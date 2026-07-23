@@ -35,39 +35,42 @@
 | Task #124 - Task #125 | ✓ closed | README + TASKS_INDEX stale number refresh v2 + CI workflow dispatcher sync |
 | Task #126 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v2 |
 
-## Recent closed tasks (Task #101 - Task #127)
+## Recent closed tasks (Task #101 - Task #134)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
-| #101 | REPRODUCE.md + env verifier | ✅ | `verdicts/task101_reproduce_md_result.md` |
-| #102 | README.md paper-reviewer landing | ✅ | `verdicts/task102_readme_md_result.md` |
-| #103 | Paper claims cross-validation audit | ✅ | `verdicts/task103_paper_claims_audit_result.md` |
-| #104 | CITATION.cff + CHANGELOG.md | ✅ | `verdicts/task104_citation_changelog_result.md` |
-| #105 | R12 ckpt integrity 4-layer audit | ✅ | `verdicts/task105_ckpt_integrity_result.md` |
-| #106 | 5-audit defense bundle | ✅ | `verdicts/task106_submission_defense_result.md` |
-| #107 | GitHub Actions CI (9-step workflow) | ✅ | `verdicts/task107_github_actions_ci_result.md` |
-| #108 | arXiv submission packet (7 files) | ✅ | `verdicts/task108_arxiv_packet_result.md` |
-| #109 | 7 shields.io badges in README.md | ✅ | `verdicts/task109_shields_badges_result.md` |
-| #110 | Audit dispatcher + VERSION 1.0.0 + tag | ✅ | `verdicts/task110_audit_dispatcher_version_result.md` |
-| #111 | Final synthesis verdict (project closure) | ✅ | `verdicts/task111_final_synthesis_result.md` |
-| #112 | v1.0.0 release artifacts consolidation | ✅ | `verdicts/task112_release_artifacts_result.md` |
-| #113 | README stale number refresh | ✅ | `verdicts/task113_readme_stale_numbers_result.md` |
-| #114 | 5th audit (verdict integrity) + R8 §9.3 retroactive | ✅ | `verdicts/task114_verdict_integrity_result.md` |
-| #115 | Track 166 verdicts + 104 descriptions | ✅ | `verdicts/task115_track_untracked_result.md` |
-| #116 | Track 466 utility scripts + 20 reference papers | ✅ | `verdicts/task116_track_scripts_papers_result.md` |
-| #117 | Project-specific .gitignore + track CLAUDE.md + requirements.txt | ✅ | `verdicts/task117_gitignore_project_specific_result.md` |
-| #118 | REPRODUCE.md §0 Upstream Framework Clone | ✅ | `verdicts/task118_reproduce_setup_section_result.md` |
-| #119 | Orphan file cleanup (descriptions + task data + scripts) | ✅ | `verdicts/task119_orphan_file_cleanup_result.md` |
-| #120 | gitignore 15 paper reference clones + reports/result cleanup | ✅ | `verdicts/task120_gitignore_paper_clones_result.md` |
-| #121 | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] | ✅ | `verdicts/task121_post_submission_housekeeping_synthesis_result.md` |
-| #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
-| #123 | REPRODUCE.md script reference alignment (7 nonexistent → 8 real) | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
-| #124 | README + TASKS_INDEX stale number refresh v2 (114→125, 253→255) | ✅ | `verdicts/task124_readme_stale_numbers_v2_result.md` |
-| #125 | CI workflow sync with 5-audit dispatcher (4 separate → 1 dispatcher) | ✅ | `verdicts/task125_ci_workflow_dispatcher_sync_result.md` |
-| #126 | TASKS_INDEX + CHANGELOG docs drift v2 (3 places synced) | ✅ | `verdicts/task126_docs_drift_v2_result.md` |
-| #127 | 6th audit (script syntax check via ast.parse) + drift v3 | ✅ | `verdicts/task127_6th_audit_script_syntax_result.md` |
-| #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
-| #123 | REPRODUCE.md script reference alignment | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
+| #101 | REPRODUCE.md 复现包 + 环境验证脚本 闭环 | ✅ | `verdicts/task101_reproduce_md_result.md` |
+| #102 | README.md 顶层落地页 闭环 | ✅ | `verdicts/task102_readme_md_result.md` |
+| #103 | Paper Claim Cross-Validation Audit 闭环 | ✅ | `verdicts/task103_paper_claims_audit_result.md` |
+| #104 | CITATION.cff + CHANGELOG.md 闭环 | ✅ | `verdicts/task104_citation_changelog_result.md` |
+| #105 | R12 Best Checkpoint Integrity Verification (Verdict) | ✅ | `verdicts/task105_ckpt_integrity_result.md` |
+| #106 | Submission Defense Bundle (Verdict) | ✅ | `verdicts/task106_submission_defense_result.md` |
+| #107 | GitHub Actions CI for Paper Defense Audits (Verdict) | ✅ | `verdicts/task107_github_actions_ci_result.md` |
+| #108 | arXiv Submission Packet (Verdict) | ✅ | `verdicts/task108_arxiv_packet_result.md` |
+| #109 | shields.io Badges + README Visual Upgrade (Verdict) | ✅ | `verdicts/task109_shields_badges_result.md` |
+| #110 | Audit Dispatcher + VERSION Tag + Paper-Submission Baseline (Verdict) | ✅ | `verdicts/task110_audit_dispatcher_version_result.md` |
+| #111 | Final Synthesis Verdict (Project Closure) | ✅ | `verdicts/task111_final_synthesis_result.md` |
+| #112 | v1.0.0 Release Artifacts Consolidation (Verdict) | ✅ | `verdicts/task112_release_artifacts_result.md` |
+| #113 | README.md Stale Number Refresh (Verdict) | ✅ | `verdicts/task113_readme_stale_numbers_result.md` |
+| #114 | Verdict Integrity Audit (5th Audit for Dispatcher) (Verdict) | ✅ | `verdicts/task114_verdict_integrity_result.md` |
+| #115 | Track Untracked Verdicts + Descriptions (Verdict) | ✅ | `verdicts/task115_track_untracked_result.md` |
+| #116 | HG-Rec per-layer δ_95/diameter (原版 vs 改造版) | ✅ | `verdicts/task116_hgrec_delta_per_layer_result.md` |
+| #117 | Project-Specific .gitignore (Verdict) | ✅ | `verdicts/task117_gitignore_project_specific_result.md` |
+| #118 | HG-Rec codebook 利用率 / 碰撞率 (6 curvature 网格) | ✅ | `verdicts/task118_hgrec_codebook_utilization_result.md` |
+| #119 | 3 tokenizer 简化 kNN 分析 + 3 核心问题回答 | ✅ | `verdicts/task119_3tokenizer_kNN_result.md` |
+| #120 | gitignore Paper Reference Framework Clones (Verdict) | ✅ | `verdicts/task120_gitignore_paper_clones_result.md` |
+| #121 | Post-Submission Housekeeping Synthesis (Verdict) | ✅ | `verdicts/task121_post_submission_housekeeping_synthesis_result.md` |
+| #122 | TASKS_INDEX.md Refresh (Verdict) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
+| #123 | 跨空间 n=4 完整相关性分析 | ✅ | `verdicts/task123_cross_space_correlation_result.md` |
+| #124 | README.md + TASKS_INDEX.md Stale Number Refresh v2 (Verdict) | ✅ | `verdicts/task124_readme_stale_numbers_v2_result.md` |
+| #125 | Sync CI Workflow with 5-Audit Dispatcher (Verdict) | ✅ | `verdicts/task125_ci_workflow_dispatcher_sync_result.md` |
+| #126 | TASKS_INDEX + CHANGELOG Documentation Drift v2 (Verdict) | ✅ | `verdicts/task126_docs_drift_v2_result.md` |
+| #127 | TASKS_INDEX+CHANGELOG drift v3 + 6th audit (script syntax) | ✅ | `verdicts/task127_6th_audit_script_syntax_result.md` |
+| #128 | Housekeeping Cycle Closure (R8 §16 Cleanup + Drift Pattern Resolution) | ✅ | `verdicts/task128_housekeeping_cycle_closure_result.md` |
+| #129 | Auto-Gen TASKS_INDEX (Break Drift Cycle) | ✅ | `verdicts/task129_auto_gen_tasks_index_result.md` |
+| #131 | phonism 4 seed 量化前 kNN vs Recall 相关性分析 verdict | ✅ | `verdicts/task131_pre_quant_knn_vs_recall_result.md` |
+| #132 | 验证 Task #131 pre-quant R@5=0.00107 是否合理 | ✅ | `verdicts/task132_verify_pre_quant_baselines_result.md` |
+| #134 | CLAUDE.md R9-Enforce + audit 脚本 verdict | ✅ | `verdicts/task134_r9_enforce_audit_result.md` |
 
 ## Paper-defense artifacts (10 件套, Task #101 - #110)
 
