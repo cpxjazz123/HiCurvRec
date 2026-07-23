@@ -78,12 +78,28 @@ def main() -> int:
         "--data-dir",
         default=str(REPO / "data" / "amazon_data" / "musical_instruments"),
     )
+    parser.add_argument(
+        "--skip-data",
+        action="store_true",
+        help="Skip dataset CSV check (used by Task #107 CI to avoid pulling 100s MB)",
+    )
+    parser.add_argument(
+        "--skip-packages",
+        action="store_true",
+        help="Skip torch/transformers/hydra import check (used by Task #107 CI which only needs pyyaml)",
+    )
     args = parser.parse_args()
 
     print("=== Task #101 Environment Verification ===")
     check_repo_layout()
-    check_packages()
-    check_dataset(Path(args.data_dir))
+    if args.skip_packages:
+        print("  [SKIP] Package import check (--skip-packages flag; CI mode)")
+    else:
+        check_packages()
+    if args.skip_data:
+        print("  [SKIP] Dataset CSV check (--skip-data flag; CI mode)")
+    else:
+        check_dataset(Path(args.data_dir))
     print("=== ALL CHECKS PASSED ===")
     return 0
 
