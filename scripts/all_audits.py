@@ -37,6 +37,7 @@ AUDITS: list[tuple[str, str]] = [
     ("task103", "python3 scripts/task103_paper_claims_audit.py"),
     ("task105", "python3 scripts/task105_ckpt_integrity.py --ci-mode"),
     ("task106", "python3 scripts/task106_audits.py"),
+    ("task114", "python3 scripts/task114_verdict_integrity.py"),
 ]
 
 
