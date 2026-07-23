@@ -33,8 +33,9 @@
 | Task #121 | ✓ closed | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] update |
 | Task #122 - Task #123 | ✓ closed | TASKS_INDEX.md refresh + REPRODUCE.md script reference alignment |
 | Task #124 - Task #125 | ✓ closed | README + TASKS_INDEX stale number refresh v2 + CI workflow dispatcher sync |
+| Task #126 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v2 |
 
-## Recent closed tasks (Task #101 - Task #125)
+## Recent closed tasks (Task #101 - Task #127)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
@@ -63,6 +64,8 @@
 | #123 | REPRODUCE.md script reference alignment (7 nonexistent → 8 real) | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
 | #124 | README + TASKS_INDEX stale number refresh v2 (114→125, 253→255) | ✅ | `verdicts/task124_readme_stale_numbers_v2_result.md` |
 | #125 | CI workflow sync with 5-audit dispatcher (4 separate → 1 dispatcher) | ✅ | `verdicts/task125_ci_workflow_dispatcher_sync_result.md` |
+| #126 | TASKS_INDEX + CHANGELOG docs drift v2 (3 places synced) | ✅ | `verdicts/task126_docs_drift_v2_result.md` |
+| #127 | 6th audit (script syntax check via ast.parse) + drift v3 | ✅ | `verdicts/task127_6th_audit_script_syntax_result.md` |
 | #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
 | #123 | REPRODUCE.md script reference alignment | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
 

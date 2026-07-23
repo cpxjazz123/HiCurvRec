@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   no changes to paper numbers, baselines, or scientific conclusions.
 
 ### Verified
-- `python3 scripts/all_audits.py` — 5/5 PASS (task101/103/105/106/114).
+- `python3 scripts/all_audits.py` — 6/6 PASS (task101/103/105/106/114/127).
 - R9 mandate: descriptions/ task IDs contiguous 1..121 (no gaps).
 - All committed Python scripts pass `python3 -m py_compile`.
 - v1.0.0 git tag still anchors paper-submission baseline at commit 9b81667.
@@ -44,7 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   #118 (REPRODUCE §0) → #119 (orphan cleanup) → #120 (gitignore paper
   clones) → #121 (synthesis) → #122-#125 (continued housekeeping:
   TASKS_INDEX refresh + REPRODUCE.md script alignment + README/TASKS_INDEX
-  stale numbers v2 + CI workflow dispatcher sync).
+  stale numbers v2 + CI workflow dispatcher sync) → #126 (TASKS_INDEX +
+  CHANGELOG docs drift v2) → #127 (drift v3 + 6th audit: script syntax
+  check via `ast.parse`, dispatcher 5/6 → 6/6 PASS).
 
 ## [1.0.0] - 2026-07-24 — Paper Submission Baseline
 
