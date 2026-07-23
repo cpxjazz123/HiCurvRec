@@ -255,11 +255,12 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-**🟢 0 个活跃 (2026-07-24 更新, Task #109 shields.io badges 7 个闭环 (README.md 顶部 paper 14p + 12/20 reproduced + 14/14 Δ=0 + 197/200 words + 21.06 MB R12 ckpt + MIT license + CI audits))**:
+**🟢 0 个活跃 (2026-07-24 更新, Task #110 audit dispatcher + VERSION 1.0.0 + git tag v1.0.0 闭环 (单 dispatcher `python3 scripts/all_audits.py` 4/4 PASS 0.46s, VERSION=1.0.0 锁 paper-submission baseline, git tag v1.0.0 锁 commit 9b81667))**:
 
 | Task | 模型 | GPU | 状态 | 启动时间 | 备注 |
 |------|------|-----|------|---------|------|
 | (空 — §16 表格清空, 等待下一任务) |
+| (空 — R8 强制清理: Task #110 audit dispatcher + VERSION 1.0.0 ✅ 已完成 (2026-07-24). scripts/all_audits.py 单 dispatcher 跑 4 audit (task101 env / task103 paper claims / task105 ckpt integrity / task106 paper audits) 4/4 PASS 0.46s 实测. VERSION=1.0.0 锁 repo 基线, git tag v1.0.0 锁 commit 9b81667. reviewer 单命令 `python3 scripts/all_audits.py` 拿全部 4 audit verdict. verdict: `verdicts/task110_audit_dispatcher_version_result.md`) |
 | (空 — R8 强制清理: Task #109 shields.io badges ✅ 已完成 (2026-07-24). README.md 顶部 7 个 `<a href><img>` shields.io badges: paper (14 页 blue / acrobat reader logo) + baselines (12/20 reproduced brightgreen) + paper claims (14/14 Δ=0 brightgreen) + abstract (197/200 字 green) + R12 ckpt (21.06 MB green) + license (MIT blue) + CI (audits automated success / github actions logo). 全部 `%2F`-encoded URLs, evidence files 全 linked. verdict: `verdicts/task109_shields_badges_result.md`) |
 | (空 — R8 强制清理: Task #99 paper.md → paper.pdf ✅ 已完成 (2026-07-24). 14 页 PDF (124 KB), 修复 10 个 LaTeX bug, 三状态 math 追踪, lstlisting verbatim. verdict: `verdicts/task99_md_to_pdf_result.md`. 同时补 task99 description 文档化工作, 修复 R9 descriptions/ 编号连续性.) |
 | (空 — R8 强制清理: Task #100 paper submission 准备 ✅ 已完成 (2026-07-24). Step A BibTeX (papers/refs.bib 12 entries) + Step B 格式微调 (\\usepackage{times} + fancyhdr + Acknowledgements section) + Step C local git commit 3b982f6 (无 origin remote). 14 页 PDF (106 KB). verdict: `verdicts/task100_paper_submission_prep_result.md`.) |
