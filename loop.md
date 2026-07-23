@@ -255,11 +255,12 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-**🟢 0 个活跃 (2026-07-24 更新, Task #112 v1.0.0 release artifacts consolidation 闭环 (CHANGELOG [1.0.0] 段 + TASKS_INDEX 数字刷新 28/6/26 → 116/232/46 + dispatcher 4/4 PASS 0.40s; v1.0.0 release artifacts 三件套 + index 全部 production-ready))**:
+**🟢 0 个活跃 (2026-07-24 更新, Task #113 README stale number refresh 闭环 (line 58 `101` → `114 entries`, line 61 `~480` → `~483 files`; dispatcher 4/4 PASS 0.29s; line 33 paper.pdf 14 pages 106 KB 验证正确未动))**:
 
 | Task | 模型 | GPU | 状态 | 启动时间 | 备注 |
 |------|------|-----|------|---------|------|
 | (空 — §16 表格清空, 等待下一任务) |
+| (空 — R8 强制清理: Task #113 README stale number refresh ✅ 已完成 (2026-07-24). README.md §1 "What's in this repository" 改 2 处数字: line 58 `Task definitions (101 entries, R9 continuous)` → `(114 entries, R9 continuous)` (匹配 descriptions/ 实际 114 task files); line 61 `Diagnostic & analysis scripts (~480 files)` → `(~483 files)` (匹配 scripts/ 实际 483 files = 318 .py + 154 .sh + 11 others). line 33 `papers/paper.pdf (14 pages, 106 KB)` 验证正确未动. dispatcher 4/4 PASS 0.29s 无 regression. verdict: `verdicts/task113_readme_stale_numbers_result.md`) |
 | (空 — R8 强制清理: Task #112 v1.0.0 release artifacts consolidation ✅ 已完成 (2026-07-24). 三件套: (a) CHANGELOG.md 加 `[1.0.0] - 2026-07-24 — Paper Submission Baseline` 段 (Keep-a-Changelog 1.1.0 格式, Added 12 项 + Changed 3 项 + Verified 5 项 + Notes 3 项); (b) TASKS_INDEX.md 完全重写, 数字刷新 28/6/26 → 116/232/46, 含 12 paper-defense artifacts 表格; (c) 最终验证 dispatcher 4/4 PASS 0.40s + R9 contiguous 1-112 无空洞 + git status clean. v1.0.0 release artifacts (VERSION + tag + CHANGELOG + TASKS_INDEX) 全部 production-ready. verdict: `verdicts/task112_release_artifacts_result.md`) |
 | (空 — R8 强制清理: Task #111 final synthesis verdict ✅ 已完成 (2026-07-24). 单 verdict 8 节 markdown (~280 行) 串联 Task #1-#110: 1) Project Overview + 2) Baselines (12 reproduced + 7 NO-GO) + 3) Paper Defense (10 件套 #101-#110) + 4) Scientific Findings (5 重 evidence → Musical_Instruments 本质欧氏) + 5) Reproducibility Package + 6) Project Timeline (7/21-7/24 4 天) + 7) Key Decisions (R11.3) + 8) Optional Future. 数字与现有 verdict 一致 cross-validated. 关闭整个 paper submission 周期. verdict: `verdicts/task111_final_synthesis_result.md`) |
 | (空 — R8 强制清理: Task #110 audit dispatcher + VERSION 1.0.0 ✅ 已完成 (2026-07-24). scripts/all_audits.py 单 dispatcher 跑 4 audit (task101 env / task103 paper claims / task105 ckpt integrity / task106 paper audits) 4/4 PASS 0.46s 实测. VERSION=1.0.0 锁 repo 基线, git tag v1.0.0 锁 commit 9b81667. reviewer 单命令 `python3 scripts/all_audits.py` 拿全部 4 audit verdict. verdict: `verdicts/task110_audit_dispatcher_version_result.md`) |
