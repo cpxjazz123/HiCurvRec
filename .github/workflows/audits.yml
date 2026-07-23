@@ -1,12 +1,16 @@
 # GitHub Actions workflow for paper submission defense audits (Task #107)
 #
-# Runs the 4 cumulative paper defense audit scripts on every push and PR:
+# Runs the single audit dispatcher (Task #110), which in turn runs all 5
+# paper defense audit scripts:
 #   - Task #101: scripts/task101_verify_env.py (repo layout + packages)
 #   - Task #103: scripts/task103_paper_claims_audit.py (paper claims Δ=0)
 #   - Task #105: scripts/task105_ckpt_integrity.py (R12 best ckpt)
 #   - Task #106: scripts/task106_audits.py (5-audit submission defense)
+#   - Task #114: scripts/task114_verdict_integrity.py (verdict result: + R9 + dispatcher)
 #
-# Outputs verdicts/ audit reports as artifacts for PR reviewers.
+# Adding a new audit in scripts/all_audits.py automatically extends CI coverage
+# — no separate workflow edit needed. Outputs verdicts/ audit reports as
+# artifacts for PR reviewers.
 
 name: Paper Integrity Audits
 
@@ -41,25 +45,11 @@ jobs:
           # Audit scripts use only stdlib except task103 which needs pyyaml
           pip install pyyaml
 
-      - name: Task #101 — Environment verification (CI mode)
+      - name: Single audit dispatcher (all 5 paper defense audits)
         run: |
-          echo "--- Task #101: Environment verification (CI mode) ---"
-          python3 scripts/task101_verify_env.py --skip-data --skip-packages
-
-      - name: Task #103 — Paper claims audit (Δ=0 expected)
-        run: |
-          echo "--- Task #103: Paper claims audit ---"
-          python3 scripts/task103_paper_claims_audit.py
-
-      - name: Task #105 — Best ckpt integrity (CI mode: graceful if absent)
-        run: |
-          echo "--- Task #105: R12 ckpt integrity (CI mode) ---"
-          python3 scripts/task105_ckpt_integrity.py --ci-mode
-
-      - name: Task #106 — Submission defense bundle (5 audits)
-        run: |
-          echo "--- Task #106: Submission defense bundle ---"
-          python3 scripts/task106_audits.py
+          echo "--- Paper defense audit dispatcher (Task #110) ---"
+          echo "    Runs all 5 audits: task101/103/105/106/114"
+          python3 scripts/all_audits.py
 
       - name: Upload audit reports
         if: always()
@@ -72,6 +62,7 @@ jobs:
             verdicts/task105_ckpt_integrity.md
             verdicts/task106_audits.md
             verdicts/task106_audits.json
+            verdicts/task114_verdict_integrity_result.md
           if-no-files-found: warn
 
       - name: Summarize audit results
@@ -91,4 +82,7 @@ jobs:
             n_a4=$(python3 -c "import json; d=json.load(open('verdicts/task106_audits.json')); print('✅' if d['audit_4_number_consistency']['verdict_ok'] else '⚠️')")
             n_a5=$(python3 -c "import json; d=json.load(open('verdicts/task106_audits.json')); print('✅' if d['audit_5_license_attribution']['verdict_ok'] else '❌')")
             echo "- **Task #106 defense bundle**: A1 $n_a1 / A2 $n_a2 / A3 $n_a3 / A4 $n_a4 / A5 $n_a5" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f verdicts/task114_verdict_integrity_result.md ]; then
+            echo "- **Task #114 verdict integrity**: ✅ result: lines + R9 contiguous + dispatcher self-check" >> "$GITHUB_STEP_SUMMARY"
           fi
