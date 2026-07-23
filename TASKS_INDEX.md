@@ -5,11 +5,12 @@
 
 ## Three artifact categories
 
-- **descriptions/**: task definitions (markdown). 123 files total — 121
-  numbered tasks (Task #1 - Task #121 contiguous per R9) + 2 reference
-  files (`README.md`, `_general_pipeline.md`).
+- **descriptions/**: task definitions (markdown). 127 files total — 125
+  numbered files covering 123 unique task IDs (Task #1 - Task #123
+  contiguous per R9; Task #27 and Task #67 have 2 revision files each)
+  + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  253 files — verdicts for Task #1 - Task #121 + auxiliary verdicts +
+  255 files — verdicts for Task #1 - Task #123 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
@@ -30,6 +31,7 @@
 | Task #115 - Task #117 | ✓ closed | Track untracked: 270 verdicts/descriptions + 486 scripts/papers + .gitignore project-specific + CLAUDE.md + requirements.txt |
 | Task #118 - Task #120 | ✓ closed | REPRODUCE.md §0 onboarding + orphan file cleanup + gitignore paper clones |
 | Task #121 | ✓ closed | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] update |
+| Task #122 - Task #123 | ✓ closed | TASKS_INDEX.md refresh + REPRODUCE.md script reference alignment |
 
 ## Recent closed tasks (Task #101 - Task #121)
 
@@ -56,6 +58,8 @@
 | #119 | Orphan file cleanup (descriptions + task data + scripts) | ✅ | `verdicts/task119_orphan_file_cleanup_result.md` |
 | #120 | gitignore 15 paper reference clones + reports/result cleanup | ✅ | `verdicts/task120_gitignore_paper_clones_result.md` |
 | #121 | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] | ✅ | `verdicts/task121_post_submission_housekeeping_synthesis_result.md` |
+| #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
+| #123 | REPRODUCE.md script reference alignment | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
 
 ## Paper-defense artifacts (10 件套, Task #101 - #110)
 
