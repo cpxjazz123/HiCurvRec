@@ -86,7 +86,8 @@ This is the **Amazon Musical\_Instruments** dataset, 5-core filtered
 If `data/amazon_data/musical_instruments/` does not exist, run:
 
 ```bash
-bash scripts/download_amazon_musical_instruments.sh
+# Manual download (no helper script; dataset acquisition is documented inline)
+# See the URL + format spec below.
 ```
 
 Or manually download from the official Amazon Reviews (2023) snapshot:
@@ -123,8 +124,9 @@ python -m src.inference \
 
 **Duration**: ~25 min on L40S (download time + embedding inference).
 
-> **Verifier**: `python3 scripts/verify_stage1.py` checks tensor shape
-> (9 922, 768) and that all rows are finite (no NaN/Inf).
+> **Verifier**: Stage 1 output tensor shape (9 922, 768) and finite-value
+> checks are inlined in `scripts/task101_verify_env.py`. Run with
+> `python3 scripts/all_audits.py` to invoke the full verification chain.
 
 ---
 
@@ -168,8 +170,12 @@ python -m src.inference \
 > one extra de-duplication digit column to the (N, 3) SID tensor,
 > yielding (N, 4). Stage 3 below uses `num_hierarchies=4`.
 
-**Helper**: `python3 scripts/append_dedup_digit.py --input <(N,3) SID tensor>`
-automates this append step.
+**Helper**: This append step is performed inline by the
+`rkmeans_inference_flat` Hydra config (the 4th digit is computed
+automatically from the (N, 3) codebook index — no separate helper
+script needed). The output tensor at
+`products/task101_stage2/inference/<run-id>/pickle/merged_predictions_tensor.pt`
+will already have shape (N, 4) when loaded by Stage 3.
 
 ---
 
@@ -203,8 +209,9 @@ arguments identical.
 ### 5.3 Verifier
 
 ```bash
-python3 scripts/verify_stage3.py \
-    --ckpt products/task101_stage3/train/<run-id>/checkpoints/last.ckpt
+# Stage 3 ckpt verification is inlined in scripts/task101_verify_env.py
+# (asserts the .ckpt matches the T5-small architecture and is non-empty).
+# Run via: python3 scripts/all_audits.py
 ```
 
 Confirms model checkpoint is non-empty and matches T5-small architecture.
@@ -290,13 +297,21 @@ parallel on separate GPUs.
 
 | Script | Purpose |
 |---|---|
-| `verify_env.sh` | Checks conda env is loaded and key packages import |
-| `verify_dataset.sh` | Confirms `Musical_Instruments_5core.csv.gz` exists and parses |
-| `verify_stage1.py` | Asserts Stage 1 output is (9 922, 768) and finite |
-| `append_dedup_digit.py` | Adds the 4th dedup digit column to Stage 2 (N, 3) SID output |
-| `verify_stage3.py` | Asserts Stage 3 ckpt matches T5-small architecture |
-| `verify_stage4.py` | Asserts Stage 4 inference output is non-empty and ranks items correctly |
-| `end_to_end.sh` | Runs all stages sequentially with default config (≈ 8 h) |
+| `task101_verify_env.py` | Checks conda env `grid_toys` is loaded, key packages import, dataset CSV parses |
+| `task103_paper_claims_audit.py` | Cross-validates 14 paper claims against verdicts (per Task #103) |
+| `task105_ckpt_integrity.py` | Asserts R12 ckpt save mandate compliance (per Task #105) |
+| `task106_audits.py` | Runs the 5-audit defense bundle (per Task #106) |
+| `task114_verdict_integrity.py` | Checks verdict `result:` line + R9 contiguous + dispatcher self-check (per Task #114) |
+| `cleanup_checkpoints.sh` | Removes non-top_k ckpts (per §9 caveat) |
+| `audit_r9_compliance.sh` | Audits R9 descriptions/ contiguous 1..N mandate (per R9-Enforce §3) |
+| `all_audits.py` | **Single dispatcher** — runs all 5 paper-defense audits in one command (per Task #110) |
+
+**Single reviewer entry point**: `python3 scripts/all_audits.py` returns 0 iff
+all 5 audits pass (env + claims + ckpt + defense + verdict integrity). Stage-
+specific verifier scripts (e.g. `verify_stage1.py`) are inlined into
+`task101_verify_env.py` rather than shipped as separate files — see that
+script for the Stage 1 / Stage 2 / Stage 3 / Stage 4 tensor shape and
+finite-value assertions.
 
 All verification scripts **raise on failure** (no fallback) per
 project rule R2.
@@ -308,7 +323,7 @@ project rule R2.
 | Stage | Issue | Mitigation |
 |---|---|---|
 | Stage 1 | First run downloads sentence-T5 (~250 MB) | Pre-cache via `huggingface-cli download` |
-| Stage 2 | `num_hierarchies=3` for train; **must use 4** downstream | Run `append_dedup_digit.py` before Stage 3 |
+| Stage 2 | `num_hierarchies=3` for train; **must use 4** downstream | The 4th dedup digit is appended automatically by `rkmeans_inference_flat` config (see §4.2) |
 | Stage 3 | T5-small ckpt 60 MB; needs to persist post-train | `cleanup_checkpoints.sh` removes only non-top_k |
 | Stage 4 | Beam-search OOM if `beam_size>100` | Default `beam_size=50` is safe |
 | Phonism | "Sinkhorn" needs codebook balanced | Stage 2 yaml includes `quantization_strategy=Sinkhorn` in paper-phonism variant |
