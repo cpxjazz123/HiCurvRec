@@ -55,10 +55,10 @@ GeneRec/
 │   └── amazon_data/
 │       └── musical_instruments/   #     Amazon_Musical_Instruments_5core.csv.gz
 │
-├── descriptions/                  # Task definitions (101 entries, R9 continuous)
+├── descriptions/                  # Task definitions (114 entries, R9 continuous)
 ├── verdicts/                      # Closure reports (one per task)
 ├── products/                      # Task execution artifacts (checkpoints, runs)
-└── scripts/                       # Diagnostic & analysis scripts (~480 files)
+└── scripts/                       # Diagnostic & analysis scripts (~483 files)
 ```
 
 The directory **BLOGER/**, **DECOR/**, **ETEGRec/**, **HG-Rec/**, **LETTER/**,
