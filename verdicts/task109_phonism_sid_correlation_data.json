@@ -1,0 +1,155 @@
+{
+  "n_data_points": 6,
+  "n_total_tokenizers": 7,
+  "excluded": [
+    "Task85_m2_hyperbolic"
+  ],
+  "k": 50,
+  "n_bootstrap": 1000,
+  "primary_cocluster_lift_vs_R5": {
+    "pearson_rho": 0.3980763723631684,
+    "pearson_p": 0.43442598746933764,
+    "spearman_rho": 0.14494275891311212,
+    "spearman_p": 0.7841083696021082,
+    "spearman_ci95": [
+      -0.8000000000000002,
+      1.0
+    ]
+  },
+  "primary_normalized_hamming_vs_R5": {
+    "pearson_rho": -0.42077399205727906,
+    "pearson_p": 0.4060881878544067,
+    "spearman_rho": -0.6667366910003157,
+    "spearman_p": 0.14808979944035275,
+    "spearman_ci95": [
+      -1.0,
+      0.3178208630818641
+    ]
+  },
+  "sanity_raw_hamming_vs_R5": {
+    "pearson_rho": -0.7220362338244447,
+    "pearson_p": 0.10515750685462931,
+    "spearman_rho": -0.6667366910003157,
+    "spearman_p": 0.14808979944035275
+  },
+  "legacy_raw_cocluster_vs_R5": {
+    "pearson_rho": 0.39726687598883836,
+    "pearson_p": 0.43544820802600687,
+    "spearman_rho": 0.14494275891311212,
+    "spearman_p": 0.7841083696021082
+  },
+  "per_tokenizer_results": [
+    {
+      "id": "Task85_m1_quasi_euclid",
+      "family": "curvature_rqvae",
+      "sid_dim": 3,
+      "downstream_R5": 0.02,
+      "downstream_R10": 0.0288,
+      "cocluster_mean": 0.04632338136434555,
+      "cocluster_std": 0.03894277289509773,
+      "hamming_mean": 2.9484400749206543,
+      "hamming_std": 0.04585263505578041,
+      "hamming_norm_mean": 0.9828134179115295,
+      "hamming_norm_std": 0.01528420764952898,
+      "cocluster_random_baseline": 0.0413451852897803,
+      "cocluster_lift": 0.004978196074565254,
+      "notes": "single \u03ba=0 (Euclidean) RQ-VAE"
+    },
+    {
+      "id": "Task87_K256_seed42",
+      "family": "flat_rqvae",
+      "sid_dim": 4,
+      "downstream_R5": 0.01937,
+      "downstream_R10": 0.03318,
+      "cocluster_mean": 0.9667007327079773,
+      "cocluster_std": 0.09250013530254364,
+      "hamming_mean": 2.723393201828003,
+      "hamming_std": 0.26940587162971497,
+      "hamming_norm_mean": 0.6808483004570007,
+      "hamming_norm_std": 0.06735146790742874,
+      "cocluster_random_baseline": 0.9487587809562683,
+      "cocluster_lift": 0.017941951751708984,
+      "notes": "TIGER-aligned flat Euclidean baseline (seed=42)"
+    },
+    {
+      "id": "Task85_m0_sphere",
+      "family": "curvature_rqvae",
+      "sid_dim": 3,
+      "downstream_R5": 0.0174,
+      "downstream_R10": 0.0262,
+      "cocluster_mean": 0.03291177377104759,
+      "cocluster_std": 0.03014015033841133,
+      "hamming_mean": 2.96451473236084,
+      "hamming_std": 0.03373049199581146,
+      "hamming_norm_mean": 0.9881718158721924,
+      "hamming_norm_std": 0.011243496090173721,
+      "cocluster_random_baseline": 0.029492340981960297,
+      "cocluster_lift": 0.0034194327890872955,
+      "notes": "single \u03ba=+1 (sphere) RQ-VAE"
+    },
+    {
+      "id": "Task107_K256_seed123",
+      "family": "flat_rqvae",
+      "sid_dim": 4,
+      "downstream_R5": 0.01489,
+      "downstream_R10": 0.02627,
+      "cocluster_mean": 0.9667007327079773,
+      "cocluster_std": 0.09250013530254364,
+      "hamming_mean": 2.723393201828003,
+      "hamming_std": 0.26940587162971497,
+      "hamming_norm_mean": 0.6808483004570007,
+      "hamming_norm_std": 0.06735146790742874,
+      "cocluster_random_baseline": 0.9487587809562683,
+      "cocluster_lift": 0.017941951751708984,
+      "notes": "Same SID as Task87, TIGER seed=123 (variance probe)"
+    },
+    {
+      "id": "Task22_PM_RQ_phase2",
+      "family": "pm_rq",
+      "sid_dim": 3,
+      "downstream_R5": 0.00474,
+      "downstream_R10": 0.00551,
+      "cocluster_mean": 0.030649110674858093,
+      "cocluster_std": 0.03131921961903572,
+      "hamming_mean": 2.9682185649871826,
+      "hamming_std": 0.03311633691191673,
+      "hamming_norm_mean": 0.9894062876701355,
+      "hamming_norm_std": 0.01103877741843462,
+      "cocluster_random_baseline": 0.027870960533618927,
+      "cocluster_lift": 0.0027781501412391663,
+      "notes": "PM-RQ Phase 2 single-layer, 3 sub-codebooks (S\u00d7E\u00d7H), K=256 each"
+    },
+    {
+      "id": "Task22_PM_RQ_phase3_cascade",
+      "family": "pm_rq",
+      "sid_dim": 9,
+      "downstream_R5": 0.00144,
+      "downstream_R10": 0.00206,
+      "cocluster_mean": 0.064615897834301,
+      "cocluster_std": 0.040834493935108185,
+      "hamming_mean": 8.928444862365723,
+      "hamming_std": 0.04933193698525429,
+      "hamming_norm_mean": 0.9920493960380554,
+      "hamming_norm_std": 0.005481325555592775,
+      "cocluster_random_baseline": 0.05915240943431854,
+      "cocluster_lift": 0.005463488399982452,
+      "notes": "PM-RQ Phase 3 3-layer cascade, 9 codes/item"
+    },
+    {
+      "id": "Task85_m2_hyperbolic",
+      "family": "curvature_rqvae",
+      "sid_dim": 3,
+      "downstream_R5": 0.25546,
+      "downstream_R10": null,
+      "cocluster_mean": 0.11320864409208298,
+      "cocluster_std": 0.1385822296142578,
+      "hamming_mean": 2.8259894847869873,
+      "hamming_std": 0.2509303689002991,
+      "hamming_norm_mean": 0.9419965744018555,
+      "hamming_norm_std": 0.08364345133304596,
+      "cocluster_random_baseline": 0.10905177146196365,
+      "cocluster_lift": 0.004156872630119324,
+      "notes": "single \u03ba=-1 (hyperbolic) RQ-VAE, MODE COLLAPSE \u2192 trivial bias, EXCLUDE from primary correlation"
+    }
+  ]
+}

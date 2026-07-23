@@ -1,0 +1,39 @@
+{
+  "n_tokenizers": 2,
+  "kappas": [
+    5.0483,
+    -0.0795,
+    -5.0407
+  ],
+  "n_sample": 200,
+  "caveat": "baseline 不在 MCKG 训练, 不能直接对照. 本表仅测 m=0 vs m=1 在 MCKG 空间的 kNN 共 digit 率.",
+  "results": [
+    {
+      "id": "Task85_m1_quasi_euclid",
+      "label": "m=1 准欧氏 (κ≈-0.17)",
+      "sid_shape": [
+        3,
+        11924
+      ],
+      "downstream_R5": 0.02,
+      "downstream_R10": 0.0288,
+      "mckg_co_cluster_at_10_mean": 0.37,
+      "mckg_co_cluster_at_10_std": 0.280235791371181
+    },
+    {
+      "id": "Task85_m0_sphere",
+      "label": "m=0 球面 (κ≈+0.85)",
+      "sid_shape": [
+        3,
+        11924
+      ],
+      "downstream_R5": 0.0174,
+      "downstream_R10": 0.0262,
+      "mckg_co_cluster_at_10_mean": 0.23555555555555557,
+      "mckg_co_cluster_at_10_std": 0.229212285021851
+    }
+  ],
+  "correlation_pearson": 1.0,
+  "correlation_spearman": 0.9999999999999999,
+  "correlation_warning": "n=2 cannot establish significance"
+}
