@@ -255,12 +255,12 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-**🟢 0 个活跃 (2026-07-24 更新, Task #108 arXiv submission packet 7 文件闭环 (paper.tex sanitized no fancyhdr/times/authblk + paper.pdf 14页 125 KB + refs.bib 12 entries + LICENSE CC-BY-4.0 + ARXIV_METADATA.md + README.md + SUBMISSION_CHECKLIST.md))**:
+**🟢 0 个活跃 (2026-07-24 更新, Task #109 shields.io badges 7 个闭环 (README.md 顶部 paper 14p + 12/20 reproduced + 14/14 Δ=0 + 197/200 words + 21.06 MB R12 ckpt + MIT license + CI audits))**:
 
 | Task | 模型 | GPU | 状态 | 启动时间 | 备注 |
 |------|------|-----|------|---------|------|
 | (空 — §16 表格清空, 等待下一任务) |
-| (空 — R8 强制清理: Task #108 arXiv submission packet ✅ 已完成 (2026-07-24). `arxiv/` 7 文件: ARXIV_METADATA.md (title/cs.IR primary/cs.LG cross/CC-BY-4.0) + LICENSE (CC-BY-4.0) + README.md (sanitization notes) + SUBMISSION_CHECKLIST.md (13 项 pre-upload verify) + paper.tex (39.7 KB sanitized: 移除 fancyhdr/times/authblk, author 改为 "Reproduction of HG-Rec" + GitHub email) + paper.pdf (14 页 125 KB, xelatex 重编译 exit 0) + refs.bib (12 entries) + fig/ (empty placeholder). verdict: `verdicts/task108_arxiv_packet_result.md`) |
+| (空 — R8 强制清理: Task #109 shields.io badges ✅ 已完成 (2026-07-24). README.md 顶部 7 个 `<a href><img>` shields.io badges: paper (14 页 blue / acrobat reader logo) + baselines (12/20 reproduced brightgreen) + paper claims (14/14 Δ=0 brightgreen) + abstract (197/200 字 green) + R12 ckpt (21.06 MB green) + license (MIT blue) + CI (audits automated success / github actions logo). 全部 `%2F`-encoded URLs, evidence files 全 linked. verdict: `verdicts/task109_shields_badges_result.md`) |
 | (空 — R8 强制清理: Task #99 paper.md → paper.pdf ✅ 已完成 (2026-07-24). 14 页 PDF (124 KB), 修复 10 个 LaTeX bug, 三状态 math 追踪, lstlisting verbatim. verdict: `verdicts/task99_md_to_pdf_result.md`. 同时补 task99 description 文档化工作, 修复 R9 descriptions/ 编号连续性.) |
 | (空 — R8 强制清理: Task #100 paper submission 准备 ✅ 已完成 (2026-07-24). Step A BibTeX (papers/refs.bib 12 entries) + Step B 格式微调 (\\usepackage{times} + fancyhdr + Acknowledgements section) + Step C local git commit 3b982f6 (无 origin remote). 14 页 PDF (106 KB). verdict: `verdicts/task100_paper_submission_prep_result.md`.) |
 | (空 — Task #87 v2 synthesis 闭环 (2026-07-24 04:00). 整合 Task #88 c555 + Task #89 free-curv κ→0 + Task #95 HGN 闭环. 27 baseline 完整 ranking, RQ-VAE 系 7 个变体 ≥ 0.10 R@10, 论文 Section 5.4 应报告并列最优 phonism 0.1058 / HG-Rec c555 0.1051. verdict: `verdicts/task87_paper_table2_baseline_ranking_result.md`. GPU 0/1/2/3 全部空闲) |

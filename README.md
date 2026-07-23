@@ -1,5 +1,15 @@
 # GeneRec — Independent Reproduction of HG-Rec on Amazon Musical\_Instruments
 
+<p align="left">
+<a href="papers/paper.pdf"><img src="https://img.shields.io/badge/paper-14%20pages-blue?logo=adobeacrobatreader&logoColor=white" alt="paper pdf"></a>
+<a href="papers/SUBMISSION_DEFENSE.md"><img src="https://img.shields.io/badge/baselines-12%2F20%20reproduced-brightgreen" alt="baselines reproduced"></a>
+<a href="verdicts/task103_paper_claims_audit.md"><img src="https://img.shields.io/badge/paper%20claims-14%2F14%20%CE%94%3D0-brightgreen" alt="paper claims"></a>
+<a href="verdicts/task106_audits.md"><img src="https://img.shields.io/badge/abstract-197%2F200%20words-green" alt="abstract compliance"></a>
+<a href="verdicts/task105_ckpt_integrity.md"><img src="https://img.shields.io/badge/R12%20ckpt-21.06%20MB-green" alt="R12 ckpt integrity"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="license"></a>
+<a href=".github/workflows/audits.yml"><img src="https://img.shields.io/badge/CI-audits%20automated-success?logo=githubactions&logoColor=white" alt="CI"></a>
+</p>
+
 > **Paper**: *Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook: An Independent Reproduction on Amazon Musical\_Instruments*
 > **Original work**: Zhang et al., ICML 2026 (see `HG-Rec/`)
 > **Reproduction date**: 2026-07-24
