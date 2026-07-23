@@ -1,0 +1,300 @@
+{
+  "audit_1_md_tex_sync": {
+    "md_headings_count": 58,
+    "tex_headings_count": 42,
+    "tex_sections": 10,
+    "tex_subsections": 32,
+    "md_decimals_unique": 114,
+    "md_r10_unique": 3,
+    "tex_r10_unique": 3,
+    "md_sample_headings": [
+      "1. Introduction",
+      "1.1 Background: Generative Recommendation and Codebook-based Tokenization",
+      "1.2 The HG-Rec Approach",
+      "1.3 Our Reproduction Motivation",
+      "1.4 Our Key Findings Preview",
+      "1.5 Contributions"
+    ],
+    "tex_sample_sections": [
+      "1. Introduction",
+      "2. Preliminaries",
+      "3. Method",
+      "4. Related Work",
+      "5. Experiments",
+      "6. Discussion"
+    ],
+    "md_sample_r10": [
+      "0.1020",
+      "0.1051",
+      "0.1058"
+    ],
+    "verdict_ok": true
+  },
+  "audit_2_abstract_compliance": {
+    "word_count": 197,
+    "limit": 200,
+    "verdict_ok": true,
+    "first_30_words": [
+      "We",
+      "present",
+      "an",
+      "independent",
+      "reproduction",
+      "of",
+      "HG-Rec",
+      "(Zhang",
+      "et",
+      "al.,",
+      "ICML",
+      "2026)",
+      "on",
+      "Amazon",
+      "Musical_Instruments,",
+      "a",
+      "dataset",
+      "not",
+      "featured",
+      "in",
+      "the",
+      "original",
+      "paper's",
+      "headline",
+      "experiments.",
+      "We",
+      "replicate",
+      "the",
+      "full",
+      "pipeline"
+    ],
+    "abstract_first_300_chars": "We present an independent reproduction of HG-Rec (Zhang et al., ICML 2026) on Amazon Musical_Instruments, a dataset not featured in the original paper's headline experiments. We replicate the full pipeline \u2014 Stage 1 sentence-T5 embedding, Stage 2 RQ-VAE tokenization, Stage 3 T5-small generation, Sta"
+  },
+  "audit_3_baseline_coverage": {
+    "coverage": {
+      "rqvae_phonism": {
+        "method": "phonism (vanilla + Sinkhorn)",
+        "expected_r10": 0.1058,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task125_phonism_genrec_analysis_result.md",
+        "r10_in_paper_text": true
+      },
+      "rqvae_c555": {
+        "method": "HG-Rec c555 (\u03ba=0.5)",
+        "expected_r10": 0.1051,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task88_hgrec_perlayer_curvature_result.template.md",
+        "r10_in_paper_text": true
+      },
+      "rqvae_c222": {
+        "method": "HG-Rec c222 (\u03ba=2.0)",
+        "expected_r10": 0.1036,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task88_hgrec_perlayer_curvature_result.template.md",
+        "r10_in_paper_text": true
+      },
+      "rqvae_c215": {
+        "method": "HG-Rec c215 (mixed)",
+        "expected_r10": 0.1028,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task88_hgrec_perlayer_curvature_result.template.md",
+        "r10_in_paper_text": true
+      },
+      "rqvae_c111": {
+        "method": "HG-Rec c111 (\u03ba=1.0)",
+        "expected_r10": 0.0998,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task84_hgrec_main_repro_instruments_result.md",
+        "r10_in_paper_text": true
+      },
+      "rqvae_freecurv": {
+        "method": "HG-Rec free-curv (\u03ba\u21920)",
+        "expected_r10": 0.1015,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task89_free_curv_product_manifold_result.md",
+        "r10_in_paper_text": true
+      },
+      "letter": {
+        "method": "LETTER",
+        "expected_r10": 0.0997,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task61_letter_tiger_inference.md",
+        "r10_in_paper_text": true
+      },
+      "tiger": {
+        "method": "TIGER",
+        "expected_r10": 0.0591,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task23_pmrq2_tiger_result.md",
+        "r10_in_paper_text": true
+      },
+      "fdsa": {
+        "method": "FDSA",
+        "expected_r10": 0.0594,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task80_fdsa_instruments_result.md",
+        "r10_in_paper_text": true
+      },
+      "p5cid": {
+        "method": "P5-CID",
+        "expected_r10": 0.0413,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task82_p5_cid_instruments_result.md",
+        "r10_in_paper_text": true
+      },
+      "sasrec": {
+        "method": "SASRec",
+        "expected_r10": 0.0557,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "narm": {
+        "method": "NARM",
+        "expected_r10": 0.052,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "gru4rec": {
+        "method": "GRU4Rec",
+        "expected_r10": 0.0513,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "hgn": {
+        "method": "HGN",
+        "expected_r10": 0.0495,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task95_hgn_test_eval_result.md",
+        "r10_in_paper_text": true
+      },
+      "bert4rec": {
+        "method": "BERT4Rec",
+        "expected_r10": 0.0452,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "lightgcn": {
+        "method": "LightGCN",
+        "expected_r10": 0.0455,
+        "verdict_status": "\u2705 reproduced",
+        "evidence": "task89_free_curv_product_manifold_result.md",
+        "r10_in_paper_text": true
+      },
+      "caser": {
+        "method": "Caser",
+        "expected_r10": 0.0463,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "stamp": {
+        "method": "STAMP",
+        "expected_r10": 0.0463,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "dmf": {
+        "method": "DMF",
+        "expected_r10": 0.0311,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      },
+      "bpr": {
+        "method": "BPR",
+        "expected_r10": 0.0359,
+        "verdict_status": "\u26a0\ufe0f inherits paper-reported",
+        "evidence": "no per-method verdict; paper-reported (cf. \u00a75.7)",
+        "r10_in_paper_text": true
+      }
+    },
+    "n_reproduced": 12,
+    "n_inherits": 8,
+    "n_unjustified": 0,
+    "verdict_ok": true
+  },
+  "audit_4_number_consistency": {
+    "n_unique_numbers_section5": 112,
+    "sample_numbers": [
+      "0.001",
+      "0.002",
+      "0.0204",
+      "0.0205",
+      "0.0222",
+      "0.0223",
+      "0.0229",
+      "0.0234",
+      "0.0237",
+      "0.0240",
+      "0.0242",
+      "0.0255",
+      "0.0261",
+      "0.0265",
+      "0.0277",
+      "0.0297",
+      "0.0302",
+      "0.0304",
+      "0.0311",
+      "0.0316"
+    ],
+    "n_traceable_to_verdicts": 112,
+    "n_untraceable": 0,
+    "untraceable_sample": [],
+    "verdict_ok": true
+  },
+  "audit_5_license_attribution": {
+    "attributions": [
+      {
+        "asset": "Google sentence-T5",
+        "expected_license": "Apache 2.0",
+        "paper_mentions": true,
+        "readme_mentions": false,
+        "reproduce_mentions": true,
+        "verdict_ok": true,
+        "evidence": "paper \u2705 | docs \u2705"
+      },
+      {
+        "asset": "Google T5-small",
+        "expected_license": "Apache 2.0",
+        "paper_mentions": true,
+        "readme_mentions": false,
+        "reproduce_mentions": true,
+        "verdict_ok": true,
+        "evidence": "paper \u2705 | docs \u2705"
+      },
+      {
+        "asset": "snap-research/GRID",
+        "expected_license": "Apache 2.0",
+        "paper_mentions": true,
+        "readme_mentions": true,
+        "reproduce_mentions": true,
+        "verdict_ok": true,
+        "evidence": "paper \u2705 | docs \u2705"
+      },
+      {
+        "asset": "HG-Rec paper (Zhang et al., ICML 2026)",
+        "expected_license": "research use",
+        "paper_mentions": true,
+        "readme_mentions": true,
+        "reproduce_mentions": true,
+        "verdict_ok": true,
+        "evidence": "paper \u2705 | docs \u2705"
+      },
+      {
+        "asset": "Amazon Musical_Instruments",
+        "expected_license": "Amazon data license",
+        "paper_mentions": true,
+        "readme_mentions": true,
+        "reproduce_mentions": true,
+        "verdict_ok": true,
+        "evidence": "paper \u2705 | docs \u2705"
+      }
+    ],
+    "n_total": 5,
+    "n_ok": 5,
+    "verdict_ok": true
+  }
+}
