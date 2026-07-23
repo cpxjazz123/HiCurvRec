@@ -255,7 +255,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-**🟢 0 个活跃 (2026-07-24 更新, Task #101 reproducibility package 闭环)**:
+**🟢 0 个活跃 (2026-07-24 更新, Task #102 README.md 顶层落地页闭环)**:
 
 | Task | 模型 | GPU | 状态 | 启动时间 | 备注 |
 |------|------|-----|------|---------|------|
