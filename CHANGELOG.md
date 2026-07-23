@@ -7,10 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `REPRODUCE.md` §0 "Upstream Framework Clone (prerequisite)" — explicit
+  `git clone https://github.com/snap-research/GRID.git` + `cp -r` + verify
+  three-step onboarding for reviewer (Task #118).
+- 5th audit `scripts/task114_verdict_integrity.py` — checks `result:` line
+  presence, task-ID pairing, R9 contiguous 1..N in both descriptions/ and
+  verdicts/, and dispatcher self-reference (Task #114).
+- `scripts/all_audits.py` extended 4 → 5 audit entries (Task #114).
+- R8 §9.3 retroactive compliance — `result: Task #X — completed (R8 §9.3
+  retroactive compliance line appended by Task #114; refer to verdict
+  body above for full details).` line appended to 50 verdicts missing it
+  (Task #114).
+- Post-submission housekeeping synthesis verdict
+  `verdicts/task121_post_submission_housekeeping_synthesis_result.md`
+  (Task #121).
 
 ### Changed
+- `README.md` §1 "What's in this repository" — stale numbers refreshed
+  (101 → 114 entries, 480 → 483 files) per Task #113.
+- 6 housekeeping rounds (Tasks #115-#120) reduced untracked noise:
+  2097 → 114 files (-94.6%).
+- Tracked file growth: 80 → 907 files (+1033%) across Tasks #115-#117.
+- All post-submission housekeeping improvements are reviewer-facing only —
+  no changes to paper numbers, baselines, or scientific conclusions.
 
-### Removed
+### Verified
+- `python3 scripts/all_audits.py` — 5/5 PASS (task101/103/105/106/114).
+- R9 mandate: descriptions/ task IDs contiguous 1..121 (no gaps).
+- All committed Python scripts pass `python3 -m py_compile`.
+- v1.0.0 git tag still anchors paper-submission baseline at commit 9b81667.
+
+### Notes
+- Post-submission housekeeping cycle: Tasks #111 (final paper-defense
+  synthesis) → #112 (release artifacts) → #113 (README refresh) → #114
+  (5th audit + retroactive compliance) → #115-#117 (track untracked) →
+  #118 (REPRODUCE §0) → #119 (orphan cleanup) → #120 (gitignore paper
+  clones) → #121 (this synthesis).
 
 ## [1.0.0] - 2026-07-24 — Paper Submission Baseline
 
