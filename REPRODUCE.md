@@ -11,6 +11,42 @@ Table 2 (R@10 numbers) and the per-layer curvature grid in Table 4.
 
 ---
 
+## 0. Upstream Framework Clone (prerequisite)
+
+The `src/`, `configs/`, and `data/amazon_data/toys/` directories are
+**not** tracked in this repository. They are clones of the upstream
+[snap-research/GRID](https://github.com/snap-research/GRID) framework
+(Apache 2.0 licensed), which provides the Stage 1–4 pipeline.
+
+### 0.1 Clone GRID
+
+```bash
+# Clone GRID into a sibling directory (or any location; adjust path below)
+cd /home/wlia0047/ar57/wenyu        # example path; adapt to your setup
+git clone https://github.com/snap-research/GRID.git
+```
+
+### 0.2 Copy three required directories into GeneRec
+
+```bash
+# From the GeneRec repository root
+cd /fs04/ar57/wenyu/GeneRec          # example path; adapt to your setup
+cp -r ../GRID/src ./
+cp -r ../GRID/configs ./
+cp -r ../GRID/data/amazon_data ./    # only the amazon_data subdirectory is needed
+```
+
+### 0.3 Verify
+
+```bash
+ls src/train.py configs/experiment/tiger_train_flat.yaml data/amazon_data/toys/
+# All three should list contents (not "No such file or directory")
+```
+
+If `data/amazon_data/toys/` is missing the 5-core CSV, also see §2.2 (Dataset acquisition).
+
+---
+
 ## 1. Hardware & Software Requirements
 
 ### 1.1 Hardware
