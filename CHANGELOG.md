@@ -42,7 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   synthesis) → #112 (release artifacts) → #113 (README refresh) → #114
   (5th audit + retroactive compliance) → #115-#117 (track untracked) →
   #118 (REPRODUCE §0) → #119 (orphan cleanup) → #120 (gitignore paper
-  clones) → #121 (this synthesis).
+  clones) → #121 (synthesis) → #122-#125 (continued housekeeping:
+  TASKS_INDEX refresh + REPRODUCE.md script alignment + README/TASKS_INDEX
+  stale numbers v2 + CI workflow dispatcher sync).
 
 ## [1.0.0] - 2026-07-24 — Paper Submission Baseline
 

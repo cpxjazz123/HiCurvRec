@@ -32,8 +32,9 @@
 | Task #118 - Task #120 | ✓ closed | REPRODUCE.md §0 onboarding + orphan file cleanup + gitignore paper clones |
 | Task #121 | ✓ closed | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] update |
 | Task #122 - Task #123 | ✓ closed | TASKS_INDEX.md refresh + REPRODUCE.md script reference alignment |
+| Task #124 - Task #125 | ✓ closed | README + TASKS_INDEX stale number refresh v2 + CI workflow dispatcher sync |
 
-## Recent closed tasks (Task #101 - Task #121)
+## Recent closed tasks (Task #101 - Task #125)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
@@ -58,6 +59,10 @@
 | #119 | Orphan file cleanup (descriptions + task data + scripts) | ✅ | `verdicts/task119_orphan_file_cleanup_result.md` |
 | #120 | gitignore 15 paper reference clones + reports/result cleanup | ✅ | `verdicts/task120_gitignore_paper_clones_result.md` |
 | #121 | Post-submission housekeeping synthesis + CHANGELOG [Unreleased] | ✅ | `verdicts/task121_post_submission_housekeeping_synthesis_result.md` |
+| #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
+| #123 | REPRODUCE.md script reference alignment (7 nonexistent → 8 real) | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
+| #124 | README + TASKS_INDEX stale number refresh v2 (114→125, 253→255) | ✅ | `verdicts/task124_readme_stale_numbers_v2_result.md` |
+| #125 | CI workflow sync with 5-audit dispatcher (4 separate → 1 dispatcher) | ✅ | `verdicts/task125_ci_workflow_dispatcher_sync_result.md` |
 | #122 | TASKS_INDEX.md refresh (Task #113-#121 coverage) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
 | #123 | REPRODUCE.md script reference alignment | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
 
