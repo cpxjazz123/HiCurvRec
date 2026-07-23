@@ -1,0 +1,78 @@
+{
+  "task": "task92_rqvae_delta_hyperbolicity",
+  "timestamp": "2026-07-23 16:59:55",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task73/rqvae_tiger_sas/Jul-22-2026_14-32-55/best_loss_model.pth",
+  "embedding_file": "/home/wlia0047/ar57/wenyu/GeneRec/ETEGRec/dataset/Musical_Instruments/Musical_Instruments_emb_128.npy",
+  "num_samples": 5000,
+  "num_layers": 3,
+  "num_emb_list": [
+    256,
+    256,
+    256
+  ],
+  "e_dim": 128,
+  "seed": 42,
+  "layers": [
+    {
+      "delta_max": 5.389854431152344,
+      "delta_95": 2.8187005519866943,
+      "delta_median": 0.9088020324707031,
+      "delta_mean": 1.109397053718567,
+      "num_samples": 5000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 128,
+      "diameter_approx": 44.157039642333984,
+      "layer": 0,
+      "label": "raw_encoded",
+      "elapsed_sec": 0.2601015567779541,
+      "residual_norm_mean": 17.94439697265625,
+      "residual_norm_std": 3.889705181121826
+    },
+    {
+      "delta_max": 4.926801681518555,
+      "delta_95": 2.0375049114227295,
+      "delta_median": 0.6648883819580078,
+      "delta_mean": 0.8141961097717285,
+      "num_samples": 5000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 128,
+      "diameter_approx": 38.38188934326172,
+      "layer": 1,
+      "label": "residual_after_layer_0",
+      "elapsed_sec": 0.2669706344604492,
+      "residual_norm_mean": 13.427132606506348,
+      "residual_norm_std": 3.8601272106170654
+    },
+    {
+      "delta_max": 3.7023696899414062,
+      "delta_95": 1.7288951873779297,
+      "delta_median": 0.5398235321044922,
+      "delta_mean": 0.6658497452735901,
+      "num_samples": 5000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 128,
+      "diameter_approx": 35.07463455200195,
+      "layer": 2,
+      "label": "residual_after_layer_1",
+      "elapsed_sec": 0.3102421760559082,
+      "residual_norm_mean": 11.560105323791504,
+      "residual_norm_std": 3.4077937602996826
+    },
+    {
+      "delta_max": 2.7394676208496094,
+      "delta_95": 1.4252376556396484,
+      "delta_median": 0.4701976776123047,
+      "delta_mean": 0.5677834749221802,
+      "num_samples": 5000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 128,
+      "diameter_approx": 29.6363582611084,
+      "layer": 3,
+      "label": "residual_after_layer_2",
+      "elapsed_sec": 0.30072903633117676,
+      "residual_norm_mean": 10.270374298095703,
+      "residual_norm_std": 3.0019545555114746
+    }
+  ],
+  "interpretation": "\u03b4 \u2248 0 means tree-like (hyperbolic). \u03b4 > 0 means increasingly non-hyperbolic / flat / cyclic. A growing \u03b4 across layers means residual space becomes less tree-like."
+}

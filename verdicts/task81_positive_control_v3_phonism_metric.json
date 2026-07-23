@@ -1,0 +1,129 @@
+{
+  "task": "task81_positive_control_v3",
+  "timestamp": "2026-07-23 19:00:39",
+  "method": "Stage 1c RGD MDS, target=Poincar\u00e9 distance @ \u03ba=-1 (true hyperbolic dist)",
+  "method_references": [
+    "Sarkar 2011",
+    "Nickel & Kiela 2017",
+    "Gu 2019"
+  ],
+  "kappa_candidates": [
+    -2.0,
+    -1.5,
+    -1.0,
+    -0.7,
+    -0.5,
+    -0.3,
+    0.0
+  ],
+  "trees": [
+    {
+      "label": "Tree-A",
+      "num_points": 40,
+      "kappa_generated": -1.0,
+      "kappa_target": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 23.411170959472656,
+        "-1.5": 3.6969809532165527,
+        "-1.0": 1.1120567321777344,
+        "-0.7": 0.03461897745728493,
+        "-0.5": 0.027183938771486282,
+        "-0.3": 0.027065234258770943,
+        "0.0": 0.1742817461490631
+      },
+      "best_kappa": -0.3,
+      "best_stress": 0.027065234258770943,
+      "spec": {
+        "n_levels": 4,
+        "branching": 3,
+        "kappa": -1.0,
+        "noise_sigma": 0.03,
+        "step_per_level": [
+          0.0,
+          0.6,
+          0.45,
+          0.35
+        ]
+      },
+      "norm_max": 0.7568247499105427,
+      "norm_mean": 0.6442940425889125,
+      "target_max_dist": 3.4870340824127197,
+      "target_mean_dist": 2.197136878967285
+    },
+    {
+      "label": "Tree-B",
+      "num_points": 31,
+      "kappa_generated": -1.0,
+      "kappa_target": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 23.015094757080078,
+        "-1.5": 3.258065938949585,
+        "-1.0": 0.12245377153158188,
+        "-0.7": 0.04894418269395828,
+        "-0.5": 0.036635443568229675,
+        "-0.3": 0.03078504465520382,
+        "0.0": 0.1317206770181656
+      },
+      "best_kappa": -0.3,
+      "best_stress": 0.03078504465520382,
+      "spec": {
+        "n_levels": 5,
+        "branching": 2,
+        "kappa": -1.0,
+        "noise_sigma": 0.03,
+        "step_per_level": [
+          0.0,
+          0.5,
+          0.4,
+          0.3,
+          0.25
+        ]
+      },
+      "norm_max": 0.7481897954886101,
+      "norm_mean": 0.6100941593161044,
+      "target_max_dist": 3.254673480987549,
+      "target_mean_dist": 1.913122534751892
+    },
+    {
+      "label": "Tree-C",
+      "num_points": 85,
+      "kappa_generated": -1.0,
+      "kappa_target": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 18.05030059814453,
+        "-1.5": 2.0370025634765625,
+        "-1.0": 0.06409987807273865,
+        "-0.7": 0.034441299736499786,
+        "-0.5": 0.0317576639354229,
+        "-0.3": 0.033325791358947754,
+        "0.0": 0.19534341990947723
+      },
+      "best_kappa": -0.5,
+      "best_stress": 0.0317576639354229,
+      "spec": {
+        "n_levels": 4,
+        "branching": 4,
+        "kappa": -1.0,
+        "noise_sigma": 0.03,
+        "step_per_level": [
+          0.0,
+          0.55,
+          0.4,
+          0.3
+        ]
+      },
+      "norm_max": 0.7705601334327569,
+      "norm_mean": 0.6290945532716341,
+      "target_max_dist": 3.267977476119995,
+      "target_mean_dist": 2.1775243282318115
+    }
+  ],
+  "verdict": "B (sanity check \u90e8\u5206\u901a\u8fc7)",
+  "decision_note": "\u4ec5 1/3 \u6811\u8bc6\u522b\u8d1f\u66f2\u7387, metric \u90e8\u5206\u53ef\u4fe1, \u9700\u8bca\u65ad.",
+  "summary": {
+    "n_negative_recognized": 1,
+    "n_zero_recognized": 0,
+    "n_total": 3
+  },
+  "v1_v2_failure_summary": "v1 (2D + Euclidean pairwise): \u03ba=0 trivial stress \u2248 0. v2 (32D + graph shortest path): \u03ba=0 stress 0.23-0.35 vs \u03ba=-1 7-14. \u5171\u540c\u6839\u56e0: target \u4e0d\u662f\u6570\u636e\u70b9\u7684\u771f\u5b9e\u53cc\u66f2\u8ddd\u79bb. v3 \u7528 Poincar\u00e9 dist @ \u03ba=-1 \u4f5c\u4e3a target."
+}

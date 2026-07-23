@@ -1,0 +1,540 @@
+{
+  "task": "task116_hgrec_delta_per_layer_dual_metric",
+  "timestamp": "2026-07-24 00:49:25",
+  "label": "task84_c111",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt/Instruments/Jul-23-2026_20-08-06_beta_1.000_codebook_[64,128,256]_sk_0.000/best_loss_model.pth",
+  "embedding_file": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/item_emb.parquet",
+  "num_samples": 50000,
+  "seeds": [
+    42,
+    123,
+    456
+  ],
+  "metrics": [
+    "euclidean",
+    "poincare"
+  ],
+  "num_layers": 3,
+  "num_emb_list": [
+    64,
+    128,
+    256
+  ],
+  "e_dim": 32,
+  "per_layer_curvatures": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "layers": [
+    {
+      "layer": 0,
+      "label": "L0_raw_encoded_z",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.31077486276626587,
+      "residual_norm_std": 0.0494181364774704,
+      "shape": [
+        9922,
+        32
+      ],
+      "metrics": {
+        "euclidean": {
+          "per_seed": [
+            {
+              "delta_max": 0.13102573156356812,
+              "delta_95": 0.06610935181379318,
+              "delta_median": 0.022285670042037964,
+              "delta_mean": 0.026608355343341827,
+              "delta_std": 0.020335087552666664,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.6696295738220215,
+              "normalized_delta_95": 0.09872525706483232,
+              "normalized_delta_max": 0.19566897384133902,
+              "seed": 42,
+              "elapsed_sec": 0.9899239540100098
+            },
+            {
+              "delta_max": 0.1311396062374115,
+              "delta_95": 0.06633076816797256,
+              "delta_median": 0.02230924367904663,
+              "delta_mean": 0.026636848226189613,
+              "delta_std": 0.020373661071062088,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.702543318271637,
+              "normalized_delta_95": 0.09441520037676297,
+              "normalized_delta_max": 0.18666408579621083,
+              "seed": 123,
+              "elapsed_sec": 1.100980281829834
+            },
+            {
+              "delta_max": 0.12970584630966187,
+              "delta_95": 0.06692329794168472,
+              "delta_median": 0.022276997566223145,
+              "delta_mean": 0.026760751381516457,
+              "delta_std": 0.020543565973639488,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.6546879410743713,
+              "normalized_delta_95": 0.10222167500421755,
+              "normalized_delta_max": 0.19811858165099075,
+              "seed": 456,
+              "elapsed_sec": 1.0009822845458984
+            }
+          ],
+          "delta_95_mean": 0.06645447264115016,
+          "delta_95_std": 0.00034361235163142507,
+          "delta_max_mean": 0.1306237280368805,
+          "delta_max_std": 0.0006507032140728588,
+          "diameter_mean": 0.6756202777226766,
+          "diameter_std": 0.019990842596751407,
+          "normalized_delta_95_mean": 0.0984540441486043,
+          "normalized_delta_95_std": 0.0031927447817115735
+        },
+        "poincare": {
+          "per_seed": [
+            {
+              "delta_max": 0.5718421936035156,
+              "delta_95": 0.2206561118364334,
+              "delta_median": 0.06869006156921387,
+              "delta_mean": 0.08495321124792099,
+              "delta_std": 0.06916287541389465,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 2.011120080947876,
+              "normalized_delta_95": 0.10971801929024265,
+              "normalized_delta_max": 0.2843401540369466,
+              "seed": 42,
+              "elapsed_sec": 5.714528799057007
+            },
+            {
+              "delta_max": 0.5931100845336914,
+              "delta_95": 0.22223353385925293,
+              "delta_median": 0.06821620464324951,
+              "delta_mean": 0.08499328047037125,
+              "delta_std": 0.06968636810779572,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 2.2764503955841064,
+              "normalized_delta_95": 0.09762283170779604,
+              "normalized_delta_max": 0.26054162466452835,
+              "seed": 123,
+              "elapsed_sec": 5.48569655418396
+            },
+            {
+              "delta_max": 0.706535816192627,
+              "delta_95": 0.22273129224777222,
+              "delta_median": 0.06862276792526245,
+              "delta_mean": 0.08556502312421799,
+              "delta_std": 0.07010196149349213,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 1.9553591012954712,
+              "normalized_delta_95": 0.11390812669662954,
+              "normalized_delta_max": 0.36133302354771074,
+              "seed": 456,
+              "elapsed_sec": 5.6410017013549805
+            }
+          ],
+          "delta_95_mean": 0.22187364598115286,
+          "delta_95_std": 0.000884583856399383,
+          "delta_max_mean": 0.6238293647766113,
+          "delta_max_std": 0.05912330970396689,
+          "diameter_mean": 2.0809765259424844,
+          "diameter_std": 0.14008294447088915,
+          "normalized_delta_95_mean": 0.1070829925648894,
+          "normalized_delta_95_std": 0.006904599076018138
+        }
+      }
+    },
+    {
+      "layer": 1,
+      "label": "L1_pre_quant_input (z - q_0..q_0)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.1405458152294159,
+      "residual_norm_std": 0.03402820602059364,
+      "shape": [
+        9922,
+        32
+      ],
+      "metrics": {
+        "euclidean": {
+          "per_seed": [
+            {
+              "delta_max": 0.07252040505409241,
+              "delta_95": 0.031989920884370804,
+              "delta_median": 0.010621070861816406,
+              "delta_mean": 0.012775727547705173,
+              "delta_std": 0.00983826071023941,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.3919612765312195,
+              "normalized_delta_95": 0.08161500331735659,
+              "normalized_delta_max": 0.18501931031525304,
+              "seed": 42,
+              "elapsed_sec": 1.1501715183258057
+            },
+            {
+              "delta_max": 0.06826908886432648,
+              "delta_95": 0.03196260333061218,
+              "delta_median": 0.010720789432525635,
+              "delta_mean": 0.012848207727074623,
+              "delta_std": 0.009890049695968628,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.42263540625572205,
+              "normalized_delta_95": 0.07562689461770442,
+              "normalized_delta_max": 0.16153187322649257,
+              "seed": 123,
+              "elapsed_sec": 1.0723543167114258
+            },
+            {
+              "delta_max": 0.0649186372756958,
+              "delta_95": 0.03182068467140198,
+              "delta_median": 0.010735303163528442,
+              "delta_mean": 0.012808183208107948,
+              "delta_std": 0.009816448204219341,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.3964165449142456,
+              "normalized_delta_95": 0.08027082895413852,
+              "normalized_delta_max": 0.1637636927836583,
+              "seed": 456,
+              "elapsed_sec": 1.0164906978607178
+            }
+          ],
+          "delta_95_mean": 0.03192440296212832,
+          "delta_95_std": 7.418299472356437e-05,
+          "delta_max_mean": 0.0685693770647049,
+          "delta_max_std": 0.003110664247566437,
+          "diameter_mean": 0.4036710759003957,
+          "diameter_std": 0.013532595795846952,
+          "normalized_delta_95_mean": 0.0791709089630665,
+          "normalized_delta_95_std": 0.0025653757931061367
+        },
+        "poincare": {
+          "per_seed": [
+            {
+              "delta_max": 0.19793158769607544,
+              "delta_95": 0.07475501298904419,
+              "delta_median": 0.024327456951141357,
+              "delta_mean": 0.02950993739068508,
+              "delta_std": 0.023113679140806198,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.8817133903503418,
+              "normalized_delta_95": 0.08478380141118293,
+              "normalized_delta_max": 0.22448517836099655,
+              "seed": 42,
+              "elapsed_sec": 6.21034574508667
+            },
+            {
+              "delta_max": 0.17199057340621948,
+              "delta_95": 0.07441553473472595,
+              "delta_median": 0.024463772773742676,
+              "delta_mean": 0.029672598466277122,
+              "delta_std": 0.023242464289069176,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.9695576429367065,
+              "normalized_delta_95": 0.07675204798481884,
+              "normalized_delta_max": 0.17739076645847981,
+              "seed": 123,
+              "elapsed_sec": 6.012531995773315
+            },
+            {
+              "delta_max": 0.17037999629974365,
+              "delta_95": 0.07441086322069168,
+              "delta_median": 0.02456068992614746,
+              "delta_mean": 0.029572758823633194,
+              "delta_std": 0.02304146997630596,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.8808630108833313,
+              "normalized_delta_95": 0.08447495501720785,
+              "normalized_delta_max": 0.1934239424231087,
+              "seed": 456,
+              "elapsed_sec": 6.437727212905884
+            }
+          ],
+          "delta_95_mean": 0.07452713698148727,
+          "delta_95_std": 0.0001611439560887564,
+          "delta_max_mean": 0.18010071913401285,
+          "delta_max_std": 0.012625460913359159,
+          "diameter_mean": 0.9107113480567932,
+          "diameter_std": 0.04161206237082195,
+          "normalized_delta_95_mean": 0.08200360147106987,
+          "normalized_delta_95_std": 0.003715549043141482
+        }
+      }
+    },
+    {
+      "layer": 2,
+      "label": "L2_pre_quant_input (z - q_0..q_1)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.10007350891828537,
+      "residual_norm_std": 0.024082474410533905,
+      "shape": [
+        9922,
+        32
+      ],
+      "metrics": {
+        "euclidean": {
+          "per_seed": [
+            {
+              "delta_max": 0.04801219701766968,
+              "delta_95": 0.021368326619267464,
+              "delta_median": 0.0071475207805633545,
+              "delta_mean": 0.00858340784907341,
+              "delta_std": 0.0066203526221215725,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.29598522186279297,
+              "normalized_delta_95": 0.07219389699521206,
+              "normalized_delta_max": 0.16221146689521623,
+              "seed": 42,
+              "elapsed_sec": 1.232017993927002
+            },
+            {
+              "delta_max": 0.04798057675361633,
+              "delta_95": 0.021458061411976814,
+              "delta_median": 0.007153302431106567,
+              "delta_mean": 0.008592789061367512,
+              "delta_std": 0.006642804481089115,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.2793242335319519,
+              "normalized_delta_95": 0.07682133820129941,
+              "normalized_delta_max": 0.1717737703847591,
+              "seed": 123,
+              "elapsed_sec": 1.3698890209197998
+            },
+            {
+              "delta_max": 0.0479293018579483,
+              "delta_95": 0.02139028161764145,
+              "delta_median": 0.007161363959312439,
+              "delta_mean": 0.008566942997276783,
+              "delta_std": 0.006615739781409502,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.28398093581199646,
+              "normalized_delta_95": 0.07532294925530646,
+              "normalized_delta_max": 0.16877647691702402,
+              "seed": 456,
+              "elapsed_sec": 1.4017393589019775
+            }
+          ],
+          "delta_95_mean": 0.021405556549628574,
+          "delta_95_std": 3.8193157467937796e-05,
+          "delta_max_mean": 0.047974025209744774,
+          "delta_max_std": 3.41574191221936e-05,
+          "diameter_mean": 0.28643013040224713,
+          "diameter_std": 0.007018834121884266,
+          "normalized_delta_95_mean": 0.07477939481727264,
+          "normalized_delta_95_std": 0.0019278470892472224
+        },
+        "poincare": {
+          "per_seed": [
+            {
+              "delta_max": 0.10894086956977844,
+              "delta_95": 0.04614419490098953,
+              "delta_median": 0.015286237001419067,
+              "delta_mean": 0.01844193786382675,
+              "delta_std": 0.014335633255541325,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.6214439272880554,
+              "normalized_delta_95": 0.07425319143813999,
+              "normalized_delta_max": 0.17530281460016828,
+              "seed": 42,
+              "elapsed_sec": 5.924112796783447
+            },
+            {
+              "delta_max": 0.10957777500152588,
+              "delta_95": 0.046343158930540085,
+              "delta_median": 0.015298783779144287,
+              "delta_mean": 0.018469687551259995,
+              "delta_std": 0.014399729669094086,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.5924525856971741,
+              "normalized_delta_95": 0.07822256168568383,
+              "normalized_delta_max": 0.18495619336791183,
+              "seed": 123,
+              "elapsed_sec": 6.732745409011841
+            },
+            {
+              "delta_max": 0.1111028790473938,
+              "delta_95": 0.04625006765127182,
+              "delta_median": 0.015321552753448486,
+              "delta_mean": 0.01841326430439949,
+              "delta_std": 0.014334279112517834,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.5963672399520874,
+              "normalized_delta_95": 0.0775529984762201,
+              "normalized_delta_max": 0.18629943364481236,
+              "seed": 456,
+              "elapsed_sec": 4.979277610778809
+            }
+          ],
+          "delta_95_mean": 0.046245807160933815,
+          "delta_95_std": 8.128257335652565e-05,
+          "delta_max_mean": 0.10987384120623271,
+          "delta_max_std": 0.0009071246307249391,
+          "diameter_mean": 0.6034212509791056,
+          "diameter_std": 0.012843773471654472,
+          "normalized_delta_95_mean": 0.07667625053334798,
+          "normalized_delta_95_std": 0.0017350293478823214
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "label": "L3_final_residual (z - q_0 - q_1 - q_2)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.07478631287813187,
+      "residual_norm_std": 0.016994496807456017,
+      "shape": [
+        9922,
+        32
+      ],
+      "metrics": {
+        "euclidean": {
+          "per_seed": [
+            {
+              "delta_max": 0.03346957266330719,
+              "delta_95": 0.015072890557348728,
+              "delta_median": 0.004951708018779755,
+              "delta_mean": 0.005985195282846689,
+              "delta_std": 0.004651612136512995,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.1985301524400711,
+              "normalized_delta_95": 0.07592242474048709,
+              "normalized_delta_max": 0.16858684815350863,
+              "seed": 42,
+              "elapsed_sec": 0.5383241176605225
+            },
+            {
+              "delta_max": 0.03270653635263443,
+              "delta_95": 0.01502238865941763,
+              "delta_median": 0.004986822605133057,
+              "delta_mean": 0.006011937279254198,
+              "delta_std": 0.0046456302516162395,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.21610233187675476,
+              "normalized_delta_95": 0.06951516223334897,
+              "normalized_delta_max": 0.15134744761239913,
+              "seed": 123,
+              "elapsed_sec": 0.5122532844543457
+            },
+            {
+              "delta_max": 0.03236311674118042,
+              "delta_95": 0.014988331124186516,
+              "delta_median": 0.004958972334861755,
+              "delta_mean": 0.005984243005514145,
+              "delta_std": 0.004645193926990032,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.2285279929637909,
+              "normalized_delta_95": 0.0655864121055898,
+              "normalized_delta_max": 0.14161554705601512,
+              "seed": 456,
+              "elapsed_sec": 0.5291621685028076
+            }
+          ],
+          "delta_95_mean": 0.015027870113650957,
+          "delta_95_std": 3.473815567511437e-05,
+          "delta_max_mean": 0.032846408585707344,
+          "delta_max_std": 0.00046240988894482893,
+          "diameter_mean": 0.2143868257602056,
+          "diameter_std": 0.012306497740315059,
+          "normalized_delta_95_mean": 0.07034133302647529,
+          "normalized_delta_95_std": 0.0042599067229029276
+        },
+        "poincare": {
+          "per_seed": [
+            {
+              "delta_max": 0.07103663682937622,
+              "delta_95": 0.03143236041069031,
+              "delta_median": 0.010285615921020508,
+              "delta_mean": 0.012439013458788395,
+              "delta_std": 0.009711027145385742,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.4049184322357178,
+              "normalized_delta_95": 0.07762640054970969,
+              "normalized_delta_max": 0.175434436108908,
+              "seed": 42,
+              "elapsed_sec": 2.7009167671203613
+            },
+            {
+              "delta_max": 0.06958991289138794,
+              "delta_95": 0.03129268437623978,
+              "delta_median": 0.010342612862586975,
+              "delta_mean": 0.012498758733272552,
+              "delta_std": 0.009698832407593727,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.44170936942100525,
+              "normalized_delta_95": 0.07084451121618357,
+              "normalized_delta_max": 0.15754683443234796,
+              "seed": 123,
+              "elapsed_sec": 2.678640604019165
+            },
+            {
+              "delta_max": 0.06842681765556335,
+              "delta_95": 0.031234167516231537,
+              "delta_median": 0.010278880596160889,
+              "delta_mean": 0.01244126632809639,
+              "delta_std": 0.009695149026811123,
+              "num_samples": 50000,
+              "point_cloud_size": 9922,
+              "point_cloud_dim": 32,
+              "diameter_approx": 0.4675658941268921,
+              "normalized_delta_95": 0.06680163781953467,
+              "normalized_delta_max": 0.14634689680123053,
+              "seed": 456,
+              "elapsed_sec": 2.6874806880950928
+            }
+          ],
+          "delta_95_mean": 0.03131973743438721,
+          "delta_95_std": 8.314247538545927e-05,
+          "delta_max_mean": 0.06968445579210918,
+          "delta_max_std": 0.0010675494680366202,
+          "diameter_mean": 0.438064565261205,
+          "diameter_std": 0.025705246784447296,
+          "normalized_delta_95_mean": 0.07175751652847599,
+          "normalized_delta_95_std": 0.004466098675305786
+        }
+      }
+    }
+  ],
+  "interpretation": "\u03b4_95/diameter < 0.1 \u2192 tree-like (hyperbolic). Euclidean and Poincar\u00e9 metrics are computed separately; compare both to assess whether log-map coords under-represent hyperbolic structure."
+}

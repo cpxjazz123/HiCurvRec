@@ -1,0 +1,115 @@
+{
+  "task": "task79_phonism_rqvae_delta_hyperbolicity",
+  "timestamp": "2026-07-23 16:55:23",
+  "comparison": {
+    "task92_vanilla": {
+      "e_dim": 128,
+      "sk_epsilons": [
+        0,
+        0,
+        0
+      ],
+      "embedding": "Musical_Instruments SASRec 128d",
+      "delta_max_per_layer": [
+        5.39,
+        4.93,
+        3.7,
+        2.74
+      ]
+    },
+    "task79_phonism": {
+      "e_dim": 32,
+      "sk_epsilons": [
+        0,
+        0,
+        0.003
+      ],
+      "embedding": "Musical_Instruments sentence-t5 768d"
+    }
+  },
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task78_phonism_rqvae_768d/rqvae_ckpt/Jul-23-2026_16-23-23/best_loss_model.pth",
+  "embedding_file": "/home/wlia0047/ar57/wenyu/GeneRec/external/LLM-RecSys-ID/data/instruments/sentence-t5-768d.npy",
+  "num_samples": 50000,
+  "num_layers": 3,
+  "num_emb_list": [
+    256,
+    256,
+    256
+  ],
+  "e_dim": 32,
+  "seed": 42,
+  "layers": [
+    {
+      "delta_max": 0.06701919436454773,
+      "delta_95": 0.026143915951251984,
+      "delta_median": 0.008534759283065796,
+      "delta_mean": 0.010335740633308887,
+      "num_samples": 50000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 32,
+      "diameter_approx": 0.6227778792381287,
+      "layer": 0,
+      "label": "raw_encoded",
+      "elapsed_sec": 0.453387975692749,
+      "residual_norm_mean": 0.13897822797298431,
+      "residual_norm_std": 0.042203545570373535,
+      "codebook_size": null,
+      "codebook_unique": 0,
+      "codebook_utilization": null
+    },
+    {
+      "delta_max": 0.030758216977119446,
+      "delta_95": 0.010587680153548717,
+      "delta_median": 0.003492586314678192,
+      "delta_mean": 0.004225192591547966,
+      "num_samples": 50000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 32,
+      "diameter_approx": 0.274586945772171,
+      "layer": 1,
+      "label": "residual_after_layer_0",
+      "elapsed_sec": 0.4219629764556885,
+      "residual_norm_mean": 0.045050766319036484,
+      "residual_norm_std": 0.021505465731024742,
+      "codebook_size": 256,
+      "codebook_unique": 216,
+      "codebook_utilization": 0.84375
+    },
+    {
+      "delta_max": 0.017390266060829163,
+      "delta_95": 0.007680128328502178,
+      "delta_median": 0.0025469139218330383,
+      "delta_mean": 0.0030756769701838493,
+      "num_samples": 50000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 32,
+      "diameter_approx": 0.16751064360141754,
+      "layer": 2,
+      "label": "residual_after_layer_1",
+      "elapsed_sec": 0.42037439346313477,
+      "residual_norm_mean": 0.03365742787718773,
+      "residual_norm_std": 0.013612414710223675,
+      "codebook_size": 256,
+      "codebook_unique": 234,
+      "codebook_utilization": 0.9140625
+    },
+    {
+      "delta_max": 0.013413496315479279,
+      "delta_95": 0.005294862203299999,
+      "delta_median": 0.0017357245087623596,
+      "delta_mean": 0.002103129168972373,
+      "num_samples": 50000,
+      "point_cloud_size": 24588,
+      "point_cloud_dim": 32,
+      "diameter_approx": 0.14576691389083862,
+      "layer": 3,
+      "label": "residual_after_layer_2",
+      "elapsed_sec": 0.42254638671875,
+      "residual_norm_mean": 0.024647291749715805,
+      "residual_norm_std": 0.010953717865049839,
+      "codebook_size": 256,
+      "codebook_unique": 256,
+      "codebook_utilization": 1.0
+    }
+  ]
+}

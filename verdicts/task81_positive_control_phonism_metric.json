@@ -1,0 +1,97 @@
+{
+  "task": "task81_positive_control_phonism_metric",
+  "timestamp": "2026-07-23 18:47:41",
+  "method": "Stage 1c Riemannian GD MDS + Kruskal stress-1 (re-used)",
+  "method_references": [
+    "Sarkar 2011",
+    "Nickel & Kiela 2017",
+    "Gu 2019"
+  ],
+  "kappa_candidates": [
+    -2.0,
+    -1.5,
+    -1.0,
+    -0.7,
+    -0.5,
+    -0.3,
+    0.0
+  ],
+  "trees": [
+    {
+      "tree_label": "Tree-A",
+      "num_points": 21,
+      "kappa_generated": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 0.010069812647998333,
+        "-1.5": 0.006641438230872154,
+        "-1.0": 0.003996171057224274,
+        "-0.7": 0.0023842183873057365,
+        "-0.5": 0.0015437621623277664,
+        "-0.3": 0.0009075669222511351,
+        "0.0": 1.5683455785620026e-05
+      },
+      "best_kappa": 0.0,
+      "best_stress": 1.5683455785620026e-05,
+      "all_finite": true,
+      "config": {
+        "n_levels": 3,
+        "branching": 4,
+        "kappa": -1.0,
+        "noise_sigma": 0.02
+      }
+    },
+    {
+      "tree_label": "Tree-B",
+      "num_points": 40,
+      "kappa_generated": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 1.2583996057510376,
+        "-1.5": 0.6443735957145691,
+        "-1.0": 0.3724822700023651,
+        "-0.7": 0.28702107071876526,
+        "-0.5": 0.24720358848571777,
+        "-0.3": 0.21691690385341644,
+        "0.0": 0.055710114538669586
+      },
+      "best_kappa": 0.0,
+      "best_stress": 0.055710114538669586,
+      "all_finite": true,
+      "config": {
+        "n_levels": 4,
+        "branching": 3,
+        "kappa": -1.0,
+        "noise_sigma": 0.02
+      }
+    },
+    {
+      "tree_label": "Tree-C",
+      "num_points": 31,
+      "kappa_generated": -1.0,
+      "stress_per_kappa": {
+        "-2.0": 0.8284225463867188,
+        "-1.5": 0.26327812671661377,
+        "-1.0": 0.09997231513261795,
+        "-0.7": 0.06303779035806656,
+        "-0.5": 0.04858978092670441,
+        "-0.3": 0.037786390632390976,
+        "0.0": 0.0031067593954503536
+      },
+      "best_kappa": 0.0,
+      "best_stress": 0.0031067593954503536,
+      "all_finite": true,
+      "config": {
+        "n_levels": 3,
+        "branching": 5,
+        "kappa": -1.0,
+        "noise_sigma": 0.02
+      }
+    }
+  ],
+  "verdict": "C (\u6d41\u7a0b\u6709 bug)",
+  "decision_note": "3/3 \u5408\u6210\u6811 best \u03ba = 0. Stage 1c metric **\u6709 bug**. task80 verdict \u00a79 (phonism \u03ba=0 \u6700\u4f18) \u5931\u6548, \u9700\u5148\u4fee\u6d41\u7a0b, \u4e0d\u80fd\u636e\u6b64\u4e0b\u7ed3\u8bba.",
+  "summary": {
+    "n_negative_recognized": 0,
+    "n_zero_recognized": 3,
+    "n_total": 3
+  }
+}

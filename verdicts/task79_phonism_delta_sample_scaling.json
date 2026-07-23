@@ -1,0 +1,161 @@
+{
+  "task": "task79_phonism_delta_sample_scaling",
+  "timestamp": "2026-07-23 16:55:24",
+  "user_feedback": "5000 4-tuples may have statistical noise; rerun with 20000 / 50000 to test stability",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task78_phonism_rqvae_768d/rqvae_ckpt/Jul-23-2026_16-23-23/best_loss_model.pth",
+  "emb": "/home/wlia0047/ar57/wenyu/GeneRec/external/LLM-RecSys-ID/data/instruments/sentence-t5-768d.npy",
+  "device": "cuda:0",
+  "seed": 42,
+  "runs": [
+    {
+      "num_samples": 5000,
+      "seed": 42,
+      "layers": [
+        {
+          "layer": 0,
+          "label": "raw_encoded",
+          "delta_max": 0.05358511209487915,
+          "delta_95": 0.026301616802811623,
+          "delta_median": 0.008574292063713074,
+          "diameter_approx": 0.6227778792381287,
+          "delta_over_diameter": 0.08604209282518537,
+          "residual_norm_mean": 0.13897822797298431,
+          "codebook_utilization": null
+        },
+        {
+          "layer": 1,
+          "label": "residual_after_layer_0",
+          "delta_max": 0.02425709366798401,
+          "delta_95": 0.010432062670588493,
+          "delta_median": 0.003409646451473236,
+          "diameter_approx": 0.274586945772171,
+          "delta_over_diameter": 0.0883403018296088,
+          "residual_norm_mean": 0.045050766319036484,
+          "codebook_utilization": 0.84375
+        },
+        {
+          "layer": 2,
+          "label": "residual_after_layer_1",
+          "delta_max": 0.017390266060829163,
+          "delta_95": 0.00766654871404171,
+          "delta_median": 0.002464503049850464,
+          "diameter_approx": 0.16751064360141754,
+          "delta_over_diameter": 0.10381588708003746,
+          "residual_norm_mean": 0.03365742787718773,
+          "codebook_utilization": 0.9140625
+        },
+        {
+          "layer": 3,
+          "label": "residual_after_layer_2",
+          "delta_max": 0.011434555053710938,
+          "delta_95": 0.005331472959369421,
+          "delta_median": 0.0017915815114974976,
+          "diameter_approx": 0.14576691389083862,
+          "delta_over_diameter": 0.0784441046908217,
+          "residual_norm_mean": 0.024647291749715805,
+          "codebook_utilization": 1.0
+        }
+      ]
+    },
+    {
+      "num_samples": 20000,
+      "seed": 42,
+      "layers": [
+        {
+          "layer": 0,
+          "label": "raw_encoded",
+          "delta_max": 0.05873984098434448,
+          "delta_95": 0.026212254539132118,
+          "delta_median": 0.008527442812919617,
+          "diameter_approx": 0.6227778792381287,
+          "delta_over_diameter": 0.09431908701735439,
+          "residual_norm_mean": 0.13897822797298431,
+          "codebook_utilization": null
+        },
+        {
+          "layer": 1,
+          "label": "residual_after_layer_0",
+          "delta_max": 0.030067071318626404,
+          "delta_95": 0.010565207339823246,
+          "delta_median": 0.0034850314259529114,
+          "diameter_approx": 0.274586945772171,
+          "delta_over_diameter": 0.10949927438857021,
+          "residual_norm_mean": 0.045050766319036484,
+          "codebook_utilization": 0.84375
+        },
+        {
+          "layer": 2,
+          "label": "residual_after_layer_1",
+          "delta_max": 0.017390266060829163,
+          "delta_95": 0.007710626348853111,
+          "delta_median": 0.0025374069809913635,
+          "diameter_approx": 0.16751064360141754,
+          "delta_over_diameter": 0.10381588708003746,
+          "residual_norm_mean": 0.03365742787718773,
+          "codebook_utilization": 0.9140625
+        },
+        {
+          "layer": 3,
+          "label": "residual_after_layer_2",
+          "delta_max": 0.013413496315479279,
+          "delta_95": 0.005292633548378944,
+          "delta_median": 0.0017297044396400452,
+          "diameter_approx": 0.14576691389083862,
+          "delta_over_diameter": 0.09202017081547276,
+          "residual_norm_mean": 0.024647291749715805,
+          "codebook_utilization": 1.0
+        }
+      ]
+    },
+    {
+      "num_samples": 50000,
+      "seed": 42,
+      "layers": [
+        {
+          "layer": 0,
+          "label": "raw_encoded",
+          "delta_max": 0.06701919436454773,
+          "delta_95": 0.026143915951251984,
+          "delta_median": 0.008534759283065796,
+          "diameter_approx": 0.6227778792381287,
+          "delta_over_diameter": 0.10761331864666618,
+          "residual_norm_mean": 0.13897822797298431,
+          "codebook_utilization": null
+        },
+        {
+          "layer": 1,
+          "label": "residual_after_layer_0",
+          "delta_max": 0.030758216977119446,
+          "delta_95": 0.010587680153548717,
+          "delta_median": 0.003492586314678192,
+          "diameter_approx": 0.274586945772171,
+          "delta_over_diameter": 0.11201631195767044,
+          "residual_norm_mean": 0.045050766319036484,
+          "codebook_utilization": 0.84375
+        },
+        {
+          "layer": 2,
+          "label": "residual_after_layer_1",
+          "delta_max": 0.017390266060829163,
+          "delta_95": 0.007680128328502178,
+          "delta_median": 0.0025469139218330383,
+          "diameter_approx": 0.16751064360141754,
+          "delta_over_diameter": 0.10381588708003746,
+          "residual_norm_mean": 0.03365742787718773,
+          "codebook_utilization": 0.9140625
+        },
+        {
+          "layer": 3,
+          "label": "residual_after_layer_2",
+          "delta_max": 0.013413496315479279,
+          "delta_95": 0.005294862203299999,
+          "delta_median": 0.0017357245087623596,
+          "diameter_approx": 0.14576691389083862,
+          "delta_over_diameter": 0.09202017081547276,
+          "residual_norm_mean": 0.024647291749715805,
+          "codebook_utilization": 1.0
+        }
+      ]
+    }
+  ]
+}

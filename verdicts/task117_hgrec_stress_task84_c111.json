@@ -1,0 +1,377 @@
+{
+  "task": "task117_hgrec_stress_grid",
+  "timestamp": "2026-07-24 00:53:31",
+  "label": "task84_c111",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt/Instruments/Jul-23-2026_20-08-06_beta_1.000_codebook_[64,128,256]_sk_0.000/best_loss_model.pth",
+  "embedding_file": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/item_emb.parquet",
+  "positive_control": null,
+  "num_layers": 3,
+  "num_emb_list": [
+    64,
+    128,
+    256
+  ],
+  "e_dim": 32,
+  "per_layer_curvatures": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "kappa_grid": [
+    0.0,
+    -0.05,
+    -0.1,
+    -0.15,
+    -0.2,
+    -0.25,
+    -0.3,
+    -0.5,
+    -1.0,
+    -1.5,
+    -2.0
+  ],
+  "n_subset": 300,
+  "n_iter": 200,
+  "lr": 0.005,
+  "d_mds": 32,
+  "seed": 42,
+  "layers": [
+    {
+      "layer": 0,
+      "label": "L0_raw_encoded_z",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.31077486276626587,
+      "shape": [
+        9922,
+        32
+      ],
+      "kappa_grid": [
+        0.0,
+        -0.05,
+        -0.1,
+        -0.15,
+        -0.2,
+        -0.25,
+        -0.3,
+        -0.5,
+        -1.0,
+        -1.5,
+        -2.0
+      ],
+      "kappa_results": [
+        {
+          "kappa": 0.0,
+          "stress": 4.804015159606934,
+          "elapsed_sec": 1.3088388442993164
+        },
+        {
+          "kappa": -0.05,
+          "stress": 28.0482120513916,
+          "elapsed_sec": 1.6384122371673584
+        },
+        {
+          "kappa": -0.1,
+          "stress": 30.233993530273438,
+          "elapsed_sec": 0.5647215843200684
+        },
+        {
+          "kappa": -0.15,
+          "stress": 32.59470748901367,
+          "elapsed_sec": 1.7952399253845215
+        },
+        {
+          "kappa": -0.2,
+          "stress": 35.152618408203125,
+          "elapsed_sec": 2.297569513320923
+        },
+        {
+          "kappa": -0.25,
+          "stress": 37.93524932861328,
+          "elapsed_sec": 2.293015718460083
+        },
+        {
+          "kappa": -0.3,
+          "stress": 40.977325439453125,
+          "elapsed_sec": 2.253805160522461
+        },
+        {
+          "kappa": -0.5,
+          "stress": 56.93043899536133,
+          "elapsed_sec": 2.288111448287964
+        },
+        {
+          "kappa": -1.0,
+          "stress": 521.6609497070312,
+          "elapsed_sec": 0.017737627029418945
+        },
+        {
+          "kappa": -1.5,
+          "stress": 1581.096923828125,
+          "elapsed_sec": 0.0293424129486084
+        },
+        {
+          "kappa": -2.0,
+          "stress": 1615.534423828125,
+          "elapsed_sec": 0.024281740188598633
+        }
+      ],
+      "best_kappa": 0.0,
+      "best_stress": 4.804015159606934,
+      "zero_stress": 4.804015159606934,
+      "margin_vs_zero": 1.0
+    },
+    {
+      "layer": 1,
+      "label": "L1_pre_quant_input (z - q_0..q_0)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.1405458152294159,
+      "shape": [
+        9922,
+        32
+      ],
+      "kappa_grid": [
+        0.0,
+        -0.05,
+        -0.1,
+        -0.15,
+        -0.2,
+        -0.25,
+        -0.3,
+        -0.5,
+        -1.0,
+        -1.5,
+        -2.0
+      ],
+      "kappa_results": [
+        {
+          "kappa": 0.0,
+          "stress": 7.198923587799072,
+          "elapsed_sec": 1.6208546161651611
+        },
+        {
+          "kappa": -0.05,
+          "stress": 38.77629852294922,
+          "elapsed_sec": 2.2462165355682373
+        },
+        {
+          "kappa": -0.1,
+          "stress": 40.06375503540039,
+          "elapsed_sec": 2.2408323287963867
+        },
+        {
+          "kappa": -0.15,
+          "stress": 41.39088821411133,
+          "elapsed_sec": 2.252333402633667
+        },
+        {
+          "kappa": -0.2,
+          "stress": 42.75934982299805,
+          "elapsed_sec": 2.2260429859161377
+        },
+        {
+          "kappa": -0.25,
+          "stress": 44.17094802856445,
+          "elapsed_sec": 2.2368736267089844
+        },
+        {
+          "kappa": -0.3,
+          "stress": 45.62763977050781,
+          "elapsed_sec": 2.2090039253234863
+        },
+        {
+          "kappa": -0.5,
+          "stress": 51.95082092285156,
+          "elapsed_sec": 1.6236350536346436
+        },
+        {
+          "kappa": -1.0,
+          "stress": 72.43028259277344,
+          "elapsed_sec": 0.8597233295440674
+        },
+        {
+          "kappa": -1.5,
+          "stress": 106.46631622314453,
+          "elapsed_sec": 1.5891847610473633
+        },
+        {
+          "kappa": -2.0,
+          "stress": 297.95379638671875,
+          "elapsed_sec": 0.009612083435058594
+        }
+      ],
+      "best_kappa": 0.0,
+      "best_stress": 7.198923587799072,
+      "zero_stress": 7.198923587799072,
+      "margin_vs_zero": 1.0
+    },
+    {
+      "layer": 2,
+      "label": "L2_pre_quant_input (z - q_0..q_1)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.10007350891828537,
+      "shape": [
+        9922,
+        32
+      ],
+      "kappa_grid": [
+        0.0,
+        -0.05,
+        -0.1,
+        -0.15,
+        -0.2,
+        -0.25,
+        -0.3,
+        -0.5,
+        -1.0,
+        -1.5,
+        -2.0
+      ],
+      "kappa_results": [
+        {
+          "kappa": 0.0,
+          "stress": 16.61086654663086,
+          "elapsed_sec": 1.1153464317321777
+        },
+        {
+          "kappa": -0.05,
+          "stress": 82.82073211669922,
+          "elapsed_sec": 1.5796701908111572
+        },
+        {
+          "kappa": -0.1,
+          "stress": 85.4378890991211,
+          "elapsed_sec": 1.594752550125122
+        },
+        {
+          "kappa": -0.15,
+          "stress": 88.1333236694336,
+          "elapsed_sec": 1.5901854038238525
+        },
+        {
+          "kappa": -0.2,
+          "stress": 90.91031646728516,
+          "elapsed_sec": 1.614208459854126
+        },
+        {
+          "kappa": -0.25,
+          "stress": 93.77239990234375,
+          "elapsed_sec": 1.5853772163391113
+        },
+        {
+          "kappa": -0.3,
+          "stress": 96.72343444824219,
+          "elapsed_sec": 1.6199381351470947
+        },
+        {
+          "kappa": -0.5,
+          "stress": 109.50638580322266,
+          "elapsed_sec": 1.6182575225830078
+        },
+        {
+          "kappa": -1.0,
+          "stress": 150.66737365722656,
+          "elapsed_sec": 1.6182329654693604
+        },
+        {
+          "kappa": -1.5,
+          "stress": 218.35935974121094,
+          "elapsed_sec": 1.595569372177124
+        },
+        {
+          "kappa": -2.0,
+          "stress": 619.146484375,
+          "elapsed_sec": 0.03385758399963379
+        }
+      ],
+      "best_kappa": 0.0,
+      "best_stress": 16.61086654663086,
+      "zero_stress": 16.61086654663086,
+      "margin_vs_zero": 1.0
+    },
+    {
+      "layer": 3,
+      "label": "L3_final_residual (z - q_0 - q_1 - q_2)",
+      "per_layer_curvature": 1.0,
+      "residual_norm_mean": 0.07478631287813187,
+      "shape": [
+        9922,
+        32
+      ],
+      "kappa_grid": [
+        0.0,
+        -0.05,
+        -0.1,
+        -0.15,
+        -0.2,
+        -0.25,
+        -0.3,
+        -0.5,
+        -1.0,
+        -1.5,
+        -2.0
+      ],
+      "kappa_results": [
+        {
+          "kappa": 0.0,
+          "stress": 33.34334182739258,
+          "elapsed_sec": 0.578909158706665
+        },
+        {
+          "kappa": -0.05,
+          "stress": 158.64405822753906,
+          "elapsed_sec": 0.8683578968048096
+        },
+        {
+          "kappa": -0.1,
+          "stress": 163.4922332763672,
+          "elapsed_sec": 2.1967804431915283
+        },
+        {
+          "kappa": -0.15,
+          "stress": 168.48228454589844,
+          "elapsed_sec": 2.1987829208374023
+        },
+        {
+          "kappa": -0.2,
+          "stress": 173.62013244628906,
+          "elapsed_sec": 2.2295684814453125
+        },
+        {
+          "kappa": -0.25,
+          "stress": 178.91209411621094,
+          "elapsed_sec": 2.2214579582214355
+        },
+        {
+          "kappa": -0.3,
+          "stress": 184.36505126953125,
+          "elapsed_sec": 2.253291130065918
+        },
+        {
+          "kappa": -0.5,
+          "stress": 207.9472198486328,
+          "elapsed_sec": 2.243466854095459
+        },
+        {
+          "kappa": -1.0,
+          "stress": 283.4883117675781,
+          "elapsed_sec": 2.3031609058380127
+        },
+        {
+          "kappa": -1.5,
+          "stress": 406.01263427734375,
+          "elapsed_sec": 2.32578182220459
+        },
+        {
+          "kappa": -2.0,
+          "stress": 1130.1357421875,
+          "elapsed_sec": 0.020784616470336914
+        }
+      ],
+      "best_kappa": 0.0,
+      "best_stress": 33.34334182739258,
+      "zero_stress": 33.34334182739258,
+      "margin_vs_zero": 1.0
+    }
+  ],
+  "interpretation": "best \u03ba* < 0 \u2192 residual space is better fit by hyperbolic geometry. margin_vs_zero = stress(\u03ba=0)/stress(best \u03ba*) > 2 \u2192 significant hyperbolic preference. Per-layer curvature: c_i from ckpt; if [0.5,0.5,0.5] then per-layer c is smaller (more hyperbolic)."
+}

@@ -1,0 +1,31 @@
+{
+  "task": "Task #89 Stage 4 eval [arm A: FreeCurvHRQVAE M=1, \u03ba_m=0]",
+  "curvature_tag": "curv_free_M1",
+  "curvatures": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "free_curvature": true,
+  "M": 1,
+  "kappa_max": 2.0,
+  "kappa_learned": [
+    [
+      0.0
+    ],
+    [
+      0.0
+    ],
+    [
+      0.0
+    ]
+  ],
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task89/ckpt_hgrec_curv_free_M1/Instruments/Jul-24-2026_02-11-11/HG_Rec_best.pth",
+  "code_path_suffix": "_curv_free_M1_t5_hrqvae_poincare.npy",
+  "test_result": {
+    "Recall@5": 0.0829,
+    "Recall@10": 0.1015,
+    "NDCG@5": 0.0702,
+    "NDCG@10": 0.0762
+  }
+}
