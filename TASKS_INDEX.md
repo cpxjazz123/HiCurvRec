@@ -72,7 +72,7 @@
 | #128 | Housekeeping Cycle Closure (R8 §16 Cleanup + Drift Pattern Resolution) | ✅ | `verdicts/task128_housekeeping_cycle_closure_result.md` |
 | #129 | Auto-Gen TASKS_INDEX (Break Drift Cycle) | ✅ | `verdicts/task129_auto_gen_tasks_index_result.md` |
 | #130 | Final State Closure (TASKS_INDEX Counts Refresh + Closure Report) | ✅ | `verdicts/task130_final_state_closure_result.md` |
-| #131 | phonism 4 seed 量化前 kNN vs Recall 相关性分析 verdict | ✅ | `verdicts/task131_pre_quant_knn_vs_recall_result.md` |
+| #131 | Empty Orphan Dir Cleanup + Explicit Gitignore Hygiene | ✅ | `verdicts/task131_orphan_dir_cleanup_result.md` |
 | #132 | 验证 Task #131 pre-quant R@5=0.00107 是否合理 | ✅ | `verdicts/task132_verify_pre_quant_baselines_result.md` |
 | #134 | CLAUDE.md R9-Enforce + audit 脚本 verdict | ✅ | `verdicts/task134_r9_enforce_audit_result.md` |
 
