@@ -2,7 +2,7 @@
 """
 Task #110 — Single Audit Dispatcher
 
-Runs all 7 paper defense audit scripts in sequence and returns a single
+Runs all 8 paper defense audit scripts in sequence and returns a single
 exit code (0 = all pass, 1 = any fail). Provides reviewer-friendly
 single-entry point for "verify all paper defenses".
 
@@ -19,6 +19,7 @@ Equivalent to running each in sequence:
     python3 scripts/task114_verdict_integrity.py
     python3 scripts/task127_script_syntax_audit.py
     python3 scripts/task128_sync_task_docs.py --check
+    python3 scripts/task133_sync_changelog.py --check
 
 No network. No fallback (R2). Stdlib only.
 """
@@ -43,6 +44,7 @@ AUDITS: list[tuple[str, str]] = [
     ("task114", "python3 scripts/task114_verdict_integrity.py"),
     ("task127", "python3 scripts/task127_script_syntax_audit.py"),
     ("task129", "python3 scripts/task128_sync_task_docs.py --check"),
+    ("task133", "python3 scripts/task133_sync_changelog.py --check"),
 ]
 
 
