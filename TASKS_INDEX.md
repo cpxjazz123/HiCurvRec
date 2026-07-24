@@ -57,14 +57,14 @@
 | #113 | README.md Stale Number Refresh (Verdict) | ✅ | `verdicts/task113_readme_stale_numbers_result.md` |
 | #114 | Verdict Integrity Audit (5th Audit for Dispatcher) (Verdict) | ✅ | `verdicts/task114_verdict_integrity_result.md` |
 | #115 | Track Untracked Verdicts + Descriptions (Verdict) | ✅ | `verdicts/task115_track_untracked_result.md` |
-| #116 | HG-Rec per-layer δ_95/diameter (原版 vs 改造版) | ✅ | `verdicts/task116_hgrec_delta_per_layer_result.md` |
+| #116 | Track Untracked Scripts + Reference Papers (Verdict) | ✅ | `verdicts/task116_track_scripts_papers_result.md` |
 | #117 | Project-Specific .gitignore (Verdict) | ✅ | `verdicts/task117_gitignore_project_specific_result.md` |
-| #118 | HG-Rec codebook 利用率 / 碰撞率 (6 curvature 网格) | ✅ | `verdicts/task118_hgrec_codebook_utilization_result.md` |
-| #119 | 3 tokenizer 简化 kNN 分析 + 3 核心问题回答 | ✅ | `verdicts/task119_3tokenizer_kNN_result.md` |
+| #118 | REPRODUCE.md §0 Upstream Framework Clone (Verdict) | ✅ | `verdicts/task118_reproduce_setup_section_result.md` |
+| #119 | Orphan File Cleanup (Verdict) | ✅ | `verdicts/task119_orphan_file_cleanup_result.md` |
 | #120 | gitignore Paper Reference Framework Clones (Verdict) | ✅ | `verdicts/task120_gitignore_paper_clones_result.md` |
 | #121 | Post-Submission Housekeeping Synthesis (Verdict) | ✅ | `verdicts/task121_post_submission_housekeeping_synthesis_result.md` |
 | #122 | TASKS_INDEX.md Refresh (Verdict) | ✅ | `verdicts/task122_tasks_index_refresh_result.md` |
-| #123 | 跨空间 n=4 完整相关性分析 | ✅ | `verdicts/task123_cross_space_correlation_result.md` |
+| #123 | REPRODUCE.md Script Reference Alignment (Verdict) | ✅ | `verdicts/task123_reproduce_md_script_alignment_result.md` |
 | #124 | README.md + TASKS_INDEX.md Stale Number Refresh v2 (Verdict) | ✅ | `verdicts/task124_readme_stale_numbers_v2_result.md` |
 | #125 | Sync CI Workflow with 5-Audit Dispatcher (Verdict) | ✅ | `verdicts/task125_ci_workflow_dispatcher_sync_result.md` |
 | #126 | TASKS_INDEX + CHANGELOG Documentation Drift v2 (Verdict) | ✅ | `verdicts/task126_docs_drift_v2_result.md` |
@@ -75,7 +75,7 @@
 | #131 | Empty Orphan Dir Cleanup + Explicit Gitignore Hygiene | ✅ | `verdicts/task131_orphan_dir_cleanup_result.md` |
 | #132 | Save Infrastructure Pattern Learnings to Memory | ✅ | `verdicts/task132_memory_infrastructure_patterns_result.md` |
 | #133 | CHANGELOG.md Auto-Gen + 8th Dispatcher Audit | ✅ | `verdicts/task133_changelog_auto_gen_result.md` |
-| #134 | CLAUDE.md R9-Enforce + audit 脚本 verdict | ✅ | `verdicts/task134_r9_enforce_audit_result.md` |
+| #134 | README.md + TASKS_INDEX.md Counts Auto-Gen + 9th Dispatcher Audit | ✅ | `verdicts/task134_readme_tasks_index_counts_sync_result.md` |
 
 ## Paper-defense artifacts (10 件套, Task #101 - #110)
 

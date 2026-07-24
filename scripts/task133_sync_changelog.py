@@ -54,11 +54,42 @@ def discover_task_ids() -> list[int]:
 
 
 def _candidate_verdicts(task_id: int) -> list[Path]:
-    """Glob + sort verdict candidates: prefer *_result.md, then by name."""
+    """Glob + sort verdict candidates.
+
+    Sort priority:
+    1. Verdict filename shares slug with `descriptions/task<N>_<slug>*.md` (newest)
+    2. `*_result.md` suffix preferred (canonical verdict files)
+    3. Alphabetical by name (final tiebreaker)
+
+    Why description-slug match priority?
+    - For tasks with multiple verdicts (e.g. #116, #134), the verdict whose
+      filename matches the current description's slug is the canonical one.
+      Legacy orphan verdicts (e.g. verdicts/task134_r9_enforce_audit_result.md
+      from renumbering) lose to the live verdict (task134_readme_tasks_*
+      _sync_result.md) when slug match takes priority.
+    - Without this, lexically first orphan wins (e.g. "r9" < "re" sorts first),
+      causing CHANGELOG/TASKS_INDEX to display stale orphan text instead of
+      the current Task #N's subject.
+    """
     candidates = list(VERDICTS.glob(f"task{task_id}_*_result.md"))
     if not candidates:
         candidates = list(VERDICTS.glob(f"task{task_id}_*.md"))
-    candidates.sort(key=lambda p: (not p.name.endswith("_result.md"), p.name))
+
+    # Find description slug for this task (if any)
+    desc_files = list(DESCRIPTIONS.glob(f"task{task_id}_*.md"))
+    desc_slugs = {f.stem.replace(f"task{task_id}_", "") for f in desc_files}
+
+    def sort_key(p: Path) -> tuple:
+        stem = p.stem
+        # Strip "_result" suffix for slug comparison
+        if stem.endswith("_result"):
+            stem = stem[:-len("_result")]
+        slug = stem.replace(f"task{task_id}_", "")
+        slug_match = 0 if slug in desc_slugs else 1
+        result_pref = 0 if p.name.endswith("_result.md") else 1
+        return (slug_match, result_pref, p.name)
+
+    candidates.sort(key=sort_key)
     return candidates
 
 
