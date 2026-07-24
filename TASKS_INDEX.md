@@ -1,16 +1,16 @@
 # GRID Tasks Index
 
-> **Snapshot**: 2026-07-24 (post Task #130 final state closure)
+> **Snapshot**: 2026-07-24 (post Task #134 final state closure)
 > **Status**: ✅ v1.0.0 paper-submission baseline closed + 20 post-submission housekeeping rounds (Tasks #111-#130)
 
 ## Three artifact categories
 
-- **descriptions/**: task definitions (markdown). 134 files total — 132
-  numbered files covering 130 unique task IDs (Task #1 - Task #130
+- **descriptions/**: task definitions (markdown). 138 files total — 136
+  numbered files covering 134 unique task IDs (Task #1 - Task #134
   contiguous per R9; Task #27 and Task #67 have 2 revision files each)
   + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  261 files — verdicts for Task #1 - Task #129 + auxiliary verdicts +
+  266 files — verdicts for Task #1 - Task #134 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
