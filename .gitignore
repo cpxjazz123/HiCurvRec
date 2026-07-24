@@ -257,3 +257,12 @@ result/
 
 # === Large binary data (RecBole framework data, 573M) ===
 data/recbole/
+
+# === Orphan cleanup (Task #131) ===
+# Empty orphan dir from failed git clone attempt (https://github.com/zar123123)
+https:/
+# Singular 'log/' baseline experiment logs (HGN/SASRec, already *.log covered)
+log/
+# Per-curvature transient experiment logs (Task #88)
+logs_curv_*/
+
