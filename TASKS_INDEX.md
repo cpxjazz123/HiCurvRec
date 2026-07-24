@@ -1,20 +1,21 @@
 # GRID Tasks Index
 
-> **Snapshot**: 2026-07-24 (post Task #121 post-submission housekeeping synthesis)
-> **Status**: ✅ v1.0.0 paper-submission baseline closed + 11 post-submission housekeeping rounds (Tasks #111-#121)
+> **Snapshot**: 2026-07-24 (post Task #130 final state closure)
+> **Status**: ✅ v1.0.0 paper-submission baseline closed + 20 post-submission housekeeping rounds (Tasks #111-#130)
 
 ## Three artifact categories
 
-- **descriptions/**: task definitions (markdown). 127 files total — 125
-  numbered files covering 123 unique task IDs (Task #1 - Task #123
+- **descriptions/**: task definitions (markdown). 134 files total — 132
+  numbered files covering 130 unique task IDs (Task #1 - Task #130
   contiguous per R9; Task #27 and Task #67 have 2 revision files each)
   + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  255 files — verdicts for Task #1 - Task #123 + auxiliary verdicts +
+  261 files — verdicts for Task #1 - Task #129 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
-  phonism_v5_5defense_legacy_verdict.md).
+  phonism_v5_5defense_legacy_verdict.md, task127_*, task128_*,
+  task129_*).
 - **products/**: execution artifacts (ckpt/pt/json/log/paper). 46 task
   directories with physical run outputs (gitignored, regeneratable).
 
@@ -34,6 +35,8 @@
 | Task #122 - Task #123 | ✓ closed | TASKS_INDEX.md refresh + REPRODUCE.md script reference alignment |
 | Task #124 - Task #125 | ✓ closed | README + TASKS_INDEX stale number refresh v2 + CI workflow dispatcher sync |
 | Task #126 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v2 |
+| Task #127 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v3 + 6th audit (script syntax) |
+| Task #128 - Task #130 | ✓ closed | Housekeeping cycle closure + auto-gen TASKS_INDEX (break drift cycle) + final state closure report |
 
 ## Recent closed tasks (Task #101 - Task #134)
 
@@ -68,6 +71,7 @@
 | #127 | TASKS_INDEX+CHANGELOG drift v3 + 6th audit (script syntax) | ✅ | `verdicts/task127_6th_audit_script_syntax_result.md` |
 | #128 | Housekeeping Cycle Closure (R8 §16 Cleanup + Drift Pattern Resolution) | ✅ | `verdicts/task128_housekeeping_cycle_closure_result.md` |
 | #129 | Auto-Gen TASKS_INDEX (Break Drift Cycle) | ✅ | `verdicts/task129_auto_gen_tasks_index_result.md` |
+| #130 | Final State Closure (TASKS_INDEX Counts Refresh + Closure Report) | ✅ | `verdicts/task130_final_state_closure_result.md` |
 | #131 | phonism 4 seed 量化前 kNN vs Recall 相关性分析 verdict | ✅ | `verdicts/task131_pre_quant_knn_vs_recall_result.md` |
 | #132 | 验证 Task #131 pre-quant R@5=0.00107 是否合理 | ✅ | `verdicts/task132_verify_pre_quant_baselines_result.md` |
 | #134 | CLAUDE.md R9-Enforce + audit 脚本 verdict | ✅ | `verdicts/task134_r9_enforce_audit_result.md` |
