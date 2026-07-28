@@ -255,104 +255,74 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-**🟡 §16 当前活跃: 等用户最终决策 (Task #230/#231/#232 已完成 — 方向 H PCA 钉方向 + 方向 I c=10/100 + 方向 H+I 组合 也撞墙, 5-cond + collision trade-off 仍未突破; 跨 10 variants × 8-point w_angular sweep × κ-Stereographic × PCA 冻结 × c 放大 × H+I 组合穷尽). 决策方向: (a) 接受 v6 (5-cond PASS, collision 95.68%) 作为几何可解释性终点; (b) 攻命题前提 (方向 E κ-Stereographic / 方向 F per-codeword κ 67-76% OPEN / 方向 G Gromov 79.65% OPEN).**
+> **🟢 §16 当前状态 (2026-07-29)**: Issue #9 + Issue #10 都已 NO-GO 闭环. 4× L40S GPU 全空闲 (util 0%, mem 0 MiB). 等用户决策下一步方向 (R11.4 关键决策).
 
-> **🟢 Task #218 + #219 已完成 (verdicts 落盘 + memory 索引)**: 用户 2026-07-26 终极提议 (攻命题前提 b/d) Phase 0 判据检查两条都有层 OPEN (L0 用 Gromov 79.65% ✅, L1/L2 用 Per-Codeword κ 67-76% ✅). 已写完 4 份产物 (verdict + memory + paper §1.4-6.7.5 update). 0 卡消耗.
->
-> **🟠 Task #226 + #227 + 后续 v9/v10/v11/v12 收口 (2026-07-27)**: M-arm product_manifold 架构在 tuple collision ≤ 12% AND 5-cond PASS 二元 trade-off 上**架构级 NO-GO**:
->   - Task #226 v6 5 条件全 PASS (cos_std=0.74, util≥0.97, agreement<0.90 ✓), 但 collision 95.68%
->   - Task #227 v6/v7/v8/v9/v10 撞墙 95-99%
->   - v11 (8D hyp) 起跑 5.45% collision **PASS** 但 cos_std=0.12 (FAIL), ep 19 5cond 全 PASS 但 collision 已涨到 59.99% (FAIL)
->   - v12 (16D hyp) 起跑 8.35% collision **PASS** 但 cos_std=0.049 (FAIL), 从未达到 5cond 全 PASS
->   - **没有任何 epoch 同时满足两个目标** (HRQVAE 直加载 calibration 验证, sweep 数值 = trainer ±0.03%)
->
-> **GPU 状态**: 0-3 全部空闲 (4× L40S, 0-3% util, 0 MiB used, trainer 全部已 kill).
->
-> **候选下一步 (R11.4 关键决策, 等用户决定)**:
->   - **方向 D (R11.3 自主推荐)** ⭐: 回退 vanilla 32D Poincaré (Task #84 baseline 路线), 已知 collision 9.07% 50 epoch, 1 天复现 Stage 1-4 验证 R@10=0.1020
->   - **方向 E**: κ-Stereographic (Berman-Metzler 2020) 替换 Poincaré 距离公式, 在 2D hyp 子空间增加角灵敏度, 3-5 天工程量
->   - **方向 F**: v11/v12 短训 (12 epoch 锁定, 不让 collision 爬升), 1 天 Stage 3 测 R@10 (期望低, 5cond FAIL)
->   - **方向 A**: 接受 5 条件 PASS 已达成 (Task #226) 作为几何可解释性研究终点, collision 降级为次要目标, 0 卡当天
->   - **方向 B**: 注册 M-arm Stage 2/3/4 队列 (即使 collision 高, 仍可走 RQ-VAE 路径测下游 R@10)
->
-> **新增工程产物**:
->   - scripts/m_arm_step3_sweep_5cond.py (HRQVAE 直加载, collision 校准到 ±0.03%, 可复用)
->   - scripts/m_arm_step3_v11_angdim8.sh, scripts/m_arm_step3_v12_angdim16.sh (v11/v12 launchers)
->   - memory/m-arm-v8-collision-nogo.md 更新 v11/v12 epoch 全表 + Goldilocks 不存在结论
+### 已闭环 (近 24 小时)
 
-**📦 7 方向几何路线完整清单 (全部 NO-GO/NO-HOPE):**
-> | 方向 | Task | 状态 | 根因 |
-> |---|---|---|---|
-> | exp(θ) 可学习 κ | #199/201/203 | ❌ | θ 全程未动 |
-> | 双码本解耦 | #200/208 | ❌ | R@10=0.0915 |
-> | path regularization | #209 | ❌ | dyn 1.27 距离饱和 |
-> | 低维双曲 + 钉半径 | #211 | ❌ | R@10=0.0816, util 23% |
-> | Two-stage decision | #212 | ❌ | 99% 一致率 |
-> | Entailment Cones | #213 | ❌ | 锥 opening 数值病态 |
-> | Latent Radius Live | #214 | ❌ | radius head 无信号 |
+| Issue | 任务 | 状态 |
+|-------|------|:----:|
+| #9 | Task #234/235 hybrid per-layer assignment | ❌ FULL NO-GO (Gate 1 FAIL: L0 util 12.5%, L1/L2 util 0.78%, collision 0.9988) |
+| #10 | Task #236/237 collision 3-arm + Task #238 redesign | ❌ Gate 1 PARTIAL FAIL (Arm B R@10=0.1021 ≈ A 持平; 3-arm 退化为 2-arm) |
 
-**📦 Task #215 + #216 产物:**
-> - verdicts/task213_entailment_cones_phase0_result.md (158 行)
-> - verdicts/task214_radius_live_phase0_result.md (106 行)
-> - verdicts/task215_paper_section4_complete.md (103 行)
-> - verdicts/index.md (117 行, 按主题分组 #193-#215)
-> - papers/paper.md (590 → 615 行, +25 行 = §1.4×3 + §5.7.1×4 + §6.6×1)
-> - 4 个 CPU 脚本 (/home/wlia0047/.claude/jobs/04ccf474/tmp/task{212,213_v2,214}_*.py)
+### 等用户决策 (Task #238 Issue #10 redesign 4-arm 单变量设计)
 
-**📦 paper.md 完整更新:**
-> - §1.4: 7 → 11 evidence (加 finding 8/9/10/11)
-> - §5.7.1: 7 → 11 evidence (加 evidence 8/9/10/11)
-> - §6.1: "Seven" → "Eleven"
-> - §6.6 (新): "Geometry Route Closure — 7 Directions All NO-GO/NO-HOPE"
+候选方向 (R11.4 关键决策, **必须用户拍板**):
+- **方向 A (推荐)**: vanilla Euclidean RQ-VAE 4 臂 (A baseline + D vanilla + E vanilla+S-during-train + F hyp+S-during-train) 单变量隔离 hyp-vs-euc + Sinkhorn-during-train 效应. ~13h wall-clock + 12 min eval (R11.4 提议 4-arm 单变量分解, 详见 descriptions/task238_issue10_redesign_collision_lever.md)
+- **方向 B (保守)**: 接受当前 Issue #10 NO-GO 结论, 关闭 issue, 把精力转到其他方向 (e.g. 跨架构 LETTER/S3Rec paper-aligned fix 后的 R@10 重新基线)
+- **方向 C (激进)**: 用户提新方向 (e.g. 训练时长作为 R@10 真正变量 / 完全不同的几何路线)
 
-**📦 关键证据 (Task #212):**
-> - 双曲几何在 baseline 码本 top-k 候选内跟欧式 argmin 排序 **99% 一致** (L0 98.82%, L1 99.21%, L2 99.56%)
-> - 任何 "欧式取候选 + 双曲重排" 都不改变最终选择 (单调变换, 不改变 argmin)
-> - 这是 HG-Rec "包装失效" finding 的第二个独立证据 (Task #199 λ_κ≈2 + Task #212 一致率 99%)
-> - **结论**: 方向二 NO-HOPE 收线; 方向一是希望所在 (绕开 argmin 死结, 用"包含"关系替代"最近"关系)
-> - verdict: verdicts/task212_two_stage_criterion_result.md (147 行完整判据)
-> - 产物: /home/wlia0047/.claude/jobs/04ccf474/tmp/task212_two_stage_decision_criterion.py (CPU 2min 重跑)
+### GPU 状态 (R7)
 
-**📦 Task #211 已归档 (上一轮):**
-> - 低维双曲 + 钉半径 4 stage 闭环 → ❌ NO-GO 收线. C1 R@10=**0.0816** (-20% vs baseline). Forward patch (HG-Rec/model/utils.py 5 处) + 单元测试 PASS.
-> - 论文交付: 2×2 design space paper skeleton (verdicts/task30_2x2_design_space_paper_skeleton.md). 4 格失败模式 + 修复路径.
-> - verdict: verdicts/task211_low_dim_pinned_radius_arch_infeasible.md
+| GPU | util | mem |
+|-----|------|-----|
+| 0 | 0% | 0 MiB |
+| 1 | 0% | 0 MiB |
+| 2 | 0% | 0 MiB |
+| 3 | 0% | 0 MiB |
 
-**已完成 / 归档:**
-- **#208** 双码本几何解耦 (4 臂 B/C/D + E 欧式加权) | ⛔ **已过时** (用户 2026-07-26 新方案替代 → Task #209, 新增路径正则 + 5 臂 + 多种子 + 切片) | description: descriptions/task208_dual_codebook_geometry_decoupling.md. 继承: 双码本 + 显式 `r_target = ρ/2` 半径设定 + κ-Stereo 距离 (c=1.0) → Task #209.
-- **#207** Euclidean vs Hyperbolic 全流水线对比 | ✅ COMPLETE | verdict: verdicts/task207_euclidean_vs_hyperbolic_result.md. 核心: Euc VQ 坍缩不可修复 (β/K0/Sinkhorn 全失败), hyp 稳定码本. Hyp test R@10=0.0914 (vs baseline 0.1020, △-10%), Euc SID 超 vocab 边界不可用. **论文基调结论**: 双曲几何是 VQ 稳定的必要条件.
+## §17. 历史归档 (从 §16 移出)
 
-**已完成 / 归档:**
-- **#206n** Phase A: usage-target_r 半径语义项 (3 臂 w_rad 0/0.1/1.0, per-layer c=93/604/702, 500 epoch) | ❌ **全部 3 臂模式坍缩** (collision 93.6-99.9%) | verdict: verdicts/task206n_phaseA_mode_collapse_result.md. 根因: 强度对齐 c 过高 → λₖ 共形因子 L2 达 10⁵ → 梯度爆炸 → 全部码字退化到同一位置. w_rad=0 对照也坍缩, 说明不是 usage-target_r 问题而是曲率本身不可训练. **几何激活路线核心结论**: c ∈ [1, ~10] 安全, c ≥ 93 不可训练. Task #206 系列任务线终止.
-- **#203** exp(θ) κ + scale normalization poincare commit/code | ❌ NO-GO | verdict: verdicts/task203_kappa_scale_norm_result.md.
-- **#204** c=1 + weight×2.2 vs c=10 + weight=1.0 | 🟡 第三种结果 (Δ 0.86%) | verdict: verdicts/task204_quant_loss_weight_对照_result.md.
-- **#201** exp(θ) κ with θ_init=log(10) | ❌ FAIL (θ 全程未动) | verdict: verdicts/task201_kappa_redo_result.md.
-- **#200 dual_v5 Stage 3+4** | ❌ FAIL (R@10=0.0915) | verdicts/task200_dual_v5_stage3_4_result.md.
-- **#199** exp(θ) κ 参数化 Stage 1 | ✅ 完成 | verdict: verdicts/task199_stage1_exp_theta_result.md.
-- **#194** K0 容量扫描 | ✅ 完成 (用户决策: 不需要 Stage 3+4)
+> 所有 NO-GO / 已过时任务详见 verdicts/ + descriptions/. 本节只列 R10 推送需要快速查的关键 NO-GO.
 
-**队列 (待用户拍板):**
-- **#196** Stage 1 软约束 γ 扫描 | ⛔ **已过时** (Task #206 线终止, 几何激活 c≥93 不可训练)
-- **#197** Stage 2 双码本解耦 | ⛔ **已过时** (双码本 #200 已 FAIL)
-- **#198 Stage 3 逐层可学习 κ** | ⛔ **已过时** (c≥10 退化, c=30+ 坍缩, #199+#201 链证伪)
+### 7 方向几何路线 (全部 NO-GO/NO-HOPE)
 
-**已完成 / 归档:**
-- **#199** exp(θ) κ 参数化 Stage 1 (4 臂: B exp_global, C exp_per_layer, D c-扫描{1,10,30,100}) | ✅ 完成 (2026-07-26 02:56) | verdict: verdicts/task199_stage1_exp_theta_result.md. 关键: B/C 学到 c=0.7-1.0 (而非预测 30-550), D c=10 是 D 臂最佳 (8.26% < c=1 9.15%), D c=30 退化 (10.84%), D c=100 完全坍缩 (ep 14 29.67% → ep 164+ 99.99%). 用户"50× κ_max 修复 + c 进 [10,100] 健康窗口"假设**被实验数据明确证伪**: HG-Rec c=1.0 是次优但接近最优, c≤10 是健康区间.
-- **#194** K0 容量扫描: Stage 1+2 已坐实 K0 controlling variable (collision 12.6→6.0% 单调↓). 用户 2026-07-26 00:14 决策: "不需要 #194 Stage 3+4". Stage 3 4 臂 (ep 90%+) + dispatcher 全部 kill. R12 best_ckpt 4 臂保留 (22 MB each).
+| 方向 | Task | 状态 | 根因 |
+|------|------|:---:|------|
+| exp(θ) 可学习 κ | #199/201/203 | ❌ | θ 全程未动 |
+| 双码本解耦 | #200/208 | ❌ | R@10=0.0915 |
+| path regularization | #209 | ❌ | dyn 1.27 距离饱和 |
+| 低维双曲 + 钉半径 | #211 | ❌ | R@10=0.0816, util 23% |
+| Two-stage decision | #212 | ❌ | 99% 一致率 |
+| Entailment Cones | #213 | ❌ | 锥 opening 数值病态 |
+| Latent Radius Live | #214 | ❌ | radius head 无信号 |
 
-**已完成 / 归档:**
+### M-arm product_manifold (架构级 NO-GO)
 
-| Task | 最终状态 | 关键数字 |
-|------|---------|---------|
-| **#181** Phase 0.6 官方对齐 | ✅ COMPLETE (full pipeline R@10=0.1057, +3.6% vs baseline) | verdicts/task181_phase0.6_result.md. Stage 3 early stop at epoch 91. best ckpt epoch 72 (val R@10=0.1262, N@20=0.1003). Test R@10=0.1057 vs HGRec baseline 0.1020 (+3.6%). 仍低于 paper 0.1315 (-19.6%). |
-| **#182** 欧式 + loss×4 | ⛔ FAIL (Stage 1 complete, Best Collision 83.5%, final 99% mode collapse) | 欧式 MSE 无几何约束 → 码字坍缩. 不推进 Stage 2/3. |
-| **#183 v1** 硬归一化 | ⛔ FAIL (epoch 54 coll 99.86%, fill=0.03) | 硬归一化移除了 argmin 径向信号 → 坍缩. pivot 到 v2 软正则化. |
-| **#183 v2** 软正则化 | ⛔ FAIL (1000 epoch done, final collision=96.25%, fill=[0.70,0.85,0.93] ✓) | 软正则化只修复径向未修复角向坍缩 (encoder latent 方向未分化). → 登记 Task #184 product manifold. |
-| **#184** Phase 1a product manifold | ⛔ FAIL (Stage 1 collision=95.48%, Stage 2 只有 50 unique 3-digit SIDs, Stage 3 CUDA assert 崩溃) | verdict: verdicts/task184_phase1a_result.md. Product manifold 假设"两轴独立可分" — 但 init 阶段两轴就耦合，复合 argmin 仍坍缩. 方向失败, 不推进 Stage 4. |
-| **#185** disable early stop + resume 1000 epoch | ⏸️ STOPPED (epoch 8, val R@10=0.1062) | 用户叫停, 改用 fresh 0→1000 epoch 方案 (Task #186). description: descriptions/task185_disable_early_stop_resume.md. |
-| **#186** fresh 1000 epoch (no resume, no early stop) | ⏸️ STOPPED (epoch 25, val NDCG@20=0.0887) | 用户 18:21 叫停, 不是失败. verdict: verdicts/task186_fresh_1000epoch_result.md. best_ckpt 已 R12 保存 (22 MB, epoch 24). GPU 0 全释放. |
-| **#187** encoder 4 层 | ⏸️ STOPPED (epoch 6/200, best val NDCG@20=0.0630) | 用户 18:42 改方向到 Task #188 (paper Table 7 多 seed 复现). verdict 未写 (实验太短). description: descriptions/task187_encoder4_layers.md. |
-| **#200 v3** 双码本 Phase 1 v3 | ⛔ FAIL (ep 14-176/1000 manual kill) | 用户 2026-07-26 5 点修正方案 (α_geo 0.1→1.0 + 三层 centering + emb_rec 自由). 隔离测试 v4 PASS (emb_geo grad ×10). 训练 ep 50+ (manual kill ep 176): train_loss 稳定 60-83 ✅ (vs v2 飞涨 15720), collision 95.85-99.56% (中位数 ~97%) ❌ (期望 30-50%). 修复路径走通 (no NaN), 但 collision 未改善, 等用户决策 A 接受/B 长训/C 调 β/D 启 Sinkhorn. verdict: verdicts/task200_phase1_v3_result.md. |
-| **#200 dual_v5 Stage 3+4** | ❌ FAIL (Stage 3 silent death @ ep 93/200, Stage 4 test R@10=0.0915 < HG-Rec baseline 0.1020 -10.3%) | 用户 2026-07-26 选项 B: 验证 v5 collision 84% SID Stage 3+4 性能"持平". R12 best_ckpt 救场 22 MB. Stage 4 test R@10=0.0915, R@5=0.0756, R@20=0.1119, N@10=0.0697. 全面低于 baseline, 持平预测**失败**. 双码本 Phase 0+1 修复路径 (Phase 1 v5 Sinkhorn + 双码本解耦) 端到端验证**没救** baseline. verdict: verdicts/task200_dual_v5_stage3_4_result.md. |
-| **#202** Sinkhorn-on Stage 3 K0=64 | ❌ NO-GO (val R@10=0.1065, vs #181 默认 SID 0.1057 持平) | 用户 2026-07-25 拍板"用 Sinkhorn 版 SID 重跑 Stage 3". Sinkhorn SID `_t5_rqvae_k064_sk0.003.npy`, T5-mini 9.18M, early_stop=20. early stop @ ep 117/200 (counter 20). best epoch (ep 113): val R@5=0.0909 R@10=0.1065 R@20=0.1223 N@5=0.0785 N@10=0.0836 N@20=**0.0876** (best). **用户预测 +1~3% 已 FAIL** (实际 +0.07% 持平). Sinkhorn 路径不进 paper recipe. verdict: verdicts/task202_sinkhorn_stage3_result.md. R12 best_ckpt 22 MB saved. |
+- Task #226 v6: 5-cond 全 PASS (cos_std=0.74, util≥0.97, agreement<0.90) 但 collision 95.68% ❌
+- Task #227 v6/v7/v8/v9/v10: 撞墙 95-99%
+- v11 (8D hyp) 起跑 5.45% ✅, ep 19 5cond 全 PASS 但 collision 涨到 59.99% ❌
+- v12 (16D hyp) 起跑 8.35% ✅, 从未达到 5cond 全 PASS
+- **没有任何 epoch 同时满足两个目标**: tuple collision ≤ 12% AND 5cond PASS = binary trade-off
 
+### HG-Rec paper-aligned fixes (paper §6.7 收口)
+
+- ✅ LETTER paper-aligned fix (Task #141): R@10=0.0378 (underperforms baseline)
+- ✅ Caser paper-aligned fix (Task #141): R@10 验证
+- ✅ S3Rec paper-aligned fix (Task #140): Stage 3 rerun
+- ✅ FDSA paper-aligned fix (Task #143): 准备实施
+- ✅ κ-decouple backlog (Task #143+144)
+
+### Phase 0 fix (码字范数归一化)
+
+- Task #178-181 200 epoch collision 85.24%/81.70% → mode collapse (Poincaré 边界饱和 + β=0.5 + 200 epoch)
+- Task #181 50 epoch 是虚假健康 (Sinkhorn 制造 SID 唯一性假象)
+- Task #179 Euclidean 是真健康对照 (Phase 0 fix 没引入 collapse)
+- Task #178 Stage 3 R@10=0.1035 是 T5 学 Sinkhorn-balanced SID 能力, 不是几何优势
+- **Phase 0 fix 引入 mode collapse 结论**: 地基数字对不上, 先别叠
+
+### 关键证据 (Task #212)
+
+- 双曲几何在 baseline 码本 top-k 候选内跟欧式 argmin 排序 99% 一致 (L0 98.82%, L1 99.21%, L2 99.56%)
+- HG-Rec "包装失效" finding 的第二个独立证据 (Task #199 λ_κ≈2 + Task #212 一致率 99%)
+- 方向二 (欧式取候选 + 双曲重排) NO-HOPE 收线; 方向一是希望所在 (绕开 argmin 死结)
+- verdict: verdicts/task212_two_stage_criterion_result.md
