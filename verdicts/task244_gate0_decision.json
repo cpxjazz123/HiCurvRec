@@ -1,0 +1,10 @@
+{
+  "gate0": "FAIL (excl L3 K=1)",
+  "gate0_literal": "PASS (incl L3 trivial)",
+  "h1_pass_strict": false,
+  "h1_pass_literal": true,
+  "n_sids": 4,
+  "reason": "排除 L3 (K=1 dedup digit, 不承载 SID 信息) 后, 0 个 arm-layer 满足 Gini >= 0.5 AND util >= 0.9. H1 在严格 '沙漏式集中' 意义上证伪.",
+  "key_finding": "Arm A (T84 baseline) L0/L1 Gini > 0.5 但 util 仅 50% (死码字机制, 不是沙漏集中). Arm B (T237 Sinkhorn) 把 Gini 砍到 0.17-0.20 但 R@10 几乎不变 (0.1021 vs 0.1020). 集中度不是 R@10 杠杆.",
+  "decision": "Issue #12 close with NO-GO, 不进入 Gate 1/2/3"
+}
