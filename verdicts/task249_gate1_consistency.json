@@ -1,0 +1,28 @@
+{
+  "per_layer": [
+    {
+      "layer": 0,
+      "transition": "L0 \u2192 L1",
+      "residual_norm": 1.1289126873016357,
+      "x_res_norm": 0.3406844437122345,
+      "consistency_poinc_vs_mob": 0.6732513308525085,
+      "agree_poinc_with_actual": 1.0,
+      "agree_mob_with_actual": 0.6732513308525085,
+      "open_band": true,
+      "no_op": false
+    },
+    {
+      "layer": 1,
+      "transition": "L1 \u2192 L2",
+      "residual_norm": 1.0762207508087158,
+      "x_res_norm": 0.23878823220729828,
+      "consistency_poinc_vs_mob": 0.4998992085456848,
+      "agree_poinc_with_actual": 1.0,
+      "agree_mob_with_actual": 0.4998992085456848,
+      "open_band": false,
+      "no_op": false
+    }
+  ],
+  "decision": "GATE1_PASS",
+  "reason": "\u81f3\u5c11\u4e00\u5c42\u4e00\u81f4\u7387 \u2208 [60%, 90%] OPEN \u5e26, \u8ddd\u79bb\u66ff\u6362\u786e\u5b9e\u6539\u53d8\u4e0b\u4e00\u5c42\u5206\u914d\u7ed3\u6784"
+}
