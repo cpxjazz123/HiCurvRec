@@ -1,3 +1,5 @@
+result: **Issue #10 Gate 1 PARTIAL FAIL — Arm B (partial Sinkhorn max_iters=10) R@10=0.1021, 跟 Arm A (vanilla, 0.1020) 持平, 低于 Arm C (full Sinkhorn, 0.1058, -3.5%). 3-arm collision 曲线退化为 2-arm (B-C 碰撞率差仅 5pp < 15pp 阈值), 不进入 Gate 2/3. 建议用户重新设计 Issue #10 实验变量 (Sinkhorn 之外)**.
+
 # Task #237 — Issue #10 Gate 1 Arm B: partial Sinkhorn (3-arm 因果曲线) — **Gate 1 PARTIAL → STOP**
 
 ## 来源
