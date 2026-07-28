@@ -1,0 +1,102 @@
+{
+  "schema": "issue15_phase0_stage1_pair (Phase 0 agreement/OPEN band × Stage 1 utilization × collision)",
+  "authoritative_bands": "verdicts/task251_band_unification.md",
+  "collision_def": "verdicts/task236_collision_metric_unification_result.md (collision_rate = 1 - uniqueness_rate)",
+
+  "grey_zone_decision": {
+    "50-60%": "WEAK (single-side, NOT open, NOT too_strong)",
+    "90-95%": "WEAK_OPEN (single-side, NOT open, NOT fail; task222 L1/L2 falls here)"
+  },
+
+  "pair_points": [
+    {
+      "run_id": "task220",
+      "mechanism": "PC_kappa_U(0.5,5) (all layers)",
+      "epoch": "ep29 (200-epoch train)",
+      "ckpt_path": "products/task220/per_codeword_kappa_stage1/.../ep29",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "28.90% ± 2.15% (task231 sweep, TOO_STRONG)", "stage1_util": "20.31%", "collision": 0.3835, "source": "verdicts/task220_per_codeword_kappa_stage1_train_result.md + verdicts/task231_pck_phase0_ckrange_sweep_result.md"},
+        "L1": {"agreement": null, "consistency_p0": "67.15% ± 0.22% (task231 sweep, OPEN)", "stage1_util": "96.09%", "collision": null, "source": "verdicts/task220 + task231"},
+        "L2": {"agreement": null, "consistency_p0": "75.69% ± 0.79% (task231 sweep, OPEN)", "stage1_util": "93.75%", "collision": null, "source": "verdicts/task220 + task231"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "L0 = 20.31% < 90%"
+    },
+    {
+      "run_id": "task222",
+      "mechanism": "PC_kappa_U(0.5,5) (all layers, 40-epoch replay)",
+      "epoch": "ep29",
+      "ckpt_path": "products/task222/hrqvae_pck_replay/.../epoch_29_collision_0.3706_model.pth",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "81.12% ± 0.48% (task231, OPEN)", "stage1_util": "20.31%", "collision": null, "source": "verdicts/task222_pck_earlystop_replay_result.md + task231"},
+        "L1": {"agreement": null, "consistency_p0": "92.37% ± 0.30% (task231, WEAK_OPEN under new band)", "stage1_util": "98.44%", "collision": null, "source": "verdicts/task222 + task231"},
+        "L2": {"agreement": null, "consistency_p0": "94.04% ± 0.17% (task231, WEAK_OPEN under new band)", "stage1_util": "91.02%", "collision": 0.3706, "source": "verdicts/task222 + task231"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "L0 = 20.31% < 90%",
+      "note": "唯一 L1/L2 健康配置, 但 L1/L2 一致率落在 90-95% 灰区 (新分类 WEAK_OPEN)"
+    },
+    {
+      "run_id": "task221",
+      "mechanism": "Gromov weight=0.5",
+      "epoch": "ep29",
+      "ckpt_path": "products/task221/gromov_stage1/.../",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "90.06% (task232, WEAK_OPEN)", "stage1_util": "3.12%", "collision": null, "source": "verdicts/task221_gromov_stage1_train_result.md + task232"},
+        "L1": {"agreement": null, "consistency_p0": "73.67% (task232, OPEN)", "stage1_util": "1.56%", "collision": null, "source": "verdicts/task221 + task232"},
+        "L2": {"agreement": null, "consistency_p0": "68.11% (task232, OPEN)", "stage1_util": "0.78%", "collision": 0.9999, "source": "verdicts/task221 + task232"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "L0/L1/L2 全层坍缩"
+    },
+    {
+      "run_id": "task235",
+      "mechanism": "hybrid (L0 PC κ + L1/L2 Gromov)",
+      "epoch": "ep29 (40-epoch)",
+      "ckpt_path": "products/task235/issue9_hybrid_stage1/.../",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "OPEN (三层全 OPEN)", "stage1_util": "12.50%", "collision": null, "source": "verdicts/task235_issue9_gate1_hybrid_stage1_result.md"},
+        "L1": {"agreement": null, "consistency_p0": "OPEN", "stage1_util": "0.78%", "collision": null, "source": "verdicts/task235"},
+        "L2": {"agreement": null, "consistency_p0": "OPEN", "stage1_util": "0.78%", "collision": 0.9988, "source": "verdicts/task235"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "全层坍缩"
+    },
+    {
+      "run_id": "task242_ArmA",
+      "mechanism": "PC_kappa per-layer ranges",
+      "epoch": "ep14 (best_collision)",
+      "ckpt_path": "products/task242/issue11_perlayer_stage1/ArmA/.../",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "82.68% ± 0.29% (task241, OPEN)", "stage1_util": "23.44%", "collision": null, "source": "verdicts/task241_issue11_gate0_perlayer_ck_combo_pass.md §3 + verdicts/task242_issue11_gate1_perlayer_stage1_result.md"},
+        "L1": {"agreement": null, "consistency_p0": "67.15% ± 0.22% (task241, OPEN)", "stage1_util": "46.09%", "collision": null, "source": "verdicts/task241 + task242"},
+        "L2": {"agreement": null, "consistency_p0": "75.69% ± 0.79% (task241, OPEN)", "stage1_util": "38.28%", "collision": 0.9385, "source": "verdicts/task241 + task242"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "L0/L1/L2 全层未达 90/80/80"
+    },
+    {
+      "run_id": "task242_ArmA+",
+      "mechanism": "PC_kappa per-layer ranges + dead_revive",
+      "epoch": "ep34 (best_loss)",
+      "ckpt_path": "products/task242/issue11_perlayer_stage1/ArmA+/.../",
+      "per_layer": {
+        "L0": {"agreement": null, "consistency_p0": "82.68% ± 0.29% (OPEN, 同 ArmA)", "stage1_util": "3.12%", "collision": null, "source": "verdicts/task242_issue11_gate1b_perlayer_deadrevive_result.md"},
+        "L1": {"agreement": null, "consistency_p0": "67.15% ± 0.22% (OPEN, 同 ArmA)", "stage1_util": "3.12%", "collision": null, "source": "verdicts/task242 §对照表"},
+        "L2": {"agreement": null, "consistency_p0": "75.69% ± 0.79% (OPEN, 同 ArmA)", "stage1_util": "7.03%", "collision": 0.9945, "source": "verdicts/task242 §对照表"}
+      },
+      "stage1_survives_674": false,
+      "stop_loss_hit": "全层坍缩"
+    }
+  ],
+
+  "summary": {
+    "n_mechanisms": 4,
+    "n_configs": 6,
+    "n_layers_total": 18,
+    "config_with_healthy_L1L2": "task222 (98.44% / 91.02%)",
+    "configs_with_open_band_L1L2": "task222 (WEAK_OPEN) + task221 (OPEN) + task235 (OPEN) + task242 ArmA (OPEN) + task242 ArmA+ (OPEN) = 5/5"
+  },
+
+  "followup_caveat": "Issue #15 §1 注: Issue #11 关闭评论与 verdict 文件在 L0/L1 一致率数字上有 ±1-2pp 差异, 本表全采用 verdict 文件数字. 详细差异见 task241 + Issue #11 关闭评论."
+}
