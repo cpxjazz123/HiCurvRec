@@ -93,7 +93,7 @@ def main():
         c_k_max=ckpt_args.get('c_k_max', 20.0),
         c_k_seed=ckpt_args.get('c_k_seed', 42),
     )
-    model.load_state_dict(state_dict)
+    model.load_state_dict(state_dict, strict=False)
     model = model.to(device)
     model.eval()
 

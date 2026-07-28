@@ -1,0 +1,40 @@
+{
+  "task": "task237_armB_partial_sinkhorn10",
+  "sid_file": "_t5_rqvae_task237_armB.npy",
+  "ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task237/t5mini_armB/Instruments/Jul-29-2026_00-39-46/HG_Rec_best.pth",
+  "ckpt_mtime": "2026-07-29 01:27:53.000000000 +1000",
+  "ckpt_size": 22086676,
+  "eval_time_sec": 17.2,
+  "test_recalls": {
+    "Recall@5": 0.08244851961890128,
+    "Recall@10": 0.10211550826961929,
+    "Recall@20": 0.1235119046851935
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.0700493956786584,
+    "NDCG@10": 0.07634986833126274,
+    "NDCG@20": 0.08179740394145596
+  },
+  "baseline_comparison": {
+    "HG-Rec #84": {
+      "R@5": 0.0816,
+      "R@10": 0.102,
+      "R@20": 0.1279
+    },
+    "#200 dual_v5 (truncated ep93)": {
+      "R@5": 0.0756,
+      "R@10": 0.0915,
+      "R@20": 0.1119
+    },
+    "#233 dual_v5 RERUN (c=10 ep1)": {
+      "R@5": null,
+      "R@10": null,
+      "R@20": null
+    },
+    "#237 Arm B partial sk10 (this)": {
+      "Recall@5": 0.08244851961890128,
+      "Recall@10": 0.10211550826961929,
+      "Recall@20": 0.1235119046851935
+    }
+  }
+}
