@@ -1,0 +1,36 @@
+{
+  "per_layer": [
+    {
+      "layer": 0,
+      "transition": "L0 argmin",
+      "residual_norm": 1.2287126779556274,
+      "consistency_euc_vs_logmap": 0.670630931854248,
+      "agree_euc_with_actual": 1.0,
+      "agree_logmap_with_actual": 0.670630931854248,
+      "open_band": true,
+      "no_op": false
+    },
+    {
+      "layer": 1,
+      "transition": "L1 argmin",
+      "residual_norm": 1.043493628501892,
+      "consistency_euc_vs_logmap": 0.4332795739173889,
+      "agree_euc_with_actual": 1.0,
+      "agree_logmap_with_actual": 0.4332795739173889,
+      "open_band": false,
+      "no_op": false
+    },
+    {
+      "layer": 2,
+      "transition": "L2 argmin",
+      "residual_norm": 0.9632769227027893,
+      "consistency_euc_vs_logmap": 0.29822617769241333,
+      "agree_euc_with_actual": 1.0,
+      "agree_logmap_with_actual": 0.29822617769241333,
+      "open_band": false,
+      "no_op": false
+    }
+  ],
+  "decision": "GATE3_PASS",
+  "reason": "\u81f3\u5c11\u4e00\u5c42 argmin \u4e00\u81f4\u7387 \u2208 [60%, 90%] OPEN \u5e26, Logmap \u8ddd\u79bb\u786e\u5b9e\u6539\u53d8 argmin \u51b3\u7b56, \u53ef\u63a8 Phase 2 Stage 3 50 epoch"
+}
