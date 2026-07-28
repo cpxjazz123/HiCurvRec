@@ -1,0 +1,17 @@
+{
+  "task": "task161_t5mini_dkv_fix",
+  "recipe": "T5-mini 9.18M d_kv fix (heads 6\u21924) + code_default SID (\u03b2=0.25, [32,64,256], sk=0.5)",
+  "t5_config": "4 enc + 4 dec, d_model=256, d_ff=1024, 4 heads \u00d7 d_kv=64 (4\u00d764=256 strict)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task161/ckpt_hgrec/Instruments/Jul-24-2026_22-34-31/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08417792779368323,
+    "Recall@10": 0.10115025758484386,
+    "Recall@20": 0.12387387381154598
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07257366781105003,
+    "NDCG@10": 0.07801924424756562,
+    "NDCG@20": 0.08376492454911291
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "task": "task169_t5mini_kappa_sinkhorn",
+  "recipe": "T5-mini 9.18M (4+4 layers, d_model=256, d_ff=1024, 4 heads \u00d7 d_kv=64) + \u03ba-Stereographic + Sinkhorn(L2=0.003) SID + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task169/t5mini_kappa_sinkhorn/jul-25-2026_11-13-12/Instruments/Jul-25-2026_11-13-40/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07203185304452783,
+    "Recall@10": 0.08626930494379238,
+    "Recall@20": 0.10171332057838735
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06442474316388484,
+    "NDCG@10": 0.06895072012420557,
+    "NDCG@20": 0.07288018949186019
+  }
+}

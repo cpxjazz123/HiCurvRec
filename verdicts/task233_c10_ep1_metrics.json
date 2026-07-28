@@ -1,0 +1,20 @@
+{
+  "task": "task233_c10_ep1",
+  "recipe": "c=10 ep1 RQ-VAE SID (51.41% collision) + T5-mini 9.18M (4+4 layers, d_model=256, d_ff=1024)",
+  "direction": "M-arm \u65b9\u5411 I c=10 (wdiv=100, beta=0.5, 50 epoch train, ep1 ckpt)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/m_arm/m_radius_spread_step3_50ep_wdiv100_c10_jul-27-2026_16-18-09/stage3_t5mini/Instruments/Jul-27-2026_17-20-49/HG_Rec_best.pth",
+  "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_rqvae_task233_c10_ep1.npy",
+  "sid_collision_rate_pre_resolve": 0.6141,
+  "sid_unique_count": 9922,
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.0713079149176773,
+    "Recall@10": 0.08558558570185108,
+    "Recall@20": 0.09881756782646806
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06194645011056804,
+    "NDCG@10": 0.0665567847666363,
+    "NDCG@20": 0.06992190759125594
+  }
+}

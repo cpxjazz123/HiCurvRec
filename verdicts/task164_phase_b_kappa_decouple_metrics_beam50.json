@@ -1,0 +1,16 @@
+{
+  "task": "task164_phase_b_kappa_decouple_beam50",
+  "recipe": "\u03ba-Stereographic + Phase A 100ep + Phase B 100ep + T5-small 60M, beam_size=50",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task164/phase_b_kappa_decouple/jul-25-2026_01-32-16/stage3_60m/Instruments/Jul-25-2026_01-32-48/HG_Rec_best.pth",
+  "beam_size": 50,
+  "test_recalls": {
+    "Recall@5": 0.07782335897267555,
+    "Recall@10": 0.096404440247932,
+    "Recall@20": 0.12552284483858978
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06630287053689188,
+    "NDCG@10": 0.07227168768342282,
+    "NDCG@20": 0.07960365204910054
+  }
+}

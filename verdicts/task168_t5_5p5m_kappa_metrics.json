@@ -1,0 +1,16 @@
+{
+  "task": "task168_t5_5p5m_kappa_decouple",
+  "recipe": "T5-5.5M (5+5 layers, d_model=192, d_ff=1024, 3 heads \u00d7 d_kv=64) + \u03ba-Stereographic Phase B SID + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task168/t5_5p5m_kappa_decouple/jul-25-2026_03-10-37/Instruments/Jul-25-2026_03-10-48/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07995495505803571,
+    "Recall@10": 0.09970238110820069,
+    "Recall@20": 0.1241554056211558
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06816633702633348,
+    "NDCG@10": 0.07452661934592779,
+    "NDCG@20": 0.08069958404051751
+  }
+}

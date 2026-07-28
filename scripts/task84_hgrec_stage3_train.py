@@ -139,6 +139,9 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=2025, help='Random seed for reproducibility')
     parser.add_argument('--save_path', type=str, default='./ckpt/', help='Path to save the trained model')
     parser.add_argument('--early_stop', type=int, default=20, help='Early stopping patience')
+    parser.add_argument('--disable_early_stop', action='store_true', help='Disable early stop (run all num_epochs)')
+    parser.add_argument('--resume_from', type=str, default=None, help='Path to ckpt to resume from (loads model weights, resets optimizer)')
+    parser.add_argument('--resume_start_epoch', type=int, default=0, help='Start epoch counter (use --epoch_already_done N to skip first N epochs)')
     parser.add_argument('--topk_list', type=int, nargs='+', default=[5,10,20], help='List of top-k values for evaluation metrics (R11.3 FIX: original used type=list which fails with multi values)')
     parser.add_argument('--beam_size', type=int, default=20, help='Beam size for generation')
     config = vars(parser.parse_args())
@@ -161,6 +164,23 @@ if __name__ == "__main__":
     model = HG_Rec(config)
     print(model.n_parameters)
     logging.info(model.n_parameters)
+
+    # R88 / Task #185 (2026-07-25): 支持 resume_from + disable_early_stop
+    if config.get('disable_early_stop'):
+        config['early_stop'] = 99999
+        logging.info("[Task #185] Early stop DISABLED — 跑到 num_epochs 为止")
+
+    if config.get('resume_from'):
+        resume_path = config['resume_from']
+        if os.path.exists(resume_path):
+            sd = torch.load(resume_path, map_location='cpu', weights_only=False)
+            # 兼容纯 state_dict 和 {'state_dict': ...} 两种格式
+            if isinstance(sd, dict) and 'state_dict' in sd:
+                sd = sd['state_dict']
+            model.load_state_dict(sd)
+            logging.info(f"[Task #185] Resumed model weights from {resume_path}")
+        else:
+            raise FileNotFoundError(f"--resume_from path not found: {resume_path}")
 
     # Set random seed for reproducibility
     set_seed(config['seed'])

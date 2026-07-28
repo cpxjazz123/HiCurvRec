@@ -1,0 +1,17 @@
+{
+  "task": "task157_t5_base_capacity_unlock",
+  "recipe": "T5-base 220M + code-default SID (\u03b2=0.25, [32,64,256], sk=0.5)",
+  "t5_config": "12 enc + 12 dec, d_model=768, d_ff=3072, 12 heads (~220M params)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task157/ckpt_hgrec/Instruments/Jul-24-2026_21-10-08/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.0776222650839095,
+    "Recall@10": 0.09499678245842687,
+    "Recall@20": 0.11542792806696707
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06665653278367975,
+    "NDCG@10": 0.07224694164074295,
+    "NDCG@20": 0.07739118741228314
+  }
+}

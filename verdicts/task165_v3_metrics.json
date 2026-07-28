@@ -1,0 +1,16 @@
+{
+  "task": "task165_v3_long_stage3",
+  "recipe": "\u03ba-Stereographic + Phase A 100ep + Phase B 100ep + T5-small 60M 200 epoch long training",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task165/v3_long_stage3/jul-25-2026_02-17-23/stage3_60m/Instruments/Jul-25-2026_02-17-35/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.0785875159988187,
+    "Recall@10": 0.09652509656824661,
+    "Recall@20": 0.11989221406891999
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06748408870591735,
+    "NDCG@10": 0.07323536952116085,
+    "NDCG@20": 0.07915664112562149
+  }
+}

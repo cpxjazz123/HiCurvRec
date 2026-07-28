@@ -1,0 +1,20 @@
+{
+  "task": "task188_paper_table7_multiseed",
+  "tier": "t1_8pct",
+  "seed": 42,
+  "collision_rate": 0.0862,
+  "recipe": "T5-small 5.5M + paper-aligned Poincar\u00e9 distance",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task188/t5small_t1_8pct/seed42/Instruments/Jul-25-2026_19-11-18/HG_Rec_best.pth",
+  "selected_by": "best_val_NDCG@20",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08373552114922107,
+    "Recall@10": 0.10408622944101864,
+    "Recall@20": 0.1278555342301899
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07054583129606076,
+    "NDCG@10": 0.07708459814226536,
+    "NDCG@20": 0.08310061669458985
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "task": "task175_orc_locked",
+  "arm": "ORC_locked",
+  "recipe": "T5-mini 9.18M + \u03ba-Stereographic + \u03ba LOCKED at Ollivier ORC [-0.653, -0.829, -0.840] per-layer per-component + M=3",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task175/t5mini_orc_locked/jul-25-2026_13-30-47/Instruments/Jul-25-2026_13-31-17/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07219272835403105,
+    "Recall@10": 0.08944658963477174,
+    "Recall@20": 0.11104408013688322
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06113517823769319,
+    "NDCG@10": 0.06673573668053712,
+    "NDCG@20": 0.0721818108334562
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "task": "task156_hgrec_code_default",
+  "recipe": "code-default (\u03b2=0.25, [32,64,256], sk=0.5, 1869 ep)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task156/ckpt_hgrec/Instruments/Jul-24-2026_21-10-08/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08309202037147574,
+    "Recall@10": 0.10300032170237722,
+    "Recall@20": 0.1303893180715071
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07112684191841072,
+    "NDCG@10": 0.07749520078243896,
+    "NDCG@20": 0.08442646673517337
+  }
+}

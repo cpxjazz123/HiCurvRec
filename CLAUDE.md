@@ -4,7 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库性质
 
-工作目录，用于复现 Snap Research 的 GRID（Generative Recommendation with Semantic IDs）流水线。**当前项目计划与基线已固化在仓库根的 `task` 文件**，CLAUDE.md 只补充跨文件才能看出的架构约束。
+工作目录，用于复现 **HG-Rec（Hyperbolic RQ-VAE + Differential-Length Codebook + T5）** 流水线 + 后续 κ-Stereographic 变体实验。**当前项目计划与基线已固化在仓库根的 `task` 文件**，CLAUDE.md 只补充跨文件才能看出的架构约束。
+
+> ⚠️ **重要: 项目当前基线 与 数据集 (2026-07-25 明确)**
+>
+> | 项目 | 值 |
+> |------|-----|
+> | **基线模型** | **HG-Rec** (Task #84 主实验) |
+> | **HG-Rec Test R@10** | **0.1020** (Musical_Instruments) |
+> | **HG-Rec recipe** | Poincaré loss RQ-VAE + Differential-Length Codebook + T5-small + Musical_Instruments |
+> | **数据集** | **Musical_Instruments** (Amazon, 24588 items → 5-core 后 **9922 items**) |
+> | **次要参考 baseline** | phonism (vanilla RQ-VAE + SINKHORN, R@10=0.1058) — 仅作横向对比, 不是当前项目主线 baseline |
+> | **任务默认框架** | HG-Rec pipeline, 不是 GRID |
+>
+> ⚠️ **历史混淆澄清**: CLAUDE.md 之前部分行残留 "toys" / "GRID" / "TIGER paper Toys" 表述, 那是**上游 `snap-research/GRID` 项目 (TIGER paper Toys 数据集)** 的内容, **不是当前 HG-Rec 项目**. 当前 HG-Rec 项目使用 **Musical_Instruments** 数据集, baseline 是 **HG-Rec Task #84 (R@10=0.1020)**, 不是 Toys.
+>
+> **所有新任务必须用 HG-Rec baseline (R@10=0.1020) 作为对照**, 不用 phonism 或 Toys.
 
 ---
 
@@ -56,8 +71,10 @@ cd /home/wlia0047/ar57/wenyu/MCKG_repro/knowledge_graph_attention_network
 - ✅ 例外：仅修改文档文件（AGENTS.md、README 等）时不需要验证
 
 ### R5：任务硬约束（来自 `task` 文件）
+- **基线模型**: HG-Rec (Task #84) — 单一变量对照, 任何 κ-Stereographic / β(x) / codebook variant 跟 HG-Rec 对比
 - **量化算法**：仅 RQ-VAE，不跑 RKMeans / RVQ（`rkmeans_inference_flat` 只在 Stage 2.2 推断时调用一次）
-- **数据集**：仅 `data/amazon_data/toys/`
+- **数据集**：**Musical_Instruments** (`HG-Rec/dataset/Instruments/`, 24588 items → 5-core 后 9922 items)
+  - ❌ 不使用 GRID 上游项目的 Toys 数据集 (那是 `snap-research/GRID` paper Table 1 的玩具数据, 不是当前 HG-Rec 主线)
 - **总实验阶段**：4 个（Stage 1 / Stage 2 训练 / Stage 2 推断 / Stage 3+4）
 - **超参**：`num_hierarchies=3`（Stage 2）→ 推断后追加 1 列去重 digit → Stage 3/4 用 `num_hierarchies=4`
 - **种子**：`seed=42`（跨 run 固定）
@@ -202,7 +219,7 @@ bash scripts/audit_r9_compliance.sh
 ### R11.2 自主决策的兜底顺序 (从高到低优先级)
 遇到不确定的多选项时, 按以下顺序自主选择:
 
-1. **项目 CLAUDE.md / memory 已固化的偏好** (例如 R5 数据集仅 toys, R9 编号连续无空洞, R10 必须主动推进)
+1. **项目 CLAUDE.md / memory 已固化的偏好** (例如 R5 数据集仅 Musical_Instruments, HG-Rec baseline R@10=0.1020, R9 编号连续无空洞, R10 必须主动推进)
 2. **上游 framework 默认值** (例如 paper 报告的超参, official code 的 default)
 3. **论文原始方案** (DECOR paper 的 α=0.35, bos_queries=64 等)
 4. **简单实用方案** (例如找不到精确匹配时用近似版本, 记下偏差)
@@ -332,54 +349,49 @@ bash scripts/audit_r9_compliance.sh
 
 | 路径 | 角色 | 是否可改 |
 |------|------|----------|
-| `src/` + `data/` | 从 `snap-research/GRID` clone 的框架源码和数据 | ❌ 只读 |
-| `data/amazon_data/toys/` | 当前唯一数据集（Beauty/Sports 已删） | ❌ 只读 |
-| `papers/grid_paper.pdf` | arXiv:2507.22224 GRID 论文 | ❌ 只读 |
+| `HG-Rec/src/` + `HG-Rec/data/` | 从上游 clone 的 HG-Rec 框架源码和数据 | ❌ 只读 |
+| `HG-Rec/dataset/Instruments/` | **当前唯一数据集**: Musical_Instruments (24588 → 5-core 后 9922 items) | ❌ 只读 |
+| `papers/grid_paper.pdf` | GRID paper (TIGER Toys 数据集) — 历史参考, 不是当前 HG-Rec 主线 | ❌ 只读 |
 | `task` | **本项目唯一的"做什么"的真源** | ❌ 任务已固化，改它要先和用户确认 |
 | `products/task<N>/{train,inference}/` | 物理化的 run 产物（checkpoint、pickle、csv） | ✅ 自动生成 |
 
 ## 流水线架构（跨文件才能看清的部分）
 
-GRID 是一段**三阶段串行流水线**，上游产物是下游的输入，跨阶段的 shape 约定见 `task` 第 153 行的"关键约定"：
+HG-Rec (Task #84 baseline) 是一段**三阶段串行流水线**，上游产物是下游的输入，跟 GRID 流水线结构相似:
 
 ```
-┌──────────────┐    (N, 2048)    ┌──────────────┐    (N, 4)    ┌──────────────┐
-│ Stage 1 LLM  │ ──────────────▶ │ Stage 2 RQ-  │ ───────────▶ │ Stage 3+4    │
-│ Embedding    │  merged_        │ VAE SID      │  merged_     │ TIGER        │
-│ (flan-t5-xl) │  predictions_   │ (15k steps) │  predictions_│ (T5 encoder- │
-│              │  tensor.pt      │              │  tensor.pt   │  decoder)    │
-└──────────────┘                └──────────────┘              └──────────────┘
-   configs/                       configs/                       configs/
-   experiment/                    experiment/                    experiment/
-   sem_embeds_                    rqvae_train_flat               tiger_train_flat
-   inference_flat                 + rkmeans_inference_flat       + tiger_inference_flat
+┌──────────────┐    (9922, 768)   ┌──────────────┐    (9922, 4)    ┌──────────────┐
+│ Stage 1 LLM  │ ──────────────▶ │ Stage 2 RQ-  │ ──────────────▶ │ Stage 3+4    │
+│ Embedding    │  item_emb        │ VAE SID      │  _t5_rqvae_     │ T5-mini      │
+│ (sentence-   │  .parquet        │ (200 epoch)  │  <variant>.npy  │ 9.18M        │
+│  t5-base)    │                  │              │                  │ (encoder-    │
+│              │                  │              │                  │  decoder)    │
+└──────────────┘                └──────────────┘                  └──────────────┘
+   num_emb_list=                  κ-Stereographic                  Musical_Instru
+   [32,64,256,1]                  distance formula                  ments test set
+   e_dim=32                       (Berman-Metzler 2020)
+   M=3
 ```
 
-> ⚠️ **非常规约定**：Stage 2 的 SID 推断**复用** `rkmeans_inference_flat` 配置（不是 `rqvae_inference_flat`），因为 SID 推断只读码本，与训练算法无关。task 文件明确写了这一点。
+Stage 3 训练脚本: `scripts/task84_hgrec_stage3_train.py` (Task #84+ 通用 T5-mini 训练)
+Stage 4 评估脚本: `scripts/task174_*_stage4_eval.sh` 模式 (config dict + GenRecDataset positional args, Task #174 v3 已验证可跑通)
 
-## 配置系统
+> ⚠️ Stage 2 SID 推断代码在 `scripts/task<id>_stage2_codebook.py`, 使用 Sinkhorn-Knopp 解码 (最多 30 轮) + 4th-digit dedup, 输出 `(9922, 4)` int array.
 
-GRID 用 Hydra 做配置组合，每个 run 形如：
+## 评估指标（HG-Rec baseline Musical_Instruments, 来源: Task #84 verdict）
 
-```bash
-python -m src.train experiment=<yaml_basename> data_dir=<path> [override_key=value ...]
-```
+> HG-Rec baseline (Task #84, R@10=0.1020) 是当前项目的**唯一对照基线**. 所有新任务必须跟 HG-Rec baseline 对比.
 
-`configs/experiment/` 下 7 个 yaml 名称即为可传入 `experiment=` 的值。`src/train.py` 和 `src/inference.py` 是仅有的两个 CLI 入口。
-⚠️ `configs/` 目录已删除，如需重跑实验需从上游 `snap-research/GRID` 重新获取。历史 run 的精确配置保存在 `products/task<N>/train/*/.hydra/` 中。
-
-## 评估指标（Toys 基线，来源：论文 Table 1 RQ-VAE 行）
-
-> ⚠️ 以下为 **RQ-VAE** 专用指标（论文 Table 1），task 指定只用 RQ-VAE。注意 RK-Means Toys 值更高（R@5=0.0376, R@10=0.0577）—— **不可混用**。
-
-| 指标 | 目标（RQ-VAE Toys） | RK-Means Toys（参考） | TIGER 原论文 |
+| 指标 | HG-Rec baseline (#84) | phonism (次要参考) | 决策阈值 (vs HG-Rec) |
 |------|------|------|------|
-| Recall@5 | ≥ 0.034 | 0.0376 | 0.0446 |
-| Recall@10 | ≥ 0.051 | 0.0577 | 0.0679 |
-| NDCG@5 | ≥ 0.022 | 0.0243 | - |
-| NDCG@10 | ≥ 0.028 | 0.0308 | - |
+| Recall@5 | 0.0816 | - | - |
+| **Recall@10** | **0.1020** | 0.1058 | **> 0.1020 GO, ≤ 0.1020 NO-GO** |
+| Recall@20 | 0.1279 | - | - |
+| NDCG@5 | 0.0690 | - | - |
+| NDCG@10 | 0.0755 | - | - |
+| NDCG@20 | 0.0821 | - | - |
 
-评估实现见 `src/components/eval_metrics.py`，关键类：`SIDRetrievalEvaluator`（按 SID 整序列匹配）、`NDCG`、`Recall`。
+评估实现见 `HG-Rec/model/HG_Rec.py` + `HG-Rec/src/components/eval_metrics.py`, 关键类: `SIDRetrievalEvaluator`(按 SID 整序列匹配)、`NDCG`、`Recall`. Stage 4 eval 模式: load best_ckpt → GenRecDataset (mode='evaluation') → evaluate(model, dataloader, [5,10,20], beam_size=20, device).
 
 ## 关键依赖
 

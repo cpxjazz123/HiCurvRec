@@ -1,0 +1,22 @@
+{
+  "task": "task164_phase_b_kappa_decouple",
+  "recipe": "\u03ba-Stereographic + Phase A 100ep frozen + Phase B 100ep lr_theta=1e-5 + T5-small 60M",
+  "final_kappa_m": [
+    -0.0908,
+    -0.0938,
+    -0.0963
+  ],
+  "t5_config": "6 enc + 6 dec, d_model=512, d_ff=2048, 8 heads d_kv=64 (~44.6M params)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task164/phase_b_kappa_decouple/jul-25-2026_01-32-16/stage3_60m/Instruments/Jul-25-2026_01-32-48/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07774292128196554,
+    "Recall@10": 0.09487612631071259,
+    "Recall@20": 0.11751930533573894
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06629272188962541,
+    "NDCG@10": 0.07178103738611845,
+    "NDCG@20": 0.07753126300209738
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "task": "task170_t5mini_kappa_sinkhorn_all3",
+  "recipe": "T5-mini 9.18M + \u03ba-Stereographic + Sinkhorn(ALL 3 layers, sk_eps=[0.003,0.003,0.003]) SID + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task170/t5mini_kappa_sinkhorn_all3/jul-25-2026_11-43-38/Instruments/Jul-25-2026_11-44-05/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07211229057702088,
+    "Recall@10": 0.08357464617413098,
+    "Recall@20": 0.09950128740641831
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06423727804471283,
+    "NDCG@10": 0.0679271055033078,
+    "NDCG@20": 0.07201785806019909
+  }
+}

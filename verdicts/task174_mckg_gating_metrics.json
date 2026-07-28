@@ -1,0 +1,17 @@
+{
+  "task": "task174_t5mini_mckg_gating",
+  "arm": "D",
+  "recipe": "T5-mini 9.18M + \u03ba-Stereographic + M=2 + gating fusion D \u81c2 SID + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task174/t5mini_mckg_gating/jul-25-2026_12-23-44/Instruments/Jul-25-2026_12-23-54/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.0810810810019726,
+    "Recall@10": 0.09925997420483805,
+    "Recall@20": 0.12194337202487765
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06899400528980613,
+    "NDCG@10": 0.07486110916325255,
+    "NDCG@20": 0.08057518047370506
+  }
+}

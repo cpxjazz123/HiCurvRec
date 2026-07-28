@@ -1,0 +1,16 @@
+{
+  "task": "task166_t5mini_kappa_decouple",
+  "recipe": "T5-mini 9.18M (4+4 layers, d_model=256, d_ff=1024, 4 heads \u00d7 d_kv=64) + \u03ba-Stereographic Phase B SID + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task166/t5mini_kappa_decouple/jul-25-2026_02-25-46/Instruments/Jul-25-2026_02-26-00/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08268983251483514,
+    "Recall@10": 0.10187419550673152,
+    "Recall@20": 0.12500000018698368
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07001823139768885,
+    "NDCG@10": 0.07619676600897174,
+    "NDCG@20": 0.08206626234942882
+  }
+}

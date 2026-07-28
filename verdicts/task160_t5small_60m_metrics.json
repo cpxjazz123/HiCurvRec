@@ -1,0 +1,17 @@
+{
+  "task": "task160_t5small_60m",
+  "recipe": "T5-small 60M + code_default SID (\u03b2=0.25, [32,64,256], sk=0.5)",
+  "t5_config": "6 enc + 6 dec, d_model=512, d_ff=2048, 8 heads (~60M params)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task160/ckpt_hgrec/Instruments/Jul-24-2026_21-42-45/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08140283161378735,
+    "Recall@10": 0.09740990998662116,
+    "Recall@20": 0.11876608782293253
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07028735456736507,
+    "NDCG@10": 0.07545393268113891,
+    "NDCG@20": 0.08083009399818868
+  }
+}

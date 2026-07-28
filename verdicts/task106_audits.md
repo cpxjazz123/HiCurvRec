@@ -24,8 +24,8 @@
 
 ## Audit 3 — Section 5 Baseline Coverage Audit
 
-- ✅ Reproduced: **12** (verdict exists in verdicts/)
-- ⚠️ Inherits paper-reported: **8** (no verdict, paper reports)
+- ✅ Reproduced: **13** (verdict exists in verdicts/)
+- ⚠️ Inherits paper-reported: **7** (no verdict, paper reports)
 - ❌ Unjustified: **0** (no verdict AND OUR work)
 
 | Category | Method | R@10 paper | Status | Evidence |
@@ -35,10 +35,10 @@
 | rqvae_c222 | HG-Rec c222 (κ=2.0) | 0.1036 | ✅ reproduced | task88_hgrec_perlayer_curvature_result.template.md |
 | rqvae_c215 | HG-Rec c215 (mixed) | 0.1028 | ✅ reproduced | task88_hgrec_perlayer_curvature_result.template.md |
 | rqvae_c111 | HG-Rec c111 (κ=1.0) | 0.0998 | ✅ reproduced | task84_hgrec_main_repro_instruments_result.md |
-| rqvae_freecurv | HG-Rec free-curv (κ→0) | 0.1015 | ✅ reproduced | task89_free_curv_product_manifold_result.md |
-| letter | LETTER | 0.0997 | ✅ reproduced | task61_letter_tiger_inference.md |
+| rqvae_freecurv | HG-Rec free-curv (κ→0) | 0.1015 | ✅ reproduced | task138_free_curv_A_B_scheme_fix_result.md |
+| letter | LETTER | 0.0997 | ✅ reproduced | task150_letter_paper_aligned_result.md |
 | tiger | TIGER | 0.0591 | ✅ reproduced | task23_pmrq2_tiger_result.md |
-| fdsa | FDSA | 0.0594 | ✅ reproduced | task80_fdsa_instruments_result.md |
+| fdsa | FDSA | 0.0594 | ✅ reproduced | task143_fdsa_paper_aligned_fix_no_go.md |
 | p5cid | P5-CID | 0.0413 | ✅ reproduced | task82_p5_cid_instruments_result.md |
 | sasrec | SASRec | 0.0557 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
 | narm | NARM | 0.0520 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
@@ -46,7 +46,7 @@
 | hgn | HGN | 0.0495 | ✅ reproduced | task95_hgn_test_eval_result.md |
 | bert4rec | BERT4Rec | 0.0452 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
 | lightgcn | LightGCN | 0.0455 | ✅ reproduced | task89_free_curv_product_manifold_result.md |
-| caser | Caser | 0.0463 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
+| caser | Caser | 0.0463 | ✅ reproduced | task141_caser_paper_aligned_fix_result.md |
 | stamp | STAMP | 0.0463 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
 | dmf | DMF | 0.0311 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |
 | bpr | BPR | 0.0359 | ⚠️ inherits paper-reported | no per-method verdict; paper-reported (cf. §5.7) |

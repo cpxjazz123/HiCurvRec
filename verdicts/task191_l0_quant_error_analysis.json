@@ -1,0 +1,32 @@
+{
+  "task": "task191_l0_quant_error_analysis",
+  "n_ckpts": 98,
+  "epoch_range": [
+    34,
+    794
+  ],
+  "L0_err_mean_range": [
+    0.082402,
+    0.252665
+  ],
+  "L0_err_mean_change_pct": 2.066248392029319,
+  "L0_err_p50_range": [
+    0.081213,
+    0.250795
+  ],
+  "L0_err_p90_range": [
+    0.110057,
+    0.321894
+  ],
+  "corr_L0_err_collision": 0.8611045255042623,
+  "epoch_step_monotonicity": {
+    "up": 74,
+    "down": 23,
+    "const": 0
+  },
+  "three_window_means": {
+    "early": 0.1521961875,
+    "mid": 0.22826475000000002,
+    "late": 0.24947567647058821
+  }
+}

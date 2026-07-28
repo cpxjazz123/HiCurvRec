@@ -1,0 +1,17 @@
+{
+  "task": "task176_posdep_sigmoid_t5small",
+  "arm": "posdep_sigmoid_T5small",
+  "recipe": "T5-small 5.5M (HG-Rec baseline capacity) + \u03ba-Stereographic + \u03b2(x) = \u03b2_base\u00b7sigmoid(-sign(\u03ba)\u00b7||x||\u00b2\u00b7scale) posdep commitment weight",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task176/t5small_posdep_sigmoid/jul-25-2026_14-12-03/Instruments/Jul-25-2026_14-12-55/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.07750160864852801,
+    "Recall@10": 0.09535875178614639,
+    "Recall@20": 0.11924871328398298
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06471908161359116,
+    "NDCG@10": 0.07043758841612624,
+    "NDCG@20": 0.0764976247792711
+  }
+}

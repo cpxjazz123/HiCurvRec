@@ -152,4 +152,55 @@
 
 **核心一句话**: **5 重独立证据闭环 (Stage 0 + 18/18 κ_m=0 + 损失一致 + A 臂下游 R@10=0.1015 + Task #82/88/117 历史) 强烈支持 "Musical_Instruments 数据本质欧氏, 曲率边际效应被数据噪声稀释" 的结论. Free-curvature product manifold 不带来下游 R@10 增益 (A 臂 -0.5% vs baseline). D 臂无需启动**.
 
-result: Task #89 — completed (R8 §9.3 retroactive compliance line appended by Task #114; refer to verdict body above for full details).
+---
+
+## 10. ⚠️ RETRO CAVEAT (2026-07-24, Task #135 闭环)
+
+**Task #135 诊断确认** `hrqvae_free_curv.py` line 152-178 + 207-231 有 **3 处硬分支梯度 bug**:
+
+1. **κ=0 Euclidean 分支**: `if k_m.item() == 0.0:` Python 硬分支 — κ 不在计算图里
+2. **κ<0 Poincaré 分支**: `c = (-k_m).item()` detach κ from graph
+3. **commitment/codebook loss**: 同 (1)+(2) 双重断点
+
+**唯一能 work 的分支: κ>0 (spherical)** (grad 通过 `theta / sqrt(kappa)` 流通).
+
+### 影响范围
+- Task #89 训练时 θ_m init = [0.0] → 所有 18 个 (layer, κ_m) 进入 κ=0 Euclidean 分支 → 1000 epoch 完全锁死精确 0.000000
+- 5 重证据 "数据本质欧氏" 结论**被 bug 污染** — 锁 0 是因为代码断层, 不是优化结果
+- 当前 verdict **保留 A 臂下游 R@10=0.1015** (那是已训 + already-evaluated model, 不重新训也能用), 但 **18/18 κ_m 全 0 结论必须待 bug 修复后重训验证**
+- B/C 臂下游未跑仍是合理决策 (即使修复后, A 臂下游 R@10 已锁 -0.5%, 重训 A 臂配 bug fix 后再下结论比补 B/C 更高效)
+
+### 状态
+- Task #89 verdict 当前: ✅ 已闭环 + ⚠️ retro caveat attached
+- 修复 + 重训是独立 Task #137+ (不在本任务范围)
+- 一旦 bug 修复 + 重训完成, 跑 `scripts/task89_stage1_train_rqvae.py` 3 臂 + Stage 4 eval 重新验证
+- 若修复后 θ_m 仍锁 0 → "数据本质欧氏" 结论确认 (但证据**干净**了, 无代码 bug 噪声)
+- 若修复后 θ_m 学到非 0 → "数据本质欧氏" 结论**强推翻**, paper Section 5.4 需重大重写
+
+### 🔄 验证状态更新 (2026-07-24 14:40, Task #137 A-arm ep 400)
+**Task #137 已完成 R137 fix + θ_init=0.01 escape fixed point + 启动 3 臂 retrain** (GPU 1, PID 2826511).
+A 臂 ep 400 中间观察 (`verdicts/task137_A_arm_interim_summary.md`):
+- L0 κ=+0.165, L1 κ=+0.077, L2 κ=+0.064, 全 sph 分支稳定
+- **"数据本质欧氏" 结论已被强推翻** (曲率有真实信号, 不是 bug artifact)
+- A 臂 Stage 2/3/4 下游验证待 1000 epoch 完成后启动 (ETA 今晚 ~21:00)
+
+### 关联
+- 详细诊断: `verdicts/task135_kappa_zero_gradient_path_audit_result.md`
+- JSON 数据: `verdicts/task135_step1_step2_diagnostic.json`
+- 诊断脚本: `scripts/task135_kappa_grad_diagnostic.py`
+- 后续 Task: Task #137 (✅ R137 fix 完成 + 3 臂 retrain A 臂 ep 400 验证 κ_m 非零, 推翻 5 重证据)
+
+result: Task #89 — completed (R8 §9.3 retroactive compliance line + Task #135 retro caveat appended + Task #137 A-arm ep 400 已验证 "数据本质欧氏" 结论**强推翻**; paper Section 5.4 需重大重写, A 臂 Stage 2/3/4 下游今晚 ~21:00 启动).
+
+### 🔒 终审状态更新 (2026-07-24, Task #138 闭环)
+
+**Task #138 试了 metric-mismatch 修复方向 (A 方案 geodesic kmeans init + B 方案 dead-code reset), 均未解决 codebook collapse**:
+- A 方案 (geodesic init): L0 utilization 从 Task #137 v1 的 ~1% 提到 54.7%, 但 L1 28.1% / L2 14.5% 仍坍缩, Stage 2 codebook 仅 **64 unique SID / 99.35% collision** (baseline 8936 unique 100% util)
+- B 方案 (dead-code reset): ❌ poincare ball 边界触发 NaN (ep 3), 不可用
+- κ_m 终值 **首次干净中间值** (+0.069/+0.043/+0.042 非饱和) → 反证坍缩 ≠ κ 饱和, 也 ≠ 单纯 metric mismatch
+
+**Task #89 free-curv product manifold RQ-VAE 框架终审: NO-GO, 永久放弃.**
+- "数据本质欧氏" 结论演进: R137 bug 污染 (κ 锁 0) → Task #137 推翻 (κ 学非零 +0.5 饱和) → **Task #138 终审框架本身不可行** (κ 干净但 codebook 坍缩)
+- paper Section 5.4 落点: free-curvature product manifold RQ-VAE 在 HG-Rec 实现下不可行, 用固定 κ=-1 baseline (Task #84, R@10=0.1020, utilization 100%) 作为 geometry 章节结论
+- C 方案 (EMA codebook) ROI < GPU 成本 (需改上游 VQ 核心, 高 risk), **不启动**
+- 详见 `verdicts/task138_free_curv_A_B_scheme_fix_result.md` + `memory/free-curv-codebook-collapse.md`

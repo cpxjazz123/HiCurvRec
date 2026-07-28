@@ -1,0 +1,163 @@
+{
+  "task": "task211_phase0_verify",
+  "n_items": 9922,
+  "orig_dim": 768,
+  "d_values": [
+    2,
+    4,
+    8
+  ],
+  "layer_configs": [
+    {
+      "layer": 0,
+      "K": 64,
+      "rho": 2.0
+    },
+    {
+      "layer": 1,
+      "K": 128,
+      "rho": 2.7
+    },
+    {
+      "layer": 2,
+      "K": 256,
+      "rho": 3.4
+    }
+  ],
+  "results": {
+    "2": {
+      "0": {
+        "dyn_range": 35.191392032965005,
+        "max_norm": 0.761594155955765,
+        "utilization": 1.0,
+        "min_angle_rad": 0.05683972892440066,
+        "unique_used": 64,
+        "K": 64,
+        "explained_var_sum": 0.1664001367073169,
+        "elapsed_sec": 0.36
+      },
+      "1": {
+        "dyn_range": 76.51516593202128,
+        "max_norm": 0.8740532878860071,
+        "utilization": 1.0,
+        "min_angle_rad": 0.026139345653822723,
+        "unique_used": 128,
+        "K": 128,
+        "explained_var_sum": 0.1664001367073169,
+        "elapsed_sec": 0.63
+      },
+      "2": {
+        "dyn_range": 164.90940763405294,
+        "max_norm": 0.9354090706030991,
+        "utilization": 1.0,
+        "min_angle_rad": 0.012127945089664777,
+        "unique_used": 256,
+        "K": 256,
+        "explained_var_sum": 0.1664001367073169,
+        "elapsed_sec": 1.32
+      }
+    },
+    "4": {
+      "0": {
+        "dyn_range": 6.510617591191768,
+        "max_norm": 0.761594155955765,
+        "utilization": 1.0,
+        "min_angle_rad": 0.3079898089687171,
+        "unique_used": 64,
+        "K": 64,
+        "explained_var_sum": 0.2475360326560633,
+        "elapsed_sec": 0.52
+      },
+      "1": {
+        "dyn_range": 8.787499259120276,
+        "max_norm": 0.8740532878860071,
+        "utilization": 1.0,
+        "min_angle_rad": 0.2278925868326597,
+        "unique_used": 128,
+        "K": 128,
+        "explained_var_sum": 0.2475360326560633,
+        "elapsed_sec": 0.78
+      },
+      "2": {
+        "dyn_range": 12.67629808342705,
+        "max_norm": 0.9354090706030992,
+        "utilization": 1.0,
+        "min_angle_rad": 0.15787802183597266,
+        "unique_used": 256,
+        "K": 256,
+        "explained_var_sum": 0.2475360326560633,
+        "elapsed_sec": 1.95
+      }
+    },
+    "8": {
+      "0": {
+        "dyn_range": 4.660807918754621,
+        "max_norm": 0.761594155955765,
+        "utilization": 1.0,
+        "min_angle_rad": 0.4219322696154977,
+        "unique_used": 64,
+        "K": 64,
+        "explained_var_sum": 0.3407813137740781,
+        "elapsed_sec": 0.7
+      },
+      "1": {
+        "dyn_range": 5.79412628381048,
+        "max_norm": 0.8740532878860071,
+        "utilization": 1.0,
+        "min_angle_rad": 0.3404341691169416,
+        "unique_used": 128,
+        "K": 128,
+        "explained_var_sum": 0.3407813137740781,
+        "elapsed_sec": 1.55
+      },
+      "2": {
+        "dyn_range": 8.10050065801994,
+        "max_norm": 0.9354090706030991,
+        "utilization": 1.0,
+        "min_angle_rad": 0.24534010569195777,
+        "unique_used": 256,
+        "K": 256,
+        "explained_var_sum": 0.3407813137740781,
+        "elapsed_sec": 2.51
+      }
+    }
+  },
+  "decision": {
+    "2": {
+      "layers_pass": [
+        true,
+        true,
+        true
+      ],
+      "all_pass": true,
+      "any_pass": true,
+      "recommendation": "GO"
+    },
+    "4": {
+      "layers_pass": [
+        true,
+        true,
+        true
+      ],
+      "all_pass": true,
+      "any_pass": true,
+      "recommendation": "GO"
+    },
+    "8": {
+      "layers_pass": [
+        true,
+        true,
+        true
+      ],
+      "all_pass": true,
+      "any_pass": true,
+      "recommendation": "GO"
+    }
+  },
+  "recommended_d": 2,
+  "gates": {
+    "dyn_range_min": 2.0,
+    "max_norm_max": 0.95,
+    "utilization_min": 0.9
+  }
+}
