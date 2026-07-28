@@ -255,24 +255,27 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-29 02:59 AEST)**: Issue #9 + #10 + #12 都已 NO-GO 闭环. **Task #243 训练时长 Stage 3 (GPU 1/2, PID 3000689/3000695) 在跑**. GPU 0/3 空闲, 等 Task #243 完成后跑 Stage 4 eval × 2.
+> **🟡 §16 当前状态 (2026-07-29 03:13 AEST)**: Issue #9 + #10 + #11 + #12 都已 NO-GO 闭环. **Task #243 训练时长 Stage 3 (GPU 1/2, PID 3000689/3000695) 仍在跑 (epoch 34, 23 min wall)**. GPU 0/3 空闲. Task #245 (Issue #10 Gate 0 revisit) + Task #246 (paper-aligned ranking v3) 已闭环 + commit.
 
 ### 已闭环 (近 24 小时)
 
 | Issue | 任务 | 状态 |
 |-------|------|:----:|
 | #9 | Task #234/235 hybrid per-layer assignment | ❌ FULL NO-GO (Gate 1 FAIL: L0 util 12.5%, L1/L2 util 0.78%, collision 0.9988) |
-| #10 | Task #236/237 collision 3-arm | ❌ Gate 1 PARTIAL FAIL (Arm B R@10=0.1021 ≈ A 持平; 3-arm 退化为 2-arm) |
+| #10 | Task #236/237/245 collision 口径 + 3-arm | ❌ Gate 0 PASS (#236/#245) + Gate 1 PARTIAL FAIL (#237: Arm B R@10=0.1021 ≈ A 持平) |
 | #11 | Task #241/242 per-layer c_k range | ❌ Gate 1b FULL NO-GO (Arm A L0 23.44%, Arm A+ dead_revive L0 3.12%) |
 | #12 | Task #244 SID 沙漏集中度分布画像 | ❌ Gate 0 FAIL (排除 L3 K=1: 0 个 arm 满足 Gini ≥ 0.5 AND util ≥ 0.9) |
+| (排名) | Task #246 paper-aligned ranking v3 增量 | ✅ done (Caser 0.0463→0.0378, LETTER 0.0997→0.0509) |
 
 ### 活跃训练 (Task #243 训练时长作为 R@10 真正变量)
 
 | Task | GPU | 状态 | 说明 |
 |------|-----|:----:|------|
-| Task #243 epoch=200 | GPU 1 (util 87%) | 🏃 running | T5-mini 9.18M, ~15 min 跑完, ckpt 02:57 更新 |
-| Task #243 epoch=400 | GPU 2 (util 81%) | 🏃 running | T5-mini 9.18M, 估计 ~174 min wall |
+| Task #243 epoch=200 | GPU 1 (util 96%) | 🏃 running | T5-mini 9.18M, epoch 34/200, ckpt 03:07 更新 |
+| Task #243 epoch=400 | GPU 2 (util 95%) | 🏃 running | T5-mini 9.18M, epoch 34/400, 估计 ~2h+ wall |
 | Task #244 Issue #12 Gate 0 | — | ✅ done | NO-GO, commit done, GitHub issue closed |
+| Task #245 Issue #10 Gate 0 revisit | — | ✅ done | Gate 0 PASS + GitHub 评论落定 |
+| Task #246 paper-aligned ranking v3 | — | ✅ done | ranking 增量更新 + retro-label |
 
 ### 等用户决策 (Task #238 Issue #10 redesign 4-arm 单变量设计)
 
@@ -306,13 +309,20 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 - v12 (16D hyp) 起跑 8.35% ✅, 从未达到 5cond 全 PASS
 - **没有任何 epoch 同时满足两个目标**: tuple collision ≤ 12% AND 5cond PASS = binary trade-off
 
-### HG-Rec paper-aligned fixes (paper §6.7 收口)
+### HG-Rec paper-aligned fixes (paper §6.7 收口, Task #246 v3 ranking)
 
-- ✅ LETTER paper-aligned fix (Task #141): R@10=0.0378 (underperforms baseline)
-- ✅ Caser paper-aligned fix (Task #141): R@10 验证
-- ✅ S3Rec paper-aligned fix (Task #140): Stage 3 rerun
-- ✅ FDSA paper-aligned fix (Task #143): 准备实施
-- ✅ κ-decouple backlog (Task #143+144)
+- ✅ LETTER paper-aligned fix (Task #150): R@10=0.0509 (paper 0.0581, Δ -12.4%, ∈ paper ±25%)
+- ✅ Caser paper-aligned fix (Task #141): R@10=0.0378 (paper 0.0392, Δ -3.6%, ∈ paper ±5% 下限)
+- ❌ FDSA paper-aligned fix (Task #143): NO-GO 撤回 (paper R@10 数字理解错 + paper FDSA 用 class feature 假设错). 沿用 Task #85 RecBole default R@10=0.0594
+- ❌ S3Rec paper-aligned fix (Task #140/148): in progress (yaml 默认 `train_stage='pretrain'` 错配)
+- ❌ P5-CID paper-aligned fix (Task #151): in progress (5-task trainer cycle 修复)
+- ✅ ranking v3 增量更新 (Task #246): Caser 0.0463→0.0378, LETTER 0.0997→0.0509. 论文 Section 5.4 必须用 v3 ranking
+
+**paper-aligned systematic bias 重述** (Task #246 §5.2):
+- 11 个 baseline 中 7 个 ±10% 内 (不再是"系统性偏低")
+- paper-aligned fix 真实价值: LETTER (Δ +57.5% outlier) → -12.4% (合理), Caser (Δ +18.1% outlier) → -3.6% (合理)
+- 仍有大偏差的 4 个: HGN (-48.4%), ETEGRec (-56.7%), P5-CID (-18.5%), P5-SID (-99.2% eval_only 限制)
+- **核心结论**: paper-aligned fix 把 "+ve outlier" 拉回真实档位, 强化 "RQ-VAE + T5 生成 vs 其他 generative" 的领先幅度
 
 ### Phase 0 fix (码字范数归一化)
 
