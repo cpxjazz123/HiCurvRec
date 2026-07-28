@@ -255,34 +255,41 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-29 03:13 AEST)**: Issue #9 + #10 + #11 + #12 都已 NO-GO 闭环. **Task #243 训练时长 Stage 3 (GPU 1/2, PID 3000689/3000695) 仍在跑 (epoch 34, 23 min wall)**. GPU 0/3 空闲. Task #245 (Issue #10 Gate 0 revisit) + Task #246 (paper-aligned ranking v3) 已闭环 + commit.
+> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#11/#12 已 NO-GO 闭环, Issue #10 仍 OPEN (Gate 0 PASS + Sinkhorn 旋钮 FAIL + 等用户决策方向 A1/A2/B/C). Issue #16 已 CLOSED (Gate 0/1 闭环, NO-GO 保留, 证据已更新). 4 GPU 全空闲, 无活跃训练. 顶部表更新: Task #243 已死 (无 PID + GPU 0%), R12 ckpt 已存但 Stage 4 eval 未跑 (R11.4 用户决策).
 
 ### 已闭环 (近 24 小时)
 
 | Issue | 任务 | 状态 |
 |-------|------|:----:|
 | #9 | Task #234/235 hybrid per-layer assignment | ❌ FULL NO-GO (Gate 1 FAIL: L0 util 12.5%, L1/L2 util 0.78%, collision 0.9988) |
-| #10 | Task #236/237/245 collision 口径 + 3-arm | ❌ Gate 0 PASS (#236/#245) + Gate 1 PARTIAL FAIL (#237: Arm B R@10=0.1021 ≈ A 持平) |
+| #10 | Task #236/237/245/259/260 collision 口径 + 3-arm + Sinkhorn 扫描 | ❌ Gate 0 PASS (#236/#245/#259) + Gate 1 Sinkhorn 旋钮 FAIL (#260: vanilla 上 5 iter 即 full convergence, 三臂无 ≥ 15pp 分离) |
 | #11 | Task #241/242 per-layer c_k range | ❌ Gate 1b FULL NO-GO (Arm A L0 23.44%, Arm A+ dead_revive L0 3.12%) |
 | #12 | Task #244 SID 沙漏集中度分布画像 | ❌ Gate 0 FAIL (排除 L3 K=1: 0 个 arm 满足 Gini ≥ 0.5 AND util ≥ 0.9) |
+| #13 | Task #248/249/253/254 Möbius 残差 4-gate | ❌ NO-GO (Gate 2 实测 R@10=0.000403 但被 #16 越闸 audit, 证据基础退回到 task225 0.0938 -8.1%) |
+| #16 | Task #257/258 #13 Gate 2 越闸 audit | ✅ CLOSED (Gate 0 PASS 取回全产物 + Gate 1 STOP: L0 util<90% stop-loss 越闸, 0.000403 作废) |
 | (排名) | Task #246 paper-aligned ranking v3 增量 | ✅ done (Caser 0.0463→0.0378, LETTER 0.0997→0.0509) |
 
-### 活跃训练 (Task #243 训练时长作为 R@10 真正变量)
+### 活跃任务 (R12 ckpt 已存, Stage 4 eval 待 R11.4 用户决策)
 
 | Task | GPU | 状态 | 说明 |
 |------|-----|:----:|------|
-| Task #243 epoch=200 | GPU 1 (util 96%) | 🏃 running | T5-mini 9.18M, epoch 34/200, ckpt 03:07 更新 |
-| Task #243 epoch=400 | GPU 2 (util 95%) | 🏃 running | T5-mini 9.18M, epoch 34/400, 估计 ~2h+ wall |
-| Task #244 Issue #12 Gate 0 | — | ✅ done | NO-GO, commit done, GitHub issue closed |
-| Task #245 Issue #10 Gate 0 revisit | — | ✅ done | Gate 0 PASS + GitHub 评论落定 |
-| Task #246 paper-aligned ranking v3 | — | ✅ done | ranking 增量更新 + retro-label |
+| Task #243 epoch=200/400 | (历史 GPU 1/2) | ☠️ dead (无 PID, GPU 0%) | T5-mini 9.18M, R12 ckpt 已存 (`products/task243/t5mini_epoch{200,400}/Instruments/Jul-29-2026_02-44-41/HG_Rec_best.pth` 22MB), Stage 4 eval 未跑 |
 
-### 等用户决策 (Task #238 Issue #10 redesign 4-arm 单变量设计)
+### 等用户决策 (Issue #10 方向选择, R11.4 不可逆)
 
-候选方向 (R11.4 关键决策, **必须用户拍板**):
-- **方向 A (推荐)**: vanilla Euclidean RQ-VAE 4 臂 (A baseline + D vanilla + E vanilla+S-during-train + F hyp+S-during-train) 单变量隔离 hyp-vs-euc + Sinkhorn-during-train 效应. ~13h wall-clock + 12 min eval (R11.4 提议 4-arm 单变量分解, 详见 descriptions/task238_issue10_redesign_collision_lever.md)
-- **方向 B (保守)**: 接受当前 Issue #10 NO-GO 结论, 关闭 issue, 把精力转到其他方向 (e.g. 跨架构 LETTER/S3Rec paper-aligned fix 后的 R@10 重新基线)
-- **方向 C (激进)**: 用户提新方向 (e.g. 完全不同的几何路线)
+候选方向 (按 Sinkhorn 扫描 #260 新增 / 修订):
+- **方向 A1 (新推荐)**: 换旋钮为 **β + Sinkhorn 联合** (β ∈ {0.5, 1.0, 2.0}) 制造三层 utilization 差异. 但需 Stage 1 重训 3 次, 估约 2-4 小时 GPU. Sinkhorn 仍可能无效 (#260 evidence).
+- **方向 A2 (新)**: 接受 **Issue #10 H1 在 vanilla 族内不成立** (Sinkhorn 旋钮证据), 直接关 issue, 结论 NO-GO. 证据链: #260 Sinkhorn 扫描 + #259 Gate 0 重述 + task225 §5 同 collision 跨机制 R@10 0.0615 vs 0.1020.
+- **方向 B (保守, 等价 A2)**: 接受当前 Issue #10 NO-GO 结论, 关闭 issue.
+- **方向 C (激进)**: 用户提新方向 (e.g. 完全不同的几何路线).
+
+scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
+
+### 等用户决策 (Task #243 Stage 4 eval)
+
+- Task #243 epoch=200 R12 ckpt 已存 (`HG_Rec_best.pth` 22MB at `products/task243/t5mini_epoch200/Instruments/Jul-29-2026_02-44-41/`)
+- Task #243 epoch=400 R12 ckpt 已存 (`HG_Rec_best.pth` 22MB at `products/task243/t5mini_epoch400/Instruments/Jul-29-2026_02-44-41/`)
+- Stage 4 eval 没跑. R11.4 用户决策: 是否跑 (~2 min per ckpt eval) 来验证"训练时长是否 R@10 真正变量". 任务原始动机是 task233 #243 是 budget-fix control arm.
 
 
 ## §17. 历史归档 (从 §16 移出)
