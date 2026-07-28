@@ -255,30 +255,32 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟢 §16 当前状态 (2026-07-29)**: Issue #9 + Issue #10 都已 NO-GO 闭环. 4× L40S GPU 全空闲 (util 0%, mem 0 MiB). 等用户决策下一步方向 (R11.4 关键决策).
+> **🟡 §16 当前状态 (2026-07-29 02:59 AEST)**: Issue #9 + #10 + #12 都已 NO-GO 闭环. **Task #243 训练时长 Stage 3 (GPU 1/2, PID 3000689/3000695) 在跑**. GPU 0/3 空闲, 等 Task #243 完成后跑 Stage 4 eval × 2.
 
 ### 已闭环 (近 24 小时)
 
 | Issue | 任务 | 状态 |
 |-------|------|:----:|
 | #9 | Task #234/235 hybrid per-layer assignment | ❌ FULL NO-GO (Gate 1 FAIL: L0 util 12.5%, L1/L2 util 0.78%, collision 0.9988) |
-| #10 | Task #236/237 collision 3-arm + Task #238 redesign | ❌ Gate 1 PARTIAL FAIL (Arm B R@10=0.1021 ≈ A 持平; 3-arm 退化为 2-arm) |
+| #10 | Task #236/237 collision 3-arm | ❌ Gate 1 PARTIAL FAIL (Arm B R@10=0.1021 ≈ A 持平; 3-arm 退化为 2-arm) |
+| #11 | Task #241/242 per-layer c_k range | ❌ Gate 1b FULL NO-GO (Arm A L0 23.44%, Arm A+ dead_revive L0 3.12%) |
+| #12 | Task #244 SID 沙漏集中度分布画像 | ❌ Gate 0 FAIL (排除 L3 K=1: 0 个 arm 满足 Gini ≥ 0.5 AND util ≥ 0.9) |
+
+### 活跃训练 (Task #243 训练时长作为 R@10 真正变量)
+
+| Task | GPU | 状态 | 说明 |
+|------|-----|:----:|------|
+| Task #243 epoch=200 | GPU 1 (util 87%) | 🏃 running | T5-mini 9.18M, ~15 min 跑完, ckpt 02:57 更新 |
+| Task #243 epoch=400 | GPU 2 (util 81%) | 🏃 running | T5-mini 9.18M, 估计 ~174 min wall |
+| Task #244 Issue #12 Gate 0 | — | ✅ done | NO-GO, commit done, GitHub issue closed |
 
 ### 等用户决策 (Task #238 Issue #10 redesign 4-arm 单变量设计)
 
 候选方向 (R11.4 关键决策, **必须用户拍板**):
 - **方向 A (推荐)**: vanilla Euclidean RQ-VAE 4 臂 (A baseline + D vanilla + E vanilla+S-during-train + F hyp+S-during-train) 单变量隔离 hyp-vs-euc + Sinkhorn-during-train 效应. ~13h wall-clock + 12 min eval (R11.4 提议 4-arm 单变量分解, 详见 descriptions/task238_issue10_redesign_collision_lever.md)
 - **方向 B (保守)**: 接受当前 Issue #10 NO-GO 结论, 关闭 issue, 把精力转到其他方向 (e.g. 跨架构 LETTER/S3Rec paper-aligned fix 后的 R@10 重新基线)
-- **方向 C (激进)**: 用户提新方向 (e.g. 训练时长作为 R@10 真正变量 / 完全不同的几何路线)
+- **方向 C (激进)**: 用户提新方向 (e.g. 完全不同的几何路线)
 
-### GPU 状态 (R7)
-
-| GPU | util | mem |
-|-----|------|-----|
-| 0 | 0% | 0 MiB |
-| 1 | 0% | 0 MiB |
-| 2 | 0% | 0 MiB |
-| 3 | 0% | 0 MiB |
 
 ## §17. 历史归档 (从 §16 移出)
 
