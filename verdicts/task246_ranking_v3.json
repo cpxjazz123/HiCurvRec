@@ -1,0 +1,45 @@
+{
+  "task_id": 246,
+  "title": "paper-aligned fixes 增量更新综合 ranking (v3)",
+  "date": "2026-07-29",
+  "baseline": "task87 v2 (2026-07-24)",
+  "incremental_changes": {
+    "Caser": {"old_r10": 0.0463, "new_r10": 0.0378, "delta_pct": -3.6, "source": "task141 paper-aligned fix"},
+    "LETTER": {"old_r10": 0.0997, "new_r10": 0.0509, "delta_pct": -12.4, "source": "task150 paper-aligned fix"},
+    "FDSA": {"old_r10": 0.0594, "new_r10": 0.0594, "delta_pct": 6.6, "source": "task143 fix 撤回, 沿用 task85"}
+  },
+  "ranking_v3": [
+    {"rank": 1, "method": "phonism (vanilla RQ-VAE + SINKHORN)", "r10": 0.1058, "delta_pct": null, "source": "task32"},
+    {"rank": 2, "method": "HG-Rec c555", "r10": 0.1051, "delta_pct": -22.4, "source": "task88"},
+    {"rank": 3, "method": "HG-Rec c222", "r10": 0.1036, "delta_pct": null, "source": "task88"},
+    {"rank": 4, "method": "HG-Rec c215", "r10": 0.1028, "delta_pct": null, "source": "task88"},
+    {"rank": 5, "method": "HG-Rec c111 (baseline)", "r10": 0.1020, "delta_pct": -22.4, "source": "task84"},
+    {"rank": 6, "method": "HG-Rec c1055", "r10": 0.1015, "delta_pct": null, "source": "task88"},
+    {"rank": 7, "method": "HG-Rec A-arm (free-curv κ=0)", "r10": 0.1015, "delta_pct": null, "source": "task89"},
+    {"rank": 8, "method": "HG-Rec c512", "r10": 0.0998, "delta_pct": null, "source": "task88"},
+    {"rank": 9, "method": "DuoRec", "r10": 0.0672, "delta_pct": 48.0, "source": "task91"},
+    {"rank": 10, "method": "FDSA", "r10": 0.0594, "delta_pct": 6.6, "source": "task85"},
+    {"rank": 11, "method": "TIGER", "r10": 0.0591, "delta_pct": 2.9, "source": "task78/task84"},
+    {"rank": 12, "method": "SASRec", "r10": 0.0557, "delta_pct": 5.1, "source": "task72"},
+    {"rank": 13, "method": "NARM", "r10": 0.0520, "delta_pct": null, "source": "task72"},
+    {"rank": 14, "method": "LETTER (paper-aligned)", "r10": 0.0509, "delta_pct": -12.4, "source": "task150"},
+    {"rank": 15, "method": "GRU4Rec", "r10": 0.0513, "delta_pct": -4.5, "source": "task72"},
+    {"rank": 16, "method": "HGN", "r10": 0.0495, "delta_pct": -48.4, "source": "task95"},
+    {"rank": 17, "method": "STAMP", "r10": 0.0463, "delta_pct": null, "source": "task72"},
+    {"rank": 18, "method": "LightGCN", "r10": 0.0455, "delta_pct": 0.2, "source": "task89"},
+    {"rank": 19, "method": "BERT4Rec", "r10": 0.0452, "delta_pct": -6.4, "source": "task72"},
+    {"rank": 20, "method": "P5-CID", "r10": 0.0413, "delta_pct": -18.5, "source": "task82"},
+    {"rank": 21, "method": "Caser (paper-aligned)", "r10": 0.0378, "delta_pct": -3.6, "source": "task141"},
+    {"rank": 22, "method": "BPR", "r10": 0.0359, "delta_pct": null, "source": "task72"},
+    {"rank": 23, "method": "DMF", "r10": 0.0311, "delta_pct": null, "source": "task72"},
+    {"rank": 24, "method": "ETEGRec", "r10": 0.0264, "delta_pct": -56.7, "source": "task74-77"},
+    {"rank": 25, "method": "Pop", "r10": 0.0261, "delta_pct": null, "source": "task72"},
+    {"rank": 26, "method": "P5-SID", "r10": 0.000366, "delta_pct": -99.2, "source": "task86"},
+    {"rank": 27, "method": "Random", "r10": 0.0003, "delta_pct": null, "source": null}
+  ],
+  "retro_labels": {
+    "Caser_0.0463": "task87 报告的 paper-aligned 实际是 RecBole default yaml 在 paper Caser 真实设置下的 over-trained '+ve outlier' (+18.1%), 跟 paper Caser 配置不严格对齐. task141 paper-aligned 真实值 = 0.0378.",
+    "LETTER_0.0997": "task87 报告的 paper-aligned 实际是 lr=5e-4/batch=256/epochs=200 over-trained '+57.5% outlier', 跟 paper LETTER 默认 lr=2e-5/batch=8/epochs=4 不一致. task150 paper-faithful 真实值 = 0.0509."
+  },
+  "result": "Task #246 v3 ranking 闭环. Caser 0.0463→0.0378, LETTER 0.0997→0.0509, FDSA 不变. paper-aligned fix 把 '+ve outlier' 拉回真实档位. 论文 Section 5.4 应更新 v3 ranking."
+}
