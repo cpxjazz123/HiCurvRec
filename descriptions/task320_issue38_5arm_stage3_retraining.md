@@ -53,6 +53,20 @@
 - **推测 (08:16)**: 50 epoch 完成后 adam/adamw 预期 val_R@10=0.119-0.122, task320 Arm A 200 epoch (cosine + warmup + lr=1e-3) 期望 val_R@10=0.13-0.15
 - **implication**: Issue #38 Stage 3 Optimizer 改造路径 GO 几乎确定. adam/adamw 即使 constant LR 也实质突破, task320 Arm A 叠加 cosine + warmup 期望进一步突破
 
+## task318 final results (08:26, 50 epoch proxy test completed)
+**AdamW 最佳 ⭐⭐⭐ val_R@10=0.1204 (+14.3% vs anchor 0.1053)**
+- **adamw ep50** (08:26): val_NDCG@20=0.0947, val_R@10=0.1204 ⭐⭐⭐ (+14.3% vs anchor 0.1053) ⭐最佳
+- **adam ep50** (08:26): val_NDCG@20=0.0947, val_R@10=0.1185 ⭐ (+12.5% vs anchor)
+- **sgd ep50** (08:26): val_NDCG@20=0.0862, val_R@10=0.1088 (+3.3% vs anchor)
+- **adafactor ep50** (08:26): val_NDCG@20=0.0775, val_R@10=0.0969 (-8.0% vs anchor, NO-GO)
+
+## task320 5-arm 启动 (08:27)
+- Arm A: GPU 0 ✅ (AdamW lr=1e-3 + cosine + warmup 5000 + dropout 0.05)
+- Arm B: GPU 1 ✅ (Adam + inv_sqrt + warmup 10000 + dropout 0.1)
+- Arm D: GPU 2 ✅ (BF16 mixed precision) — 初次启动误配 GPU 3, kill + relaunch (commit 439fa6f)
+- Arm E: GPU 3 ✅ (control = baseline)
+- Arm C: 待启动 (等任一 arm 完成) — R-Drop alpha=1.0, 2 forward passes
+
 ## Task structure
 - task320_armA_optimizer_200ep.sh
 - task320_armB_lr_schedule_200ep.sh
