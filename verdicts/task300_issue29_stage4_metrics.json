@@ -1,0 +1,16 @@
+{
+  "task": "task300_issue29_per_layer_k",
+  "recipe": "per-layer K_l=[128,64,32] (Issue #29)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task300/ckpt_hgrec_issue29/Instruments/Jul-30-2026_00-17-08/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.0789092665782709,
+    "Recall@10": 0.09785231653759148,
+    "Recall@20": 0.11989221382440288
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06770752320015752,
+    "NDCG@10": 0.0737536619111723,
+    "NDCG@20": 0.07932910751047972
+  }
+}
