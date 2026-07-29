@@ -91,3 +91,4 @@
 ---
 
 **最终判定**: κ-Stereographic × T5-5.5M **未达 baseline 0.1058** (test R@10=0.0997, -5.8%). val/test gap -19.0%, 跟 §6.2.1 "R3 falsified" 一致. **2/4 档 capacity ablation 已证实 κ-Stereographic 是 val-only improvement**. R2 大概率完全 falsified.
+result: Task #168 — κ-Stereographic × T5-5.5M Stage 4 Test Result

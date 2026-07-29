@@ -156,3 +156,4 @@ Gromov_k = ½ · (d(0,z) + d(0,e_k) - d(z,e_k))
 ---
 
 (本文档覆盖 Task #219 Phase 0 判据检查, 出结果 + 推荐调参版 Task #221, 不阻塞用户决策.)
+result: Task #219 — 逃法二 (Gromov Product) 判据检查

@@ -187,3 +187,5 @@
 - [x] Final verdict (本文件)
 - [ ] v3 Stage 3 长训 (200 epoch + early_stop=30) — 留给下一轮 task
 - [ ] paper.md 更新 (含 R3 否证子节)
+
+result: Task #164 — 最终结果

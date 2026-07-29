@@ -137,3 +137,4 @@ L0 一致率 28.90% — 64 个码字 + c_k ∈ [0.5, 20] 太散:
 ---
 
 (本文档覆盖 Task #218 Phase 0 判据检查, 出结果 + 推荐调参版 Task #220, 不阻塞用户决策.)
+result: Task #218 — 逃法一 (Per-Codeword Curvature) 判据检查

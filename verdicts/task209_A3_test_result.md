@@ -87,3 +87,5 @@ A3 NO-GO 闭环了 **Task #209 软约束 + path_reg hyp** 完整 path. 累积证
 - `logs/task209/A3_stage4_eval_jul-26-2026_19-51-49.log` (eval 日志)
 
 **result:** ❌ Task #209 A3 test R@10=0.0863 (-15.4% vs HG-Rec baseline 0.1020). val/test gap -18% 提示 path_reg hyp 软约束版有过拟合. 路径正则化对 generalization 无帮助, NO-GO 闭环 Phase 1 软约束路径.
+
+result: Task #209 — Test Eval Verdict

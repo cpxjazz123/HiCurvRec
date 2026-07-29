@@ -21,3 +21,5 @@ max_diff=4.05e-07, threshold=1e-5
 ---
 
 **result:** ✅ Check #1 PASS
+
+result: Task #209 — Task #209 (auto-extracted fallback)

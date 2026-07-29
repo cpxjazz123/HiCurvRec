@@ -133,3 +133,5 @@
 ---
 
 **result:** Task #182 欧式 RQ-VAE + loss×4 完全坍缩, Stage 1 collision 始终 99%+, mode collapse from epoch 9. 欧式 + commitment ×4 + β=1.0 三重组合让码字失去区分能力. 不推进 Stage 2/3/4. 后续不重试欧式方向.
+
+result: Task #182 — 欧式 RQ-VAE + 量化 loss ×4 (NO-GO, Stage 1 完全坍缩)

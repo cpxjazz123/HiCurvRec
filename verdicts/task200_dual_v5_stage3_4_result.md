@@ -119,3 +119,4 @@ baseline 对照:
 ---
 
 **result:** #200 dual_v5 Stage 3 异常中断于 ep 93/200 (silent death, R12 best_ckpt 救场 22 MB), Stage 4 test R@10 = 0.0915 (vs HG-Rec #84 baseline 0.1020, **-10.3% drop**). 用户"v5 collision 84% SID 性能持平" 预测**失败**: 实际所有指标全面下降. 双码本 #200 Phase 0+1 修复路径 (Phase 1 v5 跟 Sinkhorn + 双码本解耦) 在 Stage 3+4 端到端验证**没救** baseline.
+result: Task #200 — Task #200 (auto-extracted fallback)

@@ -58,3 +58,4 @@
 - #222: Stage 1 训练 (Phase 2 healthy ckpt 锁定)
 - #224 (待登记): Stage 3 T5-mini 训练
 - #225 (待登记): Stage 4 test eval
+result: Task #223 — Stage 2 SID 推断 结果

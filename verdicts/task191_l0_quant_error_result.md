@@ -207,3 +207,5 @@ SGD 优化 RQ-VAE 损失 = `recon_loss + β · quant_loss`. 训练后期:
 ---
 
 **result:** Task #191 L0 量化误差机制坐实. ‖z − e_L0‖ 从 ep34 的 0.082 单调↑到 ep794 的 0.253 (+207%), 跟 collision 相关 0.861, 三窗口均值 0.152→0.228→0.250 逐级上升. L0 码本容量受限是瓶颈, 全 4 层 collision 单调↑ 是果.
+
+result: Task #191 — L0 量化误差 ‖z − e_L0‖ 随 epoch 变化 (机制坐实)

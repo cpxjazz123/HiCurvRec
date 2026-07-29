@@ -76,3 +76,5 @@ Issue #11 推荐 Arm A 的核心论点是：L1/L2 用更宽区间 (U(0.5, 20)) �
 - `products/task242/hrqvae_perlayer_ck/Jul-29-2026_02-32-39_*/epoch_*_collision_*_model.pth` (epochs 9/14/19/24/29/34/39, R12 save_limit 5)
 - `logs/task242/perlayer_ck_stage1_train.out`
 - `scripts/task242_issue11_gate1_perlayer_stage1.sh`
+
+result: Task #242 — NO-GO

@@ -162,3 +162,4 @@ code = ((x_q - z_for_assign.detach()) ** 2).sum(-1).mean()
 - ✅ **清单 3 关键发现** — 流水线 ep1 init_emb 时, **cos_mean=0.98+ (方向高度集中)** + **latent_norm_p50=0.0856 (3.5× 小于隔离)** → **encoder 输出形态完全不同**
 - ❌ **流水线 collision v4 (99%) 反而比 v3 (97%) 略高** — 清单 1 fix (rec_grad 修复) 不能解决**encoder 输出形态问题**
 - ⏳ **清单 4-5 等用户决策** — A encoder 约束 / B init 中心化 / C 长训 / D 接受 v3 走 Stage 3
+result: Task #200 — 用户 5 点诊断清单 (1-3) 阶段性 verdict

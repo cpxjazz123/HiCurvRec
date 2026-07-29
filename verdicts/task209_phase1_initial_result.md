@@ -82,3 +82,5 @@ A3 epoch 0-1000 collision 一直 0.9999 不变 — 完全无学习.
 - `products/task209/_TRAINING_PID_arm_*` (PID 已停, 可清理)
 
 **result:** ❌ Phase 1 FAIL — 4 臂 collision ≈ 0.99 (vs baseline 0.06), 根因: HVectorQuantization hard-norm 投影夹断 kmeans 方向, 触发 mode collapse. 修复: 改 `--norm_target + --gamma_norm` 软约束, 撤回硬投影 patch, 重跑 4 臂.
+
+result: Task #209 — NO-GO

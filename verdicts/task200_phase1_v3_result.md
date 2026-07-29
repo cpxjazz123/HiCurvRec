@@ -128,3 +128,4 @@ PID: 229797 (killed at epoch 166/1000 by manual stop, 2:35 elapsed)
 - ✅ **train_loss 稳定**: 60-83 (vs v2 飞涨 15720)
 - ❌ **collision 97%**: 远高于期望 30-50%, Stage 2 SID 质量待 Stage 3 验证
 - ⏳ **待用户决策**: A 接受 / B 长训 / C 调 β / D 启 Sinkhorn
+result: Task #200 — 双码本 50 epoch 冒烟 verdict

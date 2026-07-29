@@ -134,3 +134,4 @@ Phase 0 任务:**不训练, 只验证 init_emb 是否产生可用码本**(4 个�
 ---
 
 **result: Phase 0 双码本几何解耦 init ✅ PASS — L0 加 z=z-mean(z) 中心化后三层全过 (util=1.0, cos_mean ∈ [-0.05, 0.15], n_dup=0, min‖r‖ > 0.018). 锥体诊断证实用户洞察: L0 cone_ratio=0.51 需中心化, L1/L2 <0.18 天然中心化. 下一步: Phase 1 单臂 50 epoch 冒烟.**
+result: Task #200 — 双码本几何解耦 初始化验证 (v3 通过)

@@ -136,3 +136,5 @@
 ---
 
 **result:** Task #188 paper Table 7 多 seed 方差复现完成. **R@10 均 0.1014-0.1033, std ≤ 0.0015 (R2 ✅, 多 seed 验证不必要). R1 不成立 (4 tier R@10 差异 < 1.5%, collision 上行下游不显示)**. 跟 Task #191/192/193 综合, 真正 controlling variable 是 L0 K0 容量或 decoder 重建约束.
+
+result: Task #188 — paper Table 7 多种子方差复现

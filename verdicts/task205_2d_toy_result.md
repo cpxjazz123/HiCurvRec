@@ -214,3 +214,4 @@ L_hier = Σ max(0,  d_H(a, b; c_large) − d_H(a, e; c_large) + margin)
 - 这是**累积第 7 阶段 κ 实验**, 加上未跑的"欧式 vs 双曲 (collision 对齐)"实验, 共同决定 paper 基调
 
 **用户原 18× 是近似失效**, 但**用户给的"曲率该用在层级 margin 而非 argmin"设计方向正确**.
+result: Task #205 — 2D 玩具: 最近邻距离 + 动态范围 (用户 2026-07-26 修正指标后)

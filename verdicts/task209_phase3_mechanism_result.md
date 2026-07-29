@@ -67,3 +67,5 @@ description 期望:
 ---
 
 **result:** ✅ Phase 3.1 部分完成 — A3 几何激活成功 (‖x‖_E=0.756/0.870/0.927, λ_κ=4.67/8.24/14.19, sinh(ρ)=2.16/2.76/3.11), 显著高于 A0 baseline (sinh(ρ) 仅 0.14-0.54). 角分辨率提升 22×, 但 argmin 分配未因几何激活而区分 (collision 99.97%, SID 退化为 identity). 主张: norm_target 是 κ-Stereo 几何激活的充分条件, 但 argmin 在球面深层需要方向多样性正则补强.
+
+result: Task #209 — 机制指标对比 (A0 baseline vs A3 路径正则+norm_target)

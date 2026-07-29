@@ -101,3 +101,5 @@ e_dim = 36 (= 4 hyp + 32 euc), num_emb_list=[64,128,256], 其余对齐官方.
 
 **result:** ❌ Task #211 Phase 1 NO-GO — 5 个 product_manifold 变体全部失败. 跟 Phase B B1/B2/B3 同根因 (boundary saturation + mode collapse). product_manifold 架构本身不可行. 等待用户决定下一步方向.
 
+
+result: Task #211 — C1/C2/C3 三臂 Stage 1 训练结果

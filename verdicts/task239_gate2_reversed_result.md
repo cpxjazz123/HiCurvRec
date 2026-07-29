@@ -98,3 +98,5 @@ A2 (8.010) < A1 (8.107) < B (8.350) — 几何压缩更狠 (高 c) → 重构 lo
 - ✅ Issue #9 / Issue #10 redesign / Task #229 Gate 2 全部 stay-as-is
 - ⏸️ 等用户决策的项: Issue #10 redesign 4-arm (Task #238 提议)
 - ⏭️ 下一个主动推进候选: 跨架构 R@10 重新基线 或 Task #229 论文 Eq11/12 ρ 单调假设验证 (Task #137)
+
+result: Task #239 — REVERSED per-layer c 验证 (PARTIAL FAIL)

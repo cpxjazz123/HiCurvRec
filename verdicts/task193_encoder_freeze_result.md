@@ -17,3 +17,5 @@
 **结论**: Encoder freeze 对 collision 无实质影响 (8.72% vs 9.08%)。Task #191 假设"encoder 漂移 → 码字滞后 → collision"被否定。HG-Rec 的碰撞稳定机制与 encoder 是否漂移无关。
 
 **不推进 Stage 2+3+4**: 无有意义差异。
+
+result: Task #193 — Encoder freeze 补充实验 (因果验证)

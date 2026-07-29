@@ -27,3 +27,5 @@ passed=True (ratio ∈ [0.001, 100] 且 finite)
 ---
 
 **result:** ✅ Check #4 (v2) PASS — baseline 配比合理
+
+result: Task #209 — Task #209 (auto-extracted fallback)

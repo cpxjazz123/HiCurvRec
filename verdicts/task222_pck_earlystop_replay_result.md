@@ -53,3 +53,4 @@
 - **#223 (待登记)**: Stage 2 SID 推断 (Sinkhorn 30 轮 + 4th-digit dedup)
 - **#224 (待登记)**: Stage 3 T5-mini 训练
 - **#225 (待登记)**: Stage 4 test eval
+result: Task #222 — Phase 2 早停 30 epoch 复现 healthy ckpt 结果

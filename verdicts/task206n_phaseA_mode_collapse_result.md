@@ -94,3 +94,5 @@ w_rad CLI + pass-through 保留在 `train_hrqvae.py`, `hrqvae.py`, `utils.py` �
 ---
 
 **一句话结论**: 强度对齐 per-layer c (93/604/702) 导致全部 3 臂坍缩, 即使 w_rad=0 (无 usage-target_r) 也无例外. 根本原因是高曲率压缩 Poincaré 球体积 → λₖ 共形因子爆炸 (L2 达 10⁵ 倍) → 训练梯度不稳定. 几何激活路线 (Task #206 主线) 确认 c ∈ [1, ~10] 是安全窗口, c≥93 不可训练.
+
+result: Task #206 — Phase A: usage-target_r 半径语义项扫描 verdict

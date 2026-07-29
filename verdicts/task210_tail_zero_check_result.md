@@ -81,3 +81,5 @@ test.parquet 中 target ∈ Tail 的样本 (n=2765):
 ---
 
 **result:** ✅ Tail=0.0000 不是评估 bug — Tail items 都在 train 里出现过 (avg 3.29 次), test history 长度正常 (mean 7.92), 但用户对 Tail items 无共现 pattern (median=0 Tail in history). Tail R@10=0 是结构性瓶颈. 切片章节保留, 但 Head 是真实读数.
+
+result: Task #210 — Task #210 (auto-extracted fallback)

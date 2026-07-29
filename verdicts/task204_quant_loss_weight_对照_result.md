@@ -158,3 +158,4 @@
 ---
 
 **result:** #204 Stage 1 双臂 1000 epoch 完成 (实际 11 min). 读 ckpt best_collision_rate: arm A (c=1, w=2.2) = 9.00%, arm B (c=10, w=1.0) = 8.14%, Δ 0.86% (B 更好). 跟 #199 D baseline Δ 0.89% 几乎相同, 表明 2.2× multiplier **未消除** c=10 优势 — c=10 优势是真实几何 (非量级伪影), 但幅度小 (0.86%) 在 ±1% 噪声范围内跟 c=1 统计等价. 用户决策树两条都不严格成立, 但 **曲率这条线仍可干净收尾**: c=1 是合理工程选择, paper 写 "HG-Rec κ 不影响 collision, c∈[1,10] 健康区" 即可.
+result: Task #204 — quant_loss_weight 对照 verdict (用户 2026-07-26 决定性实验)

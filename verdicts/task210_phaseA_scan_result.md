@@ -163,3 +163,5 @@ Phase A 只验证"几何激活 + 分配", **未验证训练稳定性**. Phase B 
 ---
 
 **result:** Phase A 完成. 90 格子全跑, 54 格子通过 λ≥4.7 + util≥0.9 主门. 推荐 Phase B 主配置 **d_hyp=8, ρ=3.0, e_dim=40**. 备选 d_hyp=4 e_dim=36. Phase B 启动条件: 必须重训 (e_dim 变了, 不能复用 #181 encoder).
+
+result: Task #210 — 维度 × 半径扫描 verdict

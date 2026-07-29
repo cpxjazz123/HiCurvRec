@@ -163,3 +163,5 @@ Backward:
 | 修复方向 | init/loss/reset 三轴（已证伪） | EMA + frozen-θ 切断正反馈 |
 | Sinkhorn | "R137/Sinkhorn 都解不了"（oversell） | 待 Task #167 审计 |
 
+
+result: Task #165 — FreeCurv collapse 真正机制：可学习 κ 的正反馈环路

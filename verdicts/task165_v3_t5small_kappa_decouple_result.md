@@ -101,3 +101,4 @@
 ---
 
 **最终判定**: κ-Stereographic × T5-small 60M long training **未达 baseline 0.1058** (test R@10=0.0965, -8.8%). **Long training 没能解决 val/test gap** (gap -11.2%). 3/4 档 capacity ablation 全部 falsify R2. **R2 大概率完全 falsified**.
+result: Task #165 — κ-Stereographic × T5-small 60M Stage 4 Test Result

@@ -168,3 +168,4 @@ missing, unexpected = self.model.encoder.load_state_dict(encoder_sd, strict=Fals
   - ✅ collision 从 99% → 84% (显著改善)
   - ❌ **cos_mean 仍 0.91+ (用户期望 <0.3)** — 因 baseline encoder poincare 输出 + 新 loss mismatch
 - ⏳ **清单 4 等用户拍板**: A 跑 1000 epoch / B Stage 2+3 验证 / C 延迟初始化 / D 接受 v5 走 Stage 3
+result: Task #200 — 用户根因诊断 4 步清单 (清单 1+2+3) verdict

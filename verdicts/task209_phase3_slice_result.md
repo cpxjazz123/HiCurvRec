@@ -83,3 +83,5 @@ Test set 在每个切片上的样本数:
 ---
 
 **result:** 🟡 Phase 3.2 部分完成 — A0 Head R@10=0.1794 (主导), Body/Tail 几乎零 (结构性瓶颈). A3 中间态 Head R@10=0.1228, Stage 3 完成后需重跑. **结论: Tail R@10=0 是结构性问题 (T5 训练范式), 不是几何激活 / 路径正则能解决, pivot 到机制叙事正确**.
+
+result: Task #209 — Head/Body/Tail 切片评估 (A0 ✅, A3 中间态)

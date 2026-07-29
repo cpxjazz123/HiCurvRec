@@ -159,3 +159,4 @@ Phase 1 修复成功 (util 100%) 是关键 — 之前 Task #137/#89/#142 都因 
 - Task #142 verdict (4 方向修复失败, 但用户给了新方向)
 - Task #145 description (软量化退火 Phase 2, 本任务 verdict 决定是否启动)
 - Verdicts: `verdicts/task144_kappa_decouple_stage1_only_result.md` (本文件)
+result: Task #144 — κ + codebook 解耦训练调度 (Phase 1 only) verdict

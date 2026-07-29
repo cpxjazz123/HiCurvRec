@@ -45,3 +45,5 @@
 ---
 
 **result:** Task #194 K0 容量扫描 verdict 完成. 详见上表 collision 演化 + Stage 4 R@10.
+
+result: Task #194 — K0 码本容量扫描 verdict

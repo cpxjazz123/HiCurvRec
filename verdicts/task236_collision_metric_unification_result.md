@@ -116,3 +116,5 @@ bar 出处不明, 大概率是从 task225 §5 表面数字直读. 真实意图�
 ## Status
 
 Gate 0 PASS. 后续 Gate 1 (Arm B Sinkhorn 部分配置 + 1 次 Stage 3 训练 + Stage 4 + slice) 等下一 tick 启动 (R10). 计算预算: 1 × Stage 3 训练 ~44min + Stage 4 eval ~3min + slice ~1min ≈ 48min.
+
+result: Task #236 — Issue #10 Gate 0: collision 指标口径统一 (zero GPU)

@@ -100,3 +100,5 @@
 **B1 Stage 3 (task210) 训练继续跑** (GPU 1, epoch 54+, best NDCG=0.098), 跟 Phase 0/1 不冲突.
 
 **result:** ✅ Phase 0 GO — d_hyp ∈ {2, 4, 8} 数值上站得住. 推荐 d_hyp=4. 待用户确认 d 后启动 Phase 1.
+
+result: Task #211 — 低维双曲 + 钉半径可行性

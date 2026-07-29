@@ -71,3 +71,4 @@ sk_epsilons=[0.0, 0.0, 0.0], sk_iters=50
 - #219: 平行 Phase 0 (Gromov L0 OPEN / L1+L2 TOO_STRONG)
 - #221: 平行 Stage 1 (Gromov, 完全坍缩 NO-GO)
 - #222 (待登记): Phase 2 早停 30 epoch 复现 healthy ckpt
+result: Task #220 — Stage 1 训练 逃法一 (Per-Codeword κ) 结果

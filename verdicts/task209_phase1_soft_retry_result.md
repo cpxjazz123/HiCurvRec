@@ -141,3 +141,5 @@ A0 直接用 #181 ckpt.
 ---
 
 **result:** ❌ Phase 1 软约束重试 FAIL — 4 臂 collision 0.99 (vs baseline 0.06), 但 A3 几何激活成功 (λ_κ=4.7/8.4/15.8). 不再投入 GPU 修 norm 约束, pivot 到 description §7 退路 2 (机制叙事 + 切片评估), Phase 2 简化为 A0/A3 各 1 seed 下游, Phase 1b 取消.
+
+result: Task #209 — NO-GO (双失败)

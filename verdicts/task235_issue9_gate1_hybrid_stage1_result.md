@@ -113,3 +113,5 @@ Issue #9 提出的 hybrid 方案失败的关键路径:
 ## Commit + Issue #9 close
 
 下一步: git add + commit + Issue #9 comment + close Issue #9 (附 verdict 引用).
+
+result: Task #235 — Issue #9 Gate 1: Hybrid per-layer assignment Stage 1 (FULL NO-GO)

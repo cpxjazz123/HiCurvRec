@@ -57,3 +57,4 @@ sk_epsilons=[0.0, 0.0, 0.0], sk_iters=50
 - #219: Phase 0 判据检查 (Gromov L0 OPEN, 但训练后坍缩)
 - #220: 平行 Stage 1 (Per-Codeword κ, escape 真实发生)
 - #222 (待登记): Task #220 Phase 2 早停复现 healthy ckpt
+result: Task #221 — Stage 1 训练 逃法二 (Gromov Product) 结果

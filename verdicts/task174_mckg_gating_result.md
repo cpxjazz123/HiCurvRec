@@ -116,3 +116,4 @@
    - (a) 接受 Euclidean RQ-VAE 0.1058 作为 final baseline
    - (b) 尝试完全不同方向 (e.g., 完全放弃 κ, 看 baseline 0.1058 是否有 paper Table 1 RQ-VAE Toys 0.034 上限)
    - (c) 转向更大模型 (TIGER 原 paper 220M) 或完全不同的 SID framework
+result: Task #174 — κ-Stereographic + M=2 + MCKG 门控融合 D 臂 [⛔ C3 NO-GO]

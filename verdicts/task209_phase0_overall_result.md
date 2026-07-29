@@ -39,3 +39,5 @@ v2 改用真实 Task #181 baseline encoder 跑 5 步, 报出 baseline 自身的 
 ---
 
 **result:** ✅ Phase 0 PASS (6/6) — 可进 Phase 1 (5 臂 Stage 1 消融)
+
+result: Task #209 — Task #209 (auto-extracted fallback)

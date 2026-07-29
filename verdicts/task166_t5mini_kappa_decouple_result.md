@@ -90,3 +90,4 @@
 ---
 
 **最终判定**: κ-Stereographic × T5-mini 9.18M **未达 baseline 0.1058**, val/test gap -16.7%, 跟 §6.2.1 "R3 falsified" 一致. R2 部分 falsified (T5-mini 容量不支持 generalization).
+result: Task #166 — κ-Stereographic × T5-mini 9.18M Stage 4 Test Result

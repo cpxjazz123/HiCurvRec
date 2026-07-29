@@ -171,3 +171,5 @@ quant_loss **卡死** 在 ~250 (而不是预期的 4-30). 原因: ρ 大量 samp
 ---
 
 **result:** #203 Stage 1 双臂 1000 epoch 跑到 ep ~165 后 kill (loss 卡死). 读 ckpt 验证 θ 学到 -0.385/-0.485 等 (c 学到 0.62-0.79), 仍 DOWNWARD 方向, 不变 #199 趋势. 用户理论预测"scale 让 c 不被 bias 到小值"在 Stage 1 层面**完全 REFUTED**. 4 阶段实验 (#199/201/203) 累加坐实 HG-Rec c=1.0 是工程最优, 推荐写入 paper. 下一步等用户拍板 #196/#197/#198 或接受 c=1.0 结论.
+
+result: Task #203 — exp(θ) κ + scale normalization verdict

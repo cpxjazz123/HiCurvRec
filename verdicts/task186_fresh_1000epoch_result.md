@@ -111,3 +111,5 @@
 ---
 
 **result:** Task #186 fresh 1000 epoch 训练被用户在 epoch 25/1000 (val NDCG@20=0.0887) 叫停, best_ckpt 已 R12 保存 (22 MB). 不是训练失败. GPU 0 全释放. 等待新指令.
+
+result: Task #186 — Fresh 1000 epoch training (用户叫停, ⏸️ 终止)

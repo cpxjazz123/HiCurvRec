@@ -76,3 +76,4 @@
 - ❌ **Sinkhorn 路径 NO-GO** — val R@10=0.1065 vs #181 0.1057 持平 (+0.07%, 完全没达到用户预测的 +1~3%)
 - ✅ **HG-Rec baseline (sk_eps=0) 维持** — Sinkhorn 不贡献增益, 不进 paper recipe
 - ✅ **Stage 3 训练流程验证** — early_stop + best_metric save (R12) 工作正常
+result: Task #202 — verdict

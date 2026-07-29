@@ -111,3 +111,5 @@ Phase D 的 col 3 = 0~5031 → offsets[3] = 354~5384 > vocab_size=5032 → embed
 - [x] verdict write
 - [x] 提交至 P5 paper section
 
+
+result: Task #163 — NO-GO (FreeCurv codebook 坍缩无法靠 ORC-init 解决)

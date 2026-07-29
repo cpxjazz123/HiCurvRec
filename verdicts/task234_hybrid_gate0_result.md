@@ -67,3 +67,5 @@
 ## Status
 
 Gate 0 PASS. 后续: 启动 Stage 1 40 epoch 训练 (Gate 1).
+
+result: Task #234 — Issue #9 Hybrid Phase 0 Gate 0: per-layer composition (PASS)

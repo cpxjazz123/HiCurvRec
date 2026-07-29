@@ -19,3 +19,5 @@
 **结论**: β 在 0.25-2.0 范围内对 collision 无显著影响。Task #191 的 corr(L0_err, collision)=0.861 未通过因果验证 (β 改变码本更新速度但不影响最终碰撞率)。HG-Rec 的碰撞稳定对 β 不敏感 — 这是鲁棒性体现。
 
 **不推进 Stage 2+3+4**: 所有 β 臂 collision 相同 → 下游指标预期无差异。
+
+result: Task #192 — β 剂量扫描 (Instruments, 4 臂)

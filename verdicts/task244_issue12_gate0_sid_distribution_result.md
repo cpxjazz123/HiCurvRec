@@ -135,3 +135,5 @@ L3 是 4th-digit dedup digit,K=1 (所有路径必须经过它),Gini 几乎 1.0 �
 ## 10. Status
 
 ✅ **Task #244 完成**. Issue #12 Gate 0 FAIL (排除 L3 K=1) → 标记 Issue #12 close with NO-GO, 不进入 Gate 1/2/3.
+
+result: Task #244 — Issue #12 Gate 0 分布画像 (零 GPU) 结果

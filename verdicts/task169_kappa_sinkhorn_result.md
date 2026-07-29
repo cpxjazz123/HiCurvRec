@@ -81,3 +81,4 @@
 2. **#170/#171/#172**: 等待 Stage 4 exit, 写 verdict 同样模式
 3. **#163 synthesis verdict**: 等 #170/#171/#172 后, 整合 8 κ-Stereo 变体 NO-GO 报告
 4. **#174 D 臂 MCKG gating**: 已在跑 (12:12 launch, GPU 1), 决策点跟 #169-#172 一致 (test R@10 vs 0.1058)
+result: Task #169 — κ-Stereographic + Sinkhorn(L2 only) [⛔ C3 NO-GO]

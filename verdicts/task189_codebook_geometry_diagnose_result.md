@@ -244,3 +244,5 @@ recipe 完全一致 (Phase 0.6 paper-aligned, β=1.0, Sinkhorn OFF, c=[1.0,1.0,1
 ---
 
 **result:** Task #189 8 项 baseline codebook 几何诊断完成. 核心结论: baseline λ ∈ [2.0, 2.3] (跟用户预期一致), max(c‖x‖²) < 0.2 (0% near), ρ 浅层递减, 残差与码字同量级, 100% 真实利用率. Item 1/3/5 在 6 epoch 时间序列里稳定 λ 全程 ≈ 2, 证明 baseline 几何稳定不漂移. GPU 0 全释放. Task #188 暂不推进 (用户改方向).
+
+result: Task #189 — Codebook 几何诊断 (baseline + 时间序列)

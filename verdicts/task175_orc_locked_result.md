@@ -118,3 +118,4 @@ Stage 1 RQ-VAE best_ckpt 因 Stage 2 已跑完, 不再保留.
 
 - ✅ 已从 loop.md §16 删除 #175 活跃任务行
 - ✅ verdict 文件保留在 verdicts/task175_orc_locked_result.md (本文件)
+result: Task #175 — κ-Stereographic + κ LOCKED at Ollivier ORC 实测值

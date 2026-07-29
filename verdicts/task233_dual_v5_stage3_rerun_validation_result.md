@@ -180,3 +180,5 @@ Issue #8 自身 §Falsification 指出: "A gap that survives the budget fix is t
 ---
 
 **result:** Task #233 dual_v5 Stage 3 RERUN 完成 68 epochs (early_stop, 非 silent death), best ckpt ep ~48 val NDCG@20=0.09199, Stage 4 test R@10=0.0934 (vs HG-Rec 0.1020 = -8.4%, vs task200 截断版 0.0915 = +2.1% recovery). **Issue #8 PARTIAL closed**: budget 只解释 ~2pp 残差 (~20% of gap), ~8pp 主导效应归因于 collision + codebook convergence 真实差异, 但 dual_v5 single-arm 不能下 causal claim. Task #209 slice 显示 Head 主导 gap (-10.9%), Body/Tail ~0. **待 3-arm converged collision design 才能 disentangle**, Issue #6/#7 ≤12% collision bar 暂不动, Issue #8 状态保持 OPEN.
+
+result: Task #233 — Issue #8 Validation: dual_v5 Stage 3 rerun verdict

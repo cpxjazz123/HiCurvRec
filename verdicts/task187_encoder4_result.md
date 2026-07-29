@@ -110,3 +110,5 @@
 ---
 
 **result:** Task #187 4 层 encoder 实验在 epoch 5/200 被用户叫停 (val NDCG@20=0.0630), 不是失败. 用户 18:42 战略转向 Task #188 (paper Table 7 多 seed 复现). best_ckpt 18 MB 已 R12 保存. GPU 0 全释放.
+
+result: Task #187 — 4 层 Encoder 实验 (⏸️ STOPPED by user, 数据不足)

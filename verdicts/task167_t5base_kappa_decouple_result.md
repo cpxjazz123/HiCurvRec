@@ -105,3 +105,4 @@
 ---
 
 **最终判定**: κ-Stereographic × T5-base 220M **未达 baseline 0.1058** (test R@10=0.0940, -11.2%). **4/4 capacity ablation 全部 falsify R2** (val-only improvement 系统性现象).
+result: Task #167 — κ-Stereographic × T5-base 220M Stage 4 Test Result

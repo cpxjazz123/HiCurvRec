@@ -76,3 +76,5 @@ T5-base 220M 全面差于 T5-small 60M (-7% ~ -12%)。可能原因：
 - [x] verdict write
 - [x] 提交至 P5 paper section
 
+
+result: Task #157 — T5-base 220M 容量解锁

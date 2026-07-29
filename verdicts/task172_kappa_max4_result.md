@@ -87,3 +87,4 @@
 1. **§16 cleanup (R8)**: 立即从 §16 删除 Task #172 行 (Stage 4 已 exit 0)
 2. **#170/#174**: 等待 Stage 4 exit, 写 verdict 同样模式
 3. **#163 synthesis verdict**: 等 #170/#174 后, 整合 8 κ-Stereo 变体 NO-GO 报告
+result: Task #172 — κ-Stereographic + κ_max=4.0 [⛔ C3 NO-GO]

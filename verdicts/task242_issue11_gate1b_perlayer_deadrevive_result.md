@@ -76,3 +76,5 @@
 - verdicts/task241_issue11_gate0_perlayer_ck_combo_pass.md (Gate 0 PASS — Phase 0 OPEN 三层)
 - verdicts/task242_issue11_gate1_perlayer_stage1_result.md (Gate 1 NO-GO)
 - verdicts/task242_issue11_gate1b_perlayer_deadrevive_result.md (本文件, FULL NO-GO)
+
+result: Task #242 — FULL NO-GO 关闭方向

@@ -156,3 +156,5 @@
 ---
 
 (本文档覆盖 verdicts/task213_* 之前的临时记录; 完整结论已固化.)
+
+result: Task #213 — Entailment Cones (方向一) ❌ NO-HOPE

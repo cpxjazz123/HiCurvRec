@@ -146,3 +146,4 @@ if self.theta is not None:
 ---
 
 **result:** #201 Stage 1 双臂 1000 epoch 完成. 读 ckpt 发现 θ 全程未动 (=2.3026 init 值), 根因诊断: `exp(θ)` + `c_max clamp` **机制不兼容** — θ_init=log(10) 时 c_init=10 > 所有层 c_max (6.25/3.43/2.16), clamp 立即把 c 截断到 c_max, gradient=0, θ 不再可学. 配合 #199 已有结论, 用户"50× κ_max 修复 + c 进 [10,100] 健康窗口"假设**被 3 次实验明确证伪**: HG-Rec c=1.0 路线是次优但接近最优, 推荐写入 paper.
+result: Task #201 — 重做 exp(θ) κ with θ_init=log(10) verdict (用户拍板选项 A)

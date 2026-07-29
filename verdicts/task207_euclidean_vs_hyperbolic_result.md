@@ -117,3 +117,5 @@ Euclidean arm: SID 不可用 → Stage 3 无法训练 → 无性能数据
 2. **论文写作参考**: 本实验的"碰撞对齐不可能"结论直接支持"双曲几何是 VQ 稳定的必要条件"
 3. **Euclidean 替代方案**: 如果 Reviewer 要求"纯欧氏 baseline"，可尝试 semantic codebook (非 RQ-VAE) 如 FSQ (Finite Scalar Quantization)
 4. **下一步实验**: loop.md §16 backlog 中的 κ-Stereographic / 软量化 / 异质曲率 等方向
+
+result: Task #207 — Euclidean vs Hyperbolic Collision-Aligned 全流水线对比

@@ -116,3 +116,5 @@ for d, c_list in [('gate2_c10_10_10', [10,10,10]),
 - ✅ paper Eq12 Δρ>0 假设 REFUTED (3/3 ckpt 验证)
 - ❌ paper "等 Δρ → K 几何级数" 因果链断开
 - ⏭️ 下一个主动推进候选: 跨架构 R@10 重新基线 (S3Rec paper-aligned fix 后 Stage 3+4) / Issue #10 redesign 4-arm (等用户)
+
+result: Task #137 — paper Eq11/12 ρ 单调假设 REFUTED
