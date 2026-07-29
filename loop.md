@@ -352,6 +352,17 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 
 **Issue #30 / Task #301 Gate 3 进行中** — `products/task301/_TRAINING_PID_GATE3` = 550667, GPU 3 (L40S, util 88% mem 3875 MiB 训练中). 等 PID 死亡后跑 Stage 4 eval (R@10 vs HG-Rec baseline 0.1020).
 
+**Issue #31 / Task #302 (per-layer 异构 encoder regularization β_l + α_l + γ_l + c_k range) Gate 0 PASS (2026-07-30)**:
+- **Gate 0 PASS**: EncoderRegHRQVAE wrapper (`scripts/task302_issue31_gate0_wrapper.py`) 继承 baseline HRQVAE, 不修改 HG-Rec/model/. 4 条 reg test 全部通过:
+  - Test 1: β_l=[0.5,0.5,0.5] + α=γ=0 → out_max_diff=0, rq_loss diff=0, idx_equal=True (核心 reg test baseline 等价)
+  - Test 2: β_l=[0.1,0.3,0.5] + α=γ=0 → indices 一致 (β 不影响 argmin 路径)
+  - Test 3: α_l=[0.01,0.005,0.001] → anchor_loss=0.001661 > 0
+  - Test 4: γ_l=[0.001,0.0005,0.0001] → rq_loss 增量 +0.005406
+- **R11.4 critical decision**: 不修改 HG-Rec/model/, 通过 Python 子类化 (EncoderRegHRQVAE(HRQVAE)) + patch per-layer β 实现
+- **Gate 1 决策待 R11.5**: 等 Issue #30 Gate 3 R@10 实证 (GO/NO-GO), 决定 Issue #31 Gate 1 Stage 1 100 epoch 是否启动. GPU 0/1/2 空闲, 不抢 GPU 3.
+- **跟 Issue #30 对比**: Issue #30 走 codebook 几何变换 (r_l + R_l + s_l) → Gate 1 PASS. Issue #31 走 encoder regularization (β_l + α_l + γ_l) → Gate 0 PASS, Gate 1 待跑. 两个方向互补: Issue #30 处理 codebook 分布, Issue #31 处理 encoder-side boundary saturation (Issue #28 closure 锁定根因).
+- 产物: `descriptions/task302_issue31_per_layer_encoder_reg.md` + `scripts/task302_issue31_gate0_wrapper.py` + `verdicts/task302_issue31_gate0_result.md`.
+
 
 ## §17. 历史归档 (从 §16 移出)
 
