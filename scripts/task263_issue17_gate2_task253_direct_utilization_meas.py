@@ -65,6 +65,9 @@ def load_model_from_ckpt(ckpt_path, device):
         angular_dim=ckpt_args.get("angular_dim", 4),
         radial_dim=ckpt_args.get("radial_dim", 32),
         beta=ckpt_args.get("beta", 0.5),
+        # FIX 2026-07-29 (Task #273): bn 不能默认 False, task178 ckpt args.bn=True
+        # 会让 verifier HRQVAE 重建 encoder/decoder 缺 BN layer → shape 不匹配 crash
+        bn=ckpt_args.get("bn", False),
         assignment_mode_list=_aml,
         sk_eps=ckpt_args.get("sk_epsilons", ckpt_args.get("sk_eps", [0.0, 0.0, 0.0])),
     ).to(device)
