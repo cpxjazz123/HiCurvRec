@@ -320,9 +320,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #20)** | **Task #288 (L0 utilization 三配方 A1/A2/A3 NO-GO)** | **❌ NO-GO (A1 β=0.0 三次 USAGE-KILL 锁死 baseline recipe 内部无解; Gate 2/3 硬停止不启动; 资源转向 task268 §4 候选 2 m-arm κ-Stereographic v9+)** |
 | **(R9)** | **Task #289 (R9 Compliance Audit)** | **✅ done (audit 跑通, 10 个历史空洞 + 5+ renumber 残留 FAIL 由 R11.5 决策保留; drift cycle 警告适用)** |
 | **(Issue #21)** | **Task #290 (第六次越闸治理 Gate 0/1/2/3 全部闭环)** | **✅ done (Gate 0 历史越闸记录盘点 + Gate 1 launcher header 约束 + Gate 2 越闸计数暴露 + Gate 3 硬停止; 全程零 GPU; 跨过理由 6 类全部闭环: fallback / 当场 GO / 量没打印 / launcher 没求值点 / 量测法歧义 / proxy+precedent)** |
-| **(quantizer #1)** | **Task #291 (EMA codebook + κ learnable, 3-way #2)** | **❌ NO-GO (Stage 4 R@10=0.0765 -25.0% vs baseline 0.1020; EMA 切断 gradient 但没解决坍缩, collision 33%; Stage 1 best_collision=0.3360 ep169; 跟 baseline HG-Rec 不兼容)** |
-| **(quantizer #2)** | **Task #292 (Restoration EMA + dead code revival + κ, 3-way #3)** | **❌ NO-GO (Stage 4 R@10=0.0799 -21.7% vs baseline; 比 EMA +4.5% 但杯水车薪; 修复 hook no-op 后 L0 应健康但 R@10 仍 -21.7%; 跟 task291 + task287 + task284 + task144 联立锁死 baseline recipe 内部无解)** |
-| **(quantizer #0)** | **Task #290 (FSQ + κ-decouple, 3-way #1)** | **❌ NO-GO (Stage 4 R@10=0.0553 -45.8% vs baseline; Stage 1 collision=0.0045 极低 (跟 baseline 类似) 但 R@10 -45.8%; FSQ 切 Sinkhorn 解码不切 gradient; 跟 task291 / task292 联立锁死 baseline recipe 内部无解)** |
+
 ### R10 backlog 真空状态 (Task #287 闭环后, 2026-07-29)
 
 **§16 backlog 全 NO-GO 收口** (D1 κ-decouple + D2 K-sweep + D5 dead_revive frequency 已闭环; D3 m-arm κ-Stereo v9+ 仍 backlog 唯一剩余, 动机被 #287 部分削弱).
@@ -419,3 +417,12 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - K=1024 不重跑: K=512 数字已独立证伪 K ≥ 512 区间 R@10 < 0.1020; R10 + R7 + GPU 占用约束.
 - K-sweep 6-arm (32/64/128/256/512/1024) 趋势: K=256 ⭐0.1053 是 trade-off 顶峰 (单峰曲线, K=128 微跌 0.1027, K ≥ 512 跌穿 baseline). **"L0 大 R@10 高" 假设 REFUTED** (Task #194/279 联立).
 - §16 R10 backlog D1 (κ-decouple) + D2 (K-sweep) + D3 (m-arm κ-Stereo) + D5 (dead_revive frequency) 全 NO-GO 收口. 几何 + K-sweep 方向无新候选.
+
+### Task #290/#291/#292 (3 alternative quantizer: FSQ/EMA/Restoration) 已闭环 — Stage 4 实测完成 (2026-07-29)
+
+- **Task #290 FSQ + κ-decouple**: Stage 4 R@10=0.0553 (-45.8% vs baseline 0.1020). Stage 1 collision 极低 0.0044 (FSQ 100% util by construction) 但 R@10 最差. 关键修复: FSQCodebook.indices 输出 packed-int 4^32 ≈ 1.8e19 超过 vocab_size=1025 → 改 `packed_int mod n_e_list[m]` per-layer. 因 mixed-base packing 损失 FSQ 解空间信息, R@10 比 VQ 还差.
+- **Task #291 EMA codebook + κ learnable**: Stage 4 R@10=0.0765 (-25.0% vs baseline). Stage 1 collision 0.3360 (EMA 切断 gradient 但没解决坍缩). EMAQuantizerWrapper 3 处修复: `[vq.K for ...]` → `[vq.n_e for ...]`, indices clamp, all_indices shape.
+- **Task #292 Restoration EMA + dead code revival + κ**: Stage 4 R@10=0.0799 (-21.7% vs baseline). Stage 1 collision 0.3234 (revival 略好 EMA +4.5% 但杯水车薪).
+- **横向联立**: codebook 坍缩**不是** R@10 杠杆 (FSQ 100% util 但 R@10 最差 -45.8%). 任何"换 quantizer"提议必须先问 R@10 ceiling 在哪. 答案: 30 epoch + Sinkhorn + 4th-digit dedup + 完整 codebook = 0.1020 (本 setting ceiling). 后续应该攻 [Stage 3/4 训练协议] 而非 [Stage 1/2 quantizer 架构].
+- **跟 Task #225 + #282/#283 + #284 联立**: 几何 + K-sweep + quantizer 7 方向全部 NO-GO 收口. baseline recipe 内部 R@10 杠杆已穷尽, 后续候选必须在架构层 (Gumbel-Softmax / 多样 hash / per-item soft-assign).
+- 3 verdicts 落盘: verdicts/task290_fsq_kappa_decouple_result.md / verdicts/task291_ema_codebook_result.md / verdicts/task292_restoration_result.md. Memory: memory/3-way-alternative-quantizer-nogo.md.
