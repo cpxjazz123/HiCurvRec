@@ -34,6 +34,10 @@
 
 set -u
 
+# Issue #21 Gate 2: 越闸计数暴露 (template 被调用 = 闸门求值时机 = 越闸可能发生时机)
+# 每次模板被调用时打印一次, 双保险覆盖 cron tick 启动日志
+source /home/wlia0047/ar57/wenyu/GeneRec/scripts/issue21_skip_counter.sh 2>/dev/null && emit_skip_counter 2>/dev/null || true
+
 # 闸门定义 (可被环境变量 override)
 GATE_L0_THRESHOLD="${GATE_L0_THRESHOLD:-90}"                  # §6.7.4 stop-loss (i) L0 ≥ 90%
 GATE_EPOCH_MIN="${GATE_EPOCH_MIN:-30}"                        # L0 测量必须在 epoch ≥ 30 (warmup)
