@@ -1,0 +1,16 @@
+{
+  "task": "task304_d6_arm_a_r_only",
+  "recipe": "per-layer r_l=[0.1,1,10] + s_l=[1,1,1] + c_k_range (D6 Arm A r_l only)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task304/ckpt_hgrec_arm_a/Instruments/Jul-30-2026_02-29-04/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 0.08252895757929929,
+    "Recall@10": 0.09901866181591763,
+    "Recall@20": 0.12230534139574725
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.07079935157276028,
+    "NDCG@10": 0.07611837399166983,
+    "NDCG@20": 0.0820086988688781
+  }
+}
