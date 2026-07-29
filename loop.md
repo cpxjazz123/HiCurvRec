@@ -462,3 +462,22 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **后续候选 (架构层, 非 Stage 1/2 修补)**: Gumbel-Softmax soft assignment / 多样 hash / per-item soft-assign with temperature annealing. **禁止方向**: 任何在 baseline recipe 内的 c_k / β / κ-decouple / quantizer variant 修补 (8 方向已穷尽证伪).
 - **R10 推进决策**: 跟 [[r10-backlog-vacuum-2026-07-29]] 默认行为一致 (backlog 真空时整理 paper / 写 verdict / memory 整合, 不强启动 ROI 极低实验). 零 GPU, 推进方式 = housekeeping 综合.
 - 产物: verdicts/task294_ck_range_path_exhausted_cross_task_result.md (187 lines). commit d45a0f6 推送 main.
+
+### Task #295 (loop.md §15 R14 GitHub Issue 自动监听规则显眼化) 已闭环 — 零 GPU housekeeping (2026-07-29)
+
+- **目的**: 用户硬性要求 "每次检查 https://github.com/WENYULIANG123/GeneRec 有没有新的 issue, 如果有, 马上根据 issue 的要求完成并且 commit. 并且尽量并行完成 issue. write this rule into loop.md" → 把 R14 从 §15.6 提升到 §15 标题后显眼化位置 (R14 优先级高于一切其他规则, issue 触发即任务).
+- **执行**: §15 标题后立即插入显眼化 block (3 关键词: **每次 / 马上 / 尽量并行**), 显式声明 "本显眼化块优先级高于一切其他规则, issue 触发即任务". 完整流程仍指向 §15.6 详解.
+- **跟 §15.6 协调**: §15.6 保留 R14 完整流程 (GitHub scan → 决策 → 执行 → close), §15 显眼化 block 是简化强提示.
+- 产物: loop.md §15 显眼化 block. commit 33bf4a7 推送 main.
+
+### Task #297 / Issue #25 (Phase A + B 联合: κ-decouple Phase A → per-layer c_k range Phase B) 已闭环 — Gate 1 FAIL (硬停止 + Issue #25 closed) (2026-07-29)
+
+- **R14 第一步扫描发现 OPEN**: GitHub issue #25 (Phase A + B 联合) 2026-07-29 创建. 4-Gate 协议 (Gate 0 Phase A ckpt 复用 / Gate 1 Phase B 30 epoch warm-start / Gate 2 Sinkhorn 5 iter / Gate 3 T5-mini 200 epoch + R@10 > 0.1020).
+- **Gate 0 PASS**: 冻结 `products/task287/hrqvae_k0128_armA_phaseA_only/best_loss_model.pth` (Phase A only, κ frozen=0, 100 epoch, K=128), 三层 util = **100% / 100% / 100%** + 4-digit SID collision 0.0004. 零 GPU ~5s.
+- **Gate 1 启动**: warm-start 用 `train_hrqvae.py --init_encoder_from` 续训 130 epoch (Phase A 100 + Phase B 30, κ_freeze_epochs=100 + lr_theta_post_unfreeze=1e-5). K=128, shared c_k range U(0.5, 20). GPU 1.
+- **Gate 1 实测 (~5 min 训练后被 kill)**: L0 trajectory ep5-105 始终 **67-75%** (max=75.8% @ ep20, < 95% threshold). L1 96-100% (PASS), L2 99-100% (PASS), collision 0.07-0.16 (PASS ≤0.20). **Gate 1 (a) FAIL** → 硬停止.
+- **关键发现 K1 (warm-start 路径不能保留 L0=100% 起点)**: task287 Arm A ckpt (task89 launcher, 100 epoch κ frozen=0) L0/L1/L2 = 100%/100%/100% (实测 Gate 0 Phase 0); 但 task297 warm-start (train_hrqvae.py --init_encoder_from, ep 5-100) L0 67-75%. 可能原因: `--init_encoder_from` 只加载 encoder weights, 不加载 codebook embeddings (task275 launcher 也只加载 encoder); task287 Arm A ckpt 的 L0=100% 来自 100 epoch κ frozen=0 + codebook 跟 encoder 共同学习, 单独加载 encoder 时 codebook 是新随机初始化, 重新训练后无法重建.
+- **关键发现 K2 (联立 task287 + Issue #25)**: task287 §2.2 关键发现 "κ-decouple Phase A κ frozen=0 跨 K=64/128/256 一致 100% utilization" 是**端到端训练结果**, 不是 warm-start 结果. Issue #25 假设 "Phase A 起点 + Phase B 续训" 能保留 L0=100%, 但实测 warm-start 路径破坏这个假设. **Phase A κ-decouple 端到端训练是 in-baseline-recipe L0 杠杆, 但作为 warm-start 起点 Phase B 续训时不能保留 L0=100%**.
+- **关键发现 K3 (跨任务联立 9 方向 × 14 verdict 收口)**: 跟 [[cross-task-c-k-range-no-go-exhausted]] §C2 "per-layer 异构 c_k range 不能脱离时间维度" 一致. Issue #25 是 task294 8 方向 × 13 verdict 收口的"第 9 方向 (Phase A + B 联合)", 也 NO-GO. 现在 **9 方向 × 14 verdict 全 NO-GO 收口**, baseline Stage 1 recipe 内部 R@10 杠杆已穷尽 (跟 task294 / Task #296 paper.md §6.7.4 联动段一致).
+- **R14 闭环**: Issue #25 hard-stop → comment + close (not planned reason), 同步 commit da9ae2b 推送 main.
+- 产物: verdicts/task297_issue25_gate1_phase_b_result.md + verdicts/task297_issue25_gate0_phase0_result.md + scripts/task297_issue25_gate1_phase_b.sh. commit 4af4a9f (Gate 0 PASS) + da9ae2b (Gate 1 FAIL + Issue close).
