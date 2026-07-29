@@ -481,3 +481,21 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **关键发现 K3 (跨任务联立 9 方向 × 14 verdict 收口)**: 跟 [[cross-task-c-k-range-no-go-exhausted]] §C2 "per-layer 异构 c_k range 不能脱离时间维度" 一致. Issue #25 是 task294 8 方向 × 13 verdict 收口的"第 9 方向 (Phase A + B 联合)", 也 NO-GO. 现在 **9 方向 × 14 verdict 全 NO-GO 收口**, baseline Stage 1 recipe 内部 R@10 杠杆已穷尽 (跟 task294 / Task #296 paper.md §6.7.4 联动段一致).
 - **R14 闭环**: Issue #25 hard-stop → comment + close (not planned reason), 同步 commit da9ae2b 推送 main.
 - 产物: verdicts/task297_issue25_gate1_phase_b_result.md + verdicts/task297_issue25_gate0_phase0_result.md + scripts/task297_issue25_gate1_phase_b.sh. commit 4af4a9f (Gate 0 PASS) + da9ae2b (Gate 1 FAIL + Issue close).
+
+### Task #298 / Issue #28 (per-layer 异构 Gumbel-Softmax τ_l + per-layer c_k range) 已闭环 — Gate 1 FAIL (硬停止 + Issue #28 closed) (2026-07-29)
+
+- **4-Gate 综合结果**:
+  - **Gate 0 (算法正确性, 零 GPU)**: L0/L1/L2 match rate = 1.0000/1.0000/1.0000 (B=64, τ=0.01), 跟 baseline argmin 完全一致. ✅ **PASS**.
+  - **Gate 1 (Stage 1 100 epoch 训练, GPU 0)**: ep 30 USAGE-KILL — codebook ‖x‖_E=0 (码字坍缩到原点), train_loss 恒定 8713.8723 (完全没学习), recon_loss 恒定 0.0080, collision=0.9999, 实际只用 1 个码字 (L0=1.6%/L1=0.8%/L2=0.4%). 修复 2 次后仍 NO-GO. ❌ **NO-GO**.
+
+- **修复尝试 (R11.3 自主决策)**:
+  1. **Fix 1**: codebook 用 `quantizer.get_codebook()` (Poincaré ball, post proj_to_ball + expmap0) 而非 raw `quantizer.embeddings.weight` (切空间 norm≈0.01). 后者让 poincare_distance 几乎全 0 → softmax 均匀 → straight-through 无信号 → 坍缩. **仍坍缩**.
+  2. **Fix 2**: straight-through estimator 公式 `x_q_st = (x_q_hard - x_q_soft).detach() + x_q_soft` (Jang 2017 Categorical Reparameterization, forward=hard, backward=soft). **仍坍缩**.
+
+- **根因 (R11.3 分析)**: Gumbel-Softmax straight-through estimator 在 VQ-VAE 中已知不稳定 — 当码字初始化为 uniform(-0.01, 0.01) (norm≈0.1), `get_codebook()` 把它们投到 Poincaré ball 后 norm 接近 0, distances ≈ 0 → softmax uniform → prob 均匀 → straight-through 给所有码字均匀梯度 → 全部码字更新到 batch mean (=0) → codebook 坍缩到原点 → loss 恒定 → USAGE-KILL. 这是 Gumbel-Softmax 在 VQ-VAE 中的固有问题 (不同于 categorical reparameterization 用于离散分布建模), 不是 Issue #28 协议的错误.
+
+- **关键发现 K4 (跨任务联立 10 方向 × 15 verdict 收口)**: 跟 task294 + task296 + task297 联立, Issue #28 Gumbel-Softmax 是 baseline Stage 1 recipe 内部 R@10 杠杆穷尽的"第 10 方向", 也 NO-GO. **10 方向 × 15 verdict 全 NO-GO 收口**, baseline Stage 1 recipe 内部 R@10 杠杆已穷尽 (跟 task294 §C2 + Task #296 paper.md §6.7.4 + Task #297 联立一致). 后续方向必须在架构层 (per-item soft-assign / per-layer diverse hash / TIGER-style multi-codeword / Codebook Transforms, 见 task298 §4 候选列表).
+
+- **R14 闭环**: Issue #28 hard-stop → comment + close (not planned reason), 同步 commit 867fc0e 推送 main.
+
+- **产物**: verdicts/task298_issue28_gate0_result.md + verdicts/task298_issue28_result.md + verdicts/task298_issue26_conflict_report.md (Issue #26 维持 OPEN 等候 owner) + scripts/task298_issue28_gate0_gumbel_softmax.py + scripts/task298_train_hrqvae_gumbel.py + scripts/task298_issue28_gate1_stage1_train.sh. commit 7b3fe5e (Gate 0 PASS) + 0e8c98f (Gate 1 修复) + 867fc0e (Gate 1 NO-GO + Issue close).
