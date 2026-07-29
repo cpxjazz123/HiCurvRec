@@ -29,67 +29,78 @@ from torch.utils.data import DataLoader
 REPO = "/home/wlia0047/ar57/wenyu/GeneRec"
 sys.path.insert(0, os.path.join(REPO, "HG-Rec"))
 
+import random
+import numpy as np
+
 from data.dataset import GenRecDataset
 from data.dataloader import GenRecDataLoader
 from model.HG_Rec import HG_Rec
-from model.utils import set_seed
 
 
-def evaluate(model, eval_loader, topk_list, beam_size, device):
-    """跟 task84_hgrec_stage3_train.py evaluate() 一致"""
+def set_seed(seed):
+    """Local copy — same as task84_hgrec_stage3_train.py"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def calculate_pos_index(preds, labels, maxk=20):
+    """跟 task84_hgrec_stage3_train.py line 23-49 一致 (本地 copy)"""
+    preds = preds.detach().cpu()
+    labels = labels.detach().cpu()
+    assert (
+        preds.shape[1] == maxk
+    ), f'preds.shape[1] = {preds.shape[1]} != {maxk}'
+
+    pos_index = torch.zeros((preds.shape[0], maxk), dtype=torch.bool)
+    for i in range(preds.shape[0]):
+        cur_label = labels[i].tolist()
+        for j in range(maxk):
+            cur_pred = preds[i, j].tolist()
+            if cur_pred == cur_label:
+                pos_index[i, j] = True
+                break
+    return pos_index
+
+
+def recall_at_k(pos_index, k):
+    return pos_index[:, :k].sum(dim=1).cpu().float()
+
+
+def ndcg_at_k(pos_index, k):
+    ranks = torch.arange(1, pos_index.shape[-1] + 1).to(pos_index.device)
+    dcg = 1.0 / torch.log2(ranks + 1)
+    dcg = torch.where(pos_index, dcg, torch.tensor(0.0, dtype=torch.float, device=dcg.device))
+    return dcg[:, :k].sum(dim=1).cpu().float()
+
+
+def evaluate(model, eval_loader, topk_list, beam_size, device, max_len):
+    """跟 task84_hgrec_stage3_train.py evaluate() 一致 (line 80-104)
+
+    注意: HG_Rec.generate() 内部硬编码 max_length=5, 不能再传 max_length kwarg (会冲突)
+    """
     model.eval()
     recalls = {'Recall@' + str(k): [] for k in topk_list}
     ndcgs = {'NDCG@' + str(k): [] for k in topk_list}
 
     with torch.no_grad():
         for batch in eval_loader:
-            # batch 可能是 dict 或 tuple, 跟 GenRecDataLoader 一致
-            if isinstance(batch, dict):
-                input_ids = batch['input_ids'].to(device)
-                attention_mask = batch['attention_mask'].to(device) if 'attention_mask' in batch else None
-                labels = batch['labels'].to(device)
-            else:
-                input_ids, attention_mask, labels = batch
-                input_ids = input_ids.to(device)
-                labels = labels.to(device)
-                if attention_mask is not None:
-                    attention_mask = attention_mask.to(device)
+            input_ids = batch['history'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['target'].to(device)
 
-            # beam search generation
-            outputs = model.model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                max_length=model.config.max_len,
-                num_beams=beam_size,
-                num_return_sequences=beam_size,
-                early_stopping=True,
-            )
-            # outputs: (batch*beam, seq_len) → reshape
-            outputs = outputs.view(input_ids.size(0), beam_size, -1)
+            # 跟 task84 evaluate() 一致: 不传 max_length, HG_Rec.generate 内部默认 5
+            preds = model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=beam_size)
+            preds = preds[:, 1:]  # Exclude the start token
+            preds = preds.reshape(input_ids.shape[0], beam_size, -1)  # Reshape to (batch_size, beam_size, seq_len)
+            pos_index = calculate_pos_index(preds, labels, maxk=beam_size)
 
-            # 计算 Recall@k + NDCG@k (跟 stage3 evaluate() 一样的逻辑)
             for k in topk_list:
-                # top-k predictions
-                top_k_preds = outputs[:, :k, :]  # (batch, k, seq_len)
-                # 计算 hit
-                hits = []
-                for i in range(input_ids.size(0)):
-                    label_seq = labels[i].tolist()
-                    hit = 0
-                    for j in range(k):
-                        pred_seq = top_k_preds[i, j].tolist()
-                        if pred_seq == label_seq:
-                            hit = 1
-                            break
-                    hits.append(hit)
-                recall_at_k = sum(hits) / len(hits)
-                recalls['Recall@' + str(k)].append(recall_at_k)
-
-                # NDCG: binary relevance (hit=1, miss=0)
-                import math
-                dcg = sum([1.0 / math.log2(j + 2) for j, h in enumerate(hits) if h])
-                idcg = 1.0 / math.log2(2)  # ideal: hit at position 1
-                ndcg = dcg / idcg if idcg > 0 else 0
+                recall = recall_at_k(pos_index, k).mean().item()
+                ndcg = ndcg_at_k(pos_index, k).mean().item()
+                recalls['Recall@' + str(k)].append(recall)
                 ndcgs['NDCG@' + str(k)].append(ndcg)
 
     avg_recalls = {k: sum(v) / len(v) for k, v in recalls.items()}
@@ -180,7 +191,7 @@ def main():
 
     # 4. Evaluate
     set_seed(args.seed)
-    avg_recalls, avg_ndcgs = evaluate(model, test_dataloader, args.topk_list, args.beam_size, device)
+    avg_recalls, avg_ndcgs = evaluate(model, test_dataloader, args.topk_list, args.beam_size, device, args.max_len)
     print(f"[Task #276 Stage 4] Test Recall: {avg_recalls}")
     print(f"[Task #276 Stage 4] Test NDCG:   {avg_ndcgs}")
 
