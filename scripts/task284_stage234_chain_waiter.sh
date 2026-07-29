@@ -62,7 +62,7 @@ if [ -z "$CKPT_A" ]; then
 else
     echo "[$(date)] Arm A Stage 2: $CKPT_A → $SID_A" >> $LOG
     CUDA_VISIBLE_DEVICES=2 TRITON_CACHE_DIR=/home/wlia0047/.triton/cache_task284_armA_stage2 \
-    python3 -u $REPO/scripts/task194_stage2_codebook.py \
+    python3 -u $REPO/scripts/task284_stage2_free_curv.py \
         --ckpt_path "$CKPT_A" \
         --output_path "$SID_A" \
         --device cuda:0 \
@@ -81,7 +81,7 @@ if [ -z "$CKPT_B" ]; then
 else
     echo "[$(date)] Arm B Stage 2: $CKPT_B → $SID_B" >> $LOG
     CUDA_VISIBLE_DEVICES=3 TRITON_CACHE_DIR=/home/wlia0047/.triton/cache_task284_armB_stage2 \
-    python3 -u $REPO/scripts/task194_stage2_codebook.py \
+    python3 -u $REPO/scripts/task284_stage2_free_curv.py \
         --ckpt_path "$CKPT_B" \
         --output_path "$SID_B" \
         --device cuda:0 \
