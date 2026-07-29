@@ -113,7 +113,7 @@ if [ -f "$SID_A" ]; then
         --dataset_name Instruments \
         --dataset_path $REPO/HG-Rec/dataset/ \
         --code_path _t5_hrqvae_kappa_decouple_armA_k0256.npy \
-        --codebook_size 256 128 256 1 \
+        --codebook_size "256,128,256,1" \
         --num_epochs 200 \
         --batch_size 256 \
         --lr 1e-4 \
@@ -150,7 +150,7 @@ if [ -f "$SID_B" ]; then
         --dataset_name Instruments \
         --dataset_path $REPO/HG-Rec/dataset/ \
         --code_path _t5_hrqvae_kappa_decouple_armB_k0256.npy \
-        --codebook_size 256 128 256 1 \
+        --codebook_size "256,128,256,1" \
         --num_epochs 200 \
         --batch_size 256 \
         --lr 1e-4 \
@@ -199,7 +199,7 @@ if [ -n "$CKPT_A_HG" ]; then
     python3 -u $REPO/scripts/task278_batch_stage4_eval.py \
         --ckpt_path "$CKPT_A_HG" \
         --code_path _t5_hrqvae_kappa_decouple_armA_k0256.npy \
-        --codebook_size 256 128 256 1 \
+        --codebook_size "256,128,256,1" \
         --vocab_size 1025 \
         --d_model 128 \
         --d_ff 1024 \
@@ -224,7 +224,7 @@ if [ -n "$CKPT_B_HG" ]; then
     python3 -u $REPO/scripts/task278_batch_stage4_eval.py \
         --ckpt_path "$CKPT_B_HG" \
         --code_path _t5_hrqvae_kappa_decouple_armB_k0256.npy \
-        --codebook_size 256 128 256 1 \
+        --codebook_size "256,128,256,1" \
         --vocab_size 1025 \
         --d_model 128 \
         --d_ff 1024 \
