@@ -93,3 +93,24 @@
 3. 等 task318 结束 → 启动 task320 5-arm 并行
 4. 200 epoch 训练完成 → Stage 4 K=100 eval
 5. 写 task320_result.md verdict
+
+## Critical finding (08:37) — train/val/test gap
+task318 50 epoch proxy Stage 4 eval (K=100 beam) 显示 val/test 严重不一致:
+- adam: val_R@10=0.1185 → test_R@10=0.0971 (-0.021 gap, NO-GO vs baseline 0.1020)
+- adamw: val_R@10=0.1204 → test_R@10=0.0996 (-0.020 gap, NO-GO vs baseline 0.1020)
+- adafactor: val_R@10=0.0969 → test_R@10=?
+- sgd: val_R@10=0.1088 → test_R@10=? (eval running)
+
+**Implication for task320**: 5-arm val_R@10 可能 0.12+, 但 test_R@10 可能仅 0.10.
+Issue #38 Stage 3 协议改造看似在 val 显著突破 (+15%), test 仍接近 baseline.
+Stage 4 评估必须等 test set, 不能仅看 val.
+
+## inv_sqrt formula bug fix (Arm B v2, commit d24b89e)
+Arm B 用 Noam inv_sqrt 公式 + base lr=1e-4 → 双重缩放 bug:
+- 公式 lr_lambda = d_model^-0.5 × min(step^-0.5, step × warmup^-1.5)
+- d_model=128 → 缩放因子 0.0884
+- warmup=10000 → 起始 LR 8.84e-12 (卡死 6 epoch val_R@10=0.0000)
+- v1 改 warmup=2000 → step=1 LR=9.88e-11 (仍卡)
+- v2 加 scale=506 → step=2000 LR=1e-4 (peak), step=103000 LR=1.4e-5 (decay)
+
+Arm B v3 (待 GPU 1 释放): 用 v2 fix 重启
