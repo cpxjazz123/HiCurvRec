@@ -57,17 +57,21 @@ def main():
     ckpt = torch.load(args.ckpt_path, weights_only=False, map_location=torch.device('cpu'))
     ckpt_args = ckpt['args']
     state_dict = ckpt['state_dict']
-    # R11 fix: ckpt['args'] is Namespace (not dict), use getattr
-    num_emb_list = getattr(ckpt_args, 'num_emb_list', None)
-    e_dim = getattr(ckpt_args, 'e_dim', None)
-    loss_type = getattr(ckpt_args, 'loss_type', '?')
-    beta = getattr(ckpt_args, 'beta', '?')
+    # R11 fix: ckpt['args'] 可能是 Namespace (task84) 或 dict (task89 vars(args))
+    def _get_arg(name, default=None):
+        if isinstance(ckpt_args, dict):
+            return ckpt_args.get(name, default)
+        return getattr(ckpt_args, name, default)
+    num_emb_list = _get_arg('num_emb_list', None)
+    e_dim = _get_arg('e_dim', None)
+    loss_type = _get_arg('loss_type', '?')
+    beta = _get_arg('beta', '?')
     log.info(f"  num_emb_list={num_emb_list}, e_dim={e_dim}, "
              f"loss_type={loss_type}, beta={beta}")
 
-    # EmbDataset path: ckpt 中 args.data_path 是相对路径 './dataset/Instruments/item_emb.parquet'
-    # 转为绝对路径
-    data_path = getattr(ckpt_args, 'data_path', None)
+    # EmbDataset path: ckpt 中 args.data_path 已是绝对路径 (task89 default = /home/wlia0047/.../item_emb.parquet)
+    # 兼容 task84 相对路径 './dataset/Instruments/item_emb.parquet'
+    data_path = _get_arg('data_path', None)
     if not data_path:
         raise RuntimeError("ckpt['args'] missing data_path")
     if not os.path.isabs(data_path):
@@ -79,16 +83,16 @@ def main():
     model = HRQVAE(in_dim=data.dim,
                    num_emb_list=num_emb_list,
                    e_dim=e_dim,
-                   layers=getattr(ckpt_args, 'layers', [512, 256, 128, 64]),
-                   dropout_prob=getattr(ckpt_args, 'dropout_prob', 0.0),
-                   bn=getattr(ckpt_args, 'bn', False),
+                   layers=_get_arg('layers', [512, 256, 128, 64]),
+                   dropout_prob=_get_arg('dropout_prob', 0.0),
+                   bn=_get_arg('bn', False),
                    loss_type=loss_type,
-                   quant_loss_weight=getattr(ckpt_args, 'quant_loss_weight', 1.0),
+                   quant_loss_weight=_get_arg('quant_loss_weight', 1.0),
                    beta=beta,
-                   kmeans_init=getattr(ckpt_args, 'kmeans_init', True),
-                   kmeans_iters=getattr(ckpt_args, 'kmeans_iters', 1000),
-                   sk_eps=getattr(ckpt_args, 'sk_epsilons', [0.0, 0.0, 0.0]),
-                   sk_iters=getattr(ckpt_args, 'sk_iters', 50))
+                   kmeans_init=_get_arg('kmeans_init', True),
+                   kmeans_iters=_get_arg('kmeans_iters', 1000),
+                   sk_eps=_get_arg('sk_epsilons', [0.0, 0.0, 0.0]),
+                   sk_iters=_get_arg('sk_iters', 50))
 
     model.load_state_dict(state_dict)
     model = model.to(device)
