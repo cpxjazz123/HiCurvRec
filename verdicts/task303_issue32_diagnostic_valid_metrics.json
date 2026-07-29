@@ -1,0 +1,17 @@
+{
+  "task": "task303_issue32_DIAGNOSTIC_valid_eval",
+  "note": "Eval on valid.parquet to compare with training val R@10=0.117",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task303/ckpt_hgrec_issue32/Instruments/Jul-30-2026_02-20-16/HG_Rec_best.pth",
+  "ckpt_missing": 0,
+  "ckpt_unexpected": 0,
+  "valid_recalls": {
+    "Recall@5": 0.0,
+    "Recall@10": 8.043758283480714e-05,
+    "Recall@20": 0.00032175033133922856
+  },
+  "valid_ndcgs": {
+    "NDCG@5": 0.0,
+    "NDCG@10": 2.773248583337285e-05,
+    "NDCG@20": 8.815491453359716e-05
+  }
+}

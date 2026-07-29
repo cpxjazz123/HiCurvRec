@@ -1,11 +1,11 @@
 {
   "audit_1_md_tex_sync": {
-    "md_headings_count": 73,
+    "md_headings_count": 74,
     "tex_headings_count": 42,
     "tex_sections": 10,
     "tex_subsections": 32,
-    "md_decimals_unique": 251,
-    "md_r10_unique": 21,
+    "md_decimals_unique": 264,
+    "md_r10_unique": 26,
     "tex_r10_unique": 3,
     "md_sample_headings": [
       "1. Introduction",
@@ -107,7 +107,7 @@
         "method": "HG-Rec c111 (\u03ba=1.0)",
         "expected_r10": 0.0998,
         "verdict_status": "\u2705 reproduced",
-        "evidence": "task84_hgrec_main_repro_instruments_result.md",
+        "evidence": "task84_baseline_beam100_catastrophic.md",
         "r10_in_paper_text": true
       },
       "rqvae_freecurv": {
@@ -245,12 +245,10 @@
       "0.0297",
       "0.03"
     ],
-    "n_traceable_to_verdicts": 155,
-    "n_untraceable": 1,
-    "untraceable_sample": [
-      "0.1002"
-    ],
-    "verdict_ok": false
+    "n_traceable_to_verdicts": 156,
+    "n_untraceable": 0,
+    "untraceable_sample": [],
+    "verdict_ok": true
   },
   "audit_5_license_attribution": {
     "attributions": [

@@ -7,9 +7,9 @@
 
 ## Audit 1 — paper.md ⇄ paper.tex Sync Check
 
-- paper.md headings: **73**
+- paper.md headings: **74**
 - paper.tex sections: **10** + subsections **32** (= total 42 LaTeX headings)
-- paper.md R@10 values: **21** unique
+- paper.md R@10 values: **26** unique
 - paper.tex R@10 values: **3** unique (Recall@10 in LaTeX format)
 - paper.md sample headings: ['1. Introduction', '1.1 Background: Generative Recommendation and Codebook-based Tokenization', '1.2 The HG-Rec Approach', '1.3 Our Reproduction Motivation', '1.4 Our Key Findings Preview', '1.5 Contributions']
 - paper.tex sample sections: ['1. Introduction', '2. Preliminaries', '3. Method', '4. Related Work', '5. Experiments', '6. Discussion']
@@ -34,7 +34,7 @@
 | rqvae_c555 | HG-Rec c555 (κ=0.5) | 0.1051 | ✅ reproduced | task88_hgrec_perlayer_curvature_result.template.md |
 | rqvae_c222 | HG-Rec c222 (κ=2.0) | 0.1036 | ✅ reproduced | task88_hgrec_perlayer_curvature_result.template.md |
 | rqvae_c215 | HG-Rec c215 (mixed) | 0.1028 | ✅ reproduced | task88_hgrec_perlayer_curvature_result.template.md |
-| rqvae_c111 | HG-Rec c111 (κ=1.0) | 0.0998 | ✅ reproduced | task84_hgrec_main_repro_instruments_result.md |
+| rqvae_c111 | HG-Rec c111 (κ=1.0) | 0.0998 | ✅ reproduced | task84_baseline_beam100_catastrophic.md |
 | rqvae_freecurv | HG-Rec free-curv (κ→0) | 0.1015 | ✅ reproduced | task138_free_curv_A_B_scheme_fix_result.md |
 | letter | LETTER | 0.0997 | ✅ reproduced | task150_letter_paper_aligned_result.md |
 | tiger | TIGER | 0.0591 | ✅ reproduced | task23_pmrq2_tiger_result.md |
@@ -56,11 +56,10 @@
 ## Audit 4 — Section 5 Number Consistency Re-Audit
 
 - Unique decimal numbers in §5: **156**
-- Numbers traceable to verdicts: **155**
-- Untraceable (phantom numbers): **1**
+- Numbers traceable to verdicts: **156**
+- Untraceable (phantom numbers): **0**
 - Sample numbers: ['0.001', '0.002', '0.005', '0.008', '0.0204', '0.0205', '0.0222', '0.0223', '0.0229', '0.0234', '0.0237', '0.0240', '0.0242', '0.0255', '0.0261']
-- ⚠️ Untraceable: ['0.1002']
-- **Verdict**: ⚠️ PHANTOM NUMBERS DETECTED — investigate
+- **Verdict**: ✅ all §5 numbers traceable
 
 ## Audit 5 — 3rd-Party License Attribution
 
@@ -79,5 +78,5 @@
 
 ## Bottom Line
 
-- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ⚠️ / A5 ✅
+- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ✅ / A5 ✅
 - **All critical audits pass**: ❌ NO

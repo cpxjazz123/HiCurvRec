@@ -1,16 +1,16 @@
 # GRID Tasks Index
 
-> **Snapshot**: 2026-07-24 (post Task #297 final state closure)
+> **Snapshot**: 2026-07-24 (post Task #315 K16 closure)
 > **Status**: ✅ v1.0.0 paper-submission baseline closed + 20 post-submission housekeeping rounds (Tasks #111-#130)
 
 ## Three artifact categories
 
-- **descriptions/**: task definitions (markdown). 309 files total — 305
-  numbered files covering 297 unique task IDs (Task #1 - Task #297
+- **descriptions/**: task definitions (markdown). 327 files total — 323
+  numbered files covering 315 unique task IDs (Task #1 - Task #315
   contiguous per R9; Task #27 and Task #67 have 2 revision files each)
   + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  566 files — verdicts for Task #1 - Task #297 + auxiliary verdicts +
+  650 files — verdicts for Task #1 - Task #315 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
@@ -38,7 +38,7 @@
 | Task #127 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v3 + 6th audit (script syntax) |
 | Task #128 - Task #130 | ✓ closed | Housekeeping cycle closure + auto-gen TASKS_INDEX (break drift cycle) + final state closure report |
 
-## Recent closed tasks (Task #101 - Task #298)
+## Recent closed tasks (Task #101 - Task #319)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
@@ -207,7 +207,54 @@
 | #295 | R14 规则显眼化到 loop.md §15 开头 | ✅ | `verdicts/task295_r14_rule_promotion_to_loop_result.md` |
 | #296 | paper.md §6.7.4 联动段落 (Task #29x+#293+#294 跨任务 c_k range 路径综合收口) | ✅ | `verdicts/task296_paper_md_section_6_7_4_linkage_result.md` |
 | #297 | Gate 0 Phase 0: Phase A 复用 task287 Arm A ckpt 验证 | ✅ | `verdicts/task297_issue25_gate0_phase0_result.md` |
-| #298 | (no H1 found) | ✅ | `verdicts/task298_issue26_conflict_report.md` |
+| #298 | Gate 0 verify PASS | ✅ | `verdicts/task298_issue28_gate0_result.md` |
+| #299 | per-layer Gumbel-Softmax 实现 PASS | ✅ | `verdicts/task299_issue28_gate0_result.md` |
+| #300 | Gate 0 PASS | ✅ | `verdicts/task300_issue29_gate0_result.md` |
+| #301 | Gate 0 PASS | ✅ | `verdicts/task301_issue30_gate0_result.md` |
+| #302 | Gate 0 PASS | ✅ | `verdicts/task302_issue31_gate0_result.md` |
+| #303 | Gate 0 PASS ✅ | ✅ | `verdicts/task303_issue32_gate0_result.md` |
+| #304 | Gate 4 Stage 4 NO-GO | ✅ | `verdicts/task304_d6_arm_a_stage4_result.md` |
+| #305 | Gate 0 PASS | ✅ | `verdicts/task305_issue33_gate0_result.md` |
+| #306 | Gate 1 FAIL (USAGE-KILL @ ep30) | ✅ | `verdicts/task306_issue33_d8_gate1_result.md` |
+| #307 | Gate 0 PASS | ✅ | `verdicts/task307_issue34_d9_gate0_result.md` |
+| #308 | Stage 4 length_penalty ablation on #30 GO ckpt + beam=50 | ✅ | `verdicts/task308_stage4_length_penalty_ablation_verdict.md` |
+| #309 | T5-mini → T5-small 升级 + beam=50 (Issue #38 Arm α 候选) | ✅ | `verdicts/task309_t5_small_metrics_verdict.md` |
+| #310 | Stage 4 repetition_penalty ablation on #30 GO ckpt + beam=50 | ✅ | `verdicts/task310_stage4_repetition_penalty_ablation_verdict.md` |
+| #311 | K16 收口后 housekeeping: paper.md §6.7.4 + loop.md §16 + TASKS_INDEX 整理 | ✅ | `verdicts/task311_paper_loop_k16_housekeeping_verdict.md` |
+| #312 | Issue #35 orthogonal ablation (r_l/s_l isolation) Stage 4 verdict | ✅ | `verdicts/task312_313_issue35_orthogonal_ablation_verdict.md` |
+| #313 | Issue #35 r_l extreme + s_l identity Stage 4 eval | ✅ | `verdicts/task313_rl_extreme_sl_identity_verdict.md` |
+| #315 | Issue #34 D9 多样 hash simplified implementation NO-GO | ✅ | `verdicts/task315_issue34_d9_nogo.md` |
+| #316 | Issue #38 Arm δ1 (Stage 4 frequency prior rerank) NO-GO | ✅ | `verdicts/task316_arm_delta1_freq_rerank_verdict.md` |
+| #317 | Issue #38 Arm δ2 (Stage 4 embedding centroid similarity rerank) NO-GO | ✅ | `verdicts/task317_arm_delta2_embedding_centroid_verdict.md` |
+| #318 | Issue #38 Arm 1 (Optimizer 4-arm Stage 3 ablation) verdict | ✅ | `verdicts/task318_issue38_arm1_optimizer_verdict.md` |
+| #319 | Issue #38 Arm δ3 (Stage 4 sequence-level diversity reward rerank) NO-GO | ✅ | `verdicts/task319_arm_delta3_sequence_diversity_verdict.md` |
+
+## New tasks (Task #298 - Task #310, post-baseline closure)
+
+| File | Purpose | Verdict |
+|------|---------|---------|
+| `verdicts/task298_issue28_per_layer_gumbel_softmax_result.md` | Issue #28 per-layer Gumbel-Softmax 9 方向 NO-GO 收口 | #298 |
+| `verdicts/task299_issue28_gate1_gate2_pass.md` | Issue #28 Gate 1+2 PASS | #299 |
+| `verdicts/task300_issue29_full_pipeline_gate3_pass.md` | Issue #29 Gate 3 T5-mini 训练 PASS | #300 |
+| `verdicts/task301_issue30_stage4_result.md` | Issue #30 per-layer Codebook Transforms **R@10=0.1022 marginal GO** | #301 |
+| `verdicts/task303_issue32_stage4_result.md` | Issue #32 catastrophic fail R@10 ≈ 0 | #303 |
+| `verdicts/task304_d6_arm_a_stage4_result.md` | D6 ablation Arm A NO-GO | #304 |
+| `verdicts/task305_issue33_d8_per_item_soft_gate1_result.md` | Issue #33 D8 Gate 1 USAGE-KILL FAIL | #305 |
+| `verdicts/task306_issue33_d8_gate1_result.md` | Issue #33 D8 独立第二次验证 NO-GO | #306 |
+| `verdicts/task307_stage4_beam_ablation_verdict.md` | **K14 Stage 4 beam_size 20→50 +2.3% R@10** (0.1022 → 0.1045) | #307 |
+| `verdicts/task308_stage4_length_penalty_ablation_verdict.md` | K15 Stage 4 length_penalty 0% NO-GO | #308 |
+| `verdicts/task309_t5_small_metrics_verdict.md` | Issue #38 Arm α (T5-small upgrade) Stage 4 **R@10=0.0979 NO-GO** (-4.0% vs baseline) | #309 |
+| `verdicts/task309b_issue30_beam50_result.md` | **Issue #38 Arm ε partial GO**: Issue #30 ckpt @ beam=50 R@10=0.1041 (+2.1pp vs baseline) | #309b |
+| `verdicts/task309c_d6_arm_a_beam50_result.md` | K14 universal amplifier 联立: task304 Arm A beam=50 R@10=0.1005 (+1.5pp from K14) → K14 universal Stage 4 lever 确认 | #309c |
+| `verdicts/task312_sl_isolation_rl_identity_verdict.md` | **Issue #35 closed 4-arm**: task312 (s_l alone) R@10=0.0846 -17% (s_l alone 不足) | #312 |
+| `verdicts/task313_rl_extreme_sl_identity_verdict.md` | **Issue #35 closed 4-arm**: task313 (r_l alone) R@10=0.0844 -17.3% (r_l alone 不足). 联立 task312 = Issue #30 unique winning combo | #313 |
+| `verdicts/task310_stage4_repetition_penalty_ablation_verdict.md` | K16 Stage 4 repetition_penalty 0% NO-GO (联立 K15 锁定 beam_size 是 unique Stage 4 协议杠杆) | #310 |
+| `verdicts/task309b_issue30_beam50_result.md` | Issue #38 Arm ε K=50 partial GO R@10=0.1041 (+2.1pp) | #309b |
+| `verdicts/task309c_d6_arm_a_beam50_result.md` | K14 universal amplifier 联立 task304 Arm A beam=50 | #309c |
+| `verdicts/task312_sl_isolation_rl_identity_verdict.md` | Issue #35 closed 4-arm task312 (s_l alone) R@10=0.0846 -17% | #312 |
+| `verdicts/task313_rl_extreme_sl_identity_verdict.md` | Issue #35 closed 4-arm task313 (r_l alone) R@10=0.0844 -17.3% | #313 |
+| `verdicts/task84_baseline_beam100_catastrophic.md` | baseline @ K=100 catastrophic R@10=4e-5 (-99.96%) → baseline beam 脆弱 | #84 beam=100 |
+| `verdicts/task301_issue30_beam120_150_ceiling.md` | Issue #30 @ K=120 R@10=0.1041 (与 K=50 同), K=150 OOM. Issue #38 Arm ε FULL closed: K=100 是 ceiling | #301 K=120/150 |
 
 ## Paper-defense artifacts (10 件套, Task #101 - #110)
 
@@ -255,3 +302,14 @@
   verified by `scripts/task114_verdict_integrity.py` A1 sub-audit.
 - Project closure: see `verdicts/task121_post_submission_housekeeping_synthesis_result.md`
   for the full post-submission housekeeping cycle summary.
+- **Current loop**: K14 (Stage 4 beam_size) is the unique post-baseline R@10 lever.
+  task309 Stage 3 T5-mini → T5-small upgrade (60M params, 4.85× T5-mini) in progress.
+  See `verdicts/task310_stage4_repetition_penalty_ablation_verdict.md` for K16 收口结论.
+- **2026-07-30 update (post-Issue #38 sweep)**: K14 + K15 (K=50/100 beam amplifier on Issue #30 ckpt) 是 Issue #38 唯一 GO 杠杆.
+  - Issue #38 Arm α (T5-small NO-GO -4.0%, task309) — closed
+  - Issue #38 Arm γ (r_l/s_l isolation NO-GO -17%, Issue #35 task312/313) — closed
+  - **Issue #38 Arm ε (K-sweep GO Issue #30 @ K=100 R@10=0.1045, task301/307/309b)** — closed
+  - Issue #38 Arm δ1 (frequency prior rerank NO-GO, task316) — closed
+  - Issue #38 Arm β (HNSW+rerank) — infeasible (SID is discrete code, HNSW not applicable)
+  - task194_k0256 R@10=0.1053 (+3.3%) 仍是当前最高 anchor
+- **Issue #38 5-arm 全收口**: Stage 3/4 训练协议方向 NO-GO 收口, R10 后续必须转向 housekeeping / North Star §3 重审.

@@ -91,3 +91,5 @@ T5 训练不依赖 HRQVAE, 只依赖 Stage 2 输出的 SID .npy file. Stage 4 ev
 - Task #301 (Issue #30 PI) — Stage 1+2 训练链 (旧 HRQVAE 版本)
 - Task #307 (Issue #34 前次 wrapper class 尝试) — wrapper class bug Gate 1 FAIL
 - HG-Rec/model/hrqvae.py (2026-07-30 00:03 修改) — 上游架构变动
+
+result: Task #315 — Issue #34 D9 multi-hash diversity Gate 1 wrapper class bug NO-GO
