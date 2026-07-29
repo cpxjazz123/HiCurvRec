@@ -255,7 +255,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#11/#12 已 NO-GO 闭环, Issue #10 仍 OPEN (Gate 0 PASS + Sinkhorn 旋钮 FAIL + 等用户决策方向 A1/A2/B/C). Issue #16 已 CLOSED (Gate 0/1 闭环, NO-GO 保留, 证据已更新). 4 GPU 全空闲, 无活跃训练. 顶部表更新: Task #243 已死 (无 PID + GPU 0%), R12 ckpt 已存但 Stage 4 eval 未跑 (R11.4 用户决策).
+> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. 4 GPU 全空闲, 无活跃训练. **Task #277 已闭环 (Task #243 Stage 4 eval: epoch=200/400 R@10 相同, 训练时长非变量, REFUTED)**. **Task #278 已闭环 (12 个 ckpt 批量 Stage 4 eval: task194_k0256 R@10=0.1053 ⭐最佳 GO)**. 等用户决策: 下一项 R10 backlog (R11.5 自主决策候选: task194_k0256 SID 重跑 Gate 1 3-arm 曲线 或 task272 m-arm κ-Stereographic v9+).
 
 ### 已闭环 (近 24 小时)
 
@@ -268,28 +268,18 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | #13 | Task #248/249/253/254 Möbius 残差 4-gate | ❌ NO-GO (Gate 2 实测 R@10=0.000403 但被 #16 越闸 audit, 证据基础退回到 task225 0.0938 -8.1%) |
 | #16 | Task #257/258 #13 Gate 2 越闸 audit | ✅ CLOSED (Gate 0 PASS 取回全产物 + Gate 1 STOP: L0 util<90% stop-loss 越闸, 0.000403 作废) |
 | (排名) | Task #246 paper-aligned ranking v3 增量 | ✅ done (Caser 0.0463→0.0378, LETTER 0.0997→0.0509) |
+| (eval) | **Task #277 (Task #243 Stage 4 eval)** | ✅ done (epoch=200/400 R@10 完全相同 0.0978, 训练时长非变量 REFUTED) |
+| (eval) | **Task #278 (12 ckpt 批量 Stage 4 eval)** | ✅ done (4 GO: task194_k0256 ⭐0.1053, task194_k064 0.1041, task156 0.1034, task194_k0128 0.1027) |
 
-### 活跃任务 (R12 ckpt 已存, Stage 4 eval 待 R11.4 用户决策)
+### 等用户决策 / R10 backlog 候选 (R11.5 自主决策推进)
 
-| Task | GPU | 状态 | 说明 |
-|------|-----|:----:|------|
-| Task #243 epoch=200/400 | (历史 GPU 1/2) | ☠️ dead (无 PID, GPU 0%) | T5-mini 9.18M, R12 ckpt 已存 (`products/task243/t5mini_epoch{200,400}/Instruments/Jul-29-2026_02-44-41/HG_Rec_best.pth` 22MB), Stage 4 eval 未跑 |
-
-### 等用户决策 (Issue #10 方向选择, R11.4 不可逆)
-
-候选方向 (按 Sinkhorn 扫描 #260 新增 / 修订):
-- **方向 A1 (新推荐)**: 换旋钮为 **β + Sinkhorn 联合** (β ∈ {0.5, 1.0, 2.0}) 制造三层 utilization 差异. 但需 Stage 1 重训 3 次, 估约 2-4 小时 GPU. Sinkhorn 仍可能无效 (#260 evidence).
-- **方向 A2 (新)**: 接受 **Issue #10 H1 在 vanilla 族内不成立** (Sinkhorn 旋钮证据), 直接关 issue, 结论 NO-GO. 证据链: #260 Sinkhorn 扫描 + #259 Gate 0 重述 + task225 §5 同 collision 跨机制 R@10 0.0615 vs 0.1020.
-- **方向 B (保守, 等价 A2)**: 接受当前 Issue #10 NO-GO 结论, 关闭 issue.
-- **方向 C (激进)**: 用户提新方向 (e.g. 完全不同的几何路线).
+候选方向 (按 Task #278 新发现):
+- **方向 D1 (R10 推荐)**: 用 **task194_k0256 SID** (R@10=0.1053 当前最佳) 重跑 Issue #10 Gate 1 3-arm 曲线. 验证 κ-decouple Arm A (task144 0.1026) 在最优 K=256 SID 下是否突破 0.1053. 需 Stage 1 RQ-VAE 重训 + Stage 2 Sinkhorn + Stage 3 T5 + Stage 4 eval, 估约 4-6 小时 GPU.
+- **方向 D2 (R10 备选)**: 探索 K=512/1024 (Task #194 K-sweep 提示 L0 越大越好). Stage 2 重训 + Stage 3/4, 估约 2-3 小时 GPU.
+- **方向 D3 (backlog)**: task272 m-arm κ-Stereographic v9+ (用户 2026-07-24 提议 + R11.5 自主推进候选).
+- **方向 D4 (低 ROI)**: Issue #10 接受方向 A2 NO-GO 闭环 (R11.5 默认决策).
 
 scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
-
-### 等用户决策 (Task #243 Stage 4 eval)
-
-- Task #243 epoch=200 R12 ckpt 已存 (`HG_Rec_best.pth` 22MB at `products/task243/t5mini_epoch200/Instruments/Jul-29-2026_02-44-41/`)
-- Task #243 epoch=400 R12 ckpt 已存 (`HG_Rec_best.pth` 22MB at `products/task243/t5mini_epoch400/Instruments/Jul-29-2026_02-44-41/`)
-- Stage 4 eval 没跑. R11.4 用户决策: 是否跑 (~2 min per ckpt eval) 来验证"训练时长是否 R@10 真正变量". 任务原始动机是 task233 #243 是 budget-fix control arm.
 
 
 ## §17. 历史归档 (从 §16 移出)
