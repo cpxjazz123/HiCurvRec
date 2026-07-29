@@ -58,7 +58,7 @@ GeneRec/
 ├── descriptions/                  # Task definitions (297 entries, R9 continuous)
 ├── verdicts/                      # Closure reports (one per task + data files)
 ├── products/                      # Task execution artifacts (checkpoints, runs)
-└── scripts/                       # Diagnostic & analysis scripts (~900 files)
+└── scripts/                       # Diagnostic & analysis scripts (~904 files)
 ```
 
 The directory **BLOGER/**, **DECOR/**, **ETEGRec/**, **HG-Rec/**, **LETTER/**,

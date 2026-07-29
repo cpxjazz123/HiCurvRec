@@ -10,7 +10,7 @@
   contiguous per R9; Task #27 and Task #67 have 2 revision files each)
   + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  563 files — verdicts for Task #1 - Task #297 + auxiliary verdicts +
+  566 files — verdicts for Task #1 - Task #297 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
@@ -38,7 +38,7 @@
 | Task #127 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v3 + 6th audit (script syntax) |
 | Task #128 - Task #130 | ✓ closed | Housekeeping cycle closure + auto-gen TASKS_INDEX (break drift cycle) + final state closure report |
 
-## Recent closed tasks (Task #101 - Task #297)
+## Recent closed tasks (Task #101 - Task #298)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
@@ -207,6 +207,7 @@
 | #295 | R14 规则显眼化到 loop.md §15 开头 | ✅ | `verdicts/task295_r14_rule_promotion_to_loop_result.md` |
 | #296 | paper.md §6.7.4 联动段落 (Task #29x+#293+#294 跨任务 c_k range 路径综合收口) | ✅ | `verdicts/task296_paper_md_section_6_7_4_linkage_result.md` |
 | #297 | Gate 0 Phase 0: Phase A 复用 task287 Arm A ckpt 验证 | ✅ | `verdicts/task297_issue25_gate0_phase0_result.md` |
+| #298 | (no H1 found) | ✅ | `verdicts/task298_issue26_conflict_report.md` |
 
 ## Paper-defense artifacts (10 件套, Task #101 - #110)
 
