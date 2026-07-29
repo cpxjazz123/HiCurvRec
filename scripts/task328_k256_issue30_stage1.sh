@@ -31,7 +31,7 @@ TRITON_CACHE_DIR=/home/wlia0047/.triton/cache_task328_k256_issue30
 mkdir -p "$TRITON_CACHE_DIR"
 
 CUDA_VISIBLE_DEVICES=1 TRITON_CACHE_DIR="$TRITON_CACHE_DIR" \
-  nohup "$PYTHON_BIN" $REPO/scripts/task301_issue30_gate1_stage1_train.py \
+  nohup "$PYTHON_BIN" $REPO/scripts/task328_k256_issue30_stage1_train.py \
     --lr 1e-3 \
     --epochs 100 \
     --batch_size 512 \
