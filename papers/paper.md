@@ -310,6 +310,24 @@ sentence-t5-base (768-dim), frozen. **Semantic ID:** 3-level RQ-VAE [64, 128, 25
 
 K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一性 (Sinkhorn 端点) / T5-mini 容量 (d_model=128, ~5.5M params) 三者间 trade-off 在 K=256 已达最优. K ≥ 512 增加 L0 codeword 多样性但 Sinkhorn 端点稀释 SID 序列信息密度, T5-mini 学不到更多模式. 这是 Musical_Instruments 数据集 (9922 items, 24772 test) + 当前 T5-mini 容量的固定特性, 跟 K-sweep 是否单调无关.
 
+### 5.6c κ-Decouple Cross-K Ablation (Table 7c, Task #144 K=64 + Task #284 K=256)
+
+| K (L0) | Arm A (κ frozen) R@10 | Arm B (Phase A + Phase B unfreeze) R@10 | task194/k R@10 (no decouple) | vs baseline | 备注 |
+|--------|------------------------|------------------------------------------|------------------------------|--------------|------|
+| 64 (Task #144)   | 0.1026 | 0.1017 | 0.1041 ⭐ | +0.6% / -0.3% (≈ baseline) | κ-decouple + 小 K 几乎中性 |
+| **256 (Task #284)** | **0.0846** | **0.0864** | **0.1053** ⭐ | **-17.0% / -15.3%** (degraded) | κ-decouple + 大 K 显著退化 |
+
+**Span: -17.0pp (Task #284 Arm A vs task194_k0256).** κ-decouple + baseline Stage 1 recipe 跨 K 测试一致 NO-GO:
+- K=64 时几乎中性 (R@10 0.1026/0.1017 vs task194_k064 0.1041, -1.5pp / -2.4pp)
+- K=256 时显著退化 (R@10 0.0846/0.0864 vs task194_k0256 0.1053, -20.7pp / -18.9pp)
+- **新现象**: κ-decouple + 大 K 是负面相互作用, 不是 neutral.
+
+根因假设 (R11.3 自主决策):
+- **H1 (推荐)**: κ frozen at 0 (c=1 欧氏) + K=256 → L0 第一层欧氏 argmin 在 256 个码字上 collision 暴涨. K=64 欧氏 argmin collision 还可控 (K 小, 量化误差天然 cover), K=256 欧氏 argmin 出现严重 collision → Sinkhorn 后处理也无法补救 (跟 task178-181 mode collapse 同根).
+- **H2 (备选)**: κ-decouple 训练 + K=256 改变了 Stage 2 Sinkhorn 平衡点. task144 K=64 和 task284 K=256 都用 task89 FreeCurvHRQVAE 训练, 但 K 改大后 Sinkhorn 30 iter 收敛轨迹不同, 4th-digit dedup 后 SID 唯一性损失更大.
+
+**结论**: κ-decouple 不是 R@10 杠杆, baseline Stage 1 recipe 在任何已知 K (64/256) 都不是隐藏参数可调 (联立 Task #282 β=稳定剂非天花板 + Task #283 dead_revive=hook no-op + Task #284 κ-decouple=大 K 退化). L0 ≥ 90% 需结构改动 (Gromov-Softmax / EMA / 多样 hash / per-item soft-assign), 不在 baseline 修补 ROI 范围. 跟 §5.7.1 11-条 evidence 联立共同锁死: geometric intervention ≤ baseline on Musical_Instruments.
+
 ### 5.7 Discussion
 
 #### 5.7.1 Is Hyperbolic Geometry Necessary?
