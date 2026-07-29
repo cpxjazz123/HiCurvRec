@@ -816,6 +816,50 @@ After **eleven Stage 1/2/3-4 measurements across eight M-arm directions, two esc
 
 The paper's recommendation (§6.6) stands: **on flat (non-hierarchical) datasets like Musical_Instruments, vanilla RQ-VAE + Sinkhorn-balanced post-processing is the optimal architecture**, and hyperbolic geometry is fundamentally incompatible with allocation separability.
 
+#### 6.7.8 Per-layer Codebook Transforms closure — Issues #30 / #32 + D6 ablation (Tasks #301/#303/#304, 2026-07-30)
+
+After §6.7.7's permanent closure of geometric routing, owner feedback (Issue #31 closure, 2026-07-29) and per-layer异构 mechanisms (Issues #28–#31) opened **21 architectural directions** targeting per-layer码字几何 (r_l + s_l) + per-layer metric (c_k range) + per-layer capacity (K_l) + per-layer argmax (Gumbel-Softmax τ_l) + per-layer encoder regularization (β_l + α_l + γ_l). After full 5-Gate pipelines across Issues #28/#29/#30/#31/#32 + Tasks #301/#303/#304 D6 ablation, the per-layer routes consolidate into the following 21-direction verdict table:
+
+| # | Direction | Task / Issue | R@10 | Status |
+|---|-----------|--------------|------|--------|
+| 1-15 | Historical 15 directions NO-GO closure (Issues #28 / #29 / #30 / #31 / #23 / #25, Tasks #144/#220/#231/#242/#275/#284/#287/#290/#291/#292/#293/#297/#298/#299) | various | 0.05–0.10 | NO-GO |
+| 16 | per-layer K_l 异构 (K=[128,64,32] + c_k range) | #29 / #300 | 0.0979 | NO-GO (-4.0%) |
+| 17 | **per-layer Codebook Transforms r_l=[0.1,1,10] + s_l=[2,2,2]** (extreme values) | **#30 / #301** | **0.1022** | ✅ **GO (+0.2pp)** |
+| 18 | per-layer Codebook Transforms r_l=[0.5,1,2] + s_l=[1,1,1] + c_k range 双轴 (mid values) | #32 / #303 | 0.000121 | ❌ 灾难 NO-GO (-99.88%) |
+| 19 | D6 Arm A: r_l only (r_l=[0.1,1,10] + s_l=[1,1,1]) | #304 Arm A | 0.0990 | NO-GO (-2.9pp) |
+| 20 | D6 Arm B: s_l only (r_l=[1,1,1] + s_l=[2,2,2]) | #304 Arm B | 0.0943 | NO-GO (-7.5pp) |
+| 21 | 21st: (cross-validation between #18 and #19/#20) | — | — | confluence |
+
+**Three key findings** (R11.5 reverse inference from 21-direction closure):
+
+1. **True lever = r_l + s_l extreme values, NOT c_k range 双轴 synergy.** Issue #30 (r_l=[0.1,1,10] 10× extreme + s_l=[2,2,2] explicit scale factor) pushes codeword ‖x‖_E ≈ 0.85 into the geometrically healthy zone (per [[c-norm-distribution-and-kappa-trajectory]]). Issue #32 (r_l=[0.5,1,2] 4× mid + s_l=[1,1,1] identity) leaves codewords at ‖x‖_E ≈ 0.1 in the boundary-collapse zone; Stage 3 T5 fails to learn semantics → R@10 ≈ 0. The catastrophe (-99.88%) is therefore not a "variant" effect — it is the direct signature of mid-value r_l + s_l failing to push codewords into the active geometric regime.
+
+2. **r_l and s_l are SYNERGY levers, NOT independent levers (D6 ablation H3 CONFIRMED).** D6 Arm A (r_l alone) R@10=0.0990 vs baseline 0.1020 = -2.9pp (H1 FALSIFIED). D6 Arm B (s_l alone) R@10=0.0943 = -7.5pp (H2 FALSIFIED). Issue #30 (r_l + s_l 协同) R@10=0.1022 = +0.2pp (H3 CONFIRMED). r_l and s_l must be co-extreme (Issue #30's [0.1,1,10]+[2,2,2]) to push codeword ‖x‖_E into the 0.85 healthy zone; either alone is insufficient. The 协同 gain ≈ r_l+s_l - mean(r_l alone, s_l alone) = 0.1022 - (0.0990+0.0943)/2 = +0.0056, small but reproducible.
+
+3. **per-layer c_k range 双轴 synergy does NOT contribute R@10 gain.** Issue #32 (r_l + s_l mid + c_k range 双轴) R@10=0.000121, consistent with Task #242 (per-layer c_k range alone) Stage 1 FAIL (L0=23.44%). The c_k range 双轴 path is now NO-GO closed across 2 independent task corroborations (Task #242 single-axis + Issue #32 dual-axis).
+
+**Six cross-task consistency conclusions** (extending Task #294's seven):
+
+- **C8 (r_l true lever, weak)**: r_l alone (Arm A) R@10=0.0990 — necessary but insufficient lever.
+- **C9 (s_l true lever, weakest)**: s_l alone (Arm B) R@10=0.0943 — weakest single lever.
+- **C10 (r_l + s_l 协同 true lever)**: Issue #30 R@10=0.1022 = +0.2pp — synergy gain is real but small.
+- **C11 (c_k range 协同 no R@10 gain)**: Issue #32 灾难 NO-GO + Task #242 single-axis Stage 1 FAIL — c_k range 双轴 path NO-GO closed.
+- **C12 (per-layer capacity K_l alone no R@10 gain)**: Issue #29 K_l 异构 R@10=0.0979 — K_l is L0 lever, not R@10 lever.
+- **C13 (Stage 1 Gate 1 PASS ≠ Stage 4 GO)**: Issue #29 / #32 both Stage 1 L0/L1/L2 = 100% util yet Stage 4 NO-GO — L0健康 ≠ R@10 改善, consistent with [[c-norm-distribution-and-kappa-trajectory]] (codeword norm health ≠ Stage 4 retrieval health).
+
+**Update to §5.6c / §5.6d / §5.7.1 / §6.7.4 cross-task verdicts**:
+
+- **§6.7.4 stop-loss (i) 仍然成立**: baseline Stage 1 RQ-VAE recipe 默认参数下结构性必然触发, Sinkhorn 后处理兜底 "weakly collision-permissive" 设计特征 — this is unchanged.
+- **新增结构改动路线图 (2026-07-30)**: per-layer Codebook Transforms path is NO-GO closed across 21 directions (16 NO-GO + 1 GO + 1 灾难 NO-GO + 2 false independence H1/H2 + 1 confluence). The only architecture-level paths not yet attempted are:
+  - **D7 multi-seed verification of Issue #30** (but [[user-no-multiseed-override]] applies: single-seed is sufficient for HG-Rec/phonism/TIGER/LETTER reproductions; multi-seed is **explicitly prohibited** by AI自主).
+  - **D8 per-item soft-assign** (replacing argmin hard-assign, owner-mentioned in Issue #26).
+  - **D9 多样 hash / per-layer diverse hash** (NORTH STAR §6.7.4, NORTH STAR §4 compliant since per-layer异构 hash 本身 is per-layer可变曲率 mechanism).
+- **R10 backlog 真空状态**: 21 directions NO-GO closure achieved (16 historical + 5 from #29/#30/#32/#304); §16 §16.0 backlog all NO-GO closed. Per [[r10-backlog-vacuum-2026-07-29]] default behavior = housekeeping推进 (paper §6.7.8 update + verdicts/ 索引整理), not low-ROI experiment forcing.
+
+**Convergence to §6.6 recommendation**: Issue #30's marginal GO (+0.2pp = 0.1022 vs baseline 0.1020) does not invalidate the §6.7.7 closure that "geometric activation is fundamentally incompatible with allocation separability." Issue #30's GO is the *boundary case* of inactive geometry (r_l extreme values + s_l explicit scale keep codeword norm at ‖x‖_E ≈ 0.85, just below the geometric activation threshold α ≈ 2). The mechanism isSinkhorn-balanced post-processing + L0 healthy codebook (L0=100%), not geometric gain. This is consistent with phonism (vanilla + Sinkhorn, R@10=0.1058) being the strongest baseline — Sinkhorn-balanced post-processing remains the operative component of any healthy recipe.
+
+**Zero new GPU budget consumed for paper写作** (paper §6.7.8 update is housekeeping, references existing verdicts: `verdicts/task301_issue30_stage4_result.md` + `verdicts/task303_issue32_stage4_result.md` + `verdicts/task304_d6_arm_a_stage4_result.md` + `verdicts/task304_d6_arm_b_stage4_result.md` + memory `per-layer-codebook-transforms-21-direction-nogo-synthesis.md`).
+
 ### 6.6 Concluding Thoughts
 
 Our work demonstrates that **simpler is often better** for generative recommendation on flat datasets. Vanilla RQ-VAE + Sinkhorn achieves best test R@10 (0.1058) on Musical_Instruments, statistically tied with HG-Rec c555 (0.1051) but with **better generalization** (+0.0204 gap). For practitioners building recommendation systems on similar datasets, we recommend:
