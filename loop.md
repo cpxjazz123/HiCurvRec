@@ -341,3 +341,27 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - HG-Rec "包装失效" finding 的第二个独立证据 (Task #199 λ_κ≈2 + Task #212 一致率 99%)
 - 方向二 (欧式取候选 + 双曲重排) NO-HOPE 收线; 方向一是希望所在 (绕开 argmin 死结)
 - verdict: verdicts/task212_two_stage_criterion_result.md
+
+### Task #282+#283 baseline-recipe 卡死 (2026-07-29 新增, 字面写死)
+
+- **Task #282 (β curriculum, task270 A1)**: `loss_type=mse + β=0` Stage 1 ep30 USAGE-KILL L0=1.6% (1/64 mode collapse, 比 baseline 73.44% 还糟 −71.84pp). 推论: commit loss 不是 L0 上限, 是下限 (无 β 时 5 epoch encoder 自洽坍缩).
+- **Task #283 (D5 dead_revive frequency)**: `eval_step=5 + anti_collapse=dead_revive` ep30 USAGE-KILL L0=70.3% ≈ baseline 73.44%, **post-revive 严格 = pre-revive**. 根因 `hrqvae_trainer.py:271` `latent_gravy = torch.empty(0)` 让 hook no-op.
+- **联立锁死 (papers/paper.md §6.7.4 字面段落)**: baseline Stage 1 recipe (`poincare + β=0.5 + kmeans + product_manifold + anti_collapse=none + eval_step=5`) 在 `β ∈ {0, 0.5, 1.0}` / `frequency ∈ {1, 5, 10}` / `loss_type ∈ {mse, l1, poincare}` 调节空间内**没有任何已知杠杆把 L0 ≥ 90%**. §6.7.4 stop-loss (i) 在 baseline recipe 上结构性必然触发 — Sinkhorn 后处理兜底的 "weakly collision-permissive" 设计特征, 不是 bug.
+- **真实 L0 ≥ 90% 杠杆候选**: 需结构改动 (Gumbel-Softmax / EMA / 多样 hash / per-item soft-assign), 不在 baseline 修补 ROI. 任何接续提议须先通过 `loop.md §R10` 路线图审核.
+- 0 GPU (D5A 75 sec + ep30 USAGE-KILL 自动 abort), R2 KB 产物落盘 `products/task270/A1_euclidean/` + `products/task283/A_eval5/`.
+
+### κ-decouple RQ-VAE 路线 收线 (Task #225 2026-07-23 NO-GO)
+
+- Stage 4 test R@10 = **0.0938** (-8.1% vs baseline 0.1020). 全链路 200 epoch RQ-VAE + Sinkhorn + T5-mini 在 Musical_Instruments 上比 baseline 还差.
+- Task #144 Arm A κ-decouple (warm-start from vanilla 100 epoch, then 100 epoch κ decouple) 同样卡 — issue #16 #17 已证 pre-revive L0 = 73.44% 触发 stop-loss.
+- 与 Task #282+#283 联立共同锁死: geometric intervention ≤ baseline, 任何新 κ 变体 (κ-decouple / κ-Stereographic / per-codeword κ / m-arm product_manifold) 都不能绕开 baseline Stage 1 recipe 卡点.
+
+### §16 R10 backlog 几何方向 全收线 (2026-07-29 R10 backlog 收口)
+
+- **D1 (task194_k0256 κ-decouple 重训)**: 4-6h GPU 跑 Arm A 在最优 K=256 SID 上. 预测 Stage 4 R@10 < baseline 0.1020 (Task #225 #144 已证). **不再列入 backlog**.
+- **D3 (task272 m-arm κ-Stereo v9+)**: 用户 2026-07-24 提议. m-arm product_manifold (Task #227) 已 7 variants NO-GO, κ-Stereographic 在 baseline recipe 不是 L0 杠杆. **不再列入 backlog**.
+- 后续 backlog 收口方向: 数据分析 (Phase 0 false 验证 / 5-graph weight 在 #69 已查) / 诊断 (specific file audit) / 已有结果整理 (K-sweep + paper-aligned ranking v3 写 paper.md Section 5.4).
+
+### Task #279 (K=512/1024 K-sweep 扩展) 闭环 — Stage 4 waiter 自动 fire
+- K=512 + K=1024 Stage 3 ckpt 已落盘 (13:47 / 13:56). 12 stage3_train children 进程 alive, early_stop 触发后会自然 exit. Waiter `task279_stage4_eval.sh` 每 2 min check, 满足条件 (python3 procs=0 + ckpt age>60s) 自动 fire Stage 4 eval 2 臂 (K=512 + K=1024).
+- 预估 30-60 min 内自然 fire. 结果落 `verdicts/task279_k_sweep_result.md`.
