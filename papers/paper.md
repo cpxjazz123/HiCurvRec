@@ -310,25 +310,27 @@ sentence-t5-base (768-dim), frozen. **Semantic ID:** 3-level RQ-VAE [64, 128, 25
 
 K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一性 (Sinkhorn 端点) / T5-mini 容量 (d_model=128, ~5.5M params) 三者间 trade-off 在 K=256 已达最优. K ≥ 512 增加 L0 codeword 多样性但 Sinkhorn 端点稀释 SID 序列信息密度, T5-mini 学不到更多模式. 这是 Musical_Instruments 数据集 (9922 items, 24772 test) + 当前 T5-mini 容量的固定特性, 跟 K-sweep 是否单调无关.
 
-### 5.6c κ-Decouple Cross-K Ablation (Table 7c, Task #144 K=64 + Task #284 K=256)
+### 5.6c κ-Decouple Cross-K Ablation (Table 7c, Task #144 K=64 + Task #287 K=128 + Task #284 K=256)
 
 | K (L0) | Arm A (κ frozen) R@10 | Arm B (Phase A + Phase B unfreeze) R@10 | task194/k R@10 (no decouple) | vs baseline | 备注 |
 |--------|------------------------|------------------------------------------|------------------------------|--------------|------|
 | 64 (Task #144)   | 0.1026 | 0.1017 | 0.1041 ⭐ | +0.6% / -0.3% (≈ baseline) | κ-decouple + 小 K 几乎中性 |
+| **128 (Task #287)** | **0.0855** | **0.0830** | **0.1027** | **-16.2% / -18.6%** (degraded) | κ-decouple + 中 K 显著退化 |
 | **256 (Task #284)** | **0.0846** | **0.0864** | **0.1053** ⭐ | **-17.0% / -15.3%** (degraded) | κ-decouple + 大 K 显著退化 |
 
 **Span: -17.0pp (Task #284 Arm A vs task194_k0256).** κ-decouple + baseline Stage 1 recipe 跨 K 测试一致 NO-GO:
 - K=64 时几乎中性 (R@10 0.1026/0.1017 vs task194_k064 0.1041, -1.5pp / -2.4pp)
+- K=128 时显著退化 (R@10 0.0855/0.0830 vs task194_k0128 0.1027, -17.2pp / -19.7pp)
 - K=256 时显著退化 (R@10 0.0846/0.0864 vs task194_k0256 0.1053, -20.7pp / -18.9pp)
-- **新现象**: κ-decouple + 大 K 是负面相互作用, 不是 neutral.
+- **新现象**: κ-decouple + K ≥ 128 是负面相互作用 (跳崖式), 不是 neutral. K=64 → K=128 跳崖 -16%~-19%, K=128 → K=256 持平.
 
 根因假设 (R11.3 自主决策):
-- **H1 (推荐)**: κ frozen at 0 (c=1 欧氏) + K=256 → L0 第一层欧氏 argmin 在 256 个码字上 collision 暴涨. K=64 欧氏 argmin collision 还可控 (K 小, 量化误差天然 cover), K=256 欧氏 argmin 出现严重 collision → Sinkhorn 后处理也无法补救 (跟 task178-181 mode collapse 同根).
-- **H2 (备选)**: κ-decouple 训练 + K=256 改变了 Stage 2 Sinkhorn 平衡点. task144 K=64 和 task284 K=256 都用 task89 FreeCurvHRQVAE 训练, 但 K 改大后 Sinkhorn 30 iter 收敛轨迹不同, 4th-digit dedup 后 SID 唯一性损失更大.
+- **H1 (推荐)**: κ frozen at 0 (c=1 欧氏) + K ≥ 128 → L0 第一层欧氏 argmin 在 128/256 个码字上 collision 略高 (Stage 2 Sinkhorn 30 iter + dedup 后 collision=0 但 T5 训练看到一些数字串内变化). K=64 欧氏 argmin collision 天然 cover, K=128/256 量化误差失控 → 下游退化. (跟 task178-181 mode collapse 同根, 但 Sinkhorn 兜底让 collision=0 掩盖了坍缩, 只在下游 R@10 暴露.)
+- **H2 (备选)**: κ-decouple 训练 + K ≥ 128 改变了 Stage 2 Sinkhorn 平衡点. task144 K=64 / task287 K=128 / task284 K=256 都用 task89 FreeCurvHRQVAE 训练, 但 K 改大后 Sinkhorn 30 iter 收敛轨迹不同, 4th-digit dedup 后 SID 唯一性损失更大.
 
-**结论**: κ-decouple 不是 R@10 杠杆, baseline Stage 1 recipe 在任何已知 K (64/256) 都不是隐藏参数可调 (联立 Task #282 β=稳定剂非天花板 + Task #283 dead_revive=hook no-op + Task #284 κ-decouple=大 K 退化). L0 ≥ 90% 需结构改动 (Gromov-Softmax / EMA / 多样 hash / per-item soft-assign), 不在 baseline 修补 ROI 范围. 跟 §5.7.1 11-条 evidence 联立共同锁死: geometric intervention ≤ baseline on Musical_Instruments.
+**结论**: κ-decouple 不是 R@10 杠杆, baseline Stage 1 recipe 在任何已知 K (64/128/256) 都不是隐藏参数可调 (联立 Task #282 β=稳定剂非天花板 + Task #283 dead_revive=hook no-op + Task #287 + #284 κ-decouple=K≥128 跳崖退化). **L0 ≥ 90% 不需要结构改动 — κ-decouple Phase A κ frozen=0 本身就是 L0 ≥ 90% 杠杆** (跨 K=64/128/256 一致 100% util, 详见 §5.6d 修正), 但跟 R@10 改善不能并存. 跟 §5.7.1 11-条 evidence 联立共同锁死: geometric intervention ≤ baseline on Musical_Instruments.
 
-### 5.6d L0 Utilization ≥ 90% Curriculum Validation (Table 7d, Task #288 — Issue #20 NO-GO)
+### 5.6d L0 Utilization ≥ 90% Curriculum Validation (Table 7d, Task #288 + Task #287 — Issue #20 闭环 + 修正)
 
 **目标**: §6.7.4 stop-loss (i) "L0 utilization ≥ 90%" 在 baseline recipe 上是否恒触发 (Issue #20, 3 配方 Stage 1 验证).
 
@@ -337,6 +339,8 @@ K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一�
 | **A1 β=0.0** | H2: 纯欧氏让码字自由散开 | **1/64 = 1.6%** ❌ | **0.9988** ❌ | **NO-GO (USAGE-KILL 自动 abort)** — 三次独立实验 (task271 / task275 / task288) |
 | A2 curriculum (β=0.0 → β=0.5 warm-start) | H3: A1 warm-start + β=0.5 精修 | n/a | n/a | **不启动** — Issue #20 硬停止: Gate 2 仅 Gate 1 PASS 后启动 |
 | A3 encoder freeze (β=0.5 + freeze_encoder_epoch=20) | H4: encoder freeze 让 codebook+decoder 重分配 | n/a | n/a | **不启动** — Gate 1 NO-GO 已锁 baseline recipe 内部无解 |
+| **κ-decouple K=128 (Task #287 Arm A κ frozen)** | H5: κ frozen=0 防 mode collapse | **100%** ✅ | 0 ✅ (Sinkhorn dedup) | **L0 ≥ 90% PASS** — 但 Stage 4 R@10=0.0855 (-16.2%, 退化) |
+| **κ-decouple K=128 (Task #287 Arm B Phase A + Phase B)** | H6: κ-decouple + κ unfreeze | **100%** ✅ | 0 ✅ | **L0 ≥ 90% PASS** — Stage 4 R@10=0.0830 (-18.6%, 退化) |
 
 **A1 三次实验 USAGE-KILL 锁死证据** (Task #288 hrqvae.log 提取):
 
@@ -351,20 +355,36 @@ K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一�
 
 **Root cause (跟 task282 R2 KB 一致)**: A1 β=0.0 让 VQ-VAE 完全退化到纯欧氏 VQ. 失去 commit loss 跟 phase-0 fix 的码字 norm scaling 协同后, encoder 学习 trivial mapping (always pick the closest), 所有 item 映射到 1-2 个码字 → **mode collapse + collision → 0.999**. 这是**结构性**问题, 不是 β=0.5 vs 0.0 的连续可调问题.
 
-**联立锁死 (§6.7.4 字面段落已写入)**:
+**κ-decouple L0 100% 跨 K 联立 (Task #144 + #287 + #284, Stage 1 ep 200)**:
+
+| K | task | L0 utilization (Arm A κ frozen) | L1 utilization | L2 utilization | vs baseline L0 (task253=73.44%) |
+|---|------|----------------------------------|----------------|----------------|----------------------------------|
+| 64  | #144 | **100%** | 100% | 100% | **+26.56pp** |
+| 128 | #287 | **100%** | 100% | 100% | **+26.56pp** |
+| 256 | #284 | **100%** | 100% | 100% | **+26.56pp** |
+
+**Task #287 反证 Task #288 部分闭环推论** (R14 Issue #20 处理 + 跨 task 联立):
+- **task288 闭环推论** "baseline recipe 内部结构性不可达 L0 ≥ 90%, 需换轨 κ-Stereographic/Gromov-Softmax" — **错误**.
+- **实际**: κ-decouple Phase A κ frozen at 0 跨 K=64/128/256 一致让 L0=100%, 跟 baseline recipe (task253 L0=73.44%) 差 +26.56pp. **不需要结构改动**. 
+- **机制**: κ frozen=0 (= c=1 欧氏) 阻止码字被推到双曲 boundary, Phase A 100/200 epoch 训练稳定 (commit loss 不会让码字移出欧氏单位球 → 防 mode collapse). Phase B κ unfreeze lr_theta=1e-5 缓慢下推到 κ≈-0.09 (K=128), 微调但不破坏 L0 健康.
+
+**联立锁死 (修正版)**:
 
 | Task | 方向 | 锁死维度 | 证据 |
 |------|------|----------|------|
 | #282 | β=0 (A1) | β 不是 L0 上限, 是下限 | ep5 40.6% → ep30 1.6% mode collapse |
 | #283 | dead_revive frequency | hook no-op ≠ frequency | L0 70.3% ≈ baseline 73.44%; `latent_gravy=empty` |
-| #284 | κ-decouple K=256 | 大 K + κ-decouple 是负面相互作用 | -17.0% / -15.3% Stage 4 退化 |
-| **#288 (Issue #20)** | **A1/A2/A3 curriculum 三配方** | **§6.7.4 stop-loss (i) 在 baseline recipe 内部结构性不可达** | **A1 三次 USAGE-KILL 锁死; Gate 2/3 依赖 Gate 1 → 不启动** |
+| #284 | κ-decouple K=256 | 大 K + κ-decouple 是负面相互作用 (R@10) | -17.0% / -15.3% Stage 4 退化 |
+| **#287 (R14)** | **κ-decouple K=128** | **中 K + κ-decouple 也是负面相互作用 (R@10)**; **但 L0 = 100% PASS** | **Stage 4 -16.2% / -18.6% 退化; Stage 1 L0=100% 跨 K 验证** |
+| **#288 (Issue #20)** | **A1/A2/A3 curriculum 三配方** | **β=0 / β curriculum / encoder freeze 不是 L0 ≥ 90% 杠杆** | **A1 三次 USAGE-KILL 锁死; Gate 2/3 依赖 Gate 1 → 不启动** |
 
-**结论 (§6.7.4 进展意义限定, 必须正面写)**:
-- **§6.7.4 stop-loss (i) 在 baseline recipe 内部结构性必然触发** — task253 (73.44%) + task222 ep29 (65.62%) + task271/275/288 A1 (1.6%) + task283 D5 (70.3%) 四方向证据全部失败.
-- **Issue #20 §反证 三配方全失败触发**: A1 NO-GO + Gate 2/3 依赖 Gate 1 → 闭环 NO-GO verdict, 资源转向 task268 §4 候选 2 (m-arm κ-Stereographic v9+, Berman-Metzler 2020 距离公式).
-- **本方向不隐含任何 Stage 2 / 3 / 4 预算申请** — 任何接续提议须先通过 `loop.md §R10` 路线图审核.
-- **0 GPU 闭环**: A1 单次 50 epoch 在 ep30 触发 USAGE-KILL 自动 abort (≤30 sec 实际 GPU 时间), R12 best_loss_model.pth 已保存.
+**结论 (修正版, §6.7.4 进展意义重述, 必须正面写)**:
+- **L0 ≥ 90% 杠杆**:**κ-decouple (Phase A κ frozen at 0) 是 in-baseline-recipe 的 L0 杠杆** (跨 K=64/128/256 一致 100% util, +26.56pp vs baseline). **不需要换轨到结构改动路线**.
+- **但**: κ-decouple 让 L0 健康**不能保留 R@10 改善** — κ-decouple + K ≥ 128 Stage 4 R@10 显著退化 (-16% 到 -18%). κ-decouple 是 L0 杠杆, **不是 R@10 杠杆**.
+- **β / dead_revive frequency** 仍然不是 L0 杠杆 (task282/task283 推论保留).
+- **§6.7.4 stop-loss (i) 在 baseline recipe 默认参数下恒触发** (task253 L0=73.44%, task222 ep29 L0=65.62%, task271/275/288 A1 L0=1.6%, task283 D5 L0=70.3%) — 这些都是 baseline recipe 默认参数 (κ frozen 不冻结 = κ learnable, β=0.5, no dead_revive). κ-decouple 让 L0 健康**靠的不是 §6.7.4 默认参数**, 而是**额外引入 κ frozen=0 起点**.
+- **本方向不隐含任何 Stage 2 / 3 / 4 预算申请** — κ-decouple L0 杠杆已闭环, R@10 杠杆已否定 (跨 K 一致 NO-GO).
+- **0 GPU 闭环 (Task #288)**: A1 单次 50 epoch 在 ep30 触发 USAGE-KILL 自动 abort (≤30 sec 实际 GPU 时间), R12 best_loss_model.pth 已保存.
 
 ### 5.7 Discussion
 
