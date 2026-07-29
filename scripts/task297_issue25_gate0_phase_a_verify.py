@@ -25,38 +25,37 @@ log = logging.getLogger("task297_issue25_gate0")
 sys.path.insert(0, '/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec')
 
 
+def _get_args(args, name, default=None):
+    """args 可能是 dict (新 ckpt) 或 Namespace (旧 ckpt)."""
+    if isinstance(args, dict):
+        return args.get(name, default)
+    return getattr(args, name, default)
+
+
 def load_ckpt(ckpt_path, device='cpu'):
     from model.hrqvae import HRQVAE
     from model.utils import EmbDataset
     log.info(f"Loading ckpt: {ckpt_path}")
     ckpt = torch.load(ckpt_path, map_location=torch.device('cpu'), weights_only=False)
     args = ckpt['args']
-    # args 可能是 dict (新 ckpt) 或 Namespace (旧 ckpt)
-    def _get(name, default=None):
-        if isinstance(args, dict):
-            return args.get(name, default)
-        return getattr(args, name, default)
-    log.info(f"  num_emb_list={_get('num_emb_list')}, e_dim={_get('e_dim')}, "
-             f"beta={_get('beta')}, kappa={_get('kappa', 'N/A')}")
-    data = EmbDataset(_get('data_path'))
+    log.info(f"  num_emb_list={_get_args(args, 'num_emb_list')}, e_dim={_get_args(args, 'e_dim')}, "
+             f"beta={_get_args(args, 'beta')}, kappa={_get_args(args, 'kappa', 'N/A')}")
+    data = EmbDataset(_get_args(args, 'data_path'))
     log.info(f"  Data: {len(data)} items, dim={data.dim}")
     model = HRQVAE(
         in_dim=data.dim,
-        num_emb_list=_get('num_emb_list'),
-        e_dim=_get('e_dim'),
-        layers=_get('layers', [512, 256, 128, _get('e_dim')]),
-        dropout_prob=_get('dropout_prob', 0.0),
-        bn=_get('bn', False),
-        loss_type=_get('loss_type'),
-        quant_loss_weight=_get('quant_loss_weight', 1.0),
-        beta=_get('beta'),
+        num_emb_list=_get_args(args, 'num_emb_list'),
+        e_dim=_get_args(args, 'e_dim'),
+        layers=_get_args(args, 'layers', [512, 256, 128, _get_args(args, 'e_dim')]),
+        dropout_prob=_get_args(args, 'dropout_prob', 0.0),
+        bn=_get_args(args, 'bn', False),
+        loss_type=_get_args(args, 'loss_type'),
+        quant_loss_weight=_get_args(args, 'quant_loss_weight', 1.0),
+        beta=_get_args(args, 'beta'),
         kmeans_init=False,
         kmeans_iters=100,
-        sk_eps=_get('sk_epsilons'),
-        sk_iters=_get('sk_iters'),
-        angular_dim=_get('angular_dim', 4),
-        radial_dim=_get('radial_dim', 32),
-        product_manifold=_get('product_manifold', True),
+        sk_eps=_get_args(args, 'sk_epsilons'),
+        sk_iters=_get_args(args, 'sk_iters'),
     )
     model.load_state_dict(ckpt['state_dict'], strict=False)
     model = model.to(device).eval()
@@ -85,15 +84,16 @@ def encode_all(model, data, batch_size=256, device='cpu'):
 @torch.no_grad()
 def sinkhorn_(M, eps=0.003, n_iters=5):
     """Simple log-Sinkhorn: returns assignment."""
-    log_a = -torch.log(torch.tensor(M.size(0)).float())
-    log_b = -torch.log(torch.tensor(M.size(1)).float())
+    n, m = M.shape
+    log_a = -torch.log(torch.tensor(n).float())
+    log_b = -torch.log(torch.tensor(m).float())
     log_K = -M / eps
-    log_u = log_a.clone()
-    log_v = log_b.clone()
+    log_u = torch.full((n,), log_a.item())
+    log_v = torch.full((m,), log_b.item())
     for _ in range(n_iters):
-        log_u = log_a - torch.logsumexp(log_K + log_v[None, :], dim=1)
-        log_v = log_b - torch.logsumexp(log_K + log_u[:, None], dim=0)
-    log_P = log_K + log_u[:, None] + log_v[None, :]
+        log_u = log_a - torch.logsumexp(log_K + log_v.unsqueeze(0), dim=1)
+        log_v = log_b - torch.logsumexp(log_K + log_u.unsqueeze(1), dim=0)
+    log_P = log_K + log_u.unsqueeze(1) + log_v.unsqueeze(0)
     return log_P.argmax(dim=1).numpy()
 
 
@@ -119,7 +119,7 @@ def main():
     z_all = encode_all(model, data)
     log.info(f"  Latent shape: {z_all.shape}, encode time: {time.time()-t0:.1f}s")
 
-    n_e_list = _get('num_emb_list')
+    n_e_list = _get_args(ckpt_args, 'num_emb_list')
     n_layers = len(n_e_list)
 
     # Per-layer Sinkhorn + 4-digit dedup
