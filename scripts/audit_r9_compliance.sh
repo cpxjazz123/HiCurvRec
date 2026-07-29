@@ -120,6 +120,8 @@ WHITELIST_VERDICTS=$(ls "$VERDICTS_DIR" 2>/dev/null | grep -oE '^task[0-9]+' | s
 
 # 真正被 renumber 的范围: 104-117 → 23-35, 127-130 → 32-35 (Task #80 + #133)
 # task118-126 不在 MAPPING 内, 是合法当前编号 (e.g. task119, task120, task123, task125, task126)
+# 注意: task105/107/109/110/111/112 是 post-renumber 合法有效任务 (paper-defense artifacts), 引用合法.
+# 严格语义: 残余 = 引用编号 ∈ RENUMBERED_NUMBERS 但 not in WHITELIST (descriptions/ 当前实际存在)
 RENUMBERED_NUMBERS="task104|task105|task107|task108|task109|task110|task111|task112|task113|task114|task115|task116|task117|task127|task128|task129|task130"
 RESIDUAL_RENUMBER=$(grep -lrE "$RENUMBERED_NUMBERS" \
     "$DESCRIPTIONS_DIR" "$VERDICTS_DIR" "$SCRIPTS_DIR" \
@@ -129,7 +131,7 @@ RESIDUAL_RENUMBER=$(grep -lrE "$RENUMBERED_NUMBERS" \
 RESIDUAL_LOGS=$(grep -lE "task(1(0[4-9]|1[0-9]|2[0-9]|30))" "$LOGS_DIR"/task*.log 2>/dev/null | grep -v "renumber_tasks_" || true)
 RESIDUAL_RENUMBER=$(printf "%s\n%s\n" "$RESIDUAL_RENUMBER" "$RESIDUAL_LOGS" | grep -v '^$' | sort -u || true)
 
-# 排除每个文件中自指 (文件名前缀匹配)
+# 排除每个文件中自指 (文件名前缀匹配) + 当前有效引用 (在 WHITELIST 中的不是残余)
 REAL_RESIDUAL=""
 if [ -n "$RESIDUAL_RENUMBER" ]; then
     while IFS= read -r f; do
@@ -140,6 +142,10 @@ if [ -n "$RESIDUAL_RENUMBER" ]; then
             # 跳过自指 (verdict 文件 task125_xxx.md 里出现 task125 是合法的)
             fname_self=$(basename "$f" | grep -oE '^task[0-9]+')
             if [ "$fname_self" = "$ref" ]; then
+                continue
+            fi
+            # 跳过当前有效引用 (task105/110/111 等是 post-renumber 合法任务, descriptions/ 中存在)
+            if echo "$WHITELIST" | grep -q "^${ref}$"; then
                 continue
             fi
             # 否则这是潜在残留, 加入 REAL_RESIDUAL

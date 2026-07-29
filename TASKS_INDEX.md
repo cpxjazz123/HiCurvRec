@@ -10,7 +10,7 @@
   contiguous per R9; Task #27 and Task #67 have 2 revision files each)
   + 2 reference files (`README.md`, `_general_pipeline.md`).
 - **verdicts/**: task result verdicts (markdown + json + csv + png + legacy).
-  562 files — verdicts for Task #1 - Task #297 + auxiliary verdicts +
+  563 files — verdicts for Task #1 - Task #297 + auxiliary verdicts +
   data files (task62_tc_zador.csv, task103_paper_claims_audit.csv,
   task109_phonism_sid_*, task119_3tokenizer_kNN_*,
   task123_cross_space_correlation_*, task27_neighborhood_quality_*,
