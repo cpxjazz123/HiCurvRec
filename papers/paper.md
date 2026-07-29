@@ -615,6 +615,13 @@ then the geometric-route investigation is **closed permanently**. The utilizatio
 
 If the stop-loss gate is met, this concludes the geometric-route investigation on Musical_Instruments: **active hyperbolic geometry is fundamentally incompatible with allocation separability in this architecture**, and the only viable path is to keep the baseline geometry inactive (default HG-Rec) and rely on Sinkhorn-balanced post-processing for codebook health (per Task #207).
 
+**Task #287 修正段 (2026-07-29, 反证 Task #282+#283+#288 联立中"真实杠杆候选 = 结构改动"推论)**:
+- 上面 Task #282+#283+#288 联立段落写"真实 L0 ≥ 90% 杠杆候选 = 结构改动 (m-arm κ-Stereographic v9+ / Gromov-Softmax / EMA / per-item soft-assign), 不在 baseline 修补 ROI" — **部分正确, 部分错误**.
+- **部分正确**: 这三个联立 task 都只测试 baseline Stage 1 recipe 的单变量微调 (β / dead_revive / curriculum freeze), 它们证伪了 "baseline 微调路径" 的杠杆存在 — 这一结论保留.
+- **部分错误**: 它们没测 **κ-decouple (Phase A κ frozen at 0)** 这条路径 (跟 baseline 微调同属 baseline Stage 1 recipe 内部, 但属于 curriculum 调度路径不是单变量微调). Task #287 K=128 κ-decouple (跟 #144 K=64 + #284 K=256 联立, 跨 K 一致) 证实 κ-decouple 跨 K=64/128/256 一致让 L0/L1/L2 = 100% (vs baseline L0=73.44%, +26.56pp), 是 **in-baseline-recipe 的 L0 ≥ 90% 杠杆**, 不需要换轨到结构改动.
+- **修正闭环**: 真实 L0 ≥ 90% 杠杆 = **κ-decouple (Phase A κ frozen=0)**. 但 κ-decouple 是 L0 杠杆**不是 R@10 杠杆** — 跨 K 一致 Stage 4 R@10 退化 (-16% 到 -18%). L0 健康 ≠ R@10 改善. §6.7.4 stop-loss (i) 在 baseline Stage 1 recipe 默认参数下恒触发, 但 κ-decouple 引入 κ frozen=0 额外起点可突破 — 这意味着 "baseline 微调路径无杠杆" 是正确的, "baseline 任何路径无杠杆" 是错误的.
+- **跟 §5.6c / §5.6d / §5.7.1 line 9 同步**: 这段修正跟 paper.md §5.6d 详细论证 + §5.7.1 line 9 (line 444) 修正版完全一致. 联立共同锁死: κ-decouple 解决 L0 健康 (in-baseline-recipe, 不需要结构改动) 但不解决 R@10 (退化曲线), 几何干预 ≤ baseline 在 Musical_Instruments 数据集结构性必然.
+
 #### 6.7.5 Escape routes — attacking the assignment-identity premises (Tasks #218 + #219)
 
 The seven directions above (plus the diversity-regularizer stop-loss) all attack $\alpha := \sqrt{c}\,\rho$ from *inside* the tension — by trying to drive $\alpha$ into the active regime without breaking separability. **None succeeded.** A complementary class of attack targets not the regime but the **algebraic identity itself**: the standard result
