@@ -426,3 +426,13 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **横向联立**: codebook 坍缩**不是** R@10 杠杆 (FSQ 100% util 但 R@10 最差 -45.8%). 任何"换 quantizer"提议必须先问 R@10 ceiling 在哪. 答案: 30 epoch + Sinkhorn + 4th-digit dedup + 完整 codebook = 0.1020 (本 setting ceiling). 后续应该攻 [Stage 3/4 训练协议] 而非 [Stage 1/2 quantizer 架构].
 - **跟 Task #225 + #282/#283 + #284 联立**: 几何 + K-sweep + quantizer 7 方向全部 NO-GO 收口. baseline recipe 内部 R@10 杠杆已穷尽, 后续候选必须在架构层 (Gumbel-Softmax / 多样 hash / per-item soft-assign).
 - 3 verdicts 落盘: verdicts/task290_fsq_kappa_decouple_result.md / verdicts/task291_ema_codebook_result.md / verdicts/task292_restoration_result.md. Memory: memory/3-way-alternative-quantizer-nogo.md.
+
+### Task #293 / Issue #23 (per-layer per-epoch c_k curriculum) Gate 0 FAIL — 硬停止 (2026-07-29)
+
+- **Issue #23 body 设计**: 4-Gate 协议 (Gate 0 Phase 0 frozen ckpt 组合性 / Gate 1 Stage 1 30 epoch warm-start / Gate 2 Sinkhorn 5 iter / Gate 3 T5-mini 200 epoch + R@10 > 0.1020). 任一 Gate 失败即硬停止.
+- **Gate 0 实测 (零 GPU, ~30s)**: 冻结 task275 A2_extend_ep50 ckpt (product_manifold=True, 36-d, codebook [64,128,256]), 测 3 schedules (A=异构时变 U(0.5,20)→U(1,5)→U(2,8) / B=全程宽 U(0.5,20) / C=全程窄 U(1,5)) × 3 layers × 3 segments × 3 seeds = **81 agreement measurements**.
+- **结果**: **0/81 measurements 三层全 OPEN (60-90% 带内)**, L0 0-15%, L1 7-26%, L2 15-48%, 全部 NOT OPEN. 通过条件 ≥ 60% (即 ≥2/3 seeds 三层全 OPEN).
+- **硬停止执行**: 不进 Gate 1/2/3, 关闭 Issue #23. verdict 落盘 `verdicts/task293_issue23_gate0_phase0_result.md`.
+- **跨任务一致性**: 跟 [[issue11-gate1-full-nogo]] (Task #242) 结论一致 — per-layer c_k 参数空间在 task275 ckpt 上已耗尽, time-varying curriculum 不能挽救 frozen ckpt 失配. Schedule B 全程宽 跟 Schedule C 全程窄表现相似 → frozen ckpt 的 geometry 决定 argmin, 不是 c_k range.
+- **跟 task29x + task287 + task284 + task144 联立**: baseline recipe 内部 R@10 杠杆已穷尽, 后续候选必须在架构层 (Gumbel-Softmax / 多样 hash / per-item soft-assign), 不能在 Stage 1/2 范围内打补丁.
+- **R14 闭环**: Issue #23 hard-stop → comment + close, 同步 commit 8628283 推送 main.
