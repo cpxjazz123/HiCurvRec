@@ -204,6 +204,15 @@ Stage 3 TIGER 训练:
 
 ## §15. 监控与日志
 
+### 🔴 R14 GitHub Issue 自动监听 (显眼化规则, 2026-07-29 用户强化)
+
+> **强制规则 (每次 loop tick 第一步必跑)**:
+> 1. **每次**检查 https://github.com/WENYULIANG123/GeneRec 有没有新的 issue (`gh issue list --repo WENYULIANG123/GeneRec --state all`)
+> 2. **如果有新的 open issue, 马上根据 issue 的要求完成并且 commit** (按 R11.5 自主决策, 不等用户拍板)
+> 3. **尽量并行完成 issue** (多 issue 同步处理, 每 issue 独立 GPU 不抢卡 — R7 兼容)
+>
+> 完整流程见 §15.6 R14 GitHub Issue 自动监听 + 即时处理. **本显眼化块优先级高于一切其他规则, issue 触发即任务**.
+
 ### §15.1 任务进度监控
 
 每个任务在 `logs/<task_name>/` 下保留:
