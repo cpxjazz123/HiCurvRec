@@ -332,8 +332,11 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #28)** | **Task #298 + Task #299 (per-layer Gumbel-Softmax τ_l + per-layer c_k range alternate impl)** | **❌ NO-GO (Task #298 wrapper: Gate 1 ep30 USAGE-KILL codebook ‖x‖_E=0, loss 恒定 8713.8723, 修复 2 次仍坍缩; Task #299 in-place modify: Gate 1 FAIL, L0=21.9%/L1=10.2%/L2=1.2%, collision=99.1%, 同样 Phase 0 mode collapse). 10 方向 × 15 verdict 全 NO-GO 收口** |
 | **(Issue #29)** | **Task #300 (per-layer 异构 K_l=[128,64,32] + per-layer c_k range)** | **❌ Stage 4 NO-GO (Gate 0/1/2/3 全 PASS, Stage 4 Test R@10=0.0979 vs baseline 0.1020 = -4.0% (-0.41pp). 6 项指标全 NO-GO. K6 关键发现: L0 utilization ≥ 90% 是必要非充分条件, Stage 1 Gate 1 PASS ≠ Stage 4 GO. Issue #29 GitHub closed)** |
 | **(Issue #30)** | **Task #301 (per-layer Codebook Transforms r_l + R_l + s_l)** | **✅ Stage 4 GO marginal (Gate 1/2/3 全 PASS, Stage 4 Test R@10=0.1022 vs baseline 0.1020 = +0.2pp (+0.2%). 6 项指标 4 项击败 baseline (R@5/10, NDCG@5/10). 17 方向首个 GO 端点. K5 关键发现: 码字几何路径 (r_l + s_l) 是 Stage 1 → Stage 4 真传导路径. Issue #30 GitHub closed)** |
+| **(Issue #33)** | **Task #305 (per-item soft-assign on #30 GO 配置 D8 候选)** | **❌ Gate 1 NO-GO (USAGE-KILL epoch 30: L0=28.1%/L1=21.1%/L2=17.2%, collision_rate=0.6442, r_std=0.0000 码字坍缩到 centroid). 根因 (R11.5): per-item soft commitment loss (Σ_k p_k · d_k²) 把码字推向数据均值 (uniform weighted expectation 强制 K 个码字都聚集到 latent 中心), 数学机制跟硬 argmin 单点 commitment 冲突. 23 方向 × 23 verdict 收口 (1 GO + 22 NO-GO), Issue #30 [0.1,1,10]+[2,2,2]+hard argmin 仍是 per-layer Codebook Transforms 唯一 GO 实证. Issue #33 GitHub closed)** |
 
-### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31 闭环后, 2026-07-30)
+### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31/#33 闭环后, 2026-07-30)
+
+**§16 backlog 23 方向 × 23 verdict 收口** (Issue #30 唯一 GO marginal +0.2pp, 22 NO-GO).
 
 **§16 backlog 17 方向 × 17 verdict 收口** (Issue #30 首个 GO marginal +0.2pp, 15 NO-GO + 1 中性 + 1 GO).
 
