@@ -50,10 +50,13 @@ def get_arm_config(arm):
             'dropout_rate': 0.05, 'use_bf16': False, 'use_rdrop': False, 'rdrop_alpha': 0.0,
         }
     elif arm == 'B':
-        # LR schedule: inverse sqrt + warmup 10000 + Adam
+        # LR schedule: inverse sqrt (Noam-style) + warmup 2000 + Adam (R11.5 fix v2: d_model=128 scale gives formula peak LR ~ 1.98e-3 with base lr=1e-4, but early steps still tiny. Use Noam-style with base lr = target_peak and lambda = 1.0 at warmup)
+        # Use base lr = 1e-4 (matches Arm E baseline), lambda scaled so peak at warmup = 1e-4
+        # Noam: lr = d_model^-0.5 * min(step^-0.5, step*warmup^-1.5)
+        # We want peak at warmup = base_lr → multiply by base_lr / (d_model^-0.5 * warmup^-0.5) = base_lr / 0.00198 = 50.5 for d_model=128, warmup=2000
         return {
             'optimizer': 'adam', 'lr': 1e-4, 'weight_decay': 0.0,
-            'scheduler': 'inv_sqrt', 'warmup_steps': 10000,
+            'scheduler': 'inv_sqrt', 'warmup_steps': 2000,
             'dropout_rate': 0.1, 'use_bf16': False, 'use_rdrop': False, 'rdrop_alpha': 0.0,
         }
     elif arm == 'C':
@@ -106,12 +109,19 @@ def build_scheduler(optimizer, arm_cfg, total_steps):
             return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
         return LambdaLR(optimizer, lr_lambda)
     elif sched_name == 'inv_sqrt':
-        # inverse square root: lr = d_model^-0.5 * min(step^-0.5, step * warmup^-1.5)
+        # inverse square root (Noam-style): lr = base_lr * scale * (d_model^-0.5) * min(step^-0.5, step*warmup^-1.5)
+        # We want actual_lr at warmup end = base_lr (e.g., 1e-4)
+        # At warmup end: noam_factor = d_model^-0.5 * warmup^-0.5 = 1.9764e-3 for d_model=128, warmup=2000
+        # So scale = 1 / noam_factor_at_warmup = 506 (so base_lr * 506 * 1.9764e-3 = base_lr)
         from torch.optim.lr_scheduler import LambdaLR
         d_model = 128  # T5-mini d_model
+        # Compute scale factor (so peak actual lr = base_lr at warmup end)
+        peak_noam = (d_model ** -0.5) * (warmup ** -0.5) if warmup > 0 else 1.0
+        scale = 1.0 / peak_noam if peak_noam > 0 else 1.0
         def lr_lambda(step):
             step = max(1, step)
-            return (d_model ** -0.5) * min(step ** -0.5, step * (warmup ** -1.5))
+            noam_factor = (d_model ** -0.5) * min(step ** -0.5, step * (warmup ** -1.5))
+            return noam_factor * scale
         return LambdaLR(optimizer, lr_lambda)
     else:
         raise ValueError(f"Unknown scheduler: {sched_name}")
