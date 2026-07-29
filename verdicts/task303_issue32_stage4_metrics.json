@@ -1,0 +1,16 @@
+{
+  "task": "task303_issue32_dual_axis_synergy",
+  "recipe": "per-layer r_l=[0.5,1,2] + s_l=[1,1,1] + c_k_range (Issue #32)",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task303/ckpt_hgrec_issue32/Instruments/Jul-30-2026_02-20-16/HG_Rec_best.pth",
+  "beam_size": 20,
+  "test_recalls": {
+    "Recall@5": 8.043758283480714e-05,
+    "Recall@10": 0.00012065637425221072,
+    "Recall@20": 0.00016087516566961428
+  },
+  "test_ndcgs": {
+    "NDCG@5": 5.754008241947093e-05,
+    "NDCG@10": 7.186630474669593e-05,
+    "NDCG@20": 8.21606266855273e-05
+  }
+}
