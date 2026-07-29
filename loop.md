@@ -329,6 +329,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #20)** | **Task #288 (L0 utilization 三配方 A1/A2/A3 NO-GO)** | **❌ NO-GO (A1 β=0.0 三次 USAGE-KILL 锁死 baseline recipe 内部无解; Gate 2/3 硬停止不启动; 资源转向 task268 §4 候选 2 m-arm κ-Stereographic v9+)** |
 | **(R9)** | **Task #289 (R9 Compliance Audit)** | **✅ done (audit 跑通, 10 个历史空洞 + 5+ renumber 残留 FAIL 由 R11.5 决策保留; drift cycle 警告适用)** |
 | **(Issue #21)** | **Task #290 (第六次越闸治理 Gate 0/1/2/3 全部闭环)** | **✅ done (Gate 0 历史越闸记录盘点 + Gate 1 launcher header 约束 + Gate 2 越闸计数暴露 + Gate 3 硬停止; 全程零 GPU; 跨过理由 6 类全部闭环: fallback / 当场 GO / 量没打印 / launcher 没求值点 / 量测法歧义 / proxy+precedent)** |
+| **(Issue #28)** | **Task #298 + Task #299 (per-layer Gumbel-Softmax τ_l + per-layer c_k range alternate impl)** | **❌ NO-GO (Task #298 wrapper: Gate 1 ep30 USAGE-KILL codebook ‖x‖_E=0, loss 恒定 8713.8723, 修复 2 次仍坍缩; Task #299 in-place modify: Gate 1 FAIL, L0=21.9%/L1=10.2%/L2=1.2%, collision=99.1%, 同样 Phase 0 mode collapse). 10 方向 × 15 verdict 全 NO-GO 收口** |
+| **(Issue #29)** | **Task #300 (per-layer 异构 K_l=[128,64,32] + per-layer c_k range)** | **❌ NO-GO (Gate 1 FAIL: 训练启动崩 `TypeError: HRQVAE.forward() got an unexpected keyword argument 'rho_target_batch'`. wrapper 缺失, baseline trainer.py 已升级期望 5-tuple forward. 即使修复大概率 Phase 0 mode collapse, K_l 单一变量不能突破 Phase 0)** |
+| **(Issue #30)** | **Task #301 (per-layer Codebook Transforms r_l + R_l + s_l)** | **🟢 Gate 1 PASS (100 epoch, L0/L1/L2 usage 100% ep25-100, best collision=0.0873 ep25) + Gate 2 PASS (Sinkhorn 5 iter, 4-digit unique 9922/9922=100%, 3-digit collision 0.1299 ≤ 0.20). Gate 3 T5-mini 200 epoch 训练中 (GPU 3, PID 550667, ~83 min 预计). task298 §4 候选 5 "Generalized Radius + Integrated Codebook Transforms" 首次实证 PASS** |
 
 ### R10 backlog 真空状态 (Task #287 闭环后, 2026-07-29)
 
@@ -344,6 +347,10 @@ R11.5 自主决策 (R10 + R11.3 兜底 = 接受 backlog 真空, 不强行启动 
 - **R10 兜底**: 不阻塞等待, 按 R11.3 自主决策做低 ROI 整理 (paper.md 矛盾修正已完成, 后续视用户指示或 cron tick 触发)
 
 scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
+
+### 4-Gate 协议当前活跃任务 (2026-07-30)
+
+**Issue #30 / Task #301 Gate 3 进行中** — `products/task301/_TRAINING_PID_GATE3` = 550667, GPU 3 (L40S, util 88% mem 3875 MiB 训练中). 等 PID 死亡后跑 Stage 4 eval (R@10 vs HG-Rec baseline 0.1020).
 
 
 ## §17. 历史归档 (从 §16 移出)
