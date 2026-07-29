@@ -320,6 +320,8 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #20)** | **Task #288 (L0 utilization 三配方 A1/A2/A3 NO-GO)** | **❌ NO-GO (A1 β=0.0 三次 USAGE-KILL 锁死 baseline recipe 内部无解; Gate 2/3 硬停止不启动; 资源转向 task268 §4 候选 2 m-arm κ-Stereographic v9+)** |
 | **(R9)** | **Task #289 (R9 Compliance Audit)** | **✅ done (audit 跑通, 10 个历史空洞 + 5+ renumber 残留 FAIL 由 R11.5 决策保留; drift cycle 警告适用)** |
 | **(Issue #21)** | **Task #290 (第六次越闸治理 Gate 0/1/2/3 全部闭环)** | **✅ done (Gate 0 历史越闸记录盘点 + Gate 1 launcher header 约束 + Gate 2 越闸计数暴露 + Gate 3 硬停止; 全程零 GPU; 跨过理由 6 类全部闭环: fallback / 当场 GO / 量没打印 / launcher 没求值点 / 量测法歧义 / proxy+precedent)** |
+| **(quantizer #1)** | **Task #291 (EMA codebook + κ learnable, 3-way #2)** | **❌ NO-GO (Stage 4 R@10=0.0765 -25.0% vs baseline 0.1020; EMA 切断 gradient 但没解决坍缩, collision 33%; Stage 1 best_collision=0.3360 ep169; 跟 baseline HG-Rec 不兼容)** |
+| **(quantizer #2)** | **Task #292 (Restoration EMA + dead code revival + κ, 3-way #3)** | **❌ NO-GO (Stage 4 R@10=0.0799 -21.7% vs baseline; 比 EMA +4.5% 但杯水车薪; 修复 hook no-op 后 L0 应健康但 R@10 仍 -21.7%; 跟 task291 + task287 + task284 + task144 联立锁死 baseline recipe 内部无解)** |
 ### R10 backlog 真空状态 (Task #287 闭环后, 2026-07-29)
 
 **§16 backlog 全 NO-GO 收口** (D1 κ-decouple + D2 K-sweep + D5 dead_revive frequency 已闭环; D3 m-arm κ-Stereo v9+ 仍 backlog 唯一剩余, 动机被 #287 部分削弱).
