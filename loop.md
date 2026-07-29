@@ -256,6 +256,8 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 ## §16. 当前活跃任务
 
 > **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. **Issue #18 (Task #280) 全 3 Gate 闭环 — §6.7.4 stop-loss (i) 口径绑定 Stage 1 argmin, task253 L0=73.44% / task222 ep29 L0=65.62% 复算 PASS, 6 个 vanilla 测点 (B 口径) 100% 反证闸门真闸门, 0 GPU**. **Issue #19 (Task #281) 全 3 Gate 闭环 — 通用 `scripts/issue19_gate_template.sh` 3 回放 PASS (a/b exit 1, c exit 0), 4 存量脚本 (`task237`/`task256`/`task188_to_193`/`task194`) 文件头标注, `papers/paper.md` Gate 3 字面写死**. **Task #282 (Task #270 A1 NO-GO) 已闭环 — Stage 1 50 epoch USAGE-KILL @ ep30, loss_type=mse+β=0 L0 ep5=40.6% → ep30=1.6% (1/64), mode collapse 比 poincare+β=0.5 (73.44%) 更严重 −71.84pp. 推论: β 不是 L0 ≥ 90% 杠杆 (它是稳定剂非天花板)**. **Task #283 (D5 dead_revive frequency NO-GO) 已闭环 — D5A ep30 USAGE-KILL L0=70.3% (跟 baseline 73.44% 几乎一样), post-revive 严格=pre-revive, hrqvae_trainer.py:271 latent_gravy=empty 让 hook 退化成 no-op. D5B/C 不再跑 (code no-op ≠ frequency). 联立 Task #282 锁死 baseline Stage 1 recipe 不是 L0 ≥ 90% 杠杆 (β 是稳定剂非天花板 + dead_revive 是 hook no-op 非频率), L0 ≥ 90% 需结构改动 (新 VQ 范式 / EMA / 多样 hash) 不在 baseline 修补 ROI**. **Task #277/#278 已闭环**.
+> **Task #284 (Issue #10 follow-up: task194_k0256 SID + κ-decouple 3-arm) 已 launch** — Arm A (Phase A only κ frozen, GPU 2, PID=3755366) + Arm B (Phase A 100ep + Phase B 100ep κ unfreeze, GPU 3, PID=3755372) Stage 1 进行中 (ep ~20/200 at launch). Waiter (PID=3763257) 自动 fire Stage 2 Sinkhorn → Stage 3 T5-mini (200 ep) → Stage 4 eval. 总估约 75 min (并行). 决策阈值: 任何臂 R@10 > 0.1053 (task194_k0256 当前最佳) → GO. verdict 落 verdicts/task284_*_test_metrics.json + verdicts/task284_issue10_followup_result.md.
+
 > **Task #279 (K-sweep K=512/1024) 已闭环 — Stage 4 eval 实测 K=512 R@10=0.0824 (-19.2% vs baseline 0.1020), K=1024 R@10=0.0847 (-16.9%, 数字不可信 ⚠️ ckpt 是 background 重启 ep1 initial). K-sweep 6-arm (32/64/128/256/512/1024) 趋势: K=256 ⭐0.1053 是 trade-off 顶峰, K ≥ 512 区间 R@10 不增反降, "L0 大 R@10 高" 假设 REFUTED**. **§16 R10 几何 + K-sweep backlog D1/D2/D3/D5 全 NO-GO 收口**.
 
 ### 已闭环 (近 24 小时)
@@ -276,11 +278,12 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | (A1) | **Task #282 (Task #270 A1 欧氏 MSE+β=0)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 40.6%→1.6% mode collapse) |
 | (D5A) | **Task #283 (D5 dead_revive frequency)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 70.3% ≈ baseline 73.44%; hook no-op latent_gravy=empty) |
 | (D2) | **Task #279 (K-sweep K=512/1024 扩展)** | ❌ NO-GO (K=512 R@10=0.0824 -19.2%; K=1024 R@10=0.0847 -16.9% ⚠️ ep1 initial; "L0 大 R@10 高" REFUTED; K=256 ⭐0.1053 是 trade-off 顶峰) |
+| (D1 v2) | **Task #284 (Issue #10 follow-up K=256 SID κ-decouple 3-arm)** | 🟡 **正在跑** (PID 3755366 Arm A @ GPU 2 + 3755372 Arm B @ GPU 3, etime 1m20s, R12 ckpt 落盘 best_loss_model.pth 4.5MB) — D1 重启 (task144 在 K=64 SID 下 NO-GO, 但 K=256 SID 未测, 验证 κ-decouple 在最优 K=256 SID 下是否突破 0.1053 ⭐) |
 
 ### 等用户决策 / R10 backlog 候选 (R11.5 自主决策推进)
 
 候选方向 (按 Task #278 / #282 / #283 联立推论):
-- **方向 D1 (R10 推荐)**: 用 **task194_k0256 SID** (R@10=0.1053 当前最佳) 重跑 Issue #10 Gate 1 3-arm 曲线. 验证 κ-decouple Arm A (task144 0.1026) 在最优 K=256 SID 下是否突破 0.1053. 需 Stage 1 RQ-VAE 重训 + Stage 2 Sinkhorn + Stage 3 T5 + Stage 4 eval, 估约 4-6 小时 GPU.
+- **方向 D1 v2 (Task #284 launch 中)**: 用 **task194_k0256 SID** (R@10=0.1053 当前最佳) 重跑 Issue #10 Gate 1 3-arm 曲线. 验证 κ-decouple Arm A (task144 0.1026) 在最优 K=256 SID 下是否突破 0.1053. 已 launch 2 臂 (Arm A κ frozen 全程, Arm B Phase A 100ep + Phase B 100ep unfreeze 1e-5), Arm C 复用 task194_k0256 R@10=0.1053. 估 4-6 小时 GPU. 决策阈值: 任何 R@10 > 0.1053 → GO; 否则 → Issue #10 follow-up NO-GO 闭环.
 - **方向 D2 (R10 备选)**: 探索 K=512/1024 (Task #194 K-sweep 提示 L0 越大越好). Stage 2 重训 + Stage 3/4, 估约 2-3 小时 GPU. (与 Task #279 重叠, 等 task279 完成后合并).
 - **方向 D3 (backlog)**: task272 m-arm κ-Stereographic v9+ (用户 2026-07-24 提议 + R11.5 自主推进候选).
 - **方向 D4 (低 ROI)**: Issue #10 接受方向 A2 NO-GO 闭环 (R11.5 默认决策).
@@ -359,7 +362,7 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 
 ### §16 R10 backlog 几何方向 全收线 (2026-07-29 R10 backlog 收口)
 
-- **D1 (task194_k0256 κ-decouple 重训)**: 4-6h GPU 跑 Arm A 在最优 K=256 SID 上. 预测 Stage 4 R@10 < baseline 0.1020 (Task #225 #144 已证). **不再列入 backlog**.
+- **D1 (task194_k0256 κ-decouple 重训) v2**: 已 launch **Task #284** (Issue #10 follow-up K=256 SID 3-arm, 见 §16 活跃行). D1 v2 不再用"不再列入 backlog"判定, 因 task144 在 K=64 SID 下 NO-GO ≠ K=256 SID 下 NO-GO. 决策阈值改 task194_k0256 ⭐0.1053 (而非 baseline 0.1020). Arm A κ frozen 全程 / Arm B Phase A 100ep + Phase B 100ep unfreeze 1e-5 / Arm C 复用 task194_k0256. 任何 R@10 > 0.1053 GO; 否则 Issue #10 follow-up NO-GO 闭环.
 - **D3 (task272 m-arm κ-Stereo v9+)**: 用户 2026-07-24 提议. m-arm product_manifold (Task #227) 已 7 variants NO-GO, κ-Stereographic 在 baseline recipe 不是 L0 杠杆. **不再列入 backlog**.
 - 后续 backlog 收口方向: 数据分析 (Phase 0 false 验证 / 5-graph weight 在 #69 已查) / 诊断 (specific file audit) / 已有结果整理 (K-sweep + paper-aligned ranking v3 写 paper.md Section 5.4).
 
