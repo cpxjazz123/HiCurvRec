@@ -33,8 +33,9 @@ source /apps/anaconda/2024.02-1/etc/profile.d/conda.sh
 conda activate /home/wlia0047/ar57_scratch/wenyu/grid_toys
 cd $REPO/HG-Rec
 
-export PYTHONPATH=$REPO/HG-Rec:$PYTHONPATH
-export HF_HOME=/home/wlia0047/ar57_scratch/wenyu/hf_models
+# FIX: PYTHONPATH 可能未预设, 用 ${PYTHONPATH:-} 默认空串避免 set -u 触发 unbound variable
+export PYTHONPATH=$REPO/HG-Rec:${PYTHONPATH:-}
+export HF_HOME=${HF_HOME:-/home/wlia0047/ar57_scratch/wenyu/hf_models}
 
 DATA=$REPO/HG-Rec/dataset/Instruments/item_emb.parquet
 GPU=${GPU:-0}
