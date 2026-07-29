@@ -1,0 +1,34 @@
+{
+  "task": "task306_issue33_d8_per_item_soft_forward",
+  "issue": "#33",
+  "variant": "D8 forward (per-item soft weighted sum + STE)",
+  "date": "2026-07-30",
+  "gate_0": "PASS",
+  "gate_1": "NO-GO (USAGE-KILL epoch 30)",
+  "gate_2": "SKIP (Gate 1 FAIL)",
+  "gate_3": "SKIP (Gate 1 FAIL)",
+  "gate_4": "SKIP (Gate 1 FAIL)",
+  "final_status": "Issue #33 D8 forward 变体 NO-GO 关闭 — per-item soft weighted sum 推到 codebook collapse",
+  "gate_1_metrics": {
+    "epoch_9_collision_rate": 0.8666,
+    "epoch_24_collision_rate": 0.9451,
+    "epoch_24_L0_utilization": 0.625,
+    "epoch_24_L1_utilization": 0.383,
+    "epoch_24_L2_utilization": 0.277,
+    "epoch_30_collision_rate": 0.9602,
+    "epoch_30_L0_utilization": 0.547,
+    "epoch_30_L1_utilization": 0.312,
+    "epoch_30_L2_utilization": 0.180,
+    "r_std_at_ep25_30": 0.0000,
+    "trigger": "USAGE-KILL epoch 30 (L2 utilization = 18.0% < 20%)"
+  },
+  "root_cause_R11_5": "per-item soft forward (weighted sum + STE) 数学上等价于 task305 commit loss 软分配: 都是 K 个码字的 weighted centroid. Weighted average 强制码字聚集到数据几何中心 (per-item 期望 = uniform weighted centroid), 反向操作 = codebook collapse. STE 路径不会绕过这个问题, 因为梯度反向时 decoder 仍推 centroid 移动.",
+  "key_evidence": "r_std=0.0000 r_min=0.000 r_max=0.000 @ ep25/30 = 所有码字都在同一 Poincare 球面位置 (radius=0) = codebook collapse 标准症状. task305 commit loss 跟 task306 forward r_std 全为 0.0000, 共享 root cause.",
+  "cross_variant_synthesis": {
+    "task305_D8_commit_loss": "ep30 L2=17.2%, r_std=0.0000, NO-GO",
+    "task306_D8_forward": "ep30 L2=18.0%, r_std=0.0000, NO-GO",
+    "math_equivalence": "per-item expectation commit loss (Σ_k p_k · d_k²) ≡ per-item weighted sum forward (weights @ codebook) 都是 K 个码字的 weighted centroid",
+    "verdict": "D8 per-item 软分配跨 2 变体联合 NO-GO 收口, Issue #33 closed, 24 方向 NO-GO 全线收口"
+  },
+  "verdict_decision": "Issue #33 D8 Gate 1 hard-stop (任一 layer util < 90% → STOP). 立即关闭. 不允许重跑掩盖. 跨 task305 + task306 联合证据: per-item soft 任何公式 (commit loss / forward) 都推动码字到 centroid = codebook collapse. 后续架构层方向 (D9 多样 hash) 留待 owner decision."
+}
