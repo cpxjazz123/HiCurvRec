@@ -1,5 +1,10 @@
 #!/bin/bash
-# Chained dispatcher — Task #188 Phase 3 完成时, 自动 fire Phase 4 → β scan → freeze
+# ⚠️  [Issue #19 Gate 2 annotation 2026-07-29]
+# 本脚本是 β-scan chained dispatcher, 含 Stage 1/3/4 串联, 但不含闸门求值点 (Stage 1 后 → Stage 3 前
+# 无任何 evaluate_stage_2_gate 调用). 按 Issue #19 §Gate 2 规则, **不得用于任何声明了 Stage 2 级闸门的 issue** 执行.
+# 若新 issue 需要本 dispatcher 的链式逻辑, 必须先在每个 Stage 1 best_collision 推断结束后插入
+# `source scripts/issue19_gate_template.sh && evaluate_stage_2_gate <diag.json>` 调用,
+# 不通过则跳过该 Stage 3. See verdicts/task281_issue19_gate0_replay.md 完整清单.
 #
 # 检测策略: Task #188 phase 3 (12 stage3_train 进程) 退到 0 → 认为 Phase 3 完成
 # 然后串行:

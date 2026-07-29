@@ -496,6 +496,12 @@ then the geometric-route investigation is **closed permanently**. The utilizatio
 - Gate 1 的验证一律用历史产物回放 (task253 best_collision + task222 ep29), 不新起训练.
 - Gate 2 的产出是一张口径表, 不构成任何重跑的理由.
 
+**Issue #19 Gate 3 (字面写死, 2026-07-29)**:
+- 本 issue 不申请、不批准、也不隐含任何 Stage 3 / Stage 4 预算. 全程零 GPU, 不引入新机制.
+- Gate 1 的验证一律用历史产物回放 (`Instruments_t5_rqvae_task237_armB_diagnostic.json` + `verdicts/task260_issue10_sinkhorn_strength_sweep.json` 的 `max_iters=30` 测点), 不新起训练.
+- Gate 2 只写注释与清单. **不得以「顺便改造存量脚本」为由启动任何 Stage 3 / Stage 4 训练.** 任何以「闸门脚本做好了, 跑一轮验证一下」为名的 Stage 3 提议一律拒收 — 与 `verdicts/task200_v5_user_4step_result.md` 里的 "fallback option B" 是同一句式.
+- Gate 1 落地后的执行约束: **任何声明了 Stage 2 级闸门的 issue, 其执行脚本必须在 Stage 2 与 Stage 3 之间含一个会非零退出的求值点; 使用无求值点的链式 launcher 执行该类 issue, 视为该 Gate 未通过**.
+
 If the stop-loss gate is met, this concludes the geometric-route investigation on Musical_Instruments: **active hyperbolic geometry is fundamentally incompatible with allocation separability in this architecture**, and the only viable path is to keep the baseline geometry inactive (default HG-Rec) and rely on Sinkhorn-balanced post-processing for codebook health (per Task #207).
 
 #### 6.7.5 Escape routes — attacking the assignment-identity premises (Tasks #218 + #219)

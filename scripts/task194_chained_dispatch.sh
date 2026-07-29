@@ -1,5 +1,11 @@
 #!/bin/bash
-# Task #194 — Chained dispatcher (Stage 2/3/4 after Stage 1 finishes)
+# ⚠️  [Issue #19 Gate 2 annotation 2026-07-29]
+# 本脚本是 4 臂 chained dispatcher (Stage 1 → 2 → 3 → 4 全链), 但不含闸门求值点
+# (Stage 2 后 → Stage 3 前无任何 evaluate_stage_2_gate 调用). 按 Issue #19 §Gate 2 规则,
+# **不得用于任何声明了 Stage 2 级闸门的 issue** 执行.
+# 若新 issue 需要本 dispatcher 的链式逻辑, 必须先在每臂 Stage 2 Sinkhorn 推断**结束后**插入
+# `source scripts/issue19_gate_template.sh && evaluate_stage_2_gate <diag.json>` 调用,
+# 不通过则跳过该臂 Stage 3. See verdicts/task281_issue19_gate0_replay.md 完整清单.
 # 监控 4 臂 train_hrqvae 主进程全结束 → fire 4 臂 Stage 2 (Sinkhorn) → 4 臂 Stage 3 (T5-mini) → 4 臂 Stage 4 (eval)
 #
 # 用法: nohup bash scripts/task194_chained_dispatch.sh > logs/task194/chain_dispatch.log 2>&1 &

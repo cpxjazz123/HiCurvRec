@@ -1,5 +1,10 @@
 #!/bin/bash
-# Task #237 — Issue #10 Arm B FULL CHAIN (Stage 2 + Stage 3 + Stage 4 + slice)
+# ⚠️  [Issue #19 Gate 2 annotation 2026-07-29]
+# 本脚本不含闸门求值点 (Stage 2 后 → Stage 3 前无任何 evaluate_stage_2_gate 调用).
+# 按 Issue #19 §Gate 2 规则, **不得用于任何声明了 Stage 2 级闸门的 issue** 执行.
+# 若新 issue 需要本脚本的链式逻辑, 必须先在 Stage 2 推断**结束后**插入
+# `source scripts/issue19_gate_template.sh && evaluate_stage_2_gate <diag.json>` 调用,
+# 不通过则不启动 Stage 3. See verdicts/task281_issue19_gate0_replay.md 完整清单.
 #
 # Chain: partial Sinkhorn max_iters=10 → T5-mini 200 epoch → eval → slice
 # Wall-clock: ~50min (Stage 3 = ~44min is bottleneck)

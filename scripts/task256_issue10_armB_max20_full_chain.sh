@@ -1,5 +1,11 @@
 #!/bin/bash
-# Task #256 — Issue #10 方向 A Arm B 中点配置: max_sinkhorn_iters=20
+# ⚠️  [Issue #19 Gate 2 annotation 2026-07-29]
+# 本脚本不含闸门求值点 (Stage 2 后 → Stage 3 前无任何 evaluate_stage_2_gate 调用).
+# 按 Issue #19 §Gate 2 规则, **不得用于任何声明了 Stage 2 级闸门的 issue** 执行.
+# 若新 issue 需要本脚本的链式逻辑, 必须先在 Stage 2 推断**结束后**插入
+# `source scripts/issue19_gate_template.sh && evaluate_stage_2_gate <diag.json>` 调用,
+# 不通过则不启动 Stage 3. See verdicts/task281_issue19_gate0_replay.md 完整清单.
+# 同时本脚本 Issue #10 关闭时明确记为 "不建议启动" (Chain 仍未拆 Stage 2/3 闸门).
 # 跟 Task #237 (max_iters=10) 平行, 跟 Arm C (max_iters=30) 平行.
 # 3-arm 因果曲线 max_iters ∈ {0, 10, 20, 30}, 找 collision→R@10 因果曲线.
 #
