@@ -1,0 +1,118 @@
+#!/bin/bash
+# Task #304 / D6 ablation Arm A — Gate 4 Stage 4 eval (r_l only SID)
+# 2026-07-30
+#
+# 背景: Task #304 Arm A Gate 1+2+3 PASS (Stage 1 L0/L1/L2 100% util + Stage 2 9922 unique + Stage 3 T5-mini 200 epoch training 完成).
+#       Gate 4 = Stage 4 评估 Test R@10 > 0.1020 (HG-Rec baseline).
+# R7: GPU 2 (R7 空闲)
+# R12: 复用 Stage 3 best ckpt
+
+set -o pipefail
+
+REPO=/home/wlia0047/ar57/wenyu/GeneRec
+cd $REPO/HG-Rec
+
+export PYTHONPATH=$REPO/HG-Rec:${PYTHONPATH:-}
+export CUDA_VISIBLE_DEVICES=2
+export HF_HOME=/home/wlia0047/scratch/wenyu/hf_models
+export TRITON_CACHE_DIR=/home/wlia0047/.triton/cache_task304_arm_a_gate4
+
+LOG_DIR=$REPO/logs/task304
+TS=$(date +%b-%d-%Y_%H-%M-%S | sed 's/^.../\L&/')
+LOG_FILE=$LOG_DIR/stage4_eval_arm_a_${TS}.log
+RESULT_JSON=$REPO/verdicts/task304_d6_stage4_arm_a_metrics.json
+
+mkdir -p $LOG_DIR
+
+echo "===== [Task #304 D6 Arm A Gate 4 Stage 4] r_l only SID eval launched at $(date) =====" | tee $LOG_FILE
+echo "code_path = _t5_hrqvae_d6_arm_a_r_only.npy" | tee -a $LOG_FILE
+echo "GPU 2 (R7 空闲)" | tee -a $LOG_FILE
+echo "Output JSON: $RESULT_JSON" | tee -a $LOG_FILE
+
+BEST_CKPT=$(ls -t $REPO/products/task304/ckpt_hgrec_arm_a/Instruments/*/HG_Rec_best.pth 2>/dev/null | head -1)
+if [ -z "$BEST_CKPT" ] || [ ! -f "$BEST_CKPT" ]; then
+    echo "❌ Stage 3 best ckpt MISSING" | tee -a $LOG_FILE
+    exit 1
+fi
+echo "Stage 3 best ckpt: $BEST_CKPT" | tee -a $LOG_FILE
+
+PYTHON_BIN=/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python
+
+$PYTHON_BIN -c "
+import sys, os, glob, torch, json
+sys.path.insert(0, '$REPO/HG-Rec')
+sys.path.insert(0, '$REPO/scripts')
+
+from model.HG_Rec import HG_Rec
+from data.dataset import GenRecDataset
+from data.dataloader import GenRecDataLoader
+
+import importlib.util as _ilu
+_s4_spec = _ilu.spec_from_file_location(
+    'task84_s3_train_fork',
+    '$REPO/scripts/task84_hgrec_stage3_train.py',
+)
+_s4_mod = _ilu.module_from_spec(_s4_spec)
+_s4_spec.loader.exec_module(_s4_mod)
+evaluate = _s4_mod.evaluate
+
+config = {
+    'batch_size': 256,
+    'infer_size': 96,
+    'lr': 1e-4,
+    'device': 'cuda:0',
+    'num_layers': 6,
+    'num_decoder_layers': 4,
+    'd_model': 128,
+    'd_ff': 1024,
+    'num_heads': 6,
+    'd_kv': 64,
+    'dropout_rate': 0.1,
+    'vocab_size': 1025,
+    'pad_token_id': 0,
+    'eos_token_id': 0,
+    'feed_forward_proj': 'relu',
+    'max_len': 20,
+    'dataset_name': 'Instruments',
+    'dataset_path': '$REPO/HG-Rec/dataset/',
+    'codebook_size': [64, 128, 256, 1],
+    'code_path': '_t5_hrqvae_d6_arm_a_r_only.npy',
+    'topk_list': [5, 10, 20],
+    'beam_size': 20,
+}
+
+device = torch.device('cuda:0')
+model = HG_Rec(config)
+model.load_state_dict(torch.load('$BEST_CKPT', map_location='cpu'))
+model.to(device)
+
+test_dataset = GenRecDataset(
+    dataset_path=os.path.join(config['dataset_path'], config['dataset_name'], 'test.parquet'),
+    code_path=os.path.join(config['dataset_path'], config['dataset_name'], config['dataset_name'] + config['code_path']),
+    mode='evaluation',
+    codebook_size=config['codebook_size'],
+    max_len=config['max_len']
+)
+test_dataloader = GenRecDataLoader(test_dataset, batch_size=config['infer_size'], shuffle=False)
+print(f'[Stage 4 D6 Arm A] Test dataset size: {len(test_dataset)}, codebook={config[\"codebook_size\"]}')
+
+avg_recalls, avg_ndcgs = evaluate(model, test_dataloader, config['topk_list'], config['beam_size'], device)
+
+result = {
+    'task': 'task304_d6_arm_a_r_only',
+    'recipe': 'per-layer r_l=[0.1,1,10] + s_l=[1,1,1] + c_k_range (D6 Arm A r_l only)',
+    'best_ckpt': '$BEST_CKPT',
+    'beam_size': 20,
+    'test_recalls': avg_recalls,
+    'test_ndcgs': avg_ndcgs,
+}
+os.makedirs(os.path.dirname('$RESULT_JSON'), exist_ok=True)
+with open('$RESULT_JSON', 'w') as f:
+    json.dump(result, f, indent=2)
+print(f'[Stage 4 D6 Arm A] Saved: $RESULT_JSON')
+print(f'[Stage 4 D6 Arm A] Test recalls: {avg_recalls}')
+print(f'[Stage 4 D6 Arm A] Test NDCGs: {avg_ndcgs}')
+" 2>&1 | tee -a $LOG_FILE
+
+EXIT_CODE=${PIPESTATUS[0]}
+echo "===== [Task #304 D6 Arm A Gate 4 Stage 4] Test eval completed at $(date), exit code: $EXIT_CODE =====" | tee -a $LOG_FILE
