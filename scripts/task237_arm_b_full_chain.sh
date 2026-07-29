@@ -6,6 +6,14 @@
 # `source scripts/issue19_gate_template.sh && evaluate_stage_2_gate <diag.json>` 调用,
 # 不通过则不启动 Stage 3. See verdicts/task281_issue19_gate0_replay.md 完整清单.
 #
+# GATE_DECLARATION:
+#   section_6_7_4_stop_loss_i: bound
+#   stage_2_threshold:        15
+#   stage_3_threshold:        NA
+#   auto_proceed_after_stage_2: false
+#   precedent_override:       forbidden
+# (Issue #19 + Issue #21 双闸门: Stage 2 collision 差 ≥ 15pp + §6.7.4 stop-loss (i) L0 ≥ 90%)
+#
 # Chain: partial Sinkhorn max_iters=10 → T5-mini 200 epoch → eval → slice
 # Wall-clock: ~50min (Stage 3 = ~44min is bottleneck)
 set -e

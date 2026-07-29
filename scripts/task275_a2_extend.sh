@@ -6,6 +6,15 @@
 #       trajectory 仍上升 (ep25=84.4% → ep30=89.1%, 5 ep +4.7pp)
 #       期望 ep50 跨 90%
 #
+# GATE_DECLARATION:
+#   section_6_7_4_stop_loss_i: bound
+#   stage_2_threshold:        NA
+#   stage_3_threshold:        NA
+#   auto_proceed_after_stage_2: false
+#   precedent_override:       forbidden
+# (Issue #21 Gate 1: header 声明 §6.7.4 stop-loss (i) bound + auto_proceed=false,
+#  模板在 L0 < 90% 时非零退出, 不允许 proxy / precedent / Task #178 类比跨过)
+#
 # R7: GPU 1 空闲
 # R12: 默认 save_limit=1 + best_collision ckpt
 # R8: commit 后立即 push
