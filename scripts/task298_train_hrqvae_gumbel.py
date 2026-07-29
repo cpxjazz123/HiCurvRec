@@ -119,10 +119,15 @@ def gumbel_softmax_assign_per_layer(
         log_prob = log_prob + gumbel
     prob = F.softmax(log_prob, dim=-1)  # (B, K)
     indices = prob.argmax(dim=-1)  # (B,)
-    # Straight-through
+    # Straight-through estimator (Jang et al. 2017 Categorical Reparameterization):
+    #   forward:  x_q_st = x_q_hard (用 hard argmax — 跟 baseline 一致)
+    #   backward: d(x_q_st)/d(params) = d(x_q_soft)/d(params) (用 soft 加权)
+    # 写法: x_q_st = (x_q_hard - x_q_soft).detach() + x_q_soft
+    #       forward  : (x_q_hard - x_q_soft) + x_q_soft = x_q_hard
+    #       backward : d(x_q_soft)/d(params) only (x_q_hard detached)
     x_q_soft = prob @ codebook  # (B, e_dim)
     x_q_hard = codebook[indices]
-    x_q_st = x_q_hard + (x_q_soft - x_q_hard).detach()
+    x_q_st = (x_q_hard - x_q_soft).detach() + x_q_soft
     return x_q_st, indices, prob
 
 
@@ -172,7 +177,10 @@ class GumbelSoftmaxResidualQuantization(torch.nn.Module):
         B = x.shape[0]
         # 跟 baseline 一样: 在循环里算 commitment_loss + codebook_loss
         for li, quantizer in enumerate(self.vq_layers):
-            codebook = quantizer.embeddings.weight  # (K, e_dim) 切空间码字
+            # Issue #28 fix: 用 get_codebook() (Poincaré ball, post proj_to_ball + expmap0),
+            # 而不是 quantizer.embeddings.weight (切空间 raw, norm≈0.01).
+            # 后者会让 poincare_distance 几乎全 0 → softmax 均匀 → straight-through 无信号 → 坍缩.
+            codebook = quantizer.get_codebook()  # (K, e_dim) Poincaré ball, norm ≤ 1-eps
             c_k = self._get_layer_c_k(li, codebook)
             tau = self.tau_list[li]
             x_q_st, indices, prob = gumbel_softmax_assign_per_layer(
