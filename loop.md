@@ -253,6 +253,44 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ---
 
+### §15.6 R14 GitHub Issue 自动监听 + 即时处理 (2026-07-29 新增, 用户要求)
+
+> **用户要求**: 每次检查 https://github.com/WENYULIANG123/GeneRec 是否有新的 issue, 如果有, **马上根据 issue 的要求完成并且 commit**, 并且**尽量并行完成 issue**.
+> **Task #284 (Issue #10 follow-up: task194_k0256 SID κ-decouple 3-arm) 已闭环 — κ-decouple 3-arm 全部 NO-GO**: Arm A (Phase A only κ frozen) R@10=0.0846 (-17.0% vs baseline, -19.6pp vs task194_k0256 0.1053), Arm B (Phase A 100ep + Phase B 100ep κ unfreeze) R@10=0.0864 (-15.3% / -17.9pp). 联立 task144 K=64 (≈ baseline 中性) + task284 K=256 (显著退化 -17%/-15%) → **κ-decouple + 大 K 是负面相互作用, κ-decouple 不是 R@10 杠杆**. Issue #10 follow-up NO-GO 闭环. verdict: verdicts/task284_issue10_followup_result.md. 永久修复: scripts/task284_stage234_chain_waiter.sh Stage 4 部分 --codebook_size 改 "256,128,256,1" (1 comma-separated string).
+
+
+**强制规则**:
+- ✅ **每次 loop tick 第一步必跑**: `gh issue list --repo WENYULIANG123/GeneRec --state all --limit 30` 扫描所有 issue 状态 (open + closed).
+- ✅ **发现 open issue 立即处理**: 不等用户决策, 按 R11.5 自主决策推进 (跟当前 backlog 同等优先级).
+- ✅ **issue 处理流程**:
+  1. `gh issue view <N> --repo WENYULIANG123/GeneRec --comments` 读完整 issue 描述 + 评论
+  2. 按 issue 要求规划任务 (复用 R11.2 兜底顺序: CLAUDE.md > 上游默认 > paper 原始 > 简单实用)
+  3. `descriptions/task<N+1>_issue<N>_*.md` 创建任务描述 (R9 编号连续 + R9-Enforce 三层防护)
+  4. 跑实验 + 写 verdict (跟现有流程一致)
+  5. **`git add` + `git commit -m "Issue #<N> 闭环: ..."` + (可选 `git push`)** — commit 必须含 issue 编号 + 关键变更描述
+  6. **`gh issue close <N> --repo WENYULIANG123/GeneRec --reason completed`** (或 --reason "not planned" 走 D4 收口路径)
+  7. **在 issue 评论里写**: `gh issue comment <N> --repo WENYULIANG123/GeneRec --body "..."` 链接 verdict + 关键 R@10 数字 + commit hash
+- ✅ **并行完成 issue**: 多个 open issue 同步处理 (每 issue 独立 GPU, 不抢卡 — R7 兼容). 按 ROI 排序: 高 ROI issue 优先 launch. 多 issue 同跑时 §16 表格添加多行.
+- ✅ **commit 粒度**: 每 issue 一个独立 commit (避免混合 commit 难追踪). commit message 格式: `Issue #<N>: <一句话结论> (Task #<task_id>)`.
+- ❌ **禁止** 跳过 issue 留到下次 tick 处理 — 必须当 tick 闭环 (除非 GPU/数据不足, 这种情况在 issue comment 注明 + §16 标记).
+- ❌ **禁止** 等用户授权 issue 处理 — R11.5 自主决策原则, issue 要求即任务. 用户 override 仅在不可逆/破坏性操作时触发.
+- ❌ **禁止** 在 issue 处理流程中用 fallback 掩盖失败 — R2 仍生效, 失败即 raise + issue comment 记录.
+- ✅ **autonomous issue triage**: 如 issue 描述模糊, 按 R11.2 选推荐方案 + issue comment 明示选了什么 + 备选方案. 绝不抛回用户. (符合用户 2026-07-29 override "不允许等用户拍板, 必须自行决定").
+
+**实施细节**:
+- `gh` CLI 路径: `/usr/bin/gh` (已安装, auth 已配置 WENYULIANG123 账号).
+- 监听频率: 每个 loop tick 第一步 (R10 主动推进的前置步骤).
+- issue 编号 vs task 编号: issue #N 跟 task #N **不一定对应** (issue 是用户提的, task 是 AI 派的). 一个 issue 可能映射多个 task. 推荐命名: `task<M>_issue<N>_*.md` 让 task 号跟 issue 号双向追踪.
+- commit push 策略: 默认只 commit 不 push (避免 AI 误推破坏主分支). 用户授权后用 `git push` 推送. **严禁** `--force` push.
+- 关联 commit 跟 issue: `gh issue close` 时 commit 自动关联. 若 GitHub UI 不显示, 在 issue comment 里手动贴 commit hash.
+
+**与现有规则的关系**:
+- R11 (autonomous decision) > R14: issue 处理默认走 R11.2 兜底顺序, 不允许等用户拍板
+- R7 (并行 GPU) > R14: 多 issue 并行时仍遵守 GPU 不抢卡约束 (4 GPU 各跑 1 issue 主臂)
+- R9 (任务编号连续) > R14: issue 处理创建新 task 必须 R9-Enforce 三层防护 (取 max+1 编号)
+- R12 (checkpoint 强制保存) > R14: issue 触发的训练仍遵守 R12 强制 ckpt 保存
+
+
 ## §16. 当前活跃任务
 
 > **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. **Issue #18 (Task #280) 全 3 Gate 闭环 — §6.7.4 stop-loss (i) 口径绑定 Stage 1 argmin, task253 L0=73.44% / task222 ep29 L0=65.62% 复算 PASS, 6 个 vanilla 测点 (B 口径) 100% 反证闸门真闸门, 0 GPU**. **Issue #19 (Task #281) 全 3 Gate 闭环 — 通用 `scripts/issue19_gate_template.sh` 3 回放 PASS (a/b exit 1, c exit 0), 4 存量脚本 (`task237`/`task256`/`task188_to_193`/`task194`) 文件头标注, `papers/paper.md` Gate 3 字面写死**. **Task #282 (Task #270 A1 NO-GO) 已闭环 — Stage 1 50 epoch USAGE-KILL @ ep30, loss_type=mse+β=0 L0 ep5=40.6% → ep30=1.6% (1/64), mode collapse 比 poincare+β=0.5 (73.44%) 更严重 −71.84pp. 推论: β 不是 L0 ≥ 90% 杠杆 (它是稳定剂非天花板)**. **Task #283 (D5 dead_revive frequency NO-GO) 已闭环 — D5A ep30 USAGE-KILL L0=70.3% (跟 baseline 73.44% 几乎一样), post-revive 严格=pre-revive, hrqvae_trainer.py:271 latent_gravy=empty 让 hook 退化成 no-op. D5B/C 不再跑 (code no-op ≠ frequency). 联立 Task #282 锁死 baseline Stage 1 recipe 不是 L0 ≥ 90% 杠杆 (β 是稳定剂非天花板 + dead_revive 是 hook no-op 非频率), L0 ≥ 90% 需结构改动 (新 VQ 范式 / EMA / 多样 hash) 不在 baseline 修补 ROI**. **Task #277/#278 已闭环**.
