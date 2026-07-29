@@ -255,7 +255,8 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. 4 GPU 全空闲, 无活跃训练. **Task #277 已闭环 (Task #243 Stage 4 eval: epoch=200/400 R@10 相同, 训练时长非变量, REFUTED)**. **Task #278 已闭环 (12 个 ckpt 批量 Stage 4 eval: task194_k0256 R@10=0.1053 ⭐最佳 GO)**. 等用户决策: 下一项 R10 backlog (R11.5 自主决策候选: task194_k0256 SID 重跑 Gate 1 3-arm 曲线 或 task272 m-arm κ-Stereographic v9+).
+> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. **Issue #18 (Task #280) 全 3 Gate 闭环 — §6.7.4 stop-loss (i) 口径绑定 Stage 1 argmin, task253 L0=73.44% / task222 ep29 L0=65.62% 复算 PASS, 6 个 vanilla 测点 (B 口径) 100% 反证闸门真闸门, 0 GPU**. **Issue #19 (Task #281) 全 3 Gate 闭环 — 通用 `scripts/issue19_gate_template.sh` 3 回放 PASS (a/b exit 1, c exit 0), 4 存量脚本 (`task237`/`task256`/`task188_to_193`/`task194`) 文件头标注, `papers/paper.md` Gate 3 字面写死**. **Task #277/#278 已闭环**.
+> **Task #279 (K=512/1024 Stage 3 + Stage 4 eval) 仍在跑**: 12 stage3_train children 进程alive (父进程 spawn 后), K=512 + K=1024 HG_Rec_best.pth 已存. Waiter (`task279_stage4_eval.sh`) 每 2min check, 期望 Stage 4 完成后自动 fire eval.
 
 ### 已闭环 (近 24 小时)
 
