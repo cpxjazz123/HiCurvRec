@@ -316,12 +316,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | (A1) | **Task #282 (Task #270 A1 欧氏 MSE+β=0)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 40.6%→1.6% mode collapse) |
 | (D5A) | **Task #283 (D5 dead_revive frequency)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 70.3% ≈ baseline 73.44%; hook no-op latent_gravy=empty) |
 | (D2) | **Task #279 (K-sweep K=512/1024 扩展)** | ❌ NO-GO (K=512 R@10=0.0824 -19.2%; K=1024 R@10=0.0847 -16.9% ⚠️ ep1 initial; "L0 大 R@10 高" REFUTED; K=256 ⭐0.1053 是 trade-off 顶峰) |
-| (D1 v2) | **Task #284 (Issue #10 follow-up K=256 SID κ-decouple 3-arm)** | 🟡 **正在跑** (PID 3755366 Arm A @ GPU 2 + 3755372 Arm B @ GPU 3, etime 1m20s, R12 ckpt 落盘 best_loss_model.pth 4.5MB) — D1 重启 (task144 在 K=64 SID 下 NO-GO, 但 K=256 SID 未测, 验证 κ-decouple 在最优 K=256 SID 下是否突破 0.1053 ⭐) |
-
 ### 等用户决策 / R10 backlog 候选 (R11.5 自主决策推进)
 
-候选方向 (按 Task #278 / #282 / #283 联立推论):
-- **方向 D1 v2 (Task #284 launch 中)**: 用 **task194_k0256 SID** (R@10=0.1053 当前最佳) 重跑 Issue #10 Gate 1 3-arm 曲线. 验证 κ-decouple Arm A (task144 0.1026) 在最优 K=256 SID 下是否突破 0.1053. 已 launch 2 臂 (Arm A κ frozen 全程, Arm B Phase A 100ep + Phase B 100ep unfreeze 1e-5), Arm C 复用 task194_k0256 R@10=0.1053. 估 4-6 小时 GPU. 决策阈值: 任何 R@10 > 0.1053 → GO; 否则 → Issue #10 follow-up NO-GO 闭环.
+候选方向 (按 Task #278 / #282 / #283 / #284 联立推论):
 - **方向 D2 (R10 备选)**: 探索 K=512/1024 (Task #194 K-sweep 提示 L0 越大越好). Stage 2 重训 + Stage 3/4, 估约 2-3 小时 GPU. (与 Task #279 重叠, 等 task279 完成后合并).
 - **方向 D3 (backlog)**: task272 m-arm κ-Stereographic v9+ (用户 2026-07-24 提议 + R11.5 自主推进候选).
 - **方向 D4 (低 ROI)**: Issue #10 接受方向 A2 NO-GO 闭环 (R11.5 默认决策).
