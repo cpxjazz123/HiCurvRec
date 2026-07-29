@@ -622,6 +622,33 @@ If the stop-loss gate is met, this concludes the geometric-route investigation o
 - **修正闭环**: 真实 L0 ≥ 90% 杠杆 = **κ-decouple (Phase A κ frozen=0)**. 但 κ-decouple 是 L0 杠杆**不是 R@10 杠杆** — 跨 K 一致 Stage 4 R@10 退化 (-16% 到 -18%). L0 健康 ≠ R@10 改善. §6.7.4 stop-loss (i) 在 baseline Stage 1 recipe 默认参数下恒触发, 但 κ-decouple 引入 κ frozen=0 额外起点可突破 — 这意味着 "baseline 微调路径无杠杆" 是正确的, "baseline 任何路径无杠杆" 是错误的.
 - **跟 §5.6c / §5.6d / §5.7.1 line 9 同步**: 这段修正跟 paper.md §5.6d 详细论证 + §5.7.1 line 9 (line 444) 修正版完全一致. 联立共同锁死: κ-decouple 解决 L0 健康 (in-baseline-recipe, 不需要结构改动) 但不解决 R@10 (退化曲线), 几何干预 ≤ baseline 在 Musical_Instruments 数据集结构性必然.
 
+**Task #29x+#293+#294 跨任务 c_k range 路径 NO-GO 收口综合 (2026-07-29, paper-ready 联动)**:
+- 上面 Task #282+#283+#288+#287 联立段落论证 baseline Stage 1 recipe 内部 L0 ≥ 90% 杠杆 = κ-decouple, 但 R@10 杠杆已穷尽. Task #294 进一步跨 8 方向 × 13 verdict 综合 c_k range 路径在 baseline recipe 内**没有任何杠杆贡献 R@10 > 0.1020**:
+  - **Task #220** (全层 PC κ U(0.5,5) 200 epoch): L0=20.31% / collision=0.3835
+  - **Task #231** (全层 PC κ U(1,5) Phase 0 OPEN): L0=82.68% Phase 0 OPEN 但 Stage 1 训练坍缩
+  - **Task #242** (Issue #11 Arm A 逐层 U(1,5)+U(0.5,20)+U(0.5,20)): L0=23.44% / collision=0.9385
+  - **Task #242 Arm A+** (dead_revive): L0=3.12% 更差 / collision=0.9945
+  - **Task #275** (A2 β-curriculum + c_k U(0.5,5)): L0=89.1% plateau (β 是稳定剂)
+  - **Task #287 K=128** (κ-decouple): L0=100% 但 R@10=0.0855 (-16.2%)
+  - **Task #284 K=256** (κ-decouple 3-arm): R@10=0.0846 / 0.0864 (-17.0% / -15.3%)
+  - **Task #290 FSQ** (3-way quantizer #1): collision=0.0044 / R@10=0.0553 (-45.8%)
+  - **Task #291 EMA** (3-way quantizer #2): collision=0.3360 / R@10=0.0765 (-25.0%)
+  - **Task #292 Restoration** (3-way quantizer #3): collision=0.3234 / R@10=0.0799 (-21.7%)
+  - **Task #293** (Issue #23 per-layer per-epoch c_k curriculum Gate 0): 0/81 measurements 三层全 OPEN (硬停止, 不进 Gate 1/2/3)
+- **七组跨任务一致性结论 (Task #294, paper §6.7.4 联动字面)**:
+  - **C1**: c_k range 单值钉死 Stage 1 训练 (3 任务一致, 跟 Task #282+#283+#288 联立)
+  - **C2**: per-layer 异构 c_k range 不能脱离时间维度 (Task #242 Arm A 23.44% + Task #293 Gate 0 0/81 OPEN)
+  - **C3**: time-varying curriculum 不能挽救 frozen ckpt 失配 (Task #293 Schedule A/B/C 表现相似)
+  - **C4**: dead_revive hook 在窄 c_k 下是 no-op (Task #242 Arm A+ 3.12% + Task #283 hook no-op 70.3%)
+  - **C5**: β-curriculum 是稳定剂非天花板 (Task #270 1.6% + Task #275 89.1% plateau)
+  - **C6**: κ-decouple 是 L0 杠杆但不是 R@10 杠杆 (Task #144/284/287 跨 K=64/128/256 一致退化 -15% 到 -18%)
+  - **C7**: 3-way alternative quantizer 全部 NO-GO (Task #290/291/292 — codebook 坍缩不是 R@10 杠杆, FSQ 100% util 但 R@10 -45.8% 最差)
+- **联立联合立判据 (Task #294)**: baseline Stage 1 recipe (`poincare + β=0.5 + kmeans + product_manifold + anti_collapse=none + eval_step=5`) 在 `β ∈ {0, 0.5, 1.0}` / `frequency ∈ {1, 5, 10}` / `loss_type ∈ {mse, l1, poincare}` 调节空间内**没有任何已知杠杆把 L0 ≥ 90%**, 且**任何 c_k range / κ-decouple / quantizer variant 都不能贡献 R@10 > 0.1020**.
+- **跟 §6.7.4 上文 + §5.6d 同步**: Task #287 修正段证明 "baseline 任何路径无杠杆" 是错误的 (κ-decouple 是 in-baseline-recipe L0 杠杆); Task #294 进一步证明 "c_k range / quantizer 路径无法贡献 R@10 增益" 是正确的. 两个修正段互补, 共同锁死: baseline Stage 1 recipe 内部 **L0 杠杆 = κ-decouple (frozen), R@10 杠杆 = NONE**, 任何后续候选必须在架构层 (Gumbel-Softmax / 多样 hash / per-item soft-assign).
+- **§6.7.4 stop-loss (i) 最终解读 (跟 line 612 联立扩写)**: 在 baseline recipe 默认参数下结构性必然触发, Sinkhorn 后处理兜底 "weakly collision-permissive" 设计特征. 任何"修 c_k / β / κ-decouple / quantizer 让 R@10 > 0.1020" 提议必已在本段落覆盖范围内, 不得重启 baseline 修补实验.
+- **R10 推进决策 (跟 [[r10-backlog-vacuum-2026-07-29]] 默认行为一致)**: 0 GitHub OPEN issues + §16 backlog 全 NO-GO 收口 + 4×L40S 全空闲 → housekeeping 推进, 整理 paper / 写 verdict / memory 整合. 不强启动 ROI 极低实验.
+- 零 GPU. verdict 落盘: verdicts/task294_c_k_range_path_exhausted_cross_task_result.md. 引用 task294 联合立判据 + task29x 3-way + task293 Issue #23 Gate 0.
+
 #### 6.7.5 Escape routes — attacking the assignment-identity premises (Tasks #218 + #219)
 
 The seven directions above (plus the diversity-regularizer stop-loss) all attack $\alpha := \sqrt{c}\,\rho$ from *inside* the tension — by trying to drive $\alpha$ into the active regime without breaking separability. **None succeeded.** A complementary class of attack targets not the regime but the **algebraic identity itself**: the standard result
