@@ -490,6 +490,12 @@ then the geometric-route investigation is **closed permanently**. The utilizatio
   - task222 ep29 → L0 = 42/64 = **65.62%** (< 90%, 触发 stop-loss) ✅
 - 历史重述: 任何历史 verdict 中给出的 "L0 13/64 = 20.31%" 数字必须 retro-label 为 Stage 2 口径 + 不可独立复现 (`task265` 已确认), 不得再作为 Stage 1 proxy 引用.
 
+**Issue #18 Gate 3 (字面写死, 2026-07-29)**:
+- 本 issue 不申请、不批准、也不隐含任何 Stage 3/4 预算.
+- 任何以 "口径定好了, 顺手跑一轮验证" 为名的 Stage 3 提议一律拒收 — 与 `verdicts/task200_v5_user_4step_result.md` 里的 "fallback option B" 是同一句式.
+- Gate 1 的验证一律用历史产物回放 (task253 best_collision + task222 ep29), 不新起训练.
+- Gate 2 的产出是一张口径表, 不构成任何重跑的理由.
+
 If the stop-loss gate is met, this concludes the geometric-route investigation on Musical_Instruments: **active hyperbolic geometry is fundamentally incompatible with allocation separability in this architecture**, and the only viable path is to keep the baseline geometry inactive (default HG-Rec) and rely on Sinkhorn-balanced post-processing for codebook health (per Task #207).
 
 #### 6.7.5 Escape routes — attacking the assignment-identity premises (Tasks #218 + #219)
@@ -599,8 +605,13 @@ Note: Sinkhorn non-convergence is not a blocker — only the 4th-digit dedup mat
 
 The downstream T5-mini **fails to translate geometric activation into retrieval gains** — six metrics, all worse than the inactive baseline. The Phase-0 OPEN signal (L0/L1/L2 assignment agreement 28/67/76% vs 99.91% baseline) and the Stage-1 healthy codebook (L0 utilization 20.31% ×13, L1 98.44% ×24, L2 91.02% ×16, unique SID 50.93% ×17) **do not propagate to downstream Recall**. This is consistent with the Task #87 paradox: SID-quality metrics (collision, utilization, uniqueness) and downstream-Recall correlation is weak.
 
+**retro-label (Issue #18 Gate 2, 2026-07-29)**:
+- "L0 utilization 20.31%" 出处为 Stage 2 Sinkhorn 解码后口径 (B 口径), 已由 `task265_issue17_gate1_fix_apply` 判定不可独立复现. 真实 Stage 1 (A 口径) task222 ep29 L0 = **42/64 = 65.62%** (task263 verifier 两次连跑一致).
+- "L1 98.44% ×24" 标 B 口径; "L2 91.02% ×16" 标 B 口径.
+- 数字方向 (↘ activation ≠ R@10 杠杆) 保留, 定量数字按口径重述, 不再以 20.31% 作为 Stage 1 唯一标志.
+
 **Both §6.7.4 hard stop-loss conditions are satisfied**:
-- (i) L0 utilization = 20.31% < 90% ✅
+- (i) L0 utilization (Stage 1 argmin per-layer unique, A 口径, 同一 task222 ep29 ckpt 直测) = **65.62%** < 90% ✅
 - (ii) Stage 4 test R@10 = 0.0938 < 0.1020 ✅
 
 **Per the user's 2026-07-26 directive, the geometric-route investigation is now permanently closed.** No ninth direction will be attempted; vanilla RQ-VAE + Sinkhorn-balanced post-processing remains the recommended path on Musical_Instruments.
