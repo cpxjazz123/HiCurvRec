@@ -436,3 +436,20 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **跨任务一致性**: 跟 [[issue11-gate1-full-nogo]] (Task #242) 结论一致 — per-layer c_k 参数空间在 task275 ckpt 上已耗尽, time-varying curriculum 不能挽救 frozen ckpt 失配. Schedule B 全程宽 跟 Schedule C 全程窄表现相似 → frozen ckpt 的 geometry 决定 argmin, 不是 c_k range.
 - **跟 task29x + task287 + task284 + task144 联立**: baseline recipe 内部 R@10 杠杆已穷尽, 后续候选必须在架构层 (Gumbel-Softmax / 多样 hash / per-item soft-assign), 不能在 Stage 1/2 范围内打补丁.
 - **R14 闭环**: Issue #23 hard-stop → comment + close, 同步 commit 8628283 推送 main.
+
+### Task #294 (c_k range 路径跨任务综合收口, paper §6.7.4 paper-ready) 已闭环 — 零 GPU housekeeping (2026-07-29)
+
+- **目的**: 跨 task211/#220/#231/#242/#275/#287/#29x/#293 **八方向** c_k range 路径 NO-GO 收口整理成 paper-ready 综合表, 让 paper §6.7.4 联动引用无需翻 8 个 verdict 文件.
+- **七组跨任务一致性结论**:
+  - **C1**: c_k range 单值钉死 Stage 1 训练 (U(0.5,5)/U(1,5)/U(0.5,20)/U(2,8) 任何单值不能解锁 L0 ≥ 90%)
+  - **C2**: per-layer 异构 c_k range 不能脱离时间维度 (task242 23.44% + task293 0/81 OPEN)
+  - **C3**: time-varying curriculum 不能挽救 frozen ckpt 失配 (Schedule A/B/C 表现相似)
+  - **C4**: dead_revive hook 在窄 c_k 下是 no-op (task242 3.12% 更差 + task283 hook no-op 70.3%)
+  - **C5**: β-curriculum 是稳定剂非天花板 (task270 1.6% + task275 89.1% plateau)
+  - **C6**: κ-decouple 是 L0 杠杆但不是 R@10 杠杆 (task144 几乎中性 + task284 -17.0% + task287 -16.2%)
+  - **C7**: 3-way alternative quantizer 全部 NO-GO (FSQ -45.8% / EMA -25.0% / Restoration -21.7%)
+- **联合立判据 (paper §6.7.4 联动字面)**: baseline Stage 1 recipe (`poincare + β=0.5 + kmeans + product_manifold + anti_collapse=none + eval_step=5`) 在 `β ∈ {0, 0.5, 1.0}` / `frequency ∈ {1, 5, 10}` / `loss_type ∈ {mse, l1, poincare}` 调节空间内**没有任何已知杠杆把 L0 ≥ 90%**, 且**任何 c_k range / κ-decouple / quantizer variant 都不能贡献 R@10 > 0.1020**.
+- **§6.7.4 stop-loss (i) 重新解读**: 在 baseline recipe 上结构性必然触发 — Sinkhorn 后处理兜底的 "weakly collision-permissive" 设计特征, **不是 bug**. (跟 task288 / Issue #20 联立)
+- **后续候选 (架构层, 非 Stage 1/2 修补)**: Gumbel-Softmax soft assignment / 多样 hash / per-item soft-assign with temperature annealing. **禁止方向**: 任何在 baseline recipe 内的 c_k / β / κ-decouple / quantizer variant 修补 (8 方向已穷尽证伪).
+- **R10 推进决策**: 跟 [[r10-backlog-vacuum-2026-07-29]] 默认行为一致 (backlog 真空时整理 paper / 写 verdict / memory 整合, 不强启动 ROI 极低实验). 零 GPU, 推进方式 = housekeeping 综合.
+- 产物: verdicts/task294_ck_range_path_exhausted_cross_task_result.md (187 lines). commit d45a0f6 推送 main.
