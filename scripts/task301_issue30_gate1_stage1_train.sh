@@ -53,9 +53,7 @@ CUDA_VISIBLE_DEVICES=1 TRITON_CACHE_DIR="$TRITON_CACHE_DIR" \
     --data_path $REPO/HG-Rec/dataset/Instruments/item_emb.parquet \
     --weight_decay 0 \
     --dropout_prob 0.0 \
-    --bn False \
     --loss_type poincare \
-    --kmeans_init True \
     --kmeans_iters 1000 \
     --sk_epsilons 0.0 0.0 0.0 \
     --sk_iters 50 \
@@ -64,7 +62,6 @@ CUDA_VISIBLE_DEVICES=1 TRITON_CACHE_DIR="$TRITON_CACHE_DIR" \
     --e_dim 32 \
     --quant_loss_weight 1.0 \
     --beta 0.5 \
-    --euclidean_qloss False \
     --loss_mult_codebook 1.0 \
     --layers 512 256 128 64 \
     --save_limit 1 \
