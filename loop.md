@@ -342,6 +342,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #38 δ2)** | **Task #317 (Issue #38 Arm δ2 embedding centroid similarity rerank)** | **❌ NO-GO (alpha=0.10-0.50 跟 baseline R@10=0.1041 逐 batch 完全相同, alpha=1.00 R@10=0.0366 -64.9%. 跟 task316 + task319 联立: 3 种 prior 全部 NO-GO, Stage 4 post-process 收口)** |
 | **(Issue #38 Arm 1)** | **Task #318 (Issue #38 Arm 1 optimizer 4-arm ablation, parallel session 残留)** | **❌ NO-GO implicit (scripts 残留未跑完. R11.5: Arm 1 Stage 3 retraining ROI 太低 — task309 T5-small -4.0%, task312/313 r_l/s_l 隔离 -17%, 4 个 optimizer 收敛到相似 loss 局部极小. 跟 task316/317/319 联立: Issue #38 5-arm 全收口, 唯一 GO = K=100 amplifier)** |
 | **(Issue #38 δ3)** | **Task #319 (Issue #38 Arm δ3 sequence-level diversity reward rerank)** | **❌ NO-GO (alpha=0.30-0.80 跟 baseline R@10=0.1041 逐 batch 完全相同, alpha=1.00 R@10=0.0455 -56.3%. 跟 task316 + task317 联立: 3 种 prior 全部 NO-GO, Stage 4 post-process 收口)** |
+| **(Issue #38 5-arm)** | **Task #320 (Issue #38 5-arm Stage 3 retraining: Optimizer/LR schedule/R-Drop/BF16/control)** | **🔄 queued (R7: 等 task318 完成释放 GPU, 预计 15-25 min. 脚本就绪: task320_issue38_5arm_stage3_train.py + 5 个 launcher shells. 5-arm 200 epoch parallel on 4 L40S, ~140 min wall time. 决策阈值: ≥1 Arm R@10 > 0.1053)** |
 
 ### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31/#33 闭环后, 2026-07-30)
 
