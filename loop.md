@@ -547,3 +547,50 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **R14 闭环**: Issue #28 hard-stop → comment + close (not planned reason), 同步 commit 867fc0e 推送 main.
 
 - **产物**: verdicts/task298_issue28_gate0_result.md + verdicts/task298_issue28_result.md + verdicts/task298_issue26_conflict_report.md (Issue #26 维持 OPEN 等候 owner) + scripts/task298_issue28_gate0_gumbel_softmax.py + scripts/task298_train_hrqvae_gumbel.py + scripts/task298_issue28_gate1_stage1_train.sh. commit 7b3fe5e (Gate 0 PASS) + 0e8c98f (Gate 1 修复) + 867fc0e (Gate 1 NO-GO + Issue close).
+
+### Task #300 / Issue #29 (per-layer 异构 K_l=[128,64,32] + per-layer c_k range) 已闭环 — Stage 4 NO-GO (Issue #29 closed) (2026-07-30)
+
+- **5-Gate 综合结果**:
+  - **Gate 0 PASS**: per-layer K_l wrapper reg test (baseline K=[64,128,256] 等价).
+  - **Gate 1 PASS**: Stage 1 100 epoch L0/L1/L2 = 100%/100%/100% (ep25-100), best collision=0.1465.
+  - **Gate 2 PASS**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision=0.1427.
+  - **Gate 3 PASS**: T5-mini 200 epoch 训练, HG_Rec_best.pth 22MB 落盘.
+  - **Gate 4 NO-GO**: Test R@10=0.0979 (-4.0% vs baseline 0.1020). 6 项指标全 NO-GO.
+- **关键发现 K6**: L0 utilization ≥ 90% 是 Stage 1 Gate 1 必要非充分条件 (Stage 1 Gate 1 PASS ≠ Stage 4 GO). K_l 异构路径是 false positive.
+- **R14 闭环**: Issue #29 GitHub closed --reason completed (NO-GO verdict comment).
+- **产物**: verdicts/task300_issue29_stage4_result.md + verdicts/task300_issue29_stage4_metrics.json + scripts/task300_issue29_gate{0,1,2,3,4}.*
+
+### Task #301 / Issue #30 (per-layer Codebook Transforms r_l + R_l + s_l) 已闭环 — Stage 4 GO 🎉 marginal (Issue #30 closed) (2026-07-30)
+
+- **5-Gate 综合结果**:
+  - **Gate 0 PASS**: per-layer Codebook Transforms wrapper (r_l + R_l + s_l) reg test 全 3 条通过.
+  - **Gate 1 PASS**: Stage 1 100 epoch 训练 L0/L1/L2 util 100% (ep25-100), best collision=0.0873.
+  - **Gate 2 PASS**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision=0.1299 ≤ 0.20.
+  - **Gate 3 PASS**: T5-mini 200 epoch 训练 (best ep85 valid NDCG@20=0.0977 / R@10=0.1230, early stop @ ep105), best ckpt 22MB 落盘.
+  - **Gate 4 ✅ GO marginal**: Test R@10=0.1022 (+0.2% vs baseline 0.1020), 6 项指标 4 项击败 baseline (R@5/10, NDCG@5/10), 2 项略退化 (R@20 -3.5%, NDCG@20 -0.5%).
+- **关键发现 K5 (跨任务联立)**: 码字几何路径 (Issue #30 r_l + s_l) 是 per-layer 可变曲率首个击败 HG-Rec baseline 的端点. 17 方向 × 17 verdict 收口 (15 NO-GO + 1 中性 + 1 GO marginal).
+- **R14 闭环**: Issue #30 GitHub closed --reason completed (GO verdict comment).
+- **获胜配置**: per-layer r_l=[0.1, 1.0, 10.0] + s_l=[2.0, 2.0, 2.0] + c_k_range=[(1,5),(0.5,20),(0.5,20)] (沿用 task242 Arm A).
+- **paper §6.7 锚点**: Issue #30 = paper §6.7 锚点 (首个 R@10 > 0.1020 端点).
+- **产物**: verdicts/task301_issue30_stage4_result.md + verdicts/task301_issue30_gate3_gate4_result.md + verdicts/task301_issue30_stage4_metrics.json + scripts/task301_issue30_gate{0,1,2,3,4}.*
+
+### Task #302 / Issue #31 (per-layer 异构 encoder regularization β_l + α_l + γ_l + per-layer c_k range) 已闭环 — Gate 1 FAIL (Issue #31 closed) (2026-07-30)
+
+- **4-Gate 综合结果**:
+  - **Gate 0 PASS**: EncoderRegHRQVAE wrapper reg test 全 4 条通过 (β_l baseline 等价 + β 异构 indices 一致 + α anchor 非零 + γ encoder L2 增量).
+  - **Gate 1 FAIL (USAGE-KILL epoch 30)**: L0/L1/L2 = 18.8%/22.4%/34.6% (全 FAIL < 90%), collision=0.9487. ‖x‖_E → 0 (encoder trivial solution).
+  - **关键发现 K7 (owner-verdict)**: Phase 0 mode collapse 的关键是**码字几何** (Issue #30 r_l + s_l 已 PASS 路径), 不是**encoder 梯度** (β_l + α_l + γ_l).
+  - **关键发现 K8**: "后续候选必须在架构层 (Codebook Transforms 候选路径已实证)" = owner 在 Issue #31 closure 中给出的明确 verdict, 触发 Issue #32 启动.
+- **R14 闭环**: Issue #31 GitHub closed --reason not_planned (NO-GO verdict comment).
+- **产物**: verdicts/task302_issue31_gate0_result.md + verdicts/task302_issue31_gate1_result.md + scripts/task302_issue31_gate{0,1}.*
+
+### Task #303 / Issue #32 (per-layer Codebook Transforms r_l + s_l + per-layer c_k range 双轴协同) 启动中 (2026-07-30)
+
+- **4-Gate 综合结果 (running)**:
+  - **Gate 0 PASS**: per-layer Codebook Transforms + c_k range 双轴 wrapper reg test 全 5 条通过 (r_l=[1,1,1] identity 等价 baseline, Issue #32 design r_l=[0.5,1,2]+s_l=[1,1,1]+c_k range ≠ baseline, Shape 一致, monkey-patch 干净恢复, per-layer c_k range 注入正确 c=[2.50, 19.04, 14.77]).
+  - **Gate 1 PASS**: Stage 1 100 epoch L0/L1/L2 = 100%/100%/100% (ep25-100), best collision=0.0851.
+  - **Gate 2 PASS**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision=0.1045 ≤ 0.20.
+  - **Gate 3 RUNNING**: T5-mini 200 epoch 训练 PID 759154 GPU 1 (commit e972143).
+- **配置**: per-layer r_l=[0.5, 1.0, 2.0] + s_l=[1.0, 1.0, 1.0] + c_k_range=[(1,5),(0.5,20),(0.5,20)] (中间值 vs Issue #30 极端值 [0.1,1,10]+[2,2,2]).
+- **R11.5 决策**: Issue #32 是 owner verdict「码字几何是 Phase 0 mode collapse 关键, 后续候选必须在架构层」+ task242 per-layer c_k range 协同的下一机制变体.
+- **产物**: descriptions/task303_issue32_dual_axis_synergy.md + scripts/task303_issue32_gate{0,1,2,3}.* + verdicts/task303_issue32_gate{0_result.md,0_verify.json}. commit e972143.

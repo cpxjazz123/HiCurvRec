@@ -1,0 +1,42 @@
+{
+  "task_id": "304",
+  "arm": "C (Issue #30 reference)",
+  "date": "2026-07-30",
+  "gate_0": {
+    "regression_identity_transforms_pass": true,
+    "arm_c_design_differs_pass": true,
+    "shape_all_pass": true,
+    "monkey_patch_clean_recovery_pass": true,
+    "per_layer_c_k_range_applied_pass": true,
+    "overall_pass": false
+  },
+  "config": {
+    "radius_list": [
+      0.1,
+      1.0,
+      10.0
+    ],
+    "scale_list": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "rotation_list": "I identity",
+    "c_k_range_list": [
+      [
+        1.0,
+        5.0
+      ],
+      [
+        0.5,
+        20.0
+      ],
+      [
+        0.5,
+        20.0
+      ]
+    ]
+  },
+  "reference": "Issue #30 (task301) Stage 4 GO marginal R@10=0.1022",
+  "next_step": "Gate 0 FAIL, \u4e0d\u8fdb\u5165 Gate 1"
+}
