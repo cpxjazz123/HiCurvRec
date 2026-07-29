@@ -47,8 +47,11 @@ RECIPE=${RECIPE:-A1}
 
 case "$RECIPE" in
     A1)
-        # 纯欧氏 VQ-VAE
+        # 纯欧氏 VQ-VAE: loss_type=mse + β=0.0.
+        # 注意: hrqvae.py compute_loss() 只支持 mse/l1/poincare, 没有 "none".
+        # train_hrqvae.py argparse 默认 "poincare". 这里用 mse 拿欧氏重构 + β=0 拿无 commit loss.
         SAVE_DIR=$REPO/products/task270/A1_euclidean
+        LOSS_TYPE="mse"
         BETA=0.0
         FREEZE_ENC=""
         INIT_FROM=""
@@ -57,10 +60,10 @@ case "$RECIPE" in
         EXTRA_ARGS=""
         ;;
     A2)
-        # Curriculum β: 先 30 epoch β=0.0, 再 warm-start 30 epoch β=0.5
-        # 这条路径需要先跑 A1 拿到 ckpt, 才能启动 A2 第二段
+        # Curriculum β: 先 30 epoch loss=none+β=0, 再 warm-start 30 epoch poincare+β=0.5
         echo "[$(date)] A2: 必须先 A1 完成. 检查 $REPO/products/task270/A1_euclidean/"
         SAVE_DIR=$REPO/products/task270/A2_curriculum
+        LOSS_TYPE="poincare"
         BETA=0.5
         FREEZE_ENC=""
         # 从 A1 best_collision ckpt 热启动 encoder
@@ -75,8 +78,9 @@ case "$RECIPE" in
         EXTRA_ARGS=""
         ;;
     A3)
-        # β=0.5 + encoder freeze at epoch 20 (已有 Task #193 实现, 不改 src/)
+        # poincare loss + β=0.5 + encoder freeze at epoch 20 (Task #193 实现, 不改 src/)
         SAVE_DIR=$REPO/products/task270/A3_freeze_enc
+        LOSS_TYPE="poincare"
         BETA=0.5
         FREEZE_ENC="--freeze_encoder_epoch 20"
         INIT_FROM=""
@@ -94,7 +98,7 @@ mkdir -p $SAVE_DIR
 LOG_FILE="$LOG_DIR/stage1_${RECIPE}_$(date +%Y-%m-%d_%H-%M-%S).log"
 
 echo "[$(date)] Task #270 L0 utilization curriculum, RECIPE=$RECIPE, beta=$BETA, GPU=$GPU"
-echo "[$(date)] 配方: $RECIPE | beta=$BETA | freeze=$FREEZE_ENC | init_from=$INIT_FROM"
+echo "[$(date)] 配方: $RECIPE | loss_type=$LOSS_TYPE | beta=$BETA | freeze=$FREEZE_ENC | init_from=$INIT_FROM"
 echo "[$(date)] epochs=$EPOCHS | eval_step=$EVAL_STEP"
 echo "[$(date)] SAVE_DIR=$SAVE_DIR"
 
@@ -103,7 +107,7 @@ CUDA_VISIBLE_DEVICES=$GPU \
 timeout 1800 python3 -u $REPO/HG-Rec/train_hrqvae.py \
     --data_path $DATA \
     --lr 1e-3 --epochs $EPOCHS --batch_size 1024 \
-    --loss_type poincare --kmeans_init True --kmeans_iters 1000 \
+    --loss_type $LOSS_TYPE --kmeans_init True --kmeans_iters 1000 \
     --sk_epsilons 0.0 0.0 0.0 --sk_iters 50 \
     --num_emb_list 64 128 256 \
     --e_dim 36 \
