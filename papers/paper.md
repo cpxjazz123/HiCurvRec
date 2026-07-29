@@ -328,6 +328,44 @@ K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一�
 
 **结论**: κ-decouple 不是 R@10 杠杆, baseline Stage 1 recipe 在任何已知 K (64/256) 都不是隐藏参数可调 (联立 Task #282 β=稳定剂非天花板 + Task #283 dead_revive=hook no-op + Task #284 κ-decouple=大 K 退化). L0 ≥ 90% 需结构改动 (Gromov-Softmax / EMA / 多样 hash / per-item soft-assign), 不在 baseline 修补 ROI 范围. 跟 §5.7.1 11-条 evidence 联立共同锁死: geometric intervention ≤ baseline on Musical_Instruments.
 
+### 5.6d L0 Utilization ≥ 90% Curriculum Validation (Table 7d, Task #288 — Issue #20 NO-GO)
+
+**目标**: §6.7.4 stop-loss (i) "L0 utilization ≥ 90%" 在 baseline recipe 上是否恒触发 (Issue #20, 3 配方 Stage 1 验证).
+
+| 配方 | 假设 | 实测 L0 (ep 30) | 实测 collision (ep 30) | 结论 |
+|------|------|-----------------|--------------------------|------|
+| **A1 β=0.0** | H2: 纯欧氏让码字自由散开 | **1/64 = 1.6%** ❌ | **0.9988** ❌ | **NO-GO (USAGE-KILL 自动 abort)** — 三次独立实验 (task271 / task275 / task288) |
+| A2 curriculum (β=0.0 → β=0.5 warm-start) | H3: A1 warm-start + β=0.5 精修 | n/a | n/a | **不启动** — Issue #20 硬停止: Gate 2 仅 Gate 1 PASS 后启动 |
+| A3 encoder freeze (β=0.5 + freeze_encoder_epoch=20) | H4: encoder freeze 让 codebook+decoder 重分配 | n/a | n/a | **不启动** — Gate 1 NO-GO 已锁 baseline recipe 内部无解 |
+
+**A1 三次实验 USAGE-KILL 锁死证据** (Task #288 hrqvae.log 提取):
+
+| epoch | L0 usage | L1 usage | L2 usage | collision |
+|-------|----------|----------|----------|-----------|
+| 5  | **40.6%** (26/64) | 68.8% | 72.3% | 0.7852 |
+| 10 | **6.2%**  (4/64)  | 32.0% | 41.4% | 0.9763 |
+| 15 | 1.6% (1/64) | 5.5%  | 12.5% | 0.9956 |
+| 20 | 1.6% | 2.3% | 6.6% | 0.9980 |
+| 25 | 1.6% | 1.6% | 4.7% | 0.9988 |
+| **30** | **1.6%** | **1.6%** | **4.7%** | **0.9988** → **[USAGE-KILL] auto-abort** ❌ |
+
+**Root cause (跟 task282 R2 KB 一致)**: A1 β=0.0 让 VQ-VAE 完全退化到纯欧氏 VQ. 失去 commit loss 跟 phase-0 fix 的码字 norm scaling 协同后, encoder 学习 trivial mapping (always pick the closest), 所有 item 映射到 1-2 个码字 → **mode collapse + collision → 0.999**. 这是**结构性**问题, 不是 β=0.5 vs 0.0 的连续可调问题.
+
+**联立锁死 (§6.7.4 字面段落已写入)**:
+
+| Task | 方向 | 锁死维度 | 证据 |
+|------|------|----------|------|
+| #282 | β=0 (A1) | β 不是 L0 上限, 是下限 | ep5 40.6% → ep30 1.6% mode collapse |
+| #283 | dead_revive frequency | hook no-op ≠ frequency | L0 70.3% ≈ baseline 73.44%; `latent_gravy=empty` |
+| #284 | κ-decouple K=256 | 大 K + κ-decouple 是负面相互作用 | -17.0% / -15.3% Stage 4 退化 |
+| **#288 (Issue #20)** | **A1/A2/A3 curriculum 三配方** | **§6.7.4 stop-loss (i) 在 baseline recipe 内部结构性不可达** | **A1 三次 USAGE-KILL 锁死; Gate 2/3 依赖 Gate 1 → 不启动** |
+
+**结论 (§6.7.4 进展意义限定, 必须正面写)**:
+- **§6.7.4 stop-loss (i) 在 baseline recipe 内部结构性必然触发** — task253 (73.44%) + task222 ep29 (65.62%) + task271/275/288 A1 (1.6%) + task283 D5 (70.3%) 四方向证据全部失败.
+- **Issue #20 §反证 三配方全失败触发**: A1 NO-GO + Gate 2/3 依赖 Gate 1 → 闭环 NO-GO verdict, 资源转向 task268 §4 候选 2 (m-arm κ-Stereographic v9+, Berman-Metzler 2020 距离公式).
+- **本方向不隐含任何 Stage 2 / 3 / 4 预算申请** — 任何接续提议须先通过 `loop.md §R10` 路线图审核.
+- **0 GPU 闭环**: A1 单次 50 epoch 在 ep30 触发 USAGE-KILL 自动 abort (≤30 sec 实际 GPU 时间), R12 best_loss_model.pth 已保存.
+
 ### 5.7 Discussion
 
 #### 5.7.1 Is Hyperbolic Geometry Necessary?
