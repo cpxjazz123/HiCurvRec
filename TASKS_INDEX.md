@@ -38,7 +38,7 @@
 | Task #127 | ✓ closed | TASKS_INDEX + CHANGELOG docs drift v3 + 6th audit (script syntax) |
 | Task #128 - Task #130 | ✓ closed | Housekeeping cycle closure + auto-gen TASKS_INDEX (break drift cycle) + final state closure report |
 
-## Recent closed tasks (Task #101 - Task #319)
+## Recent closed tasks (Task #101 - Task #325)
 
 | Task | Subject | Status | Verdict |
 |------|---------|--------|---------|
@@ -228,6 +228,8 @@
 | #317 | Issue #38 Arm δ2 (Stage 4 embedding centroid similarity rerank) NO-GO | ✅ | `verdicts/task317_arm_delta2_embedding_centroid_verdict.md` |
 | #318 | Issue #38 Arm 1 (Optimizer 4-arm Stage 3 ablation) verdict | ✅ | `verdicts/task318_issue38_arm1_optimizer_verdict.md` |
 | #319 | Issue #38 Arm δ3 (Stage 4 sequence-level diversity reward rerank) NO-GO | ✅ | `verdicts/task319_arm_delta3_sequence_diversity_verdict.md` |
+| #324 | Issue #39 Stage 4 召回改造 5-arm verdict (PART 1: ANN dense retrieval) | ✅ | `verdicts/task324_issue39_stage4_retrieval_verdict.md` |
+| #325 | Issue #38 + Issue #39 跨方向综合分析 (2026-07-30) | ✅ | `verdicts/task325_cross_direction_synthesis.md` |
 
 ## New tasks (Task #298 - Task #310, post-baseline closure)
 

@@ -175,14 +175,15 @@ def train_arm(model, train_loader, optimizer, scheduler, device, epoch, arm_cfg,
         optimizer.zero_grad()
 
         if use_rdrop:
-            # R-Drop: 2 forward passes
-            with torch.amp.autocast('cuda', dtype=torch.bfloat16) if use_bf16 else nullcontext():
-                out1 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-                out2 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            # Note: model() with labels returns .logits + pre-computed loss (CE); we need raw logits for R-Drop
-            # If model's forward with labels returns .loss, we need to manually compute CE
-            logits1 = out1.logits if hasattr(out1, 'logits') else out1
-            logits2 = out2.logits if hasattr(out2, 'logits') else out2
+            # R-Drop: 2 forward passes, manually compute CE + symmetric KL
+            # HG_Rec.forward returns (loss, logits) TUPLE per src inspection, so use out[1] not out.logits
+            if use_bf16:
+                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                    loss1_pre, logits1 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                    loss2_pre, logits2 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            else:
+                loss1_pre, logits1 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                loss2_pre, logits2 = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
             loss = rdrop_loss(logits1, logits2, labels, alpha=arm_cfg['rdrop_alpha'])
         else:
             if use_bf16:
