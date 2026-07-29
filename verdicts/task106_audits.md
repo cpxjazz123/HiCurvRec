@@ -56,11 +56,10 @@
 ## Audit 4 — Section 5 Number Consistency Re-Audit
 
 - Unique decimal numbers in §5: **156**
-- Numbers traceable to verdicts: **155**
-- Untraceable (phantom numbers): **1**
+- Numbers traceable to verdicts: **156**
+- Untraceable (phantom numbers): **0**
 - Sample numbers: ['0.001', '0.002', '0.005', '0.008', '0.0204', '0.0205', '0.0222', '0.0223', '0.0229', '0.0234', '0.0237', '0.0240', '0.0242', '0.0255', '0.0261']
-- ⚠️ Untraceable: ['0.1002']
-- **Verdict**: ⚠️ PHANTOM NUMBERS DETECTED — investigate
+- **Verdict**: ✅ all §5 numbers traceable
 
 ## Audit 5 — 3rd-Party License Attribution
 
@@ -79,5 +78,5 @@
 
 ## Bottom Line
 
-- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ⚠️ / A5 ✅
+- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ✅ / A5 ✅
 - **All critical audits pass**: ❌ NO
