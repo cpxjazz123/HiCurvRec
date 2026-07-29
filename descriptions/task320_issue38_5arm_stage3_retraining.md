@@ -39,10 +39,19 @@
 - All Arms R@10 ≤ 0.1053 — Issue #38 → "Stage 3 protocol change NO-GO 收口"
 
 ## GPU strategy (R7 不抢卡)
-- task318 parallel session: 4 arms on 4 GPUs (07:47 start, ~16 min runtime as of 08:03)
+- task318 parallel session: 4 arms on 4 GPUs (07:47 start, ~20 min runtime as of 08:07)
 - task320 启动条件: task318 全部结束, GPU 0/1/2/3 util < 10%
 - 启动顺序: A/B/D/E 先 (4 个, 1 个 GPU 各一), C 后跑 (因为 R-Drop 慢)
 - 预计启动时间: 2026-07-30 08:20-08:30
+
+## task318 partial findings (08:07 snapshot, 50 epoch proxy test)
+**强烈正向信号**: adam + adamw 在 26 epoch 已经 val_R@10=0.1123-0.1128 (+6.6-7.1% vs anchor 0.1053)
+- **adam ep26**: val_NDCG@20=0.0889, val_R@10=0.1123 ⭐
+- **adamw ep26**: val_NDCG@20=0.0895, val_R@10=0.1128 ⭐⭐ (与 adam 几乎一致, AdamW 默认 wd=0.01 暂时够用)
+- **sgd ep30**: val_NDCG@20=0.0810, val_R@10=0.0993 (中规中矩, momentum=0.9 慢收敛)
+- **adafactor ep27**: val_NDCG@20=0.0758, val_R@10=0.0966 (NO-GO, lr=1e-3 仍欠拟合)
+- **推测**: 50 epoch 已经超过 task318 早期 R@10 期望 (0.1020 baseline), 26 epoch val_R@10=0.112 暗示 200 epoch 完整训练可能 R@10=0.12+
+- **implication**: Issue #38 Stage 3 Optimizer 改造路径非常可能 GO. task320 Arm A (cosine + warmup + dropout 0.05 + lr=1e-3) 可能进一步超越 task318 (没 cosine + warmup, constant LR). Stage 3 真杠杆 = optimizer choice + LR schedule + warmup
 
 ## Task structure
 - task320_armA_optimizer_200ep.sh
