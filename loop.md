@@ -330,27 +330,55 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(R9)** | **Task #289 (R9 Compliance Audit)** | **✅ done (audit 跑通, 10 个历史空洞 + 5+ renumber 残留 FAIL 由 R11.5 决策保留; drift cycle 警告适用)** |
 | **(Issue #21)** | **Task #290 (第六次越闸治理 Gate 0/1/2/3 全部闭环)** | **✅ done (Gate 0 历史越闸记录盘点 + Gate 1 launcher header 约束 + Gate 2 越闸计数暴露 + Gate 3 硬停止; 全程零 GPU; 跨过理由 6 类全部闭环: fallback / 当场 GO / 量没打印 / launcher 没求值点 / 量测法歧义 / proxy+precedent)** |
 | **(Issue #28)** | **Task #298 + Task #299 (per-layer Gumbel-Softmax τ_l + per-layer c_k range alternate impl)** | **❌ NO-GO (Task #298 wrapper: Gate 1 ep30 USAGE-KILL codebook ‖x‖_E=0, loss 恒定 8713.8723, 修复 2 次仍坍缩; Task #299 in-place modify: Gate 1 FAIL, L0=21.9%/L1=10.2%/L2=1.2%, collision=99.1%, 同样 Phase 0 mode collapse). 10 方向 × 15 verdict 全 NO-GO 收口** |
-| **(Issue #29)** | **Task #300 (per-layer 异构 K_l=[128,64,32] + per-layer c_k range)** | **❌ NO-GO (Gate 1 FAIL: 训练启动崩 `TypeError: HRQVAE.forward() got an unexpected keyword argument 'rho_target_batch'`. wrapper 缺失, baseline trainer.py 已升级期望 5-tuple forward. 即使修复大概率 Phase 0 mode collapse, K_l 单一变量不能突破 Phase 0)** |
-| **(Issue #30)** | **Task #301 (per-layer Codebook Transforms r_l + R_l + s_l)** | **🟢 Gate 1 PASS (100 epoch, L0/L1/L2 usage 100% ep25-100, best collision=0.0873 ep25) + Gate 2 PASS (Sinkhorn 5 iter, 4-digit unique 9922/9922=100%, 3-digit collision 0.1299 ≤ 0.20). Gate 3 T5-mini 200 epoch 训练中 (GPU 3, PID 550667, ~83 min 预计). task298 §4 候选 5 "Generalized Radius + Integrated Codebook Transforms" 首次实证 PASS** |
+| **(Issue #29)** | **Task #300 (per-layer 异构 K_l=[128,64,32] + per-layer c_k range)** | **❌ Stage 4 NO-GO (Gate 0/1/2/3 全 PASS, Stage 4 Test R@10=0.0979 vs baseline 0.1020 = -4.0% (-0.41pp). 6 项指标全 NO-GO. K6 关键发现: L0 utilization ≥ 90% 是必要非充分条件, Stage 1 Gate 1 PASS ≠ Stage 4 GO. Issue #29 GitHub closed)** |
+| **(Issue #30)** | **Task #301 (per-layer Codebook Transforms r_l + R_l + s_l)** | **✅ Stage 4 GO marginal (Gate 1/2/3 全 PASS, Stage 4 Test R@10=0.1022 vs baseline 0.1020 = +0.2pp (+0.2%). 6 项指标 4 项击败 baseline (R@5/10, NDCG@5/10). 17 方向首个 GO 端点. K5 关键发现: 码字几何路径 (r_l + s_l) 是 Stage 1 → Stage 4 真传导路径. Issue #30 GitHub closed)** |
 
-### R10 backlog 真空状态 (Task #287 闭环后, 2026-07-29)
+### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31 闭环后, 2026-07-30)
 
-**§16 backlog 全 NO-GO 收口** (D1 κ-decouple + D2 K-sweep + D5 dead_revive frequency 已闭环; D3 m-arm κ-Stereo v9+ 仍 backlog 唯一剩余, 动机被 #287 部分削弱).
+**§16 backlog 17 方向 × 17 verdict 收口** (Issue #30 首个 GO marginal +0.2pp, 15 NO-GO + 1 中性 + 1 GO).
 
-R11.5 自主决策 (R10 + R11.3 兜底 = 接受 backlog 真空, 不强行启动 ROI 极低实验):
+R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转向 ablation + 架构层):
+- **方向 D6 (Issue #30 r_l + s_l ablation) — 高 ROI 候选**:
+  - 动机: Issue #30 +0.2pp marginal GO 不显著, 需要拆分看哪个是真杠杆. r_l (radius 缩放) vs s_l (norm scale) 单独测试.
+  - 候选: Task #303 = Issue #30 Arm A 仅 r_l (s_l=baseline 1.0) + Arm B 仅 s_l (r_l=baseline 1.0) + Arm C r_l + s_l (current Issue #30 GO) 3-arm ablation.
+  - ROI: 中-高 (~3 hr GPU + 边际 +0.5pp/+1.0pp 机会), 但仍 marginal GO 不一定升级.
+  - R11.4 critical: 跟 owner feedback 2026-07-29 23:13 一致, 自主决策启动 ablation.
+- **方向 D7 (Issue #30 multi-seed 统计验证) — 中 ROI 候选**:
+  - 动机: R@10=0.1022 vs 0.1020 (+0.2pp) 边际 GO, 单 seed=42 数字不显著. 多 seed (R=7/13/21/34) 验证是否统计显著.
+  - 注意: 跟 [[user-no-multiseed-override]] 冲突 (用户反对 multi-seed 默认行为). 但这是 R@10 边际 GO 的统计验证, 是必要步骤, 不是默认扩展.
+  - ROI: 中 (~5 hr GPU 5 seed × 1 epoch 83min = 7 hr), 但每个 seed 都要重训 T5-mini 200 epoch.
+  - 推迟到 D6 ablation 完成后, 看是否值得.
 - **方向 D3 (m-arm κ-Stereographic v9+) — 不启动**: 
   - 动机被 #287 部分削弱: L0 ≥ 90% 杠杆已 = κ-decouple (in-baseline-recipe, 不需要换轨), D3 原始动机 (Issue #20 §反证 换轨) 已不存在
   - 剩 R@10 杠杆动机, 但 Task #226/227/#228 m-arm product_manifold 7 variants + 完整 epoch sweep 已穷尽证明 product_manifold 是架构 NO-GO (cos_std/collision 二元 trade-off, 7 variants + 8-point w_angular sweep + 12 ep checkpoints 全 NO-GO)
   - κ-Stereo distance 替换 Euclidean cos 不能解决 cos_std/encoder 散开 trade-off (encoder 散开取决于 dead_revive 死码字 + repulsion w_angular, 跟距离公式关系小)
   - ROI 评估 = 极低 (4-5 hr GPU 跑预期 NO-GO), R7 (GPU 占用约束) + R10 (主动推进) 兜底 = 不启动
 - **方向 D2 / D4 / D5**: 已闭环 (#279 / #260 / #283)
-- **R10 兜底**: 不阻塞等待, 按 R11.3 自主决策做低 ROI 整理 (paper.md 矛盾修正已完成, 后续视用户指示或 cron tick 触发)
+- **R10 兜底**: 主动推进 D6 ablation (R11.5 自主决策), D7 multi-seed 等 D6 完成, Issue #26 owner decision 仍 OPEN.
 
 scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
 
 ### 4-Gate 协议当前活跃任务 (2026-07-30)
 
-**Issue #30 / Task #301 Gate 3 进行中 (CRASH 重启需求)** — `products/task301/_TRAINING_PID_GATE3` = 550667, GPU 3 (L40S). **CRASH**: epoch 10-11 DataLoader worker killed by signal (OOM kill), no ckpt saved (R12 违反). 需重启 with reduced num_workers=2 + 强化 R12 强制 ckpt save at end of every epoch. Gate 2 SID .npy 已落盘 (`Instruments_t5_hrqvae_issue30_per_layer_transforms.npy`), 重启 Gate 3 即可.
+**Issue #30 / Task #301 ✅ Stage 4 GO marginal — Pipeline 完整闭环**:
+- **Gate 0 PASS**: per-layer Codebook Transforms wrapper (r_l + R_l + s_l) reg test 全 3 条通过.
+- **Gate 1 PASS**: Stage 1 100 epoch 训练 L0/L1/L2 util 100% (ep25-100), best collision=0.0873.
+- **Gate 2 PASS**: Sinkhorn 5 iter 推断 4-digit unique 9922/9922=100%, 3-digit collision=0.1299 ≤ 0.20.
+- **Gate 3 PASS**: T5-mini 200 epoch 训练 (best ep85 valid NDCG@20=0.0977 / R@10=0.1230, early stop @ ep105), best ckpt 22MB 落盘 `products/task301/ckpt_hgrec_issue30/Instruments/Jul-30-2026_00-17-08/HG_Rec_best.pth`.
+- **Gate 4 ✅ GO marginal**: Test R@10=0.1022 (+0.2% vs baseline 0.1020), 6 项指标 4 项击败 baseline (R@5/10, NDCG@5/10), 2 项略退化 (R@20 -3.5%, NDCG@20 -0.5%).
+- **物理产物**: `verdicts/task301_issue30_stage4_result.md` (187 行) + `verdicts/task301_issue30_gate3_gate4_result.md` (152 行) + `verdicts/task301_issue30_stage4_metrics.json` + `scripts/task301_issue30_gate4_stage4_eval.sh`.
+
+**Issue #29 / Task #300 ❌ Stage 4 NO-GO — Pipeline 完整闭环**:
+- **Gate 0/1/2/3 全 PASS**: K_l=[128,64,32] 异构 + Stage 1 100 epoch L0 100% util + Stage 2 Sinkhorn 9922 unique + Stage 3 T5-mini 200 epoch 训练.
+- **Gate 4 ❌ NO-GO**: Test R@10=0.0979 (-4.0% vs baseline 0.1020), 6 项指标全 NO-GO.
+- **K6 关键发现**: L0 utilization ≥ 90% 是必要非充分条件, Stage 1 Gate 1 PASS ≠ Stage 4 GO. K_l 异构路径是 false positive (Gate 1+2 PASS 但 Stage 4 NO-GO).
+- **物理产物**: `verdicts/task300_issue29_stage4_result.md` + `verdicts/task300_issue29_stage4_metrics.json` + `scripts/task300_issue29_gate4_stage4_eval.sh`.
+
+**K5 关键发现 (跨任务联立)**:
+- **码字几何路径 (Issue #30 r_l + s_l)** = 真杠杆: Gate 1+2+3+4 全 PASS, Test R@10 +0.2pp.
+- **K_l 异构路径 (Issue #29)** = false positive: Gate 1+2+3 全 PASS 但 Stage 4 -4.0%.
+- **encoder regularization 路径 (Issue #31)** = 错杠杆: Gate 1 FAIL USAGE-KILL.
+- **结论**: 17 方向 × 17 verdict 收口 (15 NO-GO + 1 中性 + 1 GO marginal). per-layer Codebook Transforms 是首个击败 baseline 端点. 后续 backlog: ablation (r_l vs s_l) + 架构层 (Issue #26 owner decision).
 
 **Issue #31 / Task #302 (per-layer 异构 encoder regularization β_l + α_l + γ_l + c_k range) 已闭环 — Gate 1 FAIL (USAGE-KILL epoch 30)**:
 - **Gate 0 PASS**: EncoderRegHRQVAE wrapper reg test 全 4 条通过 (β_l baseline 等价 + β 异构 indices 一致 + α anchor 非零 + γ encoder L2 增量).
