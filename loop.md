@@ -255,7 +255,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. **Issue #18 (Task #280) 全 3 Gate 闭环 — §6.7.4 stop-loss (i) 口径绑定 Stage 1 argmin, task253 L0=73.44% / task222 ep29 L0=65.62% 复算 PASS, 6 个 vanilla 测点 (B 口径) 100% 反证闸门真闸门, 0 GPU**. **Issue #19 (Task #281) 全 3 Gate 闭环 — 通用 `scripts/issue19_gate_template.sh` 3 回放 PASS (a/b exit 1, c exit 0), 4 存量脚本 (`task237`/`task256`/`task188_to_193`/`task194`) 文件头标注, `papers/paper.md` Gate 3 字面写死**. **Task #282 (Task #270 A1 NO-GO) 已闭环 — Stage 1 50 epoch USAGE-KILL @ ep30, loss_type=mse+β=0 L0 ep5=40.6% → ep30=1.6% (1/64), mode collapse 比 poincare+β=0.5 (73.44%) 更严重 −71.84pp. 推论: β 不是 L0 ≥ 90% 杠杆 (它是稳定剂非天花板); task270 description 高 ROI 候选 3 否定 A2 (curriculum β) 路径, 后续机制需 dead_revive frequency / Sinkhorn curriculum / kmeans 重 init**. **Task #277/#278 已闭环**.
+> **🟡 §16 当前状态 (2026-07-29 当前)**: Issue #9/#10/#11/#12 已 NO-GO 闭环, Issue #13/#16 CLOSED. **Issue #18 (Task #280) 全 3 Gate 闭环 — §6.7.4 stop-loss (i) 口径绑定 Stage 1 argmin, task253 L0=73.44% / task222 ep29 L0=65.62% 复算 PASS, 6 个 vanilla 测点 (B 口径) 100% 反证闸门真闸门, 0 GPU**. **Issue #19 (Task #281) 全 3 Gate 闭环 — 通用 `scripts/issue19_gate_template.sh` 3 回放 PASS (a/b exit 1, c exit 0), 4 存量脚本 (`task237`/`task256`/`task188_to_193`/`task194`) 文件头标注, `papers/paper.md` Gate 3 字面写死**. **Task #282 (Task #270 A1 NO-GO) 已闭环 — Stage 1 50 epoch USAGE-KILL @ ep30, loss_type=mse+β=0 L0 ep5=40.6% → ep30=1.6% (1/64), mode collapse 比 poincare+β=0.5 (73.44%) 更严重 −71.84pp. 推论: β 不是 L0 ≥ 90% 杠杆 (它是稳定剂非天花板)**. **Task #283 (D5 dead_revive frequency NO-GO) 已闭环 — D5A ep30 USAGE-KILL L0=70.3% (跟 baseline 73.44% 几乎一样), post-revive 严格=pre-revive, hrqvae_trainer.py:271 latent_gravy=empty 让 hook 退化成 no-op. D5B/C 不再跑 (code no-op ≠ frequency). 联立 Task #282 锁死 baseline Stage 1 recipe 不是 L0 ≥ 90% 杠杆 (β 是稳定剂非天花板 + dead_revive 是 hook no-op 非频率), L0 ≥ 90% 需结构改动 (新 VQ 范式 / EMA / 多样 hash) 不在 baseline 修补 ROI**. **Task #277/#278 已闭环**.
 > **Task #279 (K=512/1024 Stage 3 + Stage 4 eval) 仍在跑**: 12 stage3_train children 进程alive (父进程 spawn 后), K=512 + K=1024 HG_Rec_best.pth 已存. Waiter (`task279_stage4_eval.sh`) 每 2min check, 期望 Stage 4 完成后自动 fire eval.
 
 ### 已闭环 (近 24 小时)
@@ -274,15 +274,16 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | (eval) | **Task #277 (Task #243 Stage 4 eval)** | ✅ done (epoch=200/400 R@10 完全相同 0.0978, 训练时长非变量 REFUTED) |
 | (eval) | **Task #278 (12 ckpt 批量 Stage 4 eval)** | ✅ done (4 GO: task194_k0256 ⭐0.1053, task194_k064 0.1041, task156 0.1034, task194_k0128 0.1027) |
 | (A1) | **Task #282 (Task #270 A1 欧氏 MSE+β=0)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 40.6%→1.6% mode collapse) |
+| (D5A) | **Task #283 (D5 dead_revive frequency)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 70.3% ≈ baseline 73.44%; hook no-op latent_gravy=empty) |
 
 ### 等用户决策 / R10 backlog 候选 (R11.5 自主决策推进)
 
-候选方向 (按 Task #278 新发现 + Task #282 NO-GO 推论):
+候选方向 (按 Task #278 / #282 / #283 联立推论):
 - **方向 D1 (R10 推荐)**: 用 **task194_k0256 SID** (R@10=0.1053 当前最佳) 重跑 Issue #10 Gate 1 3-arm 曲线. 验证 κ-decouple Arm A (task144 0.1026) 在最优 K=256 SID 下是否突破 0.1053. 需 Stage 1 RQ-VAE 重训 + Stage 2 Sinkhorn + Stage 3 T5 + Stage 4 eval, 估约 4-6 小时 GPU.
 - **方向 D2 (R10 备选)**: 探索 K=512/1024 (Task #194 K-sweep 提示 L0 越大越好). Stage 2 重训 + Stage 3/4, 估约 2-3 小时 GPU. (与 Task #279 重叠, 等 task279 完成后合并).
 - **方向 D3 (backlog)**: task272 m-arm κ-Stereographic v9+ (用户 2026-07-24 提议 + R11.5 自主推进候选).
 - **方向 D4 (低 ROI)**: Issue #10 接受方向 A2 NO-GO 闭环 (R11.5 默认决策).
-- **方向 D5 (Task #282 后)**: dead_revive frequency / Sinkhorn curriculum / kmeans 重 init 探索 L0 ≥ 90% (替代 β curriculum, 因 Task #282 证 β 不是杠杆). 单 GPU × 30 epoch, 估约 5 min/臂.
+- **方向 D5 ~~(Task #282 后)~~ 已闭环**: dead_revive frequency NO-GO. baseline recipe 已证不是 L0 ≥ 90% 杠杆.
 
 scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
 
