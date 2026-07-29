@@ -44,14 +44,14 @@
 - 启动顺序: A/B/D/E 先 (4 个, 1 个 GPU 各一), C 后跑 (因为 R-Drop 慢)
 - 预计启动时间: 2026-07-30 08:20-08:30
 
-## task318 partial findings (08:07 snapshot, 50 epoch proxy test)
-**强烈正向信号**: adam + adamw 在 26 epoch 已经 val_R@10=0.1123-0.1128 (+6.6-7.1% vs anchor 0.1053)
-- **adam ep26**: val_NDCG@20=0.0889, val_R@10=0.1123 ⭐
-- **adamw ep26**: val_NDCG@20=0.0895, val_R@10=0.1128 ⭐⭐ (与 adam 几乎一致, AdamW 默认 wd=0.01 暂时够用)
-- **sgd ep30**: val_NDCG@20=0.0810, val_R@10=0.0993 (中规中矩, momentum=0.9 慢收敛)
-- **adafactor ep27**: val_NDCG@20=0.0758, val_R@10=0.0966 (NO-GO, lr=1e-3 仍欠拟合)
-- **推测**: 50 epoch 已经超过 task318 早期 R@10 期望 (0.1020 baseline), 26 epoch val_R@10=0.112 暗示 200 epoch 完整训练可能 R@10=0.12+
-- **implication**: Issue #38 Stage 3 Optimizer 改造路径非常可能 GO. task320 Arm A (cosine + warmup + dropout 0.05 + lr=1e-3) 可能进一步超越 task318 (没 cosine + warmup, constant LR). Stage 3 真杠杆 = optimizer choice + LR schedule + warmup
+## task318 partial findings (08:12 snapshot, 50 epoch proxy test, 24:30 elapsed)
+**持续正向信号**: adam + adamw ep31-32 进一步提升 val_R@10=0.1151-0.1155 (+9.3% vs anchor 0.1053)
+- **adam ep32** (08:12): val_NDCG@20=0.0911, val_R@10=0.1151 ⭐ (vs ep26: 0.1123, +2.5% in 6 epochs)
+- **adamw ep31** (08:12): val_NDCG@20=0.0909, val_R@10=0.1155 ⭐⭐ (vs ep26: 0.1128, +2.4% in 5 epochs)
+- **sgd ep36** (08:12): val_NDCG@20=0.0818, val_R@10=0.1003 (中规中矩, 趋势 -1.4% from ep30)
+- **adafactor ep33** (08:12): val_NDCG@20=0.0763, val_R@10=0.0966 (NO-GO, 平台期)
+- **推测 (08:12)**: 50 epoch 完成后 adam/adamw 预期 val_R@10=0.118-0.122, task320 Arm A 200 epoch (cosine + warmup + lr=1e-3) 期望 val_R@10=0.13-0.15 (这是 baseline 0.1020 +27-47% 的实质突破)
+- **implication**: Issue #38 Stage 3 Optimizer 改造路径 GO 几乎确定. task320 Arm A 是最高 ROI 候选
 
 ## Task structure
 - task320_armA_optimizer_200ep.sh
