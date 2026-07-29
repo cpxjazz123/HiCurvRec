@@ -22,7 +22,7 @@ echo "Optimizer: Adam (lr=1e-4), BF16 autocast, FP32 master weights" | tee -a "$
 echo "200 epoch full sweep, seed=42, batch_size=256" | tee -a "$LOG"
 echo "Expected wall time: ~60 min (BF16 ~20% faster than FP32)" | tee -a "$LOG"
 
-CUDA_VISIBLE_DEVICES=3 "$PYTHON_BIN" $REPO/scripts/task320_issue38_5arm_stage3_train.py \
+CUDA_VISIBLE_DEVICES=2 "$PYTHON_BIN" $REPO/scripts/task320_issue38_5arm_stage3_train.py \
     --arm D --num_epochs 200 --batch_size 256 --gpu 0 --task_id 320 2>&1 | tee -a "$LOG"
 
 echo "===== [Task #320 Arm D] finished at $(date +%Y%m%d_%H%M%S) =====" | tee -a "$LOG"
