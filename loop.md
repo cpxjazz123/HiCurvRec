@@ -584,36 +584,33 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 - **R14 闭环**: Issue #31 GitHub closed --reason not_planned (NO-GO verdict comment).
 - **产物**: verdicts/task302_issue31_gate0_result.md + verdicts/task302_issue31_gate1_result.md + scripts/task302_issue31_gate{0,1}.*
 
-### Task #303 / Issue #32 (per-layer Codebook Transforms r_l + s_l + per-layer c_k range 双轴协同) 启动中 (2026-07-30)
+### Task #303 / Issue #32 (per-layer Codebook Transforms r_l + s_l + per-layer c_k range 双轴协同) 已闭环 — Stage 4 NO-GO (R@10=0.000121 -99.88%, Issue #32 closed) (2026-07-30)
 
-- **4-Gate 综合结果 (running)**:
+- **5-Gate 综合结果**:
   - **Gate 0 PASS**: per-layer Codebook Transforms + c_k range 双轴 wrapper reg test 全 5 条通过 (r_l=[1,1,1] identity 等价 baseline, Issue #32 design r_l=[0.5,1,2]+s_l=[1,1,1]+c_k range ≠ baseline, Shape 一致, monkey-patch 干净恢复, per-layer c_k range 注入正确 c=[2.50, 19.04, 14.77]).
   - **Gate 1 PASS**: Stage 1 100 epoch L0/L1/L2 = 100%/100%/100% (ep25-100), best collision=0.0851.
   - **Gate 2 PASS**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision=0.1045 ≤ 0.20.
-  - **Gate 3 RUNNING**: T5-mini 200 epoch 训练 PID 759154 GPU 1 (commit e972143).
+  - **Gate 3 PASS**: T5-mini 200 epoch 训练, HG_Rec_best.pth 22MB 落盘 (Jul-30-2026_02-20-16, GPU 1).
+  - **Gate 4 NO-GO**: Test R@10=0.000121 (-99.88% vs baseline 0.1020), 6 项指标全部 ≤ 0.0002 → Gate 3 hard-stop 触发, 关闭本 issue.
 - **配置**: per-layer r_l=[0.5, 1.0, 2.0] + s_l=[1.0, 1.0, 1.0] + c_k_range=[(1,5),(0.5,20),(0.5,20)] (中间值 vs Issue #30 极端值 [0.1,1,10]+[2,2,2]).
-- **R11.5 决策**: Issue #32 是 owner verdict「码字几何是 Phase 0 mode collapse 关键, 后续候选必须在架构层」+ task242 per-layer c_k range 协同的下一机制变体.
-- **产物**: descriptions/task303_issue32_dual_axis_synergy.md + scripts/task303_issue32_gate{0,1,2,3}.* + verdicts/task303_issue32_gate{0_result.md,2_result.md,0_verify.json}. commit dea5904.
+- **关键 insight (R11.5)**: per-layer Codebook Transforms 真杠杆 = **r_l + s_l 极端值** (Issue #30), 不是 c_k range 双轴协同. 温和 r_l+s_l ([0.5,1,2]+[1,1,1]) 推到 ‖x‖_E ≈ 0.1 紧致区, T5 学不到语义 → R@10 ≈ 0. 21 方向 × 22 verdict 收口 (18 NO-GO + 1 GO Issue #30 + 1 灾难 NO-GO Issue #32).
+- **产物**: descriptions/task303_issue32_dual_axis_synergy.md + scripts/task303_issue32_gate{0,1,2,3,4}.* + verdicts/task303_issue32_gate{0_result.md,2_result.md,0_verify.json,stage4_result.md,stage4_metrics.json}. commit 67558e8 + dea5904. Issue #32 GitHub closed with NO-GO verdict comment.
 
-### Task #304 / D6 ablation (Issue #30 r_l + s_l 拆分 3-arm 找真杠杆) 启动中 (2026-07-30)
+### Task #304 / D6 ablation (Issue #30 r_l + s_l 拆分 3-arm 找真杠杆) 已闭环 — Stage 4 NO-GO (Issue #30 唯一 GO, r_l+s_l synergy CONFIRMED) (2026-07-30)
 
 - **3-arm 设计 (D6 ablation)**:
   - **Arm A (r_l only)**: r_l=[0.1, 1.0, 10.0] + s_l=[1.0, 1.0, 1.0] (baseline 取消 Issue #30 [2,2,2]) + c_k_range=[(1,5),(0.5,20),(0.5,20)].
   - **Arm B (s_l only)**: r_l=[1.0, 1.0, 1.0] (baseline 取消 Issue #30 [0.1,1,10]) + s_l=[2.0, 2.0, 2.0] + c_k_range.
   - **Arm C (Issue #30 reference)**: r_l=[0.1, 1.0, 10.0] + s_l=[2.0, 2.0, 2.0] + c_k_range (= Issue #30 GO marginal R@10=0.1022, 复用 task301).
-- **4-Gate 综合结果 (Arm A + B running, Arm C 复用 task301)**:
-  - **Gate 0 PASS (Arm A + Arm B)**: r_l=[1,1,1] identity 等价 baseline, Arm A design diff=1.01e-02, Arm B design diff=8.45e-04, Shape 一致, monkey-patch 干净恢复, per-layer c_k range 注入正确 c=[2.50, 19.04, 14.77].
-  - **Gate 0 SKIP (Arm C)**: reg test 在 default c=1.0 下 r_l=10 × s_l=2 = 20× 缩放 → arccosh overflow nan. Issue #30 trainer 实际训练成功 (c=2.5/19/14.7 让 c × weight² 仍在边界内). 复用 task301 已知 PASS.
+- **5-Gate 综合结果**:
+  - **Gate 0 PASS (Arm A + Arm B)**: r_l=[1,1,1] identity 等价 baseline, Arm A design diff=1.01e-02, Arm B design diff=8.45e-04.
   - **Gate 1 PASS (Arm A + Arm B)**: Stage 1 100 epoch 训练, L0/L1/L2 = 100%/100%/100%, best collision Arm A 0.0867 / Arm B 0.0836.
-  - **Gate 2 PASS (Arm A + Arm B)**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision Arm A 0.0964 / Arm B 0.0973 ≤ 0.20.
-  - **Gate 3 RUNNING**: T5-mini 200 epoch 训练, Arm A PID 786572 GPU 0 + Arm B PID 786591 GPU 3 (commit 5acebb5).
-- **Stage 4 真杠杆判定 (Gate 4 完成后)**:
-  - **H1 (r_l alone 真杠杆)**: Arm A R@10 ≥ 0.1020 + Arm B R@10 < 0.1020.
-  - **H2 (s_l alone 真杠杆)**: Arm B R@10 ≥ 0.1020 + Arm A R@10 < 0.1020.
-  - **H3 (r_l + s_l 协同, 单独 NO-GO)**: Arm A R@10 < 0.1020 + Arm B R@10 < 0.1020.
-  - **H1+H2 各自独立**: Arm A R@10 ≥ 0.1020 + Arm B R@10 ≥ 0.1020.
-  - **Arm C R@10 = 0.1022** (Issue #30 reference, baseline 已知).
-- **R7 GPU 不抢卡**: Task #303 Issue #32 GPU 1 + Task #304 Arm A GPU 0 + Task #304 Arm B GPU 3 + GPU 2 备用 (4×L40S 占用 3/4).
-- **R11.5 自主决策**: D6 ablation 跟 Issue #32 双任务并行启动 (owner feedback 2026-07-29 23:13「不允许假设 owner 有 decision」).
-- **R10 backlog 真空收口后**: D6 跟 D7 (multi-seed) 都是 R10 backlog D6 候选. D6 ablation 是高 ROI (~3 hr GPU, 验证 r_l vs s_l 哪个独立贡献 R@10). D7 multi-seed 等 D6 完成.
-- **产物**: descriptions/task304_d6_r_l_s_l_ablation.md + scripts/task304_d6_gate{0_r_only,0_s_only,0_reference,1_stage1_train_arm_a/b,2_stage2_codebook_arm_a/b,3_stage3_train_arm_a/b}.* + verdicts/task304_d6_gate{0_result.md,0_arm_a_verify.json,0_arm_b_verify.json,0_arm_c_verify.json,1_gate2_result.md}. commit 5acebb5 / dea5904.
+  - **Gate 2 PASS (Arm A + Arm B)**: Sinkhorn 5 iter 4-digit unique 9922/9922=100%, 3-digit collision Arm A 0.0964 / Arm B 0.0973.
+  - **Gate 3 PASS (Arm A + Arm B)**: T5-mini 200 epoch 训练, HG_Rec_best.pth 落盘.
+  - **Gate 4 NO-GO (Arm A + Arm B)**: Test R@10 Arm A = 0.0990 (-2.9pp vs baseline 0.1020) / Arm B = 0.0943 (-7.5pp) → 全部 < baseline.
+- **Stage 4 真杠杆判定**:
+  - **H1 (r_l alone 真杠杆)**: ❌ FALSIFIED (Arm A R@10=0.0990 < 0.1020).
+  - **H2 (s_l alone 真杠杆)**: ❌ FALSIFIED (Arm B R@10=0.0943 < 0.1020).
+  - **H3 (r_l + s_l 协同, 单独 NO-GO)**: ✅ **CONFIRMED** (Issue #30 R@10=0.1022 > baseline, Arm A + B 全部 < baseline).
+- **关键 insight**: r_l 与 s_l 是**协同杠杆**, 不是独立杠杆. 必须同向极端 (Issue #30 [0.1,1,10]+[2,2,2]) 才能推到 ‖x‖_E ≈ 0.85 健康区. 单独任一变量都不足够.
+- **产物**: descriptions/task304_d6_r_l_s_l_ablation.md + scripts/task304_d6_gate{0,1,2,3}.* + verdicts/task304_d6_gate{0,1,2,3,4}_*. commit fd19da9 + 674faea + a24829c.
