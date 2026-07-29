@@ -7,20 +7,20 @@
 
 ## Audit 1 — paper.md ⇄ paper.tex Sync Check
 
-- paper.md headings: **58**
+- paper.md headings: **73**
 - paper.tex sections: **10** + subsections **32** (= total 42 LaTeX headings)
-- paper.md R@10 values: **3** unique
+- paper.md R@10 values: **21** unique
 - paper.tex R@10 values: **3** unique (Recall@10 in LaTeX format)
 - paper.md sample headings: ['1. Introduction', '1.1 Background: Generative Recommendation and Codebook-based Tokenization', '1.2 The HG-Rec Approach', '1.3 Our Reproduction Motivation', '1.4 Our Key Findings Preview', '1.5 Contributions']
 - paper.tex sample sections: ['1. Introduction', '2. Preliminaries', '3. Method', '4. Related Work', '5. Experiments', '6. Discussion']
-- paper.md sample R@10 numbers: ['0.1020', '0.1051', '0.1058']
+- paper.md sample R@10 numbers: ['0.0553', '0.0700', '0.0765', '0.0799', '0.0816', '0.0824', '0.0830', '0.0846']
 - **Verdict**: ✅ both files contain sections + R@10 data
 
 ## Audit 2 — ICML 2026 Abstract Compliance
 
-- Abstract word count: **197** / 200
+- Abstract word count: **272** / 200
 - First 30 words: ['We', 'present', 'an', 'independent', 'reproduction', 'of', 'HG-Rec', '(Zhang', 'et', 'al.,', 'ICML', '2026)', 'on', 'Amazon', 'Musical_Instruments,', 'a', 'dataset', 'not', 'featured', 'in', 'the', 'original', "paper's", 'headline', 'experiments.', 'We', 'replicate', 'the', 'full', 'pipeline']
-- **Verdict**: ✅ ≤ 200 word limit (PASS)
+- **Verdict**: ❌ ≤ 200 word limit (FAIL)
 
 ## Audit 3 — Section 5 Baseline Coverage Audit
 
@@ -55,11 +55,12 @@
 
 ## Audit 4 — Section 5 Number Consistency Re-Audit
 
-- Unique decimal numbers in §5: **112**
-- Numbers traceable to verdicts: **112**
-- Untraceable (phantom numbers): **0**
-- Sample numbers: ['0.001', '0.002', '0.0204', '0.0205', '0.0222', '0.0223', '0.0229', '0.0234', '0.0237', '0.0240', '0.0242', '0.0255', '0.0261', '0.0265', '0.0277']
-- **Verdict**: ✅ all §5 numbers traceable
+- Unique decimal numbers in §5: **156**
+- Numbers traceable to verdicts: **155**
+- Untraceable (phantom numbers): **1**
+- Sample numbers: ['0.001', '0.002', '0.005', '0.008', '0.0204', '0.0205', '0.0222', '0.0223', '0.0229', '0.0234', '0.0237', '0.0240', '0.0242', '0.0255', '0.0261']
+- ⚠️ Untraceable: ['0.1002']
+- **Verdict**: ⚠️ PHANTOM NUMBERS DETECTED — investigate
 
 ## Audit 5 — 3rd-Party License Attribution
 
@@ -78,5 +79,5 @@
 
 ## Bottom Line
 
-- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ✅ / A5 ✅
-- **All critical audits pass**: ✅ YES
+- 5 audits run: A1 ✅ / A2 ✅ / A3 ✅ / A4 ⚠️ / A5 ✅
+- **All critical audits pass**: ❌ NO
