@@ -419,6 +419,9 @@ Paper-reported absolute numbers on Musical_Instruments are systematically higher
 4. Sinkhorn-balanced utilization is more impactful than geometric inductive bias.
 5. Test generalization is the right metric.
 6. Paper absolute numbers are systematically higher; relative ordering preserved.
+7. **K-sweep 6-arm (Task #278/#279)**: K=256 ⭐0.1053 是 trade-off 顶峰 (单峰曲线); K=512 R@10=0.0824 (-19.2%), K=1024 R@10=0.0847 (-16.9%, ⚠️ ckpt 是 background 重启 ep1 initial). "L0 大 R@10 高" 假设 REFUTED; K-sweep 6-arm 趋势: 32 (0.1006) → 64 (0.1041) → 128 (0.1027) → **256 (0.1053)** → 512 (0.0824) → 1024 (0.0847). 跟 §5.7.2 联立共同锁死: 几何变量 (curvature / per-layer c_k) 对 R@10 的影响 ≤ 数据集固定特性 (SID 序列长度 + Sinkhorn 端点 + T5-mini 容量) 决定的 trade-off 顶峰.
+8. **κ-decouple 跨 K 验证 (Task #144 + #284)**: K=64 Arm A R@10=0.1026 / Arm B R@10=0.1017 (几乎中性, ±2%); K=256 Arm A R@10=0.0846 (-17.0%) / Arm B R@10=0.0864 (-15.3%) (显著退化). κ-decouple + baseline Stage 1 recipe 跨 K 测试一致 NO-GO; **新现象**: κ-decouple + 大 K 是负面相互作用. 跟 #5.7.1 联立共同锁死: geometric intervention ≤ baseline on Musical_Instruments.
+9. **§6.7.4 stop-loss (i) 在 baseline recipe 内部结构性不可达 (Task #282+#283+#288 = Issue #20)**: 4 方向证据 — task253 L0=73.44% / task222 ep29 L0=65.62% / task271/275/288 A1 β=0.0 (三次 USAGE-KILL L0=1.6% mode collapse) / task283 D5 dead_revive (L0=70.3% hook no-op). baseline Stage 1 RQ-VAE recipe (`poincare loss + β=0.5 + kmeans_init + product_manifold + 默认 anti_collapse=none` + 默认 `eval_step=5`) 在已知单变量调节空间内 (β ∈ {0, 0.5, 1.0}, dead_revive 频率 ∈ {1, 5, 10}, loss_type ∈ {mse, l1, poincare}, A1/A2/A3 curriculum 配方) **没有任何杠杆能把 L0 推到 ≥ 90%**. `§6.7.4 stop-loss (i)` 是 baseline 的 "weakly collision-permissive" 设计特征 (Sinkhorn 端点后处理兜底), 结构性必然触发. 真实 L0 ≥ 90% 杠杆候选 = 结构改动 (task268 §4 候选 2 m-arm κ-Stereographic v9+, Berman-Metzler 2020 距离公式 / Gromov-Softmax / EMA code 更新 / per-item soft-assign), 不在 baseline 修补 ROI.
 
 ---
 
