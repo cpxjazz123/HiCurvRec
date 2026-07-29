@@ -477,10 +477,18 @@ loss = loss - w_ent * L_ent
 ```
 
 **Hard stop-loss condition** (per user 2026-07-26 directive): if after adding direction-diversity regularization either
-- (i) L0 utilization remains $< 90\%$, **or**
+- (i) L0 utilization (Stage 1 directly-argmin per-layer unique, i.e. `hrqvae_trainer.py` step2 monitor 打印于 `hrqvae.log` 的 `usage=X% (K/M)` 格式, 预 Sinkhorn/预 unique-resolve) remains $< 90\%$, **or**
 - (ii) utilization recovers but Stage 4 test R@10 $< 0.1020$,
 
 then the geometric-route investigation is **closed permanently**. The utilization failure would be the only unaddressed failure indicator; its persistence after a targeted fix would imply the $\alpha$-tension is structural, not an artifact of any single architectural choice. No ninth direction will be attempted.
+
+**口径锁定 (Issue #18 Gate 1, 2026-07-29)**:
+- stop-loss (i) 显式绑定到 **Stage 1 直接 argmin per-layer unique** (即 `hrqvae_trainer.py` step2 monitor 在 `hrqvae.log` 打印的 `usage=X% (K/M)` 一行). 阈值 L0 ≥ 90%, L1 / L2 ≥ 80%.
+- **Stage 2 Sinkhorn 解码后的 SID per-layer unique 不得用于该闸门**: 在 #84 baseline vanilla recipe 上 6 个已知测点 (`task260_issue10_sinkhorn_strength_sweep`, max_iters ∈ {0, 5, 10, 20, 30} 五点 + `task237` Arm B max_iters=10 一点) 全部 L0/L1/L2 = 100/100/100%, 该口径下闸门零判别力, 等同废弃.
+- 复算锚点 (Issue #18 Gate 1 (b) 实测, 0 GPU):
+  - task253 best_collision → L0 = 47/64 = **73.44%** (< 90%, 触发 stop-loss) ✅
+  - task222 ep29 → L0 = 42/64 = **65.62%** (< 90%, 触发 stop-loss) ✅
+- 历史重述: 任何历史 verdict 中给出的 "L0 13/64 = 20.31%" 数字必须 retro-label 为 Stage 2 口径 + 不可独立复现 (`task265` 已确认), 不得再作为 Stage 1 proxy 引用.
 
 If the stop-loss gate is met, this concludes the geometric-route investigation on Musical_Instruments: **active hyperbolic geometry is fundamentally incompatible with allocation separability in this architecture**, and the only viable path is to keep the baseline geometry inactive (default HG-Rec) and rely on Sinkhorn-balanced post-processing for codebook health (per Task #207).
 
