@@ -350,18 +350,20 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
 
 ### 4-Gate 协议当前活跃任务 (2026-07-30)
 
-**Issue #30 / Task #301 Gate 3 进行中** — `products/task301/_TRAINING_PID_GATE3` = 550667, GPU 3 (L40S, util 88% mem 3875 MiB 训练中). 等 PID 死亡后跑 Stage 4 eval (R@10 vs HG-Rec baseline 0.1020).
+**Issue #30 / Task #301 Gate 3 进行中 (CRASH 重启需求)** — `products/task301/_TRAINING_PID_GATE3` = 550667, GPU 3 (L40S). **CRASH**: epoch 10-11 DataLoader worker killed by signal (OOM kill), no ckpt saved (R12 违反). 需重启 with reduced num_workers=2 + 强化 R12 强制 ckpt save at end of every epoch. Gate 2 SID .npy 已落盘 (`Instruments_t5_hrqvae_issue30_per_layer_transforms.npy`), 重启 Gate 3 即可.
 
-**Issue #31 / Task #302 (per-layer 异构 encoder regularization β_l + α_l + γ_l + c_k range) Gate 0 PASS (2026-07-30)**:
-- **Gate 0 PASS**: EncoderRegHRQVAE wrapper (`scripts/task302_issue31_gate0_wrapper.py`) 继承 baseline HRQVAE, 不修改 HG-Rec/model/. 4 条 reg test 全部通过:
-  - Test 1: β_l=[0.5,0.5,0.5] + α=γ=0 → out_max_diff=0, rq_loss diff=0, idx_equal=True (核心 reg test baseline 等价)
-  - Test 2: β_l=[0.1,0.3,0.5] + α=γ=0 → indices 一致 (β 不影响 argmin 路径)
-  - Test 3: α_l=[0.01,0.005,0.001] → anchor_loss=0.001661 > 0
-  - Test 4: γ_l=[0.001,0.0005,0.0001] → rq_loss 增量 +0.005406
-- **R11.4 critical decision**: 不修改 HG-Rec/model/, 通过 Python 子类化 (EncoderRegHRQVAE(HRQVAE)) + patch per-layer β 实现
-- **Gate 1 决策待 R11.5**: 等 Issue #30 Gate 3 R@10 实证 (GO/NO-GO), 决定 Issue #31 Gate 1 Stage 1 100 epoch 是否启动. GPU 0/1/2 空闲, 不抢 GPU 3.
-- **跟 Issue #30 对比**: Issue #30 走 codebook 几何变换 (r_l + R_l + s_l) → Gate 1 PASS. Issue #31 走 encoder regularization (β_l + α_l + γ_l) → Gate 0 PASS, Gate 1 待跑. 两个方向互补: Issue #30 处理 codebook 分布, Issue #31 处理 encoder-side boundary saturation (Issue #28 closure 锁定根因).
-- 产物: `descriptions/task302_issue31_per_layer_encoder_reg.md` + `scripts/task302_issue31_gate0_wrapper.py` + `verdicts/task302_issue31_gate0_result.md`.
+**Issue #31 / Task #302 (per-layer 异构 encoder regularization β_l + α_l + γ_l + c_k range) 已闭环 — Gate 1 FAIL (USAGE-KILL epoch 30)**:
+- **Gate 0 PASS**: EncoderRegHRQVAE wrapper reg test 全 4 条通过 (β_l baseline 等价 + β 异构 indices 一致 + α anchor 非零 + γ encoder L2 增量).
+- **Gate 1 FAIL — USAGE-KILL epoch 30**: trainer 自动检测 L0 utilization < 20% 触发 RuntimeError 退出.
+  - L0 ep30 = 18.8% (12/64) < 90% threshold + < 20% USAGE-KILL line
+  - L1 ep30 = 27.3%, L2 ep30 = 55.1% (all < 90%)
+  - collision_rate ep30 = 0.5692 (> 2x 0.20 threshold)
+  - r_min/r_std 全程 0.000 → ‖x‖_E → 0 (encoder trivial solution)
+- **R11.5 critical decision**: 关闭 Issue #31 NO-GO (不调参重试, 因为 [[phase0-mode-collapse]] 机制已穷尽, 重试 ROI 极低).
+- **关键发现 K5 (跨任务联立 11 方向 × 16 verdict 收口)**: Issue #30 (Codebook Transforms r_l + s_l) 走码字几何路径 Gate 1+2 PASS, Issue #31 (Encoder Regularization β_l + α_l + γ_l) 走 encoder 梯度路径 Gate 1 FAIL → **Phase 0 mode collapse 的关键是码字几何, 不是 encoder 梯度**. Issue #30 path 是真杠杆, Issue #31 path 是错杠杆.
+- **跟 Issue #28 task299 对比**: Issue #28 Gumbel-Softmax ep30 L0=21.9% (跟 Issue #31 ep30 L0=18.8% 几乎一致), 都撞 boundary saturation. Issue #28 / #31 共享根因.
+- **GitHub close**: Issue #31 closed (`gh issue close 31 --reason 'not planned'`).
+- 产物: `descriptions/task302_issue31_per_layer_encoder_reg.md` + `scripts/task302_issue31_gate0_wrapper.py` + `scripts/task302_issue31_gate1_stage1_train.py` + `verdicts/task302_issue31_gate0_result.md` + `verdicts/task302_issue31_gate1_result.md`.
 
 
 ## §17. 历史归档 (从 §16 移出)
