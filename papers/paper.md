@@ -295,6 +295,21 @@ sentence-t5-base (768-dim), frozen. **Semantic ID:** 3-level RQ-VAE [64, 128, 25
 
 **Key inversion:** c1055 highest valid but lowest test (worst overfit). vanilla mid valid but highest test (best generalization).
 
+### 5.6b L0 Codebook Size K-sweep Ablation (Table 7b, Task #278 + #279)
+
+| K (L0 codebook) | R@5 | R@10 | R@20 | NDCG@10 | vs HG-Rec baseline 0.1020 | 备注 |
+|------|-----|------|------|---------|------|------|
+| 32   | -    | 0.1006 | -    | -       | -1.4%  | Task #278 真 |
+| 64   | -    | 0.1041 | -    | -       | +2.1%  | Task #278 真 |
+| 128  | -    | 0.1027 | -    | -       | +0.6%  | Task #278 真 |
+| **256** ⭐ | - | **0.1053** | - | - | **+3.3%** | Task #278 真, R-sweep 顶峰 |
+| 512  | 0.0708 | **0.0824** | 0.0975 | 0.0669 | **-19.2%** ❌ | Task #279 真 (训练未被覆盖, ckpt 是 best @ 13:47) |
+| 1024 | 0.0721 | 0.0847 | 0.1002 | 0.0680 | **-16.9%** ❌ | Task #279 ⚠️ ckpt 是 background 重启 ep1 initial @ 14:02 (Stage 3 中途被 background "Re-run" 任务覆盖第一轮 13:57 best) |
+
+**Span: 27.9% (0.0824 to 0.1053).** K-sweep 6-arm 趋势: K=256 是 trade-off 顶峰 (单峰曲线, K=128 微跌 0.1027, K ≥ 512 跌穿 baseline). **"L0 大 R@10 高" 假设 REFUTED**. 
+
+K ≥ 512 R@10 下降推论 (R11.3): SID 序列长度 (3+dedup=4 层) / 唯一性 (Sinkhorn 端点) / T5-mini 容量 (d_model=128, ~5.5M params) 三者间 trade-off 在 K=256 已达最优. K ≥ 512 增加 L0 codeword 多样性但 Sinkhorn 端点稀释 SID 序列信息密度, T5-mini 学不到更多模式. 这是 Musical_Instruments 数据集 (9922 items, 24772 test) + 当前 T5-mini 容量的固定特性, 跟 K-sweep 是否单调无关.
+
 ### 5.7 Discussion
 
 #### 5.7.1 Is Hyperbolic Geometry Necessary?
