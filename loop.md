@@ -372,6 +372,30 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
 - **方向 D2 / D4 / D5**: 已闭环 (#279 / #260 / #283)
 - **R10 兜底**: 主动推进 D6 ablation (R11.5 自主决策), D7 multi-seed 等 D6 完成, Issue #26 owner decision 仍 OPEN.
 
+### 🔴 Drift-cycle 终结 (2026-07-30 14:45)
+
+**3+ 连续 NO-GO 信号识别** (per [[drift-cycle-pattern-recognition]]):
+- Task #327 (K=256+Issue#30 synergy): NO-GO R@10=0.0859
+- Task #328 (R-Drop α sweep): NO-GO test_R@10=0.0 + K9 新维度
+- Task #333 (Issue #42 unified formula): NO-GO 5/5 FAIL
+
+**R11.5 决策**: 不再启动低 ROI 实验 (D9 异构 hash / Issue #43 Gate 2a / Issue #44 Gate 1 都被 drift-cycle 拦截), 等 owner 明确新方向.
+
+**当前 GPU 占用**:
+- GPU 0/2/3: 完全空闲 (0% util, 0 MiB)
+- GPU 1: task194 K=64 Stage 3 训练中 (88% util, 6137 MiB, started 13:58, ~1.5h 预计完成 ~15:30)
+
+**R10 backlog 真空** (等待 owner 方向):
+- Issue #43 (Gate 2 实验设计): deferred, 启动条件 = GPU + owner 拍板
+- Issue #44 (统一公式重写): deferred 双重阻塞 (H1 REFUTED + Gate 0 阻塞)
+- Issue #26 (per-layer c_k curriculum): owner decision OPEN
+- Issue #34 D9 (异构 hash): script ready, 但 drift-cycle 拦截低 ROI 启动
+
+**下次 loop tick 起点**:
+1. 检查 GitHub 新 issue (R14 强制)
+2. 检查 GPU 1 task194 是否完成 (CPU % + GPU util)
+3. 若 task194 完成且无新 issue → 报告 GPU 空闲 + 等 owner 方向, 不主动启动低 ROI
+
 ### 🔴 R-Drop α=1.0 突破 — Issue #38 Layer 2 推进 (2026-07-30 12:48)
 
 **Task #320 Arm C R-Drop α=1.0 实证 GO**:
