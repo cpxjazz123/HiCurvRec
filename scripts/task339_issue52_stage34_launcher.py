@@ -143,42 +143,34 @@ def main():
         return
 
     # Find best ckpt
-    candidate_ckpts = [out_dir / 'best_ckpt.pth', out_dir / 'best_loss_model.pth', out_dir / 'best_collision_model.pth']
+    # task84 saves HG_Rec_best.pth under <save_path>/Instruments/<timestamp>/
+    # We need to find the most recent timestamp directory
     best_ckpt = None
-    for c in candidate_ckpts:
-        if c.exists():
-            best_ckpt = c
-            break
+    best_ckpts_dir = out_dir / 'Instruments'
+    if best_ckpts_dir.exists():
+        best_ckpts = list(best_ckpts_dir.glob('*/HG_Rec_best.pth'))
+        if best_ckpts:
+            best_ckpt = max(best_ckpts, key=lambda p: p.stat().st_mtime)
     if best_ckpt is None:
-        print(f"❌ No ckpt found in {out_dir}, abort Stage 4")
+        # fall back to flat structure
+        candidate_ckpts = [out_dir / 'best_ckpt.pth', out_dir / 'best_loss_model.pth', out_dir / 'best_collision_model.pth']
+        for c in candidate_ckpts:
+            if c.exists():
+                best_ckpt = c
+                break
+    if best_ckpt is None:
+        print(f"❌ No ckpt found in {out_dir} (or under {best_ckpts_dir}/<ts>/), abort Stage 4")
         sys.exit(1)
     print(f"Using ckpt: {best_ckpt}")
 
     cmd_eval = [
         '/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3',
-        str(BASE / 'scripts/task84_hgrec_stage3_train.py'),
-        '--dataset_name', 'Instruments',
-        '--dataset_path', str(BASE / 'HG-Rec/dataset'),
-        '--code_path', code_path_arg,
-        '--codebook_size', '64', '128', '256', '1',
-        '--num_layers', str(args.num_layers),
-        '--num_decoder_layers', str(args.num_decoder_layers),
-        '--d_model', str(args.d_model),
-        '--d_ff', str(args.d_ff),
-        '--num_heads', str(args.num_heads),
-        '--d_kv', str(args.d_kv),
-        '--vocab_size', str(args.vocab_size),
-        '--max_len', str(args.max_len),
-        '--pad_token_id', '0',
-        '--eos_token_id', '0',
-        '--device', args.device,
-        '--mode', 'test',
-        '--save_path', str(out_dir),
-        '--log_path', str(log_dir),
-        '--seed', str(args.seed),
-        '--beam_size', str(args.beam_size),
-        '--infer_size', str(args.infer_size),
+        str(BASE / 'scripts/task338_issue51_stage4_test_eval.py'),
         '--ckpt_path', str(best_ckpt),
+        '--code_path', code_path_arg,
+        '--device', args.device,
+        '--beam_size', str(args.beam_size),
+        '--output_json', str(BASE / 'verdicts' / f'task{args.task_id}_{args.arm_name}_stage4_beam{args.beam_size}.json'),
     ]
     env = os.environ.copy()
     env['PYTHONPATH'] = str(BASE / 'HG-Rec') + ':' + env.get('PYTHONPATH', '')

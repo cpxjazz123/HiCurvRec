@@ -152,8 +152,16 @@ def main():
         args.output_json = Path(args.output_json)
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
+    # Extract task_id from ckpt_path
+    task_id_match = Path(args.ckpt_path).parts
+    task_id = 'unknown'
+    for part in task_id_match:
+        if part.startswith('task'):
+            task_id = part
+            break
+
     out = {
-        'task': 'Issue #51 (Task #338)',
+        'task': task_id,
         'ckpt_path': str(args.ckpt_path),
         'code_path': args.code_path,
         'beam_size': args.beam_size,

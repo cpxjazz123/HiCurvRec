@@ -1,0 +1,21 @@
+{
+  "task": "Issue #52 Arm C (Task #339)",
+  "ckpt_path": "products/task339/arm_c/t5_out/Instruments/Jul-30-2026_19-29-07/HG_Rec_best.pth",
+  "code_path": "_t5_rqvae_task339_arm_c.npy",
+  "beam_size": 20,
+  "topk_list": [
+    5,
+    10,
+    20
+  ],
+  "test_recalls": {
+    "Recall@5": 0.07561132564248955,
+    "Recall@10": 0.09157818548640229,
+    "Recall@20": 0.11410070819111404
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06689567206262047,
+    "NDCG@10": 0.07202871796103288,
+    "NDCG@20": 0.07776672021992878
+  }
+}
