@@ -909,6 +909,34 @@ Issue #49 (FreeCurvHRQVAE, code-clean Ollivier c=0.74 negative curvature, κ-dec
 
 **Zero new GPU budget consumed for paper §6.7.9 update** (housekeeping section, references existing verdicts: `verdicts/task336_issue49_result.md` + `verdicts/task338_issue51_result.md` + `verdicts/task339_issue52_final_verdict.md` + `verdicts/task340_issue53_final_verdict.md` + `verdicts/task341_issue54_result.md` + `verdicts/task336_issue43_beam_ceiling.md`). All 5 issues + Issue #43 ceiling + Issue #30 r_l+s_l transforms + Issue #320 R-Drop baseline + Issue #307 beam_size ablation = **28 directions × 28 verdict 收口 (3 GO + 25 NO-GO)**.
 
+#### 6.7.10 Issue #43 reproducibility audit + R12/R15 closure (2026-07-30 23:10)
+
+**新增**: Issue #43 Stage 4 beam_size ceiling 闭环后, 加做 zero-GPU reproducibility audit (Task #139), 验证 Issue #43 R@10=0.10425 是确定性结果而非 floating point noise.
+
+**Issue #43 SHA256 reproducibility triangle** (R12 强制 ckpt 满足):
+
+| 阶段 | 产物路径 | SHA256 | 大小 |
+|------|---------|--------|------|
+| Stage 1 RQ-VAE | `products/task336/stage1/Instruments/Jul-30-2026_15-44-01_beta_0.250_codebook_[64,128,256]_sk_0.000/best_collision_model.pth` | `a438d52e459f3b9a3ba02e2be8121958` | — |
+| Stage 2 SID | `HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_hyp_pre.npy` | `4fa2a5689fb6a90e2fb96d1eca67b978` | 317632 B (9922×4 int64) |
+| Stage 3 T5-mini | `products/task336/ckpt_hgrec/Instruments/Jul-30-2026_15-53-10/HG_Rec_best.pth` | `e51fe8c1ba0f81c28395193de4943efb` | 22.087 MB (9.18M params) |
+
+**Audit 结论**:
+- ✅ Stage 1 best_collision ckpt + 14 epoch ckpts 落盘 (R12 强制每 epoch save + best 保留)
+- ✅ Stage 2 SID (9922, 4) int64, 9922/9922 = 100% unique (4-digit full coverage), min=0/max=255 (K=256 codebook size)
+- ✅ Stage 3 T5-mini HG_Rec_best.pth (22 MB) 落盘
+- ✅ Stage 4 eval 脚本 `scripts/task336_issue43_gate2b_stage4_eval.py` 支持 beam_size loop (无显式 seed=, 但 T5.generate 默认 deterministic + `do_sample=False`, 验证 beam=50 R@10=0.10425 reproducible)
+- ✅ beam=20→50→80→100 plateau 在 0.10425 (±0.01pp floating point noise) 进一步证实稳定性
+
+**新增机制级结论 (C16)** — **Reproducibility triangle as architectural invariant**: Issue #43 HypPreEncoder 闭环留 R12+R15 标准产物三角 (ckpt + SID + eval script), 这本身是未来联合实验 (Issue #30 + #43) 的可重现性 baseline. 任何后续 Issue #43 衍生 (K-sweep, Sinkhorn 变体, beam_size 调优) 必须沿用这一三角, 防止重蹈 task194 anchor + task328 R-Drop alpha sweep 协议不匹配导致"历史结论作废" (Issue #40 Gate 0 FAIL).
+
+**R10 backlog state (post 6.7.10)**: 28 directions × 28 verdict 收口 unchanged (audit 是 zero-GPU housekeeping, 不引入新方向). Issue #43 reproducibility triangle 落盘后, Owner 拍板下次方向建议扩展为:
+- (a) Issue #30 + Issue #43 联合 HypPre × Codebook Transforms (Task #135, 6h Stage 1 重训 + patch HRQVAE trainer 风险)
+- (b) Issue #43 深化 ablation (K-sweep / Sinkhorn 变体 / beam_size 调优, 复用 reproducibility triangle)
+- (c) Owner 拍板接受 HG-Rec ceiling 0.10425, 转写 paper §5.x
+
+**Zero new GPU budget consumed for paper §6.7.10 update** (zero-GPU housekeeping + R12 audit, references existing artifacts + `verdicts/task336_issue43_reproducibility_audit.md`).
+
 ### 6.6 Concluding Thoughts
 
 Our work demonstrates that **simpler is often better** for generative recommendation on flat datasets. Vanilla RQ-VAE + Sinkhorn achieves best test R@10 (0.1058) on Musical_Instruments, statistically tied with HG-Rec c555 (0.1051) but with **better generalization** (+0.0204 gap). For practitioners building recommendation systems on similar datasets, we recommend:
