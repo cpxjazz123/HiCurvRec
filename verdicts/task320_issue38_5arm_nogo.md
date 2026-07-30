@@ -12,7 +12,11 @@
 | **B** | LR scheduler inv_sqrt (5e-8→1e-4 ramp) | 0.0938 | **0.0938** | -8.0% |
 | **D** | BF16 mixed precision | 0.1105 (ep24) | **0.0983** | -3.6% |
 | **E** | Regularization (dropout 0.1 + wd 0.01) | 0.1027 | **0.0981** | -3.8% |
-| **C** | R-Drop (待 GPU 0 完成, Ep40/200, val_R@10=0.1145) | 🔄 | — | — |
+| **C** | R-Drop α=1.0 (Layer 1, completed) | 0.1145 (Ep40 last) | **0.1034** | +1.4% ✅ |
+| **C-L2** | R-Drop α ∈ {0.5, 1.0, 2.0} sweep (task328, running) | 🔄 Ep~7/200 | — | TBD Layer 2 |
+
+**🔄 更新 (2026-07-30 13:18)**: Arm C (R-Drop α=1.0) 已完成, test_R@10=0.1034 (+1.4% vs baseline 0.1020). 是 5-arm 中**唯一超 baseline** 的 Arm, 但仍 < task194 K=256 anchor 0.1053.
+Layer 2 follow-up task328 R-Drop α sweep (α ∈ {0.5, 1.0, 2.0, 4.0}) 已 12:58 启动 GPU 0/2/3, 当前 Ep ~7/200. α=4.0 未启动 (脚本只 launch 了 3 arms). 等 ~5h 跑完后再判定 Arm C 是否可调到更高.
 
 **Stage 4 test_R@10 (Issue #30 K=100 amplifier on Stage 3 5-arm)**:
 - Arm A: 0.0942 (-7.6%)
@@ -28,7 +32,11 @@
 | task194 K=256 anchor | 0.1053 | ≥ 1 Arm > 0.1053 |
 | Issue #30 marginal GO | 0.1022 | ≥ 1 Arm > 0.1022 |
 
-实测 4 Arms 全部 < baseline 0.1020. **NO-GO**.
+实测 4 Arms (A/B/D/E) 全部 < baseline 0.1020. Arm C (R-Drop α=1.0) R@10=0.1034 (+1.4% baseline), 但 < task194 K=256 anchor 0.1053.
+
+**综合 NO-GO**:
+- 4/5 Arms (A/B/D/E) < baseline → Stage 3 协议不是 R@10 杠杆 (Optimizer/LR/BF16/Regularization 全部 REFUTED)
+- Arm C (R-Drop α=1.0) 是**唯一 mild GO** at +1.4%, 但仍 < 0.1053 anchor → 不构成 ceiling 突破
 
 ## 关键发现
 
@@ -45,9 +53,10 @@
 | H2: LR scheduler inv_sqrt 改善 R@10 | Arm B R@10=0.0938 -8.0% | REFUTED |
 | H3: BF16 mixed precision 改善 R@10 | Arm D R@10=0.0983 -3.6% | REFUTED |
 | H4: Regularization (dropout 0.1 + wd 0.01) 改善 R@10 | Arm E R@10=0.0981 -3.8% | REFUTED |
-| H5: R-Drop 改善 R@10 | Arm C (待 GPU 0) | TBD Ep200 |
+| H5: R-Drop 改善 R@10 | Arm C R@10=0.1034 (+1.4% baseline, < anchor 0.1053) | **MILD GO (Layer 1)** — task328 Layer 2 α sweep 待定 |
 
-**Issue #38 4/5 Arms NO-GO**. R-Drop (Arm C) 仍训练中, 但 val_R@10=0.1145 不代表 test_R@10 (val/test gap 已知). 推断: Arm C 即使完成也会 < baseline 0.1020 (跟 Arm A/B/D/E 共享 Stage 3 protocol 不是杠杆的结论).
+**Issue #38 4/5 Arms NO-GO + Arm C MILD GO (+1.4%)**. R-Drop α=1.0 是 5-arm 唯一超 baseline Arm, 但仍 < task194 K=256 anchor 0.1053.
+Layer 2 follow-up task328 R-Drop α sweep (α ∈ {0.5, 1.0, 2.0}) 已 12:58 启动 GPU 0/2/3, ~5h 跑完. α=4.0 未 launch (脚本只 launch 3 arms). 等 task328 完成后再判定 R-Drop 是否可调到 > 0.1053.
 
 ## 决策矩阵
 
