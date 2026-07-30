@@ -1,0 +1,53 @@
+{
+  "T1": {
+    "test": "T1_static_audit",
+    "pass": true,
+    "src_has_clamp_min": true,
+    "src_clamp_matches": [
+      ".abs().clamp(min=1e-8)",
+      ".abs().clamp(min=1e-15)",
+      ".abs().clamp(min=1e-8)",
+      ".abs().clamp(min=1e-8)"
+    ],
+    "task333_has_clamp_min": true,
+    "task333_clamp_matches": [
+      ".abs().clamp(min=1e-8)"
+    ]
+  },
+  "T2": {
+    "test": "T2_reproduce_task333",
+    "pass": true,
+    "input_kappa": 0.0,
+    "post_clamp_kappa": 1e-08,
+    "observed_grad_at_kappa_0_input": 8030.093090859003,
+    "h0_confirmed": true
+  },
+  "T3": {
+    "test": "T3_no_clamp_counterfactual",
+    "pass": true,
+    "no_clamp_grad_at_kappa_0": NaN,
+    "no_clamp_grad_at_kappa_1e_minus_9": 5353.395927553969
+  },
+  "T4": {
+    "test": "T4_production_code_path",
+    "pass": true,
+    "grad_norms_per_layer": [
+      3.149585552364442e-07,
+      3.387662417253523e-08,
+      4.166666826816281e-33
+    ],
+    "final_theta": [
+      [
+        -0.008783286437392235
+      ],
+      [
+        -0.009283868595957756
+      ],
+      [
+        -0.009319089353084564
+      ]
+    ],
+    "max_theta_move_from_0": 0.009319089353084564,
+    "any_grad_present": true
+  }
+}
