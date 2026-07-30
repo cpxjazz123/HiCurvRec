@@ -125,7 +125,8 @@ def dedup_4th_digit(sid: np.ndarray) -> np.ndarray:
     """
     N = sid.shape[0]
     seen = {}
-    out = sid.copy()
+    out = np.zeros((N, 4), dtype=sid.dtype)
+    out[:, :3] = sid
     for i in range(N):
         key = tuple(sid[i, :3].tolist())
         seen[key] = seen.get(key, 0) + 1
@@ -145,7 +146,8 @@ def main():
     parser.add_argument("--e_dim", type=int, default=32)
     parser.add_argument("--M", type=int, default=1)
     parser.add_argument("--beta", type=float, default=0.25)
-    parser.add_argument("--sk_eps", type=float, default=0.003)
+    parser.add_argument("--sk_epsilons", type=float, nargs='+', default=[0.0, 0.0, 0.0],
+                        help="Per-layer Sinkhorn epsilon (matches Stage 1 task156/157)")
     parser.add_argument("--sk_iters", type=int, default=3)
     parser.add_argument("--layers", type=int, nargs='+', default=[512, 256, 128, 64])
     parser.add_argument("--device", type=str, default="cuda:0")
@@ -170,7 +172,7 @@ def main():
         layers=args.layers, dropout_prob=0.0, bn=False,
         loss_type="mse", quant_loss_weight=1.0, beta=args.beta,
         kmeans_init=True, kmeans_iters=10,
-        sk_eps=args.sk_eps, sk_iters=args.sk_iters,
+        sk_eps=args.sk_epsilons, sk_iters=args.sk_iters,
     ).to(device)
 
     # Replace VQ layers with mixed_curv (or with scale)
