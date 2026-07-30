@@ -937,6 +937,36 @@ Issue #49 (FreeCurvHRQVAE, code-clean Ollivier c=0.74 negative curvature, κ-dec
 
 **Zero new GPU budget consumed for paper §6.7.10 update** (zero-GPU housekeeping + R12 audit, references existing artifacts + `verdicts/task336_issue43_reproducibility_audit.md`).
 
+#### 6.7.11 L0 utilization × K × HypPre panorama invariant (2026-07-30 23:55)
+
+**新增 (Task #143 paper §6.7.11 prep)**: 跨 11 tasks / 4 维度联合立判据 (vanilla K-sweep 6-arm + Issue #43 HypPre + Issue #30 r_l+s_l + task327 K=256+Issue #30 + task326 K=384 Gate 0 FAIL).
+
+**核心 invariant 1 — C17 (panorama invariant)**: **Stage 1 L0 utilization ≠ R@10 因果杠杆**.
+- vanilla K-sweep 6-arm K=32/64/128/256/512/1024 验证: L0 utilization 跟 K 强相关 (K=256 ~70%, K=384 16.9% USAGE-KILL), 但 R@10 跟 L0 utilization **无单调关系**. K=256 是 R@10 trade-off 顶峰, L0 utilization 跟 K=128 (~) 持平.
+- Issue #43 HypPreEncoder 跟 baseline 配方 L0 utilization 持平 (~70%), 但 R@10 +2.4pp (vs baseline). HypPre 增益**不来自 L0 utilization**, 来自 expmap0(c·x) pre-quantization 几何感知.
+- task287 κ-decouple K=128/256 L0=100% 但 R@10=0.0855/0.0852 (-16%), 验证 L0=100% 不保证 R@10 高.
+- **结论**: K14 (L0 ≥ 90% 必要非充分) 在 vanilla 配方上**没有任何 K 满足**, κ-decouple 配方 L0=100% 但 R@10 退化. **L0 utilization 是 necessary but not sufficient**, 不是 R@10 因果路径.
+
+**核心 invariant 2 — C18 (joint ceiling)**: **HG-Rec ceiling 0.10425 (Issue #43 + beam_size 50), 28 directions 验证, 突破方向必须是联合产品**.
+- 单一杠杆清单 (3 GO 端点):
+  - Issue #30 r_l+s_l K=256: R@10=0.1022 (+0.2pp)
+  - Issue #43 HypPreEncoder K=256 + beam=50: R@10=0.10425 (+2.4pp) ⭐
+  - Issue #320 R-Drop α=1.0 (on Issue #30 SID) + beam=100: R@10=0.1034 (+1.4pp)
+- Stage 3 协议 (Optimizer/LR/BF16/Regularization) 25 方向全 NO-GO, **Stage 3 协议不是 R@10 杠杆** (除 R-Drop marginal 联合 Issue #30 SID)
+- Stage 1 κ-learning 系列 8 方向全 NO-GO, **κ-learning 不能传导 to T5 SID retrieval**
+- **突破 ceiling 方向**: Stage 1 × Stage 3 × Stage 4 **联合产品** (Issue #43 × R-Drop, Issue #30 + Issue #43, Issue #43 K-sweep + beam_size ablation), 单项无显著杠杆.
+
+**R10 backlog state (post §6.7.11)**: 5 候选 ROI 排序 (a/b/c/d/e):
+- (a) Issue #43 K-sweep {128, 192, 320, 384}: 16h GPU, 中 ROI (Task #141 design 就绪)
+- (b) **Issue #43 × R-Drop α=1.0 联合: 2h GPU, 期望 0.10545, 高 ROI ⭐** (新候选)
+- (c) Issue #30 + Issue #43 联合 (Task #135): 6h GPU, 中-高 ROI, pending owner
+- (d) 接受 ceiling 0.10425 转写 paper §5.x: 零 GPU, 兜底
+- (e) Issue #38 Layer 2 retry R-Drop × baseline SID: 2.2h 4-GPU, 高 ROI (Task #146 design 就绪, 闭环 R-Drop × baseline 实证空白)
+
+**Why C17+C18**: 28 directions NO-GO closure 揭示 "单一杠杆耗尽", 突破方向必须是**联合产品**. L0 utilization 是必要非充分条件, 不构成 R@10 因果路径. paper §5.x 应明确 HG-Rec ceiling 0.10425 + 联合产品探索方向.
+
+**Zero new GPU budget consumed for paper §6.7.11 update** (zero-GPU panorama 联合立判据, references existing verdicts: `verdicts/task143_l0_k_hyppre_panorama.md` + `verdicts/task141_issue43_k_sweep_design.md` + `verdicts/task144_issue320_rdrop_audit.md` + `verdicts/task146_issue38_layer2_retry_design.md` + 11 个跨任务 verdict).
+
 ### 6.6 Concluding Thoughts
 
 Our work demonstrates that **simpler is often better** for generative recommendation on flat datasets. Vanilla RQ-VAE + Sinkhorn achieves best test R@10 (0.1058) on Musical_Instruments, statistically tied with HG-Rec c555 (0.1051) but with **better generalization** (+0.0204 gap). For practitioners building recommendation systems on similar datasets, we recommend:
