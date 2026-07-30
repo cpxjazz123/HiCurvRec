@@ -12,16 +12,17 @@ cd $REPO
 export PYTHONPATH=$REPO/HG-Rec:$REPO/scripts:${PYTHONPATH:-}
 PYTHON_BIN=/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python
 
-# Find ckpt (either real ckpt after Stage 3 completes, or use task301 #30 ckpt as proxy)
-CKPT_PATH=$(ls -td $REPO/products/task327/t5mini_k256_issue30/Instruments/*/HG_Rec_best.pth 2>/dev/null | head -1)
+# Find ckpt (R9 mid-flight protection: R9 renumber task328→327 only renamed description file;
+# the running training still writes to products/task328/ and logs/task328/. Launcher mirrors that.)
+CKPT_PATH=$(ls -td $REPO/products/task328/t5mini_k256_issue30/Instruments/*/HG_Rec_best.pth 2>/dev/null | head -1)
 if [ -z "$CKPT_PATH" ]; then
-    echo "ERROR: task327 Stage 3 ckpt not found at products/task327/t5mini_k256_issue30/"
+    echo "ERROR: task327 Stage 3 ckpt not found at products/task328/t5mini_k256_issue30/"
     echo "Wait for Stage 3 to complete (PID 1531589 on GPU 1)"
     exit 1
 fi
 echo "Using ckpt: $CKPT_PATH"
 
-LOG_DIR=$REPO/logs/task327
+LOG_DIR=$REPO/logs/task328
 mkdir -p $LOG_DIR
 
 run_one_beam() {
@@ -79,7 +80,7 @@ model.eval()
 
 # Evaluate on test set
 t0 = time.time()
-test_dl = DataLoader(test_ds, batch_size=config['batch_size'], shuffle=False, num_workers=2)
+test_dl = GenRecDataLoader(test_ds, batch_size=config['infer_size'], shuffle=False)
 metrics = evaluate(model, test_dl, [5, 10, 20], config['beam_size'], config['device'])
 elapsed = time.time() - t0
 

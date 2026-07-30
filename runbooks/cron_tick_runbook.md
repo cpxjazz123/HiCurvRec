@@ -16,16 +16,15 @@
 ### 阶段 1: 立即 Stage 4 评估
 
 #### task327 完成时 (K=256 + Issue #30 synergy)
-1. **确认 ckpt 存在**:
+1. **确认 ckpt 存在** (实际路径 `products/task328/`, 因 R9 mid-flight protection — 见 scripts/task327_stage4_beam_eval.sh 注释):
    ```bash
-   ls -lt /home/wlia0047/ar57/wenyu/GeneRec/products/task327/t5mini_k256_issue30/Instruments/*/HG_Rec_best.pth
+   ls -lt /home/wlia0047/ar57/wenyu/GeneRec/products/task328/t5mini_k256_issue30/Instruments/*/HG_Rec_best.pth
    ```
-2. **复制 SID 到 dataset**:
+2. **SID file 已就位** (pre-staged, 不需要复制):
    ```bash
-   cp /home/wlia0047/ar57/wenyu/GeneRec/products/task327/Instruments_t5_rqvae_k256_issue30.npy \
-      /home/wlia0047/arenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_rqvae_k256_issue30.npy
+   ls -lh /home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_rqvae_k256_issue30.npy
    ```
-   (路径应为 `wenyu/GeneRec/HG-Rec/dataset/Instruments/`, 注意 typo)
+   (Stage 1 完成后已 cp 到 dataset dir, 2026-07-30 09:25 落盘 311K)
 3. **Launch Stage 4 K=20/50/100 beam ablation**:
    ```bash
    bash /home/wlia0047/ar57/wenyu/GeneRec/scripts/task327_stage4_beam_eval.sh
