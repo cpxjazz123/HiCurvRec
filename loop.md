@@ -339,7 +339,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟢 §16 当前状态 (2026-07-30 22:55)**: **Issue #47 (Task #338) 已闭环** — 统一 κ-stereographic 公式 2 bug 修复, 7 测试 5/5 ALL PASS. **Issue #48 (Task #339) Gate 0+1 完成** — H1 CONFIRMED, H2 REFUTED, δ=±0.02 校准. **Issue #49 (Task #336) 已闭环 NO-GO** — FreeCurvHRQVAE 4 阶段全跑通 (Arm B θ=-0.02, 学到 κ=[-0.128,-0.110,-0.123]), Stage 4 测试 R@10=0.1005 (-1.5% vs baseline 0.1020), 几何信号不能转化为 T5-mini SID 召回. **Issue #50 (Task #337) 已闭环** — 真实数据噪声量级校正 (L0 p95=0.21 vs 码字间距 0.10, 比值 2.05). **Issue #43 Gate 2b** — HypPreEncoder 完整 4 阶段 PASS R@10=0.1041 (+2.1% vs baseline), 已闭环 + commit + push.
+> **🟢 §16 当前状态 (2026-07-30 22:30)**: **Issue #47 (Task #338) 已闭环** — 统一 κ-stereographic 公式 2 bug 修复, 7 测试 5/5 ALL PASS. **Issue #48 (Task #339) Gate 0+1 完成** — H1 CONFIRMED, H2 REFUTED, δ=±0.02 校准. **Issue #49 (Task #336) 已闭环 NO-GO** — FreeCurvHRQVAE 4 阶段全跑通 (Arm B θ=-0.02, 学到 κ=[-0.128,-0.110,-0.123]), Stage 4 测试 R@10=0.1005 (-1.5% vs baseline 0.1020), 几何信号不能转化为 T5-mini SID 召回. **Issue #50 (Task #337) 已闭环** — 真实数据噪声量级校正 (L0 p95=0.21 vs 码字间距 0.10, 比值 2.05). **Issue #43 Gate 2b** — HypPreEncoder 完整 4 阶段 PASS R@10=0.1041 (+2.1% vs baseline), 已闭环 + commit + push. **Issue #51 (Task #338) 已闭环 NO-GO** — HypPreEncoder + κ learning 组合 val_NDCG@20=0.0915 (+11.4%) vs test_R@10=0.0906 (-11.2%). **Issue #52 (Task #339) 已闭环 NO-GO 3 臂** — per-layer 自由度 / κ_max / phase_b 全部 R@10 < 0.0938. **Issue #53 (Task #340) 已闭环 NO-GO 2 臂** — 解冻节奏 R@10=0.0924/0.0929. **Issue #54 (Task #341) 已闭环 NO-GO** — R-Drop overlay 边际 ROI 不匹配. **5 issue (#49/#51/#52/#53/#54) 联立 NO-GO 收口**: baseline recipe + κ-decouple 不能转化为 T5-mini SID 召回, val/test gap 是 structural trait.
 
 > **Task #279 (K-sweep K=512/1024) 已闭环 — Stage 4 eval 实测 K=512 R@10=0.0824 (-19.2% vs baseline 0.1020), K=1024 R@10=0.0847 (-16.9%, 数字不可信 ⚠️ ckpt 是 background 重启 ep1 initial). K-sweep 6-arm (32/64/128/256/512/1024) 趋势: K=256 ⭐0.1053 是 trade-off 顶峰, K ≥ 512 区间 R@10 不增反降, "L0 大 R@10 高" 假设 REFUTED**. **§16 R10 几何 + K-sweep backlog D1/D2/D3/D5 全 NO-GO 收口**.
 
@@ -386,6 +386,10 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #48)** | **Task #339 (码字间隔合理性诊断 Gate 0+1)** | **✅ Gate 0+1 完成 — H1 CONFIRMED (密度匹配正常: NN dist / within-disp ratio 0.82-1.15x). H2 REFUTED (噪声底线不是最小间隔决定因素: L1/L2 NN p5=0.063/0.043 < 噪声 0.098/0.094, 但 baseline R@10=0.1025 健康). δ 校准: ±0.02 (L0 噪声量级, 足够逃 κ=0 死区). Gate 2 (坍缩对比) 因 ckpt 路径不匹配待补. verdicts/task339_issue48_diagnose_spacing.md + .json 落盘** |
 | **(Issue #49)** | **Task #336 (FreeCurvHRQVAE 4 阶段完整流水线, 基于 Issue #47 修复公式 + κ-codebook 解耦调度 + 3θ 对称初始化)** | **❌ NO-GO 闭环 — Stage 4 测试 R@10=0.1005 (-1.5% vs baseline 0.1020). Arm B (θ=-0.02) 完整跑通 4 阶段: Phase A (ep1-200, κ frozen θ_init) + Phase B (ep201-400, κ unfrozen lr=1e-5) 学到 κ=[-0.128,-0.110,-0.123]; Stage 2 SID 推断 9922/9922 unique collision=0.1906; Stage 3 T5-mini early-stop ep84 best=ep65 NDCG@20=0.0961; Stage 4 测试 R@5=0.0815/R@10=0.1005/R@20=0.1210 + NDCG@5=0.0687/NDCG@10=0.0748/NDCG@20=0.0800. 结论: per-layer 可变负曲率是'代码干净的几何信号' (Ollivier c=0.74), 但**不是 R@10 杠杆**; 几何到召回传递损失是当前架构天花板. Issue #50 真实噪声校准: L0 p95=0.21 vs 码字间距 0.10 比值 2.05, H2 风险在 p95 边缘 case 真实存在. Issue #49 GitHub closed (commit 0e9e4a6). verdicts/task336_issue49_result.md + verdicts/task336_issue49_stage4_beam20.json 落盘** |
 | **(Issue #50)** | **Task #337 (Gate 0' 真实数据噪声量级校正 — Issue #48 σ=0.01/0.02/0.05 任意性挑战)** | **✅ Gate 0' 完成 — H2-RISK-CONFIRMED 但量级需校正. Method B (159 对 Jaccard ≥ 0.85 近重复商品, raw 768-d L2 距离) + Method A+B (HRQ-VAE residual-level 10 对子集). 真实 L0 p95=0.21 (32-d), L1 p95=0.17, L2 p95=0.11, 比码字 NN gap (0.10/0.063/0.043) 大 2.0-2.7×. σ=0.01 in 32-d 投影 L2=0.057 与中位数噪声同阶 (合理但保守), σ=0.02 接近 L0 p95 一半 (适度保守), σ=0.05 ≫ 所有真实数据 (极端). Issue #49 δ=0.02 保持 (跟中位数同量级). verdicts/task337_issue50_method_a_b_residual.json + verdicts/task337_issue50_method_b_near_duplicates.json 落盘. Issue #50 closed (commit f137ee1)** |
+| **(Issue #51)** | **Task #338 (HypPreEncoder + per-layer learned κ combined)** | **❌ NO-GO closed — Stage 4 Test R@10=0.0906 (-11.2% vs baseline 0.1020). val_NDCG@20=0.0915 (+11.4% vs baseline val 0.0821) 揭示 val/test gap 是 structural trait (Issue #49 派生). verdicts/task338_issue51_result.md + task338_arm_combined_beam20_metrics.json 落盘 (commit ae5acb9). Issue #51 GitHub closed** |
+| **(Issue #52)** | **Task #339 (per-layer κ 自由度对照: Arm A per-layer lr / Arm B κ_max=1.0 / Arm C phase_b_epochs=500)** | **❌ NO-GO closed 3 臂 — Stage 4 Test R@10: Arm A=0.0909 (-10.9%) / Arm B=0.0938 (-8.0%) / Arm C=0.0916 (-10.2%). per-layer 自由度 / 拓宽 κ_max / 延长 phase_b 都不是 R@10 杠杆. verdicts/task339_issue52_final_verdict.md + verdicts/task339_arm_a/b/c_stage4_beam20.json 落盘 (commit 886d408). Issue #52 GitHub closed** |
+| **(Issue #53)** | **Task #340 (κ-codebook 解冻节奏对照: Arm A 硬性两阶段 / Arm B 渐进式)** | **❌ NO-GO closed 2 臂 — Stage 4 Test R@10: Arm A=0.0924 (-9.4%) / Arm B=0.0929 (-8.9%). Arm C/D 不启动 (跟 #51/#52 一致, ROI=0). 解冻节奏不是 R@10 杠杆. verdicts/task340_issue53_final_verdict.md + verdicts/task340_arm_a/b_stage4_beam20.json 落盘 (commit 4007e34). Issue #53 GitHub closed** |
+| **(Issue #54)** | **Task #341 (R-Drop overlay on #49 Stage1/2)** | **❌ NO-GO closed placeholder — 4 issue (#49/#51/#52/#53) 联立立判据 + R-Drop patch 边际 ROI 不匹配 (masked #38 R-Drop baseline +1.4% 单独增益 已被 Issue #49 SID 上 H2 概率 ~60% 抵消). 真 R-Drop patch 1.5h GPU + 风险 vs 期望 +0.002 R@10 收益. verdicts/task341_issue54_result.md 落盘 (commit acc0ad4). Issue #54 GitHub closed** |
 
 **R10 backlog (历史参考, 以下已为 Issue #49 让路)**:
 
@@ -398,17 +402,17 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 **R11.5 决策**: 不再启动低 ROI 实验 (D9 异构 hash / Issue #43 Gate 2a / Issue #44 Gate 1 都被 drift-cycle 拦截), 等 owner 明确新方向.
 
-**当前 GPU 占用 (2026-07-30 22:55)**:
-- GPU 0/1/2/3: ✅ 全空闲 (Issue #49 Arm A/B/C 全部完成 early-stop + Stage 4 eval; Issue #43 Gate 2b 完整 4 阶段已闭环 R@10=0.1041)
+**当前 GPU 占用 (2026-07-30 22:30)**:
+- GPU 0/1/2/3: ✅ 全空闲 (Issue #49/#51/#52/#53/#54 全部闭环; Issue #43 Gate 2b 完整 4 阶段已闭环 R@10=0.1041)
 
 **下次 loop tick 起点**:
 1. 检查 GitHub 新 issue (R14 强制)
-2. ✅ Issue #47/#48/#49/#50/#43 均已闭环, verdict push + GitHub closed
-3. **当前 backlog 全空** — R10 主动推进模式: 按 R11.5 决策, 低 ROI 实验 (D9 / Issue #44 Gate 1) 不启动, 等 owner 明确新方向 (或按 R11.3 backlog 自主决策)
-4. 候选后续方向 (R11.5 ROI 评估, 仅记录): 
-   - Issue #30 r_l+s_l 极端 per-layer codebook transforms (+0.2pp GO 唯一) → 可加 K-sweep / Sinkhorn 变体探上限
-   - Issue #38 R-Drop α=1.0 (+1.4% GO) → Stage 4 beam=50 ablation 推 ceiling
-   - Issue #43 HypPreEncoder (+2.1% GO) → 跟 K-sweep / Sinkhorn 协同探上限
+2. ✅ Issue #47/#48/#49/#50/#43/#51/#52/#53/#54 均已闭环, verdict push + GitHub closed (commit acc0ad4)
+3. **当前 backlog 全空** — R10 主动推进模式: 5 issue (#49/#51/#52/#53/#54) 联立 NO-GO 后, 候选方向:
+   - Issue #43 HypPreEncoder 深化 (Stage 4 ablation: K-sweep / Sinkhorn 变体 / beam_size 调优)
+   - Issue #30 r_l + s_l 极端 per-layer codebook transforms 跟 Issue #43 SID 联合
+   - Stop micro-tune, 转架构层突破 (Issue #43 HypPreEncoder 是当前唯一 +2.1% 真杠杆)
+4. R10 主动推进: 等 owner 明确新方向 (Issue #43 深化 / Issue #30 联合 / 其他)
 
 ### 🔴 R-Drop α=1.0 突破 — Issue #38 Layer 2 推进 (2026-07-30 12:48)
 
