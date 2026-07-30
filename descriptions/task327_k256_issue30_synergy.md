@@ -1,4 +1,4 @@
-# Task #328 — K=256 anchor + Issue #30 per-layer Codebook Transforms synergy probe
+# Task #327 — K=256 anchor + Issue #30 per-layer Codebook Transforms synergy probe
 
 **日期**: 2026-07-30
 **状态**: 🔄 READY (R11.5 自主决策启动 — 取代 task326 K=384 NO-GO, 最高 ROI 协同实验)
@@ -45,20 +45,20 @@ Hypothesis: 三个 lever 联立 → R@10 > 0.1053 (新 anchor ⭐⭐⭐⭐)
 - task301 (Issue #30 Stage 1 GO marginal R@10=0.1022)
 - task307 (Stage 4 K=50 amplifier +2.3%, Issue #30 特定)
 - task326 (K=384 Gate 0 FAIL, USAGE-KILL)
-- verdicts/task328_*_verdict.md (本任务输出)
+- verdicts/task327_*_verdict.md (本任务输出)
 
 ## R10 推进
 
 - task320 还在 GPU 0/2/3 跑 (Arm A/D/E @ Ep80-88/200), GPU 1 已释放
-- GPU 1 启动 task328 Stage 1 (Issue #30 K=256, 100 epoch, ~30 min)
+- GPU 1 启动 task327 Stage 1 (Issue #30 K=256, 100 epoch, ~30 min)
 - Stage 2 Sinkhorn → Stage 3 T5-mini 200 epoch → Stage 4 R@10 @ K=50
 - 总耗时 ~2h
 
 ## 关键决策点 (R11.5 自主决策)
 
-1. **task328 取代 task326**: K=384 NO-GO 后, 跨方向协同是最高 ROI (K=256 anchor + Issue #30 GO marginal + K=50 amplifier)
+1. **task327 取代 task326**: K=384 NO-GO 后, 跨方向协同是最高 ROI (K=256 anchor + Issue #30 GO marginal + K=50 amplifier)
 2. **batch_size=512**: K=256 ≥ 256, 留 margin 512
 3. **Stage 4 K=50 amplifier**: 跟 task307 一致 protocol, 才能跟 task194 比较
 4. **GPU 1 启动**: task320 释放 GPU 1 后错峰
 
-result: Task #328 — K=256 + Issue #30 per-layer Codebook Transforms synergy probe. Stage 1 100 epoch + Stage 2 Sinkhorn + Stage 3 T5-mini 200 epoch + Stage 4 K=50 amplifier. 决策阈值 R@10 > 0.1053 (vs task194 K=256 anchor) 验证协同效应
+result: Task #327 — K=256 + Issue #30 per-layer Codebook Transforms synergy probe. Stage 1 100 epoch + Stage 2 Sinkhorn + Stage 3 T5-mini 200 epoch + Stage 4 K=50 amplifier. 决策阈值 R@10 > 0.1053 (vs task194 K=256 anchor) 验证协同效应

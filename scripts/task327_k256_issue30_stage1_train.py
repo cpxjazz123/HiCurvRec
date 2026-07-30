@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Task #328 / Issue #30 — Stage 1 Stage 1 训练 wrapper
+"""Task #327 / Issue #30 — Stage 1 Stage 1 训练 wrapper
 
 背景 (Issue #30 body Gate 1):
   Stage 1 100 epoch 训练 (per-layer r_l + R_l + s_l + per-layer c_k range):
@@ -83,7 +83,7 @@ def apply_per_layer_codebook_transforms(model: HRQVAE,
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Task #328 / Issue #30 train_hrqvae_codebook_transforms')
+    parser = argparse.ArgumentParser(description='Task #327 / Issue #30 train_hrqvae_codebook_transforms')
 
     # baseline args
     parser.add_argument('--lr', type=float, default=1e-3)
