@@ -119,3 +119,32 @@
 ---
 
 (本文档为 verdicts/ 索引, 不替代具体 verdict. reader 找详细论证请看 task{N}_result.md.)
+
+---
+
+## G. Issue #49 派生 5-tuple NO-GO + Issue #43 HypPre boundary (Tasks #336-#341, 2026-07-30)
+
+| Task | 主题 | 状态 | 关键 finding | Verdict |
+|---|---|---|---|---|
+| **#336** | FreeCurvHRQVAE 4 阶段 (Issue #49) | ❌ NO-GO | R@10=0.1005 (-1.5% vs baseline 0.1020), Ollivier c=0.74, code-clean geometric signal but can't convert to T5 SID | verdicts/task336_issue49_result.md |
+| **#336** | Issue #43 HypPreEncoder 完整 4 阶段 | ✅ GO +2.4% | R@10=0.1041 (beam=20) + 0.10425 (beam=50/80/100 plateau) | verdicts/task336_issue43_beam_ceiling.md + verdicts/task336_issue43_gate2b_stage4_beam{20,50,80,100,10,5}.json |
+| **#338** | Issue #51 HypPre + κ learning | ❌ NO-GO | R@10=0.0906 (-11.2%). val NDCG@20=0.0915 (+11.4%) — val/test gap structural | verdicts/task338_issue51_result.md |
+| **#339** | Issue #52 per-layer κ 自由度 (3 臂) | ❌ NO-GO 3-arm | R@10=0.0909/0.0938/0.0916 (-10.9%/-8.0%/-10.2%) | verdicts/task339_issue52_final_verdict.md |
+| **#340** | Issue #53 κ-codebook 解冻节奏 (2 臂) | ❌ NO-GO 2-arm | R@10=0.0924/0.0929 (-9.4%/-8.9%) | verdicts/task340_issue53_final_verdict.md |
+| **#341** | Issue #54 R-Drop overlay | ❌ NO-GO | placeholder, R-Drop patch marginal ROI ≈ 0.002 vs 1.5h GPU | verdicts/task341_issue54_result.md |
+
+**5-issue 派生 立判据**: 
+- Issue #49 series mean R@10 = 0.0932 (σ=0.0035), M = -9% vs baseline 0.1020
+- val/test gap = structural trait (derives from SID 4-digit dedup configuration, not recipe-specific)
+- κ-learning 不能传导 to T5 SID retrieval, only signal achieved is from **non-κ-learning** mechanisms (Issue #43 HypPre + Issue #30 r_l+s_l)
+- 28 directions × 28 verdict 收口 (3 GO + 25 NO-GO)
+- 详情见 paper.md §6.7.9 + loop.md §16
+
+**唯一可能的 next direction** (R10/R11.5 ROI 评估):
+1. Issue #30 + Issue #43 联合 (Task #344) - 6h Stage 1 重训, 期望 +2.5-3% (limited by κ-learning conflict)
+2. T5-mini → T5-small 容量扩展 (60M params, paper Table 1 HG-Rec 用 T5-small) - 4-5h 训练, 期望 +1-2%
+3. Owner 拍板接受 HG-Rec R@10=0.10425 ceiling, 转写 paper §5.x 总结
+
+---
+
+(本文档为 verdicts/ 索引, 不替代具体 verdict. reader 找详细论证请看 task{N}_result.md.)
