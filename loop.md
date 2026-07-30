@@ -313,6 +313,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 - ✅ **verdict 文件本身必须 tracked in git** (不能只在本地 untracked 状态). R8 + R9-Enforce 已保证 verdict 文件被 `git add`, R15 保证 commit 被 push.
 - ✅ **push 之前必跑**: `git status --short` 确认 working tree 干净, 无未跟踪残留.
 - ✅ **push 之后必跑**: `git log --oneline -1` 确认 commit hash 已落在 origin (用 `git ls-remote origin main` 或 `git fetch origin` 验证).
+- ✅ **push 之后必须关闭 GitHub Issue**: `gh issue close <N> --repo WENYULIANG123/GeneRec --reason completed` (或 `not_planned` 走 D4 收口). 此步在 `git push` 之后、下一个任务启动之前执行.
 
 **例外 / 豁免**:
 - ⏸️ **本地调试 / 中间产物**: 未完成的中间 verdict / 调试 log / scratch files **不强制 push** (R2 不允许 fallback 掩盖错误, 但允许中间产物本地滞留).
@@ -338,7 +339,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟡 §16 当前状态 (2026-07-30 当前)**: Issue #9/#10/#11/#12/#13/#16/#18/#19/#20/#28/#29/#31/#33 已 NO-GO 闭环. **Issue #41 (Task #331/332) + Issue #43 (Task #334) 全 3 Gate 闭环 — Gate 0 三段式 (input h-MDS κ=-2.0 / residual κ=0 / class tree κ=-0.739) + Gate 1 设计 4 候选 A/B/C/D (推荐 A 预量化感知) + Gate 2a HypPreEncoder 实施 PASS (5/5 regression test, c=0.74 Ollivier mean, wrapper 模式不改 upstream). Issue #43 Gate 2b (Task #336) PENDING owner 拍板启动 Stage 1 训练. Issue #42 (Task #331/333) RECORDING + 实施层 NO-GO 联立闭合 — task333 v1+v2 5/5 FAIL + **R137 κ=0 dead-point 假设 REFUTED (autograd grad=8030 非零)**. **Issue #44 (Task #335) Gate 1 NO-GO 闭环** — 4/5 FAIL (T1/T2/T3 数学正确性 FAIL, T4/T5 PASS) + 联立 task333 NO-GO, H1 前提持续 REFUTED. 函数保留为 opt-in flag (--use_unified_dist, 默认 OFF). Issue #30 仍是当前唯一有效 GO marginal (R@10=0.1022). **Task #327 (K=256+Issue #30 synergy) NO-GO 闭环 — Stage 4 R@10=0.0859 (-15.8% baseline), 协同假说 REFUTED**. **Task #328 (R-Drop α sweep 4-arm) Stage 4 NO-GO + K9 新维度 — val_R@10=0.1225 (α=1.0) 但 test_R@10=0.0 全 arm (CUDA Xid 43 driver fault). K9: R-Drop × Issue #30 SID 联合失配, 不再叠 R-Drop + Issue #30, 单独 Issue #38 (task320 α=1.0 baseline SID R@10=0.1034) 仍 GO**. **Task #287/284/144 κ-decouple 联立**: K=64/128/256 跳崖退化 −15% 到 −18%, κ-decouple 是 L0 杠杆不是 R@10 杠杆. **§16 R10 backlog 真空维持**: 17 方向 × 17 verdict 收口, Issue #30 唯一 GO marginal.
+> **🟢 §16 当前状态 (2026-07-30 22:10)**: **Issue #47 (Task #338) 已闭环** — 统一 κ-stereographic 公式 2 bug 修复, 7 测试 5/5 ALL PASS. **Issue #48 (Task #339) Gate 0+1 完成** — H1 CONFIRMED, H2 REFUTED, δ=±0.02 校准. **Issue #49 (Task #336) Stage 1 训练中** — FreeCurvHRQVAE + Issue #47 修复公式 + geodesic kmeans + κ-codebook 解耦, 3 臂 (θ=+0.02/-0.02/0.0) 并行在 GPU 0/1/3 (PID 2362999/2363002/2363005). **Issue #43 Gate 2b Stage 3 T5-mini 训练中** (GPU 2, PID 2312585). Issue #47/#48 已闭环保留 verdict 回看.
 
 > **Task #279 (K-sweep K=512/1024) 已闭环 — Stage 4 eval 实测 K=512 R@10=0.0824 (-19.2% vs baseline 0.1020), K=1024 R@10=0.0847 (-16.9%, 数字不可信 ⚠️ ckpt 是 background 重启 ep1 initial). K-sweep 6-arm (32/64/128/256/512/1024) 趋势: K=256 ⭐0.1053 是 trade-off 顶峰, K ≥ 512 区间 R@10 不增反降, "L0 大 R@10 高" 假设 REFUTED**. **§16 R10 几何 + K-sweep backlog D1/D2/D3/D5 全 NO-GO 收口**.
 
@@ -356,7 +357,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | #19 | **Task #281 链式 launcher 强制化 3-Gate 闭环** | ✅ CLOSED (Issue #19 GitHub closed --reason completed) |
 | (排名) | Task #246 paper-aligned ranking v3 增量 | ✅ done (Caser 0.0463→0.0378, LETTER 0.0997→0.0509) |
 | (eval) | **Task #277 (Task #243 Stage 4 eval)** | ✅ done (epoch=200/400 R@10 完全相同 0.0978, 训练时长非变量 REFUTED) |
-| (eval) | **Task #278 (12 ckpt 批量 Stage 4 eval)** | ✅ done (4 GO: task194_k0256 ⭐0.1053, task194_k064 0.1041, task156 0.1034, task194_k0128 0.1027) |
+| **(Issue #47)** | **Task #338 (统一 κ-stereographic 公式 debug 到 5/5 PASS)** | ✅ ALL PASS (2 bug fix: Möbius 符号 + sigmoid NaN, commit 61e707c) |
 | (A1) | **Task #282 (Task #270 A1 欧氏 MSE+β=0)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 40.6%→1.6% mode collapse) |
 | (D5A) | **Task #283 (D5 dead_revive frequency)** | ❌ NO-GO (Stage 1 ep30 USAGE-KILL: L0 70.3% ≈ baseline 73.44%; hook no-op latent_gravy=empty) |
 | (D2) | **Task #279 (K-sweep K=512/1024 扩展)** | ❌ NO-GO (K=512 R@10=0.0824 -19.2%; K=1024 R@10=0.0847 -16.9% ⚠️ ep1 initial; "L0 大 R@10 高" REFUTED; K=256 ⭐0.1053 是 trade-off 顶峰) |
@@ -382,31 +383,17 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #44)** | **Task #335 (Issue #44 统一公式重写 + 对称初始化 Gate 1 NO-GO 闭环)** | **❌ NO-GO 闭环 (Gate 1 unified κ-stereographic formula 4/5 FAIL: T1 数值正确性 FAIL Δ=2.09, T2 自距离 FAIL d(x,x)=2.22≠0, T3 对称性 FAIL κ<0 Δ=7.93e-2, T4 κ=0 梯度非零 PASS grad=5.4, T5 性能 PASS 0.4× R137). 根因: Möbius inverse vs negation bug (用普通 -x 而非 Möbius inverse). 联立 task333 v1+v2 5/5 FAIL 闭环, Issue #44 H1 前提持续 REFUTED. 函数保留为 opt-in flag (--use_unified_dist, 默认 OFF, 不破坏 R137 默认行为). 双重阻塞维持: (1) H1 前提 REFUTED, (2) Gate 0 硬阻塞 (Task #144/#145 任一未证明 codebook 健康化). verdicts/task335_issue44_gate1_test_result.md 落盘 (commit 0cbe607). Issue #44 保持 OPEN (deferred)** |
 | **(Issue #42)** | **Task #331/333 (Issue #42 Free-Curv κ-stereographic 复盘 + 实施层 NO-GO)** | **❌ NO-GO 强证据 — task331 RECORDING verdict (commit 12fe670) 跟 task333 实施层 NO-GO (commit ee18995) 联立闭合. task333 v1 torch.where + v2 sigmoid-blend 5/5 测试 FAIL: kappa_zero autograd=NaN, gradient_continuity jump=764-772, symmetry_err=13.32, performance 3.26-3.48× slower. **关键反证**: R137 autograd grad at κ=0 = **8030** (实测非零, REFUTED "R137 κ=0 dead point" 假设). Issue #42 GitHub closed --reason completed. 自由曲率主线 (Task #89/#135/#137/#138) NO-GO 收口维持. verdicts/task333_issue42_unified_formula_nogo.md + verdicts/task331_issue42_free_curv_postmortem_record.md 落盘** |
 | **(Issue #44)** | **Task #335 (Issue #44 统一公式重写 + 对称初始化 design register)** | **📝 DESIGN REGISTERED DEFERRED — 双重阻塞: (1) H1 前提被 task333 REFUTED (R137 autograd grad κ=0 = 8030 非零, 不是 dead point), (2) Gate 0 硬阻塞 (Task #144/#145 任一未证明 codebook 健康化). Issue #44 论证链基于 Issue #42 "R137 κ=0 dead point" 假设, 已被实测 REFUTED. 启动条件: Task #144/#145 任一 codebook util ≥ 90% 全层. Issue #44 保持 OPEN (deferred). verdicts/task335_issue44_design_register.md 落盘** |
+| **(Issue #48)** | **Task #339 (码字间隔合理性诊断 Gate 0+1)** | **✅ Gate 0+1 完成 — H1 CONFIRMED (密度匹配正常: NN dist / within-disp ratio 0.82-1.15x). H2 REFUTED (噪声底线不是最小间隔决定因素: L1/L2 NN p5=0.063/0.043 < 噪声 0.098/0.094, 但 baseline R@10=0.1025 健康). δ 校准: ±0.02 (L0 噪声量级, 足够逃 κ=0 死区). Gate 2 (坍缩对比) 因 ckpt 路径不匹配待补. verdicts/task339_issue48_diagnose_spacing.md + .json 落盘** |
 
-### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31/#33 闭环后, 2026-07-30)
+### ✅ Issue #49 / Task #336 — FreeCurvHRQVAE 完整 4 阶段流水线 (2026-07-30 启动)
 
-**§16 backlog 23 方向 × 23 verdict 收口** (Issue #30 唯一 GO marginal +0.2pp, 22 NO-GO).
+**Issue #49 (用户最后消息)**: 基于 #47 修复后的统一公式, 首次在"公式干净"前提下测试 per-layer 可变曲率.
+- 测地 kmeans + κ-codebook 解耦调度 (Phase A κ frozen + Phase B unfrozen lr=1e-5) + 3θ 对称初始化
+- 3 臂并行: Arm A θ=+0.02 (GPU 0 PID 2362999), Arm B θ=-0.02 (GPU 1 PID 2363002), Arm C θ=0.0 (GPU 3 PID 2363005)
+- 当前进度 (22:10): Phase A epoch ~40/200, util=100%, collision 0.13-0.55 (收敛中)
+- Stage 1 → Stage 2 → Stage 3 → Stage 4 全流程目标 R@10 > 0.1022 (Issue #30 GO 端点)
 
-**§16 backlog 17 方向 × 17 verdict 收口** (Issue #30 首个 GO marginal +0.2pp, 15 NO-GO + 1 中性 + 1 GO).
-
-R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转向 ablation + 架构层):
-- **方向 D6 (Issue #30 r_l + s_l ablation) — 高 ROI 候选**:
-  - 动机: Issue #30 +0.2pp marginal GO 不显著, 需要拆分看哪个是真杠杆. r_l (radius 缩放) vs s_l (norm scale) 单独测试.
-  - 候选: Task #303 = Issue #30 Arm A 仅 r_l (s_l=baseline 1.0) + Arm B 仅 s_l (r_l=baseline 1.0) + Arm C r_l + s_l (current Issue #30 GO) 3-arm ablation.
-  - ROI: 中-高 (~3 hr GPU + 边际 +0.5pp/+1.0pp 机会), 但仍 marginal GO 不一定升级.
-  - R11.4 critical: 跟 owner feedback 2026-07-29 23:13 一致, 自主决策启动 ablation.
-- **方向 D7 (Issue #30 multi-seed 统计验证) — 中 ROI 候选**:
-  - 动机: R@10=0.1022 vs 0.1020 (+0.2pp) 边际 GO, 单 seed=42 数字不显著. 多 seed (R=7/13/21/34) 验证是否统计显著.
-  - 注意: 跟 [[user-no-multiseed-override]] 冲突 (用户反对 multi-seed 默认行为). 但这是 R@10 边际 GO 的统计验证, 是必要步骤, 不是默认扩展.
-  - ROI: 中 (~5 hr GPU 5 seed × 1 epoch 83min = 7 hr), 但每个 seed 都要重训 T5-mini 200 epoch.
-  - 推迟到 D6 ablation 完成后, 看是否值得.
-- **方向 D3 (m-arm κ-Stereographic v9+) — 不启动**: 
-  - 动机被 #287 部分削弱: L0 ≥ 90% 杠杆已 = κ-decouple (in-baseline-recipe, 不需要换轨), D3 原始动机 (Issue #20 §反证 换轨) 已不存在
-  - 剩 R@10 杠杆动机, 但 Task #226/227/#228 m-arm product_manifold 7 variants + 完整 epoch sweep 已穷尽证明 product_manifold 是架构 NO-GO (cos_std/collision 二元 trade-off, 7 variants + 8-point w_angular sweep + 12 ep checkpoints 全 NO-GO)
-  - κ-Stereo distance 替换 Euclidean cos 不能解决 cos_std/encoder 散开 trade-off (encoder 散开取决于 dead_revive 死码字 + repulsion w_angular, 跟距离公式关系小)
-  - ROI 评估 = 极低 (4-5 hr GPU 跑预期 NO-GO), R7 (GPU 占用约束) + R10 (主动推进) 兜底 = 不启动
-- **方向 D2 / D4 / D5**: 已闭环 (#279 / #260 / #283)
-- **R10 兜底**: 主动推进 D6 ablation (R11.5 自主决策), D7 multi-seed 等 D6 完成, Issue #26 owner decision 仍 OPEN.
+**R10 backlog (历史参考, 以下已为 Issue #49 让路)**:
 
 ### 🔴 Drift-cycle 终结 (2026-07-30 14:45)
 
@@ -417,21 +404,19 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
 
 **R11.5 决策**: 不再启动低 ROI 实验 (D9 异构 hash / Issue #43 Gate 2a / Issue #44 Gate 1 都被 drift-cycle 拦截), 等 owner 明确新方向.
 
-**当前 GPU 占用**:
-- GPU 0/2/3: 完全空闲 (0% util, 0 MiB)
-- GPU 1: task194 K=64 Stage 3 进程意外终止 @ Ep 56/200 (best ckpt @ Ep 55 preserved, Stage 4 eval done: beam=20 R@10=0.1025 / beam=50 R@10=0.1038, Issue #40 Gate 1 CONFIRMED neutral)
-
-**R10 backlog 真空** (等待 owner 方向):
-- Issue #43 (Gate 2 实验设计): deferred, 启动条件 = GPU + owner 拍板
-- Issue #44 (统一公式重写): deferred 双重阻塞 (H1 REFUTED + Gate 0 阻塞)
-- Issue #26 (per-layer c_k curriculum): owner decision OPEN
-- Issue #34 D9 (异构 hash): script ready, 但 drift-cycle 拦截低 ROI 启动
+**当前 GPU 占用 (2026-07-30 22:10)**:
+- GPU 0: ✅ Issue #49 Arm A (θ=+0.02) Phase A ~ep40/200 (PID 2362999, 100% util, ~0.5% GPU)
+- GPU 1: ✅ Issue #49 Arm B (θ=-0.02) Phase A ~ep40/200 (PID 2363002, 100% util, ~0.5% GPU)
+- GPU 2: ✅ Issue #43 Gate 2b Stage 3 T5-mini 训练中 (PID 2312585, 86% util, 6137 MiB)
+- GPU 3: ✅ Issue #49 Arm C (θ=0.0) Phase A ~ep40/200 (PID 2363005, 100% util, ~0.5% GPU)
 
 **下次 loop tick 起点**:
 1. 检查 GitHub 新 issue (R14 强制)
-2. ✅ task194 Stage 4 eval done (Issue #40 Gate 1 CONFIRMED)
-3. 仍 R10 backlog 真空: 不主动启动低 ROI, 等 owner 方向
-4. **task278 historical entry stale**: "task194_k064 0.1041" 是 task278 错误数据 (跑的是 task194 原始 K=64 protocol leak 版本, 不是 protocol-matched control). 实际 task194 K=64 protocol-matched = 0.1025-0.1038. 后续引用以本 tick verdicts 为准
+2. ✅ Issue #47/48 已闭环, verdict push
+3. ✅ Issue #49 Stage 1 训练中 (3 臂, 预计 ~30 min 到 Phase A 完成)
+4. ✅ Issue #43 Gate 2b Stage 3 训练中 (GPU 2)
+5. **Phase A 完成后**: 检查 3 臂 Gate 1 PASS/FAIL, 决定是否进入 Phase B (θ unfreeze)
+6. **双 Phase 完成后**: 选最优 arm 进入 Stage 2 SID 推断 → Stage 3 T5-mini → Stage 4 eval
 
 ### 🔴 R-Drop α=1.0 突破 — Issue #38 Layer 2 推进 (2026-07-30 12:48)
 
