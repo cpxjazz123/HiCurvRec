@@ -94,12 +94,44 @@ class HRQVAEWithHypPre(nn.Module):
 
     When self.hyp_pre.enabled = False, behavior is identical to plain HRQVAE
     (regression-safe).
+
+    Module composition: `base` is registered as a submodule so its parameters
+    enumerate through the standard nn.Module mechanism. The Trainer accesses
+    `model.hrq`, `model.encoder`, etc. — these are aliased as properties that
+    forward to the base module's attributes (so upstream Trainer works without
+    source patch).
     """
 
     def __init__(self, base_hrqvae: HRQVAE, c: float = 0.74, enabled: bool = True):
         super().__init__()
+        # Register base as a submodule -> its parameters enumerate naturally
         self.base = base_hrqvae
         self.hyp_pre = HypPreEncoder(c=c, enabled=enabled)
+
+    # Property aliases for Trainer compatibility (model.hrq, .encoder, .decoder)
+    @property
+    def hrq(self):
+        return self.base.hrq
+
+    @property
+    def encoder(self):
+        return self.base.encoder
+
+    @property
+    def decoder(self):
+        return self.base.decoder
+
+    @property
+    def in_dim(self):
+        return self.base.in_dim
+
+    @property
+    def num_emb_list(self):
+        return self.base.num_emb_list
+
+    @property
+    def e_dim(self):
+        return self.base.e_dim
 
     def forward(self, x, use_sk=True, rho_target_batch=None):
         x = self.hyp_pre(x)
@@ -109,6 +141,9 @@ class HRQVAEWithHypPre(nn.Module):
     def get_indices(self, x, use_sk=True):
         x = self.hyp_pre(x)
         return self.base.get_indices(x, use_sk=use_sk)
+
+    def compute_loss(self, *args, **kwargs):
+        return self.base.compute_loss(*args, **kwargs)
 
 
 # ────────────────────────────────────────────────────────────

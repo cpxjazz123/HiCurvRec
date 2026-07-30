@@ -329,6 +329,48 @@ bash scripts/audit_r9_compliance.sh
 
 ---
 
+## R15：Issue 完成时 verdict 必须 push 到仓库 (2026-07-30 新增, 硬规则)
+
+> **背景**: 用户 2026-07-30 反馈, 早期 issue (#1-#100) verdict 写完但只 commit 不 push, reviewer 看不到完整闭环记录. R9-Enforce + R14 处理流程仍未强制 push, 历史 verdict 滞留本地. R15 强制 push 闭环.
+
+### R15 核心要求
+- ✅ **每次 issue 闭环时** (写完 verdict 文件 + commit), **必须** `git push` 把 commit 推到 origin (默认主分支 `main`).
+- ✅ **commit message 必须含**: issue 编号 + 关键结论 + verdict 路径. 例: `Issue #43 Gate 2a PASS (Task #334): HypPreEncoder 5/5 test, c=0.74. verdicts/task334_issue43_gate2a_hyp_pre_encoder_result.md`
+- ✅ **verdict 文件本身必须 tracked in git** (不能只在本地 untracked 状态). R8 + R9-Enforce 已保证 verdict 文件被 `git add`, R15 保证 commit 被 push.
+- ✅ **push 之前必跑**: `git status --short` 确认 working tree 干净.
+- ✅ **push 之后必跑**: `git log --oneline -1` 确认 commit hash 已落在 origin (`git fetch origin` 验证).
+
+### R15.1 例外 / 豁免
+- ⏸️ **本地调试 / 中间产物**: 未完成的中间 verdict / 调试 log / scratch files **不强制 push**.
+- ⏸️ **GPU 训练中的中间 ckpt**: `products/task<N>/*.pth` 大型 binary 通常 `.gitignored` 或选择性 push.
+- ⏸️ **不可逆操作**: 任何 `--force` push / branch 改写 / tag 删除 → 严禁, 必须 owner 显式授权.
+
+### R15.2 与现有规则的关系
+- **R14 (issue 自动处理) > R15**: R14 已要求 commit, R15 加强 push (commit 在本地 ≠ reviewer 可见).
+- **R8 (§16 清理) + R15**: 完成 issue 时既要从 §16 表格删除行, 又要 push verdict.
+- **R9-Enforce (descriptions/ contiguous) + R15**: descriptions + verdicts 都必须 tracked AND pushed.
+- **R11.5 自主决策 + R15**: 默认 push. 不允许"等用户授权 push" (push 是 reviewer transparency 的硬要求, 不是 R11.4 critical 决策).
+
+### R15.3 实施细节
+- **push 命令**: `git push origin main` (默认无 --force). 若 push 失败 (网络/auth), 在 issue comment 注明 + 标记 §16 backlog 真空状态 + 重试.
+- **CI / lint 兼容**: push 前本地跑 `python3 -m py_compile` (R4 强制) + dispatcher 5/5 PASS (R14 配套).
+- **频率**: 每个 issue 闭环 push 一次 (跟 commit 同频). 不允许批量 push (合并多 issue 单一 commit 难追踪).
+- **关联 commit 跟 issue**: `gh issue close` 时 commit 自动关联. 若 GitHub UI 不显示, 在 issue comment 里手动贴 commit hash.
+
+### R15.4 关键 caveat
+- ❌ **禁止** 把 R15 误用为"push 一切" — 大型 ckpt / logs / pids 仍按 .gitignore 规则保留本地.
+- ❌ **禁止** 在 push 失败时跳过该 issue — 失败即记录 + 重试, 不允许静默 skip (R2 不允许 fallback).
+- ❌ **禁止** 用 fallback 跳过 push.
+
+### R15.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-30 R15 新增 | 早期 issue (#1-#100) verdict 滞留本地, reviewer 看不到完整闭环 | R14 commit 默认不 push, R8 + R9-Enforce 没强制 push | R15 强制 push 闭环 | 每次 issue 闭环必 push |
+
+
+---
+
 ## GPU 环境（当前节点）
 
 | 项目 | 状态 |

@@ -302,6 +302,40 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 - R12 (checkpoint 强制保存) > R14: issue 触发的训练仍遵守 R12 强制 ckpt 保存
 
 
+### §15.7 R15 Issue 完成时 verdict 文件必须 push 到仓库 (2026-07-30 用户新增)
+
+> **用户要求 (2026-07-30)**: 每次完成 issue 的时候, 都需要把对应的完成这个 issue 的 verdict 文件推送到仓库.
+> **事故背景**: 早期 issue (#1-#100) verdict 写完但只 commit 不 push, reviewer 看不到完整闭环记录. 后续 R9-Enforce + R14 处理流程仍未强制 push, 历史 verdict 滞留本地.
+
+**强制规则**:
+- ✅ **每次 issue 闭环时** (写完 verdict 文件 + commit), **必须** `git push` 把 commit 推到 origin (默认推到主分支 `main`).
+- ✅ **commit message 必须含**: issue 编号 + 关键结论 + verdict 路径. 例: `Issue #43 Gate 2a PASS (Task #334): HypPreEncoder 5/5 test, c=0.74. verdicts/task334_issue43_gate2a_hyp_pre_encoder_result.md`
+- ✅ **verdict 文件本身必须 tracked in git** (不能只在本地 untracked 状态). R8 + R9-Enforce 已保证 verdict 文件被 `git add`, R15 保证 commit 被 push.
+- ✅ **push 之前必跑**: `git status --short` 确认 working tree 干净, 无未跟踪残留.
+- ✅ **push 之后必跑**: `git log --oneline -1` 确认 commit hash 已落在 origin (用 `git ls-remote origin main` 或 `git fetch origin` 验证).
+
+**例外 / 豁免**:
+- ⏸️ **本地调试 / 中间产物**: 未完成的中间 verdict / 调试 log / scratch files **不强制 push** (R2 不允许 fallback 掩盖错误, 但允许中间产物本地滞留).
+- ⏸️ **GPU 训练中的中间 ckpt**: `products/task<N>/*.pth` 大型 binary 通常 `.gitignored` 或选择性 push (per R12 R88 daemon 验证需要本地可达).
+- ⏸️ **不可逆操作**: 任何 `--force` push / branch 改写 / tag 删除 → 严禁. 必须 owner 显式授权.
+
+**与现有规则的关系**:
+- **R14 (issue 自动处理) > R15**: R14 已要求 commit, R15 加强 push (commit 在本地 ≠ reviewer 可见).
+- **R8 (§16 清理) + R15**: 完成 issue 时既要从 §16 表格删除行, 又要 push verdict.
+- **R9-Enforce (descriptions/ contiguous) + R15**: descriptions + verdicts 都必须 tracked AND pushed.
+- **R11.5 自主决策 + R15**: 默认 push. 不允许"等用户授权 push" (push 是 reviewer transparency 的硬要求, 不是 R11.4 critical 决策).
+
+**实施细节**:
+- **push 命令**: `git push origin main` (默认无 --force). 若 push 失败 (网络/auth), 在 issue comment 注明 + 标记 §16 backlog 真空状态 + 重试.
+- **CI / lint 兼容**: push 前本地跑 `python3 -m py_compile` (R4 强制) + dispatcher 5/5 PASS (R14 配套).
+- **频率**: 每个 issue 闭环 push 一次 (跟 commit 同频). 不允许批量 push (合并多 issue 单一 commit 难追踪).
+
+**关键 caveat**:
+- ❌ **禁止** 把 R15 误用为"push 一切" — 大型 ckpt / logs / pids 仍按 .gitignore 规则保留本地.
+- ❌ **禁止** 在 push 失败时跳过该 issue — 失败即记录 + 重试, 不允许静默 skip.
+- ❌ **禁止** 用 fallback 跳过 push (R2 兜底).
+
+
 ## §16. 当前活跃任务
 
 > **🟡 §16 当前状态 (2026-07-30 当前)**: Issue #9/#10/#11/#12/#13/#16/#18/#19/#20/#28/#29/#31/#33 已 NO-GO 闭环. **Issue #41 (Task #331/332) + Issue #43 (Task #334) 全 3 Gate 闭环 — Gate 0 三段式 (input h-MDS κ=-2.0 / residual κ=0 / class tree κ=-0.739) + Gate 1 设计 4 候选 A/B/C/D (推荐 A 预量化感知) + Gate 2a HypPreEncoder 实施 PASS (5/5 regression test, c=0.74 Ollivier mean, wrapper 模式不改 upstream). Issue #43 Gate 2b (Task #336) PENDING owner 拍板启动 Stage 1 训练. Issue #42 (Task #331/333) RECORDING + 实施层 NO-GO 联立闭合 — task333 v1+v2 5/5 FAIL + **R137 κ=0 dead-point 假设 REFUTED (autograd grad=8030 非零)**. **Issue #44 (Task #335) Gate 1 NO-GO 闭环** — 4/5 FAIL (T1/T2/T3 数学正确性 FAIL, T4/T5 PASS) + 联立 task333 NO-GO, H1 前提持续 REFUTED. 函数保留为 opt-in flag (--use_unified_dist, 默认 OFF). Issue #30 仍是当前唯一有效 GO marginal (R@10=0.1022). **Task #327 (K=256+Issue #30 synergy) NO-GO 闭环 — Stage 4 R@10=0.0859 (-15.8% baseline), 协同假说 REFUTED**. **Task #328 (R-Drop α sweep 4-arm) Stage 4 NO-GO + K9 新维度 — val_R@10=0.1225 (α=1.0) 但 test_R@10=0.0 全 arm (CUDA Xid 43 driver fault). K9: R-Drop × Issue #30 SID 联合失配, 不再叠 R-Drop + Issue #30, 单独 Issue #38 (task320 α=1.0 baseline SID R@10=0.1034) 仍 GO**. **Task #287/284/144 κ-decouple 联立**: K=64/128/256 跳崖退化 −15% 到 −18%, κ-decouple 是 L0 杠杆不是 R@10 杠杆. **§16 R10 backlog 真空维持**: 17 方向 × 17 verdict 收口, Issue #30 唯一 GO marginal.
