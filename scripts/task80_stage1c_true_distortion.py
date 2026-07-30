@@ -340,11 +340,17 @@ def compute_true_distortion(
     """
     rng = np.random.default_rng(seed)
     N = residual.shape[0]
+    # Issue #41 fix: residual may be torch.Tensor (from extract_per_layer_residuals_inline)
+    # Normalize to numpy float32 first
+    if hasattr(residual, 'cpu'):
+        residual_np = residual.detach().cpu().numpy().astype(np.float32)
+    else:
+        residual_np = np.asarray(residual, dtype=np.float32)
     if N > n_subset:
         idx = rng.choice(N, size=n_subset, replace=False)
-        sub = residual[idx].astype(np.float32)
+        sub = residual_np[idx]
     else:
-        sub = residual.astype(np.float32)
+        sub = residual_np
     n = sub.shape[0]
     d_use = min(d, sub.shape[1])
 
