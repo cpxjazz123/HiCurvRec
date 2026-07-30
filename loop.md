@@ -340,7 +340,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 | **(Issue #39)** | **Task #324 (Issue #39 Stage 4 召回改造 5-arm)** | **❌ NO-GO 收口 — Part 1 ANN dense (R@10=0.011 protocol 数量级失败) + Part 2 T5.generate SID (D_beam100 R@10=0.1041 ≈ Issue #30 marginal 0 增益, D_beam200 OOM, Arms A/B/C 未实现 ~3-5 天 ROI 低不投入). task243 ckpt BROKEN (R@10=0.0000), 改用 task301 Issue #30 ckpt 验证 baseline. Issue #39 全 NO-GO 收口, GitHub closed** |
 | **(Issue #38)** | **Task #320 (Stage 3 协议改造 5-arm: AdamW-cosine / Adam-inv_sqrt / R-Drop α=1.0 / BF16 / Adam-control)** | **✅ PARTIAL GO — 5 arms Stage 4 K=100 eval 完成: Arm C R-Drop α=1.0 = test_R@10=0.1034 (+1.4% baseline, +0.0014 绝对值) ⭐⭐⭐ 唯一 GO 实证, val_R@10=0.1243 (5 arms 最高 +10% vs anchor 0.1053); Arm A/B/D/E NO-GO (-7.6%/-8.1%/-3.6%/-3.9%). val/test gap -0.021 跨 5 arms 一致 (structural trait, 来自 Stage 2 SID 配置). R-Drop 同时抬 val+test (+0.005 each), 不缩 gap. Issue #38 在 2026-07-30 12:53 AEST 重新打开 (issuecomment 5125856432 已发 status update), owner 重申 Stage 3 训练协议改造方向. 后续 = Task #328 R-Drop alpha sweep (α ∈ {0.5, 1.0, 2.0, 4.0}) + Issue #38 综合 9-arm verdict (~5h 落地后)** |
-| **(Issue #38 Layer 2)** | **Task #328 (R-Drop alpha sweep 4-arm: α=0.5/1.0/2.0/4.0)** | **🔄 READY (R10 backlog 候选, descriptions/task328_issue38_followup_rdrop_alpha_sweep.md 已注册). 目标: 任何 arm R@10 > 0.1053 (task194_k0256 anchor) = 实质突破 Stage 3 ceiling. 4×L40S 并行 ~3.5 hr wall time** |
+| **(Issue #38 Layer 2)** | **Task #328 (R-Drop alpha sweep 4-arm: α=0.5/1.0/2.0/4.0)** | **🔄 RUNNING (4×L40S 并行, α=0.5 GPU 0 PID 1786849 + α=1.0 GPU 2 PID 1787021 + α=2.0 GPU 3 PID 1787191 + α=4.0 待 GPU 1 释放 ~3-4 hr 后; 3/4 arms 已启动 ep9-11/200, val_R@10 α=0.5=0.0932 / α=1.0=0.0878 / α=2.0=0.0873 早期训练正常 loss decay). 目标: 任何 arm R@10 > 0.1020 (task84 baseline, **Issue #40 Gate 0 FAIL 后修正 anchor**, 原 task194 0.1053 anchor 不可信) = 实质突破 Stage 3 ceiling. 4×L40S 并行 ~3.5 hr wall time** |
+| **(Issue #40 Gate 0)** | **Task #329 (Issue #40 Gate 0 task194 baseline audit)** | **❌ FAIL (4 项协议差异识别: Stage 1 batch_size 1024 vs 256 + epochs 1000 vs 500; Stage 2 sk_epsilons argmin vs Sinkhorn+0.003 + ckpt best_loss vs best_collision). task194_k0256 R@10=0.1053 anchor 不可信. Issue #37 closure 反转 + Issue #30 GO marginal 0.1022 恢复 + task328 decision threshold 改 vs baseline 0.1020. Issue #40 GitHub closed --reason completed (commit 222a144). verdicts/task329_issue40_gate0_protocol_audit.md + verdicts/task329_gate0_pass_fail.json 落盘** |
+| **(Issue #34 D9)** | **Task #330 (D9 per-layer 异构 hash 函数族 + 每层多个候选 SID slot)** | **🔄 PENDING (Issue #34 OPEN, R10 backlog 候选; 等 task328 R-Drop alpha sweep 落地后启动)** |
 
 ### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31/#33 闭环后, 2026-07-30)
 
@@ -379,11 +381,11 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
 
 **Layer 2 follow-up = Task #328 R-Drop alpha sweep** (R10 backlog 候选):
 - α ∈ {0.5, 1.0, 2.0, 4.0} 4-arm 200 epoch
-- 目标: R@10 > 0.1053 (task194_k0256 anchor) = Stage 3 ceiling 突破
+- 目标: R@10 > 0.1020 (task84 baseline, **Issue #40 Gate 0 FAIL 后修正 anchor**, 原 task194 0.1053 anchor 不可信) = Stage 3 ceiling 突破
 - 4×L40S 并行 ~3.5 hr wall time
 - descriptions/task328_issue38_followup_rdrop_alpha_sweep.md 已注册 (R9-Enforce max+1 = 328 ✅)
 - Issue #38 reopened + corrected verdict 已落地 (PARTIAL GO)
-- 决策阈值: 任何 α > 0.1053 → Issue #38 fully GO; 否则 → α=1.0 ceiling 锁定, 转向 Stage 4 召回改造 (Issue #39 Part 2)
+- 决策阈值: 任何 α > 0.1020 → Issue #38 fully GO; 否则 → α=1.0 ceiling 锁定, 转向 Stage 4 召回改造 (Issue #39 Part 2)
 
 **R-Drop vs Stage 4 召回协同空间** (R11.5 探索):
 - Stage 3 R-Drop 抬 absolute level +1.4% (Stage 2 配置不变)
