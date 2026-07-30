@@ -1,0 +1,19 @@
+{
+  "task": "task482_issue57_stage4_eval",
+  "arm": "hyp",
+  "sid_embedding_init": "hyperbolic",
+  "hyp_c": 0.74,
+  "ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task159/ckpt/Instruments/Jul-30-2026_23-38-59/HG_Rec_best.pth",
+  "note": "Issue #57 Stage 4 eval: random vs hyp (sphere) init baseline",
+  "test_recalls": {
+    "Recall@5": 0.07609395089138543,
+    "Recall@10": 0.09165862294697853,
+    "Recall@20": 0.11116473621268069
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.06380452725741452,
+    "NDCG@10": 0.06879174675519172,
+    "NDCG@20": 0.07371003161324728
+  },
+  "elapsed_sec": 17.047942638397217
+}
