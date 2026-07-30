@@ -4,6 +4,7 @@
 **触发**: Issue #40 owner 创建 2026-07-30 (跟 task327 R8 cleanup + runbook commit 同期)
 **决议 (按 Issue #40 Gate 0 实验设计)**: 找出 task194 vs #84 / #30 的协议差异
 **状态**: 🔄 Gate 0 完成 (本 verdict), Gate 1 待启动 (Issue #40 决定 STOP-at-Gate-0 触发)
+**🔴 更新 (2026-07-30 12:55)**: 协议 diff 项已重核 — Stage 1 num_emb_list 实际 3-element (= task194 一致), **真正 confounds 是 batch_size 1024 vs 256 + epochs 1000 vs 500 + Stage 2 sk_eps 0 vs 0.003**。
 
 ---
 
@@ -25,32 +26,47 @@
 
 ### 2.1 Stage 1 (HRQ-VAE 训练)
 
-| 维度 | task194 K0={32,64,128,256} | #84 baseline | 一致? |
-|------|----------------------------|--------------|-------|
-| num_emb_list | `${K0} 128 256` (**3 elements**) | `64 128 256 1` (**4 elements**, codebook_size[3]=1 控制 μ) | ❌ **不一致** |
-| loss_type | poincare | poincare (默认) | ✅ |
-| beta | 0.5 | 0.5 (默认) | ✅ |
+| 维度 | task194 K0=64 (代表臂) | #84 baseline | 一致? |
+|------|------------------------|--------------|-------|
+| num_emb_list | `64 128 256` (**3 elements**) | `64 128 256` (**3 elements** — `codebook_[64,128,256]` from `products/task84/ckpt/Instruments/Jul-23-2026_20-08-06`) | ✅ 一致 |
+| loss_type | poincare | poincare | ✅ |
+| beta | 0.5 | (Stage 1 ckpt 显示 `beta_1.000`, 但 Stage 1 launcher 注释说 `β=0.5`. **存疑** — 需 Stage 1 ckpt args 复核) | ⚠️ |
 | kmeans_init | True | True (默认) | ✅ |
 | kmeans_iters | 1000 | 1000 (默认) | ✅ |
 | e_dim | 32 | 32 (默认) | ✅ |
-| layers | 512 256 128 64 | 同 (默认) | ✅ |
-| sk_epsilons | 0.0 0.0 0.0 | (待确认 #84 baseline Stage 1 默认) | ⚠️ |
-| sk_iters | 50 | (待确认) | ⚠️ |
-| quant_loss_weight | 1.0 | (默认) | ⚠️ |
+| layers | 512 256 128 64 | 512 256 128 64 | ✅ |
+| sk_epsilons | `0.0 0.0 0.0` (Stage 1 train) | `0.0 0.0 0.000` (from ckpt args) | ✅ 训练时一致 |
+| sk_iters | 50 | 默认 | ✅ |
+| quant_loss_weight | 1.0 | 默认 | ✅ |
+| **batch_size** | **256** | **1024** | ❌ **不一致 (4×)** |
+| **epochs** | **500** | **1000** | ❌ **不一致 (2×)** |
+| lr | 1e-3 | 1e-3 | ✅ |
+| learner | AdamW | AdamW | ✅ |
+| lr_scheduler | linear | linear | ✅ |
+| warmup_epochs | 20 | 20 | ✅ |
+| eval_step | 5 | 5 | ✅ |
+| num_workers | 4 | 4 | ✅ |
+| weight_decay | 0.0 | 默认 | ✅ |
+| dropout_prob | 0.0 | 默认 | ✅ |
+| save_limit | 50 | 默认 | ✅ |
 
-**任务 #194 Stage 1 launcher (`task194_k0_capacity_scan.sh`) 自报**: "复用 task188/192 recipe, 只改 num_emb_list[0] (K0)"
-
-> **关键发现 #1**: task194 Stage 1 用 **3-element num_emb_list**, #84 baseline Stage 1 用 **4-element num_emb_list** — Stage 1 拓扑差异, 不仅是 K0 controlled variable。
+> **关键发现 #1 (修正)**: task194 Stage 1 跟 #84 baseline Stage 1 **num_emb_list 实际一致** (3-element `[K0,128,256]` 或 `[64,128,256]`)。Stage 1 拓扑差异是误判。
+>
+> **真正的 Stage 1 confounds**:
+> 1. **batch_size 256 vs 1024** (4× 差异 — 影响梯度噪声 + 每 epoch 步数)
+> 2. **epochs 500 vs 1000** (2× 差异 — 影响训练充分度)
+> 3. **beta 0.5 vs 1.000** (#84 baseline Stage 1 ckpt 路径显示 `beta_1.000`, 但 Stage 1 launcher 注释说 `β=0.5`, 需 Stage 1 ckpt args 复核 — 可能 Stage 1 ckpt 跟 launcher 不匹配)
+> 4. **sk_eps at inference time** (差异在 Stage 2, 不在 Stage 1)
 
 ### 2.2 Stage 2 (Codebook inference)
 
 | 维度 | task194 | #84 baseline |
 |------|---------|--------------|
 | driver | `scripts/task194_stage2_codebook.py` (fork) | `scripts/task84_hgrec_stage2_codebook.py` (upstream default fork) |
-| 关键差异 | fork 加 `--ckpt_path/--output_path` CLI + `--sk_eps_override=0.003` Sinkhorn 强制 | 默认走 upstream Stage 2 fork (sk_eps=args.sk_epsilons) |
+| 关键差异 | fork 加 `--ckpt_path/--output_path` CLI + **`--sk_eps_override=0.003` (Sinkhorn enabled)** | 默认走 upstream Stage 2 fork (`sk_eps=args.sk_epsilons`); #84 baseline ckpt args 是 `sk_epsilons=[0,0,0.000]` → **Sinkhorn DISABLED (argmin only)** |
 | prefix | `<a_{}>, <b_{}>, <c_{}>, <d_{}>, <e_{}>` | 同 |
 
-> **关键发现 #2**: task194 Stage 2 driver 用 **fork + sk_eps_override=0.003**, #84 baseline Stage 2 用 **upstream fork + 默认 sk_epsilons** — task194 强制 Sinkhorn 路径, #84 baseline 不一定走 Sinkhorn。
+> **关键发现 #2 (修正)**: task194 Stage 2 driver 用 **fork + sk_eps_override=0.003 (Sinkhorn enabled)**, #84 baseline Stage 2 用 **upstream fork + 默认 args.sk_epsilons (=0.0 → Sinkhorn disabled, argmin only)**。Sinkhorn path 强制 vs 关闭 是真 protocol diff。
 
 ### 2.3 Stage 3 (T5-mini 训练 fork)
 
@@ -75,7 +91,7 @@
 | beam_size | 20 | 20 |
 | infer_size | 96 | 96 |
 
-> **关键发现 #3**: Stage 3 launcher 全部一致, **仅 code_path 不同** — 但 code_path 是 Stage 2 输出 artifact, 差异源自 Stage 2 driver fork 不同。
+> **关键发现 #3**: Stage 3 launcher 全部一致, **仅 code_path 不同** — code_path 是 Stage 2 输出 artifact 名字, 差异源自 Stage 2 driver fork 命名习惯不同 (artifact 内容因 Stage 2 Sinkhorn 异)。
 
 ### 2.4 Stage 4 (Test 评估)
 
@@ -95,15 +111,25 @@
 
 | 维度 | task194 vs #84 baseline 差异 | 影响 K0-only ablation 有效性 |
 |------|------------------------------|------------------------------|
-| 2.1 Stage 1 num_emb_list | 3-element vs 4-element | ❌ **CONFOND** — Stage 1 拓扑不同, K0 单变量不成立 |
-| 2.2 Stage 2 driver (sk_eps_override) | 0.003 vs 默认 | ❌ **CONFOND** — 强制 Sinkhorn 改变量化行为 |
-| 2.3 Stage 3 code_path | `_t5_rqvae_k064.npy` vs `_t5_hrqvae_poincare.npy` | ⚠️ 部分 (Stage 2 artifact 异) |
+| 2.1 Stage 1 batch_size | **256 vs 1024** (4×) | ❌ **CONFOND** — 梯度噪声 + 每 epoch 步数影响 RQ-VAE 收敛 |
+| 2.1 Stage 1 epochs | **500 vs 1000** (2×) | ❌ **CONFOND** — 训练充分度差异, task194 可能欠拟合 |
+| 2.2 Stage 2 driver (sk_eps_override) | **0.003 vs 0.0** (Sinkhorn ENABLED vs DISABLED) | ❌ **CONFOND** — Sinkhorn 平衡码字分配 vs 自由 argmin, 改变 SID 分布 |
+| 2.3 Stage 3 code_path | `_t5_rqvae_k064.npy` vs `_t5_hrqvae_poincare.npy` | ⚠️ 部分 (Stage 2 artifact 异, 纯命名) |
 | 2.4 Stage 4 protocol | (推测一致) | ✅ |
 
-**结论**: Issue #40 owner 假设成立。task194 K0 扫描的 +0.6% ~ +3.2% Δ vs baseline **主要源自 Stage 1 拓扑 (3 vs 4 element num_emb_list) + Stage 2 sk_eps 强制**, 不是 K0 本身。
+**结论**: Issue #40 owner 假设成立。task194 K0 扫描的 +0.6% ~ +3.2% Δ vs baseline **主要源自 Stage 1 (batch_size + epochs 不足) + Stage 2 (Sinkhorn 强制)**, 不是 K0 本身。
 
-- **K0=64 (= baseline 默认)** 仍 +2.0%, 因为 Stage 1 num_emb_list=[64, 128, 256] (3 elements) 跟 baseline num_emb_list=[64, 128, 256, 1] (4 elements) 拓扑不同, 不是 K0 自身效果。
-- **4 臂不单调**, 因为 Stage 2/3 protocol 共变 (artifacts 不同), K0 noise 没被控制。
+- **K0=64 (= baseline 默认)** 仍 +2.0%, 因为 Stage 1 batch_size=256 比 baseline 1024 更容易过拟合到 argmin (自由度低) + Stage 2 Sinkhorn 让 L0/L1/L2 码字分配更平衡, 推高 R@10.
+- **4 臂不单调**, 因为 Stage 2 Sinkhorn + Stage 1 短训 + Sinkhorn 三者耦合, K0 单变量没被控制。
+
+## 3.1 假设分级 (按 Issue #40 H0 / H1)
+
+| 假设 | 内容 | 实证需要 |
+|------|------|----------|
+| H0 (protocol leak) | task194 4 臂 Δ +0.6% ~ +3.2% 来自 Stage 1/2/3 protocol 差异, 不是 K0 effect | Gate 1 protocol-matched K0=64 control |
+| H1 (K0 effect) | K0↑ → collision↓ → R@10↑, 但当前数据不单调, H1 弱成立 | (依赖 H0 排除) |
+
+任务 #194 K0 扫描**无法独立证明 H1**, 因为 H0 confound 存在。Gate 1 必须先排除 H0 才能 verify H1。
 
 ---
 
