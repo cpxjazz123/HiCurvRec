@@ -48,12 +48,13 @@ from task334_issue43_gate2a_hyp_pre_encoder import HRQVAEWithHypPre  # noqa: E40
 def check_input_scale(data, c=0.74):
     """Warn if input ‖x‖ exceeds Poincaré ball boundary 1/√c (≈1.16 for c=0.74).
 
-    expmap0 saturates to boundary when ‖x‖ > 1/√c. For Musical_Instruments
-    item_emb.parquet, ‖x‖ ≈ √768·σ. With σ ≈ 0.07-0.15 (sentence-T5 embeddings
-    are L2-normalized), ‖x‖ ≈ 2-4, well above boundary. The Stage 1 trainer
-    expects inputs in a safe range; we log observed scale for the verdict.
+    For Musical_Instruments item_emb.parquet (sentence-T5 L2-normalized),
+    ‖x‖ ≈ 1.0 — comfortably inside the ball, so expmap0 is in its sensitive
+    regime (no saturation). This diagnostic logs observed scale so the
+    verdict can confirm the assumption.
     """
-    sample = data.tensors[0] if hasattr(data, 'tensors') else data.data
+    # EmbDataset stores numpy embeddings as `data.embeddings` (ndarray shape (N, dim))
+    sample = torch.as_tensor(data.embeddings, dtype=torch.float32)
     norms = sample.norm(dim=-1)
     boundary = 1.0 / (c ** 0.5)
     print(f"[Issue #43 Gate 2b] Input scale diagnostic:")
@@ -171,11 +172,9 @@ def main():
         n_params_base = sum(p.numel() for p in base.parameters())
         n_params_wrapped = sum(p.numel() for p in model.parameters())
         print(f"  Base params: {n_params_base}, Wrapped params: {n_params_wrapped}")
-        # Sanity: forward pass on a small batch
-        with torch.no_grad():
-            sample = data.tensors[0][:2] * 0.03 if hasattr(data, 'tensors') else data.data[:2] * 0.03
-            _ = model(sample.to(args.device), use_sk=False)
-        print(f"  Sanity forward pass OK")
+        # Sanity: skip forward check (kmeans_init=True needs batch >= num_emb to
+        # init codebook; Trainer.fit will fail-fast on any forward issue)
+        print(f"  Skipping pre-fit sanity (kmeans_init needs batch >= num_emb)")
     else:
         model = base
         print(f"[Issue #43 Gate 2b] HypPreEncoder DISABLED (regression baseline)")
