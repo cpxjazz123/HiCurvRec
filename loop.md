@@ -336,7 +336,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(D6 Issue #30 ablation)** | **Task #321 + #322 (Issue #30 r_l + s_l ablation 3-arm)** | **🔴 HALT — task304 已闭环 (Arm A R@10=0.0990 + Arm B R@10=0.0943 + Arm C R@10=0.1022 → synergy CONFIRMED). 重复实验不启动. 转向 task326 K=384 sweet spot probe 取代** |
 | **(K-sweep 扩展)** | **Task #326 (K=384 sweet spot probe)** | **❌ Gate 0 FAIL (USAGE-KILL @ ep30, L0=16.9% < 20%. K-sweep K=256 → K=512 退化曲线闭合). K=256 锁死 anchor** |
 | **(跨方向协同)** | **Task #327 (K=256 anchor + Issue #30 per-layer Codebook Transforms synergy)** | **❌ NO-GO 闭环 — Stage 4 R@10=0.0859 (-15.8% vs HG-Rec baseline 0.1020, -18.4% vs task194 anchor 0.1053). 跨 anchor 全 NO-GO, 协同假说 (K=256 + Issue #30 + K=50 amplifier) REFUTED. Stage 3 Ep~164/200 训练中途崩溃, Stage 4 用 ep~150 ckpt 跑通. verdicts/task327_k256_issue30_synergy_result.md 落盘. Issue #30 仍是当前唯一有效 GO 端点 R@10=0.1022** |
-| **(Issue #40 Gate 1)** | **Task #194 Gate 1 (protocol-matched K0=64 control)** | **🔄 RUNNING (Stage 1 launched GPU 2 PID 1774795 12:56 AEST, recipe = #84 baseline mirror: num_emb_list=[64,128,256] + batch_size=1024 + epochs=1000 + sk_eps=0 (NO Sinkhorn). Stage 1 ~3-4h + Stage 2 5min + Stage 3 ~1.5h + Stage 4 5min = ~5h total. **Issue #40 owner 质疑: task194 +0.6-3.2% 来自 Stage 1 (batch_size 256 vs 1024) + Stage 2 (Sinkhorn 强制 0.003 vs 0.0) protocol leak, 不是 K0 effect**. R@10 ≈ 0.1020 → task194 0.1053 anchor 不可信, 需从 NORTH STAR ceiling 撤销 + #30 GO marginal 恢复 + #37 closure baseline 反转 + task327 decision threshold 改 vs baseline 0.1020 / R@10 ≈ 0.1041 → task194 protocol 真有效, 升级查 #84 baseline Stage 1/2 bug)** |
+| **(Issue #40 Gate 1)** | **Task #194 Gate 1 (protocol-matched K0=64 control)** | **✅ CONFIRMED — Stage 3 best ckpt @ Ep 55 (process terminated at Ep 56, R12 ckpt preserved), Stage 4 eval done: beam=20 R@10=0.1025 (+0.5pp vs baseline) + beam=50 R@10=0.1038 (+1.8pp). **Issue #40 Gate 1 CONFIRMED**: K-scaling (K=64 vs K=256) NOT a real R@10 lever. task194 K=0256 0.1053 anchor 100% 来自 Stage 2 Sinkhorn 0.003 + best_collision ckpt selection protocol leak (Gate 0 识别), 永久撤销. K=64 protocol-matched 统计中性, 跟 baseline 持平. 后续任何 anchor 引用: 0.1020 (baseline) / 0.1022 (Issue #30 GO) ONLY. verdicts/task194_issue40_gate1_protocol_match_verdict.md + task194_armA_beam{20,50}_metrics.json 落盘** |
 
 | **(Issue #39)** | **Task #324 (Issue #39 Stage 4 召回改造 5-arm)** | **❌ NO-GO 收口 — Part 1 ANN dense (R@10=0.011 protocol 数量级失败) + Part 2 T5.generate SID (D_beam100 R@10=0.1041 ≈ Issue #30 marginal 0 增益, D_beam200 OOM, Arms A/B/C 未实现 ~3-5 天 ROI 低不投入). task243 ckpt BROKEN (R@10=0.0000), 改用 task301 Issue #30 ckpt 验证 baseline. Issue #39 全 NO-GO 收口, GitHub closed** |
 | **(Issue #38)** | **Task #320 (Stage 3 协议改造 5-arm: AdamW-cosine / Adam-inv_sqrt / R-Drop α=1.0 / BF16 / Adam-control)** | **✅ PARTIAL GO — 5 arms Stage 4 K=100 eval 完成: Arm C R-Drop α=1.0 = test_R@10=0.1034 (+1.4% baseline, +0.0014 绝对值) ⭐⭐⭐ 唯一 GO 实证, val_R@10=0.1243 (5 arms 最高 +10% vs anchor 0.1053); Arm A/B/D/E NO-GO (-7.6%/-8.1%/-3.6%/-3.9%). val/test gap -0.021 跨 5 arms 一致 (structural trait, 来自 Stage 2 SID 配置). R-Drop 同时抬 val+test (+0.005 each), 不缩 gap. Issue #38 在 2026-07-30 12:53 AEST 重新打开 (issuecomment 5125856432 已发 status update), owner 重申 Stage 3 训练协议改造方向. 后续 = Task #328 R-Drop alpha sweep (α ∈ {0.5, 1.0, 2.0, 4.0}) + Issue #38 综合 9-arm verdict (~5h 落地后)** |
@@ -383,7 +383,7 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
 
 **当前 GPU 占用**:
 - GPU 0/2/3: 完全空闲 (0% util, 0 MiB)
-- GPU 1: task194 K=64 Stage 3 训练中 (88% util, 6137 MiB, started 13:58, ~1.5h 预计完成 ~15:30)
+- GPU 1: task194 K=64 Stage 3 进程意外终止 @ Ep 56/200 (best ckpt @ Ep 55 preserved, Stage 4 eval done: beam=20 R@10=0.1025 / beam=50 R@10=0.1038, Issue #40 Gate 1 CONFIRMED neutral)
 
 **R10 backlog 真空** (等待 owner 方向):
 - Issue #43 (Gate 2 实验设计): deferred, 启动条件 = GPU + owner 拍板
@@ -393,8 +393,9 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
 
 **下次 loop tick 起点**:
 1. 检查 GitHub 新 issue (R14 强制)
-2. 检查 GPU 1 task194 是否完成 (CPU % + GPU util)
-3. 若 task194 完成且无新 issue → 报告 GPU 空闲 + 等 owner 方向, 不主动启动低 ROI
+2. ✅ task194 Stage 4 eval done (Issue #40 Gate 1 CONFIRMED)
+3. 仍 R10 backlog 真空: 不主动启动低 ROI, 等 owner 方向
+4. **task278 historical entry stale**: "task194_k064 0.1041" 是 task278 错误数据 (跑的是 task194 原始 K=64 protocol leak 版本, 不是 protocol-matched control). 实际 task194 K=64 protocol-matched = 0.1025-0.1038. 后续引用以本 tick verdicts 为准
 
 ### 🔴 R-Drop α=1.0 突破 — Issue #38 Layer 2 推进 (2026-07-30 12:48)
 
