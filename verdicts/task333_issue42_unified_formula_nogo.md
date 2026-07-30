@@ -19,18 +19,19 @@
 
 ## 2. 实测结果 (5/5 FAIL)
 
-| 测试 | 期望 | 实测 | 解读 |
-|------|------|------|------|
-| `kappa_zero_gradient` | new_grad ≠ 0 | new_grad=**NaN**, R137 grad=**8030** | ❌ **新公式 autograd 直接 NaN, 反不如 R137** |
-| `gradient_continuity` | new 在 κ=0 连续 | new jump=**764.16**, R137 jump=2387.21 | ❌ 新公式 jump 仍然存在, R137 反而 jump 更大 |
-| `kappa_negative_consistency` | 对称性 OK | symmetry_err=**13.32**, monotonic OK | ❌ 对称性破坏 (d(x,y) ≠ d(y,x) 偏差 13.32) |
-| `kappa_positive_consistency` | 球面性质 OK | self=2e-15, all positive, sym=8.9e-16, ≤ π/√κ | ✅ PASS (唯一 PASS 的测试) |
-| `performance` | 不慢于 R137 太多 | new=0.218ms, R137=0.067ms | ⚠️ **3.26× slower**, 工程不实用 |
+| 测试 | 期望 | 实测 (v1: torch.where) | 实测 (v2: sigmoid blend + Taylor) | 解读 |
+|------|------|----------------------|----------------------------------|------|
+| `kappa_zero_gradient` | new_grad ≠ 0 | new=**NaN**, R137=8030 | new=**NaN**, R137=8030 | ❌ sigmoid blend 同样 NaN, 反不如 R137 |
+| `gradient_continuity` | new 在 κ=0 连续 | new jump=**764.16**, R137=2387 | new jump=**772.59**, R137=3206 | ❌ 两种变体均不连续 (jump 仍存在) |
+| `kappa_negative_consistency` | 对称性 OK | symmetry_err=**13.32**, mono=True | symmetry_err=**13.32**, mono=True | ❌ 对称性破坏 (d(x,y) ≠ d(y,x) 偏差 13.32) |
+| `kappa_positive_consistency` | 球面性质 OK | self=2e-15, sym=8.9e-16, ≤ π/√κ | self=2e-15, sym=6.7e-16, ≤ π/√κ | ✅ PASS (唯一 PASS 的测试) |
+| `performance` | 不慢于 R137 太多 | new=0.218ms, R137=0.067ms | new=**0.231ms**, R137=0.067ms | ⚠️ **3.48× slower** (sigmoid blend 略慢) |
 
-**核心 FAIL**:
-1. **新公式 autograd 在 κ=0 直接 NaN** — Möbius addition 的 denominator 在 κ=0 处数值不稳定
-2. **对称性破坏** — `(-x ⊕_κ y)` 和 `(y ⊕_κ -x)` 不是镜像对称, 数值误差 13.32
-3. **3.26× slower** — Möbius + `atanh` 比 R137 直接 `arctan` 慢 3×, 对 Stage 1 RQ-VAE 训练不可接受
+**核心 FAIL** (v1: torch.where + v2: sigmoid blend 同类结果):
+1. **新公式 autograd 在 κ=0 直接 NaN** — Möbius addition 的 denominator 在 κ=0 处数值不稳定 (v1 和 v2 都 FAIL)
+2. **对称性破坏** — `(-x ⊕_κ y)` 和 `(y ⊕_κ -x)` 不是镜像对称, 数值误差 13.32 (v1 和 v2 几乎一致)
+3. **3.48× slower** — Möbius + `atanh` 比 R137 直接 `arctan` 慢 3×, 对 Stage 1 RQ-VAE 训练不可接受
+4. **v2 sigmoid blend 没有改善** — sigmoid 试图用 Taylor + closed-form 平滑过渡, 但 κ=0 仍是 NaN (sigmoid gradient 在 |κ|=threshold 边界仍有尖点)
 
 ---
 

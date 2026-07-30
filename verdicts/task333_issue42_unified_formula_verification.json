@@ -2,7 +2,7 @@
   "test_kappa_zero_gradient": {
     "test": "kappa_zero_gradient",
     "new_grad_autograd": NaN,
-    "new_grad_finite_diff": -1544.6618630647888,
+    "new_grad_finite_diff": -1544.6618630448936,
     "r137_grad_at_kappa0": 8030.093090859003,
     "new_pass": false,
     "r137_dead_point": false,
@@ -12,16 +12,16 @@
     "test": "gradient_continuity",
     "new_continuous_at_kappa0": false,
     "r137_discontinuous_at_kappa0": true,
-    "new_at_kappa0": -772.6165099312047,
+    "new_at_kappa0": -772.5901711037935,
     "r137_at_kappa0": 3206.0935535720364,
-    "new_jump_left": 1684.6766162889367,
+    "new_jump_left": 1684.6502855831086,
     "r137_jump_left": 2387.206362575224
   },
   "test_kappa_negative": {
     "test": "kappa_negative_consistency",
     "self_dist_err": 2e-15,
     "all_positive": true,
-    "symmetry_err": 13.315886075687017,
+    "symmetry_err": 13.315886076131099,
     "monotonic": true,
     "pass": false
   },
@@ -29,16 +29,16 @@
     "test": "kappa_positive_consistency",
     "self_dist_err": 2e-15,
     "all_positive": true,
-    "symmetry_err": 8.881784197001252e-16,
-    "max_dist": 2.2214404690788294,
+    "symmetry_err": 6.661338147750939e-16,
+    "max_dist": 2.2214404690788285,
     "max_geodesic_bound": 4.442882938158366,
     "within_sphere": true,
     "pass": true
   },
   "test_performance": {
     "test": "performance",
-    "new_ms_per_iter": 0.25313854217529297,
-    "r137_ms_per_iter": 0.06510257720947266,
-    "slowdown_factor": 3.888302937083425
+    "new_ms_per_iter": 0.23137569427490234,
+    "r137_ms_per_iter": 0.06653308868408203,
+    "slowdown_factor": 3.4776033827850643
   }
 }

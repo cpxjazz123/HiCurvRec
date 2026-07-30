@@ -66,34 +66,42 @@ def tan_kappa_inverse(x: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     关键: κ=0 分支用 Taylor 极限 (而非退化到 atan(0)/0),
     这样 d/dκ 在 κ=0 处非零 (vs R137 用 .abs() 强行归零).
 
-    实现策略: 用 |κ| >= 1e-6 切换 atan/atanh 分支 (远离 0 时精确),
-    |κ| < 1e-6 时用 Taylor 分支 (避免数值 NaN), 这样保证 autograd 稳定.
+    实现策略: 用 sigmoid blend, 在 |κ|<threshold 区间用 Taylor (数值稳定),
+    在 |κ|>=threshold 区间用 closed-form (精确). sigmoid 保证梯度平滑.
     """
-    # 用 |κ| 作 soft switch, 不用 torch.where (避免分支处 autograd NaN)
-    abs_kappa = kappa.abs().clamp(min=EPS)
-    sqrt_abs_k = torch.sqrt(abs_kappa)
+    abs_kappa = kappa.abs()
+    # 用 abs_kappa + EPS 避免 sqrt(0) = 0 (虽然后面不除以此值, 但安全)
+    sqrt_abs_k = torch.sqrt(abs_kappa + EPS)
 
-    # κ > 0 branch: κ^{-1/2} atan(x κ^{1/2})
-    pos_result = torch.atan(x * sqrt_abs_k) / sqrt_abs_k
+    # 始终用 sqrt(|κ|+EPS), 这样 atan(x*sqrt(|κ|+EPS))/sqrt(|κ|+EPS) 在 κ=0 时:
+    #   = atan(x*sqrt(EPS))/sqrt(EPS) ≈ x*sqrt(EPS)/sqrt(EPS) = x ✓ (无 NaN)
+    # 这种"safe"公式在 κ=0 时自动 ≈ x, 跟 Taylor 极限一致
 
-    # κ < 0 branch: |κ|^{-1/2} atanh(x |κ|^{1/2})
-    # Note: atanh domain is (-1, 1), need clamp
+    # Pos branch: atan(x √|κ|) / √|κ|  (在 κ→0 时 → x)
+    pos_branch = torch.atan(x * sqrt_abs_k) / sqrt_abs_k
+
+    # Neg branch: atanh(x √|κ|) / √|κ|  (在 κ→0 时 → x)
+    # atanh domain is (-1, 1), need clamp
     neg_input = (x * sqrt_abs_k).clamp(min=-1.0 + 1e-7, max=1.0 - 1e-7)
-    neg_result = torch.atanh(neg_input) / sqrt_abs_k
+    neg_branch = torch.atanh(neg_input) / sqrt_abs_k
 
-    # 统一 tan_κ⁻¹: 当 κ 符号 ≥0 时用 atan, 当 κ<0 时用 atanh
-    # 用 sign-based blend 而不是 torch.where (避免 autograd NaN)
-    sign_kappa = torch.sign(kappa)
-    # is_positive = (sign_kappa >= 0).float()  # κ ≥ 0 → atan, κ < 0 → atanh
-    is_positive = ((sign_kappa >= 0) | (kappa == 0)).float()  # κ ≥ 0 用 atan
-    unified = is_positive * pos_result + (1 - is_positive) * neg_result
+    # 根据 κ 符号选择: κ ≥ 0 → pos, κ < 0 → neg
+    # 不直接用 torch.where (可能 NaN) - 用 sign 加权和
+    sign_kappa = torch.sign(kappa)  # +1, -1, or 0
+    # 用 soft blend: 当 sign=0 时均匀混合, 当 sign=±1 时取对应分支
+    pos_weight = (sign_kappa + 1.0) / 2.0  # 0.5 for κ=0, 1.0 for κ>0, 0.0 for κ<0
+    closed_form = pos_weight * pos_branch + (1.0 - pos_weight) * neg_branch
 
-    # 当 |κ| < threshold 时, 替换为 Taylor limit 避免数值 0/0
-    # Taylor: x - (1/3)κ x³
-    taylor_result = x - (1.0 / 3.0) * kappa * x ** 3
-    threshold = 1e-4
-    use_taylor = (abs_kappa < threshold).float()
-    return use_taylor * taylor_result + (1 - use_taylor) * unified
+    # 注: 此时 κ=0 时 closed_form = 0.5*pos + 0.5*neg = 0.5*(x + x) = x ✓
+    # pos/neg 在 κ=0 时都用 sqrt_abs_k=sqrt(EPS), 给出 x
+
+    # Taylor limit (精确在 κ=0)
+    taylor = x - (1.0 / 3.0) * kappa * x ** 3
+
+    # Sigmoid blend: 小 |κ| 用 Taylor (避免数值误差), 大 |κ| 用 closed-form
+    threshold = 1e-3
+    blend_weight = torch.sigmoid((abs_kappa - threshold) / threshold * 5.0)
+    return blend_weight * closed_form + (1.0 - blend_weight) * taylor
 
 
 def unified_k_stereographic_distance(x: torch.Tensor, y: torch.Tensor,
