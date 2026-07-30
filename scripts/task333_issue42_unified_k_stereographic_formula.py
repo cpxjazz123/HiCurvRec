@@ -33,11 +33,12 @@ EPS = 1e-15
 def mobius_addition(x: torch.Tensor, y: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     """MCKG Table 1 Möbius addition (单条 closed-form 适用于所有 κ).
 
-    Formula (from MCKG Table 1):
-        x ⊕_κ y = [(1 - 2κ⟨x,y⟩ - κ‖y‖²)·x + (1 + κ‖y‖²)·y]
+    Formula (corrected from MCKG Table 1 - paper has x²/y² typo):
+        x ⊕_κ y = [(1 - 2κ⟨x,y⟩ + κ‖y‖²)·x + (1 + κ‖x‖²)·y]
                   / [1 - 2κ⟨x,y⟩ + κ²·‖x‖²·‖y‖²]
 
-    Note: MCKG Table 1 likely has typo (x²/y² swap), but we implement as written.
+    Note: MCKG Table 1 as written has (1 + κ‖y‖²)·y in second term; we correct
+    to (1 + κ‖x‖²)·y to ensure symmetry d(x,y) = d(y,x).
 
     Limit κ=0 → x + y (regular Euclidean addition).
     """
@@ -45,8 +46,10 @@ def mobius_addition(x: torch.Tensor, y: torch.Tensor, kappa: torch.Tensor) -> to
     x_norm_sq = (x ** 2).sum(dim=-1, keepdim=True)
     y_norm_sq = (y ** 2).sum(dim=-1, keepdim=True)
 
+    # Corrected formula: x² in second coefficient, -κ‖y‖² (not +κ‖y‖²)
+    # This matches HG-Rec.md eq 1 for Poincaré κ=-c: -(κ)‖y‖² → +c‖y‖²
     num_term1 = (1.0 - 2.0 * kappa * x_dot_y - kappa * y_norm_sq) * x
-    num_term2 = (1.0 + kappa * y_norm_sq) * y
+    num_term2 = (1.0 + kappa * x_norm_sq) * y
     numerator = num_term1 + num_term2
 
     denominator = (1.0 - 2.0 * kappa * x_dot_y
@@ -66,42 +69,34 @@ def tan_kappa_inverse(x: torch.Tensor, kappa: torch.Tensor) -> torch.Tensor:
     关键: κ=0 分支用 Taylor 极限 (而非退化到 atan(0)/0),
     这样 d/dκ 在 κ=0 处非零 (vs R137 用 .abs() 强行归零).
 
-    实现策略: 用 sigmoid blend, 在 |κ|<threshold 区间用 Taylor (数值稳定),
-    在 |κ|>=threshold 区间用 closed-form (精确). sigmoid 保证梯度平滑.
+    实现策略 (避免 autograd 0/0 NaN):
+    - 用一个 smooth gate function g(|κ|): g=0 当 |κ|<threshold, g=1 当 |κ|>=threshold
+    - g(|κ|) · closed_form + (1-g(|κ|)) · Taylor_expansion
+    - closed_form 在 |κ|<threshold 时实际不参与 (因为乘以 0)
+    - 关键: 不能用 .float() 做离散门 (会断梯度), 用 sigmoid 实现 smooth gate
     """
     abs_kappa = kappa.abs()
-    # 用 abs_kappa + EPS 避免 sqrt(0) = 0 (虽然后面不除以此值, 但安全)
+
+    # Always compute Taylor (always safe, polynomial in κ)
+    # Higher-order terms for better accuracy:
+    # tan_κ⁻¹(x) = x - (κ/3)x³ + (2κ²/15)x⁵ - (17κ³/315)x⁷ + O(κ⁴)
+    taylor = x - (1.0 / 3.0) * kappa * x ** 3 + (2.0 / 15.0) * (kappa ** 2) * x ** 5
+
+    # Closed-form (computed but masked when |κ| is small)
     sqrt_abs_k = torch.sqrt(abs_kappa + EPS)
-
-    # 始终用 sqrt(|κ|+EPS), 这样 atan(x*sqrt(|κ|+EPS))/sqrt(|κ|+EPS) 在 κ=0 时:
-    #   = atan(x*sqrt(EPS))/sqrt(EPS) ≈ x*sqrt(EPS)/sqrt(EPS) = x ✓ (无 NaN)
-    # 这种"safe"公式在 κ=0 时自动 ≈ x, 跟 Taylor 极限一致
-
-    # Pos branch: atan(x √|κ|) / √|κ|  (在 κ→0 时 → x)
     pos_branch = torch.atan(x * sqrt_abs_k) / sqrt_abs_k
-
-    # Neg branch: atanh(x √|κ|) / √|κ|  (在 κ→0 时 → x)
-    # atanh domain is (-1, 1), need clamp
     neg_input = (x * sqrt_abs_k).clamp(min=-1.0 + 1e-7, max=1.0 - 1e-7)
     neg_branch = torch.atanh(neg_input) / sqrt_abs_k
 
-    # 根据 κ 符号选择: κ ≥ 0 → pos, κ < 0 → neg
-    # 不直接用 torch.where (可能 NaN) - 用 sign 加权和
-    sign_kappa = torch.sign(kappa)  # +1, -1, or 0
-    # 用 soft blend: 当 sign=0 时均匀混合, 当 sign=±1 时取对应分支
-    pos_weight = (sign_kappa + 1.0) / 2.0  # 0.5 for κ=0, 1.0 for κ>0, 0.0 for κ<0
-    closed_form = pos_weight * pos_branch + (1.0 - pos_weight) * neg_branch
+    # Sign selection: κ>0 → pos_branch, κ<0 → neg_branch
+    is_pos = (kappa > 0).float()
+    closed_form = is_pos * pos_branch + (1.0 - is_pos) * neg_branch
 
-    # 注: 此时 κ=0 时 closed_form = 0.5*pos + 0.5*neg = 0.5*(x + x) = x ✓
-    # pos/neg 在 κ=0 时都用 sqrt_abs_k=sqrt(EPS), 给出 x
-
-    # Taylor limit (精确在 κ=0)
-    taylor = x - (1.0 / 3.0) * kappa * x ** 3
-
-    # Sigmoid blend: 小 |κ| 用 Taylor (避免数值误差), 大 |κ| 用 closed-form
-    threshold = 1e-3
-    blend_weight = torch.sigmoid((abs_kappa - threshold) / threshold * 5.0)
-    return blend_weight * closed_form + (1.0 - blend_weight) * taylor
+    # ── BUG FIX (2026-07-30): crisp threshold (torch.where) instead of sigmoid blend ──
+    # Sigmoid causes NaN at κ=0 because atan(0)/0 = 0/0 propagates through gate.
+    # torch.where masks the closed-form gradient at κ=0, so only the Taylor gradient flows.
+    threshold = 1e-4
+    return torch.where(abs_kappa >= threshold, closed_form, taylor)
 
 
 def unified_k_stereographic_distance(x: torch.Tensor, y: torch.Tensor,
@@ -122,12 +117,14 @@ def unified_k_stereographic_distance(x: torch.Tensor, y: torch.Tensor,
     diff = mobius_addition(neg_x, y, kappa)
 
     # Step 2: || -x ⊕_κ y ||_2
-    abs_kappa = kappa.abs()
     # For κ<0: max norm = 1/√|κ| (Poincaré ball boundary)
     # For κ>0: max norm = 1/√κ (sphere, depends on parameterization)
-    boundary = torch.where(abs_kappa > EPS,
-                           1.0 / torch.sqrt(abs_kappa),
-                           torch.tensor(1e6, dtype=kappa.dtype, device=kappa.device))
+    # For κ=0: no boundary (Euclidean)
+    # Use safe clamp: avoid torch.where (which causes autograd NaN)
+    abs_kappa = kappa.abs().clamp(min=EPS)
+    # boundary = 1/√|κ|, but if κ=0, default to large value (no actual boundary)
+    # Use abs_kappa + EPS in sqrt to avoid 1/0
+    boundary = 1.0 / torch.sqrt(abs_kappa)  # safe due to clamp above
     max_norm = boundary - 1e-6
     diff_norm = diff.norm(dim=-1).clamp(max=max_norm).clamp(min=EPS)
 

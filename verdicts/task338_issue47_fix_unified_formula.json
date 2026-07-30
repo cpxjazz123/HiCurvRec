@@ -1,0 +1,67 @@
+{
+  "gate0": {
+    "symmetry_0.5": 2.384185791015625e-07,
+    "symmetry_-0.5": 3.5762786865234375e-07,
+    "symmetry_0.001": 1.1920928955078125e-07,
+    "symmetry_pass": true,
+    "euclidean_degeneracy": 0.0,
+    "identity_0.5": 0.0,
+    "identity_-0.5": 0.0,
+    "gate0_pass": true
+  },
+  "gate1": {
+    "forward_nan_free": true,
+    "grad_at_zero": -2204.5289487661585,
+    "grad_nonzero": true,
+    "limit_diff_0.001": 0.2347067918498098,
+    "limit_diff_0.0001": 0.023469340797239724,
+    "limit_diff_1e-05": 0.0023469326412577374,
+    "limit_diff_1e-06": 0.0002346932727306239,
+    "limit_diff_1e-07": 2.3469327281588903e-05,
+    "limit_diff_1e-08": 2.3469327263825335e-06,
+    "limit_converge": true,
+    "gate1_pass": true
+  },
+  "gate2a": {
+    "test": "kappa_zero_gradient",
+    "new_grad_autograd": -2204.5289487661585,
+    "new_grad_finite_diff": -2204.5289121336964,
+    "r137_grad_at_kappa0": 8030.093090859003,
+    "new_pass": true,
+    "verdict": "PASS"
+  },
+  "gate2b": {
+    "test": "gradient_continuity",
+    "new_continuous": true,
+    "max_rel_jump_at_threshold": 0.0011338393544023631,
+    "verdict": "PASS"
+  },
+  "gate2c": {
+    "test": "kappa_negative",
+    "self_dist_err": 2e-15,
+    "all_positive": true,
+    "symmetry_err": 7.570832849523867e-12,
+    "monotonic": true,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "gate2d": {
+    "test": "kappa_positive",
+    "self_dist_err": 2e-15,
+    "all_positive": true,
+    "symmetry_err": 4.440892098500626e-16,
+    "max_dist": 2.2214404690788285,
+    "max_geodesic_bound": 4.442882938158366,
+    "within_sphere": true,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "gate2e": {
+    "test": "performance",
+    "new_ms_per_iter": 0.22987842559814453,
+    "r137_ms_per_iter": 0.06570816040039062,
+    "slowdown_factor": 3.498476052249637,
+    "pass": true,
+    "verdict": "PASS"
+  }
+}
