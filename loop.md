@@ -337,6 +337,8 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(K-sweep 扩展)** | **Task #326 (K=384 sweet spot probe)** | **❌ Gate 0 FAIL (USAGE-KILL @ ep30, L0=16.9% < 20%. K-sweep K=256 → K=512 退化曲线闭合). K=256 锁死 anchor** |
 | **(跨方向协同)** | **Task #327 (K=256 anchor + Issue #30 per-layer Codebook Transforms synergy)** | **🔄 RUNNING (Stage 1 ✅ L0=66.4% + L1/L2=100% + collision=0.0745 + Stage 2 Sinkhorn ✅ + Stage 3 T5-mini 200 epoch RUNNING GPU 1 PID 1531589, 90 min elapsed, Ep47/200 (~24%), ~5.5 hours remaining. ckpt @ 10:42. Stage 4 K=20/50/100 beam ablation launcher ready. Decision threshold R@10 > 0.1053 vs task194 K=256 anchor)** |
 | **(Issue #39)** | **Task #324 (Issue #39 Stage 4 召回改造 5-arm)** | **❌ NO-GO 收口 — Part 1 ANN dense (R@10=0.011 protocol 数量级失败) + Part 2 T5.generate SID (D_beam100 R@10=0.1041 ≈ Issue #30 marginal 0 增益, D_beam200 OOM, Arms A/B/C 未实现 ~3-5 天 ROI 低不投入). task243 ckpt BROKEN (R@10=0.0000), 改用 task301 Issue #30 ckpt 验证 baseline. Issue #39 全 NO-GO 收口, GitHub closed** |
+| **(Issue #38)** | **Task #320 (Stage 3 协议改造 5-arm: AdamW-cosine / Adam-inv_sqrt / R-Drop α=1.0 / BF16 / Adam-control)** | **✅ PARTIAL GO — 5 arms Stage 4 K=100 eval 完成: Arm C R-Drop α=1.0 = test_R@10=0.1034 (+1.4% baseline, +0.0014 绝对值) ⭐⭐⭐ 唯一 GO 实证, val_R@10=0.1243 (5 arms 最高 +10% vs anchor 0.1053); Arm A/B/D/E NO-GO (-7.6%/-8.1%/-3.6%/-3.9%). val/test gap -0.021 跨 5 arms 一致 (structural trait, 来自 Stage 2 SID 配置). R-Drop 同时抬 val+test (+0.005 each), 不缩 gap. Issue #38 reopened + corrected verdict 落地 (PARTIAL GO). 后续 = Task #328 R-Drop alpha sweep (α ∈ {0.5, 1.0, 2.0, 4.0})** |
+| **(Issue #38 Layer 2)** | **Task #328 (R-Drop alpha sweep 4-arm: α=0.5/1.0/2.0/4.0)** | **🔄 READY (R10 backlog 候选, descriptions/task328_issue38_followup_rdrop_alpha_sweep.md 已注册). 目标: 任何 arm R@10 > 0.1053 (task194_k0256 anchor) = 实质突破 Stage 3 ceiling. 4×L40S 并行 ~3.5 hr wall time** |
 
 ### R10 backlog 真空状态 (Task #287 + Issue #29/#30/#31/#33 闭环后, 2026-07-30)
 
@@ -362,6 +364,31 @@ R11.5 自主决策 (R10 + R11.3 兜底 = Issue #30 GO marginal 后, backlog 转�
   - ROI 评估 = 极低 (4-5 hr GPU 跑预期 NO-GO), R7 (GPU 占用约束) + R10 (主动推进) 兜底 = 不启动
 - **方向 D2 / D4 / D5**: 已闭环 (#279 / #260 / #283)
 - **R10 兜底**: 主动推进 D6 ablation (R11.5 自主决策), D7 multi-seed 等 D6 完成, Issue #26 owner decision 仍 OPEN.
+
+### 🔴 R-Drop α=1.0 突破 — Issue #38 Layer 2 推进 (2026-07-30 12:48)
+
+**Task #320 Arm C R-Drop α=1.0 实证 GO**:
+- test_R@10=0.1034 (+1.4% vs baseline 0.1020, +0.0014 绝对值) — 5 arms 唯一 GO
+- val_R@10=0.1243 (5 arms 最高, +10% vs anchor 0.1053) — R-Drop 抗过拟合机制实证
+- val/test gap -0.021 跨 5 arms 一致 (structural trait, Stage 2 SID 配置决定)
+- R-Drop **同时**抬 val+test (+0.005 each), 不缩 gap
+
+**关键洞察**: Stage 3 协议层 R-Drop 类 regularization 是真 R@10 杠杆. Optimizer/LR/Precision/Control 全部 NO-GO.
+
+**Layer 2 follow-up = Task #328 R-Drop alpha sweep** (R10 backlog 候选):
+- α ∈ {0.5, 1.0, 2.0, 4.0} 4-arm 200 epoch
+- 目标: R@10 > 0.1053 (task194_k0256 anchor) = Stage 3 ceiling 突破
+- 4×L40S 并行 ~3.5 hr wall time
+- descriptions/task328_issue38_followup_rdrop_alpha_sweep.md 已注册 (R9-Enforce max+1 = 328 ✅)
+- Issue #38 reopened + corrected verdict 已落地 (PARTIAL GO)
+- 决策阈值: 任何 α > 0.1053 → Issue #38 fully GO; 否则 → α=1.0 ceiling 锁定, 转向 Stage 4 召回改造 (Issue #39 Part 2)
+
+**R-Drop vs Stage 4 召回协同空间** (R11.5 探索):
+- Stage 3 R-Drop 抬 absolute level +1.4% (Stage 2 配置不变)
+- Stage 4 召回改造 (HNSW/IVF-PQ/cross-encoder) 改 evaluation paradigm
+- 二者**非竞争互补**: R-Drop 改造 generator 训练, Stage 4 召回改造 evaluation
+- 若 R-Drop α=2.0 找到 0.1053+, 可叠加 Stage 4 HNSW (Stage 1 embedding) → 二者共同推到 0.115+
+- ROI: 高 (R-Drop 已 GO + Stage 4 改造成本低 = 联合最优)
 
 scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建议启动** — Sinkhorn 20 在 vanilla 上等价于 5/10/30 (#260 evidence), 跑 Arm B 不会改变 issue 结论.
 
