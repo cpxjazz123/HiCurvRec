@@ -1,0 +1,83 @@
+{
+  "task_id": 329,
+  "issue_id": 40,
+  "gate": "Gate 0",
+  "decision": "FAIL",
+  "reason": "Protocol differences detected between task194 K0 sweep and task84 baseline across Stage 1 (batch_size, epochs) and Stage 2 (Sinkhorn override, ckpt selection)",
+  "differences": [
+    {
+      "stage": "Stage 1 (HRQ-VAE training)",
+      "param": "batch_size",
+      "task84_baseline": 1024,
+      "task194_k0_sweep": 256,
+      "severity": "MAJOR (4× difference)"
+    },
+    {
+      "stage": "Stage 1 (HRQ-VAE training)",
+      "param": "epochs",
+      "task84_baseline": 1000,
+      "task194_k0_sweep": 500,
+      "severity": "MAJOR (2× difference)"
+    },
+    {
+      "stage": "Stage 1 (HRQ-VAE training)",
+      "param": "beta",
+      "task84_baseline": "default 1.0",
+      "task194_k0_sweep": 0.5,
+      "severity": "MINOR (requires verification, train_hrqvae.py default behavior)"
+    },
+    {
+      "stage": "Stage 2 (Sinkhorn inference)",
+      "param": "sinkhorn_iters",
+      "task84_baseline": "args.sk_iters=50 (from ckpt, but actually argmin due to sk_eps=0)",
+      "task194_k0_sweep": "max_sinkhorn_iters=30",
+      "severity": "MAJOR (semantic: argmin path vs forced Sinkhorn path)"
+    },
+    {
+      "stage": "Stage 2 (Sinkhorn inference)",
+      "param": "sk_epsilons",
+      "task84_baseline": "[0,0,0] (argmin only)",
+      "task194_k0_sweep": "sk_eps_override=0.003 (forces Sinkhorn branch)",
+      "severity": "CRITICAL (substantive semantic difference, not just numerical)"
+    },
+    {
+      "stage": "Stage 2 (Sinkhorn inference)",
+      "param": "checkpoint_selection",
+      "task84_baseline": "best_loss_model.pth",
+      "task194_k0_sweep": "best_collision_model.pth",
+      "severity": "MAJOR (different criterion, may select different epoch)"
+    },
+    {
+      "stage": "Stage 3 (T5-mini training)",
+      "param": "all",
+      "task84_baseline": "200 epoch, Adam lr=1e-4, batch_size=256, dropout=0.1, early_stop=20, beam_size=20, seed=42",
+      "task194_k0_sweep": "identical",
+      "severity": "NONE (consistent)"
+    },
+    {
+      "stage": "Stage 4 (Eval)",
+      "param": "evaluate() code path",
+      "task84_baseline": "preds[:, 1:] reshape",
+      "task194_k0_sweep": "preds.view(B,beam,-1)[:,:,1:5]",
+      "severity": "MINOR (functionally equivalent for SID of 4 tokens)"
+    }
+  ],
+  "stop_action": "Per Issue #40 spec: '若发现协议差异, STOP — 先重新测一次 protocol-matched 的 K0=64 对照组' — STOP, do not enter Gate 1 without protocol-matched re-evaluation",
+  "anchor_validity": "task194_k0256 R@10=0.1053 anchor UNRELIABLE due to Stage 1 (batch_size/epoch) + Stage 2 (argmin vs Sinkhorn) protocol confounders",
+  "implications": [
+    "Issue #37 closure (cited 0.1053 as 'higher baseline' to reject Issue #30 GO marginal) is invalidated",
+    "Issue #30 GO marginal 0.1022 should be restored as '17-direction first GO'",
+    "task328 R-Drop alpha sweep decision threshold should change from 0.1053 (task194 anchor) to 0.1020 (task84 baseline)",
+    "R-Drop α=1.0 test_R@10=0.1034 is +1.4% > baseline 0.1020, established as real R@10 leverage"
+  ],
+  "gate1_followup_required": true,
+  "gate1_followup_recipe": {
+    "stage1": "task84 baseline (batch_size=1024, epochs=1000, beta=default)",
+    "stage2": "task84 baseline (sk_eps=0, argmin path, best_loss selection)",
+    "stage3": "task84 baseline (200 epoch T5-mini, Adam, lr=1e-4, dropout=0.1)",
+    "stage4": "task84 baseline eval (preds[:, 1:] reshape)"
+  },
+  "verdict_file": "verdicts/task329_issue40_gate0_protocol_audit.md",
+  "commit_pending": true,
+  "issue_action": "Close Issue #40 with Gate 0 audit verdict"
+}
