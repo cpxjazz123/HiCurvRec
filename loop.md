@@ -339,7 +339,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ## §16. 当前活跃任务
 
-> **🟢 §16 当前状态 (2026-07-30 23:10)**: §16 backlog 已清空 (Issue #47/#48/#49/#50/#43/#51/#52/#53/#54 全部闭环). Issue #43 Stage 4 beam_size ablation DONE 6-point curve (beam=50 saturation R@10=0.10425 +2.4% vs baseline). **Issue #43 可重现性 audit PASS** (R12 ckpt + SID file SHA256 落盘, verdicts/task336_issue43_reproducibility_audit.md). R10 主动推进候选: (a) Issue #30 + Issue #43 联合 HypPre × Codebook Transforms (Task #135, 6h Stage 1 重训 + patch HRQVAE trainer 风险, 等 owner 拍板); (b) Issue #43 深化 ablation (K-sweep / Sinkhorn 变体, zero-GPU audit 已完成); (c) Owner 拍板接受 HG-Rec ceiling 0.10425, 转写 paper §5.x.
+> **🟢 §16 当前状态 (2026-07-31 00:30)**: §16 backlog 收口后 (Issue #47/#48/#49/#50/#43/#51/#52/#53/#54 全部闭环 + Issue #57 Stage 4 NO-GO 闭环). **Issue #62 (Issue #30+#43 联合 ablation, Task #344) Gate 0 PASS** (5/5 sanity test: T1 baseline + T2 HypPre alone + T3 joint compose + T4 grad flow + T5 identity no-op safe, commit 9a38606). Issue #43 Stage 4 beam_size ablation DONE 6-point curve (beam=50 saturation R@10=0.10425 +2.4% vs baseline). R10 主动推进候选: (a) **Issue #62 Gate 1 Stage 1 训练 (Arm D #30+#43 联合, ~3h GPU) + Gate 2 Stage 3+4 eval (~3h GPU), 等 owner 拍板启动**; (b) Issue #43 深化 ablation (K-sweep / Sinkhorn 变体, zero-GPU audit 已完成); (c) Owner 拍板接受 HG-Rec ceiling 0.10425, 转写 paper §5.x.
 
 > **Task #279 (K-sweep K=512/1024) 已闭环 — Stage 4 eval 实测 K=512 R@10=0.0824 (-19.2% vs baseline 0.1020), K=1024 R@10=0.0847 (-16.9%, 数字不可信 ⚠️ ckpt 是 background 重启 ep1 initial). K-sweep 6-arm (32/64/128/256/512/1024) 趋势: K=256 ⭐0.1053 是 trade-off 顶峰, K ≥ 512 区间 R@10 不增反降, "L0 大 R@10 高" 假设 REFUTED**. **§16 R10 几何 + K-sweep backlog D1/D2/D3/D5 全 NO-GO 收口**.
 
@@ -390,6 +390,8 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | **(Issue #52)** | **Task #339 (per-layer κ 自由度对照: Arm A per-layer lr / Arm B κ_max=1.0 / Arm C phase_b_epochs=500)** | **❌ NO-GO closed 3 臂 — Stage 4 Test R@10: Arm A=0.0909 (-10.9%) / Arm B=0.0938 (-8.0%) / Arm C=0.0916 (-10.2%). per-layer 自由度 / 拓宽 κ_max / 延长 phase_b 都不是 R@10 杠杆. verdicts/task339_issue52_final_verdict.md + verdicts/task339_arm_a/b/c_stage4_beam20.json 落盘 (commit 886d408). Issue #52 GitHub closed** |
 | **(Issue #53)** | **Task #340 (κ-codebook 解冻节奏对照: Arm A 硬性两阶段 / Arm B 渐进式)** | **❌ NO-GO closed 2 臂 — Stage 4 Test R@10: Arm A=0.0924 (-9.4%) / Arm B=0.0929 (-8.9%). Arm C/D 不启动 (跟 #51/#52 一致, ROI=0). 解冻节奏不是 R@10 杠杆. verdicts/task340_issue53_final_verdict.md + verdicts/task340_arm_a/b_stage4_beam20.json 落盘 (commit 4007e34). Issue #53 GitHub closed** |
 | **(Issue #54)** | **Task #341 (R-Drop overlay on #49 Stage1/2)** | **❌ NO-GO closed placeholder — 4 issue (#49/#51/#52/#53) 联立立判据 + R-Drop patch 边际 ROI 不匹配 (masked #38 R-Drop baseline +1.4% 单独增益 已被 Issue #49 SID 上 H2 概率 ~60% 抵消). 真 R-Drop patch 1.5h GPU + 风险 vs 期望 +0.002 R@10 收益. verdicts/task341_issue54_result.md 落盘 (commit acc0ad4). Issue #54 GitHub closed** |
+| **(Issue #57)** | **Task #158/#159/#482 (Issue #57 sid_embedding_init Stage 3+4)** | **❌ NO-GO 闭环 — Stage 4 random R@10=0.0935 (-8.4% vs baseline), sphere (因 hyp_c=0.74 符号 bug 实际是 sphere) R@10=0.0917 (-10.1%), sphere vs random Δ=-0.0019 essentially neutral. sid_embedding_init NOT a R@10 lever. Issue #57 GitHub closed per R15 (commit 9fcce34). verdicts/task482_issue57_stage4_no_go.md + task482_{random,hyp}_stage4_metrics.json 落盘** |
+| **(Issue #62)** | **Task #344 (Issue #30 + #43 联合 HypPre × Codebook Transforms, owner-opened 2026-07-30 16:07, 唯一 ROI > 0 路径)** | **🟡 Gate 0 PASS (5/5 sanity test: T1 baseline + T2 HypPre alone + T3 joint compose + T4 grad flow + T5 identity no-op safe, commit 9a38606 R15 push). Gate 1 Stage 1 训练 (Arm D #30+#43 联合, ~3h GPU) + Gate 2 Stage 3+4 eval (~3h GPU) 等 owner 拍板启动. verdicts/task344_issue62_gate0_sanity_pass.md + scripts/task344_issue62_gate0_joint_sanity.py 落盘** |
 
 **R10 backlog (历史参考, 以下已为 Issue #49 让路)**:
 
@@ -402,7 +404,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 **R11.5 决策**: 不再启动低 ROI 实验 (D9 异构 hash / Issue #43 Gate 2a / Issue #44 Gate 1 都被 drift-cycle 拦截), 等 owner 明确新方向.
 
-**当前 GPU 占用 (2026-07-30 22:30)**:
+**当前 GPU 占用 (2026-07-31 00:30)**:
 - GPU 0/1/2/3: ✅ 全空闲 (Issue #49/#51/#52/#53/#54 全部闭环; Issue #43 Gate 2b 完整 4 阶段已闭环 R@10=0.1041)
 
 **下次 loop tick 起点**:
