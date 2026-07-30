@@ -1,0 +1,21 @@
+{
+  "task": "Issue #51 (Task #338)",
+  "ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task338/t5_out/Instruments/Jul-30-2026_18-40-03/HG_Rec_best.pth",
+  "code_path": "_t5_rqvae_issue51_combined.npy",
+  "beam_size": 20,
+  "topk_list": [
+    5,
+    10,
+    20
+  ],
+  "test_recalls": {
+    "Recall@5": 0.07524935628600332,
+    "Recall@10": 0.09057271552477104,
+    "Recall@20": 0.10947554723924191
+  },
+  "test_ndcgs": {
+    "NDCG@5": 0.0646376911960686,
+    "NDCG@10": 0.06954768741625617,
+    "NDCG@20": 0.07435250930977144
+  }
+}
