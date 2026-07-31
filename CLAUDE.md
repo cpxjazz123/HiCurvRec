@@ -482,6 +482,66 @@ Stage 4 评估脚本: `scripts/task174_*_stage4_eval.sh` 模式 (config dict + G
 - 完整列表见 `requirements.txt`（已包含 `gdown` 用于下载数据）
 - LLM checkpoint：`google/flan-t5-xl`（首次 Stage 1 会从 HuggingFace 下载，需网络）
 
+## R17：Issue commit 必须说明 Gate + 失败原因 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, 之前 issue commit (#63/#64/#65/#66/#67/#68) 仅引证历史 verdict + commit hash, 没有明确说明"哪个 gate 失败 + 失败原因". reviewer 看不到清晰的失败链路, 难以判断是否需要继续修复. R17 强制 commit 信息必须包含 gate 维度.
+
+### R17 核心要求
+
+- ✅ **每个 issue 有 4 个 Gate**: Gate 1/2/3/4 对应 Stage 1/2/3/4 (RQ-VAE / Sinkhorn / T5 / R@K eval)
+- ✅ **commit message 必须包含**:
+  1. **哪个 Gate 失败**: `Gate <N> FAIL` 或 `Gate <N> PASS`
+  2. **失败原因**: 简洁描述根因 (e.g. "USAGE-KILL @ ep 30", "architecture incomplete", "4/8 audit FAIL", "R@10=0.0852 < 0.1020 阈值")
+- ✅ **上一个 Gate PASS 才允许执行下一个 Gate** (per Issue spec "前 Gate 不通过不进下一 Gate")
+- ✅ **不是每个 issue 都需要完整跑完 4 个 Gate**: 任何 Gate FAIL 立即 STOP, 落盘 verdict + close issue
+- ❌ **禁止** commit 信息只引证 verdict/commit hash 而不说 gate + 原因
+- ❌ **禁止** 越过失败 Gate 继续跑下一 Gate
+
+### R17.1 Gate 命名约定
+
+| Gate | Stage | 检查点 | 典型失败原因 |
+|------|-------|--------|--------------|
+| Gate 1 | Stage 1 (RQ-VAE / HRQVAE) | L0/L1/L2 utilization ≥90%, collision ≤0.20, κ/scale 非初值静止非边界饱和 | USAGE-KILL @ ep N, mode collapse, κ→Euclidean collapse |
+| Gate 2 | Stage 2 (Sinkhorn + dedup) | 4-digit SID unique ≥9500/9922, 逐层 utilization 偏差 ≤5pp | collision 99.99%, Sinkhorn 不收敛 |
+| Gate 3 | Stage 3 (T5-mini) | training loss 收敛, R@10 vs baseline 持平或更好 | loss 不收敛, R@10 反向 |
+| Gate 4 | Stage 4 (R@K eval) | R@5/10/20, NDCG@5/10/20 实际 Test 指标, R@10 > baseline (e.g. 0.1020) | R@10 < 阈值, NDCG 反向, missing metrics |
+
+> ⚠️ **历史 Gate 命名差异**: 之前 Issue #63-#68 spec 使用 Gate -1/0/1/2/3 (5 阶段, 含 Gate -1 框架合规 + Gate 0 复现/失效定位). R17 简化为 4 Gate (1/2/3/4) 对应 Stage 1/2/3/4, 历史 verdict 中 Gate -1/0 视为预检, Gate 1+ 才是 Stage 维度. 新规则以本节为准, 不追溯历史.
+
+### R17.2 commit message 模板
+
+```
+Issue #<N> [方向X] <title> (R17 强制: gate 说明 + 失败原因)
+
+- Gate <N1> <PASS|FAIL>: <结果> (commit <hash>)
+- Gate <N2> <PASS|FAIL>: <失败原因> (commit <hash>)   ← 若失败则 STOP
+- Gate <N3> <PASS|FAIL>: ⏸ STOP per spec (前 Gate <N2> FAIL)
+- Gate <N4> <PASS|FAIL>: ⏸ STOP per spec (前 Gate <N2> FAIL)
+
+verdict: verdicts/task<M>_issue<N>_<...>_result.md (commit <hash>)
+整体决策: <GO|NO-GO> 收口
+```
+
+### R17.3 与现有规则的关系
+
+- **R16 (issue 检查 + 关闭) > R17**: R16 强制每个 tick 检查 + 关闭, R17 加强 commit 质量
+- **R15 (verdict push) ⊂ R17**: R15 只保证 push, R17 加强 commit message 包含 gate 信息
+- **R11.5 (自主决策) > R17**: commit gate 说明是强制格式, 不需要等 owner 决策
+
+### R17.4 关键 caveat
+
+- ❌ **禁止** 在 commit message 跳过 gate 信息 (即使是"快速 fix" commit)
+- ❌ **禁止** 用 "see verdict" 代替 gate 说明 (verdict 是详细文档, commit message 自身必须可读)
+- ❌ **禁止** gate 编号混乱 (1/2/3/4 是硬约定, 跟 Stage 1/2/3/4 一一对应)
+- ✅ **允许** 在 commit message 引用 verdict 详细路径 (verdicts/task<M>_*.md) 作为补充
+
+### R17.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 R17 新增 | issue #66/#67/#68 commit (3001553) 仅引证 verdict + commit hash, 没有清晰说明 "Gate 1 FAIL: USAGE-KILL @ ep 30, util 1.6%/0.8%/0.4% ≪ 90%" 等失败原因 | 之前 commit 模板未强制 gate + 原因字段 | R17 强制 commit message 含 gate 状态 + 失败原因 | 每次 issue commit 必含 gate + 原因 |
+
+
 ## 必读文件优先级
 
 1. `/fs04/ar57/wenyu/CLAUDE.md` — 全局执行规则（AGENTS.md）

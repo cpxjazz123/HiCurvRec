@@ -384,3 +384,63 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 | 事故 | 现象 | 根因 | 修复 | 防止措施 |
 |------|------|------|------|----------|
 | 2026-07-31 §18 新增 | loop tick 报告 "无 actionable work" 但 GitHub 有 OPEN issue 未处理 (#63/#64/#65 三方向 ×× 闭环后 issue 仍 OPEN) | §16 backlog 真空 ≠ GitHub issue 真空, §16 没强制 issue 检查 + 关闭 | §18 强制每个 tick 第一步检查 + 完成 + 关闭 | 每次 loop tick 第一步必须 list_issues |
+
+---
+
+## §19：Issue commit 必须说明 Gate + 失败原因 (2026-07-31 新增, 硬规则, 配套 CLAUDE.md R17)
+
+> 用户 2026-07-31 反馈: issue commit 必须说清楚哪个 gate 失败 + 失败原因. 每个 issue 4 个 gate (Gate 1/2/3/4 = Stage 1/2/3/4). 上一个 gate 成功才允许执行下一个 gate.
+
+### §19.1 核心要求
+
+- ✅ **每个 issue 4 个 Gate**: Gate 1 (Stage 1 RQ-VAE) / Gate 2 (Stage 2 Sinkhorn) / Gate 3 (Stage 3 T5-mini) / Gate 4 (Stage 4 R@K eval)
+- ✅ **commit message 必含**:
+  1. **哪个 Gate 失败**: `Gate <N> FAIL` 或 `Gate <N> PASS`
+  2. **失败原因**: 简洁根因描述
+- ✅ **前 Gate FAIL → 后 Gate STOP** (不允许越闸)
+- ✅ **不是每个 issue 都需要完整跑完 4 个 Gate**: 任何 Gate FAIL 立即 STOP + 落盘 verdict + close issue
+- ❌ **禁止** commit 只引证 verdict + commit hash 而不说 gate + 原因
+
+### §19.2 Gate 命名约定
+
+| Gate | Stage | 检查点 | 典型失败原因 |
+|------|-------|--------|--------------|
+| Gate 1 | Stage 1 (RQ-VAE / HRQVAE) | L0/L1/L2 utilization ≥90%, collision ≤0.20 | USAGE-KILL @ ep N, mode collapse |
+| Gate 2 | Stage 2 (Sinkhorn + dedup) | 4-digit SID unique ≥9500/9922 | collision 99.99%, Sinkhorn 不收敛 |
+| Gate 3 | Stage 3 (T5-mini) | training loss 收敛 | loss 不收敛, R@10 反向 |
+| Gate 4 | Stage 4 (R@K eval) | R@10 > baseline (0.1020) | R@10 < 阈值, missing metrics |
+
+> ⚠️ **历史 Gate 命名差异**: 之前 issue spec 用 Gate -1/0/1/2/3 (5 阶段, 含预检). §19 简化为 4 Gate. 历史 verdict 中 Gate -1/0 视为预检, Gate 1+ 才是 Stage 维度.
+
+### §19.3 commit message 模板
+
+```
+Issue #<N> [方向X] <title> (R17 强制: gate 说明 + 失败原因)
+
+- Gate 1 <PASS|FAIL>: <结果> (commit <hash>)
+- Gate 2 <PASS|FAIL>: <失败原因> (commit <hash>)   ← 若失败则 STOP
+- Gate 3 <PASS|FAIL>: ⏸ STOP per spec (前 Gate 2 FAIL)
+- Gate 4 <PASS|FAIL>: ⏸ STOP per spec (前 Gate 2 FAIL)
+
+verdict: verdicts/task<M>_issue<N>_<...>_result.md (commit <hash>)
+整体决策: <GO|NO-GO> 收口
+```
+
+### §19.4 与现有规则的关系
+
+- §18 (issue 检查 + 关闭) > §19: §18 强制每个 tick 检查 + 关闭, §19 加强 commit 质量
+- R15 (verdict push) ⊂ §19: R15 只保证 push, §19 加强 commit message 含 gate 信息
+- §19 配套 CLAUDE.md R17, 仓库内两条规则一致
+
+### §19.5 关键 caveat
+
+- ❌ **禁止** 在 commit message 跳过 gate 信息
+- ❌ **禁止** 用 "see verdict" 代替 gate 说明
+- ❌ **禁止** gate 编号混乱 (1/2/3/4 硬约定)
+- ✅ **允许** commit message 引用 verdict 详细路径作为补充
+
+### §19.6 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 §19 新增 | issue #66/#67/#68 commit (3001553) 仅引证 verdict + commit hash, 没有清晰说明 "Gate 1 FAIL: USAGE-KILL @ ep 30" 等失败原因 | 之前 commit 模板未强制 gate + 原因字段 | §19 + CLAUDE.md R17 强制 commit message 含 gate 状态 + 失败原因 | 每次 issue commit 必含 gate + 原因 |
