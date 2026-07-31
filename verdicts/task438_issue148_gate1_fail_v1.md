@@ -1,7 +1,7 @@
 # Issue #148 [方向A Gate1] 硬SID不变的κ可微双曲三元组分离+多样性损失 — Gate 1 FAIL (架构 PASS + 配方 FAIL)
 
 **Task**: #438 / Issue #148
-**Commit**: TBD (after git push)
+**Commit**: `36056e4`
 **Verdict**: `verdicts/task438_issue148_gate1_fail_v1.md`
 **产物**: `products/task438_issue148_triplet_separation_diversity/{config,triplet_graph_proof,verdict}.json`
 **SHA256**: item_emb.parquet=`1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc`

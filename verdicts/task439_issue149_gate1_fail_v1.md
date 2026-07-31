@@ -1,7 +1,7 @@
 # Issue #149 [方向B Gate1] 硬SID不变的连续soft-anchor product校准损失 — Gate 1 FAIL (架构 PASS + 配方 FAIL)
 
 **Task**: #439 / Issue #149
-**Commit**: TBD (after git push)
+**Commit**: `36056e4`
 **Verdict**: `verdicts/task439_issue149_gate1_fail_v1.md`
 **产物**: `products/task439_issue149_continuous_anchor_product/{config,d_mix_graph_proof,verdict}.json`
 **SHA256**: item_emb.parquet=`1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc`
