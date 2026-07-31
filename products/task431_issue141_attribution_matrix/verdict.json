@@ -1,0 +1,1863 @@
+{
+  "task": "task431_issue141_attribution_matrix",
+  "issue": 141,
+  "issue_spec_6_audit_pieces": {
+    "1_config": "/home/wlia0047/ar57/wenyu/GeneRec/products/task431_issue141_attribution_matrix/config.json",
+    "2_sha256": {
+      "item_emb": "1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc"
+    },
+    "3_trace": [
+      {
+        "step": 100,
+        "loss": 0.011139621958136559,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.4326171875,
+              0.0,
+              0.2568359375
+            ],
+            "ranking_flip_mean": 0.5673828125
+          },
+          {
+            "contributions_mean": [
+              0.93408203125,
+              0.0283203125,
+              0.9716796875
+            ],
+            "ranking_flip_mean": 0.06591796875
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.0625,
+            "max_load": 0.62451171875,
+            "n_used": 4,
+            "K": 64
+          },
+          {
+            "util": 0.015625,
+            "max_load": 0.9716796875,
+            "n_used": 2,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 200,
+        "loss": 0.012610210105776787,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.173828125,
+              0.0,
+              0.85888671875
+            ],
+            "ranking_flip_mean": 0.826171875
+          },
+          {
+            "contributions_mean": [
+              0.9287109375,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0712890625
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.0625,
+            "max_load": 0.5498046875,
+            "n_used": 4,
+            "K": 64
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 300,
+        "loss": 0.011152169667184353,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.71533203125,
+              0.0,
+              0.99169921875
+            ],
+            "ranking_flip_mean": 0.28466796875
+          },
+          {
+            "contributions_mean": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 1.0
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.046875,
+            "max_load": 0.93017578125,
+            "n_used": 3,
+            "K": 64
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 400,
+        "loss": 0.011109192855656147,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.0048828125,
+              0.0,
+              0.99755859375
+            ],
+            "ranking_flip_mean": 0.9951171875
+          },
+          {
+            "contributions_mean": [
+              0.001953125,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.998046875
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.03125,
+            "max_load": 0.99755859375,
+            "n_used": 2,
+            "K": 64
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 500,
+        "loss": 0.011815078556537628,
+        "attributions": [
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              0.8037109375
+            ],
+            "ranking_flip_mean": 0.0
+          },
+          {
+            "contributions_mean": [
+              0.00341796875,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.99658203125
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.015625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 64
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 600,
+        "loss": 0.006012783385813236,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.9970703125,
+              0.0,
+              0.70458984375
+            ],
+            "ranking_flip_mean": 0.0029296875
+          },
+          {
+            "contributions_mean": [
+              0.001953125,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.998046875
+          },
+          {
+            "contributions_mean": [
+              0.99169921875,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.00830078125
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.015625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 64
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 700,
+        "loss": 0.002149601001292467,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.91162109375,
+              0.0,
+              0.07861328125
+            ],
+            "ranking_flip_mean": 0.08837890625
+          },
+          {
+            "contributions_mean": [
+              0.00830078125,
+              0.9560546875,
+              0.0
+            ],
+            "ranking_flip_mean": 0.99169921875
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.03125,
+            "max_load": 0.921875,
+            "n_used": 2,
+            "K": 64
+          },
+          {
+            "util": 0.015625,
+            "max_load": 0.9560546875,
+            "n_used": 2,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 800,
+        "loss": 0.0008437568321824074,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.279296875,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.720703125
+          },
+          {
+            "contributions_mean": [
+              0.00341796875,
+              0.29833984375,
+              0.34326171875
+            ],
+            "ranking_flip_mean": 0.99658203125
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              0.99951171875
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.015625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 64
+          },
+          {
+            "util": 0.015625,
+            "max_load": 0.70166015625,
+            "n_used": 2,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 900,
+        "loss": 0.0009362052078358829,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.177734375,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.822265625
+          },
+          {
+            "contributions_mean": [
+              0.00244140625,
+              0.333984375,
+              0.330078125
+            ],
+            "ranking_flip_mean": 0.99755859375
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              0.99951171875
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.015625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 64
+          },
+          {
+            "util": 0.015625,
+            "max_load": 0.666015625,
+            "n_used": 2,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      },
+      {
+        "step": 1000,
+        "loss": 0.0010463081998750567,
+        "attributions": [
+          {
+            "contributions_mean": [
+              0.0771484375,
+              0.0,
+              1.0
+            ],
+            "ranking_flip_mean": 0.9228515625
+          },
+          {
+            "contributions_mean": [
+              0.00341796875,
+              0.37939453125,
+              0.3271484375
+            ],
+            "ranking_flip_mean": 0.99658203125
+          },
+          {
+            "contributions_mean": [
+              1.0,
+              0.0,
+              0.99951171875
+            ],
+            "ranking_flip_mean": 0.0
+          }
+        ],
+        "per_layer_metrics": [
+          {
+            "util": 0.015625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 64
+          },
+          {
+            "util": 0.015625,
+            "max_load": 0.62060546875,
+            "n_used": 2,
+            "K": 128
+          },
+          {
+            "util": 0.00390625,
+            "max_load": 1.0,
+            "n_used": 1,
+            "K": 256
+          }
+        ],
+        "grad_max_per_layer": [
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          },
+          {
+            "kappa": 0.0,
+            "mixing": 0.0
+          }
+        ],
+        "grad_ok": false,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "mixing_per_layer": [
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ],
+          [
+            "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+            "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+          ]
+        ]
+      }
+    ],
+    "4_raw_log": "/home/wlia0047/ar57/wenyu/GeneRec/logs/task431_issue141_attribution_matrix.log",
+    "5_verdict": "/home/wlia0047/ar57/wenyu/GeneRec/products/task431_issue141_attribution_matrix/verdict.json",
+    "6_commit": "<pending - written after git push>"
+  },
+  "config": {
+    "seed": 42,
+    "device": "cuda:0",
+    "num_steps": 1000,
+    "record_every": 100,
+    "codebook_size": [
+      64,
+      128,
+      256
+    ],
+    "batch_size": 256,
+    "lr": 0.0001,
+    "ranking_flip_max": 0.05,
+    "anchor_ratio_min": 0.4,
+    "component_contrib_min": 0.1
+  },
+  "reproducibility": {
+    "item_emb_sha256": "1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc"
+  },
+  "r18_attribution_matrix_audit": {
+    "init_attribution": [
+      {
+        "contributions_mean": [
+          0.08837890625,
+          0.0,
+          0.0
+        ],
+        "ranking_flip_mean": 0.91162109375
+      },
+      {
+        "contributions_mean": [
+          0.462890625,
+          1.0,
+          0.0
+        ],
+        "ranking_flip_mean": 0.537109375
+      },
+      {
+        "contributions_mean": [
+          0.23974609375,
+          0.0,
+          0.23876953125
+        ],
+        "ranking_flip_mean": 0.76025390625
+      }
+    ],
+    "final_attribution": [
+      {
+        "contributions_mean": [
+          0.0771484375,
+          0.0,
+          1.0
+        ],
+        "ranking_flip_mean": 0.9228515625
+      },
+      {
+        "contributions_mean": [
+          0.00341796875,
+          0.37939453125,
+          0.3271484375
+        ],
+        "ranking_flip_mean": 0.99658203125
+      },
+      {
+        "contributions_mean": [
+          1.0,
+          0.0,
+          0.99951171875
+        ],
+        "ranking_flip_mean": 0.0
+      }
+    ],
+    "n_components_above_thresh_per_layer": [
+      1,
+      2,
+      2
+    ],
+    "components_ok_2_of_3": false,
+    "anchor_ratios": [
+      "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+      "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+      "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)"
+    ],
+    "ranking_flips": [
+      0.9228515625,
+      0.99658203125,
+      0.0
+    ],
+    "anchor_ratio_ok": true,
+    "ranking_flip_ok": false,
+    "final_util": {
+      "L0": 0.015625,
+      "L1": 0.015625,
+      "L2": 0.00390625
+    },
+    "final_max_load": {
+      "L0": 1.0,
+      "L1": 0.62060546875,
+      "L2": 1.0
+    },
+    "util_ok_90pct": false,
+    "max_load_ok_5pct": false,
+    "grad_ok": false,
+    "hard_sid_round_trip": true
+  },
+  "trace": [
+    {
+      "step": 100,
+      "loss": 0.011139621958136559,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.4326171875,
+            0.0,
+            0.2568359375
+          ],
+          "ranking_flip_mean": 0.5673828125
+        },
+        {
+          "contributions_mean": [
+            0.93408203125,
+            0.0283203125,
+            0.9716796875
+          ],
+          "ranking_flip_mean": 0.06591796875
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.0625,
+          "max_load": 0.62451171875,
+          "n_used": 4,
+          "K": 64
+        },
+        {
+          "util": 0.015625,
+          "max_load": 0.9716796875,
+          "n_used": 2,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 200,
+      "loss": 0.012610210105776787,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.173828125,
+            0.0,
+            0.85888671875
+          ],
+          "ranking_flip_mean": 0.826171875
+        },
+        {
+          "contributions_mean": [
+            0.9287109375,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0712890625
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.0625,
+          "max_load": 0.5498046875,
+          "n_used": 4,
+          "K": 64
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 300,
+      "loss": 0.011152169667184353,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.71533203125,
+            0.0,
+            0.99169921875
+          ],
+          "ranking_flip_mean": 0.28466796875
+        },
+        {
+          "contributions_mean": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 1.0
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.046875,
+          "max_load": 0.93017578125,
+          "n_used": 3,
+          "K": 64
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 400,
+      "loss": 0.011109192855656147,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.0048828125,
+            0.0,
+            0.99755859375
+          ],
+          "ranking_flip_mean": 0.9951171875
+        },
+        {
+          "contributions_mean": [
+            0.001953125,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.998046875
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.03125,
+          "max_load": 0.99755859375,
+          "n_used": 2,
+          "K": 64
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 500,
+      "loss": 0.011815078556537628,
+      "attributions": [
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            0.8037109375
+          ],
+          "ranking_flip_mean": 0.0
+        },
+        {
+          "contributions_mean": [
+            0.00341796875,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.99658203125
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.015625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 64
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 600,
+      "loss": 0.006012783385813236,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.9970703125,
+            0.0,
+            0.70458984375
+          ],
+          "ranking_flip_mean": 0.0029296875
+        },
+        {
+          "contributions_mean": [
+            0.001953125,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.998046875
+        },
+        {
+          "contributions_mean": [
+            0.99169921875,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.00830078125
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.015625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 64
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 700,
+      "loss": 0.002149601001292467,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.91162109375,
+            0.0,
+            0.07861328125
+          ],
+          "ranking_flip_mean": 0.08837890625
+        },
+        {
+          "contributions_mean": [
+            0.00830078125,
+            0.9560546875,
+            0.0
+          ],
+          "ranking_flip_mean": 0.99169921875
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.03125,
+          "max_load": 0.921875,
+          "n_used": 2,
+          "K": 64
+        },
+        {
+          "util": 0.015625,
+          "max_load": 0.9560546875,
+          "n_used": 2,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 800,
+      "loss": 0.0008437568321824074,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.279296875,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.720703125
+        },
+        {
+          "contributions_mean": [
+            0.00341796875,
+            0.29833984375,
+            0.34326171875
+          ],
+          "ranking_flip_mean": 0.99658203125
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            0.99951171875
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.015625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 64
+        },
+        {
+          "util": 0.015625,
+          "max_load": 0.70166015625,
+          "n_used": 2,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 900,
+      "loss": 0.0009362052078358829,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.177734375,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.822265625
+        },
+        {
+          "contributions_mean": [
+            0.00244140625,
+            0.333984375,
+            0.330078125
+          ],
+          "ranking_flip_mean": 0.99755859375
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            0.99951171875
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.015625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 64
+        },
+        {
+          "util": 0.015625,
+          "max_load": 0.666015625,
+          "n_used": 2,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    },
+    {
+      "step": 1000,
+      "loss": 0.0010463081998750567,
+      "attributions": [
+        {
+          "contributions_mean": [
+            0.0771484375,
+            0.0,
+            1.0
+          ],
+          "ranking_flip_mean": 0.9228515625
+        },
+        {
+          "contributions_mean": [
+            0.00341796875,
+            0.37939453125,
+            0.3271484375
+          ],
+          "ranking_flip_mean": 0.99658203125
+        },
+        {
+          "contributions_mean": [
+            1.0,
+            0.0,
+            0.99951171875
+          ],
+          "ranking_flip_mean": 0.0
+        }
+      ],
+      "per_layer_metrics": [
+        {
+          "util": 0.015625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 64
+        },
+        {
+          "util": 0.015625,
+          "max_load": 0.62060546875,
+          "n_used": 2,
+          "K": 128
+        },
+        {
+          "util": 0.00390625,
+          "max_load": 1.0,
+          "n_used": 1,
+          "K": 256
+        }
+      ],
+      "grad_max_per_layer": [
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        },
+        {
+          "kappa": 0.0,
+          "mixing": 0.0
+        }
+      ],
+      "grad_ok": false,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "mixing_per_layer": [
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ],
+        [
+          "tensor(0.8927, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0785, device='cuda:0', grad_fn=<DivBackward0>)",
+          "tensor(0.0289, device='cuda:0', grad_fn=<DivBackward0>)"
+        ]
+      ]
+    }
+  ],
+  "gate1_pass": false
+}

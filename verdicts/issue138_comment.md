@@ -24,7 +24,7 @@
 ### Gate 4 (= Stage 4 R@K eval): ⏸ STOP per spec
 
 ### 关键产物
-- commit hash: 600c1a3
+- commit hash: 0df1b98
 - push: origin/main (pushed 2026-08-01)
 - verdict: verdicts/task427_issue135_gate1_fail_v3.md
 - 实施: scripts/task427_issue135_layer_product_mixing.py
