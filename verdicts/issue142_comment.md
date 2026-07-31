@@ -7,7 +7,7 @@
 4. **frozen inputs**: `products/task432_issue142_data_lineage_manifest/code_path_test_frozen.npy`
 5. **raw_log**: `logs/task432_issue142_data_lineage_manifest.log` + `logs/task432_issue142_data_lineage_manifest.launch.log`
 6. **verdict**: `products/task432_issue142_data_lineage_manifest/verdict.json` + `verdicts/task432_issue142_gate4_pending_v3.md`
-7. **commit**: pending (待 git commit + push)
+7. **commit**: a2584bd (R21 v2: 不允许 "pending" 占位, commit hash 在 commit + push 后立即填入)
 
 ### Gate 0 (= 数据血缘 manifest 审计): ✅ PASS (Issue #142 spec 强制 Step 1)
 - 关键数据:
@@ -45,8 +45,8 @@
 - **Issue #142 PASS/Target reached**: ❌ FAIL — Adapter R@10=0.03684 ≪ 0.1020 阈值. 但 manifest 完整 PASS, control R@10=0.10203 完全复现 baseline 0.1020 证明 lineage 无错位.
 
 ### 关键产物
-- commit hash: pending (待 git commit + push 后填入)
-- push: pending
+- commit hash: a2584bd
+- push: origin/main
 - verdict: verdicts/task432_issue142_gate4_pending_v3.md
 - 实施: scripts/task432_issue142_data_lineage_manifest.py
 - products: products/task432_issue142_data_lineage_manifest/{manifest,verdict,config}.json + code_path_test_frozen.npy
