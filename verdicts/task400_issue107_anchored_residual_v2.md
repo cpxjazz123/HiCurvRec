@@ -70,7 +70,7 @@
 
 ## 4. 关键产物 (R21 强制具体 hash)
 
-- **commit hash**: (pending push — will be added in this commit)
+- **commit hash**: 6f6b095 (Issue #107 [方向B Gate1] anchored residual product Gate 1 NO-GO, R17+R20 强制) — 已 push origin/main (R15 + R21 v2 强制, 不允许 pending 占位)
 - **verdict**: verdicts/task400_issue107_anchored_residual_v2.md (本文件)
 - **实施**: scripts/task400_issue107_anchored_residual.py
 - **ckpt**: products/task400_issue107_anchored_residual/ckpt/issue107_ckpt.pt (R12 强制)
