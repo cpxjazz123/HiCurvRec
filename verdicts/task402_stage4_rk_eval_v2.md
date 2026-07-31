@@ -60,8 +60,8 @@
 
 ## 关键产物
 
-- **commit hash**: ⏳ 待 commit 落地后写入 (R21 v2 强制, 不允许 pending)
-- **push**: origin/main (R15 强制)
+- **commit hash**: a709a44 (R21 v2 强制落地后立即写入, 已 push origin/main)
+- **push**: origin/main (R15 强制, 5aa99db..a709a44 main -> main)
 - **verdict 路径**: `verdicts/task402_stage4_rk_eval_v2.md` (本文件)
 - **metrics 路径**: `verdicts/task402_stage4_rk_eval_metrics.json`
 - **Stage 3 ckpt**: `products/task402_ckpt_downstream/ckpt/Instruments/Jul-31-2026_20-06-14/HG_Rec_best.pth`
