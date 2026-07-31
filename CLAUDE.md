@@ -189,21 +189,20 @@ bash scripts/audit_r9_compliance.sh
 
 ---
 
-## R10：§16 必须主动推进（覆盖原 R10 空闲允许等待）
-- ❌ **禁止空闲等待**: §16 表格为空时**必须主动推进**下一项任务, 不允许保持空闲等待用户指示
-- ✅ **主动推进优先级 (按序尝试)**:
-  1. **backlog 候选**: loop.md §16 backlog 中列出的待办任务 (按 R11.5 自主决策选最高 ROI)
-  2. **backlog 也没有** → 按 R11.3 自主决策推进低 ROI 实验 (数据分析 / 诊断 / 已有结果整理 / 写 verdict)
-  3. **§16 有活跃任务 + GPU 满载** → 监控 tick, 报告进展 (R8 R11 仍生效)
-- ✅ **GPU 占用约束**: 即使主动推进, 仍遵守 R7 (不抢已占卡) + R11.5 自主决策边界
-- ✅ **不再有"等待用户指示"模式**: 即使监控 tick 期间也要尝试任务切换 (而不是只报告"无任务可推")
-- ❌ **明确禁止**: 监控 tick 只报"§16 空, 等待下一个任务" — 这是被覆盖的旧行为
+## R10：open issue 优先, 无 issue 允许 idle (R10 v2, 2026-07-31 owner 反馈, 替代原"主动推进"模式)
+- ✅ **核心行为**: 每次 loop tick 第一步检查 GitHub OPEN issue (per R16). 有 open issue → 必须完成 + 关闭 (R16). 没有 open issue → **允许 idle** (不需要主动推进 backlog 或自主决策新任务)
+- ❌ **取消原 R10 主动推进规则**: 不再要求"§16 空时必须按 backlog/R11.3 自主决策". 恢复 R10 v1 模式 (idle 等待用户指示)
+- ✅ **R11.5 自主决策原则仍生效**: 有 open issue 需要完成时, 子步骤小决策由 AI 自主决定 (不允许抛回用户等决策). 没有 issue 触发时, R11.5 不强制 AI 主动找事做
+- ✅ **R7 GPU 规则仍生效**: 启动新实验前必须核对空闲 GPU + 不抢已占卡
+- ✅ **R16 强制 issue 检查**: 每个 tick 第一步 `gh issue list --state open`, 有 issue → 完成 + 关闭, 没有 → 允许 idle
+- ✅ **R15 push 仍生效**: issue 闭环时 verdict 必须 push
+- ✅ **R17 gate 说明仍生效**: issue commit 必须含 Gate PASS/FAIL + 失败原因
 - **判断示例**:
-  - §16 空 + 用户说 "follow loop.md" + 4 张卡全空闲 → **必须**主动尝试 backlog 候选或 R11.3 自主决策, 不可空闲
-  - §16 空 + 用户明确说 "跑 X 实验" → 按用户指示启动 (最高优先级)
-  - §16 有活跃任务 + GPU 满载 → 监控 + 推进任务完成度
-  - §16 空 + 监控 tick → 立即尝试切换任务 (而非报告"无任务")
-- **背景变更 (2026-07-23)**: 用户 2026-07-23 反馈原 R10 "空闲允许等待"过于被动, AI 应主动推进 backlog 或自主决策新任务. R7 "禁止 GPU 闲置"恢复为最高优先级. 原 2026-07-19 反馈作废.
+  - §16 空 + 用户说 "follow loop.md" + 0 open issue → **允许 idle** (R10 v2 核心), 报告 R16 / R9 / R7 / GPU 状态即可
+  - §16 空 + 1 个 open issue → 必须进入该 issue, 按 R17 顺序执行 Gate, 完成后 `gh issue close --reason completed`
+  - §16 有活跃任务 + GPU 满载 → 监控 tick, 报告进展 (R8 + R11 仍生效)
+  - §16 空 + 用户明确说 "跑 X 实验" → 按用户指示启动 (用户优先级 > R10 idle)
+- **背景变更 (2026-07-31)**: 用户 2026-07-31 反馈原 R10 "主动推进"过于激进, 14+ 方向 NO-GO 收口后 AI 自主决策 ROI 极低, 改为"open issue 优先 + 无 issue 允许 idle"模式. 原 2026-07-23 R10 主动推进规则作废. 原 2026-07-19 R10 v1 idle 模式恢复 (但加 R16 强制检查 issue).
 
 ---
 
@@ -219,7 +218,7 @@ bash scripts/audit_r9_compliance.sh
 ### R11.2 自主决策的兜底顺序 (从高到低优先级)
 遇到不确定的多选项时, 按以下顺序自主选择:
 
-1. **项目 CLAUDE.md / memory 已固化的偏好** (例如 R5 数据集仅 Musical_Instruments, HG-Rec baseline R@10=0.1020, R9 编号连续无空洞, R10 必须主动推进)
+1. **项目 CLAUDE.md / memory 已固化的偏好** (例如 R5 数据集仅 Musical_Instruments, HG-Rec baseline R@10=0.1020, R9 编号连续无空洞, R10 open issue 优先 + 无 issue 允许 idle)
 2. **上游 framework 默认值** (例如 paper 报告的超参, official code 的 default)
 3. **论文原始方案** (DECOR paper 的 α=0.35, bos_queries=64 等)
 4. **简单实用方案** (例如找不到精确匹配时用近似版本, 记下偏差)
@@ -236,7 +235,7 @@ bash scripts/audit_r9_compliance.sh
 
 ### R11.5 与 R7 / R10 的优先级
 - **R7 (并行 GPU)** > R11: 自主决策必须遵守 GPU 占用约束 (不抢 vLLM 等已用卡)
-- **R10 (必须主动推进)** > R11: §16 空时 AI 必须按 backlog/R11.3 推进, 不允许空闲等待
+- **R10 (open issue 优先, 无 issue 允许 idle)** > R11: 有 open issue 时 R11.5 必须触发 (issue 完成的子步骤自主决策); 无 open issue 时 R11.5 不强制 AI 主动启动新任务
 - **R11 优先于 R2 (禁止 fallback)**: 自主决策 ≠ fallback. R11 是基于推荐方案选, 不允许用默认值掩盖错误 (R2 仍生效)
 
 ### R11 判断示例
@@ -247,7 +246,8 @@ bash scripts/audit_r9_compliance.sh
 | 任务产物路径冲突 / 缺数据 / 装包失败 | 自主选镜像源 / 替代方案, 报告偏差 |
 | 任务规模超过 GPU 预算 | 自主缩减 (例如只跑 DECOR + 2 个核心 baseline), 报告缩减理由 |
 | 关键决策不可逆 (改 src/ 上游, 删 verdict) | 必须 dry-run 先报告再执行, 不静默做 |
-| §16 真无活跃任务 + 用户说 "follow loop.md" | 按 R10 必须主动推进: 先尝试 backlog 候选, 没有则按 R11.3 自主决策 (不允许报告 "§16 空" 后空闲等待) |
+| §16 空 + 有 open issue (e.g. user 说 "follow loop.md") | 按 R10 + R16 联立: 进入 issue, 按 R17 顺序执行 Gate, 完成后 `gh issue close --reason completed` |
+| §16 空 + 无 open issue (e.g. user 说 "follow loop.md") | 允许 idle (R10 v2). 报告 R16 / R9 / R7 / GPU 状态即可, 不强制启动新任务 |
 
 ---
 
@@ -373,7 +373,7 @@ bash scripts/audit_r9_compliance.sh
 
 ## R16：每次必须检查 open issue 并完成 + 关闭 (2026-07-31 新增, 硬规则)
 
-> **背景**: 用户 2026-07-31 反馈, `/loop` tick 偶尔"无可 actionable work" 但实际 GitHub 有 OPEN issue 未完成. 当前 R10 (主动推进) + R15 (issue push 闭环) 缺少**强制检查** + **强制关闭**两步. R16 强制每个 loop tick 必须先查 issue, 有就完成, 完成后关闭, 没有才可什么都不做.
+> **背景**: 用户 2026-07-31 反馈, `/loop` tick 偶尔"无可 actionable work" 但实际 GitHub 有 OPEN issue 未完成. R10 v2 (2026-07-31 owner 修订) 已删除"主动推进"硬规则, 改为"open issue 优先 + 无 issue 允许 idle". 但 R10 v2 仍依赖 R16 强制每个 loop tick 必须先查 issue, 有就完成, 完成后关闭, 没有才可什么都不做. R16 是 R10 v2 的实施保障.
 
 ### R16 核心要求
 - ✅ **每次 loop tick 第一步** (无论是否有 backlog 候选): 调用 `mcp__github__list_issues state=OPEN` 或 `gh issue list --state open` 检查当前 open issue.
@@ -392,14 +392,14 @@ bash scripts/audit_r9_compliance.sh
 - **关闭 comment 模板**: 贴 commit hash + verdict 路径 + 关键结论 (R15.3 已要求 commit 关联, R16 加强 comment 显式标注).
 
 ### R16.2 与现有规则的关系
-- **R10 (主动推进) > R16**: §16 真空 + 有 open issue → R10 + R16 联立强制启动 issue 处理, 不允许 "无 actionable work".
+- **R10 v2 (open issue 优先, 无 issue 允许 idle) ≡ R16**: R10 v2 (2026-07-31) 与 R16 完全一致 — 有 open issue → 强制完成 + 关闭, 无 issue → 允许 idle. 两者不冲突, R16 是 R10 v2 的具体实施步骤 (强制 list_issues + close 命令).
 - **R15 (push) ⊂ R16 (close)**: R15 只保证 push, R16 加强 issue 状态必须在 GitHub 上 close.
 - **R11.5 (自主决策) > R16**: issue 关闭决策由 AI 自主 (基于 verdict 落盘 + commit + push), 不需要等 owner 拍板.
 - **R8 (§16 清理) + R16**: 完成 issue 时既要从 §16 表格删除行, 又要 push verdict, 又要 gh issue close.
 
 ### R16.3 关键 caveat
 - ❌ **禁止** 跳过 R16 强制的"先检查 issue" 步骤 (即使认为"无 issue 可做", 也必须先跑 `list_issues`).
-- ❌ **禁止** 用 "drift-cycle 终结" / "backlog 真空" 跳过 issue 检查 (R10 backlog 真空 ≠ GitHub 无 open issue).
+- ❌ **禁止** 用 "drift-cycle 终结" / "无 issue 可做" 跳过 issue 检查 (R10 v2 允许 idle 的前提是 R16 已确认 0 open issue).
 - ❌ **禁止** 关闭 issue 时不写 reason (默认 --reason completed 强制).
 - ❌ **禁止** 用 fallback "issue 不重要先放着" (R2 不允许 fallback, R16 强制关闭).
 
@@ -408,6 +408,7 @@ bash scripts/audit_r9_compliance.sh
 | 事故 | 现象 | 根因 | 修复 | 防止措施 |
 |------|------|------|------|----------|
 | 2026-07-31 R16 新增 | loop tick 报告 "无 actionable work" 但 GitHub 有 OPEN issue 未处理 (#63/#64/#65 三方向 ×× 闭环后 issue 仍 OPEN) | R10 backlog 真空 ≠ GitHub issue 真空, R10 没强制 issue 检查 + 关闭 | R16 强制每个 tick 第一步检查 + 完成 + 关闭 | 每次 loop tick 第一步必须 list_issues |
+| 2026-07-31 R10 v2 修订 | R10 v1 "主动推进"过于激进, 14+ 方向 NO-GO 收口后 AI 自主决策 ROI 极低 | R10 v1 强制"§16 空时必须按 R11.3 自主决策启动新任务", 但 drift-cycle 终止信号下启动即浪费 | R10 v2 改为"open issue 优先 + 无 issue 允许 idle", R16 强制检查 + 关闭作为补充 | R10 v2 取消"主动推进"硬规则, 仅保留 R16 强制 issue 检查 |
 
 
 ---

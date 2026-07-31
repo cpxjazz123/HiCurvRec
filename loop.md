@@ -168,7 +168,7 @@ Stage 3 TIGER 训练:
 
 - **同时只允许一个活跃任务**: 登记新任务前必须先把 §16 当前活跃任务归档
 - **完成立刻归档**: verdict 写完后立刻从 §16 删除该任务 (R8 强制清理)
-- **无任务时必须主动推进**: §16 表格为空时禁止空闲等待, 必须按 R11.3 backlog / 自主决策推进 (R10 主动模式, 2026-07-23 修订)
+- **无任务时允许 idle**: §16 表格为空 + 0 open issue 时**允许 idle 等待** (R10 v2, 2026-07-31 owner 修订). 取消原 R10 v1 "主动推进" 硬规则. R16 仍强制每 tick 检查 open issue, 有 issue → 完成 + 关闭, 没有 → 允许 idle.
 
 ---
 
@@ -270,7 +270,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 **实施细节**:
 - `gh` CLI 路径: `/usr/bin/gh` (已安装, auth 已配置 WENYULIANG123 账号).
-- 监听频率: 每个 loop tick 第一步 (R10 主动推进的前置步骤).
+- 监听频率: 每个 loop tick 第一步 (R16 强制 + R10 v2 idle 允许的前置步骤).
 - issue 编号 vs task 编号: issue #N 跟 task #N **不一定对应** (issue 是用户提的, task 是 AI 派的). 一个 issue 可能映射多个 task. 推荐命名: `task<M>_issue<N>_*.md` 让 task 号跟 issue 号双向追踪.
 - commit push 策略: 默认只 commit 不 push (避免 AI 误推破坏主分支). 用户授权后用 `git push` 推送. **严禁** `--force` push.
 - 关联 commit 跟 issue: `gh issue close` 时 commit 自动关联. 若 GitHub UI 不显示, 在 issue comment 里手动贴 commit hash.
@@ -322,7 +322,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 > **🟢 §16 框架 (universal rule)**: 本节是 loop 当前**唯一**允许的"执行情况/进度"记录位置 (CLAUDE.md 不写). 历史任务记录**禁止**入 loop.md, 必须落 verdicts/ + descriptions/ (per R9-Enforce + R15).
 
 ### §16.1 表格规范 (universal rule)
-- **活跃任务表** (有任务时填, 没任务时空表或注释 "R10 backlog 真空"):
+- **活跃任务表** (有任务时填, 没任务时空表或注释 "R10 v2 idle 等待 owner 指示"):
   | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
   |---------|-------|------|---------|-----|------|-----|
   | task<N> | #X | Stage X/Y Gate Z | Stage 1 / Stage 2 / Stage 3 / Stage 4 | GPU 0/1/2/3 | X% / epN/M | ~Yh |
@@ -336,7 +336,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 |---------|-------|------|---------|-----|------|-----|
 | (空) | — | — | — | — | — | — |
 
-> **状态**: R10 backlog **真空** 维持. Issue #47/#48/#49/#50/#43/#51/#52/#53/#54/#57/#61/#62/#63/#64/#65 全部闭环 (verdicts 落盘 + GitHub closed per R16). 唯一 ROI > 0 路径 (#30+#43 联合 / Issue #43 HypPreEncoder 深化) 已穷尽. 4 张 L40S 全空闲. 等 owner 拍板新方向.
+> **状态**: R10 v2 **idle 等待** 维持. Issue #47/#48/#49/#50/#43/#51/#52/#53/#54/#57/#61/#62/#63/#64/#65/#66/#67/#68/#69/#70/#71 全部闭环 (verdicts 落盘 + GitHub closed per R16). 唯一 ROI > 0 路径 (#30+#43 联合 / Issue #43 HypPreEncoder 深化) 已穷尽. 4 张 L40S 全空闲. R10 v2 (2026-07-31 owner 修订): 0 open issue → 允许 idle, 等 owner 拍板新方向.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
@@ -375,7 +375,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ### §18.4 关键 caveat
 - ❌ **禁止** 跳过 §18 强制的"先检查 issue" 步骤 (即使认为"无 issue 可做", 也必须先跑 `list_issues`).
-- ❌ **禁止** 用 "drift-cycle 终结" / "backlog 真空" 跳过 issue 检查 (R10 backlog 真空 ≠ GitHub issue 真空).
+- ❌ **禁止** 用 "drift-cycle 终结" / "无 issue 可做" 跳过 issue 检查 (R10 v2 idle 允许的前提是 R16 已确认 0 open issue).
 - ❌ **禁止** 关闭 issue 时不写 reason (默认 --reason completed 强制).
 - ❌ **禁止** 用 fallback "issue 不重要先放着" (R2 不允许 fallback, §18 强制关闭).
 
