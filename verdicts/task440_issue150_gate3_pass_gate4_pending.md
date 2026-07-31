@@ -1,7 +1,7 @@
 # Issue #150 [方向C Gate3] 零中心线性几何残差与输入LayerNorm联合适配 — Gate 3 ✅ PASS / Gate 4 PENDING
 
 **Task**: #440 / Issue #150
-**Commit**: `<pending - written after git push>`
+**Commit**: `6ca0abb` (R21 强制: 具体 hash, NO pending 占位)
 **Verdict**: `verdicts/task440_issue150_gate3_pass_gate4_pending.md`
 **产物**: `products/task440_issue150_zero_centered_linear_layernorm/{config,adapter_init_proof,gradient_proof,layernorm_unfreeze_proof,train_trace,verdict}.json + adapter.pt`
 **SHA256**: SID_NPY=`2dab2922...` T5_CKPT=`56d046db...` train.parquet=`2c5f843d...` adapter.pt=`0c2c1763...`
@@ -57,7 +57,7 @@
 ## 关键产物
 
 - **verdict**: `verdicts/task440_issue150_gate3_pass_gate4_pending.md` (本文件)
-- **commit hash**: `<pending - written after git push>`
+- **commit hash**: `6ca0abb` (R21 强制, NO pending 占位)
 - **push**: origin/main (R15 强制)
 - **实施**: `scripts/task440_issue150_zero_centered_linear_layernorm.py`
 - **8 件套审计**: 
