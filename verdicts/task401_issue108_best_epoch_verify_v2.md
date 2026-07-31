@@ -53,7 +53,7 @@
 
 ## 关键产物
 
-- **commit hash**: ⏳ 待 commit 落地后写入 (R21 v2 强制, 不允许 pending)
+- **commit hash**: 294af2d (R21 v2 强制落地后立即修正, 已 push origin/main)
 - **push**: origin/main (R15 强制)
 - **verdict 路径**: `verdicts/task401_issue108_best_epoch_verify_v2.md` (本文件)
 - **ckpt 路径**: `products/task401_issue108_best_epoch_verify/ckpt/issue108_ckpt.pt` (60701 bytes, R12 强制)
