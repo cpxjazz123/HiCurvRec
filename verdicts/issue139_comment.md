@@ -30,7 +30,7 @@
 - 失败原因: **协议层 PASS** (Control R@10=0.10203 完全复现 baseline 0.1020, Issue #136 R18 修复成功). **Adapter 层 NO-GO** (R@10=0.03684 -62.9% vs control): #129 dual-gate adapter 仅 2 epoch 训练, gate_zero + gate_active_up 都是 zero-init, 实际只走 active_down→ReLU 一次, 跟 T5 input embedding 适配路径不兼容. Issue #133 已知 (proxy R@K=0), Issue #139 真实协议下也确认 (R@K=0.04).
 
 ### 关键产物
-- commit hash: <pending>
+- commit hash: 347664d
 - push: origin/main
 - verdict: verdicts/task429_issue139_gate4_fail_v3.md
 - 实施: scripts/task429_issue139_stage4_repro.py
