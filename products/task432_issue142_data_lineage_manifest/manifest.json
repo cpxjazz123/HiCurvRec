@@ -1,0 +1,505 @@
+{
+  "test_parquet": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
+    "sha256": "70f00f3a3ac4cf39088e4ba7c516104ecf1d6fddf14b19e255c8f89229e55899",
+    "rows": 24772,
+    "schema": {
+      "user": "object",
+      "history": "object",
+      "target": "int64"
+    }
+  },
+  "train_parquet": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/train.parquet",
+    "sha256": "2c5f843d456a42ee8d7f6bae27c789622fd957367e958eacbad3df90942ffa1f",
+    "rows": 24772,
+    "schema": {
+      "user": "object",
+      "history": "object",
+      "target": "int64"
+    }
+  },
+  "sid_npy": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_poincare.npy",
+    "sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "shape": [
+      9922,
+      4
+    ],
+    "dtype": "int64"
+  },
+  "t5_ckpt": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt_hgrec/Instruments/Jul-23-2026_20-24-44/HG_Rec_best.pth",
+    "sha256": "56d046dbabdb1930691f1361419b030b6912409853fe84e645c67072ffecb86e",
+    "exists": true
+  },
+  "adapter_pt": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task422_issue129_t5_dual_gate_ckpt/adapter_trained_2ep.pt",
+    "sha256": "2ab2ed89d53170df9426d6c64ef8ccc4d312c38be82565da354e596ee0a71c64",
+    "exists": true
+  },
+  "code_path_test_frozen": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/products/task432_issue142_data_lineage_manifest/code_path_test_frozen.npy",
+    "sha256": "19213ed27fd9a8a30ffa3ee983c36818b23a1a0e07e59a65db2bae46d5022860",
+    "shape": [
+      24772,
+      4
+    ]
+  },
+  "codebook_size": [
+    64,
+    128,
+    256,
+    1
+  ],
+  "alignment_check": {
+    "n_items_sid": 9922,
+    "test_item_ids_count": 9922,
+    "min_item_id": 1,
+    "max_item_id": 9922,
+    "all_in_range_0idx": false,
+    "all_in_range_1idx": true,
+    "out_of_range_0idx_count": 1,
+    "out_of_range_1idx_count": 0,
+    "indexing_scheme": "1-indexed (item_id \u2192 SID[item_id-1])"
+  },
+  "sample_traces": [
+    {
+      "row_index": 10676,
+      "user": "10676",
+      "history": [
+        6565,
+        4583,
+        938,
+        8683,
+        936,
+        51,
+        113,
+        1086,
+        4041,
+        2338,
+        176
+      ],
+      "target": 2412,
+      "target_sid_1idx": [
+        53,
+        119,
+        190,
+        0
+      ]
+    },
+    {
+      "row_index": 11644,
+      "user": "11644",
+      "history": [
+        9079,
+        5225,
+        2225,
+        2301,
+        6276,
+        1579,
+        8055,
+        243,
+        34
+      ],
+      "target": 944,
+      "target_sid_1idx": [
+        2,
+        98,
+        172,
+        0
+      ]
+    },
+    {
+      "row_index": 5227,
+      "user": "5227",
+      "history": [
+        108,
+        105,
+        166,
+        164,
+        165,
+        162,
+        8220,
+        382,
+        3775,
+        393,
+        3653
+      ],
+      "target": 1342,
+      "target_sid_1idx": [
+        10,
+        19,
+        244,
+        0
+      ]
+    },
+    {
+      "row_index": 17257,
+      "user": "17257",
+      "history": [
+        538,
+        2139,
+        564,
+        2431,
+        2537,
+        2639,
+        324,
+        9194,
+        2733
+      ],
+      "target": 7958,
+      "target_sid_1idx": [
+        38,
+        88,
+        8,
+        0
+      ]
+    },
+    {
+      "row_index": 14891,
+      "user": "14891",
+      "history": [
+        2762,
+        158,
+        4760,
+        6725,
+        1829,
+        2341,
+        9715,
+        5805,
+        1566,
+        687,
+        5049,
+        5282,
+        934,
+        4029,
+        933
+      ],
+      "target": 399,
+      "target_sid_1idx": [
+        19,
+        17,
+        117,
+        0
+      ]
+    },
+    {
+      "row_index": 20418,
+      "user": "20418",
+      "history": [
+        7770,
+        3538,
+        2,
+        6635,
+        1460,
+        6273
+      ],
+      "target": 5973,
+      "target_sid_1idx": [
+        44,
+        30,
+        69,
+        1
+      ]
+    },
+    {
+      "row_index": 9192,
+      "user": "9192",
+      "history": [
+        358,
+        9,
+        578,
+        1878,
+        2833,
+        2380,
+        2347,
+        2778,
+        9351,
+        4293,
+        6595,
+        6754,
+        1355,
+        7749,
+        4749,
+        5536,
+        6712,
+        1273,
+        1204
+      ],
+      "target": 12,
+      "target_sid_1idx": [
+        59,
+        61,
+        177,
+        0
+      ]
+    },
+    {
+      "row_index": 18457,
+      "user": "18457",
+      "history": [
+        2783,
+        4615,
+        7026,
+        5062
+      ],
+      "target": 1218,
+      "target_sid_1idx": [
+        41,
+        116,
+        45,
+        0
+      ]
+    },
+    {
+      "row_index": 11800,
+      "user": "11800",
+      "history": [
+        475,
+        1010,
+        3940,
+        1679
+      ],
+      "target": 2655,
+      "target_sid_1idx": [
+        30,
+        3,
+        226,
+        0
+      ]
+    },
+    {
+      "row_index": 22097,
+      "user": "22097",
+      "history": [
+        252,
+        4626,
+        2051,
+        1291,
+        935
+      ],
+      "target": 4364,
+      "target_sid_1idx": [
+        63,
+        106,
+        152,
+        0
+      ]
+    },
+    {
+      "row_index": 9051,
+      "user": "9051",
+      "history": [
+        6158,
+        6163,
+        3000,
+        8193,
+        1790,
+        3161,
+        955,
+        5014
+      ],
+      "target": 5522,
+      "target_sid_1idx": [
+        16,
+        75,
+        110,
+        0
+      ]
+    },
+    {
+      "row_index": 6481,
+      "user": "6481",
+      "history": [
+        69,
+        1899,
+        1897,
+        1040,
+        1042
+      ],
+      "target": 4567,
+      "target_sid_1idx": [
+        44,
+        9,
+        16,
+        0
+      ]
+    },
+    {
+      "row_index": 23630,
+      "user": "23630",
+      "history": [
+        6847,
+        8037,
+        527,
+        102,
+        8214
+      ],
+      "target": 6528,
+      "target_sid_1idx": [
+        5,
+        80,
+        121,
+        0
+      ]
+    },
+    {
+      "row_index": 5354,
+      "user": "5354",
+      "history": [
+        870,
+        2182,
+        3675,
+        3364,
+        9319,
+        6436,
+        9320
+      ],
+      "target": 6490,
+      "target_sid_1idx": [
+        30,
+        23,
+        127,
+        0
+      ]
+    },
+    {
+      "row_index": 3589,
+      "user": "3589",
+      "history": [
+        405,
+        2431,
+        1148,
+        1152
+      ],
+      "target": 3199,
+      "target_sid_1idx": [
+        24,
+        33,
+        69,
+        0
+      ]
+    },
+    {
+      "row_index": 18756,
+      "user": "18756",
+      "history": [
+        1917,
+        6170,
+        2532,
+        3698,
+        95,
+        1010,
+        311
+      ],
+      "target": 379,
+      "target_sid_1idx": [
+        34,
+        68,
+        224,
+        0
+      ]
+    },
+    {
+      "row_index": 7285,
+      "user": "7285",
+      "history": [
+        1337,
+        1380,
+        4886,
+        3465,
+        9466,
+        2308
+      ],
+      "target": 3788,
+      "target_sid_1idx": [
+        54,
+        26,
+        87,
+        0
+      ]
+    },
+    {
+      "row_index": 3502,
+      "user": "3502",
+      "history": [
+        8299,
+        1411,
+        7224,
+        2572,
+        6659,
+        166,
+        162,
+        164
+      ],
+      "target": 165,
+      "target_sid_1idx": [
+        59,
+        55,
+        160,
+        0
+      ]
+    },
+    {
+      "row_index": 5589,
+      "user": "5589",
+      "history": [
+        1351,
+        8050,
+        1768,
+        2885
+      ],
+      "target": 1,
+      "target_sid_1idx": [
+        38,
+        104,
+        154,
+        0
+      ]
+    },
+    {
+      "row_index": 19879,
+      "user": "19879",
+      "history": [
+        4588,
+        1790,
+        1292,
+        2789,
+        108,
+        325,
+        654,
+        195,
+        105,
+        3297
+      ],
+      "target": 841,
+      "target_sid_1idx": [
+        51,
+        9,
+        83,
+        0
+      ]
+    }
+  ],
+  "token_in_range": true,
+  "config": {
+    "seed": 42,
+    "device": "cuda:0",
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ],
+    "beam_size": 20,
+    "max_len": 20,
+    "batch_size": 256,
+    "sample_trace_n": 20,
+    "test_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
+    "train_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/train.parquet",
+    "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_poincare.npy",
+    "t5_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt_hgrec/Instruments/Jul-23-2026_20-24-44/HG_Rec_best.pth",
+    "adapter_pt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task422_issue129_t5_dual_gate_ckpt/adapter_trained_2ep.pt"
+  }
+}

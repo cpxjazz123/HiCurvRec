@@ -1,0 +1,19 @@
+{
+  "seed": 42,
+  "device": "cuda:0",
+  "codebook_size": [
+    64,
+    128,
+    256,
+    1
+  ],
+  "beam_size": 20,
+  "max_len": 20,
+  "batch_size": 256,
+  "sample_trace_n": 20,
+  "test_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
+  "train_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/train.parquet",
+  "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_poincare.npy",
+  "t5_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt_hgrec/Instruments/Jul-23-2026_20-24-44/HG_Rec_best.pth",
+  "adapter_pt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task422_issue129_t5_dual_gate_ckpt/adapter_trained_2ep.pt"
+}
