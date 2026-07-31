@@ -1,0 +1,818 @@
+{
+  "task": "task433_issue143_kappa_ownership_repair",
+  "issue": 143,
+  "issue_spec_6_audit_pieces": {
+    "1_config": "/home/wlia0047/ar57/wenyu/GeneRec/products/task433_issue143_kappa_ownership_repair/config.json",
+    "2_sha256": {
+      "item_emb": "1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc"
+    },
+    "3_trace": [
+      {
+        "step": 100,
+        "loss": 0.005682302638888359,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.046875,
+            "max_load": 0.9697265625,
+            "n_used": 3,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.95556640625,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.0078125,
+            "max_load": 0.7138671875,
+            "n_used": 2,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 200,
+        "loss": 0.010896323248744011,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.03125,
+            "max_load": 0.73486328125,
+            "n_used": 2,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.94775390625,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.05859375,
+            "max_load": 0.95458984375,
+            "n_used": 15,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 300,
+        "loss": 0.0025394614785909653,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.9541015625,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.970703125,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.05859375,
+            "max_load": 0.94140625,
+            "n_used": 15,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 400,
+        "loss": 0.002835253719240427,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.96240234375,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9560546875,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.05859375,
+            "max_load": 0.94287109375,
+            "n_used": 15,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 500,
+        "loss": 0.003400900401175022,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.958984375,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9501953125,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.05859375,
+            "max_load": 0.92431640625,
+            "n_used": 15,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 600,
+        "loss": 0.0031219949014484882,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.95458984375,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9501953125,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.05859375,
+            "max_load": 0.9140625,
+            "n_used": 15,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 700,
+        "loss": 0.004217302426695824,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.9521484375,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.94775390625,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9111328125,
+            "n_used": 14,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 800,
+        "loss": 0.0038239071145653725,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.9560546875,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9365234375,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.04296875,
+            "max_load": 0.91943359375,
+            "n_used": 11,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 900,
+        "loss": 0.0051231104880571365,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.95556640625,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9404296875,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9375,
+            "n_used": 14,
+            "K": 256
+          }
+        ]
+      },
+      {
+        "step": 1000,
+        "loss": 0.00399414636194706,
+        "kappa_per_layer": [
+          -0.7931472063064575,
+          -0.7931472063064575,
+          -0.7931472063064575
+        ],
+        "grad_kappa_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kappa_unique": false,
+        "per_layer_metrics": [
+          {
+            "util": 0.09375,
+            "max_load": 0.95068359375,
+            "n_used": 6,
+            "K": 64
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.94775390625,
+            "n_used": 7,
+            "K": 128
+          },
+          {
+            "util": 0.0546875,
+            "max_load": 0.9501953125,
+            "n_used": 14,
+            "K": 256
+          }
+        ]
+      }
+    ],
+    "4_raw_log": "/home/wlia0047/ar57/wenyu/GeneRec/logs/task433_issue143_kappa_ownership_repair.log",
+    "5_verdict": "/home/wlia0047/ar57/wenyu/GeneRec/products/task433_issue143_kappa_ownership_repair/verdict.json",
+    "6_commit": "<pending - written after git push>"
+  },
+  "precheck": {
+    "parameter_registry": {
+      "kappa_l_raw_0": {
+        "shape": [],
+        "requires_grad": true,
+        "is_leaf": true,
+        "dtype": "torch.float32",
+        "value_initial": 0.0
+      },
+      "kappa_l_raw_1": {
+        "shape": [],
+        "requires_grad": true,
+        "is_leaf": true,
+        "dtype": "torch.float32",
+        "value_initial": 0.0
+      },
+      "kappa_l_raw_2": {
+        "shape": [],
+        "requires_grad": true,
+        "is_leaf": true,
+        "dtype": "torch.float32",
+        "value_initial": 0.0
+      }
+    },
+    "optimizer_groups": [
+      {
+        "name": "kappa",
+        "lr": 0.001,
+        "count": 3
+      },
+      {
+        "name": "codebook",
+        "lr": 0.0001,
+        "count": 3
+      },
+      {
+        "name": "other",
+        "lr": 0.0001,
+        "count": 24
+      }
+    ],
+    "before_train_kappa": {
+      "kappa_l_raw_0": -0.7931472063064575,
+      "kappa_l_raw_1": -0.7931472063064575,
+      "kappa_l_raw_2": -0.7931472063064575
+    },
+    "after_train_kappa": [
+      -0.7931472063064575,
+      -0.7931472063064575,
+      -0.7931472063064575
+    ],
+    "issue_143_precheck_pass": false
+  },
+  "config": {
+    "seed": 42,
+    "device": "cuda:0",
+    "num_steps": 1000,
+    "record_every": 100,
+    "codebook_size": [
+      64,
+      128,
+      256
+    ],
+    "batch_size": 256,
+    "lr_kappa": 0.001,
+    "lr_codebook": 0.0001,
+    "kappa_min": 0.1,
+    "kappa_max": 2.0
+  },
+  "reproducibility": {
+    "item_emb_sha256": "1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc"
+  },
+  "r18_repaired_kappa_audit": {
+    "kappa_unique": false,
+    "final_kappa": [
+      -0.7931472063064575,
+      -0.7931472063064575,
+      -0.7931472063064575
+    ],
+    "final_grad_kappa": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "all_grad_nonzero": false,
+    "all_loss_finite": true,
+    "final_util": {
+      "L0": 0.09375,
+      "L1": 0.0546875,
+      "L2": 0.0546875
+    },
+    "final_max_load": {
+      "L0": 0.95068359375,
+      "L1": 0.94775390625,
+      "L2": 0.9501953125
+    },
+    "util_ok_90pct": false,
+    "max_load_ok_5pct": false,
+    "hard_sid_round_trip": true
+  },
+  "trace": [
+    {
+      "step": 100,
+      "loss": 0.005682302638888359,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.046875,
+          "max_load": 0.9697265625,
+          "n_used": 3,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.95556640625,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.0078125,
+          "max_load": 0.7138671875,
+          "n_used": 2,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 200,
+      "loss": 0.010896323248744011,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.03125,
+          "max_load": 0.73486328125,
+          "n_used": 2,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.94775390625,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.05859375,
+          "max_load": 0.95458984375,
+          "n_used": 15,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 300,
+      "loss": 0.0025394614785909653,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.9541015625,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.970703125,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.05859375,
+          "max_load": 0.94140625,
+          "n_used": 15,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 400,
+      "loss": 0.002835253719240427,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.96240234375,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9560546875,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.05859375,
+          "max_load": 0.94287109375,
+          "n_used": 15,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 500,
+      "loss": 0.003400900401175022,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.958984375,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9501953125,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.05859375,
+          "max_load": 0.92431640625,
+          "n_used": 15,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 600,
+      "loss": 0.0031219949014484882,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.95458984375,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9501953125,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.05859375,
+          "max_load": 0.9140625,
+          "n_used": 15,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 700,
+      "loss": 0.004217302426695824,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.9521484375,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.94775390625,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9111328125,
+          "n_used": 14,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 800,
+      "loss": 0.0038239071145653725,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.9560546875,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9365234375,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.04296875,
+          "max_load": 0.91943359375,
+          "n_used": 11,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 900,
+      "loss": 0.0051231104880571365,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.95556640625,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9404296875,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9375,
+          "n_used": 14,
+          "K": 256
+        }
+      ]
+    },
+    {
+      "step": 1000,
+      "loss": 0.00399414636194706,
+      "kappa_per_layer": [
+        -0.7931472063064575,
+        -0.7931472063064575,
+        -0.7931472063064575
+      ],
+      "grad_kappa_per_layer": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "kappa_unique": false,
+      "per_layer_metrics": [
+        {
+          "util": 0.09375,
+          "max_load": 0.95068359375,
+          "n_used": 6,
+          "K": 64
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.94775390625,
+          "n_used": 7,
+          "K": 128
+        },
+        {
+          "util": 0.0546875,
+          "max_load": 0.9501953125,
+          "n_used": 14,
+          "K": 256
+        }
+      ]
+    }
+  ],
+  "gate1_pass": false
+}

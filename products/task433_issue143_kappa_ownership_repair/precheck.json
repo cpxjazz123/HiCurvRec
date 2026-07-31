@@ -1,0 +1,53 @@
+{
+  "parameter_registry": {
+    "kappa_l_raw_0": {
+      "shape": [],
+      "requires_grad": true,
+      "is_leaf": true,
+      "dtype": "torch.float32",
+      "value_initial": 0.0
+    },
+    "kappa_l_raw_1": {
+      "shape": [],
+      "requires_grad": true,
+      "is_leaf": true,
+      "dtype": "torch.float32",
+      "value_initial": 0.0
+    },
+    "kappa_l_raw_2": {
+      "shape": [],
+      "requires_grad": true,
+      "is_leaf": true,
+      "dtype": "torch.float32",
+      "value_initial": 0.0
+    }
+  },
+  "optimizer_groups": [
+    {
+      "name": "kappa",
+      "lr": 0.001,
+      "count": 3
+    },
+    {
+      "name": "codebook",
+      "lr": 0.0001,
+      "count": 3
+    },
+    {
+      "name": "other",
+      "lr": 0.0001,
+      "count": 24
+    }
+  ],
+  "before_train_kappa": {
+    "kappa_l_raw_0": -0.7931472063064575,
+    "kappa_l_raw_1": -0.7931472063064575,
+    "kappa_l_raw_2": -0.7931472063064575
+  },
+  "after_train_kappa": [
+    -0.7931472063064575,
+    -0.7931472063064575,
+    -0.7931472063064575
+  ],
+  "issue_143_precheck_pass": false
+}
