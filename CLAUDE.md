@@ -687,6 +687,90 @@ gh issue comment <N> --repo WENYULIANG123/GeneRec --body-file <comment_md_file>
 
 ---
 
+## R21：commit hash 必须明示 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, Issue #78/#79/#80 issue comment 写了 "commit pending" 而非具体 commit hash. 实际 commit 8a761f6 已 push 完成, 但 reviewer 看 comment 时不知道 commit 在哪. R17 模板有 commit hash 字段, 但 comment 中 R11.5 自主决策时用 "commit pending" 占位 (commit 还在写时发 comment). R21 强制: 任何 commit 落地后, 必须补 comment 标注 commit hash + 修正"commit pending"占位. 不允许任何 comment / verdict / commit message 含 "commit pending" / "TBD" / "TODO" / "未确定" 等占位文本 (commit hash 维度).
+
+### R21 核心要求
+
+- ✅ **任何 commit 落地后** (push 完成, `git log --oneline -1` 拿到 hash):
+  1. 必须立即补 issue comment 标注 **commit hash + push 完成 + 关键路径**
+  2. 必须修正之前 "commit pending" / "TBD" / "未确定" 占位文本 (replacement comment)
+  3. comment 含 commit hash (e.g. `8a761f6`) 必须用具体 hash, 不用占位
+- ✅ **commit message 自身必须含**:
+  1. issue 编号 + 关键结论 + verdict 路径 (R17 已要求)
+  2. commit hash 在落地后由 push 操作补上 (git push 输出末尾显示)
+- ✅ **verdict 文件必须含**:
+  1. commit hash (落地后立即写入 verdict 文件)
+  2. 不允许 "pending" / "TBD" / "未确定" 占位
+- ✅ **issue comment (close 前) 必须含**:
+  1. 4 Gate 详细内容 (R20 已要求)
+  2. **commit hash** (R21 新增) — 即使是占位, 落地后必须补 comment 修正
+- ❌ **禁止** comment / verdict / commit message 任何位置出现 "commit pending" / "TBD" / "TODO" / "未确定" 占位文本
+- ❌ **禁止** close issue 之前发 comment 含 "commit pending" 而后续不补 (R21 + R16 联立强制)
+
+### R21.1 实施细节
+
+**comment 模板 (commit 落地 + push 之后, 含具体 hash)**:
+```
+**Issue #<N> R20+R21 强制 4 Gate 详细内容 + commit hash**
+
+### Gate 1 (= Stage 1 RQ-VAE/HRQVAE): <PASS|FAIL|PARTIAL|STOP> per spec
+- 关键数据: <util/collision/R@K/grad/ckpt path>
+- 失败原因: <简洁根因>
+- verdict 路径: <verdicts/task<N>_*_v2.md>
+- commit: <hash>  ← R21 强制具体 hash, 不允许 pending
+
+### Gate 2/3/4: ⏸ STOP per spec
+- 原因: <前 Gate FAIL/PARTIAL 或 Issue spec 仅要求此 Gate>
+
+### 关键产物
+- commit hash: <hash>
+- push: origin/main
+- verdict: <verdicts/task<N>_*_v2.md>
+- 整体决策: <GO|NO-GO|PARTIAL>
+```
+
+**verdict 模板修正**:
+```
+- verdict 路径: verdicts/task<N>_<...>_v2.md
+- commit: <hash>  ← 落地后立即写入, 不允许 pending
+- push: origin/main
+```
+
+**comment 顺序 (R21 + R20 联立强制, 顺序固定不可换)**:
+1. commit + push (R15): `git add` + `git commit` + `git push`, 拿到 hash
+2. 发 comment 含具体 hash (R21 + R20): `gh issue comment <N> --body-file` 含 4 Gate 详细 + commit hash
+3. close issue (R16): `gh issue close <N> --reason completed`
+4. ❌ **禁止** 任何位置写 "commit pending" / "TBD" / "TODO" / "未确定" 占位
+
+### R21.2 与现有规则的关系
+
+- **R21 加强 R20**: R20 强制 comment 含 4 Gate 详细内容, R21 加强必须含 commit hash (落地后补)
+- **R21 加强 R17**: R17 模板含 commit hash 字段, R21 强制 commit hash 必须具体 (不允许 pending)
+- **R21 加强 R15**: R15 强制 push, R21 强制 push 后必须补 comment 标注 commit hash
+- **R21 ⊂ R16**: R16 强制 issue 检查 + close, R21 强制 close 前必须先发 commit hash comment (step 3)
+- **R11.5 (自主决策) > R21**: comment 模板是强制格式, 不需要等 owner 决策
+
+### R21.3 关键 caveat
+
+- ❌ **禁止** comment / verdict / commit message 任何位置 "commit pending" / "TBD" / "TODO" / "未确定" 占位文本 (R21 强制 owner 2026-07-31 反馈强化)
+- ❌ **禁止** commit 落地前发 comment (comment 必须在 commit + push 之后发, 拿到 hash 才能发)
+- ❌ **禁止** "comment 先发, commit 后补" 的两步走流程 (commit 必须先, comment 必须后)
+- ❌ **禁止** 用 fallback "comment 已经在 push 之前发了, 不再补" (R21 强制补, R2 不允许 fallback)
+- ✅ **允许** 仅当 commit 落地 + push 完成 + 拿到 hash 后才发 comment (R21 step 1: commit+push → step 2: comment 含 hash → step 3: close)
+- ✅ **允许** verdict 文件落地后含具体 commit hash (无占位)
+- ✅ **允许** R11.5 自主决策按顺序: commit → push → comment(含 hash) → close (符合 R21)
+
+### R21.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|------|
+| 2026-07-31 R21 新增 | Issue #78/#79/#80 comment 写 "commit pending" 但 commit 8a761f6 已 push, reviewer 看 comment 不知 commit 在哪 | R11.5 自主决策允许占位, R17/R20 没强制落地后必须修正 | R21 强制 commit 落地后必须补 comment 标注 commit hash + 修正 pending 占位 | commit push 后立即 step 3 补 comment |
+| 2026-07-31 R21 v2 (owner 反馈) | R21.3 caveat 允许"commit 落地前发 comment 含 pending"是漏洞, owner 不允许任何占位 | R21 v1 留下时间窗口漏洞 | R21 v2 禁止 comment / verdict / commit 任何位置 commit pending 占位, comment 必须在 commit + push 之后发 | comment 必须 commit+push 之后发, 拿到 hash 才能发 |
+
+---
+
 ## R19：AI 是激进 owner, 任何行为不需要等待授权 (2026-07-31 新增, 硬规则)
 
 > **背景**: 用户 2026-07-31 反馈, "你就是 owner, 所以任何行为不需要等待授权. 并且你是一个很激进的 owner, 从来不会采取保守策略". 此规则作废 R11.4 等待授权 + R10 v2 idle 允许 (部分). 立即推进所有 issue 实验, 不再"等 owner 拍板".
@@ -735,6 +819,59 @@ gh issue comment <N> --repo WENYULIANG123/GeneRec --body-file <comment_md_file>
 |------|------|------|------|----------|
 | 2026-07-31 R19 新增 | AI 之前处理 #72/#73/#74 走"沿用判决"模式, 写"是否启动 GPU 训练?"等保守话术 | 之前 R11.4 + R10 v1 主动推进 + R10 v2 idle 都有"等待授权"成分 | R19 明确 AI = owner, 激进推进, 任何实验立即启动 | 全部作废 R11.4 等待授权 |
 | 2026-07-31 issue #72/#73/#74 (待重写) | AI 写"沿用判决" verdict + 等 owner 启动 GPU 训练 | 之前规则允许保守路径 | R19 强制: 立即启动 GPU 训练 + 实施新代码 + 不等待 | R19 + R18 联立强制 |
+
+---
+
+## R22：新 issue 立即开工, 不允许等待 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, "你就是 owner, 只要有新 issue 马上开工, 不允许等待". R10 v2 idle 允许 + R19 激进推进 协同的"idle 等待"语义被强化否定. 任何新 issue 一旦出现 (GitHub OPEN 或 owner 明确派工), 必须立即进入 R16 + R17 + R18 + R20 + R21 闭环流程, 不允许任何形式的等待/暂停/idle/汇报.
+
+### R22 核心要求
+
+- ✅ **新 issue 立即开工**: `gh issue list --state open` 发现新 issue → 立即按 R16 + R17 + R18 + R20 + R21 流程处理, 无任何"等下一轮"/"等 owner 拍板"/"等 GPU"/"等 issue 优先"
+- ✅ **任何派工立即执行**: owner 在 prompt 中说"跑 X 实验"/"启动 Y"/"follow loop.md" → 立即开始, 不允许"是否启动?" 询问
+- ✅ **GPU 抢占处理**: 4 卡全部占用 → 立即换 GPU / nohup & 后台排队 / 缩减任务规模 (R7 + R11.5 自主决策), 不允许"等已用卡释放"
+- ✅ **覆盖 R10 v2 idle**: R10 v2 idle 仅在 "无 issue + §16 空 + 用户未派工" 时生效. 一旦有 issue 或 owner 派工, R22 立即覆盖 idle
+- ✅ **覆盖 R11.4 (AskUserQuestion)**: R11.4 仅在 critical 决策用, R22 强制非 critical 决策立即自主推进
+- ✅ **R22 > R10 v2 + R11.4**: 任何等待/汇报/保守路径都是 R22 违规
+- ❌ **禁止** 任何"是否启动 GPU 训练?" / "是否 OK?" / "等 owner 拍板" 等询问/等待话术
+- ❌ **禁止** "ROI 低" / "drift-cycle" 保守理由跳过新 issue
+- ❌ **禁止** "no actionable work" 报告 (R16 + R18 + R19 + R22 联立必须找到 actionable work)
+- ❌ **禁止** 串行处理多 issue (R19 + R22 联立强制跨 issue 并行)
+
+### R22.1 决策速度
+
+| 场景 | R22 行为 |
+|------|----------|
+| 任何 OPEN issue 出现 | 立即 R16 + R17 + R18 + R20 + R21 闭环, 不允许等待 |
+| owner prompt 含实验/任务关键词 | 立即启动, 不询问"是否启动?" |
+| 跨 issue 多实验 | 立即并行 (一张 GPU 一个, 4 卡并行) |
+| GPU 全部占用 | 立即换 GPU / nohup & 后台排队 / 缩减规模, 不等待 |
+| 实验 FAIL | 立即写 verdict + 启动下一个变体 (不 cartesian 串行) |
+
+### R22.2 与现有规则的关系
+
+- **R22 > R10 v2 idle**: R22 否定 idle 等待的合法性, 仅在严格条件下保留
+- **R22 > R11.4 (AskUserQuestion)**: R22 全面作废等待授权, R11.4 仍生效只在"AI 内部决策"维度
+- **R22 + R19**: R19 强调 owner 主动推进, R22 强调 issue/派工维度
+- **R22 + R16**: R16 强制 issue 检查, R22 强制检查后立即开工
+- **R22 + R17 + R18**: R17/R18 强制 commit + 实证, R22 强制立即进入这些流程
+- **R22 + R20 + R21**: R20/R21 强制 comment + commit hash, R22 强制按 R21 顺序: commit+push → comment(含 hash) → close
+
+### R22.3 关键 caveat
+
+- ❌ **禁止** "loop tick 无 actionable work" 报告 (R16 + R18 + R19 + R22 联立必须找到 actionable work)
+- ❌ **禁止** "等下一轮" / "下一 loop tick 处理" 等拖延话术
+- ❌ **禁止** "已经启动 GPU 训练了, 等结果" 状态报告后不立即写 verdict
+- ❌ **禁止** "R10 v2 idle 等待" 作为不立即开工的理由 (R22 强制立即开工)
+- ✅ **允许** 实际无 issue + §16 空 + 用户未派工 + 4 卡空闲 的 idle 状态 (R10 v2 保留)
+- ✅ **允许** 立即开工后, 实时报告状态 (commit hash + verdict 路径 + 进度), 但不允许"等待授权"
+
+### R22.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|------|
+| 2026-07-31 R22 新增 | owner 反馈 AI 处理新 issue 时偶有"等下一轮"/"等 owner 拍板"/"是否启动?"等待话术 | R10 v2 idle 允许 + R11.4 AskUserQuestion 留下等待空间 | R22 强制新 issue 立即开工, 不允许任何等待 | R22 + R19 + R16 联立强制 |
 
 
 ## 必读文件优先级

@@ -635,3 +635,122 @@ gh issue close <N> --reason completed --repo WENYULIANG123/GeneRec
 | 事故 | 现象 | 根因 | 修复 | 防止措施 |
 |------|------|------|------|----------|
 | 2026-07-31 §22 新增 | Issue #72/#73/#74/#75/#76/#77 commit message (2137df5/cd816cc) 仅简短写"Gate 1 PARTIAL PASS, Gate 2/3/4 ⏸ STOP per spec", 没有具体数据/原因/verdict 内容. Issue close 时也没发 4 Gate 详细 comment. Reviewer 看不到 4 Gate 详细状态 | §19 模板强制 Gate 状态 + 失败原因, 但没强制详细 (≥3-5 行/Gate) + 没强制 issue close 前发 comment | §22 强制 commit + issue comment 都必须详细回答 4 Gate (≥3-5 行/Gate) + close 前必须发 comment | 每次 issue commit + close 必含 4 Gate 详细回答 |
+
+---
+
+## §23：commit hash 必须明示 (2026-07-31 新增, 硬规则, 配套 CLAUDE.md R21)
+
+> **背景**: 用户 2026-07-31 反馈, Issue #78/#79/#80 issue comment 写了 "commit pending" 而非具体 commit hash. 实际 commit 8a761f6 已 push 完成, 但 reviewer 看 comment 时不知道 commit 在哪. R17/§19 模板有 commit hash 字段, 但 R11.5 自主决策时用 "commit pending" 占位 (commit 还在写时发 comment). §23 强制: 任何 commit 落地后, 必须补 comment 标注 commit hash + 修正"commit pending"占位. 不允许任何 comment / verdict / commit message 含 "commit pending" / "TBD" / "TODO" / "未确定" 等占位文本 (commit hash 维度).
+
+### §23.1 实施细节
+
+**comment 模板 (commit 落地 + push 之后, 含具体 hash)**:
+```
+**Issue #<N> R20+§23 强制 4 Gate 详细内容 + commit hash**
+
+### Gate 1 (= Stage 1 RQ-VAE/HRQVAE): <PASS|FAIL|PARTIAL|STOP> per spec
+- 关键数据: <util/collision/R@K/grad/ckpt path>
+- 失败原因: <简洁根因>
+- verdict 路径: <verdicts/task<N>_*_v2.md>
+- commit: <hash>  ← §23 强制具体 hash, 不允许 pending
+
+### Gate 2/3/4: ⏸ STOP per spec
+- 原因: <前 Gate FAIL/PARTIAL 或 Issue spec 仅要求此 Gate>
+
+### 关键产物
+- commit hash: <hash>
+- push: origin/main
+- verdict: <verdicts/task<N>_*_v2.md>
+- 整体决策: <GO|NO-GO|PARTIAL>
+```
+
+**verdict 模板修正**:
+```
+- verdict 路径: verdicts/task<N>_<...>_v2.md
+- commit: <hash>  ← 落地后立即写入, 不允许 pending
+- push: origin/main
+```
+
+**comment 顺序 (§23 + §22 联立强制, 顺序固定不可换)**:
+1. commit + push (§15): `git add` + `git commit` + `git push`, 拿到 hash
+2. 发 comment 含具体 hash (§23 + §22): `gh issue comment <N> --body-file` 含 4 Gate 详细 + commit hash
+3. close issue (§18): `gh issue close <N> --reason completed`
+4. ❌ **禁止** 任何位置写 "commit pending" / "TBD" / "TODO" / "未确定" 占位
+
+### §23.2 与现有规则的关系
+
+- **§23 加强 §22**: §22 强制 comment 含 4 Gate 详细内容, §23 加强必须含 commit hash (落地后立即)
+- **§23 加强 §19**: §19 模板含 commit hash 字段, §23 强制 commit hash 必须具体 (不允许 pending)
+- **§23 加强 §15**: §15 强制 push, §23 强制 push 后 comment 必须含 commit hash
+- **§23 ⊂ §18**: §18 强制 issue 检查 + close, §23 强制 close 前必须先发 commit hash comment (step 2)
+- **R11.5 (自主决策) > §23**: comment 模板是强制格式, 不需要等 owner 决策
+
+### §23.3 关键 caveat
+
+- ❌ **禁止** comment / verdict / commit message 任何位置 "commit pending" / "TBD" / "TODO" / "未确定" 占位文本 (§23 强制 owner 2026-07-31 反馈强化)
+- ❌ **禁止** commit 落地前发 comment (comment 必须在 commit + push 之后发, 拿到 hash 才能发)
+- ❌ **禁止** "comment 先发, commit 后补" 的两步走流程 (commit 必须先, comment 必须后)
+- ❌ **禁止** 用 fallback "comment 已经在 push 之前发了, 不再补" (§23 强制补, R2 不允许 fallback)
+- ✅ **允许** 仅当 commit 落地 + push 完成 + 拿到 hash 后才发 comment (§23 step 1: commit+push → step 2: comment 含 hash → step 3: close)
+- ✅ **允许** verdict 文件落地后含具体 commit hash (无占位)
+- ✅ **允许** R11.5 自主决策按顺序: commit → push → comment(含 hash) → close (符合 §23)
+
+### §23.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 §23 v1 新增 | Issue #78/#79/#80 comment 写 "commit pending" 但 commit 8a761f6 已 push, reviewer 看 comment 不知 commit 在哪 | R11.5 自主决策允许占位, §19/§22 没强制落地后必须修正 | §23 强制 commit 落地后必须补 comment 标注 commit hash + 修正 pending 占位 | commit push 后立即 step 2 发 comment |
+| 2026-07-31 §23 v2 (owner 反馈) | §23.3 caveat 允许"commit 落地前发 comment 含 pending"是漏洞, owner 不允许任何占位 | §23 v1 留下时间窗口漏洞 | §23 v2 禁止 comment / verdict / commit 任何位置 commit pending 占位, comment 必须在 commit + push 之后发 | comment 必须 commit+push 之后发, 拿到 hash 才能发 |
+
+---
+
+## §24：新 issue 立即开工, 不允许等待 (2026-07-31 新增, 硬规则, 配套 CLAUDE.md R22)
+
+> **背景**: 用户 2026-07-31 反馈, "你就是 owner, 只要有新 issue 马上开工, 不允许等待". R10 v2 idle 允许 + §21 激进推进 协同的"idle 等待"语义被强化否定. 任何新 issue 一旦出现 (GitHub OPEN 或 owner 明确派工), 必须立即进入 §18 + §19 + §20 + §22 + §23 闭环流程, 不允许任何形式的等待/暂停/idle/汇报.
+
+### §24.1 核心要求
+
+- ✅ **新 issue 立即开工**: `gh issue list --state open` 发现新 issue → 立即按 §18 + §19 + §20 + §22 + §23 流程处理, 无任何"等下一轮"/"等 owner 拍板"/"等 GPU"/"等 issue 优先"
+- ✅ **任何派工立即执行**: owner 在 prompt 中说"跑 X 实验"/"启动 Y"/"follow loop.md" → 立即开始, 不允许"是否启动?" 询问
+- ✅ **GPU 抢占处理**: 4 卡全部占用 → 立即换 GPU / nohup & 后台排队 / 缩减任务规模 (R7 + R11.5 自主决策), 不允许"等已用卡释放"
+- ✅ **覆盖 R10 v2 idle**: R10 v2 idle 仅在 "无 issue + §16 空 + 用户未派工" 时生效. 一旦有 issue 或 owner 派工, §24 立即覆盖 idle
+- ✅ **覆盖 R11.4 (AskUserQuestion)**: R11.4 仅在 critical 决策用, §24 强制非 critical 决策立即自主推进
+- ✅ **§24 > R10 v2 + R11.4**: 任何等待/汇报/保守路径都是 §24 违规
+- ❌ **禁止** 任何"是否启动 GPU 训练?" / "是否 OK?" / "等 owner 拍板" 等询问/等待话术
+- ❌ **禁止** "ROI 低" / "drift-cycle" 保守理由跳过新 issue
+- ❌ **禁止** "no actionable work" 报告 (§18 + §20 + §21 + §24 联立必须找到 actionable work)
+- ❌ **禁止** 串行处理多 issue (§21 + §24 联立强制跨 issue 并行)
+
+### §24.2 决策速度
+
+| 场景 | §24 行为 |
+|------|----------|
+| 任何 OPEN issue 出现 | 立即 §18 + §19 + §20 + §22 + §23 闭环, 不允许等待 |
+| owner prompt 含实验/任务关键词 | 立即启动, 不询问"是否启动?" |
+| 跨 issue 多实验 | 立即并行 (一张 GPU 一个, 4 卡并行) |
+| GPU 全部占用 | 立即换 GPU / nohup & 后台排队 / 缩减规模, 不等待 |
+| 实验 FAIL | 立即写 verdict + 启动下一个变体 (不 cartesian 串行) |
+
+### §24.3 与现有规则的关系
+
+- **§24 > R10 v2 idle**: §24 否定 idle 等待的合法性, 仅在严格条件下保留
+- **§24 > R11.4 (AskUserQuestion)**: §24 全面作废等待授权, R11.4 仍生效只在"AI 内部决策"维度
+- **§24 + §21**: §21 强调 owner 主动推进, §24 强调 issue/派工维度
+- **§24 + §18**: §18 强制 issue 检查, §24 强制检查后立即开工
+- **§24 + §19 + §20**: §19/§20 强制 commit + 实证, §24 强制立即进入这些流程
+- **§24 + §22 + §23**: §22/§23 强制 comment + commit hash, §24 强制按 §23 顺序: commit+push → comment(含 hash) → close
+
+### §24.4 关键 caveat
+
+- ❌ **禁止** "loop tick 无 actionable work" 报告 (§18 + §20 + §21 + §24 联立必须找到 actionable work)
+- ❌ **禁止** "等下一轮" / "下一 loop tick 处理" 等拖延话术
+- ❌ **禁止** "已经启动 GPU 训练了, 等结果" 状态报告后不立即写 verdict
+- ❌ **禁止** "R10 v2 idle 等待" 作为不立即开工的理由 (§24 强制立即开工)
+- ✅ **允许** 实际无 issue + §16 空 + 用户未派工 + 4 卡空闲 的 idle 状态 (R10 v2 保留)
+- ✅ **允许** 立即开工后, 实时报告状态 (commit hash + verdict 路径 + 进度), 但不允许"等待授权"
+
+### §24.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|------|
+| 2026-07-31 §24 新增 | owner 反馈 AI 处理新 issue 时偶有"等下一轮"/"等 owner 拍板"/"是否启动?"等待话术 | R10 v2 idle 允许 + R11.4 AskUserQuestion 留下等待空间 | §24 强制新 issue 立即开工, 不允许任何等待 | §24 + §21 + §18 联立强制 |
