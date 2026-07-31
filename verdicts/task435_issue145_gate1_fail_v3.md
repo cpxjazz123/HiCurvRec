@@ -1,7 +1,7 @@
 # Issue #145 [方向A Gate1] 硬SID保持下的κ可微几何校准辅助损失 — Gate 1 FAIL (架构修复成功 + 配方失败)
 
 **Task**: #435 / Issue #145
-**Commit**: <pending - written after git push>
+**Commit**: `3a78b85`
 **Verdict**: `verdicts/task435_issue145_gate1_fail_v3.md`
 **产物**: `products/task435_issue145_kappa_calibration_aux_loss/{config,verdict,precheck,aux_graph_proof}.json`
 **SHA256**: item_emb.parquet=`1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc`
@@ -53,7 +53,7 @@
 ## 关键产物
 
 - **verdict**: `verdicts/task435_issue145_gate1_fail_v3.md` (本文件)
-- **commit hash**: <pending - written after git push>
+- **commit hash**: `3a78b85`
 - **push**: origin/main (R15 强制)
 - **实施**: `scripts/task435_issue145_kappa_calibration_aux_loss.py`
 - **8 件套审计**: config.json + SHA256(item_emb=`1a42341f...`) + trace(control + aux) + precheck.json + aux_graph_proof.json + raw_log + verdict.json + commit

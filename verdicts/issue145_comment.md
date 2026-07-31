@@ -10,7 +10,7 @@
   - 最终 max_load: L0=100%, L1=100%, L2=99.66% (期望 < 5% ❌)
 - **失败原因**: aux_loss = α_pair · pairwise_calibration (mean of pairwise hyperbolic distance) + α_rank · ranking_calibration (relu(top-1 - top-2) margin minimization). pairwise mean minimize 推动 codebook 聚集到 encoder 几何中心, 所有 z_e 都跟最近 codebook 重合 → **codebook collapse** (util < 2%, max_load ≈ 100%). 跟 Issue #9/Issue #11 mode collapse 同根因, 但触发器从 hard SID 换成 aux loss.
 - **verdict 路径**: `verdicts/task435_issue145_gate1_fail_v3.md`
-- **commit**: <hash - written after git push>
+- **commit**: `3a78b85`
 - **实施**: `scripts/task435_issue145_kappa_calibration_aux_loss.py`
 - **后续**: ⏸ STOP per spec (Gate 1 PARTIAL/FAIL, Issue #145 spec Gate 1 PASS 前禁止 Gate 2/3/4)
 
@@ -27,7 +27,7 @@
 - **Issue spec 强制**: R@10 阈值 (vs HG-Rec baseline 0.1020) + 标记 [TARGET REACHED] 条件
 
 ### 关键产物
-- **commit hash**: <pending - written after git push>
+- **commit hash**: `3a78b85`
 - **push**: origin/main (R15 强制)
 - **verdict**: `verdicts/task435_issue145_gate1_fail_v3.md`
 - **实施**: `scripts/task435_issue145_kappa_calibration_aux_loss.py`
