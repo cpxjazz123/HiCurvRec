@@ -1,0 +1,558 @@
+{
+  "entities": {
+    "Verdict": [
+      {
+        "id": "verdict_task482_issue57_stage4_nogo",
+        "task_id": 482,
+        "title": "Issue #57 Stage 4 NO-GO: sid_embedding_init random vs sphere both underperform baseline",
+        "date": "2026-07-31",
+        "decision": "NO-GO",
+        "verdict_status": "Issue #57 closed per R15",
+        "r10_metric": 0.0917,
+        "baseline_r10": 0.102,
+        "delta_pct": -10.14,
+        "rationale_summary": "Both random init (R@10=0.0935, -8.4%) and sphere init (R@10=0.0917, -10.1%, due to hyp_c=0.74 sign bug) underperform HG-Rec baseline. Sphere vs random Δ=-0.0019 essentially neutral. sid_embedding_init is not an R@10 lever."
+      }
+    ],
+    "Issue": [
+      {
+        "id": "issue_57",
+        "number": 57,
+        "title": "新方向C: T5 混合曲率 attention — sid_embedding_init",
+        "state": "CLOSED",
+        "created_at": "2026-01-01"
+      },
+      {
+        "id": "issue_30",
+        "number": 30,
+        "title": "唯一 +0.2pp GO 端点 (R@10=0.1022)",
+        "state": "OPEN",
+        "created_at": "2026-01-01"
+      },
+      {
+        "id": "issue_49",
+        "number": 49,
+        "title": "R@10=0.1005 (-1.5%) Stage 2 SID 配置联立证据",
+        "state": "OPEN",
+        "created_at": "2026-01-01"
+      },
+      {
+        "id": "issue_43",
+        "number": 43,
+        "title": "HypPreEncoder (R@10=0.1041, +2.1%) 当前唯一 +GO 端点",
+        "state": "OPEN",
+        "created_at": "2026-01-01"
+      },
+      {
+        "id": "issue_44",
+        "number": 44,
+        "title": "codebook 健康化方向联立",
+        "state": "OPEN",
+        "created_at": "2026-01-01"
+      },
+      {
+        "id": "issue_45",
+        "number": 45,
+        "title": "codebook 健康化方向联立",
+        "state": "OPEN",
+        "created_at": "2026-01-01"
+      }
+    ],
+    "Task": [
+      {
+        "id": "task_158",
+        "task_id": 158,
+        "title": "random init baseline (Stage 3 T5-mini 训练 + Stage 4 eval)",
+        "gate": 0,
+        "stage": 3,
+        "status": "PASS"
+      },
+      {
+        "id": "task_159",
+        "task_id": 159,
+        "title": "hyperbolic init baseline (Stage 3 T5-mini 训练 + Stage 4 eval)",
+        "gate": 0,
+        "stage": 3,
+        "status": "PASS"
+      },
+      {
+        "id": "task_482",
+        "task_id": 482,
+        "title": "Stage 4 eval launcher + 结果分析",
+        "gate": 0,
+        "stage": 4,
+        "status": "FAIL"
+      },
+      {
+        "id": "task_164",
+        "task_id": 164,
+        "title": "Issue #57 Gate 0 wrapper audit (verdict 引用)",
+        "gate": 0,
+        "stage": 0,
+        "status": "PASS"
+      },
+      {
+        "id": "task_84",
+        "task_id": 84,
+        "title": "HG-Rec baseline",
+        "gate": -1,
+        "stage": -1,
+        "status": "PASS"
+      }
+    ],
+    "Method": [
+      {
+        "id": "method_sid_embedding_init_random",
+        "name": "sid_embedding_init='random'"
+      },
+      {
+        "id": "method_sid_embedding_init_hyperbolic",
+        "name": "sid_embedding_init='hyperbolic' (实际 sphere due to bug)"
+      },
+      {
+        "id": "method_t5_mini",
+        "name": "T5-mini"
+      },
+      {
+        "id": "method_hg_rec",
+        "name": "HG-Rec baseline"
+      },
+      {
+        "id": "method_rq_vae",
+        "name": "RQ-VAE (Stage 1 SID quantization)"
+      },
+      {
+        "id": "method_expmap0",
+        "name": "expmap0 (Euclidean/hyperbolic branch by sign of c)"
+      }
+    ],
+    "Hyperparameter": [
+      {
+        "id": "hyperparam_hyp_c_positive_0_74",
+        "name": "hyp_c",
+        "value": "0.74",
+        "scope": "L0"
+      },
+      {
+        "id": "hyperparam_hyp_c_negative_1_0",
+        "name": "hyp_c",
+        "value": "-1.0",
+        "scope": "L0"
+      },
+      {
+        "id": "hyperparam_beam_size",
+        "name": "beam_size",
+        "value": "20",
+        "scope": "L0"
+      },
+      {
+        "id": "hyperparam_topk_list",
+        "name": "topk_list",
+        "value": "[5,10,20]",
+        "scope": "L0"
+      },
+      {
+        "id": "hyperparam_sid_embedding_init",
+        "name": "sid_embedding_init",
+        "value": "random | hyperbolic",
+        "scope": "L1"
+      },
+      {
+        "id": "hyperparam_num_emb_list_r10",
+        "name": "num_emb_list (R10)",
+        "value": "[64,128,256]",
+        "scope": "L1"
+      },
+      {
+        "id": "hyperparam_epoch",
+        "name": "epoch",
+        "value": "200",
+        "scope": "L2"
+      }
+    ],
+    "Metric": [
+      {
+        "id": "metric_r_at_5",
+        "name": "Recall@5",
+        "k": 5,
+        "higher_is_better": true,
+        "anchor_value": 0.0816
+      },
+      {
+        "id": "metric_r_at_10",
+        "name": "Recall@10",
+        "k": 10,
+        "higher_is_better": true,
+        "anchor_value": 0.102
+      },
+      {
+        "id": "metric_r_at_20",
+        "name": "Recall@20",
+        "k": 20,
+        "higher_is_better": true,
+        "anchor_value": 0.1279
+      },
+      {
+        "id": "metric_ndcg_at_5",
+        "name": "NDCG@5",
+        "k": 5,
+        "higher_is_better": true,
+        "anchor_value": 0.069
+      },
+      {
+        "id": "metric_ndcg_at_10",
+        "name": "NDCG@10",
+        "k": 10,
+        "higher_is_better": true,
+        "anchor_value": 0.0755
+      },
+      {
+        "id": "metric_ndcg_at_20",
+        "name": "NDCG@20",
+        "k": 20,
+        "higher_is_better": true,
+        "anchor_value": 0.0821
+      }
+    ],
+    "RootCause": [
+      {
+        "id": "rootcause_hyp_c_sign_bug_sphere_branch",
+        "name": "hyp_c=0.74 sign bug forces sphere (Euclidean) branch",
+        "description": "expmap0 formula routes c>=0 to Euclidean/sphere branch via x/(1+sqrt(1+c·||x||²)), so Task #159 intended as hyperbolic init actually runs as sphere init. Naming 'hyperbolic' is misleading."
+      },
+      {
+        "id": "rootcause_stage2_sid_geometry_weak",
+        "name": "Stage 2 SID geometric signal is weak — R10 RQ-VAE codebook μ=0.74",
+        "description": "Stage 2 SID file _A2_t5_hrqvae_poincare.npy is generated by R10 RQ-VAE config (μ=0.74, expmap0 sphere branch). Stage 1 RQ-VAE freezes the SID geometry; sid_embedding_init has no leverage on already-frozen SID distribution."
+      },
+      {
+        "id": "rootcause_init_strategy_no_leverage",
+        "name": "sid_embedding_init has no architectural leverage under frozen Stage 2 SID",
+        "description": "Init strategy only affects T5 token embedding initialization. It does not influence Stage 2 SID geometric distribution, T5 attention computation, or loss function. Under already-frozen SID config, init strategy is not an R@10 lever."
+      }
+    ],
+    "Decision": [
+      {
+        "id": "decision_issue57_nogo_close",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task482_issue57_stage4_nogo"
+      },
+      {
+        "id": "decision_random_init_nogo",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task482_issue57_stage4_nogo"
+      },
+      {
+        "id": "decision_sphere_init_nogo",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task482_issue57_stage4_nogo"
+      },
+      {
+        "id": "decision_sphere_vs_random_neutral",
+        "decision": "NEUTRAL",
+        "verdict_ref": "verdict_task482_issue57_stage4_nogo"
+      }
+    ],
+    "Stage": [
+      {
+        "id": "stage_3",
+        "stage_number": 3,
+        "name": "T5-mini 训练 (200 epoch)"
+      },
+      {
+        "id": "stage_4",
+        "stage_number": 4,
+        "name": "Eval on test set (24772 samples, beam_size=20)"
+      },
+      {
+        "id": "stage_2",
+        "stage_number": 2,
+        "name": "SID configuration / Stage 2 SID geometry"
+      },
+      {
+        "id": "stage_1",
+        "stage_number": 1,
+        "name": "RQ-VAE Stage 1 SID quantization"
+      }
+    ],
+    "Gate": [
+      {
+        "id": "gate_0",
+        "gate_number": 0,
+        "name": "Issue #57 Gate 0 (wrapper audit, passed)"
+      }
+    ],
+    "Hypothesis": [
+      {
+        "id": "hypothesis_sid_init_helps_r10",
+        "statement": "Using hyperbolic sid_embedding_init will improve R@10 over both random init and HG-Rec baseline."
+      },
+      {
+        "id": "hypothesis_true_hyp_init_beats_random",
+        "statement": "If hyp_c=-1.0 were used so expmap0 takes the hyperbolic branch, hyperbolic init would meaningfully outperform random init."
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "issue_57",
+      "type": "Verdict--evaluates-->Issue"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "task_158",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "task_159",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "task_482",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "hypothesis_sid_init_helps_r10",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "hypothesis_true_hyp_init_beats_random",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "rootcause_hyp_c_sign_bug_sphere_branch",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "rootcause_stage2_sid_geometry_weak",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "rootcause_init_strategy_no_leverage",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_r_at_5",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_r_at_10",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_r_at_20",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_ndcg_at_5",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_ndcg_at_10",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "metric_ndcg_at_20",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "decision_issue57_nogo_close",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "decision_random_init_nogo",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "decision_sphere_init_nogo",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "decision_sphere_vs_random_neutral",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "stage_3",
+      "type": "Verdict--executes-->Stage"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "stage_4",
+      "type": "Verdict--executes-->Stage"
+    },
+    {
+      "from": "verdict_task482_issue57_stage4_nogo",
+      "to": "gate_0",
+      "type": "Verdict--passes-->Gate"
+    },
+    {
+      "from": "task_158",
+      "to": "method_sid_embedding_init_random",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_158",
+      "to": "method_t5_mini",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_159",
+      "to": "method_sid_embedding_init_hyperbolic",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_159",
+      "to": "method_t5_mini",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_482",
+      "to": "stage_4",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_158",
+      "to": "stage_3",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_159",
+      "to": "stage_3",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_158",
+      "to": "hyperparam_sid_embedding_init",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_159",
+      "to": "hyperparam_sid_embedding_init",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_158",
+      "to": "hyperparam_epoch",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_159",
+      "to": "hyperparam_epoch",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_482",
+      "to": "hyperparam_beam_size",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_482",
+      "to": "hyperparam_topk_list",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "method_sid_embedding_init_hyperbolic",
+      "to": "method_sid_embedding_init_random",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_expmap0",
+      "to": "method_sid_embedding_init_hyperbolic",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "issue_57",
+      "to": "issue_49",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_57",
+      "to": "issue_44",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_57",
+      "to": "issue_45",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_57",
+      "to": "hypothesis_sid_init_helps_r10",
+      "type": "Issue--introduces-->Hypothesis"
+    },
+    {
+      "from": "hypothesis_sid_init_helps_r10",
+      "to": "verdict_task482_issue57_stage4_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "hypothesis_true_hyp_init_beats_random",
+      "to": "verdict_task482_issue57_stage4_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "rootcause_hyp_c_sign_bug_sphere_branch",
+      "to": "method_expmap0",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "rootcause_stage2_sid_geometry_weak",
+      "to": "method_rq_vae",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "decision_sphere_init_nogo",
+      "to": "decision_random_init_nogo",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "gate_0",
+      "to": "stage_3",
+      "type": "Gate--gates-->Stage"
+    },
+    {
+      "from": "gate_0",
+      "to": "stage_4",
+      "type": "Gate--gates-->Stage"
+    }
+  ],
+  "_meta": {
+    "source_verdict": "task482_issue57_stage4_no_go.md",
+    "extraction_method": "llm_minimax_m2.5",
+    "extracted_at": "2026-07-31T14:29:24"
+  }
+}

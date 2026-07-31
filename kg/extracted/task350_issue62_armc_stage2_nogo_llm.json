@@ -1,0 +1,497 @@
+{
+  "entities": {
+    "Verdict": [
+      {
+        "id": "verdict_task350_issue62_armc_stage2_nogo",
+        "task_id": 350,
+        "title": "Task #350 / Issue #62 Arm C Stage 2 NO-GO (3-Digit Collapse)",
+        "date": "2026-07-31",
+        "decision": "NO-GO",
+        "verdict_status": "NO-GO",
+        "rationale_summary": "3 variants (v1/v2/v3) all fail with 3-digit collision 99.99%, far exceeding 0.20 threshold. 4-digit unique = 9922 but codes degenerate to [0,0,0,item_id]. Root cause = Sinkhorn ON + small layer 0 radius + HypPre joint effect causes training-inference collapse to layer 0 codeword 0. Issue #62 overall NO-GO closure (Arm D + Arm C both failed). R10 backlog vacuum after 27+ directions NO-GO."
+      }
+    ],
+    "Issue": [
+      {
+        "id": "issue_62",
+        "number": 62,
+        "title": "Issue #62 (#30+#43 joint ablation) - 4-digit SID optimization",
+        "state": "CLOSED",
+        "created_at": "2026-07-30"
+      },
+      {
+        "id": "issue_30",
+        "number": 30,
+        "title": "Issue #30 baseline HRQVAE with [0.1, 1.0, 10.0] radius_list",
+        "state": "OPEN",
+        "created_at": "2026-07-01"
+      },
+      {
+        "id": "issue_43",
+        "number": 43,
+        "title": "Issue #43 HypPreEncoder wrapper",
+        "state": "OPEN",
+        "created_at": "2026-07-01"
+      }
+    ],
+    "Task": [
+      {
+        "id": "task_350",
+        "task_id": 350,
+        "title": "Task #350 Issue #62 Gate 2 Arm C Stage 2 Sinkhorn inference",
+        "gate": 2,
+        "stage": 2,
+        "status": "FAIL"
+      }
+    ],
+    "Method": [
+      {
+        "id": "method_hrqvae",
+        "name": "HRQVAE (Hierarchical Residual Quantization VAE)",
+        "paper_ref": null
+      },
+      {
+        "id": "method_hyppre",
+        "name": "HypPreEncoder (Hyperbolic Pre-Encoder with expmap0, c=0.74)",
+        "paper_ref": null
+      },
+      {
+        "id": "method_sinkhorn",
+        "name": "Sinkhorn-balanced codebook assignment (training-time)",
+        "paper_ref": null
+      },
+      {
+        "id": "method_rqvae",
+        "name": "RQ-VAE (Residual Quantization VAE)",
+        "paper_ref": null
+      }
+    ],
+    "Hyperparameter": [
+      {
+        "id": "hyperparam_radius_list",
+        "name": "radius_list",
+        "value": "[0.1, 1.0, 10.0]",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_scale_list",
+        "name": "scale_list",
+        "value": "[2.0, 2.0, 2.0]",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_sinkhorn_eps",
+        "name": "Sinkhorn sk_eps",
+        "value": "[0.003, 0.003, 0.003]",
+        "scope": "L0"
+      },
+      {
+        "id": "hyperparam_sinkhorn_eps_l1",
+        "name": "Sinkhorn sk_eps",
+        "value": "[0.003, 0.003, 0.003]",
+        "scope": "L1"
+      },
+      {
+        "id": "hyperparam_sinkhorn_eps_l2",
+        "name": "Sinkhorn sk_eps",
+        "value": "[0.003, 0.003, 0.003]",
+        "scope": "L2"
+      },
+      {
+        "id": "hyperparam_beta",
+        "name": "beta (β)",
+        "value": "0.25",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_hyppre_c",
+        "name": "HypPre curvature c",
+        "value": "0.74",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_num_emb_list",
+        "name": "num_emb_list (K)",
+        "value": "[64, 128, 256]",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_layer0_eff_radius",
+        "name": "layer 0 effective radius",
+        "value": "0.2 (r=0.1, s=2)",
+        "scope": "L0"
+      }
+    ],
+    "Metric": [
+      {
+        "id": "metric_3digit_collision",
+        "name": "3-digit collision rate",
+        "k": null,
+        "higher_is_better": false,
+        "anchor_value": 0.2
+      },
+      {
+        "id": "metric_4digit_unique",
+        "name": "4-digit unique codes",
+        "k": null,
+        "higher_is_better": true,
+        "anchor_value": 9500
+      },
+      {
+        "id": "metric_r10",
+        "name": "Recall@10",
+        "k": 10,
+        "higher_is_better": true,
+        "anchor_value": 0.102
+      },
+      {
+        "id": "metric_l0_utilization",
+        "name": "L0 codebook utilization",
+        "k": null,
+        "higher_is_better": true,
+        "anchor_value": null
+      },
+      {
+        "id": "metric_best_loss",
+        "name": "Best loss",
+        "k": null,
+        "higher_is_better": false,
+        "anchor_value": null
+      }
+    ],
+    "RootCause": [
+      {
+        "id": "rootcause_sinkhorn_inference_gap",
+        "name": "Sinkhorn training-inference gap",
+        "description": "Training uses Sinkhorn-balanced soft assignment to enforce uniform distribution; inference uses hard argmin causing all items to collapse to nearest layer 0 codeword (codeword 0)."
+      },
+      {
+        "id": "rootcause_layer0_radius_collapse",
+        "name": "Small layer 0 radius + HypPre normalized inputs collapse",
+        "description": "HypPre (expmap0 c=0.74) maps inputs to Poincaré ball, reducing input distribution variance; combined with layer 0 effective radius 0.2 (r=0.1, s=2), encoder produces smooth latents that all map to codeword 0."
+      },
+      {
+        "id": "rootcause_three_way_joint_collapse",
+        "name": "Sinkhorn ON + small L0 radius + HypPre three-way joint collapse",
+        "description": "Combined effect: Sinkhorn forces uniform codebook usage during training, small L0 radius + HypPre normalized inputs compress latent space; at inference hard argmin collapses all residual_0 vectors to layer 0 codeword 0."
+      }
+    ],
+    "Decision": [
+      {
+        "id": "decision_issue62_close_nogo",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task350_issue62_armc_stage2_nogo"
+      },
+      {
+        "id": "decision_option_a_close",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task350_issue62_armc_stage2_nogo"
+      },
+      {
+        "id": "decision_option_b_new_arm",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task350_issue62_armc_stage2_nogo"
+      },
+      {
+        "id": "decision_option_c_wait",
+        "decision": "NEUTRAL",
+        "verdict_ref": "verdict_task350_issue62_armc_stage2_nogo"
+      }
+    ],
+    "Stage": [
+      {
+        "id": "stage_1",
+        "stage_number": 1,
+        "name": "Stage 1 Training (Sinkhorn ON, K=[64,128,256])"
+      },
+      {
+        "id": "stage_2",
+        "stage_number": 2,
+        "name": "Stage 2 Sinkhorn Inference (hard argmin)"
+      }
+    ],
+    "Gate": [
+      {
+        "id": "gate_0",
+        "gate_number": 0,
+        "name": "Gate 0 (#30+#43 joint wrapper) - PASS"
+      },
+      {
+        "id": "gate_1",
+        "gate_number": 1,
+        "name": "Gate 1 (Issue #62 Arm C with Sinkhorn ON, K=[64,128,256])"
+      },
+      {
+        "id": "gate_2",
+        "gate_number": 2,
+        "name": "Gate 2 Arm C (4-digit unique ≥ 9500 + 3-digit collision ≤ 0.20)"
+      },
+      {
+        "id": "gate_1_arm_d",
+        "gate_number": 1,
+        "name": "Gate 1 Arm D (K0=256, Sinkhorn OFF) - NO-GO per Task #349"
+      }
+    ],
+    "Hypothesis": [
+      {
+        "id": "hypothesis_joint_ablation_breakthrough",
+        "statement": "#30+#43 joint ablation can break through single-point ceiling (R@10 > 0.1042 per Issue #62 decision matrix GO marginal)"
+      },
+      {
+        "id": "hypothesis_hyppre_fix_collision",
+        "statement": "HypPre wrapper (c=0.74) can rescue Sinkhorn training-inference 3-digit collision gap"
+      },
+      {
+        "id": "hypothesis_sinkhorn_off_arm_rescue",
+        "statement": "Sinkhorn OFF + K=baseline + #30+#43 (Issue #62 third arm) can produce usable Stage 2 SID - refuted as low ROI (essentially Issue #30 baseline + HypPre already validated in Issue #43 Gate 2a)"
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "issue_62",
+      "type": "Verdict--evaluates-->Issue"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "task_350",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "hypothesis_joint_ablation_breakthrough",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "hypothesis_hyppre_fix_collision",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "hypothesis_sinkhorn_off_arm_rescue",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "rootcause_three_way_joint_collapse",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "rootcause_sinkhorn_inference_gap",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "rootcause_layer0_radius_collapse",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "metric_3digit_collision",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "metric_4digit_unique",
+      "type": "Verdict--achieves-->Metric"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "decision_issue62_close_nogo",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "decision_option_a_close",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "stage_2",
+      "type": "Verdict--executes-->Stage"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "stage_1",
+      "type": "Verdict--executes-->Stage"
+    },
+    {
+      "from": "verdict_task350_issue62_armc_stage2_nogo",
+      "to": "gate_2",
+      "type": "Verdict--passes-->Gate"
+    },
+    {
+      "from": "task_350",
+      "to": "method_hrqvae",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_350",
+      "to": "method_hyppre",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_350",
+      "to": "method_sinkhorn",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_350",
+      "to": "stage_2",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_350",
+      "to": "stage_1",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_350",
+      "to": "issue_62",
+      "type": "Task--tests-->Issue"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_num_emb_list",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_beta",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_hyppre_c",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_sinkhorn_eps",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_radius_list",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_350",
+      "to": "hyperparam_scale_list",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "method_hrqvae",
+      "to": "method_rqvae",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_hyppre",
+      "to": "method_hrqvae",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_hyppre",
+      "to": "hyperparam_hyppre_c",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_sinkhorn",
+      "to": "hyperparam_sinkhorn_eps",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "issue_62",
+      "to": "issue_30",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_62",
+      "to": "issue_43",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_62",
+      "to": "hypothesis_joint_ablation_breakthrough",
+      "type": "Issue--introduces-->Hypothesis"
+    },
+    {
+      "from": "issue_43",
+      "to": "hypothesis_hyppre_fix_collision",
+      "type": "Issue--introduces-->Hypothesis"
+    },
+    {
+      "from": "hypothesis_joint_ablation_breakthrough",
+      "to": "verdict_task350_issue62_armc_stage2_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "hypothesis_hyppre_fix_collision",
+      "to": "verdict_task350_issue62_armc_stage2_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "hypothesis_sinkhorn_off_arm_rescue",
+      "to": "verdict_task350_issue62_armc_stage2_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "rootcause_sinkhorn_inference_gap",
+      "to": "method_sinkhorn",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "rootcause_layer0_radius_collapse",
+      "to": "method_hyppre",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "rootcause_three_way_joint_collapse",
+      "to": "method_sinkhorn",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "decision_option_a_close",
+      "to": "decision_option_b_new_arm",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "decision_option_a_close",
+      "to": "decision_option_c_wait",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "decision_option_b_new_arm",
+      "to": "decision_option_c_wait",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "gate_1",
+      "to": "stage_1",
+      "type": "Gate--gates-->Stage"
+    },
+    {
+      "from": "gate_2",
+      "to": "stage_2",
+      "type": "Gate--gates-->Stage"
+    },
+    {
+      "from": "gate_1_arm_d",
+      "to": "stage_1",
+      "type": "Gate--gates-->Stage"
+    }
+  ],
+  "_meta": {
+    "source_verdict": "task350_issue62_armc_stage2_nogo.md",
+    "extraction_method": "llm_minimax_m2.5",
+    "extracted_at": "2026-07-31T14:33:42"
+  }
+}

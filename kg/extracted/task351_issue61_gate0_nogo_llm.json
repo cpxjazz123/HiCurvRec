@@ -1,0 +1,357 @@
+{
+  "entities": {
+    "Verdict": [
+      {
+        "id": "verdict_task351_issue61_gate0_nogo",
+        "task_id": 351,
+        "title": "Task #351 / Issue #61 Gate 0 — Sandbox PASS + Issue 整体 NO-GO 收口",
+        "date": "2026-07-31",
+        "decision": "NO-GO",
+        "verdict_status": "Issue #61 Gate 0 sandbox 5/5 PASS, Issue #61 整体 NO-GO 收口",
+        "r10_metric": 0.0,
+        "baseline_r10": 0.102,
+        "delta_pct": 0.0,
+        "rationale_summary": "Issue #57 Gate 0 已 NO-GO (hyperbolic init < random, 信号方向反向); Issue #61 = retry with hyp_c=-1.0 fix 但 bug 修复 ≠ 信号翻转; task482 verdict 标 ROI 极低; drift-cycle 2026-07-30 终结不启动低 ROI 实验; 28+ 方向 NO-GO 收口"
+      }
+    ],
+    "Issue": [
+      {
+        "id": "issue_61",
+        "number": 61,
+        "title": "方向C Bug 修复: hyp_c=-1.0 + Riemannian retraction",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      },
+      {
+        "id": "issue_57",
+        "number": 57,
+        "title": "方向 C 草案: 双曲坐标初始化 (HypPreEncoder/hyperbolic init)",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      },
+      {
+        "id": "issue_55",
+        "number": 55,
+        "title": "方向 A",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      },
+      {
+        "id": "issue_56",
+        "number": 56,
+        "title": "方向 B",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      },
+      {
+        "id": "issue_62",
+        "number": 62,
+        "title": "#30+#43 联合 ablation (Arm D + Arm C 双臂)",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      },
+      {
+        "id": "issue_43",
+        "number": 43,
+        "title": "HypPreEncoder 方向",
+        "state": "CLOSED",
+        "created_at": "2026-07-31"
+      }
+    ],
+    "Task": [
+      {
+        "id": "task_351",
+        "task_id": 351,
+        "title": "Issue #61 Gate 0 sandbox + Issue 整体 NO-GO 收口",
+        "gate": 0,
+        "stage": 1,
+        "status": "PASS"
+      },
+      {
+        "id": "task_158",
+        "task_id": 158,
+        "title": "Issue #57 Gate 0 Arm A random init",
+        "gate": 0,
+        "stage": 4,
+        "status": "FAIL"
+      },
+      {
+        "id": "task_159",
+        "task_id": 159,
+        "title": "Issue #57 Gate 0 Arm B hyperbolic init (hyp_c=0.74, 实际 sphere)",
+        "gate": 0,
+        "stage": 4,
+        "status": "FAIL"
+      },
+      {
+        "id": "task_482",
+        "task_id": 482,
+        "title": "Issue #61 ROI 评估",
+        "gate": -1,
+        "stage": 1,
+        "status": "NEUTRAL"
+      }
+    ],
+    "Method": [
+      {
+        "id": "method_hyperbolic_init",
+        "name": "hyperbolic init (expmap0)",
+        "paper_ref": ""
+      },
+      {
+        "id": "method_random_init",
+        "name": "random init (Arm A baseline)",
+        "paper_ref": ""
+      },
+      {
+        "id": "method_riemannian_retraction",
+        "name": "Riemannian retraction",
+        "paper_ref": ""
+      },
+      {
+        "id": "method_expmap0",
+        "name": "expmap0 (exponential map at origin)",
+        "paper_ref": ""
+      },
+      {
+        "id": "method_hg_rec_issue57",
+        "name": "HG_Rec_Issue57 (subclass wrapper, single-point patch)",
+        "paper_ref": ""
+      },
+      {
+        "id": "method_hyp_pre_encoder",
+        "name": "HypPreEncoder",
+        "paper_ref": ""
+      }
+    ],
+    "Hyperparameter": [
+      {
+        "id": "hyperparam_hyp_c_neg1",
+        "name": "hyp_c",
+        "value": "-1.0",
+        "scope": "L1"
+      },
+      {
+        "id": "hyperparam_hyp_c_074",
+        "name": "hyp_c",
+        "value": "0.74",
+        "scope": "L1"
+      },
+      {
+        "id": "hyperparam_sid_embedding_init",
+        "name": "sid_embedding_init",
+        "value": "hyperbolic",
+        "scope": "L1"
+      }
+    ],
+    "Metric": [
+      {
+        "id": "metric_r10",
+        "name": "Recall@10",
+        "k": 10,
+        "higher_is_better": true,
+        "anchor_value": 0.102
+      }
+    ],
+    "RootCause": [
+      {
+        "id": "rootcause_hyp_c_074_sphere_branch",
+        "name": "hyp_c=0.74 走 Euclidean sphere 分支而非真 hyperbolic",
+        "description": "Issue #164 audit 发现: expmap0(hyp_c=0.74) 走 Euclidean sphere 分支 x/(1+sqrt(1+c·‖x‖²)), 不是真 hyperbolic; 仅 hyp_c<0 才走 tanh 分支"
+      },
+      {
+        "id": "rootcause_signal_direction_reversed",
+        "name": "hyperbolic init < random, 信号方向反向",
+        "description": "Issue #57 Gate 0 实测 Δ (B - A) = -0.0019 (-1.9pp), hyperbolic init 反而比 random 轻微退化, 与假说方向相反"
+      },
+      {
+        "id": "rootcause_transmission_loss_misdiagnosis",
+        "name": "传输损耗定位错误: Gate 0 已证伪方向",
+        "description": "Gate 0 是最便宜诊断, 实测信号反向 (hyperbolic < random), 直接关闭 Gate 0 + 不启动 Gate 1, Gate 2 attention 改造 ROI 大幅降低"
+      },
+      {
+        "id": "rootcause_north_star_full_nogo",
+        "name": "北极星方向 FULL NO-GO",
+        "description": "A/B/C 三个方向全部 NO-GO 收口, 北极星方向需要 owner 重新审视策略基础或 AI 重新审视"
+      }
+    ],
+    "Decision": [
+      {
+        "id": "decision_close_issue61",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task351_issue61_gate0_nogo"
+      },
+      {
+        "id": "decision_skip_gate1",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task351_issue61_gate0_nogo"
+      },
+      {
+        "id": "decision_r10_backlog_vacuum",
+        "decision": "NEUTRAL",
+        "verdict_ref": "verdict_task351_issue61_gate0_nogo"
+      }
+    ],
+    "Stage": [
+      {
+        "id": "stage_4",
+        "stage_number": 4,
+        "name": "verdict + metric readout"
+      },
+      {
+        "id": "stage_3",
+        "stage_number": 3,
+        "name": "training + evaluation"
+      }
+    ],
+    "Gate": [
+      {
+        "id": "gate_0",
+        "gate_number": 0,
+        "name": "Issue #61 Gate 0: zero-GPU sandbox (expmap0 + Riemannian retraction + wrapper 验证)"
+      }
+    ],
+    "Hypothesis": [
+      {
+        "id": "hypothesis_hyp_c_neg1_fixes_direction",
+        "statement": "修复 hyp_c=-1.0 (真 hyperbolic) + Riemannian retraction 后, hyperbolic init 应优于 random baseline, 即 Issue #57 Gate 0 信号反转"
+      },
+      {
+        "id": "hypothesis_transmission_loss_in_t5",
+        "statement": "传输损耗在 T5 侧 (hyperbolic init 优于 random 即支持此诊断)"
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "issue_61",
+      "type": "Verdict--evaluates-->Issue"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "issue_57",
+      "type": "Verdict--evaluates-->Issue"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "task_351",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "hypothesis_hyp_c_neg1_fixes_direction",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "hypothesis_transmission_loss_in_t5",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "rootcause_hyp_c_074_sphere_branch",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "rootcause_signal_direction_reversed",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "rootcause_north_star_full_nogo",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "decision_close_issue61",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "decision_skip_gate1",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task351_issue61_gate0_nogo",
+      "to": "gate_0",
+      "type": "Verdict--passes-->Gate"
+    },
+    {
+      "from": "task_351",
+      "to": "method_hyperbolic_init",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_351",
+      "to": "method_riemannian_retraction",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_351",
+      "to": "method_expmap0",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_351",
+      "to": "method_hg_rec_issue57",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_351",
+      "to": "gate_0",
+      "type": "Task--executes-->Stage"
+    },
+    {
+      "from": "task_351",
+      "to": "hyperparam_hyp_c_neg1",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "method_hyperbolic_init",
+      "to": "method_expmap0",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_hg_rec_issue57",
+      "to": "method_hyperbolic_init",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "issue_61",
+      "to": "issue_57",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_61",
+      "to": "hypothesis_hyp_c_neg1_fixes_direction",
+      "type": "Issue--introduces-->Hypothesis"
+    },
+    {
+      "from": "hypothesis_hyp_c_neg1_fixes_direction",
+      "to": "verdict_task351_issue61_gate0_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "hypothesis_transmission_loss_in_t5",
+      "to": "verdict_task351_issue61_gate0_nogo",
+      "type": "Hypothesis--refuted_by-->Verdict"
+    },
+    {
+      "from": "decision_close_issue61",
+      "to": "decision_skip_gate1",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "gate_0",
+      "to": "stage_4",
+      "type": "Gate--gates-->Stage"
+    }
+  ],
+  "_meta": {
+    "source_verdict": "task351_issue61_gate0_nogo.md",
+    "extraction_method": "llm_minimax_m2.5",
+    "extracted_at": "2026-07-31T14:32:58"
+  }
+}

@@ -1,0 +1,484 @@
+{
+  "entities": {
+    "Verdict": [
+      {
+        "id": "verdict_task352_gate_minus1_pass",
+        "task_id": 352,
+        "title": "Task #352 / Issue #63 Gate -1 — 三层 κ 隔离审计 8/8 PASS",
+        "date": "2026-07-31",
+        "decision": "PASS",
+        "verdict_status": "Gate -1 PASS 8/8",
+        "r10_metric": null,
+        "baseline_r10": 0.102,
+        "delta_pct": null,
+        "rationale_summary": "FreeCurvHRQVAE 三层 κ 隔离 verified, R137 fix 无 .item() detach verified, R12 ckpt pattern 工作. T1-T8 全部 PASS 零 GPU, 进入 Gate 0 sanity."
+      }
+    ],
+    "Issue": [
+      {
+        "id": "issue_63",
+        "number": 63,
+        "title": "[方向A 重开] 三层 κ 原位曲率感知同步重校准——先过 Gate -1 再复现 arXiv:2405.13979v4",
+        "state": "OPEN",
+        "created_at": null
+      },
+      {
+        "id": "issue_47",
+        "number": 47,
+        "title": "方向 A 第一次尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_49",
+        "number": 49,
+        "title": "方向 A R@10 < baseline 失败 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_55",
+        "number": 55,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_57",
+        "number": 57,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_58",
+        "number": 58,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_59",
+        "number": 59,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_60",
+        "number": 60,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      },
+      {
+        "id": "issue_61",
+        "number": 61,
+        "title": "方向 A 尝试 (referenced)",
+        "state": "CLOSED",
+        "created_at": null
+      }
+    ],
+    "Task": [
+      {
+        "id": "task_352",
+        "task_id": 352,
+        "title": "Issue #63 Gate -1 (zero-GPU pre-flight) — 三层 κ 隔离审计",
+        "gate": -1,
+        "stage": null,
+        "status": "PASS"
+      },
+      {
+        "id": "task_84",
+        "task_id": 84,
+        "title": "HG-Rec baseline (R@10=0.1020)",
+        "gate": null,
+        "stage": null,
+        "status": "PASS"
+      },
+      {
+        "id": "task_353",
+        "task_id": 353,
+        "title": "Gate 0 sanity 脚本 (upcoming)",
+        "gate": 0,
+        "stage": null,
+        "status": "PENDING"
+      }
+    ],
+    "Method": [
+      {
+        "id": "method_freecurvhrqvae",
+        "name": "FreeCurvHRQVAE",
+        "paper_ref": "arXiv:2405.13979v4"
+      },
+      {
+        "id": "method_kappa_stereographic",
+        "name": "κ-Stereographic (tanh squashing)",
+        "paper_ref": "Berman-Metzler 2020"
+      },
+      {
+        "id": "method_hrqvae",
+        "name": "HRQ-VAE (Hierarchical Residual Quantization VAE)",
+        "paper_ref": null
+      },
+      {
+        "id": "method_r137_fix",
+        "name": "R137 fix (统一 torch.where operator)",
+        "paper_ref": null
+      },
+      {
+        "id": "method_r12_ckpt",
+        "name": "R12 ckpt pattern (state_dict save/load)",
+        "paper_ref": null
+      }
+    ],
+    "Hyperparameter": [
+      {
+        "id": "hyperparam_num_emb_list",
+        "name": "num_emb_list",
+        "value": "[64, 128, 256]",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_e_dim",
+        "name": "e_dim",
+        "value": "32",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_M",
+        "name": "M",
+        "value": "1",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_kappa_max",
+        "name": "kappa_max",
+        "value": "2.0",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_lr",
+        "name": "lr",
+        "value": "1e-3",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_theta_m_init",
+        "name": "theta_m_init",
+        "value": "0.0",
+        "scope": "global"
+      },
+      {
+        "id": "hyperparam_theta_m_test",
+        "name": "theta_m",
+        "value": "0.5",
+        "scope": "L0"
+      }
+    ],
+    "Metric": [
+      {
+        "id": "metric_r10",
+        "name": "Recall@10",
+        "k": 10,
+        "higher_is_better": true,
+        "anchor_value": 0.102
+      },
+      {
+        "id": "metric_kappa_m",
+        "name": "kappa_m",
+        "k": null,
+        "higher_is_better": null,
+        "anchor_value": 0.0049
+      },
+      {
+        "id": "metric_param_count",
+        "name": "param_count",
+        "k": null,
+        "higher_is_better": null,
+        "anchor_value": 1139235
+      },
+      {
+        "id": "metric_grad_norm",
+        "name": "grad_norm",
+        "k": null,
+        "higher_is_better": null,
+        "anchor_value": 59.9
+      }
+    ],
+    "RootCause": [
+      {
+        "id": "rootcause_sid_collapse",
+        "name": "Stage 1/2 SID collapse",
+        "description": "Issue #49 R@10 < baseline 根因之一: Stage 1/2 SID collapse"
+      },
+      {
+        "id": "rootcause_stage34_dirty_interface",
+        "name": "Stage 3/4 接口不干净",
+        "description": "Issue #49 R@10 < baseline 根因之一: Stage 3/4 接口不干净"
+      },
+      {
+        "id": "rootcause_item_detach",
+        "name": ".item() detach in forward path",
+        "description": "forward path 中 .item() detach 会切断 θ_m autograd flow; R137 fix 修复"
+      }
+    ],
+    "Decision": [
+      {
+        "id": "decision_gate_minus1_pass",
+        "decision": "GO",
+        "verdict_ref": "verdict_task352_gate_minus1_pass"
+      },
+      {
+        "id": "decision_enter_gate0",
+        "decision": "GO",
+        "verdict_ref": "verdict_task352_gate_minus1_pass"
+      }
+    ],
+    "Stage": [
+      {
+        "id": "stage_1",
+        "stage_number": 1,
+        "name": "Stage 1 (SID/inference foundation)"
+      },
+      {
+        "id": "stage_2",
+        "stage_number": 2,
+        "name": "Stage 2 (SID inference)"
+      },
+      {
+        "id": "stage_3",
+        "stage_number": 3,
+        "name": "Stage 3"
+      },
+      {
+        "id": "stage_4",
+        "stage_number": 4,
+        "name": "Stage 4"
+      }
+    ],
+    "Gate": [
+      {
+        "id": "gate_minus1",
+        "gate_number": -1,
+        "name": "Gate -1 (zero-GPU pre-flight: 三层 κ 隔离审计 8 项检查)"
+      },
+      {
+        "id": "gate_0",
+        "gate_number": 0,
+        "name": "Gate 0 (zero-GPU 数值 sanity: distance scale, codebook score, assignment entropy, NaN/Inf)"
+      }
+    ],
+    "Hypothesis": [
+      {
+        "id": "hypothesis_h1_sid_collapse",
+        "statement": "Issue #49 R@10 < baseline 根因 = Stage 1/2 SID collapse + Stage 3/4 接口不干净"
+      },
+      {
+        "id": "hypothesis_h2_recovery_to_baseline",
+        "statement": "修复后 R@10 能恢复到 baseline (0.1020) — 待 Gate 1-3 验证"
+      },
+      {
+        "id": "hypothesis_h3_direction_a_r10_gt_baseline",
+        "statement": "Gate -1/0 通过 + 干净 optimizer + 方向 A = R@10 > 0.1020 — 待 Gate 0-3 验证"
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "issue_63",
+      "type": "Verdict--evaluates-->Issue"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "task_352",
+      "type": "Verdict--evaluates-->Task"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "hypothesis_h1_sid_collapse",
+      "type": "Verdict--tests-->Hypothesis"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "rootcause_sid_collapse",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "rootcause_stage34_dirty_interface",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "rootcause_item_detach",
+      "type": "Verdict--identifies-->RootCause"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "decision_gate_minus1_pass",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "decision_enter_gate0",
+      "type": "Verdict--makes-->Decision"
+    },
+    {
+      "from": "verdict_task352_gate_minus1_pass",
+      "to": "gate_minus1",
+      "type": "Verdict--passes-->Gate"
+    },
+    {
+      "from": "hypothesis_h1_sid_collapse",
+      "to": "verdict_task352_gate_minus1_pass",
+      "type": "Hypothesis--confirmed_by-->Verdict"
+    },
+    {
+      "from": "task_352",
+      "to": "method_freecurvhrqvae",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_352",
+      "to": "method_r137_fix",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_352",
+      "to": "method_r12_ckpt",
+      "type": "Task--implements-->Method"
+    },
+    {
+      "from": "task_352",
+      "to": "gate_minus1",
+      "type": "Task--tests-->Issue"
+    },
+    {
+      "from": "task_352",
+      "to": "hyperparam_num_emb_list",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_352",
+      "to": "hyperparam_e_dim",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_352",
+      "to": "hyperparam_M",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_352",
+      "to": "hyperparam_kappa_max",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "task_352",
+      "to": "hyperparam_lr",
+      "type": "Task--configures-->Hyperparameter"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "method_hrqvae",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "method_kappa_stereographic",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "hyperparam_num_emb_list",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "hyperparam_e_dim",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "hyperparam_M",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_freecurvhrqvae",
+      "to": "hyperparam_kappa_max",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_kappa_stereographic",
+      "to": "hyperparam_kappa_max",
+      "type": "Method--uses-->Hyperparameter"
+    },
+    {
+      "from": "method_r137_fix",
+      "to": "rootcause_item_detach",
+      "type": "Method--variant_of-->Method"
+    },
+    {
+      "from": "rootcause_sid_collapse",
+      "to": "method_freecurvhrqvae",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "rootcause_stage34_dirty_interface",
+      "to": "method_r12_ckpt",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "rootcause_item_detach",
+      "to": "method_r137_fix",
+      "type": "RootCause--mitigated_by-->Method"
+    },
+    {
+      "from": "decision_enter_gate0",
+      "to": "decision_gate_minus1_pass",
+      "type": "Decision--alternative-->Decision"
+    },
+    {
+      "from": "issue_63",
+      "to": "issue_49",
+      "type": "Issue--depends_on-->Issue"
+    },
+    {
+      "from": "issue_49",
+      "to": "hypothesis_h1_sid_collapse",
+      "type": "Issue--introduces-->Hypothesis"
+    },
+    {
+      "from": "gate_minus1",
+      "to": "stage_1",
+      "type": "Gate--gates-->Stage"
+    },
+    {
+      "from": "gate_0",
+      "to": "stage_2",
+      "type": "Gate--gates-->Stage"
+    },
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "type": "Stage--precedes-->Stage"
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "type": "Stage--precedes-->Stage"
+    }
+  ],
+  "_meta": {
+    "source_verdict": "task352_issue63_gate_minus1_result.md",
+    "extraction_method": "llm_minimax_m2.5",
+    "extracted_at": "2026-07-31T14:32:35"
+  }
+}
