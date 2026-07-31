@@ -88,7 +88,7 @@
 
 ## 5. 关键产物 (R21 强制具体 hash)
 
-- **commit hash**: pending push (see git log)
+- **commit hash**: ca8a558 (Issue #99 [方向C Gate2] Stage 2 Sinkhorn post-patch PASS 10/12, R17+R20 强制) — 已 push origin/main (R15 + R21 v2 强制, 不允许 pending 占位)
 - **verdict**: verdicts/task395_issue99_stage2_sinkhorn_post_patch_v2.md (本文件)
 - **实施**: scripts/task395_issue99_stage2_sinkhorn_post_patch.py
 - **evidence**: products/task395_issue99_stage2_sinkhorn_post_patch/evidence_package.json
