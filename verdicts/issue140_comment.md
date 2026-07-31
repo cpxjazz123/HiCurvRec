@@ -6,7 +6,7 @@
 3. **trace**: 1000 step × 10 record points (step 100/200/.../1000) 全落 verdict.json
 4. **raw_log**: `logs/task430_issue140_update_order_audit.log` + `logs/task430_issue140_update_order_audit.launch.log`
 5. **verdict**: `products/task430_issue140_update_order_audit/verdict.json` + `verdicts/task430_issue140_gate1_fail_v3.md`
-6. **commit**: 28868c4 (R21 v2: 不允许 "pending" 占位, commit hash 在 commit + push 后立即填入)
+6. **commit**: 3c2d77a (R21 v2: 不允许 "pending" 占位, commit hash 在 commit + push 后立即填入)
 
 ### Gate 0 (= 协议重建): ✅ PASS
 - 关键数据: 1000-step 最小复现脚本 (`scripts/task430_issue140_update_order_audit.py`, 280 lines), data = item_emb.parquet (9922, 768), SHA256 `1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc`
@@ -33,7 +33,7 @@
 - 原因: Gate 3 STOP
 
 ### 关键产物
-- commit hash: 28868c4
+- commit hash: 3c2d77a
 - push: origin/main
 - verdict: verdicts/task430_issue140_gate1_fail_v3.md
 - 实施: scripts/task430_issue140_update_order_audit.py
