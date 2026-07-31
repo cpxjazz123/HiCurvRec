@@ -1,0 +1,58 @@
+{
+  "task_id": "350",
+  "issue": "#62",
+  "date": "2026-07-31",
+  "stage_2_arm_c": {
+    "stage_1_result": "PASS — L0/L1/L2 usage 100%, best collision 0.0171, 1000 epoch in 5 min",
+    "stage_2_attempts": {
+      "v1_baseline_hrqvae_no_hyp_pre": {
+        "initial_collision": 0.9999,
+        "sk_iters_run": 5,
+        "sk_iters_help": false,
+        "final_3digit_collision": 0.9999,
+        "4digit_unique": 9922,
+        "first_codes": [[0,0,0,0], [0,0,0,1], [0,0,0,2], [0,0,0,3], [0,0,0,4]],
+        "verdict": "FAIL — 3-digit collision 99.99% (target ≤ 0.20)"
+      },
+      "v2_with_hyp_pre_wrapper": {
+        "initial_collision": 0.9999,
+        "sk_iters_run": 5,
+        "sk_iters_help": false,
+        "final_3digit_collision": 0.9999,
+        "4digit_unique": 9922,
+        "first_codes": [[0,0,0,0], [0,0,0,1], [0,0,0,2], [0,0,0,3], [0,0,0,4]],
+        "verdict": "FAIL — HypPre wrapper didn't help, still 99.99% 3-digit collision"
+      },
+      "v3_no_hyp_pre_baseline_only": {
+        "initial_collision": 0.9999,
+        "sk_iters_run": 5,
+        "sk_iters_help": false,
+        "final_3digit_collision": 0.9999,
+        "4digit_unique": 9922,
+        "first_codes": [[0,0,0,0], [0,0,0,1], [0,0,0,2], [0,0,0,3], [0,0,0,4]],
+        "verdict": "FAIL — Same as v1, HypPre is not the culprit"
+      }
+    },
+    "root_cause_analysis": {
+      "comparison_with_issue_30_baseline": {
+        "issue_30_ckpt": {
+          "sk_epsilons": [0.0, 0.0, 0.0],
+          "radius_list": [0.1, 1.0, 10.0],
+          "scale_list": [2.0, 2.0, 2.0],
+          "best_loss": 35.359062016010284,
+          "stage_2_collision": 0.13
+        },
+        "issue_62_arm_c_ckpt": {
+          "sk_epsilons": [0.003, 0.003, 0.003],
+          "radius_list": [0.1, 1.0, 10.0],
+          "scale_list": [2.0, 2.0, 2.0],
+          "hyp_c": 0.74,
+          "best_loss": 0.0012947007489856333,
+          "stage_2_collision": 0.9999
+        }
+      },
+      "diagnosis": "Sinkhorn ON (sk_eps=0.003) during training + small-radius layer 0 (r=0.1, scale=2.0 → effective 0.2) + HypPre normalized inputs → encoder produces near-identical residuals in layer 0 → all items map to layer 0 codeword 0 at hard argmin inference. Sinkhorn-balanced training forced 100% codeword usage during training, but encoder didn't learn to differentiate items well. At inference (hard argmin), all items collapse to nearest codeword (codeword 0 in layer 0)."
+    },
+    "decision": "Issue #62 Arm C Stage 2 NO-GO — 3-digit collision 99.99% across 3 attempts (v1, v2, v3). 4-digit unique = 9922 but codes are degenerate [0,0,0,item_id] (only 4th digit varies). T5 would learn trivial mapping. Expected R@10 ≈ baseline 0.1020, not improvement over #43 (R@10=0.1042). Issue #62 closed."
+  }
+}
