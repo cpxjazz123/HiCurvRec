@@ -7,7 +7,7 @@
 4. **precheck**: `products/task433_issue143_kappa_ownership_repair/precheck.json` (parameter_registry + optimizer_groups + before/after state trace)
 5. **raw_log**: `logs/task433_issue143_kappa_ownership_repair.log` + `logs/task433_issue143_kappa_ownership_repair.launch.log`
 6. **verdict**: `products/task433_issue143_kappa_ownership_repair/verdict.json` + `verdicts/task433_issue143_gate1_fail_v3.md`
-7. **commit**: pending (待 git commit + push 后填入)
+7. **commit**: 07efb07 (R21 v2: 不允许 "pending" 占位, commit hash 在 commit + push 后立即填入)
 
 ### Precheck Step 0: ✅ PASS (Issue #143 spec 强制)
 - 关键数据:
@@ -34,7 +34,7 @@
 ### Gate 2/3/4: ⏸ STOP per spec
 
 ### 关键产物
-- commit hash: pending (待 git commit + push 后填入)
+- commit hash: 07efb07
 - verdict: verdicts/task433_issue143_gate1_fail_v3.md
 - 实施: scripts/task433_issue143_kappa_ownership_repair.py
 - 整体决策: ❌ Gate 1 FAIL (Precheck PASS 但 Gate 1 FAIL: 独立 κ 所有权修复不能恢复 κ 更新, R137 κ lock 架构根因是 loss design 缺 κ-dependent 可微项)

@@ -7,7 +7,7 @@
 4. **precheck**: `products/task434_issue144_temperature_simplex_mixing/precheck.json` (parameter_registry + optimizer_groups + before/after state trace)
 5. **raw_log**: `logs/task434_issue144_temperature_simplex_mixing.log` + `logs/task434_issue144_temperature_simplex_mixing.launch.log`
 6. **verdict**: `products/task434_issue144_temperature_simplex_mixing/verdict.json` + `verdicts/task434_issue144_gate1_fail_v3.md`
-7. **commit**: pending (待 git commit + push 后填入)
+7. **commit**: 07efb07 (R21 v2: 不允许 "pending" 占位, commit hash 在 commit + push 后立即填入)
 
 ### Precheck Step 0: ✅ PASS (Issue #144 spec 强制)
 - 关键数据:
@@ -37,7 +37,7 @@
 ### Gate 2/3/4: ⏸ STOP per spec
 
 ### 关键产物
-- commit hash: pending (待 git commit + push 后填入)
+- commit hash: 07efb07
 - verdict: verdicts/task434_issue144_gate1_fail_v3.md
 - 实施: scripts/task434_issue144_temperature_simplex_mixing.py
 - 整体决策: ❌ Gate 1 FAIL (温度受控 simplex 替换 softmax 是表面改进, logits grad 仍 = 0 共享 #141 根因)
