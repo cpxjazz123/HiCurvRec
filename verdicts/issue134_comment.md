@@ -23,7 +23,7 @@
 - 原因: Gate 3 STOP
 
 ### 关键产物
-- commit hash: <pending>
+- commit hash: 600c1a3
 - push: origin/main
 - verdict: verdicts/task426_issue134_gate1_fail_v3.md
 - 实施: scripts/task426_issue134_hard_ema.py

@@ -22,7 +22,7 @@
 - 实施: scripts/task428_issue136_stage4_rebuild.py (~250 lines)
 
 ### 关键产物
-- commit hash: <pending>
+- commit hash: 600c1a3
 - push: origin/main
 - verdict: verdicts/task428_issue136_gate4_fail_v3.md
 - 整体决策: ❌ Gate 4 FAIL (WrappedHGRec routing bug, R@K=0)
