@@ -1,0 +1,30 @@
+{
+  "task": "task398_stage4_rk_eval",
+  "recipe": "T5-mini 5.5M + #97 patch poincare_distance fix + Stage 1+2+3 (#97+task395+task396) + 200 epoch",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task396_issue99_stage3_t5_train/ckpt/Instruments/Jul-31-2026_19-15-50/HG_Rec_best.pth",
+  "beam_size": 20,
+  "topk_list": [5, 10, 20],
+  "recalls": {
+    "Recall@5": 0.07323841686615842,
+    "Recall@10": 0.08643018031802072,
+    "Recall@20": 0.1014317890995948
+  },
+  "ndcgs": {
+    "NDCG@5": 0.06471267473815606,
+    "NDCG@10": 0.06896558515439853,
+    "NDCG@20": 0.07278266756590383
+  },
+  "hgrec_baseline": {
+    "Recall@5": 0.0816,
+    "Recall@10": 0.1020,
+    "Recall@20": 0.1279,
+    "NDCG@5": 0.0690,
+    "NDCG@10": 0.0755,
+    "NDCG@20": 0.0821
+  },
+  "r10_delta_vs_baseline": -0.015569819681979283,
+  "go_nogo_decision": "NO-GO",
+  "issue_104_target": "R@10 > 0.1020 (HG-Rec baseline threshold)",
+  "issue_104_verdict": "R@10 = 0.0864 ≪ 0.1020 (-15.3% FAIL) — Issue #104 NO-GO 收口",
+  "issue_105_verdict": "R@10 = 0.0864 ≪ 0.1020 (-15.3% FAIL) — Issue #105 NO-GO 收口"
+}

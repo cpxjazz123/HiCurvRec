@@ -112,9 +112,9 @@ avg_recalls, avg_ndcgs = evaluate(model, test_dataloader, config['topk_list'], c
 print(f'[Task #398 Stage 4 v1] Test recalls: {avg_recalls}', flush=True)
 print(f'[Task #398 Stage 4 v1] Test NDCGs: {avg_ndcgs}', flush=True)
 
-# Recall@5/10/20, NDCG@5/10/20 — extract per topk_list
-recalls_dict = {f'Recall@{k}': v for k, v in zip(config['topk_list'], avg_recalls)}
-ndcgs_dict = {f'NDCG@{k}': v for k, v in zip(config['topk_list'], avg_ndcgs)}
+# Recall@5/10/20, NDCG@5/10/20 — extract per topk_list (cast to float for json serialization)
+recalls_dict = {f'Recall@{k}': float(v) for k, v in zip(config['topk_list'], avg_recalls)}
+ndcgs_dict = {f'NDCG@{k}': float(v) for k, v in zip(config['topk_list'], avg_ndcgs)}
 
 # HG-Rec baseline (Task #84) for GO/NO-GO comparison
 hgrec_baseline = {
