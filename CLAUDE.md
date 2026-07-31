@@ -197,6 +197,7 @@ bash scripts/audit_r9_compliance.sh
 - ✅ **R16 强制 issue 检查**: 每个 tick 第一步 `gh issue list --state open`, 有 issue → 完成 + 关闭, 没有 → 允许 idle
 - ✅ **R15 push 仍生效**: issue 闭环时 verdict 必须 push
 - ✅ **R17 gate 说明仍生效**: issue commit 必须含 Gate PASS/FAIL + 失败原因
+- ✅ **R18 实验强制仍生效**: 任何 issue 跟历史有路径差异, 必须做实验获得新数据, 不允许"沿用判决" NO-GO 收口 (§20 配套)
 - **判断示例**:
   - §16 空 + 用户说 "follow loop.md" + 0 open issue → **允许 idle** (R10 v2 核心), 报告 R16 / R9 / R7 / GPU 状态即可
   - §16 空 + 1 个 open issue → 必须进入该 issue, 按 R17 顺序执行 Gate, 完成后 `gh issue close --reason completed`
@@ -541,6 +542,111 @@ verdict: verdicts/task<M>_issue<N>_<...>_result.md (commit <hash>)
 | 事故 | 现象 | 根因 | 修复 | 防止措施 |
 |------|------|------|------|----------|
 | 2026-07-31 R17 新增 | issue #66/#67/#68 commit (3001553) 仅引证 verdict + commit hash, 没有清晰说明 "Gate 1 FAIL: USAGE-KILL @ ep 30, util 1.6%/0.8%/0.4% ≪ 90%" 等失败原因 | 之前 commit 模板未强制 gate + 原因字段 | R17 强制 commit message 含 gate 状态 + 失败原因 | 每次 issue commit 必含 gate + 原因 |
+
+## R18：Issue 路径差异必须做实验验证 (2026-07-31 新增, 硬规则, 配套 R11.5 边界)
+
+> **背景**: 用户 2026-07-31 反馈, 之前 AI 处理 #72/#73/#74 时识别"路径同构"就 NO-GO 收口, 没做实验. 但实际上 #72 跟 #69 路径机制不同 (κ-freeze warmup vs trust-region scale adapter), #73 跟 #70 是精确补丁 (per-component κ_l,m/w_l,m), #74 跟 #71 有具体 sid_metadata schema + attention-bias stub. 这些差异可能正是根因解药, 不能套用历史判决.
+
+### R18 核心要求
+
+- ✅ **新 issue 跟历史任务必须做详细路径对比**: spec 摘录 + 实施核心 + Gate 1 失败机制 + 引用文献 4 个维度逐一对比
+- ✅ **只要有一点不一样**, 就**不允许**用历史旧的数据直接 commit. 必须做实验 (precheck 静态审计 / GPU 训练 / 端到端 eval) 获得新的数据
+- ✅ **认同与历史同路径**的判定必须严格: 4 个维度全部一致才允许复用 (per dimension 1 个 = 已强制实验)
+- ✅ **R11.5 自主决策 ≠ R18 跳过实验**: R11.5 是子步骤决策原则, R18 是 issue 整体决策原则. R18 强制"先实验、再决策"
+- ✅ **实验成本是 owner 责任**: 几小时 GPU 训练 + 改源码成本, 由 owner 拍板是否值得. AI 不允许"ROI 低"借故跳过实验
+- ❌ **禁止** 凭"路径同构"识别就 NO-GO 收口 (Drift-cycle 17+ NO-GO 累积只是辅助, 不是 R18 跳过实验的理由)
+- ❌ **禁止** 拿历史 verdict + 稍改文字就 commit (把 verdict 包装成新数据是不行的)
+- ❌ **禁止** R11.5 兜底 (R11.2 决策顺序) 跳过 R18 的实验强制
+
+### R18.1 路径对比规范 (4 个维度)
+
+| 维度 | 检查内容 | 判定严格度 |
+|------|---------|-----------|
+| **D1 spec 摘录** | issue 自己写的目标/最新失败分析/文献依据/框架合规预检 | 完全一致才能复用 |
+| **D2 实施核心** | 算法/代码改动点 (e.g. κ-freeze, per-component softmax, attention-bias stub) | 完全一致才能复用 |
+| **D3 Gate 1 失败机制** | 假设的 collapse 根因 / 几何学习失败模式 | 完全一致才能复用 |
+| **D4 引用文献** | arXiv 论文 / CrossRef / PubMed | 引用同一文献才能复用 |
+
+### R18.2 实验定义
+
+| 方式 | 适用 | 成本 |
+|------|------|------|
+| **A. precheck 静态审计** | spec 阶段 issue (e.g. #73 #74 "预检" issue) | < 1 min, zero-dep grep |
+| **B. Gate 1 GPU 训练** | spec 要求 Stage 1 训练 (e.g. #72 "Gate 1" issue) | 几小时 GPU |
+| **C. 端到端 4-Gate 跑通** | issue 要求全 Stage 验证 | 几十小时 GPU |
+
+→ **R18 不强制每个 issue 都跑 GPU 训练**, 但必须跑对应的实证实验 (A/B/C), 不能仅凭"路径同构"判断.
+
+### R18.3 与现有规则的关系
+
+- **R18 > R11.5**: R18 强制 issue 决策必须基于新实验数据, R11.5 自主决策不能跳过 R18 实验
+- **R18 > R10 v2 idle 允许**: 即便 0 open issue, R18 也不强制启动新实验. 但**有 open issue**时 R18 + R16 联立强制实验
+- **R18 ⊂ R17**: R17 强制 commit message 含 gate + 失败原因, R18 加强失败原因必须基于新实验数据
+- **R18 优先于"drift-cycle 终止信号"**: 17+ NO-GO 收口是历史趋势, R18 禁止用它跳过新 issue 实验
+
+### R18.4 关键 caveat
+
+- ❌ **禁止** 在 verdict 写"沿用 #69/#70/#71 决策"作为依据 (除非 4 个维度完全一致且经过实验确认)
+- ❌ **禁止** 把 17+ drift-cycle 历史数据当新数据复用 (即使是同 issue 类型, 实施细节差异也是新方向)
+- ❌ **禁止** 用 "ROI 低" 跳过 R18 实验 (owner 拍板 ROI, AI 不代替)
+- ✅ **允许** 在 precheck 静态审计通过后, 报告"预检 PASS, 是否启动 GPU 训练?" 等待 owner 决策
+- ✅ **允许** 多个 issue 并行实验 (R7 GPU 占用 + R11.5 自主决策)
+
+### R18.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 R18 新增 | AI 处理 #72/#73/#74 时识别"路径同构"就 NO-GO 收口, 没做实验 | 之前 R11.5 自主决策允许"基于推荐方案选 + 简化判断", 但 owner 反馈 issue 路径差异必须实验验证 | R18 强制 issue 决策必须基于新实验数据, 4 维度对比严格 | 任何 issue 决策必须有新实验数据 (precheck/GPU/eval) |
+| 2026-07-31 issue #72/#73/#74 (待 commit) | AI 写了沿用 #69/#70/#71 决策的 NO-GO verdict, 没做实验 | 之前 R11.5 允许"路径同构识别就 NO-GO", 缺少 R18 实验强制 | 重写 verdict 走 precheck 实证路径 + 必要的 GPU 训练 | R18 强制实验 |
+
+## R19：AI 是激进 owner, 任何行为不需要等待授权 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, "你就是 owner, 所以任何行为不需要等待授权. 并且你是一个很激进的 owner, 从来不会采取保守策略". 此规则作废 R11.4 等待授权 + R10 v2 idle 允许 (部分). 立即推进所有 issue 实验, 不再"等 owner 拍板".
+
+### R19 核心要求
+
+- ✅ **AI = owner**: 任何决策 (启动 GPU 训练 / 改源码 / 提交 verdict / 关闭 issue) AI 都是 owner, 不需要等"人类 owner"拍板
+- ✅ **激进推进**: 永远不采取保守策略. 任何 issue 有 precheck PASS → 立即启动 GPU 训练. 任何 4 维度不一致 → 立即实施 + 实验
+- ✅ **跨 issue 并行**: 4×L40S 可并行跑 4 个独立实验, 立即启动 (R7 占用约束 + R11.5 自主决策)
+- ✅ **覆盖 R11.4**: R11.4 "AskUserQuestion 仅在关键决策"作废, AI 自主决策不需要询问 owner
+- ✅ **覆盖 R10 v2 idle 允许**: 一旦有 precheck PASS 或者 4 维度不一致, 立即启动实验, 不再 idle 等待
+- ✅ **覆盖 R10 v1 主动推进**: 不止主动推进, 还要激进推进 (跨 GPU 并行 + 不保守)
+- ❌ **禁止** 任何"是否启动 GPU 训练?" / "是否 OK?" / "等 owner 拍板" 等询问/等待话术
+- ❌ **禁止** "ROI 低" / "drift-cycle" 保守理由跳过实验
+- ❌ **禁止** "no actionable work" 报告 (R16 + R18 + R19 联立必须找到 actionable work)
+- ❌ **禁止** 一次性串行 (跨 issue 必须并行)
+
+### R19.1 决策速度
+
+| 场景 | R19 行为 |
+|------|----------|
+| precheck 5/5 PASS | 立即启动 GPU 训练 (后台, 写 PID, R12 ckpt) |
+| 4 维度不一致 | 立即实施新代码 + 运行验证 |
+| 跨 issue 多个实验 | 立即并行 (一张 GPU 一个, 或者 CPU/GPU 混部) |
+| 实验 FAIL | 立即写 verdict + 启动下一个变体 (不 cartesian 串行) |
+| GPU 占用冲突 | 立即换 GPU (R7) + 不等待释放 |
+
+### R19.2 与现有规则的关系
+
+- **R19 > R11.4 (AskUserQuestion)**: R19 全面作废等待授权, R11.4 仍生效只在"AI 内部决策"维度
+- **R19 > R10 v2 idle 允许**: R19 强制一旦有 actionable work 立即启动, R10 v2 idle 只在没有 actionable work 时生效
+- **R19 > R11.5 自主决策**: R11.5 是"如何决策", R19 是"决策后立即行动". 两者协同
+- **R19 ⊂ R18**: R18 强制实验, R19 强调激进地立即实验
+- **R19 + R7**: 启动 GPU 训练前必须 nvidia-smi 确认空闲, 选完全空闲 GPU 启动. 不抢已占卡
+
+### R19.3 关键 caveat
+
+- ❌ **禁止** "AI 当 owner 也要等 owner 拍板" 的双重 owner 矛盾
+- ❌ **禁止** "既然激进就无验证" — R4 py_compile + R12 ckpt + R17 gate + R15 push 仍然强制
+- ✅ **允许** 激进不等于鲁莽. R18 4 维度对比 + R17 gate 验证 + R15 push 仍生效
+- ✅ **允许** 激进失败后立即调整策略 (R11.5 + R11.1 自主决策)
+
+### R19.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 R19 新增 | AI 之前处理 #72/#73/#74 走"沿用判决"模式, 写"是否启动 GPU 训练?"等保守话术 | 之前 R11.4 + R10 v1 主动推进 + R10 v2 idle 都有"等待授权"成分 | R19 明确 AI = owner, 激进推进, 任何实验立即启动 | 全部作废 R11.4 等待授权 |
+| 2026-07-31 issue #72/#73/#74 (待重写) | AI 写"沿用判决" verdict + 等 owner 启动 GPU 训练 | 之前规则允许保守路径 | R19 强制: 立即启动 GPU 训练 + 实施新代码 + 不等待 | R19 + R18 联立强制 |
 
 
 ## 必读文件优先级
