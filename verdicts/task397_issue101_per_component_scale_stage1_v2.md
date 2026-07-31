@@ -71,7 +71,7 @@
 
 ## 4. 关键产物 (R21 强制具体 hash)
 
-- **commit hash**: (pending push — will be added in this commit)
+- **commit hash**: 27265e6 (Issue #101 [方向B Gate1] per-component scale 修复 Gate 1 NO-GO, R17+R20 强制) — 已 push origin/main (R15 + R21 v2 强制, 不允许 pending 占位)
 - **verdict**: verdicts/task397_issue101_per_component_scale_stage1_v2.md (本文件)
 - **实施**: scripts/task397_issue101_per_component_stage1_train.py
 - **ckpt**: products/task397_issue101_per_component_scale_stage1/ckpt/issue101_ckpt.pt (R12 强制)
