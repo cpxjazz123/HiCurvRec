@@ -72,7 +72,7 @@
 
 ## 关键产物
 
-- **commit hash**: ⏳ 待 commit 落地后写入 (R21 v2 强制)
+- **commit hash**: 8d10b54 (R21 v2 强制落地后立即写入, 已 push origin/main)
 - **push**: origin/main (R15 强制)
 - **verdict 路径**: `verdicts/task403_stage4_rk_eval_v2.md` (本文件)
 - **metrics 路径**: `verdicts/task403_stage4_rk_eval_metrics.json`
