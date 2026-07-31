@@ -49,8 +49,8 @@ HGREC_BASELINE = {
     "NDCG@5": 0.0690, "NDCG@10": 0.0755, "NDCG@20": 0.0821,
 }
 
-# Match task84 baseline config
-CODEBOOK_SIZE = [32, 64, 256, 1]
+# Match task84 baseline config (R18 fix: task84 ckpt trained with [64,128,256,1], not [32,64,256,1])
+CODEBOOK_SIZE = [64, 128, 256, 1]
 
 
 def sha256_of(path):
@@ -95,12 +95,16 @@ class AdapterHookedHGRec(nn.Module):
 
     def generate(self, input_ids=None, attention_mask=None, **kwargs):
         if self.adapter is not None and input_ids is not None:
-            # Use HG_Rec's internal shared embedding to look up, then apply adapter
+            # R18 fix v3: HG_Rec.generate only takes input_ids, not inputs_embeds.
+            # Bypass HG_Rec.generate, go directly to inner T5 model's generate with inputs_embeds.
             embed = self.hgrec.model.shared(input_ids)
             adapted = self.adapter(embed)
+            num_beams = kwargs.get('num_beams', 20)
             return self.hgrec.model.generate(
-                inputs_embeds=adapted, attention_mask=attention_mask, **kwargs,
+                inputs_embeds=adapted, attention_mask=attention_mask,
+                max_length=5, num_beams=num_beams, num_return_sequences=num_beams,
             )
+        # No adapter: use HG_Rec.generate default path
         return self.hgrec.generate(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
 
 
@@ -202,8 +206,8 @@ def main():
         log_lines.append(f"  Running control eval #{run_idx}...")
         print(log_lines[-1], flush=True)
         avg_recalls_ctrl, avg_ndcgs_ctrl = evaluate(wrapped_ctrl, test_dataloader, config['topk_list'], config['beam_size'], DEVICE)
-        recalls_dict = {f"R@{k}": v for k, v in zip(config['topk_list'], avg_recalls_ctrl)}
-        ndcgs_dict = {f"NDCG@{k}": v for k, v in zip(config['topk_list'], avg_ndcgs_ctrl)}
+        recalls_dict = {f"R@{k}": float(v) for k, v in avg_recalls_ctrl.items()}
+        ndcgs_dict = {f"NDCG@{k}": float(v) for k, v in avg_ndcgs_ctrl.items()}
         log_lines.append(f"  Control #{run_idx} recalls: {recalls_dict}")
         log_lines.append(f"  Control #{run_idx} NDCGs:   {ndcgs_dict}")
         print(log_lines[-2], flush=True)
@@ -238,8 +242,8 @@ def main():
         log_lines.append(f"  Running adapter eval #{run_idx}...")
         print(log_lines[-1], flush=True)
         avg_recalls_ad, avg_ndcgs_ad = evaluate(wrapped_ad, test_dataloader, config['topk_list'], config['beam_size'], DEVICE)
-        recalls_dict = {f"R@{k}": v for k, v in zip(config['topk_list'], avg_recalls_ad)}
-        ndcgs_dict = {f"NDCG@{k}": v for k, v in zip(config['topk_list'], avg_ndcgs_ad)}
+        recalls_dict = {f"R@{k}": float(v) for k, v in avg_recalls_ad.items()}
+        ndcgs_dict = {f"NDCG@{k}": float(v) for k, v in avg_ndcgs_ad.items()}
         log_lines.append(f"  Adapter #{run_idx} recalls: {recalls_dict}")
         log_lines.append(f"  Adapter #{run_idx} NDCGs:   {ndcgs_dict}")
         print(log_lines[-2], flush=True)
