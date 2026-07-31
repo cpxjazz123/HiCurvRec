@@ -89,7 +89,7 @@
 
 ## 关键产物
 
-- **commit hash**: 8e0ca7f (R21 v2 强制落地后立即写入, 已 push origin/main)
+- **commit hash**: 47672ac (R21 v2 强制落地后立即写入, 已 push origin/main)
 - **push**: origin/main (R15 强制)
 - **verdict 路径**: `verdicts/task406_issue111_stage3_layered_geometry_counterfactual_v2.md` (本文件)
 - **audit json**: `verdicts/task406_issue111_stage3_layered_geometry_counterfactual.json` (含完整 5 组反事实 L1/L2/argmax/grad 数据)
