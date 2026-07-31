@@ -1,0 +1,192 @@
+{
+  "task": "task407_issue113_three_component_precheck",
+  "spec_layer_config": {
+    "L0_K64": {
+      "fixed_kappa": 0.5
+    },
+    "L1_K128": {
+      "fixed_kappa": 1.0
+    },
+    "L2_K256": {
+      "fixed_kappa": 1.5
+    }
+  },
+  "model_params": {
+    "total": 43020,
+    "trainable": 43020
+  },
+  "audit_1_state_dict_keys": {
+    "per_layer": [
+      {
+        "layers.0.learnable_theta_m": "shape=torch.Size([1])",
+        "layers.0.codebook_learnable.weight": "shape=torch.Size([64, 32])",
+        "layers.0.codebook_fixed.weight": "shape=torch.Size([64, 32])",
+        "layers.0.codebook_euclidean.weight": "shape=torch.Size([64, 32])",
+        "layers.0.gate_logits": "shape=torch.Size([3])",
+        "layers.0.kappa_fixed_buf": "shape=torch.Size([])"
+      },
+      {
+        "layers.1.learnable_theta_m": "shape=torch.Size([1])",
+        "layers.1.codebook_learnable.weight": "shape=torch.Size([128, 32])",
+        "layers.1.codebook_fixed.weight": "shape=torch.Size([128, 32])",
+        "layers.1.codebook_euclidean.weight": "shape=torch.Size([128, 32])",
+        "layers.1.gate_logits": "shape=torch.Size([3])",
+        "layers.1.kappa_fixed_buf": "shape=torch.Size([])"
+      },
+      {
+        "layers.2.learnable_theta_m": "shape=torch.Size([1])",
+        "layers.2.codebook_learnable.weight": "shape=torch.Size([256, 32])",
+        "layers.2.codebook_fixed.weight": "shape=torch.Size([256, 32])",
+        "layers.2.codebook_euclidean.weight": "shape=torch.Size([256, 32])",
+        "layers.2.gate_logits": "shape=torch.Size([3])",
+        "layers.2.kappa_fixed_buf": "shape=torch.Size([])"
+      }
+    ],
+    "total_keys": 18
+  },
+  "audit_2_forward_contribution": {
+    "x_q_total_shape": [
+      4,
+      32
+    ],
+    "x_q_total_norm_mean": 1.0043435096740723,
+    "x_q_total_has_nan": false,
+    "x_q_total_has_inf": false,
+    "gates": [
+      [
+        0.6652408838272095,
+        0.2447284758090973,
+        0.09003056585788727
+      ],
+      [
+        0.6652408838272095,
+        0.2447284758090973,
+        0.09003056585788727
+      ],
+      [
+        0.6652408838272095,
+        0.2447284758090973,
+        0.09003056585788727
+      ]
+    ],
+    "indices_shape": [
+      [
+        4
+      ],
+      [
+        4
+      ],
+      [
+        4
+      ]
+    ],
+    "per_layer_contribution": [
+      {
+        "layer": 0,
+        "d_learnable_min_mean": 23.68625831604004,
+        "d_fixed_min_mean": 3.5734105110168457,
+        "d_euclidean_min_mean": 23.08075714111328,
+        "d_learnable_max_mean": 29.87535858154297,
+        "d_fixed_max_mean": 4.563377380371094,
+        "d_euclidean_max_mean": 31.850759506225586
+      },
+      {
+        "layer": 1,
+        "d_learnable_min_mean": 23.798357009887695,
+        "d_fixed_min_mean": 0.7447746992111206,
+        "d_euclidean_min_mean": 22.090229034423828,
+        "d_learnable_max_mean": 30.372835159301758,
+        "d_fixed_max_mean": 0.9183682799339294,
+        "d_euclidean_max_mean": 31.85556411743164
+      },
+      {
+        "layer": 2,
+        "d_learnable_min_mean": 23.265806198120117,
+        "d_fixed_min_mean": 0.30205869674682617,
+        "d_euclidean_min_mean": 22.498971939086914,
+        "d_learnable_max_mean": 30.397850036621094,
+        "d_fixed_max_mean": 0.37731966376304626,
+        "d_euclidean_max_mean": 32.15542984008789
+      }
+    ]
+  },
+  "audit_3_round_trip": {
+    "max_abs_diff": 5.960464477539063e-08,
+    "is_bit_equal": true,
+    "tolerance": 1e-06,
+    "save_path": "/tmp/task407_roundtrip_test.ckpt"
+  },
+  "audit_4_gate_non_degenerate": {
+    "per_layer": [
+      {
+        "layer": 0,
+        "gate": [
+          0.6652408838272095,
+          0.2447284758090973,
+          0.09003056585788727
+        ],
+        "non_trivial_components": 2,
+        "is_degenerate": false
+      },
+      {
+        "layer": 1,
+        "gate": [
+          0.6652408838272095,
+          0.2447284758090973,
+          0.09003056585788727
+        ],
+        "non_trivial_components": 2,
+        "is_degenerate": false
+      },
+      {
+        "layer": 2,
+        "gate": [
+          0.6652408838272095,
+          0.2447284758090973,
+          0.09003056585788727
+        ],
+        "non_trivial_components": 2,
+        "is_degenerate": false
+      }
+    ]
+  },
+  "audit_5_component_finite_nonzero": {
+    "per_layer": [
+      {
+        "layer": 0,
+        "kappa_learnable": 0.0,
+        "kappa_fixed": 0.5,
+        "codebook_learnable_norm": 5.599999904632568,
+        "codebook_fixed_norm": 4.0,
+        "codebook_euclidean_norm": 7.811199188232422,
+        "codebook_learnable_has_nan": false,
+        "codebook_fixed_has_nan": false,
+        "codebook_euclidean_has_nan": false
+      },
+      {
+        "layer": 1,
+        "kappa_learnable": 0.0,
+        "kappa_fixed": 1.0,
+        "codebook_learnable_norm": 7.919596195220947,
+        "codebook_fixed_norm": 5.656854152679443,
+        "codebook_euclidean_norm": 11.030776977539062,
+        "codebook_learnable_has_nan": false,
+        "codebook_fixed_has_nan": false,
+        "codebook_euclidean_has_nan": false
+      },
+      {
+        "layer": 2,
+        "kappa_learnable": 0.0,
+        "kappa_fixed": 1.5,
+        "codebook_learnable_norm": 11.199999809265137,
+        "codebook_fixed_norm": 8.0,
+        "codebook_euclidean_norm": 15.630887985229492,
+        "codebook_learnable_has_nan": false,
+        "codebook_fixed_has_nan": false,
+        "codebook_euclidean_has_nan": false
+      }
+    ]
+  },
+  "precheck_pass": true,
+  "next_step": "Precheck PASS \u2192 \u5199 Stage 1 \u8bad\u7ec3\u811a\u672c + \u7acb\u5373 GPU 1 launch 50 epoch"
+}

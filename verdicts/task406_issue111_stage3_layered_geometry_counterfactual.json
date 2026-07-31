@@ -1,0 +1,65 @@
+{
+  "task": "task406_issue111_stage3_layered_geometry_counterfactual",
+  "recipe": "task396b Stage 3 ckpt (Issue #99) + Issue #97 patch + Sinkhorn (task396 SID) + \u540c ckpt \u540c batch 5 \u7ec4\u53cd\u4e8b\u5b9e",
+  "ckpt_sha256": "f592b5821ec36004ed21c77b1c771663b822d76f0a79f4386f8ab1e47d969e75",
+  "sid_shape": [
+    9922,
+    4
+  ],
+  "batch_size": 8,
+  "batch_indices": [
+    5268,
+    510,
+    4328,
+    8380,
+    9034,
+    8642,
+    7028,
+    3971
+  ],
+  "seed": 42,
+  "device": "cuda:0",
+  "group_1_original_logits_shape": [
+    8,
+    20,
+    1025
+  ],
+  "group_1_original_grad": {
+    "embed_tokens_grad_norm_sum": 0,
+    "attention_grad_norm_sum": 7552334.133544922,
+    "ffn_grad_norm_sum": 5217052.1171875,
+    "layer_norm_grad_norm_sum": 854043.8106689453,
+    "total_grad_norm_sum": 13659535.787963867,
+    "num_params_with_grad": 105
+  },
+  "group_2_layer_permutation": {
+    "g2_layer_perm_L1_diff": 0.8583314418792725,
+    "g2_layer_perm_L2_diff": 1.2278196811676025,
+    "g2_layer_perm_top1_argmax_match": 0.10000000149011612,
+    "g2_layer_perm_top5_argmax_match": 0.0,
+    "g2_layer_perm_top10_argmax_match": 0.0
+  },
+  "group_3_swap_layers": {
+    "g3_swap_layers_L1_diff": 0.5767980813980103,
+    "g3_swap_layers_L2_diff": 0.9137921929359436,
+    "g3_swap_layers_top1_argmax_match": 0.606249988079071,
+    "g3_swap_layers_top5_argmax_match": 0.03750000149011612,
+    "g3_swap_layers_top10_argmax_match": 0.0
+  },
+  "group_4_break_item_alignment": {
+    "g4_break_item_align_L1_diff": 0.9112696051597595,
+    "g4_break_item_align_L2_diff": 1.3006991147994995,
+    "g4_break_item_align_top1_argmax_match": 0.18125000596046448,
+    "g4_break_item_align_top5_argmax_match": 0.0,
+    "g4_break_item_align_top10_argmax_match": 0.0
+  },
+  "group_5_mask_all_zero": {
+    "g5_mask_all_zero_L1_diff": 0.5477145314216614,
+    "g5_mask_all_zero_L2_diff": 0.7478547096252441,
+    "g5_mask_all_zero_top1_argmax_match": 0.26250001788139343,
+    "g5_mask_all_zero_top5_argmax_match": 0.0,
+    "g5_mask_all_zero_top10_argmax_match": 0.0
+  },
+  "go_nogo_logic": "Issue #111 spec \u00a7Gate 3 PASS \u6761\u4ef6: \u539f\u59cb\u4e0e\u7ed3\u6784\u7834\u574f\u7ec4\u6709\u7a33\u5b9a\u975e\u96f6\u5dee\u5f02, \u4e09\u5c42\u8def\u5f84\u68af\u5ea6\u6709\u9650\u975e\u96f6, mask \u6b63\u786e. \u82e5\u8f93\u51fa\u4ec5\u5bf9 token identity \u654f\u611f\u800c\u5bf9\u5c42\u7ea7\u51e0\u4f55\u4e0d\u654f\u611f \u2192 Gate 3 FAIL. \u672c task \u91cf\u5316\u6240\u6709 5 \u7ec4\u7684 L1/L2 diff + argmax match, \u62a5\u544a\u6bcf\u7ec4\u662f\u5426\u975e\u96f6.",
+  "next_step": "verdict \u5199 + commit + push + close issue #111"
+}
