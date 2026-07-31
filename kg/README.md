@@ -68,7 +68,7 @@ kg/
 - ❌ 扩展性差 (200+ verdict 都要手填)
 
 ### Phase 2 — DeepKE 自动抽取
-- ✅ DeepKE 2.2.7 已装在 `/home/wlia0047/.conda/envs/deepke` (Python 3.9 + torch 1.11)
+- ✅ DeepKE 2.2.7 已装在 `/home/wlia0047/ar57_scratch/wenyu/deepke` (Python 3.9 + torch 1.11)
 - ❌ cnSchema 不匹配我们域 (cnSchema = LOC/PER/ORG, 我们 = Issue/Verdict/Method)
 - ❌ 需要 fine-tune 或 prompt 适配
 - ❌ 英文 verdict 支持弱 (DeepKE 中文优化)
