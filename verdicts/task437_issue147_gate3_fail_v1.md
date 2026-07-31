@@ -1,7 +1,7 @@
 # Issue #147 [方向C Gate3] 曲率条件化T5注入 — Gate 3 FAIL (Precheck 3/3 PASS, Training adapter grad collapse)
 
 **Task**: #437 / Issue #147
-**Commit**: TBD (after git push)
+**Commit**: `1a3c623`
 **Verdict**: `verdicts/task437_issue147_gate3_fail_v1.md`
 **产物**: `products/task437_issue147_curvature_conditioned_residual/{config,verdict,train_trace,adapter_init_proof,gradient_proof,adapter.pt}.{json,pt}`
 **SHA256**: item_emb.parquet=`2c5f843d...`, T5_ckpt=`56d046db...`, SID_npy=`2dab2922...`, adapter_ckpt=`6a377018...`
