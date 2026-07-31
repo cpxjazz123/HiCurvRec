@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "description": "KG schema for GeneRec verdict repository — schema-based entity + relationship extraction",
+  "created": "2026-07-31",
+  "task_id": 332,
+  "phase": "Phase 1 pilot",
+
+  "entity_types": {
+    "Verdict": {
+      "description": "An evaluation/decision document for a specific task, recorded in verdicts/task<N>_*.md",
+      "required_fields": ["id", "task_id", "title", "date", "decision"],
+      "optional_fields": ["verdict_status", "r10_metric", "baseline_r10", "delta_pct", "rationale_summary"],
+      "decision_values": ["GO", "NO-GO", "NEUTRAL", "PASS", "FAIL", "PASS-GATE-X", "PENDING"]
+    },
+    "Issue": {
+      "description": "A GitHub issue tracking a research direction, ablation, or bug",
+      "required_fields": ["id", "number", "title", "state", "created_at"],
+      "optional_fields": ["author", "body_summary", "decision_threshold", "roi_estimate"]
+    },
+    "Task": {
+      "description": "A concrete execution unit, identified by task_id, usually maps to one stage or one experiment",
+      "required_fields": ["id", "task_id", "title"],
+      "optional_fields": ["gate", "stage", "gpu_hours", "status"]
+    },
+    "Hypothesis": {
+      "description": "A testable claim, e.g. 'κ-Stereographic formula improves R@10'",
+      "required_fields": ["id", "statement"],
+      "optional_fields": ["confidence_prior", "falsification_criterion"]
+    },
+    "Method": {
+      "description": "An algorithm/technique being tested, e.g. HypPreEncoder, per-layer Codebook Transforms",
+      "required_fields": ["id", "name"],
+      "optional_fields": ["paper_ref", "default_hyperparams", "is_upstream_patch", "wrapper_or_native"]
+    },
+    "Hyperparameter": {
+      "description": "A specific tunable value with concrete setting (e.g. c=0.74, radius_list=[0.1,1.0,10.0])",
+      "required_fields": ["id", "name", "value", "scope"],
+      "optional_fields": ["search_range", "locked_by"]
+    },
+    "Metric": {
+      "description": "An evaluation metric, e.g. Recall@10, NDCG@20",
+      "required_fields": ["id", "name", "k"],
+      "optional_fields": ["higher_is_better", "anchor_value"]
+    },
+    "RootCause": {
+      "description": "Identified mechanism that explains a NO-GO outcome (e.g. mode collapse, Sinkhorn-train/inference gap)",
+      "required_fields": ["id", "name", "description"],
+      "optional_fields": ["category", "mitigation_attempted"]
+    },
+    "Decision": {
+      "description": "A binary or graded decision point: GO / NO-GO / NEUTRAL, with rationale",
+      "required_fields": ["id", "decision", "verdict_ref"],
+      "optional_fields": ["alternative_options", "r11_5_autonomous"]
+    },
+    "Stage": {
+      "description": "A pipeline stage (Stage 1 RQ-VAE, Stage 2 Sinkhorn, Stage 3 T5-mini, Stage 4 R@K eval)",
+      "required_fields": ["id", "stage_number", "name"],
+      "optional_fields": ["depends_on_stage", "gpu_intensity"]
+    },
+    "Gate": {
+      "description": "A pass/fail checkpoint in a multi-stage experiment (Gate 0 sandbox → Gate 1 train → Gate 2 infer → Gate 3 T5 → Gate 4 eval)",
+      "required_fields": ["id", "gate_number", "name"],
+      "optional_fields": ["pass_criterion", "fail_criterion"]
+    },
+    "Paper": {
+      "description": "External paper reference providing algorithm/foundation",
+      "required_fields": ["id", "title"],
+      "optional_fields": ["authors", "year", "venue"]
+    }
+  },
+
+  "relationship_types": {
+    "Verdict--evaluates-->Issue": {
+      "description": "The verdict evaluates/tests the issue's claim"
+    },
+    "Verdict--evaluates-->Task": {
+      "description": "The verdict evaluates the task's outcome"
+    },
+    "Verdict--tests-->Hypothesis": {
+      "description": "The verdict provides evidence for/against a hypothesis"
+    },
+    "Verdict--supersedes-->Verdict": {
+      "description": "This verdict supersedes (corrects/extends/replaces) an earlier verdict"
+    },
+    "Verdict--identifies-->RootCause": {
+      "description": "This verdict identifies this root cause as the mechanism for the outcome"
+    },
+    "Verdict--achieves-->Metric": {
+      "description": "The verdict records a measured value for this metric"
+    },
+    "Verdict--makes-->Decision": {
+      "description": "The verdict issues this decision (GO/NO-GO/...)"
+    },
+    "Verdict--executes-->Stage": {
+      "description": "The verdict executes/is associated with this stage"
+    },
+    "Verdict--passes-->Gate": {
+      "description": "The verdict passes this gate (or fails, with decision=NO-GO)"
+    },
+    "Task--implements-->Method": {
+      "description": "The task implements this method"
+    },
+    "Task--executes-->Stage": {
+      "description": "The task is part of this stage"
+    },
+    "Task--tests-->Issue": {
+      "description": "The task is part of resolving/testing this issue"
+    },
+    "Task--configures-->Hyperparameter": {
+      "description": "The task uses this hyperparameter setting"
+    },
+    "Method--variant_of-->Method": {
+      "description": "This method is a variant of a parent method"
+    },
+    "Method--cites-->Paper": {
+      "description": "This method references/foundations on this paper"
+    },
+    "Method--uses-->Hyperparameter": {
+      "description": "This method has this hyperparameter as part of its design"
+    },
+    "Issue--depends_on-->Issue": {
+      "description": "This issue depends on / is joint with another issue"
+    },
+    "Issue--introduces-->Hypothesis": {
+      "description": "This issue proposes this hypothesis"
+    },
+    "Hypothesis--refuted_by-->Verdict": {
+      "description": "This verdict provides refutation evidence for this hypothesis"
+    },
+    "Hypothesis--confirmed_by-->Verdict": {
+      "description": "This verdict provides confirmation evidence for this hypothesis"
+    },
+    "RootCause--mitigated_by-->Method": {
+      "description": "This root cause was attempted to be mitigated by this method"
+    },
+    "Decision--alternative-->Decision": {
+      "description": "Two decisions are alternative options in an R11.5 trade-off"
+    },
+    "Stage--precedes-->Stage": {
+      "description": "This stage must complete before the next"
+    },
+    "Gate--gates-->Stage": {
+      "description": "This gate is a checkpoint for this stage"
+    }
+  },
+
+  "extraction_metadata": {
+    "source_format": "verdicts/task<N>_*.md",
+    "extraction_mode": "manual_phase1",
+    "auto_extraction_target": "phase2_llm_extraction",
+    "entity_id_format": "<type>_<slug>",
+    "verdict_id_format": "verdict_task<N>_<short_slug>"
+  }
+}

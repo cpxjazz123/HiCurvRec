@@ -1,0 +1,1012 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "Verdict",
+      "id": "verdict_task350_issue62_armc_stage2",
+      "task_id": 350,
+      "title": "Issue #62 Arm C Stage 2 NO-GO (3-Digit Collapse)",
+      "date": "2026-07-31",
+      "decision": "NO-GO",
+      "verdict_status": "3 variants v1/v2/v3 全部 3-digit collision 99.99%, 远超 0.20 阈值",
+      "r10_metric": null,
+      "baseline_r10": 0.102,
+      "delta_pct": null,
+      "rationale_summary": "Sinkhorn ON + 小 layer 0 radius (r=0.1, s=2 → eff=0.2) + HypPre 三联合 = 训练时 Sinkhorn-balanced, 推断时 hard argmin 全部坍缩到 layer 0 codeword 0",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Verdict",
+      "id": "verdict_task348_issue62_gate0",
+      "task_id": 348,
+      "title": "Issue #62 Gate 0 (#30+#43 联合 wrapper) PASS",
+      "date": "2026-07-31",
+      "decision": "PASS",
+      "verdict_status": "Gate 0 sandbox PASS, #30+#43 联合 wrapper 实施基础就位",
+      "r10_metric": null,
+      "baseline_r10": null,
+      "delta_pct": null,
+      "rationale_summary": "issue #62 Gate 0 PASS (Task #348, commit 8620258)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Verdict",
+      "id": "verdict_task349_issue62_armd",
+      "task_id": 349,
+      "title": "Issue #62 Gate 1 Arm D NO-GO",
+      "date": "2026-07-31",
+      "decision": "NO-GO",
+      "verdict_status": "Arm D (#30+#43+K0=256+Sinkhorn OFF) NO-GO",
+      "r10_metric": null,
+      "baseline_r10": null,
+      "delta_pct": null,
+      "rationale_summary": "Issue #62 Gate 1 Arm D (#30+#43+K0=256+Sinkhorn OFF) NO-GO (Task #349, commit 016e87e)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Issue",
+      "id": "issue_62",
+      "number": 62,
+      "title": "Issue #30 + Issue #43 联合 ablation",
+      "state": "CLOSED",
+      "created_at": "2026-07-30",
+      "author": "owner",
+      "body_summary": "Issue #62 是 #30+#43 联合 ablation (K0=256 / K=[64,128,256], Sinkhorn ON/OFF, #30 r/s + #43 HypPre)",
+      "decision_threshold": "GO marginal: R@10 > 0.1042 突破 (#43 端点)",
+      "roi_estimate": "high",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Issue",
+      "id": "issue_30",
+      "number": 30,
+      "title": "per-layer Codebook Transforms (Issue #30 GO endpoint 0.1022)",
+      "state": "CLOSED",
+      "created_at": "2026-07-23",
+      "author": "owner",
+      "body_summary": "Issue #30 是 per-layer Codebook Transforms (r_l=[0.1,1.0,10.0] + s_l=[2,2,2]), 唯一 GO 实证 R@10=0.1022",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Issue",
+      "id": "issue_43",
+      "number": 43,
+      "title": "HypPreEncoder wrapper",
+      "state": "OPEN",
+      "created_at": "2026-07-30",
+      "author": "owner",
+      "body_summary": "Issue #43 HypPreEncoder wrapper (c=0.74, Ollivier mean), 不改 upstream hrqvae.py",
+      "source_verdicts": [
+        "verdict_task350_issue62",
+        "verdict_task334_issue43"
+      ],
+      "decision_threshold": "R@10 > 0.1022 (Issue #30 GO 端点) → GO, R@10 ≤ 0.1020 → NO-GO, 中性 0.1020 < R@10 ≤ 0.1022 → NEUTRAL",
+      "roi_estimate": "high"
+    },
+    {
+      "type": "Task",
+      "id": "task_348_gate0_wrapper",
+      "task_id": 348,
+      "title": "Issue #62 Gate 0 #30+#43 联合 wrapper 实施",
+      "gate": "Gate 0",
+      "stage": "sandbox",
+      "gpu_hours": 0.0,
+      "status": "PASS",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Task",
+      "id": "task_349_armd_stage1",
+      "task_id": 349,
+      "title": "Issue #62 Gate 1 Arm D Stage 1 training (#30+#43+K0=256+Sinkhorn OFF)",
+      "gate": "Gate 1",
+      "stage": "stage_1",
+      "gpu_hours": null,
+      "status": "NO-GO",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Task",
+      "id": "task_350_armc_stage1",
+      "task_id": 350,
+      "title": "Issue #62 Gate 1 Arm C Stage 1 training (#30+#43+K=[64,128,256]+Sinkhorn ON)",
+      "gate": "Gate 1",
+      "stage": "stage_1",
+      "gpu_hours": null,
+      "status": "PASS (Stage 1) → NO-GO (Stage 2)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Task",
+      "id": "task_350_armc_stage2",
+      "task_id": 350,
+      "title": "Issue #62 Arm C Stage 2 Sinkhorn 推断",
+      "gate": "Gate 2",
+      "stage": "stage_2",
+      "gpu_hours": null,
+      "status": "NO-GO (3-digit collision 99.99%)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Method",
+      "id": "method_per_layer_codebook_transforms",
+      "name": "per-layer Codebook Transforms (Issue #30)",
+      "paper_ref": null,
+      "default_hyperparams": {
+        "radius_list": [
+          0.1,
+          1.0,
+          10.0
+        ],
+        "scale_list": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      },
+      "is_upstream_patch": true,
+      "wrapper_or_native": "patch",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Method",
+      "id": "method_hyp_pre_encoder",
+      "name": "HypPreEncoder (Issue #43)",
+      "paper_ref": null,
+      "default_hyperparams": {
+        "c": 0.74,
+        "learnable_c": false,
+        "enabled": false
+      },
+      "is_upstream_patch": false,
+      "wrapper_or_native": "wrapper",
+      "source_verdicts": [
+        "verdict_task350_issue62",
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Method",
+      "id": "method_sinkhorn_balanced",
+      "name": "Sinkhorn-balanced training",
+      "paper_ref": "HG-Rec paper",
+      "default_hyperparams": {
+        "sk_eps": [
+          0.003,
+          0.003,
+          0.003
+        ]
+      },
+      "is_upstream_patch": false,
+      "wrapper_or_native": "native",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_radius_list",
+      "name": "radius_list",
+      "value": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "scope": "per-layer Codebook Transforms",
+      "search_range": "fixed (Issue #30 GO endpoint)",
+      "locked_by": "Issue #30",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_scale_list",
+      "name": "scale_list",
+      "value": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "scope": "per-layer Codebook Transforms",
+      "search_range": "fixed (Issue #30 GO endpoint)",
+      "locked_by": "Issue #30",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_sinkhorn_sk_eps",
+      "name": "Sinkhorn sk_eps",
+      "value": [
+        0.003,
+        0.003,
+        0.003
+      ],
+      "scope": "Sinkhorn-balanced training",
+      "search_range": "OFF [0,0,0] vs ON [0.003,0.003,0.003]",
+      "locked_by": null,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_beta",
+      "name": "β (commitment loss weight)",
+      "value": 0.25,
+      "scope": "RQ-VAE",
+      "search_range": null,
+      "locked_by": null,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Metric",
+      "id": "metric_3_digit_collision",
+      "name": "3-digit collision rate",
+      "k": null,
+      "higher_is_better": false,
+      "anchor_value": 0.2,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Metric",
+      "id": "metric_4_digit_unique",
+      "name": "4-digit unique codes",
+      "k": null,
+      "higher_is_better": true,
+      "anchor_value": 9500,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "RootCause",
+      "id": "root_cause_sinkhorn_train_inference_gap",
+      "name": "Sinkhorn train/inference gap",
+      "description": "训练时 Sinkhorn 强制均匀分布, 推断时 hard argmin 把所有 items 映射到最近 codeword (layer 0 codeword 0)",
+      "category": "training_inference_mismatch",
+      "mitigation_attempted": null,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "RootCause",
+      "id": "root_cause_small_layer0_radius",
+      "name": "Small layer 0 effective radius",
+      "description": "r=0.1, s=2 → eff=0.2, layer 0 codeword 半径很小, 所有 residual_0 都映射到最近的 codeword 0",
+      "category": "codebook_geometry",
+      "mitigation_attempted": "v2 用 HypPre wrapper 试图扩大输入分布方差, 无效",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "RootCause",
+      "id": "root_cause_hyp_pre_smooth_latent",
+      "name": "HypPre normalized latent",
+      "description": "HypPre(expmap0 c=0.74) 把 inputs 映射到 Poincaré ball, 减小输入分布方差 → encoder 产生更平滑的 latent → layer 0 codeword 0 吸收所有 residual",
+      "category": "encoder_regularization",
+      "mitigation_attempted": null,
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_0",
+      "gate_number": 0,
+      "name": "Issue #62 Gate 0 #30+#43 联合 wrapper sandbox",
+      "pass_criterion": "wrapper 实施就位, regression test PASS",
+      "fail_criterion": "wrapper 实施失败",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_1",
+      "gate_number": 1,
+      "name": "Issue #62 Gate 1 Stage 1 RQ-VAE training",
+      "pass_criterion": "codebook utilization 100% (L0/L1/L2) + best loss < Issue #30 baseline",
+      "fail_criterion": "codebook collapse or best loss > baseline",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_2",
+      "gate_number": 2,
+      "name": "Issue #62 Gate 2 Stage 2 Sinkhorn 推断",
+      "pass_criterion": "4-digit unique ≥ 9500 + 3-digit collision ≤ 0.20",
+      "fail_criterion": "3-digit collision > 0.20 (实测 0.9999)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Hypothesis",
+      "id": "h_30_43_synergy",
+      "statement": "#30 (per-layer Codebook Transforms) + #43 (HypPre) 联合比单点 GO 更优",
+      "confidence_prior": "medium",
+      "falsification_criterion": "R@10 ≤ 0.1042 (#43 端点)",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Decision",
+      "id": "dec_task350_close_nogo",
+      "decision": "NO-GO",
+      "verdict_ref": "verdict_task350_issue62_armc_stage2",
+      "alternative_options": [
+        "关闭 Issue #62 (NO-GO 收口) 选定",
+        "启动 Issue #62 第三个 arm (Sinkhorn OFF + K=baseline + #30+#43)",
+        "等 owner 拍板"
+      ],
+      "r11_5_autonomous": true,
+      "rationale": "Issue #62 唯一 ROI > 0 路径已穷尽, Issue #62 (#30+#43 联合 ablation) NO-GO 收口, R10 backlog 真空",
+      "source_verdicts": [
+        "verdict_task350_issue62"
+      ]
+    },
+    {
+      "type": "Verdict",
+      "id": "verdict_task334_issue43_gate2a",
+      "task_id": 334,
+      "title": "Issue #43 Gate 2a HypPreEncoder implementation",
+      "date": "2026-07-30",
+      "decision": "PASS",
+      "verdict_status": "Gate 2a sandbox PASS, Gate 2b/2c PENDING owner",
+      "r10_metric": null,
+      "baseline_r10": null,
+      "delta_pct": null,
+      "rationale_summary": "HypPreEncoder wrapper 5/5 regression test 通过, c=0.74 (Ollivier mean), 不改 upstream hrqvae.py",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Task",
+      "id": "task_334_gate2a",
+      "task_id": 334,
+      "title": "Issue #43 Gate 2a HypPreEncoder implementation + 5 regression test",
+      "gate": "Gate 2a",
+      "stage": "sandbox",
+      "gpu_hours": 0.0,
+      "status": "PASS",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Task",
+      "id": "task_70_ollivier",
+      "task_id": 70,
+      "title": "Ollivier 真实曲率 estimation on Toys dataset",
+      "stage": "diagnostic",
+      "status": "completed",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Method",
+      "id": "method_hrqvae_with_hyp_pre",
+      "name": "HRQVAEWithHypPre",
+      "paper_ref": null,
+      "default_hyperparams": {},
+      "is_upstream_patch": false,
+      "wrapper_or_native": "wrapper",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Method",
+      "id": "method_hrqvae_baseline",
+      "name": "HRQVAE (baseline)",
+      "paper_ref": "HG-Rec paper",
+      "default_hyperparams": {
+        "c": 1.0
+      },
+      "is_upstream_patch": false,
+      "wrapper_or_native": "native",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_hyp_pre_c",
+      "name": "c (curvature)",
+      "value": 0.74,
+      "scope": "HypPreEncoder",
+      "search_range": "[0.5, 1.0]",
+      "locked_by": "Task #70 Ollivier mean |κ|=0.726",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_hyp_pre_learnable_c",
+      "name": "learnable_c",
+      "value": false,
+      "scope": "HypPreEncoder",
+      "search_range": null,
+      "locked_by": "default OFF (simplifies test + aligns with Ollivier mean)",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Hyperparameter",
+      "id": "hp_hyp_pre_enabled",
+      "name": "enabled",
+      "value": false,
+      "scope": "HypPreEncoder",
+      "search_range": null,
+      "locked_by": "opt-in flag (regression-safe baseline)",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Metric",
+      "id": "metric_recall_at_10",
+      "name": "Recall@10",
+      "k": 10,
+      "higher_is_better": true,
+      "anchor_value": 0.102,
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Metric",
+      "id": "metric_poincare_ball_constraint",
+      "name": "Poincaré ball constraint ‖x‖ < 1/√c",
+      "k": null,
+      "higher_is_better": false,
+      "anchor_value": 1.16,
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_2a",
+      "gate_number": 2,
+      "name": "Gate 2a HypPreEncoder sandbox (zero-GPU)",
+      "pass_criterion": "5/5 regression test (T1-T5)",
+      "fail_criterion": "< 5/5 test fail",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_2b",
+      "gate_number": 2,
+      "name": "Gate 2b Stage 1 RQ-VAE training, c=0.74 fixed",
+      "pass_criterion": "codebook utilization 100% (L0/L1/L2)",
+      "fail_criterion": "USAGE-KILL @ any layer",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Gate",
+      "id": "gate_2c",
+      "gate_number": 2,
+      "name": "Gate 2c Stage 2 Sinkhorn + Stage 3 T5-mini + Stage 4 R@10",
+      "pass_criterion": "R@10 > 0.1022 (Issue #30 GO 端点)",
+      "fail_criterion": "R@10 ≤ 0.1020",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Stage",
+      "id": "stage_1",
+      "stage_number": 1,
+      "name": "HRQVAE Stage 1 training",
+      "depends_on_stage": null,
+      "gpu_intensity": "high",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Stage",
+      "id": "stage_2",
+      "stage_number": 2,
+      "name": "Sinkhorn Stage 2 inference",
+      "depends_on_stage": "stage_1",
+      "gpu_intensity": "low",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Stage",
+      "id": "stage_3",
+      "stage_number": 3,
+      "name": "T5-mini Stage 3 training",
+      "depends_on_stage": "stage_2",
+      "gpu_intensity": "high",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Stage",
+      "id": "stage_4",
+      "stage_number": 4,
+      "name": "Stage 4 R@K evaluation",
+      "depends_on_stage": "stage_3",
+      "gpu_intensity": "low",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Hypothesis",
+      "id": "h_hyp_pre_improves_r10",
+      "statement": "Hyperbolic pre-encoding (expmap0 with c=0.74) before HRQ-VAE encoder improves downstream R@10 over Euclidean baseline",
+      "confidence_prior": "high",
+      "falsification_criterion": "R@10 ≤ 0.1020 (HG-Rec baseline)",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    },
+    {
+      "type": "Decision",
+      "id": "dec_task334_gate2a_pass",
+      "decision": "PASS",
+      "verdict_ref": "verdict_task334_issue43_gate2a",
+      "alternative_options": [
+        "启动 Gate 2b (~3-4h GPU)",
+        "仅 record Gate 2a PASS, 不启动 2b (选定)",
+        "完全 ignore Issue #43"
+      ],
+      "r11_5_autonomous": false,
+      "rationale": "Gate 2b 启动需 owner 拍板, 不单方面启动 GPU 实验",
+      "source_verdicts": [
+        "verdict_task334_issue43"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "rel_type": "Verdict--evaluates-->Issue",
+      "rel_types": [
+        "Verdict--evaluates-->Issue"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "issue_62"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Task",
+      "rel_types": [
+        "Verdict--evaluates-->Task"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "task_350_armc_stage1"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Task",
+      "rel_types": [
+        "Verdict--evaluates-->Task"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "task_350_armc_stage2"
+    },
+    {
+      "rel_type": "Verdict--passes-->Gate",
+      "rel_types": [
+        "Verdict--passes-->Gate"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "gate_2"
+    },
+    {
+      "rel_type": "Hypothesis--refuted_by-->Verdict",
+      "rel_types": [
+        "Hypothesis--refuted_by-->Verdict"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "h_30_43_synergy"
+    },
+    {
+      "rel_type": "Verdict--identifies-->RootCause",
+      "rel_types": [
+        "Verdict--identifies-->RootCause"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "root_cause_sinkhorn_train_inference_gap"
+    },
+    {
+      "rel_type": "Verdict--identifies-->RootCause",
+      "rel_types": [
+        "Verdict--identifies-->RootCause"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "root_cause_small_layer0_radius"
+    },
+    {
+      "rel_type": "Verdict--identifies-->RootCause",
+      "rel_types": [
+        "Verdict--identifies-->RootCause"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "root_cause_hyp_pre_smooth_latent"
+    },
+    {
+      "rel_type": "Verdict--makes-->Decision",
+      "rel_types": [
+        "Verdict--makes-->Decision"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "dec_task350_close_nogo"
+    },
+    {
+      "rel_type": "Verdict--achieves-->Metric",
+      "rel_types": [
+        "Verdict--achieves-->Metric"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "metric_3_digit_collision"
+    },
+    {
+      "rel_type": "Verdict--supersedes-->Verdict",
+      "rel_types": [
+        "Verdict--supersedes-->Verdict"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "verdict_task348_issue62_gate0"
+    },
+    {
+      "rel_type": "Verdict--supersedes-->Verdict",
+      "rel_types": [
+        "Verdict--supersedes-->Verdict"
+      ],
+      "source": "verdict_task350_issue62_armc_stage2",
+      "target": "verdict_task349_issue62_armd"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Issue",
+      "rel_types": [
+        "Verdict--evaluates-->Issue"
+      ],
+      "source": "verdict_task348_issue62_gate0",
+      "target": "issue_62"
+    },
+    {
+      "rel_type": "Verdict--passes-->Gate",
+      "rel_types": [
+        "Verdict--passes-->Gate"
+      ],
+      "source": "verdict_task348_issue62_gate0",
+      "target": "gate_0"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Issue",
+      "rel_types": [
+        "Verdict--evaluates-->Issue"
+      ],
+      "source": "verdict_task349_issue62_armd",
+      "target": "issue_62"
+    },
+    {
+      "rel_type": "Verdict--passes-->Gate",
+      "rel_types": [
+        "Verdict--passes-->Gate"
+      ],
+      "source": "verdict_task349_issue62_armd",
+      "target": "gate_1"
+    },
+    {
+      "rel_type": "Issue--depends_on-->Issue",
+      "rel_types": [
+        "Issue--depends_on-->Issue"
+      ],
+      "source": "issue_62",
+      "target": "issue_30"
+    },
+    {
+      "rel_type": "Issue--depends_on-->Issue",
+      "rel_types": [
+        "Issue--depends_on-->Issue"
+      ],
+      "source": "issue_62",
+      "target": "issue_43"
+    },
+    {
+      "rel_type": "Issue--introduces-->Hypothesis",
+      "rel_types": [
+        "Issue--introduces-->Hypothesis"
+      ],
+      "source": "issue_62",
+      "target": "h_30_43_synergy"
+    },
+    {
+      "rel_type": "Issue--depends_on-->Issue",
+      "rel_types": [
+        "Issue--depends_on-->Issue"
+      ],
+      "source": "issue_43",
+      "target": "task_70_ollivier"
+    },
+    {
+      "rel_type": "Task--implements-->Method",
+      "rel_types": [
+        "Task--implements-->Method"
+      ],
+      "source": "task_348_gate0_wrapper",
+      "target": "method_per_layer_codebook_transforms"
+    },
+    {
+      "rel_type": "Task--implements-->Method",
+      "rel_types": [
+        "Task--implements-->Method"
+      ],
+      "source": "task_348_gate0_wrapper",
+      "target": "method_hyp_pre_encoder"
+    },
+    {
+      "rel_type": "Task--implements-->Method",
+      "rel_types": [
+        "Task--implements-->Method"
+      ],
+      "source": "task_350_armc_stage1",
+      "target": "method_sinkhorn_balanced"
+    },
+    {
+      "rel_type": "Task--configures-->Hyperparameter",
+      "rel_types": [
+        "Task--configures-->Hyperparameter"
+      ],
+      "source": "task_350_armc_stage1",
+      "target": "hp_sinkhorn_sk_eps"
+    },
+    {
+      "rel_type": "Task--configures-->Hyperparameter",
+      "rel_types": [
+        "Task--configures-->Hyperparameter"
+      ],
+      "source": "task_350_armc_stage1",
+      "target": "hp_radius_list"
+    },
+    {
+      "rel_type": "Task--configures-->Hyperparameter",
+      "rel_types": [
+        "Task--configures-->Hyperparameter"
+      ],
+      "source": "task_350_armc_stage1",
+      "target": "hp_scale_list"
+    },
+    {
+      "rel_type": "Task--configures-->Hyperparameter",
+      "rel_types": [
+        "Task--configures-->Hyperparameter"
+      ],
+      "source": "task_350_armc_stage1",
+      "target": "hp_beta"
+    },
+    {
+      "rel_type": "Method--variant_of-->Method",
+      "rel_types": [
+        "Method--variant_of-->Method"
+      ],
+      "source": "method_hyp_pre_encoder",
+      "target": "method_hrqvae_baseline"
+    },
+    {
+      "rel_type": "Method--uses-->Hyperparameter",
+      "rel_types": [
+        "Method--uses-->Hyperparameter"
+      ],
+      "source": "method_hyp_pre_encoder",
+      "target": "hp_hyp_pre_c"
+    },
+    {
+      "rel_type": "Method--uses-->Hyperparameter",
+      "rel_types": [
+        "Method--uses-->Hyperparameter"
+      ],
+      "source": "method_hyp_pre_encoder",
+      "target": "hp_hyp_pre_learnable_c"
+    },
+    {
+      "rel_type": "Method--uses-->Hyperparameter",
+      "rel_types": [
+        "Method--uses-->Hyperparameter"
+      ],
+      "source": "method_hyp_pre_encoder",
+      "target": "hp_hyp_pre_enabled"
+    },
+    {
+      "rel_type": "RootCause--mitigated_by-->Method",
+      "rel_types": [
+        "RootCause--mitigated_by-->Method"
+      ],
+      "source": "root_cause_sinkhorn_train_inference_gap",
+      "target": "method_sinkhorn_balanced"
+    },
+    {
+      "rel_type": "Decision--alternative-->Decision",
+      "rel_types": [
+        "Decision--alternative-->Decision"
+      ],
+      "source": "dec_task350_close_nogo",
+      "target": "dec_task334_gate2a_pass"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Issue",
+      "rel_types": [
+        "Verdict--evaluates-->Issue"
+      ],
+      "source": "verdict_task334_issue43_gate2a",
+      "target": "issue_43"
+    },
+    {
+      "rel_type": "Verdict--evaluates-->Task",
+      "rel_types": [
+        "Verdict--evaluates-->Task"
+      ],
+      "source": "verdict_task334_issue43_gate2a",
+      "target": "task_334_gate2a"
+    },
+    {
+      "rel_type": "Verdict--tests-->Hypothesis",
+      "rel_types": [
+        "Verdict--tests-->Hypothesis"
+      ],
+      "source": "verdict_task334_issue43_gate2a",
+      "target": "h_hyp_pre_improves_r10"
+    },
+    {
+      "rel_type": "Verdict--passes-->Gate",
+      "rel_types": [
+        "Verdict--passes-->Gate"
+      ],
+      "source": "verdict_task334_issue43_gate2a",
+      "target": "gate_2a"
+    },
+    {
+      "rel_type": "Verdict--makes-->Decision",
+      "rel_types": [
+        "Verdict--makes-->Decision"
+      ],
+      "source": "verdict_task334_issue43_gate2a",
+      "target": "dec_task334_gate2a_pass"
+    },
+    {
+      "rel_type": "Task--implements-->Method",
+      "rel_types": [
+        "Task--implements-->Method"
+      ],
+      "source": "task_334_gate2a",
+      "target": "method_hyp_pre_encoder"
+    },
+    {
+      "rel_type": "Task--implements-->Method",
+      "rel_types": [
+        "Task--implements-->Method"
+      ],
+      "source": "task_334_gate2a",
+      "target": "method_hrqvae_with_hyp_pre"
+    },
+    {
+      "rel_type": "Task--tests-->Issue",
+      "rel_types": [
+        "Task--tests-->Issue"
+      ],
+      "source": "task_334_gate2a",
+      "target": "issue_43"
+    },
+    {
+      "rel_type": "Task--executes-->Stage",
+      "rel_types": [
+        "Task--executes-->Stage"
+      ],
+      "source": "task_334_gate2a",
+      "target": "gate_2a"
+    },
+    {
+      "rel_type": "Gate--gates-->Stage",
+      "rel_types": [
+        "Gate--gates-->Stage"
+      ],
+      "source": "gate_2b",
+      "target": "stage_1"
+    },
+    {
+      "rel_type": "Gate--gates-->Stage",
+      "rel_types": [
+        "Gate--gates-->Stage"
+      ],
+      "source": "gate_2c",
+      "target": "stage_2"
+    },
+    {
+      "rel_type": "Gate--gates-->Stage",
+      "rel_types": [
+        "Gate--gates-->Stage"
+      ],
+      "source": "gate_2c",
+      "target": "stage_3"
+    },
+    {
+      "rel_type": "Gate--gates-->Stage",
+      "rel_types": [
+        "Gate--gates-->Stage"
+      ],
+      "source": "gate_2c",
+      "target": "stage_4"
+    },
+    {
+      "rel_type": "Stage--precedes-->Stage",
+      "rel_types": [
+        "Stage--precedes-->Stage"
+      ],
+      "source": "stage_1",
+      "target": "stage_2"
+    },
+    {
+      "rel_type": "Stage--precedes-->Stage",
+      "rel_types": [
+        "Stage--precedes-->Stage"
+      ],
+      "source": "stage_2",
+      "target": "stage_3"
+    },
+    {
+      "rel_type": "Stage--precedes-->Stage",
+      "rel_types": [
+        "Stage--precedes-->Stage"
+      ],
+      "source": "stage_3",
+      "target": "stage_4"
+    },
+    {
+      "rel_type": "Hypothesis--introduced_by-->Issue",
+      "rel_types": [
+        "Hypothesis--introduced_by-->Issue"
+      ],
+      "source": "h_hyp_pre_improves_r10",
+      "target": "issue_43"
+    }
+  ]
+}

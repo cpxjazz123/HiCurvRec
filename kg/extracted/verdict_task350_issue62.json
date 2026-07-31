@@ -1,0 +1,294 @@
+{
+  "extraction_id": "verdict_task350_issue62",
+  "extracted_from": "verdicts/task350_issue62_armc_stage2_nogo.md",
+  "extraction_date": "2026-07-31",
+  "extraction_mode": "manual",
+  "task_id": 350,
+
+  "entities": {
+    "Verdict": [
+      {
+        "id": "verdict_task350_issue62_armc_stage2",
+        "task_id": 350,
+        "title": "Issue #62 Arm C Stage 2 NO-GO (3-Digit Collapse)",
+        "date": "2026-07-31",
+        "decision": "NO-GO",
+        "verdict_status": "3 variants v1/v2/v3 全部 3-digit collision 99.99%, 远超 0.20 阈值",
+        "r10_metric": null,
+        "baseline_r10": 0.1020,
+        "delta_pct": null,
+        "rationale_summary": "Sinkhorn ON + 小 layer 0 radius (r=0.1, s=2 → eff=0.2) + HypPre 三联合 = 训练时 Sinkhorn-balanced, 推断时 hard argmin 全部坍缩到 layer 0 codeword 0"
+      },
+      {
+        "id": "verdict_task348_issue62_gate0",
+        "task_id": 348,
+        "title": "Issue #62 Gate 0 (#30+#43 联合 wrapper) PASS",
+        "date": "2026-07-31",
+        "decision": "PASS",
+        "verdict_status": "Gate 0 sandbox PASS, #30+#43 联合 wrapper 实施基础就位",
+        "r10_metric": null,
+        "baseline_r10": null,
+        "delta_pct": null,
+        "rationale_summary": "issue #62 Gate 0 PASS (Task #348, commit 8620258)"
+      },
+      {
+        "id": "verdict_task349_issue62_armd",
+        "task_id": 349,
+        "title": "Issue #62 Gate 1 Arm D NO-GO",
+        "date": "2026-07-31",
+        "decision": "NO-GO",
+        "verdict_status": "Arm D (#30+#43+K0=256+Sinkhorn OFF) NO-GO",
+        "r10_metric": null,
+        "baseline_r10": null,
+        "delta_pct": null,
+        "rationale_summary": "Issue #62 Gate 1 Arm D (#30+#43+K0=256+Sinkhorn OFF) NO-GO (Task #349, commit 016e87e)"
+      }
+    ],
+    "Issue": [
+      {
+        "id": "issue_62",
+        "number": 62,
+        "title": "Issue #30 + Issue #43 联合 ablation",
+        "state": "CLOSED",
+        "created_at": "2026-07-30",
+        "author": "owner",
+        "body_summary": "Issue #62 是 #30+#43 联合 ablation (K0=256 / K=[64,128,256], Sinkhorn ON/OFF, #30 r/s + #43 HypPre)",
+        "decision_threshold": "GO marginal: R@10 > 0.1042 突破 (#43 端点)",
+        "roi_estimate": "high"
+      },
+      {
+        "id": "issue_30",
+        "number": 30,
+        "title": "per-layer Codebook Transforms (Issue #30 GO endpoint 0.1022)",
+        "state": "CLOSED",
+        "created_at": "2026-07-23",
+        "author": "owner",
+        "body_summary": "Issue #30 是 per-layer Codebook Transforms (r_l=[0.1,1.0,10.0] + s_l=[2,2,2]), 唯一 GO 实证 R@10=0.1022"
+      },
+      {
+        "id": "issue_43",
+        "number": 43,
+        "title": "HypPreEncoder wrapper",
+        "state": "OPEN",
+        "created_at": "2026-07-30",
+        "author": "owner",
+        "body_summary": "Issue #43 HypPreEncoder wrapper (c=0.74, Ollivier mean), 不改 upstream hrqvae.py"
+      }
+    ],
+    "Task": [
+      {
+        "id": "task_348_gate0_wrapper",
+        "task_id": 348,
+        "title": "Issue #62 Gate 0 #30+#43 联合 wrapper 实施",
+        "gate": "Gate 0",
+        "stage": "sandbox",
+        "gpu_hours": 0.0,
+        "status": "PASS"
+      },
+      {
+        "id": "task_349_armd_stage1",
+        "task_id": 349,
+        "title": "Issue #62 Gate 1 Arm D Stage 1 training (#30+#43+K0=256+Sinkhorn OFF)",
+        "gate": "Gate 1",
+        "stage": "stage_1",
+        "gpu_hours": null,
+        "status": "NO-GO"
+      },
+      {
+        "id": "task_350_armc_stage1",
+        "task_id": 350,
+        "title": "Issue #62 Gate 1 Arm C Stage 1 training (#30+#43+K=[64,128,256]+Sinkhorn ON)",
+        "gate": "Gate 1",
+        "stage": "stage_1",
+        "gpu_hours": null,
+        "status": "PASS (Stage 1) → NO-GO (Stage 2)"
+      },
+      {
+        "id": "task_350_armc_stage2",
+        "task_id": 350,
+        "title": "Issue #62 Arm C Stage 2 Sinkhorn 推断",
+        "gate": "Gate 2",
+        "stage": "stage_2",
+        "gpu_hours": null,
+        "status": "NO-GO (3-digit collision 99.99%)"
+      }
+    ],
+    "Method": [
+      {
+        "id": "method_per_layer_codebook_transforms",
+        "name": "per-layer Codebook Transforms (Issue #30)",
+        "paper_ref": null,
+        "default_hyperparams": {"radius_list": [0.1, 1.0, 10.0], "scale_list": [2.0, 2.0, 2.0]},
+        "is_upstream_patch": true,
+        "wrapper_or_native": "patch"
+      },
+      {
+        "id": "method_hyp_pre_encoder",
+        "name": "HypPreEncoder (Issue #43)",
+        "paper_ref": null,
+        "default_hyperparams": {"c": 0.74, "learnable_c": false, "enabled": false},
+        "is_upstream_patch": false,
+        "wrapper_or_native": "wrapper"
+      },
+      {
+        "id": "method_sinkhorn_balanced",
+        "name": "Sinkhorn-balanced training",
+        "paper_ref": "HG-Rec paper",
+        "default_hyperparams": {"sk_eps": [0.003, 0.003, 0.003]},
+        "is_upstream_patch": false,
+        "wrapper_or_native": "native"
+      }
+    ],
+    "Hyperparameter": [
+      {
+        "id": "hp_radius_list",
+        "name": "radius_list",
+        "value": [0.1, 1.0, 10.0],
+        "scope": "per-layer Codebook Transforms",
+        "search_range": "fixed (Issue #30 GO endpoint)",
+        "locked_by": "Issue #30"
+      },
+      {
+        "id": "hp_scale_list",
+        "name": "scale_list",
+        "value": [2.0, 2.0, 2.0],
+        "scope": "per-layer Codebook Transforms",
+        "search_range": "fixed (Issue #30 GO endpoint)",
+        "locked_by": "Issue #30"
+      },
+      {
+        "id": "hp_sinkhorn_sk_eps",
+        "name": "Sinkhorn sk_eps",
+        "value": [0.003, 0.003, 0.003],
+        "scope": "Sinkhorn-balanced training",
+        "search_range": "OFF [0,0,0] vs ON [0.003,0.003,0.003]",
+        "locked_by": null
+      },
+      {
+        "id": "hp_beta",
+        "name": "β (commitment loss weight)",
+        "value": 0.25,
+        "scope": "RQ-VAE",
+        "search_range": null,
+        "locked_by": null
+      }
+    ],
+    "Metric": [
+      {
+        "id": "metric_3_digit_collision",
+        "name": "3-digit collision rate",
+        "k": null,
+        "higher_is_better": false,
+        "anchor_value": 0.20
+      },
+      {
+        "id": "metric_4_digit_unique",
+        "name": "4-digit unique codes",
+        "k": null,
+        "higher_is_better": true,
+        "anchor_value": 9500
+      }
+    ],
+    "RootCause": [
+      {
+        "id": "root_cause_sinkhorn_train_inference_gap",
+        "name": "Sinkhorn train/inference gap",
+        "description": "训练时 Sinkhorn 强制均匀分布, 推断时 hard argmin 把所有 items 映射到最近 codeword (layer 0 codeword 0)",
+        "category": "training_inference_mismatch",
+        "mitigation_attempted": null
+      },
+      {
+        "id": "root_cause_small_layer0_radius",
+        "name": "Small layer 0 effective radius",
+        "description": "r=0.1, s=2 → eff=0.2, layer 0 codeword 半径很小, 所有 residual_0 都映射到最近的 codeword 0",
+        "category": "codebook_geometry",
+        "mitigation_attempted": "v2 用 HypPre wrapper 试图扩大输入分布方差, 无效"
+      },
+      {
+        "id": "root_cause_hyp_pre_smooth_latent",
+        "name": "HypPre normalized latent",
+        "description": "HypPre(expmap0 c=0.74) 把 inputs 映射到 Poincaré ball, 减小输入分布方差 → encoder 产生更平滑的 latent → layer 0 codeword 0 吸收所有 residual",
+        "category": "encoder_regularization",
+        "mitigation_attempted": null
+      }
+    ],
+    "Gate": [
+      {
+        "id": "gate_0",
+        "gate_number": 0,
+        "name": "Issue #62 Gate 0 #30+#43 联合 wrapper sandbox",
+        "pass_criterion": "wrapper 实施就位, regression test PASS",
+        "fail_criterion": "wrapper 实施失败"
+      },
+      {
+        "id": "gate_1",
+        "gate_number": 1,
+        "name": "Issue #62 Gate 1 Stage 1 RQ-VAE training",
+        "pass_criterion": "codebook utilization 100% (L0/L1/L2) + best loss < Issue #30 baseline",
+        "fail_criterion": "codebook collapse or best loss > baseline"
+      },
+      {
+        "id": "gate_2",
+        "gate_number": 2,
+        "name": "Issue #62 Gate 2 Stage 2 Sinkhorn 推断",
+        "pass_criterion": "4-digit unique ≥ 9500 + 3-digit collision ≤ 0.20",
+        "fail_criterion": "3-digit collision > 0.20 (实测 0.9999)"
+      }
+    ],
+    "Hypothesis": [
+      {
+        "id": "h_30_43_synergy",
+        "statement": "#30 (per-layer Codebook Transforms) + #43 (HypPre) 联合比单点 GO 更优",
+        "confidence_prior": "medium",
+        "falsification_criterion": "R@10 ≤ 0.1042 (#43 端点)"
+      }
+    ],
+    "Decision": [
+      {
+        "id": "dec_task350_close_nogo",
+        "decision": "NO-GO",
+        "verdict_ref": "verdict_task350_issue62_armc_stage2",
+        "alternative_options": ["关闭 Issue #62 (NO-GO 收口) 选定", "启动 Issue #62 第三个 arm (Sinkhorn OFF + K=baseline + #30+#43)", "等 owner 拍板"],
+        "r11_5_autonomous": true,
+        "rationale": "Issue #62 唯一 ROI > 0 路径已穷尽, Issue #62 (#30+#43 联合 ablation) NO-GO 收口, R10 backlog 真空"
+      }
+    ]
+  },
+
+  "relationships": [
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "issue_62", "type": "Verdict--evaluates-->Issue"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "task_350_armc_stage1", "type": "Verdict--evaluates-->Task"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "task_350_armc_stage2", "type": "Verdict--evaluates-->Task"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "gate_2", "type": "Verdict--passes-->Gate", "note": "Gate 2 FAIL"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "h_30_43_synergy", "type": "Hypothesis--refuted_by-->Verdict"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "root_cause_sinkhorn_train_inference_gap", "type": "Verdict--identifies-->RootCause"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "root_cause_small_layer0_radius", "type": "Verdict--identifies-->RootCause"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "root_cause_hyp_pre_smooth_latent", "type": "Verdict--identifies-->RootCause"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "dec_task350_close_nogo", "type": "Verdict--makes-->Decision"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "metric_3_digit_collision", "type": "Verdict--achieves-->Metric", "note": "实测 0.9999 (远超 0.20 阈值)"},
+    {"from": "verdict_task348_issue62_gate0", "to": "issue_62", "type": "Verdict--evaluates-->Issue"},
+    {"from": "verdict_task348_issue62_gate0", "to": "gate_0", "type": "Verdict--passes-->Gate"},
+    {"from": "verdict_task349_issue62_armd", "to": "issue_62", "type": "Verdict--evaluates-->Issue"},
+    {"from": "verdict_task349_issue62_armd", "to": "gate_1", "type": "Verdict--passes-->Gate", "note": "Gate 1 Arm D FAIL"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "verdict_task348_issue62_gate0", "type": "Verdict--supersedes-->Verdict"},
+    {"from": "verdict_task350_issue62_armc_stage2", "to": "verdict_task349_issue62_armd", "type": "Verdict--supersedes-->Verdict"},
+    {"from": "task_348_gate0_wrapper", "to": "method_per_layer_codebook_transforms", "type": "Task--implements-->Method"},
+    {"from": "task_348_gate0_wrapper", "to": "method_hyp_pre_encoder", "type": "Task--implements-->Method"},
+    {"from": "task_350_armc_stage1", "to": "method_sinkhorn_balanced", "type": "Task--implements-->Method"},
+    {"from": "task_350_armc_stage1", "to": "hp_sinkhorn_sk_eps", "type": "Task--configures-->Hyperparameter"},
+    {"from": "task_350_armc_stage1", "to": "hp_radius_list", "type": "Task--configures-->Hyperparameter"},
+    {"from": "task_350_armc_stage1", "to": "hp_scale_list", "type": "Task--configures-->Hyperparameter"},
+    {"from": "task_350_armc_stage1", "to": "hp_beta", "type": "Task--configures-->Hyperparameter"},
+    {"from": "issue_62", "to": "issue_30", "type": "Issue--depends_on-->Issue"},
+    {"from": "issue_62", "to": "issue_43", "type": "Issue--depends_on-->Issue"},
+    {"from": "issue_62", "to": "h_30_43_synergy", "type": "Issue--introduces-->Hypothesis"},
+    {"from": "root_cause_sinkhorn_train_inference_gap", "to": "method_sinkhorn_balanced", "type": "RootCause--mitigated_by-->Method", "note": "Sinkhorn train/inference gap 是 Sinkhorn-balanced 的副作用"},
+    {"from": "dec_task350_close_nogo", "to": "dec_task334_gate2a_pass", "type": "Decision--alternative-->Decision", "note": "task350 NO-GO vs task334 PASS — 对比同一时间窗的 GO/NO-GO 端点"}
+  ],
+
+  "metadata": {
+    "extractor": "manual_phase1",
+    "summary": "Verdict task350 是 Issue #62 Arm C Stage 2 NO-GO 端点. 3 variants 全部 3-digit collision 99.99%. 根因 = Sinkhorn ON + 小 layer 0 radius + HypPre 三联合. Issue #62 整体 NO-GO (Arm D + Arm C 双臂失败). 27+ 方向 NO-GO 收口后 R10 backlog 真空.",
+    "r10_status": "Stage 4 R@10 未测 (Stage 2 已经 FAIL), R@10=baseline 0.1020 维持"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "total_nodes": 46,
+  "total_edges": 50,
+  "nodes_by_type": {
+    "Verdict": 4,
+    "Issue": 3,
+    "Task": 6,
+    "Method": 5,
+    "Hyperparameter": 7,
+    "Metric": 4,
+    "RootCause": 3,
+    "Gate": 6,
+    "Hypothesis": 2,
+    "Decision": 2,
+    "Stage": 4
+  },
+  "edges_by_type": {
+    "Verdict--evaluates-->Issue": 4,
+    "Verdict--evaluates-->Task": 3,
+    "Verdict--passes-->Gate": 4,
+    "Hypothesis--refuted_by-->Verdict": 1,
+    "Verdict--identifies-->RootCause": 3,
+    "Verdict--makes-->Decision": 2,
+    "Verdict--achieves-->Metric": 1,
+    "Verdict--supersedes-->Verdict": 2,
+    "Issue--depends_on-->Issue": 3,
+    "Issue--introduces-->Hypothesis": 1,
+    "Task--implements-->Method": 5,
+    "Task--configures-->Hyperparameter": 4,
+    "Method--variant_of-->Method": 1,
+    "Method--uses-->Hyperparameter": 3,
+    "RootCause--mitigated_by-->Method": 1,
+    "Decision--alternative-->Decision": 1,
+    "Verdict--tests-->Hypothesis": 1,
+    "Task--tests-->Issue": 1,
+    "Task--executes-->Stage": 1,
+    "Gate--gates-->Stage": 4,
+    "Stage--precedes-->Stage": 3,
+    "Hypothesis--introduced_by-->Issue": 1
+  },
+  "multi_edge_pairs": [],
+  "orphan_nodes": [
+    "task_349_armd_stage1",
+    "metric_4_digit_unique",
+    "metric_recall_at_10",
+    "metric_poincare_ball_constraint"
+  ]
+}
