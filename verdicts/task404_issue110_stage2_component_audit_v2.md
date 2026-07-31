@@ -91,7 +91,7 @@
 
 ## 关键产物
 
-- **commit hash**: ⏳ 待 commit 落地后写入 (R21 v2 强制)
+- **commit hash**: 7a5d67d (R21 v2 强制落地后立即写入, 已 push origin/main)
 - **push**: origin/main (R15 强制)
 - **verdict 路径**: `verdicts/task404_issue110_stage2_component_audit_v2.md` (本文件)
 - **audit json**: `verdicts/task404_stage2_audit.json` (含完整 ckpt 数据线 + L2_norm 坍缩证据)
