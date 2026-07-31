@@ -26,33 +26,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 规则总览
 
 ### R1：Python 执行环境
-- 本仓库使用**三个专用 conda env**，按任务类型选择：
+- 本仓库使用 **两个专用 conda env**，按任务类型选择 (2026-07-31 owner 决策, 替代 R1 v1 三 env 体系):
 
-**GRID 流水线（Stage 1-4，TIGER 训练 + 推断，RQ-VAE）**：
+**所有任务 (默认)** — `genrec_env` (替代原 `grid_toys`/`kgat_tf216`, Python 3.10 + torch 2.11.0+cu130, L40S sm_89 实测跑通):
 ```bash
 source /apps/anaconda/2024.02-1/etc/profile.d/conda.sh
-conda activate /home/wlia0047/ar57_scratch/wenyu/grid_toys
+conda activate /home/wlia0047/ar57_scratch/wenyu/genrec_env
 cd /home/wlia0047/ar57/wenyu/GeneRec
 ```
+- 覆盖范围: GRID 流水线 (Stage 1-4, TIGER 训练 + 推断, RQ-VAE), HG-Rec 训练, KGAT/MCKG 训练 (替代原 kgat_tf216), 任何 GPU/CPU 计算任务
+- ✅ torch 2.11.0+cu130 + CUDA True + Python 3.10, L40S (sm_89) GPU kernel 编译通过
+- ✅ 当前 default env, 所有非 KG 任务必须用此 env
 
-**KGAT/MCKG 训练 v1（Task #73 早期 10 epoch baseline，仅 CPU）**：
+**知识图谱 (KG) 任务** — `deepke` (替代原 `kgat_mckg`, Python 3.9 + torch 1.11.0+cu102):
 ```bash
 source /apps/anaconda/2024.02-1/etc/profile.d/conda.sh
-conda activate /home/wlia0047/ar57_scratch/wenyu/kgat_mckg
-cd /home/wlia0047/ar57/wenyu/MCKG_repro/knowledge_graph_attention_network
+conda activate /home/wlia0047/ar57_scratch/wenyu/deepke
+cd /home/wlia0047/ar57/wenyu/GeneRec
 ```
+- 覆盖范围: KG 抽取 (DeepKE name_entity_re/relation_extraction 等), KG 构建, KG embedding, KG-RAG
+- ⚠️ Python 3.9 + torch 1.11.0+cu102, 不适合现代 LLM API (推荐用 base python3 + ~/.local anthropic 调用 MiniMax API)
+- ⚠️ DeepKE 2.2.7 实际装在 `~/.local/` (不在 deepke env 内), deepke env 仅提供 Python 3.9 兼容运行时
+- ✅ 当前 default KG env
 
-**KGAT/MCKG 训练 v2（Task #75+ 完整 GPU 训练，默认）**：
-```bash
-source /apps/anaconda/2024.02-1/etc/profile.d/conda.sh
-conda activate /home/wlia0047/ar57_scratch/wenyu/kgat_tf216
-cd /home/wlia0047/ar57/wenyu/MCKG_repro/knowledge_graph_attention_network
-```
-
-- ✅ `kgat_tf216` (TF 2.16.2 + cu12 + cudnn 8.9.7.29) 是 **Task #75 起的默认 KGAT 训练 env**，所有 GPU kernel（l2_normalize/Rsqrt, norm/Sqrt, softplus/Sigmoid 等）编译通过，L40S (sm_89) 实测跑通
-- ⚠️ `kgat_mckg` (TF 2.15.0 + cudnn 8.9.0.131) 在 L40S (sm_89) 上 GPU kernel JIT 编译失败（l2_normalize/Rsqrt, norm/Sqrt, SoftplusGrad 等），**仅保留**作为 Task #73 baseline 重现（10 epoch CPU 可跑），不再用于 GPU 训练
-- ❌ 不再使用 `vec2text` env（2026-07-17 弃用，原 vec2text 装的是 RAG 项目依赖 vec2text/openai/sentence-transformers 等，与 KGAT 训练无关；TF-GPU 路径走的是错配 cu13 不可用）
-- ✅ 新建 env 一键脚本：`task_artifacts/scripts/task74_create_kgat_env.sh` (kgat_mckg) / KGAT 训练 launcher `task_artifacts/scripts/task75_kgat_train_tf216.sh` (kgat_tf216)
+- ❌ 不再使用 `grid_toys`/`kgat_mckg`/`kgat_tf216` env (2026-07-31 全部删除, 被 genrec_env + deepke 替代)
+- ❌ 不再使用 `vec2text` env (2026-07-17 弃用)
+- ⚠️ **当前 session 实际在 base anaconda Python 3.11.7 + ~/.local anthropic (无 conda env 激活)** — 任何 GPU 训练前必须 `conda activate genrec_env`
+- ⚠️ **任何脚本必须先在两 env 之一运行** — base anaconda Python 3.11.7 缺少 torch/transformers/hydra 等 GeneRec 依赖, 仅适用于 zero-dep grep 审计 + MiniMax API 调用 (via ~/.local anthropic)
 
 ### R2：禁止 Fallback（父目录 AGENTS.md Rule 7）
 - ❌ 不添加 fallback 逻辑、默认值、降级策略
