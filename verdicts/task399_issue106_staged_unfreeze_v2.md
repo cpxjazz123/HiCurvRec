@@ -69,7 +69,7 @@
 
 ## 4. 关键产物 (R21 强制具体 hash)
 
-- **commit hash**: (pending push — will be added in this commit)
+- **commit hash**: 8504e36 (Issue #106 [方向B Gate1] staged product unfreeze Gate 1 NO-GO, R17+R20 强制) — 已 push origin/main (R15 + R21 v2 强制, 不允许 pending 占位)
 - **verdict**: verdicts/task399_issue106_staged_unfreeze_v2.md (本文件)
 - **实施**: scripts/task399_issue106_staged_unfreeze.py
 - **ckpt**: products/task399_issue106_staged_unfreeze/ckpt/issue106_ckpt.pt (R12 强制)
