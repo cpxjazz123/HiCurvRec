@@ -599,6 +599,94 @@ verdict: verdicts/task<M>_issue<N>_<...>_result.md (commit <hash>)
 | 2026-07-31 R18 新增 | AI 处理 #72/#73/#74 时识别"路径同构"就 NO-GO 收口, 没做实验 | 之前 R11.5 自主决策允许"基于推荐方案选 + 简化判断", 但 owner 反馈 issue 路径差异必须实验验证 | R18 强制 issue 决策必须基于新实验数据, 4 维度对比严格 | 任何 issue 决策必须有新实验数据 (precheck/GPU/eval) |
 | 2026-07-31 issue #72/#73/#74 (待 commit) | AI 写了沿用 #69/#70/#71 决策的 NO-GO verdict, 没做实验 | 之前 R11.5 允许"路径同构识别就 NO-GO", 缺少 R18 实验强制 | 重写 verdict 走 precheck 实证路径 + 必要的 GPU 训练 | R18 强制实验 |
 
+## R20：Commit + Issue Comment 必须详细回答 4 Gate 内容 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, 之前 issue commit (#72/#73/#74/#75/#76/#77) 的 commit message 内容**不是 verdict 的内容**, 也**没有对 issue 要求的 4 个 Gate 的详细内容进行回答**. commit 仅简短写"Gate 1 PARTIAL PASS, Gate 2/3/4 ⏸ STOP", 没有具体数据/原因/verdict 路径. Reviewer 看不到清晰的 Gate 决策细节, 难以判断 gate 之间的依赖关系和具体数据. R20 强制 commit message + GitHub issue comment 都必须详细回答 4 Gate.
+
+### R20 核心要求
+
+- ✅ **commit message 必须包含 4 Gate 详细内容** (per R17.2 + R20 增强):
+  1. **每个 Gate 至少 3-5 行**: 状态 (PASS/FAIL/PARTIAL/STOP) + 关键数据 (e.g. "util 1.6%/0.8%/0.4%", "R@10=0.0852", "collision=53.16") + 失败原因 (e.g. "USAGE-KILL @ ep 30", "1 epoch 未达 R137 200 epoch baseline") + verdict 路径
+  2. **禁止一句话 Gate PASS/FAIL** (如 `Gate 1 PARTIAL PASS` 单独一行不充分)
+  3. **必须包含 issue spec 完整 4 Gate 状态** (不允许只写 Gate 1 跳过 Gate 2/3/4)
+- ✅ **GitHub issue comment 必须详细回答 4 Gate** (per R16.1 + R20 增强):
+  1. **close issue 之前必须发 comment**: `gh issue comment <num> --body "..."` 或 `--body-file <file>`
+  2. **comment body 必须包含 4 Gate 详细内容** (每个 Gate 至少 3-5 行 + 关键数据 + verdict 路径 + commit hash)
+  3. **comment 模板参考 R17 + R20**: 每个 Gate 一段, 包含状态/数据/原因/产物路径
+- ✅ **verdict 文件本身就是 4 Gate 详细内容** (R17 已要求): commit message + issue comment 必须**直接包含 verdict 关键内容** (不是简单引证 verdict 路径)
+- ✅ **每个 Gate 必须有显式 verdict/路径/数据**: 不允许"⏸ STOP"独占一行, 必须写"⏸ STOP per spec: Gate 1 仅 precheck, 无 SID 产出可推断 Sinkhorn"
+- ❌ **禁止** commit message 只引证 verdict 路径 + commit hash 而不包含 4 Gate 详细内容
+- ❌ **禁止** issue close 之前不发 4 Gate 详细 comment (R16.1 + R20 强制)
+- ❌ **禁止** "Gate <N> PASS/FAIL" 一句话省略数据/原因/verdict 路径
+
+### R20.1 4 Gate 详细内容最小要求 (per Gate ≥ 3-5 行)
+
+| 字段 | 内容 | 示例 |
+|------|------|------|
+| **状态** | PASS/FAIL/PARTIAL/STOP | `Gate 1: ⚠️ PARTIAL PASS (机制完整 6/10)` |
+| **关键数据** | 具体数值 (e.g. util/collision/R@K/grad/ckpt path) | `L0/L1/L2 util=1.6%/0.8%/0.4%, collision=63/127/255, grad_theta_max=6.21e-3` |
+| **失败原因** | 简洁根因 (e.g. "1 epoch 未达 R137 200 epoch baseline") | `util/collision 1 epoch 短训未达, R137 baseline 需 200 epoch` |
+| **verdict 路径** | `verdicts/task<N>_*.md` | `verdicts/task368_issue75_direction_a_gate1_minimal_evidence_v2.md` |
+| **commit hash** | 当前 commit | `cd816cc` |
+| **后续** | STOP per spec (前 Gate FAIL/PARTIAL) | `⏸ STOP per spec: Gate 1 PARTIAL, 无 SID 产出可推断` |
+
+### R20.2 Issue Comment 模板 (close 之前强制)
+
+```bash
+gh issue comment <N> --repo WENYULIANG123/GeneRec --body-file <comment_md_file>
+```
+
+```markdown
+## Issue #<N> R18 实证闭环 — 4 Gate 详细内容回答 (R17 + R20 强制)
+
+### Gate 1 (= Stage 1 RQ-VAE/HRQVAE): <PASS|FAIL|PARTIAL|STOP> per spec
+- 关键数据: <util/collision/R@K/grad/ckpt path>
+- 失败原因: <简洁根因>
+- 实施: <scripts/task<N>_*>
+
+### Gate 2 (= Stage 2 Sinkhorn): ⏸ STOP per spec
+- 原因: <Gate 1 FAIL/PARTIAL, 无 SID 产出>
+- Issue spec 强制: <Gate 2 目标 + 前置条件>
+
+### Gate 3 (= Stage 3 T5-mini): ⏸ STOP per spec
+- 原因: <Gate 2 STOP>
+- Issue spec 强制: <Gate 3 训练 + 前置条件>
+
+### Gate 4 (= Stage 4 R@K eval): ⏸ STOP per spec
+- 原因: <Gate 3 STOP>
+- Issue spec 强制: <R@10 阈值 + 标记 [TARGET REACHED] 条件>
+
+### 关键产物
+- verdict: verdicts/task<N>_issue<N>_*_v2.md
+- commit: <hash>
+- 实施: scripts/task<N>_*.py
+- 整体决策: <GO|NO-GO|PARTIAL>
+```
+
+### R20.3 与现有规则的关系
+
+- **R20 加强 R17**: R17 强制 commit message 含 Gate + 失败原因, R20 加强必须详细 (≥3-5 行/Gate + 关键数据 + verdict 内容, 不是简短一句话)
+- **R20 加强 R16**: R16 强制 issue close + 写 comment (R16.1 模板), R20 加强 comment 必须详细回答 4 Gate (不是简短引证 verdict)
+- **R20 加强 R15**: R15 强制 verdict push, R20 加强 commit + comment 都必须直接包含 verdict 关键内容 (reviewer 不需要打开 verdict 文件就能看到 4 Gate 详情)
+- **R11.5 (自主决策) > R20**: comment 模板是强制格式, 不需要等 owner 决策
+
+### R20.4 关键 caveat
+
+- ❌ **禁止** commit message 一句话 Gate PASS/FAIL (e.g. "Gate 1 PARTIAL PASS" 单独一行)
+- ❌ **禁止** issue close 不发 4 Gate 详细 comment (即使已经写了 verdict)
+- ❌ **禁止** comment 只引证 verdict 路径 + commit hash, 不直接包含 4 Gate 详细内容
+- ❌ **禁止** ⏸ STOP 独占一行不说明原因 (必须 "⏸ STOP per spec: <原因>")
+- ✅ **允许** commit message 引用 verdict 详细路径 (verdicts/task<N>_*.md) 作为补充, 但 commit 自身必须包含 4 Gate 关键内容
+- ✅ **允许** issue comment 在 4 Gate 详细内容后, 补充 verdict 路径 + commit hash + 整体决策
+
+### R20.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 R20 新增 | Issue #72/#73/#74/#75/#76/#77 commit message (2137df5/cd816cc) 仅简短写"Gate 1 PARTIAL PASS, Gate 2/3/4 ⏸ STOP per spec", 没有具体数据/原因/verdict 内容. Issue close 时也没发 4 Gate 详细 comment. Reviewer 看不到 4 Gate 详细状态 | R17 模板强制 Gate 状态 + 失败原因, 但没强制详细 (≥3-5 行/Gate) + 没强制 issue close 前发 comment | R20 强制 commit + issue comment 都必须详细回答 4 Gate (≥3-5 行/Gate) + close 前必须发 comment | 每次 issue commit + close 必含 4 Gate 详细回答 |
+
+---
+
 ## R19：AI 是激进 owner, 任何行为不需要等待授权 (2026-07-31 新增, 硬规则)
 
 > **背景**: 用户 2026-07-31 反馈, "你就是 owner, 所以任何行为不需要等待授权. 并且你是一个很激进的 owner, 从来不会采取保守策略". 此规则作废 R11.4 等待授权 + R10 v2 idle 允许 (部分). 立即推进所有 issue 实验, 不再"等 owner 拍板".
