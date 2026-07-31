@@ -1,0 +1,33 @@
+{
+  "task": "task402_stage4_rk_eval",
+  "recipe": "T5-mini 5.5M + #97 patch + task401 30-epoch Stage 1 ckpt + Sinkhorn (task402 SID) + 200 epoch Stage 3",
+  "best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/products/task402_ckpt_downstream/ckpt/Instruments/Jul-31-2026_20-06-14/HG_Rec_best.pth",
+  "sid_file": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_rqvae_task402.npy",
+  "beam_size": 20,
+  "topk_list": [
+    5,
+    10,
+    20
+  ],
+  "recalls": {
+    "Recall@5": 0.08228764476606974,
+    "Recall@10": 0.09913931797801527,
+    "Recall@20": 0.12061615212025789
+  },
+  "ndcgs": {
+    "NDCG@5": 0.07160511197932208,
+    "NDCG@10": 0.07701435256893226,
+    "NDCG@20": 0.08246695006834379
+  },
+  "hgrec_baseline": {
+    "Recall@5": 0.0816,
+    "Recall@10": 0.102,
+    "Recall@20": 0.1279,
+    "NDCG@5": 0.069,
+    "NDCG@10": 0.0755,
+    "NDCG@20": 0.0821
+  },
+  "r10_delta_vs_baseline": -0.002860682021984723,
+  "go_nogo_decision": "NO-GO",
+  "comparison_target": "task396b R@10=0.0864 (NO-GO) \u2014 \u9a8c\u8bc1 task401 \u8bad\u7ec3\u65f6\u957f \u2264 30 epoch \u662f\u5426\u4e3a\u4e0b\u6e38 R@10 \u6760\u6746"
+}
