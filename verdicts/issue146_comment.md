@@ -15,7 +15,7 @@
   3. **fallback 路径无效 — d_mix.mean() * 0.0**: 即使 positive pair 找不到, 用 d_mix.mean() * 0.0 保留 grad_fn, 但 value = 0 → gradient 乘 0 = 0.
   4. **precheck vs 训练 gap**: precheck 用 X[:BATCH_SIZE] 固定 batch (precheck 一次性 backward 验证 graph), 训练时随机 batch 的 contrastive_loss 经常 = 0.
 - **verdict 路径**: `verdicts/task436_issue146_gate1_fail_v3.md`
-- **commit**: `3f4e8a2` (preliminary, final hash written after git push)
+- **commit**: `59e69bc`
 - **实施**: `scripts/task436_issue146_product_distance_contrastive.py`
 - **后续**: ⏸ STOP per spec (Gate 1 PARTIAL/FAIL, Issue #146 spec Gate 1 PASS 前禁止 Gate 2/3/4)
 
@@ -32,7 +32,7 @@
 - **Issue spec 强制**: R@10 阈值 (vs HG-Rec baseline 0.1020) + 标记 [TARGET REACHED] 条件
 
 ### 关键产物
-- **commit hash**: `3f4e8a2` (preliminary, final hash written after git push)
+- **commit hash**: `59e69bc`
 - **push**: origin/main (R15 强制)
 - **verdict**: `verdicts/task436_issue146_gate1_fail_v3.md`
 - **实施**: `scripts/task436_issue146_product_distance_contrastive.py`

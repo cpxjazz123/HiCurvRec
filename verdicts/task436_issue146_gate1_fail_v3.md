@@ -1,7 +1,7 @@
 # Issue #146 [方向B Gate1] hard-SID不变的product距离对比辅助损失 — Gate 1 FAIL (架构修复成功 + 配方失败)
 
 **Task**: #436 / Issue #146
-**Commit**: `3f4e8a2` (preliminary, written after git push)
+**Commit**: `59e69bc`
 **Verdict**: `verdicts/task436_issue146_gate1_fail_v3.md`
 **产物**: `products/task436_issue146_product_distance_contrastive/{config,verdict,precheck,d_mix_graph_proof}.json`
 **SHA256**: item_emb.parquet=`1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc`
@@ -57,7 +57,7 @@
 ## 关键产物
 
 - **verdict**: `verdicts/task436_issue146_gate1_fail_v3.md` (本文件)
-- **commit hash**: `3f4e8a2` (preliminary, pending git push)
+- **commit hash**: `59e69bc`
 - **push**: origin/main (R15 强制)
 - **实施**: `scripts/task436_issue146_product_distance_contrastive.py`
 - **8 件套审计**: config.json + SHA256(item_emb=`1a42341f...`) + trace(control + aux) + precheck.json + d_mix_graph_proof.json + raw_log + verdict.json + commit
