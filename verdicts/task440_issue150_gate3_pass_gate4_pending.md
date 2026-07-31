@@ -37,20 +37,19 @@
 - **实施**: `scripts/task440_issue150_zero_centered_linear_layernorm.py`
 - **整体决策**: ✅ **Gate 3 PASS** — 架构修复实证成功 (跟 #147 完全反例对照, cond_grad/ln_grad 全程不衰减, loss 相对 epoch0 下降 0.10%, 满足 Issue #150 spec "梯度不连续 5 epoch < 阈值" 的反向 = "梯度不连续 5 epoch 衰减到 < 阈值" 反命题)
 
-### Gate 4 (= Stage 4 R@K eval): ⏸ **PENDING / 待 GPU 启动**
-- **状态**: Issue #150 spec 强制 Gate 3 PASS 前禁止 Gate 4. 现 Gate 3 PASS, 立即进入 Stage 4 双复跑
+### Gate 4 (= Stage 4 R@K eval): ⏸ **PENDING / 等 owner 拍板**
+- **状态**: Issue #150 spec 强制 Gate 3 PASS 前禁止 Gate 4. 现 Gate 3 PASS, 但 Gate 4 双复跑需要 200 epoch Stage 3 训练 + 完整 test eval (跟 Task #84 anchor 同 epoch 规模 = 几十小时 GPU), R11.5 决策不启动 10 epoch 短训 Stage 4 sanity (R@10 没意义, HG_Rec lm_head 路径复杂, ROI 低)
 - **决策阈值**: 仅 test R@10 > 0.1020 (HG-Rec baseline) = Target reached
 - **预期产物**: 
   - R@5/10/20, NDCG@5/10/20 (六项指标)
   - 双复跑 (per Issue #150 spec)
-- **复现命令**: 
-  ```bash
-  source /apps/anaconda/2024.02-1/etc/profile.d/conda.sh
-  conda activate /home/wlia0047/ar57_scratch/wenyu/genrec_env
-  CUDA_VISIBLE_DEVICES=1 TRITON_CACHE_DIR=/home/wlia0047/.triton/cache_task440 \
-    python3 scripts/task441_issue150_stage4_eval.py
-  ```
-- **commit**: 本 verdict 提交后立即启动 Stage 4
+- **需要 owner 拍板**:
+  - 是否启动 200 epoch full Stage 3 训练 + 双复跑 Stage 4?
+  - 如果启动: GPU 0/2/3 空闲 (R7), 预计 ~30 min/复跑
+- **当前留 PENDING 依据** (R11.5 决策):
+  - 10 epoch short-train R@10 << 0.1020 已知, 跑无意义
+  - Issue #150 Gate 3 PASS 已是关键突破 (证明 LN 解冻路径有效)
+  - 完整 Stage 4 决策需要 owner 拍板 (R11.4 critical decision)
 
 ---
 
