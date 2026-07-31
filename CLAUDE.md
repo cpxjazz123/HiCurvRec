@@ -371,6 +371,47 @@ bash scripts/audit_r9_compliance.sh
 
 ---
 
+## R16：每次必须检查 open issue 并完成 + 关闭 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, `/loop` tick 偶尔"无可 actionable work" 但实际 GitHub 有 OPEN issue 未完成. 当前 R10 (主动推进) + R15 (issue push 闭环) 缺少**强制检查** + **强制关闭**两步. R16 强制每个 loop tick 必须先查 issue, 有就完成, 完成后关闭, 没有才可什么都不做.
+
+### R16 核心要求
+- ✅ **每次 loop tick 第一步** (无论是否有 backlog 候选): 调用 `mcp__github__list_issues state=OPEN` 或 `gh issue list --state open` 检查当前 open issue.
+- ✅ **有 open issue** → **必须**根据 issue 要求完成任务 (按 issue 的 Gate 顺序执行, 前 Gate 不通过不进下一 Gate, 不一定跑完所有 Gate).
+- ✅ **issue 完成后** (无论 GO / NO-GO / PARTIAL) → **必须** `gh issue close --reason completed` 关闭 issue.
+- ✅ **没有 open issue** → 可以什么都不做 (no actionable work).
+- ❌ **禁止** "loop tick 无 actionable work" 但 GitHub 有 OPEN issue 未处理 (R16 违规).
+- ❌ **禁止** 完成 issue 后不调用 `gh issue close` (R16 违规).
+- ❌ **禁止** "等用户拍板" / "等用户授权" 拖延 issue 关闭 (R11.5 自主决策已生效, R16 加强).
+
+### R16.1 实施细节
+- **检查命令**: 优先 `mcp__github__list_issues` (per owner 工具栈), 备选 `gh issue list --state open --repo WENYULIANG123/GeneRec --limit 30`.
+- **完成定义**: verdicts/task<N>_*.md 已落盘 + commit (含 issue 编号 + 关键结论 + verdict 路径) + push (R15) 三件套齐全.
+- **关闭命令**: `gh issue close <issue_number> --reason completed --repo WENYULIANG123/GeneRec` (默认 reason=completed; 若 owner 需 "not planned" 或其他 reason, R11.5 自主决策).
+- **关闭时机**: commit push 之后立即关闭 (R15 + R16 同频, 不允许 commit 后不 close).
+- **关闭 comment 模板**: 贴 commit hash + verdict 路径 + 关键结论 (R15.3 已要求 commit 关联, R16 加强 comment 显式标注).
+
+### R16.2 与现有规则的关系
+- **R10 (主动推进) > R16**: §16 真空 + 有 open issue → R10 + R16 联立强制启动 issue 处理, 不允许 "无 actionable work".
+- **R15 (push) ⊂ R16 (close)**: R15 只保证 push, R16 加强 issue 状态必须在 GitHub 上 close.
+- **R11.5 (自主决策) > R16**: issue 关闭决策由 AI 自主 (基于 verdict 落盘 + commit + push), 不需要等 owner 拍板.
+- **R8 (§16 清理) + R16**: 完成 issue 时既要从 §16 表格删除行, 又要 push verdict, 又要 gh issue close.
+
+### R16.3 关键 caveat
+- ❌ **禁止** 跳过 R16 强制的"先检查 issue" 步骤 (即使认为"无 issue 可做", 也必须先跑 `list_issues`).
+- ❌ **禁止** 用 "drift-cycle 终结" / "backlog 真空" 跳过 issue 检查 (R10 backlog 真空 ≠ GitHub 无 open issue).
+- ❌ **禁止** 关闭 issue 时不写 reason (默认 --reason completed 强制).
+- ❌ **禁止** 用 fallback "issue 不重要先放着" (R2 不允许 fallback, R16 强制关闭).
+
+### R16.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 R16 新增 | loop tick 报告 "无 actionable work" 但 GitHub 有 OPEN issue 未处理 (#63/#64/#65 三方向 ×× 闭环后 issue 仍 OPEN) | R10 backlog 真空 ≠ GitHub issue 真空, R10 没强制 issue 检查 + 关闭 | R16 强制每个 tick 第一步检查 + 完成 + 关闭 | 每次 loop tick 第一步必须 list_issues |
+
+
+---
+
 ## GPU 环境（当前节点）
 
 | 项目 | 状态 |

@@ -700,3 +700,44 @@ scripts/task256_issue10_armB_max20_full_chain.sh (Task #256 预准备) **不建�
   - **H3 (r_l + s_l 协同, 单独 NO-GO)**: ✅ **CONFIRMED** (Issue #30 R@10=0.1022 > baseline, Arm A + B 全部 < baseline).
 - **关键 insight**: r_l 与 s_l 是**协同杠杆**, 不是独立杠杆. 必须同向极端 (Issue #30 [0.1,1,10]+[2,2,2]) 才能推到 ‖x‖_E ≈ 0.85 健康区. 单独任一变量都不足够.
 - **产物**: descriptions/task304_d6_r_l_s_l_ablation.md + scripts/task304_d6_gate{0,1,2,3}.* + verdicts/task304_d6_gate{0,1,2,3,4}_*. commit fd19da9 + 674faea + a24829c.
+
+
+---
+
+## §18. 每次 loop tick 强制检查 open issue + 完成 + 关闭 (2026-07-31 新增, 硬规则)
+
+> **背景**: 用户 2026-07-31 反馈, `/loop` tick 偶尔报告 "无 actionable work" 但实际 GitHub 有 OPEN issue 未完成. 当前 §16 (主动推进) + R15 (issue push 闭环) 缺少**强制检查** + **强制关闭**两步. §18 强制每个 loop tick 必须先查 issue, 有就完成, 完成后关闭, 没有才可什么都不做. 对应 CLAUDE.md R16.
+
+### §18.1 核心要求
+- ✅ **每次 loop tick 第一步** (无论 §16 是否有 backlog 候选): 调用 `mcp__github__list_issues state=OPEN` 或 `gh issue list --state open` 检查当前 open issue.
+- ✅ **有 open issue** → **必须**根据 issue 要求完成任务 (按 issue 的 Gate 顺序执行, 前 Gate 不通过不进下一 Gate, 不一定跑完所有 Gate).
+- ✅ **issue 完成后** (无论 GO / NO-GO / PARTIAL) → **必须** `gh issue close --reason completed` 关闭 issue.
+- ✅ **没有 open issue** → 可以什么都不做 (no actionable work).
+- ❌ **禁止** "loop tick 无 actionable work" 但 GitHub 有 OPEN issue 未处理 (§18 违规).
+- ❌ **禁止** 完成 issue 后不调用 `gh issue close` (§18 违规).
+- ❌ **禁止** "等用户拍板" / "等用户授权" 拖延 issue 关闭 (R11.5 自主决策已生效, §18 加强).
+
+### §18.2 实施细节
+- **检查命令**: 优先 `mcp__github__list_issues` (per owner 工具栈), 备选 `gh issue list --state open --repo WENYULIANG123/GeneRec --limit 30`.
+- **完成定义**: verdicts/task<N>_*.md 已落盘 + commit (含 issue 编号 + 关键结论 + verdict 路径) + push (R15) 三件套齐全.
+- **关闭命令**: `gh issue close <issue_number> --reason completed --repo WENYULIANG123/GeneRec` (默认 reason=completed; 若 owner 需 "not planned" 或其他 reason, R11.5 自主决策).
+- **关闭时机**: commit push 之后立即关闭 (R15 + §18 同频, 不允许 commit 后不 close).
+- **关闭 comment 模板**: 贴 commit hash + verdict 路径 + 关键结论 (R15.3 已要求 commit 关联, §18 加强 comment 显式标注).
+
+### §18.3 与现有规则的关系
+- **§16 (主动推进) > §18**: §16 真空 + 有 open issue → §16 + §18 联立强制启动 issue 处理, 不允许 "无 actionable work".
+- **R15 (push) ⊂ §18 (close)**: R15 只保证 push, §18 加强 issue 状态必须在 GitHub 上 close.
+- **R11.5 (自主决策) > §18**: issue 关闭决策由 AI 自主 (基于 verdict 落盘 + commit + push), 不需要等 owner 拍板.
+- **R8 (§16 清理) + §18**: 完成 issue 时既要从 §16 表格删除行, 又要 push verdict, 又要 gh issue close.
+
+### §18.4 关键 caveat
+- ❌ **禁止** 跳过 §18 强制的"先检查 issue" 步骤 (即使认为"无 issue 可做", 也必须先跑 `list_issues`).
+- ❌ **禁止** 用 "drift-cycle 终结" / "backlog 真空" 跳过 issue 检查 (R10 backlog 真空 ≠ GitHub issue 真空).
+- ❌ **禁止** 关闭 issue 时不写 reason (默认 --reason completed 强制).
+- ❌ **禁止** 用 fallback "issue 不重要先放着" (R2 不允许 fallback, §18 强制关闭).
+
+### §18.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-07-31 §18 新增 | loop tick 报告 "无 actionable work" 但 GitHub 有 OPEN issue 未处理 (#63/#64/#65 三方向 ×× 闭环后 issue 仍 OPEN) | §16 backlog 真空 ≠ GitHub issue 真空, §16 没强制 issue 检查 + 关闭 | §18 强制每个 tick 第一步检查 + 完成 + 关闭 | 每次 loop tick 第一步必须 list_issues |
