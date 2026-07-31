@@ -1,0 +1,33 @@
+{
+  "task_id": "349",
+  "issue": "#62",
+  "date": "2026-07-31",
+  "gate_1_arm_d": {
+    "config": "#30 per-layer Codebook Transforms (r=[0.1,1,10]+s=[2,2,2]) + #43 HypPreEncoder (c=0.74) + K0=256 (num_emb_list=[256,128,256])",
+    "hyperparams": {
+      "num_epochs": 1000,
+      "batch_size": 1024,
+      "lr": 1e-3,
+      "sk_epsilons": [0.0, 0.0, 0.0],
+      "beta": 0.25,
+      "radius_list": [0.1, 1.0, 10.0],
+      "scale_list": [2.0, 2.0, 2.0],
+      "hyp_c": 0.74
+    },
+    "outcome": "USAGE-KILL @ epoch 30 (Arm D Stage 1)",
+    "result_metrics": {
+      "collision_rate": 0.9999,
+      "L0_usage": 0.004,
+      "L1_usage": 0.008,
+      "L2_usage": 0.004,
+      "L0_r_std": 0.0000,
+      "L1_r_std": 0.0000,
+      "L2_r_std": 0.0000,
+      "recon_loss_at_ep29": 0.002058,
+      "killed_at_epoch": 30
+    },
+    "diagnosis": "Phase 0 mode collapse — Arm D K0=256 + Sinkhorn OFF (sk_eps=0) + #30+#43 联合触发 mode collapse (跟 task178/180/231/242/299 同模式). 唯一码字数量: L0=1/256, L1=1/128, L2=1/256. collision_rate=99.99%.",
+    "decision": "Arm D NO-GO — K0=256 + Sinkhorn OFF + #30+#43 联合 = mode collapse. 跟 task287 Arm A (K=128/256 κ-decouple 100 epoch NO-GO) 同源: 大 K + 无 Sinkhorn = 1-码字坍缩."
+  },
+  "next_step": "立即尝试 Arm C: #30 + #43 联合 (no K0=256, baseline K=[64,128,256]) + Sinkhorn ON (sk_eps=[0.003,0.003,0.003]) — Issue #30 baseline 默认 K + Sinkhorn + Issue #30 r/s + Issue #43 HypPre. 决策: 若 Arm C 也 USAGE-KILL = Issue #62 整体 NO-GO, 27+ 方向全 NO-GO 收口; 若 Arm C PASS Gate 1 = Issue #62 仍有 RO"
+}
