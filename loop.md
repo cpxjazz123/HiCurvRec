@@ -334,9 +334,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
 |---------|-------|------|---------|-----|------|-----|
-| task450 | #150 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | epoch 0/199 done, 1.2 min/epoch | ~4h (2026-08-01 15:30 估) |
+| task450 | #150/#161 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | epoch 35/199 done (ep30 peak val_R@10=0.1001, ep35=0.0991), 1.2 min/epoch | ~3.3h (2026-08-01 11:30 估) |
 
-> **状态**: Task #450 Issue #150 200 epoch long train 已启动 (commit e932d05). Owner 2026-08-01 拍板 "do long train". 1 epoch probe 测时 71.6s → 200 epoch 估时 4h. R12 ckpt 强制 (删旧 + 存新). Stage 4 R@K 双复跑内嵌 (run1 + run2 full test set). Target reached: R@10 > 0.1020 + 双复跑 diff < 0.005. Issue #150 OPEN, 训练完成后 R20 4 Gate 详细 commit + R21 v2 hash + R16 close. Issue #157/#158 已闭环. 4 张 L40S GPU 0 占用, 1/2/3 空闲. R10 v2 (2026-07-31 owner 修订): 1 个 active task (#150 训练中) + 0 actionable open issue → 监控 task450 进展, 等 owner 拍板.
+> **状态**: Task #450 Issue #150/#161 200 epoch long train 持续进行 (commit e932d05). 当前 ep35/199, val_R@10 振荡 0.0928-0.1001 健康区 (峰值 ep30=0.1001, 距 baseline 0.1020 仅 -0.0019), loss 健康 1.6117 持续下降, α=2.13e-3 健康无饱和, cond_grad 2.87e-2 / ln_grad 0.122 / 无 NaN/Inf. **R23 trigger 检查未触发**. Issue #161 [方向C Gate4] OPEN pending task450 完成 + Stage 4 R@K eval. Issue #171/#172 已闭环 (commit ffa9f0a, 12 issue κ/scale 元数据适配 #157/#158/#162/#163/#165/#166/#167/#168/#169/#170/#171/#172 全 NO-GO 收口, baseline recipe 内部 κ/scale 杠杆穷尽). 4 张 L40S GPU 0 占用, 1/2/3 空闲 (R7 满足). R10 v2 + R22: 1 active task (#150 训练中) + 1 open issue (#161 pending task450) → 监控 task450 进展, 等 ep200 完成 + Stage 4 eval.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
