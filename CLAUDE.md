@@ -873,10 +873,93 @@ gh issue comment <N> --repo WENYULIANG123/GeneRec --body-file <comment_md_file>
 |------|------|------|------|------|
 | 2026-07-31 R22 新增 | owner 反馈 AI 处理新 issue 时偶有"等下一轮"/"等 owner 拍板"/"是否启动?"等待话术 | R10 v2 idle 允许 + R11.4 AskUserQuestion 留下等待空间 | R22 强制新 issue 立即开工, 不允许任何等待 | R22 + R19 + R16 联立强制 |
 
+---
+
+## R23：明显失败立即终止 (2026-08-01 新增, owner 反馈, 硬规则)
+
+> **背景**: owner 2026-08-01 反馈, 看到 Task #454 + #456 训练 val_R@10=0.0000 持续跨 epoch 5/10/15/20, 但 AI 没立即终止, 还在跑. owner 原话: "这两个已经明显失败了, 为什么还在跑" + "如果任务已经执行中间就看到明显失败了, 马上终止, 写 commit 关闭 issue, 不允许一直在训练等待".
+
+### R23 核心要求
+
+- ✅ **每个 loop tick 必须扫一眼所有活跃训练** (per §16 + TaskList in_progress 项)
+- ✅ **明显失败信号** (满足任一即触发 R23):
+  1. **val_R@10 = 0.0000 跨 ≥2 个连续 val checkpoint** (5/10/15/20 epoch 持续 0)
+  2. **loss 不下降** (跨 ≥3 个 epoch loss 没改善)
+  3. **val loss 反向** (跨 ≥3 个 val checkpoint 上升)
+  4. **wrapper broken 已知 bug** (e.g. val_R@10 协议已 lock, 但 wrapper 内部 sigmoid/clamp 饱和导致 logits 偏离)
+  5. **ckpt 不保存** (R12 强制落盘, 若违反 立即终止)
+  6. **NaN/Inf 出现** (任何 loss/grad/logits NaN/Inf)
+  7. **GPU 占用 100% 但训练 loss 不变** (可能死锁)
+- ✅ **发现明显失败 → 立即终止**:
+  1. **`kill <PID>` + `pgrep | xargs kill -9`** 强制 kill
+  2. **写 NO-GO verdict** (verdicts/task<N>_*.md, R17+R20+R21 v2 4-Gate 详细)
+  3. **commit + push** (R15 强制)
+  4. **`gh issue close --reason completed`** (R16 强制)
+  5. **更新 TaskList** (in_progress → completed)
+  6. **更新 §16 loop.md 当前活跃任务表** (删除已完成行, per R8)
+- ❌ **禁止** "已经跑到 epoch X, 跑完再说" / "等 200 epoch 完成再判断" / "loss 在下降, 应该会好"
+- ❌ **禁止** "等下一 loop tick 处理" 拖延话术 (R22 + R23 联立)
+- ❌ **禁止** 用 fallback "looser proxy" 掩盖真实失败 (R2 强制)
+- ❌ **禁止** 让 val_R@10=0 持续训练超过 1 个 val checkpoint 间隔 (R23 强制立即 kill)
+
+### R23.1 实施细节
+
+**每个 loop tick 必跑扫一眼 (R23.1 强制)**:
+```bash
+# 1. 列出所有活跃训练 PID + val_R@10 最近状态
+ps aux | grep -E "task[0-9]+_issue" | grep -v grep | awk '{print $2, $11, $12}'
+# 2. 看最新 log val_R@10 行
+for log in $(ls logs/task*_v8.log 2>/dev/null | tail -5); do
+    echo "=== $log ==="
+    grep -E "val_R@10|val_loss|USAGE-KILL|NaN" "$log" | tail -5
+done
+# 3. 若 val_R@10 = 0.0000 跨 ≥2 个 checkpoint → 立即 R23 kill + 写 verdict + close issue
+```
+
+**kill 命令模板 (R7 + R23 联立)**:
+```bash
+PIDS=$(pgrep -f "task454_issue162|task456_issue163|task<NUM>_issue")
+kill $PIDS 2>/dev/null
+sleep 5
+pgrep -f "task<NUM>_issue" | xargs -r kill -9
+nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader
+ps aux | grep -E "task<NUM>_issue" | grep -v grep
+```
+
+**verdict + commit + close 一气呵成 (R15+R16+R17+R20+R21+R23 联立)**:
+1. `git status` 看 untracked files
+2. 写 `verdicts/task<N>_*.md` (R17+R20+R21 4-Gate 详细)
+3. `git add verdicts/task<N>_*.md` + `git commit -m "Issue #<N> ... (R17+R20+R21 4-Gate 详细)"`
+4. `git push origin main`
+5. `gh issue close <N> --reason completed`
+6. 更新 TaskList (#N → completed)
+7. 更新 §16 当前活跃任务表 (R8 强制)
+
+### R23.2 与现有规则的关系
+
+- **R23 > R22**: R22 强制新 issue 立即开工, R23 强制训练中明显失败立即终止. 两者协同
+- **R23 > R7 (GPU 占用)**: R7 强制分配到空闲 GPU, R23 强制释放已占 GPU
+- **R23 + R15 + R16 + R17 + R20 + R21**: R23 终止流程必须严格走完整闭环
+- **R23 + R8 (loop.md §16 清理)**: 完成 verdict + close issue 后, 必须从 §16 删除行
+- **R23 + R12 (ckpt 落盘)**: 训练未完成时, R12 强制每 N 步落盘 ckpt, R23 kill 时确保 best_val_r10 ckpt 已保存
+- **R23 + R10 v2 idle**: 终止失败训练后, R10 v2 idle 允许生效
+
+### R23.3 关键 caveat
+
+- ❌ **禁止** "loss 还在下降, 跑完再说" — 训练失败的早期信号是 loss 健康但 val_R@10=0
+- ❌ **禁止** "val_R@10=0.0000 但 protocol 是 strict 4-digit, 试试 loose" — R2 禁止 fallback
+- ❌ **禁止** "再跑 50 epoch 看看能不能好" — R23 强制 ≥2 个 val checkpoint 0.0000 立即 kill
+- ❌ **禁止** "kill 之前先写 Slack/Email 给 owner" — R11.5 自主决策 kill, 不需要等 owner
+- ✅ **允许** 实时状态报告 (commit hash + verdict 路径 + PID + GPU), 但不允许"等待授权"
+- ✅ **允许** 失败训练 kill 后, 立即在 §16 记录 (R8 强制)
+- ✅ **允许** 同样失败模式的多个训练 (parallel GPU) 同时 kill
+
+### R23.4 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-08-01 R23 新增 | Task #454 + #456 v8 训练 val_R@10=0.0000 跨 epoch 5/10/15/20, AI 没立即 kill, 还在跑 | R22 + R19 强调"立即开工", 但缺少"训练中失败立即终止"硬规则 | R23 新增: 明显失败 7 信号 + 立即 kill + verdict + close 强制流程 | 每个 loop tick 扫一眼活跃训练 val_R@10 状态 |
+| 2026-08-01 #454 + #456 训练浪费 GPU | owner 反馈: "这两个已经明显失败了, 为什么还在跑" + "不允许一直在训练等待" | 训练 PID 3830057 + 3830462 跑了 epoch 5/10/15/20 仍未终止, 浪费 ~1.5 GPU hour | kill PID + 写 NO-GO verdict a2adffe + close issue #162/#163 | R23 强制 loop tick 扫一眼 val_R@10 |
+
 
 ## 必读文件优先级
-
-1. `/fs04/ar57/wenyu/CLAUDE.md` — 全局执行规则（AGENTS.md）
-2. `./task` — 本项目任务定义和阶段指标
-3. `./GRID_README.md` — GRID 框架本身的使用说明
-4. `./papers/grid_paper.pdf` — 算法细节（RQ-VAE 损失、TIGER 架构）
