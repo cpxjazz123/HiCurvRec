@@ -334,11 +334,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
 |---------|-------|------|---------|-----|------|-----|
-| task450 | #150/#161 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | ep142/199 (early stop @ ep140 best_val_R@10=0.1069 ⭐ +4.8% over 0.1020), 跑完剩余 epochs → 内嵌 Stage 4 double-run | ~30 min 剩余 ep199 |
-| task472 | #179 | 方向A Gate4 long train | Stage 3 200 epoch / Stage 4 R@K | GPU 1 | ep1/200 done (val_R@10_sim=0.1005, loss=9.1313, α=1.25e-2), BoundedKappaScaleConditioner | ~4h+ (long train) |
-| task473 | #181 | 方向B Gate4 long train | Stage 3 200 epoch / Stage 4 R@K | GPU 2 | ep0 (started 30s ago), BoundedWeightedMixedCurvatureConditioner, α init=4.54e-5 | ~4h+ (long train) |
+| task450 | #150/#161 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | ep182/199 (early stop @ ep140 best_val_R@10=0.1069 ⭐ +4.8% over 0.1020), 跑完剩余 epochs → 内嵌 Stage 4 double-run | ~30 min 剩余 ep199 |
 
-> **状态**: 3 active tasks, 4 张 L40S GPU 0/1/2 占用, GPU 3 idle (backup per R7). Task #450 (方向C long train): ep142/199, early stop 已触发 @ ep140 best_val_R@10=0.1069 (+4.8% ⭐, 当前最优 ceiling). loss 健康 1.5974-1.5978 持续下降, cond_grad 4.97e-2 / ln_grad 0.132 / 无 NaN/Inf / R23 未触发. 等待剩余 ep199 + 内嵌 Stage 4 double-run (R@5/10/20, NDCG@5/10/20 双复跑). Issue #179/#181 新派 方向A/B Gate4: 复用 #177/#178 wrapper + Stage 3 200 epoch 完整 + Stage 4 R@K 双复跑, parallel 验证 wrapper 实施差异 (有界 vs 无界, κ+scale vs [κ,α,β,γ]). Task #472 ep1 val_R@10_sim=0.1005 (略低于 task450 ep1, 健康起点). Task #473 刚启动, α init 4.54e-5, 需等 ep5+ 才有 val_R@10. **18 issue κ/scale 元数据适配 #157/#158/#162/#163/#165-#178 全 NO-GO 或 PASS 收口** + 2 新派 #179/#181 进行中 = 20 issue 处理中. R10 v2 + R22: 3 active + 1 open #161 (pending task450 Stage 4). 监控 3 task 训练进展, R23 监控跨 epoch val_R@10=0 / cond_grad=0 / α 超 0.5 / NaN/Inf.
+> **状态**: 1 active task (Task #450 方向C long train), 4 张 L40S GPU 0 占用, GPU 1/2/3 空闲. **Issue #179 (方向A Gate4) + Issue #181 (方向B Gate4) 已 NO-GO 收口** (commit a5bbc98, R20+R21+R16 全闭环). **关键洞察 (protocol split)**: 训练仿真 val_R@10_sim=0.1150 ≠ 真实 Stage 4 R@K=0. 训练时 similarity-based 4-digit 近邻匹配 (宽松) 跟 Stage 4 argmax strict 4-digit 匹配 (严格) 完全不同. α=0.5 bound 饱和时残差干扰 T5 forward path, training loss 下降 ≠ R@K 提升. 后续 issue 必须 protocol split (训练仿真 + 真实 Stage 4). **20 issue κ/scale 元数据适配全收口** (14 NO-GO #157/#158/#162/#163/#165-#172/#173/#174 + 2 PASS Gate 2 #175/#176 + 2 PASS Gate 3 #177/#178 + 2 NO-GO Gate 4 #179/#181 = 20 闭环). R10 v2 + R22: 1 active task + 1 open #161 (pending task450 Stage 4 实测). R23 监控跨 epoch val_R@10=0 / α 超 0.5 / NaN/Inf (Task #450 健康). 任务 #472/#473 的 GPU 1/2 已释放, R7 满足可启动新任务.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
