@@ -66,7 +66,7 @@ MAX_LEN = 20
 PAD_TOKEN = 0
 D_MODEL = 128
 BATCH_SIZE = 32
-START_EPOCH = 9  # 沿用 #190 epoch=9 ckpt
+START_EPOCH = 47  # 沿用本 long-run 已训 epoch=47 ckpt (alpha=1.51e-01)
 NUM_EPOCHS = 199  # 总目标 epoch
 LR_CONDITIONER = 1e-3
 LR_LAYERNORM = 1e-4
@@ -77,11 +77,16 @@ CANARY_EPOCH = 104  # 50% point (epoch 104 / 199)
 CANARY_N = 200
 DECISION_BASELINE_R10 = 0.1020  # Task #84 基线
 
+# Val + early stop 配置 (per user 派工 2026-08-02)
+VAL_SPLIT_RATIO = 0.10  # 最后 10% train 作 val
+VAL_EVAL_N = 1000  # 每 epoch 在 val 上 eval 1000 样本 (加速)
+EARLY_STOP_PATIENCE = 10  # 10 epoch 无 val_R@10 提升 → kill
+
 SID_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hrqvae_poincare.npy"
 TRAIN_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/train.parquet"
 TEST_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/test.parquet"
 T5_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_ckpt/HG_Rec_best.pth"
-PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_kappa_scale_recontinue/adapter.pt"
+PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/adapter.pt"
 
 EXPECTED_SID_SHA = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a"
 
@@ -92,6 +97,8 @@ LOG_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_PATH = LOG_DIR / "task_issue192_long_run.log"
 ADAPTER_CKPT_PATH = PRODUCT_DIR / "adapter.pt"
+BEST_ADAPTER_CKPT_PATH = PRODUCT_DIR / "best_adapter.pt"
+VAL_TRACE_PATH = PRODUCT_DIR / "val_trace.json"
 CANARY_VERDICT_PATH = PRODUCT_DIR / "canary_verdict.json"
 STAGE4_VERDICT_PATH = PRODUCT_DIR / "stage4_verdict.json"
 
@@ -223,6 +230,44 @@ def run_canary(model_wrapper, layer_ranges, canary_n=200, batch_size=32):
     return canary_pass, r10
 
 
+def run_val_eval(model_wrapper, layer_ranges, val_histories_t, val_targets_t, val_n=1000, batch_size=32):
+    """Per-epoch val_R@10 eval on val subset. Returns val_r10 + per-layer in-range stats.
+
+    val_histories_t / val_targets_t: torch tensors on DEVICE, val data pool.
+    """
+    model_wrapper.eval()
+    n = min(val_n, val_histories_t.shape[0])
+    # Random sample of n from val pool (deterministic per-epoch via generator)
+    val_r10 = 0.0
+    in_range_count = 0
+    sample_idx = torch.randperm(val_histories_t.shape[0], generator=torch.Generator().manual_seed(42 + 13))[:n]
+    histories = val_histories_t[sample_idx]
+    targets = val_targets_t[sample_idx]
+    preds_all = []
+    targets_all = []
+    with torch.no_grad():
+        for batch_start in range(0, n, batch_size):
+            batch_end = min(batch_start + batch_size, n)
+            B = batch_end - batch_start
+            history_tensor = histories[batch_start:batch_end]
+            target_tensor = targets[batch_start:batch_end]
+            attention_mask = (history_tensor != PAD_TOKEN).long()
+            predicted = autoregressive_predict(model_wrapper, history_tensor, attention_mask, layer_ranges)
+            for i in range(B):
+                pred = predicted[i].cpu().tolist()
+                tgt = target_tensor[i].cpu().tolist()
+                preds_all.append(pred[:4])
+                targets_all.append(tgt[:4])
+                for layer_i, token_id in enumerate(pred[:4]):
+                    lo, hi = layer_ranges[layer_i]
+                    if lo <= token_id <= hi:
+                        in_range_count += 1
+    r10 = float(np.mean([1.0 if p == t else 0.0 for p, t in zip(preds_all, targets_all)]))
+    total_tokens = len(preds_all) * 4
+    in_range_pct = in_range_count / total_tokens if total_tokens > 0 else 0.0
+    return r10, in_range_pct
+
+
 def run_stage4(model_wrapper, layer_ranges, batch_size=32):
     """Issue #192 Gate 4 评估: 自回归 + 6 项指标 R@5/10/20 + NDCG@5/10/20."""
     log_lines = []
@@ -335,6 +380,14 @@ def main():
     all_targets_t = torch.from_numpy(all_targets).to(DEVICE).long()
     log_lines.append(f"[Data] preloaded histories: {all_histories.shape}, targets: {all_targets.shape}")
 
+    # Train/val split (deterministic, last 10% as val per VAL_SPLIT_RATIO)
+    val_split_idx = int(n_samples * (1.0 - VAL_SPLIT_RATIO))
+    train_indices = torch.arange(0, val_split_idx, device=DEVICE)
+    val_indices = torch.arange(val_split_idx, n_samples, device=DEVICE)
+    log_lines.append(f"[Val split] train={len(train_indices)} ({len(train_indices)/n_samples*100:.1f}%), val={len(val_indices)} ({len(val_indices)/n_samples*100:.1f}%)")
+    val_histories_t = all_histories_t[val_indices]
+    val_targets_t = all_targets_t[val_indices]
+
     # Construct wrapper
     model_wrapper = WrapperCls(t5_config, t5_state_dict, d_model=D_MODEL, n_layers=3, sid_dim=4).to(DEVICE)
     log_lines.append(f"\n[Wrapper] built, adapter alpha_init logit loaded from prior ckpt")
@@ -361,8 +414,14 @@ def main():
     ])
 
     rng = torch.Generator().manual_seed(42 + 8)
-    n_batches = (n_samples + BATCH_SIZE - 1) // BATCH_SIZE
+    n_train_samples = len(train_indices)
+    n_batches = (n_train_samples + BATCH_SIZE - 1) // BATCH_SIZE
     train_trace = []
+    val_trace = []
+    best_val_r10 = -1.0
+    best_epoch = -1
+    patience_counter = 0
+    early_stop_triggered = False
     start_time = time.time()
 
     for epoch in range(START_EPOCH, NUM_EPOCHS):
@@ -371,13 +430,13 @@ def main():
         ln_grad_norms = []
         alpha_values = []
         nan_inf_detected = False
-        epoch_indices = torch.randperm(n_samples, generator=rng).to(DEVICE)
+        epoch_indices = torch.randperm(n_train_samples, generator=rng).to(DEVICE)
         for batch_idx in range(n_batches):
             start = batch_idx * BATCH_SIZE
             end = min(start + BATCH_SIZE, n_samples)
             batch_indices = epoch_indices[start:end]
-            history_tensor_b = all_histories_t[batch_indices]
-            target_tensor_b = all_targets_t[batch_indices]
+            history_tensor_b = all_histories_t[train_indices[batch_indices]]
+            target_tensor_b = all_targets_t[train_indices[batch_indices]]
             attention_mask_b = (history_tensor_b != PAD_TOKEN).long()
             B = history_tensor_b.shape[0]
             L_flat = MAX_LEN * 4
@@ -439,7 +498,42 @@ def main():
             print(f"  [R23 KILL] nan_inf detected, killing training", flush=True)
             break
 
-        # R12 ckpt 落盘
+        # Per-epoch val_R@10 eval + early stop (per user 派工 2026-08-02)
+        val_r10, val_in_range_pct = run_val_eval(
+            model_wrapper, layer_ranges, val_histories_t, val_targets_t,
+            val_n=VAL_EVAL_N, batch_size=BATCH_SIZE,
+        )
+        val_trace.append({
+            "epoch": epoch, "val_r10": val_r10, "val_in_range_pct": val_in_range_pct,
+            "val_n": min(VAL_EVAL_N, len(val_indices)),
+        })
+        if val_r10 > best_val_r10:
+            best_val_r10 = val_r10
+            best_epoch = epoch
+            patience_counter = 0
+            # Save best ckpt (per R12 best ckpt 不被覆盖)
+            if BEST_ADAPTER_CKPT_PATH.exists():
+                BEST_ADAPTER_CKPT_PATH.unlink()
+            torch.save({
+                "adapter_state_dict": model_wrapper.adapter.state_dict(),
+                "ln_state_dict": model_wrapper.first_input_ln.state_dict(),
+                "epoch": epoch, "alpha": avg_alpha, "val_r10": val_r10,
+            }, BEST_ADAPTER_CKPT_PATH)
+        else:
+            patience_counter += 1
+        val_msg = f"  [val @ epoch {epoch+1}] val_R@10={val_r10:.4f}, in-range={val_in_range_pct*100:.1f}%, best={best_val_r10:.4f} @ epoch {best_epoch+1}, patience={patience_counter}/{EARLY_STOP_PATIENCE}"
+        print(val_msg, flush=True)
+        with open(LOG_PATH, "a") as f:
+            f.write(val_msg + "\n")
+        if patience_counter >= EARLY_STOP_PATIENCE:
+            early_stop_triggered = True
+            es_msg = f"  [EarlyStop TRIGGERED @ epoch {epoch+1}] patience={patience_counter} >= {EARLY_STOP_PATIENCE}, best_val_R@10={best_val_r10:.4f} @ epoch {best_epoch+1}"
+            print(es_msg, flush=True)
+            with open(LOG_PATH, "a") as f:
+                f.write(es_msg + "\n")
+            break
+
+        # R12 ckpt 落盘 (last ckpt)
         if ADAPTER_CKPT_PATH.exists():
             ADAPTER_CKPT_PATH.unlink()
         torch.save({
@@ -457,6 +551,18 @@ def main():
                     f.write(f"\n[R23 KILL] canary FAIL @ epoch={epoch+1} R@10={canary_r10}\n")
                 break
 
+    # 保存 val_trace
+    with open(VAL_TRACE_PATH, "w") as f:
+        json.dump({"val_trace": val_trace, "best_val_r10": best_val_r10,
+                   "best_epoch": best_epoch, "early_stop_triggered": early_stop_triggered}, f, indent=2)
+
+    # Load best ckpt for Stage 4 (per R12 best ckpt 不被覆盖)
+    if BEST_ADAPTER_CKPT_PATH.exists():
+        best_ckpt = torch.load(BEST_ADAPTER_CKPT_PATH, map_location=DEVICE, weights_only=False)
+        model_wrapper.adapter.load_state_dict(best_ckpt["adapter_state_dict"])
+        model_wrapper.first_input_ln.load_state_dict(best_ckpt["ln_state_dict"])
+        print(f"\n[Stage 4] loaded BEST ckpt @ epoch {best_epoch+1}, val_R@10={best_val_r10:.4f}", flush=True)
+
     # Gate 4 Stage 4 evaluation
     final_metrics = run_stage4(model_wrapper, layer_ranges, batch_size=BATCH_SIZE)
     target_reached = final_metrics["R@10"] > DECISION_BASELINE_R10
@@ -467,6 +573,10 @@ def main():
         "start_epoch": START_EPOCH,
         "num_epochs": NUM_EPOCHS,
         "train_trace": train_trace,
+        "val_trace": val_trace,
+        "best_val_r10": best_val_r10,
+        "best_epoch": best_epoch + 1,
+        "early_stop_triggered": early_stop_triggered,
         "stage4_metrics": final_metrics,
         "decision_baseline_r10": DECISION_BASELINE_R10,
         "target_reached": bool(target_reached),
