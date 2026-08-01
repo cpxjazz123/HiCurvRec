@@ -1,4 +1,4 @@
-# Task #514 / Issue #186 [方向A Gate3→Gate4] 协议对齐 canary 真实 argmax sanity check (禁止直接长跑)
+# Task #474 / Issue #186 [方向A Gate3→Gate4] 协议对齐 canary 真实 argmax sanity check (禁止直接长跑)
 
 ## 背景
 - Gate 3 (Issue #183) PASS 仅证明 wrapper 机制完整性, 协议对齐未验证

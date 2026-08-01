@@ -1,4 +1,4 @@
-# Issue #186 / Task #514 [方向A canary] 协议对齐 sanity check — CANARY FAIL
+# Issue #186 / Task #474 [方向A canary] 协议对齐 sanity check — CANARY FAIL
 
 ## Canary 决策: ❌ FAIL (Gate 3 不升级)
 
@@ -73,10 +73,10 @@ def forward(self, input_ids, attention_mask=None, labels=None, sid_meta=None, ka
 **Issue #186 [方向A canary]: ❌ CANARY FAIL**
 
 - 关键产物:
-  - verdict: verdicts/task514_issue186_canary_stage4_argmax_result.md (本文)
-  - verdict.json: products/task514_issue186_canary_stage4_argmax/canary_verdict.json
-  - script: scripts/task514_issue186_canary_stage4_argmax.py
-  - log: logs/task514_issue186_canary_stage4_argmax.log
+  - verdict: verdicts/task474_issue186_canary_stage4_argmax_result.md (本文)
+  - verdict.json: products/task474_issue186_canary_stage4_argmax/canary_verdict.json
+  - script: scripts/task474_issue186_canary_stage4_argmax.py
+  - log: logs/task474_issue186_canary_stage4_argmax.log
 
 - Gate 3 状态: 仍 conditional-not-verified (Issue #183 mechanism PASS, 但协议对齐 FAIL, 不能进 Gate 4)
 - 修复路径: 必须修复 wrapper decoder labels bug → 新 issue 重训 + canary 验证

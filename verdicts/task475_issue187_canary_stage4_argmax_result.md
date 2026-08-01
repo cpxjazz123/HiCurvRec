@@ -1,4 +1,4 @@
-# Issue #187 / Task #515 [方向B canary] 协议对齐 sanity check — CANARY FAIL
+# Issue #187 / Task #475 [方向B canary] 协议对齐 sanity check — CANARY FAIL
 
 ## Canary 决策: ❌ FAIL (Gate 3 不升级)
 
@@ -60,10 +60,10 @@ def forward(self, input_ids, attention_mask=None, labels=None, sid_meta=None, cu
 **Issue #187 [方向B canary]: ❌ CANARY FAIL**
 
 - 关键产物:
-  - verdict: verdicts/task515_issue187_canary_stage4_argmax_result.md (本文)
-  - verdict.json: products/task515_issue187_canary_stage4_argmax/canary_verdict.json
-  - script: scripts/task515_issue187_canary_stage4_argmax.py
-  - log: logs/task515_issue187_canary_stage4_argmax.log
+  - verdict: verdicts/task475_issue187_canary_stage4_argmax_result.md (本文)
+  - verdict.json: products/task475_issue187_canary_stage4_argmax/canary_verdict.json
+  - script: scripts/task475_issue187_canary_stage4_argmax.py
+  - log: logs/task475_issue187_canary_stage4_argmax.log
 
 - Gate 3 状态: 仍 conditional-not-verified
 - 修复路径: 必须修复 wrapper decoder labels bug

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Task #514 / Issue #186 [方向A Gate3→Gate4] 协议对齐 canary 真实 argmax sanity check.
+"""Task #474 / Issue #186 [方向A Gate3→Gate4] 协议对齐 canary 真实 argmax sanity check.
 
 Issue #186 spec 强制:
 - 禁止直接长跑 (no 200 epoch, no double-run)
@@ -29,7 +29,7 @@ parser.add_argument("--canary_n", type=int, default=200)
 parser.add_argument("--seed", type=int, default=42)
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-os.environ["TRITON_CACHE_DIR"] = f"/home/wlia0047/.triton/cache_task514_issue186"
+os.environ["TRITON_CACHE_DIR"] = f"/home/wlia0047/.triton/cache_task474_issue186"
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
 
 from HG_Rec import HG_Rec
@@ -59,9 +59,9 @@ CKPT_PATH = f"{PROJECT}/products/task472_issue179_direction_a_gate4_200ep/adapte
 
 EXPECTED_SID_SHA = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a"
 
-OUT_DIR = f"{PROJECT}/products/task514_issue186_canary_stage4_argmax"
+OUT_DIR = f"{PROJECT}/products/task474_issue186_canary_stage4_argmax"
 os.makedirs(OUT_DIR, exist_ok=True)
-LOG_PATH = f"{PROJECT}/logs/task514_issue186_canary_stage4_argmax.log"
+LOG_PATH = f"{PROJECT}/logs/task474_issue186_canary_stage4_argmax.log"
 
 
 def sha256_of(path):
@@ -83,7 +83,7 @@ def seed_all(seed):
 def main():
     seed_all(SEED)
     log = []
-    log.append(f"\n=== Task #514 / Issue #186 [方向A canary] 协议对齐 sanity check ===")
+    log.append(f"\n=== Task #474 / Issue #186 [方向A canary] 协议对齐 sanity check ===")
     log.append(f"[Args] gpu={args.gpu} canary_n={CANARY_N} seed={SEED}")
 
     sid_sha = sha256_of(SID_NPY)
@@ -257,7 +257,7 @@ def main():
     log.append(f"  Overall: {'CANARY PASS' if gate3_upgrade else 'CANARY FAIL'}")
 
     verdict = {
-        "task": "task514_issue186_canary_stage4_argmax",
+        "task": "task474_issue186_canary_stage4_argmax",
         "issue": 186,
         "canary_n": canary_n,
         "sid_sha256": sid_sha,
