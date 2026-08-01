@@ -1,6 +1,6 @@
 # Task #449 / Issue #158 [方向B Gate2] 加权混合曲率RQ-VAE代码本与完整SID链路验证 — R20 4 Gate 详细内容
 
-**commit**: <hash>
+**commit**: fa0b455
 **verdict 路径**: verdicts/task449_issue158_gate2_weighted_mixed_curvature_result.md
 **整体决策**: ✅ **PASS (Issue #158 spec 关键命中: 10+ 预注册记录点 + weights alpha/beta/gamma 和=1 每项 [0.1, 0.8] + reload 5/5 一致 + 真实 SID SHA256 + 对照消融差异)**
 
@@ -94,4 +94,4 @@
 ## R17 + R20 + R21 合规
 - 4 Gate 状态: Gate 1 ⏸ STOP / Gate 2 ✅ PASS / Gate 3 ⏸ STOP / Gate 4 ⏸ STOP
 - 关键数据完整: α/β/γ final/SHA256/item_alignment/reload_5of5/raw grad/κ final/verdict 路径/commit hash
-- commit hash: <hash> (push 后回填)
+- commit hash: fa0b455 (push 后回填)

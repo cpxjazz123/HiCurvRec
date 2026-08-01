@@ -1,6 +1,6 @@
 # Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证 — R20 4 Gate 详细内容
 
-**commit**: <hash>
+**commit**: 206ebb5
 **verdict 路径**: verdicts/task448_issue157_gate2_kappa_sync_recalibration_result.md
 **整体决策**: ✅ **PASS (Issue #157 spec 关键命中: 10+ κ 更新点 + reload 5/5 一致 + 真实 SID SHA256 + item alignment + 对照消融差异)**
 
@@ -85,4 +85,4 @@
 ## R17 + R20 + R21 合规
 - 4 Gate 状态: Gate 1 ⏸ STOP / Gate 2 ✅ PASS / Gate 3 ⏸ STOP / Gate 4 ⏸ STOP
 - 关键数据完整: util/SHA256/item_alignment/reload_5of5/raw grad/κ final/verdict 路径/commit hash
-- commit hash: <hash> (push 后回填)
+- commit hash: 206ebb5 (push 后回填)
