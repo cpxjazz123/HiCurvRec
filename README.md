@@ -49,7 +49,6 @@ GeneRec/
 │
 │   ├── train.py                   #     Stage 1 / 2 / 3 entry
 │   └── inference.py               #     Stage 4 entry
-├── configs/                       #   Hydra configs (8 stage-specific YAMLs)
 ├── data/                          #   Dataset directory
 │   └── amazon_data/
 │       └── musical_instruments/   #     Amazon_Musical_Instruments_5core.csv.gz
@@ -150,7 +149,7 @@ Full reference list in `papers/refs.bib`.
 
 - The HG-Rec authors (Zhang, Yang, Yu) for the original paper and methodology.
 - The **snap-research/GRID** open-source framework, which provides the
-  Stage 1–4 pipeline (Apache 2.0 licensed). The `configs/`, and
+  Stage 1–4 pipeline (Apache 2.0 licensed). The
   upstream `data/` directories in this repository are unmodified
   clones of GRID.
 - The institutional GPU cluster (4× NVIDIA L40S) which hosted all
@@ -167,7 +166,7 @@ were shared with the original HG-Rec authors.
 - **Paper content** in `papers/` and reproduction artifacts in
   `descriptions/`, `verdicts/`, `products/`, `scripts/`: MIT License
   (see below).
-- **Upstream framework code** in `configs/`, `data/`: Apache 2.0
+- **Upstream framework code** in `data/`: Apache 2.0
   (inherited from snap-research/GRID).
 - **Reference papers** in `BLOGER/`, `DECOR/`, `ETEGRec/`, `HG-Rec/`,
   `LETTER/`, `RecBole/`, `RippleNet/`: original publication licenses.
