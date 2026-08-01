@@ -332,7 +332,7 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 ### §16.2 当前活跃任务 (2026-08-01)
 
-> **状态 (2026-08-01 闭环后)**: **0 active tasks + 0 open issue** (R10 v2 idle 等待 owner 指示). **Issue #183 (方向A Gate3) + #184 (方向B Gate3) ✅ Gate 3 PASS 收口** (commit `7491c12`, R20+R21+R16 全闭环). **23 issue κ/scale 元数据适配全收口** (14 NO-GO + 2 PASS Gate 2 + 2 PASS Gate 3 + 3 NO-GO Gate 4 + 2 PASS Gate 3 #183/#184 = 23 闭环). 4 张 L40S 全部空闲. 关键洞察 (protocol split) 仍生效: 训练仿真 val_R@10_sim ≠ 真实 Stage 4 R@K, #179/#181 已证 val_R@10_sim=0.1150 但真实 R@10=0. R22 强制新 issue 立即开工, R10 v2 idle 仅在无 issue 时生效.
+> **状态 (2026-08-01 闭环后)**: **0 active tasks + 0 open issue** (R10 v2 idle 等待 owner 指示). **Issue #186 (方向A canary) + #187 (方向B canary) ❌ CANARY FAIL 收口** (commit `d274364`, R20+R21+R16 全闭环). **重大根因发现**: wrapper `forward()` 用 `torch.zeros_like(input_ids[:, :4])` 覆盖真实 labels, decoder 学到「输出 PAD 最优」, Stage 4 argmax 100% token_id=0. 这是 Issue #179/#181 200 epoch 长训 R@10=0 的真根因 (同一 wrapper bug). **26 issue κ/scale 元数据适配收口** (14 NO-GO + 2 PASS Gate 2 + 2 PASS Gate 3 + 3 NO-GO Gate 4 + 2 PASS Gate 3 #183/#184 + 2 CANARY FAIL #186/#187 + 1 PASS Gate 3 #150/#161 = 26 闭环). 4 张 L40S 全部空闲. 修复路径: 改 wrapper labels=dummy_decoder_output → labels=labels + 重新 Stage 3 训练 → canary 验证 → Gate 4 长跑.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
