@@ -113,5 +113,6 @@ Issue #170 NO-GO 收口. Issue #169 (task462) 同模式 (Gate 1 PASS 真实 κ/s
 - **real_metadata**: `products/task463_issue170_stage1_export_three_component_audit/real_three_component_metadata.npy` (shape=[9922, 3, 4])
 - **adapter ckpt**: `products/task463_issue170_stage1_export_three_component_audit/adapter.pt` (R12 强制落盘, epoch 1 末)
 - **train trace**: `products/task463_issue170_stage1_export_three_component_audit/train_trace.json`
-- **commit pending**: 写完 verdict 后立即 commit + push
+- **commit**: `724c38c` (Issue #169/#170 R18 实证闭环, 6 files changed 1591 insertions)
+- **push**: origin/main 11b0ee5..724c38c
 - **整体决策**: NO-GO 收口 + R20 + R21 v2 (commit hash 落地后补)
