@@ -46,7 +46,7 @@ from dataset import GenRecDataset
 # Config (per Issue #163 spec)
 # ============================================================================
 SEED = 46
-DEVICE = "cuda:2"  # GPU 2 (Task #450 占用 GPU 0, Task #451 占用 GPU 1)
+DEVICE = "cuda:1"  # GPU 1 (Task #450/#454 占 GPU 0/2)
 CODEBOOK_SIZE = [64, 128, 256, 1]
 MAX_LEN = 20
 PAD_TOKEN = 0

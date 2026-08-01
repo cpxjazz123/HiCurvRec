@@ -1,4 +1,4 @@
-# Task #456 / Issue #163 [方向B Gate4] 加权混合曲率适配正式双复跑 run 1 (seed=46, GPU 2 排队)
+# Task #456 / Issue #163 [方向B Gate4] 加权混合曲率适配正式单 seed run (seed=46, GPU 1)
 
 ## 任务背景
 
