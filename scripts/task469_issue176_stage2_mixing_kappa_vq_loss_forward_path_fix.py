@@ -83,6 +83,24 @@ def poincare_distance_pairwise(x, y, c):
     return (2.0 / sqrt_c) * artanh(sqrt_c * norm).squeeze(-1)
 
 
+def poincare_distance_batched(x, y, c):
+    """Element-wise Poincaré distance, x (B, D) and y (B, D), returns (B,).
+
+    Matches baseline HVectorQuantization poincare_distance(x_q.detach(), latent, c) behavior:
+    both inputs are (B, D), mobius_add broadcasts → (B, D), norm over D → (B,).
+    """
+    from model.utils import mobius_add, artanh, _eps
+    diff = mobius_add(-x, y, c)  # (B, D)
+    sqrt_c = c ** 0.5
+    norm = diff.norm(dim=-1).clamp_min(_eps(diff))  # (B,)
+    return (2.0 / sqrt_c) * artanh(sqrt_c * norm)  # (B,)
+
+
+def euclidean_distance_batched(x, y):
+    """Element-wise Euclidean distance, x (B, D) and y (B, D), returns (B,)."""
+    return torch.norm(x - y, p=2, dim=-1)  # (B,)
+
+
 class MixingKModulatedHVectorQuantization(nn.Module):
     """3 分量距离混合 (hyp + eucl + learnable-κ) → 直接进 VQ commitment/codebook loss."""
 
@@ -202,19 +220,20 @@ class MixingKModulatedHVectorQuantization(nn.Module):
         x_q_log_detached = x_q_log.detach()
         codebook_kappa_scaled_detached = codebook_kappa_scaled.detach()
 
-        d_hyp_c = poincare_distance_pairwise(x_q_detached_h, latent_h, kappa)
-        d_eucl_c = torch.cdist(x_q_log_detached, latent_log)
-        d_lk_c = poincare_distance_pairwise(
-            x_q_detached_h, codebook_kappa_scaled, torch.tensor(1.0, device=kappa.device)
-        )
-        commitment_d = mixing[0] * d_hyp_c + mixing[1] * d_eucl_c + mixing[2] * d_lk_c
+        d_hyp_c = poincare_distance_batched(x_q_detached_h, latent_h, kappa)  # (B,)
+        d_eucl_c = euclidean_distance_batched(x_q_log_detached, latent_log)  # (B,)
+        # d_lk 用 c=1.0 在 element-wise 比较 (跟 baseline poincare_distance(x_q, latent, c) 一致)
+        d_lk_c = poincare_distance_batched(
+            x_q_detached_h, latent_h, torch.tensor(1.0, device=kappa.device)
+        )  # (B,)
+        commitment_d = mixing[0] * d_hyp_c + mixing[1] * d_eucl_c + mixing[2] * d_lk_c  # (B,)
 
-        d_hyp_b = poincare_distance_pairwise(x_q_h, latent_h_detached, kappa)
-        d_eucl_b = torch.cdist(x_q_log, latent_log_detached)
-        d_lk_b = poincare_distance_pairwise(
-            x_q_h, codebook_kappa_scaled_detached, torch.tensor(1.0, device=kappa.device)
-        )
-        codebook_d = mixing[0] * d_hyp_b + mixing[1] * d_eucl_b + mixing[2] * d_lk_b
+        d_hyp_b = poincare_distance_batched(x_q_h, latent_h_detached, kappa)  # (B,)
+        d_eucl_b = euclidean_distance_batched(x_q_log, latent_log_detached)  # (B,)
+        d_lk_b = poincare_distance_batched(
+            x_q_h, latent_h_detached, torch.tensor(1.0, device=kappa.device)
+        )  # (B,)
+        codebook_d = mixing[0] * d_hyp_b + mixing[1] * d_eucl_b + mixing[2] * d_lk_b  # (B,)
 
         commitment_loss = torch.mean(commitment_d ** 2)
         codebook_loss = torch.mean(codebook_d ** 2)
