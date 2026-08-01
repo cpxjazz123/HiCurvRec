@@ -36,7 +36,7 @@ sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
 
-os.environ["TRITON_CACHE_DIR"] = "/home/wlia0047/.triton/cache_task452"
+os.environ["TRITON_CACHE_DIR"] = "/home/wlia0047/.triton/cache_task458"
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
 
 from HG_Rec import HG_Rec
@@ -46,7 +46,7 @@ from dataset import GenRecDataset
 # Config (per Issue #160 spec)
 # ============================================================================
 SEED = 42
-DEVICE = "cuda:2"  # GPU 2 (Task #450 占用 GPU 0, Task #451 占用 GPU 1)
+DEVICE = "cuda:1"  # GPU 1 空闲 (R7 强制不抢 #450 GPU 0, #459 GPU 2)
 CODEBOOK_SIZE = [64, 128, 256, 1]
 MAX_LEN = 20
 PAD_TOKEN = 0
