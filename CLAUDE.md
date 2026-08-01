@@ -962,4 +962,78 @@ ps aux | grep -E "task<NUM>_issue" | grep -v grep
 | 2026-08-01 #454 + #456 训练浪费 GPU | owner 反馈: "这两个已经明显失败了, 为什么还在跑" + "不允许一直在训练等待" | 训练 PID 3830057 + 3830462 跑了 epoch 5/10/15/20 仍未终止, 浪费 ~1.5 GPU hour | kill PID + 写 NO-GO verdict a2adffe + close issue #162/#163 | R23 强制 loop tick 扫一眼 val_R@10 |
 
 
+---
+
+## R24：禁止任务暂停等待 owner 拍板 (2026-08-01 新增, owner 反馈, 硬规则)
+
+> **背景**: owner 2026-08-01 反馈, "每次检查是否有任务在等待owner拍板, 如果有, 马上自行做决策, 绝对不允许任务暂停". 当前 #486 task458/task459 wrapper 实质性实现 in_progress 状态 = 实质暂停 (无 wrapper 实现, 无 GPU 启动). R19 + R22 强调立即开工, 但缺少"等待 owner 拍板"专项禁止. R24 强制.
+
+### R24 核心要求
+
+- ✅ **每个 loop tick 检查是否有任务处于"等待 owner 拍板"状态** (per §16 + TaskList in_progress 项 + open issue 编号 = task<N>_issue<M>_* 模式)
+- ✅ **处于"等待 owner 拍板"的任务 → 立即 R11.5 自主决策** (不抛回用户)
+- ✅ **R11.5 决策后立即执行** (立即启动 / 立即 NO-GO / 立即修改 wrapper / 立即 kill)
+- ✅ **决策理由必须明示** (R11.3 强制: 选了哪个 + 为什么 + 备选方案)
+- ✅ **覆盖 R11.4**: R11.4 仅在"AI 内部决策"维度生效, R24 全面禁止"等待 owner 拍板"
+- ✅ **覆盖 R10 v2 idle 允许**: 一旦有任务处于等待状态, R24 立即覆盖 idle
+- ❌ **禁止** "等 owner 拍板" / "请 owner 决策" / "等下一轮" 等任何等待话术
+- ❌ **禁止** "ROI 低" / "drift-cycle" 保守理由跳过决策
+- ❌ **禁止** "wrapper 实现需要 ~30 min" 推迟到下一 tick (R24 强制立即开工)
+- ❌ **禁止** "无法决定" / "需重新决策" / "用户授权后启动" 等阻塞表述
+
+### R24.1 实施细节
+
+**每个 loop tick 必跑 (R24.1 强制)**:
+```bash
+# 1. 扫一眼 TaskList in_progress 项
+# 例如发现 Task #486 in_progress "wrapper 实质性实现" → 这是"等待 owner 拍板"信号 (R24 触发)
+# 2. 检查任务是否真有 GPU 占用 / 脚本运行 / 文件写入 行为
+ps aux | grep -E "task[0-9]+_issue" | grep -v grep | awk '{print $2, $11, $12, $13}'
+# 3. 若 in_progress 但无活跃 PID + 无 file mtime 更新 → 判定为"等待 owner 拍板"
+# 4. 立即 R11.5 自主决策 + 立即执行
+```
+
+**R11.5 自主决策 兜底顺序 (R24.1 强制)**:
+1. **项目 CLAUDE.md / memory 已固化的偏好** (e.g. R5 数据集仅 Musical_Instruments, R23 监控触发线)
+2. **上游 framework 默认值** (e.g. paper 报告超参, official code default)
+3. **论文原始方案** (e.g. arXiv:2405.13979 curvature-aware optimization)
+4. **简单实用方案** (e.g. 找不到精确匹配时用近似, 记下偏差)
+
+**R24.2 决策后立即执行 (R24 强制)**:
+- 立即写代码 (R4 py_compile 验证)
+- 立即后台启动 (R12 ckpt 落盘 + R19 激进)
+- 立即写 verdict (R17 commit message 含 Gate + 失败原因)
+- 立即 git push (R15)
+- 立即 issue comment (R20 4 Gate 详细)
+- 立即 issue close (R16)
+- 立即更新 TaskList (in_progress → completed)
+- 立即更新 §16 (R8 强制)
+
+### R24.3 与现有规则的关系
+
+- **R24 > R19**: R19 强调"立即开工", R24 加强"等待 owner 拍板"专项禁止
+- **R24 > R22**: R22 强调"新 issue 立即开工", R24 加强"任何任务禁止暂停"
+- **R24 > R10 v2 idle**: R24 否定"等待 owner 拍板"作为 idle 理由
+- **R24 > R11.4**: R11.4 仅在"AI 内部决策"维度, R24 全面禁止等待
+- **R24 + R11.5**: R11.5 提供决策顺序, R24 强制决策后立即执行
+- **R24 + R23**: R23 强制"立即 kill", R24 强制"立即决策 + 立即执行"
+
+### R24.4 关键 caveat
+
+- ❌ **禁止** "决策需要时间" / "需要权衡" 等拖延话术 — R24 强制 5 秒内决策
+- ❌ **禁止** "wrapper 实现复杂, 建议 owner 拍板" — R24 强制立即开工
+- ❌ **禁止** "无法决定 NO-GO 还是 GO" — R11.5 兜底顺序 + R19 激进必须选一个
+- ❌ **禁止** "等下一 tick 再处理" — R24 立即 tick 内闭环
+- ✅ **允许** R11.5 自主决策 + 立即执行 + verdict 记录决策理由
+- ✅ **允许** 后置微调 (决策后 5 分钟内 polish), 但不允许重新决策 (R24 锁定)
+- ✅ **允许** 失败后立即调整 (R11.5 + R11.1 自主决策), 不需要等 owner
+
+### R24.5 历史事故
+
+| 事故 | 现象 | 根因 | 修复 | 防止措施 |
+|------|------|------|------|----------|
+| 2026-08-01 R24 新增 | task458/459 wrapper 实质性实现 in_progress 状态持续 2+ tick, 无 GPU 启动, 无脚本运行. 实质是"等待 owner 拍板" | R11.4 留下"AskUserQuestion 关键决策"灰区, R19 + R22 强调开工但没专项禁止"等待拍板" | R24 新增: 禁止任务暂停等待 + R11.5 立即决策 + 立即执行 | 每个 tick 扫一眼 in_progress 任务是否有真实执行行为 |
+| 2026-08-01 task458/459 卡住 | owner 反馈: "新建规则, 每次检查是否有任务在等待owner拍板, 如果有, 马上自行做决策, 绝对不允许任务暂停" | 之前 R11.4 + R19 + R22 留有"无法决定"灰区, AI 借口"wrapper 复杂"等下一 tick | R24 强制 R11.5 决策 + 立即执行, 不允许任何"等待"话术 | R24 强制每个 tick 扫一眼 in_progress 状态 |
+
+
 ## 必读文件优先级
