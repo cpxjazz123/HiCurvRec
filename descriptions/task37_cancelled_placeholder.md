@@ -1,7 +1,0 @@
-# Task #37 — [历史空洞 placeholder]
-
-> **任务状态**: ❌ **历史空洞, 已于 2026-07-19 取消**
-> **原因**: K=64 codebook ablation 任务被用户取消("K ablation 不直接回答 Task #27 的 kNN preservation 假设")
-> **关联**: 见 loop.md §16 "2026-07-19 15:38 ❌ 全部取消 (Task #26/#28/#29/#30 + Task #31-#35 计划)"
-
-此文件作为 R9-Enforce 连续性占位符,不承载真实任务内容。
