@@ -57,6 +57,7 @@ ALPHA_INIT = 0.0
 SID_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_poincare.npy"
 TRAIN_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/train.parquet"
 TEST_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
+VAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/val.parquet"  # owner 2026-08-01 派工
 T5_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/products/task84/ckpt_hgrec/Instruments/Jul-23-2026_20-24-44/HG_Rec_best.pth"
 PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/products/task454_issue162_gate4_run1_seed44")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
@@ -449,6 +450,9 @@ def main():
 
     train_trace = []
     epoch0_loss = None
+    best_val_r10 = -1.0  # owner 2026-08-01 派工
+    patience_counter = 0
+    early_stop_triggered = False
     for epoch in range(NUM_EPOCHS):
         epoch_losses = []
         cond_grad_norms = []
@@ -512,6 +516,118 @@ def main():
             "alpha_val": alpha.item() if torch.is_tensor(alpha) else alpha,
             "nan_inf": nan_inf_detected, "n_batches": len(epoch_losses),
         })
+        # ============================================================
+        # Early Stopping (owner 2026-08-01 派工): val_R@10 + patience=5
+        # ============================================================
+        _es_val_r10 = -1.0
+        _es_should_stop = False
+        if (epoch + 1) % 5 == 0 and epoch < NUM_EPOCHS - 1:
+            try:
+                model_wrapper.eval()
+                _es_val_ds = GenRecDataset(
+                    dataset_path=VAL_PARQUET, code_path=SID_NPY, mode="evaluation",
+                    codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN, PAD_TOKEN=PAD_TOKEN,
+                )
+                _es_n = min(len(_es_val_ds), 2048)  # val 子集 2048 节省时间
+                _es_correct = 0
+                with torch.no_grad():
+                    for _es_i in range(0, _es_n, BATCH_SIZE):
+                        _es_b_end = min(_es_i + BATCH_SIZE, _es_n)
+                        _es_batch_indices = list(range(_es_i, _es_b_end))
+                        _es_batch_samples = [_es_val_ds[i] for i in _es_batch_indices]
+                        _es_h_flat = []
+                        _es_tgt = []
+                        for _es_s in _es_batch_samples:
+                            _es_h = _es_s["history"]
+                            _es_h_flat.append([_e for _sub in _es_h for _e in _sub])
+                            _es_t = _es_s["target"]
+                            if hasattr(_es_t, '__iter__'):
+                                _es_tgt.append([int(_x) for _x in _es_t])
+                            else:
+                                _es_tgt.append([int(_es_t)] * 4)
+                        _es_h_t = torch.tensor(_es_h_flat, dtype=torch.long, device=DEVICE)
+                        _es_t_t = torch.tensor(_es_tgt, dtype=torch.long, device=DEVICE)
+                        _es_am = (_es_h_t != PAD_TOKEN).long()
+                        _es_B = _es_h_t.shape[0]
+                        _es_L = MAX_LEN * 4
+                        _es_dv = _es_h_t.float()
+                        _es_li = (torch.arange(_es_L, device=DEVICE) % 4).float().unsqueeze(0).expand(_es_B, -1)
+                        _es_pi = (torch.arange(_es_L, device=DEVICE) // 4).float().unsqueeze(0).expand(_es_B, -1) / MAX_LEN
+                        _es_pf = (_es_dv == PAD_TOKEN).float()
+                        _es_sm = torch.stack([_es_dv / 1025.0, _es_li / 4.0, _es_pi, _es_pf], dim=-1)
+                        _es_kwargs = dict(input_ids=_es_h_t, attention_mask=_es_am,
+                                          labels=_es_t_t, sid_meta=_es_sm)
+                        # wrapper meta key: kappa / scale / curvature
+                        _es_km = torch.zeros(_es_B, 3, dtype=torch.float32, device=DEVICE)
+                        _es_sm2 = torch.ones(_es_B, 3, dtype=torch.float32, device=DEVICE)
+                        _es_cm = torch.zeros(_es_B, 3, 4, dtype=torch.float32, device=DEVICE)
+                        _es_cm[:, :, 1] = 0.333
+                        _es_cm[:, :, 2] = 0.333
+                        _es_cm[:, :, 3] = 0.334
+                        # inspect wrapper forward signature to determine meta kwarg name
+                        import inspect as _inspect
+                        _es_sig = _inspect.signature(model_wrapper.forward)
+                        _es_meta_names = {"kappa_meta": _es_km, "scale_meta": _es_sm2, "curvature_meta": _es_cm}
+                        _es_compat_kw = {k: v for k, v in _es_meta_names.items() if k in _es_sig.parameters}
+                        _es_out = None
+                        for _es_keys in [_es_compat_kw, {}]:
+                            _es_call_kw = dict(_es_kwargs)
+                            _es_call_kw.update(_es_keys)
+                            try:
+                                _es_out, _, _ = model_wrapper(**_es_call_kw)
+                                break
+                            except TypeError:
+                                continue
+                        if _es_out is None:
+                            raise RuntimeError(f"EarlyStop: no compatible forward call, params={list(_es_sig.parameters)}")
+                        _es_logits = _es_out.logits if hasattr(_es_out, 'logits') else _es_out[0]
+                        # Stage 4 eval 协议 (严格): argmax → 4-digit SID pred, 4-digit 全 match 算 R@K
+                        # val_R@10=0 反映 wrapper broken (alpha=1.0 饱和) 的真实失败, 不是 proxy bug
+                        _es_preds = _es_logits.argmax(dim=-1)
+                        for _i in range(_es_B):
+                            _es_p = _es_preds[_i].cpu().numpy().tolist()
+                            _es_t = _es_t_t[_i].cpu().numpy().tolist()
+                            if _es_p == _es_t:
+                                _es_correct += 1
+                _es_val_r10 = _es_correct / max(_es_n, 1)
+                _es_msg = f"  [EarlyStop epoch {epoch+1}/{NUM_EPOCHS}] val_R@10={_es_val_r10:.4f} (n={_es_n})"
+                print(_es_msg, flush=True)
+                log_lines.append(_es_msg) if 'log_lines' in dir() else None
+                with open(LOG_PATH, "a") as _es_f:
+                    _es_f.write(_es_msg + "\n")
+                train_trace[-1]["val_r10"] = _es_val_r10
+                # best ckpt
+                if _es_val_r10 > best_val_r10:
+                    best_val_r10 = _es_val_r10
+                    patience_counter = 0
+                    _es_best_path = ADAPTER_CKPT_PATH.parent / (ADAPTER_CKPT_PATH.stem + "_BEST.pt")
+                    if _es_best_path.exists():
+                        _es_best_path.unlink()
+                    torch.save({
+                        "adapter_state_dict": model_wrapper.adapter.state_dict(),
+                        "first_input_ln_state_dict": model_wrapper.first_input_ln.state_dict(),
+                        "alpha_value": model_wrapper.adapter.get_alpha().item() if hasattr(model_wrapper.adapter.get_alpha(), 'item') else model_wrapper.adapter.get_alpha(),
+                        "epoch": epoch, "val_r10": _es_val_r10,
+                        "epoch_losses": [t["avg_loss"] for t in train_trace],
+                    }, _es_best_path)
+                    log_lines.append(f"  [EarlyStop] saved BEST ckpt @ epoch {epoch+1}, val_R@10={_es_val_r10:.4f}") if 'log_lines' in dir() else None
+                else:
+                    patience_counter += 1
+                    if patience_counter >= 5:
+                        _es_should_stop = True
+                        _es_msg_stop = f"  [EarlyStop TRIGGERED @ epoch {epoch+1}] patience={patience_counter} >= 5, best_val_R@10={best_val_r10:.4f}"
+                        print(_es_msg_stop, flush=True)
+                        log_lines.append(_es_msg_stop) if 'log_lines' in dir() else None
+                        with open(LOG_PATH, "a") as _es_f:
+                            _es_f.write(_es_msg_stop + "\n")
+            except Exception as _es_e:
+                _es_msg_err = f"  [EarlyStop ERR epoch {epoch+1}]: {type(_es_e).__name__}: {str(_es_e)[:200]}"
+                print(_es_msg_err, flush=True)
+                with open(LOG_PATH, "a") as _es_f:
+                    _es_f.write(_es_msg_err + "\n")
+                train_trace[-1]["val_r10_err"] = str(_es_e)[:200]
+        # end early stop
+
         log_lines.append(f"  [epoch {epoch}] loss={avg_loss:.4f}, cond_grad={avg_cond_grad:.4e}, ln_grad={avg_ln_grad:.4e}, α={train_trace[-1]['alpha_val']:.6e}, n_batches={len(epoch_losses)}, nan_inf={nan_inf_detected}")
         print(log_lines[-1], flush=True)
 
