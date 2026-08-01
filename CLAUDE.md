@@ -62,7 +62,7 @@
 
 **GPU**: 4× NVIDIA L40S (sm_89, 46GB/卡), 驱动 580.126.20, CUDA 13.0 (torch 2.11.0+cu130) / 12.x (TF kgat_mckg).
 
-**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (descriptions/, verdicts/, products/, scripts/, logs/).
+**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/).
 
 **流水线**: 4 阶段 — Stage 1 sentence-t5-base embedding → Stage 2 Poincaré RQ-VAE SID (3→4 层去重 digit) → Stage 3 T5-mini 训练 → Stage 4 R@K/NDCG 评估.
 
