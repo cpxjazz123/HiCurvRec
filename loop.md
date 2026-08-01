@@ -334,9 +334,10 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
 |---------|-------|------|---------|-----|------|-----|
-| task450 | #150/#161 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | ep182/199 (early stop @ ep140 best_val_R@10=0.1069 ⭐ +4.8% over 0.1020), 跑完剩余 epochs → 内嵌 Stage 4 double-run | ~30 min 剩余 ep199 |
+| task512 | #183 | 方向A Gate 3 audit | precheck + Stage 3 短程 sanity | TBD | 计划中 (R18 实证) | TBD |
+| task513 | #184 | 方向B Gate 3 audit | precheck + Stage 3 短程 sanity | TBD | 计划中 (R18 实证) | TBD |
 
-> **状态**: 1 active task (Task #450 方向C long train), 4 张 L40S GPU 0 占用, GPU 1/2/3 空闲. **Issue #179 (方向A Gate4) + Issue #181 (方向B Gate4) 已 NO-GO 收口** (commit a5bbc98, R20+R21+R16 全闭环). **关键洞察 (protocol split)**: 训练仿真 val_R@10_sim=0.1150 ≠ 真实 Stage 4 R@K=0. 训练时 similarity-based 4-digit 近邻匹配 (宽松) 跟 Stage 4 argmax strict 4-digit 匹配 (严格) 完全不同. α=0.5 bound 饱和时残差干扰 T5 forward path, training loss 下降 ≠ R@K 提升. 后续 issue 必须 protocol split (训练仿真 + 真实 Stage 4). **20 issue κ/scale 元数据适配全收口** (14 NO-GO #157/#158/#162/#163/#165-#172/#173/#174 + 2 PASS Gate 2 #175/#176 + 2 PASS Gate 3 #177/#178 + 2 NO-GO Gate 4 #179/#181 = 20 闭环). R10 v2 + R22: 1 active task + 1 open #161 (pending task450 Stage 4 实测). R23 监控跨 epoch val_R@10=0 / α 超 0.5 / NaN/Inf (Task #450 健康). 任务 #472/#473 的 GPU 1/2 已释放, R7 满足可启动新任务.
+> **状态**: 2 active task plans (Task #512 #183 方向A + Task #513 #184 方向B), 4 张 L40S 全部空闲. **Issue #179 (方向A Gate4) + #181 (方向B Gate4) + #161 (方向C Gate4) 已 NO-GO 收口** (commit a5bbc98 + b431d37, R20+R21+R16 全闭环). **关键洞察 (protocol split)**: 训练仿真 val_R@10_sim (similarity-based 4-digit 近邻匹配, 宽松) ≠ 真实 Stage 4 R@K (argmax strict 4-digit 匹配, 严格). 3 方向 (A κ-scale, B weighted-mixed, C zero-centered) 都达到 val_R@10_sim plateau (0.1069-0.1150), 但真实 R@10 都是 0. **21 issue κ/scale 元数据适配全收口** (14 NO-GO #157/#158/#162/#163/#165-#172/#173/#174 + 2 PASS Gate 2 #175/#176 + 2 PASS Gate 3 #177/#178 + 3 NO-GO Gate 4 #179/#181/#161 = 21 闭环). R10 v2 + R22: 0 active tasks + 2 open #183/#184 (Gate 3 audit). R16 强制 issue 检查 + 完成 + 关闭. R19 + R22 联立: 新 issue 立即开工, 跨 GPU 并行.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
