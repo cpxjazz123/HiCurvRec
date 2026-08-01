@@ -330,13 +330,13 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 - **任务完成**: 立即从 §16 表中删除该行 (R8 强制, 不写 "已归档")
 - **行数限制**: 同时活跃 ≤ 5 行 (per R7 并行 GPU 容量)
 
-### §16.2 当前活跃任务 (2026-07-31 14:42)
+### §16.2 当前活跃任务 (2026-08-01)
 
 | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
 |---------|-------|------|---------|-----|------|-----|
 | (空) | — | — | — | — | — | — |
 
-> **状态**: R10 v2 **idle 等待** 维持. Issue #47/#48/#49/#50/#43/#51/#52/#53/#54/#57/#61/#62/#63/#64/#65/#66/#67/#68/#69/#70/#71 全部闭环 (verdicts 落盘 + GitHub closed per R16). 唯一 ROI > 0 路径 (#30+#43 联合 / Issue #43 HypPreEncoder 深化) 已穷尽. 4 张 L40S 全空闲. R10 v2 (2026-07-31 owner 修订): 0 open issue → 允许 idle, 等 owner 拍板新方向.
+> **状态**: R10 v2 **idle 等待** 维持. Issue #157/#158 已闭环 (R16+R20+R21, commit 206ebb5/fa0b455/55b24be push, gh close --reason completed). Issue #150 (Gate 3 零中心线性几何残差) 仍 OPEN — Stage 3 已训练完成 (commit 6ca0abb/379847d/b238f48), Stage 4 200 epoch 决策待 owner 拍板 (R11.5 AI 不自主启动 Stage 4). 4 张 L40S 全空闲. R10 v2 (2026-07-31 owner 修订): 0 actionable open issue → 允许 idle, 等 owner 拍板新方向.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
