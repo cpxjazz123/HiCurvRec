@@ -334,9 +334,9 @@ Lightning 保存的 ckpt 形如 `checkpoint_epoch=000_step=000100.ckpt`, Hydra �
 
 | Task ID | Issue | 类型 | 当前阶段 | GPU | 进度 | ETA |
 |---------|-------|------|---------|-----|------|-----|
-| (空) | — | — | — | — | — | — |
+| task450 | #150 | Stage 3 long train | 200 epoch / 4120 batch × 200 | GPU 0 | epoch 0/199 done, 1.2 min/epoch | ~4h (2026-08-01 15:30 估) |
 
-> **状态**: R10 v2 **idle 等待** 维持. Issue #157/#158 已闭环 (R16+R20+R21, commit 206ebb5/fa0b455/55b24be push, gh close --reason completed). Issue #150 (Gate 3 零中心线性几何残差) 仍 OPEN — Stage 3 已训练完成 (commit 6ca0abb/379847d/b238f48), Stage 4 200 epoch 决策待 owner 拍板 (R11.5 AI 不自主启动 Stage 4). 4 张 L40S 全空闲. R10 v2 (2026-07-31 owner 修订): 0 actionable open issue → 允许 idle, 等 owner 拍板新方向.
+> **状态**: Task #450 Issue #150 200 epoch long train 已启动 (commit e932d05). Owner 2026-08-01 拍板 "do long train". 1 epoch probe 测时 71.6s → 200 epoch 估时 4h. R12 ckpt 强制 (删旧 + 存新). Stage 4 R@K 双复跑内嵌 (run1 + run2 full test set). Target reached: R@10 > 0.1020 + 双复跑 diff < 0.005. Issue #150 OPEN, 训练完成后 R20 4 Gate 详细 commit + R21 v2 hash + R16 close. Issue #157/#158 已闭环. 4 张 L40S GPU 0 占用, 1/2/3 空闲. R10 v2 (2026-07-31 owner 修订): 1 个 active task (#150 训练中) + 0 actionable open issue → 监控 task450 进展, 等 owner 拍板.
 
 ### §16.3 历史任务记录位置 (universal rule)
 
