@@ -133,7 +133,8 @@ class WeightedMixedCurvatureConditioner(nn.Module):
         combined = torch.cat([sid_e, curv_summary], dim=-1)  # (B, L, 2*d_model)
         direction = self.conditioner(combined)  # (B, L, d_model), bounded [-1, 1]
 
-        alpha = F.softplus(self.alpha_logit)
+        alpha_raw = F.softplus(self.alpha_logit)
+        alpha = torch.clamp(alpha_raw, max=1.0)  # Issue #163 spec 强制 α 有界
         residual = alpha * direction
         return residual, alpha
 
