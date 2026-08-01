@@ -4,7 +4,7 @@
 
 ---
 
-## R 规则 (23 条)
+## R 规则 (25 条)
 
 **R1**: 使用 `genrec_env` (默认所有任务) 或 `deepke` (KG 任务) 两个 conda env, base anaconda Python 3.11.7 仅适用于 zero-dep grep + MiniMax API 调用.
 
@@ -51,6 +51,8 @@
 **R23**: 每个 tick 扫一眼活跃训练, 7 信号任一触发立即终止 (val_R@10=0 跨 ≥2 checkpoint / loss 不下降 / val loss 反向 / wrapper broken / ckpt 不存 / NaN/Inf / GPU 100% 但 loss 不变), 立即 kill -9 + NO-GO verdict + commit + push + close issue.
 
 **R24**: 每个 tick 检查 in_progress 任务是否真在执行 (有活跃 PID + file mtime 更新), 若 in_progress 但无活跃行为 → 立即 R11.5 决策 + 立即执行, 禁止任何"等待 owner 拍板"/"wrapper 复杂"/"等下一 tick" 话术.
+
+**R25**: issue 里的 "方向A" / "方向B" 指的就是 taskA/ + taskB/ (代码位置 / 入口 / 产物路径), 禁止把它们解读为其它 lineage (e.g. TIGER / LETTER / RecBole / phonism). 命名演化: 历史 issue 文本可能用 "方向A/方向B" 或 "Issue #55 lineage / Issue #56 lineage" 表达, 实际当前实现是 taskA/ + taskB/ 目录; 检索代码 / 产物 / 数据时用此映射.
 
 ---
 
