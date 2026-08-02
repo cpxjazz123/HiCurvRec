@@ -36,7 +36,7 @@ LAYER_RANGES = [(1, 64), (65, 192), (193, 448), (449, 449)]
 def load_wrapper_cls():
     spec = importlib.util.spec_from_file_location(
         "t470",
-        f"{PROJECT}/taskA/stage3/taskA_stage3_kappa_scale_recontinue.py",
+        f"{PROJECT}/taskA/stage3/_archive/taskA_stage3_kappa_scale_recontinue.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
