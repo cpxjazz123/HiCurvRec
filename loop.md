@@ -46,7 +46,7 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
 |---------|-------|------|------|-----|------|-----|
-| taskA_g4_retry | #2 [方向A Gate4后续] | Gate1-4 | precheck | 0 待分配 | 0% — precheck 待启动 | TBD |
-| taskB_g4_retry | #3 [方向B Gate4后续] | Gate1-4 | precheck | 1 待分配 | 0% — precheck 待启动 | TBD |
+| taskA_g4_retry | #2 [方向A Gate4后续] | Gate1-4 | Gate1 待启动 | 0 待分配 | precheck PASS (commit `d14c5b1`) → verdict `verdicts/issue2_precheck_kappa_scale_diagnostic.md` | TBD |
+| taskB_g4_retry | #3 [方向B Gate4后续] | Gate1-4 | Gate1 待启动 | 1 待分配 | precheck PASS (commit `d14c5b1`) → verdict `verdicts/issue3_precheck_mixed_weight_diagnostic.md` | TBD |
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
