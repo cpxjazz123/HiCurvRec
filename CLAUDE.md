@@ -4,7 +4,7 @@
 
 ---
 
-## R 规则 (25 条)
+## R 规则 (26 条)
 
 **R1**: 使用 `genrec_env` (默认所有任务) 或 `deepke` (KG 任务) 两个 conda env, base anaconda Python 3.11.7 仅适用于 zero-dep grep + MiniMax API 调用.
 
@@ -45,6 +45,8 @@
 **R24**: 每个 tick 检查 in_progress 任务是否真在执行 (有活跃 PID + file mtime 更新), 若 in_progress 但无活跃行为 → 立即 R11.5 决策 + 立即执行, 禁止任何"等待 owner 拍板"/"wrapper 复杂"/"等下一 tick" 话术.
 
 **R25**: issue 里的 "方向A" / "方向B" 指的就是 taskA/ + taskB/ (代码位置 / 入口 / 产物路径), 禁止把它们解读为其它 lineage (e.g. TIGER / LETTER / RecBole / phonism). 命名演化: 历史 issue 文本可能用 "方向A/方向B" 或 "Issue #55 lineage / Issue #56 lineage" 表达, 实际当前实现是 taskA/ + taskB/ 目录; 检索代码 / 产物 / 数据时用此映射.
+
+**R26**: 每个 tick 必须实际推进 open issue 的工作 (启动 precheck / Gate1 / 训练 / 评估 / 修复 / 验证 之一), 不允许仅停留在规划 / §16 状态描述 / commit + close comment 而未启动实际工作. 判定标准: 该 tick 至少执行一次以下动作 — 读取相关代码并产出诊断结论、运行 precheck 脚本、启动训练 (写 _TRAINING_PID)、产出 Gate 评估物 (verdict / 产物文件). 仅发 kickoff comment + commit §16 = 不算实际工作.
 
 ---
 
