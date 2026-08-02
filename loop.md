@@ -46,9 +46,8 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
 |---------|-------|------|------|-----|------|-----|
-| #15 | Issue #15 [方向B] | curvature_meta 修复 + precheck + 重训 | Step 4 重训中 | GPU 0 | epoch 7/60 (util 35%) | ~52m |
-| #17 | Issue #17 [方向A] | val/early stop 证据 + 单变量提升 | Step 5 续训启动 | GPU 1 | epoch 49/199 starting (util 36%) | ~3-4h |
+| #17 | Issue #17 [方向A] | val/early stop 证据 + 单变量提升 | Step 5 续训中 | GPU 1 | epoch 49+/199 (util 36%) | ~3-4h |
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
 
-> **当前活跃任务**: #15 (GPU 0 重训 epoch 7/60, val_R@10=0.0 patience=7/10) + #17 Step 5 (GPU 1 续训 epoch 49/199, initial best=0.058, PASS_THRESHOLD=0.07). GPU 2-3 空闲.
+> **当前活跃任务**: #17 Step 5 (GPU 1 续训 epoch 49/199, initial best=0.058, PASS_THRESHOLD=0.07). Issue #15 已关闭 (R23 NO-GO, commit ad795aa). GPU 0/2/3 空闲.
