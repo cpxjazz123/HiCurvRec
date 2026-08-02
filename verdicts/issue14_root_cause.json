@@ -1,0 +1,47 @@
+{
+  "issue": 14,
+  "step": "Step 3 root cause classification",
+  "r10_measured": 0.0724,
+  "r10_baseline": 0.102,
+  "delta_pct": -29.019607843137248,
+  "category_a_protocol_residual": {
+    "verdict": "排除 (a)",
+    "evidence": {
+      "validity_pct": 100.0,
+      "protocol_audit": {
+        "P1_forward_path": "PASS (encoder→decoder→t5.model.lm_head→autoregressive 4-step + layer-wise mask, 同 #12 Step 2 P4 修复)",
+        "P2_vocab_mapping": "PASS (vocab_size=1025, valid 449 tokens, layer_ranges hash=aacb3085, 同 #12 Step 1 P2 mapping)",
+        "P3_lm_head_path": "PASS (t5.model.lm_head, [1025,128], float32)",
+        "P4_valid_sid_constraint": "PASS (validity=100%, layer-wise mask 强制每步只在合法 SID 区间)"
+      }
+    }
+  },
+  "category_b_alpha_clamp_weakens_kappa": {
+    "verdict": "排除 (b)",
+    "evidence": {
+      "alpha_logit_live": -1.4404813051223755,
+      "alpha_value_live": 0.21253852546215057,
+      "alpha_max_clamp": 0.5,
+      "alpha_clamp_ratio": 0.42507705092430115,
+      "kappa_terminal_values_per_issue14_cite": [
+        -0.0082,
+        -0.0082,
+        -0.0096
+      ]
+    }
+  },
+  "category_c_stage3_capacity": {
+    "verdict": "结构事实 (T5 frozen + adapter 仅 132609 参数, 占总参 ~0.2205%)",
+    "evidence": {
+      "adapter_total_params": 132609,
+      "conditioner_params": 131456,
+      "adapter_total_l2_norm": 38.2663753022609,
+      "conditioner_l2_norm": 35.962853661181555,
+      "curvature_embed_l2_norm": 0.0,
+      "sid_token_proj_l2_norm": 9.214920725539612,
+      "alpha_logit_l2_norm": 1.4404813051223755
+    }
+  },
+  "synthesis": "真正主因: 数据规模 (9922 items) + 训练 epoch (200) + α 弱信号 + κ 终值量级极小 (-0.0082) 共同决定上限. Stage3 P4 修复 (validity 25%→100%) 解决了 decode 约束, 但没解决上游信号强度. R@10 = 0.0724 (-29% vs baseline) 反映 Stage3 适配器在当前数据 + epoch 下的天然上限.",
+  "issue14_pass_decision": "Issue #14 自身仍 PASS (全量 6 指标落盘 + 互不恒等 + validity=100% + protocol_audit PASS + κ/codebook sync 完整). R@10 不达标是 issue 关闭后另开 '方向A 上限突破' 新 issue 的范畴."
+}

@@ -1,0 +1,78 @@
+{
+  "issue": 14,
+  "gpu": "3",
+  "slice": [
+    18579,
+    24772
+  ],
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+  "ckpt_epoch": 48,
+  "n_samples": 6193,
+  "beam_size": 20,
+  "seed": 42,
+  "elapsed_sec": 1523.696678161621,
+  "validity_pct": 100.0,
+  "n_in_valid_range": 495440,
+  "n_total_tokens": 495440,
+  "metrics": {
+    "R@5": 0.06991764895850153,
+    "R@10": 0.08622638462780559,
+    "R@20": 0.11480704020668497,
+    "NDCG@5": 0.05863849467252292,
+    "NDCG@10": 0.06385664046727886,
+    "NDCG@20": 0.07102588461703088
+  },
+  "n_unique_metrics": 6,
+  "monotone_R_at_K": true,
+  "layer_ranges": [
+    [
+      1,
+      64
+    ],
+    [
+      65,
+      192
+    ],
+    [
+      193,
+      448
+    ],
+    [
+      449,
+      449
+    ]
+  ],
+  "targets_list_sample": [
+    [
+      48,
+      185,
+      433,
+      449
+    ],
+    [
+      26,
+      146,
+      260,
+      449
+    ],
+    [
+      26,
+      150,
+      210,
+      449
+    ],
+    [
+      35,
+      114,
+      417,
+      449
+    ],
+    [
+      35,
+      109,
+      225,
+      449
+    ]
+  ],
+  "verdict": "PASS"
+}
