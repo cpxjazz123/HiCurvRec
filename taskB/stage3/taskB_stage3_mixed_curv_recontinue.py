@@ -99,7 +99,8 @@ class BoundedWeightedMixedCurvatureConditioner(nn.Module):
     防止 #160 (Task #452) α 暴涨到 15.41 的反例.
     """
 
-    def __init__(self, d_model=128, n_layers=3, sid_dim=4, alpha_init_logit=-10.0, alpha_max=0.5):
+    def __init__(self, d_model=128, n_layers=3, sid_dim=4, alpha_init_logit=-10.0, alpha_max=0.5,
+                 kappa_init_logit=0.5413):  # softplus(0.5413) ≈ 1.0, 跟 baseline c=1 一致
         super().__init__()
         self.d_model = d_model
         self.n_layers = n_layers
@@ -123,8 +124,38 @@ class BoundedWeightedMixedCurvatureConditioner(nn.Module):
         # α logit (init 严格 → α=0)
         self.alpha_logit = nn.Parameter(torch.tensor(alpha_init_logit, dtype=torch.float32))
 
+        # Issue #15 Step 1: per-layer learnable κ_logits (3 layers × 1)
+        # init log(e-1)≈0.5413 → softplus ≈ 1.0 (跟 baseline c=1 一致)
+        # 严禁常数替代: 此 Parameter 必须 learnable, requires_grad=True
+        self.kappa_logits = nn.Parameter(torch.full((n_layers,), kappa_init_logit, dtype=torch.float32))
+
+        # Issue #15 Step 1: per-layer learnable mixing_logits (3 layers × 3 weights)
+        # 0 init → softmax = [1/3, 1/3, 1/3] 平衡起步, 训练中自由调整
+        # 三分量: 固定双曲 (alpha_l) + 固定欧氏 (beta_l) + 混合 (gamma_l) 的组合权重
+        # 严禁常数替代: 此 Parameter 必须 learnable, requires_grad=True
+        self.mixing_logits = nn.Parameter(torch.zeros(n_layers, 3, dtype=torch.float32))
+
     def get_alpha(self):
         return F.softplus(self.alpha_logit).clamp(max=self.alpha_max).item()
+
+    def get_kappa_per_layer(self):
+        """Issue #15 Step 1: 返回 3 层独立 learnable κ 值 (positive via softplus)."""
+        return F.softplus(self.kappa_logits)  # (3,)
+
+    def get_mixing_per_layer(self):
+        """Issue #15 Step 1: 返回 3 层 × 3 mixing weights (softmax 后每层和为 1)."""
+        return F.softmax(self.mixing_logits, dim=-1)  # (3, 3)
+
+    def build_curvature_meta(self, B):
+        """Issue #15 Step 1: 构造 curvature_meta 张量 (B, 3, 4) from learnable per-layer κ + mixing.
+        替代原 taskB_stage3_mixed_curv_recontinue.py L387-389 的常数化构造.
+        """
+        kappa_l = self.get_kappa_per_layer()  # (3,)
+        mixing_l = self.get_mixing_per_layer()  # (3, 3)
+        # 扩展到 batch dim
+        kappa_l = kappa_l.unsqueeze(0).unsqueeze(-1).expand(B, -1, -1)  # (B, 3, 1)
+        mixing_l = mixing_l.unsqueeze(0).expand(B, -1, -1)  # (B, 3, 3)
+        return torch.cat([kappa_l, mixing_l], dim=-1)  # (B, 3, 4) = [κ, alpha, beta, gamma]
 
     def forward(self, x_emb, sid_meta, curvature_meta):
         curv_e_l = self.curvature_embed(curvature_meta)  # (B, 3, d_model)
@@ -382,11 +413,10 @@ def main():
             pos_in_history = pos_in_history.float().unsqueeze(0).expand(B, -1) / MAX_LEN
             padding_flag = (digit_values == PAD_TOKEN).float()
             sid_meta = torch.stack([digit_values / 1025.0, layer_idx / 4.0, pos_in_history, padding_flag], dim=-1)
-            # 三分量 [κ_l, alpha_l, beta_l, gamma_l] (Issue #178 spec: 来自 #158)
-            # init: κ=1, alpha=beta=gamma=0 (跟 #158 Gate 2 一致)
-            kappa_l = torch.ones(B, 3, 1, dtype=torch.float32, device=DEVICE)
-            mixing_l = torch.zeros(B, 3, 3, dtype=torch.float32, device=DEVICE)
-            curvature_meta = torch.cat([kappa_l, mixing_l], dim=-1)  # (B, 3, 4) = [κ, alpha, beta, gamma]
+            # 三分量 [κ_l, alpha_l, beta_l, gamma_l] (Issue #15 Step 1 spec: per-layer learnable)
+            # 替换原 L418-420 常数化构造 (kappa_l=1, mixing_l=0 违反 precheck 红线)
+            # 现在用 model_wrapper.adapter.build_curvature_meta(B) 从 nn.Parameter kappa_logits + mixing_logits 构造
+            curvature_meta = model_wrapper.adapter.build_curvature_meta(B)  # (B, 3, 4)
 
             optimizer.zero_grad()
             output, _, alpha = model_wrapper(history_tensor_b, attention_mask=attention_mask_b,
