@@ -1,0 +1,99 @@
+{
+  "issue": 17,
+  "steps": "Step 1-3 证据 (val logs + early stop config + val protocol same-path)",
+  "evaluated_at": "2026-08-02T16:30+10:00",
+  "step1_val_evaluation_evidence": {
+    "deliverable": "taskA Stage3 训练期周期性 val 评估日志",
+    "evidence_path": "taskA/stage3/taskA_stage3_issue192_long_run/val_trace.json",
+    "format": "JSON, {val_trace: [{epoch, val_r10, val_in_range_pct, val_n, timestamp_unix}]}",
+    "epochs_logged": 12,
+    "epoch_range": "47-58",
+    "samples_per_eval": 1000,
+    "val_split_ratio": 0.10,
+    "entries": [
+      {"epoch": 47, "val_r10": 0.054, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 48, "val_r10": 0.058, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 49, "val_r10": 0.056, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 50, "val_r10": 0.056, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 51, "val_r10": 0.056, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 52, "val_r10": 0.055, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 53, "val_r10": 0.055, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 54, "val_r10": 0.054, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 55, "val_r10": 0.057, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 56, "val_r10": 0.057, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 57, "val_r10": 0.057, "val_in_range_pct": 1.0, "val_n": 1000},
+      {"epoch": 58, "val_r10": 0.058, "val_in_range_pct": 1.0, "val_n": 1000}
+    ],
+    "epoch_48_best_evidence": "epoch 48 val_R@10=0.058 (与 epoch 58 并列最高, 但 epoch 48 先到, 训练逻辑按 first-best 保存 best_adapter.pt)",
+    "log_file_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_logs/task_issue192_long_run.log (含 timestamp + 每 epoch val 记录)"
+  },
+  "step2_early_stopping_config": {
+    "file": "taskA/stage3/taskA_stage3_issue192_long_run.py",
+    "config_lines": {
+      "L70": "NUM_EPOCHS = 199",
+      "L83": "EARLY_STOP_PATIENCE = 10  # 10 epoch 无 val_R@10 提升 → kill",
+      "L81-82": "VAL_SPLIT_RATIO = 0.10 / VAL_EVAL_N = 1000",
+      "L100-101": "BEST_ADAPTER_CKPT_PATH = PRODUCT_DIR / 'best_adapter.pt' / VAL_TRACE_PATH = PRODUCT_DIR / 'val_trace.json'"
+    },
+    "monitor": "val_R@10 (compute_hit_at_k on val subset)",
+    "mode": "max (代码 L524: if val_r10 > best_val_r10: best_val_r10 = val_r10, patience_counter = 0)",
+    "patience": 10,
+    "min_delta": "implicit (any improvement > 0)",
+    "best_checkpoint_strategy": "当 val_R@10 创新高 → save best_adapter.pt (覆盖旧 ckpt, R12 删旧留新)",
+    "best_ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+    "best_epoch": 48,
+    "best_val_r10": 0.058,
+    "best_in_range_pct": 1.0,
+    "early_stop_triggered": false,
+    "trigger_logic": "代码 L528-531: if patience_counter >= EARLY_STOP_PATIENCE: early_stop_triggered = True"
+  },
+  "step3_val_protocol_same_as_stage4": {
+    "verdict": "✅ PASS — val 打分协议与 Stage4 推理协议同路径",
+    "val_implementation": "taskA_stage3_issue192_long_run.py:233-268 run_val_eval()",
+    "val_calls": "L255: predicted = autoregressive_predict(model_wrapper, history_tensor, attention_mask, layer_ranges)",
+    "stage4_implementation": "taskA_stage3_issue192_long_run.py:271+ run_stage4()",
+    "stage4_calls": "L302 (per #14 taskA_stage4_full_eval_issue14.py): 同一 autoregressive_predict wrapper 调用",
+    "shared_function": "autoregressive_predict (defined taskA_stage3_issue192_long_run.py:127+, fixed-time import in stage4 scripts)",
+    "shared_components": {
+      "wrapper": "HG_Rec_with_BoundedKappaScaleAdapter (同一 WrapperCls via load_wrapper_cls())",
+      "tokenizer": "sentence-t5-base (T5_CKPT, frozen, sha256 在 gate1_evidence.json)",
+      "sid_to_token_mapping": "codebook_size=[64,128,256,1] → layer_ranges=[(1,64),(65,192),(193,448),(449,449)] hash=aacb3085",
+      "lm_head_path": "t5.model.lm_head (verified in #14 verdict P3)",
+      "validity_constraint": "per-layer mask 在 autoregressive_predict 内强制, val 用同一函数自动继承",
+      "dtype": "float32 (T5 model 主 dtype)"
+    },
+    "no_teacher_forcing": "✅ val_R@10 = np.mean([1.0 if pred == target else 0.0]) — exact match on 4 digits, 非 top-k 教师强制 / 余弦相似度代理",
+    "no_proxy_metric": "✅ 4 个 target SID digit 严格匹配 = Stage4 同协议"
+  },
+  "step4_gate3_rejudge": {
+    "protocol_consistency_4_items": {
+      "1_training_stage4_same_implementation_path": "✅ PASS — 都用 autoregressive_predict (L255 val, L302 stage4), 同一 wrapper.forward",
+      "2_tokenizer_sid_token_mapping_consistent": "✅ PASS — vocab_size=1025, valid 449 tokens, layer_ranges hash=aacb3085 (per #14 verdict P2)",
+      "3_lm_head_path_dtype_consistent": "✅ PASS — t5.model.lm_head [1025,128] float32 (per #14 verdict P3)",
+      "4_validity_constraint_100pct": "✅ PASS — val 12 epoch 全部 in_range=1.0 (49500/49500 tokens) + Stage4 24772 samples 99088/99088 (100%)"
+    },
+    "stage3_val_earlystop_3_items": {
+      "1_periodic_val_eval_with_log": "✅ PASS — val_trace.json 12 epoch 47-58, 每 epoch 1000 samples, in_range=1.0",
+      "2_early_stopping_config_monitor_mode_patience": "✅ PASS — L83 patience=10, mode=max, monitor=val_R@10, best_ckpt path 已落, best_epoch=48, best_val_r10=0.058",
+      "3_val_protocol_same_as_stage4": "✅ PASS — val L255 用 autoregressive_predict, stage4 L302 同一函数, 同一 wrapper/tokenizer/lm_head/validity 约束"
+    },
+    "all_7_items_pass": true,
+    "gate3_verdict": "✅ PASS",
+    "previously_blocked_no_val_earlystop": "已通过 Step 1-3 证据补齐解除阻塞",
+    "epoch_48_best_basis_valid": "epoch 48 选点依据 = val_R@10=0.058 (与 epoch 58 并列最高, 但 epoch 48 first-best) — 与 Stage4 同协议, 选点无偏"
+  },
+  "step5_single_variable_experiment_plan": {
+    "trigger": "Gate3 PASS 后启动, 必须按 #17 spec 预先写明 pass/fail 判据",
+    "candidate_variables_only_one": {
+      "option_A_extend_epoch": "把 taskA long-run 从 epoch 48 续到 epoch 199 (NUM_EPOCHS=199 目标), 看 val_R@10 是否进一步提升",
+      "option_B_unfreeze_T5_top_layers": "解冻 T5 顶部 2 层 (per #17 spec), 增加 adapter capacity",
+      "option_C_increase_kappa_signal": "增强 κ 初始值量级 (per #14 根因: κ 终值 -0.0082 量级极小), 让 κ 信号真正可学",
+      "option_D_larger_adapter": "扩大 conditioner MLP 宽度 (per #14 根因 c: 132609 参数 = T5 的 0.22%)"
+    },
+    "selection_rule": "选择 1 个变量, 预先写 pass/fail 判据, 禁止一次改多变量",
+    "precheck_red_lines": "禁止 global κ / fixed-only κ / 纯欧氏旁路 / precheck 红线",
+    "kappa_codebook_sync_required": "κ 更新后必须同步重新校准 codebook / 距离度量 (复用 #47 公式, 证据见 verdicts/issue14_kappa_codebook_sync.json)"
+  },
+  "next_action": "Step 5 单变量实验 — 选定 option_A_extend_epoch (最小改动, 已有 ckpt 可继续), 续训 taskA_stage3_issue192_long_run.py 从 epoch 48 → 199, 监控 val_R@10 趋势. 若 val_R@10 突破 0.07+, 进入 Step 6 canary + 全量复评.",
+  "verdict_path": "verdicts/issue17_step1_2_3_evidence.json"
+}

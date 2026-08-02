@@ -46,7 +46,9 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
 |---------|-------|------|------|-----|------|-----|
+| #15 | Issue #15 [方向B] | curvature_meta 修复 + precheck + 重训 | Step 4 重训启动 | GPU 0 | Step 1-3 done, Step 4 启动 | ~2h |
+| #17 | Issue #17 [方向A] | val/early stop 证据 + 单变量提升 | Step 1-3 证据落盘 | (CPU) | Step 1-3 done, Step 5 待 Gate3 PASS | ~30 min |
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
 
-> **当前活跃任务**: 无 (Issue #2/#3 已关闭, commit pending, R10 v2 idle)
+> **当前活跃任务**: #15 [方向B 重训中] + #17 [方向A 证据已落盘, 等 #15 单变量实验卡]
