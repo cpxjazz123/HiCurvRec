@@ -10,19 +10,11 @@
 
 **R2**: 禁止 fallback 逻辑 (默认值/回退/降级), 预期内的缺失返回 None/空值, 预期外的失败直接 raise.
 
-**R3**: 所有 LLM 调用必须通过 `/home/wlia0047/ar57/wenyu/PersoanlQuery/llm_client.py` 的 `MiniMaxAnthropicClient`, 不直接导入 OpenAI/Anthropic/Qwen 等客户端.
-
 **R4**: 修改 Python 脚本后必须立即 `python3 -m py_compile <file>` 验证语法, 文档文件例外.
 
 **R5**: 任务硬约束 — 基线 HG-Rec Task #84 (R@10=0.1020), 仅 RQ-VAE 量化, Musical_Instruments 数据集 (9922 items), 4 阶段流水线, seed=42.
 
-**R6**: 不要把 Stage 2 SID `merged_predictions_tensor.pt` (N,4) 误用成 Stage 1 embedding (N,2048), 不要把 `num_hierarchies=3` 直接传给 Stage 3, 修改上游 HG-Rec/ 前要意识到是只读 clone.
-
 **R7**: 启动新实验前必须 `nvidia-smi` 核对 GPU 状态 (util<10%, mem<5GB), 选完全空闲 GPU 启动, 禁止等待已占卡或把多实验挤同一张卡.
-
-**R8**: 完成的任务必须从 loop.md §16 表删除该行 (不写"已归档"), verdicts/ 保留 verdict 文件.
-
-**R9**: 新任务编号必须 max+1 连续无空洞, R9-Enforce 三层防护 (创建前必跑 max+1 命令 + 创建后必验证连续 + loop tick 周期审计).
 
 **R10**: open issue 优先, 0 open issue + §16 空 + 用户未派工允许 idle (R10 v2), 取消原"主动推进"硬规则.
 
