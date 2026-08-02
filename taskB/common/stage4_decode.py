@@ -57,12 +57,25 @@ def autoregressive_predict_constrained(
         kappa_meta = torch.zeros(B, 3, dtype=torch.float32, device=device)
     if scale_meta is None:
         scale_meta = torch.ones(B, 3, dtype=torch.float32, device=device)
-    if curvature_meta is None:
-        curvature_meta = model_wrapper.adapter.build_curvature_meta(B)
 
     # 1. Encoder forward (显式, 跟 Stage4 canary 一致)
     x_emb = model_wrapper.t5.model.shared(history_tensor)
-    residual, alpha = model_wrapper.adapter(x_emb, sid_meta, curvature_meta)
+    # Adapter 类型分发: taskA 4-arg (x_emb, sid_meta, kappa_meta, scale_meta)
+    # vs taskB 3-arg (x_emb, sid_meta, curvature_meta)
+    import inspect
+    adapter_sig = inspect.signature(model_wrapper.adapter.forward)
+    adapter_params = list(adapter_sig.parameters.keys())
+    if "scale_meta" in adapter_params:
+        # taskA: BoundedKappaScaleConditioner (4-arg)
+        residual, alpha = model_wrapper.adapter(x_emb, sid_meta, kappa_meta, scale_meta)
+    else:
+        # taskB: BoundedWeightedMixedCurvatureConditioner (3-arg)
+        if curvature_meta is None:
+            if hasattr(model_wrapper.adapter, "build_curvature_meta"):
+                curvature_meta = model_wrapper.adapter.build_curvature_meta(B)
+            else:
+                curvature_meta = torch.zeros(B, 3, 4, dtype=torch.float32, device=device)
+        residual, alpha = model_wrapper.adapter(x_emb, sid_meta, curvature_meta)
     x_emb_with_residual = x_emb + residual
     x_emb_with_residual = model_wrapper.first_input_ln(x_emb_with_residual)
     encoder_outputs = model_wrapper.t5.model.encoder(

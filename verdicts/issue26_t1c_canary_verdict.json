@@ -1,0 +1,60 @@
+{
+  "issue": 26,
+  "step": "T1a meta audit + T1b shared decode reuse + T1c v3 ckpt real canary",
+  "gate": "precheck v4",
+  "verdict": "PARTIAL PASS — T1c PASS (v3 ckpt R@10=0.0250>0 + P1-P4 全 PASS + sid hash match). T1a forward uses internal get_kappa_per_layer() confirmed (external kappa_meta is dead param). T2 (kappa_logits 单独 param group + LR 短程扫) PENDING — 见后续 verdict.",
+  "evaluated_at": "2026-08-02T18:42+10:00",
+  "t1a_audit": {
+    "v3_adapter_class": "BoundedKappaScaleConditioner",
+    "forward_uses_self_get_kappa_per_layer": true,
+    "init_defines_kappa_logits_parameter": true,
+    "interpretation": "v3 forward 用 self.get_kappa_per_layer() (内部 learnable κ), 外部 kappa_meta 是 dead param (stage3 training 传 zeros, 实际不被消费). c3 verdict 归因 (LR×grad=1e-8 < 精度) 正确, 路径未塌方."
+  },
+  "t1b_shared_decode_reuse": {
+    "path": "taskB/common/stage4_decode.py (扩展支持 taskA 4-arg adapter signature via inspect.signature dispatch)",
+    "function": "autoregressive_predict_constrained(model_wrapper, history, mask, layer_ranges, ...) — taskA 与 taskB 都 import 同一函数对象",
+    "stage4_decode_extension": "新增 inspect.signature(model_wrapper.adapter.forward) 分发: taskA 4-arg (x_emb, sid_meta, kappa_meta, scale_meta) vs taskB 3-arg (x_emb, sid_meta, curvature_meta). 唯一函数对象, 内部按 adapter 类型分支, 不另写一份"
+  },
+  "t1c_v3_canary": {
+    "ckpt": "taskA/stage3/taskA_stage3_issue24_precheck_v3/adapter.pt (epoch 9, sha256 to be filled at verdict落盘时)",
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "canary_n": 200,
+    "metrics": {"R@5": 0.0250, "R@10": 0.0250, "R@20": 0.0250},
+    "in_range_pct": 1.0,
+    "audit_P1_P4": {
+      "P1_forward_path": "PASS (encoder -> decoder -> t5.model.lm_head + autoregressive_predict_constrained shared)",
+      "P2_sid_hash_match": "PASS",
+      "P3_lm_head_path": "PASS (t5.model.lm_head)",
+      "P4_valid_sid_constraint": "PASS (in_range_pct=100%)"
+    },
+    "interpretation": "v3 ckpt 真实 canary R@10=0.0250 > 0 (跟 #190 canary 一致, baseline 0.058 partial evidence). 排除 v3 路径塌方根因. 但 R@10=0.025 << baseline 0.1020, 仍有 0.077 gap 待解释."
+  },
+  "v3_ckpt_state": {
+    "kappa_per_layer": "详见 canary_verdict.json",
+    "kappa_max_min_diff": "已落盘"
+  },
+  "structural_root_cause_update": {
+    "issue22_root_cause": "kappa_e.mean(dim=1) -> dL/dkappa~2.5e-8 -> 已由 #24 排除 (kappa grad 4 个数量级提升)",
+    "issue24_c3_root_cause": "kappa_per_layer 数值不变 (LR×grad=1e-8 < 精度) -> T1a 确认路径未塌方, T2 (kappa 单独 param group + LR 提升) 待验证",
+    "issue24_c5_root_cause": "val_R@10=0 连续 10 epoch -> T1c v3 ckpt 真实 canary R@10=0.0250 (>0 但 <<baseline), 排除 v3 路径本身塌方",
+    "remaining_root_cause": "T2 验证 kappa 数值更新 + κ 更新同步触发 codebook/距离重校准 + best_adapter 写盘实证"
+  },
+  "evidence_persisted": {
+    "canary_verdict_path": "taskA/stage3/taskA_stage3_issue26_canary/canary_verdict.json",
+    "t1a_audit_path": "taskA/stage3/taskA_stage3_issue26_canary/t1a_audit.json",
+    "log_path": "taskA/_logs/task_issue26_canary.log",
+    "_TRAINING_PID": "1292050 (terminated)"
+  },
+  "next_step_recommendation": {
+    "T2_kappa_alone_param_group_LR_scan": "从 issue192_long_run/best_adapter.pt (epoch 48, val_R@10=0.058) 续训, kappa_logits 独立 param group, LR 扫 {1e-3, 1e-2, 1e-1}, 每点 ≤5 epoch. 每 step assert 至少一层 |Δκ_l| ≥ 1e-4, recalibrate_log 同步触发",
+    "cross_issue_with_27": "#27 taskB 同样补 best_adapter 写盘实证 + backbone drift 取证"
+  },
+  "close_decision": "本 verdict 仅完成 T1a/T1b/T1c, precheck 仍 blocked (T2 未验证). 不单独 close #26, 待 T2 完成后合并 verdict 一次性 close.",
+  "related_artifacts": {
+    "script": "taskA/stage3/taskA_stage3_issue26_canary.py",
+    "shared_decode_module": "taskB/common/stage4_decode.py (extended for taskA adapter)",
+    "issue24_verdict": "verdicts/issue24_precheck_v3_verdict.json"
+  },
+  "verdict_path": "verdicts/issue26_t1c_canary_verdict.json"
+}

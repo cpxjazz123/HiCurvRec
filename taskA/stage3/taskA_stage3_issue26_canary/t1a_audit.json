@@ -1,0 +1,10 @@
+{
+  "v3_adapter_class": "BoundedKappaScaleConditioner",
+  "forward_uses_self_get_kappa_per_layer": true,
+  "forward_consumes_external_kappa_meta": true,
+  "forward_references_kappa_meta_symbol": true,
+  "forward_references_scale_meta_symbol": true,
+  "init_defines_kappa_logits_parameter": true,
+  "stage3_train_meta_passing": "stage3 calls adapter(zeros, ones, sid) but forward uses internal get_kappa_per_layer() - external kappa_meta/scale_meta are dead params",
+  "interpretation": "FAIL: v3 forward does not use internal learnable kappa"
+}
