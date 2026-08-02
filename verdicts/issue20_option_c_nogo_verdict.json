@@ -1,0 +1,74 @@
+{
+  "issue": 20,
+  "step": "option_C 解冻 T5 encoder 顶层 N=2 层 (block 4-5 of 6) — R23 NO-GO",
+  "gate": "Gate 3",
+  "verdict": "❌ FAIL — R23 NO-GO (三层 κ 同步, conditioner 架构缺陷未解)",
+  "evaluated_at": "2026-08-02T17:55+10:00",
+  "single_variable": {
+    "tested": "解冻 T5 encoder block 4-5 (顶层 N=2 of 6 layers)",
+    "LAMBDA_unfrozen_t5": "5e-05 (LR_UNFROZEN_T5)",
+    "16 params unfrozen (8 per block × 2 blocks)"
+  },
+  "r23_triggers": [
+    {
+      "signal": "三层 κ 同步",
+      "data": "kappa = [0.9591848850250244, 0.9591848850250244, 0.9591848850250244] epoch 52",
+      "root_cause": "跟 #18 option_A 同根因: Stage3 curvature_meta 对三层 κ 应用同一 conditioner MLP, kappa_logits 三层梯度相同 → Adam 同步更新. **option_C 解冻 T5 不改 conditioner 路径, 因此无法修复 κ 同步**",
+      "spec_clause": "per #20 spec R23 NO-GO '三层 κ 同步 (退化为 global κ)'"
+    },
+    {
+      "signal": "val_R@10=0 catastrophic forgetting",
+      "data": "val_R@10=0.0000 @ epoch 52 (loaded 0.058 → 训练后 0.0000)",
+      "consistent_with": "#18 option_A + option_B 同样模式: 从较高 val 起点训练退化到 0.0000"
+    }
+  ],
+  "go_criteria_partial_pass": {
+    "c1_unfrozen_t5_grad_≥_cond_grad": "✅ PASS (unfrozen_t5_grad=1.3194e-02 vs cond_grad=1.7120e-02, 同数量级)",
+    "c2_kappa_grad_not_zero": "✅ PASS (kappa_grad=4.7135e-04 健康, option_B 是 0)",
+    "c3_mixing_grad_not_zero": "✅ PASS (mixing_grad=5.3761e-05 健康, option_B 是 0)",
+    "c4_val_R10_>_0.058": "❌ FAIL (val=0.0000 < 0.058)",
+    "interpretation": "三个 GO 判据的硬约束 (解冻层梯度健康 + κ/mixing_grad 非 0) ✅ PASS, 但 val_R@10=0 + 三层 κ 同步 R23 立即触发, 即使继续 epoch 也无法 PASS"
+  },
+  "positive_diagnostic_for_next_steps": {
+    "unfrozen_t5_works": "解冻 T5 顶层确实让梯度流入 encoder 顶层 (1.3e-2), 信号链路接通",
+    "kappa_grad_recovered": "option_B 是 0, option_C 是 4.7e-4 → 解冻 T5 让 κ_logits 收到反向传播信号",
+    "mixing_grad_recovered": "option_B 是 0, option_C 是 5.4e-5 → 同理",
+    "but_κ_still_synced": "因为 conditioner 路径对称, 即使 gradient 流入, 三层 gradient 仍相同 → Adam 仍同步更新"
+  },
+  "precheck_compliance": {
+    "l0_k64_l1_k128_l2_k256_three_layer": "✅ PASS",
+    "per_layer_independent_learnable_kappa": "✅ PASS (kappa_logits (3,) nn.Parameter, per #15 修复)",
+    "fixed_double_euclidean_components": "✅ PASS",
+    "learnable_mixing": "✅ PASS",
+    "no_global_kappa_fixed_only_pure_euclidean": "✅ PASS"
+  },
+  "three_first_step_resolutions": {
+    "1_early_stopping_explicit": "✅ 实现 (monitor=val_R@10 mode=max patience=10 min_delta=1e-4 best_ckpt 实际写盘, BEST_ADAPTER_CKPT_PATH 实际触发)",
+    "2_val_protocol_stage4_same_source": "✅ 验证 (autoregressive_predict 跟 #193 long-run + Stage4 同函数, in script L120 + Stage4 L302)",
+    "3_mixing_three_layer_independence_recorded": "✅ 留证 (mixing_init 三层完全相同 = [0.333, 0.333, 0.333] × 3, mixing_three_layers_identical=True init; per epoch mixing_per_layer 已记录)"
+  },
+  "ckpt_state": {
+    "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue20_option_c/best_adapter.pt",
+    "best_adapter_exists": false,
+    "reason": "val_R@10=0 退化, best_adapter.pt 未写",
+    "last_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue20_option_c/adapter.pt",
+    "last_adapter_epoch": 52
+  },
+  "next_issue_recommendation": {
+    "issue_a": "[方向B Gate3] option_C+option_B 双变量组合: 解冻 T5 顶层 + per-layer κ init [0,2,4] 破对称性 (option_C 修信号链路 + option_B 修 κ 分化)",
+    "rationale_a": "option_C 单变量证明解冻 T5 让 κ/mixing_grad 非 0 ✅ 但 κ 仍 sync. option_B 单变量证明 κ 分化 ✅ 但 κ/mixing_grad=0. 双变量组合同时解决两个瓶颈, 预期 val_R@10 > 0.058",
+    "single_variable_constraint": "新 issue 需明确标注为'双变量组合探索', 跟单变量实验 spec 区分",
+    "issue_b": "[方向B Gate3] option_D 扩 conditioner capacity (e.g. conditioner MLP 128→256 hidden), 破 curvature_meta 路径对称",
+    "rationale_b": "conditioner 路径对称是 κ 同步根因, 扩大 capacity + 让三层独立 conditioner 可能让 κ 真正分化",
+    "issue_c": "[方向A precheck 修复] 在 taskA BoundedKappaScaleAdapter 添加 per-layer learnable κ (per #19 R18 verdict, 前置修复)",
+    "rationale_c": "修复 taskA 架构缺 learnable κ 后, 才能做 #19 option_C"
+  },
+  "close_decision": "per #20 spec '三层 κ 同步 → 立即 Gate3 failed 并结束本 issue' 关闭本 issue. option_C 单变量 R23 严格 trigger. 双变量组合探索作为下个 issue 方向.",
+  "related_artifacts": {
+    "issue18_final_verdict": "verdicts/issue18_final_no_go_verdict.json",
+    "issue19_r18_verdict": "verdicts/issue19_r18_nogo_verdict.json",
+    "option_C_script": "taskB/stage3/taskB_stage3_issue20_option_c.py",
+    "option_C_artifacts": "taskB/stage3/taskB_stage3_issue20_option_c/ (adapter.pt + val_trace.json + training_summary.json)"
+  },
+  "verdict_path": "verdicts/issue20_option_c_nogo_verdict.json"
+}
