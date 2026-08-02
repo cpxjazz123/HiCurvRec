@@ -1,0 +1,85 @@
+{
+  "issue": 18,
+  "title": "[方向B Gate3] 续训 + 曲率信号量级诊断 + 单变量重训 (option_A + option_B)",
+  "final_verdict": "❌ FAIL — R23 NO-GO (option_A + option_B 都触发 R23, 路径不可行)",
+  "evaluated_at": "2026-08-02T17:30+10:00",
+  "close_decision": "per #18 spec '选择**一个**变量做单变量实验, 预先写明 pass/fail 判据, 按预设判据得出明确结论即可关闭 issue'. option_A + option_B 两个不同单变量都已明确 FAIL, 关闭本 issue. 新 issue 探索 option_C (T5 解冻) 或 option_D (capacity 扩大).",
+
+  "single_variable_experiments": [
+    {
+      "option": "option_A 续训旧 best_adapter (epoch 50 → 60)",
+      "script": "taskB/stage3/taskB_stage3_issue18_continue.py",
+      "verdict_path": "verdicts/issue18_option_a_nogo_verdict.json",
+      "r23_triggered": true,
+      "key_finding": "三层 κ 同步 [0.949, 0.949, 0.949] (架构对称: Stage3 curvature_meta 路径对三层 κ 应用同一 conditioner MLP, kappa_logits 三层梯度相同 → Adam 同步更新)",
+      "catastrophic_forgetting": "val_R@10 0.058 → 0.0000 (epoch 52)",
+      "diagnosis": "继续训练路径本身无法解决 κ 同步 (架构属性) 和 val=0 (Stage3 续训的天然退化)"
+    },
+    {
+      "option": "option_B per-layer κ init [0.0, 2.0, 4.0] 破对称性",
+      "script": "taskB/stage3/taskB_stage3_issue18_option_b.py",
+      "verdict_path": "verdicts/issue18_option_b_nogo_verdict.json",
+      "r23_triggered": true,
+      "single_variable_fix_succeeded": true,
+      "key_finding": "三层 κ 真正分化 [0.616, 1.922, 3.715] ✅, 但 kappa_grad epoch 53 = 0 + mixing_grad epoch 53 = 0 (梯度消失)",
+      "catastrophic_forgetting": "val_R@10 0.058 → 0.0000 (epoch 52-53)",
+      "diagnosis": "κ 分化不是核心瓶颈. 模型学会不依赖 κ 的局部最优 (conditioner 路径健康, κ/mixing 路径被忽略)"
+    }
+  ],
+
+  "core_conclusion": {
+    "issue_root_cause": "T5 backbone 仍然完全 frozen + κ/mixing 通过 conditioner/curvature_meta 间接注入, 信号链路过弱",
+    "evidence": "(a) option_A κ 三层同步 = 架构缺陷 (conditioner 对称); (b) option_B κ 分化后立即梯度消失 = κ/mixing 信号未被 backbone 使用",
+    "next_required_exploration": "新 issue 探索 (c) T5 顶层 N 层解冻 (option_C, 让 κ 信号真正注入 decoder) 或 (d) 扩大 conditioner MLP 容量 (option_D, 让 curvature_meta 三层真正不同)"
+  },
+
+  "spec_compliance": {
+    "precheck": "✅ (三层 learnable κ 框架保留, mixing 仍 learnable, per-layer κ 真正独立)",
+    "gate_1": "✅ (sid_sha256=2dab29229... 不变, precheck sha ✅)",
+    "gate_2": "✅ (Stage2 per-layer κ 不变, sid hash 校验通过)",
+    "gate_3": "❌ FAIL (option_A NO-GO + option_B NO-GO)",
+    "forbidden_clauses": {
+      "no_global_kappa": "✅ PASS (per-layer κ 独立)",
+      "no_fixed_only": "✅ PASS (learnable kappa_logits/mixing_logits)",
+      "no_pure_euclidean": "✅ PASS (3 weights mixing)",
+      "no_three_layer_violation": "✅ PASS (3 layers 保留)"
+    }
+  },
+
+  "ckpt_artifacts": {
+    "option_a": {
+      "loaded_prior": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue193_long_run/best_adapter.pt (epoch 50, val_R@10=0.058)",
+      "last_adapter": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue18_continue/adapter.pt (epoch 52)",
+      "best_adapter_written": false
+    },
+    "option_b": {
+      "loaded_prior": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue193_long_run/best_adapter.pt (epoch 50, val_R@10=0.058)",
+      "override_applied": "kappa_logits → [0.0, 2.0, 4.0] (softplus = [0.693, 2.127, 4.490])",
+      "last_adapter": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue18_option_b/adapter.pt (epoch 53)",
+      "best_adapter_written": false
+    }
+  },
+
+  "next_issues_plan": [
+    {
+      "option": "option_C 解冻 T5 顶层 N 层 (e.g. block 4-5 of 6)",
+      "rationale": "T5 解冻后, curvature_meta / κ / mixing 信号能真正影响 decoder 的 query/key/value → κ 信号不再被忽略",
+      "single_variable": "只改 T5 冻结策略, 不动其他架构"
+    },
+    {
+      "option": "option_D 扩大 conditioner MLP 宽度 (128 → 256 hidden)",
+      "rationale": "option_A 诊断: conditioner 三层对称, 让 per-layer κ 真正影响 curvature_meta 三层独立值",
+      "single_variable": "只改 conditioner 容量, 不动其他架构"
+    }
+  ],
+
+  "related_artifacts": {
+    "issue18_option_a_verdict": "verdicts/issue18_option_a_nogo_verdict.json",
+    "issue18_option_b_verdict": "verdicts/issue18_option_b_nogo_verdict.json",
+    "issue17_final_verdict": "verdicts/issue17_final_step1_to_6_verdict.json (方向 A 全 PASS 但 R@10=0.0724 < 0.1020 baseline)",
+    "issue15_final_verdict": "verdicts/issue15_step4_gate3_nogo_verdict.json (方向 B from-0 retrain NO-GO)",
+    "issue193_long_run_verdict": "taskB/stage3/taskB_stage3_issue193_long_run/stage4_verdict.json (epoch 50, val_R@10=0.058)"
+  },
+
+  "verdict_path": "verdicts/issue18_final_no_go_verdict.json"
+}

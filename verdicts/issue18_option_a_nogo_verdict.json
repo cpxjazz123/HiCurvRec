@@ -1,0 +1,62 @@
+{
+  "issue": 18,
+  "step": "option_A 续训旧 best_adapter (epoch 50 → 60) — R23 NO-GO",
+  "gate": "Gate 3",
+  "verdict": "❌ FAIL — R23 NO-GO",
+  "evaluated_at": "2026-08-02T17:15+10:00",
+  "r23_triggers": [
+    {
+      "signal": "三层 κ 同步",
+      "data": "kappa_per_layer = [0.9490690231323242, 0.9490690231323242, 0.9490690231323242]",
+      "init": "kappa_logits init = [0.5413, 0.5413, 0.5413] (softplus ≈ 1.0)",
+      "after_1_epoch": "kappa_logits update 三层梯度相同 → 移动量相同 → 同步到 0.949",
+      "root_cause": "Stage3 curvature_meta 路径对三层 κ 应用对称 (build_curvature_meta 用同一 conditioner MLP), 模型梯度对 kappa_logits[0,1,2] 相同 → Adam 同步更新",
+      "spec_clause": "per #18 spec '若 val_R@10连续两次为0、梯度全零/爆炸、三层参数同步或违反三层框架, 立即 Gate3 failed/R23 NO-GO'"
+    },
+    {
+      "signal": "val_R@10=0 catastrophic forgetting",
+      "data": "val_R@10=0.0000 @ epoch 52 (loaded ckpt 0.058 → 训练后 0)",
+      "consistent_with": "#15 R23 NO-GO + #17 Step 5 NO-GO 都观察到同样模式: 从较高 val 起点训练退化到 0"
+    }
+  ],
+  "loss_diagnostic": {
+    "epoch_52_loss": 1.8914,
+    "epoch_52_cond_grad": 1.8443e-02,
+    "epoch_52_kappa_grad": 8.8963e-04,
+    "epoch_52_mixing_grad": 1.0356e-04,
+    "epoch_52_kappa": [0.9490690231323242, 0.9490690231323242, 0.9490690231323242],
+    "epoch_52_mixing_max_per_layer": [0.34405, 0.34405, 0.34405],
+    "interpretation": "cond_grad 健康 (~1.8e-2), new param grad 也非零 (kappa_grad=8.9e-4 > 0). 但 κ 三层同步, 没真正 per-layer 学习, 模型只是在已训练 conditioner/alpha 周围小漂移"
+  },
+  "ckpt_state": {
+    "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue18_continue/best_adapter.pt",
+    "best_adapter_exists": false,
+    "reason": "best_val_r10 没创新高 (loaded 0.058 → 训练后 0.0000), best_adapter.pt 未写",
+    "last_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue18_continue/adapter.pt",
+    "last_adapter_epoch": 52
+  },
+  "single_variable_conclusion": {
+    "variable_tested": "option_A 续训旧 best_adapter",
+    "result": "FAIL — 三层 κ 同步 (架构对称缺陷) + val_R@10 catastrophic forgetting",
+    "diagnosis": "继续训练路径本身无法解决两个核心问题: (1) κ 同步是 curvature_meta 架构属性, 不是数据/训练时长问题; (2) val_R@10=0 是 Stage3 在 from-continuation 状态的天然退化"
+  },
+  "next_option_plan": {
+    "next_option": "option_B 提高κ初始化/注入信号量级 (per-layer 不同 init 破对称性)",
+    "implementation": "修改 taskB_stage3_mixed_curv_recontinue.py: kappa_init_logit 改为 per-layer 不同 (e.g. [0.0, 2.0, 4.0] 让 softplus 给出 [0.693, 2.127, 4.490]). 加载旧 ckpt strict=False, 让 kappa_logits 用新 init 值替代 init 默认值.",
+    "expected": "三层 κ 不同 init → 即使 gradient 对称, 值也不会 sync → 满足三层独立 learnable κ 红线",
+    "still_single_variable": "True (只改 κ init, 不动其他架构)"
+  },
+  "spec_compliance": {
+    "precheck": "✅ (三层 learnable κ 框架保留, mixing 仍 learnable)",
+    "gate_1": "✅ (sid_sha256=2dab29 不变)",
+    "gate_2": "✅ (Stage2 per-layer κ 不变)",
+    "gate_3": "❌ FAIL (option_A NO-GO, 试 option_B)",
+    "forbidden_clauses": {
+      "no_global_kappa": "✅ PASS (per-layer κ 仍存在, 只是同步)",
+      "no_fixed_only": "✅ PASS (learnable)",
+      "no_pure_euclidean": "✅ PASS (mixing 仍 3 weights)",
+      "no_three_layer_violation": "✅ PASS (3 layers 保留)"
+    }
+  },
+  "verdict_path": "verdicts/issue18_option_a_nogo_verdict.json"
+}

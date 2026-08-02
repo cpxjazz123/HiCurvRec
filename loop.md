@@ -46,8 +46,7 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
 |---------|-------|------|------|-----|------|-----|
-| #17 | Issue #17 [方向A] | val/early stop 证据 + 单变量提升 | Step 5 续训中 | GPU 1 | epoch 49+/199 (util 36%) | ~3-4h |
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
 
-> **当前活跃任务**: #17 Step 5 (GPU 1 续训 epoch 49/199, initial best=0.058, PASS_THRESHOLD=0.07). Issue #15 已关闭 (R23 NO-GO, commit ad795aa). GPU 0/2/3 空闲.
+> **当前活跃任务**: 无. #15 (commit ad795aa) + #17 (commit f8acdb6) + #18 (option_A + option_B 双 NO-GO, 闭环 pending) 已关. 4 GPU 全空闲.
