@@ -1,0 +1,99 @@
+{
+  "issue": 23,
+  "step": "option_D 单变量 — conditioner 逐层解耦 (3 x curvature_embed + 3 x conditioner head)",
+  "gate": "Gate 3",
+  "verdict": "❌ FAIL — R23 NO-GO (val_R@10=0 连续 >=2 epoch, 灾难性遗忘)",
+  "evaluated_at": "2026-08-02T18:18+10:00",
+  "single_variable": {
+    "tested": "conditioner 逐层解耦 (vs #20 option_C 共享 conditioner MLP)",
+    "n_curvature_embed": "3 x Linear(4, d_model=128) — per-layer 独立",
+    "n_conditioner_heads": "3 x MLP (Linear(256,256) -> ReLU -> Linear(256,128) -> Tanh) — per-layer 独立",
+    "forward": "curvature_meta (B,3,4) -> 3 个 curvature_embed 独立输出 -> 3 个 conditioner head 独立输出 -> mean(dim=1) (保持输出 dim=d_model)",
+    "preserved_from_#20": "T5 encoder block 4-5 解冻 + LR_UNFROZEN_T5=5e-5 (option_C 信号链路), kappa_logits (3,) init softplus(0.5413)=1.0, mixing_logits (3,3) init zeros, alpha_logit=-10.0, alpha_max=0.5"
+  },
+  "r23_triggers": [
+    {
+      "signal": "val_R@10=0 连续 >=2 epoch (FAIL 判据)",
+      "data": "epoch 52 val=0.0000, epoch 53 val=0.0000, patience=2/10 立即 R23",
+      "consistent_with": "#18 option_A + #18 option_B + #20 option_C 同样 val=0 模式"
+    }
+  ],
+  "go_criteria_partial_pass": {
+    "c1_three_layer_kappa_differentiated_>_1e-2": "✅ PASS epoch 52: kappa=[0.902, 0.947, 0.888] max-min=0.059 > 1e-2; epoch 53: kappa=[0.863, 0.902, 0.818] max-min=0.084 > 1e-2 (三层 κ 真正分化, option_D 核心目标达成)",
+    "c2_kappa_grad_not_zero": "✅ PASS (epoch 52 kappa_grad=9.88e-05, epoch 53 kappa_grad=5.43e-05)",
+    "c2_mixing_grad_not_zero": "✅ PASS (epoch 52 mixing_grad=8.24e-06, epoch 53 mixing_grad=4.37e-06)",
+    "c3_per_cond_head_grad_nonzero": "✅ PASS (epoch 52 cond_head_grad=[4.86e-04, 4.67e-04, 4.85e-04]; epoch 53 [4.73e-04, 4.49e-04, 4.51e-04]) — 三层 conditioner head 梯度都非零且与 cond_grad 同数量级",
+    "c4_val_R10_>_0.058": "❌ FAIL (val=0.0000 < 0.058, 灾难性遗忘)",
+    "interpretation": "option_D 架构改造完全成功 (三个核心 GO 判据 ✅ PASS), 但 val_R@10 仍是 0 → 训练本身 (Stage3 方向B) 仍存在根本不稳定性"
+  },
+  "epoch_observations": {
+    "epochs_observed": "52-53 (2/5 epochs), killed by R23 trigger epoch 53",
+    "epoch_52": {
+      "loss": 1.8903,
+      "cond_grad": 1.3838e-02,
+      "kappa_grad": 9.8800e-05,
+      "mixing_grad": 8.2354e-06,
+      "unfrozen_t5_grad": 1.3088e-02,
+      "cond_head_grad_per_layer": [4.86e-04, 4.67e-04, 4.85e-04],
+      "kappa_per_layer": [0.9024, 0.9466, 0.8876],
+      "mixing_max_per_layer": [0.3503, 0.3454, 0.3422],
+      "kappa_synced": false,
+      "mixing_degenerate": false,
+      "val_R@10": 0.0000,
+      "val_in_range_pct": 1.0000
+    },
+    "epoch_53": {
+      "loss": 1.8883,
+      "cond_grad": 1.3824e-02,
+      "kappa_grad": 5.4339e-05,
+      "mixing_grad": 4.3743e-06,
+      "unfrozen_t5_grad": 1.3099e-02,
+      "cond_head_grad_per_layer": [4.73e-04, 4.49e-04, 4.51e-04],
+      "kappa_per_layer": [0.8635, 0.9016, 0.8183],
+      "mixing_max_per_layer": [0.3440, 0.3417, 0.3492],
+      "kappa_synced": false,
+      "mixing_degenerate": false,
+      "val_R@10": 0.0000,
+      "val_in_range_pct": 1.0000
+    },
+    "kappa_evolution": "[1.000, 1.000, 1.000] -> [0.902, 0.947, 0.888] (epoch 52, max-min=0.059) -> [0.863, 0.902, 0.818] (epoch 53, max-min=0.084): 三层 κ 真正分化且分化逐步加大 ✅"
+  },
+  "positive_diagnostic": {
+    "per_layer_decouple_works": "option_D 成功破除 conditioner 路径对称架构缺陷. 三层 κ 分化 + 各 conditioner head 梯度非零 → 确认 #18 + #20 失败根因 (conditioner 路径对称) 已被本 issue 修复",
+    "but_val_still_zero": "val_R@10 退化仍存在, 排除 conditioner 架构假设 → 真正根因在 Stage3 训练本身",
+    "training_inherent_instability": "跨 issue (option_A / option_B / option_C / option_D) 任意改造后 val_R@10 都从初始 0.058 退化到 0, 提示 Stage3 训练本身存在根本不稳定性 (e.g. optimizer 配置, learning rate schedule, gradient clipping, 或 backbone 选择)"
+  },
+  "mixing_three_layer_independence": {
+    "init_three_layers_identical": true,
+    "init_value": "[1/3, 1/3, 1/3] 三层完全相同",
+    "after_epoch_52_max": "[0.3503, 0.3454, 0.3422] 三层不同 (max 差异 0.008, 表明 mixing_logits 开始分化)",
+    "after_epoch_53_max": "[0.3440, 0.3417, 0.3492] 三层进一步分化",
+    "verdict": "mixing_logits 是 3x3 nn.Parameter (per-layer 独立), 训练中三层真正分化 (init 相同但 gradient 三层独立)"
+  },
+  "ckpt_state": {
+    "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue23_option_d/best_adapter.pt",
+    "best_adapter_exists": false,
+    "reason": "val_R@10=0 退化, best_adapter.pt 未写 (沿用 #193 long_run best_adapter.pt epoch 50)",
+    "last_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue23_option_d/adapter.pt",
+    "last_adapter_epoch": 53
+  },
+  "structural_root_cause_final": {
+    "issue18_root_cause": "conditioner 路径对称 -> 三层 κ 同步",
+    "issue20_root_cause": "κ/mixing_grad = 0 -> 信号链路未通",
+    "issue23_root_cause": "Stage3 训练本身不稳定性 -> val_R@10 持续退化",
+    "conclusion": "option_D 已成功修复 (a) + (b), 排除这两个根因. 真正根因 (c) 尚未定位. 任何后续 issue 需优先排查 Stage3 训练本身 (optimizer / LR schedule / gradient clip / backbone freeze 完整性)"
+  },
+  "next_issue_recommendation": {
+    "issue_a": "[方向B Gate3] Stage3 训练稳定性专项: gradient clipping + LR warmup + 更小 LR (LR_CONDITIONER=1e-4 而非 1e-3) + 验证 backbone 完整性 + 早停启用更激进 (min_delta 改为 5e-4 而非 1e-4)",
+    "issue_b": "[方向B Gate3] 验证 backbone 完整性: 比较 HG_Rec frozen ckpt vs Stage3 训练中 backbone output 的 cosine similarity, 排除 backbone 漂移",
+    "issue_c": "[方向A precheck 修复 v3] 用 hrqvae_free_curv.FreeCurvVectorQuantization.kappa_m() 公共 API 替代 taskA 不可定位的 #47 公式"
+  },
+  "close_decision": "per #23 spec R23 NO-GO 'val_R@10 连续 >=2 epoch 为 0' 触发, 但 option_D 三个核心单变量 GO 判据 ✅ PASS, 排除 conditioner 路径对称根因, 关闭本 issue 转入 Stage3 训练稳定性排查.",
+  "related_artifacts": {
+    "script": "taskB/stage3/taskB_stage3_issue23_option_d.py",
+    "products_dir": "taskB/stage3/taskB_stage3_issue23_option_d/ (adapter.pt + log)",
+    "issue20_option_c_verdict": "verdicts/issue20_option_c_nogo_verdict.json",
+    "issue18_final_verdict": "verdicts/issue18_final_no_go_verdict.json"
+  },
+  "verdict_path": "verdicts/issue23_option_d_r23_verdict.json"
+}

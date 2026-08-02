@@ -1,0 +1,119 @@
+{
+  "issue": 23,
+  "variable": "option_D conditioner  (3 x curvature_embed + 3 x conditioner head)",
+  "inherited_from_#20": "T5 encoder block 4-5  + LR_UNFROZEN_T5=5e-5",
+  "start_epoch": 51,
+  "num_epochs": 56,
+  "epochs_actually_run": 2,
+  "initial_best_val_r10_epoch50": 0.058,
+  "best_val_r10": 0.058,
+  "best_epoch": 50,
+  "improvement_abs": 0.0,
+  "improvement_pct": 0.0,
+  "early_stop_triggered": false,
+  "r23_triggered": true,
+  "r23_reasons": [
+    "val_R@10=0  >=2 epoch"
+  ],
+  "elapsed_min": 2.666329475243886,
+  "val_trace": [
+    {
+      "epoch": 52,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.9023566842079163,
+        0.9465513229370117,
+        0.8876335024833679
+      ],
+      "mixing_per_layer": [
+        [
+          0.35033118724823,
+          0.3296544551849365,
+          0.3200143873691559
+        ],
+        [
+          0.32867053151130676,
+          0.34541893005371094,
+          0.3259105980396271
+        ],
+        [
+          0.32281893491744995,
+          0.3421711325645447,
+          0.33500993251800537
+        ]
+      ],
+      "mixing_max_per_layer": [
+        0.35033118724823,
+        0.34541893005371094,
+        0.3421711325645447
+      ],
+      "kappa_synced": false,
+      "mixing_degenerate": false,
+      "grad_summary": {
+        "cond_grad": 0.01383756003454067,
+        "ln_grad": 0.0,
+        "kappa_grad": 9.880041441179098e-05,
+        "mixing_grad": 8.235437567685519e-06,
+        "unfrozen_t5_grad": 0.013087502763489784,
+        "cond_head_grad_per_layer": [
+          0.0004861287581539009,
+          0.0004673313739939949,
+          0.0004851777866878213
+        ]
+      },
+      "loss": 1.8903249547833891,
+      "timestamp_unix": 1785657367.8477938
+    },
+    {
+      "epoch": 53,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.8634780645370483,
+        0.9016023278236389,
+        0.8183308839797974
+      ],
+      "mixing_per_layer": [
+        [
+          0.3440087139606476,
+          0.32740023732185364,
+          0.3285910189151764
+        ],
+        [
+          0.32499048113822937,
+          0.34168508648872375,
+          0.3333244323730469
+        ],
+        [
+          0.30611351132392883,
+          0.34463754296302795,
+          0.3492489755153656
+        ]
+      ],
+      "mixing_max_per_layer": [
+        0.3440087139606476,
+        0.34168508648872375,
+        0.3492489755153656
+      ],
+      "kappa_synced": false,
+      "mixing_degenerate": false,
+      "grad_summary": {
+        "cond_grad": 0.013823551563616006,
+        "ln_grad": 0.0,
+        "kappa_grad": 5.4339148828849915e-05,
+        "mixing_grad": 4.374321971392639e-06,
+        "unfrozen_t5_grad": 0.013099078561072657,
+        "cond_head_grad_per_layer": [
+          0.0004727598315979558,
+          0.0004492151172404682,
+          0.0004513683419838581
+        ]
+      },
+      "loss": 1.8882637825405713,
+      "timestamp_unix": 1785657444.9686718
+    }
+  ]
+}
