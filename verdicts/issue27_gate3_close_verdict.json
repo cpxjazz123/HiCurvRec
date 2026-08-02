@@ -1,0 +1,69 @@
+{
+  "issue": 27,
+  "step": "[方向B Gate3 blocked-no-val-earlystop] 共享路径收口 + best_adapter 写盘实证 + sid/dtype 取证 + backbone 漂移取证",
+  "gate": "Gate 3",
+  "verdict": "PASS — Gate3 blocked 解除 (best_adapter 实际写盘 + 共享解码路径 val_R@10=0.0500 ≥ 0.0300 + sid/dtype 逐 epoch 取证 + backbone cosine_sim 0.999+ 无漂移)",
+  "evaluated_at": "2026-08-02T18:58+10:00",
+  "single_variable": {
+    "tested": "短程续训 5 epoch (epoch 60-64) + val 改用共享解码路径 + best_adapter 写盘 + backbone 漂移取证",
+    "prior_ckpt": "taskB/stage3/taskB_stage3_issue193_long_run/adapter.pt (epoch 59, alpha=0.3057)",
+    "preserved": "全部超参沿用 issue193 long_run (LR_CONDITIONER=1e-3, LR_LAYERNORM=1e-4, patience=10, min_delta=1e-4), 未改架构/冻结/optimizer/mixing 参数化"
+  },
+  "gate3_three_checklist": {
+    "1_periodic_val_with_log": "PASS — val_trace.json 逐 epoch 记录 epoch/val_r10/in_range_pct/sid_sha256/ckpt_sha256/model_dtype/kappa_per_layer",
+    "2_best_adapter_actual_write": "PASS — best_adapter.pt 实际写盘 (epoch 60, val_R@10=0.0500, sha256=a5cf923e...). 日志含 best epoch 与 best 值. 修复 #25 遗留 'best_adapter 从未写盘' 问题",
+    "3_val_shared_function_same_import": "PASS — val 调用 taskB/common/stage4_decode.py::autoregressive_predict_constrained (同一函数对象, 非复制实现)"
+  },
+  "protocol_consistency_four_checklist": {
+    "1_same_function_object": "PASS — taskB/common/stage4_decode.py::autoregressive_predict_constrained 唯一实现",
+    "2_tokenizer_sid_mapping_consistent": "PASS — val_trace.json 逐 epoch sid_sha256=2dab2922... 与 Stage1 期望匹配 (sid_sha_match=true 全部 epoch)",
+    "3_ckpt_dtype_consistent": "PASS — ckpt_sha256 逐 epoch 记录, model_dtype=torch.float32, lm_head 路径 t5.model.lm_head 同一",
+    "4_decode_within_sid_space": "PASS — in_range_pct=100.0% 全部 epoch"
+  },
+  "val_earlystop_three_checklist": {
+    "1_periodic_val_log_verifiable": "PASS — val_trace.json 每 epoch 含 epoch/timestamp/val_r10/三层kappa/mixing/grad_summary",
+    "2_early_stop_config_complete": "PASS — monitor=val_R@10/mode=max/patience=10/min_delta=1e-4 配置齐全, best_adapter.pt 实际写盘 (epoch 60, val=0.0500)",
+    "3_val_same_path_as_stage4": "PASS — 共享函数 autoregressive_predict_constrained (非代理打分)"
+  },
+  "pass_criteria_five": {
+    "1_val_earlystop_3_items": "PASS",
+    "2_protocol_4_items": "PASS",
+    "3_val_r10_>=_0.0300_canary_level": "PASS — val_R@10=0.0500 (共享路径) >= #25 canary 0.0300, best 值可核实 (epoch 60)",
+    "4_three_layer_kappa_differentiation": "PASS — kappa 三层分化: epoch 60 [0.943,0.932,0.928] max-min=0.015 -> epoch 64 [0.872,0.848,0.813] max-min=0.059 > 1e-2, mixing 非退化 (max 0.408/0.367/0.356)",
+    "5_backbone_drift_and_grad_norm_persisted": "PASS — backbone_drift.json (逐层 cosine_sim 0.9991-0.9995 无漂移) + grad_norm_history.json (adapter/conditioner/kappa/mixing 4 组 grad norm) 均落盘"
+  },
+  "backbone_drift_evidence": {
+    "observation": "frozen HG_Rec ckpt vs Stage3 wrapper encoder 逐层 cosine_sim 0.9991-0.9995 (6 层, 全部 epoch)",
+    "conclusion": "backbone 几乎无漂移, 排除灾难性遗忘主导假设 (F3 不触发). Stage3 训练未显著破坏 backbone 表示",
+    "val_r10_gap_explanation": "val_R@10=0.0500 恒定 (200 样本, seed 固定), 低于 issue193 旧内联的 0.058. 差异来源 = val 采样 seed 不同 + 内联实现 vs 共享函数细微差异. 共享路径是 #25 验证的真实解码路径, 0.0500 为可信值"
+  },
+  "structural_root_cause_update": {
+    "issue25_protocol_mismatch": "已修复 — 共享解码函数唯一实现, 双路径对照确认 (0/200 identical)",
+    "issue27_best_adapter_write": "已修复 — best_adapter.pt 实际写盘 (epoch 60, val=0.0500)",
+    "issue27_backbone_drift": "排除 — backbone cosine_sim 0.999+ 无漂移, 非灾难性遗忘主导",
+    "remaining_root_cause": "val_R@10=0.0500 << baseline 0.1020 (差 0.052). 排除协议失配 + 排除 backbone 漂移 + 排除 conditioner 架构 (option_D) + 排除 kappa 路径 (taskA #24). 剩余候选: Stage3 训练本身优化 (LR schedule / gradient clip / 更大模型容量 / loss 函数) 或 codebook 容量限制"
+  },
+  "evidence_persisted": {
+    "best_adapter_pt": "taskB/stage3/taskB_stage3_issue27_close/best_adapter.pt (epoch 60, val_R@10=0.0500, sha256=a5cf923e...)",
+    "adapter_pt": "taskB/stage3/taskB_stage3_issue27_close/adapter.pt (epoch 64)",
+    "val_trace_json": "taskB/stage3/taskB_stage3_issue27_close/val_trace.json (5 epoch, sid_sha256+dtype 逐 epoch)",
+    "backbone_drift_json": "taskB/stage3/taskB_stage3_issue27_close/backbone_drift.json (6 次取证, cosine_sim 0.999+)",
+    "grad_norm_history_json": "taskB/stage3/taskB_stage3_issue27_close/grad_norm_history.json (5 epoch 4 组 grad norm)",
+    "verdict_json": "taskB/stage3/taskB_stage3_issue27_close/verdict.json",
+    "_TRAINING_PID": "1311167 (terminated)"
+  },
+  "next_issue_recommendation": {
+    "issue_a": "[方向B Gate4] Stage3 训练稳定性专项 (跨方向共识): 在共享路径 val_R@10=0.05 基础上, 排查 LR schedule / gradient clip / optimizer 配置 / loss 函数. 注意 kappa 更新需要单独 param group (taskA #26 T2 已验证 LR=1e-2 Adam 自适应步长让 kappa 真正更新)",
+    "issue_b": "[方向A Gate4] taskA 同样在共享路径上收口 (kappa 更新已达成 c3, 但 val 需验证)",
+    "issue_c": "[方向B Gate4] canary 全量评估 (Stage4 R@K) 在 best_adapter (epoch 60, val=0.0500) 上跑, 验证是否达到 baseline 0.1020"
+  },
+  "close_decision": "per #27 spec 5 项 PASS 判据全达成 (best_adapter 写盘 + 协议 4 项全 PASS + val_R@10=0.0500>=0.0300 + kappa 分化 + backbone 无漂移取证). Gate3 blocked 解除, 关闭 #27. 但 val_R@10=0.0500 << baseline 0.1020, 转入 Stage3 训练稳定性专项 (下一 issue).",
+  "related_artifacts": {
+    "script": "taskB/stage3/taskB_stage3_issue27_close.py",
+    "products_dir": "taskB/stage3/taskB_stage3_issue27_close/",
+    "shared_decode_module": "taskB/common/stage4_decode.py",
+    "issue25_verdict": "verdicts/issue25_protocol_ab_verdict.json",
+    "issue26_verdict": "verdicts/issue26_t1c_canary_verdict.json"
+  },
+  "verdict_path": "verdicts/issue27_gate3_close_verdict.json"
+}
