@@ -78,13 +78,13 @@ SID_EXPECTED = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a
 
 if len(sys.argv) > 1 and sys.argv[1] == "a":
     reconstruct("470", SID_EXPECTED,
-                "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_kappa_scale_recontinue/adapter.pt",
+                "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_kappa_scale_recontinue/adapter.pt",
                 "/home/wlia0047/ar57/wenyu/GeneRec/logs/task470_issue177_gate3_a_recontinue_fix.log",
-                "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_kappa_scale_recontinue")
+                "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_kappa_scale_recontinue")
 elif len(sys.argv) > 1 and sys.argv[1] == "b":
     reconstruct("471", SID_EXPECTED,
-                "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_mixed_curv_recontinue/adapter.pt",
+                "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_mixed_curv_recontinue/adapter.pt",
                 "/home/wlia0047/ar57/wenyu/GeneRec/logs/task471_issue178_gate3_b_recontinue_fix.log",
-                "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_mixed_curv_recontinue")
+                "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_mixed_curv_recontinue")
 else:
     print("usage: _reconstruct_train_verdict.py {a|b}")

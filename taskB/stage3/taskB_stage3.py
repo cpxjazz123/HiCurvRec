@@ -58,14 +58,14 @@ LR_LAYERNORM = 1e-4
 FD_EPS = 1e-3          # 有限差分扰动
 MIXING_DEGENERATE_TH = 0.95  # softmax 分量权重 > 该值 = 退化
 
-PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue27_close/best_adapter.pt"
+PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_issue27_close/best_adapter.pt"
 T5_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_ckpt/HG_Rec_best.pth"
 SID_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_data/Instruments/Instruments_t5_hrqvae_poincare.npy"
 TRAIN_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_data/Instruments/train.parquet"
 EXPECTED_SID_SHA = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a"
 VALID_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/valid.parquet"
 
-PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag")
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_issue29_gate2_diag")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 TRAINING_PID_FILE = PRODUCT_DIR / "_TRAINING_PID"
 LOG_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/_logs")

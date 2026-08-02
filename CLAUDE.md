@@ -62,7 +62,7 @@
 
 **GPU**: 4× NVIDIA L40S (sm_89, 46GB/卡), 驱动 580.126.20, CUDA 13.0 (torch 2.11.0+cu130) / 12.x (TF kgat_mckg).
 
-**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/). taskA/taskB 每 stage 顶层只保留 1 个**自包含主脚本** (`taskX_stageN.py`, 直接运行, 无 archive/ 归档、无 wrapper 转发层), 历史脚本删除后可从 git 历史恢复. stage3 主脚本内联 wrapper 类定义 (issue24/issue23, 逐字节一致保 ckpt 兼容), stage4 的 `DEFAULT_WRAPPER` 指向 `taskX/stage3/taskX_stage3.py`. 共享模块 `common/` (含 `stage4_decode` / `stage4_eval_beam20`).
+**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/). taskA/taskB 每 stage 顶层只保留 1 个**自包含主脚本** (`taskX_stageN.py`, 直接运行, 无 archive/ 归档、无 wrapper 转发层), 历史脚本删除后可从 git 历史恢复. **训练产物统一放 `taskX/_history/`** (stage2/3 ckpt+verdict, stage4 canary; 主脚本 `PRODUCT_DIR`/`PRIOR_CKPT`/`STAGE2_VQ_CKPT` 均指向 `_history/`), stage 目录不放产物与 .pid. stage3 主脚本内联 wrapper 类定义 (issue24/issue23, 逐字节一致保 ckpt 兼容), stage4 的 `DEFAULT_WRAPPER` 指向 `taskX/stage3/taskX_stage3.py`. 共享模块 `common/` (含 `stage4_decode` / `stage4_eval_beam20`).
 
 **流水线**: 4 阶段 — Stage 1 sentence-t5-base embedding → Stage 2 Poincaré RQ-VAE SID (3→4 层去重 digit) → Stage 3 T5-mini 训练 → Stage 4 R@K/NDCG 评估.
 

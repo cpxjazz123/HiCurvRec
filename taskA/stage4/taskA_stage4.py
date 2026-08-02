@@ -18,7 +18,7 @@ Sanity: 不 load ckpt (adapter init α≈4.5e-5≈0) 时 beam20 R@10 应复现 b
 用法:
   python3 taskA/stage4/taskA_stage4.py \
       --device cuda:0 --n 1000 --tag issue28_diag \
-      --ckpt "taskA/stage3/taskA_stage3.py@taskA/stage3/taskA_stage3_issue28_gate2_diag/best_adapter.pt"
+      --ckpt "taskA/stage3/taskA_stage3.py@taskA/_history/taskA_stage3_issue28_gate2_diag/best_adapter.pt"
 """
 import argparse
 import importlib.util

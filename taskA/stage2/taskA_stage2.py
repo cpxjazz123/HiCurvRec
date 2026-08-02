@@ -67,7 +67,7 @@ SK_ITERS = 3
 BETA = 1.0
 SEED = 42
 
-PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage2/taskA_stage2_kappa_sync")
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 

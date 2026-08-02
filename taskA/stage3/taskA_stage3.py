@@ -65,17 +65,17 @@ LR_KAPPA_LOGITS = 1e-2   # #26 T2 已验证生效
 DELTA_KAPPA_ASSERT = 1e-4
 
 # 从 #26 T2 best_adapter (epoch 49, val_R@10=0.05) 续训 — 最新已确认 κ 更新状态
-PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue26_t2_lr_scan/best_adapter.pt"
+PRIOR_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_issue26_t2_lr_scan/best_adapter.pt"
 T5_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_ckpt/HG_Rec_best.pth"
 SID_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hrqvae_poincare.npy"
 TRAIN_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/train.parquet"
 # Issue #30: val 改用 baseline 同 split — valid.parquet (HG-Rec/dataset/Instruments), 替代 train 尾切
 VALID_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/valid.parquet"
-STAGE2_VQ_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage2/taskA_stage2_kappa_sync/hrqvae_kappa_sync.ckpt"
+STAGE2_VQ_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync/hrqvae_kappa_sync.ckpt"
 VAL_SPLIT_RATIO = 0.2
 EXPECTED_SID_SHA = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a"
 
-PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag")
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_issue28_gate2_diag")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 TRAINING_PID_FILE = PRODUCT_DIR / "_TRAINING_PID"
 LOG_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_logs")

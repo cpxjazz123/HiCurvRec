@@ -67,7 +67,7 @@ SEED = 42
 W_MIN = 0.1
 W_MAX = 0.8
 
-PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage2/taskB_stage2_weighted_mixed")
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage2_weighted_mixed")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 

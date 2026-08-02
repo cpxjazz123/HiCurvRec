@@ -275,3 +275,27 @@ products/task338/stage1/*.pth
 products/task338/t5_out/**/*.pth
 HG-Rec/dataset/Instruments/Instruments_t5_rqvae_issue51_combined.npy
 HG-Rec/dataset/Instruments/Instruments_t5_hrqvae_issue51_combined.npy
+
+# === taskA/taskB 训练产物 (二进制可再生成, 不入库; 目录整理 Task #39 延续) ===
+taskA/_ckpt/
+taskB/_ckpt/
+taskA/_data/
+taskB/_data/
+taskA/_logs/
+taskB/_logs/
+# _history 只跟踪 json/md 文本产物, 忽略二进制
+taskA/_history/**/*.pth
+taskA/_history/**/*.pt
+taskA/_history/**/*.ckpt
+taskA/_history/**/*.npy
+taskA/_history/**/*.bin
+taskA/_history/**/*.h5
+taskB/_history/**/*.pth
+taskB/_history/**/*.pt
+taskB/_history/**/*.ckpt
+taskB/_history/**/*.npy
+taskB/_history/**/*.bin
+taskB/_history/**/*.h5
+# PID 标记 (训练时动态生成, 瞬态)
+*_TRAINING_PID
+*.pid

@@ -12,7 +12,7 @@
 用法:
   python3 taskB/stage4/taskB_stage4.py \
       --device cuda:1 --n 1000 --tag issue29_diag \
-      --ckpt "taskB/stage3/taskB_stage3.py@taskB/stage3/taskB_stage3_issue29_gate2_diag/best_adapter.pt"
+      --ckpt "taskB/stage3/taskB_stage3.py@taskB/_history/taskB_stage3_issue29_gate2_diag/best_adapter.pt"
 """
 import argparse
 import importlib.util
