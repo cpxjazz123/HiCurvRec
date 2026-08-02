@@ -1,0 +1,59 @@
+{
+  "issue": 15,
+  "step": "Step 4 Stage3 retrain + Gate 3 判定 (NO-GO)",
+  "gate": "Gate 3 (Stage3 训练)",
+  "verdict": "❌ FAIL — R23 NO-GO",
+  "evaluated_at": "2026-08-02T16:42+10:00",
+  "r23_trigger": {
+    "signal": "val_R@10=0 跨 ≥10 连续 checkpoint (epoch 1-10)",
+    "early_stop_triggered": true,
+    "early_stop_epoch": 10,
+    "best_val_r10": 0.0,
+    "best_epoch": -1,
+    "elapsed_min": 11.3,
+    "loss_trajectory": [1.8947, 1.8941, 1.8921, 1.8934, 1.8932, 1.8920, 1.8930, 1.8926, 1.8925, 1.8913],
+    "loss_drop_total": 0.0034,
+    "kappa_per_layer": [1.115, 1.115, 1.115, "→ 训练中漂移但始终同值 (per-layer κ 来自同一 logits, 不可分)"],
+    "new_param_grad_abs_mean": "5.7e-5 to 7.9e-5 (kappa_logits + mixing_logits 有梯度, 但数值极小)",
+    "conclusion": "Stage3 在 from-0 重训 + 新 learnable κ/mixing 参数下, 10 epoch 内 val_R@10 全部为 0, 模型未学到有效 SID 解码信号"
+  },
+  "ckpt_state": {
+    "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue15_retrain/best_adapter.pt",
+    "best_adapter_exists": false,
+    "reason": "best_val_r10=0.0 < initial_best=0.0, 没有任何 epoch 创新高, best_adapter.pt 未写入",
+    "last_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue15_retrain/adapter.pt",
+    "last_adapter_epoch": 10
+  },
+  "two_check_tables": {
+    "protocol_consistency_4_items": {
+      "1_training_stage4_same_implementation_path": "✅ PASS (跟 #192 long-run 同 autoregressive_predict + layer-wise mask)",
+      "2_tokenizer_sid_token_mapping_consistent": "✅ PASS (vocab_size=1025, valid 449 tokens, layer_ranges 同)",
+      "3_lm_head_path_dtype_consistent": "✅ PASS (t5.model.lm_head [1025,128] float32)",
+      "4_validity_constraint_100pct": "✅ PASS (in_range_pct=1.0 per epoch, autoregressive mask 强制有效 SID)"
+    },
+    "stage3_val_earlystop_3_items": {
+      "1_periodic_val_eval_with_log": "✅ PASS (val_trace.json 10 epoch, per epoch 1000 samples)",
+      "2_early_stopping_config_monitor_mode_patience": "✅ PASS (L78 patience=10, mode=max, monitor=val_R@10, early stop triggered @ epoch 10)",
+      "3_val_protocol_same_as_stage4": "✅ PASS (val 用 autoregressive_predict 跟 stage4 同路径)"
+    },
+    "all_7_protocol_items_pass": true,
+    "but_training_failed": "协议全 ✅ 但训练本身不收敛 (val_R@10=0 跨 10 epoch), Gate 3 判定 FAIL"
+  },
+  "root_cause_hypothesis": [
+    "(a) Stage3 from-0 重训 + 新 nn.Parameter kappa_logits/mixing_logits 路径, 训练初值 κ=softplus(0.5413)≈1.0 + mixing=[1/3,1/3,1/3] 平衡态, 梯度极小 (1e-5 量级), 训练动力学不足 → val_R@10=0",
+    "(b) T5 frozen 主干 + 仅 adapter (~132K 参数) + 9922 items 数据集, Stage3 本身信号弱, 续训 #192 epoch 48 (val_R@10=0.058) 跟 from-0 重训 (val_R@10=0) 形成对比 → 续训路径才能拿到非零 baseline",
+    "(c) Stage3 P4 修复 (validity 25→100%) 解决的是 decode 约束, 不解决训练信号弱问题; 单 P4 + 重训无法突破 val_R@10=0 上限"
+  ],
+  "decision": {
+    "issue_15_status": "closed-NO-GO (per R23 立即 kill + close)",
+    "gate_4_status": "❌ blocked — 训练无法产生 val_R@10 > 0 的 ckpt, canary 必失败",
+    "next_action": "不再重试 option 路径. 方向B 探索转入下一 issue, 焦点: 续训路径 (跟 #192 long-run 协议一致, 不改 curvature_meta 路径) + 真正扩大 κ 信号量级 / 解冻 T5 顶层 / 增大 conditioner capacity, 单变量验证.",
+    "issue_close_reason": "Stage3 from-0 重训 + 新 nn.Parameter 路径在 9922 items + T5 frozen + 60 epoch 设定下无法产生 val_R@10>0 模型, 跟 #13 Stage3 已训 (epoch 50 val_R@10=0.058) 差距显著, 路径不可行."
+  },
+  "commit_to_be_created": "(本 commit 后)",
+  "verdict_paths": {
+    "step1_curvature_fix": "verdicts/issue15_step1_curvature_fix_verify.json",
+    "step2_precheck_rejudge": "verdicts/issue15_step2_precheck_rejudge.json",
+    "step4_gate3_nogo": "verdicts/issue15_step4_gate3_nogo_verdict.json (本文件)"
+  }
+}
