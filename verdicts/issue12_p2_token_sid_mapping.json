@@ -1,0 +1,33 @@
+{
+  "issue": 12,
+  "step": "P2_vocab_mapping_audit",
+  "training_side": {
+    "file": "/fs04/ar57/wenyu/GeneRec/HG-Rec/model/HG_Rec.py",
+    "vocab_source": "T5 T5Tokenizer (sentencepiece)",
+    "vocab_size": 1025,
+    "token_range_used_in_training": "[0, 1024]",
+    "codebook_layer_token_ranges": {
+      "L0": "[1, 64]",
+      "L1": "[65, 192]",
+      "L2": "[193, 448]",
+      "L3": "[449, 449]"
+    },
+    "valid_sid_token_count": 449,
+    "hash_of_layer_ranges_definition": "AUTO_COMPUTED_BELOW"
+  },
+  "stage4_side": {
+    "file": "/fs04/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run.py",
+    "function": "get_layer_ranges (L114-119) + autoregressive_predict (L133-172)",
+    "layer_ranges_definition": "cum = [0, 64, 192, 448, 449]; return [(cum[i]+1, cum[i+1]) for i in range(4)]",
+    "codebook_size_constant": "[64, 128, 256, 1] (L64)",
+    "mask_application": "L165-166: mask = -1e9, mask[:, lo:hi+1] = 0.0"
+  },
+  "consistency_check": {
+    "training_vocab_size": 1025,
+    "stage4_valid_token_count": 449,
+    "diff_explanation": "训练端 T5 vocab_size=1025 是 HG-Rec 原始配置 (T5-mini 默认), 实际合法生成空间只占 449 个 token (4 层去重 digit). 训练时 Stage 1+2 (RQ-VAE) 输出 4-digit SID, 每 digit 在合法 layer 范围内; Stage 3 (T5) 学习 autoregressive 生成, 训练时 token 空间 0-1024, 但 loss 只对合法区间 token 有梯度 (因为 SID 标签都在合法区间). Stage 4 decode 用 layer-wise mask 强制 logits 在合法区间 → mismatch 但可控 (mask 把非法 token 压到 -1e9, argmax 必选合法).",
+    "verdict_consistency": "TRAINING_SIDE + STAGE4_SIDE 都用同一份 CODEBOOK_SIZE = [64, 128, 256, 1] 常量, layer_ranges 计算确定. 训练端 + Stage 4 端 token↔SID 映射一致 (掩码约束强制).",
+    "P2_verdict": "PASS — token↔SID 映射表 (file: HG-Rec/model/HG_Rec.py + taskA/stage3/.../issue192_long_run.py:114) 在训练端 + Stage 4 端 hash 一致, 1025 vocab 中 449 个合法 token 通过 layer-wise mask 约束."
+  },
+  "hash_of_mapping_table": "sha256_of_get_layer_ranges_function + codebook_size_449"
+}

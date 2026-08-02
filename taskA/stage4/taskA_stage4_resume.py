@@ -16,6 +16,17 @@ PROJECT = "/home/wlia0047/ar57/wenyu/GeneRec"
 sys.path.insert(0, f"{PROJECT}/HG-Rec/model")
 sys.path.insert(0, f"{PROJECT}/HG-Rec/data")
 
+# Issue #12 Step 2: 引入 long-run script 拿 autoregressive_predict + get_layer_ranges
+_spec_lr = importlib.util.spec_from_file_location(
+    "t_lr", f"{PROJECT}/taskA/stage3/taskA_stage3_issue192_long_run.py"
+)
+_m_lr = importlib.util.module_from_spec(_spec_lr)
+_spec_lr.loader.exec_module(_m_lr)
+get_layer_ranges = _m_lr.get_layer_ranges
+autoregressive_predict = _m_lr.autoregressive_predict
+CODEBOOK_SIZE = [64, 128, 256, 1]  # 跟 long-run 一致
+layer_ranges = get_layer_ranges(CODEBOOK_SIZE)
+
 # Load wrapper module from task470
 _t470_path = os.path.join(PROJECT, "taskA/stage3/taskA_stage3_kappa_scale_recontinue.py")
 spec = importlib.util.spec_from_file_location("task470_mod", _t470_path)
@@ -164,23 +175,18 @@ def main():
                 residual, alpha = model_wrapper.adapter(x_emb, sid_meta, kappa_meta, scale_meta)
                 x_emb_with_residual = x_emb + residual
                 x_emb_with_residual = model_wrapper.first_input_ln(x_emb_with_residual)
-                decoder_input_ids = torch.zeros(B, 4, dtype=torch.long, device=DEVICE)
+                # Issue #12 Step 2: 用 autoregressive_predict (layer-wise SID mask) 替换 parallel argmax
+                # 修复 P4: 强制每步只在合法 SID 区间采样, validity = 100%
                 encoder_outputs = model_wrapper.t5.model.encoder(
                     inputs_embeds=x_emb_with_residual,
                     attention_mask=attention_mask,
                 )
-                decoder_outputs = model_wrapper.t5.model.decoder(
-                    input_ids=decoder_input_ids,
-                    encoder_hidden_states=encoder_outputs.last_hidden_state,
-                    encoder_attention_mask=attention_mask,
-                )
-                logits = model_wrapper.t5.model.lm_head(decoder_outputs.last_hidden_state)
-
-                preds = logits.argmax(dim=-1)
+                # 直接调 autoregressive_predict 拿到 (B, 4) tokens (受 layer-wise mask 约束)
+                preds = _m_lr.autoregressive_predict(model_wrapper, history_tensor, attention_mask, layer_ranges)
                 for i in range(B):
                     pred = tuple(preds[i].cpu().tolist()[:4])
                     target = tuple(target_tensor[i].cpu().tolist()[:4])
-                    preds_list.append([pred])  # 1-candidate list (argmax)
+                    preds_list.append([pred])  # 1-candidate list (argmax via autoregressive)
                     targets_list.append(target)
                 n_processed += B
         # Compute metrics
