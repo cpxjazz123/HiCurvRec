@@ -1,0 +1,22 @@
+{
+  "issue": 12,
+  "step": "Step 4 beam search K=20",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+  "ckpt_epoch": 48,
+  "canary_n": 100,
+  "beam_size": 20,
+  "elapsed_sec": 25.80187964439392,
+  "metrics": {
+    "R@5": 0.04,
+    "R@10": 0.05,
+    "R@20": 0.09,
+    "NDCG@5": 0.019484591188793924,
+    "NDCG@10": 0.02263923995665121,
+    "NDCG@20": 0.03319868335371212
+  },
+  "validity_pct": 100.0,
+  "n_unique_metrics": 6,
+  "monotone_R_at_K": true,
+  "verdict": "PASS",
+  "note": "per-sample beam search 4-step + layer-wise mask, 修复 #12 Step 4 (6 指标互不恒等)"
+}
