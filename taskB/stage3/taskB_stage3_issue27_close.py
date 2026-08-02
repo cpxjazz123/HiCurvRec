@@ -3,7 +3,7 @@
 
 Per #27 spec ( =  epoch, ):
 -  issue193_long_run/adapter.pt (epoch 59)  ,  <=5 epoch (epoch 60-64)
--  taskB/common/stage4_decode.py::autoregressive_predict_constrained  val ( ,
+-  common/stage4_decode.py::autoregressive_predict_constrained  val ( ,
 - best_adapter.pt   (issue193 long_run epoch 50 val_R@10=0.058,  issue27   val_R@10  )
 - val_trace.json  epoch  sid_sha256 + ckpt_sha256 + dtype + in_range_pct
 - SIGTERM/SIGINT handler + atexit ( kill )
@@ -26,12 +26,12 @@ from pathlib import Path
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/taskB/common")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 
 os.environ["TRITON_CACHE_DIR"] = "/home/wlia0047/.triton/cache_issue27"
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
 
-from taskB.common.stage4_decode import (
+from common.stage4_decode import (
     autoregressive_predict_constrained, get_layer_ranges, compute_r_at_k,
 )
 from dataset import GenRecDataset

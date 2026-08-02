@@ -22,12 +22,12 @@ from pathlib import Path
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/taskB/common")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 
 os.environ["TRITON_CACHE_DIR"] = "/home/wlia0047/.triton/cache_issue25"
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
 
-from taskB.common.stage4_decode import (
+from common.stage4_decode import (
     autoregressive_predict_constrained, get_layer_ranges, compute_r_at_k
 )
 from HG_Rec import HG_Rec

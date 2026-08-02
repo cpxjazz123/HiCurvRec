@@ -3,7 +3,7 @@
 
 Per #26 spec:
 - T1a  meta : v3 adapter forward  kappa_meta/scale_meta
-- T1b  taskB/common/stage4_decode.py  (, taskA , )
+- T1b  common/stage4_decode.py  (, taskA , )
 - T1c  v3 ckpt  canary:  taskA_stage3_issue24_precheck_v3/adapter.pt (epoch 9/10),
    >=200  argmax + 
 -  canary_verdict.json + t1a_audit.json + sid/dtype 
@@ -22,12 +22,12 @@ from pathlib import Path
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/taskB/common")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 
 os.environ["TRITON_CACHE_DIR"] = "/home/wlia0047/.triton/cache_issue26"
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
 
-from taskB.common.stage4_decode import (
+from common.stage4_decode import (
     autoregressive_predict_constrained, get_layer_ranges, compute_r_at_k,
 )
 from dataset import GenRecDataset
@@ -177,7 +177,7 @@ def main():
     model_wrapper.eval()
     model_wrapper.t5.eval()
 
-    # T1c: real argmax + per-layer constraint via shared decode function (taskB/common/stage4_decode.py::autoregressive_predict_constrained)
+    # T1c: real argmax + per-layer constraint via shared decode function (common/stage4_decode.py::autoregressive_predict_constrained)
     preds = []
     targets_all = []
     in_range = 0
@@ -249,7 +249,7 @@ def main():
         "sid_sha_match": sid_sha == EXPECTED_SID_SHA,
         "t5_sha256": t5_sha,
         "canary_n": n,
-        "decode_protocol": "shared_autoregressive_predict_constrained (taskB/common/stage4_decode.py)",
+        "decode_protocol": "shared_autoregressive_predict_constrained (common/stage4_decode.py)",
         "metrics": metrics,
         "in_range_pct": in_range_pct,
         "audit_P1_P4": {

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, 基线 Task #84 R@10=0.1020 (Musical_Instruments 9922 items).
+> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, 基线 Task #84 valid R@10=0.1267 / test R@10=0.1024 (Musical_Instruments 9922 items).
 
 ---
 
@@ -12,7 +12,7 @@
 
 **R4**: 修改 Python 脚本后必须立即 `python3 -m py_compile <file>` 验证语法, 文档文件例外.
 
-**R5**: 任务硬约束 — 基线 HG-Rec Task #84 (R@10=0.1020), 仅 RQ-VAE 量化, Musical_Instruments 数据集 (9922 items), 4 阶段流水线, seed=42.
+**R5**: 任务硬约束 — 基线 HG-Rec Task #84 (valid R@10=0.1267, test R@10=0.1024), 仅 RQ-VAE 量化, Musical_Instruments 数据集 (9922 items), 4 阶段流水线, seed=42.
 
 **R7**: 启动新实验前必须 `nvidia-smi` 核对 GPU 状态 (util<10%, mem<5GB), 选完全空闲 GPU 启动, 禁止等待已占卡或把多实验挤同一张卡.
 
@@ -58,7 +58,7 @@
 
 ## 项目元数据 (6 条)
 
-**仓库**: HG-Rec 复现 + κ-Stereographic 变体实验, 当前基线 Task #84 (R@10=0.1020), 不用 phonism/Toys.
+**仓库**: HG-Rec 复现 + κ-Stereographic 变体实验, 当前基线 Task #84 (valid R@10=0.1267, test R@10=0.1024), 不用 phonism/Toys.
 
 **GPU**: 4× NVIDIA L40S (sm_89, 46GB/卡), 驱动 580.126.20, CUDA 13.0 (torch 2.11.0+cu130) / 12.x (TF kgat_mckg).
 
@@ -66,6 +66,6 @@
 
 **流水线**: 4 阶段 — Stage 1 sentence-t5-base embedding → Stage 2 Poincaré RQ-VAE SID (3→4 层去重 digit) → Stage 3 T5-mini 训练 → Stage 4 R@K/NDCG 评估.
 
-**评估**: HG-Rec baseline R@5/10/20 = 0.0816/0.1020/0.1279, NDCG@5/10/20 = 0.0690/0.0755/0.0821, 决策阈值 R@10 > 0.1020 GO.
+**评估**: HG-Rec baseline (全量核查 valid.parquet 24772 样本) R@5/10/20 = 0.1029/0.1267/0.1561, test.parquet = 0.0819/0.1024/0.1283; NDCG 未全量核查 (旧记录 0.0690/0.0755/0.0821). 决策阈值 = valid R@10 > 0.1267 GO. 注意: N=1000 前序子集系统性偏低 ~25%, 评估必须用全量或随机采样.
 
 **依赖**: torch >= 2.0, pytorch-lightning, hydra-core, transformers, torchmetrics (详见 requirements.txt).
