@@ -4,7 +4,7 @@
 
 ---
 
-## R 规则 (26 条)
+## R 规则 (27 条)
 
 **R1**: 使用 `genrec_env` (默认所有任务) 或 `deepke` (KG 任务) 两个 conda env, base anaconda Python 3.11.7 仅适用于 zero-dep grep + MiniMax API 调用.
 
@@ -47,6 +47,8 @@
 **R25**: issue 里的 "方向A" / "方向B" 指的就是 taskA/ + taskB/ (代码位置 / 入口 / 产物路径), 禁止把它们解读为其它 lineage (e.g. TIGER / LETTER / RecBole / phonism). 命名演化: 历史 issue 文本可能用 "方向A/方向B" 或 "Issue #55 lineage / Issue #56 lineage" 表达, 实际当前实现是 taskA/ + taskB/ 目录; 检索代码 / 产物 / 数据时用此映射.
 
 **R26**: 每个 tick 必须实际推进 open issue 的工作 (启动 precheck / Gate1 / 训练 / 评估 / 修复 / 验证 之一), 不允许仅停留在规划 / §16 状态描述 / commit + close comment 而未启动实际工作. 判定标准: 该 tick 至少执行一次以下动作 — 读取相关代码并产出诊断结论、运行 precheck 脚本、启动训练 (写 _TRAINING_PID)、产出 Gate 评估物 (verdict / 产物文件). 仅发 kickoff comment + commit §16 = 不算实际工作.
+
+**R27**: 在 R26 基础上强化: 每个 tick 在做 issue 任务时必须 **启动实际脚本运行** (例如 `python3 taskA/stage2/taskA_stage2_kappa_sync.py` / `python3 taskB/stage3/..._train.py` / `python3 taskA/stage4/..._eval.py`), 而不是仅规划脚本 / 读脚本 / 写脚本 / 改 verdict 文件. 判定标准: 该 tick 至少执行一次 `python3 <existing_script>.py` 并产生 PID 活跃运行 (写入 _TRAINING_PID 或 nvidia-smi 显示 util>0%). 仅 hash 计算 / verdict 写入 / comment 发送 = 不算实际脚本运行.
 
 ---
 
