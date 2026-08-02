@@ -16,8 +16,7 @@ PROJECT = STAGE.parent.parent
 
 MODES = {
     'kappa_sync': ('taskA_stage2_kappa_sync.py', 'Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证  R18 4 维度路径对比 vs I'),
-    'kappa_vq_fix': ('taskA_stage2_kappa_vq_fix.py', 'Task #468 / Issue #175 [方向A Gate2] κ 经代码本量化距离直接进入 VQ 损失的 forward-path 修复  Per Is'),
-    'mckg_codebook': ('taskA_stage2_mckg_codebook.py', 'Task #174 Stage 2 fork: 用 MCKGGatingHRQVAE 加载 D 臂 ckpt (含 gate_net 参数).  Mirror')
+    'kappa_vq_fix': ('taskA_stage2_kappa_vq_fix.py', 'Task #468 / Issue #175 [方向A Gate2] κ 经代码本量化距离直接进入 VQ 损失的 forward-path 修复  Per Is')
 }
 DEFAULT_MODE = 'kappa_vq_fix.py'
 

@@ -1,0 +1,56 @@
+{
+  "loss_value": 2.0093467235565186,
+  "alpha_value": 4.5398901420412585e-05,
+  "grad_summary": {
+    "t5.model.encoder.block.0.layer.0.layer_norm.weight": {
+      "abs_mean": 0.009467225521802902,
+      "abs_max": 0.029885679483413696,
+      "finite": true
+    },
+    "adapter.alpha_logit": {
+      "abs_mean": 1.342150657279717e-08,
+      "abs_max": 1.342150657279717e-08,
+      "finite": true
+    },
+    "adapter.curvature_embed.weight": {
+      "abs_mean": 0.0,
+      "abs_max": 0.0,
+      "finite": true
+    },
+    "adapter.curvature_embed.bias": {
+      "abs_mean": 4.296212807730626e-08,
+      "abs_max": 1.4331791930999316e-07,
+      "finite": true
+    },
+    "adapter.sid_token_proj.weight": {
+      "abs_mean": 0.0,
+      "abs_max": 0.0,
+      "finite": true
+    },
+    "adapter.sid_token_proj.bias": {
+      "abs_mean": 4.2775042174980626e-08,
+      "abs_max": 1.425872255822469e-07,
+      "finite": true
+    },
+    "adapter.conditioner.0.weight": {
+      "abs_mean": 1.3831143341747065e-08,
+      "abs_max": 1.5324786772907828e-07,
+      "finite": true
+    },
+    "adapter.conditioner.0.bias": {
+      "abs_mean": 5.8172453520910494e-08,
+      "abs_max": 3.074523533541651e-07,
+      "finite": true
+    },
+    "adapter.conditioner.2.weight": {
+      "abs_mean": 1.789582526612321e-08,
+      "abs_max": 4.495069276799768e-07,
+      "finite": true
+    },
+    "adapter.conditioner.2.bias": {
+      "abs_mean": 2.448221323447797e-07,
+      "abs_max": 9.359716273138474e-07,
+      "finite": true
+    }
+  }
+}

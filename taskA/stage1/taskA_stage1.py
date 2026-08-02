@@ -15,8 +15,6 @@ ARCHIVE = STAGE / "_archive"
 PROJECT = STAGE.parent.parent
 
 MODES = {
-    'mckg_gating': ('taskA_stage1_mckg_gating.py', 'Task #174 Stage 1 — MCKG门控融合HRQVAE (用户 design §5 D 臂).  D 臂 = M=2 components + 门'),
-    'orc_locked': ('taskA_stage1_orc_locked.py', 'Task #175 Stage 1 — κ-Stereographic + κ LOCKED at Ollivier ORC 实测值.  Hypothesis'),
     'riemannian_adamw': ('taskA_stage1_riemannian_adamw.py', 'Task #157 — Issue #55 Stage 1 训练 (Riemannian AdamW + per-layer s_l, GPU 3).  跟 T')
 }
 DEFAULT_MODE = 'riemannian_adamw.py'

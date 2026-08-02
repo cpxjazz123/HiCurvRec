@@ -1,0 +1,191 @@
+{
+  "issue": 15,
+  "step": "Step 4 Stage3 retrain (\u542b learnable kappa_logits / mixing_logits)",
+  "best_val_r10": 0.0,
+  "best_epoch": -1,
+  "early_stop_triggered": true,
+  "total_epochs_run": 10,
+  "elapsed_min": 11.3568825562795,
+  "val_trace": [
+    {
+      "epoch": 1,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        1.1150364875793457,
+        1.1150364875793457,
+        1.1150364875793457
+      ],
+      "mixing_per_layer_max_weight": [
+        0.3469840884208679,
+        0.3469840884208679,
+        0.3469840884208679
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785651971.6216311
+    },
+    {
+      "epoch": 2,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        1.1474406719207764,
+        1.1474406719207764,
+        1.1474406719207764
+      ],
+      "mixing_per_layer_max_weight": [
+        0.3494618237018585,
+        0.3494618237018585,
+        0.3494618237018585
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652039.0518858
+    },
+    {
+      "epoch": 3,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        1.0605518817901611,
+        1.0605518817901611,
+        1.0605518817901611
+      ],
+      "mixing_per_layer_max_weight": [
+        0.3389473855495453,
+        0.3389473855495453,
+        0.3389473855495453
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652106.8470597
+    },
+    {
+      "epoch": 4,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.9111542701721191,
+        0.9111542701721191,
+        0.9111542701721191
+      ],
+      "mixing_per_layer_max_weight": [
+        0.37892189621925354,
+        0.37892189621925354,
+        0.37892189621925354
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652174.1459043
+    },
+    {
+      "epoch": 5,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.8482570648193359,
+        0.8482570648193359,
+        0.8482570648193359
+      ],
+      "mixing_per_layer_max_weight": [
+        0.38503867387771606,
+        0.38503867387771606,
+        0.38503867387771606
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652242.2162218
+    },
+    {
+      "epoch": 6,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.8117654323577881,
+        0.8117654323577881,
+        0.8117654323577881
+      ],
+      "mixing_per_layer_max_weight": [
+        0.3855455219745636,
+        0.3855455219745636,
+        0.3855455219745636
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652309.5687108
+    },
+    {
+      "epoch": 7,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.7837160229682922,
+        0.7837160229682922,
+        0.7837160229682922
+      ],
+      "mixing_per_layer_max_weight": [
+        0.38832515478134155,
+        0.38832515478134155,
+        0.38832515478134155
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652378.2149887
+    },
+    {
+      "epoch": 8,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.7592270374298096,
+        0.7592270374298096,
+        0.7592270374298096
+      ],
+      "mixing_per_layer_max_weight": [
+        0.39185288548469543,
+        0.39185288548469543,
+        0.39185288548469543
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652446.1812418
+    },
+    {
+      "epoch": 9,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.7390734553337097,
+        0.7390734553337097,
+        0.7390734553337097
+      ],
+      "mixing_per_layer_max_weight": [
+        0.38362300395965576,
+        0.38362300395965576,
+        0.38362300395965576
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652514.767761
+    },
+    {
+      "epoch": 10,
+      "val_r10": 0.0,
+      "val_in_range_pct": 1.0,
+      "val_n": 1000,
+      "kappa_per_layer": [
+        0.7130534648895264,
+        0.7130534648895264,
+        0.7130534648895264
+      ],
+      "mixing_per_layer_max_weight": [
+        0.38505610823631287,
+        0.38505610823631287,
+        0.38505610823631287
+      ],
+      "mixing_non_degenerate": true,
+      "timestamp_unix": 1785652583.6323016
+    }
+  ]
+}

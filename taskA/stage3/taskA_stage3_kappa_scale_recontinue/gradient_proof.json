@@ -1,0 +1,66 @@
+{
+  "loss_value": 2.0093472003936768,
+  "alpha_value": 4.5398901420412585e-05,
+  "grad_summary": {
+    "t5.model.encoder.block.0.layer.0.layer_norm.weight": {
+      "abs_mean": 0.009469958022236824,
+      "abs_max": 0.029896331951022148,
+      "finite": true
+    },
+    "adapter.alpha_logit": {
+      "abs_mean": 4.6009949983272236e-07,
+      "abs_max": 4.6009949983272236e-07,
+      "finite": true
+    },
+    "adapter.kappa_embed.weight": {
+      "abs_mean": 0.0,
+      "abs_max": 0.0,
+      "finite": true
+    },
+    "adapter.kappa_embed.bias": {
+      "abs_mean": 3.3970593449339503e-08,
+      "abs_max": 1.3941669863015704e-07,
+      "finite": true
+    },
+    "adapter.scale_embed.weight": {
+      "abs_mean": 3.472093013101585e-08,
+      "abs_max": 1.0840484776508674e-07,
+      "finite": true
+    },
+    "adapter.scale_embed.bias": {
+      "abs_mean": 3.472093013101585e-08,
+      "abs_max": 1.0840484776508674e-07,
+      "finite": true
+    },
+    "adapter.sid_token_proj.weight": {
+      "abs_mean": 0.0,
+      "abs_max": 0.0,
+      "finite": true
+    },
+    "adapter.sid_token_proj.bias": {
+      "abs_mean": 3.647758717306715e-08,
+      "abs_max": 1.1788465315021313e-07,
+      "finite": true
+    },
+    "adapter.conditioner.0.weight": {
+      "abs_mean": 2.272704691108629e-08,
+      "abs_max": 7.048041084090073e-07,
+      "finite": true
+    },
+    "adapter.conditioner.0.bias": {
+      "abs_mean": 4.80131099322989e-08,
+      "abs_max": 3.8016844428057084e-07,
+      "finite": true
+    },
+    "adapter.conditioner.2.weight": {
+      "abs_mean": 3.4840624607568316e-08,
+      "abs_max": 7.917791435829713e-07,
+      "finite": true
+    },
+    "adapter.conditioner.2.bias": {
+      "abs_mean": 2.414360267266602e-07,
+      "abs_max": 9.13791780021711e-07,
+      "finite": true
+    }
+  }
+}

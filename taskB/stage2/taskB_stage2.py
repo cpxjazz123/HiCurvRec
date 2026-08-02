@@ -15,9 +15,6 @@ ARCHIVE = STAGE / "_archive"
 PROJECT = STAGE.parent.parent
 
 MODES = {
-    'hgrec_fixed': ('taskB_stage2_hgrec_fixed.py', 'Task #178 Stage 2 fork: 用 vanilla HRQVAE 加载 fixed baseline ckpt (Phase 0 修复后).'),
-    'mixing_kappa_fix': ('taskB_stage2_mixing_kappa_fix.py', 'Task #469 / Issue #176 [方向B Gate2] mixing 权重 + κ 经代码本量化距离直接进入 VQ 损失 forward-path'),
-    'posdep_beta': ('taskB_stage2_posdep_beta.py', 'Task #176 + #177 Stage 2 fork: 用 PosDepBetaHRQVAE 加载 β(x) 位置依赖训练 ckpt.  Mirror o'),
     'weighted_mixed': ('taskB_stage2_weighted_mixed.py', 'Task #449 / Issue #158 [方向B Gate2] 加权混合曲率RQ-VAE代码本与完整SID链路验证  R18 4 维度路径对比 vs Is')
 }
 DEFAULT_MODE = 'weighted_mixed.py'

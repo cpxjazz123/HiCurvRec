@@ -1,0 +1,146 @@
+{
+  "issue": 29,
+  "step": "[\u65b9\u5411B Gate2] \u6df7\u5408\u66f2\u7387\u8bad\u7ec3\u7a33\u5b9a\u6027\u4e0e\u8868\u793a\u6d41\u6536\u53e3 \u2014 forward \u8d21\u732e\u8bca\u65ad",
+  "gate": "Gate2 \u8bca\u65ad",
+  "verdict": "PASS",
+  "evaluated_at": "2026-08-02T19:34:48+1000",
+  "diagnostics": {
+    "kappa_update": {
+      "pass": true,
+      "start": [
+        0.9433794021606445,
+        0.9317888021469116,
+        0.9282277822494507
+      ],
+      "end": [
+        0.8541549444198608,
+        0.8338524103164673,
+        0.7511740922927856
+      ],
+      "delta": [
+        0.08922445774078369,
+        0.09793639183044434,
+        0.17705368995666504
+      ]
+    },
+    "mixing_nondegenerate": {
+      "pass": true,
+      "mixing_max_weight": 0.3988856077194214,
+      "end": [
+        [
+          0.3988856077194214,
+          0.30182209610939026,
+          0.29929232597351074
+        ],
+        [
+          0.3151421844959259,
+          0.32113000750541687,
+          0.3637278079986572
+        ],
+        [
+          0.33426016569137573,
+          0.3118511736392975,
+          0.3538886606693268
+        ]
+      ]
+    },
+    "fd_sensitivity": {
+      "pass": true,
+      "max_sens": 3.189238,
+      "kappa_sens_max": 3.189238,
+      "mixing_sens_max": 0.946882
+    },
+    "component_differentiation": {
+      "pass": true,
+      "per_head_norms_epochs": [
+        {
+          "epoch": 0,
+          "per_head_norms": [
+            155.875595,
+            235.492859,
+            69.58004
+          ]
+        },
+        {
+          "epoch": 1,
+          "per_head_norms": [
+            308.805695,
+            287.037109,
+            238.090836
+          ]
+        },
+        {
+          "epoch": 2,
+          "per_head_norms": [
+            367.565155,
+            321.243835,
+            233.788956
+          ]
+        },
+        {
+          "epoch": 3,
+          "per_head_norms": [
+            377.46994,
+            316.856781,
+            206.200577
+          ]
+        },
+        {
+          "epoch": 4,
+          "per_head_norms": [
+            354.820404,
+            324.075745,
+            208.070023
+          ]
+        }
+      ]
+    },
+    "backbone_drift": {
+      "pass": true,
+      "min_cosine_sim": 0.9991836547851562
+    },
+    "val_canary": {
+      "pass": true,
+      "best_val_r10": 0.05,
+      "best_epoch": 0,
+      "best_adapter_exists": true
+    }
+  },
+  "config": {
+    "prior_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue27_close/best_adapter.pt",
+    "prior_epoch": 60,
+    "lr_conditioner": 0.001,
+    "lr_layernorm": 0.0001,
+    "fd_eps": 0.001,
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ]
+  },
+  "dtype_check": {
+    "model_dtype": "torch.float32",
+    "lm_head_dtype": "torch.float32",
+    "adapter_dtype": "torch.float32"
+  },
+  "sha256s": {
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "t5_ckpt_sha256": "56d046dbabdb1930691f1361419b030b6912409853fe84e645c67072ffecb86e",
+    "prior_ckpt_sha256": "a5cf923ea658f3bb94f092fc12e407c8228e7812d09e59cddad6609f83c5e8d9",
+    "best_adapter_sha256": "8804f0d781fd28245516d2402481ad7fdb68fd1faba2a57aafed1203c2ce2c82"
+  },
+  "best_val_r10": 0.05,
+  "best_epoch": 0,
+  "best_adapter_exists": true,
+  "evidence_persisted": {
+    "fd_sensitivity": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/fd_sensitivity.json",
+    "component_norms": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/component_norms.json",
+    "mixing_weights": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/mixing_weights.json",
+    "val_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/val_trace.json",
+    "backbone_drift": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/backbone_drift.json",
+    "grad_norm_history": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/grad_norm_history.json"
+  },
+  "verdict_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue29_gate2_diag/verdict.json"
+}

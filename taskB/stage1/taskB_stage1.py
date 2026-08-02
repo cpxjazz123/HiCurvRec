@@ -15,8 +15,7 @@ ARCHIVE = STAGE / "_archive"
 PROJECT = STAGE.parent.parent
 
 MODES = {
-    'mixed_curv_dist': ('taskB_stage1_mixed_curv_dist.py', 'Task #156 — Issue #56 Stage 1 训练 (α_l mixed_curv_dist, GPU 2).  基于 hrqvae_issue5'),
-    'posdep_beta': ('taskB_stage1_posdep_beta.py', 'Task #176 + #177 Stage 1 — κ-Stereographic + 位置依赖 β(x).  Task #176 (sigmoid MCKG')
+    'mixed_curv_dist': ('taskB_stage1_mixed_curv_dist.py', 'Task #156 — Issue #56 Stage 1 训练 (α_l mixed_curv_dist, GPU 2).  基于 hrqvae_issue5')
 }
 DEFAULT_MODE = 'mixed_curv_dist.py'
 

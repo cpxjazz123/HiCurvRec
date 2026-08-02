@@ -1,0 +1,399 @@
+{
+  "issue": 28,
+  "step": "[\u65b9\u5411A Gate2] \u03ba\u66f4\u65b0\u540e\u91cd\u6821\u51c6\u4e0e\u8bad\u7ec3\u7a33\u5b9a\u6027\u6536\u53e3 \u2014 codebook \u91cd\u6821\u51c6\u53d6\u8bc1\u8bca\u65ad",
+  "gate": "Gate2 \u8bca\u65ad",
+  "verdict": "PASS",
+  "evaluated_at": "2026-08-02T19:34:15+1000",
+  "c3_kappa_actual_update": {
+    "pass": true,
+    "kappa_start": [
+      0.25182822346687317,
+      0.22672703862190247,
+      0.24494607746601105
+    ],
+    "kappa_end": [
+      0.13238027691841125,
+      0.13637450337409973,
+      0.13355602324008942
+    ],
+    "delta_per_layer": [
+      0.11944794654846191,
+      0.09035253524780273,
+      0.11139005422592163
+    ],
+    "max_delta": 0.11944794654846191
+  },
+  "c4_codebook_recalibrate": {
+    "pass": true,
+    "n_recalibrate_triggers": 16447,
+    "n_kappa_updates": 16447,
+    "count_match": true,
+    "hash_changed_any": true,
+    "dist_delta_max_per_epoch": [
+      1.3485550880432129e-06,
+      1.2069940567016602e-06,
+      5.662441253662109e-07,
+      4.842877388000488e-07,
+      8.270144462585449e-07
+    ],
+    "dist_changed_any": true,
+    "recalibrate_count": 16447
+  },
+  "c5_val_canary": {
+    "pass": true,
+    "best_val_r10": 0.05,
+    "best_epoch": 0,
+    "best_adapter_exists": true
+  },
+  "backbone_drift": {
+    "pass": true,
+    "min_cosine_sim": 0.9997706413269043,
+    "n_epochs_drifted": 5
+  },
+  "config": {
+    "prior_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue26_t2_lr_scan/best_adapter.pt",
+    "prior_epoch": 49,
+    "prior_val_r10": 0.05,
+    "lr_kappa_logits": 0.01,
+    "num_epochs": 5,
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ],
+    "stage2_vq_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage2/taskA_stage2_kappa_sync/hrqvae_kappa_sync.ckpt",
+    "stage2_vq_sha256": "4b2e1ddbab3d12594d8e2f14569c780aef7fa6410271e888af3cdc7d56964424",
+    "stage2_final_kappas": [
+      -0.008186634629964828,
+      -0.008215096779167652,
+      -0.009594440460205078
+    ]
+  },
+  "dtype_check": {
+    "model_dtype": "torch.float32",
+    "lm_head_dtype": "torch.float32",
+    "adapter_dtype": "torch.float32"
+  },
+  "sha256s": {
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "t5_ckpt_sha256": "56d046dbabdb1930691f1361419b030b6912409853fe84e645c67072ffecb86e",
+    "prior_ckpt_sha256": "27e567b9c000889f39421bff9f8770f929b47d1357052f89cef646b0a71df0a0",
+    "best_adapter_sha256": "90e2b923c3c805df4b8a6b07ac9b83c7a2b4d77c1ec2aae057d53805fb49d8d3"
+  },
+  "best_val_r10": 0.05,
+  "best_epoch": 0,
+  "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/best_adapter.pt",
+  "best_adapter_exists": true,
+  "evidence_persisted": {
+    "recalibrate_log": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/recalibrate_log.json",
+    "val_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/val_trace.json",
+    "backbone_drift": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/backbone_drift.json",
+    "grad_norm_history": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/grad_norm_history.json",
+    "kappa_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/kappa_trace.json",
+    "dist_stats_history": [
+      {
+        "epoch": 0,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 0.25182822346687317,
+            "mean_dist": 0.09651774168014526,
+            "max_dist": 0.13436222076416016,
+            "median_dist": 0.09603501856327057,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.22672703862190247,
+            "mean_dist": 0.09380356222391129,
+            "max_dist": 0.14374497532844543,
+            "median_dist": 0.09378660470247269,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.24494607746601105,
+            "mean_dist": 0.09315603226423264,
+            "max_dist": 0.15027745068073273,
+            "median_dist": 0.0928436890244484,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 0.21507686376571655,
+            "mean_dist": 0.09651639312505722,
+            "max_dist": 0.13436080515384674,
+            "median_dist": 0.0960337445139885,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.2094167023897171,
+            "mean_dist": 0.09380298852920532,
+            "max_dist": 0.14374424517154694,
+            "median_dist": 0.09378603845834732,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.21322882175445557,
+            "mean_dist": 0.09315498173236847,
+            "max_dist": 0.1502760350704193,
+            "median_dist": 0.09284252673387527,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          1.3485550880432129e-06,
+          5.736947059631348e-07,
+          1.0505318641662598e-06
+        ]
+      },
+      {
+        "epoch": 1,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 0.21507686376571655,
+            "mean_dist": 0.09651639312505722,
+            "max_dist": 0.13436080515384674,
+            "median_dist": 0.0960337445139885,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.2094167023897171,
+            "mean_dist": 0.09380298852920532,
+            "max_dist": 0.14374424517154694,
+            "median_dist": 0.09378603845834732,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.21322882175445557,
+            "mean_dist": 0.09315498173236847,
+            "max_dist": 0.1502760350704193,
+            "median_dist": 0.09284252673387527,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 0.18306289613246918,
+            "mean_dist": 0.0965152159333229,
+            "max_dist": 0.13435956835746765,
+            "median_dist": 0.09603264182806015,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.1742488443851471,
+            "mean_dist": 0.09380178153514862,
+            "max_dist": 0.14374271035194397,
+            "median_dist": 0.09378484636545181,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.18203268945217133,
+            "mean_dist": 0.0931539312005043,
+            "max_dist": 0.1502746343612671,
+            "median_dist": 0.09284136444330215,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          1.1771917343139648e-06,
+          1.2069940567016602e-06,
+          1.0505318641662598e-06
+        ]
+      },
+      {
+        "epoch": 2,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 0.18306289613246918,
+            "mean_dist": 0.0965152159333229,
+            "max_dist": 0.13435956835746765,
+            "median_dist": 0.09603264182806015,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.1742488443851471,
+            "mean_dist": 0.09380178153514862,
+            "max_dist": 0.14374271035194397,
+            "median_dist": 0.09378484636545181,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.18203268945217133,
+            "mean_dist": 0.0931539312005043,
+            "max_dist": 0.1502746343612671,
+            "median_dist": 0.09284136444330215,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 0.16767942905426025,
+            "mean_dist": 0.09651464968919754,
+            "max_dist": 0.13435900211334229,
+            "median_dist": 0.09603209048509598,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.16263717412948608,
+            "mean_dist": 0.09380140900611877,
+            "max_dist": 0.14374220371246338,
+            "median_dist": 0.09378445893526077,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.16444915533065796,
+            "mean_dist": 0.09315336495637894,
+            "max_dist": 0.150273859500885,
+            "median_dist": 0.09284072369337082,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          5.662441253662109e-07,
+          3.725290298461914e-07,
+          5.662441253662109e-07
+        ]
+      },
+      {
+        "epoch": 3,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 0.16767942905426025,
+            "mean_dist": 0.09651464968919754,
+            "max_dist": 0.13435900211334229,
+            "median_dist": 0.09603209048509598,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.16263717412948608,
+            "mean_dist": 0.09380140900611877,
+            "max_dist": 0.14374220371246338,
+            "median_dist": 0.09378445893526077,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.16444915533065796,
+            "mean_dist": 0.09315336495637894,
+            "max_dist": 0.150273859500885,
+            "median_dist": 0.09284072369337082,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 0.1546751856803894,
+            "mean_dist": 0.09651416540145874,
+            "max_dist": 0.1343584954738617,
+            "median_dist": 0.09603163599967957,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.15804465115070343,
+            "mean_dist": 0.09380124509334564,
+            "max_dist": 0.14374200999736786,
+            "median_dist": 0.09378430992364883,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.15607884526252747,
+            "mean_dist": 0.09315308183431625,
+            "max_dist": 0.15027345716953278,
+            "median_dist": 0.09284041076898575,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          4.842877388000488e-07,
+          1.6391277313232422e-07,
+          2.8312206268310547e-07
+        ]
+      },
+      {
+        "epoch": 4,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 0.1546751856803894,
+            "mean_dist": 0.09651416540145874,
+            "max_dist": 0.1343584954738617,
+            "median_dist": 0.09603163599967957,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.15804465115070343,
+            "mean_dist": 0.09380124509334564,
+            "max_dist": 0.14374200999736786,
+            "median_dist": 0.09378430992364883,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.15607884526252747,
+            "mean_dist": 0.09315308183431625,
+            "max_dist": 0.15027345716953278,
+            "median_dist": 0.09284041076898575,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 0.13238027691841125,
+            "mean_dist": 0.09651333838701248,
+            "max_dist": 0.13435766100883484,
+            "median_dist": 0.09603086858987808,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 0.13637450337409973,
+            "mean_dist": 0.09380050748586655,
+            "max_dist": 0.14374110102653503,
+            "median_dist": 0.09378360211849213,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 0.13355602324008942,
+            "mean_dist": 0.09315234422683716,
+            "max_dist": 0.15027247369289398,
+            "median_dist": 0.09283958375453949,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          8.270144462585449e-07,
+          7.37607479095459e-07,
+          7.37607479095459e-07
+        ]
+      }
+    ]
+  },
+  "verdict_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue28_gate2_diag/verdict.json"
+}

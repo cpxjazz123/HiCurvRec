@@ -15,14 +15,8 @@ ARCHIVE = STAGE / "_archive"
 PROJECT = STAGE.parent.parent
 
 MODES = {
-    'issue15_retrain': ('taskB_stage3_issue15_retrain.py', 'Issue #15 [方向B Step 4] Stage3 重训 (从 0 开始, 含 learnable kappa_logits/mixing_logits'),
-    'issue18_continue': ('taskB_stage3_issue18_continue.py', 'Issue #18 [方向B Gate3] 单变量重训 — option_A 续训旧 best_adapter.  per #18 spec: - 基础: 沿用'),
-    'issue18_option_b': ('taskB_stage3_issue18_option_b.py', 'Issue #18 [方向B Gate3] 单变量重训 — option_A 续训旧 best_adapter.  per #18 spec: - 基础: 沿用'),
     'issue193_long_run': ('taskB_stage3_issue193_long_run.py', 'Issue #193 [方向B Gate4] 几何混合分量单seed正式长训+Task84六项评估.  承接 Issue #191 commit 2368e44'),
-    'issue20_option_c': ('taskB_stage3_issue20_option_c.py', 'Issue #20 [方向B Gate3] option_C 单变量 — 解冻 T5 顶层 N=2 层 (encoder block 4-5) 打通 κ/mix'),
     'issue23_option_d': ('taskB_stage3_issue23_option_d.py', 'Issue #23 [B Gate3] option_D  - conditioner  kappa  ( #20 ).  per #23 spec: - :'),
-    'issue25_canary': ('taskB_stage3_issue25_canary.py', 'Issue #25 canary - option_D ckpt +  + .  Per #25 spec: -  taskB_stage3_issue23_o'),
-    'issue27_close': ('taskB_stage3_issue27_close.py', 'Issue #27    + best_adapter  + backbone .  Per #27 spec ( =  epoch, ): -  issue1'),
     'issue29_gate2_diag': ('taskB_stage3_issue29_gate2_diag.py', 'Issue #29 [方向B Gate2] 混合曲率训练稳定性与表示流收口 — 短程单 seed 诊断.  Per #29 spec: - 诊断固定双曲分量、欧'),
     'mixed_curv_recontinue': ('taskB_stage3_mixed_curv_recontinue.py', 'Task #471 / Issue #178 [方向B Gate3续] 加权混合曲率元数据 T5 零中心有界混合残差验证.  R18 + Issue #178')
 }
