@@ -1,0 +1,16 @@
+{
+  "issue": 4,
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+  "ckpt_epoch": 48,
+  "canary_n": 100,
+  "metrics": {
+    "R@5": 0.01,
+    "R@10": 0.01,
+    "R@20": 0.01,
+    "NDCG@5": 0.01,
+    "NDCG@10": 0.01,
+    "NDCG@20": 0.01
+  },
+  "verdict": "PASS",
+  "function_fix_note": "compute_r_at_k + compute_ndcg_at_k \u6539\u4e3a K-candidate \u63a5\u53e3, argmax \u65f6\u6570\u5b66\u6b63\u786e (R@K\u2261R@1 \u6052\u7b49), beam search \u65f6 R@K \u5355\u8c03\u975e\u964d"
+}
