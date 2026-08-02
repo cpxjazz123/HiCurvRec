@@ -50,6 +50,10 @@
 
 **R27**: 在 R26 基础上强化: 每个 tick 在做 issue 任务时必须 **启动实际脚本运行** (例如 `python3 taskA/stage2/taskA_stage2_kappa_sync.py` / `python3 taskB/stage3/..._train.py` / `python3 taskA/stage4/..._eval.py`), 而不是仅规划脚本 / 读脚本 / 写脚本 / 改 verdict 文件. 判定标准: 该 tick 至少执行一次 `python3 <existing_script>.py` 并产生 PID 活跃运行 (写入 _TRAINING_PID 或 nvidia-smi 显示 util>0%). 仅 hash 计算 / verdict 写入 / comment 发送 = 不算实际脚本运行.
 
+**R28**: 优先级裁决 + 禁止 A-B 选项话术. 任何 OPEN issue 出现时 R10 v2 (idle) 自动失效, 触发 R19 激进 owner 模式. 任何决策 / 修复方案 / 启动判断**不允许**用"等用户拍板" / "是否启动?" / A-B 选项 / "你选" / "请告诉我" / "要不要" 等阻塞话术呈现, 必须直接给出推荐方案 + 立即执行 (R11 兜底顺序: CLAUDE.md > 上游 default > 论文 > 简单实用). **唯一例外**: 不可逆操作 (rm -rf / force push / 替换已发布 commit hash / 删除 issue 关联系) 才需用户确认. 出现 R10 v2 vs R19/R22 矛盾时, R22 (OPEN 立即闭环) 优先.
+
+**R29**: tick 完成硬判定. 每个 tick 输出必须同时满足: (a) ≥1 个 R26 动作 (启动 precheck / Gate 评估 / 修复 commit / 验证运行 / 训练启动 / 落盘 verdict) **且** (b) ≥1 个 R27 动作 (`python3 -m py_compile` / `python3 <existing_script>.py` 启动 / `nvidia-smi` 查询 / `git commit` / `git push` / `glab issue close`). 仅"分析报告 + A-B 选项 + 等用户拍板"形式 = R26+R27 双 FAIL, 即使伴随 4 维度对比 / 修复方案. Tick 末尾必须明确"已执行 X" + 给出实际产物 (verdict 路径 / commit hash / PID), 不允许"下一步待定" / "等你确认" / "请选择 A 或 B".
+
 ---
 
 ## 项目元数据 (6 条)
