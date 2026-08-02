@@ -32,9 +32,9 @@
 
 **R13**: 禁止使用 `EnterWorktree` 工具或 git worktree 机制, 代码/配置修改直接落在共享 checkout, 临时文件写到 `$CLAUDE_JOB_DIR/tmp`.
 
-**R15**: issue 闭环必须四件套 = verdict 落盘 + commit + `git push` + `gh issue close`, 不允许 commit 在本地不 push.
+**R15**: issue 闭环必须四件套 = verdict 落盘 + commit + `git push` + `glab issue close`, 不允许 commit 在本地不 push.
 
-**R16**: 每次 loop tick 第一步 `gh issue list --state open` 检查, 有 open issue → 必须完成 + close, 没有 → 允许 idle.
+**R16**: 每次 loop tick 第一步 `glab issue list` 检查, 有 open issue → 必须完成 + close, 没有 → 允许 idle.
 
 **R17**: commit message 必含 `Gate <N> FAIL/PASS` + 失败原因, 4 Gate = Stage 1/2/3/4, 前 Gate FAIL → 后 Gate STOP.
 
