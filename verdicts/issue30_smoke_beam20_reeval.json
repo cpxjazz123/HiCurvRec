@@ -1,0 +1,40 @@
+{
+  "n": 64,
+  "sid_sha": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+  "split": "valid.parquet",
+  "protocol": "beam20",
+  "tag": "smoke",
+  "per_ckpt": {
+    "taskA/stage3/taskA_stage3_issue28_gate2_diag/best_adapter.pt": {
+      "wrapper_module": "taskA/stage3/taskA_stage3_issue24_precheck_v3.py",
+      "beam20_r5": 0.0469,
+      "beam20_r10": 0.0781,
+      "beam20_r20": 0.0938,
+      "greedy_layerwise_r10": 0.0156,
+      "alpha": 0.13141
+    },
+    "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/best_adapter.pt": {
+      "wrapper_module": "taskA/stage3/taskA_stage3_issue24_precheck_v3.py",
+      "beam20_r5": 0.0469,
+      "beam20_r10": 0.0781,
+      "beam20_r20": 0.0938,
+      "greedy_layerwise_r10": 0.0156,
+      "alpha": 0.128286
+    },
+    "taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt": {
+      "wrapper_module": "taskA/stage3/taskA_stage3_kappa_scale_recontinue.py",
+      "beam20_r5": 0.0469,
+      "beam20_r10": 0.0625,
+      "beam20_r20": 0.0938,
+      "greedy_layerwise_r10": 0.0312,
+      "alpha": 0.212539
+    }
+  },
+  "t5_only_sanity": {
+    "beam20_r5": 0.0469,
+    "beam20_r10": 0.0938,
+    "beam20_r20": 0.1094,
+    "greedy_layerwise_r10": 0.0156,
+    "alpha": 4.5e-05
+  }
+}

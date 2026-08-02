@@ -1,0 +1,15 @@
+{
+  "n": 32,
+  "sid_sha": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+  "split": "valid.parquet",
+  "protocol": "beam20",
+  "tag": "post_cleanup_smoke",
+  "per_ckpt": {},
+  "t5_only_sanity": {
+    "beam20_r5": 0.0625,
+    "beam20_r10": 0.125,
+    "beam20_r20": 0.125,
+    "greedy_layerwise_r10": 0.0312,
+    "alpha": 4.5e-05
+  }
+}

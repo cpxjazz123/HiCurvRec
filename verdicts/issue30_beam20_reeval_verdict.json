@@ -1,0 +1,49 @@
+{
+  "issue": 30,
+  "step": "[协议修正第 1 步] baseline 同协议 beam20 重测现有 taskA/taskB adapter — valid.parquet + hrqvae_poincare SID + num_beams=20",
+  "gate": "评估链路校准",
+  "verdict": "协议修复已验证 (sanity 精确复现 baseline), 但现有 6 个 adapter 在 baseline 同协议下 R@10 全部 ≈ baseline (0.099-0.102), 无正增益 → 错配 A (评估协议) 修复完成, 但真实增益必须靠训练端修正 (Stage4 统一 beam20 + 训练引入真实 val) 才能产生",
+  "evaluated_at": "2026-08-02",
+  "protocol": {
+    "split": "HG-Rec/dataset/Instruments/valid.parquet (baseline 用 valid)",
+    "sid": "Instruments_t5_hrqvae_poincare.npy (sha256 2dab2922, 与训练一致)",
+    "decode": "t5.model.generate(num_beams=20, num_return_sequences=20, max_length=5) 无约束 (与 baseline HG_Rec.generate 同协议)",
+    "r_at_k": "target 4-token SID 出现在 top-k beam (与 train_HG-Rec.py calculate_pos_index 一致)",
+    "n": 1000,
+    "encoder_input": "adapter 改造后 inputs_embeds = first_input_ln(shared(hist) + residual)"
+  },
+  "sanity_check": {
+    "t5_only_beam20_r10": 0.101,
+    "t5_only_beam20_r5": 0.08,
+    "t5_only_beam20_r20": 0.129,
+    "baseline_reference": "R@5/10/20 = 0.0816/0.1020/0.1279 (Task #84, 同一 valid + beam20)",
+    "conclusion": "T5-only (adapter init α≈4.5e-5≈0) 在 valid 1000 子集上 beam20 R@10=0.101 ≈ 0.1020, R@5=0.08≈0.0816, R@20=0.129≈0.1279 → 整条评估链路 (数据/SID/inputs_embeds/generate beam20) 与 baseline 精确对齐, 证明决定性实验的协议修复生效"
+  },
+  "results_per_ckpt": {
+    "taskA issue28 best (α=0.131, wrap=issue24_precheck_v3)": "beam20 R@5/10/20 = 0.078/0.100/0.128, greedy R@10=0.035",
+    "taskA issue26 best (α=0.128, wrap=issue24_precheck_v3)": "beam20 R@5/10/20 = 0.077/0.099/0.129, greedy R@10=0.035",
+    "taskA kappa_scale_recontinue (α=0.104, wrap=kappa_scale_recontinue)": "beam20 R@5/10/20 = 0.077/0.101/0.129, greedy R@10=0.035",
+    "taskB issue29 best (α=0.261, wrap=issue23_option_d)": "beam20 R@5/10/20 = 0.080/0.100/0.127, greedy R@10=0.034",
+    "taskB issue27 best (α=0.282, wrap=issue23_option_d)": "beam20 R@5/10/20 = 0.079/0.102/0.129, greedy R@10=0.037",
+    "taskB mixed_curv_recontinue (epoch 9, 旧架构)": "跳过 — ckpt 无 kappa_logits/mixing_logits, 当前 mixed_curv_recontinue.py 已含该参数, 架构不匹配不可加载"
+  },
+  "key_findings": [
+    "1. 所有 adapter α 从 init 4.5e-5 训练到 0.10-0.28 (千倍增益), 但 beam20 R@10 在 0.099-0.102 区间波动, 与 baseline 0.101 无显著差异 → adapter 训练量对 R@10 无正贡献",
+    "2. 最佳单 ckpt = taskB issue27 best (0.102) 与 baseline 持平, 无一个超过",
+    "3. greedy-layerwise R@10 全部 0.034-0.037 恒定 → 印证根因分析: 过去 taskA/B 一直测的单候选指标, adapter 训练从未改善它",
+    "4. 修正路径第 1 步 (协议校准) 完成: 评估链路已与 baseline 对齐, 现在任何训练迭代都能看到真实 R@10"
+  ],
+  "conclusion_and_next": {
+    "stage4_unify": "修正路径第 2 步: taskA/B stage4 评估必须统一到 beam20 协议 (本 issue 已提供共享模块 taskB/common/stage4_eval_beam20.py), 禁止再报 greedy 单候选 R@10 与 baseline 对比",
+    "train_real_val": "修正路径第 3 步: 训练脚本 fake early-stop (min(0.10+(epoch+1)*0.0005, 0.115)) 必须替换为真实 valid beam20 val, best_adapter 选择基于真实 R@10",
+    "expectation": "协议修复不自动带来超基线; 现有 adapter 无真实增益, 后续必须靠训练端真实优化 (LR/epoch/val 反馈) 才有机会超过 0.1020"
+  },
+  "evidence_persisted": {
+    "shared_module": "taskB/common/stage4_eval_beam20.py (generate_beam20 + recall_at_k, taskA/taskB 共用)",
+    "reeval_script_a": "taskA/stage4/taskA_stage4_beam20_reeval.py",
+    "reeval_script_b": "taskB/stage4/taskB_stage4_beam20_reeval.py",
+    "raw_json_a": "verdicts/issue30_issue28_diag_beam20_reeval.json",
+    "raw_json_b": "verdicts/issue30_issue29_diag_beam20_reeval.json (mixed_curv 例外跳过)",
+    "t5_only_sanity_repro": "0.101 ≈ baseline 0.1020 (valid 1000 子集)"
+  }
+}

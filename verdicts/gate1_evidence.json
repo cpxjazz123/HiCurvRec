@@ -1,0 +1,37 @@
+{
+  "taskA": {
+    "emb_sha256": "0fe7d949f2637b4b9d076080d679305048d74799a8b1f68ee497d80ce6d9d4f2",
+    "sid_sha256": "4654f3e22ced0932a3e5004dfe9a854694da822fb5d10282faf497f9769288d3",
+    "sid_shape": [
+      9922,
+      4
+    ],
+    "emb_dim": 768,
+    "unique_per_layer": [
+      64,
+      128,
+      256,
+      19
+    ]
+  },
+  "taskB": {
+    "emb_sha256": "0fe7d949f2637b4b9d076080d679305048d74799a8b1f68ee497d80ce6d9d4f2",
+    "sid_sha256": "4654f3e22ced0932a3e5004dfe9a854694da822fb5d10282faf497f9769288d3",
+    "sid_shape": [
+      9922,
+      4
+    ],
+    "emb_dim": 768,
+    "unique_per_layer": [
+      64,
+      128,
+      256,
+      19
+    ]
+  },
+  "cross_check": {
+    "emb_match": true,
+    "sid_match": true
+  },
+  "note": "taskA/_data SID (sha=4654f3e2) is from default fixed-\u03ba RQ-VAE, not canary learnable-\u03ba RQ-VAE (sha=2dab29). Canary PASS adapter encodes the learnable-\u03ba SID."
+}
