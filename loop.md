@@ -1,20 +1,20 @@
-# GRID Reproduction Task Plan — GitHub Issue Rules (One-Liner Subset)
+# GRID Reproduction Task Plan — GitLab Issue Rules (One-Liner Subset)
 
-> 本文件 = 11 个核心 GitHub Issue 规则, 每个一句. **不含表格 / 命令模板 / 实施细节** (按需自行实现).
+> 本文件 = 11 个核心 GitLab Issue 规则, 每个一句. **不含表格 / 命令模板 / 实施细节** (按需自行实现).
 
 ---
 
 ## 1. R14 §15.6 — Issue 自动监听
-每次 loop tick 第一步 `gh issue list --state all` 扫描, 发现 open issue 立即按 R11.5 自主处理, commit 粒度 = 每 issue 一个独立 commit.
+每次 loop tick 第一步 `glab issue list --all` 扫描, 发现 open issue 立即按 R11.5 自主处理, commit 粒度 = 每 issue 一个独立 commit.
 
 ## 2. R15 §15.7 — Issue 闭环 push
-issue 闭环 = verdict 落盘 + commit + `git push` + `gh issue close --reason completed` 四件套齐全, 顺序固定 (commit 在本地 ≠ reviewer 可见).
+issue 闭环 = verdict 落盘 + commit + `git push` + `glab issue close` 四件套齐全, 顺序固定 (commit 在本地 ≠ reviewer 可见).
 
 ## 3. §16 + §16.1 — 活跃任务表格
 活跃任务表格是 loop 唯一允许的执行情况记录位置, 同时活跃 ≤ 5 行 (Task ID / Issue / 类型 / 阶段 / GPU / 进度 / ETA), 完成立即删除该行 (R8 强制, 不写 "已归档").
 
 ## 4. R16 §18 — 每次 tick 检查 + 关闭
-每次 tick 第一步检查 open issue, 有 → 必须完成 + `gh issue close --reason completed`, 没有 → 允许 idle (R10 v2 保留).
+每次 tick 第一步检查 open issue, 有 → 必须完成 + `glab issue close`, 没有 → 允许 idle (R10 v2 保留).
 
 ## 5. R17 §19 — commit 含 Gate + 失败原因
 commit message 必含 `Gate <N> FAIL/PASS` + 失败原因, 4 Gate = Stage 1 RQ-VAE / Stage 2 Sinkhorn / Stage 3 T5-mini / Stage 4 R@K eval, 前 Gate FAIL → 后 Gate STOP.
@@ -39,3 +39,14 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 ## 12. R24 §26 — 禁止任务暂停等待 owner 拍板
 每个 tick 检查 in_progress 任务是否真在执行 (有活跃 PID + file mtime 更新), 若 in_progress 但无活跃行为 → 立即自主决策 + 立即执行, 不允许任何 "等待 owner 拍板" / "wrapper 复杂" / "等下一 tick" 话术.
+
+---
+
+## §16 — 活跃任务表 (R8 强制, 同时活跃 ≤ 5 行)
+
+| Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
+|---------|-------|------|------|-----|------|-----|
+| taskA_g4_retry | #2 [方向A Gate4后续] | Gate1-4 | precheck | 0 待分配 | 0% — precheck 待启动 | TBD |
+| taskB_g4_retry | #3 [方向B Gate4后续] | Gate1-4 | precheck | 1 待分配 | 0% — precheck 待启动 | TBD |
+
+(完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
