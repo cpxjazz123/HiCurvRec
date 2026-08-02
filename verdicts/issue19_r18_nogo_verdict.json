@@ -1,0 +1,42 @@
+{
+  "issue": 19,
+  "title": "[方向A Gate4] option_C 单变量: 放大三层独立 learnable kappa 信号量级 + kappa更新后同步重校准 codebook/距离",
+  "gate": "precheck",
+  "verdict": "❌ FAIL — R18 precheck blocked (taskA BoundedAdapter 无 per-layer learnable κ)",
+  "evaluated_at": "2026-08-02T17:35+10:00",
+  "r18_4_dimension_comparison": {
+    "D1_spec_excerpt": "Issue #19 spec: 'precheck 合规性: 必须保留 L0 K=64 / L1 K=128 / L2 K=256 三层各自独立的 learnable κ. 出现 global κ、fixed-only κ、纯欧氏旁路 → precheck blocked, 直接终止, 不得进入任何 Gate.'",
+    "D2_implementation_core": "taskA_stage3_kappa_scale_recontinue.py: BoundedKappaScaleAdapter (Task #470/Issue #177) 实现: 只有 kappa_embed (Linear(1, d_model)) + alpha_logit (1 个标量 Parameter). kappa_meta 是外部输入 (训练时 kappa_meta=torch.zeros(B, 3)), **没有 per-layer learnable κ**.",
+    "D3_gate1_failure_mechanism": "#19 spec 要求'放大三层独立 learnable κ 的有效信号量级', 但 taskA BoundedAdapter 无 learnable κ → option_C 实际无可改变量 → R18 路径同构 NO-GO",
+    "D4_reference_literature": "未变 (κ 信号量级 + codebook 同步重校准理论支持)",
+    "different_from_history": true,
+    "different_dimension": "D2 实施核心: taskA BoundedAdapter 缺 per-layer learnable κ (但 #15 已在 taskB BoundedWeightedMixedCurvatureConditioner 添加 kappa_logits nn.Parameter, 任务结构不同)"
+  },
+  "precheck_compliance": {
+    "l0_k64_l1_k128_l2_k256_three_layer": "✅ PASS (codebook_size 保持 [64, 128, 256, 1])",
+    "per_layer_independent_learnable_kappa": "❌ FAIL — taskA BoundedKappaScaleAdapter 无 per-layer learnable κ (只有 kappa_meta 外部输入 + alpha_logit 标量)",
+    "fixed_double_euclidean_components": "✅ PASS (双曲 + 欧氏分量)",
+    "learnable_mixing": "✅ PASS (alpha_logit clamp ≤ 0.5)",
+    "precheck_blocked": true,
+    "blocked_clause": "global κ / fixed-only κ / 纯欧氏旁路 (taskA 缺 learnable κ = fixed-only κ)"
+  },
+  "blocked_options_for_issue19": [
+    "option_C 放大 κ 信号量级: 无 learnable κ 可改, 必须先开新 issue 添加 per-layer learnable κ",
+    "option_B 解冻 T5: spec 明确禁止 (option_C 单变量, 禁止改第二个变量)",
+    "option_D 扩 capacity: spec 明确禁止 (另开 issue)",
+    "from-0 重训: spec 明确禁止 (沿用 #17 已合规 Stage3 路径)"
+  ],
+  "next_issue_required": {
+    "issue_title": "[方向A precheck 修复] 在 taskA BoundedKappaScaleAdapter 添加三层独立 learnable κ (kappa_logits (3,) nn.Parameter) + strict=False 加载老 ckpt",
+    "rationale": "#19 spec '三层独立 learnable κ' 是必要前置条件, 当前 taskA BoundedAdapter 不满足, 必须先架构修复才能进入 #19 option_C",
+    "reference": "Task #15 / Issue #178 已在方向B 添加 kappa_logits (3,) nn.Parameter, 修复方式可复用 (kappa_init_logit + per-layer softplus + strict=False 加载)",
+    "scope": "仅架构修复 (加 kappa_logits nn.Parameter + 初始化 + 注入 forward), 不动其他架构, 不做单变量实验"
+  },
+  "close_decision": "per R18 + #19 spec 'precheck blocked 直接终止, 不得进入任何 Gate' 关闭本 issue. 开新 issue 修 precheck 后, 才允许新 issue 重新做 option_C.",
+  "related_artifacts": {
+    "taskA_BoundedAdapter_inspection": "taskA/stage3/taskA_stage3_kappa_scale_recontinue.py L100-116 (BoundedKappaScaleAdapter 缺 per-layer learnable κ)",
+    "taskB_BoundedAdapter_reference": "taskB/stage3/taskB_stage3_mixed_curv_recontinue.py (BoundedWeightedMixedCurvatureConditioner 含 kappa_logits (3,) nn.Parameter, 可作为 taskA 修复模板)",
+    "issue15_related": "Issue #15 / commit ad795aa (方向B 已修复 BoundedAdapter 加 kappa_logits)"
+  },
+  "verdict_path": "verdicts/issue19_r18_nogo_verdict.json"
+}
