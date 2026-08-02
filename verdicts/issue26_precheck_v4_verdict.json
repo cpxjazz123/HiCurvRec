@@ -1,0 +1,67 @@
+{
+  "issue": 26,
+  "step": "[方向A precheck v4] T1a meta audit + T1b shared decode + T1c v3 canary + T2 kappa_logits 独立 param group LR 短程扫",
+  "gate": "precheck v4",
+  "verdict": "FAIL — precheck 仍 blocked. 核心目标 c3 已达成 (kappa 真正数值更新 0.99998→0.146, LR=1e-2 单独 param group 生效), 但判据4 (recalibrate codebook sha256 变化记录 = n/a) 与判据5 (val_R@10=0.05<0.058) 双 FAIL → 落 F4 + c5. 必须实现真正的 codebook/距离度量重校准 sha256 取证 (F4 修复) 才能解除 precheck.",
+  "evaluated_at": "2026-08-02T19:05+10:00",
+  "single_variable": {
+    "tested": "kappa_logits 独立 optimizer param group + LR 扫起点 1e-2 (spec 允许 {1e-3,1e-2,1e-1}, 起点 1e-2) + 每 step Δκ assert",
+    "prior_ckpt": "taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt (epoch 48, val_R@10=0.058, strict=False 续训)",
+    "preserved": "架构/冻结/optimizer 类型/超参全部沿用 issue192 long_run, 未改 gradient clip / LR warmup / mixing 参数化 (spec 禁止项未触碰)"
+  },
+  "pass_criteria_five": {
+    "1_same_decode_function_object": "PASS — val 经 run_val_shared → taskB/common/stage4_decode.py::autoregressive_predict_constrained (同一 import 函数对象, 非复制实现). taskA 与 taskB 共用同一实现",
+    "2_v3_canary_r10_gt_0": "PASS — T1c: v3 ckpt (issue24 precheck_v3) 真实 canary R@10=0.0250>0, P1-P4 全 PASS, sid_sha_match=true (sha256=2dab2922...)",
+    "3_kappa_actual_numeric_update": "PASS — |κ_l(end)−κ_l(start)|=0.854 (init [0.99998,0.99998,0.99998] → end [0.146,0.149,0.147]) ≥ 1e-3; 三层变化量互异 delta=[0.8536,0.8510,0.8525] (非同一梯度广播); kl_grad_mean=1.0e-3~1.8e-3 各 epoch ≥ 1e-5. LR=1e-2 Adam 自适应步长真正推动 κ (每 step Δκ 可观测, WARN 仅出现在 |Δκ|<1e-4 尾部)",
+    "4_recalibrate_count_eq_and_sha256_record": "FAIL — recalibrate 触发 16466 次 (≈ steps, 每有效 Δκ 触发一次, 次数匹配达标), 但 codebook_sha256_before/after 全部记录为 'n/a (codebook recalibration not in scope)' — 未实现真正的 codebook/距离度量重校准 sha256 变化取证. 违反方向A『κ 更新后必须同步重校准 codebook/距离』核心约束 → F4",
+    "5_val_r10_ge_0p058": "FAIL — val_R@10=0.0500 恒定 5 epoch (共享路径真实解码), < 0.058 阈值. best_adapter.pt 实际写盘 (epoch 49, val=0.0500, exists=True) 但 best_adapter_sha256 为空(脚本内未填) → c5"
+  },
+  "fail_branch": {
+    "classified": "F4 为主 (判据4 不满足: codebook sha256 无变化记录, 与 #24 相同的『recalibrate 只有计数无 hash 取证』缺口) + c5 (判据5: val_R@10=0.05<0.058)",
+    "F1_excluded": "canary R@10=0.025>0, val_R@10=0.05>0 (非 0) → 不落 F1 (val 实现非失效, 共享路径已修复)",
+    "F2_excluded": "canary R@10=0.025>0 → 不落 F2 (评估路径未塌方, 无需先做 backbone 漂移取证; #27 已对方向B做 cosine_sim 0.999+ 无漂移)",
+    "F3_excluded": "LR=1e-2 时 κ 明显更新 (delta 0.85) → 不落 F3 (param group 生效, 无 no_grad/detach 截断)",
+    "F4_triggered": "κ 动了 (delta=0.854) 但 codebook/距离度量重校准 sha256 无变化记录 → 判 FAIL (核心约束违反)",
+    "F5_excluded": "三层 κ 数值互异 (0.146/0.149/0.147, max-min=0.0026>0) + alpha_logit 保留 learnable → 未退化为 global κ / fixed mixing"
+  },
+  "kappa_update_evidence": {
+    "start_kappa_logits": "[0.5413,0.5413,0.5413] (softplus→[0.99998,0.99998,0.99998]; 注意 issue192 best_adapter 无 kappa_logits key, 实际从 init 出发, 未继承 issue192 训练值 — 与 spec 期望部分偏差但 c3 判据是'数值更新'非'继承值')",
+    "end_kappa_per_layer": "[0.146381,0.148935,0.147473]",
+    "max_delta_kappa": "0.8536 (≥1e-4 per-step assert 全程通过)",
+    "kappa_history": "val_trace.json kappa_history 6 采样点, 每 epoch 三层数值 + delta_from_start 全记录",
+    "update_mechanism": "Adam adaptive stepsize: LR×m/(√v+ε), kappa_logits 历史梯度极小 → 实际步长≈LR×sign, 0.54→-1.83 快速移动 (stdout epoch 49 起 WARN 仅尾部 |Δκ|<1e-4)"
+  },
+  "val_evidence": {
+    "val_trace": "5 epoch val_R@10=0.0500 恒定, in_range_pct=100%, kappa_per_layer 逐 epoch [0.252/0.227/0.245]→[0.146/0.149/0.147]",
+    "best_adapter": "best_adapter.pt (epoch 49, val=0.0500, exists=True) — 与 #27 方向B 的 0.0500 完全一致, 共享路径两方向收敛到同一诊断值",
+    "interpretation": "val_R@10=0.0500 << baseline 0.1020. 与 #27 共识: 协议失配已修复 + backbone 无漂移 + kappa 更新已达成, 剩余根因 = Stage3 训练本身优化 (LR schedule / gradient clip / optimizer / loss / codebook 容量)"
+  },
+  "structural_root_cause_update": {
+    "issue24_c3": "已修复 — kappa_logits 独立 param group + LR=1e-2 → κ 从 init 0.99998 真正更新到 0.146 (delta 0.85), 解决『梯度 healthy 但有效步长 1e-8 永不更新』",
+    "issue24_c5": "已修复 — v3 ckpt canary R@10=0.0250>0 + 共享路径 val_R@10=0.05>0, 排除 val 路径塌方; 残余 c5 为 0.05<0.058 阈值未达",
+    "issue26_f4": "待修 — codebook/距离度量重校准只有计数 (16466) 无 sha256 变化记录. 下一 issue 必须实现真正重校准 + hash 取证",
+    "remaining_root_cause": "val_R@10=0.0500 (双方向共享路径一致) << baseline 0.1020. 排除: 协议失配 / backbone 漂移 (cosine_sim 0.999+) / kappa 不更新 / conditioner 架构 (option_D). 剩余候选: Stage3 训练本身优化 + codebook 容量限制"
+  },
+  "evidence_persisted": {
+    "script": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan.py",
+    "products_dir": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/",
+    "verdict_json": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/verdict.json (脚本自评 PASS c3; 外部判据核对 FAIL F4+c5)",
+    "val_trace_json": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/val_trace.json (5 epoch + kappa_history 6 点)",
+    "recalibrate_log_json": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/recalibrate_log.json (count=16466, events=50, codebook_sha256=n/a)",
+    "best_adapter_pt": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/best_adapter.pt (epoch 49, val=0.0500)",
+    "adapter_pt": "taskA/stage3/taskA_stage3_issue26_t2_lr_scan/adapter.pt (epoch 53)",
+    "_TRAINING_PID": "terminated (训练完成)",
+    "t1_verdict": "verdicts/issue26_t1c_canary_verdict.json (T1a/T1b/T1c PARTIAL PASS, 已 commit 4986170)"
+  },
+  "next_issue_recommendation": {
+    "issue_a_precheck_v5": "[方向A precheck v5] 实现真正的 codebook/距离度量重校准 + 每层 codebook sha256 前后变化取证 (F4 修复), 其余变量不变, 短程 ≤5 epoch 复验判据4",
+    "issue_b_stage3_training": "[方向A/B Gate4 预备] Stage3 训练稳定性专项 (跨方向共识): 共享路径 val_R@10=0.05 基础上排查 LR schedule / gradient clip / optimizer 配置 / loss 函数 / codebook 容量, 目标先回 0.058 再破 0.1020"
+  },
+  "close_decision": "precheck 仍 blocked. 判据3 (c3 kappa 真正更新) 核心目标达成 — 这是 #22/#23/#24 三代 issue 首次让 κ 发生实际数值更新 (LR=1e-2 单独 param group). 但判据4 F4 (codebook sha256 无记录) + 判据5 c5 (val 0.05<0.058) 未达标, 按 spec 'FAIL 分支必须明确指认' 落 F4+c5, 判 FAIL. T1a/T1b/T1c 已 PASS (共享函数 + v3 canary + meta 审计), 为后续 issue 留下可直接复用的基础设施. 关闭 #26.",
+  "related_artifacts": {
+    "shared_decode_module": "taskB/common/stage4_decode.py (taskA/taskB 共用)",
+    "issue25_verdict": "verdicts/issue25_protocol_ab_verdict.json",
+    "issue27_verdict": "verdicts/issue27_gate3_close_verdict.json"
+  },
+  "verdict_path": "verdicts/issue26_precheck_v4_verdict.json"
+}
