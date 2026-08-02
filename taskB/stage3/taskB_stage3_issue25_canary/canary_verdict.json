@@ -1,0 +1,53 @@
+{
+  "issue": 25,
+  "ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/stage3/taskB_stage3_issue23_option_d/adapter.pt",
+  "ckpt_sha256": "ea48c395cb2e160a5355912445a1137f21e908b07adbedbcf1c1046fd866a337",
+  "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+  "sid_sha_match": true,
+  "canary_n": 200,
+  "decode_protocol": "shared_autoregressive_predict_constrained",
+  "metrics_new_shared_path": {
+    "R@5": 0.03,
+    "R@10": 0.03,
+    "R@20": 0.03
+  },
+  "metrics_old_label_path": {
+    "R@5": 0.0,
+    "R@10": 0.0,
+    "R@20": 0.0
+  },
+  "in_range_pct_new": 1.0,
+  "in_range_pct_old": 1.0,
+  "audit_P1_P4": {
+    "P1_forward_path": "PASS (encoder -> decoder -> t5.model.lm_head + autoregressive_predict_constrained)",
+    "P2_sid_hash_match": "PASS",
+    "P3_lm_head_path": "PASS (t5.model.lm_head, [1025,128])",
+    "P4_valid_sid_constraint": "PASS"
+  },
+  "option_d_ckpt_state": {
+    "kappa_per_layer": [
+      0.8634780645370483,
+      0.9016023278236389,
+      0.8183308839797974
+    ],
+    "mixing_per_layer": [
+      [
+        0.3440087139606476,
+        0.32740023732185364,
+        0.3285910189151764
+      ],
+      [
+        0.32499048113822937,
+        0.34168508648872375,
+        0.3333244323730469
+      ],
+      [
+        0.30611351132392883,
+        0.34463754296302795,
+        0.3492489755153656
+      ]
+    ]
+  },
+  "n_token_identical_between_protocols": 0,
+  "n_token_different_between_protocols": 200
+}

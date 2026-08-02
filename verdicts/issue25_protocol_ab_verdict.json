@@ -1,0 +1,80 @@
+{
+  "issue": 25,
+  "step": "[方向B Gate3 blocked-no-canary] Stage3 val 解码路径与 Stage4 对齐 (抽共享解码函数 + option_D canary 复验 + 双路径对照)",
+  "gate": "Gate 3",
+  "verdict": "PARTIAL PASS (协议失配根因确认: 旧 val 路径 R@10=0 vs 新共享路径 R@10=0.03; 但新路径 R@10=0.03 仍远低于 baseline 0.1020 -> Stage3 训练本身仍有更深不稳定性, 不止协议失配)",
+  "evaluated_at": "2026-08-02T18:40+10:00",
+  "single_variable": {
+    "tested": "抽 taskB/common/stage4_decode.py::autoregressive_predict_constrained 共享解码函数 + 双路径对照 (旧 val labels=cur_history vs 新共享 decoder_input_ids+t5.model.lm_head)",
+    "preserved": "option_D ckpt (epoch 53, taskB/stage3/taskB_stage3_issue23_option_d/adapter.pt) + sid_npy sha256=2dab2922... + T5 ckpt + 200 样本同批对照"
+  },
+  "shared_decode_function_created": {
+    "path": "taskB/common/stage4_decode.py",
+    "functions": ["autoregressive_predict_constrained(model_wrapper, history, mask, layer_ranges, sid_meta=None, curvature_meta=None, kappa_meta=None, scale_meta=None, max_len=4, mask_value=-1e9)"],
+    "used_by": "Stage3 val 与 Stage4 canary/评估 必须 import 同一函数 (R25 spec 强约束)",
+    "implementation": "1. 显式 encoder forward (per #25 spec, 跟 Stage4 canary 一致) 2. 4 步自回归 decoder: decoder_input_ids = zeros(B, max_len) + 已预测 token 右移填充 3. t5.model.lm_head 取 logits[:, pos] 4. per-layer layer_ranges mask (-1e9) + argmax"
+  },
+  "canary_results": {
+    "canary_n": 200,
+    "ckpt": "taskB/stage3/taskB_stage3_issue23_option_d/adapter.pt (epoch 53, sha256=ea48c395...)",
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "new_shared_path_metrics": {"R@5": 0.0300, "R@10": 0.0300, "R@20": 0.0300, "in_range_pct": 1.0},
+    "old_label_path_metrics": {"R@5": 0.0000, "R@10": 0.0000, "R@20": 0.0000, "in_range_pct": 1.0},
+    "n_token_identical": 0,
+    "n_token_different": 200,
+    "interpretation": "新共享路径 R@10 = 0.03 (非零) vs 旧 val 路径 R@10 = 0.00 -> 协议失配是 #23 val_R@10=0 部分根因, 但 R@10 = 0.03 << baseline 0.1020 -> Stage3 训练本身仍有更深不稳定性"
+  },
+  "audit_P1_P4_new_shared_path": {
+    "P1_forward_path": "PASS (encoder -> decoder -> t5.model.lm_head + autoregressive_predict_constrained 显式路径)",
+    "P2_sid_hash_match": "PASS (sid_sha256 匹配 #157 期望)",
+    "P3_lm_head_path": "PASS (t5.model.lm_head, shape [1025, 128])",
+    "P4_valid_sid_constraint": "PASS (in_range_pct = 100%)"
+  },
+  "r23_partial_pass": {
+    "c1_decode_path_explicit_lm_head": "PASS (新共享路径用 t5.model.lm_head 显式解码)",
+    "c2_protocol_ab_token_diff_>_50pct": "PASS (200/200 token 不同, 即双路径实质不同)",
+    "c3_new_shared_path_R10_>_0": "PASS (R@10 = 0.03 > 0, 旧路径 = 0)",
+    "c4_new_shared_path_R10_>_0.058_baseline_partial": "FAIL (0.03 < 0.058 baseline 0.058 -> 协议失配是部分根因, 但 Stage3 训练本身仍有更深问题)",
+    "interpretation": "协议失配确认: #23 val_R@10=0 中一部分是解码路径不对齐导致的. 但即便用正确的共享解码路径, R@10 = 0.03 仍远低于 baseline 0.1020 -> Stage3 训练本身 (gradient clip / LR schedule / backbone drift / optimizer / 损失函数) 仍有更深的不稳定性, 需要继续排查."
+  },
+  "option_d_ckpt_state_confirmed": {
+    "kappa_per_layer": [0.8635, 0.9016, 0.8183],
+    "mixing_per_layer": [
+      [0.3440, 0.3274, 0.3286],
+      [0.3250, 0.3417, 0.3333],
+      [0.3061, 0.3446, 0.3492]
+    ],
+    "kappa_synced": false,
+    "mixing_degenerate": false
+  },
+  "structural_root_cause_consensus_updated": {
+    "issue18_root_cause": "conditioner 路径对称 -> 三层 κ 同步 -> 已由 #23 option_D 排除 ✅",
+    "issue22_root_cause": "kappa_e.mean(dim=1) -> dL/dkappa ~ 2.5e-8 -> 已由 #24 排除 ✅ (kappa_logits.grad 提升 4 个数量级)",
+    "issue23_root_cause": "Stage3 val 路径协议失配 (labels=cur_history wrapper forward 路径不对齐 Stage4 canary 显式解码) -> 部分确认, 新共享路径 R@10=0.03 > 0 证明这部分根因存在, 但 R@10=0.03 << baseline 0.1020 证明还有更深根因",
+    "issue25_root_cause_partial_confirmation": "Stage3 val 协议失配 -> 已部分确认, 共享解码函数抽离为唯一复用实现 (taskB/common/stage4_decode.py)",
+    "remaining_root_cause": "Stage3 训练本身仍有更深不稳定性 (排除 1+2+3 之后, 真正根因待排查, 可能涉及: gradient clip / LR schedule / backbone drift / optimizer / 损失函数)"
+  },
+  "evidence_persisted": {
+    "canary_verdict_path": "taskB/stage3/taskB_stage3_issue25_canary/canary_verdict.json",
+    "protocol_ab_path": "taskB/stage3/taskB_stage3_issue25_canary/protocol_ab.json",
+    "shared_decode_module": "taskB/common/stage4_decode.py",
+    "canary_script": "taskB/stage3/taskB_stage3_issue25_canary.py",
+    "log_path": "taskB/_logs/task_issue25_canary.log",
+    "_TRAINING_PID": "1275946 (terminated)"
+  },
+  "next_issue_recommendation": {
+    "issue_a": "[方向B Gate3] Stage3 训练本身稳定性专项: 在新共享解码路径 (R10=0.03) 基础上, 排查 gradient clip / LR schedule / backbone drift / optimizer / 损失函数 本身 — 跨方向共识 (跟 #23 / #24 verdict 推荐合并)",
+    "issue_b": "[方向A Gate3] Stage3 训练本身稳定性专项 (taskA 同问题): 同步排查 taskA 训练本身稳定性 (在 #24 kappa 路径修复基础上 R@10=0 持续, 推断同根因)",
+    "issue_c": "[方向B precheck] Stage3 backbone 完整性 (cosine similarity check): 比较 HG_Rec frozen ckpt vs Stage3 训练中 backbone output 的 cosine similarity, 排除 backbone drift (跨 issue 推荐)"
+  },
+  "close_decision": "per #25 spec R23 触发: 'val_R@10=0 连续 >=2 epoch' 已经在 #23 verdict 阶段处理; 本 issue 完成了 (a) 共享解码函数抽离 (taskB/common/stage4_decode.py::autoregressive_predict_constrained), (b) option_D ckpt 200 样本 canary 复验 (新路径 R@10=0.03), (c) 双路径对照 (旧路径 0/200 相同 token, 新路径 token 全不同). 协议失配作为 #23 val_R@10=0 部分根因已确认; 但 R@10=0.03 << baseline 0.1020 证明 Stage3 训练本身仍有更深不稳定性, 转入下一 issue 继续排查.",
+  "related_artifacts": {
+    "script": "taskB/stage3/taskB_stage3_issue25_canary.py",
+    "shared_decode_module": "taskB/common/stage4_decode.py",
+    "products_dir": "taskB/stage3/taskB_stage3_issue25_canary/",
+    "issue23_verdict": "verdicts/issue23_option_d_r23_verdict.json",
+    "issue24_verdict": "verdicts/issue24_precheck_v3_verdict.json"
+  },
+  "verdict_path": "verdicts/issue25_protocol_ab_verdict.json"
+}
