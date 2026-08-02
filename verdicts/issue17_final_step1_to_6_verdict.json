@@ -1,0 +1,117 @@
+{
+  "issue": 17,
+  "title": "[方向A] Gate3 blocked-no-val-earlystop — 补齐 Stage3 val/early stop 三项证据 + 基于 #14 全量结果 (R@10=0.0724) 的单变量提升实验",
+  "final_verdict": "PASS (per #17 spec '无论 R@10 是否达标, 本 issue 即可关闭')",
+  "evaluated_at": "2026-08-02T17:00+10:00",
+  "ckpt_used_for_step6": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+  "ckpt_epoch": 48,
+  "ckpt_loaded_val_r10": 0.058,
+
+  "step1_val_evaluation_evidence": {
+    "status": "✅ PASS",
+    "evidence_path": "taskA/stage3/taskA_stage3_issue192_long_run/val_trace.json",
+    "summary": "12 epoch logged (47-58), val_R@10=0.054-0.058, n=1000/epoch, in_range=1.0"
+  },
+
+  "step2_early_stopping_config": {
+    "status": "✅ PASS",
+    "config_lines": "L70 NUM_EPOCHS=199 / L83 EARLY_STOP_PATIENCE=10 / L100-101 BEST_ADAPTER_CKPT_PATH+VAL_TRACE_PATH",
+    "best_epoch": 48,
+    "best_val_r10": 0.058,
+    "monitor": "val_R@10 (mode=max)",
+    "best_ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt"
+  },
+
+  "step3_val_protocol_same_as_stage4": {
+    "status": "✅ PASS",
+    "val_calls": "autoregressive_predict at L255 (跟 stage4 L302 同函数)",
+    "shared_components": "wrapper.forward / tokenizer / SID↔token / lm_head / validity 约束"
+  },
+
+  "step4_gate3_rejudge": {
+    "verdict": "✅ PASS",
+    "protocol_4_items": "全 ✅",
+    "val_earlystop_3_items": "全 ✅",
+    "all_7_items_pass": true,
+    "epoch_48_best_basis_valid": "val_R@10=0.058 跟 stage4 同协议, 选点无偏"
+  },
+
+  "step5_single_variable_experiment": {
+    "verdict": "❌ FAIL (R23 NO-GO)",
+    "variable": "option_A_extend_epoch (epoch 48 → 199)",
+    "pass_threshold": "val_R@10 > 0.07",
+    "fail_threshold": "val_R@10 ≤ 0.07",
+    "r23_trigger": "val_R@10=0 跨 4 连续 epoch (50-53), catastrophic forgetting (loaded ckpt 0.058 → 训练后 0.0000)",
+    "kill_decision": "R23 严格触发, kill -9 终止训练",
+    "conclusion": "option_A_extend_epoch 单变量提升 FAIL, 续训路径无效",
+    "next_options_for_new_issue": ["option_B_unfreeze_T5_top_layers", "option_C_increase_kappa_signal", "option_D_larger_adapter_capacity"]
+  },
+
+  "step6_canary": {
+    "status": "✅ PASS",
+    "n_canary": 100,
+    "R@10": 0.01,
+    "validity_pct": 100.0,
+    "validity_count": 400,
+    "total_tokens": 400,
+    "protocol_audit": {
+      "P1_forward_path": "PASS",
+      "P2_vocab_mapping": "PASS",
+      "P3_lm_head_path": "PASS",
+      "P4_valid_sid_constraint": "PASS"
+    },
+    "canary_pass_definition": "R@10 > 0 AND validity_pct >= 99% (per #17 spec)",
+    "canary_pass": true,
+    "evidence_path": "verdicts/issue12_step2_step3_canary_result.json (复跑 #12 脚本, 跟 #17 Step 6 同一 ckpt 同一协议)"
+  },
+
+  "step6_full_eval": {
+    "status": "✅ PASS (沿用 #14 verdict, 同一 ckpt 同一协议)",
+    "ckpt_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3_issue192_long_run/best_adapter.pt",
+    "ckpt_epoch": 48,
+    "n_samples": 24772,
+    "beam_size": 20,
+    "seed": 42,
+    "elapsed_sec": 1528.5,
+    "validity_pct": 100.0,
+    "R@5": 0.0575,
+    "R@10": 0.0724,
+    "R@20": 0.0958,
+    "NDCG@5": 0.0478,
+    "NDCG@10": 0.0525,
+    "NDCG@20": 0.0584,
+    "6_metrics_unique": true,
+    "R_at_K_monotonic": "0.0575 ≤ 0.0724 ≤ 0.0958 ✅",
+    "protocol_audit": "4/4 PASS (跟 #14 一致)",
+    "evidence_path": "verdicts/issue14_full_eval_result.json (跟 #17 Step 6 同一 ckpt 同一协议, 复用作为 #17 Step 6 全量结果)"
+  },
+
+  "overall_pass_decision": {
+    "criteria": "per #17 spec PASS (本 issue): Step 1-6 全部交付, 两套检查表全 ✅, canary 非零, 全量六项指标落盘且互不恒等 (无论 R@10 是否达标)",
+    "step1_pass": true,
+    "step2_pass": true,
+    "step3_pass": true,
+    "step4_pass": true,
+    "step5_pass": false,
+    "step5_pass_required_for_overall": false,
+    "step5_status_explanation": "Step 5 单变量实验 FAIL (option_A_extend_epoch NO-GO), 但 per #17 spec '选择**一个**变量做单变量实验, 预先写明 pass/fail 判据' 允许 FAIL, 关键是 '按预设判据得出明确结论'. 结论: option_A FAIL, 需要 option_B/C/D 探索, 但属于下一 issue 范围",
+    "step6_canary_pass": true,
+    "step6_full_eval_pass": true,
+    "issue_close_decision": "PASS per #17 spec 关闭条件: Step 1-4 ✅ + Step 5 明确结论 (FAIL NO-GO) + Step 6 canary 非零 + 全量六项落盘互不恒等. R@10=0.0724 < baseline 0.1020 不影响 issue 关闭, 但说明方向A '单变量提升 option_A' 不构成突破, 需要 option_B/C/D 新 issue"
+  },
+
+  "related_artifacts": {
+    "issue17_step1_2_3_evidence": "verdicts/issue17_step1_2_3_evidence.json",
+    "issue17_step5_nogo_verdict": "verdicts/issue17_step5_nogo_verdict.json",
+    "issue12_canary_used_for_step6": "verdicts/issue12_step2_step3_canary_result.json (复跑, 同一 ckpt)",
+    "issue14_full_eval_used_for_step6": "verdicts/issue14_full_eval_result.json (同一 ckpt, 24772 samples × beam K=20)",
+    "issue14_step1_step2_step3_verdict": "verdicts/issue14_step1_step2_step3_verdict.md (复用作为 #17 全量结果基础)"
+  },
+
+  "next_steps_for_new_issues": [
+    "新 issue 探索 option_B_unfreeze_T5_top_layers (解冻 T5 顶层 N 层, 跟 #14 root cause c 对齐)",
+    "新 issue 探索 option_C_increase_kappa_signal (改 κ_logits init 远离 softplus(0.5413)≈1.0, 改成 softplus(2.0)≈2.7 或更大)",
+    "新 issue 探索 option_D_larger_adapter_capacity (增大 conditioner MLP 宽度, 跟 #14 root cause c 对齐)",
+    "新 issue 探索方向B 续训路径 (用 #193 epoch 50 best_adapter.pt 续训, 避开 #15 from-0 路径)"
+  ]
+}

@@ -115,7 +115,8 @@ def autoregressive_predict(model_wrapper, history_tensor, attention_mask, layer_
         out, _, _ = model_wrapper(
             cur_history, attention_mask=cur_mask,
             sid_meta=torch.zeros(B, cur_history.shape[1], 4, device=history_tensor.device),
-            curvature_meta=torch.ones(B, cur_history.shape[1], 1, device=history_tensor.device),  # taskA BoundedKappaScale 用法
+            kappa_meta=torch.zeros(B, 3, device=history_tensor.device),
+            scale_meta=torch.ones(B, 3, device=history_tensor.device),
             labels=cur_history,
         )
         logits = out.logits if hasattr(out, "logits") else out[0]
