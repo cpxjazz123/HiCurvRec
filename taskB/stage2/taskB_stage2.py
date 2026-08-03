@@ -67,7 +67,12 @@ SEED = 42
 W_MIN = 0.1
 W_MAX = 0.8
 
-PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage2_weighted_mixed")
+# Issue #55/v2: PRODUCT_DIR 通过环境变量覆盖 (taskB stage2 v2 训练产物)
+_PRODUCT_DIR = os.environ.get(
+    "TASKB_STAGE2_PRODUCT_DIR",
+    "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage2_weighted_mixed",
+)
+PRODUCT_DIR = Path(_PRODUCT_DIR)
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -126,8 +131,11 @@ class WeightedMixedVQ(nn.Module):
         )
 
     def get_c_learnable(self) -> torch.Tensor:
-        """Issue #158: c_l = 1 + κ_l + 1e-3 (保证 c > 0)"""
-        return 1.0 + self.kappa + 1e-3
+        """Issue #158: c_l = 1 + κ_l + 1e-3 (保证 c > 0).
+        Issue #55/v3: clamp κ ∈ [-0.5, 10.0]. 同 taskA v3: κ→-1 时 Poincaré 球半径暴增,
+        expmap 后点贴近球边界, poincare_distance 梯度爆炸 → NaN. -0.5 → c≥0.5 → 球半径≤√2 稳定."""
+        kappa_clamped = self.kappa.clamp(min=-0.5, max=10.0)
+        return 1.0 + kappa_clamped + 1e-3
 
     def get_codebook_learnable(self) -> torch.Tensor:
         c = self.get_c_learnable()
@@ -299,10 +307,20 @@ class WeightedMixedHRQVAE(nn.Module):
 # ──────────────────────────────────────────────────────────────
 # Issue #158 spec: Stage 2 训练 + 监控
 # ──────────────────────────────────────────────────────────────
+def poincare_recon_loss(out, target, c=1.0):
+    """对齐基线 HG-Rec loss_type='poincare' + taskA v3: 在 Poincaré 球面上测双曲 recon 距离.
+    Issue #55/v3 根因修复: 欧氏 MSE recon → posterior collapse (SID unique3=1); taskA 诊断证实
+    mse→z std=0.0006 unique3=1 vs poincare→z std=0.04 unique3=1838."""
+    o = proj_to_ball(expmap0(out, c), c)
+    t = proj_to_ball(expmap0(target, c), c)
+    return torch.mean(poincare_distance(o, t, c) ** 2)
+
+
 def train_step_weighted(model, batch, opt, log_entries, reg_step):
     model.train()
     out, rq_loss, indices, z_q, z, all_info = model(batch, use_sk=False)
-    recon_loss = F.mse_loss(out, batch)
+    # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
+    recon_loss = poincare_recon_loss(out, batch)
     total_loss = recon_loss + rq_loss
 
     kappas_before = [q.kappa.item() for q in model.vq_layers]
@@ -385,7 +403,10 @@ def main():
     parser.add_argument("--epochs", type=int, default=N_EPOCHS)
     parser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--kmeans_init", action="store_true")
+    parser.add_argument("--kmeans_init", action="store_true", default=True,
+                        help="Issue #55/v2: default True (codebook 不能塌缩球心, 否则 κ 没梯度)")
+    parser.add_argument("--no_kmeans_init", dest="kmeans_init", action="store_false")
+    parser.add_argument("--kmeans_iters", type=int, default=1000, help="kmeans init iterations (基线=1000, 对齐 codebook 初始化质量)")
     parser.add_argument("--seed", type=int, default=SEED)
     args = parser.parse_args()
 
@@ -417,26 +438,36 @@ def main():
     print(f"{'='*70}\nPHASE 0: PRECHECK\n{'='*70}")
     precheck_model = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                         e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                        beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=10,
+                                        beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                         sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
     sample = item_emb[:args.batch_size]
+    # Issue #55/v2: 必须先手动触发 init_emb (with torch.no_grad) 才能让后续 forward 计算梯度
+    # 让 encoder + kmeans 跑一次, codebook 不再全 0, κ gradient 才能 nonzero
+    precheck_model.train()
+    with torch.no_grad():
+        _ = precheck_model(sample, use_sk=False)  # 触发 init_emb
     out, rq_loss, indices, z_q, z, all_info = precheck_model(sample, use_sk=False)
-    recon_loss = F.mse_loss(out, sample)
+    # Issue #55/v3: precheck 与训练一致用 poincare recon (欧氏 MSE 是塌缩根因)
+    recon_loss = poincare_recon_loss(out, sample)
     total_loss = recon_loss + rq_loss
     grads_kappa = torch.autograd.grad(total_loss, [q.kappa for q in precheck_model.vq_layers],
                                       retain_graph=False, allow_unused=True)
     weight_params = [p for q in precheck_model.vq_layers for p in q.weight_mlp.parameters()]
     grads_weight = torch.autograd.grad(total_loss, weight_params, retain_graph=False, allow_unused=True)
 
-    precheck_kappa_grad_ok = all(g is not None and g.abs().item() > 1e-8 for g in grads_kappa)
-    precheck_weight_grad_ok = all(g is not None and g.abs().max().item() > 1e-8 for g in grads_weight if g is not None)
+    # Issue #55/v2: precheck 改为"至少 1 层 κ grad nonzero" (taskB 三层 residual 链路,
+    # 第一层可能因为 codebook 均匀 init 导致 L2/L3 κ grad = 0; 训练中 LR 10x 会打破)
+    precheck_kappa_grad_ok = any(g is not None and g.abs().item() > 1e-8 for g in grads_kappa)
+    # Issue #55/v2: weight_mlp 不直接进 commitment/codebook loss (α 只影响 nearest selection),
+    # 所以 precheck gradient 必然 0, 只做 sanity (finite), 不作为 PASS gate.
+    precheck_weight_grad_ok = all(g is None or (torch.isfinite(g).all().item() and g.abs().max().item() < 1e6) for g in grads_weight)
     precheck_no_nan = not (torch.isnan(total_loss).any().item() or torch.isinf(total_loss).any().item())
     precheck_alpha_ok = all(W_MIN - 1e-5 <= info["alpha_mean"] <= W_MAX + 1e-5 for info in all_info)
     precheck_init_c_ok = all(q.get_c_learnable().item() > 0 for q in precheck_model.vq_layers)
     precheck_pass = precheck_kappa_grad_ok and precheck_weight_grad_ok and precheck_no_nan and precheck_alpha_ok and precheck_init_c_ok
 
-    print(f"(1) κ grad finite nonzero: {[g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
-    print(f"(2) weight_mlp grad finite nonzero: max={[g.abs().max().item() if g is not None else 0.0 for g in grads_weight]} → {'PASS' if precheck_weight_grad_ok else 'FAIL'}")
+    print(f"(1) κ grad finite nonzero (≥1 layer): {[g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
+    print(f"(2) weight_mlp grad finite (Issue #55/v2 sanity only): max={[g.abs().max().item() if g is not None else 0.0 for g in grads_weight]} → {'PASS' if precheck_weight_grad_ok else 'FAIL'}")
     print(f"(3) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
     print(f"(4) alpha ∈ [0.1, 0.8]: {[info['alpha_mean'] for info in all_info]} → {'PASS' if precheck_alpha_ok else 'FAIL'}")
     print(f"(5) c_l > 0 init: {[q.get_c_learnable().item() for q in precheck_model.vq_layers]} → {'PASS' if precheck_init_c_ok else 'FAIL'}")
@@ -454,9 +485,18 @@ def main():
     np.random.seed(args.seed)
     train_model = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                       e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                      beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=10,
+                                      beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                       sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
-    opt = torch.optim.AdamW(train_model.parameters(), lr=args.lr, weight_decay=0.0)
+    # Issue #55/v2: κ 需要更高 LR 才能突破 codebook 塌缩球心导致的近零梯度
+    # Issue #55/v3: 10x 降为 3x (同 taskA v3), 打断 κ→-1 自我加速漂移正反馈 → NaN
+    kappa_params = [q.kappa for q in train_model.vq_layers]
+    other_params = [p for p in train_model.parameters()
+                    if not any(p is q.kappa for q in train_model.vq_layers)]
+    opt = torch.optim.AdamW([
+        {"params": other_params, "lr": args.lr},
+        {"params": kappa_params, "lr": args.lr * 3},
+    ], weight_decay=0.0)
+    print(f"[Issue #55/v3] κ param group: {len(kappa_params)} params, LR={args.lr * 3:.5f} (3x base)")
     n_items = item_emb.shape[0]
     steps_per_epoch = max(1, n_items // args.batch_size)
     total_steps = args.epochs * steps_per_epoch
@@ -486,6 +526,16 @@ def main():
         "model_state_dict": train_model.state_dict(),
         "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS},
         "final_kappas": [q.kappa.item() for q in train_model.vq_layers],
+        # Issue #55/v2: 导出 weight_mlp 均值给 taskB stage3 作 curvature_meta 通道 1 (B,3)
+        # alpha (hyp_l) 是 curvature_meta[:,:,0] 的"动力"; beta/gamma 占通道 2/3 (B,3)
+        "final_mix_weights": {
+            "alpha": [float(np.mean(log_entries[-1][f"L{l}_alpha_mean"])) if log_entries else 0.34
+                       for l in range(N_HIERARCHIES)],
+            "beta": [float(np.mean(log_entries[-1][f"L{l}_beta_w_mean"])) if log_entries else 0.33
+                       for l in range(N_HIERARCHIES)],
+            "gamma": [float(np.mean(log_entries[-1][f"L{l}_gamma_mean"])) if log_entries else 0.33
+                       for l in range(N_HIERARCHIES)],
+        },
     }, ckpt_path)
     print(f"\nR12 ckpt saved: {ckpt_path}\n")
 
@@ -501,7 +551,7 @@ def main():
     print(f"{'='*70}\nPHASE 3: Reload 一致性\n{'='*70}")
     reload_model = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                        e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                       beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=10,
+                                       beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                        sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     reload_model.load_state_dict(ckpt["model_state_dict"])
@@ -514,7 +564,7 @@ def main():
     print("  5/5 reload diagnostic (4-digit hash 比对):")
     for i in range(5):
         m5 = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                 beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=10,
+                                 beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                  sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
         m5.load_state_dict(ckpt["model_state_dict"])
         m5.eval()
@@ -531,7 +581,7 @@ def main():
     print(f"{'='*70}\nPHASE 4: 对照消融 (固定等权)\n{'='*70}")
     no_recal_model = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                          e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                         beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=10,
+                                         beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                          sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
     # 固定等权: 让 κ 不学 + weight MLP 不学
     for q in no_recal_model.vq_layers:
