@@ -1,0 +1,42 @@
+{
+  "tag": "taskA_v14sid",
+  "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v14_capmatch_1000ep/sid_output.npy",
+  "sid_sha256": "170f5976f55f7f5311994d094274ab06dd676689ad0a05f9bd10b39ba04f835a",
+  "best_epoch": 55,
+  "best_ndcg20": 0.10050834715366364,
+  "final_epoch": 75,
+  "best_trace": {
+    "epoch": 55,
+    "train_loss": 2.027874933631675,
+    "R@5": 0.1026383563876152,
+    "R@10": 0.12612612545490265,
+    "R@20": 0.15596847236156464,
+    "NDCG@5": 0.08543180674314499,
+    "NDCG@10": 0.09299253672361374,
+    "NDCG@20": 0.10050834715366364,
+    "t_train": 19.9,
+    "t_eval": 8.4
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.1,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.0001,
+    "batch_size": 256,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 4,
+    "bf16": true
+  },
+  "done_at": "2026-08-03 21:55:31"
+}
