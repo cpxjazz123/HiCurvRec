@@ -43,6 +43,7 @@ from typing import Optional, Tuple, Dict, List
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 
 # R7: GPU 选择 (从环境变量读, 默认 GPU 0)
@@ -105,6 +106,33 @@ REL_STRUCT_LAMBDA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_LAMBDA", "1.0"
 REL_STRUCT_DELTA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_DELTA", "0.05"))
 REL_STRUCT_TARGET_MIN = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MIN", "0.15"))
 REL_STRUCT_TARGET_MAX = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MAX", "0.55"))
+# 用户 v12 第一步: 安全区间径向损失 (替代固定 target). v11 诊断 (2026-08-03) 证明深层 per-layer
+# target (0.42/0.55) 数学上不可达 — 健康基线 (c=1) 实测深层径向占用仅 0.087/0.058 (stats_radial.py).
+# 本损失职责 = 防球心坍缩 + 防边界爆炸, 不再决定最佳曲率:
+#   L_rad,l = ReLU(a_l − √c_l·r̄_l)² + ReLU(√c_l·r̄_l − b_l)²,  r̄_l=量化后 latent 欧氏范数均值 (detach).
+# 区间 [a,b] 由健康基线每层径向占用 p5-p95 放宽: a=0.5·p5, b=min(2·p95, 0.60).
+#   L0 n=64:  健康 mean=0.266 p5=0.205 p95=0.328 → [0.102, 0.600]
+#   L1 n=128: 健康 mean=0.087 p5=0.057 p95=0.115 → [0.028, 0.230]
+#   L2 n=256: 健康 mean=0.058 p5=0.044 p95=0.072 → [0.022, 0.143]
+RAD_SAFE = os.environ.get("TASKA_STAGE2_RAD_SAFE", "0") == "1"
+RAD_SAFE_A = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_A", "0.102,0.028,0.022").split(",")]
+RAD_SAFE_B = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_B", "0.600,0.230,0.143").split(",")]
+RAD_SAFE_LAMBDA = float(os.environ.get("TASKA_STAGE2_RAD_SAFE_LAMBDA", "1.0"))
+# 用户 v12 第二步: 推荐结构损失 (决定曲率). 曲率增大的原因不再是"点须在球半径 X%",
+# 而是"某曲率能更准确保持该层推荐邻居/排序关系". 对 anchor i 取正邻居 j+ (item_emb 余弦
+# top-K 随机) 与负邻居 j− (batch 内随机), 要求量化后正邻居仍比负邻居近:
+#   L_rec,l = −log exp(−d+/τ) / (exp(−d+/τ) + Σ_j− exp(−d_j−/τ))
+# d 必须尺度归一化 (每 anchor 距离除以其均值), 消除"曲率仅整体放大/缩小距离降 loss"的作弊.
+# z 部分 detach → 只驱动 κ (曲率保序信号), 不影响 encoder/codebook 量化训练.
+REC_LOSS = os.environ.get("TASKA_STAGE2_REC_LOSS", "0") == "1"
+REC_LAMBDA = float(os.environ.get("TASKA_STAGE2_REC_LAMBDA", "1.0"))
+REC_TAU = float(os.environ.get("TASKA_STAGE2_REC_TAU", "1.0"))
+REC_POS_K = int(os.environ.get("TASKA_STAGE2_REC_POS_K", "8"))
+REC_NEG_N = int(os.environ.get("TASKA_STAGE2_REC_NEG_N", "16"))
+# 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
+# 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
+# RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
+RECAL_CHECK_EVERY = int(os.environ.get("TASKA_STAGE2_RECAL_CHECK_EVERY", "1"))
 
 PRODUCT_DIR = Path(os.environ.get("TASKA_STAGE2_PRODUCT_DIR",
                                   "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync"))
@@ -202,7 +230,7 @@ class KappaAwareVectorQuantization(nn.Module):
     """
 
     def __init__(self, n_e, e_dim, beta=0.25, kmeans_init=True, kmeans_iters=10, sk_eps=0.0, sk_iters=3,
-                 fix_c=False):
+                 fix_c=False, layer_idx=0):
         super().__init__()
         self.n_e = n_e
         self.e_dim = e_dim
@@ -211,6 +239,17 @@ class KappaAwareVectorQuantization(nn.Module):
         self.kmeans_iters = kmeans_iters
         self.sk_eps = sk_eps
         self.sk_iters = sk_iters
+        self.layer_idx = layer_idx
+        # v12 安全区间: 由健康基线 (c=1) 每层径向占用统计得出, 防球心坍缩/防边界爆炸.
+        # 区间配比错误必须显式暴露 (R2), 不允许静默回退.
+        if RAD_SAFE:
+            if layer_idx >= len(RAD_SAFE_A) or layer_idx >= len(RAD_SAFE_B):
+                raise ValueError(f"RAD_SAFE_A/B len {len(RAD_SAFE_A)}/{len(RAD_SAFE_B)} insufficient for layer_idx={layer_idx}")
+            self._rad_a = float(RAD_SAFE_A[layer_idx])
+            self._rad_b = float(RAD_SAFE_B[layer_idx])
+        else:
+            self._rad_a = 0.0
+            self._rad_b = 1.0
         # Issue #55/v4 (fix_c): 对齐基线 HVectorQuantization 固定 c=1.0, 禁用 learnable κ/mix_weight.
         # 根因: v4/v5 1000epoch 实测 κ 三层系统性负漂移 → 撞 Poincaré 球边界 → loss=-inf→NaN → 码本塌缩.
         # 基线 c=1 固定从不崩 (HG-Rec model/utils.py HVectorQuantization self.c=1.0).
@@ -361,6 +400,18 @@ class KappaAwareVectorQuantization(nn.Module):
             loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
             self._last_struct_term = struct_term.detach().item()  # 监控: 驱动 κ 的结构偏差信号
             self._last_struct_target = target
+        # v12 安全区间径向损失 (用户第一步): 只防球心坍缩 (ρ<a) 与边界爆炸 (ρ>b), 区间内零惩罚.
+        # 职责 = 防极端, 不决定最佳曲率 (最佳曲率由推荐损失 REC_LOSS 决定).
+        if RAD_SAFE:
+            c_struct = self.get_c()  # 不 detach: κ 接收径向梯度 (仅区间外非零)
+            r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 只训曲率
+            rho = torch.sqrt(c_struct) * r_struct  # 归一化半径 ρ = √c·r (尺度无关比值)
+            a = self._rad_a
+            b = self._rad_b
+            rad_term = F.relu(a - rho).pow(2) + F.relu(rho - b).pow(2)
+            loss = loss + RAD_SAFE_LAMBDA * rad_term
+            self._last_struct_term = rho.detach().item()  # 监控: 当前归一化半径 ρ
+            self._last_struct_target = (a + b) / 2.0  # 监控: 安全区间中心
         x_q = logmap0(x_q_safe, c_geom)
         latent = logmap0(latent_safe, c_geom)
         x_q = x + (x_q - x).detach()
@@ -389,8 +440,8 @@ class KappaAwareHRQVAE(nn.Module):
         self.vq_layers = nn.ModuleList([
             KappaAwareVectorQuantization(n_e, e_dim, beta=beta, kmeans_init=kmeans_init,
                                          kmeans_iters=kmeans_iters, sk_eps=eps, sk_iters=sk_iters,
-                                         fix_c=fix_c)
-            for n_e, eps in zip(num_emb_list, sk_eps)
+                                         fix_c=fix_c, layer_idx=i)
+            for i, (n_e, eps) in enumerate(zip(num_emb_list, sk_eps))
         ])
 
     def forward(self, x, use_sk=True):
@@ -439,7 +490,68 @@ def poincare_recon_loss(out, target, c=1.0):
     return torch.mean(poincare_distance(o, t, c) ** 2)
 
 
-def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kappa_log: list,
+def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=REC_NEG_N):
+    """v12 推荐结构损失 (用户第二步): 决定曲率.
+
+    对每 anchor i (batch 内), 正邻居 j+ (item_emb 余弦 top-K 随机采 1) 应比负邻居 j− (batch 内
+    随机 neg_n 个) 在曲率 c_l 下更近 (InfoNCE):
+      L_rec,l = −log exp(−d+/τ) / (exp(−d+/τ) + Σ_j− exp(−d_j−/τ))
+    距离尺度归一化: 每 anchor 的距离除以其全部距离均值 (归一化常数 detach), 消除
+    "曲率仅整体放大/缩小距离降 loss" 的尺度作弊 — κ 只从"距离相对分布随 c 变化"获梯度.
+    z 部分 detach (encoder/量化 no-grad, rep 用 detach 累积量) → 只驱动 κ, 不影响量化.
+    """
+    device = item_emb_all.device
+    B = len(batch_idx)
+    if B < 2 or neg_n < 1:
+        return torch.zeros((), device=device)
+    # 正邻居: 每 anchor 从 item_emb 余弦 top-K 随机采 1 (nn_idx 第 0 列是自身).
+    # v12 加速: 整批向量化采样, 替代 B 次 Python 循环 (数值等价).
+    cands_all = nn_idx[batch_idx][:, 1:]  # (B, K-1)
+    if cands_all.shape[1] < 1:
+        raise ValueError("no neighbor candidates (nn_idx top-K insufficient)")
+    k_choice = np.random.randint(0, cands_all.shape[1], size=B)
+    pos_idx = cands_all[np.arange(B), k_choice].astype(np.int64)
+    # 负邻居: batch 内随机 neg_n 个 (排除 anchor 自身). 从 [0, B-2] 采样, col >= i 时 +1
+    # 跳过自身 → 等价于从 [0,B-1]\{i} 采样 (允许重复, 与原 replace=True 语义一致).
+    cols = np.random.randint(0, B - 1, size=(B, neg_n))
+    neg_idx = cols + (cols >= np.arange(B)[:, None]).astype(np.int64)
+    # union = batch ∪ pos (负都在 batch 内), 一次 encoder forward (z 无 grad)
+    union = np.unique(np.concatenate([batch_idx, pos_idx]))
+    union_t = torch.tensor(union, device=device)
+    u_map = {int(v): p for p, v in enumerate(union)}
+    with torch.no_grad():
+        z_union = model.encoder(item_emb_all[union_t])
+    batch_pos = torch.tensor([u_map[int(batch_idx[i])] for i in range(B)], device=device)
+    p_pos = torch.tensor([u_map[int(pos_idx[i])] for i in range(B)], device=device)
+    # RQ 逐层: 累积量化输出 (no_grad) proj 到球 (c_l 带 grad) → 距离 (c_l 带 grad)
+    residual = z_union
+    xq_acc = torch.zeros_like(z_union)
+    total_rec = torch.zeros((), device=device)
+    for q in model.vq_layers:
+        with torch.no_grad():
+            x_res, _loss, _idx = q(residual, use_sk=False)
+        xq_acc = xq_acc + x_res
+        c_l = q.get_c()  # 不 detach: 推荐损失是 κ 的学习信号
+        rep = proj_to_ball(xq_acc.detach(), c_l)  # z 无 grad, c 带 grad
+        rep_anchor = rep[batch_pos]  # (B, D)
+        # v12 加速: 正+负一次广播 (B, 1+neg_n) 距离, 替代 1+16 次循环 (mobius_add 逐元素广播).
+        # 参考点第 0 列 = 正邻居 (union 位置 p_pos), 其余列 = 负样本 (union 位置 batch_pos[neg_idx]).
+        ref_idx = torch.cat([p_pos.unsqueeze(1), batch_pos[neg_idx]], dim=-1)  # (B, 1+neg_n)
+        rep_ref = rep[ref_idx]  # (B, 1+neg_n, D)
+        # poincare_distance (B,1,D)×(B,K,D) → (B,K,1), .squeeze(-1) → (B,K)
+        all_d = poincare_distance(rep_anchor.unsqueeze(1), rep_ref, c_l).squeeze(-1)  # (B, 1+neg_n)
+        # 尺度归一化: 每 anchor 距离除以其全部距离均值 (常数 detach, 只消除整体缩放)
+        scale = all_d.detach().mean(dim=-1, keepdim=True)
+        d_n = all_d / (scale + 1e-8)
+        logits = -d_n / tau
+        loss_l = -F.log_softmax(logits, dim=-1)[:, 0].mean()  # 正样本位置 0
+        total_rec = total_rec + loss_l
+        residual = residual - x_res
+    return total_rec
+
+
+def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx, nn_idx,
+                                       item_emb_all, opt, kappa_log: list,
                                        reg_step: int, opt_kappa: Optional[torch.optim.Optimizer] = None):
     """Issue #157 关键: 在每个 opt.step() 后, 强制 recompute codebook + 失效 cache + 记录重校准前后差异"""
     model.train()
@@ -448,10 +560,15 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kapp
     recon_loss = poincare_recon_loss(out, batch)
     total_loss = recon_loss + rq_loss
     if CURV_PRIOR:
-        # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的唯一梯度来源 (量化已对 c stop-grad).
+        # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
+        # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
         kappa_prior = sum(q.kappa.pow(2).sum() for q in model.vq_layers)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
+    if REC_LOSS:
+        # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
+        rec_loss = compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, REC_TAU, REC_NEG_N)
+        total_loss = total_loss + REC_LAMBDA * rec_loss
 
     # 记录 κ 更新前
     kappas_before = [q.kappa.item() for q in model.vq_layers]
@@ -485,27 +602,32 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kapp
     codebook_norm_after = [q.embeddings.weight.norm().item() for q in model.vq_layers]
     cs_after = [q.get_c().item() for q in model.vq_layers]
 
-    # Issue #157 spec: 重校准后用新 c 立即 forward 一次, 验证 distance 反映新尺度
-    with torch.no_grad():
-        # 用 model encoder 把 batch[:64] 编到 e_dim 空间 (跟 training 一致)
-        sub_batch = batch[:64]
-        z_sub = model.encoder(sub_batch)  # (64, e_dim)
-        forward_dist_first = []
-        for q in model.vq_layers:
-            c = q.get_c()
-            x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
-            cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
-            d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
-            forward_dist_first.append(d.detach().clone())
-        forward_dist_second = []
-        for q in model.vq_layers:
-            c = q.get_c()
-            x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
-            cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
-            d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
-            forward_dist_second.append(d.detach().clone())
-        reload_consistent = all(torch.allclose(forward_dist_first[l], forward_dist_second[l], atol=1e-6)
-                                for l in range(N_HIERARCHIES))
+    # Issue #157 spec: 重校准后用新 c 立即 forward 一次, 验证 distance 反映新尺度.
+    # 加速 (2026-08-03): 该验证纯开销不进 loss, 每 RECAL_CHECK_EVERY 步跑一次即可, 其余步复用上次结果.
+    if reg_step % RECAL_CHECK_EVERY == 0:
+        with torch.no_grad():
+            # 用 model encoder 把 batch[:64] 编到 e_dim 空间 (跟 training 一致)
+            sub_batch = batch[:64]
+            z_sub = model.encoder(sub_batch)  # (64, e_dim)
+            forward_dist_first = []
+            for q in model.vq_layers:
+                c = q.get_c()
+                x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
+                cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
+                d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
+                forward_dist_first.append(d.detach().clone())
+            forward_dist_second = []
+            for q in model.vq_layers:
+                c = q.get_c()
+                x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
+                cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
+                d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
+                forward_dist_second.append(d.detach().clone())
+            reload_consistent = all(torch.allclose(forward_dist_first[l], forward_dist_second[l], atol=1e-6)
+                                    for l in range(N_HIERARCHIES))
+            model._last_reload_consistent = reload_consistent
+    else:
+        reload_consistent = getattr(model, "_last_reload_consistent", True)
 
     # Issue #157 spec: 记录到 kappa_log (10+ κ 更新点)
     if reg_step % LOG_EVERY == 0 or reg_step == 0:
@@ -530,6 +652,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kapp
         "raw_grad_kappa": raw_grad_kappa,
         "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in model.vq_layers],
         "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in model.vq_layers],
+        "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
         "reload_consistent": reload_consistent,
     }
 
@@ -667,6 +790,21 @@ def main():
     }
     print(f"item alignment: {item_alignment_check}\n")
 
+    # v12 推荐损失近邻预计算: item_emb 余弦 top-K (正邻居来源, 用户第二步)
+    nn_idx = None
+    if REC_LOSS:
+        print("Precomputing item cosine top-K neighbors (REC_LOSS)...")
+        emb_np = item_emb.detach().cpu().numpy()
+        emb_n = emb_np / (np.linalg.norm(emb_np, axis=1, keepdims=True) + 1e-8)
+        sim = emb_n @ emb_n.T  # (N, N)
+        K = min(REC_POS_K + 1, sim.shape[0])
+        topk = np.argpartition(-sim, K - 1, axis=1)[:, :K]
+        # 重排使前 K 列按相似度降序 (第 0 列 = 自身, 相似度 1.0 最大)
+        order = np.argsort(-sim[np.arange(sim.shape[0])[:, None], topk], axis=1)
+        nn_idx = topk[np.arange(topk.shape[0])[:, None], order]
+        np.save(PRODUCT_DIR / "nn_idx.npy", nn_idx)
+        print(f"nn_idx: {nn_idx.shape}, dtype={nn_idx.dtype} (self-sim check: {int(nn_idx[0,0])}==0 ? {int(nn_idx[0,0]) == 0})")
+
     # ── Precheck: aux loss → κ grad path ──
     print(f"{'='*70}\nPHASE 0: PRECHECK (Issue #157 spec)\n{'='*70}")
     precheck_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
@@ -771,15 +909,17 @@ def main():
         for s in range(steps_per_epoch):
             batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
             batch = item_emb[batch_idx]
-            m = train_step_with_sync_recalibration(train_model, batch, opt, kappa_log, reg_step,
+            m = train_step_with_sync_recalibration(train_model, batch, batch_idx, nn_idx, item_emb,
+                                                   opt, kappa_log, reg_step,
                                                    opt_kappa=opt_kappa if CURV_AWARE else None)
             epoch_loss += m["loss"]
             train_curve.append({"step": reg_step, "epoch": epoch, **m})
             reg_step += 1
         if epoch % 5 == 0 or epoch == args.epochs - 1:
+            rec_str = f"rec={m['rec_loss']:.4f} " if REC_LOSS else ""
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
-                  f"struct={[f'{s:.3f}' for s in m['struct_terms']]} tgt={[f'{t:.3f}' for t in m['struct_targets']]}")
+                  f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}")
 
     # ── R12 ckpt 强制保存 ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
