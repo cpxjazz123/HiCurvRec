@@ -23,6 +23,7 @@ Sanity: 不 load ckpt (adapter init α≈4.5e-5≈0) 时 beam20 R@10 应复现 b
 import argparse
 import importlib.util
 import json
+import os
 import sys
 
 import torch
@@ -41,8 +42,13 @@ MAX_LEN = 20
 PAD_TOKEN = 0
 T5_CKPT = "/fs04/ar57/wenyu/GeneRec/taskA/_ckpt/HG_Rec_best.pth"
 VALID_PARQUET = "/fs04/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/valid.parquet"
-SID_NPY = "/fs04/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hrqvae_poincare.npy"
-EXPECTED_SID_SHA = "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a"
+TEST_PARQUET = "/fs04/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
+SID_NPY = os.environ.get("TASKA_STAGE4_SID_NPY",
+                         "/fs04/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hrqvae_poincare.npy")
+# split -> parq 映射 (--split test 走 test.parquet)
+SPLIT_PARQUET = {"valid": VALID_PARQUET, "test": TEST_PARQUET}
+EXPECTED_SID_SHA = os.environ.get("TASKA_STAGE4_SID_SHA",
+                                  "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a")
 LAYER_RANGES = get_layer_ranges(CODEBOOK_SIZE)
 # 默认 (sanity) wrapper: 最新架构 (带 learnable kappa_logits), 指向 stage3 主脚本 (内联类定义, 逐字节一致)
 DEFAULT_WRAPPER = "/fs04/ar57/wenyu/GeneRec/taskA/stage3/taskA_stage3.py"
@@ -79,7 +85,7 @@ def build_wrapper(module_path, tag):
     return wrapper
 
 
-def build_data(split_parquet, sid_npy, n):
+def build_data(split_parquet, sid_npy, n, stage2_kappas=None, stage2_mix_weights=None):
     ds = GenRecDataset(dataset_path=split_parquet, code_path=sid_npy, mode="evaluation",
                        codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
     idxs = list(range(min(n, len(ds))))
@@ -99,6 +105,11 @@ def build_data(split_parquet, sid_npy, n):
     sid_meta = torch.stack([digit_values / 1025.0, layer_idx, pos_in_history, padding_flag], dim=-1)
     kappa_meta = torch.zeros(B, 3, dtype=torch.float32, device=DEVICE)
     scale_meta = torch.ones(B, 3, dtype=torch.float32, device=DEVICE)
+    # Issue #55/v2: 把 stage2 学到的 κ / mix_weight 注入 eval meta (与 train 一致)
+    if stage2_kappas is not None and any(abs(k) > 1e-6 for k in stage2_kappas):
+        kappa_meta = torch.tensor(stage2_kappas, dtype=torch.float32, device=DEVICE).unsqueeze(0).expand(B, -1)
+    if stage2_mix_weights is not None:
+        scale_meta = torch.tensor(stage2_mix_weights, dtype=torch.float32, device=DEVICE).unsqueeze(0).expand(B, -1)
     attention_mask = (history_tensor != PAD_TOKEN).long()
     return ds, history_tensor, targets, attention_mask, sid_meta, kappa_meta, scale_meta
 
@@ -147,6 +158,9 @@ def main():
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--n", type=int, default=1000)
     ap.add_argument("--tag", default="reeval")
+    ap.add_argument("--split", choices=["valid", "test"], default="valid", help="评估 split (valid/test)")
+    ap.add_argument("--alpha_logit", type=float, default=None,
+                    help="强制覆盖 alpha_logit (eval 时设不同值做 sweep); None=ckpt 原值")
     args = ap.parse_args()
     DEVICE = args.device
     if not torch.cuda.is_available():
@@ -154,14 +168,33 @@ def main():
 
     sid_sha = sha256_of(SID_NPY)
     assert sid_sha == EXPECTED_SID_SHA, f"SID hash mismatch: {sid_sha}"
-    ds, hist, tgt, mask, sid_meta, kappa_meta, scale_meta = build_data(VALID_PARQUET, SID_NPY, args.n)
-    print(f"[data] n={hist.shape[0]} (ds={len(ds)}), sid_sha={sid_sha[:12]}...", flush=True)
+    eval_parquet = SPLIT_PARQUET[args.split]
+    # Issue #55/v2: 自动加载 stage2 ckpt 中的 κ/mix_weight 用于 eval meta
+    stage2_kappas = None
+    stage2_mix_weights = None
+    stage2_ckpt = os.environ.get("TASKA_STAGE2_CKPT",
+                                  "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync/hrqvae_kappa_sync.ckpt")
+    if os.path.exists(stage2_ckpt):
+        try:
+            _d = torch.load(stage2_ckpt, map_location="cpu", weights_only=False)
+            stage2_kappas = _d.get("final_kappas")
+            stage2_mix_weights = _d.get("final_mix_weights")
+            print(f"[Stage2 meta] κ={stage2_kappas} mix_weight={stage2_mix_weights}", flush=True)
+        except Exception as e:
+            print(f"[WARN stage2 load] {e}", flush=True)
+    ds, hist, tgt, mask, sid_meta, kappa_meta, scale_meta = build_data(
+        eval_parquet, SID_NPY, args.n,
+        stage2_kappas=stage2_kappas, stage2_mix_weights=stage2_mix_weights)
+    print(f"[data] split={args.split} parquet={eval_parquet} n={hist.shape[0]} (ds={len(ds)}), sid_sha={sid_sha[:12]}...", flush=True)
 
-    results = {"n": hist.shape[0], "sid_sha": sid_sha, "split": "valid.parquet", "protocol": "beam20",
+    results = {"n": hist.shape[0], "sid_sha": sid_sha, "split": args.split, "protocol": "beam20",
                "tag": args.tag, "per_ckpt": {}}
 
     # 0) T5-only sanity: 不 load ckpt, adapter init α≈0 → 应复现 baseline 0.1020
     wrapper = build_wrapper(DEFAULT_WRAPPER, "sanity")
+    if args.alpha_logit is not None:
+        with torch.no_grad():
+            wrapper.adapter.alpha_logit.data.fill_(args.alpha_logit)
     results["t5_only_sanity"] = eval_all(wrapper, hist, tgt, mask, sid_meta, kappa_meta, scale_meta)
     print(f"[sanity T5-only (init α≈0)] {json.dumps(results['t5_only_sanity'])}", flush=True)
 
@@ -179,6 +212,14 @@ def main():
             wrapper.first_input_ln.load_state_dict(ck["ln_state_dict"])
         elif "first_input_ln_state_dict" in ck:
             wrapper.first_input_ln.load_state_dict(ck["first_input_ln_state_dict"])
+        # v5: 解冻 T5 微调后的 encoder 权重 (含在 ckpt 里), 覆盖 wrapper 内 T5
+        if "t5_state_dict" in ck:
+            missing, unexpected = wrapper.t5.load_state_dict(ck["t5_state_dict"], strict=False)
+            if missing or unexpected:
+                print(f"[WARN t5_state_dict] missing={len(missing)} unexpected={len(unexpected)}", flush=True)
+        if args.alpha_logit is not None:
+            with torch.no_grad():
+                wrapper.adapter.alpha_logit.data.fill_(args.alpha_logit)
         r = eval_all(wrapper, hist, tgt, mask, sid_meta, kappa_meta, scale_meta)
         results["per_ckpt"][ckpt] = {"wrapper_module": module_path, **r}
         print(f"[{ckpt} (wrap={module_path.split('/')[-1]})] {json.dumps(r)}", flush=True)
