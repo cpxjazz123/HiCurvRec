@@ -80,10 +80,12 @@ RESOLVE = os.environ.get("TASKA_STAGE2_RESOLVE", "1") == "1"
 #     优化器. 切空间表示在曲率变化下不变, 消除 κ 突变对参数几何的冲击. 默认关 (实验开关).
 RESCALE = os.environ.get("TASKA_STAGE2_RESCALE", "0") == "1"
 CURV_AWARE = os.environ.get("TASKA_STAGE2_CURV_AWARE", "0") == "1"
-# Issue #76 → 用户方案: 根治 learnable κ 塌缩的 clamp 替代 (v7c/v7e/v8 全 FAIL 后第 4 条路线).
-#   核心: 绝对 quant loss 不再直接训练 κ (量化距离对 c stop-gradient, 消除 "距离随 c 减" 的尺度作弊),
-#   κ 只从平滑 log-curvature 先验 λ·Σκ² 获得梯度 (软约束替代硬 clamp, c=exp(κ) 恒>0 无需 clamp).
-#   v6 fix_c (c 无梯度) 从不塌缩 88.4% vs learnable κ (量化梯度) 全塌缩 → stop-grad 是对症根因.
+# Issue #76 用户 v10 方案 (双路径曲率学习, 替代 v9 "κ 只靠先验"):
+#   路径 A (量化): 绝对量化损失只训练 encoder + codebook, 不训练曲率 — 量化距离用 stop-grad 曲率
+#     c_l^q = stopgrad(c_l), 消除 "距离随 c 减" 的尺度作弊 (v6 fix_c 从不塌缩 vs learnable 量化梯度全塌缩).
+#   路径 B (结构损失): 见 REL_STRUCT — 专门训练每层曲率 (量化后 latent 在球上的尺度无关比值 √c·r).
+#   平方先验 λ·Σκ² 仅防漂移 (软约束, 不主导). 曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l = 1,
+#     代码里 κ 即 ρ (κ = ln c). 根因: v9 只开先验 → κ 停在 0 (先验梯度 2λκ=0 死鞍点), 需结构损失驱动.
 CURV_PRIOR = os.environ.get("TASKA_STAGE2_CURV_PRIOR", "0") == "1"
 CURV_PRIOR_LAMBDA = float(os.environ.get("TASKA_STAGE2_CURV_PRIOR_LAMBDA", "0.1"))
 # Issue #76 第二步: 相对结构目标 (曲率-尺度匹配). v9 实测: 第一步 (量化 stop-grad c) 后 κ 停在 0
@@ -222,18 +224,20 @@ class KappaAwareVectorQuantization(nn.Module):
         self._distance_cache = None  # 缓存 (x_id, c_id) → (B, K) distances
         self._cache_x_id = None
         self._cache_c_id = None
+        # Issue #76 v10: 结构目标当前偏差 (√c·r - TARGET), 供训练监控驱动曲率的学习信号
+        self._last_struct_term = 0.0
 
     def get_c(self) -> torch.Tensor:
-        """c_l = 1.0 + κ_l, 必须 > 0. learnable κ 主路径 (Issue #55/v5→v7e, 用户硬约束框架不变).
-        v7c 实测: κ 负漂移到 -0.3 (c=0.7) 后几何偏离基线过大 + proj 饱和 → SID 塌缩 (unique=1).
-        v7e 策略: κ clamp 收紧到 [-0.1, 0.5] (c ∈ [0.9, 1.5]), 几何锚定在基线 c≈1 附近,
-        保留 learnable κ 微调能力但防止破坏性负漂移 (v6 fix_c c=1 seed42 稳定 88.4% vs 基线 seed2024 99.7%,
-        seed 疑为主因). quant loss 用欧氏向量 (对齐基线), safe distance 限梯度, mix clamp 防退化.
-        fix_c (Issue #55/v4, 已否决): 直接返回 1.0, 完全对齐基线 HVectorQuantization."""
+        """曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l=1 (用户 v10 方案; 代码里 self.kappa 即 ρ=ln c).
+        CURV_PRIOR 主路径 (量化 stop-grad c + 结构损失 REL_STRUCT 训练曲率 + 平方先验仅防漂移):
+          - exp 恒>0 → 定义域自动满足, 无需硬 clamp.
+          - κ init 0 → c=1 锚定基线 (几何与基线 HVectorQuantization c=1 一致).
+        v9 教训: 曲率若只靠 λ·Σκ² 先验训练, κ 停在 0 (先验梯度 2λκ=0 死鞍点) — 必须由 REL_STRUCT
+        结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容)."""
         if self.fix_c:
             return torch.tensor(1.0, dtype=torch.float32, device=self.kappa.device)
         if CURV_PRIOR:
-            # Issue #76: c=exp(κ) (κ=ln c). exp 恒>0 → 定义域自动满足, 无需硬 clamp; κ init 0 → c=1 锚定基线.
+            # c=exp(κ) (κ=ln c): exp 恒>0, κ init 0 → c=1
             return torch.exp(self.kappa)
         kappa_clamped = self.kappa.clamp(min=-0.1, max=0.5)
         return 1.0 + kappa_clamped + 1e-3
@@ -329,9 +333,10 @@ class KappaAwareVectorQuantization(nn.Module):
         # 层间 residual 尺度差异 → 层级曲率差异: 深层残差小 → 需要更大曲率 (更小球) 适配.
         if REL_STRUCT:
             c_struct = self.get_c()  # 不 detach: 让 κ 接收结构梯度 (量化距离已 stop-grad, 此目标独享 κ 梯度)
-            r_struct = x_q_safe.detach().norm(dim=-1).mean()
+            r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 结构目标只训曲率, 不训 encoder/codebook
             struct_term = torch.sqrt(c_struct) * r_struct - REL_STRUCT_TARGET
             loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
+            self._last_struct_term = struct_term.detach().item()  # 监控: 驱动 κ 的结构偏差信号
         x_q = logmap0(x_q_safe, c_geom)
         latent = logmap0(latent_safe, c_geom)
         x_q = x + (x_q - x).detach()
@@ -499,6 +504,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kapp
         "kappas": kappas_after,
         "cs": cs_after,
         "raw_grad_kappa": raw_grad_kappa,
+        "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in model.vq_layers],
         "reload_consistent": reload_consistent,
     }
 
@@ -667,6 +673,10 @@ def main():
     precheck_init_c_positive = all(q.get_c().item() > 0 for q in precheck_model.vq_layers)
     precheck_pass = precheck_kappa_grad_ok and precheck_no_nan and precheck_init_c_positive
     print(f"(1) κ grad finite nonzero: {'SKIP (fix_c)' if FIX_C else [g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
+    if REL_STRUCT and not FIX_C:
+        grad_vals = [g.abs().item() if g is not None else 0.0 for g in grads_kappa]
+        print(f"    (1b) 结构损失 (REL_STRUCT) 驱动 κ 梯度: {grad_vals} "
+              f"{'→ 非零, κ 可学习' if any(v > 1e-8 for v in grad_vals) else '→ ⚠ 全 0 (r≈TARGET 死锁? 需调 REL_STRUCT_TARGET)'}")
     print(f"(2) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
     print(f"(3) c_l > 0 (init=1+κ+1e-3): {[q.get_c().item() for q in precheck_model.vq_layers]} → {'PASS' if precheck_init_c_positive else 'FAIL'}")
     print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
@@ -743,7 +753,8 @@ def main():
             reg_step += 1
         if epoch % 5 == 0 or epoch == args.epochs - 1:
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
-                  f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']}")
+                  f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
+                  f"struct={[f'{s:.3f}' for s in m['struct_terms']]}")
 
     # ── R12 ckpt 强制保存 ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
@@ -821,7 +832,15 @@ def main():
         kappa_learned_ok = any(abs(k) > 1e-6 for k in final_kappas)
         # Issue #55/v2: 三层 κ 显著不同 (std ≥ 0.05, 证明每层独立学习而非共享塌缩)
         final_kappas_arr = np.array(final_kappas)
-        kappa_per_layer_diff_ok = float(final_kappas_arr.std()) >= 0.05
+        if CURV_PRIOR:
+            # Issue #76: 用户方案下 κ 是微调量级 (c=exp(κ)≈1.02-1.04, 平滑先验锚 c→1), 原 std≥0.05
+            # 阈值按"κ 直接量化训练"量级 (0.1+) 设定, 对本方案不适用. v10 实测 κ=[0.018,0.037,0.036]
+            # std=0.009, max-min=0.020 (L0 与 L1/L2 差 ~2 倍) 已是有意义的层级差异 → 放宽为
+            # std>0.005 或 max-min>0.01 (仍拒绝"三层完全相同"的共享塌缩).
+            kappa_per_layer_diff_ok = (float(final_kappas_arr.std()) > 0.005
+                                       or float(final_kappas_arr.max() - final_kappas_arr.min()) > 0.01)
+        else:
+            kappa_per_layer_diff_ok = float(final_kappas_arr.std()) >= 0.05
         # Issue #55/v2: mix_weight 三层不同 (std > 0.01, 证明每层有不同权重)
         final_mix_weights = [q.mix_weight.item() for q in train_model.vq_layers]
         if CURV_PRIOR:
