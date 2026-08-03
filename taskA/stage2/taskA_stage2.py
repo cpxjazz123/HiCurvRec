@@ -90,12 +90,21 @@ CURV_PRIOR = os.environ.get("TASKA_STAGE2_CURV_PRIOR", "0") == "1"
 CURV_PRIOR_LAMBDA = float(os.environ.get("TASKA_STAGE2_CURV_PRIOR_LAMBDA", "0.1"))
 # Issue #76 第二步: 相对结构目标 (曲率-尺度匹配). v9 实测: 第一步 (量化 stop-grad c) 后 κ 停在 0
 # (先验梯度 2λκ=0, 无学习信号), SID 100% 不塌缩但 κ 无法学层级差异. 本目标给 κ 唯一非零学习信号:
-#   Poincaré 球半径 R=1/√c, 量化后 latent 落在球的固定比例处 → √c·r → REL_STRUCT_TARGET.
-#   √c·r 是尺度无关比值 (不随绝对距离随 c 减而白嫖); 层间 residual 尺度差异 → 层级曲率差异
-#   (深层残差小 → 需要更大曲率/更小球适配). 与平滑先验 λ·Σκ² 共存 (先验锚 c→1, 结构目标学差异).
+#   Poincaré 球半径 R=1/√c, 量化后 latent 落在球的固定比例处 → √c·r → target.
+#   v10 固定 target=0.3 导致深层 (残差小, r̄≈0.12) 够不到 → κ 层级差异小 (std=0.0096).
+#   v11: per-layer target 由码字数 n_e 与特征尺度 δ 的测地间距约束反解 (见 _struct_target),
+#     码字多 → target 大 (深层 L2 n_e=256 → target≈0.62), 放大层级曲率差异.
+#   √c·r 是尺度无关比值 (不随绝对距离随 c 减而白嫖); 与平滑先验 λ·Σκ² 共存 (先验锚 c→1).
 REL_STRUCT = os.environ.get("TASKA_STAGE2_REL_STRUCT", "0") == "1"
+# per-layer target (用户 v11 方案): 由码字数 n_e 与特征尺度 δ 的测地间距约束反解.
+#   4πρ/(1-ρ²) ≥ n_e·δ  (Poincaré 度规拉伸 g=2/(1-ρ²), 环带测地周长≈4πρ/(1-ρ²))
+#   → A = n_e·δ/(4π), ρ* = (√(1+4A²)-1)/(2A). 码字多 → target 大 (需更大半径容纳).
+#   REL_STRUCT_TARGET 保留为 legacy 固定值 (仅当 δ≤0 时使用, 默认 per-layer).
 REL_STRUCT_TARGET = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET", "0.3"))
 REL_STRUCT_LAMBDA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_LAMBDA", "1.0"))
+REL_STRUCT_DELTA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_DELTA", "0.05"))
+REL_STRUCT_TARGET_MIN = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MIN", "0.15"))
+REL_STRUCT_TARGET_MAX = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MAX", "0.55"))
 
 PRODUCT_DIR = Path(os.environ.get("TASKA_STAGE2_PRODUCT_DIR",
                                   "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync"))
@@ -224,8 +233,9 @@ class KappaAwareVectorQuantization(nn.Module):
         self._distance_cache = None  # 缓存 (x_id, c_id) → (B, K) distances
         self._cache_x_id = None
         self._cache_c_id = None
-        # Issue #76 v10: 结构目标当前偏差 (√c·r - TARGET), 供训练监控驱动曲率的学习信号
+        # Issue #76 v10/v11: 结构目标当前偏差 (√c·r - TARGET) 与该层 target, 供训练监控曲率学习信号
         self._last_struct_term = 0.0
+        self._last_struct_target = 0.0
 
     def get_c(self) -> torch.Tensor:
         """曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l=1 (用户 v10 方案; 代码里 self.kappa 即 ρ=ln c).
@@ -241,6 +251,18 @@ class KappaAwareVectorQuantization(nn.Module):
             return torch.exp(self.kappa)
         kappa_clamped = self.kappa.clamp(min=-0.1, max=0.5)
         return 1.0 + kappa_clamped + 1e-3
+
+    def _struct_target(self) -> float:
+        """per-layer 结构损失 target (用户 v11): 按码字数 n_e 与特征尺度 δ 的测地间距约束反解.
+        要求码本 n_e 个点在归一化半径 ρ 处相邻测地间距 ≥ δ (Poincaré 拉伸 g=2/(1-ρ²),
+        环带测地周长 ≈ 4πρ/(1-ρ²)):  4πρ/(1-ρ²) ≥ n_e·δ
+        → A = n_e·δ/(4π), 反解 ρ* = (√(1+4A²)-1)/(2A). 码字多 → A 大 → target 大.
+        clamp 到 [MIN, MAX] 保证可达 (proj 负反馈限制深层; 0.15 避球心, 0.55 避边界饱和)."""
+        A = self.n_e * REL_STRUCT_DELTA / (4.0 * math.pi)
+        if A <= 0.0:
+            return REL_STRUCT_TARGET  # legacy: δ≤0 时退回固定 target
+        rho = (math.sqrt(1.0 + 4.0 * A * A) - 1.0) / (2.0 * A)
+        return min(max(rho, REL_STRUCT_TARGET_MIN), REL_STRUCT_TARGET_MAX)
 
     def get_codebook(self):
         c = self.get_c()
@@ -334,9 +356,11 @@ class KappaAwareVectorQuantization(nn.Module):
         if REL_STRUCT:
             c_struct = self.get_c()  # 不 detach: 让 κ 接收结构梯度 (量化距离已 stop-grad, 此目标独享 κ 梯度)
             r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 结构目标只训曲率, 不训 encoder/codebook
-            struct_term = torch.sqrt(c_struct) * r_struct - REL_STRUCT_TARGET
+            target = self._struct_target()  # v11: per-layer target (码字数 n_e + δ 反解)
+            struct_term = torch.sqrt(c_struct) * r_struct - target
             loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
             self._last_struct_term = struct_term.detach().item()  # 监控: 驱动 κ 的结构偏差信号
+            self._last_struct_target = target
         x_q = logmap0(x_q_safe, c_geom)
         latent = logmap0(latent_safe, c_geom)
         x_q = x + (x_q - x).detach()
@@ -505,6 +529,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, opt, kapp
         "cs": cs_after,
         "raw_grad_kappa": raw_grad_kappa,
         "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in model.vq_layers],
+        "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in model.vq_layers],
         "reload_consistent": reload_consistent,
     }
 
@@ -754,7 +779,7 @@ def main():
         if epoch % 5 == 0 or epoch == args.epochs - 1:
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
-                  f"struct={[f'{s:.3f}' for s in m['struct_terms']]}")
+                  f"struct={[f'{s:.3f}' for s in m['struct_terms']]} tgt={[f'{t:.3f}' for t in m['struct_targets']]}")
 
     # ── R12 ckpt 强制保存 ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
