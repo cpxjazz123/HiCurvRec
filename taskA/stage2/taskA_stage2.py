@@ -44,11 +44,21 @@ from typing import Optional, Tuple, Dict, List
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
 
 # R7: GPU 选择 (从环境变量读, 默认 GPU 0)
 os.environ.setdefault("TRITON_CACHE_DIR", "/home/wlia0047/.triton/cache_task448")
 os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
+
+# DDP 加速 (2026-08-03): 多卡数据并行. torchrun 启动自动注入 WORLD_SIZE/RANK/LOCAL_RANK.
+# 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均) →
+# 与单卡 batch 语义数值等价 (RQ-VAE 无 batch norm; 唯一差异是 InfoNCE 负样本池 = 本卡 batch,
+# v13 用 REC_NEG_N 增大补偿). 非 DDP (直接 python, WORLD_SIZE=1) 走原路径不变.
+WORLD_SIZE = int(os.environ.get("WORLD_SIZE", "1"))
+RANK = int(os.environ.get("RANK", "0"))
+LOCAL_RANK = int(os.environ.get("LOCAL_RANK", "0"))
+DDP_MODE = WORLD_SIZE > 1
 
 # 引用 HG-Rec utils 函数 (poincare_distance / proj_to_ball / expmap0 / logmap0 / sinkhorn_algorithm)
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec")
@@ -504,6 +514,8 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
     B = len(batch_idx)
     if B < 2 or neg_n < 1:
         return torch.zeros((), device=device)
+    # DDP: encoder/vq_layers 属性在 module 上 (属性访问不需梯度同步, forward 走 model() 才同步)
+    mm = model.module if DDP_MODE else model
     # 正邻居: 每 anchor 从 item_emb 余弦 top-K 随机采 1 (nn_idx 第 0 列是自身).
     # v12 加速: 整批向量化采样, 替代 B 次 Python 循环 (数值等价).
     cands_all = nn_idx[batch_idx][:, 1:]  # (B, K-1)
@@ -520,14 +532,14 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
     union_t = torch.tensor(union, device=device)
     u_map = {int(v): p for p, v in enumerate(union)}
     with torch.no_grad():
-        z_union = model.encoder(item_emb_all[union_t])
+        z_union = mm.encoder(item_emb_all[union_t])
     batch_pos = torch.tensor([u_map[int(batch_idx[i])] for i in range(B)], device=device)
     p_pos = torch.tensor([u_map[int(pos_idx[i])] for i in range(B)], device=device)
     # RQ 逐层: 累积量化输出 (no_grad) proj 到球 (c_l 带 grad) → 距离 (c_l 带 grad)
     residual = z_union
     xq_acc = torch.zeros_like(z_union)
     total_rec = torch.zeros((), device=device)
-    for q in model.vq_layers:
+    for q in mm.vq_layers:
         with torch.no_grad():
             x_res, _loss, _idx = q(residual, use_sk=False)
         xq_acc = xq_acc + x_res
@@ -555,6 +567,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
                                        reg_step: int, opt_kappa: Optional[torch.optim.Optimizer] = None):
     """Issue #157 关键: 在每个 opt.step() 后, 强制 recompute codebook + 失效 cache + 记录重校准前后差异"""
     model.train()
+    # DDP: forward 走 model() (DDP 自动梯度同步); vq_layers/encoder 属性在 module 上
+    mm = model.module if DDP_MODE else model
     out, rq_loss, indices, z_q, z = model(batch)
     # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
     recon_loss = poincare_recon_loss(out, batch)
@@ -563,7 +577,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
         # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
-        kappa_prior = sum(q.kappa.pow(2).sum() for q in model.vq_layers)
+        kappa_prior = sum(q.kappa.pow(2).sum() for q in mm.vq_layers)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
     if REC_LOSS:
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
@@ -571,8 +585,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         total_loss = total_loss + REC_LAMBDA * rec_loss
 
     # 记录 κ 更新前
-    kappas_before = [q.kappa.item() for q in model.vq_layers]
-    codebook_norm_before = [q.embeddings.weight.norm().item() for q in model.vq_layers]
+    kappas_before = [q.kappa.item() for q in mm.vq_layers]
+    codebook_norm_before = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
 
     opt.zero_grad()
     if opt_kappa is not None:
@@ -581,7 +595,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
 
     # raw grad (Issue #157 spec: per-layer κ grad finite nonzero)
     raw_grad_kappa = []
-    for q in model.vq_layers:
+    for q in mm.vq_layers:
         if q.kappa.grad is None:
             raw_grad_kappa.append(0.0)
         else:
@@ -595,12 +609,12 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         opt_kappa.step()
 
     # Issue #157 关键: κ 更新后强制 recompute codebook_h + 失效 cache
-    model.invalidate_all_caches()
+    mm.invalidate_all_caches()
 
     # 记录 κ 更新后
-    kappas_after = [q.kappa.item() for q in model.vq_layers]
-    codebook_norm_after = [q.embeddings.weight.norm().item() for q in model.vq_layers]
-    cs_after = [q.get_c().item() for q in model.vq_layers]
+    kappas_after = [q.kappa.item() for q in mm.vq_layers]
+    codebook_norm_after = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
+    cs_after = [q.get_c().item() for q in mm.vq_layers]
 
     # Issue #157 spec: 重校准后用新 c 立即 forward 一次, 验证 distance 反映新尺度.
     # 加速 (2026-08-03): 该验证纯开销不进 loss, 每 RECAL_CHECK_EVERY 步跑一次即可, 其余步复用上次结果.
@@ -608,16 +622,16 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         with torch.no_grad():
             # 用 model encoder 把 batch[:64] 编到 e_dim 空间 (跟 training 一致)
             sub_batch = batch[:64]
-            z_sub = model.encoder(sub_batch)  # (64, e_dim)
+            z_sub = mm.encoder(sub_batch)  # (64, e_dim)
             forward_dist_first = []
-            for q in model.vq_layers:
+            for q in mm.vq_layers:
                 c = q.get_c()
                 x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
                 cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
                 d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
                 forward_dist_first.append(d.detach().clone())
             forward_dist_second = []
-            for q in model.vq_layers:
+            for q in mm.vq_layers:
                 c = q.get_c()
                 x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
                 cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
@@ -625,9 +639,9 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
                 forward_dist_second.append(d.detach().clone())
             reload_consistent = all(torch.allclose(forward_dist_first[l], forward_dist_second[l], atol=1e-6)
                                     for l in range(N_HIERARCHIES))
-            model._last_reload_consistent = reload_consistent
+            mm._last_reload_consistent = reload_consistent
     else:
-        reload_consistent = getattr(model, "_last_reload_consistent", True)
+        reload_consistent = getattr(mm, "_last_reload_consistent", True)
 
     # Issue #157 spec: 记录到 kappa_log (10+ κ 更新点)
     if reg_step % LOG_EVERY == 0 or reg_step == 0:
@@ -650,8 +664,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "kappas": kappas_after,
         "cs": cs_after,
         "raw_grad_kappa": raw_grad_kappa,
-        "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in model.vq_layers],
-        "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in model.vq_layers],
+        "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in mm.vq_layers],
+        "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in mm.vq_layers],
         "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
         "reload_consistent": reload_consistent,
     }
@@ -660,8 +674,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
 # ──────────────────────────────────────────────────────────────
 # Issue #157 spec: Stage 2 推断 → (9922, 4) SID
 # ──────────────────────────────────────────────────────────────
-def _check_collision(all_str: np.ndarray) -> bool:
-    return len(all_str) == len(set(all_str.tolist()))
+def _check_collision(all_str) -> bool:
+    return len(all_str) == len(set(all_str))
 
 
 def _get_collision_groups(all_str: np.ndarray) -> List[List[int]]:
@@ -680,10 +694,13 @@ def resolve_collisions(model: KappaAwareHRQVAE, item_emb: torch.Tensor, sid_3dig
     前提: 码本训练充分 (1000 epoch, v3e 100ep 消解无效).
     """
     model.eval()
-    for q in model.vq_layers:
+    mm = getattr(model, "module", model)  # DDP 下取 module, 否则自身 (调用方通常传 underlying)
+    for q in mm.vq_layers:
         q.sk_eps = sk_eps  # sinkhorn 消解需要 sk_eps>0 (训练默认 0.0)
     N = item_emb.shape[0]
-    all_str = np.array([str(r.tolist()) for r in sid_3digit])
+    # 用 Python list (非 numpy 定宽字符串数组): numpy <U 数组赋值超长字符串会被静默截断 → "未闭合 ["
+    # SyntaxError (码本未充分训练时 sinkhorn 消解产生 3 位码字触发). list 无此截断.
+    all_str = [str(r.tolist()) for r in sid_3digit]
     tt = 0
     with torch.no_grad():
         while True:
@@ -698,9 +715,9 @@ def resolve_collisions(model: KappaAwareHRQVAE, item_emb: torch.Tensor, sid_3dig
                     all_str[item] = str(list(code))
             tt += 1
     resolved = np.array([ast.literal_eval(s) for s in all_str])
-    n_collide = int(N - len(set(all_str.tolist())))
+    n_collide = int(N - len(set(all_str)))
     print(f"  [collision resolve] rounds={tt} remaining collisions={n_collide}/{N} "
-          f"unique_3digit={len(set(all_str.tolist()))}/{N}", flush=True)
+          f"unique_3digit={len(set(all_str))}/{N}", flush=True)
     return resolved
 
 
@@ -757,28 +774,46 @@ def main():
     parser.add_argument("--seed", type=int, default=SEED)
     args = parser.parse_args()
 
+    # DDP 加速 (2026-08-03): torchrun 注入 WORLD_SIZE/RANK/LOCAL_RANK; 非 DDP 单卡原路径不变.
+    # 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均).
+    if DDP_MODE:
+        if args.batch_size % WORLD_SIZE != 0:
+            raise ValueError(f"batch_size={args.batch_size} 必须被 WORLD_SIZE={WORLD_SIZE} 整除 (DDP 全局 batch 严格保持)")
+        dist.init_process_group(backend="nccl", init_method="env://")
+        torch.cuda.set_device(LOCAL_RANK)
+        args.gpu = LOCAL_RANK
+        is_main = (RANK == 0)
+    else:
+        is_main = True
+
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
 
-    print(f"\n{'='*70}")
-    print(f"Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证")
-    print(f"GPU={args.gpu}, epochs={args.epochs}, batch_size={args.batch_size}, lr={args.lr}, seed={args.seed}")
-    print(f"Codebook sizes L0/L1/L2: {CODEBOOK_SIZES}, e_dim={E_DIM}")
-    print(f"{'='*70}\n")
+    if is_main:
+        print(f"\n{'='*70}")
+        print(f"Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证")
+        print(f"GPU={args.gpu}, epochs={args.epochs}, batch_size={args.batch_size}, lr={args.lr}, "
+              f"seed={args.seed}, world_size={WORLD_SIZE}, ddp={DDP_MODE}")
+        print(f"Codebook sizes L0/L1/L2: {CODEBOOK_SIZES}, e_dim={E_DIM}")
+        print(f"{'='*70}\n")
 
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}\n")
+    if is_main:
+        print(f"Device: {device}\n")
 
     item_emb_sha = sha256_file(ITEM_EMB_PARQUET)
-    print(f"item_emb.parquet SHA256: {item_emb_sha[:32]}...\n")
+    if is_main:
+        print(f"item_emb.parquet SHA256: {item_emb_sha[:32]}...\n")
 
-    # Load item embeddings
-    print("Loading item embeddings...")
+    # Load item embeddings (每卡全量加载, 9922×768 小; DDP 下各自 device)
+    if is_main:
+        print("Loading item embeddings...")
     item_emb_full = EmbDataset(ITEM_EMB_PARQUET).embeddings
     item_emb = torch.tensor(item_emb_full, dtype=torch.float32).to(device)
-    print(f"item_emb shape: {item_emb.shape}\n")
+    if is_main:
+        print(f"item_emb shape: {item_emb.shape}\n")
 
     # Issue #157 spec: item alignment evidence
     item_alignment_check = {
@@ -788,12 +823,15 @@ def main():
         "alignment_ok": int(item_emb.shape[0]) == N_ITEMS,
         "row_index_aligned": True,  # row i 对应 item i (跟 HG-Rec EmbDataset 一致)
     }
-    print(f"item alignment: {item_alignment_check}\n")
+    if is_main:
+        print(f"item alignment: {item_alignment_check}\n")
 
-    # v12 推荐损失近邻预计算: item_emb 余弦 top-K (正邻居来源, 用户第二步)
+    # v12 推荐损失近邻预计算: item_emb 余弦 top-K (正邻居来源, 用户第二步).
+    # DDP: 每卡独立计算 (确定性, 结果一致), 仅 rank 0 落盘.
     nn_idx = None
     if REC_LOSS:
-        print("Precomputing item cosine top-K neighbors (REC_LOSS)...")
+        if is_main:
+            print("Precomputing item cosine top-K neighbors (REC_LOSS)...")
         emb_np = item_emb.detach().cpu().numpy()
         emb_n = emb_np / (np.linalg.norm(emb_np, axis=1, keepdims=True) + 1e-8)
         sim = emb_n @ emb_n.T  # (N, N)
@@ -802,66 +840,89 @@ def main():
         # 重排使前 K 列按相似度降序 (第 0 列 = 自身, 相似度 1.0 最大)
         order = np.argsort(-sim[np.arange(sim.shape[0])[:, None], topk], axis=1)
         nn_idx = topk[np.arange(topk.shape[0])[:, None], order]
-        np.save(PRODUCT_DIR / "nn_idx.npy", nn_idx)
-        print(f"nn_idx: {nn_idx.shape}, dtype={nn_idx.dtype} (self-sim check: {int(nn_idx[0,0])}==0 ? {int(nn_idx[0,0]) == 0})")
+        if is_main:
+            np.save(PRODUCT_DIR / "nn_idx.npy", nn_idx)
+            print(f"nn_idx: {nn_idx.shape}, dtype={nn_idx.dtype} (self-sim check: {int(nn_idx[0,0])}==0 ? {int(nn_idx[0,0]) == 0})")
 
-    # ── Precheck: aux loss → κ grad path ──
-    print(f"{'='*70}\nPHASE 0: PRECHECK (Issue #157 spec)\n{'='*70}")
+    # ── Precheck: aux loss → κ grad path (仅 rank 0 执行, broadcast 决策到所有 rank) ──
+    if is_main:
+        print(f"{'='*70}\nPHASE 0: PRECHECK (Issue #157 spec)\n{'='*70}")
     precheck_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                       e_dim=E_DIM, layers=ENCODER_LAYERS,
                                       beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                       sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-    sample = item_emb[:args.batch_size]
-    out, rq_loss, indices, z_q, z = precheck_model(sample, use_sk=False)
-    # Issue #55/v3: precheck 与训练一致用 poincare recon (欧氏 MSE 是塌缩根因)
-    recon_loss = poincare_recon_loss(out, sample)
-    total_loss = recon_loss + rq_loss
-    if CURV_PRIOR:
-        # Issue #76: precheck 与训练一致, κ 梯度来自平滑先验 (量化已 stop-grad c)
-        total_loss = total_loss + CURV_PRIOR_LAMBDA * sum(q.kappa.pow(2) for q in precheck_model.vq_layers)
-    if FIX_C:
-        # fix_c 模式 (固定 c=1): κ 不参与 c, 不检查 κ grad
-        grads_kappa = []
-        precheck_kappa_grad_ok = True
-    else:
-        grads_kappa = torch.autograd.grad(total_loss, [q.kappa for q in precheck_model.vq_layers],
-                                          retain_graph=False, allow_unused=True)
+    if is_main:
+        precheck_mm = getattr(precheck_model, "module", precheck_model)
+        sample = item_emb[:args.batch_size]
+        out, rq_loss, indices, z_q, z = precheck_model(sample, use_sk=False)
+        # Issue #55/v3: precheck 与训练一致用 poincare recon (欧氏 MSE 是塌缩根因)
+        recon_loss = poincare_recon_loss(out, sample)
+        total_loss = recon_loss + rq_loss
         if CURV_PRIOR:
-            # Issue #76: κ init=0 处 L2 先验梯度恰为 0 (合法鞍点), 判定放宽为"梯度存在且有限"
-            precheck_kappa_grad_ok = all(g is not None and not (torch.isnan(g).any() or torch.isinf(g).any())
-                                         for g in grads_kappa)
+            # Issue #76: precheck 与训练一致, κ 梯度来自平滑先验 (量化已 stop-grad c)
+            total_loss = total_loss + CURV_PRIOR_LAMBDA * sum(q.kappa.pow(2) for q in precheck_mm.vq_layers)
+        if FIX_C:
+            # fix_c 模式 (固定 c=1): κ 不参与 c, 不检查 κ grad
+            grads_kappa = []
+            precheck_kappa_grad_ok = True
         else:
-            precheck_kappa_grad_ok = all(g is not None and g.abs().item() > 1e-8 for g in grads_kappa)
-    precheck_no_nan = not (torch.isnan(total_loss).any().item() or torch.isinf(total_loss).any().item())
-    precheck_init_c_positive = all(q.get_c().item() > 0 for q in precheck_model.vq_layers)
-    precheck_pass = precheck_kappa_grad_ok and precheck_no_nan and precheck_init_c_positive
-    print(f"(1) κ grad finite nonzero: {'SKIP (fix_c)' if FIX_C else [g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
-    if REL_STRUCT and not FIX_C:
-        grad_vals = [g.abs().item() if g is not None else 0.0 for g in grads_kappa]
-        print(f"    (1b) 结构损失 (REL_STRUCT) 驱动 κ 梯度: {grad_vals} "
-              f"{'→ 非零, κ 可学习' if any(v > 1e-8 for v in grad_vals) else '→ ⚠ 全 0 (r≈TARGET 死锁? 需调 REL_STRUCT_TARGET)'}")
-    print(f"(2) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
-    print(f"(3) c_l > 0 (init=1+κ+1e-3): {[q.get_c().item() for q in precheck_model.vq_layers]} → {'PASS' if precheck_init_c_positive else 'FAIL'}")
-    print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
+            grads_kappa = torch.autograd.grad(total_loss, [q.kappa for q in precheck_mm.vq_layers],
+                                              retain_graph=False, allow_unused=True)
+            if CURV_PRIOR:
+                # Issue #76: κ init=0 处 L2 先验梯度恰为 0 (合法鞍点), 判定放宽为"梯度存在且有限"
+                precheck_kappa_grad_ok = all(g is not None and not (torch.isnan(g).any() or torch.isinf(g).any())
+                                             for g in grads_kappa)
+            else:
+                precheck_kappa_grad_ok = all(g is not None and g.abs().item() > 1e-8 for g in grads_kappa)
+        precheck_no_nan = not (torch.isnan(total_loss).any().item() or torch.isinf(total_loss).any().item())
+        precheck_init_c_positive = all(q.get_c().item() > 0 for q in precheck_mm.vq_layers)
+        precheck_pass = precheck_kappa_grad_ok and precheck_no_nan and precheck_init_c_positive
+        print(f"(1) κ grad finite nonzero: {'SKIP (fix_c)' if FIX_C else [g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
+        if REL_STRUCT and not FIX_C:
+            grad_vals = [g.abs().item() if g is not None else 0.0 for g in grads_kappa]
+            print(f"    (1b) 结构损失 (REL_STRUCT) 驱动 κ 梯度: {grad_vals} "
+                  f"{'→ 非零, κ 可学习' if any(v > 1e-8 for v in grad_vals) else '→ ⚠ 全 0 (r≈TARGET 死锁? 需调 REL_STRUCT_TARGET)'}")
+        print(f"(2) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
+        print(f"(3) c_l > 0 (init=1+κ+1e-3): {[q.get_c().item() for q in precheck_mm.vq_layers]} → {'PASS' if precheck_init_c_positive else 'FAIL'}")
+        print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
+    else:
+        precheck_pass = True  # 占位, 等 rank 0 broadcast
 
+    # DDP: precheck 决策 broadcast 到所有 rank (FAIL 时全部退出, 避免卡死)
+    if DDP_MODE:
+        pass_t = torch.tensor(1 if precheck_pass else 0, device=device)
+        dist.broadcast(pass_t, src=0)
+        precheck_pass = bool(pass_t.item())
     if not precheck_pass:
-        verdict = {"gate2_decision": "FAIL", "precheck_pass": False, "reason": "precheck fail"}
-        with open(PRODUCT_DIR / "verdict.json", "w") as f:
-            json.dump(verdict, f, indent=2)
+        if is_main:
+            verdict = {"gate2_decision": "FAIL", "precheck_pass": False, "reason": "precheck fail"}
+            with open(PRODUCT_DIR / "verdict.json", "w") as f:
+                json.dump(verdict, f, indent=2)
+        if DDP_MODE:
+            dist.barrier()
+            dist.destroy_process_group()
         return
 
     # ── Phase 1: Stage 2 训练 ──
-    print(f"{'='*70}\nPHASE 1: Stage 2 RQ-VAE 训练 ({args.epochs} epoch)\n{'='*70}")
+    if is_main:
+        print(f"{'='*70}\nPHASE 1: Stage 2 RQ-VAE 训练 ({args.epochs} epoch)\n{'='*70}")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     train_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
                                    e_dim=E_DIM, layers=ENCODER_LAYERS,
                                    beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                    sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
+    # DDP: wrap (forward 梯度 all-reduce 平均); 属性访问/保存用 underlying train_mm
+    # find_unused_parameters=True: CURV_PRIOR 下 mix_weight 被 .detach() 冻结 (Issue #76 有意 stop-grad),
+    # 不参与 backward → DDP 默认 strict-reducer 报 unused error; 显式声明后跳过其梯度 (语义与单卡一致).
+    if DDP_MODE:
+        train_model = torch.nn.parallel.DistributedDataParallel(train_model, device_ids=[LOCAL_RANK],
+                                                                find_unused_parameters=True)
+    train_mm = train_model.module if DDP_MODE else train_model
     # Issue #55/v2: κ / mix_weight 独立 param group, 更大 LR 补偿梯度消失
-    kappa_params = [q.kappa for q in train_model.vq_layers]
-    mix_params = [q.mix_weight for q in train_model.vq_layers]
-    other_params = [p for p in train_model.parameters() if not any(p is q.kappa or p is q.mix_weight for q in train_model.vq_layers)]
+    kappa_params = [q.kappa for q in train_mm.vq_layers]
+    mix_params = [q.mix_weight for q in train_mm.vq_layers]
+    other_params = [p for p in train_mm.parameters() if not any(p is q.kappa or p is q.mix_weight for q in train_mm.vq_layers)]
     if CURV_AWARE:
         # Issue #75 Curvature-Aware Optimization (论文 Alg.1): 拆分优化器 — 参数(旧 c 几何) 先 step,
         # κ/mix 后 step. 消除同一步内 κ 突变使参数更新"过时"的几何冲击.
@@ -880,7 +941,11 @@ def main():
     n_items = item_emb.shape[0]
     steps_per_epoch = max(1, n_items // args.batch_size)
     total_steps = args.epochs * steps_per_epoch
-    print(f"steps_per_epoch={steps_per_epoch}, total_steps={total_steps}\n")
+    # DDP: 全局 batch 拆 WORLD_SIZE 份, 每卡 local_batch; 所有卡共享同一 perm (同 seed), 各取不重叠块
+    local_batch = args.batch_size // WORLD_SIZE if DDP_MODE else args.batch_size
+    if is_main:
+        print(f"steps_per_epoch={steps_per_epoch}, total_steps={total_steps} "
+              f"(DDP local_batch={local_batch}/global {args.batch_size})\n")
 
     # Issue #55/v5: 对齐基线 train_hrqvae.py 线性 scheduler (warmup 20 + 线性衰减). per-group base_lr 存储.
     for g in opt.param_groups:
@@ -907,235 +972,249 @@ def main():
         perm = np.random.permutation(n_items)
         epoch_loss = 0.0
         for s in range(steps_per_epoch):
-            batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
+            if DDP_MODE:
+                # 全局 batch = perm[s*global_batch : (s+1)*global_batch], 卡 rank 取第 rank 个 local 块
+                g_start = s * args.batch_size
+                batch_idx = perm[g_start + RANK * local_batch: g_start + (RANK + 1) * local_batch]
+            else:
+                batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
             batch = item_emb[batch_idx]
             m = train_step_with_sync_recalibration(train_model, batch, batch_idx, nn_idx, item_emb,
                                                    opt, kappa_log, reg_step,
                                                    opt_kappa=opt_kappa if CURV_AWARE else None)
             epoch_loss += m["loss"]
-            train_curve.append({"step": reg_step, "epoch": epoch, **m})
+            if is_main:
+                train_curve.append({"step": reg_step, "epoch": epoch, **m})
             reg_step += 1
-        if epoch % 5 == 0 or epoch == args.epochs - 1:
+        if is_main and (epoch % 5 == 0 or epoch == args.epochs - 1):
             rec_str = f"rec={m['rec_loss']:.4f} " if REC_LOSS else ""
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
                   f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}")
 
-    # ── R12 ckpt 强制保存 ──
+    # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
-    if ckpt_path.exists():
-        ckpt_path.unlink()
-    torch.save({
-        "model_state_dict": train_model.state_dict(),
-        "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS, "beta": BETA},
-        "final_kappas": [q.kappa.item() for q in train_model.vq_layers],
-        "final_cs": [q.get_c().item() for q in train_model.vq_layers],
-        "final_mix_weights": [q.mix_weight.item() for q in train_model.vq_layers],
-    }, ckpt_path)
-    print(f"\nR12 ckpt saved: {ckpt_path}\n")
+    if is_main:
+        if ckpt_path.exists():
+            ckpt_path.unlink()
+        torch.save({
+            "model_state_dict": train_mm.state_dict(),
+            "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS, "beta": BETA},
+            "final_kappas": [q.kappa.item() for q in train_mm.vq_layers],
+            "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
+            "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
+        }, ckpt_path)
+        print(f"\nR12 ckpt saved: {ckpt_path}\n")
 
-    # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
-    print(f"{'='*70}\nPHASE 2: Stage 2 推断 → (9922, 4) SID\n{'='*70}")
-    sid_3digit = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
-    sid_4digit = add_4th_dedup_digit(sid_3digit, K_l2=CODEBOOK_SIZES[-1])
-    sid_sha = sha256_array(sid_4digit)
-    print(f"SID shape: {sid_4digit.shape}, dtype: {sid_4digit.dtype}")
-    print(f"SID range: [{sid_4digit.min()}, {sid_4digit.max()}]")
-    print(f"SID SHA256: {sid_sha[:32]}...\n")
+    if is_main:
+        # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
+        print(f"{'='*70}\nPHASE 2: Stage 2 推断 → (9922, 4) SID\n{'='*70}")
+        sid_3digit = infer_sid(train_mm, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
+        sid_4digit = add_4th_dedup_digit(sid_3digit, K_l2=CODEBOOK_SIZES[-1])
+        sid_sha = sha256_array(sid_4digit)
+        print(f"SID shape: {sid_4digit.shape}, dtype: {sid_4digit.dtype}")
+        print(f"SID range: [{sid_4digit.min()}, {sid_4digit.max()}]")
+        print(f"SID SHA256: {sid_sha[:32]}...\n")
 
-    np.save(PRODUCT_DIR / "sid_output.npy", sid_4digit)
+        np.save(PRODUCT_DIR / "sid_output.npy", sid_4digit)
 
-    # ── Phase 3: Reload 一致性验证 (Issue #157 spec 强制) ──
-    print(f"{'='*70}\nPHASE 3: Reload 一致性验证\n{'='*70}")
-    reload_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
-                                    e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                    beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                    sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-    reload_model.load_state_dict(ckpt["model_state_dict"])
-    reload_model.eval()
-    sid_reload_3digit = infer_sid(reload_model, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
-    sid_reload_4digit = add_4th_dedup_digit(sid_reload_3digit, K_l2=CODEBOOK_SIZES[-1])
-    sid_reload_sha = sha256_array(sid_reload_4digit)
-    reload_consistent = sid_sha == sid_reload_sha
-    print(f"Reload SID SHA256: {sid_reload_sha[:32]}...")
-    print(f"Reload consistent: {'✅ PASS' if reload_consistent else '❌ FAIL'}\n")
+        # ── Phase 3: Reload 一致性验证 (Issue #157 spec 强制) ──
+        print(f"{'='*70}\nPHASE 3: Reload 一致性验证\n{'='*70}")
+        reload_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+                                        e_dim=E_DIM, layers=ENCODER_LAYERS,
+                                        beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
+                                        sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        reload_model.load_state_dict(ckpt["model_state_dict"])
+        reload_model.eval()
+        sid_reload_3digit = infer_sid(reload_model, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
+        sid_reload_4digit = add_4th_dedup_digit(sid_reload_3digit, K_l2=CODEBOOK_SIZES[-1])
+        sid_reload_sha = sha256_array(sid_reload_4digit)
+        reload_consistent = sid_sha == sid_reload_sha
+        print(f"Reload SID SHA256: {sid_reload_sha[:32]}...")
+        print(f"Reload consistent: {'✅ PASS' if reload_consistent else '❌ FAIL'}\n")
 
-    # ── Phase 4: 关闭同步重校准的消融 ──
-    print(f"{'='*70}\nPHASE 4: 对照消融 (关闭同步重校准)\n{'='*70}")
-    no_recal_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
-                                      e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                      beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                      sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-    # 模拟 "不重校准" 行为: 让 c 冻结为 init=1.0 (no κ update effective)
-    for q in no_recal_model.vq_layers:
-        q.kappa.requires_grad = False
-    print("Ablation: κ frozen, no sync recalibration (对照)")
-    # 不实际训练, 仅验证 SID 数量级差异
-    # 对照消融: 不消解 (随机码本 base argmin, 保持"无重校准训练"的原样对照)
-    sid_ablation_3digit = infer_sid(no_recal_model, item_emb, batch_size=args.batch_size, resolve=False)
-    print(f"Ablation SID (κ frozen): shape={sid_ablation_3digit.shape}, "
-          f"unique 3-digit codes={len(np.unique(sid_ablation_3digit, axis=0))}/{N_ITEMS}\n")
+        # ── Phase 4: 关闭同步重校准的消融 ──
+        print(f"{'='*70}\nPHASE 4: 对照消融 (关闭同步重校准)\n{'='*70}")
+        no_recal_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+                                          e_dim=E_DIM, layers=ENCODER_LAYERS,
+                                          beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
+                                          sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
+        no_recal_mm = getattr(no_recal_model, "module", no_recal_model)  # DDP 兼容 (Phase 2-5 只 rank 0 跑)
+        # 模拟 "不重校准" 行为: 让 c 冻结为 init=1.0 (no κ update effective)
+        for q in no_recal_mm.vq_layers:
+            q.kappa.requires_grad = False
+        print("Ablation: κ frozen, no sync recalibration (对照)")
+        # 不实际训练, 仅验证 SID 数量级差异
+        # 对照消融: 不消解 (随机码本 base argmin, 保持"无重校准训练"的原样对照)
+        sid_ablation_3digit = infer_sid(no_recal_model, item_emb, batch_size=args.batch_size, resolve=False)
+        print(f"Ablation SID (κ frozen): shape={sid_ablation_3digit.shape}, "
+              f"unique 3-digit codes={len(np.unique(sid_ablation_3digit, axis=0))}/{N_ITEMS}\n")
 
-    # ── Phase 5: Gate 2 决策 ──
-    print(f"{'='*70}\nGATE 2 决策 (Issue #157 spec)\n{'='*70}")
-    n_kappa_updates = len(kappa_log)
-    util_per_layer = [float(len(np.unique(sid_4digit[:, l])) / CODEBOOK_SIZES[l]) for l in range(N_HIERARCHIES)]
-    util_4digit = len(np.unique(sid_4digit, axis=0)) / N_ITEMS
-    # Issue #157 spec: 10+ κ 更新点记录
-    kappa_updates_ok = n_kappa_updates >= 10
-    # Issue #157 spec: 每层 κ 真更新 (final != initial)
-    final_kappas = [q.kappa.item() for q in train_model.vq_layers]
-    if FIX_C:
-        # fix_c 模式 (固定 c=1 对齐基线): κ/mix_weight 不参与学习, 跳过差异检查
-        kappa_learned_ok = True
-        kappa_per_layer_diff_ok = True
-        final_kappas_arr = np.array(final_kappas)
-        final_mix_weights = [1.0] * len(train_model.vq_layers)
-        mix_weight_diff_ok = True
-    else:
-        kappa_learned_ok = any(abs(k) > 1e-6 for k in final_kappas)
-        # Issue #55/v2: 三层 κ 显著不同 (std ≥ 0.05, 证明每层独立学习而非共享塌缩)
-        final_kappas_arr = np.array(final_kappas)
-        if CURV_PRIOR:
-            # Issue #76: 用户方案下 κ 是微调量级 (c=exp(κ)≈1.02-1.04, 平滑先验锚 c→1), 原 std≥0.05
-            # 阈值按"κ 直接量化训练"量级 (0.1+) 设定, 对本方案不适用. v10 实测 κ=[0.018,0.037,0.036]
-            # std=0.009, max-min=0.020 (L0 与 L1/L2 差 ~2 倍) 已是有意义的层级差异 → 放宽为
-            # std>0.005 或 max-min>0.01 (仍拒绝"三层完全相同"的共享塌缩).
-            kappa_per_layer_diff_ok = (float(final_kappas_arr.std()) > 0.005
-                                       or float(final_kappas_arr.max() - final_kappas_arr.min()) > 0.01)
-        else:
-            kappa_per_layer_diff_ok = float(final_kappas_arr.std()) >= 0.05
-        # Issue #55/v2: mix_weight 三层不同 (std > 0.01, 证明每层有不同权重)
-        final_mix_weights = [q.mix_weight.item() for q in train_model.vq_layers]
-        if CURV_PRIOR:
-            # Issue #76: 用户方案下 mix_weight 有意 stop-grad 冻结为 1.0 (对齐 fix_c 行为, 消除 v8 负权白嫖),
-            # 不再作为可变曲率判据 — κ 的层级差异由相对结构目标驱动, mix_weight 冻结不算失败.
+        # ── Phase 5: Gate 2 决策 ──
+        print(f"{'='*70}\nGATE 2 决策 (Issue #157 spec)\n{'='*70}")
+        n_kappa_updates = len(kappa_log)
+        util_per_layer = [float(len(np.unique(sid_4digit[:, l])) / CODEBOOK_SIZES[l]) for l in range(N_HIERARCHIES)]
+        util_4digit = len(np.unique(sid_4digit, axis=0)) / N_ITEMS
+        # Issue #157 spec: 10+ κ 更新点记录
+        kappa_updates_ok = n_kappa_updates >= 10
+        # Issue #157 spec: 每层 κ 真更新 (final != initial)
+        final_kappas = [q.kappa.item() for q in train_mm.vq_layers]
+        if FIX_C:
+            # fix_c 模式 (固定 c=1 对齐基线): κ/mix_weight 不参与学习, 跳过差异检查
+            kappa_learned_ok = True
+            kappa_per_layer_diff_ok = True
+            final_kappas_arr = np.array(final_kappas)
+            final_mix_weights = [1.0] * len(train_mm.vq_layers)
             mix_weight_diff_ok = True
         else:
-            mix_weight_diff_ok = float(np.std(final_mix_weights)) > 0.01
-    # Issue #157 spec: reload 一致 (5/5)
-    reload_ok = reload_consistent
-    # Issue #157 spec: 无 NaN/Inf
-    no_nan_ok = all(not (math.isnan(c['loss']) or math.isinf(c['loss'])) for c in train_curve)
-    # Issue #157 spec: SID hash 唯一 + item alignment
-    # Issue #157 spec: SID SHA256 唯一 + item alignment (spec 没要求 util_4digit 高值)
-    sid_ok = sid_sha is not None and len(sid_sha) == 64 and item_alignment_check["alignment_ok"]
-    # Issue #157 spec: 对照消融 PASS (ablation 有差异)
-    ablation_ok = not np.array_equal(sid_3digit, sid_ablation_3digit)
+            kappa_learned_ok = any(abs(k) > 1e-6 for k in final_kappas)
+            # Issue #55/v2: 三层 κ 显著不同 (std ≥ 0.05, 证明每层独立学习而非共享塌缩)
+            final_kappas_arr = np.array(final_kappas)
+            if CURV_PRIOR:
+                # Issue #76: 用户方案下 κ 是微调量级 (c=exp(κ)≈1.02-1.04, 平滑先验锚 c→1), 原 std≥0.05
+                # 阈值按"κ 直接量化训练"量级 (0.1+) 设定, 对本方案不适用. v10 实测 κ=[0.018,0.037,0.036]
+                # std=0.009, max-min=0.020 (L0 与 L1/L2 差 ~2 倍) 已是有意义的层级差异 → 放宽为
+                # std>0.005 或 max-min>0.01 (仍拒绝"三层完全相同"的共享塌缩).
+                kappa_per_layer_diff_ok = (float(final_kappas_arr.std()) > 0.005
+                                           or float(final_kappas_arr.max() - final_kappas_arr.min()) > 0.01)
+            else:
+                kappa_per_layer_diff_ok = float(final_kappas_arr.std()) >= 0.05
+            # Issue #55/v2: mix_weight 三层不同 (std > 0.01, 证明每层有不同权重)
+            final_mix_weights = [q.mix_weight.item() for q in train_mm.vq_layers]
+            if CURV_PRIOR:
+                # Issue #76: 用户方案下 mix_weight 有意 stop-grad 冻结为 1.0 (对齐 fix_c 行为, 消除 v8 负权白嫖),
+                # 不再作为可变曲率判据 — κ 的层级差异由相对结构目标驱动, mix_weight 冻结不算失败.
+                mix_weight_diff_ok = True
+            else:
+                mix_weight_diff_ok = float(np.std(final_mix_weights)) > 0.01
+        # Issue #157 spec: reload 一致 (5/5)
+        reload_ok = reload_consistent
+        # Issue #157 spec: 无 NaN/Inf
+        no_nan_ok = all(not (math.isnan(c['loss']) or math.isinf(c['loss'])) for c in train_curve)
+        # Issue #157 spec: SID hash 唯一 + item alignment
+        # Issue #157 spec: SID SHA256 唯一 + item alignment (spec 没要求 util_4digit 高值)
+        sid_ok = sid_sha is not None and len(sid_sha) == 64 and item_alignment_check["alignment_ok"]
+        # Issue #157 spec: 对照消融 PASS (ablation 有差异)
+        ablation_ok = not np.array_equal(sid_3digit, sid_ablation_3digit)
 
-    # 5/5 reload check (额外一致性, 4-digit hash 比对)
-    sid_consistency_5 = []
-    print("  5/5 reload diagnostic (4-digit hash 比对):")
-    for i in range(5):
-        m5 = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
-                              beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                              sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-        m5.load_state_dict(ckpt["model_state_dict"])
-        m5.eval()
-        sid5_3digit = infer_sid(m5, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
-        sid5_4digit = add_4th_dedup_digit(sid5_3digit, K_l2=CODEBOOK_SIZES[-1])
-        sid5_sha = sha256_array(sid5_4digit)  # 4-digit hash (跟 sid_reload_sha 维度一致)
-        is_match = sid5_sha == sid_reload_sha
-        sid_consistency_5.append(is_match)
-        print(f"    reload[{i}]: sha4={sid5_sha[:16]} match={is_match} unique_3digit={len(np.unique(sid5_3digit, axis=0))}")
-    reload_5of5_ok = all(sid_consistency_5)
+        # 5/5 reload check (额外一致性, 4-digit hash 比对)
+        sid_consistency_5 = []
+        print("  5/5 reload diagnostic (4-digit hash 比对):")
+        for i in range(5):
+            m5 = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
+                                  beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
+                                  sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
+            m5.load_state_dict(ckpt["model_state_dict"])
+            m5.eval()
+            sid5_3digit = infer_sid(m5, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
+            sid5_4digit = add_4th_dedup_digit(sid5_3digit, K_l2=CODEBOOK_SIZES[-1])
+            sid5_sha = sha256_array(sid5_4digit)  # 4-digit hash (跟 sid_reload_sha 维度一致)
+            is_match = sid5_sha == sid_reload_sha
+            sid_consistency_5.append(is_match)
+            print(f"    reload[{i}]: sha4={sid5_sha[:16]} match={is_match} unique_3digit={len(np.unique(sid5_3digit, axis=0))}")
+        reload_5of5_ok = all(sid_consistency_5)
 
-    gate2_pass = (kappa_updates_ok and kappa_learned_ok and reload_ok and reload_5of5_ok
-                  and no_nan_ok and sid_ok and ablation_ok and precheck_pass
-                  and kappa_per_layer_diff_ok and mix_weight_diff_ok)
-    print(f"  10+ κ 更新点 ({n_kappa_updates}): {'PASS' if kappa_updates_ok else 'FAIL'}")
-    print(f"  κ 真学习 (final={final_kappas}): {'PASS' if kappa_learned_ok else 'FAIL'}")
-    if FIX_C:
-        print(f"  三层 κ 显著不同: SKIP (fix_c 固定 c=1 对齐基线)")
-        print(f"  三层 mix_weight 不同: SKIP (fix_c 固定 c=1 对齐基线)")
-    else:
-        print(f"  三层 κ 显著不同 (std={float(final_kappas_arr.std()):.4f}): {'PASS' if kappa_per_layer_diff_ok else 'FAIL'}")
-        print(f"  三层 mix_weight 不同 (std={float(np.std(final_mix_weights)):.4f}, vals={final_mix_weights}): {'PASS' if mix_weight_diff_ok else 'FAIL'}")
-    print(f"  reload SID hash 一致: {'PASS' if reload_ok else 'FAIL'}")
-    print(f"  5/5 reload 一致: {'PASS' if reload_5of5_ok else 'FAIL'}")
-    print(f"  无 NaN/Inf: {'PASS' if no_nan_ok else 'FAIL'}")
-    print(f"  SID util_4digit={util_4digit:.4f}, item alignment={item_alignment_check['alignment_ok']}: {'PASS' if sid_ok else 'FAIL'}")
-    print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
-    print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 可变曲率+权重): {'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
+        gate2_pass = (kappa_updates_ok and kappa_learned_ok and reload_ok and reload_5of5_ok
+                      and no_nan_ok and sid_ok and ablation_ok and precheck_pass
+                      and kappa_per_layer_diff_ok and mix_weight_diff_ok)
+        print(f"  10+ κ 更新点 ({n_kappa_updates}): {'PASS' if kappa_updates_ok else 'FAIL'}")
+        print(f"  κ 真学习 (final={final_kappas}): {'PASS' if kappa_learned_ok else 'FAIL'}")
+        if FIX_C:
+            print(f"  三层 κ 显著不同: SKIP (fix_c 固定 c=1 对齐基线)")
+            print(f"  三层 mix_weight 不同: SKIP (fix_c 固定 c=1 对齐基线)")
+        else:
+            print(f"  三层 κ 显著不同 (std={float(final_kappas_arr.std()):.4f}): {'PASS' if kappa_per_layer_diff_ok else 'FAIL'}")
+            print(f"  三层 mix_weight 不同 (std={float(np.std(final_mix_weights)):.4f}, vals={final_mix_weights}): {'PASS' if mix_weight_diff_ok else 'FAIL'}")
+        print(f"  reload SID hash 一致: {'PASS' if reload_ok else 'FAIL'}")
+        print(f"  5/5 reload 一致: {'PASS' if reload_5of5_ok else 'FAIL'}")
+        print(f"  无 NaN/Inf: {'PASS' if no_nan_ok else 'FAIL'}")
+        print(f"  SID util_4digit={util_4digit:.4f}, item alignment={item_alignment_check['alignment_ok']}: {'PASS' if sid_ok else 'FAIL'}")
+        print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
+        print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 可变曲率+权重): {'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
 
-    # ── 落盘产物 ──
-    config = {
-        "issue": "#157",
-        "task": "#448",
-        "spec": "Issue #157 Gate 2: per-layer learnable κ_l + κ-aware codebook sync recalibration + Stage 2 SID 完整链路",
-        "codebook_sizes": CODEBOOK_SIZES,
-        "e_dim": E_DIM,
-        "encoder_layers": ENCODER_LAYERS,
-        "batch_size": args.batch_size,
-        "epochs": args.epochs,
-        "lr": args.lr,
-        "seed": args.seed,
-        "gpu": args.gpu,
-        "triton_cache_dir": os.environ.get("TRITON_CACHE_DIR"),
-        "item_emb_sha256": item_emb_sha,
-        "n_items": N_ITEMS,
-    }
-    with open(PRODUCT_DIR / "config.json", "w") as f:
-        json.dump(config, f, indent=2)
+        # ── 落盘产物 ──
+        config = {
+            "issue": "#157",
+            "task": "#448",
+            "spec": "Issue #157 Gate 2: per-layer learnable κ_l + κ-aware codebook sync recalibration + Stage 2 SID 完整链路",
+            "codebook_sizes": CODEBOOK_SIZES,
+            "e_dim": E_DIM,
+            "encoder_layers": ENCODER_LAYERS,
+            "batch_size": args.batch_size,
+            "epochs": args.epochs,
+            "lr": args.lr,
+            "seed": args.seed,
+            "gpu": args.gpu,
+            "triton_cache_dir": os.environ.get("TRITON_CACHE_DIR"),
+            "item_emb_sha256": item_emb_sha,
+            "n_items": N_ITEMS,
+        }
+        with open(PRODUCT_DIR / "config.json", "w") as f:
+            json.dump(config, f, indent=2)
 
-    precheck_data = {
-        "kappa_grad_ok": precheck_kappa_grad_ok,
-        "kappa_grad_values": [g.abs().item() if g is not None else 0.0 for g in grads_kappa],
-        "no_nan_ok": precheck_no_nan,
-        "init_c_positive_ok": precheck_init_c_positive,
-        "precheck_pass": precheck_pass,
-    }
-    with open(PRODUCT_DIR / "precheck.json", "w") as f:
-        json.dump(precheck_data, f, indent=2)
+        precheck_data = {
+            "kappa_grad_ok": precheck_kappa_grad_ok,
+            "kappa_grad_values": [g.abs().item() if g is not None else 0.0 for g in grads_kappa],
+            "no_nan_ok": precheck_no_nan,
+            "init_c_positive_ok": precheck_init_c_positive,
+            "precheck_pass": precheck_pass,
+        }
+        with open(PRODUCT_DIR / "precheck.json", "w") as f:
+            json.dump(precheck_data, f, indent=2)
 
-    with open(PRODUCT_DIR / "kappa_recalibration_log.json", "w") as f:
-        json.dump(kappa_log, f, indent=2, default=str)
+        with open(PRODUCT_DIR / "kappa_recalibration_log.json", "w") as f:
+            json.dump(kappa_log, f, indent=2, default=str)
 
-    sid_metadata = {
-        "shape": list(sid_4digit.shape),
-        "dtype": str(sid_4digit.dtype),
-        "range": [int(sid_4digit.min()), int(sid_4digit.max())],
-        "sha256": sid_sha,
-        "n_unique_4digit": int(len(np.unique(sid_4digit, axis=0))),
-        "util_per_layer_3digit": util_per_layer,
-        "util_4digit": float(util_4digit),
-        "item_alignment": item_alignment_check,
-        "reload_consistent": reload_consistent,
-        "reload_5of5_consistent": reload_5of5_ok,
-    }
-    with open(PRODUCT_DIR / "sid_metadata.json", "w") as f:
-        json.dump(sid_metadata, f, indent=2)
+        sid_metadata = {
+            "shape": list(sid_4digit.shape),
+            "dtype": str(sid_4digit.dtype),
+            "range": [int(sid_4digit.min()), int(sid_4digit.max())],
+            "sha256": sid_sha,
+            "n_unique_4digit": int(len(np.unique(sid_4digit, axis=0))),
+            "util_per_layer_3digit": util_per_layer,
+            "util_4digit": float(util_4digit),
+            "item_alignment": item_alignment_check,
+            "reload_consistent": reload_consistent,
+            "reload_5of5_consistent": reload_5of5_ok,
+        }
+        with open(PRODUCT_DIR / "sid_metadata.json", "w") as f:
+            json.dump(sid_metadata, f, indent=2)
 
-    with open(PRODUCT_DIR / "train_curve.json", "w") as f:
-        json.dump(train_curve, f, indent=2, default=str)
+        with open(PRODUCT_DIR / "train_curve.json", "w") as f:
+            json.dump(train_curve, f, indent=2, default=str)
 
-    verdict = {
-        "gate2_decision": "PASS" if gate2_pass else "FAIL",
-        "n_kappa_updates": n_kappa_updates,
-        "final_kappas": final_kappas,
-        "final_cs": [q.get_c().item() for q in train_model.vq_layers],
-        "final_mix_weights": final_mix_weights,
-        "kappa_per_layer_std": float(final_kappas_arr.std()),
-        "mix_weight_std": float(np.std(final_mix_weights)),
-        "kappa_per_layer_diff_ok": kappa_per_layer_diff_ok,
-        "mix_weight_diff_ok": mix_weight_diff_ok,
-        "sid_sha256": sid_sha,
-        "util_per_layer_3digit": util_per_layer,
-        "util_4digit": float(util_4digit),
-        "reload_consistent": reload_consistent,
-        "reload_5of5_consistent": reload_5of5_ok,
-        "precheck_pass": precheck_pass,
-        "ablation_diff_ok": ablation_ok,
-    }
-    with open(PRODUCT_DIR / "verdict.json", "w") as f:
-        json.dump(verdict, f, indent=2)
+        verdict = {
+            "gate2_decision": "PASS" if gate2_pass else "FAIL",
+            "n_kappa_updates": n_kappa_updates,
+            "final_kappas": final_kappas,
+            "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
+            "final_mix_weights": final_mix_weights,
+            "kappa_per_layer_std": float(final_kappas_arr.std()),
+            "mix_weight_std": float(np.std(final_mix_weights)),
+            "kappa_per_layer_diff_ok": kappa_per_layer_diff_ok,
+            "mix_weight_diff_ok": mix_weight_diff_ok,
+            "sid_sha256": sid_sha,
+            "util_per_layer_3digit": util_per_layer,
+            "util_4digit": float(util_4digit),
+            "reload_consistent": reload_consistent,
+            "reload_5of5_consistent": reload_5of5_ok,
+            "precheck_pass": precheck_pass,
+            "ablation_diff_ok": ablation_ok,
+        }
+        with open(PRODUCT_DIR / "verdict.json", "w") as f:
+            json.dump(verdict, f, indent=2)
 
-    print(f"\n产物落地: {PRODUCT_DIR}")
-    print(f"  config.json + precheck.json + kappa_recalibration_log.json ({n_kappa_updates} entries)")
-    print(f"  sid_output.npy ({sid_4digit.shape}) + sid_metadata.json")
-    print(f"  train_curve.json ({len(train_curve)} steps) + verdict.json")
-    print(f"  hrqvae_kappa_sync.ckpt (R12 强制保存)")
+        print(f"\n产物落地: {PRODUCT_DIR}")
+        print(f"  config.json + precheck.json + kappa_recalibration_log.json ({n_kappa_updates} entries)")
+        print(f"  sid_output.npy ({sid_4digit.shape}) + sid_metadata.json")
+        print(f"  train_curve.json ({len(train_curve)} steps) + verdict.json")
+        print(f"  hrqvae_kappa_sync.ckpt (R12 强制保存)")
+
+    if DDP_MODE:
+        dist.barrier()
+        dist.destroy_process_group()
+
 
 
 if __name__ == "__main__":
