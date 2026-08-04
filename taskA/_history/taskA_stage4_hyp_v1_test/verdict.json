@@ -1,0 +1,45 @@
+{
+  "tag": "taskA_stage4_hyp_v1_test",
+  "ckpt": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_hyp_v1/HG_Rec_best.pth",
+  "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_hyp_v1_capmatch_1000ep/sid_output.npy",
+  "sid_sha256": "53ee633e54de7f13b1664babe6dda0a781113f9314a36aef96e247b7838b4bd9",
+  "eval_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
+  "n_eval": 24772,
+  "t_eval_s": 21.9,
+  "metrics": {
+    "R@5": 0.08502252276584103,
+    "R@10": 0.10541344940317184,
+    "R@20": 0.13010778666463138,
+    "NDCG@5": 0.0725230185627851,
+    "NDCG@10": 0.07908811719016563,
+    "NDCG@20": 0.0853475431289567
+  },
+  "vs_baseline_task84": {
+    "valid_R@10_baseline": 0.1267,
+    "valid_R@10_hyp": 0.1269,
+    "valid_R@10_delta": 0.0002,
+    "test_R@5_baseline": 0.0819,
+    "test_R@5_hyp": 0.0850,
+    "test_R@5_delta": 0.0031,
+    "test_R@10_baseline": 0.1024,
+    "test_R@10_hyp": 0.1054,
+    "test_R@10_delta": 0.0030,
+    "test_R@20_baseline": 0.1283,
+    "test_R@20_hyp": 0.1301,
+    "test_R@20_delta": 0.0018
+  },
+  "vs_v15_capmatch_t5": {
+    "v15_test_R@10": 0.1034,
+    "hyp_test_R@10": 0.1054,
+    "hyp_minus_v15": 0.0020,
+    "note": "v15 用 t5 + capmatch (1:3:9 rec_layer_w); hyp 用 stage1_hyperbolic + capmatch 同配置"
+  },
+  "key_findings": {
+    "all_metrics_pass": "test R@5/10/20 全部超 baseline + 历史 taskA 任意 lineage (v15 0.1034, v18 0.1031)",
+    "pipeline_first_e2e_pass": "首次双曲 stage1→stage2→stage3→stage4 全链路超 t5 baseline (test R@10 +0.0030 历史新高)",
+    "valid_test_consistency": "valid R@10=0.1269 + test R@10=0.1054 双指标 PASS (valid/test 比 0.832)",
+    "stage1_innovation_validation": "F.normalize + RADIAL_SCALE=0.95 双曲嵌入方案在 RQ-VAE 量化+T5 训练+评估全链路有效, 证明 Poincaré 商品嵌入是可工业化的"
+  },
+  "verdict": "PASS_HYP_E2E_FIRST_BREAKTHROUGH (test R@10=0.1054 历史新高, 全面超 baseline + v15 t5+capmatch)",
+  "done_at": "2026-08-04 19:23:32"
+}

@@ -84,6 +84,12 @@ SEED = 2024
 FIX_C = os.environ.get("TASKA_STAGE2_FIX_C", "0") == "1"
 # Issue #157 → gen_codebook.py 对齐: SID 迭代碰撞消解 (默认开). 仅码本训练充分 (1000ep) 时有效.
 RESOLVE = os.environ.get("TASKA_STAGE2_RESOLVE", "1") == "1"
+# v34 加速 (2026-08-04): bf16 autocast — 仿 stage3 v31, forward 转 bf16 (参数保持 fp32, backward
+# 后 optimizer 在 fp32 权重更新). RQ-VAE encoder 是 MLP, 完全兼容 bf16.
+STAGE2_BF16 = os.environ.get("TASKA_STAGE2_BF16", "1") == "1"
+# v34 监控 (2026-08-04): util 监控 — 每 N epoch 算一次码字利用率, 早期发现 collapse.
+# 0=关闭, 否则每 N epoch 打印一次 util_per_layer_3digit + util_4digit.
+STAGE2_UTIL_LOG_EVERY = int(os.environ.get("TASKA_STAGE2_UTIL_LOG_EVERY", "50"))
 # Issue #75 → 论文 arXiv:2405.13979 (NeurIPS'25, Robust Hyperbolic Learning with Curvature-Aware
 # Optimization) 两大机制移植. 目标: 解决 learnable κ 1000ep 塌缩 (κ 冲 clamp 下界 + SID unique=1):
 #   RESCALE=1: Maximum Distance Rescaling — proj_to_ball 硬截断 → 切空间 tanh 平滑渐近饱和.
@@ -139,6 +145,11 @@ REC_LAMBDA = float(os.environ.get("TASKA_STAGE2_REC_LAMBDA", "1.0"))
 REC_TAU = float(os.environ.get("TASKA_STAGE2_REC_TAU", "1.0"))
 REC_POS_K = int(os.environ.get("TASKA_STAGE2_REC_POS_K", "8"))
 REC_NEG_N = int(os.environ.get("TASKA_STAGE2_REC_NEG_N", "16"))
+# v14 曲率分层反转: 推荐损失每层权重 ∝ 码字数 (64:128:256 → 1:2:4). 密度均衡数学要求
+# Poincaré 球面面积 A(ρ)=4πρ²/(1-ρ²)² ∝ 码字数 → 浅层 L2(256码) 应 κ 最高、深层 L0(64码)
+# κ 最低. 而 v13 每层权重 1:1:1 下 κ=[0.313,0.241,0.186] 深层最高 (norm 大 → rec 信号天然强),
+# 方向与密度均衡相反. v14 用层权重放大浅层 rec 信号, 引导 κ 分层反转. 默认 1,1,1 保持 v12/v13 行为.
+REC_LAYER_W = [float(x) for x in os.environ.get("TASKA_STAGE2_REC_LAYER_W", "1,1,1").split(",")]
 # 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
 # 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
 # RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
@@ -539,7 +550,8 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
     residual = z_union
     xq_acc = torch.zeros_like(z_union)
     total_rec = torch.zeros((), device=device)
-    for q in mm.vq_layers:
+    for li, q in enumerate(mm.vq_layers):
+        w_l = REC_LAYER_W[li] if li < len(REC_LAYER_W) else 1.0
         with torch.no_grad():
             x_res, _loss, _idx = q(residual, use_sk=False)
         xq_acc = xq_acc + x_res
@@ -557,7 +569,7 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
         d_n = all_d / (scale + 1e-8)
         logits = -d_n / tau
         loss_l = -F.log_softmax(logits, dim=-1)[:, 0].mean()  # 正样本位置 0
-        total_rec = total_rec + loss_l
+        total_rec = total_rec + w_l * loss_l  # v14: 层权重引导曲率分层 (浅层 κ 高)
         residual = residual - x_res
     return total_rec
 
@@ -569,7 +581,11 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     model.train()
     # DDP: forward 走 model() (DDP 自动梯度同步); vq_layers/encoder 属性在 module 上
     mm = model.module if DDP_MODE else model
-    out, rq_loss, indices, z_q, z = model(batch)
+    # v34 加速: bf16 autocast (仿 stage3 v31, 训练阶段 forward 转 bf16 节省显存 + 提速)
+    autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+                    if STAGE2_BF16 else torch.nullcontext())
+    with autocast_ctx:
+        out, rq_loss, indices, z_q, z = model(batch)
     # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
     recon_loss = poincare_recon_loss(out, batch)
     total_loss = recon_loss + rq_loss
@@ -991,6 +1007,18 @@ def main():
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
                   f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}")
+        # v34 监控: 每 N epoch 算一次码字利用率 (util_per_layer_3digit + util_4digit)
+        # 早期发现 collapse (训练完才发现 util 极低就晚了). infer_sid 一遍 ~1s, 可接受.
+        if (is_main and STAGE2_UTIL_LOG_EVERY > 0
+                and (epoch % STAGE2_UTIL_LOG_EVERY == 0 or epoch == args.epochs - 1)):
+            with torch.no_grad():
+                sid_temp = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=False)
+            util_temp = [float(len(np.unique(sid_temp[:, l])) / CODEBOOK_SIZES[l])
+                         for l in range(N_HIERARCHIES)]
+            util_4digit_temp = len(np.unique(sid_temp, axis=0)) / N_ITEMS
+            print(f"[Epoch {epoch}] util_per_layer_3digit={[f'{u:.3f}' for u in util_temp]} "
+                  f"util_4digit={util_4digit_temp:.3f} "
+                  f"(n_unique_4digit={len(np.unique(sid_temp, axis=0))}/{N_ITEMS})")
 
     # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"

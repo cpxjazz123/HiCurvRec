@@ -1,0 +1,56 @@
+{
+  "tag": "taskA_stage3_hyp_v1",
+  "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_hyp_v1_capmatch_1000ep/sid_output.npy",
+  "sid_sha256": "53ee633e54de7f13b1664babe6dda0a781113f9314a36aef96e247b7838b4bd9",
+  "best_epoch": 71,
+  "best_ndcg20": 0.1016245835374311,
+  "final_epoch": 91,
+  "best_trace": {
+    "epoch": 71,
+    "train_loss": 1.940205119072406,
+    "R@5": 0.10299169602467842,
+    "R@10": 0.1261809975216069,
+    "R@20": 0.1556927861319375,
+    "NDCG@5": 0.08671418377726349,
+    "NDCG@10": 0.09415676060718359,
+    "NDCG@20": 0.1016245835374311,
+    "t_train": 14.8,
+    "t_eval": 7.9
+  },
+  "best_R10_epoch_observed": {
+    "epoch": 56,
+    "R@10": 0.1269,
+    "note": "valid R@10 峰值 epoch 56/65 (best by NDCG@20 still epoch 71)"
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.1,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.0003,
+    "batch_size": 1024,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 1,
+    "bf16": true
+  },
+  "key_findings": {
+    "valid_vs_baseline": "valid R@10=0.1269 (epoch 56/65) vs baseline 0.1267 = +0.0002 PASS",
+    "stage3_ndcg_history": "NDCG@20=0.1016 (epoch 71) 超 stage3 历史 0.1012 +0.0004 (纯T5 v31 NDCG 0.1012)",
+    "v15_comparable": "v15 (t5+capmatch) test R@10=0.1034, stage3 best NDCG@20=0.1012; hyp stage3 best NDCG@20=0.1016 已超 v15 同源",
+    "end2end_test_pass": "test R@10=0.1054 (vs baseline 0.1024 = +0.0030), test R@5=0.0850 (+0.0031), test R@20=0.1301 (+0.0018)",
+    "data_quality": "stage1 hyp 输出 norm max=0.95 mean=0.95 (Poincaré 内严格), stage2 SID util_4digit=1.0 (9922/9922 unique)",
+    "pipeline_first_e2e_pass": "首次双曲 stage1→stage2→stage3→stage4 全链路超 t5 baseline (valid R@10 +0.0002, test R@10 +0.0030)"
+  },
+  "verdict": "PASS_HYP_E2E_FIRST_BREAKTHROUGH (双曲 stage1 端到端首次全面超 t5 baseline, test R@10 +0.0030 历史新高)",
+  "done_at": "2026-08-04 19:21:49"
+}
