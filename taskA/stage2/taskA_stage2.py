@@ -46,6 +46,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
+import contextlib
 
 # R7: GPU 选择 (从环境变量读, 默认 GPU 0)
 os.environ.setdefault("TRITON_CACHE_DIR", "/home/wlia0047/.triton/cache_task448")
@@ -583,7 +584,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     mm = model.module if DDP_MODE else model
     # v34 加速: bf16 autocast (仿 stage3 v31, 训练阶段 forward 转 bf16 节省显存 + 提速)
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
-                    if STAGE2_BF16 else torch.nullcontext())
+                    if STAGE2_BF16 else contextlib.nullcontext())
     with autocast_ctx:
         out, rq_loss, indices, z_q, z = model(batch)
     # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
