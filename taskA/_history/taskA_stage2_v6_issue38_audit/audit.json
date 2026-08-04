@@ -1,0 +1,85 @@
+{
+  "ckpt": "taskA/_history/taskA_stage2_hyp_v5_capmatch_relstruct_bs1024_1000ep/hrqvae_kappa_sync.ckpt",
+  "n_audit_samples": 9922,
+  "layers": [
+    {
+      "layer": 0,
+      "n_codes": 64,
+      "kappa": 0.024586081504821777,
+      "c": 1.0245860815048218,
+      "codebook_hash": "b131b7f3e2f9f061",
+      "tangent_hash": "a4330dbc74ae1c6a",
+      "codebook_norm_mean": 0.13819870352745056,
+      "codebook_norm_std": 0.025904720649123192,
+      "codebook_norm_max": 0.2117941975593567,
+      "boundary_occupation_95": 0.0,
+      "boundary_occupation_99": 0.0,
+      "tangent_norm_mean": 0.1392108052968979,
+      "top1_distance_mean": 0.13707132637500763,
+      "top2_distance_mean": 0.16170303523540497,
+      "margin_mean": 0.024631714448332787,
+      "margin_std": 0.018795061856508255
+    },
+    {
+      "layer": 1,
+      "n_codes": 128,
+      "kappa": 0.04566168785095215,
+      "c": 1.0456616878509521,
+      "codebook_hash": "9618b8a84feaff62",
+      "tangent_hash": "e207894f3497a52f",
+      "codebook_norm_mean": 0.08072984218597412,
+      "codebook_norm_std": 0.012536244466900826,
+      "codebook_norm_max": 0.11628697067499161,
+      "boundary_occupation_95": 0.0,
+      "boundary_occupation_99": 0.0,
+      "tangent_norm_mean": 0.08092758059501648,
+      "top1_distance_mean": 0.16423413157463074,
+      "top2_distance_mean": 0.1712522953748703,
+      "margin_mean": 0.007018150296062231,
+      "margin_std": 0.006542806047946215
+    },
+    {
+      "layer": 2,
+      "n_codes": 256,
+      "kappa": 0.055892348289489746,
+      "c": 1.0558923482894897,
+      "codebook_hash": "ee4691e6670f0822",
+      "tangent_hash": "0c639e29b39dbe70",
+      "codebook_norm_mean": 0.07082200795412064,
+      "codebook_norm_std": 0.013036614283919334,
+      "codebook_norm_max": 0.11972872167825699,
+      "boundary_occupation_95": 0.0,
+      "boundary_occupation_99": 0.0,
+      "tangent_norm_mean": 0.0709611028432846,
+      "top1_distance_mean": 0.1651456654071808,
+      "top2_distance_mean": 0.1702248901128769,
+      "margin_mean": 0.005079224240034819,
+      "margin_std": 0.004863448906689882
+    }
+  ],
+  "kappa_recalibration_stability": [
+    {
+      "layer": 0,
+      "orig_codebook_hash": "b131b7f3e2f9f061",
+      "perturbed_codebook_hash": "a6684e766ee1407c",
+      "hash_changed": true,
+      "expected": "hash_changed=True (different c \u2192 different expmap0 \u2192 different codebook)"
+    },
+    {
+      "layer": 1,
+      "orig_codebook_hash": "9618b8a84feaff62",
+      "perturbed_codebook_hash": "303cc12ccd3e1ae0",
+      "hash_changed": true,
+      "expected": "hash_changed=True (different c \u2192 different expmap0 \u2192 different codebook)"
+    },
+    {
+      "layer": 2,
+      "orig_codebook_hash": "ee4691e6670f0822",
+      "perturbed_codebook_hash": "162ea13bc2fde8a3",
+      "hash_changed": true,
+      "expected": "hash_changed=True (different c \u2192 different expmap0 \u2192 different codebook)"
+    }
+  ],
+  "gate_verdict": "PASS",
+  "gate_reason": "\u8fb9\u754c\u5360\u7528\u7387 (norm>0.99): [(0, 0.0), (1, 0.0), (2, 0.0)], \u5747 < 0.5 \u9608\u503c, codebook \u5065\u5eb7\u7403\u5185\u5206\u5e03. \u5207\u7a7a\u95f4\u2192Poincar\u00e9 \u6620\u5c04\u901a\u8fc7 expmap0 \u8fde\u7eed, \u03ba \u91cd\u6821\u51c6\u540e hash \u53d8\u5316 (\u7b26\u5408\u9884\u671f)."
+}
