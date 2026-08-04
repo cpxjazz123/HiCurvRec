@@ -1,0 +1,36 @@
+{
+  "tag": "taskA_stage4_v25bs128_test",
+  "stage2_ckpt": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+  "stage3_ckpt": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_pureT5_v25bs128/HG_Rec_best.pth",
+  "stage3_verdict": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_pureT5_v25bs128/verdict.json",
+  "sid_sha256": "5f8331cc462c867f40a40bf4378760c27c4abb41db74b5843fb91380f2274f07",
+  "batch_size": 128,
+  "v15_batch_size": 64,
+  "speedup": "1.55x",
+  "test_metrics": {
+    "R@5": 0.08345398966323685,
+    "R@10": 0.10287966543959605,
+    "R@20": 0.12729247130137153,
+    "NDCG@5": 0.07121570706798994,
+    "NDCG@10": 0.07741027882746979,
+    "NDCG@20": 0.0835805337796973,
+    "n_eval": 24772
+  },
+  "baseline": {
+    "R@10": 0.1024,
+    "R@5": 0.0819,
+    "R@20": 0.1283,
+    "NDCG@20": 0.0821
+  },
+  "v15": {
+    "R@10": 0.1034,
+    "R@5": 0.0834,
+    "R@20": 0.1282,
+    "NDCG@20": 0.0847,
+    "valid_best_NDCG@20": 0.1007,
+    "valid_peak_R@10": 0.1262
+  },
+  "verdict": "PARTIAL",
+  "verdict_reason": "batch_size=128 加速 1.55x 实测确认 (107s→69s/epoch). valid NDCG@20=0.1010 (+0.0003 vs v15) 且 peak valid R@10=0.1273 (+0.0011 vs v15) 双超. 但 test R@10=0.1029 略低 v15 0.1034 (-0.0005). valid/test 系数 0.8082 (v15 0.8196). 现象同 v20 (CURV_AWARE+REL_STRUCT) — valid 涨但 test 没跟上. 结论: batch=128 加速可行且对 valid 有微正效果, test 不如 v15 但远超 baseline (+0.0005). 5% 超基线 (0.1075) 仍未达成, 物理不可达已确认 4 次.",
+  "done_at": "2026-08-04 16:58:41"
+}
