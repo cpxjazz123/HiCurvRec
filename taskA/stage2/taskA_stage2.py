@@ -330,6 +330,10 @@ class KappaAwareVectorQuantization(nn.Module):
         return proj_to_ball(expmap0(self.embeddings.weight, c), c)
 
     def init_emb(self, data):
+        # bf16 兼容 (v35 加速): data 可能是 bf16 (STAGE2_BF16 autocast 上下文里 forward),
+        # kmeans() 内部 .cpu().numpy() 不支持 bf16 → 转 fp32
+        if data.dtype != torch.float32:
+            data = data.float()
         centers = kmeans(data, self.n_e, self.kmeans_iters)
         self.embeddings.weight.data.copy_(centers)
         self.initted = True
