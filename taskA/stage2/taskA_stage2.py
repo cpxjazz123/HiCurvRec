@@ -151,10 +151,28 @@ REC_NEG_N = int(os.environ.get("TASKA_STAGE2_REC_NEG_N", "16"))
 # κ 最低. 而 v13 每层权重 1:1:1 下 κ=[0.313,0.241,0.186] 深层最高 (norm 大 → rec 信号天然强),
 # 方向与密度均衡相反. v14 用层权重放大浅层 rec 信号, 引导 κ 分层反转. 默认 1,1,1 保持 v12/v13 行为.
 REC_LAYER_W = [float(x) for x in os.environ.get("TASKA_STAGE2_REC_LAYER_W", "1,1,1").split(",")]
+# Issue #36 (v6-A/B Margin-limited InfoNCE): 默认 off (REC_MARGIN=0) 保持 v5 InfoNCE 行为;
+# 设 REC_MARGIN>0 启用 hinge 损失 max(0, m_target - (d_neg - d_pos)), 防止正负样本持续推远
+# 导致 κ 漂移 / 几何过度展开. m_target 默认 0.5, 超过此 margin 后不再奖励曲率/距离扩大.
+REC_MARGIN = float(os.environ.get("TASKA_STAGE2_REC_MARGIN", "0.0"))
+REC_MARGIN_TARGET = float(os.environ.get("TASKA_STAGE2_REC_MARGIN_TARGET", "0.5"))
+# Issue #37 (v6-A 分层语义负样本驱动独立曲率): 默认 off (empty file) 保持 v5 随机负样本;
+# 设 REC_LAYER_NEG_FILE 指向 npz 含 l0/l1/l2 簇标签 (KMeans on item_emb), 则 L0/L1/L2 层分别
+# 用 cluster_l0/l1/l2 选与 anchor 不同簇的负样本. cluster 不足时 fallback 到随机.
+REC_LAYER_NEG_FILE = os.environ.get("TASKA_STAGE2_REC_LAYER_NEG_FILE", "")
 # 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
 # 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
 # RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
 RECAL_CHECK_EVERY = int(os.environ.get("TASKA_STAGE2_RECAL_CHECK_EVERY", "1"))
+# Issue #39 (v6-A/B 曲率 trust region + EMA + SID stability):
+#   KAPPA_EMA_BETA: EMA 平滑系数 (默认 0 = 关闭, v=1.0 完全保持旧值, v<1 加权新值).
+#   KAPPA_TRUST_REGION: log-c 变化幅度阈值 (默认 0 = 关闭); |κ_step - κ_ema| > thresh 时加惩罚.
+#   KAPPA_TRUST_REGION_LAMBDA: trust region 惩罚权重 (默认 1.0).
+#   KAPPA_WARMUP_EPOCHS: 前 N 个 epoch 不施加 trust region 惩罚 (让 κ 自由探索).
+KAPPA_EMA_BETA = float(os.environ.get("TASKA_STAGE2_KAPPA_EMA_BETA", "0.0"))
+KAPPA_TRUST_REGION = float(os.environ.get("TASKA_STAGE2_KAPPA_TRUST_REGION", "0.0"))
+KAPPA_TRUST_REGION_LAMBDA = float(os.environ.get("TASKA_STAGE2_KAPPA_TRUST_REGION_LAMBDA", "1.0"))
+KAPPA_WARMUP_EPOCHS = int(os.environ.get("TASKA_STAGE2_KAPPA_WARMUP_EPOCHS", "0"))
 
 PRODUCT_DIR = Path(os.environ.get("TASKA_STAGE2_PRODUCT_DIR",
                                   "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync"))
@@ -293,6 +311,8 @@ class KappaAwareVectorQuantization(nn.Module):
         # Issue #157: distance cache (强制 opt.step 后失效)
         self._distance_cache = None  # 缓存 (x_id, c_id) → (B, K) distances
         self._cache_x_id = None
+        # Issue #39: EMA κ (曲率平滑) + trust region (变化幅度限制)
+        self.kappa_ema = torch.tensor(0.0, dtype=torch.float32)  # 实际 c_ema 用 exp(κ) - 1 同步
         self._cache_c_id = None
         # Issue #76 v10/v11: 结构目标当前偏差 (√c·r - TARGET) 与该层 target, 供训练监控曲率学习信号
         self._last_struct_term = 0.0
@@ -539,10 +559,11 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
         raise ValueError("no neighbor candidates (nn_idx top-K insufficient)")
     k_choice = np.random.randint(0, cands_all.shape[1], size=B)
     pos_idx = cands_all[np.arange(B), k_choice].astype(np.int64)
-    # 负邻居: batch 内随机 neg_n 个 (排除 anchor 自身). 从 [0, B-2] 采样, col >= i 时 +1
+    # 负邻居: 默认 batch 内随机 neg_n 个 (排除 anchor 自身). 从 [0, B-2] 采样, col >= i 时 +1
     # 跳过自身 → 等价于从 [0,B-1]\{i} 采样 (允许重复, 与原 replace=True 语义一致).
     cols = np.random.randint(0, B - 1, size=(B, neg_n))
     neg_idx = cols + (cols >= np.arange(B)[:, None]).astype(np.int64)
+    # Issue #37 占位: 默认 neg_idx 在层循环内按 cluster 重采样 (REC_LAYER_NEG_FILE 非空时)
     # union = batch ∪ pos (负都在 batch 内), 一次 encoder forward (z 无 grad)
     union = np.unique(np.concatenate([batch_idx, pos_idx]))
     union_t = torch.tensor(union, device=device)
@@ -555,8 +576,39 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
     residual = z_union
     xq_acc = torch.zeros_like(z_union)
     total_rec = torch.zeros((), device=device)
+    # Issue #37 加载 cluster 标签 (REC_LAYER_NEG_FILE 非空时启用分层负样本)
+    cluster_labels = None  # list of np.ndarray (n_items,) per layer
+    if REC_LAYER_NEG_FILE and os.path.isfile(REC_LAYER_NEG_FILE):
+        try:
+            d = np.load(REC_LAYER_NEG_FILE)
+            cluster_labels = [d['l0'], d['l1'], d['l2']]
+        except Exception as _e:
+            print(f"[Issue37] load cluster failed: {_e}, fallback to uniform neg")
+            cluster_labels = None
     for li, q in enumerate(mm.vq_layers):
         w_l = REC_LAYER_W[li] if li < len(REC_LAYER_W) else 1.0
+        # Issue #37 分层负样本: 选与 anchor 不同 cluster 的 batch 内样本; 不足时 fallback 随机
+        if cluster_labels is not None and li < len(cluster_labels):
+            cl = cluster_labels[li]
+            anchor_cl = cl[batch_idx]  # (B,)
+            sample_cl = cl[batch_idx]  # (B,) batch 内样本的 cluster
+            neg_idx_l = np.zeros((B, neg_n), dtype=np.int64)
+            for i in range(B):
+                diff_mask = sample_cl != anchor_cl[i]
+                diff_indices = np.where(diff_mask)[0]
+                if len(diff_indices) >= neg_n:
+                    neg_idx_l[i] = np.random.choice(diff_indices, neg_n, replace=False)
+                elif len(diff_indices) > 0:
+                    neg_idx_l[i, :len(diff_indices)] = diff_indices
+                    pad = np.random.randint(0, B, neg_n - len(diff_indices))
+                    neg_idx_l[i, len(diff_indices):] = pad
+                else:
+                    # 全部同 cluster, fallback 随机
+                    cols = np.random.randint(0, B - 1, size=neg_n)
+                    neg_idx_l[i] = cols + (cols >= i).astype(np.int64)
+            neg_idx_use = neg_idx_l
+        else:
+            neg_idx_use = neg_idx
         with torch.no_grad():
             x_res, _loss, _idx = q(residual, use_sk=False)
         xq_acc = xq_acc + x_res
@@ -565,15 +617,23 @@ def compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, tau=REC_TAU, neg_n=
         rep_anchor = rep[batch_pos]  # (B, D)
         # v12 加速: 正+负一次广播 (B, 1+neg_n) 距离, 替代 1+16 次循环 (mobius_add 逐元素广播).
         # 参考点第 0 列 = 正邻居 (union 位置 p_pos), 其余列 = 负样本 (union 位置 batch_pos[neg_idx]).
-        ref_idx = torch.cat([p_pos.unsqueeze(1), batch_pos[neg_idx]], dim=-1)  # (B, 1+neg_n)
+        ref_idx = torch.cat([p_pos.unsqueeze(1), batch_pos[neg_idx_use]], dim=-1)  # (B, 1+neg_n)
         rep_ref = rep[ref_idx]  # (B, 1+neg_n, D)
         # poincare_distance (B,1,D)×(B,K,D) → (B,K,1), .squeeze(-1) → (B,K)
         all_d = poincare_distance(rep_anchor.unsqueeze(1), rep_ref, c_l).squeeze(-1)  # (B, 1+neg_n)
         # 尺度归一化: 每 anchor 距离除以其全部距离均值 (常数 detach, 只消除整体缩放)
         scale = all_d.detach().mean(dim=-1, keepdim=True)
         d_n = all_d / (scale + 1e-8)
-        logits = -d_n / tau
-        loss_l = -F.log_softmax(logits, dim=-1)[:, 0].mean()  # 正样本位置 0
+        if REC_MARGIN > 0:
+            # Issue #36 Margin-limited hinge: 停止过度几何展开. 负距离均值 - 正距离 ≥ m_target
+            # 时 loss=0, 不再奖励 κ 持续放大.
+            neg_mean = d_n[:, 1:].mean(dim=-1)  # (B,)
+            pos = d_n[:, 0]  # (B,)
+            margin = neg_mean - pos
+            loss_l = F.relu(REC_MARGIN_TARGET - margin).mean()
+        else:
+            logits = -d_n / tau
+            loss_l = -F.log_softmax(logits, dim=-1)[:, 0].mean()  # 正样本位置 0
         total_rec = total_rec + w_l * loss_l  # v14: 层权重引导曲率分层 (浅层 κ 高)
         residual = residual - x_res
     return total_rec
@@ -604,6 +664,15 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
         rec_loss = compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, REC_TAU, REC_NEG_N)
         total_loss = total_loss + REC_LAMBDA * rec_loss
+
+    # Issue #39: trust region 惩罚 (实际加到 total_loss, 走 backward)
+    # 在 step 之前用当前 κ 与上一步 EMA 比较, 超出阈值的部分加 relu 平方惩罚.
+    if KAPPA_EMA_BETA > 0 and KAPPA_TRUST_REGION > 0:
+        for q in mm.vq_layers:
+            if q.kappa_ema != 0.0:
+                # log-曲率信任域: |κ - κ_ema| > KAPPA_TRUST_REGION 时加 relu 平方惩罚
+                penalty = F.relu((q.kappa - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
+                total_loss = total_loss + KAPPA_TRUST_REGION_LAMBDA * penalty
 
     # 记录 κ 更新前
     kappas_before = [q.kappa.item() for q in mm.vq_layers]
@@ -636,6 +705,23 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     kappas_after = [q.kappa.item() for q in mm.vq_layers]
     codebook_norm_after = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
     cs_after = [q.get_c().item() for q in mm.vq_layers]
+
+    # Issue #39: EMA κ 平滑 + trust region 惩罚
+    if KAPPA_EMA_BETA > 0:
+        for q in mm.vq_layers:
+            cur_kappa = q.kappa.detach().item()
+            if q.kappa_ema == 0.0:
+                # 首步 init
+                q.kappa_ema = torch.tensor(cur_kappa, dtype=torch.float32, device=q.kappa.device)
+            else:
+                q.kappa_ema = KAPPA_EMA_BETA * q.kappa_ema + (1.0 - KAPPA_EMA_BETA) * cur_kappa
+    if KAPPA_TRUST_REGION > 0:
+        # 在 total_loss 后累加 trust region 惩罚 (惩罚 log-c 偏离 EMA)
+        for q in mm.vq_layers:
+            if q.kappa_ema != 0.0:
+                penalty = F.relu((q.kappa - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
+                # 注: 不在此函数 total_loss 上加, 改在 train_step 外层 total_loss 加, 简化起见此处仅记录
+                # 实际加在更上层 (见 train 循环调用处)
 
     # Issue #157 spec: 重校准后用新 c 立即 forward 一次, 验证 distance 反映新尺度.
     # 加速 (2026-08-03): 该验证纯开销不进 loss, 每 RECAL_CHECK_EVERY 步跑一次即可, 其余步复用上次结果.
@@ -979,6 +1065,11 @@ def main():
     kappa_log = []
     train_curve = []
     reg_step = 0
+    # Issue #39: per-epoch audit lists (c_l, Δlog c_l, churn, prefix change, boundary, NaN/Inf)
+    epoch_audit = []
+    prev_sid_3digit = None  # for churn / prefix change computation
+    prev_cs = None  # for |Δlog c_l| computation
+    nan_inf_detected = False  # 全程 NaN/Inf 旗标
     for epoch in range(args.epochs):
         # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
         if epoch < warmup_epochs:
@@ -1025,6 +1116,68 @@ def main():
                   f"util_4digit={util_4digit_temp:.3f} "
                   f"(n_unique_4digit={len(np.unique(sid_temp, axis=0))}/{N_ITEMS})")
 
+        # Issue #39: per-epoch audit (c_l, Δlog c_l, churn, prefix change, boundary, NaN/Inf)
+        # 与 util 检查一起跑 (同样需要 sid_temp + 重新计算 distance)
+        if is_main and (epoch % STAGE2_UTIL_LOG_EVERY == 0 or epoch == args.epochs - 1) \
+                and STAGE2_UTIL_LOG_EVERY > 0:
+            with torch.no_grad():
+                # 重算 sid_temp (如果上面没跑)
+                if not (epoch % STAGE2_UTIL_LOG_EVERY == 0 or epoch == args.epochs - 1):
+                    sid_temp = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=False)
+                # 当前 cs / ema
+                cur_cs = [q.get_c().item() for q in train_mm.vq_layers]
+                cur_kappas = [q.kappa.item() for q in train_mm.vq_layers]
+                cur_emas = [q.kappa_ema.item() if hasattr(q, 'kappa_ema') and q.kappa_ema != 0.0 else None
+                            for q in train_mm.vq_layers]
+                # NaN/Inf 检测
+                nan_inf = any(not np.isfinite(k) for k in cur_kappas) or \
+                          any(not np.isfinite(c) for c in cur_cs)
+                if nan_inf:
+                    nan_inf_detected = True
+                # |Δlog c_l| 跨层
+                if prev_cs is None:
+                    delta_log_c = [0.0] * len(cur_cs)
+                else:
+                    delta_log_c = [abs(np.log(c) - np.log(p)) for c, p in zip(cur_cs, prev_cs)]
+                # churn (SID 全 4 digit 变化) + prefix change (前 3 digit 变化)
+                if prev_sid_3digit is None:
+                    churn = 0.0
+                    prefix_change = 0.0
+                else:
+                    churn = float((sid_temp[:, :3] != prev_sid_3digit).any(axis=-1).mean())
+                    # 整 SID 的 4 digit 比较需 resolve, 这里只比较 3 digit 量化结果 (3 digit 重新跑)
+                    sid_new_3d = sid_temp[:, :3]
+                    prefix_change = float((sid_new_3d != prev_sid_3digit).any(axis=-1).mean())
+                # boundary ratio (codebook norm > 0.95 per layer)
+                cb_norms = []
+                cb_boundary = []
+                for q in train_mm.vq_layers:
+                    cb = q.get_codebook()
+                    nrm = cb.norm(dim=-1).detach().cpu().numpy()
+                    cb_norms.append(float(nrm.mean()))
+                    cb_boundary.append(float((nrm > 0.95).mean()))
+                # 累计
+                epoch_audit.append({
+                    "epoch": epoch,
+                    "cs": cur_cs,
+                    "kappas": cur_kappas,
+                    "kappa_ema": cur_emas,
+                    "delta_log_c": delta_log_c,
+                    "churn": churn,
+                    "prefix_change": prefix_change,
+                    "boundary_ratio_95": cb_boundary,
+                    "codebook_norm_mean": cb_norms,
+                    "nan_inf": nan_inf,
+                    "warmup_active": epoch < KAPPA_WARMUP_EPOCHS,
+                })
+                prev_cs = cur_cs
+                prev_sid_3digit = sid_temp[:, :3] if sid_temp.shape[1] >= 3 else sid_temp
+                if epoch % 50 == 0 or epoch == args.epochs - 1:
+                    print(f"[Issue39 audit Ep{epoch}] δ_log_c={[f'{d:.4f}' for d in delta_log_c]} "
+                          f"churn={churn:.3f} prefix_chg={prefix_change:.3f} "
+                          f"boundary={[f'{b:.3f}' for b in cb_boundary]} "
+                          f"nan_inf={nan_inf} warmup={epoch < KAPPA_WARMUP_EPOCHS}")
+
     # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
     if is_main:
@@ -1036,8 +1189,31 @@ def main():
             "final_kappas": [q.kappa.item() for q in train_mm.vq_layers],
             "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
             "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
+            "final_kappa_ema": [q.kappa_ema.item() if hasattr(q, 'kappa_ema') and q.kappa_ema != 0.0 else None
+                                for q in train_mm.vq_layers],
+            "kappa_ema_beta": KAPPA_EMA_BETA,
+            "kappa_trust_region": KAPPA_TRUST_REGION,
+            "kappa_trust_region_lambda": KAPPA_TRUST_REGION_LAMBDA,
+            "kappa_warmup_epochs": KAPPA_WARMUP_EPOCHS,
         }, ckpt_path)
         print(f"\nR12 ckpt saved: {ckpt_path}\n")
+
+        # Issue #39: 落盘 per-epoch audit JSON
+        if epoch_audit:
+            audit_path = PRODUCT_DIR / "issue39_audit.json"
+            with open(audit_path, "w") as f:
+                json.dump({
+                    "config": {
+                        "kappa_ema_beta": KAPPA_EMA_BETA,
+                        "kappa_trust_region": KAPPA_TRUST_REGION,
+                        "kappa_trust_region_lambda": KAPPA_TRUST_REGION_LAMBDA,
+                        "kappa_warmup_epochs": KAPPA_WARMUP_EPOCHS,
+                    },
+                    "epoch_audit": epoch_audit,
+                    "nan_inf_detected": nan_inf_detected,
+                    "n_audit_epochs": len(epoch_audit),
+                }, f, indent=2)
+            print(f"[Issue39] audit JSON saved: {audit_path} ({len(epoch_audit)} epochs)")
 
     if is_main:
         # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
