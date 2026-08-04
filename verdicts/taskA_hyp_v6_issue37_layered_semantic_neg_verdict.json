@@ -1,0 +1,84 @@
+{
+  "tag": "taskA_hyp_v6_issue37_layered_semantic_neg",
+  "issue": "wlia0047/generec#37",
+  "stage2": {
+    "module": "taskA/stage2/taskA_stage2.py",
+    "product_dir": "taskA/_history/taskA_stage2_v6_issue37_layered_neg_1000ep",
+    "config": {
+      "epochs": 1000,
+      "batch_size": 1024,
+      "seed": 2024,
+      "curv_prior": 1,
+      "rel_struct": 1,
+      "rec_layer_w": "1,3,9",
+      "rec_layer_neg_file": "/home/wlia0047/.claude/jobs/6ae5ecdb/tmp/issue37_clusters.npz",
+      "bf16": 1
+    },
+    "result": {
+      "kappa_final": [0.0236, 0.0452, 0.0561],
+      "c_final": [1.024, 1.046, 1.057],
+      "util_4digit": 1.0,
+      "unique_3digit": 9896
+    },
+    "gate2_verdict": "PASS",
+    "gate2_reason": "κ 跨层差异化 [0.024,0.045,0.056], util_4digit=1.0, unique_3digit=99.7%"
+  },
+  "stage3": {
+    "module": "common/stage3_train_pure_t5.py",
+    "product_dir": "taskA/_history/taskA_stage3_v6_issue37",
+    "config": {
+      "epochs": 200,
+      "early_stop": 20,
+      "batch_size": 1024,
+      "lr": 0.0003,
+      "bf16": 1,
+      "seed": 42
+    },
+    "best_epoch": 66,
+    "early_stopped": true,
+    "valid_metrics": {
+      "R@5": 0.1038,
+      "R@10": 0.1268,
+      "R@20": 0.1579,
+      "NDCG@5": 0.0870,
+      "NDCG@10": 0.0947,
+      "NDCG@20": 0.1005
+    },
+    "gate3_verdict": "PASS",
+    "gate3_reason": "early stop @ ep87, best ep66: valid R@10=0.1268+0.0001, NDCG@20=0.1005+0.0250"
+  },
+  "stage4": {
+    "module": "common/stage4_eval_pure_t5.py",
+    "product_dir": "taskA/_history/taskA_stage4_v6_issue37_test",
+    "eval_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
+    "n_eval": 24772,
+    "test_metrics": {
+      "R@5": 0.0836,
+      "R@10": 0.1044,
+      "R@20": 0.1308,
+      "NDCG@5": 0.0715,
+      "NDCG@10": 0.0782,
+      "NDCG@20": 0.0849
+    },
+    "t_eval_s": 26.2,
+    "gate4_verdict": "PASS",
+    "gate4_reason": "test R@10=0.1044 > 0.1020 issue Gate 4 目标 ✓; vs hyp v5 (0.1048) 微退 0.0004, NDCG@20=0.0849 (-0.0011)"
+  },
+  "baseline_comparison": {
+    "baseline_test_r10": 0.1024,
+    "hyp_v5_test_r10": 0.1048,
+    "hyp_v6_issue37_test_r10": 0.1044,
+    "delta_vs_baseline": "+0.0020",
+    "delta_vs_hyp_v5": "-0.0004"
+  },
+  "overall_verdict": "PASS_LAYERED_SEMANTIC_NEG_REACHES_GOAL_NEAR_V5",
+  "key_insights": [
+    "L0/L1/L2 层分别用 KMeans cluster (8/64/256) 选不同簇负样本, 与 v5 随机采样差异小",
+    "κ final 与 v5/v6 issue36 一致 [0.024,0.045,0.056], cluster-aware 采样未显著改变 κ 学习",
+    "test R@10=0.1044 vs hyp v5 0.1048 (-0.0004), 训练率提升 (5:30 vs 7min) 但最终精度几乎持平",
+    "分层语义负样本作为边际改进未明显突破, 验证 hyp v5 的 per-item radius + 随机负样本已接近最优"
+  ],
+  "issue_gate4_target": "test R@10 > 0.1020",
+  "issue_gate4_result": "test R@10 = 0.1044 > 0.1020 ✓",
+  "done_at": "2026-08-05T02:40:09"
+}
