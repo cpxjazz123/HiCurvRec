@@ -1,0 +1,106 @@
+{
+  "issue": "#43",
+  "task": "taskA_hyp_v7_distance_bucket_neg",
+  "spec": "[方向A v7] 分层距离区间负样本与假负样本保护：让语义难度驱动独立曲率",
+  "decision": "FAIL",
+  "gate1_precheck": {
+    "status": "PASS",
+    "notes": "Issue #43 配置保持 #37 KMeans cluster spec 的单变量设计: 替换负样本选择器为 cosine 距离分位区间 + top-20 false-neg exclusion, 其余 (REC_LAYER_W=1:3:9, REL_STRUCT, CURV_AWARE, CURV_PRIOR, 自由 κ) 维持 v5 配方."
+  },
+  "gate2_quantizer": {
+    "status": "PASS",
+    "final_kappas": [0.10639257729053497, 0.2439373880624771, 0.40286463499069214],
+    "final_cs": [1.1122584342956543, 1.2762644290924072, 1.49610435962677],
+    "kappa_per_layer_std": 0.1211,
+    "mix_weight_std": 0.0000,
+    "reload_5of5_consistent": true,
+    "n_kappa_updates": 180,
+    "util_4digit": 1.0000,
+    "util_per_layer_3digit": [0.109, 0.992, 0.988],
+    "ablation_diff_ok": true,
+    "nan_inf_detected": false,
+    "distance_bucket_pools": {
+      "L0": "P85-P100 (far, 跨粗簇): [0.190, 0.388]",
+      "L1": "P40-P75 (mid, 类别边界): [0.148, 0.178]",
+      "L2": "P10-P40 (near, hard 但排除 top-20): [0.117, 0.148]",
+      "pool_size_per_anchor": 128,
+      "excl_size_per_anchor": 20,
+      "fallback_ratio_per_layer": "<0.5% (区间内近邻充足)"
+    },
+    "notes": "κ 三层差异显著 (std=0.121), 但 final κ 显著高于 v5/hyp v5 的 [0.024, 0.046, 0.056] — 距离区间硬负样本驱动了更激进的曲率学习. util_4digit=1.0000 完美, reload 一致 5/5."
+  },
+  "gate3_train": {
+    "status": "PASS",
+    "best_epoch": 72,
+    "best_ndcg20_valid": 0.0970,
+    "best_r10_valid": 0.1200,
+    "best_r20_valid": 0.1459,
+    "best_ndcg5_valid": 0.0843,
+    "best_ndcg10_valid": 0.0914,
+    "final_epoch": 104,
+    "early_stop_triggered": false,
+    "early_stop_counter_at_kill": 10,
+    "killed_at_epoch_104_for_stage4_eval": true,
+    "lr": 1e-4,
+    "batch_size": 256,
+    "bf16": true,
+    "torch_compile": true,
+    "world_size": 1,
+    "t_train_s_per_epoch": 75,
+    "t_eval_s_per_epoch": 17,
+    "eval_every": 3,
+    "infer_size": 256,
+    "notes": "T5-mini 训练 bf16 + torch.compile (T5 dynamic shape 无显著加速). best NDCG@20=0.0970 (ep72) 接近 #41 anchored (0.0982) 但低于 v5 (0.0982)/#37 (0.1005). 用户选择在 ep104 no_improv 10/20 时 kill 跑 stage4 (节省 ~30min). 单卡 ~80s/ep (含 eval)."
+  },
+  "gate4_eval_test": {
+    "status": "FAIL",
+    "n_eval": 24772,
+    "test_r5": 0.0803,
+    "test_r10": 0.0968,
+    "test_r20": 0.1184,
+    "test_ndcg5": 0.0696,
+    "test_ndcg10": 0.0749,
+    "test_ndcg20": 0.0804,
+    "baseline_r10": 0.1024,
+    "baseline_ndcg20": 0.0821,
+    "delta_r10": -0.0056,
+    "delta_ndcg20": -0.0017,
+    "verdict": "test R@10=0.0968 < target 0.1020 (FAIL); test NDCG@20=0.0804 < baseline 0.0821 (marginal FAIL)"
+  },
+  "comparison_table": [
+    {"variant": "HG-Rec baseline (Task #84)", "test_r10": 0.1024, "test_ndcg20": 0.0821, "verdict": "BASELINE"},
+    {"variant": "hyp v2 (issue #36-#38 closed)", "test_r10": 0.1048, "test_ndcg20": 0.0860, "verdict": "PASS"},
+    {"variant": "v15 capmatch (issue #36-#38)", "test_r10": 0.1034, "test_ndcg20": 0.0776, "verdict": "PASS"},
+    {"variant": "v20 curvaware_relstruct (issue #39-1)", "test_r10": 0.1022, "test_ndcg20": null, "verdict": "PARTIAL"},
+    {"variant": "issue #37 KMeans cluster neg", "test_r10": 0.1044, "test_ndcg20": 0.0849, "verdict": "PASS"},
+    {"variant": "issue #41 anchored κ", "test_r10": 0.0993, "test_ndcg20": 0.0815, "verdict": "FAIL (-0.0031)"},
+    {"variant": "issue #43 distance-bucket neg (current)", "test_r10": 0.0968, "test_ndcg20": 0.0804, "verdict": "FAIL (-0.0056)"}
+  ],
+  "diagnosis": {
+    "root_cause": "距离分位区间 + false-neg exclusion 替换 #37 KMeans cluster 后, 三层 κ 学到 [0.106, 0.244, 0.403] — 比 v5 的 [0.024, 0.046, 0.056] 高 3-10x. 区间采样是连续分桶 (cosine dist 0.117-0.388), 比 KMeans 簇分桶更细, 但驱动了更激进的曲率学习路径. Stage 2 quantizer 端指标优秀 (util=100%, reload 一致), 但 T5 端 test R@10=0.0968 比 KMeans cluster 的 0.1044 低 0.0076, 验证 R@10=0.1200 vs 0.1268 (#37) 也低 0.0068.",
+    "compared_to_issue_37": "Issue #43 (R@10=0.0968) 比 Issue #37 KMeans cluster (R@10=0.1044) 差 -0.0076. KMeans 簇分桶 (L0=8/L1=64/L2=256) 在数据上更稀疏, 簇间语义差距大; 距离分位区间每层 9922 个 anchor × 128 候选 = ~1.27M 池, 信号更密集但驱动 κ 学习过激.",
+    "compared_to_issue_41": "Issue #43 (R@10=0.0968) 比 Issue #41 anchored κ (R@10=0.0993) 差 -0.0025. 锚定机制限制 κ 漂移范围但保留梯度; 距离区间硬负样本让 κ 完全自由学到极端值, 端到端反而更差.",
+    "valid_test_ratio": 0.81 (best 0.85, #43 valid=0.1200 / test=0.0968), 验证集与测试集间存在分布偏移 — T5 在新 SID [0.106, 0.244, 0.403] 曲率下的隐空间表示未能泛化到 test set."
+  },
+  "spec_match": {
+    "single_variable_design": true,
+    "REC_LAYER_W_1_3_9_kept": true,
+    "REL_STRUCT_kept": true,
+    "free_kappa_kept": true,
+    "stage3_T5_unchanged": true,
+    "stage4_eval_protocol_unchanged": true,
+    "only_neg_sampler_replaced": true,
+    "thresholds_from_train_quantiles_not_val_or_test": true,
+    "false_neg_topK_exclusion_applied": true
+  },
+  "r30_compliance": {
+    "stage2_v7_forked_from_v6_with_distance_bucket_sampler": true,
+    "stage3_forked_as_pure_t5_v7_for_acceleration": true,
+    "stage3_env_var_reads_remaining": 0,
+    "stage4_env_var_reads_remaining": 0,
+    "launchers_only_paths_gpu": true,
+    "notes": "本轮完成 3 个 R30 兼容变体: taskA_stage2_v7.py, common/stage3_train_pure_t5_v7.py, launch 脚本仅 GPU+路径+inference_size/batch/every. 历史 launch_v14.sh 等使用 env var 的脚本是过渡期产物, 本轮新写脚本一律硬编码."
+  },
+  "commit": "待 commit (verdict 落盘后)",
+  "conclusion": "Issue #43 分层距离区间负样本方案 Gate 4 FAIL (test R@10=0.0968 < 0.1020 目标). 与 #37 KMeans cluster 相比差 -0.0076, 与 #41 锚定相比差 -0.0025. 单变量设计成功 (只换 neg sampler), 但距离分位区间驱动 κ 学到比 v5 高 3-10x 的极端值, T5 端未能泛化. 教训: 距离分桶 (连续信号) 比 KMeans 簇分桶 (稀疏信号) 更激进, 在 hyp 系列下反而损害端到端. 5% 超基线 (R@10=0.1075) 在 taskA hyp 线路物理不可达已 9 次确认 (v22/v26/v15/v20/v25/#39/#41/#43 + 历史多次). 推荐 Issue 关闭, 不再沿 v7 路线继续实验."
+}
