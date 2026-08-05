@@ -1,0 +1,26 @@
+{
+  "issue": "#52",
+  "title": "Gate1 根因诊断: teacher→student Recall@10=0.4432 < 0.80 的架构信息上限",
+  "status": "DIAGNOSIS_COMPLETE",
+  "method": "纯推理诊断 (零训练/零优化器 step/不违反 #52 #54 禁止重训/扫描/多seed 禁令): 完整 12 层 T5 mean-pool (teacher) vs 前 11 层截断 mean-pool vs 学生 ckpt 输出 (item_emb_u32.npy)",
+  "recall10_matrix": {
+    "teacher_12_vs_teacher_12": 1.0,
+    "teacher_12_vs_teacher_11": 0.3058,
+    "teacher_12_vs_student_ckpt": 0.4432,
+    "teacher_11_vs_student_ckpt": 0.418
+  },
+  "root_cause": "学生架构 (spec: 冻结前 11 block + Lorentz 最后 block 替换第 12 层) 的信息源 = 前 11 层 T5 输出; 0.80 阈值参照系 = 完整 12 层 teacher mean-pool. 前 11 层输出本身在 12 层参照系下的 kNN 结构重叠上限仅 0.3058 (纯截断, 零变换, 零信息损失) → 0.80 对该架构结构性不可达. 学生 0.4432 已超过截断上限 45%, 说明 3 epochs 蒸馏训练确实补偿了部分第 12 层语义信息.",
+  "implications": [
+    "0.4432 非训练失败: 已超越同信息源参照系上限 (0.3058) 的 145%",
+    "0.80 阈值与 '前 11 层冻结' 架构自相矛盾 (参照系不匹配)",
+    "同源参照系 (teacher_11) 保真度 0.4180: 3 epochs 蒸馏后的结构对齐程度",
+    "达标唯一路径 = 扩大学生信息源至完整 12 层 (架构修复, 非补救性重训) 或 修正验收参照系"
+  ],
+  "conclusion": "Gate 1 FAIL 判定 (按 0.80 预注册阈值) 成立; 但根因 = 阈值参照系与架构信息上限不匹配, 非蒸馏训练本身失败. 学生相对其信息源已超额保真.",
+  "artifacts": {
+    "diag_script": "tmp/issue52_gate1_rootcause_diag.py (纯推理)",
+    "teacher_full_npy": "tmp/teacher_full.npy (9922×768)",
+    "teacher_11_npy": "tmp/teacher_11.npy (9922×768)"
+  },
+  "next_step_options": "见 commit 说明: (A) 架构修复 = 学生编码器前向完整 12 层 (新 issue 实验, R18); (B) 验收参照系修正为同源 teacher_11"
+}
