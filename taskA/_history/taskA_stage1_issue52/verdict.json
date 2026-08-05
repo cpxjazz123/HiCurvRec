@@ -1,0 +1,48 @@
+{
+  "issue": "#52",
+  "task": "taskA_stage1_lorentz_gate1_train",
+  "spec": "[\u65b9\u5411A Gate1] Stage1 Lorentz \u6b63\u5f0f\u8bad\u7ec3 (\u5355 seed=42, 9922 \u5bfc\u51fa): \u84b8\u998f\u8bad\u7ec3 Lorentz block + input_proj, \u9a8c\u6536 = loss \u4e0b\u964d + \u53c2\u6570 finite + \u5bfc\u51fa\u7ed3\u6784\u4e0e PC7 \u4e00\u81f4; Gate1 PASS \u2192 \u4e0b\u4e00 issue = Stage2 \u8bad\u7ec3",
+  "decision": "Gate 1 PASS",
+  "gate1": {
+    "status": "PASS",
+    "config": {
+      "TRAIN_BATCH_SIZE": 64,
+      "TRAIN_EPOCHS": 3,
+      "TRAIN_LR": 0.0001,
+      "TRAIN_SEED": 42,
+      "KL_TEMP": 0.07,
+      "L_AUG_WEIGHT": 0.1,
+      "DROPOUT_AUG": 0.2,
+      "C_ENC": 1.0,
+      "RHO_MAX": 1.0,
+      "MAX_SEQ_LEN": 64
+    },
+    "train_curve_mean_loss_per_epoch": [
+      1.1348590687612554,
+      0.9554545281747795,
+      0.944629415646609
+    ],
+    "loss_decreasing": true,
+    "params_finite": true,
+    "ckpt": {
+      "path": "taskA/_history/taskA_stage1_issue52/stage1_lorentz_ckpt.pt",
+      "epochs": 3
+    },
+    "export": {
+      "n_items": 9922,
+      "shape": [
+        9922,
+        768
+      ],
+      "item_ids_sha256": "a496c0bcea829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae",
+      "parquet": {
+        "path": "taskA/_history/taskA_stage1_issue52/item_emb.parquet",
+        "sha256": "6fce0e93330962f7d41d20fed5c06ccfe8cfbc6f2dca7590e3e5ecedc4a83198"
+      },
+      "cast_err": 1.8618631428268806e-09,
+      "reload_max_abs_err": 0.0
+    },
+    "teacher_student_recall10": 0.4432170933279595
+  },
+  "commit": "29f7bf4df3a23807f7100e2915426ebf0d86fe5f"
+}
