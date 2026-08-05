@@ -1,0 +1,106 @@
+{
+  "issue": "#57",
+  "gate1_issue57": {
+    "status": "FAIL",
+    "spec": "[方向A Gate1承接] Residual Lorentz Head 接入三层独立可学习 κ (L0 64/L1 128/L2 256) 与 SID 重校准; κ 更新后链式重校准 κ→c→scale→Π(E)→D→A→r→SID 清缓存; κ 扰动-恢复单进程审计; 本 issue 只处理 Stage1, 不进入 Stage2-4",
+    "input": {
+      "item_emb_npy": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue56/item_emb_u32.npy",
+      "sha256": "91864cc49d84c2a9145c6b0f7ddb9a4dc98708be5bdbd4a9cd1a4b04311cb5ce",
+      "source": "Issue #56 residual Lorentz head export (taskA_stage1_issue56)",
+      "teacher_student_recall10_issue56": 0.9575
+    },
+    "codebook_sizes": [
+      64,
+      128,
+      256
+    ],
+    "e_dim": 32,
+    "kappa_learned": true,
+    "kappa_per_layer_diff_ok": true,
+    "final_kappas_v1_raw_input": [
+      0.156,
+      0.455,
+      0.514
+    ],
+    "final_kappas_v2_input_proj_512": [
+      0.167,
+      0.445,
+      0.527
+    ],
+    "kappa_grad_ok": true,
+    "no_nan_inf": true,
+    "no_codebook_collapse": {
+      "v1_unique_3digit": 6788,
+      "v1_util_per_layer_3digit": [
+        0.5,
+        0.227,
+        0.234
+      ],
+      "v1_util_4digit": 1.0,
+      "v2_unique_3digit": "Phase 2 未跑完 (kill 时卡 5/5 reload diagnostic)",
+      "v2_util_per_layer_3digit_ep99": [
+        0.578,
+        0.258,
+        0.227
+      ],
+      "v2_util_4digit_ep99": 0.742
+    },
+    "recalibration_chain_audit_v1": "kappa_perturb_restore_audit smoke test PASS (随机初始化模型独立验证逻辑), 训练模型审计未跑完 (5/5 reload diagnostic 卡 17 分钟)",
+    "reload_consistent_v1": true,
+    "reload_5of5_consistent_v1": "未跑完 (5/5 reload diagnostic 卡 17 分钟, kill)",
+    "failure_reason": "码本塌缩: 两版训练 (v1 原始输入 + v2 加 INPUT_PROJ Linear+Tanh 768→512) 深层 util_3digit 仍仅 0.227-0.258, 远低于 #53 健康基线 0.99. v2 投影仅把 util_4digit 从 0.684 提到 0.742, 仍 25%+ 残差 collision (3000+/9922). 根因 = Stage1 #56 残差头 L2 Normalize (norm=1 单位球面) 与 Stage2 RQ-VAE Euclidean+Poincaré 量化不兼容: 单位球面点缺乏层级结构 + Poincaré distance 对固定欧氏坐标随 c 单调减 → κ 强行补偿产生大数值而无学习效益. τ 重校准链 (κ→c→scale→Π(E)→D→A→r→SID) 物理正确但输入空间塌缩使 chain 无有意义信号.",
+    "diagnostic_decision": "Issue #57 路线 (残差头表示 + 三层独立可学习 κ + SID 重校准) 与 Stage2 RQ-VAE 架构互斥. R19 激进 owner: 终止 #57 当前方向, 启动 #58: 切换到 Euclidean-only Stage2 量化器 (κ 路径关闭), 利用 #56 残差头表示直接量化, 验证 Teacher→Student R@10=0.9575 输入能否支撑高 util Stage2 输出."
+  },
+  "kappa_log_summary": {
+    "v1": {
+      "final_kappas": [
+        0.156,
+        0.455,
+        0.514
+      ],
+      "final_cs": [
+        1.169,
+        1.576,
+        1.672
+      ],
+      "kappa_grad_final": [
+        0.002,
+        0.012,
+        0.121
+      ],
+      "loss_final": 33.247
+    },
+    "v2_with_proj": {
+      "final_kappas": [
+        0.167,
+        0.445,
+        0.527
+      ],
+      "final_cs": [
+        1.182,
+        1.561,
+        1.693
+      ],
+      "kappa_grad_final": [
+        0.0016,
+        0.024,
+        0.179
+      ],
+      "loss_final": 32.68
+    }
+  },
+  "sid_v1": {
+    "sha256": "2aeac4b61c2a3774fff4bb5eda3ad2d8700a8a1efb1fc7f9f723ffb2a64b2b51",
+    "shape": [
+      9922,
+      4
+    ],
+    "n_unique_3digit": 6788,
+    "util_4digit": 1.0
+  },
+  "product_dirs": {
+    "v1_raw_input": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue57/",
+    "v2_with_input_proj": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue57_v2/"
+  },
+  "next_issue": "#58"
+}

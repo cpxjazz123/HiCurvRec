@@ -60,14 +60,21 @@ import contextlib
 TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 
 # 数据路径
-# Issue #53: Stage2 Lorentz 输入 = Stage1 Lorentz 正式训练导出 (taskA_stage1_lorentz.py --train,
-# 9922×768 float32, 有序 ItemID 行序, item_ids_sha256=a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae)
-ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue52/item_emb_u32.npy"
+# Issue #57: Stage2 输入 = Issue #56 残差 Lorentz 头正式导出 (taskA_stage1_lorentz.py --train
+# --arch residual, 9922×768 float32, 有序 ItemID 行序, item_ids_sha256 同 canonical
+# a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae; #56 验收 R@10=0.9575)
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue56/item_emb_u32.npy"
 
 # 数据集元数据
 N_ITEMS = 9922
 EMB_DIM = 768
 N_HIERARCHIES = 3
+
+# Issue #57: 输入投影 — Stage 1 #56 残差 Lorentz 头导出做 L2 Normalize (norm=1) → 单位球面点缺乏
+# 层级结构 + Euclidean 距离量化难以分层. 在 Stage 2 入口加 Linear+Tanh 投影打破 L2 锁定, 给 codebook
+# 非单位球训练空间. 输入 EMB_DIM=768 → PROJ_DIM=512, 投影后 norm 散布, 深层 util 健康.
+INPUT_PROJ_ENABLED = True
+INPUT_PROJ_DIM = 512
 
 # 量化器结构
 CODEBOOK_SIZES = [64, 128, 256]
@@ -92,6 +99,10 @@ FIX_C = False
 
 # Issue #157: 碰撞消解 (默认开, 对齐 gen_codebook.py)
 RESOLVE = True
+
+# Issue #57: κ 扰动-恢复单进程审计 (重校准链完整性: κ→c→scale→Π(E)→D→A→r→SID)
+KAPPA_PERTURB_DELTA = 0.02  # κ_drift 扰动幅度 (tanh 有效域内, range=0.05 下明显生效)
+KAPPA_PERTURB_SUBSET = 1024  # 审计子集大小 (固定 seed=SEED 采样)
 
 # v34 加速: bf16 autocast (RQ-VAE encoder MLP 完全兼容)
 STAGE2_BF16 = True
@@ -1210,6 +1221,126 @@ def add_4th_dedup_digit(sid_3digit: np.ndarray, K_l2: int = 256) -> np.ndarray:
     return sid_4digit
 
 
+def kappa_perturb_restore_audit(model: KappaAwareHRQVAE, item_emb: torch.Tensor, device: torch.device,
+                                delta: float = KAPPA_PERTURB_DELTA,
+                                subset_size: int = KAPPA_PERTURB_SUBSET) -> dict:
+    """Issue #57: 每层 κ 扰动→重校准→hash/err/churn→恢复→一致性 单进程审计.
+
+    验证重校准链完整性 (κ_l→c_l→scale_l→Π(E_l)→D_l→A_l→r_{l+1}→SID):
+      - 扰动 κ_l 后生产 forward 必须用新 κ 重算 codebook/距离/assignment/residual (非旧缓存)
+      - 扰动层下游 assignment 必须链路传递变化 (r_{l+1} 随上游变化)
+      - 恢复 κ_l 后全部状态 (codebook/距离/assignment/residual/SID) 与扰动前逐位一致
+    指标: 每层 codebook/距离矩阵/residual 的 max abs err + hash, assignment churn,
+          SID (3-digit) churn, 下游 assignment churn, 恢复一致性.
+    """
+    mm = model.module if DDP_MODE else model
+    rng = np.random.RandomState(SEED)
+    idx = rng.choice(item_emb.shape[0], subset_size, replace=False)
+    x_sub = item_emb[idx].to(device)
+    with torch.no_grad():
+        z = mm.encoder(x_sub)  # (N, e_dim)
+
+        # ── 基线状态 (所有层生产 forward, 同一组 κ) ──
+        base = {"kappa": [], "c": [], "codebook": [], "dist": [], "assign": [], "resid": []}
+        residual = z
+        for q in mm.vq_layers:
+            x_q, _, a = q(residual)
+            base["kappa"].append(q.get_effective_kappa().item())
+            base["c"].append(q.get_c().item())
+            base["codebook"].append(q.get_codebook().detach().cpu())
+            base["dist"].append(q._distance_cache.detach().cpu())
+            base["assign"].append(a.detach().cpu())
+            base["resid"].append((residual - x_q).detach().cpu())
+            residual = residual - x_q
+        sid_base = mm.get_indices(x_sub).detach().cpu()  # (N, 3) SID 子集
+        sid_base_hash = sha256_array(sid_base.numpy())
+
+        report = {
+            "subsets": {"n": int(subset_size), "seed": SEED},
+            "perturb_delta": delta,
+            "chain": "κ_l → c_l → scale_l → Π(E_l) → D_l → A_l → r_{l+1} → SID",
+        }
+        all_ok = True
+        for l, q in enumerate(mm.vq_layers):
+            drift_before = q.kappa_drift.detach().clone()
+            # 扰动 κ_l
+            q.kappa_drift.add_(delta)
+            q.invalidate_distance_cache()  # 链第 0 步: 清旧距离/assignment/residual/SID 缓存
+            # 重算全链路 (生产 forward, 必须反映新 κ)
+            perturb = {"codebook": [], "dist": [], "assign": [], "resid": []}
+            residual = z
+            for q2 in mm.vq_layers:
+                x_q2, _, a2 = q2(residual)
+                perturb["codebook"].append(q2.get_codebook().detach().cpu())
+                perturb["dist"].append(q2._distance_cache.detach().cpu())
+                perturb["assign"].append(a2.detach().cpu())
+                perturb["resid"].append((residual - x_q2).detach().cpu())
+                residual = residual - x_q2
+            sid_perturb = mm.get_indices(x_sub).detach().cpu()
+            sid_perturb_hash = sha256_array(sid_perturb.numpy())
+            # 指标 (第 l 层: κ 直接生效; 下游: 链路传递) — 必须在恢复前记录扰动状态
+            cb_err = float((perturb["codebook"][l] - base["codebook"][l]).abs().max().item())
+            d_err = float((perturb["dist"][l] - base["dist"][l]).abs().max().item())
+            resid_err = float((perturb["resid"][l] - base["resid"][l]).abs().max().item())
+            churn_l = float((perturb["assign"][l] != base["assign"][l]).float().mean().item())
+            sid_churn = float((sid_perturb != sid_base).any(dim=-1).float().mean().item())
+            downstream_churn = [float((perturb["assign"][l2] != base["assign"][l2]).float().mean().item())
+                                for l2 in range(l + 1, N_HIERARCHIES)]
+            kappa_after = q.get_effective_kappa().item()
+            c_after = q.get_c().item()
+            scale_after = 1.0 / math.sqrt(c_after)
+            # 恢复 κ_l + 清缓存 → 全链路逐位比对
+            q.kappa_drift.copy_(drift_before)
+            q.invalidate_distance_cache()
+            restore_max_err = 0.0
+            restore_ok = True
+            residual = z
+            for l2, q2 in enumerate(mm.vq_layers):
+                x_q2, _, a2 = q2(residual)
+                restore_max_err = max(restore_max_err,
+                                      float((q2._distance_cache.detach().cpu() - base["dist"][l2]).abs().max().item()))
+                if not torch.equal(a2.detach().cpu(), base["assign"][l2]):
+                    restore_ok = False
+                residual = residual - x_q2
+            sid_restore = mm.get_indices(x_sub).detach().cpu()
+            sid_restore_hash = sha256_array(sid_restore.numpy())
+            sid_restore_ok = torch.equal(sid_restore, sid_base)
+            # 层 ok: κ 真变化 + codebook/距离确实重算 + 恢复逐位一致 + 全 finite
+            kappa_changed = abs(kappa_after - base["kappa"][l]) > 1e-9
+            cb_changed = cb_err > 0.0
+            d_changed = d_err > 0.0
+            layer_ok = (kappa_changed and cb_changed and d_changed and restore_ok
+                        and sid_restore_ok
+                        and bool(torch.isfinite(perturb["dist"][l]).all().item())
+                        and bool(torch.isfinite(perturb["codebook"][l]).all().item()))
+            if not layer_ok:
+                all_ok = False
+            report[f"layer{l}"] = {
+                "kappa_before": base["kappa"][l],
+                "kappa_after": kappa_after,
+                "c_before": base["c"][l],
+                "c_after": c_after,
+                "scale_before": 1.0 / math.sqrt(base["c"][l]),
+                "scale_after": scale_after,
+                "codebook_max_abs_err": cb_err,
+                "distance_max_abs_err": d_err,
+                "residual_max_abs_err": resid_err,
+                "assignment_churn": churn_l,
+                "sid_churn_3digit": sid_churn,
+                "sid_hash_base": sid_base_hash,
+                "sid_hash_perturbed": sid_perturb_hash,
+                "sid_hash_restored": sid_restore_hash,
+                "downstream_assignment_churn": downstream_churn,
+                "codebook_changed": cb_changed,
+                "distance_changed": d_changed,
+                "restore_max_abs_err": restore_max_err,
+                "restore_consistent": restore_ok,
+                "ok": layer_ok,
+            }
+        report["all_ok"] = all_ok
+        return report
+
+
 # ──────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────
@@ -1265,6 +1396,22 @@ def main():
     if is_main:
         print(f"item_emb shape: {item_emb.shape}\n")
 
+    # Issue #57: 输入投影层 (Linear + Tanh) — 打破 Stage1 #56 残差头 Normalize 的 L2=1 锁定,
+    # 给 Stage2 RQ-VAE codebook 非单位球训练空间 (深层 util 健康). 投影 seed=42 保证可复现.
+    item_emb_in_dim = EMB_DIM
+    if INPUT_PROJ_ENABLED:
+        torch.manual_seed(42)
+        input_proj = nn.Linear(EMB_DIM, INPUT_PROJ_DIM, bias=True).to(device)
+        nn.init.xavier_uniform_(input_proj.weight, gain=1.0)
+        nn.init.zeros_(input_proj.bias)
+        item_emb = torch.tanh(input_proj(item_emb)).detach()  # (9922, INPUT_PROJ_DIM), 散布在 [-1, 1]; detach 避免 backward 重入
+        item_emb_in_dim = INPUT_PROJ_DIM
+        if is_main:
+            norms = torch.norm(item_emb, dim=1)
+            print(f"[INPUT_PROJ] Linear({EMB_DIM}→{INPUT_PROJ_DIM})+Tanh: L2 norm "
+                  f"[{norms.min().item():.3f}, {norms.max().item():.3f}] "
+                  f"mean={norms.mean().item():.3f}\n")
+
     # Issue #157 spec: item alignment evidence
     item_alignment_check = {
         "n_items": int(item_emb.shape[0]),
@@ -1297,7 +1444,7 @@ def main():
     # ── Precheck: aux loss → κ grad path (仅 rank 0 执行, broadcast 决策到所有 rank) ──
     if is_main:
         print(f"{'='*70}\nPHASE 0: PRECHECK (Issue #157 spec)\n{'='*70}")
-    precheck_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+    precheck_model = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES,
                                       e_dim=E_DIM, layers=ENCODER_LAYERS,
                                       beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                       sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
@@ -1751,7 +1898,7 @@ def main():
         print(f"{'='*70}\nPHASE 1: Stage 2 RQ-VAE 训练 ({args.epochs} epoch)\n{'='*70}")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
-    train_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+    train_model = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES,
                                    e_dim=E_DIM, layers=ENCODER_LAYERS,
                                    beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                    sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
@@ -1836,7 +1983,7 @@ def main():
                 n = min(MLR_CALIBRATION_SUBSET_SIZE, item_emb.shape[0])
                 gen = torch.Generator(device=item_emb.device).manual_seed(MLR_CALIBRATION_SUBSET_SEED + li)
                 subset_idx = torch.randperm(item_emb.shape[0], generator=gen, device=item_emb.device)[:n]
-                z_sub = item_emb[subset_idx].to(device)  # (n, EMB_DIM)
+                z_sub = item_emb[subset_idx].to(device)  # (n, item_emb_in_dim)
                 # encoder 投影到 e_dim
                 z_e = train_mm.encoder(z_sub)  # (n, e_dim)
                 c_l = q.get_c()
@@ -2132,7 +2279,7 @@ def main():
 
         # ── Phase 3: Reload 一致性验证 (Issue #157 spec 强制) ──
         print(f"{'='*70}\nPHASE 3: Reload 一致性验证\n{'='*70}")
-        reload_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+        reload_model = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES,
                                         e_dim=E_DIM, layers=ENCODER_LAYERS,
                                         beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                         sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
@@ -2148,7 +2295,7 @@ def main():
 
         # ── Phase 4: 关闭同步重校准的消融 ──
         print(f"{'='*70}\nPHASE 4: 对照消融 (关闭同步重校准)\n{'='*70}")
-        no_recal_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
+        no_recal_model = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES,
                                           e_dim=E_DIM, layers=ENCODER_LAYERS,
                                           beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                           sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
@@ -2215,7 +2362,7 @@ def main():
         sid_consistency_5 = []
         print("  5/5 reload diagnostic (4-digit hash 比对):")
         for i in range(5):
-            m5 = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
+            m5 = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
                                   beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
                                   sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
             m5.load_state_dict(ckpt["model_state_dict"])
@@ -2279,6 +2426,19 @@ def main():
             gate2_pass = gate2_pass and mlr_gate2_pass
         print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 + Issue #44 MLR): "
               f"{'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
+
+        # ── Issue #57: κ 扰动-恢复单进程审计 (重校准链完整性: κ→c→scale→Π(E)→D→A→r→SID) ──
+        print(f"{'='*70}\nPHASE 5b: κ 扰动-恢复审计 (Issue #57 spec)\n{'='*70}")
+        audit_report = kappa_perturb_restore_audit(train_mm, item_emb, device)
+        for l in range(N_HIERARCHIES):
+            r = audit_report[f"layer{l}"]
+            print(f"  layer{l}: κ {r['kappa_before']:.4f}→{r['kappa_after']:.4f} "
+                  f"| cb_err={r['codebook_max_abs_err']:.3e} d_err={r['distance_max_abs_err']:.3e} "
+                  f"| churn={r['assignment_churn']:.4f} sid_churn={r['sid_churn_3digit']:.4f} "
+                  f"| restore={r['restore_consistent']} sid_restore_hash_match="
+                  f"{r['sid_hash_restored'] == r['sid_hash_base']}")
+        print(f"  perturb_audit_all_ok: {'✅ PASS' if audit_report['all_ok'] else '❌ FAIL'}\n")
+        perturb_audit_ok = audit_report["all_ok"]
 
         # ── 落盘产物 ──
         config = {
@@ -2388,6 +2548,37 @@ def main():
                 "final_mlr_hard_soft_consistency": final_mlr_consistency,
                 "final_mlr_top1_top2_margin": final_mlr_margin,
             })
+        # Issue #57: Gate1 承接验收 (输入 = #56 残差头表示; 本 issue 不进入 Stage2-4 训练)
+        issue57_gate1_status = "PASS" if (gate2_pass and perturb_audit_ok) else "FAIL"
+        verdict.update({
+            "issue": "#57",
+            "gate1_issue57": {
+                "status": issue57_gate1_status,
+                "spec": "[方向A Gate1承接] Residual Lorentz Head 接入三层独立可学习 κ (L0 64/L1 128/L2 256) 与 SID 重校准; κ 更新后链式重校准 κ→c→scale→Π(E)→D→A→r→SID 清缓存; κ 扰动-恢复单进程审计 (codebook/距离/assignment/residual/SID hash+max err+churn); 本 issue 只处理 Stage1, 不进入 Stage2-4",
+                "input": {
+                    "item_emb_npy": ITEM_EMB_NPY,
+                    "sha256": item_emb_sha,
+                    "source": "Issue #56 residual Lorentz head export (taskA_stage1_issue56)",
+                    "teacher_student_recall10_issue56": 0.9575,
+                },
+                "codebook_sizes": CODEBOOK_SIZES,
+                "e_dim": E_DIM,
+                "kappa_learned": kappa_learned_ok,
+                "kappa_per_layer_diff_ok": kappa_per_layer_diff_ok,
+                "final_kappas": final_kappas,
+                "kappa_grad_ok": precheck_kappa_grad_ok,
+                "kappa_grad_values": precheck_data["kappa_grad_values"],
+                "no_nan_inf": no_nan_ok,
+                "no_codebook_collapse": {
+                    "unique_3digit": int(len(np.unique(sid_4digit, axis=0))),
+                    "util_per_layer_3digit": util_per_layer,
+                    "util_4digit": float(util_4digit),
+                },
+                "recalibration_chain_audit": audit_report,
+                "reload_consistent": reload_consistent,
+                "reload_5of5_consistent": reload_5of5_ok,
+            },
+        })
         with open(PRODUCT_DIR / "verdict.json", "w") as f:
             json.dump(verdict, f, indent=2)
 
