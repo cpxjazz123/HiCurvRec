@@ -82,30 +82,30 @@ BETA = 1.0
 SEED = 2024
 # Issue #55/v4 fix_c (固定 c=1) 已被用户否决: taskA 曲率必须保持可学习框架 (learnable κ).
 # 默认不设环境变量即 learnable κ 主路径; poincare_distance_safe (u clamp 0.985) 已根治边界梯度爆炸.
-FIX_C = os.environ.get("TASKA_STAGE2_FIX_C", "0") == "1"
+FIX_C = False  # R30 硬编码 — Issue #41 变体: learnable κ 主路径
 # Issue #157 → gen_codebook.py 对齐: SID 迭代碰撞消解 (默认开). 仅码本训练充分 (1000ep) 时有效.
-RESOLVE = os.environ.get("TASKA_STAGE2_RESOLVE", "1") == "1"
+RESOLVE = True  # R30 硬编码
 # v34 加速 (2026-08-04): bf16 autocast — 仿 stage3 v31, forward 转 bf16 (参数保持 fp32, backward
 # 后 optimizer 在 fp32 权重更新). RQ-VAE encoder 是 MLP, 完全兼容 bf16.
-STAGE2_BF16 = os.environ.get("TASKA_STAGE2_BF16", "1") == "1"
+STAGE2_BF16 = True  # R30 硬编码
 # v34 监控 (2026-08-04): util 监控 — 每 N epoch 算一次码字利用率, 早期发现 collapse.
 # 0=关闭, 否则每 N epoch 打印一次 util_per_layer_3digit + util_4digit.
-STAGE2_UTIL_LOG_EVERY = int(os.environ.get("TASKA_STAGE2_UTIL_LOG_EVERY", "50"))
+STAGE2_UTIL_LOG_EVERY = 10  # R30 硬编码 — Issue #41 变体: 每 10 epoch 监控 util
 # Issue #75 → 论文 arXiv:2405.13979 (NeurIPS'25, Robust Hyperbolic Learning with Curvature-Aware
 # Optimization) 两大机制移植. 目标: 解决 learnable κ 1000ep 塌缩 (κ 冲 clamp 下界 + SID unique=1):
 #   RESCALE=1: Maximum Distance Rescaling — proj_to_ball 硬截断 → 切空间 tanh 平滑渐近饱和.
 #   CURV_AWARE=1: Curvature-Aware Optimization schema (Algorithm 1) — 先参数(旧 c 几何) 后曲率拆分
 #     优化器. 切空间表示在曲率变化下不变, 消除 κ 突变对参数几何的冲击. 默认关 (实验开关).
-RESCALE = os.environ.get("TASKA_STAGE2_RESCALE", "0") == "1"
-CURV_AWARE = os.environ.get("TASKA_STAGE2_CURV_AWARE", "0") == "1"
+RESCALE = False  # R30 硬编码
+CURV_AWARE = True  # R30 硬编码 — Issue #41 变体启用
 # Issue #76 用户 v10 方案 (双路径曲率学习, 替代 v9 "κ 只靠先验"):
 #   路径 A (量化): 绝对量化损失只训练 encoder + codebook, 不训练曲率 — 量化距离用 stop-grad 曲率
 #     c_l^q = stopgrad(c_l), 消除 "距离随 c 减" 的尺度作弊 (v6 fix_c 从不塌缩 vs learnable 量化梯度全塌缩).
 #   路径 B (结构损失): 见 REL_STRUCT — 专门训练每层曲率 (量化后 latent 在球上的尺度无关比值 √c·r).
 #   平方先验 λ·Σκ² 仅防漂移 (软约束, 不主导). 曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l = 1,
 #     代码里 κ 即 ρ (κ = ln c). 根因: v9 只开先验 → κ 停在 0 (先验梯度 2λκ=0 死鞍点), 需结构损失驱动.
-CURV_PRIOR = os.environ.get("TASKA_STAGE2_CURV_PRIOR", "0") == "1"
-CURV_PRIOR_LAMBDA = float(os.environ.get("TASKA_STAGE2_CURV_PRIOR_LAMBDA", "0.1"))
+CURV_PRIOR = True  # R30 硬编码 — Issue #41 变体启用
+CURV_PRIOR_LAMBDA = 0.1  # R30 硬编码
 # Issue #76 第二步: 相对结构目标 (曲率-尺度匹配). v9 实测: 第一步 (量化 stop-grad c) 后 κ 停在 0
 # (先验梯度 2λκ=0, 无学习信号), SID 100% 不塌缩但 κ 无法学层级差异. 本目标给 κ 唯一非零学习信号:
 #   Poincaré 球半径 R=1/√c, 量化后 latent 落在球的固定比例处 → √c·r → target.
@@ -113,16 +113,16 @@ CURV_PRIOR_LAMBDA = float(os.environ.get("TASKA_STAGE2_CURV_PRIOR_LAMBDA", "0.1"
 #   v11: per-layer target 由码字数 n_e 与特征尺度 δ 的测地间距约束反解 (见 _struct_target),
 #     码字多 → target 大 (深层 L2 n_e=256 → target≈0.62), 放大层级曲率差异.
 #   √c·r 是尺度无关比值 (不随绝对距离随 c 减而白嫖); 与平滑先验 λ·Σκ² 共存 (先验锚 c→1).
-REL_STRUCT = os.environ.get("TASKA_STAGE2_REL_STRUCT", "0") == "1"
+REL_STRUCT = True  # R30 硬编码 — Issue #41 变体启用
 # per-layer target (用户 v11 方案): 由码字数 n_e 与特征尺度 δ 的测地间距约束反解.
 #   4πρ/(1-ρ²) ≥ n_e·δ  (Poincaré 度规拉伸 g=2/(1-ρ²), 环带测地周长≈4πρ/(1-ρ²))
 #   → A = n_e·δ/(4π), ρ* = (√(1+4A²)-1)/(2A). 码字多 → target 大 (需更大半径容纳).
 #   REL_STRUCT_TARGET 保留为 legacy 固定值 (仅当 δ≤0 时使用, 默认 per-layer).
-REL_STRUCT_TARGET = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET", "0.3"))
-REL_STRUCT_LAMBDA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_LAMBDA", "1.0"))
-REL_STRUCT_DELTA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_DELTA", "0.05"))
-REL_STRUCT_TARGET_MIN = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MIN", "0.15"))
-REL_STRUCT_TARGET_MAX = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MAX", "0.55"))
+REL_STRUCT_TARGET = 0.3  # R30 硬编码 (legacy fixed value, 仅 δ≤0 时使用)
+REL_STRUCT_LAMBDA = 1.0  # R30 硬编码
+REL_STRUCT_DELTA = 0.05  # R30 硬编码
+REL_STRUCT_TARGET_MIN = 0.15  # R30 硬编码
+REL_STRUCT_TARGET_MAX = 0.55  # R30 硬编码
 # 用户 v12 第一步: 安全区间径向损失 (替代固定 target). v11 诊断 (2026-08-03) 证明深层 per-layer
 # target (0.42/0.55) 数学上不可达 — 健康基线 (c=1) 实测深层径向占用仅 0.087/0.058 (stats_radial.py).
 # 本损失职责 = 防球心坍缩 + 防边界爆炸, 不再决定最佳曲率:
@@ -131,48 +131,64 @@ REL_STRUCT_TARGET_MAX = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MAX
 #   L0 n=64:  健康 mean=0.266 p5=0.205 p95=0.328 → [0.102, 0.600]
 #   L1 n=128: 健康 mean=0.087 p5=0.057 p95=0.115 → [0.028, 0.230]
 #   L2 n=256: 健康 mean=0.058 p5=0.044 p95=0.072 → [0.022, 0.143]
-RAD_SAFE = os.environ.get("TASKA_STAGE2_RAD_SAFE", "0") == "1"
-RAD_SAFE_A = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_A", "0.102,0.028,0.022").split(",")]
-RAD_SAFE_B = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_B", "0.600,0.230,0.143").split(",")]
-RAD_SAFE_LAMBDA = float(os.environ.get("TASKA_STAGE2_RAD_SAFE_LAMBDA", "1.0"))
+RAD_SAFE = False  # R30 硬编码 — Issue #41 变体: 由 KAPPA_ANCHOR_RANGE 边界约束替代
+RAD_SAFE_A = [0.102, 0.028, 0.022]  # R30 硬编码 — 健康基线每层径向下界
+RAD_SAFE_B = [0.600, 0.230, 0.143]  # R30 硬编码 — 健康基线每层径向上界
+RAD_SAFE_LAMBDA = 1.0  # R30 硬编码
 # 用户 v12 第二步: 推荐结构损失 (决定曲率). 曲率增大的原因不再是"点须在球半径 X%",
 # 而是"某曲率能更准确保持该层推荐邻居/排序关系". 对 anchor i 取正邻居 j+ (item_emb 余弦
 # top-K 随机) 与负邻居 j− (batch 内随机), 要求量化后正邻居仍比负邻居近:
 #   L_rec,l = −log exp(−d+/τ) / (exp(−d+/τ) + Σ_j− exp(−d_j−/τ))
 # d 必须尺度归一化 (每 anchor 距离除以其均值), 消除"曲率仅整体放大/缩小距离降 loss"的作弊.
 # z 部分 detach → 只驱动 κ (曲率保序信号), 不影响 encoder/codebook 量化训练.
-REC_LOSS = os.environ.get("TASKA_STAGE2_REC_LOSS", "0") == "1"
-REC_LAMBDA = float(os.environ.get("TASKA_STAGE2_REC_LAMBDA", "1.0"))
-REC_TAU = float(os.environ.get("TASKA_STAGE2_REC_TAU", "1.0"))
-REC_POS_K = int(os.environ.get("TASKA_STAGE2_REC_POS_K", "8"))
-REC_NEG_N = int(os.environ.get("TASKA_STAGE2_REC_NEG_N", "16"))
+REC_LOSS = True  # R30 硬编码 — Issue #41 变体启用 (决定 κ 主信号)
+REC_LAMBDA = 1.0  # R30 硬编码
+REC_TAU = 1.0  # R30 硬编码
+REC_POS_K = 8  # R30 硬编码
+REC_NEG_N = 16  # R30 硬编码
 # v14 曲率分层反转: 推荐损失每层权重 ∝ 码字数 (64:128:256 → 1:2:4). 密度均衡数学要求
 # Poincaré 球面面积 A(ρ)=4πρ²/(1-ρ²)² ∝ 码字数 → 浅层 L2(256码) 应 κ 最高、深层 L0(64码)
 # κ 最低. 而 v13 每层权重 1:1:1 下 κ=[0.313,0.241,0.186] 深层最高 (norm 大 → rec 信号天然强),
 # 方向与密度均衡相反. v14 用层权重放大浅层 rec 信号, 引导 κ 分层反转. 默认 1,1,1 保持 v12/v13 行为.
-REC_LAYER_W = [float(x) for x in os.environ.get("TASKA_STAGE2_REC_LAYER_W", "1,1,1").split(",")]
+REC_LAYER_W = [1.0, 3.0, 9.0]  # R30 硬编码 — v15 capmatch 1:3:9 (历史最优, 与锚点层级匹配)
 # Issue #36 (v6-A/B Margin-limited InfoNCE): 默认 off (REC_MARGIN=0) 保持 v5 InfoNCE 行为;
 # 设 REC_MARGIN>0 启用 hinge 损失 max(0, m_target - (d_neg - d_pos)), 防止正负样本持续推远
 # 导致 κ 漂移 / 几何过度展开. m_target 默认 0.5, 超过此 margin 后不再奖励曲率/距离扩大.
-REC_MARGIN = float(os.environ.get("TASKA_STAGE2_REC_MARGIN", "0.0"))
-REC_MARGIN_TARGET = float(os.environ.get("TASKA_STAGE2_REC_MARGIN_TARGET", "0.5"))
+REC_MARGIN = 0.0  # R30 硬编码 — InfoNCE 主路径
+REC_MARGIN_TARGET = 0.5  # R30 硬编码
 # Issue #37 (v6-A 分层语义负样本驱动独立曲率): 默认 off (empty file) 保持 v5 随机负样本;
 # 设 REC_LAYER_NEG_FILE 指向 npz 含 l0/l1/l2 簇标签 (KMeans on item_emb), 则 L0/L1/L2 层分别
 # 用 cluster_l0/l1/l2 选与 anchor 不同簇的负样本. cluster 不足时 fallback 到随机.
-REC_LAYER_NEG_FILE = os.environ.get("TASKA_STAGE2_REC_LAYER_NEG_FILE", "")
+REC_LAYER_NEG_FILE = ""  # R30 硬编码 — 默认随机负样本
 # 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
 # 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
 # RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
-RECAL_CHECK_EVERY = int(os.environ.get("TASKA_STAGE2_RECAL_CHECK_EVERY", "1"))
+RECAL_CHECK_EVERY = 9  # R30 硬编码 — Issue #41 变体: 每 epoch 一次 (零数值影响)
 # Issue #39 (v6-A/B 曲率 trust region + EMA + SID stability):
 #   KAPPA_EMA_BETA: EMA 平滑系数 (默认 0 = 关闭, v=1.0 完全保持旧值, v<1 加权新值).
 #   KAPPA_TRUST_REGION: log-c 变化幅度阈值 (默认 0 = 关闭); |κ_step - κ_ema| > thresh 时加惩罚.
 #   KAPPA_TRUST_REGION_LAMBDA: trust region 惩罚权重 (默认 1.0).
 #   KAPPA_WARMUP_EPOCHS: 前 N 个 epoch 不施加 trust region 惩罚 (让 κ 自由探索).
-KAPPA_EMA_BETA = float(os.environ.get("TASKA_STAGE2_KAPPA_EMA_BETA", "0.0"))
-KAPPA_TRUST_REGION = float(os.environ.get("TASKA_STAGE2_KAPPA_TRUST_REGION", "0.0"))
-KAPPA_TRUST_REGION_LAMBDA = float(os.environ.get("TASKA_STAGE2_KAPPA_TRUST_REGION_LAMBDA", "1.0"))
-KAPPA_WARMUP_EPOCHS = int(os.environ.get("TASKA_STAGE2_KAPPA_WARMUP_EPOCHS", "0"))
+KAPPA_EMA_BETA = 0.0  # R30 硬编码 — Issue #41 变体: 关闭 EMA (Issue #39 教训)
+KAPPA_TRUST_REGION = 0.0  # R30 硬编码 — Issue #41 变体: 关闭 trust region
+KAPPA_TRUST_REGION_LAMBDA = 1.0  # R30 硬编码
+KAPPA_WARMUP_EPOCHS = 0  # R30 硬编码
+# Issue #41 (Gate4 后续: 逐层锚定有界 κ):
+#   KAPPA_ANCHOR_FILE: 逐层 κ 锚点文件路径 (3 float, 默认 hyp v5 值).
+#   KAPPA_ANCHOR_RANGE: 每层最大漂移幅度 (默认 0.1, 即 κ ∈ [anchor-0.1, anchor+0.1]).
+KAPPA_ANCHOR_FILE = "/fs04/ar57/wenyu/GeneRec/taskA/_history/issue41_kappa_anchors.txt"  # R30 硬编码
+KAPPA_ANCHOR_RANGE = 0.05  # R30 硬编码 — Issue #41 变体: 收紧漂移幅度 ±0.05
+# 默认锚点: hyp v5 验证过的 [0.024, 0.046, 0.056]
+_DEFAULT_ANCHORS = [0.024, 0.046, 0.056]
+KAPPA_ANCHORS = _DEFAULT_ANCHORS
+if KAPPA_ANCHOR_FILE and os.path.isfile(KAPPA_ANCHOR_FILE):
+    try:
+        KAPPA_ANCHORS = [float(x) for x in np.loadtxt(KAPPA_ANCHOR_FILE, max_rows=N_HIERARCHIES)]
+        if len(KAPPA_ANCHORS) < N_HIERARCHIES:
+            raise ValueError(f"KAPPA_ANCHOR_FILE 提供 {len(KAPPA_ANCHORS)} 个锚点, 需 {N_HIERARCHIES}")
+    except Exception as _e:
+        print(f"[Issue41] load anchor failed: {_e}, fallback to hyp v5 defaults")
+        KAPPA_ANCHORS = _DEFAULT_ANCHORS
 
 PRODUCT_DIR = Path(os.environ.get("TASKA_STAGE2_PRODUCT_DIR",
                                   "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync"))
@@ -203,7 +219,7 @@ from model.utils import (
 # artanh' ≤~33); =0 用上游 poincare_distance (artanh clamp 1-1e-10, 距离不饱和但梯度可爆).
 # v7c/v7e (safe) 1000ep 长训练 SID 塌缩 unique=1 (SHA 相同), v6 fix_c (上游, c=1) 不塌缩 →
 # 需对照上游排除 u clamp 距离饱和致 index 区分度丧失的嫌疑. 默认 safe (已验证训练稳定).
-SAFE_DISTANCE = os.environ.get("TASKA_STAGE2_SAFE_DISTANCE", "1") == "1"
+SAFE_DISTANCE = True  # R30 硬编码 — learnable κ 主路径 (u clamp 0.985 防止边界梯度爆炸)
 if SAFE_DISTANCE:
 
     def poincare_distance_safe(x, y, c, u_max=0.985):
@@ -296,6 +312,18 @@ class KappaAwareVectorQuantization(nn.Module):
         self.fix_c = fix_c
         # Issue #157: per-layer learnable κ_l (init=0 → c_l = 1.0 + κ_l = 1.0 baseline)
         self.kappa = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
+        # Issue #41: 逐层锚定有界 κ 参数化
+        #   κ_effective = κ_anchor_l + tanh(κ_drift_l) * range_l
+        #   κ_anchor_l 来自 KAPPA_ANCHORS[l] (默认 hyp v5)
+        #   κ_drift_l 是可学习参数 (init 0), tanh 约束到 [-1,1], range 约束最大幅度
+        #   整体 κ_effective ∈ [κ_anchor_l - range_l, κ_anchor_l + range_l]
+        #   get_c() 用 κ_effective 替换 self.kappa (但 self.kappa 仍存于 state_dict 以兼容 checkpoint)
+        if layer_idx < len(KAPPA_ANCHORS):
+            self.kappa_anchor = float(KAPPA_ANCHORS[layer_idx])
+        else:
+            raise ValueError(f"KAPPA_ANCHORS len {len(KAPPA_ANCHORS)} insufficient for layer_idx={layer_idx}")
+        self.kappa_anchor_range = KAPPA_ANCHOR_RANGE
+        self.kappa_drift = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
         # Issue #55/v2: per-layer mix weight (init=1.0, softmax normalized). 三层独立学习不同权重
         self.mix_weight = nn.Parameter(torch.tensor(1.0, dtype=torch.float32))
         self.embeddings = nn.Embedding(n_e, e_dim)
@@ -318,20 +346,30 @@ class KappaAwareVectorQuantization(nn.Module):
         self._last_struct_term = 0.0
         self._last_struct_target = 0.0
 
+    def get_effective_kappa(self) -> torch.Tensor:
+        """Issue #41: 逐层锚定有界 κ.
+        κ_effective = κ_anchor_l + tanh(κ_drift_l) * range_l
+        κ_anchor 来自 KAPPA_ANCHORS[l] (默认 hyp v5 = [0.024, 0.046, 0.056]).
+        tanh 把 κ_drift 约束到 [-1,1], range 约束最大幅度 (默认 0.1).
+        整体 κ_effective ∈ [κ_anchor_l - 0.1, κ_anchor_l + 0.1] (默认 range=0.1)."""
+        return self.kappa_anchor + torch.tanh(self.kappa_drift) * self.kappa_anchor_range
+
     def get_c(self) -> torch.Tensor:
         """曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l=1 (用户 v10 方案; 代码里 self.kappa 即 ρ=ln c).
         CURV_PRIOR 主路径 (量化 stop-grad c + 结构损失 REL_STRUCT 训练曲率 + 平方先验仅防漂移):
           - exp 恒>0 → 定义域自动满足, 无需硬 clamp.
           - κ init 0 → c=1 锚定基线 (几何与基线 HVectorQuantization c=1 一致).
         v9 教训: 曲率若只靠 λ·Σκ² 先验训练, κ 停在 0 (先验梯度 2λκ=0 死鞍点) — 必须由 REL_STRUCT
-        结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容)."""
+        结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容).
+        Issue #41: 替换为逐层锚定有界 κ_effective = anchor + tanh(drift) * range."""
         if self.fix_c:
-            return torch.tensor(1.0, dtype=torch.float32, device=self.kappa.device)
+            return torch.tensor(1.0, dtype=torch.float32, device=self.kappa_drift.device)
+        kappa_eff = self.get_effective_kappa()
         if CURV_PRIOR:
-            # c=exp(κ) (κ=ln c): exp 恒>0, κ init 0 → c=1
-            return torch.exp(self.kappa)
-        kappa_clamped = self.kappa.clamp(min=-0.1, max=0.5)
-        return 1.0 + kappa_clamped + 1e-3
+            # c=exp(κ_eff) (κ_eff=ln c): exp 恒>0, 锚点为 κ_anchor_l
+            return torch.exp(kappa_eff)
+        # 非 CURV_PRIOR 分支: c=1+κ_eff+1e-3 (保留兼容)
+        return 1.0 + kappa_eff + 1e-3
 
     def _struct_target(self) -> float:
         """per-layer 结构损失 target (用户 v11): 按码字数 n_e 与特征尺度 δ 的测地间距约束反解.
@@ -658,7 +696,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
         # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
-        kappa_prior = sum(q.kappa.pow(2).sum() for q in mm.vq_layers)
+        # Issue #41: 先验作用于 drift (而非 anchor 本身), 保证 κ 漂移幅度可控, 锚点稳定.
+        kappa_prior = sum(q.kappa_drift.pow(2).sum() for q in mm.vq_layers)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
     if REC_LOSS:
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
@@ -667,15 +706,16 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
 
     # Issue #39: trust region 惩罚 (实际加到 total_loss, 走 backward)
     # 在 step 之前用当前 κ 与上一步 EMA 比较, 超出阈值的部分加 relu 平方惩罚.
+    # Issue #41: 用 effective_kappa (anchor + tanh(drift) * range) 与 EMA 比较.
     if KAPPA_EMA_BETA > 0 and KAPPA_TRUST_REGION > 0:
         for q in mm.vq_layers:
             if q.kappa_ema != 0.0:
-                # log-曲率信任域: |κ - κ_ema| > KAPPA_TRUST_REGION 时加 relu 平方惩罚
-                penalty = F.relu((q.kappa - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
+                kappa_eff = q.get_effective_kappa()
+                penalty = F.relu((kappa_eff - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
                 total_loss = total_loss + KAPPA_TRUST_REGION_LAMBDA * penalty
 
-    # 记录 κ 更新前
-    kappas_before = [q.kappa.item() for q in mm.vq_layers]
+    # 记录 κ 更新前 (使用 effective_kappa — 实际进 forward 的值)
+    kappas_before = [q.get_effective_kappa().item() for q in mm.vq_layers]
     codebook_norm_before = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
 
     opt.zero_grad()
@@ -684,12 +724,13 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     total_loss.backward()
 
     # raw grad (Issue #157 spec: per-layer κ grad finite nonzero)
+    # Issue #41: 实际被优化的参数是 kappa_drift, 因此读它的 grad
     raw_grad_kappa = []
     for q in mm.vq_layers:
-        if q.kappa.grad is None:
+        if q.kappa_drift.grad is None:
             raw_grad_kappa.append(0.0)
         else:
-            raw_grad_kappa.append(q.kappa.grad.abs().item())
+            raw_grad_kappa.append(q.kappa_drift.grad.abs().item())
 
     # Issue #75 Curvature-Aware Optimization (论文 Alg.1 更新顺序):
     #   Step 1: 先更新流形/欧氏参数 (在旧 c 几何下, κ 未动 → 梯度有效)
@@ -701,25 +742,26 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     # Issue #157 关键: κ 更新后强制 recompute codebook_h + 失效 cache
     mm.invalidate_all_caches()
 
-    # 记录 κ 更新后
-    kappas_after = [q.kappa.item() for q in mm.vq_layers]
+    # 记录 κ 更新后 (effective_kappa = anchor + tanh(drift) * range)
+    kappas_after = [q.get_effective_kappa().item() for q in mm.vq_layers]
     codebook_norm_after = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
     cs_after = [q.get_c().item() for q in mm.vq_layers]
 
-    # Issue #39: EMA κ 平滑 + trust region 惩罚
+    # Issue #39: EMA κ 平滑 + trust region 惩罚 (使用 effective_kappa)
     if KAPPA_EMA_BETA > 0:
         for q in mm.vq_layers:
-            cur_kappa = q.kappa.detach().item()
+            cur_kappa = q.get_effective_kappa().detach().item()
             if q.kappa_ema == 0.0:
                 # 首步 init
-                q.kappa_ema = torch.tensor(cur_kappa, dtype=torch.float32, device=q.kappa.device)
+                q.kappa_ema = torch.tensor(cur_kappa, dtype=torch.float32, device=q.kappa_drift.device)
             else:
                 q.kappa_ema = KAPPA_EMA_BETA * q.kappa_ema + (1.0 - KAPPA_EMA_BETA) * cur_kappa
     if KAPPA_TRUST_REGION > 0:
         # 在 total_loss 后累加 trust region 惩罚 (惩罚 log-c 偏离 EMA)
         for q in mm.vq_layers:
             if q.kappa_ema != 0.0:
-                penalty = F.relu((q.kappa - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
+                kappa_eff = q.get_effective_kappa()
+                penalty = F.relu((kappa_eff - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
                 # 注: 不在此函数 total_loss 上加, 改在 train_step 外层 total_loss 加, 简化起见此处仅记录
                 # 实际加在更上层 (见 train 循环调用处)
 
@@ -967,13 +1009,15 @@ def main():
         total_loss = recon_loss + rq_loss
         if CURV_PRIOR:
             # Issue #76: precheck 与训练一致, κ 梯度来自平滑先验 (量化已 stop-grad c)
-            total_loss = total_loss + CURV_PRIOR_LAMBDA * sum(q.kappa.pow(2) for q in precheck_mm.vq_layers)
+            # Issue #41: 先验作用于 drift, 保证锚点稳定; precheck 检查 drift 梯度
+            total_loss = total_loss + CURV_PRIOR_LAMBDA * sum(q.kappa_drift.pow(2) for q in precheck_mm.vq_layers)
         if FIX_C:
             # fix_c 模式 (固定 c=1): κ 不参与 c, 不检查 κ grad
             grads_kappa = []
             precheck_kappa_grad_ok = True
         else:
-            grads_kappa = torch.autograd.grad(total_loss, [q.kappa for q in precheck_mm.vq_layers],
+            # Issue #41: 检查 kappa_drift.grad (实际被优化参数)
+            grads_kappa = torch.autograd.grad(total_loss, [q.kappa_drift for q in precheck_mm.vq_layers],
                                               retain_graph=False, allow_unused=True)
             if CURV_PRIOR:
                 # Issue #76: κ init=0 处 L2 先验梯度恰为 0 (合法鞍点), 判定放宽为"梯度存在且有限"
@@ -1027,9 +1071,11 @@ def main():
                                                                 find_unused_parameters=True)
     train_mm = train_model.module if DDP_MODE else train_model
     # Issue #55/v2: κ / mix_weight 独立 param group, 更大 LR 补偿梯度消失
-    kappa_params = [q.kappa for q in train_mm.vq_layers]
+    # Issue #41: 实际优化 kappa_drift (effective_kappa = anchor + tanh(drift) * range, 优化 drift 让 κ 漂移可控)
+    kappa_params = [q.kappa_drift for q in train_mm.vq_layers]
     mix_params = [q.mix_weight for q in train_mm.vq_layers]
-    other_params = [p for p in train_mm.parameters() if not any(p is q.kappa or p is q.mix_weight for q in train_mm.vq_layers)]
+    other_params = [p for p in train_mm.parameters()
+                    if not any(p is q.kappa_drift or p is q.mix_weight for q in train_mm.vq_layers)]
     if CURV_AWARE:
         # Issue #75 Curvature-Aware Optimization (论文 Alg.1): 拆分优化器 — 参数(旧 c 几何) 先 step,
         # κ/mix 后 step. 消除同一步内 κ 突变使参数更新"过时"的几何冲击.
@@ -1124,9 +1170,12 @@ def main():
                 # 重算 sid_temp (如果上面没跑)
                 if not (epoch % STAGE2_UTIL_LOG_EVERY == 0 or epoch == args.epochs - 1):
                     sid_temp = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=False)
-                # 当前 cs / ema
+                # 当前 cs / ema / kappa (Issue #41: 记录 effective_kappa, anchor, drift, drift_from_anchor)
                 cur_cs = [q.get_c().item() for q in train_mm.vq_layers]
-                cur_kappas = [q.kappa.item() for q in train_mm.vq_layers]
+                cur_kappas = [q.get_effective_kappa().item() for q in train_mm.vq_layers]
+                cur_anchors = [q.kappa_anchor for q in train_mm.vq_layers]
+                cur_drifts = [q.kappa_drift.item() for q in train_mm.vq_layers]
+                cur_drift_from_anchor = [k - a for k, a in zip(cur_kappas, cur_anchors)]
                 cur_emas = [q.kappa_ema.item() if hasattr(q, 'kappa_ema') and q.kappa_ema != 0.0 else None
                             for q in train_mm.vq_layers]
                 # NaN/Inf 检测
@@ -1161,6 +1210,9 @@ def main():
                     "epoch": epoch,
                     "cs": cur_cs,
                     "kappas": cur_kappas,
+                    "kappa_anchors": cur_anchors,
+                    "kappa_drifts": cur_drifts,
+                    "drift_from_anchor": cur_drift_from_anchor,
                     "kappa_ema": cur_emas,
                     "delta_log_c": delta_log_c,
                     "churn": churn,
@@ -1173,10 +1225,11 @@ def main():
                 prev_cs = cur_cs
                 prev_sid_3digit = sid_temp[:, :3] if sid_temp.shape[1] >= 3 else sid_temp
                 if epoch % 50 == 0 or epoch == args.epochs - 1:
-                    print(f"[Issue39 audit Ep{epoch}] δ_log_c={[f'{d:.4f}' for d in delta_log_c]} "
+                    print(f"[Issue41 audit Ep{epoch}] δ_log_c={[f'{d:.4f}' for d in delta_log_c]} "
                           f"churn={churn:.3f} prefix_chg={prefix_change:.3f} "
                           f"boundary={[f'{b:.3f}' for b in cb_boundary]} "
-                          f"nan_inf={nan_inf} warmup={epoch < KAPPA_WARMUP_EPOCHS}")
+                          f"drift_from_anchor={[f'{d:.4f}' for d in cur_drift_from_anchor]} "
+                          f"nan_inf={nan_inf}")
 
     # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
@@ -1186,11 +1239,15 @@ def main():
         torch.save({
             "model_state_dict": train_mm.state_dict(),
             "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS, "beta": BETA},
-            "final_kappas": [q.kappa.item() for q in train_mm.vq_layers],
+            "final_kappas": [q.get_effective_kappa().item() for q in train_mm.vq_layers],
+            "final_kappa_anchors": [q.kappa_anchor for q in train_mm.vq_layers],
+            "final_kappa_drifts": [q.kappa_drift.item() for q in train_mm.vq_layers],
             "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
             "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
             "final_kappa_ema": [q.kappa_ema.item() if hasattr(q, 'kappa_ema') and q.kappa_ema != 0.0 else None
                                 for q in train_mm.vq_layers],
+            "kappa_anchors_config": KAPPA_ANCHORS,
+            "kappa_anchor_range": KAPPA_ANCHOR_RANGE,
             "kappa_ema_beta": KAPPA_EMA_BETA,
             "kappa_trust_region": KAPPA_TRUST_REGION,
             "kappa_trust_region_lambda": KAPPA_TRUST_REGION_LAMBDA,
@@ -1198,12 +1255,14 @@ def main():
         }, ckpt_path)
         print(f"\nR12 ckpt saved: {ckpt_path}\n")
 
-        # Issue #39: 落盘 per-epoch audit JSON
+        # Issue #41: 落盘 per-epoch audit JSON (含 drift_from_anchor 字段)
         if epoch_audit:
-            audit_path = PRODUCT_DIR / "issue39_audit.json"
+            audit_path = PRODUCT_DIR / "issue41_audit.json"
             with open(audit_path, "w") as f:
                 json.dump({
                     "config": {
+                        "kappa_anchors": KAPPA_ANCHORS,
+                        "kappa_anchor_range": KAPPA_ANCHOR_RANGE,
                         "kappa_ema_beta": KAPPA_EMA_BETA,
                         "kappa_trust_region": KAPPA_TRUST_REGION,
                         "kappa_trust_region_lambda": KAPPA_TRUST_REGION_LAMBDA,
@@ -1213,7 +1272,7 @@ def main():
                     "nan_inf_detected": nan_inf_detected,
                     "n_audit_epochs": len(epoch_audit),
                 }, f, indent=2)
-            print(f"[Issue39] audit JSON saved: {audit_path} ({len(epoch_audit)} epochs)")
+            print(f"[Issue41] audit JSON saved: {audit_path} ({len(epoch_audit)} epochs)")
 
     if is_main:
         # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
@@ -1251,8 +1310,9 @@ def main():
                                           sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
         no_recal_mm = getattr(no_recal_model, "module", no_recal_model)  # DDP 兼容 (Phase 2-5 只 rank 0 跑)
         # 模拟 "不重校准" 行为: 让 c 冻结为 init=1.0 (no κ update effective)
+        # Issue #41: 冻结 kappa_drift (而非 self.kappa) — 因为实际进 c 的是 drift
         for q in no_recal_mm.vq_layers:
-            q.kappa.requires_grad = False
+            q.kappa_drift.requires_grad = False
         print("Ablation: κ frozen, no sync recalibration (对照)")
         # 不实际训练, 仅验证 SID 数量级差异
         # 对照消融: 不消解 (随机码本 base argmin, 保持"无重校准训练"的原样对照)
@@ -1268,7 +1328,7 @@ def main():
         # Issue #157 spec: 10+ κ 更新点记录
         kappa_updates_ok = n_kappa_updates >= 10
         # Issue #157 spec: 每层 κ 真更新 (final != initial)
-        final_kappas = [q.kappa.item() for q in train_mm.vq_layers]
+        final_kappas = [q.get_effective_kappa().item() for q in train_mm.vq_layers]
         if FIX_C:
             # fix_c 模式 (固定 c=1 对齐基线): κ/mix_weight 不参与学习, 跳过差异检查
             kappa_learned_ok = True
