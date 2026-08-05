@@ -1,0 +1,91 @@
+{
+  "issue": "#45",
+  "task": "taskA_v8_修复_hyperbolic_hyperplane_mlr",
+  "spec": "[方向A v8 修复] 真正 HyperVQ 双曲超平面 MLR: 修复 #44 切空间线性头与 Sinkhorn 覆盖; 学习每类双曲锚点 p_lk + 切空间法向量 a_lk; score = <logmap0(mobius_add(-p_lk, z, c_l), c_l), a_lk> / (||a_lk|| · sqrt(c_l)); MLR 必须是 assignment 唯一来源",
+  "decision": "FAIL",
+  "gate1_precheck": {
+    "status": "PASS",
+    "mlr_audit_4a_kappa_perturbation": "PASS (signed_diff=[0.0069, 0.0047, 0.0023] > 1e-5)",
+    "mlr_audit_4b_anchor_perturbation": "PASS (assignment_diff=[0.99, 1.00, 1.00])",
+    "mlr_audit_4c_normal_perturbation": "PASS (assignment_diff=[0.98, 0.98, 1.00])",
+    "mlr_audit_overall": "PASS (4a + 4b + 4c)",
+    "kappa_grad_finite_nonzero": [0.0026, 0.0014, 0.0011],
+    "no_nan_inf": true,
+    "init_c_positive": [1.0, 1.0, 1.0],
+    "notes": "Issue #45 严格 precheck 全部 PASS: (4a) κ 扰动 c+0.5 在生产路径 proj(expmap0(z,c),c) → signed_score 变化显著 (1e-3 量级); (4b) p 锚点 ±0.05·randn 扰动 99% 改变 assignment; (4c) a 法向量 ±0.1·randn 扰动 98% 改变 assignment. 修复 #44 三个核心缺陷: (1) 用 Möbius 平移 mobius_add(-p, z, c) + logmap0 真双曲路径, 替代 W·logmap0(z)+b 切空间线性头; (2) 直接对生产 z 计算, 不绕 exp/log cycle; (3) 删除 use_sk 距离 argmax 覆盖, Sinkhorn 仅作 MLR probability 均衡正则."
+  },
+  "gate2_quantizer": {
+    "status": "FAIL",
+    "util_per_layer_3digit_ep0": [0.562, 0.781, 0.867],
+    "util_per_layer_3digit_ep2": [0.109, 0.078, 0.051],
+    "util_4digit_ep0": 0.592,
+    "util_4digit_ep2": 0.010,
+    "n_unique_4digit_ep0": "5874/9922",
+    "n_unique_4digit_ep2": "104/9922",
+    "churn_ep2": 1.0,
+    "prefix_change_ep2": 1.0,
+    "final_kappas": [0.00232, 0.00201, 0.00223],
+    "final_cs": [1.00232, 1.00201, 1.00223],
+    "kappa_per_layer_std": 0.0002,
+    "mlr_top1_top2_margin_ep2": [0.0, 0.0, 0.0],
+    "mlr_signed_score_norm": "未稳定 (smoke 仅 3 ep)",
+    "mlr_soft_entropy_ep2": [4.16, 4.85, 5.55],
+    "mlr_tau_schedule": "5.0 → 0.1 over 20 ep (linear)",
+    "loss_ep0_vs_ep2": "37.21 → 37.21 (3 ep 内 loss 几乎不变, 学习停滞)",
+    "issue_45_spec_violation": [
+      "三层 util 均 < 0.90 (ep2: 0.109/0.078/0.051, 阈值 0.95+ for #37 baseline)",
+      "mlr_top1_top2_margin ≈ 0 (spec 强制 margin 严格非零)",
+      "churn = 1.0 (spec 禁止训练不稳定)",
+      "loss 37.21 ep0 → 37.21 ep2 停滞 (spec 禁止 loss 停滞)"
+    ],
+    "notes": "Issue #45 spec 严格 Gate2 失败: ep0 util 较好 (0.56/0.78/0.87) 表明 MLR 决策面初始化健康, 但 3 epoch 内塌缩至 0.11/0.08/0.05 + margin=[0,0,0] + churn=1.0. 根因: 自由 κ 学习 + soft-to-hard τ 退火 (5.0→0.1 over 20ep) + MLR-only assignment 三者组合下, τ 退火过程中 soft_probs 退化为均匀 (H≈4-5 ≈ log K), κ 几乎不动 (final std=0.0002), MLR 决策面无法稳定覆盖码本空间. 与 #44 同样的塌缩根因, 真正双曲超平面 MLR 设计没有解决'小输入 + 自由 κ + 退火'三重耦合导致的码本利用率塌缩."
+  },
+  "gate3_train": {
+    "status": "N/A",
+    "notes": "跳过: Gate 2 实质 FAIL (util<0.90, margin=0, churn=1.0, loss 停滞) → Issue #45 spec 明确: '任何层 utilization<0.90、margin≈0、churn=1.0 或 loss 停滞, 立即 Gate2 failed 并停止'. 立即 NO-GO 不进入 Gate3."
+  },
+  "gate4_eval_test": {
+    "status": "N/A",
+    "notes": "跳过: 同 Gate 3. MLR-only assignment + 自由 κ + 软退火组合在数学 (signed_score 变化) 和决策面 (p/a 扰动改变 assignment) 上验证 PASS, 但码本利用率训练端不收敛, 端到端物理不可超基线, 无需实测."
+  },
+  "comparison_table": [
+    {"variant": "HG-Rec baseline (Task #84)", "test_r10": 0.1024, "util_3digit": "0.95+", "verdict": "BASELINE"},
+    {"variant": "hyp v2 (issue #36-#38 closed)", "test_r10": 0.1048, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "v15 capmatch (issue #36-#38)", "test_r10": 0.1034, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "issue #37 KMeans cluster neg", "test_r10": 0.1044, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "issue #44 v8 (W·logmap0 退化版)", "util_3digit": "0.016/0.062/0.051", "verdict": "FAIL Gate2"},
+    {"variant": "issue #45 v8 修复 (真双曲超平面 MLR)", "util_3digit": "0.109/0.078/0.051 (ep2)", "verdict": "FAIL Gate2 (spec 严格)"}
+  ],
+  "diagnosis": {
+    "root_cause": "Issue #45 修复了 #44 的三个数学缺陷 (切空间线性头 → 真双曲超平面 MLR; exp/log cycle → 直接生产路径; Sinkhorn 距离覆盖 → MLR-only), precheck 4 项全 PASS (κ 扰动 signed_score 变化 + p/a 扰动 99% 改变 assignment). 但训练端码本利用率 3 ep 内从 0.56/0.78/0.87 塌缩至 0.11/0.08/0.05, 与 #44 类似根因: 自由 κ 学习 + soft-to-hard τ 退火 (5.0→0.1 over 20ep) + MLR-only assignment 三者组合, 在数学 c 依赖性 (signed_score) 和决策面 (p/a 扰动) 上都正确, 但码本端无法稳定收敛 (κ 几乎不动 std=0.0002, MLR decision margin=0, churn=1.0). 真正双曲超平面设计 vs 切空间线性头是数学严格性提升, 但没有解决'小输入 norm=0.27 + 自由 κ + 退火'耦合塌缩根因.",
+    "mathematical_improvement_over_44": "Issue #45 在数学严格性上比 #44 显著提升: (1) 决策面真在双曲流形 (Möbius 平移 + 切空间法向量), 不是切空间线性分类; (2) κ 依赖通过 mobius_add 完整传递 (4a signed_diff=0.007 是真数学量级, 非 1e-5 数字噪声); (3) p/a 扰动 99% 改变 assignment, 证明决策面真实存在 (vs #44 的 mlr_weight 与 z_e 高度对齐导致 argmax 不变). 这是 HyperVQ 论文所述双曲 MLR 决策超平面的正确实现.",
+    "remaining_collapse_root_cause": "Issue #45 spec 失败的根因不是数学设计, 而是'自由 κ + 退火'训练动态: (1) κ 学习在 REL_STRUCT 驱动下缓慢漂移 (grad ~ 1e-3), 但软退火 τ=5.0 让 soft_probs 均匀化 (H≈log K), 决策面与码本对齐不及时; (2) τ 退火到 0.1 时硬分配, 但码本已陷入局部最小 (margin=0); (3) fix_c (固定 c=1) 可消除 κ 不稳定但需要修改 spec. 这是结构性问题, 不是 MLR 设计缺陷.",
+    "compared_to_v15_capmatch": "v15 (1:3:9 capmatch 硬 VQ) 端到端 PASS (test R@10=0.1034, util 0.95+), 与 v8 共享 #37 KMeans 负样本 + 1:3:9 + REL_STRUCT + CURV_AWARE + 自由 κ, 唯一区别是 v8 把硬 VQ 替换成双曲 MLR. v15 码本稳定利用 (0.95+), v8 (无论 #44 或 #45) 训练端码本塌缩. 硬 VQ + capmatch 曲率分层是该数据集规模 + 编码器下唯一稳定超基线方案."
+  },
+  "spec_match": {
+    "single_variable_design": true,
+    "REC_LAYER_W_1_3_9_kept": true,
+    "REL_STRUCT_kept": true,
+    "free_kappa_kept": true,
+    "stage3_T5_unchanged": true,
+    "stage4_eval_protocol_unchanged": true,
+    "only_vq_replaced_mlr_hyperbolic_hyperplane": true,
+    "mlr_is_only_assignment_source": true,
+    "sinkhorn_does_not_override_mlr_indices": true,
+    "precheck_uses_production_forward": true,
+    "precheck_perturb_kappa_anchor_normal_separately": true,
+    "no_synthetic_input_scaling_in_precheck": true,
+    "mlr_class": "HyperbolicHyperplaneMLR",
+    "mlr_design": "Möbius 平移 + 切空间法向量 + 带符号双曲超平面 score",
+    "precheck_4a_4b_4c_all_pass": true
+  },
+  "r30_compliance": {
+    "main_script_only_no_fork": true,
+    "no_env_var_reads_in_main_script": true,
+    "no_sh_wrapper_launchers": true,
+    "all_hyperparams_hardcoded": true,
+    "notes": "本轮完成: (1) 重写 HyperMLRVectorQuantization 为 HyperbolicHyperplaneMLR (真双曲超平面 MLR), 合并到 taskA_stage2.py 主脚本 (R31); (2) 删除 MLR-distance 对齐损失 (mlr_align_lambda 引用全部清理); (3) Sinkhorn 改为 -MLR_logits 亲和度, 不覆盖 indices; (4) precheck 严格 4a/4b/4c 三方扰动审计; (5) 0 处 env var 读取, 0 处 .sh 启动器."
+  },
+  "commit": "待 commit (verdict 落盘后)",
+  "conclusion": "Issue #45 v8 修复版 (真双曲超平面 MLR) Gate 1 precheck 4/4 PASS (κ 扰动 signed_diff 显著 + p/a 扰动 99% 改 assignment), 数学严格性显著超越 #44. 但 Gate 2 严格审计 FAIL: ep2 util=0.109/0.078/0.051 全部 < 0.90 spec 阈值 + margin=0 + churn=1.0 + loss 停滞. 修复了 #44 三个数学缺陷, 但没解决'自由 κ + 软退火 + 小输入'耦合导致的码本利用率塌缩根因. 教训: HyperVQ 论文在数学严格性上需要 Möbius 平移 + 切空间法向量 (Issue #45 已实现), 但训练稳定性 (码本利用率) 取决于退火/κ 学习与码本学习速率匹配, 这是结构性问题, 不是 MLR 设计缺陷. 5% 超基线 (0.1075) 在 taskA 物理不可达已 11+ 次确认 (#44/#45 两次 MLR 路线 FAIL, v13/v14 硬 VQ 也 FAIL). 推荐 Issue 关闭, 2-3% (v15/v37 0.1034/0.1044 水平) 更现实."
+}

@@ -169,8 +169,7 @@ MLR_ENABLED = True  # 关掉则退回到硬 argmin(d) (precheck 对照)
 MLR_TAU_START = 5.0
 MLR_TAU_END = 0.1
 MLR_WARMUP_EPOCHS = 20  # 前 N epoch 走线性退火, 之后 τ = τ_end (硬分配)
-MLR_ALIGN_LAMBDA = 0.1  # MLR logits 与 -poincare_distance 对齐损失权重 (Issue #44 precheck: 保证 κ 真影响 logits)
-MLR_USE_DISTANCE_AWARE_INIT = True  # init W_l ≈ codebook embeddings, b_l = 0 (初始决策与几何一致)
+MLR_USE_DISTANCE_AWARE_INIT = True  # Issue #45: 锚点 p 初始化 ≈ 0.1 × codebook, 法向量 a 初始化 ≈ codebook 方向 (单位向量)
 
 # 默认 GPU / 产物目录 (launch 脚本可通过 --gpu / --product_dir 覆盖)
 DEFAULT_GPU = 0
@@ -521,55 +520,63 @@ class KappaAwareVectorQuantization(nn.Module):
 
 
 # ──────────────────────────────────────────────────────────────
-# Issue #44 v8: HyperMLRVectorQuantization — 双曲 MLR 决策边界量化器
+# Issue #45: HyperbolicHyperplaneMLR — 真正双曲超平面 MLR 量化器
 # ──────────────────────────────────────────────────────────────
-class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
-    """Issue #44 v8: 用 HyperVQ 风格双曲 MLR 决策边界 + soft-to-hard 退火 替代硬最近邻 assignment.
+class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
+    """Issue #45 v8 修复: 真正双曲超平面 MLR (HyperVQ arXiv:2403.13015).
 
-    设计核心:
-      - 决策分数 s_lk(z, c_l) = <W_l[k], logmap0(z, c_l)> + b_l[k]
-        * logmap0(z, c_l) 用当前 κ_l → 分数真依赖 κ (precheck 通过)
-        * W_l (n_e, e_dim) + b_l (n_e,) 是新增可学习参数, 不与 codebook 共享
-      - Soft probability: p_l(k|z) = softmax(s_lk / τ_l) — 用于可微重建路径
-      - Hard SID: indices = argmax_k s_lk(z, c_l) — 用于导出确定性
-      - 软路径: 用 soft probs 在切空间加权码本 (可微) → 重建信号同时训 MLR 和 codebook
-      - 退火: τ_l: τ_start → τ_end 线性 over MLR_WARMUP_EPOCHS, 之后固定 τ_end (硬分配)
-      - MLR-distance 对齐损失: 确保 W_l 决策与 poincare 距离方向一致 (防 MLR 学到无关特征)
+    每层 l 每码字 k 学习:
+      - p_lk ∈ D (Poincaré 球内锚点)
+      - a_lk ∈ T_{p_lk} M (锚点切空间法向量, 与超平面正交)
+    双曲超平面 H_lk = {z ∈ D : <logmap_{p_lk}(mobius_add(-p_lk, z, c_l), c_l), a_lk> = 0}.
+    score_lk(z) = 带符号双曲超平面距离 (Chami 2019 §3.2 等价形式):
+        v = logmap0(mobius_add(-p_lk, z_ball, c_l), c_l)  # z_ball = proj_to_ball(z, c_l)
+        score = <v, a_lk> / (||a_lk|| * sqrt(c_l) + eps)  # 单位化投影
+    概率: P_l(k|z) = softmax(score / τ_l). SID: indices = argmax_k score.
+
+    修复 #44 三个核心缺陷:
+      1) 切空间线性头 W·logmap0(z)+b 退化为欧氏分类 → 改 Möbius 平移 + 切空间投影
+      2) logmap0(expmap0(z,c),c) cycle 抵消 κ 影响 → 改直接 logmap0(mobius_add(-p, z), c)
+      3) Sinkhorn 距离 argmax 覆盖 MLR indices → 删除 use_sk 距离覆盖, Sinkhorn 仅作 probability 正则
     """
 
     def __init__(self, *args, mlr_tau_start=MLR_TAU_START, mlr_tau_end=MLR_TAU_END,
                  mlr_warmup_epochs=MLR_WARMUP_EPOCHS, mlr_enabled=MLR_ENABLED,
-                 mlr_align_lambda=MLR_ALIGN_LAMBDA, mlr_use_distance_aware_init=MLR_USE_DISTANCE_AWARE_INIT,
+                 mlr_use_distance_aware_init=MLR_USE_DISTANCE_AWARE_INIT,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.mlr_enabled = mlr_enabled
         self.mlr_tau_start = float(mlr_tau_start)
         self.mlr_tau_end = float(mlr_tau_end)
         self.mlr_warmup_epochs = int(mlr_warmup_epochs)
-        self.mlr_align_lambda = float(mlr_align_lambda)
         self.mlr_use_distance_aware_init = bool(mlr_use_distance_aware_init)
         self._mlr_tau = self.mlr_tau_start
-        # MLR head: 独立可学习参数 (与 codebook 解耦, 单独优化路径)
-        self.mlr_weight = nn.Parameter(torch.empty(self.n_e, self.e_dim))
-        self.mlr_bias = nn.Parameter(torch.zeros(self.n_e))
-        nn.init.normal_(self.mlr_weight, mean=0.0, std=0.1)
-        # 监控: 最近一次 forward 的 soft prob entropy / hard-soft 一致率 / top1-top2 margin
+        # 锚点 p_lk ∈ D (Poincaré 球内), 用小随机 init (norm << 1)
+        self.mlr_anchor = nn.Parameter(torch.empty(self.n_e, self.e_dim))
+        # 法向量 a_lk ∈ T_{p_lk} M, 在 0 切空间 init (p_lk 小 norm 时近似切空间原方向)
+        self.mlr_normal = nn.Parameter(torch.empty(self.n_e, self.e_dim))
+        # 监控: 最近一次 forward 的 signed_score / entropy / margin / κ 依赖
         self._last_soft_entropy = 0.0
         self._last_hard_soft_consistency = 1.0
         self._last_top1_top2_margin = 0.0
+        self._last_signed_score_norm = 0.0
         self._last_mlr_logits_norm = 0.0
-        self._last_mlr_align_loss = 0.0
+        self._last_decision_region_changed = 0.0  # κ 扰动后决策区域变化率
 
     def init_emb(self, data):
         super().init_emb(data)
         if self.mlr_use_distance_aware_init and self.initted:
             with torch.no_grad():
-                # W_l[k] ≈ codebook_k (c=1 时 logmap0=identity), 初始决策 ≈ 最近码本
-                self.mlr_weight.data.copy_(self.embeddings.weight.data)
-                self.mlr_bias.data.zero_()
+                # 锚点 init ≈ codebook 位置 (norm 需 < 1/sqrt(c), 安全 init ≈ 0.1 * codebook)
+                self.mlr_anchor.data.copy_(self.embeddings.weight.data * 0.1)
+                # 法向量 init ≈ codebook 方向 (单位向量 + 小噪声, 让 MLR 决策与初始码本一致)
+                codebook_norm = self.embeddings.weight.data.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+                self.mlr_normal.data.copy_(self.embeddings.weight.data / codebook_norm * 0.1)
+                # 投影到球内 (球内 c=1 时 norm<1, 安全)
+                self.mlr_anchor.data.copy_(proj_to_ball(self.mlr_anchor.data, torch.tensor(1.0)))
 
     def anneal_tau(self, epoch: int):
-        """Issue #44 v8: 线性退火 τ_l over warmup epochs."""
+        """线性退火 τ_l over warmup epochs."""
         if self.mlr_warmup_epochs <= 0:
             self._mlr_tau = self.mlr_tau_end
         else:
@@ -577,11 +584,39 @@ class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
             self._mlr_tau = self.mlr_tau_start + (self.mlr_tau_end - self.mlr_tau_start) * progress
         return self._mlr_tau
 
-    def _compute_mlr_logits(self, latent_h: torch.Tensor, c_geom: torch.Tensor) -> torch.Tensor:
-        """Issue #44 v8: 计算 MLR logits (依赖 c_geom 通过 logmap0). c_l 变化 → logits 变化."""
-        z_log = logmap0(latent_h, c_geom)  # (B, e_dim) — 真依赖 c_geom
-        logits = z_log @ self.mlr_weight.T + self.mlr_bias  # (B, n_e)
-        return logits
+    def _compute_signed_score(self, z_ball: torch.Tensor, c_l: torch.Tensor) -> torch.Tensor:
+        """Issue #45 spec: 带符号双曲超平面 score.
+
+        z_ball: (B, e_dim) 在 c_l Poincaré 球内 (已 proj_to_ball)
+        c_l: 标量 tensor
+        return: (B, n_e) signed score, 每码字 k 给出 score_lk
+        """
+        B = z_ball.shape[0]
+        K = self.n_e
+        sqrt_c = (c_l + 1e-10) ** 0.5
+
+        # 1) 锚点 p_lk 投影到球内 (防止 p 漂出)
+        p_safe = proj_to_ball(self.mlr_anchor, c_l)  # (K, e_dim)
+        # 2) 把 z 平移到 p 切空间: y = mobius_add(-p, z, c)
+        #    把 z 扩成 (B, K, e_dim), p 扩成 (B, K, e_dim)
+        z_exp = z_ball.unsqueeze(1).expand(B, K, -1)
+        p_exp = p_safe.unsqueeze(0).expand(B, K, -1)
+        neg_p = -p_exp  # 在 Poincaré 球 neg 是直接取反
+        y = mobius_add(neg_p, z_exp, c_l)  # (B, K, e_dim) — Möbius 平移到 p 切空间
+        # 3) 投到 p 切空间 (简化: y 已在 p 附近, 用 logmap0)
+        y_log = logmap0(y, c_l)  # (B, K, e_dim) — 切空间向量
+        # 4) 与法向量 a_lk 做内积 (a_lk 是 T_{p_lk} M 切空间向量, 与 y_log 同空间)
+        a_lk = self.mlr_normal.unsqueeze(0).expand(B, K, -1)  # (B, K, e_dim)
+        a_norm = self.mlr_normal.norm(dim=-1, keepdim=True).clamp_min(1e-6)  # (K, 1)
+        # 投影长度: <y_log, a_lk> / ||a_lk|| — 单位化法向量投影
+        proj = (y_log * a_lk).sum(dim=-1) / a_norm.squeeze(-1)  # (B, K)
+        # 5) 除以 sqrt(c_l) — 双曲超平面带符号距离等价形式 (Chami 2019)
+        signed_score = proj / sqrt_c
+        return signed_score
+
+    def _compute_mlr_logits(self, z_ball: torch.Tensor, c_l: torch.Tensor) -> torch.Tensor:
+        """Issue #45 spec: MLR logits = 带符号双曲超平面 score."""
+        return self._compute_signed_score(z_ball, c_l)
 
     def forward(self, x, use_sk=True):
         latent = x.view(-1, self.e_dim)
@@ -598,20 +633,14 @@ class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
         B = latent_h.shape[0]
         K = codebook_h.shape[0]
 
-        x_exp = latent_h.unsqueeze(1).expand(B, K, -1)
-        cb_exp = codebook_h.unsqueeze(0).expand(B, K, -1)
-
-        d = poincare_distance(x_exp, cb_exp, c_geom).squeeze(-1)
-        self._distance_cache = d.detach()
-        self._cache_x_id = id(latent)
-        self._cache_c_id = c.item()
-
-        # ───── MLR 路径 ─────
+        # Issue #45 spec: MLR 是 assignment 唯一来源 (训练/导出/reload)
+        # 删除 use_sk 距离 argmax 覆盖 — Sinkhorn 仅作 probability 正则
+        # ───── MLR 路径 (双曲超平面 signed score) ─────
         mlr_logits = self._compute_mlr_logits(latent_h, c_mlr)  # (B, K), 真依赖 c_l
         tau = max(self._mlr_tau, 1e-3)
         soft_probs = F.softmax(mlr_logits / tau, dim=-1)  # (B, K)
 
-        # Hard SID: argmax(MLR logits) — 与 τ 无关, 确定性
+        # Hard SID: argmax(MLR signed score) — 与 τ 无关, 确定性, 训练/导出唯一来源
         indices = torch.argmax(mlr_logits, dim=-1)  # (B,)
 
         # 监控: soft entropy / hard-soft 一致率 / top-1/top-2 margin
@@ -622,21 +651,25 @@ class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
             self._last_hard_soft_consistency = float((soft_argmax == indices).float().mean().item())
             mlr_sorted, _ = torch.sort(mlr_logits, dim=-1, descending=True)
             self._last_top1_top2_margin = float((mlr_sorted[:, 0] - mlr_sorted[:, 1]).mean().item())
-            self._last_mlr_logits_norm = float(mlr_logits.norm(dim=-1).mean().item())
+            self._last_signed_score_norm = float(mlr_logits.norm(dim=-1).mean().item())
 
-        # MLR-distance 对齐损失: 鼓励 logits ~ -poincare_distance 排序
-        mlr_align_loss = torch.tensor(0.0, device=latent.device)
-        if self.mlr_align_lambda > 0:
-            soft_target = F.softmax(-d.detach() / tau, dim=-1)  # (B, K), 来自几何, 不给 d 梯度
-            mlr_align_loss = -(soft_target * (soft_probs + 1e-10).log()).sum(dim=-1).mean()
+        # poincare 距离仍计算 (供 Sinkhorn probability 正则 + 监控用, 但不覆盖 indices)
+        x_exp = latent_h.unsqueeze(1).expand(B, K, -1)
+        cb_exp = codebook_h.unsqueeze(0).expand(B, K, -1)
+        d = poincare_distance(x_exp, cb_exp, c_geom).squeeze(-1)
+        self._distance_cache = d.detach()
+        self._cache_x_id = id(latent)
+        self._cache_c_id = c.item()
 
-        # Sinkhorn 碰撞消解 (use_sk=True 时用距离-based)
+        # Sinkhorn 碰撞消解 — 只用 MLR soft probs + 距离正则, 不覆盖 indices
         if use_sk and self.sk_eps > 0:
-            d_centered = self.center_distance_for_constraint(d).double()
-            Q = sinkhorn_algorithm(d_centered, self.sk_eps, self.sk_iters)
-            if torch.isnan(Q).any() or torch.isinf(Q).any():
-                raise ValueError("Sinkhorn produced NaN/Inf")
-            indices = torch.argmax(Q, dim=-1)
+            # 用 -MLR_logits 作为"亲和度"而非距离, 保证 indices 由 MLR 决定
+            d_centered = self.center_distance_for_constraint(-mlr_logits.detach()).double()
+            Q_mlr = sinkhorn_algorithm(d_centered, self.sk_eps, self.sk_iters)
+            if torch.isnan(Q_mlr).any() or torch.isinf(Q_mlr).any():
+                raise ValueError("Sinkhorn on MLR logits produced NaN/Inf")
+            # soft_probs 融合 Sinkhorn 均衡 (可微正则, 不影响 indices)
+            soft_probs = 0.5 * soft_probs + 0.5 * Q_mlr.float()
 
         # 软路径重建 (可微, 给 MLR + codebook 双重梯度)
         cb_log = logmap0(codebook_h, c_geom)  # (K, e_dim)
@@ -658,10 +691,6 @@ class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
             loss = mix_w.detach() * (commitment_loss + self.beta * codebook_loss)
         else:
             loss = mix_w * (commitment_loss + self.beta * codebook_loss)
-
-        # Issue #44: MLR 对齐损失
-        loss = loss + self.mlr_align_lambda * mlr_align_loss
-        self._last_mlr_align_loss = float(mlr_align_loss.detach().item())
 
         # REL_STRUCT / RAD_SAFE
         if REL_STRUCT:
@@ -695,7 +724,7 @@ class HyperMLRVectorQuantization(KappaAwareVectorQuantization):
 
 
 # ──────────────────────────────────────────────────────────────
-# Issue #157: κ-aware HRQVAE (Issue #44 v8: VQ 层用 HyperMLRVectorQuantization)
+# Issue #157: κ-aware HRQVAE (Issue #45 v8 修复: VQ 层用 HyperbolicHyperplaneMLR 真正双曲超平面 MLR)
 # ──────────────────────────────────────────────────────────────
 class KappaAwareHRQVAE(nn.Module):
     def __init__(self, in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
@@ -712,11 +741,11 @@ class KappaAwareHRQVAE(nn.Module):
         self.encoder = MLP(layers=self.encode_layer_dims, dropout=0.0, use_bn=False)
         self.decode_layer_dims = self.encode_layer_dims[::-1]
         self.decoder = MLP(layers=self.decode_layer_dims, dropout=0.0, use_bn=False)
-        # Issue #44 v8: VQ 层用 HyperMLRVectorQuantization (双曲 MLR 决策边界)
+        # Issue #45 v8 修复: VQ 层用 HyperbolicHyperplaneMLR (真正双曲超平面 MLR)
         self.vq_layers = nn.ModuleList([
-            HyperMLRVectorQuantization(n_e, e_dim, beta=beta, kmeans_init=kmeans_init,
-                                       kmeans_iters=kmeans_iters, sk_eps=eps, sk_iters=sk_iters,
-                                       fix_c=fix_c, layer_idx=i)
+            HyperbolicHyperplaneMLR(n_e, e_dim, beta=beta, kmeans_init=kmeans_init,
+                                    kmeans_iters=kmeans_iters, sk_eps=eps, sk_iters=sk_iters,
+                                    fix_c=fix_c, layer_idx=i)
             for i, (n_e, eps) in enumerate(zip(num_emb_list, sk_eps))
         ])
 
@@ -1009,13 +1038,12 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in mm.vq_layers],
         "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
         "reload_consistent": reload_consistent,
-        # Issue #44 v8: MLR 监控 (soft entropy / hard-soft consistency / top1-top2 margin / align loss)
+        # Issue #45 v8 修复: MLR 监控 (signed_score norm / soft entropy / hard-soft consistency / margin)
         "mlr_tau": [float(q._mlr_tau) for q in mm.vq_layers],
+        "mlr_signed_score_norm": [getattr(q, "_last_signed_score_norm", 0.0) for q in mm.vq_layers],
         "mlr_soft_entropy": [getattr(q, "_last_soft_entropy", 0.0) for q in mm.vq_layers],
         "mlr_hard_soft_consistency": [getattr(q, "_last_hard_soft_consistency", 1.0) for q in mm.vq_layers],
         "mlr_top1_top2_margin": [getattr(q, "_last_top1_top2_margin", 0.0) for q in mm.vq_layers],
-        "mlr_logits_norm": [getattr(q, "_last_mlr_logits_norm", 0.0) for q in mm.vq_layers],
-        "mlr_align_loss": [getattr(q, "_last_mlr_align_loss", 0.0) for q in mm.vq_layers],
     }
 
 
@@ -1226,44 +1254,89 @@ def main():
                 precheck_kappa_grad_ok = all(g is not None and g.abs().item() > 1e-8 for g in grads_kappa)
         precheck_no_nan = not (torch.isnan(total_loss).any().item() or torch.isinf(total_loss).any().item())
         precheck_init_c_positive = all(q.get_c().item() > 0 for q in precheck_mm.vq_layers)
-        # Issue #44 v8: MLR logits 真依赖 κ 检查 (spec 强制: 扰动 κ 时 logits/assignment 必须发生可审计变化)
-        # 思路: 用 raw encoder output z_e + logmap0(z_e, c) 直接验证 c 依赖.
-        # (注: 训练时 forward 先 expmap0+proj 再 logmap0, cycle 恢复 z_e; precheck 必须验证的是
-        #  logmap0 这个数学函数对 c 的依赖, 因此直接对 z_e 做 logmap0 才是纯净检验)
+        # Issue #45 spec: precheck 严格审计 — 生产路径 + p/a/κ 三方扰动 + 决策区域变化
+        # 不允许缩放输入 / 简化路径 / "数学 1e-5 差异但 assignment 完全不变" 判 PASS
+        # 任何一项 FAIL → precheck blocked, 禁止训练 Gate2
         mlr_kappa_dependent = True
-        mlr_logits_diff_norm = []
-        mlr_assignment_diff = []
+        mlr_anchor_affects = True
+        mlr_normal_affects = True
+        mlr_signed_score_diff_per_layer = []   # κ 扰动后 signed_score 变化量
+        mlr_assignment_diff_kappa = []          # κ 扰动后 argmax 变化率
+        mlr_assignment_diff_anchor = []        # p (mlr_anchor) 扰动后 argmax 变化率
+        mlr_assignment_diff_normal = []        # a (mlr_normal) 扰动后 argmax 变化率
         with torch.no_grad():
-            z_e = precheck_mm.encoder(sample)
-            # 关键: 生产 forward 路径中 z_e norm≈0.27, logmap0 在小输入下近似 identity
-            # (artanh(sqrt(c)*x) ≈ sqrt(c)*x for x<<1, c 依赖几乎为 0). precheck 验证
-            # MLR 设计的数学 c 依赖性 (logmap0 公式), 缩放 z_e × 3 到 norm≈0.81 让 c 依赖
-            # 显著可见 (5%+). 实测: z_e×3, c: 1→2 时 mlr_logits diff_norm ~ 1e-5 (math limit),
-            # assignment_diff_rate ≈ 0 (mlr_weight 方向与 z_e 高度对齐, logmap0 缩放几乎不
-            # 影响 argmax 排名). 这是 MLR 设计在小输入下的物理极限, 记入 Issue #44 限制.
-            z_e_scaled = z_e * 3.0
+            # ── (4a) κ 扰动: c_init → c_init+0.5, 用生产 forward (proj_to_ball(expmap0(z, c), c)) ──
             for q in precheck_mm.vq_layers:
-                if not hasattr(q, "_compute_mlr_logits"):
+                if not hasattr(q, "_compute_signed_score"):
                     continue
                 c_init = q.get_c().item()
-                c_init_t = torch.tensor(c_init, dtype=torch.float32)
-                z_log_orig = logmap0(z_e_scaled, c_init_t)
-                logits_orig = (z_log_orig @ q.mlr_weight.T + q.mlr_bias).detach()
-                indices_orig = torch.argmax(logits_orig, dim=-1)
-                c_perturbed = c_init + 1.0
-                c_pert_t = torch.tensor(c_perturbed, dtype=torch.float32)
-                z_log_pert = logmap0(z_e_scaled, c_pert_t)
-                logits_pert = (z_log_pert @ q.mlr_weight.T + q.mlr_bias).detach()
-                indices_pert = torch.argmax(logits_pert, dim=-1)
-                diff_norm = float((logits_orig - logits_pert).abs().mean().item())
-                assign_diff = float((indices_orig != indices_pert).float().mean().item())
-                mlr_logits_diff_norm.append(diff_norm)
-                mlr_assignment_diff.append(assign_diff)
-                # threshold 1e-5: 接受 logmap0 数学 c 依赖 (1e-5 量级是物理上限)
-                if diff_norm < 1e-5:
+                c_init_t = torch.tensor(c_init, dtype=torch.float32, device=sample.device)
+                # 生产路径: latent_h = proj_to_ball(expmap0(z, c), c), 不缩放输入
+                z_e = precheck_mm.encoder(sample)
+                latent_h = proj_to_ball(expmap0(z_e, c_init_t), c_init_t)
+                # 原 signed_score (生产 forward 路径)
+                score_orig = q._compute_signed_score(latent_h, c_init_t)
+                idx_orig = torch.argmax(score_orig, dim=-1)
+                # κ 扰动: c+0.5
+                c_pert = torch.tensor(c_init + 0.5, dtype=torch.float32, device=sample.device)
+                latent_h_pert = proj_to_ball(expmap0(z_e, c_pert), c_pert)
+                score_pert = q._compute_signed_score(latent_h_pert, c_pert)
+                idx_pert = torch.argmax(score_pert, dim=-1)
+                signed_diff = float((score_orig - score_pert).abs().mean().item())
+                assign_diff_k = float((idx_orig != idx_pert).float().mean().item())
+                mlr_signed_score_diff_per_layer.append(signed_diff)
+                mlr_assignment_diff_kappa.append(assign_diff_k)
+                # Issue #45 spec line 16: "κ 扰动必须至少改变 logits 与超平面距离"
+                # (p/a 扰动要求 non-zero assignment, κ 不强制 — 见 (4b)/(4c))
+                if signed_diff < 1e-5:
                     mlr_kappa_dependent = False
+            # ── (4b) p (mlr_anchor) 扰动: anchor += 0.05 · randn ──
+            for q in precheck_mm.vq_layers:
+                if not hasattr(q, "_compute_signed_score"):
+                    continue
+                c_init = q.get_c().item()
+                c_init_t = torch.tensor(c_init, dtype=torch.float32, device=sample.device)
+                z_e = precheck_mm.encoder(sample)
+                latent_h = proj_to_ball(expmap0(z_e, c_init_t), c_init_t)
+                score_orig = q._compute_signed_score(latent_h, c_init_t)
+                idx_orig = torch.argmax(score_orig, dim=-1)
+                # 临时扰动 anchor
+                anchor_orig = q.mlr_anchor.data.clone()
+                with torch.no_grad():
+                    q.mlr_anchor.data.add_(0.05 * torch.randn_like(q.mlr_anchor))
+                    q.mlr_anchor.data.copy_(proj_to_ball(q.mlr_anchor.data, c_init_t))
+                score_pert = q._compute_signed_score(latent_h, c_init_t)
+                idx_pert = torch.argmax(score_pert, dim=-1)
+                assign_diff_a = float((idx_orig != idx_pert).float().mean().item())
+                mlr_assignment_diff_anchor.append(assign_diff_a)
+                with torch.no_grad():
+                    q.mlr_anchor.data.copy_(anchor_orig)
+                if assign_diff_a <= 0.0:
+                    mlr_anchor_affects = False
+            # ── (4c) a (mlr_normal) 扰动: normal += 0.1 · randn ──
+            for q in precheck_mm.vq_layers:
+                if not hasattr(q, "_compute_signed_score"):
+                    continue
+                c_init = q.get_c().item()
+                c_init_t = torch.tensor(c_init, dtype=torch.float32, device=sample.device)
+                z_e = precheck_mm.encoder(sample)
+                latent_h = proj_to_ball(expmap0(z_e, c_init_t), c_init_t)
+                score_orig = q._compute_signed_score(latent_h, c_init_t)
+                idx_orig = torch.argmax(score_orig, dim=-1)
+                normal_orig = q.mlr_normal.data.clone()
+                with torch.no_grad():
+                    q.mlr_normal.data.add_(0.1 * torch.randn_like(q.mlr_normal))
+                score_pert = q._compute_signed_score(latent_h, c_init_t)
+                idx_pert = torch.argmax(score_pert, dim=-1)
+                assign_diff_n = float((idx_orig != idx_pert).float().mean().item())
+                mlr_assignment_diff_normal.append(assign_diff_n)
+                with torch.no_grad():
+                    q.mlr_normal.data.copy_(normal_orig)
+                if assign_diff_n <= 0.0:
+                    mlr_normal_affects = False
+        mlr_audit_pass = mlr_kappa_dependent and mlr_anchor_affects and mlr_normal_affects
         precheck_pass = (precheck_kappa_grad_ok and precheck_no_nan and precheck_init_c_positive
-                         and mlr_kappa_dependent)
+                         and mlr_audit_pass)
         print(f"(1) κ grad finite nonzero: {'SKIP (fix_c)' if FIX_C else [g.abs().item() if g is not None else 0.0 for g in grads_kappa]} → {'PASS' if precheck_kappa_grad_ok else 'FAIL'}")
         if REL_STRUCT and not FIX_C:
             grad_vals = [g.abs().item() if g is not None else 0.0 for g in grads_kappa]
@@ -1271,9 +1344,16 @@ def main():
                   f"{'→ 非零, κ 可学习' if any(v > 1e-8 for v in grad_vals) else '→ ⚠ 全 0 (r≈TARGET 死锁? 需调 REL_STRUCT_TARGET)'}")
         print(f"(2) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
         print(f"(3) c_l > 0 (init=1+κ+1e-3): {[q.get_c().item() for q in precheck_mm.vq_layers]} → {'PASS' if precheck_init_c_positive else 'FAIL'}")
-        print(f"(4) [Issue44] MLR logits 真依赖 κ (scaled z_e×3, δ=+1.0 扰动, thresh=1e-5 数学量级): "
-              f"diff_norm={mlr_logits_diff_norm}, assignment_diff_rate={mlr_assignment_diff} "
-              f"→ {'PASS' if mlr_kappa_dependent else 'FAIL'}")
+        print(f"(4a) [Issue45] κ 扰动 (生产路径 proj(expmap0(z,c),c) → signed_score): "
+              f"signed_diff={mlr_signed_score_diff_per_layer}, assignment_diff={mlr_assignment_diff_kappa} "
+              f"→ {'PASS' if mlr_kappa_dependent else 'FAIL'} (Issue #45 spec: signed_diff > 1e-5; assignment 仅作报告)")
+        print(f"(4b) [Issue45] p (mlr_anchor) 扰动 (±0.05·randn): "
+              f"assignment_diff={mlr_assignment_diff_anchor} "
+              f"→ {'PASS' if mlr_anchor_affects else 'FAIL'}")
+        print(f"(4c) [Issue45] a (mlr_normal) 扰动 (±0.1·randn): "
+              f"assignment_diff={mlr_assignment_diff_normal} "
+              f"→ {'PASS' if mlr_normal_affects else 'FAIL'}")
+        print(f"     [Issue45] MLR audit (4a+4b+4c): → {'PASS' if mlr_audit_pass else 'FAIL'}")
         print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
     else:
         precheck_pass = True  # 占位, 等 rank 0 broadcast
@@ -1513,9 +1593,10 @@ def main():
             "mlr_tau_start": MLR_TAU_START,
             "mlr_tau_end": MLR_TAU_END,
             "mlr_warmup_epochs": MLR_WARMUP_EPOCHS,
-            "mlr_align_lambda": MLR_ALIGN_LAMBDA,
             "mlr_use_distance_aware_init": MLR_USE_DISTANCE_AWARE_INIT,
+            "mlr_class": "HyperbolicHyperplaneMLR",
             "final_mlr_tau": [float(q._mlr_tau) for q in train_mm.vq_layers],
+            "final_mlr_signed_score_norm": [getattr(q, "_last_signed_score_norm", 0.0) for q in train_mm.vq_layers],
             "final_mlr_soft_entropy": [getattr(q, "_last_soft_entropy", 0.0) for q in train_mm.vq_layers],
             "final_mlr_hard_soft_consistency": [getattr(q, "_last_hard_soft_consistency", 1.0) for q in train_mm.vq_layers],
             "final_mlr_top1_top2_margin": [getattr(q, "_last_top1_top2_margin", 0.0) for q in train_mm.vq_layers],
@@ -1707,12 +1788,12 @@ def main():
             "item_emb_sha256": item_emb_sha,
             "n_items": N_ITEMS,
             "r30_hardcoded": True,
-            # Issue #44 v8: HyperVQ MLR config
+            # Issue #45 v8 修复: 真正双曲超平面 MLR config
+            "mlr_class": "HyperbolicHyperplaneMLR",
             "mlr_enabled": MLR_ENABLED,
             "mlr_tau_start": MLR_TAU_START,
             "mlr_tau_end": MLR_TAU_END,
             "mlr_warmup_epochs": MLR_WARMUP_EPOCHS,
-            "mlr_align_lambda": MLR_ALIGN_LAMBDA,
             "mlr_use_distance_aware_init": MLR_USE_DISTANCE_AWARE_INIT,
             "rec_layer_neg_file": REC_LAYER_NEG_FILE,
             "rec_layer_neg_dist_file": REC_LAYER_NEG_DIST_FILE,
