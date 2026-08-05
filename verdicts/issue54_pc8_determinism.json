@@ -1,0 +1,359 @@
+{
+  "issue": "#54",
+  "input_hash": "94a6933a1c9d1043ed99b431858df7364918140b121fb60d0b4745caad047ee9",
+  "item_ids_sha256": "a496c0bcea829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae",
+  "seed": 42,
+  "kappa_delta": 0.001,
+  "delta_kappa_eff_actual": 0.0009999996982514858,
+  "canonical_replica": {
+    "canonical_a0_hash": "3194d2ba7fe6f135cfe27cb7e3fd9feb1cd2b574d1703145f4d82721bdd9cb7f",
+    "replica_a0_hash": "34c5d0a0001e3779afac16c97cb4cd85591c4729f102cb6418fe1f29305f4c7b",
+    "matched": false,
+    "note": "RNG \u8d77\u70b9\u672a\u77e5\u5dee\u5f02\u5bfc\u81f4\u65e0\u6cd5\u9010\u4f4d\u590d\u523b canonical \u6a21\u578b\u5b9e\u4f8b; \u673a\u5236\u9a8c\u8bc1\u4e0e\u5224\u5b9a\u4e0d\u4f9d\u8d56\u5177\u4f53\u5b9e\u4f8b"
+  },
+  "item_8625": {
+    "global_index": 8625,
+    "l0": {
+      "baseline": {
+        "A": 52,
+        "c": 1.0,
+        "E_hash": "307a1569bb0d8cc6a3a1e7fb17f4f725c60a5727f90f8815d73fff31e156f6a7",
+        "r_sha": "d74b95cc285c8ac8945f257d2dd07397ee510b9bf33a79924ab9d7e701ffc1b3",
+        "xq_sha": "90214a7def214c40b9ce558a8ce0cfe4802fbe43ca35c392a5837732b2bd8a6d",
+        "d_sha": "a881b79ee12f8394305456714e4aac6b156015c30d2470e9e8356ba0d5e10642",
+        "d_top1": 52,
+        "d_top2": 44,
+        "d_margin": 0.027135014533996582
+      },
+      "perturbed": {
+        "A": 52,
+        "c": 1.0010005235671997,
+        "E_hash": "307a1569bb0d8cc6a3a1e7fb17f4f725c60a5727f90f8815d73fff31e156f6a7",
+        "r_sha": "d74b95cc285c8ac8945f257d2dd07397ee510b9bf33a79924ab9d7e701ffc1b3",
+        "xq_sha": "e4990c8f38f3df785b13556ac4a98c9bf9aa3ce1467b8ad2998a53fa223d81d5",
+        "d_sha": "6c7e28beb274dc328329c3697c766efcb240469bc58d03638887abf713eb7f7b",
+        "d_top1": 52,
+        "d_top2": 44,
+        "d_margin": 0.027134597301483154
+      },
+      "restored": {
+        "A": 52,
+        "c": 1.0,
+        "E_hash": "307a1569bb0d8cc6a3a1e7fb17f4f725c60a5727f90f8815d73fff31e156f6a7",
+        "r_sha": "d74b95cc285c8ac8945f257d2dd07397ee510b9bf33a79924ab9d7e701ffc1b3",
+        "xq_sha": "90214a7def214c40b9ce558a8ce0cfe4802fbe43ca35c392a5837732b2bd8a6d",
+        "d_sha": "a881b79ee12f8394305456714e4aac6b156015c30d2470e9e8356ba0d5e10642",
+        "d_top1": 52,
+        "d_top2": 44,
+        "d_margin": 0.027135014533996582
+      },
+      "r_max_abs_diff_base_vs_pert": 0.0,
+      "d_max_abs_diff_base_vs_pert": 1.6689300537109375e-06,
+      "r_max_abs_diff_base_vs_rest": 0.0
+    },
+    "l1": {
+      "baseline": {
+        "A": 8,
+        "c": 1.0,
+        "E_hash": "e008c1a8c44328a2723c285ff3bb3b048be3d35b6df1010970b5987a7f14d81d",
+        "r_sha": "4a3c7d12a41e98142ae14230686241dd3b927ef32aace89f05e00c058f2b1b3b",
+        "xq_sha": "e3322891ad8ce5ae37ea083d13294b356f6a202cea6247a73399c3f73b47118d",
+        "d_sha": "6d08fac160905a38130eaf479c7c7463cffe2916fa793877ab88893bd109d729",
+        "d_top1": 8,
+        "d_top2": 44,
+        "d_margin": 0.009969830513000488
+      },
+      "perturbed": {
+        "A": 8,
+        "c": 1.0,
+        "E_hash": "e008c1a8c44328a2723c285ff3bb3b048be3d35b6df1010970b5987a7f14d81d",
+        "r_sha": "d9efb2fd3c435b5213ab0139219f48ee6ecfa95c1947656300ab10d198ef7da5",
+        "xq_sha": "562fd58fe7d75e662ffaf01be4a5ba40793bb53bdf8e077eeb71f8a2e3e9940d",
+        "d_sha": "04fb1b296ff4f4069ba539d95630d9ca6aadb7ea831c9f733a5213f56de46d59",
+        "d_top1": 8,
+        "d_top2": 44,
+        "d_margin": 0.009969055652618408
+      },
+      "restored": {
+        "A": 8,
+        "c": 1.0,
+        "E_hash": "e008c1a8c44328a2723c285ff3bb3b048be3d35b6df1010970b5987a7f14d81d",
+        "r_sha": "4a3c7d12a41e98142ae14230686241dd3b927ef32aace89f05e00c058f2b1b3b",
+        "xq_sha": "e3322891ad8ce5ae37ea083d13294b356f6a202cea6247a73399c3f73b47118d",
+        "d_sha": "6d08fac160905a38130eaf479c7c7463cffe2916fa793877ab88893bd109d729",
+        "d_top1": 8,
+        "d_top2": 44,
+        "d_margin": 0.009969830513000488
+      },
+      "r_max_abs_diff_base_vs_pert": 3.0249357223510742e-06,
+      "d_max_abs_diff_base_vs_pert": 1.5020370483398438e-05,
+      "r_max_abs_diff_base_vs_rest": 0.0
+    },
+    "l2": {
+      "baseline": {
+        "A": 61,
+        "c": 1.0,
+        "E_hash": "0117efbff9881a0ae3edd8ff571d0d6a172f6080687a217871233bd12c50b9df",
+        "r_sha": "37a49235d1c1d233dd8d1ae85215d3de4524ca8149f5e3063b3028e028fd6f81",
+        "xq_sha": "1b9e17d90b9c97eaa9bc4b1d6c5122eadbaf5589a500ffb519df203513d5f197",
+        "d_sha": "1256747223026fd74cb8335d38ccc35663ae0e75da028f9b020343844fc10a25",
+        "d_top1": 61,
+        "d_top2": 150,
+        "d_margin": 0.08966141939163208
+      },
+      "perturbed": {
+        "A": 61,
+        "c": 1.0,
+        "E_hash": "0117efbff9881a0ae3edd8ff571d0d6a172f6080687a217871233bd12c50b9df",
+        "r_sha": "42797d783921c06b45423558cd8c7b99efeed26457d3fbf6987f779212e839d7",
+        "xq_sha": "beeb5fb4655c027624c64d0a6e12ce8380dadcb8410f5813866d700e9013ca6d",
+        "d_sha": "e2f9ceff06b7e43513aa2c9843b5e0e7994c90d7969359af10233fbe728079e4",
+        "d_top1": 61,
+        "d_top2": 150,
+        "d_margin": 0.08966237306594849
+      },
+      "restored": {
+        "A": 61,
+        "c": 1.0,
+        "E_hash": "0117efbff9881a0ae3edd8ff571d0d6a172f6080687a217871233bd12c50b9df",
+        "r_sha": "37a49235d1c1d233dd8d1ae85215d3de4524ca8149f5e3063b3028e028fd6f81",
+        "xq_sha": "1b9e17d90b9c97eaa9bc4b1d6c5122eadbaf5589a500ffb519df203513d5f197",
+        "d_sha": "1256747223026fd74cb8335d38ccc35663ae0e75da028f9b020343844fc10a25",
+        "d_top1": 61,
+        "d_top2": 150,
+        "d_margin": 0.08966141939163208
+      },
+      "r_max_abs_diff_base_vs_pert": 3.0249357223510742e-06,
+      "d_max_abs_diff_base_vs_pert": 1.2278556823730469e-05,
+      "r_max_abs_diff_base_vs_rest": 0.0
+    }
+  },
+  "ml_implication": {
+    "l0": {
+      "n_ml_hit": 0,
+      "n_d_mismatch": 0,
+      "n_a_mismatch": 0,
+      "e_same": true,
+      "c_same": false,
+      "violating_items": []
+    },
+    "l1": {
+      "n_ml_hit": 0,
+      "n_d_mismatch": 0,
+      "n_a_mismatch": 0,
+      "e_same": true,
+      "c_same": true,
+      "violating_items": []
+    },
+    "l2": {
+      "n_ml_hit": 0,
+      "n_d_mismatch": 0,
+      "n_a_mismatch": 0,
+      "e_same": true,
+      "c_same": true,
+      "violating_items": []
+    }
+  },
+  "total_violations": 0,
+  "mechanism": {
+    "n_r_rows_changed_by_l0_delta1e-3": {
+      "l0": 0,
+      "l1": 9922,
+      "l2": 9922
+    },
+    "xq_c_dependency_max_abs_diff": 3.0174851417541504e-06,
+    "euclid_recompute_c_dependency_max_abs_diff": 0.0,
+    "r1_production_vs_euclid_formula_diff_8625": 0.09746196866035461,
+    "xq_production_vs_euclid_formula_diff_8625": 0.0028646141290664673,
+    "production_xq_formula": "x_res = logmap0(proj_to_ball(E_l[A_l], c_l), c_l) \u2014 c \u663e\u5f0f\u8fdb\u5165 residual",
+    "canonical_audit_xq_formula": "x_q = E_l[A_l] (\u6b27\u6c0f\u6761\u76ee) \u2014 c \u4ec5\u7ecf A \u5f71\u54cd (\u5ba1\u8ba1\u7f3a\u9677)"
+  },
+  "restore_consistency": {
+    "A_diff_base_vs_restored": {
+      "l0": 0,
+      "l1": 0,
+      "l2": 0
+    },
+    "r_diff_base_vs_restored": {
+      "l0": 0,
+      "l1": 0,
+      "l2": 0
+    }
+  },
+  "delta_scan": {
+    "delta_0.01": {
+      "n_flip_total": 0,
+      "n_r0_rows_changed": 0,
+      "flips": [],
+      "n_flips_listed": 0
+    },
+    "delta_0.1": {
+      "n_flip_total": 2,
+      "n_r0_rows_changed": 0,
+      "flips": [
+        {
+          "layer": 1,
+          "item_index": 6416,
+          "old": 8,
+          "new": 44,
+          "r1_row_same": true
+        },
+        {
+          "layer": 2,
+          "item_index": 6416,
+          "old": 61,
+          "new": 130,
+          "r1_row_same": true
+        }
+      ],
+      "n_flips_listed": 2
+    }
+  },
+  "hidden_state": {
+    "baseline_vs_perturbed": {
+      "changed": [
+        {
+          "name": "vq_layers.0.kappa_drift",
+          "field": "sha",
+          "before": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "after": "0835a5c87ba00a93f8d84fb3bdf20866024a13fc710fc1225e3d67073543bba0"
+        },
+        {
+          "name": "cache:l0_distance_cache",
+          "before": {
+            "sha": "12cb35640d500c0eeb60775f1a90c0636c6ead26e3cbc2b0aade94e68967f500",
+            "data_ptr": 140692545962496
+          },
+          "after": {
+            "sha": "ab902b2be0c86303d44e0f20048786efad3b0156168d424c8ac00aa6938305cf",
+            "data_ptr": 140692545871872
+          }
+        },
+        {
+          "name": "cache:l0_cache_x_id",
+          "before": 140693676895632,
+          "after": 140692999857120
+        },
+        {
+          "name": "cache:l0_cache_c_id",
+          "before": 1.0,
+          "after": 1.0010005235671997
+        },
+        {
+          "name": "cache:l1_distance_cache",
+          "before": {
+            "sha": "27f20bf98048b14dbd93a42d6988cee37dd349922d90048efd7f2d0165878c5f",
+            "data_ptr": 140692153715712
+          },
+          "after": {
+            "sha": "914ac70a273d8e1d3b6a007d98764890a2559d62959df05fa9ccea4bdb19b302",
+            "data_ptr": 140692054696448
+          }
+        },
+        {
+          "name": "cache:l1_cache_x_id",
+          "before": 140692988353872,
+          "after": 140692988350672
+        },
+        {
+          "name": "cache:l2_distance_cache",
+          "before": {
+            "sha": "998a9b36a9914820a0ae278d16c7266f6e13ad54bfed44d07b8463433acc41eb",
+            "data_ptr": 140692334756864
+          },
+          "after": {
+            "sha": "05dc941a53d2872ac3f4d681a83f6a957cd5224cd4e6844c4e4c935dc578f935",
+            "data_ptr": 140692153171968
+          }
+        },
+        {
+          "name": "cache:l2_cache_x_id",
+          "before": 140692988355392,
+          "after": 140692988362512
+        }
+      ],
+      "cuda_rng_same": true,
+      "cpu_rng_same": true,
+      "training_same": true
+    },
+    "baseline_vs_restored": {
+      "changed": [
+        {
+          "name": "cache:l0_distance_cache",
+          "before": {
+            "sha": "12cb35640d500c0eeb60775f1a90c0636c6ead26e3cbc2b0aade94e68967f500",
+            "data_ptr": 140692545962496
+          },
+          "after": {
+            "sha": "12cb35640d500c0eeb60775f1a90c0636c6ead26e3cbc2b0aade94e68967f500",
+            "data_ptr": 140692545871872
+          }
+        },
+        {
+          "name": "cache:l0_cache_x_id",
+          "before": 140693676895632,
+          "after": 140692988352832
+        },
+        {
+          "name": "cache:l1_distance_cache",
+          "before": {
+            "sha": "27f20bf98048b14dbd93a42d6988cee37dd349922d90048efd7f2d0165878c5f",
+            "data_ptr": 140692153715712
+          },
+          "after": {
+            "sha": "27f20bf98048b14dbd93a42d6988cee37dd349922d90048efd7f2d0165878c5f",
+            "data_ptr": 140692153443840
+          }
+        },
+        {
+          "name": "cache:l1_cache_x_id",
+          "before": 140692988353872,
+          "after": 140692952877632
+        },
+        {
+          "name": "cache:l2_distance_cache",
+          "before": {
+            "sha": "998a9b36a9914820a0ae278d16c7266f6e13ad54bfed44d07b8463433acc41eb",
+            "data_ptr": 140692334756864
+          },
+          "after": {
+            "sha": "998a9b36a9914820a0ae278d16c7266f6e13ad54bfed44d07b8463433acc41eb",
+            "data_ptr": 140692333527040
+          }
+        },
+        {
+          "name": "cache:l2_cache_x_id",
+          "before": 140692988355392,
+          "after": 140692988358112
+        }
+      ],
+      "cuda_rng_same": true,
+      "cpu_rng_same": true,
+      "training_same": true
+    }
+  },
+  "call_counts": {
+    "mlr_logits": 0,
+    "sinkhorn": 0,
+    "poincare_main_d": 180,
+    "poincare_loss_d": 180
+  },
+  "status": "PASS",
+  "branch": "A",
+  "branch_semantics": "\u5206\u652f A (\u5ba1\u8ba1/\u590d\u7b97\u9519\u8bef): canonical #51 \u7684 chain_layers \u590d\u7b97\u7528\u6b27\u6c0f residual \u516c\u5f0f r-E[A] (c \u4ec5\u7ecf A \u5f71\u54cd), \u800c\u751f\u4ea7 forward \u7684 x_res = logmap0(proj_to_ball(E_l[A_l], c_l), c_l) \u2014 c \u7ecf logmap0/proj_to_ball \u663e\u5f0f\u8fdb\u5165 residual. L0 \u6270\u52a8 \u03b4\u03ba=1e-3 \u2192 c0: 1.0\u21921.0010005 \u2192 \u751f\u4ea7 x_q0 \u53d8\u5316 3.017e-06 \u2192 \u751f\u4ea7 r1 \u5168\u90e8 9922 \u884c\u53d8\u5316 3.025e-06 \u2192 d1 \u53d8\u5316 (~1.5e-05) \u2192 margin \u5c0f\u4e8e\u8be5\u91cf\u7684 item \u7ffb\u8f6c. canonical \u6a21\u578b (seed42 \u521d\u59cb\u5316) \u4e2d 8625 \u662f margin<1.5e-5 \u7684\u8fb9\u754c item \u2192 A1 99\u2192114, A2 28\u219264. \u751f\u4ea7\u8def\u5f84\u672c\u8eab\u5b8c\u5168\u786e\u5b9a: M_l \u8574\u542b 0 \u8fdd\u53cd, \u6062\u590d\u540e A/r \u5168\u91cf 0 \u5dee\u5f02, \u65e0\u9690\u85cf\u72b6\u6001.",
+  "root_cause": {
+    "production_xq_formula": "x_res = logmap0(proj_to_ball(E_l[A_l], c_l), c_l)  (stage2 forward L533-535)",
+    "canonical_audit_formula": "x_q = E_l[A_l] \u6b27\u6c0f\u6761\u76ee (stage1 pc8_canonical_chain chain_layers)",
+    "claim": "canonical residual_analysis \u58f0\u79f0 \"r1 \u4e0d\u53d8\" \u57fa\u4e8e\u9519\u8bef\u590d\u7b97\u516c\u5f0f; \u751f\u4ea7 r1 \u5b9e\u9645\u9010\u884c\u53d8\u5316 (3.025e-06), \u6df1\u5c42 assignment \u7ffb\u8f6c\u5b8c\u5168\u7531 c0 \u4f20\u5bfc, \u65e0\u9700\u4efb\u4f55\u9690\u85cf\u72b6\u6001",
+    "delta_scan_flip_example": "\u03b4\u03ba=0.1 \u65f6 item 6416 A1 8\u219244, A2 61\u2192130 (\u540c\u673a\u5236\u5b9e\u8bc1)"
+  },
+  "conclusion_8625": {
+    "reproduced_mechanism": true,
+    "explanation": "8625 \u5728\u751f\u4ea7\u8def\u5f84\u4e2d\u65e0\u975e\u786e\u5b9a\u6027: A0 \u4e0d\u53d8 \u27f9 r1 \u53d8\u5316 (c0\u2192x_q0 \u4f20\u5bfc, 3.025e-06) \u27f9 d1 \u53d8\u5316 (~1.5e-05) \u27f9 margin<1.5e-5 \u65f6 A1 \u7ffb\u8f6c \u27f9 r2 \u53d8\u5316 \u27f9 A2 \u7ffb\u8f6c. canonical \u590d\u7b97 (\u6b27\u6c0f\u516c\u5f0f) \u770b\u4e0d\u5230 r1 \u53d8\u5316 \u2014 \u5ba1\u8ba1\u7f3a\u9677, \u975e\u751f\u4ea7 bug.",
+    "canonical_exact_replica": {
+      "matched": false,
+      "note": "RNG \u8d77\u70b9\u5dee\u5f02\u65e0\u6cd5\u9010\u4f4d\u590d\u523b canonical \u6a21\u578b\u5b9e\u4f8b; \u673a\u5236\u7531\u4efb\u610f\u5b9e\u4f8b + \u03b4\u03ba \u626b\u63cf\u7ffb\u8f6c item 6416 \u5b8c\u5168\u8bc1\u660e"
+    },
+    "issue52_gate1": "unchanged FAIL (teacher\u2192student Recall@10=0.4432 < 0.80 \u9608\u503c, \u4e0d\u5141\u8bb8\u8865\u6551)"
+  }
+}

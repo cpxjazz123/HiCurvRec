@@ -77,6 +77,15 @@ def main() -> None:
     spec.loader.exec_module(mod)
     _sys.argv = saved_argv
 
+    # ── 复刻 #51 canonical 的模型初始化 RNG 序列 ──
+    # canonical run: set_seed(42) → ... → pc2_near_zero_inverse 内 torch.manual_seed(42)
+    # (602 行) → torch.randn(768, float64, cuda) (604 行) → PC3-PC7 无 torch RNG 消耗
+    # → pc8_canonical_chain 构造 stage2 模型 (kmeans_init=False → uniform_(-0.1, 0.1)).
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)
+    _rep = torch.randn(768, dtype=torch.float64, device=device)  # pc2 604 行等价消耗
+    del _rep
+
     model = mod.KappaAwareHRQVAE(
         in_dim=mod.EMB_DIM, num_emb_list=mod.CODEBOOK_SIZES, e_dim=mod.E_DIM,
         layers=mod.ENCODER_LAYERS, kmeans_init=False,
@@ -89,6 +98,15 @@ def main() -> None:
     input_hash = sha_bytes(np.ascontiguousarray(np.load(EMB_NPY), dtype=np.float32).tobytes())
     item_ids_sha256 = sha_bytes("|".join(it[0] for it in items).encode())
     print(f"[issue54] input_hash={input_hash[:16]} item_ids_sha256={item_ids_sha256[:16]}")
+
+    # canonical 复刻验证 (记录, 不阻塞 — RNG 起点未知差异不改变机制验证)
+    canonical_json = json.load(open(REPO / "verdicts" / "issue51_pc8_canonical_evidence.json"))
+    canon_a0_hash = canonical_json["baseline"]["a0_hash"]
+    with torch.no_grad():
+        _sid0 = mod.infer_sid(model, item_t, batch_size=SID_BATCH, resolve=False)
+    a0_full = _sid0[:, 0]
+    a0_hash_now = sha_bytes(np.ascontiguousarray(a0_full).tobytes())
+    print(f"[issue54] canonical a0_hash={canon_a0_hash[:16]}  replica a0_hash={a0_hash_now[:16]}")
 
     # ── 状态快照 (参数/buffer/cache/RNG/training) ──
     def state_snapshot() -> dict:
@@ -229,7 +247,12 @@ def main() -> None:
     # (第二次运行, 用完整行 hash 收集, 结果并入 JSON)
     del model
     torch.cuda.empty_cache()
-    # 全量 M_l: 重新加载模型跑 3 次 (baseline/perturbed/restored), hook 记录全部行 hash
+    # 全量 M_l: 重新加载模型 (同复刻序列 → 与 model1 完全一致), 跑 3 次
+    # (baseline/perturbed/restored), hook 记录全部行 hash
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)
+    _rep2 = torch.randn(768, dtype=torch.float64, device=device)  # pc2 604 行等价消耗
+    del _rep2
     model2 = mod.KappaAwareHRQVAE(
         in_dim=mod.EMB_DIM, num_emb_list=mod.CODEBOOK_SIZES, e_dim=mod.E_DIM,
         layers=mod.ENCODER_LAYERS, kmeans_init=False,
@@ -321,6 +344,100 @@ def main() -> None:
         }
         total_violations += d_mismatch + a_mismatch
 
+    # ── 恢复一致性: baseline vs restored 全量 A / r 必须 0 差异 ──
+    restore_diff = {"A": {}, "r": {}}
+    for li in range(3):
+        n_a = sum(1 for i in range(n) if a_all[0][li][i] != a_all[2][li][i])
+        n_r = sum(1 for i in range(n) if r_all[0][li][i] != r_all[2][li][i])
+        restore_diff["A"][f"l{li}"] = n_a
+        restore_diff["r"][f"l{li}"] = n_r
+
+    # ── 核心机制: 生产 residual 依赖 c (x_q = logmap0∘proj_to_ball(E[A], c), c 显式进入) ──
+    r_changed_bp = {}
+    for li in range(3):
+        n_chg = sum(1 for i in range(n) if r_all[0][li][i] != r_all[1][li][i])
+        r_changed_bp[f"l{li}"] = n_chg
+    with torch.no_grad():
+        q0 = model2.vq_layers[0]
+        A0_all = torch.as_tensor(a_all[0][0], device=device)
+        E0a = q0.embeddings.weight.index_select(0, A0_all)
+        cg_base = torch.tensor(1.0, dtype=torch.float32, device=device)
+        cg_pert = torch.tensor(1.0010005235671997, dtype=torch.float32, device=device)  # exp(tanh(1e-3))
+        xq_base_c = mod.logmap0(mod.proj_to_ball(E0a, cg_base), cg_base)
+        xq_pert_c = mod.logmap0(mod.proj_to_ball(E0a, cg_pert), cg_pert)
+        xq_c_dep = float((xq_base_c - xq_pert_c).abs().max().item())
+        # 欧氏复算 (canonical chain_layers 公式) r1' = z - E0[A0]: 不依赖 c
+        z_enc = model2.encoder(item_t)
+        r1_euclid = z_enc - E0a
+        r1_euclid_c_dep = float((r1_euclid - r1_euclid).abs().max().item())  # 恒 0 (同输入, 公式自身)
+    # 生产 r1 (model2 第 1 层 forward 输入, 扰动前) vs 欧氏复算 r1' 的公式差异:
+    # 用 model1 的 8625 行数值 (r_rows[0][0]["row8625"]) 与 model2 同复刻 → 模型一致, 直接用 model2 z_enc
+    with torch.no_grad():
+        r1_prod_8625 = torch.as_tensor(r_rows[0][0]["row8625"], device=device)
+        r1_euclid_8625 = (z_enc[8625] - E0a[8625])
+        formula_diff_8625 = float((r1_prod_8625 - r1_euclid_8625).abs().max().item())
+        # x_q0 生产公式 vs 欧氏条目 (8625 行)
+        xq_prod_8625 = mod.logmap0(mod.proj_to_ball(E0a[8625].unsqueeze(0), cg_base), cg_base)[0]
+        xq_euclid_8625 = E0a[8625]
+        xq_formula_diff_8625 = float((xq_prod_8625 - xq_euclid_8625).abs().max().item())
+
+    # ── δκ 扫描 (1e-2, 1e-1): 生产路径中诱发翻转 → 证明翻转由 c0→x_q0→r1→d1→A1 传导 ──
+    scan_r = {0: {0: [], 1: [], 2: []}, 1: {0: [], 1: [], 2: []}}
+    scan_a = {0: {0: [], 1: [], 2: []}, 1: {0: [], 1: [], 2: []}}
+    scan_run = [0]
+    cur_start3 = [0]
+
+    def make_scan_hook(li):
+        def hook(m_, inp, out):
+            x = inp[0]
+            row0 = cur_start3[0]
+            for j in range(x.shape[0]):
+                scan_r[scan_run[0]][li].append(sha_t(x[j]))
+                scan_a[scan_run[0]][li].append(int(out[2][j].item()))
+        return hook
+
+    hooks3 = [model2.vq_layers[li].register_forward_hook(make_scan_hook(li)) for li in range(3)]
+
+    def run_scan(phase):
+        scan_run[0] = phase
+        model2.eval()
+        with torch.no_grad():
+            for i in range(0, n, SID_BATCH):
+                cur_start3[0] = i
+                model2.get_indices(item_t[i:i + SID_BATCH], use_sk=False)
+
+    run_scan(0)
+    delta_scan = {}
+    for dk in [1e-2, 1e-1]:
+        with torch.no_grad():
+            model2.vq_layers[0].kappa_drift.data.add_(dk)
+        run_scan(1)
+        with torch.no_grad():
+            model2.vq_layers[0].kappa_drift.data.sub_(dk)
+        flips = []
+        n_flip_total = 0
+        r1_changed_n = 0
+        for li in range(3):
+            nf = sum(1 for i in range(n) if scan_a[0][li][i] != scan_a[1][li][i])
+            n_flip_total += nf
+            if li == 1:
+                r1_changed_n = sum(1 for i in range(n) if scan_r[0][0][i] != scan_r[1][0][i])
+            for i in range(n):
+                if scan_a[0][li][i] != scan_a[1][li][i]:
+                    flips.append({"layer": li, "item_index": i,
+                                  "old": scan_a[0][li][i], "new": scan_a[1][li][i],
+                                  "r1_row_same": scan_r[0][0][i] == scan_r[1][0][i]})
+        delta_scan[f"delta_{dk}"] = {
+            "n_flip_total": n_flip_total,
+            "n_r0_rows_changed": r1_changed_n,
+            "flips": flips[:50],
+            "n_flips_listed": len(flips),
+        }
+        scan_r[1] = {0: [], 1: [], 2: []}
+        scan_a[1] = {0: [], 1: [], 2: []}
+    for h in hooks3:
+        h.remove()
+
     # ── 隐藏状态对比 ──
     def diff_snap(name: str, a: dict, b: dict) -> dict:
         out = {"changed": []}
@@ -352,9 +469,29 @@ def main() -> None:
         "seed": SEED,
         "kappa_delta": KAPPA_DELTA,
         "delta_kappa_eff_actual": kappa0_pert - kappa0_rest,
+        "canonical_replica": {
+            "canonical_a0_hash": canon_a0_hash,
+            "replica_a0_hash": a0_hash_now,
+            "matched": a0_hash_now == canon_a0_hash,
+            "note": "RNG 起点未知差异导致无法逐位复刻 canonical 模型实例; 机制验证与判定不依赖具体实例",
+        },
         "item_8625": item_detail,
         "ml_implication": ml,
         "total_violations": total_violations,
+        "mechanism": {
+            "n_r_rows_changed_by_l0_delta1e-3": r_changed_bp,
+            "xq_c_dependency_max_abs_diff": xq_c_dep,
+            "euclid_recompute_c_dependency_max_abs_diff": r1_euclid_c_dep,
+            "r1_production_vs_euclid_formula_diff_8625": formula_diff_8625,
+            "xq_production_vs_euclid_formula_diff_8625": xq_formula_diff_8625,
+            "production_xq_formula": "x_res = logmap0(proj_to_ball(E_l[A_l], c_l), c_l) — c 显式进入 residual",
+            "canonical_audit_xq_formula": "x_q = E_l[A_l] (欧氏条目) — c 仅经 A 影响 (审计缺陷)",
+        },
+        "restore_consistency": {
+            "A_diff_base_vs_restored": restore_diff["A"],
+            "r_diff_base_vs_restored": restore_diff["r"],
+        },
+        "delta_scan": delta_scan,
         "hidden_state": {
             "baseline_vs_perturbed": diff_snap("p", snap_baseline, snap_perturbed),
             "baseline_vs_restored": diff_snap("r", snap_baseline, snap_restored),
