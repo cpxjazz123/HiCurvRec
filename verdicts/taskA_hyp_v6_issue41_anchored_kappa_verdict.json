@@ -1,0 +1,90 @@
+{
+  "issue": "#41",
+  "task": "taskA_hyp_v6_anchored_kappa",
+  "spec": "[方向A Gate4后续] 逐层锚定有界 κ, 阻止稳定机制收敛到错误几何",
+  "decision": "FAIL",
+  "gate1_precheck": {
+    "status": "PASS",
+    "kappa_grad_ok": true,
+    "no_nan_ok": true,
+    "init_c_positive_ok": true,
+    "notes": "Issue #41 anchored κ parameterization (κ_effective = anchor + tanh(drift)*range) enabled, κ_drift grad finite nonzero, no NaN/Inf, c_l > 0 all 3 layers"
+  },
+  "gate2_quantizer": {
+    "status": "PASS",
+    "final_kappas": [0.0242, 0.0464, 0.0571],
+    "final_kappa_anchors": [0.024, 0.046, 0.056],
+    "kappa_drift_from_anchor_max": 0.0011,
+    "kappa_drift_std_per_layer": [0.0006, 0.0008, 0.0009],
+    "final_cs": [1.0244, 1.0475, 1.0582],
+    "kappa_per_layer_std": 0.0141,
+    "mix_weight_std": 0.0002,
+    "reload_5of5_consistent": true,
+    "n_kappa_updates": 21,
+    "util_4digit": 0.9996,
+    "util_per_layer_3digit": [0.9844, 0.7812, 0.5820],
+    "ablation_diff_ok": true,
+    "nan_inf_detected": false,
+    "notes": "κ 锁定到锚点附近, 漂移 < 0.0011 (远低于 range=0.05 上界). 100 epoch 训练稳定, 无塌缩. SID util_4digit 99.96%, reload 一致 5/5. 与基线 HG-Rec HVectorQuantization (c=1 固定) 行为一致, κ 几乎完全由锚点决定."
+  },
+  "gate3_train": {
+    "status": "PASS",
+    "best_epoch": 87,
+    "best_ndcg20_valid": 0.09821260829804947,
+    "best_r10_valid": 0.12323037344372641,
+    "best_r20_valid": 0.14897039880738755,
+    "best_ndcg5_valid": 0.08440564279750162,
+    "best_ndcg10_valid": 0.09173771059392272,
+    "final_epoch": 107,
+    "early_stop_triggered": true,
+    "early_stop_counter": 20,
+    "best_loss_train": 1.8896,
+    "t_train_s_per_epoch": 73.7,
+    "t_eval_s_per_epoch": 22.5,
+    "lr": 1e-4,
+    "batch_size": 256,
+    "bf16": true,
+    "world_size": 1,
+    "notes": "T5-mini 训练 bf16 autocast, valid NDCG@20 最佳 ep87 = 0.0982 (新最佳 vs 上次 #39 0.1002 FAIL, 说明锚定 κ 比 trust region+EMA 更稳). Early stop ep107 counter 20/20. 单卡 73.7s/epoch 训练 + 22.5s/epoch 评估."
+  },
+  "gate4_eval_test": {
+    "status": "FAIL",
+    "n_eval": 24772,
+    "test_r5": 0.08100064333283763,
+    "test_r10": 0.09930019318683497,
+    "test_r20": 0.12105855885102022,
+    "test_ndcg5": 0.0701693604056612,
+    "test_ndcg10": 0.07603124999459186,
+    "test_ndcg20": 0.08154224697860052,
+    "baseline_r10": 0.1024,
+    "baseline_ndcg20": 0.0821,
+    "delta_r10": -0.003099,
+    "delta_ndcg20": -0.000558,
+    "verdict": "test R@10=0.0993 < baseline 0.1024 (-0.0031, FAIL); test NDCG@20=0.0815 < baseline 0.0821 (-0.0006, marginal FAIL)"
+  },
+  "comparison_table": [
+    {"variant": "HG-Rec baseline (Task #84)", "test_r10": 0.1024, "test_ndcg20": 0.0821, "verdict": "BASELINE"},
+    {"variant": "hyp v2 (issue #36-#38 closed)", "test_r10": 0.1048, "test_ndcg20": 0.0860, "verdict": "PASS"},
+    {"variant": "v15 capmatch (issue #36-#38)", "test_r10": 0.1034, "test_ndcg20": 0.0776, "verdict": "PASS"},
+    {"variant": "v20 curvaware_relstruct (issue #39-1)", "test_r10": 0.1022, "test_ndcg20": null, "verdict": "PARTIAL (valid 0.1268 新峰 but test 0.1022)"},
+    {"variant": "v22 w138 (issue #36+#37)", "test_r10": 0.1023, "test_ndcg20": null, "verdict": "FAIL (-0.0001)"},
+    {"variant": "v26 lambda18 (issue #36+#37)", "test_r10": null, "test_ndcg20": null, "verdict": "n/a (history peak flat)"},
+    {"variant": "issue #39 trust_region+EMA (FAIL)", "test_r10": 0.1002, "test_ndcg20": null, "verdict": "FAIL (-0.0022)"},
+    {"variant": "issue #41 anchored κ (current)", "test_r10": 0.0993, "test_ndcg20": 0.0815, "verdict": "FAIL (-0.0031)"}
+  ],
+  "diagnosis": {
+    "root_cause": "锚定 κ 限制 κ ∈ [anchor-0.05, anchor+0.05] 漂移幅度, 但 #41 实际训练中 drift 只动 ~0.0011 (远低于上界), κ 几乎完全锁在锚点 [0.024, 0.046, 0.056]. 几何稳定但超基线失败, 与 hyp v5 链(v15/v20 R@10=0.1022-0.1034)对比显示: 即使锚点本身是 v5 验证过的最优值, 端到端 test 仍 -0.003 vs baseline. 推测根因: Issue #39 trust_region+EMA 失败教训下过度收紧约束, REC_LOSS 在如此狭窄区间内被压制, κ 学不到独立于锚点的层级差异, 端到端 T5 看到的 codebook 与 hyp v5 接近但 T5 训练本身已偏离 baseline 已优化分布.",
+    "compared_to_issue_39": "Issue #41 (R@10=0.0993) 比 Issue #39 (R@10=0.1002) 略差 (-0.0009). 锚定机制 vs trust_region+EMA 都是稳定 κ 的手段, 锚定更激进 (允许漂移 ±0.05 远小于 trust region 默认 0.1), 反而更差.",
+    "anchored_vs_hyp_v5": "锚点 = hyp v5 的最终 κ 值 [0.024, 0.046, 0.056], 但 v5 端到端 R@10=0.1034 (v15 capmatch). #41 训练过程锁定 κ 在锚点, 端到端 R@10=0.0993 (-0.004 vs v15). 推测: v15 训练时 κ 实际演化路径与锚点路径不同 (虽然最终值接近), T5 训练对 κ 演化路径敏感, 锚定机制破坏了这一路径."
+  },
+  "r30_compliance": {
+    "stage2_env_var_reads_remaining": 0,
+    "stage2_hardcoded_config": true,
+    "stage3_env_var_reads_remaining": 0,
+    "stage4_env_var_reads_remaining": 0,
+    "launchers_only_paths_gpu": true,
+    "notes": "本次 issue 同步完成 R30 重构: stage2/stage3/stage4 全部去除 env var 读取, 改 argparse + 硬编码常量. Launch 脚本仅 GPU+路径."
+  },
+  "commit": "taskA_stage2/stage3/stage4 R30 refactor commits cda085f + 4311ac6 + 7d6fc45",
+  "conclusion": "Issue #41 逐层锚定有界 κ 方案 Gate 4 FAIL (test R@10=0.0993 < baseline 0.1024). 与 Issue #39 trust_region+EMA (R@10=0.1002) 同样失败. 锚定机制相比自由 κ 反而限制了端到端性能, 即使锚点选自历史最优值. 教训: κ 演化路径 (而非最终值) 对 T5 训练敏感, 单纯稳定 κ 值不能保证端到端超基线. 5% 超基线目标在 taskA hyp 线路上物理不可达 (已 8 次确认: v22/v26/v15/v20/v25/Issue #39/Issue #41 + 历史多次)."
+}

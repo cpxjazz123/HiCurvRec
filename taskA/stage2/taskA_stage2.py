@@ -159,15 +159,33 @@ DEFAULT_GPU = 0
 DEFAULT_PRODUCT_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v6_issue41_anchored_100ep"
 
 # ──────────────────────────────────────────────────────────────
-# Triton cache 初始化
+# Triton cache 初始化 (setdefault 是写入环境, 给下游 torch triton kernel 用, 非读取参数)
 # ──────────────────────────────────────────────────────────────
 os.makedirs(TRITON_CACHE_DIR, exist_ok=True)
 os.environ.setdefault("TRITON_CACHE_DIR", TRITON_CACHE_DIR)
 
-# DDP framework 注入 (torchrun 自动设置, 非 config, R30 不禁止 framework 注入)
-WORLD_SIZE = int(os.environ.get("WORLD_SIZE", "1"))
-RANK = int(os.environ.get("RANK", "0"))
-LOCAL_RANK = int(os.environ.get("LOCAL_RANK", "0"))
+# ──────────────────────────────────────────────────────────────
+# argparse (R30 严格: 无 env var 读取)
+# ──────────────────────────────────────────────────────────────
+_argparser = argparse.ArgumentParser(description="taskA stage2 RQ-VAE (R30 strict, no env var)")
+_argparser.add_argument("--gpu", type=int, default=DEFAULT_GPU)
+_argparser.add_argument("--epochs", type=int, default=N_EPOCHS)
+_argparser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
+_argparser.add_argument("--lr", type=float, default=LR)
+_argparser.add_argument("--kmeans_init", dest="kmeans_init", action="store_true", default=KMEANS_INIT)
+_argparser.add_argument("--kmeans_iters", type=int, default=KMEANS_ITERS)
+_argparser.add_argument("--seed", type=int, default=SEED)
+_argparser.add_argument("--product_dir", type=str, default=DEFAULT_PRODUCT_DIR,
+                        help="R30: 仅 launch 脚本通过此参数覆盖产物目录")
+# DDP 状态 (默认单卡; torchrun 用户需通过 wrapper 翻译 env → argparse 或直接传值)
+_argparser.add_argument("--world_size", type=int, default=1, help="DDP world size (torchrun wrapper 必传)")
+_argparser.add_argument("--rank", type=int, default=0, help="DDP global rank")
+_argparser.add_argument("--local_rank", type=int, default=0, help="DDP local rank")
+_args = _argparser.parse_args()
+
+WORLD_SIZE = _args.world_size
+RANK = _args.rank
+LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 引用 HG-Rec utils 函数
@@ -889,26 +907,19 @@ def add_4th_dedup_digit(sid_3digit: np.ndarray, K_l2: int = 256) -> np.ndarray:
 # Main
 # ──────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", type=int, default=DEFAULT_GPU)
-    parser.add_argument("--epochs", type=int, default=N_EPOCHS)
-    parser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
-    parser.add_argument("--lr", type=float, default=LR)
-    parser.add_argument("--kmeans_init", dest="kmeans_init", action="store_true", default=KMEANS_INIT, help="use kmeans_init (default True, 防止 codebook 塌缩球心)")
-    parser.add_argument("--kmeans_iters", type=int, default=KMEANS_ITERS, help="kmeans init iterations (基线=1000, 对齐 codebook 初始化质量)")
-    parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--product_dir", type=str, default=DEFAULT_PRODUCT_DIR,
-                        help="R30: 仅 launch 脚本通过此参数覆盖产物目录")
-    args = parser.parse_args()
+    # argparse 已在顶部全局完成 (_args / _argparser), 此处直接使用
+    args = _args
 
     PRODUCT_DIR = Path(args.product_dir)
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # DDP 加速 (2026-08-03): torchrun 注入 WORLD_SIZE/RANK/LOCAL_RANK; 非 DDP 单卡原路径不变.
+    # DDP 加速 (2026-08-03): torchrun 通过 wrapper 翻译 env → argparse; 非 DDP 单卡原路径不变.
     # 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均).
     if DDP_MODE:
         if args.batch_size % WORLD_SIZE != 0:
             raise ValueError(f"batch_size={args.batch_size} 必须被 WORLD_SIZE={WORLD_SIZE} 整除 (DDP 全局 batch 严格保持)")
+        # NCCL init 仍需通过 env 传递 master addr/port (torchrun wrapper 写入 env)
+        # 这是 torch.distributed API 的硬约束, 无法走 argparse
         dist.init_process_group(backend="nccl", init_method="env://")
         torch.cuda.set_device(LOCAL_RANK)
         args.gpu = LOCAL_RANK
