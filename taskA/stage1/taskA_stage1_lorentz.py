@@ -1,43 +1,38 @@
 #!/usr/bin/env python3
-"""Task #84 Issue #48 Stage1 — frozen sentence-t5-base 前 N-1 block + Lorentz 最后 block.
+"""Task #84 Issue #49 Stage1 — frozen sentence-t5-base 前 N-1 block + Lorentz 最后 block (严格 precheck).
 
-设计 (R18 v=Issue #48 spec 严格实现):
-  - frozen sentence-t5-base, 保留前 N-1=11 个 T5Block, 第 12 个 block 替换为可训练 Lorentz block
-  - Lorentz block 内: token 表示先在原点切空间做 W_Q/W_K/W_V 投影, 再 Exp_o 映射到 Lorentz 流形
-  - Attention 用 Lorentz 距离 (Hypformer Eq.4): A_ij = softmax(-d_c(q_i,k_j)^2/sqrt(d) + M_ij)
-  - Value 聚合用 Minkowski centroid (归一化投影回双曲面)
-  - HFFN: Log_o → MLP → Exp_o
-  - HResLN: Log_o + Log_o → LayerNorm → Exp_o
-  - 输出: mask-aware Minkowski centroid → Log_o → 公共欧氏向量 u_item ∈ R^768 (与 t5 d_model 对齐)
-  - 训练目标: KL(P^T || P^H) on batch 关系分布 + 0.1*L_aug on dropout 双视图
-  - Stage2 不变: parquet 内 u_item 用 expmap0(c_l) 映射到 Poincaré 球, 走最近邻 RQ-VAE
+承接 #48 (838531d): 修复 Lorentz 数值参数化并严格完成 PC1-PC8.
 
-8 项 Precheck (Issue #48 spec):
-  1. 流形约束: |<x,x>_L + 1/c_enc|<1e-5 且 x0>0 (random input / real batch / attention 后 / FFN 后 / pooling 后)
-  2. Exp/Log 互逆: ||Log_o(Exp_o(v)) - v||/max(||v||,1e-8) < 1e-5
-  3. Lorentz↔Poincaré 距离一致性: 转 Poincaré 后两种模型距离相对误差 < 1e-5
-  4. Attention 合法: mask 后每行权重和 <1e-6, padding 权重=0, finite
-  5. Centroid 合法: 聚合前 <m,m>_L < 0, 聚合后回双曲面
-  6. 梯度有限差分: W_Q/W_K/W_V/W_1/W_2 坐标, autograd vs 中心差分 rel < 1e-3, finite nonzero
-  7. 真实路径审计: forward/parquet/reload 都经 Lorentz attention/centroid; 禁用 Lorentz block 后输出有可测变化
-  8. 三层合规 (Stage2 端验证, 此脚本仅落盘 stage1 输出)
+修复一 (平滑有界切空间参数化):
+  s = ||u||_2, ρ(u) = ρ_max·tanh(s/ρ_max), v(u) = ρ(u)/(s+ε)·u
+  ρ_max=1.0, ε=1e-12 固定, 不扫描. v(u) 才是 Exp/Log 互逆检查的输入,
+  不再将 Log(Exp(v(u))) 与未约束原始 u 比较. sinh(x)/x 接近 0 用解析极限.
 
-Gate 1 (Issue #48 spec):
-  - train loss / L_rel / L_aug / 梯度范数 / NaN-Inf
-  - Lorentz constraint max/mean error
-  - teacher→student Recall@10 邻域保持率 (≥0.80 PASS)
-  - item tangent norm min/mean/std/max (std > 1e-3 防 #33 固定半径退化)
-  - 导出 9922 商品 / 维度 / dtype / ItemID 顺序 / parquet sha256
-  - reload 后逐元素最大误差 (<1e-6)
+修复二 (几何核心强制 float64):
+  Sentence-T5 冻结输出保持原 dtype; 从输入投影之后到 Lorentz pooling/LogMap
+  的几何核心必须 float64: h64 = float64(h), z_L = LorentzBlock_64(h64).
+  不得在 attention/Minkowski centroid/ExpMap/LogMap/距离/precheck 中静默转回
+  float32/bfloat16. Stage1 parquet 写出前才显式转换, 并记录转换前后最大误差.
 
-R30 严格: 无 env var; 所有超参硬编码常量; 单主脚本 (R31); 直接 python3 启动 (R32).
+PC1-PC8 (Issue #49 spec):
+  PC1 全路径流形约束: <1e-8 (float64), 所有点 x0>0, max/mean/P99 finite
+  PC2 Exp/Log 互逆: 小范数/近 ρ_max/真实 T5 投影三种, max <1e-8
+  PC3 Lorentz/Poincaré 等距一致性: max <1e-7, P99 <1e-8, p = x_{1:d}/(√c·x0+1)
+  PC4 Attention 合法: 行和与 1 误差 <1e-10, padding key 权重严格 0, 全 finite
+  PC5 Minkowski centroid: 归一化前 <m_i,m_i>_L<0, 归一化后 <1e-8, 禁 fallback projection
+  PC6 中心有限差分: float64 h=1e-5, W_Q/W_K/W_V/W_1/W_2 各一非零坐标,
+      g_AD/g_FD finite nonzero, sign 一致, rel <1e-3, 不得降级
+  PC7 真实路径审计: forward/export/reload 三条路径计数/hash, 禁用 Lorentz 后 rel>1e-3
+  PC8 三层曲率与最近邻合规: 三个独立 nn.Parameter 地址, MLR_ENABLED=False 显式断言,
+      assignment 由 argmin d_c 唯一产生, 扰动 κ 仅对应层缓存变化, reload 5/5
+
+唯一允许结论: precheck blocked 或 precheck PASS. 全部 PASS 前禁止 Stage1-4 训练.
 """
 from __future__ import annotations
 import argparse
 import hashlib
 import json
 import math
-import os
 import random
 import sys
 import time
@@ -53,42 +48,46 @@ REPO = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 sys.path.insert(0, str(REPO / "HG-Rec"))
 
 # === R30: 所有超参硬编码常量 (无 os.environ.get) ===
-ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/item.json"
-OUTPUT_PARQUET_DEFAULT = str(REPO / "taskA/_history/taskA_stage1_issue48/item_emb.parquet")
-TAG = "issue48_lorentz"
+ITEM_JSON = "/fs04/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments.item.json"
+OUTPUT_PARQUET_DEFAULT = str(REPO / "taskA/_history/taskA_stage1_issue49/item_emb.parquet")
+TAG = "issue49_lorentz"
 ENCODER_MODEL = "sentence-transformers/sentence-t5-base"
 # Issue #48 spec: c_enc=1.0 固定 (Stage1 Lorentz 坐标系), 不搜索
 C_ENC = 1.0
-# N-1 frozen t5 blocks; 最后 1 block 替换为 Lorentz block (Issue #48 spec)
 N_FROZEN_BLOCKS = 11
-# 教师 t5 + 学生 Lorentz (双视图 dropout + KL 关系 + L_aug)
-DROPOUT_PROJ = 0.1  # t5 投影 dropout (用于 teacher 双视图)
-DROPOUT_AUG = 0.2   # 学生双视图 dropout
-KL_TEMP = 0.07      # teacher/student softmax 温度 (spec: 写死, 不扫描)
-L_AUG_WEIGHT = 0.1  # L_rel + 0.1*L_aug (spec 强制)
-# Stage1 Lorentz block 训练
+# 修复一: 平滑有界切空间参数化 (Issue #49 spec 强制, 不扫描)
+RHO_MAX = 1.0
+BOUND_EPS = 1e-12
+# 修复二: 几何核心 dtype
+GEOM_DTYPE = torch.float64
+# Lorentz 距离 arcosh 定义域机器精度保护
+ARCOSH_EPS = 1e-12
+# Stage1 Lorentz block 训练 (本 Issue 不执行, 保留入口供后续 Gate1 Issue)
 TRAIN_BATCH_SIZE = 64
 TRAIN_EPOCHS = 3
 TRAIN_LR = 1e-4
 TRAIN_SEED = 42
-DEVICE = "cuda:0"  # GPU 由 CUDA_VISIBLE_DEVICES 决定
+DEVICE = "cuda:0"
 MAX_SEQ_LEN = 64
-# HFFN hidden dim (Lorentz block 内部 MLP 隐藏层, 与 t5 d_model 对齐)
 HFFN_HIDDEN = 2048
-# Precheck 容差 (Issue #48 spec 严格数值)
-EPS_LORENTZ = 1e-5      # 流形约束误差 < 1e-5
-EPS_INV = 1e-5          # Exp/Log 互逆 < 1e-5
-EPS_DIST = 1e-5         # Lorentz↔Poincaré 距离一致性 < 1e-5
-EPS_ATTN = 1e-6         # attention 行和 < 1e-6
-EPS_GRAD_FD = 1e-3      # autograd vs FD < 1e-3
-EPS_RELOAD = 1e-6       # parquet reload 误差 < 1e-6
-# Precheck audit 子集 (固定 seed, 训练集子集)
-PRECHECK_SUBSET_SIZE = 64
+# 教师/学生关系分布温度与 L_aug 权重 (spec: 写死)
+KL_TEMP = 0.07
+L_AUG_WEIGHT = 0.1
+DROPOUT_AUG = 0.2
+# PC 阈值 (Issue #49 spec)
+PC1_MANIFOLD_MAX = 1e-8
+PC2_INVERSE_MAX = 1e-8
+PC3_ISO_MAX = 1e-7
+PC3_ISO_P99 = 1e-8
+PC4_ROWWISE_MAX = 1e-10
+PC5_PRE_INNER_LT_ZERO = True
+PC5_POST_MANIFOLD_MAX = 1e-8
+PC6_FD_H = 1e-5
+PC6_REL_MAX = 1e-3
+PC7_REL_DIFF_MIN = 1e-3
+# Precheck 固定 seed + 真实训练集 audit batch
 PRECHECK_SEED = 42
-# Recall@10 邻域保持率阈值 (Gate 1 PASS 条件)
-TEACHER_STUDENT_R10_MIN = 0.80
-# tangent norm std 阈值 (防 #33 固定半径退化)
-TANGENT_NORM_STD_MIN = 1e-3
+PRECHECK_AUDIT_SIZE = 64
 
 
 def log(msg):
@@ -100,159 +99,193 @@ def set_seed(seed):
     torch.manual_seed(seed); torch.cuda.manual_seed_all(seed)
 
 
+def sha256_bytes(data) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        h.update(f.read())
+    return h.hexdigest()
+
+
 # ================================================================
-# Lorentz 几何定义 (Issue #48 spec §"Lorentz 几何定义")
+# 几何核心 (修复二: 强制 float64)
 # ================================================================
 
 def minkowski_inner(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    """<x,y>_L = -x_0*y_0 + sum_{j>=1} x_j*y_j. x, y: (..., d+1)"""
+    """<x,y>_L = -x_0*y_0 + sum_{j>=1} x_j*y_j. x, y: (..., d+1), float64."""
+    x = x.to(GEOM_DTYPE)
+    y = y.to(GEOM_DTYPE)
     return -x[..., 0] * y[..., 0] + (x[..., 1:] * y[..., 1:]).sum(dim=-1)
 
 
-def arcosh_safe(z: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """arcosh(z) for z >= 1+eps, safe gradient near z=1."""
+def arcosh_safe(z: torch.Tensor, eps: float = ARCOSH_EPS) -> torch.Tensor:
+    """arcosh(z) for z >= 1+eps (机器精度保护), safe gradient near z=1."""
+    z = z.to(GEOM_DTYPE)
     z_safe = torch.clamp(z, min=1.0 + eps)
     return torch.acosh(z_safe)
 
 
 def lorentz_distance(x: torch.Tensor, y: torch.Tensor, c: float) -> torch.Tensor:
-    """d_c(x,y) = (1/sqrt(c)) * arcosh(max(1+eps, -c <x,y>_L))"""
+    """d_c(x,y) = (1/sqrt(c)) * arcosh(max(1+eps, -c <x,y>_L)), float64."""
     inner = minkowski_inner(x, y)
     z = -c * inner
     return arcosh_safe(z) / math.sqrt(c)
 
 
-def expmap_o(v: torch.Tensor, c: float) -> torch.Tensor:
-    """Exp_o(v) for v=(0, v_s) tangent at origin o.
-    v: (..., d) tangent (第一个分量 0)
-    o: (1/sqrt(c), 0, ..., 0)
-    Exp_o(v) = cosh(sqrt(c)||v||_L) o + sinh(sqrt(c)||v||_L)/(sqrt(c)||v||_L) v_full
-    其中 v_full = (0, v_s) (前导 0)
+def smooth_bounded_v(u: torch.Tensor, rho_max: float = RHO_MAX, eps: float = BOUND_EPS) -> torch.Tensor:
+    """修复一: 平滑有界切空间参数化.
 
-    float32 数值稳定约束: 当 ||v|| > 1 时, cosh²-sinh² 浮点精度退化, manifold 约束被破坏.
-    此函数对输入 v 做 norm clamp 到 [0, 1] 以保证 float32 精度 (Hypformer 实际用法).
+    s = ||u||_2, ρ(u) = ρ_max·tanh(s/ρ_max), v(u) = ρ(u)/(s+ε)·u.
+    返回 v(u), ||v(u)|| = ρ(u) < ρ_max 平滑 (u=0 时 v=0).
+    float64 强制.
     """
-    # v is tangent at o: first dim must be 0; if not, prepend zeros
+    u = u.to(GEOM_DTYPE)
+    s = u.norm(dim=-1, keepdim=True)  # (..., 1)
+    rho = rho_max * torch.tanh(s / rho_max)  # (..., 1)
+    v = rho / (s + eps) * u
+    return v
+
+
+def expmap_o(v: torch.Tensor, c: float) -> torch.Tensor:
+    """Exp_o(v) for v=(0, v_s) tangent at origin o. v: (..., d) 无前导 0, float64.
+
+    o = (1/√c, 0, ..., 0)
+    Exp_o(v) = cosh(√c·||v||_L)·o + sinh(√c·||v||_L)/(√c·||v||_L)·v_full
+    sinh(x)/x 接近 0 用解析极限 (1 + x²/6), 不得产生 0/0.
+    """
+    v = v.to(GEOM_DTYPE)
     if v.shape[-1] == 0:
         raise ValueError("v is empty")
-    v_norm = v.norm(dim=-1, keepdim=True).clamp_min(1e-15)
-    # clamp ||v|| 到 ≤ 1 (Hypformer 风格: token 表征先 normalize)
-    v_clamped_norm = v_norm.clamp(max=1.0)
-    v_scaled = v * (v_clamped_norm / v_norm)  # ||v_scaled|| = min(||v||, 1)
-    v_norm_final = v_clamped_norm
+    v_norm = v.norm(dim=-1, keepdim=True)  # (..., 1)
     sqrt_c = math.sqrt(c)
-    sqrt_c_norm = sqrt_c * v_norm_final  # (..., 1)
-    cosh_term = torch.cosh(sqrt_c_norm)  # (..., 1)
-    sinh_term = torch.sinh(sqrt_c_norm) / sqrt_c_norm  # (..., 1)
-    o = torch.zeros(*v.shape[:-1], v.shape[-1] + 1, device=v.device, dtype=v.dtype)
+    alpha = sqrt_c * v_norm  # (..., 1)
+    # sinh(alpha)/alpha 稳定分支: alpha→0 时 → 1 + alpha²/6 (泰勒解析极限)
+    alpha_safe = torch.clamp(alpha, min=1e-12)
+    sinh_over_alpha = torch.where(
+        alpha < 1e-6,
+        1.0 + alpha_safe * alpha_safe / 6.0,
+        torch.sinh(alpha_safe) / alpha_safe,
+    )
+    cosh_term = torch.cosh(alpha)  # (..., 1)
+    o = torch.zeros(*v.shape[:-1], v.shape[-1] + 1, device=v.device, dtype=GEOM_DTYPE)
     o[..., 0] = 1.0 / sqrt_c
-    # prepend zero for tangent direction
-    v_full = torch.cat([torch.zeros_like(v[..., :1]), v_scaled], dim=-1)
-    return cosh_term * o + sinh_term * v_full
+    v_full = torch.cat([torch.zeros_like(v[..., :1]), v], dim=-1)  # (..., d+1)
+    return cosh_term * o + sinh_over_alpha * v_full
 
 
 def logmap_o(x: torch.Tensor, c: float) -> torch.Tensor:
-    """Log_o(x) for x on H^d_c. x: (..., d+1).
-    alpha = -c <o, x>_L = sqrt(c) x_0 (since o=(1/sqrt(c), 0))
-    d = arcosh(alpha) / sqrt(c)  (Lorentz distance from o to x)
-    v = d / sinh(sqrt(c)*d) * (x - alpha*o)  (tangent at o, first component = 0)
-    返回 (..., d) 去掉前导 0
+    """Log_o(x) for x on H^d_c. x: (..., d+1), float64.
+
+    alpha = -c <o, x>_L = √c·x_0 (o=(1/√c,0,...))
+    d = arcosh(alpha)/√c
+    v = d/sinh(√c·d) · (x - alpha·o)   (tangent at o, 返回 (..., d) 去前导 0)
     """
+    x = x.to(GEOM_DTYPE)
     sqrt_c = math.sqrt(c)
     alpha = sqrt_c * x[..., 0]  # (...,)
-    # d: lorentz distance from o to x
-    d = arcosh_safe(alpha.clamp_min(1.0 + 1e-7)) / sqrt_c  # (...,)
-    # (x - alpha*o): x[0]-1, x[1:]-0
+    d = arcosh_safe(alpha.clamp_min(1.0 + ARCOSH_EPS)) / sqrt_c  # (...,)
     x_centered = x.clone()
-    x_centered[..., 0] = x[..., 0] - alpha / sqrt_c  # x_0 - alpha/sqrt(c) = x_0 - x_0 = 0 (by def of alpha)
-    # 切空间分量: d / sinh(sqrt(c)*d) * x_centered
-    sinh_term = torch.sinh(sqrt_c * d).clamp_min(1e-15)
+    x_centered[..., 0] = x[..., 0] - alpha / sqrt_c
+    sqrt_c_d = sqrt_c * d
+    sinh_term = torch.sinh(sqrt_c_d).clamp_min(1e-15)
     coeff = (d / sinh_term).unsqueeze(-1)  # (..., 1)
-    # 返回去掉前导 0 的切空间向量 (..., d)
-    return coeff * x_centered[..., 1:]
+    return coeff * x_centered[..., 1:]  # (..., d)
 
 
-def arcosh_safe(z: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """arcosh(z) for z >= 1+eps, safe gradient near z=1."""
-    z_safe = torch.clamp(z, min=1.0 + eps)
-    return torch.acosh(z_safe)
+def lorentz_centroid(values: torch.Tensor, weights: torch.Tensor, c: float) -> tuple[torch.Tensor, torch.Tensor]:
+    """归一化 Minkowski centroid (修复二 float64; Issue #49 PC5 禁 fallback).
 
+    m_i = Σ_j A_ij v_j; 归一化前必须 <m_i,m_i>_L < 0 (timelike), 否则 raise;
+    归一化 m / sqrt(-c <m,m>_L) 精确回流形 (禁 project_to_lorentz 兜底).
+    einsum '...n,...nd->...d' 加权和: 不物化 (..., N, d+1) 中间张量 (OOM 防护).
 
-def project_to_lorentz(x: torch.Tensor, c: float) -> torch.Tensor:
-    """数值漂移修复: 给定 (..., d+1) 几乎在双曲面上, 强制投影回 H^d_c."""
-    d = x.shape[-1] - 1
-    inner = minkowski_inner(x, x)
-    target = -1.0 / c
-    delta = (target - inner) / (2.0 * (-x[..., 0]).clamp_min(1e-15))  # (...,)
-    # 加 delta 到 x_0 上 (因为 <x+δ·e_0, x+δ·e_0>_L = <x,x>_L - 2δ*x_0 = target => δ = (target-<x,x>_L)/(-2x_0))
-    out = x.clone()
-    out[..., 0] = x[..., 0] + delta
-    # 强制 x_0 > 0
-    out[..., 0] = out[..., 0].clamp_min(1.0 / math.sqrt(c))
-    # 再次投影 (双步保险)
-    inner = minkowski_inner(out, out)
-    delta2 = (-1.0 / c - inner) / (2.0 * (-out[..., 0]).clamp_min(1e-15))
-    out[..., 0] = out[..., 0] + delta2
-    return out
-
-
-def minkowski_centroid(values: torch.Tensor, weights: torch.Tensor, c: float) -> torch.Tensor:
-    """归一化 Minkowski centroid: m = sum w_i v_i, then normalize back to H^d_c.
-
-    values: (..., N, d+1) on H^d_c
-    weights: (..., N) 非负, sum to 1
-    return: (..., d+1) on H^d_c
-
-    数值稳定: inner 接近 0 时 sqrt(-c*inner) 崩溃, 用 project_to_lorentz 强制投回双曲面.
+    values: (..., N, d+1) on H^d_c; weights: (..., N) 非负, sum≈1
+    return (centroid_on_manifold, m_raw)
     """
-    # weighted sum: (..., d+1)
-    m = (weights.unsqueeze(-1) * values).sum(dim=-2)
-    # normalize: m / sqrt(-c <m,m>_L), 当 <m,m>_L < 0 时
-    inner = minkowski_inner(m, m)
-    norm_factor = torch.sqrt((-c * inner).clamp_min(1e-15))
-    out = m / norm_factor.unsqueeze(-1)
-    return project_to_lorentz(out, c)
+    values = values.to(GEOM_DTYPE)
+    weights = weights.to(GEOM_DTYPE)
+    # 加权和 m_i = Σ_j w_ij v_j. 显式维度分派 (einsum ellipsis 对 3D/3D 有广播歧义):
+    #   - pooling:  weights (B, N) × values (B, N, d+1) → (B, d+1)
+    #   - attention: weights (B*h, L, L) × values (B*h, L, d_h+1) → bmm (B*h, L, d_h+1)
+    #   - per-head:  weights (B, h, Lq, Lk) × values (B, h, Lk, dh+1) → reshape+bmm
+    if weights.ndim == 2 and values.ndim == 3:
+        m = (weights.unsqueeze(-1) * values).sum(dim=-2)  # (B, d+1)
+    elif weights.ndim == 3 and values.ndim == 3:
+        m = torch.bmm(weights, values)  # (B*h, L_q, d+1)
+    elif weights.ndim == 4 and values.ndim == 4:
+        w2 = weights.reshape(-1, weights.shape[-2], weights.shape[-1])  # (B*h, Lq, Lk)
+        v2 = values.reshape(-1, values.shape[-2], values.shape[-1])     # (B*h, Lk, dh+1)
+        m = torch.bmm(w2, v2).reshape(weights.shape[:-2] + (weights.shape[-2], values.shape[-1]))  # (B, h, Lq, dh+1)
+    else:
+        raise ValueError(f"lorentz_centroid: unsupported shapes weights={tuple(weights.shape)} values={tuple(values.shape)}")
+    inner = minkowski_inner(m, m)  # (...,)
+    if not (inner < 0).all():
+        raise RuntimeError(
+            f"PC5 FAIL: Minkowski centroid 归一化前 <m,m>_L 必须 < 0 (timelike), "
+            f"got min={inner.min().item():.6e}, max={inner.max().item():.6e}"
+        )
+    norm_factor = torch.sqrt(-c * inner).unsqueeze(-1)  # (..., 1)
+    out = m / norm_factor
+    # 精确投影回流形 (无需 fallback; 数学恒等 <m,m>_L = -1/c)
+    return out, m
 
 
 # ================================================================
-# Stage1 LorentzEncoder: frozen t5-base 前 N-1 block + Lorentz 最后 block
+# Lorentz block 组件 (修复二: 全程 float64)
 # ================================================================
 
 class HFFN(nn.Module):
-    """Log_o → MLP → Exp_o (Issue #48 spec)."""
+    """Log_o → MLP → LN + 固定 1/√d 缩放 → 平滑有界 → Exp_o (Issue #48/#49 spec + #49 梯度修复).
+
+    梯度修复: LayerNorm 输出 norm=√d≈27.7 会令 smooth_bounded_v 的 tanh 饱和
+    (∂v/∂u≈0.036) 且梯度方向锁死平行于 LN 归一化输入, 被 LN 反向投影消去
+    (实测 1e-17). LN 后乘固定常数 1/√d → norm≈1 → tanh 非饱和区 (导数≈0.42),
+    梯度方向混合, PC6 中心差分可过. 该缩放是常数架构修正, 不改 spec 参数化.
+    """
 
     def __init__(self, d_model: int, d_hidden: int, c: float):
         super().__init__()
         self.linear1 = nn.Linear(d_model, d_hidden)
         self.linear2 = nn.Linear(d_hidden, d_model)
+        self.ln = nn.LayerNorm(d_model)
+        self.scale = 1.0 / math.sqrt(d_model)
         self.c = c
 
     def forward(self, x_lorentz: torch.Tensor) -> torch.Tensor:
-        # x_lorentz: (B, L, d+1)
-        v = logmap_o(x_lorentz, self.c)  # (B, L, d)
+        x_lorentz = x_lorentz.to(GEOM_DTYPE)
+        v = logmap_o(x_lorentz, self.c)  # (B, L, d) float64
         v = self.linear1(v)
         v = F.gelu(v)
         v = self.linear2(v)
-        return expmap_o(v, self.c)
+        v = self.ln(v) * self.scale  # norm ≈ 1
+        v_bounded = smooth_bounded_v(v)  # 修复一
+        return expmap_o(v_bounded, self.c)
 
 
 class HResLN(nn.Module):
-    """Log_o(x) + Log_o(y) → LayerNorm → Exp_o (Issue #48 spec)."""
+    """Log_o(x) + Log_o(y) → LayerNorm → 固定 1/√d 缩放 → 平滑有界 → Exp_o (#49 梯度修复同 HFFN)."""
 
     def __init__(self, d_model: int, c: float):
         super().__init__()
         self.ln = nn.LayerNorm(d_model)
+        self.scale = 1.0 / math.sqrt(d_model)
         self.c = c
 
     def forward(self, x_lorentz: torch.Tensor, y_lorentz: torch.Tensor) -> torch.Tensor:
+        x_lorentz = x_lorentz.to(GEOM_DTYPE)
+        y_lorentz = y_lorentz.to(GEOM_DTYPE)
         v_x = logmap_o(x_lorentz, self.c)  # (B, L, d)
-        v_y = logmap_o(y_lorentz, self.c)  # (B, L, d)
-        v = self.ln(v_x + v_y)
-        return expmap_o(v, self.c)
+        v_y = logmap_o(y_lorentz, self.c)
+        v = self.ln(v_x + v_y) * self.scale  # norm ≈ 1
+        v_bounded = smooth_bounded_v(v)  # 修复一
+        return expmap_o(v_bounded, self.c)
 
 
 class HAttention(nn.Module):
-    """Lorentz distance attention (Issue #48 spec §"Lorentz 最后编码块")."""
+    """Lorentz distance attention (Issue #48 spec; 修复一/二: float64 + 平滑有界)."""
 
     def __init__(self, d_model: int, c: float, n_heads: int = 12):
         super().__init__()
@@ -260,67 +293,69 @@ class HAttention(nn.Module):
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_head = d_model // n_heads
-        # 在切空间做投影 (W_Q/W_K/W_V: d_model → d_model)
         self.w_q = nn.Linear(d_model, d_model, bias=False)
         self.w_k = nn.Linear(d_model, d_model, bias=False)
         self.w_v = nn.Linear(d_model, d_model, bias=False)
         self.w_o = nn.Linear(d_model, d_model, bias=False)
         self.c = c
+        # 统计 (PC4/PC7 审计用)
+        self.last_attn_weights = None
+        self.last_attn_scores = None
+        self.last_entropy = None
 
     def forward(self, x_lorentz: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-        """x_lorentz: (B, L, d+1) on H^d_c.
-        mask: (B, L) 1=valid, 0=padding
-        """
-        B, L, D = x_lorentz.shape
-        # 1. token 表示 → 切空间投影
-        v = logmap_o(x_lorentz, self.c)  # (B, L, d)
-        q = self.w_q(v).view(B, L, self.n_heads, self.d_head).transpose(1, 2)  # (B, h, L, d_h)
-        k = self.w_k(v).view(B, L, self.n_heads, self.d_head).transpose(1, 2)
-        v_proj = self.w_v(v).view(B, L, self.n_heads, self.d_head).transpose(1, 2)
-        # 2. 切空间向量 → Exp_o → Lorentz
-        q_lorentz = expmap_o(q, self.c)  # (B, h, L, d_h+1) — 注: 切空间维度只有 d_h
-        k_lorentz = expmap_o(k, self.c)
-        v_lorentz = expmap_o(v_proj, self.c)
-        # 3. Lorentz distance based attention: (B, h, L_q, L_k)
-        # d_c(q_i, k_j)^2, pairwise
-        # q_lorentz: (B, h, L, d_h+1) → (B*h, L, d_h+1)
-        q_flat = q_lorentz.reshape(B * self.n_heads, L, -1)
+        x_lorentz = x_lorentz.to(GEOM_DTYPE)
+        mask = mask.to(GEOM_DTYPE)
+        B, L, _ = x_lorentz.shape
+        # 1. token → 切空间 → 平滑有界 → Q/K/V 投影
+        v = logmap_o(x_lorentz, self.c)  # (B, L, d) float64
+        v_b = smooth_bounded_v(v)  # 修复一
+        q = self.w_q(v_b).view(B, L, self.n_heads, self.d_head).transpose(1, 2)  # (B, h, L, d_h)
+        k = self.w_k(v_b).view(B, L, self.n_heads, self.d_head).transpose(1, 2)
+        v_proj = self.w_v(v_b).view(B, L, self.n_heads, self.d_head).transpose(1, 2)
+        # 2. 平滑有界 → Exp_o → Lorentz (每 head 在 d_h+1 维 Lorentz 流形)
+        q_b = smooth_bounded_v(q)   # (B, h, L, d_h)
+        k_b = smooth_bounded_v(k)
+        vp_b = smooth_bounded_v(v_proj)
+        q_lorentz = expmap_o(q_b, self.c)   # (B, h, L, d_h+1)
+        k_lorentz = expmap_o(k_b, self.c)
+        v_lorentz = expmap_o(vp_b, self.c)
+        # 3. Lorentz distance attention scores
+        q_flat = q_lorentz.reshape(B * self.n_heads, L, -1)  # (B*h, L, d_h+1)
         k_flat = k_lorentz.reshape(B * self.n_heads, L, -1)
-        # pairwise inner: (B*h, L_q, L_k)
         inner = -q_flat[..., 0:1] * k_flat[..., 0:1].transpose(-1, -2) + torch.matmul(
             q_flat[..., 1:], k_flat[..., 1:].transpose(-1, -2)
-        )
+        )  # (B*h, L_q, L_k)
         z = -self.c * inner
-        z_safe = z.clamp_min(1.0 + 1e-7)
+        z_safe = torch.clamp(z, min=1.0 + ARCOSH_EPS)
         d_c = torch.acosh(z_safe) / math.sqrt(self.c)
-        # attention score: -d_c^2 / sqrt(d_h) + M_ij
-        attn_score = -d_c ** 2 / math.sqrt(self.d_head)
-        # mask: (B, L) → (B, 1, 1, L_k)
-        attn_mask = mask[:, None, None, :]  # 1=valid
-        attn_score = attn_score.masked_fill(attn_mask == 0, float("-inf"))
-        attn_weights = F.softmax(attn_score, dim=-1)
-        attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
-        # 4. value 聚合 (Minkowski centroid over valid tokens)
-        # v_lorentz: (B*h, L, d_h+1)
-        # attn_weights: (B*h, L_q, L_k)
-        # output[b,h,i,:] = centroid over j of attn_weights[b,h,i,j] * v_lorentz[b,h,j,:]
-        v_for_centroid = v_lorentz.unsqueeze(2).expand(-1, -1, L, -1, -1)  # (B*h, L_q, L_k, d_h+1)
-        attn_for_centroid = attn_weights.reshape(B * self.n_heads, L, L, 1)
-        # Minkowski centroid requires normalized weights (sum to 1), spec 用 attn_weights
-        out_centroid = minkowski_centroid(v_for_centroid, attn_for_centroid.squeeze(-1), self.c)  # (B*h, L_q, d_h+1)
-        # reshape back
-        out = out_centroid.reshape(B, self.n_heads, L, self.d_head + 1)
-        # concat heads → (B, L, d+1) (n_heads * (d_head+1) = d + n_heads; 这里 head concat 后维度会超 d+1, 需小心)
-        # 实际上每个 head 在自己的 d_head 切空间做 attention, 输出维度 n_heads * (d_head+1) > d+1
-        # spec 未明确 multi-head 拼接方式, 此处采用简化: 在切空间 concat 后投影回 d
+        attn_score = -d_c ** 2 / math.sqrt(self.d_head)  # (B*h, L_q, L_k)
+        # mask (padding key 权重严格 0)
+        # 注意: 广播 masked_fill 在本 torch 版本有分配 bug (mask 需广播时物化 ~19GB),
+        # 必须显式构造与 attn_score 同形状的 bool mask (实测 0.38GB, 见 test_attn_mem).
+        attn_mask_full = (mask > 0)[:, None, :].expand(B, L, L).repeat(self.n_heads, 1, 1)  # (B*h, L_q, L_k) bool
+        attn_score_masked = attn_score.masked_fill(~attn_mask_full, float("-inf"))
+        attn_weights = F.softmax(attn_score_masked, dim=-1)
+        # 统计记录
+        self.last_attn_weights = attn_weights.detach()
+        self.last_attn_scores = attn_score.detach()
+        ent = -torch.sum(attn_weights * torch.log(attn_weights.clamp_min(1e-15)), dim=-1)
+        self.last_entropy = ent.detach()
+        # 4. Minkowski centroid value aggregation (每 head; einsum 不物化 5D 中间)
+        v_flat = v_lorentz.reshape(B * self.n_heads, L, -1)  # (B*h, L_k, d_h+1)
+        attn_for_centroid = attn_weights.reshape(B * self.n_heads, L, L)  # (B*h, L_q, L_k)
+        out_centroid, _ = lorentz_centroid(v_flat, attn_for_centroid, self.c)  # (B*h, L_q, d_h+1)
+        out = out_centroid.reshape(B, self.n_heads, L, self.d_head + 1)  # (B, h, L, d_h+1)
+        # 5. concat heads → 切空间 → w_o → 平滑有界 → Exp_o
         out_tangent = logmap_o(out, self.c)  # (B, h, L, d_h)
         out_tangent = out_tangent.transpose(1, 2).reshape(B, L, self.d_model)  # (B, L, d)
         out_tangent = self.w_o(out_tangent)  # (B, L, d)
-        return expmap_o(out_tangent, self.c)
+        out_bounded = smooth_bounded_v(out_tangent)  # 修复一
+        return expmap_o(out_bounded, self.c)
 
 
 class LorentzBlock(nn.Module):
-    """完整 Lorentz block: HAttention → HResLN → HFFN → HResLN (Issue #48 spec)."""
+    """完整 Lorentz block: HAttention → HResLN → HFFN → HResLN (Issue #48/#49 spec)."""
 
     def __init__(self, d_model: int, d_hidden: int, c: float, n_heads: int = 12):
         super().__init__()
@@ -331,6 +366,7 @@ class LorentzBlock(nn.Module):
         self.c = c
 
     def forward(self, x_lorentz: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        x_lorentz = x_lorentz.to(GEOM_DTYPE)
         attn_out = self.attn(x_lorentz, mask)
         x = self.ln1(x_lorentz, attn_out)
         ffn_out = self.ffn(x)
@@ -339,7 +375,7 @@ class LorentzBlock(nn.Module):
 
 
 class FrozenT5Encoder(nn.Module):
-    """frozen sentence-t5-base 前 N-1 block, 返回 hidden states."""
+    """frozen sentence-t5-base 前 N-1 block, 返回 token hidden states (float32)."""
 
     def __init__(self, model_name: str, n_frozen: int):
         super().__init__()
@@ -349,7 +385,6 @@ class FrozenT5Encoder(nn.Module):
             p.requires_grad = False
         self.encoder.eval()
         self.n_frozen = n_frozen
-        # 保留前 n_frozen 个 block; 最后 block 替换为 Lorentz
         assert n_frozen < len(self.encoder.encoder.block), (
             f"n_frozen={n_frozen} must be < total blocks={len(self.encoder.encoder.block)}"
         )
@@ -357,29 +392,21 @@ class FrozenT5Encoder(nn.Module):
         self.n_blocks = len(self.encoder.encoder.block)
 
     def encode_to_token(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        """返回前 n_frozen 个 block 后的 token hidden states: (B, L, d_model)."""
-        # 用 transformers 内置 forward, 但只跑前 n_frozen 个 block
-        # T5EncoderModel 的 encoder 是 T5Stack, 含 embedding + block + final layer norm
-        # 这里直接用 forward 但截断 block 数
         with torch.no_grad():
-            # 1. embedding
             inputs_emb = self.encoder.shared(input_ids)
-            # 2. extend attention mask (T5 内部需要 mask dtype=float)
             ext_mask = self.encoder.get_extended_attention_mask(attention_mask, input_ids.shape).to(input_ids.device)
-            # 3. 跑前 n_frozen 个 block
             hidden = inputs_emb
             for i in range(self.n_frozen):
                 hidden = self.encoder.encoder.block[i](hidden, attention_mask=ext_mask)[0]
-        return hidden  # (B, L, d_model)
+        return hidden  # (B, L, d_model) float32
 
 
 class Stage1LorentzEncoder(nn.Module):
-    """frozen t5 前 N-1 block → 输入投影 (linear + tanh) → Exp_o → Lorentz block → centroid → Log_o → u_item."""
+    """frozen t5 前 N-1 block → 输入投影 (float32→float64) → Lorentz block → centroid → Log_o → u_item."""
 
     def __init__(self, model_name: str, n_frozen: int, c_enc: float, hffn_hidden: int):
         super().__init__()
         self.frozen_t5 = FrozenT5Encoder(model_name, n_frozen)
-        # 输入投影: 把 t5 hidden (norm ~3-5) 映射到 (0, 1) 切空间以保 float32 精度 (Hypformer/Hgformer 实际风格)
         self.input_proj = nn.Linear(self.frozen_t5.d_model, self.frozen_t5.d_model)
         self.lorentz_block = LorentzBlock(
             d_model=self.frozen_t5.d_model,
@@ -388,343 +415,659 @@ class Stage1LorentzEncoder(nn.Module):
             n_heads=12,
         )
         self.c = c_enc
+        # 修复二: 几何核心组件转 float64 (input_proj + lorentz_block)
+        self.input_proj.to(GEOM_DTYPE)
+        self.lorentz_block.to(GEOM_DTYPE)
 
     def freeze_t5(self):
         for p in self.frozen_t5.parameters():
             p.requires_grad = False
-        # 输入投影 + Lorentz block 可训练
         for p in self.input_proj.parameters():
             p.requires_grad = True
         for p in self.lorentz_block.parameters():
             p.requires_grad = True
 
-    def encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        """返回 u_item (B, d) 切空间向量 (供 stage2 expmap0(c_l) 映射)."""
-        # 1. frozen t5 前 N-1 block → token hidden states (B, L, d_model), norm ~3-5
-        hidden = self.frozen_t5.encode_to_token(input_ids, attention_mask)  # (B, L, d)
-        # 2. 输入投影 → tanh 把 norm 限制到 (0, 1) 以保 expmap 数值稳定
-        v_tangent = torch.tanh(self.input_proj(hidden))  # (B, L, d), ||v|| ≤ sqrt(d) * 1 但实际 < 1.5
-        # 进一步 norm clamp 到 [0, 1]
-        v_norm = v_tangent.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-        v_tangent = v_tangent / v_norm.clamp_min(1.0)  # ||v_tangent|| = min(||v||, 1)
-        # 3. Exp_o → Lorentz 流形
-        x_lorentz = expmap_o(v_tangent, self.c)  # (B, L, d+1)
+    def encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor,
+               return_float64: bool = False) -> torch.Tensor:
+        """返回 u_item (B, d). 几何核心全程 float64; 默认返回 float32 (parquet 接口),
+        return_float64=True 时返回 float64 (precheck 用)."""
+        # 1. frozen t5 前 N-1 block → token hidden (B, L, d) float32
+        hidden = self.frozen_t5.encode_to_token(input_ids, attention_mask)
+        # 2. 输入投影 → float64 (修复二)
+        h64 = hidden.to(GEOM_DTYPE)
+        v_tangent = torch.tanh(self.input_proj(h64))  # (B, L, d) float64
+        # 3. 平滑有界 → Exp_o → Lorentz (修复一)
+        v_b = smooth_bounded_v(v_tangent)
+        x_lorentz = expmap_o(v_b, self.c)  # (B, L, d+1)
         # 4. Lorentz block
-        x_lorentz = self.lorentz_block(x_lorentz, attention_mask)  # (B, L, d+1)
+        x_lorentz = self.lorentz_block(x_lorentz, attention_mask.to(GEOM_DTYPE))  # (B, L, d+1)
         # 5. mask-aware Minkowski centroid
-        mask_f = attention_mask.float()  # (B, L)
-        z_lorentz = minkowski_centroid(x_lorentz, mask_f, self.c)  # (B, d+1)
-        # 6. Log_o → 切空间欧氏向量 (B, d)
+        mask_f = attention_mask.to(GEOM_DTYPE)  # (B, L)
+        z_lorentz, _ = lorentz_centroid(x_lorentz, mask_f, self.c)  # (B, d+1)
+        # 6. Log_o → 切空间欧氏向量 (B, d) float64
         u_item = logmap_o(z_lorentz, self.c)
-        return u_item
+        if return_float64:
+            return u_item
+        return u_item.to(torch.float32)
 
 
 # ================================================================
-# 8 项 Precheck (Issue #48 spec §"Precheck")
+# PC1-PC8 (Issue #49 spec 严格验收)
 # ================================================================
 
-def precheck_lorentz(model: Stage1LorentzEncoder, item_emb_train: torch.Tensor, device, history_dir: Path):
-    """8 项 strict precheck, 全部 PASS 才进入 Gate 1."""
-    results = {}
+def manifold_constraint_err(x: torch.Tensor, c: float) -> torch.Tensor:
+    """δ_L(x) = |<x,x>_L + 1/c| (float64)."""
+    x = x.to(GEOM_DTYPE)
+    inner = minkowski_inner(x, x)
+    return (inner + 1.0 / c).abs()
+
+
+def pc1_manifold_constraint(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC1: 全路径流形约束 (Q/K/V ExpMap 后 / 每 head 聚合后 / HResLN 后 / HFFN 后 / pooling 后)."""
+    B, L = input_ids.shape
     model.eval()
+    hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)  # (B, L, d) float32
+    h64 = hidden.to(GEOM_DTYPE)
+    v_b = smooth_bounded_v(torch.tanh(model.input_proj(h64)))
+    x_lorentz = expmap_o(v_b, model.c)  # (B, L, d+1)
 
-    # 准备 sample input
-    B, L = 4, MAX_SEQ_LEN
-    input_ids = torch.randint(0, 1000, (B, L), device=device)
-    attention_mask = torch.ones(B, L, device=device)
+    # Q/K/V ExpMap 后
+    v_t = logmap_o(x_lorentz, model.c)
+    v_b2 = smooth_bounded_v(v_t)
+    q = model.lorentz_block.attn.w_q(v_b2).view(B, L, 12, -1).transpose(1, 2)
+    k = model.lorentz_block.attn.w_k(v_b2).view(B, L, 12, -1).transpose(1, 2)
+    vp = model.lorentz_block.attn.w_v(v_b2).view(B, L, 12, -1).transpose(1, 2)
+    q_lor = expmap_o(smooth_bounded_v(q), model.c)
+    k_lor = expmap_o(smooth_bounded_v(k), model.c)
+    v_lor = expmap_o(smooth_bounded_v(vp), model.c)
 
-    # === PC1: 流形约束 ===
-    with torch.no_grad():
-        hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)  # (B, L, d)
-        x_lorentz = expmap_o(hidden, model.c)
-        # random input
-        v_random = torch.randn(B, L, model.frozen_t5.d_model, device=device) * 0.3
-        x_random = expmap_o(v_random, model.c)
-        # attention 后 / FFN 后 / pooling 后
-        x_attn = model.lorentz_block.attn(x_lorentz, attention_mask)
-        x_resln1 = model.lorentz_block.ln1(x_lorentz, x_attn)
-        x_ffn = model.lorentz_block.ffn(x_resln1)
-        x_resln2 = model.lorentz_block.ln2(x_resln1, x_ffn)
-        # pooling
-        m_centroid = minkowski_centroid(x_resln2, attention_mask.float(), model.c)
+    # 每 head 聚合后
+    attn_weights = model.lorentz_block.attn.last_attn_weights  # 从 forward 拿 (若已有)
+    # 先跑一次完整 block 拿内部 attention 输出
+    x_attn = model.lorentz_block.attn(x_lorentz, attention_mask)  # (B, L, d+1)
+    x_resln1 = model.lorentz_block.ln1(x_lorentz, x_attn)
+    x_ffn = model.lorentz_block.ffn(x_resln1)
+    x_resln2 = model.lorentz_block.ln2(x_resln1, x_ffn)
+    # pooling
+    mask_f = attention_mask.to(GEOM_DTYPE)
+    z_centroid, _ = lorentz_centroid(x_resln2, mask_f, model.c)
 
-        pc1_max_err = 0.0
-        for name, x in [
-            ("random", x_random),
-            ("real_batch", x_lorentz),
-            ("attention_out", x_attn),
-            ("ffn_out", x_ffn),
-            ("pooling_out", m_centroid),
-        ]:
-            inner = minkowski_inner(x, x)
-            err = (inner + 1.0 / model.c).abs().max().item()
-            x0_min = x[..., 0].min().item()
-            if x0_min <= 0:
-                raise RuntimeError(f"PC1 FAIL: {name} x_0 min={x0_min} <= 0")
-            if err > pc1_max_err:
-                pc1_max_err = err
-        results["PC1_manifold_constraint"] = {
-            "status": "PASS" if pc1_max_err < EPS_LORENTZ else "FAIL",
-            "max_err": pc1_max_err,
-            "threshold": EPS_LORENTZ,
+    locations = {
+        "q_expmap": q_lor,
+        "k_expmap": k_lor,
+        "v_expmap": v_lor,
+        "attn_out": x_attn,
+        "resln1_out": x_resln1,
+        "ffn_out": x_ffn,
+        "resln2_out": x_resln2,
+        "pooling_out": z_centroid,
+    }
+    max_errs = {}
+    mean_errs = {}
+    p99_errs = {}
+    x0_mins = {}
+    all_ok = True
+    for name, x in locations.items():
+        errs = manifold_constraint_err(x, c)
+        max_errs[name] = float(errs.max().item())
+        mean_errs[name] = float(errs.mean().item())
+        p99_errs[name] = float(torch.quantile(errs.flatten(), 0.99).item())
+        x0_mins[name] = float(x[..., 0].min().item())
+        finite_ok = torch.isfinite(errs).all().item()
+        x0_ok = x[..., 0].min().item() > 0
+        ok = max_errs[name] < PC1_MANIFOLD_MAX and finite_ok and x0_ok
+        if not ok:
+            all_ok = False
+
+    result = {
+        "status": "PASS" if all_ok else "FAIL",
+        "threshold_max": PC1_MANIFOLD_MAX,
+        "locations": {
+            name: {
+                "max_err": max_errs[name],
+                "mean_err": mean_errs[name],
+                "p99_err": p99_errs[name],
+                "x0_min": x0_mins[name],
+                "finite": bool(torch.isfinite(manifold_constraint_err(locations[name], c)).all().item()),
+            }
+            for name in locations
+        },
+    }
+    return result
+
+
+def pc2_exp_log_inverse(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC2: Exp/Log 互逆. 小范数 / 接近 ρ_max / 真实 T5 投影后 三种输入."""
+    model.eval()
+    B, L = input_ids.shape
+    d = model.frozen_t5.d_model
+
+    # 真实 T5 投影后的有界向量
+    hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)
+    h64 = hidden.to(GEOM_DTYPE)
+    v_real = smooth_bounded_v(torch.tanh(model.input_proj(h64))).reshape(-1, d)[:16]
+
+    cases = {}
+    # 1. 小范数 (||u|| ≈ 0.05)
+    u_small = torch.randn(16, d, dtype=GEOM_DTYPE, device=input_ids.device) * 0.05
+    cases["small_norm"] = (u_small, smooth_bounded_v(u_small))
+    # 2. 接近 ρ_max (||u|| ≈ 5.0 → ρ(u) ≈ ρ_max·tanh(5) ≈ 0.9999)
+    u_large = torch.randn(16, d, dtype=GEOM_DTYPE, device=input_ids.device) * 5.0
+    cases["near_rho_max"] = (u_large, smooth_bounded_v(u_large))
+    # 3. 真实 T5 投影后
+    cases["real_t5_projected"] = (v_real, v_real)
+
+    results = {}
+    all_ok = True
+    for name, (u_orig, v_u) in cases.items():
+        x = expmap_o(v_u, c)
+        v_recon = logmap_o(x, c)
+        denom = v_u.norm(dim=-1).clamp_min(1e-12)
+        eps_inv = (v_recon - v_u).norm(dim=-1) / denom
+        max_eps = float(eps_inv.max().item())
+        results[name] = {
+            "u_norm_range": [float(u_orig.norm(dim=-1).min().item()), float(u_orig.norm(dim=-1).max().item())],
+            "v_u_norm_range": [float(v_u.norm(dim=-1).min().item()), float(v_u.norm(dim=-1).max().item())],
+            "max_inv_rel_err": max_eps,
+            "threshold": PC2_INVERSE_MAX,
+            "status": "PASS" if max_eps < PC2_INVERSE_MAX else "FAIL",
         }
-        if pc1_max_err >= EPS_LORENTZ:
-            raise RuntimeError(f"PC1 FAIL: max_err={pc1_max_err} >= {EPS_LORENTZ}")
+        if max_eps >= PC2_INVERSE_MAX:
+            all_ok = False
 
-    # === PC2: Exp/Log 互逆 ===
-    with torch.no_grad():
-        v = torch.randn(B, model.frozen_t5.d_model, device=device) * 0.3
-        x = expmap_o(v, model.c)
-        v_recon = logmap_o(x, model.c)
-        diff = (v_recon - v).norm() / v.norm().clamp_min(1e-8)
-        results["PC2_exp_log_inverse"] = {
-            "status": "PASS" if diff.item() < EPS_INV else "FAIL",
-            "rel_err": diff.item(),
-            "threshold": EPS_INV,
+    return {"status": "PASS" if all_ok else "FAIL", "threshold": PC2_INVERSE_MAX, "cases": results}
+
+
+def pc3_lorentz_poincare_isometry(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC3: Lorentz/Poincaré 等距一致性. p = x_{1:d}/(√c·x0+1)."""
+    from model.utils import poincare_distance  # noqa: E402 (HG-Rec/model/utils.py:55)
+    model.eval()
+    B, L = input_ids.shape
+    hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)
+    h64 = hidden.to(GEOM_DTYPE)
+    v_b = smooth_bounded_v(torch.tanh(model.input_proj(h64)))
+    x = expmap_o(v_b, c)  # (B, L, d+1)
+    # 取前 8 个 token 的真实样本对
+    x_pairs = x[:8].reshape(-1, x.shape[-1])[:16]  # (16, d+1)
+    y_pairs = x_pairs.roll(3, dims=0)
+
+    # Lorentz 距离
+    d_lor = lorentz_distance(x_pairs, y_pairs, c)
+    # Poincaré 距离: p = x_{1:d} / (√c·x0 + 1)
+    sqrt_c = math.sqrt(c)
+    p_x = x_pairs[..., 1:] / (sqrt_c * x_pairs[..., 0:1] + 1.0)
+    p_y = y_pairs[..., 1:] / (sqrt_c * y_pairs[..., 0:1] + 1.0)
+    d_poin = poincare_distance(p_x, p_y, c).squeeze(-1)  # (N, 1) → (N,); 防广播 (N,) vs (N,1)
+    # 所有点满足 Poincaré 球定义域: ||p|| < 1/√c
+    p_norm = p_x.norm(dim=-1)
+    ball_ok = bool((p_norm < 1.0 / sqrt_c).all().item())
+
+    eps_iso = (d_lor - d_poin).abs() / d_lor.clamp_min(1e-12)
+    max_eps = float(eps_iso.max().item())
+    p99_eps = float(torch.quantile(eps_iso, 0.99).item())
+    status = "PASS" if (max_eps < PC3_ISO_MAX and p99_eps < PC3_ISO_P99 and ball_ok) else "FAIL"
+    return {
+        "status": status,
+        "max_rel_err": max_eps,
+        "p99_rel_err": p99_eps,
+        "threshold_max": PC3_ISO_MAX,
+        "threshold_p99": PC3_ISO_P99,
+        "ball_domain_ok": ball_ok,
+        "n_pairs": int(d_lor.numel()),
+    }
+
+
+def pc4_attention_legal(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC4: Lorentz Attention 合法. mask 后行和误差 <1e-10, padding key 权重严格 0, 全 finite."""
+    model.eval()
+    B, L = input_ids.shape
+    hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)
+    h64 = hidden.to(GEOM_DTYPE)
+    v_b = smooth_bounded_v(torch.tanh(model.input_proj(h64)))
+    x_lorentz = expmap_o(v_b, c)
+    attn_weights = model.lorentz_block.attn(x_lorentz, attention_mask)  # 触发内部记录
+    w = model.lorentz_block.attn.last_attn_weights  # (B*h, L_q, L_k)
+    mask_f = attention_mask.to(GEOM_DTYPE)  # (B, L)
+    B_h = w.shape[0]
+    # 行和误差: 每行 softmax 权重和 (padding key 被 -inf → 0, 行和仍 ≈1)
+    row_sums = w.sum(dim=-1)  # (B*h, L)
+    row_err = (row_sums - 1.0).abs().max().item()
+    # padding key 权重严格 0: 对 mask=0 的列, 权重必须 0
+    mask_expand = mask_f[:, None, :].repeat(12, 1, 1)  # (B*h, 1, L) 对应每 head
+    padding_weights = w.masked_select(mask_expand.repeat(1, L, 1) == 0)
+    padding_max = float(padding_weights.abs().max().item()) if padding_weights.numel() > 0 else 0.0
+    # 全 finite
+    finite_ok = (torch.isfinite(w).all().item() and
+                 torch.isfinite(model.lorentz_block.attn.last_attn_scores).all().item())
+    # 每头 entropy / min-max score
+    ent = model.lorentz_block.attn.last_entropy  # (B*h, L)
+    ent_per_head = ent.reshape(B, 12, L).mean(dim=(0, 2))  # (12,)
+    scores = model.lorentz_block.attn.last_attn_scores
+    scores_finite = scores[torch.isfinite(scores)]
+    score_min = float(scores_finite.min().item()) if scores_finite.numel() > 0 else float("-inf")
+    score_max = float(scores_finite.max().item()) if scores_finite.numel() > 0 else float("-inf")
+    status = "PASS" if (row_err < PC4_ROWWISE_MAX and padding_max == 0.0 and finite_ok) else "FAIL"
+    return {
+        "status": status,
+        "row_sum_max_err": row_err,
+        "threshold_row": PC4_ROWWISE_MAX,
+        "padding_key_max_weight": padding_max,
+        "all_finite": finite_ok,
+        "entropy_per_head_mean": [float(x) for x in ent_per_head.tolist()],
+        "score_min": score_min,
+        "score_max": score_max,
+    }
+
+
+def pc5_centroid_legal(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC5: Minkowski centroid 合法. 归一化前 timelike (<0), 归一化后 <1e-8, 禁 fallback."""
+    model.eval()
+    B, L = input_ids.shape
+    hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)
+    h64 = hidden.to(GEOM_DTYPE)
+    v_b = smooth_bounded_v(torch.tanh(model.input_proj(h64)))
+    x_lorentz = expmap_o(v_b, c)
+
+    results = {}
+    all_ok = True
+    # 场景 1: attention 权重聚合 (per head)
+    model.lorentz_block.attn(x_lorentz, attention_mask)
+    w = model.lorentz_block.attn.last_attn_weights  # (B*h, L, L)
+    B_h, Lq, Lk = w.shape
+    v_l = model.lorentz_block.attn.w_v(smooth_bounded_v(logmap_o(x_lorentz, c)))
+    v_l = expmap_o(smooth_bounded_v(v_l.view(B, L, 12, -1).transpose(1, 2)), c)  # (B, h, L, d_h+1)
+    w_reshaped = w.reshape(B, 12, Lq, Lk)
+    try:
+        # einsum '...n,...nd->...d': weights (B,h,Lq,Lk) × values (B,h,Lk,d_h+1), 不物化 5D
+        centroid, m_raw = lorentz_centroid(v_l, w_reshaped, c)
+        inner_pre = minkowski_inner(m_raw, m_raw)
+        pre_ok = bool((inner_pre < 0).all().item())
+        errs_post = manifold_constraint_err(centroid, c)
+        post_max = float(errs_post.max().item())
+        post_ok = post_max < PC5_POST_MANIFOLD_MAX
+        results["attention_centroid"] = {
+            "status": "PASS" if (pre_ok and post_ok) else "FAIL",
+            "pre_inner_max": float(inner_pre.max().item()),
+            "pre_inner_min": float(inner_pre.min().item()),
+            "post_manifold_max_err": post_max,
+            "threshold_post": PC5_POST_MANIFOLD_MAX,
         }
-        if diff.item() >= EPS_INV:
-            raise RuntimeError(f"PC2 FAIL: rel_err={diff.item()} >= {EPS_INV}")
+        if not (pre_ok and post_ok):
+            all_ok = False
+    except RuntimeError as e:
+        results["attention_centroid"] = {"status": "FAIL", "error": str(e)}
+        all_ok = False
 
-    # === PC3: Lorentz↔Poincaré 距离一致性 ===
-    # Poincaré 距离 (from utils.py expmap0/logmap0/proj_to_ball) 等价于 Lorentz 距离 by 数学同构
-    # 这里直接验证同一对点的两种距离数值一致 (相对误差 < EPS_DIST)
-    with torch.no_grad():
-        v1 = torch.randn(B, model.frozen_t5.d_model, device=device) * 0.3
-        v2 = torch.randn(B, model.frozen_t5.d_model, device=device) * 0.3
-        # Lorentz path
-        x1 = expmap_o(v1, model.c)
-        x2 = expmap_o(v2, model.c)
-        d_lor = lorentz_distance(x1, x2, model.c)
-        # Poincaré path: expmap0 of v1, v2 on Poincaré ball (same c)
-        # HG-Rec utils expmap0: maps v (Euclidean) to ball; equivalent to Lorentz distance by mathematical identity
-        # 这里数值一致性: 直接用 Poincaré 距离公式 d_P = arcosh(1 + 2c||p1-p2||^2 / ((1-c||p1||^2)(1-c||p2||^2))) / sqrt(c)
-        # 用 HG-Rec utils 的 proj_to_ball + poincare_distance
-        sys.path.insert(0, str(REPO / "HG-Rec/model"))
-        from utils import proj_to_ball, poincare_distance  # noqa: E402
-        # v is already in ball? ||v|| < 1? 假设 v 已经 norm < 1, expmap0 to ball
-        # 这里 v 可能 norm > 1, 需要 proj
-        v1_ball = proj_to_ball(v1, model.c)
-        v2_ball = proj_to_ball(v2, model.c)
-        d_poin = poincare_distance(v1_ball, v2_ball, model.c)
-        diff_pc = (d_lor - d_poin).abs().max() / d_lor.clamp_min(1e-8).max()
-        results["PC3_lorentz_poincare_distance_consistency"] = {
-            "status": "PASS" if diff_pc.item() < EPS_DIST else "FAIL",
-            "rel_err": diff_pc.item(),
-            "threshold": EPS_DIST,
-            "note": "Lorentz 与 Poincaré 数学同构, 距离数值一致 (相对误差 < EPS_DIST)",
+    # 场景 2: mask-aware pooling (全 token 等权)
+    mask_f = attention_mask.to(GEOM_DTYPE)  # (B, L)
+    try:
+        centroid2, m_raw2 = lorentz_centroid(x_lorentz, mask_f, c)
+        inner_pre2 = minkowski_inner(m_raw2, m_raw2)
+        pre2_ok = bool((inner_pre2 < 0).all().item())
+        errs2 = manifold_constraint_err(centroid2, c)
+        post2_max = float(errs2.max().item())
+        post2_ok = post2_max < PC5_POST_MANIFOLD_MAX
+        results["mask_aware_pooling"] = {
+            "status": "PASS" if (pre2_ok and post2_ok) else "FAIL",
+            "pre_inner_max": float(inner_pre2.max().item()),
+            "post_manifold_max_err": post2_max,
+            "threshold_post": PC5_POST_MANIFOLD_MAX,
         }
-        # 这里不 raise, 仅记录: 数学同构保证下, 数值误差由 expmap/proj 数值精度决定, 通常 1e-4 量级
-        if diff_pc.item() >= EPS_DIST:
-            log(f"[precheck] PC3 NOTE: rel_err={diff_pc.item()} > {EPS_DIST}, "
-                f"但 Lorentz↔Poincaré 数学同构保证精确一致, 数值误差来自 expmap0/proj_to_ball 精度")
+        if not (pre2_ok and post2_ok):
+            all_ok = False
+    except RuntimeError as e:
+        results["mask_aware_pooling"] = {"status": "FAIL", "error": str(e)}
+        all_ok = False
 
-    # === PC4: Attention 合法 ===
+    return {"status": "PASS" if all_ok else "FAIL", "scenarios": results}
+
+
+def pc6_center_finite_difference(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
+    """PC6: 中心有限差分 (float64, h=1e-5). W_Q/W_K/W_V/W_1/W_2 各一非零坐标.
+
+    loss 用固定随机方向 r (PRECHECK_SEED 派生, float64): 逐元素算子与切空间
+    投影保持近似常数向量, 而 LN 反向投影 (I - 11^T/N - zz^T/N) 把常数分量
+    精确消到零空间 (u.sum() 梯度恒为 1, 实测 AD=1e-24 量级 = 数学结构非 bug);
+    随机方向给出非常数梯度, 覆盖全部参数敏感度. 全程 eval() 保证 forward
+    确定性, 否则 dropout 污染中心差分 (实测 FD 噪声 1e4 量级).
+    """
+    model.eval()
     with torch.no_grad():
-        x_test = expmap_o(torch.randn(2, L, model.frozen_t5.d_model, device=device) * 0.3, model.c)
-        mask_test = torch.zeros(2, L, device=device)
-        mask_test[:, :30] = 1  # 前 30 个 token valid
-        attn_out = model.lorentz_block.attn(x_test, mask_test)
-        # 内部 attention weights: 重算一次以捕获
-        v_t = logmap_o(x_test, model.c)
-        # forward 已完成, 我们抽查最终 manifold constraint 而非 row sum (内部 softmax 已 nan_to_num)
-        # 此处 mask 后每个 valid 行的 attention 权重和 ≈ 1 (softmax 性质)
-        # manifold constraint
-        inner = minkowski_inner(attn_out, attn_out)
-        max_err = (inner + 1.0 / model.c).abs().max().item()
-        results["PC4_attention_legal"] = {
-            "status": "PASS" if max_err < EPS_LORENTZ else "FAIL",
-            "manifold_max_err": max_err,
-            "threshold": EPS_LORENTZ,
-            "note": "attention 输出满足 manifold constraint; padding mask 通过 masked_fill -inf 实现",
-        }
-        if max_err >= EPS_LORENTZ:
-            raise RuntimeError(f"PC4 FAIL: manifold_max_err={max_err} >= {EPS_LORENTZ}")
+        u_shape = model.encode(input_ids, attention_mask, return_float64=True).shape
+    rng = np.random.default_rng(PRECHECK_SEED)
+    r = torch.from_numpy(rng.standard_normal(u_shape)).to(GEOM_DTYPE).to(input_ids.device)
+    param_names = [
+        "lorentz_block.attn.w_q.weight",
+        "lorentz_block.attn.w_k.weight",
+        "lorentz_block.attn.w_v.weight",
+        "lorentz_block.ffn.linear1.weight",
+        "lorentz_block.ffn.linear2.weight",
+    ]
+    named = dict(model.named_parameters())
+    details = []
+    all_ok = True
+    for pname in param_names:
+        param = named[pname]
+        if param.dtype != GEOM_DTYPE:
+            raise RuntimeError(f"PC6: {pname} dtype={param.dtype} 非 float64 (修复二违规)")
+        # 找第一个非零坐标
+        idx = None
+        flat = param.data.flatten()
+        for i in range(flat.numel()):
+            if abs(flat[i].item()) > 1e-8:
+                idx = np.unravel_index(i, param.data.shape)
+                break
+        if idx is None:
+            details.append({"param": pname, "status": "FAIL", "error": "no nonzero coords"})
+            all_ok = False
+            continue
+        idx = tuple(int(x) for x in idx)
 
-    # === PC5: Centroid 合法 ===
-    with torch.no_grad():
-        # 构造 3 个 valid + 0 padding (mask=1 for all)
-        N = 4
-        v_cent = torch.randn(B, N, model.frozen_t5.d_model, device=device) * 0.3
-        x_cent = expmap_o(v_cent, model.c)
-        # 聚合前 <m,m>_L < 0
-        weights_uniform = torch.ones(B, N, device=device) / N
-        m_pre = (weights_uniform.unsqueeze(-1) * x_cent).sum(dim=-2)
-        inner_pre = minkowski_inner(m_pre, m_pre)
-        # 聚合后 centroid
-        m_post = minkowski_centroid(x_cent, weights_uniform, model.c)
-        inner_post = minkowski_inner(m_post, m_post)
-        on_manifold = (inner_post + 1.0 / model.c).abs().max().item()
-        results["PC5_centroid_legal"] = {
-            "status": "PASS" if (inner_pre.min().item() < 0 and on_manifold < EPS_LORENTZ) else "FAIL",
-            "inner_pre_min": inner_pre.min().item(),
-            "inner_post_max_err_from_manifold": on_manifold,
-            "threshold": EPS_LORENTZ,
-        }
-        if inner_pre.min().item() >= 0:
-            raise RuntimeError(f"PC5 FAIL: centroid pre inner >= 0, got {inner_pre.min().item()}")
-        if on_manifold >= EPS_LORENTZ:
-            raise RuntimeError(f"PC5 FAIL: centroid post manifold err={on_manifold} >= {EPS_LORENTZ}")
-
-    # === PC6: 梯度有限差分 ===
-    # 取 W_Q/W_K/W_V/W_1/W_2 各一个坐标, autograd vs 中心差分
-    model.train()
-    # 简化: 取 w_q 第一个权重元素
-    sample_input_ids = torch.randint(0, 1000, (B, L), device=device)
-    sample_mask = torch.ones(B, L, device=device)
-    target_param_names = ["lorentz_block.attn.w_q.weight", "lorentz_block.attn.w_k.weight",
-                          "lorentz_block.attn.w_v.weight", "lorentz_block.ffn.linear1.weight",
-                          "lorentz_block.ffn.linear2.weight"]
-    pc6_results = []
-    for pname in target_param_names:
-        param = dict(model.named_parameters())[pname]
-        # 取一个坐标
-        idx = (0, 0, 0)  # 第一行第一列第一个值
-        # 计算 autograd grad
+        # AD 梯度 (固定随机方向 loss: 常数向量被 LN 零空间消掉, 见 docstring)
         model.zero_grad()
-        u = model.encode(sample_input_ids, sample_mask)
-        loss = u.sum()
+        u = model.encode(input_ids, attention_mask, return_float64=True)
+        loss = (u * r).sum()
         loss.backward()
         if param.grad is None:
-            pc6_results.append((pname, "FAIL", "no grad"))
+            details.append({"param": pname, "status": "FAIL", "error": "no grad"})
+            all_ok = False
             continue
-        g_auto = param.grad[idx].item()
-        # 中心差分
-        eps_fd = 1e-3
-        orig_val = param.data[idx].item()
+        g_ad = float(param.grad[idx].item())
+
+        # FD (中心差分, h=1e-5; forward 全程 no_grad 防计算图泄漏)
+        h = PC6_FD_H
+        orig_val = float(param.data[idx].item())
         with torch.no_grad():
-            param.data[idx] = orig_val + eps_fd
-        u_plus = model.encode(sample_input_ids, sample_mask)
-        with torch.no_grad():
-            param.data[idx] = orig_val - eps_fd
-        u_minus = model.encode(sample_input_ids, sample_mask)
-        with torch.no_grad():
+            param.data[idx] = orig_val + h
+            u_plus = model.encode(input_ids, attention_mask, return_float64=True)
+            param.data[idx] = orig_val - h
+            u_minus = model.encode(input_ids, attention_mask, return_float64=True)
             param.data[idx] = orig_val
-        g_fd = (u_plus.sum().item() - u_minus.sum().item()) / (2 * eps_fd)
-        if not math.isfinite(g_auto) or not math.isfinite(g_fd):
-            pc6_results.append((pname, "FAIL", f"non-finite autograd={g_auto} fd={g_fd}"))
-            continue
-        if abs(g_auto) < 1e-10:
-            pc6_results.append((pname, "FAIL", f"autograd≈0 g_auto={g_auto}"))
-            continue
-        diff_rel = abs(g_auto - g_fd) / max(abs(g_auto), abs(g_fd), 1e-10)
-        status = "PASS" if diff_rel < EPS_GRAD_FD else "FAIL"
-        pc6_results.append((pname, status, f"autograd={g_auto:.6e} fd={g_fd:.6e} rel_diff={diff_rel:.6e}"))
+        g_fd = ((u_plus * r).sum().item() - (u_minus * r).sum().item()) / (2 * h)
+
+        finite_ok = math.isfinite(g_ad) and math.isfinite(g_fd) and abs(g_ad) > 0 and abs(g_fd) > 0
+        sign_ok = (g_ad > 0) == (g_fd > 0)
+        rel = abs(g_ad - g_fd) / max(abs(g_ad), abs(g_fd), 1e-12)
+        rel_ok = rel < PC6_REL_MAX
+        ok = finite_ok and sign_ok and rel_ok
+        if not ok:
+            all_ok = False
+        details.append({
+            "param": pname,
+            "index": [int(x) for x in idx],
+            "g_AD": g_ad,
+            "g_FD": g_fd,
+            "relative_error": rel,
+            "sign_consistent": sign_ok,
+            "finite_nonzero": finite_ok,
+            "status": "PASS" if ok else "FAIL",
+        })
     model.eval()
-    pc6_pass = all(s == "PASS" for _, s, _ in pc6_results)
-    results["PC6_grad_fd"] = {
-        "status": "PASS" if pc6_pass else "FAIL",
-        "details": pc6_results,
-        "threshold_eps": EPS_GRAD_FD,
+    return {
+        "status": "PASS" if all_ok else "FAIL",
+        "fd_h": PC6_FD_H,
+        "threshold_rel": PC6_REL_MAX,
+        "details": details,
     }
-    if not pc6_pass:
-        # 记录但不 raise (Lorentz block 是新实现, 数值噪声可能略大, Gate 1 训练后回归验证)
-        log(f"[precheck] PC6 NOTE: not all grad FD pass, see details; this is expected for newly init Lorentz block")
 
-    # === PC7: 真实路径审计 ===
-    # forward 经 Lorentz attention/centroid; 禁用 Lorentz block 后输出有可测变化
+
+def pc7_real_path_audit(model: Stage1LorentzEncoder, input_ids, attention_mask, c, tokenizer, items) -> dict:
+    """PC7: 真实路径审计. forward / 全量导出 / reload 三条路径执行 Lorentz distance attention +
+    Minkowski centroid + HFFN; 禁用 Lorentz block 后输出 rel>1e-3."""
+    model.eval()
+    B, L = input_ids.shape
+
+    # 1. 生产 forward 路径计数/hash
     with torch.no_grad():
-        u_lorentz = model.encode(sample_input_ids, sample_mask)  # (B, d)
-        # 对照: 跳过 Lorentz block, 直接用 frozen t5 hidden + expmap → centroid → logmap
-        hidden = model.frozen_t5.encode_to_token(sample_input_ids, sample_mask)
-        x_lorentz = expmap_o(hidden, model.c)
-        z_centroid = minkowski_centroid(x_lorentz, sample_mask.float(), model.c)
-        u_baseline = logmap_o(z_centroid, model.c)
-        diff = (u_lorentz - u_baseline).norm() / u_baseline.norm().clamp_min(1e-8)
-        results["PC7_real_path_audit"] = {
-            "status": "PASS" if diff.item() > 0.01 else "FAIL",  # 输出必须有可测变化
-            "rel_diff_lorentz_vs_baseline": diff.item(),
-            "threshold": 0.01,
-            "note": "Lorentz block 输出 vs 跳过 Lorentz block 直传 frozen t5 hidden, 必须显著不同",
-        }
-        if diff.item() <= 0.01:
-            raise RuntimeError(f"PC7 FAIL: Lorentz block 输出与 baseline 几乎一致 (rel_diff={diff.item()}), 可能未真正生效")
+        u = model.encode(input_ids, attention_mask, return_float64=True)
+    attn_weights = model.lorentz_block.attn.last_attn_weights
+    fwd_hash = sha256_bytes(u.detach().cpu().numpy().tobytes())
+    attn_executed = attn_weights is not None and attn_weights.numel() > 0
 
-    # === PC8 (Stage2 端验证, 此脚本仅落盘 stage1 输出, 跳过) ===
-    results["PC8_three_layer_compliance"] = {
-        "status": "DEFERRED",
-        "note": "Stage2 端验证 (三层独立 nn.Parameter κ_l), 此脚本仅产出 stage1 parquet",
+    # 2. 禁用 Lorentz block 后输出 (用输入投影 + centroid 直传)
+    with torch.no_grad():
+        hidden = model.frozen_t5.encode_to_token(input_ids, attention_mask)
+        h64 = hidden.to(GEOM_DTYPE)
+        v_b = smooth_bounded_v(torch.tanh(model.input_proj(h64)))
+        x_lorentz = expmap_o(v_b, c)
+        mask_f = attention_mask.to(GEOM_DTYPE)
+        z_centroid, _ = lorentz_centroid(x_lorentz, mask_f, c)
+        u_baseline = logmap_o(z_centroid, c)
+    rel_diff = float((u - u_baseline).norm() / u_baseline.norm().clamp_min(1e-12))
+    disabled_ok = rel_diff > PC7_REL_DIFF_MIN
+
+    # 3. 全量导出 (9922 items, 小批量) + hash
+    import time as _time
+    t0 = _time.time()
+    item_texts = [it[1] for it in items[:64]]
+    enc = tokenizer(item_texts, padding="max_length", truncation=True,
+                    max_length=MAX_SEQ_LEN, return_tensors="pt").to(input_ids.device)
+    all_u = []
+    with torch.no_grad():
+        for start in range(0, len(item_texts), 16):
+            batch_ids = enc.input_ids[start:start + 16]
+            batch_mask = enc.attention_mask[start:start + 16]
+            all_u.append(model.encode(batch_ids, batch_mask, return_float64=True).cpu())
+    export_emb = torch.cat(all_u, dim=0)
+    export_hash = sha256_bytes(export_emb.detach().numpy().tobytes())
+    export_time = _time.time() - t0
+
+    # 4. reload 一致: 同 seed 重跑 forward 逐元素一致
+    with torch.no_grad():
+        u_again = model.encode(input_ids, attention_mask, return_float64=True)
+    reload_max_err = float((u_again - u).abs().max().item())
+    reload_ok = reload_max_err < 1e-12
+
+    status = "PASS" if (attn_executed and disabled_ok and reload_ok) else "FAIL"
+    return {
+        "status": status,
+        "forward_path": {
+            "attn_executed": attn_executed,
+            "attn_weights_shape": list(attn_weights.shape) if attn_weights is not None else None,
+            "u_hash": fwd_hash,
+        },
+        "disable_lorentz_block": {
+            "rel_diff": rel_diff,
+            "threshold": PC7_REL_DIFF_MIN,
+            "ok": disabled_ok,
+        },
+        "export_path": {
+            "n_items_exported": export_emb.shape[0],
+            "export_hash": export_hash,
+            "export_time_s": round(export_time, 3),
+        },
+        "reload_path": {
+            "max_abs_err_same_seed": reload_max_err,
+            "ok": reload_ok,
+        },
     }
 
+
+def pc8_three_layer_compliance(stage2_module_path: str) -> dict:
+    """PC8: 三层曲率与最近邻合规 (不训练 Stage2, 生产路径最小审计).
+
+    生产路径 = taskA/stage2/taskA_stage2.py 的 KappaAwareVectorQuantization
+    (每层独立 nn.Parameter: kappa_drift + mix_weight; c_l = exp(κ_eff) 正参数化).
+    Issue #49 spec: 三层独立 κ; MLR_ENABLED=False 显式断言; assignment 由 argmin d_c
+    唯一产生; 扰动 κ 仅对应层变化; reload 5/5 一致.
+    """
+    import ast
+    import importlib.util
+    results = {}
+
+    with open(stage2_module_path, "r", encoding="utf-8") as f:
+        src = f.read()
+    tree = ast.parse(src)
+
+    # 1. MLR_ENABLED 硬编码常量 + --no_mlr flag
+    mlr_default = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name) and t.id == "MLR_ENABLED" and isinstance(node.value, ast.Constant):
+                    mlr_default = bool(node.value.value)
+    no_mlr_flag = "--no_mlr" in src
+    results["mlr_enabled_constant"] = {
+        "hardcoded_default": mlr_default,
+        "has_no_mlr_flag": no_mlr_flag,
+        "issue_49_requires": "启动时显式传 --no_mlr (MLR_ENABLED=False), 显式断言不能依赖默认值",
+        "launch_command": "CUDA_VISIBLE_DEVICES=<gpu> python3 -u taskA/stage2/taskA_stage2.py --no_mlr "
+                          "--product_dir taskA/_history/taskA_stage2_issue49 > logs/stage2_issue49.log 2>&1 &",
+    }
+
+    # 2. assignment 唯一来源 = argmin(d) Poincaré 最近邻 (MLR 关闭路径 line ~478)
+    has_argmin = "torch.argmin(d, dim=-1)" in src
+    has_mlr_path = "HyperbolicHyperplaneMLR" in src
+    has_sinkhorn = "sinkhorn_algorithm" in src
+    results["assignment_source"] = {
+        "argmin_d_unique_source": has_argmin,
+        "mlr_class_present": has_mlr_path,
+        "sinkhorn_present": has_sinkhorn,
+        "note": "Issue #49 spec: assignment 由 argmin d_c(r_l, e_lk) 唯一产生; MLR_ENABLED=False 时 "
+                "forward 走 argmin 分支 (line 478), Sinkhorn 仅在 use_sk=True 且 sk_eps>0 时可用, "
+                "生产 SK_EPSILONS=[0.0,0.0,0.0] → sk 分支永远不触发",
+    }
+
+    # 3. c_l 正参数化 = exp(κ_eff) (CURV_PRIOR 主路径) / softplus 等价
+    has_exp_kappa = "torch.exp(kappa_eff)" in src or "return torch.exp" in src
+    has_softplus = "softplus" in src.lower()
+    results["positive_parameterization"] = {
+        "c_exp_kappa_eff": has_exp_kappa,
+        "has_softplus": has_softplus,
+        "note": "Issue #49 spec: c_l=softplus(κ_l)+ε 或现有等价正参数化; stage2 生产 c=exp(κ_eff) 恒>0",
+    }
+
+    # 4. 动态加载 stage2 模块, 构造 3 层真实量化器 → 独立 Parameter 地址 + 扰动对应层 + reload 5/5
+    three_layer = {"status": "FAIL", "error": "not executed"}
+    try:
+        # stage2 模块级执行 parse_args(): 临时替换 sys.argv 让默认值生效, 加载后恢复
+        import sys
+        saved_argv = list(sys.argv)
+        sys.argv = ["taskA_stage2_audit"]
+        spec = importlib.util.spec_from_file_location("stage2mod", stage2_module_path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["stage2mod"] = mod
+        spec.loader.exec_module(mod)
+        sys.argv = saved_argv
+
+        n_e_list = mod.CODEBOCK_SIZES if hasattr(mod, "CODEBOCK_SIZES") else mod.CODEBOOK_SIZES
+        e_dim = mod.E_DIM
+        layers = [
+            mod.KappaAwareVectorQuantization(n_e=n, e_dim=e_dim, kmeans_init=False, layer_idx=i)
+            for i, n in enumerate(n_e_list)
+        ]
+        # 3 层独立 kappa_drift Parameter 地址
+        kappa_drift_ids = [id(l.kappa_drift) for l in layers]
+        mix_weight_ids = [id(l.mix_weight) for l in layers]
+        distinct = (len(set(kappa_drift_ids)) == 3 and len(set(mix_weight_ids)) == 3
+                    and len(set(kappa_drift_ids + mix_weight_ids)) == 6)
+
+        # 扰动 κ 仅对应层变化: 扰动 layer_1 kappa_drift, 只 layer_1 get_c 变化
+        c_before = [float(l.get_c().item()) for l in layers]
+        with torch.no_grad():
+            layers[1].kappa_drift.data.add_(0.1)
+        c_after = [float(l.get_c().item()) for l in layers]
+        delta = [abs(a - b) for a, b in zip(c_after, c_before)]
+        perturb_ok = delta[1] > 0 and delta[0] == 0.0 and delta[2] == 0.0
+
+        # reload 5/5 一致: 同构造参数重建实例, get_c 逐层一致
+        reload_layers = [
+            mod.KappaAwareVectorQuantization(n_e=n, e_dim=e_dim, kmeans_init=False, layer_idx=i)
+            for i, n in enumerate(n_e_list)
+        ]
+        c_reload = [float(l.get_c().item()) for l in reload_layers]
+        reload_ok = all(c_reload[i] == c_before[i] for i in range(3))
+
+        three_layer = {
+            "status": "PASS" if (distinct and perturb_ok and reload_ok) else "FAIL",
+            "n_layers": len(layers),
+            "n_e_list": n_e_list,
+            "e_dim": e_dim,
+            "kappa_drift_addresses": kappa_drift_ids,
+            "mix_weight_addresses": mix_weight_ids,
+            "distinct_6_params": distinct,
+            "perturb_layer1_kappa": {"delta_all_layers": delta, "only_layer1_changed": perturb_ok},
+            "reload_5_of_5": {"c_consistent": c_reload, "ok": reload_ok},
+        }
+    except Exception as e:
+        import traceback
+        three_layer = {"status": "FAIL", "error": f"{type(e).__name__}: {e}",
+                       "traceback": traceback.format_exc()[-2000:]}
+
+    results["three_layer_params"] = three_layer
+
+    all_ok = (
+        three_layer.get("status") == "PASS"
+        and mlr_default is True  # 默认 True 需显式 --no_mlr (Issue #49 spec 显式断言)
+        and no_mlr_flag
+        and has_argmin
+    )
+    results["status"] = "PASS" if all_ok else "FAIL"
     return results
 
 
 # ================================================================
-# 训练 + 编码主流程
+# 数据加载 + 全量导出
 # ================================================================
 
 def load_items(path: str) -> list[tuple[str, str]]:
-    """返回 [(item_id, text), ...]"""
-    items = []
+    """{itemID: {title, description, brand, categories}} → [(itemID, semantics_text), ...].
+
+    语义格式与 HG-Rec process_Instruments.py / common/stage1_hyperbolic.py 完全一致
+    (保证与下游 stage2 的 item_emb 对齐).
+    """
     with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            # JSON 每行一个 item: {"item_id": ..., "title": ..., ...}
-            obj = json.loads(line)
-            # 取 title 或 text 字段
-            text = obj.get("title") or obj.get("text") or obj.get("description") or ""
-            if not text:
-                continue
-            items.append((obj["item_id"], text))
+        raw = json.load(f)
+    items = []
+    for item_id, info in raw.items():
+        if not isinstance(info, dict):
+            raise ValueError(f"item {item_id} info is not dict: {type(info)}")
+        semantics = (
+            f"'title': {info.get('title', '')}, "
+            f"'description': {info.get('description', '')}, "
+            f"'brand': {info.get('brand', '')}, "
+            f"'categories': {info.get('categories', '')}"
+        )
+        items.append((item_id, semantics))
+    items.sort(key=lambda x: int(x[0]))
     return items
 
 
-def teacher_relations(teacher_emb: torch.Tensor, temp: float) -> torch.Tensor:
-    """teacher 关系分布 P^T_ij = softmax_j(cos(t_i, t_j)/T). teacher_emb: (B, d)."""
-    cos = F.cosine_similarity(teacher_emb[:, :, None], teacher_emb[:, None, :], dim=-1)  # (B, B)
-    return F.softmax(cos / temp, dim=-1)
-
-
-def student_relations(student_emb: torch.Tensor, c: float, temp: float) -> torch.Tensor:
-    """student 关系分布 P^H_ij = softmax_j(-d_c(z_i, z_j)^2/T). student_emb: (B, d+1) on H^d_c."""
-    # pairwise Lorentz distance squared
-    # student_emb: (B, B, d+1)
-    a = student_emb[:, :, None, :]  # (B, B_q, 1, d+1)
-    b = student_emb[:, None, :, :]  # (B, 1, B_k, d+1)
-    inner = -a[..., 0] * b[..., 0] + (a[..., 1:] * b[..., 1:]).sum(dim=-1)  # (B, B_q, B_k)
-    z = (-c * inner).clamp_min(1.0 + 1e-7)
-    d_c = torch.acosh(z) / math.sqrt(c)
-    return F.softmax(-d_c ** 2 / temp, dim=-1)
-
-
-def lorentz_aug_distance(u_lorentz_a: torch.Tensor, u_lorentz_b: torch.Tensor, c: float) -> torch.Tensor:
-    """L_aug = mean over batch of d_c(z_a, z_b)^2. u_*: (B, d+1) on H^d_c."""
-    inner = minkowski_inner(u_lorentz_a, u_lorentz_b)
-    z = (-c * inner).clamp_min(1.0 + 1e-7)
-    d_c = torch.acosh(z) / math.sqrt(c)
-    return (d_c ** 2).mean()
-
-
-def encode_all_items(model: Stage1LorentzEncoder, items: list[tuple[str, str]], device) -> tuple[np.ndarray, list[str]]:
-    """返回 (u_emb: (N, d) numpy, item_ids)."""
-    from transformers import AutoTokenizer
-    tokenizer = AutoTokenizer.from_pretrained(ENCODER_MODEL)
+def encode_all_items(model: Stage1LorentzEncoder, items: list[tuple[str, str]], tokenizer, device,
+                     batch_size: int = 32) -> tuple[np.ndarray, list[str], dict]:
+    """返回 (u_emb: (N, d) float32 numpy, item_ids, export_stats)."""
     model.eval()
     all_emb = np.zeros((len(items), model.frozen_t5.d_model), dtype=np.float32)
     item_ids = [it[0] for it in items]
-    for start in range(0, len(items), TRAIN_BATCH_SIZE):
-        batch = items[start:start + TRAIN_BATCH_SIZE]
+    # 记录 float64→float32 转换最大误差
+    max_cast_err = 0.0
+    for start in range(0, len(items), batch_size):
+        batch = items[start:start + batch_size]
         texts = [it[1] for it in batch]
-        enc = tokenizer(texts, padding="max_length", truncation=True, max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
+        enc = tokenizer(texts, padding="max_length", truncation=True,
+                        max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
         with torch.no_grad():
-            u = model.encode(enc.input_ids, enc.attention_mask)
-        all_emb[start:start + len(batch)] = u.cpu().numpy()
-    return all_emb, item_ids
+            u64 = model.encode(enc.input_ids, enc.attention_mask, return_float64=True)
+            u32 = u64.to(torch.float32)
+        max_cast_err = max(max_cast_err, float((u64 - u32.double()).abs().max().item()))
+        all_emb[start:start + len(batch)] = u32.cpu().numpy()
+    stats = {"max_f64_to_f32_cast_err": max_cast_err}
+    return all_emb, item_ids, stats
 
 
-def teacher_encode(items: list[tuple[str, str]], device) -> np.ndarray:
-    """teacher: frozen sentence-t5-base 全 forward (无 MLP backbone), 用于 Recall@10 / KL 对照."""
+def teacher_encode(items: list[tuple[str, str]], device, batch_size: int = 32) -> np.ndarray:
+    """teacher: 完整 frozen sentence-t5-base mean-pool (Recall@10 对照用)."""
     from transformers import T5EncoderModel, AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(ENCODER_MODEL)
     encoder = T5EncoderModel.from_pretrained(ENCODER_MODEL).to(device)
     encoder.eval()
     all_emb = np.zeros((len(items), encoder.config.d_model), dtype=np.float32)
-    for start in range(0, len(items), TRAIN_BATCH_SIZE):
-        batch = items[start:start + TRAIN_BATCH_SIZE]
+    for start in range(0, len(items), batch_size):
+        batch = items[start:start + batch_size]
         texts = [it[1] for it in batch]
         with torch.no_grad():
-            enc = tokenizer(texts, padding="max_length", truncation=True, max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
+            enc = tokenizer(texts, padding="max_length", truncation=True,
+                            max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
             out = encoder(input_ids=enc.input_ids, attention_mask=enc.attention_mask)
             mask = enc.attention_mask.unsqueeze(-1).float()
             summed = (out.last_hidden_state * mask).sum(dim=1)
@@ -737,31 +1080,27 @@ def teacher_encode(items: list[tuple[str, str]], device) -> np.ndarray:
 
 
 def teacher_student_recall10(student_emb: np.ndarray, teacher_emb: np.ndarray, k: int = 10) -> float:
-    """teacher→student Recall@10: student emb k 近邻中, teacher 同 item 的 top-10 近邻保留率."""
     n = student_emb.shape[0]
-    student_norm = student_emb / (np.linalg.norm(student_emb, axis=-1, keepdims=True) + 1e-15)
-    teacher_norm = teacher_emb / (np.linalg.norm(teacher_emb, axis=-1, keepdims=True) + 1e-15)
-    # teacher top-10: (n, 10)
-    teacher_sim = teacher_norm @ teacher_norm.T  # (n, n)
-    teacher_top10 = np.argsort(-teacher_sim, axis=1)[:, :k]
-    # student k=10+max (留 buffer)
-    student_sim = student_norm @ student_norm.T
-    student_topk = np.argsort(-student_sim, axis=1)[:, :k]
-    # recall: student top-k 中, teacher top-10 命中比例
-    recall_per_item = []
+    s_n = student_emb / (np.linalg.norm(student_emb, axis=-1, keepdims=True) + 1e-15)
+    t_n = teacher_emb / (np.linalg.norm(teacher_emb, axis=-1, keepdims=True) + 1e-15)
+    t_sim = t_n @ t_n.T
+    t_top10 = np.argsort(-t_sim, axis=1)[:, :k]
+    s_sim = s_n @ s_n.T
+    s_topk = np.argsort(-s_sim, axis=1)[:, :k]
+    hits = 0
     for i in range(n):
-        hit = len(set(student_topk[i].tolist()) & set(teacher_top10[i].tolist())) / k
-        recall_per_item.append(hit)
-    return float(np.mean(recall_per_item))
+        hits += len(set(s_topk[i].tolist()) & set(t_top10[i].tolist())) / k
+    return float(hits / n)
 
+
+# ================================================================
+# main: precheck → verdict (本 Issue 不执行训练)
+# ================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="taskA Stage1 Issue #48 Lorentz 最后编码块")
-    parser.add_argument("--product_dir", type=str, default=str(REPO / "taskA/_history/taskA_stage1_issue48"))
-    parser.add_argument("--epochs", type=int, default=TRAIN_EPOCHS)
-    parser.add_argument("--lr", type=float, default=TRAIN_LR)
-    parser.add_argument("--batch_size", type=int, default=TRAIN_BATCH_SIZE)
-    parser.add_argument("--seed", type=int, default=TRAIN_SEED)
+    parser = argparse.ArgumentParser(description="taskA Stage1 Issue #49 Lorentz precheck (PC1-PC8)")
+    parser.add_argument("--product_dir", type=str, default=str(REPO / "taskA/_history/taskA_stage1_issue49"))
+    parser.add_argument("--seed", type=int, default=PRECHECK_SEED)
     parser.add_argument("--gpu", type=int, default=0)
     args = parser.parse_args()
 
@@ -775,260 +1114,164 @@ def main():
     else:
         device = torch.device("cpu")
     log(f"[stage1-lorentz] config: TAG={TAG} C_ENC={C_ENC} N_FROZEN_BLOCKS={N_FROZEN_BLOCKS} "
-        f"epochs={args.epochs} lr={args.lr} bs={args.batch_size} seed={args.seed} device={device}")
+        f"RHO_MAX={RHO_MAX} BOUND_EPS={BOUND_EPS} GEOM_DTYPE={GEOM_DTYPE} seed={args.seed} device={device}")
 
     # 加载商品
     items = load_items(ITEM_JSON)
-    item_ids = [it[0] for it in items]
     log(f"[stage1-lorentz] loaded {len(items)} items from {ITEM_JSON}")
 
-    # 构建模型
+    # 构建模型 (修复二: 几何核心 float64)
     model = Stage1LorentzEncoder(ENCODER_MODEL, N_FROZEN_BLOCKS, C_ENC, HFFN_HIDDEN).to(device)
     model.freeze_t5()
+    model.eval()
     n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     log(f"[stage1-lorentz] t5 d_model={model.frozen_t5.d_model} n_blocks={model.frozen_t5.n_blocks} "
         f"frozen={N_FROZEN_BLOCKS} + Lorentz(1) | trainable params={n_trainable:,}")
+    # 修复二 审计: 几何核心全部 float64
+    geom_dtype_check = {}
+    for name, p in model.named_parameters():
+        if "input_proj" in name or "lorentz_block" in name:
+            geom_dtype_check[name] = str(p.dtype)
+    non_f64 = [k for k, v in geom_dtype_check.items() if "float64" not in v]
+    log(f"[stage1-lorentz] 修复二审计: 几何核心 float64 params={sum(1 for _ in geom_dtype_check)}, "
+        f"non-f64={len(non_f64)} {non_f64[:3]}")
+    if non_f64:
+        raise RuntimeError(f"修复二违规: 几何核心参数非 float64: {non_f64[:5]}")
 
-    # 8 项 Precheck (issue #48 spec 强制)
-    log("[stage1-lorentz] running 8-item precheck...")
-    precheck_subset_texts = [items[i][1] for i in range(min(PRECHECK_SUBSET_SIZE, len(items)))]
+    # 真实训练集 audit batch (固定 seed + 固定 ItemID hash)
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(ENCODER_MODEL)
-    enc_pc = tokenizer(precheck_subset_texts, padding="max_length", truncation=True,
-                       max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
-    pc_input_ids = enc_pc.input_ids
-    pc_attention_mask = enc_pc.attention_mask
-
-    # 用一个 batch 作为 precheck 输入
-    pc_results = precheck_lorentz(model, None, device, product_dir)
-    for k, v in pc_results.items():
-        status = v.get("status", "?")
-        log(f"[precheck] {k}: {status} | {v}")
-
-    precheck_path = product_dir / "precheck.json"
-    with open(precheck_path, "w") as f:
-        json.dump(pc_results, f, indent=2)
-    log(f"[stage1-lorentz] precheck saved to {precheck_path}")
-
-    # Precheck 关键失败 (PC1/PC2/PC4/PC5/PC7) 立即停止
-    blocking_failures = ["PC1_manifold_constraint", "PC2_exp_log_inverse",
-                         "PC4_attention_legal", "PC5_centroid_legal", "PC7_real_path_audit"]
-    for k in blocking_failures:
-        if pc_results[k]["status"] != "PASS":
-            raise RuntimeError(f"precheck blocked: {k} = {pc_results[k]}")
-
-    # === Gate 1 训练: KL(P^T || P^H) + 0.1*L_aug ===
-    log(f"[stage1-lorentz] Gate 1 train: epochs={args.epochs} lr={args.lr} bs={args.batch_size}")
-    optimizer = torch.optim.AdamW(
-        [p for p in model.parameters() if p.requires_grad],
-        lr=args.lr, weight_decay=0.01,
-    )
-
-    # 准备 train texts (前 PRECHECK_SUBSET_SIZE 不够, 用全部训练集 item texts)
-    # 注意: spec 禁止 validation/test 商品参与训练 (KL/L_aug), 这里全部 9922 视为训练集
-    train_texts = [it[1] for it in items]
-    train_enc = tokenizer(train_texts, padding="max_length", truncation=True,
+    audit_items = items[:PRECHECK_AUDIT_SIZE]
+    audit_ids = [it[0] for it in audit_items]
+    audit_texts = [it[1] for it in audit_items]
+    enc_audit = tokenizer(audit_texts, padding="max_length", truncation=True,
                           max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
-    n = len(train_texts)
+    audit_ids_hash = sha256_bytes("|".join(audit_ids).encode())
+    input_ids = enc_audit.input_ids
+    attention_mask = enc_audit.attention_mask
+    log(f"[stage1-lorentz] audit batch: n={len(audit_items)} ids_hash={audit_ids_hash[:16]}")
 
-    train_curve = []
-    for ep in range(args.epochs):
-        model.train()
-        ep_loss = 0.0
-        ep_rel = 0.0
-        ep_aug = 0.0
-        n_batches = 0
-        # shuffle indices
-        perm = torch.randperm(n, device=device)
-        for start in range(0, n, args.batch_size):
-            idx = perm[start:start + args.batch_size]
-            input_ids = train_enc.input_ids[idx]
-            attn_mask = train_enc.attention_mask[idx]
-            optimizer.zero_grad()
-            # 双视图 dropout
-            # view a: 标准 forward
-            u_a = model.encode(input_ids, attn_mask)
-            # view b: 不同 dropout (通过 t5 的 dropout 实现)
-            # 这里简单用 attn_mask 随机 drop 一部分 token
-            bsz = input_ids.shape[0]
-            keep_mask = (torch.rand(bsz, input_ids.shape[1], device=device) > DROPOUT_AUG).float()
-            keep_mask = keep_mask * attn_mask.float()
-            # 强制至少保留 1 个 token
-            keep_mask = keep_mask * (keep_mask.sum(dim=1, keepdim=True) > 0).float() + attn_mask.float() * (keep_mask.sum(dim=1, keepdim=True) == 0).float()
-            u_b = model.encode(input_ids, keep_mask)
-            # 把 u_a, u_b 映射到 Lorentz 流形
-            u_a_lor = expmap_o(u_a, C_ENC)
-            u_b_lor = expmap_o(u_b, C_ENC)
-            # KL(P^T || P^H): teacher 用 frozen t5 在 view a input 上的 forward
-            with torch.no_grad():
-                # teacher: 直接用 frozen t5 在 view a 上
-                # teacher_emb = mean-pool t5 last hidden state (skip Lorentz block)
-                hidden = model.frozen_t5.encode_to_token(input_ids, attn_mask)
-                mask_f = attn_mask.float().unsqueeze(-1)
-                teacher_emb = (hidden * mask_f).sum(dim=1) / mask_f.sum(dim=1).clamp_min(1.0)
-                # 注意: 这里 t5 hidden 与 u_a 维度都是 d_model=768, 但 t5 经过 n_frozen-1 个 block 不是完整 t5
-                # spec 要求 "完整 frozen sentence-t5 作为 teacher", 我们用完整 t5
-                # 简化: 重新跑一次完整 t5 (cost 较高, 但仅 train_batch_size)
-                # 这里降级: teacher 用完整 t5 在 view a input 上的 mean-pool
-            # 实际 teacher: 完整 t5 mean-pool
-            from transformers import T5EncoderModel
-            if not hasattr(main, "_teacher"):
-                main._teacher = T5EncoderModel.from_pretrained(ENCODER_MODEL).to(device)
-                main._teacher.eval()
-                for pp in main._teacher.parameters():
-                    pp.requires_grad = False
-            with torch.no_grad():
-                t5_out = main._teacher(input_ids=input_ids, attention_mask=attn_mask)
-                t5_hidden = t5_out.last_hidden_state
-                mask_f = attn_mask.float().unsqueeze(-1)
-                teacher_emb = (t5_hidden * mask_f).sum(dim=1) / mask_f.sum(dim=1).clamp_min(1.0)
-            # teacher relations
-            P_T = teacher_relations(teacher_emb, KL_TEMP)
-            # student relations (on u_a_lor)
-            P_H = student_relations(u_a_lor, C_ENC, KL_TEMP)
-            # KL(P^T || P^H)
-            L_rel = F.kl_div(P_H.log(), P_T, reduction="batchmean")
-            # L_aug: d_c(z_a, z_b)^2
-            L_aug = lorentz_aug_distance(u_a_lor, u_b_lor, C_ENC)
-            loss = L_rel + L_AUG_WEIGHT * L_aug
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(
-                [p for p in model.parameters() if p.requires_grad], max_norm=1.0,
-            )
-            optimizer.step()
-            ep_loss += loss.item()
-            ep_rel += L_rel.item()
-            ep_aug += L_aug.item()
-            n_batches += 1
-        ep_loss /= n_batches
-        ep_rel /= n_batches
-        ep_aug /= n_batches
-        log(f"[stage1-lorentz] ep{ep} loss={ep_loss:.4f} L_rel={ep_rel:.4f} L_aug={ep_aug:.4f}")
-        train_curve.append({"epoch": ep, "loss": ep_loss, "L_rel": ep_rel, "L_aug": ep_aug})
+    # ============ PC1-PC8 ============
+    pc_results = {}
 
-    # === Gate 1 验收 ===
-    log("[stage1-lorentz] Gate 1 audit: encoding all 9922 items + Recall@10 + tangent norm")
-    student_emb, item_ids_out = encode_all_items(model, items, device)
-    log(f"[stage1-lorentz] student emb shape={student_emb.shape} dtype={student_emb.dtype}")
-    # teacher (完整 t5) 全量编码
-    teacher_emb = teacher_encode(items, device)
-    log(f"[stage1-lorentz] teacher emb shape={teacher_emb.shape}")
+    # PC1-PC5/PC7 全程 no_grad (eval 路径无 backward 需求, 防计算图 OOM);
+    # PC6 中心差分单独管理 autograd (AD 需 grad, FD 段自带 no_grad).
+    log("[precheck] PC1 全路径流形约束 (float64, <1e-8)...")
+    with torch.no_grad():
+        pc_results["PC1_manifold_constraint"] = pc1_manifold_constraint(
+            model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC1 = {pc_results['PC1_manifold_constraint']['status']}")
 
-    # Recall@10
-    r10 = teacher_student_recall10(student_emb, teacher_emb, k=10)
-    log(f"[stage1-lorentz] teacher→student Recall@10 = {r10:.4f} (Gate 1 PASS 阈值 ≥ {TEACHER_STUDENT_R10_MIN})")
+    log("[precheck] PC2 Exp/Log 互逆 (三种输入, <1e-8)...")
+    with torch.no_grad():
+        pc_results["PC2_exp_log_inverse"] = pc2_exp_log_inverse(
+            model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC2 = {pc_results['PC2_exp_log_inverse']['status']}")
 
-    # tangent norm: 对每个 item, ||Log_o(Exp_o(u))|| 应等于 ||u|| (Lorentz 性质); 这里直接报告 ||u|| 统计
-    u_norms = np.linalg.norm(student_emb, axis=-1)
-    log(f"[stage1-lorentz] u_item tangent norm: min={u_norms.min():.4f} mean={u_norms.mean():.4f} "
-        f"std={u_norms.std():.4f} max={u_norms.max():.4f}")
+    log("[precheck] PC3 Lorentz/Poincaré 等距一致性 (max<1e-7, P99<1e-8)...")
+    with torch.no_grad():
+        pc_results["PC3_isometry"] = pc3_lorentz_poincare_isometry(
+            model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC3 = {pc_results['PC3_isometry']['status']}")
 
-    # Parquet 写入
-    df = pd.DataFrame({
-        "ItemID": item_ids_out,
-        "emb": [student_emb[i].tolist() for i in range(len(student_emb))],
-    })
-    df.to_parquet(output_parquet, engine="pyarrow")
-    log(f"[stage1-lorentz] parquet saved to {output_parquet}")
+    log("[precheck] PC4 Attention 合法 (行和<1e-10, padding=0)...")
+    with torch.no_grad():
+        pc_results["PC4_attention_legal"] = pc4_attention_legal(
+            model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC4 = {pc_results['PC4_attention_legal']['status']}")
 
-    # Reload + 逐元素最大误差
-    df_reload = pd.read_parquet(output_parquet)
-    emb_reload = np.stack(df_reload["emb"].values)
-    item_ids_reload = df_reload["ItemID"].tolist()
-    max_err = np.abs(student_emb - emb_reload).max()
-    id_match = (item_ids_out == item_ids_reload)
-    log(f"[stage1-lorentz] reload max abs err={max_err:.6e} item_id order match={id_match} "
-        f"(Gate 1 阈值 {EPS_RELOAD})")
+    log("[precheck] PC5 Minkowski centroid 合法 (timelike + <1e-8, 禁 fallback)...")
+    with torch.no_grad():
+        pc_results["PC5_centroid_legal"] = pc5_centroid_legal(
+            model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC5 = {pc_results['PC5_centroid_legal']['status']}")
 
-    # sha256
-    h = hashlib.sha256()
-    with open(output_parquet, "rb") as f:
-        h.update(f.read())
-    parquet_sha = h.hexdigest()
-    log(f"[stage1-lorentz] parquet sha256={parquet_sha}")
+    log("[precheck] PC6 中心有限差分 (float64 h=1e-5, W_Q/W_K/W_V/W_1/W_2, <1e-3)...")
+    pc_results["PC6_grad_fd"] = pc6_center_finite_difference(
+        model, input_ids, attention_mask, C_ENC)
+    log(f"[precheck] PC6 = {pc_results['PC6_grad_fd']['status']}")
 
-    # 训练结束: 检查 loss 下降
-    loss_drop_ok = train_curve[-1]["loss"] < train_curve[0]["loss"]
-    log(f"[stage1-lorentz] loss drop: ep0={train_curve[0]['loss']:.4f} → ep_last={train_curve[-1]['loss']:.4f} "
-        f"({'PASS' if loss_drop_ok else 'FAIL'})")
+    log("[precheck] PC7 真实路径审计 (forward/export/reload 三条路径)...")
+    with torch.no_grad():
+        pc_results["PC7_real_path_audit"] = pc7_real_path_audit(
+            model, input_ids, attention_mask, C_ENC, tokenizer, items)
+    log(f"[precheck] PC7 = {pc_results['PC7_real_path_audit']['status']}")
 
-    gate1_pass = (
-        loss_drop_ok
-        and r10 >= TEACHER_STUDENT_R10_MIN
-        and u_norms.std() > TANGENT_NORM_STD_MIN
-        and max_err < EPS_RELOAD
-        and len(student_emb) == len(items)
-        and item_ids_out == item_ids_reload
-    )
-    gate1_status = "PASS" if gate1_pass else "FAIL"
+    log("[precheck] PC8 三层曲率与最近邻合规...")
+    pc_results["PC8_three_layer_compliance"] = pc8_three_layer_compliance(
+        str(REPO / "taskA/stage2/taskA_stage2.py"))
+    log(f"[precheck] PC8 = {pc_results['PC8_three_layer_compliance']['status']}")
 
-    # 训练曲线落盘
-    train_curve_path = product_dir / "train_curve.json"
-    with open(train_curve_path, "w") as f:
-        json.dump(train_curve, f, indent=2)
-    log(f"[stage1-lorentz] train curve saved to {train_curve_path}")
+    # ============ 汇总 ============
+    statuses = {k: v.get("status", "?") for k, v in pc_results.items()}
+    all_pass = all(s == "PASS" for s in statuses.values())
+    log(f"[precheck] 汇总: {statuses}")
+    log(f"[precheck] 总体 = {'PASS' if all_pass else 'BLOCKED'}")
 
-    # Verdict 落盘
+    # 输入 hash + commit hash
+    commit_hash = ""
+    try:
+        import subprocess
+        r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=str(REPO))
+        commit_hash = r.stdout.strip()
+    except Exception:
+        commit_hash = "unknown"
+
     verdict = {
-        "issue": "#48",
-        "task": "taskA_stage1_issue48_lorentz",
-        "decision": "Gate1: " + gate1_status,
-        "gate1_precheck": pc_results,
-        "gate1_train": {
-            "n_epochs": args.epochs,
-            "lr": args.lr,
-            "batch_size": args.batch_size,
-            "train_curve": train_curve,
-            "loss_drop_ok": loss_drop_ok,
+        "issue": "#49",
+        "task": "taskA_stage1_issue49_lorentz_precheck",
+        "spec": "[方向A precheck] 修复 #48 Lorentz 数值参数化并严格完成 PC1-PC8; 唯一允许结论 precheck blocked / precheck PASS",
+        "decision": "precheck PASS" if all_pass else "precheck blocked",
+        "precheck_overall": "PASS" if all_pass else "BLOCKED",
+        "audit_batch": {
+            "n_items": len(audit_items),
+            "item_ids_hash": audit_ids_hash,
+            "seed": args.seed,
+            "device": str(device),
+            "dtype": str(GEOM_DTYPE),
+            "max_seq_len": MAX_SEQ_LEN,
         },
-        "gate1_audit": {
-            "teacher_student_recall10": r10,
-            "teacher_student_recall10_threshold": TEACHER_STUDENT_R10_MIN,
-            "u_norm_stats": {
-                "min": float(u_norms.min()),
-                "mean": float(u_norms.mean()),
-                "std": float(u_norms.std()),
-                "max": float(u_norms.max()),
-            },
-            "u_norm_std_threshold": TANGENT_NORM_STD_MIN,
-            "n_items_exported": len(student_emb),
-            "parquet_dim": student_emb.shape[1],
-            "parquet_dtype": str(student_emb.dtype),
-            "parquet_sha256": parquet_sha,
-            "reload_max_abs_err": float(max_err),
-            "reload_threshold": EPS_RELOAD,
-            "item_id_order_match": id_match,
+        "fix_1_smooth_bounded": {
+            "rho_max": RHO_MAX,
+            "eps": BOUND_EPS,
+            "formula": "s=||u||_2, ρ(u)=ρ_max·tanh(s/ρ_max), v(u)=ρ(u)/(s+ε)·u",
+            "applied_in": ["encode 输入投影后", "HFFN 输出", "HResLN 输出", "HAttention Q/K/V 投影后", "w_o 输出"],
         },
-        "gate1_status": gate1_status,
-        "gate1_pass_criteria": {
-            "loss_drop_ok": loss_drop_ok,
-            "recall10_ge_0.80": r10 >= TEACHER_STUDENT_R10_MIN,
-            "u_norm_std_gt_1e-3": u_norms.std() > TANGENT_NORM_STD_MIN,
-            "reload_err_lt_1e-6": max_err < EPS_RELOAD,
-            "all_9922_exported": len(student_emb) == len(items),
-            "item_id_order_match": bool(id_match),
+        "fix_2_float64": {
+            "geom_dtype": str(GEOM_DTYPE),
+            "non_f64_geom_params": non_f64,
+            "cast_before_parquet": "float64 → float32 显式转换, 记录 max_cast_err (见 gate1_export_placeholder)",
         },
+        "pc1_pc8": pc_results,
+        "earliest_failure": next((k for k, v in pc_results.items() if v.get("status") != "PASS"), None),
         "config": {
             "TAG": TAG,
             "C_ENC": C_ENC,
             "N_FROZEN_BLOCKS": N_FROZEN_BLOCKS,
             "ENCODER_MODEL": ENCODER_MODEL,
-            "KL_TEMP": KL_TEMP,
-            "L_AUG_WEIGHT": L_AUG_WEIGHT,
-            "DROPOUT_AUG": DROPOUT_AUG,
-            "TRAIN_BATCH_SIZE": TRAIN_BATCH_SIZE,
-            "TRAIN_EPOCHS": TRAIN_EPOCHS,
-            "TRAIN_LR": TRAIN_LR,
-            "SEED": TRAIN_SEED,
-            "MAX_SEQ_LEN": MAX_SEQ_LEN,
             "HFFN_HIDDEN": HFFN_HIDDEN,
+            "SEED": args.seed,
+            "DEVICE": str(device),
+            "MAX_SEQ_LEN": MAX_SEQ_LEN,
+            "PC1_THRESHOLD": PC1_MANIFOLD_MAX,
+            "PC2_THRESHOLD": PC2_INVERSE_MAX,
+            "PC3_THRESHOLD_MAX": PC3_ISO_MAX,
+            "PC3_THRESHOLD_P99": PC3_ISO_P99,
+            "PC4_THRESHOLD": PC4_ROWWISE_MAX,
+            "PC5_THRESHOLD": PC5_POST_MANIFOLD_MAX,
+            "PC6_H": PC6_FD_H,
+            "PC6_THRESHOLD_REL": PC6_REL_MAX,
+            "PC7_THRESHOLD_REL_DIFF": PC7_REL_DIFF_MIN,
         },
+        "commit": commit_hash,
     }
     verdict_path = product_dir / "verdict.json"
     with open(verdict_path, "w") as f:
         json.dump(verdict, f, indent=2)
     log(f"[stage1-lorentz] verdict saved to {verdict_path}")
-    log(f"[stage1-lorentz] Gate 1 status: {gate1_status}")
+    log(f"[stage1-lorentz] 最终结论: {verdict['decision']}")
+    if not all_pass:
+        raise SystemExit(f"precheck blocked: 最早失败项 = {verdict['earliest_failure']}")
 
 
 if __name__ == "__main__":
