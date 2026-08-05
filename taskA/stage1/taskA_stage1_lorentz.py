@@ -492,15 +492,17 @@ class Stage1LorentzEncoder(nn.Module):
 
 
 class LorentzResidualHead(nn.Module):
-    """Issue #56: 轻量残差 Lorentz 表示头.
+    """Issue #58: 轻量残差 Lorentz 表示头 (径向可学版).
 
-    h_out = Normalize(h_T5 + α·P(log_o^c(F_Lorentz(exp_o^c(W·h_T5)))))
+    h_out = h_T5 + α · P(log_o^c(F_Lorentz(exp_o^c(W·h_T5))))
       W        : 线性投影到切空间 (float64)
       exp_o^c  : 欧氏 → Lorentz (tanh + 平滑有界, 修复一参数化)
       F_Lorentz: 轻量逐点 Lorentz 变换 (HFFN, 无 token 注意力 — 输入是 item 级向量)
       log_o^c  : Lorentz → 切空间
       P        : 线性投影 + tanh 有界 (残差幅度受控)
       α        : 可学习标量, 初始 ALPHA_INIT (默认保留 T5 语义结构)
+    Issue #58 修改: 末尾不再 F.normalize, 直接返回切空间向量 (任意范数, 保留径向信息);
+                  Stage2 第一层用 expmap0(·, c_0) 映射到 Poincaré 球做 assignment.
     几何核心全程 float64 (修复二); c 固定 C_ENC 不搜索 (#48 spec).
     """
 
@@ -514,14 +516,14 @@ class LorentzResidualHead(nn.Module):
         self.to(GEOM_DTYPE)
 
     def forward(self, h_t5: torch.Tensor) -> torch.Tensor:
-        """h_t5: (B, d) 完整 12 层 T5 mean-pool (float32). 返回 (B, d) float64 normalized."""
+        """h_t5: (B, d) 完整 12 层 T5 mean-pool (float32). 返回 (B, d) float64 切空间向量."""
         h = h_t5.to(GEOM_DTYPE)
         v = smooth_bounded_v(torch.tanh(self.W(h)))  # (B, d) 有界切向量
         x_l = expmap_o(v, self.c)                    # (B, d+1) Lorentz
         y_l = self.F(x_l)                            # (B, d+1) 轻量变换
         u = logmap_o(y_l, self.c)                    # (B, d) 切空间
         u = torch.tanh(self.P(u))                    # (B, d) 有界投影
-        return F.normalize(h + self.alpha * u, dim=-1)
+        return h + self.alpha * u                    # (B, d) 切空间 (Issue #58: 不 normalize)
 
 
 class Stage1LorentzResidualEncoder(nn.Module):

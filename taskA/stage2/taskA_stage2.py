@@ -63,7 +63,9 @@ TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 # Issue #57: Stage2 输入 = Issue #56 残差 Lorentz 头正式导出 (taskA_stage1_lorentz.py --train
 # --arch residual, 9922×768 float32, 有序 ItemID 行序, item_ids_sha256 同 canonical
 # a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae; #56 验收 R@10=0.9575)
-ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue56/item_emb_u32.npy"
+# Issue #58: Stage1 残差头不再 F.normalize, 直接输出切空间 h+α·u (任意范数, 保留径向信息)
+# Stage2 第一层用 expmap0(·, c_0) 映射到 Poincaré 球做 assignment, 残差回到切空间 u_1 = u_0 - e_{0,a}
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue58/item_emb_u32.npy"
 
 # 数据集元数据
 N_ITEMS = 9922
@@ -1396,21 +1398,16 @@ def main():
     if is_main:
         print(f"item_emb shape: {item_emb.shape}\n")
 
-    # Issue #57: 输入投影层 (Linear + Tanh) — 打破 Stage1 #56 残差头 Normalize 的 L2=1 锁定,
-    # 给 Stage2 RQ-VAE codebook 非单位球训练空间 (深层 util 健康). 投影 seed=42 保证可复现.
+    # Issue #58: 保留 Stage1 #58 切空间向量 (任意范数, 保留径向) — 直接喂 Stage2 MLP encoder,
+    # encoder 内部走欧氏特征提取, VQ 内部用 Poincaré 距离. 不预先 expmap0 (会再次塌缩到单位球面).
     item_emb_in_dim = EMB_DIM
     if INPUT_PROJ_ENABLED:
-        torch.manual_seed(42)
-        input_proj = nn.Linear(EMB_DIM, INPUT_PROJ_DIM, bias=True).to(device)
-        nn.init.xavier_uniform_(input_proj.weight, gain=1.0)
-        nn.init.zeros_(input_proj.bias)
-        item_emb = torch.tanh(input_proj(item_emb)).detach()  # (9922, INPUT_PROJ_DIM), 散布在 [-1, 1]; detach 避免 backward 重入
-        item_emb_in_dim = INPUT_PROJ_DIM
+        # Issue #58 v2: 不投影 — 切空间向量原样喂 Stage2. 仅打印统计量.
         if is_main:
             norms = torch.norm(item_emb, dim=1)
-            print(f"[INPUT_PROJ] Linear({EMB_DIM}→{INPUT_PROJ_DIM})+Tanh: L2 norm "
+            print(f"[ISSUE58_PROJ] no projection (直接喂 Stage2): L2 norm "
                   f"[{norms.min().item():.3f}, {norms.max().item():.3f}] "
-                  f"mean={norms.mean().item():.3f}\n")
+                  f"mean={norms.mean().item():.3f} std={norms.std().item():.3f}\n")
 
     # Issue #157 spec: item alignment evidence
     item_alignment_check = {
