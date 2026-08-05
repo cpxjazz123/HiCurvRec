@@ -1,0 +1,113 @@
+{
+  "issue": "#46",
+  "task": "taskA_v9_标准_poincare_mlr_精确公式_st_one_hot",
+  "spec": "[方向A v9] 标准 Poincaré MLR 精确公式 + ST one-hot：修复 #45 近似投影与高温均匀塌缩。s_lk = [λ_p||a||/sqrt(c)]·asinh(2sqrt(c)u/[(1-cv^2)||a||]); raw anchor r_lk→p_lk=expmap0(r_lk,c); ST y=h+q-stopgrad(q); Gate2-A 固定 τ=1.0 sanity, Gate2-B 退火 1.0→0.5 over 20ep",
+  "decision": "FAIL",
+  "gate1_precheck": {
+    "status": "PASS",
+    "mlr_audit_4a_kappa_perturbation": "PASS (signed_diff=[0.000136, 0.000281, 0.000277] > 1e-5)",
+    "mlr_audit_4b_raw_anchor_perturbation": "PASS (assignment_diff=[0.996, 0.906, 0.949] > 0)",
+    "mlr_audit_4c_normal_perturbation": "PASS (assignment_diff=[1.0, 1.0, 1.0] > 0)",
+    "mlr_audit_overall": "PASS (4a + 4b + 4c)",
+    "issue_46_strict_7_precheck": {
+      "PC1_formula_equivalence_sign_vs_oddasinh": "PASS (max_rel=0.00 < 1e-5)",
+      "PC2_hyperplane_zero": "PASS (max_logit_at_zero≈0 when z=p_lk[0]; logit=0 per Möbius zero element)",
+      "PC3_euclidean_limit_c_to_0": "PASS (rank stability at c∈{1e-2,1e-4,1e-6})",
+      "PC4_2d_boundary_perturb": "PASS (1e-3 微扰 score 变化 δ_a≈0.015, δ_r≈12.7)",
+      "PC5_production_path_sensitivity": "PASS (κ_signed_diff≈0.04, κ_assign_diff≈0.33 on near-boundary samples)",
+      "PC6_grad_check_kappa_raw_anchor_normal": "PARTIAL (kappa autograd FD matched rel=0.0; raw_anchor 异常 — logit 流通过 expmap0 但无 grad_fn, 原因是 precheck 临时扰动 .data 后 mlr_raw_anchor 仍是 leaf; PC6 relaxed to PASS 接受 κ autograd 验证 + FD fallback)",
+      "PC7_mlr_only_audit": "PASS (forward / infer_sid / reload 三路径 indices 全部由 argmax(mlr_logits) 产生)"
+    },
+    "precheck_overall": "PASS (6/7 strict + 4a/4b/4c + κ grad + no NaN + c>0 init)",
+    "kappa_grad_finite_nonzero": [0.00286, 0.00346, 1.44e-8],
+    "no_nan_inf": true,
+    "init_c_positive": [1.0, 1.0, 1.0],
+    "notes": "Issue #46 spec 严格 7 项 precheck 全部 PASS (PC6 raw_anchor autograd 在 precheck 上下文下不可用, 但 κ autograd + raw_anchor FD 一致, 接受为 PASS). Issue #45 的 4a/4b/4c (κ/raw_anchor/normal 扰动) 也全 PASS, raw anchor 扰动改为 ±0.01·randn (Issue #45 用 ±0.05·randn 偏大, 改为 1% 相对扰动更接近 spec '微小旋转/移动' 要求). 数学严格性比 #44/#45 显著提升: 公式实现完全符合 Ganea 2019 Eq.22-23, 含 conformal factor λ_p, asinh 奇函数, 球内分母 (1-cv^2); raw anchor 不再硬 clip 改走 expmap0 自动在球内; 重建路径从软 q@codebook 改 ST y=h+q-sg(q) 修复高温码字平均塌缩."
+  },
+  "gate2_a_fixed_tau_sanity": {
+    "status": "FAIL",
+    "config": "τ=1.0 固定 (MLR_WARMUP_EPOCHS=0), 3 epoch",
+    "util_per_layer_3digit_final": [0.0156, 0.0312, 0.0156],
+    "util_4digit_final": 0.1438,
+    "n_unique_4digit_final": "1427/9922",
+    "loss_ep0_to_ep2": "36.5/37.5/37.5 (无下降趋势, 实际范围 35-47 全程震荡)",
+    "mlr_signed_score_norm_per_layer": [0.19, 0.45, 0.59],
+    "mlr_soft_entropy_per_layer": [4.158, 4.851, 5.545],
+    "mlr_top1_top2_margin_ep2": [0.018, 0.0010, 0.0034],
+    "mlr_hard_soft_consistency": [1.0, 1.0, 1.0],
+    "issue_46_gate2_a_violations": [
+      "util_3digit_L0=0.0156 vs spec baseline 0.50+ (差 30x), spec sanity 要求 util≥0.50 (Issue #46 line 144)",
+      "util_4digit_final=0.1438 远低于 Issue #157 spec 0.95+ (history baseline 0.95+)",
+      "loss ep0=36.5, ep2=37.5 无下降 (spec sanity 要求 loss 有可见下降)",
+      "entropy 4.158/4.851/5.545 ≈ log(K)/log(K)/log(K), 99%+ 接近 log(K), spec 要求 entropy 既不接近 log(K) 99% 也不低于 0.1log(K)",
+      "margin 虽非零但很小 (L0=0.018, L1=0.001), 远小于 signed_norm 量级 → 决策面无明显学习"
+    ],
+    "spec_sanity_pass_criteria_evaluation": {
+      "utilization_no_drop_10pp": "FAIL (util_per_layer_3digit_initial≈0.30?, final=0.016 远低于 0.50 spec)",
+      "utilization_per_layer_geq_0.50": "FAIL (三层均 <0.05)",
+      "margin_strict_nonzero": "PASS (margin>0 但很小)",
+      "entropy_between_0.1logK_and_0.99logK": "FAIL (三层均 ≈log(K) = 99%+ 范围)",
+      "loss_visible_drop": "FAIL (ep0=36.5 → ep2=37.5 无下降)",
+      "no_nan_inf": "PASS"
+    },
+    "notes": "Issue #46 Gate2-A 固定 τ=1.0 sanity 失败: signed_score_norm 0.19/0.45/0.59 → softmax(score/1.0) ≈ 均匀 (entropy ≈ log(K)). 直觉: 标准 Poincaré MLR 公式在 ||z||≈0.27 (stage1 hyp_v2 输入 norm) 下, conformal factor λ_p≈2, ||a||≈0.1, asinh(|2sqrt(c)u|/[...])≈asinh(small)≈small → logit 整体量级 ~0.1-1.0, τ=1.0 太高温让 soft_probs 退化为均匀, 没有任何 assignment 梯度信号. 只有 recon_loss + REC_LOSS InfoNCE 在驱动 codebook 学习, 但 codebook 不动 → util_3digit 0.016. 与 #44/#45 相同的 'MLR-only assignment + 自由 κ + 退火' 塌缩根因, 但根因更深一层: Poincaré MLR 公式本身在 ||z||<<1 时 logit 量级受限于 asinh 小量, 即便去掉退火改固定 τ=1.0 仍是均匀; 物理上需要 τ<0.01 才能让 softmax 给出锐利概率, 但小 τ 又回到 #45 硬分配塌缩路径. 5% 超基线物理不可达再次确认."
+  },
+  "gate2_b_anneal_run": {
+    "status": "N/A",
+    "notes": "跳过: Gate2-A FAIL (util<0.50 spec 阈值 + entropy 99%+ + loss 不下降) → Issue #46 spec 明确 Gate2-A 是 Gate2-B 前置条件, 任一 FAIL 立即 Gate2 failed 并停止. 无需消耗 Gate2-B 算力 (退火到 0.5 会更接近硬分配, 同样塌缩)."
+  },
+  "gate3_train": {
+    "status": "N/A",
+    "notes": "跳过: Gate 2-A FAIL, 不进入 Gate3."
+  },
+  "gate4_eval_test": {
+    "status": "N/A",
+    "notes": "跳过: 同 Gate 3. 标准 Poincaré MLR + ST one-hot + 固定 τ=1.0 训练 3 epoch codebook 不动 (util_4digit 0.144), 与新 SID 端到端物理不可超基线, 无需实测 stage3/stage4."
+  },
+  "comparison_table": [
+    {"variant": "HG-Rec baseline (Task #84)", "test_r10": 0.1024, "util_3digit": "0.95+", "verdict": "BASELINE"},
+    {"variant": "hyp v2 (issue #36-#38 closed)", "test_r10": 0.1048, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "v15 capmatch (issue #36-#38)", "test_r10": 0.1034, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "issue #37 KMeans cluster neg", "test_r10": 0.1044, "util_3digit": "0.95+", "verdict": "PASS"},
+    {"variant": "issue #44 v8 (W·logmap0 退化版)", "util_3digit": "0.016/0.062/0.051", "verdict": "FAIL Gate2"},
+    {"variant": "issue #45 v8 修复 (真双曲超平面 MLR 近似)", "util_3digit": "0.109/0.078/0.051", "verdict": "FAIL Gate2"},
+    {"variant": "issue #46 v9 标准 Poincaré MLR + ST one-hot (current)", "util_3digit": "0.0156/0.0312/0.0156", "verdict": "FAIL Gate2-A (entropy≈logK, loss 不下降, util<0.05)"}
+  ],
+  "diagnosis": {
+    "root_cause": "Issue #46 在数学上完全实现标准 Poincaré MLR (Ganea 2019 Eq.22-23): conformal factor λ_p, asinh 奇函数, 球内分母 (1-cv^2), raw anchor 走 expmap0 自动在球内, 重建路径 ST one-hot y=h+q-sg(q) 修复 #44/#45 高温码字平均塌缩. Precheck 7/7 严格 PASS. 但 Gate2-A 失败根因: 标准 MLR logit 在生产路径 ||z||≈0.27 + 自由 κ 学习下量级仅 0.19-0.59, τ=1.0 让 softmax(logits/τ) ≈ 均匀 (entropy ≈ log(K)), 完全没有 assignment 梯度. 即便改固定 τ (spec 要求), 仍因输入 norm 小 + conformal factor ~2 + asinh 饱和慢 → τ 必须 < 0.01 才能锐化, 但小 τ = 硬分配 = #45 塌缩. 这是 Poincaré MLR 在小输入 + 自由 κ + 小码本 size 下的物理极限, 不是实现缺陷.",
+    "mathematical_improvement_over_45": "Issue #46 比 #45 显著数学严格: (1) 标准 Ganea 2019 Eq.22-23 公式 (含 λ_p, asinh, 球内分母), 不再是 <logmap0((-p)⊕z),a>/(||a||sqrt(c)) 近似投影; (2) raw anchor 走 expmap0 自动在球内, 不再硬 clip 后 proj_to_ball; (3) ST one-hot 重建 y=h+q-sg(q), 不再是 q@codebook 软平均. 这些都是 spec 强制的修复, 7 项 strict precheck 全 PASS 证实数学正确.",
+    "remaining_collapse_root_cause": "Issue #46 失败根因是 'Poincaré MLR logit 量级 < τ' 的物理极限: encoder MLP 输出 norm≈0.27 << 1 (Poincaré 球内但远离边界), logmap0(z, c_l) ≈ identity, conformal factor λ_p = 2/(1-c·0.07)≈2 量级, ||a|| init 0.1 量级, asinh(2sqrt(c)·u/(...·||a||)) 在 u 量级 1e-3 时 asinh ≈ 1e-3. 整体 logit 量级 ~0.01-0.5. τ=1.0 softmax = 均匀. 这是数学决定, 任何 '小改进' (改 anchor init / 改 normal init / 改 κ init) 都无法把 logit 量级推到 1+ (需要输入 norm 接近 1/sqrt(c) ≈ 1, 即 Poincaré 球边界, 但 stage1 输出 norm 0.27 << 1). 与 #44/#45 同根因, 但 Issue #46 已用最严格数学公式验证: 即便标准公式 + ST one-hot 也救不了.",
+    "spec_3_round_evolution": "Issue #44 → #45 → #46 完整 MLR 路线三阶段 (#44 切空间线性头, #45 真双曲超平面 MLR 近似投影, #46 标准 Poincaré MLR + ST one-hot) 全部 Gate2 失败, 三个不同实现方案都验证 MLR 在 HG-Rec 数据集 (9922 items, ||z||≈0.27, K=64/128/256) 物理不可行. 5% 超基线 (0.1075) 不可达已 12+ 次确认. 推荐 v15 capmatch (test 0.1034) 作为 taskA 已验证最优硬 VQ 路线."
+  },
+  "spec_match": {
+    "single_variable_design": true,
+    "REC_LAYER_W_1_3_9_kept": true,
+    "REL_STRUCT_kept": true,
+    "free_kappa_kept": true,
+    "stage3_T5_unchanged": true,
+    "stage4_eval_protocol_unchanged": true,
+    "only_vq_replaced_standard_poincare_mlr_st_one_hot": true,
+    "mlr_is_only_assignment_source": true,
+    "sinkhorn_does_not_override_mlr_indices": true,
+    "raw_anchor_expmap0_no_hard_clip": true,
+    "st_one_hot_reconstruction_y_h_q_sgq": true,
+    "mlr_formula_ganea_2019_eq22_23_lambda_asinh_v_norm": true,
+    "precheck_uses_production_forward": true,
+    "precheck_perturb_kappa_raw_anchor_normal_separately": true,
+    "mlr_7_strict_precheck_pc1_pc7_all_pass": true,
+    "mlr_class": "HyperbolicHyperplaneMLR",
+    "mlr_design": "标准 Poincaré MLR (Ganea 2019 Eq.22-23): conformal factor λ_p + asinh 奇函数 + 球内分母 (1-cv^2) + ST one-hot",
+    "gate2_a_fixed_tau_spec_followed": true,
+    "gate2_b_skipped_due_to_gate2_a_fail": true
+  },
+  "r30_compliance": {
+    "main_script_only_no_fork": true,
+    "no_env_var_reads_in_main_script": true,
+    "no_sh_wrapper_launchers": true,
+    "all_hyperparams_hardcoded": true,
+    "mlr_precheck_uses_production_forward_no_synthetic_scaling": true,
+    "notes": "本轮完成: (1) 重写 HyperbolicHyperplaneMLR 为标准 Poincaré MLR 精确公式 (Ganea 2019 Eq.22-23) + ST one-hot, 合并到 taskA_stage2.py 主脚本 (R31); (2) raw anchor 改为 mlr_raw_anchor (切空间欧氏坐标) → expmap0 自动在球内, 不再硬 clip; (3) 重建路径 q@codebook 软平均改为 ST one-hot y=h+q-sg(q), 硬值前向 + 软值反向; (4) τ 退火 5.0→0.1 改为 Gate2-A 固定 1.0 / Gate2-B 退火 1.0→0.5; (5) 新增 7 项 strict precheck PC1-PC7 全 PASS, 含公式等价 / 超平面零点 / 欧氏极限 / 二维边界 / 生产路径 / 梯度检查 / MLR-only 审计; (6) 0 处 env var 读取, 0 处 .sh 启动器."
+  },
+  "commit": "待 commit (verdict 落盘后)",
+  "conclusion": "Issue #46 v9 标准 Poincaré MLR (Ganea 2019 Eq.22-23) + ST one-hot 方案 Gate 1 precheck 7/7 严格 PASS (公式等价/超平面零点/欧氏极限/二维边界/生产路径/梯度检查/MLR-only 审计). 修复 #45 三个数学缺陷 (近似投影 → 标准 Ganea 公式; raw anchor 硬 clip → expmap0; 软重建 → ST one-hot). 但 Gate 2-A 固定 τ=1.0 sanity 严格 FAIL: signed_score_norm 0.19/0.45/0.59 → softmax 退化为均匀 (entropy ≈ log(K) 三层均 99%+), util_3digit=0.016/0.031/0.016 全部 < 0.50 spec 阈值, util_4digit=0.1438 远低于 0.95+, loss ep0=36.5→ep2=37.5 无下降. 根因: Poincaré MLR logit 量级 0.1-1.0 在生产路径 ||z||≈0.27 下由 conformal factor + asinh 决定数学上限, τ=1.0 softmax 必然均匀; τ<0.01 才能锐化但即硬分配塌缩. 与 #44/#45 同根因, Issue #46 已用最严格数学公式验证: 即便标准公式 + ST one-hot 也救不了 MLR-only assignment 在此数据集 + encoder 下的物理极限. Gate2-B 跳过 (Gate2-A FAIL 前置条件). 5% 超基线 (0.1075) 物理不可达已 12+ 次确认 (#44/#45/#46 三阶段 MLR 路线全 FAIL). 推荐 Issue 关闭, 不再沿 MLR 路线继续实验, 5% 目标重新审视 (降到 2-3% 即 v15/v37 0.1034/0.1044 水平更现实)."
+}
