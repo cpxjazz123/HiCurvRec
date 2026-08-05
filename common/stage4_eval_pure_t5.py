@@ -4,15 +4,12 @@
   HG_Rec.generate(num_beams=20, num_return_sequences=20, max_length=5)
   preds = preds[:, 1:] -> (B, 20, 4);  R@K = target 4-token 出现在 top-k beam.
 
-环境变量:
-  CKPT_PATH     必填 — HG_Rec_best.pth 路径
-  SID_NPY       必填 — 与训练一致的 SID npy (code->item 映射必须同源)
-  PRODUCT_DIR   必填 — 产物目录 (verdict 落这里)
-  DEVICE        默认 cuda:0
-  TAG           默认 "task"
-  EVAL_PARQUET  默认 test.parquet (也可传 valid.parquet 做交叉验证)
-  BATCH_SIZE    默认 96
-  EXPECTED_SID_SHA 可选 — 校验 SID 文件 sha256; 不设则跳过
+R30: 所有超参硬编码在脚本顶部常量区. launcher (.sh) 仅负责 GPU + 路径 +
+TAG/EVAL_PARQUET/EXPECTED_SID_SHA 校验, 不传任何超参.
+实验变体: 复制此脚本为新文件改常量, 不复用同一脚本 + env toggle.
+
+当前变体默认值 (Issue #41 + hyp 系列常用):
+  BATCH_SIZE=96, SEED=42, MAX_LEN=20, BEAM_SIZE=20, TOP_K=[5,10,20].
 """
 import os
 import sys
@@ -32,16 +29,19 @@ from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
 
-CKPT_PATH = os.environ["CKPT_PATH"]
-SID_NPY = os.environ["SID_NPY"]
-PRODUCT_DIR = Path(os.environ["PRODUCT_DIR"])
-DEVICE = os.environ.get("DEVICE", "cuda:0")
-TAG = os.environ.get("TAG", "task")
-EXPECTED_SID_SHA = os.environ.get("EXPECTED_SID_SHA", "")
+# 路径 / GPU / 校验 (R30: launcher 必传)
+CKPT_PATH = os.environ["CKPT_PATH"]                  # R30: 路径
+SID_NPY = os.environ["SID_NPY"]                      # R30: 路径
+PRODUCT_DIR = Path(os.environ["PRODUCT_DIR"])        # R30: 路径
+DEVICE = os.environ.get("DEVICE", "cuda:0")          # R30: GPU 选择
+TAG = os.environ.get("TAG", "task")                  # R30: metadata
+EXPECTED_SID_SHA = os.environ.get("EXPECTED_SID_SHA", "")  # R30: SID 校验
 EVAL_PARQUET = os.environ.get("EVAL_PARQUET",
-                              "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet")
-BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "96"))
-SEED = int(os.environ.get("SEED", "42"))
+                              "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet")  # R30: 评估集路径
+
+# 超参 (R30 硬编码 — 变体需 fork 脚本)
+BATCH_SIZE = 96
+SEED = 42
 
 CODEBOOK_SIZE = [64, 128, 256, 1]
 CONFIG = dict(

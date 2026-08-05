@@ -1,22 +1,16 @@
 """纯 T5 基线 stage3 训练 — 与 HG-Rec/train_HG-Rec.py 完全一致的方法.
 
+R30: 所有超参硬编码在脚本顶部常量区. launcher (.sh) 仅负责 GPU 选择 + 路径
+(SID_NPY / PRODUCT_DIR / DEVICE) + TAG/EXPECTED_SID_SHA 校验, 不传任何超参.
+实验变体: 复制此脚本为新文件改常量, 不复用同一脚本 + env toggle.
+
 用指定 SID npy (taskA/taskB stage2 新 SID) 作为 item-to-code 映射,
 T5 随机初始化从头训练, 无 adapter 注入, 监控 valid NDCG@20 (beam20), early stop.
 
-环境变量 (与 taskX_stage3.py 风格一致):
-  SID_NPY           必填 — stage2 新 SID npy 路径
-  PRODUCT_DIR       必填 — 产物目录 (taskX/_history/<tag>/)
-  DEVICE            默认 cuda:0
-  TAG               默认 "task" — 方向标签 (taskA/taskB), 写进 verdict
-  EXPECTED_SID_SHA  可选 — 校验 SID npy 文件字节 sha256; 不设则跳过 (预期内缺失)
-  NUM_EPOCHS        默认 200 (基线)
-  EARLY_STOP        默认 20  (基线)
-  BATCH_SIZE        默认 256 (基线)
-  INFER_SIZE        默认 96  (基线 eval batch)
-  SEED              默认 42  (项目 R5)
-  LR                默认 1e-4 (基线)
-  MAX_LEN           默认 20  (基线)
-  NUM_WORKERS       默认 0 (基线默认 4, 但 fork + CUDA 不稳, 用 0 数据量小不受影响)
+当前变体默认值 (Issue #41 任务 + hyp 系列常用):
+  NUM_EPOCHS=200, EARLY_STOP=20, BATCH_SIZE=256, INFER_SIZE=96,
+  SEED=42, LR=1e-4, MAX_LEN=20, NUM_WORKERS=0, STAGE3_BF16=True,
+  TORCH_COMPILE=False.
 
 产物 (PRODUCT_DIR/):
   HG_Rec_best.pth    最佳 NDCG@20 ckpt
@@ -46,24 +40,33 @@ from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
 
-# ---------------------------------------------------------------- config
-SID_NPY = os.environ["SID_NPY"]
-PRODUCT_DIR = Path(os.environ["PRODUCT_DIR"])
-DEVICE = os.environ.get("DEVICE", "cuda:0")
-TAG = os.environ.get("TAG", "task")
-EXPECTED_SID_SHA = os.environ.get("EXPECTED_SID_SHA", "")
-NUM_EPOCHS = int(os.environ.get("NUM_EPOCHS", "200"))
-EARLY_STOP = int(os.environ.get("EARLY_STOP", "20"))
-BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "256"))
-INFER_SIZE = int(os.environ.get("INFER_SIZE", "96"))
-SEED = int(os.environ.get("SEED", "42"))
-LR = float(os.environ.get("LR", "1e-4"))
-MAX_LEN = int(os.environ.get("MAX_LEN", "20"))
-NUM_WORKERS = int(os.environ.get("NUM_WORKERS", "0"))
+# ---------------------------------------------------------------- config (R30 硬编码)
+# 路径 / DDP infrastructure 保留 env var (launcher 控制, R30 豁免)
+SID_NPY = os.environ["SID_NPY"]                       # R30: 路径 — launcher 必传
+PRODUCT_DIR = Path(os.environ["PRODUCT_DIR"])         # R30: 路径 — launcher 必传
+DEVICE = os.environ.get("DEVICE", "cuda:0")           # R30: GPU 选择 — launcher 必传
+TAG = os.environ.get("TAG", "task")                   # R30: metadata 标签
+EXPECTED_SID_SHA = os.environ.get("EXPECTED_SID_SHA", "")  # R30: SID 校验 (可选, 预期内缺失)
+
+# 超参 (R30 硬编码 — 变体需 fork 脚本)
+NUM_EPOCHS = 200
+EARLY_STOP = 20
+BATCH_SIZE = 256
+INFER_SIZE = 96
+SEED = 42
+LR = 1e-4
+MAX_LEN = 20
+NUM_WORKERS = 0
+
 # 训练加速 (2026-08-03): bf16 autocast — T5 训练/beam 解码标准实践, forward 转 bf16 计算
 # (参数保持 fp32, backward 后 optimizer 在 fp32 权重更新, 数值影响极小). 默认开.
-STAGE3_BF16 = os.environ.get("STAGE3_BF16", "1") == "1"
+STAGE3_BF16 = True
+# v29 加速 (2026-08-04): torch.compile — PyTorch 2.x 内置, A100+ 推荐 reduce-overhead
+_TORCH_COMPILE = False
+_TRAIN_COMPILED = False
+
 # 多卡加速 (2026-08-03): DDP 数据并行. torchrun 启动自动注入 WORLD_SIZE/RANK/LOCAL_RANK.
+# 保留为 env var (DDP infrastructure, R30 豁免).
 # 全局 batch 严格保持 BATCH_SIZE (每卡 BATCH_SIZE//WORLD_SIZE, 梯度 all-reduce 平均) → 与单卡
 # batch 语义数值等价 (T5 无 batch norm). 非 DDP (WORLD_SIZE=1) 走原 GenRecDataLoader 路径不变.
 WORLD_SIZE = int(os.environ.get("WORLD_SIZE", "1"))
@@ -160,6 +163,15 @@ def train(model, train_loader, optimizer, device, epoch):
     n = 0
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
                     if STAGE3_BF16 else torch.nullcontext())
+    # v29 加速 (2026-08-04): torch.compile — env TORCH_COMPILE=1 启用
+    if _TORCH_COMPILE and not _TRAIN_COMPILED:
+        try:
+            model = torch.compile(model, mode="reduce-overhead", fullgraph=False)
+            globals()['_TRAIN_COMPILED'] = True
+            log("[v29] torch.compile enabled (mode=reduce-overhead)")
+        except Exception as e:
+            log(f"[v29] torch.compile failed: {e}")
+            globals()['_TRAIN_COMPILED'] = True  # 不再试
     for batch in train_loader:
         input_ids = batch["history"].to(device)
         attention_mask = batch["attention_mask"].to(device)
