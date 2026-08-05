@@ -1445,20 +1445,31 @@ def pc8_canonical_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
             chain_after = chain_layers()
             sid_after = sid_pair()
 
-            # 逐商品变化 (SID3/SID4 同步列表)
+            # 逐商品变化: SID4 为准 (3-digit 自身 flip + C 位级联 cascade)
             sid3_diff_mask = (sid_after["sid3"] != base_sid["sid3"]).any(axis=1)
             sid4_diff_mask = (sid_after["sid4"] != base_sid["sid4"]).any(axis=1)
-            flipped_idx = np.where(sid3_diff_mask)[0]
-            changed_items = [
-                {"item_id": items[int(i)][0],
-                 "old_3digit": base_sid["sid3"][int(i)].tolist(),
-                 "new_3digit": sid_after["sid3"][int(i)].tolist(),
-                 "old_4digit": base_sid["sid4"][int(i)].tolist(),
-                 "new_4digit": sid_after["sid4"][int(i)].tolist()}
-                for i in flipped_idx]
-            sid4_flip_set = set(np.where(sid4_diff_mask)[0].tolist())
-            sid3_flip_set = set(np.where(sid3_diff_mask)[0].tolist())
-            sid4_is_deterministic_fn = (sid4_flip_set == sid3_flip_set)
+            changed_idx = np.where(sid4_diff_mask)[0]
+            changed_items = []
+            n_cascade = 0
+            for i in changed_idx:
+                own3 = bool(sid3_diff_mask[i])
+                n_cascade += (0 if own3 else 1)
+                changed_items.append({
+                    "item_id": items[int(i)][0],
+                    "change_type": "own_3digit_flip" if own3 else "collision_digit_cascade",
+                    "old_3digit": base_sid["sid3"][int(i)].tolist(),
+                    "new_3digit": sid_after["sid3"][int(i)].tolist(),
+                    "old_4digit": base_sid["sid4"][int(i)].tolist(),
+                    "new_4digit": sid_after["sid4"][int(i)].tolist(),
+                })
+            # SID4=f(SID3) 重放一致性: 用各自 SID3 独立重算 add_4th_dedup_digit, 必须逐位一致
+            sid4_replay_base = mod.add_4th_dedup_digit(base_sid["sid3"], K_l2=mod.CODEBOOK_SIZES[-1])
+            sid4_replay_after = mod.add_4th_dedup_digit(sid_after["sid3"], K_l2=mod.CODEBOOK_SIZES[-1])
+            sid4_replay_consistent = (
+                int((sid4_replay_base != base_sid["sid4"]).sum()) == 0
+                and int((sid4_replay_after != sid_after["sid4"]).sum()) == 0)
+            sid3_unchanged = int(sid3_diff_mask.sum()) == 0
+            sid3_unchanged_but_sid4_changed = sid3_unchanged and int(sid4_diff_mask.sum()) > 0
 
             # residual 重算审计: 生产公式 + F_l 调用计数证明
             residual_analysis = {}
@@ -1486,7 +1497,8 @@ def pc8_canonical_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
                 for j in range(li))
             perturb_ok = (
                 prev_unchanged and cur_c_changed and cur_cb_changed
-                and cur_d_changed and d_delta > 0.0 and sid4_is_deterministic_fn)
+                and cur_d_changed and d_delta > 0.0
+                and sid4_replay_consistent and not sid3_unchanged_but_sid4_changed)
 
             # 恢复 + 校验 (同一进程内可逆性)
             with torch.no_grad():
@@ -1516,12 +1528,20 @@ def pc8_canonical_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
                 "collision_digit_changed": base_sid["collision_digit_hash"] != sid_after["collision_digit_hash"],
                 "sid4_changed": base_sid["sid4_hash"] != sid_after["sid4_hash"],
                 "sid4_flip_count": int(sid4_diff_mask.sum()),
+                "n_sid4_flip_without_own_3digit_change": n_cascade,
                 "changed_items": changed_items,
-                "assignment_unchanged_but_sid4_changed": False,
-                "sid4_deterministic_fn_of_sid3": sid4_is_deterministic_fn,
-                "sid4_property_note": ("add_4th_dedup_digit: C 位 = 对 SID3 key 按有序 ItemID 顺序 "
-                                       "计数 seen[key] % 256 — SID4 是 SID3 的确定性函数; "
-                                       "A (=SID3) 不变 → SID4 必不变, 该分支结构上无商品可解释"),
+                "layer_assignment_unchanged_but_sid4_changed": bool(
+                    int((sid_after["sid3"][:, li] != base_sid["sid3"][:, li]).sum()) == 0
+                    and int(sid4_diff_mask.sum()) > 0),
+                "sid3_unchanged_but_sid4_changed": sid3_unchanged_but_sid4_changed,
+                "sid4_replay_consistent": sid4_replay_consistent,
+                "sid4_property_note": ("add_4th_dedup_digit: C 位 = 对 SID3 key 按有序 ItemID 顺序计数 "
+                                       "seen[key] % 256 (tie-break=有序 ItemID) — SID4 是 SID3 的确定性 "
+                                       "函数 (重放一致性证明); 但 C 位是组内序号: 1 个 item 的 SID3 变化 "
+                                       "会级联改变同碰撞组内其后 item 的 C 位 → SID4 变化数可大于 SID3 "
+                                       "变化数; 全部 SID4 变化 item 在 changed_items 逐商品解释 "
+                                       "(own_3digit_flip / collision_digit_cascade); "
+                                       "SID3 不变 → SID4 必不变 (单向蕴含, sid3_unchanged_but_sid4_changed 必须 False)"),
                 "residual_analysis": residual_analysis,
                 "restored": {
                     "kappa_eff": kappa_restored, "c": c_restored, "ok": restored_ok,
