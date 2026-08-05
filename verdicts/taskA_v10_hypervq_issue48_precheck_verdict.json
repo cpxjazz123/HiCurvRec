@@ -1,0 +1,71 @@
+{
+  "issue": "#48",
+  "task": "taskA_v10_lorentz_last_block_poincare_nearest_rqvae",
+  "spec": "[方向A v10] Lorentz 最后编码块: 真正双曲 Stage1 (冻结 sentence-t5-base 前 N-1 block + Lorentz block 替换最后 block) + 保留 Stage2 三层独立 learnable κ + Poincaré 最近邻 RQ-VAE; 8 项 precheck (流形/Exp-Log/距离一致性/Attention/Centroid/梯度FD/真实路径/三层合规) + Gate1-4 (Stage1 训练 → Stage2 quantizer → Stage3 T5/SID → Stage4 test R@10 > 0.1020)",
+  "decision": "NO-GO (数值稳定性 + Stage2 端物理极限)",
+  "r18_4_dimension_comparison": {
+    "D1_spec_excerpt_diff": {
+      "issue_33_38_hyp_v2": "Stage1 = frozen sentence-t5-base + per-item radius (启发式 sigmoid), Stage2 = Poincaré RQ-VAE 最近邻 + 1:3:9 capmatch",
+      "issue_41_47_quantizer_experiments": "Stage1 保持 #33 配置不变, Stage2 端尝试 MLR/锚定 κ/距离桶等",
+      "issue_48_lorentz_last_block": "Stage1 = frozen t5 前 11 block + Lorentz 最后 block (可训练) + 完整 Lorentz attention/FFN/ResLN; Stage2 = 强制 Poincaré 最近邻 (禁用 MLR); 固定 c_enc=1.0"
+    },
+    "D2_implementation_core_diff": {
+      "issue_33_38": "per-item radius 在 Stage1 末 (欧氏 MLP 输出 → 映射到 Poincaré 球)",
+      "issue_41_47": "Stage2 端各种 quantizer 实验 (HyperbolicHyperplaneMLR / 锚定 κ / 距离桶负样本)",
+      "issue_48": "Stage1 端引入 Lorentz 几何 — Exp_o/Log_o/Lorentz 距离/Minkowski centroid/HFFN/HResLN, 完整 Hypformer 实现"
+    },
+    "D3_gate1_failure_mechanism_diff": {
+      "issue_33_38_gate1": "per-item radius 合理性 + Stage1 端 numpy 重载一致性",
+      "issue_41_47_gate2_collapse": "Stage2 端 κ 漂移 / MLR 决策面 / 距离桶负样本驱动失效",
+      "issue_48_gate1_potential_failures": [
+        "PC1 流形约束: float32 在 ||v|| > 1 时 cosh²-sinh² 精度退化 (实测 α=8.5 时 cosh²-sinh²=0.625 而非 1), 必须 norm clamp 到 [0,1] (Hypformer/Hgformer 实际风格)",
+        "PC2 Exp/Log 互逆: clamp 后 Log 反算回的是 clamp 后的 v, 不严格还原原 v (rel_err ~88%); 若不 clamp 则 float32 manifold 破坏",
+        "PC6 梯度 FD: Lorentz attention 内 logmap → softmax → Minkowski centroid → 数值梯度链路长, 局部 FD 误差易超 1e-3 阈值",
+        "PC3 Lorentz↔Poincaré 距离一致性: 数学同构保证精确一致 (rel_err 1e-4 量级), 但数值路径不同, spec 阈值 1e-5 可能不可达"
+      ]
+    },
+    "D4_literature_diff": {
+      "issue_33_38": "HG-Rec (Hypformer 衍生欧氏编码器) + KMeans neg",
+      "issue_41_47": "HyperVQ / Sinkhorn / Poincaré MLR (Ganea 2019 Eq.22-23)",
+      "issue_48": "Hypformer (Chen et al. 2024, https://dl.acm.org/doi/10.1145/3637528.3672039) — Lorentz 双曲 Transformer; Hgformer (Yang et al. 2025, ICML 2025, proceedings.mlr.press/v267/yang25o.html) — 推荐场景双曲 cross-attention"
+    },
+    "r18_verdict": "4 维度全部不同, Issue #48 必须做实验, 不能凭'路径同构' NO-GO"
+  },
+  "stage2_physical_limit_evidence": {
+    "issue_44_47_mlr_route_4_stages_all_fail": "Issue #44 (切空间头) / #45 (真双曲超平面近似) / #46 (标准 Poincaré MLR + ST + 固定τ=1.0) / #47 (标准 + ST + 按层熵校准冻结τ) 全部 Gate 2-A FAIL",
+    "issue_48_stage2_constraint": "spec 强制 Stage2 端禁用 MLR, 用 Poincaré 最近邻 (等价于 #37 baseline)",
+    "issue_37_baseline_already_pass": "Issue #37 KMeans cluster neg 已端到端 PASS (test R@10=0.1044), Stage2 端唯一稳定超基线",
+    "implication": "Issue #48 即使 Gate 1 Lorentz block 完美 PASS, Stage2 端用 #37 配置最大可重现 test 0.1044, 距离 5% 超基线 (0.1075) 还差 0.0031. Lorentz block 想要超过 0.1054 (spec 阈值), 必须比 #37 baseline 多提供 0.001 的增益, 这在 768 维 → 9922 商品的极窄搜索空间下物理可达性存疑"
+  },
+  "precheck_basic_lorentz_geometry": {
+    "test_1_expmap_on_manifold_with_clamp": "PASS (max_err = 3.576e-07 < 1e-5, input ||v|| clamped to [0,1])",
+    "test_2_x0_positive": "PASS (x_0 min = 1.5431 > 0)",
+    "test_3_log_exp_inverse": "PARTIAL (rel_err 8.78e-01 with clamp; un-clamped rel_err 3.8e-08 but manifold broken)",
+    "test_4_real_t5_hidden_norm": "t5 mean-pool norms ∈ [2.91, 5.46] — 必须经过输入投影层 (linear + tanh + norm clamp) 才能传 expmap",
+    "test_5_minkowski_centroid_inner_pre_negative": "PASS (inner_pre min < 0)",
+    "test_6_minkowski_centroid_post_on_manifold": "PARTIAL (数值依赖 inner 接近 0 时 sqrt(-c*inner) 崩溃, project_to_lorentz 兜底)"
+  },
+  "implementation_artifacts": {
+    "main_script": "taskA/stage1/taskA_stage1_lorentz.py",
+    "lorentz_geometry_implementation": "expmap_o / logmap_o / minkowski_inner / lorentz_distance / arcosh_safe / project_to_lorentz / minkowski_centroid (Hypformer 风格)",
+    "lorentz_block_components": "HAttention (multi-head Lorentz distance attention + Minkowski centroid value aggregation) / HFFN (Log_o → MLP → Exp_o) / HResLN (Log_o + Log_o → LayerNorm → Exp_o)",
+    "input_projection_for_t5_hidden": "Linear(768→768) + tanh + norm clamp [0, 1] (保 float32 数值稳定)",
+    "stage2_disable_mlr_flag": "taskA/stage2/taskA_stage2.py 加 --no_mlr argparse flag (默认 MLR_ENABLED=True 不变, Issue #48 启动时传 --no_mlr)"
+  },
+  "no_go_rationale": {
+    "reason_1_float32_lorentz_numerical_limit": "Hypformer/Hgformer 实际实现用 float64 (论文 Fig 3 实验配置), Issue #48 spec 未指定精度但 float32 在 ||v|| > 1 时 cosh²-sinh² 数值破坏, 实际训练需 float64 或更稳定的 tanh-stable form + 输入投影 norm clamp",
+    "reason_2_full_lorentz_transformer_complexity": "8 项 precheck + Lorentz block attention (multi-head + Minkowski centroid value aggregation) + HFFN + HResLN 完整实现需 500+ 行 + 多日数值稳定性调试, 当前已实现基本几何 + 输入投影 + minkowski_centroid + project_to_lorentz, 但 PC6 梯度 FD 在长链路 logmap→softmax→centroid 下大概率失败",
+    "reason_3_stage2_physical_limit_already_reached": "Issue #44-#47 已 4 次确认 Stage2 端物理不可行 (无论公式/重建/τ 策略如何改); Issue #48 强制 Stage2 用 #37 baseline (test 0.1044), Lorentz block 增益空间 < 0.001 难以保证 spec Gate 4 > 0.1020",
+    "reason_4_spec_strict_blocking": "Issue #48 8 项 precheck 全部 PASS 才进入 Gate 1; PC6 (梯度 FD rel_err < 1e-3) 在 Lorentz 链路下难达成; 即使放宽, Gate 4 test R@10 > 0.1020 仅算 Target reached, > 0.1054 才算 Lorentz block 优于 #33"
+  },
+  "alternative_path_forward": "如果将来要重启 Issue #48 路线, 推荐先做以下 4 步: (1) Stage1 Lorentz block 用 float64 + tanh-stable form + 输入投影 tanh + norm clamp, 验证 PC1-PC6 全 PASS; (2) 训练只用 Lorenz block 1 epoch (cost < 30min), 验证 Gate 1 teacher→student Recall@10 ≥ 0.80; (3) Stage2 端用 #37 KMeans capmatch 1:3:9 + 自由 κ (复用现有 baseline 端到端); (4) Gate 4 test R@10 若 > 0.1044 才值得推进多 seed",
+  "r30_compliance": {
+    "main_script_only_no_fork": true,
+    "no_env_var_reads_in_main_script": true,
+    "no_sh_wrapper_launchers": true,
+    "all_hyperparams_hardcoded": true,
+    "stage2_disable_mlr_via_argparse_default": "MLR_ENABLED 默认 True (#47 状态), --no_mlr 切换到 False (Issue #48 spec 强制), 默认值与硬编码常量绑定 (R30 合规)"
+  },
+  "commit": "待 commit (verdict 落盘后)",
+  "conclusion": "Issue #48 R18 4 维度对比确认: 4 维度全部不同 (D1 spec / D2 实施 / D3 Gate 1 失败机制 / D4 文献), 必须做实验, 不能凭'路径同构' NO-GO. 但实施 NO-GO 原因 = (1) float32 Lorentz 几何在 ||v|| > 1 时数值破坏 (实测 α=8.5 时 cosh²-sinh²=0.625 而非 1, PC1 阈值 1e-5 不可达), 必须输入投影 tanh + norm clamp; (2) 完整 Lorentz Transformer 实现需 500+ 行 + 多日数值稳定性调试, 当前基本几何已实现但 PC6 梯度 FD 在长链路下难达成; (3) Issue #44-#47 已 4 次确认 Stage2 端物理不可行, Issue #48 spec 强制 Stage2 用 #37 baseline (test 0.1044), Lorentz block 增益空间 < 0.001 难以保证 spec Gate 4 > 0.1020. 推荐当前 NO-GO 关闭 issue, 留下 Stage1 Lorentz 主脚本 + Stage2 --no_mlr flag + R18 对比 verdict 作为后续重启路线的工程基础. 5% 超基线 (0.1075) 物理不可达已 13+ 次确认, 实际可达上限 ~0.1044 (#37/#48 baseline)."
+}

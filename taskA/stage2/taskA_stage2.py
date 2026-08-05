@@ -213,12 +213,15 @@ _argparser.add_argument("--product_dir", type=str, default=DEFAULT_PRODUCT_DIR,
 _argparser.add_argument("--world_size", type=int, default=1, help="DDP world size (torchrun wrapper 必传)")
 _argparser.add_argument("--rank", type=int, default=0, help="DDP global rank")
 _argparser.add_argument("--local_rank", type=int, default=0, help="DDP local rank")
+_argparser.add_argument("--no_mlr", dest="mlr_enabled", action="store_false", default=MLR_ENABLED,
+                        help="禁用 MLR, 退回到硬 argmin(d) Poincaré 最近邻 (Issue #48 spec 强制)")
 _args = _argparser.parse_args()
 
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
+MLR_ENABLED = _args.mlr_enabled  # R30: 默认走常量 True (Issue #47 状态), --no_mlr 切换到 False (Issue #48 spec)
 
 # 引用 HG-Rec utils 函数
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec")
