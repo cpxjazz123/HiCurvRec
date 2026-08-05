@@ -26,6 +26,10 @@ precheck 决策阈值 (Issue #157 spec 强制):
 Gate 2 决策阈值:
   - PASS: 10+ κ 更新点 + reload 一致 (5/5) + 无 NaN/Inf + 真实 SID hash + item alignment + 对照消融 PASS
   - FAIL: 任一项不满足即 STOP
+
+R30 重构 (2026-08-05): 顶部 CONFIG 块硬编码所有超参 (env var 读取已清除, 仅 DDP framework 注入保留).
+历史实验变体 → 复制本脚本为新文件改常量, 不复用同一脚本 + env toggle.
+当前 CONFIG = hyp v5 + Issue #41 (锚定 κ) 配置, 是已知最优配方.
 """
 
 import os
@@ -48,151 +52,126 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
 import contextlib
 
-# R7: GPU 选择 (从环境变量读, 默认 GPU 0)
-os.environ.setdefault("TRITON_CACHE_DIR", "/home/wlia0047/.triton/cache_task448")
-os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
+# ──────────────────────────────────────────────────────────────
+# R30 CONFIG BLOCK (硬编码, 不读取 env var)
+# 历史实验变体 → 复制本脚本改常量, 不复用 env toggle.
+# ──────────────────────────────────────────────────────────────
+# Triton cache (路径配置, 写死避免污染默认 ~/.triton/cache)
+TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 
-# DDP 加速 (2026-08-03): 多卡数据并行. torchrun 启动自动注入 WORLD_SIZE/RANK/LOCAL_RANK.
-# 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均) →
-# 与单卡 batch 语义数值等价 (RQ-VAE 无 batch norm; 唯一差异是 InfoNCE 负样本池 = 本卡 batch,
-# v13 用 REC_NEG_N 增大补偿). 非 DDP (直接 python, WORLD_SIZE=1) 走原路径不变.
+# 数据路径
+ITEM_EMB_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb.parquet"
+
+# 数据集元数据
+N_ITEMS = 9922
+EMB_DIM = 768
+N_HIERARCHIES = 3
+
+# 量化器结构
+CODEBOOK_SIZES = [64, 128, 256]
+E_DIM = 32
+ENCODER_LAYERS = [512, 256, 128, 64]
+BETA = 1.0
+SK_EPSILONS = [0.0, 0.0, 0.0]
+SK_ITERS = 3
+
+# 训练超参
+BATCH_SIZE = 1024
+N_EPOCHS = 100
+LR = 3e-4
+SEED = 2024  # Issue #55/v5: 对齐基线 train_hrqvae.py
+KMEANS_INIT = True
+KMEANS_ITERS = 1000
+LOG_EVERY = 5
+WARMUP_EPOCHS = 20
+
+# Issue #55/v4 (fix_c): 默认 learnable κ 主路径 (已验证 c=1 固定走基线但不学习层级差异)
+FIX_C = False
+
+# Issue #157: 碰撞消解 (默认开, 对齐 gen_codebook.py)
+RESOLVE = True
+
+# v34 加速: bf16 autocast (RQ-VAE encoder MLP 完全兼容)
+STAGE2_BF16 = True
+
+# v34 监控: 码字利用率 (每 N epoch 跑一次 infer_sid 算 util_4digit)
+STAGE2_UTIL_LOG_EVERY = 10
+
+# Issue #75 论文移植: Maximum Distance Rescaling (平滑替代 proj_to_ball 硬截断)
+RESCALE = False  # 默认关, v7c 修复后已不需要
+
+# Issue #75 论文移植: Curvature-Aware Optimization (参数 / 曲率拆分优化器)
+CURV_AWARE = True
+
+# Issue #76: CURV_PRIOR 平滑 log-curvature 先验 (量化 stop-grad c, λ·Σκ² 仅防漂移)
+CURV_PRIOR = True
+CURV_PRIOR_LAMBDA = 0.1
+
+# Issue #76 第二步: 相对结构目标 (per-layer target 由码字数 n_e + δ 反解)
+REL_STRUCT = True
+REL_STRUCT_TARGET = 0.3  # legacy 固定值 (仅 δ≤0 时使用, 默认走 per-layer 反解)
+REL_STRUCT_LAMBDA = 1.0
+REL_STRUCT_DELTA = 0.05
+REL_STRUCT_TARGET_MIN = 0.15
+REL_STRUCT_TARGET_MAX = 0.55
+
+# v12 安全区间径向损失 (防球心坍缩 + 边界爆炸, 不决定最佳曲率)
+RAD_SAFE = False  # 默认关 (v13 后 REC_LOSS 主导曲率学习)
+RAD_SAFE_A = [0.102, 0.028, 0.022]
+RAD_SAFE_B = [0.600, 0.230, 0.143]
+RAD_SAFE_LAMBDA = 1.0
+
+# v12 推荐结构损失 (InfoNCE 决定曲率)
+REC_LOSS = True
+REC_LAMBDA = 1.0
+REC_TAU = 1.0
+REC_POS_K = 8
+REC_NEG_N = 16
+
+# v14 曲率分层反转: 浅层 κ 最高 (码字多 → 面积需求大)
+REC_LAYER_W = [1.0, 3.0, 9.0]
+
+# Issue #36 (v6-A Margin-limited InfoNCE): 停止过度几何展开
+REC_MARGIN = 0.0  # 默认关 (保持 v5 InfoNCE 行为)
+REC_MARGIN_TARGET = 0.5
+
+# Issue #37 (v6-A 分层语义负样本): KMeans cluster 标签 npz (空 = 随机负样本)
+REC_LAYER_NEG_FILE = ""
+
+# Issue #157: reload 一致性验证频率 (每 N 步验证一次, 默认 9 = 每 epoch)
+RECAL_CHECK_EVERY = 9
+
+# Issue #39 (v6-A/B 曲率 trust region + EMA)
+KAPPA_EMA_BETA = 0.0  # 默认关 (issue #41 单独跑)
+KAPPA_TRUST_REGION = 0.0  # 默认关
+KAPPA_TRUST_REGION_LAMBDA = 1.0
+KAPPA_WARMUP_EPOCHS = 0
+
+# Issue #41 (逐层锚定有界 κ): κ_effective = κ_anchor + tanh(κ_drift) * range
+KAPPA_ANCHORS = [0.024, 0.046, 0.056]  # hyp v5 验证过的逐层锚点
+KAPPA_ANCHOR_RANGE = 0.05  # κ ∈ [anchor - 0.05, anchor + 0.05]
+
+# Issue #55/v5→v7f: learnable κ 稳定 (u clamp 0.985 防边界梯度爆炸)
+SAFE_DISTANCE = True
+
+# 默认 GPU / 产物目录 (launch 脚本可通过 --gpu / --product_dir 覆盖)
+DEFAULT_GPU = 0
+DEFAULT_PRODUCT_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v6_issue41_anchored_100ep"
+
+# ──────────────────────────────────────────────────────────────
+# Triton cache 初始化
+# ──────────────────────────────────────────────────────────────
+os.makedirs(TRITON_CACHE_DIR, exist_ok=True)
+os.environ.setdefault("TRITON_CACHE_DIR", TRITON_CACHE_DIR)
+
+# DDP framework 注入 (torchrun 自动设置, 非 config, R30 不禁止 framework 注入)
 WORLD_SIZE = int(os.environ.get("WORLD_SIZE", "1"))
 RANK = int(os.environ.get("RANK", "0"))
 LOCAL_RANK = int(os.environ.get("LOCAL_RANK", "0"))
 DDP_MODE = WORLD_SIZE > 1
 
-# 引用 HG-Rec utils 函数 (poincare_distance / proj_to_ball / expmap0 / logmap0 / sinkhorn_algorithm)
+# 引用 HG-Rec utils 函数
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec")
-
-ITEM_EMB_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb.parquet"
-N_ITEMS = 9922
-EMB_DIM = 768
-N_HIERARCHIES = 3
-CODEBOOK_SIZES = [64, 128, 256]
-E_DIM = 32  # HG-Rec 默认 e_dim
-ENCODER_LAYERS = [512, 256, 128, 64]
-BATCH_SIZE = 1024
-N_EPOCHS = 100  # Issue #157 spec: 10+ κ 更新点足够
-LOG_EVERY = 5
-SK_EPSILONS = [0.0, 0.0, 0.0]  # HG-Rec 默认 (非 Sinkhorn 模式)
-SK_ITERS = 3
-BETA = 1.0
-# Issue #55/v5: seed 对齐基线 train_hrqvae.py (seed=2024). kmeans_init 对 seed 高度敏感,
-# taskA(42)/taskB(42) 均停在 unique_3digit≈88.3-88.4% vs 基线 99.7%, 疑似 seed 平台.
-SEED = 2024
-# Issue #55/v4 fix_c (固定 c=1) 已被用户否决: taskA 曲率必须保持可学习框架 (learnable κ).
-# 默认不设环境变量即 learnable κ 主路径; poincare_distance_safe (u clamp 0.985) 已根治边界梯度爆炸.
-FIX_C = False  # R30 硬编码 — Issue #41 变体: learnable κ 主路径
-# Issue #157 → gen_codebook.py 对齐: SID 迭代碰撞消解 (默认开). 仅码本训练充分 (1000ep) 时有效.
-RESOLVE = True  # R30 硬编码
-# v34 加速 (2026-08-04): bf16 autocast — 仿 stage3 v31, forward 转 bf16 (参数保持 fp32, backward
-# 后 optimizer 在 fp32 权重更新). RQ-VAE encoder 是 MLP, 完全兼容 bf16.
-STAGE2_BF16 = True  # R30 硬编码
-# v34 监控 (2026-08-04): util 监控 — 每 N epoch 算一次码字利用率, 早期发现 collapse.
-# 0=关闭, 否则每 N epoch 打印一次 util_per_layer_3digit + util_4digit.
-STAGE2_UTIL_LOG_EVERY = 10  # R30 硬编码 — Issue #41 变体: 每 10 epoch 监控 util
-# Issue #75 → 论文 arXiv:2405.13979 (NeurIPS'25, Robust Hyperbolic Learning with Curvature-Aware
-# Optimization) 两大机制移植. 目标: 解决 learnable κ 1000ep 塌缩 (κ 冲 clamp 下界 + SID unique=1):
-#   RESCALE=1: Maximum Distance Rescaling — proj_to_ball 硬截断 → 切空间 tanh 平滑渐近饱和.
-#   CURV_AWARE=1: Curvature-Aware Optimization schema (Algorithm 1) — 先参数(旧 c 几何) 后曲率拆分
-#     优化器. 切空间表示在曲率变化下不变, 消除 κ 突变对参数几何的冲击. 默认关 (实验开关).
-RESCALE = False  # R30 硬编码
-CURV_AWARE = True  # R30 硬编码 — Issue #41 变体启用
-# Issue #76 用户 v10 方案 (双路径曲率学习, 替代 v9 "κ 只靠先验"):
-#   路径 A (量化): 绝对量化损失只训练 encoder + codebook, 不训练曲率 — 量化距离用 stop-grad 曲率
-#     c_l^q = stopgrad(c_l), 消除 "距离随 c 减" 的尺度作弊 (v6 fix_c 从不塌缩 vs learnable 量化梯度全塌缩).
-#   路径 B (结构损失): 见 REL_STRUCT — 专门训练每层曲率 (量化后 latent 在球上的尺度无关比值 √c·r).
-#   平方先验 λ·Σκ² 仅防漂移 (软约束, 不主导). 曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l = 1,
-#     代码里 κ 即 ρ (κ = ln c). 根因: v9 只开先验 → κ 停在 0 (先验梯度 2λκ=0 死鞍点), 需结构损失驱动.
-CURV_PRIOR = True  # R30 硬编码 — Issue #41 变体启用
-CURV_PRIOR_LAMBDA = 0.1  # R30 硬编码
-# Issue #76 第二步: 相对结构目标 (曲率-尺度匹配). v9 实测: 第一步 (量化 stop-grad c) 后 κ 停在 0
-# (先验梯度 2λκ=0, 无学习信号), SID 100% 不塌缩但 κ 无法学层级差异. 本目标给 κ 唯一非零学习信号:
-#   Poincaré 球半径 R=1/√c, 量化后 latent 落在球的固定比例处 → √c·r → target.
-#   v10 固定 target=0.3 导致深层 (残差小, r̄≈0.12) 够不到 → κ 层级差异小 (std=0.0096).
-#   v11: per-layer target 由码字数 n_e 与特征尺度 δ 的测地间距约束反解 (见 _struct_target),
-#     码字多 → target 大 (深层 L2 n_e=256 → target≈0.62), 放大层级曲率差异.
-#   √c·r 是尺度无关比值 (不随绝对距离随 c 减而白嫖); 与平滑先验 λ·Σκ² 共存 (先验锚 c→1).
-REL_STRUCT = True  # R30 硬编码 — Issue #41 变体启用
-# per-layer target (用户 v11 方案): 由码字数 n_e 与特征尺度 δ 的测地间距约束反解.
-#   4πρ/(1-ρ²) ≥ n_e·δ  (Poincaré 度规拉伸 g=2/(1-ρ²), 环带测地周长≈4πρ/(1-ρ²))
-#   → A = n_e·δ/(4π), ρ* = (√(1+4A²)-1)/(2A). 码字多 → target 大 (需更大半径容纳).
-#   REL_STRUCT_TARGET 保留为 legacy 固定值 (仅当 δ≤0 时使用, 默认 per-layer).
-REL_STRUCT_TARGET = 0.3  # R30 硬编码 (legacy fixed value, 仅 δ≤0 时使用)
-REL_STRUCT_LAMBDA = 1.0  # R30 硬编码
-REL_STRUCT_DELTA = 0.05  # R30 硬编码
-REL_STRUCT_TARGET_MIN = 0.15  # R30 硬编码
-REL_STRUCT_TARGET_MAX = 0.55  # R30 硬编码
-# 用户 v12 第一步: 安全区间径向损失 (替代固定 target). v11 诊断 (2026-08-03) 证明深层 per-layer
-# target (0.42/0.55) 数学上不可达 — 健康基线 (c=1) 实测深层径向占用仅 0.087/0.058 (stats_radial.py).
-# 本损失职责 = 防球心坍缩 + 防边界爆炸, 不再决定最佳曲率:
-#   L_rad,l = ReLU(a_l − √c_l·r̄_l)² + ReLU(√c_l·r̄_l − b_l)²,  r̄_l=量化后 latent 欧氏范数均值 (detach).
-# 区间 [a,b] 由健康基线每层径向占用 p5-p95 放宽: a=0.5·p5, b=min(2·p95, 0.60).
-#   L0 n=64:  健康 mean=0.266 p5=0.205 p95=0.328 → [0.102, 0.600]
-#   L1 n=128: 健康 mean=0.087 p5=0.057 p95=0.115 → [0.028, 0.230]
-#   L2 n=256: 健康 mean=0.058 p5=0.044 p95=0.072 → [0.022, 0.143]
-RAD_SAFE = False  # R30 硬编码 — Issue #41 变体: 由 KAPPA_ANCHOR_RANGE 边界约束替代
-RAD_SAFE_A = [0.102, 0.028, 0.022]  # R30 硬编码 — 健康基线每层径向下界
-RAD_SAFE_B = [0.600, 0.230, 0.143]  # R30 硬编码 — 健康基线每层径向上界
-RAD_SAFE_LAMBDA = 1.0  # R30 硬编码
-# 用户 v12 第二步: 推荐结构损失 (决定曲率). 曲率增大的原因不再是"点须在球半径 X%",
-# 而是"某曲率能更准确保持该层推荐邻居/排序关系". 对 anchor i 取正邻居 j+ (item_emb 余弦
-# top-K 随机) 与负邻居 j− (batch 内随机), 要求量化后正邻居仍比负邻居近:
-#   L_rec,l = −log exp(−d+/τ) / (exp(−d+/τ) + Σ_j− exp(−d_j−/τ))
-# d 必须尺度归一化 (每 anchor 距离除以其均值), 消除"曲率仅整体放大/缩小距离降 loss"的作弊.
-# z 部分 detach → 只驱动 κ (曲率保序信号), 不影响 encoder/codebook 量化训练.
-REC_LOSS = True  # R30 硬编码 — Issue #41 变体启用 (决定 κ 主信号)
-REC_LAMBDA = 1.0  # R30 硬编码
-REC_TAU = 1.0  # R30 硬编码
-REC_POS_K = 8  # R30 硬编码
-REC_NEG_N = 16  # R30 硬编码
-# v14 曲率分层反转: 推荐损失每层权重 ∝ 码字数 (64:128:256 → 1:2:4). 密度均衡数学要求
-# Poincaré 球面面积 A(ρ)=4πρ²/(1-ρ²)² ∝ 码字数 → 浅层 L2(256码) 应 κ 最高、深层 L0(64码)
-# κ 最低. 而 v13 每层权重 1:1:1 下 κ=[0.313,0.241,0.186] 深层最高 (norm 大 → rec 信号天然强),
-# 方向与密度均衡相反. v14 用层权重放大浅层 rec 信号, 引导 κ 分层反转. 默认 1,1,1 保持 v12/v13 行为.
-REC_LAYER_W = [1.0, 3.0, 9.0]  # R30 硬编码 — v15 capmatch 1:3:9 (历史最优, 与锚点层级匹配)
-# Issue #36 (v6-A/B Margin-limited InfoNCE): 默认 off (REC_MARGIN=0) 保持 v5 InfoNCE 行为;
-# 设 REC_MARGIN>0 启用 hinge 损失 max(0, m_target - (d_neg - d_pos)), 防止正负样本持续推远
-# 导致 κ 漂移 / 几何过度展开. m_target 默认 0.5, 超过此 margin 后不再奖励曲率/距离扩大.
-REC_MARGIN = 0.0  # R30 硬编码 — InfoNCE 主路径
-REC_MARGIN_TARGET = 0.5  # R30 硬编码
-# Issue #37 (v6-A 分层语义负样本驱动独立曲率): 默认 off (empty file) 保持 v5 随机负样本;
-# 设 REC_LAYER_NEG_FILE 指向 npz 含 l0/l1/l2 簇标签 (KMeans on item_emb), 则 L0/L1/L2 层分别
-# 用 cluster_l0/l1/l2 选与 anchor 不同簇的负样本. cluster 不足时 fallback 到随机.
-REC_LAYER_NEG_FILE = ""  # R30 硬编码 — 默认随机负样本
-# 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
-# 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
-# RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
-RECAL_CHECK_EVERY = 9  # R30 硬编码 — Issue #41 变体: 每 epoch 一次 (零数值影响)
-# Issue #39 (v6-A/B 曲率 trust region + EMA + SID stability):
-#   KAPPA_EMA_BETA: EMA 平滑系数 (默认 0 = 关闭, v=1.0 完全保持旧值, v<1 加权新值).
-#   KAPPA_TRUST_REGION: log-c 变化幅度阈值 (默认 0 = 关闭); |κ_step - κ_ema| > thresh 时加惩罚.
-#   KAPPA_TRUST_REGION_LAMBDA: trust region 惩罚权重 (默认 1.0).
-#   KAPPA_WARMUP_EPOCHS: 前 N 个 epoch 不施加 trust region 惩罚 (让 κ 自由探索).
-KAPPA_EMA_BETA = 0.0  # R30 硬编码 — Issue #41 变体: 关闭 EMA (Issue #39 教训)
-KAPPA_TRUST_REGION = 0.0  # R30 硬编码 — Issue #41 变体: 关闭 trust region
-KAPPA_TRUST_REGION_LAMBDA = 1.0  # R30 硬编码
-KAPPA_WARMUP_EPOCHS = 0  # R30 硬编码
-# Issue #41 (Gate4 后续: 逐层锚定有界 κ):
-#   KAPPA_ANCHOR_FILE: 逐层 κ 锚点文件路径 (3 float, 默认 hyp v5 值).
-#   KAPPA_ANCHOR_RANGE: 每层最大漂移幅度 (默认 0.1, 即 κ ∈ [anchor-0.1, anchor+0.1]).
-KAPPA_ANCHOR_FILE = "/fs04/ar57/wenyu/GeneRec/taskA/_history/issue41_kappa_anchors.txt"  # R30 硬编码
-KAPPA_ANCHOR_RANGE = 0.05  # R30 硬编码 — Issue #41 变体: 收紧漂移幅度 ±0.05
-# 默认锚点: hyp v5 验证过的 [0.024, 0.046, 0.056]
-_DEFAULT_ANCHORS = [0.024, 0.046, 0.056]
-KAPPA_ANCHORS = _DEFAULT_ANCHORS
-if KAPPA_ANCHOR_FILE and os.path.isfile(KAPPA_ANCHOR_FILE):
-    try:
-        KAPPA_ANCHORS = [float(x) for x in np.loadtxt(KAPPA_ANCHOR_FILE, max_rows=N_HIERARCHIES)]
-        if len(KAPPA_ANCHORS) < N_HIERARCHIES:
-            raise ValueError(f"KAPPA_ANCHOR_FILE 提供 {len(KAPPA_ANCHORS)} 个锚点, 需 {N_HIERARCHIES}")
-    except Exception as _e:
-        print(f"[Issue41] load anchor failed: {_e}, fallback to hyp v5 defaults")
-        KAPPA_ANCHORS = _DEFAULT_ANCHORS
-
-PRODUCT_DIR = Path(os.environ.get("TASKA_STAGE2_PRODUCT_DIR",
-                                  "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync"))
-PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def sha256_file(path: str) -> str:
@@ -215,11 +194,8 @@ from model.utils import (
     mobius_add, _eps, artanh, poincare_distance,
 )
 
-# Issue #55/v5→v7f: learnable κ 数值稳定开关. SAFE_DISTANCE=1 用 u clamp 0.985 (梯度有界,
-# artanh' ≤~33); =0 用上游 poincare_distance (artanh clamp 1-1e-10, 距离不饱和但梯度可爆).
-# v7c/v7e (safe) 1000ep 长训练 SID 塌缩 unique=1 (SHA 相同), v6 fix_c (上游, c=1) 不塌缩 →
-# 需对照上游排除 u clamp 距离饱和致 index 区分度丧失的嫌疑. 默认 safe (已验证训练稳定).
-SAFE_DISTANCE = True  # R30 硬编码 — learnable κ 主路径 (u clamp 0.985 防止边界梯度爆炸)
+# Issue #55/v5→v7f: learnable κ 数值稳定开关. SAFE_DISTANCE=True 用 u clamp 0.985 (梯度有界,
+# artanh' ≤~33); False 用上游 poincare_distance (artanh clamp 1-1e-10, 距离不饱和但梯度可爆).
 if SAFE_DISTANCE:
 
     def poincare_distance_safe(x, y, c, u_max=0.985):
@@ -240,7 +216,7 @@ if SAFE_DISTANCE:
 if RESCALE:
     # 平滑替代 proj_to_ball 硬截断. 论文原理:
     #   z = log^K_0(x)  (切空间);  x' = exp^K_0( z · D_max·tanh(r·‖z‖)/‖z‖ )
-    #   r = atanh(0.99/(s·D_max)), s=tightness. ‖z‖ → s·D_max 时 ‖z'‖ → D_max (渐近饱和, 非硬截断),
+    #   r = atanh(0.99/(s·D_max)), s=tightness. ‖z‖ → s·D_max 时 ‖x'‖ → D_max (渐近饱和, 非硬截断),
     #   tanh 导数≤1 → 梯度全程有界, 无截断不连续 → 支持长训练稳定.
     # 动机 (v7c 塌缩根因): proj_to_ball 把大 norm 点全压到球面边缘 (norm=max_norm), 这些点相互间
     #   Poincaré 距离饱和 (safe u clamp 0.985) → index 区分度丧失 → SID unique=1.
@@ -251,7 +227,7 @@ if RESCALE:
     _UP_LOGMAP = logmap0
 
     def _dmax(c, frac: float = 0.99):
-        """Poincaré ball 切空间 log-norm 上限: ‖x‖=frac·R 处测地距离 = 2/sqrt(c)·artanh(frac).
+        """Poincaré 球 切空间 log-norm 上限: ‖x‖=frac·R 处测地距离 = 2/sqrt(c)·artanh(frac).
         c 可能为 torch.Tensor (get_c) 或 Python float (poincare_recon_loss 默认 c=1.0), 两者兼容."""
         art = math.atanh(frac)
         return (2.0 / c ** 0.5) * art
@@ -350,8 +326,8 @@ class KappaAwareVectorQuantization(nn.Module):
         """Issue #41: 逐层锚定有界 κ.
         κ_effective = κ_anchor_l + tanh(κ_drift_l) * range_l
         κ_anchor 来自 KAPPA_ANCHORS[l] (默认 hyp v5 = [0.024, 0.046, 0.056]).
-        tanh 把 κ_drift 约束到 [-1,1], range 约束最大幅度 (默认 0.1).
-        整体 κ_effective ∈ [κ_anchor_l - 0.1, κ_anchor_l + 0.1] (默认 range=0.1)."""
+        tanh 把 κ_drift 约束到 [-1,1], range 约束最大幅度 (默认 0.05).
+        整体 κ_effective ∈ [κ_anchor_l - 0.05, κ_anchor_l + 0.05] (默认 range=0.05)."""
         return self.kappa_anchor + torch.tanh(self.kappa_drift) * self.kappa_anchor_range
 
     def get_c(self) -> torch.Tensor:
@@ -914,14 +890,19 @@ def add_4th_dedup_digit(sid_3digit: np.ndarray, K_l2: int = 256) -> np.ndarray:
 # ──────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--gpu", type=int, default=DEFAULT_GPU)
     parser.add_argument("--epochs", type=int, default=N_EPOCHS)
     parser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--kmeans_init", dest="kmeans_init", action="store_true", default=True, help="use kmeans_init (default True, 防止 codebook 塌缩球心)")
-    parser.add_argument("--kmeans_iters", type=int, default=1000, help="kmeans init iterations (基线=1000, 对齐 codebook 初始化质量)")
+    parser.add_argument("--lr", type=float, default=LR)
+    parser.add_argument("--kmeans_init", dest="kmeans_init", action="store_true", default=KMEANS_INIT, help="use kmeans_init (default True, 防止 codebook 塌缩球心)")
+    parser.add_argument("--kmeans_iters", type=int, default=KMEANS_ITERS, help="kmeans init iterations (基线=1000, 对齐 codebook 初始化质量)")
     parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--product_dir", type=str, default=DEFAULT_PRODUCT_DIR,
+                        help="R30: 仅 launch 脚本通过此参数覆盖产物目录")
     args = parser.parse_args()
+
+    PRODUCT_DIR = Path(args.product_dir)
+    PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
     # DDP 加速 (2026-08-03): torchrun 注入 WORLD_SIZE/RANK/LOCAL_RANK; 非 DDP 单卡原路径不变.
     # 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均).
@@ -946,6 +927,8 @@ def main():
         print(f"GPU={args.gpu}, epochs={args.epochs}, batch_size={args.batch_size}, lr={args.lr}, "
               f"seed={args.seed}, world_size={WORLD_SIZE}, ddp={DDP_MODE}")
         print(f"Codebook sizes L0/L1/L2: {CODEBOOK_SIZES}, e_dim={E_DIM}")
+        print(f"KAPPA_ANCHORS={KAPPA_ANCHORS}, KAPPA_ANCHOR_RANGE={KAPPA_ANCHOR_RANGE}")
+        print(f"REC_LAYER_W={REC_LAYER_W}, REL_STRUCT={REL_STRUCT}, CURV_AWARE={CURV_AWARE}, REC_LOSS={REC_LOSS}")
         print(f"{'='*70}\n")
 
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
@@ -1106,7 +1089,6 @@ def main():
     if CURV_AWARE:
         for g in opt_kappa.param_groups:
             g["base_lr"] = g["lr"]
-    warmup_epochs = 20
 
     kappa_log = []
     train_curve = []
@@ -1118,10 +1100,10 @@ def main():
     nan_inf_detected = False  # 全程 NaN/Inf 旗标
     for epoch in range(args.epochs):
         # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
-        if epoch < warmup_epochs:
-            lr_scale = (epoch + 1) / warmup_epochs
+        if epoch < WARMUP_EPOCHS:
+            lr_scale = (epoch + 1) / WARMUP_EPOCHS
         else:
-            lr_scale = max(0.0, 1.0 - (epoch - warmup_epochs) / max(1, args.epochs - warmup_epochs))
+            lr_scale = max(0.0, 1.0 - (epoch - WARMUP_EPOCHS) / max(1, args.epochs - WARMUP_EPOCHS))
         for g in opt.param_groups:
             g["lr"] = g["base_lr"] * lr_scale
         if CURV_AWARE:
@@ -1415,9 +1397,10 @@ def main():
             "lr": args.lr,
             "seed": args.seed,
             "gpu": args.gpu,
-            "triton_cache_dir": os.environ.get("TRITON_CACHE_DIR"),
+            "triton_cache_dir": TRITON_CACHE_DIR,
             "item_emb_sha256": item_emb_sha,
             "n_items": N_ITEMS,
+            "r30_hardcoded": True,
         }
         with open(PRODUCT_DIR / "config.json", "w") as f:
             json.dump(config, f, indent=2)
