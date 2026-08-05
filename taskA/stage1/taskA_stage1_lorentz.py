@@ -1291,7 +1291,7 @@ def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
         model = mod.KappaAwareHRQVAE(
             in_dim=mod.EMB_DIM, num_emb_list=mod.CODEBOOK_SIZES, e_dim=mod.E_DIM,
             layers=mod.ENCODER_LAYERS, kmeans_init=False,
-            sk_eps=[0.0, 0.0, 0.0])
+            sk_eps=[0.0, 0.0, 0.0]).to(device)
         model.eval()
         item_t = torch.from_numpy(np.ascontiguousarray(item_emb, dtype=np.float32)).to(device)
         n_items = item_t.shape[0]
