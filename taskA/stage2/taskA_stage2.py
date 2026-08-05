@@ -60,7 +60,9 @@ import contextlib
 TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 
 # 数据路径
-ITEM_EMB_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb.parquet"
+# Issue #53: Stage2 Lorentz 输入 = Stage1 Lorentz 正式训练导出 (taskA_stage1_lorentz.py --train,
+# 9922×768 float32, 有序 ItemID 行序, item_ids_sha256=a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae)
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue52/item_emb_u32.npy"
 
 # 数据集元数据
 N_ITEMS = 9922
@@ -79,7 +81,7 @@ SK_ITERS = 3
 BATCH_SIZE = 1024
 N_EPOCHS = 100
 LR = 3e-4
-SEED = 2024  # Issue #55/v5: 对齐基线 train_hrqvae.py
+SEED = 42  # Issue #53 spec: seed=42 (Stage2 Lorentz κ 同步重校准)
 KMEANS_INIT = True
 KMEANS_ITERS = 1000
 LOG_EVERY = 5
@@ -1251,15 +1253,15 @@ def main():
     if is_main:
         print(f"Device: {device}\n")
 
-    item_emb_sha = sha256_file(ITEM_EMB_PARQUET)
+    item_emb_sha = sha256_file(ITEM_EMB_NPY)
     if is_main:
-        print(f"item_emb.parquet SHA256: {item_emb_sha[:32]}...\n")
+        print(f"item_emb_u32.npy SHA256: {item_emb_sha[:32]}...\n")
 
     # Load item embeddings (每卡全量加载, 9922×768 小; DDP 下各自 device)
     if is_main:
         print("Loading item embeddings...")
-    item_emb_full = EmbDataset(ITEM_EMB_PARQUET).embeddings
-    item_emb = torch.tensor(item_emb_full, dtype=torch.float32).to(device)
+    item_emb_full = np.load(ITEM_EMB_NPY)  # (9922, 768) float32, Lorentz Stage1 导出
+    item_emb = torch.from_numpy(np.ascontiguousarray(item_emb_full, dtype=np.float32)).to(device)
     if is_main:
         print(f"item_emb shape: {item_emb.shape}\n")
 
@@ -1807,125 +1809,126 @@ def main():
     nan_inf_detected = False  # 全程 NaN/Inf 旗标
 
     # ──────────────────────────────────────────────────────────────
-    # Issue #47 spec 强制: 按层熵校准冻结温度 τ_l
-    # 训练集固定子集 (seed=42, size=1024) → 逐层独立二分搜索唯一 τ_l 使
-    # H_l(τ_l) / log(K_l) = 0.70 ± 0.01 (区间 [1e-4, 10], 最多 60 步).
-    # 校准后冻结 τ_l, 训练中不调整, 无退火.
-    # ──────────────────────────────────────────────────────────────
-    # Issue #47 校准前必须先初始化 codebook (KMeans) + 跑一次 forward 让 mlr_raw_anchor / mlr_normal 真实 init
-    if is_main:
-        print(f"  [Issue47 Calib] 准备阶段: 触发 codebook + MLR 参数 init (跑一次 forward)...", flush=True)
-    with torch.no_grad():
-        # 全 batch 一次, 触发所有层 init_emb (KMeans) + raw_anchor + normal 真实初始化
-        _init_batch = item_emb[:args.batch_size].to(device)
-        _ = train_mm(_init_batch, use_sk=False)
-    if is_main:
-        print(f"  [Issue47 Calib] init done; raw_anchor/norm 已真实 init", flush=True)
-
-    calibration_log = []
-    for li, q in enumerate(train_mm.vq_layers):
-        K_l = q.n_e
-        log_K = math.log(K_l)
-        target_H = MLR_ENTROPY_TARGET_RATIO * log_K
-        # 固定子集 (训练集 + 固定 seed)
+    if MLR_ENABLED:
+        # Issue #47 spec 强制: 按层熵校准冻结温度 τ_l
+        # 训练集固定子集 (seed=42, size=1024) → 逐层独立二分搜索唯一 τ_l 使
+        # H_l(τ_l) / log(K_l) = 0.70 ± 0.01 (区间 [1e-4, 10], 最多 60 步).
+        # 校准后冻结 τ_l, 训练中不调整, 无退火.
+        # ──────────────────────────────────────────────────────────────
+        # Issue #47 校准前必须先初始化 codebook (KMeans) + 跑一次 forward 让 mlr_raw_anchor / mlr_normal 真实 init
+        if is_main:
+            print(f"  [Issue47 Calib] 准备阶段: 触发 codebook + MLR 参数 init (跑一次 forward)...", flush=True)
         with torch.no_grad():
-            # 用训练集 item_emb (严禁 validation/test)
-            n = min(MLR_CALIBRATION_SUBSET_SIZE, item_emb.shape[0])
-            gen = torch.Generator(device=item_emb.device).manual_seed(MLR_CALIBRATION_SUBSET_SEED + li)
-            subset_idx = torch.randperm(item_emb.shape[0], generator=gen, device=item_emb.device)[:n]
-            z_sub = item_emb[subset_idx].to(device)  # (n, EMB_DIM)
-            # encoder 投影到 e_dim
-            z_e = train_mm.encoder(z_sub)  # (n, e_dim)
-            c_l = q.get_c()
-            c_geom = c_l.detach() if CURV_PRIOR else c_l
-            z_ball = proj_to_ball(expmap0(z_e, c_geom), c_geom)
-            # 一次性算 MLR logits (用真实 c_l + 真实 raw/normal)
-            mlr_logits = q._compute_signed_score(z_ball, c_l)  # (n, K_l)
-        def entropy_at_tau(tau_val):
+            # 全 batch 一次, 触发所有层 init_emb (KMeans) + raw_anchor + normal 真实初始化
+            _init_batch = item_emb[:args.batch_size].to(device)
+            _ = train_mm(_init_batch, use_sk=False)
+        if is_main:
+            print(f"  [Issue47 Calib] init done; raw_anchor/norm 已真实 init", flush=True)
+
+        calibration_log = []
+        for li, q in enumerate(train_mm.vq_layers):
+            K_l = q.n_e
+            log_K = math.log(K_l)
+            target_H = MLR_ENTROPY_TARGET_RATIO * log_K
+            # 固定子集 (训练集 + 固定 seed)
             with torch.no_grad():
-                q_dist = F.softmax(mlr_logits / max(tau_val, 1e-8), dim=-1)
-                H = -(q_dist * (q_dist.clamp_min(1e-12)).log()).sum(dim=-1).mean().item()
-            return H
-        # 二分搜索: H(τ) 单调减 (τ 小 → 概率锐 → 熵小), 找 H = target_H 的 τ
-        lo, hi = MLR_CALIBRATION_TAU_MIN, MLR_CALIBRATION_TAU_MAX
-        H_lo = entropy_at_tau(lo)  # 应当 < target_H
-        H_hi = entropy_at_tau(hi)  # 应当 > target_H
-        # 验证区间可解
-        if H_lo > target_H:
-            # 最小 τ 仍 > target → 端点不可达
-            tau_calibrated = lo
-            H_calibrated = H_lo
-            converged = False
-            n_iter = 0
-        elif H_hi < target_H:
-            # 最大 τ 仍 < target → 端点不可达
-            tau_calibrated = hi
-            H_calibrated = H_hi
-            converged = False
-            n_iter = 0
-        else:
-            tau_calibrated = (lo + hi) / 2
-            H_calibrated = entropy_at_tau(tau_calibrated)
-            converged = abs(H_calibrated - target_H) < MLR_CALIBRATION_TOLERANCE
-            n_iter = 0
-            for it in range(MLR_CALIBRATION_BISECT_MAX_ITER):
-                n_iter = it + 1
-                if H_calibrated > target_H:
-                    # 熵太高 → τ 偏大 → 减小 τ
-                    hi = tau_calibrated
-                else:
-                    lo = tau_calibrated
+                # 用训练集 item_emb (严禁 validation/test)
+                n = min(MLR_CALIBRATION_SUBSET_SIZE, item_emb.shape[0])
+                gen = torch.Generator(device=item_emb.device).manual_seed(MLR_CALIBRATION_SUBSET_SEED + li)
+                subset_idx = torch.randperm(item_emb.shape[0], generator=gen, device=item_emb.device)[:n]
+                z_sub = item_emb[subset_idx].to(device)  # (n, EMB_DIM)
+                # encoder 投影到 e_dim
+                z_e = train_mm.encoder(z_sub)  # (n, e_dim)
+                c_l = q.get_c()
+                c_geom = c_l.detach() if CURV_PRIOR else c_l
+                z_ball = proj_to_ball(expmap0(z_e, c_geom), c_geom)
+                # 一次性算 MLR logits (用真实 c_l + 真实 raw/normal)
+                mlr_logits = q._compute_signed_score(z_ball, c_l)  # (n, K_l)
+            def entropy_at_tau(tau_val):
+                with torch.no_grad():
+                    q_dist = F.softmax(mlr_logits / max(tau_val, 1e-8), dim=-1)
+                    H = -(q_dist * (q_dist.clamp_min(1e-12)).log()).sum(dim=-1).mean().item()
+                return H
+            # 二分搜索: H(τ) 单调减 (τ 小 → 概率锐 → 熵小), 找 H = target_H 的 τ
+            lo, hi = MLR_CALIBRATION_TAU_MIN, MLR_CALIBRATION_TAU_MAX
+            H_lo = entropy_at_tau(lo)  # 应当 < target_H
+            H_hi = entropy_at_tau(hi)  # 应当 > target_H
+            # 验证区间可解
+            if H_lo > target_H:
+                # 最小 τ 仍 > target → 端点不可达
+                tau_calibrated = lo
+                H_calibrated = H_lo
+                converged = False
+                n_iter = 0
+            elif H_hi < target_H:
+                # 最大 τ 仍 < target → 端点不可达
+                tau_calibrated = hi
+                H_calibrated = H_hi
+                converged = False
+                n_iter = 0
+            else:
                 tau_calibrated = (lo + hi) / 2
                 H_calibrated = entropy_at_tau(tau_calibrated)
-                if abs(H_calibrated - target_H) < MLR_CALIBRATION_TOLERANCE:
-                    converged = True
-                    break
-        # 冻结: 写死 q._mlr_tau, 且 override anneal_tau 让后续 epoch 不动
-        q._mlr_tau = float(tau_calibrated)
-        q._mlr_tau_calibrated = True  # 让 anneal_tau 不再覆盖
-        # Issue #47 spec: 记录 ID/hash, 初始/最终熵, 温度, 迭代次数, 收敛状态
-        subset_id_hash = hashlib.sha256(subset_idx.cpu().numpy().tobytes()).hexdigest()[:16]
-        calibration_log.append({
-            "layer": li, "K": K_l, "log_K": log_K,
-            "subset_size": n, "subset_seed": MLR_CALIBRATION_SUBSET_SEED + li,
-            "subset_id_hash": subset_id_hash,
-            "target_entropy_ratio": MLR_ENTROPY_TARGET_RATIO,
-            "target_entropy_abs": target_H,
-            "H_at_tau_min": H_lo, "H_at_tau_max": H_hi,
-            "tau_calibrated": float(tau_calibrated),
-            "entropy_calibrated": float(H_calibrated),
-            "entropy_ratio_actual": float(H_calibrated / log_K) if log_K > 0 else 0.0,
-            "n_iter": n_iter,
-            "converged": bool(converged),
-            "tolerance": MLR_CALIBRATION_TOLERANCE,
-        })
-        if is_main:
-            status = "✅ CONVERGED" if converged else "❌ NOT CONVERGED (Gate2 failed spec)"
-            print(f"  [Issue47 Calib L{li}] K={K_l} log_K={log_K:.3f} target_H={target_H:.3f} "
-                  f"τ_calibrated={tau_calibrated:.6f} H={H_calibrated:.3f} "
-                  f"ratio={H_calibrated/log_K:.3f} n_iter={n_iter} → {status}", flush=True)
-    # 校准不通过 → Issue #47 spec 明确 Gate2 failed
-    calibration_pass = all(c["converged"] for c in calibration_log)
-    if not calibration_pass:
-        if is_main:
-            print(f"  [Issue47 Calib] 部分层未达目标熵 → Gate2 FAILED (spec 禁止扩区间重试)", flush=True)
-    if is_main:
-        # 落盘 calibration_log
-        calib_path = PRODUCT_DIR / "mlr_entropy_calibration.json"
-        with open(calib_path, "w") as f:
-            json.dump({
-                "issue": "#47",
-                "spec": "per-layer entropy calibration: H_l(τ_l)/log(K_l)=0.70±0.01, train subset only, bisect 60",
-                "subset_seed": MLR_CALIBRATION_SUBSET_SEED,
-                "subset_size": MLR_CALIBRATION_SUBSET_SIZE,
-                "tau_min": MLR_CALIBRATION_TAU_MIN,
-                "tau_max": MLR_CALIBRATION_TAU_MAX,
-                "target_ratio": MLR_ENTROPY_TARGET_RATIO,
+                converged = abs(H_calibrated - target_H) < MLR_CALIBRATION_TOLERANCE
+                n_iter = 0
+                for it in range(MLR_CALIBRATION_BISECT_MAX_ITER):
+                    n_iter = it + 1
+                    if H_calibrated > target_H:
+                        # 熵太高 → τ 偏大 → 减小 τ
+                        hi = tau_calibrated
+                    else:
+                        lo = tau_calibrated
+                    tau_calibrated = (lo + hi) / 2
+                    H_calibrated = entropy_at_tau(tau_calibrated)
+                    if abs(H_calibrated - target_H) < MLR_CALIBRATION_TOLERANCE:
+                        converged = True
+                        break
+            # 冻结: 写死 q._mlr_tau, 且 override anneal_tau 让后续 epoch 不动
+            q._mlr_tau = float(tau_calibrated)
+            q._mlr_tau_calibrated = True  # 让 anneal_tau 不再覆盖
+            # Issue #47 spec: 记录 ID/hash, 初始/最终熵, 温度, 迭代次数, 收敛状态
+            subset_id_hash = hashlib.sha256(subset_idx.cpu().numpy().tobytes()).hexdigest()[:16]
+            calibration_log.append({
+                "layer": li, "K": K_l, "log_K": log_K,
+                "subset_size": n, "subset_seed": MLR_CALIBRATION_SUBSET_SEED + li,
+                "subset_id_hash": subset_id_hash,
+                "target_entropy_ratio": MLR_ENTROPY_TARGET_RATIO,
+                "target_entropy_abs": target_H,
+                "H_at_tau_min": H_lo, "H_at_tau_max": H_hi,
+                "tau_calibrated": float(tau_calibrated),
+                "entropy_calibrated": float(H_calibrated),
+                "entropy_ratio_actual": float(H_calibrated / log_K) if log_K > 0 else 0.0,
+                "n_iter": n_iter,
+                "converged": bool(converged),
                 "tolerance": MLR_CALIBRATION_TOLERANCE,
-                "per_layer": calibration_log,
-                "calibration_pass": calibration_pass,
-            }, f, indent=2)
-        print(f"  [Issue47 Calib] log → {calib_path}", flush=True)
+            })
+            if is_main:
+                status = "✅ CONVERGED" if converged else "❌ NOT CONVERGED (Gate2 failed spec)"
+                print(f"  [Issue47 Calib L{li}] K={K_l} log_K={log_K:.3f} target_H={target_H:.3f} "
+                      f"τ_calibrated={tau_calibrated:.6f} H={H_calibrated:.3f} "
+                      f"ratio={H_calibrated/log_K:.3f} n_iter={n_iter} → {status}", flush=True)
+        # 校准不通过 → Issue #47 spec 明确 Gate2 failed
+        calibration_pass = all(c["converged"] for c in calibration_log)
+        if not calibration_pass:
+            if is_main:
+                print(f"  [Issue47 Calib] 部分层未达目标熵 → Gate2 FAILED (spec 禁止扩区间重试)", flush=True)
+        if is_main:
+            # 落盘 calibration_log
+            calib_path = PRODUCT_DIR / "mlr_entropy_calibration.json"
+            with open(calib_path, "w") as f:
+                json.dump({
+                    "issue": "#47",
+                    "spec": "per-layer entropy calibration: H_l(τ_l)/log(K_l)=0.70±0.01, train subset only, bisect 60",
+                    "subset_seed": MLR_CALIBRATION_SUBSET_SEED,
+                    "subset_size": MLR_CALIBRATION_SUBSET_SIZE,
+                    "tau_min": MLR_CALIBRATION_TAU_MIN,
+                    "tau_max": MLR_CALIBRATION_TAU_MAX,
+                    "target_ratio": MLR_ENTROPY_TARGET_RATIO,
+                    "tolerance": MLR_CALIBRATION_TOLERANCE,
+                    "per_layer": calibration_log,
+                    "calibration_pass": calibration_pass,
+                }, f, indent=2)
+            print(f"  [Issue47 Calib] log → {calib_path}", flush=True)
 
     for epoch in range(args.epochs):
         # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
@@ -2242,37 +2245,38 @@ def main():
         print(f"  SID util_4digit={util_4digit:.4f}, item alignment={item_alignment_check['alignment_ok']}: {'PASS' if sid_ok else 'FAIL'}")
         print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
         # Issue #44 v8: MLR 特有 Gate2 检查
-        final_mlr_tau = [float(q._mlr_tau) for q in train_mm.vq_layers]
-        final_mlr_entropy = [getattr(q, "_last_soft_entropy", 0.0) for q in train_mm.vq_layers]
-        final_mlr_consistency = [getattr(q, "_last_hard_soft_consistency", 1.0) for q in train_mm.vq_layers]
-        final_mlr_margin = [getattr(q, "_last_top1_top2_margin", 0.0) for q in train_mm.vq_layers]
-        # Issue #47: τ 校准后冻结, 校准值由 mlr_entropy_calibration.json 给出
-        # final_mlr_tau 应与 calibration_log 中 tau_calibrated 一致 (即 anneal_tau 不再覆盖)
-        expected_taus = [c["tau_calibrated"] for c in calibration_log]
-        if expected_taus:
-            tau_frozen_ok = all(abs(t - exp_t) < 1e-6 for t, exp_t in zip(final_mlr_tau, expected_taus))
-        else:
-            tau_frozen_ok = all(abs(t - MLR_TAU_START) < 1e-6 for t in final_mlr_tau)
-        # Issue #47 spec 强制: 校准失败 → Gate2 failed
-        calibration_pass_final = all(c["converged"] for c in calibration_log) if calibration_log else True
-        hs_consistent = all(c >= 0.95 for c in final_mlr_consistency)
-        margin_positive = all(m > 0.0 for m in final_mlr_margin)
-        L0_util_min = 0.50  # Issue #47 spec 严格: util≥0.50 (vs #46 0.109)
-        l0_util_ok = util_per_layer[0] >= L0_util_min
-        mlr_gate2_pass = (tau_frozen_ok and calibration_pass_final and hs_consistent
-                          and margin_positive and l0_util_ok)
-        print(f"\n  [Issue47 v9.1 按层熵校准冻结温度]")
-        if expected_taus:
-            print(f"  τ 冻结 (final={final_mlr_tau}, expected={expected_taus}): {'PASS' if tau_frozen_ok else 'FAIL'}")
-        else:
-            print(f"  τ 固定 (final={final_mlr_tau}, target={MLR_TAU_START}): {'PASS' if tau_frozen_ok else 'FAIL'}")
-        print(f"  校准收敛 (calibration_pass={calibration_pass_final}): {'PASS' if calibration_pass_final else 'FAIL'}")
-        print(f"  hard/soft 一致率 ≥ 0.95 ({final_mlr_consistency}): {'PASS' if hs_consistent else 'FAIL'}")
-        print(f"  top1/top2 margin > 0 ({final_mlr_margin}): {'PASS' if margin_positive else 'FAIL'}")
-        print(f"  soft entropy (final={final_mlr_entropy}, max≈log(K)): 监控")
-        print(f"  L0 util ≥ 0.50 (Issue #47 spec, got {util_per_layer[0]:.3f}): "
-              f"{'PASS' if l0_util_ok else 'FAIL'}")
-        gate2_pass = gate2_pass and mlr_gate2_pass
+        if MLR_ENABLED:
+            final_mlr_tau = [float(q._mlr_tau) for q in train_mm.vq_layers]
+            final_mlr_entropy = [getattr(q, "_last_soft_entropy", 0.0) for q in train_mm.vq_layers]
+            final_mlr_consistency = [getattr(q, "_last_hard_soft_consistency", 1.0) for q in train_mm.vq_layers]
+            final_mlr_margin = [getattr(q, "_last_top1_top2_margin", 0.0) for q in train_mm.vq_layers]
+            # Issue #47: τ 校准后冻结, 校准值由 mlr_entropy_calibration.json 给出
+            # final_mlr_tau 应与 calibration_log 中 tau_calibrated 一致 (即 anneal_tau 不再覆盖)
+            expected_taus = [c["tau_calibrated"] for c in calibration_log]
+            if expected_taus:
+                tau_frozen_ok = all(abs(t - exp_t) < 1e-6 for t, exp_t in zip(final_mlr_tau, expected_taus))
+            else:
+                tau_frozen_ok = all(abs(t - MLR_TAU_START) < 1e-6 for t in final_mlr_tau)
+            # Issue #47 spec 强制: 校准失败 → Gate2 failed
+            calibration_pass_final = all(c["converged"] for c in calibration_log) if calibration_log else True
+            hs_consistent = all(c >= 0.95 for c in final_mlr_consistency)
+            margin_positive = all(m > 0.0 for m in final_mlr_margin)
+            L0_util_min = 0.50  # Issue #47 spec 严格: util≥0.50 (vs #46 0.109)
+            l0_util_ok = util_per_layer[0] >= L0_util_min
+            mlr_gate2_pass = (tau_frozen_ok and calibration_pass_final and hs_consistent
+                              and margin_positive and l0_util_ok)
+            print(f"\n  [Issue47 v9.1 按层熵校准冻结温度]")
+            if expected_taus:
+                print(f"  τ 冻结 (final={final_mlr_tau}, expected={expected_taus}): {'PASS' if tau_frozen_ok else 'FAIL'}")
+            else:
+                print(f"  τ 固定 (final={final_mlr_tau}, target={MLR_TAU_START}): {'PASS' if tau_frozen_ok else 'FAIL'}")
+            print(f"  校准收敛 (calibration_pass={calibration_pass_final}): {'PASS' if calibration_pass_final else 'FAIL'}")
+            print(f"  hard/soft 一致率 ≥ 0.95 ({final_mlr_consistency}): {'PASS' if hs_consistent else 'FAIL'}")
+            print(f"  top1/top2 margin > 0 ({final_mlr_margin}): {'PASS' if margin_positive else 'FAIL'}")
+            print(f"  soft entropy (final={final_mlr_entropy}, max≈log(K)): 监控")
+            print(f"  L0 util ≥ 0.50 (Issue #47 spec, got {util_per_layer[0]:.3f}): "
+                  f"{'PASS' if l0_util_ok else 'FAIL'}")
+            gate2_pass = gate2_pass and mlr_gate2_pass
         print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 + Issue #44 MLR): "
               f"{'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
 
@@ -2365,21 +2369,25 @@ def main():
             "reload_5of5_consistent": reload_5of5_ok,
             "precheck_pass": precheck_pass,
             "ablation_diff_ok": ablation_ok,
-            # Issue #44 v8: MLR 监控 + Gate2 MLR 检查
+            # Issue #44 v8: MLR 监控 + Gate2 MLR 检查 (仅 MLR_ENABLED 时有意义;
+            # --no_mlr 时以下字段为预期内的缺失 → None, 见 R2)
             "issue": "#44",
-            "mlr_gate2_pass": mlr_gate2_pass,
-            "mlr_anneal_complete": tau_frozen_ok,
-            "mlr_hard_soft_consistent": hs_consistent,
-            "mlr_margin_positive": margin_positive,
-            "l0_util_ok_vs_issue37": l0_util_ok,
-            "final_mlr_tau": final_mlr_tau,
-            "final_mlr_soft_entropy": final_mlr_entropy,
-            "final_mlr_hard_soft_consistency": final_mlr_consistency,
-            "final_mlr_top1_top2_margin": final_mlr_margin,
             "mlr_kappa_dependent": mlr_kappa_dependent,
             "mlr_logits_diff_norm": mlr_signed_score_diff_per_layer,
             "mlr_assignment_diff_rate": mlr_assignment_diff_kappa,
         }
+        if MLR_ENABLED:
+            verdict.update({
+                "mlr_gate2_pass": mlr_gate2_pass,
+                "mlr_anneal_complete": tau_frozen_ok,
+                "mlr_hard_soft_consistent": hs_consistent,
+                "mlr_margin_positive": margin_positive,
+                "l0_util_ok_vs_issue37": l0_util_ok,
+                "final_mlr_tau": final_mlr_tau,
+                "final_mlr_soft_entropy": final_mlr_entropy,
+                "final_mlr_hard_soft_consistency": final_mlr_consistency,
+                "final_mlr_top1_top2_margin": final_mlr_margin,
+            })
         with open(PRODUCT_DIR / "verdict.json", "w") as f:
             json.dump(verdict, f, indent=2)
 
