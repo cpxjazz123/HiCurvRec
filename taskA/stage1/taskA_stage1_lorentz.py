@@ -59,6 +59,10 @@ ENCODER_MODEL = "sentence-transformers/sentence-t5-base"
 # Issue #48 spec: c_enc=1.0 固定 (Stage1 Lorentz 坐标系), 不搜索
 C_ENC = 1.0
 N_FROZEN_BLOCKS = 11
+# Issue #55: 训练分支专用 — 学生编码器前向完整 12 层 (信息源与 teacher_encode 一致,
+# 信息上限 1.0; #52 诊断证明 11 层截断在 12 层参照系下上限仅 0.3058, 0.80 不可达).
+# precheck 分支 (默认, #51/#54 canonical) 保持 N_FROZEN_BLOCKS=11 不受影响.
+N_FROZEN_BLOCKS_TRAIN = 12
 # 修复一: 平滑有界切空间参数化 (Issue #49 spec 强制, 不扫描)
 RHO_MAX = 1.0
 BOUND_EPS = 1e-12
@@ -68,7 +72,9 @@ GEOM_DTYPE = torch.float64
 ARCOSH_EPS = 1e-12
 # Stage1 Lorentz block 训练 (本 Issue 不执行, 保留入口供后续 Gate1 Issue)
 TRAIN_BATCH_SIZE = 64
-TRAIN_EPOCHS = 3
+# Issue #55: 3 epochs (465 steps) 训练后 R@10=0.3188 未收敛 → 延长至 20 epochs
+# 验证训练量 vs 结构冲突 (12 层 + position_bias 修复后信息源与教师完全一致)
+TRAIN_EPOCHS = 20
 TRAIN_LR = 1e-4
 TRAIN_SEED = 42
 DEVICE = "cuda:0"
@@ -392,8 +398,8 @@ class FrozenT5Encoder(nn.Module):
             p.requires_grad = False
         self.encoder.eval()
         self.n_frozen = n_frozen
-        assert n_frozen < len(self.encoder.encoder.block), (
-            f"n_frozen={n_frozen} must be < total blocks={len(self.encoder.encoder.block)}"
+        assert 0 < n_frozen <= len(self.encoder.encoder.block), (
+            f"n_frozen={n_frozen} must be in (0, {len(self.encoder.encoder.block)}]"
         )
         self.d_model = self.encoder.config.d_model
         self.n_blocks = len(self.encoder.encoder.block)
@@ -403,8 +409,18 @@ class FrozenT5Encoder(nn.Module):
             inputs_emb = self.encoder.shared(input_ids)
             ext_mask = self.encoder.get_extended_attention_mask(attention_mask, input_ids.shape).to(input_ids.device)
             hidden = inputs_emb
+            # Issue #55 修复: position_bias 层间传递 (T5 仅第一层含 relative attention bias
+            # 参数, 完整 forward 从第一层向后复用; 缺失时后续层 bias=0 → 学生编码缺位置信息,
+            # 与 teacher_encode 路径不一致, 逐位 diff=2.18; 修复后 diff=0.0 已验证).
+            position_bias = None
             for i in range(self.n_frozen):
-                hidden = self.encoder.encoder.block[i](hidden, attention_mask=ext_mask)[0]
+                if position_bias is None:
+                    layer_outputs = self.encoder.encoder.block[i](hidden, attention_mask=ext_mask)
+                else:
+                    layer_outputs = self.encoder.encoder.block[i](
+                        hidden, attention_mask=ext_mask, position_bias=position_bias)
+                hidden = layer_outputs[0]
+                position_bias = layer_outputs[1] if layer_outputs[1] is not None else position_bias
         return hidden  # (B, L, d_model) float32
 
 
@@ -1820,13 +1836,14 @@ def train_stage1_lorentz(model: Stage1LorentzEncoder, items: list[tuple[str, str
                      pd.read_parquet(parquet_path)["embedding"].values])
     reload_max_abs_err = float(np.abs(emb2 - u32).max().item())
 
-    # ── 验收 3: 教师-学生 Recall@10 对照 (诊断, 非硬阈值) ──
+    # ── 验收 3: 教师-学生 Recall@10 (Issue #55: 硬阈值 0.80, 表示保真度) ──
     recall10 = teacher_student_recall10(u32, teacher_emb)
-    log(f"[issue52] teacher_student_recall10={recall10:.4f} (教师自匹配 R@10 对照)")
+    log(f"[issue52] teacher_student_recall10={recall10:.4f} (硬阈值 >= 0.80, Issue #55)")
 
     ok = (u32.shape[0] == 9922 and len(set(ids_out)) == 9922
           and loss_decreasing and params_finite
-          and reload_max_abs_err < 1e-6 and bool(np.isfinite(u32).all()))
+          and reload_max_abs_err < 1e-6 and bool(np.isfinite(u32).all())
+          and recall10 >= 0.80)
     results = {
         "status": "PASS" if ok else "FAIL",
         "config": {
@@ -1877,7 +1894,7 @@ def main():
     if args.train:
         log(f"[stage1-lorentz] --train 模式: Issue #52 Gate1 训练 (seed={args.seed}, device={device})")
         items_train = load_items(ITEM_JSON)
-        model_train = Stage1LorentzEncoder(ENCODER_MODEL, N_FROZEN_BLOCKS, C_ENC, HFFN_HIDDEN).to(device)
+        model_train = Stage1LorentzEncoder(ENCODER_MODEL, N_FROZEN_BLOCKS_TRAIN, C_ENC, HFFN_HIDDEN).to(device)
         model_train.freeze_t5()
         train_result = train_stage1_lorentz(model_train, items_train, device, product_dir)
         log(f"[stage1-lorentz] Gate1 训练结果 = {train_result['status']}")

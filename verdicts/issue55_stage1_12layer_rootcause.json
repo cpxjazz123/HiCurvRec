@@ -1,0 +1,40 @@
+{
+  "issue": "#55",
+  "title": "[方向A Gate1修复] Stage1 学生编码器完整12层信息源: 目标 teacher→student R@10 ≥ 0.80",
+  "status": "FAIL",
+  "gate": "Gate 1",
+  "experiments": [
+    {
+      "variant": "12层 完整信息源 (N_FROZEN_BLOCKS_TRAIN=12) + position_bias 修复, 3 epochs",
+      "recall10": 0.3188,
+      "loss_curve_tail": "1.410→1.072→1.026",
+      "note": "position_bias 修复后学生与教师编码路径逐位一致 (diff=0.0)"
+    },
+    {
+      "variant": "同上, 20 epochs (TRAIN_EPOCHS=20)",
+      "recall10": 0.4318,
+      "loss_curve_tail": "1.410→0.951 (epoch9 后平台 ~0.95)",
+      "note": "loss 平台期 → R@10 饱和"
+    }
+  ],
+  "bug_fix": {
+    "position_bias": "FrozenT5Encoder.encode_to_token 缺 position_bias 层间传递 (T5 仅第一层含 relative attention bias 参数, 完整 forward 从第一层向后复用; 缺失时第 2+ 层 bias=0 → 学生编码缺位置信息). 修复后与 teacher_encode 路径逐位一致 (max_abs_diff=0.0, 修复前 2.18). 生产修复, 非补救性重训.",
+    "n_frozen_12": "N_FROZEN_BLOCKS_TRAIN=12 训练分支专用, precheck 分支保持 11 (canonical 不受影响)"
+  },
+  "ceiling_evidence": {
+    "teacher_full_vs_teacher_full": 1.0,
+    "teacher_full_vs_12层同路径无变换": "1.0 (逐位一致 diff=0, 信息源完全对齐)",
+    "student_variants_converged": {
+      "11层无position_3ep": 0.4432,
+      "12层修复_3ep": 0.3188,
+      "12层修复_20ep": 0.4318
+    },
+    "conclusion": "所有 Lorentz 双曲变换学生变体收敛 0.43-0.44; 零变换同路径 = 1.0 → 双曲几何重塑欧氏 kNN 结构, R@10 天花板 ≈ 0.44, 0.80 阈值对 Lorentz 架构结构性不可达 (非训练不足: loss 平台 + 收敛一致)"
+  },
+  "historical_end2end": {
+    "note": "同保真度 Lorentz Stage1 (taskA hyp v2) 端到端 valid R@10=0.1269 / test R@10=0.1048, 超 Task #84 基线 (0.1267/0.1024) — 0.43 保真度已足以支撑端到端超基线",
+    "reference": "memory: taska-hyp-v2-end2end-breakthrough"
+  },
+  "gate1_decision": "FAIL (teacher→student R@10=0.4318 < 0.80 预注册阈值 #54)",
+  "next": "需用户对验收标准拍板: (a) 验收改以端到端 R@10 为准 (保真度 0.44 作诊断记录), 或 (b) 保持 0.80 并接受 Gate1 长期 FAIL, 或 (c) 新架构 issue (放弃 Lorentz 变换或双输出)"
+}
