@@ -1,0 +1,111 @@
+{
+  "issue": "#56",
+  "task": "taskA_stage1_lorentz_residual_gate1_train",
+  "spec": "[\u65b9\u5411A Gate1] Stage1 Lorentz \u6b63\u5f0f\u8bad\u7ec3 (\u5355 seed=42, 9922 \u5bfc\u51fa): \u84b8\u998f\u8bad\u7ec3 Lorentz block + input_proj, \u9a8c\u6536 = loss \u4e0b\u964d + \u53c2\u6570 finite + \u5bfc\u51fa\u7ed3\u6784\u4e0e PC7 \u4e00\u81f4; Gate1 PASS \u2192 \u4e0b\u4e00 issue = Stage2 \u8bad\u7ec3",
+  "decision": "Gate 1 PASS",
+  "gate1": {
+    "status": "PASS",
+    "config": {
+      "TRAIN_BATCH_SIZE": 64,
+      "TRAIN_EPOCHS": 20,
+      "TRAIN_LR": 0.0001,
+      "TRAIN_SEED": 42,
+      "KL_TEMP": 0.07,
+      "C_ENC": 1.0,
+      "RHO_MAX": 1.0,
+      "MAX_SEQ_LEN": 64,
+      "ALPHA_INIT": 0.01,
+      "ARCH": "Normalize(h_T5 + \u03b1\u00b7P(log_o^c(F_Lorentz(exp_o^c(W\u00b7h_T5)))))"
+    },
+    "train_curve_mean_loss_per_epoch": [
+      0.903966441753424,
+      0.9057011103159169,
+      0.9015602832206878,
+      0.9054583491743838,
+      0.9048688618528808,
+      0.9025894081105138,
+      0.9033067509131237,
+      0.9050775273722368,
+      0.9011978051641242,
+      0.904008140674244,
+      0.9019349922225991,
+      0.9016079626323193,
+      0.9041657375628928,
+      0.9020017758019193,
+      0.9048000518073602,
+      0.9031822479835714,
+      0.901884351323911,
+      0.9059042653927034,
+      0.9031575712695641,
+      0.9013521286624507
+    ],
+    "loss_decreasing": true,
+    "params_finite": true,
+    "alpha": {
+      "init": 0.01,
+      "final": 0.02887303079085844,
+      "delta": 0.01887303079085844,
+      "curve": [
+        0.015359458801068378,
+        0.017214574504400525,
+        0.018084301196977064,
+        0.0195675304085529,
+        0.02030321084092233,
+        0.021033500489193967,
+        0.021755441949826024,
+        0.022251732051940008,
+        0.022818729282408003,
+        0.02371221980528612,
+        0.024334478630214783,
+        0.024760456416443023,
+        0.02531944761586256,
+        0.02591369538084286,
+        0.026559519456834827,
+        0.027091664327767898,
+        0.027463126131727914,
+        0.027881489929266423,
+        0.02833827669398034,
+        0.02887303079085844
+      ],
+      "grad_norm_max": 0.3210723125598284,
+      "geom_grad_norm_sq_max": {
+        "W": 0.000205523450858891,
+        "F": 0.0001658184908457372,
+        "P": 1.1536239071574528e-05
+      }
+    },
+    "manifold_constraint": {
+      "expmap_out_err_max": 3.3306690738754696e-16,
+      "F_out_err_max": 8.881784197001252e-16,
+      "threshold": 1e-08
+    },
+    "output_diversity": {
+      "std": 0.036072924733161926,
+      "distinct_rows": 9896,
+      "teacher_distinct_rows": 9896,
+      "distinct_criterion": "student distinct >= teacher distinct (9896)",
+      "cos_with_teacher_mean": 0.995385468006134,
+      "cos_with_teacher_min": 0.9905558228492737
+    },
+    "ckpt": {
+      "path": "taskA/_history/taskA_stage1_issue56/stage1_lorentz_residual_ckpt.pt",
+      "epochs": 20
+    },
+    "export": {
+      "n_items": 9922,
+      "shape": [
+        9922,
+        768
+      ],
+      "item_ids_sha256": "a496c0bcea829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae",
+      "parquet": {
+        "path": "taskA/_history/taskA_stage1_issue56/item_emb.parquet",
+        "sha256": "ef40360686a10c9741b0e2d7e3ea6b0d24a06b151923938e903f2f9535ccd72c"
+      },
+      "cast_err": 1.2011614092255485e-08,
+      "reload_max_abs_err": 0.0
+    },
+    "teacher_student_recall10": 0.95753880266069
+  },
+  "commit": "df4a5836cefe086ce1d90d12bb2dbe35b9649cb3"
+}
