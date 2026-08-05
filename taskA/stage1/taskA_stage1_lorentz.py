@@ -435,13 +435,18 @@ class Stage1LorentzEncoder(nn.Module):
             p.requires_grad = True
 
     def encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor,
-               return_float64: bool = False) -> torch.Tensor:
+               return_float64: bool = False, h_dropout: float = 0.0) -> torch.Tensor:
         """返回 u_item (B, d). 几何核心全程 float64; 默认返回 float32 (parquet 接口),
-        return_float64=True 时返回 float64 (precheck 用)."""
+        return_float64=True 时返回 float64 (precheck 用).
+        h_dropout>0 时 (仅训练模式) 在输入投影前对 hidden 施加 dropout (Issue #52 L_aug 增强)."""
         # 1. frozen t5 前 N-1 block → token hidden (B, L, d) float32
         hidden = self.frozen_t5.encode_to_token(input_ids, attention_mask)
         # 2. 输入投影 → float64 (修复二)
         h64 = hidden.to(GEOM_DTYPE)
+        if h_dropout > 0.0:
+            if not self.training:
+                raise RuntimeError("h_dropout>0 仅允许训练模式 (Issue #52)")
+            h64 = F.dropout(h64, p=h_dropout, training=True)
         v_tangent = torch.tanh(self.input_proj(h64))  # (B, L, d) float64
         # 3. 平滑有界 → Exp_o → Lorentz (修复一)
         v_b = smooth_bounded_v(v_tangent)
@@ -1709,14 +1714,153 @@ def teacher_student_recall10(student_emb: np.ndarray, teacher_emb: np.ndarray, k
 
 
 # ================================================================
+# Issue #52: Gate1 Stage1 Lorentz 正式训练 (--train 分支)
+# ================================================================
+
+def train_stage1_lorentz(model: Stage1LorentzEncoder, items: list[tuple[str, str]],
+                         device: torch.device, product_dir: Path) -> dict:
+    """Issue #52 Gate1: 单 seed=42 Stage1 Lorentz 蒸馏训练 + 9922 全量导出 + 验收.
+
+    教师 = 完整冻结 sentence-t5-base mean-pool (teacher_encode, 预计算一次);
+    学生 = Lorentz encode u_item; 目标 = batch 内关系分布 KL 蒸馏 (余弦/KL_TEMP)
+           + L_AUG_WEIGHT·dropout 增强一致性 (两次学生前向, DROPOUT_AUG);
+    超参硬编码 (R30): TRAIN_BATCH_SIZE=64 / TRAIN_EPOCHS=3 / TRAIN_LR=1e-4 /
+    KL_TEMP=0.07 / L_AUG_WEIGHT=0.1 / DROPOUT_AUG=0.2 / TRAIN_SEED=42.
+    R12: epoch 末强制保存 ckpt (删旧保新). 导出走 encode_all_items (PC7 同协议).
+    验收 (Gate 1 PASS): loss 单调下降 + 全部 trainable 参数 finite + 导出 9922×768
+    + reload <1e-6 + ItemID 顺序 hash; 任一不满足 → FAIL (禁止 fallback, 直接 raise).
+    """
+    from transformers import AutoTokenizer
+
+    product_dir.mkdir(parents=True, exist_ok=True)
+    tokenizer = AutoTokenizer.from_pretrained(ENCODER_MODEL)
+    n_items = len(items)
+    if n_items != 9922:
+        raise RuntimeError(f"Issue #52: n_items={n_items} != 9922")
+
+    log("[issue52] 预计算教师嵌入 (9922 完整 sentence-t5-base mean-pool)...")
+    teacher_emb = teacher_encode(items, device, batch_size=32)  # (9922, 768) float32
+    t_tensor = torch.from_numpy(np.ascontiguousarray(teacher_emb)).to(device)
+
+    model.train()
+    trainable = [p for p in model.parameters() if p.requires_grad]
+    for p in trainable:
+        if not bool(torch.isfinite(p).all()):
+            raise RuntimeError("Issue #52: 训练前 trainable 参数含 NaN/Inf")
+    optimizer = torch.optim.AdamW(trainable, lr=TRAIN_LR)
+
+    # 固定 seed 确定性 batch 序列 (TRAIN_SEED=42, 每个 epoch 重新打乱)
+    g = torch.Generator(device=device).manual_seed(TRAIN_SEED)
+    n_batches = (n_items + TRAIN_BATCH_SIZE - 1) // TRAIN_BATCH_SIZE
+    curve = []
+    ckpt_path = product_dir / "stage1_lorentz_ckpt.pt"
+    old_path = product_dir / "stage1_lorentz_ckpt.prev.pt"
+    for ep in range(TRAIN_EPOCHS):
+        perm = torch.randperm(n_items, generator=g, device=device)
+        ep_loss = 0.0
+        for start in range(0, n_items, TRAIN_BATCH_SIZE):
+            idx = perm[start:start + TRAIN_BATCH_SIZE]
+            texts = [items[int(i)][1] for i in idx]
+            enc = tokenizer(texts, padding="max_length", truncation=True,
+                            max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
+            t_batch = t_tensor[idx]  # (B, 768) float32
+            optimizer.zero_grad()
+            u1 = model.encode(enc.input_ids, enc.attention_mask, return_float64=True)
+            u2 = model.encode(enc.input_ids, enc.attention_mask, return_float64=True,
+                              h_dropout=DROPOUT_AUG)
+            # 关系分布 KL: 学生 vs 教师 (batch 内, 余弦相似度 / KL_TEMP)
+            s1 = F.normalize(u1, dim=-1)
+            s2 = F.normalize(u2, dim=-1)
+            ts = F.normalize(t_batch.to(GEOM_DTYPE), dim=-1)
+            sim_s = (s1 @ s1.T) / KL_TEMP
+            sim_t = (ts @ ts.T) / KL_TEMP
+            p_t = F.softmax(sim_t, dim=-1)
+            log_p_s = F.log_softmax(sim_s, dim=-1)
+            l_kl = -(p_t * log_p_s).sum(dim=-1).mean()
+            # dropout 增强一致性 (两个学生前向余弦一致性)
+            l_aug = (1.0 - (s1 * s2).sum(dim=-1)).mean()
+            loss = l_kl + L_AUG_WEIGHT * l_aug
+            loss.backward()
+            bad = [p.grad is not None and not bool(torch.isfinite(p.grad).all()) for p in trainable]
+            if any(bad):
+                raise RuntimeError(f"Issue #52: epoch {ep} 梯度 NaN/Inf @batch {start}")
+            optimizer.step()
+            ep_loss += float(loss.item())
+        mean_ep = ep_loss / n_batches
+        curve.append(mean_ep)
+        log(f"[issue52] epoch {ep + 1}/{TRAIN_EPOCHS} mean_loss={mean_ep:.6f}")
+        # R12: epoch 末强制保存 ckpt, 删旧保新 (磁盘只保留最新)
+        if ckpt_path.exists():
+            ckpt_path.rename(old_path)
+        torch.save({"state_dict": model.state_dict(), "epoch": ep + 1,
+                    "loss": mean_ep, "seed": TRAIN_SEED}, ckpt_path)
+        if old_path.exists():
+            old_path.unlink()
+        log(f"[issue52] ckpt saved: {ckpt_path} (epoch {ep + 1})")
+
+    # ── 验收 1: loss 下降 + 参数 finite ──
+    params_finite = all(bool(torch.isfinite(p).all()) for p in trainable)
+    loss_decreasing = len(curve) >= 2 and curve[-1] < curve[0]
+    log(f"[issue52] loss_curve={[f'{x:.6f}' for x in curve]} "
+        f"decreasing={loss_decreasing} params_finite={params_finite}")
+
+    # ── 验收 2: 9922 全量导出 (PC7 同协议) ──
+    model.eval()
+    u32, ids_out, export_stats = encode_all_items(model, items, tokenizer, device, batch_size=32)
+    if ids_out != [it[0] for it in items]:
+        raise RuntimeError("Issue #52: 导出 ItemID 顺序与输入不一致")
+    item_ids_sha256 = sha256_bytes("|".join(ids_out).encode())
+    parquet_path = product_dir / "item_emb.parquet"
+    df = pd.DataFrame({"item_id": ids_out,
+                       "embedding": [u32[i].tolist() for i in range(u32.shape[0])]})
+    df.to_parquet(parquet_path, index=False)
+    parquet_sha256 = sha256_file(parquet_path)
+    np.save(str(product_dir / "item_emb_u32.npy"), u32)
+    emb2 = np.stack([np.asarray(x, dtype=np.float32) for x in
+                     pd.read_parquet(parquet_path)["embedding"].values])
+    reload_max_abs_err = float(np.abs(emb2 - u32).max().item())
+
+    # ── 验收 3: 教师-学生 Recall@10 对照 (诊断, 非硬阈值) ──
+    recall10 = teacher_student_recall10(u32, teacher_emb)
+    log(f"[issue52] teacher_student_recall10={recall10:.4f} (教师自匹配 R@10 对照)")
+
+    ok = (u32.shape[0] == 9922 and len(set(ids_out)) == 9922
+          and loss_decreasing and params_finite
+          and reload_max_abs_err < 1e-6 and bool(np.isfinite(u32).all()))
+    results = {
+        "status": "PASS" if ok else "FAIL",
+        "config": {
+            "TRAIN_BATCH_SIZE": TRAIN_BATCH_SIZE, "TRAIN_EPOCHS": TRAIN_EPOCHS,
+            "TRAIN_LR": TRAIN_LR, "TRAIN_SEED": TRAIN_SEED,
+            "KL_TEMP": KL_TEMP, "L_AUG_WEIGHT": L_AUG_WEIGHT, "DROPOUT_AUG": DROPOUT_AUG,
+            "C_ENC": C_ENC, "RHO_MAX": RHO_MAX, "MAX_SEQ_LEN": MAX_SEQ_LEN,
+        },
+        "train_curve_mean_loss_per_epoch": curve,
+        "loss_decreasing": loss_decreasing,
+        "params_finite": params_finite,
+        "ckpt": {"path": str(ckpt_path), "epochs": TRAIN_EPOCHS},
+        "export": {
+            "n_items": int(u32.shape[0]), "shape": list(u32.shape),
+            "item_ids_sha256": item_ids_sha256,
+            "parquet": {"path": str(parquet_path), "sha256": parquet_sha256},
+            "cast_err": export_stats["max_f64_to_f32_cast_err"],
+            "reload_max_abs_err": reload_max_abs_err,
+        },
+        "teacher_student_recall10": recall10,
+    }
+    return results
+
+
+# ================================================================
 # main: precheck → verdict (本 Issue 不执行训练)
 # ================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="taskA Stage1 Issue #49 Lorentz precheck (PC1-PC8)")
+    parser = argparse.ArgumentParser(description="taskA Stage1 Lorentz: precheck (默认) 或 --train 正式训练 (Issue #52)")
     parser.add_argument("--product_dir", type=str, default=str(REPO / "taskA/_history/taskA_stage1_issue49"))
     parser.add_argument("--seed", type=int, default=PRECHECK_SEED)
     parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--train", action="store_true", help="Issue #52: Gate1 正式训练 + 9922 导出 (替代 precheck)")
     args = parser.parse_args()
 
     set_seed(args.seed)
@@ -1728,6 +1872,34 @@ def main():
         device = torch.device(f"cuda:{args.gpu}")
     else:
         device = torch.device("cpu")
+
+    # ============ Issue #52: Gate1 正式训练分支 ============
+    if args.train:
+        log(f"[stage1-lorentz] --train 模式: Issue #52 Gate1 训练 (seed={args.seed}, device={device})")
+        items_train = load_items(ITEM_JSON)
+        model_train = Stage1LorentzEncoder(ENCODER_MODEL, N_FROZEN_BLOCKS, C_ENC, HFFN_HIDDEN).to(device)
+        model_train.freeze_t5()
+        train_result = train_stage1_lorentz(model_train, items_train, device, product_dir)
+        log(f"[stage1-lorentz] Gate1 训练结果 = {train_result['status']}")
+        import subprocess as _sp2
+        r = _sp2.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=str(REPO))
+        commit_hash_train = r.stdout.strip()
+        verdict = {
+            "issue": "#52",
+            "task": "taskA_stage1_lorentz_gate1_train",
+            "spec": "[方向A Gate1] Stage1 Lorentz 正式训练 (单 seed=42, 9922 导出): 蒸馏训练 Lorentz block + input_proj, 验收 = loss 下降 + 参数 finite + 导出结构与 PC7 一致; Gate1 PASS → 下一 issue = Stage2 训练",
+            "decision": "Gate 1 PASS" if train_result["status"] == "PASS" else "Gate 1 FAIL",
+            "gate1": train_result,
+            "commit": commit_hash_train,
+        }
+        verdict_path = product_dir / "verdict.json"
+        with open(verdict_path, "w") as f:
+            json.dump(verdict, f, indent=2)
+        log(f"[stage1-lorentz] Gate1 verdict saved to {verdict_path}")
+        if train_result["status"] != "PASS":
+            raise SystemExit("Gate 1 FAIL: 训练验收不通过")
+        return
+
     log(f"[stage1-lorentz] config: TAG={TAG} C_ENC={C_ENC} N_FROZEN_BLOCKS={N_FROZEN_BLOCKS} "
         f"RHO_MAX={RHO_MAX} BOUND_EPS={BOUND_EPS} GEOM_DTYPE={GEOM_DTYPE} seed={args.seed} device={device}")
 
