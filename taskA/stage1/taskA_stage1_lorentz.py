@@ -578,6 +578,92 @@ def pc2_exp_log_inverse(model: Stage1LorentzEncoder, input_ids, attention_mask, 
     return {"status": "PASS" if all_ok else "FAIL", "threshold": PC2_INVERSE_MAX, "cases": results}
 
 
+def pc2_near_zero_inverse(c: float, device: torch.device) -> dict:
+    """Issue #50 补证一: PC2 近零稳定分支 + 精确零向量 + AD/中心差分.
+
+    v_j = 10^-j·a (j∈{4,6,8,10,12}, a 固定方向单位向量 seed=42) + 精确零向量.
+    非零样本 eps_inv = ||Log(Exp(v))-v||/max(||v||,1e-15) < 1e-8;
+    零向量: Exp_o(0)=o 绝对误差 <1e-12, Log_o(o)=0 绝对误差 <1e-12;
+    对 10^-8 / 10^-10 各记录输出坐标 0 的 autograd 与中心有限差分 (h=1e-5),
+    sign 一致且相对误差 <1e-3.
+    """
+    torch.manual_seed(PRECHECK_SEED)
+    d = 768
+    a = torch.randn(d, dtype=GEOM_DTYPE, device=device)
+    a = a / a.norm()
+
+    # 1. 非零近零样本
+    orders = [4, 6, 8, 10, 12]
+    cases = {}
+    all_ok = True
+    for j in orders:
+        v = (10.0 ** (-j)) * a
+        x = expmap_o(v, c)
+        v_rec = logmap_o(x, c)
+        denom = v.norm().clamp_min(1e-15)
+        rel = float((v_rec - v).norm().item() / denom.item())
+        finite = bool(torch.isfinite(v_rec).all().item())
+        ok = finite and rel < PC2_INVERSE_MAX
+        all_ok = all_ok and ok
+        cases[f"1e-{j}"] = {
+            "v_norm": float(v.norm().item()),
+            "eps_inv": rel,
+            "finite": finite,
+            "status": "PASS" if ok else "FAIL",
+        }
+
+    # 2. 精确零向量
+    sqrt_c = math.sqrt(c)
+    o = torch.zeros(d + 1, dtype=GEOM_DTYPE, device=device)
+    o[0] = 1.0 / sqrt_c
+    x0 = expmap_o(torch.zeros(d, dtype=GEOM_DTYPE, device=device), c)
+    exp_zero_err = float((x0 - o).abs().max().item())
+    log_zero_err = float(logmap_o(o, c).abs().max().item())
+    zero_ok = exp_zero_err < 1e-12 and log_zero_err < 1e-12
+    all_ok = all_ok and zero_ok
+
+    # 3. AD vs 中心差分 (10^-8 与 10^-10, 输出坐标 0, 输入坐标 0)
+    fd_details = []
+    h = PC6_FD_H
+    for v_scale in [1e-8, 1e-10]:
+        v0 = (v_scale * a).clone()
+        e0 = torch.zeros(d, dtype=GEOM_DTYPE, device=device)
+        e0[0] = 1.0
+        # AD
+        v = v0.clone().requires_grad_(True)
+        loss = logmap_o(expmap_o(v, c), c)[0]
+        loss.backward()
+        g_ad = float(v.grad[0].item())
+        # FD 中心差分 (no_grad, 同 h=1e-5)
+        with torch.no_grad():
+            loss_plus = logmap_o(expmap_o(v0 + h * e0, c), c)[0]
+            loss_minus = logmap_o(expmap_o(v0 - h * e0, c), c)[0]
+        g_fd = float(((loss_plus - loss_minus) / (2 * h)).item())
+        sign_ok = (g_ad > 0) == (g_fd > 0)
+        rel_g = abs(g_ad - g_fd) / max(abs(g_ad), abs(g_fd), 1e-12)
+        ok = math.isfinite(g_ad) and math.isfinite(g_fd) and sign_ok and rel_g < PC6_REL_MAX
+        all_ok = all_ok and ok
+        fd_details.append({
+            "v_scale": v_scale,
+            "coord": 0,
+            "g_AD": g_ad,
+            "g_FD": g_fd,
+            "relative_error": rel_g,
+            "sign_consistent": sign_ok,
+            "status": "PASS" if ok else "FAIL",
+        })
+
+    return {
+        "status": "PASS" if all_ok else "FAIL",
+        "threshold_nonzero_rel": PC2_INVERSE_MAX,
+        "threshold_zero_abs": 1e-12,
+        "direction_a_first_coords": a[:3].tolist(),
+        "cases": cases,
+        "zero_vector": {"exp_o_0_err": exp_zero_err, "log_o_o_err": log_zero_err, "status": "PASS" if zero_ok else "FAIL"},
+        "ad_vs_fd": {"fd_h": h, "threshold_rel": PC6_REL_MAX, "details": fd_details},
+    }
+
+
 def pc3_lorentz_poincare_isometry(model: Stage1LorentzEncoder, input_ids, attention_mask, c) -> dict:
     """PC3: Lorentz/Poincaré 等距一致性. p = x_{1:d}/(√c·x0+1)."""
     from model.utils import poincare_distance  # noqa: E402 (HG-Rec/model/utils.py:55)
@@ -883,6 +969,138 @@ def pc7_real_path_audit(model: Stage1LorentzEncoder, input_ids, attention_mask, 
     }
 
 
+def pc7_full_export_audit(model: Stage1LorentzEncoder, tokenizer, items: list, c: float,
+                          device: torch.device, product_dir: Path) -> dict:
+    """Issue #50 补证二: PC7 9922 全量生产导出 + parquet + reload + 确定性.
+
+    生产入口 = encode_all_items (与 Stage1 正式导出同入口), 完整 9922 商品, seed=42,
+    不做 optimizer step. 记录: 有序 ItemID SHA256 / forward-attn-centroid-HFFN-pooling
+    执行计数 (hooks) / 输出 shape-dtype-min-mean-std-max tangent norm / float64→float32
+    写出前后 max 绝对与相对误差 / parquet SHA256 + ItemID 顺序 hash / reload 逐元素
+    对比 (<1e-6) / 同 seed 只读再走一次输出 hash 完全一致.
+    """
+    model.eval()
+    n_batches = (len(items) + 31) // 32  # encode_all_items batch_size=32
+
+    # 执行计数: encode 实例替换 + attn/hffn forward hooks + lorentz_centroid 函数包装
+    counts = {"encode": 0, "attn": 0, "hffn": 0, "centroid": 0}
+    orig_encode = model.encode
+    orig_centroid = globals()["lorentz_centroid"]
+
+    def counted_encode(*args, **kwargs):
+        counts["encode"] += 1
+        return orig_encode(*args, **kwargs)
+
+    def counted_centroid(values, weights, c_):
+        counts["centroid"] += 1
+        return orig_centroid(values, weights, c_)
+
+    attn_h = model.lorentz_block.attn.register_forward_hook(lambda m, i, o: counts.__setitem__("attn", counts["attn"] + 1))
+    ffn_h = model.lorentz_block.ffn.register_forward_hook(lambda m, i, o: counts.__setitem__("hffn", counts["hffn"] + 1))
+    model.encode = counted_encode  # type: ignore[method-assign]
+    globals()["lorentz_centroid"] = counted_centroid
+
+    def stage_counts() -> dict:
+        return dict(counts)
+
+    try:
+        # ── 阶段 1: 生产入口全量导出 (float32 写出 + cast 绝对误差) ──
+        u32, ids_out, export_stats = encode_all_items(model, items, tokenizer, device, batch_size=32)
+        counts1 = stage_counts()
+        if ids_out != [it[0] for it in items]:
+            raise RuntimeError("PC7 补证: 导出 ItemID 顺序与输入不一致")
+        item_ids_sha256 = sha256_bytes("|".join(ids_out).encode())
+
+        # 输出统计 (tangent norm)
+        norms = np.linalg.norm(u32, axis=-1)
+        out_stats = {
+            "shape": list(u32.shape),
+            "dtype": str(u32.dtype),
+            "tangent_norm_min": float(norms.min().item()),
+            "tangent_norm_mean": float(norms.mean().item()),
+            "tangent_norm_std": float(norms.std().item()),
+            "tangent_norm_max": float(norms.max().item()),
+            "all_finite": bool(np.isfinite(u32).all().item()),
+        }
+        cast_abs_err = export_stats["max_f64_to_f32_cast_err"]
+
+        # ── 阶段 2: 同 seed 只读再走一次 (f64 全量, 确定性 hash + 相对 cast 误差) ──
+        all_u64 = np.zeros((len(items), model.frozen_t5.d_model), dtype=np.float64)
+        with torch.no_grad():
+            for start in range(0, len(items), 32):
+                batch = items[start:start + 32]
+                enc = tokenizer([it[1] for it in batch], padding="max_length", truncation=True,
+                                max_length=MAX_SEQ_LEN, return_tensors="pt").to(device)
+                u64b = model.encode(enc.input_ids, enc.attention_mask, return_float64=True)
+                all_u64[start:start + len(batch)] = u64b.cpu().numpy()
+        counts2 = stage_counts()
+        u32_2 = all_u64.astype(np.float32)
+        cast_rel_err = float(np.abs(all_u64 - u32_2.astype(np.float64)).max() / np.abs(all_u64).max())
+        det_max_abs = float(np.abs(u32_2 - u32).max().item())
+        det_hash_ok = sha256_bytes(u32_2.tobytes()) == sha256_bytes(u32.tobytes())
+
+        # ── parquet 写出 + reload (u32 同时落盘 npy, 供 PC8 补证 κ→SID 链路输入) ──
+        import pandas as pd
+        parquet_path = product_dir / "item_emb.parquet"
+        df = pd.DataFrame({"item_id": ids_out,
+                           "embedding": [u32[i].tolist() for i in range(u32.shape[0])]})
+        df.to_parquet(parquet_path, index=False)
+        parquet_sha256 = sha256_file(parquet_path)
+        np.save(str(product_dir / "item_emb_u32.npy"), u32)
+
+        df2 = pd.read_parquet(parquet_path)
+        reload_ids = [str(x) for x in df2["item_id"].tolist()]
+        reload_ids_sha256 = sha256_bytes("|".join(reload_ids).encode())
+        emb2 = np.stack([np.asarray(x, dtype=np.float32) for x in df2["embedding"].values])
+        reload_max_abs_err = float(np.abs(emb2 - u32).max().item())
+        ids_order_ok = reload_ids == ids_out
+
+        # ── 计数断言 (每 batch: encode 1 + attn 1 + hffn 1 + centroid 2 (attn 内 + pooling)) ──
+        expected1 = {"encode": n_batches, "attn": n_batches, "hffn": n_batches, "centroid": 2 * n_batches}
+        counts1_ok = counts1 == expected1
+        expected2 = dict(expected1)
+        counts2_ok = counts2["encode"] - counts1["encode"] == expected2["encode"] \
+            and counts2["attn"] - counts1["attn"] == expected2["attn"] \
+            and counts2["hffn"] - counts1["hffn"] == expected2["hffn"] \
+            and counts2["centroid"] - counts1["centroid"] == expected2["centroid"]
+
+        ok = (
+            u32.shape[0] == 9922
+            and len(set(ids_out)) == 9922
+            and np.isfinite(u32).all()
+            and reload_max_abs_err < 1e-6
+            and det_hash_ok and det_max_abs == 0.0
+            and counts1_ok and counts2_ok
+            and ids_order_ok and reload_ids_sha256 == item_ids_sha256
+        )
+        return {
+            "status": "PASS" if ok else "FAIL",
+            "n_items": u32.shape[0],
+            "n_unique_ids": len(set(ids_out)),
+            "item_ids_sha256": item_ids_sha256,
+            "execution_counts_stage1": counts1,
+            "execution_counts_stage2_increment": {k: counts2[k] - counts1[k] for k in counts},
+            "expected_counts_per_stage": expected1,
+            "counts_ok": counts1_ok and counts2_ok,
+            "output_stats": out_stats,
+            "cast_err": {"max_abs_f64_to_f32": cast_abs_err, "max_rel_f64_to_f32": cast_rel_err},
+            "parquet": {
+                "path": str(parquet_path),
+                "sha256": parquet_sha256,
+                "item_ids_order_hash": reload_ids_sha256,
+                "ids_order_unchanged": ids_order_ok,
+            },
+            "reload": {"max_abs_err_vs_pre_write_f32": reload_max_abs_err, "threshold": 1e-6,
+                       "ok": reload_max_abs_err < 1e-6},
+            "determinism": {"same_seed_rerun_max_abs_diff": det_max_abs, "hash_identical": det_hash_ok},
+        }
+    finally:
+        attn_h.remove()
+        ffn_h.remove()
+        del model.encode
+        globals()["lorentz_centroid"] = orig_centroid
+
+
 def pc8_three_layer_compliance(stage2_module_path: str) -> dict:
     """PC8: 三层曲率与最近邻合规 (不训练 Stage2, 生产路径最小审计).
 
@@ -1004,6 +1222,211 @@ def pc8_three_layer_compliance(stage2_module_path: str) -> dict:
     )
     results["status"] = "PASS" if all_ok else "FAIL"
     return results
+
+
+def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: torch.device,
+                        product_dir: Path) -> dict:
+    """Issue #50 补证三: PC8 运行时断言 + κ→SID 全链路 + reload 5/5.
+
+    1. importlib 加载 stage2 (--no_mlr), verdict 记录运行时实际值:
+       MLR_ENABLED is False / SK_EPSILONS == [0,0,0] / assignment_source = poincare_argmin.
+    2. 类级/函数级包装计数: _compute_mlr_logits 与 sinkhorn_algorithm 调用均为 0
+       (不靠源码行号推断).
+    3. 三层分别扰动 κ_eff ≈ +1e-3 (kappa_drift.data += 1e-3, 记录实际 Δκ_eff), 按生产路径
+       κ→c→scale(expmap0/proj_to_ball 内联)→Π_c(E)→D→A→r→SID 同步重算, 对 c/投影后
+       codebook/distance/assignment/residual/最终 SID 记录 SHA256 与数值变化量;
+       更早层必须不变; 当前层 c/Π(E)/D 必须变化; A/SID 允许不翻转但 hash 必须进入真实计算.
+    4. 恢复原 κ 后同一 9922 输入 infer_sid (resolve=False 纯 argmin) reload 5/5,
+       五次 SID 与恢复前基准逐元素完全一致, 分别提交 hash.
+
+    输入 item_emb = Stage1 Lorentz 初始化导出 (9922, EMB_DIM) float32 (PC7 补证产物).
+    """
+    import importlib.util
+    import sys as _sys
+
+    results = {"status": "FAIL", "runtime": None, "chain": {}, "reload_5_of_5": {}}
+    saved_argv = list(_sys.argv)
+    _sys.argv = ["taskA_stage2_issue50_audit", "--no_mlr"]
+    spec = importlib.util.spec_from_file_location("stage2_issue50", stage2_module_path)
+    mod = importlib.util.module_from_spec(spec)
+    _sys.modules["stage2_issue50"] = mod
+    spec.loader.exec_module(mod)
+    _sys.argv = saved_argv
+
+    # ── 1. 运行时断言 (记录实际值, 不靠建议命令) ──
+    runtime = {
+        "mlr_enabled_actual": bool(mod.MLR_ENABLED),
+        "sk_epsilons_actual": list(mod.SK_EPSILONS),
+        "assignment_source": "poincare_argmin" if (not mod.MLR_ENABLED and mod.SK_EPSILONS == [0.0, 0.0, 0.0]) else "OTHER",
+        "vq_class": "KappaAwareVectorQuantization (hard argmin(d))" if not mod.MLR_ENABLED else "HyperbolicHyperplaneMLR",
+    }
+    runtime_ok = (
+        runtime["mlr_enabled_actual"] is False
+        and runtime["sk_epsilons_actual"] == [0.0, 0.0, 0.0]
+        and runtime["assignment_source"] == "poincare_argmin"
+    )
+    results["runtime"] = runtime
+
+    # ── 2. 调用计数包装 (审计全程有效, 恢复原函数) ──
+    counts = {"mlr_logits": 0, "sinkhorn": 0}
+    orig_mlr = mod.HyperbolicHyperplaneMLR._compute_mlr_logits
+    orig_sk = mod.sinkhorn_algorithm
+
+    def counted_mlr(self, *args, **kwargs):
+        counts["mlr_logits"] += 1
+        return orig_mlr(self, *args, **kwargs)
+
+    def counted_sk(*args, **kwargs):
+        counts["sinkhorn"] += 1
+        return orig_sk(*args, **kwargs)
+
+    mod.HyperbolicHyperplaneMLR._compute_mlr_logits = counted_mlr
+    mod.sinkhorn_algorithm = counted_sk
+
+    def sha(t: torch.Tensor) -> str:
+        return sha256_bytes(np.ascontiguousarray(t.detach().cpu().numpy()).tobytes())
+
+    try:
+        # ── 3. 构造模型 (eval, 不训练不 init, 确定性) ──
+        model = mod.KappaAwareHRQVAE(
+            in_dim=mod.EMB_DIM, num_emb_list=mod.CODEBOOK_SIZES, e_dim=mod.E_DIM,
+            layers=mod.ENCODER_LAYERS, kmeans_init=False,
+            sk_eps=[0.0, 0.0, 0.0])
+        model.eval()
+        item_t = torch.from_numpy(np.ascontiguousarray(item_emb, dtype=np.float32)).to(device)
+        n_items = item_t.shape[0]
+        if n_items != 9922:
+            raise RuntimeError(f"PC8 补证: 输入 n_items={n_items} != 9922")
+        input_hash = sha256_bytes(np.ascontiguousarray(item_emb, dtype=np.float32).tobytes())
+
+        # 链路复算 (与生产 forward 相同的几何: proj_to_ball∘expmap0, poincare_distance, argmin, residual)
+        def chain_layers() -> list:
+            z = model.encoder(item_t)
+            residual = z
+            layers = []
+            for li, q in enumerate(model.vq_layers):
+                latent = residual.view(-1, q.e_dim)
+                c_geom = q.get_c()
+                latent_h = mod.proj_to_ball(mod.expmap0(latent, c_geom), c_geom)
+                cb_h = mod.proj_to_ball(mod.expmap0(q.embeddings.weight, c_geom), c_geom)
+                d = mod.poincare_distance(
+                    latent_h.unsqueeze(1).expand(-1, q.n_e, -1),
+                    cb_h.unsqueeze(0).expand(latent_h.shape[0], -1, -1), c_geom).squeeze(-1)
+                A = torch.argmin(d, dim=-1)
+                x_q = q.embeddings.weight.index_select(0, A)
+                residual_next = residual - x_q
+                layers.append({
+                    "c": float(q.get_c().item()),
+                    "c_hash": sha(c_geom),
+                    "codebook_projected_hash": sha(cb_h),
+                    "distance_hash": sha(d),
+                    "assignment_hash": sha(A),
+                    "residual_hash": sha(residual_next),
+                    "d_sum": float(d.sum().item()),
+                })
+                residual = residual_next
+            return layers
+
+        def sid_once() -> np.ndarray:
+            return mod.infer_sid(model, item_t, batch_size=1024, resolve=False)
+
+        # ── 基线 ──
+        base_chain = chain_layers()
+        sid_base = sid_once()
+        sid_base_hash = mod.sha256_array(sid_base)
+
+        # ── 4. 三层分别扰动 κ_eff ≈ +1e-3 ──
+        perturb_results = {}
+        chain_ok = True
+        for li in range(3):
+            q = model.vq_layers[li]
+            kappa_before = float(q.get_effective_kappa().item())
+            c_before = float(q.get_c().item())
+            with torch.no_grad():
+                q.kappa_drift.data.add_(1e-3)
+            kappa_after = float(q.get_effective_kappa().item())
+            c_after = float(q.get_c().item())
+            chain_after = chain_layers()
+            sid_after = sid_once()
+            sid_after_hash = mod.sha256_array(sid_after)
+
+            prev_unchanged = all(
+                chain_after[j]["c_hash"] == base_chain[j]["c_hash"]
+                and chain_after[j]["codebook_projected_hash"] == base_chain[j]["codebook_projected_hash"]
+                and chain_after[j]["distance_hash"] == base_chain[j]["distance_hash"]
+                and chain_after[j]["assignment_hash"] == base_chain[j]["assignment_hash"]
+                for j in range(li))
+            cur_c_changed = chain_after[li]["c_hash"] != base_chain[li]["c_hash"]
+            cur_cb_changed = chain_after[li]["codebook_projected_hash"] != base_chain[li]["codebook_projected_hash"]
+            cur_d_changed = chain_after[li]["distance_hash"] != base_chain[li]["distance_hash"]
+            d_delta = abs(chain_after[li]["d_sum"] - base_chain[li]["d_sum"])
+            a_changed = chain_after[li]["assignment_hash"] != base_chain[li]["assignment_hash"]
+            sid_changed = sid_after_hash != sid_base_hash
+            n_sid_flip = int((sid_after != sid_base).sum())
+            perturb_ok = prev_unchanged and cur_c_changed and cur_cb_changed and cur_d_changed and d_delta > 0.0
+            chain_ok = chain_ok and perturb_ok
+
+            perturb_results[f"layer_{li}"] = {
+                "delta_kappa_eff_actual": kappa_after - kappa_before,
+                "delta_c_actual": c_after - c_before,
+                "earlier_layers_unchanged": prev_unchanged,
+                "cur_c_changed": cur_c_changed,
+                "cur_codebook_projected_changed": cur_cb_changed,
+                "cur_distance_changed": cur_d_changed,
+                "cur_distance_delta_abs": d_delta,
+                "cur_assignment_changed": a_changed,
+                "cur_assignment_flip_count": int((sid_after[:, li] != sid_base[:, li]).sum()),
+                "sid_hash_changed": sid_changed,
+                "sid_flip_count": n_sid_flip,
+                "chain_after": {f"l{j}": {k: v for k, v in l.items()} for j, l in enumerate(chain_after)},
+                "status": "PASS" if perturb_ok else "FAIL",
+            }
+            with torch.no_grad():
+                q.kappa_drift.data.sub_(1e-3)
+            # 恢复校验
+            kappa_restored = float(q.get_effective_kappa().item())
+            if abs(kappa_restored - kappa_before) > 1e-12:
+                raise RuntimeError(f"PC8 补证: 层 {li} κ 恢复失败: {kappa_restored} != {kappa_before}")
+            if float(q.get_c().item()) != c_before:
+                raise RuntimeError(f"PC8 补证: 层 {li} c 恢复失败")
+        results["chain"] = {
+            "n_items": n_items,
+            "input_hash": input_hash,
+            "baseline": {f"l{j}": {k: v for k, v in l.items()} for j, l in enumerate(base_chain)},
+            "sid_base_hash": sid_base_hash,
+            "perturbations": perturb_results,
+        }
+
+        # ── 5. reload 5/5: 恢复后同一输入五次 SID 逐元素一致 ──
+        reload_ok = True
+        reload_hashes = []
+        for k in range(5):
+            sid_k = sid_once()
+            hk = mod.sha256_array(sid_k)
+            reload_hashes.append(hk)
+            if hk != sid_base_hash:
+                reload_ok = False
+        reload_max_diff = int((sid_once() != sid_base).sum())
+        results["reload_5_of_5"] = {
+            "n_runs": 5,
+            "hashes": reload_hashes,
+            "all_equal_to_base": reload_ok,
+            "total_element_diff_after_reload": reload_max_diff,
+            "status": "PASS" if reload_ok else "FAIL",
+        }
+
+        # ── 6. 调用计数断言 ──
+        counts_ok = counts["mlr_logits"] == 0 and counts["sinkhorn"] == 0
+        results["call_counts"] = dict(counts)
+        results["call_counts_ok"] = counts_ok
+
+        all_ok = runtime_ok and chain_ok and reload_ok and counts_ok
+        results["status"] = "PASS" if all_ok else "FAIL"
+        results["verdict_path"] = str(product_dir / "item_emb.parquet")
+        return results
+    finally:
+        mod.HyperbolicHyperplaneMLR._compute_mlr_logits = orig_mlr
+        mod.sinkhorn_algorithm = orig_sk
 
 
 # ================================================================
@@ -1168,6 +1591,10 @@ def main():
             model, input_ids, attention_mask, C_ENC)
     log(f"[precheck] PC2 = {pc_results['PC2_exp_log_inverse']['status']}")
 
+    log("[precheck] PC2 补证 (Issue #50): 近零 10^-4~10^-12 + 精确零向量 + AD/FD...")
+    pc_results["PC2_near_zero_inverse"] = pc2_near_zero_inverse(C_ENC, device)
+    log(f"[precheck] PC2 补证 = {pc_results['PC2_near_zero_inverse']['status']}")
+
     log("[precheck] PC3 Lorentz/Poincaré 等距一致性 (max<1e-7, P99<1e-8)...")
     with torch.no_grad():
         pc_results["PC3_isometry"] = pc3_lorentz_poincare_isometry(
@@ -1197,10 +1624,23 @@ def main():
             model, input_ids, attention_mask, C_ENC, tokenizer, items)
     log(f"[precheck] PC7 = {pc_results['PC7_real_path_audit']['status']}")
 
+    log("[precheck] PC7 补证 (Issue #50): 9922 全量生产导出 + parquet + reload + 确定性...")
+    pc_results["PC7_full_export_audit"] = pc7_full_export_audit(
+        model, tokenizer, items, C_ENC, device, product_dir)
+    log(f"[precheck] PC7 补证 = {pc_results['PC7_full_export_audit']['status']}")
+
     log("[precheck] PC8 三层曲率与最近邻合规...")
     pc_results["PC8_three_layer_compliance"] = pc8_three_layer_compliance(
         str(REPO / "taskA/stage2/taskA_stage2.py"))
     log(f"[precheck] PC8 = {pc_results['PC8_three_layer_compliance']['status']}")
+
+    log("[precheck] PC8 补证 (Issue #50): 运行时断言 + κ→SID 全链路 + reload 5/5...")
+    stage1_emb = np.load(str(product_dir / "item_emb_u32.npy")) if (product_dir / "item_emb_u32.npy").exists() else None
+    if stage1_emb is None:
+        raise RuntimeError("PC8 补证: 缺少 Stage1 导出 item_emb_u32.npy (PC7 补证必须先行落盘)")
+    pc_results["PC8_kappa_sid_chain"] = pc8_kappa_sid_chain(
+        str(REPO / "taskA/stage2/taskA_stage2.py"), stage1_emb, device, product_dir)
+    log(f"[precheck] PC8 补证 = {pc_results['PC8_kappa_sid_chain']['status']}")
 
     # ============ 汇总 ============
     statuses = {k: v.get("status", "?") for k, v in pc_results.items()}
@@ -1218,9 +1658,9 @@ def main():
         commit_hash = "unknown"
 
     verdict = {
-        "issue": "#49",
-        "task": "taskA_stage1_issue49_lorentz_precheck",
-        "spec": "[方向A precheck] 修复 #48 Lorentz 数值参数化并严格完成 PC1-PC8; 唯一允许结论 precheck blocked / precheck PASS",
+        "issue": "#49+#50",
+        "task": "taskA_stage1_issue49_lorentz_precheck + issue50_evidence",
+        "spec": "[方向A precheck] 修复 #48 Lorentz 数值参数化并严格完成 PC1-PC8; Issue #50 补证: PC2 近零互逆 / PC7 9922 全量导出 / PC8 运行时断言+κ→SID 全链路+reload 5/5; 唯一允许结论 precheck blocked / precheck PASS",
         "decision": "precheck PASS" if all_pass else "precheck blocked",
         "precheck_overall": "PASS" if all_pass else "BLOCKED",
         "audit_batch": {
@@ -1243,6 +1683,10 @@ def main():
             "cast_before_parquet": "float64 → float32 显式转换, 记录 max_cast_err (见 gate1_export_placeholder)",
         },
         "pc1_pc8": pc_results,
+        "issue50_evidence": {
+            "commit_chain": "verdict.commit 为运行时代码 HEAD (证据链自包含: 代码提交 A → 运行 → 证据提交 B)",
+            "note": "Issue #50 补证字段: PC2_near_zero_inverse / PC7_full_export_audit / PC8_kappa_sid_chain 均在 pc1_pc8 内",
+        },
         "earliest_failure": next((k for k, v in pc_results.items() if v.get("status") != "PASS"), None),
         "config": {
             "TAG": TAG,

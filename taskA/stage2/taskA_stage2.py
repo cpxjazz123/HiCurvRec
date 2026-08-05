@@ -677,6 +677,12 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
         return self._compute_signed_score(z_ball, c_l)
 
     def forward(self, x, use_sk=True):
+        # Issue #50 修复: --no_mlr (MLR_ENABLED=False) 必须真正回退硬 argmin(d) Poincaré 最近邻.
+        # 此前 self.mlr_enabled 仅存储未参与 forward, MLR logits 无条件计算并 argmax 出 indices,
+        # --no_mlr 无实际效果, 违反 Issue #49 spec "assignment 唯一来源 = argmin d_{c_l}(r_l, e_lk)".
+        # 回退到父类 KappaAwareVectorQuantization.forward: sk_eps<=0 时 indices=torch.argmin(d).
+        if not self.mlr_enabled:
+            return KappaAwareVectorQuantization.forward(self, x, use_sk=use_sk)
         latent = x.view(-1, self.e_dim)
         codebook_e = self.embeddings.weight
         if not self.initted and self.training:
