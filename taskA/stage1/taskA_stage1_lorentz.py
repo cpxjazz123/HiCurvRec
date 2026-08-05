@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Task #84 Issue #49 Stage1 — frozen sentence-t5-base 前 N-1 block + Lorentz 最后 block (严格 precheck).
+"""Task #84 Issue #49/#51 Stage1 — frozen sentence-t5-base 前 N-1 block + Lorentz 最后 block (严格 precheck).
 
 承接 #48 (838531d): 修复 Lorentz 数值参数化并严格完成 PC1-PC8.
+承接 #50 (d77d47f): PC2 近零互逆 / PC7 9922 全量导出 / PC8 运行时断言补证.
+Issue #51 (进行中): canonical PC8 审计 — 唯一 run_id=SHA256(code commit‖ItemID hash‖seed‖config hash),
+scale_l=√c_l/R_l=1/√c_l 逐层记录, SID3/SID4 拆分 (C=add_4th_dedup_digit 确定性 dedup),
+F_l 生产 forward hook 计数+输入 hash, residual 不变需生产公式说明, reload 5/5 六对象 diff=0.
 
 修复一 (平滑有界切空间参数化):
   s = ||u||_2, ρ(u) = ρ_max·tanh(s/ρ_max), v(u) = ρ(u)/(s+ε)·u
@@ -88,6 +92,9 @@ PC7_REL_DIFF_MIN = 1e-3
 # Precheck 固定 seed + 真实训练集 audit batch
 PRECHECK_SEED = 42
 PRECHECK_AUDIT_SIZE = 64
+# Issue #51 canonical: κ 扰动幅度 (spec 固定 δ=1e-3) + SID batch (生产 infer_sid 同款)
+KAPPA_PERTURB_DELTA = 1e-3
+SID_BATCH_SIZE = 1024
 
 
 def log(msg):
@@ -1224,53 +1231,88 @@ def pc8_three_layer_compliance(stage2_module_path: str) -> dict:
     return results
 
 
-def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: torch.device,
-                        product_dir: Path) -> dict:
-    """Issue #50 补证三: PC8 运行时断言 + κ→SID 全链路 + reload 5/5.
+def pc8_canonical_chain(stage2_module_path: str, item_emb: np.ndarray, device: torch.device,
+                        product_dir: Path, code_commit: str, item_ids_sha256: str,
+                        items: list[tuple[str, str]], seed: int) -> dict:
+    """Issue #51 canonical PC8 审计 (唯一 run + scale/residual/SID 碰撞路径拆分).
 
-    1. importlib 加载 stage2 (--no_mlr), verdict 记录运行时实际值:
-       MLR_ENABLED is False / SK_EPSILONS == [0,0,0] / assignment_source = poincare_argmin.
-    2. 类级/函数级包装计数: _compute_mlr_logits 与 sinkhorn_algorithm 调用均为 0
-       (不靠源码行号推断).
-    3. 三层分别扰动 κ_eff ≈ +1e-3 (kappa_drift.data += 1e-3, 记录实际 Δκ_eff), 按生产路径
-       κ→c→scale(expmap0/proj_to_ball 内联)→Π_c(E)→D→A→r→SID 同步重算, 对 c/投影后
-       codebook/distance/assignment/residual/最终 SID 记录 SHA256 与数值变化量;
-       更早层必须不变; 当前层 c/Π(E)/D 必须变化; A/SID 允许不翻转但 hash 必须进入真实计算.
-    4. 恢复原 κ 后同一 9922 输入 infer_sid (resolve=False 纯 argmin) reload 5/5,
-       五次 SID 与恢复前基准逐元素完全一致, 分别提交 hash.
+    Spec (Issue #51): 单一 canonical run, run_id=SHA256(code commit ‖ 有序 ItemID hash
+    ‖ seed ‖ config hash); baseline→L0/L1/L2 扰动 (δ=1e-3)→恢复→reload 5/5 全部同一进程;
+    逐层记录 kappa/c/sqrt_c/ball_radius/projected_codebook_hash/distance_hash+distance_sum/
+    assignment_hash/selected_codeword_hash/residual_hash; SID3=[A0,A1,A2] 与
+    SID4=[A0,A1,A2,C] (C=add_4th_dedup_digit 确定性 dedup, tie-break=有序 ItemID) 逐 hash
+    拆分 + 逐商品变化列表; F_l 生产 forward hook 计数 + 输入 hash, residual 数值不变时
+    给出生产公式说明并用调用计数证明重算; MLR/Sinkhorn=0, poincare_distance/argmin>0;
+    reload 5/5 六对象 (A0/A1/A2/SID3/collision/SID4) 与 baseline diff=0.
 
-    输入 item_emb = Stage1 Lorentz 初始化导出 (9922, EMB_DIM) float32 (PC7 补证产物).
+    输入 item_emb = Stage1 Lorentz 初始化导出 (9922, EMB_DIM) float32 (PC7 补证产物),
+    items 为 9922 有序 (item_id, semantics) 列表 (与导出顺序一致).
     """
     import importlib.util
     import sys as _sys
 
-    results = {"status": "FAIL", "runtime": None, "chain": {}, "reload_5_of_5": {}}
+    results = {"status": "FAIL", "run_id": None}
     saved_argv = list(_sys.argv)
-    _sys.argv = ["taskA_stage2_issue50_audit", "--no_mlr"]
-    spec = importlib.util.spec_from_file_location("stage2_issue50", stage2_module_path)
+    _sys.argv = ["taskA_stage2_issue51_audit", "--no_mlr"]
+    spec = importlib.util.spec_from_file_location("stage2_issue51", stage2_module_path)
     mod = importlib.util.module_from_spec(spec)
-    _sys.modules["stage2_issue50"] = mod
+    _sys.modules["stage2_issue51"] = mod
     spec.loader.exec_module(mod)
     _sys.argv = saved_argv
 
-    # ── 1. 运行时断言 (记录实际值, 不靠建议命令) ──
+    # ── 0. run_id = SHA256(code commit ‖ ordered ItemID hash ‖ seed ‖ config hash) ──
+    config = {
+        "stage1": {
+            "C_ENC": C_ENC, "RHO_MAX": RHO_MAX, "BOUND_EPS": BOUND_EPS,
+            "GEOM_DTYPE": str(GEOM_DTYPE), "MAX_SEQ_LEN": MAX_SEQ_LEN,
+            "ENCODER_MODEL": ENCODER_MODEL,
+        },
+        "stage2": {
+            "CODEBOOK_SIZES": list(mod.CODEBOOK_SIZES), "E_DIM": int(mod.E_DIM),
+            "ENCODER_LAYERS": list(mod.ENCODER_LAYERS),
+            "SK_EPSILONS": list(mod.SK_EPSILONS), "MLR_ENABLED": bool(mod.MLR_ENABLED),
+        },
+        "audit": {
+            "KAPPA_PERTURB_DELTA": KAPPA_PERTURB_DELTA, "SEED": seed,
+            "N_LAYERS": 3, "SID_BATCH_SIZE": SID_BATCH_SIZE,
+        },
+        "scale_semantics": "scale_l = sqrt(c_l); ball_radius R_l = 1/sqrt(c_l)",
+        "sid_semantics": ("SID3=[A0,A1,A2], A_l=argmin d_c(l) (Poincaré); "
+                          "SID4=[A0,A1,A2,C], C=add_4th_dedup_digit 确定性 dedup "
+                          "(tie-break=有序 ItemID 顺序)"),
+    }
+    config_hash = sha256_bytes(json.dumps(config, sort_keys=True).encode())
+    run_id = sha256_bytes(f"{code_commit}|{item_ids_sha256}|{seed}|{config_hash}".encode())
+    results["run_id"] = run_id
+    results["code_commit_a"] = code_commit
+    results["item_ids_sha256"] = item_ids_sha256
+    results["seed"] = seed
+    results["config"] = config
+    results["config_hash"] = config_hash
+
+    # ── 1. 运行时唯一来源断言 (记录实际值, 不靠建议命令) ──
     runtime = {
         "mlr_enabled_actual": bool(mod.MLR_ENABLED),
         "sk_epsilons_actual": list(mod.SK_EPSILONS),
         "assignment_source": "poincare_argmin" if (not mod.MLR_ENABLED and mod.SK_EPSILONS == [0.0, 0.0, 0.0]) else "OTHER",
-        "vq_class": "KappaAwareVectorQuantization (hard argmin(d))" if not mod.MLR_ENABLED else "HyperbolicHyperplaneMLR",
+        "vq_class_used": "KappaAwareVectorQuantization.forward (hard torch.argmin(d, dim=-1))" if not mod.MLR_ENABLED else "HyperbolicHyperplaneMLR",
     }
     runtime_ok = (
         runtime["mlr_enabled_actual"] is False
         and runtime["sk_epsilons_actual"] == [0.0, 0.0, 0.0]
         and runtime["assignment_source"] == "poincare_argmin"
     )
-    results["runtime"] = runtime
+    results["runtime_asserts"] = runtime
+    results["runtime_ok"] = runtime_ok
 
-    # ── 2. 调用计数包装 (审计全程有效, 恢复原函数) ──
-    counts = {"mlr_logits": 0, "sinkhorn": 0}
+    # ── 2. 审计 hook: 调用计数 + F_l 输入 hash (审计全程有效, finally 恢复) ──
+    counts = {"mlr_logits": 0, "sinkhorn": 0, "poincare_distance": 0, "argmin": 0}
+    fl_calls = [0, 0, 0]
+    fl_input_hashes = [[], [], []]
     orig_mlr = mod.HyperbolicHyperplaneMLR._compute_mlr_logits
     orig_sk = mod.sinkhorn_algorithm
+    orig_pd = mod.poincare_distance
+    orig_argmin = torch.argmin
 
     def counted_mlr(self, *args, **kwargs):
         counts["mlr_logits"] += 1
@@ -1280,12 +1322,27 @@ def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
         counts["sinkhorn"] += 1
         return orig_sk(*args, **kwargs)
 
+    def counted_pd(*args, **kwargs):
+        counts["poincare_distance"] += 1
+        return orig_pd(*args, **kwargs)
+
+    def counted_argmin(*args, **kwargs):
+        counts["argmin"] += 1
+        return orig_argmin(*args, **kwargs)
+
     mod.HyperbolicHyperplaneMLR._compute_mlr_logits = counted_mlr
     mod.sinkhorn_algorithm = counted_sk
+    mod.poincare_distance = counted_pd
+    torch.argmin = counted_argmin
 
-    def sha(t: torch.Tensor) -> str:
-        return sha256_bytes(np.ascontiguousarray(t.detach().cpu().numpy()).tobytes())
+    def sha(t) -> str:
+        if isinstance(t, torch.Tensor):
+            arr = np.ascontiguousarray(t.detach().cpu().numpy())
+        else:
+            arr = np.ascontiguousarray(t)
+        return sha256_bytes(arr.tobytes())
 
+    vq_hooks = []
     try:
         # ── 3. 构造模型 (eval, 不训练不 init, 确定性) ──
         model = mod.KappaAwareHRQVAE(
@@ -1296,17 +1353,32 @@ def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
         item_t = torch.from_numpy(np.ascontiguousarray(item_emb, dtype=np.float32)).to(device)
         n_items = item_t.shape[0]
         if n_items != 9922:
-            raise RuntimeError(f"PC8 补证: 输入 n_items={n_items} != 9922")
+            raise RuntimeError(f"Issue #51 canonical: n_items={n_items} != 9922")
         input_hash = sha256_bytes(np.ascontiguousarray(item_emb, dtype=np.float32).tobytes())
+        results["n_items"] = n_items
+        results["input_emb_hash"] = input_hash
 
-        # 链路复算 (与生产 forward 相同的几何: proj_to_ball∘expmap0, poincare_distance, argmin, residual)
+        # F_l 生产 forward hook: 每层计数 + 每次输入 (r_l) hash
+        for li in range(3):
+            def make_hook(li_):
+                def hook(m, inp, out):
+                    fl_calls[li_] += 1
+                    fl_input_hashes[li_].append(sha(inp[0]))
+                return hook
+            vq_hooks.append(model.vq_layers[li].register_forward_hook(make_hook(li)))
+
+        # 链路复算 (与生产 forward 相同几何: proj_to_ball∘expmap0, poincare_distance, argmin, residual)
         def chain_layers() -> list:
             z = model.encoder(item_t)
             residual = z
             layers = []
-            for li, q in enumerate(model.vq_layers):
+            for li_, q in enumerate(model.vq_layers):
                 latent = residual.view(-1, q.e_dim)
                 c_geom = q.get_c()
+                kappa_eff = float(q.get_effective_kappa().item())
+                c_val = float(c_geom.item())
+                sqrt_c = math.sqrt(c_val)
+                ball_radius = 1.0 / sqrt_c
                 latent_h = mod.proj_to_ball(mod.expmap0(latent, c_geom), c_geom)
                 cb_h = mod.proj_to_ball(mod.expmap0(q.embeddings.weight, c_geom), c_geom)
                 d = mod.poincare_distance(
@@ -1316,117 +1388,217 @@ def pc8_kappa_sid_chain(stage2_module_path: str, item_emb: np.ndarray, device: t
                 x_q = q.embeddings.weight.index_select(0, A)
                 residual_next = residual - x_q
                 layers.append({
-                    "c": float(q.get_c().item()),
-                    "c_hash": sha(c_geom),
-                    "codebook_projected_hash": sha(cb_h),
+                    "kappa_eff": kappa_eff,
+                    "c": c_val,
+                    "sqrt_c": sqrt_c,
+                    "ball_radius": ball_radius,
+                    "projected_codebook_hash": sha(cb_h),
                     "distance_hash": sha(d),
+                    "distance_sum": float(d.sum().item()),
                     "assignment_hash": sha(A),
+                    "selected_codeword_hash": sha(x_q),
                     "residual_hash": sha(residual_next),
-                    "d_sum": float(d.sum().item()),
                 })
                 residual = residual_next
             return layers
 
-        def sid_once() -> np.ndarray:
-            return mod.infer_sid(model, item_t, batch_size=1024, resolve=False)
+        def sid_pair() -> dict:
+            """生产 SID 路径: infer_sid(resolve=False) → SID3 (纯 argmin, 无 sinkhorn);
+            add_4th_dedup_digit → SID4 (确定性 dedup)."""
+            sid3 = mod.infer_sid(model, item_t, batch_size=SID_BATCH_SIZE, resolve=False)
+            sid4 = mod.add_4th_dedup_digit(sid3, K_l2=mod.CODEBOOK_SIZES[-1])
+            return {
+                "a0_hash": sha(sid3[:, 0]), "a1_hash": sha(sid3[:, 1]), "a2_hash": sha(sid3[:, 2]),
+                "sid3_hash": sha(sid3), "collision_digit_hash": sha(sid4[:, 3]),
+                "sid4_hash": sha(sid4), "sid3": sid3, "sid4": sid4,
+            }
 
-        # ── 基线 ──
+        # ── 4. baseline (唯一 canonical 基准) ──
         base_chain = chain_layers()
-        sid_base = sid_once()
-        sid_base_hash = mod.sha256_array(sid_base)
+        base_sid = sid_pair()
+        unique3, counts3 = np.unique(base_sid["sid3"], axis=0, return_counts=True)
+        results["baseline"] = {
+            "layers": {f"l{j}": dict(l) for j, l in enumerate(base_chain)},
+            "sid3_hash": base_sid["sid3_hash"],
+            "a0_hash": base_sid["a0_hash"], "a1_hash": base_sid["a1_hash"], "a2_hash": base_sid["a2_hash"],
+            "collision_digit_hash": base_sid["collision_digit_hash"],
+            "sid4_hash": base_sid["sid4_hash"],
+            "collision_groups": {
+                "n_unique_3digit": int(len(unique3)),
+                "max_group_size": int(counts3.max()),
+                "n_colliding_items": int(n_items - len(unique3)),
+            },
+        }
 
-        # ── 4. 三层分别扰动 κ_eff ≈ +1e-3 ──
-        perturb_results = {}
+        # ── 5. L0/L1/L2 逐层扰动 δ=1e-3 → 记录 → 恢复 (全部同一进程) ──
+        perturbations = {}
         chain_ok = True
         for li in range(3):
             q = model.vq_layers[li]
             kappa_before = float(q.get_effective_kappa().item())
             c_before = float(q.get_c().item())
+            fl_before = list(fl_calls)
             with torch.no_grad():
-                q.kappa_drift.data.add_(1e-3)
+                q.kappa_drift.data.add_(KAPPA_PERTURB_DELTA)
             kappa_after = float(q.get_effective_kappa().item())
             c_after = float(q.get_c().item())
             chain_after = chain_layers()
-            sid_after = sid_once()
-            sid_after_hash = mod.sha256_array(sid_after)
+            sid_after = sid_pair()
 
+            # 逐商品变化 (SID3/SID4 同步列表)
+            sid3_diff_mask = (sid_after["sid3"] != base_sid["sid3"]).any(axis=1)
+            sid4_diff_mask = (sid_after["sid4"] != base_sid["sid4"]).any(axis=1)
+            flipped_idx = np.where(sid3_diff_mask)[0]
+            changed_items = [
+                {"item_id": items[int(i)][0],
+                 "old_3digit": base_sid["sid3"][int(i)].tolist(),
+                 "new_3digit": sid_after["sid3"][int(i)].tolist(),
+                 "old_4digit": base_sid["sid4"][int(i)].tolist(),
+                 "new_4digit": sid_after["sid4"][int(i)].tolist()}
+                for i in flipped_idx]
+            sid4_flip_set = set(np.where(sid4_diff_mask)[0].tolist())
+            sid3_flip_set = set(np.where(sid3_diff_mask)[0].tolist())
+            sid4_is_deterministic_fn = (sid4_flip_set == sid3_flip_set)
+
+            # residual 重算审计: 生产公式 + F_l 调用计数证明
+            residual_analysis = {}
+            for j in range(3):
+                changed = base_chain[j]["residual_hash"] != chain_after[j]["residual_hash"]
+                reason = None
+                if not changed:
+                    reason = ("生产公式 r_{l+1} = r_l - E_l[A_l(i)]: x_q 直接取欧氏码本条目 "
+                              "E_l[A_l(i)], 曲率 c 仅经 assignment A_l 影响 x_q; 本扰动下该层 "
+                              f"assignment 未翻转 → x_q 逐位不变 → residual 逐位不变; F_l hook "
+                              f"计数增量 Δ={fl_calls[j] - fl_before[j]} 证明 forward 已重新执行")
+                residual_analysis[f"l{j}"] = {"changed": changed, "unchanged_reason": reason}
+
+            # 当前层必须变化, 更早层必须不变
+            cur_c_changed = chain_after[li]["c"] != base_chain[li]["c"]
+            cur_cb_changed = chain_after[li]["projected_codebook_hash"] != base_chain[li]["projected_codebook_hash"]
+            cur_d_changed = chain_after[li]["distance_hash"] != base_chain[li]["distance_hash"]
+            d_delta = abs(chain_after[li]["distance_sum"] - base_chain[li]["distance_sum"])
+            cur_a_changed = chain_after[li]["assignment_hash"] != base_chain[li]["assignment_hash"]
             prev_unchanged = all(
-                chain_after[j]["c_hash"] == base_chain[j]["c_hash"]
-                and chain_after[j]["codebook_projected_hash"] == base_chain[j]["codebook_projected_hash"]
+                chain_after[j]["c"] == base_chain[j]["c"]
+                and chain_after[j]["projected_codebook_hash"] == base_chain[j]["projected_codebook_hash"]
                 and chain_after[j]["distance_hash"] == base_chain[j]["distance_hash"]
                 and chain_after[j]["assignment_hash"] == base_chain[j]["assignment_hash"]
                 for j in range(li))
-            cur_c_changed = chain_after[li]["c_hash"] != base_chain[li]["c_hash"]
-            cur_cb_changed = chain_after[li]["codebook_projected_hash"] != base_chain[li]["codebook_projected_hash"]
-            cur_d_changed = chain_after[li]["distance_hash"] != base_chain[li]["distance_hash"]
-            d_delta = abs(chain_after[li]["d_sum"] - base_chain[li]["d_sum"])
-            a_changed = chain_after[li]["assignment_hash"] != base_chain[li]["assignment_hash"]
-            sid_changed = sid_after_hash != sid_base_hash
-            n_sid_flip = int((sid_after != sid_base).sum())
-            perturb_ok = prev_unchanged and cur_c_changed and cur_cb_changed and cur_d_changed and d_delta > 0.0
-            chain_ok = chain_ok and perturb_ok
+            perturb_ok = (
+                prev_unchanged and cur_c_changed and cur_cb_changed
+                and cur_d_changed and d_delta > 0.0 and sid4_is_deterministic_fn)
 
-            perturb_results[f"layer_{li}"] = {
+            # 恢复 + 校验 (同一进程内可逆性)
+            with torch.no_grad():
+                q.kappa_drift.data.sub_(KAPPA_PERTURB_DELTA)
+            kappa_restored = float(q.get_effective_kappa().item())
+            c_restored = float(q.get_c().item())
+            restored_ok = abs(kappa_restored - kappa_before) <= 1e-12 and c_restored == c_before
+            if not restored_ok:
+                raise RuntimeError(f"Issue #51 canonical: 层 {li} κ/c 恢复失败")
+            chain_restored = chain_layers()
+            layers_restored = all(chain_restored[j] == base_chain[j] for j in range(3))
+
+            perturbations[f"l{li}"] = {
                 "delta_kappa_eff_actual": kappa_after - kappa_before,
                 "delta_c_actual": c_after - c_before,
+                "before": dict(base_chain[li]),
+                "after": dict(chain_after[li]),
                 "earlier_layers_unchanged": prev_unchanged,
                 "cur_c_changed": cur_c_changed,
-                "cur_codebook_projected_changed": cur_cb_changed,
+                "cur_projected_codebook_changed": cur_cb_changed,
                 "cur_distance_changed": cur_d_changed,
                 "cur_distance_delta_abs": d_delta,
-                "cur_assignment_changed": a_changed,
-                "cur_assignment_flip_count": int((sid_after[:, li] != sid_base[:, li]).sum()),
-                "sid_hash_changed": sid_changed,
-                "sid_flip_count": n_sid_flip,
-                "chain_after": {f"l{j}": {k: v for k, v in l.items()} for j, l in enumerate(chain_after)},
-                "status": "PASS" if perturb_ok else "FAIL",
+                "cur_assignment_changed": cur_a_changed,
+                "assignment_flip_count_layer": int((sid_after["sid3"][:, li] != base_sid["sid3"][:, li]).sum()),
+                "sid3_changed": base_sid["sid3_hash"] != sid_after["sid3_hash"],
+                "sid3_flip_count": int(sid3_diff_mask.sum()),
+                "collision_digit_changed": base_sid["collision_digit_hash"] != sid_after["collision_digit_hash"],
+                "sid4_changed": base_sid["sid4_hash"] != sid_after["sid4_hash"],
+                "sid4_flip_count": int(sid4_diff_mask.sum()),
+                "changed_items": changed_items,
+                "assignment_unchanged_but_sid4_changed": False,
+                "sid4_deterministic_fn_of_sid3": sid4_is_deterministic_fn,
+                "sid4_property_note": ("add_4th_dedup_digit: C 位 = 对 SID3 key 按有序 ItemID 顺序 "
+                                       "计数 seen[key] % 256 — SID4 是 SID3 的确定性函数; "
+                                       "A (=SID3) 不变 → SID4 必不变, 该分支结构上无商品可解释"),
+                "residual_analysis": residual_analysis,
+                "restored": {
+                    "kappa_eff": kappa_restored, "c": c_restored, "ok": restored_ok,
+                    "chain_fully_restored": layers_restored,
+                },
+                "status": "PASS" if (perturb_ok and restored_ok and layers_restored) else "FAIL",
             }
-            with torch.no_grad():
-                q.kappa_drift.data.sub_(1e-3)
-            # 恢复校验
-            kappa_restored = float(q.get_effective_kappa().item())
-            if abs(kappa_restored - kappa_before) > 1e-12:
-                raise RuntimeError(f"PC8 补证: 层 {li} κ 恢复失败: {kappa_restored} != {kappa_before}")
-            if float(q.get_c().item()) != c_before:
-                raise RuntimeError(f"PC8 补证: 层 {li} c 恢复失败")
-        results["chain"] = {
-            "n_items": n_items,
-            "input_hash": input_hash,
-            "baseline": {f"l{j}": {k: v for k, v in l.items()} for j, l in enumerate(base_chain)},
-            "sid_base_hash": sid_base_hash,
-            "perturbations": perturb_results,
-        }
+            chain_ok = chain_ok and perturbations[f"l{li}"]["status"] == "PASS"
+        results["perturbations"] = perturbations
 
-        # ── 5. reload 5/5: 恢复后同一输入五次 SID 逐元素一致 ──
+        # ── 6. reload 5/5: 恢复后同一输入, 六对象 hash + 与 baseline 逐元素 diff=0 ──
+        reload_runs = []
         reload_ok = True
-        reload_hashes = []
         for k in range(5):
-            sid_k = sid_once()
-            hk = mod.sha256_array(sid_k)
-            reload_hashes.append(hk)
-            if hk != sid_base_hash:
+            s = sid_pair()
+            run = {
+                "a0_hash": s["a0_hash"], "a1_hash": s["a1_hash"], "a2_hash": s["a2_hash"],
+                "sid3_hash": s["sid3_hash"], "collision_digit_hash": s["collision_digit_hash"],
+                "sid4_hash": s["sid4_hash"],
+                "diffs_vs_baseline": {
+                    "a0": int((s["sid3"][:, 0] != base_sid["sid3"][:, 0]).sum()),
+                    "a1": int((s["sid3"][:, 1] != base_sid["sid3"][:, 1]).sum()),
+                    "a2": int((s["sid3"][:, 2] != base_sid["sid3"][:, 2]).sum()),
+                    "sid3": int((s["sid3"] != base_sid["sid3"]).sum()),
+                    "collision_digit": int((s["sid4"][:, 3] != base_sid["sid4"][:, 3]).sum()),
+                    "sid4": int((s["sid4"] != base_sid["sid4"]).sum()),
+                },
+            }
+            reload_runs.append(run)
+            if run["diffs_vs_baseline"]["sid4"] != 0:
                 reload_ok = False
-        reload_max_diff = int((sid_once() != sid_base).sum())
         results["reload_5_of_5"] = {
             "n_runs": 5,
-            "hashes": reload_hashes,
-            "all_equal_to_base": reload_ok,
-            "total_element_diff_after_reload": reload_max_diff,
+            "runs": reload_runs,
+            "all_diff_zero": reload_ok,
             "status": "PASS" if reload_ok else "FAIL",
         }
 
-        # ── 6. 调用计数断言 ──
-        counts_ok = counts["mlr_logits"] == 0 and counts["sinkhorn"] == 0
-        results["call_counts"] = dict(counts)
+        # ── 7. 调用计数断言 (与层数和扰动次数匹配) ──
+        n_chain = 7   # baseline 1 + 扰动 3 + 恢复校验 3
+        n_sid_once = 9  # baseline 1 + 扰动 3 + reload 5
+        n_batches = 10  # ceil(9922/1024)
+        counts_result = {
+            "actual": dict(counts),
+            "fl_calls_per_layer": list(fl_calls),
+            "fl_input_hash_unique_per_layer": [sorted(set(h)) for h in fl_input_hashes],
+            "expected": {
+                "mlr_logits": 0, "sinkhorn": 0,
+                "argmin_min": n_chain * 3 + n_sid_once * n_batches * 3,
+                "poincare_distance_min": n_chain * 3 + n_sid_once * n_batches * 3 * 3,
+                "fl_calls_per_layer_exact": n_sid_once * n_batches,
+            },
+            "breakdown": {
+                "chain_layers_calls": n_chain, "sid_once_calls": n_sid_once, "sid_batches": n_batches,
+                "per_q_forward": {"argmin": 1, "poincare_distance": 3},
+            },
+        }
+        counts_ok = (
+            counts["mlr_logits"] == 0 and counts["sinkhorn"] == 0
+            and counts["argmin"] >= counts_result["expected"]["argmin_min"]
+            and counts["poincare_distance"] >= counts_result["expected"]["poincare_distance_min"]
+            and fl_calls == [n_sid_once * n_batches] * 3
+        )
+        results["call_counts"] = counts_result
         results["call_counts_ok"] = counts_ok
 
         all_ok = runtime_ok and chain_ok and reload_ok and counts_ok
         results["status"] = "PASS" if all_ok else "FAIL"
-        results["verdict_path"] = str(product_dir / "item_emb.parquet")
+        results["verdict_path"] = str(product_dir / "verdict.json")
         return results
     finally:
         mod.HyperbolicHyperplaneMLR._compute_mlr_logits = orig_mlr
         mod.sinkhorn_algorithm = orig_sk
+        mod.poincare_distance = orig_pd
+        torch.argmin = orig_argmin
+        for h in vq_hooks:
+            h.remove()
 
 
 # ================================================================
@@ -1634,13 +1806,30 @@ def main():
         str(REPO / "taskA/stage2/taskA_stage2.py"))
     log(f"[precheck] PC8 = {pc_results['PC8_three_layer_compliance']['status']}")
 
-    log("[precheck] PC8 补证 (Issue #50): 运行时断言 + κ→SID 全链路 + reload 5/5...")
+    # Issue #51 canonical run_id 需要 code commit (commit A), 提前取 HEAD
+    import subprocess as _sp
+    commit_hash = ""
+    try:
+        r = _sp.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=str(REPO))
+        commit_hash = r.stdout.strip()
+    except Exception:
+        commit_hash = "unknown"
+    log(f"[precheck] code commit (canonical run_id 分量) = {commit_hash}")
+
+    log("[precheck] PC8 补证 (Issue #51): canonical 审计 — run_id + scale + SID3/4 拆分 + residual 计数...")
     stage1_emb = np.load(str(product_dir / "item_emb_u32.npy")) if (product_dir / "item_emb_u32.npy").exists() else None
     if stage1_emb is None:
         raise RuntimeError("PC8 补证: 缺少 Stage1 导出 item_emb_u32.npy (PC7 补证必须先行落盘)")
-    pc_results["PC8_kappa_sid_chain"] = pc8_kappa_sid_chain(
-        str(REPO / "taskA/stage2/taskA_stage2.py"), stage1_emb, device, product_dir)
-    log(f"[precheck] PC8 补证 = {pc_results['PC8_kappa_sid_chain']['status']}")
+    pc8_canonical = pc8_canonical_chain(
+        str(REPO / "taskA/stage2/taskA_stage2.py"), stage1_emb, device, product_dir,
+        commit_hash, pc_results["PC7_full_export_audit"]["item_ids_sha256"], items, args.seed)
+    pc_results["PC8_canonical_chain"] = pc8_canonical
+    log(f"[precheck] PC8 canonical = {pc8_canonical['status']} run_id={pc8_canonical['run_id'][:16]}")
+    # Issue #51: 唯一正式证据文件 (commit B 单独提交)
+    canonical_evidence_path = Path(REPO) / "verdicts" / "issue51_pc8_canonical_evidence.json"
+    with open(canonical_evidence_path, "w") as f:
+        json.dump(pc8_canonical, f, indent=2)
+    log(f"[issue51] canonical evidence saved to {canonical_evidence_path}")
 
     # ============ 汇总 ============
     statuses = {k: v.get("status", "?") for k, v in pc_results.items()}
@@ -1648,19 +1837,12 @@ def main():
     log(f"[precheck] 汇总: {statuses}")
     log(f"[precheck] 总体 = {'PASS' if all_pass else 'BLOCKED'}")
 
-    # 输入 hash + commit hash
-    commit_hash = ""
-    try:
-        import subprocess
-        r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=str(REPO))
-        commit_hash = r.stdout.strip()
-    except Exception:
-        commit_hash = "unknown"
+    # commit hash 已在 PC8 canonical 之前获取 (canonical run_id 分量)
 
     verdict = {
-        "issue": "#49+#50",
-        "task": "taskA_stage1_issue49_lorentz_precheck + issue50_evidence",
-        "spec": "[方向A precheck] 修复 #48 Lorentz 数值参数化并严格完成 PC1-PC8; Issue #50 补证: PC2 近零互逆 / PC7 9922 全量导出 / PC8 运行时断言+κ→SID 全链路+reload 5/5; 唯一允许结论 precheck blocked / precheck PASS",
+        "issue": "#49+#50+#51",
+        "task": "taskA_stage1_issue49_lorentz_precheck + issue50_evidence + issue51_canonical_pc8",
+        "spec": "[方向A precheck] 修复 #48 Lorentz 数值参数化并严格完成 PC1-PC8; Issue #50 补证: PC2 近零互逆 / PC7 9922 全量导出 / PC8 运行时断言+κ→SID 全链路+reload 5/5; Issue #51 canonical: 唯一 run_id + scale/residual/SID 碰撞路径拆分 + reload 5/5 六对象; 唯一允许结论 precheck blocked / precheck PASS",
         "decision": "precheck PASS" if all_pass else "precheck blocked",
         "precheck_overall": "PASS" if all_pass else "BLOCKED",
         "audit_batch": {
