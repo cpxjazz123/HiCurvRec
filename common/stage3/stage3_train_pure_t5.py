@@ -121,6 +121,17 @@ _argparser.add_argument("--stage3_label_smoothing", type=float, default=0.0,
                         help="Issue #138 v74: T5 CE loss label_smoothing (默认 0, v74 推荐 0.05-0.1 防 T5 过拟合)")
 _argparser.add_argument("--stage3_dropout", type=float, default=0.1,
                         help="Issue #138 v74: T5 dropout_rate 覆盖 (默认 0.1, v74 推荐 0.2 防过拟合)")
+# Issue #140 v76: T5 logits uncertainty decay head (借鉴 DIGER AutoSigmaGumbel 思想)
+_argparser.add_argument("--enable_t5_uncertainty", action="store_true",
+                        help="Issue #140 v76: T5 logits 加 Gumbel noise, σ learnable + uncertainty loss")
+_argparser.add_argument("--t5_uncertainty_init_std", type=float, default=1.0,
+                        help="v76: 初始 std (= 2^σ_init), DIGER 推荐 1.0 (中等 noise)")
+_argparser.add_argument("--t5_uncertainty_k", type=float, default=0.458145,
+                        help="v76: uncertainty decay rate, DIGER Gumbel 默认 0.458145 (slow) / 0.018127 (fast)")
+_argparser.add_argument("--t5_uncertainty_c", type=float, default=1.361442,
+                        help="v76: uncertainty reg coef, DIGER Gumbel 默认 1.361442 (slow) / 0.036916 (fast)")
+_argparser.add_argument("--t5_uncertainty_reg_weight", type=float, default=0.01,
+                        help="v76: uncertainty loss 缩放 (总 loss = CE + reg_weight * uncertainty_loss)")
 # DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
 _argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
 _argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
@@ -153,6 +164,12 @@ PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 STAGE3_WEIGHT_DECAY = _args.stage3_weight_decay
 STAGE3_LABEL_SMOOTHING = _args.stage3_label_smoothing
 STAGE3_DROPOUT = _args.stage3_dropout
+# Issue #140 v76: T5 uncertainty decay head 常量
+T5_UNCERTAINTY_ENABLED = _args.enable_t5_uncertainty
+T5_UNCERTAINTY_INIT_STD = _args.t5_uncertainty_init_std
+T5_UNCERTAINTY_K = _args.t5_uncertainty_k
+T5_UNCERTAINTY_C = _args.t5_uncertainty_c
+T5_UNCERTAINTY_REG_WEIGHT = _args.t5_uncertainty_reg_weight
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
@@ -272,6 +289,8 @@ def set_seed(seed):
 # alpha_l 初始 0.01 (issue spec 小初始化), hard cap ±0.5 防破坏 #61 baseline
 # ──────────────────────────────────────────────────────────────
 import torch.nn as nn  # noqa: E402
+# Issue #140 v76: T5 uncertainty head 借鉴 DIGER AutoSigmaGumbel
+from common.t5_uncertainty import T5UncertaintyHead  # noqa: E402
 import torch.nn.functional as F  # noqa: E402
 
 
@@ -718,6 +737,8 @@ def ndcg_at_k(pos_index, k):
 
 def train(model, train_loader, optimizer, device, epoch):
     model.train()
+    # Issue #140 v76: T5 uncertainty head 全局变量 (main() 创建)
+    global t5_uncertainty_head
     total_loss = 0.0
     n = 0
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
@@ -738,9 +759,34 @@ def train(model, train_loader, optimizer, device, epoch):
         optimizer.zero_grad()
         # 加速: bf16 forward (T5 标准混合精度, 参数 fp32, 仅前向计算转 bf16)
         with autocast_ctx:
-            loss, _ = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            loss, logits = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+        # Issue #140 v76: T5 uncertainty head 注入 Gumbel noise + uncertainty loss
+        # 注意: 仅在 training 时有 noise, eval 时 head 直通 logits
+        if t5_uncertainty_head is not None and model.training:
+            noisy_logits = t5_uncertainty_head(logits.float())  # fp32 加 noise 防 bf16 精度问题
+            loss = F.cross_entropy(
+                noisy_logits.view(-1, noisy_logits.size(-1)),
+                labels.view(-1),
+                ignore_index=CONFIG["pad_token_id"],
+            )
+            uncertainty_reg = t5_uncertainty_head.compute_uncertainty_loss(loss.detach())
+            loss = loss + T5_UNCERTAINTY_REG_WEIGHT * uncertainty_reg
+        # Issue #139 v75: 启用 label_smoothing 时手动算 F.cross_entropy 平滑 loss
+        # (T5 内部 loss 不支持 label_smoothing, 从已有 logits 重算)
+        elif STAGE3_LABEL_SMOOTHING > 0:
+            loss_t5 = loss
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)).float(),
+                labels.view(-1),
+                ignore_index=CONFIG["pad_token_id"],
+                label_smoothing=STAGE3_LABEL_SMOOTHING,
+            )
         loss.backward()
         optimizer.step()
+        # Issue #139 v75: 第一个 batch 后打印一次 (验证 label_smoothing 生效)
+        if RANK == 0 and n == 0 and STAGE3_LABEL_SMOOTHING > 0:
+            log(f"[Issue #139 v75] label_smoothing={STAGE3_LABEL_SMOOTHING} "
+                f"(T5 CE loss={loss_t5.item():.4f} → CE_smooth={loss.item():.4f})")
         total_loss += loss.item() * input_ids.shape[0]
         n += input_ids.shape[0]
     # DDP: all-reduce 各卡 loss (按样本数加权平均, 全局一致)
@@ -849,6 +895,21 @@ def main():
             # beta=0 等价性: 同一输入, beta=0 时 forward 输出 == input_embeds (直接相加 0)
             # 训练代码已保证 beta=0 → delta=0 → 等价
             log(f"[Issue #63] Gate3 beta=0 等价性预检: beta=0 → delta=0 → h'==h, 严格退化 #61 baseline")
+    # Issue #140 v76: T5 logits uncertainty decay head (借鉴 DIGER AutoSigmaGumbel)
+    global t5_uncertainty_head
+    t5_uncertainty_head = None
+    if T5_UNCERTAINTY_ENABLED:
+        t5_uncertainty_head = T5UncertaintyHead(
+            initial_std=T5_UNCERTAINTY_INIT_STD,
+            k=T5_UNCERTAINTY_K,
+            c=T5_UNCERTAINTY_C,
+            reg_weight=T5_UNCERTAINTY_REG_WEIGHT,
+        ).to(device)
+        if is_main:
+            sigma_init = t5_uncertainty_head.sigma.item()
+            log(f"[Issue #140 v76] T5 uncertainty head ON: σ_init={sigma_init:.4f} "
+                f"std_init={2.0**sigma_init:.4f} k={T5_UNCERTAINTY_K} c={T5_UNCERTAINTY_C} "
+                f"reg_weight={T5_UNCERTAINTY_REG_WEIGHT}")
     # Issue #64: 双曲码字距离 attention bias (在 DDP wrap 前; 跟 #62/#63 互斥, 优先 #64)
     hab_module = None
     if HAB_ENABLED:
@@ -928,6 +989,9 @@ def main():
         other_params = [p for n, p in model.named_parameters() if not n.endswith("geo_module.alphas_raw")]
         _param_groups.append({"params": other_params, "lr": LR})
         _param_groups.append({"params": alpha_params, "lr": LR / GEO_ALPHA_LR_RATIO})
+        # Issue #140 v76: T5 uncertainty head σ 加到 base lr group (如果有)
+        if t5_uncertainty_head is not None:
+            _param_groups.append({"params": [t5_uncertainty_head.sigma], "lr": LR})
         optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER, weight_decay=STAGE3_WEIGHT_DECAY)
         if is_main:
             log(f"[v4] per-layer alpha lr={LR/GEO_ALPHA_LR_RATIO:.2e} (ratio={GEO_ALPHA_LR_RATIO}×), "
@@ -953,6 +1017,9 @@ def main():
         _exclude_ids = _hab_param_ids | _pf_param_ids
         _other_params = [p for p in model.parameters() if id(p) not in _exclude_ids]
         _param_groups.insert(0, {"params": _other_params, "lr": LR})
+        # Issue #140 v76: T5 uncertainty head σ 加到 base lr group
+        if t5_uncertainty_head is not None:
+            _param_groups.append({"params": [t5_uncertainty_head.sigma], "lr": LR})
         optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER, weight_decay=STAGE3_WEIGHT_DECAY)
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0 and is_main:
         n_bias_params = sum(p.numel() for p in list(hab_module.U.parameters()) + list(hab_module.V.parameters()))
