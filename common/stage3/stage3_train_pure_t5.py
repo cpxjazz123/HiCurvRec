@@ -114,6 +114,15 @@ _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35,
                         help="Issue #70: alpha gate 初始值 (DECOR 默认 0.35)")
 _argparser.add_argument("--prompt_former_num_bos_queries", type=int, default=64,
                         help="Issue #70: bos_queries 数量 (DECOR 默认 64)")
+# Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap
+_argparser.add_argument("--pf_alpha_warmup_steps", type=int, default=200,
+                        help="Issue #68: alpha warmup 步数 (前 K 步冻结 alpha 不动, T5 学稳定 baseline)")
+_argparser.add_argument("--pf_alpha_penalty_weight", type=float, default=0.01,
+                        help="Issue #68: alpha warmup 期 penalty 权重 (relu(alpha-0.1)^2)")
+_argparser.add_argument("--pf_bos_diversity_weight", type=float, default=0.01,
+                        help="Issue #68: bos_queries 多样性 loss 权重 (负 std, 鼓励维度间差异)")
+_argparser.add_argument("--pf_attn_entropy_weight", type=float, default=0.001,
+                        help="Issue #68: attn 分布熵 loss 权重 (鼓励 attn 尖锐)")
 # Issue #138 v74 (2026-08-07): Stage3 全面 regularization 防过拟合
 _argparser.add_argument("--stage3_weight_decay", type=float, default=0.0,
                         help="Issue #138 v74: AdamW weight_decay (默认 0, v74 推荐 0.01 拉小 U/V 范数)")
@@ -160,6 +169,11 @@ RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
+# Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
+PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
+PF_ALPHA_PENALTY_WEIGHT = _args.pf_alpha_penalty_weight
+PF_BOS_DIVERSITY_WEIGHT = _args.pf_bos_diversity_weight
+PF_ATTN_ENTROPY_WEIGHT = _args.pf_attn_entropy_weight
 # Issue #138 v74 (2026-08-07): Stage3 全面 regularization 常量
 STAGE3_WEIGHT_DECAY = _args.stage3_weight_decay
 STAGE3_LABEL_SMOOTHING = _args.stage3_label_smoothing
@@ -657,7 +671,9 @@ def build_codeword_geo_module(stage2_ckpt_path):
 
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) 与 HAB/GEO 正交
 def build_prompt_former_module():
-    """构建 DecorPromptFormer. 不需要 stage2 ckpt, 只用 T5 nn.Embedding."""
+    """构建 DecorPromptFormer. 不需要 stage2 ckpt, 只用 T5 nn.Embedding.
+    Issue #68: 加 4 个抗 self-reinforcing trap 参数.
+    """
     from common.decor_prompt_former import DecorPromptFormer
     return DecorPromptFormer(
         d_model=CONFIG["d_model"],
@@ -666,6 +682,10 @@ def build_prompt_former_module():
         codes_per_bin=256,
         num_bos_queries=PROMPT_FORMER_NUM_BOS_QUERIES,
         alpha_init=PROMPT_FORMER_ALPHA,
+        alpha_warmup_steps=PF_ALPHA_WARMUP_STEPS,
+        alpha_penalty_weight=PF_ALPHA_PENALTY_WEIGHT,
+        bos_diversity_weight=PF_BOS_DIVERSITY_WEIGHT,
+        attn_entropy_weight=PF_ATTN_ENTROPY_WEIGHT,
     )
 
 
@@ -686,18 +706,20 @@ def install_prompt_former(hg_rec, pf_module):
 
     def pf_forward(self, input_ids, attention_mask=None, labels=None):
         e_fused = self.model.shared(input_ids) * d_model_sqrt      # (B, L, D)
-        e_final, aux = self.pf_module(
+        e_final, aux, reg_losses = self.pf_module(
             e_fused, input_ids,
             attention_mask=attention_mask,
             e_fused_embedding=self.model.shared,
         )
         outputs = self.model(inputs_embeds=e_final,
                              attention_mask=attention_mask, labels=labels)
-        return outputs.loss, outputs.logits
+        # Issue #68: 返回 reg_losses 让 train() 加到 loss
+        return outputs.loss, outputs.logits, reg_losses
 
     def pf_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
         e_fused = self.model.shared(input_ids) * d_model_sqrt
-        e_final, aux = self.pf_module(
+        # Issue #68: pf_module 现在返回 (e_final, aux, reg_losses), eval 时 reg_losses 无用
+        e_final, aux, reg_losses = self.pf_module(
             e_fused, input_ids,
             attention_mask=attention_mask,
             e_fused_embedding=self.model.shared,
@@ -759,7 +781,15 @@ def train(model, train_loader, optimizer, device, epoch):
         optimizer.zero_grad()
         # 加速: bf16 forward (T5 标准混合精度, 参数 fp32, 仅前向计算转 bf16)
         with autocast_ctx:
-            loss, logits = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            # Issue #68: PromptFormer 时 forward 返回 (loss, logits, reg_losses)
+            pf_out = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            if PROMPT_FORMER_ENABLED and len(pf_out) == 3:
+                loss, logits, reg_losses = pf_out
+                # 3 个 reg loss 加权求和
+                for k, v in reg_losses.items():
+                    loss = loss + v
+            else:
+                loss, logits = pf_out[0], pf_out[1]
         # Issue #140 v76: T5 uncertainty head 注入 Gumbel noise + uncertainty loss
         # 注意: 仅在 training 时有 noise, eval 时 head 直通 logits
         if t5_uncertainty_head is not None and model.training:

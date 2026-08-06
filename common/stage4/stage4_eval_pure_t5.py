@@ -156,7 +156,8 @@ def install_prompt_former_eval(hg_rec, pf_module):
 
     def pf_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
         e_fused = self.model.shared(input_ids) * d_model_sqrt
-        e_final, _aux = self.pf_module(
+        # Issue #68: pf_module 现在返回 (e_final, aux, reg_losses), eval 时 reg_losses 无用
+        e_final, _aux, _reg_losses = self.pf_module(
             e_fused, input_ids,
             attention_mask=attention_mask,
             e_fused_embedding=self.model.shared,
