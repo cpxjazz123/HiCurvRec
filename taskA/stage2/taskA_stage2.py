@@ -165,8 +165,8 @@ REC_LAYER_NEG_DIST_FILE = ""
 RECAL_CHECK_EVERY = 9
 
 # Issue #39 (v6-A/B 曲率 trust region + EMA)
-KAPPA_EMA_BETA = 0.0  # 默认关 (issue #41 单独跑)
-KAPPA_TRUST_REGION = 0.0  # 默认关
+KAPPA_EMA_BETA = 0.9  # Issue #59: 启用 EMA (β=0.9, 半衰期 ~10 步), 作为 L_κ trust region baseline
+KAPPA_TRUST_REGION = 0.0  # Issue #59: 关闭旧硬 clamp (改用 L_κ 平滑处理)
 KAPPA_TRUST_REGION_LAMBDA = 1.0
 KAPPA_WARMUP_EPOCHS = 0
 
@@ -174,6 +174,25 @@ KAPPA_WARMUP_EPOCHS = 0
 # Issue #44 v8: KAPPA_ANCHORS=[] → 自由 κ (回 v5 行为, 与 Issue #37 / Issue #44 spec 一致)
 KAPPA_ANCHORS = []  # 空 = 自由 κ (与 hyp v5 一致)
 KAPPA_ANCHOR_RANGE = 0.05  # range 仍保留 (KAPPA_ANCHORS=[] 时自动用 anchor=0+range=1.0 fallback)
+
+# Issue #59: 平滑有界 κ 参数化 (sigmoid 形式, 严格上下界, 运行前硬编码 + 说明依据).
+#   κ_l = κ_min + (κ_max-κ_min) · σ(θ_l),  θ_l 独立可学
+#   c_l = exp(κ_l) ∈ [exp(κ_min), exp(κ_max)] 严格有界, 防止深层 κ 漂移导致球面边界吸附
+#   依据: #53 健康 κ=[0.072, 0.138, 0.366] (无 κ 路线, util_3digit=0.99 健康基线),
+#         κ_min=-1 (c_min=0.368, 允许负 κ 与更大球半径) + κ_max=0.5 (c_max=1.649,
+#         比 #53 最大 κ=0.366 留 36% 余量防冲界). 区间宽度 1.5 满足 σ(θ) ∈ (0,1) 全学习空间.
+KAPPA_MIN = -1.0
+KAPPA_MAX = 0.5
+KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 1.5
+
+# Issue #59: L_κ 稳定项系数 (trust region + 边界占用惩罚, 温和抑制冲界/剧烈变化).
+#   λ_tr=0.1: log c 步间变化 (tanh 风格平滑), 不允许剧烈 κ 跳变 (相邻 epoch |Δ log c| ≲ 0.05)
+#   λ_b=0.01: 边界占用率 > 30% 触发 ReLU 惩罚 (压制深层码字聚拢到球面边界)
+#   依据: #53 健康训练 κ 渐变幅度 ≈ 0.01/epoch (epoch 99 vs epoch 95 ~5%), 信任 0.05 为上限
+LAMBDA_TR = 0.1
+LAMBDA_B = 0.01
+B_TARGET = 0.3  # 边界占用率阈值 (Poincaré norm > 0.9 视为边界)
+B_BOUNDARY = 0.9  # norm 超过此值视为边界占用 (Poincaré 球面内 < 1)
 
 # Issue #55/v5→v7f: learnable κ 稳定 (u clamp 0.985 防边界梯度爆炸)
 SAFE_DISTANCE = True
@@ -366,10 +385,10 @@ class KappaAwareVectorQuantization(nn.Module):
             self.kappa_anchor = float(KAPPA_ANCHORS[layer_idx])
             self.kappa_anchor_range = KAPPA_ANCHOR_RANGE
         elif len(KAPPA_ANCHORS) == 0:
-            # Issue #44 / Issue #43: KAPPA_ANCHORS=[] → 锚点 0 + range=1.0, tanh 近似 [-1,1] → 自由 κ 行为
-            # (与 hyp v5 自由学习兼容, 不锁定到任何特定锚点)
-            self.kappa_anchor = 0.0
-            self.kappa_anchor_range = 1.0
+            # Issue #59: KAPPA_ANCHORS=[] → 平滑有界 sigmoid 形式 κ_l = KAPPA_MIN + KAPPA_RANGE·σ(θ_l)
+            # (取代 #44/#43 旧 tanh 形式; 严格 [KAPPA_MIN, KAPPA_MAX] 上下界, 防止深层 κ 漂移冲界)
+            self.kappa_anchor = KAPPA_MIN  # 仅用于历史 verdict 字段记录
+            self.kappa_anchor_range = KAPPA_RANGE  # 同上
         else:
             raise ValueError(f"KAPPA_ANCHORS len {len(KAPPA_ANCHORS)} insufficient for layer_idx={layer_idx}")
         self.kappa_drift = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
@@ -396,11 +415,15 @@ class KappaAwareVectorQuantization(nn.Module):
         self._last_struct_target = 0.0
 
     def get_effective_kappa(self) -> torch.Tensor:
-        """Issue #41: 逐层锚定有界 κ.
-        κ_effective = κ_anchor_l + tanh(κ_drift_l) * range_l
-        κ_anchor 来自 KAPPA_ANCHORS[l] (默认 hyp v5 = [0.024, 0.046, 0.056]).
-        tanh 把 κ_drift 约束到 [-1,1], range 约束最大幅度 (默认 0.05).
-        整体 κ_effective ∈ [κ_anchor_l - 0.05, κ_anchor_l + 0.05] (默认 range=0.05)."""
+        """Issue #59: 平滑有界 κ 参数化 (sigmoid 形式, 严格 [KAPPA_MIN, KAPPA_MAX]).
+        κ_effective = KAPPA_MIN + KAPPA_RANGE · σ(kappa_drift)
+        KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN = 1.5, 默认 KAPPA_MIN=-1, KAPPA_MAX=0.5.
+        σ 把 kappa_drift 约束到 (0, 1), 整体 κ ∈ [-1, 0.5] 严格有界.
+        取代旧 #41 tanh 形式 (κ_anchor + tanh(κ_drift)·range), 历史 ckpt reload 兼容 (kappa_anchor/range 字段保留)."""
+        if len(KAPPA_ANCHORS) == 0:
+            # Issue #59 形式: 平滑有界 sigmoid
+            return KAPPA_MIN + KAPPA_RANGE * torch.sigmoid(self.kappa_drift)
+        # 旧 #41 形式 (KAPPA_ANCHORS 非空时保留, 历史 ckpt 兼容)
         return self.kappa_anchor + torch.tanh(self.kappa_drift) * self.kappa_anchor_range
 
     def get_c(self) -> torch.Tensor:
@@ -1022,6 +1045,26 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
                 penalty = F.relu((kappa_eff - q.kappa_ema).abs() - KAPPA_TRUST_REGION).pow(2).mean()
                 total_loss = total_loss + KAPPA_TRUST_REGION_LAMBDA * penalty
 
+    # Issue #59: L_κ 稳定项 = λ_tr·Σ(log c_l^t - sg(log c_l^{t-1}))² + λ_b·Σ ReLU(b_l - b_target)²
+    #   - trust region 项用 q.kappa_ema (来自 #39 EMA 上一步 log c 近似, 见下方 κ EMA 更新逻辑)
+    #   - 边界占用 b_l = 该层码字 norm > B_BOUNDARY 的比例 (Poincaré 球内 < 1 视为边界)
+    #   - 惩罚温和, 不强制三层 κ 相同, 不让 κ 梯度为零 (依赖 q.kappa_drift.grad)
+    if LAMBDA_TR > 0 or LAMBDA_B > 0:
+        l_kappa = torch.zeros((), device=batch.device)
+        for q in mm.vq_layers:
+            log_c_t = torch.log(q.get_c())  # 当前 log c_l
+            # trust region: 与上一步 EMA 比较 (Issue #39 已维护 q.kappa_ema = 上一步 κ_eff 近似 log c)
+            # Issue #59: q.kappa_ema 首步会被 init 为 0.0 (与 log_c_t 比较无意义), 用 _kappa_ema_initialized 标志判断
+            if LAMBDA_TR > 0 and getattr(q, "_kappa_ema_initialized", False):
+                log_c_ema = q.kappa_ema.detach().to(log_c_t.device)
+                l_kappa = l_kappa + LAMBDA_TR * (log_c_t - log_c_ema).pow(2).mean()
+            # boundary occupancy: 码字 norm > B_BOUNDARY 的比例
+            if LAMBDA_B > 0:
+                cb_norm = q.get_codebook().norm(dim=-1)  # (K,)
+                b_l = (cb_norm > B_BOUNDARY).float().mean()
+                l_kappa = l_kappa + LAMBDA_B * F.relu(b_l - B_TARGET).pow(2)
+        total_loss = total_loss + l_kappa
+
     # 记录 κ 更新前 (使用 effective_kappa — 实际进 forward 的值)
     kappas_before = [q.get_effective_kappa().item() for q in mm.vq_layers]
     codebook_norm_before = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
@@ -1062,6 +1105,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             if q.kappa_ema == 0.0:
                 # 首步 init
                 q.kappa_ema = torch.tensor(cur_kappa, dtype=torch.float32, device=q.kappa_drift.device)
+                q._kappa_ema_initialized = True  # Issue #59: 标记 L_κ trust region 可用
             else:
                 q.kappa_ema = KAPPA_EMA_BETA * q.kappa_ema + (1.0 - KAPPA_EMA_BETA) * cur_kappa
     if KAPPA_TRUST_REGION > 0:
