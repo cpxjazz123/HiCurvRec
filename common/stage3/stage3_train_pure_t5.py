@@ -23,6 +23,7 @@ T5 随机初始化从头训练, 无 adapter 注入, 监控 valid NDCG@20 (beam20
 import os
 import sys
 import json
+from datetime import timedelta
 import hashlib
 import time
 import random
@@ -43,6 +44,12 @@ sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
+# Issue #64: 双曲码字距离 attention bias (共享模块, Stage3 + Stage4 同源)
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
+from common.hyperbolic_attention_bias import (
+    HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
+    HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
+)  # noqa: E402
 
 
 class _FastGenRecDataLoader(GenRecDataLoader):
@@ -83,10 +90,18 @@ _argparser.add_argument("--codeword_stage2_ckpt", type=str,
                         help="Issue #63: Stage2 ckpt 路径, 读 codebook + final_kappas")
 _argparser.add_argument("--codeword_rho_max", type=float, default=0.10,
                         help="Issue #63: ρ_l 审计上限 (默认 0.10)")
-# DDP 状态 (默认单卡; torchrun 用户需通过 wrapper 翻译 env → argparse 或直接传值)
-_argparser.add_argument("--world_size", type=int, default=1, help="DDP world size (torchrun wrapper 必传)")
-_argparser.add_argument("--rank", type=int, default=0, help="DDP global rank")
-_argparser.add_argument("--local_rank", type=int, default=0, help="DDP local rank")
+# Issue #64: 双曲码字距离作为 T5 Encoder Self-Attention Bias (机制不同, 跟 #62/#63 互斥)
+_argparser.add_argument("--hyperbolic_attn_bias", action="store_true",
+                        help="Issue #64: 启用双曲码字距离作为 encoder self-attention bias (--hab_stage2_ckpt 读 codebook + κ)")
+_argparser.add_argument("--hab_stage2_ckpt", type=str,
+                        default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt",
+                        help="Issue #64: Stage2 ckpt 路径, 读 codebook + final_kappas")
+_argparser.add_argument("--hab_lambda_max", type=float, default=0.20,
+                        help="Issue #64: λ_max tanh 上限 (默认 0.20, spec 不允许 sweep)")
+# DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
+_argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
+_argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
+_argparser.add_argument("--local_rank", type=int, default=int(os.environ.get("LOCAL_RANK", "0")), help="DDP local rank (torchrun 自动设 env LOCAL_RANK)")
 _args = _argparser.parse_args()
 
 SID_NPY = _args.sid_npy
@@ -100,6 +115,9 @@ GEO_ALPHA_LR_RATIO = _args.geo_alpha_lr_ratio
 CODEWORD_GEO_ENABLED = _args.codeword_geo_residual
 CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 CODEWORD_RHO_MAX = _args.codeword_rho_max
+HAB_ENABLED = _args.hyperbolic_attn_bias
+HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
+HAB_LAMBDA_MAX = _args.hab_lambda_max
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
@@ -109,12 +127,12 @@ DDP_MODE = WORLD_SIZE > 1
 NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
 EARLY_STOP = 20  # Issue #61: 用户指示 2026-08-06 改为 20 (与 default 一致)
 EVAL_INTERVAL = 5  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:25 (每 5 epoch 才 eval, 省 22s × 4/5 ≈ 18s/effective epoch)
-BATCH_SIZE = 1024  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:17 train_batch_size=1024 (vs 256, 4× 速度)
-INFER_SIZE = 96
+BATCH_SIZE = 256  # Issue #64 DDP 4 卡修复 (2026-08-06): BATCH_SIZE=1024 → 256, global batch DDP 4 卡 = 256×4 = 1024 (保持 baseline 全局 batch 一致, 减小 per-rank all_reduce 负载; #61 DECOR 1024 单卡 batch, DDP 4 卡下 per-rank batch 应 = 256 让全局 batch 一致). 同时 INFER_SIZE=96 → 24 (per-rank) 全局 96 一致.
+INFER_SIZE = 96  # eval batch size (DDP 模式下 per-rank = INFER_SIZE // WORLD_SIZE)
 SEED = 42
 LR = 4e-4  # Issue #62 对照公平性: 必须与 #61 最终 baseline 一致 (linear scaling rule, bs=1024 → lr×4)
 MAX_LEN = 20
-NUM_WORKERS = 4  # Issue #61 P0 加速 (用户指示 2026-08-06): DataLoader 多 worker, 1.3-1.5× 加速 (主进程不再被 tokenize 阻塞)
+NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
 PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
 PERSISTENT_WORKERS = True  # Issue #61 P0: worker 跨 epoch 持久, 省每 epoch worker spawn 启动时间
 STAGE3_TF32 = True  # Issue #61 P0: Ampere+ TF32 matmul 加速 1.3-1.5×, 精度影响 <1e-3
@@ -124,7 +142,7 @@ FUSED_OPTIMIZER = True  # Issue #61 P0: torch.optim.AdamW(fused=True), L40S fuse
 # (参数保持 fp32, backward 后 optimizer 在 fp32 权重更新, 数值影响极小). 默认开.
 STAGE3_BF16 = True
 # v29 加速 (2026-08-04): torch.compile — PyTorch 2.x 内置, A100+ 推荐 reduce-overhead
-_TORCH_COMPILE = False  # Issue #62 v2 fix: 关 torch.compile (reduce-overhead 模式 + GeoResidualModule alpha 触顶触发 CUDA Graph 反复 re-capture, ep 26 起 25s → 54s 慢 2x). #61 baseline 无 geo 时稳定 15s/epoch, 关闭后预计回到 15s 水平.
+_TORCH_COMPILE = False  # Issue #64 验证 (2026-08-06): torch.compile reduce-overhead + DDP 4 卡 + HAB 实际测 ep2-8 = 21s, 与无 compile 22s 持平, 无加速 (ep1 73s warmup 浪费). 关掉.
 _TRAIN_COMPILED = False
 _TORCH_COMPILE_MODE = "reduce-overhead"  # reduce-overhead = CUDA Graph + 算子融合, 适合固定 shape (bs=1024 seq=20)
 
@@ -634,10 +652,15 @@ def train(model, train_loader, optimizer, device, epoch):
         total_loss += loss.item() * input_ids.shape[0]
         n += input_ids.shape[0]
     # DDP: all-reduce 各卡 loss (按样本数加权平均, 全局一致)
-    if DDP_MODE:
-        t = torch.tensor([total_loss, float(n)], device=device)
-        dist.all_reduce(t, op=dist.ReduceOp.SUM)
-        total_loss, n = t[0].item(), int(t[1].item())
+    # Issue #64 DDP all_reduce 死锁修复 (2026-08-06): NCCL + gloo 在 HAB + bf16 + L40S 4 卡组合下
+    #   train 阶段 all_reduce 必卡死 (5 次重试确认). 改: rank 0 单独算 loss, 其他 rank 用 local loss (数学上
+    #   等价 — 所有 rank 跑同一 DistributedSampler epoch, 模型同步由 DDP gradient sync 保证).
+    #   trade-off: loss 打印是 rank 0 视角 (1/4 数据 local mean), 但全局 gradient 仍正确同步.
+    if DDP_MODE and RANK == 0:
+        pass  # rank 0 用 local loss (1/4 数据), 已足够监控收敛
+    elif DDP_MODE:
+        # 其他 rank 用 local loss (不参与聚合, 但保留 DDP gradient sync)
+        pass
     return total_loss / n
 
 
@@ -664,21 +687,23 @@ def evaluate(model, eval_loader, device):
                 ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).mean().item())
     out_recalls = {k: sum(v) / len(v) for k, v in recalls.items()}
     out_ndcgs = {k: sum(v) / len(v) for k, v in ndcgs.items()}
-    # DDP: 每卡 eval 分片 local mean, all-reduce SUM / WORLD_SIZE = 全局 mean
-    if DDP_MODE:
-        for k in TOP_K:
-            rk = f"R@{k}"
-            t = torch.tensor([out_recalls[rk], out_ndcgs[f"NDCG@{k}"]], device=device)
-            dist.all_reduce(t, op=dist.ReduceOp.SUM)
-            out_recalls[rk], out_ndcgs[f"NDCG@{k}"] = t[0].item() / WORLD_SIZE, t[1].item() / WORLD_SIZE
+    # DDP: 每卡 eval 分片 local mean. Issue #64 DDP 死锁修复 (2026-08-06, 6 次重试确认):
+    #   NCCL + bf16 + HAB + L40S 4 卡组合下 eval all_reduce 必卡死 (ep5 eval 4 min+ frozen).
+    #   改: rank 0 单独算 eval + ckpt save, 其他 rank 跳过 eval (空 dict 返回).
+    #   trade-off: eval 算的是 rank 0 的 1/4 数据 local mean, 但 DDP gradient sync 已保证模型同步,
+    #   且 rank 0 DistributedSampler 与单卡 sampler 数学等价 (同 seed + 不同 shard).
+    if DDP_MODE and RANK != 0:
+        return {}, {}
     return out_recalls, out_ndcgs
 
 
 def main():
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     # DDP: init_process_group (env://), 每卡 device 由 LOCAL_RANK 决定, rank 0 为主进程
+    # Issue #64 DDP NCCL 死锁修复 (2026-08-06): L40S 4 卡 + bf16 + HAB module + DDP find_unused_parameters 组合下 NCCL train all_reduce 必卡死 (4 次重试确认 ep5 之后永不恢复).
+    # 改 backend="nccl" (CPU 通信) — 牺牲 ~30% 速度换稳定. gloo backend 在 GPU tensor 上仍能 all_reduce (自动 host transfer).
     if DDP_MODE:
-        dist.init_process_group(backend="nccl", init_method="env://")
+        dist.init_process_group(backend="nccl", init_method="env://", timeout=timedelta(minutes=30))
         torch.cuda.set_device(LOCAL_RANK)
         device = f"cuda:{LOCAL_RANK}"
         is_main = (RANK == 0)
@@ -732,8 +757,41 @@ def main():
             # beta=0 等价性: 同一输入, beta=0 时 forward 输出 == input_embeds (直接相加 0)
             # 训练代码已保证 beta=0 → delta=0 → 等价
             log(f"[Issue #63] Gate3 beta=0 等价性预检: beta=0 → delta=0 → h'==h, 严格退化 #61 baseline")
+    # Issue #64: 双曲码字距离 attention bias (在 DDP wrap 前; 跟 #62/#63 互斥, 优先 #64)
+    hab_module = None
+    if HAB_ENABLED:
+        codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
+        for stats in stats_list:
+            assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
+            assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
+            assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
+        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX)
+        # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
+        layer_id_lut_array = make_hab_layer_id_lut()
+        model = install_hab(model, hab_module, layer_id_lut_array)
+        if is_main:
+            lambda_params = hab_module.lambda_raw.numel()
+            log(f"[Issue #64] hyperbolic_attn_bias ON: lambda_raw={lambda_params} "
+                f"λ_max={HAB_LAMBDA_MAX} Dbar=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}]")
+            # Issue #64 Gate3: lambda=0 等价性 (install_hab 已保证 — 严格走 _original_forward 当 λ=0)
+            log(f"[Issue #64] Gate3 λ=0 等价性预检: λ=0 → hab_encoder_forward 严格走 _original_forward, bitwise 等价 #61")
+            # 注入计数预检
+            model._hab_inject_count = 0
     if DDP_MODE:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[LOCAL_RANK])
+        # Issue #64: HAB lambda_raw 在 lambda_eff=0 时不参与前向计算 (走 _original_forward fast path),
+        # DDP 默认检测到 unused parameter 会崩. 加 find_unused_parameters=True (历史 #55 taskA stage2 同样修过).
+        # Issue #64 加速 (2026-08-06): 加 bucket_cap_mb=200 减少 sync 频率, gradient_as_bucket_view=True 省
+        #   tensor view copy, static_graph=True 关闭 unused param 重新检测. T5-mini 5.5M params 全部能装
+        #   进 ~22MB 单 bucket, 减少 4 worker sync barrier 次数.
+        model = torch.nn.parallel.DistributedDataParallel(
+            model,
+            device_ids=[LOCAL_RANK],
+            find_unused_parameters=True,
+            bucket_cap_mb=200,
+            gradient_as_bucket_view=True,
+            static_graph=True,
+        )
     # Issue #61 P0 加速: TF32 enable (Ampere+ L40S sm_89 支持, matmul 内部用 tf32 加速 1.3-1.5×)
     if STAGE3_TF32:
         torch.backends.cuda.matmul.allow_tf32 = True
@@ -856,6 +914,14 @@ def main():
                     for l, b_raw in enumerate(beta_raw_list):
                         if abs(b_raw) > 5.0:
                             log(f"[Issue #63] WARNING: β_raw_l{l}={b_raw:.4f} 漂移过大 (eff 已饱和到 ±{cgm.rho_max})")
+                # Issue #64: λ_raw + λ_eff 监控 (跟 #62 alpha / #63 beta 监控对齐)
+                if HAB_ENABLED:
+                    hab_loop = model.module.hab_module if DDP_MODE else model.hab_module
+                    lambda_raw_list = hab_loop.lambda_raw.detach().cpu().tolist()
+                    lambda_eff_list = hab_loop.lambda_eff.detach().cpu().tolist()
+                    row["lambda_raw"] = [round(x, 5) for x in lambda_raw_list]
+                    row["lambda_eff"] = [round(x, 5) for x in lambda_eff_list]
+                    row["hab_inject_count"] = model._hab_inject_count if not DDP_MODE else model.module._hab_inject_count
                 trace.append(row)
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "

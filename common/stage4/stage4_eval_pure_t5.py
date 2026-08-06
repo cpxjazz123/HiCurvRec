@@ -35,6 +35,13 @@ sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
+# Issue #64: 双曲码字距离 attention bias (跟 Stage3 train 同源共享模块)
+import sys as _sys
+_sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
+from common.hyperbolic_attention_bias import (  # noqa: E402
+    HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
+    HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
+)
 
 # ──────────────────────────────────────────────────────────────
 # argparse (R30 严格: 无 env var 读取)
@@ -49,6 +56,10 @@ _argparser.add_argument("--expected_sid_sha", type=str, default="", help="校验
 _argparser.add_argument("--geo_residual", action="store_true", help="Issue #62: 加载 geo_module 子模块并 monkey-patch forward/generate, 用于 Stage3 v3 ckpt 评估")
 _argparser.add_argument("--codeword_geo_residual", action="store_true", help="Issue #63: 加载 codeword_geo_module 子模块, 用于 Stage3 Issue #63 ckpt 评估")
 _argparser.add_argument("--codeword_stage2_ckpt", type=str, default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt", help="Issue #63: Stage2 ckpt 路径, 读 codebook + final_kappas")
+# Issue #64: 双曲 attention bias 评估 (跟 Stage3 train 共享同一个 HyperbolicAttentionBias 类)
+_argparser.add_argument("--hyperbolic_attn_bias", action="store_true", help="Issue #64: 加载 hab_module 子模块, 用于 Stage3 Issue #64 ckpt 评估")
+_argparser.add_argument("--hab_stage2_ckpt", type=str, default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt", help="Issue #64: Stage2 ckpt 路径, 读 codebook + final_kappas")
+_argparser.add_argument("--hab_lambda_max", type=float, default=0.20, help="Issue #64: λ_max tanh 上限 (默认 0.20, 跟 Stage3 train 一致)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -58,8 +69,13 @@ DEVICE = _args.device
 TAG = _args.tag
 EXPECTED_SID_SHA = _args.expected_sid_sha
 GEO_RESIDUAL = _args.geo_residual
+GEO_RESIDUAL_ENABLED = _args.geo_residual
 CODEWORD_GEO = _args.codeword_geo_residual
+CODEWORD_GEO_ENABLED = _args.codeword_geo_residual
 CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
+HAB_ENABLED = _args.hyperbolic_attn_bias
+HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
+HAB_LAMBDA_MAX_VAL = _args.hab_lambda_max
 # Stage4 = test only (held-out). 硬编码, 不允许覆盖 (valid 由 Stage3 val_trace 覆盖)
 EVAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
 
@@ -363,6 +379,24 @@ def main():
         model.forward = types.MethodType(codeword_forward, model)
         model.generate = types.MethodType(codeword_generate, model)
         print("[Issue #63] codeword_geo_residual enabled for eval (forward + generate patched)", flush=True)
+
+    # Issue #64: 安装 HAB (跟 Stage3 train 共享同一个 HyperbolicAttentionBias 实现)
+    # install_hab 通过 monkey-patch model.encoder.forward 注入 B_geo (无需 patch generate, 因为
+    # generate 内部也是 encoder + decoder 路径, encoder 已被 patch)
+    if HAB_ENABLED:
+        codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
+        for stats in stats_list:
+            assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
+            assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
+            assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
+        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX_VAL)
+        layer_id_lut_array = make_hab_layer_id_lut()
+        install_hab(model, hab_module, layer_id_lut_array)
+        print(f"[Issue #64] hyperbolic_attn_bias enabled for eval "
+              f"(encoder.forward patched, λ_max={HAB_LAMBDA_MAX_VAL}, "
+              f"Dbar median=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}])",
+              flush=True)
 
     state_dict = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)
     # Issue #62 ckpt 兼容:
