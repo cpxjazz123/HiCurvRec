@@ -379,11 +379,20 @@ class CodewordGeoResidual(nn.Module):
         force_zero_layers: β_l 强制 0 的层列表 (默认 [3] L3 dedup).
     """
     def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
-                 offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10):
+                 offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10,
+                 warmup_start=30, warmup_end=50, rho_max_per_layer=None):
         super().__init__()
         self.d_model = d_model
         self.num_layers = len(codebook_list)
-        self.rho_max = float(rho_max)  # β_l smooth clamp 上限 (Issue #63 v3 修复: 防止 β 自由漂移破坏 T5 表示)
+        # Issue #63 v4: per-layer ρ_max 分层 (L0=0.15 信号最强, L1=0.05, L2=0.02 信号最弱, 跟 Stage2 codebook norm 异质性匹配)
+        if rho_max_per_layer is None:
+            self.rho_max_per_layer = torch.tensor([0.15, 0.05, 0.02][:self.num_layers], dtype=torch.float32)
+        else:
+            self.rho_max_per_layer = torch.as_tensor(rho_max_per_layer[:self.num_layers], dtype=torch.float32)
+        # Issue #63 v4: β warmup 配置 (避免前 30 ep 扰动 T5 已学表示)
+        self.warmup_start = int(warmup_start)
+        self.warmup_end = int(warmup_end)
+        self.current_epoch = 0  # 训练循环每 epoch 设一次
         self.d_tangent = codebook_list[0].shape[-1]
         self.offsets = list(offsets)
         self.K = [cb.shape[0] for cb in codebook_list]
@@ -419,6 +428,8 @@ class CodewordGeoResidual(nn.Module):
                 beta[l] = 0.0
         # Issue #63 v3 修复: β_raw 自由训练, forward 时 clamp 到 ±rho_max (避免 v2 β 冲 -1.13 破坏 T5 表示)
         self.beta_raw = nn.Parameter(beta)
+        # Issue #63 v4: per-layer ρ_max 注册为 buffer (跟 device 同步, 不参与梯度)
+        self.register_buffer("rho_max_per_layer_buf", self.rho_max_per_layer.clone())
         # per-layer LN
         self.ln_h = nn.LayerNorm(d_model)
         self.ln_q = nn.LayerNorm(d_model)
@@ -456,8 +467,10 @@ class CodewordGeoResidual(nn.Module):
         h_ln = self.ln_h(input_embeds)                      # (B, L, d_model)
         q_ln = self.ln_q(q_per_token)                       # (B, L, d_model)
         g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))  # (B, L, 1)
-        # Issue #63 v3: β smooth clamp 到 ±rho_max (避免 v2 β 自由漂移到 -1.13 破坏 T5)
-        beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)   # (num_layers,)
+        # Issue #63 v4: β warmup (ep 30-50 线性 0→1) + per-layer ρ_max 分层
+        warmup_factor = max(0.0, min(1.0, (self.current_epoch - self.warmup_start) / max(1, self.warmup_end - self.warmup_start)))
+        rho = self.rho_max_per_layer_buf.to(self.beta_raw.device)  # (num_layers,)
+        beta_eff = warmup_factor * rho * torch.tanh(self.beta_raw / rho)   # (num_layers,)
         # per-layer β 查表: L3 (safe_layer=3) 强制 β=0 (避免越界 self.beta[3])
         beta_per_token = torch.where(
             safe_layer >= self.num_layers,
@@ -481,7 +494,10 @@ class CodewordGeoResidual(nn.Module):
         h_ln = self.ln_h(input_embeds)
         q_ln = self.ln_q(q_per_token)
         g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1))).squeeze(-1)
-        beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)
+        # Issue #63 v4: 同步 train 端 (warmup + per-layer ρ_max)
+        warmup_factor = max(0.0, min(1.0, (self.current_epoch - self.warmup_start) / max(1, self.warmup_end - self.warmup_start)))
+        rho = self.rho_max_per_layer_buf.to(self.beta_raw.device)
+        beta_eff = warmup_factor * rho * torch.tanh(self.beta_raw / rho)
         beta_per_token = torch.where(
             safe_layer >= self.num_layers,
             torch.zeros_like(safe_layer, dtype=beta_eff.dtype),
@@ -712,7 +728,7 @@ def main():
             ln_params = (codeword_module.ln_h.weight.numel() * 2 + codeword_module.ln_q.weight.numel() * 2)
             beta_params = codeword_module.beta_raw.numel()
             log(f"[Issue #63] codeword_geo ON: proj={proj_params} gate={gate_params} "
-                f"ln={ln_params} beta={beta_params} (β_init=0.0, ρ_max={CODEWORD_RHO_MAX})")
+                f"ln={ln_params} beta={beta_params} (β_init=0.0, v4 per-layer ρ_max={codeword_module.rho_max_per_layer.tolist()}, warmup=[30, 50])")
             # beta=0 等价性: 同一输入, beta=0 时 forward 输出 == input_embeds (直接相加 0)
             # 训练代码已保证 beta=0 → delta=0 → 等价
             log(f"[Issue #63] Gate3 beta=0 等价性预检: beta=0 → delta=0 → h'==h, 严格退化 #61 baseline")
@@ -774,6 +790,10 @@ def main():
     for epoch in range(NUM_EPOCHS):
         if DDP_MODE:
             train_sampler.set_epoch(epoch)  # 每 epoch 不同 shuffle (所有 rank 一致)
+        # Issue #63 v4: β warmup 需要当前 epoch (1-indexed: epoch=0 → 第 1 轮)
+        if CODEWORD_GEO_ENABLED:
+            cgm_loop = model.module.codeword_geo_module if DDP_MODE else model.codeword_geo_module
+            cgm_loop.current_epoch = epoch + 1
         t0 = time.time()
         train_loss = train(model, train_loader, optimizer, device, epoch)
         t_train = time.time() - t0
@@ -806,7 +826,10 @@ def main():
                 if CODEWORD_GEO_ENABLED:
                     cgm = model.module.codeword_geo_module if DDP_MODE else model.codeword_geo_module
                     beta_raw_list = cgm.beta_raw.detach().cpu().tolist()
-                    beta_eff_list = [cgm.rho_max * math.tanh(b / cgm.rho_max) for b in beta_raw_list]
+                    rho_list = cgm.rho_max_per_layer_buf.detach().cpu().tolist()
+                    # Issue #63 v4: 同步 train 端 (warmup + per-layer ρ_max)
+                    warmup_factor = max(0.0, min(1.0, (cgm.current_epoch - cgm.warmup_start) / max(1, cgm.warmup_end - cgm.warmup_start)))
+                    beta_eff_list = [warmup_factor * rho_list[i] * math.tanh(b / rho_list[i]) for i, b in enumerate(beta_raw_list)]
                     row["beta_raw"] = [round(b, 5) for b in beta_raw_list]
                     row["beta_eff"] = [round(b, 5) for b in beta_eff_list]
                     betas = beta_eff_list  # 保留给 WARNING 用

@@ -239,10 +239,19 @@ def main():
         class CodewordGeoResidualEval(nn.Module):
             """Stage4 eval 用的精简版 (跟 Stage3 train 完全一致, 仅去训练相关字段)."""
             def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
-                         offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10):
+                         offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10,
+                         warmup_start=30, warmup_end=50, rho_max_per_layer=None):
                 super().__init__()
                 self.d_model = d_model
                 self.num_layers = len(codebook_list)
+                # Issue #63 v4: 跟 train 对齐 (warmup + per-layer ρ_max)
+                if rho_max_per_layer is None:
+                    self.rho_max_per_layer = torch.tensor([0.15, 0.05, 0.02][:self.num_layers], dtype=torch.float32)
+                else:
+                    self.rho_max_per_layer = torch.as_tensor(rho_max_per_layer[:self.num_layers], dtype=torch.float32)
+                self.warmup_start = int(warmup_start)
+                self.warmup_end = int(warmup_end)
+                self.current_epoch = 200  # Stage4 eval 默认 warmup_factor=1.0 (best ckpt 时训练已完成 warmup)
                 self.d_tangent = codebook_list[0].shape[-1]
                 self.offsets = list(offsets)
                 self.K = [cb.shape[0] for cb in codebook_list]
@@ -268,7 +277,7 @@ def main():
                 for l in force_zero_layers:
                     beta[l] = 0.0
                 self.beta_raw = nn.Parameter(beta)  # Issue #63 v3: 跟 train 对齐, forward 时 clamp 到 ±rho_max
-                self.rho_max = float(rho_max)
+                self.register_buffer("rho_max_per_layer_buf", self.rho_max_per_layer.clone())  # v4
                 self.ln_h = nn.LayerNorm(d_model)
                 self.ln_q = nn.LayerNorm(d_model)
 
@@ -294,7 +303,10 @@ def main():
                 h_ln = self.ln_h(input_embeds)
                 q_ln = self.ln_q(q_per_token)
                 g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))
-                beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)  # 跟 train 对齐
+                # Issue #63 v4: 同步 train 端 (warmup + per-layer ρ_max)
+                warmup_factor = max(0.0, min(1.0, (self.current_epoch - self.warmup_start) / max(1, self.warmup_end - self.warmup_start)))
+                rho = self.rho_max_per_layer_buf.to(self.beta_raw.device)
+                beta_eff = warmup_factor * rho * torch.tanh(self.beta_raw / rho)
                 beta_per_token = beta_eff[safe_layer.clamp(max=self.num_layers - 1)] * valid.float()
                 delta = beta_per_token.unsqueeze(-1) * g * q_ln
                 return input_embeds + delta
