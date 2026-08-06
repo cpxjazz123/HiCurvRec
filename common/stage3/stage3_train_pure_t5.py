@@ -149,7 +149,7 @@ DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
-EARLY_STOP = 30  # Issue #64 v5 (2026-08-07): 用户指示 loss-based early stop — train loss 易抖动, 阈值从 20 提到 30 epoch 给更宽容量
+EARLY_STOP = 10  # Issue #135 v73 (2026-08-07): valid_R10-based early stop — 10 次 eval (约 50 epoch) 无 valid_R10 提升就停. v72 用 EARLY_STOP=5 太激进, best ckpt 在 ep35 锁定但 valid 还在涨, test 0.1003 < v71 ep71 0.1013. v73 给 valid 更多机会触顶.
 EVAL_INTERVAL = 5  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:25 (每 5 epoch 才 eval, 省 22s × 4/5 ≈ 18s/effective epoch)
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
@@ -977,12 +977,16 @@ def main():
         valid_loader = _FastGenRecDataLoader(valid_ds, batch_size=INFER_SIZE, shuffle=False, num_workers=NUM_WORKERS,
                                              pin_memory=PIN_MEMORY, persistent_workers=PERSISTENT_WORKERS)
 
-    # Issue #64 v5 (2026-08-07): 改用 train_loss 作 early stop 信号 (用户指示 2026-08-07)
-    # best_loss 跟踪最低 train_loss, best ckpt 按 loss 保存
+    # Issue #135 v72 (2026-08-07): 改用 valid_R10 作 early stop 信号 + ckpt 保存
+    # v71 用 loss-based early stop + loss-best ckpt, 但 valid peak (ep50 0.1285) 跟 loss-best (ep116 1.6697)
+    # 严重脱节 — loss 持续下降但 valid 在 ep75 后单调崩 -0.0083 → test 0.1013 FAIL.
+    # v72: ckpt 按 valid_R10 保存 + 5 epoch 无 valid_R10 提升就停. 锁定 valid peak epoch, 避免训练后期崩.
+    best_valid_r10 = -1.0
     best_loss = float("inf")
     best_epoch = -1
     early_stop_counter = 0
     trace = []
+    EARLY_STOP_METRIC = "valid_R10"  # 区分 v6b/v71 loss-based
 
     for epoch in range(NUM_EPOCHS):
         if DDP_MODE:
@@ -999,18 +1003,9 @@ def main():
         do_eval = ((epoch + 1) % EVAL_INTERVAL == 0) or (epoch == NUM_EPOCHS - 1)
 
         if is_main:
-            # Issue #64 v5 (2026-08-07): loss-based early stop — 每个 epoch 都更新 best_loss / early_stop_counter
-            # (loss 每 epoch 都有, 不必等 eval; val R@K 仍按 EVAL_INTERVAL 评估仅作 trace)
-            if train_loss < best_loss - 1e-4:
-                best_loss = train_loss
-                best_epoch = epoch
-                early_stop_counter = 0
-                torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
-                log(f"[BEST] train_loss={best_loss:.4f} saved {CKPT_PATH}")
-            else:
-                early_stop_counter += 1
-                log(f"no loss improv ({early_stop_counter}/{EARLY_STOP})")
-
+            # Issue #135 v72 (2026-08-07): valid_R10-based early stop + ckpt 保存
+            # loss-based 在 v71 失效 — valid ep75→ep115 单调崩但 loss 持续下降
+            # valid_R10 每 5 epoch 评估一次, 只在 do_eval 时更新 best_valid_r10 / early_stop_counter
             if do_eval:
                 t0 = time.time()
                 recalls, ndcgs = evaluate(model, valid_loader, device)
@@ -1081,6 +1076,18 @@ def main():
                     row["U_l2_norm"] = [round(x, 4) for x in u_norms]
                     row["V_l2_norm"] = [round(x, 4) for x in v_norms]
                 trace.append(row)
+                # Issue #135 v72 (2026-08-07): valid_R10-based best ckpt + early stop
+                # v71 loss-best 与 valid peak 严重脱节 (loss ep116 best, valid ep50 peak). v72 按 valid_R10 保存 + 早停.
+                if recalls["R@10"] > best_valid_r10 + 1e-4:
+                    best_valid_r10 = recalls["R@10"]
+                    best_loss = train_loss
+                    best_epoch = epoch
+                    early_stop_counter = 0
+                    torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
+                    log(f"[BEST] valid_R10={best_valid_r10:.4f} train_loss={best_loss:.4f} saved {CKPT_PATH}")
+                else:
+                    early_stop_counter += 1
+                    log(f"no valid_R10 improv ({early_stop_counter}/{EARLY_STOP}, best={best_valid_r10:.4f})")
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "
                     f"(train {t_train:.0f}s, eval {t_eval:.0f}s)"
