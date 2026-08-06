@@ -1,0 +1,409 @@
+{
+  "issue": "#60",
+  "r18_4dim_comparison": {
+    "D1_spec": "#56/#58/#59: Stage1 \u6b8b\u5dee Lorentz \u5934 \u2192 Stage2 \u03ba \u540c\u6b65\u91cd\u6821\u51c6 RQ-VAE; #60: Stage1+Stage2 \u8054\u5408 (Stage1 \u52a0 L_var+L_rank+L_assign+L_geo \u6b8b\u5dee\u53ef\u91cf\u5316\u7ea6\u675f)",
+    "D2_implementation": "#60 \u65b0\u5f15\u5165 Stage1 \u635f\u5931\u6269\u5c55; #56/#58/#59 \u4ec5\u8c03 Stage2 \u4fa7 (\u03ba \u8def\u5f84 + \u6295\u5f71 + \u5207\u7a7a\u95f4)",
+    "D3_gate1_fail_mechanism": "#56: Stage1 R@10=0.9575 PASS, Stage2 util_3digit=[0.50,0.23,0.23] FAIL (L0 \u5438\u8d70\u4fe1\u606f, L1/L2 residual \u51e0\u4e4e\u4e3a\u96f6\u65b9\u5dee); #58: Stage1 R@10=0.9575 PASS, Stage2 util_3digit=[0.42,0.28,0.21] FAIL (\u5207\u7a7a\u95f4\u7248, \u7565\u5347); #59: Stage1 R@10 (\u8f93\u5165 #58) Stage2 util_3digit=[0.45,0.25,0.20] FAIL (\u03c3+ L_\u03ba \u8def\u5f84, \u03ba \u6536\u655b\u7a33\u4f46 util \u672a\u6539\u5584); \u5171\u540c: Stage1 \u8f93\u51fa\u65e0\u6b8b\u5dee\u53ef\u91cf\u5316\u7ea6\u675f, L0 \u91cf\u5316\u540e L1/L2 residual \u51e0\u8fd1\u584c\u7f29",
+    "D4_references": "VQ-VAE \u6b8b\u5dee\u91cf\u5316 (van den Oord 2017), RQ-VAE (Lee 2022); #60 L_var/L_rank/L_assign/L_geo \u662f\u65b0\u7ea6\u675f, \u6587\u732e\u672a\u89c1"
+  },
+  "diagnostic_inputs": [
+    {
+      "name": "#52_simple_lorentz",
+      "npy_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue52/item_emb_u32.npy",
+      "sha256": "c877373ebc40fc8eafb433adcde2a798c6aca3d49d32d67dd5f5abcf70491572",
+      "shape": [
+        9922,
+        768
+      ],
+      "mean_norm": 0.20786568522453308,
+      "std_norm": 0.015751132741570473,
+      "min_norm": 0.16300755739212036,
+      "max_norm": 0.2889774739742279,
+      "cosine_mean": 0.48164060711860657,
+      "cosine_std": 0.0793749988079071,
+      "cosine_min": 0.15373408794403076,
+      "cosine_max": 0.9999998807907104,
+      "erank_1024_subset": 123.23806184363221,
+      "top10_variance_ratio": 0.32760931005178706,
+      "top50_variance_ratio": 0.7025483251181887,
+      "n_eigvals_positive": 767
+    },
+    {
+      "name": "#56_residual_lorentz",
+      "npy_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue56/item_emb_u32.npy",
+      "sha256": "91864cc49d84c2a9145c6b0f7ddb9a4dc98708be5bdbd4a9cd1a4b04311cb5ce",
+      "shape": [
+        9922,
+        768
+      ],
+      "mean_norm": 1.0,
+      "std_norm": 1.7700457988212293e-08,
+      "min_norm": 0.9999999403953552,
+      "max_norm": 1.0,
+      "cosine_mean": 0.567018985748291,
+      "cosine_std": 0.06795290857553482,
+      "cosine_min": 0.29768243432044983,
+      "cosine_max": 1.000000238418579,
+      "erank_1024_subset": 145.17934234984676,
+      "top10_variance_ratio": 0.2956400420199308,
+      "top50_variance_ratio": 0.625496587332799,
+      "n_eigvals_positive": 768
+    },
+    {
+      "name": "#58_residual_radial",
+      "npy_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue58/item_emb_u32.npy",
+      "sha256": "f79287643c51a4818b4e61f5fb2853dff9d14b0f53f4c2be8deccece078a7b8e",
+      "shape": [
+        9922,
+        768
+      ],
+      "mean_norm": 0.7423185110092163,
+      "std_norm": 0.055669691413640976,
+      "min_norm": 0.5502232909202576,
+      "max_norm": 0.9679160714149475,
+      "cosine_mean": 0.5670189261436462,
+      "cosine_std": 0.06795290857553482,
+      "cosine_min": 0.29768243432044983,
+      "cosine_max": 1.000000238418579,
+      "erank_1024_subset": 143.071095957691,
+      "top10_variance_ratio": 0.2992067790294341,
+      "top50_variance_ratio": 0.6286531251449958,
+      "n_eigvals_positive": 768
+    }
+  ],
+  "diagnostic_residual": [
+    {
+      "name": "#53_healthy",
+      "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue53/hrqvae_kappa_sync.ckpt",
+      "item_emb": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue52/item_emb_u32.npy",
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "residual_norm_mean": 0.1417299062013626,
+          "residual_norm_std": 0.020324217155575752,
+          "residual_norm_cv": 0.14340104851658295,
+          "residual_erank_1024": 14.070781097815553,
+          "top10_variance_ratio": 0.813576301029369,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.012573895044624805,
+          "top1_top2_margin_min": 7.487833499908447e-06,
+          "kappa_eff": -0.22289514541625977
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "residual_norm_mean": 0.056781161576509476,
+          "residual_norm_std": 0.01099946815520525,
+          "residual_norm_cv": 0.19371685695774923,
+          "residual_erank_1024": 17.52847475176947,
+          "top10_variance_ratio": 0.6996904393689946,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.004628725815564394,
+          "top1_top2_margin_min": 3.5390257835388184e-07,
+          "kappa_eff": -0.19802218675613403
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "residual_norm_mean": 0.0429694801568985,
+          "residual_norm_std": 0.008494758047163486,
+          "residual_norm_cv": 0.19769282793154783,
+          "residual_erank_1024": 18.905063674189787,
+          "top10_variance_ratio": 0.6426358662774543,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.0031301279086619616,
+          "top1_top2_margin_min": 4.2654573917388916e-07,
+          "kappa_eff": -0.10782849788665771
+        }
+      ]
+    },
+    {
+      "name": "#59_bounded_kappa",
+      "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue59/hrqvae_kappa_sync.ckpt",
+      "item_emb": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue58/item_emb_u32.npy",
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "residual_norm_mean": 0.3280164897441864,
+          "residual_norm_std": 0.06613390892744064,
+          "residual_norm_cv": 0.20161763507321098,
+          "residual_erank_1024": 11.548594782198665,
+          "top10_variance_ratio": 0.9093341271183075,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.05296634882688522,
+          "top1_top2_margin_min": 1.424551010131836e-05,
+          "kappa_eff": -0.23361468315124512
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "residual_norm_mean": 0.18555572628974915,
+          "residual_norm_std": 0.04365013167262077,
+          "residual_norm_cv": 0.23524001411966633,
+          "residual_erank_1024": 15.042066248983316,
+          "top10_variance_ratio": 0.8440710091797148,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.014362395741045475,
+          "top1_top2_margin_min": 9.685754776000977e-07,
+          "kappa_eff": -0.1998693346977234
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "residual_norm_mean": 0.14699305593967438,
+          "residual_norm_std": 0.03396160528063774,
+          "residual_norm_cv": 0.23104224252841213,
+          "residual_erank_1024": 17.055560676675277,
+          "top10_variance_ratio": 0.7742918665283446,
+          "zero_dim_ratio": 0.0,
+          "top1_top2_margin_mean": 0.008605385199189186,
+          "top1_top2_margin_min": 1.4901161193847656e-08,
+          "kappa_eff": -0.11646980047225952
+        }
+      ]
+    }
+  ],
+  "diagnostic_assignment": [
+    {
+      "name": "#53_healthy",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue53/sid_output.npy",
+      "n_items": 9922,
+      "unique_3digit": 9901,
+      "unique_3digit_fraction": 0.9978834912316066,
+      "unique_4digit": 9922,
+      "util_4digit": 1.0,
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "utilization": 0.921875,
+          "n_used": 59,
+          "n_empty": 5,
+          "min_count": 1,
+          "max_count": 428,
+          "count_mean": 168.16949152542372,
+          "count_std": 133.9653575941731,
+          "entropy": 3.6374643139514746,
+          "max_entropy": 4.1588830833596715,
+          "entropy_ratio": 0.8746252878580614
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "utilization": 1.0,
+          "n_used": 128,
+          "n_empty": 0,
+          "min_count": 54,
+          "max_count": 116,
+          "count_mean": 77.515625,
+          "count_std": 12.789756872567008,
+          "entropy": 4.838581506809361,
+          "max_entropy": 4.852030263919617,
+          "entropy_ratio": 0.9972282206872735
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "utilization": 1.0,
+          "n_used": 256,
+          "n_empty": 0,
+          "min_count": 24,
+          "max_count": 66,
+          "count_mean": 38.7578125,
+          "count_std": 6.667020152575193,
+          "entropy": 5.530707569053725,
+          "max_entropy": 5.545177444479562,
+          "entropy_ratio": 0.9973905478101078
+        }
+      ]
+    },
+    {
+      "name": "#57_v1",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue57/sid_output.npy",
+      "n_items": 9922,
+      "unique_3digit": 6788,
+      "unique_3digit_fraction": 0.6841362628502318,
+      "unique_4digit": 9922,
+      "util_4digit": 1.0,
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "utilization": 0.5,
+          "n_used": 32,
+          "n_empty": 32,
+          "min_count": 1,
+          "max_count": 750,
+          "count_mean": 310.0625,
+          "count_std": 257.05628487502497,
+          "entropy": 3.048099823847572,
+          "max_entropy": 4.1588830833596715,
+          "entropy_ratio": 0.7329130833332359
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "utilization": 0.2265625,
+          "n_used": 29,
+          "n_empty": 99,
+          "min_count": 292,
+          "max_count": 421,
+          "count_mean": 342.13793103448273,
+          "count_std": 38.97100968308855,
+          "entropy": 3.360917012852248,
+          "max_entropy": 4.852030263919617,
+          "entropy_ratio": 0.6926826153258981
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "utilization": 0.234375,
+          "n_used": 60,
+          "n_empty": 196,
+          "min_count": 3,
+          "max_count": 209,
+          "count_mean": 165.36666666666667,
+          "count_std": 32.24798012623771,
+          "entropy": 4.066090980651267,
+          "max_entropy": 5.545177444479562,
+          "entropy_ratio": 0.7332661616986156
+        }
+      ]
+    },
+    {
+      "name": "#57_v2",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue57_v2/sid_output.npy",
+      "n_items": 9922,
+      "unique_3digit": 7363,
+      "unique_3digit_fraction": 0.7420882886514816,
+      "unique_4digit": 9922,
+      "util_4digit": 1.0,
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "utilization": 0.578125,
+          "n_used": 37,
+          "n_empty": 27,
+          "min_count": 1,
+          "max_count": 586,
+          "count_mean": 268.1621621621622,
+          "count_std": 203.09051550285884,
+          "entropy": 3.196932964494786,
+          "max_entropy": 4.1588830833596715,
+          "entropy_ratio": 0.7686998889885135
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "utilization": 0.2578125,
+          "n_used": 33,
+          "n_empty": 95,
+          "min_count": 1,
+          "max_count": 373,
+          "count_mean": 300.6666666666667,
+          "count_std": 61.01746727889739,
+          "entropy": 3.4614894675352814,
+          "max_entropy": 4.852030263919617,
+          "entropy_ratio": 0.7134105269860757
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "utilization": 0.2265625,
+          "n_used": 58,
+          "n_empty": 198,
+          "min_count": 1,
+          "max_count": 288,
+          "count_mean": 171.06896551724137,
+          "count_std": 46.65828162028078,
+          "entropy": 4.002483162352682,
+          "max_entropy": 5.545177444479562,
+          "entropy_ratio": 0.7217953261959739
+        }
+      ]
+    },
+    {
+      "name": "#59",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue59/sid_output.npy",
+      "n_items": 9922,
+      "unique_3digit": 6641,
+      "unique_3digit_fraction": 0.6693207014714775,
+      "unique_4digit": 9922,
+      "util_4digit": 1.0,
+      "layers": [
+        {
+          "layer": 0,
+          "codebook_size": 64,
+          "utilization": 0.453125,
+          "n_used": 29,
+          "n_empty": 35,
+          "min_count": 1,
+          "max_count": 712,
+          "count_mean": 342.13793103448273,
+          "count_std": 232.273578905971,
+          "entropy": 3.0673681654453118,
+          "max_entropy": 4.1588830833596715,
+          "entropy_ratio": 0.7375461401447715
+        },
+        {
+          "layer": 1,
+          "codebook_size": 128,
+          "utilization": 0.25,
+          "n_used": 32,
+          "n_empty": 96,
+          "min_count": 1,
+          "max_count": 416,
+          "count_mean": 310.0625,
+          "count_std": 102.82932992950018,
+          "entropy": 3.3738729180447407,
+          "max_entropy": 4.852030263919617,
+          "entropy_ratio": 0.6953528182075319
+        },
+        {
+          "layer": 2,
+          "codebook_size": 256,
+          "utilization": 0.203125,
+          "n_used": 52,
+          "n_empty": 204,
+          "min_count": 2,
+          "max_count": 238,
+          "count_mean": 190.80769230769232,
+          "count_std": 33.00060515851797,
+          "entropy": 3.9276411749567153,
+          "max_entropy": 5.545177444479562,
+          "entropy_ratio": 0.7082985556876693
+        }
+      ]
+    }
+  ],
+  "stage1_artifacts": {
+    "available": [
+      "#52",
+      "#55",
+      "#56",
+      "#58"
+    ],
+    "used_in_diag": [
+      "#52 (\u5065\u5eb7\u57fa\u7ebf \u2192 #53)",
+      "#56 (\u6b8b\u5dee\u5934 \u2192 #57)",
+      "#58 (\u5f84\u5411\u7248 \u2192 #58 v2 / #59)"
+    ],
+    "missing": "#49+ \u65e9\u671f Stage1 \u7b80\u5355 sentence-t5-base \u8f93\u51fa (Issue #53 spec \u65e9\u671f, \u5df2\u88ab #52 \u66ff\u4ee3)"
+  },
+  "stage2_artifacts": {
+    "available_ckpt": [
+      "#53",
+      "#59"
+    ],
+    "available_sid": [
+      "#53",
+      "#57 v1/v2",
+      "#58 v2",
+      "#59"
+    ]
+  },
+  "diagnosis": "diagnostic computed; see 'diagnostic_inputs/residual/assignment' fields"
+}

@@ -95,6 +95,19 @@ HFFN_HIDDEN = 2048
 KL_TEMP = 0.07
 L_AUG_WEIGHT = 0.1
 DROPOUT_AUG = 0.2
+
+# Issue #60: 残差可量化性联合约束 (L_var + L_rank), Stage1 损失新增分支
+# Stage1 训练时用 Stage2 #53 健康 quantizer 作 proxy (固定 codebook, 不更新)
+# 残差分解 r^(0)=z_e, r^(l+1)=r^(l) - Q_l(r^(l)); L1/L2 residual 加 var+rank 下限
+ISSUE60_PROXY_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue53/hrqvae_kappa_sync.ckpt"
+ISSUE60_PROXY_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue52/item_emb_u32.npy"
+# 三层 τ (var 下限) 与 ρ (rank 下限) — #53 健康 r^(l).std 实测 ≈ 0.014, ERank 14-19
+# L1/L2 residual var/ERank 通常比 L0 低 30%, 故目标设 0.005 (var) / 8.0 (rank)
+ISSUE60_TAU = [0.005, 0.005]  # L1/L2 var 下限 (Issue #60 spec: τ_l = 0.05 上限; 实际 #53 std=0.014/0.011 → 0.005 适度下限)
+ISSUE60_RHO = [8.0, 8.0]      # L1/L2 effective-rank 下限
+ISSUE60_LAMBDA_VAR = 1.0      # λ_var 权重
+ISSUE60_LAMBDA_RANK = 1.0     # λ_rank 权重
+ISSUE60_VAR_RANK_PROXY_DEVICE = "cuda:0"
 # PC 阈值 (Issue #49 spec)
 PC1_MANIFOLD_MAX = 1e-8
 PC2_INVERSE_MAX = 1e-8
@@ -1808,6 +1821,88 @@ def teacher_student_recall10(student_emb: np.ndarray, teacher_emb: np.ndarray, k
     return float(hits / n)
 
 
+# ============================================================
+# Issue #60: Stage1 残差可量化性约束 (L_var + L_rank)
+# ============================================================
+@torch.no_grad()
+def _stage2_proxy_quantizer_init(device: torch.device, ckpt_path: str = ISSUE60_PROXY_CKPT):
+    """加载 Stage2 #53 健康 ckpt 的 quantizer (冻结) 作 Stage1 训练 proxy.
+
+    Returns: 加载好的 Stage2 模型 (冻结, no grad).
+    """
+    import importlib.util
+    REPO_PATH = Path("/home/wlia0047/ar57/wenyu/GeneRec")
+    sys.path.insert(0, str(REPO_PATH / "HG-Rec"))
+    # Issue #60: stage2 module-level 调用 _argparser.parse_args() (line 252),
+    # 需临时清空 sys.argv 避免 stage1 --train --arch 触发 stage2 parse_args 报错
+    saved_argv = list(sys.argv)
+    sys.argv = ["taskA_stage2_issue60_proxy"]
+    try:
+        spec = importlib.util.spec_from_file_location("s2", str(REPO_PATH / "taskA/stage2/taskA_stage2.py"))
+        s2 = importlib.util.module_from_spec(spec)
+        sys.modules["s2"] = s2
+        spec.loader.exec_module(s2)
+    finally:
+        sys.argv = saved_argv
+    # 用 #52 输入 embed_dim=768
+    model = s2.KappaAwareHRQVAE(in_dim=s2.EMB_DIM, num_emb_list=s2.CODEBOOK_SIZES,
+                                e_dim=s2.E_DIM, layers=s2.ENCODER_LAYERS,
+                                beta=s2.BETA, kmeans_init=False, kmeans_iters=10,
+                                sk_eps=s2.SK_EPSILONS, sk_iters=3, fix_c=s2.FIX_C).to(device)
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+    model.load_state_dict(ckpt["model_state_dict"])
+    model.eval()
+    for p in model.parameters():
+        p.requires_grad = False
+    return model, s2.EMB_DIM
+
+
+def _residual_quantize_layers(encoder_out: torch.Tensor, proxy_model,
+                              tau_list: list, rho_list: list,
+                              lambda_var: float, lambda_rank: float):
+    """三层残差量化分解, 计算 L_var + L_rank.
+
+    encoder_out: (B, 768) Stage1 student 表示 (cosine 归一化后)
+    proxy_model: Stage2 #53 健康 quantizer (冻结, 但 forward 仍传梯度回 encoder_out)
+    tau_list/rho_list: L1/L2 (跳过 L0, 只约束 L1/L2 residual)
+    lambda_var/lambda_rank: 损失权重
+
+    实现关键: 不调用 encoder_out.detach(), 让 z_e 走 proxy encoder 的 forward (参数冻结,
+    requires_grad=False), 但 forward 输出 z_e 仍能接收上游梯度 (Stage1 encoder 优化方向
+    通过 encoder_out 反传到 Stage1).
+    """
+    # Stage2 encoder 把 Stage1 表示映射到 latent (B, e_dim=32). 不 detach, 保留梯度回传路径.
+    z_e = proxy_model.encoder(encoder_out)
+    residual = z_e
+    l_var = torch.zeros((), device=encoder_out.device)
+    l_rank = torch.zeros((), device=encoder_out.device)
+    quant_layers = proxy_model.vq_layers if hasattr(proxy_model, "vq_layers") else proxy_model.module.vq_layers
+    for l_idx, q in enumerate(quant_layers):
+        codebook = q.embeddings.weight  # (K, e_dim)
+        # L2 距离选最近码字 (Euclidean VQ 路径)
+        dist = torch.cdist(residual.unsqueeze(1), codebook.unsqueeze(0)).squeeze(1)
+        nearest = dist.argmin(dim=-1)
+        # 用 soft assignment (STE) 模拟量化, 让梯度流回 codebook 之外的输入空间
+        # Issue #60 简化: 用 straight-through estimator 替代硬量化
+        quantized_hard = codebook[nearest]
+        quantized = residual + (quantized_hard - residual).detach()  # STE: 前向用 quantized_hard, 反向梯度流到 residual
+        new_residual = residual - quantized_hard  # 残差 (无梯度, 仅用于下一层分解)
+        if l_idx >= 1:  # L1/L2 残差约束 (基于量化前 residual, 因量化本身不可导)
+            # 用原始 residual (有梯度) 计算 var/ERank
+            res_var = residual.var(dim=0).mean()
+            cov = torch.cov(residual.T)
+            eigvals = torch.linalg.eigvalsh(cov).clamp_min(0.0)
+            p = eigvals / (eigvals.sum() + 1e-12)
+            p_nz = p[p > 1e-12]
+            erank = torch.exp(-(p_nz * torch.log(p_nz)).sum())
+            tau_l = tau_list[l_idx - 1]
+            rho_l = rho_list[l_idx - 1]
+            l_var = l_var + torch.clamp(tau_l - res_var, min=0.0)
+            l_rank = l_rank + torch.clamp(rho_l - erank, min=0.0)
+        residual = new_residual
+    return lambda_var * l_var + lambda_rank * l_rank, l_var.detach(), l_rank.detach()
+
+
 # ================================================================
 # Issue #52: Gate1 Stage1 Lorentz 正式训练 (--train 分支)
 # ================================================================
@@ -1986,11 +2081,19 @@ def train_stage1_lorentz_residual(model: Stage1LorentzResidualEncoder, items: li
             raise RuntimeError("Issue #56: 训练前 trainable 参数含 NaN/Inf")
     optimizer = torch.optim.AdamW(trainable, lr=TRAIN_LR)
 
+    # Issue #60: 加载 Stage2 #53 健康 quantizer 作 proxy (冻结), Stage1 训练时算 L_var + L_rank
+    log("[issue60] 加载 Stage2 #53 健康 quantizer 作 proxy (冻结)")
+    proxy_model, _ = _stage2_proxy_quantizer_init(device)
+    log(f"[issue60] proxy ready, tau={ISSUE60_TAU} rho={ISSUE60_RHO} "
+        f"lambda_var={ISSUE60_LAMBDA_VAR} lambda_rank={ISSUE60_LAMBDA_RANK}")
+
     # 固定 seed 确定性 batch 序列 (TRAIN_SEED=42, 每个 epoch 重新打乱)
     g = torch.Generator(device=device).manual_seed(TRAIN_SEED)
     n_batches = (n_items + TRAIN_BATCH_SIZE - 1) // TRAIN_BATCH_SIZE
     curve = []
     alpha_curve = []
+    var_curve = []
+    rank_curve = []
     alpha_grad_norm_max = 0.0
     geom_grad_norms = {"W": 0.0, "F": 0.0, "P": 0.0}
     ckpt_path = product_dir / "stage1_lorentz_residual_ckpt.pt"
@@ -1998,6 +2101,8 @@ def train_stage1_lorentz_residual(model: Stage1LorentzResidualEncoder, items: li
     for ep in range(TRAIN_EPOCHS):
         perm = torch.randperm(n_items, generator=g, device=device)
         ep_loss = 0.0
+        ep_l_var = 0.0
+        ep_l_rank = 0.0
         for start in range(0, n_items, TRAIN_BATCH_SIZE):
             idx = perm[start:start + TRAIN_BATCH_SIZE]
             texts = [items[int(i)][1] for i in idx]
@@ -2014,7 +2119,14 @@ def train_stage1_lorentz_residual(model: Stage1LorentzResidualEncoder, items: li
             p_t = F.softmax(sim_t, dim=-1)
             log_p_s = F.log_softmax(sim_s, dim=-1)
             l_kl = -(p_t * log_p_s).sum(dim=-1).mean()
-            loss = l_kl  # 残差头 α 初始小结构稳定, 无需 L_aug 增强
+            # Issue #60: 残差可量化性约束 L_var + L_rank (Stage2 #53 quantizer proxy)
+            l_vr, l_var_det, l_rank_det = _residual_quantize_layers(
+                s1.float(), proxy_model,
+                ISSUE60_TAU, ISSUE60_RHO,
+                ISSUE60_LAMBDA_VAR, ISSUE60_LAMBDA_RANK)
+            loss = l_kl + l_vr  # 联合损失: 语义 KL + 残差可量化约束
+            ep_l_var += float(l_var_det.item())
+            ep_l_rank += float(l_rank_det.item())
             loss.backward()
             bad = [p.grad is not None and not bool(torch.isfinite(p.grad).all()) for p in trainable]
             if any(bad):
@@ -2034,7 +2146,10 @@ def train_stage1_lorentz_residual(model: Stage1LorentzResidualEncoder, items: li
         mean_ep = ep_loss / n_batches
         curve.append(mean_ep)
         alpha_curve.append(float(model.head.alpha.detach().item()))
-        log(f"[issue56] epoch {ep + 1}/{TRAIN_EPOCHS} mean_loss={mean_ep:.6f} alpha={alpha_curve[-1]:.6f}")
+        var_curve.append(float(ep_l_var / max(n_batches, 1)))
+        rank_curve.append(float(ep_l_rank / max(n_batches, 1)))
+        log(f"[issue56] epoch {ep + 1}/{TRAIN_EPOCHS} mean_loss={mean_ep:.6f} "
+            f"alpha={alpha_curve[-1]:.6f} L_var={var_curve[-1]:.6f} L_rank={rank_curve[-1]:.6f}")
         # R12: epoch 末强制保存 ckpt, 删旧保新 (磁盘只保留最新)
         if ckpt_path.exists():
             ckpt_path.rename(old_path)

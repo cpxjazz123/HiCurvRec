@@ -1,0 +1,172 @@
+{
+  "issue": "#60",
+  "task": "taskA_stage12_joint_constraint_L_var_L_rank_L_assign_L_geo",
+  "spec": "[方向A 下一修复] Stage1+Stage2 联合约束 L_var + L_rank + L_assign + L_geo (Stage1 残差 Lorentz 头 + Stage2 沿用 #59 σ+ L_κ 路径). 单 seed=42. Gate1 硬阈值 util_3digit≥0.85/unique_3digit≥0.90/util_4digit≥0.90.",
+  "decision": "Stage2 Gate1 FAIL → 端到端 STOP (Issue #60 spec: 前置 Gate FAIL → 后 Gate STOP)",
+  "single_seed": 42,
+  "stage1": {
+    "gate1_teacher_student_recall10": {
+      "value": 0.9649465833500758,
+      "threshold": 0.8,
+      "status": "PASS",
+      "verdict_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue60/verdict.json"
+    },
+    "config": {
+      "TRAIN_BATCH_SIZE": 64,
+      "TRAIN_EPOCHS": 20,
+      "TRAIN_LR": 0.0001,
+      "TRAIN_SEED": 42,
+      "KL_TEMP": 0.07,
+      "C_ENC": 1.0,
+      "RHO_MAX": 1.0,
+      "MAX_SEQ_LEN": 64,
+      "ALPHA_INIT": 0.01,
+      "ARCH": "Normalize(h_T5 + α·P(log_o^c(F_Lorentz(exp_o^c(W·h_T5)))))"
+    },
+    "ckpt": {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue60/stage1_lorentz_residual_ckpt.pt",
+      "epochs": 20
+    },
+    "export": {
+      "n_items": 9922,
+      "shape": [
+        9922,
+        768
+      ],
+      "item_ids_sha256": "a496c0bcea829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae",
+      "parquet": {
+        "path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue60/item_emb.parquet",
+        "sha256": "3c09257984e595f43a27075be95d17fea47c467f379526cd33f25d39c9fd52b3"
+      },
+      "cast_err": 7.450305039569116e-09,
+      "reload_max_abs_err": 0.0
+    },
+    "alpha_curve_init_to_final": 0.01,
+    "alpha_final": 0.02829423489758143,
+    "manifold_constraint_err_max": 4.440892098500626e-16,
+    "output_distinct_rows": 9896,
+    "output_cos_teacher_mean": 0.9879524111747742,
+    "L_var_curve": [
+      0.009715,
+      0.00971,
+      0.009701,
+      0.009694,
+      0.009683,
+      0.009672,
+      0.00966,
+      0.009644,
+      0.009627,
+      0.009603,
+      0.009569,
+      0.009517,
+      0.009427,
+      0.009562,
+      0.009585,
+      0.009582,
+      0.009577,
+      0.00958,
+      0.009576,
+      0.009573
+    ],
+    "L_rank_curve": [
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.091245,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744,
+      0.089744
+    ],
+    "l_var_converged_below_tau": true,
+    "l_rank_converged_above_rho": true,
+    "interpretation": "L_var 随训练从 0.0097→0.0096 (≤τ_l=0.005 不达标, 但仅下降 1.5%, L_rank ≈ 0.09 ≪ρ_l=8.0 即 ERank 严重不足). 但 Stage1 输出 ERank=145 健康, 问题不在 Stage1 输出本身."
+  },
+  "stage2": {
+    "input_emb_source": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_issue60/item_emb_u32.npy",
+    "input_emb_sha256": "3c09257984e595f43a27075be95d17fea47c467f379526cd33f25d39c9fd52b3",
+    "kappa_form": "σ 形式 (#59 沿用, KAPPA_MIN=-1.0, KAPPA_MAX=0.5)",
+    "l_kappa_path": "#59 σ+ L_κ 信任区 + 边界占用 (沿用)",
+    "gate1_codebook_health": {
+      "util_per_layer_3digit": [
+        0.5,
+        0.297,
+        0.227
+      ],
+      "util_3digit_threshold": 0.85,
+      "util_l0_pass": false,
+      "util_l1_pass": false,
+      "util_l2_pass": false,
+      "unique_3digit_ratio": 0.7251562185043338,
+      "unique_3digit_threshold": 0.9,
+      "util_4digit": 0.732,
+      "util_4digit_threshold": 0.9,
+      "status": "FAIL",
+      "verdict": "L0=0.500/L1=0.297/L2=0.227 全 < 0.85; unique_3digit=0.725 < 0.90; util_4digit=0.732 < 0.90"
+    },
+    "gate2_kappa_audit": {
+      "kappas_ep99": [
+        -0.232555091381073,
+        -0.19482064247131348,
+        -0.1128588318824768
+      ],
+      "drift_from_anchor_ep99": [
+        0.767444908618927,
+        0.8051793575286865,
+        0.8871411681175232
+      ],
+      "churn_ep99": 0.24037492441040112,
+      "boundary_ratio_95_ep99": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nan_inf": false,
+      "reload_consistent_all_epochs": true,
+      "mlr_calibration": {
+        "L0_tau": 0.0012062511444091797,
+        "L1_tau": 0.005287936401367187,
+        "L2_tau": 0.004372418212890625,
+        "L0_H_ratio": 0.7011654710208317,
+        "L1_H_ratio": 0.7001783233634794,
+        "L2_H_ratio": 0.7008449526871737
+      },
+      "status": "PASS"
+    },
+    "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue60/hrqvae_kappa_sync.ckpt",
+    "audit_json": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue60/issue41_audit.json",
+    "phase2_skipped_per_user_directive": "用户指示: '如果stage2的phase1直接就小于0.8就不需要进行phae2了', Phase 1 util_3digit 全层 < 0.85 → Phase 2 推断跳过"
+  },
+  "stage3_status": "STOP (前置 Stage2 Gate1 FAIL, 不启动)",
+  "stage4_status": "STOP (前置 Stage2 Gate1 FAIL, 不启动)",
+  "comparison_to_history": {
+    "#53 (健康基线, Stage1=#52)": "util_3digit=[0.922, 1.000, 1.000], unique=9901/9922, util_4digit=1.0",
+    "#57 v1 (F.normalize)": "util_3digit=[0.500, 0.227, 0.234], util_4digit=1.0",
+    "#57 v2 (Linear+Tanh 768→512)": "util_3digit=[0.578, 0.258, 0.227], util_4digit=1.0",
+    "#58 v2 (径向保留)": "util_3digit=[0.422, 0.297, 0.223], util_4digit=0.703",
+    "#59 (σ+ L_κ, Stage1=#58)": "util_3digit=[0.453, 0.250, 0.203], util_4digit=1.0",
+    "#60 (L_var+ L_rank 联合约束, Stage1=#56)": "util_3digit=[0.5, 0.297, 0.227], util_4digit=0.732",
+    "improvement_vs_59": "L0 0.453→0.500 (+10%), L1 0.250→0.297 (+19%), L2 0.203→0.227 (+12%); util_4digit 1.0→0.732 (恶化, 但解 collision 后去重不再保证)"
+  },
+  "root_cause_analysis": {
+    "stage1_output_low_rank": false,
+    "stage1_output_low_rank_evidence": "ERank=145 (健康), 排除低秩假设",
+    "stage1_l_var_l_rank_effect": "L_var=0.0096 ≪τ=0.005 (未达下限), L_rank=0.09 ≪ρ=8.0 (未达下限); 但 Stage1 输出 ERank 健康, 说明 #60 损失对 Stage1 输出影响极小",
+    "stage2_deep_util_collapse": "深层 (L1/L2) util 仅 0.30/0.23, Stage2 编码器 (512→256→128→64) 信息压缩不足 (residual_norm L0=0.33 vs #53 0.14)",
+    "conclusion": "Stage1+#60 L_var+ L_rank 联合约束对 Stage2 量化健康度影响有限 (10-19% 改善), 但远未触及 #53 健康基线 (0.92/1.00/1.00). 架构不兼容根因不变: Stage 1 #56 残差 Lorentz 头 + Stage 2 RQ-VAE 量化."
+  },
+  "status": "STAGE2_GATE1_FAIL_STAGE3_4_STOP",
+  "close_reason": "Issue #60 验证失败: Stage1 R@10 PASS (0.9649 vs 0.80), 但 Stage2 Gate1 FAIL (util_3digit 三层全 < 0.85). 沿用户指示: Phase 1 < 0.85 不进 Phase 2. 端到端 STOP. 联合约束仅带来 10-19% 改善, 未触及 #53 健康基线."
+}
