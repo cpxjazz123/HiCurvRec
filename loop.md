@@ -49,19 +49,15 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
 
-> **当前活跃任务**:
+> **当前活跃任务**: (空 — R10 v2 idle 模式, 0 open issue)
 >
-> | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
-> |---------|-------|------|------|-----|------|-----|
-> | #98 (in_progress) | #61 | 方向A Stage3 | T5 训练 200ep, P0 5 项加速 | GPU 0 | epoch 5/200 完成 (best NDCG@20=0.0611), 15s/epoch train + 14s eval | ~1.7 h |
-> | #102 (pending) | #61 | 方向A Stage4 | R@K/NDCG eval | GPU 0 (after Stage3) | 待 Stage3 完成启动 | ~10 min |
-> | #103 (pending) | #61 | 方向A verdict | 闭环 commit + push + close | - | 待 Stage4 完成 | ~5 min |
+> 已关: #56/#57/#58/#59/#60/**#61 (2026-08-06 14:08 PARTIAL-GO 闭环, commit 6efb85d)**.
 >
-> 已关: #56/#57/#58/#59/#60. 4 GPU 中 GPU 0 占 (Stage3 200ep + P0 5 项加速), 1-3 空闲.
+> **Issue #61 端到端结果**:
+> - Stage3: 200ep bs=1024 lr=4e-4, best ep 70 valid R@10=0.1254
+> - Stage4 test: R@5/10/20 = 0.0863/0.1059/0.1283 (+5.4%/+3.4%/0%), NDCG@5/10/20 = 0.0732/0.0795/0.0852 (+6.1%/+5.3%/+3.8%) — **6/6 PASS**
+> - Stage4 valid: R@5/10/20 = 0.1028/0.1253/0.1511 (-0.1%/-1.1%/-3.2%), NDCG@5/10/20 = 0.0859/0.0931/0.0996 (+24.5%/+23.3%/+21.3%) — **NDCG 3/3 大幅 PASS**, R@K 略低
+> - PARTIAL-GO: test 6/6 ≥ 基线 + valid NDCG +21-24% 大幅领先, valid R@10 差 0.0014 未达 strict 阈值 0.1267
+> - 产物: verdicts/issue61_stage4_eval_result.md + taskA/_history/taskA_stage4_issue61/{test,valid}/eval_test.json
 >
-> **Stage3 三轮加速累积 (用户指示 2026-08-06)**:
-> - L1: BATCH_SIZE 256→1024 + EVAL_INTERVAL=5 (DECOR 对齐)
-> - L2: P0 5 项框架加速 — NUM_WORKERS=4 + pin_memory + persistent_workers + TF32 + fused AdamW + torch.compile
-> - L1+L2 综合: 96s/epoch → 15s train + 14s eval = 29s/effective epoch (3.3× 加速), 5.3h → 1.7h
->
-> Stage3 PID=2231158 (active, GPU 0 93%/16.3GB). HG-Rec 上游 DataLoader 不允许改 → 用 `_FastGenRecDataLoader` 子类注入 pin_memory/persistent_workers.
+> 4 GPU 全空 (Stage3 PID 2911111 已 kill, Stage4 PID 3314054/3322032 已 exit), 等下一轮派工.
