@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - phonism
+up: "[[index]]"
+---
 # task388v5 综合判定：5 道防线版 H-E-E-E / H-H-E-E / H-H-H-H 最终结论
 
 **日期**：2026-07-15

@@ -1,3 +1,14 @@
+---
+task: 473
+type: result
+issue: 181
+gate: 4
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #181 / Task #473 [方向B Gate4] 混合曲率有界残差 conditioner Gate 4 NO-GO 收口
 
 ## Gate 4 决策: ❌ NO-GO 收口

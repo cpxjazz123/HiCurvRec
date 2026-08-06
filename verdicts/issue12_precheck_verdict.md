@@ -1,3 +1,12 @@
+---
+type: precheck
+issue: 12
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #12 Precheck — R18 4 维度对比
 
 **Issue #12**: [方向A] 修复 P2 vocab 映射与 P4 合法SID约束失效, canary 非零复验, beam search 六指标产出

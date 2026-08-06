@@ -1,3 +1,10 @@
+---
+type: analysis
+created: 2026-08-02
+tags:
+  - baseline
+up: "[[index]]"
+---
 # 系统性根因分析: taskA/taskB 为何至今未超过 baseline (R@10=0.1020)
 
 > 分析时间: 2026-08-02 (纯代码审计 + 决定性实验, 不看 issue 历史)

@@ -299,3 +299,7 @@ taskB/_history/**/*.h5
 # PID 标记 (训练时动态生成, 瞬态)
 *_TRAINING_PID
 *.pid
+
+# === SquashFS root (Obsidian AppImage 提取, 351M, 误提交 cfdf319 后移除) ===
+squashfs-root/
+appimage-extracted/

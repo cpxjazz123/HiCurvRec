@@ -1,3 +1,12 @@
+---
+type: verdict
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - kappa
+  - phase0
+up: "[[index]]"
+---
 # Phase 0 (球面侧 κ 扫描) — NO-GO with caveat (2026-07-27)
 
 ## Step 0 通过 ✅

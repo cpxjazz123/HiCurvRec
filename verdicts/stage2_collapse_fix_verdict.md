@@ -1,3 +1,11 @@
+---
+type: verdict
+status: "PASS"
+created: 2026-08-03
+tags:
+  - stage2
+up: "[[index]]"
+---
 # Stage2 量化器塌缩修复 — Verdict
 
 > 任务: "stage2 量化器让它不塌缩, 产出能用且 unique 的好 SID" (方向A taskA + 方向B taskB)

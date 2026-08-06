@@ -1,3 +1,13 @@
+---
+type: verdict
+issue: 3
+gate: 4
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #3 关闭 verdict — Gate 4 FAIL (NO-GO)
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26+R27)
 **Issue**: #3 [方向B Gate4后续] 混合权重泛化诊断与单seed重评估

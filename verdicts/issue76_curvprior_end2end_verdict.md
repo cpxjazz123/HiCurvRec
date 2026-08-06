@@ -1,3 +1,12 @@
+---
+type: verdict
+issue: 76
+status: "FAIL"
+created: 2026-08-03
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #76 — 用户方案 (c=exp(κ)+stop-grad c+REL_STRUCT+平滑先验) 端到端验证 verdict
 
 > **日期**: 2026-08-03

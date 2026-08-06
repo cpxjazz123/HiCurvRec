@@ -1,3 +1,14 @@
+---
+task: 471
+type: result
+issue: 178
+gate: 3
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #471 / Issue #178 [方向B Gate3续] [κ,α,β,γ] 元数据 T5 零中心有界混合残差 — ✅ Gate 3 PASS
 
 ## 任务目标 (per Issue #178 spec, 2026-08-01 owner 派发)

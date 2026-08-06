@@ -1,3 +1,14 @@
+---
+task: 472
+type: result
+issue: 179
+gate: 4
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #179 / Task #472 [方向A Gate4] κ-scale 有界残差 conditioner Gate 4 NO-GO 收口
 
 ## Gate 4 决策: ❌ NO-GO 收口

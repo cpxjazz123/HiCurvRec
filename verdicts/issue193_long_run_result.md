@@ -1,3 +1,12 @@
+---
+type: result
+issue: 193
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #193 [方向B Gate4 长跑] Stage 3 199 epoch + Stage 4 完整评估 — ❌ GATE 4 FAIL (R@10=0.0395 vs baseline 0.1020)
 
 ## 任务目标 (per Issue #193 spec, 2026-08-01 owner 派发)

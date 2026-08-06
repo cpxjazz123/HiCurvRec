@@ -1,3 +1,12 @@
+---
+type: verdict
+issue: 14
+status: "PASS"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #14 Verdict — [方向A] Gate4 单seed Task84 全量评估
 
 **Issue #14**: [方向A] Gate4 单seed Task84 全量评估 — beam K=20 六指标产出 + kappa/codebook 同步性取证

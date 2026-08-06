@@ -1,3 +1,11 @@
+---
+task: 186
+type: result
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #186 — Fresh 1000 epoch training (用户叫停, ⏸️ 终止)
 
 > **结论**: ⏸️ **STOPPED by user** at epoch 25/1000 — 不是训练失败, 是用户在 18:21 主动叫停 (GPU 0 已释放, 0% util, 0 MiB). best_ckpt 落盘保存 (epoch 24, val NDCG@20=0.0887).

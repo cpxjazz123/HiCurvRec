@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - phase0
+up: "[[index]]"
+---
 # Phase 0B: 防坍缩独立测试 (2026-07-27)
 
 ## 目的

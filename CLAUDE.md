@@ -54,6 +54,12 @@
 
 **R29**: tick 完成硬判定. 每个 tick 输出必须同时满足: (a) ≥1 个 R26 动作 (启动 precheck / Gate 评估 / 修复 commit / 验证运行 / 训练启动 / 落盘 verdict) **且** (b) ≥1 个 R27 动作 (`python3 -m py_compile` / `python3 <existing_script>.py` 启动 / `nvidia-smi` 查询 / `git commit` / `git push` / `glab issue close`). 仅"分析报告 + A-B 选项 + 等用户拍板"形式 = R26+R27 双 FAIL, 即使伴随 4 维度对比 / 修复方案. Tick 末尾必须明确"已执行 X" + 给出实际产物 (verdict 路径 / commit hash / PID), 不允许"下一步待定" / "等你确认" / "请选择 A 或 B".
 
+**R30**: 脚本参数硬编码. 所有 `.py` 脚本 (`taskA/stage2/taskA_stage2.py` / `common/stage3_train_pure_t5.py` / `common/stage4_eval_*.py` 等) **不允许** 使用 `os.environ.get(...)` / `os.environ[...]` 动态读取参数. 所有超参 (epoch / batch_size / lr / seed / bf16 / κ EMA / trust region / anchor / REC_LOSS / REL_STRUCT / INFER_SIZE / MAX_LEN / ...) 必须硬编码进脚本 (常量赋值或 argparse 默认值). launch 脚本 (`.sh`) 仅负责 GPU 选择 (`CUDA_VISIBLE_DEVICES`) + 路径 (`PRODUCT_DIR` / `SID_NPY` / `CKPT_PATH`) + 产物目录设定, 不传任何超参. 历史代码中的 env var 读取是过渡期产物, 后续修改一律去除. **Why:** env var 隐式接口难以审计, 易遗漏 (如本轮 launch 漏设 `INFER_SIZE=256`), 复现性依赖 launcher 上下文而非脚本本身. **How to apply:** 新写脚本 → 顶部常量区列所有超参; 修改脚本 → 若只是改超参, 直接改脚本常量, 不要碰 launcher; 实验变体 → 复制脚本为新文件改常量, 不复用同一脚本 + env toggle.
+
+**R31**: 每个 stage 目录 (如 `taskA/stage2/` / `taskB/stage3/`) 只允许一个主脚本 (例如 `taskA_stage2.py` / `taskB_stage3.py`), 不允许 fork 出 `taskA_stage2_v2.py` / `taskA_stage2_v8.py` 等多版本并存. 修改时直接在主脚本上改, 历史实验变体从 git 历史恢复, 不在 stage 目录保留多份. 历史 issue 已 fork 的 v3-v8 副脚本 (如 `taskA_stage2_v7.py` / `taskA_stage2_v8.py`) 在本规则生效后必须删除, 仅留主脚本作为唯一入口. **Why:** 多版本并存 → 启动时不知道跑哪个 → 容易跑错版本 → 复现性崩溃; 主脚本单一入口 + git 历史 = 任何变体都可追溯, 同时避免误启动. **How to apply:** 新实验变体 → 改主脚本 CONFIG 块 + commit; 旧的 v*-forked.py 文件 → 立即 `rm` (commit + push 一起发); `_history/` 目录的产物文件夹 (如 `taskA_stage2_v7_issue43/`) 仅保留产物, 不影响主脚本选择.
+
+**R32**: 运行脚本必须直接 `python3` 执行, **不允许** 写 `.sh` 包装脚本启动 (如 `launch_xxx.sh`). GPU 选择走 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联环境变量; 路径走 `--product_dir <path>` argparse 参数; 日志走 `tee` 或 `nohup ... > log.txt 2>&1` (`.sh` 仅作内联一次性命令, 不落盘). 历史 `.sh` 启动器 (如 `launch_stage2_v7_issue43.sh`) 一律删除, 启动方式统一为 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...`. **Why:** `.sh` 包装层 → 超参容易从 launcher 注入 → 违背 R30 硬编码原则; `.sh` 累积 → 仓库膨胀 / 哪个版本对应哪个 launcher 难追溯; 直接 python 执行 → 单行命令自描述, 复现性直接 grep 命令即可. **How to apply:** 写新实验 → 不写 `.sh` 文件; 启动训练 → 在终端直接 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args... > log.txt 2>&1 &` (后台) 或 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...` (前台) 或 `bash -c 'CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...' | tee log.txt` (前台+日志). **唯一例外**: DDP 多卡 `torchrun` (env 必须由 torchrun wrapper 设, 无法绕开) — 此场景保留 `.sh` 包装.
+
 ---
 
 ## 项目元数据 (6 条)
@@ -62,7 +68,12 @@
 
 **GPU**: 4× NVIDIA L40S (sm_89, 46GB/卡), 驱动 580.126.20, CUDA 13.0 (torch 2.11.0+cu130) / 12.x (TF kgat_mckg).
 
-**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/). taskA/taskB 每 stage 顶层只保留 1 个**自包含主脚本** (`taskX_stageN.py`, 直接运行, 无 archive/ 归档、无 wrapper 转发层), 历史脚本删除后可从 git 历史恢复. **训练产物统一放 `taskX/_history/`** (stage2/3 ckpt+verdict, stage4 canary; 主脚本 `PRODUCT_DIR`/`PRIOR_CKPT`/`STAGE2_VQ_CKPT` 均指向 `_history/`), stage 目录不放产物与 .pid. stage3 主脚本内联 wrapper 类定义 (issue24/issue23, 逐字节一致保 ckpt 兼容), stage4 的 `DEFAULT_WRAPPER` 指向 `taskX/stage3/taskX_stage3.py`. 共享模块 `common/` (含 `stage4_decode` / `stage4_eval_beam20`).
+**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/). taskA/taskB 只保留 Stage 1 / Stage 2 子目录 (各 1 个主脚本). **Stage 3 / Stage 4 只允许使用 `common/` 下的脚本** (用户指示 2026-08-06): `common/stage3/stage3_train_pure_t5.py` (T5 训练, R30 硬编码超参 + argparse 路径) / `common/stage4/stage4_eval_pure_t5.py` (pure T5 评估) / `common/stage4/stage4_eval_beam20.py` (beam20 评估) / `common/stage4/stage4_decode.py` (解码工具). taskA/stage3+stage4 与 taskB/stage3+stage4 目录已删除, 任何 stage3/4 任务必须用 common/. **common/ 目录结构 (用户指示 2026-08-06)**:
+  - `common/stage1/stage1_hyperbolic.py` (Stage 1 双曲 sentence-t5-base embedding)
+  - `common/stage2/` (空占位 — Stage 2 在 taskA/stage2/ 与 taskB/stage2/, 各自为方向专用变体)
+  - `common/stage3/stage3_train_pure_t5.py` (Stage 3 纯 T5 训练)
+  - `common/stage4/stage4_{decode,eval_pure_t5,eval_beam20}.py` (Stage 4 解码 + 评估工具)
+  **训练产物统一放 `taskX/_history/`** (stage2 ckpt+verdict + stage3 adapter+verdict + stage4 canary; 主脚本 `PRODUCT_DIR` 均指向 `_history/`), stage 目录不放产物与 .pid.
 
 **流水线**: 4 阶段 — Stage 1 sentence-t5-base embedding → Stage 2 Poincaré RQ-VAE SID (3→4 层去重 digit) → Stage 3 T5-mini 训练 → Stage 4 R@K/NDCG 评估.
 

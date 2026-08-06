@@ -1,0 +1,280 @@
+"""Stage 1 双曲 encoder — frozen sentence-t5-base → MLP backbone (方向) + radius head (半径).
+
+设计 v2 (2026-08-04): per-item 半径 + stage2 expmap0(c_l) per-layer.
+- 输出**欧氏基础向量 v_i = r_i × d_i** (norm = r_i < 1, 严格在欧氏单位球内)
+  - 方向 d_i = F.normalize(MLP(t5_emb)) (unit 向量, 语义方向)
+  - 半径 r_i = heuristic(t5_emb norm) 或 sigmoid(MLP_radius) × R_MAX (per-item 径向位置)
+- stage2 **不变**, KappaAwareVectorQuantization 已实现每层 expmap0(c_l)
+  - 因 ||v_i|| < 1, expmap0(z, c_l) 输出 norm = tanh(√κ_l · arctanh(||z||))/√κ_l < 1/√κ_l = radius_l
+  - 严格在 Poincaré ball 内, 无 clip/溢出风险
+- 优点:
+  - 不同商品可有不同半径 (per-item 径向位置)
+  - 三层使用不同曲率 (stage2 现有 per-layer learnable κ_l 自动生效)
+  - 曲率变化后自动重新映射 (stage2 forward 每步重算 expmap0, 无需重训 stage1)
+  - 不容易超 Poincaré ball 边界 (||v||<1 ⟹ expmap0 严格在球内)
+
+环境变量:
+  ITEM_JSON         必填 — {dataset}.item.json 路径
+  OUTPUT_PARQUET    必填 — 输出 parquet 路径 (ItemID + embedding=list<float> 128 维欧氏基础向量)
+  TAG               默认 "hyp_v2"
+  E_DIM             默认 128 — 欧氏基础向量维度 (与 stage2 e_dim 对齐)
+  R_MAX             默认 0.99 — 半径上限 (<1 给 expmap0 留 arctanh 余量)
+  R_MODE            heuristic / fixed (默认 heuristic)
+                      heuristic: r_i = R_MAX × sigmoid(3 × (||t5_emb|| - 0.7)) 由 t5 norm 启发
+                      fixed:     r_i = R_MAX (退化为 v4 固定半径行为)
+  ENCODER_MODEL     默认 sentence-transformers/sentence-t5-base — frozen text encoder
+  DEVICE            默认 cuda:0
+  BATCH_SIZE        默认 64
+  MAX_SEQ_LEN       默认 64
+  SEED              默认 42
+
+产物:
+  OUTPUT_PARQUET    ItemID + embedding (parquet, 128 维欧氏基础向量 v_i = r_i × d_i)
+  verdict.json      sha256 + config + v/r 维度/半径/方向统计 + 半径 histogram
+"""
+import os
+import sys
+import json
+import time
+import random
+import hashlib
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
+from utils import expmap0, proj_to_ball  # noqa: E402
+
+# === R30: 所有配置硬编码 (无 os.environ.get; 变体复制脚本改常量) ===
+ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/item.json"
+OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hyp_v2.parquet")
+TAG = "hyp_v2"
+E_DIM = 128
+# R_MAX 必须 < 1 — 给 expmap0(c=κ) 留 arctanh(r) 余量, 防 arctanh(1)=inf 数值爆炸
+R_MAX = 0.99
+R_MODE = "heuristic"
+ENCODER_MODEL = "sentence-transformers/sentence-t5-base"
+DEVICE = "cuda:0"  # GPU 由 CUDA_VISIBLE_DEVICES 决定 (R30 例外: torch 标准接口)
+BATCH_SIZE = 64
+MAX_SEQ_LEN = 64
+SEED = 42
+
+if not (0.0 < R_MAX < 1.0):
+    raise ValueError(f"R_MAX must be in (0, 1), got {R_MAX}")
+if R_MODE not in ("heuristic", "fixed"):
+    raise ValueError(f"R_MODE must be heuristic or fixed, got {R_MODE}")
+
+
+def log(msg):
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {msg}", flush=True)
+
+
+def set_seed(seed):
+    random.seed(seed); np.random.seed(seed)
+    torch.manual_seed(seed); torch.cuda.manual_seed_all(seed)
+
+
+def load_items(path):
+    """{itemID: {title, description, brand, categories}} → [(itemID, semantics_text), ...]."""
+    with open(path, "r") as f:
+        raw = json.load(f)
+    items = []
+    for item_id, info in raw.items():
+        if not isinstance(info, dict):
+            raise ValueError(f"item {item_id} info is not dict: {type(info)}")
+        semantics = (
+            f"'title': {info.get('title', '')}, "
+            f"'description': {info.get('description', '')}, "
+            f"'brand': {info.get('brand', '')}, "
+            f"'categories': {info.get('categories', '')}"
+        )
+        items.append((item_id, semantics))
+    items.sort(key=lambda x: int(x[0]))
+    return items
+
+
+class HyperbolicEncoder(nn.Module):
+    """frozen sentence-t5-base → MLP backbone (方向) + radius head (半径) → v = r × d.
+
+    方向 d_i: unit 向量 (语义方向)
+    半径 r_i: per-item scalar ∈ (0, R_MAX) (径向位置)
+    基础向量 v_i = r_i × d_i: norm=r_i<1 严格在欧氏单位球内
+    """
+
+    def __init__(self, encoder_model, e_dim, r_max, r_mode):
+        super().__init__()
+        from transformers import T5EncoderModel, AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(encoder_model)
+        self.encoder = T5EncoderModel.from_pretrained(encoder_model)
+        for p in self.encoder.parameters():
+            p.requires_grad = False
+        self.encoder.eval()
+        d_model = self.encoder.config.d_model
+        # MLP backbone: 768 → 256 → e_dim, 输出方向 d (unit)
+        self.backbone = nn.Sequential(
+            nn.Linear(d_model, 256),
+            nn.GELU(),
+            nn.LayerNorm(256),
+            nn.Linear(256, e_dim),
+        )
+        self.e_dim = e_dim
+        self.r_max = r_max
+        self.r_mode = r_mode
+
+    @torch.no_grad()
+    def encode_text(self, texts, device):
+        """frozen t5 → (B, d_model). mean-pool + attention mask."""
+        enc = self.tokenizer(
+            texts, padding=True, truncation=True, max_length=MAX_SEQ_LEN,
+            return_tensors="pt"
+        ).to(device)
+        out = self.encoder(input_ids=enc.input_ids, attention_mask=enc.attention_mask)
+        h = out.last_hidden_state
+        mask = enc.attention_mask.unsqueeze(-1).float()
+        summed = (h * mask).sum(dim=1)
+        denom = mask.sum(dim=1).clamp_min(1.0)
+        return summed / denom  # (B, d_model)
+
+    def predict_radius(self, eu):
+        """(B, d_model) → (B,) ∈ (0, R_MAX).
+
+        heuristic: r_i = R_MAX × sigmoid(3 × (||t5_emb|| - 0.7)) (无训练, t5 norm 启发)
+            标定: norm=0.3 → r≈R_MAX×0.18, norm=0.7 → r=R_MAX×0.5, norm=1.5 → r≈R_MAX×0.95
+            t5 mean-pool norm 通常 0.3-1.5, 不同商品有差异 → 不同半径
+        fixed: 全 R_MAX (退化为 v4 行为, 全部商品同半径)
+        """
+        if self.r_mode == "fixed":
+            return torch.full((eu.shape[0],), self.r_max, device=eu.device)
+        # heuristic
+        norms = eu.norm(dim=-1)  # (B,)
+        return self.r_max * torch.sigmoid(3.0 * (norms - 0.7))  # (B,) ∈ (0, R_MAX)
+
+    def forward(self, texts, device):
+        """texts → (v, r, d).
+        v: (B, e_dim) 欧氏基础向量, norm=r<1 严格在欧氏单位球内
+        r: (B,) 半径 ∈ (0, R_MAX)
+        d: (B, e_dim) 单位方向
+        """
+        eu = self.encode_text(texts, device)  # (B, d_model) no_grad
+        d_raw = self.backbone(eu)  # (B, e_dim)
+        d = F.normalize(d_raw, p=2, dim=-1)  # (B, e_dim) unit
+        r = self.predict_radius(eu)  # (B,) ∈ (0, R_MAX)
+        v = r.unsqueeze(-1) * d  # (B, e_dim), norm=r<1
+        return v, r, d
+
+
+def main():
+    OUTPUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
+    set_seed(SEED)
+    device = torch.device(DEVICE if torch.cuda.is_available() else "cpu")
+    log(f"[stage1-hyp] config: TAG={TAG} E_DIM={E_DIM} R_MAX={R_MAX} R_MODE={R_MODE} "
+        f"ENCODER={ENCODER_MODEL} SEED={SEED} device={device}")
+
+    items = load_items(ITEM_JSON)
+    item_ids = [it[0] for it in items]
+    item_ids_set = set(item_ids)
+    texts = [it[1] for it in items]
+    log(f"[stage1-hyp] loaded {len(items)} items from {ITEM_JSON}")
+
+    model = HyperbolicEncoder(ENCODER_MODEL, E_DIM, R_MAX, R_MODE).to(device)
+    n_params = sum(p.numel() for p in model.parameters())
+    log(f"[stage1-hyp] t5 dim={model.encoder.config.d_model} → MLP backbone → e_dim={E_DIM} → "
+        f"v = r × d (||v||=r<{R_MAX}), backbone params={n_params:,}")
+    log(f"[stage1-hyp] stage2 expmap0(c_l) 严格在 Poincaré ball 内 (||v||<1 ⟹ norm<radius)")
+
+    log(f"[stage1-hyp] encoding {len(items)} items (batch={BATCH_SIZE})...")
+    all_v = np.zeros((len(items), E_DIM), dtype=np.float32)
+    all_r = np.zeros((len(items),), dtype=np.float32)
+    t0 = time.time()
+    model.eval()
+    for start in range(0, len(items), BATCH_SIZE):
+        batch_texts = texts[start:start + BATCH_SIZE]
+        with torch.no_grad():
+            v, r, d = model(batch_texts, device)
+        all_v[start:start + len(batch_texts)] = v.detach().cpu().numpy()
+        all_r[start:start + len(batch_texts)] = r.detach().cpu().numpy()
+    log(f"[stage1-hyp] encode done in {time.time()-t0:.0f}s")
+
+    # sanity check
+    norms = np.linalg.norm(all_v, axis=1)
+    log(f"[stage1-hyp] 欧氏基础向量 v stats: max_norm={norms.max():.4f} mean_norm={norms.mean():.4f} "
+        f"std_norm={norms.std():.4f} (R_MAX={R_MAX})")
+    log(f"[stage1-hyp] 半径 r stats: min={all_r.min():.4f} max={all_r.max():.4f} "
+        f"mean={all_r.mean():.4f} std={all_r.std():.4f}")
+    if norms.max() >= 1.0:
+        raise ValueError(f"v max_norm={norms.max():.4f} >= 1.0, arctanh 发散, R_MAX={R_MAX} 过大")
+    if all_r.max() >= R_MAX + 1e-6:
+        raise ValueError(f"r max={all_r.max():.4f} > R_MAX={R_MAX}")
+    # 半径多样性检查
+    unique_r = len(np.unique(np.round(all_r, 4)))
+    log(f"[stage1-hyp] 半径唯一值数={unique_r}/{len(items)} (R_MODE={R_MODE})")
+    if R_MODE != "fixed" and unique_r < len(items) * 0.5:
+        log(f"[stage1-hyp] WARN: 半径多样性低, 考虑换 R_MODE")
+
+    df = pd.DataFrame({
+        "ItemID": item_ids,
+        "embedding": [row.tolist() for row in all_v],
+    })
+    df.to_parquet(OUTPUT_PARQUET, index=False)
+    log(f"[stage1-hyp] saved {OUTPUT_PARQUET}")
+
+    sha = hashlib.sha256()
+    with open(OUTPUT_PARQUET, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha.update(chunk)
+    r_hist, r_bin_edges = np.histogram(all_r, bins=10, range=(0, R_MAX))
+    verdict = {
+        "tag": TAG,
+        "item_json": ITEM_JSON,
+        "output_parquet": str(OUTPUT_PARQUET),
+        "output_sha256": sha.hexdigest(),
+        "n_items": len(items),
+        "e_dim": E_DIM,
+        "r_max": R_MAX,
+        "r_mode": R_MODE,
+        "encoder_model": ENCODER_MODEL,
+        "v_stats": {
+            "max_norm": float(norms.max()),
+            "mean_norm": float(norms.mean()),
+            "std_norm": float(norms.std()),
+            "median_norm": float(np.median(norms)),
+        },
+        "r_stats": {
+            "min": float(all_r.min()),
+            "max": float(all_r.max()),
+            "mean": float(all_r.mean()),
+            "std": float(all_r.std()),
+            "median": float(np.median(all_r)),
+            "unique_buckets": int(unique_r),
+            "histogram": [int(c) for c in r_hist],
+            "bin_edges": [float(e) for e in r_bin_edges],
+        },
+        "config": {
+            "batch_size": BATCH_SIZE, "max_seq_len": MAX_SEQ_LEN, "seed": SEED,
+        },
+        "design_notes": {
+            "philosophy": "v = r × d, ||v||=r<1, stage2 用每层 κ_l 做 expmap0 投到 Poincaré ball",
+            "advantages": [
+                "不同商品可有不同半径 (per-item 径向位置, t5 norm 启发)",
+                "三层使用不同曲率 (stage2 现有 per-layer κ_l 自动生效)",
+                "曲率变化后自动重新映射 (stage2 forward 每步重算 expmap0, 无需重训 stage1)",
+                "不易超 Poincaré ball 边界 (||v||<1 ⟹ expmap0 输出 norm<radius)",
+            ],
+            "stage2_required_changes": "none (KappaAwareVectorQuantization 已实现 per-layer expmap0)",
+        },
+        "done_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    verdict_path = OUTPUT_PARQUET.parent / "verdict.json"
+    with open(verdict_path, "w") as f:
+        json.dump(verdict, f, indent=2)
+    log(f"[stage1-hyp] verdict: {verdict_path}")
+    log("DONE")
+
+
+if __name__ == "__main__":
+    main()

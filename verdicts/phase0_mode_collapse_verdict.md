@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - phase0
+up: "[[index]]"
+---
 # Phase 0 fix 隐藏的 85% RQ-VAE mode collapse (用户 2026-07-25 第二轮诊断)
 
 > **核心 falsification**: 用户指认的 "λ=2万" 来自 **task180_graph_aware (200 epoch, Phase 0 fix)**, 不是 task181 (50 epoch). **task181 是 50 epoch 短训** — 范数还没涨到边界 (mean ‖x‖_E=0.26, q95=0.31). **task180/task178 是 200 epoch 长训** — 范数已被推到 boundary (mean 0.85-0.90, q95=1.0000). 我之前用 task181 的数字证明"饱和假设 falsified" 是**诊断对象错**.

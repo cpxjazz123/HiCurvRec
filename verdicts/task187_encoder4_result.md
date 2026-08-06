@@ -1,3 +1,11 @@
+---
+task: 187
+type: result
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #187 — 4 层 Encoder 实验 (⏸️ STOPPED by user, 数据不足)
 
 > **结论**: ⏸️ **STOPPED by user** at epoch 6/200 — 用户 18:42 改方向到 Task #188 (paper Table 7 多 seed 复现). 不是实验失败, 是用户战略调整. best_ckpt 已 R12 强制保存 (epoch 5, val NDCG@20=0.0630).

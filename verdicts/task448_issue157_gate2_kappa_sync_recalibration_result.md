@@ -1,3 +1,14 @@
+---
+task: 448
+type: result
+issue: 157
+gate: 2
+status: "PASS"
+created: 2026-08-02
+tags:
+  - kappa
+up: "[[index]]"
+---
 # Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证 — R20 4 Gate 详细内容
 
 **commit**: 206ebb5

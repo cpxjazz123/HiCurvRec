@@ -1,3 +1,11 @@
+---
+task: 177
+type: verdict
+created: 2026-08-02
+tags:
+  - baseline
+up: "[[index]]"
+---
 # Task #177 β(x) = β_base / λ_κ(x) conformal factor — Broken Baseline 终止
 
 > **任务目的**: 在 Stage 1 RQ-VAE 的 commitment loss 上叠加 conformal 位置依赖 β(x) = β_base / λ_κ(x), λ_κ = 2/(1-c·‖x‖²) 是 Poincaré 共形因子, 验证是否能提升 Musical_Instruments 上 Stage 3 的 R@10 (基线 HG-Rec #84 = 0.1020).

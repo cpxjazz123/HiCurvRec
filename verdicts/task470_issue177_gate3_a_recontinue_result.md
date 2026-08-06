@@ -1,3 +1,14 @@
+---
+task: 470
+type: result
+issue: 177
+gate: 3
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #470 / Issue #177 [方向A Gate3续] κ+scale 元数据 T5 零中心有界残差 — ✅ Gate 3 PASS
 
 ## 任务目标 (per Issue #177 spec, 2026-08-01 owner 派发)

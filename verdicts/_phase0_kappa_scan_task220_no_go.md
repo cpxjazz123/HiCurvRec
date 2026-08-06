@@ -1,3 +1,13 @@
+---
+task: 220
+type: verdict
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - kappa
+  - phase0
+up: "[[index]]"
+---
 # Phase 0 选项 D (task220 ckpt) — 同样 NO-GO (2026-07-27)
 
 ## 关键发现

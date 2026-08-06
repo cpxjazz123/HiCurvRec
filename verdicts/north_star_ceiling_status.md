@@ -1,3 +1,11 @@
+---
+type: status
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - ceiling
+up: "[[index]]"
+---
 # NORTH STAR Status — R@10 ceiling project 综合分析 (2026-07-30)
 
 **日期**: 2026-07-30

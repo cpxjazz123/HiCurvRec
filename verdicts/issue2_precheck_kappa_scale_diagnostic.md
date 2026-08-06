@@ -1,3 +1,11 @@
+---
+type: precheck
+issue: 2
+created: 2026-08-02
+tags:
+  - kappa
+up: "[[index]]"
+---
 # Issue #2 precheck verdict — 方向A κ/尺度有效性诊断
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26)
 **Issue**: #2 [方向A Gate4后续] κ/尺度有效性诊断与单seed重评估

@@ -1,3 +1,11 @@
+---
+type: result
+status: "PASS"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Gate-M — cond5 max_c2 <0.5 → w<2 上限能否定量解释 collision 地板
 
 result: **结论 (iii) 反例普遍. 5cond PASS 必须满足 max_c2 <0.5 → w_max <2 这个 2× 上限,但 PASS 点 collision 50-95% 全员 > 50% (无 12% 地板存在性),且 span 大小跟 collision 反向相关 (ep9 1.86x → 61.66%, ep13 span>2 → 93.95%). 真正机制不是"重加权比不足",而是"码字被推到球边界时 argmin 退化 + boundary clustering" — 2× 上限仅是必要条件,真实瓶颈在 boundary collapse.**

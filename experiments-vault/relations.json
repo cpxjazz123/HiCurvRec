@@ -1,0 +1,195 @@
+{
+  "version": 6,
+  "primary_axis": "方向 (A/B) + 实验情况 (status)",
+  "filename_convention": "文件 = 方法名 (中文直述，不出现编号)",
+  "direction_convention": "方向A = taskA 目录, 方向B = taskB 目录 (按 CLAUDE.md R25)",
+  "category": {
+    "experiment": "真实验 (8 个，按方向A/B 划分 4+4)",
+    "reference": "诊断/扫描/housekeeping (3 个，方向A/B 共用)"
+  },
+  "axes": {
+    "status": {
+      "HG-Rec 端到端基线方法": "BASELINE",
+      "Hyp 路线端到端配方方法 (历史最佳)": "BREAKTHROUGH",
+      "稳定化 κ 路径全部放弃方法": "NO_GO",
+      "Issue 收口裁定与协议诊断方法": "FAIL",
+      "系列内多 step 拆解方法": "MIXED",
+      "扫描 sweep 数据集收集方法": "DATA"
+    },
+    "topic": {
+      "基线复现方法 (HG-Rec 原论文流水线)": "baseline",
+      "Hyp 路线方法 (per-item radius + 自由 κ)": "hyp_routes",
+      "方向A 适配器方法 (T5 stage3 wrapper)": "direction_c",
+      "方向B T5 容量 sweep 方法 (mini/small/base)": "t5_capacity",
+      "方向B 早期 issue 裁定方法 (Stage 2/3 防线建设)": "early_issues",
+      "α-sweep + beam20 reeval 数据集方法 (方向A/B 共用)": "issue30_beam20",
+      "诊断报告方法 (19 份分主题审计, 方向A/B 共用)": "diagnostics",
+      "Loop tick housekeeping 方法 (方向A/B 共用)": "loop_tick",
+      "方向B Issue 收口裁定方法 (含 #76 SID-incompat)": "issue_closure"
+    }
+  },
+  "experiments": [
+    {
+      "category": "experiment",
+      "direction": "A",
+      "zh": "方向A 用 Hyp 端到端配方达成历史最佳",
+      "filename": "方向A 用 Hyp 端到端配方达成历史最佳.md",
+      "relpath": "experiment/方向A 用 Hyp 端到端配方达成历史最佳.md",
+      "status": "BREAKTHROUGH",
+      "topic": "hyp_routes",
+      "method": "方向A per-item radius + capmatch REL_STRUCT + 自由 κ (Hyp 路线唯一超基线)",
+      "metrics": {
+        "test_r10": 0.1048,
+        "delta_r10": "+0.0024",
+        "ndcg20": 0.086,
+        "valid_r10": 0.1269
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "A",
+      "zh": "方向A 试图用 trust region + anchored 稳定 κ",
+      "filename": "方向A 试图用 trust region + anchored 稳定 κ.md",
+      "relpath": "experiment/方向A 试图用 trust region + anchored 稳定 κ.md",
+      "status": "NO_GO",
+      "topic": "hyp_routes",
+      "method": "方向A 用 trust region + anchored κ 稳定化 (NO-GO)",
+      "metrics": {
+        "anchored_test_r10": 0.0993,
+        "delta_anchored": "-0.0031",
+        "tr_test_r10": 0.1002
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "A",
+      "zh": "方向A 用距离分桶替换 KMeans 负采样",
+      "filename": "方向A 用距离分桶替换 KMeans 负采样.md",
+      "relpath": "experiment/方向A 用距离分桶替换 KMeans 负采样.md",
+      "status": "NO_GO",
+      "topic": "hyp_routes",
+      "method": "方向A 用 cosine 距离分位区间负采样 + false-neg 排除 (NO-GO)",
+      "metrics": {
+        "test_r10": 0.0968,
+        "delta_r10": "-0.0056",
+        "ndcg20": 0.0804,
+        "valid_r10": 0.12
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "A",
+      "zh": "方向A 用 T5 stage3 wrapper 注入 κ",
+      "filename": "方向A 用 T5 stage3 wrapper 注入 κ.md",
+      "relpath": "experiment/方向A 用 T5 stage3 wrapper 注入 κ.md",
+      "status": "MIXED",
+      "topic": "direction_c",
+      "method": "方向A 在 T5 stage3 加 wrapper (BoundedKappaScaleConditioner) 注入 κ",
+      "metrics": {
+        "stage4_r10": 0.0,
+        "val_sim": 0.115,
+        "val_ndcg20": 0.0972
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "B",
+      "zh": "方向B 用 T5 容量 sweep (mini/small/base) 找甜点位",
+      "filename": "方向B 用 T5 容量 sweep (mini／small／base) 找甜点位.md",
+      "relpath": "experiment/方向B 用 T5 容量 sweep (mini／small／base) 找甜点位.md",
+      "status": "MIXED",
+      "topic": "t5_capacity",
+      "method": "方向B 扫 T5 模型大小 (mini/small/base) + encoder 变体",
+      "metrics": {
+        "t5_base_pass": true,
+        "t5_mini_r10": 0.102,
+        "t5_small_r10": 0.102
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "B",
+      "zh": "方向B 逐个裁定早期 issue 并定位塌缩根因",
+      "filename": "方向B 逐个裁定早期 issue 并定位塌缩根因.md",
+      "relpath": "experiment/方向B 逐个裁定早期 issue 并定位塌缩根因.md",
+      "status": "MIXED",
+      "topic": "early_issues",
+      "method": "方向B 早期 issue 裁定 + κ codebook sync + 量化器塌缩根因定位",
+      "metrics": {
+        "unique_3digit": "81%/80%",
+        "stage2_fix": "PASS"
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "B",
+      "zh": "方向B 收口历史 open issue",
+      "filename": "方向B 收口历史 open issue.md",
+      "relpath": "experiment/方向B 收口历史 open issue.md",
+      "status": "FAIL",
+      "topic": "issue_closure",
+      "method": "方向B 4 Gate 协议裁定 + 历史 issue 最终收口",
+      "metrics": {
+        "issue76_test_r10": 0.047,
+        "issue76_sanity_check": 0
+      }
+    },
+    {
+      "category": "experiment",
+      "direction": "B",
+      "zh": "方向B 建立 HG-Rec 端到端基线",
+      "filename": "方向B 建立 HG-Rec 端到端基线.md",
+      "relpath": "experiment/方向B 建立 HG-Rec 端到端基线.md",
+      "status": "BASELINE",
+      "topic": "baseline",
+      "method": "方向B HG-Rec 原论文 4 阶段流水线 (sentence-T5 + Poincaré RQ-VAE + T5-mini + beam search)",
+      "metrics": {
+        "test_r10": 0.1024,
+        "valid_r10": 0.1267,
+        "ndcg20": 0.0821
+      }
+    },
+    {
+      "category": "reference",
+      "direction": null,
+      "zh": "方向A 和方向B 共用的 α-sweep + beam20 reeval 数据集",
+      "filename": "方向A 和方向B 共用的 α-sweep + beam20 reeval 数据集.md",
+      "relpath": "reference/方向A 和方向B 共用的 α-sweep + beam20 reeval 数据集.md",
+      "status": "DATA",
+      "topic": "issue30_beam20",
+      "method": "α/β 扫描 + beam width 扫描 (大文件集, 60+ json)",
+      "metrics": {
+        "n_json_files": "60+",
+        "variants": 25,
+        "beam_widths": 6
+      }
+    },
+    {
+      "category": "reference",
+      "direction": null,
+      "zh": "方向A 和方向B 共用的 19 份诊断报告",
+      "filename": "方向A 和方向B 共用的 19 份诊断报告.md",
+      "relpath": "reference/方向A 和方向B 共用的 19 份诊断报告.md",
+      "status": "MIXED",
+      "topic": "diagnostics",
+      "method": "19 份分主题审计报告 (代码 + 数据 + 几何 + 协议)",
+      "metrics": {
+        "n_diagnostic_reports": 19,
+        "sqrt_c_rho_baseline": 0.54
+      }
+    },
+    {
+      "category": "reference",
+      "direction": null,
+      "zh": "方向A 和方向B 共用的 Loop tick housekeeping 日志",
+      "filename": "方向A 和方向B 共用的 Loop tick housekeeping 日志.md",
+      "relpath": "reference/方向A 和方向B 共用的 Loop tick housekeeping 日志.md",
+      "status": "DATA",
+      "topic": "loop_tick",
+      "method": "R10 v2 + R16 自动 idle 维护",
+      "metrics": {
+        "n_idle_status_logs": 3
+      }
+    }
+  ]
+}

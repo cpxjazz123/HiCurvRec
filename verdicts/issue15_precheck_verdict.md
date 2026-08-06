@@ -1,3 +1,12 @@
+---
+type: precheck
+issue: 15
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #15 Precheck — R18 4 维度对比 + 实施计划
 
 **Issue #15**: [方向B] precheck blocked — Stage3 curvature_meta 常数化 (κ=1.0 / mixing=0) 修复 + 重走 precheck→Gate3→Gate4

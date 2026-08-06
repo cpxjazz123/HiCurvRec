@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # c‖x‖² 分布 + κ 学习轨迹 verdict (用户 2026-07-25 跟进)
 
 > **核心结论**: 0% 码字接近 boundary (c‖x‖² > 1-ε 在所有 ckpt × 所有层都是 0%)。**饱和假设不成立**。

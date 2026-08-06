@@ -1,3 +1,11 @@
+---
+type: result
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # 第二代 G 系列 Campaign — D0 Round 1 汇总 (2026-07-20)
 
 > **任务目的**: 验证 5 个新研究方向 (G1-G5) 的 D0 GO 假设, 决定哪些方向升级到 P1 全阶段研究

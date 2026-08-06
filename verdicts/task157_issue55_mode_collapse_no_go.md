@@ -1,3 +1,13 @@
+---
+task: 157
+type: verdict
+issue: 55
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - direction-c
+up: "[[index]]"
+---
 # Issue #55 (新方向A: 曲率感知优化器) — Mode Collapse NO-GO (2026-07-31)
 
 ## Issue 摘要

@@ -1,3 +1,11 @@
+---
+type: verdict
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # J-plan Phase 1 anchor sweep — NO-GO (2026-07-27)
 
 ## 决策依据 (R11.3 自主决策)

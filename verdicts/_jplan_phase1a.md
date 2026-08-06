@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # J-plan Phase 1a 收尾 (2026-07-27)
 
 ## 状态

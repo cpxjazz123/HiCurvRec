@@ -1,3 +1,11 @@
+---
+type: verdict
+issue: 5
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #5 [方向B Gate4修复] Step 1-4 闭环 verdict
 
 **Commit**: pending (本文件落盘后 commit + push)

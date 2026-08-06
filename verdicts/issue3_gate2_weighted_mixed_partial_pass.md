@@ -1,3 +1,13 @@
+---
+type: verdict
+issue: 3
+gate: 2
+status: "PARTIAL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #3 Gate 2 verdict — 方向B weighted-mixed Stage 2 PARTIAL PASS
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26+R27)
 **Issue**: #3 [方向B Gate4后续] 混合权重泛化诊断与单seed重评估

@@ -1,3 +1,13 @@
+---
+task: 474
+type: canary
+issue: 186
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - stage4
+up: "[[index]]"
+---
 # Issue #186 / Task #474 [方向A canary] 协议对齐 sanity check — CANARY FAIL
 
 ## Canary 决策: ❌ FAIL (Gate 3 不升级)

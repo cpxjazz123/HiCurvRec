@@ -1,3 +1,11 @@
+---
+task: 157
+type: result
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #157 verdict — T5-base 220M 容量解锁
 
 > **result**: T5-base 220M (12+12 layers, d_model=768) 在 Instruments 上**比 T5-small 60M 更差**，典型 small-data 过拟合。

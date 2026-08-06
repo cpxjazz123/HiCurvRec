@@ -1,0 +1,24 @@
+{
+  "n": 1000,
+  "sid_sha": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+  "split": "valid",
+  "protocol": "beam20",
+  "tag": "alphasweep_a0",
+  "per_ckpt": {
+    "taskA/_history/taskA_stage3_alphaboost_v2/best_adapter.pt": {
+      "wrapper_module": "taskA/stage3/taskA_stage3.py",
+      "beam20_r5": 0.07,
+      "beam20_r10": 0.086,
+      "beam20_r20": 0.112,
+      "greedy_layerwise_r10": 0.03,
+      "alpha": 0.693147
+    }
+  },
+  "t5_only_sanity": {
+    "beam20_r5": 0.08,
+    "beam20_r10": 0.1,
+    "beam20_r20": 0.129,
+    "greedy_layerwise_r10": 0.035,
+    "alpha": 0.126928
+  }
+}

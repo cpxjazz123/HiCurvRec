@@ -1,3 +1,13 @@
+---
+type: result
+issue: 188
+gate: 3
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #476 / Issue #188 [方向A Gate3 修复] wrapper labels bug → 短训 → canary — ⚠️ Gate 3 PASS / Gate 4 (canary) FAIL → conditional-not-verified 维持
 
 ## 任务目标 (per Issue #188 spec, 2026-08-01 owner 派发)

@@ -1,0 +1,24 @@
+{
+  "n": 24772,
+  "sid_sha": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+  "split": "test",
+  "protocol": "beam20",
+  "tag": "taskA_fine_logit_-2.1518",
+  "per_ckpt": {
+    "taskA/_history/taskA_stage3_alphaboost/best_adapter.pt": {
+      "wrapper_module": "taskA/stage3/taskA_stage3.py",
+      "beam20_r5": 0.081,
+      "beam20_r10": 0.1022,
+      "beam20_r20": 0.1272,
+      "greedy_layerwise_r10": 0.0393,
+      "alpha": 0.109997
+    }
+  },
+  "t5_only_sanity": {
+    "beam20_r5": 0.0808,
+    "beam20_r10": 0.1013,
+    "beam20_r20": 0.1268,
+    "greedy_layerwise_r10": 0.039,
+    "alpha": 0.126928
+  }
+}

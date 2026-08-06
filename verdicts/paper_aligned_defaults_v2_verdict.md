@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - paper
+up: "[[index]]"
+---
 # Paper Table 6 默认值对齐 v2 (2026-07-25 用户跟进)
 
 > **核心改动**: 按用户指令"按照你找到的不同的配置，进行修改对齐论文", 在 Phase 0.2 已修过的基础上**第二轮对齐**, 改 4 处 `train_hrqvae.py` / `train_HG-Rec.py` defaults. 已 py_compile 通过.

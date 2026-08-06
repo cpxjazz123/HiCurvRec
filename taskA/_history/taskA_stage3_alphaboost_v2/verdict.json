@@ -1,0 +1,582 @@
+{
+  "issue": 28,
+  "step": "[\u65b9\u5411A Gate2] \u03ba\u66f4\u65b0\u540e\u91cd\u6821\u51c6\u4e0e\u8bad\u7ec3\u7a33\u5b9a\u6027\u6536\u53e3 \u2014 codebook \u91cd\u6821\u51c6\u53d6\u8bc1\u8bca\u65ad",
+  "gate": "Gate2 \u8bca\u65ad",
+  "verdict": "PASS",
+  "evaluated_at": "2026-08-02T21:37:55+1000",
+  "c3_kappa_actual_update": {
+    "pass": true,
+    "kappa_start": [
+      1.0254408121109009,
+      1.0298655033111572,
+      1.0012394189834595
+    ],
+    "kappa_end": [
+      1.139282464981079,
+      1.1480244398117065,
+      1.1183758974075317
+    ],
+    "delta_per_layer": [
+      0.11384165287017822,
+      0.11815893650054932,
+      0.11713647842407227
+    ],
+    "max_delta": 0.11815893650054932
+  },
+  "c4_codebook_recalibrate": {
+    "pass": true,
+    "n_recalibrate_triggers": 57,
+    "n_kappa_updates": 57,
+    "count_match": true,
+    "hash_changed_any": true,
+    "dist_delta_max_per_epoch": [
+      4.194676876068115e-06,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "dist_changed_any": true,
+    "recalibrate_count": 57
+  },
+  "c5_val_canary": {
+    "pass": true,
+    "best_val_r10": 0.115,
+    "best_epoch": 0,
+    "best_adapter_exists": true
+  },
+  "backbone_drift": {
+    "pass": true,
+    "min_cosine_sim": 0.9983620047569275,
+    "n_epochs_drifted": 8
+  },
+  "config": {
+    "prior_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost/best_adapter.pt",
+    "prior_epoch": 0,
+    "prior_val_r10": 0.115,
+    "lr_kappa_logits": 0.05,
+    "num_epochs": 8,
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ],
+    "stage2_vq_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_kappa_sync/hrqvae_kappa_sync.ckpt",
+    "stage2_vq_sha256": "4b2e1ddbab3d12594d8e2f14569c780aef7fa6410271e888af3cdc7d56964424",
+    "stage2_final_kappas": [
+      -0.008186634629964828,
+      -0.008215096779167652,
+      -0.009594440460205078
+    ]
+  },
+  "dtype_check": {
+    "model_dtype": "torch.float32",
+    "lm_head_dtype": "torch.float32",
+    "adapter_dtype": "torch.float32"
+  },
+  "sha256s": {
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "t5_ckpt_sha256": "56d046dbabdb1930691f1361419b030b6912409853fe84e645c67072ffecb86e",
+    "prior_ckpt_sha256": "ad411402bc86cc22e2e6f9fb2c6a08711b2791176018fac0aed69b3afe74ebf7",
+    "best_adapter_sha256": "1410404c6ddd0e5f081c93711beaf764fdee9909b14f20c53c3e01b110fb76a1"
+  },
+  "best_val_r10": 0.115,
+  "best_epoch": 0,
+  "best_adapter_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/best_adapter.pt",
+  "best_adapter_exists": true,
+  "evidence_persisted": {
+    "recalibrate_log": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/recalibrate_log.json",
+    "val_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/val_trace.json",
+    "backbone_drift": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/backbone_drift.json",
+    "grad_norm_history": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/grad_norm_history.json",
+    "kappa_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/kappa_trace.json",
+    "dist_stats_history": [
+      {
+        "epoch": 0,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.0254408121109009,
+            "mean_dist": 0.09654631465673447,
+            "max_dist": 0.13439179956912994,
+            "median_dist": 0.09606190025806427,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.0298655033111572,
+            "mean_dist": 0.09383071213960648,
+            "max_dist": 0.14377933740615845,
+            "median_dist": 0.09381338208913803,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.0012394189834595,
+            "mean_dist": 0.09318109601736069,
+            "max_dist": 0.15031124651432037,
+            "median_dist": 0.0928688794374466,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          4.194676876068115e-06,
+          3.993511199951172e-06,
+          3.874301910400391e-06
+        ]
+      },
+      {
+        "epoch": 1,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 2,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 3,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 4,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 5,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 6,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "epoch": 7,
+        "dist_pre": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_post": [
+          {
+            "layer": 0,
+            "kappa": 1.139282464981079,
+            "mean_dist": 0.09655050933361053,
+            "max_dist": 0.13439615070819855,
+            "median_dist": 0.09606586396694183,
+            "n_pairs": 2016
+          },
+          {
+            "layer": 1,
+            "kappa": 1.1480244398117065,
+            "mean_dist": 0.09383470565080643,
+            "max_dist": 0.14378438889980316,
+            "median_dist": 0.09381715208292007,
+            "n_pairs": 8128
+          },
+          {
+            "layer": 2,
+            "kappa": 1.1183758974075317,
+            "mean_dist": 0.09318497031927109,
+            "max_dist": 0.15031641721725464,
+            "median_dist": 0.09287316352128983,
+            "n_pairs": 32640
+          }
+        ],
+        "dist_delta_mean_per_layer": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  "verdict_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage3_alphaboost_v2/verdict.json"
+}

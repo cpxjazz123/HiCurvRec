@@ -1,3 +1,11 @@
+---
+task: 181
+type: result
+created: 2026-08-02
+tags:
+  - phase0
+up: "[[index]]"
+---
 # Task #181 Result — Phase 0.6 官方对齐 T5-small 闭环
 
 > **任务目的**: 用 100% paper-aligned Phase 0.6 训练 recipe（官方 loss + β=1.0 + Sinkhorn OFF + logmap0 proj）验证 baseline 复现，并跑完 Stage 4 test eval 得到最终 test R@10。

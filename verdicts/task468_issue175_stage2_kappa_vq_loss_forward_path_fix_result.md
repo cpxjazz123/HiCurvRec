@@ -1,3 +1,14 @@
+---
+task: 468
+type: result
+issue: 175
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - kappa
+  - stage2
+up: "[[index]]"
+---
 # Task #468 / Issue #175 [方向A Gate2] κ 经代码本量化距离直接进入 VQ 损失的 forward-path 修复 — ✅ PASS
 
 ## 任务摘要

@@ -1,0 +1,39 @@
+{
+  "tag": "taskA_stage3_pureT5_v31bs1024dl",
+  "status": "USER_TERMINATED",
+  "reason": "用户主动 kill (请求启动 hyp 流水线腾 GPU)",
+  "kill_pid": 3195790,
+  "kill_at": "2026-08-04 18:03:30",
+  "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/sid_output.npy",
+  "best_epoch": 61,
+  "best_ndcg20": 0.1012,
+  "best_R10": 0.1264,
+  "best_R5": null,
+  "best_R20": null,
+  "best_NDCG5": null,
+  "best_NDCG10": null,
+  "config": {
+    "batch_size": 1024,
+    "lr": 0.0003,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 1,
+    "bf16": true,
+    "torch_compile": true,
+    "num_workers": 4,
+    "pin_memory": true
+  },
+  "key_findings": {
+    "speedup_vs_v24": "5.45x (45s → 14s train/epoch, 22s/epoch total)",
+    "speedup_components": "DataLoader workers=4 + pin_memory = 3.21x 突破 GPU util 38% → 86% 瓶颈 (CPU 数据加载)",
+    "torch_compile_effect": "无收益 (compile 开销抵消, online softmax warning)",
+    "flash_attn": "装不上 (CUDA 13.0 metadata-generation-failed), fallback eager",
+    "valid_R10_peak": "0.1271 epoch 50 (超 baseline 0.1267)",
+    "NDCG20_peak_at_kill": "0.1012 epoch 61 (刚超 epoch 50 的 0.1009)",
+    "trian_loss_trend": "monotonic下降 2.39 → 1.98 (健康)",
+    "gpu_util": "91% (vs v30 38%)",
+    "mem_usage": "16GB / 80GB"
+  },
+  "verdict": "ACCEL_BREAKTHROUGH_USER_TERM (加速 5.45x 验证成功, valid R@10=0.1271 epoch 50 已超 baseline 0.1267, 用户主动 kill 让位 hyp 流水线)"
+}

@@ -1,3 +1,12 @@
+---
+type: canary
+issue: 191
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #191 [方向B Gate3 协议对齐] 自回归 canary + mixing weights 非退化核查 — ✅ CANARY PASS (Gate 3 升级 PASS)
 
 ## 任务目标 (per Issue #191 spec, 2026-08-01 owner 派发)

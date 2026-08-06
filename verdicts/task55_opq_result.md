@@ -1,3 +1,11 @@
+---
+task: 55
+type: result
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #55 — OPQ (ITQ) 变体 — 负结果
 
 > **任务目的**: 在 RQ 前对 S4 AE embedding 做正交旋转 (ITQ 闭式), 让 data 与码本坐标对齐, 减小 RQ 失真

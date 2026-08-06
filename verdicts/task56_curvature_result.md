@@ -1,3 +1,11 @@
+---
+task: 56
+type: result
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #56 — 曲率重审 / Task #85 三几何清算 — 低 ROI (维持 Task #85 verdict)
 
 > **任务目的**: 在 dist_kappa κ→0 L'Hôpital 边界修复 (阈值 1e-6 → 1e-3) 后, 重审 Task #85 三几何独立 SID 的曲率机制

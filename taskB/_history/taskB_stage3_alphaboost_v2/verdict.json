@@ -1,0 +1,170 @@
+{
+  "issue": 29,
+  "step": "[\u65b9\u5411B Gate2] \u6df7\u5408\u66f2\u7387\u8bad\u7ec3\u7a33\u5b9a\u6027\u4e0e\u8868\u793a\u6d41\u6536\u53e3 \u2014 forward \u8d21\u732e\u8bca\u65ad",
+  "gate": "Gate2 \u8bca\u65ad",
+  "verdict": "FAIL",
+  "evaluated_at": "2026-08-02T21:40:54+1000",
+  "diagnostics": {
+    "kappa_update": {
+      "pass": false,
+      "start": [
+        1.0373859405517578,
+        1.0890434980392456,
+        0.9215900301933289
+      ],
+      "end": [
+        1.0373859405517578,
+        1.0890434980392456,
+        0.9215900301933289
+      ],
+      "delta": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "mixing_nondegenerate": {
+      "pass": true,
+      "mixing_max_weight": 0.9295845031738281,
+      "end": [
+        [
+          0.05111159011721611,
+          0.026101121678948402,
+          0.9227873682975769
+        ],
+        [
+          0.06713207066059113,
+          0.003283456200733781,
+          0.9295845031738281
+        ],
+        [
+          0.013241763226687908,
+          0.49429386854171753,
+          0.4924642741680145
+        ]
+      ]
+    },
+    "fd_sensitivity": {
+      "pass": false,
+      "max_sens": 0.0,
+      "kappa_sens_max": 0.0,
+      "mixing_sens_max": 0.0
+    },
+    "component_differentiation": {
+      "pass": false,
+      "per_head_norms_epochs": [
+        {
+          "epoch": 0,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 1,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 2,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 3,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 4,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 5,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 6,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        },
+        {
+          "epoch": 7,
+          "per_head_norms": [
+            572.433411,
+            572.433411,
+            572.433411
+          ]
+        }
+      ]
+    },
+    "backbone_drift": {
+      "pass": true,
+      "min_cosine_sim": 0.9983803033828735
+    },
+    "val_canary": {
+      "pass": true,
+      "best_val_r10": 0.115,
+      "best_epoch": 4,
+      "best_adapter_exists": true
+    }
+  },
+  "config": {
+    "prior_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost/best_adapter.pt",
+    "prior_epoch": 4,
+    "lr_conditioner": 0.005,
+    "lr_layernorm": 0.0005,
+    "fd_eps": 0.001,
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ]
+  },
+  "dtype_check": {
+    "model_dtype": "torch.float32",
+    "lm_head_dtype": "torch.float32",
+    "adapter_dtype": "torch.float32"
+  },
+  "sha256s": {
+    "sid_sha256": "2dab29229c36a9695a11d70b61d1b80fae95a08d00e3c3675e9bf899b709508a",
+    "sid_sha_match": true,
+    "t5_ckpt_sha256": "56d046dbabdb1930691f1361419b030b6912409853fe84e645c67072ffecb86e",
+    "prior_ckpt_sha256": "77780d925740533a6f4500d40b16198dfb66f70833fd8d4435012b6f923e0be9",
+    "best_adapter_sha256": "c088a4ca3bc1df8d68f2b776b0b1ee092c77e14e9eb41ff8210b59f7364f95c9"
+  },
+  "best_val_r10": 0.115,
+  "best_epoch": 4,
+  "best_adapter_exists": true,
+  "evidence_persisted": {
+    "fd_sensitivity": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/fd_sensitivity.json",
+    "component_norms": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/component_norms.json",
+    "mixing_weights": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/mixing_weights.json",
+    "val_trace": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/val_trace.json",
+    "backbone_drift": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/backbone_drift.json",
+    "grad_norm_history": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/grad_norm_history.json"
+  },
+  "verdict_path": "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage3_alphaboost_v2/verdict.json"
+}

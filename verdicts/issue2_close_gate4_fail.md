@@ -1,3 +1,13 @@
+---
+type: verdict
+issue: 2
+gate: 4
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #2 关闭 verdict — Gate 4 FAIL (NO-GO)
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26+R27)
 **Issue**: #2 [方向A Gate4后续] κ/尺度有效性诊断与单seed重评估

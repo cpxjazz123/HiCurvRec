@@ -1,3 +1,11 @@
+---
+type: precheck
+issue: 3
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #3 precheck verdict — 方向B 混合权重泛化诊断
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26)
 **Issue**: #3 [方向B Gate4后续] 混合权重泛化诊断与单seed重评估

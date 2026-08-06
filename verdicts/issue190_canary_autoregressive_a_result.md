@@ -1,3 +1,12 @@
+---
+type: canary
+issue: 190
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #190 [方向A Gate3 协议对齐] 自回归 canary — ✅ CANARY PASS (Gate 3 升级 PASS)
 
 ## 任务目标 (per Issue #190 spec, 2026-08-01 owner 派发)

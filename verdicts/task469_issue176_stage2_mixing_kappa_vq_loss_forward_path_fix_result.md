@@ -1,3 +1,14 @@
+---
+task: 469
+type: result
+issue: 176
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - kappa
+  - stage2
+up: "[[index]]"
+---
 # Task #469 / Issue #176 [方向B Gate2] mixing 权重 + κ 经代码本量化距离直接进入 VQ 损失 forward-path 修复 — ✅ PASS
 
 ## 任务摘要

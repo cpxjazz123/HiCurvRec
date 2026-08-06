@@ -1,3 +1,12 @@
+---
+task: 175
+type: result
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #175 — κ-Stereographic + κ LOCKED at Ollivier ORC 实测值
 
 > **任务目的**: 验证 hypothesis "如果直接把 κ 锁定在真实 ORC 测出来的值 (-0.65~-0.84) 上, 不学习, 跑一次, 能不能超过 HG-Rec baseline (0.1020) / phonism baseline (0.1058)"

@@ -1,3 +1,14 @@
+---
+task: 449
+type: result
+issue: 158
+gate: 2
+status: "PASS"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Task #449 / Issue #158 [方向B Gate2] 加权混合曲率RQ-VAE代码本与完整SID链路验证 — R20 4 Gate 详细内容
 
 **commit**: fa0b455

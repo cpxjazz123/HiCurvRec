@@ -1,3 +1,11 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - kappa
+  - phase0
+up: "[[index]]"
+---
 # Phase 0 重测 — 范数放大下 κ 几何确实激活 (2026-07-27)
 
 ## 关键发现 (R11.3 选项 C)

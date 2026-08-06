@@ -1,3 +1,10 @@
+---
+type: verdict
+created: 2026-08-02
+tags:
+  - phase0
+up: "[[index]]"
+---
 # Phase 0 快速检查 — 钉半径激活 κ 几何 (2026-07-27)
 
 ## 配置

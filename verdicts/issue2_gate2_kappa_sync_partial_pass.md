@@ -1,3 +1,13 @@
+---
+type: verdict
+issue: 2
+gate: 2
+status: "PARTIAL"
+created: 2026-08-02
+tags:
+  - kappa
+up: "[[index]]"
+---
 # Issue #2 Gate 2 verdict — 方向A κ-sync Stage 2 PARTIAL PASS
 **Generated**: 2026-08-02 (loop tick, follow loop.md R26+R27)
 **Issue**: #2 [方向A Gate4后续] κ/尺度有效性诊断与单seed重评估

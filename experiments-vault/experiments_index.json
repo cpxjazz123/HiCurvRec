@@ -1,0 +1,73 @@
+{
+  "version": 6,
+  "primary_axis": "方向 (A/B) + 实验情况 (status)",
+  "filename_convention": "文件 = 方法名 (中文直述，不出现编号)",
+  "direction_convention": "方向A = taskA, 方向B = taskB",
+  "n_experiments_total": 8,
+  "n_direction_A": 4,
+  "n_direction_B": 4,
+  "n_reference": 3,
+  "n_status": 6,
+  "n_topic": 9,
+  "direction_A": [
+    {
+      "zh": "方向A 用 Hyp 端到端配方达成历史最佳",
+      "filename": "方向A 用 Hyp 端到端配方达成历史最佳.md",
+      "status": "BREAKTHROUGH"
+    },
+    {
+      "zh": "方向A 试图用 trust region + anchored 稳定 κ",
+      "filename": "方向A 试图用 trust region + anchored 稳定 κ.md",
+      "status": "NO_GO"
+    },
+    {
+      "zh": "方向A 用距离分桶替换 KMeans 负采样",
+      "filename": "方向A 用距离分桶替换 KMeans 负采样.md",
+      "status": "NO_GO"
+    },
+    {
+      "zh": "方向A 用 T5 stage3 wrapper 注入 κ",
+      "filename": "方向A 用 T5 stage3 wrapper 注入 κ.md",
+      "status": "MIXED"
+    }
+  ],
+  "direction_B": [
+    {
+      "zh": "方向B 用 T5 容量 sweep (mini/small/base) 找甜点位",
+      "filename": "方向B 用 T5 容量 sweep (mini／small／base) 找甜点位.md",
+      "status": "MIXED"
+    },
+    {
+      "zh": "方向B 逐个裁定早期 issue 并定位塌缩根因",
+      "filename": "方向B 逐个裁定早期 issue 并定位塌缩根因.md",
+      "status": "MIXED"
+    },
+    {
+      "zh": "方向B 收口历史 open issue",
+      "filename": "方向B 收口历史 open issue.md",
+      "status": "FAIL"
+    },
+    {
+      "zh": "方向B 建立 HG-Rec 端到端基线",
+      "filename": "方向B 建立 HG-Rec 端到端基线.md",
+      "status": "BASELINE"
+    }
+  ],
+  "reference": [
+    {
+      "zh": "方向A 和方向B 共用的 α-sweep + beam20 reeval 数据集",
+      "filename": "方向A 和方向B 共用的 α-sweep + beam20 reeval 数据集.md",
+      "status": "DATA"
+    },
+    {
+      "zh": "方向A 和方向B 共用的 19 份诊断报告",
+      "filename": "方向A 和方向B 共用的 19 份诊断报告.md",
+      "status": "MIXED"
+    },
+    {
+      "zh": "方向A 和方向B 共用的 Loop tick housekeeping 日志",
+      "filename": "方向A 和方向B 共用的 Loop tick housekeeping 日志.md",
+      "status": "DATA"
+    }
+  ]
+}

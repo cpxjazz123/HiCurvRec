@@ -1,3 +1,12 @@
+---
+type: precheck
+issue: 13
+status: "FAIL"
+created: 2026-08-02
+tags:
+  - misc
+up: "[[index]]"
+---
 # Issue #13 Precheck — R18 4 维度对比
 
 **Issue #13**: [方向B] taskB 协议 audit 补做与 P2 P4 修复, canary 非零复验, 混合分量诊断, beam search 六指标产出

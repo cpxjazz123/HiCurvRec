@@ -1,3 +1,15 @@
+---
+task: 158
+type: verdict
+issue: 57
+gate: 0
+status: "NO-GO"
+created: 2026-08-02
+tags:
+  - direction-c
+  - stage4
+up: "[[index]]"
+---
 # Task #158 + #159 / Issue #57 Gate 0 — Stage 4 eval (random vs hyperbolic init) ❌ NO-GO
 
 **日期**: 2026-07-31 01:59

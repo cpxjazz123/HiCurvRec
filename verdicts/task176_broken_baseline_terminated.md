@@ -1,3 +1,11 @@
+---
+task: 176
+type: verdict
+created: 2026-08-02
+tags:
+  - baseline
+up: "[[index]]"
+---
 # Task #176 β(x) = sigmoid MCKG-style 位置依赖 — Broken Baseline 终止
 
 > **任务目的**: 在 Stage 1 RQ-VAE 的 commitment loss 上叠加位置依赖 β(x) = β_base · sigmoid(α · pos_idx), 验证是否能提升 Musical_Instruments 上 Stage 3 的 R@10 (基线 HG-Rec #84 = 0.1020).
