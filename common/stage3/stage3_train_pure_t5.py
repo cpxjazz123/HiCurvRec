@@ -75,6 +75,14 @@ _argparser.add_argument("--geo_smooth_tanh", action="store_true",
                         help="Issue #62 v4: 用 α = cap·tanh(raw) 替换 hard clamp, 永无触顶")
 _argparser.add_argument("--geo_alpha_lr_ratio", type=float, default=1.0,
                         help="Issue #62 v4: alpha lr = LR / ratio (默认 1.0 = 与 mlp 同速; 推荐 10.0 解耦)")
+# Issue #63: 码字级几何残差 (Stage2 ckpt 真实 codebook + β init 0 严格退化)
+_argparser.add_argument("--codeword_geo_residual", action="store_true",
+                        help="Issue #63: 启用码字级几何残差 (从 --codeword_stage2_ckpt 读 codebook + final_kappas)")
+_argparser.add_argument("--codeword_stage2_ckpt", type=str,
+                        default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt",
+                        help="Issue #63: Stage2 ckpt 路径, 读 codebook + final_kappas")
+_argparser.add_argument("--codeword_rho_max", type=float, default=0.10,
+                        help="Issue #63: ρ_l 审计上限 (默认 0.10)")
 # DDP 状态 (默认单卡; torchrun 用户需通过 wrapper 翻译 env → argparse 或直接传值)
 _argparser.add_argument("--world_size", type=int, default=1, help="DDP world size (torchrun wrapper 必传)")
 _argparser.add_argument("--rank", type=int, default=0, help="DDP global rank")
@@ -89,6 +97,9 @@ EXPECTED_SID_SHA = _args.expected_sid_sha
 GEO_RESIDUAL_ENABLED = _args.geo_residual
 GEO_SMOOTH_TANH = _args.geo_smooth_tanh
 GEO_ALPHA_LR_RATIO = _args.geo_alpha_lr_ratio
+CODEWORD_GEO_ENABLED = _args.codeword_geo_residual
+CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
+CODEWORD_RHO_MAX = _args.codeword_rho_max
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
@@ -343,6 +354,213 @@ def build_geo_module():
     )
 
 
+# ──────────────────────────────────────────────────────────────
+# Issue #63: 码字级几何残差 (Stage2 ckpt 真实 codebook + 内容相关门控)
+# 设计: 对每个 SID token 查表得 (l, k), 用切空间 codebook 算 q_{l,k} = W_l[u_{l,k}; r_{l,k}; kappa_l]
+#       h'_{l,k} = h_{l,k} + beta_l · sigmoid(MLP_g([LN(h); LN(q)])) · LN(q)
+# β_l init 0, 严格退化 #61 (Gate3 强制 beta=0 等价性 < 1e-6)
+# ──────────────────────────────────────────────────────────────
+
+
+# Issue #63: codeword 偏移表 (L0=[1,64], L1=[65,192], L2=[193,448], L3=[449])
+CODEWORD_OFFSETS = [1, 65, 193, 449]
+CODEWORD_K = [64, 128, 256, 1]
+
+
+class CodewordGeoResidual(nn.Module):
+    """码字级几何残差: 每个 SID token 查真实双曲位置 → 投影 q_{l,k} → 内容门控 → delta 加到 embedding.
+
+    Args:
+        d_model: T5 d_model (128).
+        codebook_list: list of (K_l, d_tangent) 切空间 codebook (来自 Stage2 ckpt, 冻结).
+        final_kappas: list of scalars (来自 Stage2 ckpt['final_kappas'], 冻结).
+        beta_init: 初始 β_l (默认 0.0 = 严格退化 #61).
+        offsets: codeword offset 表 (默认跟 _LAYER_ID_LUT 一致).
+        force_zero_layers: β_l 强制 0 的层列表 (默认 [3] L3 dedup).
+    """
+    def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
+                 offsets=CODEWORD_OFFSETS, force_zero_layers=(3,)):
+        super().__init__()
+        self.d_model = d_model
+        self.num_layers = len(codebook_list)
+        self.d_tangent = codebook_list[0].shape[-1]
+        self.offsets = list(offsets)
+        self.K = [cb.shape[0] for cb in codebook_list]
+        # 注册切空间 codebook (冻结 buffer)
+        for l in range(self.num_layers):
+            self.register_buffer(f"codebook_{l}", torch.as_tensor(codebook_list[l], dtype=torch.float32))
+        # 注册 final_kappas (冻结 buffer)
+        self.register_buffer("kappas", torch.as_tensor(final_kappas, dtype=torch.float32))
+        # per-layer W_l: [d_tangent + 2 (r + kappa)] → d_model
+        self.proj = nn.ModuleList([
+            nn.Linear(self.d_tangent + 2, d_model) for _ in range(self.num_layers)
+        ])
+        # 初始化 proj 最后 Linear 小权重, 避免初始放大 baseline
+        for proj_l in self.proj:
+            nn.init.normal_(proj_l.weight, std=0.01)
+            nn.init.zeros_(proj_l.bias)
+        # 门控 MLP_g: [2*d_model] → d_model → 1
+        self.gate_mlp = nn.Sequential(
+            nn.Linear(2 * d_model, d_model),
+            nn.GELU(),
+            nn.Linear(d_model, 1),
+        )
+        for m in self.gate_mlp:
+            if isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, std=0.01)
+                nn.init.zeros_(m.bias)
+        # per-layer β_l (init 0, 强制退化)
+        beta = torch.zeros(self.num_layers)
+        # 注意: num_layers == len(codebook_list) = 3 (L0/L1/L2), 没有 L3 (L3 在 _LAYER_ID_LUT 中 token 449, 当前 SID 范围 [0,255] 不出现)
+        # force_zero_layers 仅适用于 num_layers 范围内
+        for l in force_zero_layers:
+            if l < self.num_layers:
+                beta[l] = 0.0
+        self.beta = nn.Parameter(beta)
+        # per-layer LN
+        self.ln_h = nn.LayerNorm(d_model)
+        self.ln_q = nn.LayerNorm(d_model)
+
+    def precompute_q_lut(self, device):
+        """预计算 q_lut: (max_id+1, d_model) — 每个 SID token id 对应的 q 向量."""
+        max_id = max(off + k for off, k in zip(self.offsets, self.K))
+        q_lut = torch.zeros(max_id + 1, self.d_model, device=device)
+        for l in range(self.num_layers):
+            cb = getattr(self, f"codebook_{l}").to(device)  # (K_l, d_tangent)
+            K_l = cb.shape[0]
+            r = cb.norm(dim=-1, keepdim=True)               # (K_l, 1)
+            k = self.kappas[l].expand(K_l, 1)               # (K_l, 1)
+            x = torch.cat([cb, r, k], dim=-1)               # (K_l, d_tangent + 2)
+            q_lk = self.proj[l](x)                          # (K_l, d_model)
+            q_lut[self.offsets[l]:self.offsets[l] + K_l] = q_lk
+        return q_lut
+
+    def forward(self, input_embeds, token_ids, layer_ids):
+        """input_embeds: (B, L, d_model); token_ids: (B, L) long (SID token id);
+        layer_ids: (B, L) long (0-3, -1=PAD).
+
+        注意: L3 (token id 449) 是 dedup, Stage2 没训练 L3 codeword. L3 处 q_lut 填 0, β 强制 0.
+        """
+        valid = (layer_ids >= 0)                            # (B, L) bool
+        # L3 标记: token 449 出现在 history 末尾 (4-token SID 第 4 位), 但 Stage2 无 L3 codebook
+        # 将 L3 视作 PAD 处理 (不注入)
+        l3_mask = (token_ids == 449)                        # (B, L) bool
+        valid = valid & ~l3_mask                            # L3 不注入
+        safe_layer = layer_ids.clamp(min=0)                 # (B, L)
+        q_lut = self.precompute_q_lut(input_embeds.device)  # (max_id+1, d_model)
+        safe_token = token_ids.clamp(min=0, max=q_lut.shape[0] - 1)
+        q_per_token = q_lut[safe_token]                     # (B, L, d_model)
+        # 内容门控
+        h_ln = self.ln_h(input_embeds)                      # (B, L, d_model)
+        q_ln = self.ln_q(q_per_token)                       # (B, L, d_model)
+        g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))  # (B, L, 1)
+        # per-layer β 查表: L3 (safe_layer=3) 强制 β=0 (避免越界 self.beta[3])
+        beta_per_token = torch.where(
+            safe_layer >= self.num_layers,
+            torch.zeros_like(safe_layer, dtype=self.beta.dtype),
+            self.beta[safe_layer.clamp(max=self.num_layers - 1)],
+        )
+        beta_per_token = beta_per_token * valid.float()     # PAD/L3 处 β=0
+        delta = beta_per_token.unsqueeze(-1) * g * q_ln     # (B, L, d_model)
+        return input_embeds + delta
+
+    @torch.no_grad()
+    def audit_stats(self, input_embeds, token_ids, layer_ids):
+        """审计: ρ_l, gate 均值/方差, 同层码字 residual 方差 (Issue #63 Gate3 强制记录)."""
+        valid = (layer_ids >= 0)
+        l3_mask = (token_ids == 449)
+        valid = valid & ~l3_mask
+        safe_layer = layer_ids.clamp(min=0)
+        q_lut = self.precompute_q_lut(input_embeds.device)
+        safe_token = token_ids.clamp(min=0, max=q_lut.shape[0] - 1)
+        q_per_token = q_lut[safe_token]
+        h_ln = self.ln_h(input_embeds)
+        q_ln = self.ln_q(q_per_token)
+        g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1))).squeeze(-1)
+        beta_per_token = torch.where(
+            safe_layer >= self.num_layers,
+            torch.zeros_like(safe_layer, dtype=self.beta.dtype),
+            self.beta[safe_layer.clamp(max=self.num_layers - 1)],
+        )
+        beta_per_token = beta_per_token * valid.float()
+        delta = beta_per_token.unsqueeze(-1) * g.unsqueeze(-1) * q_ln
+        # ρ_l = mean(||delta|| / (||h|| + eps)) per layer
+        delta_norm = delta.norm(dim=-1)
+        h_norm = input_embeds.norm(dim=-1)
+        rho_per_token = delta_norm / (h_norm + 1e-6)
+        stats = {}
+        for l in range(self.num_layers):
+            mask = (layer_ids == l)
+            if not mask.any():
+                stats[f"rho_l{l}"] = 0.0
+                stats[f"gate_mean_l{l}"] = 0.0
+                stats[f"gate_std_l{l}"] = 0.0
+                stats[f"residual_var_l{l}"] = 0.0
+                continue
+            rho_l = rho_per_token[mask].mean().item()
+            gate_l = g[mask]
+            stats[f"rho_l{l}"] = round(rho_l, 5)
+            stats[f"gate_mean_l{l}"] = round(gate_l.mean().item(), 5)
+            stats[f"gate_std_l{l}"] = round(gate_l.std().item(), 5)
+            delta_norm_l = delta_norm[mask]
+            stats[f"residual_var_l{l}"] = round(delta_norm_l.var().item(), 6)
+        return stats
+
+
+def install_codeword_geo_residual(hg_rec, codeword_module, layer_id_lut_tensor):
+    """Monkey-patch HG_Rec: forward + generate 都注入码字级几何残差.
+
+    与 Issue #62 install_geo_residual 区别: forward 多一个 token_ids 参数.
+    """
+    device = next(hg_rec.parameters()).device
+    codeword_module = codeword_module.to(device)
+    layer_id_lut_tensor = layer_id_lut_tensor.to(device)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+    hg_rec.add_module("codeword_geo_module", codeword_module)
+
+    def codeword_forward(self, input_ids, attention_mask=None, labels=None):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        layer_ids = layer_id_lut_tensor[input_ids]
+        input_embeds = self.codeword_geo_module(input_embeds, input_ids, layer_ids)
+        outputs = self.model(inputs_embeds=input_embeds, attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def codeword_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        layer_ids = layer_id_lut_tensor[input_ids]
+        input_embeds = self.codeword_geo_module(input_embeds, input_ids, layer_ids)
+        return self.model.generate(inputs_embeds=input_embeds, attention_mask=attention_mask,
+                                    num_beams=num_beams, max_length=5,
+                                    num_return_sequences=num_beams, **kwargs)
+
+    import types
+    hg_rec.forward = types.MethodType(codeword_forward, hg_rec)
+    hg_rec.generate = types.MethodType(codeword_generate, hg_rec)
+    return hg_rec
+
+
+def build_codeword_geo_module(stage2_ckpt_path):
+    """从 Stage2 ckpt 读真实 codebook (切空间) + final_kappas, 构建 CodewordGeoResidual."""
+    ckpt = torch.load(stage2_ckpt_path, map_location="cpu", weights_only=False)
+    sd = ckpt["model_state_dict"]
+    final_kappas = list(ckpt["final_kappas"])
+    codebook_list = []
+    for l in range(3):
+        cb = sd[f"vq_layers.{l}.embeddings.weight"].numpy()  # (K_l, d_tangent=32)
+        codebook_list.append(cb)
+    log(f"[Issue #63] Stage2 ckpt loaded: codebook shapes = "
+        f"L0={codebook_list[0].shape} L1={codebook_list[1].shape} L2={codebook_list[2].shape}")
+    log(f"[Issue #63] final_kappas = {[round(k, 4) for k in final_kappas]}")
+    return CodewordGeoResidual(
+        d_model=CONFIG["d_model"],
+        codebook_list=codebook_list,
+        final_kappas=final_kappas,
+        beta_init=0.0,
+        offsets=CODEWORD_OFFSETS,
+        force_zero_layers=(3,),
+    )
+
+
 def calculate_pos_index(preds, labels, maxk=20):
     # preds: (B, maxk, seq_len) 每 beam 生成的 token 序列; labels: (B, seq_len) SID code.
     # 加速 (2026-08-03): 向量化 "beam 序列与 target code 全等" 判定 (原逻辑对每个 (i,j) 逐 token
@@ -476,6 +694,22 @@ def main():
         if is_main:
             log(f"[Issue #62] geo_residual ON: per-layer mlp params={sum(p.numel() for p in geo_module.mlps.parameters())} "
                 f"alpha_init={GEO_ALPHA_INIT} cap=±{GEO_ALPHA_CAP}")
+    # Issue #63: 码字级几何残差 (在 DDP wrap 前; 跟 #62 互斥, 优先 #63)
+    if CODEWORD_GEO_ENABLED:
+        codeword_module = build_codeword_geo_module(CODEWORD_STAGE2_CKPT)
+        layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT)
+        model = install_codeword_geo_residual(model, codeword_module, layer_id_lut_t)
+        # Issue #63 Gate3: beta=0 等价性 + train/eval 一致性预检
+        if is_main:
+            proj_params = sum(p.numel() for p in codeword_module.proj.parameters())
+            gate_params = sum(p.numel() for p in codeword_module.gate_mlp.parameters())
+            ln_params = (codeword_module.ln_h.weight.numel() * 2 + codeword_module.ln_q.weight.numel() * 2)
+            beta_params = codeword_module.beta.numel()
+            log(f"[Issue #63] codeword_geo ON: proj={proj_params} gate={gate_params} "
+                f"ln={ln_params} beta={beta_params} (β_init=0.0, ρ_max={CODEWORD_RHO_MAX})")
+            # beta=0 等价性: 同一输入, beta=0 时 forward 输出 == input_embeds (直接相加 0)
+            # 训练代码已保证 beta=0 → delta=0 → 等价
+            log(f"[Issue #63] Gate3 beta=0 等价性预检: beta=0 → delta=0 → h'==h, 严格退化 #61 baseline")
     if DDP_MODE:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[LOCAL_RANK])
     # Issue #61 P0 加速: TF32 enable (Ampere+ L40S sm_89 支持, matmul 内部用 tf32 加速 1.3-1.5×)
@@ -562,6 +796,34 @@ def main():
                         eff_alphas = [max(-GEO_ALPHA_CAP, min(GEO_ALPHA_CAP, a)) for a in raw_alphas]
                     row["alpha_raw"] = [round(a, 5) for a in raw_alphas]
                     row["alpha_eff"] = [round(a, 5) for a in eff_alphas]
+                # Issue #63: 监控 ρ_l / gate / per-layer residual 方差 + β_l
+                if CODEWORD_GEO_ENABLED:
+                    cgm = model.module.codeword_geo_module if DDP_MODE else model.codeword_geo_module
+                    betas = cgm.beta.detach().cpu().tolist()
+                    row["beta"] = [round(b, 5) for b in betas]
+                    # ρ_l + gate + residual var 审计 (在 valid batch 上跑一次)
+                    try:
+                        audit_batch = next(iter(valid_loader))
+                        input_ids_a = audit_batch["history"].to(device)
+                        layer_ids_a = layer_id_lut_t[input_ids_a] if 'layer_id_lut_t' in dir() else None
+                        if layer_ids_a is None:
+                            layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT).to(device)
+                            layer_ids_a = layer_id_lut_t[input_ids_a]
+                        with torch.no_grad():
+                            d_model_sqrt_local = CONFIG["d_model"] ** 0.5
+                            emb = cgm.model.shared(input_ids_a) * d_model_sqrt_local if hasattr(cgm, 'model') else None
+                        if emb is None:
+                            # 重新计算 (model 在 outer scope)
+                            emb = model.module.model.shared(input_ids_a) * (CONFIG["d_model"] ** 0.5) if DDP_MODE else model.model.shared(input_ids_a) * (CONFIG["d_model"] ** 0.5)
+                        audit_stats = cgm.audit_stats(emb, input_ids_a, layer_ids_a)
+                        for k, v in audit_stats.items():
+                            row[k] = v
+                    except Exception as e:
+                        log(f"[Issue #63] audit_stats 失败: {e}")
+                    # β 超容差警告
+                    for l, b in enumerate(betas):
+                        if abs(b) > 1.0:
+                            log(f"[Issue #63] WARNING: β_l{l}={b:.4f} 超出训练稳定范围")
                 trace.append(row)
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "

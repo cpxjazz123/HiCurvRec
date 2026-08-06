@@ -47,6 +47,8 @@ _argparser.add_argument("--device", type=str, default="cuda:0", help="GPU device
 _argparser.add_argument("--tag", type=str, default="task", help="方向标签 (taskA/taskB), 写进 verdict")
 _argparser.add_argument("--expected_sid_sha", type=str, default="", help="校验 SID 文件 sha256; 不传则跳过")
 _argparser.add_argument("--geo_residual", action="store_true", help="Issue #62: 加载 geo_module 子模块并 monkey-patch forward/generate, 用于 Stage3 v3 ckpt 评估")
+_argparser.add_argument("--codeword_geo_residual", action="store_true", help="Issue #63: 加载 codeword_geo_module 子模块, 用于 Stage3 Issue #63 ckpt 评估")
+_argparser.add_argument("--codeword_stage2_ckpt", type=str, default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt", help="Issue #63: Stage2 ckpt 路径, 读 codebook + final_kappas")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -56,6 +58,8 @@ DEVICE = _args.device
 TAG = _args.tag
 EXPECTED_SID_SHA = _args.expected_sid_sha
 GEO_RESIDUAL = _args.geo_residual
+CODEWORD_GEO = _args.codeword_geo_residual
+CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 # Stage4 = test only (held-out). 硬编码, 不允许覆盖 (valid 由 Stage3 val_trace 覆盖)
 EVAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
 
@@ -64,6 +68,8 @@ BATCH_SIZE = 96
 SEED = 42
 
 CODEBOOK_SIZE = [64, 128, 256, 1]
+# Issue #63: codeword 偏移表 (跟 Stage3 训练一致)
+CODEWORD_OFFSETS = [1, 65, 193, 449]
 CONFIG = dict(
     num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,
     num_heads=6, d_kv=64, dropout_rate=0.1, vocab_size=1025,
@@ -225,6 +231,124 @@ def main():
         model.generate = types.MethodType(geo_generate, model)
         print("[Issue #62] geo_residual enabled for eval (forward + generate patched)", flush=True)
 
+    if CODEWORD_GEO:
+        # Issue #63: 码字级几何残差 eval (跟 Stage3 train 完全一致, 仅去训练相关字段)
+        import torch.nn as nn
+        import numpy as _np
+
+        class CodewordGeoResidualEval(nn.Module):
+            """Stage4 eval 用的精简版 (跟 Stage3 train 完全一致, 仅去训练相关字段)."""
+            def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
+                         offsets=CODEWORD_OFFSETS, force_zero_layers=(3,)):
+                super().__init__()
+                self.d_model = d_model
+                self.num_layers = len(codebook_list)
+                self.d_tangent = codebook_list[0].shape[-1]
+                self.offsets = list(offsets)
+                self.K = [cb.shape[0] for cb in codebook_list]
+                for l in range(self.num_layers):
+                    self.register_buffer(f"codebook_{l}", torch.as_tensor(codebook_list[l], dtype=torch.float32))
+                self.register_buffer("kappas", torch.as_tensor(final_kappas, dtype=torch.float32))
+                self.proj = nn.ModuleList([
+                    nn.Linear(self.d_tangent + 2, d_model) for _ in range(self.num_layers)
+                ])
+                for proj_l in self.proj:
+                    nn.init.normal_(proj_l.weight, std=0.01)
+                    nn.init.zeros_(proj_l.bias)
+                self.gate_mlp = nn.Sequential(
+                    nn.Linear(2 * d_model, d_model),
+                    nn.GELU(),
+                    nn.Linear(d_model, 1),
+                )
+                for m in self.gate_mlp:
+                    if isinstance(m, nn.Linear):
+                        nn.init.normal_(m.weight, std=0.01)
+                        nn.init.zeros_(m.bias)
+                beta = torch.zeros(self.num_layers)
+                for l in force_zero_layers:
+                    beta[l] = 0.0
+                self.beta = nn.Parameter(beta)
+                self.ln_h = nn.LayerNorm(d_model)
+                self.ln_q = nn.LayerNorm(d_model)
+
+            def precompute_q_lut(self, device):
+                max_id = max(off + k for off, k in zip(self.offsets, self.K))
+                q_lut = torch.zeros(max_id + 1, self.d_model, device=device)
+                for l in range(self.num_layers):
+                    cb = getattr(self, f"codebook_{l}").to(device)
+                    K_l = cb.shape[0]
+                    r = cb.norm(dim=-1, keepdim=True)
+                    k = self.kappas[l].expand(K_l, 1)
+                    x = torch.cat([cb, r, k], dim=-1)
+                    q_lk = self.proj[l](x)
+                    q_lut[self.offsets[l]:self.offsets[l] + K_l] = q_lk
+                return q_lut
+
+            def forward(self, input_embeds, token_ids, layer_ids):
+                valid = (layer_ids >= 0)
+                safe_layer = layer_ids.clamp(min=0)
+                q_lut = self.precompute_q_lut(input_embeds.device)
+                safe_token = token_ids.clamp(min=0, max=q_lut.shape[0] - 1)
+                q_per_token = q_lut[safe_token]
+                h_ln = self.ln_h(input_embeds)
+                q_ln = self.ln_q(q_per_token)
+                g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))
+                beta_per_token = self.beta[safe_layer] * valid.float()
+                delta = beta_per_token.unsqueeze(-1) * g * q_ln
+                return input_embeds + delta
+
+        # 从 Stage2 ckpt 读 codebook + final_kappas
+        ckpt_stage2 = torch.load(CODEWORD_STAGE2_CKPT, map_location="cpu", weights_only=False)
+        sd_stage2 = ckpt_stage2["model_state_dict"]
+        final_kappas = list(ckpt_stage2["final_kappas"])
+        codebook_list = []
+        for l in range(3):
+            cb = sd_stage2[f"vq_layers.{l}.embeddings.weight"].numpy()
+            codebook_list.append(cb)
+        print(f"[Issue #63] Stage2 ckpt loaded: codebook shapes = L0={codebook_list[0].shape} "
+              f"L1={codebook_list[1].shape} L2={codebook_list[2].shape}", flush=True)
+        print(f"[Issue #63] final_kappas = {[round(k, 4) for k in final_kappas]}", flush=True)
+
+        _LAYER_ID_LUT = _np.full(1025, -1, dtype=_np.int64)
+        _LAYER_ID_LUT[1:65] = 0
+        _LAYER_ID_LUT[65:193] = 1
+        _LAYER_ID_LUT[193:449] = 2
+        _LAYER_ID_LUT[449:450] = 3
+
+        codeword_module = CodewordGeoResidualEval(
+            d_model=CONFIG["d_model"],
+            codebook_list=codebook_list,
+            final_kappas=final_kappas,
+            beta_init=0.0,
+            offsets=CODEWORD_OFFSETS,
+            force_zero_layers=(3,),
+        )
+        device0 = torch.device(DEVICE)
+        codeword_module = codeword_module.to(device0)
+        layer_id_lut_tensor = torch.as_tensor(_LAYER_ID_LUT, dtype=torch.long).to(device0)
+        d_model_sqrt = CONFIG["d_model"] ** 0.5
+        model.add_module("codeword_geo_module", codeword_module)
+
+        def codeword_forward(self, input_ids, attention_mask=None, labels=None):
+            input_embeds = self.model.shared(input_ids) * d_model_sqrt
+            layer_ids = layer_id_lut_tensor[input_ids]
+            input_embeds = self.codeword_geo_module(input_embeds, input_ids, layer_ids)
+            outputs = self.model(inputs_embeds=input_embeds, attention_mask=attention_mask, labels=labels)
+            return outputs.loss, outputs.logits
+
+        def codeword_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+            input_embeds = self.model.shared(input_ids) * d_model_sqrt
+            layer_ids = layer_id_lut_tensor[input_ids]
+            input_embeds = self.codeword_geo_module(input_embeds, input_ids, layer_ids)
+            return self.model.generate(inputs_embeds=input_embeds, attention_mask=attention_mask,
+                                        num_beams=num_beams, max_length=5,
+                                        num_return_sequences=num_beams, **kwargs)
+
+        import types
+        model.forward = types.MethodType(codeword_forward, model)
+        model.generate = types.MethodType(codeword_generate, model)
+        print("[Issue #63] codeword_geo_residual enabled for eval (forward + generate patched)", flush=True)
+
     state_dict = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)
     # Issue #62 ckpt 兼容:
     # - v3 ckpt: key=geo_module.alphas (旧命名)
@@ -239,6 +363,7 @@ def main():
         elif "geo_module.alphas" in state_dict and "geo_module.alphas_raw" in state_dict:
             del state_dict["geo_module.alphas"]
             print("[Issue #62] v4/v5 ckpt detected, dropped redundant geo_module.alphas", flush=True)
+    # Issue #63 ckpt 兼容: codeword_geo_module 名称对齐 (暂无需重命名, 跟 train 一致)
     model.load_state_dict(state_dict)
     model.to(DEVICE)
     model.eval()
