@@ -22,7 +22,8 @@ precheck 决策阈值:
   - alpha/beta/gamma 和=1, 每项 ∈ [0.1, 0.8]
 
 Gate 2 决策阈值:
-  - PASS: 10+ 记录点 + alpha 和=1 + reload 一致 + 无 NaN/Inf + 真实 SID + 对照消融 PASS
+  - PASS: 10+ 记录点 + alpha 和=1 + 无 NaN/Inf + 真实 SID + 对照消融 PASS
+  - (2026-08-06 移除 reload 一致性验证 — 用户指示"以后都去掉这个reload逻辑")
 """
 
 import os
@@ -67,12 +68,8 @@ SEED = 42
 W_MIN = 0.1
 W_MAX = 0.8
 
-# Issue #55/v2: PRODUCT_DIR 通过环境变量覆盖 (taskB stage2 v2 训练产物)
-_PRODUCT_DIR = os.environ.get(
-    "TASKB_STAGE2_PRODUCT_DIR",
-    "/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage2_weighted_mixed",
-)
-PRODUCT_DIR = Path(_PRODUCT_DIR)
+# Issue #55/v2: taskB stage2 v2 训练产物目录 (R30 硬编码; 变体复制脚本改此路径)
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskB/_history/taskB_stage2_weighted_mixed")
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -547,35 +544,8 @@ def main():
     print(f"SID shape={sid_4digit.shape}, range=[{sid_4digit.min()}, {sid_4digit.max()}], SHA256={sid_sha[:32]}...\n")
     np.save(PRODUCT_DIR / "sid_output.npy", sid_4digit)
 
-    # Phase 3: Reload 一致性
-    print(f"{'='*70}\nPHASE 3: Reload 一致性\n{'='*70}")
-    reload_model = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES,
-                                       e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                       beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                       sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
-    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-    reload_model.load_state_dict(ckpt["model_state_dict"])
-    sid_reload_3digit = infer_sid(reload_model, item_emb, batch_size=args.batch_size)
-    sid_reload_4digit = add_4th_dedup_digit(sid_reload_3digit, K_l2=CODEBOOK_SIZES[-1])
-    reload_consistent = sha256_array(sid_reload_4digit) == sid_sha
-
-    # 5/5 reload 一致 (4-digit hash 比对)
-    sid_consistency_5 = []
-    print("  5/5 reload diagnostic (4-digit hash 比对):")
-    for i in range(5):
-        m5 = WeightedMixedHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                 beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                 sk_eps=SK_EPSILONS, sk_iters=SK_ITERS).to(device)
-        m5.load_state_dict(ckpt["model_state_dict"])
-        m5.eval()
-        sid5_3digit = infer_sid(m5, item_emb, batch_size=args.batch_size)
-        sid5_4digit = add_4th_dedup_digit(sid5_3digit, K_l2=CODEBOOK_SIZES[-1])
-        sid5_sha = sha256_array(sid5_4digit)  # 4-digit hash 比对
-        is_match = sid5_sha == sid_sha
-        sid_consistency_5.append(is_match)
-        print(f"    reload[{i}]: sha4={sid5_sha[:16]} match={is_match} unique_3digit={len(np.unique(sid5_3digit, axis=0))}")
-    reload_5of5_ok = all(sid_consistency_5)
-    print(f"reload consistent: {reload_consistent}, 5/5: {reload_5of5_ok}\n")
+    # (2026-08-06 移除 Phase 3 reload 一致性 + 5/5 reload diagnostic — 用户指示"以后都去掉这个reload逻辑",
+    #  ckpt 落盘由 R12 保证, SID SHA256 唯一性已足够, 不需 reload 重推断验证)
 
     # Phase 4: 对照消融 (关闭产品分量 = 固定等权)
     print(f"{'='*70}\nPHASE 4: 对照消融 (固定等权)\n{'='*70}")
@@ -614,11 +584,10 @@ def main():
     else:
         weights_ok = False
 
-    gate2_pass = (log_ok and kappa_learned_ok and reload_5of5_ok and no_nan_ok and sid_ok
+    gate2_pass = (log_ok and kappa_learned_ok and no_nan_ok and sid_ok
                   and weights_ok and ablation_diff and precheck_pass)
     print(f"  10+ log points ({n_log_points}): {'PASS' if log_ok else 'FAIL'}")
     print(f"  κ 真学习 (final={final_kappas}): {'PASS' if kappa_learned_ok else 'FAIL'}")
-    print(f"  reload 5/5: {'PASS' if reload_5of5_ok else 'FAIL'}")
     print(f"  无 NaN/Inf: {'PASS' if no_nan_ok else 'FAIL'}")
     print(f"  SID util_4digit={util_4digit:.4f}: {'PASS' if sid_ok else 'FAIL'}")
     print(f"  weights alpha/beta/gamma 和=1, 每项 ∈ [0.1, 0.8]: {'PASS' if weights_ok else 'FAIL'}")
@@ -669,8 +638,6 @@ def main():
         "util_per_layer_3digit": util_per_layer,
         "util_4digit": float(util_4digit),
         "item_alignment": item_alignment_check,
-        "reload_consistent": reload_consistent,
-        "reload_5of5_consistent": reload_5of5_ok,
     }
     with open(PRODUCT_DIR / "sid_metadata.json", "w") as f:
         json.dump(sid_metadata, f, indent=2)
@@ -685,7 +652,6 @@ def main():
         "sid_sha256": sid_sha,
         "util_per_layer_3digit": util_per_layer,
         "util_4digit": float(util_4digit),
-        "reload_5of5_consistent": reload_5of5_ok,
         "weights_ok": weights_ok,
         "precheck_pass": precheck_pass,
         "ablation_diff_ok": ablation_diff,

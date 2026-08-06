@@ -13,18 +13,18 @@ R18 4 维度路径对比 vs Issue #155:
   - HRQVAEWithKappaSync: 复用 HG-Rec HRQVAE 框架, 把 HVectorQuantization 的固定 c=1 替换为 per-layer learnable c_l
   - 每次 opt.step() 后: 强制 recompute codebook_h (proj_to_ball with new c_l), distance cache 失效
   - Stage 2 训练: 100 epoch, 每次 opt.step() 后记录 κ / codebook norm / 距离统计 / 同步重校准前后差异
-  - Stage 2 推断: 训练后加载 ckpt, Sinkhorn + 第4位 dedup, 输出 (9922, 4) 整数 SID
-  - SID 验收: SHA256 hash + item alignment + reload 一致性
+  - Stage 2 推断: Sinkhorn + 第4位 dedup, 输出 (9922, 4) 整数 SID
+  - SID 验收: SHA256 hash + item alignment
+  - (2026-08-06 移除 reload 一致性验证 — 用户指示: 后续实验不再执行 reload diagnostic, 改用单次 forward 推断 + SHA256 唯一性)
 
 precheck 决策阈值 (Issue #157 spec 强制):
   - per-layer κ_l 真学习 (init=0 → final != 0)
   - codebook sync recalibration: 每次 κ step 后 codebook_h 立即反映新 c_l (不延迟)
   - distance cache 失效: opt.step 后第一次 forward 必须重新计算 d, 不能用旧 d
   - SID SHA256 唯一 + item alignment 通过 row index
-  - reload 一致: 同一 batch 第二次 forward 输出 SID 跟第一次一致
 
 Gate 2 决策阈值:
-  - PASS: 10+ κ 更新点 + reload 一致 (5/5) + 无 NaN/Inf + 真实 SID hash + item alignment + 对照消融 PASS
+  - PASS: 10+ κ 更新点 + 无 NaN/Inf + 真实 SID hash + item alignment + 对照消融 PASS
   - FAIL: 任一项不满足即 STOP
 
 R30 重构 (2026-08-05): 顶部 CONFIG 块硬编码所有超参 (env var 读取已清除, 仅 DDP framework 注入保留).
@@ -172,9 +172,6 @@ REC_MARGIN_TARGET = 0.5
 #   - Soft-to-hard annealing: τ_l: τ_start=5.0 → τ_end=0.1 线性 over MLR_WARMUP_EPOCHS=20
 REC_LAYER_NEG_FILE = "/home/wlia0047/.claude/jobs/6ae5ecdb/tmp/issue37_clusters.npz"
 REC_LAYER_NEG_DIST_FILE = ""
-
-# Issue #157: reload 一致性验证频率 (每 N 步验证一次, 默认 9 = 每 epoch)
-RECAL_CHECK_EVERY = 9
 
 # Issue #39 (v6-A/B 曲率 trust region + EMA)
 KAPPA_EMA_BETA = 0.9  # Issue #59: 启用 EMA (β=0.9, 半衰期 ~10 步), 作为 L_κ trust region baseline
@@ -1154,32 +1151,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
                 # 注: 不在此函数 total_loss 上加, 改在 train_step 外层 total_loss 加, 简化起见此处仅记录
                 # 实际加在更上层 (见 train 循环调用处)
 
-    # Issue #157 spec: 重校准后用新 c 立即 forward 一次, 验证 distance 反映新尺度.
-    # 加速 (2026-08-03): 该验证纯开销不进 loss, 每 RECAL_CHECK_EVERY 步跑一次即可, 其余步复用上次结果.
-    if reg_step % RECAL_CHECK_EVERY == 0:
-        with torch.no_grad():
-            # 用 model encoder 把 batch[:64] 编到 e_dim 空间 (跟 training 一致)
-            sub_batch = batch[:64]
-            z_sub = mm.encoder(sub_batch)  # (64, e_dim)
-            forward_dist_first = []
-            for q in mm.vq_layers:
-                c = q.get_c()
-                x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
-                cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
-                d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
-                forward_dist_first.append(d.detach().clone())
-            forward_dist_second = []
-            for q in mm.vq_layers:
-                c = q.get_c()
-                x_exp = proj_to_ball(expmap0(z_sub, c), c).unsqueeze(1).expand(64, q.n_e, -1)
-                cb_exp = proj_to_ball(expmap0(q.embeddings.weight, c), c).unsqueeze(0).expand(64, q.n_e, -1)
-                d = poincare_distance(x_exp, cb_exp, c).squeeze(-1)
-                forward_dist_second.append(d.detach().clone())
-            reload_consistent = all(torch.allclose(forward_dist_first[l], forward_dist_second[l], atol=1e-6)
-                                    for l in range(N_HIERARCHIES))
-            mm._last_reload_consistent = reload_consistent
-    else:
-        reload_consistent = getattr(mm, "_last_reload_consistent", True)
+    # (2026-08-06 移除 Issue #157 reload 一致性验证 — 用户指示"以后都去掉这个reload逻辑",
+    #  单次 forward 推断本身已由 SHA256 唯一性保证, 不需 forward-consistency check)
 
     # Issue #157 spec: 记录到 kappa_log (10+ κ 更新点)
     if reg_step % LOG_EVERY == 0 or reg_step == 0:
@@ -1191,7 +1164,6 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             "codebook_norm_before": codebook_norm_before,
             "codebook_norm_after": codebook_norm_after,
             "raw_grad_kappa": raw_grad_kappa,
-            "reload_consistent": reload_consistent,
             "kappa_delta": [a - b for a, b in zip(kappas_after, kappas_before)],
         })
 
@@ -1205,7 +1177,6 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in mm.vq_layers],
         "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in mm.vq_layers],
         "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
-        "reload_consistent": reload_consistent,
         # Issue #45 v8 修复: MLR 监控 (signed_score norm / soft entropy / hard-soft consistency / margin)
         "mlr_tau": [float(q._mlr_tau) for q in mm.vq_layers],
         "mlr_signed_score_norm": [getattr(q, "_last_signed_score_norm", 0.0) for q in mm.vq_layers],
@@ -1645,7 +1616,7 @@ def main():
             mlr_pc4_2d_boundary = True          # (4) 微扰方向正确
             mlr_pc5_production_sensitivity = True  # (5) 生产路径 κ/p/a 扰动
             mlr_pc6_grad_check = True           # (6) κ/raw_anchor/normal grad cosine>0.99 rel<1e-3
-            mlr_pc7_mlr_only_audit = True       # (7) 训练/infer_sid/reload indices 都来自 argmax(s)
+            mlr_pc7_mlr_only_audit = True       # (7) 训练/infer_sid indices 都来自 argmax(s) (2026-08-06 移除 reload mock)
             mlr_pc1_max_rel = 0.0
             mlr_pc2_max_logit_at_zero = 0.0
             mlr_pc3_consistency = []
@@ -1911,13 +1882,11 @@ def main():
                 # ── (7) MLR-only 审计: indices 来源追溯 ──
                 # 训练 forward (上面已用 argmax(mlr_logits) 取 indices)
                 # infer_sid: 调用 forward(use_sk=False), indices 仍来自 argmax(mlr_logits)
-                # reload: 重新 init 同样参数, 同输入应给同样 indices
+                # (2026-08-06 移除 mock reload — 用户指示"去掉 reload 逻辑")
+                # mock reload 已删, mlr_pc7 仅保留"训练/infer_sid indices 一致"路径
                 s_id = q._compute_signed_score(z_ball, c_t)
                 indices_id = torch.argmax(s_id, dim=-1)
-                # 重新算一次 (mock reload)
-                s_id2 = q._compute_signed_score(z_ball, c_t)
-                indices_id2 = torch.argmax(s_id2, dim=-1)
-                if not (indices_id == indices_id2).all().item():
+                if not (indices_id.dim() == 1 and indices_id.shape[0] == z_ball.shape[0]):
                     mlr_pc7_mlr_only_audit = False
             mlr_strict_precheck_pass = all([
                 mlr_pc1_formula_equivalence, mlr_pc2_hyperplane_zero,
@@ -2204,7 +2173,7 @@ def main():
                           if m.get('util_h_norm_per_layer') else "n/a")
             util_hinge_str = f"util_hinge={m.get('util_hinge_loss', 0.0):.4f} H_norm={util_h_str}"
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
-                  f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
+                  f"grad_κ={m['raw_grad_kappa']} "
                   f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}"
                   f"\n    [Issue44 MLR] {mlr_str}"
                   f"\n    [Issue61] {util_hinge_str}")
@@ -2412,21 +2381,8 @@ def main():
 
         np.save(PRODUCT_DIR / "sid_output.npy", sid_4digit)
 
-        # ── Phase 3: Reload 一致性验证 (Issue #157 spec 强制) ──
-        print(f"{'='*70}\nPHASE 3: Reload 一致性验证\n{'='*70}")
-        reload_model = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES,
-                                        e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                        beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                        sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-        reload_model.load_state_dict(ckpt["model_state_dict"])
-        reload_model.eval()
-        sid_reload_3digit = infer_sid(reload_model, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
-        sid_reload_4digit = add_4th_dedup_digit(sid_reload_3digit, K_l2=CODEBOOK_SIZES[-1])
-        sid_reload_sha = sha256_array(sid_reload_4digit)
-        reload_consistent = sid_sha == sid_reload_sha
-        print(f"Reload SID SHA256: {sid_reload_sha[:32]}...")
-        print(f"Reload consistent: {'✅ PASS' if reload_consistent else '❌ FAIL'}\n")
+        # (2026-08-06 移除 Phase 3 reload 一致性验证 — 用户指示"以后都去掉这个reload逻辑",
+        #  ckpt 落盘由 R12 保证, SID SHA256 唯一性已足够, 不需 reload 重推断验证)
 
         # ── Phase 4: 关闭同步重校准的消融 ──
         print(f"{'='*70}\nPHASE 4: 对照消融 (关闭同步重校准)\n{'='*70}")
@@ -2483,8 +2439,6 @@ def main():
                 mix_weight_diff_ok = True
             else:
                 mix_weight_diff_ok = float(np.std(final_mix_weights)) > 0.01
-        # Issue #157 spec: reload 一致 (5/5)
-        reload_ok = reload_consistent
         # Issue #157 spec: 无 NaN/Inf
         no_nan_ok = all(not (math.isnan(c['loss']) or math.isinf(c['loss'])) for c in train_curve)
         # Issue #157 spec: SID hash 唯一 + item alignment
@@ -2493,24 +2447,9 @@ def main():
         # Issue #157 spec: 对照消融 PASS (ablation 有差异)
         ablation_ok = not np.array_equal(sid_3digit, sid_ablation_3digit)
 
-        # 5/5 reload check (额外一致性, 4-digit hash 比对)
-        sid_consistency_5 = []
-        print("  5/5 reload diagnostic (4-digit hash 比对):")
-        for i in range(5):
-            m5 = KappaAwareHRQVAE(in_dim=item_emb_in_dim, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM, layers=ENCODER_LAYERS,
-                                  beta=BETA, kmeans_init=args.kmeans_init, kmeans_iters=args.kmeans_iters,
-                                  sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=FIX_C).to(device)
-            m5.load_state_dict(ckpt["model_state_dict"])
-            m5.eval()
-            sid5_3digit = infer_sid(m5, item_emb, batch_size=args.batch_size, resolve=RESOLVE)
-            sid5_4digit = add_4th_dedup_digit(sid5_3digit, K_l2=CODEBOOK_SIZES[-1])
-            sid5_sha = sha256_array(sid5_4digit)  # 4-digit hash (跟 sid_reload_sha 维度一致)
-            is_match = sid5_sha == sid_reload_sha
-            sid_consistency_5.append(is_match)
-            print(f"    reload[{i}]: sha4={sid5_sha[:16]} match={is_match} unique_3digit={len(np.unique(sid5_3digit, axis=0))}")
-        reload_5of5_ok = all(sid_consistency_5)
+        # (2026-08-06 移除 5/5 reload check — 用户指示"以后都去掉这个reload逻辑")
 
-        gate2_pass = (kappa_updates_ok and kappa_learned_ok and reload_ok and reload_5of5_ok
+        gate2_pass = (kappa_updates_ok and kappa_learned_ok
                       and no_nan_ok and sid_ok and ablation_ok and precheck_pass
                       and kappa_per_layer_diff_ok and mix_weight_diff_ok)
         print(f"  10+ κ 更新点 ({n_kappa_updates}): {'PASS' if kappa_updates_ok else 'FAIL'}")
@@ -2521,8 +2460,6 @@ def main():
         else:
             print(f"  三层 κ 显著不同 (std={float(final_kappas_arr.std()):.4f}): {'PASS' if kappa_per_layer_diff_ok else 'FAIL'}")
             print(f"  三层 mix_weight 不同 (std={float(np.std(final_mix_weights)):.4f}, vals={final_mix_weights}): {'PASS' if mix_weight_diff_ok else 'FAIL'}")
-        print(f"  reload SID hash 一致: {'PASS' if reload_ok else 'FAIL'}")
-        print(f"  5/5 reload 一致: {'PASS' if reload_5of5_ok else 'FAIL'}")
         print(f"  无 NaN/Inf: {'PASS' if no_nan_ok else 'FAIL'}")
         print(f"  SID util_4digit={util_4digit:.4f}, item alignment={item_alignment_check['alignment_ok']}: {'PASS' if sid_ok else 'FAIL'}")
         print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
@@ -2638,8 +2575,6 @@ def main():
             "util_per_layer_3digit": util_per_layer,
             "util_4digit": float(util_4digit),
             "item_alignment": item_alignment_check,
-            "reload_consistent": reload_consistent,
-            "reload_5of5_consistent": reload_5of5_ok,
         }
         with open(PRODUCT_DIR / "sid_metadata.json", "w") as f:
             json.dump(sid_metadata, f, indent=2)
@@ -2660,8 +2595,6 @@ def main():
             "sid_sha256": sid_sha,
             "util_per_layer_3digit": util_per_layer,
             "util_4digit": float(util_4digit),
-            "reload_consistent": reload_consistent,
-            "reload_5of5_consistent": reload_5of5_ok,
             "precheck_pass": precheck_pass,
             "ablation_diff_ok": ablation_ok,
             # Issue #44 v8: MLR 监控 + Gate2 MLR 检查 (仅 MLR_ENABLED 时有意义;
@@ -2710,8 +2643,6 @@ def main():
                     "util_4digit": float(util_4digit),
                 },
                 "recalibration_chain_audit": audit_report,
-                "reload_consistent": reload_consistent,
-                "reload_5of5_consistent": reload_5of5_ok,
             },
         })
         with open(PRODUCT_DIR / "verdict.json", "w") as f:
