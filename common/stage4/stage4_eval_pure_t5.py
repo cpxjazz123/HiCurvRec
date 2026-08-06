@@ -4,12 +4,17 @@
   HG_Rec.generate(num_beams=20, num_return_sequences=20, max_length=5)
   preds = preds[:, 1:] -> (B, 20, 4);  R@K = target 4-token 出现在 top-k beam.
 
+Stage4 协议 = test only (held-out). valid 评估由 Stage3 training 循环覆盖
+  (val_trace.json 每个 eval_interval epoch 记录 valid R@K/NDCG, 用于 best ckpt
+   选择 + 早停). Stage4 不重复 valid 评估.
+
 R30: 所有超参 + 路径 + GPU + 校验都通过 argparse 传入, 无任何 env var 读取.
 launcher (.sh) 必须传 --ckpt_path / --sid_npy / --product_dir; 其他 arg 走默认值.
 实验变体: 复制此脚本为新文件改默认值, 不复用同一脚本 + env toggle.
 
 当前变体默认值 (Issue #41 + hyp 系列常用):
-  BATCH_SIZE=96, SEED=42, MAX_LEN=20, BEAM_SIZE=20, TOP_K=[5,10,20].
+  BATCH_SIZE=96, SEED=42, MAX_LEN=20, BEAM_SIZE=20, TOP_K=[5,10,20],
+  EVAL_PARQUET=test.parquet (硬编码, 不可覆盖).
 """
 import os
 import sys
@@ -40,9 +45,6 @@ _argparser.add_argument("--product_dir", type=str, required=True, help="产物�
 _argparser.add_argument("--device", type=str, default="cuda:0", help="GPU device")
 _argparser.add_argument("--tag", type=str, default="task", help="方向标签 (taskA/taskB), 写进 verdict")
 _argparser.add_argument("--expected_sid_sha", type=str, default="", help="校验 SID 文件 sha256; 不传则跳过")
-_argparser.add_argument("--eval_parquet", type=str,
-                        default="/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet",
-                        help="评估集路径 (也可传 valid.parquet 做交叉验证)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -51,7 +53,8 @@ PRODUCT_DIR = Path(_args.product_dir)
 DEVICE = _args.device
 TAG = _args.tag
 EXPECTED_SID_SHA = _args.expected_sid_sha
-EVAL_PARQUET = _args.eval_parquet
+# Stage4 = test only (held-out). 硬编码, 不允许覆盖 (valid 由 Stage3 val_trace 覆盖)
+EVAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 BATCH_SIZE = 96
