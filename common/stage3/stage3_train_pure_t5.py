@@ -114,6 +114,13 @@ _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35,
                         help="Issue #70: alpha gate 初始值 (DECOR 默认 0.35)")
 _argparser.add_argument("--prompt_former_num_bos_queries", type=int, default=64,
                         help="Issue #70: bos_queries 数量 (DECOR 默认 64)")
+# Issue #138 v74 (2026-08-07): Stage3 全面 regularization 防过拟合
+_argparser.add_argument("--stage3_weight_decay", type=float, default=0.0,
+                        help="Issue #138 v74: AdamW weight_decay (默认 0, v74 推荐 0.01 拉小 U/V 范数)")
+_argparser.add_argument("--stage3_label_smoothing", type=float, default=0.0,
+                        help="Issue #138 v74: T5 CE loss label_smoothing (默认 0, v74 推荐 0.05-0.1 防 T5 过拟合)")
+_argparser.add_argument("--stage3_dropout", type=float, default=0.1,
+                        help="Issue #138 v74: T5 dropout_rate 覆盖 (默认 0.1, v74 推荐 0.2 防过拟合)")
 # DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
 _argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
 _argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
@@ -142,6 +149,10 @@ RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
+# Issue #138 v74 (2026-08-07): Stage3 全面 regularization 常量
+STAGE3_WEIGHT_DECAY = _args.stage3_weight_decay
+STAGE3_LABEL_SMOOTHING = _args.stage3_label_smoothing
+STAGE3_DROPOUT = _args.stage3_dropout
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
@@ -197,7 +208,7 @@ _LAYER_ID_LUT[193:449] = 2     # L2: K=256
 _LAYER_ID_LUT[449:450] = 3     # L3: K=1 (dedup)
 CONFIG = dict(                               # 基线 T5 (task84, encoder 6 + decoder 4)
     num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,
-    num_heads=6, d_kv=64, dropout_rate=0.1, vocab_size=1025,
+    num_heads=6, d_kv=64, dropout_rate=STAGE3_DROPOUT, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
     feed_forward_proj="relu",
 )
@@ -917,7 +928,7 @@ def main():
         other_params = [p for n, p in model.named_parameters() if not n.endswith("geo_module.alphas_raw")]
         _param_groups.append({"params": other_params, "lr": LR})
         _param_groups.append({"params": alpha_params, "lr": LR / GEO_ALPHA_LR_RATIO})
-        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER)
+        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER, weight_decay=STAGE3_WEIGHT_DECAY)
         if is_main:
             log(f"[v4] per-layer alpha lr={LR/GEO_ALPHA_LR_RATIO:.2e} (ratio={GEO_ALPHA_LR_RATIO}×), "
                 f"mlp+base lr={LR:.2e}")
@@ -942,12 +953,14 @@ def main():
         _exclude_ids = _hab_param_ids | _pf_param_ids
         _other_params = [p for p in model.parameters() if id(p) not in _exclude_ids]
         _param_groups.insert(0, {"params": _other_params, "lr": LR})
-        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER)
+        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER, weight_decay=STAGE3_WEIGHT_DECAY)
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0 and is_main:
         n_bias_params = sum(p.numel() for p in list(hab_module.U.parameters()) + list(hab_module.V.parameters()))
         log(f"[Issue #64 v6b] λ_raw + U/V embedding ({n_bias_params} params) "
             f"共进 high-lr group lr={LR*HAB_LAMBDA_LR_RATIO:.2e} "
             f"(ratio={HAB_LAMBDA_LR_RATIO}×, 推动 v6b low-rank learnable bias 学习)")
+    if STAGE3_WEIGHT_DECAY > 0 and is_main:
+        log(f"[Issue #138 v74] AdamW weight_decay={STAGE3_WEIGHT_DECAY} 拉小 U/V 范数防过拟合")
 
     train_ds = GenRecDataset(
         dataset_path=TRAIN_PARQUET, code_path=SID_NPY, mode="train",

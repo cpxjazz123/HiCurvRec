@@ -201,7 +201,10 @@ class HyperbolicAttentionBias(nn.Module):
                 self.Dbar_buffers.append(nn.Parameter(Dbar_l, requires_grad=False))
             # residual_alpha: logit 形式, sigmoid 后 ∈ (0, 1)
             # init = logit(0.5) = 0 → sigmoid(0) = 0.5
-            init_logit = math.log(residual_alpha_init / (1.0 - residual_alpha_init + 1e-10))
+            # Issue #138 v74 (2026-08-07): clamp 到 (1e-9, 1-1e-9) 避免 math.log domain error
+            # 用户可传 -20 (想 sigmoid≈0) 或 +20 (想 sigmoid≈1), 自动 clamp 不会崩
+            _alpha_safe = max(min(residual_alpha_init, 1.0 - 1e-9), 1e-9)
+            init_logit = math.log(_alpha_safe / (1.0 - _alpha_safe))
             self.residual_alpha = nn.Parameter(torch.full((self.num_layers,), init_logit))
         # Issue #64 v2 修复 (2026-08-06): lambda_raw init 非零
         _lambda_init = 0.5 * self.lambda_max
