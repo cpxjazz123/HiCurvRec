@@ -379,10 +379,11 @@ class CodewordGeoResidual(nn.Module):
         force_zero_layers: β_l 强制 0 的层列表 (默认 [3] L3 dedup).
     """
     def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
-                 offsets=CODEWORD_OFFSETS, force_zero_layers=(3,)):
+                 offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10):
         super().__init__()
         self.d_model = d_model
         self.num_layers = len(codebook_list)
+        self.rho_max = float(rho_max)  # β_l smooth clamp 上限 (Issue #63 v3 修复: 防止 β 自由漂移破坏 T5 表示)
         self.d_tangent = codebook_list[0].shape[-1]
         self.offsets = list(offsets)
         self.K = [cb.shape[0] for cb in codebook_list]
@@ -416,7 +417,8 @@ class CodewordGeoResidual(nn.Module):
         for l in force_zero_layers:
             if l < self.num_layers:
                 beta[l] = 0.0
-        self.beta = nn.Parameter(beta)
+        # Issue #63 v3 修复: β_raw 自由训练, forward 时 clamp 到 ±rho_max (避免 v2 β 冲 -1.13 破坏 T5 表示)
+        self.beta_raw = nn.Parameter(beta)
         # per-layer LN
         self.ln_h = nn.LayerNorm(d_model)
         self.ln_q = nn.LayerNorm(d_model)
@@ -454,11 +456,13 @@ class CodewordGeoResidual(nn.Module):
         h_ln = self.ln_h(input_embeds)                      # (B, L, d_model)
         q_ln = self.ln_q(q_per_token)                       # (B, L, d_model)
         g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))  # (B, L, 1)
+        # Issue #63 v3: β smooth clamp 到 ±rho_max (避免 v2 β 自由漂移到 -1.13 破坏 T5)
+        beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)   # (num_layers,)
         # per-layer β 查表: L3 (safe_layer=3) 强制 β=0 (避免越界 self.beta[3])
         beta_per_token = torch.where(
             safe_layer >= self.num_layers,
-            torch.zeros_like(safe_layer, dtype=self.beta.dtype),
-            self.beta[safe_layer.clamp(max=self.num_layers - 1)],
+            torch.zeros_like(safe_layer, dtype=beta_eff.dtype),
+            beta_eff[safe_layer.clamp(max=self.num_layers - 1)],
         )
         beta_per_token = beta_per_token * valid.float()     # PAD/L3 处 β=0
         delta = beta_per_token.unsqueeze(-1) * g * q_ln     # (B, L, d_model)
@@ -477,10 +481,11 @@ class CodewordGeoResidual(nn.Module):
         h_ln = self.ln_h(input_embeds)
         q_ln = self.ln_q(q_per_token)
         g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1))).squeeze(-1)
+        beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)
         beta_per_token = torch.where(
             safe_layer >= self.num_layers,
-            torch.zeros_like(safe_layer, dtype=self.beta.dtype),
-            self.beta[safe_layer.clamp(max=self.num_layers - 1)],
+            torch.zeros_like(safe_layer, dtype=beta_eff.dtype),
+            beta_eff[safe_layer.clamp(max=self.num_layers - 1)],
         )
         beta_per_token = beta_per_token * valid.float()
         delta = beta_per_token.unsqueeze(-1) * g.unsqueeze(-1) * q_ln
@@ -558,6 +563,7 @@ def build_codeword_geo_module(stage2_ckpt_path):
         beta_init=0.0,
         offsets=CODEWORD_OFFSETS,
         force_zero_layers=(3,),
+        rho_max=CODEWORD_RHO_MAX,
     )
 
 
@@ -697,14 +703,14 @@ def main():
     # Issue #63: 码字级几何残差 (在 DDP wrap 前; 跟 #62 互斥, 优先 #63)
     if CODEWORD_GEO_ENABLED:
         codeword_module = build_codeword_geo_module(CODEWORD_STAGE2_CKPT)
-        layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT)
+        layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT).to(device)
         model = install_codeword_geo_residual(model, codeword_module, layer_id_lut_t)
         # Issue #63 Gate3: beta=0 等价性 + train/eval 一致性预检
         if is_main:
             proj_params = sum(p.numel() for p in codeword_module.proj.parameters())
             gate_params = sum(p.numel() for p in codeword_module.gate_mlp.parameters())
             ln_params = (codeword_module.ln_h.weight.numel() * 2 + codeword_module.ln_q.weight.numel() * 2)
-            beta_params = codeword_module.beta.numel()
+            beta_params = codeword_module.beta_raw.numel()
             log(f"[Issue #63] codeword_geo ON: proj={proj_params} gate={gate_params} "
                 f"ln={ln_params} beta={beta_params} (β_init=0.0, ρ_max={CODEWORD_RHO_MAX})")
             # beta=0 等价性: 同一输入, beta=0 时 forward 输出 == input_embeds (直接相加 0)
@@ -799,8 +805,11 @@ def main():
                 # Issue #63: 监控 ρ_l / gate / per-layer residual 方差 + β_l
                 if CODEWORD_GEO_ENABLED:
                     cgm = model.module.codeword_geo_module if DDP_MODE else model.codeword_geo_module
-                    betas = cgm.beta.detach().cpu().tolist()
-                    row["beta"] = [round(b, 5) for b in betas]
+                    beta_raw_list = cgm.beta_raw.detach().cpu().tolist()
+                    beta_eff_list = [cgm.rho_max * math.tanh(b / cgm.rho_max) for b in beta_raw_list]
+                    row["beta_raw"] = [round(b, 5) for b in beta_raw_list]
+                    row["beta_eff"] = [round(b, 5) for b in beta_eff_list]
+                    betas = beta_eff_list  # 保留给 WARNING 用
                     # ρ_l + gate + residual var 审计 (在 valid batch 上跑一次)
                     try:
                         audit_batch = next(iter(valid_loader))
@@ -820,10 +829,10 @@ def main():
                             row[k] = v
                     except Exception as e:
                         log(f"[Issue #63] audit_stats 失败: {e}")
-                    # β 超容差警告
-                    for l, b in enumerate(betas):
-                        if abs(b) > 1.0:
-                            log(f"[Issue #63] WARNING: β_l{l}={b:.4f} 超出训练稳定范围")
+                    # β_raw 超容差警告 (raw 漂到 ±5 远超需要, 即便 eff 已饱和到 ±rho_max)
+                    for l, b_raw in enumerate(beta_raw_list):
+                        if abs(b_raw) > 5.0:
+                            log(f"[Issue #63] WARNING: β_raw_l{l}={b_raw:.4f} 漂移过大 (eff 已饱和到 ±{cgm.rho_max})")
                 trace.append(row)
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "

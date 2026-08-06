@@ -239,7 +239,7 @@ def main():
         class CodewordGeoResidualEval(nn.Module):
             """Stage4 eval 用的精简版 (跟 Stage3 train 完全一致, 仅去训练相关字段)."""
             def __init__(self, d_model, codebook_list, final_kappas, beta_init=0.0,
-                         offsets=CODEWORD_OFFSETS, force_zero_layers=(3,)):
+                         offsets=CODEWORD_OFFSETS, force_zero_layers=(3,), rho_max=0.10):
                 super().__init__()
                 self.d_model = d_model
                 self.num_layers = len(codebook_list)
@@ -267,7 +267,8 @@ def main():
                 beta = torch.zeros(self.num_layers)
                 for l in force_zero_layers:
                     beta[l] = 0.0
-                self.beta = nn.Parameter(beta)
+                self.beta_raw = nn.Parameter(beta)  # Issue #63 v3: 跟 train 对齐, forward 时 clamp 到 ±rho_max
+                self.rho_max = float(rho_max)
                 self.ln_h = nn.LayerNorm(d_model)
                 self.ln_q = nn.LayerNorm(d_model)
 
@@ -293,7 +294,8 @@ def main():
                 h_ln = self.ln_h(input_embeds)
                 q_ln = self.ln_q(q_per_token)
                 g = torch.sigmoid(self.gate_mlp(torch.cat([h_ln, q_ln], dim=-1)))
-                beta_per_token = self.beta[safe_layer] * valid.float()
+                beta_eff = self.rho_max * torch.tanh(self.beta_raw / self.rho_max)  # 跟 train 对齐
+                beta_per_token = beta_eff[safe_layer.clamp(max=self.num_layers - 1)] * valid.float()
                 delta = beta_per_token.unsqueeze(-1) * g * q_ln
                 return input_embeds + delta
 
@@ -322,6 +324,7 @@ def main():
             beta_init=0.0,
             offsets=CODEWORD_OFFSETS,
             force_zero_layers=(3,),
+            rho_max=CODEWORD_RHO_MAX,
         )
         device0 = torch.device(DEVICE)
         codeword_module = codeword_module.to(device0)
@@ -363,7 +366,16 @@ def main():
         elif "geo_module.alphas" in state_dict and "geo_module.alphas_raw" in state_dict:
             del state_dict["geo_module.alphas"]
             print("[Issue #62] v4/v5 ckpt detected, dropped redundant geo_module.alphas", flush=True)
-    # Issue #63 ckpt 兼容: codeword_geo_module 名称对齐 (暂无需重命名, 跟 train 一致)
+    # Issue #63 ckpt 兼容: v2 用 codeword_geo_module.beta (自由漂移), v3 用 codeword_geo_module.beta_raw (smooth clamp)
+    if CODEWORD_GEO_ENABLED:
+        b_key = "codeword_geo_module.beta"
+        br_key = "codeword_geo_module.beta_raw"
+        if b_key in state_dict and br_key not in state_dict:
+            state_dict[br_key] = state_dict.pop(b_key)
+            print("[Issue #63] v2 ckpt detected, remapped codeword_geo_module.beta → codeword_geo_module.beta_raw", flush=True)
+        elif b_key in state_dict and br_key in state_dict:
+            del state_dict[b_key]
+            print("[Issue #63] v2+v3 ckpt detected, dropped redundant codeword_geo_module.beta", flush=True)
     model.load_state_dict(state_dict)
     model.to(DEVICE)
     model.eval()
