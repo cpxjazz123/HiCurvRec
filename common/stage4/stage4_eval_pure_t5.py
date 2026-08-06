@@ -60,6 +60,9 @@ _argparser.add_argument("--codeword_stage2_ckpt", type=str, default="/home/wlia0
 _argparser.add_argument("--hyperbolic_attn_bias", action="store_true", help="Issue #64: 加载 hab_module 子模块, 用于 Stage3 Issue #64 ckpt 评估")
 _argparser.add_argument("--hab_stage2_ckpt", type=str, default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt", help="Issue #64: Stage2 ckpt 路径, 读 codebook + final_kappas")
 _argparser.add_argument("--hab_lambda_max", type=float, default=0.20, help="Issue #64: λ_max tanh 上限 (默认 0.20, 跟 Stage3 train 一致)")
+# Issue #71: HAB 残差学习 (Dbar + α·delta) — 修复 v6b learned B 偏离 Dbar 460-660% 导致过拟合
+_argparser.add_argument("--enable_residual_hab", action="store_true", help="Issue #71: HAB 残差模式, B = Dbar_frozen + sigmoid(α)·(U·V^T - Dbar_frozen), anchor 永远是 Dbar")
+_argparser.add_argument("--residual_alpha_init", type=float, default=0.5, help="Issue #71: residual_alpha sigmoid init (默认 0.5)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) eval-time 安装 (与 HAB/GEO 正交)
 _argparser.add_argument("--enable_prompt_former", action="store_true", help="Issue #70: 安装 DecorPromptFormer 模块, 加载 pf_module.* 参数, monkey-patch forward+generate")
 _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35, help="Issue #70: alpha gate sigmoid 初始值 (Stage3 train 默认 0.35)")
@@ -80,6 +83,9 @@ CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 HAB_ENABLED = _args.hyperbolic_attn_bias
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX_VAL = _args.hab_lambda_max
+# Issue #71: HAB 残差学习开关
+RESIDUAL_HAB_ENABLED = _args.enable_residual_hab
+RESIDUAL_ALPHA_INIT = _args.residual_alpha_init
 # Issue #70: DECOR PromptFormer 配置
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
@@ -447,7 +453,9 @@ def main():
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
-        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX_VAL)
+        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX_VAL,
+                                              enable_residual=RESIDUAL_HAB_ENABLED,
+                                              residual_alpha_init=RESIDUAL_ALPHA_INIT)
         layer_id_lut_array = make_hab_layer_id_lut()
         install_hab(model, hab_module, layer_id_lut_array)
         print(f"[Issue #64] hyperbolic_attn_bias enabled for eval "

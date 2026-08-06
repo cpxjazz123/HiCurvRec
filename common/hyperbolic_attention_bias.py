@@ -144,28 +144,38 @@ def precompute_distance_matrices(codebook_list, final_kappas):
 
 
 class HyperbolicAttentionBias(nn.Module):
-    """Issue #64 v6b 核心模块 (2026-08-07): 三层低秩 learnable attention bias + 三层 learnable lambda.
+    """Issue #64 v6b 核心模块 (2026-08-07) + Issue #71 残差学习变体 (2026-08-07).
 
-    v6b 改造 (方向 a + 低秩): B_geo 从 (K_l, K_l) 满秩矩阵改 low-rank factorized
-    - 每层两个 nn.Embedding: U_l (K_l, r) 和 V_l (K_l, r), r=HAB_BIAS_RANK
-    - bias_l[k_i, k_j] = U_l[k_i]^T · V_l[k_j] / sqrt(r) (Eckart-Young 最优 rank-r 近似)
-    - init: 用 SVD(Dbar_l) 取前 r 维, sqrt(S[:r]) / sqrt(r) 吸收到 U/V (Eckart-Young 最优分解)
-    - forward 用 einsum('bir,bjr->bij'), backward 是标准 embedding backward (PyTorch fused)
-    - 总参数: 3 + sum(K_l * r * 2) = 3 + (64+128+256)*16*2 = 14339 (vs v6 86016, 砍 83%)
-    - 训练速度: ~3× 快 (避开 fancy index 的 scatter backward)
+    三种模式:
+      1. v6b (enable_residual=False): 完全 learnable U·V^T, learned B 偏离 Dbar 460-660% → FAIL
+      2. v7 残差 (enable_residual=True): B_final = Dbar_frozen + sigmoid(α) · (U·V^T - Dbar_frozen)
+         - 永远以 Dbar 为 anchor, α ∈ (0,1) 自动调节 delta 权重
+         - α → 0 退化为 v4 frozen Dbar (PASS); α → 1 退化为 v6b learnable (FAIL)
+      3. v4 frozen: Dbar_buffer + lambda_raw, 无 U/V learnable (历史 PASS test 0.1038)
+
+    残差学习 (Issue #71) 改造细节:
+      - Dbar_frozen 注册为 requires_grad=False Parameter (参与 state_dict 但不训练)
+      - residual_alpha (logit 形式) sigmoid init = 0.5, 自动 ∈ (0, 1)
+      - forward 计算: Dbar_geo[k_i, k_j] (anchor) + sigmoid(α) * (U·V^T - Dbar_geo) (delta)
+      - Dbar_geo fancy index 用 gather 优化 (避免慢循环)
+      - 总参数: 3 + sum(K_l * r * 2) + 3 (residual_alpha) = 14342 (vs v6b 14339, +3)
+      - 与 v4 frozen 是连续插值, 模型自己选 α, 过拟合有界 (anchor 永远是 Dbar)
 
     Args:
         Dbar_list: list of (K_l, K_l) tensor (init 值, 来自 stage2 ckpt 预计算 Dbar)
         lambda_max: λ 上限 (默认 0.20, Issue #64 spec)
         force_zero_layers: 强制 lambda_l = 0 的层列表 (默认 [3] L3 dedup)
         bias_rank: U/V 嵌入维度 (默认 16, HAB_BIAS_RANK)
+        enable_residual: 是否启用残差学习 (Issue #71)
+        residual_alpha_init: sigmoid init 值 (默认 0.5, 即 alpha_raw=0)
     """
     def __init__(self, Dbar_list, lambda_max=HAB_LAMBDA_MAX, force_zero_layers=(),
-                 bias_rank=HAB_BIAS_RANK):
+                 bias_rank=HAB_BIAS_RANK, enable_residual=False, residual_alpha_init=0.5):
         super().__init__()
         self.num_layers = len(Dbar_list)
         self.lambda_max = float(lambda_max)
         self.bias_rank = int(bias_rank)
+        self.enable_residual = bool(enable_residual)
         self.K = [Dbar_list[l].shape[0] for l in range(self.num_layers)]
         # v6b: U/V embedding (init from Dbar via SVD)
         self.U = nn.ModuleList([nn.Embedding(self.K[l], self.bias_rank) for l in range(self.num_layers)])
@@ -182,6 +192,17 @@ class HyperbolicAttentionBias(nn.Module):
             with torch.no_grad():
                 self.U[l].weight.copy_(U_svd[:, :r] * scale.unsqueeze(0))
                 self.V[l].weight.copy_(Vt_svd[:r, :].T * scale.unsqueeze(0))
+        # Issue #71: 残差学习 — 把 Dbar 注册为 frozen Parameter (参与 state_dict 序列化)
+        if self.enable_residual:
+            self.Dbar_buffers = nn.ParameterList()
+            for l in range(self.num_layers):
+                Dbar_l = Dbar_list[l].detach().cpu().to(torch.float32)
+                # requires_grad=False 让优化器跳过, 但仍是 Parameter (state_dict 会保存/加载)
+                self.Dbar_buffers.append(nn.Parameter(Dbar_l, requires_grad=False))
+            # residual_alpha: logit 形式, sigmoid 后 ∈ (0, 1)
+            # init = logit(0.5) = 0 → sigmoid(0) = 0.5
+            init_logit = math.log(residual_alpha_init / (1.0 - residual_alpha_init + 1e-10))
+            self.residual_alpha = nn.Parameter(torch.full((self.num_layers,), init_logit))
         # Issue #64 v2 修复 (2026-08-06): lambda_raw init 非零
         _lambda_init = 0.5 * self.lambda_max
         lambda_raw = torch.full((self.num_layers,), _lambda_init)
@@ -235,7 +256,21 @@ class HyperbolicAttentionBias(nn.Module):
             # forward 用 einsum (PyTorch 优化过), backward 是标准 Embedding backward (fused)
             u_l = self.U[l](k_for_layer)  # (B, L, r)
             v_l = self.V[l](k_for_layer)  # (B, L, r)
-            Dbar_ij = torch.einsum('bir,bjr->bij', u_l, v_l)
+            B_learned = torch.einsum('bir,bjr->bij', u_l, v_l)  # (B, L_i, L_j)
+            if self.enable_residual:
+                # Issue #71 残差学习: B_final = Dbar_frozen + sigmoid(α) · (U·V^T - Dbar_frozen)
+                # 用 fancy index 取 Dbar_frozen[k_for_layer_i, k_for_layer_j] for each pair
+                Dbar_frozen_l = self.Dbar_buffers[l]  # (K_l, K_l)
+                # k_for_layer: (B, L), unsqueeze(-1)→(B, L, 1), unsqueeze(-2)→(B, 1, L)
+                Dbar_geo = Dbar_frozen_l[
+                    k_for_layer.unsqueeze(-1).expand(-1, -1, k_for_layer.shape[1]).clamp(0, self.K[l] - 1),
+                    k_for_layer.unsqueeze(-2).expand(-1, k_for_layer.shape[1], -1).clamp(0, self.K[l] - 1),
+                ]  # (B, L_i, L_j)
+                alpha = torch.sigmoid(self.residual_alpha[l])
+                Dbar_ij = Dbar_geo + alpha * (B_learned - Dbar_geo)
+            else:
+                # v6b 现状: 完全 learnable
+                Dbar_ij = B_learned
             mask_pair_l = mask_l.unsqueeze(2) & mask_l.unsqueeze(1)  # (B, L_i, L_j) 同层 pair
             B_geo_l = -lambda_eff[l] * Dbar_ij
             B_geo = torch.where(mask_pair_l, B_geo_l, B_geo)

@@ -100,6 +100,13 @@ _argparser.add_argument("--hab_lambda_max", type=float, default=0.20,
                         help="Issue #64: λ_max tanh 上限 (默认 0.20, spec 不允许 sweep)")
 _argparser.add_argument("--hab_lambda_lr_ratio", type=float, default=100.0,
                         help="Issue #64 v3 优化: λ_raw param group lr 倍率 (默认 100×, 推动 λ_raw 学习. 历史 v2 λ_raw 50 epoch 没动, 共享主 lr=0.0004 太小)")
+# Issue #71: HAB 残差学习 (Dbar_frozen + α·(U·V^T - Dbar_frozen)) — 修复 v6b learned B 偏离 Dbar 460-660% 导致 valid/test 失衡
+_argparser.add_argument("--enable_residual_hab", action="store_true",
+                        help="Issue #71: HAB 残差学习模式, B = Dbar_frozen + sigmoid(α)·(U·V^T - Dbar_frozen), anchor 永远是 Dbar")
+_argparser.add_argument("--residual_alpha_init", type=float, default=0.5,
+                        help="Issue #71: residual_alpha sigmoid init (默认 0.5)")
+_argparser.add_argument("--residual_alpha_lr_ratio", type=float, default=10.0,
+                        help="Issue #71: residual_alpha param group lr 倍率 (默认 10×, 推动 alpha 学习)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -128,6 +135,10 @@ HAB_ENABLED = _args.hyperbolic_attn_bias
 HAB_LAMBDA_LR_RATIO = _args.hab_lambda_lr_ratio
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX = _args.hab_lambda_max
+# Issue #71: HAB 残差学习开关
+RESIDUAL_HAB_ENABLED = _args.enable_residual_hab
+RESIDUAL_ALPHA_INIT = _args.residual_alpha_init
+RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
@@ -836,14 +847,18 @@ def main():
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
-        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX)
+        hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX,
+                                              enable_residual=RESIDUAL_HAB_ENABLED,
+                                              residual_alpha_init=RESIDUAL_ALPHA_INIT)
         # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
         layer_id_lut_array = make_hab_layer_id_lut()
         model = install_hab(model, hab_module, layer_id_lut_array)
         if is_main:
             lambda_params = hab_module.lambda_raw.numel()
-            log(f"[Issue #64] hyperbolic_attn_bias ON: lambda_raw={lambda_params} "
-                f"λ_max={HAB_LAMBDA_MAX} Dbar=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}]")
+            residual_tag = f" residual_alpha_init={RESIDUAL_ALPHA_INIT}" if RESIDUAL_HAB_ENABLED else ""
+            log(f"[Issue #64/71] hyperbolic_attn_bias ON: lambda_raw={lambda_params} "
+                f"λ_max={HAB_LAMBDA_MAX} Dbar=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}]"
+                f"{residual_tag}")
             # Issue #64 v2 修复 (2026-08-06): lambda_raw init = 0.5*λ_max (非零), 触发 HAB 实际生效.
             # 历史 #64 v1 lambda_raw init=0 → fast path → HAB 0 梯度 → 完全未生效 (Gate 4 FAIL NO-GO).
             lambda_init = hab_module.lambda_raw.detach().cpu().tolist()
@@ -892,6 +907,11 @@ def main():
         hab_bias_params = list(hab_module.U.parameters()) + list(hab_module.V.parameters())  # 6 个 (K_l, r) embedding
         _param_groups.append({"params": hab_lambda_params + hab_bias_params,
                                 "lr": LR * HAB_LAMBDA_LR_RATIO})
+        # Issue #71 (2026-08-07): residual_alpha 单独 group (alpha 是关键调节门, 10× 推动)
+        if RESIDUAL_HAB_ENABLED and RESIDUAL_ALPHA_LR_RATIO > 1.0:
+            residual_alpha_params = [hab_module.residual_alpha]  # 3 个标量 (logit 形式)
+            _param_groups.append({"params": residual_alpha_params,
+                                    "lr": LR * RESIDUAL_ALPHA_LR_RATIO})
     if GEO_RESIDUAL_ENABLED and GEO_ALPHA_LR_RATIO > 1.0:
         alpha_params = [geo_module.alphas_raw]  # alpha 解耦, lr 慢 ratio×
         other_params = [p for n, p in model.named_parameters() if not n.endswith("geo_module.alphas_raw")]
@@ -909,6 +929,9 @@ def main():
             _hab_param_ids = {id(hab_module.lambda_raw)}
             for _e in list(hab_module.U) + list(hab_module.V):
                 _hab_param_ids.add(id(_e.weight))
+            # Issue #71: residual_alpha 也进 high-lr group (上面), 必须从 base group 排除
+            if RESIDUAL_HAB_ENABLED:
+                _hab_param_ids.add(id(hab_module.residual_alpha))
         else:
             _hab_param_ids = set()
         if PROMPT_FORMER_ENABLED and pf_module is not None:
