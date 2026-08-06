@@ -60,6 +60,10 @@ _argparser.add_argument("--codeword_stage2_ckpt", type=str, default="/home/wlia0
 _argparser.add_argument("--hyperbolic_attn_bias", action="store_true", help="Issue #64: 加载 hab_module 子模块, 用于 Stage3 Issue #64 ckpt 评估")
 _argparser.add_argument("--hab_stage2_ckpt", type=str, default="/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_issue61/hrqvae_kappa_sync.ckpt", help="Issue #64: Stage2 ckpt 路径, 读 codebook + final_kappas")
 _argparser.add_argument("--hab_lambda_max", type=float, default=0.20, help="Issue #64: λ_max tanh 上限 (默认 0.20, 跟 Stage3 train 一致)")
+# Issue #70: DECOR PromptFormer (candidate bins + alpha gate) eval-time 安装 (与 HAB/GEO 正交)
+_argparser.add_argument("--enable_prompt_former", action="store_true", help="Issue #70: 安装 DecorPromptFormer 模块, 加载 pf_module.* 参数, monkey-patch forward+generate")
+_argparser.add_argument("--prompt_former_alpha", type=float, default=0.35, help="Issue #70: alpha gate sigmoid 初始值 (Stage3 train 默认 0.35)")
+_argparser.add_argument("--prompt_former_num_bos_queries", type=int, default=64, help="Issue #70: learnable bos_queries count (DECOR 默认 64)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -76,6 +80,10 @@ CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 HAB_ENABLED = _args.hyperbolic_attn_bias
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX_VAL = _args.hab_lambda_max
+# Issue #70: DECOR PromptFormer 配置
+PROMPT_FORMER_ENABLED = _args.enable_prompt_former
+PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
+PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Stage4 = test only (held-out). 硬编码, 不允许覆盖 (valid 由 Stage3 val_trace 覆盖)
 EVAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
 
@@ -106,6 +114,55 @@ def sha256_of(path):
         for chunk in iter(lambda: f.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+# Issue #70: DECOR PromptFormer eval-mode 安装 (跟 Stage3 train install_prompt_former 等价,
+# 但只 monkey-patch forward+generate, 不动 optimizer / DDP / param group)
+def install_prompt_former_eval(hg_rec, pf_module):
+    """注入 DecorPromptFormer 到 HG_Rec.eval() 调用路径.
+
+    关键点:
+      1. add_module(pf_module) → state_dict() 自动包含 pf_module.bos_queries / alpha_raw /
+         q_ctx.weight / k_candidates.weight, load_state_dict(strict=True) 才能匹配 ckpt
+      2. forward 与 generate 都先 self.model.shared(input_ids) * sqrt(d_model) → e_fused,
+         再 pf_module(e_fused, input_ids, attention_mask, e_fused_embedding=self.model.shared)
+         → e_final = α*e_soft + (1-α)*e_fused
+      3. e_fused_embedding 必须传 self.model.shared (与 Stage3 train 一致, 同一 nn.Embedding)
+    """
+    import types
+    from common.decor_prompt_former import DecorPromptFormer  # noqa: F401
+
+    device = next(hg_rec.parameters()).device
+    pf_module = pf_module.to(device)
+    hg_rec.add_module("pf_module", pf_module)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+
+    def pf_forward(self, input_ids, attention_mask=None, labels=None):
+        e_fused = self.model.shared(input_ids) * d_model_sqrt        # (B, L, D)
+        e_final, _aux = self.pf_module(
+            e_fused, input_ids,
+            attention_mask=attention_mask,
+            e_fused_embedding=self.model.shared,
+        )
+        outputs = self.model(inputs_embeds=e_final,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def pf_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        e_fused = self.model.shared(input_ids) * d_model_sqrt
+        e_final, _aux = self.pf_module(
+            e_fused, input_ids,
+            attention_mask=attention_mask,
+            e_fused_embedding=self.model.shared,
+        )
+        return self.model.generate(inputs_embeds=e_final,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+
+    hg_rec.forward = types.MethodType(pf_forward, hg_rec)
+    hg_rec.generate = types.MethodType(pf_generate, hg_rec)
+    return hg_rec
 
 
 def calculate_pos_index(preds, labels, maxk=20):
@@ -396,6 +453,25 @@ def main():
         print(f"[Issue #64] hyperbolic_attn_bias enabled for eval "
               f"(encoder.forward patched, λ_max={HAB_LAMBDA_MAX_VAL}, "
               f"Dbar median=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}])",
+              flush=True)
+
+    # Issue #70: 安装 DecorPromptFormer (candidate bins + alpha gate)
+    # 必须在 load_state_dict 之前 add_module(pf_module), 否则 strict load 找不到 pf_module.* keys
+    if PROMPT_FORMER_ENABLED:
+        from common.decor_prompt_former import DecorPromptFormer
+        pf_module = DecorPromptFormer(
+            d_model=CONFIG["d_model"],
+            vocab_size=CONFIG.get("vocab_size", 1024),
+            num_bins=4,
+            codes_per_bin=256,
+            num_bos_queries=PROMPT_FORMER_NUM_BOS_QUERIES,
+            alpha_init=PROMPT_FORMER_ALPHA,
+        )
+        install_prompt_former_eval(model, pf_module)
+        print(f"[Issue #70] prompt_former enabled for eval "
+              f"(forward+generate patched, alpha_init={PROMPT_FORMER_ALPHA:.3f}, "
+              f"num_bos_queries={PROMPT_FORMER_NUM_BOS_QUERIES}, "
+              f"pf_params={sum(p.numel() for p in pf_module.parameters())})",
               flush=True)
 
     state_dict = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)

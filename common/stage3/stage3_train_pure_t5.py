@@ -100,6 +100,13 @@ _argparser.add_argument("--hab_lambda_max", type=float, default=0.20,
                         help="Issue #64: λ_max tanh 上限 (默认 0.20, spec 不允许 sweep)")
 _argparser.add_argument("--hab_lambda_lr_ratio", type=float, default=100.0,
                         help="Issue #64 v3 优化: λ_raw param group lr 倍率 (默认 100×, 推动 λ_raw 学习. 历史 v2 λ_raw 50 epoch 没动, 共享主 lr=0.0004 太小)")
+# Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
+_argparser.add_argument("--enable_prompt_former", action="store_true",
+                        help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
+_argparser.add_argument("--prompt_former_alpha", type=float, default=0.35,
+                        help="Issue #70: alpha gate 初始值 (DECOR 默认 0.35)")
+_argparser.add_argument("--prompt_former_num_bos_queries", type=int, default=64,
+                        help="Issue #70: bos_queries 数量 (DECOR 默认 64)")
 # DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
 _argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
 _argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
@@ -121,6 +128,9 @@ HAB_ENABLED = _args.hyperbolic_attn_bias
 HAB_LAMBDA_LR_RATIO = _args.hab_lambda_lr_ratio
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX = _args.hab_lambda_max
+PROMPT_FORMER_ENABLED = _args.enable_prompt_former
+PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
+PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
 LOCAL_RANK = _args.local_rank
@@ -604,6 +614,63 @@ def build_codeword_geo_module(stage2_ckpt_path):
     )
 
 
+# Issue #70: DECOR PromptFormer (candidate bins + alpha gate) 与 HAB/GEO 正交
+def build_prompt_former_module():
+    """构建 DecorPromptFormer. 不需要 stage2 ckpt, 只用 T5 nn.Embedding."""
+    from common.decor_prompt_former import DecorPromptFormer
+    return DecorPromptFormer(
+        d_model=CONFIG["d_model"],
+        vocab_size=CONFIG.get("vocab_size", 1024),
+        num_bins=4,
+        codes_per_bin=256,
+        num_bos_queries=PROMPT_FORMER_NUM_BOS_QUERIES,
+        alpha_init=PROMPT_FORMER_ALPHA,
+    )
+
+
+def install_prompt_former(hg_rec, pf_module):
+    """Monkey-patch HG_Rec 实例: forward + generate 都注入 DECOR PromptFormer.
+    在 self.model.shared(input_ids) 之后注入, 与现有 install_geo_residual / install_hab 互不干扰.
+
+    关键: e_fused_embedding = self.model.shared (T5 nn.Embedding(1024, 128))
+    e_final = alpha * e_soft + (1-alpha) * e_fused
+    """
+    import types
+    from common.decor_prompt_former import DecorPromptFormer  # noqa: F401
+
+    device = next(hg_rec.parameters()).device
+    pf_module = pf_module.to(device)
+    hg_rec.add_module("pf_module", pf_module)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+
+    def pf_forward(self, input_ids, attention_mask=None, labels=None):
+        e_fused = self.model.shared(input_ids) * d_model_sqrt      # (B, L, D)
+        e_final, aux = self.pf_module(
+            e_fused, input_ids,
+            attention_mask=attention_mask,
+            e_fused_embedding=self.model.shared,
+        )
+        outputs = self.model(inputs_embeds=e_final,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def pf_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        e_fused = self.model.shared(input_ids) * d_model_sqrt
+        e_final, aux = self.pf_module(
+            e_fused, input_ids,
+            attention_mask=attention_mask,
+            e_fused_embedding=self.model.shared,
+        )
+        return self.model.generate(inputs_embeds=e_final,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+
+    hg_rec.forward = types.MethodType(pf_forward, hg_rec)
+    hg_rec.generate = types.MethodType(pf_generate, hg_rec)
+    return hg_rec
+
+
 def calculate_pos_index(preds, labels, maxk=20):
     # preds: (B, maxk, seq_len) 每 beam 生成的 token 序列; labels: (B, seq_len) SID code.
     # 加速 (2026-08-03): 向量化 "beam 序列与 target code 全等" 判定 (原逻辑对每个 (i,j) 逐 token
@@ -785,6 +852,16 @@ def main():
                 f"λ_eff init={lambda_eff_init} (B_geo 实际生效, 梯度正常流到 λ_raw)")
             # 注入计数预检
             model._hab_inject_count = 0
+    # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
+    pf_module = None
+    if PROMPT_FORMER_ENABLED:
+        pf_module = build_prompt_former_module()
+        model = install_prompt_former(model, pf_module)
+        if is_main:
+            pf_params = sum(p.numel() for p in pf_module.parameters())
+            log(f"[Issue #70] prompt_former ON: bos_queries={pf_module.bos_queries.shape} "
+                f"alpha_init={PROMPT_FORMER_ALPHA:.3f} num_bos_queries={PROMPT_FORMER_NUM_BOS_QUERIES} "
+                f"总参数={pf_params}")
     if DDP_MODE:
         # Issue #64: HAB lambda_raw 在 lambda_eff=0 时不参与前向计算 (走 _original_forward fast path),
         # DDP 默认检测到 unused parameter 会崩. 加 find_unused_parameters=True (历史 #55 taskA stage2 同样修过).
@@ -827,10 +904,20 @@ def main():
     else:
         # Issue #64 v6b: 用 id() 排除 hab params (lambda_raw + U/V embeddings)
         # 之前 n.startswith/endswith 在 DDP wrap 后参数名前缀变化时不可靠 (v6 启动失败)
-        _hab_param_ids = {id(hab_module.lambda_raw)}
-        for _e in list(hab_module.U) + list(hab_module.V):
-            _hab_param_ids.add(id(_e.weight))
-        _other_params = [p for p in model.parameters() if id(p) not in _hab_param_ids]
+        # Issue #70: 同样排除 prompt_former params (alpha_raw + bos_queries + q/k)
+        if HAB_ENABLED and hab_module is not None:
+            _hab_param_ids = {id(hab_module.lambda_raw)}
+            for _e in list(hab_module.U) + list(hab_module.V):
+                _hab_param_ids.add(id(_e.weight))
+        else:
+            _hab_param_ids = set()
+        if PROMPT_FORMER_ENABLED and pf_module is not None:
+            _pf_param_ids = {id(pf_module.alpha_raw), id(pf_module.bos_queries),
+                             id(pf_module.q_ctx.weight), id(pf_module.k_candidates.weight)}
+        else:
+            _pf_param_ids = set()
+        _exclude_ids = _hab_param_ids | _pf_param_ids
+        _other_params = [p for p in model.parameters() if id(p) not in _exclude_ids]
         _param_groups.insert(0, {"params": _other_params, "lr": LR})
         optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER)
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0 and is_main:
