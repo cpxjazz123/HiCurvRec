@@ -26,6 +26,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
@@ -45,6 +46,7 @@ _argparser.add_argument("--product_dir", type=str, required=True, help="产物�
 _argparser.add_argument("--device", type=str, default="cuda:0", help="GPU device")
 _argparser.add_argument("--tag", type=str, default="task", help="方向标签 (taskA/taskB), 写进 verdict")
 _argparser.add_argument("--expected_sid_sha", type=str, default="", help="校验 SID 文件 sha256; 不传则跳过")
+_argparser.add_argument("--geo_residual", action="store_true", help="Issue #62: 加载 geo_module 子模块并 monkey-patch forward/generate, 用于 Stage3 v3 ckpt 评估")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -53,6 +55,7 @@ PRODUCT_DIR = Path(_args.product_dir)
 DEVICE = _args.device
 TAG = _args.tag
 EXPECTED_SID_SHA = _args.expected_sid_sha
+GEO_RESIDUAL = _args.geo_residual
 # Stage4 = test only (held-out). 硬编码, 不允许覆盖 (valid 由 Stage3 val_trace 覆盖)
 EVAL_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/test.parquet"
 
@@ -119,7 +122,124 @@ def main():
                 f"SID sha mismatch: got {sid_sha}, expected {EXPECTED_SID_SHA} ({SID_NPY})")
 
     model = HG_Rec(CONFIG)
-    model.load_state_dict(torch.load(CKPT_PATH, map_location="cpu", weights_only=False))
+    if GEO_RESIDUAL:
+        # Issue #62: geo_residual v2 配置 (与 Stage3 train 脚本一致)
+        GEO_KAPPA = [-0.2289, -0.1872, -0.0932, 0.0]
+        GEO_SCALE = [4.0, 5.04, 6.35, 1.0]
+        GEO_CODEBOOK_NORM = [4.0, 5.04, 6.35, 1.0]
+        GEO_ALPHA_INIT = 0.01
+        GEO_ALPHA_CAP = 0.1
+        GEO_FORCE_ZERO_LAYERS = [3]
+
+        class GeoResidualModuleEval(nn.Module):
+            """Stage4 eval 用的精简版 (跟 Stage3 train 完全一致, 仅去训练相关字段)."""
+            def __init__(self, d_model, meta_per_layer, alpha_init=0.01, alpha_cap=0.1, force_zero_layers=()):
+                super().__init__()
+                self.d_model = d_model
+                self.num_layers, meta_dim = meta_per_layer.shape
+                self.alpha_cap = alpha_cap
+                meta_t = torch.as_tensor(meta_per_layer, dtype=torch.float32)
+                self.register_buffer("meta", meta_t)
+                self.mlps = nn.ModuleList([
+                    nn.Sequential(
+                        nn.Linear(meta_dim, d_model),
+                        nn.GELU(),
+                        nn.LayerNorm(d_model),
+                        nn.Linear(d_model, d_model),
+                    ) for _ in range(self.num_layers)
+                ])
+                alpha = torch.full((self.num_layers,), alpha_init)
+                for l in force_zero_layers:
+                    alpha[l] = 0.0
+                # Issue #62 v4/v5 ckpt 兼容: ckpt 存的是 geo_module.alphas_raw, 此处注册同名参数
+                self.alphas_raw = nn.Parameter(alpha)
+                # 兼容 v3 ckpt (key = geo_module.alphas): 如果传入 state_dict 含 alphas, 重命名加载
+                for mlp in self.mlps:
+                    nn.init.normal_(mlp[-1].weight, std=0.01)
+                    nn.init.zeros_(mlp[-1].bias)
+
+            def get_deltas(self):
+                deltas = [self.mlps[l](self.meta[l]) for l in range(self.num_layers)]
+                return torch.stack(deltas, dim=0)
+
+            def forward(self, input_embeds, layer_ids):
+                deltas = self.get_deltas()
+                alphas = self.alphas_raw.clamp(-self.alpha_cap, self.alpha_cap)
+                valid = layer_ids >= 0
+                safe_ids = layer_ids.clamp(min=0)
+                delta_per_token = deltas[safe_ids]
+                alpha_per_token = alphas[safe_ids]
+                residual = (alpha_per_token.unsqueeze(-1) * delta_per_token) * valid.unsqueeze(-1).float()
+                return input_embeds + residual
+
+        _LAYER_ID_LUT = np.full(1025, -1, dtype=np.int64)
+        _LAYER_ID_LUT[1:65] = 0
+        _LAYER_ID_LUT[65:193] = 1
+        _LAYER_ID_LUT[193:449] = 2
+        _LAYER_ID_LUT[449:450] = 3
+
+        num_layers = len(GEO_KAPPA)
+        raw = np.array([GEO_KAPPA[:3], GEO_SCALE[:3], GEO_CODEBOOK_NORM[:3]], dtype=np.float32)
+        means = raw.mean(axis=1, keepdims=True)
+        stds = raw.std(axis=1, keepdims=True) + 1e-6
+        meta = np.zeros((num_layers, 3), dtype=np.float32)
+        for l in range(3):
+            meta[l, 0] = (GEO_KAPPA[l] - means[0, 0]) / stds[0, 0]
+            meta[l, 1] = (GEO_SCALE[l] - means[1, 0]) / stds[1, 0]
+            meta[l, 2] = (GEO_CODEBOOK_NORM[l] - means[2, 0]) / stds[2, 0]
+        meta[3, :] = 0.0
+
+        geo_module = GeoResidualModuleEval(
+            d_model=CONFIG["d_model"],
+            meta_per_layer=meta,
+            alpha_init=GEO_ALPHA_INIT,
+            alpha_cap=GEO_ALPHA_CAP,
+            force_zero_layers=GEO_FORCE_ZERO_LAYERS,
+        )
+        layer_id_lut_tensor = torch.as_tensor(_LAYER_ID_LUT, dtype=torch.long)
+
+        # Monkey-patch: 跟 Stage3 train 一致
+        device0 = torch.device(DEVICE)
+        geo_module = geo_module.to(device0)
+        layer_id_lut_tensor = layer_id_lut_tensor.to(device0)
+        d_model_sqrt = CONFIG["d_model"] ** 0.5
+        model.add_module("geo_module", geo_module)
+
+        def geo_forward(self, input_ids, attention_mask=None, labels=None):
+            input_embeds = self.model.shared(input_ids) * d_model_sqrt
+            layer_ids = layer_id_lut_tensor[input_ids]
+            input_embeds = self.geo_module(input_embeds, layer_ids)
+            outputs = self.model(inputs_embeds=input_embeds, attention_mask=attention_mask, labels=labels)
+            return outputs.loss, outputs.logits
+
+        def geo_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+            input_embeds = self.model.shared(input_ids) * d_model_sqrt
+            layer_ids = layer_id_lut_tensor[input_ids]
+            input_embeds = self.geo_module(input_embeds, layer_ids)
+            return self.model.generate(inputs_embeds=input_embeds, attention_mask=attention_mask,
+                                       num_beams=num_beams, max_length=5,
+                                       num_return_sequences=num_beams, **kwargs)
+
+        import types
+        model.forward = types.MethodType(geo_forward, model)
+        model.generate = types.MethodType(geo_generate, model)
+        print("[Issue #62] geo_residual enabled for eval (forward + generate patched)", flush=True)
+
+    state_dict = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)
+    # Issue #62 ckpt 兼容:
+    # - v3 ckpt: key=geo_module.alphas (旧命名)
+    # - v4/v5 ckpt: 同时存 geo_module.alphas_raw + geo_module.alphas (alias 冗余)
+    # 当前 GeoResidualModuleEval 类只用 alphas_raw; 统一处理:
+    if GEO_RESIDUAL:
+        # v3 路径: alphas → alphas_raw 重命名
+        if "geo_module.alphas" in state_dict and "geo_module.alphas_raw" not in state_dict:
+            state_dict["geo_module.alphas_raw"] = state_dict.pop("geo_module.alphas")
+            print("[Issue #62] v3 ckpt detected, remapped geo_module.alphas → geo_module.alphas_raw", flush=True)
+        # v4/v5 路径: 移除冗余 alphas key, 只保留 alphas_raw
+        elif "geo_module.alphas" in state_dict and "geo_module.alphas_raw" in state_dict:
+            del state_dict["geo_module.alphas"]
+            print("[Issue #62] v4/v5 ckpt detected, dropped redundant geo_module.alphas", flush=True)
+    model.load_state_dict(state_dict)
     model.to(DEVICE)
     model.eval()
 
