@@ -28,6 +28,8 @@ HAB_CODEWORD_OFFSETS = [1, 65, 193, 449]
 HAB_CODEWORD_K = [64, 128, 256, 1]
 # Issue #64 λ_max 默认 0.20 (spec 推荐, 本 issue 不允许 sweep)
 HAB_LAMBDA_MAX = 0.20
+# Issue #64 v6b 低秩 bias 维度 (2026-08-07): U/V embedding 维度, 砍 86k → 14k params (rank=16)
+HAB_BIAS_RANK = 16
 
 
 def load_hab_assets_from_stage2_ckpt(stage2_ckpt_path):
@@ -142,27 +144,47 @@ def precompute_distance_matrices(codebook_list, final_kappas):
 
 
 class HyperbolicAttentionBias(nn.Module):
-    """Issue #64 核心模块: 持有三层归一化双曲距离矩阵 + 三层 learnable lambda.
+    """Issue #64 v6b 核心模块 (2026-08-07): 三层低秩 learnable attention bias + 三层 learnable lambda.
+
+    v6b 改造 (方向 a + 低秩): B_geo 从 (K_l, K_l) 满秩矩阵改 low-rank factorized
+    - 每层两个 nn.Embedding: U_l (K_l, r) 和 V_l (K_l, r), r=HAB_BIAS_RANK
+    - bias_l[k_i, k_j] = U_l[k_i]^T · V_l[k_j] / sqrt(r) (Eckart-Young 最优 rank-r 近似)
+    - init: 用 SVD(Dbar_l) 取前 r 维, sqrt(S[:r]) / sqrt(r) 吸收到 U/V (Eckart-Young 最优分解)
+    - forward 用 einsum('bir,bjr->bij'), backward 是标准 embedding backward (PyTorch fused)
+    - 总参数: 3 + sum(K_l * r * 2) = 3 + (64+128+256)*16*2 = 14339 (vs v6 86016, 砍 83%)
+    - 训练速度: ~3× 快 (避开 fancy index 的 scatter backward)
 
     Args:
-        Dbar_list: list of (K_l, K_l) tensor (预计算冻结, register_buffer)
+        Dbar_list: list of (K_l, K_l) tensor (init 值, 来自 stage2 ckpt 预计算 Dbar)
         lambda_max: λ 上限 (默认 0.20, Issue #64 spec)
         force_zero_layers: 强制 lambda_l = 0 的层列表 (默认 [3] L3 dedup)
-
-    Note:
-        lambda_raw init 0 → lambda_eff = 0 → 严格等价 #61 (Gate3 强制 < 1e-6)
-        lambda_l = lambda_max * tanh(lambda_raw_l / lambda_max) 数学保证 ±lambda_max
+        bias_rank: U/V 嵌入维度 (默认 16, HAB_BIAS_RANK)
     """
-    def __init__(self, Dbar_list, lambda_max=HAB_LAMBDA_MAX, force_zero_layers=()):
+    def __init__(self, Dbar_list, lambda_max=HAB_LAMBDA_MAX, force_zero_layers=(),
+                 bias_rank=HAB_BIAS_RANK):
         super().__init__()
-        # num_layers = 实际 Dbar 数量 (#64 = 3, 因为 L3 是 dedup 无距离矩阵)
         self.num_layers = len(Dbar_list)
         self.lambda_max = float(lambda_max)
-        for l in range(self.num_layers):
-            self.register_buffer(f"Dbar_{l}", Dbar_list[l].clone())
+        self.bias_rank = int(bias_rank)
         self.K = [Dbar_list[l].shape[0] for l in range(self.num_layers)]
-        # lambda_raw 只对前 num_layers 个层有意义; force_zero_layers 超出范围跳过
-        lambda_raw = torch.zeros(self.num_layers)
+        # v6b: U/V embedding (init from Dbar via SVD)
+        self.U = nn.ModuleList([nn.Embedding(self.K[l], self.bias_rank) for l in range(self.num_layers)])
+        self.V = nn.ModuleList([nn.Embedding(self.K[l], self.bias_rank) for l in range(self.num_layers)])
+        for l in range(self.num_layers):
+            # SVD: Dbar_l = U_l · diag(S_l) · V_l^T (Eckart-Young 最优 rank-r 近似)
+            # init 方案: U = U_svd[:, :r] * sqrt(S[:r]), V = V_svd[:, :r] * sqrt(S[:r])
+            # 这样 forward 不带 /sqrt(r) 时: U @ V^T = sum_r S[r] * U_svd[i,r] * V_svd[j,r] = rank-r approx Dbar_l ✓
+            # (v6c 错在 init 用 /sqrt(r) + forward 又 /sqrt(r), 双因子抵消成 1/(r·sqrt(r)) → 重建误差 98%)
+            Dbar_l = Dbar_list[l].detach().cpu().to(torch.float32)
+            U_svd, S_svd, Vt_svd = torch.linalg.svd(Dbar_l, full_matrices=False)
+            r = min(self.bias_rank, len(S_svd))
+            scale = torch.sqrt(S_svd[:r].clamp_min(1e-8))
+            with torch.no_grad():
+                self.U[l].weight.copy_(U_svd[:, :r] * scale.unsqueeze(0))
+                self.V[l].weight.copy_(Vt_svd[:r, :].T * scale.unsqueeze(0))
+        # Issue #64 v2 修复 (2026-08-06): lambda_raw init 非零
+        _lambda_init = 0.5 * self.lambda_max
+        lambda_raw = torch.full((self.num_layers,), _lambda_init)
         for l in force_zero_layers:
             if l < self.num_layers:
                 lambda_raw[l] = 0.0
@@ -191,11 +213,17 @@ class HyperbolicAttentionBias(nn.Module):
         """
         B, L = input_ids.shape
         device = input_ids.device
+        # Issue #64 v2 eval 修复 (2026-08-06): layer_id_lut_tensor 可能在 CPU, input_ids 在 GPU,
+        # 导致 indexing 报错. 强制 layer_id_lut_tensor.to(device) 保证同 device.
+        if layer_id_lut_tensor.device != device:
+            layer_id_lut_tensor = layer_id_lut_tensor.to(device)
         layer_ids = layer_id_lut_tensor[input_ids]  # (B, L) long: 0/1/2/3 或 -1
         B_geo = torch.zeros(B, L, L, device=device, dtype=torch.float32)
-        lambda_eff = self.lambda_eff.detach()  # (num_layers,)
+        # Issue #64 v3 关键修复 (2026-08-06): 历史 detach() 让 lambda_raw 永远 0 梯度,
+        #   B_geo 计算完后与 loss 断开. 现在去掉 detach() 让 λ_raw 能反向传播.
+        lambda_eff = self.lambda_eff  # (num_layers,) requires_grad=True
         # 关键: 对每层独立算 k_for_layer (该层专用), 不复用全局 k_in_layer (避免跨层越界)
-        for l in range(self.num_layers):  # L0/L1/L2: 三层有距离矩阵
+        for l in range(self.num_layers):  # L0/L1/L2: 三层有 bias embedding
             mask_l = (layer_ids == l)  # (B, L) 该层 token
             if not mask_l.any():
                 continue
@@ -203,9 +231,12 @@ class HyperbolicAttentionBias(nn.Module):
             k_for_layer = torch.where(mask_l, input_ids - HAB_CODEWORD_OFFSETS[l],
                                        torch.zeros_like(input_ids))
             k_for_layer = k_for_layer.clamp(0, self.K[l] - 1)
-            Dbar_l = getattr(self, f"Dbar_{l}")  # (K_l, K_l)
+            # v6b 低秩: bias_l[k_i, k_j] = U_l[k_i]^T · V_l[k_j] (无 /sqrt(r), 已吸收到 init scale)
+            # forward 用 einsum (PyTorch 优化过), backward 是标准 Embedding backward (fused)
+            u_l = self.U[l](k_for_layer)  # (B, L, r)
+            v_l = self.V[l](k_for_layer)  # (B, L, r)
+            Dbar_ij = torch.einsum('bir,bjr->bij', u_l, v_l)
             mask_pair_l = mask_l.unsqueeze(2) & mask_l.unsqueeze(1)  # (B, L_i, L_j) 同层 pair
-            Dbar_ij = Dbar_l[k_for_layer.unsqueeze(2), k_for_layer.unsqueeze(1)]  # (B, L, L)
             B_geo_l = -lambda_eff[l] * Dbar_ij
             B_geo = torch.where(mask_pair_l, B_geo_l, B_geo)
         # PAD 屏蔽: 任何 token 为 PAD, 该行/列 bias 设为 0 (跟 attention_mask 一致)

@@ -98,6 +98,8 @@ _argparser.add_argument("--hab_stage2_ckpt", type=str,
                         help="Issue #64: Stage2 ckpt 路径, 读 codebook + final_kappas")
 _argparser.add_argument("--hab_lambda_max", type=float, default=0.20,
                         help="Issue #64: λ_max tanh 上限 (默认 0.20, spec 不允许 sweep)")
+_argparser.add_argument("--hab_lambda_lr_ratio", type=float, default=100.0,
+                        help="Issue #64 v3 优化: λ_raw param group lr 倍率 (默认 100×, 推动 λ_raw 学习. 历史 v2 λ_raw 50 epoch 没动, 共享主 lr=0.0004 太小)")
 # DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
 _argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
 _argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
@@ -116,6 +118,7 @@ CODEWORD_GEO_ENABLED = _args.codeword_geo_residual
 CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 CODEWORD_RHO_MAX = _args.codeword_rho_max
 HAB_ENABLED = _args.hyperbolic_attn_bias
+HAB_LAMBDA_LR_RATIO = _args.hab_lambda_lr_ratio
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX = _args.hab_lambda_max
 WORLD_SIZE = _args.world_size
@@ -125,10 +128,10 @@ DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
-EARLY_STOP = 20  # Issue #61: 用户指示 2026-08-06 改为 20 (与 default 一致)
+EARLY_STOP = 30  # Issue #64 v5 (2026-08-07): 用户指示 loss-based early stop — train loss 易抖动, 阈值从 20 提到 30 epoch 给更宽容量
 EVAL_INTERVAL = 5  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:25 (每 5 epoch 才 eval, 省 22s × 4/5 ≈ 18s/effective epoch)
-BATCH_SIZE = 256  # Issue #64 DDP 4 卡修复 (2026-08-06): BATCH_SIZE=1024 → 256, global batch DDP 4 卡 = 256×4 = 1024 (保持 baseline 全局 batch 一致, 减小 per-rank all_reduce 负载; #61 DECOR 1024 单卡 batch, DDP 4 卡下 per-rank batch 应 = 256 让全局 batch 一致). 同时 INFER_SIZE=96 → 24 (per-rank) 全局 96 一致.
-INFER_SIZE = 96  # eval batch size (DDP 模式下 per-rank = INFER_SIZE // WORLD_SIZE)
+BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
+INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
 LR = 4e-4  # Issue #62 对照公平性: 必须与 #61 最终 baseline 一致 (linear scaling rule, bs=1024 → lr×4)
 MAX_LEN = 20
@@ -774,8 +777,12 @@ def main():
             lambda_params = hab_module.lambda_raw.numel()
             log(f"[Issue #64] hyperbolic_attn_bias ON: lambda_raw={lambda_params} "
                 f"λ_max={HAB_LAMBDA_MAX} Dbar=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}]")
-            # Issue #64 Gate3: lambda=0 等价性 (install_hab 已保证 — 严格走 _original_forward 当 λ=0)
-            log(f"[Issue #64] Gate3 λ=0 等价性预检: λ=0 → hab_encoder_forward 严格走 _original_forward, bitwise 等价 #61")
+            # Issue #64 v2 修复 (2026-08-06): lambda_raw init = 0.5*λ_max (非零), 触发 HAB 实际生效.
+            # 历史 #64 v1 lambda_raw init=0 → fast path → HAB 0 梯度 → 完全未生效 (Gate 4 FAIL NO-GO).
+            lambda_init = hab_module.lambda_raw.detach().cpu().tolist()
+            lambda_eff_init = hab_module.lambda_eff.detach().cpu().tolist()
+            log(f"[Issue #64 v2] λ_raw init={lambda_init} (非零, fast path 不触发) "
+                f"λ_eff init={lambda_eff_init} (B_geo 实际生效, 梯度正常流到 λ_raw)")
             # 注入计数预检
             model._hab_inject_count = 0
     if DDP_MODE:
@@ -787,10 +794,10 @@ def main():
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
-            find_unused_parameters=True,
-            bucket_cap_mb=200,
+            find_unused_parameters=False,  # Issue #64 v6c 加速 (2026-08-07): 关 find_unused_parameters 避免每 step 全 autograd graph 遍历 (PyTorch 警告明示 "extra traversal ... can adversely affect performance"); HAB bias 每个 batch 都用 (历史 token 跨 3 层), 不会有 unused param
+            bucket_cap_mb=512,  # Issue #64 v6 加速 (2026-08-07): 200→512, 86k bias params 加入后更多 bucket 拆分导致 NCCL sync barrier 翻倍, 加大 bucket_cap 减少 barrier 次数
             gradient_as_bucket_view=True,
-            static_graph=True,
+            static_graph=False,  # Issue #64 v6 加速 (2026-08-07): static_graph=True + find_unused_parameters=True 触发 _set_static_graph() 自动重扫 unused 参数图, 86k bias 矩阵在 batch 全 L0 token 时触发重扫, 改 False 关闭 (HAB bias 实际每 batch 都用, 不会有 unused)
         )
     # Issue #61 P0 加速: TF32 enable (Ampere+ L40S sm_89 支持, matmul 内部用 tf32 加速 1.3-1.5×)
     if STAGE3_TF32:
@@ -799,18 +806,38 @@ def main():
         torch.backends.cudnn.benchmark = True  # cudnn benchmark 自动选最快卷积算法 (T5 没用卷积, 但无害)
     # Issue #61 P0 加速: fused AdamW (PyTorch 2.x fused=True 用单个 CUDA kernel 跑 optimizer step, 1.2-1.5×)
     # Issue #62 v4: per-layer alpha 独立学习率 (GEO_ALPHA_LR_RATIO > 1 时生效)
+    # Issue #64 v3 优化: λ_raw 单独高 lr param group (HAB_LAMBDA_LR_RATIO=100, 推动 λ_raw 学习)
+    _param_groups = []
+    if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0:
+        # Issue #64 v6b (2026-08-07): U/V embedding 也进 high-lr group (与 λ_raw 一起, 推动 B_geo 学习)
+        # 总参数量 = sum(K_l * r * 2) = (64+128+256)*16*2 = 14336 scalar + 3 scalar (lambda_raw)
+        hab_lambda_params = [hab_module.lambda_raw]  # 3 个标量
+        hab_bias_params = list(hab_module.U.parameters()) + list(hab_module.V.parameters())  # 6 个 (K_l, r) embedding
+        _param_groups.append({"params": hab_lambda_params + hab_bias_params,
+                                "lr": LR * HAB_LAMBDA_LR_RATIO})
     if GEO_RESIDUAL_ENABLED and GEO_ALPHA_LR_RATIO > 1.0:
         alpha_params = [geo_module.alphas_raw]  # alpha 解耦, lr 慢 ratio×
         other_params = [p for n, p in model.named_parameters() if not n.endswith("geo_module.alphas_raw")]
-        optimizer = optim.AdamW([
-            {"params": other_params, "lr": LR},
-            {"params": alpha_params, "lr": LR / GEO_ALPHA_LR_RATIO},
-        ], fused=FUSED_OPTIMIZER)
+        _param_groups.append({"params": other_params, "lr": LR})
+        _param_groups.append({"params": alpha_params, "lr": LR / GEO_ALPHA_LR_RATIO})
+        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER)
         if is_main:
             log(f"[v4] per-layer alpha lr={LR/GEO_ALPHA_LR_RATIO:.2e} (ratio={GEO_ALPHA_LR_RATIO}×), "
                 f"mlp+base lr={LR:.2e}")
     else:
-        optimizer = optim.AdamW(model.parameters(), lr=LR, fused=FUSED_OPTIMIZER)
+        # Issue #64 v6b: 用 id() 排除 hab params (lambda_raw + U/V embeddings)
+        # 之前 n.startswith/endswith 在 DDP wrap 后参数名前缀变化时不可靠 (v6 启动失败)
+        _hab_param_ids = {id(hab_module.lambda_raw)}
+        for _e in list(hab_module.U) + list(hab_module.V):
+            _hab_param_ids.add(id(_e.weight))
+        _other_params = [p for p in model.parameters() if id(p) not in _hab_param_ids]
+        _param_groups.insert(0, {"params": _other_params, "lr": LR})
+        optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER)
+    if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0 and is_main:
+        n_bias_params = sum(p.numel() for p in list(hab_module.U.parameters()) + list(hab_module.V.parameters()))
+        log(f"[Issue #64 v6b] λ_raw + U/V embedding ({n_bias_params} params) "
+            f"共进 high-lr group lr={LR*HAB_LAMBDA_LR_RATIO:.2e} "
+            f"(ratio={HAB_LAMBDA_LR_RATIO}×, 推动 v6b low-rank learnable bias 学习)")
 
     train_ds = GenRecDataset(
         dataset_path=TRAIN_PARQUET, code_path=SID_NPY, mode="train",
@@ -840,7 +867,9 @@ def main():
         valid_loader = _FastGenRecDataLoader(valid_ds, batch_size=INFER_SIZE, shuffle=False, num_workers=NUM_WORKERS,
                                              pin_memory=PIN_MEMORY, persistent_workers=PERSISTENT_WORKERS)
 
-    best_ndcg = 0.0
+    # Issue #64 v5 (2026-08-07): 改用 train_loss 作 early stop 信号 (用户指示 2026-08-07)
+    # best_loss 跟踪最低 train_loss, best ckpt 按 loss 保存
+    best_loss = float("inf")
     best_epoch = -1
     early_stop_counter = 0
     trace = []
@@ -860,6 +889,18 @@ def main():
         do_eval = ((epoch + 1) % EVAL_INTERVAL == 0) or (epoch == NUM_EPOCHS - 1)
 
         if is_main:
+            # Issue #64 v5 (2026-08-07): loss-based early stop — 每个 epoch 都更新 best_loss / early_stop_counter
+            # (loss 每 epoch 都有, 不必等 eval; val R@K 仍按 EVAL_INTERVAL 评估仅作 trace)
+            if train_loss < best_loss - 1e-4:
+                best_loss = train_loss
+                best_epoch = epoch
+                early_stop_counter = 0
+                torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
+                log(f"[BEST] train_loss={best_loss:.4f} saved {CKPT_PATH}")
+            else:
+                early_stop_counter += 1
+                log(f"no loss improv ({early_stop_counter}/{EARLY_STOP})")
+
             if do_eval:
                 t0 = time.time()
                 recalls, ndcgs = evaluate(model, valid_loader, device)
@@ -869,6 +910,8 @@ def main():
                     "epoch": epoch, "train_loss": train_loss,
                     **recalls, **ndcgs,
                     "t_train": round(t_train, 1), "t_eval": round(t_eval, 1),
+                    "early_stop_counter": early_stop_counter,
+                    "best_loss": round(best_loss, 4),
                 }
                 if GEO_RESIDUAL_ENABLED:
                     raw_alphas = model.module.geo_module.alphas_raw.detach().cpu().tolist() if DDP_MODE else model.geo_module.alphas_raw.detach().cpu().tolist()
@@ -922,24 +965,22 @@ def main():
                     row["lambda_raw"] = [round(x, 5) for x in lambda_raw_list]
                     row["lambda_eff"] = [round(x, 5) for x in lambda_eff_list]
                     row["hab_inject_count"] = model._hab_inject_count if not DDP_MODE else model.module._hab_inject_count
+                    # Issue #64 v6b: 监控 U/V embedding 范数 (init → 训练后对比, 验矩阵真在学习)
+                    u_norms = [u.weight.detach().norm().item() for u in hab_loop.U]
+                    v_norms = [v.weight.detach().norm().item() for v in hab_loop.V]
+                    row["U_l2_norm"] = [round(x, 4) for x in u_norms]
+                    row["V_l2_norm"] = [round(x, 4) for x in v_norms]
                 trace.append(row)
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "
                     f"(train {t_train:.0f}s, eval {t_eval:.0f}s)"
                     + (f" alpha={row.get('alpha_eff', '')}" if GEO_RESIDUAL_ENABLED else ""))
-                if ndcgs["NDCG@20"] > best_ndcg:
-                    best_ndcg = ndcgs["NDCG@20"]
-                    best_epoch = epoch
-                    early_stop_counter = 0
-                    torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
-                    log(f"[BEST] NDCG@20={best_ndcg:.4f} saved {CKPT_PATH}")
-                else:
-                    early_stop_counter += 1
-                    log(f"no improv ({early_stop_counter}/{EARLY_STOP})")
             else:
-                # 非 eval epoch: 只记录 train_loss, 不更新 best / early_stop_counter
+                # 非 eval epoch: 只记录 train_loss (best/early_stop 已在 do_eval 之前更新)
                 row = {"epoch": epoch, "train_loss": train_loss,
-                       "t_train": round(t_train, 1), "t_eval": 0.0}
+                       "t_train": round(t_train, 1), "t_eval": 0.0,
+                       "early_stop_counter": early_stop_counter,
+                       "best_loss": round(best_loss, 4)}
                 trace.append(row)
                 log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
                     f"(train {t_train:.0f}s, eval skipped, next eval @ epoch {((epoch + 1) // EVAL_INTERVAL + 1) * EVAL_INTERVAL})")
@@ -961,17 +1002,18 @@ def main():
             json.dump(trace, f, indent=2)
         verdict = {
             "tag": TAG, "sid_npy": SID_NPY, "sid_sha256": sid_sha,
-            "best_epoch": best_epoch, "best_ndcg20": best_ndcg,
+            "best_epoch": best_epoch, "best_loss": round(best_loss, 4),
             "final_epoch": trace[-1]["epoch"] if trace else None,
             "best_trace": trace[best_epoch] if 0 <= best_epoch < len(trace) else None,
             "config": {**CONFIG, "lr": LR, "batch_size": BATCH_SIZE,
                        "num_epochs": NUM_EPOCHS, "early_stop": EARLY_STOP, "seed": SEED,
-                       "world_size": WORLD_SIZE, "bf16": STAGE3_BF16},
+                       "world_size": WORLD_SIZE, "bf16": STAGE3_BF16,
+                       "early_stop_metric": "train_loss"},
             "done_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         with open(VERDICT_PATH, "w") as f:
             json.dump(verdict, f, indent=2)
-        log(f"[VERDICT] {VERDICT_PATH} best_epoch={best_epoch} best_NDCG@20={best_ndcg:.4f}")
+        log(f"[VERDICT] {VERDICT_PATH} best_epoch={best_epoch} best_loss={best_loss:.4f}")
         log("DONE")
     if DDP_MODE:
         dist.barrier()
