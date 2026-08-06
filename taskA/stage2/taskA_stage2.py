@@ -112,6 +112,18 @@ STAGE2_BF16 = True
 # v34 监控: 码字利用率 (每 N epoch 跑一次 infer_sid 算 util_4digit)
 STAGE2_UTIL_LOG_EVERY = 10
 
+# Issue #61: 用户目标 — Stage2 Phase 1 util_per_layer_3digit 三层 ≥ 0.85
+# 历史 6 issue (#56→#60) Stage1 各种变体全 FAIL Stage2 Gate1 (util 0.20-0.50),
+# 根因=Stage1 #56 残差 Lorentz 头输出 norm=1.0 → expmap0 后 norm=0.92 (球面) → kmeans 难聚类.
+# 修复单边走 Stage2 侧 (不动 Stage1 框架):
+#   (1) Dead code revival: 每 UTIL_REVIVE_EVERY epoch 检查全量 hard util, 替换未使用码字 (count=0)
+#       为随机 item 的 latent, 防止 collapse 扩散
+#   (2) Util hinge loss (轻量): 仅作 monitor, 不进入 total_loss
+#       (实验 #61 v2 验证: hinge loss 反而降低硬 util 0.50→0.44, 因 batch 软熵与全量硬 util 不一致)
+# Stage1 输入: taskA_stage1_issue60/item_emb_u32.npy (沿用 #56 残差 Lorentz 头输出)
+UTIL_REVIVE_EVERY = 10  # 每 10 epoch 检查一次 dead code
+UTIL_HINGE_LAMBDA = 0.0  # 禁用 util hinge loss (实验证伪)
+
 # Issue #75 论文移植: Maximum Distance Rescaling (平滑替代 proj_to_ball 硬截断)
 RESCALE = False  # 默认关, v7c 修复后已不需要
 
@@ -208,7 +220,8 @@ MLR_WARMUP_EPOCHS = 0  # Issue #47: 0 → τ 永远固定 = 校准值 (不退火
 MLR_USE_DISTANCE_AWARE_INIT = True  # Issue #45/46/47: 锚点 raw r 初始化 ≈ 0.1 × codebook 方向, 法向量 a ≈ codebook 方向
 
 # Issue #47 spec 强制: 按层熵校准冻结温度
-MLR_ENTROPY_TARGET_RATIO = 0.70  # ρ_target = H_l(τ_l) / log(K_l) = 0.70
+MLR_ENTROPY_TARGET_RATIO = 0.85  # Issue #61: 用户目标 util_3digit ≥ 0.85 → H_norm 需 ≥ 0.85
+#   ρ_target = H_l(τ_l) / log(K_l) = 0.85 (提高以维持高软利用率)
 MLR_CALIBRATION_TAU_MIN = 1e-4
 MLR_CALIBRATION_TAU_MAX = 10.0
 MLR_CALIBRATION_BISECT_MAX_ITER = 60
@@ -763,6 +776,8 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
             mlr_sorted, _ = torch.sort(mlr_logits, dim=-1, descending=True)
             self._last_top1_top2_margin = float((mlr_sorted[:, 0] - mlr_sorted[:, 1]).mean().item())
             self._last_signed_score_norm = float(mlr_logits.norm(dim=-1).mean().item())
+        # Issue #61: 保存 soft_probs 给外层 train_step 计算 util hinge loss (可微, 回传梯度)
+        self._last_soft_probs = soft_probs
 
         # poincare 距离仍计算 (供 Sinkhorn probability 正则 + 监控用, 但不覆盖 indices)
         x_exp = latent_h.unsqueeze(1).expand(B, K, -1)
@@ -1065,6 +1080,28 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
                 l_kappa = l_kappa + LAMBDA_B * F.relu(b_l - B_TARGET).pow(2)
         total_loss = total_loss + l_kappa
 
+    # Issue #61: Util hinge loss — 直推 util_per_layer_3digit 三层 ≥ 0.85
+    # 用 soft_probs 计算 mean assignment entropy (归一化到 [0,1] by log K)
+    # H_norm = entropy(p̄_l) / log K,  p̄_l = mean(soft_probs_l, dim=0)
+    # H_norm 高 → 码字分布均匀 → 利用率高.  hinge: max(0, TARGET - H_norm)
+    if UTIL_HINGE_LAMBDA > 0:
+        util_hinge = batch.device.type == "cpu"  # dummy guard
+        util_hinge = torch.zeros((), device=batch.device)
+        util_h_norm_per_layer = []
+        for l_idx, q in enumerate(mm.vq_layers):
+            sp = getattr(q, "_last_soft_probs", None)
+            if sp is None:
+                continue
+            K_l = CODEBOOK_SIZES[l_idx]
+            # mean soft assignment distribution per layer
+            p_l = sp.mean(dim=0)  # (K,)
+            p_l = p_l.clamp(min=1e-10)
+            H_l = -(p_l * p_l.log()).sum()
+            H_norm_l = H_l / torch.log(torch.tensor(float(K_l), device=batch.device))
+            util_h_norm_per_layer.append(float(H_norm_l.item()))
+            util_hinge = util_hinge + F.relu(torch.tensor(UTIL_HINGE_TARGET, device=batch.device) - H_norm_l)
+        total_loss = total_loss + UTIL_HINGE_LAMBDA * util_hinge
+
     # 记录 κ 更新前 (使用 effective_kappa — 实际进 forward 的值)
     kappas_before = [q.get_effective_kappa().item() for q in mm.vq_layers]
     codebook_norm_before = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
@@ -1175,6 +1212,9 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "mlr_soft_entropy": [getattr(q, "_last_soft_entropy", 0.0) for q in mm.vq_layers],
         "mlr_hard_soft_consistency": [getattr(q, "_last_hard_soft_consistency", 1.0) for q in mm.vq_layers],
         "mlr_top1_top2_margin": [getattr(q, "_last_top1_top2_margin", 0.0) for q in mm.vq_layers],
+        # Issue #61: util hinge 监控 (soft entropy normalized per layer, 越接近 1.0 利用率越高)
+        "util_h_norm_per_layer": util_h_norm_per_layer if 'util_h_norm_per_layer' in dir() else [],
+        "util_hinge_loss": float(util_hinge.item()) if 'util_hinge' in dir() and isinstance(util_hinge, torch.Tensor) else 0.0,
     }
 
 
@@ -2159,10 +2199,15 @@ def main():
                        f"H={[f'{e:.2f}' for e in m['mlr_soft_entropy']]} "
                        f"c_hs={[f'{c:.2f}' for c in m['mlr_hard_soft_consistency']]} "
                        f"margin={[f'{mm:.2f}' for mm in m['mlr_top1_top2_margin']]}")
+            # Issue #61: util hinge 监控 (H_norm 越接近 1.0 软利用率越高)
+            util_h_str = ("[" + ", ".join(f"{h:.2f}" for h in m.get('util_h_norm_per_layer', [])) + "]"
+                          if m.get('util_h_norm_per_layer') else "n/a")
+            util_hinge_str = f"util_hinge={m.get('util_hinge_loss', 0.0):.4f} H_norm={util_h_str}"
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
                   f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}"
-                  f"\n    [Issue44 MLR] {mlr_str}")
+                  f"\n    [Issue44 MLR] {mlr_str}"
+                  f"\n    [Issue61] {util_hinge_str}")
         # v34 监控: 每 N epoch 算一次码字利用率 (util_per_layer_3digit + util_4digit)
         # 早期发现 collapse (训练完才发现 util 极低就晚了). infer_sid 一遍 ~1s, 可接受.
         if (is_main and STAGE2_UTIL_LOG_EVERY > 0
@@ -2175,6 +2220,55 @@ def main():
             print(f"[Epoch {epoch}] util_per_layer_3digit={[f'{u:.3f}' for u in util_temp]} "
                   f"util_4digit={util_4digit_temp:.3f} "
                   f"(n_unique_4digit={len(np.unique(sid_temp, axis=0))}/{N_ITEMS})")
+
+        # Issue #61: Periodic dead code revival — 每 UTIL_REVIVE_EVERY epoch 检查全量 hard util
+        # 对每层: 找出 count=0 的 dead codes, 用随机 item 的 latent 替换 (k-means re-seed 风格)
+        # 替代早期版本: util hinge loss (实验证伪: batch 软熵与全量硬 util 不一致) + 整层 reinit (干扰训练)
+        if (is_main and UTIL_REVIVE_EVERY > 0
+                and epoch > 0 and epoch % UTIL_REVIVE_EVERY == 0 and epoch < args.epochs - 1):
+            with torch.no_grad():
+                # 全量 infer (resolve=False 仅做硬分配检查)
+                sid_full = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=False)
+                util_full_per_layer = [float(len(np.unique(sid_full[:, l])) / CODEBOOK_SIZES[l])
+                                       for l in range(N_HIERARCHIES)]
+                # 全量 latent_h
+                z_all = train_mm.encoder(item_emb)  # (9922, e_dim)
+                residual = z_all
+                revive_log = []
+                for l_idx, q in enumerate(train_mm.vq_layers):
+                    K_l = CODEBOOK_SIZES[l_idx]
+                    # 统计每码字使用次数 (sid_full 是 numpy)
+                    counts_np = np.bincount(sid_full[:, l_idx], minlength=K_l)
+                    dead_mask_np = counts_np == 0
+                    n_dead = int(dead_mask_np.sum())
+                    if n_dead == 0:
+                        residual = residual - q(residual, use_sk=False)[0]
+                        continue
+                    # 用随机 item 的 residual 替换 dead codes
+                    if residual.dtype != torch.float32:
+                        residual_fp32 = residual.float()
+                    else:
+                        residual_fp32 = residual
+                    # 取 n_dead 个不同的随机 index
+                    g = torch.Generator(device='cpu').manual_seed(SEED + epoch + l_idx)
+                    rand_idx = torch.randperm(residual_fp32.shape[0], generator=g)[:n_dead].to(residual_fp32.device)
+                    new_codes = residual_fp32[rand_idx]  # (n_dead, e_dim)
+                    # 直接覆盖 q.embeddings.weight 的 dead 位置
+                    dead_indices = torch.where(torch.from_numpy(dead_mask_np))[0].to(q.embeddings.weight.device)
+                    with torch.no_grad():
+                        q.embeddings.weight.data[dead_indices] = new_codes.to(q.embeddings.weight.dtype)
+                    # 重置对应 MLR raw_anchor / normal (避免 dead anchor 干扰 MLR)
+                    if hasattr(q, 'mlr_raw_anchor') and q.mlr_raw_anchor is not None:
+                        cb_norm = new_codes.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+                        cb_unit = new_codes / cb_norm
+                        q.mlr_raw_anchor.data[dead_indices] = (cb_unit * q.mlr_raw_anchor_norm).to(q.mlr_raw_anchor.dtype)
+                        q.mlr_normal.data[dead_indices] = (cb_unit * 0.1 + 0.01 * torch.randn_like(cb_unit)).to(q.mlr_normal.dtype)
+                    q.invalidate_distance_cache()
+                    revive_log.append((l_idx, n_dead))
+                    residual = residual - q(residual, use_sk=False)[0]
+                if revive_log:
+                    print(f"[Issue61 REVIVE Ep{epoch}] util_full={util_full_per_layer} "
+                          f"revive_log={revive_log} (count=0 codes replaced by random latents)")
 
         # Issue #39: per-epoch audit (c_l, Δlog c_l, churn, prefix change, boundary, NaN/Inf)
         # 与 util 检查一起跑 (同样需要 sid_temp + 重新计算 distance)
