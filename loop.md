@@ -49,4 +49,19 @@ commit hash 必须明示 (不允许 "pending" / "TBD" / "TODO" 占位), comment 
 
 (完成立即删除该行 — R8 强制, 不写 "已归档"; verdicts/ 保留 verdict 文件)
 
-> **当前活跃任务**: 无. #15 (commit ad795aa) + #17 (commit f8acdb6) + #18 (option_A + option_B 双 NO-GO, 闭环 pending) 已关. 4 GPU 全空闲.
+> **当前活跃任务**:
+>
+> | Task ID | Issue | 类型 | 阶段 | GPU | 进度 | ETA |
+> |---------|-------|------|------|-----|------|-----|
+> | #98 (in_progress) | #61 | 方向A Stage3 | T5 训练 200ep, P0 5 项加速 | GPU 0 | epoch 5/200 完成 (best NDCG@20=0.0611), 15s/epoch train + 14s eval | ~1.7 h |
+> | #102 (pending) | #61 | 方向A Stage4 | R@K/NDCG eval | GPU 0 (after Stage3) | 待 Stage3 完成启动 | ~10 min |
+> | #103 (pending) | #61 | 方向A verdict | 闭环 commit + push + close | - | 待 Stage4 完成 | ~5 min |
+>
+> 已关: #56/#57/#58/#59/#60. 4 GPU 中 GPU 0 占 (Stage3 200ep + P0 5 项加速), 1-3 空闲.
+>
+> **Stage3 三轮加速累积 (用户指示 2026-08-06)**:
+> - L1: BATCH_SIZE 256→1024 + EVAL_INTERVAL=5 (DECOR 对齐)
+> - L2: P0 5 项框架加速 — NUM_WORKERS=4 + pin_memory + persistent_workers + TF32 + fused AdamW + torch.compile
+> - L1+L2 综合: 96s/epoch → 15s train + 14s eval = 29s/effective epoch (3.3× 加速), 5.3h → 1.7h
+>
+> Stage3 PID=2231158 (active, GPU 0 93%/16.3GB). HG-Rec 上游 DataLoader 不允许改 → 用 `_FastGenRecDataLoader` 子类注入 pin_memory/persistent_workers.

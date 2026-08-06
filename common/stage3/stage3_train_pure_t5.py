@@ -43,6 +43,21 @@ from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
 
+
+class _FastGenRecDataLoader(GenRecDataLoader):
+    """Issue #61 P0 加速: 子类化 GenRecDataLoader, 注入 pin_memory + persistent_workers
+    (HG-Rec 上游不允许修改, 这里用子类透传). DataLoader 父类原生支持这两个 kwargs.
+    """
+    def __init__(self, dataset, batch_size=32, shuffle=True, num_workers=4, collate_fn=None,
+                 pin_memory=False, persistent_workers=False):
+        # 跳过 GenRecDataLoader.__init__ 直接走 DataLoader.__init__, 注入额外 kwargs
+        DataLoader.__init__(
+            self, dataset, batch_size=batch_size, shuffle=shuffle,
+            num_workers=num_workers, collate_fn=self.collate_fn,
+            pin_memory=pin_memory,
+            persistent_workers=(persistent_workers if num_workers > 0 else False),
+        )
+
 # ──────────────────────────────────────────────────────────────
 # argparse (R30 严格: 无 env var 读取)
 # ──────────────────────────────────────────────────────────────
@@ -69,21 +84,27 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 30  # Issue #61: 快速验证 Issue #61 Stage2 新 SID + T5 端到端; 30 epoch + early_stop 足够观察 R@10/NDCG 趋势
-EARLY_STOP = 8  # Issue #61: 比 default 20 更快收敛停止, 因为单卡不 DDP
-BATCH_SIZE = 256
+NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
+EARLY_STOP = 20  # Issue #61: 用户指示 2026-08-06 改为 20 (与 default 一致)
+EVAL_INTERVAL = 5  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:25 (每 5 epoch 才 eval, 省 22s × 4/5 ≈ 18s/effective epoch)
+BATCH_SIZE = 1024  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:17 train_batch_size=1024 (vs 256, 4× 速度)
 INFER_SIZE = 96
 SEED = 42
 LR = 1e-4
 MAX_LEN = 20
-NUM_WORKERS = 0
+NUM_WORKERS = 4  # Issue #61 P0 加速 (用户指示 2026-08-06): DataLoader 多 worker, 1.3-1.5× 加速 (主进程不再被 tokenize 阻塞)
+PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
+PERSISTENT_WORKERS = True  # Issue #61 P0: worker 跨 epoch 持久, 省每 epoch worker spawn 启动时间
+STAGE3_TF32 = True  # Issue #61 P0: Ampere+ TF32 matmul 加速 1.3-1.5×, 精度影响 <1e-3
+FUSED_OPTIMIZER = True  # Issue #61 P0: torch.optim.AdamW(fused=True), L40S fused AdamW kernel 加速 1.2-1.5×
 
 # 训练加速 (2026-08-03): bf16 autocast — T5 训练/beam 解码标准实践, forward 转 bf16 计算
 # (参数保持 fp32, backward 后 optimizer 在 fp32 权重更新, 数值影响极小). 默认开.
 STAGE3_BF16 = True
 # v29 加速 (2026-08-04): torch.compile — PyTorch 2.x 内置, A100+ 推荐 reduce-overhead
-_TORCH_COMPILE = False
+_TORCH_COMPILE = True  # Issue #61 P0: 用户指示 2026-08-06 启用 torch.compile mode=reduce-overhead (1.5-2.5× 加速, warm-up 1-2 min)
 _TRAIN_COMPILED = False
+_TORCH_COMPILE_MODE = "reduce-overhead"  # reduce-overhead = CUDA Graph + 算子融合, 适合固定 shape (bs=1024 seq=20)
 
 
 def _collate_fn(batch, pad_token=0):
@@ -177,7 +198,7 @@ def train(model, train_loader, optimizer, device, epoch):
     # v29 加速 (2026-08-04): torch.compile — env TORCH_COMPILE=1 启用
     if _TORCH_COMPILE and not _TRAIN_COMPILED:
         try:
-            model = torch.compile(model, mode="reduce-overhead", fullgraph=False)
+            model = torch.compile(model, mode=_TORCH_COMPILE_MODE, fullgraph=False)
             globals()['_TRAIN_COMPILED'] = True
             log("[v29] torch.compile enabled (mode=reduce-overhead)")
         except Exception as e:
@@ -272,7 +293,13 @@ def main():
     model.to(device)
     if DDP_MODE:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[LOCAL_RANK])
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    # Issue #61 P0 加速: TF32 enable (Ampere+ L40S sm_89 支持, matmul 内部用 tf32 加速 1.3-1.5×)
+    if STAGE3_TF32:
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+        torch.backends.cudnn.benchmark = True  # cudnn benchmark 自动选最快卷积算法 (T5 没用卷积, 但无害)
+    # Issue #61 P0 加速: fused AdamW (PyTorch 2.x fused=True 用单个 CUDA kernel 跑 optimizer step, 1.2-1.5×)
+    optimizer = optim.AdamW(model.parameters(), lr=LR, fused=FUSED_OPTIMIZER)
 
     train_ds = GenRecDataset(
         dataset_path=TRAIN_PARQUET, code_path=SID_NPY, mode="train",
@@ -297,8 +324,10 @@ def main():
         valid_loader = DataLoader(valid_ds, batch_size=INFER_SIZE // WORLD_SIZE, sampler=valid_sampler,
                                   num_workers=NUM_WORKERS, collate_fn=_collate_fn)
     else:
-        train_loader = GenRecDataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
-        valid_loader = GenRecDataLoader(valid_ds, batch_size=INFER_SIZE, shuffle=False, num_workers=NUM_WORKERS)
+        train_loader = _FastGenRecDataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS,
+                                             pin_memory=PIN_MEMORY, persistent_workers=PERSISTENT_WORKERS)
+        valid_loader = _FastGenRecDataLoader(valid_ds, batch_size=INFER_SIZE, shuffle=False, num_workers=NUM_WORKERS,
+                                             pin_memory=PIN_MEMORY, persistent_workers=PERSISTENT_WORKERS)
 
     best_ndcg = 0.0
     best_epoch = -1
@@ -312,30 +341,40 @@ def main():
         train_loss = train(model, train_loader, optimizer, device, epoch)
         t_train = time.time() - t0
 
-        t0 = time.time()
-        recalls, ndcgs = evaluate(model, valid_loader, device)
-        t_eval = time.time() - t0
+        # EVAL_INTERVAL 控制 eval 频率 (Issue #61, 用户指示 2026-08-06 对齐 DECOR)
+        do_eval = ((epoch + 1) % EVAL_INTERVAL == 0) or (epoch == NUM_EPOCHS - 1)
 
         if is_main:
-            row = {
-                "epoch": epoch, "train_loss": train_loss,
-                **recalls, **ndcgs,
-                "t_train": round(t_train, 1), "t_eval": round(t_eval, 1),
-            }
-            trace.append(row)
-            log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
-                f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "
-                f"(train {t_train:.0f}s, eval {t_eval:.0f}s)")
-
-            if ndcgs["NDCG@20"] > best_ndcg:
-                best_ndcg = ndcgs["NDCG@20"]
-                best_epoch = epoch
-                early_stop_counter = 0
-                torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
-                log(f"[BEST] NDCG@20={best_ndcg:.4f} saved {CKPT_PATH}")
+            if do_eval:
+                t0 = time.time()
+                recalls, ndcgs = evaluate(model, valid_loader, device)
+                t_eval = time.time() - t0
+                row = {
+                    "epoch": epoch, "train_loss": train_loss,
+                    **recalls, **ndcgs,
+                    "t_train": round(t_train, 1), "t_eval": round(t_eval, 1),
+                }
+                trace.append(row)
+                log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
+                    f"R@10={recalls['R@10']:.4f} NDCG@20={ndcgs['NDCG@20']:.4f} "
+                    f"(train {t_train:.0f}s, eval {t_eval:.0f}s)")
+                if ndcgs["NDCG@20"] > best_ndcg:
+                    best_ndcg = ndcgs["NDCG@20"]
+                    best_epoch = epoch
+                    early_stop_counter = 0
+                    torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
+                    log(f"[BEST] NDCG@20={best_ndcg:.4f} saved {CKPT_PATH}")
+                else:
+                    early_stop_counter += 1
+                    log(f"no improv ({early_stop_counter}/{EARLY_STOP})")
             else:
-                early_stop_counter += 1
-                log(f"no improv ({early_stop_counter}/{EARLY_STOP})")
+                # 非 eval epoch: 只记录 train_loss, 不更新 best / early_stop_counter
+                row = {"epoch": epoch, "train_loss": train_loss,
+                       "t_train": round(t_train, 1), "t_eval": 0.0}
+                trace.append(row)
+                log(f"Epoch {epoch+1}/{NUM_EPOCHS} loss={train_loss:.4f} "
+                    f"(train {t_train:.0f}s, eval skipped, next eval @ epoch {((epoch + 1) // EVAL_INTERVAL + 1) * EVAL_INTERVAL})")
+
         # DDP: rank 0 的 early stop 决策 broadcast 到所有 rank (否则非主卡继续跑, 卡死)
         if DDP_MODE:
             stop_flag = torch.tensor(1 if is_main and early_stop_counter >= EARLY_STOP else 0, device=device)
