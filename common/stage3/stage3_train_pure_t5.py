@@ -219,20 +219,18 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
-EARLY_STOP = 10  # Issue #141 v85 (2026-08-07): v77 base (EI=5 + EARLY_STOP=10 = 50 epoch 评估窗口). v84 用的 EI=1+ES=50 = 50 epoch 评估窗口, 但 v84 ep40 valid=0.1280 test=0.1020 ratio 1.255 vs v77 1.215 — v84 验证过松. v85 恢复 v77 节奏 + dropout=0.30 + label_smoothing=0.05 抗过拟合.
+NUM_EPOCHS = 300  # Issue #141 v85i (2026-08-08): v85h baseline Stage1 + v15 SID + cosine test=0.1042 (v85 系列 SOTA), 但 ep180-185 才到顶. v85e NO-GO 根因是 ES=15 配合 hyp_v2 SID 触发过早. v85i 重启 (300ep + ES=15 + LR_min=0.05) 在 v85h baseline 路径上验证 cosine 末期巩固.
+EARLY_STOP = 15  # Issue #141 v85i: 配合 300ep 训练延长评估窗口 (EI=5 + ES=15 = 75 epoch 评估窗口).
 EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
 LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR=4e-4; DECOR paper lr=3e-3, 4e-4 太保守. 提 LR 到 1e-3 (DECOR 1/3), 配合 wd=0.01 + dropout=0.20 + label_smoothing=0.05 + HAB λ_lr_ratio=30. 预期 +1~2% test_R10 (基于曲率框架 P0 路线, 见 verdicts/issue76_radial_exploration_nogo.md 借鉴路线段).
 
-# Issue #141 v85d (2026-08-07): LR cosine decay with warmup. v85 P0 (LR=1e-3 constant 200 ep) test=0.0925 < v77 0.1080 (-0.0155).
-# 根因: LR 1e-3 恒定 + 无 scheduler → 后半段泛化震荡. 加 warmup 5% (10 ep) + cosine decay → LR_min = LR*0.1.
-# 这是标准 T5/transformer 训练范式 (HF Trainer 默认 cosine_with_restarts), 与 DECOR paper 一致.
-LR_SCHEDULER = "cosine"  # Issue #141 v85d (2026-08-07): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
-LR_WARMUP_FRAC = 0.05  # Issue #141 v85d: warmup 占总训练步的比例 (5% = 10 epoch × 131837 samples / 1024 batch / 4 world_size)
-LR_MIN_FACTOR = 0.1  # Issue #141 v85d: cosine decay 末态 LR 倍率 (T5 推荐 0.05-0.1)
+# Issue #141 v85f (2026-08-08): LR cosine 温和版 (沿用 v85d) + SID v15 (5f8331cc). v85d (warmup_frac=0.05 + LR_min=0.1 + 200ep) 配 hyp_v2 SID test=0.1011. v85f 同样 LR 调度换 SID v15, 验证 v15 κ=[0.30,1.79,1.48] c=[1.35,6.00,4.39] 强几何信号 + cosine 衰减是否协同.
+LR_SCHEDULER = "cosine"  # Issue #141 v85f (2026-08-08): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
+LR_WARMUP_FRAC = 0.05  # Issue #141 v85f: warmup 占总训练步的比例 (5% = 10 epoch × 131837 samples / 1024 batch / 4 world_size)
+LR_MIN_FACTOR = 0.05  # Issue #141 v85i: cosine decay 末态 LR 倍率 (5e-5, 比 v85f 0.1 更低), 巩固 cosine 末期收敛. v85f LR_min=1e-4, v85i LR_min=5e-5.
 MAX_LEN = 20
 NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
 PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
