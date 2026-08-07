@@ -107,6 +107,11 @@ _argparser.add_argument("--residual_alpha_init", type=float, default=0.5,
                         help="Issue #71: residual_alpha sigmoid init (默认 0.5)")
 _argparser.add_argument("--residual_alpha_lr_ratio", type=float, default=10.0,
                         help="Issue #71: residual_alpha param group lr 倍率 (默认 10×, 推动 alpha 学习)")
+# Issue #71 Phase A (2026-08-07): HAB warmup 延迟开启 (DECOR + HAB 协同, 防 v79 优化 landscape 冲突)
+_argparser.add_argument("--hab_warmup_T0", type=int, default=0,
+                        help="Issue #71 Phase A: HAB warmup 起始步数 (前 T_0 步 w=0)")
+_argparser.add_argument("--hab_warmup_Tw", type=int, default=0,
+                        help="Issue #71 Phase A: HAB warmup 渐增步数 (T_0+T_w 步内 w 渐增到 1)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -166,6 +171,9 @@ HAB_LAMBDA_MAX = _args.hab_lambda_max
 RESIDUAL_HAB_ENABLED = _args.enable_residual_hab
 RESIDUAL_ALPHA_INIT = _args.residual_alpha_init
 RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
+# Issue #71 Phase A (2026-08-07): HAB warmup 常量
+HAB_WARMUP_T0 = _args.hab_warmup_T0
+HAB_WARMUP_TW = _args.hab_warmup_Tw
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
@@ -951,7 +959,9 @@ def main():
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
         hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX,
                                               enable_residual=RESIDUAL_HAB_ENABLED,
-                                              residual_alpha_init=RESIDUAL_ALPHA_INIT)
+                                              residual_alpha_init=RESIDUAL_ALPHA_INIT,
+                                              warmup_T0=HAB_WARMUP_T0,
+                                              warmup_Tw=HAB_WARMUP_TW)
         # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
         layer_id_lut_array = make_hab_layer_id_lut()
         model = install_hab(model, hab_module, layer_id_lut_array)

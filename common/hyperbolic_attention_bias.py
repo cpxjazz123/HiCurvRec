@@ -168,14 +168,21 @@ class HyperbolicAttentionBias(nn.Module):
         bias_rank: U/V 嵌入维度 (默认 16, HAB_BIAS_RANK)
         enable_residual: 是否启用残差学习 (Issue #71)
         residual_alpha_init: sigmoid init 值 (默认 0.5, 即 alpha_raw=0)
+        warmup_T0: Issue #71 Phase A — warmup 起始步数 (默认 0, 立即生效)
+        warmup_Tw: Issue #71 Phase A — warmup 渐增步数 (默认 0, 无渐增)
     """
     def __init__(self, Dbar_list, lambda_max=HAB_LAMBDA_MAX, force_zero_layers=(),
-                 bias_rank=HAB_BIAS_RANK, enable_residual=False, residual_alpha_init=0.5):
+                 bias_rank=HAB_BIAS_RANK, enable_residual=False, residual_alpha_init=0.5,
+                 warmup_T0=0, warmup_Tw=0):
         super().__init__()
         self.num_layers = len(Dbar_list)
         self.lambda_max = float(lambda_max)
         self.bias_rank = int(bias_rank)
         self.enable_residual = bool(enable_residual)
+        # Issue #71 Phase A: warmup 延迟开启 (T_0 步前 w=0, T_w 步内 w 渐增到 1)
+        self.warmup_T0 = int(warmup_T0)
+        self.warmup_Tw = int(warmup_Tw)
+        self._step_counter = 0  # 在 get_B_geo 中 +1
         self.K = [Dbar_list[l].shape[0] for l in range(self.num_layers)]
         # v6b: U/V embedding (init from Dbar via SVD)
         self.U = nn.ModuleList([nn.Embedding(self.K[l], self.bias_rank) for l in range(self.num_layers)])
@@ -246,6 +253,18 @@ class HyperbolicAttentionBias(nn.Module):
         # Issue #64 v3 关键修复 (2026-08-06): 历史 detach() 让 lambda_raw 永远 0 梯度,
         #   B_geo 计算完后与 loss 断开. 现在去掉 detach() 让 λ_raw 能反向传播.
         lambda_eff = self.lambda_eff  # (num_layers,) requires_grad=True
+        # Issue #71 Phase A (2026-08-07): warmup 延迟开启
+        #   w(t) = 0 if t < T_0 else min(1, (t - T_0) / T_w)
+        #   当 T_0=T_w=0 时 w=1 (立即生效, 与原行为等价)
+        if self.warmup_Tw > 0:
+            t = self._step_counter
+            if t < self.warmup_T0:
+                warmup_w = 0.0
+            else:
+                warmup_w = min(1.0, (t - self.warmup_T0) / float(self.warmup_Tw))
+        else:
+            warmup_w = 1.0
+        self._step_counter += 1
         # 关键: 对每层独立算 k_for_layer (该层专用), 不复用全局 k_in_layer (避免跨层越界)
         for l in range(self.num_layers):  # L0/L1/L2: 三层有 bias embedding
             mask_l = (layer_ids == l)  # (B, L) 该层 token
@@ -275,7 +294,8 @@ class HyperbolicAttentionBias(nn.Module):
                 # v6b 现状: 完全 learnable
                 Dbar_ij = B_learned
             mask_pair_l = mask_l.unsqueeze(2) & mask_l.unsqueeze(1)  # (B, L_i, L_j) 同层 pair
-            B_geo_l = -lambda_eff[l] * Dbar_ij
+            # Issue #71 Phase A: warmup 因子 w(t) 应用到 bias (与 Dbar/U/V 无关, 是几何强度的整体缩放)
+            B_geo_l = -warmup_w * lambda_eff[l] * Dbar_ij
             B_geo = torch.where(mask_pair_l, B_geo_l, B_geo)
         # PAD 屏蔽: 任何 token 为 PAD, 该行/列 bias 设为 0 (跟 attention_mask 一致)
         if attention_mask_2d is not None:

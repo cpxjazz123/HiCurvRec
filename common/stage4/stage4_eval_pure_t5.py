@@ -63,6 +63,13 @@ _argparser.add_argument("--hab_lambda_max", type=float, default=0.20, help="Issu
 # Issue #71: HAB 残差学习 (Dbar + α·delta) — 修复 v6b learned B 偏离 Dbar 460-660% 导致过拟合
 _argparser.add_argument("--enable_residual_hab", action="store_true", help="Issue #71: HAB 残差模式, B = Dbar_frozen + sigmoid(α)·(U·V^T - Dbar_frozen), anchor 永远是 Dbar")
 _argparser.add_argument("--residual_alpha_init", type=float, default=0.5, help="Issue #71: residual_alpha sigmoid init (默认 0.5)")
+# Issue #71 Phase A (2026-08-07): HAB warmup (eval 时 T_0=T_w=0 让 w=1 立即生效)
+_argparser.add_argument("--hab_warmup_T0", type=int, default=0, help="Issue #71 Phase A: HAB warmup T_0 (eval 默认 0)")
+_argparser.add_argument("--hab_warmup_Tw", type=int, default=0, help="Issue #71 Phase A: HAB warmup T_w (eval 默认 0)")
+
+# Issue #71 Phase A (2026-08-07): eval 时 T_0=T_w=0 → warmup_w=1 立即生效
+HAB_WARMUP_T0_EVAL = _args.hab_warmup_T0
+HAB_WARMUP_TW_EVAL = _args.hab_warmup_Tw
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) eval-time 安装 (与 HAB/GEO 正交)
 _argparser.add_argument("--enable_prompt_former", action="store_true", help="Issue #70: 安装 DecorPromptFormer 模块, 加载 pf_module.* 参数, monkey-patch forward+generate")
 _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35, help="Issue #70: alpha gate sigmoid 初始值 (Stage3 train 默认 0.35)")
@@ -456,7 +463,9 @@ def main():
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
         hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX_VAL,
                                               enable_residual=RESIDUAL_HAB_ENABLED,
-                                              residual_alpha_init=RESIDUAL_ALPHA_INIT)
+                                              residual_alpha_init=RESIDUAL_ALPHA_INIT,
+                                              warmup_T0=HAB_WARMUP_T0_EVAL,
+                                              warmup_Tw=HAB_WARMUP_TW_EVAL)
         layer_id_lut_array = make_hab_layer_id_lut()
         install_hab(model, hab_module, layer_id_lut_array)
         print(f"[Issue #64] hyperbolic_attn_bias enabled for eval "
