@@ -165,3 +165,44 @@ accelerate launch --config_file accelerate_config_single.yaml test_only.py \
 **P2 — 缩小模型**: `encoder_layers`/`decoder_layers` 6→4, `d_model` 128→96。9922 items 的数据规模可能撑不住 6+6 层 T5。
 
 **当前判定**: 以上均为推测性改动, 而 DECOR (0.1157) / DIGER (0.1121) 已在同数据集上验证有效且远超 ETEGRec, ETEGRec 路线的 ROI 明显低于继续优化 DECOR/DIGER 借鉴点。**建议不继续投入 ETEGRec**。
+
+---
+
+## 追加: 768 维截断修复尝试 (2026-08-07, 16:28)
+
+**假设**: 256 维截断 (sentence-t5-base 768 维取前 256 维) 丢弃了 2/3 语义信息, 是 ETEGRec 效果差的主因。
+
+**操作**:
+- 新生成 `instruments_emb_768.npy` (9922×768 float32, mean abs=0.0150, 无 NaN/Inf, 29.07 MB)
+- 用 768 维 npy 重训 RQ-VAE: `in_dim=768`, encoder 768→512→256→128, 3000 epochs
+  - **best collision_rate = 0.09776** (vs 256d 版 0.09565, 基本持平)
+  - max_conflict=14 (vs 256d 23, 768 维 tokenizer 质量更好)
+- 部署 ckpt: `768-256-256-256-128.rqvae.pth`
+- 主训练: `semantic_hidden_size=768`, `dec_adapter` 输出 768 (vs 原 256), `semantic_embedding` 变为 9922×768 (7.6M 参数)
+
+**768d vs 256d val 轨迹对比**:
+
+| Epoch | 768d R@10 | 256d R@10 | 768d NDCG@10 | 256d NDCG@10 |
+|---|---|---|---|---|
+| 1 | 0.0869 | 0.0854 | 0.0507 | 0.0485 |
+| 3 | 0.0954 | 0.0947 | 0.0549 | 0.0554 |
+| 5 | 0.0877 | 0.0923 | 0.0498 | 0.0554 |
+| 7 | 0.0945 | 0.0946 | 0.0540 | 0.0556 |
+| **9** | **0.0964** | 0.0908 | **0.0548** | 0.0533 |
+| 11 | 0.0907 | **0.0948** | 0.0530 | 0.0557 |
+| 13 | 0.0802 | 0.0922 | 0.0461 | 0.0556 |
+| 15 | 0.0788 | 0.0926 | 0.0443 | 0.0543 |
+| 17 | 0.0850 | **0.0969** | 0.0524 | **0.0592** |
+
+**结论**: **修复方向不正确** — 768 维信息量增加带来的收益被更大的模型容量抵消了。
+
+1. **768d 峰值 (E9) 与 256d 峰值 (E17) R@10 基本持平** (0.0964 vs 0.0969), 但 NDCG@10 更低 (0.0548 vs 0.0592), 意味着排序质量仍然差一截
+2. **768d 过拟合更快** — E9 即峰, 之后持续下滑; 256d 能撑到 E17 才峰。根因: `semantic_embedding` 从 256→768 多了 7.6M 参数, `dec_adapter` 输出维度 256→768, 总参数量增加导致在小数据集 (9922 items) 上更容易过拟合
+3. **256 维截断不是主因** — 即使完整 768 维信息, ETEGRec 在 Musical_Instruments 上的极限也只能达到 ~0.096 (valid R@10), 对应 test ~0.076, 仍然 -25% vs 基线
+
+**真正主因重新定位**:
+- ETEGRec 的 end-to-end 联合优化 (RQ-VAE + T5 同时更新) 在 9922 items 小数据集上参数量相对于数据量过大
+- 论文原始 Amazon 2023 Scientific 有更多 items (约 57k users, 约 20k+ items), 支撑得起 6+6 层 T5 的 end-to-end 训练
+- 同数据集 DECOR 0.1157 / DIGER 0.1121 的成功, 关键在于它们**不 做 end-to-end RQ-VAE 联合训练**, 而是预训练好固定 tokenizer, 只训 T5
+
+**建议**: 终止 ETEGRec 路线探索, ROI 为负。DECOR/DIGER 借鉴点的 SOTA v78 = 0.1092 已充分验证在 Musical_Instruments 上可行的架构方向。
