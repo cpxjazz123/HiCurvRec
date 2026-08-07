@@ -23,6 +23,7 @@ T5 随机初始化从头训练, 无 adapter 注入, 监控 valid NDCG@20 (beam20
 import os
 import sys
 import json
+import subprocess
 from datetime import timedelta
 import hashlib
 import time
@@ -99,7 +100,9 @@ _argparser.add_argument("--hab_stage2_ckpt", type=str,
 _argparser.add_argument("--hab_lambda_max", type=float, default=0.20,
                         help="Issue #64: λ_max tanh 上限 (默认 0.20, spec 不允许 sweep)")
 _argparser.add_argument("--hab_lambda_lr_ratio", type=float, default=100.0,
-                        help="Issue #64 v3 优化: λ_raw param group lr 倍率 (默认 100×, 推动 λ_raw 学习. 历史 v2 λ_raw 50 epoch 没动, 共享主 lr=0.0004 太小)")
+                        help="Issue #141 v85 (2026-08-07): v77 base 100× (lr=4e-2 for λ_raw + U/V). v84 倍半 50× (lr=2e-2) 实验 NO-GO, 验证 ratio 1.255 vs v77 1.215, v85 改回 v77 100×.")
+_argparser.add_argument("--hab_lambda_raw_clamp", type=float, default=10.0,
+                        help="Issue #141 v85 (2026-08-07): v84 试 ±3.0 让 λ_raw 限制过紧, v77 没设 clamp λ_raw 学到 ±1.4 仍 ok; v85 设 ±10.0 几乎不约束 (与 v77 接近), 比 v84 更宽松")
 # Issue #71: HAB 残差学习 (Dbar_frozen + α·(U·V^T - Dbar_frozen)) — 修复 v6b learned B 偏离 Dbar 460-660% 导致 valid/test 失衡
 _argparser.add_argument("--enable_residual_hab", action="store_true",
                         help="Issue #71: HAB 残差学习模式, B = Dbar_frozen + sigmoid(α)·(U·V^T - Dbar_frozen), anchor 永远是 Dbar")
@@ -132,12 +135,12 @@ _argparser.add_argument("--pf_bos_diversity_weight", type=float, default=0.01,
 _argparser.add_argument("--pf_attn_entropy_weight", type=float, default=0.001,
                         help="Issue #68: attn 分布熵 loss 权重 (鼓励 attn 尖锐)")
 # Issue #138 v74 (2026-08-07): Stage3 全面 regularization 防过拟合
-_argparser.add_argument("--stage3_weight_decay", type=float, default=0.0,
-                        help="Issue #138 v74: AdamW weight_decay (默认 0, v74 推荐 0.01 拉小 U/V 范数)")
-_argparser.add_argument("--stage3_label_smoothing", type=float, default=0.0,
-                        help="Issue #138 v74: T5 CE loss label_smoothing (默认 0, v74 推荐 0.05-0.1 防 T5 过拟合)")
-_argparser.add_argument("--stage3_dropout", type=float, default=0.1,
-                        help="Issue #138 v74: T5 dropout_rate 覆盖 (默认 0.1, v74 推荐 0.2 防过拟合)")
+_argparser.add_argument("--stage3_weight_decay", type=float, default=0.01,
+                        help="Issue #138 v74 推荐 0.01 (单卡跑得 U/V fro=0.04-0.07). Issue #141 v83 DDP 4卡尝试 WD=0.003 让 U/V 过学习 + ratio 1.299 NO-GO, 改回 v74/v77 原值 0.01.")
+_argparser.add_argument("--stage3_label_smoothing", type=float, default=0.05,
+                        help="Issue #141 v85 (2026-08-07): T5 CE loss label_smoothing (v85 0.05 防过拟合, v74 推荐 0.05-0.1, v75=0.10 NO-GO 减半)")
+_argparser.add_argument("--stage3_dropout", type=float, default=0.30,
+                        help="Issue #141 v85 (2026-08-07): T5 dropout_rate 覆盖 (v85 0.30 防过拟合, v74=0.20, 默认 0.1)")
 # Issue #140 v76: T5 logits uncertainty decay head (借鉴 DIGER AutoSigmaGumbel 思想)
 _argparser.add_argument("--enable_t5_uncertainty", action="store_true",
                         help="Issue #140 v76: T5 logits 加 Gumbel noise, σ learnable + uncertainty loss")
@@ -149,6 +152,13 @@ _argparser.add_argument("--t5_uncertainty_c", type=float, default=1.361442,
                         help="v76: uncertainty reg coef, DIGER Gumbel 默认 1.361442 (slow) / 0.036916 (fast)")
 _argparser.add_argument("--t5_uncertainty_reg_weight", type=float, default=0.01,
                         help="v76: uncertainty loss 缩放 (总 loss = CE + reg_weight * uncertainty_loss)")
+# Issue #141 v85 (2026-08-07): 在线 stage4 test eval — 每次保存 new best ckpt 立即异步触发 stage4 test 验证
+_argparser.add_argument("--stage4_test_on_best", type=lambda x: str(x).lower() in ("true", "1", "yes"), default=True,
+                        help="v85: new best ckpt 立即触发 async stage4 test eval (实时监控 valid/test ratio)")
+_argparser.add_argument("--stage4_eval_script", type=str, default="common/stage4/stage4_eval_pure_t5.py",
+                        help="v85: stage4 eval 脚本路径 (默认 pure_t5, 与 v77 一致)")
+_argparser.add_argument("--stage4_test_gpu", type=int, default=0,
+                        help="v85: test eval 用哪张 GPU (CUDA_VISIBLE_DEVICES override, 默认 0 与 RANK=0 共享)")
 # DDP 状态 (默认单卡; torchrun 自动设 WORLD_SIZE/RANK/LOCAL_RANK env, argparse default 从 env 读, 这是 PyTorch 官方推荐做法, 不是 R30 禁止的"超参 env 接口" — 这些是 torchrun runtime context, 不是业务超参)
 _argparser.add_argument("--world_size", type=int, default=int(os.environ.get("WORLD_SIZE", "1")), help="DDP world size (torchrun 自动设 env WORLD_SIZE)")
 _argparser.add_argument("--rank", type=int, default=int(os.environ.get("RANK", "0")), help="DDP global rank (torchrun 自动设 env RANK)")
@@ -168,6 +178,7 @@ CODEWORD_STAGE2_CKPT = _args.codeword_stage2_ckpt
 CODEWORD_RHO_MAX = _args.codeword_rho_max
 HAB_ENABLED = _args.hyperbolic_attn_bias
 HAB_LAMBDA_LR_RATIO = _args.hab_lambda_lr_ratio
+HAB_LAMBDA_RAW_CLAMP = _args.hab_lambda_raw_clamp
 HAB_STAGE2_CKPT = _args.hab_stage2_ckpt
 HAB_LAMBDA_MAX = _args.hab_lambda_max
 # Issue #71: HAB 残差学习开关
@@ -191,6 +202,10 @@ PF_ATTN_ENTROPY_WEIGHT = _args.pf_attn_entropy_weight
 STAGE3_WEIGHT_DECAY = _args.stage3_weight_decay
 STAGE3_LABEL_SMOOTHING = _args.stage3_label_smoothing
 STAGE3_DROPOUT = _args.stage3_dropout
+# Issue #141 v85 (2026-08-07): 在线 stage4 test eval 常量
+STAGE4_TEST_ON_BEST = _args.stage4_test_on_best
+STAGE4_EVAL_SCRIPT = _args.stage4_eval_script
+STAGE4_TEST_GPU = _args.stage4_test_gpu
 # Issue #140 v76: T5 uncertainty decay head 常量
 T5_UNCERTAINTY_ENABLED = _args.enable_t5_uncertainty
 T5_UNCERTAINTY_INIT_STD = _args.t5_uncertainty_init_std
@@ -204,8 +219,8 @@ DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #61: 用户指示 2026-08-06 改为 200 epoch 全量训练 (与 default 一致)
-EARLY_STOP = 10  # Issue #135 v73 (2026-08-07): valid_R10-based early stop — 10 次 eval (约 50 epoch) 无 valid_R10 提升就停. v72 用 EARLY_STOP=5 太激进, best ckpt 在 ep35 锁定但 valid 还在涨, test 0.1003 < v71 ep71 0.1013. v73 给 valid 更多机会触顶.
-EVAL_INTERVAL = 5  # Issue #61: 用户指示 2026-08-06, 对齐 DECOR default.yaml:25 (每 5 epoch 才 eval, 省 22s × 4/5 ≈ 18s/effective epoch)
+EARLY_STOP = 10  # Issue #141 v85 (2026-08-07): v77 base (EI=5 + EARLY_STOP=10 = 50 epoch 评估窗口). v84 用的 EI=1+ES=50 = 50 epoch 评估窗口, 但 v84 ep40 valid=0.1280 test=0.1020 ratio 1.255 vs v77 1.215 — v84 验证过松. v85 恢复 v77 节奏 + dropout=0.30 + label_smoothing=0.05 抗过拟合.
+EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
@@ -285,6 +300,101 @@ LOG_PATH = PRODUCT_DIR / "train_pure_t5.log"
 CKPT_PATH = PRODUCT_DIR / "HG_Rec_best.pth"
 TRACE_PATH = PRODUCT_DIR / "trace.json"
 VERDICT_PATH = PRODUCT_DIR / "verdict.json"
+STAGE4_ON_BEST_DIR = PRODUCT_DIR / "stage4_test_on_best"
+STAGE4_ON_BEST_HISTORY = STAGE4_ON_BEST_DIR / "history.json"
+# Issue #141 v85 (2026-08-07): 跟踪活跃 async stage4 eval (epoch -> Popen)
+_STAGE4_PROCS = {}
+
+
+def _append_stage4_history(epoch, valid_r10, test_r10, test_path):
+    """Issue #141 v85 (2026-08-07): 追加每次 new best 的 test_R10 到 history.json (实时 overfitting 监控)."""
+    STAGE4_ON_BEST_DIR.mkdir(parents=True, exist_ok=True)
+    history = []
+    if STAGE4_ON_BEST_HISTORY.exists():
+        try:
+            history = json.loads(STAGE4_ON_BEST_HISTORY.read_text())
+        except Exception:
+            history = []
+    ratio = round(valid_r10 / test_r10, 4) if test_r10 and test_r10 > 0 else None
+    history.append({
+        "epoch": epoch,
+        "valid_R10": round(valid_r10, 5),
+        "test_R10": test_r10,
+        "valid_test_ratio": ratio,
+        "test_json": str(test_path),
+        "ts": time.strftime("%Y-%m-%d %H:%M:%S"),
+    })
+    STAGE4_ON_BEST_HISTORY.write_text(json.dumps(history, indent=2, ensure_ascii=False))
+
+
+def trigger_stage4_test_async(ckpt_path, epoch, valid_r10):
+    """Issue #141 v85 (2026-08-07): new best ckpt 立即异步触发 stage4 test eval.
+    不阻塞训练 (subprocess.Popen), 复用相同 Stage2 + Dbar + HAB 配置.
+    子进程跑完后写 history.json; 主进程下次 do_eval 时只读取最新一个 ratio 用于 log.
+    """
+    if not STAGE4_TEST_ON_BEST:
+        return None
+    STAGE4_ON_BEST_DIR.mkdir(parents=True, exist_ok=True)
+    eval_dir = STAGE4_ON_BEST_DIR / f"ep{epoch+1}"
+    eval_dir.mkdir(parents=True, exist_ok=True)
+    eval_log = STAGE4_ON_BEST_DIR / f"ep{epoch+1}_eval.log"
+    eval_meta = STAGE4_ON_BEST_DIR / f"ep{epoch+1}_meta.json"
+    eval_meta.write_text(json.dumps({
+        "epoch": epoch + 1,
+        "valid_R10": round(valid_r10, 5),
+        "ckpt_path": str(ckpt_path),
+        "ts": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }, indent=2))
+    cmd = [
+        sys.executable, "-u", STAGE4_EVAL_SCRIPT,
+        "--ckpt_path", str(ckpt_path),
+        "--sid_npy", str(SID_NPY),
+        "--product_dir", str(eval_dir),
+        "--tag", TAG,
+    ]
+    if HAB_ENABLED:
+        cmd += ["--hyperbolic_attn_bias", "--hab_stage2_ckpt", str(HAB_STAGE2_CKPT)]
+        if RESIDUAL_HAB_ENABLED:
+            cmd += ["--enable_residual_hab",
+                    "--residual_alpha_init", str(RESIDUAL_ALPHA_INIT),
+                    "--hab_lambda_max", str(HAB_LAMBDA_MAX)]
+    env = dict(os.environ)
+    env["CUDA_VISIBLE_DEVICES"] = str(STAGE4_TEST_GPU)
+    log_h = open(eval_log, "w")
+    try:
+        proc = subprocess.Popen(cmd, stdout=log_h, stderr=subprocess.STDOUT, env=env)
+    except Exception as e:
+        log(f"[v85] stage4 async trigger FAILED: {e}")
+        log_h.close()
+        return None
+    log(f"[v85] stage4 async test eval triggered @ ep{epoch+1} pid={proc.pid} "
+        f"gpu={STAGE4_TEST_GPU} log={eval_log}")
+    _STAGE4_PROCS[epoch + 1] = (proc, valid_r10, eval_dir)
+    return proc
+
+
+def _poll_stage4_procs():
+    """Issue #141 v85 (2026-08-07): 检查已完成的 async eval, 读 test_R10 写 history + log. 无阻塞."""
+    finished = []
+    for ep, (proc, valid_r10, eval_dir) in list(_STAGE4_PROCS.items()):
+        if proc.poll() is not None:
+            finished.append(ep)
+            test_json = eval_dir / "eval_test.json"
+            test_r10 = None
+            if test_json.exists():
+                try:
+                    test_r10 = json.loads(test_json.read_text()).get("R@10")
+                except Exception:
+                    pass
+            if test_r10 is not None:
+                _append_stage4_history(ep - 1, valid_r10, test_r10, test_json)
+                ratio = valid_r10 / test_r10 if test_r10 > 0 else None
+                log(f"[v85] stage4 test DONE ep{ep} valid_R10={valid_r10:.4f} "
+                    f"test_R10={test_r10:.4f} ratio={ratio:.3f}")
+            else:
+                log(f"[v85] stage4 test DONE ep{ep} but eval_test.json 不存在 (log={eval_dir.parent}/ep{ep}_eval.log)")
+    for ep in finished:
+        _STAGE4_PROCS.pop(ep, None)
 
 
 def log(msg):
@@ -1201,6 +1311,9 @@ def main():
                 # Issue #64: λ_raw + λ_eff 监控 (跟 #62 alpha / #63 beta 监控对齐)
                 if HAB_ENABLED:
                     hab_loop = model.module.hab_module if DDP_MODE else model.hab_module
+                    # Issue #141 v84 (2026-08-07): λ_raw clamp 兜底 (在每 epoch do_eval 时 in-place, 防止 λ_eff 饱和到 ±λ_max 边界, v74 L116-122 问题)
+                    with torch.no_grad():
+                        hab_loop.lambda_raw.clamp_(-HAB_LAMBDA_RAW_CLAMP, HAB_LAMBDA_RAW_CLAMP)
                     lambda_raw_list = hab_loop.lambda_raw.detach().cpu().tolist()
                     lambda_eff_list = hab_loop.lambda_eff.detach().cpu().tolist()
                     row["lambda_raw"] = [round(x, 5) for x in lambda_raw_list]
@@ -1221,6 +1334,11 @@ def main():
                     early_stop_counter = 0
                     torch.save(model.module.state_dict() if DDP_MODE else model.state_dict(), CKPT_PATH)
                     log(f"[BEST] valid_R10={best_valid_r10:.4f} train_loss={best_loss:.4f} saved {CKPT_PATH}")
+                    # Issue #141 v85 (2026-08-07): 1) new best ckpt 立即异步触发 stage4 test eval (实时 ratio 监控)
+                    #                                2) 顺便 poll 已完成的 async eval 写 history
+                    if STAGE4_TEST_ON_BEST and is_main:
+                        _poll_stage4_procs()
+                        trigger_stage4_test_async(CKPT_PATH, epoch, best_valid_r10)
                 else:
                     early_stop_counter += 1
                     log(f"no valid_R10 improv ({early_stop_counter}/{EARLY_STOP}, best={best_valid_r10:.4f})")
