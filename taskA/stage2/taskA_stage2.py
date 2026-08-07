@@ -215,6 +215,8 @@ KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 1.5
 # R31 合规: 不 fork 脚本, 全部变体走同一主脚本 + 网格表.
 FIXED_CURV = False          # 由 --sweep_id 自动置 True; 默认 False 走原 learnable 主路径
 FIXED_CURV_C = None         # 由 --sweep_id 从 CURV_SWEEP_GRID 查表填入, 形如 [c0, c1, c2]
+# Issue #75 (2026-08-07): Vanilla-RQ 欧氏基线模式 (避免几何干扰)
+VANILLA_RQ = False          # 由 --vanilla_rq 自动置 True; poincare_recon_loss → 欧氏 MSE
 
 # issue #70/#71/#72 共用的曲率取值集合 (κ 即曲率 c)
 CURV_SWEEP_KAPPAS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0]   # #70 per-layer 扫描用 (7 值)
@@ -343,7 +345,18 @@ _argparser.add_argument("--no_mlr", dest="mlr_enabled", action="store_false", de
 # 曲率数值全部硬编码于 CURV_SWEEP_GRID; 未传则走原 learnable 主路径.
 _argparser.add_argument("--sweep_id", type=str, default=None,
                         help="固定曲率网格点名称 (键见 CURV_SWEEP_GRID, 如 b_L0_k0p01 / c_fixed_k5p0 / d_global_k0p566)")
+# Issue #75 (2026-08-07): Vanilla-RQ 欧氏基线模式 (避免几何干扰) + 每 epoch 收集 ‖r_l‖
+_argparser.add_argument("--vanilla_rq", action="store_true",
+                        help="Issue #75: 切到纯欧氏 Vanilla-RQ (no Poincaré), 每 epoch 收集 ‖r_l‖ mean/std/分位数 + KS 检验")
 _args = _argparser.parse_args()
+
+# Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
+if _args.vanilla_rq:
+    VANILLA_RQ = True
+    poincare_recon_loss = lambda out, target, c=1.0: torch.nn.functional.mse_loss(out, target)
+    print("[Issue75] VANILLA_RQ=ON → poincare_recon_loss 已被欧氏 MSE 覆盖; 每 epoch 收集 ‖r_l‖")
+else:
+    VANILLA_RQ = False
 
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
@@ -2131,6 +2144,7 @@ def main():
     reg_step = 0
     # Issue #39: per-epoch audit lists (c_l, Δlog c_l, churn, prefix change, boundary, NaN/Inf)
     epoch_audit = []
+    residual_norm_history = []  # Issue #75: 仅 Vanilla-RQ 模式填充
     prev_sid_3digit = None  # for churn / prefix change computation
     prev_cs = None  # for |Δlog c_l| computation
     nan_inf_detected = False  # 全程 NaN/Inf 旗标
@@ -2434,7 +2448,47 @@ def main():
                     "mlr_hard_soft_consistency": [getattr(q, "_last_hard_soft_consistency", 1.0) for q in train_mm.vq_layers],
                     "mlr_top1_top2_margin": [getattr(q, "_last_top1_top2_margin", 0.0) for q in train_mm.vq_layers],
                     "mlr_logits_norm": [getattr(q, "_last_mlr_logits_norm", 0.0) for q in train_mm.vq_layers],
+                    # Issue #75 (2026-08-07): 三层残差范数 ‖r_l‖ 全量分布统计 (仅 Vanilla-RQ 模式)
+                    # 全量重算 encoder + 逐层 residual, 与 audit 路径一致
                 })
+                # Issue #75: 每 epoch 末收集 ‖r_l‖ mean/std/分位数 (与 audit 共用同一次 forward)
+                if VANILLA_RQ:
+                    with torch.no_grad():
+                        z_full = train_mm.encoder(item_emb)  # (9922, e_dim)
+                        resid = z_full
+                        resid_per_layer = []
+                        resid_norms_arr = []
+                        for l_idx, q in enumerate(train_mm.vq_layers):
+                            x_res, _loss, _idx = q(resid, use_sk=False)
+                            resid_norms = resid.norm(dim=-1).cpu().numpy()  # ‖r_l‖
+                            resid_norms_arr.append(resid_norms)
+                            qqs = np.quantile(resid_norms, [0.05, 0.25, 0.5, 0.75, 0.95])
+                            resid_per_layer.append({
+                                "layer": l_idx,
+                                "mean": float(resid_norms.mean()),
+                                "std": float(resid_norms.std()),
+                                "min": float(resid_norms.min()),
+                                "max": float(resid_norms.max()),
+                                "q05": float(qqs[0]),
+                                "q25": float(qqs[1]),
+                                "q50": float(qqs[2]),
+                                "q75": float(qqs[3]),
+                                "q95": float(qqs[4]),
+                            })
+                            resid = resid - x_res
+                        residual_norm_history.append({
+                            "epoch": epoch,
+                            "per_layer": resid_per_layer,
+                            "z_norm_mean": float(z_full.norm(dim=-1).mean().item()),
+                            "z_norm_std": float(z_full.norm(dim=-1).std().item()),
+                        })
+                        # Issue #75: 末 epoch 全量 ‖r_l‖ 落盘供 KS 检验
+                        if epoch == args.epochs - 1:
+                            np.savez(PRODUCT_DIR / "residual_norms_final.npz",
+                                     z_full=z_full.cpu().numpy(),
+                                     L0=resid_norms_arr[0],
+                                     L1=resid_norms_arr[1],
+                                     L2=resid_norms_arr[2])
                 prev_cs = cur_cs
                 prev_sid_3digit = sid_temp[:, :3] if sid_temp.shape[1] >= 3 else sid_temp
                 if epoch % 50 == 0 or epoch == args.epochs - 1:
@@ -2715,6 +2769,10 @@ def main():
 
         with open(PRODUCT_DIR / "train_curve.json", "w") as f:
             json.dump(train_curve, f, indent=2, default=str)
+
+        if VANILLA_RQ:
+            with open(PRODUCT_DIR / "residual_norm_history.json", "w") as f:
+                json.dump(residual_norm_history, f, indent=2, default=str)
 
         verdict = {
             "gate2_decision": "PASS" if gate2_pass else "FAIL",
