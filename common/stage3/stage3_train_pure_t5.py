@@ -985,13 +985,17 @@ def main():
         # Issue #64 加速 (2026-08-06): 加 bucket_cap_mb=200 减少 sync 频率, gradient_as_bucket_view=True 省
         #   tensor view copy, static_graph=True 关闭 unused param 重新检测. T5-mini 5.5M params 全部能装
         #   进 ~22MB 单 bucket, 减少 4 worker sync barrier 次数.
+        # Issue #69 v79 (2026-08-07): DECOR PromptFormer + HAB 叠加时 pf_module / hab_module 某些 batch 可能不参与 loss 计算,
+        #   find_unused_parameters=False 必崩 (RuntimeError: Expected to have finished reduction).
+        #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
-            find_unused_parameters=False,  # Issue #64 v6c 加速 (2026-08-07): 关 find_unused_parameters 避免每 step 全 autograd graph 遍历 (PyTorch 警告明示 "extra traversal ... can adversely affect performance"); HAB bias 每个 batch 都用 (历史 token 跨 3 层), 不会有 unused param
+            find_unused_parameters=ddp_find_unused,  # Issue #69: DECOR/HAB 时 True 避免 reducer 崩
             bucket_cap_mb=512,  # Issue #64 v6 加速 (2026-08-07): 200→512, 86k bias params 加入后更多 bucket 拆分导致 NCCL sync barrier 翻倍, 加大 bucket_cap 减少 barrier 次数
             gradient_as_bucket_view=True,
-            static_graph=False,  # Issue #64 v6 加速 (2026-08-07): static_graph=True + find_unused_parameters=True 触发 _set_static_graph() 自动重扫 unused 参数图, 86k bias 矩阵在 batch 全 L0 token 时触发重扫, 改 False 关闭 (HAB bias 实际每 batch 都用, 不会有 unused)
+            static_graph=False,
         )
     # Issue #61 P0 加速: TF32 enable (Ampere+ L40S sm_89 支持, matmul 内部用 tf32 加速 1.3-1.5×)
     if STAGE3_TF32:
