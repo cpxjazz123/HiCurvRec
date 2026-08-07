@@ -194,6 +194,83 @@ KAPPA_MIN = -1.0
 KAPPA_MAX = 0.5
 KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 1.5
 
+# ──────────────────────────────────────────────────────────────
+# Issue #70/#71/#72: 固定 per-layer 曲率注入通道 (FIXED_CURV)
+# ──────────────────────────────────────────────────────────────
+# 动机: #70 (逐层最优曲率扫描) / #71 (固定 κ 层间失衡) / #72 (折中损失量化) 都要求把每层曲率
+# **固定**到指定值 κ ∈ {0.01, 0.05, 0.1, 0.5, 1, 2, 5}, 而不是学出来.
+# 现有 learnable 路径不可达该范围: κ_eff = KAPPA_MIN + KAPPA_RANGE·σ(drift) ∈ [-1, 0.5],
+# 经 CURV_PRIOR 的 c = exp(κ_eff) 只覆盖 c ∈ [0.368, 1.649].
+# issue 里的 κ 是**曲率 c 本身**的语义 (V(r) ∝ exp((d-1)√c·r) 中的 c), c=0.01 需 κ_eff=ln0.01=-4.6,
+# c=5 需 κ_eff=1.609 — 两端都在 sigmoid 边界之外, 故必须新增固定曲率通道.
+#
+# 语义: FIXED_CURV_C[l] 直接就是该层的曲率 c_l (不经 exp / sigmoid 任何变换).
+#   - get_c() 在 FIXED_CURV 模式下直接返回常量 c_l, 不参与梯度 (requires_grad=False).
+#   - 与 FIX_C 的区别: FIX_C 是"三层全部 c=1.0"的基线对齐开关 (Issue #55/v4);
+#     FIXED_CURV 是"三层各自固定到指定值"的扫描开关, 允许层间不同.
+#   - 两者互斥: 同时开启直接 raise (R2 禁 fallback, 不做优先级静默覆盖).
+#
+# R30 合规: 所有网格点数值硬编码在下方 CURV_SWEEP_GRID 表中, launcher 只通过 --sweep_id 传
+# **网格点名称** (字符串键), 不传任何曲率数值. 任何一次运行的完整超参都能从本脚本 + sweep_id 复现.
+# R31 合规: 不 fork 脚本, 全部变体走同一主脚本 + 网格表.
+FIXED_CURV = False          # 由 --sweep_id 自动置 True; 默认 False 走原 learnable 主路径
+FIXED_CURV_C = None         # 由 --sweep_id 从 CURV_SWEEP_GRID 查表填入, 形如 [c0, c1, c2]
+
+# issue #70/#71/#72 共用的曲率取值集合 (κ 即曲率 c)
+CURV_SWEEP_KAPPAS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0]   # #70 per-layer 扫描用 (7 值)
+CURV_FIXED_KAPPAS = [0.1, 0.5, 1.0, 2.0, 5.0]               # #71 Fixed-κ 层间失衡用 (5 值)
+CURV_DEFAULT_C = 0.5        # #70 扫描时"其他两层"固定的默认曲率 (issue 原文: 固定其他两层默认 κ=0.5)
+
+
+def _build_curv_sweep_grid():
+    """构造硬编码曲率网格表: sweep_id (str) → per-layer 曲率 [c0, c1, c2].
+
+    三类网格点 (对应三个 issue), 全部在本函数内确定性生成, 无随机、无 env、无外部输入:
+
+    #70 Issue B 逐层最优曲率扫描 — sweep_id = "b_L{layer}_k{kappa}"
+        对每层 l ∈ {0,1,2} 独立扫 κ ∈ CURV_SWEEP_KAPPAS (7 值), 其余两层固定 CURV_DEFAULT_C=0.5.
+        共 3 × 7 = 21 组. (注: issue 原文写"18 组", 但 κ 集合明列 7 个值 → 7×3=21,
+        原文计数与集合自相矛盾; 本实现按**集合**取全量 21 组, 并在 verdict 中明示该矛盾.)
+        另加 baseline "b_baseline" = 三层全 CURV_DEFAULT_C (issue 原文的"1 组 baseline (默认 κ)").
+
+    #71 Issue C 固定 κ 层间失衡 — sweep_id = "c_fixed_k{kappa}"
+        三层同时固定为同一 κ ∈ CURV_FIXED_KAPPAS (5 值), 用于展示"不管选什么单 κ, 总有一层不满意".
+        共 5 组.
+
+    #72 Issue D 折中损失量化 — sweep_id = "d_global_k{kappa}" / "d_perlayer"
+        d_global_k*: 三层共用同一 κ ∈ {0.428, 0.5, 0.566, 0.77} (issue Table 7 的四个共用 κ).
+          0.428 = §4.5 已有 Global-κ; 0.5 = Fixed-κ; 0.566 = per-layer optima 几何平均;
+          0.77 = per-layer optima 算术平均 (0.18+0.71+1.42)/3.
+        d_perlayer: per-layer κ = {0.18, 0.71, 1.42} (§4.5 已有 Per-Layer 设定), 作为对照上界.
+    """
+    grid = {}
+    # --- #70 Issue B: 逐层扫描 ---
+    for layer in range(N_HIERARCHIES):
+        for kappa in CURV_SWEEP_KAPPAS:
+            cs = [CURV_DEFAULT_C] * N_HIERARCHIES
+            cs[layer] = kappa
+            grid[f"b_L{layer}_k{_kappa_tag(kappa)}"] = cs
+    grid["b_baseline"] = [CURV_DEFAULT_C] * N_HIERARCHIES
+    # --- #71 Issue C: 三层同 κ ---
+    for kappa in CURV_FIXED_KAPPAS:
+        grid[f"c_fixed_k{_kappa_tag(kappa)}"] = [kappa] * N_HIERARCHIES
+    # --- #72 Issue D: 共用 κ Table 7 四点 + per-layer 对照 ---
+    for kappa in CURV_D_GLOBAL_KAPPAS:
+        grid[f"d_global_k{_kappa_tag(kappa)}"] = [kappa] * N_HIERARCHIES
+    grid["d_perlayer"] = list(CURV_D_PERLAYER_C)
+    return grid
+
+
+def _kappa_tag(kappa: float) -> str:
+    """把曲率数值转成 sweep_id 里的稳定字符串标签 (0.01 → '0p01', 5.0 → '5p0').
+    用 'p' 代替小数点, 保证 sweep_id 可安全用于目录名/文件名."""
+    return f"{kappa:g}".replace(".", "p")
+
+
+CURV_D_GLOBAL_KAPPAS = [0.428, 0.5, 0.566, 0.77]   # #72 Table 7 四个共用 κ
+CURV_D_PERLAYER_C = [0.18, 0.71, 1.42]             # #72 §4.5 已有 Per-Layer κ (对照上界)
+CURV_SWEEP_GRID = _build_curv_sweep_grid()
+
 # Issue #59: L_κ 稳定项系数 (trust region + 边界占用惩罚, 温和抑制冲界/剧烈变化).
 #   λ_tr=0.1: log c 步间变化 (tanh 风格平滑), 不允许剧烈 κ 跳变 (相邻 epoch |Δ log c| ≲ 0.05)
 #   λ_b=0.01: 边界占用率 > 30% 触发 ReLU 惩罚 (压制深层码字聚拢到球面边界)
@@ -253,12 +330,19 @@ _argparser.add_argument("--kmeans_iters", type=int, default=KMEANS_ITERS)
 _argparser.add_argument("--seed", type=int, default=SEED)
 _argparser.add_argument("--product_dir", type=str, default=DEFAULT_PRODUCT_DIR,
                         help="R30: 仅 launch 脚本通过此参数覆盖产物目录")
+# Issue #71 v82 (2026-08-07): Stage1 radius 强化 → Stage2 必须用 v82 Stage1 输出 (Stage1 v82 .npy)
+_argparser.add_argument("--item_emb_npy", type=str, default=ITEM_EMB_NPY,
+                        help="Stage1 item embedding npy 路径 (v82 用 Stage1 v82_r095_t5 输出)")
 # DDP 状态 (默认单卡; torchrun 用户需通过 wrapper 翻译 env → argparse 或直接传值)
 _argparser.add_argument("--world_size", type=int, default=1, help="DDP world size (torchrun wrapper 必传)")
 _argparser.add_argument("--rank", type=int, default=0, help="DDP global rank")
 _argparser.add_argument("--local_rank", type=int, default=0, help="DDP local rank")
 _argparser.add_argument("--no_mlr", dest="mlr_enabled", action="store_false", default=MLR_ENABLED,
                         help="禁用 MLR, 退回到硬 argmin(d) Poincaré 最近邻 (Issue #48 spec 强制)")
+# Issue #70/#71/#72 (2026-08-07): 固定 per-layer 曲率扫描. R30 合规 — 只传网格点**名称**,
+# 曲率数值全部硬编码于 CURV_SWEEP_GRID; 未传则走原 learnable 主路径.
+_argparser.add_argument("--sweep_id", type=str, default=None,
+                        help="固定曲率网格点名称 (键见 CURV_SWEEP_GRID, 如 b_L0_k0p01 / c_fixed_k5p0 / d_global_k0p566)")
 _args = _argparser.parse_args()
 
 WORLD_SIZE = _args.world_size
@@ -266,6 +350,30 @@ RANK = _args.rank
 LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 MLR_ENABLED = _args.mlr_enabled  # R30: 默认走常量 True (Issue #47 状态), --no_mlr 切换到 False (Issue #48 spec)
+# Issue #71 v82 (2026-08-07): --item_emb_npy 命令行覆盖 (默认 issue60 packed u32, v82 用 Stage1 v82 .npy)
+ITEM_EMB_NPY = _args.item_emb_npy
+
+# Issue #70/#71/#72 (2026-08-07): 解析 --sweep_id → 固定 per-layer 曲率.
+# R2 合规: 未知 sweep_id 直接 raise (不做 fallback 到默认网格点); FIXED_CURV 与 FIX_C 互斥同样 raise.
+if _args.sweep_id is not None:
+    if _args.sweep_id not in CURV_SWEEP_GRID:
+        raise ValueError(
+            f"未知 --sweep_id={_args.sweep_id!r}; 可用网格点 ({len(CURV_SWEEP_GRID)} 个): "
+            f"{sorted(CURV_SWEEP_GRID.keys())}"
+        )
+    if FIX_C:
+        raise ValueError(
+            "FIX_C=True 与 --sweep_id (FIXED_CURV) 互斥: FIX_C 强制三层 c=1.0, "
+            "FIXED_CURV 要求三层各自固定到网格值. 请把 FIX_C 改为 False 再跑扫描."
+        )
+    FIXED_CURV = True
+    FIXED_CURV_C = list(CURV_SWEEP_GRID[_args.sweep_id])
+    if len(FIXED_CURV_C) != N_HIERARCHIES:
+        raise ValueError(
+            f"sweep_id={_args.sweep_id} 的曲率表长度 {len(FIXED_CURV_C)} != N_HIERARCHIES={N_HIERARCHIES}"
+        )
+    if any(c <= 0.0 for c in FIXED_CURV_C):
+        raise ValueError(f"曲率必须 > 0 (Poincaré ball 半径 1/√c), 实得 {FIXED_CURV_C}")
 
 # 引用 HG-Rec utils 函数
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec")
@@ -430,6 +538,11 @@ class KappaAwareVectorQuantization(nn.Module):
         KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN = 1.5, 默认 KAPPA_MIN=-1, KAPPA_MAX=0.5.
         σ 把 kappa_drift 约束到 (0, 1), 整体 κ ∈ [-1, 0.5] 严格有界.
         取代旧 #41 tanh 形式 (κ_anchor + tanh(κ_drift)·range), 历史 ckpt reload 兼容 (kappa_anchor/range 字段保留)."""
+        if FIXED_CURV:
+            # Issue #70/#71/#72: 固定曲率模式下 κ_eff 的语义仍是 ln c (与 CURV_PRIOR 一致),
+            # 仅用于日志/verdict 记录, 不参与任何梯度.
+            return torch.tensor(math.log(FIXED_CURV_C[self.layer_idx]), dtype=torch.float32,
+                                device=self.kappa_drift.device)
         if len(KAPPA_ANCHORS) == 0:
             # Issue #59 形式: 平滑有界 sigmoid
             return KAPPA_MIN + KAPPA_RANGE * torch.sigmoid(self.kappa_drift)
@@ -444,6 +557,11 @@ class KappaAwareVectorQuantization(nn.Module):
         v9 教训: 曲率若只靠 λ·Σκ² 先验训练, κ 停在 0 (先验梯度 2λκ=0 死鞍点) — 必须由 REL_STRUCT
         结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容).
         Issue #41: 替换为逐层锚定有界 κ_effective = anchor + tanh(drift) * range."""
+        if FIXED_CURV:
+            # Issue #70/#71/#72: 固定 per-layer 曲率 — 直接返回硬编码网格值 c_l, 不经 exp/sigmoid.
+            # 无梯度 (常量 tensor): 本模式下曲率是**自变量**而非被学习量, κ 路径整体旁路.
+            return torch.tensor(FIXED_CURV_C[self.layer_idx], dtype=torch.float32,
+                                device=self.kappa_drift.device)
         if self.fix_c:
             return torch.tensor(1.0, dtype=torch.float32, device=self.kappa_drift.device)
         kappa_eff = self.get_effective_kappa()
@@ -558,7 +676,9 @@ class KappaAwareVectorQuantization(nn.Module):
         # 量化后 latent 落在球的固定比例 √c·r → REL_STRUCT_TARGET (r=‖x_q_safe‖ ≤ R=1/√c 在球内).
         # √c·r 为尺度无关比值: 不随"绝对距离随 c 减"而白嫖 (结构目标不受量化作弊影响).
         # 层间 residual 尺度差异 → 层级曲率差异: 深层残差小 → 需要更大曲率 (更小球) 适配.
-        if REL_STRUCT:
+        # Issue #70/#71/#72: FIXED_CURV 下曲率是自变量, 该项对 κ 梯度恒为 0, 且其数值随网格点
+        # 变化会污染跨网格点的 loss 可比性 → 整体旁路 (仍记录监控量便于 #71 的层间失衡分析).
+        if REL_STRUCT and not FIXED_CURV:
             c_struct = self.get_c()  # 不 detach: 让 κ 接收结构梯度 (量化距离已 stop-grad, 此目标独享 κ 梯度)
             r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 结构目标只训曲率, 不训 encoder/codebook
             target = self._struct_target()  # v11: per-layer target (码字数 n_e + δ 反解)
@@ -568,7 +688,15 @@ class KappaAwareVectorQuantization(nn.Module):
             self._last_struct_target = target
         # v12 安全区间径向损失 (用户第一步): 只防球心坍缩 (ρ<a) 与边界爆炸 (ρ>b), 区间内零惩罚.
         # 职责 = 防极端, 不决定最佳曲率 (最佳曲率由推荐损失 REC_LOSS 决定).
-        if RAD_SAFE:
+        # Issue #70/#71/#72: FIXED_CURV 下 c 无梯度且 r_struct 已 detach → rad_term 是纯常数,
+        # 对优化零作用但污染 loss 可比性 → 只保留监控量 ρ (#71 分析层间失衡的关键指标), 不入 loss.
+        if RAD_SAFE and FIXED_CURV:
+            c_struct = self.get_c()
+            r_struct = x_q_safe.detach().norm(dim=-1).mean()
+            rho = torch.sqrt(c_struct) * r_struct
+            self._last_struct_term = rho.detach().item()   # 监控: 当前归一化半径 ρ = √c·r
+            self._last_struct_target = (self._rad_a + self._rad_b) / 2.0
+        elif RAD_SAFE:
             c_struct = self.get_c()  # 不 detach: κ 接收径向梯度 (仅区间外非零)
             r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 只训曲率
             rho = torch.sqrt(c_struct) * r_struct  # 归一化半径 ρ = √c·r (尺度无关比值)
@@ -1035,22 +1163,24 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
     recon_loss = poincare_recon_loss(out, batch)
     total_loss = recon_loss + rq_loss
-    if CURV_PRIOR:
+    if CURV_PRIOR and not FIXED_CURV:
         # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
         # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
         # Issue #41: 先验作用于 drift (而非 anchor 本身), 保证 κ 漂移幅度可控, 锚点稳定.
         kappa_prior = sum(q.kappa_drift.pow(2).sum() for q in mm.vq_layers)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
-    if REC_LOSS:
+    if REC_LOSS and not FIXED_CURV:
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
+        # Issue #70/#71/#72: FIXED_CURV 下 c 无梯度 + z 已 detach → 该项对所有可训练参数梯度恒 0,
+        # 但会随网格点 c 变化而改变 total_loss 数值 → 旁路以保证跨网格点 loss 严格可比.
         rec_loss = compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, REC_TAU, REC_NEG_N)
         total_loss = total_loss + REC_LAMBDA * rec_loss
 
     # Issue #39: trust region 惩罚 (实际加到 total_loss, 走 backward)
     # 在 step 之前用当前 κ 与上一步 EMA 比较, 超出阈值的部分加 relu 平方惩罚.
     # Issue #41: 用 effective_kappa (anchor + tanh(drift) * range) 与 EMA 比较.
-    if KAPPA_EMA_BETA > 0 and KAPPA_TRUST_REGION > 0:
+    if KAPPA_EMA_BETA > 0 and KAPPA_TRUST_REGION > 0 and not FIXED_CURV:
         for q in mm.vq_layers:
             if q.kappa_ema != 0.0:
                 kappa_eff = q.get_effective_kappa()
@@ -1061,7 +1191,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     #   - trust region 项用 q.kappa_ema (来自 #39 EMA 上一步 log c 近似, 见下方 κ EMA 更新逻辑)
     #   - 边界占用 b_l = 该层码字 norm > B_BOUNDARY 的比例 (Poincaré 球内 < 1 视为边界)
     #   - 惩罚温和, 不强制三层 κ 相同, 不让 κ 梯度为零 (依赖 q.kappa_drift.grad)
-    if LAMBDA_TR > 0 or LAMBDA_B > 0:
+    if (LAMBDA_TR > 0 or LAMBDA_B > 0) and not FIXED_CURV:
         l_kappa = torch.zeros((), device=batch.device)
         for q in mm.vq_layers:
             log_c_t = torch.log(q.get_c())  # 当前 log c_l
@@ -1176,7 +1306,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "raw_grad_kappa": raw_grad_kappa,
         "struct_terms": [getattr(q, "_last_struct_term", 0.0) for q in mm.vq_layers],
         "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in mm.vq_layers],
-        "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
+        "rec_loss": rec_loss.item() if (REC_LOSS and not FIXED_CURV) else 0.0,
         # Issue #45 v8 修复: MLR 监控 (signed_score norm / soft entropy / hard-soft consistency / margin)
         "mlr_tau": [float(q._mlr_tau) for q in mm.vq_layers],
         "mlr_signed_score_norm": [getattr(q, "_last_signed_score_norm", 0.0) for q in mm.vq_layers],
@@ -1478,7 +1608,7 @@ def main():
     # v12 推荐损失近邻预计算: item_emb 余弦 top-K (正邻居来源, 用户第二步).
     # DDP: 每卡独立计算 (确定性, 结果一致), 仅 rank 0 落盘.
     nn_idx = None
-    if REC_LOSS:
+    if REC_LOSS and not FIXED_CURV:
         if is_main:
             print("Precomputing item cosine top-K neighbors (REC_LOSS)...")
         emb_np = item_emb.detach().cpu().numpy()
@@ -2530,6 +2660,10 @@ def main():
             "item_emb_sha256": item_emb_sha,
             "n_items": N_ITEMS,
             "r30_hardcoded": True,
+            # Issue #70/#71/#72: 固定 per-layer 曲率扫描记录 (sweep_id + 实际生效的 c_l)
+            "fixed_curv": FIXED_CURV,
+            "fixed_curv_sweep_id": _args.sweep_id,
+            "fixed_curv_c": FIXED_CURV_C,
             # Issue #45 v8 修复: 真正双曲超平面 MLR config
             "mlr_class": "HyperbolicHyperplaneMLR",
             "mlr_enabled": MLR_ENABLED,
