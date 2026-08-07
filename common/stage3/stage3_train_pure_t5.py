@@ -35,6 +35,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 import torch.distributed as dist
 from torch.utils.data import DistributedSampler, DataLoader
 
@@ -225,6 +226,13 @@ BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GP
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
 LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR=4e-4; DECOR paper lr=3e-3, 4e-4 太保守. 提 LR 到 1e-3 (DECOR 1/3), 配合 wd=0.01 + dropout=0.20 + label_smoothing=0.05 + HAB λ_lr_ratio=30. 预期 +1~2% test_R10 (基于曲率框架 P0 路线, 见 verdicts/issue76_radial_exploration_nogo.md 借鉴路线段).
+
+# Issue #141 v85d (2026-08-07): LR cosine decay with warmup. v85 P0 (LR=1e-3 constant 200 ep) test=0.0925 < v77 0.1080 (-0.0155).
+# 根因: LR 1e-3 恒定 + 无 scheduler → 后半段泛化震荡. 加 warmup 5% (10 ep) + cosine decay → LR_min = LR*0.1.
+# 这是标准 T5/transformer 训练范式 (HF Trainer 默认 cosine_with_restarts), 与 DECOR paper 一致.
+LR_SCHEDULER = "cosine"  # Issue #141 v85d (2026-08-07): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
+LR_WARMUP_FRAC = 0.05  # Issue #141 v85d: warmup 占总训练步的比例 (5% = 10 epoch × 131837 samples / 1024 batch / 4 world_size)
+LR_MIN_FACTOR = 0.1  # Issue #141 v85d: cosine decay 末态 LR 倍率 (T5 推荐 0.05-0.1)
 MAX_LEN = 20
 NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
 PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
@@ -880,7 +888,7 @@ def ndcg_at_k(pos_index, k):
     return dcg[:, :k].sum(dim=1).cpu().float()
 
 
-def train(model, train_loader, optimizer, device, epoch):
+def train(model, train_loader, optimizer, device, epoch, scheduler=None):
     model.train()
     # Issue #140 v76: T5 uncertainty head 全局变量 (main() 创建)
     global t5_uncertainty_head
@@ -936,6 +944,9 @@ def train(model, train_loader, optimizer, device, epoch):
             )
         loss.backward()
         optimizer.step()
+        # Issue #141 v85d: per-batch LR scheduler step (cosine with warmup, 更细粒度)
+        if scheduler is not None:
+            scheduler.step()
         # Issue #139 v75: 第一个 batch 后打印一次 (验证 label_smoothing 生效)
         if RANK == 0 and n == 0 and STAGE3_LABEL_SMOOTHING > 0:
             log(f"[Issue #139 v75] label_smoothing={STAGE3_LABEL_SMOOTHING} "
@@ -1190,6 +1201,26 @@ def main():
         if t5_uncertainty_head is not None:
             _param_groups.append({"params": [t5_uncertainty_head.sigma], "lr": LR})
         optimizer = optim.AdamW(_param_groups, fused=FUSED_OPTIMIZER, weight_decay=STAGE3_WEIGHT_DECAY)
+    # Issue #141 v85d (2026-08-07): LR cosine decay with warmup. v85 P0 失败根因 = LR 1e-3 恒定无 scheduler.
+    # 构造基于 step 的 LambdaLR: warmup_frac 步内线性从 0→1, 之后 cosine decay 到 LR_MIN_FACTOR.
+    if LR_SCHEDULER == "cosine":
+        import math as _math
+        _total_steps = NUM_EPOCHS * (131837 // (BATCH_SIZE * WORLD_SIZE) + 1)  # 估计总步数
+        _warmup_steps = max(1, int(_total_steps * LR_WARMUP_FRAC))
+        def _lr_lambda(step):
+            if step < _warmup_steps:
+                return step / _warmup_steps
+            progress = (step - _warmup_steps) / max(1, _total_steps - _warmup_steps)
+            return LR_MIN_FACTOR + (1.0 - LR_MIN_FACTOR) * 0.5 * (1.0 + _math.cos(_math.pi * min(1.0, progress)))
+        scheduler = lr_scheduler.LambdaLR(optimizer, _lr_lambda)
+        if is_main:
+            log(f"[Issue #141 v85d] LR scheduler=cosine warmup={_warmup_steps}/{_total_steps} steps → LR_min={LR*LR_MIN_FACTOR:.2e}")
+    elif LR_SCHEDULER == "none":
+        scheduler = None
+        if is_main:
+            log(f"[Issue #141 v85d] LR scheduler=none (LR={LR} 恒定, 与 v85 P0 一致)")
+    else:
+        raise ValueError(f"LR_SCHEDULER={LR_SCHEDULER} 不是合法值 (none/cosine)")
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0 and is_main:
         n_bias_params = sum(p.numel() for p in list(hab_module.U.parameters()) + list(hab_module.V.parameters()))
         log(f"[Issue #64 v6b] λ_raw + U/V embedding ({n_bias_params} params) "
@@ -1245,7 +1276,7 @@ def main():
             cgm_loop = model.module.codeword_geo_module if DDP_MODE else model.codeword_geo_module
             cgm_loop.current_epoch = epoch + 1
         t0 = time.time()
-        train_loss = train(model, train_loader, optimizer, device, epoch)
+        train_loss = train(model, train_loader, optimizer, device, epoch, scheduler=scheduler)
         t_train = time.time() - t0
 
         # EVAL_INTERVAL 控制 eval 频率 (Issue #61, 用户指示 2026-08-06 对齐 DECOR)
