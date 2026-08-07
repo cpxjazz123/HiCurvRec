@@ -132,7 +132,7 @@ CURV_AWARE = True
 
 # Issue #76: CURV_PRIOR 平滑 log-curvature 先验 (量化 stop-grad c, λ·Σκ² 仅防漂移)
 CURV_PRIOR = True
-CURV_PRIOR_LAMBDA = 0.1
+CURV_PRIOR_LAMBDA = 0.1  # 默认 (Issue #76 经验值, 保留 v15 行为)
 
 # Issue #76 第二步: 相对结构目标 (per-layer target 由码字数 n_e + δ 反解)
 REL_STRUCT = True
@@ -141,6 +141,35 @@ REL_STRUCT_LAMBDA = 1.0
 REL_STRUCT_DELTA = 0.05
 REL_STRUCT_TARGET_MIN = 0.15
 REL_STRUCT_TARGET_MAX = 0.55
+
+# Issue #76 径向量纲修复 (2026-08-07): REL_STRUCT 约束的量必须是 HAB 真正消费的球内半径.
+#   诊断 (v15 实测): REL_STRUCT 优化 √c·r (切空间量) 达 [0.634, 0.472, 0.378],
+#   但码本经 expmap0 进球后真实半径 tanh(√c·‖e‖) 仅 [0.277, 0.293, 0.229] — tanh 吃掉 38~56%.
+#   Poincaré 指数体积增长只在 ρ→1 显著, ρ<0.3 区域度量与欧氏几乎无异 → HAB 拿到的 Dbar
+#   ≈ 欧氏距离重参数化 → 14342 个 HAB 参数不携带几何归纳偏置 → 纯增自由度 → 过拟合
+#   (v15 对照: valid 0.1358 历史新高 / test 0.1062 反降 / ratio 1.2775 恶化).
+#   修复: REL_STRUCT_ON_BALL=True 时结构项直接约束 ρ_ball = tanh(√c·‖e_codebook‖) 的中位数,
+#   即 HAB precompute_distance_matrices 实际消费的那个半径, 消除量纲错配.
+#   target 同时按球内语义重算 (RHO_BALL_TARGET), 不再复用切空间反解值.
+REL_STRUCT_ON_BALL = True
+# per-layer 球内半径目标: 深层码字多 → 需更靠边界才有足够测地容量.
+#   上界由 Poincare 球的 safe_distance 决定: ρ = tanh(u_max) = tanh(0.985) = 0.7547.
+#   设 target ≤ 0.72 留 5% 余量, 数学上可达且不被 artanh 梯度饱和.
+#   浅层 (n=64) 目标低 0.50; 中层 (n=128) 0.62; 深层 (n=256) 0.72 (最大码字数 → 最需靠边界).
+RHO_BALL_TARGET = [0.50, 0.62, 0.72]
+
+# Issue #76 径向目标强度 (2026-08-07): REL_STRUCT_LAMBDA 1.0 → 200.0.
+#   实测 ep5 训练: struct_term ≈ 0.007–0.011 而 REC_LOSS=36.9 → REC 梯度主导, κ 不动.
+#   REL_STRUCT 在 (ρ_ball − target)² 形式下量纲是 ρ² (~0.1), 需要 λ≈100 才让梯度贡献
+#   与 REC_LOSS (~30) 同量级. 设 200 留余量, 太大可减; CURV_PRIOR_LAMBDA=0.001 已不再压制.
+REL_STRUCT_LAMBDA_BALL = 200.0
+
+# Issue #76 径向扩容 (2026-08-07): kmeans 后 rescale 码本范数让 ρ_ball init = RHO_BALL_TARGET[layer].
+#   历史 (v1 硬压 0.07 / v2 按 target 反解) 都破坏 SID 健康 (util_3digit=0.03~0.17 vs 健康 1.0),
+#   根因 = 码本范数被人为偏离 data-driven 的 kmeans 范数, kmeans assignment 退化.
+#   v3 关闭: 用 v15 的健康初始化 (norm≈0.11 + κ→目标驱动), 让 κ 学习 (c 涨/缩) 而不是码本范数.
+#   False=使用 v15 行为 (kmeans 后不 rescale).
+INIT_CODEBOOK_RESCALE_BY_TARGET = False
 
 # v12 安全区间径向损失 (防球心坍缩 + 边界爆炸, 不决定最佳曲率)
 RAD_SAFE = False  # 默认关 (v13 后 REC_LOSS 主导曲率学习)
@@ -190,8 +219,15 @@ KAPPA_ANCHOR_RANGE = 0.05  # range 仍保留 (KAPPA_ANCHORS=[] 时自动用 anch
 #   依据: #53 健康 κ=[0.072, 0.138, 0.366] (无 κ 路线, util_3digit=0.99 健康基线),
 #         κ_min=-1 (c_min=0.368, 允许负 κ 与更大球半径) + κ_max=0.5 (c_max=1.649,
 #         比 #53 最大 κ=0.366 留 36% 余量防冲界). 区间宽度 1.5 满足 σ(θ) ∈ (0,1) 全学习空间.
+#
+# Issue #76 径向扩容 (2026-08-07): KAPPA_MAX 0.5 → 6.0.
+#   动机: 旧上界 κ≤0.5 (c≤1.649) 使码字球内半径 tanh(√c·‖e‖) 最多到 ~0.3, 停留在近欧氏区
+#     (Poincaré 指数体积增长只在 ρ→1 显著) → HAB 拿到的 Dbar ≈ 欧氏距离重参数化 → 无几何信息.
+#   反解: 要 ρ_ball 达 RHO_BALL_TARGET=[0.60,0.75,0.85], 给定 v15 实测 ‖e‖=[0.244,0.123,0.111],
+#     需 c=[8.06, 62.3, 127.4] 即 κ=[2.09, 4.13, 4.85]. 上界取 6.0 (c=403) 留余量.
+#   注意 κ_max 抬高本身不强迫 κ 变大 — σ(θ) 仍自由; 是 REL_STRUCT_ON_BALL 的径向目标在拉 κ.
 KAPPA_MIN = -1.0
-KAPPA_MAX = 0.5
+KAPPA_MAX = 0.5  # v15 值, 保留历史行为 (Issue #59 安全区间)
 KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 1.5
 
 # ──────────────────────────────────────────────────────────────
@@ -585,11 +621,23 @@ class KappaAwareVectorQuantization(nn.Module):
         return 1.0 + kappa_eff + 1e-3
 
     def _struct_target(self) -> float:
-        """per-layer 结构损失 target (用户 v11): 按码字数 n_e 与特征尺度 δ 的测地间距约束反解.
+        """per-layer 结构损失 target.
+
+        Issue #76 径向量纲修复: REL_STRUCT_ON_BALL=True 时 target 是 Poincaré 球内归一化
+        半径 ρ_ball = tanh(√c·‖e‖) 的目标值 (直接取 RHO_BALL_TARGET[layer_idx]), 与 HAB
+        消费的量同量纲. 否则走 v11 切空间反解 (历史行为, 存在 tanh 压缩量纲错配).
+
+        v11 切空间反解 (legacy): 按码字数 n_e 与特征尺度 δ 的测地间距约束反解.
         要求码本 n_e 个点在归一化半径 ρ 处相邻测地间距 ≥ δ (Poincaré 拉伸 g=2/(1-ρ²),
         环带测地周长 ≈ 4πρ/(1-ρ²)):  4πρ/(1-ρ²) ≥ n_e·δ
         → A = n_e·δ/(4π), 反解 ρ* = (√(1+4A²)-1)/(2A). 码字多 → A 大 → target 大.
         clamp 到 [MIN, MAX] 保证可达 (proj 负反馈限制深层; 0.15 避球心, 0.55 避边界饱和)."""
+        if REL_STRUCT_ON_BALL:
+            if self.layer_idx >= len(RHO_BALL_TARGET):
+                raise IndexError(
+                    f"RHO_BALL_TARGET 长度 {len(RHO_BALL_TARGET)} 不覆盖 layer_idx={self.layer_idx}"
+                )
+            return float(RHO_BALL_TARGET[self.layer_idx])
         A = self.n_e * REL_STRUCT_DELTA / (4.0 * math.pi)
         if A <= 0.0:
             return REL_STRUCT_TARGET  # legacy: δ≤0 时退回固定 target
@@ -693,10 +741,24 @@ class KappaAwareVectorQuantization(nn.Module):
         # 变化会污染跨网格点的 loss 可比性 → 整体旁路 (仍记录监控量便于 #71 的层间失衡分析).
         if REL_STRUCT and not FIXED_CURV:
             c_struct = self.get_c()  # 不 detach: 让 κ 接收结构梯度 (量化距离已 stop-grad, 此目标独享 κ 梯度)
-            r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 结构目标只训曲率, 不训 encoder/codebook
             target = self._struct_target()  # v11: per-layer target (码字数 n_e + δ 反解)
-            struct_term = torch.sqrt(c_struct) * r_struct - target
-            loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
+            if REL_STRUCT_ON_BALL:
+                # Issue #76 径向量纲修复: 直接约束 HAB 消费的球内半径 ρ_ball = tanh(√c·‖e‖).
+                # 用 codebook 权重 (非量化后 latent) — HAB precompute 就是对 codebook 做 expmap0.
+                # Issue #76 (2026-08-07) e_norm 必须用 proj 后值. 否则 κ 涨到 c=20+ 球半径 R=1/√c≈0.22,
+                #   但 e_norm=0.69 > R, proj 把 norm 截到 0.22 → 实际 ρ_ball = tanh(√c·0.22) 不是 tanh(√c·0.69).
+                #   用 proj 后 norm 让 ρ_ball 跟 HAB precompute 实际消费的值一致.
+                R = (1.0 / c_struct).sqrt()
+                eps_norm = 1e-5
+                e_norm_raw = self.embeddings.weight.detach().norm(dim=-1)
+                e_norm = e_norm_raw.clamp(max=(1.0 - eps_norm) * R)
+                rho_ball = torch.tanh(torch.sqrt(c_struct) * e_norm).median()
+                struct_term = rho_ball - target
+                loss = loss + REL_STRUCT_LAMBDA_BALL * struct_term.pow(2)
+            else:
+                r_struct = x_q_safe.detach().norm(dim=-1).mean()  # detach: 结构目标只训曲率, 不训 encoder/codebook
+                struct_term = torch.sqrt(c_struct) * r_struct - target
+                loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
             self._last_struct_term = struct_term.detach().item()  # 监控: 驱动 κ 的结构偏差信号
             self._last_struct_target = target
         # v12 安全区间径向损失 (用户第一步): 只防球心坍缩 (ρ<a) 与边界爆炸 (ρ>b), 区间内零惩罚.
@@ -958,10 +1020,19 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
 
         if REL_STRUCT:
             c_struct = self.get_c()
-            r_struct = x_q_safe.detach().norm(dim=-1).mean()
             target = self._struct_target()
-            struct_term = torch.sqrt(c_struct) * r_struct - target
-            loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
+            if REL_STRUCT_ON_BALL:
+                # Issue #76 (MLR 路径同步): e_norm 用 proj 后值, 与 HAB precompute 一致.
+                R_mlr = (1.0 / c_struct).sqrt()
+                e_norm_raw = self.embeddings.weight.detach().norm(dim=-1)
+                e_norm = e_norm_raw.clamp(max=(1.0 - 1e-5) * R_mlr)
+                rho_ball = torch.tanh(torch.sqrt(c_struct) * e_norm).median()
+                struct_term = rho_ball - target
+                loss = loss + REL_STRUCT_LAMBDA_BALL * struct_term.pow(2)
+            else:
+                r_struct = x_q_safe.detach().norm(dim=-1).mean()
+                struct_term = torch.sqrt(c_struct) * r_struct - target
+                loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
             self._last_struct_term = struct_term.detach().item()
             self._last_struct_target = target
         if RAD_SAFE:
@@ -1180,8 +1251,12 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
         # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
-        # Issue #41: 先验作用于 drift (而非 anchor 本身), 保证 κ 漂移幅度可控, 锚点稳定.
-        kappa_prior = sum(q.kappa_drift.pow(2).sum() for q in mm.vq_layers)
+        # Issue #76 径向扩容修复 (2026-08-07): 惩罚项从 kappa_drift² 改为 κ_eff².
+        #   原因: KAPPA_MAX 0.5→6.0 后 σ(drift) 的零点语义变了 — 惩罚 drift² 会把 drift→0 即
+        #   κ_eff→KAPPA_MIN+KAPPA_RANGE/2=2.5 (c=12.2), 与"拉 c→1 锚定基线"的本意相反.
+        #   直接惩罚 κ_eff² 才是 log-curvature 先验的正确形式 (κ=ln c, 拉 κ→0 ⟺ 拉 c→1),
+        #   且对 KAPPA_MIN/MAX 的任何取值都语义不变.
+        kappa_prior = sum(q.get_effective_kappa().pow(2).sum() for q in mm.vq_layers)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
     if REC_LOSS and not FIXED_CURV:
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
@@ -2370,6 +2445,16 @@ def main():
                     dead_indices = torch.where(torch.from_numpy(dead_mask_np))[0].to(q.embeddings.weight.device)
                     with torch.no_grad():
                         q.embeddings.weight.data[dead_indices] = new_codes.to(q.embeddings.weight.dtype)
+                    # Issue #76 (2026-08-07): REVIVE 替换的码字 rescale 到 init_norm, 否则
+                    #   residual norm≈0.11 << INIT norm=[0.69,0.97,1.26] → 替换后码本范数
+                    #   骤降 → ρ_ball 跌到 ~0.30 → 反复 REVIVE 也救不回 SID.
+                    if INIT_CODEBOOK_RESCALE_BY_TARGET and l_idx < len(RHO_BALL_TARGET):
+                        rho_tgt = RHO_BALL_TARGET[l_idx]
+                        target_norm = math.atanh(rho_tgt)
+                        with torch.no_grad():
+                            cur = q.embeddings.weight.data[dead_indices]
+                            cur_norm = cur.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+                            q.embeddings.weight.data[dead_indices] = cur * (target_norm / cur_norm)
                     # 重置对应 MLR raw_anchor / normal (避免 dead anchor 干扰 MLR)
                     if hasattr(q, 'mlr_raw_anchor') and q.mlr_raw_anchor is not None:
                         cb_norm = new_codes.norm(dim=-1, keepdim=True).clamp_min(1e-6)
