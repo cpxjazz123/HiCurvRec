@@ -68,8 +68,7 @@ _argparser.add_argument("--hab_warmup_T0", type=int, default=0, help="Issue #71 
 _argparser.add_argument("--hab_warmup_Tw", type=int, default=0, help="Issue #71 Phase A: HAB warmup T_w (eval 默认 0)")
 
 # Issue #71 Phase A (2026-08-07): eval 时 T_0=T_w=0 → warmup_w=1 立即生效
-HAB_WARMUP_T0_EVAL = _args.hab_warmup_T0
-HAB_WARMUP_TW_EVAL = _args.hab_warmup_Tw
+# HAB_WARMUP_T0_EVAL / HAB_WARMUP_TW_EVAL 在 _args = parse_args() 之后赋值 (line ~99)
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) eval-time 安装 (与 HAB/GEO 正交)
 _argparser.add_argument("--enable_prompt_former", action="store_true", help="Issue #70: 安装 DecorPromptFormer 模块, 加载 pf_module.* 参数, monkey-patch forward+generate")
 _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35, help="Issue #70: alpha gate sigmoid 初始值 (Stage3 train 默认 0.35)")
@@ -93,6 +92,9 @@ HAB_LAMBDA_MAX_VAL = _args.hab_lambda_max
 # Issue #71: HAB 残差学习开关
 RESIDUAL_HAB_ENABLED = _args.enable_residual_hab
 RESIDUAL_ALPHA_INIT = _args.residual_alpha_init
+# Issue #71 Phase A (2026-08-07): HAB warmup eval (T_0=T_w=0 让 w=1 立即生效, 与训练末态对齐)
+HAB_WARMUP_T0_EVAL = _args.hab_warmup_T0
+HAB_WARMUP_TW_EVAL = _args.hab_warmup_Tw
 # Issue #70: DECOR PromptFormer 配置
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
