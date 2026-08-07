@@ -219,8 +219,8 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 300  # Issue #141 v85i (2026-08-08): v85h baseline Stage1 + v15 SID + cosine test=0.1042 (v85 系列 SOTA), 但 ep180-185 才到顶. v85e NO-GO 根因是 ES=15 配合 hyp_v2 SID 触发过早. v85i 重启 (300ep + ES=15 + LR_min=0.05) 在 v85h baseline 路径上验证 cosine 末期巩固.
-EARLY_STOP = 15  # Issue #141 v85i: 配合 300ep 训练延长评估窗口 (EI=5 + ES=15 = 75 epoch 评估窗口).
+NUM_EPOCHS = 300  # Issue #141 v85j (2026-08-08): v85i 0.1044 (v85 系列 SOTA) + num_decoder_layers 4→6 (标准 T5-small 解码器, 6+6). v85i LR 调度已饱和 (300ep LR_min=0.05 仅 +0.0002 vs v85h), 跳出 LR 维度尝试增加解码器容量. 预期 +0.005~+0.010 → 0.109~0.114 (冲击 0.11 目标).
+EARLY_STOP = 15  # Issue #141 v85j: 沿用 v85i ES=15 (300ep + 75 epoch 评估窗口).
 EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
@@ -271,8 +271,8 @@ _LAYER_ID_LUT[1:65] = 0        # L0: K=64
 _LAYER_ID_LUT[65:193] = 1      # L1: K=128
 _LAYER_ID_LUT[193:449] = 2     # L2: K=256
 _LAYER_ID_LUT[449:450] = 3     # L3: K=1 (dedup)
-CONFIG = dict(                               # 基线 T5 (task84, encoder 6 + decoder 4)
-    num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,
+CONFIG = dict(                               # Issue #141 v85j (2026-08-08): 标准 T5-small (encoder 6 + decoder 6). v85i (encoder 6 + decoder 4) 0.1044 触及 LR 调度极限, 增加解码层容量. d_model=128/d_ff=1024 保持不变 (避免参数爆炸).
+    num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,
     num_heads=6, d_kv=64, dropout_rate=STAGE3_DROPOUT, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
     feed_forward_proj="relu",
