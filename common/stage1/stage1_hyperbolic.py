@@ -38,6 +38,7 @@ import json
 import time
 import random
 import hashlib
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -50,13 +51,16 @@ sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 from utils import expmap0, proj_to_ball  # noqa: E402
 
 # === R30: 所有配置硬编码 (无 os.environ.get; 变体复制脚本改常量) ===
-ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/item.json"
+ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments.item.json"
 OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hyp_v2.parquet")
 TAG = "hyp_v2"
-E_DIM = 128
+E_DIM = 768  # Issue #71 v82 (2026-08-07): 必须与 Stage2 EMB_DIM 对齐 (768), 不然 np.load shape mismatch
 # R_MAX 必须 < 1 — 给 expmap0(c=κ) 留 arctanh(r) 余量, 防 arctanh(1)=inf 数值爆炸
 R_MAX = 0.99
 R_MODE = "heuristic"
+# Issue #71 v82 (2026-08-07): radius 对 t5 norm 的敏感度 (越大越锐利过渡)
+SIGMOID_TEMP = 3.0
+SIGMOID_CENTER = 0.7  # sigmoid 中心点 (||t5_emb|| ≈ 0.7 时 r = R_MAX/2)
 ENCODER_MODEL = "sentence-transformers/sentence-t5-base"
 DEVICE = "cuda:0"  # GPU 由 CUDA_VISIBLE_DEVICES 决定 (R30 例外: torch 标准接口)
 BATCH_SIZE = 64
@@ -105,7 +109,7 @@ class HyperbolicEncoder(nn.Module):
     基础向量 v_i = r_i × d_i: norm=r_i<1 严格在欧氏单位球内
     """
 
-    def __init__(self, encoder_model, e_dim, r_max, r_mode):
+    def __init__(self, encoder_model, e_dim, r_max, r_mode, sigmoid_temp=3.0, sigmoid_center=0.7):
         super().__init__()
         from transformers import T5EncoderModel, AutoTokenizer
 
@@ -125,6 +129,9 @@ class HyperbolicEncoder(nn.Module):
         self.e_dim = e_dim
         self.r_max = r_max
         self.r_mode = r_mode
+        # Issue #71 v82 (2026-08-07): radius 对 t5 norm 的敏感度 (越大越锐利)
+        self.sigmoid_temp = float(sigmoid_temp)
+        self.sigmoid_center = float(sigmoid_center)
 
     @torch.no_grad()
     def encode_text(self, texts, device):
@@ -150,9 +157,9 @@ class HyperbolicEncoder(nn.Module):
         """
         if self.r_mode == "fixed":
             return torch.full((eu.shape[0],), self.r_max, device=eu.device)
-        # heuristic
+        # heuristic (Issue #71 v82: sigmoid_temp / sigmoid_center 从 self 读)
         norms = eu.norm(dim=-1)  # (B,)
-        return self.r_max * torch.sigmoid(3.0 * (norms - 0.7))  # (B,) ∈ (0, R_MAX)
+        return self.r_max * torch.sigmoid(self.sigmoid_temp * (norms - self.sigmoid_center))  # (B,) ∈ (0, R_MAX)
 
     def forward(self, texts, device):
         """texts → (v, r, d).
@@ -169,10 +176,23 @@ class HyperbolicEncoder(nn.Module):
 
 
 def main():
+    # Issue #71 v82 (2026-08-07): argparse 默认值硬编码 (R30 允许), 兼容旧实验 + v82 命令行覆盖
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--radius_max", type=float, default=R_MAX, help="per-item radius 上限 (<1, v82: 0.99→0.95)")
+    ap.add_argument("--sigmoid_temp", type=float, default=SIGMOID_TEMP, help="heuristic sigmoid 温度 (v82: 3.0→5.0)")
+    ap.add_argument("--sigmoid_center", type=float, default=SIGMOID_CENTER, help="heuristic sigmoid 中心")
+    ap.add_argument("--tag_suffix", type=str, default="", help="输出路径 tag 后缀 (v82 用 _v82_r095_t5)")
+    args = ap.parse_args()
+
+    global OUTPUT_PARQUET
+    if args.tag_suffix:
+        OUTPUT_PARQUET = OUTPUT_PARQUET.parent / f"Instruments_t5_hyp_v2_{args.tag_suffix}.parquet"
+
     OUTPUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
     set_seed(SEED)
     device = torch.device(DEVICE if torch.cuda.is_available() else "cpu")
-    log(f"[stage1-hyp] config: TAG={TAG} E_DIM={E_DIM} R_MAX={R_MAX} R_MODE={R_MODE} "
+    log(f"[stage1-hyp] config: TAG={TAG} E_DIM={E_DIM} R_MAX={args.radius_max} R_MODE={R_MODE} "
+        f"sigmoid_temp={args.sigmoid_temp} sigmoid_center={args.sigmoid_center} "
         f"ENCODER={ENCODER_MODEL} SEED={SEED} device={device}")
 
     items = load_items(ITEM_JSON)
@@ -181,10 +201,12 @@ def main():
     texts = [it[1] for it in items]
     log(f"[stage1-hyp] loaded {len(items)} items from {ITEM_JSON}")
 
-    model = HyperbolicEncoder(ENCODER_MODEL, E_DIM, R_MAX, R_MODE).to(device)
+    model = HyperbolicEncoder(ENCODER_MODEL, E_DIM, args.radius_max, R_MODE,
+                              sigmoid_temp=args.sigmoid_temp,
+                              sigmoid_center=args.sigmoid_center).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     log(f"[stage1-hyp] t5 dim={model.encoder.config.d_model} → MLP backbone → e_dim={E_DIM} → "
-        f"v = r × d (||v||=r<{R_MAX}), backbone params={n_params:,}")
+        f"v = r × d (||v||=r<{args.radius_max}), backbone params={n_params:,}")
     log(f"[stage1-hyp] stage2 expmap0(c_l) 严格在 Poincaré ball 内 (||v||<1 ⟹ norm<radius)")
 
     log(f"[stage1-hyp] encoding {len(items)} items (batch={BATCH_SIZE})...")
