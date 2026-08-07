@@ -462,9 +462,11 @@ def main():
     # install_hab 通过 monkey-patch model.encoder.forward 注入 B_geo (无需 patch generate, 因为
     # generate 内部也是 encoder + decoder 路径, encoder 已被 patch)
     if HAB_ENABLED:
-        codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        codebook_list, hab_final_cs = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        print(f"[HAB curvature] final_cs from Stage2 ckpt = "
+              f"{[round(c, 4) for c in hab_final_cs]} (c>0 直接使用, 不由 κ 反推)", flush=True)
         D_list, Dbar_list, stats_list = precompute_distance_matrices(
-            codebook_list, final_kappas, use_delta_curvature=HAB_DELTA_CURVATURE_EVAL)
+            codebook_list, hab_final_cs, use_delta_curvature=HAB_DELTA_CURVATURE_EVAL)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"

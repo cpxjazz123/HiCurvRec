@@ -33,13 +33,16 @@ HAB_BIAS_RANK = 16
 
 
 def load_hab_assets_from_stage2_ckpt(stage2_ckpt_path):
-    """从 #61 Stage2 ckpt 读 codebook (e_l) + final_kappas (κ_l).
+    """从 Stage2 ckpt 读 codebook (e_l) + final_cs (曲率 c_l > 0).
 
     Returns:
         codebook_list: list of (K_l, d_tangent) numpy float32
-        final_kappas: list of 4 floats (L3 占位 0.0)
+        final_cs: list of 3 floats, Poincaré 球曲率 c_l > 0 (直接来自 Stage2, 不做符号推断)
 
-    Note: #61 ckpt 里 vq_layers.{i}.kappa 是 drift 量 (训练后 = 0), 真实 κ 在 final_kappas.
+    Note: ckpt 里 vq_layers.{i}.kappa 是 drift 量 (训练后 = 0), 真实曲率在 final_cs.
+      **不要用 final_kappas 反推 c**: κ 的符号约定随 issue 演化 (Issue #61 κ<0 用 c=-κ,
+      Issue #76 起 CURV_PRIOR 下 κ>0 用 c=exp(κ)), 反推会静默给出错误曲率.
+      final_cs 是 Stage2 训练时实际生效的 c, 是唯一可信来源.
     """
     ckpt = torch.load(stage2_ckpt_path, map_location="cpu", weights_only=False)
     sd = ckpt["model_state_dict"]
@@ -47,11 +50,22 @@ def load_hab_assets_from_stage2_ckpt(stage2_ckpt_path):
     for l in range(3):
         cb = sd[f"vq_layers.{l}.embeddings.weight"].numpy().astype(np.float32)
         codebook_list.append(cb)
-    final_kappas = list(ckpt["final_kappas"])
-    if len(final_kappas) < 4:
-        # L3 占位 0 (dedup, 无几何信息)
-        final_kappas = list(final_kappas) + [0.0] * (4 - len(final_kappas))
-    return codebook_list, final_kappas
+    if "final_cs" not in ckpt:
+        raise KeyError(
+            f"Stage2 ckpt {stage2_ckpt_path} 缺少 'final_cs' (HAB 曲率唯一可信来源). "
+            f"现有 top-level keys: {[k for k in ckpt.keys() if k != 'model_state_dict']}. "
+            f"禁止用 final_kappas 反推 c (符号约定跨 issue 不一致)."
+        )
+    final_cs = [float(x) for x in ckpt["final_cs"]]
+    if len(final_cs) != 3:
+        raise ValueError(f"final_cs 长度应为 3 (三层量化器), 实际 {len(final_cs)}: {final_cs}")
+    for l, c in enumerate(final_cs):
+        if not (c > 0.0):
+            raise ValueError(
+                f"Stage2 ckpt final_cs[{l}] = {c} 不是正数, Poincaré 球要求 c > 0. "
+                f"检查 Stage2 训练是否正常收敛."
+            )
+    return codebook_list, final_cs
 
 
 def _artanh(x):
@@ -93,15 +107,21 @@ def _poincare_distance(x, y, c):
     return (2.0 / sqrt_c) * _artanh((sqrt_c * norm).clamp(max=1 - 1e-10))
 
 
-def precompute_distance_matrices(codebook_list, final_kappas, use_delta_curvature=False):
+def precompute_distance_matrices(codebook_list, final_cs, use_delta_curvature=False):
     """预计算三层双曲距离矩阵 D_l (K_l, K_l) + 归一化 Dbar_l.
 
-    关键: c_l = -kappa_l (Poincaré 流形要求 c > 0, 而 #61 κ 为负值, 取 c = -κ).
+    关键: c_l 直接来自 Stage2 ckpt 的 final_cs (训练时实际生效的曲率).
+      **不接受 κ 再反推 c** — κ 符号约定跨 issue 不一致 (#61 κ<0 c=-κ; CURV_PRIOR κ>0 c=exp(κ)),
+      历史 `c = max(-κ, 1e-6)` 会在 κ>0 时静默压成 c=1e-6 (退化为欧氏距离), HAB 完全失效.
     每层独立 c, 不允许跨层距离混合.
 
     Issue #71 Phase B (2026-08-07): use_delta_curvature=True 时额外计算 D_flat_l
       (c_flat = 1e-6, 接近欧氏距离的归一化形式), 然后 Dbar = (D_hyp - D_flat) / median_nonzero(D_hyp).
       意义: 剥离码字间几何距离的尺度信息, 只保留曲率对距离的非线性贡献 (即"曲率差分").
+
+    Args:
+        codebook_list: list of (K_l, d_tangent) 三层切空间码本
+        final_cs: list of 3 floats, c_l > 0 (来自 load_hab_assets_from_stage2_ckpt)
 
     Returns:
         D_list: list of (K_l, K_l) tensor (torch.float32), 未归一化 D_hyp
@@ -109,14 +129,21 @@ def precompute_distance_matrices(codebook_list, final_kappas, use_delta_curvatur
         stats_list: list of dict 每层 {finite, sym_err, diag_max, med, p95}
         Dflat_list (仅当 use_delta_curvature=True): list of (K_l, K_l) D_flat (c=1e-6)
     """
+    if len(final_cs) < len(codebook_list):
+        raise ValueError(
+            f"final_cs 长度 {len(final_cs)} < codebook 层数 {len(codebook_list)}, "
+            f"每层必须有独立曲率"
+        )
     D_list = []
     Dbar_list = []
     Dflat_list = []
     stats_list = []
     for l in range(len(codebook_list)):
         cb = torch.as_tensor(codebook_list[l], dtype=torch.float32)  # (K_l, d_tangent)
-        kappa_l = float(final_kappas[l])
-        c_l = max(-kappa_l, 1e-6)  # κ 为负, c = -κ > 0; 若 κ ≥ 0 用极小正值保护
+        c_l = float(final_cs[l])
+        if not (c_l > 0.0):
+            raise ValueError(f"final_cs[{l}] = {c_l} 不是正数, Poincaré 球要求 c > 0")
+        kappa_l = math.log(c_l)  # 仅用于 stats 记录 (CURV_PRIOR 下 c = exp(κ))
         # 映射到 Poincaré 球
         z = _proj_to_ball(_expmap0(cb, c_l), c_l)  # (K_l, d_tangent)
         # pairwise 距离

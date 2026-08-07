@@ -1066,15 +1066,18 @@ def main():
     # Issue #64: 双曲码字距离 attention bias (在 DDP wrap 前; 跟 #62/#63 互斥, 优先 #64)
     hab_module = None
     if HAB_ENABLED:
-        codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        codebook_list, hab_final_cs = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
+        if is_main:
+            log(f"[HAB curvature] final_cs from Stage2 ckpt = "
+                f"{[round(c, 4) for c in hab_final_cs]} (c>0 直接使用, 不由 κ 反推)")
         if HAB_DELTA_CURVATURE:
             # Issue #71 Phase B: 曲率差分 HAB (ΔD = D_hyp - D_flat)
             D_list, Dbar_list, stats_list, Dflat_list = precompute_distance_matrices(
-                codebook_list, final_kappas, use_delta_curvature=True)
+                codebook_list, hab_final_cs, use_delta_curvature=True)
             if is_main:
                 log(f"[Issue #71 Phase B] HAB ΔD mode: Dbar = ΔD/median, D_flat computed (c_flat=1e-6)")
         else:
-            D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
+            D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, hab_final_cs)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
