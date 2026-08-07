@@ -112,6 +112,9 @@ _argparser.add_argument("--hab_warmup_T0", type=int, default=0,
                         help="Issue #71 Phase A: HAB warmup 起始步数 (前 T_0 步 w=0)")
 _argparser.add_argument("--hab_warmup_Tw", type=int, default=0,
                         help="Issue #71 Phase A: HAB warmup 渐增步数 (T_0+T_w 步内 w 渐增到 1)")
+# Issue #71 Phase B (2026-08-07): 曲率差分 HAB (ΔD = D_hyp - D_flat) — 剥离码字距离尺度, 只留曲率贡献
+_argparser.add_argument("--hab_delta_curvature", action="store_true",
+                        help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -174,6 +177,8 @@ RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
 # Issue #71 Phase A (2026-08-07): HAB warmup 常量
 HAB_WARMUP_T0 = _args.hab_warmup_T0
 HAB_WARMUP_TW = _args.hab_warmup_Tw
+# Issue #71 Phase B (2026-08-07): 曲率差分 HAB 常量 (默认 False = 完整 D_hyp, 与历史 v74/v77 一致)
+HAB_DELTA_CURVATURE = _args.hab_delta_curvature
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
@@ -952,7 +957,14 @@ def main():
     hab_module = None
     if HAB_ENABLED:
         codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
-        D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
+        if HAB_DELTA_CURVATURE:
+            # Issue #71 Phase B: 曲率差分 HAB (ΔD = D_hyp - D_flat)
+            D_list, Dbar_list, stats_list, Dflat_list = precompute_distance_matrices(
+                codebook_list, final_kappas, use_delta_curvature=True)
+            if is_main:
+                log(f"[Issue #71 Phase B] HAB ΔD mode: Dbar = ΔD/median, D_flat computed (c_flat=1e-6)")
+        else:
+            D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"

@@ -93,19 +93,25 @@ def _poincare_distance(x, y, c):
     return (2.0 / sqrt_c) * _artanh((sqrt_c * norm).clamp(max=1 - 1e-10))
 
 
-def precompute_distance_matrices(codebook_list, final_kappas):
+def precompute_distance_matrices(codebook_list, final_kappas, use_delta_curvature=False):
     """预计算三层双曲距离矩阵 D_l (K_l, K_l) + 归一化 Dbar_l.
 
     关键: c_l = -kappa_l (Poincaré 流形要求 c > 0, 而 #61 κ 为负值, 取 c = -κ).
     每层独立 c, 不允许跨层距离混合.
 
+    Issue #71 Phase B (2026-08-07): use_delta_curvature=True 时额外计算 D_flat_l
+      (c_flat = 1e-6, 接近欧氏距离的归一化形式), 然后 Dbar = (D_hyp - D_flat) / median_nonzero(D_hyp).
+      意义: 剥离码字间几何距离的尺度信息, 只保留曲率对距离的非线性贡献 (即"曲率差分").
+
     Returns:
-        D_list: list of (K_l, K_l) tensor (torch.float32), 未归一化
+        D_list: list of (K_l, K_l) tensor (torch.float32), 未归一化 D_hyp
         Dbar_list: list of (K_l, K_l) tensor (torch.float32), 归一化 (D / median_nonzero)
         stats_list: list of dict 每层 {finite, sym_err, diag_max, med, p95}
+        Dflat_list (仅当 use_delta_curvature=True): list of (K_l, K_l) D_flat (c=1e-6)
     """
     D_list = []
     Dbar_list = []
+    Dflat_list = []
     stats_list = []
     for l in range(len(codebook_list)):
         cb = torch.as_tensor(codebook_list[l], dtype=torch.float32)  # (K_l, d_tangent)
@@ -131,15 +137,39 @@ def precompute_distance_matrices(codebook_list, final_kappas):
         else:
             med = 0.0
             p95 = 0.0
-        # 归一化
-        Dbar = D / (med + 1e-10) if D_nonzero.numel() > 0 else D
+        if use_delta_curvature:
+            # Issue #71 Phase B: 额外算 D_flat (c_flat=1e-6, 接近欧氏归一化距离).
+            # 用 c_flat → 0 极限的 Poincaré 距离形式 (与 D_hyp 同坐标系, 可差)
+            c_flat = 1e-6
+            z_flat = _proj_to_ball(_expmap0(cb, c_flat), c_flat)
+            zf_exp = z_flat.unsqueeze(1).expand(K, K, -1)
+            zf_pair = z_flat.unsqueeze(0).expand(K, K, -1)
+            D_flat = _poincare_distance(zf_exp, zf_pair, c_flat).squeeze(-1)  # (K_l, K_l)
+            Dflat_list.append(D_flat)
+            # 曲率差分: ΔD = D_hyp - D_flat (剥离码字间几何距离的尺度, 只保留曲率贡献)
+            # 注意: median 必须用 D_hyp 的 (与 D_hyp 共享坐标系, T5 学到的 bias 量纲与历史可比)
+            Delta = D - D_flat
+            # 中心化到非零均值附近 (ΔD 可能有正有负, median_nonzero 用绝对值 > 1e-8 的元素)
+            Delta_nonzero_abs = Delta[mask].abs()
+            med_delta = Delta_nonzero_abs.median().item() if Delta_nonzero_abs.numel() > 0 else 1.0
+            Dbar = Delta / (med_delta + 1e-10)
+            stats_list.append({
+                "layer": l, "c": c_l, "kappa": kappa_l,
+                "finite": finite, "sym_err": sym_err, "diag_max": diag_max,
+                "median": med, "p95": p95,
+                "med_delta": med_delta, "mode": "delta_curvature",
+            })
+        else:
+            Dbar = D / (med + 1e-10) if D_nonzero.numel() > 0 else D
+            stats_list.append({
+                "layer": l, "c": c_l, "kappa": kappa_l,
+                "finite": finite, "sym_err": sym_err, "diag_max": diag_max,
+                "median": med, "p95": p95, "mode": "full_curvature",
+            })
         D_list.append(D)
         Dbar_list.append(Dbar)
-        stats_list.append({
-            "layer": l, "c": c_l, "kappa": kappa_l,
-            "finite": finite, "sym_err": sym_err, "diag_max": diag_max,
-            "median": med, "p95": p95,
-        })
+    if use_delta_curvature:
+        return D_list, Dbar_list, stats_list, Dflat_list
     return D_list, Dbar_list, stats_list
 
 

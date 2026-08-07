@@ -66,6 +66,9 @@ _argparser.add_argument("--residual_alpha_init", type=float, default=0.5, help="
 # Issue #71 Phase A (2026-08-07): HAB warmup (eval 时 T_0=T_w=0 让 w=1 立即生效)
 _argparser.add_argument("--hab_warmup_T0", type=int, default=0, help="Issue #71 Phase A: HAB warmup T_0 (eval 默认 0)")
 _argparser.add_argument("--hab_warmup_Tw", type=int, default=0, help="Issue #71 Phase A: HAB warmup T_w (eval 默认 0)")
+# Issue #71 Phase B (2026-08-07): 曲率差分 HAB (eval 默认 False, 与 train 一致)
+_argparser.add_argument("--hab_delta_curvature", action="store_true",
+                        help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
 
 # Issue #71 Phase A (2026-08-07): eval 时 T_0=T_w=0 → warmup_w=1 立即生效
 # HAB_WARMUP_T0_EVAL / HAB_WARMUP_TW_EVAL 在 _args = parse_args() 之后赋值 (line ~99)
@@ -95,6 +98,8 @@ RESIDUAL_ALPHA_INIT = _args.residual_alpha_init
 # Issue #71 Phase A (2026-08-07): HAB warmup eval (T_0=T_w=0 让 w=1 立即生效, 与训练末态对齐)
 HAB_WARMUP_T0_EVAL = _args.hab_warmup_T0
 HAB_WARMUP_TW_EVAL = _args.hab_warmup_Tw
+# Issue #71 Phase B (2026-08-07): 曲率差分 HAB eval (与 train 一致)
+HAB_DELTA_CURVATURE_EVAL = _args.hab_delta_curvature
 # Issue #70: DECOR PromptFormer 配置
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
@@ -458,7 +463,8 @@ def main():
     # generate 内部也是 encoder + decoder 路径, encoder 已被 patch)
     if HAB_ENABLED:
         codebook_list, final_kappas = load_hab_assets_from_stage2_ckpt(HAB_STAGE2_CKPT)
-        D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, final_kappas)
+        D_list, Dbar_list, stats_list = precompute_distance_matrices(
+            codebook_list, final_kappas, use_delta_curvature=HAB_DELTA_CURVATURE_EVAL)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
             assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
