@@ -79,7 +79,7 @@ INPUT_PROJ_ENABLED = True
 INPUT_PROJ_DIM = 512
 
 # 量化器结构
-CODEBOOK_SIZES = [64, 128, 256]
+CODEBOOK_SIZES = [64, 128, 256]  # 还原 v15 配置, 取消 v85r 增量代码本实验 (改做新 Issue: Prefix-Conditioned Branch Curvature RQ-VAE).
 E_DIM = 32
 ENCODER_LAYERS = [512, 256, 128, 64]
 BETA = 1.0
@@ -396,7 +396,10 @@ else:
 
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
-LOCAL_RANK = _args.local_rank
+# Issue #141 v85g (2026-08-08): torchrun 设 LOCAL_RANK env, argparse 默认 0 → 所有 rank 都用 cuda:0 → NCCL duplicate GPU.
+# 优先读 env (torchrun 设的), fallback argparse (单进程传 --local_rank 用).
+import os as _os
+LOCAL_RANK = int(_os.environ.get("LOCAL_RANK", _args.local_rank))
 DDP_MODE = WORLD_SIZE > 1
 MLR_ENABLED = _args.mlr_enabled  # R30: 默认走常量 True (Issue #47 状态), --no_mlr 切换到 False (Issue #48 spec)
 # Issue #71 v82 (2026-08-07): --item_emb_npy 命令行覆盖 (默认 issue60 packed u32, v82 用 Stage1 v82 .npy)
@@ -1466,10 +1469,12 @@ def infer_sid(model: KappaAwareHRQVAE, item_emb: torch.Tensor, batch_size: int =
     """
     model.eval()
     all_indices = []
+    # Issue #141 v85g (2026-08-08): DDP wrapper 没有 get_indices, 必须走 model.module
+    model_inner = model.module if hasattr(model, "module") else model
     with torch.no_grad():
         for i in range(0, len(item_emb), batch_size):
             batch = item_emb[i:i + batch_size]
-            indices = model.get_indices(batch, use_sk=False)  # argmin 模式 (跟 HG-Rec 默认一致)
+            indices = model_inner.get_indices(batch, use_sk=False)  # argmin 模式 (跟 HG-Rec 默认一致)
             all_indices.append(indices.cpu())
     sid_3digit = torch.cat(all_indices, dim=0).numpy()  # (9922, 3)
     if resolve:
@@ -1666,7 +1671,7 @@ def main():
     # Load item embeddings (每卡全量加载, 9922×768 小; DDP 下各自 device)
     if is_main:
         print("Loading item embeddings...")
-    item_emb_full = np.load(ITEM_EMB_NPY)  # (9922, 768) float32, Lorentz Stage1 导出
+    item_emb_full = np.load(ITEM_EMB_NPY, allow_pickle=True)  # (9922, 768) float32, Issue #141 v85g (2026-08-08): Stage1 hyp_v2 npy header 是 dict-format 旧格式, numpy ≥1.16 默认拒绝, 必须 allow_pickle=True (R2: 不静默 fallback, 显式 raise-on-trust)
     item_emb = torch.from_numpy(np.ascontiguousarray(item_emb_full, dtype=np.float32)).to(device)
     if is_main:
         print(f"item_emb shape: {item_emb.shape}\n")
