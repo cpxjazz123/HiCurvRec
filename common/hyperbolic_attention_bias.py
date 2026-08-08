@@ -295,6 +295,11 @@ class HyperbolicAttentionBias(nn.Module):
             B_geo: (B, 1, L, L) additive bias, 同层 (L0/L1/L2) → -lambda_l * Dbar_l[k_i, k_j];
                    跨层/PAD/L3 → 0
 
+        Side effect (v87 Issue #86 borrow): 若 self.attn_entropy_weight > 0, 计算 attn 锐化 proxy:
+            对 B_geo 自身做 softmax(-B_geo/τ) (越大 bias → 越低概率) 算 entropy, 鼓励其分布尖锐
+            (即: T5 attention 应集中到几何距离近的码字对, 而非均匀).
+            通过 self.last_attn_entropy (Tensor scalar) 传出, install_hab 累加到 hg_rec._hab_attn_entropy_loss.
+
         Note: 不对 L3 应用几何 bias (L3 是 dedup 1 个码字, k=0 → Dbar 全 0 → 不影响).
               PAD (-1) 不影响, 因为 mask 屏蔽 attention.
               cross-layer (L0 vs L1 等) → 严格 0 (不允许跨层距离).
@@ -359,6 +364,22 @@ class HyperbolicAttentionBias(nn.Module):
             valid = attention_mask_2d.bool()  # (B, L)
             mask_pad = valid.unsqueeze(2) & valid.unsqueeze(1)  # (B, L_i, L_j) 两个都有效
             B_geo = B_geo * mask_pad.float()
+        # v87 (Issue #86 borrow from v78 attn_entropy, 2026-08-08): 鼓励 T5 attn 利用 HAB 几何信号
+        # proxy: 用 B_geo 自身的 softmax(-B_geo/τ) 计算 entropy (越小 = bias 越尖锐 = attn 应越集中)
+        # 仅在 self.attn_entropy_weight > 0 时计算, 默认 0 = 关闭 (与 v77 baseline 完全一致)
+        if float(getattr(self, "attn_entropy_weight", 0.0)) > 0.0 and B_geo.abs().sum() > 0:
+            tau = float(getattr(self, "attn_entropy_tau", 1.0))
+            # B_geo (B, L, L) → softmax 沿 j 维, mask PAD 行
+            logits = -B_geo / max(tau, 1e-6)
+            if attention_mask_2d is not None:
+                row_mask = valid.unsqueeze(-1).float()  # (B, L, 1) 每行是否有效
+                logits = logits.masked_fill(row_mask == 0, -1e9)
+            attn = torch.softmax(logits, dim=-1)  # (B, L, L)
+            attn_log = torch.log(attn.clamp_min(1e-9))
+            entropy = -(attn * attn_log).sum(dim=-1)  # (B, L) 每行 entropy
+            self.last_attn_entropy = entropy.mean()  # scalar, requires_grad=True (经由 λ_eff)
+        else:
+            self.last_attn_entropy = None
         return B_geo.unsqueeze(1)  # (B, 1, L, L) — HF T5 4D bias 形状
 
 
@@ -386,6 +407,8 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
     hg_rec.add_module("hab_module", hab_module)
     # 注入计数 (Issue #64 Gate3 强制: 每个 encoder forward 注入调用 = 1)
     hg_rec._hab_inject_count = 0
+    # v87 (Issue #86 borrow): 累加 attn_entropy (Stage3 train_step 取出, 加到总 loss)
+    hg_rec._hab_attn_entropy_loss = None
     # 保存原 encoder.forward 引用 (decoder 路径需要 fallback)
     hg_rec.model.encoder._original_forward = hg_rec.model.encoder.forward
 
@@ -431,6 +454,12 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
             ids_view = input_ids_flat.view(batch_size, seq_length)
             B_geo = hab_module.get_B_geo(ids_view, layer_id_lut_tensor,
                                           attention_mask_2d=attention_mask)
+            # v87 (Issue #86 borrow): 累加 attn_entropy (Stage3 train_step 用)
+            if getattr(hab_module, "last_attn_entropy", None) is not None:
+                if hg_rec._hab_attn_entropy_loss is None:
+                    hg_rec._hab_attn_entropy_loss = hab_module.last_attn_entropy
+                else:
+                    hg_rec._hab_attn_entropy_loss = hg_rec._hab_attn_entropy_loss + hab_module.last_attn_entropy
             if attention_mask_4d is not None:
                 if attention_mask_4d.dtype != B_geo.dtype:
                     attention_mask_4d = attention_mask_4d.to(B_geo.dtype)

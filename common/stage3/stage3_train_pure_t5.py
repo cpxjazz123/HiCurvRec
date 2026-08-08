@@ -116,6 +116,12 @@ _argparser.add_argument("--hab_warmup_T0", type=int, default=0,
                         help="Issue #71 Phase A: HAB warmup 起始步数 (前 T_0 步 w=0). 默认 0 = 立即激活 (v77 baseline). v86 借鉴 v78 alpha_warmup_steps=200 显式传 200 PARTIAL-GO (FAIL vs v77 -0.0112, 见 verdicts/issue86_v86_kwarmup.md).")
 _argparser.add_argument("--hab_warmup_Tw", type=int, default=0,
                         help="Issue #71 Phase A: HAB warmup 渐增步数 (T_0+T_w 步内 w 渐增到 1). 默认 0 = 立即激活 (v77 baseline). v86 显式传 400 (~8 epoch 平滑过渡).")
+# v87 (Issue #86 borrow from v78 attn_entropy, 2026-08-08): 鼓励 T5 attn 利用 HAB 几何信号 (锐化 proxy)
+# proxy: 用 B_geo 自身 softmax(-B_geo/τ) entropy 作为"attn 锐度"代理, 鼓励 bias 分布尖锐
+_argparser.add_argument("--hab_attn_entropy_weight", type=float, default=0.0,
+                        help="v87: HAB attn entropy loss 权重 (鼓励 attn 锐化 proxy). 默认 0 = 关闭 (v77 baseline). v87 显式传 0.001 = v78 DECOR 同尺度.")
+_argparser.add_argument("--hab_attn_entropy_tau", type=float, default=1.0,
+                        help="v87: attn softmax 温度 (越小越尖锐). 默认 1.0.")
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB (ΔD = D_hyp - D_flat) — 剥离码字距离尺度, 只留曲率贡献
 _argparser.add_argument("--hab_delta_curvature", action="store_true",
                         help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
@@ -204,6 +210,9 @@ RESIDUAL_ALPHA_LR_RATIO = _args.residual_alpha_lr_ratio
 # Issue #71 Phase A (2026-08-07): HAB warmup 常量
 HAB_WARMUP_T0 = _args.hab_warmup_T0
 HAB_WARMUP_TW = _args.hab_warmup_Tw
+# v87 (Issue #86 borrow): HAB attn entropy regularizer 常量 (默认 0 = 关闭)
+HAB_ATTN_ENTROPY_WEIGHT = _args.hab_attn_entropy_weight
+HAB_ATTN_ENTROPY_TAU = _args.hab_attn_entropy_tau
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB 常量 (默认 False = 完整 D_hyp, 与历史 v74/v77 一致)
 HAB_DELTA_CURVATURE = _args.hab_delta_curvature
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
@@ -1088,6 +1097,10 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
     n = 0
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
                     if STAGE3_BF16 else torch.nullcontext())
+    # v87 (Issue #86 borrow): 拿到 hab_module 引用 (用于重置 _hab_attn_entropy_loss)
+    _hab_ref = getattr(model, "module", model)
+    if hasattr(_hab_ref, "_hab_attn_entropy_loss"):
+        _hab_ref._hab_attn_entropy_loss = None  # 每个 epoch 重置 (允许累加)
     # v29 加速 (2026-08-04): torch.compile — env TORCH_COMPILE=1 启用
     if _TORCH_COMPILE and not _TRAIN_COMPILED:
         try:
@@ -1134,6 +1147,14 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
                 ignore_index=CONFIG["pad_token_id"],
                 label_smoothing=STAGE3_LABEL_SMOOTHING,
             )
+        # v87 (Issue #86 borrow from v78 attn_entropy): 加权 attn_entropy regularizer 到总 loss
+        # 鼓励 HAB bias 分布尖锐 (proxy: B_geo softmax entropy ↓), 防几何信号被 attn 稀释
+        if HAB_ATTN_ENTROPY_WEIGHT > 0:
+            _hab_entropy = getattr(_hab_ref, "_hab_attn_entropy_loss", None)
+            if _hab_entropy is not None:
+                loss = loss + HAB_ATTN_ENTROPY_WEIGHT * _hab_entropy
+                # 重置, 避免下次 batch 累加 (每次 forward 后累加, 但 loss 取完应清零)
+                _hab_ref._hab_attn_entropy_loss = None
         loss.backward()
         optimizer.step()
         # Issue #141 v85d: per-batch LR scheduler step (cosine with warmup, 更细粒度)
@@ -1290,6 +1311,9 @@ def main():
                                               residual_alpha_init=RESIDUAL_ALPHA_INIT,
                                               warmup_T0=HAB_WARMUP_T0,
                                               warmup_Tw=HAB_WARMUP_TW)
+        # v87 (Issue #86 borrow): 把 attn_entropy regularizer 参数传给 hab_module
+        hab_module.attn_entropy_weight = float(HAB_ATTN_ENTROPY_WEIGHT)
+        hab_module.attn_entropy_tau = float(HAB_ATTN_ENTROPY_TAU)
         # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
         layer_id_lut_array = make_hab_layer_id_lut()
         model = install_hab(model, hab_module, layer_id_lut_array)
