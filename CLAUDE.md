@@ -4,7 +4,7 @@
 
 ---
 
-## R 规则 (27 条)
+## R 规则 (28 条)
 
 **R1**: 使用 `genrec_env` (默认所有任务) 或 `deepke` (KG 任务) 两个 conda env, base anaconda Python 3.11.7 仅适用于 zero-dep grep + MiniMax API 调用.
 
@@ -59,6 +59,16 @@
 **R31**: 每个 stage 目录 (如 `taskA/stage2/` / `taskB/stage3/`) 只允许一个主脚本 (例如 `taskA_stage2.py` / `taskB_stage3.py`), 不允许 fork 出 `taskA_stage2_v2.py` / `taskA_stage2_v8.py` 等多版本并存. 修改时直接在主脚本上改, 历史实验变体从 git 历史恢复, 不在 stage 目录保留多份. 历史 issue 已 fork 的 v3-v8 副脚本 (如 `taskA_stage2_v7.py` / `taskA_stage2_v8.py`) 在本规则生效后必须删除, 仅留主脚本作为唯一入口. **Why:** 多版本并存 → 启动时不知道跑哪个 → 容易跑错版本 → 复现性崩溃; 主脚本单一入口 + git 历史 = 任何变体都可追溯, 同时避免误启动. **How to apply:** 新实验变体 → 改主脚本 CONFIG 块 + commit; 旧的 v*-forked.py 文件 → 立即 `rm` (commit + push 一起发); `_history/` 目录的产物文件夹 (如 `taskA_stage2_v7_issue43/`) 仅保留产物, 不影响主脚本选择.
 
 **R32**: 运行脚本必须直接 `python3` 执行, **不允许** 写 `.sh` 包装脚本启动 (如 `launch_xxx.sh`). GPU 选择走 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联环境变量; 路径走 `--product_dir <path>` argparse 参数; 日志走 `tee` 或 `nohup ... > log.txt 2>&1` (`.sh` 仅作内联一次性命令, 不落盘). 历史 `.sh` 启动器 (如 `launch_stage2_v7_issue43.sh`) 一律删除, 启动方式统一为 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...`. **Why:** `.sh` 包装层 → 超参容易从 launcher 注入 → 违背 R30 硬编码原则; `.sh` 累积 → 仓库膨胀 / 哪个版本对应哪个 launcher 难追溯; 直接 python 执行 → 单行命令自描述, 复现性直接 grep 命令即可. **How to apply:** 写新实验 → 不写 `.sh` 文件; 启动训练 → 在终端直接 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args... > log.txt 2>&1 &` (后台) 或 `CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...` (前台) 或 `bash -c 'CUDA_VISIBLE_DEVICES=0 python3 -u <script>.py --args...' | tee log.txt` (前台+日志). **唯一例外**: DDP 多卡 `torchrun` (env 必须由 torchrun wrapper 设, 无法绕开) — 此场景保留 `.sh` 包装.
+
+**R33**: verdict 文件路径规范 (1:1 映射). 所有 verdict / precheck / canary / evidence / diagnostic / probe / audit 文件必须放在 `verdicts/<gitlab_iid>/<final_verdict>.<ext>`, 其中 `<gitlab_iid>` 是 GitLab issue iid (1-90 范围). 具体规范:
+  - **路径**: `verdicts/<gitlab_iid>/<filename>.<ext>`, 顶层只保留 `index.md` + `README.md` + `gitkeep` (不分子目录如 `verdicts/_misc/<scope>/`)
+  - **文件名**: snake_case, kebab→snake, 去 internal verdict 编号前缀 (e.g. `issue141_v85c_nogo.md` → `v85c_nogo.md`)
+  - **每个 iid 一个最终 verdict**: 中间产物 (gate/canary/evidence/diagnostic/probe/audit) 不落盘, 写入最终 verdict 文件作为 section; 仅有最高 rank 的 verdict 文件落盘 (rank 顺序: verdict/nogo/partial_go/go > result/ceiling/saturation > summary/final > fix > rejudge/verify > evidence/diagnostic > precheck/audit/probe)
+  - **orphan**: 若 internal verdict #N > 90 (项目内部 verdict 编号, 无对应 GitLab issue 1-90) → `verdicts/_misc/orphan/<original_filename>`, 文件名保留 internal #N 前缀
+  - **文件类型**: `.md` 用于 verdict 报告 (含 4-Gate 审计 + 数据 + 失败原因); `.json` 用于结构化 result (机器可读 Gate 状态)
+  - **frontmatter**: 每个 verdict `.md` 文件顶部必须有 frontmatter (type/issue/status/created/tags/up), `up: "[[index]]"` 建立 wiki-link
+
+  **Why:** 此前 verdicts/ 是 327 个文件平铺, 历史 issue 中 `issue<N>` scope 命名易与 GitLab iid 混淆 (Issue #90 已修正). 1:1 映射 → 每 issue 一个 verdict 文件 → 路径 grep 即定位, 检索成本 → O(1); 中间产物落盘累积 213 个孤儿文件, 删除后仓库瘦身 21k 行; orphan 隔离 → 内部 verdict #N > 90 的工作仍可追溯但不污染 iid 主索引. **How to apply:** 新写 verdict → 先查 `glab issue list` 确定对应 iid (1-90), 写最终文件到 `verdicts/<iid>/<verdict>.<ext>`, 不写中间产物; orphan 路径 → 内部 verdict #N > 90 直接 `verdicts/_misc/orphan/issue<N>_<rest>.<ext>`; 复盘脚本 `/home/wlia0047/.claude/jobs/4efe348f/tmp/verdict_restructure_exec.py` 是参考实现. **禁止**: 在 `verdicts/_misc/<letter_scope>/` 留中间分类目录 (历史产物已清空); 写 verdict 时带 `issue<N>_` 前缀到 iid 子目录 (前缀要去掉).
 
 ---
 
