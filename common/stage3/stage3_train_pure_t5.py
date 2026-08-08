@@ -1286,14 +1286,15 @@ def main():
         model = install_hab(model, hab_module, layer_id_lut_array)
         # 新 Issue Phase B: Branch-Aware HAB (按 L0 prefix branch features 分桶 λ_max)
         if BRANCH_CURVATURE_ENABLED:
-            _bc_lut = build_branch_curvature_lut()
+            _bc_lut, _bc_stats = build_branch_curvature_lut()
             install_branch_curvature_on_hab(hab_module, _bc_lut)
             if is_main:
                 log(f"[新 Issue Branch Curvature] λ_max bucket mult: "
                     f"low={BRANCH_CURVATURE_LAMBDA_MULT[0]:.2f} "
                     f"mid={BRANCH_CURVATURE_LAMBDA_MULT[1]:.2f} "
                     f"high={BRANCH_CURVATURE_LAMBDA_MULT[2]:.2f} "
-                    f"strategy={BRANCH_CURVATURE_STRATEGY} sid={BRANCH_CURVATURE_SID_NPY}")
+                    f"strategy={BRANCH_CURVATURE_STRATEGY} sid={BRANCH_CURVATURE_SID_NPY} "
+                    f"bucket sizes={[len(_bc_stats['buckets'][b]) for b in range(BRANCH_CURVATURE_N_BUCKETS)]}")
         if is_main:
             lambda_params = hab_module.lambda_raw.numel()
             residual_tag = f" residual_alpha_init={RESIDUAL_ALPHA_INIT}" if RESIDUAL_HAB_ENABLED else ""
