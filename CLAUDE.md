@@ -61,24 +61,3 @@
 **R32**: 运行脚本必须直接 `python3` 执行, 禁写 `.sh` 包装启动, GPU 选择用 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联 (唯一例外: DDP 多卡 `torchrun`)。
 
 **R33**: verdict 文件必须放 `verdicts/<gitlab_iid>/<final_verdict>.<ext>` (1:1 映射 iid 1-90), 中间产物不落盘, orphan (internal #N > 90) → `verdicts/_misc/orphan/`。
-
----
-
-## 项目元数据 (6 条)
-
-**仓库**: HG-Rec 复现 + κ-Stereographic 变体实验, 当前基线 Task #84 (valid R@10=0.1267, test R@10=0.1024), 不用 phonism/Toys。
-
-**GPU**: 4× NVIDIA L40S (sm_89, 46GB/卡), 驱动 580.126.20, CUDA 13.0 (torch 2.11.0+cu130) / 12.x (TF kgat_mckg)。
-
-**目录**: 上游 clone 只读 (HG-Rec/, data/, papers/), 可写 (verdicts/, products/, logs/)。taskA/taskB 只保留 Stage 1 / Stage 2 子目录 (各 1 个主脚本)。**Stage 3 / Stage 4 只允许使用 `common/` 下的脚本** (用户指示 2026-08-06): `common/stage3/stage3_train_pure_t5.py` (T5 训练, R30 硬编码超参 + argparse 路径) / `common/stage4/stage4_eval_pure_t5.py` (pure T5 评估) / `common/stage4/stage4_eval_beam20.py` (beam20 评估) / `common/stage4/stage4_decode.py` (解码工具)。taskA/stage3+stage4 与 taskB/stage3+stage4 目录已删除, 任何 stage3/4 任务必须用 common/。**common/ 目录结构 (用户指示 2026-08-06)**:
-  - `common/stage1/stage1_hyperbolic.py` (Stage 1 双曲 sentence-t5-base embedding)
-  - `common/stage2/` (空占位 — Stage 2 在 taskA/stage2/ 与 taskB/stage2/, 各自为方向专用变体)
-  - `common/stage3/stage3_train_pure_t5.py` (Stage 3 纯 T5 训练)
-  - `common/stage4/stage4_{decode,eval_pure_t5,eval_beam20}.py` (Stage 4 解码 + 评估工具)
-  **训练产物统一放 `taskX/_history/`** (stage2 ckpt+verdict + stage3 adapter+verdict + stage4 canary; 主脚本 `PRODUCT_DIR` 均指向 `_history/`), stage 目录不放产物与 .pid。
-
-**流水线**: 4 阶段 — Stage 1 sentence-t5-base embedding → Stage 2 Poincaré RQ-VAE SID (3→4 层去重 digit) → Stage 3 T5-mini 训练 → Stage 4 R@K/NDCG 评估。
-
-**评估**: HG-Rec baseline (全量核查 valid.parquet 24772 样本) R@5/10/20 = 0.1029/0.1267/0.1561, test.parquet = 0.0819/0.1024/0.1283; NDCG 未全量核查 (旧记录 0.0690/0.0755/0.0821)。决策阈值 = valid R@10 > 0.1267 GO。注意: N=1000 前序子集系统性偏低 ~25%, 评估必须用全量或随机采样。
-
-**依赖**: torch >= 2.0, pytorch-lightning, hydra-core, transformers, torchmetrics (详见 requirements.txt)。
