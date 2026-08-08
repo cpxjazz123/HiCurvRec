@@ -41,10 +41,10 @@ STAGE3_DDP_CONFIG = {
 # v77 训练超参 + 路径 (硬编码, 顶部 V77_CONFIG 字典)
 V77_CONFIG = {
     # ── 路径 (硬编码, 与 Stage2 launcher 产物目录配套) ──
-    # Stage2 launcher 输出 SID 路径 (Issue #29 v15 SID + v4 配置 新组合)
-    "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/sid_output.npy",
-    # Stage3 本次产物目录 (Issue #29: 新目录, 避免覆盖 v6)
-    "product_dir": "/home/wlia0047/ar57_scratch/wenyu/full/stage3_v15_v4_d4",
+    # Stage2 launcher 输出 SID 路径 (Issue #30 equal256 SID + v4 配置 新组合)
+    "sid_npy": "/fs04/ar57/wenyu/GeneRec/taskA/_history/issue210_equal_codebook/taskA_stage2_equal256/sid_output.npy",
+    # Stage3 本次产物目录 (Issue #30: 新目录)
+    "product_dir": "/home/wlia0047/ar57_scratch/wenyu/full/stage3_equal256_v4_d4",
     # SID sha256 校验 (留空 = 跳过; 实际产物确认后填入)
     "expected_sid_sha": "",
     # ── HAB 三改动 (Issue #138 v74) ──
