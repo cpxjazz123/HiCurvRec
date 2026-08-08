@@ -119,6 +119,21 @@ _argparser.add_argument("--hab_warmup_Tw", type=int, default=0,
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB (ΔD = D_hyp - D_flat) — 剥离码字距离尺度, 只留曲率贡献
 _argparser.add_argument("--hab_delta_curvature", action="store_true",
                         help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
+# 新 Issue: Prefix-Conditioned Branch Curvature (Phase B Path B)
+# 在 HAB λ_max 上做 per-L0-prefix bucket 缩放: 把 64 个 L0 prefix 按 branch heterogeneity (Phase A)
+# 分到 3 桶 (low/mid/high), 每桶分配不同的 λ_max multiplier. 不动 Stage2 SID, 不动 HAB 内部.
+_argparser.add_argument("--branch_curvature_enabled", action="store_true",
+                        help="新 Issue: Branch-Aware HAB. 按 L0 prefix branch complexity 分桶 (low/mid/high) 给不同 λ_max 缩放")
+_argparser.add_argument("--branch_curvature_sid_npy", type=str,
+                        default="",
+                        help="新 Issue: 加载 SID npy 用于计算 L0 prefix branch features. 默认 = --sid_npy")
+_argparser.add_argument("--branch_curvature_lambda_mult", type=str, default="0.7,1.0,1.3",
+                        help="新 Issue: 3 桶 λ_max multiplier (low,mid,high). 默认 '0.7,1.0,1.3' (高 branch complexity → 强 λ_max)")
+_argparser.add_argument("--branch_curvature_n_buckets", type=int, default=3,
+                        help="新 Issue: 桶数 (默认 3 = 低/中/高)")
+_argparser.add_argument("--branch_curvature_strategy", type=str, default="quantile",
+                        choices=["quantile", "kmeans"],
+                        help="新 Issue: prefix 分桶策略 (quantile = 等频分桶, kmeans = kmeans on B(p))")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -193,6 +208,12 @@ HAB_WARMUP_TW = _args.hab_warmup_Tw
 HAB_DELTA_CURVATURE = _args.hab_delta_curvature
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
+# 新 Issue: Prefix-Conditioned Branch Curvature (Phase B Path B)
+BRANCH_CURVATURE_ENABLED = _args.branch_curvature_enabled
+BRANCH_CURVATURE_SID_NPY = _args.branch_curvature_sid_npy if _args.branch_curvature_sid_npy else _args.sid_npy
+BRANCH_CURVATURE_N_BUCKETS = int(_args.branch_curvature_n_buckets)
+BRANCH_CURVATURE_STRATEGY = _args.branch_curvature_strategy
+BRANCH_CURVATURE_LAMBDA_MULT = [float(x) for x in _args.branch_curvature_lambda_mult.split(",")]
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -219,7 +240,7 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 300  # Issue #141 v85p (2026-08-08): v85j 0.1053 (v85 系列 SOTA) + LR_WARMUP_FRAC 5%→10% 让 6 decoder 早期梯度更稳定. v85m NO-GO 验证 heads 8 不优, v85l NO-GO 验证 8+8 不优, v85k NO-GO 验证 dropout 0.30 过强. 跳出 heads/layers/dropout, 试 LR schedule warmup 延长. 预期 +0.001~0.003 → 0.106~0.108.
+NUM_EPOCHS = 300  # Issue #141 v85p (2026-08-08): v85p 0.1060 (v85 系列 SOTA), warmup_frac=10% + LR_min=0.05. v85q LR_min 0.02 NO-GO 已 kill, 还原 v85p 配置. 下一轮改做新 Issue: Prefix-Conditioned Branch Curvature RQ-VAE.
 EARLY_STOP = 15  # Issue #141 v85p: 沿用 v85j ES=15 (300ep + 75 epoch 评估窗口).
 EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
@@ -230,7 +251,7 @@ LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR
 # Issue #141 v85f (2026-08-08): LR cosine 温和版 (沿用 v85d) + SID v15 (5f8331cc). v85d (warmup_frac=0.05 + LR_min=0.1 + 200ep) 配 hyp_v2 SID test=0.1011. v85f 同样 LR 调度换 SID v15, 验证 v15 κ=[0.30,1.79,1.48] c=[1.35,6.00,4.39] 强几何信号 + cosine 衰减是否协同.
 LR_SCHEDULER = "cosine"  # Issue #141 v85f (2026-08-08): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
 LR_WARMUP_FRAC = 0.10  # Issue #141 v85p: warmup 占比 5%→10% 让 6 decoder 早期梯度更稳定, 总步 9900 × 10% = 990 warmup steps, 20 epoch warmup (vs v85j 5% = 10 epoch warmup)
-LR_MIN_FACTOR = 0.05  # Issue #141 v85i: cosine decay 末态 LR 倍率 (5e-5, 比 v85f 0.1 更低), 巩固 cosine 末期收敛. v85f LR_min=1e-4, v85i LR_min=5e-5.
+LR_MIN_FACTOR = 0.05  # Issue #141 v85p (2026-08-08): 还原 v85p baseline, v85q LR_min 0.02 NO-GO. v85p PARTIAL-GO 验证 warmup 10% 有效, 5e-5 末期 LR 维持.
 MAX_LEN = 20
 NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
 PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
@@ -798,6 +819,170 @@ def build_codeword_geo_module(stage2_ckpt_path):
     )
 
 
+# ──────────────────────────────────────────────────────────────
+# 新 Issue: Prefix-Conditioned Branch Curvature (Phase B Path B)
+# 不动 Stage2 SID, 不改 HAB 内部 — 只在 Stage3 给 L0 prefix 注入 per-prefix λ_max multiplier.
+# 计算流程:
+#   1. 加载 SID (n_items, 4), 提取 L0 prefix (column 0)
+#   2. 对每个 L0 prefix 算 B(p) = exp(H(L1 child distribution)), σ_r (residual var 代理)
+#   3. 按 B(p) 排序 + 分桶 (quantile / kmeans)
+#   4. 构造 per-token-id bucket lut (1025,) — 仅 L0 token (id=1..64) 有值, 其它 = -1
+#   5. Monkey-patch hab_module.get_B_geo: 给 L0 token i,j 之间的 bias 乘以 mult[bucket[i]]
+# ──────────────────────────────────────────────────────────────
+def build_branch_curvature_lut():
+    """根据 SID 算 L0 prefix branch features, 分桶, 返回 per-token-id bucket lut.
+
+    Returns:
+        bucket_lut: numpy (1025,) int64, 仅 L0 token (id=1..64) 有值 (0..n_buckets-1), 其它 = -1
+        stats: dict {l0_B: [...], l0_n_p: [...], buckets: {...}}
+    """
+    from collections import defaultdict
+    sid = np.load(BRANCH_CURVATURE_SID_NPY)
+    if sid.ndim != 2 or sid.shape[1] < 2:
+        raise ValueError(f"SID shape {sid.shape} 异常, 需 (n_items, >=2)")
+    l0_arr = sid[:, 0].astype(np.int64)
+    l1_arr = sid[:, 1].astype(np.int64)
+    # 每个 L0 prefix → L1 child distribution
+    l0_to_items = defaultdict(list)
+    l0_to_l1 = defaultdict(list)
+    for i in range(len(sid)):
+        l0 = int(l0_arr[i])
+        l0_to_items[l0].append(i)
+        l0_to_l1[l0].append(int(l1_arr[i]))
+    l0_features = {}  # l0 → {"B": ..., "n_p": ...}
+    for l0 in sorted(l0_to_items.keys()):
+        items = l0_to_items[l0]
+        l1_list = l0_to_l1[l0]
+        n_p = len(items)
+        # child entropy + branching factor
+        l1_unique, l1_counts = np.unique(l1_list, return_counts=True)
+        p = l1_counts / l1_counts.sum()
+        H = float(-(p * np.log(p + 1e-30)).sum())
+        B = float(np.exp(H))
+        l0_features[l0] = {"B": B, "n_p": n_p, "H": H}
+    # 分桶 (按 B 排序)
+    l0_ids_sorted = sorted(l0_features.keys(),
+                           key=lambda l: l0_features[l]["B"])
+    n_buckets = BRANCH_CURVATURE_N_BUCKETS
+    if BRANCH_CURVATURE_STRATEGY == "quantile":
+        # 等频分桶 (按 B 排序后切片)
+        bucket_assignment = {}
+        bucket_size = max(1, len(l0_ids_sorted) // n_buckets)
+        for idx, l0 in enumerate(l0_ids_sorted):
+            b = min(idx // bucket_size, n_buckets - 1)
+            bucket_assignment[l0] = b
+    elif BRANCH_CURVATURE_STRATEGY == "kmeans":
+        # 1D kmeans on B(p)
+        from sklearn.cluster import KMeans
+        B_arr = np.array([l0_features[l]["B"] for l in l0_ids_sorted]).reshape(-1, 1)
+        if len(B_arr) < n_buckets:
+            # 退化: 等频
+            bucket_assignment = {}
+            bucket_size = max(1, len(l0_ids_sorted) // n_buckets)
+            for idx, l0 in enumerate(l0_ids_sorted):
+                b = min(idx // bucket_size, n_buckets - 1)
+                bucket_assignment[l0] = b
+        else:
+            km = KMeans(n_clusters=n_buckets, random_state=42, n_init=10)
+            km.fit(B_arr)
+            labels = km.labels_
+            # 按 cluster mean B 排序, label 0 = lowest B
+            cluster_means = {c: B_arr[labels == c].mean() for c in range(n_buckets)}
+            label_remap = {old: new for new, old in
+                           enumerate(sorted(cluster_means.keys(), key=lambda c: cluster_means[c]))}
+            bucket_assignment = {l0: int(label_remap[int(labels[idx])])
+                                 for idx, l0 in enumerate(l0_ids_sorted)}
+    else:
+        raise ValueError(f"未知的 BRANCH_CURVATURE_STRATEGY: {BRANCH_CURVATURE_STRATEGY}")
+    # 构造 token-id bucket lut (1025,)
+    # L0 token id = 1..64 (offset 1), 故 lut[1..64] = bucket[l0]
+    bucket_lut = np.full(1025, -1, dtype=np.int64)
+    for l0, b in bucket_assignment.items():
+        token_id = l0 + 1  # offset 1
+        if 1 <= token_id < 1025:
+            bucket_lut[token_id] = int(b)
+    # 校验: 必须有 n_buckets 个非 -1 桶
+    used_buckets = set(int(b) for b in bucket_assignment.values())
+    if len(used_buckets) != n_buckets:
+        raise ValueError(
+            f"分桶仅产出 {len(used_buckets)} 个非空桶 (期望 {n_buckets}). "
+            f"可能是 prefix 数 < n_buckets 或分布极端. bucket_assignment={bucket_assignment}"
+        )
+    stats = {
+        "n_items": int(len(sid)),
+        "l0_unique": int(len(l0_features)),
+        "l0_B_min": min(v["B"] for v in l0_features.values()),
+        "l0_B_max": max(v["B"] for v in l0_features.values()),
+        "l0_B_mean": float(np.mean([v["B"] for v in l0_features.values()])),
+        "l0_n_p_min": min(v["n_p"] for v in l0_features.values()),
+        "l0_n_p_max": max(v["n_p"] for v in l0_features.values()),
+        "buckets": {int(b): [int(l) for l in l0_ids_sorted
+                              if bucket_assignment[l] == b]
+                    for b in range(n_buckets)},
+        "strategy": BRANCH_CURVATURE_STRATEGY,
+        "lambda_mult": BRANCH_CURVATURE_LAMBDA_MULT,
+    }
+    return bucket_lut, stats
+
+
+def install_branch_curvature_on_hab(hab_module, bucket_lut):
+    """Monkey-patch hab_module.get_B_geo: 给 L0 token 之间的 bias 乘以 per-bucket multiplier.
+
+    实现细节:
+      - 缓存原始 get_B_geo (hab_module._original_get_B_geo)
+      - 替换为 wrapper: 算原始 B_geo, 然后对所有 (i, j) 都属 L0 layer 的 pair 乘以 mult[bucket[i]]
+        (注意: 这里 i=j 也乘, 因为 λ_max 是 per-source token 的强度, 不影响对称性)
+      - 保持 λ_raw 梯度正常流回 (mult 不参与梯度, 也不修改 lambda_eff)
+    """
+    import types
+    if not hasattr(hab_module, "_original_get_B_geo"):
+        hab_module._original_get_B_geo = hab_module.get_B_geo
+    # bucket_lut: numpy (1025,) int64, token_id → bucket_id (-1 = 非 L0 token)
+    bucket_lut_tensor = torch.as_tensor(bucket_lut, dtype=torch.long)
+    mult_list = BRANCH_CURVATURE_LAMBDA_MULT
+    if len(mult_list) != BRANCH_CURVATURE_N_BUCKETS:
+        raise ValueError(
+            f"--branch_curvature_lambda_mult 长度 {len(mult_list)} != "
+            f"--branch_curvature_n_buckets {BRANCH_CURVATURE_N_BUCKETS}"
+        )
+    mult_tensor = torch.tensor(mult_list, dtype=torch.float32)
+    n_buckets = BRANCH_CURVATURE_N_BUCKETS
+
+    def get_B_geo_branch(self, input_ids, layer_id_lut_tensor, attention_mask_2d=None):
+        """Branch-Aware 版本: 在原 get_B_geo 基础上, 给 L0 layer token 之间的 pair bias
+        乘以 mult[bucket[input_ids]] (per-source multiplier)."""
+        B_geo = self._original_get_B_geo(input_ids, layer_id_lut_tensor,
+                                          attention_mask_2d=attention_mask_2d)
+        # B_geo shape: (B, 1, L, L)
+        device = B_geo.device
+        _bucket_lut = bucket_lut_tensor.to(device)
+        _mult = mult_tensor.to(device)
+        _layer_lut = layer_id_lut_tensor.to(device)
+        # 找 L0 layer 的 mask
+        layer_ids = _layer_lut[input_ids]  # (B, L)
+        l0_mask = (layer_ids == 0)  # (B, L) bool — 仅 L0 token
+        if not l0_mask.any():
+            return B_geo
+        # 找每个 token 的 bucket id (clamp 到 [0, n_buckets-1])
+        bucket_ids = _bucket_lut[input_ids].clamp(0, n_buckets - 1)  # (B, L)
+        # per-token multiplier
+        token_mult = _mult[bucket_ids]  # (B, L), dtype float32
+        # 对所有 (i, j) 都属 L0 layer 的 pair 乘以 token_mult[i] (per-source scaling)
+        # mask_pair_l0 = l0_mask.unsqueeze(2) & l0_mask.unsqueeze(1)  # (B, L, L) bool
+        # multiplier_per_pair = token_mult.unsqueeze(-1) * mask_pair_l0.float()  # (B, L, L)
+        # 直接用乘法 + mask 屏蔽非 L0 pair
+        l0_mask_f = l0_mask.float()  # (B, L)
+        pair_mask = l0_mask_f.unsqueeze(2) * l0_mask_f.unsqueeze(1)  # (B, L, L)
+        multiplier = token_mult.unsqueeze(-1) * pair_mask  # (B, L, L)
+        # 广播到 (B, 1, L, L) 与 B_geo 相乘
+        B_geo_branched = B_geo * multiplier.unsqueeze(1)
+        # 保留 PAD mask (PAD 处原本就是 0, multiplier=0 仍 0, 安全)
+        return B_geo_branched
+
+    hab_module.get_B_geo = types.MethodType(get_B_geo_branch, hab_module)
+    return hab_module
+
+
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) 与 HAB/GEO 正交
 def build_prompt_former_module():
     """构建 DecorPromptFormer. 不需要 stage2 ckpt, 只用 T5 nn.Embedding.
@@ -1099,6 +1284,16 @@ def main():
         # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
         layer_id_lut_array = make_hab_layer_id_lut()
         model = install_hab(model, hab_module, layer_id_lut_array)
+        # 新 Issue Phase B: Branch-Aware HAB (按 L0 prefix branch features 分桶 λ_max)
+        if BRANCH_CURVATURE_ENABLED:
+            _bc_lut = build_branch_curvature_lut()
+            install_branch_curvature_on_hab(hab_module, _bc_lut)
+            if is_main:
+                log(f"[新 Issue Branch Curvature] λ_max bucket mult: "
+                    f"low={BRANCH_CURVATURE_LAMBDA_MULT[0]:.2f} "
+                    f"mid={BRANCH_CURVATURE_LAMBDA_MULT[1]:.2f} "
+                    f"high={BRANCH_CURVATURE_LAMBDA_MULT[2]:.2f} "
+                    f"strategy={BRANCH_CURVATURE_STRATEGY} sid={BRANCH_CURVATURE_SID_NPY}")
         if is_main:
             lambda_params = hab_module.lambda_raw.numel()
             residual_tag = f" residual_alpha_init={RESIDUAL_ALPHA_INIT}" if RESIDUAL_HAB_ENABLED else ""
