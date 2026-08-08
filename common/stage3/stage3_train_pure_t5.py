@@ -243,7 +243,7 @@ DDP_MODE = WORLD_SIZE > 1
 NUM_EPOCHS = 300  # Issue #141 v85p (2026-08-08): v85p 0.1060 (v85 系列 SOTA), warmup_frac=10% + LR_min=0.05. v85q LR_min 0.02 NO-GO 已 kill, 还原 v85p 配置. 下一轮改做新 Issue: Prefix-Conditioned Branch Curvature RQ-VAE.
 EARLY_STOP = 15  # Issue #141 v85p: 沿用 v85j ES=15 (300ep + 75 epoch 评估窗口).
 EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
-BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
+BATCH_SIZE = 2048  # Issue #141 v85q_batch2048 (2026-08-08): v85p batch 1024→2048 (DDP 4 卡 per-rank 512, 全局 2048). 梯度更稳, 抗过拟合. v85p batch=1024 ratio=1.244, 翻倍 batch 预期 ratio 改善. 失败立即改回 1024.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
 LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR=4e-4; DECOR paper lr=3e-3, 4e-4 太保守. 提 LR 到 1e-3 (DECOR 1/3), 配合 wd=0.01 + dropout=0.20 + label_smoothing=0.05 + HAB λ_lr_ratio=30. 预期 +1~2% test_R10 (基于曲率框架 P0 路线, 见 verdicts/issue76_radial_exploration_nogo.md 借鉴路线段).
