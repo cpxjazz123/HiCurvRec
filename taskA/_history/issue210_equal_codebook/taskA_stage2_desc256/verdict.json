@@ -1,0 +1,163 @@
+{
+  "gate2_decision": "PASS",
+  "n_kappa_updates": 1800,
+  "final_kappas": [
+    0.45151376724243164,
+    0.46758508682250977,
+    0.46795833110809326
+  ],
+  "final_cs": [
+    1.570688009262085,
+    1.5961350202560425,
+    1.5967308282852173
+  ],
+  "final_mix_weights": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "kappa_per_layer_std": 0.007665581844072366,
+  "mix_weight_std": 0.0,
+  "kappa_per_layer_diff_ok": true,
+  "mix_weight_diff_ok": true,
+  "sid_sha256": "69978a0d954ed8d60d866bfaca78a16f07d3c970ae39777abdff758df9b60c9e",
+  "util_per_layer_3digit": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "util_4digit": 1.0,
+  "precheck_pass": true,
+  "ablation_diff_ok": true,
+  "issue": "#57",
+  "mlr_kappa_dependent": true,
+  "mlr_logits_diff_norm": [
+    0.00011962921416852623,
+    0.00033054687082767487,
+    0.0003420279535930604
+  ],
+  "mlr_assignment_diff_rate": [
+    0.0048828125,
+    0.005859375,
+    0.005859375
+  ],
+  "gate1_issue57": {
+    "status": "PASS",
+    "spec": "[\u65b9\u5411A Gate1\u627f\u63a5] Residual Lorentz Head \u63a5\u5165\u4e09\u5c42\u72ec\u7acb\u53ef\u5b66\u4e60 \u03ba (L0 64/L1 128/L2 256) \u4e0e SID \u91cd\u6821\u51c6; \u03ba \u66f4\u65b0\u540e\u94fe\u5f0f\u91cd\u6821\u51c6 \u03ba\u2192c\u2192scale\u2192\u03a0(E)\u2192D\u2192A\u2192r\u2192SID \u6e05\u7f13\u5b58; \u03ba \u6270\u52a8-\u6062\u590d\u5355\u8fdb\u7a0b\u5ba1\u8ba1 (codebook/\u8ddd\u79bb/assignment/residual/SID hash+max err+churn); \u672c issue \u53ea\u5904\u7406 Stage1, \u4e0d\u8fdb\u5165 Stage2-4",
+    "input": {
+      "item_emb_npy": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_hyp_v2/item_emb_u32.npy",
+      "sha256": "e8fea26aa52438a7fb360fce8d1afbedcbbffc6d6e1564d67c5aa46f7bebe5fb",
+      "source": "Issue #56 residual Lorentz head export (taskA_stage1_issue56)",
+      "teacher_student_recall10_issue56": 0.9575
+    },
+    "codebook_sizes": [
+      256,
+      128,
+      64
+    ],
+    "e_dim": 32,
+    "kappa_learned": true,
+    "kappa_per_layer_diff_ok": true,
+    "final_kappas": [
+      0.45151376724243164,
+      0.46758508682250977,
+      0.46795833110809326
+    ],
+    "kappa_grad_ok": true,
+    "kappa_grad_values": [
+      0.5296512842178345,
+      0.0880790650844574,
+      0.06015843152999878
+    ],
+    "no_nan_inf": true,
+    "no_codebook_collapse": {
+      "unique_3digit": 9922,
+      "util_per_layer_3digit": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "util_4digit": 1.0
+    },
+    "recalibration_chain_audit": {
+      "subsets": {
+        "n": 1024,
+        "seed": 42
+      },
+      "perturb_delta": 0.02,
+      "chain": "\u03ba_l \u2192 c_l \u2192 scale_l \u2192 \u03a0(E_l) \u2192 D_l \u2192 A_l \u2192 r_{l+1} \u2192 SID",
+      "layer0": {
+        "kappa_before": 0.45151376724243164,
+        "kappa_after": 0.45244359970092773,
+        "c_before": 1.570688009262085,
+        "c_after": 1.5721491575241089,
+        "scale_before": 0.7979120721216734,
+        "scale_after": 0.7975411980077683,
+        "codebook_max_abs_err": 5.0514936447143555e-06,
+        "distance_max_abs_err": 4.1544437408447266e-05,
+        "residual_max_abs_err": 7.197260856628418e-06,
+        "assignment_churn": 0.0,
+        "sid_churn_3digit": 0.0,
+        "sid_hash_base": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_perturbed": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_restored": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "downstream_assignment_churn": [
+          0.0,
+          0.0
+        ],
+        "codebook_changed": true,
+        "distance_changed": true,
+        "restore_max_abs_err": 0.0,
+        "restore_consistent": true,
+        "ok": true
+      },
+      "layer1": {
+        "kappa_before": 0.46758508682250977,
+        "kappa_after": 0.46821343898773193,
+        "c_before": 1.5961350202560425,
+        "c_after": 1.5971382856369019,
+        "scale_before": 0.7915260030680539,
+        "scale_after": 0.7912773597942503,
+        "codebook_max_abs_err": 1.2293457984924316e-07,
+        "distance_max_abs_err": 3.874301910400391e-06,
+        "residual_max_abs_err": 1.2293457984924316e-07,
+        "assignment_churn": 0.0,
+        "sid_churn_3digit": 0.0,
+        "sid_hash_base": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_perturbed": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_restored": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "downstream_assignment_churn": [
+          0.0
+        ],
+        "codebook_changed": true,
+        "distance_changed": true,
+        "restore_max_abs_err": 0.0,
+        "restore_consistent": true,
+        "ok": true
+      },
+      "layer2": {
+        "kappa_before": 0.46795833110809326,
+        "kappa_after": 0.46857941150665283,
+        "c_before": 1.5967308282852173,
+        "c_after": 1.5977228879928589,
+        "scale_before": 0.7913783133193976,
+        "scale_after": 0.7911325834583809,
+        "codebook_max_abs_err": 3.3527612686157227e-08,
+        "distance_max_abs_err": 1.3709068298339844e-06,
+        "residual_max_abs_err": 3.725290298461914e-08,
+        "assignment_churn": 0.0,
+        "sid_churn_3digit": 0.0,
+        "sid_hash_base": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_perturbed": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "sid_hash_restored": "760dc4094ef6037e1988f06e243ca4ff2df784321b84ad96c954bd5d84c56667",
+        "downstream_assignment_churn": [],
+        "codebook_changed": true,
+        "distance_changed": true,
+        "restore_max_abs_err": 0.0,
+        "restore_consistent": true,
+        "ok": true
+      },
+      "all_ok": true
+    }
+  }
+}
