@@ -115,7 +115,7 @@ CODEBOOK_SIZE = [64, 128, 256, 1]
 # Issue #63: codeword 偏移表 (跟 Stage3 训练一致)
 CODEWORD_OFFSETS = [1, 65, 193, 449]
 CONFIG = dict(
-    num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,  # Issue #141 v85j (2026-08-08): num_decoder_layers 4→6 同步 Stage3 训练
+    num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,  # Issue #141 v85p (2026-08-08): 回到 num_heads=6 同步 v85j 训练, v85m heads=8 NO-GO. 仅 LR_WARMUP_FRAC 5%→10%.
     num_heads=6, d_kv=64, dropout_rate=0.1, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
     feed_forward_proj="relu",

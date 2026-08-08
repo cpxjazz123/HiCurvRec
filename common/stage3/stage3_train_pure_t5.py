@@ -219,8 +219,8 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 300  # Issue #141 v85j (2026-08-08): v85i 0.1044 (v85 系列 SOTA) + num_decoder_layers 4→6 (标准 T5-small 解码器, 6+6). v85i LR 调度已饱和 (300ep LR_min=0.05 仅 +0.0002 vs v85h), 跳出 LR 维度尝试增加解码器容量. 预期 +0.005~+0.010 → 0.109~0.114 (冲击 0.11 目标).
-EARLY_STOP = 15  # Issue #141 v85j: 沿用 v85i ES=15 (300ep + 75 epoch 评估窗口).
+NUM_EPOCHS = 300  # Issue #141 v85p (2026-08-08): v85j 0.1053 (v85 系列 SOTA) + LR_WARMUP_FRAC 5%→10% 让 6 decoder 早期梯度更稳定. v85m NO-GO 验证 heads 8 不优, v85l NO-GO 验证 8+8 不优, v85k NO-GO 验证 dropout 0.30 过强. 跳出 heads/layers/dropout, 试 LR schedule warmup 延长. 预期 +0.001~0.003 → 0.106~0.108.
+EARLY_STOP = 15  # Issue #141 v85p: 沿用 v85j ES=15 (300ep + 75 epoch 评估窗口).
 EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
 BATCH_SIZE = 1024  # Issue #64 v3 加速 (2026-08-06): 用户指示 batch=256/GPU (DDP 4 卡) → 全局 1024 = 当前 4x. per-rank 256 让 GPU util 从 27%→~70%, epoch time 略增但 total epochs 减半 → 总训练时间减半. 历史 v2 batch=64/GPU = 256 全局, GPU 内存只用 3%.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
@@ -229,7 +229,7 @@ LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR
 
 # Issue #141 v85f (2026-08-08): LR cosine 温和版 (沿用 v85d) + SID v15 (5f8331cc). v85d (warmup_frac=0.05 + LR_min=0.1 + 200ep) 配 hyp_v2 SID test=0.1011. v85f 同样 LR 调度换 SID v15, 验证 v15 κ=[0.30,1.79,1.48] c=[1.35,6.00,4.39] 强几何信号 + cosine 衰减是否协同.
 LR_SCHEDULER = "cosine"  # Issue #141 v85f (2026-08-08): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
-LR_WARMUP_FRAC = 0.05  # Issue #141 v85f: warmup 占总训练步的比例 (5% = 10 epoch × 131837 samples / 1024 batch / 4 world_size)
+LR_WARMUP_FRAC = 0.10  # Issue #141 v85p: warmup 占比 5%→10% 让 6 decoder 早期梯度更稳定, 总步 9900 × 10% = 990 warmup steps, 20 epoch warmup (vs v85j 5% = 10 epoch warmup)
 LR_MIN_FACTOR = 0.05  # Issue #141 v85i: cosine decay 末态 LR 倍率 (5e-5, 比 v85f 0.1 更低), 巩固 cosine 末期收敛. v85f LR_min=1e-4, v85i LR_min=5e-5.
 MAX_LEN = 20
 NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
@@ -271,7 +271,7 @@ _LAYER_ID_LUT[1:65] = 0        # L0: K=64
 _LAYER_ID_LUT[65:193] = 1      # L1: K=128
 _LAYER_ID_LUT[193:449] = 2     # L2: K=256
 _LAYER_ID_LUT[449:450] = 3     # L3: K=1 (dedup)
-CONFIG = dict(                               # Issue #141 v85j (2026-08-08): 标准 T5-small (encoder 6 + decoder 6). v85i (encoder 6 + decoder 4) 0.1044 触及 LR 调度极限, 增加解码层容量. d_model=128/d_ff=1024 保持不变 (避免参数爆炸).
+CONFIG = dict(                               # Issue #141 v85p (2026-08-08): 回到 v85j 配置 (num_heads=6, d_kv=64), v85m heads=8 NO-GO 验证. 仅 LR_WARMUP_FRAC 5%→10% 是核心改动. 其余 v85j (num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024, dropout=0.20, label_smoothing=0.05).
     num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,
     num_heads=6, d_kv=64, dropout_rate=STAGE3_DROPOUT, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
