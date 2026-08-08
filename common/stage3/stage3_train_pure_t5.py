@@ -240,10 +240,10 @@ LOCAL_RANK = _args.local_rank
 DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
-NUM_EPOCHS = 300  # Issue #141 v85p (2026-08-08): v85p 0.1060 (v85 系列 SOTA), warmup_frac=10% + LR_min=0.05. v85q LR_min 0.02 NO-GO 已 kill, 还原 v85p 配置. 下一轮改做新 Issue: Prefix-Conditioned Branch Curvature RQ-VAE.
-EARLY_STOP = 15  # Issue #141 v85p: 沿用 v85j ES=15 (300ep + 75 epoch 评估窗口).
-EVAL_INTERVAL = 5  # Issue #141 v85 (2026-08-07): v77 base EI=5
-BATCH_SIZE = 2048  # Issue #141 v85q_batch2048 (2026-08-08): v85p batch 1024→2048 (DDP 4 卡 per-rank 512, 全局 2048). 梯度更稳, 抗过拟合. v85p batch=1024 ratio=1.244, 翻倍 batch 预期 ratio 改善. 失败立即改回 1024.
+NUM_EPOCHS = 200  # Issue #210 Phase D (2026-08-08): 用户指示 200 epoch. v85p PARTIAL-GO 0.1080 300ep 配置, Phase D 用户改为 200 epoch 验证 equal128 SID 收敛.
+EARLY_STOP = 20  # Issue #210 Phase D (2026-08-08): 用户指示 20 epoch 无改善早停 (vs v85p ES=15). 每 epoch 评估 → ES 20 = 20 次连续评估无改进.
+EVAL_INTERVAL = 1  # Issue #210 Phase D (2026-08-08): 用户指示每个 epoch 评估一次 (vs v85p EI=5). 监控粒度更细, 早停更敏感.
+BATCH_SIZE = 1024  # Issue #141 v85p PARTIAL-GO (2026-08-08): v85p batch=1024 baseline, v85q batch=2048 仍在 pending. v77/v85p + v15 SID 0.1080 (历史 SOTA) 用此 batch. Phase D 验证 equal128 SID 必严格匹配 v85p 配置.
 INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
 SEED = 42
 LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR=4e-4; DECOR paper lr=3e-3, 4e-4 太保守. 提 LR 到 1e-3 (DECOR 1/3), 配合 wd=0.01 + dropout=0.20 + label_smoothing=0.05 + HAB λ_lr_ratio=30. 预期 +1~2% test_R10 (基于曲率框架 P0 路线, 见 verdicts/issue76_radial_exploration_nogo.md 借鉴路线段).
@@ -413,11 +413,17 @@ def _poll_stage4_procs():
                     test_r10 = json.loads(test_json.read_text()).get("R@10")
                 except Exception:
                     pass
-            if test_r10 is not None:
+            # Issue #210 Phase D fix (2026-08-08): valid_r10 may be None if trigger 路径异常而未传.
+            # 触发条件: trigger 返回 None 时 _STAGE4_PROCS 不被赋值, 但防御性 None check 仍保留.
+            if valid_r10 is None:
+                log(f"[v85] stage4 test DONE ep{ep} but valid_r10 is None (trigger 异常), skip")
+            elif test_r10 is not None:
                 _append_stage4_history(ep - 1, valid_r10, test_r10, test_json)
-                ratio = valid_r10 / test_r10 if test_r10 > 0 else None
-                log(f"[v85] stage4 test DONE ep{ep} valid_R10={valid_r10:.4f} "
-                    f"test_R10={test_r10:.4f} ratio={ratio:.3f}")
+                ratio = valid_r10 / test_r10 if (test_r10 is not None and test_r10 > 0) else None
+                v_str = f"{valid_r10:.4f}"
+                r_str = f"{ratio:.3f}" if ratio is not None else "None"
+                log(f"[v85] stage4 test DONE ep{ep} valid_R10={v_str} "
+                    f"test_R10={test_r10:.4f} ratio={r_str}")
             else:
                 log(f"[v85] stage4 test DONE ep{ep} but eval_test.json 不存在 (log={eval_dir.parent}/ep{ep}_eval.log)")
     for ep in finished:
