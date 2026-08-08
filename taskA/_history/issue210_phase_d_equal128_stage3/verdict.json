@@ -1,0 +1,66 @@
+{
+  "tag": "equal128_v85p",
+  "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue210_equal_codebook/taskA_stage2_equal128/sid_output.npy",
+  "sid_sha256": "ac33431b11061c0cd5a8a10e815b5449a56a9dcec6e42da90e33807381c1afcc",
+  "best_epoch": 106,
+  "best_loss": 2.7513,
+  "final_epoch": 126,
+  "best_trace": {
+    "epoch": 106,
+    "train_loss": 2.7512757829092083,
+    "R@5": 0.09802459466915864,
+    "R@10": 0.1209216380921694,
+    "R@20": 0.14862637359362382,
+    "NDCG@5": 0.08206484048412396,
+    "NDCG@10": 0.08932436721829268,
+    "NDCG@20": 0.09630282303461661,
+    "t_train": 12.4,
+    "t_eval": 4.7,
+    "early_stop_counter": 7,
+    "best_loss": 2.7536,
+    "lambda_raw": [
+      1.4375,
+      1.42535,
+      1.10816
+    ],
+    "lambda_eff": [
+      0.2,
+      0.2,
+      0.19999
+    ],
+    "hab_inject_count": 20758,
+    "U_l2_norm": [
+      58.3098,
+      79.1651,
+      60.1201
+    ],
+    "V_l2_norm": [
+      56.2133,
+      74.9114,
+      59.0844
+    ]
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 6,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.3,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.001,
+    "batch_size": 1024,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 4,
+    "bf16": true,
+    "early_stop_metric": "train_loss"
+  },
+  "done_at": "2026-08-08 15:56:44"
+}
