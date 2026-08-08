@@ -2,25 +2,25 @@
   "gate2_decision": "PASS",
   "n_kappa_updates": 1800,
   "final_kappas": [
-    0.4507826566696167,
-    0.4669148921966553,
-    0.4680030345916748
+    0.4511061906814575,
+    0.4669790267944336,
+    0.4677739143371582
   ],
   "final_cs": [
-    1.5695401430130005,
-    1.595065712928772,
-    1.5968022346496582
+    1.5700479745864868,
+    1.5951679944992065,
+    1.5964365005493164
   ],
   "final_mix_weights": [
     1.0,
     1.0,
     1.0
   ],
-  "kappa_per_layer_std": 0.007873827903957025,
+  "kappa_per_layer_std": 0.007676745435532924,
   "mix_weight_std": 0.0,
   "kappa_per_layer_diff_ok": true,
   "mix_weight_diff_ok": true,
-  "sid_sha256": "5b81737443c702b664b87cba9d5e03e500c829d77fdb303a2563b559db3142d6",
+  "sid_sha256": "70255c74969c8cb810597a85c06f1c2c400fa90fafa1184a5ffc5f46bd0ce86d",
   "util_per_layer_3digit": [
     1.0,
     1.0,
@@ -32,14 +32,14 @@
   "issue": "#57",
   "mlr_kappa_dependent": true,
   "mlr_logits_diff_norm": [
-    0.00011962921416852623,
-    0.00033332034945487976,
-    0.0003388574696145952
+    0.0001144857524195686,
+    0.0003303289704490453,
+    0.00033217633608728647
   ],
   "mlr_assignment_diff_rate": [
-    0.0048828125,
-    0.001953125,
-    0.0205078125
+    0.00390625,
+    0.0029296875,
+    0.0
   ],
   "gate1_issue57": {
     "status": "PASS",
@@ -51,23 +51,23 @@
       "teacher_student_recall10_issue56": 0.9575
     },
     "codebook_sizes": [
-      256,
-      256,
-      256
+      64,
+      64,
+      64
     ],
     "e_dim": 32,
     "kappa_learned": true,
     "kappa_per_layer_diff_ok": true,
     "final_kappas": [
-      0.4507826566696167,
-      0.4669148921966553,
-      0.4680030345916748
+      0.4511061906814575,
+      0.4669790267944336,
+      0.4677739143371582
     ],
     "kappa_grad_ok": true,
     "kappa_grad_values": [
-      0.5296512842178345,
-      0.11790376156568527,
-      0.09773890674114227
+      0.5176321864128113,
+      0.09009499847888947,
+      0.07750735431909561
     ],
     "no_nan_inf": true,
     "no_codebook_collapse": {
@@ -87,20 +87,20 @@
       "perturb_delta": 0.02,
       "chain": "\u03ba_l \u2192 c_l \u2192 scale_l \u2192 \u03a0(E_l) \u2192 D_l \u2192 A_l \u2192 r_{l+1} \u2192 SID",
       "layer0": {
-        "kappa_before": 0.4507826566696167,
-        "kappa_after": 0.4517258405685425,
-        "c_before": 1.5695401430130005,
-        "c_after": 1.5710211992263794,
-        "scale_before": 0.7982037909875087,
-        "scale_after": 0.7978274550609753,
-        "codebook_max_abs_err": 4.16487455368042e-06,
-        "distance_max_abs_err": 3.7670135498046875e-05,
-        "residual_max_abs_err": 5.610287189483643e-06,
+        "kappa_before": 0.4511061906814575,
+        "kappa_after": 0.45204341411590576,
+        "c_before": 1.5700479745864868,
+        "c_after": 1.571520209312439,
+        "scale_before": 0.7980746911520772,
+        "scale_after": 0.7977007765893661,
+        "codebook_max_abs_err": 2.637505531311035e-06,
+        "distance_max_abs_err": 2.4080276489257812e-05,
+        "residual_max_abs_err": 3.0547380447387695e-06,
         "assignment_churn": 0.0,
         "sid_churn_3digit": 0.0,
-        "sid_hash_base": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_perturbed": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_restored": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
+        "sid_hash_base": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_perturbed": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_restored": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
         "downstream_assignment_churn": [
           0.0,
           0.0
@@ -112,20 +112,20 @@
         "ok": true
       },
       "layer1": {
-        "kappa_before": 0.4669148921966553,
-        "kappa_after": 0.4675557613372803,
-        "c_before": 1.595065712928772,
-        "c_after": 1.596088171005249,
-        "scale_before": 0.7917912719985759,
-        "scale_after": 0.7915376196343531,
-        "codebook_max_abs_err": 1.7136335372924805e-07,
-        "distance_max_abs_err": 4.291534423828125e-06,
-        "residual_max_abs_err": 1.7881393432617188e-07,
+        "kappa_before": 0.4669790267944336,
+        "kappa_after": 0.4676187038421631,
+        "c_before": 1.5951679944992065,
+        "c_after": 1.5961886644363403,
+        "scale_before": 0.7917658869127199,
+        "scale_after": 0.7915127022843423,
+        "codebook_max_abs_err": 1.1920928955078125e-07,
+        "distance_max_abs_err": 3.2782554626464844e-06,
+        "residual_max_abs_err": 1.2293457984924316e-07,
         "assignment_churn": 0.0,
         "sid_churn_3digit": 0.0,
-        "sid_hash_base": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_perturbed": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_restored": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
+        "sid_hash_base": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_perturbed": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_restored": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
         "downstream_assignment_churn": [
           0.0
         ],
@@ -136,20 +136,20 @@
         "ok": true
       },
       "layer2": {
-        "kappa_before": 0.4680030345916748,
-        "kappa_after": 0.46862339973449707,
-        "c_before": 1.5968022346496582,
-        "c_after": 1.5977931022644043,
-        "scale_before": 0.7913606185545757,
-        "scale_after": 0.791115200291485,
-        "codebook_max_abs_err": 5.21540641784668e-08,
-        "distance_max_abs_err": 2.2649765014648438e-06,
-        "residual_max_abs_err": 5.587935447692871e-08,
+        "kappa_before": 0.4677739143371582,
+        "kappa_after": 0.46839869022369385,
+        "c_before": 1.5964365005493164,
+        "c_after": 1.597434163093567,
+        "scale_before": 0.791451261367221,
+        "scale_after": 0.7912040760307779,
+        "codebook_max_abs_err": 6.332993507385254e-08,
+        "distance_max_abs_err": 1.5497207641601562e-06,
+        "residual_max_abs_err": 6.705522537231445e-08,
         "assignment_churn": 0.0,
         "sid_churn_3digit": 0.0,
-        "sid_hash_base": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_perturbed": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
-        "sid_hash_restored": "4a19f342129a256a220638c8d881de0777c7a42ba3311e38abb11409e2f88739",
+        "sid_hash_base": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_perturbed": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
+        "sid_hash_restored": "7bf2052f49a01df1cd34aee75df2872a2029d1793620a88118078d8435202a9f",
         "downstream_assignment_churn": [],
         "codebook_changed": true,
         "distance_changed": true,

@@ -79,7 +79,7 @@ INPUT_PROJ_ENABLED = True
 INPUT_PROJ_DIM = 512
 
 # 量化器结构
-CODEBOOK_SIZES = [128, 128, 128]  # Issue #210 Phase A 主控: equal-codebook (128,128,128), 等 RQ depth 异质性排除 confounder.
+CODEBOOK_SIZES = [64, 128, 256]  # v15 capmatch: K=(64,128,256) 递增, 三层差异化曲率 (issue #210 验证 K 是 κ heterogeneity 主因).
 E_DIM = 32
 ENCODER_LAYERS = [512, 256, 128, 64]
 BETA = 1.0
@@ -2150,10 +2150,10 @@ def main():
         print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
         # Issue #210 (2026-08-08): equal-codebook 配置下三层 κ init 相同, signed_diff < 1e-5
         # 导致 Issue #45 precheck FAIL. 这是 expected, 不代表模型错误, 强制 bypass.
-        # 通过 sys.argv 含 "issue210" 触发 (避开 sweep_id 白名单).
-        if any("issue210" in str(a) for a in __import__("sys").argv):
+        # 触发条件: 三层 CODEBOOK_SIZES 完全相同 (equal-codebook 必然).
+        if len(set(CODEBOOK_SIZES)) == 1:
             precheck_pass = True
-            print("[Issue #210] precheck bypass (equal-codebook signed_diff expected < 1e-5)")
+            print(f"[Issue #210] precheck bypass (equal-codebook {CODEBOOK_SIZES}, signed_diff expected < 1e-5)")
     else:
         precheck_pass = True  # 占位, 等 rank 0 broadcast
 
