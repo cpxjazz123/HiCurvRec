@@ -113,9 +113,9 @@ _argparser.add_argument("--residual_alpha_lr_ratio", type=float, default=10.0,
                         help="Issue #71: residual_alpha param group lr 倍率 (默认 10×, 推动 alpha 学习)")
 # Issue #71 Phase A (2026-08-07): HAB warmup 延迟开启 (DECOR + HAB 协同, 防 v79 优化 landscape 冲突)
 _argparser.add_argument("--hab_warmup_T0", type=int, default=0,
-                        help="Issue #71 Phase A: HAB warmup 起始步数 (前 T_0 步 w=0)")
+                        help="Issue #71 Phase A: HAB warmup 起始步数 (前 T_0 步 w=0). 默认 0 = 立即激活 (v77 baseline). v86 借鉴 v78 alpha_warmup_steps=200 显式传 200 PARTIAL-GO (FAIL vs v77 -0.0112, 见 verdicts/issue86_v86_kwarmup.md).")
 _argparser.add_argument("--hab_warmup_Tw", type=int, default=0,
-                        help="Issue #71 Phase A: HAB warmup 渐增步数 (T_0+T_w 步内 w 渐增到 1)")
+                        help="Issue #71 Phase A: HAB warmup 渐增步数 (T_0+T_w 步内 w 渐增到 1). 默认 0 = 立即激活 (v77 baseline). v86 显式传 400 (~8 epoch 平滑过渡).")
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB (ΔD = D_hyp - D_flat) — 剥离码字距离尺度, 只留曲率贡献
 _argparser.add_argument("--hab_delta_curvature", action="store_true",
                         help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
@@ -385,6 +385,9 @@ def trigger_stage4_test_async(ckpt_path, epoch, valid_r10):
             cmd += ["--enable_residual_hab",
                     "--residual_alpha_init", str(RESIDUAL_ALPHA_INIT),
                     "--hab_lambda_max", str(HAB_LAMBDA_MAX)]
+        # Issue #71 Phase A: 透传 HAB warmup 到 Stage4 eval (Stage4 应保持 w=1 评估, 但 _step_counter 不重置会继续累计, 安全起见 T0/Tw 也传)
+        cmd += ["--hab_warmup_T0", str(HAB_WARMUP_T0),
+                "--hab_warmup_Tw", str(HAB_WARMUP_TW)]
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = str(STAGE4_TEST_GPU)
     log_h = open(eval_log, "w")
