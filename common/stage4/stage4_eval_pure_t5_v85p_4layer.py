@@ -46,6 +46,8 @@ from common.hyperbolic_attention_bias import (  # noqa: E402
 )
 # Issue #236 (2026-08-10): Stage3 Poincaré Attention Scoring eval 同步
 from common.poincare_attention_scoring import install_poincare_attention_scoring  # noqa: E402
+# Issue #238 (2026-08-10): Stage4 Poincaré Re-ranking (post-generation rerank)
+from common.poincare_rerank import load_poincare_assets, rerank_with_poincare  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────
 # argparse (R30 严格: 无 env var 读取)
@@ -96,6 +98,14 @@ _argparser.add_argument("--poincare_attn_scoring", action="store_true",
                         help="Issue #236: 启用 Poincaré Attention Scoring eval (与 Stage3 训练一致)")
 _argparser.add_argument("--poincare_c_init", type=float, default=1.0,
                         help="Issue #236: eval 初始曲率 c (eval 阶段通常 c_learnable=False, 用训练末值)")
+# Issue #238 (2026-08-10): Stage4 Hyperbolic Re-ranking — 绕开 #100 cross-entropy 失败路径
+# 曲率不进 cross-entropy, 只进 post-generation rerank (Stage4)
+_argparser.add_argument("--poincare_rerank", action="store_true",
+                        help="Issue #238: 启用 Poincaré 距离 rerank (score = orig + alpha*R_geo, R_geo = -d_P(history, cand))")
+_argparser.add_argument("--rerank_alpha", type=float, default=0.5,
+                        help="Issue #238: R_geo 权重 alpha (默认 0.5, 0 = 不 rerank 与 v18 baseline 等价)")
+_argparser.add_argument("--rerank_layer", type=int, default=0, choices=[0, 1, 2],
+                        help="Issue #238: 用哪层 codebook 算 R_geo (0=L0/64 entries, 1=L1/128, 2=L2/256)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -126,6 +136,10 @@ CPERTURB_SCALE = _args.c_perturb_scale
 # Issue #236 (2026-08-10): Poincaré Attention Scoring eval
 POINCARE_ATTN_SCORING = _args.poincare_attn_scoring
 POINCARE_C_INIT = _args.poincare_c_init
+# Issue #238 (2026-08-10): Poincaré Re-ranking (Stage4 post-generation)
+POINCARE_RERANK = _args.poincare_rerank
+RERANK_ALPHA = _args.rerank_alpha
+RERANK_LAYER = _args.rerank_layer
 # Issue #70: DECOR PromptFormer 配置
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
@@ -625,6 +639,21 @@ def main():
             preds = model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=BEAM_SIZE, num_beam_groups=NUM_BEAM_GROUPS if NUM_BEAM_GROUPS > 0 else 1, diversity_penalty=DIVERSITY_PENALTY if NUM_BEAM_GROUPS > 0 else 0.0, length_penalty=LENGTH_PENALTY)
             preds = preds[:, 1:]
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
+            # Issue #238 (2026-08-10): Stage4 Poincaré Re-ranking
+            # alpha=0 完全等价 v18 baseline (no rerank, 保持 generate 原序)
+            # alpha>0 按 R_geo 重排 top-K (鼓励 candidate 与 history 在 Poincaré 球上接近)
+            if POINCARE_RERANK:
+                from common.poincare_rerank import compute_geo_score_batch
+                _codebook_t, _c_t = load_poincare_assets(HAB_STAGE2_CKPT, layer=RERANK_LAYER)
+                R_geo = compute_geo_score_batch(input_ids, preds, _codebook_t, _c_t, device=DEVICE)  # (B, K)
+                # 策略:
+                #   α=0 → 严格保持原 beam 序 (rank_score 主导, R_geo = 0)
+                #   α>0 → 按 α*R_geo 重排 (鼓励 candidate 与 history 在 Poincaré 球上接近)
+                # rank_score = -beam_idx / K 归一化到 [-1, 0]
+                rank_score = -torch.arange(BEAM_SIZE, dtype=torch.float, device=DEVICE).unsqueeze(0).expand(input_ids.shape[0], -1) / BEAM_SIZE
+                final_score = rank_score + RERANK_ALPHA * R_geo
+                new_order = final_score.argsort(dim=-1, descending=True)  # (B, K)
+                preds = torch.gather(preds, 1, new_order.unsqueeze(-1).expand(-1, -1, preds.shape[-1]))
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)
             for k in TOP_K:
                 recalls[f"R@{k}"].append(recall_at_k(pos_index, k).mean().item())
