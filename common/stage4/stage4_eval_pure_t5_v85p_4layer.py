@@ -79,6 +79,10 @@ _argparser.add_argument("--enable_prompt_former", action="store_true", help="Iss
 _argparser.add_argument("--prompt_former_alpha", type=float, default=0.35, help="Issue #70: alpha gate sigmoid 初始值 (Stage3 train 默认 0.35)")
 _argparser.add_argument("--prompt_former_num_bos_queries", type=int, default=64, help="Issue #70: learnable bos_queries count (DECOR 默认 64)")
 _argparser.add_argument("--beam_size", type=int, default=20, help="Issue #45 beam_size sweep: 默认 20, 尝试 10/30/50")
+# Issue #95 single-ckpt diverse beam search (DBS): num_beam_groups + diversity_penalty 强制组间差异
+_argparser.add_argument("--num_beam_groups", type=int, default=0, help="Issue #95 DBS: 0=标准 beam, >0=DBS (需整除 beam_size)")
+_argparser.add_argument("--diversity_penalty", type=float, default=0.5, help="Issue #95 DBS: 组间 diversity penalty")
+_argparser.add_argument("--length_penalty", type=float, default=1.0, help="Issue #95 single-ckpt beam=20: length penalty (HF generate kwarg, 1.0=neutral)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -125,6 +129,11 @@ CONFIG = dict(
 )
 TOP_K = [5, 10, 20]
 BEAM_SIZE = _args.beam_size  # Issue #45: 允许 sweep beam_size
+# Issue #95 DBS: num_beam_groups > 0 触发 diverse beam search
+NUM_BEAM_GROUPS = _args.num_beam_groups
+DIVERSITY_PENALTY = _args.diversity_penalty
+# Issue #95 single-ckpt beam=20: try length_penalty to favor longer sequences
+LENGTH_PENALTY = getattr(_args, "length_penalty", 1.0)
 MAX_LEN = 20
 
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
@@ -572,7 +581,7 @@ def main():
             input_ids = batch["history"].to(DEVICE)
             attention_mask = batch["attention_mask"].to(DEVICE)
             labels = batch["target"].to(DEVICE)
-            preds = model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=BEAM_SIZE)
+            preds = model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=BEAM_SIZE, num_beam_groups=NUM_BEAM_GROUPS if NUM_BEAM_GROUPS > 0 else 1, diversity_penalty=DIVERSITY_PENALTY if NUM_BEAM_GROUPS > 0 else 0.0, length_penalty=LENGTH_PENALTY)
             preds = preds[:, 1:]
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)
