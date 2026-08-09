@@ -275,6 +275,17 @@ MCJT_C_SET = [0.5, 1.0, 2.0, 5.0]   # 4 个 c 值覆盖 #83 distortion curve 整
 MCJT_ENTROPY_LAMBDA = 1.0   # α entropy reg 强度 (防塌缩到单一 c)
 MCJT_LAYER_LAMBDA = 0.1     # per-layer multi-c recon 相对 commitment loss 的权重
 MCJT_ENTROPY_MIN_FACTOR = 0.5  # entropy ≥ log(|C_set|)·factor = log(4)·0.5 ≈ 0.693
+# Issue #104 (2026-08-10): Stratified Poincaré Ball Initialization (SPBI) — 4 径向层 + S^{dim-1} 均匀方向.
+# 路径与 v15 capmatch + MCJT (#103) 完全正交:
+#   - 不改 κ/c 标量, 不改 distance, 不改 loss aggregation
+#   - 改 codebook 初始化: 从 KMeans (Euclidean → exp_map) 改为 stratified shell sampling
+#     让 codeword 在 Poincaré 球面上预先分散到 4 个径向层 + 每层内方向均匀
+#   - 动机: 防 v26 MCJT 类 codebook 早期塌缩 (init 阶段就分散 → 后期不容易聚集)
+# Gate 1: util_3digit > 0.85 (init 分散应避免 v26 类塌缩)
+# Gate 2: SID collision > 60% with 5f8331cc (init 差异应允许更大多样性)
+SPBI_INIT = False           # 由 --spbi_init flag 启用; 默认 False 兼容 v15 KMeans init
+SPBI_R_SHELLS = [0.3, 0.5, 0.7, 0.9]   # 4 个 Poincaré 球径向层
+SPBI_INIT_C = 1.0           # 初始化用 c (expmap_0 在 c=1 时 ‖·‖_ball = tanh(‖v‖))
 
 # issue #70/#71/#72 共用的曲率取值集合 (κ 即曲率 c)
 CURV_SWEEP_KAPPAS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0]   # #70 per-layer 扫描用 (7 值)
@@ -412,6 +423,9 @@ _argparser.add_argument("--enable_per_batch_radius_mod", action="store_true",
 # Issue #103 (2026-08-10): MCJT — Multi-Curvature Joint Training
 _argparser.add_argument("--mcjt_alpha", action="store_true", default=False,
                         help="Issue #103: 启用 MCJT multi-c recon loss aggregation + learnable α_c (per layer, |C_set|=4)")
+# Issue #104 (2026-08-10): SPBI — Stratified Poincaré Ball Initialization
+_argparser.add_argument("--spbi_init", action="store_true", default=False,
+                        help="Issue #104: 启用 SPBI 4 径向层 codebook init (|R_shells|=4, 方向 S^{dim-1} 均匀)")
 _args = _argparser.parse_args()
 
 # Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
@@ -435,6 +449,12 @@ if _args.mcjt_alpha:
     print(f"[Issue103] MCJT_ALPHA=ON → per-layer recon loss = Σ_c α_c·d_P^c, α_c learnable, |C_set|={len(MCJT_C_SET)}")
 else:
     MCJT_ALPHA = False
+# Issue #104 (2026-08-10): SPBI — stratified Poincaré ball init flag
+if _args.spbi_init:
+    SPBI_INIT = True
+    print(f"[Issue104] SPBI_INIT=ON → codebook init = stratified {len(SPBI_R_SHELLS)} shells at Poincaré ball radius {SPBI_R_SHELLS}, S^{{dim-1}} uniform")
+else:
+    SPBI_INIT = False
 
 WORLD_SIZE = int(os.environ.get("WORLD_SIZE", _args.world_size))
 RANK = int(os.environ.get("RANK", _args.rank))
@@ -728,6 +748,32 @@ class KappaAwareVectorQuantization(nn.Module):
         # kmeans() 内部 .cpu().numpy() 不支持 bf16 → 转 fp32
         if data.dtype != torch.float32:
             data = data.float()
+        # Issue #104 (2026-08-10): SPBI — Stratified Poincaré Ball Initialization
+        # 在 c=1.0 下, exp_map_0(v) 给出 ‖·‖_ball = tanh(‖v‖). 要使 codeword 在 Poincaré 球上
+        # 半径 = r, 取 ‖v‖ = arctanh(r), 方向 d ∈ S^{dim-1} 均匀 (N(0,I) normalize).
+        # codeword 按 i % |R_shells| 分配到 4 个径向层, 每层容纳 K/4 个 codeword.
+        # v15 KMeans 默认 init 保留 (SPBI_INIT=False).
+        if SPBI_INIT:
+            n_e = self.n_e
+            e_dim = self.e_dim
+            n_shells = len(SPBI_R_SHELLS)
+            if n_e % n_shells != 0:
+                raise ValueError(f"SPBI requires n_e={n_e} divisible by n_shells={n_shells}, "
+                                 f"got {n_e}/{n_shells}={n_e/n_shells} (per-shell allocation).")
+            per_shell = n_e // n_shells
+            centers = torch.zeros(n_e, e_dim, dtype=torch.float32)
+            for si, r in enumerate(SPBI_R_SHELLS):
+                # v_norm = arctanh(r) for c=1.0 (exp_map_0 output radius = r)
+                v_norm = math.atanh(min(max(r, 1e-5), 1.0 - 1e-5))
+                # Direction: sample N(0,1) and normalize → uniform on S^{dim-1}
+                d = torch.randn(per_shell, e_dim, dtype=torch.float32)
+                d = d / d.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+                centers[si * per_shell:(si + 1) * per_shell] = v_norm * d
+            self.embeddings.weight.data.copy_(centers)
+            self.initted = True
+            print(f"[Issue104] SPBI init: {n_e} codewords → {n_shells} shells at r={SPBI_R_SHELLS}, "
+                  f"v_norm={v_norm:.4f}, S^{{{e_dim-1}}} uniform")
+            return
         centers = kmeans(data, self.n_e, self.kmeans_iters)
         self.embeddings.weight.data.copy_(centers)
         self.initted = True
