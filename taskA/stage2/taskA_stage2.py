@@ -134,6 +134,13 @@ CURV_AWARE = True
 CURV_PRIOR = True
 CURV_PRIOR_LAMBDA = 0.1  # 默认 (Issue #76 经验值, 保留 v15 行为)
 
+# Issue #228 (2026-08-09): Stage2 κ per-batch radius modulation.
+#   κ_eff_l = κ_l_base · (1 + α_l · batch_mean_norm), α_l ∈ [-0.5, 0.5] (sigmoid bound).
+#   per-batch scalar 调制 (非 per-item), 梯度量级 ≈ baseline, 不触发 #225 v2 40× 爆炸.
+#   batch_mean_norm = 当前 batch 量化前 residual latent 的平均范数 (proxy 球面深度).
+PER_BATCH_RADIUS_MOD = False  # 默认关 (与 v15 capmatch 完全等价)
+PER_BATCH_RADIUS_MOD_MAX = 0.5  # sigmoid - 0.5 后 bound, 与 baseline 兼容 ±50%
+
 # Issue #76 第二步: 相对结构目标 (per-layer target 由码字数 n_e + δ 反解)
 REL_STRUCT = True
 REL_STRUCT_TARGET = 0.3  # legacy 固定值 (仅 δ≤0 时使用, 默认走 per-layer 反解)
@@ -384,6 +391,9 @@ _argparser.add_argument("--sweep_id", type=str, default=None,
 # Issue #75 (2026-08-07): Vanilla-RQ 欧氏基线模式 (避免几何干扰) + 每 epoch 收集 ‖r_l‖
 _argparser.add_argument("--vanilla_rq", action="store_true",
                         help="Issue #75: 切到纯欧氏 Vanilla-RQ (no Poincaré), 每 epoch 收集 ‖r_l‖ mean/std/分位数 + KS 检验")
+# Issue #228 (2026-08-09): Stage2 κ per-batch radius modulation — κ_l_eff = κ_l_base · (1 + α_l · batch_norm)
+_argparser.add_argument("--enable_per_batch_radius_mod", action="store_true",
+                        help="Issue #228: 启用 per-batch radius 调制 c_l (与 v15 capmatch baseline 完全等价, 仅 α_l init 0)")
 _args = _argparser.parse_args()
 
 # Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
@@ -393,6 +403,13 @@ if _args.vanilla_rq:
     print("[Issue75] VANILLA_RQ=ON → poincare_recon_loss 已被欧氏 MSE 覆盖; 每 epoch 收集 ‖r_l‖")
 else:
     VANILLA_RQ = False
+
+# Issue #228 (2026-08-09): Stage2 κ per-batch radius modulation flag
+if _args.enable_per_batch_radius_mod:
+    PER_BATCH_RADIUS_MOD = True
+    print("[Issue228] PER_BATCH_RADIUS_MOD=ON → κ_l_eff = κ_l_base · (1 + α_l · batch_norm), α_l init 0")
+else:
+    PER_BATCH_RADIUS_MOD = False
 
 WORLD_SIZE = _args.world_size
 RANK = _args.rank
@@ -562,6 +579,13 @@ class KappaAwareVectorQuantization(nn.Module):
         else:
             raise ValueError(f"KAPPA_ANCHORS len {len(KAPPA_ANCHORS)} insufficient for layer_idx={layer_idx}")
         self.kappa_drift = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
+        # Issue #228 (2026-08-09): per-batch radius modulation α_l (init 0 → c_base 不变).
+        #   α_l 训练后捕捉 batch 球面深度 vs κ 的最优耦合 (v15 baseline 不能表达的二阶信号).
+        #   sigmoid bound 到 [-MAX, MAX], 防止 κ 偏离 baseline 太多.
+        self.alpha_radius_mod = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
+        # Issue #228: __init__ 接受的 enable_per_batch_radius_mod 参数, 默认 False (兼容 v15)
+        self._enable_per_batch_radius_mod = PER_BATCH_RADIUS_MOD
+        self._per_batch_radius_mod_max = PER_BATCH_RADIUS_MOD_MAX
         # Issue #55/v2: per-layer mix weight (init=1.0, softmax normalized). 三层独立学习不同权重
         self.mix_weight = nn.Parameter(torch.tensor(1.0, dtype=torch.float32))
         self.embeddings = nn.Embedding(n_e, e_dim)
@@ -623,6 +647,25 @@ class KappaAwareVectorQuantization(nn.Module):
         # 非 CURV_PRIOR 分支: c=1+κ_eff+1e-3 (保留兼容)
         return 1.0 + kappa_eff + 1e-3
 
+    def get_c_with_batch_norm(self, batch_norm: torch.Tensor) -> torch.Tensor:
+        """Issue #228 (2026-08-09): per-batch radius modulation.
+        c_l_eff = c_l_base · (1 + α_l · batch_norm), where α_l ∈ [-MAX, MAX] (sigmoid bound).
+        当 self._enable_per_batch_radius_mod=False 或 batch_norm=None 时, 直接返回 get_c() 等价值.
+        物理意义: 远球面 item (大 norm) 倾向更曲 (大 c), 近球心 item 倾向更平 (小 c).
+        """
+        c_base = self.get_c()
+        if not self._enable_per_batch_radius_mod or batch_norm is None:
+            return c_base
+        # sigmoid bound α_l 到 [-MAX, MAX]
+        max_amp = self._per_batch_radius_mod_max
+        alpha_l_bounded = (torch.sigmoid(self.alpha_radius_mod) - 0.5) * 2.0 * max_amp
+        # batch_norm 应是 scalar tensor (per-batch), clamp 到合理范围避免极端梯度
+        bn = batch_norm.clamp(min=1e-3, max=10.0)
+        mod_factor = 1.0 + alpha_l_bounded * bn
+        # 防 c_eff 退化到 0 或负 (与 #225 v2 不同: per-batch scalar 信号温和)
+        mod_factor = mod_factor.clamp(min=0.5, max=2.0)
+        return c_base * mod_factor
+
     def _struct_target(self) -> float:
         """per-layer 结构损失 target.
 
@@ -682,7 +725,16 @@ class KappaAwareVectorQuantization(nn.Module):
         if not self.initted and self.training:
             self.init_emb(latent)
 
-        c = self.get_c()  # Issue #157: per-layer learnable c
+        # Issue #228 (2026-08-09): per-batch radius modulation — 用 batch 内 latent 平均 norm 作为
+        #   proxy "batch 球面深度", 调制 c_l: c_l_eff = c_l_base · (1 + α_l · batch_norm).
+        #   关键: per-batch scalar (非 per-item), 不会触发 #225 v2 40× 梯度爆炸.
+        #   self.alpha_radius_mod init 0 → batch_norm 不影响 c (与 v15 baseline 完全等价).
+        if self._enable_per_batch_radius_mod:
+            with torch.no_grad():
+                _batch_norm = latent.detach().norm(dim=-1).mean()  # scalar
+        else:
+            _batch_norm = None
+        c = self.get_c_with_batch_norm(_batch_norm) if self._enable_per_batch_radius_mod else self.get_c()
         # Issue #76: CURV_PRIOR 下量化距离对 c stop-gradient — κ 不接收"距离随 c 减"的尺度作弊梯度.
         # 几何 (expmap/proj/distance) 用 c_geom, κ 只从 train_step 的平滑 log-curvature 先验获得梯度.
         c_geom = c.detach() if CURV_PRIOR else c
@@ -2192,8 +2244,10 @@ def main():
     # Issue #41: 实际优化 kappa_drift (effective_kappa = anchor + tanh(drift) * range, 优化 drift 让 κ 漂移可控)
     kappa_params = [q.kappa_drift for q in train_mm.vq_layers]
     mix_params = [q.mix_weight for q in train_mm.vq_layers]
+    # Issue #228 (2026-08-09): per-batch radius mod α_l 加入 param group (LR=base × 1x, 与 mix_weight 同量级)
+    alpha_params = [q.alpha_radius_mod for q in train_mm.vq_layers] if PER_BATCH_RADIUS_MOD else []
     other_params = [p for p in train_mm.parameters()
-                    if not any(p is q.kappa_drift or p is q.mix_weight for q in train_mm.vq_layers)]
+                    if not any(p is q.kappa_drift or p is q.mix_weight or p is q.alpha_radius_mod for q in train_mm.vq_layers)]
     if CURV_AWARE:
         # Issue #75 Curvature-Aware Optimization (论文 Alg.1): 拆分优化器 — 参数(旧 c 几何) 先 step,
         # κ/mix 后 step. 消除同一步内 κ 突变使参数更新"过时"的几何冲击.
@@ -2201,12 +2255,14 @@ def main():
         opt_kappa = torch.optim.AdamW([
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界
+            *([{"params": alpha_params, "lr": args.lr * 1.0}] if PER_BATCH_RADIUS_MOD else []),  # Issue #228: α_l LR=1x (温和, 防 κ 漂移)
         ], weight_decay=0.0)
     else:
         opt = torch.optim.AdamW([
             {"params": other_params, "lr": args.lr},
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界 (poincare commit 梯度爆炸根因)
+            *([{"params": alpha_params, "lr": args.lr * 1.0}] if PER_BATCH_RADIUS_MOD else []),  # Issue #228
         ], weight_decay=0.0)
         opt_kappa = None
     n_items = item_emb.shape[0]
