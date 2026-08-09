@@ -277,6 +277,21 @@ class HyperbolicAttentionBias(nn.Module):
             if l < self.num_layers:
                 lambda_raw[l] = 0.0
         self.lambda_raw = nn.Parameter(lambda_raw)
+        # Issue #224 (2026-08-09) 新曲率框架: 曲率扰动学习 (Curvature Perturbation Learning)
+        # 思想: Stage2 冻结 final_cs, Stage3 HAB Dbar 是基于 fixed c 预计算的 frozen 矩阵.
+        #       加一个 per-layer 可微扰动 c_perturb_raw, 在 forward 时把 Dbar 缩放 (1 + scale*tanh(·)),
+        #       让 Stage3 反向传播微调"曲率漂移", 适配 T5 学到的码字分布.
+        # 设计:
+        #   - c_perturb_raw init 0 → 起始扰动 0 (与 frozen baseline 完全一致)
+        #   - scale = 0.10 (小扰动, 不破坏 Stage2 frozen geometry 主信号)
+        #   - 可关闭: c_perturb_enabled=False 时, 完全绕开此逻辑 (与 v77 baseline 等价)
+        self.c_perturb_enabled = False  # 默认关, opt-in 启用
+        self.c_perturb_scale = 0.10     # 最大缩放 10%
+        c_perturb_raw = torch.zeros(self.num_layers)
+        for l in force_zero_layers:
+            if l < self.num_layers:
+                c_perturb_raw[l] = 0.0
+        self.c_perturb_raw = nn.Parameter(c_perturb_raw, requires_grad=False)  # 默认 buffer, 启用时转 trainable
 
     @property
     def lambda_eff(self):
@@ -352,6 +367,16 @@ class HyperbolicAttentionBias(nn.Module):
                 ]  # (B, L_i, L_j)
                 alpha = torch.sigmoid(self.residual_alpha[l])
                 Dbar_ij = Dbar_geo + alpha * (B_learned - Dbar_geo)
+                # Issue #224 (2026-08-09) 新曲率框架: 曲率扰动学习
+                # Dbar_geo 反映 Stage2 final_cs 下的距离矩阵; 用 c_perturb 缩放 = 让 Stage3 调整"有效曲率"
+                # (1 + scale * tanh(c_perturb_raw)) ∈ (1-scale, 1+scale), 默认 scale=0.10 → ±10% 距离扰动
+                # warmup: _cperturb_w_buf (epoch 级) 控制扰动幅度 (前 T0 epoch=0, T0+Tw 内渐增到 1)
+                if self.c_perturb_enabled:
+                    _w = getattr(self, "_cperturb_w_buf", torch.tensor(1.0, device=self.c_perturb_raw.device))
+                    if not torch.is_tensor(_w):
+                        _w = torch.tensor(float(_w), device=self.c_perturb_raw.device)
+                    perturb = 1.0 + self.c_perturb_scale * _w * torch.tanh(self.c_perturb_raw[l])
+                    Dbar_ij = Dbar_ij * perturb
             else:
                 # v6b 现状: 完全 learnable
                 Dbar_ij = B_learned
