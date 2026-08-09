@@ -77,11 +77,52 @@ REL_STRUCT_LAMBDA_BALL = 400.0  # 200 → 400 (2×)
 2. **P1 (后续)**: Issue #225 方案 1 (per-item-conditioned κ) — 需要 1-2 小时实施 + 训练
 3. **P2 (后续)**: Issue #225 方案 2 (加强 κ 信号) — 需要 30 min 实施 + 训练
 
-## 当前状态 (2026-08-09 12:28)
+## 当前状态 (2026-08-09 12:33)
 
-- Issue #224 CPL Stage3 训练 **正在跑** (PID 66272, 4 卡 70% util, ep1 loss=6.0351, 已 ~1 min)
-- Issue #225 实施: **待用户授权启动**
+- Issue #224 CPL Stage3 训练 **正在跑** (PID 66272, 4 卡 70% util, **ep30 valid_R@10=0.1127**, 已 4 min)
+- c_perturb warmup T0=50 还未到 (ep50 时启动曲率扰动)
+- Issue #225 实施: **待用户授权启动** (GPU 已被 CPL 占满,无法并行 Stage2 训练)
 - 0.108 复现: **待训练结果**
 
+## 新思考角度 (2026-08-09 12:33)
+
+**用户原话深度解读** "stage2 curvature should be learnable" 的真正含义可能是:
+
+1. **不是"是否 learnable" (已经是), 而是"更细粒度 learnable"**
+   - 当前: per-layer scalar κ (3 个标量, 三层共享一个池化)
+   - 用户想要: per-item κ (9922 个 item 各自独立 κ) 或 per-(layer, item-pair) κ
+
+2. **具体路径: 让 κ 的学习信号来自 per-item 多样性**
+   - 当前: REL_STRUCT 用 per-layer scalar target
+   - 改进: target 变成 `target_base_l + β · item_radius_offset_i` (per-layer base + per-item offset)
+   - 物理意义: 不同位置的 item 对 ρ_ball 有不同需求, κ 应该响应这个多样性
+
+3. **方案 3-Minimal (P1 ★★★★★)**: 修改 REL_STRUCT 让 target per-item-conditioned
+   ```python
+   # 现有:
+   target = self._struct_target()  # per-layer scalar
+   
+   # 改进:
+   item_r = latent.detach().norm(dim=-1).mean()  # 当前 batch mean radius
+   target = self._struct_target() + β_peritem * mlp(item_r.unsqueeze(0))  # per-item offset
+   ```
+   - 改动量: ~5 行代码
+   - 训练时间: 仍 1000 ep (8 min DDP)
+   - ckpt 兼容: 仍存 final_cs (3 个标量), Stage3 HAB 路径不变
+   - 真正"让 Stage2 curvature learnable" — κ 信号来自 per-item, 但仍是 per-layer 标量 (Stage3 兼容)
+
+4. **风险评估**:
+   - 当前 v15 capmatch κ=[0.30, 1.79, 1.48] 已是非平凡值
+   - 改进预期: κ 应该更激进学习 (如 [0.50, 2.50, 2.00])
+   - Issue #59 历史教训: κ 学到极值 → 码字撞边界 → util < 0.85
+   - 缓解: 仍保留 RAD_SAFE + κ EMA trust region, 加强 REL_STRUCT_LAMBDA_BALL
+
+## 决策 (2026-08-09)
+
+- 当前 GPU 被 CPL 训练占满 (4 卡 70% util), Stage2 训练无法并行
+- 等 CPL 训练完成 (ep200 ~17 min 总时间) 后, 再决定是否启动 v2 Stage2 训练
+- 如果 CPL ep50+ valid_R10 超过 0.130 (= v77 baseline 0.129),说明 CPL 已突破, 不需要 Stage2 重训
+- 如果 CPL ep50+ valid_R10 持平 0.1127, 说明 CPL warmup 后无增益, 立即启动 v2 Stage2 训练 (per-item-conditioned target patch)
+
 **Why**: 用户 2026-08-09 新方向, 暗示 Stage2 曲率本身应该更激进可学. 当前 κ 已是 learnable 但偏保守 (per-layer scalar), 用户可能希望更细粒度.
-**How to apply**: 等待 CPL 训练结果 (Issue #224). 如果 R@10 > 0.108, CPL 路径成功. 如果 < 0.108, 启动 Issue #225 方案 1.
+**How to apply**: 等待 CPL 训练结果 (Issue #224). 如果 R@10 > 0.108, CPL 路径成功. 如果 < 0.108, 启动 Issue #225 方案 3-Minimal.
