@@ -32,6 +32,8 @@ sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/model")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/data")
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec")
 
+import numpy as np  # Issue #141: np 顶层导入, 不再 shadow
+
 from HG_Rec import HG_Rec          # noqa: E402
 from dataset import GenRecDataset  # noqa: E402
 from dataloader import GenRecDataLoader  # noqa: E402
@@ -560,6 +562,11 @@ def main():
     recalls = {f"R@{k}": [] for k in TOP_K}
     ndcgs = {f"NDCG@{k}": [] for k in TOP_K}
     t0 = time.time()
+    # Issue #141 ensemble (2026-08-09): 收集 raw top-K predictions per user, 落盘供 ensemble post-process.
+    # preds shape: (B, BEAM_SIZE, 4) — 4-token SID code.  R@10 = target 出现在 top-10 of 30.
+    all_preds = []
+    all_labels = []
+    all_history_ids = []
     with torch.no_grad():
         for bi, batch in enumerate(loader):
             input_ids = batch["history"].to(DEVICE)
@@ -572,6 +579,10 @@ def main():
             for k in TOP_K:
                 recalls[f"R@{k}"].append(recall_at_k(pos_index, k).mean().item())
                 ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).mean().item())
+            # Save predictions for ensemble
+            all_preds.append(preds.detach().cpu().numpy().tolist())
+            all_labels.append(labels.detach().cpu().numpy().tolist())
+            all_history_ids.append(input_ids.detach().cpu().numpy().tolist())
             if (bi + 1) % 50 == 0:
                 print(f"  {bi+1}/{len(loader)} batches done", flush=True)
 
@@ -587,6 +598,13 @@ def main():
 
     with open(VERDICT_PATH, "w") as f:
         json.dump(result, f, indent=2)
+
+    # Issue #141 ensemble (2026-08-09): 落盘 raw predictions
+    preds_arr = np.array([p for batch_preds in all_preds for p in batch_preds], dtype=np.int32)  # (n, BEAM_SIZE, 4)
+    labels_arr = np.array([l for batch_labels in all_labels for l in batch_labels], dtype=np.int32)  # (n, 4)
+    preds_path = PRODUCT_DIR / "raw_predictions.npz"
+    np.savez_compressed(preds_path, preds=preds_arr, labels=labels_arr)
+    print(f"  saved raw predictions: {preds_path} shape={preds_arr.shape}", flush=True)
     print(f"=== {TAG} test R@5/10/20 = {result['R@5']:.4f}/{result['R@10']:.4f}/{result['R@20']:.4f} "
           f"NDCG@5/10/20 = {result['NDCG@5']:.4f}/{result['NDCG@10']:.4f}/{result['NDCG@20']:.4f}")
     print(f"=== verdict: {VERDICT_PATH}")
