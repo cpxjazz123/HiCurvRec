@@ -44,6 +44,8 @@ from common.hyperbolic_attention_bias import (  # noqa: E402
     HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
     HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
 )
+# Issue #236 (2026-08-10): Stage3 Poincaré Attention Scoring eval 同步
+from common.poincare_attention_scoring import install_poincare_attention_scoring  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────
 # argparse (R30 严格: 无 env var 读取)
@@ -71,6 +73,12 @@ _argparser.add_argument("--hab_warmup_Tw", type=int, default=0, help="Issue #71 
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB (eval 默认 False, 与 train 一致)
 _argparser.add_argument("--hab_delta_curvature", action="store_true",
                         help="Issue #71 Phase B: HAB 用 ΔD = D_hyp - D_flat (c_flat=1e-6) 替代完整 D_hyp")
+# Issue #224 (2026-08-10): Stage3 κ frozen→learnable c_perturb eval 支持 (v23 启用).
+#   加载 ckpt 的 c_perturb_raw 参数 + 启用 c_perturb_enabled, 让 eval 也应用 Stage3 学到的曲率扰动.
+_argparser.add_argument("--c_perturb_enabled", action="store_true",
+                        help="Issue #224: 启用 Stage3 曲率扰动 eval. 若 ckpt 含 hab_module.c_perturb_raw, 加载并启用 (±scale 距离扰动)")
+_argparser.add_argument("--c_perturb_scale", type=float, default=0.10,
+                        help="Issue #224: c_perturb_scale (与 train 端一致, 默认 0.10 = ±10% 距离扰动)")
 
 # Issue #71 Phase A (2026-08-07): eval 时 T_0=T_w=0 → warmup_w=1 立即生效
 # HAB_WARMUP_T0_EVAL / HAB_WARMUP_TW_EVAL 在 _args = parse_args() 之后赋值 (line ~99)
@@ -83,6 +91,11 @@ _argparser.add_argument("--beam_size", type=int, default=20, help="Issue #45 bea
 _argparser.add_argument("--num_beam_groups", type=int, default=0, help="Issue #95 DBS: 0=标准 beam, >0=DBS (需整除 beam_size)")
 _argparser.add_argument("--diversity_penalty", type=float, default=0.5, help="Issue #95 DBS: 组间 diversity penalty")
 _argparser.add_argument("--length_penalty", type=float, default=1.0, help="Issue #95 single-ckpt beam=20: length penalty (HF generate kwarg, 1.0=neutral)")
+# Issue #236 (2026-08-10): Stage4 同步支持 Poincaré Attention Scoring eval
+_argparser.add_argument("--poincare_attn_scoring", action="store_true",
+                        help="Issue #236: 启用 Poincaré Attention Scoring eval (与 Stage3 训练一致)")
+_argparser.add_argument("--poincare_c_init", type=float, default=1.0,
+                        help="Issue #236: eval 初始曲率 c (eval 阶段通常 c_learnable=False, 用训练末值)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -107,6 +120,12 @@ HAB_WARMUP_T0_EVAL = _args.hab_warmup_T0
 HAB_WARMUP_TW_EVAL = _args.hab_warmup_Tw
 # Issue #71 Phase B (2026-08-07): 曲率差分 HAB eval (与 train 一致)
 HAB_DELTA_CURVATURE_EVAL = _args.hab_delta_curvature
+# Issue #224 (2026-08-10): c_perturb Stage3 κ frozen→learnable eval 支持 (v23 启用)
+CPERTURB_ENABLED = _args.c_perturb_enabled
+CPERTURB_SCALE = _args.c_perturb_scale
+# Issue #236 (2026-08-10): Poincaré Attention Scoring eval
+POINCARE_ATTN_SCORING = _args.poincare_attn_scoring
+POINCARE_C_INIT = _args.poincare_c_init
 # Issue #70: DECOR PromptFormer 配置
 PROMPT_FORMER_ENABLED = _args.enable_prompt_former
 PROMPT_FORMER_ALPHA = _args.prompt_former_alpha
@@ -493,6 +512,17 @@ def main():
               f"Dbar median=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}])",
               flush=True)
 
+    # Issue #236 (2026-08-10): Stage4 eval 同步支持 Poincaré Attention Scoring
+    # eval 时 c_learnable=False (避免改变训练末态的 c), c 直接读 ckpt 中的 log_c_param
+    poincare_attn_module = None
+    if POINCARE_ATTN_SCORING:
+        # eval 时 c_learnable=False 但 ckpt 中保存的 log_c_param 仍可被加载
+        # install_poincare_attention_scoring 会自动把 log_c_param 注册到 model state_dict
+        poincare_attn_module = install_poincare_attention_scoring(
+            model, c_init=POINCARE_C_INIT, c_learnable=False)
+        print(f"[Issue #236] poincare_attn_scoring ON for eval (c_learnable=False, "
+              f"c_init={POINCARE_C_INIT})", flush=True)
+
     # Issue #70: 安装 DecorPromptFormer (candidate bins + alpha gate)
     # 必须在 load_state_dict 之前 add_module(pf_module), 否则 strict load 找不到 pf_module.* keys
     if PROMPT_FORMER_ENABLED:
@@ -550,6 +580,17 @@ def main():
             print(f"[Stage4/v85u] HAB unexpected keys: {hab_unexpected}", flush=True)
     elif HAB_ENABLED:
         print(f"[Stage4/v85u] no HAB params in ckpt, using init values", flush=True)
+    # Issue #224: c_perturb_raw 加载 + 启用 (与 train 端 v85p_repro 配套)
+    if HAB_ENABLED and CPERTURB_ENABLED:
+        hab_module.c_perturb_enabled = True
+        hab_module.c_perturb_scale = float(CPERTURB_SCALE)
+        # c_perturb_raw 已通过 hab_state 加载 (在 strict=False 下, 即便 ckpt 中是 trainable tensor 也能加载)
+        if hasattr(hab_module, "c_perturb_raw"):
+            print(f"[Stage4/Issue #224] c_perturb ENABLED for eval "
+                  f"(c_perturb_raw={[round(hab_module.c_perturb_raw[i].item(), 4) for i in range(3)]}, "
+                  f"scale={CPERTURB_SCALE})", flush=True)
+        else:
+            print(f"[Stage4/Issue #224] c_perturb enabled flag set but c_perturb_raw not found in hab_module", flush=True)
     # strict=False: v77 纯 T5 ckpt (134 keys) + HAB forward monkey-patch, state_dict 不存 hab_module.*
     #    keys; strict=True 会 RuntimeError. 不允许 silent fallback (R8) — 缺失 keys 必须 log 出来供审查.
     missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)

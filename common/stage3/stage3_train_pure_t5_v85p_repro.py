@@ -52,6 +52,8 @@ from common.hyperbolic_attention_bias import (
     HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
     HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
 )  # noqa: E402
+# Issue #236 (2026-08-10): Stage3 Hyperbolic Attention Scoring — 替换 inner-product 为负 Poincaré 距离
+from common.poincare_attention_scoring import install_poincare_attention_scoring  # noqa: E402
 
 
 class _FastGenRecDataLoader(GenRecDataLoader):
@@ -152,6 +154,17 @@ _argparser.add_argument("--branch_curvature_n_buckets", type=int, default=3,
 _argparser.add_argument("--branch_curvature_strategy", type=str, default="quantile",
                         choices=["quantile", "kmeans"],
                         help="新 Issue: prefix 分桶策略 (quantile = 等频分桶, kmeans = kmeans on B(p))")
+# Issue #236 (2026-08-10): Stage3 Hyperbolic Attention Scoring — 替换 inner-product 为负 Poincaré 距离
+# 核心: T5 attention score = matmul(Q, K^T) 替换为 -d_P(Q, K), 让曲率成为 attention 第一公民
+# 与 HAB 正交可叠加 (HAB 是 additive 4D bias, 此处是替换 score 函数本身)
+_argparser.add_argument("--poincare_attn_scoring", action="store_true",
+                        help="Issue #236: 启用 Poincaré Attention Scoring (-d_P 替换 inner-product)")
+_argparser.add_argument("--poincare_c_init", type=float, default=1.0,
+                        help="Issue #236: 初始曲率倒数 c_init (默认 1.0)")
+_argparser.add_argument("--poincare_c_learnable", action="store_true",
+                        help="Issue #236: 启用 c 可学习 (sigmoid 缩放到 [1e-3, 10])")
+_argparser.add_argument("--poincare_c_lr_ratio", type=float, default=10.0,
+                        help="Issue #236: c_param 的 LR 倍率 (默认 10×)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -235,6 +248,11 @@ BRANCH_CURVATURE_SID_NPY = _args.branch_curvature_sid_npy if _args.branch_curvat
 BRANCH_CURVATURE_N_BUCKETS = int(_args.branch_curvature_n_buckets)
 BRANCH_CURVATURE_STRATEGY = _args.branch_curvature_strategy
 BRANCH_CURVATURE_LAMBDA_MULT = [float(x) for x in _args.branch_curvature_lambda_mult.split(",")]
+# Issue #236 (2026-08-10): Poincaré Attention Scoring 常量
+POINCARE_ATTN_SCORING = _args.poincare_attn_scoring
+POINCARE_C_INIT = _args.poincare_c_init
+POINCARE_C_LEARNABLE = _args.poincare_c_learnable
+POINCARE_C_LR_RATIO = _args.poincare_c_lr_ratio
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -268,12 +286,12 @@ DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #210 Phase D (2026-08-08): 用户指示 200 epoch. v85p PARTIAL-GO 0.1080 300ep 配置, Phase D 用户改为 200 epoch 验证 equal128 SID 收敛.
-EARLY_STOP = 10  # Issue #141 v77 实际配置 (2026-08-08): 复现 v77 0.1080 (/tmp/v77_peritem_hab/test_eval test_R@10=0.1080) 用 ES=10. Phase D ES=20 是给 equal128 SID 验证的独立设置, 不应影响 v77 复现.
+EARLY_STOP = 30  # v23 (2026-08-10): 沿用 v18 EARLY_STOP=30
 EVAL_INTERVAL = 5  # Issue #141 v85q (2026-08-09): 用户指示 EVAL_INTERVAL=5 (匹配 v77/v85p 历史配置, 每 5 epoch 评估). 当前 + NUM_WORKERS=2 单 epoch 7s, EI=5 省 2s/epoch (-28%). v77 实际配置就是 EI=5.
 BATCH_SIZE = 1024  # Issue #141 v85t (2026-08-09) v77完全相同复现: v77原 batch=1024 (DDP 4 卡 per-rank 256), 验证 v77 数值可复现性, 解释 v85 路径所有"修复"是不是 noise.
 INFER_SIZE = 256  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 64, v77原等价值)
 SEED = 42
-LR = 4e-4  # Issue #141 v85t (2026-08-09) v77完全相同复现: v77原 LR=4e-4 (跟 batch 1024 配套).
+LR = 1e-3  # v23 (2026-08-10): 沿用 v18 LR=1e-3 sweet spot
 
 # Issue #141 v85f (2026-08-08): LR cosine 温和版 (沿用 v85d) + SID v15 (5f8331cc). v85d (warmup_frac=0.05 + LR_min=0.1 + 200ep) 配 hyp_v2 SID test=0.1011. v85f 同样 LR 调度换 SID v15, 验证 v15 κ=[0.30,1.79,1.48] c=[1.35,6.00,4.39] 强几何信号 + cosine 衰减是否协同.
 LR_SCHEDULER = "cosine"  # Issue #141 v85f (2026-08-08): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
@@ -1377,6 +1395,17 @@ def main():
                 f"λ_eff init={lambda_eff_init} (B_geo 实际生效, 梯度正常流到 λ_raw)")
             # 注入计数预检
             model._hab_inject_count = 0
+    # Issue #236 (2026-08-10): Poincaré Attention Scoring — 替换 inner-product 为 -d_P
+    # 与 HAB 正交可叠加: HAB 注入 attention_mask 4D bias, 这里替换 T5Attention.forward 内部的 score 函数
+    poincare_attn_module = None
+    if POINCARE_ATTN_SCORING:
+        poincare_attn_module = install_poincare_attention_scoring(
+            model, c_init=POINCARE_C_INIT, c_learnable=POINCARE_C_LEARNABLE)
+        if is_main:
+            c_init_val = poincare_attn_module.log_c_param.detach().item()
+            c_eff = poincare_attn_module.c.detach().item()
+            log(f"[Issue #236] poincare_attn_scoring ON: log_c_param init={c_init_val:.4f} → c_eff={c_eff:.4f} "
+                f"c_learnable={POINCARE_C_LEARNABLE} c_lr_ratio={POINCARE_C_LR_RATIO}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -1396,7 +1425,9 @@ def main():
         # Issue #69 v79 (2026-08-07): DECOR PromptFormer + HAB 叠加时 pf_module / hab_module 某些 batch 可能不参与 loss 计算,
         #   find_unused_parameters=False 必崩 (RuntimeError: Expected to have finished reduction).
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED
+        # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
+        #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
@@ -1413,7 +1444,11 @@ def main():
     # Issue #61 P0 加速: fused AdamW (PyTorch 2.x fused=True 用单个 CUDA kernel 跑 optimizer step, 1.2-1.5×)
     # Issue #62 v4: per-layer alpha 独立学习率 (GEO_ALPHA_LR_RATIO > 1 时生效)
     # Issue #64 v3 优化: λ_raw 单独高 lr param group (HAB_LAMBDA_LR_RATIO=100, 推动 λ_raw 学习)
+    # Issue #236 (2026-08-10): poincare_attn_module.log_c_param 单独 group (POINCARE_C_LR_RATIO 默认 10×, 推动 c 学习)
     _param_groups = []
+    if POINCARE_ATTN_SCORING and POINCARE_C_LEARNABLE and POINCARE_C_LR_RATIO > 1.0 and poincare_attn_module is not None:
+        _param_groups.append({"params": [poincare_attn_module.log_c_param],
+                                "lr": LR * POINCARE_C_LR_RATIO})
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0:
         # Issue #64 v6b (2026-08-07): U/V embedding 也进 high-lr group (与 λ_raw 一起, 推动 B_geo 学习)
         # 总参数量 = sum(K_l * r * 2) = (64+128+256)*16*2 = 14336 scalar + 3 scalar (lambda_raw)
@@ -1463,7 +1498,12 @@ def main():
                              id(pf_module.q_ctx.weight), id(pf_module.k_candidates.weight)}
         else:
             _pf_param_ids = set()
-        _exclude_ids = _hab_param_ids | _pf_param_ids
+        # Issue #236 (2026-08-10): 排除 poincare_attn_module.log_c_param (已进独立 group)
+        if POINCARE_ATTN_SCORING and poincare_attn_module is not None:
+            _poincare_param_ids = {id(poincare_attn_module.log_c_param)}
+        else:
+            _poincare_param_ids = set()
+        _exclude_ids = _hab_param_ids | _pf_param_ids | _poincare_param_ids
         _other_params = [p for p in model.parameters() if id(p) not in _exclude_ids]
         _param_groups.insert(0, {"params": _other_params, "lr": LR})
         # Issue #140 v76: T5 uncertainty head σ 加到 base lr group
