@@ -65,7 +65,7 @@ TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 # a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae; #56 验收 R@10=0.9575)
 # Issue #58: Stage1 残差头不再 F.normalize, 直接输出切空间 h+α·u (任意范数, 保留径向信息)
 # Stage2 第一层用 expmap0(·, c_0) 映射到 Poincaré 球做 assignment, 残差回到切空间 u_1 = u_0 - e_{0,a}
-ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage1_hyp_v2/item_emb_u32.npy"  # Issue #141 v77: Stage1 per-item radius 输出 (R_MAX=0.99, e_dim=768, 9922 items)
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb_baseline_u32.npy"  # v15+v74 baseline Stage1 输出 (R_MODE=fixed, R_MAX=0.99, e_dim=768, 9922 items, parquet SHA=1a42341f)
 
 # 数据集元数据
 N_ITEMS = 9922

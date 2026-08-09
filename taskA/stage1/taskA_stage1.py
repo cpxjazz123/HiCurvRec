@@ -1,23 +1,18 @@
-"""Stage 1 双曲 encoder — frozen sentence-t5-base → MLP backbone (方向) + radius head (半径).
+"""Stage 1 双曲 encoder — frozen sentence-t5-base → MLP backbone (方向) + radius head (半径) [BASELINE].
 
-设计 v2 (2026-08-04): per-item 半径 + stage2 expmap0(c_l) per-layer.
+设计: HG-Rec baseline Stage 1 — R_MODE="fixed" 退化为 v4 行为 (全部商品同半径, 无 per-item 半径).
 - 输出**欧氏基础向量 v_i = r_i × d_i** (norm = r_i < 1, 严格在欧氏单位球内)
   - 方向 d_i = F.normalize(MLP(t5_emb)) (unit 向量, 语义方向)
-  - 半径 r_i = heuristic(t5_emb norm) 或 sigmoid(MLP_radius) × R_MAX (per-item 径向位置)
-- stage2 **不变**, KappaAwareVectorQuantization 已实现每层 expmap0(c_l)
-  - 因 ||v_i|| < 1, expmap0(z, c_l) 输出 norm = tanh(√κ_l · arctanh(||z||))/√κ_l < 1/√κ_l = radius_l
-  - 严格在 Poincaré ball 内, 无 clip/溢出风险
-- 优点:
-  - 不同商品可有不同半径 (per-item 径向位置)
-  - 三层使用不同曲率 (stage2 现有 per-layer learnable κ_l 自动生效)
-  - 曲率变化后自动重新映射 (stage2 forward 每步重算 expmap0, 无需重训 stage1)
-  - 不容易超 Poincaré ball 边界 (||v||<1 ⟹ expmap0 严格在球内)
+  - 半径 r_i = R_MAX (固定, R_MODE=fixed, 全部商品同半径)
+- stage2 v15 capmatch (per-layer learnable κ_l) 接收 baseline Stage1 输出
+- baseline Stage1 输出 SHA = 1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc
+  → v15 capmatch Stage2 训练时 item_emb_sha256 也是 1a42341f (R10 一致性)
 
 环境变量:
   ITEM_JSON         必填 — {dataset}.item.json 路径
-  OUTPUT_PARQUET    必填 — 输出 parquet 路径 (ItemID + embedding=list<float> 128 维欧氏基础向量)
-  TAG               默认 "hyp_v2"
-  E_DIM             默认 128 — 欧氏基础向量维度 (与 stage2 e_dim 对齐)
+  OUTPUT_PARQUET    必填 — 输出 parquet 路径 (ItemID + embedding=list<float> 768 维欧氏基础向量)
+  TAG               默认 "baseline"
+  E_DIM             默认 768 — 欧氏基础向量维度 (与 stage2 e_dim 对齐)
   R_MAX             默认 0.99 — 半径上限 (<1 给 expmap0 留 arctanh 余量)
   R_MODE            heuristic / fixed (默认 heuristic)
                       heuristic: r_i = R_MAX × sigmoid(3 × (||t5_emb|| - 0.7)) 由 t5 norm 启发
@@ -52,12 +47,15 @@ from utils import expmap0, proj_to_ball  # noqa: E402
 
 # === R30: 所有配置硬编码 (无 os.environ.get; 变体复制脚本改常量) ===
 ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments/Instruments.item.json"
-OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/Instruments_t5_hyp_v2.parquet")
-TAG = "hyp_v2"
+# baseline Stage1 输出: parquet SHA = 1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc
+# 与 v15 capmatch Stage2 训练时 item_emb_sha256 (1a42341f...) 一致 → R10 一致性
+OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb_baseline_backup.parquet")
+TAG = "baseline"
 E_DIM = 768  # Issue #71 v82 (2026-08-07): 必须与 Stage2 EMB_DIM 对齐 (768), 不然 np.load shape mismatch
 # R_MAX 必须 < 1 — 给 expmap0(c=κ) 留 arctanh(r) 余量, 防 arctanh(1)=inf 数值爆炸
 R_MAX = 0.99
-R_MODE = "heuristic"
+# baseline 模式: 所有商品同半径 (退化为 v4 行为, 无 per-item 径向位置)
+R_MODE = "fixed"
 # Issue #71 v82 (2026-08-07): radius 对 t5 norm 的敏感度 (越大越锐利过渡)
 SIGMOID_TEMP = 3.0
 SIGMOID_CENTER = 0.7  # sigmoid 中心点 (||t5_emb|| ≈ 0.7 时 r = R_MAX/2)
@@ -186,7 +184,7 @@ def main():
 
     global OUTPUT_PARQUET
     if args.tag_suffix:
-        OUTPUT_PARQUET = OUTPUT_PARQUET.parent / f"Instruments_t5_hyp_v2_{args.tag_suffix}.parquet"
+        OUTPUT_PARQUET = OUTPUT_PARQUET.parent / f"item_emb_baseline_{args.tag_suffix}.parquet"
 
     OUTPUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
     set_seed(SEED)
