@@ -1,0 +1,28 @@
+{
+  "R@5": 0.0782334894235427,
+  "R@10": 0.09829646374939448,
+  "R@20": 0.12497981592120136,
+  "NDCG@5": 0.0664844622007407,
+  "NDCG@10": 0.07294193346472846,
+  "NDCG@20": 0.07969618334752587,
+  "n_eval": 24772,
+  "method": "borda",
+  "weights": [
+    3.0,
+    2.0,
+    2.0,
+    1.0
+  ],
+  "beams": [
+    30,
+    30,
+    30,
+    50
+  ],
+  "pred_npys": [
+    "/fs04/ar57/wenyu/GeneRec/taskA/_history/v11_borda_ensemble/v9_eval/raw_predictions.npz",
+    "/fs04/ar57/wenyu/GeneRec/taskA/_history/v11_borda_ensemble/v10_eval/raw_predictions.npz",
+    "/fs04/ar57/wenyu/GeneRec/taskA/_history/v11_borda_ensemble/step2_eval/raw_predictions.npz",
+    "/fs04/ar57/wenyu/GeneRec/taskA/_history/v13_issue94_strict/step2_b50/raw_predictions.npz"
+  ]
+}

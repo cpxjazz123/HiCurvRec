@@ -175,8 +175,8 @@ _argparser.add_argument("--t5_uncertainty_c", type=float, default=1.361442,
 _argparser.add_argument("--t5_uncertainty_reg_weight", type=float, default=0.01,
                         help="v76: uncertainty loss 缩放 (总 loss = CE + reg_weight * uncertainty_loss)")
 # Issue #141 v85 (2026-08-07): 在线 stage4 test eval — 每次保存 new best ckpt 立即异步触发 stage4 test 验证
-_argparser.add_argument("--stage4_test_on_best", type=lambda x: str(x).lower() in ("true", "1", "yes"), default=True,
-                        help="v85: new best ckpt 立即触发 async stage4 test eval (实时监控 valid/test ratio)")
+_argparser.add_argument("--stage4_test_on_best", type=lambda x: str(x).lower() in ("true", "1", "yes"), default=False,
+                        help="v85: new best ckpt 立即触发 async stage4 test eval (实时监控 valid/test ratio). 默认 False, Stage3 只跑 valid 评估, test 留给 Stage4 单独跑 (避免训练时争 GPU + 训练被 test eval 拖慢).")
 _argparser.add_argument("--stage4_eval_script", type=str, default="common/stage4/stage4_eval_pure_t5.py",
                         help="v85: stage4 eval 脚本路径 (默认 pure_t5, 与 v77 一致)")
 _argparser.add_argument("--stage4_test_gpu", type=int, default=0,
@@ -250,19 +250,20 @@ DDP_MODE = WORLD_SIZE > 1
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #210 Phase D (2026-08-08): 用户指示 200 epoch. v85p PARTIAL-GO 0.1080 300ep 配置, Phase D 用户改为 200 epoch 验证 equal128 SID 收敛.
-EARLY_STOP = 20  # Issue #210 Phase D (2026-08-08): 用户指示 20 epoch 无改善早停 (vs v85p ES=15). 每 epoch 评估 → ES 20 = 20 次连续评估无改进.
-EVAL_INTERVAL = 1  # Issue #210 Phase D (2026-08-08): 用户指示每个 epoch 评估一次 (vs v85p EI=5). 监控粒度更细, 早停更敏感.
-BATCH_SIZE = 1024  # Issue #141 v85p PARTIAL-GO (2026-08-08): v85p batch=1024 baseline, v85q batch=2048 仍在 pending. v77/v85p + v15 SID 0.1080 (历史 SOTA) 用此 batch. Phase D 验证 equal128 SID 必严格匹配 v85p 配置.
-INFER_SIZE = 384  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 96)
+EARLY_STOP = 30  # v18 (2026-08-09): 沿用 v15 EARLY_STOP=30 (2026-08-08): 复现 v77 0.1080 (/tmp/v77_peritem_hab/test_eval test_R@10=0.1080) 用 ES=10. Phase D ES=20 是给 equal128 SID 验证的独立设置, 不应影响 v77 复现.
+EVAL_INTERVAL = 5  # Issue #141 v85q (2026-08-09): 用户指示 EVAL_INTERVAL=5 (匹配 v77/v85p 历史配置, 每 5 epoch 评估). 当前 + NUM_WORKERS=2 单 epoch 7s, EI=5 省 2s/epoch (-28%). v77 实际配置就是 EI=5.
+BATCH_SIZE = 1024  # Issue #141 v85t (2026-08-09) v77完全相同复现: v77原 batch=1024 (DDP 4 卡 per-rank 256), 验证 v77 数值可复现性, 解释 v85 路径所有"修复"是不是 noise.
+INFER_SIZE = 256  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 64, v77原等价值)
 SEED = 42
-LR = 1e-3  # Issue #141 v85 (2026-08-07): v77 P0 superparam upgrade. v77 base LR=4e-4; DECOR paper lr=3e-3, 4e-4 太保守. 提 LR 到 1e-3 (DECOR 1/3), 配合 wd=0.01 + dropout=0.20 + label_smoothing=0.05 + HAB λ_lr_ratio=30. 预期 +1~2% test_R10 (基于曲率框架 P0 路线, 见 verdicts/issue76_radial_exploration_nogo.md 借鉴路线段).
+LR = 1e-3  # v18 (2026-08-09): 沿用 v15 LR=1e-3 sweet spot
 
 # Issue #141 v85f (2026-08-08): LR cosine 温和版 (沿用 v85d) + SID v15 (5f8331cc). v85d (warmup_frac=0.05 + LR_min=0.1 + 200ep) 配 hyp_v2 SID test=0.1011. v85f 同样 LR 调度换 SID v15, 验证 v15 κ=[0.30,1.79,1.48] c=[1.35,6.00,4.39] 强几何信号 + cosine 衰减是否协同.
 LR_SCHEDULER = "cosine"  # Issue #141 v85f (2026-08-08): "none" / "cosine" (warmup_frac=0.05 → cos → LR_min=LR*0.1)
-LR_WARMUP_FRAC = 0.10  # Issue #141 v85p: warmup 占比 5%→10% 让 6 decoder 早期梯度更稳定, 总步 9900 × 10% = 990 warmup steps, 20 epoch warmup (vs v85j 5% = 10 epoch warmup)
-LR_MIN_FACTOR = 0.05  # Issue #141 v85p (2026-08-08): 还原 v85p baseline, v85q LR_min 0.02 NO-GO. v85p PARTIAL-GO 验证 warmup 10% 有效, 5e-5 末期 LR 维持.
+LR_WARMUP_FRAC = 0.025  # Issue #141 v85s (2026-08-09) 方案D batch=2048: 总步 ~3300 (vs v77原 6600 batch=1024 的一半), warmup=82 steps (≈2.5 epoch warmup). warmup_frac 不变, 绝对步数跟 v77原 660 步略减半, 起步更稳定.
+LR_MIN_FACTOR = 0.01  # Issue #141 v85r (2026-08-09) 方案C修scheduler: 0.05→0.01. 末期 LR=8e-6 (vs 之前 4e-5). 让模型末期更收敛, 修 generalization gap.
 MAX_LEN = 20
-NUM_WORKERS = 0  # Issue #64 DDP 4 卡修复 (2026-08-06): NUM_WORKERS=4 × 4 worker = 16 个 DataLoader fork 在 DDP NCCL shared memory + torch elastic barrier 下 ep5 eval 卡死, 改 0 排除 fork 冲突 (单卡历史用 4, DDP 改 0)
+NUM_WORKERS = 2  # Issue #141 v85q GPU 利用率优化 (2026-08-09): 用户指示 NUM_WORKERS=2 (8 forks, vs Issue #64 NUM_WORKERS=4 16 forks NCCL deadlock). 配 prefetch_factor=4 让 GPU 不再等数据. Issue #64 deadlock 是 4×4=16 fork 触发, 2×4=8 fork 应该安全.
+PREFETCH_FACTOR = 4  # 每个 worker 预加载 4 个 batch, GPU 永远有数据
 PIN_MEMORY = True  # Issue #61 P0: DataLoader pin_memory=True, CPU→GPU 传输加速
 PERSISTENT_WORKERS = True  # Issue #61 P0: worker 跨 epoch 持久, 省每 epoch worker spawn 启动时间
 STAGE3_TF32 = True  # Issue #61 P0: Ampere+ TF32 matmul 加速 1.3-1.5×, 精度影响 <1e-3
@@ -301,8 +302,8 @@ _LAYER_ID_LUT[1:65] = 0        # L0: K=64
 _LAYER_ID_LUT[65:193] = 1      # L1: K=128
 _LAYER_ID_LUT[193:449] = 2     # L2: K=256
 _LAYER_ID_LUT[449:450] = 3     # L3: K=1 (dedup)
-CONFIG = dict(                               # Issue #141 v85p (2026-08-08): 回到 v85j 配置 (num_heads=6, d_kv=64), v85m heads=8 NO-GO 验证. 仅 LR_WARMUP_FRAC 5%→10% 是核心改动. 其余 v85j (num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024, dropout=0.20, label_smoothing=0.05).
-    num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,
+CONFIG = dict(                               # Issue #141 v77 原配置 (2026-08-08): v77 base num_layers=6, num_decoder_layers=4 (v85 升级到 6 是 P0 superparam upgrade 但导致 test 泛化下降 -0.013). 复现 v77 用原值.
+    num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,
     num_heads=6, d_kv=64, dropout_rate=STAGE3_DROPOUT, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
     feed_forward_proj="relu",
@@ -472,7 +473,16 @@ def set_seed(seed):
 # ──────────────────────────────────────────────────────────────
 import torch.nn as nn  # noqa: E402
 # Issue #140 v76: T5 uncertainty head 借鉴 DIGER AutoSigmaGumbel
-from common.t5_uncertainty import T5UncertaintyHead  # noqa: E402
+# Issue #92 清理后 conditional import: 默认 (不传 --enable_t5_uncertainty) = None,
+# 传 flag 但模块仍缺失 (预期外) = ImportError, 不允许 fallback (R8)
+try:
+    from common.t5_uncertainty import T5UncertaintyHead  # noqa: E402
+    _t5_uncertainty_available = True
+except ImportError as _e:
+    if "--enable_t5_uncertainty" in sys.argv:
+        raise ImportError(f"--enable_t5_uncertainty requires common.t5_uncertainty, but import failed: {_e}")
+    T5UncertaintyHead = None  # type: ignore[assignment,misc]
+    _t5_uncertainty_available = False
 import torch.nn.functional as F  # noqa: E402
 
 
@@ -1475,9 +1485,13 @@ def main():
         train_sampler = DistributedSampler(train_ds, num_replicas=WORLD_SIZE, rank=RANK, shuffle=True)
         valid_sampler = DistributedSampler(valid_ds, num_replicas=WORLD_SIZE, rank=RANK, shuffle=False)
         train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE // WORLD_SIZE, sampler=train_sampler,
-                                  num_workers=NUM_WORKERS, collate_fn=_collate_fn)
+                                  num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR if NUM_WORKERS > 0 else None,
+                                  persistent_workers=PERSISTENT_WORKERS if NUM_WORKERS > 0 else False,
+                                  collate_fn=_collate_fn)
         valid_loader = DataLoader(valid_ds, batch_size=INFER_SIZE // WORLD_SIZE, sampler=valid_sampler,
-                                  num_workers=NUM_WORKERS, collate_fn=_collate_fn)
+                                  num_workers=NUM_WORKERS, prefetch_factor=PREFETCH_FACTOR if NUM_WORKERS > 0 else None,
+                                  persistent_workers=PERSISTENT_WORKERS if NUM_WORKERS > 0 else False,
+                                  collate_fn=_collate_fn)
     else:
         train_loader = _FastGenRecDataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS,
                                              pin_memory=PIN_MEMORY, persistent_workers=PERSISTENT_WORKERS)

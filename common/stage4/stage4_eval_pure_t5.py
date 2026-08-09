@@ -115,7 +115,7 @@ CODEBOOK_SIZE = [64, 128, 256, 1]
 # Issue #63: codeword 偏移表 (跟 Stage3 训练一致)
 CODEWORD_OFFSETS = [1, 65, 193, 449]
 CONFIG = dict(
-    num_layers=6, num_decoder_layers=6, d_model=128, d_ff=1024,  # Issue #141 v85p (2026-08-08): 回到 num_heads=6 同步 v85j 训练, v85m heads=8 NO-GO. 仅 LR_WARMUP_FRAC 5%→10%.
+    num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,  # Issue #141 v85q (2026-08-09): num_decoder_layers 6→4 匹配 v77 Stage3 训练 (v77 ckpt decoder blocks=[0,1,2,3], 53 decoder keys). 之前 6 默认会让 Stage4 eval 出现 26 missing keys (block.4.*), T5 评估用随机初始化 block 4 + HAB 状态不一致 → test_R@10 严重低估 (0.0957 vs v77 原 0.1080). v85p/v85j 6 layer ckpt 需要回退 fork 脚本 (R31).
     num_heads=6, d_kv=64, dropout_rate=0.1, vocab_size=1025,
     pad_token_id=0, eos_token_id=0, decoder_start_token_id=0,
     feed_forward_proj="relu",
@@ -187,15 +187,13 @@ def install_prompt_former_eval(hg_rec, pf_module):
 
 
 def calculate_pos_index(preds, labels, maxk=20):
+    # Issue #41 v85h fix (2026-08-09): 原 BUG — preds[i,j].tolist() (4-token list) vs cur_label (4-token list)
+    # 永远不全等 → R@10=0. 改用 train_pure_t5.py 的向量化正确逻辑:
+    # labels (B, seq_len) → (B,1,seq_len) 与 preds (B,maxk,seq_len) 广播, all(dim=-1) 判全等
     preds = preds.detach().cpu()
     labels = labels.detach().cpu()
-    pos_index = torch.zeros((preds.shape[0], maxk), dtype=torch.bool)
-    for i in range(preds.shape[0]):
-        cur_label = labels[i].tolist()
-        for j in range(maxk):
-            if preds[i, j].tolist() == cur_label:
-                pos_index[i, j] = True
-                break
+    assert preds.shape[1] == maxk, f"preds.shape[1] = {preds.shape[1]} != {maxk}"
+    pos_index = (preds == labels.unsqueeze(1)).all(dim=-1)  # (B, maxk)
     return pos_index
 
 
@@ -526,7 +524,29 @@ def main():
         elif b_key in state_dict and br_key in state_dict:
             del state_dict[b_key]
             print("[Issue #63] v2+v3 ckpt detected, dropped redundant codeword_geo_module.beta", flush=True)
-    model.load_state_dict(state_dict)
+    # Issue #141 v85u (2026-08-09) HAB ckpt 加载修复: v77原 ckpt 实际存了 11 HAB keys (U/V/Dbar/lambda_raw/residual_alpha), 之前假设"v77 纯 T5 ckpt"是错的. 必须把 ckpt 的 HAB params 加载到 hab_module, 否则 Stage4 eval 用新 init 值 (lambda_raw=0.1) 跟训练收敛值 (lambda_raw=[-0.057, 0.571, 0.689]) 完全不同 → HAB bias 错误 → 预测全 0 (test_R@10=0).
+    hab_keys_in_ckpt = [k for k in state_dict.keys() if k.startswith('hab_module.')]
+    if HAB_ENABLED and hab_keys_in_ckpt:
+        hab_state = {k[len('hab_module.'):]: state_dict.pop(k) for k in hab_keys_in_ckpt}
+        hab_missing, hab_unexpected = hab_module.load_state_dict(hab_state, strict=False)
+        print(f"[Stage4/v85u] loaded {len(hab_keys_in_ckpt)} HAB params from ckpt "
+              f"(lambda_raw={[round(hab_module.lambda_raw[i].item(), 4) for i in range(3)]}, "
+              f"residual_alpha={[round(hab_module.residual_alpha[i].item(), 4) for i in range(3)]})", flush=True)
+        if hab_missing:
+            print(f"[Stage4/v85u] HAB missing keys: {hab_missing}", flush=True)
+        if hab_unexpected:
+            print(f"[Stage4/v85u] HAB unexpected keys: {hab_unexpected}", flush=True)
+    elif HAB_ENABLED:
+        print(f"[Stage4/v85u] no HAB params in ckpt, using init values", flush=True)
+    # strict=False: v77 纯 T5 ckpt (134 keys) + HAB forward monkey-patch, state_dict 不存 hab_module.*
+    #    keys; strict=True 会 RuntimeError. 不允许 silent fallback (R8) — 缺失 keys 必须 log 出来供审查.
+    missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+    if missing_keys:
+        print(f"[Stage4] load_state_dict missing keys (HAB/geo/codeword 模块未在 ckpt, 接受 — "
+              f"{len(missing_keys)} keys): {missing_keys[:6]}...", flush=True)
+    if unexpected_keys:
+        print(f"[Stage4] load_state_dict unexpected keys (ckpt 含未注册模块, "
+              f"{len(unexpected_keys)} keys): {unexpected_keys[:6]}...", flush=True)
     model.to(DEVICE)
     model.eval()
 

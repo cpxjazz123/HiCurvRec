@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeneRec 任务管理 Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">GR</div>
+      <div>
+        <div class="brand-title">GeneRec</div>
+        <div class="brand-sub">任务管理 Dashboard</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">📊</span>概览
+      </button>
+      <button class="nav-item" data-view="tasks">
+        <span class="nav-icon">📁</span>任务
+        <span class="nav-badge" id="badge-tasks">-</span>
+      </button>
+      <button class="nav-item" data-view="verdicts">
+        <span class="nav-icon">⚖️</span>Verdicts
+        <span class="nav-badge" id="badge-verdicts">-</span>
+      </button>
+      <button class="nav-item" data-view="loop">
+        <span class="nav-icon">🔁</span>Loop
+      </button>
+      <button class="nav-item" data-view="rules">
+        <span class="nav-icon">📜</span>R 规则
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="hint">R35 强约束: 单 ckpt + beam=20</div>
+      <div class="hint">R36 强约束: 禁调参, 必走曲率</div>
+      <div class="ts" id="ts-now">--</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <section class="view active" id="view-dashboard">
+      <header class="view-header">
+        <h1>总览</h1>
+        <div class="actions">
+          <button class="btn" id="btn-refresh-dash">🔄 刷新</button>
+        </div>
+      </header>
+      <div class="grid-cards" id="dash-stats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>当前活跃迭代 (loop.md)</h2>
+          <div class="table-wrap" id="dash-active">
+            <div class="empty">加载中…</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>最近 Verdict</h2>
+          <div class="list" id="dash-recent-verdicts"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Stage 覆盖率</h2>
+        <div class="bar-chart" id="dash-stage-coverage"></div>
+      </div>
+    </section>
+
+    <!-- Tasks -->
+    <section class="view" id="view-tasks">
+      <header class="view-header">
+        <h1>任务列表</h1>
+        <div class="actions">
+          <input type="search" id="task-search" placeholder="搜索任务名…" class="search">
+          <button class="btn" id="btn-refresh-tasks">🔄</button>
+        </div>
+      </header>
+      <div class="task-grid" id="task-grid">
+        <div class="empty">加载中…</div>
+      </div>
+    </section>
+
+    <!-- Task Detail (slide-in panel) -->
+    <div class="panel-backdrop" id="task-panel-backdrop"></div>
+    <aside class="panel" id="task-panel">
+      <header class="panel-header">
+        <h2 id="task-panel-title">任务详情</h2>
+        <button class="btn-icon" id="task-panel-close">✕</button>
+      </header>
+      <div class="panel-body" id="task-panel-body"></div>
+    </aside>
+
+    <!-- Verdicts -->
+    <section class="view" id="view-verdicts">
+      <header class="view-header">
+        <h1>Verdicts</h1>
+        <div class="actions">
+          <input type="search" id="verdict-search" placeholder="搜索 iid / 文件名…" class="search">
+          <button class="btn" id="btn-refresh-verdicts">🔄</button>
+        </div>
+      </header>
+      <div class="verdict-list" id="verdict-list">
+        <div class="empty">加载中…</div>
+      </div>
+    </section>
+
+    <!-- Verdict Detail Panel -->
+    <div class="panel-backdrop" id="verdict-panel-backdrop"></div>
+    <aside class="panel panel-wide" id="verdict-panel">
+      <header class="panel-header">
+        <h2 id="verdict-panel-title">Verdict 详情</h2>
+        <button class="btn-icon" id="verdict-panel-close">✕</button>
+      </header>
+      <div class="panel-body" id="verdict-panel-body"></div>
+    </aside>
+
+    <!-- Loop -->
+    <section class="view" id="view-loop">
+      <header class="view-header">
+        <h1>Loop 状态</h1>
+        <div class="actions">
+          <span class="ts" id="loop-mtime">--</span>
+          <button class="btn" id="btn-refresh-loop">🔄</button>
+        </div>
+      </header>
+      <div class="card">
+        <h2>当前活跃迭代</h2>
+        <div id="loop-active"></div>
+      </div>
+      <div class="card">
+        <h2>loop.md 全文</h2>
+        <pre class="md-source" id="loop-content"></pre>
+      </div>
+    </section>
+
+    <!-- Rules -->
+    <section class="view" id="view-rules">
+      <header class="view-header">
+        <h1>R 规则 (CLAUDE.md)</h1>
+        <div class="actions">
+          <button class="btn" id="btn-refresh-rules">🔄</button>
+        </div>
+      </header>
+      <pre class="md-source" id="rules-content">加载中…</pre>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

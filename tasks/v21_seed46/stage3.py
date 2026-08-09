@@ -30,9 +30,9 @@ V21_CONFIG = {
     "tag": "v21_seed46",
 }
 
-# 假设 v18/v19/v20 已留下 marker 状态 (SEED=45, EARLY_STOP=30, LR=1e-3)
-# v21 patch: SEED 45 → 46
-PATCH_SEED_OLD = "SEED = 45  # v20 (2026-08-09): multi-seed averaging 第 4 个 (42, 43, 44, 45)"
+# v20 训练完已 restore SEED=42 (回到 baseline).
+# v21 patch: SEED 42 → 46
+PATCH_SEED_OLD = "SEED = 42"
 PATCH_SEED_NEW = "SEED = 46  # v21 (2026-08-09): multi-seed averaging 第 5 个 (42, 43, 44, 45, 46)"
 
 

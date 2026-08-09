@@ -65,7 +65,7 @@ TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 # a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae; #56 验收 R@10=0.9575)
 # Issue #58: Stage1 残差头不再 F.normalize, 直接输出切空间 h+α·u (任意范数, 保留径向信息)
 # Stage2 第一层用 expmap0(·, c_0) 映射到 Poincaré 球做 assignment, 残差回到切空间 u_1 = u_0 - e_{0,a}
-ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb_baseline_u32.npy"  # v15+v74 baseline Stage1 输出 (R_MODE=fixed, R_MAX=0.99, e_dim=768, 9922 items, parquet SHA=1a42341f)
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue96_v74_repro/item_emb_baseline_u32.npy"  # Stage 1 实时产出 (R_MODE=fixed, R_MAX=1.0, F.normalize norm=1.0, e_dim=768, 9922 items, parquet SHA=96a7109e14b6b93ce1ae2c628fa1df9a06f9d177673d6ba1f78c5db98aea5cea)
 
 # 数据集元数据
 N_ITEMS = 9922
@@ -216,9 +216,12 @@ KAPPA_TRUST_REGION_LAMBDA = 1.0
 KAPPA_WARMUP_EPOCHS = 0
 
 # Issue #41 (逐层锚定有界 κ): κ_effective = κ_anchor + tanh(κ_drift) * range
-# Issue #44 v8: KAPPA_ANCHORS=[] → 自由 κ (回 v5 行为, 与 Issue #37 / Issue #44 spec 一致)
-KAPPA_ANCHORS = []  # 空 = 自由 κ (与 hyp v5 一致)
-KAPPA_ANCHOR_RANGE = 0.05  # range 仍保留 (KAPPA_ANCHORS=[] 时自动用 anchor=0+range=1.0 fallback)
+# Issue #96 v15 capmatch 复现 (2026-08-09): 锚定到 v15 历史 final_kappas=[0.30, 1.79, 1.48],
+#   KAPPA_ANCHOR_RANGE=0.5 让 κ 在 anchor 附近浮动 (±0.5) 而非无限涨到 KAPPA_MAX=6.
+#   上一轮自由 κ (KAPPA_ANCHORS=[]) + KAPPA_MAX=6 让 κ 涨到 [3.12, 4.29, 4.64] 过头,
+#   util_4digit 崩到 0.003 (R23 Gate 1 FAIL).
+KAPPA_ANCHORS = [0.30, 1.79, 1.48]  # v15 实际 final_kappas (Issue #157 verdict)
+KAPPA_ANCHOR_RANGE = 0.5  # v15 anchor ±0.5 (温和浮动, 防彻底锁死)
 
 # Issue #59: 平滑有界 κ 参数化 (sigmoid 形式, 严格上下界, 运行前硬编码 + 说明依据).
 #   κ_l = κ_min + (κ_max-κ_min) · σ(θ_l),  θ_l 独立可学
@@ -234,8 +237,8 @@ KAPPA_ANCHOR_RANGE = 0.05  # range 仍保留 (KAPPA_ANCHORS=[] 时自动用 anch
 #     需 c=[8.06, 62.3, 127.4] 即 κ=[2.09, 4.13, 4.85]. 上界取 6.0 (c=403) 留余量.
 #   注意 κ_max 抬高本身不强迫 κ 变大 — σ(θ) 仍自由; 是 REL_STRUCT_ON_BALL 的径向目标在拉 κ.
 KAPPA_MIN = -1.0
-KAPPA_MAX = 0.5  # v15 值, 保留历史行为 (Issue #59 安全区间)
-KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 1.5
+KAPPA_MAX = 6.0  # v15 真实值 (Issue #76 修复 2026-08-09, 原 commit 32beba0 注释承诺改 6.0 但值未改, 致 κ 卡 0.5 上限)
+KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 7.0
 
 # ──────────────────────────────────────────────────────────────
 # Issue #70/#71/#72: 固定 per-layer 曲率注入通道 (FIXED_CURV)
@@ -260,6 +263,18 @@ FIXED_CURV = False          # 由 --sweep_id 自动置 True; 默认 False 走原
 FIXED_CURV_C = None         # 由 --sweep_id 从 CURV_SWEEP_GRID 查表填入, 形如 [c0, c1, c2]
 # Issue #75 (2026-08-07): Vanilla-RQ 欧氏基线模式 (避免几何干扰)
 VANILLA_RQ = False          # 由 --vanilla_rq 自动置 True; poincare_recon_loss → 欧氏 MSE
+# Issue #103 (2026-08-10): Multi-Curvature Joint Training (MCJT) — 多 c 值联合 recon + α_c learnable.
+# 路径与 v15 capmatch + HRQ (#102) 完全正交:
+#   - 不改 κ/c 标量 (per-layer κ 仍按 v15 learnable 主路径)
+#   - 不改 distance 函数本身 (expmap0/d_P/argmin 沿用 v15)
+#   - 改 loss aggregation: per-layer recon 改为 Σ_c α_c·d_P^c, α_c = softmax(logits_c) learnable
+# Gate 1: util_3digit > 0.85 (允许略低于 v15 0.92, 因 MCJT 多解空间)
+# Gate 2: SID collision > 70% with 5f8331cc (multi-c 应允许多解空间)
+MCJT_ALPHA = False          # 由 --mcjt_alpha flag 启用; 默认 False 兼容 v15
+MCJT_C_SET = [0.5, 1.0, 2.0, 5.0]   # 4 个 c 值覆盖 #83 distortion curve 整个扫描范围
+MCJT_ENTROPY_LAMBDA = 1.0   # α entropy reg 强度 (防塌缩到单一 c)
+MCJT_LAYER_LAMBDA = 0.1     # per-layer multi-c recon 相对 commitment loss 的权重
+MCJT_ENTROPY_MIN_FACTOR = 0.5  # entropy ≥ log(|C_set|)·factor = log(4)·0.5 ≈ 0.693
 
 # issue #70/#71/#72 共用的曲率取值集合 (κ 即曲率 c)
 CURV_SWEEP_KAPPAS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0]   # #70 per-layer 扫描用 (7 值)
@@ -394,6 +409,9 @@ _argparser.add_argument("--vanilla_rq", action="store_true",
 # Issue #228 (2026-08-09): Stage2 κ per-batch radius modulation — κ_l_eff = κ_l_base · (1 + α_l · batch_norm)
 _argparser.add_argument("--enable_per_batch_radius_mod", action="store_true",
                         help="Issue #228: 启用 per-batch radius 调制 c_l (与 v15 capmatch baseline 完全等价, 仅 α_l init 0)")
+# Issue #103 (2026-08-10): MCJT — Multi-Curvature Joint Training
+_argparser.add_argument("--mcjt_alpha", action="store_true", default=False,
+                        help="Issue #103: 启用 MCJT multi-c recon loss aggregation + learnable α_c (per layer, |C_set|=4)")
 _args = _argparser.parse_args()
 
 # Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
@@ -411,12 +429,18 @@ if _args.enable_per_batch_radius_mod:
 else:
     PER_BATCH_RADIUS_MOD = False
 
-WORLD_SIZE = _args.world_size
-RANK = _args.rank
+# Issue #103 (2026-08-10): MCJT — multi-c loss aggregation flag
+if _args.mcjt_alpha:
+    MCJT_ALPHA = True
+    print(f"[Issue103] MCJT_ALPHA=ON → per-layer recon loss = Σ_c α_c·d_P^c, α_c learnable, |C_set|={len(MCJT_C_SET)}")
+else:
+    MCJT_ALPHA = False
+
+WORLD_SIZE = int(os.environ.get("WORLD_SIZE", _args.world_size))
+RANK = int(os.environ.get("RANK", _args.rank))
 # Issue #141 v85g (2026-08-08): torchrun 设 LOCAL_RANK env, argparse 默认 0 → 所有 rank 都用 cuda:0 → NCCL duplicate GPU.
 # 优先读 env (torchrun 设的), fallback argparse (单进程传 --local_rank 用).
-import os as _os
-LOCAL_RANK = int(_os.environ.get("LOCAL_RANK", _args.local_rank))
+LOCAL_RANK = int(os.environ.get("LOCAL_RANK", _args.local_rank))
 DDP_MODE = WORLD_SIZE > 1
 MLR_ENABLED = _args.mlr_enabled  # R30: 默认走常量 True (Issue #47 状态), --no_mlr 切换到 False (Issue #48 spec)
 # Issue #71 v82 (2026-08-07): --item_emb_npy 命令行覆盖 (默认 issue60 packed u32, v82 用 Stage1 v82 .npy)
@@ -588,6 +612,11 @@ class KappaAwareVectorQuantization(nn.Module):
         self._per_batch_radius_mod_max = PER_BATCH_RADIUS_MOD_MAX
         # Issue #55/v2: per-layer mix weight (init=1.0, softmax normalized). 三层独立学习不同权重
         self.mix_weight = nn.Parameter(torch.tensor(1.0, dtype=torch.float32))
+        # Issue #103 (2026-08-10): MCJT — per-layer learnable α_c (init logits=0 → α_c init uniform 1/|C_set|).
+        # α_c = softmax(self.mcjt_alpha_logits) ∈ Δ^(|C_set|-1), 用于 per-layer recon 多曲率加权.
+        # 总参数增量: 3 层 × 4 c logits = 12 个标量 (vs v15 完全无新增参数).
+        if MCJT_ALPHA:
+            self.mcjt_alpha_logits = nn.Parameter(torch.zeros(len(MCJT_C_SET), dtype=torch.float32))
         self.embeddings = nn.Embedding(n_e, e_dim)
         if not kmeans_init:
             self.initted = True
@@ -840,6 +869,28 @@ class KappaAwareVectorQuantization(nn.Module):
         latent = logmap0(latent_safe, c_geom)
         x_q = x + (x_q - x).detach()
         indices = indices.view(x.shape[:-1])
+        # Issue #103 (2026-08-10): MCJT — per-layer multi-c recon loss with learnable α_c.
+        # 对 (input=x, output=x_q) pair, 在 4 个 c 值上分别算 d_P^c, 按 α_c 加权求和, 加 entropy reg 防塌缩.
+        # 不影响 commitment/codebook loss 主路径, 仅叠加 per-layer recon 信号.
+        if MCJT_ALPHA:
+            alpha_c = F.softmax(self.mcjt_alpha_logits, dim=-1)
+            mcjt_recon = torch.zeros((), device=x.device, dtype=x.dtype)
+            for ci, c_val in enumerate(MCJT_C_SET):
+                c_t = torch.tensor(c_val, dtype=x.dtype, device=x.device)
+                # Project input + quantized to Poincaré ball at curvature c_val
+                inp_ball = proj_to_ball(expmap0(x.view(-1, self.e_dim), c_t), c_t)
+                xq_ball = proj_to_ball(expmap0(x_q.view(-1, self.e_dim), c_t), c_t)
+                d_c = torch.mean(poincare_distance(inp_ball, xq_ball, c_t) ** 2)
+                mcjt_recon = mcjt_recon + alpha_c[ci] * d_c
+            # Entropy reg: 阻止 α 塌缩到单一 c (下限 = log(|C_set|) · MCJT_ENTROPY_MIN_FACTOR)
+            entropy = -(alpha_c * (alpha_c + 1e-10).log()).sum()
+            entropy_min = math.log(len(MCJT_C_SET)) * MCJT_ENTROPY_MIN_FACTOR
+            entropy_reg = F.relu(entropy_min - entropy)
+            mcjt_loss = mcjt_recon + MCJT_ENTROPY_LAMBDA * entropy_reg
+            loss = loss + MCJT_LAYER_LAMBDA * mcjt_loss
+            # 监控: 当前 α 分布 + entropy (每层独立, 便于看三层是否学到不同 α)
+            self._last_mcjt_alpha = alpha_c.detach().cpu().numpy().tolist()
+            self._last_mcjt_entropy = float(entropy.item())
         return x_q, loss, indices
 
 
@@ -1105,6 +1156,28 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
         latent = logmap0(latent_safe, c_geom)
         x_q = x + (x_q - x).detach()
         indices = indices.view(x.shape[:-1])
+        # Issue #103 (2026-08-10): MCJT — per-layer multi-c recon loss with learnable α_c.
+        # 对 (input=x, output=x_q) pair, 在 4 个 c 值上分别算 d_P^c, 按 α_c 加权求和, 加 entropy reg 防塌缩.
+        # 不影响 commitment/codebook loss 主路径, 仅叠加 per-layer recon 信号.
+        if MCJT_ALPHA:
+            alpha_c = F.softmax(self.mcjt_alpha_logits, dim=-1)
+            mcjt_recon = torch.zeros((), device=x.device, dtype=x.dtype)
+            for ci, c_val in enumerate(MCJT_C_SET):
+                c_t = torch.tensor(c_val, dtype=x.dtype, device=x.device)
+                # Project input + quantized to Poincaré ball at curvature c_val
+                inp_ball = proj_to_ball(expmap0(x.view(-1, self.e_dim), c_t), c_t)
+                xq_ball = proj_to_ball(expmap0(x_q.view(-1, self.e_dim), c_t), c_t)
+                d_c = torch.mean(poincare_distance(inp_ball, xq_ball, c_t) ** 2)
+                mcjt_recon = mcjt_recon + alpha_c[ci] * d_c
+            # Entropy reg: 阻止 α 塌缩到单一 c (下限 = log(|C_set|) · MCJT_ENTROPY_MIN_FACTOR)
+            entropy = -(alpha_c * (alpha_c + 1e-10).log()).sum()
+            entropy_min = math.log(len(MCJT_C_SET)) * MCJT_ENTROPY_MIN_FACTOR
+            entropy_reg = F.relu(entropy_min - entropy)
+            mcjt_loss = mcjt_recon + MCJT_ENTROPY_LAMBDA * entropy_reg
+            loss = loss + MCJT_LAYER_LAMBDA * mcjt_loss
+            # 监控: 当前 α 分布 + entropy (每层独立, 便于看三层是否学到不同 α)
+            self._last_mcjt_alpha = alpha_c.detach().cpu().numpy().tolist()
+            self._last_mcjt_entropy = float(entropy.item())
         return x_q, loss, indices
 
     def get_codebook(self):
