@@ -182,11 +182,18 @@ def main():
     ap.add_argument("--sigmoid_temp", type=float, default=SIGMOID_TEMP, help="heuristic sigmoid 温度 (v82: 3.0→5.0)")
     ap.add_argument("--sigmoid_center", type=float, default=SIGMOID_CENTER, help="heuristic sigmoid 中心")
     ap.add_argument("--tag_suffix", type=str, default="", help="输出路径 tag 后缀 (v82 用 _v82_r095_t5)")
+    # Issue #105 (2026-08-10): SHIE — Stage1 Hyperbolic Item Encoding
+    ap.add_argument("--shie_encoding", action="store_true", default=False,
+                    help="Issue #105: 启用 SHIE exp_map_0 Stage1 encoding (输出 hyperbolic 而非 Euclidean)")
+    ap.add_argument("--shie_c", type=float, default=1.0, help="Issue #105: SHIE exp_map_0 曲率 c (默认 1.0)")
     args = ap.parse_args()
 
     global OUTPUT_PARQUET
     if args.tag_suffix:
         OUTPUT_PARQUET = OUTPUT_PARQUET.parent / f"item_emb_baseline_{args.tag_suffix}.parquet"
+    # Issue #105: SHIE 启用时改 output tag 后缀, 避免与 baseline parquet 冲突
+    if args.shie_encoding:
+        OUTPUT_PARQUET = OUTPUT_PARQUET.parent / "item_emb_shie.parquet"
 
     OUTPUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
     set_seed(SEED)
@@ -214,10 +221,17 @@ def main():
     all_r = np.zeros((len(items),), dtype=np.float32)
     t0 = time.time()
     model.eval()
+    # Issue #105 (2026-08-10): SHIE — exp_map_0 应用于 Stage1 输出 (Euclidean → hyperbolic)
+    # 仅在 --shie_encoding 启用时执行; 默认保持 v15 Euclidean 输出 (||v||=1.0).
+    if args.shie_encoding:
+        log(f"[Issue105] SHIE encoding: exp_map_0 applied (c={args.shie_c})")
     for start in range(0, len(items), BATCH_SIZE):
         batch_texts = texts[start:start + BATCH_SIZE]
         with torch.no_grad():
             v, r, d = model(batch_texts, device)
+        # Issue #105: SHIE — apply exp_map_0 to v (Euclidean → hyperbolic ball)
+        if args.shie_encoding:
+            v = expmap0(v, args.shie_c)  # v ∈ Poincaré ball, ||v||_ball = tanh(√c · ||v||)/√c
         all_v[start:start + len(batch_texts)] = v.detach().cpu().numpy()
         all_r[start:start + len(batch_texts)] = r.detach().cpu().numpy()
     log(f"[stage1-hyp] encode done in {time.time()-t0:.0f}s")

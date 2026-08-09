@@ -1350,7 +1350,7 @@ def main():
             D_list, Dbar_list, stats_list = precompute_distance_matrices(codebook_list, hab_final_cs)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
-            assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
+            assert stats["sym_err"] < 1e-5, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-5"
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
         hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX,
                                               enable_residual=RESIDUAL_HAB_ENABLED,

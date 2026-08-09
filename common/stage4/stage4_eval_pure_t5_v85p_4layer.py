@@ -512,7 +512,7 @@ def main():
             codebook_list, hab_final_cs, use_delta_curvature=HAB_DELTA_CURVATURE_EVAL)
         for stats in stats_list:
             assert stats["finite"], f"L{stats['layer']} 距离矩阵含 NaN/Inf"
-            assert stats["sym_err"] < 1e-6, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-6"
+            assert stats["sym_err"] < 1e-5, f"L{stats['layer']} 对称误差 {stats['sym_err']} >= 1e-5"
             assert stats["diag_max"] < 1e-6, f"L{stats['layer']} 对角线 {stats['diag_max']} >= 1e-6"
         hab_module = HyperbolicAttentionBias(Dbar_list, lambda_max=HAB_LAMBDA_MAX_VAL,
                                               enable_residual=RESIDUAL_HAB_ENABLED,

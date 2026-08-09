@@ -426,6 +426,9 @@ _argparser.add_argument("--mcjt_alpha", action="store_true", default=False,
 # Issue #104 (2026-08-10): SPBI — Stratified Poincaré Ball Initialization
 _argparser.add_argument("--spbi_init", action="store_true", default=False,
                         help="Issue #104: 启用 SPBI 4 径向层 codebook init (|R_shells|=4, 方向 S^{dim-1} 均匀)")
+# Issue #105 (2026-08-10): SHIE — Stage1 输出已在 Poincaré ball, Stage2 跳过内部 exp_map_0
+_argparser.add_argument("--input_hyperbolic", action="store_true", default=False,
+                        help="Issue #105: 输入已是 Poincaré ball (Stage1 SHIE), Stage2 跳过内部 exp_map_0 (直接用 latent in ball)")
 _args = _argparser.parse_args()
 
 # Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
@@ -455,6 +458,10 @@ if _args.spbi_init:
     print(f"[Issue104] SPBI_INIT=ON → codebook init = stratified {len(SPBI_R_SHELLS)} shells at Poincaré ball radius {SPBI_R_SHELLS}, S^{{dim-1}} uniform")
 else:
     SPBI_INIT = False
+# Issue #105 (2026-08-10): SHIE — 输入已是 Poincaré ball, Stage2 跳过内部 exp_map_0
+INPUT_HYPERBOLIC = _args.input_hyperbolic
+if INPUT_HYPERBOLIC:
+    print(f"[Issue105] INPUT_HYPERBOLIC=ON → Stage2 跳过内部 exp_map_0 (Stage1 SHIE 输出已在 Poincaré ball)")
 
 WORLD_SIZE = int(os.environ.get("WORLD_SIZE", _args.world_size))
 RANK = int(os.environ.get("RANK", _args.rank))
@@ -814,7 +821,7 @@ class KappaAwareVectorQuantization(nn.Module):
         # 几何 (expmap/proj/distance) 用 c_geom, κ 只从 train_step 的平滑 log-curvature 先验获得梯度.
         c_geom = c.detach() if CURV_PRIOR else c
         # Issue #157 关键: 每次 forward 重新投影 codebook (不 cache 旧尺度)
-        latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom)
+        latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom) if not INPUT_HYPERBOLIC else proj_to_ball(latent, c_geom)
         codebook_h = proj_to_ball(expmap0(codebook_e, c_geom), c_geom)
 
         B = latent_h.shape[0]
@@ -1094,7 +1101,7 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
         c = self.get_c()
         c_geom = c.detach() if CURV_PRIOR else c
         c_mlr = c  # MLR score 真依赖 κ (Issue #46 spec)
-        latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom)
+        latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom) if not INPUT_HYPERBOLIC else proj_to_ball(latent, c_geom)
         codebook_h = proj_to_ball(expmap0(codebook_e, c_geom), c_geom)
 
         B = latent_h.shape[0]
@@ -1297,9 +1304,14 @@ def poincare_recon_loss(out, target, c=1.0):
     Issue #55/v3 根因修复: 欧氏 MSE recon 导致 posterior collapse (encoder z→常数,
     SID unique3=1). 基线用 poincare recon 不塌缩 (诊断: mse→z std=0.0006 unique3=1,
     poincare→z std=0.04 unique3=1838).
+    Issue #105 (2026-08-10) SHIE: 当 INPUT_HYPERBOLIC=True (Stage1 输出已在 Poincaré ball),
+    target 已是 ball 内的点, 不能再次 exp_map_0 (会误把 ball 点当作切向量) → 改用 proj_to_ball 直接保 ball.
     """
     o = proj_to_ball(expmap0(out, c), c)
-    t = proj_to_ball(expmap0(target, c), c)
+    if INPUT_HYPERBOLIC:
+        t = proj_to_ball(target, c)  # target 已在 ball, 只投影 (idempotent if already <1)
+    else:
+        t = proj_to_ball(expmap0(target, c), c)  # Euclidean → exp_map → ball
     return torch.mean(poincare_distance(o, t, c) ** 2)
 
 
