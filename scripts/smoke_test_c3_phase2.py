@@ -173,13 +173,15 @@ def main():
         fix_c=FIX_C,
     ).to(device)
 
-    # KMeans init
+    # KMeans init: 删手工 for q.init_emb (Issue #119 Step 2, 2026-08-10).
+    #   原代码 L0/L1/L2 全部用同一份 encoder latent z_first → RQ 顺序错。
+    #   正确路径: 首次 model(batch) 在 HRQVAE.forward() 内部自然按 RQ 顺序 init:
+    #     L0 ← encoder latent
+    #     L1 ← (encoder latent - L0)
+    #     L2 ← (encoder latent - L0 - L1)
+    #   每层 q(residual) 第一次调用时, 因 not q.initted 触发 init_emb(latent=该层 residual)。
+    #   见 stage2.py KappaAwareVectorQuantization.forward() line 858-862 + HRQVAE.forward() line 1035-1047。
     model.train()
-    with torch.no_grad():
-        z_first = model.encoder(item_emb_t[:args_pre.batch_size])
-        for q in model.vq_layers:
-            if not q.initted:
-                q.init_emb(z_first.detach().cpu())
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args_pre.lr)
 
