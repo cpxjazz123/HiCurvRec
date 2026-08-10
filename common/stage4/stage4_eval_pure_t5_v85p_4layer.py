@@ -125,6 +125,22 @@ _argparser.add_argument("--scsb_beta", type=float, default=0.1,
 _argparser.add_argument("--scsb_stage2_ckpt", type=str,
                         default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
                         help="Issue #107: Stage2 ckpt 路径 (提供 codebook + per-layer κ)")
+# Issue #108 (2026-08-10): Stage4 HSCSB eval 同步 (Hierarchical SCSB)
+_argparser.add_argument("--hscsb_enabled", action="store_true",
+                        help="Issue #108: 启用 HSCSB eval (3 层累积 + cross-layer bias)")
+_argparser.add_argument("--hscsb_alpha_init", type=str, default="1.0,1.0,1.0",
+                        help="Issue #108: 3 个 α_ℓ 初始值 (与 train 一致)")
+_argparser.add_argument("--hscsb_beta_l0", type=float, default=0.1,
+                        help="Issue #108: β_0 fixed (与 train 一致)")
+_argparser.add_argument("--hscsb_beta_l1", type=float, default=0.2,
+                        help="Issue #108: β_1 fixed (与 train 一致)")
+_argparser.add_argument("--hscsb_beta_l2", type=float, default=0.4,
+                        help="Issue #108: β_2 fixed (与 train 一致)")
+_argparser.add_argument("--hscsb_beta_cross", type=float, default=0.05,
+                        help="Issue #108: β_cross fixed (与 train 一致)")
+_argparser.add_argument("--hscsb_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #108: Stage2 ckpt 路径 (与 train 一致)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -160,6 +176,14 @@ SCSB_ENABLED = _args.scsb_enabled
 SCSB_ALPHA_INIT = _args.scsb_alpha_init
 SCSB_BETA = _args.scsb_beta
 SCSB_STAGE2_CKPT = _args.scsb_stage2_ckpt
+# Issue #108 (2026-08-10): HSCSB eval 常量
+HSCSB_ENABLED = _args.hscsb_enabled
+HSCSB_ALPHA_INIT = [float(x) for x in _args.hscsb_alpha_init.split(",")]
+HSCSB_BETA_L0 = _args.hscsb_beta_l0
+HSCSB_BETA_L1 = _args.hscsb_beta_l1
+HSCSB_BETA_L2 = _args.hscsb_beta_l2
+HSCSB_BETA_CROSS = _args.hscsb_beta_cross
+HSCSB_STAGE2_CKPT = _args.hscsb_stage2_ckpt
 # Issue #238 (2026-08-10): Poincaré Re-ranking (Stage4 post-generation)
 POINCARE_RERANK = _args.poincare_rerank
 RERANK_ALPHA = _args.rerank_alpha
@@ -386,6 +410,139 @@ def install_scsb_eval(hg_rec, scsb_module, device):
         return out
 
     hg_rec.forward = types.MethodType(scsb_forward, hg_rec)
+    return hg_rec
+
+
+class HSCSBModuleEval(nn.Module):
+    """Issue #108 (2026-08-10): Stage4 HSCSB eval 同源实现 (与 train 一致)."""
+
+    def __init__(self, codebooks_t, cs, kappas, layer_id_lut,
+                 alpha_init=[1.0, 1.0, 1.0], beta_l=[0.1, 0.2, 0.4],
+                 beta_cross=0.05, alpha_max=5.0, vocab_size=1025):
+        super().__init__()
+        codebooks_ball = []
+        for tan_emb, c in zip(codebooks_t, cs):
+            tan_emb = tan_emb.float()
+            c_t = torch.tensor(float(c), dtype=torch.float32)
+            ball_emb = self._exp_map_0(tan_emb, c_t)
+            ball_emb = self._proj_to_ball(ball_emb, c_t)
+            codebooks_ball.append(ball_emb)
+        self.register_buffer("codebook_l0", codebooks_ball[0])
+        self.register_buffer("codebook_l1", codebooks_ball[1])
+        self.register_buffer("codebook_l2", codebooks_ball[2])
+        self.register_buffer("c_l0", torch.tensor(float(cs[0]), dtype=torch.float32))
+        self.register_buffer("c_l1", torch.tensor(float(cs[1]), dtype=torch.float32))
+        self.register_buffer("c_l2", torch.tensor(float(cs[2]), dtype=torch.float32))
+        self.register_buffer("layer_id_lut",
+                             torch.tensor(layer_id_lut, dtype=torch.long))
+        self.register_buffer("token_offset_l0", torch.tensor(1, dtype=torch.long))
+        self.register_buffer("token_offset_l1", torch.tensor(65, dtype=torch.long))
+        self.register_buffer("token_offset_l2", torch.tensor(193, dtype=torch.long))
+        self.register_buffer("K_l0", torch.tensor(64, dtype=torch.long))
+        self.register_buffer("K_l1", torch.tensor(128, dtype=torch.long))
+        self.register_buffer("K_l2", torch.tensor(256, dtype=torch.long))
+        self.vocab_size = vocab_size
+        self.alpha_raw = nn.Parameter(torch.tensor(alpha_init, dtype=torch.float32))
+        self.alpha_max = float(alpha_max)
+        self.register_buffer("beta_l", torch.tensor(beta_l, dtype=torch.float32))
+        self.register_buffer("beta_cross", torch.tensor(float(beta_cross),
+                                                        dtype=torch.float32))
+
+    @property
+    def alphas(self):
+        return self.alpha_max * torch.sigmoid(self.alpha_raw)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    def _compute_layer_dist(self, input_ids, l):
+        device = input_ids.device
+        layer_ids = self.layer_id_lut[input_ids]
+        cb_list = [self.codebook_l0, self.codebook_l1, self.codebook_l2]
+        c_list = [self.c_l0, self.c_l1, self.c_l2]
+        offset_list = [self.token_offset_l0.item(),
+                       self.token_offset_l1.item(),
+                       self.token_offset_l2.item()]
+        cb = cb_list[l]
+        c = c_list[l]
+        mask = (layer_ids == l)
+        token_idx_l = input_ids - offset_list[l]
+        safe_idx = token_idx_l.clamp(0, cb.shape[0] - 1)
+        history_emb = cb[safe_idx]
+        mask_f = mask.float().unsqueeze(-1)
+        cnt = mask_f.sum(1).clamp_min(1.0)
+        centroid = (mask_f * history_emb).sum(1) / cnt
+        x_sq = (centroid * centroid).sum(-1, keepdim=True)
+        y_sq = (cb * cb).sum(-1, keepdim=True).T
+        diff_sq = ((centroid.unsqueeze(1) - cb.unsqueeze(0)) ** 2).sum(-1)
+        num = 2.0 * diff_sq
+        denom = ((1.0 - x_sq) * (1.0 - y_sq)).clamp_min(1e-30)
+        arg = (1.0 + num / denom).clamp_min(1.0 + 1e-7)
+        sqrt_term = torch.sqrt((arg ** 2 - 1.0).clamp_min(1e-30))
+        dist = (torch.log(arg + sqrt_term) / (c ** 0.5).clamp_min(1e-30))
+        return -dist
+
+    def compute_bias(self, input_ids):
+        device = input_ids.device
+        B = input_ids.shape[0]
+        cb_list = [self.codebook_l0, self.codebook_l1, self.codebook_l2]
+        offset_list = [self.token_offset_l0.item(),
+                       self.token_offset_l1.item(),
+                       self.token_offset_l2.item()]
+        K_list = [self.K_l0.item(), self.K_l1.item(), self.K_l2.item()]
+        alphas = self.alphas
+        bias_total = torch.zeros(B, self.vocab_size, device=device,
+                                 dtype=torch.float32)
+        all_dist = []
+        for l in range(3):
+            neg_dist_l = self._compute_layer_dist(input_ids, l)
+            all_dist.append(neg_dist_l)
+            layer_bias = torch.zeros(B, self.vocab_size, device=device,
+                                      dtype=torch.float32)
+            layer_bias[:, offset_list[l]:offset_list[l] + K_list[l]] = neg_dist_l
+            layer_bias_log = torch.log_softmax(layer_bias, dim=-1)
+            bias_total = bias_total + self.beta_l[l] * alphas[l] * layer_bias_log
+        cross_bias = torch.zeros(B, self.vocab_size, device=device,
+                                  dtype=torch.float32)
+        for l in range(3):
+            cross_bias[:, offset_list[l]:offset_list[l] + K_list[l]] = all_dist[l]
+        cross_bias_log = torch.log_softmax(cross_bias, dim=-1)
+        bias_total = bias_total + self.beta_cross * cross_bias_log
+        return bias_total
+
+
+def install_hscsb_eval(hg_rec, hscsb_module, device):
+    """Issue #108 (2026-08-10): 包裹 T5 forward, 注入 HSCSB bias (eval)."""
+    import types
+    hscsb_module = hscsb_module.to(device)
+    hg_rec.add_module("hscsb_module", hscsb_module)
+
+    if not hasattr(hg_rec, "_hscsb_orig_forward"):
+        hg_rec._hscsb_orig_forward = hg_rec.forward
+
+    def hscsb_forward(self, input_ids=None, attention_mask=None,
+                      labels=None, **kwargs):
+        out = self._hscsb_orig_forward(input_ids=input_ids,
+                                        attention_mask=attention_mask,
+                                        labels=labels, **kwargs)
+        if (input_ids is not None
+                and hasattr(out, "logits") and out.logits is not None):
+            bias = self.hscsb_module.compute_bias(input_ids)
+            out.logits = out.logits + bias.unsqueeze(1)
+        return out
+
+    hg_rec.forward = types.MethodType(hscsb_forward, hg_rec)
     return hg_rec
 
 
@@ -721,6 +878,35 @@ def main():
         install_scsb_eval(model, scsb_module, DEVICE)
         print(f"[Issue #107 v30 SCSB] eval ON: c_per_layer={[f'{c:.4f}' for c in cs]} "
               f"beta={SCSB_BETA}", flush=True)
+
+    # Issue #108 (2026-08-10): HSCSB eval 同步
+    hscsb_module = None
+    if HSCSB_ENABLED:
+        sd_ckpt = torch.load(HSCSB_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        sd = sd_ckpt["model_state_dict"]
+        codebooks_t = [
+            sd["vq_layers.0.embeddings.weight"].float(),
+            sd["vq_layers.1.embeddings.weight"].float(),
+            sd["vq_layers.2.embeddings.weight"].float(),
+        ]
+        cs = [float(c) for c in sd_ckpt["final_cs"]]
+        kappas = [float(k) for k in sd_ckpt["final_kappas"]]
+        hscsb_module = HSCSBModuleEval(
+            codebooks_t=codebooks_t,
+            cs=cs,
+            kappas=kappas,
+            layer_id_lut=SCSB_LAYER_ID_LUT,
+            alpha_init=HSCSB_ALPHA_INIT,
+            beta_l=[HSCSB_BETA_L0, HSCSB_BETA_L1, HSCSB_BETA_L2],
+            beta_cross=HSCSB_BETA_CROSS,
+            alpha_max=5.0,
+            vocab_size=1025,
+        ).to(DEVICE)
+        install_hscsb_eval(model, hscsb_module, DEVICE)
+        print(f"[Issue #108 v31 HSCSB] eval ON: c_per_layer={[f'{c:.4f}' for c in cs]} "
+              f"beta_l=[{HSCSB_BETA_L0}, {HSCSB_BETA_L1}, {HSCSB_BETA_L2}] "
+              f"beta_cross={HSCSB_BETA_CROSS}", flush=True)
 
     # Issue #70: 安装 DecorPromptFormer (candidate bins + alpha gate)
     # 必须在 load_state_dict 之前 add_module(pf_module), 否则 strict load 找不到 pf_module.* keys
