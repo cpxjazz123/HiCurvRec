@@ -222,6 +222,17 @@ _argparser.add_argument("--hres_beta_init", type=float, default=0.01,
 _argparser.add_argument("--hres_stage2_ckpt", type=str,
                         default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
                         help="Issue #111: Stage2 ckpt 路径 (提供 per-layer κ 给 exp_map_0/log_map_0)")
+# Issue #112 (2026-08-10): HCL — Stage3 Hyperbolic Contrastive aux Loss (不动 forward 主路径, 仅 loss 函数)
+# 沿 v34 HRes 失败教训 (R23 NaN): exp/log_map forward 路径已彻底穷尽. v35 改 loss 函数加 L_aux 项 (d_P 作为 contrastive 距离).
+_argparser.add_argument("--hcl_enabled", action="store_true",
+                        help="Issue #112: 启用 HCL — Stage3 aux loss 用 d_P 做 contrastive learning (train-only, 不影响 inference)")
+_argparser.add_argument("--hcl_alpha", type=float, default=0.1,
+                        help="Issue #112: HCL aux loss 权重 α (init=0.1, 与 v34 β=0.01 同量级, 训练初期低权重)")
+_argparser.add_argument("--hcl_tau", type=float, default=1.0,
+                        help="Issue #112: HCL 温度参数 τ (init=1.0, contrastive 距离缩放)")
+_argparser.add_argument("--hcl_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #112: Stage2 ckpt 路径 (提供 per-layer κ 给 c_avg 计算)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -347,6 +358,18 @@ else:
     HRES_ENABLED = False
     HRES_BETA_INIT = 0.0
     HRES_STAGE2_CKPT = None
+# Issue #112 (2026-08-10): HCL — Stage3 Hyperbolic Contrastive aux Loss 常量
+if _args.hcl_enabled:
+    HCL_ENABLED = True
+    HCL_ALPHA = float(_args.hcl_alpha)
+    HCL_TAU = float(_args.hcl_tau)
+    HCL_STAGE2_CKPT = _args.hcl_stage2_ckpt
+    print(f"[Issue #112] HCL_ENABLED=ON → aux contrastive loss in Poincaré space, α={HCL_ALPHA}, τ={HCL_TAU}")
+else:
+    HCL_ENABLED = False
+    HCL_ALPHA = 0.0
+    HCL_TAU = 1.0
+    HCL_STAGE2_CKPT = None
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -1407,6 +1430,131 @@ def install_hres(hg_rec, hres_module, device):
     return hg_rec
 
 
+# ──────────────────────────────────────────────────────────────
+# Issue #112 (2026-08-10): Stage3 HCL — Hyperbolic Contrastive aux Loss
+# 设计 (避开 v34 HRes R23 NaN + v33 RDB bias 主导 logits):
+#   - 不动 forward 主路径 (decoder block / attn / lm_head 全部沿用 v74 HAB)
+#   - 仅在 loss 函数层加 L_aux = -mean log_softmax(-d_P(anchor, all) / τ)[positive]
+#   - 用 lm_head forward_pre_hook (read-only) 拿 decoder final hidden state, 不修改 input
+#   - d_P 沿用 v15 safe poincare_distance (内部已避免 artanh(±1) 边界)
+#   - α=0.1 init (训练初期低权重), τ=1.0 init
+#   - 总参数增量: 0 (纯 loss 项, 无新参数)
+# ──────────────────────────────────────────────────────────────
+
+
+class HCLModule(nn.Module):
+    """Issue #112 v35 HCL: Stage3 aux contrastive loss in Poincaré space.
+
+    Args:
+        c_per_layer: list of 3 floats (Stage2 final_cs), HCL 用平均 c = mean(c_per_layer) 作单曲率.
+        tau: 温度参数 (init=1.0).
+    """
+
+    def __init__(self, c_per_layer, tau=1.0):
+        super().__init__()
+        c_avg = float(sum(c_per_layer) / len(c_per_layer))
+        self.register_buffer("c", torch.tensor(c_avg, dtype=torch.float32))
+        self.tau = float(tau)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    def poincare_distance(self, x, y):
+        """v15 safe poincare_distance: 输入 (..., D) → 返回 (..., ) 距离.
+
+        x_sq = (x * x).sum(-1, keepdim=True)
+        y_sq = (y * y).sum(-1, keepdim=True)
+        diff_sq = ((x.unsqueeze(-2) - y.unsqueeze(-3)) ** 2).sum(-1)
+        arg = 1 + 2 * diff_sq / ((1 - x_sq) * (1 - y_sq)).clamp_min(1e-30)
+        sqrt_term = sqrt(arg^2 - 1).clamp_min(1e-30)
+        d = log(arg + sqrt_term) / sqrt(c)
+        """
+        c = self.c
+        x_sq = (x * x).sum(-1, keepdim=True)
+        y_sq = (y * y).sum(-1, keepdim=True)
+        diff_sq = ((x.unsqueeze(-2) - y.unsqueeze(-3)) ** 2).sum(-1)
+        num = 2.0 * diff_sq
+        denom = ((1.0 - x_sq) * (1.0 - y_sq)).clamp_min(1e-30)
+        arg = (1.0 + num / denom).clamp_min(1.0 + 1e-7)
+        sqrt_term = torch.sqrt((arg ** 2 - 1.0).clamp_min(1e-30))
+        return torch.log(arg + sqrt_term) / c.sqrt().clamp_min(1e-30)
+
+    def compute_hcl_loss(self, h_final, input_ids, layer_id_lut):
+        """h_final: (B, L, D), input_ids: (B, L), layer_id_lut: (V,) → L_aux scalar.
+
+        batch-local contrastive:
+          - 投影 h_final 到 Poincaré ball (单曲率 mean)
+          - pairwise d_P on (B*L, B*L) anchor-positive-negative
+          - same SID as positive pair, different SID as negative pair
+          - L_aux = -mean over anchors of log(softmax(-d_P / τ)[positive])
+        """
+        device = h_final.device
+        c = self.c
+        B, L, D = h_final.shape
+        # 1. 投影到 Poincaré ball (单曲率)
+        h_ball = self._exp_map_0(h_final, c)
+        h_ball = self._proj_to_ball(h_ball, c)
+        h_ball_flat = h_ball.view(B * L, D)
+        # 2. SID 类别 (从 input_ids 查 layer_id_lut, -1=PAD, 0/1/2=L0/L1/L2, 3=L3)
+        sids = layer_id_lut[input_ids]  # (B, L)
+        sids_flat = sids.view(-1)  # (B*L,)
+        # 3. valid mask (排除 PAD)
+        valid = (sids_flat >= 0).float()  # (B*L,)
+        # 4. pairwise d_P
+        D_pair = self.poincare_distance(h_ball_flat, h_ball_flat)  # (B*L, B*L)
+        # 5. positive mask: 同 SID 且 i != j 且 valid
+        same_sid = (sids_flat.unsqueeze(0) == sids_flat.unsqueeze(1)).float()  # (B*L, B*L)
+        diag_mask = 1.0 - torch.eye(B * L, device=device)
+        pos_mask = same_sid * diag_mask * valid.unsqueeze(0) * valid.unsqueeze(1)  # (B*L, B*L)
+        # 6. multi-positive InfoNCE:
+        #    L_aux[i] = -log(sum_pos exp(-D[i,pos]/τ) / sum_all_valid exp(-D[i,k]/τ))
+        log_softmax_input = -D_pair / self.tau  # (B*L, B*L)
+        # mask out invalid k
+        log_softmax_input = log_softmax_input.masked_fill(valid.unsqueeze(0) == 0, -1e9)
+        log_sum_exp_all = torch.logsumexp(log_softmax_input, dim=1)  # (B*L,)
+        # positive 部分: pos_mask 为 0 时用 -1e9 占位
+        log_softmax_input_pos = log_softmax_input.masked_fill(pos_mask == 0, -1e9)
+        log_sum_exp_pos = torch.logsumexp(log_softmax_input_pos, dim=1)  # (B*L,)
+        # anchors with no positive: skip
+        n_pos = pos_mask.sum(1)  # (B*L,)
+        valid_loss = (n_pos > 0).float()  # (B*L,)
+        L_aux_per_anchor = -(log_sum_exp_pos - log_sum_exp_all)  # (B*L,)
+        L_aux = (L_aux_per_anchor * valid_loss).sum() / (valid_loss.sum() + 1e-30)
+        return L_aux
+
+
+def install_hcl(hg_rec, hcl_module, device):
+    """Issue #112 v35 HCL: 注册 forward_pre_hook 到 hg_rec.model.lm_head (read-only, 拿 decoder final hidden state).
+
+    只读 input[0] 存到 hg_rec._last_hidden_state, 不修改 input (forward 主路径不变).
+    保留 gradient 让 HCL aux loss 能 backward 到 decoder params.
+    """
+    hcl_module = hcl_module.to(device)
+    hg_rec.add_module("hcl_module", hcl_module)
+
+    def hcl_lm_head_pre_hook(module, args):
+        """lm_head forward_pre_hook: 存 input[0] (decoder final hidden state) 到 hg_rec, 不修改."""
+        if not args:
+            return None
+        hg_rec._last_hidden_state = args[0]  # 保留 gradient, 不 detach
+        return None  # 不修改 input
+
+    lm_head = hg_rec.model.lm_head
+    lm_head.register_forward_pre_hook(hcl_lm_head_pre_hook)
+    return hg_rec
+
+
 def build_geo_module():
     """按 GEO_KAPPA/SCALE/CODEBOOK_NORM 配置构建 GeoResidualModule.
 
@@ -1917,10 +2065,16 @@ def ndcg_at_k(pos_index, k):
     return dcg[:, :k].sum(dim=1).cpu().float()
 
 
+# Issue #112 (2026-08-10): HCL aux loss module 全局变量 (main() 创建, train() 通过 global 读)
+hcl_module = None  # 必须在 module-level 预声明, 否则 train() global 声明无效
+
+
 def train(model, train_loader, optimizer, device, epoch, scheduler=None):
     model.train()
     # Issue #140 v76: T5 uncertainty head 全局变量 (main() 创建)
     global t5_uncertainty_head
+    # Issue #112 (2026-08-10): HCL aux loss module 全局变量 (main() 创建)
+    global hcl_module
     total_loss = 0.0
     n = 0
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
@@ -1983,6 +2137,22 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
                 loss = loss + HAB_ATTN_ENTROPY_WEIGHT * _hab_entropy
                 # 重置, 避免下次 batch 累加 (每次 forward 后累加, 但 loss 取完应清零)
                 _hab_ref._hab_attn_entropy_loss = None
+        # Issue #112 (2026-08-10): HCL aux contrastive loss in Poincaré space
+        # 拿 lm_head pre-hook 存的 decoder final hidden state + input_ids SID → 算 L_aux
+        if HCL_ENABLED and hcl_module is not None:
+            _inner = model.module if hasattr(model, "module") else model
+            if hasattr(_inner, "_last_hidden_state") and _inner._last_hidden_state is not None:
+                try:
+                    _h_final = _inner._last_hidden_state.float()  # fp32 for d_P numerical stability
+                    _l_aux = hcl_module.compute_hcl_loss(_h_final, input_ids, _LAYER_ID_LUT)
+                    if torch.isfinite(_l_aux):
+                        loss = loss + HCL_ALPHA * _l_aux
+                    else:
+                        if RANK == 0 and n == 0:
+                            log(f"[Issue #112 HCL] warning: L_aux non-finite {_l_aux.item()}, skip")
+                except Exception as _e:
+                    if RANK == 0 and n == 0:
+                        log(f"[Issue #112 HCL] warning: L_aux compute failed: {_e}, skip")
         loss.backward()
         optimizer.step()
         # Issue #141 v85d: per-batch LR scheduler step (cosine with warmup, 更细粒度)
@@ -2327,6 +2497,25 @@ def main():
                 f"beta_init={HRES_BETA_INIT} beta_eff={beta_eff:.4f} "
                 f"c_avg={c_avg:.4f} c_per_layer={[f'{c:.4f}' for c in cs]} "
                 f"learnable_params={sum(p.numel() for p in hres_module.parameters() if p.requires_grad)}")
+    hcl_module = None
+    if HCL_ENABLED:
+        sd_ckpt = torch.load(HCL_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        cs = [float(c) for c in sd_ckpt["final_cs"]]
+        hcl_module = HCLModule(
+            c_per_layer=cs,
+            tau=HCL_TAU,
+        )
+        inner = model.module if hasattr(model, "module") else model
+        inner = install_hcl(inner, hcl_module, device)
+        if hasattr(model, "module"):
+            model.module = inner
+        if is_main:
+            c_avg = float(sum(cs) / len(cs))
+            log(f"[Issue #112 v35 HCL] hyperbolic contrastive aux loss ON: "
+                f"alpha={HCL_ALPHA} tau={HCL_TAU} c_avg={c_avg:.4f} "
+                f"c_per_layer={[f'{c:.4f}' for c in cs]} "
+                f"learnable_params={sum(p.numel() for p in hcl_module.parameters() if p.requires_grad)}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -2348,7 +2537,7 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED or HCL_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
