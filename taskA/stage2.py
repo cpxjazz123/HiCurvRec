@@ -146,6 +146,16 @@ RHO_BALL_TARGET = [0.50, 0.62, 0.72]
 # Issue #76 径向目标强度 (2026-08-07): REL_STRUCT_LAMBDA 1.0 → 200.0
 REL_STRUCT_LAMBDA_BALL = 200.0
 
+# Issue #117 Task 2 (2026-08-10): C3 relational-driven κ objective (Poincaré InfoNCE).
+#   当前占位 disabled — 真正实现 (L_rel = -log(exp(-d_c(z_i,z_i+)/τ) / (sum exp(-d_c(z_i,z_*)/τ))))
+#   留作 Issue #118. 启用前 RELATIONAL_KAPPA_GRAD 始终 0.
+RELATIONAL_ENABLED = False
+RELATIONAL_TAU = 0.5  # InfoNCE 温度
+RELATIONAL_LAMBDA = 1.0  # L_rel 权重
+# nn 邻居采样参数 (Issue #118 实现时启用)
+RELATIONAL_POS_K = 8  # 每 item 采样正样本数 (item emb 余弦 top-K)
+RELATIONAL_NEG_N = 32  # 负样本数 (随机 sample)
+
 # Issue #76 径向扩容 (2026-08-07): kmeans 后 rescale 码本范数让 ρ_ball init = RHO_BALL_TARGET[layer].
 INIT_CODEBOOK_RESCALE_BY_TARGET = False
 
@@ -576,14 +586,16 @@ class KappaAwareVectorQuantization(nn.Module):
             "top1_clip_ratio": sat_top1_ratio,  # S_top1 = P(top-1 u_raw ≥ u_max)
             "all_pair_clip_ratio": sat_all_ratio,  # S_all = P(all (i,k) pair u_raw ≥ u_max)
             "u_raw_clipped_ratio": u_raw_clipped_ratio if False else sat_all_ratio,  # alias, 保留兼容
+            # Issue #117 Task 2 (2026-08-10): 字段重命名 — 显式区分三路 κ 梯度来源
+            #   C1 (vq) = commitment + codebook loss 通过 c_loss 提供的数据驱动 κ 梯度
+            #   C2 (radial) = REL_STRUCT 通过 c_struct 提供的 radial target 梯度 (人工 prior)
+            #   C3 (relational) = L_rel (Poincaré InfoNCE) 通过 c_rel 提供的关系几何梯度 (数据驱动)
+            #   三路只用于解释 curvature 来源, 不定义好坏 (Issue #117 显式删除 c2_c1_ratio > 1 健康判断)
             "vq_kappa_grad": getattr(self, '_last_vq_kappa_grad', 0.0),
-            "rel_kappa_grad": getattr(self, '_last_rel_kappa_grad', 0.0),
-            # Issue #116 Task 4 (2026-08-10): C1 (VQ-driven) vs C2 (relational-driven) 信号量化
-            #   c1 = VQ loss 通过 c_loss 提供的数据驱动 κ 梯度
-            #   c2 = REL_STRUCT 结构损失通过 c_struct 提供的关系驱动 κ 梯度
-            #   c2_c1_ratio >> 1: κ 改善主要来自关系几何 (健康)
-            #   c2_c1_ratio << 1: κ 改善可能来自 distance-scale shortcut (c 缩放距离但 util 不变)
-            "c1_vq_kappa_grad": getattr(self, '_last_vq_kappa_grad', 0.0),  # alias, 显式命名
+            "radial_kappa_grad": getattr(self, '_last_rel_kappa_grad', 0.0),  # 重命名 (旧 rel = radial prior)
+            "relational_kappa_grad": getattr(self, '_last_relational_kappa_grad', 0.0),
+            # legacy alias — Issue #116 Task 4 字段, Issue #117 标 deprecated 但保留兼容
+            "c1_vq_kappa_grad": getattr(self, '_last_vq_kappa_grad', 0.0),
             "c2_rel_kappa_grad": getattr(self, '_last_rel_kappa_grad', 0.0),
             "c2_c1_ratio": (getattr(self, '_last_rel_kappa_grad', 0.0) + 1e-9) / (
                 getattr(self, '_last_vq_kappa_grad', 0.0) + 1e-9
@@ -845,6 +857,15 @@ def _summarize_gate2(collapse_diag_log):
             else:
                 rel_kappa_grad = 0.0
             self._last_rel_kappa_grad = rel_kappa_grad
+        # Issue #117 Task 2 (2026-08-10): C3 relational-driven κ gradient 占位.
+        #   真正 relational objective (Poincaré InfoNCE) 待后续 issue 实现, 当前默认 disabled.
+        #   钩子位置: 与 _last_rel_kappa_grad 平行, 便于后期加 L_rel loss 时直接接 autograd.grad.
+        #   R36 合规: 新曲率正则项 (真正 relational geometry objective), 不动现有 κ 主路径.
+        relational_kappa_grad = 0.0
+        if RELATIONAL_ENABLED:
+            # 占位: 待 Issue #118 实现 L_rel 后, 这里计算 autograd.grad(L_rel, self.kappa_drift)
+            pass
+        self._last_relational_kappa_grad = relational_kappa_grad
         # 阉割后: RAD_SAFE 已删 (走 v15 健康基线, κ 路径无额外径向区间约束)
         x_q = logmap0(x_q_safe, c_geom)
         latent = logmap0(latent_safe, c_geom)
