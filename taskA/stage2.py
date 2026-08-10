@@ -759,7 +759,7 @@ class KappaAwareVectorQuantization(nn.Module):
     #   `def forward` 被错误嵌套在 `relational_gradient_audit` 函数内 (line 894-1043).
     #   导致 class 只能继承 nn.Module._forward_unimplemented, _rq_forward 调用 q(use_sk=...) 抛
     #   TypeError. 此处把 forward 正确归位为 KappaAwareVectorQuantization 类方法.
-    def forward(self, x, use_sk=True):
+    def forward(self, x, use_sk=True, branch_idx=None):
         latent = x.view(-1, self.e_dim)
         codebook_e = self.embeddings.weight
         if not self.initted and self.training:
@@ -767,6 +767,10 @@ class KappaAwareVectorQuantization(nn.Module):
 
         # 阉割后: PER_BATCH_RADIUS_MOD 已删, c 直接来自 get_c()
         c = self.get_c()
+        # Issue #138 v22 (2026-08-10): branch_idx 参数已加, 但当前默认走 per-layer mean 路径
+        #   (Δκ 仅作辅助训练信号, forward 距离仍用 per-layer scalar c).
+        #   Plan A 完整实施 (per-branch VQ distance lookup) 需要改 expmap0/proj_to_ball/poincare_distance
+        #   的 broadcast 路径, 工程量大; 当前 Phase 1.5 不启用, Plan B 留 v22.b.
         # Issue #119 P0-3 (2026-08-10): 引入 c_vq 统一变量切断 VQ→κ gradient.
         #   VQ_TO_KAPPA=True  (C1): c_vq = c  (κ 通过 commitment/codebook loss 接收数据驱动梯度)
         #   VQ_TO_KAPPA=False (C3): c_vq = c.detach()  (κ 对 VQ 路径恒为 0)
@@ -1369,13 +1373,13 @@ def compute_branch_regularizers(model: KappaAwareHRQVAE, batch: torch.Tensor,
     return l_branch, l_geo
 
 
-def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx: torch.Tensor,
+def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx,
                                 d_ref_full: np.ndarray, mm) -> torch.Tensor:
     """Issue #138 v22: L_geo = Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B]) per-layer.
 
     输入:
       encoded_z: (B, EMB_DIM) encoder 输出 (在欧氏切空间, expmap0 到球)
-      batch_idx: (B,) global item indices in D_ref
+      batch_idx: (B,) global item indices in D_ref (Tensor 或 numpy ndarray)
       d_ref_full: (N, N) D_ref 矩阵, batch_idx 取 d_ref_full[batch_idx][:, batch_idx] 子集
       mm: model (含 vq_layers, 用 per-layer mean c 算 distance)
 
@@ -1385,8 +1389,11 @@ def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx: torch.Tensor,
     B = encoded_z.shape[0]
     if B < 2 or d_ref_full is None:
         return torch.zeros((), device=encoded_z.device)
-    # 取 D_ref 子集 (B, B)
-    idx_np = batch_idx.detach().cpu().numpy().astype(np.int64)
+    # 取 D_ref 子集 (B, B): 兼容 tensor 与 numpy
+    if hasattr(batch_idx, "detach"):
+        idx_np = batch_idx.detach().cpu().numpy().astype(np.int64)
+    else:
+        idx_np = np.asarray(batch_idx, dtype=np.int64)
     d_ref_sub = torch.as_tensor(d_ref_full[np.ix_(idx_np, idx_np)],
                                 device=encoded_z.device, dtype=torch.float32)
     if not torch.isfinite(d_ref_sub).all():
