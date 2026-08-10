@@ -2434,6 +2434,16 @@ def main():
         n_kappa_updates = len(kappa_log)
         util_per_layer = [float(len(np.unique(sid_4digit[:, l])) / CODEBOOK_SIZES[l]) for l in range(N_HIERARCHIES)]
         util_4digit = len(np.unique(sid_4digit, axis=0)) / N_ITEMS
+        # Issue #128 Item 6 (2026-08-10): Gate 2 真正阻止 collapse.
+        #   旧 Gate 2 决策不查 util — 训练结束后即使 L0/L1/L2 util 跌到 0.3 仍可能 PASS.
+        #   修复: 加 per-layer util ≥ 0.5 硬门槛, 任一层 < 0.5 视为 COLLAPSE → Gate 2 FAIL.
+        #   注: 训练在 Phase 1 已结束, 此 gate 决定是否将该 run 标为可用.
+        #         "真正阻止" 语义 = verdict 标 FAIL + 不进入 Stage 3 (Stage 3 启动脚本读 verdict gate2_decision).
+        #   R23 (mid-training) 单独负责训练期间早停回退, 不在 Item 6 范围.
+        UTIL_COLLAPSE_THRESHOLD = 0.5
+        util_collapse_layers = [l for l, u in enumerate(util_per_layer) if u < UTIL_COLLAPSE_THRESHOLD]
+        util_per_layer_ok = len(util_collapse_layers) == 0
+        util_4digit_ok = util_4digit >= 0.2  # 4-digit 联合 util 至少 20% (宽松于 per-layer)
         # Issue #157 spec: 10+ κ 更新点记录
         kappa_updates_ok = n_kappa_updates >= 10
         # Issue #157 spec: 每层 κ 真更新 (final != initial)
@@ -2478,7 +2488,8 @@ def main():
 
         gate2_pass = (kappa_updates_ok and kappa_learned_ok
                       and no_nan_ok and sid_ok and ablation_ok and precheck_pass
-                      and kappa_per_layer_diff_ok and mix_weight_diff_ok)
+                      and kappa_per_layer_diff_ok and mix_weight_diff_ok
+                      and util_per_layer_ok and util_4digit_ok)  # Item 6: util<0.5 → COLLAPSE 硬门槛
         print(f"  10+ κ 更新点 ({n_kappa_updates}): {'PASS' if kappa_updates_ok else 'FAIL'}")
         print(f"  κ 真学习 (final={final_kappas}): {'PASS' if kappa_learned_ok else 'FAIL'}")
         if FIX_C:
@@ -2490,8 +2501,14 @@ def main():
         print(f"  无 NaN/Inf: {'PASS' if no_nan_ok else 'FAIL'}")
         print(f"  SID util_4digit={util_4digit:.4f}, item alignment={item_alignment_check['alignment_ok']}: {'PASS' if sid_ok else 'FAIL'}")
         print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
+        # Item 6 (Issue #128, 2026-08-10): per-layer util collapse 硬门槛
+        util_collapse_str = "HEALTHY" if util_per_layer_ok else f"COLLAPSE@{util_collapse_layers}"
+        print(f"  per-layer util ≥ {UTIL_COLLAPSE_THRESHOLD} (vals={['%.3f'%u for u in util_per_layer]}): "
+              f"{'PASS' if util_per_layer_ok else '❌ FAIL'} ({util_collapse_str})")
+        print(f"  util_4digit ≥ 0.2 (val={util_4digit:.3f}): "
+              f"{'PASS' if util_4digit_ok else '❌ FAIL'}")
         # 阉割后: MLR Gate2 块已删
-        print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2): "
+        print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 + Issue #128 Item 6): "
               f"{'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
 
         # ── Issue #57: κ 扰动-恢复单进程审计 (重校准链完整性: κ→c→scale→Π(E)→D→A→r→SID) ──
@@ -2582,6 +2599,14 @@ def main():
             "util_4digit": float(util_4digit),
             "precheck_pass": precheck_pass,
             "ablation_diff_ok": ablation_ok,
+            # Item 6 (Issue #128, 2026-08-10): util collapse 硬门槛 verdict 字段
+            #   下游 Stage 3 启动脚本应读 collapse_layers, 任意非空 → 不进入 Stage 3
+            "util_collapse_threshold": UTIL_COLLAPSE_THRESHOLD,
+            "util_collapse_layers": util_collapse_layers,  # 空 list 表示无 collapse
+            "util_collapse_indicator": ["COLLAPSE" if u < UTIL_COLLAPSE_THRESHOLD else "HEALTHY"
+                                        for u in util_per_layer],
+            "util_per_layer_ok": util_per_layer_ok,
+            "util_4digit_ok": util_4digit_ok,
             # 阉割后: MLR 顶层字段已删
             "issue": "#157",
         }
