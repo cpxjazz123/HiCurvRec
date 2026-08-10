@@ -1246,7 +1246,16 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             #   ρ_safe=0.90 与 diagnostics 的 rho_gt_090 阈值一致.
             if LAMBDA_B > 0:
                 c_b = q.get_c()
-                e_ball = q.get_codebook()  # (K, D) 已在 ball
+                # Issue #119 Item 3 (2026-08-10): boundary loss 必须只更新 κ, 不更新 codebook.
+                #   原代码 q.get_codebook() 内部用 self.embeddings.weight (无 detach),
+                #   导致 ∂L_boundary/∂E_l ≠ 0 (同时更新 codebook embeddings).
+                #   修复: detach embeddings.weight, 让 ∂L_boundary/∂E_l = 0.
+                #   几何意义: boundary 是 κ stability regularizer, 不是 codebook regularizer.
+                #   若以后真要让 boundary 同时约束 codebook, 应单独命名 codebook regularizer.
+                e_ball = proj_to_ball(
+                    expmap0(q.embeddings.weight.detach(), c_b),
+                    c_b,
+                )  # (K, D) 在 ball, 不进 autograd graph for E
                 rho_k = torch.sqrt(c_b) * e_ball.norm(dim=-1)  # (K,) normalized radius
                 # 连续 penalty: (1/K) Σ max(0, ρ_k - ρ_safe)²
                 boundary_term = LAMBDA_B * F.relu(rho_k - B_BOUNDARY).pow(2).mean()
