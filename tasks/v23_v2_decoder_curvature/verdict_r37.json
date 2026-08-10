@@ -1,0 +1,26 @@
+{
+  "version": "v23_v2",
+  "tag": "v23_v2_decoder_curvature_stage4_beam20",
+  "verdict_at": "2026-08-11 01:25:53",
+  "r37_decision": "NO-GO",
+  "r37_anchor": "v23 (test_R@10 = 0.1025)",
+  "v23_v2_test_R10": 0.09089446595679379,
+  "delta_vs_v23": -0.0116,
+  "mechanism": "v23 v2: encoder + decoder 两侧 curvature residual injection, L1+L2 (decoder L2 lookup 用 (L0,L1) pair). 4 α scalars (α_1_enc, α_2_enc, α_1_dec, α_2_dec) + 2 shared MLPs (f_1, f_2).",
+  "best_valid_R10": 0.1185,
+  "best_epoch": 139,
+  "alphas_learned": {
+    "alpha_1_enc": 0.091,
+    "alpha_2_enc": -0.078,
+    "alpha_1_dec": 0.531,
+    "alpha_2_dec": -0.638
+  },
+  "r37_verdict": "v23 v2 test_R@10 = 0.0909 < v23 0.1025 (-0.0116). R37 NO-GO. v23 v2 lineage 终止. 下次创新必须从 v23 base 重新开始, 禁止叠加 decoder curvature injection. v23 v2 产物 (Stage3 ckpt / Stage4 raw_predictions / verdict) 留作记录, 不作为下一版起点.",
+  "r38_check": "v23 v2 best_valid_R10 = 0.1185 vs v23 0.1275 (-0.009). Mid-training 持续上涨 (无饱和平台, 0.0759 → 0.1185 over 200 epochs), R38 NO-GO 未触发. 但 best_valid 始终落后 v23 约 -0.010, 训练自然结束后确认 R37 NO-GO.",
+  "interpretation": "Decoder 端 curvature injection 让 α_1_dec / α_2_dec 大幅学到 0.5-0.6 magnitude, 但 valid/test 同时跌. 可能原因: (1) decoder 输入序列 (teacher-forcing 时 shift_right(labels)) 与 encoder 不同分布, curvature 的物理意义无法直接迁移; (2) decoder 注入 + encoder 注入叠加产生 gradient 干扰; (3) decoder 阶段已是高层抽象, 直接注入 Stage2 几何信息可能稀释了语义. 下一步应回到 v23 base, 探索其他机制 (Poincaré attention, curvature-aware decoder cross-attn).",
+  "next_action": "v23 v2 NO-GO. 重新以 v23 为基础设计 v24 (新机制, 禁叠加 decoder curvature).",
+  "gate_1_evidence": "CurvatureResidualModule 单测 PASS (5/5): α=0 identity (enc+dec), α=0.5 injects, L2 (L0,L1) pair lookup, 梯度流 encoder+decoder 双路径, decoder mask 正确屏蔽 PAD.",
+  "gate_2_evidence": "Stage4 install decoder injection OK, f1/f2/4 αs 加载成功 (a1_enc=0.091, a2_enc=-0.078, a1_dec=0.531, a2_dec=-0.638). decoder α 显著非零, 说明 decoder 注入实际生效.",
+  "gate_3_evidence": "test_R@10 = 0.0909 < 0.1025 (-0.0116). R37 NO-GO. 无 fallback 逻辑, 无超参调优 (R36 严格).",
+  "gate_4_evidence": "R23 七信号全 0 (无 loss 反向/NaN/Inf/wrapper broken/val_R@10=0 跨 ckpt/GPU 100% loss 不变). R38 mid-train: best_valid 持续上升, NO-GO 不触发. 训练自然结束 (200 epochs)."
+}

@@ -128,13 +128,15 @@ _argparser.add_argument("--scsb_stage2_ckpt", type=str,
 # v23 (2026-08-11): Stage4 镜像 Stage3 curvature residual (eval 时同步注入, 保持 train/eval 一致)
 _argparser.add_argument("--curvature_residual_enabled", action="store_true",
                         help="v23: 启用 Stage2 branch curvature → Stage4 L1 token residual 注入 (与 Stage3 train 同步)")
+_argparser.add_argument("--curvature_residual_decoder_enabled", action="store_true",
+                        help="v23 v2: decoder 端也注入 curvature (encoder+decoder L1+L2)")
 _argparser.add_argument("--curvature_residual_layer", type=int, default=1,
                         choices=[1, 2],
-                        help="v23: 注入层位 (默认 L1)")
+                        help="v23: 注入层位 (默认 L1, 兼容 v1)")
 _argparser.add_argument("--curvature_residual_mlp_hidden", type=int, default=64,
                         help="v23: MLP f_1 hidden dim (默认 64, 与 Stage3 train 一致)")
 _argparser.add_argument("--curvature_residual_alpha_init", type=float, default=0.0,
-                        help="v23: α_1 初始值 (eval 从 ckpt load 训练末值, init 仅作 fallback)")
+                        help="v23: α 初始值 (eval 从 ckpt load 训练末值, init 仅作 fallback)")
 # Issue #108 (2026-08-10): Stage4 HSCSB eval 同步 (Hierarchical SCSB)
 _argparser.add_argument("--hscsb_enabled", action="store_true",
                         help="Issue #108: 启用 HSCSB eval (3 层累积 + cross-layer bias)")
@@ -204,6 +206,7 @@ SCSB_BETA = _args.scsb_beta
 SCSB_STAGE2_CKPT = _args.scsb_stage2_ckpt
 # v23 (2026-08-11): Stage4 curvature residual eval 常量 (镜像 Stage3 train)
 CURVATURE_RESIDUAL_ENABLED = _args.curvature_residual_enabled
+CURVATURE_RESIDUAL_DECODER_ENABLED = bool(_args.curvature_residual_decoder_enabled)
 CURVATURE_RESIDUAL_LAYER = int(_args.curvature_residual_layer)
 CURVATURE_RESIDUAL_MLP_HIDDEN = int(_args.curvature_residual_mlp_hidden)
 CURVATURE_RESIDUAL_ALPHA_INIT = float(_args.curvature_residual_alpha_init)
@@ -325,44 +328,75 @@ def install_prompt_former_eval(hg_rec, pf_module):
 # 保持 train/eval 一致: 同一 Stage2 ckpt + 同一 MLP 结构 + 同一 alpha (eval 从 ckpt load 训练末值)
 # ──────────────────────────────────────────────────────────────
 class CurvatureResidualModuleEval(nn.Module):
-    """v23 eval: 镜像 Stage3 train 的 CurvatureResidualModule.
+    """v23 v1+v2 eval: 镜像 Stage3 train 的 CurvatureResidualModule.
 
-    与 train 版的唯一区别: alpha_1 在 train 时已通过 Stage3 ckpt 保存, eval 直接 load 训练末值.
+    v23 v2: L1 + L2 (encoder + decoder), 4 个 α scalars (alpha_1_enc, alpha_2_enc,
+    alpha_1_dec, alpha_2_dec), 2 个 MLPs (f1 shared, f2 shared).
+    与 train 版的区别: alpha 从 ckpt load 训练末值.
     """
 
-    def __init__(self, kappa_l1, delta_kappa_l1, d_model=128, mlp_hidden=64, alpha_init=0.0):
+    def __init__(self, kappa_l1, delta_kappa_l1, kappa_l2, delta_kappa_l2,
+                 d_model=128, mlp_hidden=64, alpha_init=0.0):
         super().__init__()
         self.register_buffer("kappa_l1", torch.tensor(float(kappa_l1)))
-        self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())  # (K0=64, 1)
+        self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())  # (64, 1)
+        self.register_buffer("kappa_l2", torch.tensor(float(kappa_l2)))
+        self.register_buffer("delta_kappa_l2", delta_kappa_l2.detach().clone())  # (8192, 1)
         self.f1 = nn.Sequential(
             nn.Linear(2, mlp_hidden),
             nn.GELU(),
             nn.Linear(mlp_hidden, d_model),
         )
-        self.alpha_1 = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.f2 = nn.Sequential(
+            nn.Linear(2, mlp_hidden),
+            nn.GELU(),
+            nn.Linear(mlp_hidden, d_model),
+        )
+        self.alpha_1_enc = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_2_enc = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_1_dec = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_2_dec = nn.Parameter(torch.tensor(float(alpha_init)))
 
-    def forward(self, input_ids, input_embeds):
+    def forward(self, input_ids, input_embeds, side='encoder'):
         # Defensive device sync: install 时模型可能在 CPU, generate 时已迁到 CUDA
         lut = self._cached_layer_id_lut
         if lut.device != input_ids.device:
             lut = lut.to(input_ids.device)
             self._cached_layer_id_lut = lut
-        layer_ids = lut[input_ids]  # (B, L), 1=L1
+        layer_ids = lut[input_ids]  # (B, L)
         is_l1 = (layer_ids == 1)
-        q_0_ids = torch.roll(input_ids, shifts=1, dims=-1)
-        q_0_ids = q_0_ids * is_l1.long()
-        l0_idx = q_0_ids - 1  # vocab 1-64 → 0-63
-        l0_idx = l0_idx.clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)
-        delta_kappa_at_q0 = self.delta_kappa_l1[l0_idx]  # (B, L, 1)
-        kappa_l1_expanded = self.kappa_l1.expand_as(delta_kappa_at_q0)
-        cur_input = torch.cat([kappa_l1_expanded, delta_kappa_at_q0], dim=-1)
-        cur_emb = self.f1(cur_input)
-        mask = is_l1.unsqueeze(-1).to(input_embeds.dtype)
-        return input_embeds + self.alpha_1 * cur_emb * mask
+        is_l2 = (layer_ids == 2)
+        # L1
+        q_0_id_l1 = torch.roll(input_ids, shifts=1, dims=-1) * is_l1.long()
+        l0_idx_l1 = (q_0_id_l1 - 1).clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)
+        delta_kappa_l1 = self.delta_kappa_l1[l0_idx_l1]
+        kappa_l1_expanded = self.kappa_l1.expand_as(delta_kappa_l1)
+        cur_input_l1 = torch.cat([kappa_l1_expanded, delta_kappa_l1], dim=-1)
+        cur_emb_l1 = self.f1(cur_input_l1)
+        mask_l1 = is_l1.unsqueeze(-1).to(input_embeds.dtype)
+        # L2
+        q_0_id_l2 = torch.roll(input_ids, shifts=2, dims=-1) * is_l2.long()
+        q_1_id_l2 = torch.roll(input_ids, shifts=1, dims=-1) * is_l2.long()
+        l0_idx_l2 = (q_0_id_l2 - 1).clamp(min=0, max=63)
+        l1_idx_l2 = (q_1_id_l2 - 65).clamp(min=0, max=127)
+        l2_idx_l2 = (l0_idx_l2 * 128 + l1_idx_l2).clamp(min=0, max=self.delta_kappa_l2.shape[0] - 1)
+        delta_kappa_l2 = self.delta_kappa_l2[l2_idx_l2]
+        kappa_l2_expanded = self.kappa_l2.expand_as(delta_kappa_l2)
+        cur_input_l2 = torch.cat([kappa_l2_expanded, delta_kappa_l2], dim=-1)
+        cur_emb_l2 = self.f2(cur_input_l2)
+        mask_l2 = is_l2.unsqueeze(-1).to(input_embeds.dtype)
+        # Select α
+        if side == 'encoder':
+            alpha_1, alpha_2 = self.alpha_1_enc, self.alpha_2_enc
+        elif side == 'decoder':
+            alpha_1, alpha_2 = self.alpha_1_dec, self.alpha_2_dec
+        else:
+            raise ValueError(f"side must be encoder/decoder, got {side!r}")
+        return input_embeds + alpha_1 * cur_emb_l1 * mask_l1 + alpha_2 * cur_emb_l2 * mask_l2
 
 
-def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor):
-    """v23 eval: Monkey-patch HG_Rec.forward + .generate, 注入 curvature residual."""
+def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor, decoder_enabled=False):
+    """v23 v1+v2 eval: Monkey-patch HG_Rec.forward + .generate (+ decoder.forward if decoder_enabled)."""
     import types
     device = next(hg_rec.parameters()).device
     curv_module = curv_module.to(device)
@@ -373,14 +407,14 @@ def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor):
 
     def curv_forward(self, input_ids, attention_mask=None, labels=None):
         input_embeds = self.model.shared(input_ids) * d_model_sqrt
-        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds, side='encoder')
         outputs = self.model(inputs_embeds=input_embeds,
                              attention_mask=attention_mask, labels=labels)
         return outputs.loss, outputs.logits
 
     def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
         input_embeds = self.model.shared(input_ids) * d_model_sqrt
-        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds, side='encoder')
         return self.model.generate(inputs_embeds=input_embeds,
                                    attention_mask=attention_mask,
                                    num_beams=num_beams, max_length=5,
@@ -388,6 +422,23 @@ def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor):
 
     hg_rec.forward = types.MethodType(curv_forward, hg_rec)
     hg_rec.generate = types.MethodType(curv_generate, hg_rec)
+
+    if decoder_enabled:
+        # v23 v2: decoder 端注入. Monkey-patch model.decoder.forward
+        hg_rec.model.decoder.curvature_residual_module = curv_module
+        original_decoder_forward = hg_rec.model.decoder.__class__.forward
+
+        def curv_decoder_forward(self, input_ids=None, attention_mask=None, **kwargs):
+            inputs_embeds = kwargs.get('inputs_embeds', None)
+            if input_ids is not None and inputs_embeds is None:
+                inputs_embeds = self.embed_tokens(input_ids) * d_model_sqrt
+                inputs_embeds = self.curvature_residual_module(input_ids, inputs_embeds, side='decoder')
+                kwargs['inputs_embeds'] = inputs_embeds
+                kwargs['input_ids'] = None
+            return original_decoder_forward(self, attention_mask=attention_mask, **kwargs)
+
+        hg_rec.model.decoder.forward = types.MethodType(curv_decoder_forward, hg_rec.model.decoder)
+
     return hg_rec
 
 
@@ -1179,52 +1230,77 @@ def main():
         print(f"[Issue #107 v30 SCSB] eval ON: c_per_layer={[f'{c:.4f}' for c in cs]} "
               f"beta={SCSB_BETA}", flush=True)
     # v23 (2026-08-11): Stage4 curvature residual 镜像 Stage3 train, 保持 train/eval 一致
+    # v23 v2 (2026-08-11): decoder 端也注入, L1+L2
     if CURVATURE_RESIDUAL_ENABLED:
         sd_ckpt = torch.load(HAB_STAGE2_CKPT, map_location="cpu", weights_only=False)
         sd = sd_ckpt["model_state_dict"]
-        cv_l = CURVATURE_RESIDUAL_LAYER
-        cv_kappa = float(sd_ckpt["final_kappas"][cv_l])
-        cv_delta = sd[f"vq_layers.{cv_l}.delta_kappa.weight"].float()
+        cv_kappa_l1 = float(sd_ckpt["final_kappas"][1])
+        cv_kappa_l2 = float(sd_ckpt["final_kappas"][2])
+        cv_delta_l1 = sd["vq_layers.1.delta_kappa.weight"].float()
+        cv_delta_l2 = sd["vq_layers.2.delta_kappa.weight"].float()
         curv_module = CurvatureResidualModuleEval(
-            kappa_l1=cv_kappa,
-            delta_kappa_l1=cv_delta,
+            kappa_l1=cv_kappa_l1,
+            delta_kappa_l1=cv_delta_l1,
+            kappa_l2=cv_kappa_l2,
+            delta_kappa_l2=cv_delta_l2,
             d_model=128,
             mlp_hidden=CURVATURE_RESIDUAL_MLP_HIDDEN,
             alpha_init=CURVATURE_RESIDUAL_ALPHA_INIT,
         ).to(DEVICE)
-        # Try to load alpha_1 + f1 weights from Stage3 ckpt (保持 train/eval 一致)
+        # Try to load 4 αs + f1/f2 weights from Stage3 ckpt (保持 train/eval 一致)
         if os.path.exists(CKPT_PATH):
             _cv_ck = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)
             _cv_sd = _cv_ck.get("model_state_dict", _cv_ck)
-            _alpha_key = "curvature_residual_module.alpha_1"
-            _f1_l0_w = "curvature_residual_module.f1.0.weight"
-            _f1_l0_b = "curvature_residual_module.f1.0.bias"
-            _f1_l2_w = "curvature_residual_module.f1.2.weight"
-            _f1_l2_b = "curvature_residual_module.f1.2.bias"
+            _alpha_keys = [
+                "curvature_residual_module.alpha_1_enc",
+                "curvature_residual_module.alpha_2_enc",
+                "curvature_residual_module.alpha_1_dec",
+                "curvature_residual_module.alpha_2_dec",
+            ]
             _loaded_any = False
-            if _alpha_key in _cv_sd:
-                curv_module.alpha_1.data = _cv_sd[_alpha_key].detach().clone()
+            # v23 v1 backward compat: if alpha_1 (not _enc) in ckpt, load as encoder
+            if "curvature_residual_module.alpha_1" in _cv_sd and "curvature_residual_module.alpha_1_enc" not in _cv_sd:
+                curv_module.alpha_1_enc.data = _cv_sd["curvature_residual_module.alpha_1"].detach().clone()
                 _loaded_any = True
-            for _k in [_f1_l0_w, _f1_l0_b, _f1_l2_w, _f1_l2_b]:
-                if _k in _cv_sd:
+            for _ak in _alpha_keys:
+                if _ak in _cv_sd:
+                    _attr = _ak.split(".")[-1]
+                    getattr(curv_module, _attr).data = _cv_sd[_ak].detach().clone()
                     _loaded_any = True
+            # Load f1, f2
             try:
                 curv_module.f1.load_state_dict({
-                    "0.weight": _cv_sd[_f1_l0_w],
-                    "0.bias": _cv_sd[_f1_l0_b],
-                    "2.weight": _cv_sd[_f1_l2_w],
-                    "2.bias": _cv_sd[_f1_l2_b],
+                    k.split("f1.")[-1]: v for k, v in _cv_sd.items() if k.startswith("curvature_residual_module.f1.")
                 })
+                _loaded_any = True
             except Exception as _e:
-                print(f"[v23] WARN: failed to load f1 from ckpt ({_e}); use init weights", flush=True)
-            print(f"[v23 curvature residual eval] alpha_1 loaded from ckpt={float(curv_module.alpha_1.item()):.6f} "
+                print(f"[v23 v2] WARN: failed to load f1 from ckpt ({_e}); use init", flush=True)
+            try:
+                curv_module.f2.load_state_dict({
+                    k.split("f2.")[-1]: v for k, v in _cv_sd.items() if k.startswith("curvature_residual_module.f2.")
+                })
+                _loaded_any = True
+            except Exception as _e:
+                # f2 might not be in ckpt (v23 v1 had no f2), use init
+                pass
+            print(f"[v23 v2 curvature residual eval] alphas loaded from ckpt "
+                  f"a1_enc={float(curv_module.alpha_1_enc.item()):.4f} "
+                  f"a2_enc={float(curv_module.alpha_2_enc.item()):.4f} "
+                  f"a1_dec={float(curv_module.alpha_1_dec.item()):.4f} "
+                  f"a2_dec={float(curv_module.alpha_2_dec.item()):.4f} "
                   f"loaded_any={_loaded_any}", flush=True)
         else:
-            print(f"[v23 curvature residual eval] no ckpt at {CKPT_PATH}, use alpha_init={CURVATURE_RESIDUAL_ALPHA_INIT}", flush=True)
+            print(f"[v23 v2 curvature residual eval] no ckpt at {CKPT_PATH}, use init", flush=True)
         layer_id_lut_t = torch.from_numpy(SCSB_LAYER_ID_LUT)
-        install_curvature_residual_eval(model, curv_module, layer_id_lut_t)
-        print(f"[v23 curvature residual] eval ON: layer=L{cv_l} kappa={cv_kappa:.4f} "
-              f"delta_kappa_std={float(cv_delta.std().item()):.4f} mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
+        install_curvature_residual_eval(
+            model, curv_module, layer_id_lut_t,
+            decoder_enabled=CURVATURE_RESIDUAL_DECODER_ENABLED,
+        )
+        _cv_side = "encoder+decoder (L1+L2)" if CURVATURE_RESIDUAL_DECODER_ENABLED else "encoder-only (L1+L2)"
+        print(f"[v23 v2 curvature residual] eval ON: side={_cv_side} "
+              f"L1 kappa={cv_kappa_l1:.4f} delta_kappa_std={float(cv_delta_l1.std().item()):.4f} "
+              f"L2 kappa={cv_kappa_l2:.4f} delta_kappa_std={float(cv_delta_l2.std().item()):.4f} "
+              f"mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
               f"learnable_params={sum(p.numel() for p in curv_module.parameters() if p.requires_grad)}", flush=True)
 
     # Issue #108 (2026-08-10): HSCSB eval 同步

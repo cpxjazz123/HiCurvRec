@@ -161,13 +161,15 @@ _argparser.add_argument("--branch_curvature_strategy", type=str, default="quanti
 #   与 HAB 共存, 互不冲突 (HAB = attention bias, v23 = token residual).
 _argparser.add_argument("--curvature_residual_enabled", action="store_true",
                         help="v23: 启用 Stage2 branch curvature → Stage3 L1 token residual 注入 (e'_{q_1} = e_{q_1} + α_1 · f_1([κ_1, Δκ_{1,q_0}]))")
+_argparser.add_argument("--curvature_residual_decoder_enabled", action="store_true",
+                        help="v23 v2: 启用 decoder 端 curvature 注入 (encoder + decoder 都注入, L1+L2)")
 _argparser.add_argument("--curvature_residual_layer", type=int, default=1,
                         choices=[1, 2],
-                        help="v23: 注入层位 (默认 L1)")
+                        help="v23: 注入层位 (默认 L1, 兼容 v1)")
 _argparser.add_argument("--curvature_residual_mlp_hidden", type=int, default=64,
                         help="v23: MLP f_1 hidden dim (默认 64)")
 _argparser.add_argument("--curvature_residual_alpha_init", type=float, default=0.0,
-                        help="v23: α_1 初始值 (默认 0.0, 训练起点等同无 curvature)")
+                        help="v23: α 初始值 (默认 0.0, 训练起点等同无 curvature)")
 # Issue #236 (2026-08-10): Stage3 Hyperbolic Attention Scoring — 替换 inner-product 为负 Poincaré 距离
 # 核心: T5 attention score = matmul(Q, K^T) 替换为 -d_P(Q, K), 让曲率成为 attention 第一公民
 # 与 HAB 正交可叠加 (HAB 是 additive 4D bias, 此处是替换 score 函数本身)
@@ -332,6 +334,7 @@ BRANCH_CURVATURE_STRATEGY = _args.branch_curvature_strategy
 BRANCH_CURVATURE_LAMBDA_MULT = [float(x) for x in _args.branch_curvature_lambda_mult.split(",")]
 # v23 (2026-08-11): Stage3 显式消费 Stage2 branch curvature
 CURVATURE_RESIDUAL_ENABLED = _args.curvature_residual_enabled
+CURVATURE_RESIDUAL_DECODER_ENABLED = bool(_args.curvature_residual_decoder_enabled)
 CURVATURE_RESIDUAL_LAYER = int(_args.curvature_residual_layer)
 CURVATURE_RESIDUAL_MLP_HIDDEN = int(_args.curvature_residual_mlp_hidden)
 CURVATURE_RESIDUAL_ALPHA_INIT = float(_args.curvature_residual_alpha_init)
@@ -818,86 +821,123 @@ def install_shse(hg_rec, shse_module, device):
 #   - branch_curvature_enabled (旧): 也是 HAB multiplier, 不加载 Stage2 ckpt → 与 v23 共存
 #   - SHSE / SCSB / PF: 都在 self.model.shared 之后注入, 但各自独立 module → 互不冲突
 class CurvatureResidualModule(nn.Module):
-    """v23: 显式消费 Stage2 branch curvature via SID token residual injection.
+    """v23 v1+v2: 显式消费 Stage2 branch curvature via SID token residual injection.
 
-    对 L1 token (vocab range [65, 192]) 注入:
-        e'_{q_1} = e_{q_1} + alpha_1 * f_1([kappa_1, delta_kappa_{1, q_0}])
+    v23 v1 (encoder-only L1):
+        e'_{q_1} = e_{q_1} + alpha_1_enc * f_1([kappa_1, delta_kappa_{1, q_0}])
+
+    v23 v2 (encoder + decoder L1 + L2):
+        encoder L1: e'_{q_1} = e_{q_1} + alpha_1_enc * f_1([kappa_1, Δκ_{1, q_0}])
+        encoder L2: e'_{q_2} = e_{q_2} + alpha_2_enc * f_2([kappa_2, Δκ_{2, (L0,L1)}])
+        decoder L1: e'_{q_1} = e_{q_1} + alpha_1_dec * f_1([kappa_1, Δκ_{1, q_0}])
+        decoder L2: e'_{q_2} = e_{q_2} + alpha_2_dec * f_2([kappa_2, Δκ_{2, (L0,L1)}])
+
+    L1 lookup: q_prev = position i-1 (vocab 1-64 → idx 0-63)
+    L2 lookup: (q_prev_2, q_prev_1) = positions (i-2, i-1) → idx l0*128 + l1
+    MLPs f_1/f_2 shared between encoder/decoder (same physics).
+    α_1_enc / α_2_enc / α_1_dec / α_2_dec 都 init=0, gradient 决定是否使用.
 
     Args:
-        kappa_l1: scalar, Stage2 final_kappas[1]
-        delta_kappa_l1: (K0=64, 1), Stage2 vq_layers.1.delta_kappa.weight
+        kappa_l1, kappa_l2: scalars, Stage2 final_kappas[1, 2]
+        delta_kappa_l1: (64, 1), Stage2 vq_layers.1.delta_kappa.weight
+        delta_kappa_l2: (8192, 1), Stage2 vq_layers.2.delta_kappa.weight
         d_model: T5 hidden size (128)
-        mlp_hidden: MLP f_1 hidden dim (default 64)
+        mlp_hidden: MLP hidden dim (default 64)
         alpha_init: 初始值, 默认 0.0 (训练起点等同无 curvature)
     """
 
-    def __init__(self, kappa_l1, delta_kappa_l1, d_model=128, mlp_hidden=64, alpha_init=0.0):
+    def __init__(self, kappa_l1, delta_kappa_l1, kappa_l2, delta_kappa_l2,
+                 d_model=128, mlp_hidden=64, alpha_init=0.0):
         super().__init__()
         # Stage2 注入参数 (frozen, 不参与训练)
         self.register_buffer("kappa_l1", torch.tensor(float(kappa_l1)))
         self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())  # (K0=64, 1)
-        # MLP f_1: ℝ² → ℝ^{d_model}
+        self.register_buffer("kappa_l2", torch.tensor(float(kappa_l2)))
+        self.register_buffer("delta_kappa_l2", delta_kappa_l2.detach().clone())  # (8192, 1)
+        # MLP f_1, f_2: ℝ² → ℝ^{d_model} (encoder + decoder 共用)
         self.f1 = nn.Sequential(
             nn.Linear(2, mlp_hidden),
             nn.GELU(),
             nn.Linear(mlp_hidden, d_model),
         )
-        # α_1: scalar, init=0 (训练起点等同无 curvature; 后续 gradient 决定是否使用)
-        self.alpha_1 = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.f2 = nn.Sequential(
+            nn.Linear(2, mlp_hidden),
+            nn.GELU(),
+            nn.Linear(mlp_hidden, d_model),
+        )
+        # 4 个 α scalars (encoder / decoder × L1 / L2, 全部 init=0)
+        self.alpha_1_enc = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_2_enc = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_1_dec = nn.Parameter(torch.tensor(float(alpha_init)))
+        self.alpha_2_dec = nn.Parameter(torch.tensor(float(alpha_init)))
 
-    def forward(self, input_ids, input_embeds):
+    def forward(self, input_ids, input_embeds, side='encoder'):
         """
         Args:
-            input_ids: (B, L) long, T5 encoder input vocab ids (flattened history: q_0,q_1,q_2,eos,q_0',q_1',q_2',eos',...)
-            input_embeds: (B, L, d_model), T5 shared(input_ids) * sqrt(d_model)
+            input_ids: (B, L) long, T5 encoder/decoder input vocab ids
+            input_embeds: (B, L, d_model), shared(input_ids) * sqrt(d_model)
+            side: 'encoder' or 'decoder' — 选择 α 集合
 
         Returns:
-            input_embeds + alpha_1 * curvature_residual (only on L1 positions)
+            input_embeds + alpha_1 * cur_emb_l1 + alpha_2 * cur_emb_l2
+            (mask 自动过滤非 L1/L2 位置)
         """
-        # 直接读 layer_id_lut (cache 在 install 时传入避免重复查表)
-        # Defensive device sync: DDP 启动时可能 LUT 在 CPU, forward 时已迁到 CUDA
+        # Defensive device sync: DDP / generate 时 LUT 可能不在 input_ids 设备
         lut = self._cached_layer_id_lut
         if lut.device != input_ids.device:
             lut = lut.to(input_ids.device)
             self._cached_layer_id_lut = lut
-        layer_ids = lut[input_ids]  # (B, L), 1=L1
-        is_l1 = (layer_ids == 1)  # (B, L) bool mask
+        layer_ids = lut[input_ids]  # (B, L)
+        is_l1 = (layer_ids == 1)  # (B, L)
+        is_l2 = (layer_ids == 2)  # (B, L)
 
-        # 提取每个 L1 位置对应的 L0 code (位置 i-1, 因为历史排列 q_0,q_1,q_2,eos)
-        q_0_ids = torch.roll(input_ids, shifts=1, dims=-1)  # (B, L)
-        q_0_ids = q_0_ids * is_l1.long()  # mask 非 L1 位置 (第一位置 q_0 也会被 mask, 因为 is_l1=False)
+        # === L1: q_0 at position i-1 ===
+        q_0_id_l1 = torch.roll(input_ids, shifts=1, dims=-1) * is_l1.long()
+        l0_idx_l1 = (q_0_id_l1 - 1).clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)
+        delta_kappa_l1 = self.delta_kappa_l1[l0_idx_l1]  # (B, L, 1)
+        kappa_l1_expanded = self.kappa_l1.expand_as(delta_kappa_l1)
+        cur_input_l1 = torch.cat([kappa_l1_expanded, delta_kappa_l1], dim=-1)
+        cur_emb_l1 = self.f1(cur_input_l1)
+        mask_l1 = is_l1.unsqueeze(-1).to(input_embeds.dtype)
 
-        # L0 code → L0 idx (vocab 1-64 → 0-63)
-        # offset_l0 = 1 (L0 tokens start at vocab id 1)
-        l0_idx = q_0_ids - 1  # (B, L), 0 / negative (masked by is_l1)
-        l0_idx = l0_idx.clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)  # safety
+        # === L2: (q_0, q_1) at positions (i-2, i-1) ===
+        q_0_id_l2 = torch.roll(input_ids, shifts=2, dims=-1) * is_l2.long()
+        q_1_id_l2 = torch.roll(input_ids, shifts=1, dims=-1) * is_l2.long()
+        l0_idx_l2 = (q_0_id_l2 - 1).clamp(min=0, max=63)  # 0-63
+        l1_idx_l2 = (q_1_id_l2 - 65).clamp(min=0, max=127)  # 0-127
+        l2_idx_l2 = (l0_idx_l2 * 128 + l1_idx_l2).clamp(min=0, max=self.delta_kappa_l2.shape[0] - 1)
+        delta_kappa_l2 = self.delta_kappa_l2[l2_idx_l2]  # (B, L, 1)
+        kappa_l2_expanded = self.kappa_l2.expand_as(delta_kappa_l2)
+        cur_input_l2 = torch.cat([kappa_l2_expanded, delta_kappa_l2], dim=-1)
+        cur_emb_l2 = self.f2(cur_input_l2)
+        mask_l2 = is_l2.unsqueeze(-1).to(input_embeds.dtype)
 
-        # Look up Δκ_{1, q_0}: (B, L, 1)
-        delta_kappa_at_q0 = self.delta_kappa_l1[l0_idx]  # (B, L, 1)
+        # === 选择 α by side ===
+        if side == 'encoder':
+            alpha_1 = self.alpha_1_enc
+            alpha_2 = self.alpha_2_enc
+        elif side == 'decoder':
+            alpha_1 = self.alpha_1_dec
+            alpha_2 = self.alpha_2_dec
+        else:
+            raise ValueError(f"side must be 'encoder' or 'decoder', got {side!r}")
 
-        # 拼 κ_1: (B, L, 1)
-        kappa_l1_expanded = self.kappa_l1.expand_as(delta_kappa_at_q0)
-
-        # MLP 输入: (B, L, 2)
-        cur_input = torch.cat([kappa_l1_expanded, delta_kappa_at_q0], dim=-1)
-
-        # MLP 输出: (B, L, d_model)
-        cur_emb = self.f1(cur_input)
-
-        # Mask: 只在 L1 位置注入
-        mask = is_l1.unsqueeze(-1).to(input_embeds.dtype)
-
-        # Residual: input_embeds + alpha_1 * cur_emb * mask
-        # 注: alpha_1 init=0 时, residual ≡ 0, 训练起点等同 v22.b Stage3 baseline
-        return input_embeds + self.alpha_1 * cur_emb * mask
+        # 注: alpha_* init=0 时, residual ≡ 0, 训练起点等同 baseline
+        return (input_embeds
+                + alpha_1 * cur_emb_l1 * mask_l1
+                + alpha_2 * cur_emb_l2 * mask_l2)
 
 
-def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor):
-    """v23: Monkey-patch HG_Rec 实例, forward + generate 都注入 curvature residual.
+def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor, decoder_enabled=False):
+    """v23 v1+v2: Monkey-patch HG_Rec 实例, 注入 curvature residual.
 
-    与 install_geo_residual / install_shse 同模式, 区别:
-      - 调用 CurvatureResidualModule(input_ids, input_embeds) → 修改 input_embeds
-      - layer_id_lut_tensor 缓存到 module._cached_layer_id_lut 避免重复 .to(device)
+    v23 v1 (decoder_enabled=False): 只 patch hg_rec.forward + .generate (encoder 注入)
+    v23 v2 (decoder_enabled=True):  + patch model.decoder.forward (decoder 注入)
+
+    与 install_geo_residual / install_shse 同模式:
+      - encoder: 在 model.shared(input_ids) * sqrt(d_model) 之后调 module(input_ids, input_embeds, side='encoder')
+      - decoder: 在 model.decoder(input_ids=...) 内部, embed_tokens 之后调 module(input_ids, input_embeds, side='decoder')
+      - layer_id_lut_tensor 缓存到 module._cached_layer_id_lut
     """
     import types
     device = next(hg_rec.parameters()).device
@@ -908,15 +948,16 @@ def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor):
     hg_rec.add_module("curvature_residual_module", curv_module)
 
     def curv_forward(self, input_ids, attention_mask=None, labels=None):
+        # Encoder injection
         input_embeds = self.model.shared(input_ids) * d_model_sqrt
-        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds, side='encoder')
         outputs = self.model(inputs_embeds=input_embeds,
                              attention_mask=attention_mask, labels=labels)
         return outputs.loss, outputs.logits
 
     def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
         input_embeds = self.model.shared(input_ids) * d_model_sqrt
-        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds, side='encoder')
         return self.model.generate(inputs_embeds=input_embeds,
                                    attention_mask=attention_mask,
                                    num_beams=num_beams, max_length=5,
@@ -924,6 +965,26 @@ def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor):
 
     hg_rec.forward = types.MethodType(curv_forward, hg_rec)
     hg_rec.generate = types.MethodType(curv_generate, hg_rec)
+
+    if decoder_enabled:
+        # v23 v2: decoder 端注入. Monkey-patch model.decoder.forward
+        # 让 decoder 拿到 input_ids 时, 先用 embed_tokens + sqrt(d_model) + curvature(side='decoder')
+        # 再以 inputs_embeds 形式传给原 decoder forward.
+        hg_rec.model.decoder.curvature_residual_module = curv_module  # 直接访问
+        original_decoder_forward = hg_rec.model.decoder.__class__.forward
+
+        def curv_decoder_forward(self, input_ids=None, attention_mask=None, **kwargs):
+            inputs_embeds = kwargs.get('inputs_embeds', None)
+            if input_ids is not None and inputs_embeds is None:
+                # 计算 embedding 并注入 decoder-side curvature
+                inputs_embeds = self.embed_tokens(input_ids) * d_model_sqrt
+                inputs_embeds = self.curvature_residual_module(input_ids, inputs_embeds, side='decoder')
+                kwargs['inputs_embeds'] = inputs_embeds
+                kwargs['input_ids'] = None
+            return original_decoder_forward(self, attention_mask=attention_mask, **kwargs)
+
+        hg_rec.model.decoder.forward = types.MethodType(curv_decoder_forward, hg_rec.model.decoder)
+
     return hg_rec
 
 
@@ -2683,33 +2744,44 @@ def main():
     #   - alpha_1 init=0 (训练起点等同 v22.b Stage3 baseline, gradient 决定是否使用)
     #   - L1 mask 只在 layer_id == 1 的位置注入 (其他层位 / PAD 不动)
     if CURVATURE_RESIDUAL_ENABLED:
-        # Load Stage2 ckpt for curvature
+        # Load Stage2 ckpt for curvature (L1 + L2 branch curvature)
         _cv_ckpt = torch.load(HAB_STAGE2_CKPT, map_location="cpu", weights_only=False)
         _cv_sd = _cv_ckpt["model_state_dict"]
-        _cv_l = CURVATURE_RESIDUAL_LAYER  # 1 (L1 only)
-        _cv_kappa = float(_cv_ckpt["final_kappas"][_cv_l])
-        _cv_delta = _cv_sd[f"vq_layers.{_cv_l}.delta_kappa.weight"].float()  # (K_branch, 1)
+        # v23 v2: 始终 load L1 + L2 (encoder L1, decoder L1+L2, encoder L2 视 _cv_l 决定)
+        _cv_kappa_l1 = float(_cv_ckpt["final_kappas"][1])
+        _cv_kappa_l2 = float(_cv_ckpt["final_kappas"][2])
+        _cv_delta_l1 = _cv_sd["vq_layers.1.delta_kappa.weight"].float()  # (64, 1)
+        _cv_delta_l2 = _cv_sd["vq_layers.2.delta_kappa.weight"].float()  # (8192, 1)
         curv_module = CurvatureResidualModule(
-            kappa_l1=_cv_kappa,
-            delta_kappa_l1=_cv_delta,
+            kappa_l1=_cv_kappa_l1,
+            delta_kappa_l1=_cv_delta_l1,
+            kappa_l2=_cv_kappa_l2,
+            delta_kappa_l2=_cv_delta_l2,
             d_model=CONFIG["d_model"],
             mlp_hidden=CURVATURE_RESIDUAL_MLP_HIDDEN,
             alpha_init=CURVATURE_RESIDUAL_ALPHA_INIT,
         ).to(device)
         _layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT)
         _inner_pre = model.module if hasattr(model, "module") else model
-        _inner_pre = install_curvature_residual(_inner_pre, curv_module, _layer_id_lut_t)
+        _inner_pre = install_curvature_residual(
+            _inner_pre, curv_module, _layer_id_lut_t,
+            decoder_enabled=CURVATURE_RESIDUAL_DECODER_ENABLED,
+        )
         if hasattr(model, "module"):
             model.module = _inner_pre
         else:
             model = _inner_pre
         if is_main:
-            _cv_delta_std = float(_cv_delta.std().item())
+            _cv_delta_l1_std = float(_cv_delta_l1.std().item())
+            _cv_delta_l2_std = float(_cv_delta_l2.std().item())
             _cv_learnable = sum(p.numel() for p in curv_module.parameters() if p.requires_grad)
-            log(f"[v23 curvature residual] ON: layer=L{_cv_l} kappa={_cv_kappa:.4f} "
-                f"delta_kappa_std={_cv_delta_std:.4f} alpha_init={CURVATURE_RESIDUAL_ALPHA_INIT} "
+            _cv_side = "encoder+decoder (L1+L2)" if CURVATURE_RESIDUAL_DECODER_ENABLED else "encoder-only (L1+L2)"
+            log(f"[v23 v2 curvature residual] ON: side={_cv_side} "
+                f"L1 kappa={_cv_kappa_l1:.4f} delta_kappa_std={_cv_delta_l1_std:.4f} "
+                f"L2 kappa={_cv_kappa_l2:.4f} delta_kappa_std={_cv_delta_l2_std:.4f} "
+                f"alpha_init={CURVATURE_RESIDUAL_ALPHA_INIT} "
                 f"mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
-                f"learnable_params={_cv_learnable} (alpha=1 + mlp=2 layers)")
+                f"learnable_params={_cv_learnable} (4 alphas + 2 MLPs)")
     if DDP_MODE:
         # Issue #64: HAB lambda_raw 在 lambda_eff=0 时不参与前向计算 (走 _original_forward fast path),
         # DDP 默认检测到 unused parameter 会崩. 加 find_unused_parameters=True (历史 #55 taskA stage2 同样修过).
