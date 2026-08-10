@@ -1151,6 +1151,141 @@ def build_global_relation_bank(model: KappaAwareHRQVAE, item_emb_all: torch.Tens
     return bank
 
 
+# ──────────────────────────────────────────────────────────────
+# Issue #128 P0-extract: precheck & train_step 共享的 loss computation
+# ──────────────────────────────────────────────────────────────
+def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
+                                    batch_idx: Optional[torch.Tensor] = None,
+                                    item_emb_all: Optional[torch.Tensor] = None,
+                                    relation_bank: Optional[List[torch.Tensor]] = None,
+                                    use_sk: bool = True) -> dict:
+    """Issue #128 Item 5 (2026-08-10): 抽 precheck 与 train_step 的 loss computation
+    共享路径, 确保 precheck 看到的 κ grad path 与 train_step 完全一致.
+
+    Precheck parity fix:
+      - 旧 precheck 只算 recon + rq_loss + CURV_PRIOR_LAMBDA * drift² (错, 应为 κ_eff²)
+      - 缺 boundary_term (LAMBDA_B > 0 时非零)
+      - 缺 trust_term (EMA 已初始化后)
+      - 缺 relational_term (RELATIONAL_TO_KAPPA=True 时)
+    现统一通过本函数, 与 train_step 完全一致.
+
+    Args:
+        model: KappaAwareHRQVAE 模型.
+        batch: (B, EMB_DIM) 输入 batch.
+        batch_idx: (B,) batch 对应的 global item indices (L_rel 需要).
+        item_emb_all: (N, EMB_DIM) 全部 item embeddings (L_rel shape 校验需要).
+        relation_bank: List[Tensor] of length n_hier, 每层 (N, e_dim) frozen bank.
+        use_sk: 是否用 Sinkhorn (precheck 通常用 False 取确定性 hard argmin).
+
+    Returns:
+        dict with keys: out, rq_loss, indices, z_q, z, recon_loss,
+        prior_loss_total, boundary_term_total, trust_term_total,
+        l_rel_total, kappa_prior, total_loss.
+
+    R7/R36: 不做 fallback; RELATIONAL_TO_KAPPA=True 时任何缺失 (relation_bank=None,
+    RELATION_GRAPH_NPZ missing, etc.) 直接 raise RuntimeError, 绝不静默 skip.
+    """
+    mm = getattr(model, "module", model) if hasattr(model, "module") else model
+    autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+                    if STAGE2_BF16 else contextlib.nullcontext())
+    with autocast_ctx:
+        out, rq_loss, indices, z_q, z = model(batch, use_sk=use_sk)
+    recon_loss = poincare_recon_loss(out, batch)
+    total_loss = recon_loss + rq_loss
+
+    # ---- PRIOR (Issue #76: λ·Σκ_eff², 不是 drift²) ----
+    kappa_prior = None
+    prior_loss_total = None
+    if CURV_PRIOR:
+        kappa_prior = sum(q.get_effective_kappa().pow(2).sum() for q in mm.vq_layers)
+        prior_loss_total = CURV_PRIOR_LAMBDA * kappa_prior
+        total_loss = total_loss + prior_loss_total
+
+    # ---- BOUNDARY + TRUST (Issue #59 κ stability regularizers) ----
+    boundary_term_total = None
+    trust_term_total = None
+    if LAMBDA_TR > 0 or LAMBDA_B > 0:
+        l_kappa = torch.zeros((), device=batch.device)
+        for q in mm.vq_layers:
+            log_c_t = torch.log(q.get_c())
+            if LAMBDA_TR > 0 and getattr(q, "_kappa_ema_initialized", False):
+                log_c_ema = q.kappa_ema.detach().to(log_c_t.device)
+                trust_term = LAMBDA_TR * (log_c_t - log_c_ema).pow(2).mean()
+                l_kappa = l_kappa + trust_term
+                if trust_term_total is None:
+                    trust_term_total = trust_term
+                else:
+                    trust_term_total = trust_term_total + trust_term
+            if LAMBDA_B > 0:
+                c_b = q.get_c()
+                # Issue #119 Item 3: detach codebook, ∂L_boundary/∂E=0, 仅 ∂L_boundary/∂κ≠0
+                e_ball = proj_to_ball(expmap0(q.embeddings.weight.detach(), c_b), c_b)
+                rho_k = torch.sqrt(c_b) * e_ball.norm(dim=-1)
+                boundary_term = LAMBDA_B * F.relu(rho_k - B_BOUNDARY).pow(2).mean()
+                l_kappa = l_kappa + boundary_term
+                if boundary_term_total is None:
+                    boundary_term_total = boundary_term
+                else:
+                    boundary_term_total = boundary_term_total + boundary_term
+                q._last_rho_median = rho_k.median().item()
+                q._last_rho_p95 = rho_k.quantile(0.95).item()
+                q._last_rho_gt_090 = (rho_k > 0.90).float().mean().item()
+                q._last_boundary_term = boundary_term.detach().item()
+        total_loss = total_loss + l_kappa
+
+    # ---- RELATIONAL (Issue #119 P0-1/P0-2/P0-5) ----
+    l_rel_total = None
+    if RELATIONAL_TO_KAPPA:
+        if not RELATION_GRAPH_NPZ or not os.path.exists(RELATION_GRAPH_NPZ):
+            raise RuntimeError(f"P0-5 C3 模式下必须提供 RELATION_GRAPH_NPZ, 当前: {RELATION_GRAPH_NPZ}")
+        if relation_bank is None or len(relation_bank) != len(mm.vq_layers):
+            raise RuntimeError(
+                f"P0-1 C3 模式必须传入 relation_bank (每层 (N, e_dim) frozen), "
+                f"got: {type(relation_bank).__name__ if relation_bank is None else len(relation_bank)} layers"
+            )
+        if batch_idx is None or item_emb_all is None:
+            raise RuntimeError("P0-1 C3 模式必须传入 batch_idx 与 item_emb_all (global item index lookup)")
+        N_ITEMS = item_emb_all.shape[0]
+        for l, b in enumerate(relation_bank):
+            assert b.shape[0] == N_ITEMS, f"P0-1 relation_bank[{l}] N mismatch: {b.shape[0]} vs {N_ITEMS}"
+        rg = np.load(RELATION_GRAPH_NPZ)
+        pos_idx_np = rg["pos_idx"]
+        neg_idx_np = rg["neg_idx"]
+        N_TOT = pos_idx_np.shape[0]
+        assert N_TOT == N_ITEMS, f"P0-1 relation graph N mismatch: {N_TOT} vs {N_ITEMS}"
+        assert pos_idx_np.max() < N_ITEMS, f"P0-1 pos_idx max {pos_idx_np.max()} >= N {N_ITEMS}"
+        assert neg_idx_np.max() < N_ITEMS, f"P0-1 neg_idx max {neg_idx_np.max()} >= N {N_ITEMS}"
+        batch_idx_np = batch_idx.detach().cpu().numpy()
+        pos_idx_t = torch.as_tensor(pos_idx_np[batch_idx_np], device=batch.device)
+        neg_idx_t = torch.as_tensor(neg_idx_np[batch_idx_np], device=batch.device)
+        l_rel_total = torch.zeros((), device=batch.device)
+        with torch.enable_grad():
+            for l, q in enumerate(mm.vq_layers):
+                anchor_z = relation_bank[l][torch.as_tensor(batch_idx_np, device=batch.device)]
+                pos_z = relation_bank[l][pos_idx_t]
+                neg_z = relation_bank[l][neg_idx_t]
+                c_l = q.get_c()
+                l_rel_l = poincare_relational_loss_per_layer(
+                    anchor_z=anchor_z, pos_z=pos_z, neg_z=neg_z, c=c_l, tau=RELATIONAL_TAU,
+                )
+                l_rel_total = l_rel_total + l_rel_l
+                if not torch.isfinite(l_rel_l).item():
+                    raise RuntimeError(f"P0-5 L_rel 第 {l} 层非 finite: {l_rel_l.item()}")
+                if not l_rel_l.requires_grad:
+                    raise RuntimeError(f"P0-5 L_rel 第 {l} 层 requires_grad=False, κ 路径断开")
+        l_rel_total = l_rel_total / max(len(mm.vq_layers), 1)
+        total_loss = total_loss + RELATIONAL_LAMBDA * l_rel_total
+        for q in mm.vq_layers:
+            q._last_L_rel = l_rel_total.item()
+
+    return {
+        "out": out, "rq_loss": rq_loss, "indices": indices, "z_q": z_q, "z": z,
+        "recon_loss": recon_loss, "prior_loss_total": prior_loss_total,
+        "boundary_term_total": boundary_term_total, "trust_term_total": trust_term_total,
+        "l_rel_total": l_rel_total, "kappa_prior": kappa_prior, "total_loss": total_loss,
+    }
+
+
 def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx, nn_idx,
                                        item_emb_all, opt, kappa_log: list,
                                        reg_step: int, opt_kappa: Optional[torch.optim.Optimizer] = None,
@@ -1166,143 +1301,33 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     model.train()
     # DDP: forward 走 model() (DDP 自动梯度同步); vq_layers/encoder 属性在 module 上
     mm = model.module if DDP_MODE else model
-    # v34 加速: bf16 autocast (仿 stage3 v31, 训练阶段 forward 转 bf16 节省显存 + 提速)
-    autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
-                    if STAGE2_BF16 else contextlib.nullcontext())
-    with autocast_ctx:
-        out, rq_loss, indices, z_q, z = model(batch)
-    # Issue #55/v3: recon 用 poincare (对齐基线), 弃用欧氏 MSE (塌缩根因)
-    recon_loss = poincare_recon_loss(out, batch)
-    total_loss = recon_loss + rq_loss
-    # ===== P0-4 真实 gradient source audit: 5 路分量分别记 (P0-4 reconstruction 校验基础) =====
-    # 5 路: VQ (commitment + codebook), RADIAL (REL_STRUCT), PRIOR (CURV_PRIOR L_B), TR (LAMBDA_TR trust), RELATIONAL (L_rel)
+    # ===== Item 5 (Issue #128, 2026-08-10): forward + recon + prior + boundary + trust + relational
+    # 全部走共享的 compute_stage2_loss_components, 与 precheck 完全一致 (parity) =====
+    components = compute_stage2_loss_components(
+        model, batch, batch_idx, item_emb_all,
+        relation_bank=relation_bank,
+    )
+    out, rq_loss, indices, z_q, z = (
+        components["out"], components["rq_loss"], components["indices"],
+        components["z_q"], components["z"],
+    )
+    recon_loss = components["recon_loss"]
+    prior_loss_total = components["prior_loss_total"]
+    boundary_term_total = components["boundary_term_total"]
+    trust_term_total = components["trust_term_total"]
+    l_rel_total = components["l_rel_total"]
+    kappa_prior = components["kappa_prior"]
+    total_loss = components["total_loss"]
+    # ===== Item 4 真实 gradient source audit: 6 路分量分别记 (P0-4 reconstruction 校验基础) =====
+    # 6 路: VQ (commitment + codebook), RADIAL (REL_STRUCT), PRIOR (CURV_PRIOR L_B),
+    #       BOUNDARY (LAMBDA_B), TRUST (LAMBDA_TR trust), RELATIONAL (L_rel)
     grad_vq_per_layer = [0.0] * len(mm.vq_layers)
     grad_radial_per_layer = [0.0] * len(mm.vq_layers)
     grad_prior_per_layer = [0.0] * len(mm.vq_layers)
     grad_boundary_per_layer = [0.0] * len(mm.vq_layers)
     grad_trust_per_layer = [0.0] * len(mm.vq_layers)
     grad_relational_per_layer = [0.0] * len(mm.vq_layers)
-    # kappa_prior 必须用单独张量 (add to total_loss 后会污染 autograd)
-    kappa_prior = None
-    if CURV_PRIOR:
-        # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
-        # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
-        # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
-        # Issue #76 径向扩容修复 (2026-08-07): 惩罚项从 kappa_drift² 改为 κ_eff².
-        #   原因: KAPPA_MAX 0.5→6.0 后 σ(drift) 的零点语义变了 — 惩罚 drift² 会把 drift→0 即
-        #   κ_eff→KAPPA_MIN+KAPPA_RANGE/2=2.5 (c=12.2), 与"拉 c→1 锚定基线"的本意相反.
-        #   直接惩罚 κ_eff² 才是 log-curvature 先验的正确形式 (κ=ln c, 拉 κ→0 ⟺ 拉 c→1),
-        #   且对 KAPPA_MIN/MAX 的任何取值都语义不变.
-        kappa_prior = sum(q.get_effective_kappa().pow(2).sum() for q in mm.vq_layers)
-        total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
-    # 阉割后: REC_LOSS / KAPPA_TRUST_REGION / UTIL_HINGE 分支已删 (无 MLR 概念)
-    # Issue #59: L_κ 稳定项 = λ_tr·Σ(log c_l^t - sg(log c_l^{t-1}))² + λ_b·Σ ReLU(b_l - b_target)²
-    #   - trust region 项用 q.kappa_ema (来自 #39 EMA 上一步 log c 近似, 见下方 κ EMA 更新逻辑)
-    #   - 边界占用 b_l = 该层码字 norm > B_BOUNDARY 的比例 (Poincaré 球内 < 1 视为边界)
-    #   - 惩罚温和, 不强制三层 κ 相同, 不让 κ 梯度为零 (依赖 q.kappa_drift.grad)
-    boundary_term_total = None
-    trust_term_total = None
-    if (LAMBDA_TR > 0 or LAMBDA_B > 0):
-        l_kappa = torch.zeros((), device=batch.device)
-        for q in mm.vq_layers:
-            log_c_t = torch.log(q.get_c())  # 当前 log c_l
-            # trust region: 与上一步 EMA 比较 (Issue #39 已维护 q.kappa_ema = 上一步 κ_eff 近似 log c)
-            # Issue #59: q.kappa_ema 首步会被 init 为 0.0 (与 log_c_t 比较无意义), 用 _kappa_ema_initialized 标志判断
-            if LAMBDA_TR > 0 and getattr(q, "_kappa_ema_initialized", False):
-                log_c_ema = q.kappa_ema.detach().to(log_c_t.device)
-                trust_term = LAMBDA_TR * (log_c_t - log_c_ema).pow(2).mean()
-                l_kappa = l_kappa + trust_term
-                if trust_term_total is None:
-                    trust_term_total = trust_term
-                else:
-                    trust_term_total = trust_term_total + trust_term
-            # Issue #115 P0-3 (2026-08-10): boundary penalty 用 normalized radius ρ_k = √c · ‖e_k^D‖.
-            #   旧实现用 ball norm > B_BOUNDARY=0.9 作为阈值 — 但 ball norm 不含 c 缩放,
-            #   诊断中算 ρ = √c · ball_norm, 而 loss 中只看 ball_norm, 两者在 c≠1 时错位.
-            #   修复: loss + diagnostics 共用 ρ 定义; penalty 改成连续 max(0, ρ_k - ρ_safe)².
-            #   ρ_safe=0.90 与 diagnostics 的 rho_gt_090 阈值一致.
-            if LAMBDA_B > 0:
-                c_b = q.get_c()
-                # Issue #119 Item 3 (2026-08-10): boundary loss 必须只更新 κ, 不更新 codebook.
-                #   原代码 q.get_codebook() 内部用 self.embeddings.weight (无 detach),
-                #   导致 ∂L_boundary/∂E_l ≠ 0 (同时更新 codebook embeddings).
-                #   修复: detach embeddings.weight, 让 ∂L_boundary/∂E_l = 0.
-                #   几何意义: boundary 是 κ stability regularizer, 不是 codebook regularizer.
-                #   若以后真要让 boundary 同时约束 codebook, 应单独命名 codebook regularizer.
-                e_ball = proj_to_ball(
-                    expmap0(q.embeddings.weight.detach(), c_b),
-                    c_b,
-                )  # (K, D) 在 ball, 不进 autograd graph for E
-                rho_k = torch.sqrt(c_b) * e_ball.norm(dim=-1)  # (K,) normalized radius
-                # 连续 penalty: (1/K) Σ max(0, ρ_k - ρ_safe)²
-                boundary_term = LAMBDA_B * F.relu(rho_k - B_BOUNDARY).pow(2).mean()
-                l_kappa = l_kappa + boundary_term
-                if boundary_term_total is None:
-                    boundary_term_total = boundary_term
-                else:
-                    boundary_term_total = boundary_term_total + boundary_term
-                # 记录实际 boundary occupancy (供诊断)
-                q._last_rho_median = rho_k.median().item()
-                q._last_rho_p95 = rho_k.quantile(0.95).item()
-                q._last_rho_gt_090 = (rho_k > 0.90).float().mean().item()
-                q._last_boundary_term = boundary_term.detach().item()
-        total_loss = total_loss + l_kappa
 
-    # Issue #119 P0-1/P0-2/P0-5 (2026-08-10): C3 — L_rel (Poincaré InfoNCE) 集成
-    #   - P0-1: 用 frozen per-layer relation_bank (N, e_dim) × 3 层, 用 global item index.
-    #   - P0-2: anchor/positive/negative 统一走 expmap0 + proj_to_ball (球内一致性).
-    #   - P0-5: 任何异常立即 raise RuntimeError, 禁 fallback 到 L_rel=0.
-    l_rel_total = None
-    if RELATIONAL_TO_KAPPA:
-        if not RELATION_GRAPH_NPZ or not os.path.exists(RELATION_GRAPH_NPZ):
-            raise RuntimeError(f"P0-5 C3 模式下必须提供 RELATION_GRAPH_NPZ, 当前: {RELATION_GRAPH_NPZ}")
-        if relation_bank is None or len(relation_bank) != len(mm.vq_layers):
-            raise RuntimeError(
-                f"P0-1 C3 模式必须传入 relation_bank (每层 (N, e_dim) frozen), "
-                f"got: {type(relation_bank).__name__ if relation_bank is None else len(relation_bank)} layers"
-            )
-        # P0-1 验收: bank 形状
-        N_ITEMS = item_emb_all.shape[0]
-        for l, b in enumerate(relation_bank):
-            assert b.shape[0] == N_ITEMS, f"P0-1 relation_bank[{l}] N mismatch: {b.shape[0]} vs {N_ITEMS}"
-        rg = np.load(RELATION_GRAPH_NPZ)
-        pos_idx_np = rg["pos_idx"]  # (N, POS_K)
-        neg_idx_np = rg["neg_idx"]  # (N, NEG_N)
-        N_TOT = pos_idx_np.shape[0]
-        assert N_TOT == N_ITEMS, f"P0-1 relation graph N mismatch: {N_TOT} vs {N_ITEMS}"
-        assert pos_idx_np.max() < N_ITEMS, f"P0-1 pos_idx max {pos_idx_np.max()} >= N {N_ITEMS}"
-        assert neg_idx_np.max() < N_ITEMS, f"P0-1 neg_idx max {neg_idx_np.max()} >= N {N_ITEMS}"
-        # 用 batch_idx (item indices) 拿正负样本 index (global item index)
-        batch_idx_np = batch_idx.detach().cpu().numpy()
-        pos_idx_t = torch.as_tensor(pos_idx_np[batch_idx_np], device=batch.device)
-        neg_idx_t = torch.as_tensor(neg_idx_np[batch_idx_np], device=batch.device)
-        l_rel_total = torch.zeros((), device=batch.device)
-        with torch.enable_grad():
-            for l, q in enumerate(mm.vq_layers):
-                anchor_z = relation_bank[l][batch_idx_t_valid := torch.as_tensor(batch_idx_np, device=batch.device)]  # (B, e_dim)
-                pos_z = relation_bank[l][pos_idx_t]      # (B, POS_K, e_dim)
-                neg_z = relation_bank[l][neg_idx_t]      # (B, NEG_N, e_dim)
-                c_l = q.get_c()  # C3 唯一 κ 梯度源 (c_l 接收 L_rel 的 ∂d_P/∂c 几何梯度)
-                # P0-1/P0-2: anchor/positive/negative 全部从 frozen bank 取, 全部走 expmap0+proj_to_ball
-                l_rel_l = poincare_relational_loss_per_layer(
-                    anchor_z=anchor_z,
-                    pos_z=pos_z,
-                    neg_z=neg_z,
-                    c=c_l,
-                    tau=RELATIONAL_TAU,
-                )
-                l_rel_total = l_rel_total + l_rel_l
-                # P0-5 验收: finite + requires_grad
-                if not torch.isfinite(l_rel_l).item():
-                    raise RuntimeError(f"P0-5 L_rel 第 {l} 层非 finite: {l_rel_l.item()}")
-                if not l_rel_l.requires_grad:
-                    raise RuntimeError(f"P0-5 L_rel 第 {l} 层 requires_grad=False, κ 路径断开")
-        l_rel_total = l_rel_total / max(len(mm.vq_layers), 1)
-        total_loss = total_loss + RELATIONAL_LAMBDA * l_rel_total
-        for q in mm.vq_layers:
-            q._last_L_rel = l_rel_total.item()
-
-    # 阉割后: util_hinge 分支已删
     # 记录 κ 更新前 (使用 effective_kappa — 实际进 forward 的值)
     kappas_before = [q.get_effective_kappa().item() for q in mm.vq_layers]
     codebook_norm_before = [q.embeddings.weight.norm().item() for q in mm.vq_layers]
@@ -1356,12 +1381,12 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         radial_loss_total = radial_loss_total / max(len(mm.vq_layers), 1)
 
     # A.3 PRIOR (with CURV_PRIOR_LAMBDA 显式乘 — 修复原 (3))
-    prior_loss_total = torch.zeros((), device=batch.device)
-    if CURV_PRIOR and kappa_prior is not None:
-        prior_loss_total = CURV_PRIOR_LAMBDA * kappa_prior
+    # Item 5: 直接复用 compute_stage2_loss_components 返回的 prior_loss_total
+    # (其值 = CURV_PRIOR_LAMBDA * kappa_prior, 与原 audit 计算一致)
+    # 这里不需要再算, 删去冗余.
 
-    # A.4 BOUNDARY/TRUST/RELATIONAL tensor 已存在, 在 audit 处显式乘 λ:
-    #     - boundary_term_total 已含 LAMBDA_B (1226 行) — 不要再乘
+    # A.4 BOUNDARY/TRUST/RELATIONAL tensor 来自 compute_stage2_loss_components:
+    #     - boundary_term_total 已含 LAMBDA_B — 不要再乘
     #     - trust_term_total 已含 LAMBDA_TR — 不要再乘
     #     - l_rel_total 是 sum, 需乘 RELATIONAL_LAMBDA (修复原 (3))
 
@@ -1904,14 +1929,12 @@ def main():
     if is_main:
         precheck_mm = getattr(precheck_model, "module", precheck_model)
         sample = item_emb[:args.batch_size]
-        out, rq_loss, indices, z_q, z = precheck_model(sample, use_sk=False)
-        # Issue #55/v3: precheck 与训练一致用 poincare recon (欧氏 MSE 是塌缩根因)
-        recon_loss = poincare_recon_loss(out, sample)
-        total_loss = recon_loss + rq_loss
-        if CURV_PRIOR:
-            # Issue #76: precheck 与训练一致, κ 梯度来自平滑先验 (量化已 stop-grad c)
-            # Issue #41: 先验作用于 drift, 保证锚点稳定; precheck 检查 drift 梯度
-            total_loss = total_loss + CURV_PRIOR_LAMBDA * sum(q.kappa_drift.pow(2) for q in precheck_mm.vq_layers)
+        # ===== Item 5 (Issue #128, 2026-08-10): precheck 用共享 compute_stage2_loss_components =====
+        # precheck 之前只算 recon + rq_loss + CURV_PRIOR_LAMBDA*drift² (错, 应为 κ_eff²)
+        # + 缺 boundary_term + 缺 trust_term + 缺 relational_term
+        # 现统一走共享路径, 与 train_step 完全一致. RELATIONAL_TO_KAPPA 默认 False 故 l_rel=None.
+        components = compute_stage2_loss_components(precheck_model, sample, use_sk=False)
+        total_loss = components["total_loss"]
         if FIX_C:
             # fix_c 模式 (固定 c=1): κ 不参与 c, 不检查 κ grad
             grads_kappa = []
