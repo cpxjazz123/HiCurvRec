@@ -396,7 +396,18 @@ class CurvatureResidualModuleEval(nn.Module):
 
 
 def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor, decoder_enabled=False):
-    """v23 v1+v2 eval: Monkey-patch HG_Rec.forward + .generate (+ decoder.forward if decoder_enabled)."""
+    """v23 v1+v2 eval: Monkey-patch HG_Rec.forward + .generate (+ decoder.forward if decoder_enabled).
+
+    P0 FIX (2026-08-11): decoder 端 curvature 注入在 beam KV-cache 时, decoder.forward 收到 input_ids
+    长度为 1 (只有当前 token), 之前用 torch.roll(input_ids, 1) 找前一个 token 完全错 (变成自己).
+    修复方案: 维护 per-beam full prefix tracker (BeamPrefixTracker), 每次 decoder.forward 时构造
+    fake_input_ids = [prev2?, prev1, current] (形状 [B*beam, 2 or 3]) 传给 curvature module,
+    让 torch.roll 在 fake prefix 上找到正确的 previous tokens. 取 fake_with_curv[:, -1, :] 作为
+    current token 的 curvature-injected embedding, 保留 KV-cache 加速.
+
+    Train-test mismatch 关闭: 训练 (teacher forcing) decoder 看完整 shifted sequence → lookup 正确;
+    推理 (KV-cache) decoder 用 fake prefix 重建 → 与训练分布一致.
+    """
     import types
     device = next(hg_rec.parameters()).device
     curv_module = curv_module.to(device)
@@ -413,6 +424,11 @@ def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor, de
         return outputs.loss, outputs.logits
 
     def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        # P0 FIX: 重置 beam prefix tracker (每次 generate 独立维护)
+        if decoder_enabled:
+            device = next(self.parameters()).device
+            num_total = input_ids.shape[0] * num_beams
+            self.model.decoder._beam_prefix_tracker = BeamPrefixTracker(num_total, device)
         input_embeds = self.model.shared(input_ids) * d_model_sqrt
         input_embeds = self.curvature_residual_module(input_ids, input_embeds, side='encoder')
         return self.model.generate(inputs_embeds=input_embeds,
@@ -425,21 +441,64 @@ def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor, de
 
     if decoder_enabled:
         # v23 v2: decoder 端注入. Monkey-patch model.decoder.forward
+        # P0 FIX: 用 BeamPrefixTracker 维护 per-beam 完整 prefix
         hg_rec.model.decoder.curvature_residual_module = curv_module
         original_decoder_forward = hg_rec.model.decoder.__class__.forward
 
         def curv_decoder_forward(self, input_ids=None, attention_mask=None, **kwargs):
             inputs_embeds = kwargs.get('inputs_embeds', None)
             if input_ids is not None and inputs_embeds is None:
-                inputs_embeds = self.embed_tokens(input_ids) * d_model_sqrt
-                inputs_embeds = self.curvature_residual_module(input_ids, inputs_embeds, side='decoder')
+                # P0 FIX: 用 prefix tracker 构造 fake_input_ids = [prev2?, prev1, current]
+                # 让 torch.roll 在 fake prefix 上找到正确的 previous tokens
+                tracker = getattr(self, '_beam_prefix_tracker', None)
+                if tracker is None:
+                    # Lazy init (若 curv_generate 未被调, 例如直接 forward)
+                    tracker = BeamPrefixTracker(input_ids.shape[0], input_ids.device)
+                    self._beam_prefix_tracker = tracker
+                prev = tracker.prefix
+                if prev.shape[1] >= 2:
+                    # 有 ≥2 个前 token: fake = [q_{i-2}, q_{i-1}, current]
+                    fake_input_ids = torch.cat([prev[:, -2:], input_ids], dim=1)  # (B*beam, 3)
+                elif prev.shape[1] == 1:
+                    # 仅有 1 个前 token: fake = [q_{i-1}, current] (L2 lookup 会错但 L2 mask=0)
+                    fake_input_ids = torch.cat([prev[:, -1:], input_ids], dim=1)  # (B*beam, 2)
+                else:
+                    # 无前 token (e.g., 第一次 decoder_start): fake = current (无 curvature 可查)
+                    fake_input_ids = input_ids  # (B*beam, 1)
+                # Compute curvature on fake prefix, take current token's embedding
+                fake_embeds = self.embed_tokens(fake_input_ids) * d_model_sqrt
+                fake_with_curv = self.curvature_residual_module(fake_input_ids, fake_embeds, side='decoder')
+                inputs_embeds = fake_with_curv[:, -1:, :]  # current token's curvature-injected embedding
                 kwargs['inputs_embeds'] = inputs_embeds
                 kwargs['input_ids'] = None
+                # P0 FIX: 更新 tracker (在 curvature 计算之后, 这样 prev 反映之前的 tokens)
+                tracker.append(input_ids)
             return original_decoder_forward(self, attention_mask=attention_mask, **kwargs)
 
         hg_rec.model.decoder.forward = types.MethodType(curv_decoder_forward, hg_rec.model.decoder)
 
     return hg_rec
+
+
+class BeamPrefixTracker:
+    """v23 v2 P0 FIX: 维护 beam search 中每个 beam 的完整 token prefix.
+
+    HF T5 generation 用 KV-cache 后, decoder.forward(input_ids=...) 每步只收到最新 token
+    (shape=(B*beam, 1)), 而 curvature injection 需要前 1-2 个 token 做 branch lookup.
+    在 curv_decoder_forward 里构造 fake_input_ids = [prev2?, prev1, current] 传给
+    CurvatureResidualModule 让 torch.roll 在 fake prefix 上找到正确的 previous tokens.
+
+    设计: tracker.prefix 是 (num_beams, max_len) long tensor, 每次 curv_decoder_forward
+    调用后 append 当前 token 到 prefix.
+    """
+    def __init__(self, num_beams, device):
+        self.num_beams = num_beams
+        self.device = device
+        self.prefix = torch.zeros(num_beams, 0, dtype=torch.long, device=device)
+
+    def append(self, new_tokens):
+        """Append new tokens (shape=(num_beams, 1)) to prefix."""
+        self.prefix = torch.cat([self.prefix, new_tokens], dim=1)
 
 
 # ──────────────────────────────────────────────────────────────

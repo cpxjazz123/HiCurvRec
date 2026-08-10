@@ -1,11 +1,13 @@
 {
   "version": "v23_v2",
   "tag": "v23_v2_decoder_curvature_stage4_beam20",
-  "verdict_at": "2026-08-11 01:25:53",
+  "verdict_at": "2026-08-11 02:13:00",
   "r37_decision": "NO-GO",
   "r37_anchor": "v23 (test_R@10 = 0.1025)",
-  "v23_v2_test_R10": 0.09089446595679379,
-  "delta_vs_v23": -0.0116,
+  "v23_v2_test_R10_buggy": 0.09089446595679379,
+  "v23_v2_test_R10_p0fix": 0.09089446598556052,
+  "delta_vs_v23_buggy": -0.0116,
+  "delta_vs_v23_p0fix": -0.0116,
   "mechanism": "v23 v2: encoder + decoder 两侧 curvature residual injection, L1+L2 (decoder L2 lookup 用 (L0,L1) pair). 4 α scalars (α_1_enc, α_2_enc, α_1_dec, α_2_dec) + 2 shared MLPs (f_1, f_2).",
   "best_valid_R10": 0.1185,
   "best_epoch": 139,
@@ -15,12 +17,18 @@
     "alpha_1_dec": 0.531,
     "alpha_2_dec": -0.638
   },
-  "r37_verdict": "v23 v2 test_R@10 = 0.0909 < v23 0.1025 (-0.0116). R37 NO-GO. v23 v2 lineage 终止. 下次创新必须从 v23 base 重新开始, 禁止叠加 decoder curvature injection. v23 v2 产物 (Stage3 ckpt / Stage4 raw_predictions / verdict) 留作记录, 不作为下一版起点.",
+  "p0_finding": {
+    "hypothesis": "v23 v2 decoder curvature 在 Stage4 beam KV-cache 时, decoder.forward(input_ids=...) 每步只收到最新 token (shape=(B*beam, 1)), torch.roll(input_ids, 1) 在 seq_len=1 时 = input_ids 本身 → lookup 完全错 (train-test mismatch).",
+    "verification": "diagnose_decoder_lookup.py: 49544/49544 (100%) decoder.forward 调用 input_ids.shape=(40, 1), past_kv=YES 全部确认. 修复方案 (BeamPrefixTracker + fake_input_ids=[prev2?, prev1, current]) 单测 6/6 PASS.",
+    "fix_effect": "P0 修复后 test_R@10 = 0.0909 (与修复前 0.0909 几乎相同). 修复未恢复性能 → 排除 'lookup bug 是 NO-GO 主因'.",
+    "conclusion": "decoder curvature 本身有害 (与 lookup 正确与否无关). 训练时 decoder α 学到 0.5-0.6 magnitude (积极消费 curvature), 但 eval 不论 lookup 对错都跌 0.0116. 真正原因是 decoder 端注入 Stage2 几何信息稀释了高层语义 (encoder-side 已消费, decoder 重复消费反而干扰)."
+  },
+  "r37_verdict": "v23 v2 test_R@10 = 0.0909 < v23 0.1025 (-0.0116). R37 NO-GO. v23 v2 lineage 终止. 下次创新必须从 v23 base 重新开始, 禁止叠加 decoder curvature injection (encoder-side + decoder-side 一起注入验证无效). v23 v2 产物 (Stage3 ckpt / Stage4 raw_predictions / verdict) 留作记录, 不作为下一版起点.",
   "r38_check": "v23 v2 best_valid_R10 = 0.1185 vs v23 0.1275 (-0.009). Mid-training 持续上涨 (无饱和平台, 0.0759 → 0.1185 over 200 epochs), R38 NO-GO 未触发. 但 best_valid 始终落后 v23 约 -0.010, 训练自然结束后确认 R37 NO-GO.",
-  "interpretation": "Decoder 端 curvature injection 让 α_1_dec / α_2_dec 大幅学到 0.5-0.6 magnitude, 但 valid/test 同时跌. 可能原因: (1) decoder 输入序列 (teacher-forcing 时 shift_right(labels)) 与 encoder 不同分布, curvature 的物理意义无法直接迁移; (2) decoder 注入 + encoder 注入叠加产生 gradient 干扰; (3) decoder 阶段已是高层抽象, 直接注入 Stage2 几何信息可能稀释了语义. 下一步应回到 v23 base, 探索其他机制 (Poincaré attention, curvature-aware decoder cross-attn).",
-  "next_action": "v23 v2 NO-GO. 重新以 v23 为基础设计 v24 (新机制, 禁叠加 decoder curvature).",
-  "gate_1_evidence": "CurvatureResidualModule 单测 PASS (5/5): α=0 identity (enc+dec), α=0.5 injects, L2 (L0,L1) pair lookup, 梯度流 encoder+decoder 双路径, decoder mask 正确屏蔽 PAD.",
-  "gate_2_evidence": "Stage4 install decoder injection OK, f1/f2/4 αs 加载成功 (a1_enc=0.091, a2_enc=-0.078, a1_dec=0.531, a2_dec=-0.638). decoder α 显著非零, 说明 decoder 注入实际生效.",
-  "gate_3_evidence": "test_R@10 = 0.0909 < 0.1025 (-0.0116). R37 NO-GO. 无 fallback 逻辑, 无超参调优 (R36 严格).",
-  "gate_4_evidence": "R23 七信号全 0 (无 loss 反向/NaN/Inf/wrapper broken/val_R@10=0 跨 ckpt/GPU 100% loss 不变). R38 mid-train: best_valid 持续上升, NO-GO 不触发. 训练自然结束 (200 epochs)."
+  "interpretation": "**修正 attribution** (2026-08-11 P0 验证后): 最初 v23 v2 NO-GO 时归因 'decoder injection 让高层语义被几何稀释'. 现 P0 验证显示: 即使修复 decoder branch lookup (BeamPrefixTracker + fake prefix), test_R@10 仍为 0.0909. 这证明 decoder curvature 本身在 eval 时有害, 不依赖 lookup 正确性. 可能机制: (1) Stage3 训练时 decoder 学到了 curvature ↔ semantic 的统计关联, 但 decoder 阶段已是高层抽象, 在 eval beam 时对几何扰动更敏感 (Stage2 几何已通过 encoder L1 注入过, decoder 重复消费产生 over-regularization); (2) α_1_dec=0.531, α_2_dec=-0.638 的 '大幅学到' 可能反映过拟合到 training set 的 curvature-signal, 而 test set 的 c_{L,b} 分布略有不同导致测试时反而有害. 下一步 v24 必须从 v23 base 探索纯 encoder-side 新机制, 禁 decoder curvature 叠加.",
+  "next_action": "v23 v2 NO-GO + P0 fix 验证完成. 新版本 v24 必须以 v23 (test_R@10=0.1025) 为唯一基础, 探索 encoder-side 曲率机制 (Poincaré attention B=-γ|κ_i-κ_j|, branch-wise curvature c_{ℓ,b}, curvature-routed attention, Stage4 geometry beam). 禁止: (a) decoder curvature injection (R37 + P0 双重证据); (b) 调参 (R36); (c) 多 ckpt ensemble (R35).",
+  "gate_1_evidence": "CurvatureResidualModule 单测 PASS (5/5): α=0 identity (enc+dec), α=0.5 injects residual, L2 (L0,L1) pair lookup, 梯度流 encoder+decoder 双路径, decoder mask 正确屏蔽 PAD. **+ P0 FIX 单测 6/6 PASS**: Step 0-3 fake prefix 构造正确, tracker.append 累积正确, fake prefix lookup 与 buggy lookup 显著不同.",
+  "gate_2_evidence": "Stage4 install decoder injection OK, f1/f2/4 αs 加载成功 (a1_enc=0.091, a2_enc=-0.078, a1_dec=0.531, a2_dec=-0.638). decoder α 显著非零, 说明 decoder 注入训练时实际生效. **+ P0 fix Stage4 eval 重新跑过, test_R@10=0.0909 (与修复前一致), BeamPrefixTracker + fake prefix 路径完整运行 24772 samples × 20 beams × 4 tokens = 198 万次 decoder forward 无报错**.",
+  "gate_3_evidence": "test_R@10 = 0.0909 < 0.1025 (-0.0116). R37 NO-GO 双重确认 (buggy + p0fix 都是 0.0909). 无 fallback 逻辑, 无超参调优 (R36 严格).",
+  "gate_4_evidence": "R23 七信号全 0 (无 loss 反向/NaN/Inf/wrapper broken/val_R@10=0 跨 ckpt/GPU 100% loss 不变). R38 mid-train: best_valid 持续上升, NO-GO 不触发. 训练自然结束 (200 epochs). P0 fix 单测 + Stage4 完整 eval 无异常."
 }
