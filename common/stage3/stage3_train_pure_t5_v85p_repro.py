@@ -202,6 +202,16 @@ _argparser.add_argument("--hscsb_beta_cross", type=float, default=0.05,
 _argparser.add_argument("--hscsb_stage2_ckpt", type=str,
                         default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
                         help="Issue #108: Stage2 ckpt 路径 (提供 codebook + per-layer κ)")
+# Issue #110 (2026-08-10): RDB — Raw Distance Bias (Stage3 lm_head raw -d_P bias, no log_softmax)
+# 沿 v107/v108 SCSB/HSCSB 路径升级: 跳过 log_softmax 包装, 直接用 raw -d_P 保留完整动态范围
+# 突破 v30/v31 (-0.79%/-0.20%) log_softmax 信号饱和上限
+_argparser.add_argument("--rdb_enabled", action="store_true",
+                        help="Issue #110: 启用 RDB — Stage3 lm_head raw -d_P bias, 不依赖 log_softmax")
+_argparser.add_argument("--rdb_alpha_init", type=float, default=1.0,
+                        help="Issue #110: RDB α 初始值 (扫描 {0.5, 1.0, 2.0}, 默认 1.0)")
+_argparser.add_argument("--rdb_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #110: Stage2 ckpt 路径 (提供 codebook + per-layer κ)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -307,6 +317,16 @@ HSCSB_BETA_L1 = _args.hscsb_beta_l1
 HSCSB_BETA_L2 = _args.hscsb_beta_l2
 HSCSB_BETA_CROSS = _args.hscsb_beta_cross
 HSCSB_STAGE2_CKPT = _args.hscsb_stage2_ckpt
+# Issue #110 (2026-08-10): RDB — Raw Distance Bias 常量
+if _args.rdb_enabled:
+    RDB_ENABLED = True
+    RDB_ALPHA_INIT = float(_args.rdb_alpha_init)
+    RDB_STAGE2_CKPT = _args.rdb_stage2_ckpt
+    print(f"[Issue #110] RDB_ENABLED=ON → raw -d_P lm_head bias, α_init={RDB_ALPHA_INIT}, no log_softmax")
+else:
+    RDB_ENABLED = False
+    RDB_ALPHA_INIT = 0.0
+    RDB_STAGE2_CKPT = None
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -1102,6 +1122,168 @@ def install_hscsb(hg_rec, hscsb_module, device):
 
     hg_rec.forward = types.MethodType(hscsb_forward, hg_rec)
     hg_rec.generate = types.MethodType(hscsb_generate, hg_rec)
+    return hg_rec
+
+
+# ──────────────────────────────────────────────────────────────
+# Issue #110 (2026-08-10): RDB — Raw Distance Bias (Stage3 lm_head)
+#   bias_total = α · Σ_ℓ (-d_P(codeword_ℓ, history_centroid_ℓ))
+#   关键差异 (vs SCSB/HSCSB): **跳过 log_softmax 包装**, 保留 raw -d_P 完整动态范围
+#   -d_P ∈ [-max_d_P, 0] ≈ [-5, 0], 与 T5 logits (~10) 同量级
+#   而 log_softmax(-d_P) ∈ [-log K, 0] ≈ [-5.5, 0], 但 K 个值都接近 0 (区分度丢失)
+#
+# 沿用 SCSBModule 的 centroid 计算 + codebook + c 加载逻辑
+# 仅有的新逻辑: 不调用 log_softmax, 直接 scatter raw -d_P 到 vocab positions
+# 总参数增量: 1 个 learnable α scalar (vs SCSB 1, vs HSCSB 3, vs v18 0)
+# ──────────────────────────────────────────────────────────────
+class RDBModule(nn.Module):
+    """Issue #110 (2026-08-10): Stage3 RDB - Raw Distance Bias.
+
+    在 T5 lm_head 之后插入 raw additive distance bias:
+      bias_ℓ = α · (-d_P(codeword_ℓ, history_centroid_ℓ)) ∈ R^{K_ℓ}
+      bias_total = Σ_ℓ scatter(bias_ℓ, [offset_ℓ, offset_ℓ + K_ℓ))  → (B, V)
+
+    - α: 1 个 learnable scalar (init=1.0, Sigmoid bounded [0, alpha_max])
+    - 总参数增量: 1 个 α scalar
+    - 不改 T5 内部 (沿用 SCSB R36 严守成功路径)
+    - **突破 v30/v31 log_softmax 信号饱和上限**: bias 量级与 T5 logits 匹配
+    """
+
+    def __init__(self, codebooks_t, cs, layer_id_lut,
+                 alpha_init=1.0, alpha_max=3.0, vocab_size=1025):
+        super().__init__()
+        codebooks_ball = []
+        for tan_emb, c in zip(codebooks_t, cs):
+            tan_emb = tan_emb.float()
+            c_t = torch.tensor(float(c), dtype=torch.float32)
+            ball_emb = self._exp_map_0(tan_emb, c_t)
+            ball_emb = self._proj_to_ball(ball_emb, c_t)
+            codebooks_ball.append(ball_emb)
+        self.register_buffer("codebook_l0", codebooks_ball[0])
+        self.register_buffer("codebook_l1", codebooks_ball[1])
+        self.register_buffer("codebook_l2", codebooks_ball[2])
+        self.register_buffer("c_l0", torch.tensor(float(cs[0]), dtype=torch.float32))
+        self.register_buffer("c_l1", torch.tensor(float(cs[1]), dtype=torch.float32))
+        self.register_buffer("c_l2", torch.tensor(float(cs[2]), dtype=torch.float32))
+        self.register_buffer("layer_id_lut",
+                             torch.tensor(layer_id_lut, dtype=torch.long))
+        self.register_buffer("token_offset_l0", torch.tensor(1, dtype=torch.long))
+        self.register_buffer("token_offset_l1", torch.tensor(65, dtype=torch.long))
+        self.register_buffer("token_offset_l2", torch.tensor(193, dtype=torch.long))
+        self.register_buffer("K_l0", torch.tensor(64, dtype=torch.long))
+        self.register_buffer("K_l1", torch.tensor(128, dtype=torch.long))
+        self.register_buffer("K_l2", torch.tensor(256, dtype=torch.long))
+        self.vocab_size = vocab_size
+        # 1 个 learnable α (init=alpha_init, Sigmoid -> [0, alpha_max])
+        self.alpha_raw = nn.Parameter(torch.tensor(float(alpha_init), dtype=torch.float32))
+        self.alpha_max = float(alpha_max)
+
+    @property
+    def alpha(self):
+        # α ∈ [0, alpha_max]
+        return self.alpha_max * torch.sigmoid(self.alpha_raw)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    def _compute_layer_dist(self, input_ids, l):
+        """Compute -d_P(codeword_l, centroid_l) raw bias slice for layer l. shape: (B, K_l)"""
+        device = input_ids.device
+        layer_ids = self.layer_id_lut[input_ids]
+        cb_list = [self.codebook_l0, self.codebook_l1, self.codebook_l2]
+        c_list = [self.c_l0, self.c_l1, self.c_l2]
+        offset_list = [self.token_offset_l0.item(),
+                       self.token_offset_l1.item(),
+                       self.token_offset_l2.item()]
+        cb = cb_list[l]
+        c = c_list[l]
+        mask = (layer_ids == l)
+        token_idx_l = input_ids - offset_list[l]
+        safe_idx = token_idx_l.clamp(0, cb.shape[0] - 1)
+        history_emb = cb[safe_idx]
+        mask_f = mask.float().unsqueeze(-1)
+        cnt = mask_f.sum(1).clamp_min(1.0)
+        centroid = (mask_f * history_emb).sum(1) / cnt  # (B, D)
+
+        # poincare distance (centroid, cb) -> (B, K_l)
+        x_sq = (centroid * centroid).sum(-1, keepdim=True)
+        y_sq = (cb * cb).sum(-1, keepdim=True).T
+        diff_sq = ((centroid.unsqueeze(1) - cb.unsqueeze(0)) ** 2).sum(-1)
+        num = 2.0 * diff_sq
+        denom = ((1.0 - x_sq) * (1.0 - y_sq)).clamp_min(1e-30)
+        arg = (1.0 + num / denom).clamp_min(1.0 + 1e-7)
+        sqrt_term = torch.sqrt((arg ** 2 - 1.0).clamp_min(1e-30))
+        dist = (torch.log(arg + sqrt_term) / (c ** 0.5).clamp_min(1e-30))
+        return -dist  # (B, K_l), raw negative distance (no softmax)
+
+    def compute_bias(self, input_ids):
+        """input_ids: (B, L) → bias_total: (B, V=vocab_size).
+
+        关键差异 (vs SCSB/HSCSB): **不调用 log_softmax**, 直接 scatter raw -d_P.
+        """
+        device = input_ids.device
+        B = input_ids.shape[0]
+        cb_list = [self.codebook_l0, self.codebook_l1, self.codebook_l2]
+        offset_list = [self.token_offset_l0.item(),
+                       self.token_offset_l1.item(),
+                       self.token_offset_l2.item()]
+        K_list = [self.K_l0.item(), self.K_l1.item(), self.K_l2.item()]
+
+        # 收集每层 raw -d_P
+        bias_total = torch.zeros(B, self.vocab_size, device=device,
+                                  dtype=torch.float32)
+        for l in range(3):
+            dist_l = self._compute_layer_dist(input_ids, l)  # (B, K_l) raw
+            # 直接 scatter 到 vocab positions (no log_softmax!)
+            bias_total[:, offset_list[l]:offset_list[l] + K_list[l]] = dist_l
+
+        # 单 α 缩放
+        alpha = self.alpha
+        bias_total = alpha * bias_total
+        return bias_total
+
+
+def install_rdb(hg_rec, rdb_module, device):
+    """Issue #110 (2026-08-10): 包裹 T5 forward/generate, 在 lm_head 之后注入 RDB raw -d_P bias."""
+    import types
+    rdb_module = rdb_module.to(device)
+    hg_rec.add_module("rdb_module", rdb_module)
+
+    if not hasattr(hg_rec, "_rdb_orig_forward"):
+        hg_rec._rdb_orig_forward = hg_rec.forward
+
+    def rdb_forward(self, input_ids=None, attention_mask=None,
+                    labels=None, **kwargs):
+        out = self._rdb_orig_forward(input_ids=input_ids,
+                                      attention_mask=attention_mask,
+                                      labels=labels, **kwargs)
+        if (input_ids is not None
+                and hasattr(out, "logits") and out.logits is not None):
+            bias = self.rdb_module.compute_bias(input_ids)  # (B, V) raw -d_P
+            out.logits = out.logits + bias.unsqueeze(1)
+        return out
+
+    if not hasattr(hg_rec, "_rdb_orig_generate"):
+        hg_rec._rdb_orig_generate = hg_rec.generate
+
+    def rdb_generate(self, input_ids=None, attention_mask=None, **kwargs):
+        return self._rdb_orig_generate(input_ids=input_ids,
+                                       attention_mask=attention_mask,
+                                       **kwargs)
+
+    hg_rec.forward = types.MethodType(rdb_forward, hg_rec)
+    hg_rec.generate = types.MethodType(rdb_generate, hg_rec)
     return hg_rec
 
 
@@ -1974,6 +2156,36 @@ def main():
                 f"beta_l=[{HSCSB_BETA_L0}, {HSCSB_BETA_L1}, {HSCSB_BETA_L2}] "
                 f"beta_cross={HSCSB_BETA_CROSS} "
                 f"learnable_params={sum(p.numel() for p in hscsb_module.parameters() if p.requires_grad)}")
+    # Issue #110 (2026-08-10): Stage3 RDB - Raw Distance Bias (no log_softmax)
+    rdb_module = None
+    if RDB_ENABLED:
+        sd_ckpt = torch.load(RDB_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        sd = sd_ckpt["model_state_dict"]
+        codebooks_t = [
+            sd["vq_layers.0.embeddings.weight"].float(),
+            sd["vq_layers.1.embeddings.weight"].float(),
+            sd["vq_layers.2.embeddings.weight"].float(),
+        ]
+        cs = [float(c) for c in sd_ckpt["final_cs"]]
+        rdb_module = RDBModule(
+            codebooks_t=codebooks_t,
+            cs=cs,
+            layer_id_lut=_LAYER_ID_LUT,
+            alpha_init=RDB_ALPHA_INIT,
+            alpha_max=3.0,
+            vocab_size=1025,
+        )
+        inner = model.module if hasattr(model, "module") else model
+        inner = install_rdb(inner, rdb_module, device)
+        if hasattr(model, "module"):
+            model.module = inner
+        if is_main:
+            alpha_eff = rdb_module.alpha.detach().cpu().item()
+            log(f"[Issue #110 v33 RDB] raw distance bias ON: "
+                f"alpha_init={RDB_ALPHA_INIT} alpha_eff={alpha_eff:.4f} "
+                f"c_per_layer={[f'{c:.4f}' for c in cs]} "
+                f"learnable_params={sum(p.numel() for p in rdb_module.parameters() if p.requires_grad)}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -1995,7 +2207,7 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
