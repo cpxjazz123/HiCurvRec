@@ -155,30 +155,25 @@ KAPPA_TRUST_REGION = 0.0  # Issue #59: 关闭旧硬 clamp (改用 L_κ 平滑处
 KAPPA_TRUST_REGION_LAMBDA = 1.0
 KAPPA_WARMUP_EPOCHS = 0
 
-# Issue #41 (逐层锚定有界 κ): κ_effective = κ_anchor + tanh(κ_drift) * range
-# Issue #96 v15 capmatch 复现 (2026-08-09): 锚定到 v15 历史 final_kappas=[0.30, 1.79, 1.48],
-#   KAPPA_ANCHOR_RANGE=0.5 让 κ 在 anchor 附近浮动 (±0.5) 而非无限涨到 KAPPA_MAX=6.
-#   上一轮自由 κ (KAPPA_ANCHORS=[]) + KAPPA_MAX=6 让 κ 涨到 [3.12, 4.29, 4.64] 过头,
-#   util_4digit 崩到 0.003 (R23 Gate 1 FAIL).
-KAPPA_ANCHORS = [0.30, 1.79, 1.48]  # v15 实际 final_kappas (Issue #157 verdict)
-KAPPA_ANCHOR_RANGE = 1.0  # 方案 D: 0.5→1.0 放宽 κ 几何变化空间, 防 ep155 临界突破 (实测 drift_from_anchor=[0.49,0.24,0.49] 已撞 ±0.5 上限)
+# Issue #114 (2026-08-10) Task 1: 恢复**中性**曲率初始化 (clean reproduction).
+#   旧 #96 v15 capmatch 把历史 v15 final_kappas=[0.30, 1.79, 1.48] 当作初始化 anchor,
+#   这不是真正的"中性初始化", 而是"从一个之前训练结果附近出发", 让 collapse 实验
+#   几乎必到 κ ceiling (实测 final=[1.30, 2.79, 2.48] 已撞 KAPPA_ANCHOR_RANGE=1.0 上界).
+#   clean reproduction: KAPPA_ANCHORS=[] → 走 Issue #59 sigmoid 形式, KAPPA_MIN=-KAPPA_MAX
+#   让 sigmoid 中点 = 0, drift init=0 → κ=[0,0,0], c=[1,1,1] (与 HG-Rec baseline c=1 一致).
+#   v15 final κ 仅作历史参考, 不作初始化锚点.
+KAPPA_ANCHORS = []  # Issue #114 Task 1: 空列表 → 走 sigmoid 形式 (中性初始化)
+KAPPA_ANCHOR_RANGE = 1.0  # 保留兼容: 旧 #41 tanh 形式未触发, 此值仅在 KAPPA_ANCHORS 非空时生效
 
-# Issue #59: 平滑有界 κ 参数化 (sigmoid 形式, 严格上下界, 运行前硬编码 + 说明依据).
-#   κ_l = κ_min + (κ_max-κ_min) · σ(θ_l),  θ_l 独立可学
-#   c_l = exp(κ_l) ∈ [exp(κ_min), exp(κ_max)] 严格有界, 防止深层 κ 漂移导致球面边界吸附
-#   依据: #53 健康 κ=[0.072, 0.138, 0.366] (无 κ 路线, util_3digit=0.99 健康基线),
-#         κ_min=-1 (c_min=0.368, 允许负 κ 与更大球半径) + κ_max=0.5 (c_max=1.649,
-#         比 #53 最大 κ=0.366 留 36% 余量防冲界). 区间宽度 1.5 满足 σ(θ) ∈ (0,1) 全学习空间.
-#
-# Issue #76 径向扩容 (2026-08-07): KAPPA_MAX 0.5 → 6.0.
-#   动机: 旧上界 κ≤0.5 (c≤1.649) 使码字球内半径 tanh(√c·‖e‖) 最多到 ~0.3, 停留在近欧氏区
-#     (Poincaré 指数体积增长只在 ρ→1 显著) → HAB 拿到的 Dbar ≈ 欧氏距离重参数化 → 无几何信息.
-#   反解: 要 ρ_ball 达 RHO_BALL_TARGET=[0.60,0.75,0.85], 给定 v15 实测 ‖e‖=[0.244,0.123,0.111],
-#     需 c=[8.06, 62.3, 127.4] 即 κ=[2.09, 4.13, 4.85]. 上界取 6.0 (c=403) 留余量.
-#   注意 κ_max 抬高本身不强迫 κ 变大 — σ(θ) 仍自由; 是 REL_STRUCT_ON_BALL 的径向目标在拉 κ.
+# Issue #59 sigmoid 形式 (KAPPA_ANCHORS=[] 时生效):
+#   κ_l = κ_min + (κ_max-κ_min) · σ(θ_l), θ_l = kappa_drift 是 nn.Parameter (init 0)
+#   drift=0 → σ(0)=0.5 → κ = (κ_min+κ_max)/2. 要求 init=0 → κ_min = -κ_max.
+#   选 KAPPA_MIN=-1, KAPPA_MAX=1 → κ ∈ [-1, 1] (c ∈ [0.368, 2.718]), 中性范围不爆炸.
+#   注意: 这比旧 KAPPA_MAX=6.0 (c=403) 保守得多, 因为 clean reproduction 阶段
+#   我们需要先观察数据驱动梯度能把 κ 推到哪, 而不是预设一个超大空间让它冲爆.
 KAPPA_MIN = -1.0
-KAPPA_MAX = 6.0  # v15 真实值 (Issue #76 修复 2026-08-09, 原 commit 32beba0 注释承诺改 6.0 但值未改, 致 κ 卡 0.5 上限)
-KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 7.0
+KAPPA_MAX = 1.0  # Issue #114 Task 1: 6.0→1.0 让 sigmoid 中点 = 0 (c_init=exp(0)=1)
+KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 2.0
 
 # ──────────────────────────────────────────────────────────────
 # 阉割后: FIXED_CURV / FIXED_CURV_C / VANILLA_RQ / MCJT_* / SPBI_* /
@@ -424,6 +419,110 @@ class KappaAwareVectorQuantization(nn.Module):
         c = self.get_c()
         return proj_to_ball(expmap0(self.embeddings.weight, c), c)
 
+    def compute_collapse_diagnostics(self, indices=None, distances=None, c_geom=None):
+        """Issue #114 Task 7 (2026-08-10): 完整 collapse diagnostics.
+        返回 dict 含每层:
+          - util_3digit / util_4digit / unique_codes (from indices if provided)
+          - assignment_entropy
+          - top1_code_freq / top5_cumulative_freq
+          - raw_tangent_norm (median, p95)
+          - ball_norm (median, p95)
+          - rho_normalized (median, p95, max)  — Task 4 normalized radius
+          - rho_gt_090 / rho_gt_095          — Task 5 boundary monitoring
+          - safe_distance_saturation_ratio   — Task 6
+          - top1_top2_margin (mean, median, near_zero_ratio) — Task 6
+          - kappa / c_l / kappa_grad_norm    — κ learning state
+        验收: 找出 κ 上升、距离饱和、entropy 降低、util collapse 的先后顺序.
+        """
+        c = self.get_c()
+        R = (1.0 / c).sqrt().item()  # 球半径
+        codebook_e = self.embeddings.weight.detach()
+        # raw tangent-space codebook norm
+        raw_tangent_norm = codebook_e.norm(dim=-1)
+        # Poincaré-ball norm: proj_to_ball(expmap0(e, c), c).norm
+        ball_coord = proj_to_ball(expmap0(codebook_e, c), c)
+        ball_norm = ball_coord.norm(dim=-1)
+        # Task 4: normalized radius ρ = √c · |e^D|
+        rho = torch.sqrt(c) * ball_norm
+        # Task 5: boundary monitoring (基于 ρ 而非 raw norm)
+        rho_gt_090 = (rho > 0.90).float().mean().item()
+        rho_gt_095 = (rho > 0.95).float().mean().item()
+        # Task 6: safe-distance saturation (用当前 indices 看 d 接近 u_max 的比例)
+        sat_ratio = 0.0
+        margin_mean = 0.0
+        margin_median = 0.0
+        near_zero_margin_ratio = 0.0
+        if distances is not None and c_geom is not None:
+            sqrt_c = c_geom.sqrt().item() if hasattr(c_geom, 'sqrt') else float(c_geom) ** 0.5
+            u_max = 0.985  # poincare_distance_safe default
+            # 每个 item 的 distance 序列 → 算 saturation (距离被 clamp 到 u_max/√c 即 (2/√c)·artanh(u_max))
+            d_min = distances.min(dim=-1).values  # (B,)
+            d_max_per_item = distances.max(dim=-1).values
+            sat_per_item = (d_min / d_max_per_item.clamp_min(1e-10) > 0.99).float()  # top-1 = top-max 几乎相等 → saturation
+            sat_ratio = sat_per_item.mean().item()
+            # top1-top2 margin (Δd = d_2nd - d_1st, 越小越易塌缩)
+            sorted_d, _ = distances.sort(dim=-1)
+            margin = sorted_d[:, 1] - sorted_d[:, 0]  # (B,)
+            margin_mean = margin.mean().item()
+            margin_median = margin.median().item()
+            near_zero_margin_ratio = (margin < 1e-4).float().mean().item()
+        # utilization + assignment entropy
+        util_3digit = 0.0
+        util_4digit = 0.0
+        unique_codes = 0
+        assign_entropy = 0.0
+        top1_freq = 0.0
+        top5_cum_freq = 0.0
+        if indices is not None and indices.numel() > 0:
+            indices_flat = indices.flatten().cpu().numpy()
+            unique_codes = len(set(indices_flat.tolist()))
+            util_3digit = unique_codes / self.n_e
+            # 4-digit utilization = 多层 concat 后 unique 数 / (n_e^3) — 这里近似用 3digit
+            # 实际 4digit 需要 cross-layer (留给 train_step 统计)
+            util_4digit = util_3digit  # single-layer proxy
+            # assignment entropy: H(p) = -Σ p_i log p_i
+            counts = torch.bincount(torch.as_tensor(indices_flat), minlength=self.n_e).float()
+            p = counts / counts.sum()
+            p_nz = p[p > 0]
+            assign_entropy = -(p_nz * p_nz.log()).sum().item()
+            sorted_counts, _ = counts.sort(descending=True)
+            top1_freq = (sorted_counts[0] / counts.sum()).item() if sorted_counts.numel() > 0 else 0.0
+            top5_cum_freq = (sorted_counts[:5].sum() / counts.sum()).item() if sorted_counts.numel() >= 5 else 1.0
+        # κ state
+        kappa = self.get_effective_kappa().item()
+        c_val = c.item()
+        kappa_grad_norm = self.kappa_drift.grad.abs().item() if self.kappa_drift.grad is not None else 0.0
+        return {
+            "layer_idx": self.layer_idx,
+            "n_e": self.n_e,
+            "kappa": kappa,
+            "c": c_val,
+            "ball_radius_R": R,
+            "kappa_grad_norm": kappa_grad_norm,
+            "util_3digit": util_3digit,
+            "util_4digit_proxy": util_4digit,
+            "unique_codes": unique_codes,
+            "assign_entropy": assign_entropy,
+            "top1_code_freq": top1_freq,
+            "top5_cum_freq": top5_cum_freq,
+            "raw_tangent_norm_median": raw_tangent_norm.median().item(),
+            "raw_tangent_norm_p95": raw_tangent_norm.quantile(0.95).item(),
+            "ball_norm_median": ball_norm.median().item(),
+            "ball_norm_p95": ball_norm.quantile(0.95).item(),
+            "rho_normalized_median": rho.median().item(),
+            "rho_normalized_p95": rho.quantile(0.95).item(),
+            "rho_normalized_max": rho.max().item(),
+            "rho_gt_090_ratio": rho_gt_090,
+            "rho_gt_095_ratio": rho_gt_095,
+            "safe_distance_saturation_ratio": sat_ratio,
+            "top1_top2_margin_mean": margin_mean,
+            "top1_top2_margin_median": margin_median,
+            "near_zero_margin_ratio": near_zero_margin_ratio,
+            "vq_kappa_grad": getattr(self, '_last_vq_kappa_grad', 0.0),
+            "struct_term": getattr(self, '_last_struct_term', 0.0),
+            "struct_target": getattr(self, '_last_struct_target', 0.0),
+        }
+
     def init_emb(self, data):
         # bf16 兼容 (v35 加速): data 可能是 bf16 (STAGE2_BF16 autocast 上下文里 forward),
         # kmeans() 内部 .cpu().numpy() 不支持 bf16 → 转 fp32
@@ -493,15 +592,32 @@ class KappaAwareVectorQuantization(nn.Module):
                 raise ValueError("Sinkhorn produced NaN/Inf")
             indices = torch.argmax(Q, dim=-1)
 
-        x_exp = logmap0(x_exp, c_geom)
-        cb_exp = logmap0(cb_exp, c_geom)
-        x_q = codebook_e.index_select(0, indices)
-        # Issue #55/v5→v7e: quant loss 输入恢复欧氏向量 (对齐基线 HVectorQuantization + v6 fix_c 行为).
-        # v7c 用 proj_to_ball 后 SID 塌缩 (unique=1): proj 使大 norm 点全压到球面边缘, safe distance
-        # 饱和 (u clamp 0.985) → index 区分度丧失 → 码本退化. 欧氏直接进 + κ clamp 紧下界 (c≥0.9
-        # 接近基线) 是既保 κ 梯度路径又贴近基线的平衡.
-        commitment_loss = torch.mean(poincare_distance(x_q.detach(), latent, c_geom) ** 2)
-        codebook_loss = torch.mean(poincare_distance(x_q, latent.detach(), c_geom) ** 2)
+        # Issue #114 Task 3 (2026-08-10): assignment 和 VQ loss 用同一 ball coord.
+        #   旧实现 (Issue #55/v7e 改动): assignment 在 ball coord 算, 但 VQ loss (commitment/codebook)
+        #   直接拿原始欧氏 codebook_e[indices] (没 expmap0) 算 poincare_distance, 导致:
+        #     (1) VQ loss 输入不在 ball 内 (poincare_distance_safe 假设 ball coord)
+        #     (2) VQ loss 用的 norm 与 assignment 用的 norm 不一致, 优化方向与量化方向脱钩
+        #   修复: VQ loss 也用 codebook_h[indices] (ball coord), 与 assignment 完全一致.
+        x_q = codebook_e.index_select(0, indices)  # 原始欧氏 (for residual path line 559)
+        x_q_h = codebook_h.index_select(0, indices)  # ball coord (for VQ loss — Task 3)
+        # Issue #114 Task 2 (2026-08-10): VQ loss 用 ball coord 后, 不再需要 line 491-492 的 logmap0 (那是为后续 residual 计算准备). 保留供 residual 用, 不影响 VQ loss.
+        x_exp = logmap0(x_exp, c_geom)  # for residual
+        cb_exp = logmap0(cb_exp, c_geom)  # for residual
+        # Task 3: VQ loss 用 ball coord (与 assignment 一致)
+        commitment_loss = torch.mean(poincare_distance(x_q_h.detach(), latent_h, c_geom) ** 2)
+        codebook_loss = torch.mean(poincare_distance(x_q_h, latent_h.detach(), c_geom) ** 2)
+        # Issue #114 Task 7 (2026-08-10): 记录 VQ loss 对 κ 的梯度贡献 (因 c_geom 已 detach, 应为 0).
+        #   这是验收标准: "记录每层 κ gradient contribution 来源"
+        if c.requires_grad:
+            try:
+                vq_kappa_grad = torch.autograd.grad(
+                    commitment_loss + codebook_loss, c, retain_graph=True
+                )[0].abs().item()
+            except RuntimeError:
+                vq_kappa_grad = 0.0
+        else:
+            vq_kappa_grad = 0.0
+        self._last_vq_kappa_grad = vq_kappa_grad
         # Issue #55/v2: mix_weight_l 调节本层 loss 贡献 (三层不同权重学习)
         # Issue #55/v5: mix_weight clamp ≥0.01 防负值次生失控 (κ 冲边界后曾学到负权 → loss 一路变负)
         mix_w = self.mix_weight.clamp(min=0.01, max=20.0)
@@ -526,16 +642,13 @@ class KappaAwareVectorQuantization(nn.Module):
             c_struct = self.get_c()  # 不 detach: 让 κ 接收结构梯度 (量化距离已 stop-grad, 此目标独享 κ 梯度)
             target = self._struct_target()  # v11: per-layer target (码字数 n_e + δ 反解)
             if REL_STRUCT_ON_BALL:
-                # Issue #76 径向量纲修复: 直接约束 HAB 消费的球内半径 ρ_ball = tanh(√c·‖e‖).
-                # 用 codebook 权重 (非量化后 latent) — HAB precompute 就是对 codebook 做 expmap0.
-                # Issue #76 (2026-08-07) e_norm 必须用 proj 后值. 否则 κ 涨到 c=20+ 球半径 R=1/√c≈0.22,
-                #   但 e_norm=0.69 > R, proj 把 norm 截到 0.22 → 实际 ρ_ball = tanh(√c·0.22) 不是 tanh(√c·0.69).
-                #   用 proj 后 norm 让 ρ_ball 跟 HAB precompute 实际消费的值一致.
-                R = (1.0 / c_struct).sqrt()
-                eps_norm = 1e-5
-                e_norm_raw = self.embeddings.weight.detach().norm(dim=-1)
-                e_norm = e_norm_raw.clamp(max=(1.0 - eps_norm) * R)
-                rho_ball = torch.tanh(torch.sqrt(c_struct) * e_norm).median()
+                # Issue #114 Task 4 (2026-08-10): 用正确的 normalized radius ρ_k = √c · |e_k^D|.
+                #   旧实现 (Issue #76 修复): tanh(√c · clamp(‖e‖, max=R)) ≈ tanh(√c · min(‖e‖, 1/√c)).
+                #   这是用 raw tangent-space norm 近似, 不严格等价于 √c · |proj_to_ball(expmap0(e, c), c)|.
+                #   物理意义: ρ 是 HAB precompute 实际消费的归一化球内半径 (与 c_R=1/√c 等价的 scale-free 表达).
+                #   修复: e_ball = proj_to_ball(expmap0(e, c), c); ρ = √c · |e_ball|.
+                e_ball = proj_to_ball(expmap0(self.embeddings.weight.detach(), c_struct), c_struct)
+                rho_ball = (torch.sqrt(c_struct) * e_ball.norm(dim=-1)).median()
                 struct_term = rho_ball - target
                 loss = loss + REL_STRUCT_LAMBDA_BALL * struct_term.pow(2)
             else:
