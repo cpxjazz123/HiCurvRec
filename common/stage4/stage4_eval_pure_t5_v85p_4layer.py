@@ -137,6 +137,12 @@ _argparser.add_argument("--curvature_residual_mlp_hidden", type=int, default=64,
                         help="v23: MLP f_1 hidden dim (默认 64, 与 Stage3 train 一致)")
 _argparser.add_argument("--curvature_residual_alpha_init", type=float, default=0.0,
                         help="v23: α 初始值 (eval 从 ckpt load 训练末值, init 仅作 fallback)")
+# Issue #166 (2026-08-11): v24 Poincaré attention — Stage4 eval 镜像 Stage3
+# encoder-only (decoder curvature 已被 P0 验证为有害)
+_argparser.add_argument("--curvature_attn_bias_enabled", action="store_true",
+                        help="v24: 启用 Stage4 encoder Poincaré attention bias (B[i,j] = -γ · |κ_i - κ_j|)")
+_argparser.add_argument("--curvature_attn_bias_gamma_init", type=float, default=0.0,
+                        help="v24: γ 初始值 (eval 从 ckpt load 训练末值, init 仅作 fallback)")
 # Issue #108 (2026-08-10): Stage4 HSCSB eval 同步 (Hierarchical SCSB)
 _argparser.add_argument("--hscsb_enabled", action="store_true",
                         help="Issue #108: 启用 HSCSB eval (3 层累积 + cross-layer bias)")
@@ -210,6 +216,9 @@ CURVATURE_RESIDUAL_DECODER_ENABLED = bool(_args.curvature_residual_decoder_enabl
 CURVATURE_RESIDUAL_LAYER = int(_args.curvature_residual_layer)
 CURVATURE_RESIDUAL_MLP_HIDDEN = int(_args.curvature_residual_mlp_hidden)
 CURVATURE_RESIDUAL_ALPHA_INIT = float(_args.curvature_residual_alpha_init)
+# v24 (2026-08-11): Stage4 Poincaré attention bias eval 常量 (镜像 Stage3 train)
+POINCARE_ATTN_BIAS_ENABLED = bool(_args.curvature_attn_bias_enabled)
+POINCARE_ATTN_BIAS_GAMMA_INIT = float(_args.curvature_attn_bias_gamma_init)
 # Issue #108 (2026-08-10): HSCSB eval 常量
 HSCSB_ENABLED = _args.hscsb_enabled
 HSCSB_ALPHA_INIT = [float(x) for x in _args.hscsb_alpha_init.split(",")]
@@ -476,6 +485,112 @@ def install_curvature_residual_eval(hg_rec, curv_module, layer_id_lut_tensor, de
             return original_decoder_forward(self, attention_mask=attention_mask, **kwargs)
 
         hg_rec.model.decoder.forward = types.MethodType(curv_decoder_forward, hg_rec.model.decoder)
+
+    return hg_rec
+
+
+# ──────────────────────────────────────────────────────────────
+# v24 (2026-08-11): Stage4 encoder Poincaré attention bias (镜像 Stage3 train)
+# 注入点: T5 encoder self-attention position_bias (encoder-only, decoder 不变)
+# 生成阶段无 KV-cache 影响 (bias 在 encoder forward 算, decoder attention 不消费 encoder curvature)
+# ──────────────────────────────────────────────────────────────
+class CurvatureAttnBiasEval(nn.Module):
+    """v24 Stage4: 镜像 Stage3 train CurvatureAttnBias, compute κ + bias."""
+
+    def __init__(self, kappa_l0, kappa_l1, kappa_l2, delta_kappa_l1, delta_kappa_l2,
+                 gamma_init=0.0):
+        super().__init__()
+        self.register_buffer("kappa_l0", torch.tensor(float(kappa_l0)))
+        self.register_buffer("kappa_l1", torch.tensor(float(kappa_l1)))
+        self.register_buffer("kappa_l2", torch.tensor(float(kappa_l2)))
+        self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())
+        self.register_buffer("delta_kappa_l2", delta_kappa_l2.detach().clone())
+        self.gamma = nn.Parameter(torch.tensor(float(gamma_init)))
+
+    def compute_kappa(self, input_ids, layer_id_lut):
+        if layer_id_lut.device != input_ids.device:
+            layer_id_lut = layer_id_lut.to(input_ids.device)
+        layer_ids = layer_id_lut[input_ids]
+        kappa = torch.zeros_like(input_ids, dtype=torch.float32)
+        is_l0 = (layer_ids == 0)
+        kappa = torch.where(is_l0, self.kappa_l0, kappa)
+        q_0_id = torch.roll(input_ids, shifts=1, dims=-1)
+        is_l1 = (layer_ids == 1)
+        l0_idx = (q_0_id - 1).clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)
+        delta_kappa_l1 = self.delta_kappa_l1[l0_idx].squeeze(-1)
+        kappa_l1 = self.kappa_l1 + delta_kappa_l1
+        kappa = torch.where(is_l1, kappa_l1, kappa)
+        q_0_id_l2 = torch.roll(input_ids, shifts=2, dims=-1)
+        q_1_id_l2 = torch.roll(input_ids, shifts=1, dims=-1)
+        is_l2 = (layer_ids == 2)
+        l0_idx_l2 = (q_0_id_l2 - 1).clamp(min=0, max=63)
+        l1_idx_l2 = (q_1_id_l2 - 65).clamp(min=0, max=127)
+        l2_idx_l2 = (l0_idx_l2 * 128 + l1_idx_l2).clamp(min=0, max=self.delta_kappa_l2.shape[0] - 1)
+        delta_kappa_l2 = self.delta_kappa_l2[l2_idx_l2].squeeze(-1)
+        kappa_l2 = self.kappa_l2 + delta_kappa_l2
+        kappa = torch.where(is_l2, kappa_l2, kappa)
+        return kappa
+
+    def forward(self, input_ids, layer_id_lut):
+        kappa = self.compute_kappa(input_ids, layer_id_lut)
+        kappa_i = kappa.unsqueeze(2)
+        kappa_j = kappa.unsqueeze(1)
+        diff = (kappa_i - kappa_j).abs()
+        return -self.gamma * diff
+
+
+def install_curvature_attn_bias_eval(hg_rec, cab_module, layer_id_lut_tensor):
+    """v24 Stage4: Monkey-patch T5 encoder self-attention, 加 Poincaré attention bias.
+
+    与 Stage3 train install_curvature_attn_bias 完全一致:
+      - T5Stack.forward (encoder): 算 cab_bias matrix, 存到 stack_self._cab_bias_cache
+      - T5Block.forward (每层): 把 cab_bias 加到 position_bias (broadcast over heads)
+    encoder-only, 不动 decoder.
+    """
+    import types
+    device = next(hg_rec.parameters()).device
+    cab_module = cab_module.to(device)
+    layer_id_lut_tensor = layer_id_lut_tensor.to(device)
+    hg_rec.add_module("curvature_attn_bias_module_eval", cab_module)
+
+    encoder = hg_rec.model.encoder
+
+    original_stack_forward = encoder.__class__.forward
+
+    def patched_stack_forward(stack_self, input_ids=None, inputs_embeds=None,
+                              attention_mask=None, **kwargs):
+        if input_ids is not None:
+            cab_bias = hg_rec.curvature_attn_bias_module_eval(input_ids, layer_id_lut_tensor)
+            stack_self._cab_bias_cache = cab_bias
+        else:
+            stack_self._cab_bias_cache = None
+        return original_stack_forward(stack_self, input_ids=input_ids,
+                                      inputs_embeds=inputs_embeds,
+                                      attention_mask=attention_mask, **kwargs)
+
+    encoder.forward = types.MethodType(patched_stack_forward, encoder)
+
+    for layer_module in encoder.block:
+        original_block_forward = layer_module.__class__.forward
+
+        def make_block_patched(orig):
+            def patched_block(block_self, hidden_states, attention_mask=None,
+                              position_bias=None, encoder_hidden_states=None,
+                              encoder_attention_mask=None,
+                              encoder_decoder_position_bias=None, **kwargs):
+                cab_bias = getattr(encoder, "_cab_bias_cache", None)
+                if cab_bias is not None and position_bias is not None:
+                    position_bias = position_bias + cab_bias.unsqueeze(1)
+                return orig(block_self, hidden_states=hidden_states,
+                            attention_mask=attention_mask,
+                            position_bias=position_bias,
+                            encoder_hidden_states=encoder_hidden_states,
+                            encoder_attention_mask=encoder_attention_mask,
+                            encoder_decoder_position_bias=encoder_decoder_position_bias,
+                            **kwargs)
+            return patched_block
+
+        layer_module.forward = types.MethodType(make_block_patched(original_block_forward), layer_module)
 
     return hg_rec
 
@@ -1361,6 +1476,51 @@ def main():
               f"L2 kappa={cv_kappa_l2:.4f} delta_kappa_std={float(cv_delta_l2.std().item()):.4f} "
               f"mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
               f"learnable_params={sum(p.numel() for p in curv_module.parameters() if p.requires_grad)}", flush=True)
+    # v24 (2026-08-11): Poincaré attention bias eval (encoder-only, 镜像 Stage3 train)
+    if POINCARE_ATTN_BIAS_ENABLED:
+        # 复用 CURVATURE_RESIDUAL_ENABLED 已加载的 Stage2 ckpt (避免二次 I/O)
+        if not CURVATURE_RESIDUAL_ENABLED:
+            _cab_eval_ckpt = torch.load(HAB_STAGE2_CKPT, map_location="cpu", weights_only=False)
+            _cab_eval_sd = _cab_eval_ckpt["model_state_dict"]
+            _cab_eval_kappa_l0 = float(_cab_eval_ckpt["final_kappas"][0])
+            _cab_eval_kappa_l1 = float(_cab_eval_ckpt["final_kappas"][1])
+            _cab_eval_kappa_l2 = float(_cab_eval_ckpt["final_kappas"][2])
+            _cab_eval_delta_l1 = _cab_eval_sd["vq_layers.1.delta_kappa.weight"].float()
+            _cab_eval_delta_l2 = _cab_eval_sd["vq_layers.2.delta_kappa.weight"].float()
+        else:
+            _cab_eval_kappa_l0 = float(cv_ckpt["final_kappas"][0])
+            _cab_eval_kappa_l1 = cv_kappa_l1
+            _cab_eval_kappa_l2 = cv_kappa_l2
+            _cab_eval_delta_l1 = cv_delta_l1
+            _cab_eval_delta_l2 = cv_delta_l2
+        cab_eval_module = CurvatureAttnBiasEval(
+            kappa_l0=_cab_eval_kappa_l0,
+            kappa_l1=_cab_eval_kappa_l1,
+            kappa_l2=_cab_eval_kappa_l2,
+            delta_kappa_l1=_cab_eval_delta_l1,
+            delta_kappa_l2=_cab_eval_delta_l2,
+            gamma_init=POINCARE_ATTN_BIAS_GAMMA_INIT,
+        ).to(device)
+        # 加载训练末值 gamma (从 ckpt)
+        if os.path.exists(CKPT_PATH):
+            try:
+                _cab_eval_ck = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)
+                _cab_eval_sd_ck = _cab_eval_ck.get("model_state_dict", _cab_eval_ck)
+                _cab_gamma_state = {k.split("curvature_attn_bias_module.")[-1]: v
+                                    for k, v in _cab_eval_sd_ck.items()
+                                    if k.startswith("curvature_attn_bias_module.")}
+                if _cab_gamma_state:
+                    cab_eval_module.load_state_dict(_cab_gamma_state, strict=False)
+                    print(f"[v24 poincare attn bias eval] gamma loaded from ckpt: "
+                          f"gamma={float(cab_eval_module.gamma.item()):.4f}", flush=True)
+            except Exception as _e:
+                print(f"[v24 poincare attn bias eval] WARN: failed to load gamma ({_e}); use init", flush=True)
+        layer_id_lut_t_cab = torch.from_numpy(SCSB_LAYER_ID_LUT)
+        install_curvature_attn_bias_eval(model, cab_eval_module, layer_id_lut_t_cab)
+        print(f"[v24 poincare attn bias] eval ON: encoder-only "
+              f"L0 kappa={_cab_eval_kappa_l0:.4f} L1 kappa={_cab_eval_kappa_l1:.4f} L2 kappa={_cab_eval_kappa_l2:.4f} "
+              f"gamma_init={POINCARE_ATTN_BIAS_GAMMA_INIT} "
+              f"learnable_params={sum(p.numel() for p in cab_eval_module.parameters() if p.requires_grad)}", flush=True)
 
     # Issue #108 (2026-08-10): HSCSB eval 同步
     hscsb_module = None

@@ -170,6 +170,14 @@ _argparser.add_argument("--curvature_residual_mlp_hidden", type=int, default=64,
                         help="v23: MLP f_1 hidden dim (默认 64)")
 _argparser.add_argument("--curvature_residual_alpha_init", type=float, default=0.0,
                         help="v23: α 初始值 (默认 0.0, 训练起点等同无 curvature)")
+# Issue #166 (2026-08-11): v24 Poincaré attention — Stage3 encoder self-attention 加 curvature-aware bias
+# 核心: B[i,j] = -γ · |κ_i - κ_j|. γ init=0 (训练起点等同 v23 baseline)
+# κ_i 来自 Stage2 branch curvature (per-L0 for L1, per-(L0,L1) for L2)
+# encoder-only (decoder-side curvature 已被 v23 v2 P0 验证为有害, 禁 decoder)
+_argparser.add_argument("--curvature_attn_bias_enabled", action="store_true",
+                        help="v24: 启用 Stage3 encoder Poincaré attention bias (B[i,j] = -γ · |κ_i - κ_j|)")
+_argparser.add_argument("--curvature_attn_bias_gamma_init", type=float, default=0.0,
+                        help="v24: γ 初始值 (默认 0.0, 训练起点等同无 bias)")
 # Issue #236 (2026-08-10): Stage3 Hyperbolic Attention Scoring — 替换 inner-product 为负 Poincaré 距离
 # 核心: T5 attention score = matmul(Q, K^T) 替换为 -d_P(Q, K), 让曲率成为 attention 第一公民
 # 与 HAB 正交可叠加 (HAB 是 additive 4D bias, 此处是替换 score 函数本身)
@@ -335,6 +343,8 @@ BRANCH_CURVATURE_LAMBDA_MULT = [float(x) for x in _args.branch_curvature_lambda_
 # v23 (2026-08-11): Stage3 显式消费 Stage2 branch curvature
 CURVATURE_RESIDUAL_ENABLED = _args.curvature_residual_enabled
 CURVATURE_RESIDUAL_DECODER_ENABLED = bool(_args.curvature_residual_decoder_enabled)
+POINCARE_ATTN_BIAS_ENABLED = bool(_args.curvature_attn_bias_enabled)
+POINCARE_ATTN_BIAS_GAMMA_INIT = float(_args.curvature_attn_bias_gamma_init)
 CURVATURE_RESIDUAL_LAYER = int(_args.curvature_residual_layer)
 CURVATURE_RESIDUAL_MLP_HIDDEN = int(_args.curvature_residual_mlp_hidden)
 CURVATURE_RESIDUAL_ALPHA_INIT = float(_args.curvature_residual_alpha_init)
@@ -926,6 +936,138 @@ class CurvatureResidualModule(nn.Module):
         return (input_embeds
                 + alpha_1 * cur_emb_l1 * mask_l1
                 + alpha_2 * cur_emb_l2 * mask_l2)
+
+
+# ──────────────────────────────────────────────────────────────
+# v24 (2026-08-11): Stage3 encoder Poincaré attention bias
+# 核心公式 (新曲率机制, 不与 v23 token residual 冲突):
+#     B[i,j] = -γ · |κ_i - κ_j|
+#   κ_i 来自 Stage2 branch curvature:
+#     - L0 token:    κ_i = κ_0 (per-layer mean, 无 branch)
+#     - L1 token:    κ_i = κ_1 + Δκ_{1, q_0}  (q_0 = 前一个 token 的 L0 code)
+#     - L2 token:    κ_i = κ_2 + Δκ_{2, (q_0, q_1)}  (pair lookup)
+#   γ: 可学习 scalar, init=0 (训练起点等同无 bias)
+# 注入点: T5 encoder self-attention 的 position_bias (与 HAB 共存, 加性)
+# 范围: encoder only (decoder-side 已被 v23 v2 P0 验证为有害, 禁 decoder)
+# ──────────────────────────────────────────────────────────────
+class CurvatureAttnBias(nn.Module):
+    """v24: Poincaré attention bias B[i,j] = -γ · |κ_i - κ_j|.
+
+    γ init=0 → 训练起点等同无 curvature-aware attention bias (baseline 一致).
+    κ_i 来自 Stage2 branch curvature (per-token lookup):
+      - L0: κ_i = κ_0 (per-layer mean, stage2 final_kappas[0])
+      - L1: κ_i = κ_1 + Δκ_{1, q_0}  (per L0 code branch)
+      - L2: κ_i = κ_2 + Δκ_{2, (q_0, q_1)}  (per (L0,L1) pair branch)
+    """
+
+    def __init__(self, kappa_l0, kappa_l1, kappa_l2, delta_kappa_l1, delta_kappa_l2,
+                 gamma_init=0.0):
+        super().__init__()
+        self.register_buffer("kappa_l0", torch.tensor(float(kappa_l0)))
+        self.register_buffer("kappa_l1", torch.tensor(float(kappa_l1)))
+        self.register_buffer("kappa_l2", torch.tensor(float(kappa_l2)))
+        self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())  # (64, 1)
+        self.register_buffer("delta_kappa_l2", delta_kappa_l2.detach().clone())  # (8192, 1)
+        self.gamma = nn.Parameter(torch.tensor(float(gamma_init)))
+
+    def compute_kappa(self, input_ids):
+        """Compute κ_i for each token. input_ids: (B, L) long. Returns: (B, L) float."""
+        lut = self._cached_layer_id_lut
+        if lut.device != input_ids.device:
+            lut = lut.to(input_ids.device)
+            self._cached_layer_id_lut = lut
+        layer_ids = lut[input_ids]  # (B, L)
+        kappa = torch.zeros_like(input_ids, dtype=torch.float32)
+        # L0: κ = κ_0
+        is_l0 = (layer_ids == 0)
+        kappa = torch.where(is_l0, self.kappa_l0, kappa)
+        # L1: κ = κ_1 + Δκ_{1, q_0}
+        q_0_id = torch.roll(input_ids, shifts=1, dims=-1)
+        is_l1 = (layer_ids == 1)
+        l0_idx = (q_0_id - 1).clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)
+        delta_kappa_l1 = self.delta_kappa_l1[l0_idx].squeeze(-1)
+        kappa_l1 = self.kappa_l1 + delta_kappa_l1
+        kappa = torch.where(is_l1, kappa_l1, kappa)
+        # L2: κ = κ_2 + Δκ_{2, (q_0, q_1)}
+        q_0_id_l2 = torch.roll(input_ids, shifts=2, dims=-1)
+        q_1_id_l2 = torch.roll(input_ids, shifts=1, dims=-1)
+        is_l2 = (layer_ids == 2)
+        l0_idx_l2 = (q_0_id_l2 - 1).clamp(min=0, max=63)
+        l1_idx_l2 = (q_1_id_l2 - 65).clamp(min=0, max=127)
+        l2_idx_l2 = (l0_idx_l2 * 128 + l1_idx_l2).clamp(min=0, max=self.delta_kappa_l2.shape[0] - 1)
+        delta_kappa_l2 = self.delta_kappa_l2[l2_idx_l2].squeeze(-1)
+        kappa_l2 = self.kappa_l2 + delta_kappa_l2
+        kappa = torch.where(is_l2, kappa_l2, kappa)
+        return kappa  # (B, L)
+
+    def forward(self, input_ids):
+        """Compute attention bias matrix. input_ids: (B, L). Returns: (B, L, L)."""
+        kappa = self.compute_kappa(input_ids)  # (B, L)
+        kappa_i = kappa.unsqueeze(2)  # (B, L, 1)
+        kappa_j = kappa.unsqueeze(1)  # (B, 1, L)
+        diff = (kappa_i - kappa_j).abs()  # (B, L, L)
+        return -self.gamma * diff  # (B, L, L)
+
+
+def install_curvature_attn_bias(hg_rec, cab_module, layer_id_lut_tensor):
+    """v24: Monkey-patch T5 encoder self-attention, 加 Poincaré attention bias.
+
+    注入点:
+      - T5Stack.forward (encoder): 在 input_ids 可用时算 curvature bias matrix
+      - T5Block.forward (encoder 每层): 把 cab_bias 加到 position_bias (broadcast over heads)
+
+    与 HAB / curvature_residual 共存, 互不冲突 (加性叠加).
+    """
+    import types
+    device = next(hg_rec.parameters()).device
+    cab_module = cab_module.to(device)
+    layer_id_lut_tensor = layer_id_lut_tensor.to(device)
+    cab_module._cached_layer_id_lut = layer_id_lut_tensor
+    hg_rec.add_module("curvature_attn_bias_module", cab_module)
+
+    encoder = hg_rec.model.encoder
+
+    # 1) Patch T5Stack.forward (encoder): 算 cab_bias matrix
+    original_stack_forward = encoder.__class__.forward
+
+    def patched_stack_forward(stack_self, input_ids=None, inputs_embeds=None,
+                              attention_mask=None, **kwargs):
+        if input_ids is not None:
+            cab_bias = hg_rec.curvature_attn_bias_module(input_ids)  # (B, L, L)
+            stack_self._cab_bias_cache = cab_bias
+        else:
+            stack_self._cab_bias_cache = None
+        return original_stack_forward(stack_self, input_ids=input_ids,
+                                      inputs_embeds=inputs_embeds,
+                                      attention_mask=attention_mask, **kwargs)
+
+    encoder.forward = types.MethodType(patched_stack_forward, encoder)
+
+    # 2) Patch 每个 T5Block.forward: 把 cab_bias 加到 position_bias
+    for layer_module in encoder.block:
+        original_block_forward = layer_module.__class__.forward
+
+        def make_block_patched(orig):
+            def patched_block(block_self, hidden_states, attention_mask=None,
+                              position_bias=None, encoder_hidden_states=None,
+                              encoder_attention_mask=None,
+                              encoder_decoder_position_bias=None, **kwargs):
+                cab_bias = getattr(encoder, "_cab_bias_cache", None)
+                if cab_bias is not None and position_bias is not None:
+                    # cab_bias: (B, L, L). position_bias: (B, H, L, L) 或 (1, H, L, L)
+                    position_bias = position_bias + cab_bias.unsqueeze(1)
+                return orig(block_self, hidden_states=hidden_states,
+                            attention_mask=attention_mask,
+                            position_bias=position_bias,
+                            encoder_hidden_states=encoder_hidden_states,
+                            encoder_attention_mask=encoder_attention_mask,
+                            encoder_decoder_position_bias=encoder_decoder_position_bias,
+                            **kwargs)
+            return patched_block
+
+        layer_module.forward = types.MethodType(make_block_patched(original_block_forward), layer_module)
+
+    return hg_rec
 
 
 def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor, decoder_enabled=False):
@@ -2782,6 +2924,47 @@ def main():
                 f"alpha_init={CURVATURE_RESIDUAL_ALPHA_INIT} "
                 f"mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
                 f"learnable_params={_cv_learnable} (4 alphas + 2 MLPs)")
+    # v24 (2026-08-11): Poincaré attention bias — Stage3 encoder self-attention 加 curvature-aware bias
+    #   核心: B[i,j] = -γ · |κ_i - κ_j|  (encoder-only, decoder-side 已证有害)
+    #   γ init=0 (训练起点等同 v23 baseline), 与 CURVATURE_RESIDUAL_ENABLED 完全正交可叠加
+    if POINCARE_ATTN_BIAS_ENABLED:
+        # 复用同一个 Stage2 ckpt 加载的 curvature (避免二次 I/O)
+        if not CURVATURE_RESIDUAL_ENABLED:
+            _cab_ckpt = torch.load(HAB_STAGE2_CKPT, map_location="cpu", weights_only=False)
+            _cab_sd = _cab_ckpt["model_state_dict"]
+            _cab_kappa_l0 = float(_cab_ckpt["final_kappas"][0])
+            _cab_kappa_l1 = float(_cab_ckpt["final_kappas"][1])
+            _cab_kappa_l2 = float(_cab_ckpt["final_kappas"][2])
+            _cab_delta_l1 = _cab_sd["vq_layers.1.delta_kappa.weight"].float()  # (64, 1)
+            _cab_delta_l2 = _cab_sd["vq_layers.2.delta_kappa.weight"].float()  # (8192, 1)
+        else:
+            # 复用上面已加载的 curvature (避免重复 ckpt I/O)
+            _cab_kappa_l0 = float(_cv_ckpt["final_kappas"][0])
+            _cab_kappa_l1 = _cv_kappa_l1
+            _cab_kappa_l2 = _cv_kappa_l2
+            _cab_delta_l1 = _cv_delta_l1
+            _cab_delta_l2 = _cv_delta_l2
+        cab_module = CurvatureAttnBias(
+            kappa_l0=_cab_kappa_l0,
+            kappa_l1=_cab_kappa_l1,
+            kappa_l2=_cab_kappa_l2,
+            delta_kappa_l1=_cab_delta_l1,
+            delta_kappa_l2=_cab_delta_l2,
+            gamma_init=POINCARE_ATTN_BIAS_GAMMA_INIT,
+        ).to(device)
+        _cab_lut_t = torch.from_numpy(_LAYER_ID_LUT)
+        _cab_inner_pre = model.module if hasattr(model, "module") else model
+        _cab_inner_pre = install_curvature_attn_bias(_cab_inner_pre, cab_module, _cab_lut_t)
+        if hasattr(model, "module"):
+            model.module = _cab_inner_pre
+        else:
+            model = _cab_inner_pre
+        if is_main:
+            _cab_learnable = sum(p.numel() for p in cab_module.parameters() if p.requires_grad)
+            log(f"[v24 poincare attn bias] ON: encoder-only "
+                f"L0 kappa={_cab_kappa_l0:.4f} L1 kappa={_cab_kappa_l1:.4f} L2 kappa={_cab_kappa_l2:.4f} "
+                f"gamma_init={POINCARE_ATTN_BIAS_GAMMA_INIT} "
+                f"learnable_params={_cab_learnable} (1 gamma scalar)")
     if DDP_MODE:
         # Issue #64: HAB lambda_raw 在 lambda_eff=0 时不参与前向计算 (走 _original_forward fast path),
         # DDP 默认检测到 unused parameter 会崩. 加 find_unused_parameters=True (历史 #55 taskA stage2 同样修过).
@@ -2794,7 +2977,8 @@ def main():
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
         # v23 (2026-08-11): CURVATURE_RESIDUAL_ENABLED 时 alpha_1 init=0 不参与前向, DDP 需 find_unused=True
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED or HCL_ENABLED or CURVATURE_RESIDUAL_ENABLED
+        # v24 (2026-08-11): POINCARE_ATTN_BIAS_ENABLED 时 gamma init=0 不参与前向, DDP 需 find_unused=True
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED or HCL_ENABLED or CURVATURE_RESIDUAL_ENABLED or POINCARE_ATTN_BIAS_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
