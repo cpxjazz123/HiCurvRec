@@ -392,6 +392,80 @@ if SAFE_DISTANCE:
     # learnable κ 主路径: 全局替换 poincare_distance 为稳定版 (所有调用点自动生效)
     poincare_distance = poincare_distance_safe
 
+
+# ──────────────────────────────────────────────────────────────
+# Issue #138 v22.b Plan A (2026-08-10): Branch-aware geometry wrapper
+#   背景: utils.py proj_to_ball 内 `if c <= 0` 检查对 tensor c 触发 RuntimeError
+#         (PyTorch 对 tensor 与 0 比较返回 element-wise bool, 在 if 语句 ambiguous)
+#         utils.py mobius_add / expmap0 内部 c**0.5 / c*x 等 broadcast 都接受 (B,1,1) tensor
+#   方案: stage2.py 内 wrapper 处理 (B,) tensor c, 跳过 if c<=0 校验
+#         scalar c / python float 仍走 utils.py 原版 (保留历史校验)
+#   R31: 不改 utils.py (基线 HG-Rec 上游文件), stage2.py 内部包装
+# ──────────────────────────────────────────────────────────────
+def _reshape_c_for_input(c: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
+    """把 (B,) c reshape 到 (B, 1, ..., 1) 让其与 u.shape[:-1] 对齐 (供 norm 广播).
+    u 例: (B, D) → c reshape (B, 1); (B, K, D) → c reshape (B, 1, 1).
+    """
+    return c.view(-1, *([1] * (u.dim() - 1)))
+
+
+def branch_aware_proj_to_ball(x: torch.Tensor, c) -> torch.Tensor:
+    """Issue #138 v22.b Plan A: per-sample c broadcast 版 proj_to_ball.
+    接受 c 形式: python float / 0-dim tensor / (B,) tensor。
+    - 非 tensor 或 0-dim tensor: 走 utils.py 原版 (保留 c<=0 校验)
+    - tensor with dim > 0: 跳过 c<=0 校验, 因 c 来自 exp(κ_eff) > 0 (永远).
+    """
+    if not torch.is_tensor(c) or c.dim() == 0:
+        return proj_to_ball(x, c)
+    # tensor c (B,): reshape 到跟 x 的 batch dim 对齐
+    c_b = _reshape_c_for_input(c, x)  # (B, 1) or (B, 1, 1) etc
+    r = (1.0 / c_b) ** 0.5
+    norm = x.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+    max_norm = (1 - 1e-6) * r
+    scale = torch.where(norm > max_norm, max_norm / norm, torch.ones_like(norm))
+    return x * scale
+
+
+def branch_aware_expmap0(u: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
+    """Issue #138 v22.b Plan A: per-sample c broadcast 版 expmap0."""
+    if not torch.is_tensor(c) or c.dim() == 0:
+        return expmap0(u, c)
+    c_b = _reshape_c_for_input(c, u)
+    sqrt_c = c_b ** 0.5
+    norm_u = u.norm(dim=-1, keepdim=True).clamp_min(_eps(u))
+    factor = torch.tanh(sqrt_c * norm_u) / (sqrt_c * norm_u)
+    return branch_aware_proj_to_ball(factor * u, c_b)
+
+
+def branch_aware_mobius_add(x: torch.Tensor, y: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
+    """Issue #138 v22.b Plan A: per-sample c broadcast 版 mobius_add.
+    utils.py mobius_add 内部 c*x2 等 broadcast 都接受 (B,1,1) tensor, 直接调用 OK。
+    仅当 c 是 python float / 0-dim tensor 时才调 utils 原版.
+    """
+    if not torch.is_tensor(c) or c.dim() == 0:
+        return mobius_add(x, y, c)
+    # tensor c (B,): reshape 让 x2/y2/xy 跟 c 对齐
+    c_b = _reshape_c_for_input(c, x)  # x shape 跟 y 一样 (B, ...) 形式
+    x2 = (x * x).sum(dim=-1, keepdim=True)
+    y2 = (y * y).sum(dim=-1, keepdim=True)
+    xy = (x * y).sum(dim=-1, keepdim=True)
+    num = (1 + 2 * c_b * xy + c_b * y2) * x + (1 - c_b * x2) * y
+    den = 1 + 2 * c_b * xy + (c_b ** 2) * x2 * y2
+    return num / den.clamp_min(_eps(den))
+
+
+def branch_aware_logmap0(x: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
+    """Issue #138 v22.b Plan A: per-sample c broadcast 版 logmap0.
+    """
+    if not torch.is_tensor(c) or c.dim() == 0:
+        return logmap0(x, c)
+    c_b = _reshape_c_for_input(c, x)
+    sqrt_c = c_b ** 0.5
+    norm_x = x.norm(dim=-1, keepdim=True).clamp_min(_eps(x))
+    factor = artanh(sqrt_c * norm_x) / (sqrt_c * norm_x)
+    return factor * x
+
+
 # ──────────────────────────────────────────────────────────────
 # 阉割后: RESCALE 已删 (默认 False, 用 v7c 后的硬 proj_to_ball)
 # ──────────────────────────────────────────────────────────────
@@ -765,41 +839,71 @@ class KappaAwareVectorQuantization(nn.Module):
         if not self.initted and self.training:
             self.init_emb(latent)
 
-        # 阉割后: PER_BATCH_RADIUS_MOD 已删, c 直接来自 get_c()
-        c = self.get_c()
-        # Issue #138 v22 (2026-08-10): branch_idx 参数已加, 但当前默认走 per-layer mean 路径
-        #   (Δκ 仅作辅助训练信号, forward 距离仍用 per-layer scalar c).
-        #   Plan A 完整实施 (per-branch VQ distance lookup) 需要改 expmap0/proj_to_ball/poincare_distance
-        #   的 broadcast 路径, 工程量大; 当前 Phase 1.5 不启用, Plan B 留 v22.b.
-        # Issue #119 P0-3 (2026-08-10): 引入 c_vq 统一变量切断 VQ→κ gradient.
-        #   VQ_TO_KAPPA=True  (C1): c_vq = c  (κ 通过 commitment/codebook loss 接收数据驱动梯度)
-        #   VQ_TO_KAPPA=False (C3): c_vq = c.detach()  (κ 对 VQ 路径恒为 0)
-        #   assignment / mapping / expmap0 / proj_to_ball / poincare_distance / commitment / codebook
-        #   全部统一使用 c_vq. C3 必须满足 dL_VQ/dkappa = 0.
-        c_vq = c if VQ_TO_KAPPA else c.detach()  # P0-3 c_vq gate
+        # Issue #138 v22.b Plan A (2026-08-10): 真正消费 per-branch c_{ℓ,b}.
+        #   use_branch=True 当: flag 开启 + delta_kappa 存在 + branch_idx 提供 + L1/L2.
+        #   c_branch: (B,) tensor, c_{ℓ,b} = exp(κ_eff + Δκ_{ℓ,b[sample]})
+        #   c_for_geom: (B, 1, 1) tensor, broadcast 到 (B, K, D) 给 expmap/proj/distance.
+        #   c_scalar: per-layer mean of branch_c (等价 get_c()), 供 VQ_TO_KAPPA gate (P0-3)
+        #             使用 — gate 必须用 scalar 才能正确切断 VQ→per-layer κ gradient;
+        #             per-branch Δκ gradient 自然通过 c_for_geom 流入.
+        use_branch = (self._branch_curvature_enabled
+                      and self.delta_kappa is not None
+                      and branch_idx is not None
+                      and self.layer_idx >= 1)
+        if use_branch:
+            c_branch = self.get_branch_c(branch_idx)  # (B,)
+            # c_for_geom 统一用 (B, 1, 1) 让 utils 内部 broadcast (B, K, D) input 一致
+            c_for_geom = c_branch.view(-1, 1, 1)
+            c_scalar = self.get_c()  # per-layer mean (含 Δκ mean), 供 P0-3 gate
+        else:
+            c_for_geom = self.get_c()  # 0-dim tensor / scalar, automatic broadcast
+            c_scalar = c_for_geom
+        # 兼容旧 c 变量 (后续行仍引用 c / c_vq)
+        c = c_scalar
+        # Issue #119 P0-3 (2026-08-10): 引入 c_vq 统一变量切断 VQ→per-layer κ gradient.
+        #   VQ_TO_KAPPA=True  (C1): c_vq = c_scalar  (per-layer κ 通过 commitment/codebook loss 接收梯度)
+        #   VQ_TO_KAPPA=False (C3): c_vq = c_scalar.detach()  (per-layer κ 对 VQ 路径恒为 0)
+        #   注意: per-branch Δκ 梯度由 c_for_geom 流入, 不受 c_vq 影响 — c_vq 只决定 per-layer κ 路径.
+        c_vq = c_scalar if VQ_TO_KAPPA else c_scalar.detach()  # P0-3 c_vq gate
         # Issue #157 关键: 每次 forward 重新投影 codebook (不 cache 旧尺度)
-        latent_h = proj_to_ball(expmap0(latent, c_vq), c_vq) if not INPUT_HYPERBOLIC else proj_to_ball(latent, c_vq)
-        codebook_h = proj_to_ball(expmap0(codebook_e, c_vq), c_vq)
-
+        #   use_branch=True 时用 per-sample c (B,1,1) 广播; 否则用 scalar c.
+        if not INPUT_HYPERBOLIC:
+            # latent (B, D) → reshape 到 (B, 1, D) 让 per-sample c (B, 1, 1) broadcast 匹配
+            latent_h_3d = branch_aware_proj_to_ball(
+                branch_aware_expmap0(latent.unsqueeze(1), c_for_geom), c_for_geom
+            ).squeeze(1)  # (B, D)
+            latent_h = latent_h_3d
+        else:
+            latent_h_3d = branch_aware_proj_to_ball(latent.unsqueeze(1), c_for_geom).squeeze(1)
+            latent_h = latent_h_3d
         B = latent_h.shape[0]
-        K = codebook_h.shape[0]
-
+        K = codebook_e.shape[0]
+        # Issue #138 v22.b (2026-08-10): use_branch 路径 codebook 投影必须 broadcast 到 (B, K, D)
+        #   才能用 per-sample c_for_geom (B, 1, 1). 否则 c_for_geom.batch_dim (B) 跟 codebook K 错位.
+        if use_branch:
+            codebook_e_b = codebook_e.unsqueeze(0).expand(B, K, -1).contiguous()  # (B, K, D)
+            codebook_h = branch_aware_proj_to_ball(
+                branch_aware_expmap0(codebook_e_b, c_for_geom), c_for_geom
+            )
+        else:
+            codebook_h = branch_aware_proj_to_ball(branch_aware_expmap0(codebook_e, c_for_geom), c_for_geom)
         x_exp = latent_h.unsqueeze(1).expand(B, K, -1)
-        cb_exp = codebook_h.unsqueeze(0).expand(B, K, -1)
+        cb_exp = codebook_h if use_branch else codebook_h.unsqueeze(0).expand(B, K, -1)
 
         # Issue #157 关键: distance 重算 (每次 forward 重算, 不 cache 旧 c)
-        d = poincare_distance(x_exp, cb_exp, c_vq).squeeze(-1)
+        #   per-branch c → d[b, k] = poincare_distance(z_b, e_k, c_{ℓ,b_b}), 不同 sample b 用不同 c
+        d = poincare_distance(x_exp, cb_exp, c_for_geom).squeeze(-1)
         # Issue #115 P0-4 (2026-08-10): 计算 u_raw = √c · ‖(-x) ⊕_c y‖ (未被 clamp 的原始值),
         #   供 diagnostics 检查真实 safe-distance saturation (top-1 u_raw ≥ u_max=0.985).
         with torch.no_grad():
-            diff_raw = mobius_add(-x_exp, cb_exp, c_vq)
-            sqrt_c_raw = c_vq.sqrt()
+            diff_raw = branch_aware_mobius_add(-x_exp, cb_exp, c_for_geom)
+            sqrt_c_raw = c_for_geom ** 0.5
             u_raw = (sqrt_c_raw * diff_raw.norm(dim=-1))  # (B, K)
             self._last_u_raw = u_raw.detach()
         # Issue #157 spec: cache 仅用于 reload 一致性测试 (写一个标志)
         self._distance_cache = d.detach()
         self._cache_x_id = id(latent)
-        self._cache_c_id = c.item()
+        self._cache_c_id = c_scalar.item()
 
         if not use_sk or self.sk_eps <= 0:
             indices = torch.argmin(d, dim=-1)
@@ -812,12 +916,23 @@ class KappaAwareVectorQuantization(nn.Module):
 
         # Issue #114 Task 3 (2026-08-10): assignment 和 VQ loss 用同一 ball coord.
         x_q = codebook_e.index_select(0, indices)  # 原始欧氏 (for residual path)
-        x_q_h = codebook_h.index_select(0, indices)  # ball coord (for VQ loss — Task 3)
-        x_exp = logmap0(x_exp, c_vq)  # for residual
-        cb_exp = logmap0(cb_exp, c_vq)  # for residual
-        # Issue #119 P0-3 (2026-08-10): VQ loss 全部走 c_vq 统一变量, C3 下 commitment/codebook 对 κ 恒为 0.
-        commitment_loss = torch.mean(poincare_distance(x_q_h.detach(), latent_h, c_vq) ** 2)
-        codebook_loss = torch.mean(poincare_distance(x_q_h, latent_h.detach(), c_vq) ** 2)
+        # Issue #138 v22.b (2026-08-10): use_branch=True 时 codebook_h 是 (B, K, D), 必须用 gather 索引 dim 1
+        if use_branch:
+            x_q_h = codebook_h.gather(
+                1, indices.view(-1, 1, 1).expand(-1, 1, codebook_h.shape[-1])
+            ).squeeze(1)  # (B, D)
+        else:
+            x_q_h = codebook_h.index_select(0, indices)  # (B, D)
+        # Issue #138 v22.b Plan A (2026-08-10): residual path 用 c_for_geom (per-branch when use_branch)
+        #   让 logmap0 也在 per-sample 曲率下计算, RQ residual path 几何一致性.
+        x_exp = branch_aware_logmap0(x_exp, c_for_geom)
+        cb_exp = branch_aware_logmap0(cb_exp, c_for_geom)
+        # Issue #138 v22.b Plan A (2026-08-10): commitment/codebook loss 用 per-sample c_for_geom
+        #   让 Δκ 真正接收 VQ 路径梯度 — 这是 Plan A 完整版的核心修复 (原 v22 用 c_vq=per-layer mean
+        #   → 所有 Δκ 收到相同梯度 → 退化为单一常数).
+        #   per-layer κ 仍通过 c_vq 切断 (P0-3 gate); per-branch Δκ 通过 c_for_geom 流入.
+        commitment_loss = torch.mean(poincare_distance(x_q_h.detach(), latent_h, c_for_geom) ** 2)
+        codebook_loss = torch.mean(poincare_distance(x_q_h, latent_h.detach(), c_for_geom) ** 2)
         # Issue #114 Task 7 (2026-08-10): 记录 VQ loss 对 κ 的梯度贡献 (P0-3 修复后 C3 应 = 0).
         if c.requires_grad and VQ_TO_KAPPA:
             try:
@@ -841,8 +956,10 @@ class KappaAwareVectorQuantization(nn.Module):
             loss = mix_w * (commitment_loss + self.beta * codebook_loss)
         # Issue #55/v3: logmap0 输入先 proj_to_ball 兜底防 artanh(sqrt(c)*norm)>1 → NaN
         # Issue #115 P0-2 (2026-08-10): 修复 RQ residual path 几何不一致.
-        x_q_safe = proj_to_ball(x_q_h, c_vq)
-        latent_safe = proj_to_ball(latent_h, c_vq)
+        # Issue #138 v22.b (2026-08-10): 用 branch_aware_proj_to_ball 兼容 0-dim tensor c_vq
+        #   (utils.proj_to_ball 内 `if c <= 0` 对 tensor 触发 ambiguous RuntimeError).
+        x_q_safe = branch_aware_proj_to_ball(x_q_h, c_vq)
+        latent_safe = branch_aware_proj_to_ball(latent_h, c_vq)
         # Issue #76 第二步: 相对结构目标 (曲率-尺度匹配)
         # 阉割后: FIXED_CURV 已删, REL_STRUCT 永远执行
         if REL_STRUCT and RADIAL_TO_KAPPA:  # Issue #118: RADIAL_TO_KAPPA flag (C2 gate)
@@ -876,8 +993,10 @@ class KappaAwareVectorQuantization(nn.Module):
         relational_kappa_grad = 0.0
         self._last_relational_kappa_grad = relational_kappa_grad
         # 阉割后: RAD_SAFE 已删
-        x_q = logmap0(x_q_safe, c_vq)
-        latent = logmap0(latent_safe, c_vq)
+        # Issue #138 v22.b (2026-08-10): residual path logmap0 走 branch_aware wrapper (per-branch c
+        #   when use_branch=True, 0-dim c_vq when use_branch=False).
+        x_q = branch_aware_logmap0(x_q_safe, c_for_geom if use_branch else c_vq)
+        latent = branch_aware_logmap0(latent_safe, c_for_geom if use_branch else c_vq)
         x_q = x + (x_q - x).detach()
         indices = indices.view(x.shape[:-1])
         # 阉割后: MCJT 已删 (仅保留 κ 主路径)
@@ -1138,12 +1257,26 @@ class KappaAwareHRQVAE(nn.Module):
         all_losses, all_indices = [], []
         x_q = 0
         residual = x
-        for q in self.vq_layers:
-            x_res, loss, idx = q(residual, use_sk=use_sk)
+        # Issue #138 v22.b Plan A (2026-08-10): 计算 cumulative branch_idx per sample.
+        #   L0: 无 prefix, branch_idx = None → 走 per-layer scalar c 路径 (无 branch curvature)
+        #   L1: branch_idx = idx_L0 ∈ [0, K_0)        → Δκ_{1, L0_code}
+        #   L2: branch_idx = idx_L0 * K_1 + idx_L1 ∈ [0, K_0*K_1)  → Δκ_{2, (L0,L1)}
+        #   branch_idx 在 RQ forward 内逐层累积, 每层 q 拿到本层 prefix path 对应的 branch c.
+        branch_idx = None
+        for l, q in enumerate(self.vq_layers):
+            x_res, loss, idx = q(residual, use_sk=use_sk, branch_idx=branch_idx)
             residual = residual - x_res
             x_q = x_q + x_res
             all_losses.append(loss)
             all_indices.append(idx)
+            # 下一层 branch_idx: 当前 layer code 拼接到 prefix.
+            # branch_idx=None (L0) → 第一层 idx; 之后 prefix * K_prev + idx.
+            K_prev = self.num_emb_list[l]
+            if branch_idx is None:
+                branch_idx = idx
+            else:
+                # 用 idx.device 保证 branch_idx 与 idx 同 device (DDP 时尤其关键)
+                branch_idx = branch_idx * K_prev + idx
         mean_loss = torch.stack(all_losses).mean()
         all_indices = torch.stack(all_indices, dim=-1)
         return x_q, mean_loss, all_indices
@@ -1375,15 +1508,21 @@ def compute_branch_regularizers(model: KappaAwareHRQVAE, batch: torch.Tensor,
 
 def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx,
                                 d_ref_full: np.ndarray, mm) -> torch.Tensor:
-    """Issue #138 v22: L_geo = Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B]) per-layer.
+    """Issue #138 v22.b Plan A (2026-08-10): L_geo = Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B])
+    per-layer + per-sample c_{ℓ,b[sample]} (Plan A 关键修复).
 
     输入:
       encoded_z: (B, EMB_DIM) encoder 输出 (在欧氏切空间, expmap0 到球)
       batch_idx: (B,) global item indices in D_ref (Tensor 或 numpy ndarray)
       d_ref_full: (N, N) D_ref 矩阵, batch_idx 取 d_ref_full[batch_idx][:, batch_idx] 子集
-      mm: model (含 vq_layers, 用 per-layer mean c 算 distance)
+      mm: model (含 vq_layers, 用 per-sample branch c 算 distance — Plan A)
 
     输出: scalar tensor = L_GEO_LAMBDA * Σ_ℓ Stress
+
+    Plan A vs 原 v22 (Phase 1.5) 关键区别:
+      原: c_l = q.get_c() (per-layer scalar) → 所有 sample 用同一 c → Δκ 收到 mean 梯度, 退化为单一常数
+      新: c_for_sample[i] = q.get_branch_c(prefix_path_i) → 每 sample 用独立 c → Δκ 收到 per-sample 梯度, 异质化
+
     R7/R36: 不做 fallback; 输入非 finite → raise.
     """
     B = encoded_z.shape[0]
@@ -1399,15 +1538,44 @@ def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx,
     if not torch.isfinite(d_ref_sub).all():
         raise RuntimeError("L_geo: D_ref subset 含 NaN/Inf")
 
-    # 对 encoded_z 用 per-layer mean c 算 Poincaré 距离矩阵
+    # Issue #138 v22.b Plan A (2026-08-10): 拿真实 prefix path indices (L0, L1)
+    #   detached no_grad forward — 不影响任何参数, 仅拿 (B,) L0/L1 indices.
+    #   L0: 无 prefix (branch=None)
+    #   L1: branch_idx = L0_idx
+    #   L2: branch_idx = L0_idx * K_1 + L1_idx
+    #   ⚠ encoded_z 已是 (B, e_dim=32) HRQVAE.encoder 输出 (latent), 直接 _rq_forward 拿 indices.
+    #     不要 mm.encoder (encoded_z 已不是输入空间, encoder 会拒绝 EMB_DIM 期望).
+    #   ⚠ 必须在 fp32 跑 (autocast 上下文会让 _rq_forward 输出 bf16, 后续 poincare_distance fp32 不兼容)
+    was_training = mm.training
+    mm.eval()
+    with torch.no_grad():
+        z_fp32 = encoded_z.float()  # autocast 兼容 (输入可能 bf16)
+        _, _, all_indices = mm._rq_forward(z_fp32, use_sk=False)  # (B, 3)
+        L0_idx = all_indices[:, 0].detach()  # (B,)
+        L1_idx = all_indices[:, 1].detach()  # (B,)
+    if was_training:
+        mm.train()
+
+    # 对 encoded_z 用 per-sample branch c 算 Poincaré 距离矩阵
     z_exp = encoded_z.unsqueeze(0).expand(B, B, -1)  # (B, B, D)
     z_exp_t = encoded_z.unsqueeze(1).expand(B, B, -1)  # (B, B, D)
     l_geo = torch.zeros((), device=encoded_z.device)
     for q in mm.vq_layers:
-        c_l = q.get_c()  # per-layer mean of branch curvature (Stage3 兼容)
-        if not torch.isfinite(c_l) or c_l.item() <= 0:
-            raise RuntimeError(f"L_geo: layer {q.layer_idx} c={c_l.item()} 非法")
-        d_l = poincare_distance(z_exp, z_exp_t, c_l).squeeze(-1)  # (B, B)
+        # Plan A: per-sample branch c (关键修复 — 让 Δκ 真正异质化)
+        if q.layer_idx == 0:
+            c_for_geo = q.get_c()  # 0-dim tensor / scalar (L0 无 branch)
+        elif q.layer_idx == 1:
+            c_for_geo = q.get_branch_c(L0_idx).view(-1, 1)  # (B, 1)
+        else:  # layer_idx == 2
+            l2_branch = L0_idx * mm.num_emb_list[1] + L1_idx  # (B,)
+            c_for_geo = q.get_branch_c(l2_branch).view(-1, 1)  # (B, 1)
+        # 检查 c 非 finite / 非法
+        if not torch.isfinite(c_for_geo).all():
+            raise RuntimeError(f"L_geo: layer {q.layer_idx} c 含 NaN/Inf")
+        # c 来自 exp(κ_eff) 或 1+κ_eff+1e-3, 永远 > 0; min().item() 检查
+        if c_for_geo.min().item() <= 0:
+            raise RuntimeError(f"L_geo: layer {q.layer_idx} c<=0")
+        d_l = poincare_distance(z_exp, z_exp_t, c_for_geo).squeeze(-1)  # (B, B)
         if not torch.isfinite(d_l).all():
             raise RuntimeError(f"L_geo: layer {q.layer_idx} Poincaré dist 含 NaN/Inf")
         # Stress = Σ_ij (D_pred - D_ref)² / Σ_ij D_ref²
