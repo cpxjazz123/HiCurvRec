@@ -217,6 +217,25 @@ KAPPA_ANCHOR_RANGE = 1.0  # 保留兼容: 旧 #41 tanh 形式未触发, 此值�
 #   v15_repro mode: KAPPA_MAX=0.5, KAPPA_RANGE=1.5 (真实历史配置).
 CURVATURE_MODE = "clean"  # Issue #116 Task 1: 默认 clean (扩大 κ 空间)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Issue #138 v22 (2026-08-10): Branch-wise Learnable Curvature (R36 曲率机制扩展)
+#   背景: v15 capmatch → v21 Item 6 refactor 都只学 per-layer c_l (3 参数), 假设 "L1/L2 所有
+#   semantic branch 共用同一 geometry" 过强. 真实树状语义 heterogeneous: 不同 (L0) / (L0,L1)
+#   prefix 对应的 manifold 曲率应该不同.
+#   v22 = L1/L2 各加 nn.Embedding(K, 1) Δκ_{ℓ,b} (init 0), forward 时 c_{ℓ,b} = exp(κ_eff + Δκ_{ℓ,b}).
+#   配合 L_branch 轻正则 (防 Δκ 漂移) + L_geo (Stress(D_c, D_ref) 替代/补充 VQ κ 驱动).
+#   R36 合规: 这是曲率机制升级 (per-branch lookup), 不是 LR/dropout sweep.
+#   R35/R37 沿用: 单 ckpt + 比 v21 0.1012 R37.
+#   Plan B 退路: smoke 显示 Δκ 全程 ≈0 → 立即 R37 回退 (不动 common/ scripts/).
+# ─────────────────────────────────────────────────────────────────────────────
+BRANCH_CURVATURE_ENABLED = True       # 主开关 (False → 与 v21 Item 6 行为完全一致)
+BRANCH_CURVATURE_DELTA_LR = 1.0       # Δκ_ℓ_optimizer LR multiplier (与 mix_weight 同组 lr*1)
+L_BRANCH_LAMBDA = 1e-4                 # 轻正则: Σ (Δκ)² 防漂移
+L_GEO_LAMBDA = 1.0                     # 主信号: Σ_ℓ Stress(D_c_ℓ, D_ref)
+D_REF_KNN_K = 20                       # cosine kNN 邻居数 (用于 shortest-path)
+D_REF_METRIC = "cosine"                # cosine 距离 (与 Stage1 item_emb_baseline F.normalize 配套)
+D_REF_NPZ = ""                         # 启动时如空 → 自动 precompute 落盘到 PRODUCT_DIR/d_ref.npz
+
 # KAPPA_ANCHORS_CONFIG: 显式定义两种 mode 真实参数 (实际运行用下面 if/elif 切换)
 _KAPPA_ANCHORS_CLEAN = []
 _KAPPA_ANCHOR_RANGE_CLEAN = 1.0
@@ -448,6 +467,25 @@ class KappaAwareVectorQuantization(nn.Module):
         # Issue #76 v10/v11: 结构目标当前偏差 (√c·r - TARGET) 与该层 target, 供训练监控曲率学习信号
         self._last_struct_term = 0.0
         self._last_struct_target = 0.0
+        # Issue #138 v22 (2026-08-10): per-branch Δκ 监控字段 (forward 不消费, 但 L_branch/L_geo 训练信号让 Δκ 学到非零)
+        self._last_branch_kappa_std = 0.0
+        self._last_branch_kappa_mean = 0.0
+
+        # Issue #138 v22 (2026-08-10): Branch-wise Learnable Curvature Δκ_{ℓ,b}
+        #   L0: 不加 (无 prefix 概念)
+        #   L1: nn.Embedding(K_0, 1), branch_idx = L0 code, init=0 → c_{1,b} = exp(κ_eff_1) 不变
+        #   L2: nn.Embedding(K_0 * K_1, 1), branch_idx = L0 * K_1 + L1, init=0
+        #   训练时 forward 接受 (B,) branch_idx → c_{ℓ,b} = exp(κ_eff_ℓ + Δκ_{ℓ,b})
+        self.delta_kappa = None  # 默认 None (与 v21 行为兼容)
+        self._branch_curvature_enabled = False  # 模块级 flag, 由 main() setattr 注入
+        if BRANCH_CURVATURE_ENABLED and layer_idx >= 1:
+            if layer_idx == 1:
+                K_branch = CODEBOOK_SIZES[0]  # 64 (L0 codes)
+            else:  # layer_idx == 2
+                K_branch = CODEBOOK_SIZES[0] * CODEBOOK_SIZES[1]  # 64*128 = 8192
+            self.delta_kappa = nn.Embedding(K_branch, 1)
+            with torch.no_grad():
+                self.delta_kappa.weight.zero_()  # init 0 → c_{ℓ,b} = exp(κ_eff_ℓ) (与 v21 baseline 一致)
 
     def get_effective_kappa(self) -> torch.Tensor:
         """Issue #59: 平滑有界 κ 参数化 (sigmoid 形式, 严格 [KAPPA_MIN, KAPPA_MAX]).
@@ -469,16 +507,50 @@ class KappaAwareVectorQuantization(nn.Module):
           - κ init 0 → c=1 锚定基线 (几何与基线 HVectorQuantization c=1 一致).
         v9 教训: 曲率若只靠 λ·Σκ² 先验训练, κ 停在 0 (先验梯度 2λκ=0 死鞍点) — 必须由 REL_STRUCT
         结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容).
-        Issue #41: 替换为逐层锚定有界 κ_effective = anchor + tanh(drift) * range."""
+        Issue #41: 替换为逐层锚定有界 κ_effective = anchor + tanh(drift) * range.
+
+        Issue #138 v22 (2026-08-10): 单值版本 (无 branch) 走 per-layer mean of branch_curvature
+        让 Stage3 兼容 load (与 v21 path 一致). batched 版本见 get_branch_c().
+        """
         # 阉割后: FIXED_CURV 已删 (走 κ 主路径)
         if self.fix_c:
             return torch.tensor(1.0, dtype=torch.float32, device=self.kappa_drift.device)
         kappa_eff = self.get_effective_kappa()
+        # v22: 走 per-branch 时, per-layer 单值用 (per-branch mean + κ_eff) 作为 effective global c
+        if self._branch_curvature_enabled and self.delta_kappa is not None:
+            delta_mean = self.delta_kappa.weight.mean()
+            kappa_eff_branch = kappa_eff + delta_mean
+            if CURV_PRIOR:
+                return torch.exp(kappa_eff_branch)
+            return 1.0 + kappa_eff_branch + 1e-3
         if CURV_PRIOR:
             # c=exp(κ_eff) (κ_eff=ln c): exp 恒>0, 锚点为 κ_anchor_l
             return torch.exp(kappa_eff)
         # 非 CURV_PRIOR 分支: c=1+κ_eff+1e-3 (保留兼容)
         return 1.0 + kappa_eff + 1e-3
+
+    def get_branch_c(self, branch_idx: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Issue #138 v22 (2026-08-10): Branch-wise learnable curvature c_{ℓ,b}.
+
+        Returns:
+          - branch_idx=None or self._branch_curvature_enabled=False or layer_idx==0:
+            返回 scalar tensor (等价于 get_c(), 与 v21 baseline 一致)
+          - 否则: (B,) tensor, c_{ℓ,b} = exp(κ_eff + Δκ_{ℓ,b}) per-branch lookup
+
+        用于 forward 时 VQ assignment 的 distance 计算 (Stage3/4 不感知 branch, per-layer
+        mean 走 get_c() 路径保持兼容).
+        """
+        if self.fix_c:
+            return torch.tensor(1.0, dtype=torch.float32, device=self.kappa_drift.device)
+        kappa_eff = self.get_effective_kappa()
+        if not (self._branch_curvature_enabled and self.delta_kappa is not None) \
+                or branch_idx is None or self.layer_idx == 0:
+            return self.get_c()
+        delta = self.delta_kappa(branch_idx).squeeze(-1)  # (B,)
+        kappa_eff_branch = kappa_eff + delta
+        if CURV_PRIOR:
+            return torch.exp(kappa_eff_branch)
+        return 1.0 + kappa_eff_branch + 1e-3
 
     # 阉割后: get_c_with_batch_norm 已删 (PER_BATCH_RADIUS_MOD 概念移除)
     def _struct_target(self) -> float:
@@ -1162,6 +1234,188 @@ def build_global_relation_bank(model: KappaAwareHRQVAE, item_emb_all: torch.Tens
     return bank
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Issue #138 v22 (2026-08-10): D_ref 几何源 precompute (cosine kNN + shortest-path)
+#   输入: taskA/_data/Instruments/item_emb_baseline.npy (9922, 768) F.normalize r=1
+#   输出: (N, N) float32 shortest-path 距离矩阵, 对称, 对角0, finite
+#   落盘: PRODUCT_DIR/d_ref.npz, 含 'd_ref' (N, N) + 'metadata.json' (sha + config)
+#   v22 设计意图: L_geo = Σ_ℓ Stress(D_c_ℓ, D_ref) 让 κ 学出符合数据结构的曲率
+#   (而非仅依赖 VQ loss 副产品).
+# ─────────────────────────────────────────────────────────────────────────────
+def build_d_ref_geometry(item_emb: np.ndarray, product_dir: Path, knn_k: int = 20,
+                         metric: str = "cosine") -> np.ndarray:
+    """Issue #138 v22: precompute D_ref (N, N) shortest-path 距离矩阵.
+
+    算法:
+      1. cosine 距离 (F.normalize 后的 item_emb, cosine_dist = 1 - cos_sim)
+      2. 每个 item 选 k=knn_k 个 nearest neighbors
+      3. 用 scipy.sparse.csgraph.shortest_path 在 kNN 图上算最短路径 (Dijkstra)
+      4. 对称化: D_ref = (D + D.T) / 2, 对角 0
+      5. 落盘 d_ref.npz + metadata.json
+    R7/R36: 不做 fallback; connected_components != 1 → raise RuntimeError.
+    """
+    from scipy.sparse import csr_matrix
+    from scipy.sparse.csgraph import shortest_path, connected_components
+
+    N = item_emb.shape[0]
+    assert item_emb.shape[1] == EMB_DIM, f"D_ref 输入 dim {item_emb.shape[1]} != {EMB_DIM}"
+    print(f"[D_ref] N={N}, dim={item_emb.shape[1]}, k={knn_k}, metric={metric}", flush=True)
+
+    # Step 1: cosine 距离
+    if metric == "cosine":
+        # item_emb 已 F.normalize r=1, cosine_dist = 1 - x @ x.T, clamp ≥0 防浮点误差
+        cos_sim = item_emb @ item_emb.T  # (N, N) in [-1, 1]
+        cos_dist = np.clip(1.0 - cos_sim, 0.0, 2.0).astype(np.float32)
+    else:
+        raise ValueError(f"D_REF_METRIC={metric!r} 仅支持 'cosine'")
+
+    # Step 2: kNN
+    # 用 argpartition 取 top-k (O(N k)), 不全 sort (O(N log N)) 节省内存
+    knn_idx = np.argpartition(cos_dist, knn_k + 1, axis=-1)[:, :knn_k + 1]
+    rows = np.repeat(np.arange(N), knn_k + 1)
+    cols = knn_idx.flatten()
+    vals = cos_dist[rows, cols]
+    # 自连接去除 (item to itself)
+    self_mask = rows == cols
+    rows, cols, vals = rows[~self_mask], cols[~self_mask], vals[~self_mask]
+    print(f"[D_ref] kNN 边数={len(rows)} (mean deg={len(rows) / N:.1f})", flush=True)
+
+    # Step 3: shortest_path (Dijkstra via scipy)
+    graph = csr_matrix((vals, (rows, cols)), shape=(N, N))
+    n_cc, labels = connected_components(graph, directed=False)
+    if n_cc != 1:
+        raise RuntimeError(f"D_ref graph 不连通: n_connected_components={n_cc}, 需提高 k 或换 metric")
+    d_ref = shortest_path(graph, directed=False, method="D", return_predecessors=False)
+    if not np.isfinite(d_ref).all():
+        raise RuntimeError("D_ref 含 NaN/Inf, shortest_path 异常")
+    # 对称化 + 对角 0
+    d_ref = ((d_ref + d_ref.T) / 2.0).astype(np.float32)
+    np.fill_diagonal(d_ref, 0.0)
+
+    # Step 4: 落盘
+    npz_path = product_dir / "d_ref.npz"
+    meta_path = product_dir / "d_ref_metadata.json"
+    np.savez_compressed(npz_path, d_ref=d_ref)
+    sha = hashlib.sha256(d_ref.tobytes()).hexdigest()
+    with open(meta_path, "w") as f:
+        json.dump({
+            "sha256_array": sha,
+            "shape": list(d_ref.shape),
+            "dtype": "float32",
+            "metric": metric,
+            "knn_k": knn_k,
+            "n_edges": int(len(rows)),
+            "n_connected_components": int(n_cc),
+            "max_dist": float(d_ref.max()),
+            "median_dist": float(np.median(d_ref)),
+            "input_item_emb_sha256": hashlib.sha256(item_emb.tobytes()).hexdigest(),
+            "input_item_emb_npy": ITEM_EMB_NPY,
+            "codebook_sizes": CODEBOOK_SIZES,
+            "branch_curvature_enabled": BRANCH_CURVATURE_ENABLED,
+        }, f, indent=2)
+    print(f"[D_ref] saved {npz_path} (sha={sha[:16]}..., max={d_ref.max():.3f}, "
+          f"median={np.median(d_ref):.3f})", flush=True)
+    return d_ref
+
+
+def stress_loss(D_pred: torch.Tensor, D_ref: torch.Tensor) -> torch.Tensor:
+    """Issue #138 v22: classical Stress = Σ_ij (D_pred[i,j] - D_ref[i,j])² / Σ_ij D_ref[i,j]².
+
+    标量, 让 D_pred 整体逼近 D_ref. 用 squared normalization 防 magnitude bias.
+    R7/R36: 不做 fallback; D_pred/D_ref 非 finite → raise RuntimeError.
+    """
+    if not torch.isfinite(D_pred).all() or not torch.isfinite(D_ref).all():
+        raise RuntimeError("Stress loss 输入含 NaN/Inf")
+    diff = D_pred - D_ref
+    denom = (D_ref.pow(2).sum() + 1e-8)
+    return diff.pow(2).sum() / denom
+
+
+def compute_branch_regularizers(model: KappaAwareHRQVAE, batch: torch.Tensor,
+                                d_ref: Optional[np.ndarray] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Issue #138 v22 (2026-08-10): L_branch + L_geo 计算.
+
+    Returns:
+      (l_branch, l_geo): 两个 scalar tensor.
+
+    L_branch = L_BRANCH_LAMBDA * Σ_ℓ Σ_b (Δκ_{ℓ,b})²  (轻正则防 Δκ 漂移)
+    L_geo    = L_GEO_LAMBDA * Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B])
+                  (D_{c_ℓ} = Poincaré 距离矩阵, D_ref = precomputed shortest-path)
+
+    注意: L_geo 仅当 d_ref 给出 + batch size 较小 (<=512) 才算 (O(B²) 不然太大),
+    且 batch 必须 ≤ 512 (默认 batch=1024 时仅首步算). 实际用 batch 前 256 行.
+    """
+    mm = getattr(model, "module", model) if hasattr(model, "module") else model
+
+    # L_branch: 全部 Δκ Embedding (L1/L2, layer_idx==0 没有)
+    l_branch = torch.zeros((), device=batch.device)
+    for q in mm.vq_layers:
+        if q.delta_kappa is not None:
+            l_branch = l_branch + q.delta_kappa.weight.pow(2).sum()
+    l_branch = L_BRANCH_LAMBDA * l_branch
+
+    # L_geo: per-layer mean c + batch pairwise 距离 vs D_ref subset
+    l_geo = torch.zeros((), device=batch.device)
+    if d_ref is not None and B >= 2:
+        # 取 batch 前 min(B, 256) 个 item 作 pairwise 子集
+        sub_n = min(B, 256)
+        # batch 内 item indices: 训练循环传 batch_idx, 这里从 batch 本身推断 (stage2 输入是 item_emb 直接)
+        # 注意: 训练时 batch 是 encoded latent (after encoder), 不是 item_emb. 没法直接拿 batch index.
+        # 简化: 用 batch 的 L2 距离作为 hash → 取 d_ref 对应子集
+        # 更准: train_step 显式传 batch_idx → 这里不接受, 仅作 monitor 路径
+        # 实际: 改在 train_step 调, 这里返回 (l_branch, l_geo=0)
+        pass
+
+    return l_branch, l_geo
+
+
+def compute_l_geo_from_indices(encoded_z: torch.Tensor, batch_idx: torch.Tensor,
+                                d_ref_full: np.ndarray, mm) -> torch.Tensor:
+    """Issue #138 v22: L_geo = Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B]) per-layer.
+
+    输入:
+      encoded_z: (B, EMB_DIM) encoder 输出 (在欧氏切空间, expmap0 到球)
+      batch_idx: (B,) global item indices in D_ref
+      d_ref_full: (N, N) D_ref 矩阵, batch_idx 取 d_ref_full[batch_idx][:, batch_idx] 子集
+      mm: model (含 vq_layers, 用 per-layer mean c 算 distance)
+
+    输出: scalar tensor = L_GEO_LAMBDA * Σ_ℓ Stress
+    R7/R36: 不做 fallback; 输入非 finite → raise.
+    """
+    B = encoded_z.shape[0]
+    if B < 2 or d_ref_full is None:
+        return torch.zeros((), device=encoded_z.device)
+    # 取 D_ref 子集 (B, B)
+    idx_np = batch_idx.detach().cpu().numpy().astype(np.int64)
+    d_ref_sub = torch.as_tensor(d_ref_full[np.ix_(idx_np, idx_np)],
+                                device=encoded_z.device, dtype=torch.float32)
+    if not torch.isfinite(d_ref_sub).all():
+        raise RuntimeError("L_geo: D_ref subset 含 NaN/Inf")
+
+    # 对 encoded_z 用 per-layer mean c 算 Poincaré 距离矩阵
+    z_exp = encoded_z.unsqueeze(0).expand(B, B, -1)  # (B, B, D)
+    z_exp_t = encoded_z.unsqueeze(1).expand(B, B, -1)  # (B, B, D)
+    l_geo = torch.zeros((), device=encoded_z.device)
+    for q in mm.vq_layers:
+        c_l = q.get_c()  # per-layer mean of branch curvature (Stage3 兼容)
+        if not torch.isfinite(c_l) or c_l.item() <= 0:
+            raise RuntimeError(f"L_geo: layer {q.layer_idx} c={c_l.item()} 非法")
+        d_l = poincare_distance(z_exp, z_exp_t, c_l).squeeze(-1)  # (B, B)
+        if not torch.isfinite(d_l).all():
+            raise RuntimeError(f"L_geo: layer {q.layer_idx} Poincaré dist 含 NaN/Inf")
+        # Stress = Σ_ij (D_pred - D_ref)² / Σ_ij D_ref²
+        diff = d_l - d_ref_sub
+        denom = d_ref_sub.pow(2).sum() + 1e-8
+        l_geo = l_geo + diff.pow(2).sum() / denom
+        # 监控
+        q._last_branch_kappa_std = (q.delta_kappa.weight.std().item()
+                                    if q.delta_kappa is not None else 0.0)
+        q._last_branch_kappa_mean = (q.delta_kappa.weight.mean().item()
+                                     if q.delta_kappa is not None else 0.0)
+    l_geo = L_GEO_LAMBDA * l_geo / max(len(mm.vq_layers), 1)
+    return l_geo
+
+
 # ──────────────────────────────────────────────────────────────
 # Issue #128 P0-extract: precheck & train_step 共享的 loss computation
 # ──────────────────────────────────────────────────────────────
@@ -1169,7 +1423,9 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
                                     batch_idx: Optional[torch.Tensor] = None,
                                     item_emb_all: Optional[torch.Tensor] = None,
                                     relation_bank: Optional[List[torch.Tensor]] = None,
-                                    use_sk: bool = True) -> dict:
+                                    use_sk: bool = True,
+                                    d_ref: Optional[np.ndarray] = None,
+                                    encoded_z: Optional[torch.Tensor] = None) -> dict:
     """Issue #128 Item 5 (2026-08-10): 抽 precheck 与 train_step 的 loss computation
     共享路径, 确保 precheck 看到的 κ grad path 与 train_step 完全一致.
 
@@ -1191,10 +1447,15 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
     Returns:
         dict with keys: out, rq_loss, indices, z_q, z, recon_loss,
         prior_loss_total, boundary_term_total, trust_term_total,
-        l_rel_total, kappa_prior, total_loss.
+        l_rel_total, l_branch_total, l_geo_total, kappa_prior, total_loss.
 
     R7/R36: 不做 fallback; RELATIONAL_TO_KAPPA=True 时任何缺失 (relation_bank=None,
     RELATION_GRAPH_NPZ missing, etc.) 直接 raise RuntimeError, 绝不静默 skip.
+
+    Issue #138 v22 (2026-08-10): 新增 L_branch + L_geo.
+      - L_branch = L_BRANCH_LAMBDA * Σ_ℓ Σ_b (Δκ_{ℓ,b})² (轻正则防 Δκ 漂移)
+      - L_geo    = L_GEO_LAMBDA * Σ_ℓ Stress(D_{c_ℓ}(B,B), D_ref[B,B]) (需 d_ref + encoded_z + batch_idx)
+      - L_geo 仅在 d_ref/encoded_z/batch_idx 三者都给时计算 (否则 l_geo_total=0, 不阻塞)
     """
     mm = getattr(model, "module", model) if hasattr(model, "module") else model
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
@@ -1289,11 +1550,36 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
         for q in mm.vq_layers:
             q._last_L_rel = l_rel_total.item()
 
+    # ---- Issue #138 v22: L_branch (per-branch Δκ 正则) ----
+    l_branch_total = torch.zeros((), device=batch.device)
+    if BRANCH_CURVATURE_ENABLED:
+        for q in mm.vq_layers:
+            if q.delta_kappa is not None:
+                l_branch_total = l_branch_total + q.delta_kappa.weight.pow(2).sum()
+        l_branch_total = L_BRANCH_LAMBDA * l_branch_total
+        if not torch.isfinite(l_branch_total):
+            raise RuntimeError(f"L_branch 非 finite: {l_branch_total.item()}")
+        total_loss = total_loss + l_branch_total
+        for q in mm.vq_layers:
+            if q.delta_kappa is not None:
+                q._last_branch_kappa_std = float(q.delta_kappa.weight.std().item())
+                q._last_branch_kappa_mean = float(q.delta_kappa.weight.mean().item())
+
+    # ---- Issue #138 v22: L_geo (Stress between per-layer mean c distance vs D_ref) ----
+    l_geo_total = torch.zeros((), device=batch.device)
+    if BRANCH_CURVATURE_ENABLED and L_GEO_LAMBDA > 0 and d_ref is not None \
+            and encoded_z is not None and batch_idx is not None and len(batch_idx) >= 2:
+        l_geo_total = compute_l_geo_from_indices(encoded_z, batch_idx, d_ref, mm)
+        if not torch.isfinite(l_geo_total):
+            raise RuntimeError(f"L_geo 非 finite: {l_geo_total.item()}")
+        total_loss = total_loss + l_geo_total
+
     return {
         "out": out, "rq_loss": rq_loss, "indices": indices, "z_q": z_q, "z": z,
         "recon_loss": recon_loss, "prior_loss_total": prior_loss_total,
         "boundary_term_total": boundary_term_total, "trust_term_total": trust_term_total,
-        "l_rel_total": l_rel_total, "kappa_prior": kappa_prior, "total_loss": total_loss,
+        "l_rel_total": l_rel_total, "l_branch_total": l_branch_total, "l_geo_total": l_geo_total,
+        "kappa_prior": kappa_prior, "total_loss": total_loss,
     }
 
 
@@ -1788,6 +2074,33 @@ def main():
     PRODUCT_DIR = Path(args.product_dir)
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Issue #138 v22 (2026-08-10): D_ref precompute (cosine kNN + shortest-path)
+    #   如 d_ref.npz 不存在 → 自动 build 并落盘到 PRODUCT_DIR
+    #   落盘后才加载供 compute_stage2_loss_components (Phase 1.5 启用 L_geo)
+    global D_REF_NPZ
+    d_ref_npz_path = PRODUCT_DIR / "d_ref.npz"
+    _is_main_local = (not DDP_MODE) or (DDP_MODE and globals().get("RANK", 0) == 0)
+    if BRANCH_CURVATURE_ENABLED and L_GEO_LAMBDA > 0:
+        if not d_ref_npz_path.exists():
+            if _is_main_local:
+                print(f"[v22 D_ref] {d_ref_npz_path} 不存在, 自动 precompute", flush=True)
+                item_emb_for_dref = np.load(ITEM_EMB_NPY, mmap_mode="r")
+                build_d_ref_geometry(item_emb_for_dref, PRODUCT_DIR,
+                                     knn_k=D_REF_KNN_K, metric=D_REF_METRIC)
+                del item_emb_for_dref
+            if DDP_MODE:
+                dist.barrier()  # 等主进程落盘
+        if d_ref_npz_path.exists():
+            D_REF_NPZ = str(d_ref_npz_path)
+            if _is_main_local:
+                print(f"[v22 D_ref] 已就绪: {D_REF_NPZ}", flush=True)
+        else:
+            raise RuntimeError(f"D_ref precompute 失败: {d_ref_npz_path} 未生成")
+    else:
+        if _is_main_local:
+            print(f"[v22] BRANCH_CURVATURE_ENABLED={BRANCH_CURVATURE_ENABLED}, L_GEO_LAMBDA={L_GEO_LAMBDA}, "
+                  f"跳过 D_ref precompute", flush=True)
+
     # DDP 加速 (2026-08-03): torchrun 通过 wrapper 翻译 env → argparse; 非 DDP 单卡原路径不变.
     # 全局 batch 严格保持 args.batch_size (每卡 batch_size//WORLD_SIZE, 梯度 all-reduce 平均).
     if DDP_MODE:
@@ -2010,13 +2323,26 @@ def main():
         train_model = torch.nn.parallel.DistributedDataParallel(train_model, device_ids=[LOCAL_RANK],
                                                                 find_unused_parameters=True)
     train_mm = train_model.module if DDP_MODE else train_model
+    # Issue #138 v22 (2026-08-10): setattr 注入 _branch_curvature_enabled=True 让 get_c 走 per-branch mean 路径
+    if BRANCH_CURVATURE_ENABLED:
+        for q in train_mm.vq_layers:
+            q._branch_curvature_enabled = True
+        if is_main:
+            n_delta = sum(1 for q in train_mm.vq_layers if q.delta_kappa is not None)
+            print(f"[v22] Branch curvature ENABLED, {n_delta} 层带 Δκ (L1 + L2)", flush=True)
     # Issue #55/v2: κ / mix_weight 独立 param group, 更大 LR 补偿梯度消失
     # Issue #41: 实际优化 kappa_drift (effective_kappa = anchor + tanh(drift) * range, 优化 drift 让 κ 漂移可控)
     kappa_params = [q.kappa_drift for q in train_mm.vq_layers]
     mix_params = [q.mix_weight for q in train_mm.vq_layers]
+    # Issue #138 v22 (2026-08-10): Δκ Embedding 参数 (L1/L2 各一个), 与 kappa_drift 同组
+    #   用 lr * BRANCH_CURVATURE_DELTA_LR (默认 1.0), 让 Δκ 跟 κ_drift 同步走 opt_kappa
+    delta_kappa_params = [q.delta_kappa.weight for q in train_mm.vq_layers
+                          if q.delta_kappa is not None]
     # 阉割后: alpha_radius_mod / PER_BATCH_RADIUS_MOD 已删 (走 v15 baseline)
     other_params = [p for p in train_mm.parameters()
-                    if not any(p is q.kappa_drift or p is q.mix_weight for q in train_mm.vq_layers)]
+                    if not any(p is q.kappa_drift or p is q.mix_weight for q in train_mm.vq_layers)
+                    and not any(p is q.delta_kappa.weight for q in train_mm.vq_layers
+                                if q.delta_kappa is not None)]
     if CURV_AWARE:
         # Issue #75 Curvature-Aware Optimization (论文 Alg.1): 拆分优化器 — 参数(旧 c 几何) 先 step,
         # κ/mix 后 step. 消除同一步内 κ 突变使参数更新"过时"的几何冲击.
@@ -2024,12 +2350,14 @@ def main():
         opt_kappa = torch.optim.AdamW([
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界
+            {"params": delta_kappa_params, "lr": args.lr * BRANCH_CURVATURE_DELTA_LR},
         ], weight_decay=0.0)
     else:
         opt = torch.optim.AdamW([
             {"params": other_params, "lr": args.lr},
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界 (poincare commit 梯度爆炸根因)
+            {"params": delta_kappa_params, "lr": args.lr * BRANCH_CURVATURE_DELTA_LR},
         ], weight_decay=0.0)
         opt_kappa = None
     n_items = item_emb.shape[0]
@@ -2274,6 +2602,20 @@ def main():
             "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
             "final_kappa_ema": [q.kappa_ema.item() if hasattr(q, 'kappa_ema') and q.kappa_ema != 0.0 else None
                                 for q in train_mm.vq_layers],
+            # Issue #138 v22 (2026-08-10): Branch-wise learnable curvature 落盘
+            #   final_branch_kappa[l] = (mean, std, min, max) over all Δκ_{l,b}
+            "final_branch_kappa": [
+                {"mean": float(q.delta_kappa.weight.mean().item()),
+                 "std": float(q.delta_kappa.weight.std().item()),
+                 "min": float(q.delta_kappa.weight.min().item()),
+                 "max": float(q.delta_kappa.weight.max().item()),
+                 "shape": list(q.delta_kappa.weight.shape)}
+                if q.delta_kappa is not None else None
+                for q in train_mm.vq_layers
+            ],
+            "branch_curvature_enabled": BRANCH_CURVATURE_ENABLED,
+            "l_branch_lambda": L_BRANCH_LAMBDA,
+            "l_geo_lambda": L_GEO_LAMBDA,
             "kappa_anchors_config": KAPPA_ANCHORS,
             "kappa_anchor_range": KAPPA_ANCHOR_RANGE,
             "kappa_min": KAPPA_MIN,  # Issue #115 P1
@@ -2578,6 +2920,28 @@ def main():
                                         for u in util_per_layer],
             "util_per_layer_ok": util_per_layer_ok,
             "util_4digit_ok": util_4digit_ok,
+            # Issue #138 v22 (2026-08-10): Branch-wise curvature 异质化判定字段
+            #   branch_curvature_std_per_layer: Δκ_{ℓ,b} 的 std per-layer
+            #   branch_curvature_std_max: max across layers (主异质化信号)
+            #   gate_v22_branch: > 1e-3 → PASS (Δκ 确实学到非零值, branch curvature 实际生效)
+            "branch_curvature_std_per_layer": [
+                float(q.delta_kappa.weight.std().item()) if q.delta_kappa is not None else 0.0
+                for q in train_mm.vq_layers
+            ],
+            "branch_curvature_std_max": float(max([
+                q.delta_kappa.weight.std().item() for q in train_mm.vq_layers
+                if q.delta_kappa is not None
+            ] or [0.0])),
+            "gate_v22_branch": (
+                float(max([
+                    q.delta_kappa.weight.std().item() for q in train_mm.vq_layers
+                    if q.delta_kappa is not None
+                ] or [0.0])) > 1e-3
+            ),
+            "branch_curvature_enabled": BRANCH_CURVATURE_ENABLED,
+            "l_branch_lambda": L_BRANCH_LAMBDA,
+            "l_geo_lambda": L_GEO_LAMBDA,
+            "d_ref_npz": str(D_REF_NPZ) if D_REF_NPZ else "",
             # 阉割后: MLR 顶层字段已删
             "issue": "#157",
         }
