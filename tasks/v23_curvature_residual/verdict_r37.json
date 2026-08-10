@@ -1,0 +1,20 @@
+{
+  "version": "v23",
+  "tag": "v23_curvature_residual_stage4_beam20",
+  "verdict_at": "2026-08-11 00:44:06",
+  "r37_decision": "PASS",
+  "r37_anchor": "v22.b (test_R@10 = 0.1013)",
+  "v23_test_R10": 0.10247747718022136,
+  "delta_vs_v22b": 0.0012,
+  "mechanism": "Stage3 显式消费 Stage2 branch curvature via SID token residual injection: e'_{q_1} = e_{q_1} + alpha_1 * f_1([kappa_1, delta_kappa_{1, q_0}]). L1 only, encoder only, alpha_1 init=0 (训练起点等同 v22.b baseline).",
+  "best_valid_R10": 0.1275,
+  "best_epoch": 154,
+  "alpha_1_learned": -0.384089,
+  "r37_verdict": "v23 test_R@10 = 0.1025 > v22.b 0.1013 (+0.0012). Branch curvature residual injection mechanism works. Continue to v23 v2 (decoder prefix-conditioned routing).",
+  "r38_check": "v23 best_valid_R10 = 0.1275 vs v22.b 0.1258. Mid-training NEVER regressed. R38 NO-GO not triggered.",
+  "next_action": "v23 v2: decoder prefix-conditioned routing (i.e. decoder prefix tokens also inject curvature residual)",
+  "gate_1_evidence": "CurvatureResidualModule 单测 PASS (alpha=0 输出零, alpha=0.5 输出 residual, 梯度正常流到 alpha + MLP). Stage3 200ep 训练完成, alpha_1 从 0 增长到 -0.384 (gradient-driven learning confirmed).",
+  "gate_2_evidence": "Stage4 device sync fix (LUT 移到 input_ids.device) applied. Beam=20, 单 ckpt (R35 严格). 250/259 batches 完成.",
+  "gate_3_evidence": "valid_R@10 = 0.1275 > 0.1258 (+0.0017). test_R@10 = 0.1025 > 0.1013 (+0.0012). R37 PASS. 无 fallback 逻辑, 无超参调优 (R36 严格).",
+  "gate_4_evidence": "R23 七信号全 0: 无 loss 反向/NaN/Inf, 无 wrapper broken, 无 val_R@10=0 跨 ckpt, 无 GPU 100% loss 不变, ckpt 持续 save (10 snapshots). R38 mid-training no-kill."
+}

@@ -154,6 +154,20 @@ _argparser.add_argument("--branch_curvature_n_buckets", type=int, default=3,
 _argparser.add_argument("--branch_curvature_strategy", type=str, default="quantile",
                         choices=["quantile", "kmeans"],
                         help="新 Issue: prefix 分桶策略 (quantile = 等频分桶, kmeans = kmeans on B(p))")
+# v23 (2026-08-11): Stage3 显式消费 Stage2 branch curvature via SID token residual injection.
+# 与 --branch_curvature_enabled (HAB attention-bias multiplier) **机制完全不同**:
+#   v23 = 加载 Stage2 ckpt 的 final_kappas[1] + vq_layers.1.delta_kappa.weight,
+#         用 MLP 把 [κ_1, Δκ_{1,q_0}] 映射成 d_model 维, 加到 L1 token embedding.
+#   与 HAB 共存, 互不冲突 (HAB = attention bias, v23 = token residual).
+_argparser.add_argument("--curvature_residual_enabled", action="store_true",
+                        help="v23: 启用 Stage2 branch curvature → Stage3 L1 token residual 注入 (e'_{q_1} = e_{q_1} + α_1 · f_1([κ_1, Δκ_{1,q_0}]))")
+_argparser.add_argument("--curvature_residual_layer", type=int, default=1,
+                        choices=[1, 2],
+                        help="v23: 注入层位 (默认 L1)")
+_argparser.add_argument("--curvature_residual_mlp_hidden", type=int, default=64,
+                        help="v23: MLP f_1 hidden dim (默认 64)")
+_argparser.add_argument("--curvature_residual_alpha_init", type=float, default=0.0,
+                        help="v23: α_1 初始值 (默认 0.0, 训练起点等同无 curvature)")
 # Issue #236 (2026-08-10): Stage3 Hyperbolic Attention Scoring — 替换 inner-product 为负 Poincaré 距离
 # 核心: T5 attention score = matmul(Q, K^T) 替换为 -d_P(Q, K), 让曲率成为 attention 第一公民
 # 与 HAB 正交可叠加 (HAB 是 additive 4D bias, 此处是替换 score 函数本身)
@@ -316,6 +330,11 @@ BRANCH_CURVATURE_SID_NPY = _args.branch_curvature_sid_npy if _args.branch_curvat
 BRANCH_CURVATURE_N_BUCKETS = int(_args.branch_curvature_n_buckets)
 BRANCH_CURVATURE_STRATEGY = _args.branch_curvature_strategy
 BRANCH_CURVATURE_LAMBDA_MULT = [float(x) for x in _args.branch_curvature_lambda_mult.split(",")]
+# v23 (2026-08-11): Stage3 显式消费 Stage2 branch curvature
+CURVATURE_RESIDUAL_ENABLED = _args.curvature_residual_enabled
+CURVATURE_RESIDUAL_LAYER = int(_args.curvature_residual_layer)
+CURVATURE_RESIDUAL_MLP_HIDDEN = int(_args.curvature_residual_mlp_hidden)
+CURVATURE_RESIDUAL_ALPHA_INIT = float(_args.curvature_residual_alpha_init)
 # Issue #236 (2026-08-10): Poincaré Attention Scoring 常量
 POINCARE_ATTN_SCORING = _args.poincare_attn_scoring
 POINCARE_C_INIT = _args.poincare_c_init
@@ -776,7 +795,139 @@ def install_shse(hg_rec, shse_module, device):
     return hg_rec
 
 
-class SHSEEncoder(nn.Module):
+# v23 (2026-08-11): CurvatureResidualModule — Stage3 显式消费 Stage2 branch curvature via SID token residual injection.
+#
+# 核心公式:
+#     e'_{q_1} = e_{q_1} + alpha_1 * f_1([kappa_1, delta_kappa_{1, q_0}])
+#
+# 其中:
+#     e_{q_1}: T5 shared embedding lookup for L1 token (vocab range [65, 192])
+#     kappa_1: Stage2 final_kappas[1] (scalar) — per-layer mean L1 curvature
+#     delta_kappa_{1, q_0}: Stage2 vq_layers.1.delta_kappa.weight[q_0] (shape=(64, 1))
+#         — per-L0-prefix L1 curvature residual
+#     f_1: MLP, R^2 → R^{d_model=128}, e.g. Linear(2→64) → GELU → Linear(64→128)
+#     alpha_1: nn.Parameter, init=0 (训练起点等同无 curvature; gradient-driven 决定是否使用)
+#
+# v23 v1 范围 (用户明确):
+#   - L1 only (L0 无 branch, L2 branch 样本稀疏)
+#   - Encoder only (decoder prefix-conditioned routing 是 v2)
+#   - 不引入 Curvature Attention (v2/v3 才考虑)
+#
+# 与已有机制的兼容性:
+#   - HAB: attention-bias, 不改 token embedding → 与 v23 共存, 互不干扰
+#   - branch_curvature_enabled (旧): 也是 HAB multiplier, 不加载 Stage2 ckpt → 与 v23 共存
+#   - SHSE / SCSB / PF: 都在 self.model.shared 之后注入, 但各自独立 module → 互不冲突
+class CurvatureResidualModule(nn.Module):
+    """v23: 显式消费 Stage2 branch curvature via SID token residual injection.
+
+    对 L1 token (vocab range [65, 192]) 注入:
+        e'_{q_1} = e_{q_1} + alpha_1 * f_1([kappa_1, delta_kappa_{1, q_0}])
+
+    Args:
+        kappa_l1: scalar, Stage2 final_kappas[1]
+        delta_kappa_l1: (K0=64, 1), Stage2 vq_layers.1.delta_kappa.weight
+        d_model: T5 hidden size (128)
+        mlp_hidden: MLP f_1 hidden dim (default 64)
+        alpha_init: 初始值, 默认 0.0 (训练起点等同无 curvature)
+    """
+
+    def __init__(self, kappa_l1, delta_kappa_l1, d_model=128, mlp_hidden=64, alpha_init=0.0):
+        super().__init__()
+        # Stage2 注入参数 (frozen, 不参与训练)
+        self.register_buffer("kappa_l1", torch.tensor(float(kappa_l1)))
+        self.register_buffer("delta_kappa_l1", delta_kappa_l1.detach().clone())  # (K0=64, 1)
+        # MLP f_1: ℝ² → ℝ^{d_model}
+        self.f1 = nn.Sequential(
+            nn.Linear(2, mlp_hidden),
+            nn.GELU(),
+            nn.Linear(mlp_hidden, d_model),
+        )
+        # α_1: scalar, init=0 (训练起点等同无 curvature; 后续 gradient 决定是否使用)
+        self.alpha_1 = nn.Parameter(torch.tensor(float(alpha_init)))
+
+    def forward(self, input_ids, input_embeds):
+        """
+        Args:
+            input_ids: (B, L) long, T5 encoder input vocab ids (flattened history: q_0,q_1,q_2,eos,q_0',q_1',q_2',eos',...)
+            input_embeds: (B, L, d_model), T5 shared(input_ids) * sqrt(d_model)
+
+        Returns:
+            input_embeds + alpha_1 * curvature_residual (only on L1 positions)
+        """
+        # 直接读 layer_id_lut (cache 在 install 时传入避免重复查表)
+        # Defensive device sync: DDP 启动时可能 LUT 在 CPU, forward 时已迁到 CUDA
+        lut = self._cached_layer_id_lut
+        if lut.device != input_ids.device:
+            lut = lut.to(input_ids.device)
+            self._cached_layer_id_lut = lut
+        layer_ids = lut[input_ids]  # (B, L), 1=L1
+        is_l1 = (layer_ids == 1)  # (B, L) bool mask
+
+        # 提取每个 L1 位置对应的 L0 code (位置 i-1, 因为历史排列 q_0,q_1,q_2,eos)
+        q_0_ids = torch.roll(input_ids, shifts=1, dims=-1)  # (B, L)
+        q_0_ids = q_0_ids * is_l1.long()  # mask 非 L1 位置 (第一位置 q_0 也会被 mask, 因为 is_l1=False)
+
+        # L0 code → L0 idx (vocab 1-64 → 0-63)
+        # offset_l0 = 1 (L0 tokens start at vocab id 1)
+        l0_idx = q_0_ids - 1  # (B, L), 0 / negative (masked by is_l1)
+        l0_idx = l0_idx.clamp(min=0, max=self.delta_kappa_l1.shape[0] - 1)  # safety
+
+        # Look up Δκ_{1, q_0}: (B, L, 1)
+        delta_kappa_at_q0 = self.delta_kappa_l1[l0_idx]  # (B, L, 1)
+
+        # 拼 κ_1: (B, L, 1)
+        kappa_l1_expanded = self.kappa_l1.expand_as(delta_kappa_at_q0)
+
+        # MLP 输入: (B, L, 2)
+        cur_input = torch.cat([kappa_l1_expanded, delta_kappa_at_q0], dim=-1)
+
+        # MLP 输出: (B, L, d_model)
+        cur_emb = self.f1(cur_input)
+
+        # Mask: 只在 L1 位置注入
+        mask = is_l1.unsqueeze(-1).to(input_embeds.dtype)
+
+        # Residual: input_embeds + alpha_1 * cur_emb * mask
+        # 注: alpha_1 init=0 时, residual ≡ 0, 训练起点等同 v22.b Stage3 baseline
+        return input_embeds + self.alpha_1 * cur_emb * mask
+
+
+def install_curvature_residual(hg_rec, curv_module, layer_id_lut_tensor):
+    """v23: Monkey-patch HG_Rec 实例, forward + generate 都注入 curvature residual.
+
+    与 install_geo_residual / install_shse 同模式, 区别:
+      - 调用 CurvatureResidualModule(input_ids, input_embeds) → 修改 input_embeds
+      - layer_id_lut_tensor 缓存到 module._cached_layer_id_lut 避免重复 .to(device)
+    """
+    import types
+    device = next(hg_rec.parameters()).device
+    curv_module = curv_module.to(device)
+    layer_id_lut_tensor = layer_id_lut_tensor.to(device)
+    curv_module._cached_layer_id_lut = layer_id_lut_tensor
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+    hg_rec.add_module("curvature_residual_module", curv_module)
+
+    def curv_forward(self, input_ids, attention_mask=None, labels=None):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        outputs = self.model(inputs_embeds=input_embeds,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        input_embeds = self.curvature_residual_module(input_ids, input_embeds)
+        return self.model.generate(inputs_embeds=input_embeds,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+
+    hg_rec.forward = types.MethodType(curv_forward, hg_rec)
+    hg_rec.generate = types.MethodType(curv_generate, hg_rec)
+    return hg_rec
+
+
+
     """Issue #106 (2026-08-10): Stage3 Hyperbolic SID Embedding Encoder.
 
     Linear (W_hyp·emb + b_hyp) → exp_map_0(·) → proj_to_ball(·).
@@ -2526,6 +2677,39 @@ def main():
             log(f"[Issue #70] prompt_former ON: bos_queries={pf_module.bos_queries.shape} "
                 f"alpha_init={PROMPT_FORMER_ALPHA:.3f} num_bos_queries={PROMPT_FORMER_NUM_BOS_QUERIES} "
                 f"总参数={pf_params}")
+    # v23 (2026-08-11): Curvature Residual — Stage3 显式消费 Stage2 branch curvature via SID token residual
+    # 与 HAB / PF / SHSE / SCSB / HSCSB / RDB / HRES / HCL / branch_curvature_enabled **完全正交可叠加**:
+    #   - 加载 Stage2 ckpt 的 final_kappas[l] + vq_layers.l.delta_kappa.weight (frozen)
+    #   - alpha_1 init=0 (训练起点等同 v22.b Stage3 baseline, gradient 决定是否使用)
+    #   - L1 mask 只在 layer_id == 1 的位置注入 (其他层位 / PAD 不动)
+    if CURVATURE_RESIDUAL_ENABLED:
+        # Load Stage2 ckpt for curvature
+        _cv_ckpt = torch.load(HAB_STAGE2_CKPT, map_location="cpu", weights_only=False)
+        _cv_sd = _cv_ckpt["model_state_dict"]
+        _cv_l = CURVATURE_RESIDUAL_LAYER  # 1 (L1 only)
+        _cv_kappa = float(_cv_ckpt["final_kappas"][_cv_l])
+        _cv_delta = _cv_sd[f"vq_layers.{_cv_l}.delta_kappa.weight"].float()  # (K_branch, 1)
+        curv_module = CurvatureResidualModule(
+            kappa_l1=_cv_kappa,
+            delta_kappa_l1=_cv_delta,
+            d_model=CONFIG["d_model"],
+            mlp_hidden=CURVATURE_RESIDUAL_MLP_HIDDEN,
+            alpha_init=CURVATURE_RESIDUAL_ALPHA_INIT,
+        ).to(device)
+        _layer_id_lut_t = torch.from_numpy(_LAYER_ID_LUT)
+        _inner_pre = model.module if hasattr(model, "module") else model
+        _inner_pre = install_curvature_residual(_inner_pre, curv_module, _layer_id_lut_t)
+        if hasattr(model, "module"):
+            model.module = _inner_pre
+        else:
+            model = _inner_pre
+        if is_main:
+            _cv_delta_std = float(_cv_delta.std().item())
+            _cv_learnable = sum(p.numel() for p in curv_module.parameters() if p.requires_grad)
+            log(f"[v23 curvature residual] ON: layer=L{_cv_l} kappa={_cv_kappa:.4f} "
+                f"delta_kappa_std={_cv_delta_std:.4f} alpha_init={CURVATURE_RESIDUAL_ALPHA_INIT} "
+                f"mlp_hidden={CURVATURE_RESIDUAL_MLP_HIDDEN} "
+                f"learnable_params={_cv_learnable} (alpha=1 + mlp=2 layers)")
     if DDP_MODE:
         # Issue #64: HAB lambda_raw 在 lambda_eff=0 时不参与前向计算 (走 _original_forward fast path),
         # DDP 默认检测到 unused parameter 会崩. 加 find_unused_parameters=True (历史 #55 taskA stage2 同样修过).
@@ -2537,7 +2721,8 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED or HCL_ENABLED
+        # v23 (2026-08-11): CURVATURE_RESIDUAL_ENABLED 时 alpha_1 init=0 不参与前向, DDP 需 find_unused=True
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED or HCL_ENABLED or CURVATURE_RESIDUAL_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
