@@ -429,6 +429,12 @@ _argparser.add_argument("--spbi_init", action="store_true", default=False,
 # Issue #105 (2026-08-10): SHIE — Stage1 输出已在 Poincaré ball, Stage2 跳过内部 exp_map_0
 _argparser.add_argument("--input_hyperbolic", action="store_true", default=False,
                         help="Issue #105: 输入已是 Poincaré ball (Stage1 SHIE), Stage2 跳过内部 exp_map_0 (直接用 latent in ball)")
+_argparser.add_argument("--cdr_enabled", action="store_true", default=False,
+                        help="Issue #109: 启用 CDR, L_div = -mean d_P(codeword_i, codeword_j), 不依赖 log_softmax")
+_argparser.add_argument("--cdr_lambda", type=float, default=0.05,
+                        help="Issue #109: CDR loss 权重 (初始扫描 {0.01, 0.05, 0.1})")
+_argparser.add_argument("--cdr_subsample", type=int, default=0,
+                        help="Issue #109: codeword 随机子采样数 (0=全部, >0 加速). 默认 0")
 _args = _argparser.parse_args()
 
 # Issue #75 (2026-08-07): Vanilla-RQ 模式 → poincare_recon_loss 替换为欧氏 MSE
@@ -470,6 +476,17 @@ RANK = int(os.environ.get("RANK", _args.rank))
 LOCAL_RANK = int(os.environ.get("LOCAL_RANK", _args.local_rank))
 DDP_MODE = WORLD_SIZE > 1
 MLR_ENABLED = _args.mlr_enabled  # R30: 默认走常量 True (Issue #47 状态), --no_mlr 切换到 False (Issue #48 spec)
+# Issue #109 (2026-08-10): CDR — Codebook Diversity Regularization 标志 + 参数
+if _args.cdr_enabled:
+    CDR_ENABLED = True
+    CDR_LAMBDA = float(_args.cdr_lambda)
+    CDR_SUBSAMPLE = int(_args.cdr_subsample)
+    print(f"[Issue109] CDR_ENABLED=ON → L_div = -mean d_P(codeword_i, codeword_j), "
+          f"lambda={CDR_LAMBDA}, subsample={CDR_SUBSAMPLE}")
+else:
+    CDR_ENABLED = False
+    CDR_LAMBDA = 0.0
+    CDR_SUBSAMPLE = 0
 # Issue #71 v82 (2026-08-07): --item_emb_npy 命令行覆盖 (默认 issue60 packed u32, v82 用 Stage1 v82 .npy)
 ITEM_EMB_NPY = _args.item_emb_npy
 
@@ -573,6 +590,38 @@ if RESCALE:
         return _expmap0_no_recurse(z * scale, c)
 
     proj_to_ball = proj_to_ball_smooth
+
+
+# ──────────────────────────────────────────────────────────────
+# Issue #109 (2026-08-10): CDR — Codebook Diversity Regularization
+# L_div = -mean_{i<j} d_P(codeword_i, codeword_j)  (最大化 codeword 间距离)
+# 不依赖 log_softmax 信号 (R36+R37 严守), 直接用 d_P 算术平均作 loss
+# 总参数增量: 0 (纯 loss 项). 复杂度: O(K^2 * dim), K≤256 → 32640 对/dim=32 → 单 batch +0.5s
+# ──────────────────────────────────────────────────────────────
+def codebook_diversity_loss(codebook_h: torch.Tensor, c_geom: torch.Tensor,
+                            subsample: int = 0, seed: int = 2024) -> torch.Tensor:
+    """Issue #109 CDR: L_div = -mean_{i<j} d_P(codeword_i, codeword_j).
+
+    Args:
+        codebook_h: (K, dim) codebook in Poincaré ball (proj 后值)
+        c_geom: scalar curvature (or 1D tensor with 1 element)
+        subsample: int, 0 = all codewords; >0 = random subsample for speed
+        seed: int, RNG seed for deterministic subsample
+    Returns:
+        L_div: scalar tensor (negative mean pairwise d_P, 鼓励 codeword 分散)
+    """
+    K = codebook_h.shape[0]
+    cb = codebook_h
+    if subsample > 0 and K > subsample:
+        gen = torch.Generator(device=codebook_h.device).manual_seed(seed)
+        idx = torch.randperm(K, device=codebook_h.device, generator=gen)[:subsample]
+        cb = cb[idx]
+        K = subsample
+    cb_a = cb.unsqueeze(0).expand(K, K, -1)
+    cb_b = cb.unsqueeze(1).expand(K, K, -1)
+    d_pair = poincare_distance(cb_a, cb_b, c_geom)  # (K, K)
+    mask = ~torch.eye(K, dtype=torch.bool, device=d_pair.device)
+    return -d_pair[mask].mean()
 
 
 # ──────────────────────────────────────────────────────────────
@@ -867,6 +916,11 @@ class KappaAwareVectorQuantization(nn.Module):
             loss = mix_w.detach() * (commitment_loss + self.beta * codebook_loss)
         else:
             loss = mix_w * (commitment_loss + self.beta * codebook_loss)
+        # Issue #109 CDR (2026-08-10): L_div = -mean d_P(codeword_i, codeword_j) (鼓励 codeword 分散)
+        if CDR_ENABLED:
+            L_div = codebook_diversity_loss(codebook_h, c_geom, subsample=CDR_SUBSAMPLE, seed=SEED)
+            loss = loss + CDR_LAMBDA * L_div
+            self._last_div_loss = float(L_div.detach().item())
         # Issue #55/v3: logmap0 输入先 proj_to_ball 兜底防 artanh(sqrt(c)*norm)>1 → NaN
         x_q_safe = proj_to_ball(x_q, c_geom)
         latent_safe = proj_to_ball(latent, c_geom)
@@ -1171,6 +1225,11 @@ class HyperbolicHyperplaneMLR(KappaAwareVectorQuantization):
             loss = mix_w.detach() * (commitment_loss + self.beta * codebook_loss)
         else:
             loss = mix_w * (commitment_loss + self.beta * codebook_loss)
+        # Issue #109 CDR (2026-08-10): L_div = -mean d_P(codeword_i, codeword_j) (鼓励 codeword 分散)
+        if CDR_ENABLED:
+            L_div = codebook_diversity_loss(codebook_h, c_geom, subsample=CDR_SUBSAMPLE, seed=SEED)
+            loss = loss + CDR_LAMBDA * L_div
+            self._last_div_loss = float(L_div.detach().item())
 
         # REL_STRUCT / RAD_SAFE (基于硬路径 norm, 不基于 ST 重建 norm)
         x_q_hard = codebook_h.index_select(0, indices)  # 硬路径, 用于结构损失
@@ -1590,6 +1649,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # Issue #61: util hinge 监控 (soft entropy normalized per layer, 越接近 1.0 利用率越高)
         "util_h_norm_per_layer": util_h_norm_per_layer if 'util_h_norm_per_layer' in dir() else [],
         "util_hinge_loss": float(util_hinge.item()) if 'util_hinge' in dir() and isinstance(util_hinge, torch.Tensor) else 0.0,
+        # Issue #109 CDR (2026-08-10): per-layer diversity loss 监控 (L_div = -mean d_P)
+        "div_loss_per_layer": [getattr(q, "_last_div_loss", 0.0) for q in mm.vq_layers],
     }
 
 
@@ -2589,11 +2650,14 @@ def main():
             util_h_str = ("[" + ", ".join(f"{h:.2f}" for h in m.get('util_h_norm_per_layer', [])) + "]"
                           if m.get('util_h_norm_per_layer') else "n/a")
             util_hinge_str = f"util_hinge={m.get('util_hinge_loss', 0.0):.4f} H_norm={util_h_str}"
+            div_str = ("[" + ", ".join(f"{d:.4f}" for d in m.get('div_loss_per_layer', [])) + "]"
+                       if CDR_ENABLED else "n/a")
             print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
                   f"grad_κ={m['raw_grad_kappa']} "
                   f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}"
                   f"\n    [Issue44 MLR] {mlr_str}"
-                  f"\n    [Issue61] {util_hinge_str}")
+                  f"\n    [Issue61] {util_hinge_str}"
+                  f"\n    [Issue109 CDR] L_div_per_layer={div_str} λ={CDR_LAMBDA}")
         # v34 监控: 每 N epoch 算一次码字利用率 (util_per_layer_3digit + util_4digit)
         # 早期发现 collapse (训练完才发现 util 极低就晚了). infer_sid 一遍 ~1s, 可接受.
         if (is_main and STAGE2_UTIL_LOG_EVERY > 0
@@ -3016,6 +3080,10 @@ def main():
             "curv_prior": CURV_PRIOR,
             "fix_c": FIX_C,
             "kappa_anchors_config": KAPPA_ANCHORS,
+            # Issue #109 (2026-08-10): CDR — Codebook Diversity Regularization 配置
+            "cdr_enabled": CDR_ENABLED,
+            "cdr_lambda": CDR_LAMBDA,
+            "cdr_subsample": CDR_SUBSAMPLE,
         }
         with open(PRODUCT_DIR / "config.json", "w") as f:
             json.dump(config, f, indent=2)

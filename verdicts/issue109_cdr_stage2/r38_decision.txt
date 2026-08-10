@@ -1,0 +1,28 @@
+R38 决策 (2026-08-10): v32 CDR (λ=0.05) mid-training regress (Stage2 Gate 1 FAIL).
+
+v32 util_4digit 跨 ≥2 ckpt 急剧下降 (R23 Gate 1 触发):
+  - ep30  util_4digit=0.637  (6320 unique)
+  - ep90  util_4digit=0.572
+  - ep120 util_4digit=0.362  (L2 dropping)
+  - ep130 util_4digit=0.239
+  - ep140 util_4digit=0.040  (L1 collapse begins)
+  - ep150 util_4digit=0.010  (L1/L2 collapse)
+  - ep160 util_4digit=0.003  (only 27 unique)
+  - ep170-390 util_4digit=0.002-0.004 stable collapse
+
+对比 v15 capmatch baseline util_4digit = 0.85+ (健康基线):
+  v32 Stage2 util_4digit 比 v18 差 ~400x (0.002 vs 0.85, -99.7%)
+
+根因: CDR 最大化 pairwise d_P → codeword 被推出 data 流形 → L1/L2 各只剩 1 个 active codeword
+  - L1: 128 codewords → 1 active (127 dead)
+  - L2: 256 codewords → 1 active (255 dead)
+  - L0: 64 codewords → 12 active (52 dead)
+
+立即 kill (PID=3278036 + 4 children) + R37 回退至 v18 重新创新 (CDR line 终止).
+
+R37 注释: v32 失败于 Stage2 Gate 1 (未到 Stage4 test_R@10), 但 R38 触发 R37 回退流程.
+新版本必须以 v18 为唯一 base, 不依赖 log_softmax 且不靠纯 pairwise d_P 最大化.
+可能的 v33 方向 (R36 曲率机制 + 严守数据锚定):
+  - Stage2 **anchor-based diversity** (只在数据周围的 codeword 范围内最大化, 加 anchor term)
+  - Stage3 **raw -d_P bias** (跳过 log_softmax, 直接 -d_P 加到 logits)
+  - Stage4 **multi-layer rerank** (#238 v25 PASS +0.0001, 扩展到 L0/L1/L2 多层)
