@@ -149,6 +149,14 @@ _argparser.add_argument("--rdb_alpha_init", type=float, default=1.0,
 _argparser.add_argument("--rdb_stage2_ckpt", type=str,
                         default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
                         help="Issue #110: Stage2 ckpt 路径 (与 train 一致)")
+# Issue #111 (2026-08-10): HRes — Stage3 Decoder Hyperbolic Residual 评估同步
+_argparser.add_argument("--hres_enabled", action="store_true",
+                        help="Issue #111: 启用 HRes 评估同步 (与 train 一致)")
+_argparser.add_argument("--hres_beta_init", type=float, default=0.01,
+                        help="Issue #111: HRes β 初始值 (与 train 一致)")
+_argparser.add_argument("--hres_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #111: Stage2 ckpt 路径 (与 train 一致)")
 _args = _argparser.parse_args()
 
 CKPT_PATH = _args.ckpt_path
@@ -196,6 +204,10 @@ HSCSB_STAGE2_CKPT = _args.hscsb_stage2_ckpt
 RDB_ENABLED = _args.rdb_enabled
 RDB_ALPHA_INIT = float(_args.rdb_alpha_init)
 RDB_STAGE2_CKPT = _args.rdb_stage2_ckpt
+# Issue #111 (2026-08-10): HRes eval 常量
+HRES_ENABLED = _args.hres_enabled
+HRES_BETA_INIT = float(_args.hres_beta_init)
+HRES_STAGE2_CKPT = _args.hres_stage2_ckpt
 # Issue #238 (2026-08-10): Poincaré Re-ranking (Stage4 post-generation)
 POINCARE_RERANK = _args.poincare_rerank
 RERANK_ALPHA = _args.rerank_alpha
@@ -679,6 +691,73 @@ def install_rdb_eval(hg_rec, rdb_module, device):
     return hg_rec
 
 
+# ──────────────────────────────────────────────────────────────
+# Issue #111 (2026-08-10): HRes — Stage3 Decoder Hyperbolic Residual eval 同步
+# ──────────────────────────────────────────────────────────────
+
+
+class HResModuleEval(nn.Module):
+    """Issue #111 v34 HRes eval 同步: 同 HResModule, 但只 forward 路径用 (eval 无需 optimizer 关心)."""
+
+    def __init__(self, c_per_layer, beta_init=0.01, beta_max=0.5):
+        super().__init__()
+        c_avg = float(sum(c_per_layer) / len(c_per_layer))
+        self.register_buffer("c", torch.tensor(c_avg, dtype=torch.float32))
+        self.beta_raw = nn.Parameter(torch.tensor(float(beta_init), dtype=torch.float32))
+        self.beta_max = float(beta_max)
+
+    @property
+    def beta(self):
+        return self.beta_max * torch.sigmoid(self.beta_raw)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    @staticmethod
+    def _log_map_0(y, c):
+        sqrt_c = c ** 0.5
+        norm_y = y.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        R = (1.0 / c) ** 0.5
+        scale = (1.0 / sqrt_c) * torch.arctanh(sqrt_c * norm_y / R) / (norm_y / R)
+        return scale * y
+
+    def compute_residual(self, hidden_states):
+        c = self.c
+        h_hyp = self._exp_map_0(hidden_states, c)
+        h_hyp = self._proj_to_ball(h_hyp, c)
+        h_tan = self._log_map_0(h_hyp, c)
+        return h_tan - hidden_states
+
+
+def install_hres_eval(hg_rec, hres_module, device):
+    """Issue #111 v34 HRes eval 同步: 注册 forward_pre_hook 到 hg_rec.model.lm_head."""
+    hres_module = hres_module.to(device)
+    hg_rec.add_module("hres_module", hres_module)
+
+    def hres_lm_head_pre_hook(module, args):
+        if not args:
+            return None
+        h = args[0]
+        residual = hres_module.compute_residual(h)
+        h_new = h + hres_module.beta * residual
+        return (h_new,) + args[1:]
+
+    lm_head = hg_rec.model.lm_head
+    lm_head.register_forward_pre_hook(hres_lm_head_pre_hook)
+    return hg_rec
+
+
 def calculate_pos_index(preds, labels, maxk=20):
     # Issue #41 v85h fix (2026-08-09): 原 BUG — preds[i,j].tolist() (4-token list) vs cur_label (4-token list)
     # 永远不全等 → R@10=0. 改用 train_pure_t5.py 的向量化正确逻辑:
@@ -1063,6 +1142,20 @@ def main():
         install_rdb_eval(model, rdb_module, DEVICE)
         print(f"[Issue #110 v33 RDB] eval ON: c_per_layer={[f'{c:.4f}' for c in cs]} "
               f"alpha_init={RDB_ALPHA_INIT}", flush=True)
+
+    # Issue #111 (2026-08-10): HRes eval 安装 (与 train 一致)
+    if HRES_ENABLED:
+        sd_ckpt = torch.load(HRES_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        cs = [float(c) for c in sd_ckpt["final_cs"]]
+        hres_module = HResModuleEval(
+            c_per_layer=cs,
+            beta_init=HRES_BETA_INIT,
+            beta_max=0.5,
+        ).to(DEVICE)
+        install_hres_eval(model, hres_module, DEVICE)
+        print(f"[Issue #111 v34 HRes] eval ON: c_per_layer={[f'{c:.4f}' for c in cs]} "
+              f"beta_init={HRES_BETA_INIT}", flush=True)
 
     # Issue #70: 安装 DecorPromptFormer (candidate bins + alpha gate)
     # 必须在 load_state_dict 之前 add_module(pf_module), 否则 strict load 找不到 pf_module.* keys

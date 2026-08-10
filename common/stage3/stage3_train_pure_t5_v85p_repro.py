@@ -212,6 +212,16 @@ _argparser.add_argument("--rdb_alpha_init", type=float, default=1.0,
 _argparser.add_argument("--rdb_stage2_ckpt", type=str,
                         default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
                         help="Issue #110: Stage2 ckpt 路径 (提供 codebook + per-layer κ)")
+# Issue #111 (2026-08-10): HRes — Stage3 Decoder Hyperbolic Residual (exp_map_0 + log_map_0 + scalar β)
+# 沿 v33 RDB 失败教训 (R37): 不动 lm_head logits (避免 bias 主导 logits),
+# 在 lm_head 之前的 decoder hidden state 层加 Poincaré residual (near-identity 起步, 训练期慢慢引入曲率信号).
+_argparser.add_argument("--hres_enabled", action="store_true",
+                        help="Issue #111: 启用 HRes — Stage3 lm_head 之前 decoder hidden state 加 exp/log_map 残差 (β=0.01 init, near-identity 起步)")
+_argparser.add_argument("--hres_beta_init", type=float, default=0.01,
+                        help="Issue #111: HRes β 初始值 (init=0.01 让训练初期接近 identity, 监控 < 0.5 防 norm mismatch)")
+_argparser.add_argument("--hres_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #111: Stage2 ckpt 路径 (提供 per-layer κ 给 exp_map_0/log_map_0)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -327,6 +337,16 @@ else:
     RDB_ENABLED = False
     RDB_ALPHA_INIT = 0.0
     RDB_STAGE2_CKPT = None
+# Issue #111 (2026-08-10): HRes — Stage3 Decoder Hyperbolic Residual 常量
+if _args.hres_enabled:
+    HRES_ENABLED = True
+    HRES_BETA_INIT = float(_args.hres_beta_init)
+    HRES_STAGE2_CKPT = _args.hres_stage2_ckpt
+    print(f"[Issue #111] HRES_ENABLED=ON → decoder hidden state exp/log_map residual, β_init={HRES_BETA_INIT}")
+else:
+    HRES_ENABLED = False
+    HRES_BETA_INIT = 0.0
+    HRES_STAGE2_CKPT = None
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -1287,6 +1307,106 @@ def install_rdb(hg_rec, rdb_module, device):
     return hg_rec
 
 
+# ──────────────────────────────────────────────────────────────
+# Issue #111 (2026-08-10): Stage3 HRes — Decoder Hyperbolic Residual
+# 设计 (避开 v33 RDB 失败根因 — lm_head logits bias 主导梯度):
+#   - 修改位置: lm_head 之前 (decoder final hidden state), 不动 lm_head logits / 不动 attn / 不动 embed
+#   - 残差路径: h_residual = log_map_0(exp_map_0(h, c), c) - h  (近 zero near-identity)
+#   - 输出: h_out = h + β · h_residual  (β=0.01 init, Sigmoid bounded [0, β_max])
+#   - 总参数: 1 个 scalar β (vs v33 RDB 1 α + SCSB 1 α + HSCSB 4 α, 极小开销)
+#   - 核心洞察: exp_map_0 → log_map_0 链是 near-identity (‖h‖ 小 / c 小时 ≈ 0),
+#                β=0.01 init 让训练初期几乎不影响, 后期通过梯度慢慢引入 curvature.
+# ──────────────────────────────────────────────────────────────
+
+
+class HResModule(nn.Module):
+    """Issue #111 v34 HRes: Stage3 decoder hidden state 加 exp/log_map 残差.
+
+    Args:
+        c_per_layer: list of 3 floats (Stage2 final_cs), HRes 用平均 c = mean(c_per_layer) 作单曲率.
+        beta_init: β 初始值 (默认 0.01, 训练初期 near-identity, 监控 < 0.5 防 norm mismatch).
+        beta_max: β hard cap (Sigmoid bounded [0, beta_max]).
+    """
+
+    def __init__(self, c_per_layer, beta_init=0.01, beta_max=0.5):
+        super().__init__()
+        # 用平均 c 作单曲率 (R-stage3 decoder 不分层, 简化近似 v15 per-layer κ)
+        c_avg = float(sum(c_per_layer) / len(c_per_layer))
+        self.register_buffer("c", torch.tensor(c_avg, dtype=torch.float32))
+        # 1 个 learnable β (init=beta_init, Sigmoid -> [0, beta_max])
+        self.beta_raw = nn.Parameter(torch.tensor(float(beta_init), dtype=torch.float32))
+        self.beta_max = float(beta_max)
+        self.c_per_layer = [float(c) for c in c_per_layer]
+
+    @property
+    def beta(self):
+        # β ∈ [0, beta_max]
+        return self.beta_max * torch.sigmoid(self.beta_raw)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    @staticmethod
+    def _log_map_0(y, c):
+        """log_map_0: Poincaré ball → tangent space at origin.
+
+        y ∈ ball (‖y‖ < 1/sqrt(c)).
+        Returns u ∈ tangent space.
+        """
+        sqrt_c = c ** 0.5
+        norm_y = y.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        R = (1.0 / c) ** 0.5
+        scale = (1.0 / sqrt_c) * torch.arctanh(sqrt_c * norm_y / R) / (norm_y / R)
+        return scale * y
+
+    def compute_residual(self, hidden_states):
+        """hidden_states: (B, L, d_model) → residual: (B, L, d_model).
+
+        残差 = log_map_0(exp_map_0(h, c), c) - h.
+        exp_map_0 + log_map_0 链是 near-identity (当 h 小 或 c 小时).
+        """
+        c = self.c
+        h_hyp = self._exp_map_0(hidden_states, c)
+        h_hyp = self._proj_to_ball(h_hyp, c)
+        h_tan = self._log_map_0(h_hyp, c)
+        return h_tan - hidden_states
+
+
+def install_hres(hg_rec, hres_module, device):
+    """Issue #111 v34 HRes: 注册 forward_pre_hook 到 hg_rec.model.lm_head (T5ForConditionalGeneration 内部)."""
+    hres_module = hres_module.to(device)
+    hg_rec.add_module("hres_module", hres_module)
+
+    def hres_lm_head_pre_hook(module, args):
+        """lm_head.forward 的 forward_pre_hook: 修改 input[0] (decoder hidden state).
+
+        args 是 lm_head 的 input tuple: args[0] = hidden_states (B, L, d_model).
+        返回新 input tuple.
+        """
+        if not args:
+            return None
+        h = args[0]
+        residual = hres_module.compute_residual(h)  # (B, L, d_model)
+        h_new = h + hres_module.beta * residual
+        return (h_new,) + args[1:]
+
+    # HG_Rec.model 是 T5ForConditionalGeneration, 其 lm_head 是 nn.Linear (decoder final hidden state → logits)
+    lm_head = hg_rec.model.lm_head
+    lm_head.register_forward_pre_hook(hres_lm_head_pre_hook)
+    return hg_rec
+
+
 def build_geo_module():
     """按 GEO_KAPPA/SCALE/CODEBOOK_NORM 配置构建 GeoResidualModule.
 
@@ -2186,6 +2306,27 @@ def main():
                 f"alpha_init={RDB_ALPHA_INIT} alpha_eff={alpha_eff:.4f} "
                 f"c_per_layer={[f'{c:.4f}' for c in cs]} "
                 f"learnable_params={sum(p.numel() for p in rdb_module.parameters() if p.requires_grad)}")
+    hres_module = None
+    if HRES_ENABLED:
+        sd_ckpt = torch.load(HRES_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        cs = [float(c) for c in sd_ckpt["final_cs"]]
+        hres_module = HResModule(
+            c_per_layer=cs,
+            beta_init=HRES_BETA_INIT,
+            beta_max=0.5,
+        )
+        inner = model.module if hasattr(model, "module") else model
+        inner = install_hres(inner, hres_module, device)
+        if hasattr(model, "module"):
+            model.module = inner
+        if is_main:
+            beta_eff = hres_module.beta.detach().cpu().item()
+            c_avg = float(sum(cs) / len(cs))
+            log(f"[Issue #111 v34 HRes] decoder hyperbolic residual ON: "
+                f"beta_init={HRES_BETA_INIT} beta_eff={beta_eff:.4f} "
+                f"c_avg={c_avg:.4f} c_per_layer={[f'{c:.4f}' for c in cs]} "
+                f"learnable_params={sum(p.numel() for p in hres_module.parameters() if p.requires_grad)}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -2207,7 +2348,7 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED or HSCSB_ENABLED or RDB_ENABLED or HRES_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
