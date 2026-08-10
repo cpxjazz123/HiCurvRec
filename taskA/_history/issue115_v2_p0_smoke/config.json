@@ -1,0 +1,31 @@
+{
+  "issue": "#44",
+  "task": "#448",
+  "spec": "Issue #157 Gate 2: per-layer learnable \u03ba_l + \u03ba-aware codebook sync recalibration + Stage 2 SID \u5b8c\u6574\u94fe\u8def",
+  "codebook_sizes": [
+    64,
+    128,
+    256
+  ],
+  "e_dim": 32,
+  "encoder_layers": [
+    512,
+    256,
+    128,
+    64
+  ],
+  "batch_size": 1024,
+  "epochs": 20,
+  "lr": 0.001,
+  "seed": 2024,
+  "gpu": 0,
+  "triton_cache_dir": "/home/wlia0047/.triton/cache_task448",
+  "item_emb_sha256": "96a7109e14b6b93ce1ae2c628fa1df9a06f9d177673d6ba1f78c5db98aea5cea",
+  "n_items": 9922,
+  "r30_hardcoded": true,
+  "rel_struct": true,
+  "curv_aware": true,
+  "curv_prior": true,
+  "fix_c": false,
+  "kappa_anchors_config": []
+}
