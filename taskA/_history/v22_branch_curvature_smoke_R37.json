@@ -1,0 +1,46 @@
+{
+  "issue": "v22 branch_curvature lineage",
+  "branch": "v22_branch_curvature",
+  "phase": "Phase 1.5 50ep smoke",
+  "gate_v22_branch": false,
+  "r37_decision": "v22 Phase 1.5 50ep smoke 显示 branch_curvature_std_max=0.0 (L1+L2 delta_kappa std=0), 机制不工作 → R37 终止 v22 lineage",
+  "r38_decision": "v22 mid-training regress: branch_curvature_std_max=0.0, gate_v22_branch=false, L_geo 接入后 mean(Δκ) 学到非零偏移 (-0.012 / -0.001) 但 std=0 — 所有 branch 学到相同值, 无 per-branch 异质化",
+  "diagnosis": {
+    "root_cause": "Plan A 完整版没实施: forward 距离仍用 per-layer scalar c (Stage3 兼容路径), Δκ 仅在 mean(Δκ) 路径参与 forward. L_geo 算的是 per-layer mean c 距离 vs D_ref, 梯度对所有 branch 同质 → Δκ 整体偏移但 std=0. 这等价于 per-layer mean Δκ (Plan B 退化版), 不构成真正的 per-branch 异质化.",
+    "ckpt_evidence": {
+      "L1_delta_kappa_shape": [64, 1],
+      "L1_delta_kappa_mean": -0.012176,
+      "L1_delta_kappa_std": 0.0,
+      "L1_delta_kappa_min": -0.012176,
+      "L1_delta_kappa_max": -0.012176,
+      "L2_delta_kappa_shape": [8192, 1],
+      "L2_delta_kappa_mean": -0.000935,
+      "L2_delta_kappa_std": 0.0
+    },
+    "smoke_summary": {
+      "n_kappa_updates": 90,
+      "final_kappas": [-0.0594, -0.0028, -0.0068],
+      "final_cs": [0.9423, 0.9851, 0.9923],
+      "util_per_layer_3digit": [1.0, 1.0, 1.0],
+      "util_4digit": 1.0,
+      "gate2_decision": "PASS",
+      "branch_curvature_std_max": 0.0,
+      "gate_v22_branch": false,
+      "product_dir": "taskA/_history/v22_smoke_50ep_v3",
+      "sid_sha256": "32f4e3f1989f967e5e5edb7d858a23e07027a159d0d4f6d19e15e725daa711ca"
+    }
+  },
+  "next_version_plan": "v22.b: Plan A 完整版 — 改 KappaAwareVectorQuantization.forward 接受 branch_idx 参数 (L1=batch_idx%K0, L2=batch_idx%(K0*K1) proxy), 让 expmap0/proj_to_ball/poincare_distance/mobius_add/commitment_loss/codebook_loss 全部走 per-branch c (B,1,1) 广播路径. 工程量: forward + poincare_distance + 4 个辅助函数 broadcast 路径验证 + poincare_recon_loss 路径检查. R36 真正合规.",
+  "r37_compliance": "v22 branch_curvature lineage 终止, v22_smoke_50ep_v3/ 产物仅留作记录, 新版本必须以 v21 Item 6 refactor (test_R@10=0.1012) 为唯一基础, 禁止 v23 = v22 + v21 叠加",
+  "preserved_infrastructure": [
+    "taskA/stage2.py 顶部 BRANCH_CURVATURE_ENABLED 常量 (可复用)",
+    "KappaAwareVectorQuantization.delta_kappa Embedding (L1=64, L2=8192)",
+    "get_branch_c(branch_idx) 函数 (Stage3+ 备用)",
+    "build_d_ref_geometry (cosine kNN + scipy shortest_path, 9922×768 → 9922×9922)",
+    "compute_l_geo_from_indices (Stress 公式就位)",
+    "compute_stage2_loss_components 集成 L_branch + L_geo 路径",
+    "verdict branch_curvature_std_per_layer / gate_v22_branch 字段",
+    "ckpt final_branch_kappa 字段",
+    "commit e42b449 (Phase 1) + 20e0f2f (Phase 1.5) — 基础设施完整"
+  ]
+}
