@@ -168,13 +168,17 @@ RELATIONAL_NEG_N = 32  # 负样本数 (随机 sample)
 RELATIONAL_NEG_EXCL = 64  # 排除 Top64 近邻 (避免 trivial negative)
 RELATION_GRAPH_NPZ = ""  # 留空: 在 smoke runner 中通过 monkey-patch 注入
 
-# Issue #118 (2026-08-10): C1/C2/C3 切换旗标 — 显式控制哪个 loss 驱动 κ.
-#   默认值保留 #117 clean 行为 (C1 + C2 开, C3 关).
-#   C1 matched smoke: VQ_TO_KAPPA=True, RADIAL_TO_KAPPA=False, RELATIONAL_TO_KAPPA=False
+# Issue #119 Item 2 (2026-08-10): Clean Stage2 默认关闭 RADIAL_TO_KAPPA (R36 强化).
+#   之前默认 VQ_TO_KAPPA=True + RADIAL_TO_KAPPA=True 同时驱动 κ, 而 radial target
+#   [0.50, 0.62, 0.72] 是人工规定的逐层半径 + 权重 200.0, 导致 c_0 ≠ c_1 ≠ c_2 不完全是
+#   数据自己学出的. 现在改为 VQ_TO_KAPPA=True + RADIAL_TO_KAPPA=False, 让 VQ 作为
+#   κ 的唯一数据驱动信号. RADIAL_TO_KAPPA=True 仅在 C2/D ablation 显式启用.
+#   C1 matched smoke: VQ_TO_KAPPA=True,  RADIAL_TO_KAPPA=False, RELATIONAL_TO_KAPPA=False
+#   C2 ablation  : VQ_TO_KAPPA=True,  RADIAL_TO_KAPPA=True,  RELATIONAL_TO_KAPPA=False
 #   C3 matched smoke: VQ_TO_KAPPA=False, RADIAL_TO_KAPPA=False, RELATIONAL_TO_KAPPA=True
 #   R36 合规: 这些 flag 决定 curvature gradient source, 不是 hyperparameter sweep.
-VQ_TO_KAPPA = True  # C1: commitment + codebook loss → κ
-RADIAL_TO_KAPPA = True  # C2: REL_STRUCT radial target → κ
+VQ_TO_KAPPA = True  # C1: commitment + codebook loss → κ (clean baseline 唯一 κ 源)
+RADIAL_TO_KAPPA = False  # C2: REL_STRUCT radial target → κ (clean baseline 默认关闭, 仅 ablation 启用)
 RELATIONAL_TO_KAPPA = False  # C3: L_rel (Poincaré InfoNCE) → κ
 
 # Issue #76 径向扩容 (2026-08-07): kmeans 后 rescale 码本范数让 ρ_ball init = RHO_BALL_TARGET[layer].
