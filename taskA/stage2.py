@@ -175,6 +175,24 @@ KAPPA_MIN = -1.0
 KAPPA_MAX = 1.0  # Issue #114 Task 1: 6.0→1.0 让 sigmoid 中点 = 0 (c_init=exp(0)=1)
 KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 2.0
 
+# Issue #115 P1 (2026-08-10): 区分 clean learnable vs v15 historical reproduction parameterization.
+#   历史 v15 capmatch (Issue #96) 用 KAPPA_ANCHORS=[0.30, 1.79, 1.48] 作手工 anchor + REL_STRUCT
+#   反解 RHO_BALL_TARGET + κ EMA. final_kappas=[0.30, 1.79, 1.48] (c=[1.35, 6.00, 4.39]).
+#   clean learnable 实验不能用 [0.30, 1.79, 1.48] 当 init — 这违反"中性初始化"原则,
+#   而且 KAPPA_MAX=1.0 根本装不下 1.79/1.48.
+#   通过 CURVATURE_MODE 显式区分:
+#     - "clean": KAPPA_ANCHORS=[], KAPPA_MAX=1.0 → clean reproduction (默认)
+#     - "v15_repro": KAPPA_ANCHORS=[0.30, 1.79, 1.48], KAPPA_MAX=6.0 → 复现历史 v15 健康曲线
+CURVATURE_MODE = "clean"  # Issue #115 P1: 默认 clean learnable
+# 旧 v15 复现配置 (切换用: CURVATURE_MODE="v15_repro"):
+#   KAPPA_ANCHORS = [0.30, 1.79, 1.48]
+#   KAPPA_ANCHOR_RANGE = 1.0
+#   KAPPA_MIN = -1.0
+#   KAPPA_MAX = 6.0
+#   KAPPA_RANGE = KAPPA_MAX - KAPPA_MIN  # = 7.0
+#   RHO_BALL_TARGET = [0.50, 0.62, 0.72]
+assert CURVATURE_MODE in ("clean", "v15_repro"), f"CURVATURE_MODE={CURVATURE_MODE} 未支持"
+
 # ──────────────────────────────────────────────────────────────
 # 阉割后: FIXED_CURV / FIXED_CURV_C / VANILLA_RQ / MCJT_* / SPBI_* /
 #          CURV_SWEEP_KAPPAS / CURV_FIXED_KAPPAS / CURV_DEFAULT_C /
@@ -447,19 +465,29 @@ class KappaAwareVectorQuantization(nn.Module):
         # Task 5: boundary monitoring (基于 ρ 而非 raw norm)
         rho_gt_090 = (rho > 0.90).float().mean().item()
         rho_gt_095 = (rho > 0.95).float().mean().item()
-        # Task 6: safe-distance saturation (用当前 indices 看 d 接近 u_max 的比例)
+        # Task 6: safe-distance saturation.
+        # Issue #115 P0-4 (2026-08-10): 用 u_raw ≥ u_max 替代 d_min/d_max > 0.99.
+        #   旧: d_min/d_max > 0.99 — 间接判断, 在 c 小时距离普遍小, 易假阳.
+        #   新: 直接用 forward 捕获的 _last_u_raw, top-1 u_raw ≥ u_max 才是真正几何饱和
+        #   (最近码字也被 clamp 到边界, 无更近的几何位置).
         sat_ratio = 0.0
+        u_raw_median = 0.0
+        u_raw_p95 = 0.0
+        u_raw_max = 0.0
+        u_raw_clipped_ratio = 0.0
+        if getattr(self, '_last_u_raw', None) is not None:
+            u_raw = self._last_u_raw  # (B, K)
+            u_max = 0.985
+            top1_u_raw = u_raw.min(dim=-1).values  # 每个 item 最近码字的 u_raw
+            u_raw_clipped_ratio = (top1_u_raw >= u_max).float().mean().item()
+            sat_ratio = u_raw_clipped_ratio
+            u_raw_median = u_raw.median().item()
+            u_raw_p95 = u_raw.quantile(0.95).item()
+            u_raw_max = u_raw.max().item()
         margin_mean = 0.0
         margin_median = 0.0
         near_zero_margin_ratio = 0.0
-        if distances is not None and c_geom is not None:
-            sqrt_c = c_geom.sqrt().item() if hasattr(c_geom, 'sqrt') else float(c_geom) ** 0.5
-            u_max = 0.985  # poincare_distance_safe default
-            # 每个 item 的 distance 序列 → 算 saturation (距离被 clamp 到 u_max/√c 即 (2/√c)·artanh(u_max))
-            d_min = distances.min(dim=-1).values  # (B,)
-            d_max_per_item = distances.max(dim=-1).values
-            sat_per_item = (d_min / d_max_per_item.clamp_min(1e-10) > 0.99).float()  # top-1 = top-max 几乎相等 → saturation
-            sat_ratio = sat_per_item.mean().item()
+        if distances is not None:
             # top1-top2 margin (Δd = d_2nd - d_1st, 越小越易塌缩)
             sorted_d, _ = distances.sort(dim=-1)
             margin = sorted_d[:, 1] - sorted_d[:, 0]  # (B,)
@@ -518,9 +546,19 @@ class KappaAwareVectorQuantization(nn.Module):
             "top1_top2_margin_mean": margin_mean,
             "top1_top2_margin_median": margin_median,
             "near_zero_margin_ratio": near_zero_margin_ratio,
+            # Issue #115 P0-4 (2026-08-10): 新增 u_raw 详细诊断
+            "u_raw_median": u_raw_median,
+            "u_raw_p95": u_raw_p95,
+            "u_raw_max": u_raw_max,
+            "u_raw_clipped_ratio": u_raw_clipped_ratio,
             "vq_kappa_grad": getattr(self, '_last_vq_kappa_grad', 0.0),
             "struct_term": getattr(self, '_last_struct_term', 0.0),
             "struct_target": getattr(self, '_last_struct_target', 0.0),
+            # Issue #115 P0-3 (2026-08-10): boundary penalty 诊断
+            "boundary_term": getattr(self, '_last_boundary_term', 0.0),
+            "rho_boundary_median": getattr(self, '_last_rho_median', 0.0),
+            "rho_boundary_p95": getattr(self, '_last_rho_p95', 0.0),
+            "rho_boundary_gt_090": getattr(self, '_last_rho_gt_090', 0.0),
         }
 
     def init_emb(self, data):
@@ -562,9 +600,15 @@ class KappaAwareVectorQuantization(nn.Module):
 
         # 阉割后: PER_BATCH_RADIUS_MOD 已删, c 直接来自 get_c()
         c = self.get_c()
-        # Issue #76: CURV_PRIOR 下量化距离对 c stop-gradient — κ 不接收"距离随 c 减"的尺度作弊梯度.
-        # 几何 (expmap/proj/distance) 用 c_geom, κ 只从 train_step 的平滑 log-curvature 先验获得梯度.
-        c_geom = c.detach() if CURV_PRIOR else c
+        # Issue #76 历史: CURV_PRIOR 下量化距离对 c stop-gradient — 防止"距离随 c 减"尺度作弊梯度.
+        #   此处 c.detach() 让 κ 只从 REL_STRUCT/CURV_PRIOR 获得梯度, VQ loss 对 κ 恒为 0.
+        # Issue #115 P0-1 (2026-08-10): 恢复 data-driven κ signal.
+        #   实测: 保留 c_geom.detach() + 用 c_loss 算 VQ loss 时, VQ loss 输入 (latent_h, codebook_h)
+        #   都是 c_geom.detach() 算的常量, c_loss 的梯度对它们无效 → vq_κ_grad=0 (与"双 c 路径"目标相反).
+        #   修复: KAPPA_RANGE ∈ [-1, 1] (c ∈ [0.37, 2.72]) 已将"尺度作弊"幅度限定在安全区间,
+        #   故 c_geom 直接 alias c (不再 detach). κ 通过 VQ loss 接收真实数据驱动梯度.
+        c_geom = c  # alias, non-detach (P0-1 修复)
+        c_loss = c  # alias, non-detach (P0-1 修复)
         # Issue #157 关键: 每次 forward 重新投影 codebook (不 cache 旧尺度)
         latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom) if not INPUT_HYPERBOLIC else proj_to_ball(latent, c_geom)
         codebook_h = proj_to_ball(expmap0(codebook_e, c_geom), c_geom)
@@ -577,6 +621,15 @@ class KappaAwareVectorQuantization(nn.Module):
 
         # Issue #157 关键: distance 重算 (每次 forward 重算, 不 cache 旧 c)
         d = poincare_distance(x_exp, cb_exp, c_geom).squeeze(-1)
+        # Issue #115 P0-4 (2026-08-10): 计算 u_raw = √c · ‖(-x) ⊕_c y‖ (未被 clamp 的原始值),
+        #   供 diagnostics 检查真实 safe-distance saturation (top-1 u_raw ≥ u_max=0.985).
+        #   旧实现用 d_min/d_max > 0.99 间接判断 — 在 c 小 (Poincaré 球大) 时所有距离接近, 假阳性多.
+        #   u_raw ≥ u_max 直接反映"最近码字也已被 clamp 到边界"的几何饱和信号.
+        with torch.no_grad():
+            diff_raw = mobius_add(-x_exp, cb_exp, c_geom)
+            sqrt_c_raw = c_geom.sqrt()
+            u_raw = (sqrt_c_raw * diff_raw.norm(dim=-1))  # (B, K)
+            self._last_u_raw = u_raw.detach()
         # Issue #157 spec: cache 仅用于 reload 一致性测试 (写一个标志)
         # 这里默认 invalidate (true κ-aware behavior)
         self._distance_cache = d.detach()
@@ -604,10 +657,11 @@ class KappaAwareVectorQuantization(nn.Module):
         x_exp = logmap0(x_exp, c_geom)  # for residual
         cb_exp = logmap0(cb_exp, c_geom)  # for residual
         # Task 3: VQ loss 用 ball coord (与 assignment 一致)
-        commitment_loss = torch.mean(poincare_distance(x_q_h.detach(), latent_h, c_geom) ** 2)
-        codebook_loss = torch.mean(poincare_distance(x_q_h, latent_h.detach(), c_geom) ** 2)
-        # Issue #114 Task 7 (2026-08-10): 记录 VQ loss 对 κ 的梯度贡献 (因 c_geom 已 detach, 应为 0).
-        #   这是验收标准: "记录每层 κ gradient contribution 来源"
+        # Issue #115 P0-1 (2026-08-10): VQ loss 用 c_loss (non-detach) 而非 c_geom, 让 κ 接收
+        #   commitment/codebook loss 的数据驱动梯度. c_geom (assignment) 仍 detach 保证稳定.
+        commitment_loss = torch.mean(poincare_distance(x_q_h.detach(), latent_h, c_loss) ** 2)
+        codebook_loss = torch.mean(poincare_distance(x_q_h, latent_h.detach(), c_loss) ** 2)
+        # Issue #114 Task 7 (2026-08-10): 记录 VQ loss 对 κ 的梯度贡献 (P0-1 修复后应 ≠ 0).
         if c.requires_grad:
             try:
                 vq_kappa_grad = torch.autograd.grad(
@@ -631,8 +685,13 @@ class KappaAwareVectorQuantization(nn.Module):
             loss = mix_w * (commitment_loss + self.beta * codebook_loss)
         # 阉割后: CDR_ENABLED 已删 (codebook_diversity_loss 函数也已删)
         # Issue #55/v3: logmap0 输入先 proj_to_ball 兜底防 artanh(sqrt(c)*norm)>1 → NaN
-        x_q_safe = proj_to_ball(x_q, c_geom)
-        latent_safe = proj_to_ball(latent, c_geom)
+        # Issue #115 P0-2 (2026-08-10): 修复 RQ residual path 几何不一致.
+        #   旧: x_q_safe = proj_to_ball(x_q, c_geom), 其中 x_q = codebook_e[indices] (raw tangent).
+        #   proj_to_ball 把 raw tangent 错当作 ball coord 投影, logmap0 后与 latent_tangent 不在同一流形.
+        #   严格路径: e_k → exp_0^c → e_k^D (ball) → assignment → e_{k*}^D → log_0^c → tangent (residual).
+        #   修复: x_q_safe = proj_to_ball(x_q_h, c_geom) (x_q_h 已是 ball coord, proj 是 idempotent 安全网).
+        x_q_safe = proj_to_ball(x_q_h, c_geom)
+        latent_safe = proj_to_ball(latent_h, c_geom)
         # Issue #76 第二步: 相对结构目标 (曲率-尺度匹配) — κ 在 CURV_PRIOR 下的唯一非零学习信号.
         # 量化后 latent 落在球的固定比例 √c·r → REL_STRUCT_TARGET (r=‖x_q_safe‖ ≤ R=1/√c 在球内).
         # √c·r 为尺度无关比值: 不随"绝对距离随 c 减"而白嫖 (结构目标不受量化作弊影响).
@@ -783,11 +842,23 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             if LAMBDA_TR > 0 and getattr(q, "_kappa_ema_initialized", False):
                 log_c_ema = q.kappa_ema.detach().to(log_c_t.device)
                 l_kappa = l_kappa + LAMBDA_TR * (log_c_t - log_c_ema).pow(2).mean()
-            # boundary occupancy: 码字 norm > B_BOUNDARY 的比例
+            # Issue #115 P0-3 (2026-08-10): boundary penalty 用 normalized radius ρ_k = √c · ‖e_k^D‖.
+            #   旧实现用 ball norm > B_BOUNDARY=0.9 作为阈值 — 但 ball norm 不含 c 缩放,
+            #   诊断中算 ρ = √c · ball_norm, 而 loss 中只看 ball_norm, 两者在 c≠1 时错位.
+            #   修复: loss + diagnostics 共用 ρ 定义; penalty 改成连续 max(0, ρ_k - ρ_safe)².
+            #   ρ_safe=0.90 与 diagnostics 的 rho_gt_090 阈值一致.
             if LAMBDA_B > 0:
-                cb_norm = q.get_codebook().norm(dim=-1)  # (K,)
-                b_l = (cb_norm > B_BOUNDARY).float().mean()
-                l_kappa = l_kappa + LAMBDA_B * F.relu(b_l - B_TARGET).pow(2)
+                c_b = q.get_c()
+                e_ball = q.get_codebook()  # (K, D) 已在 ball
+                rho_k = torch.sqrt(c_b) * e_ball.norm(dim=-1)  # (K,) normalized radius
+                # 连续 penalty: (1/K) Σ max(0, ρ_k - ρ_safe)²
+                boundary_term = F.relu(rho_k - B_BOUNDARY).pow(2).mean()
+                l_kappa = l_kappa + LAMBDA_B * boundary_term
+                # 记录实际 boundary occupancy (供诊断)
+                q._last_rho_median = rho_k.median().item()
+                q._last_rho_p95 = rho_k.quantile(0.95).item()
+                q._last_rho_gt_090 = (rho_k > 0.90).float().mean().item()
+                q._last_boundary_term = boundary_term.detach().item()
         total_loss = total_loss + l_kappa
 
     # 阉割后: util_hinge 分支已删
@@ -1295,6 +1366,11 @@ def main():
     prev_cs = None  # for |Δlog c_l| computation
     nan_inf_detected = False  # 全程 NaN/Inf 旗标
 
+    # Issue #115 P0-5 (2026-08-10): 完整 collapse diagnostics 时序 (per-layer, per-epoch)
+    collapse_diag_log = []
+    # Issue #115 P0-5: diagnostics 调用间隔 (epoch 单位, 默认与 STAGE2_UTIL_LOG_EVERY 同步)
+    DIAG_LOG_EVERY = max(1, STAGE2_UTIL_LOG_EVERY)
+
     # 阉割后: MLR calibration 块已删 (无需 τ 校准, 走硬 argmin)
     for epoch in range(args.epochs):
         # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
@@ -1341,6 +1417,64 @@ def main():
             print(f"[Epoch {epoch}] util_per_layer_3digit={[f'{u:.3f}' for u in util_temp]} "
                   f"util_4digit={util_4digit_temp:.3f} "
                   f"(n_unique_4digit={len(np.unique(sid_temp, axis=0))}/{N_ITEMS})")
+
+        # Issue #115 P0-5 (2026-08-10): 完整 collapse diagnostics 接入 training loop.
+        # 复用 sid_temp (3-digit), 计算每层 18+ 指标 (util / entropy / top1+top5 / κ / c / norm /
+        # ρ / boundary / saturation / margin / gradient / loss breakdown).
+        # 输出: collapse_diag_log + 每 N epoch 打印 κ/c/util/ρ/saturation 趋势.
+        if is_main and (epoch % DIAG_LOG_EVERY == 0 or epoch == args.epochs - 1):
+            with torch.no_grad():
+                # sid_temp 必须存在 (由上面 STAGE2_UTIL_LOG_EVERY 块算出), 或重算
+                if 'sid_temp' not in dir() or sid_temp is None:
+                    sid_temp = infer_sid(train_model, item_emb, batch_size=args.batch_size, resolve=False)
+                # per-layer collapse diagnostics
+                layer_diags = []
+                # 全量 encode 一次获取每层 latent, 避免每层重新 encode 浪费
+                # 注意: 不能用 torch.no_grad() 包住 q(residual), 否则 c.requires_grad=False
+                # 导致 vq_κ_grad 恒为 0. 这里用 enable_grad 显式开启 autograd, 算完后再 no_grad.
+                device = next(train_mm.parameters()).device
+                with torch.enable_grad():
+                    z_all = train_mm.encoder(item_emb.to(device))  # (9922, e_dim)
+                    residual = z_all
+                    for l, q in enumerate(train_mm.vq_layers):
+                        layer_indices = torch.as_tensor(sid_temp[:, l])
+                        # 该层 forward (latent 是 residual, 已是 e_dim=32)
+                        _ = q(residual)
+                        diag = q.compute_collapse_diagnostics(
+                            indices=layer_indices,
+                            distances=q._distance_cache.detach(),
+                            c_geom=q.get_c().detach(),
+                        )
+                        layer_diags.append(diag)
+                        # 更新 residual 供下一层 (与 _rq_forward 一致: residual -= x_res)
+                        x_res = q(residual)[0].detach()
+                        residual = (residual - x_res).detach()
+                # 收集 loss breakdown (来自最近 step)
+                step_losses = m if 'm' in dir() else {}
+                collapse_diag_log.append({
+                    "epoch": epoch,
+                    "step": reg_step,
+                    "layers": layer_diags,
+                    "step_loss": step_losses.get("loss"),
+                    "step_recon_loss": step_losses.get("recon_loss"),
+                    "step_rq_loss": step_losses.get("rq_loss"),
+                })
+                # 打印关键指标趋势 (每 epoch)
+                util_l = [d["util_3digit"] for d in layer_diags]
+                kappas = [d["kappa"] for d in layer_diags]
+                cs = [d["c"] for d in layer_diags]
+                rho_med = [d["rho_normalized_median"] for d in layer_diags]
+                rho_gt_090 = [d["rho_gt_090_ratio"] for d in layer_diags]
+                sat = [d["safe_distance_saturation_ratio"] for d in layer_diags]
+                entropy = [d["assign_entropy"] for d in layer_diags]
+                margin = [d["top1_top2_margin_median"] for d in layer_diags]
+                kgrad = [d["kappa_grad_norm"] for d in layer_diags]
+                vq_kgrad = [d["vq_kappa_grad"] for d in layer_diags]
+                bterm = [d["boundary_term"] for d in layer_diags]
+                print(f"[P0-5 Diag Ep{epoch}] util={util_l} κ={kappas} c={cs} "
+                      f"ρ_med={rho_med} ρ>0.9={rho_gt_090} "
+                      f"sat={sat} H={entropy} margin={margin} "
+                      f"κ_grad={kgrad} vq_κ_grad={vq_kgrad} boundary={bterm}")
 
         # 阉割后: REVIVE block + τ re-calibrate block 已删
         # Issue #39: per-epoch audit (c_l, Δlog c_l, churn, prefix change, boundary, NaN/Inf)
@@ -1433,6 +1567,9 @@ def main():
                                 for q in train_mm.vq_layers],
             "kappa_anchors_config": KAPPA_ANCHORS,
             "kappa_anchor_range": KAPPA_ANCHOR_RANGE,
+            "kappa_min": KAPPA_MIN,  # Issue #115 P1
+            "kappa_max": KAPPA_MAX,  # Issue #115 P1
+            "curvature_mode": CURVATURE_MODE,  # Issue #115 P1
             "kappa_ema_beta": KAPPA_EMA_BETA,
             "kappa_trust_region": KAPPA_TRUST_REGION,
             "kappa_trust_region_lambda": KAPPA_TRUST_REGION_LAMBDA,
@@ -1460,6 +1597,22 @@ def main():
                     "n_audit_epochs": len(epoch_audit),
                 }, f, indent=2)
             print(f"[Issue41] audit JSON saved: {audit_path} ({len(epoch_audit)} epochs)")
+
+        # Issue #115 P0-5 (2026-08-10): 落盘 collapse diagnostics 时序 (per-layer 全指标)
+        if collapse_diag_log:
+            diag_path = PRODUCT_DIR / "issue115_p05_collapse_diag.json"
+            with open(diag_path, "w") as f:
+                json.dump({
+                    "config": {
+                        "kappa_anchors": KAPPA_ANCHORS,
+                        "kappa_min": KAPPA_MIN,
+                        "kappa_max": KAPPA_MAX,
+                        "diag_log_every": DIAG_LOG_EVERY,
+                    },
+                    "n_epochs_logged": len(collapse_diag_log),
+                    "epochs": collapse_diag_log,
+                }, f, indent=2, default=str)
+            print(f"[P0-5] collapse diag JSON saved: {diag_path} ({len(collapse_diag_log)} epochs)")
 
     if is_main:
         # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
