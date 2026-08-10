@@ -79,6 +79,8 @@ from taskA.stage2 import (
     E_DIM,
     ENCODER_LAYERS,
     LR,
+    WARMUP_EPOCHS,
+    CURV_AWARE,
     SEED,
     SK_EPSILONS,
     FIX_C,
@@ -183,7 +185,37 @@ def main():
     #   见 stage2.py KappaAwareVectorQuantization.forward() line 858-862 + HRQVAE.forward() line 1035-1047。
     model.train()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args_pre.lr)
+    # Issue #119 Step 3 (2026-08-10): optimizer 对齐 production Stage2 (train_step 完整路径).
+    #   - AdamW (not Adam), weight_decay=0.0
+    #   - 3 param groups: other_params / kappa_params (lr*3) / mix_params (lr*1)
+    #   - CURV_AWARE=True (production default): 2 optimizers (opt 先 step, opt_kappa 后 step)
+    #   - per-group base_lr + per-epoch linear warmup (WARMUP_EPOCHS=20) + linear decay
+    #   见 taskA/stage2.py line 1850-1870 (optimizer construction) + line 1904-1914 (LR schedule)
+    kappa_params = [q.kappa_drift for q in model.vq_layers]
+    mix_params = [q.mix_weight for q in model.vq_layers]
+    other_params = [p for p in model.parameters()
+                    if not any(p is q.kappa_drift or p is q.mix_weight for q in model.vq_layers)]
+    if CURV_AWARE:
+        opt = torch.optim.AdamW([{"params": other_params, "lr": args_pre.lr}], weight_decay=0.0)
+        opt_kappa = torch.optim.AdamW([
+            {"params": kappa_params, "lr": args_pre.lr * 3.0},   # Issue #55/v3: 3x 补偿梯度消失
+            {"params": mix_params, "lr": args_pre.lr * 1.0},     # Issue #55/v3: 1x 防 latent norm 冲 Poincaré 边界
+        ], weight_decay=0.0)
+    else:
+        opt = torch.optim.AdamW([
+            {"params": other_params, "lr": args_pre.lr},
+            {"params": kappa_params, "lr": args_pre.lr * 3.0},
+            {"params": mix_params, "lr": args_pre.lr * 1.0},
+        ], weight_decay=0.0)
+        opt_kappa = None
+    for g in opt.param_groups:
+        g["base_lr"] = g["lr"]
+    if CURV_AWARE:
+        for g in opt_kappa.param_groups:
+            g["base_lr"] = g["lr"]
+    print(f"[smoke_c3_phase2] optimizer: AdamW, base_lr={args_pre.lr}, "
+          f"kappa_lr={args_pre.lr*3.0}, mix_lr={args_pre.lr*1.0}, "
+          f"CURV_AWARE={CURV_AWARE}, WARMUP_EPOCHS={WARMUP_EPOCHS}")
 
     # 训练循环
     training_log = []
@@ -194,6 +226,18 @@ def main():
     relational_batches_failed = 0
 
     for epoch in range(args_pre.epochs):
+        # Issue #119 Step 3 (2026-08-10): per-epoch LR schedule (warmup + linear decay)
+        #   对齐 train_hrqvae.py baseline + production Stage2 line 1906-1914
+        if epoch < WARMUP_EPOCHS:
+            lr_scale = (epoch + 1) / WARMUP_EPOCHS
+        else:
+            lr_scale = max(0.0, 1.0 - (epoch - WARMUP_EPOCHS) / max(1, args_pre.epochs - WARMUP_EPOCHS))
+        for g in opt.param_groups:
+            g["lr"] = g["base_lr"] * lr_scale
+        if CURV_AWARE:
+            for g in opt_kappa.param_groups:
+                g["lr"] = g["base_lr"] * lr_scale
+
         # P0-1: build global relation bank (每个 epoch)
         relation_bank = None
         if RELATIONAL_TO_KAPPA:
@@ -220,7 +264,9 @@ def main():
             batch_idx_np = perm[start:end]
             batch_idx_t = torch.as_tensor(batch_idx_np, device=device)
 
-            optimizer.zero_grad()
+            opt.zero_grad()
+            if CURV_AWARE:
+                opt_kappa.zero_grad()
             x_recon, rq_loss, indices, z_q, z = model(batch)
             # Issue #119 (2026-08-10): 复用 taskA.stage2.poincare_recon_loss (与正式 Stage2 完全一致)
             recon_loss = poincare_recon_loss(x_recon, batch)
@@ -281,7 +327,9 @@ def main():
                 err = abs(total_g_vals[l] - summed) / denom
                 epoch_recon_err[l] += err
 
-            optimizer.step()
+            opt.step()
+            if CURV_AWARE:
+                opt_kappa.step()
 
             for l in range(len(CODEBOOK_SIZES)):
                 epoch_vq_grad[l] += vq_g_vals[l]
