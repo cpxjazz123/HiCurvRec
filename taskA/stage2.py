@@ -1424,8 +1424,7 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
                                     item_emb_all: Optional[torch.Tensor] = None,
                                     relation_bank: Optional[List[torch.Tensor]] = None,
                                     use_sk: bool = True,
-                                    d_ref: Optional[np.ndarray] = None,
-                                    encoded_z: Optional[torch.Tensor] = None) -> dict:
+                                    d_ref: Optional[np.ndarray] = None) -> dict:
     """Issue #128 Item 5 (2026-08-10): 抽 precheck 与 train_step 的 loss computation
     共享路径, 确保 precheck 看到的 κ grad path 与 train_step 完全一致.
 
@@ -1566,10 +1565,13 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
                 q._last_branch_kappa_mean = float(q.delta_kappa.weight.mean().item())
 
     # ---- Issue #138 v22: L_geo (Stress between per-layer mean c distance vs D_ref) ----
+    #   encoded_z = forward 返回的 z (B, e_dim) — encoder 输出切空间向量
+    #   batch_idx = global item indices (R-Q 训练循环已知)
+    #   d_ref = precomputed (N, N) cosine kNN shortest-path distance matrix
     l_geo_total = torch.zeros((), device=batch.device)
     if BRANCH_CURVATURE_ENABLED and L_GEO_LAMBDA > 0 and d_ref is not None \
-            and encoded_z is not None and batch_idx is not None and len(batch_idx) >= 2:
-        l_geo_total = compute_l_geo_from_indices(encoded_z, batch_idx, d_ref, mm)
+            and z is not None and batch_idx is not None and len(batch_idx) >= 2:
+        l_geo_total = compute_l_geo_from_indices(z, batch_idx, d_ref, mm)
         if not torch.isfinite(l_geo_total):
             raise RuntimeError(f"L_geo 非 finite: {l_geo_total.item()}")
         total_loss = total_loss + l_geo_total
@@ -1586,7 +1588,8 @@ def compute_stage2_loss_components(model: KappaAwareHRQVAE, batch: torch.Tensor,
 def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx, nn_idx,
                                        item_emb_all, opt, kappa_log: list,
                                        reg_step: int, opt_kappa: Optional[torch.optim.Optimizer] = None,
-                                       relation_bank: Optional[List[torch.Tensor]] = None):
+                                       relation_bank: Optional[List[torch.Tensor]] = None,
+                                       d_ref: Optional[np.ndarray] = None):
     """Issue #157 关键: 在每个 opt.step() 后, 强制 recompute codebook + 失效 cache + 记录重校准前后差异.
 
     Issue #119 P0-1/P0-4/P0-5 (2026-08-10):
@@ -1603,6 +1606,7 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
     components = compute_stage2_loss_components(
         model, batch, batch_idx, item_emb_all,
         relation_bank=relation_bank,
+        d_ref=d_ref,
     )
     out, rq_loss, indices, z_q, z = (
         components["out"], components["rq_loss"], components["indices"],
@@ -2096,6 +2100,14 @@ def main():
                 print(f"[v22 D_ref] 已就绪: {D_REF_NPZ}", flush=True)
         else:
             raise RuntimeError(f"D_ref precompute 失败: {d_ref_npz_path} 未生成")
+
+    # Issue #138 v22: 加载 d_ref_loaded 给 train_step (L_geo 用)
+    d_ref_loaded = None
+    if BRANCH_CURVATURE_ENABLED and L_GEO_LAMBDA > 0 and D_REF_NPZ and os.path.exists(D_REF_NPZ):
+        d_ref_loaded = np.load(D_REF_NPZ)["d_ref"]
+        if _is_main_local:
+            print(f"[v22 D_ref] loaded {d_ref_loaded.shape} {d_ref_loaded.dtype}, "
+                  f"max={d_ref_loaded.max():.3f}", flush=True)
     else:
         if _is_main_local:
             print(f"[v22] BRANCH_CURVATURE_ENABLED={BRANCH_CURVATURE_ENABLED}, L_GEO_LAMBDA={L_GEO_LAMBDA}, "
@@ -2422,10 +2434,13 @@ def main():
             else:
                 batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
             batch = item_emb[batch_idx]
+            # Issue #138 v22 (2026-08-10): 加载 d_ref (numpy array) 传 train_step → L_geo
+            d_ref_np = d_ref_loaded if BRANCH_CURVATURE_ENABLED and L_GEO_LAMBDA > 0 else None
             m = train_step_with_sync_recalibration(train_model, batch, batch_idx, nn_idx, item_emb,
                                                    opt, kappa_log, reg_step,
                                                    opt_kappa=opt_kappa if CURV_AWARE else None,
-                                                   relation_bank=relation_bank)
+                                                   relation_bank=relation_bank,
+                                                   d_ref=d_ref_np)
             epoch_loss += m["loss"]
             if is_main:
                 train_curve.append({"step": reg_step, "epoch": epoch, **m})
