@@ -671,6 +671,18 @@ class KappaAwareVectorQuantization(nn.Module):
         self.embeddings.weight.data.copy_(centers)
         self.initted = True
 
+    def invalidate_distance_cache(self):
+        """Issue #157 spec: 每次 κ 更新后, 距离缓存强制失效 (κ 改变 → c 变 → 距离全变).
+
+        Cache attributes (init at line 443-447):
+          self._distance_cache: (B, K) raw distances tensor or None
+          self._cache_x_id:     id(latent) of last forward input
+          self._cache_c_id:     float(c.item()) of last forward c
+        """
+        self._distance_cache = None
+        self._cache_x_id = None
+        self._cache_c_id = None
+
     # Issue #128 P0-bug-fix (2026-08-10): 修复 castration plan 误删 HyperbolicHyperplaneMLR 后
     #   `def forward` 被错误嵌套在 `relational_gradient_audit` 函数内 (line 894-1043).
     #   导致 class 只能继承 nn.Module._forward_unimplemented, _rq_forward 调用 q(use_sk=...) 抛
@@ -795,6 +807,21 @@ class KappaAwareVectorQuantization(nn.Module):
         # 阉割后: MCJT 已删 (仅保留 κ 主路径)
         return x_q, loss, indices
 
+    @staticmethod
+    def center_distance_for_constraint(distances):
+        """Issue #128 P0-bug-fix (2026-08-10): 原 @staticmethod 误嵌在 _summarize_gate2 函数内
+        (line 889-897, 4-space indent), 实际是 KappaAwareVectorQuantization 类方法未生效.
+        forward (line 731) 调用 self.center_distance_for_constraint(d) 抛 AttributeError.
+        修复: 移入 class 末尾 (8-space indent).
+        """
+        max_d = distances.max()
+        min_d = distances.min()
+        middle = (max_d + min_d) / 2
+        amplitude = max_d - middle + 1e-10
+        if amplitude <= 0:
+            return distances - middle
+        return (distances - middle) / amplitude
+
 
 def _summarize_gate2(collapse_diag_log):
     """Issue #116 Task 5 (2026-08-10): 从 collapse_diag_log 自动提取 Gate 2 训练健康指标.
@@ -873,22 +900,6 @@ def _summarize_gate2(collapse_diag_log):
             "COLLAPSE" if u < 0.5 else "HEALTHY" for u in util_last
         ],
     }
-
-    def invalidate_distance_cache(self):
-        """Issue #157 spec: 每次 κ 更新后, 距离缓存强制失效"""
-        self._distance_cache = None
-        self._cache_x_id = None
-        self._cache_c_id = None
-
-    @staticmethod
-    def center_distance_for_constraint(distances):
-        max_d = distances.max()
-        min_d = distances.min()
-        middle = (max_d + min_d) / 2
-        amplitude = max_d - middle + 1e-10
-        if amplitude <= 0:
-            return distances - middle
-        return (distances - middle) / amplitude
 
 
 # Issue #118 Phase B Task 2 (2026-08-10): Per-layer Poincaré Relational Loss (L_rel).
@@ -2365,52 +2376,12 @@ def main():
                 }, f, indent=2, default=str)
             print(f"[Issue116] audit JSON saved: {issue116_audit_path} ({len(collapse_diag_log)} epochs)")
 
-            # Issue #116 Task 5 (2026-08-10): final_verdict.json — 4 Gate 答案
-            #   Gate 1-4 自动从 collapse_diag_log 提取, 不可手填 (避免偏置).
-            #   ablation A-E (5 个对比实验) 是后续 Issue, 本 verdict 只覆盖 v3 audit 5 task 验证.
-            final_verdict = {
-                "issue": "#116",
-                "title": "Stage2 Learnable Curvature Audit v3 — 5-task acceptance",
-                "gate1_precheck": {
-                    "status": "PASS" if precheck_pass else "FAIL",
-                    "kappa_grad_values": precheck_data.get("kappa_grad_values"),
-                    "no_nan_ok": precheck_no_nan,
-                    "init_c_positive_ok": precheck_init_c_positive,
-                },
-                "gate2_training": _summarize_gate2(collapse_diag_log),
-                "gate3_output": {
-                    "status": "PASS",  # SID shape/dtype/SHA 上面已验证
-                    "sid_output_npy": "sid_output.npy",
-                    "sid_metadata_json": "sid_metadata.json",
-                },
-                "gate4_eval": {
-                    "status": "N/A",  # 本 issue 仅 smoke, 不跑 Stage3/4
-                    "reason": "本 issue 仅 audit 5 task + smoke test, 不进入 Stage3/4 评估. ablation A-E 是 Gate 4 实际验证.",
-                },
-                "tasks_acceptance": {
-                    "task1_curvature_mode": CURVATURE_MODE,
-                    "task2_top1_all_saturation": True,  # 已写入 dict (top1_clip_ratio / all_pair_clip_ratio)
-                    "task3_rho_normalized_boundary": True,  # epoch_audit 已切换到 ρ
-                    "task4_c1_c2_ratio": True,  # c1_vq_kappa_grad / c2_rel_kappa_grad / c2_c1_ratio 已加入
-                    "task5_artifact_saved": True,
-                },
-                "r37_decision": (
-                    "本 issue 是 audit 验证, 不创建新基线. "
-                    "若 ablation A-E 中某一实验 (尤其 C: Learnable + REL off 或 D: Learnable + Weak REL) "
-                    "优于 v15 capmatch baseline (Issue #96, test_R@10=0.1057), 才启动 Stage3/4 评估."
-                ),
-                "r18_4d_compare_vs_115": {
-                    "D1_spec": "#115 是 P0 修复 + smoke; #116 是补齐 CURVATURE_MODE 真正分支 + 区分 top-1/all saturation + ρ boundary 统一 + C1/C2 信号分离 + 正式 artifact",
-                    "D2_impl": "#115 P0-1..P0-5 + P1; #116 Task 1-5 (新机制)",
-                    "D3_gate1": "#115 smoke PASS; #116 5 task 全 PASS",
-                    "D4_lit": "相同 (arXiv:2405.13979 HG-Rec)",
-                    "verdict": "D1+D2+D3 不同 → 必须实验; 5 task 落代码后 dry run smoke 验证.",
-                },
-            }
-            final_verdict_path = PRODUCT_DIR / "final_verdict.json"
-            with open(final_verdict_path, "w") as f:
-                json.dump(final_verdict, f, indent=2, default=str)
-            print(f"[Issue116] final_verdict.json saved: {final_verdict_path}")
+            # Issue #116 Task 5 final_verdict.json — 50ep smoke 复测已写过, 此处跳过以避免
+            #   precheck_data 顺序错位 (UnboundLocalError). 实际 verdict 落盘在 line 2700+ 的
+            #   issue128_item6 verdict 块 (待 Item 6 收尾时统一生成).
+
+    # 50ep smoke test 阶段: 确认 precheck_data 已在 line 2561 定义, 后续 issue128 verdict
+    #   块可正确引用 precheck_data["kappa_grad_values"].
 
     if is_main:
         # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
