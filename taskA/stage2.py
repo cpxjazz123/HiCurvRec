@@ -248,6 +248,16 @@ B_BOUNDARY = 0.9  # norm 超过此值视为边界占用 (Poincaré 球面内 < 1
 # Issue #55/v5→v7f: learnable κ 稳定 (u clamp 0.985 防边界梯度爆炸)
 SAFE_DISTANCE = True
 
+# Issue #119 P0-1 (2026-08-10): 切断 VQ curvature-scale shortcut.
+#   机制: poincare_distance_safe 中 u=√c·‖diff‖ 被 clamp 到 u_max=0.985.
+#     当 u_raw ≥ u_max (clipping 区), artanh(u_max) 为常数 ⇒ d_c ≈ constant/√c
+#     ⇒ L_VQ ∝ 1/c. κ range [-1, 1] / c = e^κ ⇒ shortcut 天然推 κ 到上界.
+#     chain: κ↑ → distance saturation → assignment discrimination↓ → collapse.
+#   修复: poincare_distance_safe 在 clipping 区 detach √c, ∂L_VQ/∂c = 0 when clipped.
+#     非 clipping 区行为完全不变 (gradient 通过 u_raw + artanh 正常流动).
+#   False 用于 ablation A/B (gate on vs off), 不参与正式基线.
+P0_1_SCALE_SHORTCUT_GATE = True
+
 # 默认 GPU / 产物目录 (launch 脚本可通过 --gpu / --product_dir 覆盖)
 DEFAULT_GPU = 0
 DEFAULT_PRODUCT_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v8_issue44"
@@ -327,12 +337,24 @@ if SAFE_DISTANCE:
 
     def poincare_distance_safe(x, y, c, u_max=0.985):
         """learnable κ 稳定版 poincare 距离: u=sqrt(c)·norm 截断到 u_max, artanh 梯度有界,
-        从源头杜绝边界梯度爆炸 (上游 artanh 只 clamp 1-1e-10, u→1 时梯度 ~5e5 爆炸)."""
+        从源头杜绝边界梯度爆炸 (上游 artanh 只 clamp 1-1e-10, u→1 时梯度 ~5e5 爆炸).
+
+        Issue #119 P0-1 (2026-08-10): 在 u_raw ≥ u_max clipping 区, 切断 VQ curvature-scale shortcut.
+          详见模块顶部 P0_1_SCALE_SHORTCUT_GATE 注释. 修复: in_clip 区 detach sqrt_c,
+          ∂L_VQ/∂c = 0 when clipped. 非 clipping 区行为完全不变.
+        """
         diff = mobius_add(-x, y, c)
         sqrt_c = c ** 0.5
         norm = diff.norm(dim=-1, keepdim=True).clamp_min(_eps(diff))
-        u = (sqrt_c * norm).clamp(max=u_max)
-        return (2.0 / sqrt_c) * artanh(u)
+        u_raw = sqrt_c * norm
+        # P0-1: in_clip 区切断 c 通道 (curvature-scale shortcut 防护)
+        if P0_1_SCALE_SHORTCUT_GATE:
+            in_clip = (u_raw >= u_max)
+            sqrt_c_safe = torch.where(in_clip, sqrt_c.detach(), sqrt_c)
+        else:
+            sqrt_c_safe = sqrt_c
+        u = u_raw.clamp(max=u_max)
+        return (2.0 / sqrt_c_safe) * artanh(u)
 
     # learnable κ 主路径: 全局替换 poincare_distance 为稳定版 (所有调用点自动生效)
     poincare_distance = poincare_distance_safe
