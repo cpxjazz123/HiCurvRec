@@ -82,6 +82,7 @@ from taskA.stage2 import (
     RELATIONAL_NEG_N,
     RELATIONAL_NEG_EXCL,
     poincare_relational_loss_per_layer,
+    poincare_recon_loss,
     poincare_distance_safe,
     proj_to_ball,
     expmap0,
@@ -216,7 +217,8 @@ def main():
             optimizer.zero_grad()
             # forward
             x_recon, rq_loss, indices, z_q, z = model(batch)
-            recon_loss = torch.mean((x_recon - batch) ** 2)
+            # Issue #119 (2026-08-10): 复用 taskA.stage2.poincare_recon_loss (与正式 Stage2 完全一致)
+            recon_loss = poincare_recon_loss(x_recon, batch)
             total_loss = recon_loss + rq_loss
 
             l_rel_total = torch.zeros((), device=device)

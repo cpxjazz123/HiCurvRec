@@ -111,6 +111,7 @@ from taskA.stage2 import (
     RADIAL_TO_KAPPA,
     RELATIONAL_TO_KAPPA,
     RELATIONAL_TAU,
+    poincare_recon_loss,
     RELATIONAL_LAMBDA,
     RELATION_GRAPH_NPZ,
     poincare_relational_loss_per_layer,
@@ -220,7 +221,8 @@ def main():
             batch_idx = torch.as_tensor(perm[start:end], device=device)  # for relation graph lookup
             optimizer.zero_grad()
             x_recon, rq_loss, indices, z_q, z = model(batch)
-            recon_loss = torch.mean((x_recon - batch) ** 2)
+            # Issue #119 (2026-08-10): 复用 taskA.stage2.poincare_recon_loss (与正式 Stage2 完全一致)
+            recon_loss = poincare_recon_loss(x_recon, batch)
             total_loss = recon_loss + rq_loss
             # Issue #118: C3 加 L_rel
             l_rel_val = 0.0
