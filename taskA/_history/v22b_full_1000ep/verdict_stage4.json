@@ -1,0 +1,88 @@
+{
+  "issue": "#138",
+  "lineage": "v22b_branch_curvature_from_v15_capmatch",
+  "stage": "Stage4 evaluation complete",
+  "gate4_decision": "NO-GO",
+  "r37_decision": "v22.b Branch-wise Learnable Curvature test_R@10=0.1013 < v15 capmatch baseline 0.1057 (-0.0044, -4.16%), 回退至 v15 capmatch 重新创新",
+  "stages": {
+    "stage2_v22b_1000ep": {
+      "status": "PASS",
+      "product_dir": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/v22b_full_1000ep",
+      "ckpt": "hrqvae_kappa_sync.ckpt",
+      "final_kappas": [-0.094, 1.05, 0.91],
+      "final_cs": [0.87, 0.9092, 0.9238],
+      "util_per_layer": [1.0, 1.0, 1.0],
+      "util_4digit": 1.0,
+      "branch_curvature_std_per_layer": [0.0, 0.158, 0.183],
+      "n_kappa_updates": 1800,
+      "gate2_pass": true,
+      "sid_sha256_file": "332c948cce329944ee6a879636e91d261377b04766eec47df5b1fff9edc6eec5",
+      "sid_sha256_array": "c4b3d250080a55d1df6a6b0991c32df4c1db0e72f88e7ddeaf736a3e29cebe04"
+    },
+    "stage3_v22b_200ep": {
+      "status": "PASS",
+      "ckpt": "HG_Rec_best.pth",
+      "best_epoch": 199,
+      "best_valid_R10": 0.1258,
+      "best_valid_NDCG20": 0.1018,
+      "final_train_loss": 2.6019,
+      "v15_capmatch_valid_R10": 0.1267,
+      "valid_delta_vs_v15": "-0.0009 (-0.7%)"
+    },
+    "stage4_v22b_beam20": {
+      "status": "PASS",
+      "ckpt": "HG_Rec_best.pth",
+      "beam_size": 20,
+      "test_R5": 0.0805,
+      "test_R10": 0.1013,
+      "test_R20": 0.1278,
+      "test_NDCG5": 0.0687,
+      "test_NDCG10": 0.0753,
+      "test_NDCG20": 0.0821,
+      "n_eval": 24772,
+      "t_eval_s": 20.6,
+      "v15_capmatch_test_R10": 0.1057,
+      "test_R10_vs_v15": "-0.0044 (-4.16%)",
+      "rule": "R35 beam=20 单 ckpt 严格使用",
+      "git_HEAD_at_launch": "13abae4",
+      "done_at": "2026-08-10 23:43:27",
+      "verdict_json": "taskA/_history/v22b_full_1000ep/eval/eval_test.json"
+    }
+  },
+  "diagnosis": {
+    "valid_test_gap_widened": "valid_R10 落后 v15 -0.7%, 但 test_R10 落后 v15 -4.16% — v22.b valid/test gap 比 v15 baseline 更大 (-3.46% valid→test 落差)",
+    "branch_curvature_actual_heterogeneity": "L1 std(Δκ)=0.158, L2 std(Δκ)=0.183 — branch curvature 实际异质化 (Plan A 路径 ✓), 但 effective per-layer mean c=[0.87, 0.91, 0.92] 比 v15 baseline [1.355, 6.002, 4.394] 显著偏小 → Stage3 训练侧 codebook 几何被压, HAB λ_max=0.20 + α_init=-20 在小 c 下放大 noise, test 集放大反映出来",
+    "stage2_root_cause": "v22.b 走 Branch-wise curvature 但 L0 Δκ≈0 (std=0.0) + L_geo Stress 损失压低 per-layer mean c (避免 per-layer c 偏离 1 太多, 反向导致几何过压). κ_path 最终 L0=-0.094 → c0=0.91 远低于 v15 c0=1.355. c 偏小 + per-branch 异质化让 codebook 量化中心漂移",
+    "stage3_root_cause": "Stage3 best_valid_R10=0.1258 仅落后 v15 0.7%, 但 HAB additive bias + branch-perturbation 在 c<1 区间放大小 c 区域 noise, test 集比 valid 集敏感 → test 跌 -4.16%",
+    "stage4_root_cause": "Stage4 单 ckpt + beam=20 正常 (无 bug), test_R10=0.1013 直接反映 Stage3 ckpt 在测试集的真实性能"
+  },
+  "r37_required_next_step": "v22.b lineage 终止, v22.b 产物 (Stage3 ckpt / Stage4 raw_predictions / verdict) 留作记录. 下一版本必须以 v15 capmatch Stage2 为唯一基础 (Issue #96 / Issue #157, test_R@10=0.1057). 禁止 v23 = v15 + v22 叠加. 同时禁止 v23 在 v22.b 偏小的 per-layer mean c 基础上叠加 L_geo (L_geo 在 v22.b 中已显示压低 per-layer mean c 的反向效果, v23 需另寻 geometry-driven signal 而非 Stress-based).",
+  "abandoned_applicable_records": [
+    "taskA/_history/v22b_full_1000ep/HG_Rec_best.pth",
+    "taskA/_history/v22b_full_1000ep/sid_output.npy",
+    "taskA/_history/v22b_full_1000ep/raw_predictions.npz",
+    "taskA/_history/v22b_full_1000ep/eval/eval_test.json",
+    "taskA/_history/v22b_full_1000ep/verdict.json (Stage3)",
+    "taskA/_history/v22b_full_1000ep/verdict_stage4.json (Stage4 R37)",
+    "taskA/_history/v22b_full_1000ep/hrqvae_kappa_sync.ckpt",
+    "taskA/_history/v22b_full_1000ep/d_ref.npz",
+    "taskA/_history/v22b_full_1000ep/stage4_run.log",
+    "taskA/_history/v22b_full_1000ep/eval/_STAGE4_PID"
+  ],
+  "r37_compliance": "严格遵守 R37: v22.b 比 v15 差 (-4.16%) 立即终止 v22.b lineage, 产物仅留作记录. v23 必须以 v15 capmatch 为唯一基础, 禁止 v22 + v15 叠加, 禁止在 v22.b 偏小的 per-layer mean c 基础上叠加 L_geo 反向路径.",
+  "commit_metadata": {
+    "stage2_v22b_commits": [
+      "13abae4 (Issue #138 v22.b Plan A 完整版: forward 真正消费 per-branch c)",
+      "f0c340b (Merge branch 'v22_branch_curvature' into main)",
+      "92d9b1d (Issue #138 v22 Phase 1.5 hotfix: forward 加 branch_idx 占位)",
+      "9863518 (Issue #138 v22 Phase 1.5 R37 NO-GO: branch_curvature_std_max=0.0)",
+      "20e0f2f (Issue #138 v22 Phase 1.5: L_geo 真正接入 train_step)"
+    ],
+    "stage4_attribution": {
+      "stage4_wrapper_commit": "13abae4 (taskA/stage4.py 路径 patch → v22b_full_1000ep + git HEAD 记录)",
+      "stage4_eval_launch_time": "2026-08-10 23:41",
+      "stage4_eval_done_time": "2026-08-10 23:43:27",
+      "git_HEAD_at_eval_launch": "13abae42408cd669bbb5fa8af55c9d4348b89bd1"
+    }
+  }
+}
