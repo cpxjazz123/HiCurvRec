@@ -65,17 +65,27 @@ TRITON_CACHE_DIR = "/home/wlia0047/.triton/cache_task448"
 # a496c0bce829344231e11ef4b3c7e1fcd5cf5ad4e16cbf809287993eaa8dfae; #56 验收 R@10=0.9575)
 # Issue #58: Stage1 残差头不再 F.normalize, 直接输出切空间 h+α·u (任意范数, 保留径向信息)
 # Stage2 第一层用 expmap0(·, c_0) 映射到 Poincaré 球做 assignment, 残差回到切空间 u_1 = u_0 - e_{0,a}
-ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue96_v74_repro/item_emb_baseline_u32.npy"  # Stage 1 实时产出 (R_MODE=fixed, R_MAX=1.0, F.normalize norm=1.0, e_dim=768, 9922 items, parquet SHA=96a7109e14b6b93ce1ae2c628fa1df9a06f9d177673d6ba1f78c5db98aea5cea)
+
+# Issue #119 Item 1 (2026-08-10): Stage2 输入 provenance 严格化 (R7 禁 fallback).
+#   - 默认 ITEM_EMB_NPY 改为当前 canonical Stage1 artifact (taskA/_data/Instruments/...)
+#   - 同时记录 parquet (item-IDs source of truth) + npy (embeddings) 双路径
+#   - 启动时强制 SHA + shape 三项验证 (npy SHA / parquet SHA / (N_ITEMS, EMB_DIM))
+#   - row_index_aligned 由真实验证结果决定, 禁硬编码 True
+#   - INPUT_PROJ_ENABLED 反映事实: 当前 Stage2 入口 MLP encoder 直接吃切空间向量, 不投影
+ITEM_EMB_NPY = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb_baseline.npy"
+ITEM_EMB_PARQUET = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_data/Instruments/item_emb_baseline_backup.parquet"
+# Stage1 verdict.json.output_sha256 (parquet) = canonical source-of-truth
+ITEM_EMB_EXPECTED_SHA256_NPY = "96a7109e14b6b93ce1ae2c628fa1df9a06f9d177673d6ba1f78c5db98aea5cea"
+ITEM_EMB_EXPECTED_SHA256_PARQUET = "fd482f3d224299d9f96ce4aaba6a08d18f9e64d40e2cc008788a6d940481cdf9"
 
 # 数据集元数据
 N_ITEMS = 9922
 EMB_DIM = 768
 N_HIERARCHIES = 3
 
-# Issue #57: 输入投影 — Stage 1 #56 残差 Lorentz 头导出做 L2 Normalize (norm=1) → 单位球面点缺乏
-# 层级结构 + Euclidean 距离量化难以分层. 在 Stage 2 入口加 Linear+Tanh 投影打破 L2 锁定, 给 codebook
-# 非单位球训练空间. 输入 EMB_DIM=768 → PROJ_DIM=512, 投影后 norm 散布, 深层 util 健康.
-INPUT_PROJ_ENABLED = True
+# Issue #57 输入投影历史: Linear+Tanh(768→512) 实际未启用 (代码仅 print stats). 改为 False 反映事实,
+# 避免后续 ablation 误判实验配置. INPUT_PROJ_DIM 保留以防旧 ckpt reload (legacy compat).
+INPUT_PROJ_ENABLED = False
 INPUT_PROJ_DIM = 512
 
 # 量化器结构
@@ -1750,7 +1760,32 @@ def main():
 
     item_emb_sha = sha256_file(ITEM_EMB_NPY)
     if is_main:
-        print(f"item_emb_u32.npy SHA256: {item_emb_sha[:32]}...\n")
+        print(f"item_emb.npy SHA256: {item_emb_sha}\n")
+
+    # Issue #119 Item 1 (2026-08-10): 三项 provenance 严格验证 (R7 禁 fallback).
+    #   - npy SHA 必须等于 ITEM_EMB_EXPECTED_SHA256_NPY (canonical Stage1 artifact)
+    #   - parquet SHA 必须等于 ITEM_EMB_EXPECTED_SHA256_PARQUET (item-IDs source of truth)
+    #   - shape 必须 == (N_ITEMS, EMB_DIM) = (9922, 768)
+    # 不匹配立即 raise, 禁静默 fallback (R2)
+    provenance_fail = []
+    if item_emb_sha != ITEM_EMB_EXPECTED_SHA256_NPY:
+        provenance_fail.append(
+            f"npy SHA mismatch: expected={ITEM_EMB_EXPECTED_SHA256_NPY[:32]}..., actual={item_emb_sha[:32]}..."
+        )
+    if os.path.exists(ITEM_EMB_PARQUET):
+        item_emb_parquet_sha = sha256_file(ITEM_EMB_PARQUET)
+        if item_emb_parquet_sha != ITEM_EMB_EXPECTED_SHA256_PARQUET:
+            provenance_fail.append(
+                f"parquet SHA mismatch: expected={ITEM_EMB_EXPECTED_SHA256_PARQUET[:32]}..., actual={item_emb_parquet_sha[:32]}..."
+            )
+    else:
+        provenance_fail.append(f"parquet missing: {ITEM_EMB_PARQUET}")
+    if provenance_fail:
+        raise RuntimeError(
+            "P0 Item 1 FAIL: Stage2 输入 provenance 不匹配 (R7 禁 fallback).\n"
+            + "\n".join(f"  - {msg}" for msg in provenance_fail)
+            + "\n如需更新 baseline, 请重新跑 stage1 并更新 ITEM_EMB_EXPECTED_SHA256_*."
+        )
 
     # Load item embeddings (每卡全量加载, 9922×768 小; DDP 下各自 device)
     if is_main:
@@ -1760,27 +1795,59 @@ def main():
     if is_main:
         print(f"item_emb shape: {item_emb.shape}\n")
 
+    # shape 三项验证 (第四项)
+    expected_shape = (N_ITEMS, EMB_DIM)
+    if item_emb_full.shape != expected_shape:
+        raise RuntimeError(
+            f"P0 Item 1 FAIL: Stage2 输入 shape 不匹配 (R7).\n"
+            f"  expected: {expected_shape}, actual: {item_emb_full.shape}"
+        )
+
     # Issue #58: 保留 Stage1 #58 切空间向量 (任意范数, 保留径向) — 直接喂 Stage2 MLP encoder,
     # encoder 内部走欧氏特征提取, VQ 内部用 Poincaré 距离. 不预先 expmap0 (会再次塌缩到单位球面).
+    # INPUT_PROJ_ENABLED=False (Item 1): 反映事实 — Stage2 入口不投影.
     item_emb_in_dim = EMB_DIM
     if INPUT_PROJ_ENABLED:
-        # Issue #58 v2: 不投影 — 切空间向量原样喂 Stage2. 仅打印统计量.
+        # legacy 路径保留 (实测代码仅 print stats, 从未真正投影)
         if is_main:
             norms = torch.norm(item_emb, dim=1)
             print(f"[ISSUE58_PROJ] no projection (直接喂 Stage2): L2 norm "
                   f"[{norms.min().item():.3f}, {norms.max().item():.3f}] "
                   f"mean={norms.mean().item():.3f} std={norms.std().item():.3f}\n")
+    else:
+        if is_main:
+            norms = torch.norm(item_emb, dim=1)
+            print(f"[Item 1] INPUT_PROJ_ENABLED=False — Stage2 直接吃切空间向量 (n_items={item_emb.shape[0]}, "
+                  f"emb_dim={item_emb.shape[1]}, L2 norm [{norms.min().item():.3f}, {norms.max().item():.3f}], "
+                  f"mean={norms.mean().item():.3f})\n")
 
     # Issue #157 spec: item alignment evidence
+    # row_index_aligned 严格由真实验证结果决定 (npy SHA + parquet SHA + shape 三项全 PASS 才为 True)
     item_alignment_check = {
         "n_items": int(item_emb.shape[0]),
         "emb_dim": int(item_emb.shape[1]),
         "expected_n_items": N_ITEMS,
-        "alignment_ok": int(item_emb.shape[0]) == N_ITEMS,
-        "row_index_aligned": True,  # row i 对应 item i (跟 HG-Rec EmbDataset 一致)
+        "expected_emb_dim": EMB_DIM,
+        "alignment_ok": int(item_emb.shape[0]) == N_ITEMS and int(item_emb.shape[1]) == EMB_DIM,
+        # Item 1: row i 对应 item i 仅在三项验证都 PASS 时成立
+        "row_index_aligned": (
+            item_emb_sha == ITEM_EMB_EXPECTED_SHA256_NPY
+            and os.path.exists(ITEM_EMB_PARQUET)
+            and sha256_file(ITEM_EMB_PARQUET) == ITEM_EMB_EXPECTED_SHA256_PARQUET
+            and item_emb_full.shape == expected_shape
+        ),
+        "sha256_npy_actual": item_emb_sha,
+        "sha256_npy_expected": ITEM_EMB_EXPECTED_SHA256_NPY,
+        "sha256_parquet_actual": sha256_file(ITEM_EMB_PARQUET) if os.path.exists(ITEM_EMB_PARQUET) else None,
+        "sha256_parquet_expected": ITEM_EMB_EXPECTED_SHA256_PARQUET,
     }
     if is_main:
         print(f"item alignment: {item_alignment_check}\n")
+    if not item_alignment_check["row_index_aligned"]:
+        raise RuntimeError(
+            "P0 Item 1 FAIL: row_index_aligned=False (三项 provenance 验证失败).\n"
+            f"  alignment_check: {item_alignment_check}"
+        )
 
     # v12 推荐损失近邻预计算: item_emb 余弦 top-K (正邻居来源, 用户第二步).
     # DDP: 每卡独立计算 (确定性, 结果一致), 仅 rank 0 落盘.
