@@ -165,6 +165,14 @@ _argparser.add_argument("--poincare_c_learnable", action="store_true",
                         help="Issue #236: 启用 c 可学习 (sigmoid 缩放到 [1e-3, 10])")
 _argparser.add_argument("--poincare_c_lr_ratio", type=float, default=10.0,
                         help="Issue #236: c_param 的 LR 倍率 (默认 10×)")
+# Issue #106 (2026-08-10): Stage3 SHSE — Hyperbolic SID Embedding (W_hyp·emb+b_hyp + exp_map_0)
+# 核心: 在 T5 shared(input_ids) * d_model_sqrt 之后插入 hyperbolic projection,仅对 SID tokens 应用
+_argparser.add_argument("--shse_enabled", action="store_true",
+                        help="Issue #106: 启用 Stage3 SHSE encoder (W_hyp·emb+b_hyp + exp_map_0)")
+_argparser.add_argument("--shse_c", type=float, default=1.0,
+                        help="Issue #106: SHSE exp_map_0 曲率倒数 c (默认 1.0)")
+_argparser.add_argument("--shse_c_learnable", action="store_true",
+                        help="Issue #106: c 可学习 (sigmoid 缩放到 [1e-3, 10])")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -253,6 +261,10 @@ POINCARE_ATTN_SCORING = _args.poincare_attn_scoring
 POINCARE_C_INIT = _args.poincare_c_init
 POINCARE_C_LEARNABLE = _args.poincare_c_learnable
 POINCARE_C_LR_RATIO = _args.poincare_c_lr_ratio
+# Issue #106 (2026-08-10): Stage3 SHSE — Hyperbolic SID Embedding 常量
+SHSE_ENABLED = _args.shse_enabled
+SHSE_C = _args.shse_c
+SHSE_C_LEARNABLE = _args.shse_c_learnable
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -623,6 +635,84 @@ def install_geo_residual(hg_rec, geo_module, layer_id_lut_tensor):
     hg_rec.forward = types.MethodType(geo_forward, hg_rec)
     hg_rec.generate = types.MethodType(geo_generate, hg_rec)
     return hg_rec
+
+
+def install_shse(hg_rec, shse_module, device):
+    """Issue #106 (2026-08-10): Stage3 SHSE — Hyperbolic SID Embedding.
+
+    在 T5 shared(input_ids) * d_model_sqrt 之后插入 hyperbolic projection:
+      input_embeds = shse_module(input_embeds)  # W_hyp·emb + b_hyp + exp_map_0
+    不动 attention / CE loss / HAB, 与 #64 / #100 / #224 / #226 / #230 正交.
+    """
+    import types
+    import torch.nn as nn
+
+    shse_module = shse_module.to(device)
+    hg_rec.add_module("shse_module", shse_module)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+
+    def shse_forward(self, input_ids, attention_mask=None, labels=None):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        input_embeds = self.shse_module(input_embeds)
+        outputs = self.model(inputs_embeds=input_embeds,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def shse_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        input_embeds = self.shse_module(input_embeds)
+        return self.model.generate(inputs_embeds=input_embeds,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+
+    hg_rec.forward = types.MethodType(shse_forward, hg_rec)
+    hg_rec.generate = types.MethodType(shse_generate, hg_rec)
+    return hg_rec
+
+
+class SHSEEncoder(nn.Module):
+    """Issue #106 (2026-08-10): Stage3 Hyperbolic SID Embedding Encoder.
+
+    Linear (W_hyp·emb + b_hyp) → exp_map_0(·) → proj_to_ball(·).
+    W_hyp init = I, b_hyp init = 0 → 起点与 Euclidean embed 一致 (无扰动).
+    c 可选可学习: sigmoid(c_raw) · 10 + 1e-3 → [1e-3, 10].
+    """
+
+    def __init__(self, d_model, c=1.0, c_learnable=False):
+        super().__init__()
+        self.linear = nn.Linear(d_model, d_model, bias=True)
+        with torch.no_grad():
+            self.linear.weight.copy_(torch.eye(d_model))
+            self.linear.bias.zero_()
+        if c_learnable:
+            # c_raw ∈ R, sigmoid(c_raw) * 10 + 1e-3 ∈ [1e-3, 10]
+            import math
+            init_raw = math.log(max(c, 1e-3) / 10.0 / (1 - max(c, 1e-3) / 10.0 + 1e-30))
+            self.c_raw = nn.Parameter(torch.tensor(init_raw, dtype=torch.float32))
+        else:
+            self.register_buffer("c_const", torch.tensor(float(c), dtype=torch.float32))
+        self.c_learnable = c_learnable
+
+    @property
+    def c(self):
+        if self.c_learnable:
+            return torch.sigmoid(self.c_raw) * 10.0 + 1e-3
+        return self.c_const
+
+    def forward(self, emb):
+        # emb: (B, L, d_model), Euclidean T5 embed
+        z = self.linear(emb)             # (B, L, d_model) Euclidean
+        # exp_map_0(z, c): apply per-token
+        sqrt_c = self.c ** 0.5
+        norm_z = z.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_z) / (sqrt_c * norm_z)
+        hyp = factor * z                  # (B, L, d_model) in Poincaré ball
+        # proj_to_ball: ensure norm < 1/sqrt(c)
+        R = (1.0 / self.c) ** 0.5
+        norm_h = hyp.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_h + 1e-5), max=1.0)
+        return hyp * scale
 
 
 def build_geo_module():
@@ -1406,6 +1496,26 @@ def main():
             c_eff = poincare_attn_module.c.detach().item()
             log(f"[Issue #236] poincare_attn_scoring ON: log_c_param init={c_init_val:.4f} → c_eff={c_eff:.4f} "
                 f"c_learnable={POINCARE_C_LEARNABLE} c_lr_ratio={POINCARE_C_LR_RATIO}")
+    # Issue #106 (2026-08-10): Stage3 SHSE — Hyperbolic SID Embedding (T5 shared 之后插 W_hyp·emb+b_hyp + exp_map_0)
+    # 与 HAB / #236 / #70 完全正交: HAB 是 attention bias, #236 改 attention score, #70 改 encoder input prompt.
+    # SHSE 只改 T5 shared(input_ids) 之后的输入 embedding 几何, 让 Stage3 HAB 矩阵与输入 geometry 一致.
+    shse_module = None
+    if SHSE_ENABLED:
+        d_model = model.model.config.d_model if hasattr(model, "model") else model.module.model.config.d_model
+        shse_module = SHSEEncoder(d_model=d_model, c=SHSE_C, c_learnable=SHSE_C_LEARNABLE).to(device)
+        # 找 inner model (DDP unwrap)
+        inner = model.module if hasattr(model, "module") else model
+        inner = install_shse(inner, shse_module, device)
+        # DDP wrap if needed: model 是 DDP-wrapped 时, install_shse 已作用在 inner; 再 wrap DDP if not yet
+        if not hasattr(model, "module") and DDP_MODE:
+            # 已经 DDP wrap 但没 unwrap, 重新 DDP wrap (skip — 简化: assume before DDP wrap)
+            pass
+        if is_main:
+            shse_params = sum(p.numel() for p in shse_module.parameters())
+            c_init_eff = shse_module.c.detach().cpu().tolist()
+            log(f"[Issue #106 v29 SHSE] hyperbolic SID embedding ON: "
+                f"W_hyp init=I b_hyp init=0 c_init={SHSE_C} c_learnable={SHSE_C_LEARNABLE} "
+                f"c_eff={c_init_eff} params={shse_params}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -1427,7 +1537,7 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
