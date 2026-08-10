@@ -173,6 +173,18 @@ _argparser.add_argument("--shse_c", type=float, default=1.0,
                         help="Issue #106: SHSE exp_map_0 曲率倒数 c (默认 1.0)")
 _argparser.add_argument("--shse_c_learnable", action="store_true",
                         help="Issue #106: c 可学习 (sigmoid 缩放到 [1e-3, 10])")
+# Issue #107 (2026-08-10): Stage3 SCSB — Curvature Soft-Bias on T5 logits
+# 在 T5 lm_head 之后插入 α·β·log_softmax(-d_P(codeword, history_centroid))
+# 不改 T5 内部任何参数 (R36 严守),仅在 logits 层后 additive soft bias
+_argparser.add_argument("--scsb_enabled", action="store_true",
+                        help="Issue #107: 启用 SCSB (Curvature Soft-Bias on T5 logits)")
+_argparser.add_argument("--scsb_alpha_init", type=float, default=1.0,
+                        help="Issue #107: α 初始值 (Sigmoid bounded [0, 2], 默认 1.0)")
+_argparser.add_argument("--scsb_beta", type=float, default=0.1,
+                        help="Issue #107: β 固定缩放 (默认 0.1, 防止 curvature bias 干扰 T5 训练)")
+_argparser.add_argument("--scsb_stage2_ckpt", type=str,
+                        default="/fs04/ar57/wenyu/GeneRec/taskA/_history/taskA_stage2_v15_capmatch_1000ep/hrqvae_kappa_sync.ckpt",
+                        help="Issue #107: Stage2 ckpt 路径 (提供 codebook + per-layer κ)")
 # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
 _argparser.add_argument("--enable_prompt_former", action="store_true",
                         help="Issue #70: 启用 DECOR PromptFormer (candidate bins + alpha gate) 注入 T5 encoder 输入 embedding")
@@ -265,6 +277,11 @@ POINCARE_C_LR_RATIO = _args.poincare_c_lr_ratio
 SHSE_ENABLED = _args.shse_enabled
 SHSE_C = _args.shse_c
 SHSE_C_LEARNABLE = _args.shse_c_learnable
+# Issue #107 (2026-08-10): Stage3 SCSB — Curvature Soft-Bias on T5 logits 常量
+SCSB_ENABLED = _args.scsb_enabled
+SCSB_ALPHA_INIT = _args.scsb_alpha_init
+SCSB_BETA = _args.scsb_beta
+SCSB_STAGE2_CKPT = _args.scsb_stage2_ckpt
 PROMPT_FORMER_NUM_BOS_QUERIES = _args.prompt_former_num_bos_queries
 # Issue #68 (2026-08-07): DECOR PromptFormer 抗 self-reinforcing trap 常量
 PF_ALPHA_WARMUP_STEPS = _args.pf_alpha_warmup_steps
@@ -713,6 +730,177 @@ class SHSEEncoder(nn.Module):
         norm_h = hyp.norm(dim=-1, keepdim=True).clamp_min(1e-30)
         scale = torch.clamp(R / (norm_h + 1e-5), max=1.0)
         return hyp * scale
+
+
+class SCSBModule(nn.Module):
+    """Issue #107 (2026-08-10): Stage3 SCSB — Curvature Soft-Bias on T5 logits.
+
+    在 T5 lm_head 之后插入 additive soft bias:
+        bias = α · β · log_softmax(-d_P(codeword_emb, history_centroid))
+
+    - α: learnable scalar (init=1.0, Sigmoid bounded [0, 2])
+    - β: fixed 0.1 (防 curvature bias 干扰 T5 训练)
+    - 总参数增量: 1 个 α scalar (vs v18 0 新参数)
+    - 不改 T5 内部任何机制 (R36 严守, 避开 #100/#105/#106 失败路径)
+
+    机制说明:
+      history_centroid_ℓ = mean_{item ∈ history at layer ℓ} exp_map_0(codeword_layer_ℓ(item))
+      d_P(t) = poincare_distance(codeword_ℓ(t), centroid_ℓ)  for token t at layer ℓ
+      bias[t] = -d_P(t)                                       for all t ∈ vocab (V=1025)
+      bias_log = log_softmax(bias)                            over V
+      sid_logits_final = sid_logits_base + α · β · bias_log
+    """
+
+    def __init__(self, codebooks_t, cs, kappas, layer_id_lut,
+                 alpha_init=1.0, beta=0.1, vocab_size=1025):
+        super().__init__()
+        # Convert codebooks to Poincaré ball space (frozen)
+        codebooks_ball = []
+        for tan_emb, c in zip(codebooks_t, cs):
+            tan_emb = tan_emb.float()
+            c_t = torch.tensor(float(c), dtype=torch.float32)
+            ball_emb = self._exp_map_0(tan_emb, c_t)
+            ball_emb = self._proj_to_ball(ball_emb, c_t)
+            codebooks_ball.append(ball_emb)
+        # Codebook embeddings (Poincaré ball, frozen)
+        self.register_buffer("codebook_l0", codebooks_ball[0])  # (64, 32)
+        self.register_buffer("codebook_l1", codebooks_ball[1])  # (128, 32)
+        self.register_buffer("codebook_l2", codebooks_ball[2])  # (256, 32)
+        # Per-layer curvature (frozen)
+        self.register_buffer("c_l0", torch.tensor(float(cs[0]), dtype=torch.float32))
+        self.register_buffer("c_l1", torch.tensor(float(cs[1]), dtype=torch.float32))
+        self.register_buffer("c_l2", torch.tensor(float(cs[2]), dtype=torch.float32))
+        # Token → layer mapping (frozen)
+        self.register_buffer("layer_id_lut",
+                             torch.tensor(layer_id_lut, dtype=torch.long))
+        # Token → codebook index offset per layer (LAYER_ID_LUT: L0=[1,64] L1=[65,192] L2=[193,448])
+        self.register_buffer("token_offset_l0", torch.tensor(1, dtype=torch.long))
+        self.register_buffer("token_offset_l1", torch.tensor(65, dtype=torch.long))
+        self.register_buffer("token_offset_l2", torch.tensor(193, dtype=torch.long))
+        self.register_buffer("K_l0", torch.tensor(64, dtype=torch.long))
+        self.register_buffer("K_l1", torch.tensor(128, dtype=torch.long))
+        self.register_buffer("K_l2", torch.tensor(256, dtype=torch.long))
+        self.vocab_size = vocab_size
+        # Learnable α (raw, Sigmoid → [0, 2])
+        self.alpha_raw = nn.Parameter(torch.tensor(float(alpha_init),
+                                                  dtype=torch.float32))
+        # Fixed β
+        self.register_buffer("beta", torch.tensor(float(beta),
+                                                  dtype=torch.float32))
+
+    @property
+    def alpha(self):
+        # α ∈ [0, 2], smooth bounded
+        return 2.0 * torch.sigmoid(self.alpha_raw)
+
+    @staticmethod
+    def _exp_map_0(v, c):
+        """v: (..., D) tangent → (..., D) Poincaré ball."""
+        sqrt_c = c ** 0.5
+        norm_v = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        factor = torch.tanh(sqrt_c * norm_v) / (sqrt_c * norm_v)
+        return factor * v
+
+    @staticmethod
+    def _proj_to_ball(x, c):
+        """x: (..., D) → clamp norm < 1/sqrt(c)."""
+        R = (1.0 / c) ** 0.5
+        norm_x = x.norm(dim=-1, keepdim=True).clamp_min(1e-30)
+        scale = torch.clamp(R / (norm_x + 1e-5), max=1.0)
+        return x * scale
+
+    def compute_bias(self, input_ids):
+        """input_ids: (B, L_history) → bias: (B, V=vocab_size).
+
+        对每个 sample 的 history, 按 layer 分组, 算每层 centroid,
+        然后对 vocab 中每个 token (按层归属) 计算 -d_P(codeword, centroid),
+        最后 log_softmax 归一化 + α·β 缩放。
+        """
+        device = input_ids.device
+        B = input_ids.shape[0]
+        layer_ids = self.layer_id_lut[input_ids]  # (B, L_history)
+        cb_list = [self.codebook_l0, self.codebook_l1, self.codebook_l2]
+        c_list = [self.c_l0, self.c_l1, self.c_l2]
+        offset_list = [self.token_offset_l0.item(),
+                       self.token_offset_l1.item(),
+                       self.token_offset_l2.item()]
+        K_list = [self.K_l0.item(), self.K_l1.item(), self.K_l2.item()]
+
+        # 收集每层 centroid
+        centroid_per_layer = []
+        for l in range(3):
+            mask = (layer_ids == l)  # (B, L_history) bool
+            cb = cb_list[l]  # (K_l, 32)
+            # token_id at layer l → codebook index = token_id - offset_l
+            token_idx_l = input_ids - offset_list[l]  # (B, L_history)
+            safe_idx = token_idx_l.clamp(0, cb.shape[0] - 1)
+            history_emb = cb[safe_idx]  # (B, L_history, 32)
+            mask_f = mask.float().unsqueeze(-1)  # (B, L_history, 1)
+            cnt = mask_f.sum(1).clamp_min(1.0)  # (B, 1)
+            centroid = (mask_f * history_emb).sum(1) / cnt  # (B, 32)
+            centroid_per_layer.append(centroid)
+
+        # 构造 full bias (B, V)
+        bias = torch.zeros(B, self.vocab_size, device=device,
+                           dtype=torch.float32)
+        for l in range(3):
+            cb = cb_list[l]
+            centroid = centroid_per_layer[l]
+            c = c_list[l]
+            # poincare_distance(centroid, cb) → (B, K_l)
+            x_sq = (centroid * centroid).sum(-1, keepdim=True)  # (B, 1)
+            y_sq = (cb * cb).sum(-1, keepdim=True).T  # (1, K_l)
+            diff_sq = ((centroid.unsqueeze(1) - cb.unsqueeze(0))
+                       ** 2).sum(-1)  # (B, K_l)
+            num = 2.0 * diff_sq
+            denom = ((1.0 - x_sq) * (1.0 - y_sq)).clamp_min(1e-30)
+            arg = (1.0 + num / denom).clamp_min(1.0 + 1e-7)
+            sqrt_term = torch.sqrt((arg ** 2 - 1.0).clamp_min(1e-30))
+            dist = (torch.log(arg + sqrt_term)
+                    / (c ** 0.5).clamp_min(1e-30))  # (B, K_l)
+            offset_l = offset_list[l]
+            K_l = K_list[l]
+            bias[:, offset_l:offset_l + K_l] = -dist  # (B, V)
+
+        # log_softmax over vocab + α · β
+        bias_log = torch.log_softmax(bias, dim=-1)  # (B, V)
+        return self.alpha * self.beta * bias_log  # (B, V)
+
+
+def install_scsb(hg_rec, scsb_module, device):
+    """Issue #107 (2026-08-10): 包裹 T5 forward/generate, 在 lm_head 之后注入 SCSB bias."""
+    import types
+    scsb_module = scsb_module.to(device)
+    hg_rec.add_module("scsb_module", scsb_module)
+
+    if not hasattr(hg_rec, "_scsb_orig_forward"):
+        hg_rec._scsb_orig_forward = hg_rec.forward
+
+    def scsb_forward(self, input_ids=None, attention_mask=None,
+                     labels=None, **kwargs):
+        out = self._scsb_orig_forward(input_ids=input_ids,
+                                       attention_mask=attention_mask,
+                                       labels=labels, **kwargs)
+        # 在 lm_head 输出 logits 之后注入 curvature soft bias
+        if (input_ids is not None
+                and hasattr(out, "logits") and out.logits is not None):
+            bias = self.scsb_module.compute_bias(input_ids)  # (B, V)
+            # logits: (B, L_target, V) — bias: (B, V) → broadcast to (B, 1, V)
+            out.logits = out.logits + bias.unsqueeze(1)
+        return out
+
+    if not hasattr(hg_rec, "_scsb_orig_generate"):
+        hg_rec._scsb_orig_generate = hg_rec.generate
+
+    def scsb_generate(self, input_ids=None, attention_mask=None, **kwargs):
+        # generate 内部 forward 调用已经走过 scsb_forward,自动获得 bias
+        return self._scsb_orig_generate(input_ids=input_ids,
+                                         attention_mask=attention_mask,
+                                         **kwargs)
+
+    hg_rec.forward = types.MethodType(scsb_forward, hg_rec)
+    hg_rec.generate = types.MethodType(scsb_generate, hg_rec)
+    return hg_rec
 
 
 def build_geo_module():
@@ -1516,6 +1704,41 @@ def main():
             log(f"[Issue #106 v29 SHSE] hyperbolic SID embedding ON: "
                 f"W_hyp init=I b_hyp init=0 c_init={SHSE_C} c_learnable={SHSE_C_LEARNABLE} "
                 f"c_eff={c_init_eff} params={shse_params}")
+    # Issue #107 (2026-08-10): Stage3 SCSB - Curvature Soft-Bias on T5 logits
+    # 与 SHSE / HAB / #236 / #70 完全正交: SHSE 改 T5 内部 embed 几何 (NO-GO v29),
+    # SCSB 仅在 logits 层后 additive soft bias, 不改 T5 内部任何参数.
+    # SCSB 用 Stage2 codebook curvature 作为 soft prior rerank signal.
+    scsb_module = None
+    if SCSB_ENABLED:
+        # Load Stage2 ckpt -> codebook + per-layer kappa
+        sd_ckpt = torch.load(SCSB_STAGE2_CKPT, map_location="cpu",
+                              weights_only=False)
+        sd = sd_ckpt["model_state_dict"]
+        codebooks_t = [
+            sd["vq_layers.0.embeddings.weight"].float(),  # (64, 32)
+            sd["vq_layers.1.embeddings.weight"].float(),  # (128, 32)
+            sd["vq_layers.2.embeddings.weight"].float(),  # (256, 32)
+        ]
+        cs = [float(c) for c in sd_ckpt["final_cs"]]  # [c_l0, c_l1, c_l2]
+        kappas = [float(k) for k in sd_ckpt["final_kappas"]]
+        scsb_module = SCSBModule(
+            codebooks_t=codebooks_t,
+            cs=cs,
+            kappas=kappas,
+            layer_id_lut=_LAYER_ID_LUT,
+            alpha_init=SCSB_ALPHA_INIT,
+            beta=SCSB_BETA,
+            vocab_size=1025,
+        ).to(device)
+        # Find inner model (DDP unwrap)
+        inner = model.module if hasattr(model, "module") else model
+        inner = install_scsb(inner, scsb_module, device)
+        if is_main:
+            alpha_eff = scsb_module.alpha.detach().cpu().item()
+            log(f"[Issue #107 v30 SCSB] curvature soft-bias ON: "
+                f"alpha_raw_init={SCSB_ALPHA_INIT} alpha_eff={alpha_eff:.4f} beta={SCSB_BETA} "
+                f"c_per_layer={[f'{c:.4f}' for c in cs]} "
+                f"learnable_params={sum(p.numel() for p in scsb_module.parameters() if p.requires_grad)}")
     # Issue #70: DECOR PromptFormer (candidate bins + alpha gate) — 与 HAB/GEO 正交可叠加
     pf_module = None
     if PROMPT_FORMER_ENABLED:
@@ -1537,7 +1760,7 @@ def main():
         #   自动检测: DECOR 或 HAB 启用时改 True (损失一些加速, 但保训练).
         # Issue #236 (2026-08-10): Poincaré Attention Scoring 启用时 poincare_attn_module.log_c_param
         #   也需 find_unused_parameters=True (走 fast path 时 log_c_param 不参与 forward → DDP 崩)
-        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED
+        ddp_find_unused = PROMPT_FORMER_ENABLED or HAB_ENABLED or POINCARE_ATTN_SCORING or SHSE_ENABLED or SCSB_ENABLED
         model = torch.nn.parallel.DistributedDataParallel(
             model,
             device_ids=[LOCAL_RANK],
