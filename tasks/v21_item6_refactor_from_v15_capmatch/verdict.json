@@ -3,6 +3,23 @@
   "lineage": "v21_item6_refactor_from_v15_capmatch",
   "gate2_decision": "NO-GO",
   "r37_decision": "v21 Item 6 refactor test_R@10=0.1012 < v15 capmatch baseline 0.1057 (-0.0045, -4.3%), 回退至 v15 capmatch 重新创新",
+  "attribution_chain_verified": {
+    "stage2_experiment_time_commit": "2fe9cf1 (Item 6: Gate 2 真正阻止 collapse, 2026-08-10 19:22:36)",
+    "stage3_experiment_time_commit": "2fe9cf1 (Stage3 launch 20:16:29, ckpt write 20:29:44, no stage3/stage4 code commit between 19:22 and 20:30)",
+    "stage4_experiment_time_commit": "2fe9cf1 (Stage4 launch 20:38:17, eval done 20:40:23)",
+    "post_eval_fixes_did_not_affect_eval": [
+      "bd251b2 (2026-08-10 20:48:12): Stage2 P0 bug fixes (invalidate_distance_cache + center_distance_for_constraint 嵌套错位) — 修的是 Stage2 forward path 的 castration plan 残留方法, 但本次 Stage2 训练 (19:54:35 跑完) 和 Stage3 训练 (20:29:44 ckpt 写出) 已结束, 后续重跑才会受影响",
+      "43b5e7d (2026-08-10 20:48:43): v21 artifacts commit — 记录评估产物, 不改代码"
+    ],
+    "sid_sha_disambiguation": {
+      "sid_metadata_json_sha256": "8c456b36d3081bb31dcbe6145b33d2462447bc34208b9a76953389b00fea0064 (= sha256_array(sid.tobytes()), array-only hash)",
+      "sid_output_npy_file_sha256": "39b949a4d4eb70e262047ee03ffbc16dcc61131bea84591dfc19a7a1f9e85744 (= sha256_file(path), raw file hash including npy header)",
+      "stage3_verify_algorithm": "Stage3 主脚本读 .npy 文件走 sha256_file → 39b949... ✓ PASS",
+      "stage2_sid_metadata_algorithm": "Stage2 落盘 sid_metadata 时用 sha256_array(arr.tobytes()) → 8c456... (跳 npy header 78 bytes, 所以两个 SHA 必然不同, 但都对应同一个 SID, 无 attribution 错位)",
+      "resolution": "Stage2 sid_metadata 与 sid_output.npy 的 SHA 不一致是 Stage2 内部 sha256_array vs Stage3 外部 sha256_file 的算法差, 不是数据错位. 用户提出的 attribution 担忧已澄清: 39b949... 是真 SID, 8c456... 是 array SHA, 两者都对应同一份 (9922,4) int64 SID"
+    },
+    "systemic_issue_identified": "Stage3/4 主脚本 (common/stage3/stage3_train_pure_t5_v85p_repro.py + common/stage4/stage4_eval_pure_t5_v85p_4layer.py) 启动时不记录 git HEAD SHA → 实验时间 commit 只能从 file mtime + git log 推算 (本次诊断已确认 2fe9cf1). 建议下一版本在 Stage3/4 启动 wrapper 加 'git rev-parse HEAD' log 落盘."
+  },
   "r37_compliance": "严格遵守 R37: 比 v15 差 (-4.3%) 立即终止 v21 lineage, 产物仅留作记录, 新版本必须以 v15 capmatch 为唯一基础, 禁止 v22 = v15 + v21 叠加",
   "stages": {
     "stage2_item6_1000ep": {
