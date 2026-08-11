@@ -1,0 +1,54 @@
+{
+  "issue": "#112 — v35 HCL Stage3 Hyperbolic Contrastive aux Loss",
+  "tag": "v35_hcl_stage3_contrastive",
+  "version": "v35",
+  "date": "2026-08-11",
+  "baseline": {
+    "v22.b": 0.1013,
+    "v23": 0.1025,
+    "v23_v2": 0.0909,
+    "v24": 0.0984,
+    "v15_capmatch_anchor": 0.1057
+  },
+  "current": {
+    "test_R@10": 0.09986325628825367,
+    "test_R@5": 0.07963320470871728,
+    "test_R@20": 0.12616634563071846,
+    "test_NDCG@10": 0.07422409835541226
+  },
+  "training": {
+    "best_epoch": 129,
+    "best_valid_R@10": 0.12613743958399468,
+    "best_train_loss": 2.6080301030168256,
+    "early_stopped_at_epoch": 199,
+    "early_stop_counter": 14,
+    "200_epoch_completed": true
+  },
+  "r37_decision": "v35 HCL 比 v22.b 差 (0.0999 < 0.1013, -0.0014), 比 v23 差 (0.0999 < 0.1025, -0.0026). HCL aux loss 在 Stage3 训练中起过作用 (best_valid=0.1261 > v22.b 0.1258 +0.0003), 但 test 反而下降. 这是 valid bias 现象 — aux loss 优化了 valid 上的对比学习, 但 Stage4 推理不用 HCL, 所以 test 退化. lineage 终止, 下一版必须从 v23 (test_R@10=0.1025) 重新创新, 不用 HCL.",
+  "valid_bias_diagnosis": "v35 best_valid=0.1261 vs test_R@10=0.0999, gap = 0.0262. v22.b best_valid=0.1258 vs test_R@10=0.1013, gap = 0.0245. Gap 扩大 0.0017, 说明 HCL 增加了 valid overfitting. 切合 memory [[r36-strict-v2-avoid-valid-bias]] 警告: 训练端 regularizer 即使不引入可学习参数也可能引入 valid 偏置, 走几何变换更安全.",
+  "r37_rollback": "v35 lineage 终止. 下一版命名为 v36_<新机制>_from_v23/, 完全复用 v23 配置 + 仅新加的曲率机制 (非 HCL).",
+  "config_used": {
+    "hcl_alpha": 0.1,
+    "hcl_tau": 1.0,
+    "hcl_stage2_ckpt": "taskA/_history/v22b_full_1000ep/hrqvae_kappa_sync.ckpt",
+    "hcl_enabled": true,
+    "stage2_ckpt": "taskA/_history/v22b_full_1000ep/hrqvae_kappa_sync.ckpt",
+    "stage2_sid_sha256": "332c948cce329944ee6a879636e91d261377b04766eec47df5b1fff9edc6eec5",
+    "hab_lambda_max": 0.20,
+    "residual_alpha_init": -20.0,
+    "num_epochs": 200,
+    "early_stop": 30,
+    "ddp_cards": 4,
+    "master_port": 29526
+  },
+  "artifacts": {
+    "stage3_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/HG_Rec_best.pth",
+    "stage4_eval": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/eval/eval_test.json",
+    "stage4_raw_preds": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/eval/raw_predictions.npz",
+    "stage3_log": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/train_pure_t5.log",
+    "smoke_test": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/smoke_module.py",
+    "stage3_launcher": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/stage3.py",
+    "stage4_launcher": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/v35_hcl_stage3_contrastive/stage4_beam20.py"
+  },
+  "r37_compliance": "R37 严格执行: v35 < v23 (test_R@10=0.0999 < 0.1025 -0.0026), lineage 终止, 下一版从 v23 基础重新创新 + 不复用 HCL. 投影记录归档至 _history/."
+}
