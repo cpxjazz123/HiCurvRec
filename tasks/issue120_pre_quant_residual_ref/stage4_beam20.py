@@ -51,8 +51,11 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 EVAL_KAPPAS = [0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0]
 EVAL_KAPPA_TAGS = {0.01: "0p01", 0.1: "0p1", 0.5: "0p5", 1.0: "1", 2.0: "2", 5.0: "5", 10.0: "10", 20.0: "20"}
 
-# 跨曲率 sweep 网格 (negative sphere + 0 Euclidean + 9 positive hyperbolic)
-CROSS_C_GRID = [-1.0, 0.0, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+# 跨曲率 sweep 网格 (c 是 magnitude ≥ 0, HG-Rec convention)
+# c = 0: Euclidean (zero curvature)
+# c > 0: hyperbolic (negative Gaussian curvature = -c)
+# 球面 (positive curvature) 通过单独的 sphere_distance 实现, 不放在这里
+CROSS_C_GRID = [0.0, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
 
 # Stage2 ckpt 路径 (Issue #119 复用)
 ISSUE119_CKPT_ROOT = "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue219_per_curvature_retrain"
@@ -281,7 +284,7 @@ def main():
                     "nn_overlap_1": metrics["nn_overlap_1"],
                     "nn_overlap_5": metrics["nn_overlap_5"],
                 })
-                print(f"[issue120-eval] κ={kappa} L{layer_idx} c={c} → spec={metrics['spearman']:.4f} nn1={metrics['nn_overlap_1']:.4f}", flush=True)
+                print(f"[issue120-eval] κ={kappa} L{layer_idx} c={c} → dist={metrics['distortion']:.6f} spec={metrics['spearman']:.4f} kend={metrics['kendall']:.4f} nn1={metrics['nn_overlap_1']:.4f} nn5={metrics['nn_overlap_5']:.4f}", flush=True)
 
         # 释放
         del ckpt

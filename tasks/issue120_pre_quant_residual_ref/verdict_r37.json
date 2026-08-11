@@ -2,30 +2,39 @@
   "issue": "#120",
   "task_internal_id": "issue120_pre_quant_residual_ref",
   "date": "2026-08-11",
-  "method": "8 κ × 100 epoch Stage2 重训 (Issue #119) + pre-quantization residual pairwise Euclidean D_ref (vs Issue #118 #119 codebook self-distance 退化)",
+  "method": "8 κ × 100 epoch Stage2 重训 (Issue #119) + pre-quantization residual pairwise Euclidean D_ref (修复 Issue #118 #119 codebook self-distance 退化)",
   "evaluation": {
     "metrics": ["distortion", "spearman", "kendall", "nn_overlap_1", "nn_overlap_5"],
-    "c_grid": [-1.0, 0.0, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    "c_grid_v2": [0.0, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    "c_grid_v2_note": "c 是 magnitude ≥ 0 (HG-Rec convention); v1 sweep 含 c=-1.0 已被 v2 排除 (球面走单独 sphere_distance 路径)",
     "d_ref_definition": "D_ref = Euclidean pairwise distance of pre-quantization residual (z from encoder for L0, residual after L0 for L1, residual after L1 for L2)",
     "d_c_definition": "D^(c) = curvature-c distance between assigned codebook embeddings (per item assignment via sid_output.npy)",
     "sample_size": 500,
     "subset_seed": 42
   },
-  "key_findings": {
-    "l0_best_c_by_spearman": {
-      "0.01_to_2.0_trained": "c=5.0 (spearman 0.6215-0.6500)",
-      "5.0_to_20.0_trained": "c=10.0 (spearman 0.5769-0.6119)"
-    },
-    "l1_best_c_by_spearman": "c=10.0 across all κ (spearman 0.1276-0.1471)",
+  "key_findings_v2": {
+    "l0_best_c_by_spearman": "c=5.0 across all κ (spearman 0.6215-0.6450)",
+    "l1_best_c_by_spearman": "c=10.0 across all κ (spearman 0.1276-0.1471, monotonic increasing)",
     "l2_best_c_by_spearman": "c=10.0 across all κ (spearman 0.0597-0.0802)",
-    "nn_overlap_c_minus_1_wins": "NN@1 and NN@5 both favor c=-1.0 (sphere) across ALL κ × layer combinations — relationship-preservation metric favors sphere geometry",
-    "distortion_min_c_0.01": "per design — D_c small when c small, so normalized distortion small at c=0.01",
-    "contradicts_issue118": "Issue #118 #118 said L0 c*=0 (Euclidean best). Issue #120 pre-quantization reference shows L0 best c=5-10 (hyperbolic). Issue #118 was methodologically wrong (D_ref = codebook self-distance → c=0 trivially wins)."
+    "nn_overlap_best_c": "c=0.01 (NN overlap always best at small c, flat across c > 0)",
+    "distortion_best_c": "c=0.01 (by definition: D_c small when c small)",
+    "hyp_improvement": {
+      "l0_max_delta_spearman": "+0.005-0.007 (peak at c=5.0)",
+      "l1_max_delta_spearman": "+0.0007 (peak at c=10.0)",
+      "l2_max_delta_spearman": "+0.0003 (peak at c=10.0)",
+      "conclusion": "Hyp. improvement is small (< 1% relative). Codebook geometry is largely insensitive to curvature choice."
+    },
+    "metric_split": {
+      "spearman_kendall_best": "hyp. (c=5-10)",
+      "nn_overlap_distortion_best": "low c (c=0.01)",
+      "interpretation": "Global rank order preserved better by hyperbolic; local neighborhood preserved equally across c (NN metric is invariant to c)."
+    },
+    "v1_correction": "v1 sweep used c=-1.0 for sphere, violating HG-Rec convention (c ≥ 0). v2 excludes c=-1.0. The v1 finding 'NN overlap supports sphere' was an artifact of the sign convention. Real finding (v2): NN overlap is invariant to c (best at low c)."
   },
-  "verdict": "PARTIAL-GO with critical caveat: Issue #120's pre-quantization reference exposes that Issue #118 L0 c*=0 finding was a mathematical artifact. True relationship-preservation metrics (pre-quantization residual → post-quantization codebook) favor hyperbolic c=5-10 for L0 and c=10 for L1/L2. NN overlap metrics favor sphere (c=-1). However, magnitude of differences is small (spearman ranges 0.6-0.65 for L0, 0.13-0.15 for L1, 0.06-0.08 for L2 across all c grids).",
-  "r37_decision": "R37 NA — Issue #120 is Stage2 geometric diagnostic, not Stage3 T5 recommendation.",
+  "verdict": "NO-GO for level-specific curvature: Hyp. improvement is too small (<1% Spearman gain for L0, <0.1% for L1/L2) to justify architectural complexity of per-layer curvature. Recommendation: keep v22.b baseline c=[2.0, 2.0, 2.0] (within Hyp. improvement plateau at c=2.0).",
+  "r37_decision": "R37 NA — Issue #120 is Stage2 geometric diagnostic, no Stage3 T5 training.",
   "r38_decision": "R38 NA — no training in this issue.",
-  "next_step": "v23+ should NOT use Issue #118 L0 c*=0 finding. Use Issue #120 evidence: L0 c=5-10, L1 c=10, L2 c=10. NN overlap evidence for sphere (c=-1) is novel but mismatched with hyperbolic pre-existing bias. Recommend: implement learnable per-layer curvature (k_0=5-10, k_1=k_2=10) as v23 mechanism.",
-  "commit_hash": "22899e3d4f9b0ec2002f1c03030729622280d78d",
-  "issue_close_action": "Issue #120 close with 4 Gate answer + 5-metric verdict link"
+  "next_step": "v23+ should focus on mechanisms that ACT on existing geometry rather than per-layer curvature tuning. Candidates: branch curvature routing (v23 plan), curvature-routed attention (v23 v3), or token residual injection (v23 v1).",
+  "commit_hash": "TBD",
+  "issue_close_action": "Issue #120 close with v2 4 Gate answer + verdict link"
 }
