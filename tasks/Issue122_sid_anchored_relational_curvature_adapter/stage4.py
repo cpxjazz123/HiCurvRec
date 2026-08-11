@@ -21,7 +21,9 @@ import types
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
@@ -34,20 +36,20 @@ STAGE2_DIR = TASK_DIR / "stage2"
 STAGE3_DIR = TASK_DIR / "stage3"
 STAGE4_DIR = TASK_DIR / "stage4"
 
-# 与 stage3.py 一致
+# 与 stage3.py 一致 (baseline v85/v77 一致)
 T5_CONFIG = dict(
-    vocab_size=1024,
+    vocab_size=1025,
     d_model=128,
-    d_ff=512,
+    d_ff=1024,
     num_layers=6,
     num_decoder_layers=4,
-    num_heads=4,
-    d_kv=32,
+    num_heads=6,
+    d_kv=64,
     dropout_rate=0.10,
     pad_token_id=0,
-    eos_token_id=1,
+    eos_token_id=0,
     decoder_start_token_id=0,
-    feed_forward_proj="gated-gelu",
+    feed_forward_proj="relu",
 )
 ADAPTER_GATE_HIDDEN = 64
 PAD_TOKEN_ID = 0
@@ -129,12 +131,8 @@ class RelationalCurvatureAdapter(nn.Module):
         return input_embeds + delta
 
 
-import torch.nn as nn
-
-
 class GenRecDataset(torch.utils.data.Dataset):
     def __init__(self, dataset_path, code_path, mode="evaluation", codebook_size=1024, max_len=20):
-        import pandas as pd
         df = pd.read_parquet(dataset_path)
         self.history = df["history"].tolist()
         self.target = df["target"].tolist()
@@ -146,7 +144,19 @@ class GenRecDataset(torch.utils.data.Dataset):
         return len(self.history)
 
     def __getitem__(self, idx):
-        return {"history": self.history[idx][:self.max_len], "target": self.target[idx]}
+        hist_ids = list(self.history[idx])[:self.max_len]
+        target_raw = self.target[idx]
+        # history 是 item id list (1-indexed, 范围 1..9922), 展开为 SID token list
+        hist_tokens = []
+        for item_id in hist_ids:
+            sid = self.code[int(item_id) - 1]
+            hist_tokens.extend(int(x) for x in sid)
+        # target 是 item id (1-indexed) → 4-digit SID
+        if isinstance(target_raw, (int, np.integer)):
+            target_sid = [int(x) for x in self.code[int(target_raw) - 1]]
+        else:
+            target_sid = list(target_raw)
+        return {"history": hist_tokens, "target": target_sid}
 
 
 def collate_fn(batch, pad_token=PAD_TOKEN_ID):
@@ -177,7 +187,15 @@ def collate_fn(batch, pad_token=PAD_TOKEN_ID):
 
 
 def evaluate_with_beam(model, eval_loader, device, maxk=BEAM_SIZE):
-    """跑完整 test set, 单 ckpt + beam=20, 收集 raw predictions + 六指标."""
+    """跑完整 test set, 单 ckpt + beam=20, 收集 raw predictions + 六指标.
+
+    对齐 baseline v3e+LR=4e-4 evaluate (git show c4289aa:common/stage3/stage3_train_pureT5_v3e_lr4e4.py line 1199-1228):
+      preds = gen_model.generate(num_beams=BEAM_SIZE)  # 不传 max_length/min_length/early_stopping
+      preds = preds[:, 1:]  # 排除 start token
+      preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
+
+    Issue122 v1 时期添加的 min_length=5 / early_stopping=False / padding 兜底 = fallback, R2 禁. 已移除.
+    """
     model.eval()
     all_pos = []
     all_preds = []
@@ -189,21 +207,16 @@ def evaluate_with_beam(model, eval_loader, device, maxk=BEAM_SIZE):
             input_ids = batch["history"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["target"].to(device)
+            # baseline v3e+LR=4e-4 一致: 只传 num_beams=BEAM_SIZE
             preds = model.generate(input_ids, attention_mask=attention_mask, num_beams=maxk)
+            # baseline 一致: 排除 decoder_start_token_id=0 (start token)
+            preds = preds[:, 1:]
             B = input_ids.shape[0]
-            preds = preds.view(B, maxk, -1)
-            if preds.shape[-1] != labels.shape[-1]:
-                if preds.shape[-1] > labels.shape[-1]:
-                    pad_len = preds.shape[-1] - labels.shape[-1]
-                    labels_padded = F.pad(labels, (0, pad_len), value=PAD_TOKEN_ID)
-                else:
-                    labels_padded = labels[:, :preds.shape[-1]]
-            else:
-                labels_padded = labels
-            pos_index = (preds == labels_padded.unsqueeze(1)).all(dim=-1)
+            preds = preds.view(B, maxk, -1)  # (B, maxk, seq_len) — seq_len 由 generate 决定
+            pos_index = (preds == labels.unsqueeze(1)).all(dim=-1)
             all_pos.append(pos_index.cpu())
             all_preds.append(preds.cpu())
-            all_labels.append(labels_padded.cpu())
+            all_labels.append(labels.cpu())
             n_eval += B
             if (batch_idx + 1) % 50 == 0:
                 log(f"  eval batch {batch_idx+1}/{len(eval_loader)} elapsed={time.time()-t0:.0f}s")
@@ -256,23 +269,44 @@ def main():
     t5_model = t5_model.to(device)
     d_model_sqrt = float(t5config.d_model) ** 0.5
 
-    # Monkey-patch forward + generate (与 stage3 一致)
-    def adapter_forward(self, input_ids, attention_mask=None, labels=None):
-        input_embeds = self.shared(input_ids) * d_model_sqrt
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        outputs = super(type(self), self).forward(
-            inputs_embeds=input_embeds, attention_mask=attention_mask,
-            labels=labels, decoder_input_ids=None,
+    # Monkey-patch forward + generate (与 stage3 一致, 用原始 forward 避免 DDP super 问题)
+    _orig_t5_forward = t5_model.__class__.forward
+    _orig_t5_generate = t5_model.__class__.generate
+
+    def adapter_forward(self, input_ids=None, attention_mask=None, labels=None, decoder_input_ids=None, inputs_embeds=None, **kwargs):
+        if inputs_embeds is None and "inputs_embeds" in kwargs:
+            inputs_embeds = kwargs.pop("inputs_embeds")
+        if input_ids is not None and inputs_embeds is None:
+            input_embeds = self.shared(input_ids) * d_model_sqrt
+            input_embeds = self.rel_adapter(input_embeds, input_ids)
+        elif inputs_embeds is None:
+            return _orig_t5_forward(
+                self,
+                attention_mask=attention_mask,
+                labels=labels,
+                decoder_input_ids=decoder_input_ids,
+                **kwargs,
+            )
+        outputs = _orig_t5_forward(
+            self, inputs_embeds=input_embeds, attention_mask=attention_mask,
+            labels=labels, decoder_input_ids=decoder_input_ids, **kwargs,
         )
         return outputs.loss, outputs.logits
 
-    def adapter_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
-        input_embeds = self.shared(input_ids) * d_model_sqrt
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        return super(type(self), self).generate(
-            inputs_embeds=input_embeds, attention_mask=attention_mask,
-            num_beams=num_beams, max_length=MAX_GEN_LEN,
-            num_return_sequences=num_beams, **kwargs,
+    def adapter_generate(self, input_ids=None, attention_mask=None, num_beams=20, inputs_embeds=None, **kwargs):
+        # 关键: generate 路径必须把 input_ids 提前转 inputs_embeds 并注入 adapter
+        # 不在 adapter_generate 硬编码任何 generate 参数 (max_length/min_length/early_stopping/num_return_sequences),
+        # 让 evaluate_with_beam() 透过 **kwargs 完整控制, 避免冲突.
+        if input_ids is not None and inputs_embeds is None:
+            input_embeds = self.shared(input_ids) * d_model_sqrt
+            input_embeds = self.rel_adapter(input_embeds, input_ids)
+            return _orig_t5_generate(
+                self, input_ids=None, inputs_embeds=input_embeds,
+                attention_mask=attention_mask, num_beams=num_beams, **kwargs,
+            )
+        return _orig_t5_generate(
+            self, input_ids=input_ids, inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask, num_beams=num_beams, **kwargs,
         )
 
     t5_model.forward = types.MethodType(adapter_forward, t5_model)

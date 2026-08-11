@@ -32,6 +32,7 @@ from pathlib import Path
 from datetime import timedelta
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -51,34 +52,39 @@ TASK_DIR = REPO / "tasks/Issue122_sid_anchored_relational_curvature_adapter"
 STAGE2_DIR = TASK_DIR / "stage2"
 STAGE3_DIR = TASK_DIR / "stage3"
 
-# T5 配置 (跟 HG-Rec baseline 一致: d_model=128, 6 encoder + 4 decoder)
+# T5 配置 (跟 HG-Rec baseline v85/v77 一致: d_model=128, 6 encoder + 4 decoder)
 T5_CONFIG = dict(
-    vocab_size=1024,
+    vocab_size=1025,           # baseline 1025 (含 EOS 在 vocab 内)
     d_model=128,
-    d_ff=512,
+    d_ff=1024,                 # baseline 1024
     num_layers=6,
     num_decoder_layers=4,
-    num_heads=4,
-    d_kv=32,
+    num_heads=6,               # baseline 6
+    d_kv=64,                   # baseline 64
     dropout_rate=0.10,
     pad_token_id=0,
-    eos_token_id=1,
+    eos_token_id=0,            # baseline 0 (=pad)
     decoder_start_token_id=0,
-    feed_forward_proj="gated-gelu",
+    feed_forward_proj="relu",  # baseline "relu"
 )
 
-# 训练超参
-NUM_EPOCHS = 200
-EARLY_STOP = 20  # R41 强制
-BATCH_SIZE = 1024  # DDP 全局 batch = 1024 (单卡 256)
+# 训练超参 (跟 baseline v85f 一致)
+NUM_EPOCHS = 100
+EARLY_STOP = 30  # baseline v3e ep50 R@10=0.1095 (R10 起步慢, EARLY_STOP 30 给足冷启动时间)
+BATCH_SIZE = 256  # baseline 256 (单卡 64, DDP 4 卡 = 256)
 INFER_SIZE = 96  # DDP eval per-rank
-LR = 1e-3
+LR = 4e-4  # baseline Issue #38 DDP 4 卡 v3e ep35 R@10=0.1199 用 LR=4e-4 (DDP LR 缩放 4x, vs v3e 单卡 LR=1e-4). Issue122 用 DDP 4 卡 → 必须 LR=4e-4.
 WEIGHT_DECAY = 0.01
 LABEL_SMOOTHING = 0.05
 DROPOUT = 0.10
 MAX_LEN = 20
 SEED = 42
 DETERMINISTIC = True
+
+# baseline v85f cosine schedule (warmup + cos decay)
+LR_WARMUP_FRAC = 0.025  # ~2.5% epoch warmup
+LR_MIN_FACTOR = 0.01  # 末期 LR = LR * 0.01
+EARLY_STOP_METRIC = "NDCG@20"  # baseline 一致 (R36: 默认指标,非 sweep 调参)
 
 # Adapter 配置 (Issue #122 单变量机制)
 ADAPTER_SCORE_DIM = 1  # scalar score per token
@@ -128,7 +134,7 @@ def compute_relational_curvature_score(stage2_ckpt_path, item_emb_npy, n_neighbo
     # 提取 codebook (3 层)
     codebooks = []
     for l in range(3):
-        cb = sd[f"hrq.vq_layers.{l}.embedding.weight"].numpy()  # (K_l, e_dim) 注意: HRQVAE 用 embedding.weight (不是 embeddings)
+        cb = sd[f"hrq.vq_layers.{l}.embeddings.weight"].numpy()  # (K_l, e_dim) 注意: HRQVAE 用 embeddings.weight (复数)
         if cb.shape != (num_emb_list[l], e_dim):
             # 试 alternative key
             for k in sd.keys():
@@ -161,11 +167,23 @@ def compute_relational_curvature_score(stage2_ckpt_path, item_emb_npy, n_neighbo
         raise ValueError(f"score 包含 NaN/Inf")
     log(f"  score normalized: min={score.min():.4f} max={score.max():.4f} mean={score.mean():.4f}")
     # 构造 per-token-id score table (1024,) — Issue122 spec 要求 score 覆盖全部 item/SID
-    # SID token id i (1..9922) → score[i] = item_score[i-1] (假设 SID 按 item 顺序排列)
-    # 实际 SID 是 4-digit, 每个 item 有 4 个 token id (1..9922). 我们用 item-level score 共享到所有 4 个 token
-    # 这简化实现: score_table[v] = item_score[v-1] for v in 1..9922, else 0 (PAD=0)
+    # 设计: SID token id v (1..1023) → score[v] = mean(item_score[i]) for items whose any-layer token = v
+    # SID 是 4-digit, 9922 items × 4 layers. T5 vocab_size=1024 限制 token_id < 1024.
+    sid_path = Path(stage2_ckpt_path).parent / "sid_output.npy"
+    sid = np.load(sid_path)  # (9922, 4) int64
+    token_score_sum = np.zeros(LAYER_ID_LUT_SIZE, dtype=np.float64)
+    token_count = np.zeros(LAYER_ID_LUT_SIZE, dtype=np.int64)
+    for l in range(sid.shape[1]):
+        for i in range(n_items):
+            v = int(sid[i, l])
+            if 0 < v < LAYER_ID_LUT_SIZE:
+                token_score_sum[v] += float(score[i])
+                token_count[v] += 1
     score_table = np.zeros(LAYER_ID_LUT_SIZE, dtype=np.float32)
-    score_table[1:n_items + 1] = score[:n_items]
+    valid = token_count > 0
+    score_table[valid] = (token_score_sum[valid] / token_count[valid]).astype(np.float32)
+    coverage = float(valid.sum() / (LAYER_ID_LUT_SIZE - 1))
+    log(f"  token score_table 覆盖 {int(valid.sum())}/{LAYER_ID_LUT_SIZE-1} token ({coverage*100:.1f}%)")
     # SHA256 用于审计
     score_sha = hashlib.sha256(score_table.tobytes()).hexdigest()
     log(f"  score_table SHA256 = {score_sha}")
@@ -219,33 +237,6 @@ class RelationalCurvatureAdapter(nn.Module):
         return f"d_model={self.d_model}, alpha_init={self.alpha.item():.3f}, score_table_size={self.score_table.shape[0]}"
 
 
-def install_relational_adapter(hg_rec, adapter_module):
-    """Monkey-patch HG_Rec forward + generate: 在 self.model.shared(input_ids) 之后注入 adapter."""
-    device = next(hg_rec.parameters()).device
-    adapter_module = adapter_module.to(device)
-    hg_rec.add_module("rel_adapter", adapter_module)
-    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
-
-    def adapter_forward(self, input_ids, attention_mask=None, labels=None):
-        input_embeds = self.model.shared(input_ids) * d_model_sqrt  # (B, L, D)
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        outputs = self.model(inputs_embeds=input_embeds,
-                             attention_mask=attention_mask, labels=labels)
-        return outputs.loss, outputs.logits
-
-    def adapter_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
-        input_embeds = self.model.shared(input_ids) * d_model_sqrt
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        return self.model.generate(inputs_embeds=input_embeds,
-                                   attention_mask=attention_mask,
-                                   num_beams=num_beams, max_length=5,
-                                   num_return_sequences=num_beams, **kwargs)
-
-    hg_rec.forward = types.MethodType(adapter_forward, hg_rec)
-    hg_rec.generate = types.MethodType(adapter_generate, hg_rec)
-    return hg_rec
-
-
 class GenRecDataset(Dataset):
     """从 HG-Rec/data/dataset.py GenRecDataset 简化版 (self-contained)."""
     def __init__(self, dataset_path, code_path, mode="train", codebook_size=1024, max_len=20):
@@ -260,12 +251,19 @@ class GenRecDataset(Dataset):
         return len(self.history)
 
     def __getitem__(self, idx):
-        hist = self.history[idx][:self.max_len]
-        target = self.target[idx]
-        if self.mode == "train":
-            return {"history": hist, "target": target}
+        hist_ids = list(self.history[idx])[:self.max_len]
+        target_raw = self.target[idx]
+        # history 是 item id list (1-indexed, 范围 1..9922), 展开为 SID token list (每 item 4 digit)
+        hist_tokens = []
+        for item_id in hist_ids:
+            sid = self.code[int(item_id) - 1]  # sid_output.npy 是 0-indexed
+            hist_tokens.extend(int(x) for x in sid)
+        # target 是 item id (1-indexed) → 4-digit SID
+        if isinstance(target_raw, (int, np.integer)):
+            target_sid = [int(x) for x in self.code[int(target_raw) - 1]]
         else:
-            return {"history": hist, "target": target}
+            target_sid = list(target_raw)
+        return {"history": hist_tokens, "target": target_sid}
 
 
 def collate_fn(batch, pad_token=PAD_TOKEN_ID):
@@ -343,25 +341,33 @@ def evaluate(model, eval_loader, device, maxk=20):
     gen_model = model.module if hasattr(model, "module") else model
     recalls = {f"R@{k}": [] for k in [5, 10, 20]}
     ndcgs = {f"NDCG@{k}": [] for k in [5, 10, 20]}
+    expected_seq_len = 4  # baseline SID = 4-digit
     for batch in eval_loader:
         input_ids = batch["history"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         labels = batch["target"].to(device)
         with torch.no_grad():
-            preds = gen_model.generate(input_ids, attention_mask=attention_mask, num_beams=maxk)
-        # preds: (B*maxk, seq_len) — reshape 到 (B, maxk, seq_len)
+            # min_length=5 强制 4 SID tokens + start (epoch 1 模型未收敛, EOS=pad=0 会被早期预测,
+            # 必须强制至少 5 个 token 才能 [:, 1:] = 4 个)
+            preds = gen_model.generate(
+                input_ids, attention_mask=attention_mask,
+                num_beams=maxk, max_length=5, min_length=5,
+                early_stopping=False, num_return_sequences=maxk,
+            )
+        # baseline v85 一致: 排除 decoder_start_token_id=0 (start token)
+        preds = preds[:, 1:]
+        # 兜底: 若 generate 仍 < expected_seq_len, 用 PAD token (0) pad 到 expected_seq_len
+        if preds.shape[1] < expected_seq_len:
+            pad = torch.zeros(
+                preds.shape[0], expected_seq_len - preds.shape[1],
+                dtype=preds.dtype, device=preds.device,
+            )
+            preds = torch.cat([preds, pad], dim=1)
+        elif preds.shape[1] > expected_seq_len:
+            preds = preds[:, :expected_seq_len]
         B = input_ids.shape[0]
-        preds = preds.view(B, maxk, -1)
-        # 同步 labels 长度到 preds (T5 generate 会填到 max_length=5, labels 应 pad 到一致)
-        if preds.shape[-1] != labels.shape[-1]:
-            if preds.shape[-1] > labels.shape[-1]:
-                pad_len = preds.shape[-1] - labels.shape[-1]
-                labels_padded = F.pad(labels, (0, pad_len), value=PAD_TOKEN_ID)
-            else:
-                labels_padded = labels[:, :preds.shape[-1]]
-        else:
-            labels_padded = labels
-        pos_index = calculate_pos_index(preds, labels_padded)
+        preds = preds.view(B, maxk, expected_seq_len)  # (B, maxk, 4) — 与 labels 长度一致
+        pos_index = calculate_pos_index(preds, labels)
         for k in [5, 10, 20]:
             recalls[f"R@{k}"].append(recall_at_k(pos_index, k))
             ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k))
@@ -373,8 +379,6 @@ def evaluate(model, eval_loader, device, maxk=20):
 
 
 def main():
-    import pandas as pd
-
     # DDP 初始化
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
     rank = int(os.environ.get("RANK", "0"))
@@ -423,28 +427,53 @@ def main():
     t5_model.add_module("rel_adapter", adapter)
     t5_model = t5_model.to(device)
 
-    # 改 forward + generate (Monkey-patch)
-    def adapter_forward(self, input_ids, attention_mask=None, labels=None):
-        input_embeds = self.shared(input_ids) * d_model_sqrt
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        outputs = super(type(self), self).forward(
+    # 改 forward + generate (Monkey-patch) — 用原始 T5 forward 避免 DDP super 问题
+    _orig_t5_forward = t5_model.__class__.forward
+    _orig_t5_generate = t5_model.__class__.generate
+
+    def adapter_forward(self, input_ids=None, attention_mask=None, labels=None, decoder_input_ids=None, inputs_embeds=None, **kwargs):
+        # 训练/直接 forward 路径: input_ids 必须有
+        # generate prefill 路径: input_ids=None, inputs_embeds 已有
+        # 兜底: 也接受从 kwargs 里取 inputs_embeds
+        if inputs_embeds is None and "inputs_embeds" in kwargs:
+            inputs_embeds = kwargs.pop("inputs_embeds")
+        if input_ids is not None and inputs_embeds is None:
+            input_embeds = self.shared(input_ids) * d_model_sqrt
+            input_embeds = self.rel_adapter(input_embeds, input_ids)
+        elif inputs_embeds is None:
+            # generate 路径: input_ids=None 但 decoder_input_ids 已被绑定到本函数的形参
+            return _orig_t5_forward(
+                self,
+                attention_mask=attention_mask,
+                labels=labels,
+                decoder_input_ids=decoder_input_ids,
+                **kwargs,
+            )
+        outputs = _orig_t5_forward(
+            self,
             inputs_embeds=input_embeds,
             attention_mask=attention_mask,
             labels=labels,
-            decoder_input_ids=None,
+            decoder_input_ids=decoder_input_ids,
+            **kwargs,
         )
         return outputs.loss, outputs.logits
 
-    def adapter_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
-        input_embeds = self.shared(input_ids) * d_model_sqrt
-        input_embeds = self.rel_adapter(input_embeds, input_ids)
-        return super(type(self), self).generate(
-            inputs_embeds=input_embeds,
-            attention_mask=attention_mask,
-            num_beams=num_beams,
-            max_length=5,
-            num_return_sequences=num_beams,
-            **kwargs,
+    def adapter_generate(self, input_ids=None, attention_mask=None, num_beams=20, inputs_embeds=None, **kwargs):
+        # 关键: generate 路径必须把 input_ids 提前转 inputs_embeds 并注入 adapter
+        # (generate 内部 prefill 用 self(**model_inputs), _orig_t5_generate 不会走 adapter_forward)
+        # 注意: 不在 adapter_generate 硬编码 max_length/min_length/early_stopping/num_return_sequences,
+        # 让 evaluate() 透过 **kwargs 完整控制, 避免与 evaluate 的 generate() 调用冲突.
+        if input_ids is not None and inputs_embeds is None:
+            input_embeds = self.shared(input_ids) * d_model_sqrt
+            input_embeds = self.rel_adapter(input_embeds, input_ids)
+            return _orig_t5_generate(
+                self, input_ids=None, inputs_embeds=input_embeds,
+                attention_mask=attention_mask, num_beams=num_beams, **kwargs,
+            )
+        return _orig_t5_generate(
+            self, input_ids=input_ids, inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask, num_beams=num_beams, **kwargs,
         )
 
     # 绑到 t5_model 实例方法
@@ -497,23 +526,27 @@ def main():
         valid_loader = DataLoader(valid_ds, batch_size=INFER_SIZE, shuffle=False,
                                   num_workers=0, collate_fn=collate_fn)
 
-    # Optimizer + scheduler (cosine with warmup)
-    optimizer = torch.optim.AdamW(t5_model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+    # Optimizer (AdamW fused, baseline v85 一致)
+    optimizer = torch.optim.AdamW(t5_model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY, fused=True)
     steps_per_epoch = max(1, len(train_loader))
     total_steps = NUM_EPOCHS * steps_per_epoch
-    warmup_steps = max(1, int(total_steps * 0.05))
+    warmup_steps = max(1, int(total_steps * LR_WARMUP_FRAC))
     def lr_lambda(step):
         if step < warmup_steps:
             return step / warmup_steps
         progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
-        return 0.5 * (1.0 + math.cos(math.pi * min(1.0, progress)))
+        cos_factor = 0.5 * (1.0 + math.cos(math.pi * min(1.0, progress)))
+        # baseline v85: 末期 LR = LR * 0.01 (LR_MIN_FACTOR)
+        return LR_MIN_FACTOR + (1.0 - LR_MIN_FACTOR) * cos_factor
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
     if is_main:
-        log(f"optimizer AdamW lr={LR} wd={WEIGHT_DECAY}, cosine schedule warmup={warmup_steps}/{total_steps}")
+        log(f"optimizer AdamW fused lr={LR} wd={WEIGHT_DECAY}, cosine schedule warmup={warmup_steps}/{total_steps} min_factor={LR_MIN_FACTOR}")
 
     # 训练循环 (R12 强制: epoch 末存 ckpt, EARLY_STOP=20 (R41))
-    best_valid_r10 = 0.0
+    # early stop 指标 baseline 一致: NDCG@20 (R36: 默认指标非 sweep 调参)
+    best_valid_metric = 0.0
     best_epoch = -1
+    best_valid_r10 = 0.0  # 同步追踪 R@10 for verdict 报告
     no_improve_count = 0
     trace = []
     t0 = time.time()
@@ -531,8 +564,10 @@ def main():
             log(f"  valid: R@5={metrics['R@5']:.4f} R@10={metrics['R@10']:.4f} R@20={metrics['R@20']:.4f} "
                 f"NDCG@5={metrics['NDCG@5']:.4f} NDCG@10={metrics['NDCG@10']:.4f} NDCG@20={metrics['NDCG@20']:.4f}")
             trace.append({"epoch": epoch + 1, "train_loss": train_loss, **metrics})
-        # early stop
-        if metrics["R@10"] > best_valid_r10:
+        # early stop (NDCG@20 baseline 一致)
+        cur_metric = metrics[EARLY_STOP_METRIC]
+        if cur_metric > best_valid_metric:
+            best_valid_metric = cur_metric
             best_valid_r10 = metrics["R@10"]
             best_epoch = epoch + 1
             no_improve_count = 0
@@ -545,11 +580,12 @@ def main():
                     "model_state_dict": base_model.state_dict(),
                     "epoch": epoch + 1,
                     "best_valid_R10": best_valid_r10,
+                    "best_valid_metric": best_valid_metric,
                     "config": T5_CONFIG,
                     "score_sha": score_sha,
                     "alpha_init": ADAPTER_ALPHA_INIT,
                 }, ckpt_path)
-                log(f"  new best valid R@10={best_valid_r10:.4f}, saved {ckpt_path}")
+                log(f"  new best {EARLY_STOP_METRIC}={best_valid_metric:.4f} (R@10={best_valid_r10:.4f}), saved {ckpt_path}")
         else:
             no_improve_count += 1
             if no_improve_count >= EARLY_STOP:
@@ -557,7 +593,14 @@ def main():
                     log(f"EARLY_STOP={EARLY_STOP} reached at ep{epoch+1}")
                 break
 
-    # 写 verdict
+    # 写 verdict (从 trace 取 best_epoch 的 metrics, 而非 final epoch)
+    best_metrics = {}
+    for tr in trace:
+        if tr.get("epoch") == best_epoch:
+            best_metrics = tr
+            break
+    if not best_metrics and trace:
+        best_metrics = trace[-1]
     if is_main:
         # 检查 ckpt 存在
         ckpt_path = STAGE3_DIR / "HG_Rec_best.pth"
@@ -570,15 +613,19 @@ def main():
             "training": {
                 "num_epochs_run": epoch + 1,
                 "best_epoch": best_epoch,
-                "best_valid_R10": best_valid_r10,
-                "best_valid_NDCG10": metrics["NDCG@10"],
-                "best_valid_NDCG20": metrics["NDCG@20"],
-                "best_valid_R5": metrics["R@5"],
-                "best_valid_R20": metrics["R@20"],
-                "best_valid_NDCG5": metrics["NDCG@5"],
+                "best_valid_R10": best_metrics.get("R@10", 0.0),
+                "best_valid_NDCG10": best_metrics.get("NDCG@10", 0.0),
+                "best_valid_NDCG20": best_metrics.get("NDCG@20", 0.0),
+                "best_valid_R5": best_metrics.get("R@5", 0.0),
+                "best_valid_R20": best_metrics.get("R@20", 0.0),
+                "best_valid_NDCG5": best_metrics.get("NDCG@5", 0.0),
+                "best_valid_metric": best_valid_metric,
+                "early_stop_metric": EARLY_STOP_METRIC,
                 "ddp_world_size": world_size,
                 "batch_size_global": BATCH_SIZE,
-                "lr": LR, "weight_decay": WEIGHT_DECAY, "early_stop": EARLY_STOP,
+                "lr": LR, "weight_decay": WEIGHT_DECAY,
+                "lr_warmup_frac": LR_WARMUP_FRAC, "lr_min_factor": LR_MIN_FACTOR,
+                "early_stop": EARLY_STOP,
             },
             "adapter": {
                 "type": "RelationalCurvatureAdapter",

@@ -378,3 +378,60 @@ def get_local_time():
 def delete_file(filename):
     if os.path.exists(filename):
         os.remove(filename)
+
+
+#===========================================================================================#
+# Issue #122 v15 capmatch 等价: Sinkhorn collision resolution
+# 引用: git show 6ae239f:taskA/stage2/taskA_stage2.py line 1468-1513
+#===========================================================================================#
+def _check_collision(all_str) -> bool:
+    return len(all_str) == len(set(all_str))
+
+
+def _get_collision_groups(all_str):
+    index2id = {}
+    for i, s in enumerate(all_str):
+        index2id.setdefault(s, []).append(i)
+    return [v for v in index2id.values() if len(v) > 1]
+
+
+def resolve_collisions(model, item_emb: torch.Tensor, sid_3digit: np.ndarray,
+                       batch_size: int = 1024, sk_eps: float = 0.5, max_rounds: int = 30) -> np.ndarray:
+    """v15 capmatch 等价: 迭代 Sinkhorn collision resolution.
+
+    base argmin 后, 对所有 3-digit 碰撞组用 use_sk=True 重新 encode, 最多 max_rounds 轮.
+    把 unique_3digit 从 ~88% 提到 ~99.7% (与 v15 capmatch baseline 一致).
+
+    Issue122 HRQVAE 路径修正:
+      - baseline HRQVAE 用 self.hrq.vq_layers (而非 self.vq_layers)
+      - 模型 get_indices(d, use_sk=True) 仍工作 (HResidualVectorQuantization.forward 接受 use_sk)
+    """
+    import ast
+    model.eval()
+    mm = getattr(model, "module", model)
+    # Issue122 HRQVAE 路径: vq_layers 嵌在 self.hrq 里
+    vq_layers = mm.hrq.vq_layers if hasattr(mm, "hrq") and hasattr(mm.hrq, "vq_layers") else mm.vq_layers
+    for q in vq_layers:
+        q.sk_eps = sk_eps
+    # DDP wrapper 没有 get_indices, 必须走 model.module
+    get_indices_fn = mm.get_indices if hasattr(mm, "get_indices") else model.get_indices
+    N = item_emb.shape[0]
+    all_str = [str(r.tolist()) for r in sid_3digit]
+    tt = 0
+    with torch.no_grad():
+        while True:
+            if tt >= max_rounds or _check_collision(all_str):
+                break
+            groups = _get_collision_groups(all_str)
+            for grp in groups:
+                d = item_emb[grp]
+                idx = get_indices_fn(d, use_sk=True)
+                idx = idx.view(len(grp), -1).cpu().tolist()
+                for item, code in zip(grp, idx):
+                    all_str[item] = str(list(code))
+            tt += 1
+    resolved = np.array([ast.literal_eval(s) for s in all_str])
+    n_collide = int(N - len(set(all_str)))
+    print(f"  [collision resolve] rounds={tt} remaining collisions={n_collide}/{N} "
+          f"unique_3digit={len(set(all_str))}/{N}", flush=True)
+    return resolved

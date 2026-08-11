@@ -30,7 +30,7 @@ STAGE1_DIR = TASK_DIR / "stage1"
 
 # Task #84 baseline 配置 (与 HG-Rec/data/process_Instruments.py 一致)
 ITEM_JSON = REPO / "dataset/Instruments.item.json"
-MODEL_NAME = "sentence-transformers/sentence-t5-xl"
+MODEL_NAME = "sentence-transformers/sentence-t5-base"
 EXPECTED_EMB_DIM = 768
 EXPECTED_N_ITEMS = 9922
 EXPECTED_BASELINE_SHA = "1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc"
