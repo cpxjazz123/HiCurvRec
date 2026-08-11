@@ -1,0 +1,27 @@
+{
+  "issue": "#120",
+  "date": "2026-08-11",
+  "method": "extract pre-quantization residual from 8 \u03ba \u00d7 100ep Stage2 ckpts (Issue #119)",
+  "kappas": [
+    0.01,
+    0.1,
+    0.5,
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+    20.0
+  ],
+  "layers": [
+    "L0",
+    "L1",
+    "L2"
+  ],
+  "shape_per_layer": [
+    [
+      9922,
+      32
+    ]
+  ],
+  "output_root": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue120_pre_quant_residual_ref"
+}
