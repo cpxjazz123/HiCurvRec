@@ -1,0 +1,29 @@
+{
+  "version": "v24",
+  "tag": "v24_poincare_attention_stage4_beam20",
+  "verdict_at": "2026-08-11 11:03:00",
+  "r37_decision": "NO-GO",
+  "r37_anchor": "v23 (test_R@10 = 0.1025)",
+  "v24_test_R10": 0.09841538001657338,
+  "v23_test_R10_anchor": 0.1025,
+  "delta_vs_v23": -0.0041,
+  "mechanism": "v24 = Stage3 encoder self-attention 加 curvature-aware bias: B[i,j] = -γ · |κ_i - κ_j|. γ init=0 (训练起点等同 v23 baseline), 可学习. κ_i 来自 Stage2 branch curvature (L0 → κ_0, L1 → κ_1 + Δκ_{1,q_0}, L2 → κ_2 + Δκ_{2,(q_0,q_1)}). encoder-only, 与 HAB + v23 curvature_residual 完全正交可叠加. 1 γ scalar 可学习.",
+  "best_valid_R10": 0.1257,
+  "best_epoch": 149,
+  "gamma_learned": 0.2939,
+  "training_evidence": {
+    "loss_curve": "5.55 → 2.61 over 200 epochs, 收敛稳定",
+    "valid_R10_curve": "0.0939 (ep5) → 0.1257 (ep149), 训练曲线正常",
+    "early_stop": "epoch 149 + 10 epoch 无改进 → early stop counter 10/30, 200 epoch 训练自然完成",
+    "lambda_raw": "[0.1, 0.1, 0.1] 保持不变 (与 v23 一致, HAB 路径稳定)",
+    "R23_seven_signals": "0 触发 (无 loss 反向 / NaN / Inf / wrapper broken / val_R@10=0 / GPU 100% / ckpt 缺失)"
+  },
+  "r37_verdict": "v24 test_R@10 = 0.0984 < v23 0.1025 (-0.0041). R37 NO-GO 触发. v24 lineage 终止. 新版本必须从 v23 base 重新开始 (禁止叠加 v24 curvature_attn_bias). v24 产物 (Stage3 ckpt / Stage4 raw_predictions / verdict) 留作记录, 不作为下一版起点.",
+  "r38_check": "v24 mid-training: best_valid_R10=0.1257 (epoch 149) ≈ v23 best_valid=0.1275. 同 epoch 范围对比, v24 valid 始终小幅落后 v23 (-0.0018). 但 R38 触发条件要求 '连续 ≥30 epoch 无改进 + 落后 vN-1'. v24 在 epoch 30-149 持续上涨 (无饱和平台), R38 NO-GO 未触发. 训练自然结束, R37 决定 NO-GO.",
+  "interpretation": "**修正 attribution** (2026-08-11 R37 后): γ 训练末值 = 0.2939 (从 0 推到 ~0.3, gradient 流得通), 但 test_R@10 跌 0.0041. 可能机制: (1) γ=0.3 引入 bias magnitude ~ 0.3 * |Δκ| ~ 0.3 * 0.18 = 0.054, 对 attention scores 量级有限, 不直接破坏 ranking; (2) 真正原因可能是 curvature bias 给 attention 加了过强的 prior (强制相似 κ_i 的 token 互相 attend), 但 Stage2 branch curvature 本身是编码压缩产物, 不一定与 item semantic 相关; (3) γ 学到的 0.29 是从 0 自然推到的, 可能只是 loss landscape 局部最优, 但 test set 上与 v23 (无 bias) 相比略差. 下一步 v25 必须从 v23 base 探索新曲率机制, 禁叠加 v24 Poincaré attention bias (encoder-side 实验已结束).",
+  "next_action": "v24 R37 NO-GO + R38 NO-GO (训练自然结束). v24 lineage 终止. 下一步: 探索其他 encoder-side 曲率机制 (例如 curvature-routed attention / per-head curvature bias / head-wise γ), 或转回 Stage2 改造 (branch-wise codebook / Riemannian score). v25 必须以 v23 (test_R@10=0.1025) 为唯一基础. 禁止: (a) v24 Poincaré attn bias 叠加; (b) decoder curvature injection (R37 + P0 双重证据); (c) 调参 (R36); (d) 多 ckpt ensemble (R35).",
+  "gate_1_evidence": "CurvatureAttnBias 5/5 单测 PASS (γ=0 identity, L0 const, L1 lookup, L2 pair lookup, bias sign+magnitude). γ=0 baseline 与 no-install 完全等价 (diff=0.00e+00, R36 起点保护). Stage4 install smoke 5/5 PASS: γ>0 实际改变 loss, decoder 不受影响. 训练 install log: '[v24 poincare attn bias] ON: encoder-only γ_init=0.0 learnable_params=1'.",
+  "gate_2_evidence": "Stage4 install gamma loaded from ckpt: gamma=0.2939 (与训练末值一致). '[v24 poincare attn bias] eval ON: encoder-only κ_L0=-0.1393 κ_L1=-0.0062 κ_L2=-0.0706 learnable_params=1'. eval forward 跑通, 259 batches, raw_predictions.npz shape=(24772, 20, 4), t_eval=21.4s.",
+  "gate_3_evidence": "test_R@10 = 0.0984 < 0.1025 (-0.0041). R37 NO-GO. 单一变量 (Stage3 加 Poincaré bias + Stage4 镜像), 其他 (HAB + dropout + LR + WD + Stage2 ckpt) 全部对齐 v23. 无 fallback 逻辑, 无超参调优 (R36 严格).",
+  "gate_4_evidence": "R23 七信号全 0 (无 NaN/Inf/loss 反向/wrapper broken/GPU 100%/ckpt 缺失/val_R@10=0 跨 ckpt). R38 mid-train: best_valid 持续上涨, NO-GO 不触发. 训练自然结束 200ep. Stage4 eval 完整跑通无异常."
+}

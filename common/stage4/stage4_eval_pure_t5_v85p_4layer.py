@@ -1500,7 +1500,7 @@ def main():
             delta_kappa_l1=_cab_eval_delta_l1,
             delta_kappa_l2=_cab_eval_delta_l2,
             gamma_init=POINCARE_ATTN_BIAS_GAMMA_INIT,
-        ).to(device)
+        ).to(DEVICE)
         # 加载训练末值 gamma (从 ckpt)
         if os.path.exists(CKPT_PATH):
             try:
