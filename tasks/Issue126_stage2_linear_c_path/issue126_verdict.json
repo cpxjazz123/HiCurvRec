@@ -1,0 +1,48 @@
+{
+  "issue": "#126",
+  "decision": "NO-GO (R38 mid-training kill)",
+  "reason": "Stage2 κ clamp 后 grad=0, κ 卡在 [-0.5, 0.5] 边界 → c 恒定 [0.501, 1.501, 1.501], 与 c=exp(κ) 路径相比 κ 完全不学, spec 失效",
+  "r38_kill_signal": {
+    "rule": "R38 训练期早停回退硬约束: vN 训练期 valid_R@10/loss/收敛速度明确比 vN-1 差 → 立即 kill + 写 R38 决策行",
+    "triggered_at_epoch": 100,
+    "evidence": "epoch 50 起 L1/L2 κ 撞 clamp 边界 0.5, epoch 100+ grad_κ=[0.0, 0.0, 0.0] 持续 500+ epoch, c 卡在边界值 [0.501, 1.501, 1.501], κ 完全不学",
+    "loss_trajectory": "epoch 50: loss=0.5212, epoch 285: loss=1.0929 (突涨), epoch 500: loss=1.0602 (无收敛)"
+  },
+  "spec": "Stage2 c=1+κ+1e-3 路径替代 c=exp(κ) — κ 范围线性可控 ([-0.5, 0.5] → c [0.501, 1.501])",
+  "implementation": {
+    "stage2_get_c": "强制 1.0 + kappa.clamp(-0.5, 0.5) + 1e-3 (不论 CURV_PRIOR env)",
+    "REL_STRUCT_default": True (启用结构损失让 κ 学到非零),
+    "CURV_AWARE_default": True (拆分 κ optimizer 避免几何冲击)",
+    "line_350_c_geom": "c.detach() if CURV_PRIOR else c (默认 CURV_PRIOR=False, 梯度正常流)"
+  },
+  "stage_results": {
+    "stage1": "OK (item_emb.parquet 47MB max_norm=0.6603)",
+    "stage2": {
+      "started_epoch": 1,
+      "killed_at_epoch": "~550",
+      "final_κ": [-0.5436, 0.5416, 0.5437],
+      "final_c": [0.501, 1.501, 1.501],
+      "grad_κ_history": "[0.0037, 0.0027, 0.0026] epoch 10 → [0.0038, 0.0038, 0.0035] epoch 15 → [0.0, 0.0, 0.0] epoch 100+ (clamp 阻断梯度)",
+      "ρ_history": "epoch 10 [-0.16, -0.40, -0.53] → epoch 100+ [0.06, -0.10, -0.22]",
+      "issue": "clamp(-0.5, 0.5) + REL_STRUCT 让 κ 立即到边界, clamp 反向梯度被阻断, κ 完全卡死"
+    },
+    "stage3": "skipped (Stage2 NO-GO)",
+    "stage4": "skipped"
+  },
+  "r18_4d_compare": {
+    "D1_spec": "Issue #126 spec: Stage2 c=1+κ+1e-3 替代 c=exp(κ) (R36 曲率机制变更, Stage2 端)",
+    "D2_implementation": "stage2.py get_c() 强制 clamp + 加法, REL_STRUCT + CURV_AWARE default True",
+    "D3_gate1_failure": "κ clamp [-0.5, 0.5] → κ 立即到边界 → 反向 grad=0 → κ 卡死, spec 中"κ ∈ [-0.5, 0.5]"实际不可学",
+    "D4_cite": "无外部文献 (内部 R36 曲率机制变更)",
+    "conclusion": "D3 Gate1 FAIL: clamp 反向梯度阻断是设计缺陷, 加法参数化需要更小 clamp (e.g. [-0.05, 0.05]) 或更大学习率才能让 κ 在内点学习"
+  },
+  "lessons_learned": [
+    "clamp 边界 saturate + 平方损失先验 → κ 立即到 clamp 边界后梯度被阻断, 学不动",
+    "Issue #125 c=exp(κ) 没有 clamp 限制, κ 学到 [-0.21, 1.21] (大范围), 但 Issue #126 加法参数化 + 严 clamp 让 spec 失效",
+    "Stage2 NO-GO 必须立即终止 (R38), 不要继续等 Stage3/4 — Stage2 是 4 stage 链的根, 失效必失败"
+  ],
+  "next_idea_hint": "Issue #127 应回到 Issue #125 的 c=exp(κ) 路径 (无 clamp 设计), 但修复 per-head κ_h_init=0.5 → 0.0 (避免 κ_h 一开始就过强), 让 per-head bias scale 不超过 baseline HAB",
+  "files_touched": [
+    "tasks/Issue126_stage2_linear_c_path/stage2.py (get_c() 强制加法, REL_STRUCT/CURV_AWARE default True)"
+  ]
+}
