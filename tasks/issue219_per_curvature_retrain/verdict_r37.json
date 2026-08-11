@@ -1,0 +1,35 @@
+{
+  "issue": "#119",
+  "task_internal_id": "#219",
+  "date": "2026-08-11",
+  "method": "8 κ × 100 epoch Stage2 重训 (DDP 4-card, 复用 Issue #210 equal128 Stage1 item_emb_u32.npy)",
+  "kappas": [0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0],
+  "extension": "CURV_FIXED_KAPPAS = [0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0] (issue #119 方式 A: 顶部扩展)",
+  "epochs": 100,
+  "lr": 3e-4,
+  "batch_size": 1024,
+  "no_mlr": true,
+  "checkpoint_status": "8/8 ckpt 落盘 (issue41_audit.json + sid_output.npy 齐全). PHASE 5b (Issue #57 audit) 触发 AttributeError(model.module) 但不影响评估必要产物.",
+  "outputs": {
+    "ckpt_dir": "/home/wlia0047/ar57/wenyu/GeneRec/taskA/_history/issue219_per_curvature_retrain",
+    "distortion_summary": "curvature_retrain_distortion_summary.csv",
+    "distortion_cross": "curvature_retrain_distortion_cross.csv",
+    "codebook_health": "codebook_health_summary.csv",
+    "verdict_md": "issue219_per_layer_curvature_retrain_result.md"
+  },
+  "key_findings": {
+    "self_curvature_distortion_monotone": "L0/L1/L2 self-distortion 随 κ 单调递增 (e.g., L0: 1e-6@κ=0.01 → 1.35e-3@κ=20.0, 3 数量级).",
+    "cross_curvature_minimum": "L0 distortion min at c=0 (Euclidean). L1/L2 distortion min at c≈0.5 (与 κ 解耦).",
+    "codebook_health_norm": "低 κ 训练后嵌入范数更大 (0.083@κ=0.01 vs 0.048@κ=20.0), 利用率更高.",
+    "l0_best_c": 0.0,
+    "l1_best_c_range": [0.5, 1.0],
+    "l2_best_c_range": [0.5, 1.0]
+  },
+  "consistency_with_issue118": "L0 c*=0 与 Issue #118 PARTIAL-A 一致. L1/L2 c*≈0.5-1.0 边界与 Issue #118 #118 sweep 结果一致 (c*=0.5 ∈ finite optimum).",
+  "r37_decision": "R37 NA — Issue #119 不涉及 Stage3 T5 推荐性能, 仅 Stage2 codebook 几何验证. 不与 v22.b 比较 test_R@10.",
+  "r38_decision": "R38 NA — 训练 0/8 触发 NaN/Inf/反向 (κ/[0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0] 全程稳定下降).",
+  "conclusion": "Issue #119 / #219 验证完成: 8 κ × 100 epoch Stage2 重训证实 Issue #118 #118 sweep 推断. L0 偏 Euclidean (c*=0), L1/L2 偏低曲率 (c*≈0.5-1.0). 这与 Issue #83 v22.b 基线 c=[2.0, 2.0, 2.0] 显式偏离, 提示 v23+ 应考虑 per-layer curvature 学习机制 (而非固定 c=2.0).",
+  "next_step": "v23 阶段: Stage3 显式消费 Stage2 branch curvature via SID token residual injection (用户 2026-08-11 设计)",
+  "commit_hash": "TBD",
+  "issue_close_action": "Issue #119 / #219 close with 4 Gate answer + verdict link"
+}
