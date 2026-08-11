@@ -1,0 +1,19 @@
+{
+  "POS_K": 8,
+  "NEG_N": 16,
+  "NEG_EXCL": true,
+  "N_ITEMS": 9922,
+  "source": {
+    "l0": "encoder(item_emb)",
+    "l1": "z_l0 - VQ_L0(quantize(z_l0))",
+    "l2": "resid_l1 - VQ_L1(quantize(resid_l1))"
+  },
+  "RELATIONAL_TAU": 0.5,
+  "RELATIONAL_LAMBDA": 1.0,
+  "RELATIONAL_LAYER_W": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "sha256": "l0:4f5035e15b08eacf08a7198ea2c410b8fa1fdb49d4b0e131a1e55d96f732009d; l1:4f5035e15b08eacf08a7198ea2c410b8fa1fdb49d4b0e131a1e55d96f732009d; l2:4f5035e15b08eacf08a7198ea2c410b8fa1fdb49d4b0e131a1e55d96f732009d"
+}
