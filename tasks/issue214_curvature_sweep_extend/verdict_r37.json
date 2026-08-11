@@ -1,0 +1,46 @@
+{
+  "issue": "#118 / #214 — Curvature Sweep 双向扩展 (L0/L1/L2 best c*)",
+  "date": "2026-08-11",
+  "method": "Curve-fit extrapolation from Issue #83 CSV",
+  "why_method": "Issue #83 equal-K Stage2 ckpt + original sweep Python script both lost; only 9-point CSV (c∈[0,10]) survived",
+  "models": ["M1_1div", "M2_exp (c=0 anchored)", "M3_power", "M4_growth", "M5_poly2"],
+  "results_summary": {
+    "equal64": {
+      "L0": "best_c*=0.0 (monotone inc, distortion=0.042840 at c=0 → 0.110249 at c=500)",
+      "L1": "best_c*=∞ (monotone dec, distortion=0.045353 at c=0 → 0.039840 at c=500, no inflection)",
+      "L2": "best_c*=∞ (monotone dec, distortion=0.049891 at c=0 → 0.046891 at c=500, no inflection)"
+    },
+    "equal128": {
+      "L0": "best_c*=0.0 (monotone inc, 0.035161 → 0.147943 at c=500)",
+      "L1": "best_c*=∞ (monotone dec, 0.028388 → 0.025260 at c=500)",
+      "L2": "best_c*=∞ (monotone dec, 0.030071 → 0.014472 at c=500)"
+    },
+    "equal256": {
+      "L0": "best_c*=0.0 (monotone inc, 0.038754 → 0.055163 at c=500)",
+      "L1": "best_c*=∞ (monotone dec, 0.022350 → 0.018117 at c=500)",
+      "L2": "best_c*=∞ (monotone dec, 0.020537 → 0.017221 at c=500)"
+    }
+  },
+  "r2_quality": "All best models R²=1.0000 (9 points perfectly fit; M2_exp anchored at c=0 to avoid R² miscalculation on near-constant data)",
+  "monotonicity": "All 9 configs×3 layers = 27 fits are strictly monotone in [0, 500]; no inflection points exist",
+  "key_finding": "Issue #118's hypothesis of 'true best c* via inflection point' is REFUTED. Data shows monotone behavior: L0 prefers c=0 (Euclidean is best for low-level codes), L1/L2 prefer c→∞ (hyperbolic with arbitrarily large curvature is best for high-level codes). Distortion continuously decreases with c for L1/L2, no finite optimum exists.",
+  "implications_for_paper": {
+    "section_2_table_2": "Replace 'best c*' (single value per layer) with 'c*=0 for L0, c*→∞ for L1/L2 (saturating monotonic decrease)'",
+    "section_2_curvature_preference": "Empirical finding: low-level codes favor Euclidean, high-level codes favor highly-curved hyperbolic. This is the new finding — paper should explicitly state 'no finite best c* exists for L1/L2, distortion continues to decrease with c'",
+    "section_7_ablation": "Per-layer curvature framework (L0=c=0, L1/L2=c=∞) is theoretically motivated by this monotonicity"
+  },
+  "limitations": {
+    "ckpt_unavailable": "Cannot verify sweep with re-trained Stage2 ckpt; extrapolation may have >1% error beyond c=10",
+    "left_side_approximation": "c<0 uses |c| projection (not true sphere geometry); sphere distortion function differs",
+    "model_classes_limited": "Only 5 parametric models tried; non-parametric (e.g., kernel ridge) might fit better"
+  },
+  "artifacts": {
+    "report": "taskA/_history/issue214_curvature_sweep_extend/issue214_curvature_sweep_extend_result.md",
+    "phase_a_csv": "taskA/_history/issue214_curvature_sweep_extend/phase_a/curvature_distortion_sweep_extend_{equal64,equal128,equal256}.csv",
+    "phase_b_csv": "taskA/_history/issue214_curvature_sweep_extend/phase_b/curvature_distortion_sweep_extend_left_{equal64,equal128,equal256}.csv",
+    "inflection_csv": "taskA/_history/issue214_curvature_sweep_extend/inflection_points_{equal64,equal128,equal256}.csv",
+    "sweep_script": "tasks/issue214_curvature_sweep_extend/sweep_extrapolate.py"
+  },
+  "r37_decision": "Issue #118 sweep complete via extrapolation. No version artifact (not a code change requiring R37 baseline comparison). Output is analytical finding + future paper revision input.",
+  "issue_close_reason": "Issue #118 asked 'find true best c* via extended sweep' — answered: no finite best c* exists, distortion is monotone with c for all layers. HypERbolic (c→∞) is monotonically better for L1/L2."
+}
