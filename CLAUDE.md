@@ -75,3 +75,8 @@
 **R42** — Stage2 / Stage3 必须用 `torchrun --nproc_per_node=4` DDP 4 卡运行, 禁单卡 (world_size=1); 唯一例外: nvidia-smi 显示 GPU 1/2/3 都被占时允许单卡, 但 verdict_r37.json 必须显式记录 (R7+R42 联动)。
 
 **R43** — 禁止脚本使用 CLI 传入数值超参; 脚本超参必须硬编码为模块级常量, 调用方只能改代码, 不能传 `--xxx`; 唯一允许传参: `--sid_npy` / `--product_dir` / `--tag` 路径参数 (R30 强化)。
+
+**R44** — 数据集与依赖库位置硬约束:
+- 数据集: 每个新任务的 4 stage 脚本必须显式从 `/home/wlia0047/ar57/wenyu/GeneRec/dataset/` 读取 (Instruments.item.json, Instruments.inter.json, train.parquet, valid.parquet, test.parquet 等), 禁引用任何外部数据集路径 (HG-Rec/dataset/, 用户家目录其他位置等);
+- 依赖库: stage 需要的 baseline 模型/工具库 (如 HRQVAE、quantizer、utils 等) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/_lib/` 复制到对应任务目录的 `_lib/` 子目录, 任务脚本 `sys.path.insert(0, str(<task_dir>/_lib))`; 禁止从外部路径 import baseline 代码;
+- 两者共同强化 R40 自包含, 确保任务目录可独立运行、可重现。
