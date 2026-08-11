@@ -54,7 +54,7 @@
 
 **R32** — 运行脚本必须直接 `python3` 执行, 禁写 `.sh` 包装启动, GPU 选择用 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联 (唯一例外: DDP 多卡 `torchrun`)。
 
-**R33** — verdict 文件必须放 `verdicts/<gitlab_iid>/<final_verdict>.<ext>` (1:1 映射 iid 1-90); orphan (internal #N > 90) → `verdicts/_misc/orphan/`。
+**R33** — 任务完成 verdict 写到 `tasks/<task_dir>/issue<NN>_verdict.json` (本任务自己的目录), 不集中放 `verdicts/`; 文件名格式 `issue<NN>_verdict.json`, NN = gitlab issue 编号; 区分 stage3/verdict.json (产物级) 与 issue 闭环 verdict (任务级)。
 
 **R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯), 必须有且仅有 stage1/2/3/4_beam20.py 四个脚本。
 
