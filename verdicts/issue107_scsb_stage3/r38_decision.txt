@@ -1,4 +1,0 @@
-R38 决策 (2026-08-10): v30 SCSB mid-training regress.
-v30 best_valid=0.1244 (ep45) < v18 best_valid=0.1267 (-0.0023, -1.8%) +
-30 epoch 饱和 (ep45=0.1244 → ep75=0.1239, 区间 [0.1231, 0.1244]) + 无突破 v18.
-立即 kill + 用 ep45 best ckpt 跑 stage4 留作记录 + R37 回退至 v18 重新创新。

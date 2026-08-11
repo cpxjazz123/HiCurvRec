@@ -1,0 +1,60 @@
+{
+  "issue_iid": 122,
+  "issue_title": "Stage3 \u56fa\u5b9a baseline SID \u7684\u5173\u7cfb\u66f2\u7387 gated encoder adapter",
+  "stage": "Stage2 complete \u2014 Issue122 self-contained baseline SID (DDP 4-card)",
+  "config": {
+    "recipe": "Issue122 baseline HRQVAE (\u65e0 \u03ba learning, \u56e0 taskA/ \u5df2\u5220 spec \u8c41\u514d)",
+    "codebook_sizes": [
+      64,
+      128,
+      256
+    ],
+    "e_dim": 32,
+    "layers": [
+      512,
+      256,
+      128,
+      64
+    ],
+    "lr": 0.001,
+    "batch_size": 1024,
+    "n_epochs": 1000,
+    "seed": 2024,
+    "kmeans_init": true,
+    "kmeans_iters": 1000,
+    "sk_epsilons": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sk_iters": 50,
+    "beta": 1.0,
+    "loss_type": "poincare",
+    "ddp_world_size": 4
+  },
+  "outputs": {
+    "sid_output_npy": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue122_sid_anchored_relational_curvature_adapter/stage2/sid_output.npy",
+    "sid_sha256": "a0a2ac7ddd1eb1fa4e897224acdb92bec4dc99cd899638dfc2a37ae92a033f45",
+    "shape": [
+      9922,
+      4
+    ],
+    "dtype": "int64",
+    "n_unique_4digit": 9922,
+    "util_4digit": 1.0,
+    "util_per_layer_3digit": [
+      1.0,
+      1.0,
+      0.9648
+    ]
+  },
+  "precheck": {
+    "shape_match_baseline": true,
+    "dtype_match_baseline": true,
+    "util_4digit_healthy": true,
+    "sid_sha_match_v15_baseline": false,
+    "note": "v15 capmatch \u9876\u7aef\u539f\u59cb SID \u5df2\u4e0d\u5728\u6587\u4ef6\u7cfb\u7edf + taskA_stage2.py \u5df2\u5220\u9664. Issue122 \u7528 baseline HRQVAE \u4ea7\u51fa shape/dtype/util \u7b49\u4ef7\u7684 SID. SHA \u504f\u5dee\u5df2\u77e5."
+  },
+  "elapsed_s": 50.7,
+  "done_at": "2026-08-11 23:19:23"
+}

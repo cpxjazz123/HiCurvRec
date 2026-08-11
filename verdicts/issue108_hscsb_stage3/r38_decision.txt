@@ -1,4 +1,0 @@
-R38 决策 (2026-08-10): v31 HSCSB mid-training regress.
-v31 best_valid=0.1249 (ep90) < v18 best_valid=0.1267 (-0.0018, -1.4%) +
-ep90-105 (15 epoch) 饱和 (区间 [0.1237, 0.1249], 无新 BEST) + loss 2.61 几乎不变 + 无突破 v18.
-立即 kill + 用 ep90 best ckpt 跑 stage4 留作记录 + R37 回退至 v18 重新创新。
