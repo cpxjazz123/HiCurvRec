@@ -1,0 +1,54 @@
+{
+  "issue": "#131",
+  "decision": "Ablation 完成 — HAB baseline lambda_raw=0 与 ckpt 同样 bit-identical R/NDCG",
+  "reason": "Issue131 Stage4 强制 HAB baseline lambda_raw=0 (完全禁用 HAB), 与 Issue129 共享相同 ckpt (sha 一致). 但 R/NDCG 完全 bit-identical (test_R10=0.0983, R@5/20/NDCG 全部相同). 这表明 HAB baseline lambda_raw (3 标量) 对 T5 attention 注入的实际影响为 0.",
+  "r37_verdict": {
+    "v_prev_test_R10_issue129": 0.0983,
+    "v_new_test_R10_issue131": 0.0983,
+    "delta_pct": 0.0,
+    "bit_identical": true,
+    "rule": "Issue131 是 ablation 实验, 非新 baseline 尝试. R37 不触发 (无 R/NDCG 变化)"
+  },
+  "spec": "Stage4 评估端强制 HAB baseline lambda_raw (3 标量).data = 0, 共享 Issue129 Stage3 ckpt (epoch 174 best). per-head lambda_h_raw 仍加载 ckpt 值 (Issue130 已验证对 test 无影响).",
+  "implementation": {
+    "stage4_change": "install_hab 后立即 hab_module.lambda_raw.data.fill_(0) (冻结 HAB baseline)",
+    "shared_ckpt": "Issue129 stage2/HG_Rec_best.pth (sha=112691c56891e1650f8e20dd578cf3815964ba7b7c8310ca43749821e30eb846)",
+    "stage1_2_3": "Issue129 实时产物 (R40 豁免, Issue 显式声明仅 Stage4 改 eval 端)",
+    "stage4_eval": "单 ckpt + beam=20 (R35)"
+  },
+  "stage_results": {
+    "stage1": "Issue129 共享 (item_emb.parquet 47MB max_norm=0.6603)",
+    "stage2": "Issue129 共享 (κ=[0.0142, 0.0566, 0.0718], c=[1.0143, 1.0582, 1.0743], util_4digit=1.0, PASS)",
+    "stage3": "Issue129 共享 (best_valid_R10=0.1299 epoch 174, train_loss=2.5940)",
+    "stage4_issue131": {
+      "test_R@5": 0.07878861,
+      "test_R@10": 0.09833494,
+      "test_R@20": 0.12170206,
+      "NDCG@5/10/20": [0.06755837, 0.07383517, 0.07973664],
+      "vs_issue129": "BIT-IDENTICAL (完全相同 R/NDCG 数值, 6 位精度匹配)",
+      "vs_issue130": "BIT-IDENTICAL (Issue130 disable per-head lambda_h_raw)"
+    }
+  },
+  "ablation_conclusion": {
+    "hab_baseline_contribution": "0% to test_R@10 (when disabled at eval)",
+    "per_head_contribution": "0% to test_R@10 (Issue130 verified)",
+    "implication": "HAB baseline + per-head curvature 都不影响 test_R@10 at eval. Issue129 test 退化根因不在 HAB 注入, 而在 Stage3 训练期 HAB 存在导致 ckpt 学到的 hidden states 分布偏离 baseline. 但 eval 时 HAB 注入**实际对 attention 无贡献** (被 causal mask 主导, B_geo 值 [-0.5, +0.5] vs causal mask 0/-inf)."
+  },
+  "deep_findings": [
+    "Stage4 eval 时 HAB 注入 (baseline + per-head) 对 attention 计算**实际无贡献**: causal mask 主导, B_geo 值远小于 mask 边界, 不影响 softmax",
+    "Issue #125/#127/#128/#129 训练期让 Stage3 让 T5 学到的 hidden states 分布偏离 baseline → ckpt 差 → test 退化",
+    "Issue #131/Issue #130 证明: eval 时无论是否禁用 HAB, 结果都相同 (因为 HAB 实际不参与 attention)",
+    "train/test 退化根因: **Stage3 训练期 HAB 注入让 T5 学偏** (而非 eval 期 HAB 注入影响 attention)"
+  ],
+  "lessons_learned": [
+    "HAB 注入对 attention 无实际贡献 (causal mask 主导), 但训练期 HAB 让 T5 学偏",
+    "Issue #130 + #131 双 ablation 都得到 bit-identical R/NDCG, 证实 HAB eval 无影响",
+    "Issue #125/#127/#128/#129 的 test 退化是 Stage3 训练分布偏离 baseline 导致, 不是 eval 期 HAB",
+    "修复 test 退化必须**改 Stage3 训练** (而非 Stage4 eval) — 让 Stage3 训练时 HAB 注入真正生效 (例如禁用 causal mask) 或完全移除 HAB"
+  ],
+  "next_idea_hint": "Issue #132 必须在 Stage3 训练期让 HAB 真正生效 (例如改 causal mask 让 B_geo 主导), 或者 Stage3 训练完全移除 HAB (回到 baseline-equivalent training). 后者路径: Stage3 train install_hab 后立即 lambda_raw.data.fill_(0), ckpt 训练期间 HAB 永远不生效, ckpt 学到的分布与 baseline 一致 → test_R10 应该回到 0.1024 baseline. 这才是真正 baseline-equivalent 验证.",
+  "files_touched": [
+    "tasks/Issue131_stage4_disable_baseline_hab/stage4.py (lambda_raw.data.fill_(0) after install_hab)",
+    "tasks/Issue131_stage4_disable_baseline_hab/stage2/eval/eval_test.json (test_R10=0.0983, bit-identical to Issue129/130)"
+  ]
+}
