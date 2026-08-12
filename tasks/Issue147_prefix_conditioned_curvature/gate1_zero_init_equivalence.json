@@ -1,0 +1,17 @@
+{
+  "issue": "#147",
+  "checks": {
+    "check1_input_hash": true,
+    "check2_stage1_consistent": true,
+    "check3_router_zero_init_equivalent": true,
+    "check4_per_item_curvature": true,
+    "check5_item_level_isolation": true,
+    "check6_grad_finite_detach": true,
+    "check7_no_nan_boundary": true
+  },
+  "stage1_sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6",
+  "n_pass": 7,
+  "n_total": 7,
+  "gate1_pass": true,
+  "decision": "GATE1_PASS"
+}

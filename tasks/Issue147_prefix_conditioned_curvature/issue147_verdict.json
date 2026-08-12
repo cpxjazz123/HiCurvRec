@@ -1,0 +1,58 @@
+{
+  "issue": "#147",
+  "task": "Issue147_prefix_conditioned_curvature",
+  "decision": "INVALID (paired CI 跨 0, 提升统计不显著)",
+  "reason": "B (prefix-conditioned curvature) test R@10=0.1113 > A (三层共享) 0.1094 (Δ=+0.0018), 但 95% paired bootstrap CI [-0.0007, +0.0042] 跨 0 (方向正确但统计不显著), McNemar p=0.145. Spec 明确 'paired CI 跨 0 即判无效'. Stage3 valid R@10 B 0.1342 > A 0.1306, 但 paired CI 决定最终判定.",
+  "r18_4d_compare": {
+    "D1_spec": "Issue #147 spec: A 三层共享 c_l = C_MIN + (C_MAX-C_MIN)·sigmoid(θ_l); B L0 全局共享, L1 曲率 c_1,i = c_θ(θ_1 + δ_1,i), δ_1,i = δ_max·tanh(g_1(stop_grad(e_0,i))), L2 类似 prefix [L0,L1]. g_1/g_2 零初始化 → 训练起点 δ=0 → 与 A 严格等价. 同 item 同层所有候选共享同一 c_l,i. 路由正则 L_route = λ_δ·mean(δ²) + λ_mean·(mean(log c_l,i) - log c_global)².",
+    "D2_implementation": "新模块 _lib/prefix_conditioned_quantizer.py (PrefixConditionedHRQVAE + prefix_routing flag) + stage2_train.py (--arm control/treatment 切换, A+B 各 200 epoch) + Stage3/Stage4 从 baseline 复制 (改 DDP GPU 分配 + ckpt 路径 + 额外存 'final_cs' key 兼容 Stage4 hyperbolic_attention_bias.load_hab_assets_from_stage2_ckpt).",
+    "D3_gate1_failure_mechanism": "Gate 1 7/7 PASS 未失败. 设计规避: (a) Stage3 期望 ckpt 有 'final_cs' key → stage2_train 同时存 final_cs_global 和 final_cs; (b) Stage3 DDP 4 卡 auto-launch 冲突 → 每 arm 2 卡 + 不同 master_port (R42).",
+    "D4_cite": "Issue #147 spec 引用 QINCo (ICML 2024) Huijben et al.; 路由器 zero-init + stop_grad(prefix codeword) + per-item 曲率遵循 spec."
+  },
+  "gate_summary": {
+    "Gate_1_mechanism_equivalence": {
+      "decision": "PASS",
+      "n_pass": 7,
+      "n_total": 7,
+      "report": "gate1_zero_init_equivalence.json"
+    },
+    "Gate_2_stage2_numerical_stability": {
+      "decision": "PASS",
+      "B_final_cs_global": [0.608, 1.873, 1.890],
+      "B_delta_abs_mean_final": [0.0, 1.457, 1.453],
+      "B_SID_unique_4digit": 9170,
+      "A_SID_unique_4digit": 9171,
+      "boundary_hit": 0
+    },
+    "Gate_3_stage3_stage4_effectiveness": {
+      "decision": "INVALID",
+      "A_test_R@10": 0.1094,
+      "B_test_R@10": 0.1113,
+      "delta_R@10": 0.0018,
+      "paired_bootstrap_CI_95": [-0.0007, 0.0042],
+      "ci_cross_zero": true,
+      "ci_direction_correct": true,
+      "McNemar_only_A": 434,
+      "McNemar_only_B": 479,
+      "McNemar_p_value": 0.1453,
+      "valid_R@10_A": 0.1306,
+      "valid_R@10_B": 0.1342
+    }
+  },
+  "stage_results": {
+    "stage1_shared": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
+    "stage2_control": {"ok": true, "final_cs_global": [0.611, 0.605, 0.606], "n_unique_4digit": 9171, "train_time_s_estimate": 380},
+    "stage2_treatment": {"ok": true, "final_cs_global": [0.608, 1.873, 1.890], "delta_abs_mean_final": [0.0, 1.457, 1.453], "n_unique_4digit": 9170, "train_time_s_estimate": 380},
+    "stage3_control": {"best_valid_R10": 0.1306, "best_epoch": 179, "EARLY_STOP": 20},
+    "stage3_treatment": {"best_valid_R10": 0.1342, "best_epoch": 134, "EARLY_STOP": 20},
+    "stage4_control": {"test_R@5": 0.0870, "test_R@10": 0.1094, "test_R@20": 0.1380, "NDCG@10": 0.0803, "n_eval": 24772},
+    "stage4_treatment": {"test_R@5": 0.0881, "test_R@10": 0.1113, "test_R@20": 0.1388, "NDCG@10": 0.0814, "n_eval": 24772}
+  },
+  "vs_baseline_target": {
+    "baseline_test_R@10": 0.1024,
+    "A_test_R@10": 0.1094,
+    "B_test_R@10": 0.1113,
+    "TARGET_0.1020_reached_A": true,
+    "TARGET_0.1020_reached_B": true
+  }
+}

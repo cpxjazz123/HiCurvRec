@@ -1,0 +1,30 @@
+{
+  "issue": "#147",
+  "n_samples": 24772,
+  "control_R@10": 0.10943807524624576,
+  "treatment_R@10": 0.11125464233812368,
+  "delta_R@10": 0.001816567091877927,
+  "paired_bootstrap_CI_95": [
+    -0.000687267883093813,
+    0.004238656547715158
+  ],
+  "ci_cross_zero": true,
+  "ci_direction_correct": false,
+  "McNemar": {
+    "only_A": 434,
+    "only_B": 479,
+    "p_value": 0.1452996632924476
+  },
+  "best_rank": {
+    "control_mean": 18.852050702405943,
+    "treatment_mean": 18.830695947036975
+  },
+  "prefix_match_length_mean": {
+    "control": 0.32185532052317134,
+    "treatment": 0.3228241563055062
+  },
+  "first_error_position": {
+    "control_pos_1_ratio": 0.8603261747133861,
+    "treatment_pos_1_ratio": 0.8588729210398838
+  }
+}
