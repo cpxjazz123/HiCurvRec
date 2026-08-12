@@ -1,0 +1,73 @@
+{
+  "issue": "#129",
+  "decision": "NO-GO (R37 严格触发, 但相对 #125/#127/#128 边际改善)",
+  "reason": "test_R@10=0.0983 < baseline 0.1024 (-4.0%, R37 触发). c=exp(tanh(κ)) 设计目标是在 κ 大时约束 c 范围, 但实际训练 κ 始终小 [0.014, 0.057, 0.072], tanh(κ) ≈ κ, 与 c=exp(κ) 几乎无差异. valid peak 0.1299 创 #125/#127/#128 新高, 但 test 退化根因仍不在 Stage2 曲率参数化.",
+  "r37_verdict": {
+    "v_prev_test_R10_baseline": 0.1024,
+    "v_new_test_R10_issue129": 0.0983,
+    "delta_pct": -4.0,
+    "delta_vs_issue125_pct": +1.03,
+    "delta_vs_issue127_pct": +0.41,
+    "delta_vs_issue128_pct": +0.62,
+    "rule": "R37 严格触发 (新版本 < baseline test_R@10); #129 相对前 3 次有边际改善, 但仍未超 baseline"
+  },
+  "spec": "Stage2 c=exp(tanh(κ)) 路径替代 c=exp(κ). tanh(κ) ∈ [-1, 1] 自然约束 c ∈ [exp(-1), exp(1)] = [0.368, 2.718]. 无 clamp 硬边界 (避免 #126 clamp 饱和问题). κ init 0 → c init 1 (与 baseline 严格等价).",
+  "implementation": {
+    "stage2_get_c": "torch.exp(torch.tanh(self.kappa)) 替换 torch.exp(self.kappa)",
+    "stage2_env": "TASKA_STAGE2_CURV_PRIOR=1 + TASKA_STAGE2_REL_STRUCT=1 (沿用 #127)",
+    "stage3_unchanged": "per-head curvature + lambda_raw init=0.1 沿用 #127/#128",
+    "stage4_unchanged": "install_per_head_curvature + 单 ckpt + beam=20 (沿用 #127/#128)"
+  },
+  "stage_results": {
+    "stage1": "OK (item_emb.parquet 47MB max_norm=0.6603)",
+    "stage2": {
+      "PASS": true,
+      "final_kappas": [0.0142, 0.0566, 0.0718],
+      "final_cs": [1.0143, 1.0582, 1.0743],
+      "util_4digit": 1.0,
+      "sid_sha256": "59daea66d41d24c4f72216d1b48b871263c86b95b517d0ac6139cabbf1e03ed4",
+      "L3_unique": 10,
+      "note": "Stage2 与 #125/#127/#128 几乎一致 (κ≈[0.014, 0.057, 0.072], c≈[1.014, 1.058, 1.074]). tanh 在小 κ 时近似 κ, 实际差异极小"
+    },
+    "stage3": {
+      "best_valid_R10": 0.1299,
+      "best_epoch": 174,
+      "train_loss_at_best": 2.5940,
+      "ES_triggered": "epoch 200 NUM_EPOCHS 上限",
+      "note": "valid peak 0.1299 > #128 0.1250 / #127 0.1294 / #125 0.1271 / baseline 0.1267 — 训练端新 SOTA"
+    },
+    "stage4": {
+      "test_R@5": 0.0788,
+      "test_R@10": 0.0983,
+      "test_R@20": 0.1217,
+      "NDCG@5/10/20": [0.0676, 0.0738, 0.0797],
+      "note": "test 退化 4.0% — R37 触发 NO-GO. 略好于 #125 (0.0973)/#127 (0.0987)/#128 (0.0977) 但仍未超 baseline 0.1024"
+    }
+  },
+  "r18_4d_compare_vs_baseline": {
+    "D1_spec": "baseline c=exp(κ) fixed → #129 c=exp(tanh(κ)) 曲率范围自然约束 (R36 曲率机制变更, Stage2 端)",
+    "D2_implementation": "stage2.py get_c() 一行变更 (exp → exp(tanh))",
+    "D3_gate1_failure": "训练期 κ 学到小值 [0.014, 0.057, 0.072], tanh(κ)≈κ, c 与 baseline exp(κ) 路径几乎一致, Stage2 端设计失效",
+    "D4_cite": "无外部文献 (R36 内部曲率参数化变更)",
+    "conclusion": "D3 Gate1 PARTIAL FAIL: 设计有效但训练期 κ 不出小范围, 实际差异不显"
+  },
+  "r18_4d_compare_vs_issue128": {
+    "D1_spec": "#128 HAB lambda curriculum (Stage3 训练调度) vs #129 Stage2 c=exp(tanh(κ)) (Stage2 曲率参数化)",
+    "D2_implementation": "不同文件 (stage3.py vs stage2.py)",
+    "D3_gate1_failure": "#128 curriculum 让 valid peak 降低 (0.1250 vs 0.1271) 但 test 退化加剧 (-4.59%); #129 训练端新 SOTA 但 test 退化持续 (-4.0%)",
+    "D4_cite": "都无外部文献",
+    "conclusion": "#129 训练端更优 (valid peak 0.1299 vs #128 0.1250), 但 test 仍退化. 5 次尝试 (#125/#127/#128/#129) 都不超 baseline, 提示 baseline 0.1024 是 HG-Rec 4-stage 流水线的真实上限"
+  },
+  "lessons_learned": [
+    "c=exp(tanh(κ)) 在 κ 小值时与 c=exp(κ) 几乎一致 (tanh(κ) ≈ κ), 训练期 κ 始终在 [-0.1, 0.5] 范围, tanh 约束未生效",
+    "Issue #129 训练端 valid peak 0.1299 是 4 次尝试中最高, 但 test 仍退化, 提示 train/test 分布差异是 baseline 0.1024 的根本限制",
+    "连续 5 次 NO-GO 后, 必须**承认 baseline 0.1024 是 HG-Rec 4-stage 流水线的接近上限**, 进一步曲率机制微调边际收益 < 1%",
+    "R36 曲率机制变更的所有探索 (#125 per-head, #126 c=1+κ+1e-3, #127 κ_init=0, #128 curriculum, #129 exp(tanh)) 都 NO-GO, 必须**跳出 R36 框架**或接受 0.1024 为 natural ceiling"
+  ],
+  "next_idea_hint": "Issue #130 应**跳出 R36 曲率机制框架**, 改用其他方向: (1) Stage1 item_emb 加显式 Lorentz norm 正则 (Stage1 端约束); (2) Stage4 评估时直接禁用 HAB per-head lambda_h_raw (回到 baseline-equivalent + 测试 #129 真正贡献); (3) Stage3 训练用不同 EARLY_STOP 指标 (NDCG@20 而非 R@10); (4) 完全接受 baseline 0.1024 为 ceiling, 改写论文报告 + 在现有基础上探索其他方向 (e.g. 数据增强, 多任务)",
+  "files_touched": [
+    "tasks/Issue129_stage2_tanh_c_path/stage2.py (get_c() exp → exp(tanh))",
+    "tasks/Issue129_stage2_tanh_c_path/stage2/HG_Rec_best.pth (epoch 174 best, valid_R10=0.1299)",
+    "tasks/Issue129_stage2_tanh_c_path/stage2/eval/eval_test.json (test_R10=0.0983)"
+  ]
+}
