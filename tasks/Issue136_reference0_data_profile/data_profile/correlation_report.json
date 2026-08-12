@@ -1,0 +1,89 @@
+{
+  "correlations": {
+    "L0_freq_vs_prefix_hit": {
+      "spearman_rho": -0.003505324984103831,
+      "pvalue": 0.8042870698251581,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L0_freq_vs_first_err_pos": {
+      "spearman_rho": -0.021914952707769737,
+      "pvalue": 0.12128084205014063,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L1_freq_vs_prefix_hit": {
+      "spearman_rho": -0.005104087692086624,
+      "pvalue": 0.718229814301816,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L1_freq_vs_first_err_pos": {
+      "spearman_rho": -0.0319102624993799,
+      "pvalue": 0.024045171082215103,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L2_freq_vs_prefix_hit": {
+      "spearman_rho": -0.007694345917907904,
+      "pvalue": 0.586479710174371,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L2_freq_vs_first_err_pos": {
+      "spearman_rho": -0.043150858539072516,
+      "pvalue": 0.002274091922883854,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L3_freq_vs_prefix_hit": {
+      "spearman_rho": -0.0010973103286864869,
+      "pvalue": 0.9381683722827132,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L3_freq_vs_first_err_pos": {
+      "spearman_rho": -0.006860278024994475,
+      "pvalue": 0.6276910079418776,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L2_uniqueness_vs_prefix_hit": {
+      "spearman_rho": -0.30211618238639554,
+      "pvalue": 4.9569408902098065e-106,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "L2_uniqueness_vs_first_err_pos": {
+      "spearman_rho": -0.04170080453575833,
+      "pvalue": 0.0031855882696995063,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "item_knn_mean_dist_vs_prefix_hit": {
+      "spearman_rho": -0.0024007771058428733,
+      "pvalue": 0.8652316212240799,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "item_knn_mean_dist_vs_first_err_pos": {
+      "spearman_rho": 0.05301779816922141,
+      "pvalue": 0.0001763943590092998,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "text_emb_norm_vs_prefix_hit": {
+      "spearman_rho": 0.013672088665781089,
+      "pvalue": 0.33376098089179096,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    },
+    "text_emb_norm_vs_first_err_pos": {
+      "spearman_rho": -0.05501313217707262,
+      "pvalue": 9.942508074446811e-05,
+      "n": 5000,
+      "interpretation": "correlation, not causation"
+    }
+  },
+  "note": "Spearman 相关, 仅相关非因果, 未做多重比较校正"
+}

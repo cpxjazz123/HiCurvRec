@@ -1,0 +1,59 @@
+{
+  "reference_id": "reference-0",
+  "anchor": "Issue #133",
+  "test_R@10": 0.0962,
+  "issue133_commit": "74477d565af9ca46af74c6978bab88de9ade409c",
+  "issue133_head_short": "74477d5",
+  "issue133_branch": "main",
+  "timestamp": "2026-08-12 13:35:21",
+  "artifacts": {
+    "stage1/item_emb.parquet": {
+      "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6",
+      "size_bytes": 47129482
+    },
+    "stage2/sid_output.npy": {
+      "sha256": "d43dea6fe1988105ec06f8035e62028ad2d3e67a54a6fca0592f0bc004a84158",
+      "size_bytes": 317632
+    },
+    "stage2/HG_Rec_best.pth": {
+      "sha256": "b6041115241236a2cfe3bf73845febe99745cfb1270cd111005a02de20aa1232",
+      "size_bytes": 22493253
+    },
+    "stage2/hrqvae_kappa_sync.ckpt": {
+      "sha256": "652827aade04aa4ff9695e67369b94bcd23e6c0af3e644a57c93204ecbf53ad5",
+      "size_bytes": 4618218
+    },
+    "stage2/config.json": {
+      "sha256": "9a10cf0f168355f5c25c1c1f21814e5eacd048e6aac0a7601d69f95031ffc86a",
+      "size_bytes": 563
+    },
+    "stage2/sid_metadata.json": {
+      "sha256": "1d649db443f80152434d2b5c2ed997ea29b8c6a14f775caea68d90af2ba33ebb",
+      "size_bytes": 495
+    },
+    "stage2/eval/eval_test.json": {
+      "sha256": "fbeda1afa74a211f756c383c7285c1bbe003af9b25fb683053902cac96707a5d",
+      "size_bytes": 564
+    },
+    "dataset/Instruments.item.json": {
+      "sha256": "1d9938e576a8d964e6b977a2b63aa56402840a788eaa6685f26f0d910a7133f2",
+      "size_bytes": 7526890
+    },
+    "dataset/Instruments.inter.json": {
+      "sha256": "0a11d47791d90483005da93c36d826679e20e4592d1d2b86518d5f56f218e743",
+      "size_bytes": 3312848
+    },
+    "dataset/train.parquet": {
+      "sha256": "2c5f843d456a42ee8d7f6bae27c789622fd957367e958eacbad3df90942ffa1f",
+      "size_bytes": 513105
+    },
+    "dataset/valid.parquet": {
+      "sha256": "989a3680b0540558a739ce16f2542afb0e6e45c277ce9eaa7869f136a8df4c0a",
+      "size_bytes": 559697
+    },
+    "dataset/test.parquet": {
+      "sha256": "70f00f3a3ac4cf39088e4ba7c516104ecf1d6fddf14b19e255c8f89229e55899",
+      "size_bytes": 605566
+    }
+  }
+}
