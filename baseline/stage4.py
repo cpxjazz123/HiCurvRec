@@ -37,6 +37,10 @@ from dataloader import GenRecDataLoader  # noqa: E402
 # Issue #64: 双曲码字距离 attention bias (跟 Stage3 train 同源共享模块)
 import sys as _sys
 _sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/baseline")  # R44 baseline 自包含
+from _lib.per_head_curvature import (  # noqa: E402  Issue125
+    install_per_head_curvature, get_per_head_kappa_stats,
+    PER_HEAD_NUM_HEADS_DEFAULT, PER_HEAD_KAPPA_H_INIT, PER_HEAD_LAMBDA_H_INIT,
+)
 from _lib.hyperbolic_attention_bias import (  # noqa: E402
     HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
     HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
@@ -447,6 +451,30 @@ def main():
         print(f"[Issue #64] hyperbolic_attn_bias enabled for eval "
               f"(encoder.forward patched, λ_max={HAB_LAMBDA_MAX_VAL}, "
               f"Dbar median=[{stats_list[0]['median']:.4f}, {stats_list[1]['median']:.4f}, {stats_list[2]['median']:.4f}])",
+              flush=True)
+        # Issue #132 (2026-08-12): Stage4 eval 端冻结 HAB baseline lambda_raw (与 Stage3 训练一致).
+        # Stage3 训练期 HAB 已 frozen (lambda_raw + lambda_h_raw + kappa_h 全 0),
+        # Stage4 也强制 0 让 eval 严格 baseline-equivalent (避免 HAB 干扰 baseline 评估).
+        with torch.no_grad():
+            hab_module.lambda_raw.data.fill_(0.0)
+            print(f"[Issue #132] HAB baseline lambda_raw frozen to 0 for eval (Stage3 训练期已 freeze)", flush=True)
+        # Issue125 (2026-08-12): per-head learnable curvature (κ_h + λ_h) — 必须在 install_hab 之后
+        # 否则 ckpt load_state_dict 会把 kappa_h / lambda_h_raw 标 unexpected 丢弃,
+        # 导致 Stage3 train 时学到的 per-head 信号在 eval 失效, test_R@10 退化 (R37 触发场景).
+        hab_module = install_per_head_curvature(
+            hab_module,
+            num_heads=PER_HEAD_NUM_HEADS_DEFAULT,
+            kappa_h_init=PER_HEAD_KAPPA_H_INIT,
+            lambda_h_init=PER_HEAD_LAMBDA_H_INIT,
+        )
+        # Issue #132: per-head lambda_h_raw + kappa_h 训练期已 frozen, eval 也强制 0
+        with torch.no_grad():
+            hab_module.lambda_h_raw.data.fill_(0.0)
+            hab_module.kappa_h.data.fill_(0.0)
+            print(f"[Issue #132] per-head lambda_h_raw + kappa_h frozen to 0 for eval", flush=True)
+        print(f"[Issue #125] per-head curvature enabled for eval: "
+              f"num_heads={hab_module.num_heads} kappa_h_init={PER_HEAD_KAPPA_H_INIT} "
+              f"lambda_h_init={PER_HEAD_LAMBDA_H_INIT} (R36 曲率机制 + ckpt 必须能加载)",
               flush=True)
 
     # Issue #70: 安装 DecorPromptFormer (candidate bins + alpha gate)

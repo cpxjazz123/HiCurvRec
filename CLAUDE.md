@@ -82,3 +82,5 @@
 - 两者共同强化 R40 自包含, 确保任务目录可独立运行、可重现。
 
 **R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R33+R34 联动)。
+
+**R46** — 任务模板来源硬约束: 每个新任务目录的 4 stage 脚本 (stage1/2/3/4_beam20.py) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/baseline/` 复制 (stage4.py 已内置 raw predictions 收集, 无需额外 full_oracle 脚本), 禁止从任何其他 issue 目录 (如 tasks/Issue1xx_*/) 复制脚本/产物/配置; 复制后仅允许修改: 路径参数 (指向本任务目录)、issue 编号/标签、以及本任务创新点所需的最小代码改动。历史 issue 目录仅作 git 历史与参考查阅, 不作模板源。

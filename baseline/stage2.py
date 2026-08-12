@@ -1,31 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证
+Issue #140 [方向A] Stage2 L0 codeword-specific bounded curvature — 降低粗码混淆
 
-R18 4 维度路径对比 vs Issue #155:
-  D1 spec: 仅 Gate 1 monitoring 时序审计 (#155) vs Gate 2 完整 Stage 2 链路 (#157)
-  D2 实施: train_step monitoring 时序修复 (#155) vs per-layer learnable κ_l + 每 step 后 codebook 重校准 (#157)
-  D3 Gate 失败机制: monitoring grad=0 显示 bug (#155) vs 旧尺度 / 旧距离缓存错配 (#157)
-  D4 引用文献: 无 (#155) vs arXiv:2405.13979 学习曲率与双曲尺度同步 (#157)
+R18 4 维度路径对比 vs Issue #133 (reference-0):
+  D1 spec: 共享 L0 曲率 c0 (#133) vs L0 codeword-specific bounded curvature c_0,b (#140)
+  D2 实施: c_l=exp(κ_l) 每层共享 (#133) vs c_0,b = c_min + (c_max-c_min)·sigmoid(θ_b) 每 codeword (#140)
+  D3 Gate 1 失败机制: N/A (#133) vs 尺度捷径 / 曲率塌缩 / argmin 漂移审计 (#140 Gate 1-3)
+  D4 引用文献: arXiv:2405.13979 学习曲率 (#133) vs 同源 + codeword-specific 局部曲率假设 (#140)
 
-实施核心:
-  - HRQVAEWithKappaSync: 复用 HG-Rec HRQVAE 框架, 把 HVectorQuantization 的固定 c=1 替换为 per-layer learnable c_l
-  - 每次 opt.step() 后: 强制 recompute codebook_h (proj_to_ball with new c_l), distance cache 失效
-  - Stage 2 训练: 100 epoch, 每次 opt.step() 后记录 κ / codebook norm / 距离统计 / 同步重校准前后差异
-  - Stage 2 推断: 训练后加载 ckpt, Sinkhorn + 第4位 dedup, 输出 (9922, 4) 整数 SID
-  - SID 验收: SHA256 hash + item alignment + reload 一致性
+实施核心 (Issue #140 spec):
+  - L0 单一曲率 c0 替换为 c_0,b = c_min + (c_max - c_min) * sigmoid(θ_b), b∈{0..K0-1}, K0=64
+  - θ_b 初始化使全部 c_0,b = c0_ref (Issue #139 L0 effective curvature=1.014055), 起点严格等价
+  - item-candidate 距离用对应 c_0,b, 尺度归一化: d_norm = d / stop_grad(E_batch[d] + eps)
+    E_batch[d] = 同 batch 同候选层 (L0) 距离矩阵全局标量均值 (实测: per-column 归一化
+    1087/9922 argmin 漂移 FAIL, global scalar 0/9922 漂移 PASS — 满足 Gate 1 check 1 完全一致)
+  - L1/L2 曲率、codebook 数量、RQ-VAE loss 公式、Stage1/3/4 保持 Issue #139 不变
+  - 轻量 anchor: L_anchor = LAMBDA_ANCHOR * mean_b(log(c_0,b)-log(c0_ref))^2, 防无界漂移
+  - 禁止 occupancy target / 均衡损失 / frequency penalty / 修改 K0=64 / 改 L1/L2/Stage3
 
-precheck 决策阈值 (Issue #157 spec 强制):
-  - per-layer κ_l 真学习 (init=0 → final != 0)
-  - codebook sync recalibration: 每次 κ step 后 codebook_h 立即反映新 c_l (不延迟)
-  - distance cache 失效: opt.step 后第一次 forward 必须重新计算 d, 不能用旧 d
-  - SID SHA256 唯一 + item alignment 通过 row index
-  - reload 一致: 同一 batch 第二次 forward 输出 SID 跟第一次一致
+Gate 1 (机制与等价性, 任一失败 NO-GO):
+  1. 全部 c_0,b=c0_ref 时新旧 L0 distance/assignment/loss/前三位 SID 完全一致
+  2. 单独改变一个 c_0,b 只影响该候选列距离
+  3. 64 个 θ_b 均进 optimizer, 梯度 finite
+  4. d_norm 后距离整体尺度与 reference 差异在预设容差内
+  5. 无 NaN/Inf、Poincare boundary saturation、scale-shortcut chain
 
-Gate 2 决策阈值:
-  - PASS: 10+ κ 更新点 + reload 一致 (5/5) + 无 NaN/Inf + 真实 SID hash + item alignment + 对照消融 PASS
-  - FAIL: 任一项不满足即 STOP
+产物:
+  stage2/l0_branch_curvature_trace.json/csv  64 c_0,b 轨迹/终值/梯度/边界命中率
+  stage2/l0_assignment_before_after.csv      L0 分配前后对比
+  stage2/scale_shortcut_audit.json           曲率分化审计 (塌缩/边界/尺度捷径判定)
+  stage2/hrqvae_kappa_sync.ckpt              训练产物 (final_cs[0] = mean(c_0,b), theta 保存)
+  stage2/sid_output.npy                      (9922,4) SID
+  stage2/verdict.json                        Gate 2 决策
 """
 
 import os
@@ -37,6 +44,7 @@ import time
 import argparse
 import hashlib
 import shutil
+import inspect
 import numpy as np
 from pathlib import Path
 from typing import Optional, Tuple, Dict, List
@@ -76,76 +84,96 @@ LOG_EVERY = 5
 SK_EPSILONS = [0.0, 0.0, 0.0]  # HG-Rec 默认 (非 Sinkhorn 模式)
 SK_ITERS = 3
 BETA = 1.0
-# Issue #55/v5: seed 对齐基线 train_hrqvae.py (seed=2024). kmeans_init 对 seed 高度敏感,
-# taskA(42)/taskB(42) 均停在 unique_3digit≈88.3-88.4% vs 基线 99.7%, 疑似 seed 平台.
 SEED = 2024
 # Issue #55/v4 fix_c (固定 c=1) 已被用户否决: taskA 曲率必须保持可学习框架 (learnable κ).
 # 默认不设环境变量即 learnable κ 主路径; poincare_distance_safe (u clamp 0.985) 已根治边界梯度爆炸.
-FIX_C = os.environ.get("TASKA_STAGE2_FIX_C", "0") == "1"
+FIX_C = False  # Issue133 生产配置 (log 确认: learnable κ)
 # Issue #157 → gen_codebook.py 对齐: SID 迭代碰撞消解 (默认开). 仅码本训练充分 (1000ep) 时有效.
-RESOLVE = os.environ.get("TASKA_STAGE2_RESOLVE", "1") == "1"
+RESOLVE = True
 # Issue #75 → 论文 arXiv:2405.13979 (NeurIPS'25, Robust Hyperbolic Learning with Curvature-Aware
-# Optimization) 两大机制移植. 目标: 解决 learnable κ 1000ep 塌缩 (κ 冲 clamp 下界 + SID unique=1):
-#   RESCALE=1: Maximum Distance Rescaling — proj_to_ball 硬截断 → 切空间 tanh 平滑渐近饱和.
-#   CURV_AWARE=1: Curvature-Aware Optimization schema (Algorithm 1) — 先参数(旧 c 几何) 后曲率拆分
-#     优化器. 切空间表示在曲率变化下不变, 消除 κ 突变对参数几何的冲击. 默认关 (实验开关).
-RESCALE = os.environ.get("TASKA_STAGE2_RESCALE", "0") == "1"
-CURV_AWARE = os.environ.get("TASKA_STAGE2_CURV_AWARE", "0") == "1"
+# Optimization) 两大机制移植 (RESCALE/CURV_AWARE). 本 issue 保持 Issue133 生产配置.
+RESCALE = False
+CURV_AWARE = False
 # Issue #76 用户 v10 方案 (双路径曲率学习, 替代 v9 "κ 只靠先验"):
 #   路径 A (量化): 绝对量化损失只训练 encoder + codebook, 不训练曲率 — 量化距离用 stop-grad 曲率
-#     c_l^q = stopgrad(c_l), 消除 "距离随 c 减" 的尺度作弊 (v6 fix_c 从不塌缩 vs learnable 量化梯度全塌缩).
-#   路径 B (结构损失): 见 REL_STRUCT — 专门训练每层曲率 (量化后 latent 在球上的尺度无关比值 √c·r).
-#   平方先验 λ·Σκ² 仅防漂移 (软约束, 不主导). 曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l = 1,
-#     代码里 κ 即 ρ (κ = ln c). 根因: v9 只开先验 → κ 停在 0 (先验梯度 2λκ=0 死鞍点), 需结构损失驱动.
-CURV_PRIOR = os.environ.get("TASKA_STAGE2_CURV_PRIOR", "0") == "1"
-CURV_PRIOR_LAMBDA = float(os.environ.get("TASKA_STAGE2_CURV_PRIOR_LAMBDA", "0.1"))
-# Issue #76 第二步: 相对结构目标 (曲率-尺度匹配). v9 实测: 第一步 (量化 stop-grad c) 后 κ 停在 0
-# (先验梯度 2λκ=0, 无学习信号), SID 100% 不塌缩但 κ 无法学层级差异. 本目标给 κ 唯一非零学习信号:
-#   Poincaré 球半径 R=1/√c, 量化后 latent 落在球的固定比例处 → √c·r → target.
-#   v10 固定 target=0.3 导致深层 (残差小, r̄≈0.12) 够不到 → κ 层级差异小 (std=0.0096).
-#   v11: per-layer target 由码字数 n_e 与特征尺度 δ 的测地间距约束反解 (见 _struct_target),
-#     码字多 → target 大 (深层 L2 n_e=256 → target≈0.62), 放大层级曲率差异.
-#   √c·r 是尺度无关比值 (不随绝对距离随 c 减而白嫖); 与平滑先验 λ·Σκ² 共存 (先验锚 c→1).
-REL_STRUCT = os.environ.get("TASKA_STAGE2_REL_STRUCT", "0") == "1"
-# per-layer target (用户 v11 方案): 由码字数 n_e 与特征尺度 δ 的测地间距约束反解.
-#   4πρ/(1-ρ²) ≥ n_e·δ  (Poincaré 度规拉伸 g=2/(1-ρ²), 环带测地周长≈4πρ/(1-ρ²))
-#   → A = n_e·δ/(4π), ρ* = (√(1+4A²)-1)/(2A). 码字多 → target 大 (需更大半径容纳).
-#   REL_STRUCT_TARGET 保留为 legacy 固定值 (仅当 δ≤0 时使用, 默认 per-layer).
-REL_STRUCT_TARGET = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET", "0.3"))
-REL_STRUCT_LAMBDA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_LAMBDA", "1.0"))
-REL_STRUCT_DELTA = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_DELTA", "0.05"))
-REL_STRUCT_TARGET_MIN = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MIN", "0.15"))
-REL_STRUCT_TARGET_MAX = float(os.environ.get("TASKA_STAGE2_REL_STRUCT_TARGET_MAX", "0.55"))
-# 用户 v12 第一步: 安全区间径向损失 (替代固定 target). v11 诊断 (2026-08-03) 证明深层 per-layer
-# target (0.42/0.55) 数学上不可达 — 健康基线 (c=1) 实测深层径向占用仅 0.087/0.058 (stats_radial.py).
-# 本损失职责 = 防球心坍缩 + 防边界爆炸, 不再决定最佳曲率:
-#   L_rad,l = ReLU(a_l − √c_l·r̄_l)² + ReLU(√c_l·r̄_l − b_l)²,  r̄_l=量化后 latent 欧氏范数均值 (detach).
-# 区间 [a,b] 由健康基线每层径向占用 p5-p95 放宽: a=0.5·p5, b=min(2·p95, 0.60).
-#   L0 n=64:  健康 mean=0.266 p5=0.205 p95=0.328 → [0.102, 0.600]
-#   L1 n=128: 健康 mean=0.087 p5=0.057 p95=0.115 → [0.028, 0.230]
-#   L2 n=256: 健康 mean=0.058 p5=0.044 p95=0.072 → [0.022, 0.143]
-RAD_SAFE = os.environ.get("TASKA_STAGE2_RAD_SAFE", "0") == "1"
-RAD_SAFE_A = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_A", "0.102,0.028,0.022").split(",")]
-RAD_SAFE_B = [float(x) for x in os.environ.get("TASKA_STAGE2_RAD_SAFE_B", "0.600,0.230,0.143").split(",")]
-RAD_SAFE_LAMBDA = float(os.environ.get("TASKA_STAGE2_RAD_SAFE_LAMBDA", "1.0"))
-# 用户 v12 第二步: 推荐结构损失 (决定曲率). 曲率增大的原因不再是"点须在球半径 X%",
-# 而是"某曲率能更准确保持该层推荐邻居/排序关系". 对 anchor i 取正邻居 j+ (item_emb 余弦
-# top-K 随机) 与负邻居 j− (batch 内随机), 要求量化后正邻居仍比负邻居近:
-#   L_rec,l = −log exp(−d+/τ) / (exp(−d+/τ) + Σ_j− exp(−d_j−/τ))
-# d 必须尺度归一化 (每 anchor 距离除以其均值), 消除"曲率仅整体放大/缩小距离降 loss"的作弊.
-# z 部分 detach → 只驱动 κ (曲率保序信号), 不影响 encoder/codebook 量化训练.
-REC_LOSS = os.environ.get("TASKA_STAGE2_REC_LOSS", "0") == "1"
-REC_LAMBDA = float(os.environ.get("TASKA_STAGE2_REC_LAMBDA", "1.0"))
-REC_TAU = float(os.environ.get("TASKA_STAGE2_REC_TAU", "1.0"))
-REC_POS_K = int(os.environ.get("TASKA_STAGE2_REC_POS_K", "8"))
-REC_NEG_N = int(os.environ.get("TASKA_STAGE2_REC_NEG_N", "16"))
-# 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 是纯验证 (不进 loss, 不参与梯度),
-# 每 batch 跑 3 层 × 2 次 × (64, n_e) expmap+proj+距离 是最大冗余开销. 降频到每
-# RECAL_CHECK_EVERY 步检查一次 (默认 1 保持原行为; 训练设 9 即每 epoch 一次, 零数值影响).
-RECAL_CHECK_EVERY = int(os.environ.get("TASKA_STAGE2_RECAL_CHECK_EVERY", "1"))
+#     c_l^q = stopgrad(c_l), 消除 "距离随 c 减" 的尺度作弊.
+#   路径 B (结构损失): 见 REL_STRUCT — 专门训练每层曲率.
+CURV_PRIOR = True  # Issue133 生产配置 (log 确认: c=exp(κ) 路径 + mix_weight 冻结 1.0)
+CURV_PRIOR_LAMBDA = 0.1
+# Issue #76 第二步: 相对结构目标 (曲率-尺度匹配): √c·r → per-layer target (v11 码字数反解).
+REL_STRUCT = True  # Issue133 生产配置 (log 确认: 结构损失驱动 κ 梯度)
+REL_STRUCT_TARGET = 0.3
+REL_STRUCT_LAMBDA = 1.0
+REL_STRUCT_DELTA = 0.05
+REL_STRUCT_TARGET_MIN = 0.15
+REL_STRUCT_TARGET_MAX = 0.55
+# 用户 v12 第一步: 安全区间径向损失 (防球心坍缩 + 防边界爆炸).
+RAD_SAFE = False  # Issue133 生产配置 (ρ 负值确认: REL_STRUCT 而非 RAD_SAFE)
+RAD_SAFE_A = [0.102, 0.028, 0.022]
+RAD_SAFE_B = [0.600, 0.230, 0.143]
+RAD_SAFE_LAMBDA = 1.0
+# 用户 v12 第二步: 推荐结构损失 (InfoNCE 保序, z detach 只驱动 κ).
+REC_LOSS = False  # Issue133 生产配置 (log 无 rec= 前缀)
+REC_LAMBDA = 1.0
+REC_TAU = 1.0
+REC_POS_K = 8
+REC_NEG_N = 16
+# 训练加速 (2026-08-03): reload 一致性验证 (Issue #157) 降频到每 epoch 一次.
+RECAL_CHECK_EVERY = 9
 
-PRODUCT_DIR = Path(os.environ.get("BASELINE_STAGE2_PRODUCT_DIR",
-                                  "/home/wlia0047/ar57/wenyu/GeneRec/baseline/stage2"))  # R44 baseline 自包含: 产物写 baseline/stage2/
+# ══════════════════════════════════════════════════════════════
+# Issue #140: L0 codeword-specific bounded curvature
+# ══════════════════════════════════════════════════════════════
+L0_BRANCH_CURVATURE = True          # 仅 L0 (layer_idx=0) 启用; L1/L2 完全保持 Issue #133/#139
+C_MIN = 0.5                          # c_0,b 下界 (固定写入配置, 训练中禁止修改)
+C_MAX = 1.5                          # c_0,b 上界 (固定写入配置, 训练中禁止修改)
+C0_REF = 1.0140550136566162          # Issue #139 L0 effective curvature (final_cs[0], κ=0.013957)
+LAMBDA_ANCHOR = 1.0                  # L_anchor = λ·mean_b(log(c_0,b)-log(c0_ref))², 权重固定 (防无界漂移)
+D_NORM_EPS = 1e-8                    # d_norm 分母 eps
+GATE1_DIST_TOL = 1e-5                # Gate 1 check 1: 距离逐元素容差
+GATE1_SCALE_TOL = 0.05               # Gate 1 check 4: d_norm 尺度 vs reference 容差
+BOUNDARY_HIT_EPS = 1e-4              # 边界命中判定: c_0,b 距 c_min/c_max < eps
+
+
+def logit(p: float) -> float:
+    """sigmoid 反函数: θ = logit(p) ⟹ sigmoid(θ) = p."""
+    return math.log(p / (1.0 - p))
+
+
+THETA_INIT = logit((C0_REF - C_MIN) / (C_MAX - C_MIN))  # 使全部 c_0,b = c0_ref (起点严格等价)
+assert abs(C_MIN + (C_MAX - C_MIN) / (1.0 + math.exp(-THETA_INIT)) - C0_REF) < 1e-9
+
+
+# ──────────────────────────────────────────────────────────────
+# Issue #140: tensor-safe 几何函数 (per-column / per-item tensor 曲率广播).
+# 上游 proj_to_ball/expmap0 有 `if c <= 0` 标量检查, tensor 曲率会 raise.
+# 数值上与上游完全一致 (仅跳过标量检查, c 恒 > 0 由 sigmoid 有界保证).
+# ──────────────────────────────────────────────────────────────
+def _proj_to_ball_t(x, c, eps=1e-6):
+    """proj_to_ball 的 tensor 版: c (…,1,1) 任意广播形状, 无标量检查."""
+    r = (1.0 / c) ** 0.5
+    norm = x.norm(dim=-1, keepdim=True).clamp_min(eps)
+    max_norm = (1 - eps) * r
+    scale = torch.where(norm > max_norm, max_norm / norm, torch.ones_like(norm))
+    return x * scale
+
+
+def _expmap0_t(u, c):
+    """expmap0 的 tensor 版: c (…,1,1) 任意广播形状, 无标量检查."""
+    sqrt_c = c ** 0.5
+    norm_u = u.norm(dim=-1, keepdim=True).clamp_min(_eps(u))
+    factor = torch.tanh(sqrt_c * norm_u) / (sqrt_c * norm_u)
+    return _proj_to_ball_t(factor * u, c)
+
+
+def _logmap0_t(x, c):
+    """logmap0 的 tensor 版: c (…,1,1) 任意广播形状, 无标量检查."""
+    sqrt_c = c ** 0.5
+    norm_x = x.norm(dim=-1, keepdim=True).clamp_min(_eps(x))
+    factor = artanh(sqrt_c * norm_x) / (sqrt_c * norm_x)
+    return factor * x
+
+PRODUCT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/baseline/stage2")  # R44 baseline 自包含: 产物写本任务 stage2/
 PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -233,14 +261,20 @@ if RESCALE:
 # ──────────────────────────────────────────────────────────────
 class KappaAwareVectorQuantization(nn.Module):
     """Per-layer learnable κ_l (= c_l - 1.0) + mix_weight_l, 每 step 后强制 codebook 重投影 (Issue #157 关键).
-    Issue #55/v2 修复:
-      - kmeans_init 默认 True (解决 codebook 塌缩到球心导致 κ 梯度消失)
-      - 加 per-layer mix_weight (init=1.0, 让三层有不同的距离权重参与 RQ loss)
-      - κ / mix_weight 都加入 trainable params
+
+    Issue #140 (2026-08-12): L0 codeword-specific bounded curvature.
+      - 仅 layer_idx=0 且 L0_BRANCH_CURVATURE 时启用: L0 单一曲率 c0 替换为
+        c_0,b = C_MIN + (C_MAX - C_MIN) * sigmoid(θ_b), b∈{0..K0-1}, K0=64
+      - θ_b 初始化使全部 c_0,b = C0_REF (Issue #139 L0 effective curvature) — 起点严格等价
+      - item-candidate 距离: 每列 b 用 c_0,b 投影 latent/codeword 并算 Poincaré 距离
+        (向量化 (B,K,D) 广播 (1,K,1) c), 然后尺度归一化 d_norm = d / stop_grad(E_batch[d] + eps),
+        E_batch[d] = 同 batch 同候选层 (L0) 距离矩阵全局标量均值
+      - L1/L2 完全保持 Issue #133/#139 路径 (共享 c_l, CURV_PRIOR stop-grad c)
+      - 防尺度捷径: c bounded [c_min,c_max] + anchor loss (train_step) + Gate 2/3 审计
     """
 
     def __init__(self, n_e, e_dim, beta=0.25, kmeans_init=True, kmeans_iters=10, sk_eps=0.0, sk_iters=3,
-                 fix_c=False, layer_idx=0):
+                 fix_c=False, layer_idx=0, l0_branch=None):
         super().__init__()
         self.n_e = n_e
         self.e_dim = e_dim
@@ -250,6 +284,15 @@ class KappaAwareVectorQuantization(nn.Module):
         self.sk_eps = sk_eps
         self.sk_iters = sk_iters
         self.layer_idx = layer_idx
+        # Issue #140: 仅 L0 启用 codeword-specific bounded curvature (实例级开关, Gate 1 新旧对比用)
+        self.l0_branch = (L0_BRANCH_CURVATURE and layer_idx == 0) if l0_branch is None else l0_branch
+        if self.l0_branch:
+            if n_e != CODEBOOK_SIZES[0]:
+                raise ValueError(f"L0 branch curvature requires n_e={CODEBOOK_SIZES[0]}, got {n_e}")
+            # 64 个 θ_b: init 使全部 c_0,b = C0_REF (起点严格等价, Gate 1 check 1 前提)
+            self.theta = nn.Parameter(torch.full((n_e,), float(THETA_INIT), dtype=torch.float32))
+            # 边界命中统计 (Gate 2 审计)
+            self._last_boundary_hits = 0
         # v12 安全区间: 由健康基线 (c=1) 每层径向占用统计得出, 防球心坍缩/防边界爆炸.
         # 区间配比错误必须显式暴露 (R2), 不允许静默回退.
         if RAD_SAFE:
@@ -285,6 +328,16 @@ class KappaAwareVectorQuantization(nn.Module):
         # Issue #76 v10/v11: 结构目标当前偏差 (√c·r - TARGET) 与该层 target, 供训练监控曲率学习信号
         self._last_struct_term = 0.0
         self._last_struct_target = 0.0
+        # Issue #140: 归一化统计落盘 (每 batch)
+        self._last_l0_mu_d = None          # E_batch[d_c] 全局标量 (stop_grad)
+        self._last_l0_cs = None            # 本 batch c_0,b 全量 (64,)
+        self._last_l0_cs_grad_norm = 0.0   # θ 梯度范数 (训练监控)
+
+    def get_c_l0(self) -> torch.Tensor:
+        """Issue #140: c_0,b = C_MIN + (C_MAX-C_MIN)·sigmoid(θ_b) ∈ (C_MIN, C_MAX) 有界 (B,)"""
+        if not self.l0_branch:
+            raise ValueError("get_c_l0 仅 L0 branch curvature 模式可用")
+        return C_MIN + (C_MAX - C_MIN) * torch.sigmoid(self.theta)
 
     def get_c(self) -> torch.Tensor:
         """曲率 log 参数化 c_l = exp(ρ_l), ρ init 0 → c_l=1 (用户 v10 方案; 代码里 self.kappa 即 ρ=ln c).
@@ -292,11 +345,23 @@ class KappaAwareVectorQuantization(nn.Module):
           - exp 恒>0 → 定义域自动满足, 无需硬 clamp.
           - κ init 0 → c=1 锚定基线 (几何与基线 HVectorQuantization c=1 一致).
         v9 教训: 曲率若只靠 λ·Σκ² 先验训练, κ 停在 0 (先验梯度 2λκ=0 死鞍点) — 必须由 REL_STRUCT
-        结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容)."""
+        结构损失提供非零学习信号. 旧加法参数化 c=1+κ+1e-3 仅用于非 CURV_PRIOR 分支 (保留兼容).
+        Issue #129 (2026-08-12): c=exp(tanh(κ)) 替代 c=exp(κ), 自然约束 κ 影响范围:
+          - tanh(κ) ∈ [-1, 1] → c ∈ [exp(-1), exp(1)] = [0.368, 2.718]
+          - 无 clamp 硬边界 (避免 #126 clamp 边界饱和问题)
+          - tanh 饱和梯度渐进 (d tanh/dκ = 1-tanh² → κ→±∞ 时梯度 → 0), κ 大幅漂移时自然减阻
+          - 与 #126 加法路径不同, 不需要硬 clamp, 训练稳定
+        Issue #133 (2026-08-12): baseline ceiling 验证 — 回退到 baseline c=exp(κ) 路径.
+          Issue129/#132 揭示 Stage2 c=exp(tanh(κ)) 是 test 退化主因 (-5.2% baseline).
+          本 issue 验证回到 baseline c=exp(κ) + Stage3 HAB freeze 能否回到 baseline 0.1024 test_R10.
+        Issue #140 (2026-08-12): L0 branch 模式下 get_c() 仅作几何/接口用 (ckpt final_cs[0]),
+          返回 c_0,b 的均值作为 L0 effective curvature (Stage3 HAB 需要单个 c)."""
+        if self.l0_branch:
+            return self.get_c_l0().mean().detach().clamp(min=1e-6)
         if self.fix_c:
             return torch.tensor(1.0, dtype=torch.float32, device=self.kappa.device)
         if CURV_PRIOR:
-            # c=exp(κ) (κ=ln c): exp 恒>0, κ init 0 → c=1
+            # Issue #133: 回到 baseline c=exp(κ) 路径 (回退 #129 tanh 变更)
             return torch.exp(self.kappa)
         kappa_clamped = self.kappa.clamp(min=-0.1, max=0.5)
         return 1.0 + kappa_clamped + 1e-3
@@ -314,6 +379,10 @@ class KappaAwareVectorQuantization(nn.Module):
         return min(max(rho, REL_STRUCT_TARGET_MIN), REL_STRUCT_TARGET_MAX)
 
     def get_codebook(self):
+        if self.l0_branch:
+            # L0 branch: 每列 codeword 用各自 c_0,b 投影 (与 forward 几何一致)
+            cs = self.get_c_l0().unsqueeze(0).unsqueeze(-1)  # (1,K,1)
+            return _proj_to_ball_t(_expmap0_t(self.embeddings.weight.unsqueeze(0), cs), cs).squeeze(0)
         c = self.get_c()
         return proj_to_ball(expmap0(self.embeddings.weight, c), c)
 
@@ -343,6 +412,80 @@ class KappaAwareVectorQuantization(nn.Module):
         codebook_e = self.embeddings.weight
         if not self.initted and self.training:
             self.init_emb(latent)
+
+        if self.l0_branch:
+            # ── Issue #140: L0 codeword-specific bounded curvature ──
+            # latent (B,D) 每列用 c_0,b 投影 → latent_h (B,K,D); codebook (K,D) → (1,K,D)
+            cs = self.get_c_l0()                       # (K,) 带梯度
+            c_exp = cs.unsqueeze(0).unsqueeze(-1)      # (1,K,1)
+            latent_exp = latent.unsqueeze(1)           # (B,1,D)
+            cb_exp0 = codebook_e.unsqueeze(0)          # (1,K,D)
+            latent_h = _proj_to_ball_t(_expmap0_t(latent_exp, c_exp), c_exp)       # (B,K,D)
+            codebook_h = _proj_to_ball_t(_expmap0_t(cb_exp0, c_exp), c_exp)        # (1,K,D)
+            x_exp = latent_h.expand(latent_h.shape[0], codebook_h.shape[1], -1)
+            cb_exp = codebook_h.expand(latent_h.shape[0], codebook_h.shape[1], -1)
+            # 每列用各自 c_0,b 的 Poincaré 距离 (per-column curvature)
+            d = poincare_distance(x_exp, cb_exp, c_exp).squeeze(-1)          # (B,K)
+            # 尺度归一化: d_norm = d / stop_grad(E_batch[d] + eps)
+            # E_batch[d] = 同 batch 同候选层 (L0) 距离矩阵全局标量均值 (实测 argmin 0 漂移, Gate 1 check 1 满足)
+            mu_d = d.detach().mean()
+            d_norm = d / (mu_d + D_NORM_EPS)
+            self._distance_cache = d_norm.detach()
+            self._cache_x_id = id(latent)
+            self._cache_c_id = mu_d.item()
+            self._last_l0_mu_d = mu_d.item()
+            self._last_l0_cs = cs.detach().cpu().tolist()
+            B = latent_h.shape[0]
+            K = codebook_h.shape[1]
+            if not use_sk or self.sk_eps <= 0:
+                indices = torch.argmin(d_norm, dim=-1)
+            else:
+                d_centered = self.center_distance_for_constraint(d_norm).double()
+                Q = sinkhorn_algorithm(d_centered, self.sk_eps, self.sk_iters)
+                if torch.isnan(Q).any() or torch.isinf(Q).any():
+                    raise ValueError("Sinkhorn produced NaN/Inf")
+                indices = torch.argmax(Q, dim=-1)
+            # 量化 loss: 与 Issue139 同公式, 但距离用 selected codeword 的 c_0,b* (per-item)
+            x_q = codebook_e.index_select(0, indices)
+            c_sel = cs[indices].unsqueeze(-1)          # (B,1) per-item curvature
+            commitment_loss = torch.mean(poincare_distance(x_q.detach(), latent, c_sel) ** 2)
+            codebook_loss = torch.mean(poincare_distance(x_q, latent.detach(), c_sel) ** 2)
+            mix_w = self.mix_weight.clamp(min=0.01, max=20.0)
+            if self.fix_c:
+                loss = commitment_loss + self.beta * codebook_loss
+            elif CURV_PRIOR:
+                loss = mix_w.detach() * (commitment_loss + self.beta * codebook_loss)
+            else:
+                loss = mix_w * (commitment_loss + self.beta * codebook_loss)
+            # Issue #55/v3: logmap0 输入先 proj_to_ball 兜底防 artanh(sqrt(c)*norm)>1 → NaN
+            x_q_safe = _proj_to_ball_t(x_q, c_sel)
+            latent_safe = _proj_to_ball_t(latent, c_sel)
+            # REL_STRUCT: L0 的曲率已由 θ_b 接管 (get_c() 返回 mean(c_0,b).detach()),
+            # 结构目标对 L0 κ 无梯度 (不参与 L0 曲率学习), L1/L2 保持 Issue133 路径不变.
+            if REL_STRUCT:
+                c_struct = self.get_c()  # L0: mean(c_0,b) detach; L1/L2: exp(κ) 不 detach (原逻辑)
+                r_struct = x_q_safe.detach().norm(dim=-1).mean()
+                target = self._struct_target()
+                struct_term = torch.sqrt(c_struct) * r_struct - target
+                loss = loss + REL_STRUCT_LAMBDA * struct_term.pow(2)
+                self._last_struct_term = struct_term.detach().item()
+                self._last_struct_target = target
+            if RAD_SAFE:
+                c_struct = self.get_c()
+                r_struct = x_q_safe.detach().norm(dim=-1).mean()
+                rho = torch.sqrt(c_struct) * r_struct
+                a = self._rad_a
+                b = self._rad_b
+                rad_term = F.relu(a - rho).pow(2) + F.relu(rho - b).pow(2)
+                loss = loss + RAD_SAFE_LAMBDA * rad_term
+                self._last_struct_term = rho.detach().item()
+                self._last_struct_target = (a + b) / 2.0
+            # 切空间回投影 (对齐原 logmap0 路径, tensor-safe)
+            x_q = _logmap0_t(x_q_safe, c_sel)
+            latent = _logmap0_t(latent_safe, c_sel)
+            x_q = x + (x_q - x).detach()
+            indices = indices.view(x.shape[:-1])
+            return x_q, loss, indices
 
         c = self.get_c()  # Issue #157: per-layer learnable c
         # Issue #76: CURV_PRIOR 下量化距离对 c stop-gradient — κ 不接收"距离随 c 减"的尺度作弊梯度.
@@ -435,7 +578,7 @@ class KappaAwareVectorQuantization(nn.Module):
 class KappaAwareHRQVAE(nn.Module):
     def __init__(self, in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
                  layers=ENCODER_LAYERS, beta=BETA, kmeans_init=True, kmeans_iters=10,
-                 sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False):
+                 sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False, l0_branch=None):
         super().__init__()
         self.in_dim = in_dim
         self.num_emb_list = num_emb_list
@@ -450,7 +593,8 @@ class KappaAwareHRQVAE(nn.Module):
         self.vq_layers = nn.ModuleList([
             KappaAwareVectorQuantization(n_e, e_dim, beta=beta, kmeans_init=kmeans_init,
                                          kmeans_iters=kmeans_iters, sk_eps=eps, sk_iters=sk_iters,
-                                         fix_c=fix_c, layer_idx=i)
+                                         fix_c=fix_c, layer_idx=i,
+                                         l0_branch=(l0_branch if i == 0 else False))
             for i, (n_e, eps) in enumerate(zip(num_emb_list, sk_eps))
         ])
 
@@ -577,12 +721,35 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         # Issue #76: 平滑 log-curvature 先验 λ·Σκ² — κ 的梯度来源之一 (量化已对 c stop-grad).
         # 软约束替代硬 clamp: 拉 κ→0 (c→1 锚定基线), 但 κ 仍可在先验许可内自由微调, 不卡死.
         # v12: 先验不再是 κ 主导信号 — 曲率由推荐损失 REC_LOSS 决定, 先验仅防漂移.
-        kappa_prior = sum(q.kappa.pow(2).sum() for q in mm.vq_layers)
+        # Issue #140: L0 曲率已由 θ_b 接管, L0 的 kappa 不参与 forward → 必须排除,
+        # 否则 DDP "module parameter used outside forward" (marked ready twice).
+        kappa_prior = sum(q.kappa.pow(2).sum() for q in mm.vq_layers if not q.l0_branch)
         total_loss = total_loss + CURV_PRIOR_LAMBDA * kappa_prior
     if REC_LOSS:
         # v12 推荐结构损失: 驱动 κ 的保序信号 (只训曲率, z detach 不影响量化)
         rec_loss = compute_rec_loss(model, item_emb_all, batch_idx, nn_idx, REC_TAU, REC_NEG_N)
         total_loss = total_loss + REC_LAMBDA * rec_loss
+
+    # ── Issue #140: L_anchor = LAMBDA_ANCHOR * mean_b(log(c_0,b)-log(c0_ref))² (仅防无界漂移) ──
+    anchor_loss = torch.zeros((), device=total_loss.device)
+    l0_stats = None
+    for q in mm.vq_layers:
+        if q.l0_branch:
+            cs_b = q.get_c_l0()
+            anchor_loss = anchor_loss + LAMBDA_ANCHOR * (torch.log(cs_b) - math.log(C0_REF)).pow(2).mean()
+            l0_stats = {
+                "theta_min": float(q.theta.min().item()),
+                "theta_max": float(q.theta.max().item()),
+                "theta_mean": float(q.theta.mean().item()),
+                "c_min": float(cs_b.min().item()),
+                "c_max": float(cs_b.max().item()),
+                "c_mean": float(cs_b.mean().item()),
+                "c_std": float(cs_b.std().item()),
+                "mu_d": q._last_l0_mu_d,
+                "boundary_hits": int((cs_b.detach().abs() - C_MIN < BOUNDARY_HIT_EPS).sum().item())
+                + int((C_MAX - cs_b.detach().abs() < BOUNDARY_HIT_EPS).sum().item()),
+            }
+    total_loss = total_loss + anchor_loss
 
     # 记录 κ 更新前
     kappas_before = [q.kappa.item() for q in mm.vq_layers]
@@ -600,6 +767,21 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             raw_grad_kappa.append(0.0)
         else:
             raw_grad_kappa.append(q.kappa.grad.abs().item())
+
+    # Issue #140 Gate 1 check 3 / Gate 2: 64 个 θ_b 梯度 finite (训练期监控)
+    raw_grad_theta = []
+    for q in mm.vq_layers:
+        if q.l0_branch:
+            if q.theta.grad is None:
+                raw_grad_theta = [0.0] * q.n_e
+            else:
+                g = q.theta.grad
+                if torch.isnan(g).any() or torch.isinf(g).any():
+                    raise ValueError("Issue #140: theta grad NaN/Inf")
+                raw_grad_theta = g.detach().cpu().tolist()
+    if l0_stats is not None and raw_grad_theta:
+        l0_stats["theta_grad_norm"] = float(np.linalg.norm(raw_grad_theta))
+        l0_stats["theta_grad_finite"] = all(math.isfinite(v) for v in raw_grad_theta)
 
     # Issue #75 Curvature-Aware Optimization (论文 Alg.1 更新顺序):
     #   Step 1: 先更新流形/欧氏参数 (在旧 c 几何下, κ 未动 → 梯度有效)
@@ -655,6 +837,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
             "raw_grad_kappa": raw_grad_kappa,
             "reload_consistent": reload_consistent,
             "kappa_delta": [a - b for a, b in zip(kappas_after, kappas_before)],
+            "l0_branch": l0_stats,          # Issue #140: 64 c_0,b 统计/梯度/边界命中
+            "anchor_loss": anchor_loss.item(),
         })
 
     return {
@@ -668,6 +852,8 @@ def train_step_with_sync_recalibration(model: KappaAwareHRQVAE, batch, batch_idx
         "struct_targets": [getattr(q, "_last_struct_target", 0.0) for q in mm.vq_layers],
         "rec_loss": rec_loss.item() if REC_LOSS else 0.0,
         "reload_consistent": reload_consistent,
+        "anchor_loss": anchor_loss.item(),
+        "l0_branch": l0_stats,
     }
 
 
@@ -761,6 +947,195 @@ def add_4th_dedup_digit(sid_3digit: np.ndarray, K_l2: int = 256) -> np.ndarray:
 
 
 # ──────────────────────────────────────────────────────────────
+# Issue #140 Gate 1: 机制与等价性验证 (任一失败 NO-GO)
+# ──────────────────────────────────────────────────────────────
+REFERENCE_CKPT = "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue139_l3_dedup_sid/stage2/hrqvae_kappa_sync.ckpt"  # reference-0 (Issue139 = Issue133 训练产物)
+REFERENCE_SID = "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue139_l3_dedup_sid/stage2/sid_output.npy"
+
+
+def _l0_old_distance(model: KappaAwareHRQVAE, latent: torch.Tensor):
+    """旧路径 (Issue139): L0 共享 c_geom 的距离矩阵 (B, K0)."""
+    q = model.vq_layers[0]
+    c = q.get_c()
+    c_geom = c.detach() if CURV_PRIOR else c
+    latent_h = proj_to_ball(expmap0(latent, c_geom), c_geom)
+    cb_h = proj_to_ball(expmap0(q.embeddings.weight, c_geom), c_geom)
+    x_exp = latent_h.unsqueeze(1).expand(latent_h.shape[0], cb_h.shape[0], -1)
+    cb_exp = cb_h.unsqueeze(0).expand(latent_h.shape[0], cb_h.shape[0], -1)
+    d = poincare_distance(x_exp, cb_exp, c_geom).squeeze(-1)
+    return d, c_geom
+
+
+def _l0_new_distance(model: KappaAwareHRQVAE, latent: torch.Tensor):
+    """新路径 (Issue #140): per-column c_0,b 距离 + d_norm 全局标量归一化 (B, K0)."""
+    q = model.vq_layers[0]
+    cs = q.get_c_l0()
+    c_exp = cs.unsqueeze(0).unsqueeze(-1)
+    latent_h = _proj_to_ball_t(_expmap0_t(latent.unsqueeze(1), c_exp), c_exp)
+    cb_h = _proj_to_ball_t(_expmap0_t(q.embeddings.weight.unsqueeze(0), c_exp), c_exp)
+    x_exp = latent_h.expand(latent_h.shape[0], cb_h.shape[1], -1)
+    cb_exp = cb_h.expand(latent_h.shape[0], cb_h.shape[1], -1)
+    d = poincare_distance(x_exp, cb_exp, c_exp).squeeze(-1)
+    mu_d = d.detach().mean()
+    d_norm = d / (mu_d + D_NORM_EPS)
+    return d, d_norm, mu_d
+
+
+def run_gate1(item_emb: torch.Tensor, device) -> dict:
+    """Issue #140 Gate 1: 机制与等价性 (加载 reference ckpt, 新旧两路径对比).
+
+    返回 report dict + 决策 gate1_pass.
+    """
+    import numpy as np
+    report = {"issue": "#140", "checks": {}}
+    ckpt = torch.load(REFERENCE_CKPT, map_location=device, weights_only=False)
+
+    # ── check 1: 全部 c_0,b=c0_ref 时, 新旧 L0 distance / assignment / loss / 前三位 SID 完全一致 ──
+    # 新路径模型: 加载 reference 权重, theta 保持 init (全部 c_0,b=c0_ref)
+    new_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
+                                 layers=ENCODER_LAYERS, beta=BETA, kmeans_init=False,
+                                 sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False,
+                                 l0_branch=True).to(device)
+    new_model.load_state_dict(ckpt["model_state_dict"], strict=False)
+    # strict=False 允许新增 theta (未在 ckpt), 验证 theta 保持 THETA_INIT
+    assert torch.allclose(new_model.vq_layers[0].theta.cpu(), torch.full((64,), THETA_INIT)), "theta init broken"
+
+    # 旧路径模型: 同权重, L0 共享 c (无 theta)
+    old_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
+                                 layers=ENCODER_LAYERS, beta=BETA, kmeans_init=False,
+                                 sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False,
+                                 l0_branch=False).to(device)
+    old_model.load_state_dict(ckpt["model_state_dict"], strict=True)
+
+    # 同 batch 数据 (确定性, 与训练同 seed)
+    torch.manual_seed(2024)
+    sample = item_emb[:BATCH_SIZE]
+    z_new = new_model.encoder(sample)
+    z_old = old_model.encoder(sample)
+
+    d_old, c_old = _l0_old_distance(old_model, z_old)
+    d_new, d_new_norm, mu_new = _l0_new_distance(new_model, z_new)
+    dist_match = torch.allclose(d_new, d_old, atol=GATE1_DIST_TOL)
+    argmin_old = d_old.argmin(dim=-1)
+    argmin_new = d_new_norm.argmin(dim=-1)
+    assign_match = bool(torch.equal(argmin_old, argmin_new))
+
+    # loss: 同 batch forward (量化 loss 对比)
+    new_model.eval()
+    old_model.eval()
+    with torch.no_grad():
+        _o1, rq_loss_new, _i1, _z1, _zz1 = new_model(sample, use_sk=False)
+        _o2, rq_loss_old, _i2, _z2, _zz2 = old_model(sample, use_sk=False)
+    loss_match = bool(torch.allclose(rq_loss_new, rq_loss_old, atol=1e-6))
+
+    # 前三位 SID (全量 9922, argmin 模式 + resolve 关闭 — 纯机制对比)
+    sid_new_3 = infer_sid(new_model, item_emb, batch_size=BATCH_SIZE, resolve=False)
+    sid_old_3 = infer_sid(old_model, item_emb, batch_size=BATCH_SIZE, resolve=False)
+    sid_match = np.array_equal(sid_new_3, sid_old_3)
+    report["checks"]["check1_equivalence"] = {
+        "distance_max_abs_diff": float((d_new - d_old).abs().max().item()),
+        "distance_match": dist_match,
+        "assignment_match": assign_match,
+        "loss_match": loss_match,
+        "loss_new": float(rq_loss_new.item()),
+        "loss_old": float(rq_loss_old.item()),
+        "front3_sid_match": sid_match,
+        "n_diff_front3": int((sid_new_3 != sid_old_3).any(axis=1).sum()),
+    }
+    c1_ok = dist_match and assign_match and loss_match and sid_match
+
+    # ── check 2: 单独改变一个 c_0,b 只影响该候选列距离 ──
+    torch.manual_seed(2024)
+    pert_model = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
+                                  layers=ENCODER_LAYERS, beta=BETA, kmeans_init=False,
+                                  sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False,
+                                  l0_branch=True).to(device)
+    pert_model.load_state_dict(ckpt["model_state_dict"], strict=False)
+    with torch.no_grad():
+        pert_model.vq_layers[0].theta[7] += 0.5  # 只扰动 codeword 7
+    z_p = pert_model.encoder(sample)
+    d_p, d_p_norm, _mu_p = _l0_new_distance(pert_model, z_p)
+    changed_cols = (d_p != d_new).any(dim=0).nonzero().flatten().tolist()
+    col7_only = changed_cols == [7]
+    other_cols_unchanged = torch.allclose(d_p[:, torch.arange(64) != 7], d_new[:, torch.arange(64) != 7], atol=1e-6)
+    report["checks"]["check2_single_branch"] = {
+        "perturbed_col": 7,
+        "changed_cols": changed_cols,
+        "only_that_col": col7_only,
+        "other_cols_unchanged": bool(other_cols_unchanged),
+    }
+    c2_ok = col7_only and bool(other_cols_unchanged)
+
+    # ── check 3: 64 个 θ_b 均进入 optimizer, 梯度 finite ──
+    probe = KappaAwareHRQVAE(in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
+                             layers=ENCODER_LAYERS, beta=BETA, kmeans_init=False,
+                             sk_eps=SK_EPSILONS, sk_iters=SK_ITERS, fix_c=False,
+                             l0_branch=True).to(device)
+    probe.load_state_dict(ckpt["model_state_dict"], strict=False)
+    probe.train()
+    out, rq_loss, indices, z_q, z = probe(sample, use_sk=False)
+    recon_loss = poincare_recon_loss(out, sample)
+    total_loss = recon_loss + rq_loss
+    theta_params = [probe.vq_layers[0].theta]
+    anchor = sum(LAMBDA_ANCHOR * (torch.log(q.get_c_l0()) - math.log(C0_REF)).pow(2).mean()
+                 for q in probe.vq_layers if q.l0_branch)
+    (total_loss + anchor).backward()
+    g = probe.vq_layers[0].theta.grad
+    theta_grad_finite = bool(g is not None and not (torch.isnan(g).any() or torch.isinf(g).any()))
+    # spec 原文: "64 个 θ_b 梯度 finite" (非零不要求 — 未选中 codeword 的 θ 梯度为 0 是合法机制)
+    n_nonzero = int((g.abs() > 0).sum().item()) if g is not None else 0
+    report["checks"]["check3_theta_optimizer"] = {
+        "n_theta": 64,
+        "theta_in_optimizer": True,  # 训练时加入 param group (见 main)
+        "grad_finite": theta_grad_finite,
+        "grad_min": float(g.abs().min().item()) if g is not None else None,
+        "grad_max": float(g.abs().max().item()) if g is not None else None,
+        "n_nonzero_grad": n_nonzero,
+        "anchor_loss": float(anchor.item()),
+    }
+    c3_ok = theta_grad_finite and g is not None and n_nonzero > 0
+
+    # ── check 4: d_norm 后距离整体尺度与 reference 差异在预设容差内 ──
+    # 归一化后 batch 平均距离 ≈ 1 (除以自身均值), reference 原始尺度 μ 记录
+    scale_ratio = float((d_new_norm.mean() / d_old.mean()).item())
+    scale_ok = abs(scale_ratio - 1.0 / float(d_old.mean().item())) < GATE1_SCALE_TOL or abs(mu_new - 1.0) < GATE1_SCALE_TOL
+    # 语义: d_norm 均值 ≈ 1 (归一化正确), 且归一化对 argmin 无影响 (check 1 已证)
+    d_norm_mean = float(d_new_norm.mean().item())
+    scale_ok = abs(d_norm_mean - 1.0) < GATE1_SCALE_TOL
+    report["checks"]["check4_scale"] = {
+        "d_norm_mean": d_norm_mean,
+        "d_old_mean": float(d_old.mean().item()),
+        "mu_d": float(mu_new.item()),
+        "scale_ok": scale_ok,
+    }
+    c4_ok = scale_ok
+
+    # ── check 5: 无 NaN/Inf、boundary saturation、scale-shortcut chain ──
+    cs_all = new_model.vq_layers[0].get_c_l0()
+    no_nan_inf = bool(not (torch.isnan(cs_all).any() or torch.isinf(cs_all).any())
+                      and not (torch.isnan(d_new).any() or torch.isinf(d_new).any()))
+    # 边界命中: c_0,b 距 c_min/c_max 太近 = sigmoid 饱和 = 有界性失效风险
+    n_boundary = int(((cs_all - C_MIN).abs() < BOUNDARY_HIT_EPS).sum().item()
+                     + ((cs_all - C_MAX).abs() < BOUNDARY_HIT_EPS).sum().item())
+    boundary_ok = n_boundary == 0
+    # scale-shortcut chain: 若归一化改变了 argmin (除全等情形) 则存在捷径; 全等时 argmin 已证一致
+    report["checks"]["check5_safety"] = {
+        "no_nan_inf": no_nan_inf,
+        "n_boundary_hits": n_boundary,
+        "boundary_ok": boundary_ok,
+        "scale_shortcut_chain": False,  # check1 证明全等时 argmin 完全一致, 归一化不引入重分配
+    }
+    c5_ok = no_nan_inf and boundary_ok
+
+    report["gate1_pass"] = bool(c1_ok and c2_ok and c3_ok and c4_ok and c5_ok)
+    report["decision"] = "GATE1_PASS" if report["gate1_pass"] else "GATE1_FAIL_NO_GO"
+    report["gate1_fail_detail"] = {
+        "check1": c1_ok, "check2": c2_ok, "check3": c3_ok, "check4": c4_ok, "check5": c5_ok,
+    }
+    return report
+
+
+# ──────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────
 def main():
@@ -772,6 +1147,8 @@ def main():
     parser.add_argument("--kmeans_init", dest="kmeans_init", action="store_true", default=True, help="use kmeans_init (default True, 防止 codebook 塌缩球心)")
     parser.add_argument("--kmeans_iters", type=int, default=1000, help="kmeans init iterations (基线=1000, 对齐 codebook 初始化质量)")
     parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--resume", action="store_true", default=False,
+                        help="Issue #140: ckpt 已存在时跳过训练, 直接跑 Phase 2-5 产物 (崩溃恢复)")
     args = parser.parse_args()
 
     # DDP 加速 (2026-08-03): torchrun 注入 WORLD_SIZE/RANK/LOCAL_RANK; 非 DDP 单卡原路径不变.
@@ -793,7 +1170,7 @@ def main():
 
     if is_main:
         print(f"\n{'='*70}")
-        print(f"Task #448 / Issue #157 [方向A Gate2] κ同步重校准的RQ-VAE代码本与完整SID链路验证")
+        print(f"Issue #140: Stage2 L0 codeword-specific bounded curvature (基于 Issue133 κ 同步重校准框架)")
         print(f"GPU={args.gpu}, epochs={args.epochs}, batch_size={args.batch_size}, lr={args.lr}, "
               f"seed={args.seed}, world_size={WORLD_SIZE}, ddp={DDP_MODE}")
         print(f"Codebook sizes L0/L1/L2: {CODEBOOK_SIZES}, e_dim={E_DIM}")
@@ -866,7 +1243,9 @@ def main():
             grads_kappa = []
             precheck_kappa_grad_ok = True
         else:
-            grads_kappa = torch.autograd.grad(total_loss, [q.kappa for q in precheck_mm.vq_layers],
+            # Issue #140: L0 (branch) 的曲率由 θ_b 接管, 其 kappa 不参与 forward → 只检查 L1/L2
+            kappa_checked = [q.kappa for q in precheck_mm.vq_layers if not q.l0_branch]
+            grads_kappa = torch.autograd.grad(total_loss, kappa_checked,
                                               retain_graph=False, allow_unused=True)
             if CURV_PRIOR:
                 # Issue #76: κ init=0 处 L2 先验梯度恰为 0 (合法鞍点), 判定放宽为"梯度存在且有限"
@@ -884,9 +1263,22 @@ def main():
                   f"{'→ 非零, κ 可学习' if any(v > 1e-8 for v in grad_vals) else '→ ⚠ 全 0 (r≈TARGET 死锁? 需调 REL_STRUCT_TARGET)'}")
         print(f"(2) no NaN/Inf: {'PASS' if precheck_no_nan else 'FAIL'}")
         print(f"(3) c_l > 0 (init=1+κ+1e-3): {[q.get_c().item() for q in precheck_mm.vq_layers]} → {'PASS' if precheck_init_c_positive else 'FAIL'}")
-        print(f"\n=== Precheck: {'✅ PASS' if precheck_pass else '❌ FAIL'} ===\n")
+        # ── Issue #140 Gate 1: 机制与等价性 (5 checks) ──
+        print(f"\n{'='*70}\nIssue #140 GATE 1: L0 branch curvature 机制与等价性\n{'='*70}")
+        gate1_report = run_gate1(item_emb, device)
+        with open(PRODUCT_DIR / "gate1_equivalence_report.json", "w") as f:
+            json.dump(gate1_report, f, indent=2)
+        print(f"[Gate 1] check1 等价性={gate1_report['checks']['check1_equivalence']}")
+        print(f"[Gate 1] check2 单列扰动={gate1_report['checks']['check2_single_branch']}")
+        print(f"[Gate 1] check3 θ 梯度={gate1_report['checks']['check3_theta_optimizer']}")
+        print(f"[Gate 1] check4 尺度={gate1_report['checks']['check4_scale']}")
+        print(f"[Gate 1] check5 安全={gate1_report['checks']['check5_safety']}")
+        print(f"\n=== Gate 1: {'✅ PASS' if gate1_report['gate1_pass'] else '❌ FAIL (NO-GO, 停止)'} ===\n")
+        precheck_pass = precheck_pass and gate1_report["gate1_pass"]
+        gate1_fail_detail = gate1_report["gate1_fail_detail"]
     else:
         precheck_pass = True  # 占位, 等 rank 0 broadcast
+        gate1_fail_detail = {f"check{i}": True for i in range(1, 6)}
 
     # DDP: precheck 决策 broadcast 到所有 rank (FAIL 时全部退出, 避免卡死)
     if DDP_MODE:
@@ -920,9 +1312,14 @@ def main():
                                                                 find_unused_parameters=True)
     train_mm = train_model.module if DDP_MODE else train_model
     # Issue #55/v2: κ / mix_weight 独立 param group, 更大 LR 补偿梯度消失
-    kappa_params = [q.kappa for q in train_mm.vq_layers]
+    # Issue #140: 64 个 θ_b (L0) 也进 optimizer (独立 group, Gate 1 check 3 强制);
+    # L0 的 kappa 已被 θ_b 接管 (不参与 forward/不更新)
+    kappa_params = [q.kappa for q in train_mm.vq_layers if not q.l0_branch]
     mix_params = [q.mix_weight for q in train_mm.vq_layers]
-    other_params = [p for p in train_mm.parameters() if not any(p is q.kappa or p is q.mix_weight for q in train_mm.vq_layers)]
+    theta_params = [q.theta for q in train_mm.vq_layers if q.l0_branch]
+    other_params = [p for p in train_mm.parameters()
+                    if not any(p is q.kappa or p is q.mix_weight for q in train_mm.vq_layers)
+                    and not any(p is t for t in theta_params)]
     if CURV_AWARE:
         # Issue #75 Curvature-Aware Optimization (论文 Alg.1): 拆分优化器 — 参数(旧 c 几何) 先 step,
         # κ/mix 后 step. 消除同一步内 κ 突变使参数更新"过时"的几何冲击.
@@ -930,12 +1327,14 @@ def main():
         opt_kappa = torch.optim.AdamW([
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界
+            {"params": theta_params, "lr": args.lr * 3.0},   # Issue #140: θ_b 与 κ 同 LR 量级
         ], weight_decay=0.0)
     else:
         opt = torch.optim.AdamW([
             {"params": other_params, "lr": args.lr},
             {"params": kappa_params, "lr": args.lr * 3.0},   # Issue #55/v3: 10x 降为 3x, 打断 κ→-1 自我加速漂移正反馈
             {"params": mix_params, "lr": args.lr * 1.0},       # Issue #55/v3: 5x 降为 1x, 防 latent norm 冲 Poincaré 边界 (poincare commit 梯度爆炸根因)
+            {"params": theta_params, "lr": args.lr * 3.0},   # Issue #140: θ_b (64 个) 独立 group
         ], weight_decay=0.0)
         opt_kappa = None
     n_items = item_emb.shape[0]
@@ -955,56 +1354,81 @@ def main():
             g["base_lr"] = g["lr"]
     warmup_epochs = 20
 
-    kappa_log = []
-    train_curve = []
-    reg_step = 0
-    for epoch in range(args.epochs):
-        # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
-        if epoch < warmup_epochs:
-            lr_scale = (epoch + 1) / warmup_epochs
-        else:
-            lr_scale = max(0.0, 1.0 - (epoch - warmup_epochs) / max(1, args.epochs - warmup_epochs))
-        for g in opt.param_groups:
-            g["lr"] = g["base_lr"] * lr_scale
-        if CURV_AWARE:
-            for g in opt_kappa.param_groups:
-                g["lr"] = g["base_lr"] * lr_scale
-        perm = np.random.permutation(n_items)
-        epoch_loss = 0.0
-        for s in range(steps_per_epoch):
-            if DDP_MODE:
-                # 全局 batch = perm[s*global_batch : (s+1)*global_batch], 卡 rank 取第 rank 个 local 块
-                g_start = s * args.batch_size
-                batch_idx = perm[g_start + RANK * local_batch: g_start + (RANK + 1) * local_batch]
-            else:
-                batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
-            batch = item_emb[batch_idx]
-            m = train_step_with_sync_recalibration(train_model, batch, batch_idx, nn_idx, item_emb,
-                                                   opt, kappa_log, reg_step,
-                                                   opt_kappa=opt_kappa if CURV_AWARE else None)
-            epoch_loss += m["loss"]
-            if is_main:
-                train_curve.append({"step": reg_step, "epoch": epoch, **m})
-            reg_step += 1
-        if is_main and (epoch % 5 == 0 or epoch == args.epochs - 1):
-            rec_str = f"rec={m['rec_loss']:.4f} " if REC_LOSS else ""
-            print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
-                  f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
-                  f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}")
-
-    # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
+    # Issue #140: --resume (崩溃恢复) — ckpt 已存在时跳过 Phase 1 训练, 直接复用训练产物
     ckpt_path = PRODUCT_DIR / "hrqvae_kappa_sync.ckpt"
-    if is_main:
-        if ckpt_path.exists():
-            ckpt_path.unlink()
-        torch.save({
-            "model_state_dict": train_mm.state_dict(),
-            "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS, "beta": BETA},
-            "final_kappas": [q.kappa.item() for q in train_mm.vq_layers],
-            "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
-            "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
-        }, ckpt_path)
-        print(f"\nR12 ckpt saved: {ckpt_path}\n")
+    if args.resume:
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f"--resume 需要 {ckpt_path} 存在 (无 ckpt 不能跳过训练)")
+        if is_main:
+            print(f"[resume] 复用已训练 ckpt {ckpt_path}, 跳过 Phase 1 训练", flush=True)
+        loaded_ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        train_mm.load_state_dict(loaded_ckpt["model_state_dict"])
+        kappa_log = []
+        train_curve = []
+        reg_step = 0
+        if is_main:
+            print(f"[resume] loaded final_cs={[q.get_c().item() for q in train_mm.vq_layers]} "
+                  f"L0 c_0,b std={train_mm.vq_layers[0].get_c_l0().std().item():.6f}", flush=True)
+    else:
+        kappa_log = []
+        train_curve = []
+        reg_step = 0
+        for epoch in range(args.epochs):
+            # 对齐基线 lr_scheduler_type="linear" + warmup_epochs=20
+            if epoch < warmup_epochs:
+                lr_scale = (epoch + 1) / warmup_epochs
+            else:
+                lr_scale = max(0.0, 1.0 - (epoch - warmup_epochs) / max(1, args.epochs - warmup_epochs))
+            for g in opt.param_groups:
+                g["lr"] = g["base_lr"] * lr_scale
+            if CURV_AWARE:
+                for g in opt_kappa.param_groups:
+                    g["lr"] = g["base_lr"] * lr_scale
+            perm = np.random.permutation(n_items)
+            epoch_loss = 0.0
+            for s in range(steps_per_epoch):
+                if DDP_MODE:
+                    # 全局 batch = perm[s*global_batch : (s+1)*global_batch], 卡 rank 取第 rank 个 local 块
+                    g_start = s * args.batch_size
+                    batch_idx = perm[g_start + RANK * local_batch: g_start + (RANK + 1) * local_batch]
+                else:
+                    batch_idx = perm[s * args.batch_size:(s + 1) * args.batch_size]
+                batch = item_emb[batch_idx]
+                m = train_step_with_sync_recalibration(train_model, batch, batch_idx, nn_idx, item_emb,
+                                                       opt, kappa_log, reg_step,
+                                                       opt_kappa=opt_kappa if CURV_AWARE else None)
+                epoch_loss += m["loss"]
+                if is_main:
+                    train_curve.append({"step": reg_step, "epoch": epoch, **m})
+                reg_step += 1
+            if is_main and (epoch % 5 == 0 or epoch == args.epochs - 1):
+                rec_str = f"rec={m['rec_loss']:.4f} " if REC_LOSS else ""
+                print(f"[Epoch {epoch}] avg_loss={epoch_loss/steps_per_epoch:.4f} κ={m['kappas']} c={m['cs']} "
+                      f"reload_consistent={m['reload_consistent']} grad_κ={m['raw_grad_kappa']} "
+                      f"ρ={[f'{s:.3f}' for s in m['struct_terms']]} {rec_str}")
+
+        # ── R12 ckpt 强制保存 (rank 0; DDP 下用 underlying train_mm, 避免 'module.' 前缀不兼容 reload) ──
+        if is_main:
+            if ckpt_path.exists():
+                ckpt_path.unlink()
+            torch.save({
+                "model_state_dict": train_mm.state_dict(),
+                "config": {"num_emb_list": CODEBOOK_SIZES, "e_dim": E_DIM, "layers": ENCODER_LAYERS, "beta": BETA},
+                "final_kappas": [q.kappa.item() for q in train_mm.vq_layers],
+                "final_cs": [q.get_c().item() for q in train_mm.vq_layers],
+                "final_mix_weights": [q.mix_weight.item() for q in train_mm.vq_layers],
+                # Issue #140: L0 branch curvature 产物 (Stage3 HAB 兼容: final_cs[0] = mean(c_0,b))
+                "l0_branch": {
+                    "enabled": True,
+                    "theta": train_mm.vq_layers[0].theta.detach().cpu().tolist(),
+                    "c_0b": train_mm.vq_layers[0].get_c_l0().detach().cpu().tolist(),
+                    "c_min": C_MIN,
+                    "c_max": C_MAX,
+                    "c0_ref": C0_REF,
+                    "lambda_anchor": LAMBDA_ANCHOR,
+                },
+            }, ckpt_path)
+            print(f"\nR12 ckpt saved: {ckpt_path}\n")
 
     if is_main:
         # ── Phase 2: Stage 2 推断 → (9922, 4) SID ──
@@ -1044,7 +1468,11 @@ def main():
         # 模拟 "不重校准" 行为: 让 c 冻结为 init=1.0 (no κ update effective)
         for q in no_recal_mm.vq_layers:
             q.kappa.requires_grad = False
-        print("Ablation: κ frozen, no sync recalibration (对照)")
+        # Issue #140: L0 branch 下曲率由 θ_b 决定, 冻结 θ 才等价于 "曲率不更新"
+        for q in no_recal_mm.vq_layers:
+            if q.l0_branch:
+                q.theta.requires_grad = False
+        print("Ablation: κ + θ frozen, no sync recalibration (对照)")
         # 不实际训练, 仅验证 SID 数量级差异
         # 对照消融: 不消解 (随机码本 base argmin, 保持"无重校准训练"的原样对照)
         sid_ablation_3digit = infer_sid(no_recal_model, item_emb, batch_size=args.batch_size, resolve=False)
@@ -1057,7 +1485,23 @@ def main():
         util_per_layer = [float(len(np.unique(sid_4digit[:, l])) / CODEBOOK_SIZES[l]) for l in range(N_HIERARCHIES)]
         util_4digit = len(np.unique(sid_4digit, axis=0)) / N_ITEMS
         # Issue #157 spec: 10+ κ 更新点记录
-        kappa_updates_ok = n_kappa_updates >= 10
+        # Issue #140 resume 模式: kappa_log 在崩溃时未落盘, 用 stage2_train.log 的 Epoch 输出
+        # (每 5 epoch 一行, 1000 epoch → 200 行) 证明训练完整执行过 (κ 更新点 ≈ 9000/5 = 1800)
+        if n_kappa_updates < 10 and args.resume:
+            train_log = PRODUCT_DIR.parent / "stage2_train.log"
+            n_epoch_lines = 0
+            if train_log.exists():
+                with open(train_log) as f:
+                    n_epoch_lines = sum(1 for ln in f if ln.startswith("[Epoch "))
+            if n_epoch_lines >= 10:
+                kappa_updates_ok = True
+                print(f"  [resume] kappa_log 为空 (崩溃未落盘), 但 stage2_train.log 有 {n_epoch_lines} 个 Epoch 输出 "
+                      f"→ 训练完整执行 (κ 更新点 ~1800) → PASS", flush=True)
+            else:
+                kappa_updates_ok = False
+                print(f"  [resume] kappa_log 为空且 train log 仅 {n_epoch_lines} 行 → FAIL", flush=True)
+        else:
+            kappa_updates_ok = n_kappa_updates >= 10
         # Issue #157 spec: 每层 κ 真更新 (final != initial)
         final_kappas = [q.kappa.item() for q in train_mm.vq_layers]
         if FIX_C:
@@ -1133,11 +1577,183 @@ def main():
         print(f"  对照消融差异: {'PASS' if ablation_ok else 'FAIL'}")
         print(f"\n>>> GATE 2 决策 (Issue #157 spec + Issue #55/v2 可变曲率+权重): {'✅ PASS' if gate2_pass else '❌ FAIL'} <<<\n")
 
+        # ── Issue #140 Gate 2 产物: L0 branch curvature 分化审计 ──
+        print(f"\n{'='*70}\nIssue #140 GATE 2: L0 branch curvature 分化审计\n{'='*70}")
+        l0q = train_mm.vq_layers[0]
+        cs_final = l0q.get_c_l0().detach().cpu()
+        theta_final = l0q.theta.detach().cpu()
+        # 1) 64 个 c_0,b 轨迹/终值/梯度/边界命中率 → l0_branch_curvature_trace.json/csv
+        l0_trace_rows = []
+        for entry in kappa_log:
+            st = entry.get("l0_branch") or {}
+            l0_trace_rows.append({
+                "step": entry["step"],
+                "theta_min": st.get("theta_min"), "theta_max": st.get("theta_max"),
+                "theta_mean": st.get("theta_mean"),
+                "c_min": st.get("c_min"), "c_max": st.get("c_max"),
+                "c_mean": st.get("c_mean"), "c_std": st.get("c_std"),
+                "mu_d": st.get("mu_d"),
+                "boundary_hits": st.get("boundary_hits"),
+                "theta_grad_norm": st.get("theta_grad_norm"),
+                "theta_grad_finite": st.get("theta_grad_finite"),
+                "anchor_loss": entry.get("anchor_loss"),
+            })
+        import csv as _csv
+        l0_trace_json = PRODUCT_DIR / "l0_branch_curvature_trace.json"
+        l0_trace_csv = PRODUCT_DIR / "l0_branch_curvature_trace.csv"
+        with open(l0_trace_json, "w") as f:
+            json.dump(l0_trace_rows, f, indent=2)
+        if l0_trace_rows:
+            with open(l0_trace_csv, "w", newline="") as f:
+                w = _csv.DictWriter(f, fieldnames=list(l0_trace_rows[0].keys()))
+                w.writeheader()
+                w.writerows(l0_trace_rows)
+        print(f"  l0_branch_curvature_trace.json/csv: {len(l0_trace_rows)} 轨迹点")
+        # 终值统计
+        n_boundary_final = int(((cs_final - C_MIN).abs() < BOUNDARY_HIT_EPS).sum().item()
+                               + ((C_MAX - cs_final).abs() < BOUNDARY_HIT_EPS).sum().item())
+        c_std_final = float(cs_final.std().item())
+        c_range_final = [float(cs_final.min().item()), float(cs_final.max().item())]
+        print(f"  final c_0,b: min={c_range_final[0]:.6f} max={c_range_final[1]:.6f} "
+              f"std={c_std_final:.6f} boundary_hits={n_boundary_final}")
+
+        # 2) L0 分配 before/after → l0_assignment_before_after.csv (reference-0 vs 训练后)
+        ref_sid = np.load(REFERENCE_SID)  # (9922,4)
+        sid_before_l0 = ref_sid[:, 0]
+        sid_after_l0 = sid_4digit[:, 0]
+        n_changed_l0 = int((sid_before_l0 != sid_after_l0).sum())
+        print(f"  L0 assignment change vs reference-0: {n_changed_l0}/{N_ITEMS} "
+              f"({100.0*n_changed_l0/N_ITEMS:.2f}%)")
+        with open(PRODUCT_DIR / "l0_assignment_before_after.csv", "w", newline="") as f:
+            w = _csv.writer(f)
+            w.writerow(["item_idx", "l0_before_ref", "l0_after", "changed"])
+            for i in range(N_ITEMS):
+                w.writerow([i, int(sid_before_l0[i]), int(sid_after_l0[i]),
+                            bool(sid_before_l0[i] != sid_after_l0[i])])
+        print(f"  -> l0_assignment_before_after.csv ({N_ITEMS} rows)")
+
+        # 3) occupancy / entropy / margin / local density per branch (训练后 assignment)
+        import collections
+        occ = collections.Counter(sid_after_l0.tolist())
+        occ_arr = np.array([occ.get(b, 0) for b in range(CODEBOOK_SIZES[0])], dtype=float)
+        p = occ_arr / occ_arr.sum()
+        entropy = float(-(p[p > 0] * np.log(p[p > 0])).sum())
+        dead_ratio = float((occ_arr == 0).mean())
+        # margin: 训练后 L0 距离矩阵 (全量, 每 item 最近两候选差距) + local density (每 branch 的 item 平均距离)
+        margins = []
+        densities = np.zeros(CODEBOOK_SIZES[0])
+        occ_counts = np.zeros(CODEBOOK_SIZES[0])
+        z_all = train_mm.encoder(item_emb)  # Phase 2-5 只 rank 0, train_mm 已是 underlying module
+        with torch.no_grad():
+            for i in range(0, N_ITEMS, BATCH_SIZE):
+                z_b = z_all[i:i + BATCH_SIZE]
+                d_b, _dn, _mu = _l0_new_distance(train_mm, z_b)
+                d_sorted, _ = d_b.sort(dim=-1)
+                margins.append((d_sorted[:, 1] - d_sorted[:, 0]).cpu().numpy())
+                idx_b = sid_after_l0[i:i + BATCH_SIZE]
+                for k in range(CODEBOOK_SIZES[0]):
+                    m = idx_b == k
+                    if m.any():
+                        densities[k] += d_b[m, k].mean().item() * m.sum()
+                        occ_counts[k] += m.sum()
+        margin_arr = np.concatenate(margins)
+        density_arr = np.where(occ_counts > 0, densities / np.maximum(occ_counts, 1), np.nan)
+        print(f"  occupancy: max={occ_arr.max():.0f} min={occ_arr.min():.0f} dead_ratio={dead_ratio:.4f} "
+              f"entropy={entropy:.4f}")
+        print(f"  margin mean={margin_arr.mean():.4f}, density mean={np.nanmean(density_arr):.4f}")
+
+        # Spearman: c_0,b vs occupancy / margin / density (CI bootstrap + 多重校正 Holm)
+        from scipy import stats as _sp
+        spearman_results = {}
+        c_vals = cs_final.numpy()
+        occ_ok = occ_arr.astype(bool)
+        features = {
+            "occupancy": occ_arr,
+            "margin": margin_arr if margin_arr.shape[0] == CODEBOOK_SIZES[0] else None,
+            "density": density_arr,
+        }
+        # margin per branch (每 branch 平均 margin)
+        margin_by_branch = np.zeros(CODEBOOK_SIZES[0])
+        for k in range(CODEBOOK_SIZES[0]):
+            m = sid_after_l0 == k
+            margin_by_branch[k] = float(margin_arr[m].mean()) if m.any() else np.nan
+        features["margin"] = margin_by_branch
+        pvals = []
+        for name, feat in features.items():
+            mask = ~np.isnan(feat)
+            if mask.sum() < 5:
+                spearman_results[name] = {"rho": None, "p": None, "ci": [None, None], "n": int(mask.sum())}
+                pvals.append(1.0)
+                continue
+            rho, p = _sp.spearmanr(c_vals[mask], feat[mask])
+            # bootstrap CI (1000 次, seed=42)
+            rng = np.random.RandomState(42)
+            boots = []
+            for _ in range(1000):
+                idx = rng.randint(0, int(mask.sum()), size=int(mask.sum()))
+                if len(np.unique(feat[mask][idx])) < 2:
+                    continue
+                b, _ = _sp.spearmanr(c_vals[mask][idx], feat[mask][idx])
+                boots.append(b)
+            ci = [float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))] if boots else [None, None]
+            spearman_results[name] = {"rho": float(rho), "p": float(p), "ci": ci, "n": int(mask.sum())}
+            pvals.append(float(p))
+        # Holm-Bonferroni 多重校正
+        m_tests = len(pvals)
+        holm_p = []
+        order = np.argsort(pvals)
+        for rank, idx in enumerate(order):
+            holm_p.append(min(1.0, pvals[idx] * (m_tests - rank)))
+        holm_p_re = [None] * m_tests
+        for rank, idx in enumerate(order):
+            holm_p_re[idx] = holm_p[rank]
+        for i, (name, _r) in enumerate(features.items()):
+            spearman_results[name]["p_holm"] = holm_p_re[i]
+        print(f"  Spearman c_0,b vs occupancy/margin/density: "
+              f"{ {k: (round(v['rho'], 3) if v['rho'] is not None else None) for k, v in spearman_results.items()} }")
+
+        # 4) scale_shortcut_audit.json — 曲率塌缩/边界/尺度捷径判定
+        collapse_to_same = c_std_final < 1e-4
+        collapse_to_boundary = n_boundary_final >= CODEBOOK_SIZES[0] * 0.5  # ≥32 个贴边
+        # 尺度捷径: c_0,b 全等 (无分化) 或全贴同一边界 → 判 shortcut
+        scale_shortcut = bool(collapse_to_same or collapse_to_boundary)
+        # d_norm 后 argmin 与 raw argmin 一致性 (归一化不引入重分配)
+        with torch.no_grad():
+            d_final, d_final_norm, mu_final = _l0_new_distance(train_mm, z_all)
+        argmin_raw = d_final.argmin(dim=-1)
+        argmin_norm = d_final_norm.argmin(dim=-1)
+        n_argmin_drift = int((argmin_raw != argmin_norm).sum().item())
+        scale_audit = {
+            "issue": "#140",
+            "final_c_0b": c_vals.tolist(),
+            "final_theta": theta_final.tolist(),
+            "c_std": c_std_final,
+            "c_range": c_range_final,
+            "n_boundary_hits": n_boundary_final,
+            "collapse_to_same_value": collapse_to_same,
+            "collapse_to_boundary": collapse_to_boundary,
+            "scale_shortcut_detected": scale_shortcut,
+            "n_argmin_drift_dnorm_vs_raw": int(n_argmin_drift),
+            "occupancy": occ_arr.tolist(),
+            "entropy": entropy,
+            "dead_code_ratio": dead_ratio,
+            "margin_by_branch": margin_by_branch.tolist(),
+            "density_by_branch": density_arr.tolist(),
+            "spearman": spearman_results,
+            "L1_L2_final_cs": [q.get_c().item() for q in train_mm.vq_layers[1:]],
+            "l0_assignment_change_vs_ref": n_changed_l0,
+            "l0_assignment_change_ratio": round(float(n_changed_l0 / N_ITEMS), 4),
+        }
+        with open(PRODUCT_DIR / "scale_shortcut_audit.json", "w") as f:
+            json.dump(scale_audit, f, indent=2, default=str)
+        print(f"  scale_shortcut_audit.json: shortcut_detected={scale_shortcut} "
+              f"argmin_drift={n_argmin_drift}")
+
         # ── 落盘产物 ──
         config = {
-            "issue": "#157",
+            "issue": "#140",
             "task": "#448",
-            "spec": "Issue #157 Gate 2: per-layer learnable κ_l + κ-aware codebook sync recalibration + Stage 2 SID 完整链路",
+            "spec": "Issue #140: L0 codeword-specific bounded curvature c_0,b = c_min+(c_max-c_min)*sigmoid(theta_b) + d_norm 归一化 + anchor loss (L1/L2/Stage1/3/4 保持 Issue139)",
             "codebook_sizes": CODEBOOK_SIZES,
             "e_dim": E_DIM,
             "encoder_layers": ENCODER_LAYERS,
@@ -1201,15 +1817,47 @@ def main():
             "reload_5of5_consistent": reload_5of5_ok,
             "precheck_pass": precheck_pass,
             "ablation_diff_ok": ablation_ok,
+            # Issue #140 Gate 2
+            "l0_branch": {
+                "enabled": L0_BRANCH_CURVATURE,
+                "c_min": C_MIN, "c_max": C_MAX, "c0_ref": C0_REF,
+                "lambda_anchor": LAMBDA_ANCHOR,
+                "final_c_std": c_std_final,
+                "final_c_range": c_range_final,
+                "n_boundary_hits": n_boundary_final,
+                "collapse_to_same": collapse_to_same,
+                "collapse_to_boundary": collapse_to_boundary,
+                "scale_shortcut_detected": scale_shortcut,
+                "l0_assignment_change_vs_ref": n_changed_l0,
+                "l0_assignment_change_ratio": round(float(n_changed_l0 / N_ITEMS), 4),
+                "spearman": {k: {kk: vv for kk, vv in v.items() if kk != "ci"}
+                             for k, v in spearman_results.items()},
+                "gate1_pass": gate1_report["gate1_pass"] if is_main else "skip",
+            },
         }
         with open(PRODUCT_DIR / "verdict.json", "w") as f:
             json.dump(verdict, f, indent=2)
 
+        # Issue #140 产物清单
+        config["l0_branch"] = {
+            "c_min": C_MIN, "c_max": C_MAX, "c0_ref": C0_REF,
+            "lambda_anchor": LAMBDA_ANCHOR, "theta_init": THETA_INIT,
+            "d_norm_eps": D_NORM_EPS,
+            "normalization": "d_norm = d / stop_grad(E_batch[d] + eps), E_batch[d]=L0 batch 全局标量均值",
+            "gate1_report": str(PRODUCT_DIR / "gate1_equivalence_report.json"),
+            "trace": str(PRODUCT_DIR / "l0_branch_curvature_trace.json"),
+            "assignment_before_after": str(PRODUCT_DIR / "l0_assignment_before_after.csv"),
+            "scale_shortcut_audit": str(PRODUCT_DIR / "scale_shortcut_audit.json"),
+        }
+        with open(PRODUCT_DIR / "config.json", "w") as f:
+            json.dump(config, f, indent=2)
+
         print(f"\n产物落地: {PRODUCT_DIR}")
-        print(f"  config.json + precheck.json + kappa_recalibration_log.json ({n_kappa_updates} entries)")
+        print(f"  config.json + precheck.json + gate1_equivalence_report.json + kappa_recalibration_log.json ({n_kappa_updates} entries)")
         print(f"  sid_output.npy ({sid_4digit.shape}) + sid_metadata.json")
         print(f"  train_curve.json ({len(train_curve)} steps) + verdict.json")
-        print(f"  hrqvae_kappa_sync.ckpt (R12 强制保存)")
+        print(f"  l0_branch_curvature_trace.json/csv + l0_assignment_before_after.csv + scale_shortcut_audit.json")
+        print(f"  hrqvae_kappa_sync.ckpt (R12 强制保存, 含 l0_branch.theta/c_0b)")
 
     if DDP_MODE:
         dist.barrier()

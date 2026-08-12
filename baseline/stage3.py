@@ -51,6 +51,13 @@ from _lib.hyperbolic_attention_bias import (
     HAB_LAMBDA_MAX, load_hab_assets_from_stage2_ckpt, precompute_distance_matrices,
     HyperbolicAttentionBias, install_hab, make_hab_layer_id_lut,
 )  # noqa: E402
+# Issue #125 (2026-08-12): Stage3 per-head learnable curvature (κ_h) — R36 曲率机制变更.
+# 6 个 attention head 各自 learnable κ_h + λ_h, 给 HAB get_B_geo 输出扩展到 (B, num_heads, L, L).
+# 训练初期 λ_h_init=0 → 严格等价 baseline (R44); λ_h 学习后 per-head bias 自动生效.
+from _lib.per_head_curvature import (  # noqa: E402
+    install_per_head_curvature, get_per_head_kappa_stats,
+    PER_HEAD_NUM_HEADS_DEFAULT, PER_HEAD_KAPPA_H_INIT, PER_HEAD_LAMBDA_H_INIT,
+)
 
 
 class _FastGenRecDataLoader(GenRecDataLoader):
@@ -130,6 +137,14 @@ HAB_WARMUP_TW = 0
 HAB_ATTN_ENTROPY_WEIGHT = 0.0
 HAB_ATTN_ENTROPY_TAU = 1.0
 HAB_DELTA_CURVATURE = False
+
+# Issue #132 (2026-08-12): Stage3 训练期冻结 HAB (lambda_raw + lambda_h_raw) — baseline-equivalent 训练.
+# Issue #130 + #131 双 ablation 揭示: Stage4 eval 时 HAB 注入对 attention 无贡献 (causal mask 主导).
+# 但 Issue #125/#127/#128/#129 训练期 HAB 让 T5 学偏 → test 退化.
+# 修复: install_hab 后强制 lambda_raw=0, install_per_head_curvature 后 lambda_h_raw=0,
+# 两者都从 optimizer 移除 (frozen by design). ckpt 训练等效 baseline.
+ISSUE132_FREEZE_HAB = True  # Issue #132: 启用冻结, 关闭=沿用 #129 全程学习
+
 PROMPT_FORMER_ENABLED = False
 PROMPT_FORMER_ALPHA = 0.35
 BRANCH_CURVATURE_ENABLED = False
@@ -161,7 +176,7 @@ DEVICE = f"cuda:{LOCAL_RANK}" if DDP_MODE else "cuda:0"
 
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #210 Phase D (2026-08-08): 用户指示 200 epoch. v85p PARTIAL-GO 0.1080 300ep 配置, Phase D 用户改为 200 epoch 验证 equal128 SID 收敛.
-EARLY_STOP = 30  # v18 (2026-08-09): 沿用 v15 EARLY_STOP=30 (2026-08-08): 复现 v77 0.1080 (/tmp/v77_peritem_hab/test_eval test_R@10=0.1080) 用 ES=10. Phase D ES=20 是给 equal128 SID 验证的独立设置, 不应影响 v77 复现.
+EARLY_STOP = 20  # Issue125 R41 硬约束: EARLY_STOP=20 (历史 v121 用 30 不追溯)
 EVAL_INTERVAL = 5  # Issue #141 v85q (2026-08-09): 用户指示 EVAL_INTERVAL=5 (匹配 v77/v85p 历史配置, 每 5 epoch 评估). 当前 + NUM_WORKERS=2 单 epoch 7s, EI=5 省 2s/epoch (-28%). v77 实际配置就是 EI=5.
 BATCH_SIZE = 1024  # Issue #141 v85t (2026-08-09) v77完全相同复现: v77原 batch=1024 (DDP 4 卡 per-rank 256), 验证 v77 数值可复现性, 解释 v85 路径所有"修复"是不是 noise.
 INFER_SIZE = 256  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 64, v77原等价值)
@@ -961,10 +976,23 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
         optimizer.zero_grad()
         # 加速: bf16 forward (T5 标准混合精度, 参数 fp32, 仅前向计算转 bf16)
         with autocast_ctx:
-            # Issue #68: PromptFormer 时 forward 返回 (loss, logits, reg_losses). R44: PROMPT_FORMER_ENABLED=False, 默认 forward 返回 T5LMHeadOutput 含 .loss + .logits.
+            # Issue125 (2026-08-12): HG_Rec.forward 返回 tuple (loss, logits), 必须解包.
+            #   baseline _lib/HG_Rec.py:61 写死 `return outputs.loss, outputs.logits` → tuple.
+            #   PromptFormer 时返回 (loss, logits, reg_losses) 也是 tuple, 同样解包.
+            #   旧代码 line 971-974 的注释 "默认 forward 返回 T5LMHeadOutput 含 .loss + .logits" 是错的
+            #   (来自 baseline stage3.py 抄错的注释), 实际从来就是 tuple, 旧 baseline 都没跑过这里.
             pf_out = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            loss = pf_out.loss
-            logits = pf_out.logits
+            if isinstance(pf_out, tuple):
+                # HG_Rec.forward / PromptFormer 路径: tuple 形式
+                if len(pf_out) == 2:
+                    loss, logits = pf_out
+                elif len(pf_out) == 3:
+                    loss, logits, _reg = pf_out
+                else:
+                    raise ValueError(f"Unexpected tuple length {len(pf_out)} from model.forward")
+            else:
+                # 防御: T5ForConditionalGeneration 直接返回 Seq2SeqLMOutput (R30 兜底)
+                loss, logits = pf_out.loss, pf_out.logits
         # Issue #140 v76: T5 uncertainty head 注入 Gumbel noise + uncertainty loss
         # 注意: 仅在 training 时有 noise, eval 时 head 直通 logits
         if t5_uncertainty_head is not None and model.training:
@@ -976,7 +1004,7 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
             )
             uncertainty_reg = t5_uncertainty_head.compute_uncertainty_loss(loss.detach())
             loss = loss + T5_UNCERTAINTY_REG_WEIGHT * uncertainty_reg
-        # Issue #139 v75: 启用 label_smoothing 时手动算 F.cross_entropy 平滑 loss
+        # Issue #140 v75: 启用 label_smoothing 时手动算 F.cross_entropy 平滑 loss
         # (T5 内部 loss 不支持 label_smoothing, 从已有 logits 重算)
         elif STAGE3_LABEL_SMOOTHING > 0:
             loss_t5 = loss
@@ -999,9 +1027,9 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
         # Issue #141 v85d: per-batch LR scheduler step (cosine with warmup, 更细粒度)
         if scheduler is not None:
             scheduler.step()
-        # Issue #139 v75: 第一个 batch 后打印一次 (验证 label_smoothing 生效)
+        # Issue #140 v75: 第一个 batch 后打印一次 (验证 label_smoothing 生效)
         if RANK == 0 and n == 0 and STAGE3_LABEL_SMOOTHING > 0:
-            log(f"[Issue #139 v75] label_smoothing={STAGE3_LABEL_SMOOTHING} "
+            log(f"[Issue #140 v75] label_smoothing={STAGE3_LABEL_SMOOTHING} "
                 f"(T5 CE loss={loss_t5.item():.4f} → CE_smooth={loss.item():.4f})")
         total_loss += loss.item() * input_ids.shape[0]
         n += input_ids.shape[0]
@@ -1145,6 +1173,27 @@ def main():
         # Issue #64 不需要 separate L3 dummy: num_layers=3, force_zero_layers=() (L3 在 Dbar 外)
         layer_id_lut_array = make_hab_layer_id_lut()
         model = install_hab(model, hab_module, layer_id_lut_array)
+        # Issue #132 (2026-08-12): Stage3 训练期完全禁用 HAB baseline lambda_raw (3 标量).
+        # Issue #130 + #131 双 ablation 验证: eval 期 HAB 注入对 attention 计算无贡献 (causal mask 主导).
+        # test 退化根因在 Stage3 训练期 HAB 让 T5 学偏, 不是 eval 期 HAB 注入.
+        # 本 issue 强制 lambda_raw=0 (训练全程), ckpt 训练等效 baseline (无 HAB 干扰).
+        with torch.no_grad():
+            hab_module.lambda_raw.data.fill_(0.0)
+        # Issue #125 (2026-08-12): per-head learnable curvature (κ_h + λ_h) — 必须在 install_hab 之后
+        # lambda_h_init=0 → 训练初期不贡献 (与 baseline 严格等价); 训练中学到合适 λ 后 per-head bias 生效.
+        hab_module = install_per_head_curvature(
+            hab_module,
+            num_heads=PER_HEAD_NUM_HEADS_DEFAULT,
+            kappa_h_init=PER_HEAD_KAPPA_H_INIT,
+            lambda_h_init=PER_HEAD_LAMBDA_H_INIT,
+        )
+        # Issue #132: per-head lambda_h_raw 训练期同样冻结 (避免 per-head 也学偏, 与 baseline 完全等价)
+        with torch.no_grad():
+            hab_module.lambda_h_raw.data.fill_(0.0)
+        if is_main:
+            log(f"[Issue #125] per-head curvature enabled: "
+                f"num_heads={hab_module.num_heads} kappa_h_init={PER_HEAD_KAPPA_H_INIT} "
+                f"lambda_h_init={PER_HEAD_LAMBDA_H_INIT} (R36 曲率机制变更)")
         # 新 Issue Phase B: Branch-Aware HAB (按 L0 prefix branch features 分桶 λ_max)
         if BRANCH_CURVATURE_ENABLED:
             _bc_lut, _bc_stats = build_branch_curvature_lut()
@@ -1203,7 +1252,11 @@ def main():
     if HAB_ENABLED and HAB_LAMBDA_LR_RATIO > 1.0:
         # Issue #64 v6b (2026-08-07): U/V embedding 也进 high-lr group (与 λ_raw 一起, 推动 B_geo 学习)
         # 总参数量 = sum(K_l * r * 2) = (64+128+256)*16*2 = 14336 scalar + 3 scalar (lambda_raw)
-        hab_lambda_params = [hab_module.lambda_raw]  # 3 个标量
+        # Issue #132 (2026-08-12): 当 ISSUE132_FREEZE_HAB=True, lambda_raw 不进 optimizer (frozen by design).
+        if ISSUE132_FREEZE_HAB:
+            hab_lambda_params = []  # freeze: 训练期强制 0
+        else:
+            hab_lambda_params = [hab_module.lambda_raw]  # 3 个标量
         hab_bias_params = list(hab_module.U.parameters()) + list(hab_module.V.parameters())  # 6 个 (K_l, r) embedding
         _param_groups.append({"params": hab_lambda_params + hab_bias_params,
                                 "lr": LR * HAB_LAMBDA_LR_RATIO})
@@ -1235,6 +1288,10 @@ def main():
             # Issue #71: residual_alpha 也进 high-lr group (上面), 必须从 base group 排除
             if RESIDUAL_HAB_ENABLED:
                 _hab_param_ids.add(id(hab_module.residual_alpha))
+            # Issue #132: 当 ISSUE132_FREEZE_HAB=True, per-head lambda_h_raw 也排除 (frozen by design)
+            if ISSUE132_FREEZE_HAB and hasattr(hab_module, 'lambda_h_raw'):
+                _hab_param_ids.add(id(hab_module.lambda_h_raw))
+                _hab_param_ids.add(id(hab_module.kappa_h))  # 冻结 kappa_h 也避免 per-head 学偏
         else:
             _hab_param_ids = set()
         # R44 self-contained: PROMPT_FORMER_ENABLED=False, pf_module 始终 None, _pf_param_ids 始终空集合.

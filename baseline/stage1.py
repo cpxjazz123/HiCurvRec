@@ -49,7 +49,7 @@ from utils import expmap0, proj_to_ball  # noqa: E402
 ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments.item.json"  # R44 baseline 自包含: 引用共享 dataset/ 顶层 (md5 一致 HG-Rec/dataset/Instruments/)
 # baseline Stage1 输出: parquet SHA = 1a42341f01537d6db5f622e4831e0fc1a2039dc8b1288291dcc4963deee000cc
 # 与 v15 capmatch Stage2 训练时 item_emb_sha256 (1a42341f...) 一致 → R10 一致性
-OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/baseline/stage1/item_emb.parquet")  # R44 baseline 自包含: 产物写 baseline/stage1/
+OUTPUT_PARQUET = Path("/home/wlia0047/ar57/wenyu/GeneRec/baseline/stage1/item_emb.parquet")  # R44 baseline 自包含: 产物写本任务 stage1/
 TAG = "baseline"
 E_DIM = 768  # Issue #71 v82 (2026-08-07): 必须与 Stage2 EMB_DIM 对齐 (768), 不然 np.load shape mismatch
 # R_MAX 必须 < 1 — 给 expmap0(c=κ) 留 arctanh(r) 余量, 防 arctanh(1)=inf 数值爆炸
