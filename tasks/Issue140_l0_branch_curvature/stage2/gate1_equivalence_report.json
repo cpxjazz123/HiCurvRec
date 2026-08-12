@@ -1,0 +1,53 @@
+{
+  "issue": "#140",
+  "checks": {
+    "check1_equivalence": {
+      "distance_max_abs_diff": 4.172325134277344e-07,
+      "distance_match": true,
+      "assignment_match": true,
+      "loss_match": true,
+      "loss_new": 0.33921393752098083,
+      "loss_old": 0.33921393752098083,
+      "front3_sid_match": true,
+      "n_diff_front3": 0
+    },
+    "check2_single_branch": {
+      "perturbed_col": 7,
+      "changed_cols": [
+        7
+      ],
+      "only_that_col": true,
+      "other_cols_unchanged": true
+    },
+    "check3_theta_optimizer": {
+      "n_theta": 64,
+      "theta_in_optimizer": true,
+      "grad_finite": true,
+      "grad_min": 0.0,
+      "grad_max": 0.00019703472207766026,
+      "n_nonzero_grad": 63,
+      "anchor_loss": 0.0
+    },
+    "check4_scale": {
+      "d_norm_mean": 1.0,
+      "d_old_mean": 0.7016764283180237,
+      "mu_d": 0.7016764283180237,
+      "scale_ok": true
+    },
+    "check5_safety": {
+      "no_nan_inf": true,
+      "n_boundary_hits": 0,
+      "boundary_ok": true,
+      "scale_shortcut_chain": false
+    }
+  },
+  "gate1_pass": true,
+  "decision": "GATE1_PASS",
+  "gate1_fail_detail": {
+    "check1": true,
+    "check2": true,
+    "check3": true,
+    "check4": true,
+    "check5": true
+  }
+}

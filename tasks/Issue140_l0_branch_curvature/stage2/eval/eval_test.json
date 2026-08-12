@@ -1,0 +1,21 @@
+{
+  "R@5": 0.08027670519160372,
+  "R@10": 0.09885778618278881,
+  "R@20": 0.12178249721879204,
+  "NDCG@5": 0.06796711472916672,
+  "NDCG@10": 0.07390889796899437,
+  "NDCG@20": 0.0797085021352791,
+  "n_eval": 24772,
+  "t_eval_s": 23.7,
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue140_l0_branch_curvature/stage2/HG_Rec_best.pth",
+  "sid_sha256": "9dafeef0ec352ffc250f6c03be2cfc8c8777c7c707d3cbc1f19abdbc5dfdf7a9",
+  "eval_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/dataset/test.parquet",
+  "tag": "v138_full_oracle",
+  "done_at": "2026-08-12 18:41:03",
+  "protocol_drift_check": {
+    "issue133_full_R10": 0.0962,
+    "this_run_full_R10": 0.09885778618278881,
+    "abs_diff": 0.0027,
+    "blocked": false
+  }
+}
