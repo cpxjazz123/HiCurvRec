@@ -1,0 +1,69 @@
+{
+  "issue": "#128",
+  "decision": "NO-GO (R37 严格触发)",
+  "reason": "test_R@10=0.0977 < baseline 0.1024 (-4.59%, R37 触发). curriculum 设计成功降低了 valid 偏置信号 (valid peak 0.1250 vs #127 0.1294 / baseline 0.1267), 但 test 退化未修复. 说明 curriculum 解决了 overfit 信号, 但 test 退化根源不在 valid overfit, 而在 HAB 几何正则本身对 test 分布的模式不匹配.",
+  "r37_verdict": {
+    "v_prev_test_R10_baseline": 0.1024,
+    "v_new_test_R10_issue128": 0.0977,
+    "delta_pct": -4.59,
+    "rule": "R37 严格触发 (新版本 < baseline test_R@10); curriculum 没解决 test 退化, 必须重新分析根因"
+  },
+  "spec": "Stage3 HAB lambda_raw curriculum schedule: epoch 0-30 lambda=0 (HAB 冻结, T5 backbone 自由学), epoch 30-60 线性增长到 0.5*lambda_max (与 baseline 一致), epoch 60+ 稳定 0.1. lambda_raw 从 optimizer 移除 (frozen by schedule).",
+  "implementation": {
+    "constants_added": "HAB_LAMBDA_CURRICULUM_ENABLED=True, HAB_LAMBDA_CURR_WARMUP_END=30, HAB_LAMBDA_CURR_RAMP_END=60, HAB_LAMBDA_CURR_FINAL=0.5*lambda_max=0.10",
+    "optimizer_freeze": "lambda_raw 在 high-lr group 移除 (curriculum 控制 data)",
+    "epoch_loop_step": "每个 epoch 开头 hab_curr_loop.lambda_raw.data.fill_(target_lambda)",
+    "stage2_env": "TASKA_STAGE2_CURV_PRIOR=1 + TASKA_STAGE2_REL_STRUCT=1 (沿用 #127)",
+    "per_head_curvature": "沿用 #127 (PER_HEAD_KAPPA_H_INIT=0.0 + lambda_h_init=0)"
+  },
+  "stage_results": {
+    "stage1": "OK (item_emb.parquet 47MB max_norm=0.6603)",
+    "stage2": {
+      "PASS": true,
+      "final_kappas": [0.01392, 0.05670, 0.07179],
+      "final_cs": [1.01402, 1.05833, 1.07443],
+      "util_4digit": 1.0,
+      "sid_sha256": "1bc262f40e47e1860bed5b4140da174b82e55230d3541f50f7817cd9871f1065",
+      "L3_unique": 6,
+      "note": "Stage2 与 #125/#127 几乎一致 (κ≈[0.014, 0.057, 0.072], c≈[1.014, 1.058, 1.074])"
+    },
+    "stage3": {
+      "best_valid_R10": 0.1250,
+      "best_epoch": 149,
+      "train_loss_at_best": 2.6098,
+      "ES_counter": "10/20 (epoch 200 NUM_EPOCHS 上限)",
+      "lambda_raw_ckpt": [0.1, 0.1, 0.1],
+      "kappa_h_ckpt": [0.014, 0.024, 0.022, 0.004, 0.022, 0.019],
+      "lambda_h_raw_ckpt": [-0.023, -0.038, -0.035, -0.017, -0.032, -0.029],
+      "residual_alpha_ckpt": [-19.7766, -19.7766, -19.7766],
+      "note": "valid peak 0.1250 (vs #127 0.1294 / baseline 0.1267) — curriculum 有效降低 overfit, 但 valid 涨得比 baseline 少, 训练端没学到更多"
+    },
+    "stage4": {
+      "test_R@5": 0.0780,
+      "test_R@10": 0.0977,
+      "test_R@20": 0.1229,
+      "NDCG@5/10/20": [0.0666, 0.0729, 0.0793],
+      "ckpt_per_head_loaded": true,
+      "note": "test 退化 4.59% — R37 严格触发 NO-GO"
+    }
+  },
+  "r18_4d_compare_vs_issue127": {
+    "D1_spec": "#127 per-head κ_h_init=0 (静态) vs #128 curriculum schedule (动态 λ_raw 调度)",
+    "D2_implementation": "stage3.py 加 HAB_LAMBDA_CURRICULUM_ENABLED + epoch 循环 lambda_raw.data.fill_ + optimizer 移除 lambda_raw",
+    "D3_gate1_failure": "#127 valid 偏置 → #128 valid 偏置降低 (peak 0.1294→0.1250) 但 test 退化加剧 (-3.61%→-4.59%)",
+    "D4_cite": "无外部文献 (R36 曲率正则项强度调度)",
+    "conclusion": "curriculum 部分有效 (valid 涨势收敛), 但 test 退化根源不在 overfit, 而在 HAB 几何模式与 test 分布失配"
+  },
+  "lessons_learned": [
+    "curriculum 调度有效: HAB λ=0 训练初期让 T5 backbone 学到更稳定的 valid 模式, 后期慢慢引入 HAB, valid peak 0.1250 比 #127 0.1294 低 (overfit 减弱)",
+    "per-head kappa_h + lambda_h_raw 在 Issue #128 实际几乎不学 (kappa_h ≈ 0.02, lambda_h ≈ -0.03): curriculum 把 lambda_raw freeze 后, per-head 似乎也没动力学大值",
+    "test 退化 4.59% 与 #125 (4.98%) / #127 (3.61%) 同量级, 表明 HAB 几何模式无论怎么调, test 都不友好",
+    "R36 严格化 v2 提示 (valid 偏置) 实际是部分 true, 但不是 test 退化的根本原因"
+  ],
+  "next_idea_hint": "Issue #129 必须**完全跳出 HAB 几何正则框架**, 走其他曲率机制或非曲率方向. 可能方向: (1) Stage2 端换 κ 参数化为 tanh(κ) (强制 κ ∈ [-1, 1]), 让 c=exp(tanh(κ)) 范围可控; (2) Stage1 item_emb 加 Lorentz norm 正则 (latent 不偏离 radius boundary); (3) Stage4 评估时禁用 HAB per-head (回到 baseline-equivalent), 测 #128 实际只用 curriculum",
+  "files_touched": [
+    "tasks/Issue128_stage3_lambda_curriculum/stage3.py (curriculum schedule + lambda_raw freeze)",
+    "tasks/Issue128_stage3_lambda_curriculum/stage2/HG_Rec_best.pth (epoch 149 best, valid_R10=0.1250)",
+    "tasks/Issue128_stage3_lambda_curriculum/stage2/eval/eval_test.json (test_R10=0.0977)"
+  ]
+}
