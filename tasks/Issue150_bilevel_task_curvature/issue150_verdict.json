@@ -1,0 +1,40 @@
+{
+  "issue": 150,
+  "task_dir": "tasks/Issue150_bilevel_task_curvature",
+  "verdict": "INVALID",
+  "gate1_precheck": "PASS (8/8 checks)",
+  "gate2_stage2_internal": "PASS (control c bounded, both SID3>9000)",
+  "gate3_mechanism_changes_behavior": "PASS (B-0 outer ≡ A; treatment c_l trajectory differs)",
+  "gate4_stage4_test_r10_ge_baseline": "FAIL (T=0.1071 < C=0.1084, 95% CI crosses 0, McNemar p=0.82)",
+  "metrics": {
+    "control_test_r10": 0.10838963974511762,
+    "treatment_test_r10": 0.1071428571572405,
+    "diff_t_minus_c_r10": -0.00124678258787712,
+    "control_test_r5": 0.08590733588576087,
+    "treatment_test_r5": 0.08425836556709757,
+    "control_test_r20": 0.13992117148281064,
+    "treatment_test_r20": 0.136502573949835,
+    "control_test_ndcg10": 0.07796904601113562,
+    "treatment_test_ndcg10": 0.07710055308596278
+  },
+  "statistical_tests": {
+    "n_eval": 24772,
+    "paired_bootstrap_ci95_low": -0.0027450347166155338,
+    "paired_bootstrap_ci95_high": 0.0020991441950589376,
+    "p_value_one_sided": 0.3847,
+    "mcnemar_b": 462,
+    "mcnemar_c": 454,
+    "mcnemar_pvalue_two_sided": 0.8171077226967772
+  },
+  "stage2_observation": {
+    "control_c_final": [0.5279, 0.5229, 0.5242],
+    "treatment_c_final": [0.5004, 0.5004, 0.5001],
+    "treatment_outer_loss_final": 0.6833,
+    "treatment_outer_loss_random_baseline": 0.6931,
+    "interpretation": "Treatment c_l collapses to C_MIN=0.5; outer preference loss stays near log(2)=0.693 (random). Hypergradient has no task signal to drive θ, pushes c toward lower bound where distances collapse."
+  },
+  "root_cause_r36": "Soft-codeword preference surrogate with shared curvature produces a near-uniform ranking over items (≈ random preference). The only way for the outer hypergradient to consistently lower the loss is to drive c_l → 0, where the Poincaré ball flattens and distance differences vanish. With uninformative outer gradient, the inner-loss-dominated φ update tracks the control arm and Stage3 picks up the same T5 signal regardless of θ.",
+  "r37_decision": "R37 violated (T < C). Terminate lineage, do not iterate on this bilevel formulation.",
+  "r38_decision": "Not triggered (Stage2 loss decreased monotonically; c_l collapse is captured as a Gate 4 outcome, not a mid-training anomaly).",
+  "commit": "pending"
+}
