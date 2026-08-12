@@ -1,0 +1,66 @@
+{
+  "tag": "v15_v74_baseline",
+  "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue151_gromov_wasserstein_curvature/control/stage2/sid_output.npy",
+  "sid_sha256": "1e652b2215da4d19e7fad383e3a889f23542247e9eba4367d69edc5be4a02f30",
+  "best_epoch": 104,
+  "best_loss": 2.4443,
+  "final_epoch": 199,
+  "best_trace": {
+    "epoch": 104,
+    "train_loss": 2.444318910060945,
+    "R@5": 0.10405105982244629,
+    "R@10": 0.1319117530719521,
+    "R@20": 0.16511282355514997,
+    "NDCG@5": 0.08562129113784771,
+    "NDCG@10": 0.09458908146804142,
+    "NDCG@20": 0.10292824008262035,
+    "t_train": 9.8,
+    "t_eval": 4.7,
+    "early_stop_counter": 1,
+    "best_loss": 2.4475,
+    "lambda_raw": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "lambda_eff": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "hab_inject_count": 15582,
+    "U_l2_norm": [
+      10.3689,
+      14.1917,
+      20.5021
+    ],
+    "V_l2_norm": [
+      10.3689,
+      14.1917,
+      20.5021
+    ]
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.2,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.001,
+    "batch_size": 1024,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 2,
+    "bf16": true,
+    "early_stop_metric": "train_loss"
+  },
+  "done_at": "2026-08-13 07:54:52"
+}
