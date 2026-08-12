@@ -1,0 +1,19 @@
+section,metric,current_issue133,reference_task84,diff,verdict
+Stage1,item_emb.max_norm,0.6603,unavailable,n/a,unavailable
+Stage1,item_emb.shape,"(9922, ?)",unavailable,n/a,unavailable
+Stage2,SID.L0_unique,62,unavailable,n/a,unavailable
+Stage2,SID.L1_unique,126,unavailable,n/a,unavailable
+Stage2,SID.L2_unique,245,unavailable,n/a,unavailable
+Stage2,SID.L3_unique,1 (PAD),unavailable,n/a,unavailable
+Stage2,kappa,"[0.014, 0.057, 0.072]",unavailable,n/a,unavailable
+Stage2,c,"[1.014, 1.058, 1.074]",unavailable,n/a,unavailable
+Stage3,best_valid_R10,0.1251,0.1267,-0.0016 (-1.3%),different
+Stage3,best_epoch,94,unavailable,n/a,unavailable
+Stage3,train_loss_at_best,2.6291,unavailable,n/a,unavailable
+Stage3,ES_triggered,20/20,unavailable,n/a,unavailable
+Stage4,test_R@5,0.0776,unavailable,n/a,unavailable
+Stage4,test_R@10,0.0962,0.1024,-0.0062 (-6.05%),different
+Stage4,test_R@20,0.1183,unavailable,n/a,unavailable
+Stage4,NDCG@10,0.0715,unavailable,n/a,unavailable
+Stage4,BEAM_SIZE,20,20 (assumed),0,assumed-same
+Stage4,n_eval,24772,24772 (assumed),0,assumed-same

@@ -1,0 +1,38 @@
+{
+  "issue": "#135",
+  "decision": "diagnostic_complete_with_unavailable_reference",
+  "reason": "全链路诊断矩阵已建立, 但 reference (Task #84 baseline) ckpt/code 在本仓库 unavailable, 无法定位最早分叉点",
+  "earliest_observable_diff": {
+    "stage": "Stage3",
+    "metric": "best_valid_R10",
+    "current": 0.1251,
+    "reference": 0.1267,
+    "delta_pct": -1.3,
+    "verdict": "different"
+  },
+  "stage4_final_diff": {
+    "stage": "Stage4",
+    "metric": "test_R@10",
+    "current": 0.0962,
+    "reference": 0.1024,
+    "delta_pct": -6.05,
+    "verdict": "different"
+  },
+  "reference_status": {
+    "task84_baseline_ckpt": "unavailable",
+    "task84_baseline_code": "unavailable",
+    "task84_baseline_logs": "unavailable"
+  },
+  "next_steps": [
+    "寻找 Task #84 baseline commit hash (gitlab 其他 branch 或 tag)",
+    "比对 baseline v22b Stage3 vs 本仓库 Stage3 实现 commit-by-commit",
+    "检查 Stage3 LR / scheduler / early_stop / label_smoothing 实现差异",
+    "检查 Stage4 beam_search 算法 (length_penalty, repetition_penalty) 实现差异"
+  ],
+  "products": [
+    "diagnostic/provenance_manifest.json",
+    "diagnostic/stage_metrics_reference_vs_current.csv",
+    "diagnostic/diagnostic_verdict.md",
+    "diagnostic/diagnostic_verdict.json"
+  ]
+}
