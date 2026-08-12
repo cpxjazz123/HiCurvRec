@@ -1,0 +1,13 @@
+{
+  "issue": "#139",
+  "decision": "PASS_GATE_1",
+  "Gate_1_checks": {
+    "front3_match_reference0": true,
+    "back1_dedup_legal": true,
+    "no_4tuple_collision": true,
+    "no_L3_capacity_overflow": true,
+    "deterministic": true,
+    "match_issue133_sid_output": true
+  },
+  "implications_for_curvature": "Stage2 \u7b2c 4 \u4f4d SID \u73b0\u5728\u662f non-trivial \u7684 6-value dedup (raw 0..5), \u800c\u4e0d\u662f\u5355 PAD. \u8fd9\u610f\u5473\u7740 Stage3 model \u8bad\u7ec3\u65f6\u53ef\u4ee5\u5b66\u5230 emit 6 \u4e2a\u6709\u6548 token (449..454), \u4e0d\u518d\u662f trivial 'predict PAD=449' \u5b66\u4e60\u4fe1\u53f7. \u4f46\u672c\u6b21 L3 \u5bb9\u91cf K_l3=256, \u5b9e\u9645\u53ea\u7528\u4e86 6 \u4e2a value (\u56e0\u4e3a max prefix group size=6, \u8fdc\u5c0f\u4e8e 256). \u540e\u7eed\u82e5\u589e\u52a0 K_l3 (e.g. K_l3=256 \u4f46 prefix group \u5305\u542b\u66f4\u591a item), L3 \u5bb9\u91cf\u5229\u7528\u4f1a\u66f4\u5145\u5206."
+}
