@@ -36,5 +36,5 @@
   "root_cause_r36": "Soft-codeword preference surrogate with shared curvature produces a near-uniform ranking over items (≈ random preference). The only way for the outer hypergradient to consistently lower the loss is to drive c_l → 0, where the Poincaré ball flattens and distance differences vanish. With uninformative outer gradient, the inner-loss-dominated φ update tracks the control arm and Stage3 picks up the same T5 signal regardless of θ.",
   "r37_decision": "R37 violated (T < C). Terminate lineage, do not iterate on this bilevel formulation.",
   "r38_decision": "Not triggered (Stage2 loss decreased monotonically; c_l collapse is captured as a Gate 4 outcome, not a mid-training anomaly).",
-  "commit": "pending"
+  "commit": "97db43c"
 }
