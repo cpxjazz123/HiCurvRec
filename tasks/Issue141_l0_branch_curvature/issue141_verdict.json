@@ -1,0 +1,110 @@
+{
+  "issue": "#141",
+  "decision": "\u673a\u5236\u6709\u6548 (MECHANISM_EFFECTIVE)",
+  "gate1_pass": true,
+  "gate3": {
+    "B_R10_gt_A": true,
+    "paired_CI95_not_cross_zero": true,
+    "first_error_or_bucket_improved": true,
+    "other_not_degraded": true,
+    "scale_shortcut_B": false,
+    "target_reached_0_1020": false
+  },
+  "A_shared": {
+    "R@5": 0.07713963963724241,
+    "R@10": 0.09684684705420696,
+    "R@20": 0.12142052790545589,
+    "NDCG@5": 0.06594211929999148,
+    "NDCG@10": 0.07223588763646292,
+    "NDCG@20": 0.07845366746906378,
+    "n_eval": 24772,
+    "t_eval_s": 24.0,
+    "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue141_l0_branch_curvature/control/stage2/HG_Rec_best.pth",
+    "sid_sha256": "8acf8bd4006127dca9940ac01a3a5000d46f151b2965fb00fdf9f86e1cada39f",
+    "eval_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/dataset/test.parquet",
+    "tag": "v15_v74_baseline",
+    "done_at": "2026-08-12 20:49:44"
+  },
+  "B_codeword": {
+    "R@5": 0.07955276685259863,
+    "R@10": 0.09901866147071699,
+    "R@20": 0.12415540569307261,
+    "NDCG@5": 0.06691544902111803,
+    "NDCG@10": 0.07317172421653068,
+    "NDCG@20": 0.07951162699394244,
+    "n_eval": 24772,
+    "t_eval_s": 23.7,
+    "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue141_l0_branch_curvature/treatment/stage2/HG_Rec_best.pth",
+    "sid_sha256": "0213b0a1080ffa26d1f756650c70e9234603f4fe4244dbe028cd9efa9b03a785",
+    "eval_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/dataset/test.parquet",
+    "tag": "v15_v74_baseline",
+    "done_at": "2026-08-12 20:52:02"
+  },
+  "paired": {
+    "issue": "#141",
+    "n_test": 24772,
+    "R10_A": 0.09684684705420696,
+    "R10_B": 0.09901866147071699,
+    "R10_delta": 0.002171814416510029,
+    "paired_delta_R10": 0.002179880510253512,
+    "paired_delta_CI95": [
+      4.036815759728726e-05,
+      0.004359761020507024
+    ],
+    "paired_delta_p_bootstrap": 0.0247,
+    "paired_delta_CI_crosses_zero": false,
+    "mcnemar_only_B": 405,
+    "mcnemar_only_A": 351,
+    "mcnemar_p": 0.05390597393019925,
+    "both_hit": 2057,
+    "both_miss": 21959,
+    "first_error_pos1_A": 0.8797836266752785,
+    "first_error_pos1_B": 0.879299208784111,
+    "fixed_bucket": [
+      200,
+      1000
+    ],
+    "fixed_bucket_n": 6717,
+    "fixed_bucket_R10_A": 0.16986750037218998,
+    "fixed_bucket_R10_B": 0.16942087241327974,
+    "fixed_bucket_delta": -0.000446627958910234,
+    "metrics_ab": [
+      {
+        "metric": "R@5",
+        "A_shared": 0.07713963963724241,
+        "B_codeword": 0.07955276685259863,
+        "B_minus_A": 0.00241312721535622
+      },
+      {
+        "metric": "R@10",
+        "A_shared": 0.09684684705420696,
+        "B_codeword": 0.09901866147071699,
+        "B_minus_A": 0.002171814416510029
+      },
+      {
+        "metric": "R@20",
+        "A_shared": 0.12142052790545589,
+        "B_codeword": 0.12415540569307261,
+        "B_minus_A": 0.0027348777876167185
+      },
+      {
+        "metric": "NDCG@5",
+        "A_shared": 0.06594211929999148,
+        "B_codeword": 0.06691544902111803,
+        "B_minus_A": 0.0009733297211265424
+      },
+      {
+        "metric": "NDCG@10",
+        "A_shared": 0.07223588763646292,
+        "B_codeword": 0.07317172421653068,
+        "B_minus_A": 0.0009358365800677532
+      },
+      {
+        "metric": "NDCG@20",
+        "A_shared": 0.07845366746906378,
+        "B_codeword": 0.07951162699394244,
+        "B_minus_A": 0.0010579595248786655
+      }
+    ]
+  }
+}

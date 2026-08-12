@@ -1,0 +1,82 @@
+{
+  "issue": "#141",
+  "gate1": {
+    "check1_source_config_seed": {
+      "src_hashes_equal_after_path_norm": true,
+      "stage2_single_variable": "L0_SHARED_CURVATURE (A: 1 theta vs B: 64 theta)",
+      "seed_A": 2024,
+      "seed_B": 2024,
+      "epochs_A": 1000,
+      "epochs_B": 1000,
+      "c_range_A": [
+        0.5,
+        1.5
+      ],
+      "c_range_B": [
+        0.5,
+        1.5
+      ],
+      "lambda_anchor_A": 1.0,
+      "lambda_anchor_B": 1.0,
+      "config_equal": true
+    },
+    "check2_stage1_embedding": {
+      "elementwise_equal": true,
+      "sha_A": "e7f52257d7a1f13d58365b8852823052d142803772cb03e1f62bdebb7a3fa631",
+      "sha_B": "e7f52257d7a1f13d58365b8852823052d142803772cb03e1f62bdebb7a3fa631",
+      "max_abs_diff": 0.0
+    },
+    "check3_c_ab_init": {
+      "c_A": 1.0140550136566162,
+      "c_B_min": 1.0140550136566162,
+      "c_B_max": 1.0140550136566162,
+      "c_B_std": 0.0,
+      "all_equal": true,
+      "c0_ref": 1.0140550136566162
+    },
+    "check4_initial_behavior": {
+      "distance_max_abs_diff": 0.0,
+      "distance_equal": true,
+      "assignment_equal": true,
+      "loss_equal": true,
+      "loss_A": 0.33921393752098083,
+      "loss_B": 0.33921393752098083,
+      "sid_equal": true,
+      "n_diff_sid": 0
+    },
+    "check5_single_perturb": {
+      "perturbed_col": 9,
+      "changed_cols": [
+        9
+      ],
+      "only_that_col": true,
+      "other_cols_unchanged": true
+    },
+    "check6_optimizer_grad": {
+      "n_theta_A": 1,
+      "n_theta_B": 64,
+      "grad_finite_A": true,
+      "grad_finite_B": true,
+      "grad_max_A": 0.003570437664166093,
+      "grad_max_B": 0.00019703472207766026
+    },
+    "check7_safety": {
+      "no_nan_inf": true,
+      "n_boundary_hits": 0,
+      "d_norm_mean_A": 1.0,
+      "d_norm_mean_B": 1.0,
+      "scale_shortcut_chain": false
+    }
+  },
+  "gate1_pass": true,
+  "decision": "GATE1_PASS",
+  "gate1_fail_detail": {
+    "check1": true,
+    "check2": true,
+    "check3": true,
+    "check4": true,
+    "check5": true,
+    "check6": true,
+    "check7": true
+  }
+}

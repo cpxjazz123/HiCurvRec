@@ -539,6 +539,9 @@ def main():
 
     recalls = {f"R@{k}": [] for k in TOP_K}
     ndcgs = {f"NDCG@{k}": [] for k in TOP_K}
+
+    # Issue #138: 全量 raw trace 收集 (per-sample preds/labels/pos_index + best_rank + first_error_position + prefix_match_length)
+    raw_rows = []
     t0 = time.time()
     with torch.no_grad():
         for bi, batch in enumerate(loader):
@@ -552,8 +555,59 @@ def main():
             for k in TOP_K:
                 recalls[f"R@{k}"].append(recall_at_k(pos_index, k).mean().item())
                 ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).mean().item())
+            # Issue #138: 收集全量 raw (每 sample 一行, parquet-friendly)
+            for s in range(input_ids.shape[0]):
+                pi = pos_index[s].cpu().tolist()  # (20,) bool
+                best_rank = next((r + 1 for r, v in enumerate(pi) if v), 21)  # 1..20 or 21 (miss)
+                top1_pred = preds[s, 0].cpu().tolist()  # (4,)
+                target = labels[s].cpu().tolist()       # (4,)
+                first_err = 0
+                for t in range(4):
+                    if top1_pred[t] != target[t]:
+                        first_err = t + 1   # 1..4, 0 = all match
+                        break
+                prefix_len = 0
+                for t in range(4):
+                    if top1_pred[t] == target[t]:
+                        prefix_len += 1
+                    else:
+                        break
+                top1_has_pad = int(0 in top1_pred)
+                target_has_pad = int(0 in target)
+                raw_rows.append({
+                    "sample_idx": bi * BATCH_SIZE + s,
+                    "target_sid": target,
+                    "target_l0": target[0] if len(target) > 0 else -1,
+                    "target_l1": target[1] if len(target) > 1 else -1,
+                    "target_l2": target[2] if len(target) > 2 else -1,
+                    "target_l3": target[3] if len(target) > 3 else -1,
+                    "top1_pred": top1_pred,
+                    "top1_l0": top1_pred[0],
+                    "top1_l1": top1_pred[1],
+                    "top1_l2": top1_pred[2],
+                    "top1_l3": top1_pred[3],
+                    "best_rank_top20": best_rank,
+                    "hit_at_5": int(best_rank <= 5),
+                    "hit_at_10": int(best_rank <= 10),
+                    "hit_at_20": int(best_rank <= 20),
+                    "first_error_position": first_err,
+                    "prefix_match_length": prefix_len,
+                    "top1_has_pad": top1_has_pad,
+                    "target_has_pad": target_has_pad,
+                    "pred_top20_sids": preds[s].cpu().tolist(),
+                    "pos_index_top20": pi,
+                })
             if (bi + 1) % 50 == 0:
                 print(f"  {bi+1}/{len(loader)} batches done", flush=True)
+
+
+    # Issue #138: 写 raw predictions parquet (与 eval 同一次推理内产出)
+    import pandas as pd
+    raw_df = pd.DataFrame(raw_rows)
+    raw_parquet_path = PRODUCT_DIR / "raw_predictions_stage4_full.parquet"
+    raw_df.to_parquet(raw_parquet_path, index=False)
+    print(f"[Issue #138] raw predictions -> {raw_parquet_path} ({len(raw_df)} samples, "
+          f"{raw_parquet_path.stat().st_size / 1024:.1f}KB)", flush=True)
 
     result = {k: sum(v) / len(v) for k, v in recalls.items()}
     result.update({k: sum(v) / len(v) for k, v in ndcgs.items()})
