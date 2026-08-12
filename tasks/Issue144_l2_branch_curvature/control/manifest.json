@@ -1,0 +1,23 @@
+{
+  "issue": "#144",
+  "arm": "control",
+  "seed": 42,
+  "stage2_epochs": 1000,
+  "stage3_epochs": 200,
+  "shared_layers": [
+    true,
+    true,
+    true
+  ],
+  "c_min": 0.5,
+  "c_max": 1.5,
+  "c_ref_per_layer": [
+    1.0140550136566162,
+    1.0582729578018188,
+    1.074223279953003
+  ],
+  "stage1_emb_sha": "1a6dd2ac1c690d02",
+  "stage2_script_sha": "ea82b0c3c83c572d",
+  "stage3_script_sha": "2093febd2ae0ddcf",
+  "stage4_script_sha": "ab9c379bef7184ec"
+}

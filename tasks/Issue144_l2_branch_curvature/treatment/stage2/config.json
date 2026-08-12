@@ -1,0 +1,46 @@
+{
+  "issue": "#140",
+  "task": "#448",
+  "spec": "Issue #140: L0 codeword-specific bounded curvature c_0,b = c_min+(c_max-c_min)*sigmoid(theta_b) + d_norm \u5f52\u4e00\u5316 + anchor loss (L1/L2/Stage1/3/4 \u4fdd\u6301 Issue139)",
+  "codebook_sizes": [
+    64,
+    128,
+    256
+  ],
+  "e_dim": 32,
+  "encoder_layers": [
+    512,
+    256,
+    128,
+    64
+  ],
+  "batch_size": 1024,
+  "epochs": 1000,
+  "lr": 0.001,
+  "seed": 2024,
+  "gpu": 0,
+  "triton_cache_dir": "/home/wlia0047/.triton/cache_task448",
+  "item_emb_sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6",
+  "n_items": 9922,
+  "branch_curvature": {
+    "c_min": 0.5,
+    "c_max": 1.5,
+    "c_ref_per_layer": [
+      1.0140550136566162,
+      1.0582729578018188,
+      1.074223279953003
+    ],
+    "lambda_anchor": 1.0,
+    "theta_init_per_layer": [
+      0.05623486951922025,
+      0.23415587473734248,
+      0.29910323262849475
+    ],
+    "d_norm_eps": 1e-08,
+    "normalization": "d_norm = d / stop_grad(E_batch[d] + eps), E_batch[d]=\u5404\u5c42 batch \u5168\u5c40\u6807\u91cf\u5747\u503c",
+    "gate1_report": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue144_l2_branch_curvature/treatment/stage2/gate1_equivalence_report.json",
+    "trace": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue144_l2_branch_curvature/treatment/stage2/l2_curvature_trace.json",
+    "assignment_before_after": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue144_l2_branch_curvature/treatment/stage2/l0_assignment_before_after.csv",
+    "scale_shortcut_audit": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue144_l2_branch_curvature/treatment/stage2/scale_shortcut_audit.json"
+  }
+}
