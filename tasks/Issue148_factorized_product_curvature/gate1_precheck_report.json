@@ -1,0 +1,99 @@
+{
+  "issue": "#148",
+  "overall_decision": "PASS",
+  "n_pass": 7,
+  "n_total": 7,
+  "checks": [
+    {
+      "name": "check1_input_hash",
+      "decision": "PASS",
+      "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6",
+      "expected": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"
+    },
+    {
+      "name": "check2_sid_structure",
+      "decision": "PASS",
+      "A_codebook_sizes": [
+        64,
+        128,
+        256
+      ],
+      "B_codebook_sizes": [
+        64,
+        128,
+        256
+      ],
+      "expected": [
+        64,
+        128,
+        256
+      ],
+      "sid_len": 3
+    },
+    {
+      "name": "check3_A_distance_correct",
+      "decision": "PASS",
+      "c_value": 1.25,
+      "d_expected_min": 4.407912254333496,
+      "vq_idx_range": [
+        5,
+        62
+      ]
+    },
+    {
+      "name": "check4_B_distance_correct",
+      "decision": "PASS",
+      "c_value": 1.25,
+      "d_euc_min": 0.907856822013855,
+      "d_hyp_min": 2.363203763961792,
+      "d_product_min": 2.7608089447021484,
+      "vq_idx_range": [
+        1,
+        47
+      ]
+    },
+    {
+      "name": "check5_different_sid_same_init",
+      "decision": "PASS",
+      "encoder_close": true,
+      "L0_SID_diff": 40,
+      "L1_SID_diff": 44,
+      "L2_SID_diff": 49,
+      "explanation": "A (32D Poincaré) vs B (sqrt(d_E^2+d_H^2)) 距离不同 → 同 input 同 init 应至少 1 层 SID 不一致"
+    },
+    {
+      "name": "check6_grad_finite",
+      "decision": "PASS",
+      "encoder_grad_norm_A": 40.308868408203125,
+      "encoder_grad_norm_B": 0.43946489691734314,
+      "c_values": [
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25,
+        1.25
+      ],
+      "c_in_bounds": true
+    },
+    {
+      "name": "check7_no_nan_100_steps",
+      "decision": "PASS",
+      "nan_count": 0,
+      "loss_A_first": 92.8931655883789,
+      "loss_A_last": 0.03379353508353233,
+      "loss_B_first": 1.7705740928649902,
+      "loss_B_last": 0.0854344367980957,
+      "final_c_A": [
+        1.2477480173110962,
+        1.2477480173110962,
+        1.2477480173110962
+      ],
+      "final_c_B": [
+        1.2351983785629272,
+        1.2424707412719727,
+        1.236432433128357
+      ]
+    }
+  ]
+}
