@@ -1,0 +1,138 @@
+{
+  "issue": "#138",
+  "task": "Issue138_full_curvature_failure_map",
+  "stage4_entry_script": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage4_full_oracle.py",
+  "ckpt": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage2/HG_Rec_best.pth",
+    "sha256": "b6041115241236a2cfe3bf73845febe99745cfb1270cd111005a02de20aa1232",
+    "size_bytes": 22493253
+  },
+  "sid": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage2/sid_output.npy",
+    "sha256": "d43dea6fe1988105ec06f8035e62028ad2d3e67a54a6fca0592f0bc004a84158",
+    "shape": [
+      9922,
+      4
+    ],
+    "dtype": "int64",
+    "L0_unique_count": 64,
+    "L1_unique_count": 128,
+    "L2_unique_count": 256,
+    "L3_unique_count": 6,
+    "L3_PAD_count": 9894,
+    "L3_PAD_ratio": 0.9972
+  },
+  "hab_stage2_ckpt": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage2/hrqvae_kappa_sync.ckpt",
+    "sha256": "652827aade04aa4ff9695e67369b94bcd23e6c0af3e644a57c93204ecbf53ad5"
+  },
+  "eval_parquet": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/dataset/test.parquet",
+    "sha256": "70f00f3a3ac4cf39088e4ba7c516104ecf1d6fddf14b19e255c8f89229e55899",
+    "size_bytes": 605566,
+    "n_rows": 24772,
+    "n_cols": 3
+  },
+  "t5_config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.1,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu"
+  },
+  "codebook": {
+    "codebook_size": [
+      64,
+      128,
+      256,
+      1
+    ],
+    "codeword_offsets": [
+      1,
+      65,
+      193,
+      449
+    ],
+    "note": "L3 codebook_size=1 \u2192 \u6240\u6709 item \u7b2c 4 \u4f4d\u90fd\u662f 0 (PAD), \u8fd9\u662f Issue #136/#137/#122 plan \u8bc6\u522b\u7684 Stage2 sid \u7b2c 4 \u4f4d\u5206\u914d bug"
+  },
+  "generation_config": {
+    "beam_size": 20,
+    "num_return_sequences": 20,
+    "max_length_wrapper": 5,
+    "early_stopping": "(HG_Rec wrapper default, not explicitly specified)",
+    "min_length": "(HG_Rec wrapper default, not explicitly specified)"
+  },
+  "eval_protocol": {
+    "batch_size": 96,
+    "max_len": 20,
+    "post_process": "preds[:, 1:] skip first + reshape to (B, 20, 4)",
+    "score": "calculate_pos_index vectorized all-token match",
+    "TOP_K": [
+      5,
+      10,
+      20
+    ]
+  },
+  "hab_eval_state": {
+    "install_hab": true,
+    "lambda_raw_freeze": "fill_(0.0)",
+    "install_per_head_curvature": true,
+    "lambda_h_raw_freeze": "fill_(0.0)",
+    "kappa_h_freeze": "no_grad (default for eval)"
+  },
+  "raw_predictions": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage2/eval/raw_predictions_stage4_full.parquet",
+    "exists": true,
+    "size_bytes": 1697583,
+    "n_samples": 24772,
+    "columns": [
+      "sample_idx",
+      "target_sid",
+      "target_l0",
+      "target_l1",
+      "target_l2",
+      "target_l3",
+      "top1_pred",
+      "top1_l0",
+      "top1_l1",
+      "top1_l2",
+      "top1_l3",
+      "best_rank_top20",
+      "hit_at_5",
+      "hit_at_10",
+      "hit_at_20",
+      "first_error_position",
+      "prefix_match_length",
+      "top1_has_pad",
+      "target_has_pad",
+      "pred_top20_sids",
+      "pos_index_top20"
+    ]
+  },
+  "eval_test": {
+    "path": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue138_full_curvature_failure_map/stage2/eval/eval_test.json",
+    "exists": true,
+    "R@5": 0.07758204628170458,
+    "R@10": 0.09624356496000382,
+    "R@20": 0.11828346219647345,
+    "NDCG@5": 0.0655517495798242,
+    "NDCG@10": 0.0715099692804933,
+    "NDCG@20": 0.07709542617316872,
+    "n_eval": 24772
+  },
+  "protocol_drift_check": {
+    "issue133_full_R10": 0.0962,
+    "tolerance": 0.005,
+    "this_run_full_R10": 0.09624356496000382,
+    "abs_diff": 0.0,
+    "blocked": false
+  },
+  "generated_at": "2026-08-12 14:27:32"
+}
