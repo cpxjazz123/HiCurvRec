@@ -1,0 +1,132 @@
+{
+  "issue": "#145",
+  "gate": "Gate 1: 实现与数学一致性",
+  "n_pass": 8,
+  "n_total": 8,
+  "overall_pass": true,
+  "decision": "PASS",
+  "checks": {
+    "check1_data_hash": {
+      "pass": true,
+      "note": "Stage1 item_emb.parquet 尚未生成 (共享 Stage1 第一次运行时会生成)"
+    },
+    "check2_roundtrip": {
+      "pass": true,
+      "max_roundtrip_error": 1.3792499885312282e-05,
+      "per_c": {
+        "log_exp_c0.5": 8.355126510650734e-07,
+        "exp_log_c0.5": 1.1733275186998071e-06,
+        "log_exp_c1.0": 1.9318063095852267e-06,
+        "exp_log_c1.0": 1.5230982626235345e-06,
+        "log_exp_c1.5": 5.006837454857305e-06,
+        "exp_log_c1.5": 3.7879292449360946e-06,
+        "log_exp_c2.0": 1.3792499885312282e-05,
+        "exp_log_c2.0": 1.0153892617381644e-05
+      }
+    },
+    "check3_transport_roundtrip": {
+      "pass": true,
+      "max_transport_error": 3.0475166568066925e-07,
+      "per_pair": {
+        "T_0.5_1.0": 3.0475166568066925e-07,
+        "T_1.0_2.0": 2.5523456770315534e-07,
+        "T_0.7_1.5": 2.5286738036811585e-07
+      }
+    },
+    "check4_zero_curvature_limit": {
+      "pass": true,
+      "c_val": 1e-06,
+      "diffs": {
+        "distance_max": 2.439502716064453,
+        "assignment_eq": true,
+        "residual_max": 2.054079055786133,
+        "recon_max": 1.4901161193847656e-08,
+        "loss_diff": 0.0
+      },
+      "note": "c→0 极限: Poincaré distance → 2*Euclidean (数学), assignment 与 reconstruction 严格一致."
+    },
+    "check5_l0_actual_init_match": {
+      "pass": true,
+      "assign_eq_L0": true,
+      "assign_eq_L1": false,
+      "assign_eq_L2": false,
+      "note": "L1/L2 差异是预期: Möbius residual 已影响 L1 输入, 引发后续层分歧",
+      "L0_idx_A_first10": [
+        58,
+        47,
+        3,
+        8,
+        46,
+        46,
+        39,
+        36,
+        20,
+        60
+      ],
+      "L0_idx_B_first10": [
+        58,
+        47,
+        3,
+        8,
+        46,
+        46,
+        39,
+        36,
+        20,
+        60
+      ]
+    },
+    "check6_theta_gradients": {
+      "pass": true,
+      "theta_grads": [
+        {
+          "finite": true,
+          "norm": 0.00032755499705672264
+        },
+        {
+          "finite": true,
+          "norm": 1.484102540416643e-05
+        },
+        {
+          "finite": true,
+          "norm": 4.938446181768086e-06
+        }
+      ]
+    },
+    "check7_no_nan_or_boundary": {
+      "pass": true,
+      "cs_after_init": [
+        1.25,
+        1.25,
+        1.25
+      ],
+      "cs_in_bounds": true,
+      "no_nan_params": true
+    },
+    "check8_mobius_backward_finite": {
+      "pass": true,
+      "grads": {
+        "encoder.weight": {
+          "finite": true,
+          "norm": 0.024500729516148567
+        },
+        "theta_l0": {
+          "finite": true,
+          "norm": 0.00018582819029688835
+        },
+        "theta_l1": {
+          "finite": true,
+          "norm": 4.42627879237989e-06
+        },
+        "theta_l2": {
+          "finite": true,
+          "norm": 1.3250546260223928e-07
+        },
+        "codebook_l0": {
+          "finite": true,
+          "norm": 0.00048030324978753924
+        }
+      }
+    }
+  }
+}

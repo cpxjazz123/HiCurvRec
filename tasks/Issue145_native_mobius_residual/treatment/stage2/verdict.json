@@ -1,0 +1,48 @@
+{
+  "issue": "#145",
+  "arm": "treatment",
+  "mobius_residual": true,
+  "gate2_pass": true,
+  "cs_in_bounds": true,
+  "any_nan_or_inf": false,
+  "final_cs": [
+    1.1410366296768188,
+    1.276587724685669,
+    1.2562915086746216
+  ],
+  "final_thetas": [
+    -0.2926396131515503,
+    0.07093020528554916,
+    0.016777850687503815
+  ],
+  "final_residual_norms": [
+    0.07548321783542633,
+    0.0007429362158291042,
+    7.658083632122725e-05
+  ],
+  "final_roundtrip_errors": [
+    5.360890842354138e-09,
+    3.022240444017221e-11,
+    9.483677948854408e-13
+  ],
+  "final_transport_errors": [
+    7.598568885214263e-09,
+    9.506219811328265e-09
+  ],
+  "final_boundary_hit_rate": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "n_unique_3digit": 9386,
+  "n_unique_4digit": 9922,
+  "sid_sha256": "f65032908ed0fd2a14a492433f128d9a9b3dbbfa2a8096f60e5101f7eed35368",
+  "item_emb_sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6",
+  "ckpt_path": "/fs04/ar57/wenyu/GeneRec/tasks/Issue145_native_mobius_residual/treatment/stage2/hrqvae_kappa_sync.ckpt",
+  "sid_path": "/fs04/ar57/wenyu/GeneRec/tasks/Issue145_native_mobius_residual/treatment/stage2/sid_output.npy",
+  "train_time_s": 642.1580867767334,
+  "epochs": 1000,
+  "lr": 0.001,
+  "batch_size": 512,
+  "seed": 42
+}
