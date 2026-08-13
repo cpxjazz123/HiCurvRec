@@ -1,0 +1,26 @@
+{
+  "issue": "#159",
+  "task": "Issue159_curvature_state_stage3",
+  "decision": "CURVATURE_END2END_GO (曲率状态注入 Stage3 全链路显著提升!)",
+  "reason": "#158 CROSS_LAYER_SID_ACTIVE → 曲率状态 token 路径: h_token = Emb(SID_l) + phi(c_l,i), phi 零初始化可学习投影 (1→d_model). Stage2 treatment 导出 per-item 有效曲率 curvature_state.npy (9922×3), Stage3 用 CurvatureGenRecDataset 附加曲率到每个 history item, install_curvature_state monkey-patch 注入 embedding. Gate 1 PASS (分支锁定, phi 零初始化 gate-zero 等价, 曲率响应, shuffle 因果, 梯度通路); Stage3 valid: B 0.1514 > A 0.1255 (+0.0259); Stage4 test R@10: B 0.1264 > A 0.1035 (+0.0230), 95% CI [+0.0195,+0.0258] 不含 0, McNemar p<0.0001 → 统计显著. 判定: CURVATURE_END2END_GO — Curvature Chain 5/5 全链路完成, 曲率信息从 Stage2 成功传递到 Stage3 推荐.",
+  "gate_summary": {
+    "Gate_1": {"decision": "PASS", "checks": ["branch_locked(phi零初始化)", "gate_zero_equivalence(phi权重0→无注入)", "curvature_response(改曲率→embedding变化)", "curvature_shuffle_causal(SID不变曲率打乱→表示变化)", "gradient_path"], "report": "control/stage2/gate1_precheck.json"},
+    "Gate_4_full_ab": {"decision": "SIGNIFICANT_GAIN", "A_test_R10": 0.1035, "B_test_R10": 0.1264, "delta": 0.0230, "CI95": [0.0195, 0.0258], "cross_zero": false, "direction_correct": true, "McNemar_p": 0.0000}
+  },
+  "stage_results": {
+    "stage1": {"sha256": "1a6dd2ac"},
+    "stage2_control": {"final_cs": [0.6126, 0.6053, 0.6117], "SID4": 9167},
+    "stage2_treatment": {"final_cs": [0.6124, 0.6157, 0.6019], "SID4": 6297, "curvature_state_L1_range": [0.527, 0.796], "curvature_state_L2_range": [0.524, 0.702]},
+    "stage3_control": {"best_valid_R10": 0.1255, "best_epoch": 154},
+    "stage3_treatment": {"best_valid_R10": 0.1514, "best_epoch": 199},
+    "stage4_control": {"R@5": 0.0814, "R@10": 0.1035, "R@20": 0.1314, "NDCG@10": 0.0747},
+    "stage4_treatment": {"R@5": 0.0967, "R@10": 0.1264, "R@20": 0.1659, "NDCG@10": 0.0843}
+  },
+  "chain_summary": {
+    "issue155": "MARGIN_LOCKED (真实 residual 曲率响应: 距离变化显著, assignment flip 低)",
+    "issue156": "CURVATURE_ACTIVE_NO_GEOMETRY_GAIN (margin-sensitive 机制激活但推荐无增益)",
+    "issue157": "INTRINSIC_RESIDUAL_PASS (内在 Möbius 残差减法 → test R@10 +0.0205 显著)",
+    "issue158": "CROSS_LAYER_SID_ACTIVE (跨层曲率传递 → test R@10 +0.0176 显著)",
+    "issue159": "CURVATURE_END2END_GO (曲率状态注入 Stage3 → test R@10 +0.0230, 全链路最佳)"
+  }
+}
