@@ -27,6 +27,8 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.distributed as dist
+from torch.utils.data import DataLoader, DistributedSampler
 
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/baseline/_lib")  # R44 baseline 自包含: HG_Rec/dataset/dataloader/utils/fsq_quantizer/hrqvae
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/baseline")  # R44 baseline 自包含: from _lib import hyperbolic_attention_bias
@@ -180,10 +182,27 @@ def ndcg_at_k(pos_index, k):
     return dcg[:, :k].sum(dim=1).cpu().float()
 
 
+class _ShardedGenRecDataLoader(GenRecDataLoader):
+    """R35b: DDP 分片版 — 透传 sampler (DistributedSampler) 给 DataLoader.
+    GenRecDataLoader 上游不支持 sampler 参数, 子类化注入 (与 Issue #61 模式一致).
+    """
+    def __init__(self, dataset, batch_size=32, sampler=None, num_workers=0):
+        DataLoader.__init__(
+            self, dataset, batch_size=batch_size, shuffle=False,
+            sampler=sampler, num_workers=num_workers, collate_fn=self.collate_fn,
+        )
+
+
 def main():
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     torch.cuda.manual_seed_all(SEED)
+
+    # R35b: DDP 评估同口径 — 4 卡分片不重复评估, 每样本恰好被一个 rank 处理
+    if DDP_ENABLED:
+        dist.init_process_group(backend="nccl")
+        torch.cuda.set_device(LOCAL_RANK)
+        print(f"[Stage4/R35b] DDP world_size={WORLD_SIZE} rank={RANK} local_rank={LOCAL_RANK}", flush=True)
 
     sid_sha = sha256_of(SID_NPY)
     if EXPECTED_SID_SHA:
@@ -534,8 +553,17 @@ def main():
     ds = GenRecDataset(
         dataset_path=EVAL_PARQUET, code_path=SID_NPY, mode="evaluation",
         codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
-    loader = GenRecDataLoader(ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
-    n = len(ds)
+    # R35b: DistributedSampler(shuffle=False) 顺序切分 → 每 rank 只处理不重复分片
+    if DDP_ENABLED:
+        sampler = DistributedSampler(ds, num_replicas=WORLD_SIZE, rank=RANK, shuffle=False, seed=SEED)
+        loader = _ShardedGenRecDataLoader(ds, batch_size=BATCH_SIZE, sampler=sampler, num_workers=0)
+        n_local = len(sampler)
+        n = len(ds)
+        print(f"[Stage4/R35b] shard: rank {RANK} evaluates {n_local}/{n} samples "
+              f"(每样本恰好一次, all_reduce SUM 汇总)", flush=True)
+    else:
+        loader = GenRecDataLoader(ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+        n_local = n = len(ds)
 
     recalls = {f"R@{k}": [] for k in TOP_K}
     ndcgs = {f"NDCG@{k}": [] for k in TOP_K}
@@ -553,12 +581,14 @@ def main():
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)
             for k in TOP_K:
-                recalls[f"R@{k}"].append(recall_at_k(pos_index, k).mean().item())
-                ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).mean().item())
+                recalls[f"R@{k}"].append(recall_at_k(pos_index, k).sum().item())
+                ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).sum().item())
             # Issue #138: 收集全量 raw (每 sample 一行, parquet-friendly)
+            # R35b: DistributedSampler(shuffle=False) 下全局索引 = local_pos * WORLD_SIZE + RANK
             for s in range(input_ids.shape[0]):
                 pi = pos_index[s].cpu().tolist()  # (20,) bool
                 best_rank = next((r + 1 for r, v in enumerate(pi) if v), 21)  # 1..20 or 21 (miss)
+                global_idx = (bi * BATCH_SIZE + s) * WORLD_SIZE + RANK if DDP_ENABLED else (bi * BATCH_SIZE + s)
                 top1_pred = preds[s, 0].cpu().tolist()  # (4,)
                 target = labels[s].cpu().tolist()       # (4,)
                 first_err = 0
@@ -575,7 +605,7 @@ def main():
                 top1_has_pad = int(0 in top1_pred)
                 target_has_pad = int(0 in target)
                 raw_rows.append({
-                    "sample_idx": bi * BATCH_SIZE + s,
+                    "sample_idx": global_idx,
                     "target_sid": target,
                     "target_l0": target[0] if len(target) > 0 else -1,
                     "target_l1": target[1] if len(target) > 1 else -1,
@@ -601,17 +631,38 @@ def main():
                 print(f"  {bi+1}/{len(loader)} batches done", flush=True)
 
 
-    # Issue #138: 写 raw predictions parquet (与 eval 同一次推理内产出)
-    import pandas as pd
-    raw_df = pd.DataFrame(raw_rows)
-    raw_parquet_path = PRODUCT_DIR / "raw_predictions_stage4_full.parquet"
-    raw_df.to_parquet(raw_parquet_path, index=False)
-    print(f"[Issue #138] raw predictions -> {raw_parquet_path} ({len(raw_df)} samples, "
-          f"{raw_parquet_path.stat().st_size / 1024:.1f}KB)", flush=True)
+    # R35b: 各 rank 本地汇总其分片的命中数 (hits) 与 NDCG 总和 → all_reduce SUM
+    # → 全部样本命中数/NDCG 总和 / 总样本数 N (与单卡评估完全同口径, 每样本恰好计数一次)
+    if DDP_ENABLED:
+        for k in TOP_K:
+            local_r = torch.tensor([sum(recalls[f"R@{k}"])], dtype=torch.float64, device=DEVICE)
+            local_n = torch.tensor([sum(ndcgs[f"NDCG@{k}"])], dtype=torch.float64, device=DEVICE)
+            dist.all_reduce(local_r, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_n, op=dist.ReduceOp.SUM)
+            recalls[f"R@{k}"] = [local_r.item()]
+            ndcgs[f"NDCG@{k}"] = [local_n.item()]
+        dist.barrier()
+        # raw predictions: 各 rank 本地分片先落盘, rank0 合并 (每样本恰好一行)
+        import pandas as pd
+        raw_parquet_local = PRODUCT_DIR / f"raw_predictions_stage4_rank{RANK}.parquet"
+        pd.DataFrame(raw_rows).to_parquet(raw_parquet_local, index=False)
+        dist.barrier()
+        if RANK == 0:
+            frames = []
+            for r in range(WORLD_SIZE):
+                frames.append(pd.read_parquet(PRODUCT_DIR / f"raw_predictions_stage4_rank{r}.parquet"))
+            raw_df = pd.concat(frames, ignore_index=True).sort_values("sample_idx")
+            raw_parquet_path = PRODUCT_DIR / "raw_predictions_stage4_full.parquet"
+            raw_df.to_parquet(raw_parquet_path, index=False)
+            print(f"[Issue #138] raw predictions (merged, R35b) -> {raw_parquet_path} "
+                  f"({len(raw_df)} samples, {raw_parquet_path.stat().st_size / 1024:.1f}KB)", flush=True)
 
-    result = {k: sum(v) / len(v) for k, v in recalls.items()}
-    result.update({k: sum(v) / len(v) for k, v in ndcgs.items()})
+    # R35b: 统一除以总样本数 N (hits/NDCG 总和 / N)
+    result = {k: sum(v) / n for k, v in recalls.items()}
+    result.update({k: sum(v) / n for k, v in ndcgs.items()})
     result["n_eval"] = n
+    result["n_eval_local"] = n_local
+    result["world_size"] = WORLD_SIZE
     result["t_eval_s"] = round(time.time() - t0, 1)
     result["ckpt"] = CKPT_PATH
     result["sid_sha256"] = sid_sha
@@ -619,11 +670,14 @@ def main():
     result["tag"] = TAG
     result["done_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
-    with open(VERDICT_PATH, "w") as f:
-        json.dump(result, f, indent=2)
-    print(f"=== {TAG} test R@5/10/20 = {result['R@5']:.4f}/{result['R@10']:.4f}/{result['R@20']:.4f} "
-          f"NDCG@5/10/20 = {result['NDCG@5']:.4f}/{result['NDCG@10']:.4f}/{result['NDCG@20']:.4f}")
-    print(f"=== verdict: {VERDICT_PATH}")
+    if RANK == 0:
+        with open(VERDICT_PATH, "w") as f:
+            json.dump(result, f, indent=2)
+        print(f"=== {TAG} test R@5/10/20 = {result['R@5']:.4f}/{result['R@10']:.4f}/{result['R@20']:.4f} "
+              f"NDCG@5/10/20 = {result['NDCG@5']:.4f}/{result['NDCG@10']:.4f}/{result['NDCG@20']:.4f}")
+        print(f"=== verdict: {VERDICT_PATH}")
+    if DDP_ENABLED:
+        dist.destroy_process_group()
 
 
 def _ddp_self_launch():

@@ -1,0 +1,77 @@
+{
+  "checks": {
+    "init_delta_zero": {
+      "pass": true,
+      "delta_max": [
+        0.0,
+        0.0
+      ]
+    },
+    "same_distance_out": {
+      "pass": true,
+      "max_abs_diff": 2.3283064365386963e-09
+    },
+    "same_rq_loss": {
+      "pass": true,
+      "diff": 0.0
+    },
+    "same_assignment": {
+      "pass": true
+    },
+    "same_total_loss": {
+      "pass": true
+    },
+    "same_sid": {
+      "pass": true
+    },
+    "fc1_nonzero": {
+      "pass": true,
+      "fc1_w_norm": 5.820929050445557
+    },
+    "fc2_zero": {
+      "pass": true
+    },
+    "step1_fc2_grad": {
+      "pass": true,
+      "step1": {
+        "L1_fc1_grad_norm": 0.0,
+        "L1_fc1_w_norm": 5.820929050445557,
+        "L1_fc2_grad_norm": 4.710037360133867e-10,
+        "L1_fc2_w_norm": 0.0,
+        "L2_fc1_grad_norm": 0.0,
+        "L2_fc1_w_norm": 6.535763263702393,
+        "L2_fc2_grad_norm": 1.295094448350298e-10,
+        "L2_fc2_w_norm": 0.0
+      }
+    },
+    "step2_both_grad": {
+      "pass": true,
+      "step1": {
+        "L1_fc1_grad_norm": 0.0,
+        "L1_fc1_w_norm": 5.820929050445557,
+        "L1_fc2_grad_norm": 4.710037360133867e-10,
+        "L1_fc2_w_norm": 0.0,
+        "L2_fc1_grad_norm": 0.0,
+        "L2_fc1_w_norm": 6.535763263702393,
+        "L2_fc2_grad_norm": 1.295094448350298e-10,
+        "L2_fc2_w_norm": 0.0
+      },
+      "step2": {
+        "L1_fc1_grad_norm": 1.0706217162814724e-11,
+        "L1_fc1_w_norm": 5.820929050445557,
+        "L1_fc2_grad_norm": 1.793992367993269e-07,
+        "L1_fc2_w_norm": 4.6326207666425034e-05,
+        "L2_fc1_grad_norm": 2.3158317711408083e-12,
+        "L2_fc1_w_norm": 6.535763263702393,
+        "L2_fc2_grad_norm": 9.520216792680003e-08,
+        "L2_fc2_w_norm": 1.2885367141279858e-05
+      }
+    },
+    "prefix_stopgrad": {
+      "pass": true,
+      "L0_grad_sum": 0.0,
+      "L1_grad_sum": 0.0
+    }
+  },
+  "decision": "PASS"
+}
