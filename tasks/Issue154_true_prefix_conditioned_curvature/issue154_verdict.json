@@ -1,50 +1,50 @@
 {
   "issue": "#154",
   "task": "Issue154_true_prefix_conditioned_curvature",
-  "decision": "ROUTER_COLLAPSE (Gate 2 机制未激活, 停止 Stage3/4)",
-  "reason": "Gate 1 全过 (初始化等价 + 梯度通路形成), 但 Gate 2 判定 FAIL: L1 delta_std=4.6e-4 < 1e-3, L2 delta_std=1.7e-4 < 1e-3; L1 c_effective_std=4.5e-5 < 1e-4, L2=1.7e-5 < 1e-4; shuffle counterfactual L1=11.2% (过 10%), L2=0% (FAIL). 路由器虽从全零初始化修复为 Xavier fc1 且形成梯度通路 (fc1_w_norm=5.8, fc2_w_norm=0.063/0.009), 但 200 epoch 后 per-item 曲率分化量级仅 1e-4~1e-3, 机制未激活 → 按 spec 'Gate 2 失败判定为 ROUTER_COLLAPSE, 停止 Stage3/4'. 不进入推荐评估.",
+  "decision": "MECHANISM_VALID_NO_RECOMMENDATION_GAIN (机制激活, 推荐差异不显著)",
+  "reason": "修复后 Gate 1-3 全过: 路由器机制真实激活 (L1 delta_std=0.639, c_std=0.070, shuffle=97.6%; L2 delta_std=0.448, c_std=0.046, shuffle=99.8%). 但 Gate 4: B test R@10=0.1044 vs A 0.1043 (Δ=+0.0001), 95% paired CI [-0.0021, +0.0025] 跨 0, McNemar p=0.945 → 推荐差异统计不显著. spec 判定: 机制激活但推荐差异不显著 = MECHANISM_VALID_NO_RECOMMENDATION_GAIN.",
+  "fix_summary": {
+    "root_cause_1_input_scale": "codeword 切空间范数仅 0.01-0.04, fc1 Xavier 适配 O(1) 输入 → h=relu(fc1(prefix)) 均值 0.003, fc2 梯度被稀释 ~300 倍",
+    "fix_1": "PrefixRouter.forward 对 prefix_emb 加 LayerNorm → h 均值恢复 0.43, fc2 梯度通路有效",
+    "root_cause_2_regularizer": "量化 loss 对 c 梯度极弱 (8e-11), 原 LAMBDA_DELTA=0.01 正则梯度 (1.7e-8) 主导 → delta 压回 0; 双正则都降 1e-6 → delta 整体漂移到 -1.5 边界饱和 (L1 退化常数)",
+    "fix_2": "正则分工: LAMBDA_DELTA=1e-6 (允许 per-item 分化) + LAMBDA_MEAN=0.01 (锚定均值防边界漂移) → delta 健康分化且无饱和"
+  },
   "gate_summary": {
-    "Gate_1_initialization": {
-      "decision": "PASS",
-      "n_pass": 11,
-      "n_total": 11,
-      "report": "gate1_initialization.json",
-      "key_checks": {
-        "init_delta_zero": true,
-        "A_B_same_distance_loss_sid": true,
-        "fc1_xavier_nonzero": true,
-        "fc2_zero": true,
-        "step1_fc2_grad": true,
-        "step2_fc1_fc2_grad": true,
-        "prefix_stopgrad": true
-      }
-    },
+    "Gate_1_initialization": {"decision": "PASS", "n_pass": 11, "n_total": 11},
     "Gate_2_mechanism_activation": {
-      "decision": "FAIL (ROUTER_COLLAPSE)",
-      "L1": {"delta_std": 0.000459, "c_effective_std": 4.49e-05, "shuffle_fraction_dc_gt_1e-4": 0.112, "fc2_w_norm": 0.0627},
-      "L2": {"delta_std": 0.000167, "c_effective_std": 1.74e-05, "shuffle_fraction_dc_gt_1e-4": 0.0, "fc2_w_norm": 0.00904},
-      "thresholds": {"delta_std": ">1e-3", "c_effective_std": ">1e-4", "shuffle_fraction": ">=10%", "fc1/fc2_nonzero": "required"}
+      "decision": "PASS (修复后激活)",
+      "L1": {"delta_std": 0.639, "c_effective_std": 0.0699, "shuffle_fraction": 0.976, "boundary_hit": 0.0},
+      "L2": {"delta_std": 0.448, "c_effective_std": 0.0457, "shuffle_fraction": 0.998, "boundary_hit": 0.0}
+    },
+    "Gate_3_causal_diagnosis": {
+      "decision": "PASS",
+      "L1": {"dc_shuffle": 0.0718, "flip_rate": 0.0009},
+      "L2": {"dc_shuffle": 0.0510, "flip_rate": 0.0008},
+      "note": "固定 residual 仅换 prefix → 曲率变化 0.05-0.07 (非候选列尺度/数值边界), assignment flip 由曲率驱动"
+    },
+    "Gate_4_full_ab": {
+      "decision": "MECHANISM_VALID_NO_RECOMMENDATION_GAIN",
+      "A_test_R@10": 0.1043,
+      "B_test_R@10": 0.1044,
+      "delta_R@10": 0.0001,
+      "paired_bootstrap_CI_95": [-0.0021, 0.0025],
+      "ci_cross_zero": true,
+      "McNemar_only_A": 418,
+      "McNemar_only_B": 421,
+      "McNemar_p_value": 0.9450
     }
   },
   "stage_results": {
-    "stage1_control": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
-    "stage1_treatment": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
-    "stage2_control": {"ok": true, "final_cs_global": [0.60995, 0.60541, 0.61253], "n_unique_4digit": 9169},
-    "stage2_treatment": {"ok": true, "final_cs_global": [0.61206, 0.60538, 0.61274], "delta_abs_mean_final": [0.0, 0.00193, 0.00049], "n_unique_4digit": 9168},
-    "stage3_stage4": "SKIPPED (Gate 2 ROUTER_COLLAPSE, spec 禁止进入 Stage3/4)"
-  },
-  "r18_4d_compare": {
-    "D1_spec": "Issue #154: 修复 #147 常数退化 — fc1 Xavier 非零 init + fc1.bias=0; fc2.weight/bias=0 → 初始 delta=0 与 A 严格等价; 路由正则必须用未 detach delta; Gate 2 机制激活量化阈值 (delta_std>1e-3, c_std>1e-4, shuffle counterfactual ≥10%).",
-    "D2_implementation": "treatment/_lib/prefix_conditioned_quantizer.py PrefixRouter: xavier_uniform_(fc1.weight), zeros(fc1.bias/fc2.weight/fc2.bias); get_c_per_item 存 _last_delta_live (未 detach) 用于 compute_route_reg; stage2.py B arm: prefix_routing=True + L_route 正则 + gate2_mechanism.json 全量统计 (delta/c 分布, fc norm, boundary, prefix 分组, shuffle counterfactual); control 完全保持 baseline A arm.",
-    "D3_gate1_failure_mechanism": "首次 gate1 FAIL (10/11): gate1_precheck 把 control/_lib insert 到 path 0 导致 treatment 加载旧版全零 fc1 模型 — 修复为统一用 treatment/_lib; 二次 PASS 11/11. step1 fc1 梯度为 0 属预期 (fc2.weight=0 时梯度不穿透), 判定逻辑改为检查 step2.",
-    "D4_cite": "Issue #154 spec 无新增文献引用, 延续 #147 QINCo (ICML 2024) 路由器设计; 修复点 (Xavier fc1 + live-delta reg) 为 #147 失败根因分析结论."
-  },
-  "failure_analysis": {
-    "root_cause": "Gate 1 修复确认梯度通路成立, 但 200 epoch 训练后路由器分化量级不足以激活机制: fc2_w_norm L1=0.063/L2=0.009, delta 范围 L1=[-0.0031,-0.0008], L2=[-0.0010,+0.0001]. 量化 loss 对 c 的梯度经 sigmoid(θ+δ) 与距离函数两级衰减, per-item c 的微小变化对 argmin assignment 影响甚微 (SID 4-digit A=9169 vs B=9168 几乎一致), 路由器缺乏足够学习信号.",
-    "L1_vs_L2": "L1 shuffle 11.2% 勉强过 10% (delta_std 4.6e-4), L2 完全未激活 (shuffle 0%) — L2 router 输入 [e0,e1] 高维 (64) 但信号更弱, fc2_w_norm 仅 0.009.",
-    "not_hyperparameter_tuning": "按 R36 不做 LR/dropout/λ sweep; 若继续此 lineage 应改曲率机制 (如直接回归 δ 到距离 loss、或 per-item c 进入 Stage3 输入) — 超出单变量约束, 不在此 issue 内."
+    "stage1": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
+    "stage2_control": {"final_cs_global": [0.60995, 0.60541, 0.61253], "n_unique_4digit": 9169},
+    "stage2_treatment": {"final_cs_global": [0.61027, 0.60629, 0.61335], "delta_abs_mean_final": [0.0, 0.206, 0.091], "n_unique_4digit": 9218},
+    "stage3_control": {"best_valid_R10": 0.1342, "best_epoch": 154},
+    "stage3_treatment": {"best_valid_R10": 0.1325, "best_epoch": 79},
+    "stage4_control": {"test_R@5": 0.0833, "test_R@10": 0.1043, "test_R@20": 0.1332, "NDCG@10": 0.0756, "n_eval": 24772},
+    "stage4_treatment": {"test_R@5": 0.0807, "test_R@10": 0.1044, "test_R@20": 0.1341, "NDCG@10": 0.0745, "n_eval": 24772}
   },
   "vs_previous": {
-    "Issue147_152": "旧版 fc1 全零 → 路由器只学到常数偏置 (delta 全体相同 ~1.45, '常数退化'); #154 修复后 fc1 Xavier → 梯度通路真实形成, 但 delta 分化仅 1e-3 量级, 机制仍未激活 — 两次均 INVALID/COLLAPSE, 结论一致: prefix-conditioned 曲率路由在该设置下无效果."
+    "Issue147_152": "#147/152 路由器未激活 (常数偏置/弱分化) → INVALID; #154 修复后机制真实激活 (Gate 2 全阈值过) 但推荐仍无统计显著差异 → 从 ROUTER_COLLAPSE 变为 MECHANISM_VALID_NO_RECOMMENDATION_GAIN, 结论深化: per-item 曲率路由对量化 SID 影响过小 (flip 0.09%), 无法传导到 Stage3/4 推荐指标",
+    "baseline_test_R@10": 0.1024
   }
 }

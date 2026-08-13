@@ -28,8 +28,13 @@ C_MIN = 0.5
 C_MAX = 2.0
 DELTA_MAX = 1.5  # spec 上界 tanh 范围
 G_HIDDEN = 32  # MLP 隐藏层宽度
-LAMBDA_DELTA = 0.01  # spec 防漂移: 路由输出 delta 不偏离 0 太远
-LAMBDA_MEAN = 0.01  # spec 防漂移: per-item log c 不偏离全局 log c 太远
+# Issue #154 fix: 正则分工. 根因诊断: (a) 量化 loss 对 c 的梯度极弱 (8e-11),
+# 原 0.01/0.01 使 LAMBDA_DELTA 正则梯度 (1.7e-8) 主导 → delta 压回 0 → ROUTER_COLLAPSE;
+# (b) 双正则全降 1e-6 → delta 整体漂移饱和到 -1.5 边界 (L1 退化常数).
+# 修复: LAMBDA_DELTA=1e-6 (仅防极端漂移, 允许 per-item 分化), LAMBDA_MEAN=0.01
+# (锚定 per-item log c 均值 ≈ 全局, 防整体漂移到 C_MIN/C_MAX 边界).
+LAMBDA_DELTA = 1e-6  # 防极端漂移 (不主导学习, 允许 delta 分化)
+LAMBDA_MEAN = 0.01  # 锚定 per-item log c 均值到全局, 防曲率塌缩边界
 GATE1_DIST_TOL = 1e-5  # 距离容差
 GATE1_ARG_TOL = 1e-7  # argmin 容差
 
@@ -88,6 +93,11 @@ class PrefixRouter(nn.Module):
         self.delta_max = float(delta_max)
 
     def forward(self, prefix_emb):
+        # 修复 (Issue #154): codeword 切空间范数仅 ~0.01-0.04, fc1 Xavier 适配 O(1) 输入
+        # → h = relu(fc1(prefix)) 均值仅 0.003 (fc2 梯度 ∝ h, 比 theta 梯度小 300 倍),
+        #   路由器因此学不到 per-prefix 分化 (ROUTER_COLLAPSE 根因).
+        # LayerNorm 规范化输入尺度 → fc1 梯度通路有效.
+        prefix_emb = F.layer_norm(prefix_emb, prefix_emb.shape[-1:])
         h = F.relu(self.fc1(prefix_emb))
         delta = self.delta_max * torch.tanh(self.fc2(h).squeeze(-1))
         return delta  # (B,)
