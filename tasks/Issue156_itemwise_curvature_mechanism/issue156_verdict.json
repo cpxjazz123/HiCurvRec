@@ -1,0 +1,21 @@
+{
+  "issue": "#156",
+  "task": "Issue156_itemwise_curvature_mechanism",
+  "decision": "CURVATURE_ACTIVE_NO_GEOMETRY_GAIN (margin-sensitive curvature 机制激活, 但推荐/几何无显著增益)",
+  "reason": "#155 MARGIN_LOCKED → 实现 margin-sensitive curvature (delta_eff = delta_raw * sigmoid(-MARGIN_K*(margin-MARGIN_REF)), 参考曲率 c=1.0 计算真实 top1-top2 margin). Gate 1 PASS (分支锁定+初始等价+梯度通路); Gate 2 机制激活 PASS (L1 delta_raw=0.74, gate=0.54, c_std=0.044, shuffle=98%; L2 delta_raw=0.58, gate=0.59, c_std=0.040, shuffle=99.8%); Gate 4 推荐: B test R@10=0.1021 vs A 0.1021 (Δ=+0.0001, 95% CI [-0.0022,+0.0023] 跨 0, McNemar p=0.972) 统计不显著. 机制激活但几何/推荐关系未改善 → #157 改用内在曲率 residual 更新, 不继续扩大路由输出.",
+  "gate_summary": {
+    "Gate_1": {"decision": "PASS", "checks": ["branch_locked(margin门控无参数)", "init_equivalence(delta0=0)", "gradient_path(step2 fc1/fc2非零)", "margin_mechanism(c形状(B,)广播)"], "report": "control/stage2/gate1_precheck.json"},
+    "Gate_2_mechanism_activation": {"decision": "PASS", "L1": {"delta_raw_abs": 0.744, "margin_mean": 0.0217, "gate_mean": 0.542, "c_std": 0.0439, "shuffle_frac": 0.980}, "L2": {"delta_raw_abs": 0.579, "margin_mean": 0.0118, "gate_mean": 0.589, "c_std": 0.0401, "shuffle_frac": 0.998}, "report": "treatment/stage2/gate2_mechanism.json"},
+    "Gate_4_full_ab": {"decision": "NO_RECOMMENDATION_GAIN", "A_test_R10": 0.1021, "B_test_R10": 0.1021, "delta": 0.0001, "CI95": [-0.0022, 0.0023], "cross_zero": true, "McNemar_p": 0.972}
+  },
+  "stage_results": {
+    "stage1": {"sha256": "1a6dd2ac"},
+    "stage2_control": {"final_cs": [0.6118, 0.6068, 0.6165], "SID4": 9216},
+    "stage2_treatment": {"final_cs": [0.6099, 0.6047, 0.6124], "delta_abs_final": [0.0, 0.401, 0.345], "SID4": 9207},
+    "stage3_control": {"best_valid_R10": 0.1248, "best_epoch": 94},
+    "stage3_treatment": {"best_valid_R10": 0.1253, "best_epoch": 179},
+    "stage4_control": {"R@5": 0.0804, "R@10": 0.1021, "R@20": 0.1295, "NDCG@10": 0.0749},
+    "stage4_treatment": {"R@5": 0.0808, "R@10": 0.1021, "R@20": 0.1287, "NDCG@10": 0.0755}
+  },
+  "chain_branch_next": "Issue #157 改用内在曲率 residual 更新 (不继续扩大路由输出, 因为 margin 门控下曲率虽激活但无几何/推荐增益)"
+}
