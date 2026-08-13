@@ -207,8 +207,10 @@ _TORCH_COMPILE_MODE = "reduce-overhead"  # reduce-overhead = CUDA Graph + 算子
 def _collate_fn(batch, pad_token=0):
     # 与 HG-Rec/data/dataloader.py GenRecDataLoader.collate_fn 逐字节一致. DDP 需要 sampler,
     # 但 GenRecDataLoader 不接受 sampler 参数 → 复刻 collate 以构造标准 DataLoader (仅 DDP 用).
+    # Issue #159: 附加 curvature (B, L) 与 input_ids 对齐 (每 token 有效曲率).
     histories = [item['history'] for item in batch]
     targets = [item['target'] for item in batch]
+    has_c = 'history_c' in batch[0] and 'target_c' in batch[0]
     flattened_histories = torch.stack(
         [torch.tensor([elem for sublist in history for elem in sublist], dtype=torch.int64) for history in histories]
     )
@@ -218,7 +220,17 @@ def _collate_fn(batch, pad_token=0):
     attention_masks = torch.stack(
         [torch.tensor([1 if elem != pad_token else 0 for elem in h], dtype=torch.int64) for h in flattened_histories]
     )
-    return {'history': flattened_histories, 'target': flattened_targets, 'attention_mask': attention_masks}
+    out = {'history': flattened_histories, 'target': flattened_targets, 'attention_mask': attention_masks}
+    if has_c:
+        # history 每 item 4 tokens → 展平曲率 (B, L); target 4 tokens 曲率
+        flat_c = torch.stack([
+            torch.tensor([elem for sublist in item['history_c'] for elem in sublist], dtype=torch.float32)
+            for item in batch
+        ])
+        target_c = torch.stack([torch.tensor(item['target_c'], dtype=torch.float32) for item in batch])
+        out['history_c'] = flat_c
+        out['target_c'] = target_c
+    return out
 
 CODEBOOK_SIZE = [64, 128, 256, 1]          # 基线 stage2 结构
 # Issue #62: token → 层位查找表 (按 item2code offsets: L0=[1,64] L1=[65,192] L2=[193,448] L3=[449])
@@ -473,6 +485,54 @@ def install_geo_residual(hg_rec, geo_module, layer_id_lut_tensor):
     import types
     hg_rec.forward = types.MethodType(geo_forward, hg_rec)
     hg_rec.generate = types.MethodType(geo_generate, hg_rec)
+    return hg_rec
+
+
+class CurvatureStateInjector(nn.Module):
+    """Issue #159: 曲率状态 token 注入 phi(c_l,i) → h_token = Emb(SID_l) + phi(c_l,i).
+    phi: 可学习投影 1 → d_model (零初始化 → 门控归零时 A/B 严格等价).
+    """
+    def __init__(self, d_model):
+        super().__init__()
+        self.proj = nn.Linear(1, d_model)
+        nn.init.zeros_(self.proj.weight)
+        nn.init.zeros_(self.proj.bias)
+
+    def forward(self, curvature):
+        # curvature: (B, L) 每 token 有效曲率 → (B, L, d_model)
+        return self.proj(curvature.unsqueeze(-1))
+
+
+def install_curvature_state(hg_rec, curv_injector):
+    """Issue #159: monkey-patch HG_Rec forward/generate 注入曲率状态.
+    forward/generate 接受额外 curvature (B, L); 缺省 (stage4 评估) 用 0 → 无注入.
+    """
+    device = next(hg_rec.parameters()).device
+    curv_injector = curv_injector.to(device)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+    hg_rec.add_module("curv_injector", curv_injector)
+
+    def curv_forward(self, input_ids, attention_mask=None, labels=None, curvature=None):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        if curvature is not None and curvature.shape[1] == input_ids.shape[1]:
+            input_embeds = input_embeds + self.curv_injector(curvature)
+        outputs = self.model(inputs_embeds=input_embeds,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+
+    def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        curvature = kwargs.pop("curvature", None)
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        if curvature is not None and curvature.shape[1] == input_ids.shape[1]:
+            input_embeds = input_embeds + self.curv_injector(curvature)
+        return self.model.generate(inputs_embeds=input_embeds,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+
+    import types
+    hg_rec.forward = types.MethodType(curv_forward, hg_rec)
+    hg_rec.generate = types.MethodType(curv_generate, hg_rec)
     return hg_rec
 
 
@@ -973,6 +1033,7 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
         input_ids = batch["history"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         labels = batch["target"].to(device)
+        curvature = batch["history_c"].to(device) if "history_c" in batch else None
         optimizer.zero_grad()
         # 加速: bf16 forward (T5 标准混合精度, 参数 fp32, 仅前向计算转 bf16)
         with autocast_ctx:
@@ -981,7 +1042,8 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
             #   PromptFormer 时返回 (loss, logits, reg_losses) 也是 tuple, 同样解包.
             #   旧代码 line 971-974 的注释 "默认 forward 返回 T5LMHeadOutput 含 .loss + .logits" 是错的
             #   (来自 baseline stage3.py 抄错的注释), 实际从来就是 tuple, 旧 baseline 都没跑过这里.
-            pf_out = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            pf_out = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels,
+                           curvature=curvature)
             if isinstance(pf_out, tuple):
                 # HG_Rec.forward / PromptFormer 路径: tuple 形式
                 if len(pf_out) == 2:
@@ -1066,7 +1128,9 @@ def evaluate(model, eval_loader, device):
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["target"].to(device)
             with autocast_ctx:
-                preds = gen_model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=BEAM_SIZE)
+                curv = batch["history_c"].to(device) if "history_c" in batch else None
+                preds = gen_model.generate(input_ids=input_ids, attention_mask=attention_mask,
+                                           num_beams=BEAM_SIZE, curvature=curv)
             preds = preds[:, 1:]
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)
@@ -1127,6 +1191,11 @@ def main():
     if is_main:
         log(model.n_parameters.rstrip())
     model.to(device)
+    # Issue #159: 曲率状态注入 (在 DDP wrap 前, phi 零初始化 → gate-zero 严格等价)
+    curv_injector = CurvatureStateInjector(d_model=CONFIG["d_model"])
+    model = install_curvature_state(model, curv_injector)
+    if is_main:
+        log(f"[Issue #159] curvature-state injector: {sum(p.numel() for p in curv_injector.parameters())} params (phi 零初始化)")
     # Issue #62: 几何残差注入 (在 DDP wrap 前, 让 DDP 一起管理 geo_module 参数)
     if GEO_RESIDUAL_ENABLED:
         geo_module = build_geo_module()
@@ -1343,12 +1412,20 @@ def main():
     if STAGE3_WEIGHT_DECAY > 0 and is_main:
         log(f"[Issue #138 v74] AdamW weight_decay={STAGE3_WEIGHT_DECAY} 拉小 U/V 范数防过拟合")
 
-    train_ds = GenRecDataset(
-        dataset_path=TRAIN_PARQUET, code_path=SID_NPY, mode="train",
-        codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
-    valid_ds = GenRecDataset(
-        dataset_path=VALID_PARQUET, code_path=SID_NPY, mode="evaluation",
-        codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
+    # Issue #159: 曲率状态注入 — Stage3 同时读取 codeword 与产生它的曲率状态
+    # (h_token = Emb(SID_l) + phi(c_l,i), phi 零初始化 → 门控归零时 A/B 严格等价)
+    from curvature_dataset import CurvatureGenRecDataset
+    CURVATURE_STATE_NPY = os.path.join(os.path.dirname(SID_NPY), "curvature_state.npy")
+    if not os.path.exists(CURVATURE_STATE_NPY):
+        raise FileNotFoundError(f"curvature_state.npy 缺失: {CURVATURE_STATE_NPY} (需 stage2 treatment 导出)")
+    if is_main:
+        log(f"[Issue #159] curvature-state Stage3: {CURVATURE_STATE_NPY}")
+    train_ds = CurvatureGenRecDataset(
+        dataset_path=TRAIN_PARQUET, code_path=SID_NPY, curvature_path=CURVATURE_STATE_NPY,
+        mode="train", codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
+    valid_ds = CurvatureGenRecDataset(
+        dataset_path=VALID_PARQUET, code_path=SID_NPY, curvature_path=CURVATURE_STATE_NPY,
+        mode="evaluation", codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
     if is_main:
         log(f"n_train(windowed)={len(train_ds)} n_valid={len(valid_ds)}")
 

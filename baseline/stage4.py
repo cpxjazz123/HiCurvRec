@@ -182,15 +182,78 @@ def ndcg_at_k(pos_index, k):
     return dcg[:, :k].sum(dim=1).cpu().float()
 
 
+def _curv_collate(batch, pad_token=0):
+    """Issue #159: 复刻 GenRecDataLoader.collate_fn + 附加 history_c 曲率状态."""
+    histories = [item['history'] for item in batch]
+    targets = [item['target'] for item in batch]
+    flattened_histories = torch.stack(
+        [torch.tensor([elem for sublist in history for elem in sublist], dtype=torch.int64) for history in histories]
+    )
+    flattened_targets = torch.stack(
+        [torch.tensor(target, dtype=torch.int64) for target in targets]
+    )
+    attention_masks = torch.stack(
+        [torch.tensor([1 if elem != pad_token else 0 for elem in h], dtype=torch.int64) for h in flattened_histories]
+    )
+    out = {'history': flattened_histories, 'target': flattened_targets, 'attention_mask': attention_masks}
+    if 'history_c' in batch[0]:
+        flat_c = torch.stack([
+            torch.tensor([elem for sublist in it['history_c'] for elem in sublist], dtype=torch.float32)
+            for it in batch
+        ])
+        out['history_c'] = flat_c
+    return out
+
+
 class _ShardedGenRecDataLoader(GenRecDataLoader):
     """R35b: DDP 分片版 — 透传 sampler (DistributedSampler) 给 DataLoader.
     GenRecDataLoader 上游不支持 sampler 参数, 子类化注入 (与 Issue #61 模式一致).
+    Issue #159: 用 _curv_collate 产出曲率状态.
     """
     def __init__(self, dataset, batch_size=32, sampler=None, num_workers=0):
         DataLoader.__init__(
             self, dataset, batch_size=batch_size, shuffle=False,
-            sampler=sampler, num_workers=num_workers, collate_fn=self.collate_fn,
+            sampler=sampler, num_workers=num_workers, collate_fn=_curv_collate,
         )
+
+
+class CurvatureStateInjector(nn.Module):
+    """Issue #159: 曲率状态 token 注入 phi(c_l,i) (与 Stage3 训练一致)."""
+    def __init__(self, d_model):
+        super().__init__()
+        self.proj = nn.Linear(1, d_model)
+        nn.init.zeros_(self.proj.weight)
+        nn.init.zeros_(self.proj.bias)
+    def forward(self, curvature):
+        return self.proj(curvature.unsqueeze(-1))
+
+
+def install_curvature_state(hg_rec, curv_injector):
+    """Issue #159: monkey-patch HG_Rec forward/generate 注入曲率状态."""
+    device = next(hg_rec.parameters()).device
+    curv_injector = curv_injector.to(device)
+    d_model_sqrt = hg_rec.model.config.d_model ** 0.5
+    hg_rec.add_module("curv_injector", curv_injector)
+    def curv_forward(self, input_ids, attention_mask=None, labels=None, curvature=None):
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        if curvature is not None and curvature.shape[1] == input_ids.shape[1]:
+            input_embeds = input_embeds + self.curv_injector(curvature)
+        outputs = self.model(inputs_embeds=input_embeds,
+                             attention_mask=attention_mask, labels=labels)
+        return outputs.loss, outputs.logits
+    def curv_generate(self, input_ids, attention_mask=None, num_beams=20, **kwargs):
+        curvature = kwargs.pop("curvature", None)
+        input_embeds = self.model.shared(input_ids) * d_model_sqrt
+        if curvature is not None and curvature.shape[1] == input_ids.shape[1]:
+            input_embeds = input_embeds + self.curv_injector(curvature)
+        return self.model.generate(inputs_embeds=input_embeds,
+                                   attention_mask=attention_mask,
+                                   num_beams=num_beams, max_length=5,
+                                   num_return_sequences=num_beams, **kwargs)
+    import types
+    hg_rec.forward = types.MethodType(curv_forward, hg_rec)
+    hg_rec.generate = types.MethodType(curv_generate, hg_rec)
+    return hg_rec
 
 
 def main():
@@ -211,6 +274,10 @@ def main():
                 f"SID sha mismatch: got {sid_sha}, expected {EXPECTED_SID_SHA} ({SID_NPY})")
 
     model = HG_Rec(CONFIG)
+    # Issue #159: 曲率状态注入 (与 Stage3 训练一致, phi 零初始化加载 ckpt 权重)
+    from curvature_dataset import CurvatureGenRecDataset
+    curv_injector = CurvatureStateInjector(d_model=CONFIG["d_model"])
+    model = install_curvature_state(model, curv_injector)
     if GEO_RESIDUAL:
         # Issue #62: geo_residual v2 配置 (与 Stage3 train 脚本一致)
         GEO_KAPPA = [-0.2289, -0.1872, -0.0932, 0.0]
@@ -550,9 +617,12 @@ def main():
     model.to(DEVICE)
     model.eval()
 
-    ds = GenRecDataset(
-        dataset_path=EVAL_PARQUET, code_path=SID_NPY, mode="evaluation",
-        codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
+    CURVATURE_STATE_NPY = os.path.join(os.path.dirname(SID_NPY), "curvature_state.npy")
+    if not os.path.exists(CURVATURE_STATE_NPY):
+        raise FileNotFoundError(f"curvature_state.npy 缺失: {CURVATURE_STATE_NPY}")
+    ds = CurvatureGenRecDataset(
+        dataset_path=EVAL_PARQUET, code_path=SID_NPY, curvature_path=CURVATURE_STATE_NPY,
+        mode="evaluation", codebook_size=CODEBOOK_SIZE, max_len=MAX_LEN)
     # R35b: DistributedSampler(shuffle=False) 顺序切分 → 每 rank 只处理不重复分片
     if DDP_ENABLED:
         sampler = DistributedSampler(ds, num_replicas=WORLD_SIZE, rank=RANK, shuffle=False, seed=SEED)
@@ -562,7 +632,8 @@ def main():
         print(f"[Stage4/R35b] shard: rank {RANK} evaluates {n_local}/{n} samples "
               f"(每样本恰好一次, all_reduce SUM 汇总)", flush=True)
     else:
-        loader = GenRecDataLoader(ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+        loader = DataLoader(ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0,
+                            collate_fn=_curv_collate)
         n_local = n = len(ds)
 
     recalls = {f"R@{k}": [] for k in TOP_K}
@@ -576,7 +647,10 @@ def main():
             input_ids = batch["history"].to(DEVICE)
             attention_mask = batch["attention_mask"].to(DEVICE)
             labels = batch["target"].to(DEVICE)
-            preds = model.generate(input_ids=input_ids, attention_mask=attention_mask, num_beams=BEAM_SIZE)
+            # Issue #159: 曲率状态注入 (batch 已含 history_c, 与训练注入一致)
+            curv = batch["history_c"].to(DEVICE) if "history_c" in batch else None
+            preds = model.generate(input_ids=input_ids, attention_mask=attention_mask,
+                                   num_beams=BEAM_SIZE, curvature=curv)
             preds = preds[:, 1:]
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)

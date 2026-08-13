@@ -41,7 +41,7 @@ import torch.nn as nn
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, "_lib"))  # R44 baseline 自包含
-from prefix_conditioned_quantizer import PrefixConditionedHRQVAE, C_MIN, C_MAX
+from cross_layer_quantizer import CrossLayerHRQVAE, C_MIN, C_MAX
 from utils import EmbDataset
 
 # ── 超参 (硬编码, R30/R43) — 与 Issue #147 A arm 完全一致 ──
@@ -112,16 +112,16 @@ def main():
     if rank == 0:
         with open(out_dir / "_TRAINING_PID", "w") as f:
             f.write(str(os.getpid()))
-        print(f"[stage2/A] world_size={world} rank={rank} device={device} prefix_routing=False "
-              f"(三层共享曲率) epochs={N_EPOCHS} global_batch={BATCH_SIZE}")
+        print(f"[stage2/B] world_size={world} rank={rank} device={device} prefix_routing=True "
+              f"(margin-sensitive, #156 MARGIN_LOCKED) epochs={N_EPOCHS} global_batch={BATCH_SIZE}")
 
     item_emb = torch.tensor(
         EmbDataset(ITEM_EMB_PARQUET).embeddings, dtype=torch.float32
     ).to(device)
-    model = PrefixConditionedHRQVAE(
+    model = CrossLayerHRQVAE(
         in_dim=EMB_DIM, num_emb_list=CODEBOOK_SIZES, e_dim=E_DIM,
         layers=ENCODER_LAYERS, kmeans_init=True, kmeans_iters=KMEANS_ITERS,
-        prefix_routing=False,
+        prefix_routing=True,
     ).to(device)
     broadcast_kmeans_init(model, item_emb, rank, world)
     if world > 1:
@@ -132,7 +132,7 @@ def main():
     n_steps_per_epoch = max(1, N_ITEMS // BATCH_SIZE)
     if rank == 0:
         n_params = sum(p.numel() for p in model.parameters())
-        print(f"[stage2/A] model params={n_params} steps/epoch={n_steps_per_epoch} "
+        print(f"[stage2/B] model params={n_params} steps/epoch={n_steps_per_epoch} "
               f"per_rank_batch={per_rank_batch}")
 
     log_records = []
@@ -149,6 +149,8 @@ def main():
             out, rq_loss, indices, zq, z = model(batch, use_sk=False)
             recon = poincare_recon_loss(out, batch)
             loss = recon + rq_loss
+            rd, rm = model.module.compute_route_reg() if world > 1 else model.compute_route_reg()
+            loss = loss + rd + rm
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
@@ -160,11 +162,17 @@ def main():
             with torch.no_grad():
                 raw = model.module if world > 1 else model
                 cs = [q.get_c_global().item() for q in raw.vq_layers]
+                deltas = []
+                for q in raw.vq_layers:
+                    if q.prefix_routing and q._last_delta is not None:
+                        deltas.append(float(q._last_delta.abs().mean().item()))
+                    else:
+                        deltas.append(0.0)
             rec = {
                 "epoch": epoch,
                 "loss": avg_loss,
                 "cs_global": cs,
-                "delta_abs_mean": [0.0, 0.0, 0.0],
+                "delta_abs_mean": deltas,
                 "n_unique_3digit": int(np.unique(np.concatenate([
                     raw.get_indices(item_emb[i:i + 1024]).cpu().numpy()
                     for i in range(0, N_ITEMS, 1024)
@@ -173,7 +181,7 @@ def main():
             log_records.append(rec)
             last_loss = avg_loss
             if epoch % LOG_EVERY == 0 or epoch == N_EPOCHS - 1:
-                print(f"  epoch {epoch:4d} | loss={avg_loss:.4f} | c={cs} | "
+                print(f"  epoch {epoch:4d} | loss={avg_loss:.4f} | c={cs} | delta={deltas} | "
                       f"SID3={rec['n_unique_3digit']}")
 
     # ── 推理 SID (全量 9922, 仅 rank0) ──
@@ -196,29 +204,62 @@ def main():
             seen[key] = seen.get(key, 0)
             sid_4digit[i, 3] = seen[key] % CODEBOOK_SIZES[2]
         n_uniq_4 = len(set(map(tuple, sid_4digit.tolist())))
-        print(f"[stage2/A] SID 3-digit unique: {n_uniq_3}/{N_ITEMS}, "
+        print(f"[stage2/B] SID 3-digit unique: {n_uniq_3}/{N_ITEMS}, "
               f"4-digit unique: {n_uniq_4}/{N_ITEMS}")
 
         final_cs_list = [q.get_c_global().item() for q in raw.vq_layers]
+
+        # ── Issue #159: 导出 per-item 有效曲率状态 (9922×3, 每 item 每层有效 c_l,i) ──
+        # 供 Stage3 曲率状态 token 注入 (h_token = Emb(SID_l) + phi(c_l,i)).
+        # 与训练 _rq_forward 完全一致: prefix = 已选 codeword 拼接 + 上层曲率信号 (transport).
+        import math
+        curvature_state = np.zeros((N_ITEMS, 3), dtype=np.float32)
+        with torch.no_grad():
+            prefix_codes = []
+            prev_c = None
+            for li, q in enumerate(raw.vq_layers):
+                # 复刻 _rq_forward 的 prefix 构造 (含 transport c_sig)
+                parts = list(prefix_codes)
+                if q.prefix_routing and prev_c is not None:
+                    c_sig = torch.log(prev_c.clamp(min=1e-6)) / math.log(2.0)
+                    parts.append(c_sig)
+                prefix_emb = torch.cat(parts, dim=-1) if parts else None
+                if q.prefix_routing:
+                    c_per = q.get_c_per_item(prefix_emb).detach()  # (B,)
+                    curvature_state[:, li] = c_per.cpu().numpy()
+                    prev_c = q.get_c_global().detach().unsqueeze(0).expand(N_ITEMS, 1)
+                else:
+                    curvature_state[:, li] = q.get_c_global().item()
+                    prev_c = q.get_c_global().detach().unsqueeze(0).expand(N_ITEMS, 1)
+                cb = q.embeddings.weight[sid_3digit[:, li]]
+                prefix_codes.append(cb)
+        np.save(out_dir / "curvature_state.npy", curvature_state)
+        cs_stats = {
+            "L0": [float(np.min(curvature_state[:, 0])), float(np.mean(curvature_state[:, 0])), float(np.max(curvature_state[:, 0]))],
+            "L1": [float(np.min(curvature_state[:, 1])), float(np.mean(curvature_state[:, 1])), float(np.max(curvature_state[:, 1]))],
+            "L2": [float(np.min(curvature_state[:, 2])), float(np.mean(curvature_state[:, 2])), float(np.max(curvature_state[:, 2]))],
+        }
+        print(f"[stage2/B] curvature_state saved ({curvature_state.shape}): {cs_stats}")
+
         ckpt_path = out_dir / "hrqvae_kappa_sync.ckpt"
         torch.save({
             "model_state_dict": raw.state_dict(),
             "epoch": N_EPOCHS,
-            "arm": "control",
-            "prefix_routing": False,
+            "arm": "treatment",
+            "prefix_routing": True,
             "final_cs_global": final_cs_list,
             "final_cs": final_cs_list,  # Stage3 hyperbolic_attention_bias 要求此 key
         }, ckpt_path)
         np.save(out_dir / "sid_output.npy", sid_4digit)
-        print(f"[stage2/A] saved ckpt + SID -> {out_dir}")
+        print(f"[stage2/B] saved ckpt + SID -> {out_dir}")
 
         with open(out_dir / "train_log.jsonl", "w") as f:
             for r in log_records:
                 f.write(json.dumps(r) + "\n")
         verdict = {
-            "issue": "#147-A-sync",
-            "arm": "control",
-            "source": "Issue #147 stage2_train.py --arm control 同步 + DDP 4 卡",
+            "issue": "#159",
+            "arm": "treatment",
+            "source": "Issue #159 curvature state export + DDP 4 卡",
             "world_size": world,
             "n_epochs": N_EPOCHS,
             "global_batch": BATCH_SIZE,
@@ -226,11 +267,12 @@ def main():
             "n_unique_3digit": n_uniq_3,
             "n_unique_4digit": n_uniq_4,
             "final_cs_global": final_cs_list,
+            "curvature_state_stats": cs_stats,
             "gate2_pass": True,
         }
         with open(out_dir / "verdict.json", "w") as f:
             json.dump(verdict, f, indent=2, ensure_ascii=False)
-        print(f"\n✓ stage2/A done: {verdict}")
+        print(f"\n✓ stage2/B done: {verdict}")
     if world > 1:
         dist.barrier()
 
