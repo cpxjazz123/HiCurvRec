@@ -1,0 +1,31 @@
+{
+  "issue": "#157",
+  "checks": {
+    "small_c_euclid_limit": {
+      "pass": true,
+      "max_err": 2.390739248323698e-07
+    },
+    "roundtrip_and_inverse": {
+      "pass": true,
+      "roundtrip": 1.1102230246251565e-16,
+      "inverse": 0.0
+    },
+    "gate_zero_equivalence": {
+      "pass": true,
+      "out_diff": 2.2118911147117615e-09,
+      "delta0": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "gradient_path": {
+      "pass": true,
+      "step2": {
+        "L1_fc2_g": 1.866042111942079e-05,
+        "L2_fc2_g": 8.87095393409254e-06
+      }
+    }
+  },
+  "decision": "PASS"
+}
