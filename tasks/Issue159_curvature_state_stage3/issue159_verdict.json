@@ -22,5 +22,12 @@
     "issue157": "INTRINSIC_RESIDUAL_PASS (内在 Möbius 残差减法 → test R@10 +0.0205 显著)",
     "issue158": "CROSS_LAYER_SID_ACTIVE (跨层曲率传递 → test R@10 +0.0176 显著)",
     "issue159": "CURVATURE_END2END_GO (曲率状态注入 Stage3 → test R@10 +0.0230, 全链路最佳)"
+  },
+  "rerun_2026_08_14": {
+    "note": "treatment 完整重跑 (stage1→4): 结果高度一致, END2END_GO 稳定复现",
+    "stage2": {"final_cs": [0.6191, 0.6108, 0.6089], "SID4": 6190, "curvature_state_L1_range": [0.526, 0.876], "curvature_state_L2_range": [0.526, 0.730]},
+    "stage3_treatment": {"best_valid_R10": 0.1494, "best_epoch": 159},
+    "stage4_treatment": {"R@5": 0.0979, "R@10": 0.1258, "R@20": 0.1656, "NDCG@10": 0.0886, "n_eval": 24772},
+    "vs_original_run": {"valid_R10": "0.1494 vs 0.1514", "test_R10": "0.1258 vs 0.1264", "conclusion": "统计一致, 均显著超 baseline 0.1024"}
   }
 }

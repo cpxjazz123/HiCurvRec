@@ -1,23 +1,23 @@
 {
   "tag": "v15_v74_baseline",
   "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue159_curvature_state_stage3/treatment/stage2/sid_output.npy",
-  "sid_sha256": "241a9eaae5ed0c106ec5d8e44351b214b07ad22fa9f402a6dd802c599d3813e9",
-  "best_epoch": 199,
-  "best_loss": 2.3058,
+  "sid_sha256": "e14aea421d546ede5c0ef17046636d2be61e00b79bdbd445f3b406f1282f7890",
+  "best_epoch": 159,
+  "best_loss": 2.3198,
   "final_epoch": 199,
   "best_trace": {
-    "epoch": 199,
-    "train_loss": 2.3058114973086754,
-    "R@5": 0.11710802518973035,
-    "R@10": 0.15138059098982723,
-    "R@20": 0.19215243016308736,
-    "NDCG@5": 0.0910959509796113,
-    "NDCG@10": 0.10208792998200565,
-    "NDCG@20": 0.11238578713115382,
-    "t_train": 5.7,
-    "t_eval": 3.5,
-    "early_stop_counter": 5,
-    "best_loss": 2.3125,
+    "epoch": 159,
+    "train_loss": 2.319834411491468,
+    "R@5": 0.11743097045050864,
+    "R@10": 0.14936218310996285,
+    "R@20": 0.19154690779912806,
+    "NDCG@5": 0.09267000686789337,
+    "NDCG@10": 0.10288084674570647,
+    "NDCG@20": 0.11346152238577878,
+    "t_train": 5.4,
+    "t_eval": 3.4,
+    "early_stop_counter": 11,
+    "best_loss": 2.3251,
     "lambda_raw": [
       0.0,
       0.0,
@@ -30,14 +30,14 @@
     ],
     "hab_inject_count": 0,
     "U_l2_norm": [
-      10.577,
-      56.8358,
-      20.4495
+      11.0607,
+      44.8347,
+      20.4399
     ],
     "V_l2_norm": [
-      10.577,
-      56.8358,
-      20.4495
+      11.0607,
+      44.8347,
+      20.4399
     ]
   },
   "config": {
@@ -62,5 +62,5 @@
     "bf16": true,
     "early_stop_metric": "train_loss"
   },
-  "done_at": "2026-08-14 01:22:59"
+  "done_at": "2026-08-14 02:30:01"
 }
