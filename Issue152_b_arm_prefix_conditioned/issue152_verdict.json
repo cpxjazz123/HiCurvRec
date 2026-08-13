@@ -1,0 +1,28 @@
+{
+  "issue": "#152",
+  "task": "Issue152_b_arm_prefix_conditioned",
+  "decision": "INVALID (B arm 独立验证: 4 卡 DDP 完整运行, paired CI 跨 0 且方向反)",
+  "reason": "B arm (prefix-conditioned curvature routing) 在 4 卡 DDP 独立任务完整运行后 test R@10=0.1027/0.1031(paired) < A arm (baseline) 0.1033/0.1037(paired), Δ=-0.0006, 95% paired bootstrap CI [-0.0029, +0.0016] 跨 0, McNemar p=0.619. Stage3 valid R@10: B 0.1343 ≈ A 0.1341 (epoch 169 vs 174). 与 Issue #147 结论一致: prefix-conditioned curvature 路由不产生统计显著增益 (且本次方向反转为 B 略低), 差异为噪声.",
+  "stage_results": {
+    "stage1": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
+    "stage2_treatment": {"ok": true, "final_cs_global": [0.6139, 1.8780, 1.8951], "delta_abs_mean_final": [0.0, 1.4528, 1.4456], "n_unique_4digit": 9262},
+    "stage3_treatment": {"best_valid_R10": 0.1343, "best_epoch": 169, "EARLY_STOP": 20},
+    "stage4_treatment": {"test_R@5": 0.0816, "test_R@10": 0.1027, "test_R@20": 0.1312, "NDCG@10": 0.0756, "n_eval": 24772}
+  },
+  "paired_vs_baseline_A": {
+    "A_test_R@10": 0.1033,
+    "B_test_R@10": 0.1027,
+    "delta_R@10": -0.0006,
+    "paired_bootstrap_CI_95": [-0.0029, 0.0016],
+    "ci_cross_zero": true,
+    "McNemar_only_A": 403,
+    "McNemar_only_B": 388,
+    "McNemar_p_value": 0.6187,
+    "valid_R@10_A": 0.1341,
+    "valid_R@10_B": 0.1343
+  },
+  "vs_issue147": {
+    "note": "Issue #147 (2 卡/arm 并行): B 0.1113 > A 0.1094 (Δ+0.0018, CI 跨 0). Issue #152 (4 卡 DDP 独立): B 0.1027 < A 0.1033 (Δ-0.0006, CI 跨 0). 方向翻转 + 均不显著 → B arm 相对 A 无统计显著差异, 判定稳定 INVALID.",
+    "baseline_test_R@10": 0.1024
+  }
+}
