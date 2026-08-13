@@ -1047,11 +1047,17 @@ def train(model, train_loader, optimizer, device, epoch, scheduler=None):
 
 
 def evaluate(model, eval_loader, device):
+    """R35c: 4 卡分片不重复评估完整 Valid 集 → 本地汇总逐样本 hits/NDCG 总和
+    → all_reduce SUM → rank0 依据全量 Valid R@K/NDCG@K 选 best ckpt (与单卡同口径).
+
+    历史 (Issue #64): 因 NCCL 死锁 workaround 只让 rank0 评估 1/4 分片 → local mean
+    选 ckpt, 与单卡口径不一致 → R35c 废弃该路径.
+    """
     model.eval()
-    # DDP 包装后 generate 在 model.module 上 (forward 走 DDP.__call__, generate 是原模型方法)
     gen_model = model.module if DDP_MODE else model
-    recalls = {f"R@{k}": [] for k in TOP_K}
-    ndcgs = {f"NDCG@{k}": [] for k in TOP_K}
+    recalls_sum = {f"R@{k}": 0.0 for k in TOP_K}   # 本地分片 hits 总和 (逐样本)
+    ndcgs_sum = {f"NDCG@{k}": 0.0 for k in TOP_K}  # 本地分片 NDCG 总和 (逐样本)
+    n_local = 0
     autocast_ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
                     if STAGE3_BF16 else torch.nullcontext())
     with torch.no_grad():
@@ -1064,18 +1070,24 @@ def evaluate(model, eval_loader, device):
             preds = preds[:, 1:]
             preds = preds.reshape(input_ids.shape[0], BEAM_SIZE, -1)
             pos_index = calculate_pos_index(preds, labels, maxk=BEAM_SIZE)
+            n_local += int(input_ids.shape[0])
             for k in TOP_K:
-                recalls[f"R@{k}"].append(recall_at_k(pos_index, k).mean().item())
-                ndcgs[f"NDCG@{k}"].append(ndcg_at_k(pos_index, k).mean().item())
-    out_recalls = {k: sum(v) / len(v) for k, v in recalls.items()}
-    out_ndcgs = {k: sum(v) / len(v) for k, v in ndcgs.items()}
-    # DDP: 每卡 eval 分片 local mean. Issue #64 DDP 死锁修复 (2026-08-06, 6 次重试确认):
-    #   NCCL + bf16 + HAB + L40S 4 卡组合下 eval all_reduce 必卡死 (ep5 eval 4 min+ frozen).
-    #   改: rank 0 单独算 eval + ckpt save, 其他 rank 跳过 eval (空 dict 返回).
-    #   trade-off: eval 算的是 rank 0 的 1/4 数据 local mean, 但 DDP gradient sync 已保证模型同步,
-    #   且 rank 0 DistributedSampler 与单卡 sampler 数学等价 (同 seed + 不同 shard).
-    if DDP_MODE and RANK != 0:
-        return {}, {}
+                recalls_sum[f"R@{k}"] += float(recall_at_k(pos_index, k).sum().item())
+                ndcgs_sum[f"NDCG@{k}"] += float(ndcg_at_k(pos_index, k).sum().item())
+    if DDP_MODE:
+        # R35c: all_reduce SUM 全部样本的 hits/NDCG 总和 + 样本数 → /N 与单卡完全同口径
+        vals = torch.tensor(
+            [recalls_sum[f"R@{k}"] for k in TOP_K]
+            + [ndcgs_sum[f"NDCG@{k}"] for k in TOP_K]
+            + [float(n_local)],
+            dtype=torch.float64, device=device)
+        dist.all_reduce(vals, op=dist.ReduceOp.SUM)
+        n_total = vals[-1].item()
+        out_recalls = {f"R@{k}": vals[i].item() / n_total for i, k in enumerate(TOP_K)}
+        out_ndcgs = {f"NDCG@{k}": vals[len(TOP_K) + i].item() / n_total for i, k in enumerate(TOP_K)}
+        return out_recalls, out_ndcgs
+    out_recalls = {k: v / n_local for k, v in recalls_sum.items()}
+    out_ndcgs = {k: v / n_local for k, v in ndcgs_sum.items()}
     return out_recalls, out_ndcgs
 
 
@@ -1388,14 +1400,21 @@ def main():
         # EVAL_INTERVAL 控制 eval 频率 (Issue #61, 用户指示 2026-08-06 对齐 DECOR)
         do_eval = ((epoch + 1) % EVAL_INTERVAL == 0) or (epoch == NUM_EPOCHS - 1)
 
+        # R35c: 所有 rank 同步执行 evaluate (各自分片 → all_reduce SUM 全量 Valid R@K),
+        # 非 rank0 也执行 (all_reduce 同步点), 仅 rank0 用结果选 ckpt/早停
+        if do_eval:
+            t0 = time.time()
+            recalls, ndcgs = evaluate(model, valid_loader, device)
+            t_eval = time.time() - t0
+        else:
+            recalls, ndcgs = None, None
+            t_eval = 0.0
+
         if is_main:
             # Issue #135 v72 (2026-08-07): valid_R10-based early stop + ckpt 保存
             # loss-based 在 v71 失效 — valid ep75→ep115 单调崩但 loss 持续下降
             # valid_R10 每 5 epoch 评估一次, 只在 do_eval 时更新 best_valid_r10 / early_stop_counter
             if do_eval:
-                t0 = time.time()
-                recalls, ndcgs = evaluate(model, valid_loader, device)
-                t_eval = time.time() - t0
                 # Issue #62 v2 修复: 监控 geo_module.alpha_l 训练轨迹 (写到 trace, 防 alpha 失控)
                 row = {
                     "epoch": epoch, "train_loss": train_loss,
