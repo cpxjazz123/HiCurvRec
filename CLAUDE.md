@@ -60,6 +60,8 @@
 
 **R35** — 评估强约束: 只使用单 checkpoint + `beam_search=20`, 禁 Borda Rank Fusion / 任何 ensemble 多 ckpt 融合。
 
+**R35b** — Stage4 评估 DDP 同口径硬约束: 4 卡各自评估**不重复**的数据分片 (DistributedSampler / 按 rank 切片, 每样本只被一个 rank 处理), 各 rank 在**本地**汇总其分片的命中数 (hits) 与 NDCG 总和, 最后 `all_reduce SUM` 全部样本的命中数与 NDCG 总和, 统一除以总样本数 N — 保证 R@K / NDCG@K 与单卡评估完全同口径 (每个样本恰好计数一次, 无重复、无遗漏、无按 rank 平均的错误口径)。禁直接对 4 个 rank 的均值取平均。
+
 **R36** — 方法路径强约束: 禁止通过调参形式 (LR/dropout/label_smoothing/weight_decay sweep) 提升指标; 必须通过改善曲率框架 (Stage 2 κ 学习 / Stage 3 κ frozen→learnable / 新曲率正则项 / Poincaré-Minkowski-Lorentz 曲率机制变更)。
 
 **R37** — 版本回滚硬约束: 新版本 (vN) test_R@10 < 上一版本 (vN-1) → 立即终止 lineage, 必须回到 vN-1 重新创新, 禁止在比旧版本差的版本上进行二次创新。
