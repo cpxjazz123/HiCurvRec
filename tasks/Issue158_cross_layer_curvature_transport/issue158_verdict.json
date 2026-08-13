@@ -1,0 +1,20 @@
+{
+  "issue": "#158",
+  "task": "Issue158_cross_layer_curvature_transport",
+  "decision": "CROSS_LAYER_SID_ACTIVE (跨层曲率传递激活且推荐显著提升)",
+  "reason": "#157 INTRINSIC_RESIDUAL_PASS → 加入跨层曲率传递: (a) c_{l+1} router 输入拼接上一层有效曲率信号 log(c_l)/log(C_MAX); (b) 层间几何显式转换 u_l=Log_0^{c_l}(h_l); h_{l+1}=Exp_0^{c_{l+1}}(u_l). Gate 1 PASS (identity/cycle <0.05 float32 容差, gate-zero A/B 等价, 跨层响应 resp>0, 梯度通路); Stage3 valid: B 0.1467 > A 0.1269 (+0.0198); Stage4 test R@10: B 0.1223 > A 0.1047 (+0.0176), 95% CI [+0.0142,+0.0208] 不含 0, McNemar p<0.0001 → 统计显著. 判定: CROSS_LAYER_SID_ACTIVE, #159 将逐 token 曲率状态传入 Stage3.",
+  "gate_summary": {
+    "Gate_1": {"decision": "PASS", "checks": ["transport_identity(<0.05)", "transport_cycle(<0.05)", "gate_zero_equivalence", "cross_layer_response(训练后 resp>0)", "gradient_path"], "report": "control/stage2/gate1_precheck.json"},
+    "Gate_4_full_ab": {"decision": "SIGNIFICANT_GAIN", "A_test_R10": 0.1047, "B_test_R10": 0.1223, "delta": 0.0176, "CI95": [0.0142, 0.0208], "cross_zero": false, "direction_correct": true, "McNemar_p": 0.0000}
+  },
+  "stage_results": {
+    "stage1": {"sha256": "1a6dd2ac"},
+    "stage2_control": {"final_cs": [0.6137, 0.6071, 0.6134], "SID4": 9226},
+    "stage2_treatment": {"final_cs": [0.6147, 0.6150, 0.6025], "delta_abs_final": [0.0, 1.201, 0.850], "SID4": 5951},
+    "stage3_control": {"best_valid_R10": 0.1269, "best_epoch": 179},
+    "stage3_treatment": {"best_valid_R10": 0.1467, "best_epoch": 169},
+    "stage4_control": {"R@5": 0.0828, "R@10": 0.1047, "R@20": 0.1335, "NDCG@10": 0.0767},
+    "stage4_treatment": {"R@5": 0.0935, "R@10": 0.1223, "R@20": 0.1650, "NDCG@10": 0.0839}
+  },
+  "chain_branch_next": "Issue #159 将逐 token 曲率状态传入 Stage3 (CROSS_LAYER_SID_ACTIVE 分支)"
+}

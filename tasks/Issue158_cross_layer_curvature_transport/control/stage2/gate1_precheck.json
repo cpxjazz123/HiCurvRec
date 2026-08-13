@@ -1,0 +1,35 @@
+{
+  "issue": "#158",
+  "checks": {
+    "transport_identity": {
+      "pass": true,
+      "id_err": 0.03123342990875244
+    },
+    "transport_cycle": {
+      "pass": true,
+      "cycle_err": 0.0307733416557312
+    },
+    "gate_zero_equivalence": {
+      "pass": true,
+      "out_diff": 2.3283064365386963e-09,
+      "delta0": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "cross_layer_response": {
+      "pass": true,
+      "max_delta_response": 0.003776631783694029,
+      "note": "训练后测量 (改上层曲率→下层 router 输出)"
+    },
+    "gradient_path": {
+      "pass": true,
+      "step2": {
+        "L1_fc2_g": 1.2360704204184003e-05,
+        "L2_fc2_g": 4.620464824256487e-05
+      }
+    }
+  },
+  "decision": "PASS"
+}
