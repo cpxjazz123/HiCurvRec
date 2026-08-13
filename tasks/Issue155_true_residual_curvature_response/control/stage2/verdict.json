@@ -1,0 +1,17 @@
+{
+  "issue": "#147-A-sync",
+  "arm": "control",
+  "source": "Issue #147 stage2_train.py --arm control 同步 + DDP 4 卡",
+  "world_size": 4,
+  "n_epochs": 200,
+  "global_batch": 1024,
+  "final_loss": 0.3784620695643955,
+  "n_unique_3digit": 9195,
+  "n_unique_4digit": 9195,
+  "final_cs_global": [
+    0.6142142415046692,
+    0.6077103614807129,
+    0.616024374961853
+  ],
+  "gate2_pass": true
+}
