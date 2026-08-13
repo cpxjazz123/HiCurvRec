@@ -2,22 +2,22 @@
   "tag": "v15_v74_baseline",
   "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/baseline/stage2/sid_output.npy",
   "sid_sha256": "f4843112e3b3b6056dd0a923441ee5639a7394af9ee22009c65c14d0a7357a13",
-  "best_epoch": 174,
-  "best_loss": 2.5466,
+  "best_epoch": 199,
+  "best_loss": 2.5489,
   "final_epoch": 199,
   "best_trace": {
-    "epoch": 174,
-    "train_loss": 2.5466490240930355,
-    "R@5": 0.10751433301832258,
-    "R@10": 0.13407979168228268,
-    "R@20": 0.16462300118711806,
-    "NDCG@5": 0.08896950492155306,
-    "NDCG@10": 0.09743000198270857,
-    "NDCG@20": 0.10511635313021768,
-    "t_train": 5.5,
-    "t_eval": 3.4,
-    "early_stop_counter": 1,
-    "best_loss": 2.5591,
+    "epoch": 199,
+    "train_loss": 2.548885665819483,
+    "R@5": 0.09974971742289682,
+    "R@10": 0.12598901986113353,
+    "R@20": 0.1578394962053932,
+    "NDCG@5": 0.08231236713586669,
+    "NDCG@10": 0.0907128915809072,
+    "NDCG@20": 0.09876829137926088,
+    "t_train": 11.7,
+    "t_eval": 5.5,
+    "early_stop_counter": 0,
+    "best_loss": 2.5524,
     "lambda_raw": [
       0.0,
       0.0,
@@ -28,7 +28,7 @@
       0.0,
       0.0
     ],
-    "hab_inject_count": 25970,
+    "hab_inject_count": 29680,
     "U_l2_norm": [
       10.3114,
       14.1698,
@@ -62,5 +62,6 @@
     "bf16": true,
     "early_stop_metric": "train_loss"
   },
-  "done_at": "2026-08-13 14:53:16"
+  "done_at": "2026-08-13 19:31:06"
+}
 }
