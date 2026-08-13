@@ -1,8 +1,9 @@
 {
   "issue": "#147",
   "task": "Issue147_prefix_conditioned_curvature",
+  "rerun": "2026-08-13 完整重跑 (stage1→stage4 全部实时运行)",
   "decision": "INVALID (paired CI 跨 0, 提升统计不显著)",
-  "reason": "B (prefix-conditioned curvature) test R@10=0.1113 > A (三层共享) 0.1094 (Δ=+0.0018), 但 95% paired bootstrap CI [-0.0007, +0.0042] 跨 0 (方向正确但统计不显著), McNemar p=0.145. Spec 明确 'paired CI 跨 0 即判无效'. Stage3 valid R@10 B 0.1342 > A 0.1306, 但 paired CI 决定最终判定.",
+  "reason": "重跑确认: B (prefix-conditioned curvature) test R@10=0.1068 > A (三层共享) 0.1046 (Δ=+0.0022), 但 95% paired bootstrap CI [-0.0001, +0.0046] 跨 0 (方向正确但统计不显著), McNemar p=0.067. Spec 明确 'paired CI 跨 0 即判无效'. 两次独立运行方向一致 (上次 Δ=+0.0018, CI [-0.0007,+0.0042]; 本次 Δ=+0.0022, CI [-0.0001,+0.0046]), 均为 B 均值更高但 CI 跨 0, 判定稳定复现 INVALID.",
   "r18_4d_compare": {
     "D1_spec": "Issue #147 spec: A 三层共享 c_l = C_MIN + (C_MAX-C_MIN)·sigmoid(θ_l); B L0 全局共享, L1 曲率 c_1,i = c_θ(θ_1 + δ_1,i), δ_1,i = δ_max·tanh(g_1(stop_grad(e_0,i))), L2 类似 prefix [L0,L1]. g_1/g_2 零初始化 → 训练起点 δ=0 → 与 A 严格等价. 同 item 同层所有候选共享同一 c_l,i. 路由正则 L_route = λ_δ·mean(δ²) + λ_mean·(mean(log c_l,i) - log c_global)².",
     "D2_implementation": "新模块 _lib/prefix_conditioned_quantizer.py (PrefixConditionedHRQVAE + prefix_routing flag) + stage2_train.py (--arm control/treatment 切换, A+B 各 200 epoch) + Stage3/Stage4 从 baseline 复制 (改 DDP GPU 分配 + ckpt 路径 + 额外存 'final_cs' key 兼容 Stage4 hyperbolic_attention_bias.load_hab_assets_from_stage2_ckpt).",
@@ -18,40 +19,45 @@
     },
     "Gate_2_stage2_numerical_stability": {
       "decision": "PASS",
-      "B_final_cs_global": [0.608, 1.873, 1.890],
-      "B_delta_abs_mean_final": [0.0, 1.457, 1.453],
-      "B_SID_unique_4digit": 9170,
-      "A_SID_unique_4digit": 9171,
+      "B_final_cs_global": [0.6069, 1.8748, 1.8922],
+      "B_delta_abs_mean_final": [0.0, 1.4557, 1.4512],
+      "B_SID_unique_4digit": 9174,
+      "A_SID_unique_4digit": 9198,
       "boundary_hit": 0
     },
     "Gate_3_stage3_stage4_effectiveness": {
       "decision": "INVALID",
-      "A_test_R@10": 0.1094,
-      "B_test_R@10": 0.1113,
-      "delta_R@10": 0.0018,
-      "paired_bootstrap_CI_95": [-0.0007, 0.0042],
+      "A_test_R@10": 0.1046,
+      "B_test_R@10": 0.1068,
+      "delta_R@10": 0.0022,
+      "paired_bootstrap_CI_95": [-0.0001, 0.0046],
       "ci_cross_zero": true,
       "ci_direction_correct": true,
-      "McNemar_only_A": 434,
-      "McNemar_only_B": 479,
-      "McNemar_p_value": 0.1453,
-      "valid_R@10_A": 0.1306,
-      "valid_R@10_B": 0.1342
+      "McNemar_only_A": 407,
+      "McNemar_only_B": 462,
+      "McNemar_p_value": 0.0669,
+      "valid_R@10_A": 0.1328,
+      "valid_R@10_B": 0.1303
     }
   },
   "stage_results": {
     "stage1_shared": {"ok": true, "sha256": "1a6dd2ac1c690d029d985787d5b0b95b881df934d7d7fb52c3f095162add6af6"},
-    "stage2_control": {"ok": true, "final_cs_global": [0.611, 0.605, 0.606], "n_unique_4digit": 9171, "train_time_s_estimate": 380},
-    "stage2_treatment": {"ok": true, "final_cs_global": [0.608, 1.873, 1.890], "delta_abs_mean_final": [0.0, 1.457, 1.453], "n_unique_4digit": 9170, "train_time_s_estimate": 380},
-    "stage3_control": {"best_valid_R10": 0.1306, "best_epoch": 179, "EARLY_STOP": 20},
-    "stage3_treatment": {"best_valid_R10": 0.1342, "best_epoch": 134, "EARLY_STOP": 20},
-    "stage4_control": {"test_R@5": 0.0870, "test_R@10": 0.1094, "test_R@20": 0.1380, "NDCG@10": 0.0803, "n_eval": 24772},
-    "stage4_treatment": {"test_R@5": 0.0881, "test_R@10": 0.1113, "test_R@20": 0.1388, "NDCG@10": 0.0814, "n_eval": 24772}
+    "stage2_control": {"ok": true, "final_cs_global": [0.6086, 0.6051, 0.6099], "n_unique_4digit": 9198},
+    "stage2_treatment": {"ok": true, "final_cs_global": [0.6069, 1.8748, 1.8922], "delta_abs_mean_final": [0.0, 1.4557, 1.4512], "n_unique_4digit": 9174},
+    "stage3_control": {"best_valid_R10": 0.1328, "best_epoch": 74, "EARLY_STOP": 20},
+    "stage3_treatment": {"best_valid_R10": 0.1303, "best_epoch": 84, "EARLY_STOP": 20},
+    "stage4_control": {"test_R@5": 0.0825, "test_R@10": 0.1046, "test_R@20": 0.1354, "NDCG@10": 0.0765, "n_eval": 24772},
+    "stage4_treatment": {"test_R@5": 0.0849, "test_R@10": 0.1068, "test_R@20": 0.1353, "NDCG@10": 0.0786, "n_eval": 24772}
+  },
+  "rerun_consistency": {
+    "run_1_2026_08_13_02_48": {"A_test_R@10": 0.1094, "B_test_R@10": 0.1113, "delta": 0.0018, "CI": [-0.0007, 0.0042], "mcnemar_p": 0.1453, "valid_A": 0.1306, "valid_B": 0.1342},
+    "run_2_2026_08_13_14_10": {"A_test_R@10": 0.1046, "B_test_R@10": 0.1068, "delta": 0.0022, "CI": [-0.0001, 0.0046], "mcnemar_p": 0.0669, "valid_A": 0.1328, "valid_B": 0.1303},
+    "note": "两次独立运行均 B 样本均值更高、paired CI 跨 0 → INVALID 判定稳定复现. valid 方向在两次间翻转 (0.1306→0.1328 A, 0.1342→0.1303 B), 进一步支持差异为噪声."
   },
   "vs_baseline_target": {
     "baseline_test_R@10": 0.1024,
-    "A_test_R@10": 0.1094,
-    "B_test_R@10": 0.1113,
+    "A_test_R@10": 0.1046,
+    "B_test_R@10": 0.1068,
     "TARGET_0.1020_reached_A": true,
     "TARGET_0.1020_reached_B": true
   }
