@@ -177,7 +177,7 @@ DEVICE = f"cuda:{LOCAL_RANK}" if DDP_MODE else "cuda:0"
 # 超参 (R30 硬编码 — 变体需 fork 脚本)
 NUM_EPOCHS = 200  # Issue #210 Phase D (2026-08-08): 用户指示 200 epoch. v85p PARTIAL-GO 0.1080 300ep 配置, Phase D 用户改为 200 epoch 验证 equal128 SID 收敛.
 EARLY_STOP = 20  # Issue125 R41 硬约束: EARLY_STOP=20 (历史 v121 用 30 不追溯)
-EVAL_INTERVAL = 5  # Issue #141 v85q (2026-08-09): 用户指示 EVAL_INTERVAL=5 (匹配 v77/v85p 历史配置, 每 5 epoch 评估). 当前 + NUM_WORKERS=2 单 epoch 7s, EI=5 省 2s/epoch (-28%). v77 实际配置就是 EI=5.
+EVAL_INTERVAL = 1  # R41b: 每个 epoch 都必须 eval (2026-08-09): 用户指示 EVAL_INTERVAL=5 (匹配 v77/v85p 历史配置, 每 5 epoch 评估). 当前 + NUM_WORKERS=2 单 epoch 7s, EI=5 省 2s/epoch (-28%). v77 实际配置就是 EI=5.
 BATCH_SIZE = 1024  # Issue #141 v85t (2026-08-09) v77完全相同复现: v77原 batch=1024 (DDP 4 卡 per-rank 256), 验证 v77 数值可复现性, 解释 v85 路径所有"修复"是不是 noise.
 INFER_SIZE = 256  # eval batch size (DDP per-rank = INFER_SIZE // WORLD_SIZE = 64, v77原等价值)
 SEED = 42

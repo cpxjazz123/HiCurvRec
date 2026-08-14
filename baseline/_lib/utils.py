@@ -128,7 +128,8 @@ def kmeans(
 
     cluster = KMeans(
         n_clusters = num_clusters,
-        max_iter = num_iterations, 
+        max_iter = num_iterations,
+        random_state = 2024,  # R41c: 固定 KMeans 中心 → 对照实验初始 codebook 完全一致
     ).fit(x)
 
     cluster_centers = cluster.cluster_centers_

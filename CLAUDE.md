@@ -78,6 +78,8 @@
 
 **R41b** — Stage3 训练期 Valid 评估频率硬约束: 每个 epoch 都必须执行一次 valid 评估 (EVAL_INTERVAL 恒等于 1), 禁止每 5 个 epoch 才 eval 一次 (历史 EVAL_INTERVAL=5 不追溯, 仅本规则生效后新任务生效); 每次 eval 仍需遵循 R35c (4 卡分片不重复评估完整 Valid 集, all_reduce SUM, rank 0 按全量 Valid R@10 选 best ckpt + 触发早停), `EARLY_STOP` 保持 20 (R41)。
 
+**R41c** — Stage2 A/B 对照初始一致性硬约束: 任何 Stage2 曲率机制对照实验 (Control vs Treatment) 必须满足以下因果链: 同一 Stage1 embedding → 同一 KMeans 初始中心 (sklearn KMeans 必须固定 `random_state`, 禁止默认随机初始化) → 初始 codebook 数值一致 (逐元素差 < 1e-7) → 初始 distance / assignment / SID 一致 (argmin 逐元素相同, SID 差异 < 1%) → 之后只开启或关闭一个曲率机制。若两套 Stage2 因 KMeans 未固定等原因初始就产生不同 SID, 判定 `STAGE2_NONDETERMINISM`, 不得把差异称为曲率机制收益, 必须先修复初始化再实验。
+
 **R42** — Stage2 / Stage3 必须用 `torchrun --nproc_per_node=4` DDP 4 卡运行, 禁单卡 (world_size=1); 唯一例外: nvidia-smi 显示 GPU 1/2/3 都被占时允许单卡, 但 verdict_r37.json 必须显式记录 (R7+R42 联动)。
 
 **R43** — 禁止脚本使用 CLI 传入数值超参; 脚本超参必须硬编码为模块级常量, 调用方只能改代码, 不能传 `--xxx`; 唯一允许传参: `--sid_npy` / `--product_dir` / `--tag` 路径参数 (R30 强化)。

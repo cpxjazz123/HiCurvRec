@@ -85,8 +85,12 @@ def broadcast_kmeans_init(model: nn.Module, item_emb: torch.Tensor, rank: int, w
     init_batch = item_emb[perm[:BATCH_SIZE]]
     if rank == 0:
         model.train()
+        # R41c: init 阶段强制 M2 off (欧式残差路径) → Control/Treatment 初始 codebook 完全一致
+        m2_orig = model.gate_M2_intrinsic
+        model.gate_M2_intrinsic = False
         with torch.no_grad():
             model(init_batch, use_sk=False)  # forward 内触发各层 init_emb(latent)
+        model.gate_M2_intrinsic = m2_orig
     for q in model.vq_layers:
         centers = q.embeddings.weight.data.clone()
         if world > 1:
