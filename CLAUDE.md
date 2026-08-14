@@ -76,6 +76,8 @@
 
 **R41** — 所有 Stage3 / Stage2 训练脚本的 `EARLY_STOP` 统一硬编码为 20 (历史 v121 用 30 不追溯, 仅本规则生效后新任务生效)。
 
+**R41b** — Stage3 训练期 Valid 评估频率硬约束: 每个 epoch 都必须执行一次 valid 评估 (EVAL_INTERVAL 恒等于 1), 禁止每 5 个 epoch 才 eval 一次 (历史 EVAL_INTERVAL=5 不追溯, 仅本规则生效后新任务生效); 每次 eval 仍需遵循 R35c (4 卡分片不重复评估完整 Valid 集, all_reduce SUM, rank 0 按全量 Valid R@10 选 best ckpt + 触发早停), `EARLY_STOP` 保持 20 (R41)。
+
 **R42** — Stage2 / Stage3 必须用 `torchrun --nproc_per_node=4` DDP 4 卡运行, 禁单卡 (world_size=1); 唯一例外: nvidia-smi 显示 GPU 1/2/3 都被占时允许单卡, 但 verdict_r37.json 必须显式记录 (R7+R42 联动)。
 
 **R43** — 禁止脚本使用 CLI 传入数值超参; 脚本超参必须硬编码为模块级常量, 调用方只能改代码, 不能传 `--xxx`; 唯一允许传参: `--sid_npy` / `--product_dir` / `--tag` 路径参数 (R30 强化)。
