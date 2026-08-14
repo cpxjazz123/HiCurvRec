@@ -1,0 +1,66 @@
+{
+  "tag": "v15_v74_baseline",
+  "sid_npy": "/fs04/ar57/wenyu/GeneRec/tasks/Issue160_factorial_ablation/configs/c0011/stage2/sid_output.npy",
+  "sid_sha256": "b858e419f67b55a9de9302f2e2f432ab192625c9cc79e30140a7ed5427f2c54a",
+  "best_epoch": 159,
+  "best_loss": 2.1976,
+  "final_epoch": 199,
+  "best_trace": {
+    "epoch": 159,
+    "train_loss": 2.197590218211927,
+    "R@5": 0.11206200549006944,
+    "R@10": 0.14056192475375423,
+    "R@20": 0.17979977393831745,
+    "NDCG@5": 0.09144961951372986,
+    "NDCG@10": 0.10060132995437925,
+    "NDCG@20": 0.1104897297816536,
+    "t_train": 18.7,
+    "t_eval": 8.1,
+    "early_stop_counter": 1,
+    "best_loss": 2.2061,
+    "lambda_raw": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "lambda_eff": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "hab_inject_count": 0,
+    "U_l2_norm": [
+      10.5012,
+      63.1696,
+      20.3427
+    ],
+    "V_l2_norm": [
+      10.5012,
+      63.1696,
+      20.3427
+    ]
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.2,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.001,
+    "batch_size": 1024,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 1,
+    "bf16": true,
+    "early_stop_metric": "train_loss"
+  },
+  "done_at": "2026-08-14 05:35:26"
+}
