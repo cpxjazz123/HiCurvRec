@@ -1,0 +1,24 @@
+{
+  "fixed_inputs": {
+    "stage2_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue162_layer_curvature_mixer/treatment/stage2/hrqvae_kappa_sync.ckpt",
+    "sid": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue162_layer_curvature_mixer/treatment/stage2/sid_output.npy",
+    "curvature_state": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue162_layer_curvature_mixer/treatment/stage2/curvature_state.npy",
+    "stage3_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue162_layer_curvature_mixer/treatment/stage2/HG_Rec_best.pth",
+    "test_samples": 24772,
+    "beam": 20
+  },
+  "branches": {
+    "T_full": "confidence gate + layer mixer (原 ckpt 权重)",
+    "T_no_mixer": "gate + uniform layer weight (a=1/3, 同尺度)",
+    "T_no_gate": "layer mixer + g=1 (gate 输出强制 1)",
+    "T_off": "curvature injection 全部关闭 (delta=0)",
+    "layerwise": ["l0_only", "l1_only", "l2_only", "shuffle"]
+  },
+  "findings": {
+    "alpha_after_training": 0.0,
+    "proj_weight_after_training": 0.0,
+    "q_pool": "constant 0.5 (非 history SID embedding)",
+    "response_features": "缺失 (#162 curvature_dataset 无 history_s)",
+    "branch_delta": "全部为 0 (注入恒 0)"
+  }
+}
