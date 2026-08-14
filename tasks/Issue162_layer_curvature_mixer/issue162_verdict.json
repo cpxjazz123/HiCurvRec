@@ -1,0 +1,19 @@
+{
+  "issue": "#162",
+  "task": "Issue162_layer_curvature_mixer",
+  "decision": "LAYER_MIXER_GO (layer curvature mixer 显著有效)",
+  "reason": "继承 #161 confidence gate (CONFIDENCE_CURVATURE_GO). Treatment 增加 layer mixer: a_t=softmax(W[q_pool, c0,c1,c2]/tau), 调制每 token 层曲率注入深度, h=Emb(SID)+alpha*a_t[layer]*g*phi(c). Stage3 valid: treatment 0.1534 vs control 0.1463 (mixer 提升); Stage4 test R@10: treatment 0.1285 vs control 0.0998 (Δ=+0.0286), 95% CI [+0.0247,+0.0322] 不含 0, McNemar p<0.0001 → 统计显著. 判定: LAYER_MIXER_GO, #163 继承 mixer + gate 并加 curvature attention bias.",
+  "gate_summary": {
+    "mechanism": "layer mixer a_t=softmax(W[q,c0,c1,c2]/tau) 调制注入深度 (继承 gate)",
+    "paired": {"A_R10": 0.0998, "B_R10": 0.1285, "delta": 0.0286, "CI95": [0.0247, 0.0322], "cross_zero": false, "McNemar_p": 0.0000}
+  },
+  "stage_results": {
+    "stage1": {"sha256": "1a6dd2ac"},
+    "stage2": {"config": "M2+M3 (M1 off)"},
+    "stage3_control": {"best_valid_R10": 0.1463, "best_epoch": 119},
+    "stage3_treatment": {"best_valid_R10": 0.1534, "best_epoch": 149},
+    "stage4_control": {"R@10": 0.0998, "n_eval": 24772},
+    "stage4_treatment": {"R@10": 0.1285, "NDCG@10": 0.0892, "n_eval": 24772}
+  },
+  "chain_branch_next": "Issue #163 curvature attention bias: 继承 mixer + gate (LAYER_MIXER_GO), 加 B_c(i,j)=-softplus(w)^T Δc + beta*sim(phi(c_i),phi(c_j)) attention bias"
+}

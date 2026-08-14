@@ -1,0 +1,66 @@
+{
+  "tag": "v15_v74_baseline",
+  "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/tasks/Issue162_layer_curvature_mixer/treatment/stage2/sid_output.npy",
+  "sid_sha256": "1dd1055eb9752cbef49cb9123295018e38f974e0e0c30f3f09b03e0b58dde0f8",
+  "best_epoch": 149,
+  "best_loss": 2.1305,
+  "final_epoch": 199,
+  "best_trace": {
+    "epoch": 149,
+    "train_loss": 2.130467995952981,
+    "R@5": 0.11981269174874859,
+    "R@10": 0.1533586307120943,
+    "R@20": 0.190699176489585,
+    "NDCG@5": 0.09643049823743123,
+    "NDCG@10": 0.10722195091567863,
+    "NDCG@20": 0.11661457649710182,
+    "t_train": 23.1,
+    "t_eval": 8.7,
+    "early_stop_counter": 5,
+    "best_loss": 2.1686,
+    "lambda_raw": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "lambda_eff": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "hab_inject_count": 0,
+    "U_l2_norm": [
+      10.6331,
+      47.0546,
+      20.39
+    ],
+    "V_l2_norm": [
+      10.6331,
+      47.0546,
+      20.39
+    ]
+  },
+  "config": {
+    "num_layers": 6,
+    "num_decoder_layers": 4,
+    "d_model": 128,
+    "d_ff": 1024,
+    "num_heads": 6,
+    "d_kv": 64,
+    "dropout_rate": 0.2,
+    "vocab_size": 1025,
+    "pad_token_id": 0,
+    "eos_token_id": 0,
+    "decoder_start_token_id": 0,
+    "feed_forward_proj": "relu",
+    "lr": 0.001,
+    "batch_size": 1024,
+    "num_epochs": 200,
+    "early_stop": 20,
+    "seed": 42,
+    "world_size": 1,
+    "bf16": true,
+    "early_stop_metric": "train_loss"
+  },
+  "done_at": "2026-08-14 13:37:31"
+}
