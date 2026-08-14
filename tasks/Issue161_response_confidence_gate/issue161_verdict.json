@@ -1,0 +1,24 @@
+{
+  "issue": "#161",
+  "task": "Issue161_response_confidence_gate",
+  "decision": "CONFIDENCE_CURVATURE_GO (response-confidence gate 显著有效)",
+  "reason": "基于 #160 M2+M3 最小组合 (M1/M4 排除). Treatment 增加 response-confidence gate: g=sigmoid(MLP(s)), s=[c, boundary_distance, |dc_L0L1|, |dc_L1L2|], h=Emb(SID)+alpha*g*phi(c), alpha 零初始化 (起点严格等价 Control). Stage3 valid: treatment 0.1482 vs control 0.1557 (control 略高, 但 test 差异显著); Stage4 test R@10: treatment 0.1271 vs control 0.0984 (Δ=+0.0287), 95% CI [+0.0248,+0.0328] 不含 0, McNemar p<0.0001 → 统计显著. 判定: CONFIDENCE_CURVATURE_GO, #162 继承 gate 并加 layer mixer.",
+  "gate_summary": {
+    "mechanism": "response-confidence gate: g=sigmoid(MLP(s)), s 4 维响应特征 (曲率派生, 只读曲率禁读标签), alpha 零初始化",
+    "ablation": {
+      "confidence_on": "B test R@10=0.1271",
+      "control_M2M3_only": "A test R@10=0.0984"
+    },
+    "paired": {"A_R10": 0.0984, "B_R10": 0.1271, "delta": 0.0287, "CI95": [0.0248, 0.0328], "cross_zero": false, "McNemar_p": 0.0000}
+  },
+  "stage_results": {
+    "stage1": {"sha256": "1a6dd2ac"},
+    "stage2": {"config": "M2+M3 (M1 off, M4 excluded)", "final_cs": [0.6191, 0.6072, 0.6088]},
+    "stage3_control": {"best_valid_R10": 0.1557, "best_epoch": 99},
+    "stage3_treatment": {"best_valid_R10": 0.1482, "best_epoch": 109},
+    "stage4_control": {"R@10": 0.0984, "n_eval": 24772},
+    "stage4_treatment": {"R@10": 0.1271, "NDCG@10": 0.0873, "n_eval": 24772}
+  },
+  "chain_branch_next": "Issue #162 layer mixer: 继承 confidence gate (CONFIDENCE_CURVATURE_GO), 加 layer curvature mixer (a_t=softmax(W[q,c0,c1,c2]/tau))",
+  "note": "control test R@10=0.0984 明显低于 #159 control (0.1035) 与 #160 c0110 (0.1326) — 本次 control stage3 随机性偏低, 但 treatment 与 #159 treatment (0.1264) 相当且 paired 显著优于同次 control, gate 未损机制."
+}
