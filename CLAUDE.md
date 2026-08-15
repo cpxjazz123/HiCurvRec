@@ -4,6 +4,25 @@
 
 ---
 
+## 最新测试结果 (2026-08-15 重跑实测, beam=20)
+
+| 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
+|---|---|---|---|---|---|---|---|
+| **HG-Rec 重跑** (Aug-14-2026_20-15-45) | ✅ | 0.1312 (valid) | **0.1049** | **0.1074** | 0.1369 | 0.0879 | `HG_Rec_epoch_63.pth` |
+| **RQ-VAE-Recommender 新跑** (DDP 4 卡, 200 epoch) | ✅ | 0.8841 (best_ckpt epoch 199) | **0.8313** | **0.0926** | 0.1163 | 0.0740 | `out/decoder/instruments/best_ckpt.pt` |
+| HG-Rec 原 baseline (R5 硬约束) | ref | 0.1267 | — | 0.1024 | — | — | — |
+
+**关键观察 (R36 valid 偏置)**:
+- RQ-VAE-Recommender valid NDCG@20=0.8313 (比 HG-Rec 高 8 倍),但 test R@10=0.0926 (反而比 HG-Rec 0.1074 低 14%) — 强烈 valid overfitting。
+- HG-Rec 重跑 valid NDCG@20=0.1049 → test R@10=0.1074,valid-test 方向一致 (提升 +0.005 vs 原 0.1024)。
+- 走 R36 严格化 v2 (几何变换, 避免 valid 偏置) 是后续改进方向。
+
+**测试结果物路径**:
+- HG-Rec 重跑日志: `/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/hg_rec_eval_test.log`
+- RQ-VAE-Recommender test JSON: `RQ-VAE-Recommender/out/decoder/instruments/test_final.json`
+
+---
+
 ## R 规则
 
 **R1** — 默认 `genrec_env`; KG 任务用 `deepke`; base anaconda 仅 zero-dep grep + MiniMax API。
@@ -103,3 +122,5 @@
 - `TRANSFORMERS_CACHE=/home/wlia0047/hj82_scratch2/wenyu/hf_models/hub`
 
 禁止把 xxL 模型缓存写到 `/home/wlia0047/` 下 (20G 撑爆), 或 `/home/wlia0047/ar57_scratch/wenyu/` (用户专属); xxL 与 base 不可混用 (参数量 11B vs 220M, embedding 质量显著差异); 下载前 `df -h /home/wlia0047/hj82_scratch2` 检查剩余空间 (需 ≥15G)。
+
+**R48** — 临时文件位置硬约束: 所有临时文件 (训练日志、调试输出、nohup.out、自建临时目录) 必须放在 `/home/wlia0047/hj82_scratch2/wenyu/` 下, 推荐统一子目录 `/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/` (沿用现有路径); 禁止把临时文件写到 `/fs04/scratch2/...` (Lustre 子配额 100% 满导致 ENOSPC 输出截断) 或 `/home/wlia0047/` (20G 撑爆); Bash 输出若报 `temp filesystem is full`, 应立即 `df -h /fs04` 检查并迁移到 hj82_scratch2; 任务脚本中的 `tempfile.NamedTemporaryFile` 等 Python 临时 API 也应通过 `TMPDIR` 环境变量指向 hj82_scratch2 (如 `TMPDIR=/home/wlia0047/hj82_scratch2/wenyu/tmp`)。
