@@ -91,6 +91,15 @@
 
 **R44b** — 下载位置与磁盘硬约束: 禁止向 `/home/wlia0047/` 写入任何数据 (模型权重、数据集、缓存等) — /home 挂载仅 20G 且曾 100% 满导致 HuggingFace 模型下载截断损坏; 所有下载/HF 缓存必须指向 `/home/wlia0047/ar57_scratch/wenyu/` (大磁盘); 运行下载类任务前必须 `df -h /home/wlia0047/` 检查剩余空间, 不足 5G 时先清理或改路径; HuggingFace 相关必须显式设 `HF_HOME=/home/wlia0047/ar57_scratch/wenyu/.cache/huggingface` (或对应 scratch 路径)。
 
+**R44c** — pip 安装位置硬约束: 禁止任何 pip 安装落到 `/home/wlia0047/` 下的用户 site (即 `~/.local`, 含 `/home/wlia0047/.local` 与 `/home/wlia0047/ar57/wenyu/.local`) — 曾因无 `-t` 的 pip install 把 13G 依赖树写进 `/home/wlia0047/ar57/wenyu/.local` 撑爆 20G /home 挂载; pip 安装必须显式 `pip install <pkg> -t <conda_env>/lib/python3.10/site-packages` (如 `-t /home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages`), 或 `--user` 仅指向 scratch 路径; 安装前先 `df -h /home/wlia0047/` 核对, 安装后检查 `/home/wlia0047/` 下不得出现新的 `.local`/`.cache` 目录。
+
 **R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R33+R34 联动)。
 
 **R46** — 任务模板来源硬约束: 每个新任务目录的 4 stage 脚本 (stage1/2/3/4_beam20.py) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/baseline/` 复制 (stage4.py 已内置 raw predictions 收集, 无需额外 full_oracle 脚本), 禁止从任何其他 issue 目录 (如 tasks/Issue1xx_*/) 复制脚本/产物/配置; 复制后仅允许修改: 路径参数 (指向本任务目录)、issue 编号/标签、以及本任务创新点所需的最小代码改动。历史 issue 目录仅作 git 历史与参考查阅, 不作模板源。
+
+**R47** — sentence-t5-xxl 模型位置硬约束: `sentence-transformers/sentence-t5-xxl` (RQ-VAE-Recommender 默认 embedding 模型, ~10GB) **必须**存放在 `/home/wlia0047/hj82_scratch2/wenyu/` 下面 (该挂载点 6.6T 总量, 充裕可装下 RQ-VAE-Recommender 全套); HF 相关环境变量必须显式设:
+- `HF_HOME=/home/wlia0047/hj82_scratch2/wenyu/.cache/huggingface`
+- `HUGGINGFACE_HUB_CACHE=/home/wlia0047/hj82_scratch2/wenyu/hf_models/hub`
+- `TRANSFORMERS_CACHE=/home/wlia0047/hj82_scratch2/wenyu/hf_models/hub`
+
+禁止把 xxL 模型缓存写到 `/home/wlia0047/` 下 (20G 撑爆), 或 `/home/wlia0047/ar57_scratch/wenyu/` (用户专属); xxL 与 base 不可混用 (参数量 11B vs 220M, embedding 质量显著差异); 下载前 `df -h /home/wlia0047/hj82_scratch2` 检查剩余空间 (需 ≥15G)。
