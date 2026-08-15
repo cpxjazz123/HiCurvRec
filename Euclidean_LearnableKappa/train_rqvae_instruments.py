@@ -28,19 +28,18 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-# R47 imports — RQ-VAE-Recommender modules
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/RQ-VAE-Recommender")
+# R47 imports — Euclidean_LearnableKappa (M3 机制目录)
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_LearnableKappa")
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeDistance
 from modules.quantize import QuantizeForwardMode
-from modules.tokenizer.semids import SemanticIdTokenizer
 from data.schemas import SeqBatch
 
 
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out"
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m3_learnable_kappa"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]

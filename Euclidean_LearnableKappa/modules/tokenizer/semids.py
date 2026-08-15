@@ -36,8 +36,16 @@ class SemanticIdTokenizer(nn.Module):
         rqvae_weights_path: Optional[str] = None,
         rqvae_codebook_normalize: bool = False,
         rqvae_sim_vq: bool = False,
+        # === 双曲机制参数 (M1/M2/M3, 必须与训 RQ-VAE 时一致才能正确生成 SIDs) ===
+        hyperbolic_mechanism: str = "none",
+        vae_init_curvature: float = 1.0,
+        quantize_distance_mode=None,  # QuantizeDistance, 默认 L2
     ) -> None:
         super().__init__()
+
+        from modules.quantize import QuantizeDistance
+        if quantize_distance_mode is None:
+            quantize_distance_mode = QuantizeDistance.L2
 
         self.rq_vae = RqVae(
             input_dim=input_dim,
@@ -50,6 +58,9 @@ class SemanticIdTokenizer(nn.Module):
             n_layers=n_layers,
             n_cat_features=n_cat_feats,
             commitment_weight=commitment_weight,
+            hyperbolic_mechanism=hyperbolic_mechanism,
+            vae_init_curvature=vae_init_curvature,
+            quantize_distance_mode=quantize_distance_mode,
         )
 
         if rqvae_weights_path is not None:

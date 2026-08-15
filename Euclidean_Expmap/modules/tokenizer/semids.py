@@ -7,6 +7,7 @@ from data.utils import batch_to
 from einops import rearrange
 from einops import pack
 from modules.utils import eval_mode
+from modules.quantize import QuantizeDistance
 from modules.rqvae import RqVae
 from typing import List
 from typing import Optional
@@ -36,6 +37,10 @@ class SemanticIdTokenizer(nn.Module):
         rqvae_weights_path: Optional[str] = None,
         rqvae_codebook_normalize: bool = False,
         rqvae_sim_vq: bool = False,
+        # === 双曲机制参数 (M1/M2/M3, 必须与训 RQ-VAE 时一致才能正确生成 SIDs) ===
+        hyperbolic_mechanism: str = "none",
+        vae_init_curvature: float = 1.0,
+        quantize_distance_mode: QuantizeDistance = QuantizeDistance.L2,
     ) -> None:
         super().__init__()
 
@@ -50,6 +55,9 @@ class SemanticIdTokenizer(nn.Module):
             n_layers=n_layers,
             n_cat_features=n_cat_feats,
             commitment_weight=commitment_weight,
+            hyperbolic_mechanism=hyperbolic_mechanism,
+            vae_init_curvature=vae_init_curvature,
+            quantize_distance_mode=quantize_distance_mode,
         )
 
         if rqvae_weights_path is not None:

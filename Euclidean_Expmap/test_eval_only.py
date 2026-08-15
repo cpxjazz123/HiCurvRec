@@ -53,8 +53,11 @@ def main():
     tokenizer = SemanticIdTokenizer(
         input_dim=768, hidden_dims=[512, 256, 128], output_dim=32,
         codebook_size=256, n_layers=3, n_cat_feats=0,
-        rqvae_weights_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out/rqvae_final.pt",
+        # M1 Expmap: 用 M1 RQ-VAE 权重 (含 expmap.c buffer), 与 train_decoder 一致
+        rqvae_weights_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m1_expmap/rqvae_final.pt",
         rqvae_codebook_normalize=False, rqvae_sim_vq=False,
+        hyperbolic_mechanism="expmap",
+        vae_init_curvature=1.0,
     )
     tokenizer = accelerator.prepare(tokenizer)
     raw_tokenizer = accelerator.unwrap_model(tokenizer)
@@ -127,7 +130,7 @@ def main():
         print(f"  full: {metrics}", flush=True)
         # 持久化结果
         import json
-        out_path = "out/decoder/instruments/test_final.json"
+        out_path = "out/decoder/m1_expmap_instruments/test_final.json"
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         with open(out_path, "w") as f:
             json.dump({

@@ -1,4 +1,13 @@
 import os
+import sys
+# 跳过 transformers TF 路径 (Keras 3 兼容性问题)
+os.environ["USE_TF"] = "0"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
+# 把当前脚本所在目录加入 sys.path 最前 (R44/R47: 任务目录自包含)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+
 import gin
 import torch
 import wandb
@@ -13,6 +22,7 @@ from data.utils import cycle
 from data.utils import next_batch
 from evaluate.metrics import TopKAccumulator
 from modules.model import EncoderDecoderRetrievalModel
+from modules.quantize import QuantizeDistance
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import compute_debug_metrics
@@ -64,6 +74,10 @@ def train(
     should_add_sep_token=True,
     num_user_bins=None,
     top_k_eval_list=[1, 5, 10],
+    # === 双曲机制参数 (M3 LearnableKappa, 透传给 SemanticIdTokenizer → RqVae) ===
+    hyperbolic_mechanism="none",
+    vae_init_curvature=1.0,
+    quantize_distance_mode=QuantizeDistance.L2,
 ):
     if dataset not in (RecDataset.AMAZON, RecDataset.INSTRUMENTS):
         raise Exception(f"Dataset currently not supported: {dataset}.")
@@ -160,6 +174,9 @@ def train(
         rqvae_weights_path=pretrained_rqvae_path,
         rqvae_codebook_normalize=vae_codebook_normalize,
         rqvae_sim_vq=vae_sim_vq,
+        hyperbolic_mechanism=hyperbolic_mechanism,
+        vae_init_curvature=vae_init_curvature,
+        quantize_distance_mode=quantize_distance_mode,
     )
     tokenizer = accelerator.prepare(tokenizer)
     # unwrap DDP 包装以调用非-module 方法 (precompute_corpus_ids 是 tokenizer 的方法,不是 nn.Module 方法)
@@ -215,7 +232,7 @@ def train(
     MAX_EPOCHS = 200
     EARLY_STOP_PATIENCE = 20  # 连续 20 epoch valid NDCG@20 没创新低就停
     SELECT_METRIC = "ndcg@20"  # 与 HG-Rec train_HG-Rec.py:214 一致 (best_ndcg)
-    BEST_CKPT_PATH = "out/decoder/instruments/best_ckpt.pt"
+    BEST_CKPT_PATH = "out/decoder/m3_learnable_kappa_instruments/best_ckpt.pt"
 
     # === helper: eval 一个 dataloader, 返回 R35b 全局口径指标 ===
     def do_eval(eval_dl, split_name: str):

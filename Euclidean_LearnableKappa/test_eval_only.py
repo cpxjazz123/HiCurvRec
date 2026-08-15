@@ -53,8 +53,11 @@ def main():
     tokenizer = SemanticIdTokenizer(
         input_dim=768, hidden_dims=[512, 256, 128], output_dim=32,
         codebook_size=256, n_layers=3, n_cat_feats=0,
-        rqvae_weights_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out/rqvae_final.pt",
+        # M3 LearnableKappa: 用 M3 RQ-VAE 权重 (含 learnable curvature param)
+        rqvae_weights_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m3_learnable_kappa/rqvae_final.pt",
         rqvae_codebook_normalize=False, rqvae_sim_vq=False,
+        hyperbolic_mechanism="learnable_kappa",
+        vae_init_curvature=1.0,
     )
     tokenizer = accelerator.prepare(tokenizer)
     raw_tokenizer = accelerator.unwrap_model(tokenizer)
@@ -127,7 +130,7 @@ def main():
         print(f"  full: {metrics}", flush=True)
         # 持久化结果
         import json
-        out_path = "out/decoder/instruments/test_final.json"
+        out_path = "out/decoder/m3_learnable_kappa_instruments/test_final.json"
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         with open(out_path, "w") as f:
             json.dump({
