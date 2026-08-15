@@ -1,0 +1,10 @@
+# @package _global_
+# 机制差异配置: 继承 rqvae_common.yaml, 仅覆盖双曲机制开关
+defaults:
+  - rqvae_common
+model:
+  _target_: src.modules.clustering.residual_quantization.ResidualQuantization
+  use_hyperbolic: true
+  use_expmap: true
+  use_poincare_dist: true
+  learnable_curvature: true
