@@ -1,0 +1,23 @@
+{
+  "issue": 173,
+  "task": "C25 HG-Rec hyperbolic loss - 重建/commitment loss = poincare_distance^2 (c=1)",
+  "decision": "R37 rollback",
+  "reason": "test R@10=0.0959 < C10 baseline 0.0967 (-0.0008)",
+  "baseline_test_r10": 0.0967,
+  "c25_test_r10": 0.0959,
+  "delta": -0.0008,
+  "best_valid_ndcg20": 0.0967,
+  "stage2_ckpt": "rqvae_out_c25_hgrec_loss/rqvae_final.pt",
+  "stage3_test": {
+    "ndcg": 0.0797,
+    "ndcg@10": 0.0733,
+    "ndcg@20": 0.0797,
+    "h@10": 0.0959,
+    "h@20": 0.1210,
+    "best_epoch": 32,
+    "early_stop_epoch": 52
+  },
+  "key_observation": "HG-Rec loss 单独叠加 (保留 M2/M3/C5/learnable curvature) 不能复现 HG-Rec test R@10=0.1007. 关键 insight: HG-Rec 的极简实现 (c=1 fixed, 无 M2/M3, 无 C5) 是相互耦合的整体. C25 把 HG-Rec loss 嫁接到我们的 M2/M3 lineage 上, 反而打破了已建立的 valid-test 一致性.",
+  "rollback_action": "ReconstructionLoss/QuantizeLoss 保留 hyperbolic 版本 (供 C26+ 复用), 但 train paths 全部回到 m2m3 baseline",
+  "next_step": "C26: 完全剥离到 HG-Rec 极简结构 — gate_M2_intrinsic=False, gate_M3_transport=False, margin_reg_weight=0, c_min=c_max=1, 同时保留 HG-Rec loss + Sinkhorn center"
+}

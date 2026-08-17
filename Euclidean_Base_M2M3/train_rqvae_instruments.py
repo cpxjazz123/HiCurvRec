@@ -36,7 +36,7 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C24 R37 rollback: 回到 m2m3 baseline
+# C25 R37 rollback: 回到 m2m3 baseline (HG-Rec style hyperbolic loss 未带来 test 收益)
 OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3"
 
 INPUT_DIM = 768
