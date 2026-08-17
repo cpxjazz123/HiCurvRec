@@ -193,6 +193,8 @@ def main():
         hyperbolic_distance=True,
         sk_eps=0.05,
         prefix_router_layers=None,
+        use_scs=False,  # C24 R37 rollback: 与 Stage2 ckpt 一致
+        scs_eps_scale=1.0,
     ).to(device)
     model.load_state_dict(state["model"])
     model.eval()

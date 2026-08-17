@@ -172,6 +172,8 @@ def train(
         gate_M2_intrinsic=True,
         gate_M3_transport=True,
         hypervq=False,  # C21 rollback fix: 与 Stage2 ckpt (无 mlr_*) 保持一致 (Poincaré distance argmin)
+        use_scs=False,  # C24 R37 rollback
+        scs_eps_scale=1.0,
     )
     tokenizer = accelerator.prepare(tokenizer)
     # unwrap DDP 包装以调用非-module 方法 (precompute_corpus_ids 是 tokenizer 的方法,不是 nn.Module 方法)

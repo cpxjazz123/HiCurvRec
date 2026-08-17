@@ -36,7 +36,7 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C23: MCDQ 输出路径 (切换 c23 时改这里, R37 rollback 回到 m2m3)
+# C24 R37 rollback: 回到 m2m3 baseline
 OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3"
 
 INPUT_DIM = 768
@@ -69,6 +69,10 @@ TCU_ETA = 0.1                    # Riemannian step 大小 (切空间单位)
 #          "Product Manifolds" (Chami et al. ICML 2021).
 USE_MCDQ = False                # C23: 默认关闭 (R37 rollback), C23 切到 True 启用
 MCDQ_ALPHA_INIT = 0.5            # α 初始值 (sigmoid(θ)=0.5 → 等权混合)
+
+# C24: SCS (Sinkhorn Curvature Scaling) — Sinkhorn eps ∝ 1/c_l (几何驱动, 非调参)
+USE_SCS = False                 # C24 R37 rollback (test R@10=0.0949 < baseline 0.0967)
+SCS_EPS_SCALE = 1.0             # SCS 缩放指数 (eps = sk_eps / c_l^SCS_EPS_SCALE)
 
 # === 加速调参 (硬编码, R36 加速 OK) ===
 BATCH_SIZE = 640                 # per-GPU batch (4 卡 DDP, 总 batch = 2560)
@@ -182,6 +186,8 @@ def main():
         tcu_eta=TCU_ETA,
         use_mcdq=USE_MCDQ,         # C23: Mixed-Curvature Distance (False 默认, 跑 C23 时改为 True)
         mcdq_alpha_init=MCDQ_ALPHA_INIT,
+        use_scs=False,             # C24 R37 rollback
+        scs_eps_scale=SCS_EPS_SCALE,
     ).to(device)
 
     if COMPILE:
@@ -256,6 +262,13 @@ def main():
                     alpha_str = "/".join(f"{a:.3f}" for a in alphas)
                 else:
                     alpha_str = "off"
+                # C24: SCS 有效 Sinkhorn epsilon per-layer
+                if USE_SCS:
+                    c_vals = [float(l.get_c().item()) for l in model.module.layers]
+                    scs_eps = [f"{0.05 / (c ** SCS_EPS_SCALE):.3f}" for c in c_vals]
+                    scs_str = "/".join(scs_eps)
+                else:
+                    scs_str = "off"
                 print(
                     f"  ep {global_step_sync // 10:5d}/{NUM_EPOCHS} | step {global_step_sync:6d}/{MAX_GLOBAL_STEPS} "
                     f"| loss={float(loss.item()):.4f} "
@@ -266,6 +279,7 @@ def main():
                     f"| c={curv_str} "
                     f"| marg={marg_str} "
                     f"| α={alpha_str} "
+                    f"| eps={scs_str} "
                     f"| ips_g={ips_global:.1f} ips/rk={ips_per_gpu:.1f} "
                     f"| elapsed={elapsed:.1f}s | eta={eta_s:.1f}s",
                     flush=True,

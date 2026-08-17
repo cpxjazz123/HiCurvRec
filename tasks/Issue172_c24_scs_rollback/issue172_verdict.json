@@ -1,0 +1,23 @@
+{
+  "issue": 172,
+  "task": "C24 SCS (Sinkhorn Curvature Scaling) - eps ∝ 1/c_l",
+  "decision": "R37 rollback",
+  "reason": "test R@10=0.0949 < C10 baseline 0.0967 (-0.0018, -1.9%)",
+  "baseline_test_r10": 0.0967,
+  "c24_test_r10": 0.0949,
+  "delta": -0.0018,
+  "stage2_out_dir": "rqvae_out_c24_scs/",
+  "sid_file": "sids_c24_scs.npy",
+  "stage3_test": {
+    "ndcg": 0.0782,
+    "ndcg@10": 0.0716,
+    "ndcg@20": 0.0782,
+    "h@10": 0.0949,
+    "h@20": 0.1212,
+    "best_epoch": 25,
+    "early_stop_epoch": 45
+  },
+  "key_observation": "SCS gave codebook usage 99/100/100% (vs baseline 31/60/75%), but assignment sharpness vs distance fidelity tradeoff didn't help test R@10; better SID coverage ≠ better retrieval",
+  "rollback_action": "USE_SCS=False in train_rqvae_instruments.py, paths reverted to m2m3 baseline",
+  "next_step": "C25: explore information-geometric (Fisher metric) regularization OR mixed-curvature aggregation (Gu et al. 2019) NOT via Sinkhorn"
+}
