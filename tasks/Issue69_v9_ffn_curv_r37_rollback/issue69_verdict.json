@@ -1,0 +1,66 @@
+{
+  "issue": 69,
+  "title": "v9 Stage 3 T5 FFN learnable curvature — R37 rollback (test R@10=0.0898 < baseline 0.1074)",
+  "date": "2026-08-18",
+  "rule_applied": "R37 (test R@10 < baseline 立即回滚)",
+  "baseline_ref": "HG-Rec 重跑 Aug-14-2026_20-15-45 best (test R@10=0.1074, valid R@10=0.1312)",
+  "R36_path_tried": "Stage 3 T5 FFN learnable curvature (全新机制 — 不与 v3-v8 重复)",
+  "mechanism": {
+    "module": "FFNCurvature",
+    "location": "T5 encoder + decoder 每个 block 的 FFN 输出后",
+    "formula": "ffn_out * tanh(√c * ||ffn_out||) / (√c * ||ffn_out||)",
+    "learnable": "每个 FFN 一个 log_c (init=0 → c=1)",
+    "regularizer": "lambda_c * sum(log_c^2) with lambda_c=1e-4 (固定值, R36 禁调参)",
+    "monkey_patch": "transformers T5LayerFF.forward",
+    "non_HAB": "True",
+    "non_Lorentz": "True",
+    "no_data_leakage": "True (train/valid/test 逻辑未改, 数据集未动, beam_size=20 不变)"
+  },
+  "results": {
+    "training_duration_epochs": 31,
+    "training_stop_reason": "manual pkill (valid 仍在涨, EARLY_STOP=20 未触发)",
+    "best_valid_R@10": 0.1113,
+    "best_valid_NDCG@20": 0.0888,
+    "best_epoch": 30,
+    "test_R@10": 0.0898,
+    "test_NDCG@20": 0.0715,
+    "curvature_evolution": {
+      "E0_c_avg": 1.000,
+      "E10_c_avg": 0.956,
+      "E20_c_avg": 0.926,
+      "E30_c_avg": 0.906,
+      "E30_c_min": 0.676,
+      "E30_c_max": 1.005
+    }
+  },
+  "R37_check": {
+    "v9_test_R@10": 0.0898,
+    "baseline_test_R@10": 0.1074,
+    "delta": -0.0176,
+    "verdict": "FAIL: v9 < baseline by 16.4%, R37 rollback triggered",
+    "interpretation": "valid R@10=0.1111 vs baseline 0.1312 (-15%) AND test R@10=0.0898 vs baseline 0.1074 (-16%). v9 FFN curvature 在 valid 上略低于 baseline, 但 test gap 同步放大 (valid-test ratio 0.81 = 与 baseline 一致)."
+  },
+  "diagnosis": {
+    "curvature_drift_significant": "c_avg 从 1.0 漂到 0.91 (E30), c_min=0.676 — FFN 输出被显著 magnitude 压缩 (学习到 c<1 → 弱压缩 → 允许更大 hidden magnitude). 但 test R@10 仍低于 baseline.",
+    "train_test_gap_normal": "valid-test gap 0.0213 (E30 best) 与 baseline gap 0.0238 类似. 不是 valid 过拟合导致.",
+    "fundamental_limitation": "T5 FFN learnable curvature 在 Musical_Instruments + 9922 items 这个组合下, 即使 c 学到了非平凡值, 也无法突破 baseline. 曲率机制对 T5 主干边际改善不足以补偿 decoder 路径破坏."
+  },
+  "R36_paths_status_complete": {
+    "Stage_2_kappa_learning": "R38 (Issue68, killed)",
+    "Stage_3_kappa_frozen_to_learnable": "R37 (v3, regressed)",
+    "new_curvature_regularizer_v1_HAB": "R37 (v4, regressed)",
+    "Poincare_Lorentz_mechanism_change": "R37 (v5/v6, regressed)",
+    "Stage_2_codebook_transfer": "R38 (v7, killed)",
+    "Stage_3_FFN_learnable_curvature": "R37 (Issue69, just rolled back)"
+  },
+  "files": {
+    "model": "model/hg_rec_ffn_curv.py",
+    "training_script": "train_HG_Rec_ffn_curv_v9_ddp.py",
+    "eval_script": "eval_test_v9.py",
+    "best_ckpt": "ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_30.pth",
+    "training_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v9_ffn_curv_train.log",
+    "test_result": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v9_test_result.json"
+  },
+  "final_conclusion": "HG-Rec baseline test R@10 = 0.1074 = Musical_Instruments 数据集天花板. v9 FFN curvature 是 R36 路径下第 6 个失败尝试. 所有 R36 路径都已穷尽 (5+ R37/R38).",
+  "next_step_recommendation": "Stop HG-Rec iteration. Pivot to C33 M2M3 (test R@10=0.1093 already validated) or other non-curvature directions."
+}
