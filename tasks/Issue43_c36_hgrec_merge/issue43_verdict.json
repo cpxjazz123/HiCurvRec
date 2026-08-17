@@ -1,0 +1,65 @@
+{
+  "issue": 43,
+  "task": "C36: Merge HG-Rec architecture (T5ForConditionalGeneration + 序列级 CE + 平铺 vocab 769) into Euclidean_Base_M2M3 main",
+  "status": "R37_ROLLBACK",
+  "verdict": "FAIL",
+  "reason": "C36 v3 implementation uses SemanticIdTokenizer (M2M3 原生) + SlidingWindowTrainDataset + Adam (no scheduler) + bf16, test R@10=0.0162 << v1 baseline test R@10=0.0987 (R37 triggered, 必须立即回滚)",
+  "pre_check": {
+    "head_state": "EncoderDecoderRetrievalModel + SeqData + AdamW+InverseSquareRootScheduler(warmup=250) + fp16",
+    "v1_test_r10": 0.0987,
+    "v3_test_r10": 0.0162,
+    "regression": "-0.0825 (严重退化)"
+  },
+  "iterations": [
+    {
+      "name": "v3 (C36 attempt)",
+      "config": {
+        "model": "HG_Rec (T5ForConditionalGeneration, vocab=769, d_model=128)",
+        "tokenization": "SemanticIdTokenizer (2D sem_ids (B,80))",
+        "train_dataset": "SlidingWindowTrainDataset (131774 样本, inter.json)",
+        "optimizer": "Adam (no scheduler)",
+        "mixed_precision": "bf16",
+        "batch_size": 1024,
+        "infer_size": 256,
+        "valid_subset": 1500,
+        "early_stop": 20
+      },
+      "training": {
+        "epochs_run": 27,
+        "best_epoch": 7,
+        "best_valid_ndcg20": 0.0252,
+        "final_train_loss": 2.40,
+        "early_stopped": true
+      },
+      "test_eval": {
+        "test_h5": 622,
+        "test_h10": 703,
+        "test_h20": 887,
+        "test_ndcg5": 0.0152,
+        "test_ndcg10": 0.0162,
+        "test_ndcg20": 0.0181,
+        "test_r10": 0.0162
+      },
+      "gate_results": {
+        "Gate1_SID_format": "PASS (sem_ids shape (B,80) reshape→(B,20,4))",
+        "Gate2_Stage3_train_start": "PASS (loss 4.85→2.40 单调下降)",
+        "Gate3_EARLY_STOP": "PASS (counter=20@Epoch27)",
+        "Gate4_test_R10": "FAIL (0.0162 << v1 0.0987, R37 触发)"
+      }
+    }
+  ],
+  "diagnosis": [
+    "v3 valid ndcg@20=0.025 (best@Epoch7) 比 v1 (~0.06-0.07) 显著低 → 模型根本没学好泛化",
+    "SemanticIdTokenizer 输出 sem_ids 含 dedup_count 第 4 列 + 负值 padding marker (-1)",
+    "C33 用 item2code 直接映射 item→4 codes (3 SID + PAD=0), 无负值、无 dedup 列",
+    "可能 SemanticIdTokenizer 把同一 item 在不同位置编码为不同 2D sem_ids (因 dedup 语义), HG_Rec 平铺 vocab 学不到稳定 item boundary",
+    "Adam + 无 scheduler + bf16 也是可能的干扰, 但 loss 单调下降说明 optimizer 不是主因"
+  ],
+  "rollback_action": [
+    "git checkout HEAD -- Euclidean_Base_M2M3/train_decoder.py test_eval_only.py data/instruments.py infer_sids_instruments.py modules/loss.py modules/quantize.py modules/rqvae.py modules/tokenizer/semids.py train_rqvae_instruments.py",
+    "rm -f Euclidean_Base_M2M3/build_c28_sids_for_hgrec.py Euclidean_Base_M2M3/configs/decoder_instruments_hgrec.gin Euclidean_Base_M2M3/configs/decoder_instruments_m2m3_replay.gin Euclidean_Base_M2M3/hg_rec.py",
+    "rm -rf Euclidean_Base_M2M3/out/decoder/instruments_hgrec (broken best_ckpt)"
+  ],
+  "next_step": "新 issue 必须采用 C33 完全相同的架构: (1) 直接 item2code (9922,4) int64, 第 4 列=0; (2) HG_Rec T5ForConditionalGeneration (vocab=769); (3) GenRecDataset + 滑动窗口 (1-indexed inter.json); (4) 复用 C33 的 DDP 4 卡 + fp16 + AdamW + InverseSquareRootScheduler(warmup=250) 配置. 严禁自创 tokenization 路径 (SemanticIdTokenizer+dedup 与 C33 的 item2code 不等价).",
+  "rules_applied": ["R17", "R20", "R21", "R33", "R36", "R37"]
+}
