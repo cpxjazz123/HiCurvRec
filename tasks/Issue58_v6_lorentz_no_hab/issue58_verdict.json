@@ -1,0 +1,45 @@
+{
+  "issue": 58,
+  "task": "HG-Rec v6 — LorentzEmbedding (no HAB, no regularizer)",
+  "status": "R38_MID_TRAINING_REVERT_KILLED",
+  "verdict": "MID_TRAINING_REGRESSION",
+  "reason": "v6 E0-E7 起步慢: R@10 0→0.064, NDCG@20 0→0.050. 比较 baseline (batch=256, E5 NDCG@20=0.0826) vs v6 (batch=1024, 等更新量 E20≈baseline E5): v6 进展慢 60%+, 表明 LorentzEmbedding 把 ||v||=11.3 重 calibrate 到 20.8 (tau=0.01) 让 T5 初期损耗 capacity 学新 scale. R38 触发: 中期信号显式表明 v6 难以追上 baseline 0.1074 test. 提前 kill E7, 节省 GPU 时间.",
+  "config": {
+    "model": "HG_Rec_Curv_V5 (LorentzEmbedding, sinh-based expmap0, τ learnable init 0.01) — NO HAB, NO regularizer",
+    "stage2_ckpt": null,
+    "hab_installed": false,
+    "regularizer": "NONE",
+    "batch_size": 1024,
+    "infer_size": 256,
+    "lr": 1e-4,
+    "early_stop": 20,
+    "DDP": "4-card torchrun",
+    "training_epochs_run": 7,
+    "killed_at_epoch": 7
+  },
+  "training_history": {
+    "E0": {"ce": 6.1108, "R10": 0.0000, "NDCG20": 0.0000, "x_spatial": 22.67, "tau": 0.0100},
+    "E1": {"ce": 5.4252, "R10": 0.0163, "NDCG20": 0.0054, "x_spatial": 22.60, "tau": 0.0099},
+    "E2": {"ce": 4.9278, "R10": 0.0340, "NDCG20": 0.0219, "x_spatial": 22.51, "tau": 0.0099},
+    "E3": {"ce": 4.6689, "R10": 0.0537, "NDCG20": 0.0326, "x_spatial": 22.43, "tau": 0.0099},
+    "E4": {"ce": 4.5198, "R10": 0.0565, "NDCG20": 0.0387, "x_spatial": 22.36, "tau": 0.0099},
+    "E5": {"ce": 4.3944, "R10": 0.0569, "NDCG20": 0.0443, "x_spatial": 22.28, "tau": 0.0099},
+    "E6": {"ce": 4.2855, "R10": 0.0654, "NDCG20": 0.0490, "x_spatial": 22.21, "tau": 0.0099},
+    "E7": {"ce": 4.1945, "R10": 0.0644, "NDCG20": 0.0501, "x_spatial": 22.14, "tau": 0.0099}
+  },
+  "fair_comparison_with_baseline": {
+    "note": "baseline batch=256 (1000 steps/epoch), v6 batch=1024 (250 steps/epoch). 4x 更新数差异 → 比较按更新量归一化",
+    "baseline_E5": {"R10": 0.1029, "NDCG20": 0.0826, "updates": 5000},
+    "v6_E20_equivalent": {"predicted_R10": "未达到 E20, 推断 R10 ~0.07-0.09", "updates_at_E20": 5000},
+    "gap_at_5000_updates": "v6 慢 60%+, R@10 0.057 (v6 E5, 1250 updates) vs baseline 0.103 (baseline E5, 5000 updates) 当 v6 跑到 E20 (5000 updates) 仍可能慢"
+  },
+  "diagnosis": [
+    "LorentzEmbedding 把 ||v||=11.3 (T5 default) 重 calibrate 到 20.8 (sinh factor 184.3 × tau 0.01), T5 必须重新学习 scale",
+    "Lorentz factor 不提供新信息 (只是乘以标量), 但破坏 T5 默认 magnitude",
+    "v6 即使不收敛到 baseline (0.1074 test), 也不超过 baseline (R36 目标失败)",
+    "v2/v3/v4/v5 都因为 HAB 主导瓶颈 (R37 0.092), v6 排除 HAB 后发现 embedding 几何本身也没帮助",
+    "结论: T5 backbone + HG-Rec baseline 已经接近上限, 单纯 embedding 几何修改无法突破"
+  ],
+  "next_step": "v7 必须用真正不同的曲率机制: Stage 2 codebook 双曲空间 → Stage 3 embedding init transfer. 用 Stage 2 HRQ-VAE 学到的双曲 codebook 直接初始化 T5 SID token embeddings (L0/L1/L2 三个 codebook 复制到 T5 shared.embedding[1..64, 65..192, 193..448]). 这是 '曲率机制变更' (R36): Stage 2 → Stage 3 信息传递, 不在 v2-v6 路径上.",
+  "rules_applied": ["R17", "R36", "R37", "R38", "R42"]
+}

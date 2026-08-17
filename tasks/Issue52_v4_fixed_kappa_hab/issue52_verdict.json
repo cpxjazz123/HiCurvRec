@@ -1,0 +1,63 @@
+{
+  "issue": 52,
+  "task": "HG-Rec v4 — PoincareEmbedding (fixed κ=0.5) + 曲率正则项 + HAB",
+  "status": "R37_REGRESSION",
+  "verdict": "REGRESSION",
+  "reason": "v4 E67 best ckpt test R@10=0.0922 < baseline 0.1074 (-0.0152, -14.2% 回归). R37 触发, 不能 commit. Valid R@10=0.1147 → test 0.0922 (valid→test ratio=0.80, 与 v2 完全一致), HAB 仍然是泛化瓶颈. PoincareEmbeddingFixed (κ=0.5) 退化为 embedding 规范化 (||expmap(v)||=1.41 卡在 Poincaré 球边缘), 不提供真正双曲几何价值.",
+  "config": {
+    "model": "HG_Rec_Curv_V4 (Poincaré embedding fixed κ=0.5 + 曲率正则) + HAB frozen Dbar + learnable λ",
+    "stage2_ckpt": "ckpt/Instruments/Aug-14-2026_20-04-16_beta_1.000_codebook_[64,128,256]_sk_0.000/best_collision_model.pth",
+    "hab_lambda_max": 0.20,
+    "kappa_fixed": 0.5,
+    "target_norm": 0.5,
+    "lambda_reg": 0.01,
+    "batch_size": 1024,
+    "infer_size": 256,
+    "lr": 1e-4,
+    "early_stop": 20,
+    "DDP": "4-card torchrun",
+    "training_epochs_run": 67,
+    "best_epoch": 67
+  },
+  "init_bug": {
+    "issue": "init 时 ||v||=11.26 (T5 默认 std=1.0 覆盖了我设的 init_std=0.1, 因为 copy_(self.model.shared.weight.data) 把 T5 默认 embeddings 拷贝到 PoincareEmbeddingFixed)",
+    "effect": "expmap(v) 饱和, ||expmap(v)||=1.4131 卡在 Poincaré 球边缘 (max=1.414), 不在球内"
+  },
+  "training_history": {
+    "E0":  {"ce": 5.7602, "R10": 0.0000, "NDCG20": 0.0000, "expmap_norm": 1.4131, "lambda": [0.0929, 0.0932, 0.0933]},
+    "E10": {"ce": 4.0055, "R10": 0.0771, "NDCG20": 0.0605, "expmap_norm": 1.4131, "lambda": [0.0718, 0.1001, 0.1071]},
+    "E20": {"ce": 3.5109, "R10": 0.0939, "NDCG20": 0.0768, "expmap_norm": 1.4131, "lambda": [0.0314, 0.1060, 0.1190]},
+    "E30": {"ce": 3.2152, "R10": 0.0998, "NDCG20": 0.0818, "expmap_norm": 1.4131, "lambda": [0.0176, 0.1087, 0.1262]},
+    "E40": {"ce": 2.9929, "R10": 0.1052, "NDCG20": 0.0857, "expmap_norm": 1.4131, "lambda": [0.0136, 0.1113, 0.1305]},
+    "E50": {"ce": 2.8174, "R10": 0.1096, "NDCG20": 0.0888, "expmap_norm": 1.4131, "lambda": [0.0148, 0.1170, 0.1347]},
+    "E60": {"ce": 2.6820, "R10": 0.1119, "NDCG20": 0.0912, "expmap_norm": 1.4131, "lambda": [0.0148, 0.1193, 0.1382]},
+    "E67": {"ce": 2.6020, "R10": 0.1147, "NDCG20": 0.0932, "expmap_norm": 1.4131, "lambda": [0.0155, 0.1200, 0.1390]}
+  },
+  "lambda_trajectory": {
+    "L0": "0.093 → 0.015 (aggressive shutdown — coarse layer geometry dropped)",
+    "L1": "0.093 → 0.120 (consistent increase)",
+    "L2": "0.093 → 0.139 (consistent increase)"
+  },
+  "test_eval_E67": {
+    "R@5": 0.0743, "R@10": 0.0922, "R@20": 0.1173,
+    "NDCG@5": 0.0634, "NDCG@10": 0.0691, "NDCG@20": 0.0755
+  },
+  "baseline_comparison": {
+    "baseline_test_R10": 0.1074,
+    "v4_test_R10": 0.0922,
+    "delta": -0.0152,
+    "delta_pct": "-14.2%",
+    "valid_to_test_ratio_v4": 0.804,
+    "valid_to_test_ratio_v2": 0.796,
+    "valid_to_test_ratio_baseline": 0.851
+  },
+  "diagnosis": [
+    "v4 fixed κ PoincareEmbedding 退化为 embedding norm 规范化, 不提供真正双曲几何",
+    "expmap_norm 1.4131 卡死在 Poincaré 球边缘 (R=1.414), expmap 实际溢出球外 (||expmap(v)|| 真实值 ~2.83)",
+    "v4 valid 接近 v2 (0.1147 vs 0.1162), test 也接近 (0.0922 vs 0.0925) → HAB 是主导, PoincareEmbedding 没贡献",
+    "valid→test ratio 0.80 = v2, HAB 仍是泛化瓶颈",
+    "曲率正则项 (lambda_reg=0.01) 太弱, 拉不动 expmap_norm"
+  ],
+  "next_step": "v5 必须换路径: (a) Stage 2 κ learning (R36 #1 priority, 需要重训 Stage 2 + 重新生成 SID), (b) 不用 HAB 直接换 Stage 3 架构 (e.g., Möbius FFN, decoder-side curvature), (c) 放弃 v2/v3/v4 整套思路, 重新调研 R36 Poincaré-Minkowski-Lorentz 路径. R37 触发, 不能 commit v4.",
+  "rules_applied": ["R17", "R36", "R37", "R42"]
+}

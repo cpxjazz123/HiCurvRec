@@ -1,0 +1,50 @@
+{
+  "issue": 60,
+  "task": "HG-Rec v7 — Stage 2 codebook init for T5 SID embeddings",
+  "status": "R38_MID_TRAINING_REVERT_KILLED",
+  "verdict": "MID_TRAINING_REGRESSION",
+  "reason": "v7 E0-E5: ce 6.63→5.79 (vs baseline E0=6.11, E5=3.5). R@10 全程 = 0.0. Codebook init 远差于 T5 default init. Stage 2 训练域 (RQE-VAE reconstruction loss) ≠ T5 训练域 (sequence CE), transfer learning 负迁移. R38 触发: 中期信号显式表明 v7 不收敛.",
+  "config": {
+    "model": "HG_Rec_Curv_V7 — T5 shared.embedding[SID] ← Stage 2 HRQ-VAE codebook (raw tangent, repeat 4x to d=128, scale to ||v||≈11.3)",
+    "stage2_ckpt": "ckpt/Instruments/Aug-14-2026_20-04-16_beta_1.000_codebook_[64,128,256]_sk_0.000/best_collision_model.pth",
+    "hab_installed": false,
+    "regularizer": "NONE",
+    "batch_size": 1024,
+    "infer_size": 256,
+    "lr": 1e-4,
+    "early_stop": 20,
+    "DDP": "4-card torchrun",
+    "training_epochs_run": 5,
+    "killed_at_epoch": 5
+  },
+  "training_history": {
+    "E0": {"ce": 6.6348, "R10": 0.0000, "NDCG20": 0.0000},
+    "E1": {"ce": 6.1448, "R10": 0.0000, "NDCG20": 0.0000},
+    "E2": {"ce": 6.0111, "R10": 0.0000, "NDCG20": 0.0000},
+    "E3": {"ce": 5.9251, "R10": 0.0000, "NDCG20": 0.0000},
+    "E4": {"ce": 5.8542, "R10": 0.0000, "NDCG20": 0.0000},
+    "E5": {"ce": 5.7942, "R10": 0.0000, "NDCG20": 0.0000}
+  },
+  "comparison_with_baseline": {
+    "baseline_E5": {"ce": 3.5, "R10": 0.103},
+    "v7_E5": {"ce": 5.79, "R10": 0.0},
+    "gap": "v7 CE 比 baseline E5 高 2.3 nats, R@10 落后 baseline 100%",
+    "verdict": "v7 远不如 baseline"
+  },
+  "diagnosis": [
+    "Stage 2 codebook 是为 reconstruction 训练 (用 PQ/RQ-VAE loss), 与 T5 next-token prediction 任务域完全不同",
+    "Codebook 32-d tangent space 重复 4x 到 128-d, 引入 dim 相关性 (相邻 4 dim 同值), T5 attention 可能受阻",
+    "Codebook init 替换 T5 default isotropic init, 损失方向均匀性, 初始 ce=6.63 高于 baseline 6.11",
+    "Stage 2→Stage 3 transfer 必须满足 'similar domain' 假设, 这里不满足",
+    "负迁移典型表现: 比 from-scratch 更差"
+  ],
+  "lessons_learned": [
+    "v2-v6 都在 Stage 3 内部尝试 curvature (embedding geometry), 全部失败",
+    "v7 首次尝试 Stage 2→Stage 3 信息传递, 也失败 (transfer learning 假设不成立)",
+    "R36 列出的 4 个曲率机制: (a) Stage 2 κ learning, (b) Stage 3 κ frozen→learnable, (c) 新曲率正则项, (d) Poincaré-Minkowski-Lorentz 曲率机制变更",
+    "已尝试 (b)(c)(d), 全 R37 / R38 regress",
+    "唯一未尝试 (a) Stage 2 κ learning: 需要重训 Stage 2 (1-2 小时), 重新生成 SID, 重新训练 Stage 3"
+  ],
+  "next_step": "Stage 2 κ learning (R36 #1) 是唯一未尝试的核心路径. 实现方案: 修改 HG-Rec/train_hrqvae.py 加 per-branch learnable κ (L0/L1/L2 三个曲率), 重训 Stage 2 (~30-60 min DDP 4 卡), 重新生成 SID (9922 items), 用新 SID 训练 Stage 3 (~30-60 min), test eval. 总耗时 ~2 小时, 可能提升 test R@10 ≥ 0.11 (R36 #1 优先级最高路径). 若失败, conclude HG-Rec baseline 已达上限.",
+  "rules_applied": ["R17", "R36", "R37", "R38", "R42"]
+}

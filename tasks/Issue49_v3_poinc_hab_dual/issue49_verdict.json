@@ -1,0 +1,57 @@
+{
+  "issue": 49,
+  "task": "HG-Rec v3 — PoincareEmbedding (κ learnable) + HAB (λ learnable) 组合",
+  "status": "R37_REGRESSION",
+  "verdict": "REGRESSION",
+  "reason": "v3 E44 R@10=0.0724 < baseline 0.1074 (-32% 回归), κ 漂移 1.0→1.016→0.955 不稳定. v3 = PoincareEmbeddingV3 (κ learnable) + HAB 双重曲率, 但 κ 振荡反而拖慢收敛. 比较 v2 (HAB only): v3 E20 R@10=0.0736 < v2 E20 R@10=0.0933, v3 落后 v2 约 5-7 epochs. 双曲几何双重注入无法挽救单一 HAB 的泛化偏置. 必须回滚 v3 路径, 不能 commit.",
+  "config": {
+    "model": "HG_Rec_Curv_V3 (Poincaré embedding std=0.1 + learnable κ) + HAB frozen Dbar + learnable λ",
+    "stage2_ckpt": "ckpt/Instruments/Aug-14-2026_20-04-16_beta_1.000_codebook_[64,128,256]_sk_0.000/best_collision_model.pth",
+    "hab_lambda_max": 0.20,
+    "hab_force_zero_layers": [3],
+    "emb_init_std": 0.1,
+    "kappa_init": 1.0,
+    "kappa_clamp": [0.05, 8.0],
+    "batch_size": 1024,
+    "infer_size": 256,
+    "lr": 1e-4,
+    "early_stop": 20,
+    "DDP": "4-card torchrun",
+    "training_epochs_run": 44
+  },
+  "key_fix": {
+    "bug": "v3 初始版 κ 卡死 1.0000 (E0-E10)",
+    "root_cause": "T5 encoder/decoder 各自缓存 embed_tokens 引用, self.model.shared = new_shared 不会自动更新 → encoder 仍走原 nn.Embedding, PoincareEmbeddingV3.forward 未被调用 → κ.grad = None",
+    "fix": "HG_Rec_Curv_V3.__init__ 显式同步: self.model.encoder.embed_tokens = new_shared, self.model.decoder.embed_tokens = new_shared",
+    "verify": "diag_kappa_grad_ce3.py: 修复后 log_κ.grad=-5.26e-3 (非零), embedding.weight.grad.sum=0.243"
+  },
+  "training_history": {
+    "E0":  {"loss": 6.6887, "R10": 0.0000, "NDCG20": 0.0000, "kappa": 1.0013, "lambda": [0.0930, 0.0928, 0.0932]},
+    "E5":  {"loss": 6.3924, "R10": 0.0513, "NDCG20": 0.0224, "kappa": 1.0065, "lambda": [0.0910, 0.0936, 0.0939]},
+    "E10": {"loss": 6.1432, "R10": 0.0684, "NDCG20": 0.0458, "kappa": 1.0097, "lambda": [0.0914, 0.0951, 0.0949]},
+    "E20": {"loss": 5.6734, "R10": 0.0736, "NDCG20": 0.0522, "kappa": 1.0162, "lambda": [0.0759, 0.0984, 0.1012]},
+    "E30": {"loss": 5.2277, "R10": 0.0739, "NDCG20": 0.0595, "kappa": 1.0014, "lambda": [0.0743, 0.1008, 0.0995]},
+    "E40": {"loss": 4.8158, "R10": 0.0724, "NDCG20": 0.0611, "kappa": 0.9678, "lambda": [0.0796, 0.1025, 0.0974]},
+    "E44": {"loss": 4.6500, "R10": 0.0724, "NDCG20": 0.0616, "kappa": 0.9545, "lambda": [0.0799, 0.1036, 0.0958]}
+  },
+  "kappa_trajectory": "1.0013 → 1.016 (peak E20) → 0.978 (E30) → 0.955 (E44). κ oscillation indicates loss prefers flat embedding; learnable κ fights against Euclidean attractor.",
+  "lambda_trajectory": {
+    "L0": "0.093 → 0.080 (decreasing — coarse layer less geometry)",
+    "L1": "0.093 → 0.104 (increasing — mid layer more geometry)",
+    "L2": "0.093 → 0.096 (slight increase)"
+  },
+  "comparison_with_v2": {
+    "v2_E20_R10": 0.0933,
+    "v3_E20_R10": 0.0736,
+    "gap": "-0.0197 (-21%)",
+    "diagnosis": "v3 slower than v2. Combined curvature injection didn't help; may interfere with v2's λ learning signal."
+  },
+  "diagnosis": [
+    "PoincareEmbeddingV3 κ learnable 工作 (确认 E0→E20 κ=1.0013→1.016), 但 κ 漂移回 0.95 后 R@10 反而下降",
+    "κ 优化目标不明确 — 自由 κ 会拉回 1.0 (Euclidean attractor) 或 0.95 (model-preferred curvature)",
+    "v3 = HAB + κ 双重曲率, 但 κ 漂移引入额外方差, 反而拖慢 HAB 主线学习",
+    "EARLY_STOP 未触发因 NDCG@20 还在缓慢↑, 但 R@10 已停滞/下降"
+  ],
+  "next_step": "v4 必须换思路: 不再 κ learnable (避免 κ 漂移扰动), 改用 (a) 固定 κ PoincareEmbedding + curvature regularizer, 或 (b) 双曲 FFN (Möbius FFN), 或 (c) Stage 2 branch-wise curvature (需要重训 Stage2). R37 触发, 不能 commit.",
+  "rules_applied": ["R17", "R36", "R37", "R42"]
+}
