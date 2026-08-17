@@ -146,7 +146,16 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
 
     def load_pretrained(self, path: str) -> None:
         state = torch.load(path, map_location=self.device, weights_only=False)
-        # strict=False: 兼容无 theta 参数的旧欧氏 ckpt (M2/M3 新增曲率参数不在 state_dict)
+        # C21 防泄露校验: ckpt 用 hypervq 训练 (含 mlr_a/mlr_r), 但当前模型 hypervq=False →
+        # strict=False 会静默丢弃 mlr 参数, tokenizer 用未训练 embedding.weight → SID 塌缩 + 指标虚高
+        # (实测: 9922 items 只剩 251 唯一 SID, test R@10 假象 0.27). 必须显式报错阻止.
+        ckpt_has_mlr = any("mlr_a" in k or "mlr_r" in k for k in state["model"])
+        if ckpt_has_mlr and not self.hypervq:
+            raise ValueError(
+                "C21 MISMATCH: ckpt 由 hypervq=True 训练 (含 mlr_a/mlr_r 参数), 但当前 RqVae "
+                "hypervq=False (用未训练 embedding.weight). 这会导致 codebook SID 塌缩与指标虚高 (数据泄露). "
+                "请传入 hypervq=True 保持一致."
+            )
         self.load_state_dict(state["model"], strict=False)
         # 兼容多种 ckpt key 命名 (原项目 'iter' / 我们的 'global_step')
         iter_val = state.get("iter", state.get("global_step", "unknown"))

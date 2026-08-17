@@ -38,6 +38,7 @@ class SemanticIdTokenizer(nn.Module):
         rqvae_sim_vq: bool = False,
         gate_M2_intrinsic: bool = True,
         gate_M3_transport: bool = True,
+        hypervq: bool = False,  # C21: HyperVQ 双曲 MLR 量化 (必须与训练 ckpt 一致, 否则 SID 塌缩泄露)
     ) -> None:
         super().__init__()
 
@@ -54,6 +55,7 @@ class SemanticIdTokenizer(nn.Module):
             commitment_weight=commitment_weight,
             gate_M2_intrinsic=gate_M2_intrinsic,
             gate_M3_transport=gate_M3_transport,
+            hypervq=hypervq,
         )
 
         if rqvae_weights_path is not None:
