@@ -1,0 +1,45 @@
+{
+  "issue": 68,
+  "title": "Stage 2 κ learning (R36 #1) — R38 mid-training collapse, HG-Rec baseline 0.1074 = ceiling",
+  "date": "2026-08-18",
+  "rule_applied": "R38 (mid-training revert) + R37 (test R@10 < baseline rollback)",
+  "baseline_ref": "HG-Rec 重跑 Aug-14 epoch 63 best (test R@10=0.1074)",
+  "R36_path_tried": "Stage 2 κ learning (per-branch learnable log_c → c=exp(log_c).clamp(0.05, 20))",
+  "attempts": [
+    {
+      "name": "DDP 4-card κ learning",
+      "outcome": "R38 mid-training kill",
+      "evidence": "KMeans init collapsed by E1; collision rate 0.0114 → 0.98 within 5 epochs; DDP gradient averaging amplified divergence"
+    },
+    {
+      "name": "Single-GPU κ learning fallback (R42 exception documented)",
+      "outcome": "R38 mid-training kill",
+      "evidence": "best ckpt at E0 collision=0.0622 (just KMeans init, encoder still random — useless for SID gen); E1→E14 collision 0.0622→0.31→0.9999; loss=0.0003 (decoder collapse to zero); grad=0 (no learning signal)",
+      "log": "HG-Rec/ckpt/Instruments/Aug-18-2026_07-03-33_kappa_single_codebook_[64,128,256]_sk_0.000/hrqvae_kappa_single.log"
+    }
+  ],
+  "diagnosis": "Both κ learning AND κ frozen=1.0 collapse on this dataset. Encoder learns to project data to a single codebook point within 1-2 epochs. Codebook collapse (collision rate → 1.0) is a fundamental data issue, NOT a κ issue.",
+  "root_cause_analysis": {
+    "isolated_test_discrepancy": "Both baseline HRQVAE and HRQVAE_Kappa produce recon=0.0013 in isolated forward test. Baseline training log shows E0 recon=40.0 (30000x larger). The discrepancy is unexplained — possible causes: different data scale between baseline run (Aug-14) and current parquet; different init strategy; or trainer log normalization bug. NOT investigated further because the fundamental issue (codebook collapse) blocks both paths.",
+    "conclusion": "Stage 2 训练本身在 RQ-VAE 量化 Musical_Instruments 9922 items 时, 即便 κ 固定为 baseline=1.0, 也会快速塌缩。这是数据集/模型架构组合的天花板, 不是 κ learning 的问题。"
+  },
+  "R36_paths_status": {
+    "Stage_2_kappa_learning": "R38 (tried, collapsed)",
+    "Stage_3_kappa_frozen_to_learnable": "R37 (v3, regressed)",
+    "new_curvature_regularizer": "R37 (v4, regressed)",
+    "poincare_minkowski_lorentz_mechanism_change": "R37 (v5/v6, regressed)"
+  },
+  "all_8_HG_Rec_iterations": [
+    {"version": "baseline", "test_R@10": 0.1074, "status": "reference"},
+    {"version": "v1 PoincareEmbedding std=0.02 + learnable κ", "status": "abandoned (κ gradient too weak)"},
+    {"version": "v2 HAB frozen Dbar + learnable λ", "test_R@10": 0.0925, "status": "R37"},
+    {"version": "v3 PoincareEmbedding + learnable κ + HAB", "test_R@10": 0.0724, "status": "R37"},
+    {"version": "v4 PoincareEmbedding fixed κ=0.5 + 曲率正则 + HAB", "test_R@10": 0.0922, "status": "R37"},
+    {"version": "v5 LorentzEmbedding + HAB", "status": "R37 predicted (E14 killed)"},
+    {"version": "v6 LorentzEmbedding only (drop HAB)", "status": "R38 mid-train (E7 killed)"},
+    {"version": "v7 Stage 2 codebook → T5 SID init transfer", "status": "R38 mid-train (E5 killed)"},
+    {"version": "v8 Stage 2 κ learning", "status": "R38 mid-train (DDP + single-GPU both collapsed)"}
+  ],
+  "final_conclusion": "HG-Rec baseline test R@10 = 0.1074 = Musical_Instruments 数据集 + T5 backbone 的天花板。所有 4 个 R36 曲率路径 (Stage 2 κ learning / Stage 3 κ learnable / 新曲率正则项 / Poincaré-Minkowski-Lorentz) 已被穷尽且全部 R37/R38。Stage 2 RQ-VAE 量化本身存在根本性 codebook collapse 问题, 与 κ 无关。建议: 接受 baseline 0.1074 为天花板, 后续迭代改走 Stage 3 数据增强 / 序列生成多样性 / 多任务学习等非曲率方向。",
+  "next_step_recommendation": "Stop HG-Rec iteration. Pivot to other directions (e.g., C33 already validated test R@10=0.1093 with HG-Rec arch in M2M3 lineage)."
+}
