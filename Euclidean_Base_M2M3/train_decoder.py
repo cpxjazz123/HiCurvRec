@@ -198,9 +198,9 @@ def train(
         should_add_sep_token=should_add_sep_token,
         num_user_bins=num_user_bins,
         # 欧氏对照: 无曲率注入 / 无 HAB
-        curv_state_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/curvature_state_m2m3.npy",
-        response_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/response_m2m3.npy",
-        hab_rqvae_ckpt="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3/rqvae_final.pt",
+        curv_state_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/curvature_state_c26_full_hgrec.npy",
+        response_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/response_c26_full_hgrec.npy",
+        hab_rqvae_ckpt="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec/rqvae_final.pt",
     )
     if False:
         model = torch.compile(model)  # 关闭 torch.compile (4 卡 DDP 兼容性问题)
@@ -245,7 +245,7 @@ def train(
     MAX_EPOCHS = 200
     EARLY_STOP_PATIENCE = 20  # 连续 20 epoch valid NDCG@20 没创新低就停
     SELECT_METRIC = "ndcg@20"  # 与 HG-Rec train_HG-Rec.py:214 一致 (best_ndcg)
-    BEST_CKPT_PATH = "out/decoder/m2m3_400k_instruments/best_ckpt.pt"
+    BEST_CKPT_PATH = "out/decoder/c26_full_hgrec_400k_instruments/best_ckpt.pt"
 
     # === helper: eval 一个 dataloader, 返回 R35b 全局口径指标 ===
     def do_eval(eval_dl, split_name: str):

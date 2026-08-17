@@ -107,6 +107,10 @@ class Quantize(nn.Module):
         tcu_max_step: float = 0.1,          # C22: 单步最大切空间位移 (防 catastrophic jump)
         use_mcdq: bool = False,             # C23: Mixed-Curvature Distance Quantization
         mcdq_alpha_init: float = 0.5,       # C23: 初始 mixing weight (α ∈ [0,1], sigmoid(θ)=0.5)
+        use_scs: bool = False,              # C24: Sinkhorn Curvature Scaling — eps ∝ 1/c_l
+        scs_eps_scale: float = 1.0,         # C24: SCS scaling factor (eps = sk_eps / (c_l^scs_eps_scale))
+        use_fixed_curvature: bool = False,  # C26: HG-Rec 极简 — 固定 c (无 learnable θ)
+        c_fixed: float = 1.0,               # C26: HG-Rec default c=1
     ) -> None:
         super().__init__()
 
@@ -151,9 +155,25 @@ class Quantize(nn.Module):
             init_logit = _math.log(mcdq_alpha_init / (1.0 - mcdq_alpha_init))
             self.theta_mcdq = nn.Parameter(torch.tensor(init_logit, dtype=torch.float32))
 
+        # C24: SCS (Sinkhorn Curvature Scaling) — Sinkhorn eps ∝ 1/c_l
+        # 论文支撑: "Hyperbolic Residual Quantization for Recommendation" (HypRQ) 中提到 entropy reg;
+        #          本机制让 Sinkhorn 自适应曲率: 高 c → 小 eps → 更尖锐分配 (缓解 collapse),
+        #          低 c → 大 eps → 更平分配 (允许软聚类).
+        self.use_scs = use_scs
+        self.scs_eps_scale = float(scs_eps_scale)
+        self.use_fixed_curvature = use_fixed_curvature
+        self.c_fixed = float(c_fixed)
+
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
-        self.theta = nn.Parameter(torch.tensor(math.log((1.0 - _C_MIN) / (_C_MAX - 1.0)), dtype=torch.float32))
+        # C26: use_fixed_curvature=True 时冻结 θ (requires_grad=False), get_c 始终返回 c_fixed
+        if use_fixed_curvature:
+            self.theta = nn.Parameter(
+                torch.tensor(math.log((c_fixed - _C_MIN) / (_C_MAX - c_fixed)), dtype=torch.float32),
+                requires_grad=False,
+            )
+        else:
+            self.theta = nn.Parameter(torch.tensor(math.log((1.0 - _C_MIN) / (_C_MAX - 1.0)), dtype=torch.float32))
 
         # Issue #154: prefix router (L1/L2) — per-item delta, fc2 零初始化 → 初始 delta=0
         if prefix_routing:
@@ -174,15 +194,19 @@ class Quantize(nn.Module):
         return self.embedding.weight
 
     def get_c(self) -> Tensor:
-        """M2/M3: 该层全局曲率 c_l (1,) — C_MIN + (C_MAX-C_MIN)*sigmoid(theta_l)."""
+        """M2/M3: 该层全局曲率 c_l (1,) — C_MIN + (C_MAX-C_MIN)*sigmoid(theta_l).
+        C26: use_fixed_curvature=True → 永远返回 c_fixed (HG-Rec 极简).
+        """
+        if self.use_fixed_curvature:
+            return torch.tensor(self.c_fixed, device=self.theta.device, dtype=self.theta.dtype)
         return _C_MIN + (_C_MAX - _C_MIN) * torch.sigmoid(self.theta)
 
     def get_c_per_item(self, prefix_emb: Optional[Tensor] = None) -> Tensor:
         """Issue #154: per-item 曲率 c_l,i (B,) — prefix router 输出 delta 调制 θ.
-
-        无 prefix_routing / 无 prefix_emb → 退化为全局 c_l (1,).
-        fc2 零初始化 → 初始 delta=0 → 与 baseline 严格等价.
+        C26: use_fixed_curvature=True → 永远返回 c_fixed, 忽略 prefix_emb (HG-Rec 极简).
         """
+        if self.use_fixed_curvature:
+            return torch.tensor(self.c_fixed, device=self.theta.device, dtype=self.theta.dtype)
         c_global = self.get_c()
         if not self.prefix_routing or prefix_emb is None:
             return c_global
@@ -306,7 +330,15 @@ class Quantize(nn.Module):
             # HG-Rec 防坍缩: Sinkhorn-Knopp 均衡分配 (balanced assignment, 强制 code 均衡使用)
             from modules.hyperbolic import _sinkhorn_algorithm
             d_centered = self._center_distance_for_constraint(dist.detach())
-            Q = _sinkhorn_algorithm(d_centered.double(), self.sk_eps, self.sk_iters)
+            # C24: SCS — Sinkhorn eps 自适应曲率: eps = sk_eps / c_l^scs_eps_scale
+            # 高 c → 小 eps → 尖锐分配; 低 c → 大 eps → 平滑分配. 几何驱动, 非调参.
+            if self.use_scs:
+                c_for_sinkhorn = self.get_c_per_item(prefix_emb)
+                c_scalar = float(c_for_sinkhorn.mean().item()) if c_for_sinkhorn.dim() > 0 else float(c_for_sinkhorn.item())
+                effective_eps = self.sk_eps / (c_scalar ** self.scs_eps_scale)
+            else:
+                effective_eps = self.sk_eps
+            Q = _sinkhorn_algorithm(d_centered.double(), effective_eps, self.sk_iters)
             if torch.isnan(Q).any() or torch.isinf(Q).any():
                 raise ValueError("Sinkhorn algorithm produced NaN or Inf values.")
             ids = torch.argmax(Q, dim=-1)

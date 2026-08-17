@@ -41,6 +41,8 @@ class SemanticIdTokenizer(nn.Module):
         hypervq: bool = False,  # C21: HyperVQ 双曲 MLR 量化 (必须与训练 ckpt 一致, 否则 SID 塌缩泄露)
         use_mcdq: bool = False,  # C23: MCDQ 混合曲率距离 (必须与 Stage2 ckpt 一致, 否则 SID 不对齐)
         mcdq_alpha_init: float = 0.5,  # C23: α 初始 (与 Stage2 ckpt 一致)
+        use_scs: bool = False,  # C24: SCS Sinkhorn eps ∝ 1/c_l (必须与 Stage2 ckpt 一致)
+        scs_eps_scale: float = 1.0,  # C24: SCS 缩放指数
     ) -> None:
         super().__init__()
 
@@ -60,6 +62,8 @@ class SemanticIdTokenizer(nn.Module):
             hypervq=hypervq,
             use_mcdq=use_mcdq,
             mcdq_alpha_init=mcdq_alpha_init,
+            use_scs=use_scs,
+            scs_eps_scale=scs_eps_scale,
         )
 
         if rqvae_weights_path is not None:

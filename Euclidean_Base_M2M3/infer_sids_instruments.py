@@ -24,8 +24,8 @@ from data.schemas import SeqBatch
 
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_m2m3.npy"
+CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec/rqvae_final.pt"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c26_full_hgrec.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768
@@ -176,6 +176,7 @@ def main():
     print(f"[ckpt] loaded at global_step={state['global_step']}")
 
     # Build model (codebook_kmeans_init=False, ckpt 覆盖权重)
+    # C26: 与训练一致 (HG-Rec 极简: 关 M2/M3/Sinkhorn, 固定 c=1)
     model = RqVae(
         input_dim=INPUT_DIM,
         embed_dim=EMBED_DIM,
@@ -188,13 +189,18 @@ def main():
         n_layers=N_LAYERS,
         n_cat_features=0,
         commitment_weight=COMMITMENT_WEIGHT,
-        gate_M2_intrinsic=True,  # M2: Möbius 内在减法
-        gate_M3_transport=True,  # M3: 跨层曲率传输
-        hyperbolic_distance=True,
-        sk_eps=0.05,
+        gate_M2_intrinsic=False,  # C26 HG-Rec 极简: 关 M2
+        gate_M3_transport=False,  # C26 HG-Rec 极简: 关 M3
+        hyperbolic_distance=True,  # HG-Rec 双曲 argmin
+        sk_eps=0.0,                # C26 HG-Rec 极简: 关 Sinkhorn
         prefix_router_layers=None,
-        use_scs=False,  # C24 R37 rollback: 与 Stage2 ckpt 一致
+        margin_reg_weight=0.0,     # C26 HG-Rec: 关 C5
+        use_tcu=False,             # C26 HG-Rec: 关 TCU
+        use_mcdq=False,            # C26 HG-Rec: 关 MCDQ
+        use_scs=False,             # C26 HG-Rec: 关 SCS
         scs_eps_scale=1.0,
+        use_fixed_curvature=True,  # C26 HG-Rec: 固定 c=1
+        c_fixed=1.0,
     ).to(device)
     model.load_state_dict(state["model"])
     model.eval()
@@ -303,9 +309,9 @@ def main():
     # Save
     np.save(OUT_NPY, sids)
     print(f"[save] {OUT_NPY}: shape={sids.shape}, dtype={sids.dtype}")
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_m2m3.npy"), curv_state)
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_m2m3.npy"), response)
-    print(f"[save] curvature_state_m2m3.npy: {curv_state.shape} | response_m2m3.npy: {response.shape}")
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c26_full_hgrec.npy"), curv_state)
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c26_full_hgrec.npy"), response)
+    print(f"[save] curvature_state_c26_full_hgrec.npy: {curv_state.shape} | response_c26_full_hgrec.npy: {response.shape}")
     print(f"[curv] per-layer c: {[float(curv_state[0, li]) for li in range(N_LAYERS)]}")
     print(f"[resp] boundary mean: {[float(response[:, li, 1].mean()) for li in range(N_LAYERS)]}")
 

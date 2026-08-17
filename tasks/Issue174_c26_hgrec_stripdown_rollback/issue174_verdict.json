@@ -1,0 +1,50 @@
+{
+  "issue": "Issue #174 (C26)",
+  "experiment": "C26 = 完全剥离到 HG-Rec 极简结构: sk_eps=0.0 + hyperbolic loss + 关 M2/M3 + 关 C5 margin + 固定 c=1",
+  "hypothesis": "C25 (HG-Rec 双曲 loss) test R@10=0.0959 < baseline 0.0967, 推测是我们 lineage 的额外机制 (Sinkhorn sk_eps=0.05, learnable curvature, M2/M3/C5) 阻碍了 HG-Rec 简单架构的生效。剥离到 HG-Rec 极简结构应能恢复 HG-Rec 自己的 test R@10=0.1007 量级。",
+  "result": {
+    "test_R_at_10": 0.0956,
+    "test_R_at_20": 0.1212,
+    "test_NDCG_at_20": 0.0770,
+    "best_epoch": 28,
+    "valid_NDCG_at_20": 0.0946,
+    "baseline_test_R_at_10": 0.0967,
+    "delta_test_R_at_10": -0.0011
+  },
+  "gates": {
+    "gate_1_stage2_retrain": {
+      "outcome": "PASS",
+      "details": "100k global steps 完成 (398.6s, exit 0). loss rl=1.86→0.91 下降. 但是 layer 0 codebook 仅 91/256 codes used (36.7%), layer 1/2 = 232/230. 层 0 collapse 是 HG-Rec 极简结构 + 固定 c=1 + 无 margin_reg 的副特征 (无法靠 sinkhorn / margin reg 抗 collapse)."
+    },
+    "gate_2_sid_inference": {
+      "outcome": "PASS",
+      "details": "9922 SIDs 导出 (0.4s). 94/256/256 unique codes per layer → 6.16M 潜在 unique SIDs, 充裕."
+    },
+    "gate_3_stage3_retrain": {
+      "outcome": "PASS",
+      "details": "Stage3 DDP 4-GPU 训练完成 (early stop @ epoch 49, counter=20/20). best epoch=28 valid ndcg@20=0.0946."
+    },
+    "gate_4_test_eval": {
+      "outcome": "FAIL",
+      "details": "test R@10=0.0956 < baseline 0.0967. Δ=-0.0011 (R37 trigger)."
+    }
+  },
+  "r37_verdict": "ROLLBACK",
+  "r37_reason": "C26 test R@10=0.0956 < C10 baseline 0.0967 → R37 rollback 触发. 必须回到 vN-1 (baseline) 重新创新.",
+  "scientific_finding": "C26 反直觉结果: 即便完全剥离到 HG-Rec 极简结构 (sk_eps=0, 固定 c=1, hyperbolic loss, 无 M2/M3/C5), test R@10 反而低于 C10 baseline. 这表明: (1) 我们 lineage 现有的小机制 (Sinkhorn sk_eps=0.05, learnable curvature, M2/M3/C5) 实际上提供了小幅正收益; (2) HG-Rec 在 instruments 数据集上的优势 (0.1007) 不能简单通过 '剥离' 复现 — 需要查找 HG-Rec 真实差异点 (而非仅仅认为 M2/M3/C5 是负担).",
+  "next_direction": "重新审视: HG-Rec 真正的差异可能在 (a) embedding 维度/层数 (HG-Rec d_model=128, layers=4); (b) T5 配置 (d_model=128/num_layers=4 vs 我们的 384/4); (c) input embedding normalization; (d) pretrain 数据集差异. 这些是 baseline 调参禁止项, 必须从论文/代码逐字比对.",
+  "files_changed": [
+    "Euclidean_Base_M2M3/modules/rqvae.py (C26 use_fixed_curvature, c_fixed)",
+    "Euclidean_Base_M2M3/modules/quantize.py (C26 use_fixed_curvature branches)",
+    "Euclidean_Base_M2M3/modules/loss.py (C25/C26 poincare_distance²)",
+    "Euclidean_Base_M2M3/train_rqvae_instruments.py (USE_FIXED_CURVATURE=True, margin_reg_weight=0)",
+    "Euclidean_Base_M2M3/infer_sids_instruments.py (C26 settings)",
+    "Euclidean_Base_M2M3/train_decoder.py (C26 paths)",
+    "Euclidean_Base_M2M3/configs/decoder_instruments.gin (C26 paths)"
+  ],
+  "ckpt_paths": {
+    "stage2": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec/rqvae_final.pt",
+    "stage3_best": "out/decoder/c26_full_hgrec_400k_instruments/best_ckpt.pt",
+    "sids": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c26_full_hgrec.npy"
+  }
+}

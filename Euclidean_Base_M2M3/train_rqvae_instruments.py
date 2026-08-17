@@ -36,15 +36,15 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C25 R37 rollback: 回到 m2m3 baseline (HG-Rec style hyperbolic loss 未带来 test 收益)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3"
+# C26: 完全剥离到 HG-Rec 极简结构 — sk_eps=0 + hyperbolic loss + 无 M2/M3 + 无 C5 + 固定 c=1
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
 EMBED_DIM = 32
 CODEBOOK_SIZE = 256
 N_LAYERS = 3
-COMMITMENT_WEIGHT = 0.25
+COMMITMENT_WEIGHT = 1.0  # HG-Rec default beta=1.0 (vs 我们 0.25) — commitment/codebook loss 等权
 
 # === 训练硬约束 (R30/R43): 100k global steps ===
 NUM_EPOCHS = 10000               # 语义参考
@@ -59,6 +59,9 @@ CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 # θ 曲率学习检查 (M2/M3): 曲率初始值 与 "已学习" 判定阈值
 CURV_INIT_C = 1.0                         # 曲率初始值 c=1.0 (HG-Rec 对齐)
 CURV_LEARNED_TOL = 0.01                   # |c - 1.25| > 0.01 视为曲率在学习
+# C26: 固定 c=1 (HG-Rec 极简, 无可学曲率)
+USE_FIXED_CURVATURE = True                # C26 HG-Rec default: c=1 固定 (关 M2/M3/C5)
+C_FIXED = 1.0                             # 固定曲率值 (HG-Rec)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -174,20 +177,22 @@ def main():
         n_layers=N_LAYERS,
         n_cat_features=0,
         commitment_weight=COMMITMENT_WEIGHT,
-        gate_M2_intrinsic=True,  # M2: Möbius 内在减法 (Issue #166 treatment)
-        gate_M3_transport=True,  # M3: 跨层曲率传输
+        gate_M2_intrinsic=not USE_FIXED_CURVATURE,  # C26 HG-Rec: 关 M2
+        gate_M3_transport=not USE_FIXED_CURVATURE,  # C26 HG-Rec: 关 M3
         hyperbolic_distance=True,  # HG-Rec 双曲 argmin
-        sk_eps=0.05,               # Sinkhorn 均衡
+        sk_eps=0.0,                # C26 HG-Rec: 关 Sinkhorn (纯 argmin)
         prefix_router_layers=None, # Issue #154: L1/L2 per-item 曲率 (默认)
-        margin_reg_weight=MARGIN_REG_WEIGHT,  # C5 曲率 margin 正则
+        margin_reg_weight=0.0 if USE_FIXED_CURVATURE else MARGIN_REG_WEIGHT,  # C26 HG-Rec: 关 C5
         margin_target=MARGIN_TARGET,
-        use_tcu=USE_TCU,           # C22: Riemannian centroid tracking (False 默认, 跑 C22 时改为 True)
+        use_tcu=False,             # C26 HG-Rec: 关 TCU
         tcu_alpha=TCU_ALPHA,
         tcu_eta=TCU_ETA,
-        use_mcdq=USE_MCDQ,         # C23: Mixed-Curvature Distance (False 默认, 跑 C23 时改为 True)
+        use_mcdq=False,            # C26 HG-Rec: 关 MCDQ
         mcdq_alpha_init=MCDQ_ALPHA_INIT,
-        use_scs=False,             # C24 R37 rollback
+        use_scs=False,             # C26 HG-Rec: 关 SCS
         scs_eps_scale=SCS_EPS_SCALE,
+        use_fixed_curvature=USE_FIXED_CURVATURE,  # C26 HG-Rec: 固定 c=1
+        c_fixed=C_FIXED,
     ).to(device)
 
     if COMPILE:
@@ -274,7 +279,7 @@ def main():
                     f"| loss={float(loss.item()):.4f} "
                     f"| rl={float(out.reconstruction_loss.item()):.4f} "
                     f"| vl={float(out.rqvae_loss.item()):.4f} "
-                    f"| ml={float(out.margin_loss.item()):.4f} "
+                    f"| ml={float(out.margin_loss.item() if hasattr(out.margin_loss, 'item') else out.margin_loss):.4f} "
                     f"| codes={usage_str}/{CODEBOOK_SIZE} "
                     f"| c={curv_str} "
                     f"| marg={marg_str} "

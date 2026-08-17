@@ -72,6 +72,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         tcu_eta: float = 0.1,              # C22: Riemannian step 大小
         use_mcdq: bool = False,             # C23: Mixed-Curvature Distance Quantization (per-layer α)
         mcdq_alpha_init: float = 0.5,       # C23: 初始 mixing weight (sigmoid⁻¹(mcdq_alpha_init))
+        use_scs: bool = False,              # C24: Sinkhorn Curvature Scaling — eps ∝ 1/c_l
+        scs_eps_scale: float = 1.0,         # C24: SCS scaling 指数
+        use_fixed_curvature: bool = False,  # C26: HG-Rec 极简 — 固定曲率 (无 learnable θ)
+        c_fixed: float = 1.0,               # C26: HG-Rec default c=1
     ) -> None:
         self._config = locals()
 
@@ -97,6 +101,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.tcu_eta = float(tcu_eta)
         self.use_mcdq = use_mcdq
         self.mcdq_alpha_init = float(mcdq_alpha_init)
+        self.use_scs = use_scs
+        self.scs_eps_scale = float(scs_eps_scale)
+        self.use_fixed_curvature = use_fixed_curvature
+        self.c_fixed = float(c_fixed)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -126,6 +134,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     tcu_eta=tcu_eta,
                     use_mcdq=use_mcdq,  # C23: Mixed-Curvature Distance Quantization
                     mcdq_alpha_init=mcdq_alpha_init,
+                    use_scs=use_scs,  # C24: Sinkhorn Curvature Scaling
+                    scs_eps_scale=scs_eps_scale,
+                    use_fixed_curvature=use_fixed_curvature,  # C26: HG-Rec 极简
+                    c_fixed=c_fixed,
                 )
                 for i in range(n_layers)
             ]
