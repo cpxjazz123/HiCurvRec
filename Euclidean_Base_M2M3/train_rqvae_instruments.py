@@ -36,8 +36,8 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C28: Curriculum Curvature + M3 Cross-Layer Transport (与 curriculum 联动)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3"
+# C29: Curriculum + M2 intrinsic + M3 transport (M2 + M3 联合)
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c29_curriculum_m2m3"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -74,7 +74,8 @@ GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 # 机制: curriculum ramp c 时, M3 防止不同 c 层之间 residual 几何不一致
 # 论文支撑: M3 = "Parallel Transport in Hyperbolic Space" (Chami et al. 2019)
 USE_M3_TRANSPORT = True                   # C28: 启用 M3 (与 C27 互补)
-USE_M2_INTRINSIC = False                  # C28: 关 M2 (M2 是 residual 减法, M3 是 transport; 任选其一)
+# C29: 启用 M2 intrinsic Möbius 减法 (R37 rollback: M2 + M3 联合恶化 L0 collapse, test R@10 0.0991→0.0941)
+USE_M2_INTRINSIC = False                  # C28: 关 M2 (M2 + M3 联合 NO-GO, 回 C28 单 M3)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)

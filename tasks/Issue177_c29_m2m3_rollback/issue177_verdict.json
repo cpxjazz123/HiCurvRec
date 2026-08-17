@@ -1,0 +1,46 @@
+{
+  "issue": "Issue #177 (C29)",
+  "experiment": "C29 = C28 (Curriculum + M3) + M2 intrinsic Möbius 减法 (M2 + M3 联合)",
+  "hypothesis": "M2 + M3 联合: M2 让 residual subtraction 走 Möbius 加法 (保双曲几何), M3 让跨层 residual transport 一致. 二者正交, 应协同提升曲率机制效力.",
+  "result": {
+    "test_R_at_10": 0.0941,
+    "test_R_at_20": 0.1186,
+    "test_NDCG_at_20": 0.0756,
+    "best_epoch": 32,
+    "valid_NDCG_at_20": 0.0935,
+    "baseline_test_R_at_10": 0.0967,
+    "C28_test_R_at_10": 0.0991,
+    "delta_test_R_at_10_vs_C28": -0.0050
+  },
+  "gates": {
+    "gate_1_stage2_retrain": {
+      "outcome": "PASS",
+      "details": "100k steps 完成 (524.4s, 慢于 C28 的 420s, M2 引入额外 expmap0/mobius_add 计算). codebook usage 30/233/235 (L0 比 C28 的 62 显著恶化)."
+    },
+    "gate_2_sid_inference": {
+      "outcome": "PASS",
+      "details": "9922 SIDs. 35/256/255 codes per layer (L0 比 C28 的 63 进一步恶化, M2 让 layer 0 严重 collapse)."
+    },
+    "gate_3_stage3_retrain": {
+      "outcome": "PASS",
+      "details": "early stop @ epoch 53, best valid ndcg@20=0.0935 (epoch 32). 比 C28 的 0.0969 略低."
+    },
+    "gate_4_test_eval": {
+      "outcome": "FAIL",
+      "details": "test R@10=0.0941 < C28 0.0991. Δ=-0.0050 (R37 trigger)."
+    }
+  },
+  "r37_verdict": "ROLLBACK",
+  "r37_reason": "C29 test R@10=0.0941 < C28 0.0991 → R37 rollback 触发. 恢复 USE_M2_INTRINSIC=False, 回到 C28 单 M3 配置 (新最佳).",
+  "scientific_finding": "M2 + M3 联合反而恶化 layer 0 codebook collapse (35 vs C28 63). Möbius 减法 + cross-layer transport 的几何约束过于强烈, 在 curriculum 低曲率阶段 (近欧氏) 两者都退化成不必要的复杂运算, 干扰 codebook 初始化. 单一 M3 transport 效果最佳.",
+  "next_direction": "继续探索不与 M3 冲突的曲率机制. C30 候选: (a) C28 + Sinkhorn sk_eps curriculum (双 curriculum); (b) C28 + 自适应 per-item 曲率 (Issue #154 prefix router 联动 curriculum); (c) C28 + hyperbolic contrastive loss (NeurIPS 2024); (d) 重新审视 HG-Rec 的真正差异点 (loss_type 'poincare' 的具体用法).",
+  "files_changed": [
+    "Euclidean_Base_M2M3/train_rqvae_instruments.py (USE_M2_INTRINSIC 回 False, OUT_DIR 回 c28)",
+    "Euclidean_Base_M2M3/infer_sids_instruments.py (gate_M2 回 False, paths 改回 c28)"
+  ],
+  "ckpt_paths": {
+    "stage2": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3/rqvae_final.pt",
+    "stage3_best": "out/decoder/c28_curriculum_m3_400k_instruments/best_ckpt.pt",
+    "sids": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c28_curriculum_m3.npy"
+  }
+}
