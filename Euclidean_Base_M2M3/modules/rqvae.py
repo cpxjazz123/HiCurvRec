@@ -76,6 +76,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         scs_eps_scale: float = 1.0,         # C24: SCS scaling 指数
         use_fixed_curvature: bool = False,  # C26: HG-Rec 极简 — 固定曲率 (无 learnable θ)
         c_fixed: float = 1.0,               # C26: HG-Rec default c=1
+        use_curriculum_curvature: bool = False,  # C27: Curriculum Curvature Schedule (ICML 2025)
+        c_start: float = 0.05,             # C27: 初始 c (近欧氏, 优化稳定)
+        c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
+        curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
     ) -> None:
         self._config = locals()
 
@@ -105,6 +109,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.scs_eps_scale = float(scs_eps_scale)
         self.use_fixed_curvature = use_fixed_curvature
         self.c_fixed = float(c_fixed)
+        self.use_curriculum_curvature = use_curriculum_curvature
+        self.c_start = float(c_start)
+        self.c_end = float(c_end)
+        self.curriculum_steps = int(curriculum_steps)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -137,6 +145,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     use_scs=use_scs,  # C24: Sinkhorn Curvature Scaling
                     scs_eps_scale=scs_eps_scale,
                     use_fixed_curvature=use_fixed_curvature,  # C26: HG-Rec 极简
+                    use_curriculum_curvature=use_curriculum_curvature,  # C27: curriculum
+                    c_start=c_start,
+                    c_end=c_end,
+                    curriculum_steps=curriculum_steps,
                     c_fixed=c_fixed,
                 )
                 for i in range(n_layers)
@@ -162,6 +174,13 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             if n_cat_features != 0
             else ReconstructionLoss()
         )
+
+    def set_curriculum_step(self, step: int) -> None:
+        """C27: 把 curriculum step 广播到所有 Quantize 层 (所有 rank 各自调用).
+        训练脚本每个 step 调用一次 (rank 0 计算, 然后 dist.broadcast 或各 rank 同步算).
+        """
+        for layer in self.layers:
+            layer.set_curriculum_step(step)
 
     @cached_property
     def config(self) -> dict:

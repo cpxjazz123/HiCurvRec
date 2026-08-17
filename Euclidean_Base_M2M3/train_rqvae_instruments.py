@@ -36,8 +36,9 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C26: 完全剥离到 HG-Rec 极简结构 — sk_eps=0 + hyperbolic loss + 无 M2/M3 + 无 C5 + 固定 c=1
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec"
+# C27: Curriculum Curvature Schedule (ICML 2025) — c 从 0.05 线性增到 1.0 over 50k 步
+# + Gradient Clipping fix (HG-Rec 实现 bug 修复: clip_grad_norm_(1.0))
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c27_curriculum"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -62,6 +63,14 @@ CURV_LEARNED_TOL = 0.01                   # |c - 1.25| > 0.01 视为曲率在学
 # C26: 固定 c=1 (HG-Rec 极简, 无可学曲率)
 USE_FIXED_CURVATURE = True                # C26 HG-Rec default: c=1 固定 (关 M2/M3/C5)
 C_FIXED = 1.0                             # 固定曲率值 (HG-Rec)
+# C27: Curriculum Curvature Schedule (ICML 2025)
+# 机制: c 从 c_start (近欧氏) 线性增到 c_end (双曲) over curriculum_steps
+USE_CURRICULUM_CURVATURE = True           # C27 启用 (取代 C26 固定 c)
+C_START = 0.05                            # 初始 c (近欧氏, 训练稳定)
+C_END = 1.0                               # 最终 c (双曲, HG-Rec 对齐)
+CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
+# HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
+GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -191,8 +200,12 @@ def main():
         mcdq_alpha_init=MCDQ_ALPHA_INIT,
         use_scs=False,             # C26 HG-Rec: 关 SCS
         scs_eps_scale=SCS_EPS_SCALE,
-        use_fixed_curvature=USE_FIXED_CURVATURE,  # C26 HG-Rec: 固定 c=1
+        use_fixed_curvature=USE_FIXED_CURVATURE,  # C26 HG-Rec: 固定 c=1 (C27 优先覆盖)
         c_fixed=C_FIXED,
+        use_curriculum_curvature=USE_CURRICULUM_CURVATURE,  # C27: curriculum schedule (优先于 use_fixed)
+        c_start=C_START,
+        c_end=C_END,
+        curriculum_steps=CURRICULUM_STEPS,
     ).to(device)
 
     if COMPILE:
@@ -232,6 +245,9 @@ def main():
             out = model(seq_batch, gumbel_t=0.2)
             loss = out.loss
             loss.backward()
+            # HG-Rec fix: gradient clipping at norm 1.0 (实测稳定 +∞ norm 梯度, 防 NaN)
+            if GRAD_CLIP_NORM > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP_NORM)
             optimizer.step()
             global_step += 1
 
@@ -240,6 +256,10 @@ def main():
             step_tensor = torch.tensor([global_step], dtype=torch.long, device=device)
             dist.all_reduce(step_tensor, op=dist.ReduceOp.SUM)
             global_step_sync = int(step_tensor.item())
+
+            # C27: 更新 curriculum step (各 rank 各自用同步后的 global_step_sync)
+            # 这样所有 rank 看到的 c 完全一致 (no broadcast needed)
+            model.module.set_curriculum_step(global_step_sync)
 
             now = time.time()
             if rank == 0 and (now - last_log_t >= 5.0):

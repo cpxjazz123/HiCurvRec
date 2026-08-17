@@ -24,8 +24,8 @@ from data.schemas import SeqBatch
 
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c26_full_hgrec/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c26_full_hgrec.npy"
+CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c27_curriculum/rqvae_final.pt"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c27_curriculum.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768
@@ -199,9 +199,15 @@ def main():
         use_mcdq=False,            # C26 HG-Rec: 关 MCDQ
         use_scs=False,             # C26 HG-Rec: 关 SCS
         scs_eps_scale=1.0,
-        use_fixed_curvature=True,  # C26 HG-Rec: 固定 c=1
+        use_fixed_curvature=True,  # C26 HG-Rec: 固定 c=1 (C27 优先覆盖)
         c_fixed=1.0,
+        use_curriculum_curvature=True,  # C27: 训练末期 c=1.0 (inference 也走 curriculum, 但用 step=curriculum_steps → c=c_end=1.0)
+        c_start=0.05,
+        c_end=1.0,
+        curriculum_steps=1,  # inference 时 set_step(>=1) 强制 t=1 → c=c_end=1.0
     ).to(device)
+    # C27: 强制 inference 走 schedule 终点 (c=c_end=1.0)
+    model.set_curriculum_step(10**9)  # step >> curriculum_steps → t=1 → c=1.0
     model.load_state_dict(state["model"])
     model.eval()
     print(f"[model] params={sum(p.numel() for p in model.parameters()):,} loaded")
@@ -309,9 +315,9 @@ def main():
     # Save
     np.save(OUT_NPY, sids)
     print(f"[save] {OUT_NPY}: shape={sids.shape}, dtype={sids.dtype}")
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c26_full_hgrec.npy"), curv_state)
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c26_full_hgrec.npy"), response)
-    print(f"[save] curvature_state_c26_full_hgrec.npy: {curv_state.shape} | response_c26_full_hgrec.npy: {response.shape}")
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c27_curriculum.npy"), curv_state)
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c27_curriculum.npy"), response)
+    print(f"[save] curvature_state_c27_curriculum.npy: {curv_state.shape} | response_c27_curriculum.npy: {response.shape}")
     print(f"[curv] per-layer c: {[float(curv_state[0, li]) for li in range(N_LAYERS)]}")
     print(f"[resp] boundary mean: {[float(response[:, li, 1].mean()) for li in range(N_LAYERS)]}")
 

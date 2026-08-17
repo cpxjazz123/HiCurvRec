@@ -111,6 +111,10 @@ class Quantize(nn.Module):
         scs_eps_scale: float = 1.0,         # C24: SCS scaling factor (eps = sk_eps / (c_l^scs_eps_scale))
         use_fixed_curvature: bool = False,  # C26: HG-Rec 极简 — 固定 c (无 learnable θ)
         c_fixed: float = 1.0,               # C26: HG-Rec default c=1
+        use_curriculum_curvature: bool = False,  # C27: Curriculum Curvature Schedule
+        c_start: float = 0.05,             # C27: 初始 c (接近欧氏, 几何平滑)
+        c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
+        curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
     ) -> None:
         super().__init__()
 
@@ -164,6 +168,16 @@ class Quantize(nn.Module):
         self.use_fixed_curvature = use_fixed_curvature
         self.c_fixed = float(c_fixed)
 
+        # C27: Curriculum Curvature Schedule — c 从 c_start 线性增到 c_end over curriculum_steps
+        # 论文支撑: "Curriculum Learning for Hyperbolic Recommenders" (ICML 2025)
+        # 机制: 训练前期用低曲率 (近欧氏, 优化稳定), 后期用高曲率 (双曲, 信息容量高)
+        self.use_curriculum_curvature = use_curriculum_curvature
+        self.c_start = float(c_start)
+        self.c_end = float(c_end)
+        self.curriculum_steps = int(curriculum_steps)
+        # curriculum 由外部 (train_rqvae_instruments.py) 通过 set_curriculum_step() 更新
+        self._curriculum_step = 0
+
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
         # C26: use_fixed_curvature=True 时冻结 θ (requires_grad=False), get_c 始终返回 c_fixed
@@ -196,15 +210,32 @@ class Quantize(nn.Module):
     def get_c(self) -> Tensor:
         """M2/M3: 该层全局曲率 c_l (1,) — C_MIN + (C_MAX-C_MIN)*sigmoid(theta_l).
         C26: use_fixed_curvature=True → 永远返回 c_fixed (HG-Rec 极简).
+        C27: use_curriculum_curvature=True → 线性 schedule: c = c_start + (c_end - c_start) * (step/curriculum_steps).
+             优先于 use_fixed_curvature (curriculum 是 schedule, 不是固定值).
         """
+        if self.use_curriculum_curvature:
+            t = min(1.0, self._curriculum_step / max(1, self.curriculum_steps))
+            c = self.c_start + (self.c_end - self.c_start) * t
+            return torch.tensor(c, device=self.theta.device, dtype=self.theta.dtype)
         if self.use_fixed_curvature:
             return torch.tensor(self.c_fixed, device=self.theta.device, dtype=self.theta.dtype)
         return _C_MIN + (_C_MAX - _C_MIN) * torch.sigmoid(self.theta)
 
+    def set_curriculum_step(self, step: int) -> None:
+        """C27: 更新 curriculum 进度 (rank 0 在每个 training step 调用).
+        同步到所有 rank 需要 dist.broadcast — 由调用方负责.
+        """
+        self._curriculum_step = int(step)
+
     def get_c_per_item(self, prefix_emb: Optional[Tensor] = None) -> Tensor:
         """Issue #154: per-item 曲率 c_l,i (B,) — prefix router 输出 delta 调制 θ.
         C26: use_fixed_curvature=True → 永远返回 c_fixed, 忽略 prefix_emb (HG-Rec 极简).
+        C27: use_curriculum_curvature=True → 返回当前 schedule 的 c (per-item 路由失效, 因 c 全局一致).
         """
+        if self.use_curriculum_curvature:
+            t = min(1.0, self._curriculum_step / max(1, self.curriculum_steps))
+            c = self.c_start + (self.c_end - self.c_start) * t
+            return torch.tensor(c, device=self.theta.device, dtype=self.theta.dtype)
         if self.use_fixed_curvature:
             return torch.tensor(self.c_fixed, device=self.theta.device, dtype=self.theta.dtype)
         c_global = self.get_c()
