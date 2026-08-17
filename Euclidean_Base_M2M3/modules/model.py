@@ -103,6 +103,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
         t5_num_heads: int = 6,
         t5_d_ff: int = 1024,
         t5_num_layers: int = 4,
+        t5_num_decoder_layers: Optional[int] = None,  # C31: HG-Rec 风格 encoder=6 decoder=4 (None=decoder=encoder)
         top_k_for_generation: int = 10,
         should_add_sep_token: bool = True,
         num_user_bins: Optional[int] = None,
@@ -176,7 +177,7 @@ class EncoderDecoderRetrievalModel(nn.Module):
             d_model=t5_d_model,
             num_heads=t5_num_heads,
             d_ff=t5_d_ff,
-            num_layers=t5_num_layers,
+            num_layers=t5_num_decoder_layers if t5_num_decoder_layers is not None else t5_num_layers,  # C31: HG-Rec decoder=4, encoder=6
             is_decoder=True,
             is_encoder_decoder=False,
         )

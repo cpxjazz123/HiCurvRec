@@ -69,6 +69,7 @@ def train(
     t5_num_heads=6,
     t5_d_ff=1024,
     t5_num_layers=4,
+    t5_num_decoder_layers=None,  # C31: HG-Rec 风格 decoder ≠ encoder 时设
     top_k_for_generation=10,
     should_add_sep_token=True,
     num_user_bins=None,
@@ -174,6 +175,7 @@ def train(
         hypervq=False,  # C21 rollback fix: 与 Stage2 ckpt (无 mlr_*) 保持一致 (Poincaré distance argmin)
         use_scs=False,  # C24 R37 rollback
         scs_eps_scale=1.0,
+        prefix_router_layers=[True] * vae_n_layers,  # C30: 与 Stage2 ckpt 一致
     )
     tokenizer = accelerator.prepare(tokenizer)
     # unwrap DDP 包装以调用非-module 方法 (precompute_corpus_ids 是 tokenizer 的方法,不是 nn.Module 方法)
@@ -194,13 +196,14 @@ def train(
         t5_num_heads=t5_num_heads,
         t5_d_ff=t5_d_ff,
         t5_num_layers=t5_num_layers,
+        t5_num_decoder_layers=t5_num_decoder_layers,  # C31: HG-Rec 风格 encoder=6 decoder=4
         top_k_for_generation=top_k_for_generation,
         should_add_sep_token=should_add_sep_token,
         num_user_bins=num_user_bins,
         # 欧氏对照: 无曲率注入 / 无 HAB
-        curv_state_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/curvature_state_c28_curriculum_m3.npy",
-        response_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/response_c28_curriculum_m3.npy",
-        hab_rqvae_ckpt="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3/rqvae_final.pt",
+        curv_state_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/curvature_state_c30_curriculum_per_item_delta.npy",
+        response_path="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/response_c30_curriculum_per_item_delta.npy",
+        hab_rqvae_ckpt="/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c30_curriculum_per_item_delta/rqvae_final.pt",
     )
     if False:
         model = torch.compile(model)  # 关闭 torch.compile (4 卡 DDP 兼容性问题)
@@ -245,7 +248,7 @@ def train(
     MAX_EPOCHS = 200
     EARLY_STOP_PATIENCE = 20  # 连续 20 epoch valid NDCG@20 没创新低就停
     SELECT_METRIC = "ndcg@20"  # 与 HG-Rec train_HG-Rec.py:214 一致 (best_ndcg)
-    BEST_CKPT_PATH = "out/decoder/c28_curriculum_m3_400k_instruments/best_ckpt.pt"
+    BEST_CKPT_PATH = "out/decoder/c30_curriculum_per_item_delta_400k_instruments/best_ckpt.pt"
 
     # === helper: eval 一个 dataloader, 返回 R35b 全局口径指标 ===
     def do_eval(eval_dl, split_name: str):
