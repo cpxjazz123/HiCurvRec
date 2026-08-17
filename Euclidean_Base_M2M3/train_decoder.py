@@ -171,7 +171,7 @@ def train(
         rqvae_sim_vq=vae_sim_vq,
         gate_M2_intrinsic=True,
         gate_M3_transport=True,
-        hypervq=True,  # C21: HyperVQ 双曲 MLR 量化 (必须与 Stage2/3 一致, 否则 SID 塌缩泄露)
+        hypervq=False,  # C21 rollback fix: 与 Stage2 ckpt (无 mlr_*) 保持一致 (Poincaré distance argmin)
     )
     tokenizer = accelerator.prepare(tokenizer)
     # unwrap DDP 包装以调用非-module 方法 (precompute_corpus_ids 是 tokenizer 的方法,不是 nn.Module 方法)

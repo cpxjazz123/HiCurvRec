@@ -57,7 +57,7 @@ def main():
         gate_M2_intrinsic=True,
         gate_M3_transport=True,
         rqvae_codebook_normalize=False, rqvae_sim_vq=False,
-        hypervq=True,  # C21: HyperVQ 双曲 MLR 量化 (必须与 Stage2/3 一致, 否则 SID 塌缩泄露)
+        hypervq=False,  # C21 rollback fix: 与 Stage2 ckpt 一致
     )
     tokenizer = accelerator.prepare(tokenizer)
     raw_tokenizer = accelerator.unwrap_model(tokenizer)
