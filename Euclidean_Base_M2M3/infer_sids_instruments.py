@@ -193,6 +193,7 @@ def main():
         hyperbolic_distance=True,
         sk_eps=0.05,
         prefix_router_layers=None,
+        hypervq=True,             # C21: HyperVQ 双曲 MLR 量化 (与 train 一致)
     ).to(device)
     model.load_state_dict(state["model"])
     model.eval()

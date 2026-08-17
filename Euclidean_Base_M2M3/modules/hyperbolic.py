@@ -99,3 +99,28 @@ def _artanh(x):
 def _sigmoid(x):
     return torch.sigmoid(x)
 
+
+def _mlr_logits_t(x, a, r, c, eps=1e-6):
+    """C21 (HyperVQ, ICML 2025): Unidirectional 双曲 MLR logits.
+
+    logits_k(x) = (λ_qk·‖a_k‖/√c)·artanh(√c·⟨−q_k⊕_c x, a_k⟩/(λ_qk·‖a_k‖))
+    q_k = exp_0^c(r_k·[a_k])  (超平面代表点, [a_k] = 归一化方向)
+    λ_qk = 2/(1−c·‖q_k‖²)
+
+    替代最近邻距离分配 — 用双曲超平面判别, 提升 codebook 利用率与解耦.
+    x: (..., D) 投影后的 Poincaré 点; a: (K,D) 法向量; r: (K,) 标量; c: 曲率.
+    """
+    sqrt_c = c ** 0.5
+    a_norm = a.norm(dim=-1, keepdim=True).clamp_min(eps)      # (K,1)
+    a_dir = a / a_norm                                        # (K,D)
+    q = _expmap0_t(a_dir * r.unsqueeze(-1), c)                # (K,D) 代表点
+    q_norm_sq = (q * q).sum(-1, keepdim=True)                 # (K,1)
+    lam_q = (2.0 / (1.0 - c * q_norm_sq)).clamp_min(eps)      # (K,1)
+    mob = _mobius_add_t(-q.unsqueeze(0), x.unsqueeze(1), c)   # (...,K,D)
+    inner = (mob * a.unsqueeze(0)).sum(-1)                    # (...,K)
+    scale = (lam_q.squeeze(-1) * a_norm.squeeze(-1)) / sqrt_c  # (K,)
+    denom = (lam_q.squeeze(-1) * a_norm.squeeze(-1)).clamp_min(eps)
+    arg = (sqrt_c * inner / denom).clamp(max=1 - 1e-5)
+    logits = scale * torch.atanh(arg)                         # (...,K)
+    return logits
+

@@ -100,6 +100,7 @@ class Quantize(nn.Module):
         sk_iters: int = 3,                  # Sinkhorn 迭代数
         prefix_routing: bool = False,       # Issue #154: prefix-conditioned per-item 曲率 (L1/L2)
         in_dim_router: Optional[int] = None,
+        hypervq: bool = False,              # C21: HyperVQ 双曲 MLR 量化 (论文 ICML 2025)
     ) -> None:
         super().__init__()
 
@@ -109,12 +110,19 @@ class Quantize(nn.Module):
         self.forward_mode = forward_mode
         self.distance_mode = distance_mode
         self.hyperbolic_distance = hyperbolic_distance
+        self.hypervq = hypervq
         self.sk_eps = sk_eps
         self.sk_iters = sk_iters
         self.do_kmeans_init = do_kmeans_init
         self.kmeans_initted = False
         self.prefix_routing = prefix_routing
         self._last_delta = None
+
+        # C21 (HyperVQ): 双曲 MLR 参数 — a_k 法向量 (K,D) + r_k 标量 (K,)
+        # codebook 向量 z_q = r_k·a_k (超平面代表点经 logmap, 天然解耦, 论文 Eq.9)
+        if hypervq:
+            self.mlr_a = nn.Parameter(torch.randn(n_embed, embed_dim) * 0.02)
+            self.mlr_r = nn.Parameter(torch.ones(n_embed) * 0.5)
 
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
@@ -182,6 +190,9 @@ class Quantize(nn.Module):
         self.kmeans_initted = True
 
     def get_item_embeddings(self, item_ids) -> Tensor:
+        if self.hypervq:
+            # C21: codebook 向量 = 超平面代表点 logmap = r_k·a_k (论文 Eq.9)
+            return self.out_proj(self.mlr_a * self.mlr_r.unsqueeze(-1))[item_ids]
         return self.out_proj(self.embedding(item_ids))
 
     def forward(self, x, temperature, prefix_emb=None) -> QuantizeOutput:
@@ -192,7 +203,15 @@ class Quantize(nn.Module):
 
         codebook = self.out_proj(self.embedding.weight)
 
-        if self.distance_mode == QuantizeDistance.L2:
+        if self.hypervq:
+            # C21 (HyperVQ, ICML 2025): 双曲 MLR 判别量化, 替代最近邻距离
+            # logits 用双曲超平面判别; codebook 向量 z_q = r_k·a_k (论文 Eq.9)
+            from modules.hyperbolic import _mlr_logits_t, _expmap0_t
+            c = self.get_c().view(-1, 1, 1)  # (1,1,1) 该层全局曲率
+            z_h = _expmap0_t(x.unsqueeze(1), c).squeeze(1)  # (B,D) 投影到 Poincaré
+            logits = _mlr_logits_t(z_h, self.mlr_a, self.mlr_r, c.view(1).mean())
+            dist = -logits  # 高 logits → 低 dist → argmin 选中
+        elif self.distance_mode == QuantizeDistance.L2:
             if self.hyperbolic_distance:
                 # HG-Rec 机制复制: Poincaré 距离 argmin (双曲量化, 缓解 codebook collapse)
                 # latent/codebook expmap 到该层曲率空间后算双曲距离 (per-item c 广播)

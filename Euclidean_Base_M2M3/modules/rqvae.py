@@ -62,6 +62,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         hyperbolic_distance: bool = True,  # HG-Rec 机制: Poincaré 距离 argmin (缓解 codebook collapse)
         sk_eps: float = 0.05,              # HG-Rec 机制: Sinkhorn 均衡温度 (0=关闭; 0.003 太陡致约束失效, 0.05 实测均衡)
         sk_iters: int = 3,                 # Sinkhorn 迭代数 (HG-Rec 论文值)
+        hypervq: bool = False,             # C21: HyperVQ 双曲 MLR 量化 (ICML 2025)
         prefix_router_layers: Optional[List[bool]] = None,  # Issue #154: 各层是否 prefix-routing (默认 L0 关, L1/L2 开)
         # C5: 曲率 margin 正则 (新曲率正则项, R36) — 0=关闭
         margin_reg_weight: float = 0.0,
@@ -83,6 +84,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.hyperbolic_distance = hyperbolic_distance
         self.sk_eps = sk_eps
         self.sk_iters = sk_iters
+        self.hypervq = hypervq
         self.margin_reg_weight = margin_reg_weight
         self.margin_target = margin_target
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
@@ -108,6 +110,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     # router 输入 = 已选 codeword (i*D 维) + M3 曲率信号 (1 维)
                     prefix_routing=prefix_router_layers[i],
                     in_dim_router=(i * embed_dim + 1) if prefix_router_layers[i] else None,
+                    hypervq=hypervq,  # C21: HyperVQ 双曲 MLR 量化
                 )
                 for i in range(n_layers)
             ]
