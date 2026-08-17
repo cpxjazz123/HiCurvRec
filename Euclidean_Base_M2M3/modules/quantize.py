@@ -101,6 +101,10 @@ class Quantize(nn.Module):
         prefix_routing: bool = False,       # Issue #154: prefix-conditioned per-item 曲率 (L1/L2)
         in_dim_router: Optional[int] = None,
         hypervq: bool = False,              # C21: HyperVQ 双曲 MLR 量化 (论文 ICML 2025)
+        use_tcu: bool = False,              # C22: τ-Geometric Codebook Update (Riemannian centroid tracking)
+        tcu_alpha: float = 0.05,            # C22: EMA momentum (新几何位置混合比)
+        tcu_eta: float = 0.1,              # C22: Riemannian step 大小
+        tcu_max_step: float = 0.1,          # C22: 单步最大切空间位移 (防 catastrophic jump)
     ) -> None:
         super().__init__()
 
@@ -123,6 +127,15 @@ class Quantize(nn.Module):
         if hypervq:
             self.mlr_a = nn.Parameter(torch.randn(n_embed, embed_dim) * 0.02)
             self.mlr_r = nn.Parameter(torch.ones(n_embed) * 0.5)
+
+        # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
+        # 论文支撑: "Fréchet Mean Embeddings in Hyperbolic Space" / Hyperbolic K-Means 理论
+        # 机制: 训练每个 batch 后, 对每个 codeword 计算指派样本的 Euclidean 均值 (Riemannian centroid 近似),
+        #       在该层曲率 c_l 的切空间做 EMA 混合 + 限幅 step, 推到 expmap 后回 Euclidean codebook
+        self.use_tcu = use_tcu
+        self.tcu_alpha = float(tcu_alpha)
+        self.tcu_eta = float(tcu_eta)
+        self.tcu_max_step = float(tcu_max_step)
 
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
@@ -291,4 +304,75 @@ class Quantize(nn.Module):
             emb_out = self.get_item_embeddings(ids)
             loss = self.quantize_loss(query=x, value=emb_out)
 
+        # C22: TCU Riemannian Codebook Update — 仅在 train 模式 + hypervq=False 时 (hypervq 用 mlr_a/mlr_r, 不能动 embedding)
+        # 训练阶段最后一步: per-codeword Riemann centroid tracking (auto-grad 不流过, 仅作 codebook 自组织)
+        if self.training and self.use_tcu and not self.hypervq:
+            self._tcu_centroid_update(x.detach(), ids)
+
         return QuantizeOutput(embeddings=emb_out, ids=ids, loss=loss, margin=margin)
+
+    @torch.no_grad()
+    def _tcu_centroid_update(self, x: Tensor, ids: Tensor) -> None:
+        """C22: TCU (τ-Geometric Codebook Update).
+
+        每 batch 后, 对每个 codeword k 做 1 步 Riemannian centroid tracking:
+          1) Euclidean-arithmetic mean 近似 Fréchet 均值 (Riemannian K-Means 文献)
+          2) 在该层曲率 c_l 的 Poincaré 切空间计算 step
+          3) 限幅 max_step + EMA 平滑更新 embedding.weight
+
+        Args:
+            x: 输入 latent (B, D), 已 detach 不影响主梯度
+            ids: 当前 batch 的最近邻指派 (B,)
+        """
+        from modules.hyperbolic import _expmap0_t, _logmap0_t
+
+        device = self.device
+        K = self.n_embed
+        D = self.embed_dim
+
+        # 1) Per-codeword Euclidean mean (proxy for Fréchet centroid in Poincaré ball)
+        ones = torch.ones(ids.shape[0], dtype=x.dtype, device=device)
+        sums = torch.zeros(K, D, device=device, dtype=x.dtype)
+        sums.index_add_(0, ids, x)
+        counts = torch.zeros(K, device=device, dtype=x.dtype)
+        counts.index_add_(0, ids, ones)
+        used = counts > 0
+        if not used.any():
+            return  # 空 batch, 跳过
+        inv_counts = torch.where(
+            used, 1.0 / counts.clamp_min(1.0), torch.zeros_like(counts)
+        )
+        means = sums * inv_counts.unsqueeze(-1)  # (K, D), unused 位置 = 0
+
+        # 2) 该层曲率 (取全局 c, prefix routing 时仍走全局 baseline, 因 centroid 在 c_global 更稳定)
+        c = self.get_c()  # (1,)
+        c_scalar = float(c.item()) if c.dim() == 0 else float(c.mean().item())
+        c_t = torch.tensor(c_scalar, device=device, dtype=x.dtype)
+
+        # 3) 推入 Poincaré 球, 在切空间算 step
+        cur_w = self.embedding.weight  # (K, D)
+        cur_h = _expmap0_t(cur_w, c_t)              # (K, D) 当前 codebook 在 Poincaré
+        means_h = _expmap0_t(means, c_t)            # (K, D) 当前 batch 均值在 Poincaré
+        cur_v = _logmap0_t(cur_h, c_t)               # (K, D) 切空间 (at origin)
+        means_v = _logmap0_t(means_h, c_t)           # (K, D)
+
+        # 4) Step = -η * (means_v - cur_v), 限幅
+        step = self.tcu_eta * (means_v - cur_v)      # 朝 batch centroid 走
+        step_norm = step.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+        scale = torch.where(
+            step_norm > self.tcu_max_step,
+            self.tcu_max_step / step_norm,
+            torch.ones_like(step_norm),
+        )
+        step = step * scale
+        new_v = cur_v + step
+        new_h = _expmap0_t(new_v, c_t)
+        new_w = _logmap0_t(new_h, c_t)
+
+        # 5) EMA 混合 (新几何位置 ≤ self.tcu_alpha 比例与旧位置)
+        blended = (1.0 - self.tcu_alpha) * cur_w + self.tcu_alpha * new_w
+
+        # 6) 只更新被指派到的 codeword; 未用保持不变 (避免把空码推到 0)
+        self.embedding.weight.data.copy_(
+            torch.where(used.unsqueeze(-1), blended, cur_w)
+        )

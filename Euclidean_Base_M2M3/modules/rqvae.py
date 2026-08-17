@@ -67,6 +67,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # C5: 曲率 margin 正则 (新曲率正则项, R36) — 0=关闭
         margin_reg_weight: float = 0.0,
         margin_target: float = 0.05,
+        use_tcu: bool = False,              # C22: τ-Geometric Codebook Update (Riemannian centroid tracking)
+        tcu_alpha: float = 0.05,            # C22: EMA momentum
+        tcu_eta: float = 0.1,              # C22: Riemannian step 大小
     ) -> None:
         self._config = locals()
 
@@ -87,6 +90,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.hypervq = hypervq
         self.margin_reg_weight = margin_reg_weight
         self.margin_target = margin_target
+        self.use_tcu = use_tcu
+        self.tcu_alpha = float(tcu_alpha)
+        self.tcu_eta = float(tcu_eta)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -111,6 +117,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     prefix_routing=prefix_router_layers[i],
                     in_dim_router=(i * embed_dim + 1) if prefix_router_layers[i] else None,
                     hypervq=hypervq,  # C21: HyperVQ 双曲 MLR 量化
+                    use_tcu=use_tcu,  # C22: Riemannian centroid update
+                    tcu_alpha=tcu_alpha,
+                    tcu_eta=tcu_eta,
                 )
                 for i in range(n_layers)
             ]
