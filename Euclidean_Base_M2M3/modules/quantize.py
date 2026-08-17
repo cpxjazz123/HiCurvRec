@@ -105,6 +105,8 @@ class Quantize(nn.Module):
         tcu_alpha: float = 0.05,            # C22: EMA momentum (新几何位置混合比)
         tcu_eta: float = 0.1,              # C22: Riemannian step 大小
         tcu_max_step: float = 0.1,          # C22: 单步最大切空间位移 (防 catastrophic jump)
+        use_mcdq: bool = False,             # C23: Mixed-Curvature Distance Quantization
+        mcdq_alpha_init: float = 0.5,       # C23: 初始 mixing weight (α ∈ [0,1], sigmoid(θ)=0.5)
     ) -> None:
         super().__init__()
 
@@ -136,6 +138,18 @@ class Quantize(nn.Module):
         self.tcu_alpha = float(tcu_alpha)
         self.tcu_eta = float(tcu_eta)
         self.tcu_max_step = float(tcu_max_step)
+
+        # C23: MCDQ (Mixed-Curvature Distance Quantization)
+        # 论文支撑: "Learning Mixed-Curvature Representations" (Gu et al. ICLR 2019),
+        #          "Product Manifolds" (Chami et al. ICML 2021).
+        # 机制: 每层 distance metric = (1-α_l)·d_Poincaré + α_l·d_Euclid, α_l = sigmoid(θ_l)
+        # 两距离按 batch 均值归一化 (让 mixing 有意义), θ_l 由 codebook assignment loss 反向学习.
+        # θ_mcdq 初始化 = logit(mcdq_alpha_init) → α_init = mcdq_alpha_init (默认 0.5 中点).
+        self.use_mcdq = use_mcdq
+        if use_mcdq:
+            import math as _math
+            init_logit = _math.log(mcdq_alpha_init / (1.0 - mcdq_alpha_init))
+            self.theta_mcdq = nn.Parameter(torch.tensor(init_logit, dtype=torch.float32))
 
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
@@ -177,6 +191,17 @@ class Quantize(nn.Module):
         self._last_delta = delta.detach()
         theta_eff = self.theta + delta  # (B,) broadcast
         return _C_MIN + (_C_MAX - _C_MIN) * torch.sigmoid(theta_eff)  # (B,)
+
+    def get_alpha(self) -> Tensor:
+        """C23: MCDQ mixing weight α_l = sigmoid(θ_l^α) ∈ [0,1].
+
+        α_l=0: 纯 Poincaré (与 baseline hyperbolic_distance=True 严格一致)
+        α_l=1: 纯 Euclidean (codebook argmin 用 L2)
+        α_l=0.5: 等权混合 (默认 init)
+        """
+        if not self.use_mcdq:
+            return torch.tensor(0.0, device=self.embedding.weight.device)
+        return torch.sigmoid(self.theta_mcdq)
 
     @staticmethod
     def _center_distance_for_constraint(distances: Tensor) -> Tensor:
@@ -236,9 +261,24 @@ class Quantize(nn.Module):
                 latent_h = _expmap0_t(x.unsqueeze(1), c_exp)                    # (B,1,D)
                 cb_exp0 = codebook.unsqueeze(0).expand(B, K, -1)               # (B,K,D)
                 codebook_h = _expmap0_t(cb_exp0, c_exp)                        # (B,K,D)
-                dist = _poincare_distance_t(
+                d_poincare = _poincare_distance_t(
                     latent_h.expand(B, K, -1), codebook_h, c_exp
                 ).squeeze(-1)  # (B, K)
+                if self.use_mcdq:
+                    # C23: MCDQ 混合距离 = (1-α)·d_P + α·d_E
+                    # 两距离按 batch 均值归一化 (让混合系数有可比语义, 避免一方 scale 主导)
+                    d_euclid = (
+                        (x**2).sum(axis=1, keepdim=True)
+                        + (codebook.T**2).sum(axis=0, keepdim=True)
+                        - 2 * x @ codebook.T
+                    )  # (B, K)
+                    # 归一化: 各距离 / 自均值, 让两者的均值为 1 (per-batch global)
+                    d_p_norm = d_poincare / d_poincare.mean().clamp_min(1e-6)
+                    d_e_norm = d_euclid / d_euclid.mean().clamp_min(1e-6)
+                    alpha = self.get_alpha()  # 不 detach: 通过 margin_loss 反向传播让 α 自适应
+                    dist = (1.0 - alpha) * d_p_norm + alpha * d_e_norm
+                else:
+                    dist = d_poincare
             else:
                 dist = (
                     (x**2).sum(axis=1, keepdim=True)

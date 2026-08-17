@@ -39,6 +39,8 @@ class SemanticIdTokenizer(nn.Module):
         gate_M2_intrinsic: bool = True,
         gate_M3_transport: bool = True,
         hypervq: bool = False,  # C21: HyperVQ 双曲 MLR 量化 (必须与训练 ckpt 一致, 否则 SID 塌缩泄露)
+        use_mcdq: bool = False,  # C23: MCDQ 混合曲率距离 (必须与 Stage2 ckpt 一致, 否则 SID 不对齐)
+        mcdq_alpha_init: float = 0.5,  # C23: α 初始 (与 Stage2 ckpt 一致)
     ) -> None:
         super().__init__()
 
@@ -56,6 +58,8 @@ class SemanticIdTokenizer(nn.Module):
             gate_M2_intrinsic=gate_M2_intrinsic,
             gate_M3_transport=gate_M3_transport,
             hypervq=hypervq,
+            use_mcdq=use_mcdq,
+            mcdq_alpha_init=mcdq_alpha_init,
         )
 
         if rqvae_weights_path is not None:

@@ -70,6 +70,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         use_tcu: bool = False,              # C22: τ-Geometric Codebook Update (Riemannian centroid tracking)
         tcu_alpha: float = 0.05,            # C22: EMA momentum
         tcu_eta: float = 0.1,              # C22: Riemannian step 大小
+        use_mcdq: bool = False,             # C23: Mixed-Curvature Distance Quantization (per-layer α)
+        mcdq_alpha_init: float = 0.5,       # C23: 初始 mixing weight (sigmoid⁻¹(mcdq_alpha_init))
     ) -> None:
         self._config = locals()
 
@@ -93,6 +95,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.use_tcu = use_tcu
         self.tcu_alpha = float(tcu_alpha)
         self.tcu_eta = float(tcu_eta)
+        self.use_mcdq = use_mcdq
+        self.mcdq_alpha_init = float(mcdq_alpha_init)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -120,6 +124,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     use_tcu=use_tcu,  # C22: Riemannian centroid update
                     tcu_alpha=tcu_alpha,
                     tcu_eta=tcu_eta,
+                    use_mcdq=use_mcdq,  # C23: Mixed-Curvature Distance Quantization
+                    mcdq_alpha_init=mcdq_alpha_init,
                 )
                 for i in range(n_layers)
             ]

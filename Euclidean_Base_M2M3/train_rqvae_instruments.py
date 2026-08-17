@@ -36,6 +36,7 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
+# C23: MCDQ 输出路径 (切换 c23 时改这里, R37 rollback 回到 m2m3)
 OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m2m3"
 
 INPUT_DIM = 768
@@ -62,6 +63,12 @@ CURV_LEARNED_TOL = 0.01                   # |c - 1.25| > 0.01 视为曲率在学
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
 TCU_ETA = 0.1                    # Riemannian step 大小 (切空间单位)
+
+# C23: MCDQ (Mixed-Curvature Distance Quantization) — 每层 dist = (1-α)·d_P + α·d_E
+# 论文支撑: "Learning Mixed-Curvature Representations" (Gu et al. ICLR 2019),
+#          "Product Manifolds" (Chami et al. ICML 2021).
+USE_MCDQ = False                # C23: 默认关闭 (R37 rollback), C23 切到 True 启用
+MCDQ_ALPHA_INIT = 0.5            # α 初始值 (sigmoid(θ)=0.5 → 等权混合)
 
 # === 加速调参 (硬编码, R36 加速 OK) ===
 BATCH_SIZE = 640                 # per-GPU batch (4 卡 DDP, 总 batch = 2560)
@@ -173,6 +180,8 @@ def main():
         use_tcu=USE_TCU,           # C22: Riemannian centroid tracking (False 默认, 跑 C22 时改为 True)
         tcu_alpha=TCU_ALPHA,
         tcu_eta=TCU_ETA,
+        use_mcdq=USE_MCDQ,         # C23: Mixed-Curvature Distance (False 默认, 跑 C23 时改为 True)
+        mcdq_alpha_init=MCDQ_ALPHA_INIT,
     ).to(device)
 
     if COMPILE:
@@ -241,6 +250,12 @@ def main():
                 # C5: 各层 mean margin 监控 (目标 MARGIN_TARGET)
                 margs = out.per_layer_margin.tolist()
                 marg_str = "/".join(f"{m:.4f}" for m in margs)
+                # C23: MCDQ 各层 mixing weight α_l 监控
+                if USE_MCDQ:
+                    alphas = [float(l.get_alpha().item()) for l in model.module.layers]
+                    alpha_str = "/".join(f"{a:.3f}" for a in alphas)
+                else:
+                    alpha_str = "off"
                 print(
                     f"  ep {global_step_sync // 10:5d}/{NUM_EPOCHS} | step {global_step_sync:6d}/{MAX_GLOBAL_STEPS} "
                     f"| loss={float(loss.item()):.4f} "
@@ -250,6 +265,7 @@ def main():
                     f"| codes={usage_str}/{CODEBOOK_SIZE} "
                     f"| c={curv_str} "
                     f"| marg={marg_str} "
+                    f"| α={alpha_str} "
                     f"| ips_g={ips_global:.1f} ips/rk={ips_per_gpu:.1f} "
                     f"| elapsed={elapsed:.1f}s | eta={eta_s:.1f}s",
                     flush=True,
