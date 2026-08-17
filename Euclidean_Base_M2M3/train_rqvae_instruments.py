@@ -36,9 +36,8 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C27: Curriculum Curvature Schedule (ICML 2025) — c 从 0.05 线性增到 1.0 over 50k 步
-# + Gradient Clipping fix (HG-Rec 实现 bug 修复: clip_grad_norm_(1.0))
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c27_curriculum"
+# C28: Curriculum Curvature + M3 Cross-Layer Transport (与 curriculum 联动)
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -71,6 +70,11 @@ C_END = 1.0                               # 最终 c (双曲, HG-Rec 对齐)
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
 # HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
 GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
+# C28: 启用 M3 cross-layer transport (与 curriculum 联动)
+# 机制: curriculum ramp c 时, M3 防止不同 c 层之间 residual 几何不一致
+# 论文支撑: M3 = "Parallel Transport in Hyperbolic Space" (Chami et al. 2019)
+USE_M3_TRANSPORT = True                   # C28: 启用 M3 (与 C27 互补)
+USE_M2_INTRINSIC = False                  # C28: 关 M2 (M2 是 residual 减法, M3 是 transport; 任选其一)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -186,8 +190,8 @@ def main():
         n_layers=N_LAYERS,
         n_cat_features=0,
         commitment_weight=COMMITMENT_WEIGHT,
-        gate_M2_intrinsic=not USE_FIXED_CURVATURE,  # C26 HG-Rec: 关 M2
-        gate_M3_transport=not USE_FIXED_CURVATURE,  # C26 HG-Rec: 关 M3
+        gate_M2_intrinsic=USE_M2_INTRINSIC,  # C28: 开关由 USE_M2_INTRINSIC 控制
+        gate_M3_transport=USE_M3_TRANSPORT,  # C28: 启用 M3 transport
         hyperbolic_distance=True,  # HG-Rec 双曲 argmin
         sk_eps=0.0,                # C26 HG-Rec: 关 Sinkhorn (纯 argmin)
         prefix_router_layers=None, # Issue #154: L1/L2 per-item 曲率 (默认)
