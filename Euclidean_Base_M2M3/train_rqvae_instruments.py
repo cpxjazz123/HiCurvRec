@@ -164,7 +164,6 @@ def main():
         hyperbolic_distance=True,  # HG-Rec 双曲 argmin
         sk_eps=0.05,               # Sinkhorn 均衡
         prefix_router_layers=None, # Issue #154: L1/L2 per-item 曲率 (默认)
-        hypervq=True,             # C21: HyperVQ 双曲 MLR 量化 (ICML 2025, 论文支撑)
         margin_reg_weight=MARGIN_REG_WEIGHT,  # C5 曲率 margin 正则
         margin_target=MARGIN_TARGET,
     ).to(device)
