@@ -24,8 +24,8 @@ from data.schemas import SeqBatch
 
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c29_curriculum_m2m3/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c29_curriculum_m2m3.npy"
+CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3/rqvae_final.pt"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c28_curriculum_m3.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768
@@ -315,9 +315,9 @@ def main():
     # Save
     np.save(OUT_NPY, sids)
     print(f"[save] {OUT_NPY}: shape={sids.shape}, dtype={sids.dtype}")
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c29_curriculum_m2m3.npy"), curv_state)
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c29_curriculum_m2m3.npy"), response)
-    print(f"[save] curvature_state_c29_curriculum_m2m3.npy: {curv_state.shape} | response_c29_curriculum_m2m3.npy: {response.shape}")
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c28_curriculum_m3.npy"), curv_state)
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c28_curriculum_m3.npy"), response)
+    print(f"[save] curvature_state_c28_curriculum_m3.npy: {curv_state.shape} | response_c28_curriculum_m3.npy: {response.shape}")
     print(f"[curv] per-layer c: {[float(curv_state[0, li]) for li in range(N_LAYERS)]}")
     print(f"[resp] boundary mean: {[float(response[:, li, 1].mean()) for li in range(N_LAYERS)]}")
 

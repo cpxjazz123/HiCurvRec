@@ -169,8 +169,8 @@ def train(
         rqvae_weights_path=pretrained_rqvae_path,
         rqvae_codebook_normalize=vae_codebook_normalize,
         rqvae_sim_vq=vae_sim_vq,
-        gate_M2_intrinsic=True,
-        gate_M3_transport=True,
+        gate_M2_intrinsic=False,  # C28/C29 rollback: 关 M2 (M2 + M3 联合 NO-GO)
+        gate_M3_transport=True,   # C28: 开 M3 transport (当前最佳 0.0991)
         hypervq=False,  # C21 rollback fix: 与 Stage2 ckpt (无 mlr_*) 保持一致 (Poincaré distance argmin)
         use_scs=False,  # C24 R37 rollback
         scs_eps_scale=1.0,

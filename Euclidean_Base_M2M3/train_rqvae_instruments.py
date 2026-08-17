@@ -36,8 +36,8 @@ from data.schemas import SeqBatch
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C29: Curriculum + M2 intrinsic + M3 transport (M2 + M3 联合)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c29_curriculum_m2m3"
+# C28 (C29 rollback): Curriculum + M3 transport 单 M3 (M2 OFF, 当前最佳 0.0991)
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
