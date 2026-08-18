@@ -208,17 +208,20 @@ def _train_hgrec(
     model, optimizer, train_loader, valid_loader, test_loader = accelerator.prepare(
         model, optimizer, train_loader, valid_loader, test_loader
     )
-    # === HALC v2 创新 (R52): 实例化 HALC reg, 手动搬到 device (DDP 不 wrap, 同步靠 all_reduce) ===
+    # === HALC v2 + v16 differential schedule (R36 机制变更): encoder 早 warmup, decoder 晚 warmup ===
     halc = HALCAnnealingRegularizer(
         num_layers=7, init_curvature=1.0, c_max=1.0,
         warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
+        encoder_warmup=3, encoder_cooldown=8,
+        decoder_warmup=7, decoder_cooldown=12,
     )
     halc = halc.to(accelerator.device)
     if accelerator.is_main_process:
         halc.set_epoch(0)
         c_init = halc.annealed_curvature().detach().cpu().tolist()
-        print(f"[HALC v2] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
-        print(f"[HALC v2] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
+        print(f"[HALC v2 + v16 diff] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
+        print(f"[HALC v2 + v16 diff] encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12", flush=True)
+        print(f"[HALC v2 + v16 diff] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
 
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
