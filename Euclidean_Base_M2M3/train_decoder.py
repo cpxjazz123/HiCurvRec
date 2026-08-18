@@ -179,7 +179,14 @@ def _train_hgrec(
                     input_ids=input_ids, attention_mask=attention_mask,
                     num_beams=top_k_for_generation,
                 )
-                preds = preds[:, 1:].reshape(input_ids.shape[0], top_k_for_generation, -1)
+                # 模型未充分训练时 generate 可能输出短序列 (EOS 早停) → 补 PAD 到固定 5 (= 1 首 token + 4 label tokens)
+                if preds.shape[-1] < 5:
+                    pad = torch.zeros(
+                        (*preds.shape[:-1], 5 - preds.shape[-1]),
+                        dtype=preds.dtype, device=preds.device,
+                    )
+                    preds = torch.cat([preds, pad], dim=-1)
+                preds = preds[:, 1:].reshape(input_ids.shape[0], top_k_for_generation, 4)
                 acc.accumulate(actual=labels, top_k=preds)
         local = acc.get_sums_and_total()
         keys = ["ndcg"] + [f"ndcg@{k}" for k in top_k_eval_list] + [f"h@{k}" for k in top_k_eval_list] + ["total"]
