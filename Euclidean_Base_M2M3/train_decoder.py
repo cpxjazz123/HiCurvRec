@@ -35,8 +35,8 @@ from tqdm import tqdm
 # HG-Rec 路径 (C33 Issue #181 合并): 序列级 CE 数据集
 from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 
-# === HALC v2 创新 (R52 主目录直接迭代): learnable per-layer κ + curvature annealing ===
-from _lib.halc import HALCAnnealingRegularizer
+# === HALC v3 创新 (R52 主目录直接迭代): per-channel-group κ + 强 reg (v2 升级) ===
+from _lib.halc_v3 import HALCPerChannelGroupRegularizer
 
 
 @gin.configurable
@@ -201,17 +201,17 @@ def _train_hgrec(
     model, optimizer, train_loader, valid_loader, test_loader = accelerator.prepare(
         model, optimizer, train_loader, valid_loader, test_loader
     )
-    # === HALC v2 创新 (R52): 实例化 HALC reg, 手动搬到 device (DDP 不 wrap, 同步靠 all_reduce) ===
-    halc = HALCAnnealingRegularizer(
-        num_layers=7, init_curvature=1.0, c_max=1.0,
-        warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
+    # === HALC v3 创新 (R52): per-channel-group κ + 强 reg (v2 升级) ===
+    halc = HALCPerChannelGroupRegularizer(
+        num_layers=7, d_model=128, num_groups=4, init_curvature=1.0, c_max=1.0,
+        warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.08,
     )
     halc = halc.to(accelerator.device)
     if accelerator.is_main_process:
         halc.set_epoch(0)
         c_init = halc.annealed_curvature().detach().cpu().tolist()
-        print(f"[HALC v2] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
-        print(f"[HALC v2] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
+        print(f"[HALC v3] init annealed κ[l,g] @ epoch=0: {[[round(c, 4) for c in row] for row in c_init]}", flush=True)
+        print(f"[HALC v3] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
 
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
@@ -230,7 +230,7 @@ def _train_hgrec(
         print(f"[hgrec] n_params={n_params:,} world={accelerator.num_processes}", flush=True)
 
     for epoch in range(MAX_EPOCHS):
-        # === HALC v2: 更新 annealing schedule epoch ===
+        # === HALC v3: 更新 annealing schedule epoch ===
         halc.set_epoch(epoch)
         model.train()
         epoch_loss = 0.0
@@ -244,7 +244,7 @@ def _train_hgrec(
             batch = {k: v.to(device) for k, v in batch.items()}
             optimizer.zero_grad()
             with accelerator.autocast():
-                # === HALC v2 创新: 取 encoder hidden_states 计算 Poincaré reg ===
+                # === HALC v3 创新: 取 encoder hidden_states 计算 Poincaré reg (per-channel-group) ===
                 loss, _, enc_hs, _ = model(
                     input_ids=batch["history"],
                     attention_mask=batch["attention_mask"],
@@ -282,7 +282,7 @@ def _train_hgrec(
             early_stop_counter = 0
             if accelerator.is_main_process:
                 os.makedirs(os.path.dirname(BEST_CKPT_PATH), exist_ok=True)
-                # === HALC v2 创新: 同时保存 HALC 状态 (reg_weight + log_curvature) ===
+                # === HALC v3 创新: 同时保存 HALC 状态 (per-channel-group κ)
                 state = {
                     "epoch": epoch,
                     "model": accelerator.unwrap_model(model).state_dict(),
@@ -308,7 +308,7 @@ def _train_hgrec(
     raw_model = accelerator.unwrap_model(model)
     best_ckpt = torch.load(BEST_CKPT_PATH, map_location=device, weights_only=False)
     raw_model.load_state_dict(best_ckpt["model"])
-    # === HALC v2 创新: 加载 HALC 状态 (保持 annealing schedule) ===
+    # === HALC v3 创新: 加载 HALC 状态 (保持 annealing schedule) ===
     if "halc_state" in best_ckpt and "halc_epoch" in best_ckpt:
         halc.load_state_dict(best_ckpt["halc_state"])
         halc.set_epoch(best_ckpt["halc_epoch"])
