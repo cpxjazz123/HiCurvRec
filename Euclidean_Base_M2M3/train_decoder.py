@@ -27,7 +27,6 @@ from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
 from modules.utils import compute_debug_metrics
 from modules.utils import parse_config
-from torch.utils.data.distributed import DistributedSampler
 from huggingface_hub import login
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -107,7 +106,6 @@ def _train_hgrec(
     )
 
     # HG-Rec 评估用 per-rank batch (4 卡各处理一段, DistributedSampler 自动切片)
-    # R35b 同口径: 4 卡 DDP 切片, 每样本只被一个 rank 处理, ratio 计算分母 global_total = sum = N (9922)
     eval_batch_size = 64  # per-GPU (4 卡 DDP, beam=20, KV cache 留足空间)
 
     train_loader = DataLoader(
@@ -115,22 +113,13 @@ def _train_hgrec(
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
-    # === R35b DistributedSampler: 4 卡各自评估不重复的数据分片 ===
-    valid_sampler = DistributedSampler(
-        valid_ds, num_replicas=accelerator.num_processes,
-        rank=accelerator.local_process_index, shuffle=False,
-    )
     valid_loader = DataLoader(
-        valid_ds, batch_size=eval_batch_size, sampler=valid_sampler,
+        valid_ds, batch_size=eval_batch_size, shuffle=False,
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
-    test_sampler = DistributedSampler(
-        test_ds, num_replicas=accelerator.num_processes,
-        rank=accelerator.local_process_index, shuffle=False,
-    )
     test_loader = DataLoader(
-        test_ds, batch_size=eval_batch_size, sampler=test_sampler,
+        test_ds, batch_size=eval_batch_size, shuffle=False,
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
