@@ -69,13 +69,11 @@
 
 **R30** — 脚本超参硬编码进模块, 禁 `os.environ.get` 读超参, 禁 wrapper 传 num_epochs/batch_size/lr/seed 等数值超参 (路径参数可传)。
 
-**R31** — 每个 stage 目录只允许一个主脚本, 禁 fork `_v2.py/_v8.py` 多版本并存, 历史实验变体从 git 历史恢复。
+**R31** — 主目录每个 stage 只允许一个主脚本 (`train_decoder.py` / `test_eval_only.py` / `_lib/halc.py`), 禁 fork `_v2.py/_v8.py` 多版本并存, 历史实验变体从 git 历史恢复。
 
 **R32** — 运行脚本必须直接 `python3` 执行, 禁写 `.sh` 包装启动, GPU 选择用 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联 (唯一例外: DDP 多卡 `torchrun`)。
 
-**R33** — 任务完成 verdict 写到 `tasks/<task_dir>/issue<NN>_verdict.json` (本任务自己的目录), 不集中放 `verdicts/`; 文件名格式 `issue<NN>_verdict.json`, NN = gitlab issue 编号; 区分 stage3/verdict.json (产物级) 与 issue 闭环 verdict (任务级)。
-
-**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯), 必须有且仅有 stage1/2/3/4_beam20.py 四个脚本。
+**R33** — 任务完成 verdict 写到 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/verdicts/v<N>_verdict.json` (主目录 verdicts/ 子目录, 全局集中, 不放 tasks/); 文件名格式 `v<N>_verdict.json` (N=版本号); 区分 stage3/verdict.json (产物级) 与版本闭环 verdict (迭代级)。
 
 **R35** — 评估强约束: 只使用单 checkpoint + `beam_search=20`, 禁 Borda Rank Fusion / 任何 ensemble 多 ckpt 融合。
 
@@ -91,7 +89,7 @@
 
 **R39** — Open Issue 立即实现硬约束: 任何 open issue 一旦被 loop tick 发现, 必须立即实施 (R19+R26+R27 联动), 严禁等待用户评论授权。
 
-**R40** — 四 Stage 全量运行硬约束: 每个任务目录必须完整实时运行 stage1 → stage2 → stage3 → stage4, 无论创新点位于哪个 stage; stage n+1 输入必须唯一来自 stage n 实时运行产物 (落 tasks/<task_dir>/), 禁引用任何外部脚本/外部产物; stage n 产物缺失 → stage n+1 raise FileNotFoundError 禁启动 (issue 显式豁免某 stage 除外)。
+**R40** — 四 Stage 全量运行硬约束: 主目录所有 4 个 stage (`train_rqvae_instruments.py` / `infer_sids_instruments.py` / `train_decoder.py` / `test_eval_only.py`) 必须完整实时运行, 无论创新点位于哪个 stage; stage n+1 输入必须唯一来自 stage n 实时运行产物 (落 `Euclidean_Base_M2M3/` 主目录), 禁引用任何外部脚本/外部产物; stage n 产物缺失 → stage n+1 raise FileNotFoundError 禁启动 (issue 显式豁免某 stage 除外)。
 
 **R41** — 所有 Stage3 / Stage2 训练脚本的 `EARLY_STOP` 统一硬编码为 20 (历史 v121 用 30 不追溯, 仅本规则生效后新任务生效)。
 
@@ -103,18 +101,15 @@
 
 **R43** — 禁止脚本使用 CLI 传入数值超参; 脚本超参必须硬编码为模块级常量, 调用方只能改代码, 不能传 `--xxx`; 唯一允许传参: `--sid_npy` / `--product_dir` / `--tag` 路径参数 (R30 强化)。
 
-**R44** — 数据集与依赖库位置硬约束:
-- 数据集: 每个新任务的 4 stage 脚本必须显式从 `/home/wlia0047/ar57/wenyu/GeneRec/dataset/` 读取 (Instruments.item.json, Instruments.inter.json, train.parquet, valid.parquet, test.parquet 等), 禁引用任何外部数据集路径 (HG-Rec/dataset/, 用户家目录其他位置等);
-- 依赖库: stage 需要的 baseline 模型/工具库 (如 HRQVAE、quantizer、utils 等) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/_lib/` 复制到对应任务目录的 `_lib/` 子目录, 任务脚本 `sys.path.insert(0, str(<task_dir>/_lib))`; 禁止从外部路径 import baseline 代码;
-- 两者共同强化 R40 自包含, 确保任务目录可独立运行、可重现。
+**R44** — 数据集位置硬约束:
+- 所有脚本必须显式从 `/home/wlia0047/ar57/wenyu/GeneRec/dataset/` 读取 (Instruments.item.json, Instruments.inter.json, train.parquet, valid.parquet, test.parquet 等), 禁引用任何外部数据集路径 (HG-Rec/dataset/, 用户家目录其他位置等);
+- 依赖库 (HALC / Möbius / HG_Rec wrapper 等) 直接放在 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/_lib/` 下, 直接 import, 不为每个任务复制 _lib/。
 
 **R44b** — 下载位置与磁盘硬约束: 禁止向 `/home/wlia0047/` 写入任何数据 (模型权重、数据集、缓存等) — /home 挂载仅 20G 且曾 100% 满导致 HuggingFace 模型下载截断损坏; 所有下载/HF 缓存必须指向 `/home/wlia0047/ar57_scratch/wenyu/` (大磁盘); 运行下载类任务前必须 `df -h /home/wlia0047/` 检查剩余空间, 不足 5G 时先清理或改路径; HuggingFace 相关必须显式设 `HF_HOME=/home/wlia0047/ar57_scratch/wenyu/.cache/huggingface` (或对应 scratch 路径)。
 
 **R44c** — pip 安装位置硬约束: 禁止任何 pip 安装落到 `/home/wlia0047/` 下的用户 site (即 `~/.local`, 含 `/home/wlia0047/.local` 与 `/home/wlia0047/ar57/wenyu/.local`) — 曾因无 `-t` 的 pip install 把 13G 依赖树写进 `/home/wlia0047/ar57/wenyu/.local` 撑爆 20G /home 挂载; pip 安装必须显式 `pip install <pkg> -t <conda_env>/lib/python3.10/site-packages` (如 `-t /home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages`), 或 `--user` 仅指向 scratch 路径; 安装前先 `df -h /home/wlia0047/` 核对, 安装后检查 `/home/wlia0047/` 下不得出现新的 `.local`/`.cache` 目录。
 
-**R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R33+R34 联动)。
-
-**R46** — 任务模板来源硬约束: 每个新任务目录的 4 stage 脚本 (stage1/2/3/4_beam20.py) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/baseline/` 复制 (stage4.py 已内置 raw predictions 收集, 无需额外 full_oracle 脚本), 禁止从任何其他 issue 目录 (如 tasks/Issue1xx_*/) 复制脚本/产物/配置; 复制后仅允许修改: 路径参数 (指向本任务目录)、issue 编号/标签、以及本任务创新点所需的最小代码改动。历史 issue 目录仅作 git 历史与参考查阅, 不作模板源。
+**R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。
 
 **R47** — sentence-t5-xxl 模型位置硬约束: `sentence-transformers/sentence-t5-xxl` (RQ-VAE-Recommender 默认 embedding 模型, ~10GB) **必须**存放在 `/home/wlia0047/hj82_scratch2/wenyu/` 下面 (该挂载点 6.6T 总量, 充裕可装下 RQ-VAE-Recommender 全套); HF 相关环境变量必须显式设:
 - `HF_HOME=/home/wlia0047/hj82_scratch2/wenyu/.cache/huggingface`
@@ -128,3 +123,11 @@
 **R49** — 禁 sleep 阻塞等待: 启动长任务 (训练/推理/下载) 后**禁止使用 `sleep` 休眠等待进程执行**, 改为**定期手动轮询检查** (每次轮询: 查日志尾部 / `ps` 进程状态 / 产物 mtime, 轮询间隔由 tick 节奏决定, 单次轮询命令内不 sleep 长于 ~10s)。等待期间应并行推进其他可做事项 (写代码/分析/准备下一阶段), 而不是空转; 任务完成判定基于日志标记 (如 `[train] done` / `Early stopping`) 或产物出现, 非时间估算。
 
 **R50** — 回滚后禁重跑硬约束: 任何代码/产物回滚操作 (R37/R38 触发的 `git checkout <commit> -- <file>` / 手动恢复 best_ckpt.pt / 手动恢复 test_final.json / conda env 升降级 / 脚本超参改回上一版本) 完成之后, **禁止立即自动重新启动训练或评估脚本** (`python3 train_decoder.py` / `python3 test_eval_only.py` / `accelerate launch ...`); 验证手段仅限于 `git diff --stat` / `git status` / `python3 -m py_compile` / 文件 mtime 比对 / `cat <result.json>` 校验数值。回滚操作的产出物以 "已回滚 + 已记录 verdict" 为终态, 不擅自触发新一轮 GPU 作业; 是否重跑、什么时候重跑、用什么配置重跑, 必须由用户明确指令或下一次 tick 主动启动新任务时再决定 (与 R19 + R26 + R27 区分: 那三条是 tick 启动新任务时强制实操, R50 是回滚后强制停手)。
+
+**R52** — 迭代不许新建独立目录 (用户指令 2026-08-18):
+- 任何曲率机制版本迭代, **必须**直接在 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/` 主目录的现有文件上修改 (`train_decoder.py` / `test_eval_only.py` / `_lib/*` / `configs/*.gin` / `data/*` / `modules/*`), 不许在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 子目录包装, 不许新建独立 `stage1/2/3/4_beam20.py` 四件套
+- 唯一允许新增位置: `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/_lib/` (HALC 等新模块) 和 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/configs/` (新 gin 配置)
+- 历史已建的 `tasks/Issue<NN>_*` 目录不追溯清理 (git 历史保留), 但下一次迭代**禁止**再新建
+- git commit message 写 `v<N> → v<N+1>: <改动描述>`, 不写 `Issue<NN>_*` 命名
+- 备份的 `tasks/Issue_curvature_innov_v*` 目录 (HALC v1/v2/v3/v4) 当前正在跑 v1 训练, 必须等 v1 训练**完全结束** (EARLY_STOP 或 max 200 epoch) 后, 把成功版本 (v1 R37 PASS) 或失败分析 (v1 R37 FAIL) **直接合并/反馈回主目录 `train_decoder.py`** (R52), 不留独立目录包装
+- 配套废除: R34 (新建 Issue 目录) / R46 (从 baseline 复制模板) / R44 任务目录 _lib 部分

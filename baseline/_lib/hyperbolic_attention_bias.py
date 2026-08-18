@@ -425,7 +425,17 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
     """
     import types
     from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
-    from transformers.models.t5.modeling_t5 import create_bidirectional_mask
+    try:
+        from transformers.models.t5.modeling_t5 import create_bidirectional_mask
+    except ImportError:
+        import torch as _torch
+
+        def create_bidirectional_mask(config, inputs_embeds, attention_mask):
+            if attention_mask is None:
+                attention_mask = _torch.ones(inputs_embeds.shape[:2], device=inputs_embeds.device)
+            extended = attention_mask[:, None, None, :].to(dtype=inputs_embeds.dtype)
+            extended = (1.0 - extended) * _torch.finfo(inputs_embeds.dtype).min
+            return extended
     device = next(hg_rec.parameters()).device
     hab_module = hab_module.to(device)
     layer_id_lut_tensor = torch.as_tensor(layer_id_lut_array, dtype=torch.long).to(device)
@@ -501,7 +511,8 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
                 all_hidden_states = all_hidden_states + (hidden_states,)
             layer_outputs = layer_module(
                 hidden_states, attention_mask_4d, None, None, None, None,
-                past_key_values=None, use_cache=False,
+                past_key_value=None, use_cache=False,
+                cache_position=torch.arange(seq_length, device=inputs_embeds.device),
                 output_attentions=output_attentions, return_dict=True)
             hidden_states = layer_outputs[0]
         hidden_states = self.final_layer_norm(hidden_states)

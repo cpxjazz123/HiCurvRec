@@ -1,4 +1,13 @@
 import os
+import sys
+# 跳过 transformers TF 路径 (Keras 3 兼容性问题)
+os.environ["USE_TF"] = "0"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
+# 把当前脚本所在目录加入 sys.path 最前 (R44/R47: 任务目录自包含)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+
 import gin
 import torch
 import wandb

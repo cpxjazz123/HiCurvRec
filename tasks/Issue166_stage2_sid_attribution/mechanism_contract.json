@@ -1,0 +1,27 @@
+{
+  "issue": "#166",
+  "unique_difference": "S_C vs S_T (Stage2 SID/codebook \u6765\u6e90) \u2014 Stage3 \u5b8c\u5168\u5173\u95ed\u6240\u6709\u6ce8\u5165",
+  "injection_modules": {
+    "gate": 0,
+    "mixer": 0,
+    "curv_injector": 0,
+    "hab_diff": "\u51bb\u7ed3\u4e3a baseline \u9ed8\u8ba4",
+    "geo_residual": "\u51bb\u7ed3\u4e3a baseline \u9ed8\u8ba4"
+  },
+  "stage2_source_audit": {
+    "design_equivalence": "S_C \u548c S_T \u7684 stage2.py \u914d\u7f6e\u76f8\u540c (GATE_M1=False, M2=True, M3=True, seed=2024)",
+    "observed_difference": "final_loss 0.427 vs 0.441; SID unique 7267 vs 6077; Hamming mean 2.97",
+    "nondeterminism_source": "sklearn KMeans \u65e0 random_state (stage2.py docstring \u660e\u786e 'KMeans \u975e\u786e\u5b9a\u6027') \u2192 \u4e24\u5957 Stage2 codebook init \u4e0d\u540c \u2192 SID \u4e0d\u540c",
+    "conclusion": "STAGE2_NONDETERMINISM \u98ce\u9669\u6807\u8bb0: \u4e24\u5957 Stage2 \u8bbe\u8ba1\u7b49\u4ef7\u4f46 KMeans \u672a\u56fa\u5b9a\u5bfc\u81f4\u8f93\u51fa\u4e0d\u540c"
+  },
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "arms": {
+    "A": "S_C + \u65e0\u6ce8\u5165 Stage3",
+    "B": "S_T + \u65e0\u6ce8\u5165 Stage3"
+  },
+  "stage3_config": "\u4e0e #162 stage3 \u76f8\u540c\u4f46\u5f3a\u5236 GATE_M4_INJECTION=False, GATE_CURV_ATTN=False (\u65e0 gate/mixer/injection)"
+}

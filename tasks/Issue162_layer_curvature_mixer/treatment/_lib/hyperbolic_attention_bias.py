@@ -425,7 +425,19 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
     """
     import types
     from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
-    from transformers.models.t5.modeling_t5 import create_bidirectional_mask
+    try:
+        from transformers.models.t5.modeling_t5 import create_bidirectional_mask
+    except ImportError:
+        # transformers >= 4.33/4.40 无 create_bidirectional_mask (T5Stack 改用内部 causal mask 逻辑,
+        # 但仍支持 4D additive attention_mask 原样透传, dim==4 分支). 本地复刻旧版等价实现.
+        import torch as _torch
+
+        def create_bidirectional_mask(config, inputs_embeds, attention_mask):
+            if attention_mask is None:
+                attention_mask = _torch.ones(inputs_embeds.shape[:2], device=inputs_embeds.device)
+            extended = attention_mask[:, None, None, :].to(dtype=inputs_embeds.dtype)
+            extended = (1.0 - extended) * _torch.finfo(inputs_embeds.dtype).min
+            return extended
     device = next(hg_rec.parameters()).device
     hab_module = hab_module.to(device)
     layer_id_lut_tensor = torch.as_tensor(layer_id_lut_array, dtype=torch.long).to(device)
@@ -440,6 +452,8 @@ def install_hab(hg_rec, hab_module, layer_id_lut_array):
     def hab_encoder_forward(self, input_ids=None, attention_mask=None, inputs_embeds=None,
                               encoder_hidden_states=None, *args, **kwargs):
         """Issue #64: monkey-patch 的 encoder.forward, 只在 is_decoder=False 时修补 attention_mask."""
+        # transformers 兼容: T5Stack.forward 不接受 curvature/response (generate model_kwargs 透传)
+        kwargs = {k: v for k, v in kwargs.items() if k not in ("curvature", "response")}
         if self.is_decoder:
             # Decoder 路径 (Issue #64 明确不允许注入): 直接调原 forward
             return self._original_forward(input_ids=input_ids, attention_mask=attention_mask,

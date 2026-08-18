@@ -46,8 +46,10 @@ N_LAYERS = 3
 COMMITMENT_WEIGHT = 0.25
 
 # === 训练硬约束 (R30/R43) ===
-MAX_GLOBAL_STEPS = 400_000       # RQ-VAE-Recommender 论文 400k iter (全球)
-CKPT_EVERY = 50_000              # 每 50k 全球 step 保存一份 ckpt
+MAX_GLOBAL_STEPS = 100_000       # 100k 对照 (与 M2M3 双曲版训练量对齐)       # RQ-VAE-Recommender 论文 400k iter (全球)
+CKPT_EVERY = 10_000              # 每 50k 全球 step 保存一份 ckpt
+# codebook 健康检查: 层 unique code 数 < CODEBOOK_SIZE*该阈值 → 打印 [CODEBOOK WARNING]
+CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 
 # === 加速调参 (硬编码, R36 加速 OK) ===
 BATCH_SIZE = 640                 # per-GPU batch (4 卡 DDP, 总 batch = BATCH_SIZE * 4)
@@ -202,15 +204,28 @@ def main():
                 ips_global = global_step_sync / elapsed
                 ips_per_gpu = (global_step_sync / world_size) / elapsed
                 eta_s = (MAX_GLOBAL_STEPS - global_step_sync) / ips_global if ips_global > 0 else float("inf")
+                # codebook 健康检查 (rank 0): 各层 unique code 数 + 低使用率告警
+                usage = [int(u) for u in out.per_layer_usage.tolist()]
+                usage_str = "/".join(str(u) for u in usage)
+                low_usage = [
+                    li for li, u in enumerate(usage) if u < CODEBOOK_SIZE * CODEBOOK_COLLAPSE_THRESHOLD
+                ]
                 print(
                     f"  step {global_step_sync:6d}/{MAX_GLOBAL_STEPS} "
                     f"| loss={float(loss.item()):.4f} "
                     f"| rl={float(out.reconstruction_loss.item()):.4f} "
                     f"| vl={float(out.rqvae_loss.item()):.4f} "
+                    f"| codes={usage_str}/{CODEBOOK_SIZE} "
                     f"| ips_g={ips_global:.1f} ips/rk={ips_per_gpu:.1f} "
                     f"| elapsed={elapsed:.1f}s | eta={eta_s:.1f}s",
                     flush=True,
                 )
+                if low_usage:
+                    print(
+                        f"  [CODEBOOK WARNING] layer {low_usage} usage={usage_str}/{CODEBOOK_SIZE} "
+                        f"(< {CODEBOOK_COLLAPSE_THRESHOLD:.0%}), 疑似 collapse, 建议终止检查",
+                        flush=True,
+                    )
                 last_log_t = now
 
             # ckpt 保存 (rank 0 only, 每 CKPT_EVERY 步一次)

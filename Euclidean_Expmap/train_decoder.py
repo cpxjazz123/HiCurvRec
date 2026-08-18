@@ -77,7 +77,7 @@ def train(
     num_user_bins=None,
     top_k_eval_list=[1, 5, 10],
     # === 双曲机制参数 (M1 Expmap, 透传给 SemanticIdTokenizer → RqVae) ===
-    hyperbolic_mechanism="none",
+    hyperbolic_mechanism="expmap",
     vae_init_curvature=1.0,
     quantize_distance_mode=QuantizeDistance.L2,
 ):
@@ -280,6 +280,7 @@ def train(
             data = batch_to(batch, device)
             tokenized_data = tokenizer(data)
             with accelerator.autocast():
+                # R36 v4: HGRecModel.forward() 返回 (loss, logits) tuple (HG-Rec 完全等价)
                 model_output = model(tokenized_data)
                 loss = model_output.loss
             optimizer.zero_grad()

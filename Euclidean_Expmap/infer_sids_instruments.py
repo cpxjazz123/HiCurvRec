@@ -15,17 +15,17 @@ import numpy as np
 import torch
 
 # R47 imports
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/RQ-VAE-Recommender")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Expmap")
 from modules.rqvae import RqVae
-from modules.quantize import QuantizeForwardMode
+from modules.quantize import QuantizeForwardMode, QuantizeDistance
 from modules.tokenizer.semids import SemanticIdTokenizer
 from data.schemas import SeqBatch
 
 
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids.npy"
+CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_m1_expmap/rqvae_final.pt"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_m1.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768
@@ -69,6 +69,9 @@ def main():
         n_layers=N_LAYERS,
         n_cat_features=0,
         commitment_weight=COMMITMENT_WEIGHT,
+        hyperbolic_mechanism="expmap",
+        vae_init_curvature=1.0,
+        quantize_distance_mode=QuantizeDistance.L2,
     ).to(device)
     model.load_state_dict(state["model"])
     model.eval()

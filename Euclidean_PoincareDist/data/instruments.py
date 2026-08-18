@@ -139,11 +139,12 @@ class RawMusicalInstruments(InMemoryDataset):
             # 构造完整 raw_seq (历史 + train/valid/test target)
             raw_seq = history + [t_train, t_valid, t_test]
 
-            # train: history[:-2] → itemId, itemId_fut = history[-2]
-            train_items = raw_seq[:-2]
+            # train (HG-Rec 公平划分): 输入 = history (不含 target), 标签 = t_train (train.target)
+            # 注意: 不能用 raw_seq[:-2] (= history+[t_train]) + 标签 t_valid — 那会让训练标签 = valid 评估标签 (背题)
+            train_items = raw_seq[:-3]
             sequences["train"]["userId"].append(user_id)
             sequences["train"]["itemId"].append(train_items)
-            sequences["train"]["itemId_fut"].append(t_valid)
+            sequences["train"]["itemId_fut"].append(t_train)
 
             # eval (语义上 = HG-Rec valid 集): history[-(max_seq_len+2):-2] (padded -1), fut = t_valid
             eval_items = raw_seq[-(max_seq_len + 2):-2]

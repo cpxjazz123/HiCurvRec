@@ -19,14 +19,15 @@ def process_data(file_path, mode, max_len, PAD_TOKEN=0):
     data['sequence'] = data['history'].apply(lambda x: list(x)) + data['target'].apply(lambda x: [x])
     
     if mode == 'train':
+        # Issue #166 v2 (no windowed): 与 Euclidean_Base 系列对齐 — 每用户只保留最后一个窗口
+        # (完整 history + train.target), 不用前缀窗口采样 (windowed 已删除, n_train = n_users)
         process_data = []
         for row in data.itertuples(index=False):
             sequence = row.sequence
-            for i in range(1, len(sequence)):
-                process_data.append({
-                    'history': sequence[:i],
-                    'target': sequence[i] 
-                })
+            process_data.append({
+                'history': sequence[:-1],
+                'target': sequence[-1]
+            })
     elif mode == 'evaluation':
         process_data = []
         for row in data.itertuples(index=False):

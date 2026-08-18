@@ -32,6 +32,7 @@ class RqVaeComputedLosses(NamedTuple):
     rqvae_loss: Tensor
     embs_norm: Tensor
     p_unique_ids: Tensor
+    per_layer_usage: Tensor  # codebook 健康检查: 每层量化 ids 的 unique code 数 (n_layers,)
 
 
 class RqVae(nn.Module, PyTorchModelHubMixin):
@@ -167,6 +168,12 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     diagonal=1,
                 )
             ).all(axis=1).sum() / quantized.sem_ids.shape[0]
+            # codebook 健康检查: 每层 unique code 数 (sem_ids: [B, n_layers], 按列统计)
+            per_layer_usage = torch.zeros(
+                self.n_layers, dtype=torch.long, device=quantized.sem_ids.device
+            )
+            for li in range(self.n_layers):
+                per_layer_usage[li] = quantized.sem_ids[:, li].unique().numel()
 
         return RqVaeComputedLosses(
             loss=loss,
@@ -174,4 +181,5 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             rqvae_loss=rqvae_loss.mean(),
             embs_norm=embs_norm,
             p_unique_ids=p_unique_ids,
+            per_layer_usage=per_layer_usage,
         )
