@@ -24,6 +24,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Optional
 
 
 class HALCAnnealingRegularizer(nn.Module):
@@ -32,6 +33,10 @@ class HALCAnnealingRegularizer(nn.Module):
     decoder (深层) 晚 warmup. 通过 encoder_warmup / decoder_warmup / encoder_cooldown /
     decoder_cooldown 区分 schedule. 默认 encoder_warmup=3 / decoder_warmup=7,
     encoder_cooldown=8 / decoder_cooldown=12 (vs HALC v2 统一 warmup=5, cooldown=10).
+    v17 备胎 (R36 新曲率正则项): per-layer reg_weight_max — 不同 layer 不同 reg 强度.
+    通过 reg_weight_max_per_layer 张量 (num_layers,) 区分. 默认 encoder 浅层 L1-3 强 reg (0.10),
+    encoder 深层 L4-6 弱 reg (0.02), decoder embed L7 中等 (0.05). v16/v17 兼容 (reg_weight_max
+    为 scalar 时退化为全局).
     """
 
     def __init__(
@@ -47,6 +52,8 @@ class HALCAnnealingRegularizer(nn.Module):
         decoder_warmup: int = 7,    # v16: decoder 深层 (L7) 晚 warmup
         decoder_cooldown: int = 12, # v16: decoder 深层 cooldown 较长 (更慢达到 c_max)
         reg_weight_max: float = 0.05,
+        # v17: per-layer reg_weight_max 张量 (None=用 scalar reg_weight_max 全局共享)
+        reg_weight_max_per_layer: Optional[list] = None,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -71,6 +78,13 @@ class HALCAnnealingRegularizer(nn.Module):
         # learnable reg_weight (bounded by tanh)
         self.raw_reg_weight = nn.Parameter(torch.tensor(0.01))
         self.reg_weight_max = reg_weight_max
+        # v17: per-layer reg_weight_max (None = scalar 共享, 列表 = 各自独立)
+        if reg_weight_max_per_layer is None:
+            reg_weight_max_per_layer = [reg_weight_max] * num_layers
+        assert len(reg_weight_max_per_layer) == num_layers, \
+            f"reg_weight_max_per_layer 长度 {len(reg_weight_max_per_layer)} 必须等于 num_layers {num_layers}"
+        # 存为 Python list (用于 tanh clamp 时直接用, 不需要 buffer 因为是数值常量)
+        self.reg_weight_max_per_layer = list(reg_weight_max_per_layer)
         self.current_epoch = 0
 
     def annealed_curvature(self) -> torch.Tensor:
@@ -86,7 +100,13 @@ class HALCAnnealingRegularizer(nn.Module):
 
     @property
     def reg_weight(self) -> torch.Tensor:
-        return self.reg_weight_max * torch.tanh(self.raw_reg_weight / self.reg_weight_max)
+        """v17 兼容: scalar 全局时返回标量; per-layer 时返回 (num_layers,) 张量."""
+        if len(set(self.reg_weight_max_per_layer)) == 1:
+            return self.reg_weight_max * torch.tanh(self.raw_reg_weight / self.reg_weight_max)
+        # v17: per-layer reg_weight (each layer tanh-clamped by its own max)
+        raw = self.raw_reg_weight  # scalar parameter
+        maxes = torch.tensor(self.reg_weight_max_per_layer, dtype=raw.dtype, device=raw.device)
+        return maxes * torch.tanh(raw / maxes)
 
     def poincare_logmap0(self, x: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
         """logmap0: Poincaré ball B_c^d → tangent space at origin."""
@@ -109,10 +129,17 @@ class HALCAnnealingRegularizer(nn.Module):
         n = min(len(hidden_states_list), self.num_layers)
         total = 0.0
         c_per_layer = self.annealed_curvature()  # (num_layers,)
+        # v17: per-layer reg_weight (如果配置为非均匀)
+        per_layer_w = self.reg_weight
+        is_per_layer = per_layer_w.dim() > 0  # (num_layers,) tensor vs scalar
         for i in range(n):
             c = c_per_layer[i]
             logmap = self.poincare_logmap0(hidden_states_list[i], c)
-            total = total + (logmap ** 2).sum(dim=-1).mean()
+            layer_loss = (logmap ** 2).sum(dim=-1).mean()
+            if is_per_layer:
+                total = total + per_layer_w[i] * layer_loss
+            else:
+                total = total + per_layer_w * layer_loss
         return total / max(n, 1)
 
     def set_epoch(self, epoch: int):
