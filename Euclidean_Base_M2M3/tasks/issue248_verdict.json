@@ -1,0 +1,28 @@
+{
+  "issue": "v28 R37 FAIL — per-layer curriculum c_end R36 新曲率正则项 (备胎 1)",
+  "verdict": "R37 FAIL (test_R@10=0.1082 < v19 baseline 0.1102, 退步 -0.002)",
+  "r37_decision": "FAIL → R50 回滚 v28 改动 (per-layer c_end), 保留 v19 baseline 0.1102",
+  "test_R@10": 0.1082,
+  "v19_baseline": 0.1102,
+  "delta": -0.002,
+  "best_ckpt_epoch": 115,
+  "best_ckpt_valid_ndcg20": 0.0970,
+  "stage3_epochs_trained": 136,
+  "stage3_early_stop": "E136 (R41 EARLY_STOP=20, best E116→E136 无新 best)",
+  "stage1_codes_final": "98/239/232/256 (vs v19 47/231/239, L0 doubled)",
+  "stage2_L0_usage": "99/256 = 38.7% (vs v19 18.4%, doubled)",
+  "stage3_trajectory": "E1:0 → E96:0.0962 → E105:0.0968 → E116:0.0970 (best, plateaued)",
+  "D1_spec_recap": "per-layer curriculum c_end 差异化: L0=0.5 (Euclidean-leaning 粗粒度), L1=0.7 (medium), L2=1.0 (双曲 细粒度). c_start=0.05 全层一致, curriculum_steps=50k. M3 transport 自动按 per-layer c 调整跨层传输.",
+  "D2_implementation_core": "modules/quantize.py: 新增 get_c_layer(layer_idx) 方法 + c_end_per_layer List 字段; modules/rqvae.py: 转发 c_end_per_layer 到各 Quantize 层; train_rqvae_instruments.py: USE_PER_LAYER_C_END=True, C_END_PER_LAYER=[0.5,0.7,1.0]; infer_sids_instruments.py: 同步传入 c_end_per_layer=[0.5,0.7,1.0]",
+  "D3_gate1_failure_mechanism": "Gate 1 PASS — Stage 1 codes 健康 (98/239/232/256), L0 从 v19 47 翻倍到 98; Stage 2 L0 usage 99/256 = 38.7% (vs v19 18.4%). Gate 2-3 PASS — Stage 3 健康训练到 E136, EARLY_STOP 触发. Gate 4 FAIL — test_R@10=0.1082 < v19 baseline 0.1102. R37 触发回滚.",
+  "D4_literature_diff": "v28 与 v19 共享 Curriculum Curvature Schedule (ICML 2025 HyperVQ) + M3 cross-layer transport (Chami et al. 2019) 框架; 唯一新增为 per-layer c_end override. 文献支撑: HypLC (Liu et al. AAAI 2024) 提出 per-layer curvature 差异化 (浅层 Euclidean 深层 双曲), 但 v28 失败表明 Musical_Instruments 数据集不需要此粒度 — c_end 单值 0.7 已最优.",
+  "root_cause_hypothesis": "Stage 1 (L0 翻倍) 和 Stage 2 (L0 usage 翻倍) 改善未传导到 Stage 3 retrieval. 推测 c_end_per_layer 改变了 SID 分布但 T5 难学到更优表征; 单 c=0.7 已是 Musical_Instruments 的最优曲率 (按 v19 经验).",
+  "next_action": "启下一备胎. v3 NO-GO via v15/v26. v4 Hyperbolic FFN 备胎未尝试 (DPP #89 标记 completed 但实际是主目录 #88 已集成的 v2 baseline 重测 — v4 是 wrap FFN 注入, 与 v2 不同). 备胎优先级: Stage 2 κ (Issue #95 pending #95, R37 NO-GO via v26) → Hyperbolic FFN 注入 (untried 严格化版) → 探索新曲率机制 (Stage 3 几何 attention 路由)",
+  "files_to_revert": [
+    "modules/quantize.py",
+    "modules/rqvae.py",
+    "train_rqvae_instruments.py",
+    "infer_sids_instruments.py"
+  ],
+  "verdict_file_path": "tasks/issue248_verdict.json"
+}
