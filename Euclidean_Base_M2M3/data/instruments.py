@@ -218,3 +218,140 @@ class RawMusicalInstruments(InMemoryDataset):
         for sp in ["train", "eval", "test"]:
             n = len(sequences[sp]["userId"])
             print(f"  split={sp}: {n} users", flush=True)
+
+
+# =============================================================================
+# HG-Rec 架构兼容层 (C33 Issue #181 合并):
+# 把 per-hierarchy CE 路径 (EncoderDecoderRetrievalModel + SemanticIdTokenizer)
+# 切到序列级 CE 路径 (HG_Rec + GenRecDataset + flat token sequence)
+# 复用同一份 Instruments parquet, 仅数据预处理格式不同
+# =============================================================================
+
+def _hgrec_pad_or_truncate(sequence, max_len, PAD_TOKEN=0):
+    """HG-Rec 风格: 截断 / 左填充 PAD."""
+    if len(sequence) > max_len:
+        return sequence[-max_len:]
+    return [PAD_TOKEN] * (max_len - len(sequence)) + sequence
+
+
+def _hgrec_process_data(file_path, mode, max_len, PAD_TOKEN=0):
+    """读 parquet → 转 HG-Rec 格式 dict-of-list (history 与 target 为 list[int]).
+
+    mode='train': 每个用户产生多个 (history, target) pair (前向滑动切片)
+    mode='evaluation': 每个用户仅 1 个 pair (history[:-1], target=sequence[-1])
+    """
+    data = pd.read_parquet(file_path)
+    data['sequence'] = data['history'].apply(lambda x: list(x)) + data['target'].apply(lambda x: [x])
+    processed = []
+    if mode == 'train':
+        for row in data.itertuples(index=False):
+            seq = row.sequence
+            for i in range(1, len(seq)):
+                processed.append({"history": seq[:i], "target": seq[i]})
+    elif mode == 'evaluation':
+        for row in data.itertuples(index=False):
+            seq = row.sequence
+            processed.append({"history": seq[:-1], "target": seq[-1]})
+    else:
+        raise ValueError(f"Mode must be 'train' or 'evaluation', got {mode!r}")
+    for item in processed:
+        item['history'] = _hgrec_pad_or_truncate(item['history'], max_len, PAD_TOKEN)
+    return processed
+
+
+def _hgrec_item2code(code_path, codebook_size):
+    """读 (N, 3) SID numpy → dict {item_id_1indexed: (4,) vocab id list}.
+
+    HG-Rec vocab 平铺: layer l 的 code c → vocab_id = 1 + sum(codebook_size[0:l]) + c
+    第 4 层 (codebook_size=[1]) 保持 0 (PAD).
+
+    C33 patch: HG-Rec 原版 vocab_size=1025 (4 层 codebook_size=[256,256,256,1]).
+    C28 只有 3 层, 第 4 位填 PAD=0. 直接保留 0, 不加 offset, 避免越界 vocab_size=769.
+    """
+    sids = np.load(code_path, allow_pickle=True)
+    item_to_code = {}
+    for idx, code in enumerate(sids):
+        offsets = []
+        for i, c in enumerate(code):
+            if i >= len(codebook_size) or codebook_size[i] == 1:
+                offsets.append(int(c))
+            else:
+                offsets.append(int(c) + sum(codebook_size[0:i]) + 1)
+        item_to_code[idx + 1] = offsets  # item_id 1-indexed (与 parquet 一致)
+    return item_to_code
+
+
+class GenRecDataset(torch.utils.data.Dataset):
+    """HG-Rec 序列数据集: 输出 {history: [(item_code, 4)×max_len], target: (item_code, 4)}."""
+
+    def __init__(self, parquet_path, code_path, mode, codebook_size, max_len, PAD_TOKEN=0):
+        self.parquet_path = parquet_path
+        self.code_path = code_path
+        self.mode = mode
+        self.max_len = max_len
+        self.PAD_TOKEN = PAD_TOKEN
+        self.codebook_size = codebook_size
+        self.item_to_code = _hgrec_item2code(code_path, codebook_size)
+        self.data = self._prepare_data()
+
+    def _prepare_data(self):
+        processed = _hgrec_process_data(self.parquet_path, self.mode, self.max_len, self.PAD_TOKEN)
+        pad_code = [self.PAD_TOKEN] * 4
+        for item in processed:
+            item['history'] = [self.item_to_code.get(int(x), pad_code) for x in item['history']]
+            item['target'] = self.item_to_code.get(int(item['target']), pad_code)
+        return processed
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
+
+
+def hgrec_collate_fn(batch, pad_token=0):
+    """HG-Rec collate: history (B, max_len, 4) → flat (B, max_len*4), target (B, 4)."""
+    flat_histories = torch.stack([
+        torch.tensor([tok for codes in item['history'] for tok in codes], dtype=torch.int64)
+        for item in batch
+    ])
+    targets = torch.stack([torch.tensor(item['target'], dtype=torch.int64) for item in batch])
+    attn = torch.stack([
+        torch.tensor([1 if tok != pad_token else 0 for tok in h], dtype=torch.int64)
+        for h in flat_histories
+    ])
+    return {"history": flat_histories, "target": targets, "attention_mask": attn}
+
+
+class RawMusicalInstrumentsHGRec:
+    """HG-Rec 风格 Musical_Instruments 数据集包装器.
+
+    不依赖 HeteroData/SemanticIdTokenizer, 直接读 parquet + SID numpy.
+
+    用法:
+        train_ds = RawMusicalInstrumentsHGRec(
+            parquet_path="/.../train.parquet",
+            code_path="/.../Instruments_c28_sids_for_hgrec.npy",
+            mode="train",
+            codebook_size=[256, 256, 256],
+            max_len=20,
+        )
+        loader = DataLoader(train_ds, batch_size=256, shuffle=True,
+                            collate_fn=hgrec_collate_fn, num_workers=2)
+    """
+
+    def __init__(self, parquet_path, code_path, mode, codebook_size, max_len, PAD_TOKEN=0):
+        self.dataset = GenRecDataset(
+            parquet_path=parquet_path,
+            code_path=code_path,
+            mode=mode,
+            codebook_size=codebook_size,
+            max_len=max_len,
+            PAD_TOKEN=PAD_TOKEN,
+        )
+
+    def __getitem__(self, index):
+        return self.dataset[index]
+
+    def __len__(self):
+        return len(self.dataset)

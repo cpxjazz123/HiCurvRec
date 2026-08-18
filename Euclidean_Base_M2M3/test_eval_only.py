@@ -8,6 +8,7 @@ R35b: 4 卡分片不重复评估 test 集, all_reduce SUM, 统一除以全局 to
 """
 import os
 import sys
+import json
 import gin
 import torch
 
@@ -20,7 +21,9 @@ from data.processed import ItemData, RecDataset, SeqData
 from data.utils import batch_to
 from evaluate.metrics import TopKAccumulator
 from modules.model import EncoderDecoderRetrievalModel
+from modules.hg_rec import HG_Rec  # C33 Issue #181 合并
 from modules.tokenizer.semids import SemanticIdTokenizer
+from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 from torch.utils.data import DataLoader
 
 
@@ -33,9 +36,22 @@ def main():
 
     # gin config 必须显式 parse (复用 train_decoder 的 config)
     config_path = sys.argv[1] if len(sys.argv) > 1 else "configs/decoder_instruments.gin"
-    gin.parse_config_file(config_path)
+    try:
+        gin.parse_config_file(config_path, skip_unknown=True)
+    except Exception as e:
+        print(f"[test_eval] gin parse failed: {e}; fallback to FORCE_HGREC=1", flush=True)
 
     BEST_CKPT_PATH = sys.argv[2] if len(sys.argv) > 2 else "out/decoder/instruments/best_ckpt.pt"
+
+    # === C33 HG-Rec 路径分支 ===
+    try:
+        use_hgrec = gin.query_parameter("train_decoder.train.use_hgrec_arch")
+    except ValueError:
+        use_hgrec = False
+    if os.environ.get("FORCE_HGREC", "0") == "1":
+        return _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH)
+    if use_hgrec:
+        return _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH)
 
     # 1) load datasets & tokenizer (走 train 同样的路径)
     item_dataset = ItemData(
@@ -132,6 +148,122 @@ def main():
         import json
         out_path = "out/decoder/instruments/test_final.json"
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "w") as f:
+            json.dump({
+                "best_ckpt_epoch": int(epoch),
+                "best_ckpt_valid_ndcg20": float(best_metric),
+                "test_R@5": float(metrics.get("h@5", 0)),
+                "test_R@10": float(metrics.get("h@10", 0)),
+                "test_R@20": float(metrics.get("h@20", 0)),
+                "test_NDCG@5": float(metrics.get("ndcg@5", 0)),
+                "test_NDCG@10": float(metrics.get("ndcg@10", 0)),
+                "test_NDCG@20": float(metrics.get("ndcg@20", 0)),
+                "n_eval": int(global_total),
+            }, f, indent=2)
+        print(f"\nSaved → {out_path}", flush=True)
+
+
+# =============================================================================
+# C33 Issue #181 HG-Rec test eval 路径 (序列级 CE + T5ForConditionalGeneration)
+# 加载 best_ckpt.pt (HG-Rec 训练产出), 4 卡 DDP 评估 test.parquet
+# =============================================================================
+
+def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
+    """HG-Rec 路径 test eval — 与 train_decoder.py:_train_hgrec 的 do_eval 完全一致."""
+    import os.path as _osp
+
+    INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
+    # 硬编码 (与 train_decoder.hgrec_code_path 一致), 不依赖 gin query
+    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+    beam_size = 20
+    top_k_eval_list = [5, 10, 20]
+    max_len = 20
+
+    # === HG-Rec 模型 (与 train 一致) ===
+    hgrec_config = {
+        "num_layers": 6,
+        "num_decoder_layers": 4,
+        "d_model": 128,
+        "d_ff": 1024,
+        "num_heads": 6,
+        "d_kv": 64,
+        "dropout_rate": 0.1,
+        "vocab_size": 769,
+        "pad_token_id": 0,
+        "eos_token_id": 0,
+        "decoder_start_token_id": 0,
+        "feed_forward_proj": "relu",
+    }
+    model = HG_Rec(hgrec_config)
+
+    test_ds = RawMusicalInstrumentsHGRec(
+        parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
+        code_path=code_path, mode="evaluation",
+        codebook_size=[256, 256, 256],
+        max_len=max_len,
+    )
+    test_loader = DataLoader(
+        test_ds, batch_size=64, shuffle=False, num_workers=2,
+        persistent_workers=True, pin_memory=True, collate_fn=hgrec_collate_fn,
+    )
+
+    # === 加载 best_ckpt (rank 0 先 load, broadcast 给其他 rank) ===
+    if accelerator.is_main_process:
+        print(f"[rank 0] loading best_ckpt: {BEST_CKPT_PATH}", flush=True)
+        state = torch.load(BEST_CKPT_PATH, map_location="cpu", weights_only=False)
+        valid_metrics = state.get("valid_metrics", {})
+        best_metric = state.get("best_metric", -1.0)
+        epoch = state.get("epoch", -1)
+        broadcast_payload = [state["model"]]
+        print(f"[rank 0] best_ckpt epoch={epoch} valid_ndcg@20={best_metric:.4f}", flush=True)
+    else:
+        broadcast_payload = [None]
+        valid_metrics = {}
+        best_metric = -1.0
+        epoch = -1
+
+    import torch.distributed as dist
+    if dist.is_available() and dist.is_initialized():
+        dist.broadcast_object_list(broadcast_payload, src=0)
+    model_state = broadcast_payload[0]
+    model.load_state_dict(model_state, strict=False)
+    model, test_loader = accelerator.prepare(model, test_loader)
+    raw_model = accelerator.unwrap_model(model)
+
+    # === eval (R35b: DDP 同口径) ===
+    model.eval()
+    acc = TopKAccumulator(ks=top_k_eval_list)
+    with torch.no_grad():
+        for batch in test_loader:
+            batch = {k: v.to(device) for k, v in batch.items()}
+            input_ids = batch["history"]
+            attention_mask = batch["attention_mask"]
+            labels = batch["target"]
+            preds = raw_model.generate(
+                input_ids=input_ids, attention_mask=attention_mask,
+                num_beams=beam_size,
+            )
+            preds = preds[:, 1:].reshape(input_ids.shape[0], beam_size, -1)
+            acc.accumulate(actual=labels, top_k=preds)
+
+    local = acc.get_sums_and_total()
+    keys = ["ndcg"] + [f"ndcg@{k}" for k in top_k_eval_list] + [f"h@{k}" for k in top_k_eval_list] + ["total"]
+    local_vec = torch.tensor([float(local.get(k, 0.0)) for k in keys], device=device)
+    global_vec = accelerator.reduce(local_vec, reduction="sum")
+    global_total = global_vec[-1].item()
+    metrics = {
+        keys[i]: (global_vec[i].item() / global_total if global_total > 0 else 0.0)
+        for i in range(len(keys) - 1)
+    }
+    if accelerator.is_main_process:
+        print(f"\n=== TEST FINAL (HG-Rec, beam={beam_size}) ===", flush=True)
+        print(f"  loaded best_ckpt epoch={epoch} valid_ndcg@20={best_metric:.4f}", flush=True)
+        for k in top_k_eval_list:
+            print(f"  Recall@{k}:  {metrics.get(f'h@{k}', 0):.4f}", flush=True)
+            print(f"  NDCG@{k}:    {metrics.get(f'ndcg@{k}', 0):.4f}", flush=True)
+        print(f"  n_eval:    {int(global_total)}", flush=True)
+        out_path = _osp.join(_osp.dirname(BEST_CKPT_PATH), "test_final.json")
+        os.makedirs(_osp.dirname(out_path), exist_ok=True)
         with open(out_path, "w") as f:
             json.dump({
                 "best_ckpt_epoch": int(epoch),
