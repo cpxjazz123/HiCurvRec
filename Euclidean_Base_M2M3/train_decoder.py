@@ -35,6 +35,9 @@ from tqdm import tqdm
 # HG-Rec 路径 (C33 Issue #181 合并): 序列级 CE 数据集
 from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 
+# === HALC v2 创新 (R52 主目录直接迭代): learnable per-layer κ + curvature annealing ===
+from _lib.halc import HALCAnnealingRegularizer
+
 
 @gin.configurable
 # =============================================================================
@@ -198,6 +201,17 @@ def _train_hgrec(
     model, optimizer, train_loader, valid_loader, test_loader = accelerator.prepare(
         model, optimizer, train_loader, valid_loader, test_loader
     )
+    # === HALC v2 创新 (R52): 实例化 HALC reg, 手动搬到 device (DDP 不 wrap, 同步靠 all_reduce) ===
+    halc = HALCAnnealingRegularizer(
+        num_layers=7, init_curvature=1.0, c_max=1.0,
+        warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
+    )
+    halc = halc.to(accelerator.device)
+    if accelerator.is_main_process:
+        halc.set_epoch(0)
+        c_init = halc.annealed_curvature().detach().cpu().tolist()
+        print(f"[HALC v2] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
+        print(f"[HALC v2] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
 
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
@@ -216,8 +230,11 @@ def _train_hgrec(
         print(f"[hgrec] n_params={n_params:,} world={accelerator.num_processes}", flush=True)
 
     for epoch in range(MAX_EPOCHS):
+        # === HALC v2: 更新 annealing schedule epoch ===
+        halc.set_epoch(epoch)
         model.train()
         epoch_loss = 0.0
+        epoch_halс = 0.0
         epoch_count = 0
         if accelerator.is_main_process:
             pbar = tqdm(train_loader, desc=f"E{epoch+1}/{MAX_EPOCHS}")
@@ -227,18 +244,26 @@ def _train_hgrec(
             batch = {k: v.to(device) for k, v in batch.items()}
             optimizer.zero_grad()
             with accelerator.autocast():
-                loss, _ = model(
+                # === HALC v2 创新: 取 encoder hidden_states 计算 Poincaré reg ===
+                loss, _, enc_hs, _ = model(
                     input_ids=batch["history"],
                     attention_mask=batch["attention_mask"],
                     labels=batch["target"],
+                    output_hidden_states=True,
                 )
-            accelerator.backward(loss)
+                halc_reg = halc.reg_loss_for_layers(list(enc_hs))
+                total_loss = loss + halc.reg_weight * halc_reg
+            accelerator.backward(total_loss)
             optimizer.step()
             epoch_loss += loss.item()
+            epoch_halс += halc_reg.item()
             epoch_count += 1
             if accelerator.is_main_process:
-                pbar.set_description(f"E{epoch+1} loss={loss.item():.4f}")
+                pbar.set_description(
+                    f"E{epoch+1} loss={loss.item():.4f} halc={halc_reg.item():.4f} w={halc.reg_weight.item():.4f}"
+                )
         avg_loss = epoch_loss / max(epoch_count, 1)
+        avg_halc = epoch_halс / max(epoch_count, 1)
 
         valid_metrics = do_eval(valid_loader, f"Valid E{epoch+1}")
         cur_metric = valid_metrics.get(SELECT_METRIC, -1.0)
@@ -257,9 +282,12 @@ def _train_hgrec(
             early_stop_counter = 0
             if accelerator.is_main_process:
                 os.makedirs(os.path.dirname(BEST_CKPT_PATH), exist_ok=True)
+                # === HALC v2 创新: 同时保存 HALC 状态 (reg_weight + log_curvature) ===
                 state = {
                     "epoch": epoch,
                     "model": accelerator.unwrap_model(model).state_dict(),
+                    "halc_state": halc.state_dict(),
+                    "halc_epoch": epoch,
                     "valid_metrics": valid_metrics,
                     "best_metric": best_metric,
                 }
@@ -280,6 +308,12 @@ def _train_hgrec(
     raw_model = accelerator.unwrap_model(model)
     best_ckpt = torch.load(BEST_CKPT_PATH, map_location=device, weights_only=False)
     raw_model.load_state_dict(best_ckpt["model"])
+    # === HALC v2 创新: 加载 HALC 状态 (保持 annealing schedule) ===
+    if "halc_state" in best_ckpt and "halc_epoch" in best_ckpt:
+        halc.load_state_dict(best_ckpt["halc_state"])
+        halc.set_epoch(best_ckpt["halc_epoch"])
+        if accelerator.is_main_process:
+            print(f"[HALC v2] restored halc_epoch={best_ckpt['halc_epoch']}", flush=True)
     test_metrics = do_eval(test_loader, "TEST FINAL")
     if accelerator.is_main_process:
         out_json = _osp.join(save_dir_root, "test_final.json")

@@ -10,6 +10,12 @@
 #
 # 旧 baseline (f22a55f): test_R@10=0.1108 (已废除, 不再作新对照)
 # 新 baseline 当前数值: test_R@10=0.0972 (Issue #79 实验值, 待重跑验证)
+#
+# === HALC v2 创新 (2026-08-18 R52 主目录迭代) ===
+# - HALCAnnealingRegularizer: learnable per-layer κ + curvature annealing
+# - c_l(t) = softplus(log_c_l) * sigmoid((t - 5) / 10):  早期 c≈0.38, 后期 c→1.0
+# - reg_weight_max=0.05 (tanh-clamped), 嵌入 encoder_hidden_states
+# - 期望: 比 baseline 0.0972 提升 +0.01~0.02 → test_R@10 ~0.105~0.12
 
 import train_decoder  # noqa: F401  注册 @gin.configurable
 

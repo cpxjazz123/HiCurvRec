@@ -39,23 +39,28 @@ class HG_Rec(nn.Module):
         # Initialize T5 model with the specified configuration
         self.model = T5ForConditionalGeneration(t5config)
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None, labels: Optional[torch.Tensor] = None):
+    def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None, labels: Optional[torch.Tensor] = None, output_hidden_states: bool = False):
         """Forward pass of the model. Returns (loss, logits) tuple.
 
         Args:
             input_ids: (B, max_len * n_layers) flat token sequence (history 展平)
             attention_mask: (B, max_len * n_layers) 1 where real token, 0 for PAD
             labels: (B, n_layers) target item code sequence (含 PAD)
+            output_hidden_states: 是否返回各层 hidden_states (HALC 创新需要)
 
         Returns:
             loss: 序列级 cross-entropy (整个 target 序列 1 个标量)
             logits: (B, n_layers, vocab_size) decoder 输出 logits
+            (可选) encoder_hidden_states + decoder_hidden_states: T5 各层 hidden_states
         """
         outputs = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            labels=labels
+            labels=labels,
+            output_hidden_states=output_hidden_states,
         )
+        if output_hidden_states:
+            return outputs.loss, outputs.logits, outputs.encoder_hidden_states, outputs.decoder_hidden_states
         return outputs.loss, outputs.logits
 
     def generate(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None, num_beams: int = 20, **kwargs):
