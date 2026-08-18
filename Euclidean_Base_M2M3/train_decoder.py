@@ -325,7 +325,7 @@ def train(
     dataset=RecDataset.ML_1M,
     pretrained_rqvae_path=None,
     pretrained_decoder_path=None,
-    split_batches=True,
+    split_batches=False,  # R37 fix: DistributedSampler + BatchSamplerShard 双层切片冲突, valid 评估只跑 26% 样本. split_batches=False 让 DistributedSampler 单独工作.
     amp=False,
     wandb_logging=False,
     force_dataset_process=False,

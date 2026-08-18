@@ -32,7 +32,7 @@ def main():
     # 与 train_decoder.py 同样的 gin config
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-    accelerator = Accelerator(split_batches=True, mixed_precision="no")
+    accelerator = Accelerator(split_batches=False, mixed_precision="no")  # R37 fix: DistributedSampler 与 BatchSamplerShard 冲突, split_batches=False 让 DS 单独工作.
     device = accelerator.device
 
     # gin config 必须显式 parse (复用 train_decoder 的 config)
