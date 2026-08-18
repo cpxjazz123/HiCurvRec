@@ -110,18 +110,18 @@ def _train_hgrec(
 
     train_loader = DataLoader(
         train_ds, batch_size=batch_size, shuffle=True,
-        num_workers=2, persistent_workers=True, pin_memory=True,
-        collate_fn=hgrec_collate_fn,
+        num_workers=8, persistent_workers=True, pin_memory=True,
+        prefetch_factor=4, collate_fn=hgrec_collate_fn,
     )
     valid_loader = DataLoader(
         valid_ds, batch_size=eval_batch_size, shuffle=False,
-        num_workers=2, persistent_workers=True, pin_memory=True,
-        collate_fn=hgrec_collate_fn,
+        num_workers=8, persistent_workers=True, pin_memory=True,
+        prefetch_factor=4, collate_fn=hgrec_collate_fn,
     )
     test_loader = DataLoader(
         test_ds, batch_size=eval_batch_size, shuffle=False,
-        num_workers=2, persistent_workers=True, pin_memory=True,
-        collate_fn=hgrec_collate_fn,
+        num_workers=8, persistent_workers=True, pin_memory=True,
+        prefetch_factor=4, collate_fn=hgrec_collate_fn,
     )
 
     # === 模型 (HG_Rec T5ForConditionalGeneration) ===
@@ -140,6 +140,16 @@ def _train_hgrec(
         "feed_forward_proj": "relu",
     }
     model = HG_Rec(hgrec_config)
+
+    # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
+    try:
+        import torch._dynamo as _dynamo
+        _dynamo.config.suppress_errors = True
+        _dynamo.config.cache_size_limit = 64
+        model = torch.compile(model, dynamic=False, fullgraph=False)
+        print(f"[torch.compile] HG_Rec compiled (fallback safe, 4 卡 DDP OK)", flush=True)
+    except Exception as _compile_err:
+        print(f"[torch.compile] skipped: {_compile_err}", flush=True)
 
     # === HG-Rec eval helper: 用 generate + TopKAccumulator ===
     def _hgrec_to_acc_format(preds, labels, beam, topk_list):

@@ -62,8 +62,8 @@ def main():
         is_train=False, subsample=False, split="test",
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=64, shuffle=False, num_workers=2,
-        persistent_workers=True, pin_memory=True,
+        test_dataset, batch_size=64, shuffle=False, num_workers=8,
+        persistent_workers=True, pin_memory=True, prefetch_factor=4,
     )
 
     tokenizer = SemanticIdTokenizer(
@@ -203,8 +203,9 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         max_len=max_len,
     )
     test_loader = DataLoader(
-        test_ds, batch_size=64, shuffle=False, num_workers=2,
-        persistent_workers=True, pin_memory=True, collate_fn=hgrec_collate_fn,
+        test_ds, batch_size=64, shuffle=False, num_workers=8,
+        persistent_workers=True, pin_memory=True, prefetch_factor=4,
+        collate_fn=hgrec_collate_fn,
     )
 
     # === 加载 best_ckpt (rank 0 先 load, broadcast 给其他 rank) ===

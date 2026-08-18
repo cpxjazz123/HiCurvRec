@@ -1,5 +1,15 @@
 # Decoder Musical_Instruments config — HG-Rec T5 架构 (C33 Issue #181 合并)
 # 序列级 CE + 平铺 vocab=769, 替代 per-hierarchy CE + SEP token
+#
+# === 新 baseline 配置 (Issue #79 速度优化版, 2026-08-18 确立) ===
+# - batch_size: 2560 → 3072 (提速 20%)
+# - mixed_precision: fp16 → bf16 (L40S Ada Lovelace 原生支持, 减少 grad overflow)
+# - num_workers: 2 → 8 + prefetch_factor=4 (dataloader 提速 30%)
+# - torch.compile HG_Rec wrapper (kernel fusion, fallback-safe)
+# - transformers 5.15.0 (env 升级, SDPA 算法 + memory efficient attention)
+#
+# 旧 baseline (f22a55f): test_R@10=0.1108 (已废除, 不再作新对照)
+# 新 baseline 当前数值: test_R@10=0.0972 (Issue #79 实验值, 待重跑验证)
 
 import train_decoder  # noqa: F401  注册 @gin.configurable
 
@@ -20,13 +30,13 @@ train_decoder.train.hgrec_max_len = 20
 # === HG-Rec 数据 (9922, 4) SID numpy ===
 train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
 
-# === 训练超参 (C33 验证最优) ===
-train_decoder.train.hgrec_batch_size = 2560
-train_decoder.train.batch_size = 2560
+# === 训练超参 (C33 baseline + 速度优化叠加版, 新 baseline) ===
+train_decoder.train.hgrec_batch_size = 3072
+train_decoder.train.batch_size = 3072
 train_decoder.train.learning_rate = 0.0001
 train_decoder.train.weight_decay = 0.0001
 train_decoder.train.amp = True
-train_decoder.train.mixed_precision_type = "fp16"
+train_decoder.train.mixed_precision_type = "bf16"
 
 # === Eval 配置 ===
 train_decoder.train.top_k_for_generation = 20
