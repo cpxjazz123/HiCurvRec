@@ -24,8 +24,9 @@ from data.schemas import SeqBatch
 
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_c28_curriculum_m3.npy"
+# v19: 用 Stage 1 v19 c_end=0.7 训练产物
+CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v19_cend_07.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768
@@ -201,10 +202,10 @@ def main():
         scs_eps_scale=1.0,
         use_fixed_curvature=True,  # C26 HG-Rec: 固定 c=1 (C27 优先覆盖)
         c_fixed=1.0,
-        use_curriculum_curvature=True,  # C27: 训练末期 c=1.0 (inference 也走 curriculum, 但用 step=curriculum_steps → c=c_end=1.0)
+        use_curriculum_curvature=True,  # C27: 训练末期 c=c_end (v19: 0.7)
         c_start=0.05,
-        c_end=1.0,
-        curriculum_steps=1,  # inference 时 set_step(>=1) 强制 t=1 → c=c_end=1.0
+        c_end=0.7,  # v19: 与 Stage 1 c_end 一致
+        curriculum_steps=1,  # inference 时 set_step(>=1) 强制 t=1 → c=c_end
     ).to(device)
     # C27: 强制 inference 走 schedule 终点 (c=c_end=1.0)
     model.set_curriculum_step(10**9)  # step >> curriculum_steps → t=1 → c=1.0

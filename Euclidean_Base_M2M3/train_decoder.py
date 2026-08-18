@@ -404,6 +404,15 @@ def train(
     if os.environ.get("FORCE_HGREC", "0") == "1":
         use_hgrec_arch = True
 
+    # === gin 兜底: save_dir_root 不通过 gin binding 时按 config 文件名派生 ===
+    if save_dir_root == "out/":
+        # 检测 gin config 文件名 (sys argv 末位是 .gin)
+        for arg in sys.argv[::-1]:
+            if arg.endswith(".gin"):
+                tag = arg.replace("decoder_instruments_", "").replace(".gin", "")
+                save_dir_root = f"out/decoder/instruments_hgrec_{tag}/"
+                break
+
     if dataset not in (RecDataset.AMAZON, RecDataset.INSTRUMENTS):
         if not use_hgrec_arch:
             raise Exception(f"Dataset currently not supported: {dataset}.")

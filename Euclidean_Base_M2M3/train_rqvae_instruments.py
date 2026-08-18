@@ -37,7 +37,8 @@ from data.schemas import SeqBatch
 SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
 # C28 (C29 rollback): Curriculum + M3 transport 单 M3 (M2 OFF, 当前最佳 0.0991)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3"
+# v19 备胎 (R36 框架级变更): C27 c_end 1.0→0.7 缓和曲率调度 (Poincaré ball r=1/sqrt(c), c↓ r↑, 更接近欧氏)
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -66,7 +67,7 @@ C_FIXED = 1.0                             # 固定曲率值 (HG-Rec)
 # 机制: c 从 c_start (近欧氏) 线性增到 c_end (双曲) over curriculum_steps
 USE_CURRICULUM_CURVATURE = True           # C27 启用 (取代 C26 固定 c)
 C_START = 0.05                            # 初始 c (近欧氏, 训练稳定)
-C_END = 1.0                               # 最终 c (双曲, HG-Rec 对齐)
+C_END = 0.7                               # v19: 最终 c 1.0→0.7 (缓和曲率调度, R36 框架级变更)
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
 # HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
 GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
