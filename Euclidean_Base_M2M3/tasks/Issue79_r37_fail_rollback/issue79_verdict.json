@@ -1,12 +1,15 @@
 {
   "issue": 79,
   "task_name": "Issue79_r37_fail_rollback",
-  "status": "R37_FAIL_ROLLBACK_COMPLETE",
-  "decision": "STOP_AND_ROLLBACK",
+  "status": "NEW_BASELINE_ESTABLISHED",
+  "decision": "STOP_AND_ROLLBACK_THEN_NEW_BASELINE",
+  "user_decision": "保留速度优化配置作为新 baseline, 取代 f22a55f 旧 baseline",
   "executed_actions": [
-    "git checkout f22a55f -- train_decoder.py test_eval_only.py configs/decoder_instruments_hgrec.gin (回滚代码)",
+    "git checkout f22a55f -- train_decoder.py test_eval_only.py configs/decoder_instruments_hgrec.gin (回滚到 f22a55f baseline)",
     "CLAUDE.md + AGENTS.md 新增 R50 规则: 回滚后禁止自动重跑",
-    "写本 verdict 文件 (R33 任务级 verdict)"
+    "写本 verdict 文件 (R33 任务级 verdict)",
+    "重新应用速度优化配置 (commit a7d4fd6): batch_size=3072 + bf16 + num_workers=8 + prefetch_factor=4 + torch.compile",
+    "确立速度优化版为新 baseline, 旧 baseline (f22a55f) 已废除"
   ],
   "do_NOT_auto_execute": [
     "python3 train_decoder.py 重跑 baseline",
@@ -57,9 +60,9 @@
     "enforcement": "R50 规则禁止回滚后自动重跑, 必须用户明确指令"
   },
   "next_step_user_decision_required": [
-    "Option A: 降级 transformers 4.46.3 + 重跑 baseline 验证可复现 f22a55f 0.1108 (推荐, R37 baseline 复现优先)",
-    "Option B: 接受当前状态 (代码已回滚, 产物未替换, R37 FAIL verdict 锁定), 直接开始新一轮曲率创新 (R36 几何变换路径)",
-    "Option C: 替换 best_ckpt.pt + test_final.json 到 f22a55f 历史产物 (需要用户提供产物路径, git 不跟踪 .pt)"
+    "Option A: 重跑新 baseline (速度优化配置) 确认 test_R@10=0.0972 是否准确, 等用户明确指令",
+    "Option B: 直接开始新一轮曲率创新 (R36 几何变换路径, 与新 baseline 对照)",
+    "Option C: 降级 transformers 4.46.3 + 取消速度优化回到 f22a55f baseline, 用户已选不采纳"
   ],
   "R50_new_constraint_added": {
     "files": ["CLAUDE.md", "AGENTS.md"],
@@ -79,5 +82,11 @@
     ]
   },
   "timestamp": "2026-08-18",
-  "written_by": "claude-minimax R37 FAIL verdict writer"
+  "written_by": "claude-minimax R37 FAIL verdict writer",
+  "commit_history": {
+    "a95f05f": "M2M3 R37 FAIL 回滚 + R50 规则 (code 回滚 + R50 + verdict v1)",
+    "a7d4fd6": "M2M3 新 baseline 确立 (速度优化配置重应用, gin + train_decoder.py + test_eval_only.py)",
+    "verdict_v2_pending": "新 baseline 字段更新 + commit hash, 本次 commit 即将执行"
+  },
+  "R21_compliance": "commit hashes 已明示 (a95f05f, a7d4fd6), verdict 增量在 commit 之后, R45 push 待执行"
 }
