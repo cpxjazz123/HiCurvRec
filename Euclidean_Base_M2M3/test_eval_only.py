@@ -25,6 +25,7 @@ from modules.hg_rec import HG_Rec  # C33 Issue #181 合并
 from modules.tokenizer.semids import SemanticIdTokenizer
 from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 
 
 def main():
@@ -202,8 +203,12 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         codebook_size=[256, 256, 256],
         max_len=max_len,
     )
+    test_sampler = DistributedSampler(
+        test_ds, num_replicas=accelerator.num_processes,
+        rank=accelerator.local_process_index, shuffle=False, drop_last=True,
+    )
     test_loader = DataLoader(
-        test_ds, batch_size=64, shuffle=False, num_workers=2,
+        test_ds, batch_size=64, sampler=test_sampler, num_workers=2,
         persistent_workers=True, pin_memory=True, collate_fn=hgrec_collate_fn,
     )
 

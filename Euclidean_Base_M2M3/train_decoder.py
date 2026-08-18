@@ -30,7 +30,19 @@ from modules.utils import parse_config
 from huggingface_hub import login
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
+
+# === 方案 1: 固定所有随机种子 (R37 重跑 0.1088 < 0.1108 根因 = DDP 浮点非确定性) ===
+# 启动命令须设: PYTHONHASHSEED=0 CUBLAS_WORKSPACE_CONFIG=:4096:8
+import os as _seed_os
+_seed_os.environ.setdefault("PYTHONHASHSEED", "0")
+_seed_os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+import torch as _seed_torch
+_seed_torch.use_deterministic_algorithms(True, warn_only=True)
+_seed_torch.backends.cudnn.deterministic = True
+_seed_torch.backends.cudnn.benchmark = False
+_seed_torch.manual_seed(42)
 
 # HG-Rec 路径 (C33 Issue #181 合并): 序列级 CE 数据集
 from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
@@ -76,6 +88,10 @@ def _train_hgrec(
     import json as _json
     import os.path as _osp
 
+    # === 方案 1: accelerate set_seed(42) 显式调用 (DDP 4 卡下保证可复现) ===
+    from accelerate.utils import set_seed as _set_seed
+    _set_seed(42)
+
     accelerator = accelerator_factory()
     device = accelerator.device
 
@@ -113,13 +129,23 @@ def _train_hgrec(
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
+    # === 方案 2: DistributedSampler (仅 valid/test 切片, 不动 train) ===
+    # R35b 同口径: 4 卡各评估不重复切片, all_reduce SUM, ratio 数学等价
+    valid_sampler = DistributedSampler(
+        valid_ds, num_replicas=accelerator.num_processes,
+        rank=accelerator.local_process_index, shuffle=False,
+    )
     valid_loader = DataLoader(
-        valid_ds, batch_size=eval_batch_size, shuffle=False,
+        valid_ds, batch_size=eval_batch_size, sampler=valid_sampler,
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
+    test_sampler = DistributedSampler(
+        test_ds, num_replicas=accelerator.num_processes,
+        rank=accelerator.local_process_index, shuffle=False,
+    )
     test_loader = DataLoader(
-        test_ds, batch_size=eval_batch_size, shuffle=False,
+        test_ds, batch_size=eval_batch_size, sampler=test_sampler,
         num_workers=2, persistent_workers=True, pin_memory=True,
         collate_fn=hgrec_collate_fn,
     )
