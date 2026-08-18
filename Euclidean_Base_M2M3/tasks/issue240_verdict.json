@@ -1,0 +1,32 @@
+{
+  "issue": 240,
+  "task": "v20 备胎: Stage 1 C27 缓和曲率调度 (C_END 0.7 → 0.5, R36 框架级变更)",
+  "verdict": "R37 FAIL — test_R@10=0.1055 < v19 0.1102 (-0.0047), R50 回滚到 v19 baseline",
+  "stage1_outcome": "C27 curriculum c_end 0.7→0.5 (USE_FIXED_CURVATURE=True, USE_M3_TRANSPORT=True). 训练 100k global steps DDP 4 卡, c 从 0.05 ramp 到 0.5 over 50k steps, 后续稳定在 0.5. codebook 健康: L0=50/256 (20%, partial fill, no collapse), L1=231/256 (90%), L2=226/256 (88%)",
+  "stage2_outcome": "Stage 2 SID inference: (9922, 3) int64, per-layer c=[0.5, 0.5, 0.5]",
+  "stage3_outcome": "HALC v2 + v16 differential schedule. 训练 EARLY_STOP @ E117, best_ckpt epoch 96, valid NDCG@10=0.0959 (vs v19 0.0970, -0.0011)",
+  "stage4_outcome": "test_R@10=0.1055, h@10=0.1055, ndcg@10=0.0789. 单 ckpt + beam=20. R35 禁 Borda 满足.",
+  "test_R@10": 0.1055,
+  "test_NDCG@10": 0.0789,
+  "valid_best_NDCG@10": 0.0959,
+  "baseline_R@10": 0.1102,
+  "v16_R@10": 0.1077,
+  "delta_vs_v19": -0.0047,
+  "delta_vs_baseline": -0.0017,
+  "r37_decision": "FAIL — test_R@10=0.1055 < v19 0.1102 baseline. R50 回滚: train_rqvae_instruments.py C_END 0.5→0.7 + OUT_DIR v20→v19, infer_sids_instruments.py c_end=0.5→0.7 + CKPT v20→v19 + OUT_NPY v20→v19, 删除 configs/decoder_instruments_hgrec_v20.gin + build_v20_sids_for_hgrec.py. 已 git checkout + py_compile 验证.",
+  "r50_verification": [
+    "git status -s: clean (无 uncommitted modifications)",
+    "train_rqvae_instruments.py C_END=0.7, OUT_DIR=rqvae_out_v19_cend_07 ✓",
+    "infer_sids_instruments.py c_end=0.7, CKPT=rqvae_out_v19_cend_07/rqvae_final.pt, OUT_NPY=sids_v19_cend_07.npy ✓",
+    "python3 -m py_compile train_rqvae_instruments.py: OK",
+    "python3 -m py_compile infer_sids_instruments.py: OK"
+  ],
+  "r18_4dim": {
+    "D1_spec": "Stage 1 C27 curriculum C_END 0.7→0.5 (Poincaré ball r=1/sqrt(c), c↓ r↑, 几何空间比 c=0.7 缓和 ~30%)",
+    "D2_impl": "train_rqvae_instruments.py C_END 0.7→0.5 (1 行改动), infer_sids_instruments.py c_end=0.7→0.5 (1 行改动), 新增 build_v20_sids_for_hgrec.py + decoder_instruments_hgrec_v20.gin config. Stage 3 沿用 v16 differential schedule",
+    "D3_gate1": "Stage 1 健康完成 (无 catastrophic collapse, L0 fill 50/256). Stage 3 EARLY_STOP @ E117 触发, 但 valid NDCG@10=0.0959 < v19 0.0970 (-0.0011) → 训练期就 regress",
+    "D4_lit": "数学依据: Poincaré ball radius r=1/sqrt(c), c↓ → r↑. 但 c=0.5 太接近欧氏 (vs v19 c=0.7 + R36 验证 PASS), 量化粒度变粗 (L0 fill 50/256 vs v19 46/256), SID 多样性下降 → T5 训练期 valid NDCG 偏低 → test R@10 反退."
+  },
+  "v19_v20_contrast": "v19 c_end=0.7 PASS (+0.0030 vs baseline), v20 c_end=0.5 FAIL (-0.0047 vs v19). 几何调度方向上 v19 已接近甜点, v20 越缓和反而 over-flattened (Poincaré ball r=1/sqrt(0.5)=1.414 vs r=1/sqrt(0.7)=1.195, r 增大 18% 但量化粗化损失覆盖距离精度收益). Stage 1 C27 曲率调度已被 v19 锁死, v21 必须改 Stage 2 κ 学习 / Stage 3 κ frozen→learnable / Lorentz 机制 (R36 explicit allowed).",
+  "next_step": "v21 备胎: Stage 3 切 Lorentz model (R36 explicit allowed 机制变更). 当前 Stage 1 v19 已 PASS, Stage 3 HALC 走 Poincaré. Stage 3 切 Lorentz = 改 attention distance 公式 (Poincaré distance → Lorentz inner product), 是 R36 'Poincaré-Minkowski-Lorentz 曲率机制变更' explicit allowed. Stage 1 维持 v19 c_end=0.7 不变."
+}
