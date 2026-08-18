@@ -24,6 +24,12 @@ from modules.model import EncoderDecoderRetrievalModel
 from modules.hg_rec import HG_Rec  # C33 Issue #181 合并
 from modules.tokenizer.semids import SemanticIdTokenizer
 from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
+# HALC v4/v6 wrap support (R36 曲率机制, 让 test_eval 与 train 用相同 wrap FFN)
+try:
+    from _lib.halc_v4 import wrap_hgrec_ffn as _wrap_hgrec_ffn_v4
+    _HAS_HALC_V4 = True
+except ImportError:
+    _HAS_HALC_V4 = False
 from torch.utils.data import DataLoader
 
 
