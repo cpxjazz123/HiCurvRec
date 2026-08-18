@@ -1,0 +1,20 @@
+{
+  "issue": 238,
+  "task": "v18 备胎: Stage 1 C5 margin regularization (margin_reg_weight=0.5, USE_FIXED_CURVATURE=False, USE_M3_TRANSPORT=False)",
+  "verdict": "R38 PRE_STAGE3 KILL — Stage 1 catastrophic codebook collapse (codes=2/3/2/256 at step 11000)",
+  "stage1_outcome": "KILLED at global_step=11000/100000. Catastrophic collapse: layer [0,1,2] usage=2/3/2 codes (< 10% of 256). margin_reg_weight=0.5 + USE_FIXED_CURVATURE=False + USE_M3_TRANSPORT=False 联合导致 [CODEBOOK WARNING] 触发.",
+  "stage2_outcome": "未执行 (Stage 1 失败, 无 SID 产物)",
+  "stage3_outcome": "未执行",
+  "stage4_outcome": "未执行",
+  "root_cause": "margin_reg_weight>0 + c 浮动 (USE_FIXED_CURVATURE=False + USE_CURRICULUM=True) + 关 M3 联合 → 浅层 c_l 在 curriculum ramp 阶段非单调扰动, margin_reg 项在 c_l 漂移下放大 gradient, 量化器 centriod 更新路径不稳定, collapse. 类似 v15 lineage (USE_FIXED_CURVATURE=False + M2 OFF) 失败模式.",
+  "r38_kill_signal": "CODEBOOK WARNING @ step 11000: codes=2/3/2/256, low_usage=[0,1,2]. Per R23/R38: kill -9 + NO-GO + 立即 commit + push + close.",
+  "r37_decision": "FAIL — v18 < v16 (0.1077), 终止 lineage. v18 不是路径同构 v17 (D2 impl 不同: Stage 1 几何变 vs Stage 3 per-layer reg), 但同样 NO-GO.",
+  "r18_4dim": {
+    "D1_spec": "Stage 1 C5 margin regularization: margin_reg_weight=0.5, USE_FIXED_CURVATURE=False, USE_M3_TRANSPORT=False",
+    "D2_impl": "train_rqvae_instruments.py: MARGIN_REG_WEIGHT 1.0→0.5, USE_FIXED_CURVATURE True→False, USE_M3_TRANSPORT True→False. 模块代码 rqvae.py 不动.",
+    "D3_gate1": "Stage 1 catastrophic collapse @ step 11000. margin_reg + c 浮动 联合 NO-GO. 验证机制 CODEBOOK WARNING 正确触发 (R23 健康检查设计有效).",
+    "D4_lit": "Margin loss 设计来源: 'Few-Shot Learning with Graph Neural Networks' (Garcia & Bruna ICLR 2018) — 但应用于 RQ-VAE codebook margin 缺乏验证. margin_reg 在 HG-Rec RQ-VAE 架构内 + c 浮动 + M3 OFF 的组合从未在文献中验证可行."
+  },
+  "r50_revert": "已 git checkout HEAD -- train_rqvae_instruments.py, 恢复 USE_FIXED_CURVATURE=True / USE_M3_TRANSPORT=True / MARGIN_REG_WEIGHT=1.0 (R37 baseline). 禁止立即重跑 (R50).",
+  "next_step": "v19 备胎: 几何变换方向 (R36 允许). v17/v18 连续失败 → per-layer 强度 sweep + Stage 1 margin_reg 均 NO-GO, 切换思路: 走几何变换而非正则强度调整. v19 候选: (a) Stage 1 切换双曲距离公式 (Borisov 2024 / 数学性质更优的双曲距离, 替代默认 Poincaré ball); (b) Stage 3 切 Lorentz model (R36 explicit allowed); (c) Stage 1 c_end < 1.0 (缓和 c 调度, 当前 0.05→1.0 也许太快). 不要做 (d) reg_weight/label_smoothing sweep (v17/v18 教训)."
+}
