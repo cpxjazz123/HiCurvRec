@@ -208,6 +208,20 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         codebook_size=[256, 256, 256],
         max_len=max_len,
     )
+
+    # === R34c fix: 固定 DistributedSampler seed=42 让 4 卡 test 分片可重复 ===
+    # 默认 DistributedSampler 用 torch.randint 每次生成新 seed, 4 卡分片每次不同
+    # → all_reduce SUM 后总数有 ±0.001 量级噪声
+    # train_decoder.py 路径让 accelerator.prepare() 自动 wrap DistributedSampler, seed 由 torch RNG 决定
+    # → 显式设 torch.manual_seed(42) + numpy/random seed 让 DistributedSampler 拿到固定 seed
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42)
+    import random as _random
+    _random.seed(42)
+    import numpy as _np
+    _np.random.seed(42)
+
     test_loader = DataLoader(
         test_ds, batch_size=64, shuffle=False, num_workers=8,
         persistent_workers=True, pin_memory=True, prefetch_factor=4,
