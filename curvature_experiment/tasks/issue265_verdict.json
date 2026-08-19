@@ -1,0 +1,41 @@
+{
+  "version": "v45",
+  "issue": "Issue265",
+  "branch": "main",
+  "baseline_test_R@10": 0.11130798969072164,
+  "test_R@10": 0.00032216494845360824,
+  "test_R@5": 0.0002818943298969072,
+  "test_R@20": 0.00032216494845360824,
+  "test_NDCG@10": 0.00019256574745030747,
+  "test_NDCG@20": 0.00019256574745030747,
+  "valid_ndcg@20_best_ckpt": 0.09632551055593588,
+  "best_ckpt_epoch": 106,
+  "delta_vs_baseline": -0.9997103457831106,
+  "delta_pct": -99.71,
+  "verdict": "FAIL",
+  "r37_decision": "R37 FAIL — test_R@10=0.0003 << v19 baseline 0.1113. R50 revert 触发.",
+  "curvature_innovation": "Stage 2 端 Poincaré K-means codebook 重训 (c=0.5, Fréchet mean 30 步 Karcher gradient). Stage 1 不重训 (复用 v19 RQ-VAE ckpt), Stage 3 端不启用任何曲率机制 (全交 Stage 2 完成).",
+  "stage3_best_valid_ndcg10": 0.09632551055593588,
+  "stage3_best_epoch": 107,
+  "stage3_early_stop_epoch": 127,
+  "diagnostic": {
+    "valid_test_gap": "valid ndcg@20=0.0963 vs test_R@10=0.0003 (collapse)",
+    "D1_spec": "Stage 2 端 K-means 几何变换 (Poincaré 距离 + Fréchet mean 中心更新), 不同于 v40-v44 全部 Stage 3 端 attention bias.",
+    "D2_implementation": "_lib/poincare_kmeans_v45.py (Poincaré K-means + Fréchet mean), scripts/infer_sids_poincare_v45.py (重训 v19 codebook → 新 SID numpy (9922, 4) HG-Rec 格式).",
+    "D3_gate1_failure_mechanism": "Stage 2 codebook 中心 Poincaré 化 (norm 0.055 → 0.29) 后, get_semantic_ids 推理 SID 分布严重偏移. T5 在 valid 上学到了强 valid-bias SID 模式 (ndcg@20=0.0963 创 v40-v45 最高 valid), 但 test set SID 完全不同 → R@10 崩塌到 0.0003. 这是几何变换在 valid 端的过拟合信号, test 完全无法泛化, 体现 Stage 2 端曲率机制变更的极端 domain shift 灾难性后果.",
+    "D4_reference": "Poincaré Embedding (NIPS 2018) + Hyperbolic K-means (Monath 2019).",
+    "codebook_norm_change": {
+      "layer_0": "0.055 → 0.294",
+      "layer_1": "0.121 → 0.108",
+      "layer_2": "0.083 → 0.083"
+    }
+  },
+  "r50_revert_status": "verdict + commit + push (R45 gitlab), 不重跑任何 Stage (R50 强制停手).",
+  "next_action": "已 R50 revert + R36/R37 终止 v45 lineage. Stage 1 端 v19 RQ-VAE ckpt 仍锁定为 baseline, 后续迭代须重新设计 Stage 1/2/3 端曲率机制 (避免再次 valid-test 极端 gap).",
+  "artifacts": {
+    "stage1_rqvae_ckpt_reused": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt",
+    "stage2_sids_output": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v45_sids_for_hgrec.npy",
+    "stage3_best_ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_v45/best_ckpt.pt (deprecated)",
+    "stage4_test_final": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments/test_final.json"
+  }
+}
