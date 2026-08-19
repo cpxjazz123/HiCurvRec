@@ -215,6 +215,17 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         # gin.query_parameter raises ValueError if not bound
         pass
 
+    # === v41 (Issue261): Stage 4 也启用 PoincareInputEmbedding (与 Stage 3 训练时一致) ===
+    try:
+        import gin as _gin
+        _use_poinc = _gin.query_parameter("train_decoder.train.use_poinc_input_embed")
+        if _use_poinc:
+            from _lib.poincare_input_embed import replace_t5_shared_embedding
+            n_replaced = replace_t5_shared_embedding(model.model, c=0.5)
+            print(f"[v41 poinc_input_embed] Stage 4 replaced {n_replaced} T5.shared → PoincareInputEmbedding (c=0.5)", flush=True)
+    except (ValueError, Exception) as e:
+        pass
+
     test_ds = RawMusicalInstrumentsHGRec(
         parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
         code_path=code_path, mode="evaluation",

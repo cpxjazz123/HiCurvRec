@@ -79,6 +79,7 @@ def _train_hgrec(
     wandb_logging,
     use_halc_v38=False,  # Issue258 v38: per-token input-dependent κ
     use_hyp_layernorm=False,  # Issue260 v40: Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换)
+    use_poinc_input_embed=False,  # Issue261 v41: Stage 3 T5 shared embedding → Poincaré projection (R36 几何变换)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -168,6 +169,13 @@ def _train_hgrec(
     }
     model = HG_Rec(hgrec_config)
 
+    # === gin binding fallback 修复 (Issue261 v41): gin binding 失败时参数 fallback 默认值
+    # === 通过 env var 显式启用 v40/v41 创新, 不依赖 gin ===
+    if os.environ.get("USE_HYP_LAYERNORM", "0") == "1":
+        use_hyp_layernorm = True
+    if os.environ.get("USE_POINC_INPUT_EMBED", "0") == "1":
+        use_poinc_input_embed = True
+
     # === v40 (Issue260): Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换) ===
     # 替换 T5 所有 T5LayerNorm 实例为 PoincareT5LayerNorm (logmap0 → RMSNorm → expmap0, c=0.5)
     # 保持 weight 起点与 T5LayerNorm 完全一致 (new_ln.weight.copy_(old_ln.weight))
@@ -175,6 +183,13 @@ def _train_hgrec(
         from _lib.hyperbolic_layernorm import replace_t5_layernorm
         n_replaced = replace_t5_layernorm(model.model, c=0.5)  # 与 v19 Stage 1 c_end=0.7 一致
         print(f"[v40 hyp_layernorm] replaced {n_replaced} T5LayerNorm → PoincareT5LayerNorm (c=0.5)", flush=True)
+
+    # === v41 (Issue261): Stage 3 T5 shared embedding → Poincaré projection (R36 几何变换) ===
+    # 替换 T5.shared (nn.Embedding) 为 PoincareInputEmbedding, 每次 forward 把欧氏 embedding 投影到 Poincaré ball
+    if use_poinc_input_embed:
+        from _lib.poincare_input_embed import replace_t5_shared_embedding
+        n_replaced = replace_t5_shared_embedding(model.model, c=0.5)
+        print(f"[v41 poinc_input_embed] replaced {n_replaced} T5.shared → PoincareInputEmbedding (c=0.5)", flush=True)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
@@ -447,6 +462,9 @@ def train(
     hgrec_vocab_size=769,
     hgrec_max_len=20,
     hgrec_batch_size=2560,  # per-global-batch (4 卡 DDP)
+    # === v40/v41 曲率机制开关 (Stage 3 端, 默认 False 不启用, 不破坏 v19 baseline) ===
+    use_hyp_layernorm=False,  # Issue260 v40: T5 LayerNorm → Poincaré LayerNorm
+    use_poinc_input_embed=False,  # Issue261 v41: T5.shared → PoincareInputEmbedding
 ):
     # HG-Rec gin binding 兜底 (加速器子进程下 gin macro 可能未生效, 强制走 HG-Rec 路径)
     if "hgrec" in sys.argv[0:5] or any("hgrec" in str(a) for a in sys.argv):
@@ -499,6 +517,8 @@ def train(
             top_k_for_generation=top_k_for_generation,
             top_k_eval_list=top_k_eval_list,
             wandb_logging=wandb_logging,
+            use_hyp_layernorm=use_hyp_layernorm,
+            use_poinc_input_embed=use_poinc_input_embed,
         )
 
     if wandb_logging:

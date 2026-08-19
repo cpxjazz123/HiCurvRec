@@ -1,0 +1,36 @@
+{
+  "version": "v41",
+  "issue": "Issue261_v41_stage3_input_poinc_embed",
+  "curvature_innovation": "Stage 3 T5.shared (nn.Embedding 769×128) → PoincareInputEmbedding: 每次 forward 把欧氏 embedding 通过 logmap0 → expmap0 投影到 Poincaré ball (c=0.5). R36 几何变换 (Stage 3 输入端).",
+  "baseline_v19": {
+    "test_R@10": 0.11130798969072164,
+    "valid_ndcg@10": 0.1049,
+    "lock": "R51 字符级一致 3 次验证"
+  },
+  "v41_result": {
+    "best_ckpt_epoch": 115,
+    "valid_ndcg@10": 0.09562590687545304,
+    "test_R@5": 0.08642074742268041,
+    "test_R@10": 0.10885148195876289,
+    "test_R@20": 0.13893363402061856,
+    "test_NDCG@5": 0.07235799868082263,
+    "test_NDCG@10": 0.07956651314017699,
+    "test_NDCG@20": 0.08716130010860483,
+    "n_eval": 24832
+  },
+  "delta": {
+    "test_R@10": -0.002456507731958753,
+    "valid_ndcg@10": -0.009293968124264838,
+    "pct": "-2.21% test_R@10, -8.86% valid_ndcg@10"
+  },
+  "gate_evaluation": {
+    "gate_1_sid": "PASS (复用 v19 Instruments_v19_sids_for_hgrec.npy 9922×4)",
+    "gate_2_train_launch": "PASS (DDP 4 卡 torchrun 29511, 4 rank 全部 print '[v41 poinc_input_embed] replaced 1 T5.shared → PoincareInputEmbedding (c=0.5)' — 替换真正生效)",
+    "gate_3_early_stop": "PASS (EARLY_STOP=20, 触发于 epoch 136, best_ckpt epoch 115)",
+    "gate_4_test_R@10": "FAIL — 0.1089 < v19 baseline 0.1113 (R37 FAIL)"
+  },
+  "verdict": "FAIL",
+  "decision": "R37 FAIL: test_R@10=0.1089 < v19 baseline 0.1113 (-2.21%). R50 禁重跑, 立即终止 lineage, 回到 v19 baseline, 禁止在 v41 上二次创新.",
+  "r36_compliance": "PASS — 仅引入几何变换 (Poincaré projection), 无 LR/dropout/wd 调参, c=0.5 硬编码 (无 sweep).",
+  "next_iteration_direction": "v42 候选方向 (R36 曲率机制变更):\n1. Stage 3 FFN 内 Poincaré activation (gated hyperbolic FFN)\n2. Stage 3 attention logit bias: -c * d_b(q,k) (HNN attention bias)\n3. Stage 1 代码: codebook Möbius 加减 (per-level c_t)\n4. Stage 2 SID: K-means in Poincaré ball with c-aware init"
+}
