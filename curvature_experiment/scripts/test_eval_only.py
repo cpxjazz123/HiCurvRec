@@ -226,6 +226,18 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     except (ValueError, Exception) as e:
         pass
 
+    # === v42 (Issue262): Stage 4 也启用 Q/K 双曲距离 bias (与 Stage 3 训练时一致) ===
+    try:
+        import gin as _gin
+        _use_attn = _gin.query_parameter("train_decoder.train.use_hyp_attn_bias")
+        if _use_attn:
+            from _lib.hyp_attn_bias_v42 import install_v42_hook, wrap_t5_attention_with_poinc_bias
+            install_v42_hook(model.model)
+            n_replaced = wrap_t5_attention_with_poinc_bias(model.model, c=0.5, lam=0.1)
+            print(f"[v42 hyp_attn_bias] Stage 4 installed Q/K Poincaré distance bias on {n_replaced} T5 attention (c=0.5, λ=0.1)", flush=True)
+    except (ValueError, Exception) as e:
+        pass
+
     test_ds = RawMusicalInstrumentsHGRec(
         parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
         code_path=code_path, mode="evaluation",

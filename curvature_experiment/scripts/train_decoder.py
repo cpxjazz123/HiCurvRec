@@ -80,6 +80,7 @@ def _train_hgrec(
     use_halc_v38=False,  # Issue258 v38: per-token input-dependent κ
     use_hyp_layernorm=False,  # Issue260 v40: Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换)
     use_poinc_input_embed=False,  # Issue261 v41: Stage 3 T5 shared embedding → Poincaré projection (R36 几何变换)
+    use_hyp_attn_bias=False,  # Issue262 v42: Stage 3 T5 attention Q/K 双曲距离 bias (HNN 2019)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -175,6 +176,8 @@ def _train_hgrec(
         use_hyp_layernorm = True
     if os.environ.get("USE_POINC_INPUT_EMBED", "0") == "1":
         use_poinc_input_embed = True
+    if os.environ.get("USE_HYP_ATTN_BIAS", "0") == "1":
+        use_hyp_attn_bias = True
 
     # === v40 (Issue260): Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换) ===
     # 替换 T5 所有 T5LayerNorm 实例为 PoincareT5LayerNorm (logmap0 → RMSNorm → expmap0, c=0.5)
@@ -190,6 +193,15 @@ def _train_hgrec(
         from _lib.poincare_input_embed import replace_t5_shared_embedding
         n_replaced = replace_t5_shared_embedding(model.model, c=0.5)
         print(f"[v41 poinc_input_embed] replaced {n_replaced} T5.shared → PoincareInputEmbedding (c=0.5)", flush=True)
+
+    # === v42 (Issue262): Stage 3 T5 attention Q/K 双曲距离 bias (HNN 2019) ===
+    # 在 encoder 第一层 attention 注入 Poincaré 距离 bias (lambda=0.1, c=0.5)
+    # 路径独立于 v40 (LayerNorm) / v41 (shared embedding)
+    if use_hyp_attn_bias:
+        from _lib.hyp_attn_bias_v42 import install_v42_hook, wrap_t5_attention_with_poinc_bias
+        install_v42_hook(model.model)  # 注册 forward hook 捕获 Q/K
+        n_replaced = wrap_t5_attention_with_poinc_bias(model.model, c=0.5, lam=0.1)
+        print(f"[v42 hyp_attn_bias] installed Q/K Poincaré distance bias on {n_replaced} T5 attention (c=0.5, λ=0.1)", flush=True)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
@@ -462,9 +474,10 @@ def train(
     hgrec_vocab_size=769,
     hgrec_max_len=20,
     hgrec_batch_size=2560,  # per-global-batch (4 卡 DDP)
-    # === v40/v41 曲率机制开关 (Stage 3 端, 默认 False 不启用, 不破坏 v19 baseline) ===
+    # === v40/v41/v42 曲率机制开关 (Stage 3 端, 默认 False 不启用, 不破坏 v19 baseline) ===
     use_hyp_layernorm=False,  # Issue260 v40: T5 LayerNorm → Poincaré LayerNorm
     use_poinc_input_embed=False,  # Issue261 v41: T5.shared → PoincareInputEmbedding
+    use_hyp_attn_bias=False,  # Issue262 v42: T5 attention Q/K 双曲距离 bias (HNN 2019)
 ):
     # HG-Rec gin binding 兜底 (加速器子进程下 gin macro 可能未生效, 强制走 HG-Rec 路径)
     if "hgrec" in sys.argv[0:5] or any("hgrec" in str(a) for a in sys.argv):
@@ -519,6 +532,7 @@ def train(
             wandb_logging=wandb_logging,
             use_hyp_layernorm=use_hyp_layernorm,
             use_poinc_input_embed=use_poinc_input_embed,
+            use_hyp_attn_bias=use_hyp_attn_bias,
         )
 
     if wandb_logging:

@@ -1,0 +1,42 @@
+{
+  "version": "v42",
+  "issue": "Issue262_v42_stage3_attention_bias",
+  "curvature_innovation": "Stage 3 T5 encoder 第一层 attention compute_bias 注入 Q/K 双曲距离 bias: bias -= lambda * normalize(||q-k||^2), lambda=0.1 (R36 硬编码). HNN 2019 attention bias 思路. 内存友好版: 用欧氏距离平方近似双曲距离, 一次 matmul 计算.",
+  "baseline_v19": {
+    "test_R@10": 0.11130798969072164,
+    "valid_ndcg@10": 0.1049,
+    "lock": "R51 字符级一致 3 次验证"
+  },
+  "v42_result": {
+    "best_ckpt_epoch": 115,
+    "valid_ndcg@10": 0.0961867951855217,
+    "test_R@5": 0.08243395618556701,
+    "test_R@10": 0.10599226804123711,
+    "test_R@20": 0.136316043814433,
+    "test_NDCG@5": 0.06858011619331911,
+    "test_NDCG@10": 0.07618514287103083,
+    "test_NDCG@20": 0.08384899257384625,
+    "n_eval": 24832
+  },
+  "delta": {
+    "test_R@10": -0.0053157216494845306,
+    "valid_ndcg@10": -0.00873307881419552,
+    "pct": "-4.78% test_R@10, -8.32% valid_ndcg@10"
+  },
+  "compare_with_v40_v41": {
+    "v40_hyp_layernorm": "test_R@10=0.1102, delta=-0.0011",
+    "v41_poinc_input_embed": "test_R@10=0.1089, delta=-0.0025",
+    "v42_hyp_attn_bias": "test_R@10=0.1060, delta=-0.0053 (最差)"
+  },
+  "gate_evaluation": {
+    "gate_1_sid": "PASS (复用 v19 Instruments_v19_sids_for_hgrec.npy 9922×4)",
+    "gate_2_train_launch": "PASS (DDP 4 卡 torchrun 29521, 4 rank 全部 print 'v42 hyp_attn_bias installed Q/K Poincaré distance bias' — 替换生效; 内存优化版用 ||q-k||^2 近似避免 OOM)",
+    "gate_3_early_stop": "PASS (EARLY_STOP=20, 触发于 epoch 136, best_ckpt epoch 115)",
+    "gate_4_test_R@10": "FAIL — 0.1060 < v19 baseline 0.1113 (R37 FAIL)"
+  },
+  "verdict": "FAIL",
+  "decision": "R37 FAIL: test_R@10=0.1060 < v19 baseline 0.1113 (-4.78%). 比 v40/v41 衰退更多 (-0.0053 vs -0.0011/-0.0025). R50 禁重跑, 立即终止 v42 lineage, 回到 v19 baseline 重新创新.",
+  "r36_compliance": "PASS — 仅引入几何变换 (Poincaré attention bias 近似为欧氏距离平方, c=0.5/lambda=0.1 硬编码), 无 LR/dropout/wd sweep.",
+  "implementation_challenge": "内存优化: 原始 (B, H, q_len, k_len, dim) 形状直接算全成对 Poincaré 距离触发 18.75 GB OOM. 修复: 用 ||q-k||^2 = ||q||^2 + ||k||^2 - 2*q·k 三 matmul 形式 (Poincaré 球小 norm 下近似, HNN 论文原始形式).",
+  "next_iteration_direction": "v43 候选方向 (R36 曲率机制变更):\n1. Stage 3 T5 FFN 端 Poincaré FFN (中间端, v40/v41/v42 都在 LayerNorm/Input/Attention, FFN 未尝试)\n2. Stage 1 RQ-VAE codebook per-level c_l 可学习 (Stage 1 端)\n3. Stage 2 K-means in Poincaré ball + Poincaré SID init (Stage 2 端)\n4. Stage 3 decoder HALC v2 (decoder 端) — 历史 v25 R37 FAIL 不追溯\n\nR36 合规路径建议: Stage 2 K-means in Poincaré ball — 不重训 Stage 1, 只需 stage2 + stage3 + stage4."
+}
