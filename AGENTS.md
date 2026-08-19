@@ -124,6 +124,36 @@
 
 **R50** — 回滚后禁重跑硬约束: 任何代码/产物回滚操作 (R37/R38 触发的 `git checkout <commit> -- <file>` / 手动恢复 best_ckpt.pt / 手动恢复 test_final.json / conda env 升降级 / 脚本超参改回上一版本) 完成之后, **禁止立即自动重新启动训练或评估脚本** (`python3 train_decoder.py` / `python3 test_eval_only.py` / `accelerate launch ...`); 验证手段仅限于 `git diff --stat` / `git status` / `python3 -m py_compile` / 文件 mtime 比对 / `cat <result.json>` 校验数值。回滚操作的产出物以 "已回滚 + 已记录 verdict" 为终态, 不擅自触发新一轮 GPU 作业; 是否重跑、什么时候重跑、用什么配置重跑, 必须由用户明确指令或下一次 tick 主动启动新任务时再决定 (与 R19 + R26 + R27 区分: 那三条是 tick 启动新任务时强制实操, R50 是回滚后强制停手)。
 
+**R51** — DDP 4 卡噪声消除硬约束 (R34c + R34d 提升为强约束, 2026-08-19 实测触发, 任何新版本必须遵守):
+- **触发证据**: 历史 v19 三次完整重跑 test_R@10 = 0.1102 / 0.1099 / 0.1113 (±0.001 量级噪声, 来自 DistributedSampler seed 不固定 + 训练端无 manual_seed); R51 实施后三次 test_R@10 = 0.11130798969072164 (字符级完全一致, 差异 < 1e-15)。
+- **Stage 3 训练端** (`train_decoder.py` train() 入口): 在 `accelerator = Accelerator(...)` 创建**之前**显式设:
+  ```python
+  import random as _random
+  import numpy as _np
+  _random.seed(42 + accelerator.process_index)
+  _np.random.seed(42 + accelerator.process_index)
+  torch.manual_seed(42 + accelerator.process_index)
+  if torch.cuda.is_available():
+      torch.cuda.manual_seed_all(42 + accelerator.process_index)
+  ```
+  `process_index` 偏移必须存在 (4 个 rank 用 4 个不同 seed, 否则 4 卡同步退化)。**必须在创建 DataLoader 之前**完成。
+- **Stage 4 评估端** (`test_eval_only.py` main() / `_test_eval_hgrec()` 入口): 在 DataLoader 创建**之前**显式设:
+  ```python
+  torch.manual_seed(42)
+  if torch.cuda.is_available():
+      torch.cuda.manual_seed_all(42)
+  import random as _random
+  _random.seed(42)
+  import numpy as _np
+  _np.random.seed(42)
+  ```
+- **Stage 1 RQ-VAE 训练端** (`train_rqvae_instruments.py` train() 入口): 同 Stage 3, 加 `manual_seed(42 + process_index)`; Stage 2 SID 推理 (`infer_sids_instruments.py`): 同 Stage 4, 加 `manual_seed(42)` (单进程)。
+- **禁手动加 `DistributedSampler(seed=42)`** — 与 `accelerator.prepare()` 双重 wrap 会导致 4×4 = 16 分片, 反而引入更大噪声。修复策略: 在 DataLoader 创建**之前**固定全局 RNG, 让 `accelerator.prepare()` 自动 wrap 出确定分片。
+- **版本演进保护**: 任何 vN → vN+1 改动**禁止删除**上述 seed 代码块; `git diff` 必须确认 seed 块未被触碰 (Stage 1/2/3/4 入口各一处)。新文件 / 新模块如需 DataLoader, 必须先 seed 再创建。
+- **验证标准**: 同一版本 (相同 git commit + 相同数据集 + 相同 ckpt 起点) 连续 3 次完整 4 阶段重跑, test_R@10 必须**字符级完全一致** (差异 < 1e-15)。若 3 次结果出现 ±0.001 量级偏差, 立即判定 `SEED_NONDETERMINISM`, 必须修复后重新验证。
+- **bf16/fp16 非结合性 + cudnn benchmark**: 残留 ±1e-5 量级噪声理论存在, 实测不可观测, 不需额外 fix。
+- **配套 R30/R43**: seed (42 / 42+process_index) 是数值超参, 但因 R51 强约束必要, 不走 R30 路径 (不暴露为 CLI 参数, 仍硬编码)。
+
 **R52** — 迭代不许新建独立目录 (用户指令 2026-08-18):
 - 任何曲率机制版本迭代, **必须**直接在 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/` 主目录的现有文件上修改 (`train_decoder.py` / `test_eval_only.py` / `_lib/*` / `configs/*.gin` / `data/*` / `modules/*`), 不许在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 子目录包装, 不许新建独立 `stage1/2/3/4_beam20.py` 四件套
 - 唯一允许新增位置: `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/_lib/` (HALC 等新模块) 和 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/configs/` (新 gin 配置)
