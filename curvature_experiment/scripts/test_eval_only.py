@@ -250,6 +250,18 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     except (ValueError, Exception) as e:
         pass
 
+    # === v44 (Issue264): Stage 4 也启用 product manifold bias (与 Stage 3 训练时一致) ===
+    try:
+        import gin as _gin
+        _use_pm = _gin.query_parameter("train_decoder.train.use_product_manifold")
+        if _use_pm:
+            from _lib.product_manifold_attn_v44 import install_v44_hook, wrap_t5_cross_attention_with_product_bias
+            install_v44_hook(model.model)
+            n_replaced = wrap_t5_cross_attention_with_product_bias(model.model, c_p=0.5, lam_p=0.05, c_l=1.0, lam_l=0.05)
+            print(f"[v44 product_manifold] Stage 4 installed Poincaré+Lorentz product bias on {n_replaced} T5 cross-attention (c_p=0.5/λ_p=0.05, c_l=1.0/λ_l=0.05)", flush=True)
+    except (ValueError, Exception) as e:
+        pass
+
     test_ds = RawMusicalInstrumentsHGRec(
         parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
         code_path=code_path, mode="evaluation",

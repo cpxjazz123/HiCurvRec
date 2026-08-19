@@ -82,6 +82,7 @@ def _train_hgrec(
     use_poinc_input_embed=False,  # Issue261 v41: Stage 3 T5 shared embedding → Poincaré projection (R36 几何变换)
     use_hyp_attn_bias=False,  # Issue262 v42: Stage 3 T5 attention Q/K 双曲距离 bias (HNN 2019)
     use_lorentz_attn=False,  # Issue263 v43: Stage 3 T5 cross-attention Lorentz inner product bias (Chen 2022)
+    use_product_manifold=False,  # Issue264 v44: Stage 3 T5 cross-attention Poincaré + Lorentz 双 bias 组合 (R36 曲率机制组合)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -181,6 +182,8 @@ def _train_hgrec(
         use_hyp_attn_bias = True
     if os.environ.get("USE_LORENTZ_ATTN", "0") == "1":
         use_lorentz_attn = True
+    if os.environ.get("USE_PRODUCT_MANIFOLD", "0") == "1":
+        use_product_manifold = True
 
     # === v40 (Issue260): Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换) ===
     # 替换 T5 所有 T5LayerNorm 实例为 PoincareT5LayerNorm (logmap0 → RMSNorm → expmap0, c=0.5)
@@ -214,6 +217,15 @@ def _train_hgrec(
         install_v43_hook(model.model)
         n_replaced = wrap_t5_cross_attention_with_lorentz_bias(model.model, c=1.0, lam=0.1)
         print(f"[v43 lorentz_attn] installed Lorentz inner product bias on {n_replaced} T5 cross-attention (c=1.0, λ=0.1)", flush=True)
+
+    # === v44 (Issue264): Stage 3 T5 cross-attention product manifold bias (R36 曲率机制组合) ===
+    # 在 decoder 第一层 cross-attention 同时注入 Poincaré 距离 bias (c=0.5, λ_p=0.05) + Lorentz 距离 bias (c=1.0, λ_l=0.05)
+    # bias -= λ_p * normalize(||q-k||²) + λ_l * normalize(d_L(q_L, k_L))
+    if use_product_manifold:
+        from _lib.product_manifold_attn_v44 import install_v44_hook, wrap_t5_cross_attention_with_product_bias
+        install_v44_hook(model.model)
+        n_replaced = wrap_t5_cross_attention_with_product_bias(model.model, c_p=0.5, lam_p=0.05, c_l=1.0, lam_l=0.05)
+        print(f"[v44 product_manifold] installed Poincaré+Lorentz product bias on {n_replaced} T5 cross-attention (c_p=0.5/λ_p=0.05, c_l=1.0/λ_l=0.05)", flush=True)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
@@ -491,6 +503,7 @@ def train(
     use_poinc_input_embed=False,  # Issue261 v41: T5.shared → PoincareInputEmbedding
     use_hyp_attn_bias=False,  # Issue262 v42: T5 attention Q/K 双曲距离 bias (HNN 2019)
     use_lorentz_attn=False,  # Issue263 v43: T5 cross-attention Lorentz inner product bias (Chen 2022)
+    use_product_manifold=False,  # Issue264 v44: T5 cross-attention Poincaré + Lorentz product manifold bias
 ):
     # HG-Rec gin binding 兜底 (加速器子进程下 gin macro 可能未生效, 强制走 HG-Rec 路径)
     if "hgrec" in sys.argv[0:5] or any("hgrec" in str(a) for a in sys.argv):
@@ -547,6 +560,7 @@ def train(
             use_poinc_input_embed=use_poinc_input_embed,
             use_hyp_attn_bias=use_hyp_attn_bias,
             use_lorentz_attn=use_lorentz_attn,
+            use_product_manifold=use_product_manifold,
         )
 
     if wandb_logging:

@@ -1,0 +1,44 @@
+{
+  "version": "v44",
+  "issue": "Issue264_v44_stage3_product_manifold_attn",
+  "curvature_innovation": "Stage 3 T5 decoder 第一层 cross-attention product manifold bias (R36 曲率机制组合): 同时注入 Poincaré 距离 bias (c_p=0.5, λ_p=0.05) + Lorentz 距离 bias (c_l=1.0, λ_l=0.05). bias -= λ_p * normalize(||q-k||²) + λ_l * normalize(sqrt(c)*arccosh(-<q_L, k_L>_L * c)). 复用 v42 matmul + v43 arccosh 实现, 权重减半避免叠加过强 (总 0.10 ≈ v42/v43 单一注入 0.10).",
+  "baseline_v19": {
+    "test_R@10": 0.11130798969072164,
+    "valid_ndcg@10": 0.1049,
+    "lock": "R51 字符级一致 3 次验证"
+  },
+  "v44_result": {
+    "best_ckpt_epoch": 130,
+    "valid_ndcg@10": 0.0959914885845381,
+    "test_R@5": 0.0858972293814433,
+    "test_R@10": 0.10824742268041238,
+    "test_R@20": 0.13619523195876287,
+    "test_NDCG@5": 0.07253374512662593,
+    "test_NDCG@10": 0.07973976725155545,
+    "test_NDCG@20": 0.0868114982683634,
+    "n_eval": 24832
+  },
+  "delta": {
+    "test_R@10": -0.0030605670103092583,
+    "valid_ndcg@10": -0.0089,
+    "pct": "-2.75% test_R@10, -8.49% valid_ndcg@10"
+  },
+  "compare_with_v40_v41_v42_v43": {
+    "v40_hyp_layernorm": "test_R@10=0.1102, delta=-0.0011",
+    "v41_poinc_input_embed": "test_R@10=0.1089, delta=-0.0025",
+    "v42_hyp_attn_bias_encoder": "test_R@10=0.1060, delta=-0.0053",
+    "v43_lorentz_cross_attn": "test_R@10=0.1083, delta=-0.0030",
+    "v44_product_manifold": "test_R@10=0.1082, delta=-0.0031 (valid_ndcg@10=0.0960, 比 v43 0.0956 略高 0.0004 但 test 几乎相同)"
+  },
+  "gate_evaluation": {
+    "gate_1_sid": "PASS (复用 v19 Instruments_v19_sids_for_hgrec.npy 9922×4)",
+    "gate_2_train_launch": "PASS (DDP 4 卡 torchrun 29541, 4 rank 全部 print 'v44 product_manifold installed Poincaré+Lorentz product bias on 1 T5 cross-attention (c_p=0.5/λ_p=0.05, c_l=1.0/λ_l=0.05)' — 替换生效; 修复了初次 ImportError: cannot import name '_poinc_dist_norm' from v42 module, 直接用 v44 内部 matmul 实现 Poincaré 距离)",
+    "gate_3_early_stop": "PASS (EARLY_STOP=20, 触发于 epoch 151, best_ckpt epoch 130)",
+    "gate_4_test_R@10": "FAIL — 0.1082 < v19 baseline 0.1113 (R37 FAIL)"
+  },
+  "verdict": "FAIL",
+  "decision": "R37 FAIL: test_R@10=0.1082 < v19 baseline 0.1113 (-2.75%). 几乎与 v43 (0.1083) 相同, 但 valid_ndcg@10 略高 (0.0960 vs 0.0956). 曲率机制组合 (R36 'Poincaré + Lorentz 双重 bias') 未能突破 baseline, Stage 3 端几何变换路线仍无效. R50 禁重跑, 立即终止 v44 lineage, 回到 v19 baseline 重新创新.",
+  "r36_compliance": "PASS — 仅引入曲率机制组合 (同时两种几何距离 bias, c_p=0.5/λ_p=0.05, c_l=1.0/λ_l=0.05 硬编码), 无 LR/dropout/wd sweep.",
+  "implementation_challenge": "1. 初次启动 ImportError: cannot import name '_poinc_dist_norm' from '_lib.hyp_attn_bias_v42' (v42 没暴露此函数, 在内部用 inline matmul). 修复: 直接在 v44 内部用 ||q-k||² = ||q||² + ||k||² - 2*q·k 实现, 不依赖 v42. 2. 每次 cross-attention forward 调用两种距离公式 (matmul + arccosh), 单步时间从 v43 ~9s/epoch 增加到 v44 ~10s/epoch (+10%), 仍在 DDP 4 卡 budget 内.",
+  "next_iteration_direction": "v45 候选方向 (Stage 3 几何变换路线已连续 5 次失败 v40-v44, 需换路径):\n1. Stage 2 K-means in Poincaré ball (Poincaré SID init) — Stage 2 端曲率机制, 不重训 Stage 1\n2. Stage 1 RQ-VAE per-item κ codebook (Issue95 HALC v7) — Stage 1 端, 重训 Stage 1+2+3\n3. Stage 3 T5 训练用 Riemannian Adam (切空间梯度修正) — 不算 LR sweep, 属曲率优化器\n4. Stage 3 T5 label smoothing + hyperbolic distance reg 替代 cross-entropy — R36 新曲率正则项\n\nR36 合规路径建议: 路径 1 — Stage 2 端曲率机制, 只重训 stage2 + stage3 + stage4, 不动 stage1. 这是 Stage 1/2/3/4 全量流水线里唯一未尝试的方向."
+}
