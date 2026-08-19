@@ -1,0 +1,54 @@
+{
+  "version": "v48",
+  "issue": 269,
+  "title": "v48 Stage 1 端 Poincaré + Lorentz Product Manifold Codebook (R36 曲率机制变更)",
+  "stage1": {
+    "innovation": "Stage 1 端 distance = α·d_Poincaré + (1-α)·d_Lorentz (R36 曲率机制变更)",
+    "lorentz_alpha": 0.5,
+    "lorentz_distance_formula": "d_L(u, v) = arccosh(-c·⟨u, v⟩_L) / sqrt(c), ⟨u, v⟩_L = -u₀v₀ + u₁v₁ + ... + u_D v_D",
+    "poincare_to_lorentz": "x₀ = (1 + c·||p||²) / (1 - c·||p||²), x_i = 2·p_i / (1 - c·||p||²)",
+    "rqvae_ckpt": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v48_lorentz_mix/rqvae_final.pt",
+    "training_time_s": 454.5,
+    "global_step": 100000,
+    "loss_final": 1.49,
+    "codebook_usage_L0_L1_L2": [47, 255, 254],
+    "margin_L0_L1_L2": [0.13, 0.038, 0.020],
+    "L0_collapse_warning": "L0 只用 47/256 codes (18.4%), 略低于 v46 (22.3%) 但 L1/L2 健康"
+  },
+  "stage2": {
+    "sid_npy": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v48_lorentz_mix.npy",
+    "hgrec_format": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v48_sids_for_hgrec.npy",
+    "shape": [9922, 4],
+    "vocab_max": 255,
+    "codebook_usage_L0_L1_L2_post_inference": [47, 255, 254]
+  },
+  "stage3": {
+    "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_v48/best_ckpt.pt",
+    "best_epoch": 113,
+    "valid_ndcg20": 0.0956,
+    "early_stop_epoch": 134,
+    "DDP_4gpu": true,
+    "R51_lock": true,
+    "HALC_v2_v16_diff_schedule": true,
+    "R40_reason": "Stage 3 完全复用 v19 baseline 训练路径"
+  },
+  "stage4": {
+    "test_R@10": 0.10848904639175258,
+    "test_R@20": 0.13841011597938144,
+    "test_NDCG@20": 0.08676975289570917,
+    "n_eval": 24832,
+    "DDP_4gpu_eval": true
+  },
+  "baseline_v19_R51_locked": 0.11130798969072164,
+  "delta_R10": -0.002819,
+  "delta_R10_pct": -2.53,
+  "verdict": "FAIL",
+  "R37_reason": "v48 test_R@10=0.1085 < v19 baseline 0.1113 → R37 FAIL (-2.53%)",
+  "diagnosis": "Poincaré+Lorentz 混合距离导致 L0 codebook 部分坍缩 (47/256), L0 信息容量下降使 L0 SID 区分度变差, 影响 Stage 3 T5 学习. 但 L1/L2 健康 (255/254) 说明 L1/L2 量化未受损. 微退步 -0.0028 与 v40-v47 同量级.",
+  "next_iteration_direction": "Stage 1 端 L0 坍缩是关键瓶颈 — 任何在 L0 引入新机制的版本都需保证 L0 使用率 ≥ 200/256. Poincaré+Lorentz 混合对 L0 反而引入双约束, 不利于 L0 充分探索.",
+  "Gate_1_SID_format": "PASS — (9922, 4) int64, vocab max=255 < 769",
+  "Gate_2_Stage1_train": "PASS — DDP 4 卡, 100k steps, loss 1.49, L1/L2 usage ≥99%",
+  "Gate_3_Stage3_train": "PASS — DDP 4 卡, valid_ndcg@20=0.0956 best@113, EARLY_STOP@134",
+  "Gate_4_R37_check": "FAIL — test_R@10=0.1085 < 0.1113 baseline (-2.53%)",
+  "history_alignment": "v40-v48 连续 9 次 FAIL (Stage 3 端 / Stage 2 端 / Stage 1 端微退步或灾难). v48 是 Stage 1 端 Product Manifold Codebook 新方向, 也只带来 -0.0028 退步."
+}

@@ -115,6 +115,16 @@ class Quantize(nn.Module):
         c_start: float = 0.05,             # C27: 初始 c (接近欧氏, 几何平滑)
         c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
         curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
+        # v48: Poincaré-Lorentz Product Manifold Codebook (R36 曲率机制变更)
+        # 论文支撑: "Product Manifolds" (Chami et al. ICML 2021),
+        #          "Hyperbolic Embedding" (Nickel & Kiela, NIPS 2018),
+        #          "Lorentzian Distance Learning" (Law et al. ICLR 2019).
+        # 机制: 每层距离 metric = α·d_Poincaré + (1-α)·d_Lorentz
+        #       d_Lorentz(u, v) = arccosh(-⟨u, v⟩_L) / sqrt(c), ⟨u, v⟩_L = -u₀v₀ + u₁v₁ + ... + u_D v_D
+        #       (u, v 在 hyperboloid: x₀² - x₁² - ... = 1/c 上)
+        # 两距离按 batch 均值归一化 (避免一方 scale 主导)
+        use_lorentz_mix: bool = False,     # v48: 是否启用 Poincaré+Lorentz 混合距离 (默认关=v19 baseline)
+        lorentz_alpha: float = 0.5,        # v48: 混合权重 (Poincaré 占比), (1-α) 走 Lorentz
     ) -> None:
         super().__init__()
 
@@ -177,6 +187,10 @@ class Quantize(nn.Module):
         self.curriculum_steps = int(curriculum_steps)
         # curriculum 由外部 (train_rqvae_instruments.py) 通过 set_curriculum_step() 更新
         self._curriculum_step = 0
+
+        # v48: Poincaré-Lorentz 混合距离 (R36 曲率机制变更)
+        self.use_lorentz_mix = use_lorentz_mix
+        self.lorentz_alpha = float(lorentz_alpha)
 
         # M2/M3 (Issue #166 treatment 移植): 每层可学习曲率 θ_l → c_l = C_MIN + (C_MAX-C_MIN)*sigmoid(θ)
         # 初始化 c=1.0 (HG-Rec c=1.0 对齐): θ = log((1.0-C_MIN)/(C_MAX-1.0)) = log(0.5) ≈ -0.6931
@@ -319,6 +333,39 @@ class Quantize(nn.Module):
                 d_poincare = _poincare_distance_t(
                     latent_h.expand(B, K, -1), codebook_h, c_exp
                 ).squeeze(-1)  # (B, K)
+                # v48: Poincaré-Lorentz Product Manifold 混合距离 (R36 曲率机制变更)
+                # 把 expmap0 输出 (Poincaré D 维) 转 hyperboloid (D+1 维) 算 Lorentz distance
+                # Poincaré p ∈ B_c (D 维) → Hyperboloid x ∈ H_c (D+1 维):
+                #   x₀ = (1 + c·||p||²) / (1 - c·||p||²), x_i = 2·p_i / (1 - c·||p||²)
+                # d_L(u, v) = arccosh(-⟨u, v⟩_L) / sqrt(c)
+                #   ⟨u, v⟩_L = -u₀v₀ + u₁v₁ + ... + u_D v_D
+                if self.use_lorentz_mix:
+                    import math as _math_lm
+                    c_for_lorentz = c_exp  # (B,1,1)
+                    sqrt_c = _math_lm.sqrt(float(c_for_lorentz.mean().item()))
+                    # latent_h, codebook_h 当前是 (B, K, D) Poincaré — 转 hyperboloid
+                    norm_p_sq = (latent_h ** 2).sum(dim=-1, keepdim=True)  # (B,1,1)
+                    norm_c_sq = (codebook_h ** 2).sum(dim=-1, keepdim=True)  # (B,K,1)
+                    denom_p = (1.0 - c_for_lorentz * norm_p_sq).clamp_min(1e-9)  # (B,1,1)
+                    denom_c = (1.0 - c_for_lorentz * norm_c_sq).clamp_min(1e-9)  # (B,K,1)
+                    # x₀ = (1 + c·||p||²) / (1 - c·||p||²)
+                    x0_p = (1.0 + c_for_lorentz * norm_p_sq) / denom_p  # (B,1,1)
+                    xi_p = 2.0 * latent_h / denom_p  # (B,1,D)
+                    x0_c = (1.0 + c_for_lorentz * norm_c_sq) / denom_c  # (B,K,1)
+                    xi_c = 2.0 * codebook_h / denom_c  # (B,K,D)
+                    # Lorentz inner product: ⟨u, v⟩_L = -u₀v₀ + Σ u_i v_i (i=1..D)
+                    # 取 u=latent_h_lorentz (B,1,D+1), v=codebook_h_lorentz (B,K,D+1)
+                    inner_p0 = -x0_p * x0_c  # (B,K,1)
+                    inner_pi = (xi_p * xi_c).sum(dim=-1, keepdim=True)  # (B,K,1)
+                    inner_L = inner_p0 + inner_pi  # (B,K,1)
+                    # d_L = arccosh(-c·⟨u,v⟩_L) / sqrt(c); -c·⟨u,v⟩_L ≥ 1 (hyperboloid 约束)
+                    arg = (-c_for_lorentz * inner_L).clamp(min=1.0)  # (B,K,1)
+                    d_lorentz = (torch.acosh(arg) / sqrt_c).squeeze(-1)  # (B, K)
+                    # 两距离按 batch 均值归一化 (让混合系数有可比语义)
+                    d_p_norm = d_poincare / d_poincare.mean().clamp_min(1e-6)
+                    d_l_norm = d_lorentz / d_lorentz.mean().clamp_min(1e-6)
+                    # α 硬编码 lorentz_alpha (R30/R43: 不暴露 CLI, 不调参, 与 v19 baseline 一致)
+                    dist = self.lorentz_alpha * d_p_norm + (1.0 - self.lorentz_alpha) * d_l_norm
                 if self.use_mcdq:
                     # C23: MCDQ 混合距离 = (1-α)·d_P + α·d_E
                     # 两距离按 batch 均值归一化 (让混合系数有可比语义, 避免一方 scale 主导)

@@ -87,6 +87,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # L_hyp = mean(d_Poincaré(expmap0(res, c), expmap0(codeword, c))²) per layer, sum
         hyp_emb_reg_weight: float = 0.0,   # v39: 权重 (默认 0=关闭, v19 baseline 不变)
         hyp_emb_c: float = 0.5,            # v39: 双曲距离用固定 c (与 C27 课程末态一致)
+        # v48: Poincaré-Lorentz Product Manifold Codebook (R36 曲率机制变更)
+        # 每层量化距离 = α·d_Poincaré + (1-α)·d_Lorentz (hyperboloid inner product)
+        use_lorentz_mix: bool = False,     # v48: 默认关 (= v19 baseline), v48 切到 True
+        lorentz_alpha: float = 0.5,        # v48: 混合权重 (Poincaré 占比)
     ) -> None:
         self._config = locals()
 
@@ -123,6 +127,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # v39: Poincaré Embedding Regularization (R36 新曲率正则项)
         self.hyp_emb_reg_weight = float(hyp_emb_reg_weight)
         self.hyp_emb_c = float(hyp_emb_c)
+        # v48: Poincaré-Lorentz 混合距离
+        self.use_lorentz_mix = use_lorentz_mix
+        self.lorentz_alpha = float(lorentz_alpha)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -160,6 +167,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     c_end=c_end,
                     curriculum_steps=curriculum_steps,
                     c_fixed=c_fixed,
+                    use_lorentz_mix=use_lorentz_mix,  # v48: Poincaré+Lorentz 混合
+                    lorentz_alpha=lorentz_alpha,
                 )
                 for i in range(n_layers)
             ]
