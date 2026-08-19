@@ -1,0 +1,63 @@
+[v9] world_size=4
+[v9] config: {'batch_size': 256, 'infer_size': 96, 'num_epochs': 200, 'lr': 0.0001, 'num_layers': 6, 'num_decoder_layers': 4, 'd_model': 128, 'd_ff': 1024, 'num_heads': 6, 'd_kv': 64, 'dropout_rate': 0.1, 'vocab_size': 1025, 'pad_token_id': 0, 'eos_token_id': 0, 'feed_forward_proj': 'relu', 'max_len': 20, 'dataset_name': 'Instruments', 'dataset_path': './dataset/', 'codebook_size': [64, 128, 256, 1], 'code_path': '_t5_rqvae_beta_0.250_codebook_[64,128,256]_sk_0.000.npy', 'beam_size': 20, 'topk_list': [5, 10, 20], 'early_stop': 20}
+[v9] params: 5,508,874
+[v9] initial curvatures: {'encoder.block.0.curvature_ffn': 1.0, 'encoder.block.1.curvature_ffn': 1.0, 'encoder.block.2.curvature_ffn': 1.0, 'encoder.block.3.curvature_ffn': 1.0, 'encoder.block.4.curvature_ffn': 1.0, 'encoder.block.5.curvature_ffn': 1.0, 'decoder.block.0.curvature_ffn': 1.0, 'decoder.block.1.curvature_ffn': 1.0, 'decoder.block.2.curvature_ffn': 1.0, 'decoder.block.3.curvature_ffn': 1.0}
+[v9] starting: 200 epochs, EARLY_STOP=20
+[E000] loss=5.2643 ce=5.2637 reg=0.00000 R@10=0.0342 N@20=0.0207 train=9.2s eval=41.7s c_avg=1.000 c_min=0.995 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_0.pth NDCG@20=0.0207
+[E001] loss=4.6741 ce=4.6753 reg=0.00000 R@10=0.0512 N@20=0.0400 train=8.8s eval=42.1s c_avg=0.997 c_min=0.987 c_max=1.009
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_1.pth NDCG@20=0.0400
+[E002] loss=4.3138 ce=4.3129 reg=0.00000 R@10=0.0679 N@20=0.0540 train=8.8s eval=41.3s c_avg=0.991 c_min=0.966 c_max=1.008
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_2.pth NDCG@20=0.0540
+[E003] loss=4.1028 ce=4.1042 reg=0.00000 R@10=0.0739 N@20=0.0593 train=8.8s eval=41.3s c_avg=0.986 c_min=0.950 c_max=1.008
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_3.pth NDCG@20=0.0593
+[E004] loss=3.9456 ce=3.9448 reg=0.00000 R@10=0.0782 N@20=0.0657 train=8.8s eval=42.1s c_avg=0.981 c_min=0.935 c_max=1.008
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_4.pth NDCG@20=0.0657
+[E005] loss=3.8112 ce=3.8101 reg=0.00000 R@10=0.0845 N@20=0.0701 train=8.9s eval=41.5s c_avg=0.977 c_min=0.922 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_5.pth NDCG@20=0.0701
+[E006] loss=3.6950 ce=3.6936 reg=0.00000 R@10=0.0879 N@20=0.0724 train=8.9s eval=41.4s c_avg=0.972 c_min=0.910 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_6.pth NDCG@20=0.0724
+[E007] loss=3.5890 ce=3.5894 reg=0.00000 R@10=0.0902 N@20=0.0743 train=8.8s eval=41.9s c_avg=0.968 c_min=0.899 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_7.pth NDCG@20=0.0743
+[E008] loss=3.4960 ce=3.4953 reg=0.00000 R@10=0.0901 N@20=0.0754 train=8.9s eval=41.3s c_avg=0.964 c_min=0.889 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_8.pth NDCG@20=0.0754
+[E009] loss=3.4100 ce=3.4119 reg=0.00000 R@10=0.0948 N@20=0.0770 train=8.8s eval=42.0s c_avg=0.959 c_min=0.881 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_9.pth NDCG@20=0.0770
+[E010] loss=3.3323 ce=3.3340 reg=0.00001 R@10=0.0959 N@20=0.0782 train=8.8s eval=41.6s c_avg=0.956 c_min=0.871 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_10.pth NDCG@20=0.0782
+[E011] loss=3.2633 ce=3.2633 reg=0.00001 R@10=0.0958 N@20=0.0793 train=8.9s eval=41.8s c_avg=0.952 c_min=0.859 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_11.pth NDCG@20=0.0793
+[E012] loss=3.1996 ce=3.1995 reg=0.00001 R@10=0.0985 N@20=0.0799 train=9.0s eval=42.3s c_avg=0.948 c_min=0.847 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_12.pth NDCG@20=0.0799
+[E013] loss=3.1410 ce=3.1424 reg=0.00001 R@10=0.0993 N@20=0.0811 train=8.9s eval=41.5s c_avg=0.945 c_min=0.836 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_13.pth NDCG@20=0.0811
+[E014] loss=3.0886 ce=3.0894 reg=0.00001 R@10=0.1010 N@20=0.0825 train=8.9s eval=41.3s c_avg=0.942 c_min=0.826 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_14.pth NDCG@20=0.0825
+[E015] loss=3.0375 ce=3.0374 reg=0.00001 R@10=0.1005 N@20=0.0822 train=8.8s eval=41.8s c_avg=0.939 c_min=0.815 c_max=1.006
+[E016] loss=2.9913 ce=2.9935 reg=0.00001 R@10=0.1024 N@20=0.0825 train=8.8s eval=41.4s c_avg=0.936 c_min=0.805 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_16.pth NDCG@20=0.0825
+[E017] loss=2.9520 ce=2.9518 reg=0.00001 R@10=0.1036 N@20=0.0836 train=8.8s eval=41.3s c_avg=0.933 c_min=0.795 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_17.pth NDCG@20=0.0836
+[E018] loss=2.9141 ce=2.9137 reg=0.00001 R@10=0.1039 N@20=0.0841 train=8.8s eval=41.7s c_avg=0.931 c_min=0.786 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_18.pth NDCG@20=0.0841
+[E019] loss=2.8788 ce=2.8780 reg=0.00002 R@10=0.1037 N@20=0.0847 train=8.9s eval=41.5s c_avg=0.928 c_min=0.777 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_19.pth NDCG@20=0.0847
+[E020] loss=2.8448 ce=2.8455 reg=0.00002 R@10=0.1065 N@20=0.0858 train=8.9s eval=41.8s c_avg=0.926 c_min=0.768 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_20.pth NDCG@20=0.0858
+[E021] loss=2.8154 ce=2.8150 reg=0.00002 R@10=0.1063 N@20=0.0860 train=8.8s eval=41.3s c_avg=0.924 c_min=0.759 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_21.pth NDCG@20=0.0860
+[E022] loss=2.7864 ce=2.7861 reg=0.00002 R@10=0.1067 N@20=0.0856 train=8.9s eval=41.5s c_avg=0.922 c_min=0.749 c_max=1.008
+[E023] loss=2.7588 ce=2.7595 reg=0.00002 R@10=0.1075 N@20=0.0859 train=8.8s eval=42.0s c_avg=0.920 c_min=0.741 c_max=1.008
+[E024] loss=2.7358 ce=2.7353 reg=0.00002 R@10=0.1087 N@20=0.0872 train=9.0s eval=41.4s c_avg=0.918 c_min=0.732 c_max=1.007
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_24.pth NDCG@20=0.0872
+[E025] loss=2.7118 ce=2.7128 reg=0.00002 R@10=0.1088 N@20=0.0873 train=8.8s eval=41.4s c_avg=0.916 c_min=0.724 c_max=1.006
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_25.pth NDCG@20=0.0873
+[E026] loss=2.6889 ce=2.6894 reg=0.00003 R@10=0.1113 N@20=0.0884 train=8.8s eval=42.6s c_avg=0.914 c_min=0.715 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_26.pth NDCG@20=0.0884
+[E027] loss=2.6692 ce=2.6679 reg=0.00003 R@10=0.1093 N@20=0.0875 train=8.8s eval=41.4s c_avg=0.912 c_min=0.707 c_max=1.006
+[E028] loss=2.6513 ce=2.6524 reg=0.00003 R@10=0.1111 N@20=0.0887 train=8.9s eval=41.9s c_avg=0.910 c_min=0.699 c_max=1.005
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_28.pth NDCG@20=0.0887
+[E029] loss=2.6324 ce=2.6310 reg=0.00003 R@10=0.1106 N@20=0.0882 train=8.8s eval=41.3s c_avg=0.908 c_min=0.691 c_max=1.004
+[E030] loss=2.6164 ce=2.6169 reg=0.00003 R@10=0.1111 N@20=0.0888 train=8.9s eval=41.4s c_avg=0.906 c_min=0.683 c_max=1.004
+  Best ckpt saved: ./ckpt/Instruments/Aug-18-2026_07-18-40_v9_ffn_curv/HG_Rec_v9_epoch_30.pth NDCG@20=0.0888
+[E031] loss=2.5984 ce=2.5983 reg=0.00003 R@10=0.1099 N@20=0.0885 train=8.9s eval=41.9s c_avg=0.905 c_min=0.676 c_max=1.005
