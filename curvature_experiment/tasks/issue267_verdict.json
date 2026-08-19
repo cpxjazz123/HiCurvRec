@@ -1,0 +1,49 @@
+{
+  "version": "v47",
+  "issue": 267,
+  "title": "v47 Stage 4 端 Poincaré distance rerank (R36 新曲率机制)",
+  "stage1": {
+    "rqvae_ckpt": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt",
+    "reused_from_v19": true,
+    "R40_reason": "v19 baseline RQ-VAE ckpt 锁定 (R19), Stage 1 端不动"
+  },
+  "stage2": {
+    "sid_npy": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy",
+    "reused_from_v19": true,
+    "R40_reason": "v19 baseline SID 锁定 (R19), Stage 2 端不动"
+  },
+  "stage3": {
+    "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_configs/hgrec_v47/best_ckpt.pt",
+    "best_epoch": 122,
+    "valid_ndcg20": 0.0952,
+    "early_stop_epoch": 143,
+    "DDP_4gpu": true,
+    "R51_lock": true,
+    "HALC_v2_v16_diff_schedule": true,
+    "R40_reason": "Stage 3 完全复用 v19 baseline 训练路径"
+  },
+  "stage4": {
+    "innovation": "Stage 4 端 Poincaré distance rerank (R36 新曲率机制)",
+    "test_R@10": 0.10732119845360824,
+    "test_R@20": 0.13865173969072164,
+    "test_NDCG@20": 0.08713454806927554,
+    "n_eval": 24832,
+    "DDP_4gpu_eval": true,
+    "rerank_lambda": 0.1,
+    "poincare_c": 1.0
+  },
+  "baseline_v19_R51_locked": 0.11130798969072164,
+  "delta_R10": -0.003987,
+  "delta_R10_pct": -3.58,
+  "verdict": "FAIL",
+  "R37_reason": "v47 test_R@10=0.1073 < v19 baseline 0.1113 → 立即终止 v47 lineage, 不在 v47 基础上二次创新, 回到 v19 重新设计",
+  "R50_revert": "Stage 4 端 rerank 引入 -0.0040 退步, 不可接受; Stage 3 ckpt 复用 v19 baseline 路径, 无需回滚",
+  "Gate_1_SID_format": "PASS — v19 SID numpy (9922, 4) int64, vocab range [0, 768]",
+  "Gate_2_Stage3_train": "PASS — DDP 4 卡, loss 单调下降, valid ndcg@20=0.0952 best@122, EARLY_STOP@143",
+  "Gate_3_EARLY_STOP": "PASS — counter 20/20 @ E143, 触发早停",
+  "Gate_4_R37_check": "FAIL — test_R@10=0.1073 < 0.1113 baseline (-3.58%), R37 FAIL",
+  "diagnosis": "Stage 4 端 rerank (Poincaré distance to codebook centroid) 引入 -0.0040 退步。猜想: T5 已经在 EUCLIDEAN space 学 log-prob 排序, 加双曲距离会与学习到的 seq_logp 冲突, 破坏 beam 内排序 (T5 beam 排序正确性 ≫ centroid 距离先验). Stage 4 端曲率机制对 beam 已排序输出无提升空间.",
+  "next_iteration_direction": "Stage 1/2/3/4 端任何几何变换都未带来 test_R@10 ≥ 0.12. 必须重新审视目标合理性: 0.12 目标可能需要 baseline 整体重新设计 (HG-Rec 原论文为 0.1024, HG-Rec 重跑实测 0.1074, v19 R51 locked 0.1113 已超过 HG-Rec 重跑 +0.0039). 0.12 需要在此基础上 +0.0087, 历史上 47 次 v* 迭代均未达成, 剩余边际空间有限.",
+  "commit": "pending — to be committed + pushed",
+  "history_alignment": "v40-v46 已 FAIL (Stage 3 端微退步 / Stage 2 端灾难 / Stage 1 端灾难). v47 是 Stage 4 端唯一剩余创新点, 同样 FAIL (-0.0040)."
+}
