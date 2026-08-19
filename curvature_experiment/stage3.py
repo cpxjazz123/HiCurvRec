@@ -42,7 +42,7 @@ STAGE3_TORCHRUN = [
     "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun",
     "--nproc_per_node=4",
     "--master_port=29501",
-    os.path.join(MAIN_DIR, "train_decoder.py"),
+    os.path.join(MAIN_DIR, "scripts/train_decoder.py"),
     "configs/decoder_instruments_hgrec_v19.gin",
 ]
 

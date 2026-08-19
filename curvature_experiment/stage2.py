@@ -34,8 +34,8 @@ MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 # 不用 sys.executable (可能指向无 torch 的 base python)
 CONDA_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3"
 
-STAGE2_INFER = os.path.join(MAIN_DIR, "infer_sids_instruments.py")
-STAGE2_BUILD = os.path.join(MAIN_DIR, "build_v19_sids_for_hgrec.py")
+STAGE2_INFER = os.path.join(MAIN_DIR, "scripts/infer_sids_instruments.py")
+STAGE2_BUILD = os.path.join(MAIN_DIR, "scripts/build_v19_sids_for_hgrec.py")
 
 
 def check_stage1_artifact():

@@ -15,7 +15,7 @@ HALC v2 + v16 differential schedule).
      EOS
      )"
 
-实际执行 → 顶层 train_rqvae_instruments.py (R40 自包含, 所有超参硬编码).
+实际执行 → scripts/train_rqvae_instruments.py (R40 自包含, 所有超参硬编码).
 R42: 必须 torchrun --nproc_per_node=4 (DDP 4 卡).
 R30/R43: 超参硬编码, 无 CLI 数值超参.
 R36: 仅曲率机制 (c_end=0.7 curriculum), 不调 LR/dropout/wd.
@@ -36,7 +36,7 @@ STAGE1_TORCHRUN = [
     "--nproc_per_node=4",
     "--master_port=29500",
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                 "train_rqvae_instruments.py"),
+                 "scripts/train_rqvae_instruments.py"),
 ]
 
 

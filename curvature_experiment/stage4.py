@@ -49,7 +49,7 @@ STAGE4_TORCHRUN_BASE = [
 def build_stage4_cmd(ckpt_path):
     """构造 stage4 torchrun 命令 (ckpt 在 main() 时 resolve)."""
     return STAGE4_TORCHRUN_BASE + [
-        os.path.join(MAIN_DIR, "test_eval_only.py"),
+        os.path.join(MAIN_DIR, "scripts/test_eval_only.py"),
         os.path.join(MAIN_DIR, "configs/decoder_instruments_hgrec_v19.gin"),
         ckpt_path,
     ]
