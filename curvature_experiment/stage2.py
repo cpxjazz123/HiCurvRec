@@ -8,7 +8,7 @@
        输出: /home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/
              sids_v19_cend_07.npy (shape 9922, 3)
   2.2 build_v19_sids_for_hgrec.py — HG-Rec 格式转换
-       输出: /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/
+       输出: /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/
              Instruments/Instruments_v19_sids_for_hgrec.npy (shape 9922, 4)
 
 启动方式 (任选其一):
@@ -19,7 +19,7 @@
 
 R36: 复用 v19 baseline 配置 (c per layer = [0.7, 0.7, 0.7]).
 R40: 必须 Stage 1 产物存在 (rqvae_final.pt) 才能跑 Stage 2.
-R44: dataset/ 路径硬编码到 /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/
+R44: dataset/ 路径硬编码到 /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/
      dataset/Instruments/, 不依赖外部数据集路径.
 
 产物 codes_per_layer 预期 [47, 255, 254] (Stage 2 与 Stage 1 ±2% 容差内).
@@ -68,7 +68,7 @@ def main():
         sys.exit(r2.returncode)
 
     # 验证产物
-    out = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+    out = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
     print(f"[stage2] done → {out}")
 
 

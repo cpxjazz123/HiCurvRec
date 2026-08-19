@@ -4,9 +4,9 @@
 输出 test_R@10, test_R@20, test_NDCG@10/20.
 
 启动方式 (任选其一):
-  1) python3 stage4_beam20.py
+  1) python3 stage4.py
   2) CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=29502 \
-       /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/stage4_beam20.py
+       stage4.py
 
 R35: 单 ckpt + beam=20, 禁 Borda Rank Fusion.
 R35b: DDP 4 卡各自分片不重复评估 test 集, all_reduce SUM.
@@ -22,7 +22,7 @@ FORCE_HGREC=1 bypass 这个 bug, 直接走 _test_eval_hgrec() 分支.
 
 输入:
   - Stage 3 产物: best_ckpt.pt (R34b fix 后默认路径见 resolve_stage3_ckpt)
-  - gin config:    /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/configs/
+  - gin config:    /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/configs/
                   decoder_instruments_hgrec_v19.gin
 
 产物:
@@ -58,9 +58,9 @@ def build_stage4_cmd(ckpt_path):
 # ⚠️ R34b fix: 兼容旧绝对路径输出 (Issue256 v19 repro 期间产生) 和新相对路径输出
 STAGE3_CKPT_CANDIDATES = [
     # 新路径 (R34b fix 后): cwd=MAIN_DIR + 相对路径 config
-    "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/instruments_hgrec_configs/hgrec_v19/best_ckpt.pt",
+    "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_configs/hgrec_v19/best_ckpt.pt",
     # 旧路径 (Issue256 v19 repro 期间, config 用绝对路径产生)
-    "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/instruments_hgrec_/fs04/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/configs/hgrec_v19/best_ckpt.pt",
+    "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_/fs04/ar57/wenyu/GeneRec/curvature_experiment/configs/hgrec_v19/best_ckpt.pt",
 ]
 
 

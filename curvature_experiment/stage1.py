@@ -8,7 +8,7 @@ HALC v2 + v16 differential schedule).
 启动方式 (任选其一):
   1) python3 stage1.py
   2) CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=29500 \
-       /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/stage1.py
+       stage1.py
   3) bash -c "$(cat <<'EOS'
      CUDA_VISIBLE_DEVICES=0,1,2,3 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun \\
        --nproc_per_node=4 --master_port=29500 stage1.py

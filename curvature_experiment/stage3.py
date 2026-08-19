@@ -6,7 +6,7 @@
 启动方式 (任选其一):
   1) python3 stage3.py
   2) CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=29501 \
-       /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/stage3.py
+       stage3.py
 
 实际执行 → 顶层 train_decoder.py + configs/decoder_instruments_hgrec_v19.gin
 (R40 自包含, 训练期 valid 评估 per-epoch, EARLY_STOP=20).
@@ -18,13 +18,13 @@ R36: 曲率机制: HALC v2 sigmoid c 调度 (v16 differential schedule),
      不调 LR/dropout/wd/batch_size.
 
 输入:
-  - Stage 2 产物: /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/
+  - Stage 2 产物: /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/
                   Instruments/Instruments_v19_sids_for_hgrec.npy
 
 产物:
-  - /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/
+  - /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/
     instruments_hgrec_configs/hgrec_v19/best_ckpt.pt (~22MB)
-  - /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/
+  - /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/
     instruments_hgrec_configs/hgrec_v19/train_log.json
 
 预期 best valid ndcg@10 = 0.097 (vs Issue239 0.097, -0.001 noise 内).
@@ -47,7 +47,7 @@ STAGE3_TORCHRUN = [
 ]
 
 # R40 自包含: Stage 2 产物必须存在
-STAGE2_OUT = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+STAGE2_OUT = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
 
 
 def check_stage2_artifact():
