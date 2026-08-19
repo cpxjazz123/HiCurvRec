@@ -75,7 +75,7 @@
 
 **R33** — 任务完成 verdict 写到 `tasks/<task_dir>/issue<NN>_verdict.json` (本任务自己的目录), 不集中放 `verdicts/`; 文件名格式 `issue<NN>_verdict.json`, NN = gitlab issue 编号; 区分 stage3/verdict.json (产物级) 与 issue 闭环 verdict (任务级)。
 
-**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯), 必须有且仅有 stage1/2/3/4_beam20.py 四个脚本。
+**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯)。
 
 **R35** — 评估强约束: 只使用单 checkpoint + `beam_search=20`, 禁 Borda Rank Fusion / 任何 ensemble 多 ckpt 融合。
 
@@ -114,8 +114,6 @@
 
 **R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R33+R34 联动)。
 
-**R46** — 任务模板来源硬约束: 每个新任务目录的 4 stage 脚本 (stage1/2/3/4_beam20.py) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/baseline/` 复制 (stage4.py 已内置 raw predictions 收集, 无需额外 full_oracle 脚本), 禁止从任何其他 issue 目录 (如 tasks/Issue1xx_*/) 复制脚本/产物/配置; 复制后仅允许修改: 路径参数 (指向本任务目录)、issue 编号/标签、以及本任务创新点所需的最小代码改动。历史 issue 目录仅作 git 历史与参考查阅, 不作模板源。
-
 **R47** — sentence-t5-xxl 模型位置硬约束: `sentence-transformers/sentence-t5-xxl` (RQ-VAE-Recommender 默认 embedding 模型, ~10GB) **必须**存放在 `/home/wlia0047/hj82_scratch2/wenyu/` 下面 (该挂载点 6.6T 总量, 充裕可装下 RQ-VAE-Recommender 全套); HF 相关环境变量必须显式设:
 - `HF_HOME=/home/wlia0047/hj82_scratch2/wenyu/.cache/huggingface`
 - `HUGGINGFACE_HUB_CACHE=/home/wlia0047/hj82_scratch2/wenyu/hf_models/hub`
@@ -127,4 +125,34 @@
 
 **R49** — 禁 sleep 阻塞等待: 启动长任务 (训练/推理/下载) 后**禁止使用 `sleep` 休眠等待进程执行**, 改为**定期手动轮询检查** (每次轮询: 查日志尾部 / `ps` 进程状态 / 产物 mtime, 轮询间隔由 tick 节奏决定, 单次轮询命令内不 sleep 长于 ~10s)。等待期间应并行推进其他可做事项 (写代码/分析/准备下一阶段), 而不是空转; 任务完成判定基于日志标记 (如 `[train] done` / `Early stopping`) 或产物出现, 非时间估算。
 
-**R50** — 回滚后禁重跑硬约束: 任何代码/产物回滚操作 (R37/R38 触发的 `git checkout <commit> -- <file>` / 手动恢复 best_ckpt.pt / 手动恢复 test_final.json / conda env 升降级 / 脚本超参改回上一版本) 完成之后, **禁止立即自动重新启动训练或评估脚本** (`python3 train_decoder.py` / `python3 test_eval_only.py` / `accelerate launch ...`); 验证手段仅限于 `git diff --stat` / `git status` / `python3 -m py_compile` / 文件 mtime 比对 / `cat <result.json>` 校验数值。回滚操作的产出物以 "已回滚 + 已记录 verdict" 为终态, 不擅自触发新一轮 GPU 作业; 是否重跑、什么时候重跑、用什么配置重跑, 必须由用户明确指令或下一次 tick 主动启动新任务时再决定 (与 R19 + R26 + R27 区分: 那三条是 tick 启动新任务时强制实操, R50 是回滚后强制停手)。
+**R50** — 回滚后禁重跑硬约束: 任何代码/产物回滚操作 (R37/R38 触发的 `git checkout <commit> -- <file>` / 手动恢复 best_ckpt.pt / 手动恢复 test_final.json / conda env 升降级 / 脚本超参改回上一版本) 完成之后, **禁止立即自动重新启动训练或评估脚本** (`python3 train_decoder.py` / `python3 test_eval_only.py` / `accelerate launch ...`); 验证手段仅限于 `git diff --stat` / `git status` / `python3 -m py_compile` / 文件 mtime 比比 / `cat <result.json>` 校验数值。回滚操作的产出物以 "已回滚 + 已记录 verdict" 为终态, 不擅自触发新一轮 GPU 作业; 是否重跑、什么时候重跑、用什么配置重跑, 必须由用户明确指令或下一次 tick 主动启动新任务时再决定 (与 R19 + R26 + R27 区分: 那三条是 tick 启动新任务时强制实操, R50 是回滚后强制停手)。
+
+**R51** — DDP 4 卡噪声消除硬约束 (R34c + R34d 提升为强约束, 2026-08-19 实测触发, 任何新版本必须遵守):
+- **触发证据**: 历史 v19 三次完整重跑 test_R@10 = 0.1102 / 0.1099 / 0.1113 (±0.001 量级噪声, 来自 DistributedSampler seed 不固定 + 训练端无 manual_seed); R51 实施后三次 test_R@10 = 0.11130798969072164 (字符级完全一致, 差异 < 1e-15)。
+- **Stage 3 训练端** (`train_decoder.py` train() 入口): 在 `accelerator = Accelerator(...)` 创建**之前**显式设:
+  ```python
+  import random as _random
+  import numpy as _np
+  _random.seed(42 + accelerator.process_index)
+  _np.random.seed(42 + accelerator.process_index)
+  torch.manual_seed(42 + accelerator.process_index)
+  if torch.cuda.is_available():
+      torch.cuda.manual_seed_all(42 + accelerator.process_index)
+  ```
+  `process_index` 偏移必须存在 (4 个 rank 用 4 个不同 seed, 否则 4 卡同步退化)。**必须在创建 DataLoader 之前**完成。
+- **Stage 4 评估端** (`test_eval_only.py` main() / `_test_eval_hgrec()` 入口): 在 DataLoader 创建**之前**显式设:
+  ```python
+  torch.manual_seed(42)
+  if torch.cuda.is_available():
+      torch.cuda.manual_seed_all(42)
+  import random as _random
+  _random.seed(42)
+  import numpy as _np
+  _np.random.seed(42)
+  ```
+- **Stage 1 RQ-VAE 训练端** (`train_rqvae_instruments.py` train() 入口): 同 Stage 3, 加 `manual_seed(42 + process_index)`; Stage 2 SID 推理 (`infer_sids_instruments.py`): 同 Stage 4, 加 `manual_seed(42)` (单进程)。
+- **禁手动加 `DistributedSampler(seed=42)`** — 与 `accelerator.prepare()` 双重 wrap 会导致 4×4 = 16 分片, 反而引入更大噪声。修复策略: 在 DataLoader 创建**之前**固定全局 RNG, 让 `accelerator.prepare()` 自动 wrap 出确定分片。
+- **版本演进保护**: 任何 vN → vN+1 改动**禁止删除**上述 seed 代码块; `git diff` 必须确认 seed 块未被触碰 (Stage 1/2/3/4 入口各一处)。新文件 / 新模块如需 DataLoader, 必须先 seed 再创建。
+- **验证标准**: 同一版本 (相同 git commit + 相同数据集 + 相同 ckpt 起点) 连续 3 次完整 4 阶段重跑, test_R@10 必须**字符级完全一致** (差异 < 1e-15)。若 3 次结果出现 ±0.001 量级偏差, 立即判定 `SEED_NONDETERMINISM`, 必须修复后重新验证。
+- **bf16/fp16 非结合性 + cudnn benchmark**: 残留 ±1e-5 量级噪声理论存在, 实测不可观测, 不需额外 fix。
+- **配套 R30/R43**: seed (42 / 42+process_index) 是数值超参, 但因 R51 强约束必要, 不走 R30 路径 (不暴露为 CLI 参数, 仍硬编码)。
