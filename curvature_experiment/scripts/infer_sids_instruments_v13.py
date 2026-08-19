@@ -15,7 +15,7 @@ import numpy as np
 import torch
 
 # R47 imports
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment")
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer

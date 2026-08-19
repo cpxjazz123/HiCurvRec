@@ -15,7 +15,7 @@ import numpy as np
 import torch
 
 # R47 imports
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment")
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
@@ -26,7 +26,7 @@ SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
 # v19: 用 Stage 1 v19 c_end=0.7 训练产物
 CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v19_cend_07.npy"
+OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v38_cend_07.npy"
 OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
 
 INPUT_DIM = 768

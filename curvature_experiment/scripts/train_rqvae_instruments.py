@@ -26,7 +26,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 # R47 imports — RQ-VAE-Recommender modules
-sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3")
+sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment")
 from modules.rqvae import RqVae
 from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
@@ -38,7 +38,7 @@ SEED = 42
 EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
 # C28 (C29 rollback): Curriculum + M3 transport 单 M3 (M2 OFF, 当前最佳 0.0991)
 # v19 备胎 (R36 框架级变更): C27 c_end 1.0→0.7 缓和曲率调度 (Poincaré ball r=1/sqrt(c), c↓ r↑, 更接近欧氏)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07"
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v38_cend_07"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]

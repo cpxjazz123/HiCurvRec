@@ -180,7 +180,7 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
 
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
     # 硬编码 (与 train_decoder.hgrec_code_path 一致), 不依赖 gin query
-    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
     beam_size = 20
     top_k_eval_list = [5, 10, 20]
     max_len = 20

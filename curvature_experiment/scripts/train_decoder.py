@@ -4,9 +4,11 @@ import sys
 os.environ["USE_TF"] = "0"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 
-# 把当前脚本所在目录加入 sys.path 最前 (R44/R47: 任务目录自包含)
+# 把脚本所在目录 (scripts/) 的上级目录 (MAIN_DIR, 含 modules/ _lib/) 加入 sys.path
+# (R44/R47: 任务目录自包含; Stage 3 torchrun cwd=MAIN_DIR, 这里显式再加 MAIN_DIR 保险)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
+MAIN_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, MAIN_DIR)
 
 import gin
 import torch
@@ -38,6 +40,14 @@ from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 # === HALC v2 创新 (R52 主目录直接迭代): learnable per-layer κ + curvature annealing ===
 from _lib.halc import HALCAnnealingRegularizer
 
+# === HALC v38 备胎 (Issue258): per-token input-dependent κ + Stage 2 TCU init=0.3 ===
+# 默认未启用, v38 gin config 显式设 train.use_halc_v38=True 才生效
+try:
+    from _lib.halc_v38 import HALCPerTokenInputDependentRegularizer
+    _HAS_HALC_V38 = True
+except ImportError:
+    _HAS_HALC_V38 = False
+
 
 @gin.configurable
 # =============================================================================
@@ -67,6 +77,7 @@ def _train_hgrec(
     top_k_for_generation,
     top_k_eval_list,
     wandb_logging,
+    use_halc_v38=False,  # Issue258 v38: per-token input-dependent κ
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -82,9 +93,21 @@ def _train_hgrec(
     accelerator = accelerator_factory()
     device = accelerator.device
 
+    # === R51 强约束: DataLoader 创建之前固定全局 RNG (Stage 3 训练端) ===
+    # 防止 DistributedSampler 每次拿不同分片 → 训练轨迹不同 → EARLY_STOP 触发时机漂移
+    # → best_ckpt_epoch 不同 → test_R@10 漂移 (实测 ±0.001 量级)
+    import random as _r51_random
+    import numpy as _r51_np
+    _r51_random.seed(42 + accelerator.process_index)
+    _r51_np.random.seed(42 + accelerator.process_index)
+    torch.manual_seed(42 + accelerator.process_index)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42 + accelerator.process_index)
+    print(f"[R51 seed] rank={accelerator.process_index} seeded with 42+rank before DataLoader", flush=True)
+
     # === 路径 (硬编码, R44/R47) ===
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
-    DEFAULT_CODE_PATH = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+    DEFAULT_CODE_PATH = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
     code_path = hgrec_code_path if hgrec_code_path else DEFAULT_CODE_PATH
     BEST_CKPT_PATH = _osp.join(save_dir_root, "best_ckpt.pt")
     LOG_PATH = _osp.join(save_dir_root, "train_log.json")
@@ -208,20 +231,38 @@ def _train_hgrec(
     model, optimizer, train_loader, valid_loader, test_loader = accelerator.prepare(
         model, optimizer, train_loader, valid_loader, test_loader
     )
-    # === HALC v2 + v16 differential schedule (R36 机制变更): encoder 早 warmup, decoder 晚 warmup ===
-    halc = HALCAnnealingRegularizer(
-        num_layers=7, init_curvature=1.0, c_max=1.0,
-        warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
-        encoder_warmup=3, encoder_cooldown=8,
-        decoder_warmup=7, decoder_cooldown=12,
-    )
+    # === HALC v38 备胎 (Issue258): per-token input-dependent κ + Stage 2 TCU init=0.3 ===
+    # env 注入兜底 (R34b 风格 — gin binding 失败时仍能启用 v38 机制)
+    if os.environ.get("USE_HALC_V38", "0") == "1" and _HAS_HALC_V38:
+        use_halc_v38 = True
+    if use_halc_v38 and _HAS_HALC_V38:
+        halc = HALCPerTokenInputDependentRegularizer(
+            num_layers=7, d_model=128, init_curvature=0.3,
+            warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.06,
+            delta_scale_init=0.01,
+        )
+        HALC_VARIANT = "v38_per_token_input_dependent"
+    else:
+        # === HALC v2 + v16 differential schedule (R36 机制变更): encoder 早 warmup, decoder 晚 warmup ===
+        halc = HALCAnnealingRegularizer(
+            num_layers=7, init_curvature=1.0, c_max=1.0,
+            warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
+            encoder_warmup=3, encoder_cooldown=8,
+            decoder_warmup=7, decoder_cooldown=12,
+        )
+        HALC_VARIANT = "v2_v16_diff"
     halc = halc.to(accelerator.device)
     if accelerator.is_main_process:
         halc.set_epoch(0)
-        c_init = halc.annealed_curvature().detach().cpu().tolist()
-        print(f"[HALC v2 + v16 diff] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
-        print(f"[HALC v2 + v16 diff] encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12", flush=True)
-        print(f"[HALC v2 + v16 diff] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
+        if HALC_VARIANT == "v38_per_token_input_dependent":
+            print(f"[HALC v38 per-token κ + TCU init=0.3] init reg_weight={halc.reg_weight.item():.4f}", flush=True)
+            print(f"[HALC v38] warmup={halc.warmup_epochs}/cooldown={halc.cooldown_epochs}, reg_weight_max={halc.reg_weight_max:.4f}", flush=True)
+            print(f"[HALC v38] num_layers={halc.num_layers}, init_curvature=0.3, delta_scale={halc.delta_scale}", flush=True)
+        else:
+            c_init = halc.annealed_curvature().detach().cpu().tolist()
+            print(f"[HALC v2 + v16 diff] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
+            print(f"[HALC v2 + v16 diff] encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12", flush=True)
+            print(f"[HALC v2 + v16 diff] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
 
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
@@ -406,12 +447,17 @@ def train(
 
     # === gin 兜底: save_dir_root 不通过 gin binding 时按 config 文件名派生 ===
     if save_dir_root == "out/":
-        # 检测 gin config 文件名 (sys argv 末位是 .gin)
-        for arg in sys.argv[::-1]:
-            if arg.endswith(".gin"):
-                tag = arg.replace("decoder_instruments_", "").replace(".gin", "")
-                save_dir_root = f"out/decoder/instruments_hgrec_{tag}/"
-                break
+        # 优先用 env 注入 (R34b 风格 — 绝对路径避免嵌套错)
+        env_save_dir = os.environ.get("SAVE_DIR_ROOT", "")
+        if env_save_dir:
+            save_dir_root = env_save_dir
+        else:
+            # 检测 gin config 文件名 (sys argv 末位是 .gin)
+            for arg in sys.argv[::-1]:
+                if arg.endswith(".gin"):
+                    tag = arg.replace("decoder_instruments_", "").replace(".gin", "")
+                    save_dir_root = f"out/decoder/instruments_hgrec_{tag}/"
+                    break
 
     if dataset not in (RecDataset.AMAZON, RecDataset.INSTRUMENTS):
         if not use_hgrec_arch:

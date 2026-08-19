@@ -1,10 +1,10 @@
-"""v19 SID HG-Rec 格式转换: (9922, 3) → (9922, 4) 第 4 列=PAD=0.
-等价于 build_c28_sids_for_hgrec.py 的 v19 版本 (脚本已删除, 通过本文件复用).
+"""v38 SID HG-Rec 格式转换: (9922, 3) → (9922, 4) 第 4 列=PAD=0.
+基于 v19 build_v19_sids_for_hgrec.py 改写, 输入是 v38 RQ-VAE 训练产物的 SID.
 """
 import numpy as np
 
-SRC = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v19_cend_07.npy"
-DST = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+SRC = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v38_cend_07.npy"
+DST = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v38_sids_for_hgrec.npy"
 
 src = np.load(SRC).astype(np.int64)
 assert src.shape == (9922, 3), f"unexpected src shape {src.shape}"
