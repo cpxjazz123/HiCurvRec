@@ -1,0 +1,79 @@
+# Decoder Musical_Instruments config — v39 备胎 (Issue259)
+# Stage 1 RQ-VAE Poincaré Embedding Regularization (R36 新曲率正则项)
+# Stage 3 维持 v19 HALC v2 + v16 differential schedule (与 v19 baseline 一致)
+#
+# === v39 创新点 (R36 新曲率机制 — Stage 1 端) ===
+# 1. Stage 1 RQ-VAE 训练加 hyp_emb_reg (强制 codebook + encoder residual 落在同一 Poincaré ball):
+#    L_hyp = Σ_l mean( ‖expmap0(res_l, c) - expmap0(emb_l, c)‖² ), c=0.5 (与 C27 curriculum 末态 0.7 一致)
+#    weight=0.1 (新曲率正则项, R36 合规)
+# 2. 其他 Stage 1 配置与 v19 一致: c_end=0.7 curriculum, USE_M3=True, M2=False, MCDQ=False
+#
+# === Stage 1 / Stage 2 (v39 实时产物) ===
+# - Stage 1 RQ-VAE: rqvae_out_v39_hyp_emb_reg/rqvae_final.pt (USE_HYP_EMB_REG=True, weight=0.1, c=0.5)
+# - Stage 2 SID:    dataset/Instruments/Instruments_v39_sids_for_hgrec.npy (HG-Rec 格式 9922x4)
+#
+# === R37 baseline ===
+# - v19 baseline test_R@10=0.1113 (R51 锁定)
+# - 期望 v39 突破: hyp_emb_reg 强制几何一致性 → Stage 3 SID 表征更优 → test_R@10 ≥ 0.1113
+
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+# === 启用 HG-Rec 路径 (与 v19 baseline 一致) ===
+train_decoder.train.use_hgrec_arch = True
+
+# === HG-Rec T5Config (与 v19 严格对齐) ===
+train_decoder.train.hgrec_t5_d_model = 128
+train_decoder.train.hgrec_t5_d_ff = 1024
+train_decoder.train.hgrec_t5_num_heads = 6
+train_decoder.train.hgrec_t5_d_kv = 64
+train_decoder.train.hgrec_t5_num_layers = 6
+train_decoder.train.hgrec_t5_num_decoder_layers = 4
+train_decoder.train.hgrec_t5_dropout = 0.1
+train_decoder.train.hgrec_vocab_size = 769
+train_decoder.train.hgrec_max_len = 20
+
+# === HG-Rec 数据 (v39 SID numpy — Stage 1+2 实时重跑) ===
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v39_sids_for_hgrec.npy"
+
+# === 训练超参 (与 v19 一致, R36 禁调参) ===
+train_decoder.train.hgrec_batch_size = 3072
+train_decoder.train.batch_size = 3072
+train_decoder.train.learning_rate = 0.0001
+train_decoder.train.weight_decay = 0.0001
+train_decoder.train.amp = True
+train_decoder.train.mixed_precision_type = "bf16"
+
+# === Eval 配置 (与 v19 一致) ===
+train_decoder.train.top_k_for_generation = 20
+train_decoder.train.top_k_eval_list = [5, 10, 20]
+
+# === 保存路径 (R35 禁 Borda, 单 ckpt + beam=20) — 绝对路径避免 cwd 嵌套错 ===
+train_decoder.train.save_dir_root = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_v39/"
+
+# === gin 必填项 ===
+train_decoder.train.dataset_folder = "dataset/"
+train_decoder.train.dataset = "INSTRUMENTS"
+train_decoder.train.force_dataset_process = False
+train_decoder.train.dataset_split = "instruments"
+train_decoder.train.full_eval_every = 500
+train_decoder.train.partial_eval_every = 250
+train_decoder.train.wandb_logging = False
+
+# === HG-Rec 路径不读取的占位 ===
+train_decoder.train.t5_d_model = 384
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
+train_decoder.train.t5_num_decoder_layers = 4
+train_decoder.train.should_add_sep_token = False
+train_decoder.train.pretrained_rqvae_path = ""
+train_decoder.train.vae_input_dim = 768
+train_decoder.train.vae_hidden_dims = [512, 256, 128]
+train_decoder.train.vae_embed_dim = 32
+train_decoder.train.vae_codebook_size = 256
+train_decoder.train.vae_n_layers = 3
+train_decoder.train.vae_n_cat_feats = 0
+train_decoder.train.iterations = 500000
+train_decoder.train.gradient_accumulate_every = 1
+train_decoder.train.split_batches = True
+train_decoder.train.vae_codebook_normalize = False

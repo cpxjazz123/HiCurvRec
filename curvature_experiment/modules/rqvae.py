@@ -39,6 +39,8 @@ class RqVaeComputedLosses(NamedTuple):
     per_layer_usage: Tensor  # codebook 健康检查: 每层量化 ids 的 unique code 数 (n_layers,)
     margin_loss: Tensor  # C5: margin 正则项值 (0 关闭时 = 0)
     per_layer_margin: Tensor  # C5: 各层 mean margin (n_layers,) 供日志监控
+    hyp_emb_loss: Tensor = torch.tensor(0.0)  # v39: Poincaré embedding regularization (0=关闭)
+    per_layer_hyp_emb: Tensor = None  # v39: 各层 hyp_emb_loss (n_layers,) 供日志监控
 
 
 class RqVae(nn.Module, PyTorchModelHubMixin):
@@ -80,6 +82,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_start: float = 0.05,             # C27: 初始 c (近欧氏, 优化稳定)
         c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
         curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
+        # v39: Poincaré Embedding Regularization (R36 新曲率正则项)
+        # 强制每层 encoder residual 与量化 codeword 落在同一个 Poincaré ball 上
+        # L_hyp = mean(d_Poincaré(expmap0(res, c), expmap0(codeword, c))²) per layer, sum
+        hyp_emb_reg_weight: float = 0.0,   # v39: 权重 (默认 0=关闭, v19 baseline 不变)
+        hyp_emb_c: float = 0.5,            # v39: 双曲距离用固定 c (与 C27 课程末态一致)
     ) -> None:
         self._config = locals()
 
@@ -113,6 +120,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.c_start = float(c_start)
         self.c_end = float(c_end)
         self.curriculum_steps = int(curriculum_steps)
+        # v39: Poincaré Embedding Regularization (R36 新曲率正则项)
+        self.hyp_emb_reg_weight = float(hyp_emb_reg_weight)
+        self.hyp_emb_c = float(hyp_emb_c)
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -286,7 +296,29 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         if self.margin_reg_weight > 0 and quantized.margins:
             m_stack = torch.stack(quantized.margins, dim=1)  # (B, n_layers)
             margin_loss = F.relu(self.margin_target - m_stack).mean()
-        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss
+        # v39: Poincaré embedding regularization — 每层 res/emb 投影到 Poincaré ball 后距离正则
+        # 强制 codebook 和 encoder 输出落在同一个双曲流形上 (R36 新曲率正则项)
+        hyp_emb_loss = torch.tensor(0.0, device=x.device)
+        per_layer_hyp_emb = torch.zeros(self.n_layers, device=x.device)
+        if self.hyp_emb_reg_weight > 0:
+            # embs 形状: (n_layers, embed_dim, B) — 按层取每层的 codeword + 对应的 residual
+            residuals_per_layer = quantized.residuals  # (n_layers, embed_dim, B)
+            embs_per_layer = quantized.embeddings  # (n_layers, embed_dim, B)
+            for li in range(self.n_layers):
+                # res_l = residuals_per_layer[li].T (B, embed_dim) — 该层 encoder 残差
+                # emb_l = embs_per_layer[li].T (B, embed_dim) — 该层 codeword
+                res_l = residuals_per_layer[li].T  # (B, D)
+                emb_l = embs_per_layer[li].T       # (B, D)
+                c = torch.tensor(self.hyp_emb_c, device=x.device, dtype=x.dtype)
+                # Poincaré 距离平方: d² = ‖log_0^c(expmap0(res,c)) - log_0^c(expmap0(emb,c))‖_E²
+                # 等价 (res ≈ emb 在量化点上): 距离退化为 0 (但 STE 梯度从 d² → expmap0/logmap0 → res/emb)
+                # 用 simple squared Euclidean on ball: ‖expmap0(res,c) - expmap0(emb,c)‖²
+                h_r = _expmap0_t(res_l, c)  # (B, D)
+                h_e = _expmap0_t(emb_l, c)  # (B, D)
+                d_sq = ((h_r - h_e) ** 2).sum(dim=-1).mean()  # (B,) → scalar
+                per_layer_hyp_emb[li] = d_sq
+                hyp_emb_loss = hyp_emb_loss + d_sq
+        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss + self.hyp_emb_reg_weight * hyp_emb_loss
 
         with torch.no_grad():
             # Compute debug ID statistics
@@ -323,4 +355,6 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             per_layer_usage=per_layer_usage,
             margin_loss=margin_loss,
             per_layer_margin=per_layer_margin,
+            hyp_emb_loss=hyp_emb_loss if self.hyp_emb_reg_weight > 0 else torch.tensor(0.0, device=x.device),
+            per_layer_hyp_emb=per_layer_hyp_emb if self.hyp_emb_reg_weight > 0 else None,
         )

@@ -40,7 +40,7 @@ EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb
 # v19 备胎 (R36 框架级变更): C27 c_end 1.0→0.7 缓和曲率调度 (Poincaré ball r=1/sqrt(c), c↓ r↑, 更接近欧氏)
 # R51 baseline 锁定: v19 test_R@10=0.1113, OUT_DIR 默认指向 v19 (历史最佳)
 # v38/v39 备胎 stage1.py 设 USE_HYP_EMB_REG=1 + 各自 OUT_DIR
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07"
+OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v39_hyp_emb_reg"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -97,7 +97,7 @@ SCS_EPS_SCALE = 1.0             # SCS 缩放指数 (eps = sk_eps / c_l^SCS_EPS_S
 # v39 (Issue259): Stage 1 RQ-VAE Poincaré Embedding Regularization (R36 新曲率正则项)
 # 默认关闭, 主目录 v19 baseline 训练时设 USE_HYP_EMB_REG=0 (现状)
 # v39 任务目录 stage1.py 显式设 USE_HYP_EMB_REG=1 启用
-USE_HYP_EMB_REG = False         # v39: 是否启用 Poincaré embedding reg (默认关)
+USE_HYP_EMB_REG = True         # v39: 是否启用 Poincaré embedding reg (默认关)
 HYP_EMB_REG_WEIGHT = 0.1        # v39: 正则权重 (与 margin_reg_weight=1.0 同量级)
 HYP_EMB_C = 0.5                 # v39: 双曲距离用固定 c (与 C27 curriculum 末态 0.5-0.7 一致)
 

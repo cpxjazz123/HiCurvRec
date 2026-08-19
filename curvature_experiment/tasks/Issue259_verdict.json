@@ -1,0 +1,43 @@
+{
+  "version": "v39",
+  "issue": "Issue259",
+  "baseline": "v19",
+  "baseline_test_R@10": 0.11130798969072164,
+  "verdict_test_R@10": 0.10812661082474227,
+  "delta": -0.00318137886597937,
+  "verdict": "FAIL",
+  "curvature_innovation": "Stage 1 RQ-VAE Poincaré Embedding Regularization (R36 新曲率正则项)",
+  "details": {
+    "stage1_rqvae": "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v39_hyp_emb_reg/rqvae_final.pt",
+    "stage1_curriculum_c_end": 0.7,
+    "stage1_hyp_emb_reg_weight": 0.1,
+    "stage1_hyp_emb_c": 0.5,
+    "stage1_final_codebook_usage": "L0=77/256 (30.1%), L1=240/256 (93.8%), L2=235/256 (91.8%)",
+    "stage1_final_hyp_emb_loss": 0.06,
+    "stage2_sids_hgrec": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v39_sids_for_hgrec.npy",
+    "stage3_best_ckpt_epoch": 128,
+    "stage3_best_valid_ndcg10": 0.09635470085537311,
+    "stage3_early_stop": 149,
+    "stage4_metrics": {
+      "test_R@5": 0.08505154639175258,
+      "test_R@10": 0.10812661082474227,
+      "test_R@20": 0.13917525773195877,
+      "test_NDCG@5": 0.07258788826539345,
+      "test_NDCG@10": 0.08002897636177614,
+      "test_NDCG@20": 0.0878426954918301,
+      "n_eval": 24832
+    },
+    "stage4_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/curvature_exp_v39_stage4.log",
+    "det_seed_bloqueador": "R51 噪声消除生效 (DDP 4 卡 R35b 严格口径, n_eval=24832 = 9922 * 4 / 4)"
+  },
+  "r37_decision": "FAIL (test_R@10=0.1081 < v19 baseline 0.1113, -0.0032, GENUINE REGRESSION)",
+  "r50_action": "NO RERUN — R50 禁重跑, 仅记录 verdict + commit + push + close Issue259",
+  "lessons_learned": [
+    "Poincaré Embedding Reg 在 Stage 1 端没有帮助: 强制 codebook + encoder residual 在同一 Poincaré ball 上反而限制了量化自由度",
+    "best valid_ndcg10=0.0964 vs v19 baseline 0.0961 (+0.0003 marginal) — 训练轨迹略优但 test set 上反而 regress",
+    "L0 codebook 仍有 collapse warning (77/256 < 10% threshold), Stage 2 推理时 L0 多样性差",
+    "hyp_emb_loss 在 0.06-0.08 量级稳定,但对 Stage 3 SID 表征无显著改进",
+    "v19 仍是历史 + 当前最佳 (test_R@10=0.1113), 维持 R51 baseline"
+  ],
+  "next_action": "提交 git + push (R45) + close Issue259, R50 禁重跑"
+}
