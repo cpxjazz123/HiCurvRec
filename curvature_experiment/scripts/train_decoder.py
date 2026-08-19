@@ -81,6 +81,7 @@ def _train_hgrec(
     use_hyp_layernorm=False,  # Issue260 v40: Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换)
     use_poinc_input_embed=False,  # Issue261 v41: Stage 3 T5 shared embedding → Poincaré projection (R36 几何变换)
     use_hyp_attn_bias=False,  # Issue262 v42: Stage 3 T5 attention Q/K 双曲距离 bias (HNN 2019)
+    use_lorentz_attn=False,  # Issue263 v43: Stage 3 T5 cross-attention Lorentz inner product bias (Chen 2022)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -178,6 +179,8 @@ def _train_hgrec(
         use_poinc_input_embed = True
     if os.environ.get("USE_HYP_ATTN_BIAS", "0") == "1":
         use_hyp_attn_bias = True
+    if os.environ.get("USE_LORENTZ_ATTN", "0") == "1":
+        use_lorentz_attn = True
 
     # === v40 (Issue260): Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换) ===
     # 替换 T5 所有 T5LayerNorm 实例为 PoincareT5LayerNorm (logmap0 → RMSNorm → expmap0, c=0.5)
@@ -202,6 +205,15 @@ def _train_hgrec(
         install_v42_hook(model.model)  # 注册 forward hook 捕获 Q/K
         n_replaced = wrap_t5_attention_with_poinc_bias(model.model, c=0.5, lam=0.1)
         print(f"[v42 hyp_attn_bias] installed Q/K Poincaré distance bias on {n_replaced} T5 attention (c=0.5, λ=0.1)", flush=True)
+
+    # === v43 (Issue263): Stage 3 T5 cross-attention Lorentz inner product bias (Chen 2022) ===
+    # 在 decoder 第一层 cross-attention 注入 Lorentz 距离 bias (lambda=0.1, c=1.0)
+    # 路径独立于 v40 (LayerNorm) / v41 (shared embedding) / v42 (encoder self-attention 欧氏距离)
+    if use_lorentz_attn:
+        from _lib.lorentz_attn_bias_v43 import install_v43_hook, wrap_t5_cross_attention_with_lorentz_bias
+        install_v43_hook(model.model)
+        n_replaced = wrap_t5_cross_attention_with_lorentz_bias(model.model, c=1.0, lam=0.1)
+        print(f"[v43 lorentz_attn] installed Lorentz inner product bias on {n_replaced} T5 cross-attention (c=1.0, λ=0.1)", flush=True)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
@@ -474,10 +486,11 @@ def train(
     hgrec_vocab_size=769,
     hgrec_max_len=20,
     hgrec_batch_size=2560,  # per-global-batch (4 卡 DDP)
-    # === v40/v41/v42 曲率机制开关 (Stage 3 端, 默认 False 不启用, 不破坏 v19 baseline) ===
+    # === v40/v41/v42/v43 曲率机制开关 (Stage 3 端, 默认 False 不启用, 不破坏 v19 baseline) ===
     use_hyp_layernorm=False,  # Issue260 v40: T5 LayerNorm → Poincaré LayerNorm
     use_poinc_input_embed=False,  # Issue261 v41: T5.shared → PoincareInputEmbedding
     use_hyp_attn_bias=False,  # Issue262 v42: T5 attention Q/K 双曲距离 bias (HNN 2019)
+    use_lorentz_attn=False,  # Issue263 v43: T5 cross-attention Lorentz inner product bias (Chen 2022)
 ):
     # HG-Rec gin binding 兜底 (加速器子进程下 gin macro 可能未生效, 强制走 HG-Rec 路径)
     if "hgrec" in sys.argv[0:5] or any("hgrec" in str(a) for a in sys.argv):
@@ -533,6 +546,7 @@ def train(
             use_hyp_layernorm=use_hyp_layernorm,
             use_poinc_input_embed=use_poinc_input_embed,
             use_hyp_attn_bias=use_hyp_attn_bias,
+            use_lorentz_attn=use_lorentz_attn,
         )
 
     if wandb_logging:

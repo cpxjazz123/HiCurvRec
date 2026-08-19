@@ -238,6 +238,18 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     except (ValueError, Exception) as e:
         pass
 
+    # === v43 (Issue263): Stage 4 也启用 Lorentz cross-attention bias (与 Stage 3 训练时一致) ===
+    try:
+        import gin as _gin
+        _use_lorentz = _gin.query_parameter("train_decoder.train.use_lorentz_attn")
+        if _use_lorentz:
+            from _lib.lorentz_attn_bias_v43 import install_v43_hook, wrap_t5_cross_attention_with_lorentz_bias
+            install_v43_hook(model.model)
+            n_replaced = wrap_t5_cross_attention_with_lorentz_bias(model.model, c=1.0, lam=0.1)
+            print(f"[v43 lorentz_attn] Stage 4 installed Lorentz inner product bias on {n_replaced} T5 cross-attention (c=1.0, λ=0.1)", flush=True)
+    except (ValueError, Exception) as e:
+        pass
+
     test_ds = RawMusicalInstrumentsHGRec(
         parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
         code_path=code_path, mode="evaluation",

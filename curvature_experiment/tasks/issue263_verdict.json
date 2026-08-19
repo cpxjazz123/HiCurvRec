@@ -1,0 +1,43 @@
+{
+  "version": "v43",
+  "issue": "Issue263_v43_stage3_cross_lorentz_attn",
+  "curvature_innovation": "Stage 3 T5 decoder 第一层 cross-attention 注入 Lorentz 内积 bias: bias -= lambda * normalize(sqrt(c)*arccosh(-<q_L, k_L>_L * c)), c=1.0, lambda=0.1 (R36 硬编码). Lorentz model 风格 (Chen 2022 Lorentz Transformer), 通过 expmap0 把 q/k 投到 Lorentz 双曲面, 用真实 arccosh 距离. 在 decoder cross-attention 而不是 encoder self-attention (与 v42 路径不同).",
+  "baseline_v19": {
+    "test_R@10": 0.11130798969072164,
+    "valid_ndcg@10": 0.1049,
+    "lock": "R51 字符级一致 3 次验证"
+  },
+  "v43_result": {
+    "best_ckpt_epoch": 107,
+    "valid_ndcg@10": 0.09563010500878402,
+    "test_R@5": 0.08537371134020619,
+    "test_R@10": 0.10828769329896908,
+    "test_R@20": 0.13873228092783504,
+    "test_NDCG@5": 0.07156439909000986,
+    "test_NDCG@10": 0.07887563508810456,
+    "test_NDCG@20": 0.0865577225832595,
+    "n_eval": 24832
+  },
+  "delta": {
+    "test_R@10": -0.0030202963917525614,
+    "valid_ndcg@10": -0.0098,
+    "pct": "-2.71% test_R@10, -9.34% valid_ndcg@10"
+  },
+  "compare_with_v40_v41_v42": {
+    "v40_hyp_layernorm": "test_R@10=0.1102, delta=-0.0011",
+    "v41_poinc_input_embed": "test_R@10=0.1089, delta=-0.0025",
+    "v42_hyp_attn_bias_encoder": "test_R@10=0.1060, delta=-0.0053",
+    "v43_lorentz_cross_attn": "test_R@10=0.1083, delta=-0.0030"
+  },
+  "gate_evaluation": {
+    "gate_1_sid": "PASS (复用 v19 Instruments_v19_sids_for_hgrec.npy 9922×4)",
+    "gate_2_train_launch": "PASS (DDP 4 卡 torchrun 29531, 4 rank 全部 print 'v43 lorentz_attn installed Lorentz inner product bias on 1 T5 cross-attention (c=1.0, λ=0.1)' — 替换生效; cross_query_states/cross_key_states forward hook 捕获成功)",
+    "gate_3_early_stop": "PASS (EARLY_STOP=20, 触发于 epoch 128, best_ckpt epoch 107)",
+    "gate_4_test_R@10": "FAIL — 0.1083 < v19 baseline 0.1113 (R37 FAIL)"
+  },
+  "verdict": "FAIL",
+  "decision": "R37 FAIL: test_R@10=0.1083 < v19 baseline 0.1113 (-2.71%). 介于 v41 (-0.0025) 和 v42 (-0.0053) 之间. cross-attention + Lorentz 路径比 encoder self-attn + 欧氏距离 (v42) 略好但仍远差 baseline. R50 禁重跑, 立即终止 v43 lineage, 回到 v19 baseline 重新创新.",
+  "r36_compliance": "PASS — 仅引入几何变换 (Lorentz 内积距离 bias, c=1.0/lambda=0.1 硬编码), 无 LR/dropout/wd sweep.",
+  "implementation_challenge": "Lorentz 距离需要 arccosh 计算, 在 cross-attention compute_bias 上每步调用. forward hook 捕获 cross_query_states/cross_key_states 然后用 unsqueeze 广播计算 (B*H, qlen, klen) 距离矩阵. HF T5 compute_bias 签名版本兼容 (TypeError fallback 到 2/3-arg).",
+  "next_iteration_direction": "v44 候选方向 (R36 曲率机制变更 — Stage 3 端, 探索新位置):\n1. Stage 3 T5 所有 6 层 decoder 都注入 Lorentz bias (而非仅第一层) — 检查位置数 vs v43 单一层的影响\n2. Stage 3 T5 decoder LMHead → Lorentz LMHead (替换 nn.Linear, 用 Lorentz distance) — 与 v24 失败模式不同\n3. Stage 3 T5 引入 product manifold attention (Poincaré + Lorentz 同时 bias, 加权) — R36 曲率机制组合\n4. Stage 3 T5 训练用 RAdam + Lorentz 重新参数化 — 不算 LR sweep, 属曲率优化器 (Riemannian SGD 变体)\n\nR36 合规路径建议: 路径 3 product manifold — 复用 v42 + v43 的 hooks 组合, 不需要新文件, 仅改 gin config + train_decoder 调用顺序."
+}
