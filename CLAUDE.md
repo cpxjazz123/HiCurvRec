@@ -31,7 +31,7 @@
 
 **R4** — 修改 Python 脚本后必须立即 `python3 -m py_compile` 验证语法 (文档例外)。
 
-**R5** — 任务硬约束 = 基线 HG-Rec Task #84 (valid R@10=0.1267, test R@10=0.1024), 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。
+**R5** — 任务硬约束 = v19 baseline (R51 锁定, test_R@10=0.11130798969072164), 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。原 HG-Rec Task #84 test_R@10=0.1024 数值已过期, R37 当前阈值以本条 v19 baseline 为准。
 
 **R7** — 启动新实验前必须 `nvidia-smi` 核对 (util<10%, mem<5GB), 选完全空闲 GPU。
 
@@ -66,8 +66,10 @@
 **R28** — 任何决策/修复方案/启动判断禁"等用户拍板"/"是否启动?"/A-B 选项/"你选"/"请告诉我"/"要不要"话术, 必须直接给出推荐方案 + 立即执行 (唯一例外: 不可逆操作)。
 
 **R29** — tick 输出必须 (a) ≥1 个 R26 动作 + (b) ≥1 个 R27 动作, 末尾明示"已执行 X" + 实际产物 (verdict 路径/commit hash/PID)。
+> **R50 联动例外**: 回滚后 (R37/R38 触发) 的 tick 不强制满足 R26/R27 (禁止重跑同任务), 但 R19 触发新任务的 tick 仍需满足 R26/R27。R50 与 R19+R26+R27 区分明确: 那三条是 tick 启动新任务时强制实操, R50 是回滚后强制停手。
 
 **R30** — 脚本超参硬编码进模块, 禁 `os.environ.get` 读超参, 禁 wrapper 传 num_epochs/batch_size/lr/seed 等数值超参 (路径参数可传)。
+> **R51 联动例外**: seed (42 / 42+process_index) 作为数值超参, 因 R51 DDP 4 卡噪声消除硬约束必要, 仍硬编码为模块级常量而非 CLI 参数, 不暴露为 `--seed` CLI 参数, 不走 R30/R43 禁 CLI 数值超参路径。
 
 **R31** — 每个 stage 目录只允许一个主脚本, 禁 fork `_v2.py/_v8.py` 多版本并存, 历史实验变体从 git 历史恢复。
 
@@ -75,13 +77,13 @@
 
 **R33** — 任务完成 verdict 写到 `tasks/<task_dir>/issue<NN>_verdict.json` (本任务自己的目录), 不集中放 `verdicts/`; 文件名格式 `issue<NN>_verdict.json`, NN = gitlab issue 编号; 区分 stage3/verdict.json (产物级) 与 issue 闭环 verdict (任务级)。
 
-**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `Issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯)。
+**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, **小写 issue** 与 R33 verdict 命名一致; 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯)。
 
 **R35** — 评估强约束: 只使用单 checkpoint + `beam_search=20`, 禁 Borda Rank Fusion / 任何 ensemble 多 ckpt 融合。
 
-**R35b** — Stage4 评估 DDP 同口径硬约束: 4 卡各自评估**不重复**的数据分片 (DistributedSampler / 按 rank 切片, 每样本只被一个 rank 处理), 各 rank 在**本地**汇总其分片的命中数 (hits) 与 NDCG 总和, 最后 `all_reduce SUM` 全部样本的命中数与 NDCG 总和, 统一除以总样本数 N — 保证 R@K / NDCG@K 与单卡评估完全同口径 (每个样本恰好计数一次, 无重复、无遗漏、无按 rank 平均的错误口径)。禁直接对 4 个 rank 的均值取平均。
-
-**R35c** — Stage3 训练期 Valid 评估 DDP 同口径硬约束: 每次 valid 评估时, 4 卡各自评估**不重复**的 Valid 数据分片 (DistributedSampler / 按 rank 切片, 每样本只被一个 rank 处理), 各 rank 在**本地**汇总其分片的**逐样本**命中结果 (hits) 与 NDCG 总和 (每样本一行), 通过 `all_gather` / `all_reduce SUM` 汇总 4 卡对**完整 Valid 集**的全部逐样本结果, 由 **rank 0** 依据**全量 Valid R@10** (每样本恰好计数一次, 与单卡评估完全同口径) 选择 best checkpoint 并触发早停 (EARLY_STOP=20)。禁各 rank 用自己分片的 valid R@10 独立选 ckpt / 禁按 rank 均值选 ckpt; rank 0 选定的 best ckpt 必须与单卡评估口径下的 best ckpt 一致。
+**R35b** — Stage3 / Stage4 DDP 同口径硬约束 (已合并原 R35c):
+- **Stage 4 评估**: 4 卡各自评估**不重复**的数据分片 (DistributedSampler / 按 rank 切片, 每样本只被一个 rank 处理), 各 rank 在 **本地** 汇总其分片的命中数 (hits) 与 NDCG 总和, 最后 `all_reduce SUM` 全部样本的命中数与 NDCG 总和, 统一除以总样本数 N — 保证 R@K / NDCG@K 与单卡评估完全同口径 (每个样本恰好计数一次, 无重复、无遗漏、无按 rank 平均的错误口径)。禁直接对 4 个 rank 的均值取平均。
+- **Stage 3 训练期 Valid 评估**: 每次 valid 评估时, 4 卡各自评估**不重复**的 Valid 数据分片 (DistributedSampler / 按 rank 切片, 每样本只被一个 rank 处理), 各 rank 在**本地**汇总其分片的**逐样本**命中结果 (hits) 与 NDCG 总和 (每样本一行), 通过 `all_gather` / `all_reduce SUM` 汇总 4 卡对**完整 Valid 集**的全部逐样本结果, 由 **rank 0** 依据**全量 Valid R@10** (每样本恰好计数一次, 与单卡评估完全同口径) 选择 best checkpoint 并触发早停 (EARLY_STOP=20)。禁各 rank 用自己分片的 valid R@10 独立选 ckpt / 禁按 rank 均值选 ckpt; rank 0 选定的 best ckpt 必须与单卡评估口径下的 best ckpt 一致。
 
 **R36** — 方法路径强约束: 禁止通过调参形式 (LR/dropout/label_smoothing/weight_decay sweep) 提升指标; 必须通过改善曲率框架 (Stage 2 κ 学习 / Stage 3 κ frozen→learnable / 新曲率正则项 / Poincaré-Minkowski-Lorentz 曲率机制变更)。
 
@@ -105,8 +107,8 @@
 
 **R44** — 数据集与依赖库位置硬约束:
 - 数据集: 每个新任务的 4 stage 脚本必须显式从 `/home/wlia0047/ar57/wenyu/GeneRec/dataset/` 读取 (Instruments.item.json, Instruments.inter.json, train.parquet, valid.parquet, test.parquet 等), 禁引用任何外部数据集路径 (HG-Rec/dataset/, 用户家目录其他位置等);
-- 依赖库: stage 需要的 baseline 模型/工具库 (如 HRQVAE、quantizer、utils 等) 必须从 `/home/wlia0047/ar57/wenyu/GeneRec/_lib/` 复制到对应任务目录的 `_lib/` 子目录, 任务脚本 `sys.path.insert(0, str(<task_dir>/_lib))`; 禁止从外部路径 import baseline 代码;
-- 两者共同强化 R40 自包含, 确保任务目录可独立运行、可重现。
+- 依赖库: stage 需要的 baseline 模型/工具库 (如 HRQVAE、quantizer、utils 等) 直接放在 `/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/_lib/` 主目录下, 任务目录脚本 `sys.path.insert(0, str(<main_dir>/_lib))` 直接 import; 不再为每个任务目录复制 _lib/ 子目录;
+- 数据集自包含 (R40), 依赖库主目录共用 (避免重复维护), 两者共同确保任务目录可独立运行、可重现。
 
 **R44b** — 下载位置与磁盘硬约束: 禁止向 `/home/wlia0047/` 写入任何数据 (模型权重、数据集、缓存等) — /home 挂载仅 20G 且曾 100% 满导致 HuggingFace 模型下载截断损坏; 所有下载/HF 缓存必须指向 `/home/wlia0047/ar57_scratch/wenyu/` (大磁盘); 运行下载类任务前必须 `df -h /home/wlia0047/` 检查剩余空间, 不足 5G 时先清理或改路径; HuggingFace 相关必须显式设 `HF_HOME=/home/wlia0047/ar57_scratch/wenyu/.cache/huggingface` (或对应 scratch 路径)。
 
