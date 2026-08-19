@@ -1,0 +1,30 @@
+{
+  "issue": 244,
+  "task": "v24 备胎: Stage 3 CurvatureLMHead 替换 lm_head (R36 Stage 3 新曲率机制)",
+  "verdict": "R37 FAIL — test_R@10=0.1071 < v19 baseline 0.1102 (-0.0031), CurvatureLMHead input-dependent bias 在训练-推理一致的前提下未带来曲率机制层面的提升, R50 回滚",
+  "stage1_outcome": "未启动 (沿用 v19 Stage 1 baseline, codebook 无变更)",
+  "stage2_outcome": "未启动 (沿用 v19 SID npy)",
+  "stage3_outcome": "HG-Rec T5 + HALC v2 + v16 differential schedule + v24 CurvatureLMHead (input-dependent L2 距离 bias, κ learnable). EARLY_STOP @ E121, best_ckpt epoch 100, valid NDCG@10=0.0970 (与 v19 0.0970 完全相同). 训练健康 (loss 7.13→~3.0, Valid 0→0.097 单调上升, 无 regress 信号).",
+  "stage4_outcome": "test_R@10=0.1071, h@10=0.1071, test_NDCG@10=0.0802. 单 ckpt + beam=20. R35 禁 Borda 满足.",
+  "test_R@10": 0.1071,
+  "test_NDCG@10": 0.0802,
+  "valid_best_NDCG@10": 0.0970,
+  "baseline_R@10": 0.1102,
+  "v19_R@10": 0.1102,
+  "delta_vs_v19": -0.0031,
+  "r37_decision": "FAIL — test_R@10=0.1071 < v19 baseline 0.1102 (-0.0031). R50 回滚: modules/hg_rec.py 删除 CurvatureLMHead 类 + 删除 HG_Rec 初始化时的 use_curvature_lm_head 分支, 恢复 v19 baseline. train_decoder.py 移除 v24 相关参数 (hgrec_use_curvature_lm_head 等). 删除 configs/decoder_instruments_hgrec_v24.gin. 删除 out/decoder/instruments_hgrec_configs/hgrec_v24/.",
+  "r50_verification": [
+    "git checkout HEAD -- modules/hg_rec.py train_decoder.py (恢复 v19 baseline)",
+    "删除 configs/decoder_instruments_hgrec_v24.gin",
+    "删除 out/decoder/instruments_hgrec_configs/hgrec_v24/",
+    "python3 -m py_compile 验证: modules/hg_rec.py OK + train_decoder.py OK"
+  ],
+  "r18_4dim": {
+    "D1_spec": "Stage 3 CurvatureLMHead 替换 T5 lm_head, 注入 per-(batch, vocab) input-dependent 距离 bias: bias[b,v] = -kappa * L2(dec_h[b], lm_weight[v]). kappa learnable (init softplus(-2.3)≈0.1). bias 在 forward (CE 训练) 和 generate (beam 推理) 共用同一路径 → train-test 一致. R36 'Stage 3 κ frozen→learnable + 新曲率机制' explicit allowed.",
+    "D2_impl": "modules/hg_rec.py: 加 CurvatureLMHead(nn.Module) 包装原始 lm_head, forward 计算 logits + bias; HG_Rec.__init__ 加 use_curvature_lm_head 配置开关. train_decoder.py: _train_hgrec 加 hgrec_use_curvature_lm_head/hgrec_log_kappa_init/hgrec_curvature_chunk_size 三个参数 + train() 默认 args. 新增 configs/decoder_instruments_hgrec_v24.gin.",
+    "D3_gate1": "Stage 3 训练健康: loss 7.13→~3.0, Valid NDCG@10 0→0.0970 单调上升, EARLY_STOP @ E121 (counter 20/20), best_ckpt epoch 100. CurvatureLMHead forward + generate 同一代码路径, 无 train-test mismatch (v23 的设计缺陷已修复). 但 test_R@10=0.1071 略差于 v19 0.1102 (-0.0031) — input-dependent bias 在 valid 上达到与 v19 同样水平 (0.0970), 但未迁移到 test 上的边际优势, 反而略低.",
+    "D4_lit": "CurvatureLMHead 的 input-dependent bias 修复了 v23 的设计缺陷 (per-vocab constant → per-(batch,vocab)), 但效果与 baseline 同. 数学分析: bias magnitude ~ kappa * ||dec_h - lm_emb||, kappa≈0.1, distance≈1.0 → bias≈0.1. 0.1 的 bias 对 769 vocab logits 影响有限 (T5 base logits scale ~10-30). argmax 偏向 dec_h 附近 vocab tokens — 这与 standard F.linear 的 argmax (最近的 lm_emb) 相同方向, 只是 scale 不同. 模型在 valid 上学到的 argmax shift 在 test 上未泛化 (valid-test 一致性 R36 教训). 可能的解释: bias 与 main loss 优化方向有微小冲突 (CE 推 logits towards labels, bias 推 logits towards closest lm_emb), 后者在 valid 上刚好等价, 在 test 上略有偏移."
+  },
+  "v24_v19_contrast": "v24 CurvatureLMHead vs v19 baseline: 两者 valid NDCG@10 都达 0.0970 (完全相同), 但 v24 test_R@10=0.1071 < v19 0.1102 (-0.0031). input-dependent bias 在 valid 上未带来任何优势, 在 test 上略有劣势. 结论: input-dependent curvature bias 不是 R36 'Poincaré-Minkowski-Lorentz 曲率机制变更' 的有效实现 — 它只是 main lm_head 的局部修正, 不改变 T5 decoder 主干的几何结构 (vs HALC v2 注入 encoder hidden states 的全局正则化, 后者已能稳定带来边际收益).",
+  "next_step": "v25 备胎方向: Stage 3 走 HALC v2 加强版 (per-layer κ + reg_weight 显著放大, 突破当前 reg_weight_max=0.05 上限) — 这是 R36 '新曲率正则项' explicit allowed. 或: Stage 2 走 HALC codebook (per-item SID 编码器 + per-item curvature), 已在 tasks/Issue95_halc_v7_stage2_kappa/ 探索但未完成. 优先 (a) Stage 3 HALC v2 加强 (低风险, R36 兼容) — reg_weight_max 0.05→0.15 配合 differential schedule, 验证曲率正则强度天花板."
+}

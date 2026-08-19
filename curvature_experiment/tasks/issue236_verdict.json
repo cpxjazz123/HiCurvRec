@@ -1,0 +1,22 @@
+{
+  "issue": 236,
+  "task": "v16 备胎: Differential Encoder/Decoder HALC Schedule (R36 机制变更)",
+  "verdict": "R37 PASS (微弱提升 +0.0005 vs baseline)",
+  "stage1_outcome": "沿用 v2 baseline (c28 curriculum, USE_FIXED_CURVATURE=True, 无 per-code κ, 无 M2/M3, 无 C22 TCU)",
+  "stage2_outcome": "沿用 v2 baseline c28 SID for HG-Rec",
+  "stage3_outcome": "HALC v2 + differential schedule: encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12. 训练 200 epoch DDP 4 卡 bf16, EARLY_STOP @ epoch 127 (best_ckpt epoch 106, valid NDCG@10=0.0964)",
+  "stage4_outcome": "test_R@10=0.1077 (vs baseline 0.1072, +0.0005) — 单 ckpt + beam=20. R35 禁 Borda 满足.",
+  "test_R@10": 0.10768363402061856,
+  "test_R@5": 0.08662210051546392,
+  "test_NDCG@10": 0.08032477270696581,
+  "baseline_R@10": 0.1072,
+  "delta_vs_baseline": 0.0005,
+  "r37_decision": "PASS — test_R@10=0.1077 ≥ 0.1072 baseline. 保留 v16 HALC differential schedule (新增机制, 不调参)",
+  "r18_4dim": {
+    "D1_spec": "HALC v2 + differential per-layer-role schedule — encoder (浅层 L1-6) 早 warmup=3/cooldown=8, decoder embed layer (L7) 晚 warmup=7/cooldown=12",
+    "D2_impl": "_lib/halc.py HALCAnnealingRegularizer.__init__ 增加 encoder_warmup/encoder_cooldown/decoder_warmup/decoder_cooldown 参数 + warmup_per_layer/cooldown_per_layer buffer; train_decoder.py 实例化传参; annealed_curvature 使用 per-layer 张量分别 sigmoid",
+    "D3_gate1": "Stage 1 完全沿用 v2 baseline (无新机制, 无 collapse 风险). Stage 3 训练 EARLY_STOP @ E127 健康停止, valid NDCG@10 单调上升到 0.0964 后饱和. 无 Stage 1/2 失败信号.",
+    "D4_lit": "ICLR 2024 HALC 论文 (per-layer learnable κ + sigmoid annealing) + 创新 layer-role-aware schedule (encoder 浅层早激活, decoder 深层晚激活). 数学上 c_l(t) = softplus(log_c_l) * sigmoid((t - warmup_l) / cooldown_l), 7 层独立 schedule."
+  },
+  "next_step": "v17 备胎: 新曲率机制探索 (查文献). v17 D2 维度需与 v16/v14/v15 不同 (避免路径同构 NO-GO). 用户目标 test_R@10=0.12, 当前 0.1077 还差 +0.0123."
+}

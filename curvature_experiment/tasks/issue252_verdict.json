@@ -1,0 +1,31 @@
+{
+  "task": "Issue252_v32_halc_cosine_restart",
+  "verdict": "R38 FAIL (NaN-Inf kill)",
+  "r38_trigger": "训练期 E26 loss=NaN, halc=NaN 触发 R38 NaN-Inf 硬约束, 立即 kill (R23 tick 扫活跃训练 7 信号之一: NaN-Inf)",
+  "r38_kill_epoch": 26,
+  "r38_kill_at": "2026-08-19T11:30:00+10:00",
+  "best_ckpt_epoch_at_kill": 5,
+  "best_ckpt_valid_ndcg10": 0.0379,
+  "best_ckpt_valid_h10": 0.0646,
+  "trajectory_summary": {
+    "E0-2": "ndcg=0.0 (cold start, valid 未启动)",
+    "E3": "ndcg=0.0174 (warmup 期 sigmoid)",
+    "E4": "ndcg=0.0294",
+    "E5": "ndcg=0.0379 (BEST, 进入 cos cycle 0)",
+    "E6-15": "ndcg 持续上升未达 0.0379, counter 累计",
+    "E16-25": "ndcg=0.0 (c cos 振荡期, valid 退化, c 接近 0 时 valid 预测崩溃)",
+    "E26+": "loss=NaN, halc=NaN (R38 NaN 触发, kill)"
+  },
+  "r37_baseline_v19_test_R@10": 0.1074,
+  "r37_reason": "v32 HALC cosine_restart 在 c 振荡下界 (c→0) 时 Stage 3 valid 完全退化 (ndcg=0.0 持续 10+ epoch), 与 v19 baseline ndcg@10=0.0969 差 -100%, 触发 R38 NaN-Inf kill. 根因分析: c 接近 0 时 HALC logmap 用 atanh(sqrt(c)*||x||), sqrt(c) * norm 可能超出 1.0 → atanh 输入 >1 → NaN. sigmoid mode 没有这个问题 (c 单调, 永不下界到 0)",
+  "r36_constraint_check": "PASS — 改动仅 Stage 3 HALCAnnealingRegularizer 新增 schedule_mode='cosine_restart' 分支 (SGDR, Loshchilov & Hutter 2017), 未引入可学习参数, 未调 LR/dropout/ls/wd. 但 R38 数值稳定性破坏 R36 隐含约束 (曲率机制不能破坏训练稳定性)",
+  "r50_action": "R50 生效: 立即停手 v32 重跑. revert _lib/halc.py cosine_restart 分支 + train_decoder.py path-detect hook + configs gin. _lib/halc.py + schedule_mode 参数保留 (备份知识, 标 INACTIVE), 禁自动启用.",
+  "stage_status": {
+    "stage1_v19_reuse": "OK (复用 v19 RQ-VAE ckpt rqvae_out_v19_cend_07)",
+    "stage2_v19_sid_reuse": "OK (复用 Instruments_v19_sids_for_hgrec.npy)",
+    "stage3_hgrec_t5_halc_cosine": "R38 KILL @ E26 (loss=NaN)",
+    "stage4_test_eval": "未执行 (训练期 kill)"
+  },
+  "next_action": "v33 备胎: 规避 c 数值不稳定 (c_min 下界约束 ≥0.1, 或切 Hyp-Former curved attention Stage 3 路线)",
+  "verdict_written_at": "2026-08-19T11:31:00+10:00"
+}

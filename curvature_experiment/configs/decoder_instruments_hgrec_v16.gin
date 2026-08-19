@@ -1,0 +1,79 @@
+# Decoder Musical_Instruments config — HG-Rec T5 架构 + HALC v2 + v16 differential schedule
+#
+# === v16 备胎 (R36 机制变更) ===
+# HALC v2 默认所有 7 个 encoder hidden_states 共享 sigmoid schedule (warmup=5, cooldown=10).
+# v16 引入 differential per-layer-role schedule:
+#   - encoder layers (L1-6, hidden_states[0..5]): warmup=3, cooldown=8 (更早达到 c_max)
+#   - embed layer (L7, hidden_states[6]):       warmup=7, cooldown=12 (更慢达到 c_max)
+# 数学含义: 浅层 encoder 早被双曲几何引导, 而深层 (即 decoder cross-attn 输入) 保持近欧氏更久,
+#           避免早期 decoder cross-attn 被打扰. 这是 R36 新曲率机制 (非超参调整).
+#
+# === Stage 1 / Stage 2 (复用 v2 baseline, 机制未变) ===
+# - Stage 1 RQ-VAE: /home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_c28_curriculum_m3/rqvae_final.pt
+#   (USE_FIXED_CURVATURE=True, USE_CURRICULUM=True c_start=0.05→c_end=1.0, USE_M2/M3=False)
+# - Stage 2 SID:    dataset/Instruments/Instruments_c28_sids_for_hgrec.npy (HG-Rec 格式 9922x4)
+#
+# === R37 baseline (v2 baseline) test_R@10=0.1072 ===
+# 期望 v16 突破: encoder 浅层早激活 curvature → 更深的几何归纳偏差 → test R@10 ≥ 0.1072
+
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+# === 启用 HG-Rec 路径 (核心开关) ===
+train_decoder.train.use_hgrec_arch = True
+
+# === HG-Rec T5Config (与 C33 / v13 严格对齐) ===
+train_decoder.train.hgrec_t5_d_model = 128
+train_decoder.train.hgrec_t5_d_ff = 1024
+train_decoder.train.hgrec_t5_num_heads = 6
+train_decoder.train.hgrec_t5_d_kv = 64
+train_decoder.train.hgrec_t5_num_layers = 6
+train_decoder.train.hgrec_t5_num_decoder_layers = 4
+train_decoder.train.hgrec_t5_dropout = 0.1
+train_decoder.train.hgrec_vocab_size = 769
+train_decoder.train.hgrec_max_len = 20
+
+# === HG-Rec 数据 (v2 baseline c28 SID numpy) ===
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+
+# === 训练超参 (与 C33 baseline 一致, R36 禁调参) ===
+train_decoder.train.hgrec_batch_size = 3072
+train_decoder.train.batch_size = 3072
+train_decoder.train.learning_rate = 0.0001
+train_decoder.train.weight_decay = 0.0001
+train_decoder.train.amp = True
+train_decoder.train.mixed_precision_type = "bf16"
+
+# === Eval 配置 ===
+train_decoder.train.top_k_for_generation = 20
+train_decoder.train.top_k_eval_list = [5, 10, 20]
+
+# === 保存路径 (R35 禁 Borda, 单 ckpt + beam=20) ===
+train_decoder.train.save_dir_root = "out/decoder/instruments_hgrec_v16/"
+
+# === gin 必填项 ===
+train_decoder.train.dataset_folder = "dataset/"
+train_decoder.train.dataset = "INSTRUMENTS"
+train_decoder.train.force_dataset_process = False
+train_decoder.train.dataset_split = "instruments"
+train_decoder.train.full_eval_every = 500
+train_decoder.train.partial_eval_every = 250
+train_decoder.train.wandb_logging = False
+
+# === 以下 HG-Rec 路径不读取 (per-hierarchy 兼容占位) ===
+train_decoder.train.t5_d_model = 384
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
+train_decoder.train.t5_num_decoder_layers = 4
+train_decoder.train.should_add_sep_token = False
+train_decoder.train.pretrained_rqvae_path = ""
+train_decoder.train.vae_input_dim = 768
+train_decoder.train.vae_hidden_dims = [512, 256, 128]
+train_decoder.train.vae_embed_dim = 32
+train_decoder.train.vae_codebook_size = 256
+train_decoder.train.vae_n_layers = 3
+train_decoder.train.vae_n_cat_feats = 0
+train_decoder.train.iterations = 500000
+train_decoder.train.gradient_accumulate_every = 1
+train_decoder.train.split_batches = True
+train_decoder.train.vae_codebook_normalize = False
