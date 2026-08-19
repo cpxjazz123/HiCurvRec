@@ -75,9 +75,7 @@
 
 **R32** — 运行脚本必须直接 `python3` 执行, 禁写 `.sh` 包装启动, GPU 选择用 `CUDA_VISIBLE_DEVICES=0 python3 -u ...` 内联 (唯一例外: DDP 多卡 `torchrun`)。
 
-**R33** — 任务完成 verdict 写到 `tasks/<task_dir>/issue<NN>_verdict.json` (本任务自己的目录), 不集中放 `verdicts/`; 文件名格式 `issue<NN>_verdict.json`, NN = gitlab issue 编号; 区分 stage3/verdict.json (产物级) 与 issue 闭环 verdict (任务级)。
-
-**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, **小写 issue** 与 R33 verdict 命名一致; 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯)。
+**R34** — 每次迭代新版本前, 必须在 `tasks/` 下新建 `issue<NN>_<任务名>/` 目录 (NN = gitlab issue 编号, **小写 issue** 与 verdict 命名一致; 禁止 `vN_xxx_from_vN-1` 命名; 历史 v* 目录不追溯)。
 
 **R35** — 评估强约束: 只使用单 checkpoint + `beam_search=20`, 禁 Borda Rank Fusion / 任何 ensemble 多 ckpt 融合。
 
@@ -114,7 +112,7 @@
 
 **R44c** — pip 安装位置硬约束: 禁止任何 pip 安装落到 `/home/wlia0047/` 下的用户 site (即 `~/.local`, 含 `/home/wlia0047/.local` 与 `/home/wlia0047/ar57/wenyu/.local`) — 曾因无 `-t` 的 pip install 把 13G 依赖树写进 `/home/wlia0047/ar57/wenyu/.local` 撑爆 20G /home 挂载; pip 安装必须显式 `pip install <pkg> -t <conda_env>/lib/python3.10/site-packages` (如 `-t /home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages`), 或 `--user` 仅指向 scratch 路径; 安装前先 `df -h /home/wlia0047/` 核对, 安装后检查 `/home/wlia0047/` 下不得出现新的 `.local`/`.cache` 目录。
 
-**R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R33+R34 联动)。
+**R45** — Git remote 强约束: 不使用 GitHub, 只使用 GitLab。`git remote` 必须仅包含 `origin` 指向 `git@gitlab.com:wlia0047/generec.git`; 禁止添加任何指向 github.com / WENYULIANG123/GeneRec.git 的 remote; 所有 commit + push 一律走 gitlab (`git push origin main`)。若当前 repo 已残留 github remote, 立即执行 `git remote remove github`。issue 编号 / 评论 / verdict `issue<NN>_verdict.json` 一律按 gitlab issue 编号 (与 R34 联动)。
 
 **R47** — sentence-t5-xxl 模型位置硬约束: `sentence-transformers/sentence-t5-xxl` (RQ-VAE-Recommender 默认 embedding 模型, ~10GB) **必须**存放在 `/home/wlia0047/hj82_scratch2/wenyu/` 下面 (该挂载点 6.6T 总量, 充裕可装下 RQ-VAE-Recommender 全套); HF 相关环境变量必须显式设:
 - `HF_HOME=/home/wlia0047/hj82_scratch2/wenyu/.cache/huggingface`
