@@ -144,28 +144,6 @@ def _train_hgrec(
     }
     model = HG_Rec(hgrec_config)
 
-    # === v34 备胎 (R36 新曲率机制变更): T5 RMSNorm → HyperbolicRMSNorm ===
-    # 检测命令行 argv 是否包含 v34 (例如 --config configs/decoder_instruments_hgrec_v34.gin)
-    use_hyperbolic_norm = any("v34" in str(a) for a in sys.argv)
-    if use_hyperbolic_norm:
-        print(f"[v34] 检测到 sys.argv 含 'v34', 启用 HyperbolicRMSNorm (c=1.0)", flush=True)
-        # 重建 model 以触发 HyperbolicRMSNorm 安装 (constructor 已读 use_hyperbolic_norm config)
-        hgrec_config["use_hyperbolic_norm"] = True
-        hgrec_config["hyperbolic_c"] = 1.0
-        model = HG_Rec(hgrec_config)
-
-    # === v35 备胎 (R36 新曲率正则项): HyperbolicRMSNorm + HALC v2 c curriculum ===
-    # 运行时切换 RMSNorm 的曲率 c (HALC v2 sigmoid schedule)
-    # c_min=0.5 (C10 扩展下界, 避免 c→0 数值不稳定) → c_max=1.0 (强 Poincaré)
-    # t_start=15 (warmup), t_scale=5 (smooth transition)
-    use_hyp_norm_c_schedule = any("v35" in str(a) for a in sys.argv)
-    if use_hyp_norm_c_schedule:
-        print(f"[v35] 检测到 sys.argv 含 'v35', 启用 HyperbolicRMSNorm + HALC v2 c curriculum", flush=True)
-        print(f"[v35] c_min=0.5, c_max=1.0, t_start=15, t_scale=5 (HALC v2 sigmoid schedule)", flush=True)
-        hgrec_config["use_hyperbolic_norm"] = True
-        hgrec_config["hyperbolic_c"] = 0.5  # 初始 c=0.5 (warmup 期间), 后续运行时调度到 1.0
-        model = HG_Rec(hgrec_config)
-
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
         import torch._dynamo as _dynamo
@@ -248,17 +226,6 @@ def _train_hgrec(
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
     EARLY_STOP_PATIENCE = 20
-
-    # === v35 备胎: HALC v2 c curriculum schedule 超参 ===
-    # c(t) = c_min + (c_max - c_min) * sigmoid((t - t_start) / t_scale)
-    # c_min=0.5: 训练早期 (epoch < t_start), c≈0.5 → 较温和的 Poincaré 约束
-    # c_max=1.0: 训练后期 (epoch > t_start+t_scale), c≈1.0 → 强 Poincaré 约束 (与 v34 一致)
-    # t_start=15: 前 15 epoch 让 model 学习基础语义 (c 仍≈0.5)
-    # t_scale=5: 在 epoch 15-20 之间平滑过渡
-    V35_C_MIN = 0.5
-    V35_C_MAX = 1.0
-    V35_T_START = 15
-    V35_T_SCALE = 5
     # C33 HG-Rec 路径: TopKAccumulator 输出 keys = ndcg + ndcg@1/5/10 (因 gin binding
     # 失败被 fallback, top_k_eval_list 默认 [1,5,10] 生效, 无 ndcg@20). 用 ndcg@10
     # 作为 SELECT_METRIC 等价于 ndcg (top-1 of valid set), 与 C33 训练协议一致.
@@ -275,25 +242,6 @@ def _train_hgrec(
     for epoch in range(MAX_EPOCHS):
         # === HALC v2: 更新 annealing schedule epoch ===
         halc.set_epoch(epoch)
-
-        # === v35 备胎: HALC v2 c curriculum → 更新所有 HyperbolicRMSNorm 的 current_c ===
-        # sigmoid 在 epoch=t_start 时 = 0.5, epoch=t_start+5*t_scale 时 ≈ 0.993
-        # 每 rank 独立调用 (DDP 各 rank 都需要更新自己的 c)
-        if use_hyp_norm_c_schedule:
-            import math
-            ratio = (epoch - V35_T_START) / V35_T_SCALE
-            # sigmoid(-3) ≈ 0.047, sigmoid(0) = 0.5, sigmoid(3) ≈ 0.953
-            sigmoid_factor = 1.0 / (1.0 + math.exp(-ratio))
-            cur_c = V35_C_MIN + (V35_C_MAX - V35_C_MIN) * sigmoid_factor
-            # model.module 是 DDP 暴露的 underlying model, 每个 rank 独立 set
-            model.module.set_all_hyp_norm_c(cur_c)
-            if accelerator.is_main_process:
-                print(
-                    f"[v35 c schedule] epoch={epoch+1} ratio={ratio:.3f} "
-                    f"sigmoid={sigmoid_factor:.4f} c={cur_c:.4f}",
-                    flush=True,
-                )
-
         model.train()
         epoch_loss = 0.0
         epoch_halс = 0.0
@@ -512,21 +460,6 @@ def train(
     )
 
     device = accelerator.device
-
-    # === R34d fix: 固定 Stage 3 训练 + valid 评估 seed ===
-    # Stage 3 训练期 bf16 + dropout + valid DistributedSampler 每次默认 seed 不同
-    # → best_ckpt epoch 浮动 (E114/E118/E135), test_R@10 噪声 ±0.001
-    # 显式 set_seed(42+rank) 让训练轨迹可重复
-    import random as _random
-    _random.seed(42 + accelerator.process_index)
-    import numpy as _np
-    _np.random.seed(42 + accelerator.process_index)
-    torch.manual_seed(42 + accelerator.process_index)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(42 + accelerator.process_index)
-    # R34d2: 固定 valid DistributedSampler seed (避免 per-epoch 不同切片导致 valid ndcg 噪声)
-    from torch.utils.data.distributed import DistributedSampler as _DS
-    _ds_seed = 42
 
     if wandb_logging and accelerator.is_main_process:
         wandb.login()
