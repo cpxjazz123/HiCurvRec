@@ -78,6 +78,7 @@ def _train_hgrec(
     top_k_eval_list,
     wandb_logging,
     use_halc_v38=False,  # Issue258 v38: per-token input-dependent κ
+    use_hyp_layernorm=False,  # Issue260 v40: Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -166,6 +167,14 @@ def _train_hgrec(
         "feed_forward_proj": "relu",
     }
     model = HG_Rec(hgrec_config)
+
+    # === v40 (Issue260): Stage 3 T5 LayerNorm → Poincaré LayerNorm (R36 几何变换) ===
+    # 替换 T5 所有 T5LayerNorm 实例为 PoincareT5LayerNorm (logmap0 → RMSNorm → expmap0, c=0.5)
+    # 保持 weight 起点与 T5LayerNorm 完全一致 (new_ln.weight.copy_(old_ln.weight))
+    if use_hyp_layernorm:
+        from _lib.hyperbolic_layernorm import replace_t5_layernorm
+        n_replaced = replace_t5_layernorm(model.model, c=0.5)  # 与 v19 Stage 1 c_end=0.7 一致
+        print(f"[v40 hyp_layernorm] replaced {n_replaced} T5LayerNorm → PoincareT5LayerNorm (c=0.5)", flush=True)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:

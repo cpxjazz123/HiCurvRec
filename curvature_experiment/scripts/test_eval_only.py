@@ -202,6 +202,19 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     }
     model = HG_Rec(hgrec_config)
 
+    # === v40 (Issue260): Stage 4 也启用 PoincareT5LayerNorm (与 Stage 3 训练时一致) ===
+    # 否则 ckpt state_dict 加载后 forward 行为不一致, R51 baseline 不可比
+    try:
+        import gin as _gin
+        _use_hyp_ln = _gin.query_parameter("train_decoder.train.use_hyp_layernorm")
+        if _use_hyp_ln:
+            from _lib.hyperbolic_layernorm import replace_t5_layernorm
+            n_replaced = replace_t5_layernorm(model.model, c=0.5)
+            print(f"[v40 hyp_layernorm] Stage 4 replaced {n_replaced} T5LayerNorm → PoincareT5LayerNorm (c=0.5)", flush=True)
+    except (ValueError, Exception) as e:
+        # gin.query_parameter raises ValueError if not bound
+        pass
+
     test_ds = RawMusicalInstrumentsHGRec(
         parquet_path=_osp.join(INSTRUMENTS_DIR, "test.parquet"),
         code_path=code_path, mode="evaluation",
