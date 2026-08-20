@@ -1,0 +1,58 @@
+# Decoder Musical_Instruments config — HG-Rec T5 架构 + HALC v2 + v16 differential schedule
+# v50 备胎 (Issue271): Stage 3 端 Inter-Layer Angular Margin (R36 严格化 v2 几何变换)
+# - 复用 v19 baseline Stage 1+2 (R40)
+# - Stage 3: HALC v2 + v16 diff + InterLayerAngularMarginLoss (R36 严格化 v2 几何变换)
+# - 不引入 schedule / weight decay, v40-v49 全部 R37 FAIL
+# - 强制 encoder 6 层 hidden states 之间的 Poincaré 距离 > margin
+
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+# === 启用 HG-Rec 路径 (核心开关) ===
+train_decoder.train.use_hgrec_arch = True
+
+# === 训练基础参数 (与 v19 baseline 完全一致) ===
+train_decoder.train.batch_size = 64
+train_decoder.train.learning_rate = 1e-3
+train_decoder.train.weight_decay = 0.01
+train_decoder.train.num_train_epochs = 200
+train_decoder.train.max_seq_length = 80
+train_decoder.train.warmup_steps = 100
+train_decoder.train.logging_steps = 100
+train_decoder.train.eval_steps = 100
+train_decoder.train.save_steps = 1000
+train_decoder.train.early_stop_patience = 20
+train_decoder.train.lr_scheduler_type = "cosine"
+train_decoder.train.top_k_for_generation = 20
+train_decoder.train.top_k_eval_list = [10, 20]
+
+# === HG-Rec T5Config (与 v19 baseline 严格对齐) ===
+train_decoder.train.hgrec_t5_d_model = 128
+train_decoder.train.hgrec_t5_d_ff = 512
+train_decoder.train.hgrec_t5_num_heads = 4
+train_decoder.train.hgrec_t5_num_layers = 6
+train_decoder.train.hgrec_t5_num_decoder_layers = 4
+train_decoder.train.hgrec_t5_d_kv = 64
+train_decoder.train.hgrec_t5_dropout = 0.1
+train_decoder.train.hgrec_vocab_size = 769
+train_decoder.train.hgrec_max_len = 20
+
+# === Stage 1 / Stage 2 (v19 baseline 复用, R40) ===
+train_decoder.train.pretrained_rqvae_path = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt"
+train_decoder.train.sids_for_hgrec_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+train_decoder.train.pretrained_decoder_path = ""
+
+# === HALC v2 + v16 diff (v19 baseline 默认) ===
+train_decoder.train.use_halc_v2 = True
+train_decoder.train.use_halc_v38 = False
+train_decoder.train.use_halc_v49 = False
+# Issue271 v50: 启用 Inter-Layer Angular Margin (R36 严格化 v2 几何变换)
+train_decoder.train.use_angular_margin_v50 = True
+
+# === Codebook (v19 baseline) ===
+train_decoder.train.codebook_size = [256, 256, 256]
+train_decoder.train.should_add_sep_token = False
+
+# === 数据集 ===
+train_decoder.train.dataset_folder = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/dataset/Instruments/"
+train_decoder.train.save_dir_root = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment/out/decoder/instruments_hgrec_v50/"

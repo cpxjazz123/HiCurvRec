@@ -56,6 +56,15 @@ try:
 except ImportError:
     _HAS_HALC_V49 = False
 
+# === v50 备胎 (Issue271): Stage 3 端 Inter-Layer Angular Margin (R36 严格化 v2 几何变换) ===
+# 强制 encoder 6 层 hidden states 之间的 Poincaré 距离 > margin (geometric separation)
+# 不引入 schedule / weight decay (v40-v49 全部 R37 FAIL), 走 R36 严格化 v2 几何变换
+try:
+    from _lib.angular_margin_v50 import InterLayerAngularMarginLoss
+    _HAS_ANGULAR_MARGIN_V50 = True
+except ImportError:
+    _HAS_ANGULAR_MARGIN_V50 = False
+
 
 @gin.configurable
 # =============================================================================
@@ -92,6 +101,7 @@ def _train_hgrec(
     use_lorentz_attn=False,  # Issue263 v43: Stage 3 T5 cross-attention Lorentz inner product bias (Chen 2022)
     use_product_manifold=False,  # Issue264 v44: Stage 3 T5 cross-attention Poincaré + Lorentz 双 bias 组合 (R36 曲率机制组合)
     use_halc_v49=False,  # Issue270 v49: HALC + linear decay multiplier (R36 曲率调度变更)
+    use_angular_margin_v50=False,  # Issue271 v50: Inter-Layer Angular Margin (R36 严格化 v2 几何变换)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -307,6 +317,9 @@ def _train_hgrec(
     # === HALC v49 备胎 (Issue270): env 注入兜底 ===
     if os.environ.get("USE_HALC_V49", "0") == "1" and _HAS_HALC_V49:
         use_halc_v49 = True
+    # === v50 备胎 (Issue271): env 注入兜底 ===
+    if os.environ.get("USE_ANGULAR_MARGIN_V50", "0") == "1" and _HAS_ANGULAR_MARGIN_V50:
+        use_angular_margin_v50 = True
     if use_halc_v49 and _HAS_HALC_V49:
         # === HALC v49: HALC v2 + linear decay multiplier ===
         halc = HALCWithLinearDecay(
@@ -345,6 +358,17 @@ def _train_hgrec(
             print(f"[HALC v2 + v16 diff] init annealed c_l @ epoch=0: {[round(c, 4) for c in c_init]}", flush=True)
             print(f"[HALC v2 + v16 diff] encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12", flush=True)
             print(f"[HALC v2 + v16 diff] reg_weight_max={halc.reg_weight_max:.4f}, init reg_weight={halc.reg_weight.item():.4f}", flush=True)
+
+    # === v50 备胎 (Issue271): Stage 3 端 Inter-Layer Angular Margin (R36 严格化 v2 几何变换) ===
+    angular_margin_loss = None
+    if use_angular_margin_v50 and _HAS_ANGULAR_MARGIN_V50:
+        angular_margin_loss = InterLayerAngularMarginLoss(
+            radius=0.3, c=1.0, margin=0.1, reg_weight=0.01,
+        ).to(accelerator.device)
+        if accelerator.is_main_process:
+            print(f"[v50 Inter-Layer Angular Margin] R36 严格化 v2 几何变换", flush=True)
+            print(f"[v50] radius=0.3, c=1.0, margin=0.1, reg_weight=0.01 (硬编码)", flush=True)
+            print(f"[v50] 仅在 HALC v2 默认 path 上 (R36 严格化 v2: 不引入 schedule/weight)", flush=True)
 
     # === 训练循环 (HG-Rec 风格 epoch, R41 EARLY_STOP=20, R41b per-epoch eval) ===
     MAX_EPOCHS = 200
@@ -386,6 +410,10 @@ def _train_hgrec(
                 )
                 halc_reg = halc.reg_loss_for_layers(list(enc_hs))
                 total_loss = loss + halc.reg_weight * halc_reg
+                # === v50 备胎 (Issue271): Inter-Layer Angular Margin (R36 几何变换) ===
+                if angular_margin_loss is not None:
+                    margin_reg = angular_margin_loss(list(enc_hs))
+                    total_loss = total_loss + margin_reg
             accelerator.backward(total_loss)
             optimizer.step()
             epoch_loss += loss.item()
