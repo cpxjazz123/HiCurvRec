@@ -82,9 +82,44 @@ def _train_hgrec(
     accelerator = accelerator_factory()
     device = accelerator.device
 
+    # === R51+ 强约束: DDP 4 卡完全确定性 (2026-08-20 升级, 含 cudnn/CUBLAS/hash) ===
+    # 防止 4 个 DDP 噪声源:
+    #   1. random/numpy/torch RNG 未固定 (Phase 1)
+    #   2. Python hash dict/set 顺序随机 (PYTHONHASHSEED)
+    #   3. cuDNN 自动选算法 (cudnn.benchmark + cudnn.deterministic)
+    #   4. cuBLAS GEMM workspace 算法 (CUBLAS_WORKSPACE_CONFIG)
+    # 实测: 单纯 Phase 1 (v51) 仍有 ±0.02 量级 best_metric 漂移, 升级为 R51+ 后必须字符级一致
+    # 与 curvature_experiment/scripts/train_decoder.py 块严格对齐, 字符级一致
+    import os as _os
+    import random as _r51_random
+    import numpy as _r51_np
+    _os.environ.setdefault("PYTHONHASHSEED", "42")
+    _os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    _rank = accelerator.process_index
+    _r51_random.seed(42 + _rank)
+    _r51_np.random.seed(42 + _rank)
+    torch.manual_seed(42 + _rank)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42 + _rank)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    torch.set_float32_matmul_precision("highest")
+    print(f"[R51+ seed] rank={_rank} deterministic (cudnn/CUBLAS/hash) before DataLoader", flush=True)
+    del _rank, _r51_random, _r51_np, _os
+
+    # === R51+ Phase 2: DataLoader worker_init_fn (rank-relative seed) ===
+    # 防止 8 个 dataloader worker 启动顺序 + worker 内 random 状态不同
+    def _r51_worker_init_fn(wid):
+        import random as _wr
+        import numpy as _wnp
+        # 用 rank * 1000 + wid 避免不同 rank 同 wid 撞 seed
+        _wr.seed(42 + accelerator.process_index * 1000 + wid)
+        _wnp.random.seed(42 + accelerator.process_index * 1000 + wid)
+
     # === 路径 (硬编码, R44/R47) ===
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
-    DEFAULT_CODE_PATH = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+    DEFAULT_CODE_PATH = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
     code_path = hgrec_code_path if hgrec_code_path else DEFAULT_CODE_PATH
     BEST_CKPT_PATH = _osp.join(save_dir_root, "best_ckpt.pt")
     LOG_PATH = _osp.join(save_dir_root, "train_log.json")
@@ -115,16 +150,19 @@ def _train_hgrec(
         train_ds, batch_size=batch_size, shuffle=True,
         num_workers=8, persistent_workers=True, pin_memory=True,
         prefetch_factor=4, collate_fn=hgrec_collate_fn,
+        worker_init_fn=_r51_worker_init_fn,
     )
     valid_loader = DataLoader(
         valid_ds, batch_size=eval_batch_size, shuffle=False,
         num_workers=8, persistent_workers=True, pin_memory=True,
         prefetch_factor=4, collate_fn=hgrec_collate_fn,
+        worker_init_fn=_r51_worker_init_fn,
     )
     test_loader = DataLoader(
         test_ds, batch_size=eval_batch_size, shuffle=False,
         num_workers=8, persistent_workers=True, pin_memory=True,
         prefetch_factor=4, collate_fn=hgrec_collate_fn,
+        worker_init_fn=_r51_worker_init_fn,
     )
 
     # === 模型 (HG_Rec T5ForConditionalGeneration) ===

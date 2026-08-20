@@ -180,7 +180,7 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
 
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
     # 硬编码 (与 train_decoder.hgrec_code_path 一致), 不依赖 gin query
-    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_c28_sids_for_hgrec.npy"
+    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
     beam_size = 20
     top_k_eval_list = [5, 10, 20]
     max_len = 20
@@ -209,11 +209,12 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         max_len=max_len,
     )
 
-    # === R34c fix: 固定 DistributedSampler seed=42 让 4 卡 test 分片可重复 ===
-    # 默认 DistributedSampler 用 torch.randint 每次生成新 seed, 4 卡分片每次不同
-    # → all_reduce SUM 后总数有 ±0.001 量级噪声
-    # train_decoder.py 路径让 accelerator.prepare() 自动 wrap DistributedSampler, seed 由 torch RNG 决定
-    # → 显式设 torch.manual_seed(42) + numpy/random seed 让 DistributedSampler 拿到固定 seed
+    # === R51+ 强约束: Stage 4 评估端完全确定性 (单进程版) ===
+    # 含 cudnn/CUBLAS/PYTHONHASHSEED (与 Stage 3 R51+ 块严格对齐)
+    # 防止 DataLoader worker 启动顺序 / hash dict 顺序 / GEMM 算法选择 引入噪声
+    import os as _os
+    _os.environ.setdefault("PYTHONHASHSEED", "42")
+    _os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     torch.manual_seed(42)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(42)
@@ -221,11 +222,17 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     _random.seed(42)
     import numpy as _np
     _np.random.seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    torch.set_float32_matmul_precision("highest")
+    print("[R51+ seed] eval deterministic (cudnn/CUBLAS/hash)", flush=True)
 
     test_loader = DataLoader(
         test_ds, batch_size=64, shuffle=False, num_workers=8,
         persistent_workers=True, pin_memory=True, prefetch_factor=4,
         collate_fn=hgrec_collate_fn,
+        worker_init_fn=lambda wid: (__import__("numpy").random.seed(42 + wid), __import__("random").seed(42 + wid)),
     )
 
     # === 加载 best_ckpt (rank 0 先 load, broadcast 给其他 rank) ===

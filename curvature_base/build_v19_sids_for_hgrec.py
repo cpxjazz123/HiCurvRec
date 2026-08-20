@@ -4,7 +4,7 @@
 import numpy as np
 
 SRC = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v19_cend_07.npy"
-DST = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+DST = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
 
 src = np.load(SRC).astype(np.int64)
 assert src.shape == (9922, 3), f"unexpected src shape {src.shape}"
