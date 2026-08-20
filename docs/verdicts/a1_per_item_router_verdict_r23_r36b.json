@@ -1,0 +1,30 @@
+{
+  "experiment_dir": "curvature_experiment_per_item_curriculum_router",
+  "mechanism_tag": "a1_per_item_router",
+  "innovation": "Per-Item Curriculum Router (每层 Linear(embed_dim,1) router, 输入 encoder 输出 z, c_l,i = C_MIN + (C_MAX-C_MIN)·sigmoid(θ + delta_l,i), custom param group lr=5e-3/wd=0)",
+  "test_R@10": null,
+  "baseline": "0.1090931056701031 (v51+ R51+ locked, R5 hard constraint)",
+  "verdict": "FAIL_R23_CODEBOOK_COLLAPSE",
+  "r23_signals_triggered": [
+    "loss 不下降 (loss=148.9552 跨 28K steps 字面完全一致)",
+    "codebook collapse (codes=1/1/1/256, 每层仅 1/256 codeword 被激活, 99.6% 死代码)",
+    "持续 [CODEBOOK WARNING] 警告 (每 1000 step 打印一次, 累计 ≥ 18 次)"
+  ],
+  "r36b_check": "理论上 4 项硬约束满足 (c 训练中动态 per-item/per-layer/per-codebook, θ 收到梯度), 但 codebook collapse 导致 R36b 失效 — c 范围 0.94-0.96 偏移但 argmin 永远选同一 codeword, R36b 实证 FAIL",
+  "r37_decision": "无需 R37 (Stage 1 R23 阶段已 FAIL, 未到 Stage 4)",
+  "r38_decision": "无需 R38 (Stage 1 训练期 R23 触发, 不是 mid-training regress)",
+  "r50_action": "rm -rf curvature_experiment_per_item_curriculum_router/ + rqvae_out_a1_per_item_router/ (实验隔离, baseline 完整)",
+  "lessons_learned": [
+    "per-item router (lr=5e-3, wd=0) 让 θ_l 快速偏离 init, c_l 范围 0.94-0.96 偏移 → 但 argmin 在 L0 全部选同 1 个 codeword",
+    "可能根因: per-item router 让 c_l,i 偏离 baseline=1.0 太远 (delta=-0.4 即 sigmoid 反推), 配合 fc2 零初始化 + 大 lr → fc2 几步内就饱和, 让 c 退化为 '每层单一标量', argmin 在该标量下选全局最优 codeword",
+    "vs v52 MCDQ θ_mcdq 不漂移相反: A1 router 太能漂移 → collapse; 需中间方案: 限制 delta_max (如 ±0.3 而非 ±1.0) 或 lr=1e-3 与 baseline 一致",
+    "下次迭代建议: A1-v2 = Per-Item Router with delta_max=0.3 (限幅版, 防 collapse) + lr=1e-3 (与 baseline 一致)"
+  ],
+  "ranking_for_next_iteration": [
+    "A1-v2: Per-Item Router delta_max=0.3 + lr=1e-3 (限幅版, 防 collapse)",
+    "C1: Adaptive-Codeword Curvature (per-codeword c, R36b 满足但与 per-item 互补)",
+    "D1: Cyclic Curriculum (cosine warm restart, 真时变但全局)",
+    "E1: Riemannian AdamAtan2 (几何优化器, 与上面任一配套)"
+  ],
+  "ckpt_status": "保留 step10000/20000/30000 (全部 collapse, 不可用) — R38 不触发, 仅做诊断保留 → 已 R50 rm -rf"
+}
