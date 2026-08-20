@@ -48,6 +48,14 @@ try:
 except ImportError:
     _HAS_HALC_V38 = False
 
+# === HALC v49 备胎 (Issue270): HALC v2 + linear decay multiplier (R36 曲率调度变更) ===
+# 训练后期 c_l 衰减 (反向 C27), 让 EUCLIDEAN 几何主导 attention
+try:
+    from _lib.halc_v49 import HALCWithLinearDecay
+    _HAS_HALC_V49 = True
+except ImportError:
+    _HAS_HALC_V49 = False
+
 
 @gin.configurable
 # =============================================================================
@@ -83,6 +91,7 @@ def _train_hgrec(
     use_hyp_attn_bias=False,  # Issue262 v42: Stage 3 T5 attention Q/K 双曲距离 bias (HNN 2019)
     use_lorentz_attn=False,  # Issue263 v43: Stage 3 T5 cross-attention Lorentz inner product bias (Chen 2022)
     use_product_manifold=False,  # Issue264 v44: Stage 3 T5 cross-attention Poincaré + Lorentz 双 bias 组合 (R36 曲率机制组合)
+    use_halc_v49=False,  # Issue270 v49: HALC + linear decay multiplier (R36 曲率调度变更)
 ):
     """HG-Rec T5 架构训练路径.
 
@@ -295,7 +304,20 @@ def _train_hgrec(
     # env 注入兜底 (R34b 风格 — gin binding 失败时仍能启用 v38 机制)
     if os.environ.get("USE_HALC_V38", "0") == "1" and _HAS_HALC_V38:
         use_halc_v38 = True
-    if use_halc_v38 and _HAS_HALC_V38:
+    # === HALC v49 备胎 (Issue270): env 注入兜底 ===
+    if os.environ.get("USE_HALC_V49", "0") == "1" and _HAS_HALC_V49:
+        use_halc_v49 = True
+    if use_halc_v49 and _HAS_HALC_V49:
+        # === HALC v49: HALC v2 + linear decay multiplier ===
+        halc = HALCWithLinearDecay(
+            num_layers=7, init_curvature=1.0, c_max=1.0,
+            warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.05,
+            encoder_warmup=3, encoder_cooldown=8,
+            decoder_warmup=7, decoder_cooldown=12,
+            decay_start_epoch=20, decay_steps=60, decay_end=0.3,
+        )
+        HALC_VARIANT = "v49_linear_decay"
+    elif use_halc_v38 and _HAS_HALC_V38:
         halc = HALCPerTokenInputDependentRegularizer(
             num_layers=7, d_model=128, init_curvature=0.3,
             warmup_epochs=5, cooldown_epochs=10, reg_weight_max=0.06,
