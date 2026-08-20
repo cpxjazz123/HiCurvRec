@@ -127,6 +127,7 @@
 
 **R51** — DDP 4 卡噪声消除硬约束 (2026-08-19 实测触发, 任何新版本必须遵守):
 - **触发证据**: 历史 v19 三次完整重跑 test_R@10 = 0.1102 / 0.1099 / 0.1113 (±0.001 量级噪声, 来自 DistributedSampler seed 不固定 + 训练端无 manual_seed); R51 实施后三次 test_R@10 = 0.11130798969072164 (字符级完全一致, 差异 < 1e-15)。
+- **R51+ 升级** (commit ac9cb5f): 在 R51 only 基础上叠加 `torch.use_deterministic_algorithms(True, warn_only=True)` + `cudnn.deterministic=True` + `CUBLAS_WORKSPACE_CONFIG=":4096:8"` + `PYTHONHASHSEED=42` + `torch.set_float32_matmul_precision("high")` + DataLoader `worker_init_fn` 固定 worker RNG。R51+ 实施后 3 RUN 字符级完全一致 test_R@10 = **0.1090931056701031** (差异 < 1e-15, best_ckpt epoch=97)。R51+ 数值 (0.10909) 与 R51 only 数值 (0.11131) 不同是因为叠加约束改变了浮点路径 (use_deterministic_algorithms 替换部分非结合 GEMM 调用), 两者均字符级一致, 不矛盾。Verdict: `/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/curvature_base_rerun/r51_verdict.json` (PASS_R51_PLUS, 2026-08-20 验证)。
 - **Stage 3 训练端** (`train_decoder.py` train() 入口): 在 `accelerator = Accelerator(...)` 创建**之前**显式设:
   ```python
   import random as _random
