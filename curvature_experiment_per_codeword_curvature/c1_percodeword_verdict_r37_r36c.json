@@ -1,0 +1,31 @@
+{
+  "experiment_dir": "curvature_experiment_per_codeword_curvature",
+  "mechanism_tag": "c1_percodeword",
+  "test_R@10": null,
+  "baseline": "0.1090931056701031 (v51+ R51+ locked)",
+  "baseline_lock": "R51+",
+  "verdict": "FAIL_R36C",
+  "curvature_innovation": "C1 Per-Codeword Curvature (c_e = c_base + delta_max * tanh(c_e_raw), per-codeword independent)",
+  "r36c_attribution": {
+    "trigger_signal": "Stage 1 R36c 触发: codes=1/1/1/256 持续, loss=148.955 字面稳定, [CODEBOOK WARNING] 持续 >= 20 次",
+    "diagnosis_rounds": 2,
+    "round_1_math_impl": {
+      "symptom": "训练 log 报 codes=1/1/1/256 (batch 2560 内 3 层每层 unique code = 1)",
+      "ckpt_state_diagnose": "ckpt 加载后 2560 batch 推理 = 256/256/256 unique codes (full diversity) — 与训练 log 矛盾",
+      "root_cause": "KMeans init (kmeans_initted flag) 在 ckpt load_state_dict(strict=False) 后会重写 embedding.weight, 但实际训练 epoch 1 触发后修复. 真正矛盾: layer 1/2 embedding 训练 20000 步后 norm → 0 (L0 norm 0.14, L1 norm 0.001, L2 norm 0.000)"
+    },
+    "round_2_empirical": {
+      "scs_eps_scale_impact": "c_e range [0.4, 1.0] 时 manifold 半径 1.0~1.58, 半径差异 58%; c_e 限幅 0.1 时 [0.6, 0.8] 半径 1.12~1.29, 差异 15%",
+      "codebook_collapse_mechanism": "cascade L1/L2 输入 residual = L0_output - L0_embedding, norm ~ 0.14 (L0 embedding norm). KMeans init on norm 0.14 input → 256 cluster 中心都在 0 附近. 训练时 c_e 异质 manifold 试图拉高 codebook norm, 但 L1 输入 norm 0.14 << radius 1.0, codebook 仍被锁在 0. loss=148.95 持续"
+    },
+    "diagnosis_conclusion": "实现已排除 (sanity test 1/2/3 PASS, 数学公式 OK, 互斥 raise OK), 机制本身的几何不兼容: per-codeword c_e 异质 manifold + cascade L1/L2 输入 norm 极小 → KMeans init 收束到 0 + 训练无法修复. 与 v52 MCDQ 是不同机制"
+  },
+  "kill_decision": "R36c 触发 + R37 阻断 (避免 3 轮修复重试浪费 GPU, 经验上 R36c 在 cascade rqvae 框架下进行深度几何机制变更, 修复 ROI 极低)",
+  "lessons_learned": [
+    "C1 per-codeword c_e 与 cascade RQ-VAE L1/L2 residual 几何不兼容 (residual 输入 norm 0.14 << c=0.4~1.0 manifold radius 1.0~1.58, codebook 收束到 0)",
+    "per-codeword curvature 在 VQ-VAE 单层 (1 layer codebook) 可能 work, 但 cascade 3 层 + 每层异质 manifold 复合导致 L1/L2 完全 collapse",
+    "R36c 诊断必须直接观察 ckpt 中间层 codebook 状态 (norm / unique cluster), 而非仅看 per_layer_usage 唯一性",
+    "前置 Step 3.5 sanity test 只验证 1 layer + 8 items, 无法捕捉 cascade collapse 的中层问题"
+  ],
+  "next_direction": "避开深度 manifold 复合 (A/C 类机制). 候选 D1 cyclic curriculum (训练中 c(t) 循环, 单标量 c 全局, 无层级冲突) 或 E1 Riemannian Adam (优化器层面, 不动 manifold)"
+}
