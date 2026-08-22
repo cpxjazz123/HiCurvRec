@@ -1,0 +1,109 @@
+{
+  "version": "v68_g4_manifold_contrastive",
+  "verdict": "FAIL_R37_test_regress_within_noise",
+  "baseline_lock": "R51+",
+  "baseline_test_R10": 0.1090931056701031,
+  "v68_test_R10": 0.10820715206185567,
+  "delta_abs": -0.0008859536082474329,
+  "delta_pct": -0.8122,
+  "design": "Stage 3 G4 Manifold Contrastive Loss (SimCLR NT-Xent on Poincaré ball c=0.7, projection dim=32, temperature=0.10, aux_weight=0.10)",
+  "trigger_signals": [
+    "v68 test_R@10 = 0.10820715206185567 < baseline 0.1090931056701031 (delta -0.81%, R37 FAIL 硬约束)",
+    "Stage 3 best valid ndcg@10 = 0.0965 (E117), 微超 baseline E97 0.0961 (+0.4%) — valid 信号略正但 test 反向, R36 v3.5 valid-test mismatch",
+    "Stage 4 v1 launch bug: 未设 FORCE_HGREC=1 + .gin 第 1 行 docstring 致 gin parse fail, 走 main() 路径 EncoderDecoderRetrievalModel (state_dict 不匹配), h@10=0.0006. Stage 4 v2 修后正确",
+    "Stage 3 训练期 [TEST FINAL] 块结果 (h@10=0.1052) 与 Stage 4 v2 (h@10=0.1082) 不同 (差异 0.003, 0.3%), Stage 4 v2 为权威 (走 _test_eval_hgrec + 字符级 ckpt)",
+    "R51+ 锁定 + R36e baseline 复测 PASS: 0.10909 字符级一致 (Stage 4 pipeline OK, 排除 pipeline 因素)",
+    "G4 manifold contrastive 训练成功 (loss=7.15 稳定下降, best v68 loss 比 baseline CE 略高), 但 test 端反而 regress, valid-test mismatch 明显"
+  ],
+  "stage_results": {
+    "stage1": {
+      "status": "REUSE_BASELINE_CKPT (Stage 1 RQ-VAE 未改动, 复用 baseline rqvae_final.pt)",
+      "duration_seconds": null
+    },
+    "stage2": {
+      "status": "REUSE_BASELINE_SID (Stage 2 SID 未改动, 复用 v19 SID)",
+      "duration_seconds": null
+    },
+    "stage3": {
+      "status": "TRAINED 137 epoch (EARLY_STOP@E137, E117 best ndcg@10=0.0965)",
+      "best_epoch": 117,
+      "best_valid_ndcg10": 0.09646873867388853,
+      "duration_minutes": 32,
+      "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_v68_g4_manifold_contrastive/out/decoder/instruments_hgrec_configs/hgrec_v68_g4_manifold_contrastive/best_ckpt.pt"
+    },
+    "stage4_v1_buggy": {
+      "status": "BUG (FORCE_HGREC 没设 + .gin docstring invalid + 走 main() 路径 state_dict mismatch)",
+      "test_R10_buggy": 0.0006040592783505155,
+      "saved_path_wrong": "out/decoder/instruments/test_final.json (相对路径 truncated)"
+    },
+    "stage4_v2_fixed": {
+      "status": "TEST_EVAL_DONE (DDP 4 卡, FORCE_HGREC=1 + 修复 .gin 第 1 行 docstring → # comment)",
+      "n_eval": 24832,
+      "test_R@5": 0.08738724226804123,
+      "test_R@10": 0.10820715206185567,
+      "test_R@20": 0.13635631443298968,
+      "test_NDCG@5": 0.0739189669029,
+      "test_NDCG@10": 0.08057213812759242,
+      "test_NDCG@20": 0.08766886131050661,
+      "delta_from_baseline_pct": -0.8122
+    }
+  },
+  "v68_g4_implementation_detail": [
+    "V68_G4_ENABLED = True, V68_G4_AUX_WEIGHT = 0.10",
+    "V68_G4_PROJECTION_DIM = 32, V68_G4_C = 0.7, V68_G4_TEMPERATURE = 0.10",
+    "Linear(128→32) projection head v68_proj (broadcast from rank 0 R51+ 兼容)",
+    "_expmap0(u, c) → Poincaré ball",
+    "_poincare_dist(x, y, c) = (2/√c) atanh(√c || (1-c||x||²)y+(1+c<x,y>)x / (1+2c<x,y>+c²||x||²||y||²) ||)",
+    "NT-Xent on Poincaré: pair (anchor, positive) = (B/2, B/2) batch slice, labels = arange(B/2)",
+    "Loss = CrossEntropy(logits=-d_pdist/T), logits squeeze(-1) 防 3D 维度错",
+    "总 loss = CE + HALC + 0.10 * G4"
+  ],
+  "stage4_bug_root_cause": {
+    "bug_1": ".gin 第 1 行用 Python docstring \"\"\"...\"\"\" 而非 # comment, 致 gin parse fail",
+    "bug_2": "Stage 4 launch 命令未设 FORCE_HGREC=1, gin parse fail 后 use_hgrec 走 False → main() 路径 → EncoderDecoderRetrievalModel 与 HG-Rec state_dict 不兼容 → strict=False 静默忽略 → 随机初始化 weights → h@10≈0",
+    "fix": "(1) sed -i '1s|.*|# v68 ...|' 改第 1 行为 comment; (2) FORCE_HGREC=1 env 强制走 _test_eval_hgrec; (3) Stage 4 v2 用绝对路径 BEST_CKPT_PATH",
+    "lesson": "Stage 4 启动前必须 R36e baseline 复测 + FORCE_HGREC=1 + .gin 第 1 行必须 # comment (R36e 强化)"
+  },
+  "r36_round_14_v68_lessons": [
+    "v68 G4 manifold contrastive FAIL_R37: test_R@10=0.1082 < baseline 0.10909 (-0.81%)",
+    "G4 manifold contrastive 让 valid 微升 (+0.4%) 但 test 反向, R36 v3.5 valid-test mismatch 实证",
+    "NT-Xent on Poincaré ball 在 encoder hidden state 上加 metric learning 信号, 但与 cross-entropy 主任务耦合不当, 训练期反向",
+    "Stage 4 v1 launch bug 暴露: .gin docstring invalid + 缺 FORCE_HGREC=1, 修后 v2 数值正常",
+    "14 轮 ceiling 0.11 严格实证: Stage 1 (B1, C1, D1, D2, MCDQ, PLD) + Stage 3 (G1, G3, G4) 全部 ≤ 0.11",
+    "下一步必须根本性变更: Stage 3 G5 (codebook-aware manifold contrastive) 或 Stage 1 E1 Riemannian Adam (需装 geoopt, R44c) 或 Stage 1 A2 Distance-Aware (R36g 推荐先单层)"
+  ],
+  "r36_full_inventory": {
+    "stage1_rqvae_attempts": [
+      "v51 PLD per-layer c_end: R36b FAIL (固定 c_end scalar)",
+      "v52 MCDQ per-layer α: R36b FAIL (训练全程稳定 α=0.5)",
+      "v55 C1 per-codeword c: R23 cascade collapse (norm→0)",
+      "v56 D1 cyclic curriculum: R23 trigger / ambiguous results",
+      "v62 D2 loss-driven c: R23 cascade assignment collapse (codes=15/256)",
+      "v65 D1 pure cyclic curriculum: PASS 持平 baseline (codes 1→93, L0 健康)",
+      "v67 B1 per-layer schedule: PASS 持平 baseline (codes 1→65, L0 偏低)"
+    ],
+    "stage3_t5_attempts": [
+      "v60 G1 v2 ε=0.02: +0.85% (within noise band)",
+      "v61 G1 v3 ε=0.03: +0.81% (within noise band)",
+      "v63 G3 manifold-decoder loss: -1.74% (R37 FAIL)",
+      "v68 G4 SimCLR NT-Xent on manifold: -0.81% (R37 FAIL, valid-test mismatch)"
+    ],
+    "stage4_attempts": [
+      "v64 Stage 4 geometry rerank (BLEND_ALPHA=0, hist_pool=last3): -37.9% (R37 FAIL dramatic)",
+      "v66 Stage 4 mixed rerank (BLEND_ALPHA=0.5, hist_pool=mean): PASS 持平 baseline"
+    ],
+    "total_attempts": 13,
+    "stage1_pass_count": 2,
+    "stage1_fail_count": 5,
+    "stage3_pass_count": 2,
+    "stage3_fail_count": 2,
+    "stage4_pass_count": 1,
+    "stage4_fail_count": 1,
+    "best_attempt": "v60 G1 v2 ε=0.02 (test_R@10=0.11002, +0.85%)",
+    "ceiling_test_R10": 0.11,
+    "target_test_R10": 0.12,
+    "v68_status": "FAIL_R37 (-0.81%)"
+  },
+  "next_direction_after_v68": "14 轮 ceiling 0.11 实证. Stage 3 G4 manifold contrastive FAIL_R37 valid-test mismatch. 下一轮 v69 候选: (a) Stage 3 G5 codebook-aware manifold contrastive (在 SID 嵌入空间而非 encoder hidden state 加 metric learning, 避免 v68 任务耦合问题); (b) Stage 1 E1 Riemannian Adam 替换 (让 c 参数真正在 manifold 上漂移, 需 geoopt 包, R44c 路径限制); (c) Stage 1 A2 Distance-Aware Adaptive Curvature + 单层 VQ-VAE 验证 (R36g 推荐先单层避免 cascade 风险). 优选 (a) Stage 3 G5 — 与 G4 同属 R36 G 类, 但任务定位更直接 (SID-level 而非 encoder-level)",
+  "r50_action": "rm -rf /home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_v68_g4_manifold_contrastive/ (R37 触发, 立即 R50 回滚)"
+}
