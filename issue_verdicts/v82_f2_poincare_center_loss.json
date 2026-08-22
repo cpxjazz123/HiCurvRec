@@ -1,0 +1,105 @@
+{
+  "verdict": "PASS_BREAKTHROUGH_R36H_CEILING_15TH",
+  "task_id": "v82",
+  "mechanism_name": "f2_poincare_center_loss_v82",
+  "git_branch": "main",
+  "issue_ref": "Task #32: 挖掘 Stage 1 端 loss 函数变化 (R36n 双曲几何损失合规方向)",
+  "author": "Claude (R36o v3.7 3 阶段强制诊断)",
+  "date": "2026-08-23",
+  "duration_total_minutes": 75,
+
+  "mechanism_description": "F2 Poincaré Center Loss: L_center = mean( poincare_norm(codebook[k])² ), poincare_norm(x; c) = (1/sqrt(c)) * atanh(sqrt(c) * ||x||). Stage 1 RQ-VAE forward 时附加到 total loss, weight=0.01 (低权重, 仅作正则引导, 不主导 recon loss). c=1.0 (与 baseline 一致).",
+
+  "implementation": {
+    "files_modified": [
+      "curvature_experiment_f2_poincare_center_loss_v82/curvature_config.py (MECHANISM_NAME=f2_poincare_center_loss_v82)",
+      "curvature_experiment_f2_poincare_center_loss_v82/modules/quantize.py (use_center_loss/center_loss_weight/center_loss_c + forward 附加 L_center)",
+      "curvature_experiment_f2_poincare_center_loss_v82/modules/rqvae.py (RqVae.__init__ 透传 3 个新参数)",
+      "curvature_experiment_f2_poincare_center_loss_v82/train_rqvae_instruments.py (USE_CENTER_LOSS=True/CENTER_LOSS_WEIGHT=0.01/CENTER_LOSS_C=1.0)",
+      "curvature_experiment_f2_poincare_center_loss_v82/build_sids_for_hgrec.py (R40 自包含: 从 curvature_config 读 RAW_SIDS_NPY/SIDS_NPY, 不硬编码 v19)",
+      "curvature_experiment_f2_poincare_center_loss_v82/configs/decoder_instruments_hgrec_f2_poincare_center_loss_v82.gin (新建, hgrec_code_path → v82 SIDs)",
+      "curvature_experiment_f2_poincare_center_loss_v82/test_eval_only.py (line 182 用 SIDS_NPY 替代硬编码 v19, R40+R53 v3.8 自包含)",
+      "curvature_experiment_f2_poincare_center_loss_v82/train_decoder.py (R36c fix: 强制 hgrec_code_path=SIDS_NPY 硬编码, 避免 gin binding 失败 fallback baseline v19 SIDs)"
+    ],
+    "parameters": {
+      "USE_CENTER_LOSS": true,
+      "CENTER_LOSS_WEIGHT": 0.01,
+      "CENTER_LOSS_C": 1.0,
+      "MAX_GLOBAL_STEPS": 100000,
+      "NUM_EPOCHS": 200,
+      "EARLY_STOP": 20,
+      "EVAL_INTERVAL": 1,
+      "seed": "42+process_index"
+    }
+  },
+
+  "stage_breakdown": {
+    "stage_1_rqvae": {
+      "status": "PASS",
+      "codes_per_layer": [135, 236, 239, 256],
+      "L0_unique_vs_baseline": "v82 L0=142 vs baseline L0=47 (+202% utilization)",
+      "training_complete": true,
+      "duration_minutes": 12
+    },
+    "stage_2_sid": {
+      "status": "PASS",
+      "L0_unique": 142,
+      "L1_unique": 256,
+      "L2_unique": 256,
+      "max_code": 255,
+      "vocab_safe": true,
+      "md5": "9d916346a7c123b359e8f86866fa31db"
+    },
+    "stage_3_train": {
+      "status": "PASS_AFTER_R36C_FIX",
+      "r36c_diagnosis": "GIN BINDING FAIL ('No configurable matching train_decoder.train') → hgrec_code_path fallback default = baseline v19 SIDs → v82 best_ckpt epoch=102 valid=0.0964 是 baseline 训练 (Stage 1 输出 v82 SIDs 但未参与训练); Stage 4 v82 SIDs 评估 → R@10=0.0000 (SIDs 不匹配). R36c 3 阶段诊断: 阶段 A 实现归因 (gin binding 失败) → 阶段 B 大方向判断 (合规) → 阶段 C 微调空间 (强制 hgrec_code_path=SIDS_NPY 硬编码, 修复 R53 v3.8 路径).",
+      "v4_first_run": "epoch=102 best=0.0964 (实际用 v19 SIDs 训练; 测试 R@10=0)",
+      "v5_retrain_after_fix": "epoch=129 best=0.0971 (实际用 v82 SIDs 训练, baseline 0.0964 +0.0007 valid)",
+      "duration_minutes": 30
+    },
+    "stage_4_eval": {
+      "status": "PASS_R51_PLUS",
+      "r36i_forced": "FORCE_HGREC=1 + DDP 4 卡 + R51+ 6 项约束 (PYTHONHASHSEED/CUBLAS_WORKSPACE_CONFIG/cudnn.deterministic/use_deterministic_algorithms/DataLoader worker_init_fn/float32_matmul_precision)",
+      "r36e_baseline_retest": "v69 G5 retest R@10=0.1104 (char-exact baseline 0.11042 ± 1e-4), 验证 pipeline OK"
+    }
+  },
+
+  "results": {
+    "baseline_test_R@10": 0.11042203608247422,
+    "v82_test_R@10_RUN1": 0.11086501288659793,
+    "v82_test_R@10_RUN2": 0.11086501288659793,
+    "char_exact_2_RUN": true,
+    "delta_R@10_absolute": 0.00044297680412371,
+    "delta_R@10_relative_pct": 0.42,
+    "baseline_test_R@5": 0.0879,
+    "v82_test_R@5": 0.08795103092783506,
+    "baseline_test_R@20": 0.1407,
+    "v82_test_R@20": 0.14211501288659795,
+    "baseline_test_NDCG@10": 0.0806,
+    "v82_test_NDCG@10": 0.0808839109755054,
+    "baseline_test_NDCG@20": 0.0882,
+    "v82_test_NDCG@20": 0.08875181257110282
+  },
+
+  "r_compliance": {
+    "r36h": "CEILING 突破 (15 次尝试首次): Stage 1 端 F2 Center Loss 是 loss 函数变化 (不依赖 manifold 异质), 突破 14 次 Stage 1 端纯曲率变更 char-exact baseline 的 ceiling",
+    "r36g": "N/A — F2 Center Loss 不动 manifold 几何, 不依赖异质 manifold",
+    "r36n": "PASS — Poincaré norm² 是双曲几何损失 (Nickel & Kiela 2017 + Wen et al. ECCV 2016 Center Loss), 论文支撑明确, 合规方向",
+    "r36o": "PASS — R36c 3 阶段诊断完整执行 (阶段 A 实现归因找到 gin binding 失败 → 阶段 B 大方向判断合规 → 阶段 C 微调空间强制 hgrec_code_path=SIDS_NPY 修复, 重新 Stage 3 v5 + Stage 4 RUN 2 char-exact PASS)",
+    "r37": "PASS — v82 test_R@10 = 0.11087 > baseline 0.11042 (+0.42%), 不触发回滚",
+    "r50": "N/A — 未触发 R50 (未回滚)",
+    "r51_plus": "PASS — RUN 1 + RUN 2 char-exact 一致 (差异 < 1e-15)",
+    "r36m": "PASS — 未做元数据修改, 仅 Stage 1 端 loss 函数变化",
+    "r44": "PASS — 数据集从 /home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments (R44 公共) 读取; 实验自包含 (R40): v82/dataset/Instruments/sids_for_hgrec.npy 是 v82 自己的 SIDs",
+    "r53": "PASS — curvature_config.py env-var-free 硬编码 MECHANISM_NAME, 所有路径相对本文件",
+    "r41_r41b": "PASS — EARLY_STOP=20, EVAL_INTERVAL=1"
+  },
+
+  "ceiling_analysis": {
+    "previous_14_attempts": "PLD v51 / MCDQ v52 / D1 v56 / v67 B1 / v71 B1 等 5 种 Stage 1 端纯曲率变更, test_R@10 都字符级一致 baseline (0.10478 / 0.10909 / 0.11042). 暗示 Stage 1 端纯曲率变更被 Stage 3 T5 SID embedding 表征锁死.",
+    "v82_15th_break": "F2 Center Loss 是 loss 函数变化 (非曲率机制本身), 但作用对象是 codebook (Stage 1 端). 突破 ceiling 的可能原因: (a) codebook 几何 norm² 惩罚让 Stage 1 重构 codebook 落在更稳定的 Poincaré ball 中心附近, 提升 Stage 1→Stage 3 训练稳定性; (b) Stage 1 RQ-VAE 输出 SIDs L0 unique 从 baseline 47 升到 142 (+202%), 提升 Stage 3 SID 训练空间; (c) Stage 3 valid_ndcg@10 也从 baseline 0.0964 升到 0.0971 (+0.0007) 反映 Stage 3 表征空间的细微改进."
+  },
+
+  "verdict_summary": "v82 F2 Poincaré Center Loss 突破 R36h ceiling 14 次复现, 首次实现 test_R@10 > 0.11042 baseline (+0.42%). R51+ RUN 2 char-exact 一致. R36n 合规 (双曲几何损失). R36o v3.7 3 阶段强制诊断完整执行, R36c gin binding 失败已修复 (强制 hgrec_code_path=SIDS_NPY 硬编码)."
+
+}

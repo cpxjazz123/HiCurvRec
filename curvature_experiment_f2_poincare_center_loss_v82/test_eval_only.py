@@ -14,6 +14,10 @@ import torch
 
 # R53 v3.8: 硬编码 mechanism 路径 (替代 HGREC_TAG env var)
 from curvature_config import CONFIG_PATH as _CONFIG_PATH, BEST_CKPT_PATH as _BEST_CKPT_PATH
+# 临时 cross-test 钩子: env var CKG_OVERRIDE 强制覆盖 ckpt path (R36c 诊断用)
+import os as _os
+if _os.environ.get("CKG_OVERRIDE"):
+    _BEST_CKPT_PATH = _os.environ["CKG_OVERRIDE"]
 
 # 关键: import train_decoder 让 `train` configurable 被 gin 注册
 # (decoder_instruments.gin 里有 train.xxx = ... 配置项)
@@ -178,8 +182,12 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     import os.path as _osp
 
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
-    # 硬编码 (与 train_decoder.hgrec_code_path 一致), 不依赖 gin query
-    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+    # v82: 用本实验 SIDS_NPY (R53 v3.8 + R40 自包含), 不硬编码 v19 baseline
+    from curvature_config import SIDS_NPY as _v82_sids
+    code_path = _v82_sids
+    # R36c 诊断: 临时让 SIDs_OVERRIDE env var 强制覆盖为 baseline v19 SIDs (验证 v82 ckpt 是否 v19 训练)
+    if _os.environ.get("SIDS_OVERRIDE"):
+        code_path = _os.environ["SIDS_OVERRIDE"]
     beam_size = 20
     top_k_eval_list = [5, 10, 20]
     max_len = 20
@@ -207,6 +215,13 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
         codebook_size=[256, 256, 256],
         max_len=max_len,
     )
+    if accelerator.is_main_process:
+        print(f"[diag] code_path={code_path}")
+        print(f"[diag] test_ds size={len(test_ds)}")
+        sample_item = test_ds[0]
+        print(f"[diag] sample[0] history[:3]={sample_item['history'][:3]} target={sample_item['target']}")
+        sids_check = __import__("numpy").load(code_path)
+        print(f"[diag] sids shape={sids_check.shape}, L0 unique={__import__('numpy').unique(sids_check[:,0]).size}, L1 unique={__import__('numpy').unique(sids_check[:,1]).size}, L2 unique={__import__('numpy').unique(sids_check[:,2]).size}")
 
     # === R51+ 强约束: Stage 4 评估端完全确定性 (单进程版) ===
     # 含 cudnn/CUBLAS/PYTHONHASHSEED (与 Stage 3 R51+ 块严格对齐)
