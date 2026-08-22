@@ -85,20 +85,19 @@ def check_stage3_artifact():
 def main():
     ckpt_path = check_stage3_artifact()
 
-    env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0,1,2,3")
-    # ⚠️ 强制 HG-Rec 路径, 绕开 test_eval_only.py 的 gin binding bug
-    env["FORCE_HGREC"] = "1"
+    # R53 v3.8: CUDA_VISIBLE_DEVICES 硬编码自 curvature_config.py, USE_HGREC_ARCH 硬编码为 True
+    # 不传 env= 让 subprocess 继承父进程 env (curvature_config.py 已设置全部 env var)
+    from curvature_config import CUDA_VISIBLE_DEVICES as _CUDA_VISIBLE_DEVICES
 
     cmd = build_stage4_cmd(ckpt_path)
     print(f"[stage4] launching DDP 4-card HG-Rec T5 test eval (beam=20)")
-    print(f"[stage4] command: FORCE_HGREC=1 CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']} "
-          f"{' '.join(cmd)}")
-    print(f"[stage4] FORCE_HGREC={env['FORCE_HGREC']} (REQUIRED — 绕开 gin binding bug)")
+    print(f"[stage4] command: {' '.join(cmd)}")
+    print(f"[stage4] CUDA_VISIBLE_DEVICES={_CUDA_VISIBLE_DEVICES} (硬编码自 curvature_config.py)")
+    print(f"[stage4] USE_HGREC_ARCH=True (硬编码自 curvature_config.py, 替代 FORCE_HGREC=1)")
     print(f"[stage4] best_ckpt: {ckpt_path}")
     print(f"[stage4] expected test_R@10 ≈ 0.110 (Issue239 baseline)")
 
-    result = subprocess.run(cmd, env=env, check=False)
+    result = subprocess.run(cmd, check=False)
     if result.returncode != 0:
         print(f"[stage4] FAIL exit={result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)

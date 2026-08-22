@@ -12,6 +12,9 @@ import json
 import gin
 import torch
 
+# R53 v3.8: 硬编码 mechanism 路径 (替代 HGREC_TAG env var)
+from curvature_config import CONFIG_PATH as _CONFIG_PATH, BEST_CKPT_PATH as _BEST_CKPT_PATH
+
 # 关键: import train_decoder 让 `train` configurable 被 gin 注册
 # (decoder_instruments.gin 里有 train.xxx = ... 配置项)
 import train_decoder  # noqa: F401
@@ -40,18 +43,13 @@ def main():
     accelerator = Accelerator(split_batches=True, mixed_precision="no")
     device = accelerator.device
 
-    # gin config + best_ckpt path 自动 derive (HGREC_TAG env var, 相对路径, 不需要 CLI 传入)
-    hgrec_tag = os.environ.get("HGREC_TAG")
-    if hgrec_tag:
-        config_path = f"configs/decoder_instruments_hgrec_{hgrec_tag}.gin"
-        BEST_CKPT_PATH = f"./out/decoder/instruments_hgrec_configs/hgrec_{hgrec_tag}/best_ckpt.pt"
-    else:
-        config_path = sys.argv[1] if len(sys.argv) > 1 else "configs/decoder_instruments.gin"
-        BEST_CKPT_PATH = sys.argv[2] if len(sys.argv) > 2 else "out/decoder/instruments/best_ckpt.pt"
+    # R53 v3.8: gin config + best_ckpt path 硬编码从 curvature_config.py import (无 env var)
+    config_path = _CONFIG_PATH
+    BEST_CKPT_PATH = _BEST_CKPT_PATH
     try:
         gin.parse_config_file(config_path, skip_unknown=True)
     except Exception as e:
-        print(f"[test_eval] gin parse failed: {e}; fallback to FORCE_HGREC=1", flush=True)
+        print(f"[test_eval] gin parse failed: {e}; fallback to USE_HGREC_ARCH=True (硬编码)", flush=True)
 
     # === C33 HG-Rec 路径分支 (硬编码, 不再靠 env var) ===
     # 原因: .gin 的 train_decoder.train.use_hgrec_arch 字段依赖 @gin.configurable 装饰,
@@ -213,9 +211,7 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     # === R51+ 强约束: Stage 4 评估端完全确定性 (单进程版) ===
     # 含 cudnn/CUBLAS/PYTHONHASHSEED (与 Stage 3 R51+ 块严格对齐)
     # 防止 DataLoader worker 启动顺序 / hash dict 顺序 / GEMM 算法选择 引入噪声
-    import os as _os
-    _os.environ.setdefault("PYTHONHASHSEED", "42")
-    _os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    # R53 v3.8: PYTHONHASHSEED/CUBLAS_WORKSPACE_CONFIG 已在 curvature_config.py 硬编码写入, 无需 setdefault
     torch.manual_seed(42)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(42)

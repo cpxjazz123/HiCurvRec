@@ -41,24 +41,22 @@ STAGE1_TORCHRUN = [
 
 
 def main():
-    # GPU 选择: 默认 0,1,2,3 (R7 需确认空闲)
-    env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0,1,2,3")
-
-    # 提示用户: 必须先确认 GPU 空闲
+    # R53 v3.8: CUDA_VISIBLE_DEVICES 硬编码从 curvature_config.py (无 env var 读取)
+    from curvature_config import CUDA_VISIBLE_DEVICES as _CUDA_VISIBLE_DEVICES
+    # 提示用户: 必须先确认 GPU 空闲 (R7)
     print("[stage1] launching DDP 4-card RQ-VAE training (c_end=0.7)")
     print(f"[stage1] command: {' '.join(STAGE1_TORCHRUN)}")
-    print(f"[stage1] CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}")
+    print(f"[stage1] CUDA_VISIBLE_DEVICES={_CUDA_VISIBLE_DEVICES} (硬编码自 curvature_config.py)")
     print(f"[stage1] expected output: rqvae_out_v19_cend_07/rqvae_final.pt")
     print(f"[stage1] expected codes_per_layer: [47, 234, 234]")
 
-    # 实际执行
-    result = subprocess.run(STAGE1_TORCHRUN, env=env, check=False)
+    # R53 v3.8: 不传 env= 让 subprocess 继承父进程 env (curvature_config.py 已硬编码 CUDA_VISIBLE_DEVICES)
+    result = subprocess.run(STAGE1_TORCHRUN, check=False)
     if result.returncode != 0:
         print(f"[stage1] FAIL exit={result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)
 
-    print(f"[stage1] done → /home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt")
+    print(f"[stage1] done → rqvae_final.pt at hardcoded path from curvature_config.py")
 
 
 if __name__ == "__main__":

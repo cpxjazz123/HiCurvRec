@@ -1,8 +1,7 @@
 import os
 import sys
-# 跳过 transformers TF 路径 (Keras 3 兼容性问题)
-os.environ["USE_TF"] = "0"
-os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+# R53 v3.8: USE_TF/TRANSFORMERS_NO_ADVISORY_WARNINGS/HF cache/R51+ 等 env var 已在 curvature_config 硬编码写入
+from curvature_config import USE_HGREC_ARCH, SAVE_DIR_ROOT as _SAVE_DIR_ROOT_DEFAULT
 
 # 把当前脚本所在目录加入 sys.path 最前 (R44/R47: 任务目录自包含)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -102,11 +101,9 @@ def _train_hgrec(
     #   4. cuBLAS GEMM workspace 算法 (CUBLAS_WORKSPACE_CONFIG)
     # 实测: 单纯 Phase 1 (v51) 仍有 ±0.02 量级 best_metric 漂移, 升级为 R51+ 后必须字符级一致
     # 与 curvature_experiment/scripts/train_decoder.py 块严格对齐, 字符级一致
-    import os as _os
+    # R53 v3.8: PYTHONHASHSEED/CUBLAS_WORKSPACE_CONFIG 已在 curvature_config.py 硬编码写入, 删除 setdefault
     import random as _r51_random
     import numpy as _r51_np
-    _os.environ.setdefault("PYTHONHASHSEED", "42")
-    _os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     _rank = accelerator.process_index
     _r51_random.seed(42 + _rank)
     _r51_np.random.seed(42 + _rank)
@@ -553,20 +550,11 @@ def train(
     hgrec_max_len=20,
     hgrec_batch_size=2560,  # per-global-batch (4 卡 DDP)
 ):
-    # HG-Rec gin binding 兜底 (加速器子进程下 gin macro 可能未生效, 强制走 HG-Rec 路径)
-    if "hgrec" in sys.argv[0:5] or any("hgrec" in str(a) for a in sys.argv):
-        use_hgrec_arch = True
-    if os.environ.get("FORCE_HGREC", "0") == "1":
-        use_hgrec_arch = True
-
-    # === gin 兜底: save_dir_root 不通过 gin binding 时按 config 文件名派生 ===
+    # R53 v3.8: use_hgrec_arch / save_dir_root 强制覆盖为 curvature_config.py 硬编码值 (无 env var)
+    # 不允许 gin binding 之外的 env var fallback; 若 gin binding 与硬编码冲突, 硬编码优先
+    use_hgrec_arch = USE_HGREC_ARCH
     if save_dir_root == "out/":
-        # 检测 gin config 文件名 (sys argv 末位是 .gin)
-        for arg in sys.argv[::-1]:
-            if arg.endswith(".gin"):
-                tag = arg.replace("decoder_instruments_", "").replace(".gin", "")
-                save_dir_root = f"out/decoder/instruments_hgrec_{tag}/"
-                break
+        save_dir_root = _SAVE_DIR_ROOT_DEFAULT
 
     if dataset not in (RecDataset.AMAZON, RecDataset.INSTRUMENTS):
         if not use_hgrec_arch:

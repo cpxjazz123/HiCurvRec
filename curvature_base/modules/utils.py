@@ -1,4 +1,3 @@
-import argparse
 import os
 import gin
 import torch
@@ -17,20 +16,14 @@ def eval_mode(fn):
 
 
 def parse_config():
-    # 优先 HGREC_TAG env var 推导 config_path (相对路径, 不需要 CLI 传入)
-    hgrec_tag = os.environ.get("HGREC_TAG")
-    if hgrec_tag:
-        config_path = f"configs/decoder_instruments_hgrec_{hgrec_tag}.gin"
-    else:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("config_path", type=str, help="Path to gin config file.")
-        args = parser.parse_args()
-        config_path = args.config_path
+    # R53 v3.8: config_path 硬编码从 curvature_config.py import (无 env var)
+    from curvature_config import CONFIG_PATH as _CONFIG_PATH
+    config_path = _CONFIG_PATH
     try:
         gin.parse_config_file(config_path)
     except Exception as e:
-        # HG-Rec 路径兜底: gin binding 失败时靠 FORCE_HGREC 环境变量 + sys.argv 检测
-        print(f"[parse_config] gin binding failed ({e}); falling back to env/argv", flush=True)
+        # HG-Rec 路径兜底: gin binding 失败时靠 USE_HGREC_ARCH 硬编码 (curvature_config.py)
+        print(f"[parse_config] gin binding failed ({e}); falling back to USE_HGREC_ARCH=True", flush=True)
 
 
 @torch.no_grad

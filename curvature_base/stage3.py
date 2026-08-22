@@ -1,84 +1,60 @@
 """Stage 3 — HG-Rec T5 training (DDP 4 卡).
 
-主目录默认入口: 用 Stage 2 v19 SID (Instruments_v19_sids_for_hgrec.npy)
-跑 HG-Rec T5 训练 (HALC v2 + v16 differential schedule).
+启动方式: python3 stage3.py
 
-启动方式 (任选其一):
-  1) python3 stage3.py
-  2) CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=29501 \
-       /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/stage3.py
-
-实际执行 → 顶层 train_decoder.py + configs/decoder_instruments_hgrec_v19.gin
-(R40 自包含, 训练期 valid 评估 per-epoch, EARLY_STOP=20).
-R42: 必须 torchrun --nproc_per_node=4 (DDP 4 卡).
-R30/R43: 超参硬编码, 无 CLI 数值超参.
-R41: EARLY_STOP=20, R41b: EVAL_INTERVAL=1.
-R35: 单 ckpt + beam=20 (valid 阶段用 beam=20 选 best).
-R36: 曲率机制: HALC v2 sigmoid c 调度 (v16 differential schedule),
-     不调 LR/dropout/wd/batch_size.
-
-输入:
-  - Stage 2 产物: /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/
-                  Instruments/Instruments_v19_sids_for_hgrec.npy
-
-产物:
-  - /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/
-    instruments_hgrec_configs/hgrec_v19/best_ckpt.pt (~22MB)
-  - /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/
-    instruments_hgrec_configs/hgrec_v19/train_log.json
-
-预期 best valid ndcg@10 = 0.097 (vs Issue239 0.097, -0.001 noise 内).
+R53 v3.8: 启动命令无 env var, 全部硬编码到 curvature_config.py.
+实际执行 → 顶层 train_decoder.py + 从 curvature_config 推导的 CONFIG_PATH.
+R40: 自包含; R42: DDP 4 卡; R41: EARLY_STOP=20 + EVAL_INTERVAL=1; R35: 单 ckpt + beam=20.
 """
 import os
 import subprocess
 import sys
 
+# R53 v3.8: 从 curvature_config 硬编码导入 mechanism 路径
+from curvature_config import CONFIG_PATH as _CONFIG_PATH, CUDA_VISIBLE_DEVICES as _CUDA_VISIBLE_DEVICES
+
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ⚠️ R34b fix: 必须 cd 到 MAIN_DIR 后用相对路径传 config,
-# 否则 train_decoder.py save_dir_root fallback 把 config 绝对路径当 tag,
-# 输出到 out/decoder/instruments_hgrec_<full_path>/hgrec_v19/ 嵌套错目录
+# R53 v3.8: torchrun 路径硬编码
 STAGE3_TORCHRUN = [
     "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun",
     "--nproc_per_node=4",
     "--master_port=29501",
     os.path.join(MAIN_DIR, "train_decoder.py"),
-    "configs/decoder_instruments_hgrec_v19.gin",
 ]
-
-# R40 自包含: Stage 2 产物必须存在
-STAGE2_OUT = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
 
 
 def check_stage2_artifact():
-    if not os.path.exists(STAGE2_OUT):
+    # R52: SID 路径相对化, 硬编码
+    sid_path = "./dataset/Instruments/sids_for_hgrec.npy"
+    if not os.path.exists(sid_path):
         raise FileNotFoundError(
-            f"Stage 2 SID 不存在: {STAGE2_OUT}\n"
+            f"Stage 2 SID 不存在: {sid_path}\n"
             f"请先跑 stage2.py 跑 RQ-VAE 推理 + 格式转换."
         )
-    print(f"[stage3] Stage 2 SID OK: {STAGE2_OUT}")
+    print(f"[stage3] Stage 2 SID OK: {sid_path}")
 
 
 def main():
     check_stage2_artifact()
 
-    env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = env.get("CUDA_VISIBLE_DEVICES", "0,1,2,3")
-
-    print(f"[stage3] launching DDP 4-card HG-Rec T5 training (HALC v2 + v16)")
+    # R53 v3.8: subprocess env 硬编码 CUDA_VISIBLE_DEVICES=0,1,2,3 (无 os.environ.copy, 无 env.get)
+    # 仅注入必要的 CUDA_VISIBLE_DEVICES, PATH 等系统环境从父进程继承 (subprocess.run 默认行为)
+    # 不传 env= 参数即可让 subprocess 继承父进程 env (curvature_config.py 已在 import 时设置 CUDA_VISIBLE_DEVICES)
+    print(f"[stage3] launching DDP 4-card HG-Rec T5 training")
     print(f"[stage3] command: cd {MAIN_DIR} && {' '.join(STAGE3_TORCHRUN)}")
-    print(f"[stage3] CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}")
-    print(f"[stage3] expected best_ckpt: out/decoder/instruments_hgrec_configs/hgrec_v19/best_ckpt.pt")
-    print(f"[stage3] expected best valid ndcg@10 = 0.0970")
+    print(f"[stage3] CUDA_VISIBLE_DEVICES={_CUDA_VISIBLE_DEVICES} (硬编码自 curvature_config.py)")
+    print(f"[stage3] config_path={_CONFIG_PATH} (硬编码自 curvature_config.py)")
     print(f"[stage3] EARLY_STOP=20, EVAL_INTERVAL=1 (R41/R41b)")
 
-    # ⚠️ R34b fix: 必须 cwd=MAIN_DIR 让 train_decoder.py save_dir_root fallback 解析为正确 tag
-    result = subprocess.run(STAGE3_TORCHRUN, cwd=MAIN_DIR, env=env, check=False)
+    # ⚠️ R34b fix: 必须 cwd=MAIN_DIR 让 train_decoder.py save_dir_root 解析为正确 tag
+    # R53: 不传 env= 让 subprocess 继承父进程 (curvature_config.py 已硬编码 CUDA_VISIBLE_DEVICES)
+    result = subprocess.run(STAGE3_TORCHRUN, cwd=MAIN_DIR, check=False)
     if result.returncode != 0:
         print(f"[stage3] FAIL exit={result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)
 
-    print(f"[stage3] done → out/decoder/instruments_hgrec_configs/hgrec_v19/best_ckpt.pt")
+    print(f"[stage3] done → best_ckpt at save_dir_root from curvature_config")
 
 
 if __name__ == "__main__":
