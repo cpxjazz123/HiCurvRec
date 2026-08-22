@@ -1,10 +1,10 @@
 """Preprocess Musical_Instruments items → sentence-t5-xxl embeddings (R47).
 
-Input: /home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments.item.json (9922 items)
-Output: /home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy (9922, 768)
+Input:  ./dataset/Instruments.item.json (9922 items, R44 相对路径)
+Output: ./dataset/Instruments/item_emb.npy (9922, 768)
 
-R36/R47: sentence-t5-xxl embedding via llm_client env var (HF cache on hj82_scratch2).
-R44/R44b: dataset read from /home/wlia0047/ar57/wenyu/GeneRec/dataset/.
+R36/R47: sentence-t5-xxl embedding, HF cache 在 curvature_config.py 硬编码 (hj82_scratch2).
+R52/R53: 路径相对 cwd, 全部从 curvature_config.py 硬编码导入, 无 env var / 无 CLI 参数.
 """
 import json
 import os
@@ -13,10 +13,12 @@ import time
 import numpy as np
 import torch
 
-ITEM_JSON = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments.item.json"
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments"
-OUT_NPY = os.path.join(OUT_DIR, "item_emb.npy")
-OUT_IDS = os.path.join(OUT_DIR, "item_ids.json")
+from curvature_config import (
+    ITEM_JSON_PATH as ITEM_JSON,
+    ITEM_EMB_NPY as OUT_NPY,
+    ITEM_IDS_JSON as OUT_IDS,
+)
+OUT_DIR = os.path.dirname(OUT_NPY)
 
 
 def main():

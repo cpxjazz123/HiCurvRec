@@ -1,9 +1,10 @@
 """SID inference for Musical_Instruments using trained RqVae.
 
-加载 rqvae_final.pt → 跑 9922 item embedding → 输出 (9922, 3) SID 矩阵
-到 /home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids.npy
+加载 ./out/rqvae/instruments/rqvae_final.pt → 跑 9922 item embedding →
+输出 (9922, 3) SID 矩阵到 ./out/rqvae/instruments/sids_raw.npy
 
-R36/R47: 使用 sentence-t5-xxl 预计算的 item_emb.npy (已存在)
+R36/R47: 使用 sentence-t5-xxl 预计算的 item_emb.npy
+R52/R53: 路径相对 cwd, 从 curvature_config.py 硬编码导入, 无 env var / 无 CLI 参数.
 R5: seed=42, 单卡运行即可 (推理不是瓶颈)
 """
 import json
@@ -21,13 +22,13 @@ from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
 from data.schemas import SeqBatch
 
-
-SEED = 42
-EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# v19: 用 Stage 1 v19 c_end=0.7 训练产物
-CKPT = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt"
-OUT_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/sids_v19_cend_07.npy"
-OUT_IDS_JSON = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_ids.json"
+# R52/R53: 从 curvature_config.py 硬编码导入路径
+from curvature_config import (
+    ITEM_EMB_NPY as EMB_NPY,
+    RQVAE_CKPT_PATH as CKPT,
+    RAW_SIDS_NPY as OUT_NPY,
+    ITEM_IDS_JSON as OUT_IDS_JSON,
+)
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]
@@ -35,6 +36,9 @@ EMBED_DIM = 32
 CODEBOOK_SIZE = 256
 N_LAYERS = 3
 COMMITMENT_WEIGHT = 0.25
+
+# R5/R51: seed=42 (推理端固定)
+SEED = 42
 
 # 推理超参 (硬编码 R30/R43)
 INFER_BATCH_SIZE = 512
@@ -314,11 +318,12 @@ def main():
     print(f"[infer] done in {time.time()-t0:.1f}s")
 
     # Save
+    os.makedirs(os.path.dirname(OUT_NPY), exist_ok=True)
     np.save(OUT_NPY, sids)
     print(f"[save] {OUT_NPY}: shape={sids.shape}, dtype={sids.dtype}")
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state_c28_curriculum_m3.npy"), curv_state)
-    np.save(os.path.join(os.path.dirname(OUT_NPY), "response_c28_curriculum_m3.npy"), response)
-    print(f"[save] curvature_state_c28_curriculum_m3.npy: {curv_state.shape} | response_c28_curriculum_m3.npy: {response.shape}")
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "curvature_state.npy"), curv_state)
+    np.save(os.path.join(os.path.dirname(OUT_NPY), "response.npy"), response)
+    print(f"[save] curvature_state.npy: {curv_state.shape} | response.npy: {response.shape}")
     print(f"[curv] per-layer c: {[float(curv_state[0, li]) for li in range(N_LAYERS)]}")
     print(f"[resp] boundary mean: {[float(response[:, li, 1].mean()) for li in range(N_LAYERS)]}")
 

@@ -115,7 +115,7 @@ def _train_hgrec(
     torch.use_deterministic_algorithms(True, warn_only=True)
     torch.set_float32_matmul_precision("highest")
     print(f"[R51+ seed] rank={_rank} deterministic (cudnn/CUBLAS/hash) before DataLoader", flush=True)
-    del _rank, _r51_random, _r51_np, _os
+    del _rank, _r51_random, _r51_np
 
     # === R51+ Phase 2: DataLoader worker_init_fn (rank-relative seed) ===
     # 防止 8 个 dataloader worker 启动顺序 + worker 内 random 状态不同

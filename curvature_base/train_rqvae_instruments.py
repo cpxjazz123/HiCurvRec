@@ -32,13 +32,12 @@ from modules.quantize import QuantizeForwardMode
 from modules.tokenizer.semids import SemanticIdTokenizer
 from data.schemas import SeqBatch
 
+# R52/R53: 路径相对 cwd, 从 curvature_config.py 硬编码导入
+from curvature_config import ITEM_EMB_NPY as EMB_NPY, RQVAE_OUT_DIR as OUT_DIR
+
 
 # === 超参 (硬编码 R30/R43) ===
 SEED = 42
-EMB_NPY = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/item_emb.npy"
-# C28 (C29 rollback): Curriculum + M3 transport 单 M3 (M2 OFF, 当前最佳 0.0991)
-# v19 备胎 (R36 框架级变更): C27 c_end 1.0→0.7 缓和曲率调度 (Poincaré ball r=1/sqrt(c), c↓ r↑, 更接近欧氏)
-OUT_DIR = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07"
 
 INPUT_DIM = 768
 HIDDEN_DIMS = [512, 256, 128]

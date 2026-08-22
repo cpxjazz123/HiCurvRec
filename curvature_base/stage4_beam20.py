@@ -54,14 +54,10 @@ def build_stage4_cmd(ckpt_path):
         ckpt_path,
     ]
 
-# R40 自包含: Stage 3 best_ckpt 必须存在
-# ⚠️ R34b fix: 兼容旧绝对路径输出 (Issue256 v19 repro 期间产生) 和新相对路径输出
-STAGE3_CKPT_CANDIDATES = [
-    # 新路径 (R34b fix 后): cwd=MAIN_DIR + 相对路径 config
-    "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/instruments_hgrec_configs/hgrec_v19/best_ckpt.pt",
-    # 旧路径 (Issue256 v19 repro 期间, config 用绝对路径产生)
-    "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/out/decoder/instruments_hgrec_/fs04/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/configs/hgrec_v19/best_ckpt.pt",
-]
+# R53 v3.8: Stage 3 best_ckpt 路径从 curvature_config 硬编码 derive
+# 不再写死 v19 绝对路径 (历史 R34b fix 残留, 已废弃)
+from curvature_config import BEST_CKPT_PATH as _BEST_CKPT_PATH_DEFAULT
+STAGE3_CKPT_CANDIDATES = [_BEST_CKPT_PATH_DEFAULT]
 
 
 def resolve_stage3_ckpt():
