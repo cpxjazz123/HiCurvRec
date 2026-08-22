@@ -1,4 +1,5 @@
 import argparse
+import os
 import gin
 import torch
 from data.schemas import TokenizedSeqBatch
@@ -16,11 +17,17 @@ def eval_mode(fn):
 
 
 def parse_config():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("config_path", type=str, help="Path to gin config file.")
-    args = parser.parse_args()
+    # 优先 HGREC_TAG env var 推导 config_path (相对路径, 不需要 CLI 传入)
+    hgrec_tag = os.environ.get("HGREC_TAG")
+    if hgrec_tag:
+        config_path = f"configs/decoder_instruments_hgrec_{hgrec_tag}.gin"
+    else:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("config_path", type=str, help="Path to gin config file.")
+        args = parser.parse_args()
+        config_path = args.config_path
     try:
-        gin.parse_config_file(args.config_path)
+        gin.parse_config_file(config_path)
     except Exception as e:
         # HG-Rec 路径兜底: gin binding 失败时靠 FORCE_HGREC 环境变量 + sys.argv 检测
         print(f"[parse_config] gin binding failed ({e}); falling back to env/argv", flush=True)

@@ -40,14 +40,18 @@ def main():
     accelerator = Accelerator(split_batches=True, mixed_precision="no")
     device = accelerator.device
 
-    # gin config 必须显式 parse (复用 train_decoder 的 config)
-    config_path = sys.argv[1] if len(sys.argv) > 1 else "configs/decoder_instruments.gin"
+    # gin config + best_ckpt path 自动 derive (HGREC_TAG env var, 相对路径, 不需要 CLI 传入)
+    hgrec_tag = os.environ.get("HGREC_TAG")
+    if hgrec_tag:
+        config_path = f"configs/decoder_instruments_hgrec_{hgrec_tag}.gin"
+        BEST_CKPT_PATH = f"./out/decoder/instruments_hgrec_configs/hgrec_{hgrec_tag}/best_ckpt.pt"
+    else:
+        config_path = sys.argv[1] if len(sys.argv) > 1 else "configs/decoder_instruments.gin"
+        BEST_CKPT_PATH = sys.argv[2] if len(sys.argv) > 2 else "out/decoder/instruments/best_ckpt.pt"
     try:
         gin.parse_config_file(config_path, skip_unknown=True)
     except Exception as e:
         print(f"[test_eval] gin parse failed: {e}; fallback to FORCE_HGREC=1", flush=True)
-
-    BEST_CKPT_PATH = sys.argv[2] if len(sys.argv) > 2 else "out/decoder/instruments/best_ckpt.pt"
 
     # === C33 HG-Rec 路径分支 (硬编码, 不再靠 env var) ===
     # 原因: .gin 的 train_decoder.train.use_hgrec_arch 字段依赖 @gin.configurable 装饰,
