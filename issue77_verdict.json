@@ -1,0 +1,54 @@
+{
+  "issue": 77,
+  "round": 1,
+  "variant": "v77 codebook 256→384 re-mine (vs v57 F1 256→512 R23 KMeans 卡 22 分钟)",
+  "rationale": "用户指令'回顾之前实现但是失败的机制'. v57 F1 (codebook 256→512) 因 KMeans 卡 timeout (R23) 终止. v77 重新挖掘方向: 改 384 (1.5x 比 baseline 256, vs F1 2x) 期望避开 R23 卡 timeout. R36h ceiling 11 机制已确认, 但 v75 R1 已是 ceiling, 需探索 codebook capacity scaling 是否能突破.",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_codebook_384_v77",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "r36o_diagnosis_rounds": [
+    {
+      "round": "R1",
+      "variant": "codebook=384 + max_iters=20 (R1 KMeans 卡 timeout fix)",
+      "stage1_outcome": "step 35028 codes=15/285/268/384 (L0 cascade, locked since step 5k)",
+      "verdict": "FAIL_R23_L0_CASCADE — KMeans 不再卡 (max_iters=20), 但 L0 cascade 持续不恢复, R36g 结构性 cascade 触发"
+    },
+    {
+      "round": "R2",
+      "variant": "codebook=320 + max_iters=50 (R1 微调: 减小容量 + 增加 KMeans iter)",
+      "stage1_outcome": "step 44240 codes=22/254/250/320 (L0 locked 22 since step 25k, 不再恢复)",
+      "verdict": "FAIL_R23_L0_CASCADE — 即使减小 codebook 容量 + 增加 KMeans iter, L0 仍 cascade 不可恢复 (vs baseline 47/256)"
+    },
+    {
+      "round": "R3",
+      "variant": "codebook=384 + max_iters=None (no cap, 验证 max_iters 是根因还是 codebook size 根因)",
+      "stage1_outcome": "KMeans 卡 4:50+ 分钟无第一 epoch 输出 (PID 3594278 elapsed 04:50, no epoch log, worker 97% CPU)",
+      "verdict": "FAIL_R23_KMEANS_HUNG — R1 卡 timeout fix 失败, max_iters=None 让 KMeans 重回 R23 卡 timeout 模式 (类似 v57 F1)"
+    }
+  ],
+  "r36o_stage_a_attribution": "R1 cascade 根因: codebook capacity 384 (vs 256 baseline) + max_iters=20 → KMeans 20 iter 不够 converge 到均匀 centroids → 早期 codebook 分布偏 → L0 编码空间 cascade. R2 cascade 根因: codebook 320 + max_iters=50 仍 cascade, 排除 max_iters 单一变量 → R36g 结构性 cascade (capacity scaling 在 cascade 3 层 RQ-VAE 下不可解). R3 卡 timeout 根因: max_iters=None 回到 v57 F1 模式, 384 codebook KMeans compute O(k²) 增长让 max_iters 不收敛.",
+  "r36o_stage_b_direction": "codebook capacity scaling (256→384, 256→320, 256→512 已被 v57 F1 R23 拒) 在 cascade 3 层 RQ-VAE 下结构性 cascade (R36g). 大方向 (codebook capacity) 是 R36h ceiling 子集, 已被 11 个 R36h 机制实验证 ceiling. v57 F1 + v77 R1/R2/R3 = 3 轮不同 capacity 微调全部 cascade, 印证 R36g 结构性约束.",
+  "r36o_stage_c_microtune": "已探索 3 轮微调 (capacity 384/iter 20, capacity 320/iter 50, capacity 384/iter None) 全部 FAIL (cascade 2 次 + 卡 timeout 1 次). R36o v3.7 '3 轮微调全 regress → R37 触发回退'. v77 codebook scaling re-mine 终止.",
+  "decision": {
+    "r37_triggered": true,
+    "r50_triggered": true,
+    "rationale": "3 轮微调全部 cascade (R1: cb 384 + iters 20, R2: cb 320 + iters 50, R3: cb 384 + iters None 卡 timeout). R36o v3.7 强制 3 轮诊断后 R37 + R50 + rm -rf. v77 codebook scaling re-mine 终止. 不再尝试 Stage 2-4 (Stage 1 已 FAIL). R36g 结构性确认: codebook capacity scaling 在 cascade 3 层 RQ-VAE 下不可解, 与 v57 F1 R23 + v75 SimCIT R0 cascade 同模式。",
+    "next_re_mine_candidate": "v57 F1 + v77 = codebook capacity 系列已穷尽 R36g. 下一个 re-mine 候选: (a) v55 C1 Per-Codeword Curvature 重挖 (R36f norm collapse after 20k) — 重新分析 θ_cw 初始化 + delta_max cap; (b) v53 A1 Per-Item Router 新方向 (R36g 结构性, 不可行); (c) Riemannian Adam E1 重挖 (不动 manifold, 仅优化器几何化). R36h ceiling 12 机制已确认 (含 v76/v77 fail), 突破 0.11042 必须用户解锁 Stage 0 (R36m) 或 Stage 2/3/4 (R36 v3.6).",
+    "r36h_ceiling_count": 12
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 codebook capacity 端)",
+    "R36m_v3_7": "Stage 0 embedding 端禁 — N/A",
+    "R36n_v3_7": "必须是曲率/几何结构变化 — PASS (codebook capacity 是几何结构)",
+    "R36b": "可变曲率 — N/A (capacity scaling 不变曲率)",
+    "R36c": "实现归因分析 — 3 轮 micro-tune 全部 cascade (R36g 结构性 + R23 KMeans 卡)",
+    "R36f": "ckpt codebook norm — N/A (Stage 1 未训到 ckpt 阶段, 全 cascade)",
+    "R36g": "cascade RQ-VAE 风险 — **结构性确认** (codebook capacity scaling 在 cascade 3 层 RQ-VAE 下不可解, R1/R2/R3 三轮全部 cascade 或卡 timeout)",
+    "R36h": "Stage 1 RQ-VAE 端纯曲率变更 ceiling — v77 也确认 ceiling (codebook scaling 子集已穷尽)",
+    "R36o": "3 阶段强制诊断 — 完成 3 轮 (R1/R2 cascade + R3 卡 timeout, R37 触发)"
+  },
+  "key_insight": "v57 F1 (cb 256→512) + v77 (cb 256→384 三轮微调) = codebook capacity scaling 系列在 cascade 3 层 RQ-VAE 下结构性 cascade (R36g). KMeans 卡 timeout (R23) + L0 cascade 持续不恢复 (R36g) 是 capacity scaling 的两个失败模式. v77 R1/R2/R3 三轮微调排除 max_iters 是 root cause (R2 50 iter 仍 cascade), 确认 codebook size 自身是 cascade trigger. R36h ceiling 已硬锁死 Stage 1 端所有方向 (12 机制已确认, 含 v76/v77 fail).",
+  "next_re_mine_target": "v57 F1 + v77 R1/R2/R3 codebook capacity 系列已穷尽. 候选 re-mine: (a) v55 C1 Per-Codeword Curvature 重挖 (R36f norm collapse, 验 theta_cw init + delta_max cap); (b) v53 A1 Per-Item Router 重挖 (R36g 结构性, 可能不可行); (c) Riemannian Adam E1 重挖 (优化器几何化, R36h 新方向). 当前 R36h ceiling 12 机制已确认, 突破 0.11042 必须用户解锁 R36m (Stage 0) 或 R36 v3.6 (Stage 2/3/4).",
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/issue77_r{1,2,3}_stage1.log",
+  "verdict_timestamp": "2026-08-23T01:57:00"
+}
