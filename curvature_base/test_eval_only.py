@@ -49,15 +49,12 @@ def main():
 
     BEST_CKPT_PATH = sys.argv[2] if len(sys.argv) > 2 else "out/decoder/instruments/best_ckpt.pt"
 
-    # === C33 HG-Rec 路径分支 ===
-    try:
-        use_hgrec = gin.query_parameter("train_decoder.train.use_hgrec_arch")
-    except ValueError:
-        use_hgrec = False
-    if os.environ.get("FORCE_HGREC", "0") == "1":
-        return _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH)
-    if use_hgrec:
-        return _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH)
+    # === C33 HG-Rec 路径分支 (硬编码, 不再靠 env var) ===
+    # 原因: .gin 的 train_decoder.train.use_hgrec_arch 字段依赖 @gin.configurable 装饰,
+    #       train() 函数本身未装饰, gin.query_parameter 经常抛 ValueError → fallback 走 LETTER 路径
+    #       导致 state_dict key 不匹配 + h@10≈0 假性失败.
+    # 强制 HG-Rec 是本项目 (Instruments v19+) 的唯一目标架构,不再支持 LETTER 分支.
+    return _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH)
 
     # 1) load datasets & tokenizer (走 train 同样的路径)
     item_dataset = ItemData(
