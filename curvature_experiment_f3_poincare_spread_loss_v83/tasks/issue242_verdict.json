@@ -1,0 +1,31 @@
+{
+  "issue": 242,
+  "task": "v22 备胎: Stage 1 单 M2 (Möbius 减法, 关 M3 transport) R36 几何变换",
+  "verdict": "R37 FAIL — test_R@10=0.1047 < v19 baseline 0.1102 (-0.0055), R50 回滚到 v19 baseline",
+  "stage1_outcome": "Stage 1 C27 curriculum (c_start=0.05→c_end=0.7) + USE_M2_INTRINSIC=True (Möbius 减法) + USE_M3_TRANSPORT=False (关 M3 transport). 训练 100k global steps DDP 4 卡. L0 codes 35/256, L1 238/256, L2 222/256, c=0.7 reached. Stage 1 健康完成 (无 catastrophic collapse).",
+  "stage2_outcome": "Stage 2 SID inference: (9922, 3) int64, per-layer c=[0.7, 0.7, 0.7], L0=37/256 codes used (14.5%), L1=256/256 (100%), L2=256/256 (100%)",
+  "stage3_outcome": "HG-Rec T5 + HALC v2 + v16 differential schedule. 训练 EARLY_STOP @ E132, best_ckpt epoch 111/112, valid NDCG@10=0.0976 (vs v19 0.0970, +0.0006, training 略微更好). 训练期无 regress 信号.",
+  "stage4_outcome": "test_R@10=0.1047, h@10=0.1047, test_NDCG@10=0.0793. 单 ckpt + beam=20. R35 禁 Borda 满足.",
+  "test_R@10": 0.1047,
+  "test_NDCG@10": 0.0793,
+  "valid_best_NDCG@10": 0.0976,
+  "baseline_R@10": 0.1102,
+  "v19_R@10": 0.1102,
+  "delta_vs_v19": -0.0055,
+  "r37_decision": "FAIL — test_R@10=0.1047 < v19 baseline 0.1102 (-0.0055). R50 回滚: train_rqvae_instruments.py USE_M2_INTRINSIC True→False, USE_M3_TRANSPORT False→True, OUT_DIR v22→v19, infer_sids_instruments.py CKPT v22→v19, OUT_NPY v22→v19, gate_M2_intrinsic=True→False, gate_M3_transport=False→True. 删除 configs/decoder_instruments_hgrec_v22.gin + build_v22_sids_for_hgrec.py. git checkout + py_compile 验证.",
+  "r50_verification": [
+    "git status -s: clean (无 uncommitted modifications)",
+    "train_rqvae_instruments.py USE_M2_INTRINSIC=False, USE_M3_TRANSPORT=True ✓",
+    "infer_sids_instruments.py gate_M2_intrinsic=False, gate_M3_transport=True ✓",
+    "python3 -m py_compile train_rqvae_instruments.py: OK",
+    "python3 -m py_compile infer_sids_instruments.py: OK"
+  ],
+  "r18_4dim": {
+    "D1_spec": "Stage 1 USE_M2_INTRINSIC=True (Möbius 减法) + USE_M3_TRANSPORT=False (关 M3 transport). R36 几何变换 (Poincaré 减法 → Möbius 减法), 论文支撑: Chami et al. 2019 HGCN 'Möbius gyrovector operations' (Intrinsic 减法比 Euclidean 减法几何一致).",
+    "D2_impl": "train_rqvae_instruments.py: USE_M2_INTRINSIC False→True, USE_M3_TRANSPORT True→False, OUT_DIR v19→v22_m2_only. infer_sids_instruments.py: gate_M2_intrinsic=False→True, gate_M3_transport=True→False, CKPT v19→v22, OUT_NPY v19→v22. 新增 configs/decoder_instruments_hgrec_v22.gin + build_v22_sids_for_hgrec.py.",
+    "D3_gate1": "Stage 1 健康完成 (L0=35/256, L1=238/256, L2=222/256). Stage 3 EARLY_STOP @ E132, valid NDCG@10=0.0976 略优于 v19 0.0970 (+0.0006). 但 test_R@10=0.1047 < v19 0.1102 (-0.0055) — 训练期 valid 优势未迁移到 test, 典型 valid→test 偏置 (R36 记忆教训).",
+    "D4_lit": "Möbius 减法数学上比 Euclidean 减法几何一致 (在 Poincaré ball 上保持测地线), 但实际 Stage 1 c_end=0.7 时 r=1/sqrt(0.7)=1.195, 几何空间与 v19 (同样 c_end=0.7) 完全一致, 区别只在 residual 更新规则 (Euclidean 减 vs Möbius 减). Möbius 减在 c 不大时与 Euclidean 减差异较小 (双曲修正项 ~c 阶), 当 c=0.7 时差异不足以改变最终量化分配. 结果: SID 几乎与 v19 相同 (v22 第一行 [59, 79, 40] vs v19 应该是类似), T5 训练随机性导致微小 valid 提升但 test 反而下降 — 反映 valid→test 偏置, 非 Stage 1 创新价值."
+  },
+  "v22_v19_contrast": "v22 M2 单测 vs v19 (M2 OFF + M3 ON): v22 Stage 1 SID 与 v19 接近 (L0=35/256 vs v19 46/256, 略低). T5 训练 valid 略好 (0.0976 vs 0.0970, +0.0006), test 反而差 (0.1047 vs 0.1102, -0.0055). Möbius 减法在 c_end=0.7 时几何效应微弱 (双曲修正项阶 O(c)), 与 R36 'Poincaré-Minkowski-Lorentz 曲率机制变更' 不同, M2 只是 Euclidean 减法的局部修正 (近似 = Euclidean 减 + c·correction). 验证: M2 单开未带来任何曲率机制层面的几何突破.",
+  "next_step": "v23 备胎方向: 避开 c floating + M2 局部修正两条 NO-GO lineage (v18/v20/v21/v22 连续失败). R36 explicit allowed 候选: (a) Stage 1 encoder architecture 变化 (hidden_dims=[768,512,256] 加宽, 强化 RQ-VAE 编码能力); (b) Stage 2 per-layer codebook 半径学习 (与 v19 SID 共享, 但 codebook 半径独立缩放); (c) Stage 3 attention bias 替换 (v15 备胎未深入, R36 新曲率机制). 优先 (c) Stage 3 attention bias — 已确认 HG-Rec 路径不使用 HAB, 但可在 T5 attention Q/K 上加曲率距离 bias (新机制, 非调参)."
+}

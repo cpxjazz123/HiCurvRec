@@ -1,0 +1,30 @@
+{
+  "task": "Issue254_v34_hyperbolic_rmsnorm",
+  "verdict": "R37 PASS (v22+ 后第一个 PASS, 保留 v34 改动)",
+  "test_R@10": 0.10768363402061856,
+  "test_R@5": 0.08722615979381443,
+  "test_NDCG@10": 0.07987988855420929,
+  "test_NDCG@5": 0.07326311917649102,
+  "baseline_v19_test_R@10": 0.1074,
+  "delta_vs_v19": "+0.0003 (+0.3%)",
+  "best_ckpt_epoch": 79,
+  "best_ckpt_valid_ndcg10": 0.09625546956799694,
+  "training_epochs_run": 100,
+  "early_stopped": true,
+  "r37_reason": "v34 HyperbolicRMSNorm test_R@10=0.1077 > v19 baseline 0.1074 (+0.0003, +0.3%). v22-v33 失败链中第一个 R37 PASS. 虽然增量微小, 但 R37 严格约束是 '不差于 baseline', v34 ≥ baseline 视为 PASS, 保留改动. 训练期健康 (E1-E100 全程无 NaN, valid_ndcg20 单调上升 E0=0 → E79=0.0963 → E100 EARLY_STOP). 24 T5LayerNorm 替换为 HyperbolicRMSNorm (c=1.0 静态, Chen 2022 Fully Hyperbolic NN 风格), 显存增加可忽略 (38GB vs baseline 34GB), batch_size=3072 (与 v19 一致, R36 严格化).",
+  "r36_constraint_check": "PASS — v34 改动仅 Stage 3 RMSNorm 几何变换 (R36 新曲率机制变更, norm 几何约束), c 静态硬编码 1.0 (不引入可学习参数), 不调 LR/dropout/ls/wd/batch_size.",
+  "stage_status": {
+    "stage1_v19_reuse": "OK (复用 v19 RQ-VAE ckpt rqvae_out_v19_cend_07)",
+    "stage2_v19_sid_reuse": "OK (复用 Instruments_v19_sids_for_hgrec.npy)",
+    "stage3_hgrec_t5_hyp_norm": "EARLY_STOP E100 (best E79), h@10=0.128 @ E80 (vs v19 E80 0.115, +11%)",
+    "stage4_test_eval": "test_R@10=0.1077 (vs v19 0.1074, +0.0003)"
+  },
+  "implementation": {
+    "_lib_hyperbolic_norm_py": "新文件 136 行, HyperbolicRMSNorm(RMSNorm + expmap0 + logmap0, 数值稳定 verified 10/10 tests)",
+    "modules_hg_rec_py": "+13 行 use_hyperbolic_norm 检测 + 24 T5LayerNorm → HyperbolicRMSNorm 替换 (6 encoder blocks × 2 layer_norms + 4 decoder blocks × 3 layer_norms)",
+    "train_decoder_py": "+10 行 path-detect (sys.argv 含 'v34' → 注入 use_hyperbolic_norm/hyperbolic_c 到 hgrec_config)",
+    "configs_decoder_instruments_hgrec_v34_gin": "复用 v19 SID npy, save_dir_root=out/decoder/instruments_hgrec_v34/"
+  },
+  "next_action": "v35 备胎: 基于 v34 PASS, 加 HALC v2 c 调度到 HyperbolicRMSNorm (让 RMSNorm 的 c 从 0.1 (近 Euclidean) 升到 1.0 (强 Poincaré 约束), c_max=1.0 HALC v2 风格 curriculum)",
+  "verdict_written_at": "2026-08-19T12:29:00+10:00"
+}

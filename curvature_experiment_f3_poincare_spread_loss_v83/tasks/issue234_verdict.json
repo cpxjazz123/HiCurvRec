@@ -1,0 +1,22 @@
+{
+  "issue": 234,
+  "task": "v14 Stage 2 κ 学习备胎: Stage 1 per-codebook 曲率校准",
+  "verdict": "R37 FAIL",
+  "test_R@10": 0.1067,
+  "baseline_R@10": 0.1072,
+  "delta_pct": -0.5,
+  "best_ckpt_epoch": 128,
+  "best_valid_ndcg10": 0.0976,
+  "stage1_outcome": "codes=59/238/226/256 (L0 严重塌缩, vs v13 L0=119)",
+  "stage2_outcome": "sids_v14.npy shape=(9922,3) int64 max=254",
+  "stage3_outcome": "best ndcg=0.0976, test R@10=0.1067",
+  "root_cause": "USE_FIXED_CURVATURE=True + USE_CURRICULUM_CURVATURE=True 屏蔽了 per-code κ 学习 (θ_code 永远不用), 但 per_code_curvature=True 仍切换 hyperbolic distance 代码路径用 c_code, 引入额外随机性导致 L0 codebook 塌缩到 59/256 (vs v13 119/256 vs baseline ~256). L0 塌缩 → SID 信息容量↓ → Stage 3 valid ndcg 0.097 < v2 0.10 → test_R@10 0.1067 < v2 0.1072. R37 FAIL.",
+  "r37_action": "立即 R50 回滚: v2 baseline 保留 (out/decoder/instruments/best_ckpt.pt), v14 best_ckpt/test_final.json/test_final.json 删除/归档.",
+  "next_step": "v15 备胎 (Task #105): Stage 1 沿用 v2 baseline (无 per-code κ, 避免 L0 塌缩) + Stage 3 引入双曲几何到 T5 attention (HAT by Chami et al. 2019). D2 维度变更 vs v14 → R18 必实验.",
+  "r18_4dim": {
+    "D1_spec": "per-code κ 在 RQ-VAE codebook 层曲率参数化",
+    "D2_impl": "v14: USE_PER_CODE_CURVATURE=True 但 USE_FIXED_CURVATURE=True 屏蔽学习路径",
+    "D3_gate1": "Stage 1 L0 塌缩 59/256 (失败机制)",
+    "D4_lit": "Gu et al. ICLR 2019 Mixed Curvature (曲率多样性), Chen et al. NeurIPS 2022 Fully Hyperbolic"
+  }
+}
