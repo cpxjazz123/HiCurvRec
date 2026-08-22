@@ -1,0 +1,51 @@
+{
+  "issue": 76,
+  "round": 1,
+  "variant": "v76 SimCIT τ=0.5 re-mine (vs v75 R1 τ=0.1)",
+  "rationale": "用户指令'回顾之前实现但是失败的机制'. v75 SimCIT Round 1 是 R36h ceiling 字符级一致 baseline (test_R@10=0.11042203608247422 char-exact). 重新挖掘方向: SimCIT 论文 τ=0.1 + batch=256, 我们 RQ-VAE batch=2560 (10x), 更平滑 τ=0.5 应该让学习更稳定 (cosine 分布过尖时梯度硬). 探索 τ/α 联合微调空间.",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_simcit_tau_05_v76",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "r36o_diagnosis_rounds": [
+    {
+      "round": "R1",
+      "variant": "τ=0.5 + α=0.01 (vs R1 baseline 0.1/0.01)",
+      "stage1_outcome": "step 19588 codes=1/129/11/256 (L0 CASCADE), step 53836 codes=5/207/191/256 (L0 锁 5 codes)",
+      "verdict": "FAIL_R23_L0_CASCADE — τ=0.5 比 R1 τ=0.1 L0 cascade 更严重 (R1 L0 恢复到 40, R1 τ=0.5 L0 锁 5), smoother softmax 让 L0 更难分配"
+    },
+    {
+      "round": "R2",
+      "variant": "τ=0.5 + α=0.001 (R1 微调: 10x 更弱)",
+      "stage1_outcome": "step 10752 codes=2/74/8/256 (L0 CASCADE 更严重, step 10k 仅 2 codes)",
+      "verdict": "FAIL_R23_L0_CASCADE — 即使 α 100x 更弱, τ=0.5 仍 cascade L0"
+    },
+    {
+      "round": "R3",
+      "variant": "τ=0.2 + α=0.001 (中间 τ, 弱 α)",
+      "stage1_outcome": "step 18460 codes=6/214/156/256 (L0 仅 6 codes, L1/L2 健康)",
+      "verdict": "FAIL_R23_L0_CASCADE — τ=0.2 (vs R1 τ=0.1) + α=0.001 仍 cascade L0, 与 v75 R1 L0=40 形成鲜明对比"
+    }
+  ],
+  "r36o_stage_a_attribution": "SimCIT cosine on L0 在 cascade 3 层 RQ-VAE 下结构性 cascade: 即使 3 轮微调 (τ=0.5/α=0.01, τ=0.5/α=0.001, τ=0.2/α=0.001) 全部 L0 cascade, 不可能通过 τ/α 调整修复. v75 R1 τ=0.1+α=0.01 是 L0 cascade 的边缘案例 (L0=40 字符级一致 baseline 但略低于 baseline 47), 任何 τ 偏移 (大或小) 都破坏 L0 平衡. R36g cascade 是 SimCIT 的结构性约束, 不只是 v75 R1 的边界问题.",
+  "r36o_stage_b_direction": "SimCIT 大方向 (Stage 1 contrastive quantization) 在 L0 不可行 (R36g cascade 结构性). Round 1 已 ceiling (char-exact baseline). Round 2-3 进一步证实 cascade 不可调.",
+  "r36o_stage_c_microtune": "已探索 3 轮微调 (R1/R2/R3 不同 τ/α 组合), 全部 cascade L0. R36o v3.7 '3 轮微调全 regress → R37 触发回退'. v76 SimCIT 终止.",
+  "decision": {
+    "r37_triggered": true,
+    "r50_triggered": true,
+    "rationale": "3 轮微调 (τ=0.5/α=0.01, τ=0.5/α=0.001, τ=0.2/α=0.001) 全部 L0 cascade (R23 + R36g), 没有 micro-tune 空间. R36o v3.7 强制 3 轮诊断后 R37 + R50 + rm -rf. v76 SimCIT re-mine 终止, 不再尝试 Stage 2-4 (Stage 1 已 FAIL). 保留 v75 SimCIT Round 1 (τ=0.1+α=0.01) 作为 SimCIT 系列唯一 ceiling 机制 (R36h 第 11 机制)."
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 contrastive loss 端)",
+    "R36m_v3_7": "Stage 0 embedding 端禁 — N/A",
+    "R36n_v3_7": "必须是曲率/几何结构变化 — PASS (cosine + Poincaré ball projection)",
+    "R36b": "可变曲率 — N/A (SimCIT 是 contrastive 正则)",
+    "R36c": "实现归因分析 — 3 轮 micro-tune 全部 cascade (R36g 结构性)",
+    "R36g": "cascade RQ-VAE 风险 — **结构性确认** (SimCIT on L0 在 cascade 3 层 RQ-VAE 下 cascade 不可解, v75 R1 τ=0.1 是边界案例, τ 偏移立即 cascade)",
+    "R36h": "Stage 1 RQ-VAE 端纯曲率变更 ceiling — v75 R1 已是 ceiling 第 11 机制 (char-exact baseline), v76 R1-R3 微调也指向 ceiling",
+    "R36o": "3 阶段强制诊断 — 完成 3 轮 (R1/R2/R3 全部 cascade FAIL, R37 触发)"
+  },
+  "key_insight": "v75 SimCIT Round 1 (τ=0.1+α=0.01) 是 L0 cascade 边界案例: 微小的 τ/α 调整 (R1: τ=0.5 或 τ=0.2 + α 任何值) 立即让 L0 cascade 不可恢复 (codes 锁 2-6). 这印证 R36g 结构性约束: SimCIT cosine + L0 + cascade RQ-VAE 是不稳定平衡, v75 R1 数值 (L0=40) 已经是接近 cascade 边缘的 ceiling 极限. R36h ceiling 第 11 机制 (v75 R1) 是 SimCIT 系列唯一幸存值. v76 探索 τ 偏移全部 R37+R50 回退.",
+  "next_re_mine_target": "v76 已 R37+R50. 用户指令'回顾之前实现但是失败的机制'继续, 候选: (a) v55 C1 Per-Codeword Curvature 重挖 (R36f norm collapse after 20k); (b) v57 F1 codebook 256→512 重挖 (R23 KMeans 卡); (c) v53 A1 Per-Item Router 新方向 (R36g 结构性, 不可行); (d) 综合 RCINIT v2 + SimCIT 双机制 (multi-mechanism composition). 当前 R36h ceiling 12 机制已确认 (含 v76 fail), 突破 0.11042 必须用户解锁 Stage 0 (R36m) 或 Stage 2/3/4 (R36 v3.6).",
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/issue76_r{1,2,3}_stage1.log",
+  "verdict_timestamp": "2026-08-23T01:30:00"
+}
