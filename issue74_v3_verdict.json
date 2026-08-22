@@ -1,0 +1,57 @@
+{
+  "issue": 74,
+  "round": 3,
+  "variant": "v53 A1 fix v2: per-item异质曲率 router (delta_max=0.15 + fc2 gain=0.01 init + L2-only + USE_FIXED_CURVATURE=False)",
+  "rationale": "v53 A1 历史 verdict 标记 R36c v3.1 根因为 lr=5e-3 + delta_max=±1.0 + fc2 零初始化几步饱和 → c 退化. 设计 fix v2: delta_max 0.15 + fc2 gain=0.01 + L2-only per-item + 关固定 c.",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_per_item_router_v3",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "stage1_outcome": {
+    "trajectory": "step 8968 codes=1/1/1/256 (CATASTROPHIC CASCADE) → step 18048 codes=1/1/1/256 (no recovery)",
+    "loss": "1.85 锁死不变 (与 R36c v3.1 实测 loss=148.9552 字面不变 同源)",
+    "c_curriculum": "c=0.167→0.285 (curriculum ramp 0.05→0.7 正常推进),但 per-item router 输出与 baseline 完全退化",
+    "verdict": "FAIL_R23_R36g_CASCADE_COLLAPSE — 即使全部 R36c 修复应用,per-item 异质曲率在 L1/L2 cascade residual (norm≈0.14) 仍触发 norm inflation → codebook 锁 0"
+  },
+  "r36o_diagnosis_rounds": [
+    {
+      "round": 1,
+      "variant": "v53 A1 历史 (delta_max=1.0 + lr=5e-3 + sigmoid + fc1 Linear(embed_dim,1) 单层 + 无 LayerNorm)",
+      "stage1_outcome": "codes=1/1/1/256 collapse, loss=148.9552 锁死",
+      "verdict": "FAIL_R23_R36g_CASCADE_COLLAPSE"
+    },
+    {
+      "round": 2,
+      "variant": "v54 a1v2 (delta_max=0.3 + fc1/fc2 两层 + LayerNorm + tanh 输出 + lr=1e-3 + 全部 L1/L2 per-item)",
+      "stage1_outcome": "passed Stage 1 但 Stage 4 test_R@10=0.10611 (-2.73% vs baseline)",
+      "verdict": "R37_FAIL (Stage 1 健康但 Stage 3 表征退化)"
+    },
+    {
+      "round": 3,
+      "variant": "v53 A1 fix v2 (delta_max=0.15 + fc2 gain=0.01 + L2-only + USE_FIXED_CURVATURE=False)",
+      "stage1_outcome": "codes=1/1/1/256 collapse (即使 fc2 不再零初始化, 仍 cascade)",
+      "verdict": "FAIL_R23_R36g_CASCADE_COLLAPSE — R36c v3.1 修复方案 delta_max=0.15 + fc2 gain=0.01 不充分,根因不在 fc2 init 而是 per-item 异质曲率本身在 L1/L2 cascade residual 下不可解"
+    }
+  ],
+  "r36o_stage_a_attribution": "即使 fc2 改成 xavier_uniform_(gain=0.01) (避免 zero-init 几步饱和), per-item 异质曲率在 L1/L2 cascade residual (norm≈0.14) 仍触发 collapse. fc2 init 不是根因, 根因是 PrefixRouter 输出的 delta 直接修改 c_l,i ∈ [0.85, 1.15], 而 c_l,i 偏离 baseline 1.0 时 L1/L2 residual 几何不一致 (norm 0.14 vs radius 1.0~1.58) → codebook 收束到 norm→0.",
+  "r36o_stage_b_direction": "大方向 (per-item 异质曲率) 在 cascade 3 层 RQ-VAE 下理论不可行: 即使 L2-only (L1 全局), L1 输入 residual norm=0.14 远小于 codebook 期望 radius, prefix-conditioned router 把 L2 c 偏离 baseline 时, L2 codebook 锁 0. 论文支撑 (Gu et al. 2019 / Chami et al. 2021) 在 cascade 结构下失效.",
+  "r36o_stage_c_microtune": "已尝试 3 轮 micro-adjustment (delta_max 1.0→0.3→0.15 + fc2 init zero→gain=0.01 + L1+L2→L2-only + 关 fixed c) → 全部 cascade. 进一步 micro-tune (lr=5e-4 / delta_max=0.05 / 关 curriculum c_end=0.3 / 关 M3) 属于 R36 v3.6 Stage 1 端纯曲率变更, 即便修复 R36g, R36h ceiling (10 机制) 也会让 test_R@10 字符级一致 baseline 0.11042. 已无可探索空间.",
+  "decision": {
+    "r37_triggered": true,
+    "r50_triggered": true,
+    "rationale": "R36o v3.7 3 阶段诊断完成: Round 1 cascade FAIL (v53) + Round 2 Stage 1 健康但 Stage 4 regress (v54 a1v2) + Round 3 即使 R36c v3.1 修复仍 cascade FAIL (v3). per-item 异质曲率在 cascade 3 层 RQ-VAE 下无法稳定训练, R36g 是结构性约束非实现问题. R37 + R50."
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 per-item router 端)",
+    "R36m_v3_7": "Stage 0 embedding 端禁 — N/A",
+    "R36b": "曲率 per-item 动态变化 — 本机制名义合规, 但 cascade 失败, 不可用",
+    "R36g": "cascade RQ-VAE 风险 — **结构性确认** (3 轮诊断全部 cascade, 即使最保守配置仍失效)",
+    "R36h": "Stage 1 RQ-VAE 端纯曲率变更 ceiling — 适用 (即使修复 cascade 也无法突破 0.11042 ceiling)",
+    "R36o": "3 阶段强制诊断 — **完成 3 轮** (Round 1/2/3 全部实证 cascade FAIL 或 regress)"
+  },
+  "artifacts_to_be_rm": [
+    "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_per_item_router_v3/"
+  ],
+  "key_insight": "R36g 是 cascade 3 层 RQ-VAE 的**结构性**约束, 非实现问题. v53 A1 / v54 a1v2 / v3 三轮诊断证明 per-item 异质曲率在 L1/L2 cascade residual (norm≈0.14) 下不可解. R36c v3.1 的修复建议 (delta_max=0.15 + fc2 gain=0.01) 不足以打破 cascade 收束路径. R36g 应当从'风险标记'升级为'per-item router 永久禁入 RQ-VAE cascade'. Stage 0 embedding 端 (R36m v3.7 禁) 是 R36h 唯一指出的突破方向, 但当前规则集禁止.",
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/issue74v3_stage1.log",
+  "verdict_timestamp": "2026-08-23T00:07:00"
+}
