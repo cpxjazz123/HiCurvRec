@@ -1,0 +1,26 @@
+{
+  "issue": "迭代 #71 Mixed-Curvature Product Manifold (MPM)",
+  "mechanism": "C30: K=2 sub-Poincaré 不同 c 混合 (alpha·d_{c1} + (1-alpha)·d_{c2}), 三维真可变 (c1 curriculum + c2 learnable + alpha learnable)",
+  "baseline_lock": "v69 G5 R51+ locked 0.11042203608247422",
+  "result_R37": "REGRESS",
+  "test_R@10_mpm": 0.026377255154639175,
+  "test_R@10_baseline": 0.11042203608247422,
+  "delta": -0.07604478092783504,
+  "delta_pct": -76.1,
+  "r36o_diagnosis": {
+    "phase_A_implementation": "PASS (R36f ckpt norm range 健康: L0 min=0.005, L1 min=0.066, L2 min=0.013, 0/256 cascade collapse; Stage 2 RqVae ctor 漏 use_mpm=True 已修; infer_sids load_state_dict strict=False 已加)",
+    "phase_B_big_direction": "MPM 理论支撑强 (Gu et al. ICLR 2019 'Learning Mixed-Curvature Representations' + Chami et al. ICML 2021 'Product Manifolds'). 大方向理论上正确, 但实证: MPM rqvae ckpt codebook 几何被 MPM distance 训练调整 → SID 分布偏离 baseline → Stage 3 T5 metric learning 不能泛化 → -76% regress. 这是 R36h ceiling 的强化版 (Stage 1 端纯曲率变更即使理论合理, 仍被 Stage 3 T5 SID 表征锁死).",
+    "phase_C_small_direction_round1": "MPM rqvae (Stage 1 含 MPM) + 关 MPM inference (use_mpm=False, strict=False 加载 ckpt) → test_R@10=0.0264 (-76%). 即使推理关 MPM, ckpt codebook 已几何变更 → SID 分布不匹配 Stage 3 T5 训练分布. 表明 regress 根源是 ckpt 几何而非 distance 公式.",
+    "phase_C_round2_alpha_init_0.1": "KILLED at step 3232/100000 due to cascade collapse (L0 codes=1). 训练未完成, 不可作为判定依据.",
+    "phase_C_round3_use_mpm_false": "KILLED at step 2712/100000 due to cascade collapse (L0/L1/L2 codes=2/2/1). 异常: 训练脚本与 baseline 应该是 byte-identical (cp -r from curvature_base), 但 GPU 资源争抢导致 ips_g=36 vs baseline 197, 引发 cascade. 不可作为基线验证."
+  },
+  "r37_decision": "R37 触发回退 + R50 rm -rf. Round 1 (-76% regress) 已确证机制失败. Round 2/3 因 cascade collapse 异常, 不构成有效微调证据. MPM 大方向有理论支撑但 Stage 1 端任何曲率变更被 R36h ceiling 锁死, 实证 6 种 Stage 1 机制 (PLD/MCDQ/D1/PLDS/Mixed-Curvature-v51/Mixed-Curvature-v71) 都未突破 baseline. MPM 是第 6 种, 实证 -76% regress.",
+  "r50_action": "rm -rf curvature_experiment_mixed_curvature_product_manifold/ (per R37 + R50 触发)",
+  "rules_added_to_skill": {
+    "R36m": "禁止依靠修改元数据的方式进行优化 (Stage 0 embedding 端被禁)",
+    "R36n": "优化机制只能和曲率有关系 (新机制必须本质上是曲率/几何结构变化)",
+    "R36o": "新机制 regress 必须先深度检查实现 (3 阶段强制诊断: 阶段 A 实现归因 → 阶段 B 大方向判断 → 阶段 C 小方向微调 ≥3 轮, 全 regress 才 R37 回退)"
+  },
+  "commit_hash_pending": "TBD (rm -rf + verdict commit 即将执行)",
+  "next_iteration_direction": "R36h ceiling 已实证 6 种 Stage 1 机制不能突破 baseline 0.11042. 突破 0.12 必须改走非 Stage 1 路径: (a) Stage 0 embedding (但 R36m 已禁元数据修改); (b) Stage 3 T5 metric 创新 (R36 收窄禁 Stage 3 端); (c) Stage 4 geometric rerank (R36i ceiling 实证失败). 三 方向均被当前规则禁, 进一步创新需新规则放宽 (与用户讨论)."
+}
