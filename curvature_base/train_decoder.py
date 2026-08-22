@@ -38,6 +38,18 @@ from data.instruments import RawMusicalInstrumentsHGRec, hgrec_collate_fn
 # === HALC v2 创新 (R52 主目录直接迭代): learnable per-layer κ + curvature annealing ===
 from _lib.halc import HALCAnnealingRegularizer
 
+# === v69 G5 Codebook-aware Manifold Contrastive (Stage 3, R36 G 类允许) ===
+# 设计: T5 logits (B, L, 769) → softmax → 期望 SID 嵌入 pred_emb = p @ E (E = lm_head 共享矩阵)
+#       target_emb = E[target_idx] → 两者都过 expmap0(c=0.7) 到 Poincaré ball
+#       NT-Xent 在 ball 上: positive=(pred, target), negatives=(pred, E[j≠target])
+# 避免 v68 G4 在 encoder hidden state 加 metric 的任务耦合问题 (G5 直接在 SID 决策空间)
+V69_G5_ENABLED = True
+V69_G5_AUX_WEIGHT = 0.10
+V69_G5_C = 0.7
+V69_G5_TEMPERATURE = 0.10
+V69_G5_VOCAB_SIZE = 769  # 256*3 + 1 (PAD=0)
+V69_G5_D_MODEL = 128  # hgrec_t5_d_model
+
 
 @gin.configurable
 # =============================================================================
@@ -181,6 +193,104 @@ def _train_hgrec(
         "feed_forward_proj": "relu",
     }
     model = HG_Rec(hgrec_config)
+    _raw_model_unwrapped = model  # v69 G5 用: lm_head weight 通过 raw_model 访问 (避免 DDP wrap 后访问问题)
+
+    # === v69 G5 Codebook-aware Manifold Contrastive: 不需要新增 projection head ===
+    # 直接用 T5 lm_head 的 weight 作为 SID codebook 嵌入空间 E (V69_G5_VOCAB_SIZE × V69_G5_D_MODEL)
+    # pred_emb = softmax(logits) @ E  (B, L, 128)
+    # target_emb = E[target_idx]       (B, L, 128)
+    # expmap0(c=0.7) → Poincaré ball → NT-Xent on ball
+
+    import math as _math_g5
+
+    def _g5_expmap0(u: torch.Tensor, c: float = V69_G5_C) -> torch.Tensor:
+        """Poincaré ball expmap at origin: u → tanh(√c · ||u||) · u / (√c · ||u||)"""
+        sqrt_c = _math_g5.sqrt(c)
+        u_norm = u.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        return torch.tanh(sqrt_c * u_norm) * u / (sqrt_c * u_norm)
+
+    def _g5_poincare_dist(x: torch.Tensor, y: torch.Tensor, c: float = V69_G5_C) -> torch.Tensor:
+        """Poincaré ball distance: d_P(x, y) = (2/√c) · atanh(√c · ||möbius_diff||)"""
+        sqrt_c = _math_g5.sqrt(c)
+        x_sq = (x * x).sum(dim=-1, keepdim=True)
+        y_sq = (y * y).sum(dim=-1, keepdim=True)
+        xy = (x * y).sum(dim=-1, keepdim=True)
+        num = (1 - c * x_sq) * y + (1 + c * xy) * x
+        denom = 1 + 2 * c * xy + c * c * x_sq * y_sq
+        diff = num / denom.clamp(min=1e-9)
+        diff_norm = diff.norm(dim=-1, keepdim=True).clamp(max=(1.0 / sqrt_c) * 0.999)
+        arg = sqrt_c * diff_norm
+        return (2.0 / sqrt_c) * torch.atanh(arg)
+
+    def _g5_manifold_contrastive_loss(logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Chunked NT-Xent on Poincaré ball between pred_emb 和 target_emb (R69 G5 创新).
+
+        Args:
+            logits: (B, L, 769) — T5 decoder 输出 logits
+            target: (B, L) — 真实 SID token ids (含 PAD=0)
+
+        Returns:
+            scalar NT-Xent loss (chunked, OOM-safe for batch_size=3072)
+        """
+        B, L, V = logits.shape
+        if B < 2:
+            return torch.tensor(0.0, device=logits.device, requires_grad=True)
+        # 展平 (B*L, V) 与 (B*L,), 跳过 PAD=0 位置
+        flat_logits = logits.reshape(B * L, V)
+        flat_target = target.reshape(B * L)
+        valid_mask = flat_target > 0  # PAD=0 跳过
+        if valid_mask.sum() < 2:
+            return torch.tensor(0.0, device=logits.device, requires_grad=True)
+        valid_logits = flat_logits[valid_mask]  # (N, V)
+        valid_target = flat_target[valid_mask]  # (N,)
+
+        # === 随机采样 N=256 控制 (chunk, N, 128) 内存 (batch_size=3072 → N≈12288 太大) ===
+        # R51+ 兼容: 用 torch.randperm 而不是 random.choice
+        N_total = valid_logits.shape[0]
+        sample_size = min(256, N_total)
+        if N_total > sample_size:
+            sample_idx = torch.randperm(N_total, device=valid_logits.device)[:sample_size]
+            valid_logits = valid_logits[sample_idx]
+            valid_target = valid_target[sample_idx]
+
+        # === lm_head 嵌入矩阵 (raw_model 内的 lm_head.weight) ===
+        lm_head_weight = _raw_model_unwrapped.model.lm_head.weight  # (V, d_model)
+        # pred_emb = softmax(logits) @ E → (N, d_model)
+        p = torch.softmax(valid_logits.float(), dim=-1)
+        pred_emb = p @ lm_head_weight.float()  # (N, d_model)
+        target_emb = lm_head_weight[valid_target].float()  # (N, d_model)
+        # expmap0 到 Poincaré ball
+        pred_ball = _g5_expmap0(pred_emb)  # (N, d_model)
+        target_ball = _g5_expmap0(target_emb)  # (N, d_model)
+
+        # === Chunked NT-Xent: chunk_size=16 控制 (chunk, N, 128) 内存 ===
+        # N=256, chunk_size=16 → 16 chunks × (16, 256, 128) = 8MB per chunk = 128MB peak (auto-released per chunk)
+        N = pred_ball.shape[0]
+        chunk_size = 16
+        total_loss = pred_ball.new_zeros(())
+        n_chunks = 0
+        for i in range(0, N, chunk_size):
+            end = min(i + chunk_size, N)
+            pred_chunk = pred_ball[i:end]  # (chunk, d)
+            # distance (chunk, N): pairwise
+            sqrt_c = _math_g5.sqrt(V69_G5_C)
+            x_sq = (pred_chunk * pred_chunk).sum(dim=-1, keepdim=True)  # (chunk, 1)
+            y_sq = (target_ball * target_ball).sum(dim=-1, keepdim=True)  # (N, 1)
+            xy = pred_chunk @ target_ball.T  # (chunk, N)
+            num = (1 - V69_G5_C * x_sq).unsqueeze(-1) * target_ball.unsqueeze(0) + \
+                  (1 + V69_G5_C * xy).unsqueeze(-1) * pred_chunk.unsqueeze(1)
+            denom = 1 + 2 * V69_G5_C * xy.unsqueeze(-1) + \
+                    V69_G5_C * V69_G5_C * x_sq.unsqueeze(-1) * y_sq.unsqueeze(0)
+            diff = num / denom.clamp(min=1e-9)
+            diff_norm = diff.norm(dim=-1).clamp(max=(1.0 / sqrt_c) * 0.999)
+            arg = sqrt_c * diff_norm
+            d = (2.0 / sqrt_c) * torch.atanh(arg)  # (chunk, N)
+            logits_g5 = -d / V69_G5_TEMPERATURE  # (chunk, N)
+            labels_g5 = torch.arange(i, end, device=logits_g5.device)
+            chunk_loss = torch.nn.functional.cross_entropy(logits_g5, labels_g5)
+            total_loss = total_loss + chunk_loss
+            n_chunks += 1
+        return total_loss / max(n_chunks, 1)
 
     # === 新 baseline 速度优化: torch.compile (kernel fusion, 4 卡 DDP 兼容, fallback-safe) ===
     try:
@@ -246,6 +356,8 @@ def _train_hgrec(
     model, optimizer, train_loader, valid_loader, test_loader = accelerator.prepare(
         model, optimizer, train_loader, valid_loader, test_loader
     )
+    # v69 G5: accelerator.prepare 后 model 被 DDP wrap, unwrap 后保持 lm_head weight 引用一致
+    _raw_model_unwrapped = accelerator.unwrap_model(model)
     # === HALC v2 + v16 differential schedule (R36 机制变更): encoder 早 warmup, decoder 晚 warmup ===
     halc = HALCAnnealingRegularizer(
         num_layers=7, init_curvature=1.0, c_max=1.0,
@@ -293,14 +405,19 @@ def _train_hgrec(
             optimizer.zero_grad()
             with accelerator.autocast():
                 # === HALC v2 创新: 取 encoder hidden_states 计算 Poincaré reg ===
-                loss, _, enc_hs, _ = model(
+                loss, logits, enc_hs, _ = model(
                     input_ids=batch["history"],
                     attention_mask=batch["attention_mask"],
                     labels=batch["target"],
                     output_hidden_states=True,
                 )
                 halc_reg = halc.reg_loss_for_layers(list(enc_hs))
-                total_loss = loss + halc.reg_weight * halc_reg
+                # === v69 G5: Codebook-aware Manifold Contrastive ===
+                if V69_G5_ENABLED:
+                    v69_g5_loss = _g5_manifold_contrastive_loss(logits, batch["target"])
+                else:
+                    v69_g5_loss = torch.tensor(0.0, device=loss.device)
+                total_loss = loss + halc.reg_weight * halc_reg + V69_G5_AUX_WEIGHT * v69_g5_loss
             accelerator.backward(total_loss)
             optimizer.step()
             epoch_loss += loss.item()
@@ -308,7 +425,7 @@ def _train_hgrec(
             epoch_count += 1
             if accelerator.is_main_process:
                 pbar.set_description(
-                    f"E{epoch+1} loss={loss.item():.4f} halc={halc_reg.item():.4f} w={halc.reg_weight.item():.4f}"
+                    f"E{epoch+1} loss={loss.item():.4f} halc={halc_reg.item():.4f} v69={v69_g5_loss.item():.4f} w={halc.reg_weight.item():.4f}"
                 )
         avg_loss = epoch_loss / max(epoch_count, 1)
         avg_halc = epoch_halс / max(epoch_count, 1)
