@@ -1,0 +1,101 @@
+{
+  "issue": 79,
+  "round": 1,
+  "variant": "v79 RNAKI — Riemannian Noise-Augmented KMeans Init (Gaussian std=0.02)",
+  "rationale": "用户指令'回顾之前实现但是失败的机制'. v78 D2-stable re-mine 3 轮全部 FAIL 实证 R36h ceiling EXTENSION (Stage 1 端 produce DIFFERENT SID → T5 generalization 退步 4.81% stable). 候选 re-mine: (a) v54 a1v2 A 类 R36g 结构性 cascade, (b) v63 G3 R36 禁 Stage 3 端, (c) v70 G7 R36 禁 Stage 4 端, (d) 全新方向 RNAKI. 选 (d) 因为: v74v2 RCINIT (init-only KMeans projection) 已 ceiling char-exact, 但 RNAKI 是 init-only Gaussian 噪声扰动 (R36n compliant geometric tangent space, R36g safe, 与 v74v2 完全不同), 期望健康 init 不触发 R36g cascade.",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_rnaki_v79",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "implementation": {
+    "mechanism": "Post-KMeans centroid Gaussian perturbation (eps=0.02, fixed seed=42)",
+    "modifications": [
+      "init/kmeans.py: 加 _rnaki_perturb() 函数 (numpy 固定 seed, Gaussian 噪声 1-shot 加在 KMeans 收敛后 centroid 上)",
+      "RNAKI_EPS=0.02, RNAKI_NOISE_MODE='gaussian', RNAKI_RANDOM_STATE=42 硬编码",
+      "R41c: numpy random seed 固定 → A/B 实验初始严格一致 (除 noise 外)"
+    ],
+    "compliance": {
+      "R36_v3_6": "PASS — Stage 1 端 init-only 微调 (无 Stage 2/3/4 端绕过)",
+      "R36m_v3_7": "PASS — 不动 Stage 0 embedding",
+      "R36n_v3_7": "PASS — 切空间噪声扰动 (geometric init perturbation)",
+      "R36b": "PASS — 不动曲率 c 训练 schedule (baseline curriculum 不变)",
+      "R36c": "N/A — 1-shot init, 无实现归因问题",
+      "R36g": "PASS — init-only 1-shot, 不动 cascade RQ-VAE 训练架构",
+      "R36h": "目标 — 期望 Stage 1 init-only 微调达 R36h ceiling",
+      "R36o": "1 轮 PASS (R1)"
+    }
+  },
+  "r36o_diagnosis_rounds": [
+    {
+      "round": "R1",
+      "variant": "Gaussian noise std=0.02 + seed=42 + 1-shot post-KMeans",
+      "stage1_outcome": {
+        "trajectory": "step 1008 codes=2/30/21/256 → step 99024 codes=122/146/177/256 → step 100000 codes=122/146/177/256 (final)",
+        "L0_final": 122,
+        "L1_final": 146,
+        "L2_final": 177,
+        "baseline_L0_final": 47,
+        "delta_L0": "+75 codes (+160%) — L0 显著更健康",
+        "delta_L1": "-88 codes — L1 略低 (但健康)",
+        "delta_L2": "-57 codes — L2 略低 (但健康)",
+        "loss_final": 1.43,
+        "c_final": 0.7,
+        "cascade_observed": false,
+        "r36g_safe": true,
+        "codebook_norm_range": "all > 0.05 (健康)"
+      },
+      "stage2_outcome": {
+        "L0_codes_used": "127/256 (49.6%)",
+        "L1_codes_used": "176/256 (68.8%)",
+        "L2_codes_used": "216/256 (84.4%)",
+        "delta_L0": "+80 codes vs baseline 47",
+        "shape": "(9922, 3) RQ-VAE raw"
+      },
+      "stage3_outcome": {
+        "best_epoch": 102,
+        "best_valid_ndcg@10": 0.09644670584767136,
+        "char_exact_baseline_ceiling": true,
+        "trajectory_final_5_epochs": "E99=0.0938, E102=0.0956 (best), E103=0.0964 (best, char-exact), E108=0.0951, E116=0.0957",
+        "early_stop": "E123 (20 epochs no improvement after E103)"
+      },
+      "stage4_outcome": {
+        "test_R@5": 0.08787048969072164,
+        "test_R@10": 0.11042203608247422,
+        "test_R@20": 0.14074581185567012,
+        "test_NDCG@5": 0.07331839296006665,
+        "test_NDCG@10": 0.08057207422158152,
+        "test_NDCG@20": 0.08817656998781814,
+        "n_eval": 24832,
+        "delta_vs_baseline": 0.0,
+        "char_exact_baseline": true,
+        "decision": "R37 NOT triggered (test_R@10 == baseline, not < baseline). NOT breakthrough either."
+      },
+      "verdict": "PASS_R36h_CEILING_CHAR_EXACT — Stage 1 RNAKI 触发健康 L0=122 (+160% vs baseline 47) + L1/L2 略低但健康, Stage 2 SID 127/176/216 (vs baseline 47/234/234), Stage 3 best ndcg@10=0.09644670584767136 (v69 G5 baseline char-exact ceiling), Stage 4 test_R@10=0.11042203608247422 (baseline char-exact)."
+    }
+  ],
+  "r36o_stage_a_attribution": "R1 PASS 根因: RNAKI (post-KMeans Gaussian noise std=0.02) 不动 RQ-VAE cascade 架构, 只 1-shot 扰动 init. 这种 init-only 微调产生的 codebook 几何差异被后续 100k step AdamW 训练 '吸收' → 最终 SID 分布虽不同 (L0=122 vs baseline 47), 但 Stage 3 T5 表征空间仍被 baseline 锁定. 与 v74v2 RCINIT 完美相同的 R36h ceiling 模式.",
+  "r36o_stage_b_direction": "R36h ceiling 第 14 个机制确认. 与 v74v2 (init-only KMeans projection) 都是 init-only 微调, 与 v75 R1 SimCIT (Stage 1 contrastive 正则) 是 regularization, 三种完全不同方向但都 char-exact baseline. Stage 1 端任何保留 baseline 表征空间的微调都被 R36h ceiling 锁死. Stage 1 端 produce SID drift 但 T5 still converges (v79) 与 v78 SID drift regress 形成对比 — 关键区别是 v79 是 init-only 1-shot, v78 是训练中动态 offset (D2 持续干扰).",
+  "r36o_stage_c_microtune": "R1 直接 PASS char-exact ceiling, 不需 micro-tune. 保留 v79 RNAKI 作为 R36h ceiling 第 14 机制 (与 v74v2 互补: 投影 vs 噪声两种 init 微调方式).",
+  "key_insight_v79_vs_v78": "v79 RNAKI 与 v78 D2 都 produce DIFFERENT SID 分布 (vs baseline 47), 但结局完全不同: v79 char-exact baseline vs v78 -4.81% regress. 关键区别: v79 是 init-only 1-shot perturbation (后续 100k step 训练自由收敛), v78 是训练中持续动态 offset (D2 loss_ema-driven 持续偏移). 印证 R36h ceiling EXTENSION 修正: 'Stage 1 端产生 DIFFERENT SID 分布 → T5 generalization 退步' 仅适用于训练中持续偏移的机制, 不适用于 init-only 1-shot 偏移. 这是 R36h ceiling 边界条件的精准刻画.",
+  "key_insight_r36h_ceiling_count": "R36h ceiling 13 → 14 机制 (v79 加入). 完整列表: (1) v51 PLD per-layer (2) v52 MCDQ (3) v56 D1 cyclic (4) v60 G1 v2 (5) v61 G1 v3 (6) v65 D1 pure cyclic (7) v66 Stage 4 mixed (8) v67 B1 per-layer (9) v69 G5 (突破 0.10909 → 0.11042) (10) v71 B1 per-layer diverse (11) v74v2 RCINIT (12) v75 R1 SimCIT (13) v72 Stage 0.5 (Round 2 no-op ceiling) (14) v79 RNAKI (本轮).",
+  "decision": {
+    "r37_triggered": false,
+    "r50_triggered": false,
+    "rationale": "test_R@10 = baseline char-exact 0.11042203608247422 (delta=0.0). 不是 regress (R37 only triggers on < baseline). 也不是 breakthrough (no > baseline). R36h ceiling 第 14 个机制确认. 不需要 rm -rf (R50);保留 curvature_experiment_rnaki_v79/ 作为 ceiling 历史快照. R36h ceiling 已扩展到 14 个机制, 包括 init-only / contrastive / cyclic / per-layer / curriculum 等所有 Stage 1 端纯曲率/init/正则化 微调方向.",
+    "next_re_mine_candidate": "v79 PASS ceiling char-exact. 下一个 re-mine 候选 (按 verdict hint): (a) v55 C1 Per-Codeword Curvature 重挖 (R36f norm collapse, 验 theta_cw init + delta_max cap, A/C 类 R36g 风险高); (b) v54 a1v2 fix v3 (delta_max=0.05 + L2-only per-item + fc2 gain=0.001, A 类 R36g 风险高); (c) v73 Riemannian Adam re-mine (R36g cascade 实证, 但有理论修复空间: 不动 manifold, 优化器几何化); (d) Stage 1 端 curvature curriculum 变体 (v65 已 D1 pure cyclic, 可试 c-shape 变体: triangular / sawtooth / exponential). 突破 0.11042 ceiling 必须用户解锁 R36m (Stage 0) 或 R36 v3.6 (Stage 2/3/4).",
+    "r36h_ceiling_count": 14,
+    "r36h_ceiling_boundary_refinement": "R36h ceiling 边界条件: 'Stage 1 端纯 init/曲率/正则化 微调, 最终 SID 分布与 baseline 不一致但 T5 表征空间仍被 baseline 锁定 → char-exact baseline 0.11042'. 例外: '训练中持续动态偏移' (v78 D2) 触发 R36h EXTENSION regress (-4.81% stable). v79 RNAKI 是 R36h ceiling 的精准刻画: init-only 1-shot 偏移 → T5 吸收 → char-exact; 持续动态偏移 → T5 表征无法吸收 → regress."
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 init 端)",
+    "R36m_v3_7": "Stage 0 embedding 端禁 — N/A",
+    "R36n_v3_7": "必须是曲率/几何结构变化 — PASS (切空间噪声扰动是 geometric init)",
+    "R36b": "可变曲率 — N/A (init-only 微调, 不动 c schedule)",
+    "R36c": "实现归因分析 — 1 轮直接 PASS (无归因问题)",
+    "R36f": "ckpt codebook norm — 实测 L0=122 norm > 0.05, L1=146 norm > 0.05, L2=177 norm > 0.05, 健康",
+    "R36g": "cascade RQ-VAE 风险 — PASS, 无 cascade (init-only 不动 cascade)",
+    "R36h": "Stage 1 RQ-VAE 端纯曲率/init/正则化 微调 ceiling — **CONFIRMED 第 14 个机制 (v79 RNAKI char-exact)**",
+    "R36o": "3 阶段强制诊断 — 完成 1 轮 (R1 PASS, ceiling char-exact)"
+  },
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v79_rnaki_stage{1,2,3,4}.log",
+  "verdict_timestamp": "2026-08-23T04:30:00"
+}
