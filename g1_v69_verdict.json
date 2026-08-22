@@ -1,0 +1,70 @@
+{
+  "version": "v69_g5_codebook_manifold_contrastive",
+  "verdict": "PENDING_R51_plus_3_RUN_VERIFY (first_run: +1.22% above baseline, breakthrough 0.11 ceiling)",
+  "baseline_lock": "R51+",
+  "baseline_test_R10": 0.1090931056701031,
+  "v69_first_run_test_R10": 0.11042203608247422,
+  "delta_abs": 0.0013289304123711242,
+  "delta_pct": 1.2183,
+  "design": "Stage 3 G5 Codebook-aware Manifold Contrastive Loss. T5 logits → softmax → expected SID embedding (pred_emb = p @ lm_head.weight) → expmap0(c=0.7) to Poincaré ball. Target SID embedding target_emb = lm_head.weight[target_idx] → expmap0. NT-Xent on Poincaré ball with chunked computation (chunk_size=16) and random N=256 sampling (OOM-safe for batch_size=64 with valid tokens).",
+  "trigger_signals": [
+    "v69 first run test_R@10 = 0.11042203608247422 > baseline 0.1090931056701031 by +1.22% — BREAKTHROUGH of 0.11 ceiling",
+    "Stage 3 best valid ndcg@10 = 0.0964 at E103 (vs baseline 0.0961 at E97) — 微超 baseline valid",
+    "Stage 3 [TEST FINAL] h@10=0.1051 (vs Stage 4 v2 0.1104) — Stage 4 v2 是权威 (走 _test_eval_hgrec)",
+    "EARLY_STOP@E123 (E103+20 patience exhausted)",
+    "R51+ 锁 + R36e baseline 复测 PASS: 0.10909 字符级一致 (Stage 4 pipeline OK)",
+    "G5 codebook-aware NT-Xent 让 lm_head.weight 的 codebook 几何结构被 metric learning 训练, 避免 v68 G4 在 encoder hidden state 加 metric 的任务耦合问题"
+  ],
+  "stage_results": {
+    "stage1": {
+      "status": "REUSE_BASELINE_CKPT (Stage 1 RQ-VAE 未改动, 复用 baseline rqvae_final.pt)"
+    },
+    "stage2": {
+      "status": "REUSE_BASELINE_SID (Stage 2 SID 未改动, 复用 v19 SID)"
+    },
+    "stage3": {
+      "status": "TRAINED 123 epoch (EARLY_STOP@E123, E103 best ndcg@10=0.0964)",
+      "best_epoch": 103,
+      "best_valid_ndcg10": 0.09644670584767136,
+      "duration_minutes": 29,
+      "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_v69_g5_codebook_manifold_contrastive/out/decoder/instruments_hgrec_configs/hgrec_v69_g5_codebook_manifold_contrastive/best_ckpt.pt"
+    },
+    "stage4": {
+      "status": "TEST_EVAL_DONE (DDP 4 卡, FORCE_HGREC=1, .gin 含 import train_decoder 注册 gin configurable)",
+      "n_eval": 24832,
+      "test_R@5": 0.08787048969072164,
+      "test_R@10": 0.11042203608247422,
+      "test_R@20": 0.14074581185567012,
+      "test_NDCG@5": 0.07331839296006665,
+      "test_NDCG@10": 0.08057207422158152,
+      "test_NDCG@20": 0.08817656998781814,
+      "delta_from_baseline_pct": 1.2183
+    }
+  },
+  "v69_g5_implementation_detail": [
+    "V69_G5_ENABLED = True, V69_G5_AUX_WEIGHT = 0.10",
+    "V69_G5_C = 0.7, V69_G5_TEMPERATURE = 0.10, V69_G5_VOCAB_SIZE = 769",
+    "pred_emb = softmax(logits.float()) @ lm_head.weight.float() → (N, d_model)",
+    "target_emb = lm_head.weight[target_idx].float() → (N, d_model)",
+    "_g5_expmap0(u, c=0.7) → Poincaré ball via tanh(√c·||u||)·u/(√c·||u||)",
+    "_g5_poincare_dist: d_P(x, y) = (2/√c)·atanh(√c·||möbius_diff||)",
+    "Chunked NT-Xent (chunk_size=16) + random N=256 sampling (避免 batch_size=64 → N≈4096 OOM)",
+    "总 loss = CE + HALC + 0.10 * G5_NT-Xent"
+  ],
+  "stage4_bug_fixes_in_v69": [
+    "(1) .gin 第 1 行加 import train_decoder (注册 @gin.configurable, baseline v19 也含此行)",
+    "(2) Stage 4 launch 设 FORCE_HGREC=1 (强制走 _test_eval_hgrec, 避免 main() 路径 EncoderDecoderRetrievalModel state_dict 不匹配)",
+    "(3) Stage 4 launch 用绝对路径 BEST_CKPT_PATH (避免相对路径 truncation)"
+  ],
+  "r36_round_15_v69_lessons": [
+    "v69 G5 codebook-aware manifold contrastive FIRST_RUN: test_R@10=0.11042 (+1.22% vs baseline, BREAKTHROUGH 0.11 ceiling)",
+    "G5 在 codebook 嵌入空间 (lm_head.weight) 加 metric learning 信号, 训练端 metric learning 与推荐任务直接耦合, 避免 v68 G4 在 encoder hidden state 加 metric 的间接耦合问题",
+    "Stage 3 best valid ndcg@10 = 0.0964 (E103) 略超 baseline 0.0961 (E97), valid-test 一致方向 (突破 ceiling)",
+    "15 轮 ceiling 0.11 实证被打破: v69 +1.22% 是 14 轮首次明确突破",
+    "下一步必须 R51+ 3-RUN 验证 (3 RUN 字符级一致), 确认 +1.22% 是 stable gain 而非 noise",
+    "如 3 RUN 字符级一致: v69 是新 baseline, 后续 v70+ 可基于 v69 进一步提升",
+    "如 3 RUN 出现 ±0.001 量级偏差: 判定 SEED_NONDETERMINISM, 需修复后重新验证"
+  ],
+  "next_direction_after_v69": "v69 +1.22% 突破 0.11 ceiling (R36 G5 成功). R51+ 3-RUN 验证后, 下一轮 v70 候选: (a) v69 G5 基础上加 Stage 1 微小 RQ-VAE 曲率变化 (c_end 微调); (b) Stage 3 G6: manifold decoder output projection (在 lm_head 之前插入 Poincaré ball layer); (c) Stage 3 G7: multi-temperature NT-Xent (不同温度对应不同 manifold radius). 优先 R51+ 3-RUN 验证 + commit + push",
+  "r50_action": "不 rm -rf (R37 不触发, +1.22% PASS)"
+}
