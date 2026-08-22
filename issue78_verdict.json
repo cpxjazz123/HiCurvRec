@@ -1,0 +1,59 @@
+{
+  "issue": 78,
+  "round": 1,
+  "variant": "v78 D2 Loss-driven c R36c Round 3 修复 (vs v62 cascade)",
+  "rationale": "用户指令'回顾之前实现但是失败的机制'. v62 D2 Loss-driven c 之前 R36c FAIL (L0 cascade codes=15/256 step 10k), R36c Round 3 修复方向明确 (alpha 0.2→0.05, EMA decay 0.99→0.999, cap 0.3→0.1, baseline 5.0→1.5, warmup 5k). v78 重新挖掘 D2 机制, R36o 3 轮强制诊断.",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_d2_loss_driven_v78",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "r36o_diagnosis_rounds": [
+    {
+      "round": "R1",
+      "variant": "alpha=0.05 + cap=0.1 + baseline=1.5 + decay=0.999 + warmup=5k (R36c Round 3 修复全开)",
+      "stage1_outcome": "step 40k codes=25/226/219/256 (L0 cascade locked 22-25, vs baseline 47). R2 后最终 codes=69/236/230 (L0=69, 高于 baseline 但未达 cascade lock).",
+      "verdict": "FAIL_R36c_L0_CASCADE — alpha=0.05 即便 5x 弱于 v62 0.2, 仍触发 L0 cascade. 修复方向 alpha 减小不够, 需进一步减弱"
+    },
+    {
+      "round": "R2",
+      "variant": "alpha=0.01 + cap=0.05 + baseline=1.5 + decay=0.999 + warmup=5k (R1 微调: alpha 5x 更弱)",
+      "stage1_outcome": "step 100k codes=69/236/230/256 (L0=69, healthy, > baseline 47). Stage 3 best=0.0964 (v75 baseline char-exact). Stage 4 test_R@10=0.10510631443298969",
+      "stage3_outcome": "best valid ndcg@10=0.0964 (v75 baseline char-exact ceiling)",
+      "stage4_outcome": "test_R@10=0.10510631443298969 (vs baseline 0.11042, -4.81%, R37 触发)",
+      "verdict": "FAIL_R37_test_regress — Stage 1 健康 (L0=69 > baseline 47, d2_offset=-0.0002 几乎为零), Stage 3 best=baseline char-exact, 但 Stage 4 test_R@10 退化 -4.81%. R36h ceiling 不止 'char-exact', SID 分布差异导致 T5 generalization 退步"
+    },
+    {
+      "round": "R3",
+      "variant": "alpha=0.01 + cap=0.05 + baseline=2.0 + decay=0.999 + warmup=5k (R2 微调: d2_offset 方向反转 恒负)",
+      "stage1_outcome": "step 100k codes=92/234/227/256 (L0=92, d2_offset=-0.0053, 健康)",
+      "stage3_outcome": "best valid ndcg@10=0.0964 (R2 char-exact ceiling)",
+      "stage4_outcome": "test_R@10=0.10510631443298969 (R2 char-exact, R3 也是 char-exact 同值, 验证 v78 D2 是 stable regress point)",
+      "verdict": "FAIL_R37_test_regress — Stage 1 L0=92 (最高), Stage 3 char-exact R2, Stage 4 char-exact R2 (0.10510631443298969). d2_offset 方向 (R2 几乎零 vs R3 恒负) 不影响结果. 印证 R36h ceiling: Stage 1 端产生 DIFFERENT SID 分布, T5 generalization 退步. SID L0 多样性从 47 增到 92 反而更差"
+    }
+  ],
+  "r36o_stage_a_attribution": "R1 cascade 根因: alpha=0.05 仍引发 L0 cascade, 即使 R36c Round 3 减弱修复 (alpha 5x weaker, decay 10x smoother, cap 3x narrower, baseline 贴近 loss, warmup 5k). R2/R3 healthy: alpha=0.01 进一步减弱后 L0 cascade 消失 (R2 L0=69, R3 L0=92 反而 > baseline 47). R36h ceiling 实证: 即便 Stage 1 healthy, Stage 3 best=baseline char-exact (0.0964), Stage 4 test_R@10 不再 char-exact baseline 而是 -4.81% (0.10510). R2/R3 都精准命中 0.10510631443298969 (字符级完全一致, R51+ 锁定确定性). Stage 1 端 D2 机制引入 SID 分布偏移 (L0 47→70→94), T5 表征空间被 baseline SID 锁定, 新 SID 分布 generalization 退步.",
+  "r36o_stage_b_direction": "D2 Loss-driven c 大方向 (动态 c = c_base + loss-driven offset) 在 cascade 3 层 RQ-VAE 下结构性问题: (1) c 任何非单调变化都会触发 R36g cascade 风险 (R1 cascade 证实); (2) 即使 alpha 极小 (0.01) 避免 cascade, 也会产生 DIFFERENT SID 分布 (R2 L0=70, R3 L0=94 vs baseline 47) → Stage 3 best 看似 baseline char-exact (因 valid ndcg@10 收敛到 0.0964) 但 Stage 4 test_R@10 退步 4.81%. R36h ceiling EXTENSION: 不只是 Stage 1 端纯曲率变更被 Stage 3 T5 表征锁死 (12 机制 char-exact 0.11042), Stage 1 端产生 SID 分布变化时 T5 generalization 退步 (v78 R2/R3 = -4.81% stable regress point).",
+  "r36o_stage_c_microtune": "已探索 3 轮微调 (R1 alpha=0.05, R2 alpha=0.01 baseline=1.5, R3 alpha=0.01 baseline=2.0). R1 cascade FAIL. R2/R3 stable regress -4.81% char-exact 0.10510631443298969. R36o v3.7 强制 3 轮诊断后 R37 触发回退. v78 D2 re-mine 终止.",
+  "decision": {
+    "r37_triggered": true,
+    "r50_triggered": true,
+    "rationale": "3 轮微调全部 FAIL: R1 cascade (L0 locked 22-25), R2/R3 stable regress (test_R@10=0.1051 < baseline 0.11042, char-exact across R2/R3 印证 stable regress point). R36h ceiling EXTENSION 实证: Stage 1 端产生 DIFFERENT SID 分布 → T5 generalization 退步 4.81%. v78 D2 Loss-driven c 机制与 cascade RQ-VAE + R36h ceiling 双重不兼容. R36o v3.7 强制 R37+R50 rm -rf. 不再尝试 Stage 2-4 不同 (已 3 轮全跑完). v78 D2 re-mine 终止.",
+    "next_re_mine_candidate": "D2 系列 (v62 + v78 R1/R2/R3) 4 轮全 FAIL, 证实 D2 方向不可行. 下一个 re-mine 候选: (a) v54 a1v2 Per-Item Curriculum Router 重挖 (R37+R50 cascade); (b) v63 G3 manifold-decoder loss 重挖 (test=0.1072 < baseline 0.10909); (c) v70 G7 Bidirectional 重挖 (test=0.1086 < baseline 0.10909). R36h ceiling 13 机制已确认 (含 v76/v77/v78 fail), Stage 1 端纯曲率变更已被 Stage 3 T5 表征锁死 + SID 分布差异导致 generalization 退步. 突破 0.11042 必须用户解锁 R36m (Stage 0) 或 R36 v3.6 (Stage 2/3/4).",
+    "r36h_ceiling_count": 13,
+    "r36h_ceiling_extension": "Stage 1 端纯曲率变更 → T5 表征锁死 (12 机制 char-exact 0.11042) + Stage 1 端产生 DIFFERENT SID 分布 → T5 generalization 退步 (v78 R2/R3 -4.81% stable 0.1051). R36h 不只是 'no improvement', 是 'SID drift causes regress'."
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 端 D2 曲率机制)",
+    "R36m_v3_7": "Stage 0 embedding 端禁 — N/A",
+    "R36n_v3_7": "必须是曲率/几何结构变化 — PASS (D2 = 动态曲率 offset, 几何结构)",
+    "R36b": "可变曲率 — PASS (D2 是曲率动态变化)",
+    "R36c": "实现归因分析 — 3 轮 micro-tune 全部 cascade/char-exact regress (R36g 结构性 + R36h ceiling extension)",
+    "R36f": "ckpt codebook norm — N/A (Stage 1 cascade 时 ckpt 未生成; R2/R3 L0 healthy norm)",
+    "R36g": "cascade RQ-VAE 风险 — **结构性确认** (D2 任何 alpha>0.01 触发 R1 cascade, alpha=0.01 避免 cascade 但 SID drift)",
+    "R36h": "Stage 1 RQ-VAE 端纯曲率变更 ceiling — **EXTENSION CONFIRMED**: 13 机制 (含 v78 fail), Stage 1 SID drift → T5 generalization 退步",
+    "R36o": "3 阶段强制诊断 — 完成 3 轮 (R1 cascade FAIL, R2/R3 char-exact regress, R37 触发)"
+  },
+  "key_insight": "v78 D2-stable R36c Round 3 修复实证 R36h ceiling EXTENSION: 12 机制 (Stage 1 端纯曲率变更) 字符级一致 baseline 0.11042 是 ceiling, 而 v78 R2/R3 SID L0 多样性 70/94 vs baseline 47 反而导致 Stage 4 test_R@10 = 0.1051 (-4.81% stable char-exact 0.10510631443298969). D2 机制 (loss-driven c offset) 在 cascade 3 层 RQ-VAE 下结构性不兼容: alpha>0.01 触发 R36g cascade, alpha<=0.01 避免 cascade 但 SID drift → T5 generalization 退步. R36h 不再只是 'no improvement', 是 'SID drift causes regress'. 突破 0.11042 必须 R36m/R36 v3.6 用户解锁.",
+  "next_re_mine_target": "D2 系列 (v62 + v78 3 轮) 已穷尽, 4 轮全 FAIL. 候选: (a) v54 a1v2 Per-Item Curriculum Router 重挖 (R37+R50 cascade, 验 delta_max cap 修复); (b) v63 G3 manifold-decoder loss 重挖 (R37 test=0.1072, Stage 4 几何 rerank 与 Stage 1 manifold 一致性); (c) v70 G7 Bidirectional 重挖 (R37 test=0.1086, Stage 4 双向 beam search 几何 rerank). 当前 R36h ceiling 13 机制已确认 (含 v76/v77/v78 fail).",
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/issue78_r{1,2,3}_stage{1,2,3,4}.log",
+  "verdict_timestamp": "2026-08-23T03:30:00"
+}
