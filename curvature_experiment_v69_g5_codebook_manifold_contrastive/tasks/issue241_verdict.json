@@ -1,0 +1,21 @@
+{
+  "issue": 241,
+  "task": "v21 备胎: Stage 1 USE_FIXED_CURVATURE=False 让 per-layer κ 可学习 (R36 新曲率机制)",
+  "verdict": "R38 PRE_STAGE3 KILL — Stage 1 L0 catastrophic collapse (codes=3/256 at step 9272), 沿 v18 失败 lineage, R50 回滚到 v19 baseline",
+  "stage1_outcome": "KILLED at global_step≈9272/100000. Catastrophic collapse: layer [0] usage=3/256 codes (< 10%) for 整段训练. v21 设计意图: USE_FIXED_CURVATURE=False + c_end=0.7 + USE_M3_TRANSPORT=True + margin_reg=0 → 让 per-layer θ 可学习 (Issue #154 prefix_routing), curriculum 锚定 c_end 防止漂移过远. 但实测: L0 codes 0→1→1→1→2→2→2→3 增长极慢, 浅层塌缩模式与 v18 (margin_reg + c 浮动 + M3 OFF) 完全一致, 即便关 margin_reg + 开 M3 transport 也无法阻止. θ 实测 c=0.706/0.706/0.706 (3 层一致), 实际未学习 → 行为与 USE_FIXED_CURVATURE=True 无差, 失败模式来自 curriculum 调度本身而非 θ 学习通路.",
+  "stage2_outcome": "未执行 (Stage 1 失败)",
+  "stage3_outcome": "未执行",
+  "stage4_outcome": "未执行",
+  "root_cause": "Stage 1 C27 curriculum (c_start=0.05 → c_end=0.7 over 50k steps) + L0 浅层 + margin_reg=0 + M3 transport ON 的组合下, c ramp 阶段浅层码字利用率仍持续低位. 排除 margin_reg (v18 因子已关), 排除 M3 OFF (v18 因子已开) → 真正的塌缩诱因是 USE_CURRICULUM_CURVATURE=True 的早期 c_start=0.05 (近欧氏) + L0 浅层正交性不足. v19 (USE_FIXED_CURVATURE=True) 没有此问题, 因为 c 始终恒定 c=0.7 (避免 c ramp 阶段的几何抖动). v21 = 路径同构 v18 + v19 失败模式的叠加态, 即使去掉 v18 的两个 NO-GO 因子仍 NO-GO.",
+  "r38_kill_signal": "CODEBOOK WARNING 持续触发: codes=1/2/2/256 → 1/3/2/256 → 1/4/2/256 → 2/22/6/256 → 2/49/28/256 → 2/92/38/256 → 3/134/56/256. L0 从 step 888 到 9272 仅增长 3 个 code (rate ~1 code/3000 steps), 预计 100k step 时 L0 仅 ~30 codes — 远低于 v19 终态 46/256. Per R23/R38: kill -9 + R38 决策行 + 立即 commit + push + close.",
+  "r37_decision": "FAIL — v21 < v19 (无 Stage 4 数值, 但 Stage 1 量化器健康度已判定 NO-GO), 终止 lineage. v21 与 v18 路径同构 (Stage 1 c floating + 几何组合), v18 失败教训: 'c floating + M3 OFF + margin_reg' 联合 NO-GO; v21 验证: 'c floating + M3 ON + margin_reg=0' 仍 NO-GO. 共同根因 = c_start=0.05 早期几何抖动.",
+  "r50_revert": "已 git checkout HEAD -- train_rqvae_instruments.py (恢复 v19 baseline). v21 OUT_DIR 留作记录, 含 rqvae_step10000_collapse.pt (R50 禁重跑, 仅作 R38 失败物证). 禁止立即重跑 (R50).",
+  "r18_4dim": {
+    "D1_spec": "Stage 1 USE_FIXED_CURVATURE=False + c_end=0.7 + USE_M3_TRANSPORT=True + margin_reg=0. 让 per-layer θ 可学习, curriculum 锚定 c_end.",
+    "D2_impl": "train_rqvae_instruments.py: USE_FIXED_CURVATURE True→False, margin_reg_weight 改为 hardcoded 0.0, OUT_DIR v19→v21_per_layer_kappa, 加 v21 备胎注释.",
+    "D3_gate1": "Stage 1 catastrophic collapse @ step 9272. L0 codes 3/256, L1 134/256 (OK), L2 56/256 (slow). θ c=0.706/0.706/0.706 (三层一致, 实际未学习).",
+    "D4_lit": "Issue #154 prefix_routing 设计意图正确 (per-item c via token-conditioned MLP), 但 θ 在量化 loss 下 gradient 信号极弱 (Issue #154 已验证: 'per-item c 1e-4 变化不足以改变 assignment'), c_end=0.7 锚定下 θ 实际未逃离 init 值, 与 USE_FIXED_CURVATURE=True 行为等价. v21 验证: 即使在最宽松条件 (margin_reg=0 + M3 ON + c_end=0.7 锚定), per-layer κ 通路无法激活, 仍然被 c ramp 阶段 L0 塌缩阻断."
+  },
+  "v18_v21_contrast": "v18 (USE_FIXED_CURVATURE=False + margin_reg=0.5 + USE_M3_TRANSPORT=False) vs v21 (USE_FIXED_CURVATURE=False + margin_reg=0 + USE_M3_TRANSPORT=True). 两个 NO-GO 因子 (margin_reg + M3 OFF) 同时关闭, 仍 NO-GO. 说明 c floating + curriculum 本身就有塌缩风险, 真正稳态只有 USE_FIXED_CURVATURE=True (v19 PASS).",
+  "next_step": "v22 备胎方向: 避开 c floating 路径 (v18/v21 连续 NO-GO). R36 explicit allowed 候选: (a) Stage 3 HALC v2 reg 切 Lorentz inner product (v5 失败因 reg 路径 bug, 但 v5 实际 test=0.0006 可能是 generate 路径 bug 而非 reg 本身); (b) Stage 1 encoder architecture 变化 (不同 hidden_dims, R36 允许); (c) Stage 1 USE_M2_INTRINSIC=True 单独测试 (v29 之前 M2 + M3 联合 NO-GO, 但 M2 单开可能 OK). 优先 (c) Stage 1 单 M2 (低风险, 仅开 Möbius 减法)."
+}

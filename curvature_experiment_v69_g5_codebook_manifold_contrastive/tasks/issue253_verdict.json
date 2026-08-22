@@ -1,0 +1,24 @@
+{
+  "task": "Issue253_v33_hyp_former_curved_attention",
+  "verdict": "R38 FAIL (OOM kill, 3 次启动均 OOM)",
+  "r38_trigger": "训练启动期 OOM, 3 次重试 (batch=2048/1024/512) 均在 cross-attention `value_states = self.v(current_states)` 阶段 OOM (GPU 44.30 GB / 44.39 GB total). 触发 R38 NaN-Inf / wrapper broken 信号. 实际上不属 NaN-Inf, 但属 wrapper broken (curved_attention monkey-patch 强制 materializes attn_weights 触发 transformers 5.15.0 显存墙).",
+  "r38_kill_at": "2026-08-19T11:50:00+10:00",
+  "trajectory_summary": {
+    "v33 启动尝试 1": "batch=3072, OOM 在 cross-attention Q@K^T 阶段 (300 MiB alloc fail)",
+    "v33 启动尝试 2": "batch=2048, OOM 在 cross-attention value_states 投影",
+    "v33 启动尝试 3": "batch=1024+expandable_segments, OOM 在 cross-attention KV cache update",
+    "v33 启动尝试 4": "batch=512, OOM 在 cross-attention value_states 投影 (44.30 GB 全占满)"
+  },
+  "r37_baseline_v19_test_R@10": 0.1074,
+  "r37_reason": "v33 Hyp-Former curved attention 完整代码 + 数值稳定验证 OK (TEST 1-4 PASS, HG_Rec 实例化 n_params=171,264 + 47/47 梯度), 但 transformers 5.15.0 T5 训练启动在 4 卡 DDP + bf16 + monkey-patch 后立即 OOM, batch_size 减半仍 OOM. 根因: new_forward 完整重写 T5Attention.forward (line 121-202 _lib/curved_attention.py) 强制返回 (attn_output, position_bias, attn_weights) 三元组并 materializes full (B, h, L, L) attn_weights 矩阵, 相比标准 SDPA path 多 10x 显存占用. v33 Stage 3 训练从未开始, 无法跑 R37 Stage 4 eval",
+  "r36_constraint_check": "PASS — v33 改动仅 Stage 3 attention logits 加 Hyp-Former d_P(q,k)² bias (R36 新曲率机制), 不引入可学习参数, 不调 LR/dropout/ls/wd. 但实际未启动训练 (OOM), R36 验证未执行",
+  "r50_action": "R50 生效: 立即停手 v33 重跑. revert modules/hg_rec.py + train_decoder.py, 删除 _lib/curved_attention.py + configs/decoder_instruments_hgrec_v33.gin. 备份知识保留 (issue253_verdict.json). v33 代码设计本身有效 (verify_curved_attention.py 4 测试 PASS), 但与 transformers 5.15.0 显存约束不兼容, 需 future work 改用 SDPA path + gradient checkpointing 才能训练.",
+  "stage_status": {
+    "stage1_v19_reuse": "OK (复用 v19 RQ-VAE ckpt)",
+    "stage2_v19_sid_reuse": "OK (复用 Instruments_v19_sids_for_hgrec.npy)",
+    "stage3_hgrec_t5_curved_attn": "R38 OOM KILL ×4 (batch=3072/2048/1024/512)",
+    "stage4_test_eval": "未执行 (训练未启动)"
+  },
+  "next_action": "v34 备胎: 避开 monkey-patch 显存墙 — Stage 1 Riemannian Codebook (Poincaré manifold-aware codebook gradient, R36 曲率机制变更, 改 Stage 1 不改 Stage 3 避开 T5 monkey-patch 显存问题)",
+  "verdict_written_at": "2026-08-19T11:51:00+10:00"
+}

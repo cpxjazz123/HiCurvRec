@@ -1,0 +1,26 @@
+{
+  "issue": 239,
+  "task": "v19 备胎: Stage 1 C27 缓和曲率调度 (C_END 1.0 → 0.7, R36 框架级变更)",
+  "verdict": "R37 PASS (test_R@10=0.1102 vs v16 0.1077, +0.0025 vs baseline +0.0030)",
+  "stage1_outcome": "C27 curriculum c_end 1.0→0.7 (USE_FIXED_CURVATURE=True, USE_M3_TRANSPORT=True). 训练 100k global steps DDP 4 卡, c 从 0.05 ramp 到 0.7 over 50k steps, 后续稳定在 0.7. codebook 健康: L0=46/256 (18%, partial fill, no collapse), L1=228/256 (89%), L2=233/256 (91%)",
+  "stage2_outcome": "Stage 2 SID inference: (9922, 3) int64, per-layer c=[0.7, 0.7, 0.7], boundary response=[0.45, 0.33, 0.27]",
+  "stage3_outcome": "HALC v2 + v16 differential schedule (encoder_warmup=3/encoder_cooldown=8, decoder_warmup=7/decoder_cooldown=12). 训练 200 epoch DDP 4 卡 bf16, EARLY_STOP @ E138 (best_ckpt epoch 117, valid NDCG@10=0.0970)",
+  "stage4_outcome": "test_R@10=0.1102 — R37 PASS (vs baseline 0.1072, +0.0030; vs v16 0.1077, +0.0025). 单 ckpt + beam=20. R35 禁 Borda 满足.",
+  "test_R@10": 0.11022068298969072,
+  "test_R@5": 0.0897229381443299,
+  "test_NDCG@10": 0.08169259730073594,
+  "test_NDCG@5": 0.07509787058092884,
+  "baseline_R@10": 0.1072,
+  "v16_R@10": 0.1077,
+  "delta_vs_baseline": 0.0030,
+  "delta_vs_v16": 0.0025,
+  "r37_decision": "PASS — test_R@10=0.1102 ≥ 0.1072 baseline. 保留 v19 c_end=0.7 Stage 1 训练产物 + ckpt (新曲率机制, 不调参)",
+  "r18_4dim": {
+    "D1_spec": "Stage 1 C27 curriculum C_END 1.0→0.7 (Poincaré ball r=1/sqrt(c), c↓ r↑, 几何空间比 c=1 缓和 ~30%)",
+    "D2_impl": "train_rqvae_instruments.py C_END 1.0→0.7 (1 行改动), infer_sids_instruments.py c_end=0.7 (1 行改动), 新增 build_v19_sids_for_hgrec.py + decoder_instruments_hgrec_v19.gin config. Stage 3 沿用 v16 differential schedule",
+    "D3_gate1": "Stage 1 健康完成 (无 catastrophic collapse, L0 fill 缓慢但持续上升至 46/256). Stage 3 EARLY_STOP @ E138 健康, valid NDCG@10 最高 0.0970 (vs v16 0.0964)",
+    "D4_lit": "数学依据: Poincaré ball radius r=1/sqrt(c), c↓ → r↑ → 距离更平滑 → argmin 更稳定. HG-Rec 论文 c=1.0 是经验值, c=0.7 是几何直觉 (实测验证 PASS, +0.0030 vs baseline)."
+  },
+  "v17_v18_contrast": "v17/v18 连续 NO-GO 后, v19 走几何调度缓和方向 (而非 per-layer reg_weight 强度 sweep 或 margin_reg). v19 与 v17/v18 路径完全不同: D2 实现差异在 Stage 1 c_end 调度参数 vs Stage 3 per-layer reg_weight (v17) / Stage 1 margin_reg (v18). R36 框架级变更成功.",
+  "next_step": "v20 备胎: 继续几何变换方向. v19 c_end=0.7 PASS 后, 可探索: (a) Stage 1 c_end=0.5 (更缓和); (b) Stage 3 切 Lorentz model (R36 explicit allowed); (c) Stage 1 双距离公式 (Poincaré + Lorentz 联合). 目标 test_R@10=0.12 还差 +0.0098. 不要重复 v17/v18 路径同构失败模式."
+}

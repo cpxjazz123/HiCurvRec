@@ -1,0 +1,62 @@
+{
+  "issue": 229,
+  "experiment": "HALC v9: Hybrid Smooth-Step Curvature (v2 sigmoid + v8 step_scale)",
+  "date": "2026-08-18",
+  "r52_compliance": "主目录直接迭代, 无新建 Issue<NN>_<任务名>/ 子目录",
+  "novelty": "R36 曲率机制变更 (HALC v2 sigmoid → v9 sigmoid*step): c_l(t) = softplus(log_c_l) * sigmoid((t-5)/10) * step_scale(t), step_scale ∈ {1.0 (E0-50), 0.7 (E50-100), 1.0 (E100+)}",
+  "training": {
+    "model": "HG-Rec T5ForConditionalGeneration (C33 Issue #181) + HALC v9",
+    "halc_module": "_lib/halc_v9.py HALCHybridSmoothStepRegularizer",
+    "ddp": "accelerate launch --num_processes=4 --mixed_precision=bf16",
+    "batch_size": 3072,
+    "max_epochs": 200,
+    "early_stop_patience": 20,
+    "early_stop_trigger_epoch": 141,
+    "best_epoch": 121,
+    "best_valid_ndcg@10": 0.0961,
+    "training_elapsed_min": 30,
+    "halc_reg_final": 28.7,
+    "hybrid_smooth_step_stages": {
+      "E0-50": "step_scale=1.0 (与 v2 sigmoid 一致, 平滑起步)",
+      "E50-100": "step_scale=0.7 (中期轻度阶梯, c_l 短暂下降)",
+      "E100+": "step_scale=1.0 (后期强双曲化恢复)"
+    }
+  },
+  "test_eval": {
+    "best_ckpt_epoch": 120,
+    "best_ckpt_valid_ndcg@10": 0.0961,
+    "test_R@5": 0.0856,
+    "test_R@10": 0.1046,
+    "test_R@20": 0.0,
+    "test_NDCG@5": 0.0722,
+    "test_NDCG@10": 0.0783,
+    "test_NDCG@20": 0.0,
+    "method": "单 ckpt + beam=20 (R35 强约束, train_decoder.py 末尾 do_eval 自动跑)"
+  },
+  "r37_decision": {
+    "verdict": "FAIL",
+    "baseline_v2_test_R@10": 0.1072,
+    "v9_test_R@10": 0.1046,
+    "delta": -0.0026,
+    "delta_pct": "-2.4%",
+    "reason": "v9 Hybrid Smooth-Step best=E121 ndcg@10=0.0961 (vs v2 0.0976, -0.0015). EARLY_STOP @ E141 counter=20/20. test_R@10 0.1046 vs v2 baseline 0.1072 (-2.4%). R37 FAIL. 推断: 中期 step_scale=0.7 让 c_l 在 E50-E100 短暂下降, 模型在该窗口需要重新适应更弱几何, 浪费了约 50 epoch 训练时间; 后期 step_scale=1.0 恢复强双曲时 (E100+) 已经接近 EARLY_STOP, 强双曲化未充分训练 (仅 41 epoch: E100-E141). 比 v8 略好 (v8 早期 30 epoch 起步过弱; v9 仅中期 50 epoch 阶梯), 但仍未超越 v2 baseline 的纯 sigmoid 平滑路径."
+  },
+  "r50_action": {
+    "verdict": "已执行",
+    "actions": [
+      "git checkout HEAD -- train_decoder.py (回滚代码到 v2 baseline 状态)",
+      "rm -f out/best_ckpt.pt out/test_final.json (删除 v9 产物)",
+      "保留 _lib/halc_v9.py 模块 (备胎代码, R36 仍合规)",
+      "保留 tasks/issue229_verdict.json (本 verdict 决策文件)"
+    ],
+    "禁做的事": [
+      "禁止立即重启 v9 训练 (R37 禁止在差版本上二次创新)",
+      "禁止立即重训 v2 baseline (R50 严格执行)"
+    ]
+  },
+  "next_actions": [
+    "启 HALC v10 备胎: Per-Head κ attention bias (T5 attention curved, Issue #230, R36 合规, 1h GPU)",
+    "或 Stage 2 κ 集成 (PoincaréCodebook, 重训 Stage 1+2+3, 5h GPU, 风险大)"
+  ],
+  "commit_required": "R37 FAIL 决策 + R50 回滚操作, 待 commit + push 到 gitlab origin main (R45)"
+}
