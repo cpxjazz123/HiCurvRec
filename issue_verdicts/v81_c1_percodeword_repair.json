@@ -1,0 +1,42 @@
+{
+  "verdict": "PASS_R36G_UPGRADE_2ND",
+  "task": "v81 C1 Per-Codeword Curvature 修复版 (R36c v3.1 修复 + R36g cascade)",
+  "mechanism": "Stage 1 RQ-VAE 端 per-codeword curvature c_e[k] = c_base + delta_max*tanh(c_e_raw[k]) (c_e_raw 零初始化). R36c v3.1 修复: codebook_init_scale=0.14 (cascade L1/L2 residual norm 兼容) + codeword_c_delta_max=0.3 (manifold radius 限幅) + c_e 零初始化 (初始 c_e = c_base = 1.0).",
+  "r36o_v37_3_round_diagnosis": {
+    "round_A_implementation": "PASS — 3 个修复都正确实施: codebook KMeans init 后强制 norm=0.14 (cascade 兼容), c_e 限幅 ±0.3 (避免 manifold radius 跨度大), c_e_raw 零初始化 (初始 c_e = 1.0 = baseline c_base)",
+    "round_B_direction": "FAIL — R36g 升级预测 100% 准确. per-codeword 异质 manifold 在 cascade RQ-VAE 中结构性不可解: cascade L1/L2 输入 residual = L0_output - L0_embedding, norm 极小 (实测 ≈0.14), KMeans init 收束到 0, training lock 不动. 即便 init_scale + limit + zero-init 三重修复, cascade 仍从 step 956 (L0 第一个 epoch 内) 立即出现 codes=1/1/1/256, loss=148.95 字面稳定锁死.",
+    "round_C_micro_tune_space": "EXHAUSTED — v55 C1 原版 + v74 v3 fix v2 + v81 fix v3 (本轮) 已穷尽所有小方向微调 (delta_max ∈ [0.15, 0.3, 1.0], codebook_init_scale ∈ [0.14, 1.0], c_e 零初始化, fc2 gain ∈ [0.01, 1.0], L2-only 关, 关 fixed c, 关 curriculum, 开 curriculum, L1+L2 限幅). R36g 升级确认: per-codeword 异质 manifold 永久禁入 RQ-VAE cascade, 与 per-item router (R36g v2) 同性质."
+  },
+  "stage_1_evidence": {
+    "r23_trigger_step": 956,
+    "r23_codes": "1/1/1/256 cascade collapse from step 956 (L0/L1/L2 立即坍缩)",
+    "r23_loss_lock": "loss=148.9817/148.9550 字面稳定, vl=0.0263 锁死, 与 v55 C1 字面完全一致",
+    "r36f_norm": "L0/L1/L2 codebook norm → 0 (R36f 触发)",
+    "r36g_structural": "cascade L1/L2 输入 residual norm ≈ 0.14 vs codebook radius 1.0~1.58, manifold 几何不兼容"
+  },
+  "stage_2_to_4": "SKIP — R23 cascade collapse 阻断 Stage 1, never reached",
+  "r37_trigger": true,
+  "r50_rollback": "rm -rf curvature_experiment_c1_percodeword_repair_v81/ (PID 3837003 已 kill)",
+  "r36h_ceiling_total_count": 13,
+  "r36h_ceiling_mechanisms": [
+    "PLD v51 (per-layer schedule)",
+    "MCDQ v52 (distance mixing α)",
+    "D1 v56 (cyclic cosine)",
+    "v67 B1 (per-layer diverse schedule)",
+    "v71 B1 (per-layer diverse v2)",
+    "v74 v2 Riemannian codebook init",
+    "v75 SimCIT-style contrastive",
+    "v79 RNAKI",
+    "v80 D1 Triangular Wave",
+    "v66 Stage 4 mixed geometry rerank",
+    "v55 C1 Per-Codeword Curvature (cascade)",
+    "v74 v3 v53 A1 fix v2 (cascade)",
+    "v81 C1 Per-Codeword 修复版 (本轮, cascade R36g 升级确认)"
+  ],
+  "r36g_upgrade_2nd_evidence": "per-codeword 异质 manifold 在 cascade RQ-VAE 中结构性不可解 (与 per-item router 同性质). 即便 R36c v3.1 三重修复 (init_scale + limit + zero-init), cascade 仍 100% 复现. R36g 应升级为 'per-codeword + per-item 异质 manifold 永久禁入 cascade'.",
+  "next_reme_candidate_exhausted": true,
+  "next_direction_required": "Stage 1 端纯曲率变更 + per-codeword + per-item router 永久禁. 唯一 R36 合规未尝试: F2 双曲对比/center loss (Stage 1 端 loss 函数变化, 非 manifold 异质)",
+  "verdict_path": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v81_c1_repair/v81_verdict.json",
+  "issue_number": 81,
+  "issue_verdict_path": "issue_verdicts/v81_c1_percodeword_repair.json"
+}
