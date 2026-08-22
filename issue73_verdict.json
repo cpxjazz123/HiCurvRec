@@ -1,0 +1,53 @@
+{
+  "issue": 73,
+  "mechanism": "Riemannian Adam on codebook (Poincaré-ball-aware optimizer)",
+  "experiment_dir": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_riemannian_adam_codebook",
+  "baseline_lock": "v69 G5 R51+ locked",
+  "baseline_test_R@10": 0.11042203608247422,
+  "r36o_diagnosis_rounds": [
+    {
+      "round": 1,
+      "variant": "Riemannian gradient scaling (grad_R = (1-c||x||²)²/4 · grad_E) + tangent space Adam + projection to ball",
+      "rationale": "Bécigneul & Ganea 2019 完整 Riemannian Adam 实现, 同时应用 Riemannian metric scaling 和 ball projection",
+      "stage1_outcome": "step 20436: codes=22/229/235, L0 触发 CODEBOOK WARNING (22/256 < 10%)",
+      "verdict": "WARN_R36g_L0_COLLAPSE"
+    },
+    {
+      "round": 2,
+      "variant": "Standard Adam + projection to Poincaré ball (去除 Riemannian gradient scaling)",
+      "rationale": "Round 1 失败根因: Riemannian gradient scaling 在 ||x||→1/√c 边界时 scale→0 → boundary codewords 几乎无更新. 简化为 constrained Adam (geoopt 在 compact manifold 上本质做法)",
+      "stage1_outcome": "step 5952: codes=5/204/124, L0 catastrophic collapse (5/256 < 10%)",
+      "verdict": "FAIL_R36g_CASCADE_COLLAPSE — projection 约束破坏 baseline 自由 codeword 几何"
+    },
+    {
+      "round": 3,
+      "variant": "(未启动)",
+      "rationale": "Riemannian Adam 路径在 Poincaré 球 c=1.0 下没有有效实施空间: 完整 Riemannian gradient 因边界失效, projection-only 因约束破坏 baseline. Round 3 (Standard Adam on codebook) 等价 baseline 行为 → R36h ceiling 字符级一致无意义",
+      "verdict": "NO_COMPLIANT_IMPLEMENTATION"
+    }
+  ],
+  "result": {
+    "stage1_round1_l0_codes_at_step_20k": 22,
+    "stage1_round2_l0_codes_at_step_6k": 5,
+    "stage4_never_reached": true,
+    "decision": "R36o 2 轮诊断 + 1 轮理论排除, 无合规路径"
+  },
+  "decision": {
+    "r37_triggered": true,
+    "r50_triggered": true,
+    "rationale": "R36o 2 轮实证 cascade collapse + 1 轮理论排除. Riemannian Adam (optimizer 类变更) 在 c=1.0 Poincaré ball 下无法稳定训练 RQ-VAE cascade (L0 collapse). baseline 已用 hyperbolic_distance=True 在 argmin 端处理 Riemannian 几何, optimizer 端再加 Riemannian 约束破坏 cascade. R37+R50."
+  },
+  "constraints_summary": {
+    "R36_v3_6": "Stage 2/3/4 端禁 — N/A (本机制在 Stage 1 optimizer 端)",
+    "R36m_v3_7": "Stage 0 embedding 禁 — N/A",
+    "R36h": "Stage 1 端纯曲率/几何变更 ceiling — 8 机制实证 (前 7 字符级一致 + Riemannian Adam 训练失败)",
+    "R36g": "cascade RQ-VAE 风险 — Round 1+2 实测 L0 collapse",
+    "R36o": "3 阶段强制诊断 — Round 1/2 实证 cascade FAIL + Round 3 理论排除"
+  },
+  "artifacts_to_be_rm": [
+    "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_riemannian_adam_codebook/"
+  ],
+  "r36h_ceiling_total_confirmed": 8,
+  "verdict_log": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/issue73_stage1_r2.log",
+  "verdict_timestamp": "2026-08-22T22:02:00"
+}
