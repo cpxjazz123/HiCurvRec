@@ -1,0 +1,19 @@
+{
+  "issue": 235,
+  "task": "v15 Stage 2 κ 学习备胎: per-codebook κ 真正学习 (R36 新曲率机制)",
+  "verdict": "R23/R38 PRE_STAGE3 KILL + NO-GO",
+  "stage1_outcome": "CATASTROPHIC COLLAPSE @ step 6200 (≈62s elapsed): L0=1/256, L1=1/256, L2=1/256 codes used (vs v2 baseline ~256, v14 59/238/226). 训练loss 1.8-2.5 反复震荡, ml=0.",
+  "stage2_outcome": "未启动 (Stage 1 终止)",
+  "stage3_outcome": "未启动",
+  "test_R@10": "N/A (PRE_STAGE3 FAIL)",
+  "baseline_R@10": 0.1072,
+  "root_cause": "USE_FIXED_CURVATURE=False + USE_PER_CODE_CURVATURE=True 让 θ_code 真正学习, 但 per-code κ 在 hyperbolic distance 代码路径里产生 catastrophic 初始化敏感度: 每个 code 在自己曲率空间, KMeans 初始化后, 第一步 step 就把所有 input 推到同一个最近邻 → 256 个 code 中只有 1 个被使用 → 反向梯度只更新这个 code → collapse 永远恢复不了. v14 (USE_FIXED_CURVATURE=True 屏蔽) 也塌缩但没这么严重 (L0=59). v15 验证: per-code κ 真学习 + 当前 RQ-VAE 训练协议 = NO-GO.",
+  "r23_action": "立即 kill -9 + 终止 lineage v15 + R50 不重跑 + R18 重新设计 (Stage 1 不能用 per-code κ).",
+  "next_step": "v16 备胎: 不改 Stage 1 (沿用 v2 baseline RQ-VAE) + Stage 3 引入新的曲率机制 (e.g. Hyperbolic T5 attention bias / differential per-layer role c). R18 4 维度需重新设计.",
+  "r18_4dim": {
+    "D1_spec": "per-codebook κ 真正学习 (256 个 code 各自独立曲率)",
+    "D2_impl": "USE_FIXED_CURVATURE=False + USE_PER_CODE_CURVATURE=True + USE_CURRICULUM=True",
+    "D3_gate1": "Stage 1 catastrophic collapse L0=1/256 (失败机制)",
+    "D4_lit": "Gu et al. ICLR 2019 Mixed Curvature (本机制理论来源, 但 RQ-VAE 训练协议不兼容)"
+  }
+}

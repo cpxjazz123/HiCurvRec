@@ -1,0 +1,25 @@
+{
+  "task": "Issue251_v31_lorentz_stage1",
+  "verdict": "R37 FAIL",
+  "test_R@10": 0.10675740979381443,
+  "test_R@20": 0.0,
+  "test_NDCG@10": 0.08002286596396535,
+  "baseline_v19_test_R@10": 0.1074,
+  "delta_vs_v19": -0.0006,
+  "delta_pct": "-0.6%",
+  "best_ckpt_epoch": 106,
+  "best_ckpt_valid_ndcg20": 0.09699367247905928,
+  "training_epochs_run": 127,
+  "early_stopped": true,
+  "r37_reason": "v31 Lorentz codebook (FEQRec KDD 2025 路线) test_R@10=0.1068 < v19 baseline 0.1074 (-0.0006, -0.6%). Lorentz hyperboloid manifold (arccosh 数值稳定) 在 Stage 1 codebook usage 改善 (L0=65/256=25.4% vs v19 L0=18%), Stage 2 L0=88/256=34.4%, 但 Stage 3 HG-Rec T5 retrieval 未受益. valid_ndcg20=0.0970 vs v19 0.0969 → valid-test 不一致 (R36 关注点).",
+  "r36_constraint_check": "PASS — 改动仅 Stage 1 切 Lorentz manifold + 增量化距离公式 (R36 几何变换范畴: 框架变更, 非调参). Stage 3 复用 v19 HG-Rec T5 baseline.",
+  "r50_action": "R50 生效: 立即停手 v31 重跑. Lorentz 改动保留在 modules/ (backup knowledge, 标注 inactive), 不擅自从 modules/ 删除.",
+  "stage_status": {
+    "stage1_rqvae_lorentz": "OK (100k steps, 424.7s, L0=65/256=25.4%, L1=225/256, L2=235/256)",
+    "stage2_sid_inference": "OK (9922 items, SID pad=0)",
+    "stage3_hgrec_t5_train": "EARLY_STOP E127 (best E106), h@10=0.128 @ E114",
+    "stage4_test_eval": "test_R@10=0.1068 < v19 0.1074 (R37 FAIL)"
+  },
+  "next_action": "启 v32 备胎: 文献发散新曲率机制路线",
+  "verdict_written_at": "2026-08-19T11:18:00+10:00"
+}
