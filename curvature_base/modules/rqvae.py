@@ -67,6 +67,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # C5: 曲率 margin 正则 (新曲率正则项, R36) — 0=关闭
         margin_reg_weight: float = 0.0,
         margin_target: float = 0.05,
+        # F3 v83: Spread Loss (反向 v82 Center) — codebook 元素互相远离
+        # 反向 v82 F2 Center (推 codebook 到原点), v83 F3 Spread (推 codebook 互相远离)
+        # 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017) + Contrastive Loss (Hadsell et al. CVPR 2006)
+        spread_loss_weight: float = 0.0,    # F3 v83: 0=关闭; 0.001/0.01 推荐值
+        spread_loss_margin: float = 2.0,    # F3 v83: pairwise 距离阈值 (Poincaré 单位)
         use_tcu: bool = False,              # C22: τ-Geometric Codebook Update (Riemannian centroid tracking)
         tcu_alpha: float = 0.05,            # C22: EMA momentum
         tcu_eta: float = 0.1,              # C22: Riemannian step 大小
@@ -99,6 +104,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.sk_iters = sk_iters
         self.hypervq = hypervq
         self.margin_reg_weight = margin_reg_weight
+        self.spread_loss_weight = spread_loss_weight
+        self.spread_loss_margin = spread_loss_margin
         self.margin_target = margin_target
         self.use_tcu = use_tcu
         self.tcu_alpha = float(tcu_alpha)
@@ -150,6 +157,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     c_end=c_end,
                     curriculum_steps=curriculum_steps,
                     c_fixed=c_fixed,
+                    use_spread_loss=spread_loss_weight > 0,  # F3 v83: Spread Loss 开关
+                    spread_loss_margin=spread_loss_margin,
                 )
                 for i in range(n_layers)
             ]
@@ -286,7 +295,16 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         if self.margin_reg_weight > 0 and quantized.margins:
             m_stack = torch.stack(quantized.margins, dim=1)  # (B, n_layers)
             margin_loss = F.relu(self.margin_target - m_stack).mean()
-        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss
+        # F3 v83: Spread Loss — 累加所有 Quantize 层 spread_loss, 加权到 total loss
+        # 注意: quantized 是 RqVaeOutput (无 spread_loss 字段), spread_loss 存在各 layer._last_spread_loss
+        spread_loss_total = torch.zeros((), device=x.device, dtype=x.dtype)
+        if self.spread_loss_weight > 0:
+            spread_per_layer = [
+                l._last_spread_loss for l in self.layers if hasattr(l, "_last_spread_loss")
+            ]
+            if spread_per_layer:
+                spread_loss_total = torch.stack(spread_per_layer).mean()
+        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss + self.spread_loss_weight * spread_loss_total
 
         with torch.no_grad():
             # Compute debug ID statistics

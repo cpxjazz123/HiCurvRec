@@ -267,6 +267,9 @@ def _hgrec_item2code(code_path, codebook_size):
 
     C33 patch: HG-Rec 原版 vocab_size=1025 (4 层 codebook_size=[256,256,256,1]).
     C28 只有 3 层, 第 4 位填 PAD=0. 直接保留 0, 不加 offset, 避免越界 vocab_size=769.
+
+    R36c fix v87: sids shape=(N, 3), 但 item_to_code 必须返回 4-token list (与 history target 对齐).
+    否则 collate_fn flatten 后 token 数 4*N vs 4*N+3 不等, stack 失败.
     """
     sids = np.load(code_path, allow_pickle=True)
     item_to_code = {}
@@ -274,9 +277,12 @@ def _hgrec_item2code(code_path, codebook_size):
         offsets = []
         for i, c in enumerate(code):
             if i >= len(codebook_size) or codebook_size[i] == 1:
-                offsets.append(int(c))
+                offsets.append(0)  # R36c fix: PAD, not raw c
             else:
                 offsets.append(int(c) + sum(codebook_size[0:i]) + 1)
+        # R36c fix v87: 强制补 PAD 到 4-token (与历史 baseline 4 层对齐)
+        while len(offsets) < 4:
+            offsets.append(0)
         item_to_code[idx + 1] = offsets  # item_id 1-indexed (与 parquet 一致)
     return item_to_code
 
@@ -310,9 +316,19 @@ class GenRecDataset(torch.utils.data.Dataset):
 
 
 def hgrec_collate_fn(batch, pad_token=0):
-    """HG-Rec collate: history (B, max_len, 4) → flat (B, max_len*4), target (B, 4)."""
+    """HG-Rec collate: history (B, max_len, 4) → flat (B, max_len*4), target (B, 4).
+
+    R36c fix v87: 不同 sample 的 history 长度不同 (< max_len), 必须 pad 到 batch 内 max_len,
+    否则 torch.stack 失败 "got [N] at entry 0 and [M] at entry 1".
+    """
+    max_h = max(len(item['history']) for item in batch)
+    pad_code = [pad_token] * 4
     flat_histories = torch.stack([
-        torch.tensor([tok for codes in item['history'] for tok in codes], dtype=torch.int64)
+        torch.tensor(
+            [tok for codes in (item['history'] + [pad_code] * (max_h - len(item['history'])))
+             for tok in codes],
+            dtype=torch.int64,
+        )
         for item in batch
     ])
     targets = torch.stack([torch.tensor(item['target'], dtype=torch.int64) for item in batch])

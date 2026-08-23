@@ -553,6 +553,10 @@ def train(
     # R53 v3.8: use_hgrec_arch / save_dir_root 强制覆盖为 curvature_config.py 硬编码值 (无 env var)
     # 不允许 gin binding 之外的 env var fallback; 若 gin binding 与硬编码冲突, 硬编码优先
     use_hgrec_arch = USE_HGREC_ARCH
+    # v83 R36c fix (复 v82 经验): gin binding 失败 → hgrec_code_path fallback default = baseline v19 SIDs →
+    # 训练端用错 SIDs → Stage 4 SIDs 不匹配 R@10=0. 强制覆盖为本实验 SIDS_NPY, 不依赖 gin binding
+    from curvature_config import SIDS_NPY as _SIDS_NPY_V83
+    hgrec_code_path = _SIDS_NPY_V83
     if save_dir_root == "out/":
         save_dir_root = _SAVE_DIR_ROOT_DEFAULT
 

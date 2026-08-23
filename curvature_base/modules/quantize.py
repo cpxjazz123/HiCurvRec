@@ -33,6 +33,7 @@ class QuantizeOutput(NamedTuple):
     ids: Tensor
     loss: Tensor
     margin: Tensor  # C5: per-item top2-top1 距离 margin (d2 - d1), 用于 margin 正则
+    spread_loss: Tensor  # F3 v83: per-layer codebook 元素两两距离 margin (relu(MARGIN - d_pair)) mean; 反向 v82 Center, 推 codebook 元素互相远离
 
 
 class PrefixRouter(nn.Module):
@@ -115,6 +116,13 @@ class Quantize(nn.Module):
         c_start: float = 0.05,             # C27: 初始 c (接近欧氏, 几何平滑)
         c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
         curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
+        # F3 v83: Poincaré Spread Loss (反向 v82 Center) — margin-based pairwise distance on codebook
+        # 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017), Contrastive Loss (Hadsell et al. CVPR 2006)
+        # 机制: L_spread_l = mean_{i≠j} relu(MARGIN - poincare_dist(codebook_l[i], codebook_l[j]))
+        #       推 codebook 元素两两距离至少 MARGIN (Poincaré 单位, c=1 时 ball 直径 ≈ 5.0)
+        # 反向 v82 Center: v82 推 codebook 到原点 (compact), v83 推 codebook 互相远离 (spread)
+        use_spread_loss: bool = False,     # F3 v83: enable spread loss
+        spread_loss_margin: float = 2.0,   # F3 v83: pairwise 距离阈值 (Poincaré 单位, 2.0/5.0 = 40% of ball)
     ) -> None:
         super().__init__()
 
@@ -175,6 +183,10 @@ class Quantize(nn.Module):
         self.c_start = float(c_start)
         self.c_end = float(c_end)
         self.curriculum_steps = int(curriculum_steps)
+
+        # F3 v83: Spread Loss 配置
+        self.use_spread_loss = bool(use_spread_loss)
+        self.spread_loss_margin = float(spread_loss_margin)
         # curriculum 由外部 (train_rqvae_instruments.py) 通过 set_curriculum_step() 更新
         self._curriculum_step = 0
 
@@ -412,7 +424,35 @@ class Quantize(nn.Module):
         if self.training and self.use_tcu and not self.hypervq:
             self._tcu_centroid_update(x.detach(), ids)
 
-        return QuantizeOutput(embeddings=emb_out, ids=ids, loss=loss, margin=margin)
+        # F3 v83: Spread Loss — codebook 元素两两 Poincaré 距离 margin (反向 v82 Center)
+        # L_spread_l = mean_{i≠j} relu(MARGIN - poincare_dist(codebook_l[i], codebook_l[j]))
+        # 推 codebook 元素互相远离, 缓解 cascade RQ-VAE 中 L1/L2 input residual 极小 (≈0.14) 时 KMeans 收束到 0 的 collapse 风险
+        spread_loss = torch.zeros((), device=emb_out.device, dtype=emb_out.dtype)
+        if self.use_spread_loss and self.training and not self.hypervq:
+            from modules.hyperbolic import _expmap0_t, _poincare_distance_t
+            # 取该层曲率 (per-item router 时取全局, 因 spread 是 codebook 级而非 per-item 级)
+            c = self.get_c()  # (1,) 或 标量
+            c_scalar = float(c.item()) if c.dim() == 0 else float(c.mean().item())
+            c_t = torch.tensor(c_scalar, device=codebook.device, dtype=codebook.dtype)
+            K = codebook.shape[0]
+            # 全部 codebook 元素推到 Poincaré 球
+            cb_h = _expmap0_t(codebook, c_t)  # (K, D)
+            # pairwise poincare distance: O(K²) = 256² = 65536 对, GPU 可承受
+            d_pair = _poincare_distance_t(
+                cb_h.unsqueeze(0).expand(K, K, -1),     # (K, K, D)
+                cb_h.unsqueeze(1).expand(K, K, -1),     # (K, K, D)
+                c_t,
+            ).squeeze(-1)  # (K, K)
+            # 屏蔽对角线 (i==j 距离=0 触发 relu 满值)
+            mask_off = ~torch.eye(K, dtype=torch.bool, device=codebook.device)
+            d_off = d_pair[mask_off]  # (K*(K-1),)
+            # margin-based push: 若 d < MARGIN, 损失 = MARGIN - d; 否则 0
+            spread_loss = F.relu(self.spread_loss_margin - d_off).mean()
+            self._last_spread_loss = spread_loss.detach()
+        else:
+            self._last_spread_loss = spread_loss.detach()
+
+        return QuantizeOutput(embeddings=emb_out, ids=ids, loss=loss, margin=margin, spread_loss=spread_loss)
 
     @torch.no_grad()
     def _tcu_centroid_update(self, x: Tensor, ids: Tensor) -> None:

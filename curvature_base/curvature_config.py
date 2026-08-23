@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "codebook_manifold_contrastive"  # ← baseline 硬编码为 v69 G5
+MECHANISM_NAME = "f3_spread_loss_revisit_v87"  # ← 重挖掘 v83 F3 Spread Loss, R36o v3.7 阶段 C 微调 space 探索
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")

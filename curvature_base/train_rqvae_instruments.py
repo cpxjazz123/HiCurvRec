@@ -54,6 +54,14 @@ CKPT_EVERY = 10_000              # 每 10k 全球 step 保存一份 ckpt
 # === C5: 曲率 margin 正则 (新曲率正则项, R36) — 实测 L1/L2 93%/92% item margin<0.1 ===
 MARGIN_REG_WEIGHT = 1.0          # 正则权重
 MARGIN_TARGET = 0.05             # 目标 margin (d2-d1), 当前 L1/L2 中位数 ~0.03
+
+# === F3 v83: Poincaré Spread Loss (反向 v82 Center) — codebook 元素互相远离 ===
+# 反向 v82 F2 Center: v82 推 codebook 到原点 (compact, weight=0.01), v83 推 codebook 互相远离 (spread)
+# 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017) + Contrastive Loss (Hadsell et al. CVPR 2006)
+# MARGIN=2.0 (Poincaré ball 直径 ≈ 5.0, MARGIN=2.0 即 40% of ball, 适中强度)
+USE_SPREAD_LOSS = True           # F3 v83: enable spread loss
+SPREAD_LOSS_WEIGHT = 0.005       # F3 v83: 正则权重 (低权重, 仅作引导, 不主导 recon loss)
+SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单位)
 # codebook 健康检查: 层 unique code 数 < CODEBOOK_SIZE*该阈值 → 打印 [CODEBOOK WARNING]
 CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 # θ 曲率学习检查 (M2/M3): 曲率初始值 与 "已学习" 判定阈值
@@ -198,6 +206,8 @@ def main():
         prefix_router_layers=None, # Issue #154: L1/L2 per-item 曲率 (默认)
         margin_reg_weight=0.0 if USE_FIXED_CURVATURE else MARGIN_REG_WEIGHT,  # C26 HG-Rec: 关 C5
         margin_target=MARGIN_TARGET,
+        spread_loss_weight=SPREAD_LOSS_WEIGHT if USE_SPREAD_LOSS else 0.0,  # F3 v83
+        spread_loss_margin=SPREAD_LOSS_MARGIN,  # F3 v83
         use_tcu=False,             # C26 HG-Rec: 关 TCU
         tcu_alpha=TCU_ALPHA,
         tcu_eta=TCU_ETA,

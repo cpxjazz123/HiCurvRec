@@ -178,8 +178,12 @@ def _test_eval_hgrec(accelerator, device, BEST_CKPT_PATH):
     import os.path as _osp
 
     INSTRUMENTS_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/HG-Rec/dataset/Instruments"
-    # 硬编码 (与 train_decoder.hgrec_code_path 一致), 不依赖 gin query
-    code_path = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+    # v83: 用本实验 SIDS_NPY (R53 v3.8 + R40 自包含 + R36c fix), 不硬编码 v19 baseline
+    from curvature_config import SIDS_NPY as _v83_sids
+    code_path = _v83_sids
+    # R36c 诊断钩子: SIDS_OVERRIDE env var 可强制覆盖为其他 SIDs
+    if os.environ.get("SIDS_OVERRIDE"):
+        code_path = os.environ["SIDS_OVERRIDE"]
     beam_size = 20
     top_k_eval_list = [5, 10, 20]
     max_len = 20
