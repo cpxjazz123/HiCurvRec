@@ -1,0 +1,19 @@
+{
+  "issue": 232,
+  "experiment": "HALC v12: Per-Head κ (per-layer → per-head)",
+  "date": "2026-08-19",
+  "r52_compliance": "主目录直接迭代, 无新建 Issue<NN>_<任务名>/ 子目录",
+  "novelty": "R36 曲率机制变更 (per-layer → per-head, 几何粒度细化: 42 个独立 c_h vs 7 个 c_l)",
+  "result": "UNSTARTED (用户中断 v12 训练启动, R50 立即回滚)",
+  "r50_action": {
+    "verdict": "已执行",
+    "actions": [
+      "git checkout HEAD -- train_decoder.py configs/decoder_instruments_hgrec.gin (回滚到 v2 baseline)",
+      "保留 _lib/halc_v12.py (备胎代码)",
+      "保留 tasks/issue232_verdict.json"
+    ],
+    "禁做的事": ["禁止立即重启 v12 (R50)"]
+  },
+  "new_strategy_note": "用户新策略: 每次迭代新版本必须 stage1 完整重跑 (stage1 → stage2 → stage3 → stage4). v12 只改 stage3, 不符合新策略, 立即 R50 终止. 下一步 v13 = stage1 曲率创新 + stage2 SID + stage3 v2 baseline + stage4 test eval 完整流程.",
+  "commit_required": "R50 回滚 v12, 待 commit + push 到 gitlab origin main (R45)"
+}

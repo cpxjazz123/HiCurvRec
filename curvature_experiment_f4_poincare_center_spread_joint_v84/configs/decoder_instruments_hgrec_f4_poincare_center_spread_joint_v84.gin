@@ -1,0 +1,18 @@
+# v84 F2+F3 Joint Center-Spread Loss decoder config (HG-Rec).
+# Stage 1 RQ-VAE 端 loss 函数变化方向: F2 Poincaré Center Loss (推 codebook 到原点, compact)
+# 联合 F3 Poincaré Spread Loss (推 codebook 互相远离, separate). 双 loss 同权重 0.001, 平衡点 = 某中间半径.
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+train_decoder.train.learning_rate = 1e-3
+train_decoder.train.weight_decay = 1e-4
+train_decoder.train.num_epochs = 200
+train_decoder.train.batch_size = 64
+train_decoder.train.early_stop = 20
+train_decoder.train.eval_every = 1
+train_decoder.train.use_hgrec_arch = True
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_f4_poincare_center_spread_joint_v84/dataset/Instruments/sids_for_hgrec.npy"
+train_decoder.train.save_dir_root = "./out/decoder/instruments_hgrec_configs/hgrec_f4_poincare_center_spread_joint_v84"
+train_decoder.train.t5_d_model = 128
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
