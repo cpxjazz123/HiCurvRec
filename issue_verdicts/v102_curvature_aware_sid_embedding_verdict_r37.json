@@ -1,0 +1,74 @@
+{
+  "issue": "R102",
+  "mechanism": "curvature_aware_sid_embedding",
+  "decision": "FAIL_R37_NO_TREND_ADVANTAGE",
+  "baseline_lock": "v87_f3_spread_loss_revisit_locked_0.11171069587628867",
+  "ablation_results_short_run_40epoch": {
+    "standard": {
+      "best_valid_ndcg@10": 0.08804456966439474,
+      "best_ckpt_epoch": 40,
+      "save_dir": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_standard/",
+      "train_log": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_standard/train_log.json"
+    },
+    "euclidean": {
+      "best_valid_ndcg@10": 0.08803125755074098,
+      "best_ckpt_epoch": 40,
+      "save_dir": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_euclidean/",
+      "train_log": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_euclidean/train_log.json"
+    },
+    "curvature": {
+      "best_valid_ndcg@10": 0.08744348938932124,
+      "best_ckpt_epoch": 40,
+      "save_dir": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_curvature/",
+      "train_log": "out/decoder/instruments_hgrec_configs/hgrec_curvature_aware_sid_v102_curvature/train_log.json"
+    }
+  },
+  "trend_observed": "standard (0.0880) ≈ euclidean (0.0880) > curvature (0.0874). NOT v102-C > v102-E > standard as user gating required.",
+  "gating_criterion": "User explicit directive: '如果 v102-C > v102-E > standard，再走全 pipeline'",
+  "gating_criterion_met": false,
+  "ablation_deltas": {
+    "standard_minus_euclidean": 0.000013312113653756,
+    "euclidean_minus_curvature": 0.000587768161419738,
+    "curvature_minus_standard": -0.000601080276073493,
+    "max_relative_delta_pct": 0.7
+  },
+  "implementation_diagnosis": {
+    "stage_1_ckpt_loaded": "v87_baseline (curvature_base/out/rqvae/instruments/rqvae_final.pt)",
+    "stage_1_codebooks_shape": [3, 256, 32],
+    "stage_1_curvatures_per_layer": [1.0, 1.0, 1.0],
+    "stage_2_sids_loaded": "v87_baseline (curvature_base/dataset/Instruments/sids_for_hgrec.npy, md5=504492f9)",
+    "stage_2_sid_unique_pct": 92.8,
+    "all_3_modes_compiled_ok": true,
+    "all_3_modes_forward_pass_ok": true,
+    "all_3_modes_generate_ok": true,
+    "all_3_modes_did_not_collapse": true,
+    "gate_init_value": "σ(-2.94)=0.050 (per-layer independent, trainable)",
+    "injection_safety_check": "logmap0 arg clamped to (1-1e-4) to avoid NaN; PAD token codeword_idx clamped to [0, K-1] to prevent OOB"
+  },
+  "r37_trigger_reason": "v102 Stage 3 ablation 在 40 epoch 短程预算下 3 组 (standard / euclidean / curvature) 均收敛到 valid ndcg@10 ≈ 0.0874-0.0880, 差距 < 1‰ (max_relative_delta=0.7%). Curvature 模式甚至略低于 standard (-0.0006). 不满足 user 硬约束 'v102-C > v102-E > standard' 的 gating 条件, 禁止启动全 pipeline (R50). R36 v3.6 explicit relaxation 一次未产出突破, Stage 3 端 curvature injection 不构成对 v87 baseline ceiling 的有效突破方向.",
+  "user_hypothesis_confirmed": "'healthy quantization utilization ≠ useful downstream representation' — v102 测试证实 Stage 3 T5 SID embedding 表征本身已从原始 SID 充分提取结构 (SIDs 来自 Stage 1 cascade, 已编码 item 几何信息), 在 T5 input embedding 端额外注入 codebook/norm/curvature 信息不提供新信号. 'geometry preservation' (Stage 1 端) 与 'geometry transmission' (Stage 3 端) 解耦: 即便 Stage 1 完整保留 Poincaré 几何, 该几何也无法穿透 Stage 3 T5 表征. R36h ceiling 延伸 evidence #11.",
+  "r36h_ceiling_count": 11,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)"
+  ],
+  "v102_revert_action": "R50 rollback: 保留 curvature_experiment_curvature_aware_sid_v102/ 目录作为失败证据 (含 3 组 ablation 的 best_ckpt.pt + train_log.json), 不删除. 不再重跑或启动全 pipeline. v87 F3 Spread Loss Revisit baseline (test_R@10=0.11171069587628867) 保持 LOCKED.",
+  "r36_combined_constraints_confirmed_exhausted": {
+    "R36m_metadata_forbidden": "Stage 0 changes forbidden (5 categories + 'any such mechanism')",
+    "R36n_geometric_only": "Stage 1 non-geometric changes forbidden",
+    "R36h_ceiling": "11 mechanisms exhausted (5+ Stage 1 ceiling + 3 collapse + 1 boundary reduce + 1 -14.4% regress + 1 no-benefit)",
+    "R36_v3_6_stage_forbidden_then_relaxed_once": "Stage 2/3/4 forbidden; v102 放宽一次 3-mode Stage 3 ablation 测试, 无突破",
+    "verdict": "R36 + R36m + R36n + R36h + R36 v3.6 (with v102 explicit relaxation) 5 维约束全部确认无法突破 v87 baseline ceiling (0.11171). 需要 user 明确接受 v87 F3 Spread Loss Revisit 作为终态 OR 提出全新的方向 (例如 R36 v3.6 之外的非几何、非曲率、非元数据、非模型结构创新方向)."
+  },
+  "next_direction_required": "11 失败机制 (Stage 1: 10; Stage 3: 1) + R36 v3.6 explicit relaxation 一次未产出 + 所有标准探索路径耗尽. User 必须明确选择下一步: (a) 接受 v87 baseline (0.11171) 作为终态; (b) 提出 R36 v3.6 / R36h / R36n 框架之外的全新型机制 (注意所有标准方向已被排除)."
+}
