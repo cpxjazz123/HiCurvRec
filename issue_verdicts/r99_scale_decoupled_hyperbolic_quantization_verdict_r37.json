@@ -1,0 +1,50 @@
+{
+  "issue": "R99",
+  "mechanism": "scale_decoupled_hyperbolic_quantization",
+  "decision": "FAIL_R37_DATA_LEAK",
+  "baseline_lock": "v87_f3_spread_loss_revisit_locked_0.11171069587628867",
+  "r99_test_R@10": 0.9997583762886598,
+  "interpretation": "FAKE_BREAKTHROUGH_via_codebook_collapse",
+  "evidence": {
+    "stage2_sid_unique_tuples": 12,
+    "stage2_sid_total_items": 9922,
+    "stage2_sid_top1_items": 3889,
+    "stage2_sid_top2_items": 3670,
+    "stage2_sid_top3_items": 1425,
+    "stage2_sid_top4_items": 459,
+    "stage3_best_valid_ndcg@10": 0.7518568530525129,
+    "stage3_best_epoch": 45,
+    "stage3_early_stop": "E66 EARLY_STOP=20",
+    "stage4_test_R@10": 0.9997583762886598,
+    "stage4_test_NDCG@10": 0.7464751410730106,
+    "stage4_test_R@5": 0.9725757087628866,
+    "stage4_test_R@20": 0.9998791881443299,
+    "stage4_n_eval": 24832,
+    "collapse_rate_top1": "3889/9922 = 39.2%",
+    "collapse_rate_top2": "7559/9922 = 76.2%",
+    "collapse_rate_top3": "8984/9922 = 90.5%"
+  },
+  "r37_trigger_reason": "Even though test_R@10=0.9998 > baseline 0.11171, this is FAKE breakthrough caused by Stage 1 codebook collapse (only 12 unique SIDs for 9922 items). T5 overfit ~12 SID patterns during training; outputting top-1 SID catches ~39% test items, top-2 ~76%, top-3 ~90%. NDCG@10=0.7465 reflects GT mostly in rank 1-2 but not always rank 1, consistent with overfit-to-mode. R36h ceiling already documented 5+ Stage 1 pure curvature changes are locked at baseline 0.11042. R99 lineage must terminate.",
+  "r36c_diagnosis_complete": true,
+  "r98_diagnostic": {
+    "L1_recon_improve": -13.73,
+    "L2_margin": 3.10,
+    "conclusion": "Stage 1 encoder shrinkage |z|→0 + scale mismatch causes γ death spiral"
+  },
+  "r99_v3_5_gate_summary": {
+    "gate1_L1_recon_improve>0": "FAIL (-13.73)",
+    "gate2_|r_l|_strictly_decreasing": "PASS (0.008→0.007→0.006)",
+    "gate3_L1/L2_codes>10": "PASS (L1=58, L2=182 at step 3000 ckpt)",
+    "gate4_margin_reduced_vs_v97": "PASS (0.025 << v97 3.10)",
+    "gate5_curvature_sensitivity_NN_overlap<100%": "MARGINAL_PASS"
+  },
+  "r99_v4_attempted": "FAILED (SD_TARGET_NORM=0.3 made |ê|>|z|, residual grew through cascade)",
+  "r99_v3_revert_action": "R50 rollback: keep curvature_experiment_scale_decoupled_v99/ as failure evidence (NOT deleted), do NOT rerun. v87 F3 Spread Loss Revisit baseline (test_R@10=0.11171069587628867) remains LOCKED.",
+  "r36_combined_constraints": {
+    "R36m_metadata_forbidden": "Stage 0 embedding model swap / multi-embedding / LoRA / side info ALL forbidden",
+    "R36n_geometric_only": "Stage 1 non-geometric changes (LR/dropout/wd sweep, batch size, attn heads) forbidden",
+    "R36h_ceiling": "5+ Stage 1 pure curvature changes (v51 PLD / v52 MCDQ / v56 D1 / v67 B1 / v71 B1 / v89 C_END / v90 RiemAdam / v91 Codebook) all hit ceiling 0.11042",
+    "R36_v3_6_stage_forbidden": "Stage 2/3/4 geometric changes forbidden (only Stage 0 + Stage 1 allowed)"
+  },
+  "next_direction_required": "R36m + R36n + R36h + R36 v3.6 jointly block all standard paths. User directive needed for new mechanism direction (e.g., breakthrough Stage 1 collapse through different SID generation strategy / non-RQ-VAE approach / Stage 0 side-channel that is geometric)."
+}
