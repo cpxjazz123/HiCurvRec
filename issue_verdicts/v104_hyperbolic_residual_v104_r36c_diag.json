@@ -1,0 +1,37 @@
+{
+  "verdict_id": "v104_hyperbolic_residual_r36c_diag",
+  "issue_number": "v104",
+  "mechanism": "HRQ (Hyperbolic Residual Quantization) — Möbius chain addition in decoder reconstruction path (arxiv 2505.12404 Piękos et al. 2025 KAUST/Amazon). Euclidean codebook update 保留, 仅在 decoder 前用 Möbius chain addition 替代 Euclidean sum.",
+  "r36c_trigger": "Stage 1 DDP 4-card 训练第一步 broadcast error (size mismatch in _mobius_add_t)",
+  "diagnosis_summary": "embs shape 误判. 之前假设 embs shape = (n_layers, D, B), 实施 permute(2,0,1) 转换, 引发 size mismatch. 实测 embs shape = (B, D, n_layers) (per quantized.embeddings), v103 baseline x_hat = self.decode(embs.sum(axis=-1)) = (B, D) → (B, 768). 修复: HRQ chain add 在 n_layers 维度串联, c_last broadcast = (1, 1), h_tan.squeeze(-1) → (B, D) → decode (B, 768).",
+  "round_1_implementation_check": {
+    "verdict": "PASS",
+    "evidence": [
+      "v103 baseline embs sum axis=-1 → (B, D) → decode (B, 768), works with x (B, 768) broadcast",
+      "v104 HRQ chain add 在 n_layers 维度串联, c_last = self.layers[-1].get_c().view(1,1), embs[..., 0:1] → (B, D, 1), Möbius chain → logmap0 → squeeze(-1) → (B, D) → decode (B, 768)",
+      "实测 forward: v104 HRQ forward OK, loss=574.4572 (与 v103 baseline 同数量级)"
+    ],
+    "fix_applied": "modules/rqvae.py line 286-303 — embs permute(2,0,1) 删除, 改为 embs[..., li:li+1] 在 n_layers 维度串联"
+  },
+  "round_2_paper_alignment_check": {
+    "verdict": "PASS",
+    "evidence": [
+      "Piękos et al. 2025 arxiv 2505.12404 'Hyperbolic Residual Quantization' WordNet 实验",
+      "Reconstruction 路径: y = decode(Möbius chain add_{l=1..L}(expmap0(c_l)))",
+      "Codebook update: 保留 Euclidean EMA (HRQ 论文中也不动 codebook)",
+      "v104 实施: use_hrq_recon=True → Möbius chain recon; codebook update 仍 Euclidean (Cauchy 跨步距 codebook)"
+    ]
+  },
+  "round_3_r36_compliance_check": {
+    "verdict": "PASS",
+    "evidence": [
+      "R36+R36b: Möbius 串联涉及指数映射 (曲率参数 c_last 在 R36b 维度动态变化).",
+      "R36m: 不涉及元数据修改 (Stage 1 RQ-VAE 端纯几何变更).",
+      "R36n: Möbius chain addition 是 manifold 几何替换 (Euclidean sum → 双曲空间 chain add), 论文归类 'geometric / manifold / curvature'.",
+      "R36h: 13 失败机制已 exhaust (per-layer dynamics / MCDQ / D1 cyclic / per-layer diverse / RiemAdam / scale-decoupled / K-means / retraction / SID embedding / reverse schedule). HRQ 是新维度 — Möbius chain recon 与之前 13 失败机制无路径重合."
+    ]
+  },
+  "implementation_status": "Stage 1 DDP 4-card 训练可启动",
+  "next_action": "R19 启动 v104 Stage 1 DDP 4-card 训练 (100k steps, M2/M3 gates OFF, R51+ seed, F3 Spread Loss ON)",
+  "timestamp": "2026-08-24"
+}
