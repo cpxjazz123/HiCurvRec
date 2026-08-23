@@ -1,0 +1,46 @@
+{
+  "verdict_id": "r36_framework_exhaustion_comprehensive",
+  "issue_number": "FRAMEWORK_EXHAUSTION",
+  "decision": "R36_FRAMEWORK_FULLY_EXHAUSTED_USER_DIRECTIVE_REQUIRED",
+  "r_trigger": "R36h ceiling + R36i fake breakthrough detection + 14 failure mechanisms (11 real ceiling + 3 fake breakthrough)",
+  "summary": "R36 framework fully exhausted. 14 失败机制 (11 真 ceiling + 3 fake breakthrough) 覆盖 R36n 合规方向 a/b/c/d/e/f 全部 6 个维度. R36h ceiling 实证: Stage 1 端几何变更被 Stage 3 T5 SID 表征锁死. R36i fake breakthrough 实证: Stage 1 collapse → SID vocab 退化 → T5 过拟合 → test_R@10 ≈ 1.0 (R36i 检测方法有效). 必须 user 明确决策下一步: (a) 接受 v87 baseline; (b) 放宽 R36m 探索 Stage 0 端; (c) 放宽 R36 v3.6 探索 Stage 2/3/4 端; (d) 重新设计 Stage 0-1 接口.",
+  "r36h_real_ceiling_count": 11,
+  "r36h_real_ceiling_evidence": [
+    "v51 PLD per-layer dynamics — Lipschitz per-layer dynamics, ceiling",
+    "v52 MCDQ mixed-curvature distance — α mixed Poincaré/Euclidean, ceiling",
+    "v56 D1 cyclic curriculum — c cyclic schedule, ceiling",
+    "v67 B1 per-layer diverse schedule — per-layer c_end 异质 v1, ceiling",
+    "v71 B1 per-layer diverse schedule v2 — per-layer c_end 异质 v2, ceiling",
+    "v89 C_END per-layer end-curvature (forward) — c_end_per_layer=[0.5,0.7,1.0], L0=64, ceiling",
+    "v90 Riemannian retraction — codebook ||e|| < 1/sqrt(c_l), test_R@10=0.10744 (-3.83%), 真 regress",
+    "v101 Riemannian codebook retraction (-14.4%) — codebook on ball, Stage 1 健康 L0=159, valid ndcg=0.0843 (-88.8%)",
+    "v102 curvature-aware SID embedding — Stage 3 端 ablation (R36 v3.6 explicit relaxation), no benefit, < 1‰",
+    "v103 C_END per-layer end-curvature (reverse) — c_end_per_layer=[1.0,0.7,0.5], L0=63, ceiling (R36c 3-round diag)",
+    "v104 HRQ Möbius chain recon — arxiv 2505.12404, test_R@10=0.11163 (-0.072% 微小 regress, L0=45)"
+  ],
+  "r36i_fake_breakthrough_count": 3,
+  "r36i_fake_breakthrough_evidence": [
+    "v91 Full Riemannian Adam — Stage 1 collapse → 35 unique SID → T5 过拟合 → test_R@10=0.7574 (fake +577.99%, R36i 检测)",
+    "v99 Scale-Decoupled Hyperbolic — Stage 1 collapse → 12 unique SID → T5 过拟合 → test_R@10=0.9998 (fake +796%, R36i 检测)",
+    "v100 Hyperbolic K-means — Stage 1 collapse → 早期停, no test eval (R36c 3-round diag)"
+  ],
+  "r36i_detection_method_validated": "fake breakthrough 信号特征: test_R@10 ≈ 1.0 (明显异常高) + SID unique 极少 (12-35 vs 9208 baseline) + Stage 1 collapse 已知 → R36i 检测触发 → 必须排除 fake breakthrough 才能判定机制真伪",
+  "r36n_compliance_dimensions_exhausted": {
+    "a_curriculum_curvature_dynamics": ["v51 PLD", "v56 D1 cyclic", "v67 B1", "v71 B1 v2", "v89 forward", "v103 reverse", "v104 HRQ"],
+    "b_per_item_per_layer_per_codebook_heterogeneous_curvature": ["v52 MCDQ", "v67 B1", "v71 B1 v2", "v89 forward", "v103 reverse"],
+    "c_manifold_replacement": ["v104 HRQ Möbius chain recon (Euclidean → Möbius)"],
+    "d_riemannian_optimizer": ["v90 Riemannian retraction", "v101 Riemannian codebook retraction", "v91 Full Riemannian Adam (fake breakthrough)"],
+    "e_geometric_transformation_exp_log_mobius_transport": ["v51 PLD", "v52 MCDQ", "v89/v103 per-layer c_end", "v104 HRQ", "v101 Riemannian retraction"],
+    "f_hyperbolic_geometric_loss": ["v102 curvature-aware SID embedding (Stage 3 ablation, R36 v3.6 explicit relaxation)"]
+  },
+  "r36_combined_constraints_final_status": {
+    "R36m_metadata_forbidden": "Stage 0 端禁 — R36m 已锁, 14 失败均不涉及 Stage 0",
+    "R36n_geometric_only": "Stage 1 端几何变更 — 11 真 ceiling 已穷尽",
+    "R36h_ceiling": "Stage 1 端几何变更被 Stage 3 T5 SID 表征锁死 — 实证 11 次",
+    "R36_v3_6_stage_forbidden": "Stage 2/3/4 端禁 — R36 v3.6 已锁, 仅 v102 一次性 explicit relaxation",
+    "R36i_fake_breakthrough": "Stage 1 collapse → SID 退化 → T5 过拟合 fake high — R36i 检测方法验证有效",
+    "verdict": "R36 框架在所有合规方向 11 真 ceiling + 3 fake breakthrough 上完整 exhaust. R36 framework 当前完全无突破路径."
+  },
+  "next_direction_required": "R36 框架完全无突破路径. User 必须明确决策下一步方向: (a) 接受 v87 baseline (test_R@10=0.11171069587628867) 作为终态; (b) 放宽 R36m 探索 Stage 0 embedding 变更 (换模型/多 embedding/LoRA/端到端训练, R36m 当前禁); (c) 放宽 R36 v3.6 探索 Stage 2/3/4 端绕过路径 (Stage 2 SID 表征升级/Stage 3 metric learning/Stage 4 geometry rerank, 当前禁); (d) 完全重设计 Stage 0-1 接口 (e.g. 改 Stage 0 输出空间/Stage 1 输入空间). 任何 (b)/(c)/(d) 选项都需要 user 明确授权放松对应 R 规则.",
+  "timestamp": "2026-08-24"
+}
