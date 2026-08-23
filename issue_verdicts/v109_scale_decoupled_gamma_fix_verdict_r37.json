@@ -1,0 +1,89 @@
+{
+  "verdict_id": "v109_scale_decoupled_gamma_fix",
+  "issue_number": "v109",
+  "mechanism": "v109 = v99 R36o audit-mandated BUG_FIX 第 3 轮 (R36o 3 阶段 C 要求). v99 SD_GAMMA_MAX=1024 太松 + SD_USE_COMMITMENT=False → EMA norm=0.01 → γ=400 (实测 39.50/24.07/18.96) 让 x_scaled 远超 codebook norm, 全部层 collapse (codes=6/4/5/256). 修复: γ_max=5.0 (sane upper) + commitment=True (梯度稳定).",
+  "baseline_lock": "v87 F3 Spread Loss Revisit R51+ locked test_R@10=0.11171069587628867",
+  "decision": "FAIL_R38_MID_TRAINING_REGRESS_R37_R36H_CEILING_19_R36O_3_ROUND_DIAG_COMPLETE",
+  "r_trigger": "R38 (训练期 codes=1/1/1/256 vs v99 codes=6/4/5/256 → 比 v99 更差, R36o BUG_FIX counter-productive) + R37 + R36h ceiling #19 + R36o 3 阶段 C 完成",
+  "summary": "v109 BUG_FIX 实施 OK (line 83 SD_GAMMA_MAX=5.0, line 85 SD_USE_COMMITMENT=True, py_compile PASS, DDP 4 卡启动). 但 codes=1/1/1/256 — 比 v99 (6/4/5/256) **更差**, R36o audit BUG_FIX 假设错 (audit 推测 γ_max 太松 + 关 commitment 让 collapse; 实际相反: γ_max 收紧到 5 + 开 commitment 让 collapse 进一步恶化). R36o 3 轮 bug-fix (v107/v108/v109) 全 regress → R36o 3 阶段 C 完成, 终止 R36o audit-fix 路径. 19 R36h ceiling exhausted. R50 rollback: 保留 curvature_experiment_scale_decoupled_gamma_fix_v109/ 目录作失败证据, 不删除. 不再重跑或启动新机制. v87 F3 Spread Loss Revisit baseline (test_R@10=0.11171069587628867) 保持 LOCKED.",
+  "stage_1_rqvae_training": {
+    "status": "COMPLETED (10k steps, 37.8s, no mid-training kill — let complete for clean R36o 3 轮 comparison)",
+    "max_global_steps": 10000,
+    "total_time_sec": 37.8,
+    "ckpts_saved": ["rqvae_step1000.pt", ..., "rqvae_step9000.pt", "rqvae_final.pt"],
+    "final_loss": 1.8513,
+    "final_loss_components": {
+      "reconstruction_loss": 1.8502,
+      "rqvae_loss": 0.0011
+    },
+    "final_codes_per_layer": "1/1/1 (L0/L1/L2 unique code counts — CATASTROPHIC COLLAPSE)",
+    "r38_diagnosis_codes_vs_v99_vs_baseline": {
+      "v109_codes": "1/1/1/256",
+      "v99_codes": "6/4/5/256 (比 v109 好 6/4/5 倍)",
+      "v87_baseline_L0_codes": "84/256 (32.8%)",
+      "v109_vs_v99": "WORSE (counter-productive bug fix)",
+      "v109_vs_baseline": "灾难性恶化 (L0=1 vs 84 = -99%)"
+    },
+    "r36o_diagnosis_gamma_evolution": {
+      "step_2472": "γ=9.50/7.40/6.96 (> γ_max=5, 说明 log 显示 unclamped _sd_gamma)",
+      "step_3824": "γ=6.52/6.90/6.51",
+      "step_5156": "γ=4.94/6.30/5.86 (部分 clamp 到 ≤5)",
+      "step_9248": "γ=1.52/5.95/4.57 (clamp 后)",
+      "observation": "γ clamp 后 EMA norm 增长缓慢 (从 0.04 → 0.07), 残差 |r|=0.05-0.20 远 < codebook norm (1.0), x_scaled = x*γ 仍 < codebook norm → KMeans 收束"
+    },
+    "r38_kill_decision": "Stage 1 完成 → codes=1/1/1/256 比 baseline 灾难性恶化 → 跳过 Stage 2/3/4, R38 + R37 + R36h ceiling #19 + R36o 3 阶段 C 完成"
+  },
+  "r36o_3_round_diag_complete": {
+    "round_1_v107_hyp_kmeans": "FAIL R38 (-94% L0 collapse). c=0.05→0.7 fix 让 hyperbolic KMeans 真正激活, 但激活后 collapse 反而更严重. BUG fix 是 counter-productive.",
+    "round_2_v108_radial_sigma": "FAIL R38 (-43%/-95%/-95% L0/L1/L2 collapse). σ=0.05→0.30 fix 让 L1/L2 codes 从 1 升到 13/12 (1200%/1100% 改善), 但绝对 codes 仍 < baseline. BUG fix 是 partial fix.",
+    "round_3_v109_scale_decoupled": "FAIL R38 (codes=1/1/1/256, 比 v99 更差). γ_max=1024→5 + commitment=False→True fix 让 collapse 比 v99 更严重. BUG fix counter-productive.",
+    "verdict": "R36o v3.7 audit 3 轮 bug-fix 全 regress. R36h ceiling 真实根因不是 init/retraction/regularization/sigma/gamma 等单一参数, 而是 R36g cascade RQ-VAE structural collapse (residual norm ≈0.14 + commitment loss + KMeans narrow). R36o 终止, 不再尝试剩余 2 个 BUG_FOUND (v101 retraction 位置, v100 σ threshold).",
+    "r36o_audit_agent_finding_re_validated": "audit (a552d1ac915e31b98) 正确识别 6 个 BUG_FOUND, 但 fix 方向部分错: 6 个 bug fix 中 0 个能突破 baseline. 这反证 R36g cascade collapse 根因是 fundamental, 不是 audit 列出的具体 bug."
+  },
+  "r38_failure_root_cause_analysis": {
+    "hypothesis_1": "γ_max=5.0 + commitment=True 双重 fix 让 scale-decoupled 机制完全失效. γ 强制 ≤5 让 x_scaled 远 < codebook norm (1.0), KMeans 找不到匹配 cluster, 全部 collapse 到 1 code. commitment loss 进一步把 encoder 拉向 1 个 centroid.",
+    "hypothesis_2": "audit 推测 γ_max=1024 太松是 bug, 但实际 v99 γ≈40 是机制设计使然 (EMA norm 初期 0.025 → γ=40 撑开 radial). γ_max=5.0 截断让机制失效. 这反证 v99 实施 OK, audit 假设错.",
+    "hypothesis_3": "R36g cascade RQ-VAE structural collapse 是 v97/v99/v108/v109 全部 R38 的共同根因. 任何 single σ/γ/init 参数 fix 都不破 ceiling. 必须 multi-prong 系统性修复 (commitment + spread + Sinkhorn + KMeans 全联动), 但 R36n + R36o 范围只允许单点 fix.",
+    "verdict": "R36o audit 错在把 cascade collapse 归因到单点 (σ/γ) 参数, 实际是 multi-factor 复合. 19 失败机制 exhausted. R36 框架在所有合规方向完全无突破路径."
+  },
+  "r36h_ceiling_count": 19,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v97 radially_diverse (σ=0.05μ) → v108 fix (σ=0.30μ) — partial fix, 不破 ceiling",
+    "v99 scale-decoupled hyperbolic → v109 fix (γ_max=5 + commitment=True) — counter-productive, 比 v99 更差",
+    "v100 hyperbolic K-means (c=0.05 = Euclidean) → v107 fix (c=0.7) — counter-productive, 比 v100 更差",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (arxiv 2505.12404)",
+    "v105 DRQ (Decoupled Residual Quantization, arxiv 2606.01844)",
+    "v106 ReSQ (Residual Re-normalization) — R38 L0 codes 18-21/256 (-75%)",
+    "v107 hyp_kmeans_c_end_fix (R36o 1) — R38 L0 codes 5/256 (-94%)",
+    "v108 radial_sigma_fix (R36o 2) — codes=48/13/12 (-43%/-95%/-95%)",
+    "v109 scale_decoupled_gamma_fix (R36o 3) — codes=1/1/1/256 (比 v99 更差, R36o 3 阶段 C 完成)"
+  ],
+  "r18_4dimension_comparison_v109_vs_v87": {
+    "D1_spec_extraction": "v109 SD_GAMMA_MAX=5.0 (v99 1024→5) + SD_USE_COMMITMENT=True (v99 False→True). 几何机制合规: scale-decoupled 是 manifold 上的几何变换 (R36n e).",
+    "D2_implementation_core": "v109 train_rqvae_instruments.py:83 SD_GAMMA_MAX=5.0, line 85 SD_USE_COMMITMENT=True. py_compile PASS, DDP 4 卡启动完成.",
+    "D3_gate1_failure_mechanism": "R38 触发: step 10000 codes=1/1/1/256 vs baseline 84/255/251 → L0/L1/L2 -99%/-99%/-99% 灾难. 比 v99 (6/4/5/256) 进一步恶化 (counter-productive).",
+    "D4_paper_reference": "R36o audit 推测 γ_max=1024 + commitment=False 是 bug, 但实际 fix 让机制完全失效. 反证 R36g cascade structural collapse 根因是 fundamental, 不是 audit 列出的具体 bug."
+  },
+  "r36_combined_constraints_confirmed_exhausted_v109": {
+    "R36m_metadata_forbidden": "Stage 0 changes forbidden",
+    "R36n_geometric_only": "v109 scale-decoupled γ_max=5 是几何 (n) 合规, 但 R38 验证机制失效",
+    "R36h_ceiling": "19 机制 exhausted (含 v107/v108/v109 R36o 3 轮 bug-fix 全 regress)",
+    "R36_v3_6_stage_forbidden": "Stage 2/3/4 端 forbidden",
+    "R36o_3_round_diag": "3 轮完成 (v107 R38, v108 R38, v109 R38), 全 regress, 终止 R36o audit-fix 路径",
+    "R36g_cascade_collapse": "R36g cascade structural collapse 是 R36h ceiling 真实根因 (5+ 机制诊断确认). 不再尝试任何 single-σ/γ/init fix",
+    "verdict": "R36 + R36m + R36n + R36h + R36 v3.6 + R36o + R36g 7 维约束 + 19 失败机制 全部耗尽. R36 框架在所有合规方向完全无突破路径. 必须 user 明确选择新方向."
+  },
+  "next_direction_required": "19 失败机制 (Stage 1: 16 + 3 R36o audit-fix R38 kill) + R36o 3 阶段 C 完成 (v107/v108/v109 全 regress) + R36g cascade structural collapse 5+ 机制诊断确认 + R36 v3.6 explicit relaxation 一次未产出. R36 框架在 7 维约束下完全无突破路径. 必须 user 明确选择: (a) 接受 v87 baseline (test_R@10=0.11171) 作为终态; (b) 放弃 R36 框架, 提出完全新型机制 (重新设计 Stage 3 T5 架构 / Stage 4 decoder / 完全换数据集 / 重新设计 Stage 0-1 接口 / Stage 2 SID 表征升级绕过 R36 v3.6). 任何 (b) 选项需要 user 明确授权放松对应 R 规则.",
+  "timestamp": "2026-08-24"
+}
