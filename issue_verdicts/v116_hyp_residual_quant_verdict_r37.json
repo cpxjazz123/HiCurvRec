@@ -1,0 +1,115 @@
+{
+  "verdict_id": "v116_hyp_residual_quant_v116",
+  "issue_number": "v116",
+  "mechanism": "HRQ (Hyperbolic Residual Quantization, arxiv 2505.12404 Piękos et al. 2025 KAUST/Amazon) in encoder cascade. Cascade 内部 Möbius subtract 替代 Euclidean subtract (vs v104 仅 decoder 端 Möbius chain recon R37 FAILED). 论文 Eq.4 主路径: r_{l+1} = log0(mobius_add(-expmap0(c_l(x_l), c_l), expmap0(r_l, c_l), c_l), c_l). R36n 合规 (Möbius chain = 几何). Stage 1 端纯几何变更. v114 baseline test_R@10=0.1129993556701031 LOCKED.",
+  "baseline_lock": "v114 hyp_sinkhorn_eps (sk_eps=0.12) R51+ locked test_R@10=0.1129993556701031",
+  "decision": "R37_FAIL_R50_ROLLBACK",
+  "r_trigger": "R37 (v116 test_R@10=0.1008 < v114 baseline 0.1129993556701031, -10.8% regress). 立即终止 lineage, R50 rollback.",
+  "summary": "v116 HRQ encoder (Möbius subtract in cascade) test_R@10=0.1008 (-10.8% vs v114 baseline 0.1129993556701031). R37 触发立即终止 lineage. Stage 1 训练成功完成 (L0/L1/L2 codes=168/149/170 final batch, 远好于 v104 HRQ decoder baseline 45/256), F3 Spread Loss 有效防止 L0 collapse. 但 Stage 3 best_ckpt epoch=129 valid_ndcg@10=0.0893 (vs v114 baseline best=0.0987 E124, -9.5% valid). valid-test 同步下降确认 HRQ encoder 引入实际 regress, 不是 baseline noise. R36o v3.7 3 阶段诊断完成: 阶段 A 实现归因 PASS (严格按 arxiv 2505.12404 Eq.4); 阶段 B 大方向 PASS (HRQ 论文 KAUST/Amazon, WordNet +20% Recall@10); 阶段 C 微调空间 (单一变量开关: c=1.0 fixed + F3 Spread Loss ON + sk_eps=0.10) 已用 v111 baseline peak. 微调空间已尽, 仍 regress -10.8%. R36g 风险确认: A 类机制 (异质 manifold) 在 cascade 3 层 RQ-VAE 中风险高, L1/L2 input residual ≈0.14 极小, 即使 v87 Spread Loss 缓解 collapse, Möbius 减法仍让 T5 SID embedding 表征空间发生实质性偏移, 被 Stage 3 T5 SID 表征锁死为 regress. R36h ceiling #15: v116 HRQ encoder path 失败 (区别于 v104 HRQ decoder path 失败的同维度机制, 但实施位置不同). v115 Sinkhorn OT sk_eps sweep saturated → 转入 v116 HRQ 新方向 → 同样 ceiling. **Stage 1 RQ-VAE 端所有几何变更 (含 v104 decoder path / v116 encoder path) ceiling 确认**. 保留 v116 目录作为失败证据 (含 Stage 1 ckpt + Stage 3 best_ckpt + test_final.json), 不重跑.",
+  "stage_1_rqvae_training": {
+    "status": "PASS (100k steps, 599.6s)",
+    "max_global_steps": 100000,
+    "final_codes_per_layer": "168/149/170 (final batch, L1 偏低 58%, 但远好于 v104 HRQ decoder baseline 45/256=17.6%)",
+    "r36f_diag_verdict": "F3 Spread Loss 有效防止 HRQ encoder 引入的 L0 collapse (L0=168/256=65.6% vs v87 baseline 84/256=32.8% 实际更好). 训练期 per_layer_usage 健康.",
+    "curriculum_c_end": 0.7,
+    "ckpt_size": "1148517 params"
+  },
+  "stage_2_sid_inference": {
+    "status": "PASS",
+    "codebook_usage_per_layer": {
+      "L0": "176/256 (68.8%)",
+      "L1": "186/256 (72.7%)",
+      "L2": "230/256 (89.8%)"
+    },
+    "sids_total": 9922,
+    "sids_unique": 9922,
+    "vs_v114_baseline": "v114 Stage 2 输出 sids_for_hgrec.npy 与 v116 完全不同 (HRQ Möbius subtract 改变 cascade residual 数值, 改变 codeword 选择); v116 Stage 2 输出 hash 完全独立"
+  },
+  "stage_3_t5_training": {
+    "status": "PASS (EarlyStop E150, counter 20/20)",
+    "best_ckpt_epoch": 129,
+    "best_valid_ndcg@10": 0.0893,
+    "best_valid_h@10": 0.1156,
+    "loss_progression": "healthy decreasing (E1 loss=7.09 → E150 loss=1.8)",
+    "vs_v114_baseline": {
+      "v114_best_ndcg@10": 0.0987,
+      "v114_best_epoch": 124,
+      "v116_best_ndcg@10": 0.0893,
+      "v116_best_epoch": 129,
+      "valid_delta_pct": "-9.5% (-0.0094 absolute)",
+      "verdict": "v116 valid ndcg@10 显著低于 v114 baseline (-9.5%), valid-test 同步下降, R37 触发"
+    }
+  },
+  "stage_4_test_eval_only": {
+    "status": "PASS (DDP 4-card + FORCE_HGREC=1, torchrun 直接)",
+    "test_R@5": 0.0820,
+    "test_R@10": 0.1008,
+    "test_R@20": 0.1253,
+    "test_NDCG@5": 0.0705,
+    "test_NDCG@10": 0.0766,
+    "test_NDCG@20": 0.0828,
+    "n_eval": 24832,
+    "vs_v114_baseline": {
+      "v114_test_R@10": 0.1129993556701031,
+      "v116_test_R@10": 0.1008,
+      "delta_pct": "-10.8% (-0.01219 absolute)",
+      "verdict": "R37 TRIGGERED (test_R@10 < baseline). 立即 R50 rollback."
+    }
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "HRQ Möbius subtract = 几何 (n) 合规",
+    "R36h_ceiling": "v116 ceiling #15 确认. Stage 1 RQ-VAE 端所有几何变更 (14 + v116 = 15 机制) 全部 ceiling 或 regress. Stage 3 T5 SID 表征空间锁死.",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (Möbius subtract), Stage 2/3/4 端不触碰",
+    "R36g_cascade_risk": "A 类机制 cascade 风险 (L1/L2 input residual 极小 ≈0.14). F3 Spread Loss 部分缓解 (L1 codes 149/256 = 58% 仍偏低) 但 T5 SID 表征空间仍偏移, 触发 regress"
+  },
+  "r36o_3stage_diagnosis": {
+    "stage_a_implementation": {
+      "verdict": "PASS",
+      "evidence": "arxiv 2505.12404 Eq.4 严格按 Möbius subtract: r_{l+1} = logmap0(mobius_add(-expmap0(c_l(x_l), c_l), expmap0(r_l, c_l), c_l), c_l). modules/rqvae.py line 269-285 实施. py_compile PASS. DDP 4 卡 100k steps 训练成功."
+    },
+    "stage_b_direction": {
+      "verdict": "PASS",
+      "evidence": "Piękos et al. 2025 arxiv 2505.12404 'Hyperbolic Residual Quantization for Hierarchical Representation Learning' KAUST/Amazon Science. WordNet 实验 +20% Recall@10. 大方向 (manifold geometric change in encoder cascade) 论文级正确."
+    },
+    "stage_c_microtune": {
+      "verdict": "EXHAUSTED",
+      "evidence": "v116 微调空间: (a) c=1.0 fixed (HG-Rec default, 与 v114 一致); (b) F3 Spread Loss ON (v87 baseline, 防 L0 collapse 验证有效 L0=168/256=65.6%); (c) sk_eps=0.10 (v111 baseline peak, 排除 Sinkhorn OT 维度); (d) M3 transport ON (c=1.0 fixed 时 identity); (e) M2 intrinsic OFF (HRQ 互斥). 单一变量开关: use_hrq_encoder=False→True vs v114 baseline. 微调空间已尽, v116 = R37 FAILED -10.8%."
+    },
+    "r37_decision": "v116 = R37 FAIL → 立即终止 lineage, R50 rollback"
+  },
+  "r18_4dimension_comparison_v116_vs_v114": {
+    "D1_spec_extraction": "v116 论文 Eq.4 Möbius subtract in cascade (vs v104 decoder chain recon). 几何机制合规.",
+    "D2_implementation_core": "v116 modules/rqvae.py line 269-285 use_hrq_encoder=True. train_rqvae_instruments.py:224 use_hrq_encoder=True. py_compile PASS. DDP 4 卡 100k steps 训练成功.",
+    "D3_gate1_failure_mechanism": "Stage 1 ckpt 完成, codes 健康 (168/149/170 final batch). Stage 2 sids_for_hgrec.npy 输出 (vs v114 不同 hash, HRQ 改变 cascade 路径). Stage 3 best_ndcg@10=0.0893 < v114 0.0987 (-9.5% valid). Stage 4 test_R@10=0.1008 < v114 0.1130 (-10.8%). valid-test 同步下降, 排除 baseline noise. R36g cascade 风险: 即使 F3 Spread Loss 缓解 L0 collapse, Möbius subtract 仍改变 L1/L2 input residual 几何空间, T5 SID embedding 表征发生实质偏移.",
+    "D4_paper_reference": "Piękos et al. 2025 arxiv 2505.12404 'HRQ for Hierarchical Representation Learning' WordNet +20% Recall@10. Musical_Instruments 数据集结果未给出. 本实验确认 HRQ encoder path 在小数据集 (9922 items) + F3 Spread Loss + sk_eps=0.10 配置下 ceiling -10.8% regress. 论文级方向正确但 Musical_Instruments 数据集特征不匹配 HRQ 假设 (WordNet 是结构化层级, Instruments 是相似商品)."
+  },
+  "r37_status": "TRIGGERED (v116 test_R@10=0.1008 < v114 baseline 0.1129993556701031, -10.8% regress)",
+  "r50_status": "TRIGGERED (R37 触发后立即 R50 rollback. 保留 v116 目录作为失败证据: Stage 1 ckpt rqvae_final.pt + Stage 3 best_ckpt epoch 129 + test_final.json + 4 stage logs 全保留. 不重跑. v115 sinkhorn_eps_v115 baseline (test_R@10=0.1129993556701031) 保持 LOCKED.)",
+  "r36h_ceiling_count": 15,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (decoder path) — R37 FAILED",
+    "v110/111/114/115 Sinkhorn OT sk_eps sweep (saturated)",
+    "v116 HRQ Möbius subtract (encoder path) — R37 FAILED (-10.8%)"
+  ],
+  "next_direction_v117_plus": {
+    "rationale": "15 Stage 1 RQ-VAE 端纯几何变更 (含 v104 decoder path / v116 encoder path) 全部 ceiling 或 regress. R36g cascade 风险确认: Möbius subtract / chain add 在 L1/L2 input residual 极小 (≈0.14) 时无法保持 Stage 3 T5 SID 表征空间稳定. R36m 禁 Stage 0 元数据变更, R36 v3.6 禁 Stage 2/3/4 绕过. 当前 R36 框架下 Stage 1 端已 15 机制穷尽.",
+    "v117_hypervq_alternative": "HyperVQ (arxiv 2403.13015): MLR-based hyperbolic VQ. 用 Multinomial Logistic Regression 在 Poincaré ball 投影作为判别量化, 替代距离 argmin. 与 Sinkhorn OT / HRQ 维度完全不同 (判别量化 vs 距离量化). 可能不被 R36g cascade 风险影响 (因为不动 cascade residual 几何, 只改 argmin 判别方式). R36n 合规 (MLR projection = 几何).",
+    "v118_poincare_codebook_constrained": "Poincaré Codebook Init (constrained codebook to ball surface): Stage 1 codebook init 直接在 Poincaré ball 表面 (norm=1), 替代 KMeans init. Stage 3 cascade 输入变化, 但 residual 几何仍是 Euclidean. R36g 风险低 (不动 cascade 路径).",
+    "v119_manifold_quant_dq": "Differentiable Quantization (DQ) - 用 Gumbel-Softmax temperature annealing + soft-to-hard quantization. 与现有 STE 路径不同, 可能改变 Stage 3 SID 表征. R36n 合规 (Gumbel = 几何? 待判定, Gumbel 本身不是几何但 quantize 路径变更是几何变种)."
+  },
+  "timestamp": "2026-08-24"
+}
