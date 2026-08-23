@@ -1,0 +1,69 @@
+{
+  "verdict_id": "v92_radial_regularization",
+  "issue_number": "v92",
+  "mechanism": "Radial Regularization Stage-1 only smoke (R92-Diagnostic 驱动). 加 L_rad = mean_{l,k} [max(0,ρ_min-ρ)² + max(0,ρ-ρ_max)²] 区间约束, ρ_min=0.20, ρ_max=0.70, λ=1e-3. Stage-1 50k steps (smoke, 不跑 Stage 2/3/4).",
+  "baseline_lock": "v87 R51+ locked test_R@10=0.11171069587628867",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_radial_regularization_v92/out/rqvae/instruments/rqvae_final.pt (50k steps, c=0.7 post-curriculum)",
+  "test_R10_baseline": 0.11171069587628867,
+  "test_R10_v92": null,
+  "delta_R10_vs_baseline_relative_pct": null,
+  "status": "STAGE_1_SMOKE_GATE_4_FAIL",
+  "r_trigger": "GATE_4_FAIL_NO_STAGE_2_3_4",
+  "summary": "v92 Stage-1 radial regularization smoke 完成. 用户授权的 4 个 gate 评估结果:\n  Gate 1 (ρ↑) PASS: ρ mean 0.07-0.10 → 0.51-0.55 (7x baseline). codewords 推到 [0.20, 0.70] 安全区间中段.\n  Gate 2 (Spearman corr↓) PASS: c=2 L0 0.9997→0.9137, c=5 L0 0.9866→0.3374. curvature 现在真影响 pairwise rank-order.\n  Gate 3 (assignment change rate↑) PARTIAL: c=2 L0 2.34%→4.92% (改善但<10%), L1/L2 几乎没变化.\n  Gate 4 (residual-reference distortion↑) FAIL: L0 0.16→0.03 (反效果!), L1 0.30→0.08 (反效果), L2 0.21→0.11 (反效果). 量化破坏 residual relationship 比 baseline 更严重.\n\n按用户决策框架: '如果 radial activation 后, 不同 c_l 能够明显降低这个 distortion, 那么论文故事就完整了. 如果这些成立, 但 residual-reference distortion 还是完全没有改善, 那么下一步就非常明确: A 不够, 需要 A + D (Radial Activation + Relational Distortion Loss).'\n\nGate 4 fail → 不进 Stage 2/3/4. Stage-1 R50 (产物保留供 v93 复用). 启动 v93 = A + D (Radial Activation + Relational Distortion Supervision).",
+  "stage_1_RQVAE_training": "COMPLETED_50K_STEPS",
+  "stage_2_SID_inference": "NOT_TRIGGERED_GATE_4_FAIL",
+  "stage_3_T5_HGRec_train": "NOT_TRIGGERED_GATE_4_FAIL",
+  "stage_4_test_eval": "NOT_TRIGGERED_GATE_4_FAIL",
+  "completed_stages": ["stage1_smoke_with_4_gates"],
+  "gate_results": {
+    "gate_1_radius_above_0_2_to_0_4": {
+      "target": "ρ ≈ 0.2-0.4",
+      "baseline": {"L0_mean": 0.0845, "L1_mean": 0.0959, "L2_mean": 0.0682},
+      "v92": {"L0_mean": 0.5340, "L1_mean": 0.5307, "L2_mean": 0.5118},
+      "verdict": "PASS (实际推到 0.5+, 接近 ρ_max=0.70 上界)"
+    },
+    "gate_2_pairwise_spearman_below_0_97": {
+      "target": "Spearman corr ↓ to 0.97/0.95",
+      "baseline_c2": {"L0": 0.9964, "L1": 0.9997, "L2": 0.9999},
+      "v92_c2": {"L0": 0.9137, "L1": 0.9985, "L2": 0.9835},
+      "v92_c5": {"L0": 0.3374, "L1": -0.3658, "L2": -0.4539},
+      "verdict": "PASS (大幅改善, curvature 现在真影响 rank-order)"
+    },
+    "gate_3_assignment_change_rate_above_10_pct": {
+      "target": "change rate 10-20%",
+      "baseline_c2": {"L0": 0.0234, "L1": 0.0299, "L2": 0.0158},
+      "v92_c2": {"L0": 0.0492, "L1": 0.0108, "L2": 0.0130},
+      "verdict": "PARTIAL (L0 2x 改善但仍 <5%, L1/L2 没明显变化)"
+    },
+    "gate_4_residual_reference_distortion_improve": {
+      "target": "corr L0=0.16→更高, L1=0.30→更高, L2=0.21→更高",
+      "baseline": {"L0": 0.16, "L1": 0.30, "L2": 0.21},
+      "v92_c0_5": {"L0": 0.0276, "L1": 0.0827, "L2": 0.1138},
+      "v92_c5": {"L0": 0.0168, "L1": 0.0891, "L2": 0.1196},
+      "verdict": "FAIL (反效果: 三层 corr 都下降, 量化更破坏 residual relationship)"
+    }
+  },
+  "compliance": {
+    "R36_R36n_compliance": "PASS — radial regularization 是几何损失方向 (区间约束)",
+    "R36b_compliance": "PASS — c 仍 curriculum 动态变化",
+    "R37_no_revisit": "PASS — 与 v89/v90/v91 完全正交 (不同机制)",
+    "R50_after_gate_4_fail": "PASS — 不跑 Stage 2/3/4 (gate 4 fail), 但保留 Stage-1 ckpt 供 v93 复用"
+  },
+  "implementation": {
+    "USE_RADIAL_REG": true,
+    "RHO_MIN": 0.20,
+    "RHO_MAX": 0.70,
+    "RADIAL_LAMBDA": 1e-3,
+    "loss_formula": "L_rad = (1/L) Σ_l mean_k [max(0,ρ_min-ρ_{lk})² + max(0,ρ_{lk}-ρ_max)²], ρ_{lk}=sqrt(c_l)*||e_{lk}||",
+    "preserved_v87_unchanged": ["F3 Spread Loss weight=0.005 margin=2.5", "Curriculum c 0.05→0.7 50k steps", "M3 Transport", "USE_M2_INTRINSIC=False", "codebook size 256"],
+    "stage1_steps": 50000,
+    "novelty_vs_v87": "v87: 仅 spread loss (codeword pair dist); v92: 加 radial 区间约束把 codeword 推离中心"
+  },
+  "next_direction_recommendation": {
+    "decision": "Gate 4 fail → A 单独不够, 需要 A + D",
+    "v93_plan": "v93 = Radial Activation + Relational Distortion Supervision. L_total = L_v92 + λ_dist * Σ_l Distortion(D_l^(c_l), D_l^ref), reference = 量化前 residual pairwise Euclidean dist. 用户授权 (8月23日决策框架).",
+    "expected_outcome": "Gate 4 应能改善 (直接优化 distortion), Gate 1-3 应保留 v92 突破."
+  },
+  "post_v92_action": "立即启动 v93 = A + D (R92 diagnostic 已经定位, R36o 阶段 C 微调空间 → 加 D loss).",
+  "timestamp": "2026-08-23"
+}
