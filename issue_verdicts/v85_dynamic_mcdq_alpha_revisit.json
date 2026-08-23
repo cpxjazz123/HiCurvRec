@@ -1,0 +1,38 @@
+{
+  "verdict_id": "v85_dynamic_mcdq_alpha_revisit",
+  "issue_number": "v85",
+  "mechanism": "Dynamic MCDQ α 调度 (重挖掘 v52 失败机制)",
+  "baseline_lock": "v69 G5 R51+ locked 0.11042203608247422",
+  "test_R10_baseline": 0.11042203608247422,
+  "test_R10_v85": null,
+  "delta_R10_vs_baseline_relative_pct": null,
+  "status": "FAIL_R37_R36O_REVISIT",
+  "r_trigger": "R36o v3.7 阶段 C 3 轮微调全 collapse + R37",
+  "summary": "v85 Dynamic MCDQ α 重挖掘 v52 失败机制: 在 baseline RQ-VAE Stage 1 训练里同时启用 F3 Spread Loss + MCDQ α 调度. 3 轮 R36o v3.7 微调: (轮 1) lr=0.01 target=1.5 → L0/L1/L2 usage=1/2/2, α 飞涨 0.55; (轮 2) lr=1e-4 target=0.5 → usage=2/2/1, α 缓慢涨但仍 collapse; (轮 3) 公式方向重判 → 仍 collapse. R36o 阶段 B 大方向判断: spread loss + dynamic α 与 baseline RQ-VAE Stage 1 训练动力学冲突, v52 历史 regress 根因 (MCDQ α 训练全程稳定 0.5 → 等权混合退化) 是 v85 必须先解决的瓶颈, 但 spread loss + dynamic α 本身破坏 codebook 收敛, 形成 catch-22.",
+  "r36o_stage_a_implementation_attribution": "公式方向正确: δ = lr * (L_spread - target) / target, L_spread 大 → α 增 (Euclidean 拉分), L_spread 小 → α 减 (Poincaré 主导). 但 spread loss 自身引入与 baseline Stage 1 不一致的优化目标, 即便 α 公式方向正确也无法恢复 baseline 训练动力学.",
+  "r36o_stage_b_macro_direction": "❌ 大方向不对. v85 在 baseline RQ-VAE 蒸馏流程里同时加 spread loss + dynamic α, 二者联合干扰 baseline 收敛. 重挖掘 v52 必须保留 v52 距离混合机制本质 (α 控制 d_P + d_E 加权), 但应避免在 Stage 1 加新 loss term 改变 baseline 优化方向. v85 设计偏离 v52 失败根因, 走错路.",
+  "r36o_stage_c_micro_space_explored": [
+    "轮 1: MCDQ_ALPHA_LR=0.01, MCDQ_SPREAD_TARGET=1.5 → usage=1/2/2/256 → collapse",
+    "轮 2: MCDQ_ALPHA_LR=1e-4, MCDQ_SPREAD_TARGET=0.5 → usage=2/2/1/256 → collapse",
+    "轮 3: 公式方向重判 (target - spread) / target → 仍 collapse"
+  ],
+  "r36h_ceiling_validation": "v85 是 R36h Stage 1 RQ-VAE 端纯曲率变更第 18 次探索, 沿用 v52 MCDQ 失败路线 + 新增 spread loss. 3 轮微调全部 Stage 1 collapse 不能完成 4 阶段流水线, 与 v51 PLD / v52 MCDQ / v56 D1 / v67 B1 / v71 B1 / v82 F2 / v83 F3 / v84 F2+F3 历史 15 次 Stage 1 端纯曲率变更 char-exact baseline ceiling 一致: **R36h ceiling 已饱和, Stage 1 RQ-VAE 端纯曲率变更无法突破 0.12 ceiling**. 当前最高 v83/v84 = 0.11171 (+1.17% vs v69 G5 baseline), 但仍距 0.12 目标差 8%.",
+  "r37_decision": "v85 终止 lineage, 立即 R50 回滚, 必须从 v84 baseline (F2+F3 Joint) 上重新设计新机制, 不得在 v85 上二次创新.",
+  "r50_action_taken": "rm -rf curvature_experiment_dynamic_mcdq_alpha_v85/R36e-stage1-cleanup + 终止所有 GPU 训练. 不触发新一轮 GPU 作业 (R50 强制停手).",
+  "next_directions_explore": [
+    "R36h 已证 Stage 1 RQ-VAE 端纯曲率变更 18 次探索均 ceiling, **必须换方向**: 探索 Stage 0 (商品 → embedding 预处理) 端创新 (换 embedding 模型 / LoRA / 多 embedding 拼接) - 但 R36m 禁元数据修改, 路径已堵. **或 R36v3.6 之后 Stage 2/3/4 端禁, 实际可探索路径仅剩 R36v3.6 例外条款** (per-layer / per-codebook 异质曲率, 已被 v53 A1 / v55 C1 R36g cascade risk 标 NO-GO).",
+    "R36o v3.7 历史教训: 任何 Stage 1 RQ-VAE 端纯曲率变更都应先做 (a) 单层 VQ-VAE 验证 → 多层 cascade 验证 → 最后黑盒训练; (b) A/C 类异质 manifold 机制若 cascade 风险高, 降级到 D1 cyclic curriculum (单标量 c 全局时间变化) 或 E1 Riemannian Adam (不动 manifold).",
+    "可重挖掘历史失败机制 (R36o v3.7 阶段 C 已扩展到所有 regress): v56 D1 Cyclic Curriculum, v55 C1 Per-Codeword Curvature, v67 B1 Per-Layer Schedule, v71 B1 Per-Layer Diverse Schedule - 4 个都 Stage 1 ceiling. **下一步: 重挖掘 Stage 0 / Stage 2 / Stage 3 路径** (R36m/n/v3.6 联动, 但需先放宽规则, 否则 R36h ceiling 不可破)."
+  ],
+  "completed_stages": [],
+  "stage_results": {
+    "stage_1_RQVAE_training": "FAIL_R36C_COLLAPSE_3_ROUNDS",
+    "stage_2_SID_inference": "NOT_REACHED",
+    "stage_3_T5_HGRec_train": "NOT_REACHED",
+    "stage_4_test_eval": "NOT_REACHED"
+  },
+  "r51_plus_run_validation": "NOT_APPLICABLE_STAGE_1_COLLAPSE",
+  "hardware": "DDP 4 卡 (CUDA_VISIBLE_DEVICES=0,1,2,3), seed=42+process_index, CUBLAS_WORKSPACE_CONFIG=:4096:8, PYTHONHASHSEED=42",
+  "log_path": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v85_stage1_train.log",
+  "timestamp": "2026-08-23"
+}
