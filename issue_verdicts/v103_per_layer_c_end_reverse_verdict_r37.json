@@ -1,0 +1,91 @@
+{
+  "verdict_id": "v103_per_layer_c_end_reverse",
+  "issue_number": "v103",
+  "mechanism": "Per-layer C_END REVERSE schedule (Stage 1 RQ-VAE 端) — 深→浅递增: L0=1.0 (Poincaré 中心, ball radius=1.0, capacity 高), L1=0.7 (中), L2=0.5 (ball radius=1.414, 强 hyperbolic 区分). Curriculum 0.05→c_end_l 共享起点. 继承 v87 F3 Spread Loss (0.005/2.5) + M3 Transport (跨层 c_next).",
+  "baseline_lock": "v87 F3 Spread Loss Revisit R51+ locked 0.11171069587628867",
+  "decision": "FAIL_R36H_CEILING_R37_NO_GO",
+  "r_trigger": "R37 + R36h ceiling + R36c 3 轮诊断完成",
+  "summary": "v103 Per-layer C_END REVERSE schedule (L0=1.0/L1=0.7/L2=0.5) 触发 R36h ceiling 第 13 次 — Stage 1 RQ-VAE 端纯曲率变更被 Stage 3 T5 SID embedding 表征锁死, 与 v89 (L0=0.5/L1=0.7/L2=1.0 forward) 方向相反但结局相同 (R36h ceiling). R37 触发立即终止 lineage, 必须回到 v87 baseline 重新创新 (禁止在比旧版本差的版本上二次创新). R36c 3 轮强制诊断完成: 第 1 轮 (实施验证 PASS), 第 2 轮 (c_end 大小方向反向探索 REVERSE vs FORWARD 都失败), 第 3 轮 (R36f codebook norm diag: L0 norms 0.005-0.30 全部非零但 mean=0.033 极小, 256 codebook 在 norm 小的 region 集中) → L0 collapse 是 cascade RQ-VAE residual-driven 机制问题 (residual norm 极小 + commitment loss 把 L0 codebook 拉到 origin), 与 c_end 大小方向无关. R36o 阶段 C 微调空间探索耗尽 (c_end 方向 2 轮: v89 forward + v103 reverse; 仍需 1 轮非 c_end 维度例如 spread_loss_weight 才能完全排除机制本身).",
+  "stage_1_rqvae_training": {
+    "status": "PASS (训练完成)",
+    "max_global_steps": 100000,
+    "total_time_sec": 468.0,
+    "final_loss": 1.4355,
+    "final_loss_components": {
+      "reconstruction_loss": 0.8888,
+      "commitment_loss": 0.5358,
+      "margin_reg": 0.0000
+    },
+    "per_layer_c_end_target": [1.0, 0.7, 0.5],
+    "per_layer_c_end_actual": [1.0, 0.7, 0.5],
+    "per_layer_c_end_implementation_correct": true,
+    "final_per_layer_codes_batch_unique": {
+      "L0": "63/256 (24.6%)",
+      "L1": "227/256 (88.7%)",
+      "L2": "234/256 (91.4%)"
+    },
+    "l0_collapse_warning": "[CODEBOOK WARNING] layer [0] usage=63/227/234/256 (< 10% for L0), 持续 50k+ 步",
+    "ckpts_saved": ["rqvae_step10000.pt", "rqvae_step20000.pt", "rqvae_step30000.pt", "rqvae_step40000.pt", "rqvae_step50000.pt", "rqvae_step60000.pt", "rqvae_step70000.pt", "rqvae_step80000.pt", "rqvae_step90000.pt", "rqvae_final.pt"]
+  },
+  "l0_collapse_diagnosis_r36c_3round": {
+    "round_1_implementation_check": {
+      "verdict": "PASS",
+      "evidence": "train log step 51152 显示 c=1.000/0.700/0.500 完美匹配 c_end_per_layer=[1.0, 0.7, 0.5] (curriculum ramp 完成). c_end_per_layer 在 RqVae.__init__ line 156-158 正确传值 (c_end=self.c_end_per_layer[i] if self.c_end_per_layer is not None else c_end). per-layer 异质实施无误."
+    },
+    "round_2_direction_exploration": {
+      "verdict": "FAIL_R36H_CEILING",
+      "evidence": "L0 codes 比较 (per-layer c_end_per_layer 方向探索): v87 baseline c=0.7 uniform → L0=84/256 (32.8%); v89 forward [0.5, 0.7, 1.0] → L0=64/256 (25.0%); v103 reverse [1.0, 0.7, 0.5] → L0=63/256 (24.6%). 三个方向 (uniform/forward/reverse) 均触发 L0 collapse, 方向与 collapse 程度无关.",
+      "hypothesis_disproved": "bug agent 原假设 'reverse schedule 解 L0 collapse' 被实验证伪. v103 与 v89 L0 codes 几乎相同 (~64/256), reverse schedule 不解决问题."
+    },
+    "round_3_r36f_codebook_norm_diag": {
+      "verdict": "L0 norms 全部非零, 但分布极不均衡",
+      "evidence_step30000_ckpt": {
+        "L0_target_c_end_1.0": "norms min=0.0053, max=0.2999, mean=0.0329, median=0.0074, zero_norm=0/256",
+        "L1_target_c_end_0.7": "norms min=0.0644, max=0.1703, mean=0.1149, median=0.1154, zero_norm=0/256",
+        "L2_target_c_end_0.5": "norms min=0.0251, max=0.2335, mean=0.0813, median=0.0664, zero_norm=0/256"
+      },
+      "diagnosis": "256 codebook 全部非零 (zero_norm_count=0/256), 但 L0 norms mean=0.033, median=0.0074 → 多数 codebook 集中在 origin 附近. batch 内 sample 落入此 region 导致 codes 报告 63/256 (实际 256 存在, 但 batch 内 sample 不覆盖). L0 norms 分布问题不是 codebook 消失, 而是 distribution collapse."
+    }
+  },
+  "l0_collapse_root_cause_analysis": {
+    "primary_cause": "Cascade RQ-VAE residual-driven 机制 (R36g 已标记): L1/L2 输入 residual = L0_output - L0_embedding, norm 极小 (实测 ≈ 0.14). L0 commitment loss (β=1.0) 把 L0 codebook 拉到 origin 区域 → codebook norms 集中小区域 → batch 内 sample 落入相同 region → codes 报告 64/256 (per-batch unique) 但实际 256 全部存在 (per-ckpt norm diag).",
+    "secondary_factor": "c_end 大小对 L0 collapse 程度无显著影响 (v87/v89/v103 三方向 L0 codes 在 63-84/256 范围内浮动, 非机制性突破).",
+    "evidence_triplet": {
+      "v87_baseline_uniform_c=0.7": "L0=84/256",
+      "v89_forward_[0.5,0.7,1.0]": "L0=64/256",
+      "v103_reverse_[1.0,0.7,0.5]": "L0=63/256"
+    }
+  },
+  "r36h_ceiling_count": 13,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断完成, L0 collapse 与 c_end 方向无关"
+  ],
+  "v103_revert_action": "R50 rollback: 保留 curvature_experiment_per_layer_c_end_reverse_v103/ 目录作为失败证据 (含 9 个中间 ckpt + stage1.log 训练日志), 不删除. 不再重跑或启动 Stage 2/3/4. v87 F3 Spread Loss Revisit baseline (test_R@10=0.11171069587628867) 保持 LOCKED.",
+  "r36_combined_constraints_confirmed_exhausted": {
+    "R36m_metadata_forbidden": "Stage 0 changes forbidden (5 categories + 'any such mechanism')",
+    "R36n_geometric_only": "Stage 1 non-geometric changes forbidden",
+    "R36h_ceiling": "13 mechanisms exhausted (5+ Stage 1 ceiling + 3 collapse + 1 boundary reduce + 1 -14.4% regress + 1 no-benefit + 1 reverse schedule)",
+    "R36_v3_6_stage_forbidden_then_relaxed_once": "Stage 2/3/4 forbidden; v102 放宽一次 3-mode Stage 3 ablation 测试, 无突破",
+    "verdict": "R36 + R36m + R36n + R36h + R36 v3.6 (with v102 explicit relaxation) + R36c 3 轮诊断 5+1 维约束全部确认无法突破 v87 baseline ceiling (0.11171). 13 次 Stage 1 端纯曲率变更 (含 v89 forward + v103 reverse) 全部 ceiling, L0 collapse 是 cascade RQ-VAE 机制本身设计, 非 c_end 大小方向可解决."
+  },
+  "r18_4dimension_comparison_v103_vs_v89": {
+    "D1_spec_extraction": "v103 c_end_per_layer=[1.0, 0.7, 0.5] REVERSE schedule; v89 c_end_per_layer=[0.5, 0.7, 1.0] FORWARD schedule. 方向相反.",
+    "D2_implementation_core": "v103 modules/rqvae.py 接受 c_end_per_layer List[float] 参数 (line 87-89), layer 创建循环 line 156-158 按 index 取值; v89 同路径. 实施同结构, 仅 list 内容相反.",
+    "D3_gate1_failure_mechanism": "v103 L0=63/256 (24.6%), v89 L0=64/256 (25.0%) → 几乎相同. 方向变化不改变 L0 collapse.",
+    "D4_paper_reference": "无直接论文支撑 per-layer c_end 异质 schedule; c_end_per_layer 是 v89 自创方向变体, 经验探索. bug agent 假设 'reverse direction 解决 v89 forward failure' 被实验证伪."
+  },
+  "next_direction_required": "13 失败机制 (Stage 1: 12; Stage 3: 1) + R36 v3.6 explicit relaxation 一次未产出 + L0 collapse 根因诊断 (cascade RQ-VAE residual-driven) 全部确认无突破. User 必须明确选择下一步: (a) 接受 v87 baseline (0.11171) 作为终态; (b) 提出 R36 v3.6 / R36h / R36n 框架之外的全新型机制 (例如 HRQ 全新机制 v104 arxiv 2505.12404, paper search agent 推荐度 ★★★★★, Möbius 残差 + 双曲距离查找 + Riemannian SGD, 与之前 13 次失败机制完全不同维度).",
+  "timestamp": "2026-08-24"
+}
