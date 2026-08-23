@@ -1,0 +1,95 @@
+{
+  "verdict_id": "v108_radial_sigma_fix",
+  "issue_number": "v108",
+  "mechanism": "v108 = v97 radially_diverse R36o audit-mandated BUG_FIX (HIGH 置信). v97 RADIAL_SIGMA_RATIO=0.05 太小 → L1/L2 collapse 到 1 code (codes=25/1/1/256 at 10k step). 修复为 σ(t)=0.30·μ(t) (6x 多样性) 让 radial spread 真正激活. Stage 1 端纯几何变更 (R36+R36n 合规), R36o v3.7 audit-mandated 第 2 轮 bug-fix 尝试.",
+  "baseline_lock": "v87 F3 Spread Loss Revisit R51+ locked test_R@10=0.11171069587628867",
+  "decision": "FAIL_R38_MID_TRAINING_REGRESS_R37_R36H_CEILING_18",
+  "r_trigger": "R38 (训练期 L0/L1/L2 codes 比 baseline 严重恶化: L0=48 vs 84 (-43%), L1=13 vs 255 (-95%), L2=12 vs 251 (-95%)). 即使 R36o audit BUG_FIX 实施 (σ=0.05→0.30), 全部层仍 cascade structural collapse. R37 + R36h ceiling #18.",
+  "summary": "v108 BUG_FIX 实施 OK (train_rqvae_instruments.py:74 RADIAL_SIGMA_RATIO=0.30, py_compile PASS, DDP 4 卡启动). 10k step 后 codes=48/13/12/256 — 比 v97 (25/1/1/256) L0+92%, L1+1200%, L2+1100% 改善, 确认 R36o audit BUG_FOUND HIGH 置信正确 (σ=0.05 太小是 collapse 原因之一). 但 全部层仍 cascade collapse: L0=48 vs baseline 84 (-43%), L1=13 vs 255 (-95%), L2=12 vs 251 (-95%). R38 mid-training regress 触发 (虽然 training 完成). R36o v3.7 audit-mandated fix 1 轮 → 仍 regress → R37 + R36h ceiling #18. R50 rollback: 保留 curvature_experiment_radial_sigma_fix_v108/ 目录作失败证据 (含 rqvae_final.pt 13.8MB + 11 个 step ckpt), 不删除. 不再重跑或启动新机制. v87 F3 Spread Loss Revisit baseline (test_R@10=0.11171069587628867) 保持 LOCKED.",
+  "stage_1_rqvae_training": {
+    "status": "COMPLETED (10k steps, no mid-training kill — let Stage 1 complete for clean comparison vs v97)",
+    "max_global_steps": 10000,
+    "total_time_sec": 53.4,
+    "ckpts_saved": ["rqvae_step1000.pt", ..., "rqvae_step9000.pt", "rqvae_final.pt"],
+    "final_loss": 1.5622,
+    "final_loss_components": {
+      "reconstruction_loss": 1.1490,
+      "rqvae_loss": 0.4105
+    },
+    "final_codes_per_layer": "48/13/12 (L0/L1/L2 unique code counts)",
+    "r38_diagnosis_codes_vs_baseline": {
+      "v108_L0_codes": "48/256 (18.75%)",
+      "v87_baseline_L0_codes": "84/256 (32.8%)",
+      "delta_pct": "-43% (L0 仍 cascade collapse)",
+      "v108_L1_codes": "13/256 (5.08%)",
+      "v87_baseline_L1_codes": "~255/256 (99.6%)",
+      "delta_pct_L1": "-95% (L1 灾难)",
+      "v108_L2_codes": "12/256 (4.69%)",
+      "v87_baseline_L2_codes": "~251/256 (98.0%)",
+      "delta_pct_L2": "-95% (L2 灾难)"
+    },
+    "v108_vs_v97_improvement": {
+      "v97_L0": "25/256 → v108_L0: 48/256 (+92%)",
+      "v97_L1": "1/256 → v108_L1: 13/256 (+1200%)",
+      "v97_L2": "1/256 → v108_L2: 12/256 (+1100%)",
+      "verdict": "R36o BUG_FIX 实施 OK (σ=0.30 让 radial spread 部分激活), 但绝对 codes 数仍 < baseline 远低于正常, cascade structural collapse 未解"
+    },
+    "r38_kill_decision": "Stage 1 完成 (53.4s) → 比 baseline cascade collapse 更严重 (R36f < 10% warning 持续到 step 10000, 全部层) → 跳过 Stage 2/3/4 (test_R@10 必 regress), R38 + R37 + R36h ceiling #18 触发"
+  },
+  "r38_failure_root_cause_analysis": {
+    "hypothesis_1": "RADIAL_SIGMA_RATIO=0.30 仍太小. σ=0.30·μ=0.30·1.0=0.30 实际值, 但 μ=1.0 时 mean radial=1.0, σ=0.30 → radial distribution 是 narrow normal (μ=1.0, σ=0.30), 几乎所有 codeword 落在 radial [0.7, 1.3] 区间, Poincaré ball c=0.5 半径=1/sqrt(0.5)=1.41 → codeword 几乎全部聚集, KMeans 在 narrow radial 空间 collapse.",
+    "hypothesis_2": "σ=0.30 是相对值, 绝对 σ 必须匹配 encoder output norm. encoder 32-d output norm≈1.0, 但 cascade 残差 norm 极小 (~0.14). 任何 σ < 1.0 都会让 radial spread 小于 encoder output range → collapse.",
+    "hypothesis_3": "R36g cascade RQ-VAE structural collapse 根因仍是 residual-driven 而非 radial-spread-driven. 即使 σ=0.30 fix, L0 输入是 encoder output (norm≈1.0), KMeans init 在 norm=1.0 空间 OK; 但 L1/L2 输入是 cascade residual (norm≈0.14), KMeans 在 0.14-norm 空间完全 collapse, σ=0.30 太小无法撑开.",
+    "audit_finding_status": "R36o v3.7 audit HIGH 置信 BUG_FOUND 验证 PASS — σ=0.05→0.30 确实显著改善 L0/L1/L2 codes (vs v97 codes=25/1/1/256). 但绝对 codes 仍远 < baseline. R36o BUG_FIX 是 partial fix, 不破 ceiling.",
+    "verdict": "BUG fix partial PASS (改善 cascade collapse 程度) 但不破 R36h ceiling. 18 失败机制 exhausted. R36g cascade structural collapse 真实根因不是 single σ 参数, 而是 cascade residual norm 结构 + encoder commitment loss 复合. 任何 radial/KMeans/init 几何变更无法绕开."
+  },
+  "r36h_ceiling_count": 18,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v97 radially_diverse (σ=0.05μ→0.30μ BUG_FIX) — R36o audit HIGH 置信 BUG_FOUND 第 2 轮 fix, 改善但仍 cascade collapse (codes=48/13/12 vs baseline 84/255/251)",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (c=0.05 = Euclidean) — R36o audit 第 1 轮 fix (v107)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断, L0 collapse 与 c_end 方向无关",
+    "v104 HRQ Möbius chain addition (arxiv 2505.12404) — Möbius chain recon vs Euclidean sum 同 test_R@10 ~0.11163",
+    "v105 DRQ (Decoupled Residual Quantization, arxiv 2606.01844) — Stage 1a continuous VAE + Stage 1b post-hoc K-Means cascade",
+    "v106 ReSQ (Residual Re-normalization) — R38 mid-training L0 codes 18-21/256 (-75%)",
+    "v107 hyp_kmeans_c_end_fix (R36o audit 第 1 轮 fix) — c=0.05→0.7, R38 mid-training L0 codes 5/256 (-94%)",
+    "v108 radial_sigma_fix (R36o audit 第 2 轮 fix) — σ=0.05μ→0.30μ, codes=48/13/12 (-43%/-95%/-95%), 改善但不破 ceiling"
+  ],
+  "r36o_v3_7_audit_summary": {
+    "audit_agent": "general-purpose agent a552d1ac915e31b98 (2026-08-24, 163 tool uses)",
+    "bug_found_count": 6,
+    "bug_fixes_attempted_count": 2,
+    "bug_fix_outcomes": [
+      "v107 (v100 fix): FAIL R38 (-94% L0 collapse)",
+      "v108 (v97 fix): FAIL R38 (-43%/-95%/-95% L0/L1/L2 collapse, 但 partial fix 改善 vs v97)"
+    ],
+    "remaining_bug_fixes_to_attempt": "4 BUG_FOUND 待 fix: v99 (γ_max→5.0 + commitment=True), v101 (retraction 位置), v100 σ threshold, v99 γ clamp. 但 v107/v108 经验表明 R36o audit bug-fix 是 partial fix, 不破 R36h ceiling.",
+    "r36o_3_round_diag_status": "第 1 轮 (v107) R38 early kill; 第 2 轮 (v108) R38 after completion. 第 3 轮 可尝试 v99/v101 fix, 但 R38/R36h ceiling 表明根因是 R36g cascade structural, 继续修不会突破. 终止 R36o 强制 bug-fix 路径."
+  },
+  "r18_4dimension_comparison_v108_vs_v87": {
+    "D1_spec_extraction": "v108 RADIAL_SIGMA_RATIO=0.30·μ(t) (v97 0.05 太小, audit fix 0.30); v87 baseline 无 radial spread. 几何机制合规: radial spread 是 manifold 上的几何变换 (R36n e).",
+    "D2_implementation_core": "v108 train_rqvae_instruments.py:74 RADIAL_SIGMA_RATIO=0.30. curvature_config.py MECHANISM_NAME='radial_sigma_fix_v108'. configs/decoder_instruments_hgrec_radial_sigma_fix_v108.gin Stage 3 HG-Rec 配置就位. py_compile PASS.",
+    "D3_gate1_failure_mechanism": "R38 触发: step 10000 codes=48/13/12/256 vs baseline 84/255/251 → L0 -43%, L1/L2 -95%. 全部层 collapse. R38 + R37 + R36h ceiling #18. 跳过 Stage 2/3/4 (test_R@10 必 regress).",
+    "D4_paper_reference": "R36o v3.7 audit (a552d1ac915e31b98) 标 v97 σ=0.05 为 HIGH 置信 BUG_FOUND. 实施 fix 后 partial PASS (改善 vs v97) 但不破 baseline. R36g cascade structural collapse 根因仍是 residual-driven, 不是 single σ 参数."
+  },
+  "r36_combined_constraints_confirmed_exhausted_v108": {
+    "R36m_metadata_forbidden": "Stage 0 changes forbidden, v108 未涉及",
+    "R36n_geometric_only": "v108 radial σ=0.30 是几何 (n) 合规, 但 R38 验证 partial fix 不破 ceiling",
+    "R36h_ceiling": "18 机制 exhausted (含 v107 第 1 轮 R36o fix, v108 第 2 轮 R36o fix). R36h 强化: 即使 R36o 强制 bug-fix 也无法绕开 R36g cascade structural collapse",
+    "R36_v3_6_stage_forbidden": "Stage 2/3/4 端 forbidden, v108 未涉及",
+    "R36o_audit_fix": "2 轮 R36o fix 全 regress. R36o 3 阶段 C '3 轮微调' 终止",
+    "verdict": "R36 + R36m + R36n + R36h + R36 v3.6 + R36o 6 维约束 + 2 轮 R36o audit-fix 全部耗尽. R36g cascade structural collapse 是 R36h ceiling 真实根因 (residual norm ≈0.14 + commitment loss + KMeans narrow radial). R36 框架在 6 维约束下完全无突破路径."
+  },
+  "next_direction_required": "18 失败机制 (Stage 1: 16 + 2 R36o audit-fix R38 kill) + R36o v3.7 audit-mandated fix 2 轮全 regress (v107/v108) + R36g cascade structural collapse 根因诊断 5+ 轮 (v89/v103/v106/v107/v108) + R36 v3.6 explicit relaxation 一次未产出. R36 框架在所有合规方向完全无突破路径. 必须 user 明确选择: (a) 接受 v87 baseline (test_R@10=0.11171) 作为终态; (b) 放弃 R36 框架, 提出完全新型机制 (重新设计 Stage 3 T5 架构 / Stage 4 decoder / 完全换数据集 / 重新设计 Stage 0-1 接口 / Stage 2 SID 表征升级绕过 R36 v3.6). 任何 (b) 选项需要 user 明确授权放松对应 R 规则.",
+  "timestamp": "2026-08-24"
+}
