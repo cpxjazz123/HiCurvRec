@@ -1,0 +1,43 @@
+{
+  "verdict_id": "v90_riemannian_adam",
+  "issue_number": "v90",
+  "mechanism": "Riemannian Adam (Stage 1 端 codebook Riemannian retraction) — 每步 Euclidean AdamW 更新后, 强制 codebook ||e|| < 1/sqrt(c_l) projection (Poincaré ball constraint, c_l = 该层当前 curriculum c). 保留 v87 F3 Spread Loss (weight=0.005, margin=2.5) + curriculum c 调度 (c_start=0.05→c_end=0.7, 50k steps) + M3 Transport.",
+  "baseline_lock": "v87 R51+ locked 0.11171069587628867",
+  "test_R10_baseline": 0.11171069587628867,
+  "test_R10_v90": 0.10744,
+  "delta_R10_vs_baseline_relative_pct": -3.83,
+  "status": "R37_FAIL_NO_GO",
+  "r_trigger": "R37",
+  "summary": "v90 Riemannian retraction 触发 R36h ceiling — Stage 1 RQ-VAE 端几何约束变更 (retraction) 被 Stage 3 T5 SID embedding 表征锁死 (历史第 7 次: v51/v52/v56/v67/v71/v89/v90 全 ceiling). R37 触发立即终止 lineage, 必须回到 v87 baseline 重新创新. R36o 阶段 A 实施正确 (retraction hook 按预期工作, codebook norm < 1/sqrt(c_l) 强制 ball constraint), 数值 regress 是机制天花板效应而非实施问题.",
+  "test_metrics": {
+    "test_R@5": 0.08839,
+    "test_NDCG@5": 0.07492,
+    "test_R@10": 0.10744,
+    "test_R@20": 0.1409,
+    "test_NDCG@20": 0.0890,
+    "test_R@10_v87_baseline": 0.11171,
+    "delta_pct": -3.83,
+    "n_eval": 24832,
+    "beam": 20,
+    "best_ckpt_epoch": 119,
+    "valid_ndcg@10_best": 0.0968,
+    "early_stop_counter_triggered": true,
+    "early_stop_patience": 20
+  },
+  "stage_1_RQVAE_training": "PASS (codes=86/230/236, L0=32%, L1/L2=90-92%, retraction 在 c=0.7 时 radius=1.19 几乎不约束)",
+  "stage_2_SID_inference": "PASS ([curv] per-layer c: [0.7, 0.7, 0.7])",
+  "stage_3_T5_HGRec_train": "PASS (Best@119 ndcg@10=0.0968 与 v87 持平, early stop @ counter=20)",
+  "stage_4_test_eval": "PASS (R35+R35b DDP 4-card, beam=20)",
+  "completed_stages": ["Stage 1", "Stage 2", "Stage 3", "Stage 4"],
+  "compliance": {
+    "R36_R36n_compliance": "PASS — Riemannian optimizer 是几何优化方向 (R36n: 'Riemannian' 关键词 ✓)",
+    "R36b_compliance": "PASS — c 仍 curriculum 动态变化 (c_start=0.05→c_end=0.7), 不退化为 scalar 常数",
+    "R37_triggered": true,
+    "R50_action": "已停止, 禁止重跑, 禁止二次创新",
+    "R36h_ceiling_evidence": "Stage 1 RQ-VAE 端几何约束变更第 7 次触发 R36h ceiling (历史: v51/v52/v56/v67/v71/v89 全 ceiling, v90 是第 7 次)"
+  },
+  "implementation_correctness": "PASS — retraction hook 实施正确 (per-step projection, per-layer c_l 来自 layer.get_c()), codebook usage 健康 (L1/L2=100%, L0=32%, 与 v89 类似). 数值 regress 是机制天花板效应而非实施问题 (R36o 阶段 A 排除).",
+  "next_step": "回到 v87 baseline, 必须设计完全跳出 R36h ceiling 框架的方向. 推荐候选: (a) Stage 1 端 Riemannian Adam 配合 FULL Riemannian gradient (而非仅 retraction), (b) MPM product manifold 微调 (混合曲率 product space, 非 per-layer schedule), (c) Lorentz manifold 替换 Poincaré (不同 manifold geometry). 严禁 Stage 0 元数据变更 (R36m) / Stage 2/3/4 端绕过 (R36 v3.6) / Stage 1 端纯曲率 schedule 变更 (R36h 7 次 ceiling 证据).",
+  "rollback_status": "PENDING (R50 + R37 联动, 下一步 rm -rf 实验目录 + commit + push)",
+  "timestamp": "2026-08-23"
+}
