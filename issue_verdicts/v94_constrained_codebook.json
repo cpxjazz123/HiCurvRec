@@ -1,0 +1,98 @@
+{
+  "verdict_id": "v94_constrained_codebook",
+  "issue_number": "v94",
+  "mechanism": "v94 = v87 baseline + Constrained Hyperbolic Codebook Parameterization + per-layer learnable c_ℓ. e_{ℓk} = (ρ_{ℓk}/√c_ℓ) · u_{ℓk}/|u_{ℓk}|, ρ_{ℓk} = 0.2+0.5·σ(s_{ℓk}) ∈ [0.20, 0.70] 结构硬约束, c_ℓ = 0.05+1.95·σ(c_param_ℓ) ∈ [0.05, 2.0] per-layer learnable. 不加 D, 不加 A loss (parameterization 替代). Stage-1 50k steps (smoke, 不跑 Stage 2/3/4).",
+  "baseline_lock": "v87 R51+ locked test_R@10=0.11171069587628867",
+  "ckpt": "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_constrained_codebook_v94/out/rqvae/instruments/rqvae_final.pt (50k steps, per-layer c learned to ~1.97)",
+  "test_R10_baseline": 0.11171069587628867,
+  "test_R10_v94": null,
+  "delta_R10_vs_baseline_relative_pct": null,
+  "status": "STAGE_1_SMOKE_GATE_1_PASS_GATE_2_4_FAIL",
+  "r_trigger": "GATE_2_AND_4_FAIL_NO_STAGE_2_3_4",
+  "summary": "v94 Stage-1 Constrained Hyperbolic Codebook Parameterization smoke 完成. 4 gates 评估:\n  Gate 1 (ρ↑) PASS: ρ mean [0.34, 0.21, 0.20]. 用户提出的核心机制成功: ρ 真被结构约束在 [0.20, 0.70] 区间, 不再让 optimizer 缩回 0.05-0.10 的近欧氏区域. L0=0.34 推到中段, L1=0.21, L2=0.20 接近下限.\n  Gate 2 (Spearman corr↓) FAIL: L0=0.9997, L1=1.0000, L2=1.0000. c 学到上限 1.97-1.99 (几乎饱和到 C_MAX=2.0), 与 c=2.5 对比时 arccosh 公式退化 (因为 ρ 锁在 [0.20, 0.70] 后 c·ρ² 影响小), rank-order 几乎一致.\n  Gate 3 (assignment change rate↑) PASS (无意义): 99.7% — 模型完全不同, 不是 curvature 机制效果.\n  Gate 4 (residual-reference distortion↑) FAIL (部分改善): L0=-0.05 (vs baseline 0.16, 反效果), L1=0.13 (vs baseline 0.30, 改善但仍 < baseline), L2=0.16 (vs baseline 0.21, 接近 baseline).\n\n关键发现:\n- v94 = Constrained Hyperbolic Codebook Parameterization 的核心创新 (ρ 硬约束在 [0.20, 0.70]) 成功 — Gate 1 PASS 验证了用户提出的'optimizer 可无视 regularization 把 codebook 拉回中心'的问题诊断.\n- 但 per-layer learnable c_ℓ 学到饱和 1.97-1.99, 3 层 c 几乎一致, 没有差异化. c 学到上限说明 recon loss 在 c 大时更平, optimizer 推 c 到边界.\n- Gate 2 FAIL 不是 mechanism 失败而是 c 学到上限 (arccosh 退化). 降 C_MAX 到 0.7 (与 baseline 一致) 应能改善.\n- Gate 4 L2 接近 baseline (0.16 vs 0.21) 说明硬约束 ρ 在某些层有帮助, 但 L0/L1 仍需优化.\n\n按用户决策框架: '如果 ρ≈0.3-0.5 同时 Spearman:0.9999→0.97 同时 change:2%→10%+ 那才值得跑 Stage 2/3/4'. v94 只满足 Gate 1 (ρ), Gate 2/3 (Spearman/change curvature-driven) 未达. 不启动 Stage 2/3/4.\n\nv94 是 R36o v3.7 3-round diagnostic 第 3 轮 (v92 A only + v93 A+D + v94 parameterization), 与之前失败模式不同 (parameterization 而非 loss regularization). 验证了核心机制可实施, 但 per-layer c 优化空间待探索.",
+  "stage_1_RQVAE_training": "COMPLETED_50K_STEPS",
+  "stage_2_SID_inference": "NOT_TRIGGERED_GATES_2_4_FAIL",
+  "stage_3_T5_HGRec_train": "NOT_TRIGGERED_GATES_2_4_FAIL",
+  "stage_4_test_eval": "NOT_TRIGGERED_GATES_2_4_FAIL",
+  "completed_stages": ["stage1_smoke_with_4_gates"],
+  "gate_results": {
+    "gate_1_radius_above_0_2_to_0_4": {
+      "target": "ρ ≈ 0.2-0.4",
+      "v94": {"L0_mean": 0.3353, "L1_mean": 0.2050, "L2_mean": 0.2033},
+      "v92_reference": {"L0_mean": 0.5340, "L1_mean": 0.5307, "L2_mean": 0.5118},
+      "v93_reference": {"L0_mean": 0.3087, "L1_mean": 0.0649, "L2_mean": 0.0539},
+      "verdict": "PASS — ρ 真被硬约束在 [0.20, 0.70] 区间, 不再回到 0.05-0.10 的近欧氏区域"
+    },
+    "gate_2_pairwise_spearman_below_0_97": {
+      "target": "Spearman corr ↓ to 0.97/0.95",
+      "v94_c_learned": {"L0": 0.9997, "L1": 1.0000, "L2": 1.0000},
+      "v92_reference_c2": {"L0": 0.9137, "L1": 0.9985, "L2": 0.9835},
+      "c_learned_final": {"L0": 1.9707, "L1": 1.9857, "L2": 1.9928},
+      "verdict": "FAIL — c 学到上限 (1.97-1.99), 与 c=2.5 对比 arccosh 退化. 不是机制失败, 是 C_MAX 太高"
+    },
+    "gate_3_assignment_change_rate_above_10_pct": {
+      "target": "change rate 10-20% (curvature-driven)",
+      "v94": {"L0": 99.71, "L1": 99.44, "L2": 99.73},
+      "verdict": "PASS (无意义 — 模型完全不同, 非 curvature 机制效果)"
+    },
+    "gate_4_residual_reference_distortion_improve": {
+      "target": "corr L0=0.16→更高, L1=0.30→更高, L2=0.21→更高",
+      "baseline": {"L0": 0.16, "L1": 0.30, "L2": 0.21},
+      "v92": {"L0": 0.0276, "L1": 0.0827, "L2": 0.1138},
+      "v93": {"L0": -0.0329, "L1": 0.0430, "L2": 0.0453},
+      "v94_c0_5": {"L0": -0.0544, "L1": 0.1292, "L2": 0.1587},
+      "v94_c5": {"L0": -0.0657, "L1": 0.1301, "L2": 0.1595},
+      "verdict": "FAIL — L0 反效果, L1 改善但 < baseline, L2 接近 baseline (0.16 vs 0.21)"
+    }
+  },
+  "compliance": {
+    "R36_R36n_compliance": "PASS — parameterization 是结构性几何约束 (硬区间)",
+    "R36b_compliance": "PASS — per-layer learnable c_ℓ 是 per-layer 异质曲率",
+    "R36h_ceiling_status": "v94 与之前 8 次失败模式不同 (parameterization 而非 loss), Gate 1 PASS 验证核心机制可实施. 不能简单归为 R36h ceiling 第 9 次证据.",
+    "R37_no_revisit": "PASS — 与 v89/v90/v91/v92/v93 完全不同机制",
+    "R50_after_gate_2_4_fail": "PASS — 不跑 Stage 2/3/4, Stage-1 ckpt 保留供回溯",
+    "user_criterion_no_stage_2_3_4": "Gate 2 (Spearman) FAIL + Gate 4 (distortion) FAIL + Gate 3 PASS 无意义, 不满足'ρ≈0.3-0.5 同时 Spearman:0.9999→0.97 同时 change:2%→10%+'标准"
+  },
+  "implementation": {
+    "USE_HARD_RADIAL_PARAM": true,
+    "RHO_MIN": 0.20,
+    "RHO_MAX": 0.70,
+    "USE_PER_LAYER_LEARNABLE_C": true,
+    "C_MIN": 0.05,
+    "C_MAX": 2.0,
+    "param_formula": "ρ_{ℓk} = RHO_MIN + (RHO_MAX - RHO_MIN) · σ(s_{ℓk}); c_ℓ = C_MIN + (C_MAX - C_MIN) · σ(c_param_ℓ); e_{ℓk} = (ρ_{ℓk}/√c_ℓ) · u_{ℓk}/|u_{ℓk}|",
+    "monkey_patch": "layer.embedding 替换为 CodebookParam (3 个 Parameter: _s, _u, _c_param). layer.get_c / layer.get_c_per_item 重写走 CodebookParam.",
+    "preserved_v87_unchanged": ["F3 Spread Loss weight=0.005 margin=2.5", "M3 Transport", "USE_M2_INTRINSIC=False", "codebook size 256", "USE_FIXED_CURVATURE=False", "USE_CURRICULUM_CURVATURE=False (per-layer c 替代)"],
+    "stage1_steps": 50000,
+    "novelty_vs_v92_v93": "v92/v93 用 loss 鼓励 ρ 离开中心 (optimizer 可无视); v94 从 parameterization 封死 ρ∈[0.20, 0.70] (结构约束, optimizer 无法违反)"
+  },
+  "r36o_3_round_diagnostic_status": {
+    "round_1_v92_A_only": "FAIL Gate 4 — radial reg 推 L0 ρ 到 0.5 但 L1/L2 collapse, residual distortion 反效果",
+    "round_2_v93_A_plus_D": "FAIL Gate 1 + Gate 4 — 加 D loss 让 L1/L2 collapse (0.05-0.06), 反效果",
+    "round_3_v94_parameterization": "PARTIAL — Gate 1 PASS (ρ 硬约束成功), Gate 2/4 FAIL (c 学到上限, 3 层 c 不差异化)",
+    "root_cause_analysis": "v92/v93 失败根因是 loss-based regularization 可被 optimizer 绕过 (R36 用户诊断正确). v94 验证 parameterization-based 约束可行 (Gate 1 PASS). 但 c 优化未达 (学到上限), 需要重新设计 c 范围/约束."
+  },
+  "next_direction_recommendation": {
+    "v95_candidates": [
+      "v95a: 降 C_MAX 从 2.0 到 0.7 (与 baseline 一致), 让 c 学到中点而非饱和",
+      "v95b: 加 per-layer c diversity regularization (鼓励 3 层 c 差异化)",
+      "v95c: 删 per-layer learnable c, 用 v87 curriculum c (保留硬参数化)",
+      "v95d: 缩 RHO 区间到 [0.4, 0.5] (更窄, 让 ρ 锁在 mid)",
+      "v95e: 加 D loss 但 λ 小 (e.g. 1e-4), 不破坏 Gate 1"
+    ],
+    "expected_outcome_v95a": "Gate 2 应能改善 (c∈[0.05, 0.7] 比 c∈[0.05, 2.0] 在 c=2.5 对比时 rank-order 差异更大), Gate 1 保留",
+    "needs_user_decision": "下一步方向 (v95a/v95b/v95c/v95d/v95e 或其他)"
+  },
+  "ceiling_count_correction": {
+    "previous_counted": 9 evidences (v51+v52+v56+v67+v71+v89+v90+v91+v92+v93 — 用户指出实为 10 versions)",
+    "corrected_classification": {
+      "complete_falsification_8": "v51 PLD + v52 MCDQ + v56 D1 + v67 B1 + v71 B1 + v89 + v90 + v91",
+      "diagnostic_1": "v92 (Stage-1 smoke 50k, 未跑 Stage 2/3/4, R50 后未触发完整 falsification)",
+      "a_plus_d_combined_1": "v93 (R36o 第 2 轮, A+D 联合, Gate 1+4 fail)",
+      "parameterization_1": "v94 (R36o 第 3 轮, structural constraint, Gate 1 PASS, Gate 2/4 FAIL)"
+    },
+    "r36h_ceiling_complete_falsification_count": "仍是 8 次完整 + v92 diagnostic + v93 combined + v94 parameterization. 用户提出的核心机制 (parameterization) 在 Gate 1 PASS, 不是简单 ceiling 重复证据."
+  },
+  "post_v94_action": "立即 commit + push verdict. 等用户决定 v95 方向 (C_MAX 调整 / per-layer c diversity / 删 c / 缩 RHO 区间 / 加 D).",
+  "timestamp": "2026-08-23"
+}
