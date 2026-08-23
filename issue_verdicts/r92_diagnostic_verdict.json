@@ -1,0 +1,90 @@
+{
+  "verdict_id": "r92_diagnostic",
+  "issue_number": "R92",
+  "title": "R92-Diagnostic: Where Does Curvature Signal Disappear?",
+  "purpose": "诊断 v51-v91 共 8 次 Stage-1 几何路线 ceiling 的根因. 不重跑训练, 只加载 v87 baseline ckpt 收集 5 项数据.",
+  "baseline_lock": "v87 R51+ locked test_R@10=0.11171069587628867 (curvature_experiment_f3_spread_loss_revisit_v87)",
+  "ckpt_loaded": "/fs04/ar57/wenyu/GeneRec/curvature_base/out/rqvae/instruments/rqvae_final.pt (global_step=100000, c=0.7 post-curriculum)",
+  "raw_results": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/r92_diagnostic_results.json",
+  "key_findings": {
+    "task1_pairwise_distance_corr_at_c5": {
+      "L0": 0.9866,
+      "L1": 0.9978,
+      "L2": 0.9995
+    },
+    "task2_normalized_rho_mean_at_c0_7": {
+      "L0": 0.0845,
+      "L1": 0.0959,
+      "L2": 0.0682
+    },
+    "task2_normalized_rho_p95_at_c0_7": {
+      "L0": 0.2470,
+      "L1": 0.1147,
+      "L2": 0.0796
+    },
+    "task2_normalized_rho_max_at_c0_7": {
+      "L0": 0.2683,
+      "L1": 0.1391,
+      "L2": 0.0912
+    },
+    "task3_assignment_change_rate_at_c2": {
+      "L0": 0.0234,
+      "L1": 0.0299,
+      "L2": 0.0158
+    },
+    "task5_residual_reference_corr_at_c0_7": {
+      "L0": 0.1635,
+      "L1": 0.2968,
+      "L2": 0.2140
+    }
+  },
+  "diagnosis": [
+    {
+      "task": "Task 2: Normalized Radius",
+      "observation": "三层 codeword ρ = sqrt(c)*||e|| 的 mean 都在 0.07-0.10 (max<0.27). Poincaré ball 半径 = 1/sqrt(0.7) ≈ 1.20, codeword 距中心仅约 6-8% ball 半径.",
+      "implication": "codewords 几乎都挤在 Poincaré ball 中心, 双曲几何事实上退化为 Euclidean. curvature 数值 (c=0.7) 几乎无法生效.",
+      "user_hypothesis_match": "ρ≈0 假设成立"
+    },
+    {
+      "task": "Task 3: Assignment Change Rate",
+      "observation": "固定 residual, 改 c=0 → c=2 重新分配码字, 三层 change rate 仅 1.5-3.0%. 改 c=2 → c=5 也类似.",
+      "implication": "改 curvature 几乎不改 SID. Stage 2 看到的输入 99% 相同 → Stage 3 T5 valid/test 数值不变 → R36h ceiling 真实存在.",
+      "user_hypothesis_match": "Assignment change rate≈0 假设成立"
+    },
+    {
+      "task": "Task 1: Pairwise Distance Corr",
+      "observation": "codebook pairwise Euclidean vs Poincaré distance Spearman corr: c=0.1 → ~1.000, c=0.5 → 0.9997-1.000, c=1 → 0.9990-1.0000, c=2 → 0.9964-0.9999, c=5 → 0.9866-0.9995.",
+      "implication": "Spearman corr 几乎不变, 即 rank-order 关系不变. 但 task 3 显示 change rate 也很低. 二者一致: 即 curvature 数值影响的是 distance 绝对值 (Poincaré scaling), 但 rank-order 几乎不变, 所以 argmin 也几乎不变.",
+      "user_hypothesis_match": "0.9998, 0.9997, 0.9995 的假设 100% 成立"
+    },
+    {
+      "task": "Task 5: Residual-Reference Distortion",
+      "observation": "r_l pair dist vs q_l pair dist 的 Spearman corr: L0=0.16, L1=0.30, L2=0.21 (远低于 1). 改 c 不显著改变 corr (e.g. L0 全 c 都是 0.16).",
+      "implication": "Stage 1 量化本身就已经破坏 residual relationship (L0 corr=0.16 极低), 不是 c 的问题. 即使 c 完美匹配, 也只能恢复量化前 relationship 16-30%, 永远无法恢复到 100%.",
+      "user_hypothesis_match": "新发现: 量化本身是 primary distortion source"
+    },
+    {
+      "task": "Task 4: Curvature Trajectory",
+      "observation": "v87 baseline c 走 curriculum: 0 → 0.05 (linear ramp) → 0.7 (stable after 50k steps). ckpt 仅存 final c=0.7.",
+      "implication": "ckpt 不存 c trajectory history, 梯度信号推断需重跑训练. 但用户最关心的不是 trajectory 本身, 而是 #2 ρ 和 #3 change rate.",
+      "user_hypothesis_match": "Task 4 未完成 (需要重训), 但不影响主要结论"
+    }
+  ],
+  "ceiling_root_cause_summary": "R36h ceiling 根因 = 双曲几何事实上退化到 Euclidean. 三层 codewords 都在球中心 ρ=0.07-0.10, 改 curvature 数值 (0→5) 的 pairwise distance Spearman corr 仍 0.99+, 所以 argmin 几乎不变 (assignment change rate <3%). 这从根上解释了 8 次 Stage-1 几何路线 ceiling: curvature signal 在球中心附近完全失效.",
+  "next_direction_options": {
+    "A_radial_curvature": "Layer-wise radial activation / radius regularization: 让 L0/L1/L2 占据不同 hyperbolic radial regions, 强迫 codewords 远离中心 (e.g. ρ target ≥ 0.5).",
+    "B_soft_curvature_aware_quantization": "训练时用 curvature-aware soft quantization (softmax(-d_c/τ)), 让 curvature 真正参与 codeword selection 梯度, anneal 成 hard SID. 用户 v92 候选方向 #2.",
+    "C_curvature_aware_SID": "让 SID token 携带 curvature 信息 (e.g. codeword radial/geometric), 让 Stage 3 T5 看到几何. 用户 v92 候选方向 #3.",
+    "D_relational_distortion_supervision": "直接优化 per-layer relational distortion L_rel = Σ_l Distortion(D_l^(c_l), D_l^ref), 用量化前 residual relationship 当 reference. 用户 v92 候选方向 #4."
+  },
+  "recommended_next_step": "方向 B (curvature-aware soft quantization) 或方向 A (radial regularization). 建议先做方向 A (更简单直接, 改量化本身的 distance formula + 加 radial repulsion), 因为它直接解决 ρ≈0 根因. 方向 B/D 是更复杂的 loss 改动.",
+  "post_diagnostic_action": "等 user 决策 v92 机制方向 (A/B/C/D). 当前不再启动新实验, 保持 Stage-1 几何路线正式关闭状态.",
+  "compliance": {
+    "R11_R28_recommendation": "PASS — 推荐方向 A 作为首选 (最简单直接对应 ρ≈0 根因)",
+    "R13_no_worktree": "PASS — curvature_experiment_r92_diagnostic/ 共享 checkout",
+    "R40_self_contained": "PASS — diagnostic 脚本独立, 数据集 dataset/ 独立, 不依赖外部产物",
+    "R36_compliance": "N/A — 不涉及新曲率机制, 只是诊断",
+    "R37_compliance": "N/A — 没有训练新模型, 不触发 R37"
+  },
+  "timestamp": "2026-08-23"
+}
