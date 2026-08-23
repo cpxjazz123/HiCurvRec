@@ -1,0 +1,19 @@
+# v106 ReSQ (Residual Re-normalization) — 根治 cascade RQ-VAE 结构性 collapse
+# R36c v89/v103 诊断实证: cascade 残差 norm 极小 → KMeans 收束到 0 → L0 codes 24-32%
+# v106 在每层 Quantize 之前 normalize+rescale res 到固定 radius=0.5
+# Stage 3 T5 HG-Rec decoder config (复用 v87 hyperparams)
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+train_decoder.train.learning_rate = 1e-3
+train_decoder.train.weight_decay = 1e-4
+train_decoder.train.num_epochs = 200
+train_decoder.train.batch_size = 64
+train_decoder.train.early_stop = 20
+train_decoder.train.eval_every = 1
+train_decoder.train.use_hgrec_arch = True
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_residual_renormalization_v106/dataset/Instruments/sids_for_hgrec.npy"
+train_decoder.train.save_dir_root = "./out/decoder/instruments_hgrec_configs/hgrec_residual_renormalization_v106"
+train_decoder.train.t5_d_model = 128
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
