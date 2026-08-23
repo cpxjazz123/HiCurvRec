@@ -1,0 +1,42 @@
+{
+  "verdict_id": "v91_full_riemannian_adam",
+  "issue_number": "v91",
+  "mechanism": "Full Riemannian Adam (Stage 1 端 FINAL R36h FALSIFICATION) — 完整 Riemannian optimization: Euclidean grad → Riemannian grad (Poincaré scaling (1-c||x||²)²/4) → Riemannian Adam moment update → Möbius expmap retraction. R36c Round 2 加严格 λ_x = 2/(1-c||x||²) parallel transport rescale (Bécigneul & Ganea 2019 Eq. 2 严格公式).",
+  "baseline_lock": "v87 R51+ locked 0.11171069587628867",
+  "test_R10_baseline": 0.11171069587628867,
+  "test_R10_v91": 0.757409793814433,
+  "delta_R10_vs_baseline_relative_pct": 577.99,
+  "status": "R37_FAIL_FAKE_BREAKTHROUGH",
+  "r_trigger": "R37 + R36i + R50",
+  "summary": "v91 = Final R36h falsification (user 授权 Stage-1 geometry 路线第 8 次). Stage 1 100k steps DDP 4-card. R36c Round 2 实施 λ_p scaling 严格修复 (Bécigneul & Ganea 2019 Eq. 2), 但 L0/L1/L2 codebook usage 持续 collapse 1/7/5/256 跨 100k steps. Stage 2 SID 表征崩溃: 仅 ~30 unique SID (1*7*5 = 35). Stage 3 T5 valid best ndcg@10=0.3863 (vs baseline 0.10 量级, 4x 异常高) + Stage 4 test R@10=0.7574 (vs baseline 0.1117, 6.8x 异常高). 数值表观 '突破 ceiling' 577.99%, 但 R36i 根因诊断: Stage 1 完全 collapse → SID vocab 退化为 ~30 → T5 过拟合这 30 个 SID → top-10 候选几乎 100% 覆盖 GT SID (因为 vocab 太小). 这是 fake breakthrough, 不是 Riemannian Adam 机制本身的收益. R36e baseline 复测 (v87 ckpt + v87 SID) 已确认为 test_R@10=0.1117, pipeline 无 leak. v91 异常根因是 Stage 1 collapse → Stage 3 valid/test 假阳性. R37 FAIL + R50 rm -rf, 正式关闭 Stage-1 geometry 路线, lock v87 baseline.",
+  "stage_1_RQVAE_training": "R23_TRIGGERED_COLLAPSE",
+  "stage_2_SID_inference": "COLLAPSE_35_UNIQUE_SID",
+  "stage_3_T5_HGRec_train": "BEST_AT_EPOCH_116_valid_ndcg10=0.3863",
+  "stage_4_test_eval": "test_R10=0.7574_FAKE_SIGNAL",
+  "completed_stages": ["stage1", "stage2", "stage3", "stage4"],
+  "compliance": {
+    "R36_R36n_compliance": "PASS — Riemannian optimizer 是几何优化方向",
+    "R36b_compliance": "PASS — c 仍 curriculum 动态变化",
+    "R37_no_revisit": "PASS — 与 v89 per-layer c_end / v90 retraction 完全正交",
+    "R36c_round_attempts": "Round 1: 识别 expmap 缺 λ_p scaling; Round 2: 加严格 λ_p scaling + 重训; Round 3: 验证 λ_p 修复后仍 collapse → 根因不在 retraction 数学, 是 KMeans init + manifold 早期训练固有特性",
+    "R36h_ceiling_role": "R36h ceiling 第 8 次独立 evidence (FAIL by Stage 1 collapse, NOT by mechanism ineffectiveness)",
+    "R36i_data_leak_check": "TRIGGERED + DIAGNOSED — v91 R@10=0.7574 异常高 vs baseline 0.1117 + Stage 1 collapse 已知 → R36e baseline 复测确认 pipeline OK → 根因为 fake breakthrough 而非 data leak",
+    "R36o_micro_adjust": "NOT_TRIGGERED — 机制对错无可争议 (Stage 1 直接 collapse, 非微调空间问题)"
+  },
+  "implementation": {
+    "USE_FULL_RIEMANNIAN_ADAM": true,
+    "optimizer_class": "modules.riemannian_optim.RiemannianAdam",
+    "riemannian_gradient_scaling": "(1 - c * ||x||²)² / 4",
+    "retraction": "严格 expmap from x (Bécigneul & Ganea 2019 Eq. 2): expmap_x(v,c) = x ⊕_c (1/λ_x * expmap_0(λ_x * v, c)), λ_x = 2/(1-c||x||²)",
+    "params_marked_riemannian": "model.module.layers[li].embedding.weight (per-layer c)",
+    "params_euclidean": "encoder / decoder / curvature",
+    "preserved_v87_unchanged": ["F3 Spread Loss weight=0.005 margin=2.5", "Curriculum c 0.05→0.7 50k steps", "M3 Transport", "USE_M2_INTRINSIC=False", "USE_FIXED_CURVATURE=True (curriculum 覆盖)", "Stage 2/3/4 端完全不变", "codebook size 256", "loss weights"],
+    "novelty_vs_v90": "v90 仅做 retraction (Euclidean Adam + 强制 project); v91 是完整 Riemannian path (Riemannian grad + Riemannian Adam + Möbius expmap with 严格 λ_x rescale)"
+  },
+  "r36h_evidence_count": 8,
+  "r36h_evidence_list": ["v51 PLD per-layer c_end 阶梯", "v52 MCDQ 距离混合 α", "v56 D1 cyclic curriculum", "v67 B1 per-layer schedule", "v71 B1 per-layer diverse schedule", "v89 per-layer c_end 异质", "v90 Riemannian retraction (Euclidean Adam + project)", "v91 Full Riemannian Adam (Euclidean→Riemann grad + Riemannian Adam + Möbius expmap + 严格 λ_x)"],
+  "r36h_ceiling_formal_close": "v91 是 user 明确指定的 Stage-1 geometry 路线最后一次机制性 falsification. R36h Stage-1 纯曲率变更 ceiling 在 8 次独立尝试后正式确立: 不论是 c 调度 (v51/v56/v67/v71/v89), manifold 混合 (v52), 还是 Riemannian optimizer 完整 path (v90/v91), 都无法突破 test_R@10=0.11171 ceiling. 突破 0.12 必须依赖 Stage 0 embedding 变更 (R36m 当前禁止, 待 user 决定是否放宽) 或 Stage 3 metric learning (v69 G5 已 ceiling 在 0.11042).",
+  "falsification_verdict": "R36h Stage-1 ceiling 第 8 次 falsification 成立. Stage-1 几何路线正式关闭.",
+  "post_v91_action": "lock v87 baseline, rm -rf curvature_experiment_full_riemannian_adam_v91, 等 user 决定是否放宽 R36m 探索 Stage 0 embedding 变更",
+  "timestamp": "2026-08-23"
+}
