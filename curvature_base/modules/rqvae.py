@@ -11,7 +11,7 @@ from modules.loss import QuantizeLoss
 from modules.normalize import l2norm
 from modules.quantize import Quantize
 from modules.hyperbolic import _expmap0_t, _logmap0_t, _mobius_add_t, _transport_between_t
-from modules.quantize import QuantizeForwardMode
+from modules.quantize import QuantizeForwardMode, QuantizeDistance
 from huggingface_hub import PyTorchModelHubMixin
 from typing import List, Optional
 from typing import NamedTuple
@@ -62,6 +62,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         hyperbolic_distance: bool = True,  # HG-Rec 机制: Poincaré 距离 argmin (缓解 codebook collapse)
         sk_eps: float = 0.05,              # HG-Rec 机制: Sinkhorn 均衡温度 (0=关闭; 0.003 太陡致约束失效, 0.05 实测均衡)
         sk_iters: int = 3,                 # Sinkhorn 迭代数 (HG-Rec 论文值)
+        distance_mode: QuantizeDistance = QuantizeDistance.L2,  # RqVae → Quantize distance mode (L2/COSINE/GAUSSIAN_RBF/MAHALANOBIS)
+        rbf_bandwidth: float = 1.0,        # v119 RBF bandwidth heuristic σ (kernel scale parameter)
+        mahalanobis_init_var: float = 1.0, # v120 C-RVQ: initial per-codeword diagonal variance (Mahalanobis dist denominator)
         hypervq: bool = False,             # C21: HyperVQ 双曲 MLR 量化 (ICML 2025)
         prefix_router_layers: Optional[List[bool]] = None,  # Issue #154: 各层是否 prefix-routing (默认 L0 关, L1/L2 开)
         # C5: 曲率 margin 正则 (新曲率正则项, R36) — 0=关闭
@@ -139,6 +142,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     hyperbolic_distance=hyperbolic_distance,
                     sk_eps=sk_eps,
                     sk_iters=sk_iters,
+                    distance_mode=distance_mode,  # v119 RKHS Gaussian kernel / v120 C-RVQ Mahalanobis (None 时 fallback L2, R7 兼容)
+                    rbf_bandwidth=rbf_bandwidth,  # v119 RBF σ
+                    mahalanobis_init_var=mahalanobis_init_var,  # v120 C-RVQ initial per-codeword diag variance
                     # Issue #154: L1/L2 prefix-conditioned per-item 曲率 (L0 全局)
                     # router 输入 = 已选 codeword (i*D 维) + M3 曲率信号 (1 维)
                     prefix_routing=prefix_router_layers[i],

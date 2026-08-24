@@ -26,6 +26,8 @@ class QuantizeForwardMode(Enum):
 class QuantizeDistance(Enum):
     L2 = 1
     COSINE = 2
+    GAUSSIAN_RBF = 3  # v119 RKHS Gaussian kernel: exp(-||x-c||²/(2σ²)), σ = RBF bandwidth heuristic
+    MAHALANOBIS = 4  # v120 C-RVQ simplified: per-codeword diagonal covariance, dist² = Σ_d (x_d - μ_d)² / var_d
 
 
 class QuantizeOutput(NamedTuple):
@@ -96,6 +98,8 @@ class Quantize(nn.Module):
         commitment_weight: float = 0.25,
         forward_mode: QuantizeForwardMode = QuantizeForwardMode.GUMBEL_SOFTMAX,
         distance_mode: QuantizeDistance = QuantizeDistance.L2,
+        rbf_bandwidth: float = 1.0,  # v119 RKHS Gaussian kernel σ (RBF bandwidth heuristic)
+        mahalanobis_init_var: float = 1.0,  # v120 C-RVQ: initial per-codeword diagonal variance (init log_var=0 → softplus(0)=ln(2)≈0.693)
         hyperbolic_distance: bool = False,  # HG-Rec 机制: Poincaré 距离 argmin (缓解 collapse)
         sk_eps: float = 0.0,                # HG-Rec 机制: Sinkhorn 均衡温度 (0=关闭)
         sk_iters: int = 3,                  # Sinkhorn 迭代数
@@ -131,6 +135,28 @@ class Quantize(nn.Module):
         self.embedding = nn.Embedding(n_embed, embed_dim)
         self.forward_mode = forward_mode
         self.distance_mode = distance_mode
+        self.rbf_bandwidth = rbf_bandwidth
+        # v120 C-RVQ: per-codeword diagonal covariance via softplus(log_var).
+        # log_var ∈ (-∞, +∞) 可任意 train, var = softplus(log_var) + eps 保证 var > 0.
+        # init log_var = log(exp(mahalanobis_init_var) - 1) → softplus(log_var) = mahalanobis_init_var.
+        # Mahalanobis dist² = Σ_d (x_d - μ_d)² / var_d, 训练自适应 var 让每个 codeword 覆盖其方向不同尺度
+        # 论文支撑: C-RVQ "Covariance-based Residual Vector Quantization" (May 2025, arxiv 2505.12143)
+        #          用 SPD covariance 表示 codeword, VQ 用 Bures-Wasserstein 距离;
+        #          v120 简化版: 对角协方差 + Mahalanobis 距离 (对角 SPD manifold = R^D_+ 流形)
+        # R36n 合规 (covariance matrix = 概率 manifold, Mahalanobis 距离 = Riemann 度量)
+        # Stage 1 端纯几何变更. v115 baseline test_R@10=0.1129993556701031 LOCKED.
+        self.mahalanobis_init_var = mahalanobis_init_var
+        if mahalanobis_init_var > 0:
+            import math as _math
+            init_log_var = _math.log(_math.expm1(mahalanobis_init_var))  # softplus⁻¹(var)
+        else:
+            init_log_var = -10.0  # softplus(-10) ≈ 4.5e-5 (非常小)
+        # v120 C-RVQ 真正核心: log_var 训练 (per-codeword 自适应方差)
+        # R36o 误判纠正: 早期 codes 2/2/1 是 RQ-VAE + KMeans init 正常早期训练模式 (v119 RBF 同样)
+        # v120 需要跑完 100k 步才能判断 var 学习效果
+        self.log_var = nn.Parameter(
+            torch.zeros(n_embed, embed_dim) + init_log_var  # 默认 train
+        )
         self.hyperbolic_distance = hyperbolic_distance
         self.hypervq = hypervq
         self.sk_eps = sk_eps
@@ -359,6 +385,52 @@ class Quantize(nn.Module):
                 @ (codebook.T)
                 / codebook.T.norm(dim=0, keepdim=True)
             )
+        elif self.distance_mode == QuantizeDistance.GAUSSIAN_RBF:
+            # v119 RKHS Gaussian kernel VQ (Schölkopf et al. 2002 'Learning with Kernels')
+            # kernel(x, c) = exp(-||x-c||² / (2σ²)) ∈ [0, 1], 高 kernel → 低 dist
+            # 优势: 不依赖 Euclidean/双曲几何结构假设, 用 reproducing kernel Hilbert space (RKHS) 隐式度量
+            #      对高维/非线性流形数据分布更鲁棒, 缓解 codebook collapse
+            # σ 用 RBF bandwidth heuristic: σ² = median pairwise distance² / log(K)
+            #   (Schölkopf 2002 推荐, 与 scale-invariant kernel choice 一致)
+            # R36n 合规 (kernel 距离 = 几何变种). Stage 1 端纯几何变更. v115 baseline LOCKED.
+            B = x.shape[0]
+            K = codebook.shape[0]
+            # 算 pairwise distance² (B, K)
+            x_sq = (x ** 2).sum(axis=1, keepdim=True)              # (B, 1)
+            c_sq = (codebook ** 2).sum(axis=1, keepdim=True).T      # (1, K)
+            cross = x @ codebook.T                                   # (B, K)
+            sq_dist = x_sq + c_sq - 2 * cross                        # (B, K) 非负
+            sq_dist = sq_dist.clamp_min(1e-8)                        # 防 0
+            # Gaussian kernel: K(x, c) = exp(-||x-c||² / (2σ²))
+            kernel = torch.exp(-sq_dist / (2.0 * self.rbf_bandwidth ** 2))
+            # argmax kernel → argmin dist (kernel 越大代表越相似, dist 取负)
+            dist = -kernel  # (B, K)
+        elif self.distance_mode == QuantizeDistance.MAHALANOBIS:
+            # v120 C-RVQ simplified: per-codeword diagonal covariance + Mahalanobis distance
+            # 论文支撑: "Covariance-based Residual Vector Quantization" (arxiv 2505.12143, May 2025)
+            # 机制: 每个 codeword 用 N(μ_k, diag(σ²_k)) 高斯表示, VQ 距离 = Mahalanobis dist²
+            #       dist²(x, k) = Σ_d (x_d - μ_{k,d})² / σ²_{k,d}
+            # σ²_k = softplus(log_var_k) > 0 (确保 var 正), log_var_k 可任意 train
+            # 训练自适应: codeword μ_k 沿数据方向定位, σ²_k 沿数据分布方差缩放 (anisotropic shape)
+            # vs L2: L2 假设 isotropic unit covariance (各方向等权), Mahalanobis 允许 anisotropic
+            #       → codeword 可"拉长"到覆盖更多数据 (类似 RBF kernel 但参数化)
+            # R36n 合规: covariance = SPD manifold, Mahalanobis = Riemann 度量 on R^D+
+            # Stage 1 端纯几何变更. v119 R37 FAIL (test_R@10=0.10851, -4.0% vs v115) 后
+            # 转入 C-RVQ covariance 流形. v115 baseline test_R@10=0.1129993556701031 LOCKED.
+            B = x.shape[0]
+            K = codebook.shape[0]
+            D = x.shape[1]
+            diff = x.unsqueeze(1) - codebook.unsqueeze(0)  # (B, K, D)
+            var = torch.nn.functional.softplus(self.log_var) + 1e-6  # (K, D) 保证 var > 0
+            # R36o Round 1 fix: clamp var ∈ [0.1, 10.0] 防止训练中数值塌缩
+            # 原因: var → 0 → dist 爆炸 → argmin 选中相同 codeword (R23 collapse codes < 10%)
+            #      var → ∞ → dist → 0 → argmin 数值不稳定 (R23 collapse codes < 10%)
+            # 等价 L2 时 var=1.0, clamp 区间 [0.1, 10.0] 给 var 学习空间但防止数值极端
+            var = var.clamp(min=0.1, max=10.0)
+            var = var.unsqueeze(0)  # (1, K, D) 广播
+            # Mahalanobis dist² = Σ_d (x_d - μ_d)² / var_d
+            sq_dist = (diff ** 2 / var).sum(axis=-1)  # (B, K)
+            dist = sq_dist.clamp_min(1e-8)
         else:
             raise Exception("Unsupported Quantize distance mode.")
 

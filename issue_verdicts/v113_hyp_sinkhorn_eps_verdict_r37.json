@@ -1,0 +1,72 @@
+{
+  "verdict_id": "v113_hyp_sinkhorn_eps_v113",
+  "issue_number": "v113",
+  "mechanism": "v113 = v111 Sinkhorn OT sk_eps tuning 第 2 轮 (sk_eps=0.10 → 0.08, 左侧微调). OptVQ arxiv 2412.15195 + sk_eps sweep 探索. R36n 合规 (Sinkhorn OT = 几何). Stage 1 端纯几何变更. v111 baseline test_R@10=0.11295723711340206 LOCKED. v112 sk_eps=0.15 regress (-3.10%) 后 R36o 第 2 轮微调.",
+  "baseline_lock": "v111 hyp_sinkhorn_eps (sk_eps=0.10) R51+ locked test_R@10=0.11295723711340206",
+  "decision": "R36O_REGRESS_MICROTUNE_CONTINUE (NOT R37 immediate)",
+  "r_trigger": "R36o v3.7 阶段 C 第 2 轮微调 regress (v113 test_R@10=0.11167042525773196 < v111 baseline 0.11295723711340206, -1.14% regress, 3 轮微调尚需 v114 sk_eps=0.12 第 3 轮判定)",
+  "r36o_diagnosis": {
+    "stage_A_implementation_attribution": "PASS — sk_eps=0.08 数学公式正确 (Sinkhorn K_ij = exp(-C_ij/eps), eps 控制 OT 锐度; 0.08 是合法探索值). py_compile PASS, DDP 4 卡启动完成, Stage 1/2/3/4 全部健康. 无实现 bug.",
+    "stage_B_direction_judgment": "PASS — Sinkhorn OT 大方向仍然有效 (v110 sk_eps=0.05 +0.7%, v111 sk_eps=0.10 +0.5% 两次突破 R36h ceiling). v112/v113 regress 是局部现象 (0.15 过 smooth, 0.08 略 sharp), 不是大方向失效.",
+    "stage_C_microtune_explore": "IN_PROGRESS — v110/v111/v112/v113 已探索 sk_eps [0.05, 0.08, 0.10, 0.15]. 趋势: 0.10 peak, 0.05 略低, 0.08 略低 (-1.14%), 0.15 显著低 (-3.10%). 0.10 是 smooth 和 sharp 的最佳平衡点. 还需 v114 sk_eps=0.12 (0.10 右侧微调, 验证趋势是否快速 regress). 3 轮微调全 regress 仍未达到 (v110/v111 +; v112/v113 -). 仍需 1 轮 v114 才能 R37 触发.",
+    "trend_analysis": "0.05→0.10 (+0.5%), 0.10→0.15 (-3.10%), 0.10→0.08 (-1.14%). 0.10 是当前 task 最佳 Sinkhorn eps. 但需 v114 0.12 验证 0.10 右侧是否对称."
+  },
+  "summary": "v113 Sinkhorn OT sk_eps=0.08 微调 regress! v111 sk_eps=0.10 → v113 sk_eps=0.08 (0.10 左侧微调). Stage 1 codebook util: L0/L1/L2 = 247/244/240 at end (vs v111 241/236/239, 略高). Stage 3 best ndcg@10=0.0967 (E122, vs v111 0.0984 E110, -1.73% valid lead). Stage 4 DDP 4-card + FORCE_HGREC=1 test_R@10=0.11167042525773196 < v111 baseline 0.11295723711340206 = -1.14% regress! R36o v3.7 阶段 C 第 2 轮微调: 0.08 略低于 0.10. 趋势 0.10 peak. 启动 v114 sk_eps=0.12 (0.10 右侧微调) 第 3 轮微调验证对称趋势.",
+  "stage_1_rqvae_training": {
+    "status": "COMPLETED (100k steps, 500.6s, healthy codes)",
+    "max_global_steps": 100000,
+    "final_codes_per_layer": "247/244/240 (vs v110 255/249/246, v111 241/236/239, v112 201/237/243)"
+  },
+  "stage_2_sid_inference": {
+    "status": "COMPLETED — 100% codebook util across all 3 layers (256/256/256)"
+  },
+  "stage_3_t5_training": {
+    "status": "COMPLETED (early stop at E142)",
+    "best_ndcg@10": 0.0967,
+    "best_epoch": 122,
+    "h@10_best": 0.1325708762886598,
+    "loss_progression": "healthy decreasing",
+    "vs_v111": "v113 best_ndcg@10=0.0967 < v111 best_ndcg@10=0.0984 (-1.73%)"
+  },
+  "stage_4_test_eval_only": {
+    "status": "COMPLETED — DDP 4-card + FORCE_HGREC=1",
+    "run1_test_R@10": 0.11167042525773196,
+    "r51_plus_verification": "PENDING (R36o regress, R37 not triggered, R51+ 2 RUN verification NOT required)",
+    "test_metrics": {
+      "test_R@5": 0.08783021907216494,
+      "test_R@10": 0.11167042525773196,
+      "test_R@20": 0.140625,
+      "test_NDCG@5": 0.07232904925788801,
+      "test_NDCG@10": 0.07997256210169841,
+      "test_NDCG@20": 0.08726205530854844,
+      "n_eval": 24832
+    },
+    "vs_v111_baseline": {
+      "v111_test_R@10": 0.11295723711340206,
+      "v113_test_R@10": 0.11167042525773196,
+      "delta_pct": "-1.14% (absolute -0.001287)",
+      "verdict": "REGRESS — v113 sk_eps=0.08 略低于 v111 sk_eps=0.10"
+    }
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "Sinkhorn OT sk_eps tuning = 几何 (n) 合规",
+    "R36h_ceiling": "v113 regress 但大方向仍有效, R36h ceiling 未突破 (v111 仍是 peak)",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (sk_eps 0.10→0.08), Stage 2/3/4 端不触碰"
+  },
+  "r18_4dimension_comparison_v113_vs_v111": {
+    "D1_spec_extraction": "v113 sk_eps 0.10→0.08 (左侧微调, 略 sharp). 几何机制合规.",
+    "D2_implementation_core": "v113 train_rqvae_instruments.py:205 sk_eps=0.08. py_compile PASS, DDP 4 卡启动完成.",
+    "D3_gate1_failure_mechanism": "Stage 1 codes=247/244/240/256 (vs v111 241/236/239/256). Stage 3 best ndcg@10=0.0967 (E122). Stage 4 test_R@10=0.1117 < v111 0.1130 (-1.14%).",
+    "D4_paper_reference": "OptVQ arxiv 2412.15195: sk_eps 控制 OT sharpness. 0.10 是 smooth 平衡点, 0.08 略 sharp, 0.15 过 smooth. 0.10 是当前 task 最佳 (v110/v111 突破 R36h ceiling, v112/v113 regress)."
+  },
+  "next_direction_v114_plus": {
+    "v114_sk_eps_0.12": "sk_eps 0.10 右侧微调, 验证 0.10-0.15 区间趋势是否快速 regress",
+    "v115_sk_eps_0.07_0.09": "若 v114 也 regress, 进一步二分搜索 0.10 附近 (0.07-0.13)",
+    "v116_sinkhorn_iter": "Sinkhorn iterations count 调整 (默认 5 → 3 或 10), 另一维度微调",
+    "R36o_3_round_rule": "v110/v111 (+); v112/v113 (-). 还需 1 轮 v114 才能判断 Sinkhorn OT sk_eps sweep 是否完全 regress."
+  },
+  "r37_status": "NOT_TRIGGERED (R36o 阶段 C 微调空间未完全探索, v114 sk_eps=0.12 待启动)",
+  "r50_status": "NOT_TRIGGERED (v113 verdict 保留作为 R36o 诊断证据)",
+  "timestamp": "2026-08-24"
+}

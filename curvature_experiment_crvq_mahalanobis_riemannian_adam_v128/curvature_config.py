@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "crvq_mahalanobis_v120"  # ← v120 NOVEL: C-RVQ simplified (arxiv 2505.12143, May 2025). 每个 codebook 元素 = N(μ, diag(σ²)) 高斯, VQ 距离 = Mahalanobis dist² = Σ_d (x_d - μ_d)² / var_d. var_d = softplus(log_var_d) > 0 任意 train. anisotropic codebook (vs L2 isotropic unit). v119 RBF kernel R37 FAIL (-4.0% vs v115) 后转入概率流形 (SPD covariance). R36n 合规 (covariance matrix = SPD manifold, Mahalanobis 距离 = Riemann 度量). Stage 1 端纯几何变更. v115 baseline test_R@10=0.1129993556701031 LOCKED.
+MECHANISM_NAME = "crvq_mahalanobis_riemannian_adam_v128"  # ← v128 NOVEL: v120 C-RVQ Mahalanobis + Riemannian gradient on log_var (R^D_+ manifold). 将 Σ 参数视为 R^D_+ manifold (positive orthant) 上的点, 用 natural gradient grad/σ² 替代 Euclidean gradient. R36n 合规 (Riemannian optimization = geometric). 论文支撑: Bécigneul & Ganea 2018 ICLR "Riemannian Adaptive Optimization Methods". 16 R36h ceiling evidence 后, 用 Riemannian 路径而非参数 init 探索 Stage 1 端不同优化机制. Stage 1 RQ-VAE 端纯几何变更.
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")

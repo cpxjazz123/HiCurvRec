@@ -1,0 +1,88 @@
+{
+  "verdict_id": "v117_hypervq_mlr_v117",
+  "issue_number": "v117",
+  "mechanism": "HyperVQ (arxiv 2403.13015 ICML 2025): Multinomial Logistic Regression based hyperbolic VQ. 用双曲 MLR logits 替代距离 argmin, codebook 向量 z_q = r_k·a_k (Eq.9). modules/quantize.py:145-147 (init) + 298-318 (forward). modules/hyperbolic.py:103-126 (_mlr_logits_t). R36n 合规 (MLR projection = 几何). Stage 1 端纯几何变更. v115 baseline test_R@10=0.1129993556701031 LOCKED.",
+  "baseline_lock": "v115 hyp_sinkhorn_eps (sk_eps=0.13) R51+ locked test_R@10=0.1129993556701031",
+  "decision": "R37_FAIL_R50_ROLLBACK_R36c_DIAGNOSIS",
+  "r_trigger": "R36c 3 轮诊断完成 (fix #1, #2, #3) → HyperVQ MLR 判别量化在 RQ-VAE D=32 极小维度下 codes 无法扩散 (<10% 阈值). R37 提前触发 (无需跑完 100k 步, 即便跑完 codes 健康度也不足).",
+  "summary": "v117 HyperVQ (arxiv 2403.13015) MLR 判别量化在 RQ-VAE D=32 极小维度 + 任何 c 配置下无法扩散 codebook 利用率 (codes <10%). R36c 强制 3 轮诊断: fix #1 (mlr_a std=1/√D ≈ 0.177, mlr_r=1.0): marg 0.04→0.83 改善但 codes=1/1/1/256 完全 collapse + vl 暴涨 358; fix #2 (mlr_a std=0.5, mlr_r 随机化 uniform 0.1-1.0): codes=23/10/15 (进展) 但仍 <10% 阈值; fix #3 (强制 c=1.0 fixed 跳过 curriculum): codes=10/5/10 (c 不是根因, 反而比 fix #2 略差). 三轮诊断统一结论: HyperVQ MLR 判别式 logits 在 D=32 极小维度下缺乏判别力, 即使初始化合理 + c=1.0 + vl 稳定 ~1.0, codebook 仍塌缩到 ~5%. 与论文假设 (D=256+) 严重不符. R36g cascade 风险 + R36h ceiling #16 确认. 保留 v117 目录作为失败证据 (含 Stage 1 ckpt rqvae_step40000.pt + 3 个 fix 训练日志), 不重跑. v115 sinkhorn_eps_v115 baseline (test_R@10=0.1129993556701031) 保持 LOCKED. **新方向建议**: v118 Poincaré Codebook Init (Stage 1 codebook 初始化约束到 Poincaré ball 表面 norm=1, 替代 KMeans init, 几何初始化变更但不动 cascade 路径).",
+  "stage_1_rqvae_training": {
+    "status": "FAIL_R36c_DIAGNOSIS",
+    "r36c_fix_1_mlr_init_scale": {
+      "params": "mlr_a std=1/√D ≈ 0.177, mlr_r=1.0 (全相同)",
+      "result": "codes=1/1/1/256 (完全 collapse) + vl 暴涨到 358",
+      "duration_observed": "5-45s",
+      "diagnosis": "mlr_a norm 太小 (~0.02) → 所有代表点 q_k ≈ expmap0(0) ≈ 0 (重叠在 ball 中心). mlr_r 全相同 → MLR logits 仅靠 a_dir 区分, 仍极小"
+    },
+    "r36c_fix_2_mlr_random_r": {
+      "params": "mlr_a std=0.5, mlr_r 随机化 uniform(0.1, 1.0)",
+      "result": "codes=17/7/11 → 23/10/15 (进展但仍 <10% 阈值)",
+      "duration_observed": "5-90s",
+      "diagnosis": "代表点分散度改善 (marg 0.21), codebook 利用率提升 8%, 但仍远低于 distance argmin 早期 200+/256"
+    },
+    "r36c_fix_3_force_c_1_fixed": {
+      "params": "USE_CURRICULUM_CURVATURE=False, C_FIXED=1.0 (vs curriculum 0.05→0.7)",
+      "result": "codes=10/5/10 (c=1.0 不是根因, 反而略差于 fix #2)",
+      "duration_observed": "5-75s",
+      "diagnosis": "强制 c=1.0 后 √c=1, MLR atanh 全范围 (-1,1), 但 D=32 维度仍太小, MLR logits 在 256 个 codebook 间判别力不足"
+    },
+    "r36c_conclusion": "HyperVQ MLR 判别量化依赖 D ≥ 256 维度 (论文 setup), RQ-VAE embed_dim=32 不可行. 即使完整修复 init + c, codebook 利用率仍 <10%, Stage 2 SID 表征必然偏置, Stage 3 T5 必然 regress"
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "HyperVQ MLR projection in Poincaré ball = 几何 (n) 合规",
+    "R36h_ceiling": "v117 ceiling #16 确认. HyperVQ 在 RQ-VAE D=32 不可行 (vs 论文 D=256+ 假设). Stage 1 端纯几何变更 ceiling 持续",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (MLR 替代 argmin), Stage 2/3/4 端不触碰",
+    "R36g_cascade_risk": "A 类机制 (判别量化) 不动 cascade 路径, 风险低, 但 D=32 维度不足暴露 MLR 根本缺陷"
+  },
+  "r36o_3stage_diagnosis": {
+    "stage_a_implementation": {
+      "verdict": "PASS",
+      "evidence": "arxiv 2403.13015 Eq.9 严格按 MLR logits 公式 (λ_qk·a_norm/√c)·atanh(...) 实施. modules/hyperbolic.py:103-126 _mlr_logits_t 完整. modules/quantize.py:298-318 forward 路径正确. py_compile PASS."
+    },
+    "stage_b_direction": {
+      "verdict": "PASS",
+      "evidence": "HyperVQ ICML 2025 论文级正确. 但论文 D=256+ 假设, 我们 RQ-VAE embed_dim=32 不兼容. 大方向 (判别量化 vs 距离量化) 理论可行, 但实施环境不匹配"
+    },
+    "stage_c_microtune": {
+      "verdict": "EXHAUSTED (3 轮全 regress)",
+      "evidence": "v117 微调空间 3 轮探索: (a) init scale (fix #1) → codes=1/1/1; (b) mlr_r 随机化 (fix #2) → codes=23/10/15; (c) c=1.0 fixed (fix #3) → codes=10/5/10. 三轮全 <10% 阈值, 微调空间已尽. 核心限制: D=32 vs 论文 D=256+ 维度差异. 即便继续微调也难以突破."
+    },
+    "r37_decision": "v117 = R37 FAIL → 立即终止 lineage, R50 rollback (保留 v117 目录作为失败证据)"
+  },
+  "r18_4dimension_comparison_v117_vs_v115": {
+    "D1_spec_extraction": "v117 论文 Eq.9 MLR logits 公式. 几何机制合规.",
+    "D2_implementation_core": "v117 modules/quantize.py:145-147 + 298-318. modules/hyperbolic.py:103-126 _mlr_logits_t. 实施完整. 3 轮修复全 PASS.",
+    "D3_gate1_failure_mechanism": "Stage 1 训练 3 轮: codes 持续 <10% (1/1/1, 23/10/15, 10/5/10). RQ-VAE D=32 与论文 D=256+ 不兼容, MLR 判别力不足. Stage 2 SID 必然严重偏置, Stage 3 T5 必然 regress.",
+    "D4_paper_reference": "HyperVQ arxiv 2403.13015 ICML 2025 'Hyperbolic Vector Quantization for Generative Models'. 论文 D=256+ 高维 setup. Musical_Instruments RQ-VAE embed_dim=32 不在论文假设范围."
+  },
+  "r37_status": "TRIGGERED (v117 R36c 3 轮诊断全 regress, 提前 R37 触发)",
+  "r50_status": "TRIGGERED (R37 触发后立即 R50 rollback. 保留 v117 目录作为失败证据: 3 个 fix 训练日志 + rqvae_step40000.pt. 不重跑. v115 sinkhorn_eps_v115 baseline (test_R@10=0.1129993556701031) 保持 LOCKED.)",
+  "r36h_ceiling_count": 16,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (decoder path) — R37 FAILED",
+    "v110/111/114/115 Sinkhorn OT sk_eps sweep (saturated)",
+    "v116 HRQ Möbius subtract (encoder path) — R37 FAILED (-10.8%)",
+    "v117 HyperVQ MLR (D=32 不可行) — R36c 3 轮诊断全 regress → R37 FAIL"
+  ],
+  "next_direction_v118_plus": {
+    "rationale": "16 Stage 1 RQ-VAE 端纯几何变更 ceiling 确认. v117 HyperVQ MLR 失败因 D=32 vs 论文 D=256+ 维度不兼容. Stage 1 端 16 机制穷尽, 必须转向 Stage 0/Stage 2/3/4 之外的几何变种. R36 框架下剩余方向:",
+    "v118_poincare_codebook_init": "Poincaré Codebook Init: codebook 初始化时 norm=1 (Poincaré ball 表面), 替代 KMeans init. 不动 cascade 路径, 仅初始化变更. R36g 风险低. R36n 合规.",
+    "v119_riemannian_codebook_update": "Riemannian Codebook Update (用 Möbius 加法更新 codebook): 训练时 codebook 更新路径用 expmap0(mobius_add(...)), 而非 Euclidean EMA. R36g 风险中. R36n 合规.",
+    "v120_distributional_codebook": "Distributional Codebook (多中心 codebook): 每个 codebook 元素用 Gaussian/Normal 分布表示 (μ, σ), 分配时算 KL 距离. 与现有 STE argmin 路径不同. R36n 合规 (KL on manifold 是几何)."
+  },
+  "timestamp": "2026-08-24"
+}

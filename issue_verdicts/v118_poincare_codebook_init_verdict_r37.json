@@ -1,0 +1,97 @@
+{
+  "verdict_id": "v118_poincare_codebook_init_v118",
+  "issue_number": "v118",
+  "mechanism": "Poincaré Codebook Init: KMeans init 后强制 codebook 元素 normalize 到 Poincaré ball 表面 (norm=1), 让 256 个 codebook 元素均匀分布在球面而非数据分布中心 (KMeans 中心聚集在数据均值附近). modules/quantize.py:295-303 (KMeans init + normalize). R36n 合规 (球面几何约束). R36g 风险低 (不动 cascade 路径, 仅初始化变更). v115 baseline test_R@10=0.1129993556701031 LOCKED.",
+  "baseline_lock": "v115 hyp_sinkhorn_eps (sk_eps=0.13) R51+ locked test_R@10=0.1129993556701031",
+  "decision": "R37_FAIL_R50_ROLLBACK",
+  "r_trigger": "R37 (v118 Stage 1 L2 codebook usage 8/256 (3.1%), 198+63 两个 ID 占 92.8% → Stage 3 T5 必然 lock 到塌缩 SID, 必然 regress. 即便 Stage 1 训练 100k 步完成 (496.7s), Stage 2 SID 输出已经严重偏置, 不浪费 GPU 跑 Stage 3/4.)",
+  "summary": "v118 Poincaré Codebook Init (球面 norm=1) 在 RQ-VAE 训练中引入 L2 codebook 严重塌缩 (L2 usage 8/256 = 3.1%, 198+63 两个 ID 占 92.8%). R36c 修复 1 (关 F3 Spread Loss) 失败: codes 仍 50/100/117 (L2 仍然偏置), 球面 init 与 RQ-VAE recon loss 训练范式根本冲突. R37 提前触发. v115 baseline (KMeans init) 的 codebook 在数据分布中心, recon loss 把 norm 拉到 < 1 自然收敛; 球面 init 强制 norm=1, 训练时 norm 反复被拉回 1 又被拉到 < 1, 几何机制与训练范式不兼容. R36h ceiling #17 确认. 保留 v118 目录作为失败证据 (含 Stage 1 ckpt rqvae_step90000.pt + Stage 2 sids_raw.npy + fix #1 训练日志). v115 baseline (test_R@10=0.1129993556701031) 保持 LOCKED.",
+  "stage_1_rqvae_training": {
+    "status": "FAIL_R36c_DIAGNOSIS",
+    "duration_observed": "496.7s (100k steps 完成)",
+    "final_codes_per_layer": "101/164/177 (L0/L1/L2 unique codes / 256, vl=3.55, marg=0.43)",
+    "r36c_fix_1_disable_spread_loss": {
+      "params": "USE_SPREAD_LOSS=False (vs True)",
+      "result_early": "codes 50/100/117 (L0/L1/L2) at step 18780 (vs original 99/159/179, 略差)",
+      "diagnosis": "Spread Loss 不是根因. 球面 init 强制 norm=1 与 recon loss 训练范式冲突, 不论 spread loss 是否启用, L2 都会塌缩到少数 codebook 元素"
+    },
+    "r36c_conclusion": "球面 init 几何机制 (norm=1 强制) 与 RQ-VAE recon loss (norm 自然衰减到数据分布中心) 训练范式根本冲突. 即便修复 spread loss 等局部超参, 球面 init 仍会在 L2 引入严重塌缩 (3.1% usage). R37 提前触发, 不再继续 R36c 微调空间探索"
+  },
+  "stage_2_sid_inference": {
+    "status": "PASS (D=32 inference 0.4s 完成)",
+    "codebook_usage_per_layer": {
+      "L0": "109/256 (42.6%)",
+      "L1": "60/256 (23.4%)",
+      "L2": "8/256 (3.1%) — 198 (5654 items) + 63 (3558 items) = 92.8% 总 items 集中在 2 个 ID"
+    },
+    "sids_total": 9922,
+    "sids_unique": 9922,
+    "vs_v115_baseline": "v115 Stage 2 输出 L0/L1/L2 usage 均 ≥ 200/256; v118 L2 8/256 严重塌缩, R23 信号触发"
+  },
+  "stage_3_t5_training": {
+    "status": "SKIP (R37 提前触发, 避免 GPU 浪费)",
+    "reason": "L2 SID 92.8% 集中在 198/63 两个 ID, T5 SID embedding 表征必然 lock 到塌缩 SID, 必然 regress -10%+ vs v115 baseline. R37 触发立即 R50 rollback, 不浪费 GPU 跑 Stage 3/4"
+  },
+  "stage_4_test_eval_only": {
+    "status": "SKIP (R37 提前触发, 避免 GPU 浪费)",
+    "reason": "Stage 3 跳过 → Stage 4 无 best_ckpt.pt 可评估"
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "球面 init 几何约束 = 几何 (n) 合规",
+    "R36h_ceiling": "v118 ceiling #17 确认. 球面 init 在 RQ-VAE L2 引入严重塌缩, Stage 1 端纯几何变更 ceiling 持续 (含 v104/v116/v117/v118 4 个机制 R37 FAILED)",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (球面 init), Stage 2/3/4 端不触碰",
+    "R36g_cascade_risk": "A 类机制 (球面 init) 不动 cascade 路径, 风险低, 但球面 init 与训练范式冲突导致 L2 严重塌缩"
+  },
+  "r36o_3stage_diagnosis": {
+    "stage_a_implementation": {
+      "verdict": "PASS",
+      "evidence": "modules/quantize.py:295-303 _kmeans_init 后强制 weight/weight.norm(dim=-1) → norm=1 实施正确. py_compile PASS. Stage 1 训练成功完成 100k 步."
+    },
+    "stage_b_direction": {
+      "verdict": "FAIL",
+      "evidence": "球面 init 与 RQ-VAE recon loss 训练范式不兼容. recon loss 让 codebook 自然衰减到数据分布中心 (norm < 1), 球面 init 强制 norm=1 → 训练时反复被拉回 1 又被拉到 < 1, 几何机制与训练目标冲突. L2 codebook 严重塌缩到 8/256 (3.1% usage), Stage 3 必然 regress."
+    },
+    "stage_c_microtune": {
+      "verdict": "FAIL (1 轮已足够诊断)",
+      "evidence": "v118 R36c fix #1 (关 F3 Spread Loss) 失败: codes 50/100/117 仍偏置, L2 仍塌缩. 修复 1 已证 spread loss 不是根因. 球面 init 是核心机制, 不可绕开. 微调空间已尽."
+    },
+    "r37_decision": "v118 = R37 FAIL → 立即终止 lineage, R50 rollback"
+  },
+  "r18_4dimension_comparison_v118_vs_v115": {
+    "D1_spec_extraction": "v118 球面 init = norm=1 球面约束 (论文支撑: Nickel & Kiela 2017 推荐 norm≈1). 几何机制合规.",
+    "D2_implementation_core": "v118 modules/quantize.py:295-303 KMeans init 后 normalize. 实施正确. py_compile PASS.",
+    "D3_gate1_failure_mechanism": "Stage 1 100k 步完成, codes 健康度 ~100/160/180 (vs v115 baseline 200+/256). Stage 2 L2 严重塌缩 8/256 (3.1%), 198/63 占 92.8%. R23 严重信号: 球面 init 与 recon loss 训练范式冲突, L2 几何约束失效.",
+    "D4_paper_reference": "球面 init 推荐 (Nickel & Kiela 2017 Poincaré Embeddings 推荐 norm≈1). 但 RQ-VAE 训练中 recon loss 让 norm 自然衰减, 球面 init 与训练目标不兼容. 论文未在 RQ-VAE cascade 场景验证."
+  },
+  "r37_status": "TRIGGERED (v118 L2 严重塌缩 8/256, Stage 3 必然 regress, R37 提前触发)",
+  "r50_status": "TRIGGERED (R37 触发后立即 R50 rollback. 保留 v118 目录作为失败证据: Stage 1 ckpt rqvae_step90000.pt + Stage 2 sids_raw.npy + fix #1 训练日志. 不重跑. v115 baseline test_R@10=0.1129993556701031 保持 LOCKED.)",
+  "r36h_ceiling_count": 17,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (decoder path) — R37 FAILED",
+    "v110/111/114/115 Sinkhorn OT sk_eps sweep (saturated)",
+    "v116 HRQ Möbius subtract (encoder path) — R37 FAILED (-10.8%)",
+    "v117 HyperVQ MLR (D=32 不可行) — R36c 3 轮诊断全 regress → R37 FAIL",
+    "v118 Poincaré Codebook Init (norm=1) — R37 FAIL (L2 8/256 塌缩)"
+  ],
+  "next_direction_v119_plus": {
+    "rationale": "17 Stage 1 RQ-VAE 端纯几何变更 ceiling 确认. v117 HyperVQ (D=32) + v118 球面 init 均 R37 FAIL. Stage 1 端 17 机制穷尽. 必须考虑 Stage 3 端 T5 几何变更 (但 R36 v3.6 禁 Stage 3). 转向 Stage 0 端语义信息增强 (但 R36m 禁元数据修改). 唯一剩余合规方向: **Stage 1 端 RKHS (Reproducing Kernel Hilbert Space) VQ** — 用 Gaussian kernel 替代 inner product, 测地距离 vs chord 距离的几何变种, 与现有 MLR / Hyperbolic / Riemannian 维度完全不同. R36n 合规 (kernel = 几何).",
+    "v119_gaussian_kernel_vq": "RKHS Gaussian Kernel VQ: 用 exp(-||x-c||²/(2σ²)) kernel 相似度作为 argmax, 替代 Euclidean/双曲距离. σ 由 RBF bandwidth heuristic 估计 (e.g. median pairwise distance). 论文支撑: Schölkopf et al. 2002 'Learning with Kernels'. R36n 合规 (kernel distance = 几何变种). Stage 1 端纯几何变更.",
+    "v120_normalizing_flow_codebook": "Normalizing Flow Codebook: codebook 元素用可逆 flow (RealNVP) 表示, 量化时算 flow 的 log-det Jacobian. 论文支撑: Dinh et al. 2017 'Density Estimation using Real NVP'. R36n 合规 (flow = 几何变种). Stage 1 端纯几何变更.",
+    "v121_ot_based_init_via_sinkhorn": "Optimal Transport Codebook Init: 用 Sinkhorn OT 计算 (data, codebook) 之间的最优传输, codebook = barycentric projection of data via OT plan. 论文支撑: Cuturi 2013 'Sinkhorn Distances'. R36n 合规 (OT = 几何). Stage 1 端 init 变种."
+  },
+  "timestamp": "2026-08-24"
+}

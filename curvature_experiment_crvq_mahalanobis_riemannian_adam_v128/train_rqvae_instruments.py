@@ -271,6 +271,13 @@ def main():
             # HG-Rec fix: gradient clipping at norm 1.0 (实测稳定 +∞ norm 梯度, 防 NaN)
             if GRAD_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP_NORM)
+            # v128: Riemannian gradient on R^D_+ manifold for log_var parameters
+            # natural gradient = grad / σ² (R^D_+ manifold metric)
+            # 论文支撑: Bécigneul & Ganea 2018 "Riemannian Adaptive Optimization Methods"
+            for name, param in model.named_parameters():
+                if 'log_var' in name and param.grad is not None:
+                    sigma_sq = torch.nn.functional.softplus(param) + 1e-6
+                    param.grad = param.grad / sigma_sq
             optimizer.step()
             global_step += 1
 
