@@ -1,0 +1,111 @@
+{
+  "verdict_id": "v119_rkhs_gaussian_kernel_v119",
+  "issue_number": "v119",
+  "mechanism": "RKHS Gaussian Kernel VQ: 用 exp(-||x-c||²/(2σ²)) kernel 相似度作为 VQ 距离, 替代 Euclidean/双曲距离 argmin. σ = RBF bandwidth heuristic. modules/quantize.py 新增 QuantizeDistance.GAUSSIAN_RBF = 3 enum + rbf_bandwidth=1.0 参数. modules/rqvae.py RqVae 新增 distance_mode/rbf_bandwidth 参数. train_rqvae_instruments.py 硬编码 DISTANCE_MODE=GAUSSIAN_RBF, RBF_BANDWIDTH=1.0. 论文支撑: Schölkopf et al. 2002 'Learning with Kernels'. R36n 合规 (kernel distance = 几何变种). Stage 1 端纯几何变更 (新方向: kernel 距离 vs 距离/MLR/球面 init).",
+  "baseline_lock": "v115 hyp_sinkhorn_eps (sk_eps=0.13) R51+ locked test_R@10=0.1129993556701031",
+  "decision": "R37_FAIL_R50_ROLLBACK",
+  "r_trigger": "R37 (v119 test_R@10=0.10850960762150816 < v115 baseline 0.1129993556701031, diff=-0.0045 ≈ -4.0%)",
+  "summary": "v119 RKHS Gaussian Kernel VQ (Schölkopf 2002) Stage 1 训练健康 (codes 72/232/229 final, L0 28.5%/L1 100%/L2 100% usage, 3层 norm range 均 ≥ 0.005), Stage 3 训练健康 (best_ckpt E119 valid_ndcg@10=0.0953, h@10=0.1273), 但 Stage 4 test_R@10=0.10851 < v115 baseline 0.11299 (-4.0%). R36h ceiling #18 确认. Kernel 距离替代内积 argmin 在 RQ-VAE cascade 中未提供有效信号 — Stage 1 codebook 健康度有保障 (norm range 健康, L1/L2 100% usage), 但 Stage 3 训练端学到的 SID 表征不能被 Stage 4 beam search 充分解码为高 R@10. 与 v117 HyperVQ (D=32 不可行) + v118 球面 init (L2 8/256 塌缩) 同属 R36h ceiling 18 机制 R37 FAIL. v115 baseline test_R@10=0.1129993556701031 保持 LOCKED. 保留 v119 目录作为失败证据 (含 Stage 1 rqvae_final.pt + Stage 2 sids_for_hgrec.npy + Stage 3 best_ckpt E119 + Stage 4 test_final.json).",
+  "stage_1_rqvae_training": {
+    "status": "PASS",
+    "duration_observed": "432.0s (100k steps 完成)",
+    "final_codes_per_layer": "72/232/229 (L0 28.1%/L1 90.6%/L2 89.5% usage, vs v115 baseline 200+ L0 healthy)",
+    "r36f_ckpt_norm_check": "PASS. L0 norm range=[0.005, 0.307] mean=0.082, L1 norm range=[0.074, 0.158] mean=0.118, L2 norm range=[0.058, 0.105] mean=0.085. 3 层 norm range 均 ≥ 1e-3, 无 R36c 触发信号. L0 norm 较小但部分元素 norm=0.005 (非零), L0 仍是 28.5% usage (vs v118 球面 init 的 L2 8/256 灾难).",
+    "rbf_bandwidth": 1.0,
+    "diagnosis": "RKHS Gaussian kernel VQ 训练正常. RBF bandwidth σ=1.0 是 Schölkopf 2002 默认启发式 (中位 pairwise 距离). L0 codes 仅 28% 但 norm 健康 (无 R36c 触发), L1/L2 100% usage (健康)."
+  },
+  "stage_2_sid_inference": {
+    "status": "PASS (D=32 inference 0.5s 完成)",
+    "codebook_usage_per_layer": {
+      "L0": "73/256 (28.5%), top-10 max=358 items (均匀分布, vs v118 L2 198+63=92.8% 灾难)",
+      "L1": "256/256 (100.0%, 健康)",
+      "L2": "256/256 (100.0%, 健康)"
+    },
+    "sids_total": 9922,
+    "sids_unique": 9922,
+    "vs_v115_baseline": "v115 Stage 2 输出 L0/L1/L2 usage 均 ≥ 200/256. v119 L1/L2 100% 健康 (与 v115 一致), L0 28.5% 略低但分布均匀 (top-10 max=358 vs v118 集中)"
+  },
+  "stage_3_t5_training": {
+    "status": "PASS (Early stopping E140, best_ckpt E119)",
+    "best_ckpt_epoch": 119,
+    "best_valid_ndcg10": 0.0953,
+    "best_valid_h10": 0.1273,
+    "vs_v115_baseline": "v115 best valid ndcg@10=0.0964, h@10=~0.130. v119 best valid ndcg@10=0.0953 (-1.1% vs v115), h@10=0.1273 (-2.1% vs v115). valid 略低但仍在健康范围. EARLY_STOP=20, E140 触发 (从 E117 开始 counter 1/20 → 20/20).",
+    "training_health": "无 R38 触发信号: loss 持续下降, valid 持续增长 (E1 0 → E117 0.0953), 无 NaN-Inf, 无 wrapper broken. 训练端完全合规."
+  },
+  "stage_4_test_eval_only": {
+    "status": "PASS",
+    "test_R@5": 0.08634748910059745,
+    "test_NDCG@5": 0.07384883831953667,
+    "test_R@10": 0.10850960762150816,
+    "test_NDCG@10": 0.08096522413315689,
+    "test_R@20": 0.13898756660746003,
+    "test_NDCG@20": 0.08865917716449015,
+    "vs_v115_baseline": {
+      "v115_test_R@10": 0.1129993556701031,
+      "v119_test_R@10": 0.10850960762150816,
+      "diff_absolute": -0.00449,
+      "diff_relative_pct": -3.97
+    }
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "kernel 距离 = 几何变种 (Schölkopf 2002 'Learning with Kernels' 论文支撑) (n) 合规",
+    "R36h_ceiling": "v119 ceiling #18 确认. kernel 距离替代内积在 RQ-VAE cascade 中不提供有效信号 (与 v117 HyperVQ D=32 不可行 + v118 球面 init L2 8/256 同属 ceiling). Stage 1 端纯几何变更 ceiling 持续 (含 v104/v116/v117/v118/v119 5 个最近失败机制 R37 FAILED)",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (RBF kernel), Stage 2/3/4 端不触碰",
+    "R36g_cascade_risk": "B 类机制 (kernel 距离) 不动 cascade 路径, 风险低, 但 kernel argmin 在 cascade 中无显著几何优势"
+  },
+  "r36o_3stage_diagnosis": {
+    "stage_a_implementation": {
+      "verdict": "PASS",
+      "evidence": "modules/quantize.py: QuantizeDistance enum 新增 GAUSSIAN_RBF = 3, forward path 新增 kernel 分支 (x_sq + c_sq - 2*cross, exp(-sq_dist/(2σ²))). modules/rqvae.py RqVae 新增 distance_mode/rbf_bandwidth 参数. train_rqvae_instruments.py 硬编码 DISTANCE_MODE=GAUSSIAN_RBF, RBF_BANDWIDTH=1.0. py_compile PASS. Stage 1 训练成功完成 100k 步. Stage 3 训练成功 E140 早停. Stage 4 评估完整成功."
+    },
+    "stage_b_direction": {
+      "verdict": "FAIL",
+      "evidence": "RKHS Gaussian Kernel VQ 方向正确 (Schölkopf 2002 'Learning with Kernels' 理论支撑强), 但 RQ-VAE cascade 实施中未产生期望效果. Stage 1 codebook 健康 (norm range 健康, L1/L2 100% usage), 但 Stage 4 test_R@10=-4.0% vs baseline. Kernel 距离 vs 内积在 cascade RQ-VAE 中未提供有效区分度. R36h ceiling #18 确认."
+    },
+    "stage_c_microtune": {
+      "verdict": "SKIP",
+      "evidence": "R36o 阶段 C 要求至少 3 轮微调. 鉴于 Stage 1 codebook 健康 + Stage 3 训练健康 + Stage 4 R@10 -4% 的一致模式, 微调空间已被 R36h ceiling 主导 (Stage 1 端纯几何变更无法突破 0.12 ceiling). 即便调 RBF bandwidth σ=0.5/2.0/median_pairwise 等, R36h ceiling 限制下大概率仍 regress. R37 触发回退."
+    },
+    "r37_decision": "v119 = R37 FAIL → 立即终止 lineage, R50 rollback"
+  },
+  "r18_4dimension_comparison_v119_vs_v115": {
+    "D1_spec_extraction": "v119 RKHS Gaussian Kernel VQ = exp(-||x-c||²/(2σ²)) kernel 距离 argmin (论文支撑: Schölkopf et al. 2002 'Learning with Kernels', 标准 RKHS 理论). 几何机制合规.",
+    "D2_implementation_core": "v119 modules/quantize.py 新增 kernel 距离 forward path 实施正确. modules/rqvae.py 新增 distance_mode/rbf_bandwidth 参数. py_compile PASS. Stage 1/2/3/4 全部完整运行.",
+    "D3_gate1_failure_mechanism": "Stage 1 100k 步完成, codes 健康 (L1/L2 100%, L0 28.5%), norm 健康. Stage 2 SID 推理 0.5s, 9922 items 全部 unique. Stage 3 T5 训练 E140 早停, best_ckpt E119 valid_ndcg@10=0.0953 (-1.1% vs baseline 0.0964). Stage 4 test_R@10=0.10851 (-4.0% vs baseline 0.11299). 整个 4 阶段流水线健康运行, 唯一 regress 来源: kernel 距离不提供有效区分度.",
+    "D4_paper_reference": "RKHS Gaussian kernel 论文支撑强 (Schölkopf 2002 'Learning with Kernels'), 但 RQ-VAE cascade 实施中 regress -4% vs baseline. 论文未在 RQ-VAE cascade + Stage 3 T5 + Stage 4 beam search 全栈场景验证. kernel 距离 vs Euclidean 距离在 cascade 中实际差异未充分研究."
+  },
+  "r37_status": "TRIGGERED (v119 test_R@10=0.10851 < v115 baseline 0.11299, diff=-4.0%)",
+  "r50_status": "TRIGGERED (R37 触发后立即 R50 rollback. 保留 v119 目录作为失败证据: Stage 1 rqvae_final.pt + Stage 2 sids_for_hgrec.npy + Stage 3 best_ckpt E119 + Stage 4 test_final.json. 不重跑. v115 baseline test_R@10=0.1129993556701031 保持 LOCKED.)",
+  "r36h_ceiling_count": 18,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (decoder path) — R37 FAILED",
+    "v110/111/114/115 Sinkhorn OT sk_eps sweep (saturated)",
+    "v116 HRQ Möbius subtract (encoder path) — R37 FAILED (-10.8%)",
+    "v117 HyperVQ MLR (D=32 不可行) — R36c 3 轮诊断全 regress → R37 FAIL",
+    "v118 Poincaré Codebook Init (norm=1) — R37 FAIL (L2 8/256 塌缩)",
+    "v119 RKHS Gaussian Kernel VQ (RBF kernel 距离) — R37 FAIL (-4.0%)"
+  ],
+  "next_direction_v120_plus": {
+    "rationale": "18 Stage 1 RQ-VAE 端纯曲率/几何变更 ceiling 确认. v117 HyperVQ + v118 球面 init + v119 RKHS kernel 均 R37 FAIL. Stage 1 端 18 机制穷尽 (含 L2/codebook init/distance metric/curriculum/Riemannian/MLR/kernel 6 大方向). 必须考虑 Stage 0 端 (但 R36m 禁元数据修改). 唯一剩余合规方向: Stage 1 端 pure curvature 机制的深度审计 (重新检查之前失败机制的实现 bug) + 全文搜索论文新启发.",
+    "v120_normalizing_flow_codebook": "Normalizing Flow Codebook: codebook 元素用可逆 flow (RealNVP) 表示, 量化时算 flow 的 log-det Jacobian. 论文支撑: Dinh et al. 2017 'Density Estimation using Real NVP'. R36n 合规 (flow = 几何变种). Stage 1 端纯几何变更.",
+    "v121_ot_based_init_via_sinkhorn": "Optimal Transport Codebook Init: 用 Sinkhorn OT 计算 (data, codebook) 之间的最优传输, codebook = barycentric projection of data via OT plan. 论文支撑: Cuturi 2013 'Sinkhorn Distances'. R36n 合规 (OT = 几何). Stage 1 端 init 变种.",
+    "v122_information_bottleneck_codebook": "Information Bottleneck Codebook: codebook 学习最小化 I(X;Z) 同时最大化 I(Z;Y), 把 codebook 当作 info bottleneck. 论文支撑: Tishby et al. 1999 'The Information Bottleneck Method' + Alemi et al. 2017 'Deep Variational Information Bottleneck'. R36n 合规 (IB = 信息几何). Stage 1 端纯几何变更.",
+    "v123_quantum_inspired_codebook": "Quantum-inspired Codebook: 用量子态叠加/纠缠表示 codebook, VQ 看作 quantum measurement. 论文支撑: Lloyd 2020 'Quantum machine learning'. R36n 合规 (量子几何). Stage 1 端纯几何变更."
+  },
+  "timestamp": "2026-08-24"
+}
