@@ -4,11 +4,15 @@
 
 ---
 
-## 最新测试结果 (2026-08-24 baseline 切换 v120 + 历史 baseline, beam=20)
+## 最新测试结果 (2026-08-24 baseline 切换 v130c + 历史 baseline, beam=20)
 
 | 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|---|
-| **v120 C-RVQ Mahalanobis** (新 baseline, 2026-08-24) | ✅ | — | 0.0965 (best valid ndcg@20) | **0.11183150773195877** | 0.1421 | 0.0900 | `curvature_experiment_crvq_mahalanobis_v120/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_v120/best_ckpt.pt` |
+| **v130c C-RVQ + Mahalanobis commit_weight=0.05** (新 baseline, 2026-08-24) | ✅ R37 | — | 0.1235 (best valid ndcg@20) | **0.15532377577319587** | 0.0000 ⚠️ | 0.1042 | `curvature_experiment_crvq_mahalanobis_commitment_weight_005_v130c/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_weight_005_v130c/best_ckpt.pt` |
+| **v129 C-RVQ + Mahalanobis commit_weight=0.10** (上一 baseline, 2026-08-24) | ✅ | — | 0.1133 (best valid ndcg@20) | **0.1403028350515464** | 0.0000 ⚠️ | 0.0960 | `curvature_experiment_crvq_mahalanobis_commitment_v129/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_v129/best_ckpt.pt` |
+| **v130 C-RVQ + Mahalanobis commit_weight=0.15** (R37 FAIL, regress -12.25% vs v129) | ❌ R37 | — | 0.1037 (best valid ndcg@20) | 0.12310728092783506 | — | 0.0871 | (已 R50 rm, 保留 verdict) |
+| **v130d C-RVQ + Mahalanobis commit_weight=0.20** (R37 FAIL, regress -26.21% vs v130c) | ❌ R37 | — | 0.0988 (best valid ndcg@20) | 0.11461018041237113 | — | 0.0827 | (已 R50 rm, 保留 verdict) |
+| **v120 C-RVQ Mahalanobis** (R5 锁定但已被 v129 突破, 2026-08-24) | ref | — | 0.0965 (best valid ndcg@20) | 0.11183150773195877 | 0.1421 | 0.0900 | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_v120/best_ckpt.pt` |
 | **v87 F3 Spread Loss Revisit** (已 R50 删除, 2026-08-24 切换) | ref | — | 0.0976 (best valid ndcg@10) | **0.11171069587628867** | 0.1409 | 0.0898 | (旧 `curvature_base/out/decoder/.../hgrec_f3_spread_loss_revisit_v87/best_ckpt.pt`) |
 | **v69 G5 Codebook-aware Manifold Contrastive** (已 R50 删除, 2026-08-23 切换) | ref | — | 0.0964 | **0.11042203608247422** | 0.1407 | 0.0882 | (旧 `curvature_base/out/.../hgrec_v69_g5_codebook_manifold_contrastive/best_ckpt.pt`) |
 | **HG-Rec 重跑** (Aug-14-2026_20-15-45) | ✅ | 0.1312 (valid) | **0.1049** | **0.1074** | 0.1369 | 0.0879 | `HG_Rec_epoch_63.pth` |
@@ -35,7 +39,7 @@
 
 **R4** — 修改 Python 脚本后必须立即 `python3 -m py_compile` 验证语法 (文档例外)。
 
-**R5** — 任务硬约束 = **v120 C-RVQ Mahalanobis baseline (R51+ locked, test_R@10=0.11183150773195877, +0.108% vs v87 F3 Spread Loss baseline)**, 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。原 HG-Rec Task #84 test_R@10=0.1024 / v19 R51+ test_R@10=0.1090931056701031 / v69 G5 R51+ test_R@10=0.11042203608247422 / v87 F3 R51+ test_R@10=0.11171069587628867 数值均已过期, R37 当前阈值以本条 v120 baseline 为准。**(2026-08-24 baseline 切换)** 原 curvature_base/ (v87 F3 Spread Loss R51+ locked) 已 R50 删除, 改用 curvature_experiment_crvq_mahalanobis_v120/ 作为新 baseline (Stage 1 RQ-VAE 端 C-RVQ Mahalanobis anisotropic per-codeword diagonal covariance distance, arxiv 2505.12143 May 2025, MAHALANOBIS_INIT_VAR=1.0, R36h ceiling 突破 19 次 +0.108%)。
+**R5** — 任务硬约束 = **v129 C-RVQ Mahalanobis + MAHALANOBIS COMMITMENT LOSS FIX baseline (test_R@10=0.1403028350515464, +25.46% vs v120 C-RVQ Mahalanobis 0.11183)**, 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。**(2026-08-24 v129 baseline 切换)** 原 v120 C-RVQ Mahalanobis test_R@10=0.11183 已被 v129 突破; v120 实现存在关键 bug: log_var 参数从未训练 (QuantizeLoss 用 Poincaré 距离做 commitment loss, 非 Mahalanobis), 实质等价 L2 distance。v129 修复: 加入 mahalanobis_commit_loss = mean_B Σ_d (x_d - codebook[ids]_d)² / var[ids]_d, 权重 0.1, 让 log_var 真正参与训练. Stage 1 RQ-VAE log_var 100k 步后 mean=0.78/4.65/0.88 (vs v120 全程 0.5413 不变), σ mean 4.7/36.4/5.3 (vs v120 1.31). L0 spread 39.8% (vs v120 27.3% = +45.7%). Stage 3 best valid h@10=0.1643 (vs v120 ~0.117 = +40.4%). test_R@10 +25.5% = **R36h ceiling 真正被打破**. 论文支撑: C-RVQ arxiv 2505.12143 May 2025. 原 v19/v69/v87/v120 数值均已过期.
 
 **R7** — 启动新实验前必须 `nvidia-smi` 核对 (util<10%, mem<5GB), 选完全空闲 GPU。
 

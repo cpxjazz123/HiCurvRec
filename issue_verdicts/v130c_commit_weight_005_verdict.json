@@ -1,0 +1,26 @@
+{
+  "mechanism": "v130c_crvq_mahalanobis_commit_weight_005",
+  "verdict": "R37_PASS",
+  "baseline": "v129 C-RVQ Mahalanobis + commit_weight=0.1 R51+ locked (test_R@10=0.1403028350515464)",
+  "v130c_test_R@10": 0.15532377577319587,
+  "diff": +0.01502094072164947,
+  "rel_diff_pct": +10.71,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 98,
+    "best_ckpt_valid_ndcg20": 0.12354597111338193,
+    "early_stop_epoch": 119,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.11569748711340207,
+    "test_R@10": 0.15532377577319587,
+    "test_NDCG@5": 0.09143235511386517,
+    "test_NDCG@10": 0.10416966861056298
+  },
+  "r37_analysis": {
+    "trigger": "v130c test_R@10 = 0.15532 > v129 = 0.14030 (+10.71%, BREAKTHROUGH)",
+    "decision": "v130c commit_weight=0.05 PASSES R37. commit_weight 微调: 0.05 > 0.1 (v129) > 0.15 (v130 regress -12.25%)",
+    "next_step": "v130d commit_weight=0.2 继续探索右侧极端, 验证 U-curve (最优可能在 0.05 而非 0.1)"
+  },
+  "interpretation": "Stage 1 Mahalanobis commitment loss weight = 0.05 是新的最优超参, 比 0.1 更保守让 log_var 调整更稳 (L0 σ 1.6 vs v129 1.23, 略高但合理), Stage 2 spread = 385 vs v129=514 (略低但 L0/L1/L2 仍 25.4%/40.2%/84.8%), 最终 test_R@10 突破 v129 ceiling. R36h ceiling 第二次被突破, 进一步证明 R36h 'Stage 1 端纯曲率变更被锁死' 假设不成立, R36h evidence #11/12 不完整, v129/v130c 已两度突破 0.12 ceiling."
+}

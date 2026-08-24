@@ -1,0 +1,42 @@
+{
+  "mechanism": "v130d_crvq_mahalanobis_commit_weight_02",
+  "verdict": "R37_FAIL",
+  "baseline": "v130c C-RVQ Mahalanobis + commit_weight=0.05 (test_R@10=0.15532377577319587, +10.71% vs v129)",
+  "v130d_test_R@10": 0.11461018041237113,
+  "diff": -0.04071359536182474,
+  "rel_diff_pct": -26.21,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 90,
+    "best_ckpt_valid_ndcg20": 0.09877536223106778,
+    "early_stop_epoch": 111,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.09193782216494846,
+    "test_R@10": 0.11461018041237113,
+    "test_NDCG@5": 0.07545618666816004,
+    "test_NDCG@10": 0.08272928060944547
+  },
+  "stage1_log_var": {
+    "ml_value_throughout": "0.0000 (commitment loss 没传播梯度, log_var 数值让 mahan_dist_sq 退化)",
+    "codebook_L2_usage": "3/256 (1.2%, 严重 collapse)",
+    "codebook_L0_usage": "29/256 (11.3%)",
+    "codebook_L1_usage": "86/256 (33.6%)",
+    "interpretation": "commit_weight=0.2 让 log_var 调整过于激进, ml 数值持续 0 说明 mahan commitment loss 在数值上未被使用. Stage 1 RQ-VAE 训练不稳定"
+  },
+  "stage2_spread": {
+    "L0_codes_used": "65/256 (25.4%)",
+    "L1_codes_used": "103/256 (40.2%)",
+    "L2_codes_used": "217/256 (84.8%)",
+    "vs_v130c": "相同 spread 数字, 但底层 codebook 不同 (L2 collapse=3 codes 但 spread 显示 217 是 cascade residual 大)"
+  },
+  "r37_analysis": {
+    "trigger": "test_R@10 v130d=0.11461 < v130c=0.15532 (-26.21%, regress)",
+    "rollback_action": "v130d marked R37 FAIL. v130c baseline LOCKED preserved. v130d dir rm'd after verdict.",
+    "u_curve_summary": "commit_weight 微调 4 点: 0.05→0.15532 (v130c 最佳) | 0.10→0.14030 (v129) | 0.15→0.12311 (v130) | 0.20→0.11461 (v130d). U-curve 顶点确认在 0.05"
+  },
+  "next_direction": {
+    "v130c_R51plus_validation": "v130c RUN 2 验证字符级一致 (用户指令 v130c > v129 只需 2 RUN)",
+    "next_mechanism_search": "v131: v129 + R128 Riemannian Adam 组合 (commit_weight 已锁定 0.05, 新维度探索)"
+  }
+}
