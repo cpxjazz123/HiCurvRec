@@ -1,0 +1,63 @@
+{
+  "mechanism": "v125_crvq_tcu_strong",
+  "verdict": "R37_FAIL_R36h_CEILING_14",
+  "verdict_lock": "v120 C-RVQ Mahalanobis R51+ locked (no change)",
+  "baseline_lock": "v120 C-RVQ Mahalanobis R51+ locked",
+  "baseline_test_R@10": 0.11183150773195877,
+  "v125_RUN1_test_R@10": 0.11191204896907217,
+  "v125_RUN2_test_R@10": 0.11179123711340207,
+  "v125_mean_test_R@10": 0.11185164304123712,
+  "RUN1_diff_abs": 0.000080541237,
+  "RUN1_diff_rel_pct": 0.0720,
+  "RUN2_diff_abs": -0.000040270619,
+  "RUN2_diff_rel_pct": -0.0360,
+  "RUN1_RUN2_diff_abs": 0.000121,
+  "RUN1_RUN2_noise_rel_pct": 0.108,
+  "stage3_train_summary_RUN1": {
+    "best_ckpt_epoch": 125,
+    "best_ckpt_valid_ndcg@20": 0.0976,
+    "early_stop_epoch": 145
+  },
+  "stage3_train_summary_RUN2": {
+    "best_ckpt_epoch": 120,
+    "best_ckpt_valid_ndcg@20": 0.0985,
+    "early_stop_epoch": 140
+  },
+  "stage_metrics_RUN1": {
+    "test_R@5": 0.08899806701030928,
+    "test_R@10": 0.11191204896907217,
+    "test_R@20": 0.14267880154639176,
+    "test_NDCG@5": 0.07496998482143756,
+    "test_NDCG@10": 0.08230401560203317,
+    "test_NDCG@20": 0.09008739904030082,
+    "n_eval": 24832
+  },
+  "stage_metrics_RUN2": {
+    "test_R@5": 0.08863563144329897,
+    "test_R@10": 0.11179123711340207,
+    "test_R@20": 0.1403028350515464,
+    "test_NDCG@5": 0.0743615799343463,
+    "test_NDCG@10": 0.08179673460340992,
+    "test_NDCG@20": 0.08901739612068098,
+    "n_eval": 24832
+  },
+  "implementation_summary": "v125 NOVEL: v124 C22 TCU + 强化参数 (alpha=0.2 4x, eta=0.3 3x vs v124 alpha=0.05 eta=0.1). R36n 合规 (Riemannian centroid EMA). Stage 3 RUN 1 best 0.0976 (E125), RUN 2 best 0.0985 (E120) - both显著优于 v120 0.0933 (+4.6% / +5.6%), 但 test_R@10 落入 v120 ±0.0001 噪声带 (RUN 1 +0.072%, RUN 2 -0.036%).",
+  "r36_compliance": {
+    "r36n_geometric_only": "PASS (TCU = Riemannian manifold EMA)",
+    "r36h_ceiling_verdict": "v125 是 R36h ceiling 第 14 个证据: Stage 1 端 TCU 强化 (4-5x) 显著改善 Stage 3 train/valid (+5% ndcg@10), 但 test_R@10 落入 v120 ±0.0001 噪声带, 未突破 0.12 ceiling. 14 个完全不同的 Stage 1 纯曲率变更均落入相同 ±0.0001 噪声带, 强烈暗示 Stage 1 端机制变更被 Stage 3 T5 SID 表征锁死.",
+    "r36o_phase": "Phase C 微调成功执行: 4-5x TCU 强化 (v124 → v125) 是 R36o 阶段 C 标准流程. 微调后仍 R37 FAIL, 决定 R37 触发 + R50 终止",
+    "verdict": "R36h ceiling 14th evidence: v125 TCU 强化 (alpha=0.2 eta=0.3) is no better than v120 baseline (mean = 0.11185 ≈ v120 0.11183). R37 FAIL 触发."
+  },
+  "r36e_validation_result": {
+    "RUN_1": "test_R@10=0.11191 (+0.072% vs v120, RUN 1 PASS)",
+    "RUN_2": "test_R@10=0.11179 (-0.036% vs v120, RUN 2 FAIL)",
+    "conclusion": "RUN 1 + RUN 2 字符级不一致 (差 0.000121, 0.108% 噪声), RUN 2 落入 v120 baseline 以下 → R37 触发 (新版本 test_R@10 < 上一版本). 即使取 2 RUN 均值 0.11185 仍基本等于 v120 0.11183, 无实质上突破"
+  },
+  "rollback_action": "R50 触发: 保留 v125 目录作为失败证据, 不重跑同任务. 已记录 verdict. baseline 保持 v120 C-RVQ Mahalanobis R51+ locked (test_R@10=0.11183150773195877).",
+  "next_direction_options": [
+    "v126: 全文本搜索 arxiv 寻找 R36+R36n 合规且不被 R36h ceiling 影响的机制 - Stage 0 端真正创新 (但 R36m 禁元数据修改, 需找到 R36n 合规的几何结构变更)",
+    "v127: Stage 3 T5 端 geometric attention (R36 v3.6 已禁, 但考虑 R36h ceiling 是否同样适用 - Stage 3 端如果创新是否同样 ceiling?)",
+    "v128: Stage 2 SID 表征升级 (R36 v3.6 已禁, 但 R36h ceiling 在 Stage 2 端是否同样适用?)",
+    "v129: 重新审视 v120 Mahalanobis 实现的数学细节 - 是否 init_var=1.0 即 Σ=I 等价 L2 distance? 若如此则 v120 = L2 baseline, R36h ceiling 强化"
+  ]
+}
