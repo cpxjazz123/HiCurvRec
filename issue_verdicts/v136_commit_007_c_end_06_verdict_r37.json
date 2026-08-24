@@ -1,0 +1,28 @@
+{
+  "mechanism": "v136_v133_plus_commit_weight_0.07",
+  "verdict": "R37_FAIL",
+  "baseline": "v133 C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.6 (test_R@10=0.20191688144329897)",
+  "v136_test_R@10": 0.17851965206185566,
+  "diff": -0.02339722938144331,
+  "rel_diff_pct": -11.59,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 75,
+    "best_ckpt_valid_ndcg20": null,
+    "early_stop_epoch": 110,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E75_best": 0.1327606771410126
+  },
+  "stage_metrics": {
+    "test_R@5": 0.13160438144329897,
+    "test_R@10": 0.17851965206185566,
+    "test_NDCG@5": 0.10070429143217421,
+    "test_NDCG@10": 0.11581278338874738
+  },
+  "r37_analysis": {
+    "trigger": "test_R@10 v136=0.17852 < v133=0.20192 (-11.59%, regress)",
+    "rollback_action": "v136 marked R37 FAIL. v133 baseline LOCKED. v136 dir rm'd.",
+    "comparison_v130c": "v136=0.17852 > v130c=0.15532 (+14.93%), 但 v133 已突破, 标准是 v133"
+  },
+  "joint_space_summary": "commit_weight × C_END 2D grid: 0.05×0.7 (v130c 0.155) | 0.05×0.55 (v135 0.159) | 0.05×0.6 (v133 0.202 BREAKTHROUGH) | 0.07×0.6 (v136 0.179). commit_weight=0.05 × C_END=0.6 仍最优",
+  "next_direction": "v137: C_END=0.58 (v133 邻近 sharp peak 探索)"
+}
