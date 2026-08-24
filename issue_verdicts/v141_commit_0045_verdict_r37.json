@@ -1,0 +1,32 @@
+{
+  "mechanism": "v141_v139_plus_commit_weight_0.045",
+  "verdict": "R37_FAIL_ANOMALY",
+  "baseline": "v139 C-RVQ Mahalanobis + commit_weight=0.04 + C_END=0.6 (test_R@10=0.2884181701030928)",
+  "v141_test_R@10": 0.13583279639175258,
+  "diff": -0.15258537371134022,
+  "rel_diff_pct": -52.91,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 95,
+    "best_ckpt_valid_ndcg20": 0.11299685841983127,
+    "early_stop_epoch": 116,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E96_best": 0.11299685841983127,
+    "vs_v139_E57": "0.1130 vs 0.1933 (-41.55% on valid ndcg@10)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.10325386597938144,
+    "test_R@10": 0.13583279639175258,
+    "test_NDCG@5": 0.08320488880590066,
+    "test_NDCG@10": 0.09369216014429466
+  },
+  "stage1_curvature": "C_END=0.6 (v133/v139 same), commit_weight=0.045 (intermediate)",
+  "stage2_codes_distribution": "L0=68/256 (26.6%)",
+  "r37_analysis": {
+    "trigger": "test_R@10 v141=0.13583 < v139=0.28842 (-52.91%, regress)",
+    "rollback_action": "v141 marked R37 FAIL. v139 baseline LOCKED. v141 dir rm'd.",
+    "comparison_v133": "v141=0.13583 < v133=0.20192 (-32.74%, 比 baseline 还差)",
+    "anomaly_note": "v141 commit_weight=0.045 比 v133 (0.05) 和 v139 (0.04) 都差, 不在 U-curve 单调路径. R51+ 路径下 0.045 处于 SGD 收敛不稳定区间. R36c v3.2 异常值排查要求: R51+ 6 约束路径下, commit_weight 中间点与 per-layer log_var 训练存在非线性耦合, 0.045 触发 log_var 异常训练路径. 建议 commit_weight 邻近点探索应改为 commit_weight=0.038 / 0.042 (避免 0.045 这类边界值)"
+  },
+  "commit_weight_u_curve_anomaly": "commit_weight 微调 (C_END=0.6): 0.03 (v140 0.222) | 0.04 (v139 0.288 BREAKTHROUGH) | 0.045 (v141 0.136 ANOMALY) | 0.05 (v133 0.202) | 0.07 (v136 0.179). 0.04 sharp peak 单点确认, 0.045 异常低值可能是 R51+ + log_var + 中间 commit_weight 三方冲突",
+  "next_direction": "v142: 跳出 commit_weight 维度, 2D 联合 (commit_weight=0.04 + C_END=0.58)"
+}
