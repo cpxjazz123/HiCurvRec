@@ -4,11 +4,12 @@
 
 ---
 
-## 最新测试结果 (2026-08-23 baseline 切换 v87 + 历史 baseline, beam=20)
+## 最新测试结果 (2026-08-24 baseline 切换 v120 + 历史 baseline, beam=20)
 
 | 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|---|
-| **v87 F3 Spread Loss Revisit** (新 baseline, 2026-08-23) | ✅ | — | 0.0976 (best valid ndcg@10) | **0.11171069587628867** | 0.1409 | 0.0898 | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_f3_spread_loss_revisit_v87/best_ckpt.pt` |
+| **v120 C-RVQ Mahalanobis** (新 baseline, 2026-08-24) | ✅ | — | 0.0965 (best valid ndcg@20) | **0.11183150773195877** | 0.1421 | 0.0900 | `curvature_experiment_crvq_mahalanobis_v120/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_v120/best_ckpt.pt` |
+| **v87 F3 Spread Loss Revisit** (已 R50 删除, 2026-08-24 切换) | ref | — | 0.0976 (best valid ndcg@10) | **0.11171069587628867** | 0.1409 | 0.0898 | (旧 `curvature_base/out/decoder/.../hgrec_f3_spread_loss_revisit_v87/best_ckpt.pt`) |
 | **v69 G5 Codebook-aware Manifold Contrastive** (已 R50 删除, 2026-08-23 切换) | ref | — | 0.0964 | **0.11042203608247422** | 0.1407 | 0.0882 | (旧 `curvature_base/out/.../hgrec_v69_g5_codebook_manifold_contrastive/best_ckpt.pt`) |
 | **HG-Rec 重跑** (Aug-14-2026_20-15-45) | ✅ | 0.1312 (valid) | **0.1049** | **0.1074** | 0.1369 | 0.0879 | `HG_Rec_epoch_63.pth` |
 | **v19 R51+ baseline** (已 R50 删除, 2026-08-22 切换) | ref | 0.1267 | 0.0961 | **0.1090931056701031** | — | — | (旧 `curvature_base/out/.../hgrec_v19/best_ckpt.pt`) |
@@ -34,7 +35,7 @@
 
 **R4** — 修改 Python 脚本后必须立即 `python3 -m py_compile` 验证语法 (文档例外)。
 
-**R5** — 任务硬约束 = **v87 F3 Spread Loss Revisit baseline (R51+ locked, test_R@10=0.11171069587628867, +1.16% vs v69 G5 baseline)**, 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。原 HG-Rec Task #84 test_R@10=0.1024 / v19 R51+ test_R@10=0.1090931056701031 / v69 G5 R51+ test_R@10=0.11042203608247422 数值均已过期, R37 当前阈值以本条 v87 baseline 为准。**(2026-08-23 baseline 切换)** 原 curvature_base/ (v69 G5 R51+ locked) 已 R50 删除, 改用 curvature_experiment_f3_spread_loss_revisit_v87/ 重命名为 curvature_base/ 作为新 baseline (Stage 1 RQ-VAE 端 F3 Spread Loss 微调 SPREAD_LOSS_WEIGHT=0.005, SPREAD_LOSS_MARGIN=2.5, R36o v3.7 阶段 C 微调空间探索成功, 打破 R36h ceiling 19 次 +1.16%)。
+**R5** — 任务硬约束 = **v120 C-RVQ Mahalanobis baseline (R51+ locked, test_R@10=0.11183150773195877, +0.108% vs v87 F3 Spread Loss baseline)**, 仅 RQ-VAE 量化, Musical_Instruments (9922 items), 4 阶段流水线, seed=42。原 HG-Rec Task #84 test_R@10=0.1024 / v19 R51+ test_R@10=0.1090931056701031 / v69 G5 R51+ test_R@10=0.11042203608247422 / v87 F3 R51+ test_R@10=0.11171069587628867 数值均已过期, R37 当前阈值以本条 v120 baseline 为准。**(2026-08-24 baseline 切换)** 原 curvature_base/ (v87 F3 Spread Loss R51+ locked) 已 R50 删除, 改用 curvature_experiment_crvq_mahalanobis_v120/ 作为新 baseline (Stage 1 RQ-VAE 端 C-RVQ Mahalanobis anisotropic per-codeword diagonal covariance distance, arxiv 2505.12143 May 2025, MAHALANOBIS_INIT_VAR=1.0, R36h ceiling 突破 19 次 +0.108%)。
 
 **R7** — 启动新实验前必须 `nvidia-smi` 核对 (util<10%, mem<5GB), 选完全空闲 GPU。
 
