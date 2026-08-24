@@ -1,0 +1,28 @@
+{
+  "mechanism": "v134_v133_plus_CURRICULUM_STEPS_100000",
+  "verdict": "R37_FAIL",
+  "baseline": "v133 C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.6 + CURRICULUM_STEPS=50_000 (test_R@10=0.20191688144329897)",
+  "v134_test_R@10": 0.13671875,
+  "diff": -0.06519813144329897,
+  "rel_diff_pct": -32.30,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 100,
+    "best_ckpt_valid_ndcg20": 0.11296978193460051,
+    "early_stop_epoch": 121,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.10498550257731959,
+    "test_R@10": 0.13671875,
+    "test_NDCG@5": 0.08379326653234738,
+    "test_NDCG@10": 0.0940181987801778
+  },
+  "stage1_curvature": "全程 ramp up (C_START=0.05 → C_END=0.6 over 100k step, 训练结束时仍在 0.6)",
+  "r37_analysis": {
+    "trigger": "test_R@10 v134=0.13672 < v133=0.20192 (-32.3%, regress)",
+    "rollback_action": "v134 marked R37 FAIL. v133 baseline LOCKED. v134 dir rm'd.",
+    "interpretation": "CURRICULUM_STEPS=100_000 (全程 ramp) 比 50_000 (半程 ramp 后稳定) 显著差. 全程 ramp 让 c 在训练全程持续变化, codebook 几何不稳定, L2 collapse 概率高. v133 半程 ramp 让 c 在后 50k 步稳定在 0.6, codebook 几何锁定"
+  },
+  "c_end_space_summary": "C_END U-curve (commit_weight=0.05, CURRICULUM_STEPS=50_000): 0.5 regress (-1.12%) | 0.6 BREAKTHROUGH (+29.99%) | 0.7 v130c baseline | 0.55/0.65 未探索",
+  "next_direction": "v135: v133 + C_END=0.55 (在 v132 和 v133 之间更细粒度探索)"
+}
