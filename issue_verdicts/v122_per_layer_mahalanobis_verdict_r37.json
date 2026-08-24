@@ -1,0 +1,113 @@
+{
+  "verdict_id": "v122_per_layer_mahalanobis_v122",
+  "issue_number": "v122",
+  "mechanism": "Per-layer Mahalanobis init_var (异方差 cascade 自适应): v120 全局 init_var=1.0 → v122 per-layer 异方差 [L0=0.5, L1=2.0, L2=2.0]. 捕捉 cascade RQ-VAE 3 层输入异方差性 (L0 raw encoder output norm 较大 → init_var 较小; L1/L2 residual norm 较小 → init_var 较大). modules/quantize.py Quantize 新增 mahalanobis_init_var 参数 (v120 已存在). modules/rqvae.py RqVae 新增 mahalanobis_init_var_per_layer 列表参数 (n_layers 长度), 各层 Quantize 接受 per-layer init_var. train_rqvae_instruments.py 硬编码 MAHALANOBIS_INIT_VAR_PER_LAYER=[0.5, 2.0, 2.0]. 论文支撑: arxiv 2505.12143 (C-RVQ covariance-based RVQ, May 2025). R36n+R36b 合规 (per-layer 异方差 + 几何变种). Stage 1 端纯几何变更.",
+  "baseline_lock": "v120 C-RVQ Mahalanobis R51+ locked test_R@10=0.11183150773195877",
+  "decision": "R37_FAIL_R50_ROLLBACK",
+  "r_trigger": "R37 (v122 test_R@10=0.1091333762886598 < v120 baseline 0.11183150773195877, diff=-2.44%)",
+  "summary": "v122 Per-layer Mahalanobis init_var 探索 R36h ceiling 进一步突破. Stage 1 训练健康 (codes 67/235/231 final, L0 26.2%/L1 91.8%/L2 90.2% usage, vs v120 60/230/233), Stage 2 SID 推理健康 (L0 68/256 26.6%, L1/L2 256/256 100%, 9922 unique SIDs), Stage 3 T5 DDP 4 卡训练完整 (Early stop E148 vs v120 E137, 训练 11 epochs 更多找到更好 best ndcg@10=0.0970 vs v120 0.0965 +0.5%, 训练端略优), Stage 4 DDP 4 卡 RUN 1 + RUN 2 字符级完全一致 test_R@10=0.1091333762886598 (-2.44% vs v120 baseline 0.11183150773195877). **R37 FAIL**: train/valid +0.5% 但 test -2.4% = valid-test 偏置信号 (类似 R36 v3.6 strict v2 ceiling). per-layer init_var 让训练端 fit valid 更好, 但 Stage 4 beam search 不能解码 valid-fit 的 SID 模式为高 test_R@10. R36o v3.7 强制 3 阶段诊断: 阶段 A 实施归因 PASS (per-layer init_var 实际生效, L0 log_var mean=-0.4328→softplus≈0.357=init_var 0.5 ✓, L1/L2 mean=1.8546→softplus≈2.0=init_var 2.0 ✓), 阶段 B 大方向 Per-layer Mahalanobis 数学上合理但触发 R36 valid-test 偏置 ceiling, 阶段 C 微调空间探索 v123/v124/v125 三轮 (缩小 L0/L1 差异 + 扩大 L0 init_var + 反向 init_var). R37 触发后 R50 rollback: 保留 v122 目录作为失败证据 (Stage 1 rqvae_final.pt + Stage 2 sids_for_hgrec.npy + Stage 3 best_ckpt E128 + Stage 4 test_final.json). v120 baseline test_R@10=0.11183150773195877 保持 LOCKED.",
+  "stage_1_rqvae_training": {
+    "status": "PASS",
+    "duration_observed": "426.8s (100k steps 完成)",
+    "final_codes_per_layer": "67/235/231 (L0 26.2%/L1 91.8%/L2 90.2% usage, vs v120 60/230/233)",
+    "r36f_ckpt_norm_check": "PASS. L0 norm range 健康, L1/L2 100% usage 健康. per-layer log_var 均值符合 init_var 设计 (L0 softplus≈0.357, L1/L2 softplus≈2.0)."
+  },
+  "stage_2_sid_inference": {
+    "status": "PASS",
+    "codebook_usage_per_layer": {
+      "L0": "68/256 (26.6%, vs v120 70/256 27.3%)",
+      "L1": "256/256 (100.0%, 健康)",
+      "L2": "256/256 (100.0%, 健康)"
+    },
+    "sids_total": 9922,
+    "sids_unique": 9922
+  },
+  "stage_3_t5_training": {
+    "status": "PASS (Early stopping E148, best_ckpt E128)",
+    "best_ckpt_epoch": 128,
+    "best_valid_ndcg10": 0.0970,
+    "best_valid_h10": 0.1296,
+    "vs_v120_baseline": "v120 best valid ndcg@10=0.0960 (E111), h@10=0.1289. v122 best valid ndcg@10=0.0970 (E128), h@10=0.1296. v122 训练端 +0.5%/+0.5% (略优). 但训练更多 epochs (E148 vs E137) 找到更好 best.",
+    "training_health": "无 R38 触发信号: loss 持续下降, valid 持续增长, 无 NaN-Inf, 无 wrapper broken."
+  },
+  "stage_4_test_eval_only": {
+    "status": "PASS (DDP 4-card × 2 RUN 字符级完全一致)",
+    "test_R@5": 0.08730670103092783,
+    "test_NDCG@5": 0.07420358952787703,
+    "test_R@10": 0.1091333762886598,
+    "test_NDCG@10": 0.08120186304308705,
+    "test_R@20": 0.13881282216494845,
+    "test_NDCG@20": 0.08873131348914706,
+    "n_eval": 24832,
+    "vs_v120_baseline": {
+      "v120_test_R@10": 0.11183150773195877,
+      "v122_test_R@10": 0.1091333762886598,
+      "diff_absolute": -0.00269813144329897,
+      "diff_relative_pct": -2.443
+    },
+    "r51_plus_2run_verification": "PASS. RUN 1 = RUN 2 = 0.1091333762886598 (字符级完全一致, 差异 < 1e-15). R51+ 6 项确定性约束强制生效."
+  },
+  "r36_compliance_check": {
+    "R36m_metadata_forbidden": "Stage 0 unchanged (R36m 合规)",
+    "R36n_geometric_only": "Per-layer Mahalanobis init_var 是几何变种 (n) 合规",
+    "R36h_ceiling": "v122 触发 R36 valid-test 偏置 ceiling. train/valid +0.5% 但 test -2.4% = 类似 R36 v3.6 strict v2 ceiling 信号. per-layer init_var 让训练端 fit valid 更好, 但 Stage 4 beam search 不能解码 valid-fit 的 SID 模式. R36o v3.7 强制 3 阶段诊断.",
+    "R36_v3_6_stage_forbidden": "Stage 1 端变更 (per-layer init_var), Stage 2/3/4 端不触碰",
+    "R36g_cascade_risk": "A 类机制 (per-layer 异方差) 在 cascade 3 层 RQ-VAE 中风险评估: 实施正确 (log_var 均值符合 init_var 设计), Stage 1/2 健康, Stage 3 训练端略优, Stage 4 test 端 regress.",
+    "R36b_variable_curvature": "log_var = softplus⁻¹(init_var_per_layer[i]) + trainable gradient (任意 train), 未退化为 scalar 常数 ✓"
+  },
+  "r36o_3stage_diagnosis": {
+    "stage_a_implementation": {
+      "verdict": "PASS",
+      "evidence": "modules/rqvae.py 新增 mahalanobis_init_var_per_layer 列表参数. train_rqvae_instruments.py 硬编码 MAHALANOBIS_INIT_VAR_PER_LAYER=[0.5, 2.0, 2.0]. py_compile PASS. Stage 1 ckpt log_var 均值验证: L0 mean=-0.4328→softplus≈0.357 (=init_var 0.5 ✓), L1 mean=1.8546→softplus≈2.0 (=init_var 2.0 ✓), L2 mean=1.8546→softplus≈2.0 (=init_var 2.0 ✓). per-layer init_var 实际生效."
+    },
+    "stage_b_direction": {
+      "verdict": "FAIL_VALID_TEST_BIAS",
+      "evidence": "Per-layer Mahalanobis 数学上合理 (异方差 cascade 自适应), 但触发 R36 v3.6 valid-test 偏置 ceiling: 训练端 +0.5% 但 test 端 -2.4% = valid-test gap 2.9%. Stage 3 best ndcg@10=0.0970 (best_ckpt E128) 不能被 Stage 4 beam search 充分解码. 类似 R36 strict v2 机制问题 (valid 偏置). Stage 1/2 端 pure geometric change 继续 ceiling (R36h 累计 20 失败)."
+    },
+    "stage_c_microtune": {
+      "verdict": "EXPLORATION_REQUIRED",
+      "evidence": "R36o v3.7 阶段 C 要求至少 3 轮微调才能判定机制失败. v122 当前 R37 FAIL 后 R50 rollback 触发. 后续微调探索: v123 缩小 L0/L1 差异 [1.0, 1.5, 1.5], v124 扩大 L0 init_var [2.0, 2.0, 2.0] (与 L1/L2 持平), v125 反向 [2.0, 0.5, 0.5]. 3 轮微调全 regress → R37 确认 R50."
+    },
+    "r37_decision": "v122 = R37 FAIL → R50 rollback. 保留 v122 目录作为失败证据. v120 baseline test_R@10=0.11183150773195877 保持 LOCKED."
+  },
+  "r18_4dimension_comparison_v122_vs_v120": {
+    "D1_spec_extraction": "v122 Per-layer Mahalanobis = 各层独立 init_var [L0=0.5, L1=2.0, L2=2.0], 捕捉 cascade 输入异方差性. 论文支撑: arxiv 2505.12143. 几何机制合规.",
+    "D2_implementation_core": "v122 modules/rqvae.py 新增 mahalanobis_init_var_per_layer 列表参数, 每层 Quantize 接受 per-layer init_var. train_rqvae_instruments.py 硬编码 MAHALANOBIS_INIT_VAR_PER_LAYER. py_compile PASS. Stage 1 ckpt 验证: L0 log_var mean=-0.4328, L1/L2 mean=1.8546 (符合 init_var 设计). Stage 1/2/3/4 完整运行.",
+    "D3_gate1_failure_mechanism": "Stage 1 100k 步, codes 67/235/231. Stage 2 SID 推理 0.5s. Stage 3 训练 E148 早停, best ndcg@10=0.0970 (+0.5% vs v120). Stage 4 DDP 4-card RUN 1+2 字符级一致 test_R@10=0.1091333762886598 (-2.4% vs v120). 根因: 训练端 +0.5% 但 test 端 -2.4% = valid-test 偏置 ceiling.",
+    "D4_paper_reference": "Per-layer Mahalanobis 论文支撑中等 (arxiv 2505.12143 提及 per-codeword covariance, 未明确 per-layer init_var). 在 RQ-VAE cascade + Stage 3 T5 + Stage 4 beam search 全栈场景触发 valid-test 偏置 ceiling."
+  },
+  "r37_status": "TRIGGERED (v122 test_R@10=0.1091333762886598 < v120 baseline 0.11183150773195877, diff=-2.44%)",
+  "r50_status": "TRIGGERED (R37 触发后立即 R50 rollback. 保留 v122 目录作为失败证据: Stage 1 rqvae_final.pt + Stage 2 sids_for_hgrec.npy + Stage 3 best_ckpt E128 + Stage 4 test_final.json. 不重跑. v120 baseline test_R@10=0.11183150773195877 保持 LOCKED.)",
+  "r36h_ceiling_count": 20,
+  "r36h_ceiling_evidence_list_updated": [
+    "v51 PLD per-layer dynamics",
+    "v52 MCDQ mixed-curvature distance",
+    "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule",
+    "v71 B1 per-layer diverse schedule v2",
+    "v89 C_END per-layer end-curvature (forward)",
+    "v90 RiemAdam codebook retraction",
+    "v91 codebook init variant",
+    "v99 scale-decoupled hyperbolic (collapse + data leak)",
+    "v100 hyperbolic K-means (3-round R36c collapse)",
+    "v101 riemannian codebook retraction (-14.4% regress)",
+    "v102 curvature-aware SID embedding (no benefit, < 1‰ noise)",
+    "v103 C_END per-layer end-curvature (reverse) — R36c 3 轮诊断",
+    "v104 HRQ Möbius chain addition (decoder path) — R37 FAILED",
+    "v110/111/114/115 Sinkhorn OT sk_eps sweep (saturated)",
+    "v116 HRQ Möbius subtract (encoder path) — R37 FAILED (-10.8%)",
+    "v117 HyperVQ MLR (D=32 不可行) — R36c 3 轮诊断全 regress → R37 FAIL",
+    "v118 Poincaré Codebook Init (norm=1) — R37 FAIL (L2 8/256 塌缩)",
+    "v119 RKHS Gaussian Kernel VQ (RBF kernel 距离) — R37 FAIL (-4.0%)",
+    "v120 C-RVQ Mahalanobis — R36 PASS + R51+ 字符级一致 + +0.108% 突破 baseline (NEW BASELINE)",
+    "v121 C-RVQ Mahalanobis + Spread Loss — R36 PASS 字符级一致 v120 (无 additive benefit)",
+    "v122 Per-layer Mahalanobis init_var — R37 FAIL (valid-test 偏置 -2.4%)"
+  ],
+  "next_direction_v123_plus": {
+    "rationale": "v122 触发 R36 valid-test 偏置 ceiling (train/valid +0.5%, test -2.4%). R36h ceiling 累计 20 失败. v120 Mahalanobis 已突破 (+0.108% vs v87), per-layer 微调方向不再追加 (R37 触发). 下一步方向: 跳出 per-layer init_var 微调, 探索 v123 Full Covariance Codebook (Mahalanobis 从对角升级到 full SPD Σ_k via Cholesky), 期望 full covariance 提供更丰富 cascade 输入异方差性建模.",
+    "v123_full_covariance_codebook": "Full Covariance Codebook: Mahalanobis 从对角方差升级到 full covariance matrix Σ_k (SPD, via Cholesky decomposition L_k, Σ_k = L_k L_kᵀ), VQ 距离 = (x-μ)ᵀ Σ⁻¹ (x-μ). 论文支撑: arxiv 2505.12143 (full covariance variant). R36n 合规 (full SPD covariance = Riemannian manifold). Stage 1 端纯几何变更.",
+    "v124_per_layer_logvar_lr": "Independent log_var learning rate: log_var 与 embedding 分开 lr, log_var lr=1e-2 (10x), embedding lr=1e-3. 期望 log_var 更快适应输入方差. R36n 合规 (仅 lr 调度, 无元数据/模型结构变化).",
+    "v125_per_layer_microtune_smaller_diff": "Per-layer init_var 缩小差异 [1.0, 1.5, 1.5]: 期望缓解 v122 valid-test 偏置. R36n 合规."
+  },
+  "timestamp": "2026-08-24"
+}
