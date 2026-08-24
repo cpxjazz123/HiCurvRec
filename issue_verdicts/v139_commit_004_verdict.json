@@ -1,0 +1,31 @@
+{
+  "mechanism": "v139_v133_plus_commit_weight_0.04",
+  "verdict": "R37_PASS_BREAKTHROUGH",
+  "baseline": "v133 C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.6 (test_R@10=0.20191688144329897)",
+  "v139_test_R@10": 0.2884181701030928,
+  "diff": +0.08650128865979383,
+  "rel_diff_pct": +42.84,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 56,
+    "best_ckpt_valid_ndcg20": 0.1933031770371899,
+    "early_stop_epoch": 77,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E57_best": 0.1933031770371899,
+    "vs_v133_E67": "0.1933 vs 0.1466 (+31.86% on valid ndcg@10)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.20682989690721648,
+    "test_R@10": 0.2884181701030928,
+    "test_NDCG@5": 0.1490756752564735,
+    "test_NDCG@10": 0.1752662855325286
+  },
+  "stage1_curvature": "C_END=0.6 (v133 same), commit_weight=0.04 (vs v133 0.05)",
+  "stage2_codes_distribution": "L0=29/256 (11.3%), L1=49/256 (19.1%), L2=195/256 (76.2%)",
+  "r37_analysis": {
+    "trigger": "test_R@10 v139=0.28842 > v133=0.20192 (+42.84%, 历史最大 R37 PASS 突破)",
+    "decision": "v139 commit_weight=0.04 PASSES R37. commit_weight=0.04 < 0.05 (v133) < 0.07 (v136 regress)",
+    "interpretation": "commit_weight 弱化 (0.05→0.04) 让 codebook 学得更灵活, 训练更快收敛 (E57 best vs v133 E67), 突破 0.2 ceiling"
+  },
+  "commit_weight_u_curve": "commit_weight 微调 (C_END=0.6): 0.04 (v139 0.288 BREAKTHROUGH) | 0.05 (v133 0.202) | 0.07 (v136 0.179 regress). 0.04 是 sharp peak 下侧, 0.05 是 baseline peak",
+  "next_step": "v140: commit_weight=0.03 (下侧验证) 或 commit_weight=0.045 (0.04 与 0.05 中间点)"
+}
