@@ -1,0 +1,33 @@
+{
+  "mechanism": "v132_v130c_plus_C_END_0.5",
+  "verdict": "R37_FAIL",
+  "baseline": "v130c C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.7 (test_R@10=0.15532377577319587)",
+  "v132_test_R@10": 0.15359213917525774,
+  "diff": -0.00173163559793813,
+  "rel_diff_pct": -1.114,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 105,
+    "best_ckpt_valid_ndcg20": 0.12074787100565802,
+    "early_stop_epoch": 126,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.11859697164948453,
+    "test_R@10": 0.15359213917525774,
+    "test_NDCG@5": 0.09297235233267558,
+    "test_NDCG@10": 0.10422208137118939
+  },
+  "stage1_log_var": {
+    "c_final_schedule": "0.500 (vs v130c 0.700)",
+    "codebook_L2_usage": "2/256 (vs v130c 3) - 略更严重 collapse",
+    "interpretation": "C_END=0.5 manifold radius 1/√0.5≈1.41 更大, codebook 几何锁定在更远的 manifold 表面, L2 collapse 加深"
+  },
+  "stage2_sids_first5": "[[3, 250, 146, 0], [3, 42, 161, 0], [58, 250, 128, 0], [3, 238, 178, 0], [206, 246, 122, 0]]",
+  "sids_match_v130c": false,
+  "r37_analysis": {
+    "trigger": "test_R@10 v132=0.15359 < v130c=0.15532 (-1.12%, regress)",
+    "rollback_action": "v132 marked R37 FAIL. v130c baseline LOCKED. v132 dir rm'd after verdict.",
+    "c_end_space_summary": "C_END 探索: 0.5 regress (-1.12%) | 0.7 baseline (v130c) | 未探索 0.6/0.8/0.9"
+  },
+  "next_direction": "v133: C_END 微调 (0.6 / 0.8 / 0.9), 验证 0.7 是否为最优"
+}
