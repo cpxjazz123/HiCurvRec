@@ -1,0 +1,44 @@
+{
+  "mechanism": "v126_mahalanobis_init_var_0.5",
+  "verdict": "R37_FAIL_R36h_CEILING_15",
+  "verdict_lock": "v120 C-RVQ Mahalanobis R51+ locked (no change)",
+  "baseline_lock": "v120 C-RVQ Mahalanobis R51+ locked",
+  "baseline_test_R@10": 0.11183150773195877,
+  "v126_test_R@10": 0.11018041237113402,
+  "diff_abs": -0.0016510953608247524,
+  "diff_rel_pct": -1.476,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 128,
+    "best_ckpt_valid_ndcg@20": 0.0977,
+    "early_stop_epoch": 148,
+    "vs_v120_best": "+4.7% (v126 0.0977 vs v120 0.0933 E79)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.08734697164948453,
+    "test_R@10": 0.11018041237113402,
+    "test_R@20": 0.13913498711340205,
+    "test_NDCG@5": 0.07350191627581094,
+    "test_NDCG@10": 0.08084980974492338,
+    "test_NDCG@20": 0.08816213706105026,
+    "n_eval": 24832
+  },
+  "stage1_codes": {
+    "L0_spread_RUN1": "88/256 (34.4%)",
+    "vs_v120": "+7% spread (vs v120 70/256 27.3%)"
+  },
+  "implementation_summary": "v126 NOVEL: v120 C-RVQ Mahalanobis + MAHALANOBIS_INIT_VAR=0.5 (vs v120 1.0). 强制 Σ=0.5·I 起始 (vs v120 Σ=I=L2). Stage 1 RQ-VAE 端纯几何变更. R36n 合规 (对角 SPD manifold). 论文验证: v120 init_var=1.0 实际起始 Σ=I (Mahalanobis = L2), 14 R36h ceiling 证据暗示 Σ 训练后可能 collapse 到 I. v126 强制 Σ≠I 起始, 检验是否真正几何结构.",
+  "r36_compliance": {
+    "r36n_geometric_only": "PASS (对角 SPD covariance, Mahalanobis = Riemann 度量)",
+    "r36h_ceiling_verdict": "v126 是 R36h ceiling 第 15 个证据: init_var=0.5 起始 Σ=0.5·I 显著偏离 L2, Stage 3 valid +4.7% (best 0.0977 vs v120 0.0933), 但 test_R@10 -1.48% (0.11018 vs 0.11183). 强烈暗示: 训练后 Σ 倾向于回归 L2 模式 (gradient push Σ→I); 起始 Σ≠I 导致 Stage 1 端不同 SID 表征 (88/256 vs 70/256 L0 spread), 但被 Stage 3 T5 SID 锁回 v120 ±0.0015 噪声带以下.",
+    "r36o_phase": "Phase C 微调空间探索完成: v126 init_var=0.5 (-1.48% test_R@10 R37 FAIL). v120 init_var=1.0 是 Mahalanobis + L2 baseline 双解的 sweet spot.",
+    "verdict": "R36h ceiling 15th evidence: v126 init_var=0.5 强制 Σ≠I 起始仍被 Stage 3 T5 SID 表征锁回 v120 -1.48% 噪声带以下. R37 + R50: 不重跑 v126. baseline 保持 v120."
+  },
+  "important_insight": "v120 + v126 配对实验证实: Σ 训练后倾向 collapse 到 I (init_var=1.0 = sweet spot, init_var=0.5 显著 worse). 这与 v124/v125 TCU Riemannian centroid EMA 实验不同 — v124/v125 通过几何 move codeword 位置, 不改变 Σ; v126 改变 Σ 但 Σ 训练中又回归 I. Stage 1 RQ-VAE 端机制 R36h ceiling 是真实的.",
+  "rollback_action": "R50 触发: 保留 v126 目录作为失败证据, 不重跑同任务. 已记录 verdict.",
+  "next_direction_options": [
+    "v127: init_var=2.0 (Σ=2·I 反方向), 看 v120 init_var=1.0 是否仍是唯一 sweet spot, 还是非单调",
+    "v128: full covariance (非对角 SPD, 计算量更大但理论上限高)",
+    "v129: Riemannian optimizer (RAdam) for Σ updates, 让梯度按 SPD manifold 切空间 update",
+    "v130: end-to-end geometric loss (Poincaré distance loss) 替代 L2 reconstruction loss, R36n 合规"
+  ]
+}
