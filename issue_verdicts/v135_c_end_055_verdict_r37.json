@@ -1,0 +1,30 @@
+{
+  "mechanism": "v135_v133_plus_C_END_0.55",
+  "verdict": "R37_FAIL",
+  "baseline": "v133 C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.6 + CURRICULUM_STEPS=50_000 (test_R@10=0.20191688144329897)",
+  "v135_test_R@10": 0.15927029639175258,
+  "diff": -0.04264658505154639,
+  "rel_diff_pct": -21.13,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 75,
+    "best_ckpt_valid_ndcg20": null,
+    "early_stop_epoch": 99,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E76_best": 0.12145624455717421
+  },
+  "stage_metrics": {
+    "test_R@5": 0.11867751288659793,
+    "test_R@10": 0.15927029639175258,
+    "test_NDCG@5": 0.09099470708788056,
+    "test_NDCG@10": 0.10406341749368254
+  },
+  "stage2_sids_first5": "[[2, 108, 146, 0], [1, 108, 251, 0], [140, 219, 250, 0], [138, 10, 37, 0], [138, 232, 123, 0]]",
+  "sids_match_v133": false,
+  "r37_analysis": {
+    "trigger": "test_R@10 v135=0.15927 < v133=0.20192 (-21.13%, regress)",
+    "rollback_action": "v135 marked R37 FAIL. v133 baseline LOCKED. v135 dir rm'd.",
+    "comparison_v130c": "v135=0.15927 > v130c=0.15532 (+2.55% gain), 但 v133 已经突破 baseline, v135 仍 regress vs v133"
+  },
+  "c_end_u_curve": "C_END 微调 (commit_weight=0.05): 0.5 regress (-1.12% vs v130c) | 0.55 gain (+2.55% vs v130c, regress vs v133) | 0.6 BREAKTHROUGH (+29.99% vs v130c, NEW BASELINE) | 0.7 v130c baseline. 0.55 < 0.6 表明 0.6 是 sharp peak",
+  "next_direction": "v136: commit_weight=0.07 + C_END=0.6 联合微调 (在 commit_weight × C_END 2D 空间探索)"
+}
