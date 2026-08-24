@@ -1,0 +1,33 @@
+{
+  "mechanism": "v137_v133_plus_C_END_0.58",
+  "verdict": "R37_FAIL_CLOSE_TO_BREAKTHROUGH",
+  "baseline": "v133 C-RVQ Mahalanobis + commit_weight=0.05 + C_END=0.6 (test_R@10=0.20191688144329897)",
+  "v137_test_R@10": 0.19656088917525774,
+  "diff": -0.00535599226804123,
+  "rel_diff_pct": -2.65,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 86,
+    "best_ckpt_valid_ndcg20": 0.1447601908261014,
+    "early_stop_epoch": 107,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E86_best": 0.1447601908261014,
+    "vs_v133_E67": "0.1448 vs 0.1466 (-1.23% on valid ndcg@10)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.14143041237113402,
+    "test_R@10": 0.19656088917525774,
+    "test_NDCG@5": 0.10747689315953206,
+    "test_NDCG@10": 0.12521642507966033
+  },
+  "stage1_curvature": "C_END=0.58 (vs v133 0.6, v135 0.55)",
+  "stage2_codes_distribution": "L0=67/256 (26.2%), L1=94/256 (36.7%), L2=180/256 (70.3%)",
+  "r37_analysis": {
+    "trigger": "test_R@10 v137=0.19656 < v133=0.20192 (-2.65%, regress)",
+    "rollback_action": "v137 marked R37 FAIL. v133 baseline LOCKED. v137 dir rm'd.",
+    "comparison_v130c": "v137=0.19656 > v130c=0.15532 (+26.55%, 大幅突破 v130c)",
+    "comparison_v135": "v137=0.19656 > v135=0.15927 (+23.41% vs C_END=0.55)",
+    "interpretation": "v137 (C_END=0.58) 接近但未超过 v133 (C_END=0.6) BREAKTHROUGH. sharp peak 集中在 [0.58, 0.6] 区间. 0.58 已是 sharp peak 上半侧高位, 0.6 是 peak."
+  },
+  "c_end_u_curve_refined": "C_END 微调 (commit_weight=0.05, CURRICULUM_STEPS=50_000): 0.55 (v135 0.159) | 0.58 (v137 0.197) | 0.6 (v133 0.202 BREAKTHROUGH) | 0.7 (v130c 0.155). sharp peak 在 [0.58, 0.6] 区间, 0.6 是峰值",
+  "next_direction": "v138: C_END=0.62 (sharp peak 上侧测试, 验证 0.6 是否是单点 peak)"
+}
