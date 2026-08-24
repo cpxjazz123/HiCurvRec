@@ -1,0 +1,34 @@
+{
+  "mechanism": "v142_v139_plus_c_end_0.58_2d_joint",
+  "verdict": "R37_FAIL",
+  "baseline": "v139 C-RVQ Mahalanobis + commit_weight=0.04 + C_END=0.6 (test_R@10=0.2884181701030928)",
+  "v142_test_R@10": 0.1840,
+  "diff": -0.10441817010309278,
+  "rel_diff_pct": -36.21,
+  "stage3_train_summary": {
+    "best_ckpt_epoch": 84,
+    "best_ckpt_valid_ndcg20": 0.1352,
+    "early_stop_epoch": 104,
+    "early_stop_reason": "counter=20/20 (no improvement 20 consecutive epochs)",
+    "valid_ndcg10_E84_best": 0.1352,
+    "vs_v139_E57": "0.1352 vs 0.1933 (-30.06% on valid ndcg@10)"
+  },
+  "stage_metrics": {
+    "test_R@5": 0.1364,
+    "test_R@10": 0.1840,
+    "test_R@20": 0.2449,
+    "test_NDCG@5": 0.1030,
+    "test_NDCG@10": 0.1182,
+    "test_NDCG@20": 0.1336
+  },
+  "stage1_curvature": "C_END=0.58 (v142), commit_weight=0.04 (kept from v139 BREAKTHROUGH)",
+  "stage2_codes_distribution": "L0=44/256 (17.2%), L1=80/256 (31.2%)",
+  "r37_analysis": {
+    "trigger": "test_R@10 v142=0.1840 < v139=0.28842 (-36.21%, regress)",
+    "rollback_action": "v142 marked R37 FAIL. v139 baseline LOCKED. v142 dir rm'd.",
+    "comparison_v133": "v142=0.1840 < v133=0.20192 (-8.89%, regress vs old baseline too)",
+    "interpretation": "2D 联合 (commit_weight=0.04 + C_END=0.58) 验证 C_END=0.58 是 sharp peak 下侧, 但只 ~0.02 差距就足以让 test_R@10 -36%。C_END=0.6 sharp peak 单点确认 (v133 0.6: 0.202, v137 0.58: 0.197, v138 0.62: 0.191, v142 0.58+commit_004: 0.184). C_END=0.6 不可动, v139 BREAKTHROUGH 关键只在 commit_weight=0.04."
+  },
+  "ceiling_u_curve_C_END_at_commit_004": "commit_weight=0.04 固定 (C_END 微调): 0.58 (v142 0.184) | 0.6 (v139 0.288 BREAKTHROUGH) | 0.62 (?) - need test. C_END=0.6 在 commit_004 下仍是 sharp peak.",
+  "next_direction": "v143: 跳出 commit_weight × C_END 2D 维度, 探索新维度 (C_START 提高 / CURRICULUM_STEPS 缩短 / 加新机制)"
+}
