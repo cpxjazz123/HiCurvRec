@@ -10,9 +10,14 @@ R36/R47: items are precomputed by preprocess_instruments.py using sentence-t5-xx
 R42: 必须 torchrun --nproc_per_node=4 (DDP 4 卡).
 R30/R43: 超参硬编码, 无 CLI 数值超参.
 
+v151 因果对照实验 (R50 例外: 不训新模型, 只做 ckpt 续训对照):
+  --ckpt_path         从指定 ckpt 续训 (A/B/C 实验用)
+  --reset_optimizer   续训时重置 optimizer state (区分 B vs C)
+
 step 计数 = 全球 step (all_reduce SUM 每 step), 与 RQ-VAE-Recommender 论文 400k iter 对齐.
 每 50k 全球 step rank 0 保存一次 ckpt; 训完保存 final.
 """
+import argparse
 import json
 import os
 import sys
@@ -66,7 +71,7 @@ SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单�
 # 论文支撑: C-RVQ arxiv 2505.12143 May 2025 (commitment loss 用 Mahalanobis dist²)
 # 关键 bug fix: v120 baseline 的 log_var 永远不训练 (QuantizeLoss 用 Poincaré dist)
 # 权重 0.1: 与 standard commitment loss (commitment_weight=0.25) 同量级 (10-100 倍比值)
-MAHALANOBIS_COMMIT_WEIGHT = 0.1  # v129: Mahalanobis commit loss 正则权重 (0.0=disable, 0.1=standard)
+MAHALANOBIS_COMMIT_WEIGHT = 0.05  # v130c: Mahalanobis commit loss 正则权重 (v129=0.1 baseline, v130c 探索 0.05 更保守)
 # codebook 健康检查: 层 unique code 数 < CODEBOOK_SIZE*该阈值 → 打印 [CODEBOOK WARNING]
 CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 
@@ -84,7 +89,7 @@ C_FIXED = 1.0                             # 固定曲率值 (HG-Rec)
 # 机制: c 从 c_start (近欧氏) 线性增到 c_end (双曲) over curriculum_steps
 USE_CURRICULUM_CURVATURE = True           # C27 启用 (取代 C26 固定 c)
 C_START = 0.05                            # 初始 c (近欧氏, 训练稳定)
-C_END = 0.7                               # v19: 最终 c 1.0→0.7 (缓和曲率调度, R36 框架级变更)
+C_END = 0.6  # v133: 略更双曲 (v130c 0.7, v132 0.5 regress, 微调 0.6)                               # v19: 最终 c 1.0→0.7 (缓和曲率调度, R36 框架级变更)
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
 # HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
 GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
@@ -164,6 +169,14 @@ def save_ckpt(model, optimizer, global_step, out_dir, tag):
 
 
 def main():
+    # v151 因果对照实验: 支持 ckpt 续训
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ckpt_path", type=str, default=None,
+                        help="从指定 ckpt 续训 (A/B/C 实验)")
+    parser.add_argument("--reset_optimizer", action="store_true",
+                        help="续训时重置 optimizer state")
+    _args, _ = parser.parse_known_args()
+
     rank, world_size, local_rank = setup_distributed()
     device = torch.device(f"cuda:{local_rank}")
 
@@ -246,9 +259,30 @@ def main():
         n_params = sum(p.numel() for p in model.module.parameters())
         print(f"[model] params={n_params} | DDP wrapped", flush=True)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+    # v151 因果对照: 从 ckpt 续训
+    global_step = 0
+    if _args.ckpt_path is not None:
+        if rank == 0:
+            print(f"[ckpt] loading from {_args.ckpt_path}", flush=True)
+        ckpt = torch.load(_args.ckpt_path, map_location="cpu")
+        model.module.load_state_dict(ckpt["model"], strict=False)
+        # 恢复 curriculum step (让 c schedule 从断点继续)
+        if "global_step" in ckpt and global_step > 0:
+            model.module.set_curriculum_step(global_step)
+        if not _args.reset_optimizer:
+            optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+            optimizer.load_state_dict(ckpt["optimizer"])
+            global_step = ckpt.get("global_step", 0)
+            if rank == 0:
+                print(f"[ckpt] resumed global_step={global_step}, optimizer state loaded", flush=True)
+        else:
+            optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+            global_step = ckpt.get("global_step", 0)
+            if rank == 0:
+                print(f"[ckpt] resumed global_step={global_step}, optimizer state RESET", flush=True)
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
 
-    global_step = 0   # 全球 step (= 单卡 step × world_size, 用 all_reduce SUM 同步)
     t_start = time.time()
     last_log_t = t_start
 

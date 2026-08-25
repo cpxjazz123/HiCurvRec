@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "crvq_mahalanobis_commitment_v129"  # ← v129 NOVEL: v120 C-RVQ Mahalanobis + MAHALANOBIS COMMITMENT LOSS FIX (关键 bug fix). v128 调研发现 v120 baseline 的 log_var 参数从未训练, 因为 QuantizeLoss 用 Poincaré 距离做 commitment loss (而非 Mahalanobis), 导致 log_var 没有 gradient flow. v129 修复: 在 modules/loss.py QuantizeLoss 中加入 Mahalanobis commitment loss term, 让 log_var 真正参与训练. 论文支撑: C-RVQ arxiv 2505.12143 May 2025 (明确使用 Mahalanobis distance 同时做 VQ assignment AND commitment loss). R36n 合规. 这是首次让 v120 C-RVQ Mahalanobis 机制真正生效.
+MECHANISM_NAME = "crvq_mahalanobis_c_end_06_v133"  # ← v130c 微调: v129 commit_weight=0.1 baseline test_R@10=0.14030, v130 (0.15) regress -12.25%. 探索更保守的 0.05 是否更稳. R36o phase C 微调空间探索. 论文支撑: C-RVQ arxiv 2505.12143 May 2025. R36n 合规.
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")

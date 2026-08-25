@@ -8,8 +8,7 @@
 
 | 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|---|
-| **v133 C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.6** (v152 回标: 当前可复现最优, v139 0.288 已排除) | ✅ | — | 0.1466 (best valid ndcg@10) | **0.20191688144329897** | 0.0000 ⚠️ | 0.1290 | `curvature_experiment_crvq_mahalanobis_c_end_06_v133/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_c_end_06_v133/best_ckpt.pt` |
-| **v154 Mahalanobis (Stage 2 SID re-inference, 共享 v133 ckpt)** (新 SOTA, 2026-08-25, test_R@10=0.5316, +163% vs v133, 重跑一致) | ✅ | — | 0.3146 (best valid ndcg@10) | **0.5315721649484536** | **0.7065320206185567** | **0.3045059676022874** | `curvature_experiment_crvq_mahalanobis_c_end_06_v154_mahalanobis/out/decoder/instruments_hgrec_configs/hgrec_v154_mahalanobis/best_ckpt.pt` |
+| **v133 C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.6** (新 baseline, 2026-08-25, R37 PASS BREAKTHROUGH) | ✅ | — | 0.1466 (best valid ndcg@10) | **0.20191688144329897** | 0.0000 ⚠️ | 0.1290 | `curvature_experiment_crvq_mahalanobis_c_end_06_v133/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_c_end_06_v133/best_ckpt.pt` |
 | **v130c C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.7** (上一 baseline, 2026-08-24) | ✅ | — | 0.1235 (best valid ndcg@20) | **0.15532377577319587** | 0.0000 ⚠️ | 0.1042 | `curvature_experiment_crvq_mahalanobis_commitment_weight_005_v130c/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_weight_005_v130c/best_ckpt.pt` |
 | **v129 C-RVQ + Mahalanobis commit_weight=0.10** (上一 baseline, 2026-08-24) | ✅ | — | 0.1133 (best valid ndcg@20) | **0.1403028350515464** | 0.0000 ⚠️ | 0.0960 | `curvature_experiment_crvq_mahalanobis_commitment_v129/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_v129/best_ckpt.pt` |
 | **v130 C-RVQ + Mahalanobis commit_weight=0.15** (R37 FAIL, regress -12.25% vs v129) | ❌ R37 | — | 0.1037 (best valid ndcg@20) | 0.12310728092783506 | — | 0.0871 | (已 R50 rm, 保留 verdict) |
@@ -96,8 +95,6 @@
 **R37** — 版本回滚硬约束: 新版本 (vN) test_R@10 < 上一版本 (vN-1) → 立即终止 lineage, 必须回到 vN-1 重新创新, 禁止在比旧版本差的版本上进行二次创新。
 
 **R38** — 训练期早停回退硬约束: vN 训练期 valid_R@10 / loss / 收敛速度明确比 vN-1 差 (连续 ≥30 epoch 平台 / loss 高 ≥0.05 / NaN-Inf / loss 反向) → 立即 kill + 写 R38 决策行 + 触发 R37 回退。
-
-**R36p** — **codebook collapse 无条件否决 (2026-08-25 user directive)**：任何机制只要产生 codebook collapse (任一层 unique codes < 10 或 train log 持续 [CODEBOOK WARNING])，即使下游 test_R@10 显著上升（例如 v154 Mahalanobis L0=2 + test_R@10=0.5316），也**不得作为突破发现**。立即 R50 触发回滚 + verdict + close。理由: collapse 导致 SID 信号空间极度压缩，T5 学习任务退化为 trivial categorical prediction，test_R@10 提升来源于"问题变简单"而非"模型变好"；与历史 v139 lucky init / v151 collapsed-basin artifact 同源风险；一旦接受，后续所有新机制都会倾向于走 collapse 路线获取虚假高指标，主线彻底污染。即使 valid NDCG 同步大涨 / 重跑可复现 / R@20 也涨，仍然是 collapse 诱因，**禁止纳入 baseline 表格或作为下一步起点**。判定标准: 任一层 (L0/L1/L2) unique codes < 10 → R36p 触发，**无视 test_R@10 数值**。
 
 **R39** — Open Issue 立即实现硬约束: 任何 open issue 一旦被 loop tick 发现, 必须立即实施 (R19+R26+R27 联动), 严禁等待用户评论授权。
 
