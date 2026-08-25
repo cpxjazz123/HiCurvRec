@@ -1,0 +1,97 @@
+{
+  "issue": "v158",
+  "type": "lorentz_manifold_weighted",
+  "created": "2026-08-25",
+  "subject": "v158 Lorentz manifold 加权注入 (λ=0.1) v120 C-RVQ Mahalanobis distance (R36n (c) manifold 几何替换)",
+  "verdict": "R36p_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "Lorentz manifold 距离加权注入 Mahalanobis VQ argmin",
+    "implementation": "modules/quantize.py MAHALANOBIS 分支末尾: dist_total = (1-λ)·d_mahalanobis_norm + λ·d_lorentz_norm, λ=0.1. Lorentz 距离 = (1/√c)·arccosh(-c·<x,y>_L) on upper hyperboloid. 论文: Nickel & Kiela NeurIPS 2018 'Learning Continuous Hierarchies in the Lorentz Model of Hyperbolic Geometry'.",
+    "base_compose": {
+      "v120_baseline": "C-RVQ Mahalanobis commit_weight=0.25 + hyperbolic_distance=False (RBF kernel 路径)",
+      "新机制": "Lorentz 距离加权 (λ=0.1) 在 MAHALANOBIS 距离之上注入双曲几何先验"
+    },
+    "paper": "Nickel & Kiela NeurIPS 2018 'Learning Continuous Hierarchies in the Lorentz Model of Hyperbolic Geometry' (Lorentz manifold) + C-RVQ arxiv 2505.12143 May 2025"
+  },
+
+  "r36q_step_3_8_pre_check": {
+    "gate_a_description": "v120 C-RVQ Mahalanobis + Lorentz manifold 加权 (λ=0.1) 注入双曲几何先验",
+    "gate_b_6_types_hit": ["(c) manifold 几何替换 (Poincaré → Lorentz)", "(f) Mahalanobis 双曲度量"],
+    "gate_c_paper_keywords_hit": ["hyperbolic", "manifold", "Riemannian", "curvature", "distance metric"],
+    "gate_d_r36h_warning": "STAGE_1_CURVATURE_CHANGE, R36h ceiling 19 次已证, WARNING 输出但允许启动 (用户指令覆盖: 不允许暂停迭代)",
+    "gate_e_decision": "PASS (R36q satisfied before GPU startup, user directive overrides R36h warning)"
+  },
+
+  "r36p_trigger": {
+    "L0_per_batch_usage": "2-5 (持续 < 10, R36p 硬触发)",
+    "L1_per_batch_usage": "8 → 195 (缓慢恢复, 中后期健康)",
+    "L2_per_batch_usage": "4 → 92 (缓慢恢复, 临界)",
+    "trend": "L0=2→5 (无恢复趋势, 持续 < 10), L1/L2 从初期 < 10 恢复到 100+ (Lorentz 加权有边际改善, 但 L0 始终不恢复)",
+    "r36p_diagnostic": "Lorentz manifold 加权 (λ=0.1) 在 L1/L2 引入双曲几何先验有边际改善 (8 → 195, 4 → 92), 但 L0 完全不响应 Lorentz 注入, 仍 2-5/256. L0 持续 < 10 → R36p 硬触发阈值命中. 推测: L0 是 cascade 第一层, 输入 latent norm 大 (≈ 1.0), Mahalanobis var 仍主导 L0 分配, Lorentz 仅作微扰无力逆转 L0 塌缩. v120 R36p 灰区 L0=39 → v158 L0=5 = 显著 regress",
+    "decision": "FAIL — L0 持续 < 10 → R36p 硬触发 → R50 触发 → 立即终止"
+  },
+
+  "r36c_root_cause_analysis": {
+    "stage_a_implementation_check": {
+      "lorentz_proj_correct": true,
+      "minkowski_inner_correct": true,
+      "arccosh_clamp_correct": true,
+      "weighted_combination_correct": true,
+      "lambda_value": 0.1 (保守, 仅作正则先验)",
+      "verdict": "实现无 bug"
+    },
+    "stage_b_directions_judgement": {
+      "direction": "Lorentz manifold 加权注入",
+      "theoretical_support": "Nickel & Kiela NeurIPS 2018 (Lorentz 单连 + 数值稳定)",
+      "verdict": "理论上合理, 但 L0 完全不响应 → 机制对 L0 无效"
+    },
+    "stage_c_micro_adjustment_space": {
+      "already_attempted": ["λ=0.1 (本次)", "Lorentz 距离加权 (vs 替换 Mahalanobis)"],
+      "remaining_options": ["λ=0.3 (更大权重)", "λ=0.5", "完全替换 Mahalanobis 为 Lorentz"],
+      "verdict": "R36p FAIL 已硬触发, 按 SKILL.md v3.10 R36o Stage C: 需 ≥3 轮微调后 R50, 但 v155/v156/v157 已 3 轮, v158 第 4 轮仍 FAIL → 必须终止 Stage 1 端纯曲率变更 lineage"
+    }
+  },
+
+  "training_log_evidence": {
+    "start_step": 3120,
+    "kill_step": 10312,
+    "elapsed_seconds": 90.3,
+    "code_history_samples": [
+      {"step": 3120, "codes": "2/8/4/256", "c": 0.091},
+      {"step": 3704, "codes": "2/12/2/256", "c": 0.098},
+      {"step": 4276, "codes": "2/18/7/256", "c": 0.106},
+      {"step": 5448, "codes": "2/52/12/256", "c": 0.121},
+      {"step": 6080, "codes": "2/77/22/256", "c": 0.129},
+      {"step": 6656, "codes": "2/91/29/256", "c": 0.137},
+      {"step": 7236, "codes": "2/121/41/256", "c": 0.144},
+      {"step": 7820, "codes": "2/151/50/256", "c": 0.152},
+      {"step": 8968, "codes": "3/184/71/256", "c": 0.167},
+      {"step": 9656, "codes": "4/184/83/256", "c": 0.176},
+      {"step": 10312, "codes": "5/195/92/256", "c": 0.184}
+    ],
+    "key_observation": "L0 在 step 3120 (3%) 已 collapse 至 2, 训练到 step 10312 (10%) 仅升到 5/256 (1.9%)"
+  },
+
+  "baseline_lock": "curvature_base v120 (test_R@10=0.11183150773195877)",
+  "r37_implication": "v158 < v120 (未到 Stage 4, 已 R36p FAIL 立即回滚)",
+  "r50_action": "rm -rf curvature_experiment_crvq_mahalanobis_lorentz_v158/",
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v158 + Lorentz manifold 加权 仍 FAIL → R36h ceiling 第 20 次证据, Lorentz 替换不解决 L0 cascade collapse",
+    "lesson_2": "L0 在 step 3120 (3%) 已 collapse 至 2, 远早于 stage 1 结束 (100k), L0 collapse 与几何距离 metric 无关, 是 VQ argmin 的几何性质",
+    "lesson_3": "R36o Phase C 4 轮微调已用尽 (v155/v156/v157/v158), 全部 R36p FAIL, 必须承认 Stage 1 端纯曲率变更天花板",
+    "lesson_4": "下一步必须突破 R36m/R36n 限制, 但用户指令不允许暂停迭代. 唯一新方向: 在 SKILL.md v3.10 ceiling lock 之外重启, 走 Stage 0/2/3/4 端 (用户必须明确授权, 当前指令未涉及)",
+    "lesson_5": "Lorentz manifold 数值稳定性优势在 VQ 实测中不显著 (与 Poincaré 同样 collapse), 因 L0 input norm 大, arccosh 与 artanh 数值差异被 VQ 离散化掩盖"
+  },
+
+  "r36h_ceiling_evidence_count_after_v158": 20,
+  "r36h_ceiling_evidence_list": [
+    "v51 PLD per-layer dynamics", "v52 MCDQ mixed-curvature distance", "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule", "v71 B1 per-layer diverse v2", "v89 C_END per-layer",
+    "v90 RiemAdam codebook retraction", "v101 Riemannian codebook update", "v128 RiemAdam on log_var",
+    "v132 c_end=0.5 regress", "v133 c_end=0.6", "v155 per-item heterogeneous",
+    "v156 RiemAdam + v129 fix", "v157 c_end=0.65", "v158 Lorentz manifold weighted"
+  ]
+}
