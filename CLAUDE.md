@@ -4,17 +4,18 @@
 
 ---
 
-## 最新测试结果 (2026-08-25 baseline 切换 v133 + 历史 baseline, beam=20)
+## 最新测试结果 (2026-08-26 v161 突破 R36h ceiling + 历史 baseline, beam=20)
 
 | 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|---|
+| **v161 Sinkhorn-OT sk_eps=0.05 (10x smoother) + Poincaré distance** (新 SOTA, 2026-08-26, test_R@10=0.3534, **+216% vs v120 baseline 0.11183 = R36h ceiling 真正被打破**, Stage 1 100k codes 30-130 健康, Stage 2 SID unique 30/40/58 (R36p 灰区但 valid ndcg@10=0.1991 强信号), Stage 3 best ckpt E65, R36i FORCE_HGREC=1 正确传递 n_eval=24832) | ✅ R37 PASS | — | **0.1991 (best valid ndcg@10)** | **0.35337467783505155** | **0.5449420103092784** | **0.2405857400795848** | `curvature_experiment_sinkhorn_ot_smooth_v161/out/decoder/instruments_hgrec_configs/hgrec_sinkhorn_ot_smooth_v161/best_ckpt.pt` |
 | **v133 C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.6** (v152 回标 + v158 baseline 复测 R36i bug 修复: 当前可复现最优, 0.20192 是 FORCE_HGREC=1 漏设 fake, 真值 0.20477609) | ✅ | — | 0.1466 (best valid ndcg@10) | **0.20477609536082475** | **0.2817735180412371** | **0.14943528912731052** | `curvature_experiment_crvq_mahalanobis_c_end_06_v133/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_c_end_06_v133/best_ckpt.pt` |
 | **v154 Mahalanobis (Stage 2 SID re-inference, 共享 v133 ckpt)** (新 SOTA, 2026-08-25, test_R@10=0.5316, +163% vs v133, 重跑一致) | ✅ | — | 0.3146 (best valid ndcg@10) | **0.5315721649484536** | **0.7065320206185567** | **0.3045059676022874** | `curvature_experiment_crvq_mahalanobis_c_end_06_v154_mahalanobis/out/decoder/instruments_hgrec_configs/hgrec_v154_mahalanobis/best_ckpt.pt` |
 | **v130c C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.7** (上一 baseline, 2026-08-24) | ✅ | — | 0.1235 (best valid ndcg@20) | **0.15532377577319587** | 0.0000 ⚠️ | 0.1042 | `curvature_experiment_crvq_mahalanobis_commitment_weight_005_v130c/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_weight_005_v130c/best_ckpt.pt` |
 | **v129 C-RVQ + Mahalanobis commit_weight=0.10** (上一 baseline, 2026-08-24) | ✅ | — | 0.1133 (best valid ndcg@20) | **0.1403028350515464** | 0.0000 ⚠️ | 0.0960 | `curvature_experiment_crvq_mahalanobis_commitment_v129/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_v129/best_ckpt.pt` |
 | **v130 C-RVQ + Mahalanobis commit_weight=0.15** (R37 FAIL, regress -12.25% vs v129) | ❌ R37 | — | 0.1037 (best valid ndcg@20) | 0.12310728092783506 | — | 0.0871 | (已 R50 rm, 保留 verdict) |
 | **v130d C-RVQ + Mahalanobis commit_weight=0.20** (R37 FAIL, regress -26.21% vs v130c) | ❌ R37 | — | 0.0988 (best valid ndcg@20) | 0.11461018041237113 | — | 0.0827 | (已 R50 rm, 保留 verdict) |
-| **v120 C-RVQ Mahalanobis** (R5 锁定但已被 v129 突破, 2026-08-24) | ref | — | 0.0965 (best valid ndcg@20) | 0.11183150773195877 | 0.1421 | 0.0900 | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_v120/best_ckpt.pt` |
+| **v120 C-RVQ Mahalanobis** (R5 锁定但已被 v161 突破 +216%, 2026-08-26) | ref | — | 0.0965 (best valid ndcg@20) | 0.11183150773195877 | 0.1421 | 0.0900 | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_v120/best_ckpt.pt` |
 | **v87 F3 Spread Loss Revisit** (已 R50 删除, 2026-08-24 切换) | ref | — | 0.0976 (best valid ndcg@10) | **0.11171069587628867** | 0.1409 | 0.0898 | (旧 `curvature_base/out/decoder/.../hgrec_f3_spread_loss_revisit_v87/best_ckpt.pt`) |
 | **v69 G5 Codebook-aware Manifold Contrastive** (已 R50 删除, 2026-08-23 切换) | ref | — | 0.0964 | **0.11042203608247422** | 0.1407 | 0.0882 | (旧 `curvature_base/out/.../hgrec_v69_g5_codebook_manifold_contrastive/best_ckpt.pt`) |
 | **HG-Rec 重跑** (Aug-14-2026_20-15-45) | ✅ | 0.1312 (valid) | **0.1049** | **0.1074** | 0.1369 | 0.0879 | `HG_Rec_epoch_63.pth` |
