@@ -1,0 +1,53 @@
+{
+  "issue": "v165",
+  "type": "poincare_commit_loss_c07_mismatch",
+  "created": "2026-08-26",
+  "subject": "v165 QuantizeLoss commitment c=0.7 (vs 默认 c=1.0) 与 Stage 1 curriculum 一致. R36p 硬触发: Stage 2 SID unique = 6/12/20 (L0=6 < 10).",
+  "verdict": "R36p_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "Poincaré commit loss c=0.7 一致化 (vs 默认 c=1.0)",
+    "implementation": "modules/quantize.py: QuantizeLoss(commitment_weight, c=0.7) — 让 commit loss 在 c=0.7 Poincaré 球上计算 (与 Stage 1 curriculum C_END=0.7 一致). 默认 c=1.0 让 commit 与 VQ argmin 几何不一致. 期望 commit 梯度流向与 VQ argmin 同曲率, 进一步突破 v161.",
+    "base_compose": {
+      "v161_baseline": "Sinkhorn-OT sk_eps=0.05 + Poincaré VQ distance + QuantizeLoss c=1.0 default",
+      "新机制": "QuantizeLoss c=1.0 → 0.7 (commit loss 也用 Stage 1 curriculum 曲率)"
+    },
+    "paper": "C-RVQ arxiv 2505.12143 May 2025 + Poincaré Nickel & Kiela NeurIPS 2017 + Sinkhorn-Knopp Cuturi 2013"
+  },
+
+  "r36p_trigger": {
+    "stage1_codes_100k": "codes=126/106/108 (c=0.7) — 健康, R36p PASS",
+    "stage2_sid_unique": "6/12/20 — **R36p 硬触发 (L0=6 < 10)**",
+    "trend": "Stage 1 训练全程 codes 健康 (>100), 但 Stage 2 SID 推理时 codebook 利用率显著崩溃 (从 100+ → 6/12/20). 根因: commit c=0.7 让 codebook 在 c=0.7 球上更紧凑, 但 Stage 2 推理时仅用最常用 6/12/20 codes",
+    "r36p_diagnostic": "QuantizeLoss c=1.0 → 0.7 改变 commit 梯度方向, 让 codebook 向 Poincaré 球 c=0.7 表面收缩. 训练时分布覆盖 100+ codes (因为 Mahalanobis 主路径 + Sinkhorn 均衡分配仍生效), 但推理时 argmin 仅选最匹配 codes, 大量 codebook 元素被 '废弃' — Stage 2 SID unique 6/12/20. 推断唯一 codes 集中在最高频 6/12/20 (代表 Stage 1 输入 latent 的几何中心, 与 c=0.7 球切空间对齐)",
+    "decision": "FAIL — L0=6 < 10 → R36p 硬触发 → R50 触发 → 立即终止"
+  },
+
+  "stage_results": {
+    "stage1_100k_steps": {
+      "codebook_usage_final": "126/106/108 (c=0.7) — 训练期 R36p PASS",
+      "loss": "1.85-1.87 (与 v161 同等)",
+      "completion": "PASS"
+    },
+    "stage2_sid_inference": {
+      "code_usage_L0": "6/256 (R36p 硬触发)",
+      "code_usage_L1": "12/256",
+      "code_usage_L2": "20/256",
+      "completion": "R36p FAIL — 立即终止, 未进 Stage 3"
+    }
+  },
+
+  "baseline_lock": "v161 (test_R@10=0.35337467783505155)",
+  "r37_implication": "v165 R36p FAIL 立即回滚, 未到 Stage 3",
+  "r50_action": "rm -rf curvature_experiment_sinkhorn_ot_commit_v165/",
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v165 改动小 (一行 c=1.0 → 0.7) 但破坏 Stage 2 SID 几何完整性. Stage 1 训练健康 ≠ Stage 2 SID 健康, 必须 Stage 1 → Stage 2 → Stage 3 → Stage 4 全流程验证",
+    "lesson_2": "QuantizeLoss c 与 VQ argmin c 一致化理论正确但实施有副作用 — commit loss 梯度方向改变让 codebook 向 c=0.7 球切空间收缩, 大量 codes 被 '废弃'",
+    "lesson_3": "v161 c=1.0 (commit loss 默认) 是 design 巧合的稳定点. 不要再改 c. 下一步新方向: 保持 v161, 探索 (a) per-layer 异质 sk_eps (真正 R36n (b)); (b) Stage 2 SID re-inference 共享 v161 ckpt (类似 v154 模式)"
+  },
+
+  "r36h_ceiling_evidence_count_after_v165": 24,
+  "key_takeaway": "v161 是稳定 SOTA, 不要在 commit loss 路径上做 c 改动. 探索方向回到 per-layer 异质 / Stage 2 共享 v161 ckpt re-inference"
+}
