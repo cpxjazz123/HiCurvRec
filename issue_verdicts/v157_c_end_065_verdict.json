@@ -1,0 +1,107 @@
+{
+  "issue": "v157",
+  "type": "c_end_micro_adjustment",
+  "created": "2026-08-25",
+  "subject": "v157 curriculum C_END=0.6 → 0.65 微调 (v133 base + c_end 0.65, v132 0.5 regress, v130c 0.7 PASS, 探索中点)",
+  "verdict": "R36p_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "curriculum C_END 微调 (0.6 → 0.65)",
+    "implementation": "v133 base + train_rqvae_instruments.py line 92 C_END=0.6 → 0.65",
+    "base_compose": {
+      "v129_fix": "mahalanobis_commit_loss 保留",
+      "v133_base": "M3 transport + Mahalanobis distance + commit_weight=0.05",
+      "微调点": "C_END=0.65 (介于 v132 regress 0.5 与 v130c PASS 0.7 之间)"
+    },
+    "paper": "C-RVQ arxiv 2505.12143 May 2025"
+  },
+
+  "r36q_step_3_8_pre_check": {
+    "gate_a_description": "v133 base + c_end=0.65 (curriculum 微调, 介于 0.6 与 0.7 之间)",
+    "gate_b_6_types_hit": ["(a) curriculum", "(e) M3 transport", "(f) Mahalanobis"],
+    "gate_c_paper_keywords_hit": ["hyperbolic", "manifold", "curvature", "distance metric"],
+    "gate_d_r36h_warning": "STAGE_1_CURVATURE_CHANGE, R36h ceiling 18 次已证 (v51/v52/v56/v67/v71/v89/v90/v101/v128/v155/v156), WARNING 输出但允许启动",
+    "gate_e_decision": "PASS (R36q satisfied before GPU startup)"
+  },
+
+  "r36p_trigger": {
+    "L0_per_batch_usage": "23-30 (临界, 接近 10% 边界但 > 10 unique)",
+    "L1_per_batch_usage": "58-117 (健康)",
+    "L2_per_batch_usage": "2-5 (持续 < 10, R36p 硬触发)",
+    "trend": "L0=23→30 (略有恢复), L2=2→5 (临界徘徊, 持续 < 10)",
+    "r36p_diagnostic": "c_end 微调 0.6→0.65 对 L2 collapse 无改善。L0/L2 在 step=25492 已 < 10, R36p 硬触发阈值在训练早期 (25%) 已命中。c_end 微调空间已用尽 (0.5 regress, 0.7 接近 collapse, 0.65 仍 collapse)",
+    "decision": "FAIL — L2 unique codes 持续 < 10 → R36p 硬触发 → R50 触发 + R37 等同 → 立即终止"
+  },
+
+  "r36c_root_cause_analysis": {
+    "stage_a_implementation_check": {
+      "v129_fix_applied": true,
+      "c_end_correct": true,
+      "m3_transport_correct": true,
+      "verdict": "实现无 bug"
+    },
+    "stage_b_directions_judgement": {
+      "direction": "curriculum C_END 微调",
+      "theoretical_support": "C-RVQ arxiv 2505.12143 May 2025 (curriculum c(t))",
+      "verdict": "理论上正确, 但 R36h ceiling 进一步证 Stage 1 端纯曲率变更被 Stage 3 T5 SID 表征锁死"
+    },
+    "stage_c_micro_adjustment_space": {
+      "already_attempted": [
+        "v132 c_end=0.5 regress",
+        "v133 c_end=0.6 (当前 baseline, 训练中 L2 仍 7-12 临界)",
+        "v157 c_end=0.65 (本次, L2 collapse 2-5)",
+        "v130c c_end=0.7 PASS 但 R36p 灰区",
+        "commit_weight {0.05, 0.10, 0.15, 0.20} 全部已试 (v129/v130/v130c/v130d)",
+        "R36o phase C 3 轮微调 (v128/v155/v156)"
+      ],
+      "remaining_options": [
+        "完全跳出 c_end 维度 (改 curriculum_steps ∈ {30k, 70k}, 但 v130c 已试过)",
+        "改 c_init 起点 (c_init=0.1 vs 1.0)"
+      ],
+      "verdict": "R36p FAIL 已硬触发, 按 SKILL.md v3.9 R36o Stage C 限制 (≥3 轮微调后必须 R50): v155/v156/v157 已 3 轮全部 R36p FAIL, 必须终止 Stage 1 端纯曲率变更 lineage"
+    }
+  },
+
+  "training_log_evidence": {
+    "start_step": 24488,
+    "kill_step": 38492,
+    "elapsed_seconds": 195.4,
+    "code_history_samples": [
+      {"step": 24488, "codes": "25/117/4/256", "c": 0.344},
+      {"step": 25492, "codes": "23/95/4/256", "c": 0.356},
+      {"step": 26492, "codes": "23/105/5/256", "c": 0.368},
+      {"step": 28476, "codes": "24/109/4/256", "c": 0.392},
+      {"step": 29472, "codes": "26/93/2/256", "c": 0.404},
+      {"step": 30464, "codes": "30/92/4/256", "c": 0.416},
+      {"step": 31464, "codes": "27/90/3/256", "c": 0.428},
+      {"step": 32464, "codes": "23/64/2/256", "c": 0.440},
+      {"step": 34468, "codes": "26/82/2/256", "c": 0.464},
+      {"step": 36476, "codes": "26/67/2/256", "c": 0.488},
+      {"step": 37488, "codes": "27/73/3/256", "c": 0.500},
+      {"step": 38492, "codes": "25/63/3/256", "c": 0.512}
+    ],
+    "key_observation": "L2 在 step=24488 已 ≤ 4, c 从 0.344 升到 0.512, 但 L2 仍 3/256 (1.2%), R36p 硬触发"
+  },
+
+  "baseline_lock": "v133 (test_R@10=0.20192)",
+  "r37_implication": "v157 < v133 (未到 Stage 4, 已 R36p FAIL 立即回滚)",
+  "r50_action": "rm -rf curvature_experiment_crvq_mahalanobis_c_end_065_v157/",
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v157 + c_end 微调 仍 FAIL → R36h ceiling 第 19 次证据, c_end 微调空间 (0.5/0.6/0.65/0.7) 全部 collapse 或 regress, Stage 1 端 c_end 微调已彻底死路",
+    "lesson_2": "L2 在 step=24488 已 collapse 至 4, 远早于 stage 1 结束 (100k), L2 collapse 是 VQ argmin distance 的几何性质, 与 c_end 取值无关",
+    "lesson_3": "R36o Phase C 3 轮微调已用尽 (v155 per-item / v156 Riemannian+fix / v157 c_end=0.65), 必须承认 Stage 1 端纯曲率变更天花板",
+    "lesson_4": "下一步可选: (a) 路径 A 接受 R36h ceiling, 改走 curriculum_steps 微调 ({30k, 70k}); (b) 路径 B 解除 R36m (Stage 0 embedding 创新, 高风险); (c) 路径 C 跳出曲率框架, 但 R36n 全禁, 已无合规方向. 优先选 (a) 是 R36o phase C 仅存微调空间",
+    "lesson_5": "c_init 起点变更可能有效 (c_init=0.1 让 L1/L2 起始更平坦), 但仍属 Stage 1 端纯曲率变更, R36h ceiling 警告仍生效, 概率仍高"
+  },
+
+  "r36h_ceiling_evidence_count_after_v157": 19,
+  "r36h_ceiling_evidence_list": [
+    "v51 PLD per-layer dynamics", "v52 MCDQ mixed-curvature distance", "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule", "v71 B1 per-layer diverse v2", "v89 C_END per-layer",
+    "v90 RiemAdam codebook retraction", "v101 Riemannian codebook update", "v128 RiemAdam on log_var",
+    "v132 c_end=0.5 regress", "v133 c_end=0.6 (当前 baseline, L2 7-12 临界)", "v155 per-item heterogeneous",
+    "v156 RiemAdam + v129 fix", "v157 c_end=0.65"
+  ]
+}
