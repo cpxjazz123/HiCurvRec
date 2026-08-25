@@ -1,0 +1,53 @@
+{
+  "issue": "v162",
+  "type": "sinkhorn_ot_sharper_temp_collapse",
+  "created": "2026-08-26",
+  "subject": "v162 Sinkhorn-OT sk_eps=0.02 (vs v161 0.05, 2.5x 更尖锐) + Poincaré distance. R36p 硬触发 collapse (codes=1/1/1).",
+  "verdict": "R36p_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "Sinkhorn-Knopp 均衡分配 (sharper eps=0.02) + Poincaré distance",
+    "implementation": "modules/quantize.py MAHALANOBIS 分支: sk_eps=0.02 (vs v161 0.05 — 2.5x 更尖锐), hyperbolic_distance=True. Step 536 codes=4/4/4 → step 1540 codes=1/1/1 永久 collapse",
+    "base_compose": {
+      "v161_breakthrough": "sk_eps=0.05 (smoother) + Poincaré → test_R@10=0.3534 (+216%)",
+      "新机制": "sk_eps=0.02 (更尖锐) — 探索最优温度"
+    },
+    "paper": "C-RVQ arxiv 2505.12143 May 2025 + Sinkhorn-Knopp Cuturi 2013"
+  },
+
+  "r36p_trigger": {
+    "L0_per_batch_usage": "1/256 (从 step 1540 永久 < 10)",
+    "L1_per_batch_usage": "1/256 (永久 < 10)",
+    "L2_per_batch_usage": "1/256 (永久 < 10)",
+    "collapse_history": [
+      {"step": 536, "codes": "4/4/4/256", "c": 0.057, "verdict": "启动即健康崩溃"},
+      {"step": 1540, "codes": "1/1/1/256", "c": 0.070, "verdict": "永久 collapse (后续 step 一直 1/1/1)"},
+      {"step": 16180, "codes": "1/1/1/256", "c": 0.260, "verdict": "collapse 未恢复"}
+    ],
+    "trend": "sk_eps=0.02 启动 536 步就触发 collapse, Sinkhorn 退化为 greedy argmin, 等价没有 Sinkhorn-OT",
+    "r36p_diagnostic": "sk_eps=0.02 太尖锐, Sinkhorn 矩阵幂迭代接近 0 温度 (greedy), 实际效果等同 v120 baseline hyperbolic_distance=False. 但 v120 baseline 仍能学到合理 SID (codes 47/234/234) — 这次 collapse 比 baseline 还差, 暗示 sk_eps=0.02 破坏了 Mahalanobis 距离的 covariance 自适应",
+    "decision": "FAIL — L0/L1/L2 永久 1/256 < 10 → R36p 硬触发 → R50 触发 → 立即终止 (step 16180 kill)"
+  },
+
+  "training_log_evidence": {
+    "start_step": 0,
+    "kill_step": 16180,
+    "elapsed_seconds": 80.2,
+    "key_observation": "sk_eps=0.02 启动即 collapse, Sinkhorn 温度太低破坏均衡分配机制"
+  },
+
+  "baseline_lock": "curvature_base v120 (test_R@10=0.11183150773195877)",
+  "r37_implication": "v162 R36p FAIL 立即回滚, 未到 Stage 3",
+  "r50_action": "rm -rf curvature_experiment_sinkhorn_ot_sharper_v162/",
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v162 sk_eps=0.02 太尖锐触发 R36p. v161 sk_eps=0.05 才是甜区. Sinkhorn 温度与 collapse 防机制有非单调关系: 0.005 (sharp) regress, 0.02 (sharp-medium) collapse, 0.05 (smoother) breakthrough, 0.1+ 待探索",
+    "lesson_2": "温度太低 → Sinkhorn 失效退化为 greedy argmin, 让 Mahalanobis covariance 自适应反噬",
+    "lesson_3": "v161 0.05 是当前最优温度, 下一步应探索 v163 sk_eps=0.1 (更平滑) 验证曲线走向, 或保持 v161 不变作为新 baseline",
+    "lesson_4": "R36p 阈值 < 10 触发硬回滚, v162 codes=1 立即触发. 早期检测 (step 1540) 比 Stage 4 test 失败时更高效"
+  },
+
+  "r36h_ceiling_evidence_count_after_v162": 22,
+  "key_takeaway": "Sinkhorn 温度对 R36h ceiling 突破有非单调效应: 0.005/0.02 collapse/regress, 0.05 breakthrough. 必须继续探索更平滑温度 (0.1/0.2) 看曲线是否饱和"
+}
