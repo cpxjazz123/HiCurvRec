@@ -1,0 +1,27 @@
+{
+  "mechanism": "v149_crvq_mahalanobis_poincare_v149",
+  "verdict": "R37_FAIL",
+  "baseline": "v139 C-RVQ Mahalanobis + commit_weight=0.04 + C_END=0.6 (test_R@10=0.2884181701030928)",
+  "v149b_test_R@10": "N/A (Stage 1 训练 R37 FAIL 触发,未进入 Stage 4)",
+  "v149_rationale": "P0-1 修复: v139 Mahalanobis distance 公式不含 c, c sweep 下 SID 完全一致. v149 尝试让 c 真正进 argmin (P0-1 修复).",
+
+  "r36c_diagnosis": {
+    "v149_round_1": {
+      "design": "Poincaré-Mahalanobis hybrid: expmap0(x, c) → Mahalanobis dist²",
+      "failure_root_cause": "数据 norm 极小 (encoder output ~0.007) << ball 半径 sqrt(1/c) ~ 2.0. expmap0(u, c) = tanh(√c·||u||)/(√c·||u||)·u ≈ u (c 退化). 此外 ckpt codebook norm ~3.2 远大于 ball, _proj_to_ball_t 把所有 codeword 投影到 norm=max_norm 同一球壳, c 不影响 argmin. v148 attribution 实测 c sweep 0.3/0.6/1.0/1.5 下 SID 完全一致 (0 diff).",
+      "fix_v149b": "改 c-weighted log_var: log_var_eff = log_var - 0.5·log(c), commit_loss 加 c 缩放"
+    },
+    "v149b_round_2": {
+      "design": "c-weighted log_var Mahalanobis (删 expmap)",
+      "stage1_train_log_evidence": "step 10000 ~ 18000: L0 codes 卡 5 unique (1.95%, 远 < 10% 阈值), L1 增长 5→189, L2 波动. loss=1.5-1.6 (vs v139 baseline ~0.8).",
+      "failure_root_cause": "L0 数据 norm 极小 (~0.007), Mahalanobis diff² ≈ 0, var clamp [0.1, 10.0] 远大于实际数据 norm². argmin 在数值噪声级抖动, 全部样本选中同一个 codeword. L0 严重 collapse (5 unique / 256). v139 baseline 也有 L0 codes 30-50 (< 25.6 阈值) 但 Stage 3 仍能跑 0.28842. v149b 因 c-weighted log_var 让 var 进一步缩小 (c_commit_scale * mahan_dist_sq) → collapse 更严重."
+    }
+  },
+
+  "r36h_ceiling_evidence_extension": {
+    "conclusion": "R36h ceiling 物理根源 = Stage 1 数据 norm 极小 (~0.007) 与曲率几何不兼容. 任何 expmap / Poincaré / Lorentz 类机制 在该 norm 尺度下都退化为 identity. c 几何效应消失. 真正能让 c 进 argmin 必须改 encoder 让输出 norm 接近 sqrt(1/c) (R36n 改架构违规).",
+    "history_extends": "v146/v147/v149 3 次连续 Stage 1 端曲率机制变更 都 R37 FAIL 或 R51+ 字符级一致 baseline. R36h ceiling 已 8+ 案例."
+  },
+
+  "next_direction": "R36 v3.6/3.7 收敛: Stage 1 端纯曲率变更无法突破 0.28842 ceiling (物理 norm 限制). 突破方向必须走 Stage 0 embedding 变更 (R36m 已禁, 因 Stage 3 T5 OOD 锁死) 或 Stage 2/3/4 端曲率机制 (R36 v3.6 已禁). R36h ceiling 实际为物理上限, 任何 R36+n 合规变更无效. 唯一可能: 改 R36m 解除 Stage 0 禁令 (高风险, R36+R36m 双重否定) 或承认 ceiling = 当前最优."
+}
