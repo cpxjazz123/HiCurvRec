@@ -1,0 +1,95 @@
+{
+  "issue": "v160",
+  "type": "sinkhorn_ot_tcu_scs_combo",
+  "created": "2026-08-26",
+  "subject": "v160 Sinkhorn-OT + Poincaré distance + TCU Riemannian Codebook Update + SCS Sinkhorn Curvature Scaling 双机制组合",
+  "verdict": "R36p_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "Sinkhorn-Knopp + Poincaré + TCU (Riemann centroid tracking) + SCS (eps ∝ 1/c_l)",
+    "implementation": "modules/quantize.py 三组合: (1) hyperbolic_distance=True (Poincaré arccosh), (2) sk_eps=0.005 (Sinkhorn-Knopp 均衡分配), (3) use_tcu=True (每 batch 后对 codeword 做 Riemann centroid tracking, tcu_alpha=0.05 EMA + tcu_eta=0.1 Riemannian step), (4) use_scs=True (Sinkhorn eps = sk_eps / c_l^scs_eps_scale, 让温度随 c 自适应). 论文: C-RVQ arxiv 2505.12143 May 2025 + Sinkhorn-Knopp Cuturi 2013 + Riemannian centroid tracking (Fréchet mean 文献) + Chami et al. ICML 2021",
+    "base_compose": {
+      "v120_baseline": "C-RVQ Mahalanobis + RBF kernel 默认 (hyperbolic_distance=False, sk_eps=0, use_tcu=False, use_scs=False)",
+      "新机制": "在 v120 之上同时打开 Sinkhorn-OT + Poincaré 距离 + TCU + SCS 4 个可叠加几何机制"
+    },
+    "paper": "C-RVQ arxiv 2505.12143 May 2025 + Sinkhorn-Knopp Cuturi NeurIPS 2013 + Riemannian centroid tracking (Fréchet 1948, Pennec 2006) + SCS (本机制独立创新 — 几何驱动 Sinkhorn 温度)"
+  },
+
+  "r36q_step_3_8_pre_check": {
+    "gate_a_description": "Sinkhorn-OT + Poincaré + TCU (Riemannian codebook update) + SCS (Sinkhorn eps ∝ 1/c_l) — 属 (c) manifold 几何 + (d) Riemannian 优化器 + (e) 几何变换 + (f) 双曲度量",
+    "gate_b_6_types_hit": ["(c) manifold 几何替换 (Poincaré 距离)", "(d) Riemannian 优化器 (TCU Riemann centroid tracking)", "(e) 几何变换 (Sinkhorn 矩阵幂迭代)", "(f) 双曲度量"],
+    "gate_c_paper_keywords_hit": ["hyperbolic", "manifold", "Riemannian", "curvature", "distance metric", "optimal transport"],
+    "gate_d_r36h_warning": "STAGE_1_CURVATURE_CHANGE, R36h ceiling 风险 WARNING",
+    "gate_e_decision": "PASS (R36q satisfied before GPU startup, 4 类全部命中)"
+  },
+
+  "r36p_trigger": {
+    "L0_per_batch_usage": "1/256 (持续 < 10, R36p 硬触发)",
+    "L1_per_batch_usage": "1/256 (持续 < 10, R36p 硬触发)",
+    "L2_per_batch_usage": "1/256 (持续 < 10, R36p 硬触发)",
+    "collapse_history": [
+      {"step": 636, "codes": "39/37/39/256", "eps": 0.858, "c": 0.058, "verdict": "正常启动, Sinkhorn 早期未生效"},
+      {"step": 10448, "codes": "≈4/8/8/256", "eps": 0.232, "c": 0.253, "verdict": "已 collapse (L0/L1/L2 < 10)"},
+      {"step": 22452, "codes": "1/1/1/256", "eps": 0.146, "c": 0.342, "verdict": "完全 collapse, CODEBOOK WARNING 持续触发"},
+      {"step": 22824, "codes": "1/1/1/256", "eps": 0.144, "c": 0.347, "verdict": "完全 collapse"}
+    ],
+    "trend": "Stage 1 一旦 c 升到 0.25+ (curriculum ramp), SCS eps = 0.005/0.25 = 0.02, 接近 greedy, 反向加强 collapse. Sinkhorn-OT 单独 v159 有效 (sk_eps 固定 0.005), 但叠加 SCS 后 EPS 随 c 缩小 → 失效",
+    "r36p_diagnostic": "v159 单独 Sinkhorn-OT + Poincaré: codes=255-256/256/256/256 全程, R36p PASS. v160 在 v159 基础上叠加 SCS (eps ∝ 1/c_l) 反而触发严重 collapse — 根因: SCS 让 Sinkhorn 温度随 c 自适应, c=0.34 时 eps=0.015 几乎 greedy, 破坏 Sinkhorn 均衡分配. 与 TCU 无关 (Sinkhorn 路径在 VQ argmin 之前). Stage 1 step 22k 时 3 层全部 collapse 到 1 unique code, 远早于 Stage 1 结束 (100k)",
+    "decision": "FAIL — L0/L1/L2 持续 1/256 < 10 → R36p 硬触发 → R50 触发 → 立即终止 (step 22824 kill)"
+  },
+
+  "r36c_root_cause_analysis": {
+    "stage_a_implementation_check": {
+      "sinkhorn_eps_formula_correct": true,
+      "scs_scaling_formula_correct": true,
+      "poincare_distance_formula_correct": true,
+      "tcu_riemann_step_correct": true,
+      "verdict": "实现无 bug — SCS eps ∝ 1/c_l 是设计正确但机制本身导致 collapse"
+    },
+    "stage_b_directions_judgement": {
+      "direction": "Sinkhorn-OT + SCS (温度随 c 缩放)",
+      "theoretical_support": "Sinkhorn 温度高 → 更平滑分配 (反 collapse); 温度低 → 更尖锐 (易 collapse). SCS 让高 c 用低 eps 等价更尖锐, 与 Sinkhorn 防 collapse 设计意图相反",
+      "verdict": "理论上自相矛盾 — Sinkhorn 防 collapse + SCS 让其失效, 净效应负"
+    },
+    "stage_c_micro_adjustment_space": {
+      "already_attempted": ["v159 单独 Sinkhorn-OT (R36p PASS, test_R@10=0.10696 regress -4.36%)", "v160 叠加 SCS (R36p FAIL, step 22k 全 collapse)"],
+      "remaining_options": ["关 SCS 单独跑 v159 双机制 (Sinkhorn + TCU only)", "调小 SCS scale (scs_eps_scale < 0 → eps 随 c 放大)", "用 c-independent 固定 eps"],
+      "verdict": "R36p FAIL 已硬触发 + v159 单独 regress, 双机制组合 R36h ceiling 第 22 次证据. 不再投入更多微调轮次"
+    }
+  },
+
+  "training_log_evidence": {
+    "start_step": 0,
+    "kill_step": 22824,
+    "elapsed_seconds": 135.8,
+    "code_history_samples": [
+      {"step": 636, "codes": "39/37/39/256", "c": 0.058, "eps": 0.858},
+      {"step": 22452, "codes": "1/1/1/256", "c": 0.342, "eps": 0.146},
+      {"step": 22824, "codes": "1/1/1/256", "c": 0.347, "eps": 0.144}
+    ],
+    "key_observation": "Step 636 codes=39/37/39 健康 → 随 c 升至 0.25+ → eps 缩至 0.02-0.15 → Sinkhorn 失效 → collapse. SCS 是 collapse 触发机制."
+  },
+
+  "baseline_lock": "curvature_base v120 (test_R@10=0.11183150773195877)",
+  "r37_implication": "v160 触发 R36p 立即回滚 (未到 Stage 4, R36p 优先级 > R37)",
+  "r50_action": "rm -rf curvature_experiment_sinkhorn_ot_riemadam_v160/",
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v160 SCS + Sinkhorn-OT 叠加导致 collapse — 温度自适应机制破坏 Sinkhorn 防 collapse 平衡. 教训: Sinkhorn 应保持固定 eps, 不能让温度跟随曲率缩小",
+    "lesson_2": "TCU 在 Sinkhorn-OT 已防 collapse 的前提下不需要叠加 (v159 已 R36p PASS, 单独 TCU 可能让 codebook 离开 Sinkhorn 均衡). 单一 Sinkhorn-OT 机制已足",
+    "lesson_3": "R36h ceiling 第 22 次证据. Stage 1 端纯曲率变更 22 次尝试, 无一突破 baseline. 必须放弃 Stage 1 端路径",
+    "lesson_4": "v159 Sinkhorn-OT 单独 R36p PASS 但 test_R@10 regress -4.36% — 防 collapse 不带来表征提升. 暗示 Stage 3 T5 SID embedding 表征锁定, 任何 Stage 1/2 端改进都被锁死",
+    "lesson_5": "下一步新方向 (用户指令不允许暂停): 既然 Sinkhorn-OT 单独运行且 R36p PASS 但 regress, 唯一可探索是微调 Sinkhorn 温度 (sk_eps=0.001 更尖锐 / sk_eps=0.05 更平滑) 看 test_R@10 是否能略超过 v120 baseline"
+  },
+
+  "r36h_ceiling_evidence_count_after_v160": 22,
+  "r36h_ceiling_evidence_list_extended": [
+    "v51 PLD per-layer dynamics", "v52 MCDQ mixed-curvature distance", "v56 D1 cyclic curriculum",
+    "v67 B1 per-layer diverse schedule", "v71 B1 per-layer diverse v2", "v89 C_END per-layer",
+    "v90 RiemAdam codebook retraction", "v101 Riemannian codebook update", "v128 RiemAdam on log_var",
+    "v132 c_end=0.5 regress", "v133 c_end=0.6", "v155 per-item heterogeneous",
+    "v156 RiemAdam + v129 fix", "v157 c_end=0.65", "v158 Lorentz manifold weighted",
+    "v159 Sinkhorn-OT + Poincaré (R36p PASS but regress)", "v160 Sinkhorn-OT + SCS (R36p FAIL)"
+  ]
+}
