@@ -1,0 +1,109 @@
+{
+  "issue": "v152",
+  "type": "forensic_audit",
+  "created": "2026-08-25",
+  "subject": "v139 0.288 真实性审计",
+  "verdict": "LUCKY_INIT_NO_REPRODUCTION_POSSIBLE",
+  "confidence": "HIGH",
+
+  "summary": "v139 test_R@10=0.288 不是 λ=0.04 的因果效应，而是随机初始化幸运值。v150 (λ=0.035/0.04/0.045, 200k steps) 全部塌缩到 1 code; v151 (A/B/C/D 四组对照) 全部塌缩到 1 code; v139 训练日志全程 L0=1-5 codes/batch 但最终 SID 有 29 个 L0 码 — 说明 v139 在 codebook 塌缩前保存了 checkpoint。",
+
+  "findings": {
+    "SHA256_CHECK": {
+      "description": "v139 checkpoint 与 v133 checkpoint SHA256 不同",
+      "v133_final": "259ec978f84cb2820d56a3fd409a751766d034b0927f48346a0b47a08cf0d66c",
+      "v139_final": "f33d7252cdb61822...",
+      "all_intermediate_ckpts": "DIFFERENT — v139 是独立训练, 非 v133 微调",
+      "verdict": "CONFIRMED_INDEPENDENT_TRAINING"
+    },
+    "NO_CKPT_LOADING": {
+      "description": "v139 train_rqvae_instruments.py 无 --ckpt_path 参数, 无 torch.load",
+      "verdict": "CONFIRMED_SCRATCH_TRAINING"
+    },
+    "TRAINING_LOG_ANALYSIS": {
+      "description": "v139 Stage 1 训练全程 L0 codes=1-5, L2=1-3, 持续 CODEBOOK WARNING",
+      "step_800": "codes=1/4/2",
+      "step_5000": "codes=1/58/11",
+      "step_10000": "codes=1/185/13",
+      "step_30000": "codes=4/65/2",
+      "step_50000": "codes=2/37/3",
+      "step_100000": "codes=2/37/2",
+      "curvature_reached": "c=0.6 at step 50000 (curriculum 结束)",
+      "verdict": "COLLAPSE_IN_PROGRESS"
+    },
+    "FINAL_SID_ANALYSIS": {
+      "description": "v139 最终 SID 有 29 L0 码, 195 L2 码 — 比训练 log 预期好",
+      "L0_distribution": "code_99=69.5%, code_7=27.1%, 其余 27 码=3.4%",
+      "L1_distribution": "49 unique codes, max=10.2%",
+      "L2_distribution": "195 unique codes, fairly distributed",
+      "v139_vs_v133": "v139 L0=29 < v133 L0=61, 但 v139 L2=195 ≈ v133 L2=198",
+      "verdict": "L2_DIVERSITY_SAVED_THE_MODEL"
+    },
+    "CODEBOOK_WEIGHTS_ANALYSIS": {
+      "description": "v139 final ckpt codebook 状态",
+      "L0_emb_norm": "mean=0.204, range=[0.088, 0.590]",
+      "L1_emb_norm": "mean=0.214, range=[0.057, 0.424]",
+      "L2_emb_norm": "mean=0.068, range=[0.025, 0.474]",
+      "L0_log_var": "mean=0.65, max=10.02",
+      "L1_log_var": "mean=2.68, max=10.02",
+      "L2_log_var": "mean=0.69, max=10.01",
+      "cosine_similarity_v139_vs_v133": "~0 (完全独立 codebook)",
+      "verdict": "HEALTHY_DIVERSE_CODEBOOK"
+    },
+    "v150_SCRATCH_FAILURE": {
+      "description": "v150 用 λ=0.035/0.04/0.045 从头训练 200k 步, 全部塌缩到 L0=1",
+      "lambda_0.035": "L0=2-9 unstable → L0=1",
+      "lambda_0.04": "L0=1 collapse",
+      "lambda_0.045": "L0=1 collapse",
+      "verdict": "LAMBDA_0.04_NOT_MAGIC_FROM_SCRATCH"
+    },
+    "v151_CKPT_CONTINUATION_FAILURE": {
+      "description": "v151 A/B/C/D 四组对照: 从 v133 续训 λ=0.04/0.05 / 从头训 λ=0.04, 全部塌缩",
+      "expA_v133_continuation_lambda_0.05": "L0=1, L1=1, L2=1",
+      "expB_v133_continuation_lambda_0.04_opt": "L0=1, L1=1, L2=1",
+      "expC_v133_continuation_lambda_0.04_opt_reset": "L0=1, L1=1, L2=1",
+      "expD_scratch_lambda_0.04": "L0=1, L1=1, L2=1",
+      "verdict": "PATH_DEPENDENCE_NOT_FROM_LAMBDA"
+    },
+    "TRAINING_LENGTH_HYPOTHESIS": {
+      "description": "v139 训练 100k 步 (~10 epochs on 9922 items), v150 训练 200k 步 (~200 epochs) — 过长的训练导致 codebook 完全塌缩",
+      "v139_100k": "L0=29 unique in final SID, test_R@10=0.288",
+      "v150_200k": "L0=1 complete collapse, test_R@10=FAILED",
+      "hypothesis": "λ=0.04 对 codebook 有持续压迫力, 训练越长塌缩越严重. v139 恰好在塌缩到 1 之前保存了 ckpt",
+      "verdict": "PLAUSIBLE_BUT_NOT_CONFIRMED — v150 λ=0.04 也塌缩到 1 in 200k, 即使 v139 在 100k 时保存"
+    }
+  },
+
+  "root_cause_analysis": {
+    "Hypothesis_1_lambda_0.04_causal": {
+      "status": "REJECTED",
+      "evidence": "v150 λ=0.04 从头训塌缩; v151 D 组 λ=0.04 从头训塌缩; v151 B/C 组从 v133 续训 λ=0.04 也塌缩"
+    },
+    "Hypothesis_2_lucky_initialization": {
+      "status": "MOST_LIKELY",
+      "evidence": "v139 cosine_similarity≈0 vs v133; optimizer state param_0 exp_avg=0 (从未更新); L0 分布极度偏斜 (99+7 占 96.6%); 相同代码/参数无法复现"
+    },
+    "Hypothesis_3_training_length_early_stop": {
+      "status": "PLAUSIBLE_CONFOUND",
+      "evidence": "v139 100k 步有 29 L0 码, v150 200k 步 L0=1; 但 v150 λ=0.04 在 200k 内塌缩, 即使 v139 在 100k 保存也无法用同样 ckpt 起点复现"
+    },
+    "Hypothesis_4_L2_layer_carrying_semantic_signal": {
+      "status": "UNCONFIRMED",
+      "evidence": "v139 L2=195 unique vs v133 L2=198, 差异不大; L0 极度偏斜但 L2 多样 → SID 主要靠 L2 区分, test_R@10 高可能来自 T5 的 SID embedding 学到了 L2 特征"
+    }
+  },
+
+  "conclusion": "v139 test_R@10=0.288 是幸运初始化的产物, 不是 λ=0.04 的可复现因果效应。v150 和 v151 的全部失败强烈支持此结论。任何基于 'λ=0.04 神奇超参' 的新实验方向应立即终止。",
+
+  "recommended_action": "放弃 λ=0.04 探索路线, 回到 v133 (test_R@10=0.2019) 作为当前最优 baseline, 在此基础上寻找真正可复现的改进。",
+
+  "v133_vs_v139_comparison": {
+    "v133_test_R@10": 0.2019,
+    "v139_test_R@10": 0.2884,
+    "v133_L0_codes": 61,
+    "v139_L0_codes": 29,
+    "v133_L2_codes": 198,
+    "v139_L2_codes": 195,
+    "key_insight": "v139 L0 码少一半但 test_R@10 高 43%, 说明 L0 码数量不是 test_R@10 的决定因素; L2 码多样性 (195 vs 198) 相似; 差异在于 v139 codebook 的具体几何排列更适配 T5 encoder"
+  }
+}

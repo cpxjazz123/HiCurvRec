@@ -4,11 +4,12 @@
 
 ---
 
-## 最新测试结果 (2026-08-24 baseline 切换 v130c + 历史 baseline, beam=20)
+## 最新测试结果 (2026-08-25 baseline 切换 v133 + 历史 baseline, beam=20)
 
 | 流水线 | 状态 | valid R@10 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|---|
-| **v130c C-RVQ + Mahalanobis commit_weight=0.05** (新 baseline, 2026-08-24) | ✅ R37 | — | 0.1235 (best valid ndcg@20) | **0.15532377577319587** | 0.0000 ⚠️ | 0.1042 | `curvature_experiment_crvq_mahalanobis_commitment_weight_005_v130c/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_weight_005_v130c/best_ckpt.pt` |
+| **v133 C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.6** (v152 回标: 当前可复现最优, v139 0.288 已排除) | ✅ | — | 0.1466 (best valid ndcg@10) | **0.20191688144329897** | 0.0000 ⚠️ | 0.1290 | `curvature_experiment_crvq_mahalanobis_c_end_06_v133/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_c_end_06_v133/best_ckpt.pt` |
+| **v130c C-RVQ + Mahalanobis commit_weight=0.05 + C_END=0.7** (上一 baseline, 2026-08-24) | ✅ | — | 0.1235 (best valid ndcg@20) | **0.15532377577319587** | 0.0000 ⚠️ | 0.1042 | `curvature_experiment_crvq_mahalanobis_commitment_weight_005_v130c/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_weight_005_v130c/best_ckpt.pt` |
 | **v129 C-RVQ + Mahalanobis commit_weight=0.10** (上一 baseline, 2026-08-24) | ✅ | — | 0.1133 (best valid ndcg@20) | **0.1403028350515464** | 0.0000 ⚠️ | 0.0960 | `curvature_experiment_crvq_mahalanobis_commitment_v129/out/decoder/instruments_hgrec_configs/hgrec_crvq_mahalanobis_commitment_v129/best_ckpt.pt` |
 | **v130 C-RVQ + Mahalanobis commit_weight=0.15** (R37 FAIL, regress -12.25% vs v129) | ❌ R37 | — | 0.1037 (best valid ndcg@20) | 0.12310728092783506 | — | 0.0871 | (已 R50 rm, 保留 verdict) |
 | **v130d C-RVQ + Mahalanobis commit_weight=0.20** (R37 FAIL, regress -26.21% vs v130c) | ❌ R37 | — | 0.0988 (best valid ndcg@20) | 0.11461018041237113 | — | 0.0827 | (已 R50 rm, 保留 verdict) |
