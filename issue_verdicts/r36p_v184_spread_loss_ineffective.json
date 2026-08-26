@@ -1,0 +1,19 @@
+{
+  "experiment": "curvature_experiment_v184_per_layer_c_end_spread",
+  "mechanism": "v120 C-RVQ Mahalanobis + per-layer c_end 阶梯 [0.5,0.6,0.7] + spread_loss_weight 0.05 + spread_loss_margin 5.0",
+  "stage1": {
+    "ckpt_attempted": "out/rqvae/instruments/rqvae_step20000.pt (then killed at 22k step)",
+    "codes_at_22k": "10/220/164/256 (~4-86% utility, L0 collapse 严重, L2 也 collapse 64%)",
+    "spread_loss_status": "active (weight 0.05) but L0 仍 collapse, L2 反而比 baseline 更差",
+    "training_status": "KILLED at 22k/100k due to R36p v3.10 utility < 90% threshold persistent"
+  },
+  "stage2": null,
+  "stage3": null,
+  "stage4": null,
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL — spread loss (几何正则) 加重 L2 collapse (从 v120 baseline ~80% → 64%) 且未救 L0 collapse (3.9% < 90% threshold).",
+  "root_cause": "spread_loss_margin=5.0 + spread_loss_weight=0.05 在 Mahalanobis distance 空间下, codebook 元素被推到 mutual 远离 (远离 cluster 中心), 加剧 dead code 区域. Mahalanobis log_var 学习自适应仍让高频 code 集中在 dense 区, L0 仍然 collapse. L2 (cascade 第三层) 输入是 L0+L1 residual, norm 极小 (≈ 0.14), spread loss 把 codebook 推到 norm 0.14 之外, 永远不被 argmin 选中.",
+  "r37_trigger": false,
+  "r50_action": "rm -rf curvature_experiment_v184_per_layer_c_end_spread",
+  "next_iteration": "v185: per-layer c_end 阶梯 + distance mode 替换 MAHALANOBIS → COSINE (R36n (f) 双曲度量替换). COSINE 不依赖 var 学习, codebook 元素 normalize 到 unit sphere, 距离公式简单. 期望三层 utility ≥ 90% (因 normalize + 内积 公式稳定, 不依赖 var 学习). 同时放弃 var 训练空间 (Mahalanobis 风险源)."
+}

@@ -1,0 +1,13 @@
+{
+  "experiment": "curvature_experiment_v193_sinkhorn_temp_curriculum",
+  "mechanism": "Sinkhorn-OT sk_eps temperature curriculum (5.0->0.05 over 50k) + per-layer c_end [0.5,0.6,0.7] + entropy bonus 0.1",
+  "stage1": {
+    "step": 12,
+    "codes_at_step12": "125/142/130/256",
+    "codes_utility_l012": "48.8% / 55.5% / 50.8%",
+    "training_status": "FAIL - 训练速度太慢 (19s/step, ETA 22 天), 训练初期 codebook 利用率反而比 v190 45% 更差"
+  },
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL - Sinkhorn sk_eps=5.0 起步让 Q 矩阵极度均匀, 训练速度被严重拖慢 (19s/step). 训练初期 codes 48% 反而低于 v190 的 45% 后期稳定值. v194 需重新设计: sk_eps curriculum 范围缩窄 (0.5->0.05), 减少 iters, 关闭 entropy bonus.",
+  "r50_action": "rm -rf curvature_experiment_v193_sinkhorn_temp_curriculum"
+}

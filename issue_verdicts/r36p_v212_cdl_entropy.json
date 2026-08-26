@@ -1,0 +1,25 @@
+{
+  "experiment": "curvature_experiment_v212_cdl_entropy",
+  "mechanism": "v212 = per-layer c_end ladder [0.5, 0.6, 0.7] + CDL entropy (weight 0.01) + dead-code penalty (0.05)",
+  "stage1": {
+    "kill_step": 4808,
+    "final_codes_at_kill": "1/1/1/256 (catastrophic collapse, 8 rounds R36p FAIL)",
+    "kill_trigger": "R23 [CODEBOOK WARNING] 持续 step 1780→4808 全 1/1/1, CDL entropy weight 0.01 不足以克服 KMeans init collapse. 8 rounds ladder/CDL 全 FAIL.",
+    "loss_at_kill": "loss=2.6715 (上升 vs 启动 loss=1.78, 训练 4.8% 步数 loss 反向)",
+    "r36p_pass": false,
+    "r36p_fail_reason": "L0/L1/L2 codes 全 = 1/1/1, 三层 0% utility. CDL entropy weight 0.01 太小 (max cdl_loss=0.055, 仅 3% of recon loss 1.9), 梯度信号太弱无法推动 codebook 分散. dead-code penalty 也失效 (因 1 个 code 概率 1.0, 其他 255 dead 接受零梯度)."
+  },
+  "r36c_round_8_outcome": "FAIL: ladder + CDL entropy (weight 0.01) 仍 catastrophic. 8 rounds R36p 全 FAIL.",
+  "r50_action": "rm -rf curvature_experiment_v212_cdl_entropy (R50 触发)",
+  "r36c_history": {
+    "round_1_v205_sinkhorn": "codes=1/1/1/256",
+    "round_2_v206_normclip_ladder": "codes=1/1/1/256",
+    "round_3_v207_ladder_only": "codes=17/231/210/256 (L0=6.6%)",
+    "round_4_v208_ladder_commit": "codes=18/224/190/256 (L0=7.0%)",
+    "round_5_v209_size_ladder_512_256_128": "KMeans 卡死",
+    "round_6_v210_size_mild_320_256_192": "codes=33/229/173/320,256,192 (L0=10.31%)",
+    "round_7_v211_ladder_size_combined": "codes=1/1/1/256 (catastrophic, KMeans init 320 簇过密)",
+    "round_8_v212_ladder_cdl_entropy_0.01": "codes=1/1/1/256 (CDL weight 0.01 太小, 梯度信号弱)"
+  },
+  "next_direction": "v213 = R36c Round 9: CDL weight 0.1 (10x 增强) + Sinkhorn sk_eps=0.05 (强制 balanced assignment, 每 code 都接受 batch mass) + τ=2.0 (更平 softmax 让远距离 code 也吃 mass). 期望: Sinkhorn 强制均衡 → CDL 维持 → utility ≥ 90%."
+}

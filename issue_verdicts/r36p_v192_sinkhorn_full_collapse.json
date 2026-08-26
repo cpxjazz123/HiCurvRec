@@ -1,0 +1,13 @@
+{
+  "experiment": "curvature_experiment_v192_sinkhorn_ot_per_layer",
+  "mechanism": "Sinkhorn-OT codebook assignment (hyperbolic_distance=True, sk_eps=0.05, SCS on) + per-layer c_end ladder [0.5,0.6,0.7] + Sinkhorn Q entropy bonus weight=0.5",
+  "stage1": {
+    "step": 20316,
+    "codes_at_step20k": "1/1/1/256",
+    "codes_utility_l012": "0.4% / 0.4% / 0.4%",
+    "training_status": "FAIL - 训练 20k 步三层全部 collapse, 即使 Sinkhorn + entropy bonus 也救不了"
+  },
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL 严重 - Sinkhorn sk_eps=0.05 + entropy bonus weight=0.5 让三层全部 collapse 到 1/256 (0.4% utility). Sinkhorn argmax(Q) 自身把 batch 全部选中同一 code → encoder 沿单一 code 学 → Sinkhorn 失败模式与 baseline L0 collapse 同源.",
+  "r50_action": "rm -rf curvature_experiment_v192_sinkhorn_ot_per_layer"
+}

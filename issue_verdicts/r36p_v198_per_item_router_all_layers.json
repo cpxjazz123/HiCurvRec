@@ -1,0 +1,15 @@
+{
+  "experiment": "curvature_experiment_v198_logvar_floor",
+  "mechanism": "v198 NOVEL: per-item FC router 全 3 层 (Issue #154 prefix_routing 扩展到 L0) + per-layer c_end ladder [0.5, 0.6, 0.7] + hyperbolic_distance + Sinkhorn",
+  "stage1": {
+    "step_killed_at": 51812,
+    "codes_at_step50k": "10/30/49/256 (L0 utility 3.9% / L1 11.7% / L2 19.1%)",
+    "training_status": "FAIL - per-item FC router on L0 同样触发 collapse (vs v187 prefix router L1/L2 only)",
+    "r36p_trigger_step": 5000,
+    "r36p_persistent_throughout": true,
+    "log_var_floor_v120_baseline_already_has_clamp_0_1_10": true
+  },
+  "r36p_decision": "FAIL - 18 次连续 v182-v198 全部 R36p FAIL L0 utility < 90%. per-item FC router 全 3 层仍 collapse 到 ~10 codes L0. Sinkhorn sk_eps=0.05 + per-layer c_end ladder + hyperbolic_distance 完全不能阻止 R36p.",
+  "r50_action": "rm -rf curvature_experiment_v198_logvar_floor",
+  "next_direction": "v199 死码随机重生 (Karpathy 2017 VQ-VAE): 每 1k step 检测死码 (>100 step 未用), 用 current batch furthest sample 替换. R36n (b) per-codebook heterogeneous treatment + (e) 几何变换."
+}

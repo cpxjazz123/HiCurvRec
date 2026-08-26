@@ -1,0 +1,20 @@
+{
+  "experiment": "curvature_experiment_v186_per_layer_c_end_cosine_ema",
+  "mechanism": "COSINE distance + per-layer c_end 阶梯 [0.5,0.6,0.7] + EMA codebook update (k-means style continuous EMA, momentum 0.05, interval 5000 step)",
+  "stage1": {
+    "ckpt_attempted": "killed at step 26k (rqvae_step30000.pt)",
+    "codes_at_26k": "37/233/116/256 (L0 14.5% / L1 91% / L2 45%)",
+    "ema_update_triggered": "1 次 (step 25k): layer 0 alive=36/256, layer 1 alive=231/256, layer 2 alive=208/256",
+    "training_status": "KILLED at 26k/100k due to R36p v3.10 L0 + L2 utility < 90%"
+  },
+  "stage2": null,
+  "stage3": null,
+  "stage4": null,
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL — L0 14.5% + L2 45% < 90% threshold (L1 91% PASS). EMA 部分救 L0 (从 8 → 36) 但仍 < 90%; L2 EMA 反恶化 (从 173 → 116). EMA update 把 alive codes 拉向 batch 中心, 但高频 dead code 区域被 EMA 拉远, 加剧 L2 collapse.",
+  "root_cause": "L0 collapse 是 v120 Mahalanobis 历史已知 (~28-35% baseline). 任何 RQ-VAE Stage 1 端纯机制 (per-layer c_end 阶梯, EMA, KMeans reinit, spread loss, COSINE 替换) 都不能突破. 根因: codebook_kmeans_init=True 初始分布 + sentence-t5 norm unit sphere 高度集中, VQ STE argmin 把 dead code 推到稀疏区, EMA 拉 alive codes 反而扩张死区. 真正 anti-collapse 需重做 encoder + k-means++ init + entropy bonus 等组合, 已是新 RQ-VAE 设计 (R36n 不直接命中).",
+  "r37_trigger": false,
+  "r50_action": "rm -rf curvature_experiment_v186_per_layer_c_end_cosine_ema",
+  "comprehensive_ceiling_note": "R36p v3.10 ≥ 90% utility 阈值对所有 RQ-VAE Stage 1 路径 (v120 Mahalanobis baseline ~30% utility + 任何 R36n 合规机制) 不可达. 5 次连续尝试 (v182/v183/v184/v185/v186) 全部 R36p FAIL L0 collapse. R36h ceiling 5 次 + R36p v3.10 ceiling 5 次 = Stage 1 端双重 ceiling 锁定. 唯一突破方向: Stage 0 embedding 创新 (R36m 已禁) 或新 RQ-VAE 设计 (R36n 不命中).",
+  "next_iteration": "v187: per-layer c_end 阶梯 + prefix router 全层 (L0/L1/L2 都 per-item 异质曲率, R36n (b) 最强形式) + COSINE. 不期望 L0 utility 90%, 但 R36n (b) per-layer 异质曲率合规, 接受 R36p FAIL 但保留 R36n 机制本身."
+}

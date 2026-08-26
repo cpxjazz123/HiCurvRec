@@ -1,0 +1,19 @@
+{
+  "experiment": "curvature_experiment_poincare_exp_input",
+  "mechanism": "Stage 0 Poincaré exp_0 input (R36n (e) 几何变换, exp/log/mobius/transport)",
+  "stage1": {
+    "ckpt_attempted": "out/rqvae/instruments/rqvae_step10000.pt (then killed)",
+    "code_per_batch_l012": "1/1-3/256 (utility 0.4-1.2%)",
+    "warning": "[CODEBOOK WARNING] persistent every step",
+    "training_status": "KILLED at step ~18k due to R36p v3.10 utility < 90% threshold + R23 codebook collapse signal"
+  },
+  "stage2": null,
+  "stage3": null,
+  "stage4": null,
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL — Stage 1 codebook collapse (1/1-3/256 < 90% utility 阈值)",
+  "root_cause": "Poincaré exp_0 强制 ||y|| ≈ tanh(||x||/2) ≈ 0.4621 (因 sentence-t5 norm ≈ 1). 信息压缩过甚: dim std 仅 0.0084 (vs input_emb_sphere 0.035, vs original 0.018). RQ-VAE encoder 输出空间被压缩到 ball 中心附近, codebook 学不到有意义的 code 分裂, 自然 collapse 到 1-3 unique codes.",
+  "r37_trigger": false,
+  "r50_action": "rm -rf curvature_experiment_poincare_exp_input",
+  "next_iteration": "Stage 1 RQ-VAE 端 Sinkhorn-OT sk_eps=0.05 + KMeans reinit 修复 collapse. v161 Sinkhorn-OT 0.3534 突破机制 + KMeans reinit 防 collapse, 维持 utility ≥ 90%."
+}

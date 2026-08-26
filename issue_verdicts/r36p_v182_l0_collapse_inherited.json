@@ -1,0 +1,21 @@
+{
+  "experiment": "curvature_experiment_v182_per_layer_c_end_ladder",
+  "mechanism": "v120 C-RVQ Mahalanobis + R36n (b) per-layer c_end 阶梯 [L0=0.5, L1=0.6, L2=0.7]",
+  "stage1": {
+    "ckpt": "out/rqvae/instruments/rqvae_final.pt (step=100000)",
+    "elapsed_s": 436.0,
+    "codes_per_batch_at_100k": "73/232/227/256",
+    "codes_utility_l012": "28.5% / 90.6% / 88.7%",
+    "c_end_reached": "0.500/0.600/0.700 (curriculum completed at 50k step)",
+    "training_status": "Stage 1 done. R36p v3.10 utility threshold ≥ 90% — L0=28.5% (严重 collapse) + L2=88.7% (< 90% 边缘) → FAIL"
+  },
+  "stage2": null,
+  "stage3": null,
+  "stage4": null,
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL — L0 28.5% (严重 collapse, 继承 v120 Mahalanobis 历史已知 L0 collapse, per-layer c_end 阶梯不能救). L2 88.7% < 90% 边缘. R36p v3.10 阈值: 三层任一层 < 90% → FAIL. 即使 L1=90.6% PASS, L0 + L2 双触发.",
+  "root_cause": "v120 Mahalanobis L0 collapse 是历史已知现象 (C-RVQ 论文 arxiv 2505.12143 中 L0 训练分布严重不均, 浅层 codebook 自然吸收高频特征, 大量 code 失效). per-layer c_end 阶梯 (浅层弱 c=0.5, 深层强 c=0.7) 不解决 L0 分布不均, 因 Mahalanobis 距离公式本身不依赖 c (c 只影响 hyperbolic_distance=True 路径). 即使 v120 L0 28.5% 是健康状态 (历史 baseline 未被 R36p v3.10 触发), R36p v3.10 (2026-08-26) 把阈值从 <10 unique 改为 <90% utility, v182 也被 R36p 拒绝.",
+  "r37_trigger": false,
+  "r50_action": "rm -rf curvature_experiment_v182_per_layer_c_end_ladder",
+  "next_iteration": "v183: v182 + KMeans reinit 救生圈 (R36p v3.10 修复机制). 每 5000 step 触发一次 MiniBatchKMeans on batch x (32-dim latent), 替换 dead code (任一层 utility < 0.85 → reinit). 与 v120 + per-layer c_end 阶梯 + KMeans reinit 三重机制组合, 期望三层 utility 均 ≥ 90%."
+}

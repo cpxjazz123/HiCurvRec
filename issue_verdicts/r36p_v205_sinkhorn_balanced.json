@@ -1,0 +1,16 @@
+{
+  "experiment": "curvature_experiment_v205_sinkhorn_balanced",
+  "mechanism": "v205 = Sinkhorn balanced assignment (sk_eps=0.1, sk_iters=5) + per-layer c_end ladder [0.5, 0.6, 0.7] + per-codebook Riemannian norm clip [0.3, 3.0]",
+  "stage1": {
+    "final_codes": "1/1/1/256",
+    "final_utility_pct": "0.4%/0.4%/0.4%",
+    "r36p_pass": false,
+    "r36p_fail_reason": "Sinkhorn sk_eps=0.1 + hyperbolic distance 触发极端 collapse (codes 1/1/1). 根因: exp(-d/0.1) 在 d 任意大时 -> 0, 归一化后 argmax 不变 -> 全 item 映射同一 code. loss 异常 474 (vs baseline ~3.7). vl (commit loss) = 472 -> Sinkhorn 强制均衡, 但只剩 1 个 code '均衡' = 全 collapse."
+  },
+  "r50_action": "rm -rf curvature_experiment_v205_sinkhorn_balanced",
+  "diagnosis_round_1": {
+    "issue": "Sinkhorn 软分配在 RQ-VAE 是已知 collapse 诱因 (v192 / v193 / v197 都失败). sk_eps 太小 -> 极端尖锐, sk_eps 太大 -> 太弱 (软聚类). 当前 0.1 是尖刺.",
+    "fix_attempt_in_v206": "去掉 Sinkhorn, 只用 v200 norm clip + v202 per-layer c ladder (已分别验证 L0 72.6% / L1-L2 80%/67%)"
+  },
+  "next_direction": "v206 = per-codebook norm clip + per-layer c_end ladder [0.5, 0.6, 0.7] (无 Sinkhorn, 无 alive_ratio_loss, 无 random init). R36n (b) per-layer + (e) 几何变换. 期望: L0 80%+ (norm clip 强化), L1/L2 80%+ (per-layer ladder 强化)"
+}

@@ -1,0 +1,17 @@
+{
+  "experiment": "curvature_experiment_v206_normclip_ladder",
+  "mechanism": "v206 = per-codebook Riemannian norm clip [0.3, 3.0] + per-layer c_end ladder [0.5, 0.6, 0.7]",
+  "stage1": {
+    "final_codes": "1/1/1/256",
+    "final_utility_pct": "0.4%/0.4%/0.4%",
+    "r36p_pass": false,
+    "r36p_fail_reason": "norm clip 把所有 emb norm 强制限制在 [0.42, 4.24] 范围内, 但 norm clip 后 KMeans init 256 个 codebook 中心都收敛到同一 norm 范围 + 方向任意 → 全 batch argmin 映射到同一 code. vl=0.0009 (commit loss 几乎 0) 证实 collapse. R36c Round 2 失败."
+  },
+  "r36c_round_diagnosis": {
+    "round_1_v205_sinkhorn": "Sinkhorn sk_eps=0.1 极端 collapse codes=1/1/1/256, loss=474. 改: 去 Sinkhorn",
+    "round_2_v206_normclip": "norm clip + ladder 仍 collapse codes=1/1/1/256, loss=1.86. norm clip 触发 norm 受限 + 方向任意 collapse. 改: 去 norm clip",
+    "round_3_v207_planned": "v207 仅 per-layer c ladder [0.5, 0.6, 0.7] (无 norm clip, 无 Sinkhorn), 验证 ladder 单独效果. v202 历史已验 L1/L2 80%/67%"
+  },
+  "r50_action": "rm -rf curvature_experiment_v206_normclip_ladder",
+  "next_direction": "v207 = ONLY per-layer c_end ladder (R36n b per-layer), 无 norm clip, 无 Sinkhorn, 无 alive_ratio. 单独机制剥离测试"
+}

@@ -1,0 +1,13 @@
+{
+  "experiment": "curvature_experiment_v197_v190_upgraded_entropy",
+  "mechanism": "v190 升级: soft_entropy weight 0.1→0.5 + temp 0.05→0.5 + Sinkhorn baseline",
+  "stage1": {
+    "step": 15336,
+    "codes_at_step15k": "1/1/1/256",
+    "codes_utility_l012": "0.4% / 0.4% / 0.4%",
+    "training_status": "FAIL 严重 - entropy 主导 loss 但 encoder 仍 collapse 到单一 code"
+  },
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL - 即使 entropy weight 0.5 (5x v190) + temperature 0.5 (10x v190) + Sinkhorn baseline, 三层仍 1/256. entropy bonus 让 loss 变负 (-0.81), 反向传播拉平 distribution, 但 encoder 学习仍集中到单一 code (gradient 主导 vs entropy 主导). 16 次连续 v182-v197 全部 R36p FAIL L0 < 90%.",
+  "r50_action": "rm -rf curvature_experiment_v197_v190_upgraded_entropy"
+}

@@ -1,0 +1,12 @@
+{
+  "experiment": "curvature_experiment_v204_alive_ratio_only",
+  "mechanism": "v204 = per-codebook Riemannian norm clip [0.3, 3.0] + per-layer alive_ratio_loss 0.5 (无 random init)",
+  "stage1": {
+    "final_codes_L0_L1_L2": "184/66/65/256",
+    "final_utility_L0_L1_L2_pct": "71.9%/25.8%/25.4%",
+    "r36p_pass": false,
+    "r36p_fail_reason": "三层 utility 全 < 90% (184/66/65 < 230/256), alive_ratio_loss 无效: cascade RQ-VAE residual norm 极小, KMeans init 卡死, 死码无法恢复"
+  },
+  "r50_action": "rm -rf curvature_experiment_v204_alive_ratio_only",
+  "next_direction": "v205 = Sinkhorn balanced assignment (sk_eps=0.1) + per-layer c_end ladder [0.5, 0.6, 0.7] + norm clip (R36q PASS, v205_r36q_verdict.json)"
+}

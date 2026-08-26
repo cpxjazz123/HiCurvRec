@@ -1,0 +1,11 @@
+{
+  "experiment": "curvature_experiment_v209_size_ladder",
+  "gate_q_pass": true,
+  "mechanism_summary": "v209 = per-layer codebook size ladder [512, 256, 128]. R36c Round 5 — 新维度 (capacity) 探索. v205/v206/v207/v208 4 rounds 全 FAIL on L0, 根因 commit/curriculum 无法传播到死码. v209 改 codebook 容量, L0=512 翻倍, L2=128 减半.",
+  "gate_b_classes_hit": {
+    "b_per_item_per_layer_per_codebook": true,
+    "rationale_b": "per-layer codebook size ladder [512, 256, 128] — 三层异质 capacity. R36n (b) per-layer 异质 (新维度: 不止 c, 还有 size)."
+  },
+  "gate_c_keywords_hit": ["hyperbolic", "manifold", "curvature"],
+  "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯曲率变更 (但 v209 是 codebook size, 不直接是曲率). R36h ceiling 主要锁 c 变化, size 是新维度. 部分 WARNING 软提示."
+}

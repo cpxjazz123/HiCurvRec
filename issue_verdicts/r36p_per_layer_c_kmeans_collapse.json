@@ -1,0 +1,19 @@
+{
+  "experiment": "curvature_experiment_per_layer_c_learnable",
+  "mechanism": "Stage 1 RQ-VAE: Sinkhorn-OT sk_eps=0.05 + hyperbolic_distance=True + KMeans reinit (R36n (b) + (e) + (f))",
+  "stage1": {
+    "ckpt_attempted": "out/rqvae/instruments/rqvae_step10000.pt (then killed)",
+    "code_per_batch_l012_range": "150/106/124 (~50%)",
+    "kmeans_reinit_triggered": "5x in 14.1k steps (each reinit 88-227 codes from batch x via MiniBatchKMeans + random projection)",
+    "training_status": "KILLED at 14.1k due to R36p v3.10 utility < 90% threshold persistent (~50% per-batch)"
+  },
+  "stage2": null,
+  "stage3": null,
+  "stage4": null,
+  "r36p_trigger": true,
+  "r36p_decision": "FAIL — Stage 1 codebook utility ~50% persistent (R36p v3.10 阈值 ≥ 90%, 实际 50% = 严重 collapse). Sinkhorn-OT 强 assignment 平均化 + KMeans reinit 仍不能维持 utility.",
+  "root_cause": "Sinkhorn-OT sk_eps=0.05 在 c=0.05-0.2 (curriculum 初期) 强制 soft assignment 平均分布, batch 内 sample 分布不均导致 codebook 学习高度依赖后续 collapse recovery. KMeans reinit 替换 dead code 但新 code 在 c 低时被 VQ argmin STE 截断, 仍然不被 pick up, 导致 utility 持续 50%. v161 历史 Stage 2 utility 11-22% 印证此机制本身与 R36p v3.10 不兼容.",
+  "r37_trigger": false,
+  "r50_action": "rm -rf curvature_experiment_per_layer_c_learnable",
+  "next_iteration": "放弃 Sinkhorn-OT 路径 (本质与 R36p v3.10 不兼容). 改为 Stage 1 RQ-VAE 端 v120 baseline + Mahalanobis commit_loss + 增强 margin regularization (R36n (f) 双曲几何损失). 验证 R36p utility ≥ 90% + test_R@10 > 0.11183."
+}

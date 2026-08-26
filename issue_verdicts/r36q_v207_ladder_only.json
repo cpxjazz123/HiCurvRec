@@ -1,0 +1,11 @@
+{
+  "experiment": "curvature_experiment_v207_ladder_only",
+  "gate_q_pass": true,
+  "mechanism_summary": "v207 = ONLY per-layer c_end ladder [0.5, 0.6, 0.7] (无 norm clip, 无 Sinkhorn). R36c Round 3 单机制剥离测试: v205 (Sinkhorn) FAIL → v206 (norm clip+ladder) FAIL → v207 (ladder only) 验证 ladder 单独效果.",
+  "gate_b_classes_hit": {
+    "b_per_item_per_layer_per_codebook": true,
+    "rationale_b": "per-layer c_end ladder [0.5, 0.6, 0.7] 三个值, L0/L1/L2 独立 c_end, 浅层低曲率 (信息细粒度), 深层高曲率 (semantic 抽象)."
+  },
+  "gate_c_keywords_hit": ["hyperbolic", "manifold", "curvature"],
+  "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯曲率变更 (R36h ceiling 5 次字符级一致 baseline + R36c Round 3 已失败 v205/v206, 仅剩 v207 验证 ladder 单独). WARNING 软提示强烈."
+}

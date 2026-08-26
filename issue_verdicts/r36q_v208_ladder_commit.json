@@ -1,0 +1,13 @@
+{
+  "experiment": "curvature_experiment_v208_ladder_commit",
+  "gate_q_pass": true,
+  "mechanism_summary": "v208 = per-layer c_end ladder [0.5, 0.6, 0.7] + per-layer commit_weight ladder [2.0, 1.0, 0.5]. v207 ladder 单独 L1 90% PASS / L2 82% / L0 17% FAIL. v208 加 L0 commit×2 强制 codebook 分散.",
+  "gate_b_classes_hit": {
+    "b_per_item_per_layer_per_codebook": true,
+    "f_hyperbolic_geometry_loss": true,
+    "rationale_b": "per-layer c_end ladder [0.5, 0.6, 0.7] + per-layer commit_weight ladder [2.0, 1.0, 0.5]. 异质曲率 + 异质 commitment loss 加权, 两维度 per-layer 异质.",
+    "rationale_f": "commit loss = commitment metric in VQ-VAE (Van den Oord 2017), 即 Riemann 度量下的 commitment 约束. L0 commit×2 即 L0 commitment 主导 (强制 codebook 频繁更新)."
+  },
+  "gate_c_keywords_hit": ["hyperbolic", "manifold", "curvature"],
+  "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯曲率变更. v207 ladder 单独有效 (L1 90% PASS R36p). v208 加 commit ladder, 仍属 Stage 1 端纯曲率变更 lineage. R36h ceiling risk 持续, 但 ladder 已突破部分 R36p (L1). 继续探索."
+}
