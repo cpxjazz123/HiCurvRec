@@ -1,0 +1,38 @@
+{
+  "experiment": "curvature_experiment_v223_fixed_max_norm + v224_smaller_max_norm",
+  "verdict": "R36p_FAIL_R37_PENDING_TEST_R10",
+  "mechanism": "v222-v224 = C-RVQ + Riemannian Codebook Retraction (Euclidean projection to ball) + fixed max_norm 硬约束",
+  "ddp_4gpu_results": {
+    "v222_step100k": {
+      "codes": "L0 stuck 2-6/256 (1-2% utility)",
+      "L1_L2_improvement": "L1 1→177/256 (single GPU smoke only, no DDP run)",
+      "single_gpu_only": true,
+      "ball_radius_issue": "ball radius = 1/√c × 0.95, c=0.053 时 = 4.12, 远大于 codeword norm 0.04, retraction L0 不触发"
+    },
+    "v223_DDP_step100k": {
+      "codes": "[67, 233, 236]/256 → L0 26.2% L1 91.0% L2 92.2%",
+      "max_norm_0.5": "min(ball_radius, 0.5), L0 改善显著 +25% (1%→26%), L1/L2 首次跨 90%",
+      "L0_still_stuck": "26% < 90% R36p 阈值"
+    },
+    "v224_DDP_step100k": {
+      "codes": "[83, 233, 227]/256 → L0 32.4% L1 91.0% L2 88.7%",
+      "max_norm_0.3": "min(ball_radius, 0.3), L0 进一步改善 +6.2% (26%→32%), 但 L2 略降至 88.7%",
+      "trend": "L0 单调上升: v222 1% → v223 26% → v224 32% (R36o 阶段 C 微调有效)"
+    }
+  },
+  "r36p_v3.10_verdict": {
+    "L0_90_threshold": "v224 32.4% ❌ FAIL",
+    "L1_90_threshold": "v224 91.0% ✅ PASS",
+    "L2_90_threshold": "v224 88.7% ❌ FAIL",
+    "overall": "R36p v3.10 utility < 90% → 立即 R50 触发回滚"
+  },
+  "r36o_v3.7_phase_c_microtune_summary": {
+    "v222_single_gpu_smoke": "L0 1-2%, L1 1%→69% single GPU only",
+    "v223_max_norm_0.5": "L0 26% (+25% vs v222)",
+    "v224_max_norm_0.3": "L0 32% (+6% vs v223)",
+    "trend": "L0 单调上升, 但仍未达 90% 阈值 (距 90% 还差 58%)"
+  },
+  "root_cause_final": "L0 cascade first stage 输入 residual 极小 (norm 0.04), 即使 max_norm=0.3 强制 norm ≤ 0.3, KMeans 初始中心聚集在狭小空间, 后续 batch 集中访问同一小区域码. forward-side + loss-side + retraction 都救不回 L0. 需 per-layer max_norm (L0 单独更激进) 或改 KMeans 初始化策略.",
+  "next_direction_v225": "per-layer max_norm (L0=0.5, L1/L2=0.3) — L0 单独激进约束, 其他层保守. R36n (c)+(e) 合规.",
+  "next_action": "R50 rm v224 + commit + 设计 v225 per-layer max_norm + 实现 + 启动 DDP 4 卡"
+}
