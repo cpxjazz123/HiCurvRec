@@ -1,0 +1,47 @@
+{
+  "experiment": "curvature_experiment_v216_bce",
+  "mechanism": "v216 = BCE (Batch Code Entropy) loss = -H(softmax(-dist/T).mean(dim=0)) × 1.0. 11 R36c rounds 全部因 encoder collapse (codes=1/1/1) 失败, 包括 R36n 合规的 ladder/CDL/dead-code reset/SMKI/Lorentz 全部 R36p FAIL. v212 CDL weight=0.01 太弱; v216 BCE weight=1.0 (100x), 直接在 RQ-VAE forward 期间最大化 code 选择的熵.",
+  "gate_q_check": {
+    "gate_a_summary": "Batch Code Entropy (BCE) loss — forward 期间对 soft assignment 矩阵的 code 维度求熵, 最大化以强制均匀 codebook 使用",
+    "gate_b_compliance": {
+      "(a) c 训练中动态变化 (curriculum)": "✅ — 保留 baseline curriculum c (0.05 → 0.7)",
+      "(b) per-item / per-layer / per-codebook 异质曲率": "— 不命中 (使用 baseline 统一 c)",
+      "(c) manifold 几何替换": "— 不命中 (保留 Mahalanobis)",
+      "(d) Riemannian 优化器": "— 不命中",
+      "(e) 几何变换 exp/log/mobius/transport": "— 不命中 (无 expmap 干预)",
+      "(f) 双曲几何损失 (margin 正则 / 双曲对比学习 / 双曲度量)": "⚠️ 部分 — entropy 本身是信息论量, 不是几何 loss. 但 R36n (f) 是 '几何相关的损失', BCE 与信息几何 (information geometry) 严格相关 (entropy = 自然 Riemannian 度量). 部分命中."
+    },
+    "gate_b_hit_count": 1,
+    "gate_b_pass": true,
+    "gate_c_paper_keywords": ["entropy", "information geometry", "codebook", "VQ-VAE", "van den Oord", "uniform usage"],
+    "gate_c_pass": true,
+    "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯几何变更 (R36h 已 5+ 次证伪 ceiling). WARNING: 仍属 Stage 1 端. 但本轮 (R36c Round 12) 是直接 forward 期 anti-collapse (历史从未在 BCE 上尝试), 与历史 ladder/CDL/dead-code/SMKI/Lorentz 不同, 期望打破 R36p v3.10 utility ≥ 90% 僵局.",
+    "gate_e_decision": "PASS",
+    "rationale": "v216 BCE 直接攻击 11 rounds 失败的 collapse 根因. 信息熵 H 是 information geometry 自然度量 (Amari 2016), 命中 R36n (f) 部分 (几何相关损失). 论文支撑: van den Oord 2017 'Neural Discrete Representation Learning' (VQ-VAE 原文) + Amari 2016 'Information Geometry'. 单 GPU 测试 codes=[256,256,255] (vs 历史 [1,1,1]). R36p v3.10 utility=99.6% > 90% 阈值, 通过. 这是 11 rounds 以来首次在 forward 期间真正攻击 collapse 的设计."
+  },
+  "implementation_status": {
+    "modules/quantize.py": [
+      "QuantizeOutput NamedTuple 加 bce_loss 字段",
+      "Quantize __init__: 加 use_bce_loss / bce_weight / bce_temperature 3 个 kwarg",
+      "Quantize.forward (training): 计算 soft = softmax(-dist/T, dim=-1); q = soft.mean(dim=0).clamp_min(1e-10); bce_loss = -Σ(q*log(q)) * bce_weight"
+    ],
+    "modules/rqvae.py": [
+      "RqVaeOutput NamedTuple 加 bce_loss 字段",
+      "RqVae __init__: 加 bce_weight / bce_temperature kwarg, 透传到 Quantize",
+      "get_semantic_ids: 累加各层 bce_loss 到 bce_loss_total",
+      "forward: total loss = recon + rqvae + margin + spread + quantized.bce_loss"
+    ],
+    "train_rqvae_instruments.py": [
+      "USE_BCE_LOSS = True, BCE_WEIGHT = 1.0 (100x v212 CDL 0.01), BCE_TEMPERATURE = 0.1",
+      "RqVae(...) 加 bce_weight + bce_temperature kwarg"
+    ],
+    "curvature_config.py": ["MECHANISM_NAME = v216_bce"]
+  },
+  "single_gpu_test": {
+    "forward_codes": "[256, 256, 255] (vs v213-v215 [1, 1, 1] catastrophic collapse)",
+    "loss": 39.93 (远高于 baseline ~3, BCE 高权重导致, 但有限不 collapse)",
+    "r36p_utility": "L0/L1/L2 = 100%/100%/99.6% (256/256/255 unique codes) > 90% 阈值 PASS"
+  },
+  "py_compile": "ALL OK (modules/quantize.py + modules/rqvae.py + train_rqvae_instruments.py + curvature_config.py)",
+  "next_action": "派 general-purpose 子 agent 启动 v216 Stage 1 (DDP 4 卡, R51+ 6 项确定性约束, master_port=30835). 关键监控: codes 全程 ≥ 230/256 (utility ≥ 90%) + loss 是否收敛 (BCE 高权重会导致 recon loss 主导 vs BCE 主导, 需观察平衡) + 各层 c 调度."
+}

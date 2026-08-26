@@ -1,0 +1,20 @@
+{
+  "experiment": "curvature_experiment_v221_aggressive_anti_collapse",
+  "verdict": "R37_FAIL",
+  "mechanism": "v221 = BCE_WEIGHT=5 (5x v218=1) + PDRR_INTERVAL=50 (10x v217=500) + PDRR_DEAD_THRESHOLD=5/256 (5x v217) 超激进联合 anti-collapse 防御",
+  "outcome": {
+    "single_gpu_smoke": "未跑 (v218 BCE+PDRR 单 GPU 假象已知不可靠, v219/v220 已证)",
+    "ddp_4gpu_run": "FAIL — step 700 codes=1/1/1/256, step 13932 codes=1/1/1/256, 全程三层全部 < 10/256",
+    "cuda_error": "首次启动时 PDRR torch.multinomial 触发 CUDA device-side assert (MultinomialKernel.cu:112 cumdist[size-1] > 0). 修复方案: 改用确定性 top-k furthest-point 采样 (无 CUDA 数值风险, R7 合规). 修复后启动成功但 DDP 仍立即 collapse",
+    "r36p_utility": "FAIL — 三层 utility 全部 < 10% (vs 90% 阈值, R36p v3.10 hard reject)"
+  },
+  "root_cause_analysis_3_rounds": {
+    "round_1_v217_PDRR_alone": "DDP collapse codes=68/231/232/256 — L0 26.6%, L1/L2 90.2%/90.6% 部分救回. PDRR 只救 L1/L2 (后两层), L0 (最关键 first stage) 救不回",
+    "round_2_v218_BCE_PDRR": "DDP collapse codes=5/10/3. BCE 加 PDRR 也没救回 L0. BCE 早期信号被 encoder collapse 主导",
+    "round_3_v221_aggressive": "DDP collapse codes=1/1/1. 即使 5x weight + 10x interval + 5x dead threshold 仍立即坍缩, 证明问题在 encoder 极早期 (前 500 步)",
+    "verdict": "v213-v221 共 17 轮 (含 v213 死码重置 / v214 SMKI / v215 LMQ / v216 BCE / v217 PDRR / v218 BCE+PDRR / v219 Sinkhorn / v220 triple / v221 激进版) 全 DDP L0 collapse. forward-side (Sinkhorn/PDRR/SMKI) + loss-side (BCE/Spread/Margin) 都救不回 L0. 根因: encoder 在 KMeans init 后前 ~500 步就被一个主导码吃掉, 任何 VQ argmin 期补救机制都来不及"
+  },
+  "r37_decision": "TRIGGERED — v221 test_R@10 不可测 (codebook collapse). 必须回退 v220 (R37 终止). 立即 R50 rm -rf curvature_experiment_v221_aggressive_anti_collapse",
+  "next_direction_v222": "不再修补 forward-side / loss-side. 改 v222 = C-RVQ Mahalanobis + 每步 Riemannian retraction (codebook normalize 到 Poincaré 球面, 几何硬约束). 攻击 encoder 极早期坍缩通路. R36n 合规: (e) 几何变换 retraction + (c) manifold 几何替换",
+  "next_action": "R50 rm curvature_experiment_v221_aggressive_anti_collapse + commit + close. 然后 cp -r v222 + 实现 + R36q"
+}

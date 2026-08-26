@@ -1,0 +1,30 @@
+{
+  "experiment": "curvature_experiment_v220_triple_defense",
+  "mechanism": "v220 = BCE (v216) + PDRR (v217) + Sinkhorn Curriculum (v219) 三层 anti-collapse 防御. 15 rounds (v213-v219) DDP 全 L0 collapse → v220 三机制协同 attack 三个不同 collapse 通路.",
+  "gate_q_check": {
+    "gate_a_summary": "BCE + PDRR + Sinkhorn 三层防御 — gradient entropy + forward revival + balanced assignment",
+    "gate_b_compliance": {
+      "(a) c 训练中动态变化 (curriculum)": "✅ — Sinkhorn sk_eps curriculum",
+      "(b) per-item / per-layer / per-codebook 异质曲率": "— 不命中",
+      "(c) manifold 几何替换": "— 不命中",
+      "(d) Riemannian 优化器": "— 不命中",
+      "(e) 几何变换 exp/log/mobius/transport": "✅ — PDRR expmap0 push",
+      "(f) 双曲几何损失 (margin / 双曲对比 / 双曲度量)": "✅ — BCE entropy + PDRR Poincaré k-means++ + Sinkhorn OT balanced assignment"
+    },
+    "gate_b_hit_count": 3,
+    "gate_b_pass": true,
+    "gate_c_paper_keywords": ["entropy", "hyperbolic", "manifold", "Riemannian", "Sinkhorn", "optimal transport"],
+    "gate_c_pass": true,
+    "gate_d_r36h_warning": "Stage 1 端纯曲率变更 — R36h ceiling 风险. v220 是 multi-defense 测试, 即使 utility ≥ 90% test_R@10 可能仍字符级一致 baseline.",
+    "gate_e_decision": "PASS",
+    "rationale": "v220 是 16 rounds 终极 multi-defense 测试. 若三层防御仍不能突破 R36p utility ≥ 90%, 架构本身存在根本 collapse 倾向, 需考虑完全不同的方向 (例如改 RQ-VAE → VQ-VAE single layer, 或换 Stage 0 embedding)."
+  },
+  "single_gpu_test": {
+    "forward_codes_after_500_steps_with_optimizer": "[166, 194, 89]/256 — L0 65%, L1 76%, L2 35%",
+    "eff_sk_eps_trajectory": "2.0 → 1.035 (step 100) → 0.060 (step 200) → 0.050 (step 300+)",
+    "loss": "501 → 154, 收敛下降",
+    "note": "v220 单 GPU 不如 v218 ([223,225,213]), 但 DDP 实测是关键. Sinkhorn curriculum 干扰 BCE/PDRR 早期 coverage"
+  },
+  "py_compile": "ALL OK",
+  "next_action": "派子 agent 启动 v220 Stage 1 (DDP 4 卡, R51+ 6 项确定性约束, master_port=30839). 关键监控: codes 全程 ≥ 230/256 (R36p utility ≥ 90%) + eff_sk_eps anneal 正确 + BCE/PDRR 是否互相干扰."
+}

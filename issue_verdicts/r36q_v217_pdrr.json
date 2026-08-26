@@ -1,0 +1,45 @@
+{
+  "experiment": "curvature_experiment_v217_pdrr",
+  "mechanism": "v217 PDRR = Periodic Dead-Code Riemannian Revival. forward 期维护 per-codebook EMA usage; 每 500 步扫描, dead codes (EMA < 1/256) 通过 Poincaré k-means++ furthest-point sampling + expmap0 push 替换. 攻击 v213-v216 12 rounds 全 DDP collapse 根因 (单 GPU 假象 vs DDP all-reduce 放大 encoder mode collapse). 论文: van den Oord 2017 VQ-VAE §3.3 (dead code re-init) + Chami 2021 Riemannian K-Means (Poincaré 几何采样).",
+  "gate_q_check": {
+    "gate_a_summary": "Periodic Dead-Code Riemannian Revival (PDRR) — 每 500 步扫描 EMA usage, dead codes 用 Poincaré k-means++ furthest-point 替换",
+    "gate_b_compliance": {
+      "(a) c 训练中动态变化 (curriculum)": "— 不命中 (使用 baseline curriculum c)",
+      "(b) per-item / per-layer / per-codebook 异质曲率": "— 不命中",
+      "(c) manifold 几何替换": "— 不命中 (保留 Mahalanobis+L2)",
+      "(d) Riemannian 优化器": "— 不命中",
+      "(e) 几何变换 exp/log/mobius/transport": "✅ — PDRR 用 expmap0/logmap0 做 revival push (Poisson revival = 推入 Poincaré 球 + 投影回欧氏空间)",
+      "(f) 双曲几何损失 (margin 正则 / 双曲对比学习 / 双曲度量)": "✅ — k-means++ furthest-point 用 Poincaré 距离 (双曲度量) 选最远 batch sample"
+    },
+    "gate_b_hit_count": 2,
+    "gate_b_pass": true,
+    "gate_c_paper_keywords": ["hyperbolic", "manifold", "geometric", "Riemannian", "distance metric", "Poincaré", "k-means++"],
+    "gate_c_pass": true,
+    "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯几何变更 — R36h ceiling 已 5+ 次证伪. WARNING: PDRR 不改 c 也不改 manifold, 而是改 codebook utilization (revival) — 与历史 ceiling 机制不同 (历史全改 curvature / distance metric). Revival 是 init-side 修复, 与 Stage 3 T5 表征空间解耦, 可能打破 ceiling. 但仍属 Stage 1 端, ceiling 风险不可忽略.",
+    "gate_e_decision": "PASS",
+    "rationale": "v217 PDRR 攻击 v213-v216 12 rounds 全 collapse 根因 (单 GPU vs DDP divergence). 历史 init-only 修复 (v213 dead-code reset, v214 SMKI stratified init) 单 GPU 256 全覆盖但 DDP collapse. PDRR revival 周期性执行 (每 500 步) 而非只 init 期, 用实际 batch 分布填 dead codes, 不依赖 gradient path. 论文: van den Oord 2017 VQ-VAE §3.3 (推荐死码随机重置) + Chami 2021 (Riemannian K-Means 在 Poincaré 球几何采样). R36n (e) 几何变换 expmap0 + (f) 双曲度量 Poincaré distance. 单 GPU smoke codes=[174,36,1] (无 optimizer step 假象, 不能作 DDP 预测, 需 DDP 实测)."
+  },
+  "implementation_status": {
+    "modules/quantize.py": [
+      "Quantize.__init__: 加 use_pdrr / pdrr_interval / pdrr_dead_threshold / pdrr_use_poincare 4 个 kwarg",
+      "register_buffer('_pdrr_usage_ema', ones(n_embed) * 0.5) per-code 初始 0.5",
+      "set_pdrr_config(): 外部 trainer 入口更新参数",
+      "_pdrr_revive(x, ids): EMA 更新 + 每 interval 步 Poincaré k-means++ furthest-point 替换 dead codes"
+    ],
+    "modules/rqvae.py": [
+      "RqVae.__init__: 加 use_pdrr / pdrr_interval / pdrr_dead_threshold / pdrr_use_poincare 4 个 kwarg",
+      "透传到各 Quantize 层"
+    ],
+    "train_rqvae_instruments.py": [
+      "USE_PDRR = True, PDRR_INTERVAL = 500, PDRR_DEAD_THRESHOLD = 1/256, PDRR_USE_POINCARE = True",
+      "RqVae(...) 加 4 个 PDRR kwarg"
+    ],
+    "curvature_config.py": ["MECHANISM_NAME = v217_pdrr"]
+  },
+  "single_gpu_test": {
+    "note": "无 optimizer step, 仅 forward 路径测试 (已知 v216 单 GPU 256 codes 是假象, DDP 实测才暴露 collapse)",
+    "forward_codes_after_500_steps": "[174, 36, 1]/256 — L2 norm 稳定 3.252, 静态 (无 opt, 不能预测 DDP 行为)"
+  },
+  "py_compile": "ALL OK (modules/quantize.py + modules/rqvae.py + train_rqvae_instruments.py + curvature_config.py)",
+  "next_action": "派 general-purpose 子 agent 启动 v217 Stage 1 (DDP 4 卡, R51+ 6 项确定性约束, master_port=30836). 关键监控: codes 全程 ≥ 230/256 (utility ≥ 90%, R36p v3.10 阈值) + EMA usage 是否下降到 <1/256 后被 revival 救活 + 是否出现 R36h ceiling (codes 满但 Stage 3/4 test_R@10 字符级一致 baseline)."
+}

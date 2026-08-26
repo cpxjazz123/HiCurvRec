@@ -1,0 +1,50 @@
+{
+  "experiment": "curvature_experiment_v218_bce_pdrr",
+  "mechanism": "v218 = BCE (v216 gradient-side entropy, weight=1.0) + PDRR (v217 forward-side revival, interval=500) 双层 anti-collapse 防御. v213-v217 13 rounds 全部 L0 collapse → v218 同时攻击两个根因: BCE 反向梯度让 encoder 输出 soft assignment 更均匀; PDRR 周期性把 dead codes 推到 active codes 之外. 论文: van den Oord 2017 VQ-VAE + Chami 2021 Riemannian K-Means.",
+  "gate_q_check": {
+    "gate_a_summary": "BCE + PDRR 双层 anti-collapse — entropy loss 反向梯度 + 周期性 Riemannian k-means++ revival",
+    "gate_b_compliance": {
+      "(a) c 训练中动态变化": "— 不命中",
+      "(b) per-item / per-layer / per-codebook 异质曲率": "— 不命中",
+      "(c) manifold 几何替换": "— 不命中",
+      "(d) Riemannian 优化器": "— 不命中",
+      "(e) 几何变换 exp/log/mobius/transport": "✅ — PDRR 用 expmap0/logmap0 做 revival push",
+      "(f) 双曲几何损失 (margin / 双曲对比 / 双曲度量)": "✅ — BCE (information geometry entropy) + PDRR k-means++ (Poincaré distance furthest-point)"
+    },
+    "gate_b_hit_count": 2,
+    "gate_b_pass": true,
+    "gate_c_paper_keywords": ["entropy", "information geometry", "hyperbolic", "manifold", "Riemannian", "distance metric"],
+    "gate_c_pass": true,
+    "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯几何变更. WARNING: R36h ceiling 已 5+ 次证伪. 但 v218 = revival + entropy, 不改 c/distance, 是 init + gradient 双向修复. 可能打破 ceiling, 但仍属 Stage 1 端.",
+    "gate_e_decision": "PASS",
+    "rationale": "v217 PDRR 单 GPU static [174,36,1] 假象被 DDP 暴露; 单 GPU 实测 v218 codes=[223,225,213] (vs v217 单 GPU 静态 [174,36,1]). BCE 反向梯度强制 encoder 不再 narrow → L0/L1/L2 同时覆盖. PDRR 前向兜底填 dead. 双层互补, 期望 L0/L1/L2 三层 ≥ 230/256 (R36p utility ≥ 90%)."
+  },
+  "implementation_status": {
+    "modules/quantize.py": [
+      "QuantizeOutput NamedTuple 加 bce_loss 字段",
+      "Quantize.__init__: 加 use_bce_loss/bce_weight/bce_temperature + use_pdrr/pdrr_interval/pdrr_dead_threshold/pdrr_use_poincare 7 个 kwarg",
+      "register_buffer('_pdrr_usage_ema')",
+      "forward: BCE 计算 + PDRR revival 调用",
+      "_pdrr_revive 方法: EMA 更新 + Poincaré k-means++ furthest-point"
+    ],
+    "modules/rqvae.py": [
+      "RqVaeOutput NamedTuple 加 bce_loss 字段",
+      "get_semantic_ids: bce_loss_total 跨层累加",
+      "forward: total loss = recon + rqvae + margin + spread + bce",
+      "透传 BCE/PDRR kwargs 到 Quantize"
+    ],
+    "train_rqvae_instruments.py": [
+      "USE_BCE_LOSS=True, BCE_WEIGHT=1.0, BCE_TEMPERATURE=0.1",
+      "USE_PDRR=True, PDRR_INTERVAL=500, PDRR_DEAD_THRESHOLD=1/256, PDRR_USE_POINCARE=True",
+      "RqVae(...) 加 BCE/PDRR 4+4 个 kwarg"
+    ],
+    "curvature_config.py": ["MECHANISM_NAME = v218_bce_pdrr"]
+  },
+  "single_gpu_test": {
+    "forward_codes_after_500_steps_with_optimizer": "[223, 225, 213]/256 — L0 87.1%, L1 87.9%, L2 83.2%",
+    "loss": "153.43 (高但收敛下降, BCE 主导 loss 值)",
+    "note": "比 v217 单 GPU 静态 [174,36,1] 显著优; BCE + PDRR 协同推动 codes 全覆盖"
+  },
+  "py_compile": "ALL OK (modules/quantize.py + modules/rqvae.py + train_rqvae_instruments.py + curvature_config.py)",
+  "next_action": "派 general-purpose 子 agent 启动 v218 Stage 1 (DDP 4 卡, R51+ 6 项确定性约束, master_port=30837). 关键监控: codes 全程 ≥ 230/256 (R36p utility ≥ 90%) + BCE loss 是否反向梯度有效 + PDRR 是否仍需在 BCE 加持下做事. R36h ceiling 风险仍存在, 即使 utility ≥ 90%, test_R@10 可能仍字符级一致 baseline."
+}
