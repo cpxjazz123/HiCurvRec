@@ -1,0 +1,67 @@
+{
+  "issue": "v169",
+  "type": "riemannian_adam_v161_plus",
+  "created": "2026-08-26",
+  "subject": "v169 Riemannian Adam on Stage 1 RQ-VAE codebook embeddings (R36n (d)). R38+R37 FAIL: train ceiling ndcg@10=0.0969 << v161 0.1985 (-51%, R38 训练期 regress 触发). Stage 3 EARLY_STOP=20 未到但 plateau 已被实测, kill + R50 触发回滚.",
+  "verdict": "R38_R37_FAIL_R50_ROLLBACK",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "R36n (d) Riemannian 优化器 — Poincaré ball 流形感知 Adam for codebook embeddings",
+    "implementation": "modules/riemannian_adam.py: 新实现 RiemannianAdam (Bécigneul & Bengio 2019 + McDonald & Alvarez 2024 简化), 对 codebook embedding 做 (1-c||x||^2)^2/4 conformal scaling + ball projection. train_rqvae_instruments.py: 在 v161 基础上, 拆分 optimizer — codebook (3 params) 用 RiemannianAdam (lr=1e-3, c=0.7), 其他 (22 params) 用 AdamW. R36n 合规方向 (d).",
+    "base_compose": {
+      "v161_baseline": "Stage 1: Sinkhorn-OT sk_eps=0.05 + Poincaré VQ distance + M3 transport + curriculum c_start=0.05→c_end=0.7 + Mahalanobis commit loss. 全程 AdamW. Stage 1 final codes=113/101/101, Stage 2 SID unique=30/40/58, test_R@10=0.35337467783505155",
+      "新机制": "Riemannian Adam on codebook (3 params): 更新 = -lr * ((1 - c*||x||^2)^2 / 4) * Adam_step, 然后 clamp 到 ball (||x|| < 1/sqrt(c) - eps). c=0.7 与 v161 curriculum c_end 对齐. 其他参数保持 AdamW (Riemannian Adam 不需要 weight decay). R36n (d) Riemannian 优化器合规."
+    },
+    "paper": "Bécigneul & Bengio 2019 (Riemannian Adam) + McDonald & Alvarez 2024 (simplified Riemannian Adam for Poincaré ball) + C-RVQ arxiv 2505.12143 May 2025"
+  },
+
+  "r36p_trigger": {
+    "stage1_100k_final": "codes=247/244/244 (vs v161 113/101/101; v169 显著高于 v161, R36p PASS, 全部 > 10)",
+    "stage2_sid_unique": "256/256/256 (vs v161 30/40/58; v169 全部 256 unique, R36p PASS, 全部 >> 10)",
+    "trend": "Riemannian Adam 让 codebook 几何分布更均匀 (256/256/256 vs 30/40/58). 但 T5 学习代价高, Stage 3 valid ndcg@10 plateau 0.097 (vs v161 0.198, -51%)"
+  },
+
+  "stage_results": {
+    "stage1_100k_steps": {
+      "codebook_usage_final": "247/244/244 (R36p PASS, 远超 baseline)",
+      "loss": "1.34 (vs v161 ~1.30, 略高)",
+      "completion": "PASS — R36p 远高于 baseline 阈值"
+    },
+    "stage2_sid_inference": {
+      "code_usage_L0": "256/256 (100%, vs v161 30/256=11.7%, R36p PASS)",
+      "code_usage_L1": "256/256 (100%, vs v161 40/256=15.6%, R36p PASS)",
+      "code_usage_L2": "256/256 (100%, vs v161 58/256=22.7%, R36p PASS)",
+      "completion": "PASS — codebook 利用率极高, 但 SID 信号空间大幅扩展, T5 学习负担加重"
+    },
+    "stage3_training": {
+      "best_valid_ndcg@10": 0.0969 (E131, R38 触发时 kill)",
+      "best_valid_h@10": 0.137,
+      "completion": "R38 FAIL — train ceiling 0.097 << v161 0.198 (-51%), 训练期 valid ndcg 明显 regress. EARLY_STOP=20 计数反复重置 (E89→E92→E105→E118→E131, 每次都仅微涨 0.0001-0.0008). 经 5 个 EARLY_STOP 周期仍未达 v161 ceiling. R38 训练期 regress 硬约束触发, kill + 写 verdict + R50 rm -rf"
+    }
+  },
+
+  "r37_decision": {
+    "stage3_valid_ndcg10_vs_v161": "0.0969 << 0.1985 (Δ=-0.1016, -51.2%, R38 触发)",
+    "expected_test_R10_vs_v161": "Stage 4 跳过 (R50 禁重跑), 但 train-side ceiling 0.097 << v161 0.198 推断 test_R@10 ~ 0.05-0.15 << v161 0.3534",
+    "interpretation": "Riemannian Adam 让 Stage 1 codebook 几何分布显著均匀化 (256/256/256 unique vs v161 30/40/58), 但破坏了 v161 的紧凑 SID 信号分布. v161 的紧凑分布对 T5 学习是友好的 (Pareto: 30 unique per layer × 3 layers = 27k 实际 SID 组合 vs v169 16M 全空间). v169 让 T5 面临 256^3 全空间分类任务, 学习负担剧增, valid ndcg@10 plateau 0.097. 这是 R36n (d) Riemannian 优化器与 R161 baseline 的根本性冲突, 不是调参问题"
+  },
+
+  "baseline_lock": "v161 (test_R@10=0.35337467783505155, 字符级锁定, R51+ deterministic)",
+  "r50_action": "rm -rf curvature_experiment_riemannian_adam_v169/",
+  "r50_preserve": [
+    "issue_verdicts/v169_riemannian_adam_verdict.json (本文件, 永久保留)",
+    "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v169_stage1.log",
+    "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v169_stage2.log",
+    "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v169_stage3.log"
+  ],
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "Riemannian Adam 让 codebook 几何均匀化 (256/256/256 unique) 但破坏了 v161 的紧凑 SID 信号分布. v161 30/40/58 unique 是 T5 友好的紧凑分布 (Pareto); v169 256/256/256 让 T5 面临 256^3=16M 全空间分类, 学习负担剧增. Stage 3 valid ndcg@10 plateau 0.097 (-51% vs v161)",
+    "lesson_2": "Riemannian 优化器合规但实际破坏下游学习信号. R36n (d) 合规方向不保证有效. v161 ceiling 真正锁定的是 'Stage 1 端紧凑 SID 分布 + Stage 3 端 T5 学习能力' 协同. 任何让 Stage 1 端 SID 空间扩展的机制都会破坏这个协同",
+    "lesson_3": "下一步新方向 (跳出 'Stage 1 端扩展 SID 空间'): (a) Stage 0 embedding drift (R36m 之前解禁过, 但 R36m 已禁; 需重新评估 R36m 例外路径); (b) Stage 1 端 Riemannian Adam 反向 — Anti-Riemannian (扩张 codebook 不动但缩小 commitment); (c) **Stage 1 端 Sinkhorn-OT 收缩** — 加大 sk_eps (0.05→0.5) 让分布更紧凑 (但 v161 sk_eps 0.05 已锁定); (d) **Stage 2 端 SID 表征升级** — 给 SID 加显式几何结构 (R36n (e) 几何变换); (e) **Stage 3 端更大 HAB lambda** (v168 lambda_max=0.20 → lambda_max=0.50, 强化几何偏置). 优先 (e): 在 v161 基础上调大 HAB 强度, 测试 Stage 3 ceiling 是否可突破"
+  },
+
+  "r36h_ceiling_evidence_count_after_v169": 28,
+  "key_takeaway": "v169 R38+R37 FAIL (train ceiling -51%). Riemannian Adam 让 Stage 1 SID 空间从 30/40/58 unique 扩展到 256/256/256, 破坏 v161 紧凑分布对 T5 的友好性. Stage 1 端纯曲率/优化器变更被 v161 ceiling 锁定 28 次. 下一步必须跳出 Stage 1 端, 探索 Stage 3 T5 端 geometry-routed attention (v168 基础上加大 HAB lambda) 或 Stage 0 embedding drift (R36m 解除路径)."
+}

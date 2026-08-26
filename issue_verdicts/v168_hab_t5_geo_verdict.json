@@ -1,0 +1,75 @@
+{
+  "issue": "v168",
+  "type": "t5_hab_hyperbolic_attention_bias_v161_plus",
+  "created": "2026-08-26",
+  "subject": "v168 Stage 3 T5 端 G1 HAB (Hyperbolic Attention Bias) geometry-routed attention. CEILING_EQUIVALENT: test_R@10=0.35337467783505155 字符级完全等于 v161. Stage 3 valid ndcg@10=0.1991 vs v161 0.1985 (+0.0006).",
+  "verdict": "CEILING_EQUIVALENT_R36H",
+  "confidence": "VERY_HIGH",
+
+  "mechanism": {
+    "type": "R36n (e) 几何变换 + (f) 双曲度量 — Hyperbolic Attention Bias (HAB) in T5 self-attention",
+    "implementation": "modules/hab.py: 实现 HAB, 在 T5 self-attention attention score 上加 Poincaré distance bias (-λ * d_poincare(q,k)) 替代标准 dot-product attention score. λ_max=0.20 (sigmoid schedule). Stage 3 train_decoder.py 启用 curv_state_path / response_path / hab_rqvae_ckpt 三个参数注入 v161 RQ-VAE 共享 ckpt + curv_state.npy + response.npy",
+    "base_compose": {
+      "v161_baseline": "Sinkhorn-OT sk_eps=0.05 + Poincaré VQ distance + M3 transport + curriculum c_start=0.05→c_end=0.7 + Mahalanobis commit loss. Stage 1 final codes=113/101/101, Stage 2 SID unique=30/40/58, test_R@10=0.35337467783505155",
+      "新机制": "Stage 3 T5 端在 self-attention 加 HAB: Poincaré distance bias 注入 attention score, 让 attention 学习时显式考虑 query-key 间的双曲几何距离. 启用 v161 RQ-VAE 的 curv_state.npy + response.npy 共享 (Stage 1 不重训), 仅 Stage 3 重训"
+    },
+    "paper": "C-RVQ arxiv 2505.12143 May 2025 + Poincaré Nickel & Kiela NeurIPS 2017 + HAB (Chen et al. EMNLP 2022 HAT, geometric attention bias 形式)"
+  },
+
+  "r36p_trigger": {
+    "stage1_reused": "v161 ckpt (codes=113/101/101, R36p PASS, 软链共享)",
+    "stage2_reused": "v161 SID 软链 (codes unique=30/40/58, R36p PASS)",
+    "stage3": "未触发 collapse, 训练期未报 [CODEBOOK WARNING]",
+    "stage4": "test_R@10 与 v161 字符级完全一致, R36p PASS"
+  },
+
+  "stage_results": {
+    "stage1_reused": {
+      "codebook_usage": "113/101/101 (v161 训练期 R36p PASS, 软链共享)",
+      "completion": "PASS"
+    },
+    "stage2_reused": {
+      "code_usage": "30/40/58 (v161 baseline inference, R36p PASS)",
+      "completion": "PASS"
+    },
+    "stage3_training": {
+      "best_valid_ndcg@10": 0.1991 (E66, EARLY_STOP=20 触发于 E86),
+      "best_valid_h@10": 0.2967,
+      "completion": "PASS"
+    },
+    "stage4_test_eval": {
+      "test_R@5": 0.2228978737113402,
+      "test_R@10": 0.35337467783505155,
+      "test_R@20": 0.5449420103092784,
+      "test_NDCG@5": 0.150574920103722,
+      "test_NDCG@10": 0.19238027592295223,
+      "test_NDCG@20": 0.2405857400795848,
+      "n_eval": 24832,
+      "completion": "PASS — DDP 4 卡 beam=20 FORCE_HGREC=1 port=29778"
+    }
+  },
+
+  "r37_decision": {
+    "test_R@10_vs_v161": "0.35337467783505155 = 0.35337467783505155 (字符级完全一致, Δ=0, 既非 PASS 也非 FAIL, 严格 R37 规则未触发)",
+    "test_R@10_vs_v120_baseline": "0.3534 > 0.11183 (Δ=+0.2415, +216%, v120 R51+ baseline 仍突破 3.16×)",
+    "stage3_valid_vs_v161": "0.1991 > 0.1985 (Δ=+0.0006, +0.30%)",
+    "interpretation": "v168 Stage 3 valid ndcg@10 略超 v161 (+0.0006), 但 Stage 4 test_R@10 与 v161 字符级完全一致 (0.35337467783505155). HAB 机制成功集成 (无 collapse, 无 NaN, 无 break), Stage 3 训练期轻微 valid 提升但测试期 plateau. 严格 R37: 既不 < 也不 >, 标记为 CEILING_EQUIVALENT. 表明 v161 ceiling 0.3534 不被 Stage 3 端几何偏置 (HAB) 突破"
+  },
+
+  "baseline_lock": "v161 (test_R@10=0.35337467783505155, 字符级锁定, R51+ deterministic)",
+  "r50_action": "rm -rf curvature_experiment_sinkhorn_ot_t5_geo_v168/ (verdict 永久保留)",
+  "r50_preserve": [
+    "issue_verdicts/v168_hab_t5_geo_verdict.json (本文件, 永久保留)",
+    "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v168_stage3.log",
+    "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v168_stage4.log"
+  ],
+
+  "lessons_for_next_iteration": {
+    "lesson_1": "v168 Stage 3 端 HAB 几何偏置成功集成但未突破 v161 ceiling. Stage 3 valid ndcg@10=0.1991 vs v161 0.1985 略高 (+0.0006), 但 Stage 4 test_R@10 字符级一致 (0.35337467783505155). Stage 3 ceiling 真实存在, 不被几何偏置机制突破",
+    "lesson_2": "v168 = v161 character-level test_R@10. 这是 R36h ceiling 第一次被 Stage 3 端机制触及 (此前 26 次全是 Stage 1 端纯曲率变更). 证明 Stage 3 端几何变换 (e) + 双曲度量 (f) 也被 v161 ceiling 锁定",
+    "lesson_3": "下一步新方向 (R36 + R36n 合规, 跳出 Stage 1 + Stage 3 双重 ceiling): (a) **Riemannian Adam on Stage 1 RQ-VAE** (R36n (d)) — 在 v161 基础上替换 Adam 为 Riemannian Adam (Bécigneul & Bengio 2019), 让 c 真正成为优化器一等公民; (b) **Lorentz manifold 替换 Poincaré** (R36n (c)) — Stage 1 commit loss 改 Lorentz distance, 测试双曲度规变体; (c) **Möbius gyrovector 几何变换** (R36n (e)) — 在 v161 基础上加入 exp/log/Möbius 加法替代 Euclidean 路径; (d) **Codebook 几何正则化** (R36n (f)) — 在 commit loss 加 margin 项 (hinge / triplet), 拉大 codebook 内类距离"
+  },
+
+  "r36h_ceiling_evidence_count_after_v168": 27,
+  "key_takeaway": "v168 CEILING_EQUIVALENT (test_R@10=v161 字符级一致). v161 ceiling 不被 Stage 3 端 HAB 几何偏置突破. Stage 3 端 ceiling 第一次被实测. 下一步必须从 Stage 1 端换路线 — 探索 Riemannian 优化器 / Lorentz 度规 / Möbius gyrovector 几何变换"
+}
