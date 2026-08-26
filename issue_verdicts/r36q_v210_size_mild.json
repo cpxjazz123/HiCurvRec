@@ -1,0 +1,11 @@
+{
+  "experiment": "curvature_experiment_v210_size_mild",
+  "gate_q_pass": true,
+  "mechanism_summary": "v210 = per-layer codebook size ladder [320, 256, 192] (温和跨度). v209 [512, 256, 128] KMeans 卡死 → v210 缩小差距. R36c Round 6 单机制剥离.",
+  "gate_b_classes_hit": {
+    "b_per_item_per_layer_per_codebook": true,
+    "rationale_b": "per-layer codebook size ladder [320, 256, 192] — 三层异质 capacity (温和)."
+  },
+  "gate_c_keywords_hit": ["hyperbolic", "manifold", "curvature"],
+  "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯曲率变更 (size ladder 是新维度). R36h 主要锁 c 变化, size 应绕过."
+}

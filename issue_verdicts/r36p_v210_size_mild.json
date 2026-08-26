@@ -1,0 +1,13 @@
+{
+  "experiment": "curvature_experiment_v210_size_mild",
+  "mechanism": "v210 = per-layer codebook size ladder [320, 256, 192] (温和)",
+  "stage1": {
+    "final_codes_at_53k": "28/230/173/320,256,192",
+    "final_utility_pct": "8.75%/89.84%/90.10%",
+    "r36p_pass": false,
+    "r36p_fail_reason": "L0 卡 28/320 = 8.75% (vs v207 卡 17/256 = 6.6%, size ladder 仅微小改善). L1 89.84% borderline, L2 90.10% PASS. 但 L0 < 90% 触发 R36p v3.10. size ladder 单独无效解决 L0 死码."
+  },
+  "r36c_round_6_outcome": "FAIL: size ladder 温和版 KMeans 可行, 但 L0 utility 仅 8.75% (vs v207 6.6%). 6 rounds 全 FAIL on L0.",
+  "r50_action": "rm -rf curvature_experiment_v210_size_mild",
+  "next_direction": "v211 = v207 ladder [0.5, 0.6, 0.7] + v210 size [320, 256, 192] 双机制组合 (R36c Round 7). 期望: ladder + size 协同突破 L0 死码."
+}
