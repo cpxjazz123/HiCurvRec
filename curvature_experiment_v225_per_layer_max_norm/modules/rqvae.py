@@ -91,6 +91,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # v222: Riemannian Codebook Retraction — 每步 optimizer 后强制 codebook 回到 Poincaré 球内
         use_codebook_retraction: bool = False,
         retraction_radius_ratio: float = 0.95,
+        # v225: per-layer max_norm (RqVae 透传 list[3])
+        retraction_max_norm_list: Optional[List[float]] = None,
     ) -> None:
         self._config = locals()
 
@@ -115,6 +117,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # v222
         self.use_codebook_retraction = bool(use_codebook_retraction)
         self.retraction_radius_ratio = float(retraction_radius_ratio)
+        # v225: per-layer max_norm (None → 全 0 → 退化为只 ball radius)
+        self.retraction_max_norm_list = (
+            [float(x) for x in retraction_max_norm_list] if retraction_max_norm_list is not None
+            else [0.0] * n_layers
+        )
         self.margin_target = margin_target
         self.use_tcu = use_tcu
         self.tcu_alpha = float(tcu_alpha)
@@ -174,6 +181,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     # v222: Riemannian Codebook Retraction
                     use_codebook_retraction=use_codebook_retraction,
                     retraction_radius_ratio=retraction_radius_ratio,
+                    # v225: per-layer max_norm + layer_idx
+                    retraction_max_norm=self.retraction_max_norm_list[i],
+                    layer_idx=i,
                 )
                 for i in range(n_layers)
             ]

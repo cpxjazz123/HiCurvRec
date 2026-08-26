@@ -68,6 +68,9 @@ SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单�
 # R36n 合规: (c) manifold 几何替换 + (e) 几何变换 retraction.
 USE_CODEBOOK_RETRACTION = True          # v222: enable Riemannian codebook retraction
 RETRACTION_RADIUS_RATIO = 0.95          # 球面内 5% 余量 (防数值精度溢出)
+# v225: per-layer max_norm (L0=0.5 激进, L1/L2=0.3 保守)
+# v224 全层统一 0.3 → L0 32% (未达 90%); v225 L0=0.5 (放宽让 L0 扩展), L1/L2=0.3 (保守)
+RETRACTION_MAX_NORM_LIST = [0.5, 0.3, 0.3]  # L0/L1/L2
 # codebook 健康检查: 层 unique code 数 < CODEBOOK_SIZE*该阈值 → 打印 [CODEBOOK WARNING]
 CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 
@@ -225,6 +228,7 @@ def main():
         # v222: Riemannian Codebook Retraction
         use_codebook_retraction=USE_CODEBOOK_RETRACTION,
         retraction_radius_ratio=RETRACTION_RADIUS_RATIO,
+        retraction_max_norm_list=RETRACTION_MAX_NORM_LIST,
         use_tcu=False,             # C26 HG-Rec: 关 TCU
         tcu_alpha=TCU_ALPHA,
         tcu_eta=TCU_ETA,

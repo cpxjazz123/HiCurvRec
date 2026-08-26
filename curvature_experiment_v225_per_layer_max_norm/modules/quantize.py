@@ -134,6 +134,10 @@ class Quantize(nn.Module):
         # R36n 合规: (c) manifold 几何替换 + (e) 几何变换 retraction
         use_codebook_retraction: bool = False,
         retraction_radius_ratio: float = 0.95,  # 球面内 5% 余量 (防数值精度溢出)
+        # v225: per-layer max_norm (L0 单独激进, L1/L2 保守)
+        # v224 全层统一 max_norm=0.3, L0 仍 32%; v225 L0=0.5 (放宽让 L0 扩展), L1/L2=0.3 (保守)
+        retraction_max_norm: float = 0.0,
+        layer_idx: int = 0,  # RqVae 透传, 用于索引 per-layer max_norm list
     ) -> None:
         super().__init__()
 
@@ -223,6 +227,9 @@ class Quantize(nn.Module):
         # v222: Riemannian Codebook Retraction
         self.use_codebook_retraction = bool(use_codebook_retraction)
         self.retraction_radius_ratio = float(retraction_radius_ratio)
+        # v225: per-layer max_norm
+        self.retraction_max_norm = float(retraction_max_norm)
+        self.layer_idx = int(layer_idx)
         # curriculum 由外部 (train_rqvae_instruments.py) 通过 set_curriculum_step() 更新
         self._curriculum_step = 0
 
@@ -294,7 +301,12 @@ class Quantize(nn.Module):
         c_scalar = float(c.item()) if c.dim() == 0 else float(c.mean().item())
         c_scalar = max(c_scalar, 1e-3)
         # Poincaré ball radius = 1/sqrt(c), ratio 给 5% 余量防数值精度溢出
-        max_norm = (1.0 / math.sqrt(c_scalar)) * self.retraction_radius_ratio
+        ball_norm = (1.0 / math.sqrt(c_scalar)) * self.retraction_radius_ratio
+        # v225: per-layer max_norm (RqVae 通过 layer_idx 区分)
+        if self.retraction_max_norm > 0:
+            max_norm = min(ball_norm, self.retraction_max_norm)
+        else:
+            max_norm = ball_norm
         norms = self.embedding.weight.data.norm(dim=-1, keepdim=True)  # (K, 1)
         # 只 scale 超出范围的 (norm > max_norm 时)
         scale = torch.where(

@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "v222_retraction"  # ← v222 NOVEL: C-RVQ + Riemannian Codebook Retraction. 17 rounds (v213-v221) DDP L0 collapse 根因: encoder 极早期坍缩到一个码, forward-side + loss-side 任何机制都救不回. v222 改攻击 encoder 反向通路本身: 每步 optimizer.step() 后, 强制 codebook 元素 norm ≤ (1/√c) × 0.95 (Euclidean retraction to Poincaré ball, Absil et al. 2008). 硬几何约束阻止 codeword 被拉出 ball. R36n 合规: (c) manifold 几何替换 + (e) 几何变换 retraction. Stage 1 端纯几何变更.
+MECHANISM_NAME = "v225_per_layer_max_norm"  # ← v225 NOVEL: v224 全层统一 max_norm=0.3 → L0 32% (未达 90%); v225 per-layer (L0=0.5 激进, L1/L2=0.3 保守). L0 单独放宽让 KMeans 中心扩展空间, L1/L2 保持紧凑防退化. R36o v3.7 阶段 C 微调空间探索. R36n 合规: (c) manifold 几何替换 + (e) 几何变换 retraction. Stage 1 端纯几何变更.
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")
