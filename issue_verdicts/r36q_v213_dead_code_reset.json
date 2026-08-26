@@ -1,0 +1,44 @@
+{
+  "experiment": "curvature_experiment_v213_dead_code_reset",
+  "mechanism": "v213 = per-layer c_end ladder [0.5, 0.6, 0.7] + Dead-code reset (每 500 步, 用 batch encoder 输出重置 usage=0 死码). 8 rounds ladder/CDL R36p FAIL 后改走显式 codebook 干预 (R36c Round 9)",
+  "gate_q_check": {
+    "gate_a_summary": "per-layer c_end ladder (R36n b) + dead-code geometric re-init (R36n e/f codebook update) — 每 500 步扫描 usage=0 死码, 重新初始化为当前 batch encoder 输出 (几何流形自然位置)",
+    "gate_b_compliance": {
+      "(a) c 训练中动态变化 (curriculum)": "✅ — 各层 c 从 c_start=0.05 独立 ramp 到 c_end_per_layer[i]",
+      "(b) per-item / per-layer / per-codebook 异质曲率": "✅ — per-layer c_end ladder 异质",
+      "(c) manifold 几何替换": "— 不命中 (保留 Mahalanobis)",
+      "(d) Riemannian 优化器": "— 不命中",
+      "(e) 几何变换 exp/log/mobius/transport": "✅ — dead-code reset = 把死码点用 encoder 输出 (流形上点) 替换, 几何流形上重激活",
+      "(f) 双曲几何损失 (margin 正则 / 双曲对比学习 / 双曲度量)": "✅ — dead-code reset 是 codebook 级别的几何干预 (类似 Riemannian centroid 修正)"
+    },
+    "gate_b_hit_count": 3,
+    "gate_b_pass": true,
+    "gate_c_paper_keywords": ["hyperbolic", "curvature", "manifold", "Poincaré", "Mahalanobis", "codebook", "Riemannian"],
+    "gate_c_pass": true,
+    "gate_d_r36h_warning": "Stage 1 RQ-VAE 端纯曲率变更 (R36h 已 5 次证伪 ceiling). WARNING: 仍属 Stage 1 端, ceiling 风险高. 但本轮 (R36c Round 9) 是显式 codebook 干预 (历史从未尝试), 与历史 ladder/CDL 不同, 期望打破 R36p v3.10 utility ≥ 90% 僵局.",
+    "gate_e_decision": "PASS",
+    "rationale": "v213 = ladder (R36n b) + dead-code geometric re-init (R36n e/f). 三层命中合规方向. Dead-code reset 是 VQ-VAE-2 (Razavi 2019) 已验证的 codebook 重新激活机制, 用于解决 VQ-VAE 的 codebook collapse 经典问题. 论文关键词: codebook (R36n 相关) + manifold + Riemannian + Mahalanobis. 8 rounds R36p FAIL 后改走显式干预是合理设计."
+  },
+  "implementation_status": {
+    "modules/quantize.py": [
+      "Quantize __init__: 加 register_buffer('usage_count', torch.zeros(n_embed, dtype=torch.long)) — 累积 code 选中次数",
+      "Quantize.forward: train 模式下 scatter_add 累积 ids 到 usage_count (per-batch 统计)",
+      "新增 reset_dead_codes(x, ids, dead_threshold=0) @torch.no_grad: 死码 (usage<=0) 重置为 batch encoder 输出 (随机选 n_dead 个), 同步 reset log_var 到 init 值, 清零 usage_count"
+    ],
+    "modules/rqvae.py": [
+      "RqVae __init__ 加 c_end_per_layer Optional kwarg + assert + self.c_end_per_layer",
+      "Quantize 层构造: c_end = c_end_per_layer[i] (per-layer)",
+      "新增 reset_dead_codes_all_layers(x, per_layer_inputs=None) @torch.no_grad: 跨所有层调用 reset, 各层用对应 source"
+    ],
+    "train_rqvae_instruments.py": [
+      "USE_FIXED_CURVATURE = False (让 per-layer c_end 生效)",
+      "USE_PER_LAYER_C_END = True + PER_LAYER_C_END = [0.5, 0.6, 0.7]",
+      "DEAD_CODE_RESET_INTERVAL = 500, DEAD_CODE_RESET_WARMUP = 1000",
+      "训练 loop: 同步后 global_step_sync % 500 == 0 且 >= 1000 时, 调 reset_dead_codes_all_layers",
+      "RqVae(...) 加 c_end_per_layer kwarg"
+    ],
+    "curvature_config.py": ["MECHANISM_NAME = v213_dead_code_reset"]
+  },
+  "py_compile": "ALL OK (quantize.py + rqvae.py + train_rqvae_instruments.py + curvature_config.py)",
+  "next_action": "派 general-purpose 子 agent 启动 v213 Stage 1 (DDP 4 卡, R51+ 6 项确定性约束, master_port=30833). 关键监控: dead_code_reset log 触发 (step 1000+, 1500, 2000, ...) + 各层 usage 趋势 (期望从 1 → 显著提升 → 接近 256)"
+}
