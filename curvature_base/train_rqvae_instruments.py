@@ -66,9 +66,9 @@ SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单�
 CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 
 # v119 RKHS Gaussian Kernel VQ: kernel(x, c) = exp(-||x-c||²/(2σ²)) 替代 Euclidean/双曲距离
-DISTANCE_MODE = QuantizeDistance.MAHALANOBIS  # v120 NOVEL: C-RVQ simplified, per-codeword diagonal covariance + Mahalanobis 距离
-RBF_BANDWIDTH = 1.0  # v119 RBF σ (备用, v120 MAHALANOBIS 不使用)
-MAHALANOBIS_INIT_VAR = 1.0  # v120 C-RVQ: 初始 per-codeword 对角方差 (init log_var=log(e-1)≈0.5413 → softplus=1.0)
+DISTANCE_MODE = QuantizeDistance.L2  # v262 NOVEL: L2 + hyperbolic_distance=True (Poincaré ball argmin) + Möbius commit path (M2 intrinsic)
+RBF_BANDWIDTH = 1.0  # 备用
+MAHALANOBIS_INIT_VAR = 1.0  # 备用
 # θ 曲率学习检查 (M2/M3): 曲率初始值 与 "已学习" 判定阈值
 CURV_INIT_C = 1.0                         # 曲率初始值 c=1.0 (HG-Rec 对齐)
 CURV_LEARNED_TOL = 0.01                   # |c - 1.25| > 0.01 视为曲率在学习
@@ -88,7 +88,7 @@ GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 # 论文支撑: M3 = "Parallel Transport in Hyperbolic Space" (Chami et al. 2019)
 USE_M3_TRANSPORT = True                   # C28: 启用 M3 (与 C27 互补)
 # C29: 启用 M2 intrinsic Möbius 减法 (R37 rollback: M2 + M3 联合恶化 L0 collapse, test R@10 0.0991→0.0941)
-USE_M2_INTRINSIC = False                  # C28: 关 M2 (M2 + M3 联合 NO-GO, 回 C28 单 M3)
+USE_M2_INTRINSIC = True                   # v262 NOVEL: 启用 M2 Möbius intrinsic commit (commit path = Poincaré ball 上测地线 residual subtraction). R36n (e) 几何变换 合规
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -206,11 +206,11 @@ def main():
         commitment_weight=COMMITMENT_WEIGHT,
         gate_M2_intrinsic=USE_M2_INTRINSIC,  # C28: 开关由 USE_M2_INTRINSIC 控制
         gate_M3_transport=USE_M3_TRANSPORT,  # C28: 启用 M3 transport
-        hyperbolic_distance=False,  # v119 RKHS Gaussian kernel 替代双曲距离 (kernel 距离 = 几何变种, R36n 合规)
-        sk_eps=0.0,                # v119 kernel 路径下 sk_eps 关闭 (kernel 已隐式均衡, 无需 Sinkhorn OT)
-        distance_mode=DISTANCE_MODE,  # v120 MAHALANOBIS
-        rbf_bandwidth=RBF_BANDWIDTH,  # v119 RBF σ (备用)
-        mahalanobis_init_var=MAHALANOBIS_INIT_VAR,  # v120 C-RVQ initial per-codeword diag variance
+        hyperbolic_distance=True,  # v262: Poincaré 距离 argmin + M2 Möbius intrinsic commit path
+        sk_eps=0.05,                # v262: Sinkhorn-Knopp 均衡温度 (防 L0 collapse)
+        distance_mode=DISTANCE_MODE,  # v262 L2
+        rbf_bandwidth=RBF_BANDWIDTH,  # 备用
+        mahalanobis_init_var=MAHALANOBIS_INIT_VAR,  # 备用
         prefix_router_layers=None, # Issue #154: L1/L2 per-item 曲率 (默认)
         margin_reg_weight=0.0 if USE_FIXED_CURVATURE else MARGIN_REG_WEIGHT,  # C26 HG-Rec: 关 C5
         margin_target=MARGIN_TARGET,
