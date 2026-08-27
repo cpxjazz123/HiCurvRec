@@ -88,6 +88,11 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_start: float = 0.05,             # C27: 初始 c (近欧氏, 优化稳定)
         c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
         curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
+        # v270 NOVEL: cyclic curriculum
+        use_cyclic_curvature: bool = False,
+        c_cyclic_min: float = 0.05,
+        c_cyclic_max: float = 0.7,
+        c_cyclic_period: int = 25_000,
     ) -> None:
         self._config = locals()
 
@@ -162,6 +167,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     c_start=c_start,
                     c_end=c_end,
                     curriculum_steps=curriculum_steps,
+                    use_cyclic_curvature=use_cyclic_curvature,  # v270: cyclic curriculum
+                    c_cyclic_min=c_cyclic_min,
+                    c_cyclic_max=c_cyclic_max,
+                    c_cyclic_period=c_cyclic_period,
                     c_fixed=c_fixed,
                     use_spread_loss=spread_loss_weight > 0,  # F3 v83: Spread Loss 开关
                     spread_loss_margin=spread_loss_margin,

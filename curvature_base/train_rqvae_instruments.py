@@ -77,10 +77,16 @@ USE_FIXED_CURVATURE = True                # C26 HG-Rec default: c=1 固定 (关 
 C_FIXED = 1.0                             # 固定曲率值 (HG-Rec)
 # C27: Curriculum Curvature Schedule (ICML 2025)
 # 机制: c 从 c_start (近欧氏) 线性增到 c_end (双曲) over curriculum_steps
-USE_CURRICULUM_CURVATURE = True           # C27 启用 (取代 C26 固定 c)
+USE_CURRICULUM_CURVATURE = False          # v270 NOVEL: 关 C27 (cyclic 取代)
 C_START = 0.05                            # 初始 c (近欧氏, 训练稳定)
 C_END = 0.7                               # v19: 最终 c 1.0→0.7 (缓和曲率调度, R36 框架级变更)
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
+# C27b (v270 NOVEL): Cyclic Curriculum Curvature — c(t) = c_min + (c_max-c_min)|sin(πt/T)|
+# 论文支撑: SGDR (Loshchilov & Hutter 2017), cyclical LR. 应用到 curvature schedule.
+USE_CYCLIC_CURVATURE = True               # v270 启用 cyclic (vs linear curriculum)
+C_CYCLIC_MIN = 0.05                       # cyclic c_min (近欧氏)
+C_CYCLIC_MAX = 0.7                        # cyclic c_max (双曲)
+C_CYCLIC_PERIOD = 25_000                  # cyclic 周期 T (步数, 训练 100k 步 ≈ 4 周期)
 # HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
 GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 # C28: 启用 M3 cross-layer transport (与 curriculum 联动)
@@ -229,6 +235,10 @@ def main():
         c_start=C_START,
         c_end=C_END,
         curriculum_steps=CURRICULUM_STEPS,
+        use_cyclic_curvature=USE_CYCLIC_CURVATURE,  # v270: cyclic curriculum (C27b)
+        c_cyclic_min=C_CYCLIC_MIN,
+        c_cyclic_max=C_CYCLIC_MAX,
+        c_cyclic_period=C_CYCLIC_PERIOD,
     ).to(device)
 
     if COMPILE:

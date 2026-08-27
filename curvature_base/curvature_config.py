@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "mobius_commit_loss_v262_baseline"  # ← BASELINE (2026-08-27 promoted from v262). Möbius commit loss + L2 distance + hyperbolic_distance=True + sk_eps=0.05. commit 路径 = 欧氏 res = res - emb 替换为 Poincaré ball 上测地线 res = exp_0(log_0(res) - log_0(emb), c) (Möbius 减法). R36n (e) 几何变换 合规. c=1 (curriculum 0.05→0.7). test_R@10 = 0.11267719072164949 (R36h ceiling +0.76% breakthrough vs 旧 v120 C-RVQ Mahalanobis 0.11183). 2 RUN 字符级一致 (RUN 1 + RUN 2 全链路 Stage 1→4 复测 PASS). 新 baseline 锁定; 旧 v120 baseline 备份在 /home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v120/.
+MECHANISM_NAME = "cyclic_curriculum_v270"  # ← v270 NOVEL: cyclic curriculum (R36n a) + v262 M2 commit loss + M3 transport 联合. 论文 SGDR (Loshchilov & Hutter 2017). 实现: c(t) = c_min + (c_max-c_min)|sin(πt/T)|, c_min=0.05, c_max=0.7, T=25000 步 (训练 100k 步 ≈ 4 个完整周期). 关 USE_CURRICULUM_CURVATURE (cyclic 取代 linear ramp). 保留 USE_M2_INTRINSIC=True / USE_M3_TRANSPORT=True / USE_FIXED_CURVATURE=True / DISTANCE_MODE=L2 / hyperbolic_distance=True / sk_eps=0.05. 历史 v56 R37 FAIL (Stage 1 端纯 cyclic, 无 M2), v270 联合 M2 commit loss + M3 transport + cyclic 重新验证. 目标: test_R@10 > 0.11267719072164949 (v262 baseline, v267/v268/v269 三种方向已证 R36h ceiling lock).
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")

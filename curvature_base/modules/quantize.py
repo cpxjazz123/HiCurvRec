@@ -120,6 +120,12 @@ class Quantize(nn.Module):
         c_start: float = 0.05,             # C27: 初始 c (接近欧氏, 几何平滑)
         c_end: float = 1.0,                # C27: 最终 c (双曲, 信息容量高)
         curriculum_steps: int = 50_000,    # C27: c 从 c_start 线性增到 c_end 所需全球步数
+        # C27b (v270 NOVEL): Cyclic Curriculum Curvature — c(t) = c_min + (c_max-c_min)|sin(πt/T)|
+        # 论文支撑: curriculum learning + curriculum 在训练中震荡 (Loshchilov & Hutter 2017 SGDR)
+        use_cyclic_curvature: bool = False,  # v270: 启用 cyclic (vs linear curriculum)
+        c_cyclic_min: float = 0.05,         # v270: cyclic c_min
+        c_cyclic_max: float = 0.7,          # v270: cyclic c_max
+        c_cyclic_period: int = 25_000,      # v270: cyclic 周期 T (步数, 训练期 ~4 个完整周期)
         # F3 v83: Poincaré Spread Loss (反向 v82 Center) — margin-based pairwise distance on codebook
         # 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017), Contrastive Loss (Hadsell et al. CVPR 2006)
         # 机制: L_spread_l = mean_{i≠j} relu(MARGIN - poincare_dist(codebook_l[i], codebook_l[j]))
@@ -209,6 +215,11 @@ class Quantize(nn.Module):
         self.c_start = float(c_start)
         self.c_end = float(c_end)
         self.curriculum_steps = int(curriculum_steps)
+        # v270 NOVEL: cyclic curriculum state
+        self.use_cyclic_curvature = use_cyclic_curvature
+        self.c_cyclic_min = float(c_cyclic_min)
+        self.c_cyclic_max = float(c_cyclic_max)
+        self.c_cyclic_period = int(c_cyclic_period)
 
         # F3 v83: Spread Loss 配置
         self.use_spread_loss = bool(use_spread_loss)
@@ -250,7 +261,14 @@ class Quantize(nn.Module):
         C26: use_fixed_curvature=True → 永远返回 c_fixed (HG-Rec 极简).
         C27: use_curriculum_curvature=True → 线性 schedule: c = c_start + (c_end - c_start) * (step/curriculum_steps).
              优先于 use_fixed_curvature (curriculum 是 schedule, 不是固定值).
+        C27b (v270): use_cyclic_curvature=True → 周期震荡: c(t) = c_min + (c_max-c_min)|sin(πt/T)|.
         """
+        if self.use_cyclic_curvature:
+            import math
+            t = self._curriculum_step
+            phase = math.pi * t / max(1, self.c_cyclic_period)
+            c = self.c_cyclic_min + (self.c_cyclic_max - self.c_cyclic_min) * abs(math.sin(phase))
+            return torch.tensor(c, device=self.theta.device, dtype=self.theta.dtype)
         if self.use_curriculum_curvature:
             t = min(1.0, self._curriculum_step / max(1, self.curriculum_steps))
             c = self.c_start + (self.c_end - self.c_start) * t
@@ -269,7 +287,14 @@ class Quantize(nn.Module):
         """Issue #154: per-item 曲率 c_l,i (B,) — prefix router 输出 delta 调制 θ.
         C26: use_fixed_curvature=True → 永远返回 c_fixed, 忽略 prefix_emb (HG-Rec 极简).
         C27: use_curriculum_curvature=True → 返回当前 schedule 的 c (per-item 路由失效, 因 c 全局一致).
+        C27b (v270): use_cyclic_curvature=True → 返回 cyclic schedule 的 c (per-item 路由失效).
         """
+        if self.use_cyclic_curvature:
+            import math
+            t = self._curriculum_step
+            phase = math.pi * t / max(1, self.c_cyclic_period)
+            c = self.c_cyclic_min + (self.c_cyclic_max - self.c_cyclic_min) * abs(math.sin(phase))
+            return torch.tensor(c, device=self.theta.device, dtype=self.theta.dtype)
         if self.use_curriculum_curvature:
             t = min(1.0, self._curriculum_step / max(1, self.curriculum_steps))
             c = self.c_start + (self.c_end - self.c_start) * t
