@@ -95,6 +95,10 @@ GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 USE_M3_TRANSPORT = True                   # C28: 启用 M3 (与 C27 互补)
 # C29: 启用 M2 intrinsic Möbius 减法 (R37 rollback: M2 + M3 联合恶化 L0 collapse, test R@10 0.0991→0.0941)
 USE_M2_INTRINSIC = True                   # v262 NOVEL: 启用 M2 Möbius intrinsic commit (commit path = Poincaré ball 上测地线 residual subtraction). R36n (e) 几何变换 合规
+# v282 NOVEL: Geodesic Midpoint Commit (R36n e variant #3, vs baseline Möbius_sub)
+# 公式: res_mid = exp_0((log_0(res) + log_0(emb))/2, c)
+# 论文: Ungar 2008 Gyrogroup / Fréchet mean closed-form
+USE_GEODESIC_MIDPOINT_COMMIT = True       # v282 启用 geodesic midpoint commit (覆盖 Möbius_sub)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -239,6 +243,8 @@ def main():
         c_cyclic_min=C_CYCLIC_MIN,
         c_cyclic_max=C_CYCLIC_MAX,
         c_cyclic_period=C_CYCLIC_PERIOD,
+        use_geodesic_midpoint_commit=USE_GEODESIC_MIDPOINT_COMMIT,  # v282: geodesic midpoint commit (vs Möbius_sub)
+        midpoint_layer_mask=[True, False, False],  # v282 R1: 仅 L0 用 midpoint, L1/L2 baseline subtraction (避免 collapse)
     ).to(device)
 
     if COMPILE:

@@ -93,6 +93,15 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_cyclic_min: float = 0.05,
         c_cyclic_max: float = 0.7,
         c_cyclic_period: int = 25_000,
+        # v282 NOVEL: geodesic midpoint commit (R36n e 几何变换变种 #3)
+        # 取代 baseline Möbius_sub (exp_0(log_0(res) - log_0(emb), c)).
+        # 公式: res_mid = exp_0((log_0(res) + log_0(emb))/2, c)
+        # 论文支撑: Ungar 2008 Gyrogroup, hyperbolic Fréchet mean closed-form.
+        use_geodesic_midpoint_commit: bool = False,
+        # v282 Round 1 (R36p): 层-wise midpoint — 仅在指定层启用 midpoint,
+        # 其余层仍用 baseline Möbius_sub (避免 L1/L2 collapse).
+        # 默认 = [True, False, False] (L0 midpoint, L1/L2 baseline).
+        midpoint_layer_mask: Optional[List[bool]] = None,
     ) -> None:
         self._config = locals()
 
@@ -128,6 +137,12 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.c_start = float(c_start)
         self.c_end = float(c_end)
         self.curriculum_steps = int(curriculum_steps)
+        self.use_geodesic_midpoint_commit = bool(use_geodesic_midpoint_commit)  # v282
+        # v282 Round 1: 层-wise midpoint mask (默认 L0 only)
+        if midpoint_layer_mask is None:
+            midpoint_layer_mask = [True] + [False] * (n_layers - 1)
+        assert len(midpoint_layer_mask) == n_layers
+        self.midpoint_layer_mask = [bool(x) for x in midpoint_layer_mask]
         # Issue #154: 默认 L0 全局曲率, L1/L2 prefix-conditioned per-item 曲率
         if prefix_router_layers is None:
             prefix_router_layers = [False] + [True] * (n_layers - 1)
@@ -267,10 +282,20 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                 # 注意: 不可 detach — 否则 θ 梯度截断, 曲率退化为固定 1.25 (M2/M3 失效)
                 c_per = layer.get_c_per_item(prefix_emb)  # (1,) 或 (B,) per-item 曲率
                 c_per = c_per.view(-1, 1)                 # (1,1) 或 (B,1)
-                h_r = _expmap0_t(res, c_per)
-                h_e = _expmap0_t(emb, c_per)
-                h_next = _mobius_add_t(-h_e, h_r, c_per)
-                res = _logmap0_t(h_next, c_per)
+                if self.use_geodesic_midpoint_commit and self.midpoint_layer_mask[li]:
+                    # v282 Round 1 NOVEL: 层-wise geodesic midpoint commit — 仅在指定层启用
+                    # 公式: res_mid = exp_0((log_0(res) + log_0(emb))/2, c)
+                    # vs baseline Möbius_sub: exp_0(log_0(res) - log_0(emb), c)
+                    # 论文: Ungar 2008 Gyrogroup, Fréchet mean closed-form
+                    log_r = _logmap0_t(res, c_per)
+                    log_e = _logmap0_t(emb, c_per)
+                    log_mid = (log_r + log_e) / 2.0
+                    res = _expmap0_t(log_mid, c_per)
+                else:
+                    h_r = _expmap0_t(res, c_per)
+                    h_e = _expmap0_t(emb, c_per)
+                    h_next = _mobius_add_t(-h_e, h_r, c_per)
+                    res = _logmap0_t(h_next, c_per)
             else:
                 res = res - emb
             if self.gate_M3_transport and li < len(self.layers) - 1:

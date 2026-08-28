@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "cyclic_curriculum_v270"  # ← v270 NOVEL: cyclic curriculum (R36n a) + v262 M2 commit loss + M3 transport 联合. 论文 SGDR (Loshchilov & Hutter 2017). 实现: c(t) = c_min + (c_max-c_min)|sin(πt/T)|, c_min=0.05, c_max=0.7, T=25000 步 (训练 100k 步 ≈ 4 个完整周期). 关 USE_CURRICULUM_CURVATURE (cyclic 取代 linear ramp). 保留 USE_M2_INTRINSIC=True / USE_M3_TRANSPORT=True / USE_FIXED_CURVATURE=True / DISTANCE_MODE=L2 / hyperbolic_distance=True / sk_eps=0.05. 历史 v56 R37 FAIL (Stage 1 端纯 cyclic, 无 M2), v270 联合 M2 commit loss + M3 transport + cyclic 重新验证. 目标: test_R@10 > 0.11267719072164949 (v262 baseline, v267/v268/v269 三种方向已证 R36h ceiling lock).
+MECHANISM_NAME = "geodesic_midpoint_v282"  # ← v282 NOVEL: R36n (e) Geodesic Midpoint Commit (vs baseline Möbius_sub vs v281 blended). 论文 Ungar 2008 "Gyrogroup" / Fréchet mean on hyperbolic space. 公式: res_mid = exp_0((log_0(res) + log_0(emb))/2, c). 与 baseline Möbius_sub (exp_0(log_0(res) - log_0(emb), c)) 不同: midpoint 居中 res/emb 之间, Möbius_sub 沿测地线远离 emb. 是 R36n (e) 几何变换变种 #3 (v262 baseline Möbius_sub + v281 α-blended Möbius_sub + v282 midpoint). 保留 v270 baseline 所有配置: cyclic curriculum + M2 commit loss + M3 transport, 只替换 commit 路径. Stage 1 R36n (e) variant 第 3 次尝试, R36h ceiling 第 17 次验证. 目标: test_R@10 > 0.1130396262886598 (v270 baseline).
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")
