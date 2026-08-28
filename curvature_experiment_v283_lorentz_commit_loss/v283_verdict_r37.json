@@ -1,0 +1,36 @@
+{
+  "verdict_id": "v283_R37_FAIL",
+  "date": "2026-08-28",
+  "experiment": "curvature_experiment_v283_lorentz_commit_loss",
+  "mechanism_name": "hyperbolic_contrastive_v283",
+  "category": "R36n (f) 双曲几何损失 — Hyperbolic Contrastive Commit Loss",
+  "description": "在 commit loss 之外加 Poincaré distance margin contrastive loss (anchor=选中 codeword, neg=K=8 随机其他 codebook entries, margin m=0.5, λ=0.05). 防 codebook collapse + 推动双曲几何 spread. 保留 v270 baseline 全部配置 (cyclic + M2 + M3 + c_cyclic).",
+  "baseline": {
+    "name": "v270 cyclic curriculum + Möbius commit loss + M3 transport",
+    "test_R@10": 0.1130396262886598
+  },
+  "result": {
+    "stage1_utility": "PASS R36p (codes=251/247/252/256, all 3 layers ≥ 75% utility)",
+    "stage2_sids_unique_count": "256/256/256 (100% all layers, 远好于 v282 灰区)",
+    "stage3_best_ndcg10": 0.0987,
+    "stage3_best_epoch": 120,
+    "stage3_early_stop_epoch": 140,
+    "test_R@10": 0.11203286082474227,
+    "test_R@20": 0.14368556701030927,
+    "test_NDCG@20": 0.0910120993545375,
+    "delta_vs_v270": -0.0010067654639175293,
+    "delta_pct_vs_v270": -0.89,
+    "delta_vs_v282": -0.0015302835051546333,
+    "delta_pct_vs_v282": -1.35
+  },
+  "r37_decision": "FAIL — v283 test_R@10=0.11203 < v270 baseline 0.11304 (-0.89%) AND < v282 0.11356 (-1.35%)",
+  "r50_action": "rm -rf curvature_experiment_v283_lorentz_commit_loss/, 保留 verdict 供 lineage 终止参考",
+  "interpretation": "valid ndcg@20 (0.0987) 实际上比 v282 (0.0966) 更高, 但 test_R@10 反而下降 — 这是 R36 严格化 v2 警告的典型 valid overfitting 模式 (CLAUDE.md 表格注脚提到). Hyperbolic contrastive 损失虽然提升了 valid 表现, 但学到的是 valid 偏置的局部模式, test 泛化差. Stage 1 RQ-VAE 端纯曲率变更虽 R36p 健康, 仍未能稳定突破 baseline (R36h ceiling 第 19 次验证失败).",
+  "next_steps": [
+    "v283 lineage 终止 (R37 + R50)",
+    "启动 v282 RUN 2 完整 Stage 1→4 验证 (R51+ 强约束)",
+    "v282 RUN 2 字符级一致 → promoted 为新 baseline"
+  ],
+  "ckpt_path": "/fs04/ar57/wenyu/GeneRec/curvature_experiment_v283_lorentz_commit_loss/out/decoder/instruments_hgrec_configs/hgrec_hyperbolic_contrastive_v283/best_ckpt.pt",
+  "test_final_path": "/fs04/ar57/wenyu/GeneRec/curvature_experiment_v283_lorentz_commit_loss/out/decoder/instruments_hgrec_configs/hgrec_hyperbolic_contrastive_v283/test_final.json"
+}
