@@ -1,0 +1,18 @@
+# v115 hyp_sinkhorn_eps — sk_eps 微调 (v114 0.12 → v115 0.13)
+# R36o 第 4 轮二分搜索: v114 sk_eps=0.12 微突破 → v115 sk_eps=0.13 (0.12 右侧二分).
+# Stage 3 T5 HG-Rec decoder config (复用 v87 hyperparams)
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+train_decoder.train.learning_rate = 1e-3
+train_decoder.train.weight_decay = 1e-4
+train_decoder.train.num_epochs = 200
+train_decoder.train.batch_size = 64
+train_decoder.train.early_stop = 20
+train_decoder.train.eval_every = 1
+train_decoder.train.use_hgrec_arch = True
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_hyp_sinkhorn_eps_v115/dataset/Instruments/sids_for_hgrec.npy"
+train_decoder.train.save_dir_root = "./out/decoder/instruments_hgrec_configs/hgrec_hyp_sinkhorn_eps_v115"
+train_decoder.train.t5_d_model = 128
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
