@@ -1,7 +1,17 @@
 import os
+import random as _random
+import numpy as _np
 import gin
 import torch
 import wandb
+
+# R51+ 6 确定性约束 (Stage 3 训练, R47 联动)
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 from accelerate import Accelerator
 from accelerate.utils import DistributedDataParallelKwargs
@@ -11,7 +21,7 @@ from data.processed import SeqData
 from data.utils import batch_to
 from data.utils import cycle
 from data.utils import next_batch
-from evaluate.metrics import TopKAccumulator
+from _eval_metrics.metrics import TopKAccumulator
 from modules.model import EncoderDecoderRetrievalModel
 from modules.scheduler.inv_sqrt import InverseSquareRootScheduler
 from modules.tokenizer.semids import SemanticIdTokenizer
@@ -67,6 +77,14 @@ def train(
 ):
     if dataset not in (RecDataset.AMAZON, RecDataset.INSTRUMENTS):
         raise Exception(f"Dataset currently not supported: {dataset}.")
+
+    # R51+: Stage 3 训练端, accelerator 创建之前显式 seed (per-rank 偏移保证 4 卡不同 seed)
+    _local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    _random.seed(42 + _local_rank)
+    _np.random.seed(42 + _local_rank)
+    torch.manual_seed(42 + _local_rank)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42 + _local_rank)
 
     if wandb_logging:
         params = locals()

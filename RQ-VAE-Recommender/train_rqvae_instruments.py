@@ -15,6 +15,7 @@ step 计数 = 全球 step (all_reduce SUM 每 step), 与 RQ-VAE-Recommender 论�
 """
 import json
 import os
+import random as _random
 import sys
 import time
 
@@ -24,6 +25,14 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
+
+# === R51+ 6 确定性约束 (硬编码, R47 + R51 联动) ===
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 # R47 imports — RQ-VAE-Recommender modules
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/RQ-VAE-Recommender")
@@ -76,6 +85,14 @@ def collate_items(batch):
     return torch.stack(batch, dim=0)
 
 
+def worker_init_fn(worker_id: int):
+    """R51+ DataLoader worker RNG 固定 (per-worker seed 由 base_seed + worker_id 派生)."""
+    base_seed = SEED + dist.get_rank() * 1000 + worker_id
+    _random.seed(base_seed)
+    np.random.seed(base_seed)
+    torch.manual_seed(base_seed)
+
+
 def setup_distributed():
     dist.init_process_group(backend="nccl")
     rank = dist.get_rank()
@@ -109,6 +126,9 @@ def main():
 
     torch.manual_seed(SEED + rank)
     np.random.seed(SEED + rank)
+    _random.seed(SEED + rank)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED + rank)
 
     if rank == 0:
         os.makedirs(OUT_DIR, exist_ok=True)
@@ -132,6 +152,7 @@ def main():
         prefetch_factor=PREFETCH_FACTOR if NUM_WORKERS > 0 else None,
         drop_last=True,
         collate_fn=collate_items,
+        worker_init_fn=worker_init_fn,
     )
 
     if rank == 0:

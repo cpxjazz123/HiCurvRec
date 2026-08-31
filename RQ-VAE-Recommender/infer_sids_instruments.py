@@ -8,11 +8,20 @@ R5: seed=42, 单卡运行即可 (推理不是瓶颈)
 """
 import json
 import os
+import random as _random
 import sys
 import time
 
 import numpy as np
 import torch
+
+# R51+ 6 确定性约束 (Stage 2 单进程推理, R47 联动)
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 # R47 imports
 sys.path.insert(0, "/home/wlia0047/ar57/wenyu/GeneRec/RQ-VAE-Recommender")
@@ -42,6 +51,9 @@ INFER_BATCH_SIZE = 512
 def main():
     torch.manual_seed(SEED)
     np.random.seed(SEED)
+    _random.seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED)
 
     print(f"=== SID inference ===")
     print(f"ckpt: {CKPT}")

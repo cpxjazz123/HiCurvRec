@@ -1,8 +1,17 @@
 import argparse
-import random
+import os
+import random as _random
 import torch
 import numpy as np
 import logging
+
+# === R51+ 6 确定性约束 (Stage 1 HRQ-VAE 训练, R47 联动) ===
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 from time import time
 from torch.utils.data import DataLoader
@@ -45,8 +54,9 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == '__main__':
-    seed = 2024
-    random.seed(seed)
+    # R51+: Stage 1 HRQ-VAE 单卡, seed=42 单 seed (DDP 由 torchrun 调度)
+    seed = 42
+    _random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)

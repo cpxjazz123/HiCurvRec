@@ -140,7 +140,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             quantize_loss=quantize_loss,
         )
 
-    @torch.compile(mode="reduce-overhead")
+    # @torch.compile(mode="reduce-overhead")  # 2026-08-29 R51+ 关闭 torch.compile (torch 2.13 + functorch 不兼容 ImportError: draw_joint_graph)
     def forward(self, batch: SeqBatch, gumbel_t: float) -> RqVaeComputedLosses:
         x = batch.x
         quantized = self.get_semantic_ids(x, gumbel_t)

@@ -1,13 +1,24 @@
 """官方 HG-Rec test 评估 (官方代码缺 test stage, 此脚本补齐).
 
 加载 best ckpt (epoch 65, NDCG@20=0.1049) → test.parquet → beam20 评估.
+R51+: 加 6 确定性约束 + 写 test_final.json (与 RQ-VAE-Recommender 一致).
 """
-
 import os
 import sys
+import json
+import random as _random
+import numpy as _np
 import torch
 import numpy as np
 from tqdm import tqdm
+
+# === R51+ 6 确定性约束 (Stage 4 评估, R47 联动) ===
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import importlib.util
@@ -18,8 +29,9 @@ GenRecDataset = thr.GenRecDataset
 GenRecDataLoader = thr.GenRecDataLoader
 evaluate = thr.evaluate
 
-CKPT = "./ckpt/Instruments/Aug-14-2026_20-15-45/HG_Rec_epoch_63.pth"
+CKPT = sys.argv[1] if len(sys.argv) > 1 else "./ckpt/Instruments/HG-Rec_R51plus_RUN1/HG_Rec_best.pth"
 SID = "./dataset/Instruments/Instruments_t5_rqvae_beta_0.250_codebook_[64,128,256]_sk_0.000.npy"
+TEST_JSON = sys.argv[2] if len(sys.argv) > 2 else "./ckpt/Instruments/HG-Rec_R51plus_RUN1/test_final.json"
 
 config = dict(
     num_layers=6, num_decoder_layers=4, d_model=128, d_ff=1024,
@@ -29,6 +41,13 @@ config = dict(
 )
 
 def main():
+    # R51+: Stage 4 评估端, seed=42 单 seed
+    _random.seed(42)
+    _np.random.seed(42)
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42)
+
     device = torch.device("cuda:0")
     model = HG_Rec(config).to(device)
     state = torch.load(CKPT, map_location="cpu", weights_only=False)
@@ -47,6 +66,22 @@ def main():
     print("\n=== TEST (beam20) ===")
     for k in [5,10,20]:
         print(f"  Recall@{k}: {recalls['Recall@'+str(k)]:.4f}  NDCG@{k}: {ndcgs['NDCG@'+str(k)]:.4f}")
+
+    # R51+: 持久化 test_final.json (与 RQ-VAE-Recommender test_final.json 一致格式)
+    os.makedirs(os.path.dirname(TEST_JSON), exist_ok=True)
+    test_final = {
+        "best_ckpt": os.path.basename(CKPT),
+        "test_R@5": float(recalls['Recall@5']),
+        "test_R@10": float(recalls['Recall@10']),
+        "test_R@20": float(recalls['Recall@20']),
+        "test_NDCG@5": float(ndcgs['NDCG@5']),
+        "test_NDCG@10": float(ndcgs['NDCG@10']),
+        "test_NDCG@20": float(ndcgs['NDCG@20']),
+        "n_eval": int(len(ds)),
+    }
+    with open(TEST_JSON, "w") as f:
+        json.dump(test_final, f, indent=2)
+    print(f"\nSaved → {TEST_JSON}", flush=True)
 
 if __name__ == "__main__":
     main()

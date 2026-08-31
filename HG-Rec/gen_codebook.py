@@ -5,13 +5,21 @@ import numpy as np
 import torch
 import os
 
+# === R51+ 6 确定性约束 (Stage 2 codebook + dedup, R47 联动) ===
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
+
 from time import time
 from torch import optim
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
 from model.utils import *
-from model.rqvae import *
+from model.hrqvae import HRQVAE
 
 def check_collision(all_indices_str):
     tot_item = len(all_indices_str)
@@ -43,10 +51,18 @@ if __name__ == "__main__":
     """
     Attention: Check the dataset name and ckpt_path before running the code
     """
-    dataset = "Games" 
-    ckpt_path = f"./ckpt/{dataset}/Nov-24-2025_14-24-21_beta_0.250_codebook_[32,64,256]_sk_0.500/epoch_1869_collision_0.2345_model.pth"
-    output_path = f"./dataset/{dataset}/{dataset}_t5_rqvae_beta_0.250_codebook_[32,64,256]_sk_0.500.npy"
+    dataset = "Instruments"
+    # R51+ Stage 1 产物路径 (HRQ-VAE ckpt 由 train_hrqvae.py 训出)
+    ckpt_path = f"./ckpt/{dataset}/HG-Rec_R51plus_HRQVAE_seed42/HG-Rec_HRQVAE_best.pth"
+    output_path = f"./dataset/{dataset}/{dataset}_t5_rqvae_beta_0.250_codebook_[64,128,256]_sk_0.000_R51plus_seed42.npy"
     device = torch.device("cuda:0")
+    # R51+ Stage 2 单卡推理, seed=42 单 seed
+    import random as _random
+    _random.seed(42)
+    np.random.seed(42)
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42)
 
     ckpt = torch.load(ckpt_path, weights_only=False, map_location = torch.device('cpu'))
     args = ckpt['args']
@@ -73,11 +89,12 @@ if __name__ == "__main__":
     model.eval()
     print(model)
 
-    data_loader = DataLoader(data, 
+    data_loader = DataLoader(data,
                              num_workers = args.num_workers,
                              batch_size = 64,
-                             shuffle = True,
-                             pin_memory = True)
+                             shuffle = False,  # R51+ 关闭 shuffle,保证 deterministic order
+                             pin_memory = True,
+                             worker_init_fn=lambda wid: (_random.seed(42 + wid), np.random.seed(42 + wid), torch.manual_seed(42 + wid)))
     
     all_indices = []
     all_indices_str = []

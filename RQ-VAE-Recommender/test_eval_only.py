@@ -7,9 +7,19 @@ torch.distributed.broadcast 把 state_dict 传给其他 3 个 rank — 避免 4 
 R35b: 4 卡分片不重复评估 test 集, all_reduce SUM, 统一除以全局 total.
 """
 import os
+import random as _random
+import numpy as _np
 import sys
 import gin
 import torch
+
+# R51+ 6 确定性约束 (Stage 4 评估, R47 联动)
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
 
 # 关键: import train_decoder 让 `train` configurable 被 gin 注册
 # (decoder_instruments.gin 里有 train.xxx = ... 配置项)
@@ -18,7 +28,7 @@ import train_decoder  # noqa: F401
 from accelerate import Accelerator
 from data.processed import ItemData, RecDataset, SeqData
 from data.utils import batch_to
-from evaluate.metrics import TopKAccumulator
+from _eval_metrics.metrics import TopKAccumulator
 from modules.model import EncoderDecoderRetrievalModel
 from modules.tokenizer.semids import SemanticIdTokenizer
 from torch.utils.data import DataLoader
@@ -27,6 +37,13 @@ from torch.utils.data import DataLoader
 def main():
     # 与 train_decoder.py 同样的 gin config
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+    # R51+: Stage 4 评估端, DataLoader 创建之前显式 seed (eval 单 seed)
+    _random.seed(42)
+    _np.random.seed(42)
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(42)
 
     accelerator = Accelerator(split_batches=True, mixed_precision="no")
     device = accelerator.device
