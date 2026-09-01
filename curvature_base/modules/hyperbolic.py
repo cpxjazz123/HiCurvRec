@@ -92,6 +92,27 @@ def _mobius_add_t(x, y, c):
     return num / den.clamp_min(_eps(den))
 
 
+def _mobius_scalar_mul_t(x, r, c):
+    """v336 NOVEL: tensor-safe Möbius scalar multiplication on Poincaré ball.
+    数学: r ⊗ x = (1/√c) tanh(r · artanh(√c ||x||)) · x/||x||
+
+    Args:
+        x: (..., D) Poincaré ball 内点
+        r: scalar 或 (..., 1) 标量乘数
+        c: 曲率 (broadcastable)
+    Returns:
+        (..., D) Möbius 数乘结果, 仍在 ball 内
+    """
+    x_norm = x.norm(dim=-1, keepdim=True).clamp_min(_eps(x))
+    sqrt_c = c.clamp_min(1e-10) ** 0.5
+    sqrt_c_x = (sqrt_c * x_norm).clamp(max=1 - 1e-5)
+    # r · artanh(√c ||x||)
+    inner = r * torch.atanh(sqrt_c_x)
+    tanh_inner = torch.tanh(inner)
+    # (1/√c) tanh(...) · x/||x||
+    return (tanh_inner / sqrt_c) * (x / x_norm)
+
+
 def _artanh(x):
     return 0.5 * torch.log((1 + x) / (1 - x))
 

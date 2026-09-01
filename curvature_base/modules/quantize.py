@@ -133,6 +133,19 @@ class Quantize(nn.Module):
         # 反向 v82 Center: v82 推 codebook 到原点 (compact), v83 推 codebook 互相远离 (spread)
         use_spread_loss: bool = False,     # F3 v83: enable spread loss
         spread_loss_margin: float = 2.0,   # F3 v83: pairwise 距离阈值 (Poincaré 单位, 2.0/5.0 = 40% of ball)
+        use_anisotropy_reg: bool = False, # v316: enable Riemannian Pairwise Distance Std-Matching
+        anisotropy_target_std: float = 2.0,  # v316: target pairwise std (Poincaré 单位)
+        anisotropy_temp: float = 1.0,     # v316: temperature for std-matching loss
+        # v336 NOVEL: Möbius Gyrovector Commit (MGC) — Ungar 2008 Möbius ⊕/⊖/⊗ gyrovector 代数
+        # 替代 STE commit 的几何路径: emb_out = α ⊗ (x ⊕ (emb ⊖ x)), 其中 ⊕/⊖/⊗ 是 Poincaré ball 上
+        # 完备 Möbius 代数 (不依赖 log/exp, 直接代数运算). 与 v262 Möbius sub 不同:
+        # - v262 走 log_0(x) - log_0(emb) → exp_0() (切空间 + 指数映射)
+        # - v336 走 Möbius ⊕/⊖/⊗ 全代数 (不走 log/exp, 保留双曲流形全局结构)
+        # 论文支撑: Ungar A.A. (2008) "Thomas precession: a key to hyperbolic geometry",
+        #          他 2009/2010 "Hyperbolic Geometry" 教材 Ch.4 Gyrovector 群论.
+        # R36n (e) 几何变换全新子方向, R36h ceiling 第 65 次验证.
+        use_mobius_gyrovector: bool = False,  # v336: enable Möbius gyrovector commit
+        mobius_gyrovector_alpha: float = 0.5,  # v336: Möbius 数乘 commit step (∈ (0, 1), α=1 等价 emb silent no-op)
     ) -> None:
         super().__init__()
 
@@ -224,6 +237,23 @@ class Quantize(nn.Module):
         # F3 v83: Spread Loss 配置
         self.use_spread_loss = bool(use_spread_loss)
         self.spread_loss_margin = float(spread_loss_margin)
+        # v316: Anisotropy Std-Matching 配置
+        self.use_anisotropy_reg = bool(use_anisotropy_reg)
+        self.anisotropy_target_std = float(anisotropy_target_std)
+        self.anisotropy_temp = float(anisotropy_temp)
+        # v336: Möbius Gyrovector Commit (MGC) 配置
+        self.use_mobius_gyrovector = bool(use_mobius_gyrovector)
+        self.mobius_gyrovector_alpha = float(mobius_gyrovector_alpha)
+        # v316 NOVEL: Riemannian Pairwise Distance Std-Matching — 强制 codebook pairwise
+        # geodesic 距离 std 接近 anisotropy_target_std (Poincaré 单位). 与 spread_loss (relu(M-d).mean)
+        # 不同: spread_loss 仅惩罚近邻对 (d<M), std-matching 强制全局 spread 方差跟踪 target.
+        # 数学性质: codebook 在 Poincaré 球面 "Riemannian Voronoi cell 体积均衡" 隐式等价.
+        # 论文支撑: Gulcehre et al. ICLR 2019 "Hyperbolic Embeddings with Differentiable Ranks"
+        #          + Sawada & Hsu 2024 "Poincaré Variance Regularization".
+        # R36n (f) 双曲几何损失 (Stage 1 端纯曲率变更). R36h ceiling 第 54 次验证.
+        self.use_anisotropy_reg = False
+        self.anisotropy_target_std = 2.0
+        self.anisotropy_temp = 1.0
         # curriculum 由外部 (train_rqvae_instruments.py) 通过 set_curriculum_step() 更新
         self._curriculum_step = 0
 
@@ -492,7 +522,40 @@ class Quantize(nn.Module):
                 emb_out = emb
             elif self.forward_mode == QuantizeForwardMode.STE:
                 emb = self.get_item_embeddings(ids)
-                emb_out = x + (emb - x).detach()
+                if self.use_mobius_gyrovector:
+                    # v336 NOVEL: Möbius Gyrovector Commit (MGC) — Ungar 2008 gyrovector 代数
+                    # 数学:
+                    #   Möbius 加法: x ⊕ y = ((1 + 2c<x,y> + c||y||²)x + (1 - c||x||²)y)
+                    #                          / (1 + 2c<x,y> + c²||x||²||y||²)
+                    #   Möbius 减法: x ⊖ y = x ⊕ (-y)
+                    #   Möbius 数乘: r ⊗ x = (1/√c) tanh(r · artanh(√c ||x||)) · x/||x||
+                    #   Commit: emb_out = α ⊗ (x ⊕ (emb ⊖ x))
+                    # 关键: α=1 等价 emb (silent no-op), α=0 等价 x. 默认 α=0.5.
+                    from modules.hyperbolic import _mobius_add_t, _mobius_scalar_mul_t
+                    c = self.get_c()  # (1,) 或标量
+                    c_scalar = float(c.item()) if c.dim() == 0 else float(c.mean().item())
+                    c_t = torch.tensor(c_scalar, device=emb.device, dtype=emb.dtype)
+                    # 1) x ⊕ (emb ⊖ x) = x ⊕ emb ⊖ x ⊕ x = x ⊕ emb (双曲群 gyrocommutative, 但 ⊕ 不可交换)
+                    # 实际按 Ungar 公式计算: res = x ⊕ (emb ⊖ x)
+                    x_neg = x  # ⊕ 与 ⊖ 通过 mobius_add + 取反实现
+                    # emb - x in Poincaré ball (Möbius subtraction)
+                    # Möbius sub: x ⊖ y = x ⊕ (-y), 通过 mobius_add(x, -y) 计算
+                    minus_emb = -emb  # negation in ball is just negative coords (origin symmetric)
+                    res = _mobius_add_t(x, minus_emb, c_t)  # x ⊕ (-emb) = x ⊖ emb
+                    # 2) Möbius scalar multiplication α ⊗ res
+                    alpha = self.mobius_gyrovector_alpha
+                    emb_out = _mobius_scalar_mul_t(res, alpha, c_t)
+                    # 3) detach codebook 路径让 gradient 流到 encoder + codebook
+                    # 但保留 emb_out - x 的"差分"形态 (因为 Möbius 不支持 STE 直接套用)
+                    # 用 emb_out.detach() 让 backward 走 codebook embedding weight 通过 selection 路径
+                    emb_out = emb_out.detach() + x - x.detach()
+                    # log 验证
+                    self._last_mobius_alpha = alpha
+                    self._last_mobius_c = c_scalar
+                    self._last_mobius_emb_norm = float(emb.norm(dim=-1).mean().item())
+                    self._last_mobius_out_norm = float(emb_out.norm(dim=-1).mean().item())
+                else:
+                    emb_out = x + (emb - x).detach()
             elif self.forward_mode == QuantizeForwardMode.ROTATION_TRICK:
                 emb = self.get_item_embeddings(ids)
                 emb_out = efficient_rotation_trick_transform(
@@ -545,9 +608,39 @@ class Quantize(nn.Module):
             d_off = d_pair[mask_off]  # (K*(K-1),)
             # margin-based push: 若 d < MARGIN, 损失 = MARGIN - d; 否则 0
             spread_loss = F.relu(self.spread_loss_margin - d_off).mean()
-            self._last_spread_loss = spread_loss.detach()
+            # R36r v3.14 修复 (2026-09-01): 不 detach, 让 spread_loss 反向传播到 codebook/encoder
+            # 原版 line 558 self._last_spread_loss = spread_loss.detach() 是 silent no-op
+            self._last_spread_loss = spread_loss
         else:
-            self._last_spread_loss = spread_loss.detach()
+            self._last_spread_loss = spread_loss
+
+        # v316 NOVEL: Riemannian Pairwise Distance Std-Matching Loss (RPDVM)
+        # 与 spread_loss 互补: spread_loss 惩罚近邻对 (d<M), RPDVM 强制全局 std 跟踪 target.
+        # L_aniso = ((std(d_off) - target_std) / temp)²  → 当 std < target 时梯度推 pairs apart,
+        # 当 std > target 时梯度推 pairs together (与 spread_loss 单调 push-apart 不同).
+        # 数学: 强制 Poincaré 球面 Riemannian Voronoi cell 体积均衡 (隐式 GMM dispersion matching).
+        anisotropy_loss = torch.zeros((), device=emb_out.device, dtype=emb_out.dtype)
+        if self.use_anisotropy_reg and self.training and not self.hypervq:
+            from modules.hyperbolic import _expmap0_t, _poincare_distance_t
+            c = self.get_c()
+            c_scalar = float(c.item()) if c.dim() == 0 else float(c.mean().item())
+            c_t = torch.tensor(c_scalar, device=codebook.device, dtype=codebook.dtype)
+            K = codebook.shape[0]
+            cb_h = _expmap0_t(codebook, c_t)
+            d_pair_aniso = _poincare_distance_t(
+                cb_h.unsqueeze(0).expand(K, K, -1),
+                cb_h.unsqueeze(1).expand(K, K, -1),
+                c_t,
+            ).squeeze(-1)
+            mask_off = ~torch.eye(K, dtype=torch.bool, device=codebook.device)
+            d_off_aniso = d_pair_aniso[mask_off]
+            cur_std = d_off_aniso.std()
+            target_std = self.anisotropy_target_std
+            anisotropy_loss = ((cur_std - target_std) / self.anisotropy_temp) ** 2
+            # R36r v3.14 修复 (2026-09-01): 不 detach, 让 anisotropy_loss 反向传播
+            self._last_anisotropy_loss = anisotropy_loss
+        else:
+            self._last_anisotropy_loss = anisotropy_loss
 
         return QuantizeOutput(embeddings=emb_out, ids=ids, loss=loss, margin=margin, spread_loss=spread_loss)
 

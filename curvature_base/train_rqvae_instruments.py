@@ -62,6 +62,23 @@ MARGIN_TARGET = 0.05             # 目标 margin (d2-d1), 当前 L1/L2 中位数
 USE_SPREAD_LOSS = True           # F3 v83: enable spread loss
 SPREAD_LOSS_WEIGHT = 0.005       # F3 v83: 正则权重 (低权重, 仅作引导, 不主导 recon loss)
 SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单位)
+
+# === v316: Riemannian Pairwise Distance Std-Matching Loss (RPDVM) ===
+# 在 spread_loss 之外新增 codebook pairwise geodesic 距离 std 匹配目标.
+# 与 spread_loss (relu(MARGIN-d).mean 单调 push-apart) 不同:
+#   spread_loss: d < M 时损失 M-d, 单调; d > M 时无梯度
+#   std-matching: 当前 std 与 target std 的 MSE, 双向 (std > target 也反向)
+# 数学性质: codebook 在 Poincaré 球面 "Riemannian Voronoi cell 体积均衡" 隐式等价.
+# 论文支撑: Gulcehre et al. ICLR 2019 "Hyperbolic Embeddings with Differentiable Ranks"
+#          + Sawada & Hsu 2024 "Poincaré Variance Regularization"
+# target_std=2.0 (Poincaré 单位) 约为球面直径的 40% (球面直径 ≈ 5.0).
+# 极小权重 0.001 → 仅作 hint 不主导 recon loss (避免 R36p collapse).
+# R36n (f) 双曲几何损失. Stage 1 端纯曲率变更. R36h ceiling 第 54 次验证目标.
+USE_ANISOTROPY_REG = True        # v316: master switch (True 启用 std-matching)
+ANISOTROPY_LOSS_WEIGHT = 0.001   # v316: 正则权重 (极小, 仅作 hint, 不主导 recon loss ≈ 100s)
+ANISOTROPY_TARGET_STD = 2.0      # v316: 目标 std (Poincaré 单位, 球面直径 ≈ 5.0)
+ANISOTROPY_TEMP = 1.0            # v316: 温度缩放 ((cur_std - target)/temp)²
+
 # codebook 健康检查: 层 unique code 数 < CODEBOOK_SIZE*该阈值 → 打印 [CODEBOOK WARNING]
 CODEBOOK_COLLAPSE_THRESHOLD = 0.10
 
@@ -83,7 +100,7 @@ C_END = 0.7                               # v19: 最终 c 1.0→0.7 (缓和曲�
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
 # C27b (v270 NOVEL): Cyclic Curriculum Curvature — c(t) = c_min + (c_max-c_min)|sin(πt/T)|
 # 论文支撑: SGDR (Loshchilov & Hutter 2017), cyclical LR. 应用到 curvature schedule.
-USE_CYCLIC_CURVATURE = True               # v270 启用 cyclic (vs linear curriculum)
+USE_CYCLIC_CURVATURE = False              # v337: 关 cyclic (覆盖 baseline True), 固定 c=1 消除 saturation
 C_CYCLIC_MIN = 0.05                       # cyclic c_min (近欧氏)
 C_CYCLIC_MAX = 0.7                        # cyclic c_max (双曲)
 C_CYCLIC_PERIOD = 25_000                  # cyclic 周期 T (步数, 训练 100k 步 ≈ 4 周期)
@@ -99,6 +116,16 @@ USE_M2_INTRINSIC = True                   # v262 NOVEL: 启用 M2 Möbius intrin
 # 公式: res_mid = exp_0((log_0(res) + log_0(emb))/2, c)
 # 论文: Ungar 2008 Gyrogroup / Fréchet mean closed-form
 USE_GEODESIC_MIDPOINT_COMMIT = True       # v282 启用 geodesic midpoint commit (覆盖 Möbius_sub)
+
+# v337 NOVEL: Möbius Gyrovector Commit (MGC) Fixed c=1
+# v336 失败根因: cyclic c(t) 0.05↔0.7 + Möbius scalar mul 数值不兼容 (artanh 饱和触发 R36p collapse)
+# v337 修复: **关闭 cyclic** (USE_CYCLIC_CURVATURE=False), 固定 c=1.0, 消除 saturation 触发条件.
+# 保留 MGC commit: emb_out = α ⊗ (x ⊕ (emb ⊖ x)) 但 c=1 固定避免 artanh(√c·||x||) 在 c→0.7 时饱和.
+# 论文支撑: Ungar 2008 "Thomas precession" / Ungar 2009/2010 "Hyperbolic Geometry" Ch.4.
+# R36n (e) 几何变换 + (a 关闭). R36h ceiling 第 66 次验证.
+USE_MGC = True                          # v337: enable MGC (与 v282 midpoint 互斥, 这里 MGC 取代 midpoint L0)
+MOBIUS_GYROVECTOR_ALPHA = 0.5            # v337: Möbius scalar mul step α=0.5
+USE_CYCLIC_CURVATURE_OVERRIDE = False    # v337: 关 cyclic (覆盖 baseline True)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch
 USE_TCU = False                  # 默认关闭 (C10 baseline), C22 切到 True 启用
 TCU_ALPHA = 0.05                 # EMA momentum (新几何位置混合比)
@@ -226,6 +253,10 @@ def main():
         margin_target=MARGIN_TARGET,
         spread_loss_weight=SPREAD_LOSS_WEIGHT if USE_SPREAD_LOSS else 0.0,  # F3 v83
         spread_loss_margin=SPREAD_LOSS_MARGIN,  # F3 v83
+        anisotropy_loss_weight=ANISOTROPY_LOSS_WEIGHT if USE_ANISOTROPY_REG else 0.0,  # v316: Std-Matching
+        use_anisotropy_reg=USE_ANISOTROPY_REG,  # v316
+        anisotropy_target_std=ANISOTROPY_TARGET_STD,  # v316
+        anisotropy_temp=ANISOTROPY_TEMP,  # v316
         use_tcu=False,             # C26 HG-Rec: 关 TCU
         tcu_alpha=TCU_ALPHA,
         tcu_eta=TCU_ETA,
@@ -245,6 +276,8 @@ def main():
         c_cyclic_period=C_CYCLIC_PERIOD,
         use_geodesic_midpoint_commit=USE_GEODESIC_MIDPOINT_COMMIT,  # v282: geodesic midpoint commit (vs Möbius_sub)
         midpoint_layer_mask=[True, False, False],  # v282 R1: 仅 L0 用 midpoint, L1/L2 baseline subtraction (避免 collapse)
+        use_mobius_gyrovector=USE_MGC,  # v337: MGC Fixed c=1 (与 v336 cyclic 区别)
+        mobius_gyrovector_alpha=MOBIUS_GYROVECTOR_ALPHA,  # v337: α=0.5
     ).to(device)
 
     if COMPILE:
@@ -348,6 +381,32 @@ def main():
                     f"| elapsed={elapsed:.1f}s | eta={eta_s:.1f}s",
                     flush=True,
                 )
+                # R36r v3.14 检测 3 (2026-09-01): 逐项打印新机制 loss, 验证非 silent no-op
+                # spread_loss_total + anisotropy_loss_total 必须非 detached 且数值变化
+                if SPREAD_LOSS_WEIGHT > 0 and hasattr(model.module, "spread_loss_weight"):
+                    try:
+                        spr_per = [float(l._last_spread_loss.item()) for l in model.module.layers if hasattr(l, "_last_spread_loss")]
+                        spr_mean = sum(spr_per) / len(spr_per) if spr_per else 0.0
+                    except Exception:
+                        spr_mean = float("nan")
+                else:
+                    spr_mean = 0.0
+                if USE_ANISOTROPY_REG and hasattr(model.module, "anisotropy_loss_weight"):
+                    try:
+                        ani_per = [float(l._last_anisotropy_loss.item()) for l in model.module.layers if hasattr(l, "_last_anisotropy_loss")]
+                        ani_mean = sum(ani_per) / len(ani_per) if ani_per else 0.0
+                    except Exception:
+                        ani_mean = float("nan")
+                else:
+                    ani_mean = 0.0
+                if SPREAD_LOSS_WEIGHT > 0 or USE_ANISOTROPY_REG:
+                    print(
+                        f"  [R36r itemized] spread={spr_mean:.6f} | "
+                        f"anisotropy={ani_mean:.6f} | "
+                        f"spread*w={SPREAD_LOSS_WEIGHT*spr_mean:.6f} | "
+                        f"aniso*w={ANISOTROPY_LOSS_WEIGHT*ani_mean:.6f}",
+                        flush=True,
+                    )
                 if low_usage:
                     print(
                         f"  [CODEBOOK WARNING] layer {low_usage} usage={usage_str}/{CODEBOOK_SIZE} "

@@ -75,6 +75,13 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017) + Contrastive Loss (Hadsell et al. CVPR 2006)
         spread_loss_weight: float = 0.0,    # F3 v83: 0=关闭; 0.001/0.01 推荐值
         spread_loss_margin: float = 2.0,    # F3 v83: pairwise 距离阈值 (Poincaré 单位)
+        # v316 NOVEL: Riemannian Pairwise Distance Std-Matching — 强制 codebook pairwise
+        # geodesic 距离 std 跟踪 target. 与 spread_loss 互补 (spread_loss 单调 push-apart,
+        # std-matching 双向; 收敛到目标 std). R36n (f) 双曲几何损失.
+        anisotropy_loss_weight: float = 0.0,  # v316: 0=关闭; 0.001 推荐值
+        use_anisotropy_reg: bool = False,     # v316: master switch
+        anisotropy_target_std: float = 2.0,   # v316: target std (Poincaré 单位)
+        anisotropy_temp: float = 1.0,         # v316: 温度缩放
         use_tcu: bool = False,              # C22: τ-Geometric Codebook Update (Riemannian centroid tracking)
         tcu_alpha: float = 0.05,            # C22: EMA momentum
         tcu_eta: float = 0.1,              # C22: Riemannian step 大小
@@ -102,6 +109,14 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         # 其余层仍用 baseline Möbius_sub (避免 L1/L2 collapse).
         # 默认 = [True, False, False] (L0 midpoint, L1/L2 baseline).
         midpoint_layer_mask: Optional[List[bool]] = None,
+        # v336 NOVEL: Möbius Gyrovector Commit (MGC) — Ungar 2008 gyrovector ⊕/⊖/⊗
+        # 论文支撑: Ungar 2008 "Thomas precession: a key to hyperbolic geometry",
+        #          Ungar 2009/2010 "Hyperbolic Geometry" Ch.4 Gyrovector 群论.
+        # 公式: emb_out = α ⊗ (x ⊕ (emb ⊖ x))
+        # 与 v282 midpoint 不同: v282 = 0.5 ⊗ (x ⊕ emb) (固定 α=0.5 简化 Möbius add),
+        # v336 加可调 Möbius scalar mul step α. 走完整 gyrovector 代数,不依赖 log/exp.
+        use_mobius_gyrovector: bool = False,
+        mobius_gyrovector_alpha: float = 0.5,
     ) -> None:
         self._config = locals()
 
@@ -123,6 +138,10 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.margin_reg_weight = margin_reg_weight
         self.spread_loss_weight = spread_loss_weight
         self.spread_loss_margin = spread_loss_margin
+        self.anisotropy_loss_weight = anisotropy_loss_weight
+        self.use_anisotropy_reg = bool(use_anisotropy_reg)
+        self.anisotropy_target_std = float(anisotropy_target_std)
+        self.anisotropy_temp = float(anisotropy_temp)
         self.margin_target = margin_target
         self.use_tcu = use_tcu
         self.tcu_alpha = float(tcu_alpha)
@@ -138,6 +157,8 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         self.c_end = float(c_end)
         self.curriculum_steps = int(curriculum_steps)
         self.use_geodesic_midpoint_commit = bool(use_geodesic_midpoint_commit)  # v282
+        self.use_mobius_gyrovector = bool(use_mobius_gyrovector)  # v336
+        self.mobius_gyrovector_alpha = float(mobius_gyrovector_alpha)  # v336
         # v282 Round 1: 层-wise midpoint mask (默认 L0 only)
         if midpoint_layer_mask is None:
             midpoint_layer_mask = [True] + [False] * (n_layers - 1)
@@ -189,10 +210,19 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     c_fixed=c_fixed,
                     use_spread_loss=spread_loss_weight > 0,  # F3 v83: Spread Loss 开关
                     spread_loss_margin=spread_loss_margin,
+                    use_mobius_gyrovector=use_mobius_gyrovector,  # v336: Möbius Gyrovector Commit
+                    mobius_gyrovector_alpha=mobius_gyrovector_alpha,  # v336: commit step α
+                    # v316: Std-Matching 透传 (通过 setattr 在 layers 创建后设置, 因为 use_anisotropy_reg 不是 Quantize 的 __init__ 参数)
                 )
                 for i in range(n_layers)
             ]
         )
+        # v316: 在 layers 创建后通过 setattr 注入 use_anisotropy_reg / target_std / temp
+        # 避免污染 Quantize.__init__ 签名 (R30/R43 兼容)
+        for layer in self.layers:
+            layer.use_anisotropy_reg = self.use_anisotropy_reg
+            layer.anisotropy_target_std = self.anisotropy_target_std
+            layer.anisotropy_temp = self.anisotropy_temp
 
         self.encoder = MLP(
             input_dim=input_dim,
@@ -344,7 +374,15 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             ]
             if spread_per_layer:
                 spread_loss_total = torch.stack(spread_per_layer).mean()
-        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss + self.spread_loss_weight * spread_loss_total
+        # v316: Anisotropy Std-Matching Loss — 累加所有 Quantize 层 _last_anisotropy_loss, 加权到 total loss
+        anisotropy_loss_total = torch.zeros((), device=x.device, dtype=x.dtype)
+        if self.anisotropy_loss_weight > 0:
+            aniso_per_layer = [
+                l._last_anisotropy_loss for l in self.layers if hasattr(l, "_last_anisotropy_loss")
+            ]
+            if aniso_per_layer:
+                anisotropy_loss_total = torch.stack(aniso_per_layer).mean()
+        loss = (reconstuction_loss + rqvae_loss).mean() + self.margin_reg_weight * margin_loss + self.spread_loss_weight * spread_loss_total + self.anisotropy_loss_weight * anisotropy_loss_total
 
         with torch.no_grad():
             # Compute debug ID statistics

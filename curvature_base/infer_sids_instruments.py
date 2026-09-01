@@ -204,14 +204,14 @@ def main():
         use_mcdq=False,            # C26 HG-Rec: 关 MCDQ
         use_scs=False,             # C26 HG-Rec: 关 SCS
         scs_eps_scale=1.0,
-        use_fixed_curvature=True,  # C26 HG-Rec: 固定 c=1 (C27 优先覆盖)
+        use_fixed_curvature=True,  # v337: c=1.0 固定 (与 Stage 1 训练一致, 关 cyclic + 关 curriculum)
         c_fixed=1.0,
-        use_curriculum_curvature=True,  # C27: 训练末期 c=c_end (v19: 0.7)
+        use_curriculum_curvature=False,  # v337: 关 curriculum schedule (与 Stage 1 训练一致)
         c_start=0.05,
-        c_end=0.7,  # v19: 与 Stage 1 c_end 一致
+        c_end=1.0,  # v337: c_end=1.0 与 Stage 1 训练 c_fixed=1.0 一致 (vs baseline 0.7)
         curriculum_steps=1,  # inference 时 set_step(>=1) 强制 t=1 → c=c_end
     ).to(device)
-    # C27: 强制 inference 走 schedule 终点 (c=c_end=1.0)
+    # v337: 强制 inference 走 fixed c=1.0 (与 Stage 1 训练 USE_CYCLIC_CURVATURE=False + c_fixed=1.0 一致)
     model.set_curriculum_step(10**9)  # step >> curriculum_steps → t=1 → c=1.0
     model.load_state_dict(state["model"])
     model.eval()
