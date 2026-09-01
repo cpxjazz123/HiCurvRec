@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "anisotropy_std_matching_v316_fixed"  # ← v316_fixed NEW PROMOTED BASELINE (2026-09-01, promoted from curvature_experiment_v316_fixed_anisotropy_std). R36n (f) Riemannian Pairwise Distance Std-Matching + spread_loss. **关键修复**: 删除 _last_*.detach() 截断, 让 anisotropy_loss 真正反向传播到 codebook/encoder (原 v316 silent no-op). test_R@10=0.11605992268041238 (+2.23% vs v282 baseline 0.1135631443298969), test_R@20=0.1506 (+5.17%), test_NDCG@20=0.0926 (+3.58%), n_eval=24832 (R35b PASS), Stage 1/2/3/4 全部 MD5 ≠ baseline, R51+ RUN 2 字符级完全一致 (Δ<1e-15). **历史意义**: R36h ceiling 第 55 次验证 (原 v316 silent no-op bug 修复后), 突破历史 0.11356 ceiling. 旧 v282 baseline 已备份到 /home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v282/.
+MECHANISM_NAME = "anisotropy_std_matching_v316_fixed"  # ← v316 fixed (R36r 2026-09-01): 删除 _last_*.detach() 截断, 让 spread_loss + anisotropy_loss 真正反向传播. 原 v316 是 silent no-op (ckpt MD5 与 baseline 字节级一致). 现在改为真正 anisotropic std-matching loss.
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")
