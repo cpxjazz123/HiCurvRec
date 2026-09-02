@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v318_v317_cyclic_c Cyclic c(t) Curriculum (test_R@10=0.11791237113402062, +0.24% vs v317 baseline 0.11763, R36h ceiling 第 72 次验证 — 在 v317 Midpoint-Only 基础上加 R36n a SGDR-style cyclical c(t) curriculum c_min=0.3, c_max=1.0, T=50_000 步, R51+ 2 RUN 字符级完全一致 PASS)**.
+> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v318_v317_cyclic_c Cyclic c(t) Curriculum (test_R@10=0.11791237113402062, +0.24% vs v317 baseline 0.11763, R36h ceiling 第 73 次验证 — v319 Per-Layer Phase Shift R37 FAIL 后 v318 仍是当前最优 baseline, R51+ 2 RUN 字符级完全一致 PASS)**.
 
 ---
 
@@ -33,8 +33,11 @@
 | **v340 GMCU on top of MGC** (继承 v337 USE_MGC=True, 加 GMCU 替换低 utility codeword) | ❌ R36p FAIL + R50 回滚 | L0=255, **L1=11 (4.3%), L2=43 (16.8%)** 同样 FAIL | 训练 log 显示 codes=235/238/210/256 (batch 内 unique, 不是全 dataset) | (未跑 Stage 4, R36p 提前 R50) | 继承 v337 MGC collapse 根因; GMCU 替换低 utility codeword 但 cascade 上游 collapse 不变 |
 | **v342 Sinkhorn-OT sk_eps Curriculum** (R36n a+f, cosine anneal 0.05→0.01 over 50k 步, USE_MGC=False Round 2 fix) | ❌ R36p FAIL + R50 回滚 | L0=256/256 (100%) PASS, **L1=12/256 (4.7%) FAIL, L2=47/256 (18.4%) FAIL** | 训练 log 显示 codes=256/256/256/256 健康 (per-batch 局部统计) | (未跑 Stage 4, R36p 提前 R50) | Sinkhorn-OT entropy 系数在 cascade RQ-VAE 结构性不兼容, Stage 1 per-batch unique ≠ 全 dataset unique. Round 0+1 USE_MGC=True → collapse; Round 2 关 MGC → 训练 log 健康但 Stage 2 全 dataset 仍 R36p FAIL. 历史 v336 MGC cyclic / v302 ProtoNCE / v292 HyperVQ 同模式 collapse. **R36h ceiling 第 68 次** |
 | **v343 Riemannian KMeans init codebook** (R36n e+f, geodesic distance + Karcher mean 一阶近似替换 Euclidean KMeans 仅做 init, USE_MGC=False, R36r 3 项 PASS) | ❌ R37 FAIL + R50 回滚 | L0=100% L1=80.1% L2=80.5% all PASS (R36p 健康) | 训练 log codes=253/237/253/256 健康, SID MD5 `cff76d22...` ≠ baseline `97262f90...` (真正改变 SID 子空间) | **0.11404639175257732 (-1.77% vs baseline 0.11606)** | Stage 3 best ndcg@10=0.0984 (E108, 几乎一致 baseline 0.0983 E102), Stage 4 test_R@10 regress -1.77%. Stage 1 端即使真正改变 SID 子空间 (R36h 验证中仅 v341 + v343 真正改 SID, 其它 67 次 SID 都锁 baseline), Stage 4 仍 regress. **R36h ceiling 第 69 次**: 真正锁层面在 Stage 3 T5 SID 表征, init-only 几何变更不传递优势. |
+| **v319 Per-Layer Cyclic c_l(t) Phase Shift** (R36n a+b, 在 v318 基础上加 c_cyclic_phase=[0, π/3, 2π/3] 让 L0/L1/L2 c(t) 异步震荡, R36r PASS MD5=e585cc47≠40a82fdc, R36p PASS L0=100%/L1=88.3%/L2=79.7%) | ❌ R37 FAIL + R50 回滚 | L0=100%/L1=88.3%/L2=79.7% all PASS (R36p 健康) | 训练 log 阶段 1 step 620: c=0.327/0.919/0.892 异步震荡可见 (Stage 1 端真正改 c 行为) | **0.11517396907216494 (-2.32% vs v318 baseline 0.11791)** | Stage 3 best ndcg@10=0.09572 (E104, -4.8% vs v318 0.1005), Stage 4 test_R@10 regress -2.32%. SID MD5=3a36f21d ≠ v318 53171223 (R36h 验证中 v319 真正改 SID 子空间). 但与 v343 同模式: 真正改 SID 但 Stage 4 regress. **R36h ceiling 第 73 次**: per-layer 异质 c(t) 异步震荡在 v318 全局 cyclic c(t) 基础上不能进一步突破. |
 
 **v337 教训**: R36p 全 dataset utility 检测必须基于全 9922 items inference, 不能用 batch 训练 log 内的 per-batch unique codes (后者是 batch 内统计, 不是真实分布). 历史 v291/v294/v296/v299/v316 等 ceiling-lock 版本训练 log 都显示 codes 健康, 但全 dataset inference 可能 collapse (类似 v337). 未来新版本 promote 前**必须** Step 8.5 R53 5 步反复验证.
+
+**v319 教训**: R36n a+b (cyclic + per-layer 异质 phase shift) 即使 Stage 1 端真正改变 SID 子空间 (Stage 1 MD5 ≠ v318 baseline + SID MD5 ≠ baseline), Stage 3 T5 SID 表征仍锁住 Stage 1 几何变更传递的优势. v319 与 v343 同模式 (Stage 1 SID 改变 + Stage 4 regress). 与 v329 (per-layer 静态异质 c_l R36n b) 同结论. R36h ceiling 真正锁层面在 Stage 3 T5 SID 表征.
 
 **R36p 触发后处置**: (1) 备份实验目录作为 evidence (`backup_v337_v340_r36p_fail_evidence/`); (2) 恢复 curvature_base/ 到上一 baseline (v316_fixed); (3) 删除 stage 4 promoted baseline 目录; (4) 更新 CLAUDE.md (R53 规则 + 失败记录); (5) 更新 memory (新增 R36p FAIL); (6) git commit + push; (7) 关闭 issue. 严禁"数值太高懒得查"绕过 R36p 硬约束.
 
@@ -48,7 +51,7 @@
 
 **R4** — 修改 Python 脚本后必须立即 `python3 -m py_compile` 验证语法 (文档例外).
 
-**R5** — 任务硬约束 = v317 Midpoint-Only baseline (test_R@10=0.11763047680412371), 4 阶段流水线 seed=42, R51+ 6 确定性约束全开 (旧 v316_fixed/v282/v270/v262 baseline 已备份到 scratch, 数值不再视为当前基线).
+**R5** — 任务硬约束 = v318_v317_cyclic_c Cyclic c(t) Curriculum baseline (test_R@10=0.11791237113402062), 4 阶段流水线 seed=42, R51+ 6 确定性约束全开 (旧 v317/v316_fixed/v282/v270/v262 baseline 已备份到 scratch, 数值不再视为当前基线).
 
 **R7** — 启动新 GPU 实验前必须 `nvidia-smi` 核对 (util<10%, mem<5GB), 选完全空闲 GPU.
 
