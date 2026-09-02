@@ -100,10 +100,10 @@ C_END = 0.7                               # v19: 最终 c 1.0→0.7 (缓和曲�
 CURRICULUM_STEPS = 50_000                 # 50k 步 ramp up (总 100k 步, 后半段稳定)
 # C27b (v270 NOVEL): Cyclic Curriculum Curvature — c(t) = c_min + (c_max-c_min)|sin(πt/T)|
 # 论文支撑: SGDR (Loshchilov & Hutter 2017), cyclical LR. 应用到 curvature schedule.
-USE_CYCLIC_CURVATURE = False              # v337: 关 cyclic (覆盖 baseline True), 固定 c=1 消除 saturation
-C_CYCLIC_MIN = 0.05                       # cyclic c_min (近欧氏)
-C_CYCLIC_MAX = 0.7                        # cyclic c_max (双曲)
-C_CYCLIC_PERIOD = 25_000                  # cyclic 周期 T (步数, 训练 100k 步 ≈ 4 周期)
+USE_CYCLIC_CURVATURE = True               # v318 NOVEL: 在 v317 (Midpoint-Only) 基础上加 cyclic c(t) curriculum (R36n a)
+C_CYCLIC_MIN = 0.3                        # v318: cyclic c_min (高于 v336 0.05 避免数值近 0 问题)
+C_CYCLIC_MAX = 1.0                        # v318: cyclic c_max=1.0 (c_max=1 是 Poincaré ball 边界, 不会触发 artanh saturation 因为 v318 无 Möbius scalar mul)
+C_CYCLIC_PERIOD = 50_000                  # v318: cyclic 周期 T=50k 步 (训练 100k ≈ 2 个完整周期, 比 v270/v336 的 25k 更慢)
 # HG-Rec 实现 fix: gradient clipping (HG-Rec 用 clip_grad_norm_(1.0))
 GRAD_CLIP_NORM = 1.0                      # 0=关闭, HG-Rec 用 1.0
 # C28: 启用 M3 cross-layer transport (与 curriculum 联动)
