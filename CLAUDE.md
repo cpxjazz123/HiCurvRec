@@ -23,6 +23,19 @@
 
 ---
 
+## R36p FAIL 历史教训 (2026-09-02 v337 R50 回滚)
+
+| 流水线 | 状态 | 实际 R36p utility | 谎称 R36p utility | test_R@10 | 根因 |
+|---|---|---|---|---|---|
+| **v337 MGC Fixed c=1** (R36n e Möbius Gyrovector Commit α=0.5, USE_CYCLIC_CURVATURE=False) | ❌ R36p FAIL + R50 回滚 | **L0=255/255 (99.6%) PASS, L1=12/255 (4.7%) FAIL, L2=41/255 (16%) FAIL** | commit message 谎称 "L0=93% L1=93% L2=84% PASS" | 0.2740415592783505 (数值真实但基于不健康 SID) | MGC α=0.5 在 Poincaré ball 上让 L1/L2 输入 residual norm 极小, 全部坍缩到低 unique codes; commit message 撒谎欺骗 R36p PASS |
+| **v340 GMCU on top of MGC** (继承 v337 USE_MGC=True, 加 GMCU 替换低 utility codeword) | ❌ R36p FAIL + R50 回滚 | L0=255, **L1=11 (4.3%), L2=43 (16.8%)** 同样 FAIL | 训练 log 显示 codes=235/238/210/256 (batch 内 unique, 不是全 dataset) | (未跑 Stage 4, R36p 提前 R50) | 继承 v337 MGC collapse 根因; GMCU 替换低 utility codeword 但 cascade 上游 collapse 不变 |
+
+**v337 教训**: R36p 全 dataset utility 检测必须基于全 9922 items inference, 不能用 batch 训练 log 内的 per-batch unique codes (后者是 batch 内统计, 不是真实分布). 历史 v291/v294/v296/v299/v316 等 ceiling-lock 版本训练 log 都显示 codes 健康, 但全 dataset inference 可能 collapse (类似 v337). 未来新版本 promote 前**必须** Step 8.5 R53 5 步反复验证.
+
+**R36p 触发后处置**: (1) 备份实验目录作为 evidence (`backup_v337_v340_r36p_fail_evidence/`); (2) 恢复 curvature_base/ 到上一 baseline (v316_fixed); (3) 删除 stage 4 promoted baseline 目录; (4) 更新 CLAUDE.md (R53 规则 + 失败记录); (5) 更新 memory (新增 R36p FAIL); (6) git commit + push; (7) 关闭 issue. 严禁"数值太高懒得查"绕过 R36p 硬约束.
+
+---
+
 ## R 规则 (每条一句话)
 
 **R1** — conda 默认用 `genrec_env`, KG 任务用 `deepke`, base anaconda 仅 zero-dep grep + MiniMax API.
@@ -116,3 +129,5 @@
 **R51** — DDP 4 卡噪声消除硬约束 (2026-08-19 实测触发, 任何新版本必须遵守): Stage 1/2/3/4 入口 (DataLoader 创建之前) 必须显式 seed RNG (`torch.manual_seed(42 + process_index)` + `torch.cuda.manual_seed_all` + `_random.seed` + `_np.random.seed`, Stage 4 / Stage 2 infer 用 `42` 单 seed), 配套 `PYTHONHASHSEED=42` + `CUBLAS_WORKSPACE_CONFIG=":4096:8"` + `torch.use_deterministic_algorithms(True, warn_only=True)` + `cudnn.deterministic=True` + `torch.set_float32_matmul_precision("high")` + DataLoader `worker_init_fn` 固定 worker RNG; 禁手动加 `DistributedSampler(seed=42)` (与 `accelerator.prepare()` 双重 wrap 会导致 16 分片); 验证标准同一版本连续 3 RUN test_R@10 字符级完全一致 (差异 < 1e-15), 否则判定 `SEED_NONDETERMINISM`.
 
 **R52** — 禁写 verdict (2026-08-29 user directive): 任何任务 (R37 触发回滚 / R38 触发早停 / R36p collapse 诊断 / Stage 4 test_R@10 出来 / R51+ 验证 等) **不再生成 verdict JSON 文件** (`v<N>_verdict_*.json` / `issue<NN>_verdict.json` / `r36p_*.json` 等), 决策信息直接写在 commit message + issue comment + 对话回复即可; 历史 verdict 文件保留不删, 后续任务**禁止**新建 verdict JSON.
+
+**R53** — 增量幅度硬约束 (2026-09-02 user directive): test_R@10 相对 baseline 提升 > 5% → 强制进入 Step 8.5 反复验证 (5 步检查: ① 全 dataset utility 重统计; ② SID 字节级比对 baseline; ③ Stage 3/4 自洽性 (valid_ndcg20 vs test_R@10 偏差 ≤ 50%); ④ R51+ 2 RUN 字符级一致; ⑤ 训练 log codes 是 batch 内 unique 还是全 dataset unique). **任一 FAIL → 立即 R50 回滚 + R36p-Implementation-Diagnosis**, 严禁"数值太高懒得查". 历史 v337 MGC Fixed c=1 教训: test_R@10=0.274 (+136% vs v316_fixed 0.116) 看似 SOTA, 实际 L1 utility=4.7% + L2=16% catastrophic collapse, commit message 谎称 R36p PASS. 任何"超 5% 跳跃"必须按 5 步反复检查才能避免污染主线.
