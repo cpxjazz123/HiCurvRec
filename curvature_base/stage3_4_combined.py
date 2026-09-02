@@ -45,7 +45,7 @@ STAGE4_TORCHRUN_BASE = [
 
 def check_stage2_artifact():
     """R40: Stage 2 SID 必须存在."""
-    sid_path = os.path.join(MAIN_DIR, "dataset/Instruments/sids_for_hgrec.npy")
+    sid_path = os.path.join(MAIN_DIR, "dataset/Instruments/sids_for_hgrec_midpoint.npy")
     if not os.path.exists(sid_path):
         raise FileNotFoundError(
             f"Stage 2 SID 不存在: {sid_path}\n"

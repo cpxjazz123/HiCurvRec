@@ -26,7 +26,7 @@ STAGE3_TORCHRUN = [
 
 def check_stage2_artifact():
     # R52: SID 路径相对化, 硬编码
-    sid_path = "./dataset/Instruments/sids_for_hgrec.npy"
+    sid_path = "./dataset/Instruments/sids_for_hgrec_midpoint.npy"
     if not os.path.exists(sid_path):
         raise FileNotFoundError(
             f"Stage 2 SID 不存在: {sid_path}\n"

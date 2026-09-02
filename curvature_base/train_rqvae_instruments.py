@@ -59,7 +59,7 @@ MARGIN_TARGET = 0.05             # 目标 margin (d2-d1), 当前 L1/L2 中位数
 # 反向 v82 F2 Center: v82 推 codebook 到原点 (compact, weight=0.01), v83 推 codebook 互相远离 (spread)
 # 论文支撑: Poincaré Embeddings (Nickel & Kiela 2017) + Contrastive Loss (Hadsell et al. CVPR 2006)
 # MARGIN=2.0 (Poincaré ball 直径 ≈ 5.0, MARGIN=2.0 即 40% of ball, 适中强度)
-USE_SPREAD_LOSS = True           # F3 v83: enable spread loss
+USE_SPREAD_LOSS = False           # F3 v83: enable spread loss
 SPREAD_LOSS_WEIGHT = 0.005       # F3 v83: 正则权重 (低权重, 仅作引导, 不主导 recon loss)
 SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单位)
 
@@ -74,7 +74,7 @@ SPREAD_LOSS_MARGIN = 2.5         # F3 v83: pairwise 距离阈值 (Poincaré 单�
 # target_std=2.0 (Poincaré 单位) 约为球面直径的 40% (球面直径 ≈ 5.0).
 # 极小权重 0.001 → 仅作 hint 不主导 recon loss (避免 R36p collapse).
 # R36n (f) 双曲几何损失. Stage 1 端纯曲率变更. R36h ceiling 第 54 次验证目标.
-USE_ANISOTROPY_REG = True        # v316: master switch (True 启用 std-matching)
+USE_ANISOTROPY_REG = False        # v316: master switch (True 启用 std-matching)
 ANISOTROPY_LOSS_WEIGHT = 0.001   # v316: 正则权重 (极小, 仅作 hint, 不主导 recon loss ≈ 100s)
 ANISOTROPY_TARGET_STD = 2.0      # v316: 目标 std (Poincaré 单位, 球面直径 ≈ 5.0)
 ANISOTROPY_TEMP = 1.0            # v316: 温度缩放 ((cur_std - target)/temp)²
@@ -123,7 +123,7 @@ USE_GEODESIC_MIDPOINT_COMMIT = True       # v282 启用 geodesic midpoint commit
 # 保留 MGC commit: emb_out = α ⊗ (x ⊕ (emb ⊖ x)) 但 c=1 固定避免 artanh(√c·||x||) 在 c→0.7 时饱和.
 # 论文支撑: Ungar 2008 "Thomas precession" / Ungar 2009/2010 "Hyperbolic Geometry" Ch.4.
 # R36n (e) 几何变换 + (a 关闭). R36h ceiling 第 66 次验证.
-USE_MGC = True                          # v337: enable MGC (与 v282 midpoint 互斥, 这里 MGC 取代 midpoint L0)
+USE_MGC = False                          # v337: enable MGC (与 v282 midpoint 互斥, 这里 MGC 取代 midpoint L0)
 MOBIUS_GYROVECTOR_ALPHA = 0.5            # v337: Möbius scalar mul step α=0.5
 USE_CYCLIC_CURVATURE_OVERRIDE = False    # v337: 关 cyclic (覆盖 baseline True)
 # C22: TCU (τ-Geometric Codebook Update) — Riemannian centroid tracking per batch

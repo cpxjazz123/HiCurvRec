@@ -1,14 +1,15 @@
 # CLAUDE.md
 
-> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v316_fixed Anisotropy Std-Matching (test_R@10=0.11605992268041238, +2.23% vs v282 0.11356, R36h ceiling 第 55 次验证 — 原 v316 silent no-op bug 修复后)**.
+> HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v317 Midpoint-Only (test_R@10=0.11763047680412371, +1.36% vs v316_fixed 0.11606, R36h ceiling 第 71 次验证 — v316_fixed 5 个组件消融实验 A5 中唯一突破 baseline, R51+ 2 RUN 字符级完全一致 PASS)**.
 
 ---
 
-## 最新测试结果 (2026-09-01 v316_fixed promoted 为新 baseline + 历史 SOTA, beam=20)
+## 最新测试结果 (2026-09-03 v317 promoted 为新 baseline + 历史 SOTA, beam=20)
 
 | 流水线 | 状态 | valid NDCG@20 | **test R@10** | test R@20 | test NDCG@20 | ckpt |
 |---|---|---|---|---|---|---|
-| **v316_fixed Anisotropy Std-Matching** (新 baseline, 2026-09-01 promoted from curvature_experiment_v316_fixed_anisotropy_std, R36n f 双曲几何损失 — Riemannian Pairwise Distance Std-Matching (target_std=2.0) + spread_loss (margin=2.5), **删除 _last_*.detach() 截断让 gradient 真正反向传播**, 修复原 v316 silent no-op bug, test_R@10=0.11605992268041238 (+2.23% vs v282 0.11356), test_R@20=0.1506 (+5.17%), n_eval=24832 (R35b PASS), Stage 1/2/3/4 全部 MD5 ≠ baseline, R51+ RUN 2 字符级完全一致 0.11605992268041238, utility 254/255/247 健康, Stage 3 best ckpt E102) | ✅ R37 PASS | **0.0983** | **0.11605992268041238** | **0.15057184278350516** | **0.09261421321593609** | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_anisotropy_std_matching_v316_fixed/best_ckpt.pt` |
+| **v317 Midpoint-Only** (新 baseline, 2026-09-03 promoted from curvature_experiment_v316_fixed_components/midpoint (A5 全消融), R36n e 几何变换 — Geodesic Midpoint Commit mid = exp_0(0.5*log_0(res) + 0.5*log_0(emb), c=1.0) + **关闭 USE_MGC / USE_ANISOTROPY_REG / USE_SPREAD_LOSS 三组件**, 只保留 Geodesic Midpoint Commit + 静态 c=1.0 + 静态 c_end 阶梯, test_R@10=0.11763047680412371 (+1.36% vs v316_fixed 0.11606, +3.58% vs v282 0.11356), test_R@20=0.15327 (+5.16%), n_eval=24832 (R35b PASS), Stage 1/2/3/4 全部 MD5 ≠ v316_fixed baseline, R51+ RUN 1+2 字符级完全一致 0.11763047680412371 (4/4 阶段 diff < 1e-15), utility L0=100%/L1=82.4%/L2=80.1% 健康 (≥75%), Stage 3 best ckpt E91) | ✅ R37 PASS | **0.0997** | **0.11763047680412371** | **0.15326997422680413** | **0.0919465330458179** | `curvature_base/out/decoder/instruments_hgrec_configs/hgrec_v317_midpoint_only/best_ckpt.pt` |
+| **v316_fixed Anisotropy Std-Matching** (历史 baseline, 备份到 `/home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v316_fixed/`, R36n f 双曲几何损失 — Riemannian Pairwise Distance Std-Matching (target_std=2.0) + spread_loss (margin=2.5), 删除 _last_*.detach() 截断让 gradient 真正反向传播, 修复原 v316 silent no-op bug, test_R@10=0.11605992268041238 (+2.23% vs v282 0.11356), utility 254/255/247 健康, Stage 3 best ckpt E102) | ✅ R37 PASS (历史) | **0.0983** | **0.11605992268041238** | **0.15057184278350516** | **0.09261421321593609** | (已 promote 出, 备份到 scratch) |
 | **v282 Geodesic Midpoint Commit** (历史 baseline, 备份到 `/home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v282/`, R36n e 几何变换 variant #3 — commit 路径走测地线中点 mid = exp_0(0.5*log_0(res) + 0.5*log_0(emb), c), R36h ceiling 三次突破 +0.46% vs v270, 2 RUN 字符级完全一致 0.1135631443298969, utility 247/249/249 健康, Stage 3 best ckpt E111/E112, n_eval=24832, R51+ 6 确定性约束全开) | ✅ R37 PASS (历史) | **0.0966** | **0.1135631443298969** | **0.14316204896907217** | **0.08940618062576725** | (已 promote 出, 备份到 scratch) |
 | **v270 cyclic curriculum + M2 commit loss + M3 transport** (历史 baseline, 备份到 `/home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v270/curvature_base_v270_R51+_locked`, R36n a cyclic c(t) = c_min+(c_max-c_min)|sin(πt/T)| SGDR + v262 M2 Möbius commit + M3 transport 联合, c 震荡 0.05↔0.7 T=25000 步 ≈ 4 个完整周期, R36h ceiling 二次突破 +0.32% vs v262 0.11268, 2 RUN 字符级完全一致 0.1130396262886598, utility 254/245/248 健康, Stage 3 best ckpt E117) | ✅ R37 PASS (历史) | **0.0978** | **0.1130396262886598** | **0.1450144974226804** | **0.0907523951579615** | (已 promote 出, 备份到 scratch) |
 | **v262 Möbius commit loss + L2 distance + hyperbolic_distance=True + sk_eps=0.05** (历史 baseline, 备份到 `/home/wlia0047/hj82_scratch2/wenyu/backup_curvature_base_v262/curvature_base_v262_R51+_locked`, R36n e 几何变换 commit 路径 = exp_0(log_0(res)-log_0(emb), c), R36h ceiling +0.76% breakthrough, 2 RUN 字符级完全一致 0.11267719072164949, utility 254/250/247/256 健康, Stage 1 c=1 curriculum 0.05→0.7, Stage 3 best ckpt E119) | ✅ R37 PASS (历史) | **0.0996** | **0.11267719072164949** | **0.14171230670103094** | **0.090311679643454** | (已 promote 出, 备份到 scratch) |
@@ -46,7 +47,7 @@
 
 **R4** — 修改 Python 脚本后必须立即 `python3 -m py_compile` 验证语法 (文档例外).
 
-**R5** — 任务硬约束 = v316_fixed Anisotropy Std-Matching baseline (test_R@10=0.11605992268041238), 4 阶段流水线 seed=42, R51+ 6 确定性约束全开 (旧 v282/v270/v262 baseline 已备份到 scratch, 数值不再视为当前基线).
+**R5** — 任务硬约束 = v317 Midpoint-Only baseline (test_R@10=0.11763047680412371), 4 阶段流水线 seed=42, R51+ 6 确定性约束全开 (旧 v316_fixed/v282/v270/v262 baseline 已备份到 scratch, 数值不再视为当前基线).
 
 **R7** — 启动新 GPU 实验前必须 `nvidia-smi` 核对 (util<10%, mem<5GB), 选完全空闲 GPU.
 

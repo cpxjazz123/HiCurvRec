@@ -9,7 +9,7 @@
              sids_v19_cend_07.npy (shape 9922, 3)
   2.2 build_v19_sids_for_hgrec.py — HG-Rec 格式转换
        输出: /home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/
-             Instruments/Instruments_v19_sids_for_hgrec.npy (shape 9922, 4)
+             Instruments/Instruments_v19_sids_for_hgrec_midpoint.npy (shape 9922, 4)
 
 启动方式 (任选其一):
   1) python3 stage2.py
@@ -61,14 +61,14 @@ def main():
         sys.exit(r1.returncode)
 
     # === Sub-step 2.2: build HG-Rec format ===
-    print(f"[stage2] step 2.2 — HG-Rec format conversion → Instruments_v19_sids_for_hgrec.npy")
+    print(f"[stage2] step 2.2 — HG-Rec format conversion → Instruments_v19_sids_for_hgrec_midpoint.npy")
     r2 = subprocess.run([CONDA_PYTHON, STAGE2_BUILD], check=False)
     if r2.returncode != 0:
         print(f"[stage2] FAIL at build_v19_sids (exit={r2.returncode})", file=sys.stderr)
         sys.exit(r2.returncode)
 
     # 验证产物
-    out = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec.npy"
+    out = "/home/wlia0047/ar57/wenyu/GeneRec/Euclidean_Base_M2M3/dataset/Instruments/Instruments_v19_sids_for_hgrec_midpoint.npy"
     print(f"[stage2] done → {out}")
 
 
