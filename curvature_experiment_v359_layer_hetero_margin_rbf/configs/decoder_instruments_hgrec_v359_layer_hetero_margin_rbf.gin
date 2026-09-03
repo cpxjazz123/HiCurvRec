@@ -1,0 +1,74 @@
+# Decoder Musical_Instruments config — v359_layer_hetero_margin_rbf EXPERIMENT (2026-09-04)
+# v359: Per-Layer 异质 c_l 静态阶梯 + c_l-aware RBF margin 双曲几何损失 (R36n b+f 三联)
+# 在 v317 baseline (Midpoint-Only) 基础上加 (b) per-layer hetero c + (f) RBF margin loss
+# Stage 1 ckpt: <exp>/out/rqvae/instruments/rqvae_final.pt
+# Stage 3 输出: <exp>/out/decoder/instruments_hgrec_configs/hgrec_v359_layer_hetero_margin_rbf/best_ckpt.pt
+# test_R@10 TBD — 目标突破 v318 baseline 0.11791 (R36h ceiling 第 79 次验证)
+
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+# === 启用 HG-Rec 路径 (核心开关, FORCE_HGREC 兜底) ===
+train_decoder.train.use_hgrec_arch = True
+
+# === HG-Rec T5Config (与 v316_fixed 严格对齐) ===
+train_decoder.train.hgrec_t5_d_model = 128
+train_decoder.train.hgrec_t5_d_ff = 1024
+train_decoder.train.hgrec_t5_num_heads = 6
+train_decoder.train.hgrec_t5_d_kv = 64
+train_decoder.train.hgrec_t5_num_layers = 6
+train_decoder.train.hgrec_t5_num_decoder_layers = 4
+train_decoder.train.hgrec_t5_dropout = 0.1
+train_decoder.train.hgrec_vocab_size = 769
+train_decoder.train.hgrec_max_len = 20
+
+# === HG-Rec 数据 (9922, 4) SID numpy (v359 Stage 2 输出) ===
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_v359_layer_hetero_margin_rbf/dataset/Instruments/sids_for_hgrec.npy"
+
+# === 训练超参 (与 v316_fixed 一致) ===
+train_decoder.train.hgrec_batch_size = 3072
+train_decoder.train.batch_size = 3072
+train_decoder.train.learning_rate = 0.0001
+train_decoder.train.weight_decay = 0.0001
+train_decoder.train.amp = True
+train_decoder.train.mixed_precision_type = "bf16"
+
+# === Eval 配置 ===
+train_decoder.train.top_k_for_generation = 20
+train_decoder.train.top_k_eval_list = [5, 10, 20]
+
+# === 保存路径 (v359 独立目录) ===
+train_decoder.train.save_dir_root = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_experiment_v359_layer_hetero_margin_rbf/out/decoder/instruments_hgrec_configs/hgrec_v359_layer_hetero_margin_rbf/"
+
+# === gin 必填项 (HG-Rec 路径忽略, 仅供 configurable 注册) ===
+train_decoder.train.dataset_folder = "dataset/"
+train_decoder.train.dataset = "INSTRUMENTS"
+train_decoder.train.force_dataset_process = False
+train_decoder.train.dataset_split = "instruments"
+train_decoder.train.full_eval_every = 500
+train_decoder.train.partial_eval_every = 250
+train_decoder.train.wandb_logging = False
+
+# === 以下 HG-Rec 路径不读取 ===
+train_decoder.train.t5_d_model = 384
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
+train_decoder.train.t5_num_decoder_layers = 4
+train_decoder.train.should_add_sep_token = False
+train_decoder.train.pretrained_rqvae_path = ""
+train_decoder.train.vae_input_dim = 768
+train_decoder.train.vae_hidden_dims = [512, 256, 128]
+train_decoder.train.vae_embed_dim = 32
+train_decoder.train.vae_codebook_size = 256
+train_decoder.train.vae_n_layers = 3
+train_decoder.train.vae_n_cat_feats = 0
+train_decoder.train.iterations = 500000
+train_decoder.train.gradient_accumulate_every = 1
+train_decoder.train.split_batches = True
+train_decoder.train.vae_codebook_normalize = False
+train_decoder.train.vae_sim_vq = False
+train_decoder.train.push_vae_to_hf = False
+train_decoder.train.vae_hf_model_name = ""
+train_decoder.train.max_grad_norm = None
+train_decoder.train.num_user_bins = None
+train_decoder.train.save_model_every = 1000000

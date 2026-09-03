@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **回复规则**: 每次回复必须简单、直接,尽量只使用一段话。
+
 > HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v318_v317_cyclic_c Cyclic c(t) Curriculum (test_R@10=0.11791237113402062, +0.24% vs v317 baseline 0.11763, R36h ceiling 第 73 次验证 — v319 Per-Layer Phase Shift R37 FAIL 后 v318 仍是当前最优 baseline, R51+ 2 RUN 字符级完全一致 PASS)**.
 
 ---
@@ -22,6 +24,14 @@
 | **RQ-VAE-Recommender 新跑** (DDP 4 卡, 200 epoch, 强烈 valid overfitting) | ref | — | **0.0926** | 0.1163 | 0.0740 | `out/decoder/instruments/best_ckpt.pt` |
 
 **关键观察 (R36 valid 偏置)**: RQ-VAE-Recommender valid NDCG@20=0.8313 (比 HG-Rec 高 8 倍),但 test R@10=0.0926 (反而比 HG-Rec 0.1074 低 14%) — 强烈 valid overfitting, 走 R36 严格化 v2 (几何变换, 避免 valid 偏置) 是后续改进方向.
+
+---
+
+## R37 FAIL 历史教训 (2026-09-04 v359 R50 回滚)
+
+| 流水线 | 状态 | 实际 test_R@10 | baseline test_R@10 | 根因 |
+|---|---|---|---|---|
+| **v359 Per-Layer 异质 c_l + c_l-aware RBF margin (R36n b+f 三联)** (R37 FAIL, R50 回滚) | ❌ R37 FAIL | **0.11605992268041238** | 0.11791237113402062 (v318) | Stage 1 端 R36n (b)+(f) 三联 per-layer 异质 c_l 静态阶梯 [0.5,0.7,1.0] + γ_l=c_l×0.5 RBF margin 双曲几何损失 真正改变 SID 子空间 (ckpt MD5 `6f203978`≠baseline `40a82fdc`, SID MD5 `3b86a5a3`≠baseline `53171223`, Stage 1 rbfl=0.9082 持续非零 R36r PASS, codes 253/253/249 utility ≥97% R36p PASS) 但 Stage 3 best ndcg@10=0.0978 @ E103 (-1.9% vs v318 0.0997), Stage 4 test_R@10 regress -1.57% (恰好 = v316_fixed 数值). 与 v319/v320/v341/v343 同模式: Stage 1 真改 SID 子空间, Stage 4 regress. **R36h ceiling 第 79 次验证**: Stage 1 端 R36n (b)+(f) 三联也锁死, Stage 3 T5 SID 表征锁住 Stage 1 几何变更传递的优势. v359 lineage 终止, 必须回到 v318 baseline 重新创新. |
 
 ---
 
