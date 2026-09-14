@@ -35,18 +35,18 @@ MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 CONDA_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3"
 
 STAGE2_INFER = os.path.join(MAIN_DIR, "infer_sids_instruments.py")
-STAGE2_BUILD = os.path.join(MAIN_DIR, "build_v19_sids_for_hgrec.py")
+STAGE2_BUILD = os.path.join(MAIN_DIR, "build_sids_for_hgrec.py")  # 2026-09-05 fix: 旧 build_v19_sids_for_hgrec.py 已删除, 改用当前 v83 F3 Spread Loss 版本 (从 curvature_config 读路径)
 
 
 def check_stage1_artifact():
     """R40: Stage 1 产物缺失 → raise FileNotFoundError 禁启动."""
-    ckpt = "/home/wlia0047/hj82_scratch2/wenyu/rqvae_dataset/instruments/rqvae_out_v19_cend_07/rqvae_final.pt"
-    if not os.path.exists(ckpt):
+    from curvature_config import RQVAE_CKPT_PATH as _CKPT  # 2026-09-05 fix: 旧 hardcoded scratch2 路径不存在, 改读 curvature_config.RQVAE_CKPT_PATH
+    if not os.path.exists(_CKPT):
         raise FileNotFoundError(
-            f"Stage 1 ckpt 不存在: {ckpt}\n"
+            f"Stage 1 ckpt 不存在: {_CKPT}\n"
             f"请先跑 stage1.py 训练 RQ-VAE."
         )
-    print(f"[stage2] Stage 1 ckpt OK: {ckpt}")
+    print(f"[stage2] Stage 1 ckpt OK: {_CKPT}")
 
 
 def main():

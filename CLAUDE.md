@@ -2,6 +2,8 @@
 
 > **回复规则**: 每次回复必须简单、直接,尽量只使用一段话。
 
+> **新规则 (2026-09-13)**: 不允许进入 plan 模式（user directive）。所有实现必须直接进行。
+
 > HG-Rec (Hyperbolic RQ-VAE + Differential-Length Codebook + T5) 流水线复现工作目录, **Musical_Instruments 9922 items, 4 阶段流水线, seed=42**, **当前 curvature_base baseline = v318_v317_cyclic_c Cyclic c(t) Curriculum (test_R@10=0.11791237113402062, +0.24% vs v317 baseline 0.11763, R36h ceiling 第 73 次验证 — v319 Per-Layer Phase Shift R37 FAIL 后 v318 仍是当前最优 baseline, R51+ 2 RUN 字符级完全一致 PASS)**.
 
 ---

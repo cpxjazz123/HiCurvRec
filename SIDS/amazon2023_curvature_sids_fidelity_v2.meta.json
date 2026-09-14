@@ -1,0 +1,28 @@
+{
+  "source": "/fs04/ar57/wenyu/GeneRec/curvature_base",
+  "mechanism": "v318 M2 intrinsic + M3 transport + cyclic curvature + L0 geodesic midpoint",
+  "input_embeddings": "/fs04/ar57/wenyu/GeneRec/TIGER/dataset/Amazon_2023_Instruments/item_emb.parquet",
+  "training_epochs": 2605,
+  "global_steps": 100000,
+  "optimizer_steps": 15625,
+  "samples_seen": 64000000,
+  "target_global_steps": 100000,
+  "target_samples": 64000000,
+  "best_train_loss": 1.2239371140797932,
+  "raw_collision_rate": 0.3675112864521902,
+  "best_loss_step": 21888,
+  "best_loss_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/curvature_fidelity_v2_20260914_153536_2671239/best_loss_model.pth",
+  "final_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/curvature_fidelity_v2_20260914_153536_2671239/final_model.pth",
+  "codebook_sizes": [
+    256,
+    256,
+    256,
+    1
+  ],
+  "variant": "curvature",
+  "num_items": 24587,
+  "sid_width": 4,
+  "unique_sids": 24587,
+  "max_raw_token": 255,
+  "sid_json": "/fs04/ar57/wenyu/GeneRec/SIDS/amazon2023_curvature_sids_fidelity_v2.json"
+}

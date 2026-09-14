@@ -1,0 +1,24 @@
+{
+  "source": "/fs04/ar57/wenyu/GeneRec/LETTER/RQ-VAE",
+  "mechanism": "LETTER collaborative-signal contrastive alignment + codebook diversity loss",
+  "input_embeddings": "/fs04/ar57/wenyu/GeneRec/TIGER/dataset/Amazon_2023_Instruments/item_emb.parquet",
+  "cf_embedding": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/letter_smoke_letter_v2_20260914_155334_2678869/letter_amazon2023_cf_embedding.pt",
+  "training_epochs": 20,
+  "best_train_loss_sum": 29.665231108665466,
+  "best_collision_rate": 0.8887623540895595,
+  "raw_collision_rate": 0.8887623540895595,
+  "best_loss_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/letter_smoke_letter_v2_20260914_155334_2678869/best_loss_model.pth",
+  "best_collision_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/letter_smoke_letter_v2_20260914_155334_2678869/best_collision_model.pth",
+  "codebook_sizes": [
+    256,
+    256,
+    256,
+    1
+  ],
+  "variant": "letter",
+  "num_items": 24587,
+  "sid_width": 4,
+  "unique_sids": 24587,
+  "max_raw_token": 1195,
+  "sid_json": "/fs04/ar57/wenyu/GeneRec/SIDS/amazon2023_letter_sids_smoke_letter_v2.json"
+}

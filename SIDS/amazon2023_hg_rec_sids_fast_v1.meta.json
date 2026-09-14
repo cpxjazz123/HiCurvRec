@@ -1,0 +1,23 @@
+{
+  "source": "/fs04/ar57/wenyu/GeneRec/HG-Rec",
+  "input_embeddings": "/fs04/ar57/wenyu/GeneRec/TIGER/dataset/Amazon_2023_Instruments/item_emb.parquet",
+  "training_epochs": 1000,
+  "best_train_loss_sum": 1.1411484479904175,
+  "best_collision_rate": 0.19685199495668437,
+  "raw_collision_rate": 0.19685199495668437,
+  "collision_resolution_rounds": 0,
+  "best_loss_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/hg_fast_v1_20260914_162226_2716562/best_loss_model.pth",
+  "best_collision_model": "/fs04/ar57/wenyu/GeneRec/SIDS/rqvae_runs/hg_fast_v1_20260914_162226_2716562/best_collision_model.pth",
+  "codebook_sizes": [
+    64,
+    128,
+    256,
+    1
+  ],
+  "variant": "hg",
+  "num_items": 24587,
+  "sid_width": 4,
+  "unique_sids": 24587,
+  "max_raw_token": 255,
+  "sid_json": "/fs04/ar57/wenyu/GeneRec/SIDS/amazon2023_hg_rec_sids_fast_v1.json"
+}

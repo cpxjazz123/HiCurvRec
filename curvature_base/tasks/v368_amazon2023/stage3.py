@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 # R53 v3.8: 从 curvature_config 硬编码导入 mechanism 路径
-from curvature_config import CONFIG_PATH as _CONFIG_PATH, CUDA_VISIBLE_DEVICES as _CUDA_VISIBLE_DEVICES
+from curvature_config import CONFIG_PATH as _CONFIG_PATH, CUDA_VISIBLE_DEVICES as _CUDA_VISIBLE_DEVICES, SIDS_NPY as _SID_PATH
 
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,8 +25,7 @@ STAGE3_TORCHRUN = [
 
 
 def check_stage2_artifact():
-    # R53 v3.8: 从 curvature_config.SIDS_NPY 读 (避免 hardcoded 2018 sids_for_hgrec_midpoint.npy 路径不存在)
-    from curvature_config import SIDS_NPY as _SID_PATH
+    # R53 v3.8: 从 curvature_config.SIDS_NPY 读 (避免 hardcoded 2018 路径)
     if not os.path.exists(_SID_PATH):
         raise FileNotFoundError(
             f"Stage 2 SID 不存在: {_SID_PATH}\n"
