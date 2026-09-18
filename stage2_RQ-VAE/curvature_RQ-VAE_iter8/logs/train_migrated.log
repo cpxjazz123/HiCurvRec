@@ -1,0 +1,192 @@
+W0917 20:07:51.559130 1199822 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W0917 20:07:51.559130 1199822 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W0917 20:07:51.559130 1199822 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0917 20:07:51.559130 1199822 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[rank2]:[W917 20:07:54.707679846 ProcessGroupNCCL.cpp:5023] [PG ID 0 PG GUID 0 Rank 2]  using GPU 2 as device used by this process is currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. You can specify device_id in init_process_group() to force use of a particular device.
+[rank3]:[W917 20:07:54.707842681 ProcessGroupNCCL.cpp:5023] [PG ID 0 PG GUID 0 Rank 3]  using GPU 3 as device used by this process is currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. You can specify device_id in init_process_group() to force use of a particular device.
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[rank1]:[W917 20:07:54.711801098 ProcessGroupNCCL.cpp:5023] [PG ID 0 PG GUID 0 Rank 1]  using GPU 1 as device used by this process is currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. You can specify device_id in init_process_group() to force use of a particular device.
+[Step3] DDP rank=0/4 local_rank=0
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[rank0]:[W917 20:07:54.751054271 ProcessGroupNCCL.cpp:5023] [PG ID 0 PG GUID 0 Rank 0]  using GPU 0 as device used by this process is currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. You can specify device_id in init_process_group() to force use of a particular device.
+[Step0] cleaned 0 stale artifact(s) from /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments
+=== RQ-VAE Step1-Step12 训练循环 (world_size=4) ===
+[Step1] emb: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/item_emb.npy
+[Step1] out: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments
+[Step1] per-GPU batch=640 | total=2560 | workers=4 | compile=False
+[Step1] hidden=[512, 256, 128] embed=32 codebook=256 layers=3
+[Step1] target: MAX_GLOBAL_STEPS=100000 | ckpt every 10000
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/item_emb.npy: shape=(24587, 768), dtype=torch.float32
+[Step2] 24587 items | 9 batches/rank | 36 batches/epoch
+[Step4] params=1146880 | DDP wrapped
+[Step5] optimizer covers 1 group(s)
+[train] start, target=100000 global steps (Step1-Step12 loop)
+[Step6] first batch ok shape=(640, 768) device=cuda:0
+[Step7] first forward ok sem_ids.shape=(640, 3)
+[Step8] first loss ok loss=9.4858 rl=9.4858 vl=0.0000
+[Step9] first backward ok params_with_grad=11
+[Step10] first optimizer.step ok
+[Step11] first curvature sync step=4 c=[0.300/0.300/0.300]
+  step    712/100000 | loss=0.7546 | rl=0.7497 | vl=0.0049 | codes=218/235/196/256 | c=0.331/0.331/0.331 | ips_g=141.8 ips/rk=35.4 | elapsed=5.0s | eta=700.2s
+  step   1556/100000 | loss=0.6302 | rl=0.6023 | vl=0.0278 | codes=253/241/209/256 | c=0.368/0.368/0.368 | ips_g=155.0 ips/rk=38.7 | elapsed=10.0s | eta=635.2s
+  step   2412/100000 | loss=0.6370 | rl=0.5630 | vl=0.0740 | codes=256/249/240/256 | c=0.406/0.406/0.406 | ips_g=160.2 ips/rk=40.1 | elapsed=15.1s | eta=609.0s
+  step   3264/100000 | loss=0.6555 | rl=0.5596 | vl=0.0959 | codes=251/241/241/256 | c=0.443/0.443/0.443 | ips_g=162.6 ips/rk=40.7 | elapsed=20.1s | eta=594.9s
+  step   4116/100000 | loss=0.6791 | rl=0.5620 | vl=0.1171 | codes=253/242/242/256 | c=0.479/0.479/0.479 | ips_g=164.0 ips/rk=41.0 | elapsed=25.1s | eta=584.5s
+  step   4968/100000 | loss=0.6970 | rl=0.5551 | vl=0.1419 | codes=253/244/241/256 | c=0.515/0.515/0.515 | ips_g=165.1 ips/rk=41.3 | elapsed=30.1s | eta=575.8s
+  step   5816/100000 | loss=0.7665 | rl=0.5919 | vl=0.1746 | codes=254/243/236/256 | c=0.550/0.550/0.550 | ips_g=165.7 ips/rk=41.4 | elapsed=35.1s | eta=568.4s
+  step   6664/100000 | loss=0.7640 | rl=0.5826 | vl=0.1814 | codes=256/247/244/256 | c=0.585/0.585/0.585 | ips_g=166.2 ips/rk=41.5 | elapsed=40.1s | eta=561.6s
+  step   7516/100000 | loss=0.8400 | rl=0.6166 | vl=0.2234 | codes=254/243/242/256 | c=0.618/0.618/0.618 | ips_g=166.6 ips/rk=41.7 | elapsed=45.1s | eta=555.0s
+  step   8372/100000 | loss=0.8479 | rl=0.6054 | vl=0.2424 | codes=254/249/238/256 | c=0.651/0.651/0.651 | ips_g=167.0 ips/rk=41.8 | elapsed=50.1s | eta=548.5s
+  step   9224/100000 | loss=0.8895 | rl=0.6246 | vl=0.2650 | codes=251/247/243/256 | c=0.683/0.683/0.683 | ips_g=167.3 ips/rk=41.8 | elapsed=55.1s | eta=542.5s
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step10000.pt (step=10000)
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+  [SID gate step=10000] hitrate@50=0.7165 full_gini=0.0396 per_layer=[0.0759/0.1181/0.1722] unique=23586/24587 l01_pairs=16253 H_l1_given_l0=5.7433 | early_stop=False
+  step  10004/100000 | loss=0.9148 | rl=0.6391 | vl=0.2757 | codes=254/248/244/256 | c=0.712/0.712/0.712 | ips_g=104.9 ips/rk=26.2 | elapsed=95.4s | eta=858.1s
+  step  10856/100000 | loss=0.9771 | rl=0.6697 | vl=0.3074 | codes=254/246/238/256 | c=0.741/0.741/0.741 | ips_g=108.1 ips/rk=27.0 | elapsed=100.4s | eta=824.5s
+  step  11692/100000 | loss=1.0055 | rl=0.6888 | vl=0.3167 | codes=255/245/239/256 | c=0.769/0.769/0.769 | ips_g=110.9 ips/rk=27.7 | elapsed=105.4s | eta=796.2s
+  step  12528/100000 | loss=1.0197 | rl=0.6867 | vl=0.3330 | codes=254/243/239/256 | c=0.796/0.796/0.796 | ips_g=113.4 ips/rk=28.4 | elapsed=110.4s | eta=771.0s
+  step  13380/100000 | loss=1.0761 | rl=0.7023 | vl=0.3738 | codes=255/242/241/256 | c=0.822/0.822/0.822 | ips_g=115.9 ips/rk=29.0 | elapsed=115.4s | eta=747.3s
+  step  14232/100000 | loss=1.0632 | rl=0.6993 | vl=0.3639 | codes=256/246/239/256 | c=0.846/0.846/0.846 | ips_g=118.2 ips/rk=29.5 | elapsed=120.5s | eta=725.9s
+  step  15084/100000 | loss=1.1534 | rl=0.7406 | vl=0.4128 | codes=254/238/238/256 | c=0.868/0.868/0.868 | ips_g=120.2 ips/rk=30.1 | elapsed=125.5s | eta=706.3s
+  step  15936/100000 | loss=1.1444 | rl=0.7396 | vl=0.4048 | codes=253/247/245/256 | c=0.890/0.890/0.890 | ips_g=122.1 ips/rk=30.5 | elapsed=130.5s | eta=688.3s
+  step  16788/100000 | loss=1.1351 | rl=0.7301 | vl=0.4050 | codes=254/252/247/256 | c=0.909/0.909/0.909 | ips_g=123.9 ips/rk=31.0 | elapsed=135.5s | eta=671.6s
+  step  17588/100000 | loss=1.2225 | rl=0.7685 | vl=0.4540 | codes=255/242/243/256 | c=0.925/0.925/0.925 | ips_g=125.2 ips/rk=31.3 | elapsed=140.5s | eta=658.3s
+  step  18440/100000 | loss=1.2565 | rl=0.7858 | vl=0.4707 | codes=256/246/236/256 | c=0.941/0.941/0.941 | ips_g=126.7 ips/rk=31.7 | elapsed=145.5s | eta=643.6s
+  step  19292/100000 | loss=1.2888 | rl=0.8059 | vl=0.4829 | codes=253/241/244/256 | c=0.955/0.955/0.955 | ips_g=128.2 ips/rk=32.0 | elapsed=150.5s | eta=629.7s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step20000.pt (step=20000)
+  [SID gate step=20000] hitrate@50=0.7165 full_gini=0.0447 per_layer=[0.0822/0.1163/0.1444] unique=23453/24587 l01_pairs=15940 H_l1_given_l0=5.7027 | early_stop=False
+[Step12] deleted previous artifacts with tag=step10000 (rqvae_step10000.pt + sids_step10000.npy + quality_step10000.json)
+  step  20004/100000 | loss=1.2853 | rl=0.8022 | vl=0.4831 | codes=253/246/243/256 | c=0.966/0.966/0.966 | ips_g=106.1 ips/rk=26.5 | elapsed=188.6s | eta=754.3s
+  step  20852/100000 | loss=1.2723 | rl=0.7833 | vl=0.4890 | codes=252/245/239/256 | c=0.976/0.976/0.976 | ips_g=107.7 ips/rk=26.9 | elapsed=193.6s | eta=735.0s
+  step  21704/100000 | loss=1.3248 | rl=0.8177 | vl=0.5071 | codes=256/244/240/256 | c=0.985/0.985/0.985 | ips_g=109.3 ips/rk=27.3 | elapsed=198.6s | eta=716.6s
+  step  22556/100000 | loss=1.2902 | rl=0.7845 | vl=0.5057 | codes=255/244/242/256 | c=0.992/0.992/0.992 | ips_g=110.8 ips/rk=27.7 | elapsed=203.6s | eta=699.2s
+  step  23408/100000 | loss=1.3374 | rl=0.8100 | vl=0.5274 | codes=253/245/238/256 | c=0.997/0.997/0.997 | ips_g=112.2 ips/rk=28.0 | elapsed=208.7s | eta=682.8s
+  step  24260/100000 | loss=1.3867 | rl=0.8161 | vl=0.5706 | codes=254/242/241/256 | c=0.999/0.999/0.999 | ips_g=113.5 ips/rk=28.4 | elapsed=213.7s | eta=667.1s
+  step  25116/100000 | loss=1.3665 | rl=0.8157 | vl=0.5507 | codes=255/244/245/256 | c=1.000/1.000/1.000 | ips_g=114.8 ips/rk=28.7 | elapsed=218.7s | eta=652.0s
+  step  25972/100000 | loss=1.3646 | rl=0.8109 | vl=0.5537 | codes=251/243/239/256 | c=0.999/0.999/0.999 | ips_g=116.1 ips/rk=29.0 | elapsed=223.7s | eta=637.6s
+  step  26824/100000 | loss=1.3552 | rl=0.8124 | vl=0.5428 | codes=254/248/244/256 | c=0.995/0.995/0.995 | ips_g=117.3 ips/rk=29.3 | elapsed=228.7s | eta=623.9s
+  step  27680/100000 | loss=1.3103 | rl=0.7781 | vl=0.5323 | codes=255/244/244/256 | c=0.990/0.990/0.990 | ips_g=118.4 ips/rk=29.6 | elapsed=233.7s | eta=610.6s
+  step  28532/100000 | loss=1.3162 | rl=0.7748 | vl=0.5414 | codes=254/247/243/256 | c=0.983/0.983/0.983 | ips_g=119.5 ips/rk=29.9 | elapsed=238.7s | eta=598.0s
+  step  29388/100000 | loss=1.2975 | rl=0.7577 | vl=0.5398 | codes=254/246/237/256 | c=0.974/0.974/0.974 | ips_g=120.6 ips/rk=30.1 | elapsed=243.8s | eta=585.7s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step30000.pt (step=30000)
+  [SID gate step=30000] hitrate@50=0.7165 full_gini=0.0484 per_layer=[0.0750/0.1148/0.1468] unique=23356/24587 l01_pairs=15924 H_l1_given_l0=5.6894 | early_stop=False
+[Step12] deleted previous artifacts with tag=step20000 (rqvae_step20000.pt + sids_step20000.npy + quality_step20000.json)
+  step  30004/100000 | loss=1.3065 | rl=0.7584 | vl=0.5481 | codes=255/246/238/256 | c=0.966/0.966/0.966 | ips_g=106.5 ips/rk=26.6 | elapsed=281.8s | eta=657.4s
+  step  30856/100000 | loss=1.2693 | rl=0.7368 | vl=0.5325 | codes=254/246/244/256 | c=0.953/0.953/0.953 | ips_g=107.6 ips/rk=26.9 | elapsed=286.8s | eta=642.7s
+  step  31712/100000 | loss=1.3050 | rl=0.7428 | vl=0.5622 | codes=254/243/232/256 | c=0.939/0.939/0.939 | ips_g=108.7 ips/rk=27.2 | elapsed=291.8s | eta=628.4s
+  step  32564/100000 | loss=1.2968 | rl=0.7410 | vl=0.5558 | codes=256/244/244/256 | c=0.922/0.922/0.922 | ips_g=109.7 ips/rk=27.4 | elapsed=296.8s | eta=614.7s
+  step  33416/100000 | loss=1.2793 | rl=0.7319 | vl=0.5473 | codes=255/246/232/256 | c=0.904/0.904/0.904 | ips_g=110.7 ips/rk=27.7 | elapsed=301.9s | eta=601.5s
+  step  34272/100000 | loss=1.2237 | rl=0.6856 | vl=0.5382 | codes=253/248/235/256 | c=0.885/0.885/0.885 | ips_g=111.7 ips/rk=27.9 | elapsed=306.9s | eta=588.5s
+  step  35128/100000 | loss=1.2218 | rl=0.6917 | vl=0.5301 | codes=253/244/238/256 | c=0.863/0.863/0.863 | ips_g=112.6 ips/rk=28.2 | elapsed=311.9s | eta=576.0s
+  step  35984/100000 | loss=1.1687 | rl=0.6584 | vl=0.5104 | codes=256/239/243/256 | c=0.840/0.840/0.840 | ips_g=113.6 ips/rk=28.4 | elapsed=316.9s | eta=563.8s
+  step  36868/100000 | loss=1.1586 | rl=0.6510 | vl=0.5075 | codes=254/242/242/256 | c=0.814/0.814/0.814 | ips_g=114.5 ips/rk=28.6 | elapsed=321.9s | eta=551.2s
+  step  37760/100000 | loss=1.1830 | rl=0.6446 | vl=0.5384 | codes=253/241/238/256 | c=0.787/0.787/0.787 | ips_g=115.5 ips/rk=28.9 | elapsed=326.9s | eta=538.9s
+  step  38648/100000 | loss=1.1571 | rl=0.6371 | vl=0.5201 | codes=253/243/238/256 | c=0.758/0.758/0.758 | ips_g=116.4 ips/rk=29.1 | elapsed=332.0s | eta=527.0s
+  step  39536/100000 | loss=1.0883 | rl=0.5926 | vl=0.4957 | codes=253/237/231/256 | c=0.728/0.728/0.728 | ips_g=117.3 ips/rk=29.3 | elapsed=337.0s | eta=515.3s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step40000.pt (step=40000)
+  [SID gate step=40000] hitrate@50=0.7165 full_gini=0.0491 per_layer=[0.0722/0.1341/0.1742] unique=23338/24587 l01_pairs=15780 H_l1_given_l0=5.6711 | early_stop=False
+[Step12] deleted previous artifacts with tag=step30000 (rqvae_step30000.pt + sids_step30000.npy + quality_step30000.json)
+  step  40004/100000 | loss=1.0979 | rl=0.6012 | vl=0.4967 | codes=256/245/238/256 | c=0.711/0.711/0.711 | ips_g=106.9 ips/rk=26.7 | elapsed=374.1s | eta=561.1s
+  step  40896/100000 | loss=1.0528 | rl=0.5765 | vl=0.4763 | codes=252/238/234/256 | c=0.679/0.679/0.679 | ips_g=107.9 ips/rk=27.0 | elapsed=379.1s | eta=547.9s
+  step  41764/100000 | loss=0.9801 | rl=0.5400 | vl=0.4401 | codes=251/243/239/256 | c=0.646/0.646/0.646 | ips_g=108.7 ips/rk=27.2 | elapsed=384.1s | eta=535.6s
+  step  42652/100000 | loss=1.0047 | rl=0.5429 | vl=0.4618 | codes=255/240/240/256 | c=0.612/0.612/0.612 | ips_g=109.6 ips/rk=27.4 | elapsed=389.1s | eta=523.2s
+  step  43544/100000 | loss=0.9480 | rl=0.5151 | vl=0.4328 | codes=254/237/238/256 | c=0.576/0.576/0.576 | ips_g=110.5 ips/rk=27.6 | elapsed=394.2s | eta=511.0s
+  step  44432/100000 | loss=0.9319 | rl=0.4916 | vl=0.4403 | codes=256/243/236/256 | c=0.540/0.540/0.540 | ips_g=111.3 ips/rk=27.8 | elapsed=399.2s | eta=499.2s
+  step  45320/100000 | loss=0.8581 | rl=0.4598 | vl=0.3983 | codes=254/244/239/256 | c=0.503/0.503/0.503 | ips_g=112.1 ips/rk=28.0 | elapsed=404.2s | eta=487.6s
+  step  46204/100000 | loss=0.8543 | rl=0.4502 | vl=0.4041 | codes=253/242/236/256 | c=0.465/0.465/0.465 | ips_g=112.9 ips/rk=28.2 | elapsed=409.2s | eta=476.4s
+  step  47092/100000 | loss=0.8322 | rl=0.4394 | vl=0.3928 | codes=253/243/236/256 | c=0.427/0.427/0.427 | ips_g=113.7 ips/rk=28.4 | elapsed=414.2s | eta=465.3s
+  step  47984/100000 | loss=0.7829 | rl=0.4095 | vl=0.3733 | codes=254/239/234/256 | c=0.388/0.388/0.388 | ips_g=114.5 ips/rk=28.6 | elapsed=419.2s | eta=454.4s
+  step  48868/100000 | loss=0.7348 | rl=0.3852 | vl=0.3496 | codes=254/241/230/256 | c=0.350/0.350/0.350 | ips_g=115.2 ips/rk=28.8 | elapsed=424.2s | eta=443.9s
+  step  49760/100000 | loss=0.6966 | rl=0.3646 | vl=0.3320 | codes=250/241/230/256 | c=0.311/0.311/0.311 | ips_g=115.9 ips/rk=29.0 | elapsed=429.2s | eta=433.4s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step50000.pt (step=50000)
+  [SID gate step=50000] hitrate@50=0.7165 full_gini=0.0511 per_layer=[0.0750/0.1310/0.1741] unique=23288/24587 l01_pairs=15714 H_l1_given_l0=5.6657 | early_stop=False
+[Step12] deleted previous artifacts with tag=step40000 (rqvae_step40000.pt + sids_step40000.npy + quality_step40000.json)
+  step  50004/100000 | loss=0.6984 | rl=0.3628 | vl=0.3356 | codes=252/241/238/256 | c=0.300/0.300/0.300 | ips_g=107.5 ips/rk=26.9 | elapsed=465.4s | eta=465.3s
+  step  50892/100000 | loss=0.7382 | rl=0.3922 | vl=0.3460 | codes=251/239/244/256 | c=0.339/0.339/0.339 | ips_g=108.2 ips/rk=27.0 | elapsed=470.4s | eta=453.9s
+  step  51784/100000 | loss=0.7603 | rl=0.4013 | vl=0.3590 | codes=254/242/227/256 | c=0.378/0.378/0.378 | ips_g=108.9 ips/rk=27.2 | elapsed=475.4s | eta=442.6s
+  step  52676/100000 | loss=0.8119 | rl=0.4212 | vl=0.3907 | codes=253/239/237/256 | c=0.417/0.417/0.417 | ips_g=109.7 ips/rk=27.4 | elapsed=480.4s | eta=431.6s
+  step  53564/100000 | loss=0.8808 | rl=0.4532 | vl=0.4276 | codes=255/241/242/256 | c=0.455/0.455/0.455 | ips_g=110.3 ips/rk=27.6 | elapsed=485.4s | eta=420.8s
+  step  54428/100000 | loss=0.8965 | rl=0.4645 | vl=0.4320 | codes=254/238/227/256 | c=0.492/0.492/0.492 | ips_g=111.0 ips/rk=27.7 | elapsed=490.4s | eta=410.6s
+  step  55288/100000 | loss=0.9624 | rl=0.5063 | vl=0.4560 | codes=255/232/225/256 | c=0.528/0.528/0.528 | ips_g=111.6 ips/rk=27.9 | elapsed=495.4s | eta=400.6s
+  step  56148/100000 | loss=0.9306 | rl=0.4852 | vl=0.4454 | codes=256/237/235/256 | c=0.564/0.564/0.564 | ips_g=112.2 ips/rk=28.1 | elapsed=500.4s | eta=390.8s
+  step  57008/100000 | loss=0.9824 | rl=0.5184 | vl=0.4640 | codes=254/242/239/256 | c=0.598/0.598/0.598 | ips_g=112.8 ips/rk=28.2 | elapsed=505.4s | eta=381.2s
+  step  57868/100000 | loss=0.9955 | rl=0.5228 | vl=0.4726 | codes=254/242/231/256 | c=0.632/0.632/0.632 | ips_g=113.4 ips/rk=28.3 | elapsed=510.4s | eta=371.6s
+  step  58728/100000 | loss=1.0518 | rl=0.5455 | vl=0.5063 | codes=254/238/240/256 | c=0.665/0.665/0.665 | ips_g=113.9 ips/rk=28.5 | elapsed=515.4s | eta=362.2s
+  step  59588/100000 | loss=1.1179 | rl=0.5864 | vl=0.5315 | codes=253/244/242/256 | c=0.697/0.697/0.697 | ips_g=114.5 ips/rk=28.6 | elapsed=520.4s | eta=353.0s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step60000.pt (step=60000)
+  [SID gate step=60000] hitrate@50=0.7165 full_gini=0.0500 per_layer=[0.0734/0.1403/0.1796] unique=23316/24587 l01_pairs=15678 H_l1_given_l0=5.6591 | early_stop=False
+[Step12] deleted previous artifacts with tag=step50000 (rqvae_step50000.pt + sids_step50000.npy + quality_step50000.json)
+  step  60004/100000 | loss=1.1208 | rl=0.5973 | vl=0.5235 | codes=254/246/231/256 | c=0.712/0.712/0.712 | ips_g=107.7 ips/rk=26.9 | elapsed=557.1s | eta=371.4s
+  step  60860/100000 | loss=1.1203 | rl=0.5939 | vl=0.5265 | codes=254/243/243/256 | c=0.741/0.741/0.741 | ips_g=108.3 ips/rk=27.1 | elapsed=562.1s | eta=361.5s
+  step  61724/100000 | loss=1.2172 | rl=0.6388 | vl=0.5784 | codes=255/240/233/256 | c=0.770/0.770/0.770 | ips_g=108.8 ips/rk=27.2 | elapsed=567.2s | eta=351.7s
+  step  62584/100000 | loss=1.1630 | rl=0.6216 | vl=0.5415 | codes=254/243/242/256 | c=0.798/0.798/0.798 | ips_g=109.4 ips/rk=27.3 | elapsed=572.2s | eta=342.1s
+  step  63440/100000 | loss=1.2450 | rl=0.6553 | vl=0.5897 | codes=256/238/236/256 | c=0.823/0.823/0.823 | ips_g=109.9 ips/rk=27.5 | elapsed=577.2s | eta=332.6s
+  step  64300/100000 | loss=1.2543 | rl=0.6683 | vl=0.5860 | codes=254/244/237/256 | c=0.848/0.848/0.848 | ips_g=110.4 ips/rk=27.6 | elapsed=582.2s | eta=323.2s
+  step  65160/100000 | loss=1.3867 | rl=0.7188 | vl=0.6679 | codes=253/232/236/256 | c=0.870/0.870/0.870 | ips_g=111.0 ips/rk=27.7 | elapsed=587.2s | eta=314.0s
+  step  66016/100000 | loss=1.3551 | rl=0.7218 | vl=0.6333 | codes=256/241/236/256 | c=0.891/0.891/0.891 | ips_g=111.5 ips/rk=27.9 | elapsed=592.2s | eta=304.9s
+  step  66876/100000 | loss=1.2969 | rl=0.6866 | vl=0.6102 | codes=254/243/236/256 | c=0.911/0.911/0.911 | ips_g=112.0 ips/rk=28.0 | elapsed=597.2s | eta=295.8s
+  step  67736/100000 | loss=1.3708 | rl=0.7247 | vl=0.6462 | codes=253/242/239/256 | c=0.928/0.928/0.928 | ips_g=112.5 ips/rk=28.1 | elapsed=602.3s | eta=286.9s
+  step  68596/100000 | loss=1.4055 | rl=0.7419 | vl=0.6636 | codes=256/238/237/256 | c=0.944/0.944/0.944 | ips_g=113.0 ips/rk=28.2 | elapsed=607.3s | eta=278.0s
+  step  69456/100000 | loss=1.3689 | rl=0.7327 | vl=0.6362 | codes=253/239/234/256 | c=0.958/0.958/0.958 | ips_g=113.4 ips/rk=28.4 | elapsed=612.3s | eta=269.3s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step70000.pt (step=70000)
+  [SID gate step=70000] hitrate@50=0.7165 full_gini=0.0502 per_layer=[0.0752/0.1385/0.1735] unique=23310/24587 l01_pairs=15661 H_l1_given_l0=5.6592 | early_stop=False
+[Step12] deleted previous artifacts with tag=step60000 (rqvae_step60000.pt + sids_step60000.npy + quality_step60000.json)
+  step  70004/100000 | loss=1.4147 | rl=0.7363 | vl=0.6784 | codes=253/237/230/256 | c=0.966/0.966/0.966 | ips_g=107.8 ips/rk=26.9 | elapsed=649.5s | eta=278.3s
+  step  70884/100000 | loss=1.3710 | rl=0.7314 | vl=0.6396 | codes=255/234/232/256 | c=0.977/0.977/0.977 | ips_g=108.3 ips/rk=27.1 | elapsed=654.5s | eta=268.8s
+  step  71768/100000 | loss=1.4456 | rl=0.7728 | vl=0.6728 | codes=255/237/233/256 | c=0.986/0.986/0.986 | ips_g=108.8 ips/rk=27.2 | elapsed=659.5s | eta=259.4s
+  step  72652/100000 | loss=1.3793 | rl=0.7409 | vl=0.6384 | codes=256/241/237/256 | c=0.992/0.992/0.992 | ips_g=109.3 ips/rk=27.3 | elapsed=664.6s | eta=250.2s
+  step  73508/100000 | loss=1.5118 | rl=0.7925 | vl=0.7193 | codes=255/236/244/256 | c=0.997/0.997/0.997 | ips_g=109.8 ips/rk=27.4 | elapsed=669.6s | eta=241.3s
+  step  74368/100000 | loss=1.4583 | rl=0.7652 | vl=0.6932 | codes=253/245/236/256 | c=0.999/0.999/0.999 | ips_g=110.2 ips/rk=27.6 | elapsed=674.6s | eta=232.5s
+  step  75224/100000 | loss=1.4246 | rl=0.7539 | vl=0.6707 | codes=253/245/241/256 | c=1.000/1.000/1.000 | ips_g=110.7 ips/rk=27.7 | elapsed=679.6s | eta=223.8s
+  step  76084/100000 | loss=1.4888 | rl=0.7795 | vl=0.7092 | codes=253/247/243/256 | c=0.998/0.998/0.998 | ips_g=111.1 ips/rk=27.8 | elapsed=684.6s | eta=215.2s
+  step  76944/100000 | loss=1.4111 | rl=0.7476 | vl=0.6635 | codes=251/240/232/256 | c=0.995/0.995/0.995 | ips_g=111.6 ips/rk=27.9 | elapsed=689.6s | eta=206.6s
+  step  77804/100000 | loss=1.4603 | rl=0.7624 | vl=0.6979 | codes=256/237/238/256 | c=0.989/0.989/0.989 | ips_g=112.0 ips/rk=28.0 | elapsed=694.6s | eta=198.2s
+  step  78668/100000 | loss=1.4513 | rl=0.7710 | vl=0.6803 | codes=254/241/236/256 | c=0.981/0.981/0.981 | ips_g=112.4 ips/rk=28.1 | elapsed=699.6s | eta=189.7s
+  step  79540/100000 | loss=1.3832 | rl=0.7246 | vl=0.6586 | codes=255/237/233/256 | c=0.972/0.972/0.972 | ips_g=112.9 ips/rk=28.2 | elapsed=704.6s | eta=181.2s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step80000.pt (step=80000)
+  [SID gate step=80000] hitrate@50=0.7165 full_gini=0.0515 per_layer=[0.0745/0.1274/0.1501] unique=23275/24587 l01_pairs=15731 H_l1_given_l0=5.6636 | early_stop=False
+[Step12] deleted previous artifacts with tag=step70000 (rqvae_step70000.pt + sids_step70000.npy + quality_step70000.json)
+  step  80004/100000 | loss=1.4040 | rl=0.7353 | vl=0.6687 | codes=255/238/239/256 | c=0.966/0.966/0.966 | ips_g=107.9 ips/rk=27.0 | elapsed=741.4s | eta=185.3s
+  step  80880/100000 | loss=1.4382 | rl=0.7469 | vl=0.6913 | codes=254/242/240/256 | c=0.953/0.953/0.953 | ips_g=108.4 ips/rk=27.1 | elapsed=746.5s | eta=176.5s
+  step  81756/100000 | loss=1.4086 | rl=0.7285 | vl=0.6801 | codes=255/244/236/256 | c=0.938/0.938/0.938 | ips_g=108.8 ips/rk=27.2 | elapsed=751.5s | eta=167.7s
+  step  82620/100000 | loss=1.3984 | rl=0.7136 | vl=0.6849 | codes=254/248/241/256 | c=0.921/0.921/0.921 | ips_g=109.2 ips/rk=27.3 | elapsed=756.5s | eta=159.1s
+  step  83480/100000 | loss=1.3262 | rl=0.6961 | vl=0.6301 | codes=254/245/241/256 | c=0.903/0.903/0.903 | ips_g=109.6 ips/rk=27.4 | elapsed=761.5s | eta=150.7s
+  step  84336/100000 | loss=1.4134 | rl=0.7178 | vl=0.6957 | codes=255/238/226/256 | c=0.883/0.883/0.883 | ips_g=110.0 ips/rk=27.5 | elapsed=766.5s | eta=142.4s
+  step  85196/100000 | loss=1.3237 | rl=0.6799 | vl=0.6438 | codes=255/243/230/256 | c=0.861/0.861/0.861 | ips_g=110.4 ips/rk=27.6 | elapsed=771.5s | eta=134.1s
+  step  86088/100000 | loss=1.2708 | rl=0.6535 | vl=0.6173 | codes=253/235/238/256 | c=0.837/0.837/0.837 | ips_g=110.9 ips/rk=27.7 | elapsed=776.5s | eta=125.5s
+  step  86980/100000 | loss=1.2393 | rl=0.6292 | vl=0.6101 | codes=255/246/232/256 | c=0.811/0.811/0.811 | ips_g=111.3 ips/rk=27.8 | elapsed=781.5s | eta=117.0s
+  step  87872/100000 | loss=1.1908 | rl=0.6122 | vl=0.5785 | codes=253/240/235/256 | c=0.783/0.783/0.783 | ips_g=111.7 ips/rk=27.9 | elapsed=786.5s | eta=108.6s
+  step  88768/100000 | loss=1.1836 | rl=0.5993 | vl=0.5843 | codes=255/239/232/256 | c=0.754/0.754/0.754 | ips_g=112.1 ips/rk=28.0 | elapsed=791.6s | eta=100.2s
+  step  89652/100000 | loss=1.1705 | rl=0.5901 | vl=0.5804 | codes=254/237/236/256 | c=0.724/0.724/0.724 | ips_g=112.5 ips/rk=28.1 | elapsed=796.6s | eta=91.9s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_step90000.pt (step=90000)
+  [SID gate step=90000] hitrate@50=0.7165 full_gini=0.0540 per_layer=[0.0684/0.1432/0.1693] unique=23211/24587 l01_pairs=15566 H_l1_given_l0=5.6438 | early_stop=False
+[Step12] deleted previous artifacts with tag=step80000 (rqvae_step80000.pt + sids_step80000.npy + quality_step80000.json)
+  step  90004/100000 | loss=1.1644 | rl=0.5822 | vl=0.5822 | codes=253/241/230/256 | c=0.711/0.711/0.711 | ips_g=108.0 ips/rk=27.0 | elapsed=833.1s | eta=92.5s
+  step  90864/100000 | loss=1.1104 | rl=0.5552 | vl=0.5552 | codes=255/236/232/256 | c=0.680/0.680/0.680 | ips_g=108.4 ips/rk=27.1 | elapsed=838.1s | eta=84.3s
+  step  91732/100000 | loss=1.0570 | rl=0.5294 | vl=0.5276 | codes=255/240/236/256 | c=0.648/0.648/0.648 | ips_g=108.8 ips/rk=27.2 | elapsed=843.1s | eta=76.0s
+  step  92604/100000 | loss=1.0219 | rl=0.5088 | vl=0.5131 | codes=251/244/240/256 | c=0.614/0.614/0.614 | ips_g=109.2 ips/rk=27.3 | elapsed=848.1s | eta=67.7s
+  step  93488/100000 | loss=0.9980 | rl=0.4941 | vl=0.5040 | codes=253/240/224/256 | c=0.578/0.578/0.578 | ips_g=109.6 ips/rk=27.4 | elapsed=853.1s | eta=59.4s
+  step  94356/100000 | loss=1.0069 | rl=0.4907 | vl=0.5163 | codes=256/241/231/256 | c=0.543/0.543/0.543 | ips_g=110.0 ips/rk=27.5 | elapsed=858.1s | eta=51.3s
+  step  95212/100000 | loss=0.9590 | rl=0.4746 | vl=0.4844 | codes=254/239/228/256 | c=0.507/0.507/0.507 | ips_g=110.3 ips/rk=27.6 | elapsed=863.2s | eta=43.4s
+  step  96072/100000 | loss=0.8954 | rl=0.4360 | vl=0.4594 | codes=253/239/236/256 | c=0.471/0.471/0.471 | ips_g=110.7 ips/rk=27.7 | elapsed=868.2s | eta=35.5s
+  step  96932/100000 | loss=0.8458 | rl=0.4095 | vl=0.4362 | codes=252/244/238/256 | c=0.434/0.434/0.434 | ips_g=111.0 ips/rk=27.8 | elapsed=873.2s | eta=27.6s
+  step  97792/100000 | loss=0.8079 | rl=0.3930 | vl=0.4149 | codes=254/239/233/256 | c=0.397/0.397/0.397 | ips_g=111.4 ips/rk=27.8 | elapsed=878.2s | eta=19.8s
+  step  98668/100000 | loss=0.8154 | rl=0.3957 | vl=0.4197 | codes=254/242/237/256 | c=0.359/0.359/0.359 | ips_g=111.7 ips/rk=27.9 | elapsed=883.2s | eta=11.9s
+  step  99564/100000 | loss=0.7592 | rl=0.3725 | vl=0.3867 | codes=256/237/228/256 | c=0.319/0.319/0.319 | ips_g=112.1 ips/rk=28.0 | elapsed=888.2s | eta=3.9s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_final.pt (step=100000)
+  [SID gate step=100000] hitrate@50=0.7165 full_gini=0.0527 per_layer=[0.0722/0.1524/0.1919] unique=23243/24587 l01_pairs=15610 H_l1_given_l0=5.6522 | early_stop=False
+[Step12] deleted previous artifacts with tag=step90000 (rqvae_step90000.pt + sids_step90000.npy + quality_step90000.json)
+[train] done at global_step=100000, total time=924.8s
