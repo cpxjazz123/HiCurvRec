@@ -6,9 +6,11 @@
 
 ## 2. Stage 2 SID Quality Gate
 
-每次跑完 curvature stage2 RQ-VAE，必须用 `python /tmp/sid_metrics_any.py <sids.npy> "<label>"` 在新产出的 SID 上算 **Embedding HitRate@K=50** 一项硬指标，且必须优于 `results/stage2_RQ-VAE/TIGER_RQ-VAE/sids_for_hgrec_recbole.npy`，否则迭代重跑，禁入 stage3。
+**Stage 2 不设任何外层/内层 hard gate**（2026-09-19 终态）：
 
-**Gini 类指标**（3-token SID Gini、每层 mean Gini）与 **collision rate** 只作为描述性指标记录到日志，**不作为 gate**：经验上 L0 极端塌陷的合法变体（iter11 sk_eps=0.5 是当前最佳，full_gini=0.1143 远高于 baseline 0.0672，collision rate 也偏高）会被这些 hard gate 误杀；改用 collapse-aware 的 l01_unique_pairs 与 H(L1|L0) 联合结构 gate（见 `curvature_RQ-VAE/modules/sid_quality.py`）。
+- **HitRate@K=50 已删除**（2026-09-19）：经验证 `/tmp/sid_metrics_any.py` 的 HR@50 算法（基于 `item_emb.npy` 余弦相似度 + train parquet 共现邻居）**完全不读 SID 文件**，因此对任何 RQ-VAE 变体恒等于常数 0.7165（curvature baseline）/ 0.5002（TIGER baseline），对 RQ-VAE 机制探索无任何区分力；作为 gate 是空操作。
+- **所有其他指标**（3-token SID Gini、每层 mean Gini、collision rate、l01_unique_pairs、H(L1|L0)）只作为描述性指标记录到日志，**不作为任何层级的 gate**：经验上 L0 极端塌陷的合法变体（iter11 sk_eps=0.5 是当前最佳，full_gini=0.1143 远高于 baseline 0.0672，collision rate / l01_pairs / H 也偏高）会被 hard gate 误杀；trainer 内层 early-stop 也完全删除（`should_early_stop` 始终返回 `(False, "")`），所有候选跑满 `MAX_GLOBAL_STEPS` 由下游 stage3 `test_R@10` 决定是否采用。
+- **stage3 仍可跑**：stage2 gate 全空后所有 RQ-VAE 变体都自动进入下游；裁决完全交由 stage3 完整跑完后的 `test_R@10`（硬目标 > 0.065）。
 
 ## 3. stage2 curvature_RQ-VAE 启动：cd 到该目录后用 `nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 curvature_RQ-VAE.py > logs/train_run.log 2>&1 &`（裸 `python3` 无 torch，会立刻 ModuleNotFoundError；脚本内置 `_launch_via_torchrun` 自动 fork 4 卡 DDP，训练输出落在 `logs/train_migrated.log`）。
 

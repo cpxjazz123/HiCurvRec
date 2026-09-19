@@ -1,0 +1,152 @@
+# Decoder Amazon_2023_Instruments config — v368_amazon2023 MIGRATION (2026-09-05)
+# v318 baseline (cyclic c(t) curriculum) + Amazon 2023 Musical Instruments 5core (24,587 items, 57,439 users)
+# R36n a cyclic c(t) — 与 2018 v318 baseline 严格对齐: c_min=0.3, c_max=1.0, T=50_000 步
+# 历史 v318 baseline 2018: test_R@10=0.11791 (+0.24% vs v317 0.11763)
+# 本任务: 看 test_R@10 在 24K items 上 vs 2018 10K items 的扩展性
+
+import train_decoder  # noqa: F401  注册 @gin.configurable
+
+# === 启用 HG-Rec 路径 (核心开关, FORCE_HGREC 兜底) ===
+train_decoder.train.use_hgrec_arch = True
+
+# === HG-Rec T5Config (与 v318 baseline 严格对齐) ===
+train_decoder.train.hgrec_t5_d_model = 128
+train_decoder.train.hgrec_t5_d_ff = 1024
+train_decoder.train.hgrec_t5_num_heads = 6
+train_decoder.train.hgrec_t5_d_kv = 64
+train_decoder.train.hgrec_t5_num_layers = 6
+train_decoder.train.hgrec_t5_num_decoder_layers = 4
+train_decoder.train.hgrec_t5_dropout = 0.1
+train_decoder.train.hgrec_vocab_size = 769
+train_decoder.train.hgrec_max_len = 20
+
+# === HG-Rec 数据 (Amazon 2023 Instruments 24,587 items, 4) SID numpy ===
+train_decoder.train.hgrec_code_path = "/home/wlia0047/ar57/wenyu/GeneRec/dataset/Amazon_2023_Instruments/sids_for_hgrec.npy"
+
+# === 训练超参 (与 v318 baseline 一致) ===
+train_decoder.train.hgrec_batch_size = 3072
+train_decoder.train.batch_size = 3072
+train_decoder.train.learning_rate = 0.0001
+train_decoder.train.weight_decay = 0.0001
+train_decoder.train.amp = True
+train_decoder.train.mixed_precision_type = "bf16"
+
+# === Eval 配置 ===
+train_decoder.train.top_k_for_generation = 20
+train_decoder.train.top_k_eval_list = [5, 10, 20]
+
+# === 保存路径 ===
+train_decoder.train.save_dir_root = "/home/wlia0047/ar57/wenyu/GeneRec/curvature_base/tasks/v368_amazon2023/out/decoder/instruments_hgrec_configs/hgrec_v368_amazon2023/"
+
+# === gin 必填项 (HG-Rec 路径忽略, 仅供 configurable 注册) ===
+train_decoder.train.dataset_folder = "dataset/"
+train_decoder.train.dataset = "INSTRUMENTS"
+train_decoder.train.force_dataset_process = False
+train_decoder.train.dataset_split = "instruments"
+train_decoder.train.full_eval_every = 500
+train_decoder.train.partial_eval_every = 250
+train_decoder.train.wandb_logging = False
+
+# === 以下 HG-Rec 路径不读取 ===
+train_decoder.train.t5_d_model = 384
+train_decoder.train.t5_num_heads = 6
+train_decoder.train.t5_d_ff = 1024
+train_decoder.train.t5_num_layers = 4
+train_decoder.train.t5_num_decoder_layers = 4
+train_decoder.train.should_add_sep_token = False
+train_decoder.train.pretrained_rqvae_path = ""
+train_decoder.train.vae_input_dim = 768
+train_decoder.train.vae_hidden_dims = [512, 256, 128]
+train_decoder.train.vae_embed_dim = 32
+train_decoder.train.vae_codebook_size = 256
+train_decoder.train.vae_num_quantizers = 3
+train_decoder.train.vae_commitment_weight = 0.25
+train_decoder.train.vae_sk_epsilon = 0.0
+train_decoder.train.vae_use_ema = False
+train_decoder.train.vae_ema_gamma = 0.95
+train_decoder.train.use_vae = True
+train_decoder.train.tokenize_mode = "rqvae"
+train_decoder.train.code_path = ""
+train_decoder.train.codebook_size = [256, 256, 256]
+train_decoder.train.num_codebooks = 3
+train_decoder.train.use_rqvae_tokenizer = True
+train_decoder.train.tie_word_embeddings = False
+train_decoder.train.lr_scheduler = "cosine"
+train_decoder.train.warmup_steps = 1000
+train_decoder.train.max_train_steps = 0
+train_decoder.train.num_epochs = 200
+train_decoder.train.eval_every = 1
+train_decoder.train.save_every = 1
+train_decoder.train.early_stop = 20
+train_decoder.train.resume_from = ""
+train_decoder.train.precision = "bf16"
+train_decoder.train.amp_dtype = "bfloat16"
+train_decoder.train.gradient_accumulation_steps = 1
+train_decoder.train.max_grad_norm = 1.0
+train_decoder.train.logging_steps = 50
+train_decoder.train.log_dir = ""
+train_decoder.train.seed = 42
+train_decoder.train.num_workers = 8
+train_decoder.train.pin_memory = True
+train_decoder.train.dataloader_drop_last = True
+train_decoder.train.compute_metrics_every = 1
+train_decoder.train.distributed = True
+train_decoder.train.local_rank = -1
+train_decoder.train.world_size = 1
+train_decoder.train.global_rank = 0
+train_decoder.train.master_port = "29500"
+train_decoder.train.master_addr = "127.0.0.1"
+train_decoder.train.negatives_per_target = 1024
+train_decoder.train.neg_sampler_seed = 42
+train_decoder.train.neg_sampling_strategy = "exact"
+train_decoder.train.loss_type = "ce"
+train_decoder.train.ignore_pad_token_in_loss = True
+train_decoder.train.label_smoothing = 0.0
+train_decoder.train.temperature = 1.0
+train_decoder.train.semantic_id_dropout = 0.0
+train_decoder.train.use_contrastive = False
+train_decoder.train.contrastive_temperature = 0.07
+train_decoder.train.contrastive_weight = 0.1
+train_decoder.train.use_manifold_contrastive = False
+train_decoder.train.g5_manifold_contrastive_c = 0.7
+train_decoder.train.g5_manifold_contrastive_temp = 0.1
+train_decoder.train.g5_manifold_contrastive_weight = 0.01
+train_decoder.train.use_classifier_free_guidance = False
+train_decoder.train.cfg_guidance_scale = 1.0
+train_decoder.train.cfg_uncond_prob = 0.1
+train_decoder.train.use_kl_divergence = False
+train_decoder.train.kl_weight = 0.01
+train_decoder.train.use_commit_loss = True
+train_decoder.train.commit_loss_weight = 1.0
+train_decoder.train.use_diversity_loss = False
+train_decoder.train.diversity_loss_weight = 0.1
+train_decoder.train.use_unique_decoding = False
+train_decoder.train.unique_decoding_weight = 0.1
+train_decoder.train.use_length_penalty = False
+train_decoder.train.length_penalty_alpha = 0.0
+train_decoder.train.length_penalty_min = 1
+train_decoder.train.length_penalty_max = 5
+train_decoder.train.use_repetition_penalty = False
+train_decoder.train.repetition_penalty = 1.0
+train_decoder.train.use_no_repeat_ngram = False
+train_decoder.train.no_repeat_ngram_size = 0
+train_decoder.train.use_temperature_sampling = True
+train_decoder.train.generation_temperature = 1.0
+train_decoder.train.use_top_k_sampling = True
+train_decoder.train.generation_top_k = 50
+train_decoder.train.use_top_p_sampling = False
+train_decoder.train.generation_top_p = 1.0
+train_decoder.train.use_beam_search = True
+train_decoder.train.num_beams = 20
+train_decoder.train.early_stopping = False
+train_decoder.train.max_new_tokens = 3
+train_decoder.train.min_new_tokens = 3
+train_decoder.train.do_sample = False
+train_decoder.train.pad_token_id = 0
+train_decoder.train.eos_token_id = 1
+train_decoder.train.bos_token_id = 2
+train_decoder.train.sep_token_id = 3
+train_decoder.train.mask_token_id = 4
+train_decoder.train.cls_token_id = 5
+train_decoder.train.special_tokens = ["<pad>", "</s>", "<s>", "<sep>", "<mask>", "<cls>"]
+train_decoder.train.special_token_ids = [0, 1, 2, 3, 4, 5]

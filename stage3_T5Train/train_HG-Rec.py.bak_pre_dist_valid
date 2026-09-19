@@ -1,0 +1,905 @@
+"""Train HG-Rec with the vanilla TIGER protocol used by RecBole3.0.
+
+The hyperbolic component only supplies the SID file.  The sequence model,
+token namespace, prefix expansion, generation and full-evaluation behavior in
+this entry point are deliberately the same as RecBole's ``model=tiger``.
+"""
+
+import argparse
+from contextlib import nullcontext
+import json
+import logging
+import math
+import os
+import random
+import re
+from pathlib import Path
+
+import numpy as np
+import torch
+import torch.distributed as dist
+import torch.optim as optim
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
+from tqdm import tqdm
+
+from data.dataloader import GenRecDataLoader
+from data.dataset import GenRecDataset
+from model.hg_rec import HG_Rec
+from model.utils import ensure_dir, get_local_time, set_color
+
+
+# Keep the existing deterministic setting used by the HG-Rec experiments.
+os.environ.setdefault("PYTHONHASHSEED", "42")
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+torch.use_deterministic_algorithms(True, warn_only=True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.set_float32_matmul_precision("high")
+
+
+def set_seed(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def _dataset_file(dataset_dir: Path, filename: str) -> Path:
+    path = Path(filename)
+    return path if path.is_absolute() else dataset_dir / path
+
+
+def _resolve_code_file(dataset_dir: Path, requested: str) -> Path:
+    """Resolve both a direct RecBole-style SID path and old HG prefixes."""
+    requested_path = Path(requested)
+    candidates = []
+    if requested_path.is_absolute():
+        candidates.append(requested_path)
+    else:
+        candidates.extend(
+            [
+                dataset_dir / requested_path,
+                dataset_dir / (dataset_dir.name + requested_path.name),
+            ]
+        )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    joined = ", ".join(str(candidate) for candidate in candidates)
+    raise FileNotFoundError(f"SID file does not exist; checked: {joined}")
+
+
+def make_sample_collator(dataset: GenRecDataset, *, include_eval_metadata=False):
+    """Create the [user, history SID..., EOS] TIGER input and target labels."""
+
+    def sample_collator(item):
+        history_tokens = [token for sid in item["history"] for token in sid]
+        input_ids = [
+            dataset.user_token_for(item["user"]),
+            *history_tokens,
+            dataset.eos_token,
+        ]
+        result = {
+            "input_ids": input_ids,
+            "labels": [*item["target"], dataset.eos_token],
+        }
+        if include_eval_metadata:
+            result["target_item"] = int(item["target_item"])
+            result["seen_item_ids"] = list(item["seen_item_ids"])
+        return result
+
+    return sample_collator
+
+
+def _autocast_context(device, use_bf16):
+    """Use A100-friendly BF16 autocast without changing the default path."""
+    if use_bf16 and device.type == "cuda":
+        return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+    return nullcontext()
+
+
+def _loader_options(config):
+    """Return loader options that overlap CPU collation with GPU work."""
+    options = {
+        "num_workers": int(config["num_workers"]),
+        "pin_memory": bool(config["pin_memory"]),
+    }
+    if options["num_workers"] > 0:
+        options["persistent_workers"] = True
+        options["prefetch_factor"] = int(config["prefetch_factor"])
+    return options
+
+
+def train(model, train_loader, optimizer, device, epoch, *, use_bf16=False):
+    model.train()
+    total_loss = 0.0
+    batches = 0
+    for batch in tqdm(
+        train_loader,
+        ncols=100,
+        desc=set_color(f"Training Epoch {epoch}", "pink"),
+    ):
+        input_ids = batch["input_ids"].to(device, non_blocking=True)
+        attention_mask = batch["attention_mask"].to(device, non_blocking=True)
+        labels = batch["labels"].to(device, non_blocking=True)
+
+        optimizer.zero_grad(set_to_none=True)
+        with _autocast_context(device, use_bf16):
+            loss, _ = model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels,
+            )
+        loss.backward()
+        optimizer.step()
+        total_loss += float(loss.item())
+        batches += 1
+    return total_loss / max(batches, 1)
+
+
+def evaluate(
+    model,
+    eval_loader,
+    eval_dataset: GenRecDataset,
+    topk_list,
+    beam_size,
+    device,
+    *,
+    exclude_history=True,
+    use_bf16=False,
+):
+    """Evaluate with RecBole's full item-level TIGER semantics.
+
+    Generation stays on the GPU, while the small set of beam tuples is mapped
+    back to item ids before metrics are computed. Invalid tuples, duplicate
+    items and items in the complete seen history are skipped, then the
+    deterministic item order fills a short list just like RecBole.
+    """
+    raw_model = model.module if hasattr(model, "module") else model
+    raw_model.eval()
+    topk_list = [int(k) for k in topk_list]
+    if not topk_list:
+        raise ValueError("topk_list must not be empty")
+    max_k = max(topk_list)
+    if beam_size < max_k:
+        raise ValueError(f"beam_size ({beam_size}) must be >= max top-k ({max_k})")
+
+    recall_sums = {k: 0.0 for k in topk_list}
+    ndcg_sums = {k: 0.0 for k in topk_list}
+    n_eval = 0
+    with torch.inference_mode():
+        for batch in tqdm(
+            eval_loader,
+            ncols=100,
+            desc=set_color("Evaluating", "pink"),
+        ):
+            input_ids = batch["input_ids"].to(device, non_blocking=True)
+            attention_mask = batch["attention_mask"].to(device, non_blocking=True)
+            batch_size = int(input_ids.shape[0])
+
+            with _autocast_context(device, use_bf16):
+                generated = raw_model.generate(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    num_beams=beam_size,
+                )
+            if generated.ndim != 2 or generated.shape[0] != batch_size * beam_size:
+                raise ValueError(
+                    "Generation must return [batch * beam, sequence] when using "
+                    f"num_return_sequences=beam; got {tuple(generated.shape)}"
+                )
+            generated = generated.reshape(batch_size, beam_size, -1)
+            sid_tokens = generated[:, :, 1 : 1 + eval_dataset.n_digit]
+            if sid_tokens.shape[-1] != eval_dataset.n_digit:
+                raise ValueError(
+                    f"Generation returned SID width {sid_tokens.shape[-1]}, "
+                    f"expected {eval_dataset.n_digit}"
+                )
+
+            # RecBole maps complete generated SID tuples to items, then
+            # removes invalid/duplicate/seen items before taking top-k.
+            # Only beam_size (normally 20) tuples per example cross to CPU.
+            sid_tokens_cpu = sid_tokens.detach().cpu()
+            target_items = batch.get("target_item")
+            if target_items is None:
+                target_sid_tokens = batch["labels"][:, : eval_dataset.n_digit]
+                target_items = torch.as_tensor(
+                    [
+                        eval_dataset.code_to_item.get(
+                            tuple(int(v) for v in row.tolist()), -1
+                        )
+                        for row in target_sid_tokens
+                    ],
+                    dtype=torch.long,
+                )
+            seen_items = batch.get("seen_item_ids")
+            seen_mask = batch.get("seen_mask")
+            selected_rows = []
+            for row_index in range(batch_size):
+                excluded = set()
+                if exclude_history and seen_items is not None and seen_mask is not None:
+                    excluded = {
+                        int(item_id)
+                        for item_id, keep in zip(
+                            seen_items[row_index].tolist(),
+                            seen_mask[row_index].tolist(),
+                        )
+                        if keep
+                    }
+                selected = []
+                selected_set = set()
+                for beam_index in range(beam_size):
+                    token_tuple = tuple(
+                        int(v) for v in sid_tokens_cpu[row_index, beam_index].tolist()
+                    )
+                    item_id = eval_dataset.code_to_item.get(token_tuple)
+                    if item_id is None or item_id in selected_set or item_id in excluded:
+                        continue
+                    selected.append(item_id)
+                    selected_set.add(item_id)
+                    if len(selected) == max_k:
+                        break
+                if len(selected) < max_k:
+                    for item_id in eval_dataset.fallback_item_ids:
+                        if item_id in selected_set or item_id in excluded:
+                            continue
+                        selected.append(item_id)
+                        selected_set.add(item_id)
+                        if len(selected) == max_k:
+                            break
+                if len(selected) < max_k:
+                    raise RuntimeError(
+                        f"Could not produce {max_k} item predictions for eval row {row_index}"
+                    )
+                selected_rows.append(selected)
+
+            target_items_cpu = target_items.detach().cpu().tolist()
+            for row_index, selected in enumerate(selected_rows):
+                target_item = int(target_items_cpu[row_index])
+                try:
+                    rank_value = selected.index(target_item)
+                except ValueError:
+                    rank_value = None
+                for k in topk_list:
+                    if rank_value is not None and rank_value < k:
+                        recall_sums[k] += 1.0
+                        ndcg_sums[k] += 1.0 / math.log2(rank_value + 2.0)
+            n_eval += batch_size
+
+    if n_eval == 0:
+        raise ValueError("Cannot evaluate an empty split")
+    # RecBole's metric registry uses lowercase result keys.
+    recalls = {f"recall@{k}": recall_sums[k] / n_eval for k in topk_list}
+    ndcgs = {f"ndcg@{k}": ndcg_sums[k] / n_eval for k in topk_list}
+    return recalls, ndcgs
+
+
+def _build_dataset(config, filename, mode, code_file):
+    dataset_dir = Path(config["dataset_path"]) / config["dataset_name"]
+    return GenRecDataset(
+        dataset_path=_dataset_file(dataset_dir, filename),
+        code_path=code_file,
+        mode=mode,
+        codebook_size=config["codebook_size"],
+        max_len=config["max_len"],
+        PAD_TOKEN=config["pad_token_id"] if "pad_token_id" in config else 0,
+        n_user_tokens=config["n_user_tokens"],
+    )
+
+
+def _load_validation_curve(path):
+    """Read validation Recall/NDCG pairs from a previous run's log.
+
+    The checkpoint is never loaded and no weights are reused.  The curve is
+    only a cheap decision boundary for rejecting an unpromising SID candidate
+    before spending the full T5 schedule on it.
+    """
+    if not path:
+        return {}
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"screen baseline log does not exist: {path}")
+    curve = {}
+    current_epoch = None
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        epoch_match = re.search(r"Epoch\s+(\d+)/", line)
+        if epoch_match:
+            current_epoch = int(epoch_match.group(1))
+        if current_epoch is None:
+            continue
+        recall_match = re.search(r"recall@10['\"]?:\s*([0-9.eE+-]+)", line)
+        if recall_match and "Validation recall" in line:
+            curve.setdefault(current_epoch, {})["recall@10"] = float(recall_match.group(1))
+        ndcg_match = re.search(r"ndcg@10['\"]?:\s*([0-9.eE+-]+)", line)
+        if ndcg_match and "Validation ndcg" in line:
+            curve.setdefault(current_epoch, {})["ndcg@10"] = float(ndcg_match.group(1))
+    return {
+        epoch: metrics
+        for epoch, metrics in curve.items()
+        if "recall@10" in metrics and "ndcg@10" in metrics
+    }
+
+
+def _baseline_metrics_at(curve, epoch):
+    """Use the same epoch when available, otherwise the latest earlier one."""
+    if epoch in curve:
+        return curve[epoch]
+    earlier = [candidate for candidate in curve if candidate <= epoch]
+    return curve[max(earlier)] if earlier else None
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(description="RecBole-aligned HG-Rec TIGER")
+    # Fast single-A100 defaults (validated on the currently available 80-GiB A100).
+    # Keep the protocol/model defaults unchanged; only throughput-safe settings
+    # are selected here.  Explicit CLI values still override these defaults.
+    parser.add_argument("--batch_size", type=int, default=10240)
+    parser.add_argument("--infer_size", type=int, default=512)
+    parser.add_argument("--num_epochs", type=int, default=200)
+    parser.add_argument("--lr", type=float, default=0.003)
+    parser.add_argument("--weight_decay", type=float, default=0.05)
+    parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--num_layers", type=int, default=4)
+    parser.add_argument("--num_decoder_layers", type=int, default=4)
+    parser.add_argument("--d_model", type=int, default=128)
+    parser.add_argument("--d_ff", type=int, default=1024)
+    parser.add_argument("--num_heads", type=int, default=6)
+    parser.add_argument("--d_kv", type=int, default=64)
+    parser.add_argument("--dropout_rate", type=float, default=0.1)
+    parser.add_argument("--activation_function", type=str, default="relu")
+    parser.add_argument("--feed_forward_proj", type=str, default="relu")
+    parser.add_argument("--vocab_size", type=int, default=0)
+    parser.add_argument("--eos_token_id", type=int, default=0)
+    parser.add_argument("--n_user_tokens", type=int, default=1)
+    parser.add_argument("--pad_token_id", type=int, default=0)
+    parser.add_argument("--max_len", type=int, default=20)
+    parser.add_argument("--dataset_name", type=str, default="Amazon_2023_Instruments")
+    parser.add_argument("--dataset_path", type=str, default="./dataset/")
+    parser.add_argument("--codebook_size", type=int, nargs="+", default=[256, 256, 256, 1])
+    parser.add_argument("--code_path", type=str, default="item_sids_recbole.json")
+    parser.add_argument("--train_file", type=str, default="train_recbole.parquet")
+    parser.add_argument("--valid_file", type=str, default="valid_recbole.parquet")
+    parser.add_argument("--test_file", type=str, default="test_recbole.parquet")
+    parser.add_argument("--log_path", type=str, default="./logs/")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--save_path", type=str, default="./ckpt/")
+    parser.add_argument("--early_stop", type=int, default=10)
+    parser.add_argument(
+        "--eval_interval",
+        type=int,
+        default=1,
+        help="Validate every N epochs when --eval is enabled.",
+    )
+    parser.add_argument(
+        "--eval_start_epoch",
+        type=int,
+        default=100,
+        help="First epoch to validate; epochs 1-99 are skipped by default.",
+    )
+    parser.add_argument(
+        "--screen_baseline_log",
+        type=str,
+        default="",
+        help=(
+            "Optional validation log used for an early candidate gate. "
+            "Only metrics are read; no baseline checkpoint is loaded."
+        ),
+    )
+    parser.add_argument(
+        "--screen_start_epoch",
+        type=int,
+        default=40,
+        help="First validation epoch used by the early baseline gate.",
+    )
+    parser.add_argument(
+        "--screen_window",
+        type=int,
+        default=5,
+        help="Number of screen validations allowed before deciding pass/fail.",
+    )
+    parser.add_argument(
+        "--screen_min_ndcg_gain",
+        type=float,
+        default=0.001,
+        help="Required best NDCG@10 gain over baseline during the screen window.",
+    )
+    parser.add_argument(
+        "--screen_min_recall_gain",
+        type=float,
+        default=0.001,
+        help="Required best Recall@10 gain over baseline during the screen window.",
+    )
+    parser.add_argument(
+        "--screen_skip_test_on_fail",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Skip the expensive final test when the candidate fails the early gate.",
+    )
+    parser.add_argument(
+        "--no_eval",
+        action="store_true",
+        default=False,
+        help="Skip validation entirely and select/early-stop checkpoints by train loss.",
+    )
+    parser.add_argument(
+        "--eval",
+        dest="no_eval",
+        action="store_false",
+        help="Keep validation enabled (the default; retained as a compatibility alias).",
+    )
+    parser.add_argument(
+        "--skip_test",
+        action="store_true",
+        help="Skip the final test (benchmark-only; the default always tests after training)",
+    )
+    parser.add_argument("--topk_list", type=int, nargs="+", default=[5, 10])
+    parser.add_argument("--beam_size", type=int, default=20)
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=8,
+        help="CPU DataLoader workers used to overlap collation with GPU work",
+    )
+    parser.add_argument(
+        "--prefetch_factor",
+        type=int,
+        default=4,
+        help="Batches prefetched per DataLoader worker",
+    )
+    parser.add_argument(
+        "--no_pin_memory",
+        action="store_true",
+        help="Disable page-locked host memory (slower for CUDA transfers)",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        default=True,
+        help="Allow nondeterministic/cuDNN fast paths for throughput",
+    )
+    parser.add_argument(
+        "--no_fast",
+        dest="fast",
+        action="store_false",
+        help="Disable throughput-oriented fast paths",
+    )
+    parser.add_argument(
+        "--compile",
+        action="store_true",
+        default=True,
+        help="Compile the training forward/backward with torch.compile; evaluation stays uncompiled",
+    )
+    parser.add_argument(
+        "--no_compile",
+        dest="compile",
+        action="store_false",
+        help="Disable torch.compile",
+    )
+    parser.add_argument(
+        "--compile_mode",
+        choices=["default", "reduce-overhead", "max-autotune"],
+        default="default",
+        help="torch.compile mode used when --compile is enabled",
+    )
+    parser.add_argument("--no_exclude_history", action="store_true")
+    parser.add_argument(
+        "--bf16",
+        action="store_true",
+        default=True,
+        help="Use BF16 autocast for training and generation on supported CUDA GPUs",
+    )
+    parser.add_argument(
+        "--no_bf16",
+        dest="bf16",
+        action="store_false",
+        help="Disable BF16 autocast",
+    )
+    return vars(parser.parse_args())
+
+
+def main():
+    config = _parse_args()
+    if config["n_user_tokens"] <= 0:
+        raise ValueError("RecBole TIGER requires --n_user_tokens >= 1")
+    if 10 not in config["topk_list"]:
+        raise ValueError("topk_list must contain 10 because RecBole monitors ndcg@10")
+    if config["beam_size"] < max(config["topk_list"]):
+        raise ValueError("beam_size must be at least the largest requested top-k")
+    if config["num_workers"] < 0 or config["prefetch_factor"] <= 0:
+        raise ValueError("num_workers must be >= 0 and prefetch_factor must be > 0")
+    if config["eval_interval"] <= 0 and not config["no_eval"]:
+        raise ValueError("eval_interval must be a positive integer unless --no_eval is set")
+    if config["eval_start_epoch"] <= 0 and not config["no_eval"]:
+        raise ValueError("eval_start_epoch must be positive unless --no_eval is set")
+    if config["screen_start_epoch"] <= 0 or config["screen_window"] <= 0:
+        raise ValueError("screen_start_epoch and screen_window must be positive")
+    if config["screen_min_ndcg_gain"] < 0 or config["screen_min_recall_gain"] < 0:
+        raise ValueError("screen gains must be non-negative")
+
+    if config["fast"]:
+        # The default remains deterministic for reproducibility.  This opt-in
+        # path is useful on A100 when throughput is the priority.
+        torch.use_deterministic_algorithms(False)
+        torch.backends.cudnn.deterministic = False
+        torch.backends.cudnn.benchmark = True
+
+    is_ddp = int(os.environ.get("WORLD_SIZE", "1")) > 1
+    if is_ddp:
+        dist.init_process_group(backend="nccl")
+        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+        torch.cuda.set_device(local_rank)
+        rank = dist.get_rank()
+        world_size = dist.get_world_size()
+        device = torch.device(f"cuda:{local_rank}")
+    else:
+        rank = 0
+        world_size = 1
+        local_rank = 0
+        if config["device"].startswith("cuda") and torch.cuda.is_available():
+            device = torch.device(config["device"])
+        else:
+            device = torch.device("cpu")
+    if config["bf16"]:
+        if device.type != "cuda" or not torch.cuda.is_bf16_supported():
+            raise RuntimeError("--bf16 requires a CUDA GPU with BF16 support")
+    set_seed(config["seed"])
+
+    screen_curve = _load_validation_curve(config["screen_baseline_log"])
+    if config["screen_baseline_log"] and not screen_curve:
+        raise ValueError(
+            f"No complete Validation recall/ndcg pairs found in {config['screen_baseline_log']}"
+        )
+
+    dataset_dir = Path(config["dataset_path"]) / config["dataset_name"]
+    code_file = _resolve_code_file(dataset_dir, config["code_path"])
+    train_dataset = _build_dataset(config, config["train_file"], "train", code_file)
+    valid_dataset = (
+        _build_dataset(config, config["valid_file"], "evaluation", code_file)
+        if not config["no_eval"]
+        else None
+    )
+
+    config["vocab_size"] = train_dataset.vocab_size if config["vocab_size"] == 0 else config["vocab_size"]
+    config["eos_token_id"] = train_dataset.eos_token if config["eos_token_id"] == 0 else config["eos_token_id"]
+    config["sid_length"] = train_dataset.n_digit
+    config["max_token_seq_len"] = train_dataset.max_token_seq_len
+    config["decoder_start_token_id"] = config["pad_token_id"]
+    config["exclude_history"] = not config.pop("no_exclude_history")
+    config["pin_memory"] = device.type == "cuda" and not config.pop("no_pin_memory")
+
+    if rank == 0:
+        cur_time = get_local_time()
+        log_path = os.path.join(config["log_path"], config["dataset_name"], cur_time)
+        ckpt_path = os.path.join(config["save_path"], config["dataset_name"], cur_time)
+        ensure_dir(log_path)
+        ensure_dir(ckpt_path)
+        logging.basicConfig(
+            filename=os.path.join(log_path, "HG_Rec.log"),
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+        logging.info("Configuration: %s", config)
+        print(
+            f"[RecBole-aligned] train={len(train_dataset)} "
+            f"valid={len(valid_dataset) if valid_dataset is not None else 'skipped'} "
+            f"num_items={train_dataset.num_items} vocab={config['vocab_size']} "
+            f"eos={config['eos_token_id']} n_digit={train_dataset.n_digit} "
+            f"beam={config['beam_size']} topk={config['topk_list']} exclude_history={config['exclude_history']}",
+            flush=True,
+        )
+        if config["bf16"]:
+            print("[AMP] BF16 autocast enabled for train/eval", flush=True)
+    else:
+        log_path = ckpt_path = None
+
+    train_collator = make_sample_collator(train_dataset)
+    eval_collator = (
+        make_sample_collator(valid_dataset, include_eval_metadata=True)
+        if valid_dataset is not None
+        else None
+    )
+    train_sampler = (
+        DistributedSampler(
+            train_dataset,
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=True,
+            seed=config["seed"],
+            drop_last=False,
+        )
+        if is_ddp
+        else None
+    )
+    loader_options = _loader_options(config)
+    train_loader = GenRecDataLoader(
+        train_dataset,
+        batch_size=config["batch_size"],
+        shuffle=train_sampler is None,
+        sampler=train_sampler,
+        sample_collator=train_collator,
+        max_token_seq_len=train_dataset.max_token_seq_len,
+        **loader_options,
+    )
+    valid_loader = (
+        GenRecDataLoader(
+            valid_dataset,
+            batch_size=config["infer_size"],
+            shuffle=False,
+            sample_collator=eval_collator,
+            max_token_seq_len=valid_dataset.max_token_seq_len,
+            include_seen=True,
+            **loader_options,
+        )
+        if rank == 0 and valid_dataset is not None
+        else None
+    )
+
+    model = HG_Rec(config).to(device)
+    train_model = model
+    if config["compile"]:
+        if is_ddp:
+            raise ValueError("--compile benchmark currently supports single-GPU training only")
+        # genrec_env currently contains a newer torch package together with an
+        # older top-level functorch compatibility package.  torch.compile
+        # imports functorch.compile, whose eager import expects this debug-only
+        # symbol even though current inductor paths do not use it.  Bridge the
+        # renamed symbol locally instead of changing the shared environment.
+        import torch._functorch.partitioners as _partitioners
+        if (
+            not hasattr(_partitioners, "draw_joint_graph")
+            and hasattr(_partitioners, "draw_graph")
+        ):
+            _partitioners.draw_joint_graph = _partitioners.draw_graph
+            if rank == 0:
+                print(
+                    "[CompileCompat] aliased draw_joint_graph -> draw_graph",
+                    flush=True,
+                )
+        train_model = torch.compile(model, mode=config["compile_mode"], dynamic=False)
+        if rank == 0:
+            logging.info("torch.compile enabled for training with mode=%s", config["compile_mode"])
+            print(
+                f"[Compile] torch.compile enabled for training ({config['compile_mode']}); evaluation remains uncompiled",
+                flush=True,
+            )
+    if rank == 0:
+        print(model.n_parameters, flush=True)
+        logging.info(model.n_parameters)
+    if is_ddp:
+        model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    optimizer = optim.AdamW(
+        model.parameters(),
+        lr=config["lr"],
+        weight_decay=config["weight_decay"],
+    )
+
+    best_monitor = -1.0
+    best_train_loss = float("inf")
+    early_stop_counter = 0
+    best_checkpoint = None
+    screen_best_ndcg_gain = float("-inf")
+    screen_best_recall_gain = float("-inf")
+    screen_decided = not bool(screen_curve)
+    screen_passed = None
+    screen_failed = False
+    screen_history = []
+    for epoch in range(1, config["num_epochs"] + 1):
+        if train_sampler is not None:
+            train_sampler.set_epoch(epoch - 1)
+        train_loss = train(
+            train_model,
+            train_loader,
+            optimizer,
+            device,
+            epoch,
+            use_bf16=config["bf16"],
+        )
+        if rank == 0:
+            logging.info("Epoch %d/%d train_loss=%s", epoch, config["num_epochs"], train_loss)
+
+        if is_ddp:
+            dist.barrier()
+        early_stop_signal = False
+        should_validate = False
+        if config["no_eval"] and rank == 0:
+            if train_loss < best_train_loss:
+                best_train_loss = train_loss
+                early_stop_counter = 0
+                best_checkpoint = os.path.join(ckpt_path, "HG_Rec_best.pth")
+                raw_model = model.module if hasattr(model, "module") else model
+                torch.save(raw_model.state_dict(), best_checkpoint)
+                logging.info("Best train loss=%s; saved %s", best_train_loss, best_checkpoint)
+            else:
+                early_stop_counter += 1
+                logging.info(
+                    "No train loss improvement; patience=%d",
+                    early_stop_counter,
+                )
+                early_stop_signal = early_stop_counter >= config["early_stop"]
+        elif not config["no_eval"] and rank == 0:
+            should_validate = (
+                epoch >= config["eval_start_epoch"]
+                and (epoch - config["eval_start_epoch"]) % config["eval_interval"] == 0
+            ) or (epoch == config["num_epochs"])
+        if not config["no_eval"] and rank == 0 and should_validate:
+            recalls, ndcgs = evaluate(
+                model,
+                valid_loader,
+                valid_dataset,
+                config["topk_list"],
+                config["beam_size"],
+                device,
+                exclude_history=config["exclude_history"],
+                use_bf16=config["bf16"],
+            )
+            logging.info("Validation recall=%s", recalls)
+            logging.info("Validation ndcg=%s", ndcgs)
+            print(
+                f"[valid] epoch={epoch} recall={recalls} ndcg={ndcgs}",
+                flush=True,
+            )
+            monitor = recalls["recall@10"]
+            if monitor > best_monitor:
+                best_monitor = monitor
+                early_stop_counter = 0
+                best_checkpoint = os.path.join(ckpt_path, "HG_Rec_best.pth")
+                raw_model = model.module if hasattr(model, "module") else model
+                torch.save(raw_model.state_dict(), best_checkpoint)
+                logging.info("Best Recall@10=%s; saved %s", best_monitor, best_checkpoint)
+                print(
+                    f"[valid] epoch={epoch} new best Recall@10={best_monitor:.6f} -> {best_checkpoint}",
+                    flush=True,
+                )
+            else:
+                early_stop_counter += 1
+                logging.info("No Recall@10 improvement; patience=%d", early_stop_counter)
+                print(
+                    f"[valid] epoch={epoch} no Recall@10 improvement (current={monitor:.6f}, best={best_monitor:.6f}, patience={early_stop_counter}/{config['early_stop']})",
+                    flush=True,
+                )
+                early_stop_signal = early_stop_counter >= config["early_stop"]
+
+            if screen_curve and epoch >= config["screen_start_epoch"] and not screen_decided:
+                baseline = _baseline_metrics_at(screen_curve, epoch)
+                if baseline is not None:
+                    ndcg_gain = ndcgs["ndcg@10"] - baseline["ndcg@10"]
+                    recall_gain = recalls["recall@10"] - baseline["recall@10"]
+                    screen_best_ndcg_gain = max(screen_best_ndcg_gain, ndcg_gain)
+                    screen_best_recall_gain = max(screen_best_recall_gain, recall_gain)
+                    screen_history.append(
+                        {
+                            "epoch": epoch,
+                            "baseline_ndcg@10": baseline["ndcg@10"],
+                            "baseline_recall@10": baseline["recall@10"],
+                            "candidate_ndcg@10": ndcgs["ndcg@10"],
+                            "candidate_recall@10": recalls["recall@10"],
+                            "ndcg_gain": ndcg_gain,
+                            "recall_gain": recall_gain,
+                        }
+                    )
+                    logging.info(
+                        "Screen epoch=%d baseline_ndcg@10=%.6f candidate_ndcg@10=%.6f "
+                        "gain=%.6f baseline_recall@10=%.6f candidate_recall@10=%.6f "
+                        "gain=%.6f best_gains=(%.6f, %.6f)",
+                        epoch,
+                        baseline["ndcg@10"],
+                        ndcgs["ndcg@10"],
+                        ndcg_gain,
+                        baseline["recall@10"],
+                        recalls["recall@10"],
+                        recall_gain,
+                        screen_best_ndcg_gain,
+                        screen_best_recall_gain,
+                    )
+                    screen_epoch_count = len(screen_history)
+                    if screen_epoch_count >= config["screen_window"]:
+                        screen_passed = (
+                            screen_best_ndcg_gain >= config["screen_min_ndcg_gain"]
+                            and screen_best_recall_gain >= config["screen_min_recall_gain"]
+                        )
+                        screen_decided = True
+                        screen_failed = not screen_passed
+                        if screen_passed:
+                            logging.info(
+                                "SCREEN PASS: best gains NDCG@10=%.6f Recall@10=%.6f",
+                                screen_best_ndcg_gain,
+                                screen_best_recall_gain,
+                            )
+                        else:
+                            logging.warning(
+                                "SCREEN FAIL: best gains NDCG@10=%.6f Recall@10=%.6f; "
+                                "required=(%.6f, %.6f)",
+                                screen_best_ndcg_gain,
+                                screen_best_recall_gain,
+                                config["screen_min_ndcg_gain"],
+                                config["screen_min_recall_gain"],
+                            )
+                            early_stop_signal = True
+        if is_ddp:
+            signal = torch.tensor(
+                [1 if early_stop_signal else 0], dtype=torch.uint8, device=device
+            )
+            dist.broadcast(signal, src=0)
+            early_stop_signal = bool(signal.item())
+        if early_stop_signal:
+            break
+
+    if rank == 0 and screen_curve:
+        screen_summary = {
+            "passed": screen_passed,
+            "failed": screen_failed,
+            "screen_start_epoch": config["screen_start_epoch"],
+            "screen_window": config["screen_window"],
+            "min_ndcg_gain": config["screen_min_ndcg_gain"],
+            "min_recall_gain": config["screen_min_recall_gain"],
+            "best_ndcg_gain": screen_best_ndcg_gain,
+            "best_recall_gain": screen_best_recall_gain,
+            "history": screen_history,
+        }
+        with open(os.path.join(log_path, "screen_summary.json"), "w", encoding="utf-8") as handle:
+            json.dump(screen_summary, handle, indent=2)
+        if screen_failed and config["screen_skip_test_on_fail"]:
+            logging.info("Final test skipped because the early baseline screen failed")
+            print("[RecBole-aligned] screen failed; final test skipped", flush=True)
+            if is_ddp:
+                dist.barrier()
+                dist.destroy_process_group()
+            return
+
+    if config["skip_test"]:
+        if rank == 0:
+            logging.info("Final test skipped by --skip_test")
+            print("[RecBole-aligned] final test skipped (--skip_test)", flush=True)
+        if is_ddp:
+            dist.barrier()
+            dist.destroy_process_group()
+        return
+
+    # RecBole reloads the best checkpoint and evaluates test automatically.
+    if is_ddp:
+        dist.barrier()
+    if rank == 0:
+        test_dataset = _build_dataset(config, config["test_file"], "evaluation", code_file)
+        test_loader = GenRecDataLoader(
+            test_dataset,
+            batch_size=config["infer_size"],
+            shuffle=False,
+            sample_collator=make_sample_collator(
+                test_dataset, include_eval_metadata=True
+            ),
+            max_token_seq_len=test_dataset.max_token_seq_len,
+            include_seen=True,
+            **loader_options,
+        )
+        raw_model = model.module if hasattr(model, "module") else model
+        if best_checkpoint is not None and os.path.exists(best_checkpoint):
+            raw_model.load_state_dict(torch.load(best_checkpoint, map_location=device))
+        test_recalls, test_ndcgs = evaluate(
+            raw_model,
+            test_loader,
+            test_dataset,
+            config["topk_list"],
+            config["beam_size"],
+            device,
+            exclude_history=config["exclude_history"],
+            use_bf16=config["bf16"],
+        )
+        test_result = {
+            "best_checkpoint": best_checkpoint,
+            "n_eval": len(test_dataset),
+            **{f"test_{key}": value for key, value in test_recalls.items()},
+            **{f"test_{key}": value for key, value in test_ndcgs.items()},
+        }
+        logging.info("Test=%s", test_result)
+        with open(os.path.join(log_path, "test_final.json"), "w", encoding="utf-8") as handle:
+            json.dump(test_result, handle, indent=2)
+        print(f"[RecBole-aligned] test={test_result}", flush=True)
+    if is_ddp:
+        dist.barrier()
+        dist.destroy_process_group()
+
+
+if __name__ == "__main__":
+    main()
