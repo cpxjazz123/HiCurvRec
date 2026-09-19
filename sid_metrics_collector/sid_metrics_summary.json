@@ -1,0 +1,520 @@
+{
+  "generated_by": "collect_metrics.py",
+  "tiger_baseline_test_r10": 0.059071362662999005,
+  "tiger_baseline_test_r5": 0.039224220477376,
+  "tiger_baseline_test_ndcg_10": 0.032687120464997076,
+  "tiger_baseline_test_ndcg_5": 0.02632008313404312,
+  "n_rows": 10,
+  "rows": [
+    {
+      "iter": "curvature_RQ-VAE",
+      "mechanism_name": "v282 baseline promoted (Geodesic Midpoint Commit, c=1)",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.052673755170607524,
+      "gini_L0": 0.0721772112803514,
+      "gini_L1": 0.15237298292797005,
+      "gini_L2": 0.19192799421442225,
+      "l01_unique_pairs": 15610,
+      "h_l1_given_l0": 5.652195857148527,
+      "n_unique_full": 23243,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06088197914309093,
+      "valid_best_ndcg_at_10": 0.03320445162819036,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.039224220477376,
+      "test_recall_at_10": 0.059071362662999005,
+      "test_ndcg_at_5": 0.02632008313404312,
+      "test_ndcg_at_10": 0.032687120464997076,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 0.0
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter10",
+      "mechanism_name": "iter10 gumbel softmax \u5f3a\u9000\u706b",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter10/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter10/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.046179507712411604,
+      "gini_L0": 0.10206883337739456,
+      "gini_L1": 0.0514853822650181,
+      "gini_L2": 0.09098542293691789,
+      "l01_unique_pairs": 15830,
+      "h_l1_given_l0": 5.684756461558769,
+      "n_unique_full": 23412,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06335416702937029,
+      "valid_best_ndcg_at_10": 0.034631617509155346,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03729173558035481,
+      "test_recall_at_10": 0.056042062013614447,
+      "test_ndcg_at_5": 0.025005279357654578,
+      "test_ndcg_at_10": 0.03104870750415122,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0030293006493845587
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter11",
+      "mechanism_name": "iter11 sk_eps=0.5 L0 collapse (\u5386\u53f2\u6700\u4f73)",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter11/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter11/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.1142677373485954,
+      "gini_L0": 0.20339089477465983,
+      "gini_L1": 0.05641843885996665,
+      "gini_L2": 0.07892969989221947,
+      "l01_unique_pairs": 7509,
+      "h_l1_given_l0": 6.33275375993708,
+      "n_unique_full": 21557,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06619196016643744,
+      "valid_best_ndcg_at_10": 0.036040525465973326,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.04077369034976236,
+      "test_recall_at_10": 0.060168178415362386,
+      "test_ndcg_at_5": 0.02691195961369832,
+      "test_ndcg_at_10": 0.033158499196049136,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 0.001096815752363381
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter14",
+      "mechanism_name": "iter14 L0 sk_eps=0.01 \u5f3a collapse",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.05361433487817067,
+      "gini_L0": 0.17522773086387114,
+      "gini_L1": 0.04657965210273722,
+      "gini_L2": 0.06932954279700655,
+      "l01_unique_pairs": 15388,
+      "h_l1_given_l0": 5.669216309594009,
+      "n_unique_full": 23218,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06434652413865144,
+      "valid_best_ndcg_at_10": 0.035728139679325664,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03873674680965894,
+      "test_recall_at_10": 0.057400024373683384,
+      "test_ndcg_at_5": 0.02606445699930998,
+      "test_ndcg_at_10": 0.03207600281245455,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0016713382893156215
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter2",
+      "mechanism_name": "iter2 sinkhorn sk_eps=0.5 \u590d\u523b baseline",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter2/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter2/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.05130378421977809,
+      "gini_L0": 0.07112069513360719,
+      "gini_L1": 0.1442888073473787,
+      "gini_L2": 0.1798195247996909,
+      "l01_unique_pairs": 15582,
+      "h_l1_given_l0": 5.650400080508322,
+      "n_unique_full": 23280,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.058862445376834556,
+      "valid_best_ndcg_at_10": 0.03222615790545695,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03584672435105068,
+      "test_recall_at_10": 0.05384843050888769,
+      "test_ndcg_at_5": 0.02344047867067431,
+      "test_ndcg_at_10": 0.029202517591223432,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0052229321541113136
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter28",
+      "mechanism_name": "iter28 R36m density-aware radial \u03b1=0.25",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter28/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "",
+      "full_gini": 0.056691560571654184,
+      "gini_L0": 0.07383903968560622,
+      "gini_L1": 0.20850624186562006,
+      "gini_L2": 0.2823266932220279,
+      "l01_unique_pairs": 15191,
+      "h_l1_given_l0": 5.592832146719418,
+      "n_unique_full": 23138,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06537370079562667,
+      "valid_best_ndcg_at_10": 0.03576391108298065,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.039694284371246016,
+      "test_recall_at_10": 0.0592976897230105,
+      "test_ndcg_at_5": 0.026142556459599144,
+      "test_ndcg_at_10": 0.03245120509739823,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 0.00022632706001149416
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter3",
+      "mechanism_name": "iter3 sinkhorn sk_eps=0.1",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter3/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter3/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.0654019203652298,
+      "gini_L0": 0.1281172786940253,
+      "gini_L1": 0.2901274365009965,
+      "gini_L2": 0.2569690347032985,
+      "l01_unique_pairs": 14630,
+      "h_l1_given_l0": 5.54618036290016,
+      "n_unique_full": 22909,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.061299813715419836,
+      "valid_best_ndcg_at_10": 0.03358190473533364,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03622973937568551,
+      "test_recall_at_10": 0.05520639286895663,
+      "test_ndcg_at_5": 0.023931540375543587,
+      "test_ndcg_at_10": 0.03001530858895001,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0038649697940423763
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter32",
+      "mechanism_name": "iter32 R36n b+f per-layer \u5f02\u8d28 c + sk_eps",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter32/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter32/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.050663760777715165,
+      "gini_L0": 0.06655241463985033,
+      "gini_L1": 0.2905392394863139,
+      "gini_L2": 0.11281574739699841,
+      "l01_unique_pairs": 15094,
+      "h_l1_given_l0": 5.592077818909811,
+      "n_unique_full": 23295,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06586117446334372,
+      "valid_best_ndcg_at_10": 0.036135959073284936,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03891084454812932,
+      "test_recall_at_10": 0.058322742387576385,
+      "test_ndcg_at_5": 0.02609163599797264,
+      "test_ndcg_at_10": 0.03230877588251829,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0007486202754226207
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter33",
+      "mechanism_name": "iter33 R36-S0 per-item curvature",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter33/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter33/dataset/Instruments/item_emb_iter33.npy",
+      "full_gini": 0.03801992285395919,
+      "gini_L0": 0.06689177080367674,
+      "gini_L1": 0.29843594302883636,
+      "gini_L2": 0.12626098776792613,
+      "l01_unique_pairs": 15560,
+      "h_l1_given_l0": 5.673523090045553,
+      "n_unique_full": 23624,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06427688504326329,
+      "valid_best_ndcg_at_10": 0.03537780813203001,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03800553630808336,
+      "test_recall_at_10": 0.05790490781524748,
+      "test_ndcg_at_5": 0.025489348895853747,
+      "test_ndcg_at_10": 0.03187442486423832,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.001166454847751526
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter4",
+      "mechanism_name": "iter4 gumbel softmax \u9000\u706b",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter4/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter4/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.06178885305221391,
+      "gini_L0": 0.1349028132244682,
+      "gini_L1": 0.22310618289136536,
+      "gini_L2": 0.19929278556757637,
+      "l01_unique_pairs": 14981,
+      "h_l1_given_l0": 5.594563043116307,
+      "n_unique_full": 23004,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.061230174620031684,
+      "valid_best_ndcg_at_10": 0.03360935949180917,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03729173558035481,
+      "test_recall_at_10": 0.0556068176674385,
+      "test_ndcg_at_5": 0.024612648992658782,
+      "test_ndcg_at_10": 0.03052170827333902,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.003464544995560502
+    }
+  ],
+  "iter11": {
+    "stage2_quality": {
+      "hitrate_k50": 0.7165,
+      "full_gini": 0.1142677373485954,
+      "per_layer_gini": [
+        0.20339089477465983,
+        0.05641843885996665,
+        0.07892969989221947
+      ],
+      "n_unique_full": 21557,
+      "n_items": 24587,
+      "l01_unique_pairs": 7509,
+      "h_l1_given_l0": 6.33275375993708,
+      "step": 100000,
+      "early_stopped": false,
+      "baseline": {
+        "hitrate_k50": 0.7165,
+        "full_gini": 0.0672,
+        "per_layer_gini": [
+          0.3598,
+          0.2467,
+          0.1656
+        ],
+        "l01_unique_pairs": 13340,
+        "h_l1_given_l0": 5.611558147195798
+      }
+    },
+    "oracle_topk": {
+      "top1": null,
+      "top5": null,
+      "top10": 0.0358
+    },
+    "l0_sk_eps": 0.5,
+    "l1_l2_sk_eps": [
+      0.05,
+      0.05
+    ]
+  },
+  "iter35": {
+    "stage2_quality": {
+      "hitrate_k50": 0.7165,
+      "full_gini": 0.07682012309158316,
+      "per_layer_gini": [
+        0.1586794802518559,
+        0.04886140923048766,
+        0.07491144329320372
+      ],
+      "n_unique_full": 22595,
+      "n_items": 24587,
+      "l01_unique_pairs": 11553,
+      "h_l1_given_l0": 6.032479424941102,
+      "step": 100000,
+      "early_stopped": false,
+      "baseline": {
+        "hitrate_k50": 0.7165,
+        "full_gini": 0.0672,
+        "per_layer_gini": [
+          0.3598,
+          0.2467,
+          0.1656
+        ],
+        "l01_unique_pairs": 13340,
+        "h_l1_given_l0": 5.611558147195798
+      }
+    },
+    "stage3_final_test": {
+      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-19-2026_22-57-37/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_recall@5": 0.03861487839272968,
+      "test_recall@10": 0.057852678493706365,
+      "test_ndcg@5": 0.02565349389980821,
+      "test_ndcg@10": 0.03185082444722105
+    },
+    "oracle_topk": {
+      "top1": null,
+      "top5": null,
+      "top10": 0.0344
+    },
+    "l0_sk_eps": 0.3,
+    "l1_l2_sk_eps": [
+      0.05,
+      0.05
+    ],
+    "stage3_best_valid": {
+      "recall@10": 0.063789
+    }
+  },
+  "iter36": {
+    "stage2_quality": {
+      "hitrate_k50": 0.7165,
+      "full_gini": 0.09727040131175405,
+      "per_layer_gini": [
+        0.1706793488707419,
+        0.05399019934314882,
+        0.087665261367796
+      ],
+      "n_unique_full": 22036,
+      "n_items": 24587,
+      "l01_unique_pairs": 8768,
+      "h_l1_given_l0": 6.290509457548803,
+      "step": 100000,
+      "early_stopped": false,
+      "baseline": {
+        "hitrate_k50": 0.7165,
+        "full_gini": 0.0672,
+        "per_layer_gini": [
+          0.3598,
+          0.2467,
+          0.1656
+        ],
+        "l01_unique_pairs": 13340,
+        "h_l1_given_l0": 5.611558147195798
+      }
+    },
+    "stage3_final_test": {
+      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_00-44-31/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_recall@5": 0.038876025000435244,
+      "test_recall@10": 0.05774821985062414,
+      "test_ndcg@5": 0.026123373596010545,
+      "test_ndcg@10": 0.03218804102048725
+    },
+    "oracle_topk": {
+      "top1": null,
+      "top5": null,
+      "top10": 0.0344
+    },
+    "l0_sk_eps": 0.4,
+    "l1_l2_sk_eps": [
+      0.05,
+      0.05
+    ],
+    "stage3_best_valid": {
+      "recall@10": 0.064799
+    }
+  },
+  "iter37": {
+    "stage2_quality": {
+      "hitrate_k50": 0.7165,
+      "full_gini": 0.11187015674986277,
+      "per_layer_gini": [
+        0.22139781985282106,
+        0.05460822157034205,
+        0.07961476720421361
+      ],
+      "n_unique_full": 21632,
+      "n_items": 24587,
+      "l01_unique_pairs": 7999,
+      "h_l1_given_l0": 6.361172176773852,
+      "step": 100000,
+      "early_stopped": false,
+      "baseline": {
+        "hitrate_k50": 0.7165,
+        "full_gini": 0.0672,
+        "per_layer_gini": [
+          0.3598,
+          0.2467,
+          0.1656
+        ],
+        "l01_unique_pairs": 13340,
+        "h_l1_given_l0": 5.611558147195798
+      }
+    },
+    "stage3_final_test": {
+      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_02-23-34/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_recall@5": 0.03798812653423632,
+      "test_recall@10": 0.05733038527829523,
+      "test_ndcg@5": 0.025337842655454565,
+      "test_ndcg@10": 0.03157390374397104
+    },
+    "oracle_topk": {
+      "top1": null,
+      "top5": null,
+      "top10": 0.0365
+    },
+    "l0_sk_eps": 0.6,
+    "l1_l2_sk_eps": [
+      0.05,
+      0.05
+    ],
+    "stage3_best_valid": {
+      "recall@10": 0.064869
+    }
+  },
+  "iter38": {
+    "stage2_quality": {
+      "hitrate_k50": 0.7165,
+      "full_gini": 0.12321100309978593,
+      "per_layer_gini": [
+        0.21869192096919368,
+        0.058248356601049336,
+        0.07012105609671777
+      ],
+      "n_unique_full": 21307,
+      "n_items": 24587,
+      "l01_unique_pairs": 6592,
+      "h_l1_given_l0": 6.412497598673861,
+      "step": 100000,
+      "early_stopped": false,
+      "baseline": {
+        "hitrate_k50": 0.7165,
+        "full_gini": 0.0672,
+        "per_layer_gini": [
+          0.3598,
+          0.2467,
+          0.1656
+        ],
+        "l01_unique_pairs": 13340,
+        "h_l1_given_l0": 5.611558147195798
+      }
+    },
+    "stage3_final_test": {
+      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_03-56-06/HG_Rec_best.pth",
+      "n_eval": 57439,
+      "test_recall@5": 0.03776179947422483,
+      "test_recall@10": 0.05736520482598931,
+      "test_ndcg@5": 0.024983714615622432,
+      "test_ndcg@10": 0.03130384546403773
+    },
+    "oracle_topk": {
+      "top1": null,
+      "top5": null,
+      "top10": 0.0358
+    },
+    "l0_sk_eps": 0.7,
+    "l1_l2_sk_eps": [
+      0.05,
+      0.05
+    ],
+    "stage3_best_valid": {
+      "recall@10": 0.063546
+    }
+  },
+  "_meta": {
+    "generated_at": "2026-09-20",
+    "iter_order": [
+      "iter11",
+      "iter35",
+      "iter36",
+      "iter37",
+      "iter38"
+    ],
+    "metric_columns": [
+      "iter",
+      "l0_sk_eps",
+      "L0_unique",
+      "L0_gini",
+      "L1_gini",
+      "L2_gini",
+      "full_gini",
+      "l01_pairs",
+      "H_L1_given_L0",
+      "best_valid_R@10",
+      "test_R@10",
+      "test_R@5",
+      "test_ndcg@10",
+      "oracle_top10"
+    ]
+  }
+}
