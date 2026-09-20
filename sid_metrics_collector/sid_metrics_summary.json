@@ -4,7 +4,7 @@
   "tiger_baseline_test_r5": 0.039224220477376,
   "tiger_baseline_test_ndcg_10": 0.032687120464997076,
   "tiger_baseline_test_ndcg_5": 0.02632008313404312,
-  "n_rows": 10,
+  "n_rows": 17,
   "rows": [
     {
       "iter": "curvature_RQ-VAE",
@@ -33,7 +33,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter10",
-      "mechanism_name": "iter10 gumbel softmax \u5f3a\u9000\u706b",
+      "mechanism_name": "iter10 gumbel softmax 强退火",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter10/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter10/dataset/Instruments/item_emb.npy",
       "full_gini": 0.046179507712411604,
@@ -58,7 +58,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter11",
-      "mechanism_name": "iter11 sk_eps=0.5 L0 collapse (\u5386\u53f2\u6700\u4f73)",
+      "mechanism_name": "iter11 sk_eps=0.5 L0 collapse (历史最佳)",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter11/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter11/dataset/Instruments/item_emb.npy",
       "full_gini": 0.1142677373485954,
@@ -83,7 +83,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter14",
-      "mechanism_name": "iter14 L0 sk_eps=0.01 \u5f3a collapse",
+      "mechanism_name": "iter14 L0 sk_eps=0.01 强 collapse",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/item_emb.npy",
       "full_gini": 0.05361433487817067,
@@ -108,7 +108,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter2",
-      "mechanism_name": "iter2 sinkhorn sk_eps=0.5 \u590d\u523b baseline",
+      "mechanism_name": "iter2 sinkhorn sk_eps=0.5 复刻 baseline",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter2/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter2/dataset/Instruments/item_emb.npy",
       "full_gini": 0.05130378421977809,
@@ -133,7 +133,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter28",
-      "mechanism_name": "iter28 R36m density-aware radial \u03b1=0.25",
+      "mechanism_name": "iter28 R36m density-aware radial α=0.25",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter28/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "",
       "full_gini": 0.056691560571654184,
@@ -183,7 +183,7 @@
     },
     {
       "iter": "curvature_RQ-VAE_iter32",
-      "mechanism_name": "iter32 R36n b+f per-layer \u5f02\u8d28 c + sk_eps",
+      "mechanism_name": "iter32 R36n b+f per-layer 异质 c + sk_eps",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter32/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter32/dataset/Instruments/item_emb.npy",
       "full_gini": 0.050663760777715165,
@@ -210,7 +210,7 @@
       "iter": "curvature_RQ-VAE_iter33",
       "mechanism_name": "iter33 R36-S0 per-item curvature",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter33/dataset/Instruments/sids_for_hgrec.npy",
-      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter33/dataset/Instruments/item_emb_iter33.npy",
+      "item_emb_path": "",
       "full_gini": 0.03801992285395919,
       "gini_L0": 0.06689177080367674,
       "gini_L1": 0.29843594302883636,
@@ -232,8 +232,133 @@
       "delta_test_r10_vs_tiger": -0.001166454847751526
     },
     {
+      "iter": "curvature_RQ-VAE_iter35",
+      "mechanism_name": "iter35 L0 sk_eps=0.30 sweep",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter35/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter35/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.07682012309158316,
+      "gini_L0": 0.1586794802518559,
+      "gini_L1": 0.04886140923048766,
+      "gini_L2": 0.07491144329320372,
+      "l01_unique_pairs": 11553,
+      "h_l1_given_l0": 6.032479424941102,
+      "n_unique_full": 22595,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06378941137554624,
+      "valid_best_ndcg_at_10": 0.03508825242907308,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03861487839272968,
+      "test_recall_at_10": 0.057852678493706365,
+      "test_ndcg_at_5": 0.02565349389980821,
+      "test_ndcg_at_10": 0.03185082444722105,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.00121868416929264
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter36",
+      "mechanism_name": "iter36 L0 sk_eps=0.40 sweep",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter36/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter36/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.09727040131175405,
+      "gini_L0": 0.1706793488707419,
+      "gini_L1": 0.05399019934314882,
+      "gini_L2": 0.087665261367796,
+      "l01_unique_pairs": 8768,
+      "h_l1_given_l0": 6.290509457548803,
+      "n_unique_full": 22036,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06479917825867441,
+      "valid_best_ndcg_at_10": 0.035350971849156074,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.038876025000435244,
+      "test_recall_at_10": 0.05774821985062414,
+      "test_ndcg_at_5": 0.026123373596010545,
+      "test_ndcg_at_10": 0.03218804102048725,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0013231428123748681
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter37",
+      "mechanism_name": "iter37 L0 sk_eps=0.60 sweep",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter37/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter37/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.11187015674986277,
+      "gini_L0": 0.22139781985282106,
+      "gini_L1": 0.05460822157034205,
+      "gini_L2": 0.07961476720421361,
+      "l01_unique_pairs": 7999,
+      "h_l1_given_l0": 6.361172176773852,
+      "n_unique_full": 21632,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06486881735406257,
+      "valid_best_ndcg_at_10": 0.03569557592787558,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03798812653423632,
+      "test_recall_at_10": 0.05733038527829523,
+      "test_ndcg_at_5": 0.025337842655454565,
+      "test_ndcg_at_10": 0.03157390374397104,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0017409773847037735
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter38",
+      "mechanism_name": "iter38 L0 sk_eps=0.70 sweep",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter38/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter38/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.12321100309978593,
+      "gini_L0": 0.21869192096919368,
+      "gini_L1": 0.058248356601049336,
+      "gini_L2": 0.07012105609671777,
+      "l01_unique_pairs": 6592,
+      "h_l1_given_l0": 6.412497598673861,
+      "n_unique_full": 21307,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.0635456745416877,
+      "valid_best_ndcg_at_10": 0.03503308604216582,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03776179947422483,
+      "test_recall_at_10": 0.05736520482598931,
+      "test_ndcg_at_5": 0.024983714615622432,
+      "test_ndcg_at_10": 0.03130384546403773,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": -0.0017061578370096975
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter39",
+      "mechanism_name": "iter39 L1 sk_eps=0.01 sweep",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter39/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter39/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.12409144324028115,
+      "gini_L0": 0.1841694976449543,
+      "gini_L1": 0.14644187604221742,
+      "gini_L2": 0.0711635912779111,
+      "l01_unique_pairs": 7284,
+      "h_l1_given_l0": 6.2682550111681135,
+      "n_unique_full": 21286,
+      "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06723654659725971,
+      "valid_best_ndcg_at_10": 0.036766954117940565,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.03948536708508157,
+      "test_recall_at_10": 0.05912359198454012,
+      "test_ndcg_at_5": 0.026135565300601356,
+      "test_ndcg_at_10": 0.03246334245685227,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 5.222932154111404e-05
+    },
+    {
       "iter": "curvature_RQ-VAE_iter4",
-      "mechanism_name": "iter4 gumbel softmax \u9000\u706b",
+      "mechanism_name": "iter4 gumbel softmax 退火",
       "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter4/dataset/Instruments/sids_for_hgrec.npy",
       "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter4/dataset/Instruments/item_emb.npy",
       "full_gini": 0.06178885305221391,
@@ -255,266 +380,56 @@
       "test_ndcg_at_10": 0.03052170827333902,
       "test_n_eval": 57439,
       "delta_test_r10_vs_tiger": -0.003464544995560502
-    }
-  ],
-  "iter11": {
-    "stage2_quality": {
-      "hitrate_k50": 0.7165,
-      "full_gini": 0.1142677373485954,
-      "per_layer_gini": [
-        0.20339089477465983,
-        0.05641843885996665,
-        0.07892969989221947
-      ],
-      "n_unique_full": 21557,
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter40",
+      "mechanism_name": "iter40 L1 sk_eps=0.03 sweep (valid 唯一超 hard target)",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter40/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter40/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.11049395235732029,
+      "gini_L0": 0.24195395432545655,
+      "gini_L1": 0.08743076244560133,
+      "gini_L2": 0.08431459587383577,
+      "l01_unique_pairs": 7938,
+      "h_l1_given_l0": 6.291374642356715,
+      "n_unique_full": 21666,
       "n_items": 24587,
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06586117446334372,
+      "valid_best_ndcg_at_10": 0.0359550447642747,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.039868382109716397,
+      "test_recall_at_10": 0.0595762461045631,
+      "test_ndcg_at_5": 0.026161070172760016,
+      "test_ndcg_at_10": 0.032507453377209485,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 0.0005048834415640954
+    },
+    {
+      "iter": "curvature_RQ-VAE_iter41",
+      "mechanism_name": "iter41 L1 sk_eps=0.05 sweep (与 iter11 baseline 等价)",
+      "sids_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter41/dataset/Instruments/sids_for_hgrec.npy",
+      "item_emb_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter41/dataset/Instruments/item_emb.npy",
+      "full_gini": 0.1142677373485954,
+      "gini_L0": 0.20339089477465983,
+      "gini_L1": 0.05641843885996665,
+      "gini_L2": 0.07892969989221947,
       "l01_unique_pairs": 7509,
       "h_l1_given_l0": 6.33275375993708,
-      "step": 100000,
-      "early_stopped": false,
-      "baseline": {
-        "hitrate_k50": 0.7165,
-        "full_gini": 0.0672,
-        "per_layer_gini": [
-          0.3598,
-          0.2467,
-          0.1656
-        ],
-        "l01_unique_pairs": 13340,
-        "h_l1_given_l0": 5.611558147195798
-      }
-    },
-    "oracle_topk": {
-      "top1": null,
-      "top5": null,
-      "top10": 0.0358
-    },
-    "l0_sk_eps": 0.5,
-    "l1_l2_sk_eps": [
-      0.05,
-      0.05
-    ]
-  },
-  "iter35": {
-    "stage2_quality": {
-      "hitrate_k50": 0.7165,
-      "full_gini": 0.07682012309158316,
-      "per_layer_gini": [
-        0.1586794802518559,
-        0.04886140923048766,
-        0.07491144329320372
-      ],
-      "n_unique_full": 22595,
+      "n_unique_full": 21557,
       "n_items": 24587,
-      "l01_unique_pairs": 11553,
-      "h_l1_given_l0": 6.032479424941102,
-      "step": 100000,
-      "early_stopped": false,
-      "baseline": {
-        "hitrate_k50": 0.7165,
-        "full_gini": 0.0672,
-        "per_layer_gini": [
-          0.3598,
-          0.2467,
-          0.1656
-        ],
-        "l01_unique_pairs": 13340,
-        "h_l1_given_l0": 5.611558147195798
-      }
-    },
-    "stage3_final_test": {
-      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-19-2026_22-57-37/HG_Rec_best.pth",
-      "n_eval": 57439,
-      "test_recall@5": 0.03861487839272968,
-      "test_recall@10": 0.057852678493706365,
-      "test_ndcg@5": 0.02565349389980821,
-      "test_ndcg@10": 0.03185082444722105
-    },
-    "oracle_topk": {
-      "top1": null,
-      "top5": null,
-      "top10": 0.0344
-    },
-    "l0_sk_eps": 0.3,
-    "l1_l2_sk_eps": [
-      0.05,
-      0.05
-    ],
-    "stage3_best_valid": {
-      "recall@10": 0.063789
+      "hr_50": 0.7165,
+      "oracle_topk_full": null,
+      "valid_best_recall_at_10": 0.06439875346019255,
+      "valid_best_ndcg_at_10": 0.035185876107458235,
+      "valid_best_epoch_or_ts": null,
+      "test_recall_at_5": 0.039624645275857864,
+      "test_recall_at_10": 0.05938473859224569,
+      "test_ndcg_at_5": 0.026379630124748775,
+      "test_ndcg_at_10": 0.03275388741408503,
+      "test_n_eval": 57439,
+      "delta_test_r10_vs_tiger": 0.0003133759292466842
     }
-  },
-  "iter36": {
-    "stage2_quality": {
-      "hitrate_k50": 0.7165,
-      "full_gini": 0.09727040131175405,
-      "per_layer_gini": [
-        0.1706793488707419,
-        0.05399019934314882,
-        0.087665261367796
-      ],
-      "n_unique_full": 22036,
-      "n_items": 24587,
-      "l01_unique_pairs": 8768,
-      "h_l1_given_l0": 6.290509457548803,
-      "step": 100000,
-      "early_stopped": false,
-      "baseline": {
-        "hitrate_k50": 0.7165,
-        "full_gini": 0.0672,
-        "per_layer_gini": [
-          0.3598,
-          0.2467,
-          0.1656
-        ],
-        "l01_unique_pairs": 13340,
-        "h_l1_given_l0": 5.611558147195798
-      }
-    },
-    "stage3_final_test": {
-      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_00-44-31/HG_Rec_best.pth",
-      "n_eval": 57439,
-      "test_recall@5": 0.038876025000435244,
-      "test_recall@10": 0.05774821985062414,
-      "test_ndcg@5": 0.026123373596010545,
-      "test_ndcg@10": 0.03218804102048725
-    },
-    "oracle_topk": {
-      "top1": null,
-      "top5": null,
-      "top10": 0.0344
-    },
-    "l0_sk_eps": 0.4,
-    "l1_l2_sk_eps": [
-      0.05,
-      0.05
-    ],
-    "stage3_best_valid": {
-      "recall@10": 0.064799
-    }
-  },
-  "iter37": {
-    "stage2_quality": {
-      "hitrate_k50": 0.7165,
-      "full_gini": 0.11187015674986277,
-      "per_layer_gini": [
-        0.22139781985282106,
-        0.05460822157034205,
-        0.07961476720421361
-      ],
-      "n_unique_full": 21632,
-      "n_items": 24587,
-      "l01_unique_pairs": 7999,
-      "h_l1_given_l0": 6.361172176773852,
-      "step": 100000,
-      "early_stopped": false,
-      "baseline": {
-        "hitrate_k50": 0.7165,
-        "full_gini": 0.0672,
-        "per_layer_gini": [
-          0.3598,
-          0.2467,
-          0.1656
-        ],
-        "l01_unique_pairs": 13340,
-        "h_l1_given_l0": 5.611558147195798
-      }
-    },
-    "stage3_final_test": {
-      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_02-23-34/HG_Rec_best.pth",
-      "n_eval": 57439,
-      "test_recall@5": 0.03798812653423632,
-      "test_recall@10": 0.05733038527829523,
-      "test_ndcg@5": 0.025337842655454565,
-      "test_ndcg@10": 0.03157390374397104
-    },
-    "oracle_topk": {
-      "top1": null,
-      "top5": null,
-      "top10": 0.0365
-    },
-    "l0_sk_eps": 0.6,
-    "l1_l2_sk_eps": [
-      0.05,
-      0.05
-    ],
-    "stage3_best_valid": {
-      "recall@10": 0.064869
-    }
-  },
-  "iter38": {
-    "stage2_quality": {
-      "hitrate_k50": 0.7165,
-      "full_gini": 0.12321100309978593,
-      "per_layer_gini": [
-        0.21869192096919368,
-        0.058248356601049336,
-        0.07012105609671777
-      ],
-      "n_unique_full": 21307,
-      "n_items": 24587,
-      "l01_unique_pairs": 6592,
-      "h_l1_given_l0": 6.412497598673861,
-      "step": 100000,
-      "early_stopped": false,
-      "baseline": {
-        "hitrate_k50": 0.7165,
-        "full_gini": 0.0672,
-        "per_layer_gini": [
-          0.3598,
-          0.2467,
-          0.1656
-        ],
-        "l01_unique_pairs": 13340,
-        "h_l1_given_l0": 5.611558147195798
-      }
-    },
-    "stage3_final_test": {
-      "best_checkpoint": "./ckpt/unknown_variant/Amazon_2023_Instruments/Sep-20-2026_03-56-06/HG_Rec_best.pth",
-      "n_eval": 57439,
-      "test_recall@5": 0.03776179947422483,
-      "test_recall@10": 0.05736520482598931,
-      "test_ndcg@5": 0.024983714615622432,
-      "test_ndcg@10": 0.03130384546403773
-    },
-    "oracle_topk": {
-      "top1": null,
-      "top5": null,
-      "top10": 0.0358
-    },
-    "l0_sk_eps": 0.7,
-    "l1_l2_sk_eps": [
-      0.05,
-      0.05
-    ],
-    "stage3_best_valid": {
-      "recall@10": 0.063546
-    }
-  },
-  "_meta": {
-    "generated_at": "2026-09-20",
-    "iter_order": [
-      "iter11",
-      "iter35",
-      "iter36",
-      "iter37",
-      "iter38"
-    ],
-    "metric_columns": [
-      "iter",
-      "l0_sk_eps",
-      "L0_unique",
-      "L0_gini",
-      "L1_gini",
-      "L2_gini",
-      "full_gini",
-      "l01_pairs",
-      "H_L1_given_L0",
-      "best_valid_R@10",
-      "test_R@10",
-      "test_R@5",
-      "test_ndcg@10",
-      "oracle_top10"
-    ]
-  }
+  ]
 }
