@@ -43,10 +43,13 @@ from model.utils import ensure_dir, get_local_time, set_color
 # Keep the existing deterministic setting used by the HG-Rec experiments.
 os.environ.setdefault("PYTHONHASHSEED", "42")
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+os.environ.setdefault("NVIDIA_TF32_OVERRIDE", "0")
 torch.use_deterministic_algorithms(True, warn_only=True)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-torch.set_float32_matmul_precision("high")
+torch.backends.cuda.matmul.allow_tf32 = False
+torch.backends.cudnn.allow_tf32 = False
+torch.set_float32_matmul_precision("highest" if STRICT_DETERMINISTIC else "high")
 
 
 # === 模块级常量 (CLAUDE.md §4 + §1 R30/R43: 全部硬编码, 禁止 argparse / CLI flag) ===
@@ -62,6 +65,17 @@ FAST             = True   # A100 吞吐向: 关 deterministic, 开 cuDNN benchma
 BF16             = True   # BF16 autocast (require CUDA+bf16-supported)
 COMPILE          = False  # torch.compile 总开关 (与 DDP functorch 旧栈有兼容问题)
 COMPILE_MODE     = "default"  # torch.compile 模式: default / reduce-overhead / max-autotune
+
+# === STRICT_DETERMINISTIC 模式 (2026-09-20 R53) ===
+# 目标: 同一 SID + 同一硬件 + 同一软件栈, 重复训练 N 次 checkpoint hash + test_R@10 都 byte-equal.
+# 启用后强制: 单卡 (跳过 DDP) + FP32 + seed=42 + cudnn.deterministic + TF32 off +
+#            use_deterministic_algorithms + num_workers=0 + DataLoader generator=manual_seed.
+# 用法 (按项目规则 0 CLI flag, 编辑源码切换): 把 STRICT_DETERMINISTIC 改 True 再 python train_HG-Rec.py.
+# 验收: 用 iter11 SID 跑两次, 比较 SHA256(HG_Rec_best.pth) + test_R@10.
+STRICT_DETERMINISTIC = False   # 默认关闭 (FAST=True 路径), 严格 ablation 时改 True
+DETERMINISTIC_NUM_WORKERS = 0  # STRICT 时强制 num_workers=0 (排除 worker RNG + scheduling)
+DETERMINISTIC_BF16 = False     # STRICT 时强制 BF16=False (排除 BF16 累加 noise)
+DETERMINISTIC_FAST = False     # STRICT 时强制 FAST=False (排除 cudnn benchmark 反转)
 
 # 模型 / Transformer
 NUM_LAYERS          = 4
@@ -479,6 +493,7 @@ def main():
         "early_stop":       EARLY_STOP,
         "fast":             FAST,
         "bf16":             BF16,
+        "strict_deterministic": STRICT_DETERMINISTIC,
         "use_lr_scheduler": USE_LR_SCHEDULER,
         "lr_warmup_pct":    LR_WARMUP_PCT,
         "lr_min_factor":    LR_MIN_FACTOR,
@@ -557,6 +572,34 @@ def main():
         torch.use_deterministic_algorithms(False)
         torch.backends.cudnn.deterministic = False
         torch.backends.cudnn.benchmark = True
+
+    # === STRICT_DETERMINISTIC 模式 (2026-09-20 R53): 强制度量再 set 一次, 覆盖上面的 FAST 反转 ===
+    if config["strict_deterministic"]:
+        # 1) 关 FAST 引入的非确定性 (覆盖上面 if fast 分支)
+        torch.use_deterministic_algorithms(True, warn_only=False)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        torch.set_float32_matmul_precision("highest")
+        # 2) 拒绝 DDP (单卡, 排除 NCCL all-reduce order noise)
+        if int(os.environ.get("WORLD_SIZE", "1")) > 1:
+            raise RuntimeError(
+                "STRICT_DETERMINISTIC 模式拒绝 DDP: 必须单卡跑, 不允许 torchrun 包装. "
+                "直接 python train_HG-Rec.py (no torchrun)."
+            )
+        # 3) 关 BF16 (排除累加 noise)
+        config["bf16"] = False
+        config["num_workers"] = 0  # 排除 worker RNG + scheduling
+        config["prefetch_factor"] = None  # num_workers=0 时 prefetch_factor 必须 None
+        config["persistent_workers"] = False
+        if rank == 0:
+            print(
+                "[STRICT_DETERMINISTIC] 全 deterministic 模式: 单卡 + FP32 + seed=42 + "
+                "cudnn.deterministic=True + TF32=off + num_workers=0 + "
+                "use_deterministic_algorithms=True(warn_only=False)",
+                flush=True,
+            )
 
     is_ddp = int(os.environ.get("WORLD_SIZE", "1")) > 1
     if is_ddp:
@@ -808,6 +851,18 @@ def main():
                 raw_model = model.module if hasattr(model, "module") else model
                 torch.save(raw_model.state_dict(), best_checkpoint)
                 logging.info("Best train loss=%s; saved %s", best_train_loss, best_checkpoint)
+                if config.get("strict_deterministic", False):
+                    import hashlib
+                    with open(best_checkpoint, "rb") as f:
+                        ckpt_sha256 = hashlib.sha256(f.read()).hexdigest()
+                    logging.info(
+                        "[STRICT_DETERMINISTIC] ckpt SHA256=%s path=%s",
+                        ckpt_sha256, best_checkpoint,
+                    )
+                    print(
+                        f"[STRICT_DETERMINISTIC] ckpt SHA256={ckpt_sha256} path={best_checkpoint}",
+                        flush=True,
+                    )
             else:
                 early_stop_counter += 1
                 logging.info(
@@ -883,6 +938,18 @@ def main():
                         f"[valid] epoch={epoch} new best Recall@10={best_monitor:.6f} -> {best_checkpoint}",
                         flush=True,
                     )
+                    if config.get("strict_deterministic", False):
+                        import hashlib
+                        with open(best_checkpoint, "rb") as f:
+                            ckpt_sha256 = hashlib.sha256(f.read()).hexdigest()
+                        logging.info(
+                            "[STRICT_DETERMINISTIC] ckpt SHA256=%s epoch=%d Recall@10=%.6f",
+                            ckpt_sha256, epoch, best_monitor,
+                        )
+                        print(
+                            f"[STRICT_DETERMINISTIC] ckpt SHA256={ckpt_sha256} epoch={epoch} Recall@10={best_monitor:.6f}",
+                            flush=True,
+                        )
                     # === 写文件给其他 rank 看 (替代 dist.broadcast) ===
                     with open(_early_stop_file, "w", encoding="utf-8") as _fh:
                         _fh.write(f"{epoch}\t0\n")  # 0 = 继续训练
@@ -1121,7 +1188,16 @@ def _launch_via_torchrun():
 if __name__ == "__main__":
     # Already a torchrun worker (RANK set) -> main directly.
     # Otherwise, fork torchrun.
-    if "RANK" in os.environ:
+    # === STRICT_DETERMINISTIC 模式 (2026-09-20): 拒绝 torchrun fork, 强制单卡直跑 ===
+    if STRICT_DETERMINISTIC:
+        if "RANK" in os.environ or int(os.environ.get("WORLD_SIZE", "1")) > 1:
+            raise RuntimeError(
+                "STRICT_DETERMINISTIC 模式必须在单卡直跑下启动 (no torchrun, no DDP). "
+                "请用: python train_HG-Rec.py (无 torchrun 前缀)"
+            )
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 强制只用 GPU 0
+        main()  # 单卡直跑, 无 cleanup_distributed
+    elif "RANK" in os.environ:
         try:
             main()
         finally:
