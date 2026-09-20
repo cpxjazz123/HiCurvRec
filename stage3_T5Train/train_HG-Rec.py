@@ -44,6 +44,9 @@ from model.utils import ensure_dir, get_local_time, set_color
 os.environ.setdefault("PYTHONHASHSEED", "42")
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 os.environ.setdefault("NVIDIA_TF32_OVERRIDE", "0")
+# === STRICT_DETERMINISTIC 模式开关 (2026-09-20 R53) ===
+# 必须在 torch.* 调用之前定义, 否则 line 56 ternary forward-reference NameError.
+STRICT_DETERMINISTIC = False   # 默认关闭 (FAST=True 路径), 严格 ablation 时改 True
 torch.use_deterministic_algorithms(True, warn_only=True)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
@@ -56,7 +59,7 @@ torch.set_float32_matmul_precision("highest" if STRICT_DETERMINISTIC else "high"
 # 训练 / 吞吐
 BATCH_SIZE       = 4096   # 4 卡 DDP 每卡 1024 (8192 OOM @ 46GB L40S, 4096 安全)
 INFER_SIZE       = 1024   # 4 卡 DDP 每卡 256, 等效 4x throughput (vs 单卡 512)
-NUM_EPOCHS       = 400      # iter11: 2x 长训练, 让 Gumbel-Softmax 充分收敛
+NUM_EPOCHS       = 100      # 2026-09-20 R53: 短训练上限, 严格 ablation 用 (避免 4x epoch 浪费 GPU)
 EVAL_INTERVAL    = 5      # validate every N epochs (NO_EVAL=False 时生效)
 EVAL_START_EPOCH = 200    # iter11: 200 epoch 后才评估, 让 stage2 编码先充分学, 避免早期 valid 噪声
 EARLY_EVAL_EPOCHS = (50, 100, 150)  # iter17: 早期诊断点, 监控 valid 走势; 仅日志, 不影响 best_monitor / early_stop
@@ -66,13 +69,9 @@ BF16             = True   # BF16 autocast (require CUDA+bf16-supported)
 COMPILE          = False  # torch.compile 总开关 (与 DDP functorch 旧栈有兼容问题)
 COMPILE_MODE     = "default"  # torch.compile 模式: default / reduce-overhead / max-autotune
 
-# === STRICT_DETERMINISTIC 模式 (2026-09-20 R53) ===
-# 目标: 同一 SID + 同一硬件 + 同一软件栈, 重复训练 N 次 checkpoint hash + test_R@10 都 byte-equal.
-# 启用后强制: 单卡 (跳过 DDP) + FP32 + seed=42 + cudnn.deterministic + TF32 off +
-#            use_deterministic_algorithms + num_workers=0 + DataLoader generator=manual_seed.
-# 用法 (按项目规则 0 CLI flag, 编辑源码切换): 把 STRICT_DETERMINISTIC 改 True 再 python train_HG-Rec.py.
-# 验收: 用 iter11 SID 跑两次, 比较 SHA256(HG_Rec_best.pth) + test_R@10.
-STRICT_DETERMINISTIC = False   # 默认关闭 (FAST=True 路径), 严格 ablation 时改 True
+# === STRICT_DETERMINICT 模式 (2026-09-20 R53) ===
+# STRICT_DETERMINISTIC 已在 line 49 提前定义 (避免 line 56 ternary forward-reference NameError).
+# 这里只保留辅助常量.
 DETERMINISTIC_NUM_WORKERS = 0  # STRICT 时强制 num_workers=0 (排除 worker RNG + scheduling)
 DETERMINISTIC_BF16 = False     # STRICT 时强制 BF16=False (排除 BF16 累加 noise)
 DETERMINISTIC_FAST = False     # STRICT 时强制 FAST=False (排除 cudnn benchmark 反转)
