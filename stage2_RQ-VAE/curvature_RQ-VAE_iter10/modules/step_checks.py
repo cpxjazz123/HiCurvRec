@@ -239,11 +239,29 @@ def check_step7_forward(
 
 
 def check_step8_loss(losses, training: bool) -> None:
-    """Step8：检查 reconstruction、quantize 和 total loss。"""
-    for name in ("loss", "reconstruction_loss", "rqvae_loss"):
+    """Step8：检查最终与逐前缀 reconstruction、quantize 和 total loss。"""
+    for name in (
+        "loss",
+        "reconstruction_loss",
+        "rqvae_loss",
+        "partial_reconstruction_loss_l0",
+        "partial_reconstruction_loss_l01",
+        "partial_reconstruction_loss_l012",
+    ):
         value = getattr(losses, name)
         _check_tensor(value, f"Step8 {name}", ndim=0)
         _require(value.item() >= 0, f"Step8 {name} 不应为负数")
+    if training:
+        for name in (
+            "partial_reconstruction_loss_l0",
+            "partial_reconstruction_loss_l01",
+            "partial_reconstruction_loss_l012",
+        ):
+            _require(
+                getattr(losses, name).item() > 1e-12,
+                f"Step8 {name} 必须为正数",
+                RuntimeError,
+            )
     if training:
         _require(losses.loss.requires_grad, "Step8 total loss 未连接计算图", RuntimeError)
         _require(losses.loss.grad_fn is not None, "Step8 total loss 缺少 grad_fn", RuntimeError)

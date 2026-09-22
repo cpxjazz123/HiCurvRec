@@ -96,6 +96,33 @@ for step in (0, rqtrain.C_CYCLIC_PERIOD // 2):
     if not torch.isfinite(total_loss).item():
         raise RuntimeError(f"step={step}: total loss 含 NaN/Inf")
 
+    partial_names = (
+        "partial_reconstruction_loss_l0",
+        "partial_reconstruction_loss_l01",
+        "partial_reconstruction_loss_l012",
+    )
+    partial_values = []
+    for name in partial_names:
+        partial_loss = getattr(output, name)
+        if not torch.isfinite(partial_loss).item() or partial_loss.item() <= 1e-12:
+            raise RuntimeError(
+                f"step={step}: {name} 必须是有限正数，实际 {float(partial_loss.item()):.6e}"
+            )
+        partial_grads = torch.autograd.grad(
+            partial_loss,
+            tuple(model.parameters()),
+            retain_graph=True,
+            allow_unused=True,
+        )
+        if not any(
+            gradient is not None
+            and torch.isfinite(gradient).all().item()
+            and gradient.abs().sum().item() > 1e-12
+            for gradient in partial_grads
+        ):
+            raise RuntimeError(f"step={step}: {name} 无非零有限梯度")
+        partial_values.append(float(partial_loss.detach().item()))
+
     layer_losses = [
         layer.quantize_loss(
             query=model.encoder(batch),
@@ -145,6 +172,7 @@ for step in (0, rqtrain.C_CYCLIC_PERIOD // 2):
         raise RuntimeError(f"step={step}: 梯度含 NaN/Inf")
 
     losses.append(float(output.rqvae_loss.detach().item()))
+    print(f"step={step} partial_losses={partial_values}")
 
 if losses[0] == losses[1]:
     raise RuntimeError("c(t) 改变后 quantize loss 数值未变化")
@@ -154,3 +182,4 @@ print(f"embedding={emb_path}")
 print(f"batch_shape={tuple(batch.shape)}")
 print(f"curvature_steps=(0,{rqtrain.C_CYCLIC_PERIOD // 2})")
 print(f"rqvae_loss_values={losses}")
+print("partial_reconstruction_gradient_path=PASS")

@@ -42,6 +42,9 @@ class RqVaeComputedLosses(NamedTuple):
     loss: Tensor
     reconstruction_loss: Tensor
     rqvae_loss: Tensor
+    partial_reconstruction_loss_l0: Tensor
+    partial_reconstruction_loss_l01: Tensor
+    partial_reconstruction_loss_l012: Tensor
     embs_norm: Tensor
     p_unique_ids: Tensor
     per_layer_usage: Tensor
@@ -66,46 +69,19 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_cyclic_max: float = 1.0,
         c_cyclic_period: int = 50_000,
         midpoint_layer_mask: List[bool] | None = None,
-        per_layer_c_min: List[float] | None = None,
-        per_layer_c_max: List[float] | None = None,
-        per_layer_c_period: List[int] | None = None,
-        per_layer_manifold: List[str] | None = None,  # iter5
-        per_layer_sk_eps: List[float] | None = None,  # iter11 sweep: L0-only Gini knob
     ) -> None:
         super().__init__()
         if midpoint_layer_mask is None:
             midpoint_layer_mask = [True] + [False] * (n_layers - 1)
-        # === iter5 v375: per-layer c + manifold ===
-        if per_layer_c_min is None:
-            per_layer_c_min = [c_cyclic_min] * n_layers
-        if per_layer_c_max is None:
-            per_layer_c_max = [c_cyclic_max] * n_layers
-        if per_layer_c_period is None:
-            per_layer_c_period = [c_cyclic_period] * n_layers
-        if per_layer_manifold is None:
-            per_layer_manifold = ["poincare"] * n_layers
-        # === iter11 sweep: per-layer sk_eps ===
-        # 若不传, 每层用全局 sk_eps (保持旧行为).
-        if per_layer_sk_eps is None:
-            per_layer_sk_eps = [float(sk_eps)] * n_layers
-        if len(per_layer_sk_eps) != n_layers:
-            raise ValueError("Step1: per_layer_sk_eps 长度必须等于 n_layers")
-        if any(v <= 0 for v in per_layer_sk_eps):
-            raise ValueError("Step1: per_layer_sk_eps 必须全部为正数")
-        if len(per_layer_c_min) != n_layers or len(per_layer_c_max) != n_layers or len(per_layer_c_period) != n_layers or len(per_layer_manifold) != n_layers:
-            raise ValueError("Step1: per_layer_* 长度必须等于 n_layers")
-        for m in per_layer_manifold:
-            if m not in ("poincare", "sphere"):
-                raise ValueError(f"Step1: manifold 必须是 poincare/sphere, 实际 {m}")
         check_step1_config(
             input_dim=input_dim,
             embed_dim=embed_dim,
             hidden_dims=hidden_dims,
             codebook_size=codebook_size,
             n_layers=n_layers,
-            c_min=min(per_layer_c_min),
-            c_max=max(per_layer_c_max),
-            c_period=max(per_layer_c_period),
+            c_min=c_cyclic_min,
+            c_max=c_cyclic_max,
+            c_period=c_cyclic_period,
             sk_eps=sk_eps,
             sk_iters=sk_iters,
         )
@@ -125,7 +101,6 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             "c_cyclic_max": c_cyclic_max,
             "c_cyclic_period": c_cyclic_period,
             "midpoint_layer_mask": midpoint_layer_mask,
-            "per_layer_sk_eps": per_layer_sk_eps,
         }
         self.input_dim = input_dim
         self.embed_dim = embed_dim
@@ -140,14 +115,13 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     n_embed=codebook_size,
                     do_kmeans_init=codebook_kmeans_init,
                     commitment_weight=commitment_weight,
-                    sk_eps=per_layer_sk_eps[i],   # iter11 sweep: per-layer sk_eps
+                    sk_eps=sk_eps,
                     sk_iters=sk_iters,
-                    c_cyclic_min=per_layer_c_min[i],
-                    c_cyclic_max=per_layer_c_max[i],
-                    c_cyclic_period=per_layer_c_period[i],
-                    manifold_mode=per_layer_manifold[i],
+                    c_cyclic_min=c_cyclic_min,
+                    c_cyclic_max=c_cyclic_max,
+                    c_cyclic_period=c_cyclic_period,
                 )
-                for i in range(n_layers)
+                for _ in range(n_layers)
             ]
         )
         self.encoder = MLP(
@@ -163,6 +137,15 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             normalize=False,
         )
         self.reconstruction_loss = ReconstructionLoss()
+        self.partial_reconstruction_weight_l0 = 0.25
+        self.partial_reconstruction_weight_l01 = 0.25
+        self.partial_reconstruction_weight_l012 = 1.0
+        if self.partial_reconstruction_weight_l0 <= 0:
+            raise ValueError("partial reconstruction L0 权重必须为正数")
+        if self.partial_reconstruction_weight_l01 <= 0:
+            raise ValueError("partial reconstruction L01 权重必须为正数")
+        if self.partial_reconstruction_weight_l012 < 0:
+            raise ValueError("partial reconstruction L012 权重不得为负数")
         check_step4_model(
             self,
             input_dim=input_dim,
@@ -320,15 +303,32 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         """Step8：重建、计算总 loss 并检查计算图。"""
         check_step6_batch(batch.x, self.input_dim, self.device)
         quantized = self.get_semantic_ids(batch.x)
-        summed_embeddings = self._step6_sum_embeddings(quantized)
-        x_hat = l2norm(self.decode(summed_embeddings))
+        # 逐前缀 decoder-aligned reconstruction：L1/L2 必须分别承担可解码 residual refinement。
+        prefix_embeddings = [
+            quantized.embeddings[:prefix_layers].sum(dim=0).transpose(0, 1)
+            for prefix_layers in (1, 2, 3)
+        ]
+        prefix_reconstructions = [
+            l2norm(self.decode(prefix_embedding))
+            for prefix_embedding in prefix_embeddings
+        ]
         # 当前所有量化层共享同一个 curriculum c(t)，重构项必须使用该曲率。
         reconstruction_curvature = self.layers[0].get_c().view(1, 1)
-        reconstruction_loss = self.reconstruction_loss(
-            x_hat, batch.x, c=reconstruction_curvature
-        )
+        prefix_reconstruction_losses = [
+            self.reconstruction_loss(reconstruction, batch.x, c=reconstruction_curvature)
+            for reconstruction in prefix_reconstructions
+        ]
+        partial_reconstruction_loss_l0 = prefix_reconstruction_losses[0]
+        partial_reconstruction_loss_l01 = prefix_reconstruction_losses[1]
+        partial_reconstruction_loss_l012 = prefix_reconstruction_losses[2]
+        reconstruction_loss = partial_reconstruction_loss_l012
         rqvae_loss = quantized.quantize_loss
-        loss = (reconstruction_loss + rqvae_loss).mean()
+        loss = (
+            rqvae_loss
+            + self.partial_reconstruction_weight_l0 * partial_reconstruction_loss_l0
+            + self.partial_reconstruction_weight_l01 * partial_reconstruction_loss_l01
+            + self.partial_reconstruction_weight_l012 * partial_reconstruction_loss_l012
+        ).mean()
         if not torch.isfinite(loss).item():
             raise RuntimeError("Step8: total loss 含 NaN 或 Inf")
 
@@ -353,6 +353,9 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             loss=loss,
             reconstruction_loss=reconstruction_loss.mean(),
             rqvae_loss=rqvae_loss.mean(),
+            partial_reconstruction_loss_l0=partial_reconstruction_loss_l0.mean(),
+            partial_reconstruction_loss_l01=partial_reconstruction_loss_l01.mean(),
+            partial_reconstruction_loss_l012=partial_reconstruction_loss_l012.mean(),
             embs_norm=embs_norm,
             p_unique_ids=p_unique_ids,
             per_layer_usage=per_layer_usage,

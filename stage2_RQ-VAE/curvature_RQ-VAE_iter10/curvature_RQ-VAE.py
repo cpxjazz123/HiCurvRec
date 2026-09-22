@@ -289,17 +289,6 @@ def main():
         )
 
     # ---------- Step4 模型 ----------
-    # === iter5 v375: mixed-curvature product manifold H^{c1} x H^{c2} x S ===
-    PER_LAYER_C_MIN = [0.3, 0.5, 0.7]
-    PER_LAYER_C_MAX = [1.0, 1.2, 1.5]
-    PER_LAYER_C_PERIOD = [50_000, 50_000, 50_000]
-    # L0/L1 = poincare (hyp), L2 = sphere. 球面用于最后一层, 避免深层 commit 失真.
-    PER_LAYER_MANIFOLD = ["poincare", "poincare", "sphere"]
-    # === iter11 sweep: L0-only sk_eps Gini sweep knob ===
-    # 默认 = [0.05, 0.05, 0.05] 等价旧行为. sweep 时只改 L0 (索引 0).
-    # L0 sk_eps ↓ → Sinkhorn 越"硬" (近 argmax) → L0 Gini↑ (head/tail 形成)
-    # L1/L2 锁死 0.05 (保留现有均匀化行为, 不让深层 collapse).
-    PER_LAYER_SK_EPS = [0.05, 0.05, 0.05]
     model = RqVae(
         input_dim=INPUT_DIM,
         embed_dim=EMBED_DIM,
@@ -310,15 +299,10 @@ def main():
         commitment_weight=COMMITMENT_WEIGHT,
         sk_eps=0.05,
         sk_iters=3,
-        c_cyclic_min=min(PER_LAYER_C_MIN),
-        c_cyclic_max=max(PER_LAYER_C_MAX),
-        c_cyclic_period=max(PER_LAYER_C_PERIOD),
+        c_cyclic_min=C_CYCLIC_MIN,
+        c_cyclic_max=C_CYCLIC_MAX,
+        c_cyclic_period=C_CYCLIC_PERIOD,
         midpoint_layer_mask=MIDPOINT_LAYER_MASK,
-        per_layer_c_min=PER_LAYER_C_MIN,
-        per_layer_c_max=PER_LAYER_C_MAX,
-        per_layer_c_period=PER_LAYER_C_PERIOD,
-        per_layer_manifold=PER_LAYER_MANIFOLD,
-        per_layer_sk_eps=PER_LAYER_SK_EPS,
     ).to(device)
 
     if COMPILE:
@@ -380,6 +364,9 @@ def main():
                 print(
                     f"[Step8] first loss ok loss={float(loss.item()):.4f} "
                     f"rl={float(out.reconstruction_loss.item()):.4f} "
+                    f"partial_l0={float(out.partial_reconstruction_loss_l0.item()):.4f} "
+                    f"partial_l01={float(out.partial_reconstruction_loss_l01.item()):.4f} "
+                    f"partial_l012={float(out.partial_reconstruction_loss_l012.item()):.4f} "
                     f"vl={float(out.rqvae_loss.item()):.4f}",
                     flush=True,
                 )
@@ -416,7 +403,7 @@ def main():
             # ---------- Step11 curriculum step 同步曲率 c(t) ----------
             _cur_model = model.module if hasattr(model, "module") else model
             _cur_model.set_curriculum_step(global_step_sync)
-            check_step11_curvature(model.module, global_step_sync, min(PER_LAYER_C_MIN), max(PER_LAYER_C_MAX))
+            check_step11_curvature(model.module, global_step_sync, C_CYCLIC_MIN, C_CYCLIC_MAX)
             if rank == 0 and not step_first_pass_logged[11]:
                 curv_str = "/".join(f"{float(l.get_c().item()):.3f}" for l in model.module.layers)
                 print(f"[Step11] first curvature sync step={global_step_sync} c=[{curv_str}]", flush=True)
@@ -443,6 +430,9 @@ def main():
                     f"  step {global_step_sync:6d}/{MAX_GLOBAL_STEPS} "
                     f"| loss={float(loss.item()):.4f} "
                     f"| rl={float(out.reconstruction_loss.item()):.4f} "
+                    f"| partial_l0={float(out.partial_reconstruction_loss_l0.item()):.4f} "
+                    f"| partial_l01={float(out.partial_reconstruction_loss_l01.item()):.4f} "
+                    f"| partial_l012={float(out.partial_reconstruction_loss_l012.item()):.4f} "
                     f"| vl={float(out.rqvae_loss.item()):.4f} "
                     f"| codes={usage_str}/{CODEBOOK_SIZE} "
                     f"| c={curv_str} "

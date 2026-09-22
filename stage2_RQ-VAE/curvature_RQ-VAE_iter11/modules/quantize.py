@@ -8,8 +8,6 @@ from modules.hyperbolic import (
     _expmap0_t,
     _poincare_distance_t,
     _sinkhorn_algorithm,
-    _sphere_distance_t,
-    _sphere_expmap0_t,
 )
 from modules.loss import QuantizeLoss
 
@@ -34,7 +32,6 @@ class Quantize(nn.Module):
         c_cyclic_min: float,
         c_cyclic_max: float,
         c_cyclic_period: int,
-        manifold_mode: str = "poincare",  # iter5: "poincare" | "sphere"
     ) -> None:
         super().__init__()
         if sk_eps <= 0:
@@ -56,22 +53,7 @@ class Quantize(nn.Module):
         self.c_cyclic_min = float(c_cyclic_min)
         self.c_cyclic_max = float(c_cyclic_max)
         self.c_cyclic_period = int(c_cyclic_period)
-        self.manifold_mode = manifold_mode
-        if manifold_mode not in ("poincare", "sphere"):
-            raise ValueError(f"manifold_mode 必须是 poincare/sphere, 实际 {manifold_mode}")
         self._curriculum_step = 0
-        # === iter10 v377: Gumbel-Softmax 风格温度退火 (Sinkhorn-balanced) ===
-        # τ 高 → centered 缩小 → Sinkhorn 软分配 (高探索)
-        # τ 低 → centered 放大 → Sinkhorn 硬分配 (高利用)
-        # 数学: 用 1/τ 缩放 centered 输入, sk_eps 不变 (与 Gumbel softmax logits/τ 等价)
-        self.gumbel_tau_initial = 2.0  # iter10: τ_start = 2.0 (软)
-        self.gumbel_tau_final = 0.5    # iter10: τ_end = 0.5 (硬)
-        self.gumbel_tau_anneal_steps = 20_000
-        if self.gumbel_tau_initial < self.gumbel_tau_final:
-            raise ValueError(
-                f"τ 必须从大到小 (anneal), init={self.gumbel_tau_initial} > final={self.gumbel_tau_final}"
-            )
-        self._current_tau = float(self.gumbel_tau_initial)
         self.quantize_loss = QuantizeLoss(commitment_weight)
         self._init_weights()
 
@@ -98,19 +80,6 @@ class Quantize(nn.Module):
         if step < 0:
             raise ValueError("curriculum step 必须非负")
         self._curriculum_step = int(step)
-        # === iter10 v377: 同步更新 Gumbel-Softmax 温度 τ ===
-        anneal_steps = self.gumbel_tau_anneal_steps
-        if anneal_steps <= 0:
-            self._current_tau = self.gumbel_tau_final
-        elif step >= anneal_steps:
-            self._current_tau = float(self.gumbel_tau_final)
-        else:
-            progress = float(step) / float(anneal_steps)
-            # linear anneal: τ(t) = τ_init + (τ_final - τ_init) * progress
-            self._current_tau = float(
-                self.gumbel_tau_initial
-                + (self.gumbel_tau_final - self.gumbel_tau_initial) * progress
-            )
 
     @staticmethod
     def _center_distance_for_constraint(distances: Tensor) -> Tensor:
@@ -149,34 +118,19 @@ class Quantize(nn.Module):
         curvature_2d = curvature.view(1, 1)
         batch_size = x.shape[0]
         codebook_size = codebook.shape[0]
-        # === iter5 v375: manifold 分支 (poincare vs sphere) ===
-        if self.manifold_mode == "sphere":
-            latent_h = _sphere_expmap0_t(x.unsqueeze(1))
-            codebook_h = _sphere_expmap0_t(
-                codebook.unsqueeze(0).expand(batch_size, codebook_size, -1)
-            )
-            distances = _sphere_distance_t(
-                latent_h.expand(batch_size, codebook_size, -1), codebook_h
-            ).squeeze(-1)
-            if not torch.isfinite(distances).all().item():
-                raise RuntimeError("Sphere 量化距离含 NaN 或 Inf")
-        else:
-            latent_h = _expmap0_t(x.unsqueeze(1), curvature_3d)
-            codebook_h = _expmap0_t(
-                codebook.unsqueeze(0).expand(batch_size, codebook_size, -1), curvature_3d
-            )
-            distances = _poincare_distance_t(
-                latent_h.expand(batch_size, codebook_size, -1), codebook_h, curvature_3d
-            ).squeeze(-1)
-            if not torch.isfinite(distances).all().item():
-                raise RuntimeError("Poincaré 量化距离含 NaN 或 Inf")
+        latent_h = _expmap0_t(x.unsqueeze(1), curvature_3d)
+        codebook_h = _expmap0_t(
+            codebook.unsqueeze(0).expand(batch_size, codebook_size, -1), curvature_3d
+        )
+        distances = _poincare_distance_t(
+            latent_h.expand(batch_size, codebook_size, -1), codebook_h, curvature_3d
+        ).squeeze(-1)
+        if not torch.isfinite(distances).all().item():
+            raise RuntimeError("Poincaré 量化距离含 NaN 或 Inf")
 
         centered = self._center_distance_for_constraint(distances.detach())
-        # === iter10 v377: Gumbel-Softmax 温度退火 (Sinkhorn-balanced) ===
-        # 1/τ 缩放 centered; τ 大 → 平滑 (高探索), τ 小 → 尖锐 (高利用)
-        scaled_centered = centered / self._current_tau
         assignments = _sinkhorn_algorithm(
-            scaled_centered.double(), self.sk_eps, self.sk_iters
+            centered.double(), self.sk_eps, self.sk_iters
         )
         if not torch.isfinite(assignments).all().item():
             raise RuntimeError("Sinkhorn assignment 含 NaN 或 Inf")

@@ -71,23 +71,3 @@ def _mobius_add_t(x, y, c):
     numerator = (1 + 2 * c * xy + c * y2) * x + (1 - c * x2) * y
     denominator = 1 + 2 * c * xy + (c ** 2) * x2 * y2
     return numerator / denominator.clamp_min(_eps(denominator))
-
-
-# === iter5 v375: spherical manifold support for mixed-curvature product ===
-def _sphere_distance_t(x, y, eps=1e-6):
-    """球面距离: d(x,y) = arccos(<x,y>). 假设 x,y 已 L2-normalize 到 S^{d-1}."""
-    inner = (x * y).sum(dim=-1).clamp(-1 + eps, 1 - eps)
-    return torch.arccos(inner)
-
-
-def _sphere_expmap0_t(v, eps=1e-6):
-    """球面 exp_0(v) = v / ||v|| (规范化到 S^{d-1}). 距离 = ||v||, 方向 = v/||v||."""
-    norm = v.norm(dim=-1, keepdim=True).clamp_min(eps)
-    return v / norm
-
-
-def _sphere_logmap0_t(x, eps=1e-6):
-    """球面 log_0(x) = arccos(<x,0_c>) * x / ||x||. 0_c 是球面任意点, 取 (1,0,...,0) 等价."""
-    # 简化: 0_c 取 e_1 = (1, 0, ..., 0). 在球面上, log 0 映射到以 0_c 为原点的切空间.
-    # 工程简化: 直接返回 x 本身, 因为下游只用 norm/方向, 球面量化的"残差"用 v 本身即可.
-    return x

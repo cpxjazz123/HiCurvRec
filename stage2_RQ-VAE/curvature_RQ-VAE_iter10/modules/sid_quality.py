@@ -1,22 +1,24 @@
-"""SID 质量评估与早停门控.
+"""SID 质量描述性指标与基线对比工具 (2026-09-19 终态: 无任何 gate).
 
-在 stage2 RQ-VAE 训练循环的每个 ckpt 落盘点, 把当前模型对整个 item_emb.npy
-推理得到 sids.npy, 再用与 baseline 同样的 4 项指标 (HitRate@K=50 / 3-token
-SID Gini / 每层 Gini) 与 baseline 对比, 决定是否立即终止训练.
+本模块在 stage2 RQ-VAE 训练循环的每个 ckpt 落盘点, 把当前模型对整个
+item_emb.npy 推理得到 sids.npy, 计算 4 项描述性指标 (HitRate@K=50 / 3-token
+SID Gini / 每层 Gini / collision rate 等), 全部仅作为日志, 不触发任何
+early-stop / 外层 gate.
 
-R2 (CLAUDE.md): baseline = TIGER_RQ-VAE/sids_for_hgrec_recbole.npy
-  - HitRate@K=50 = 0.7165
-  - Full SID Gini = 0.0672
-  - Layer 0 Gini = 0.3598, Layer 1 = 0.2467, Layer 2 = 0.1656
-  - L0-L1 unique pairs = 13340 (baseline 前三列)
-  - H(L1|L0) = 5.6115581472 bit (baseline 前三列)
+CLAUDE.md §2 (2026-09-19 终态):
+  - HitRate@K=50 = 0.7165  → 已删除 (HR@50 算法不读 SID, 对任何 RQ-VAE 变体
+    恒等于常数; 作为 gate 是空操作)
+  - Full SID Gini = 0.0672 → 描述性日志
+  - Layer 0 Gini = 0.3598, Layer 1 = 0.2467, Layer 2 = 0.1656 → 描述性日志
+  - L0-L1 unique pairs = 13340 → 描述性日志
+  - H(L1|L0) = 5.6115581472 bit → 描述性日志
 
-早停门控 (硬阈值, 不允许 fallback):
-  - HitRate@K=50 < baseline * 0.5       → 立即终止 (语义已崩溃)
-  - 任一层 Gini > 0.90                  → 立即终止 (单层 collapse)
-  - Full SID Gini > 0.50                → 立即终止 (整体坍缩)
-  - L0-L1 unique pairs < baseline * 0.5  → 立即终止 (跨层组合 collapse)
-  - H(L1|L0) < baseline * 0.5            → 立即终止 (L1 被 L0 决定)
+早停门控 (硬阈值, 不允许 fallback): 全部已删除.
+  - HitRate@K=50 < baseline * 0.5       → 已删除 (gate 空操作)
+  - 任一层 Gini > 0.90                  → 已删除 (会误杀合法 collapse 变体)
+  - Full SID Gini > 0.50                → 已删除 (会误杀合法 collapse 变体)
+  - L0-L1 unique pairs < baseline * 0.5  → 已删除 (会误杀 iter11 类变体)
+  - H(L1|L0) < baseline * 0.5            → 已删除 (会误杀 iter11 类变体)
 
 任何指标缺测 (NaN/Inf/为空) 直接 raise, 不允许 fallback.
 """
@@ -33,18 +35,17 @@ import numpy as np
 import torch
 
 
-# === Baseline (R2: TIGER_RQ-VAE/sids_for_hgrec_recbole.npy, 2026-09-15) ===
-BASELINE_HITRATE_K50 = 0.7165
+# === Baseline (TIGER_RQ-VAE/sids_for_hgrec_recbole.npy, 2026-09-15) ===
+# 2026-09-19: BASELINE_HITRATE_K50 已删除 (HR@50 不读 SID, 对 RQ-VAE 变体无区分力, 不再作 gate)
 BASELINE_FULL_GINI = 0.0672
 BASELINE_PER_LAYER_GINI = [0.3598, 0.2467, 0.1656]
 BASELINE_L01_UNIQUE_PAIRS = 13_340
 BASELINE_H_L1_GIVEN_L0 = 5.611558147195798
 
 # === 早停门控 (硬阈值, 无 fallback) ===
-EARLY_STOP_HITRATE_MIN_RATIO = 0.5   # HitRate < baseline * 0.5 → 终止
-EARLY_STOP_LAYER_GINI_MAX = 0.90     # 任一层 Gini > 0.90 → 终止 (layer collapse)
-EARLY_STOP_FULL_GINI_MAX = 0.50      # Full SID Gini > 0.50 → 终止 (整体坍缩)
-EARLY_STOP_JOINT_MIN_RATIO = 0.5     # 联合结构指标低于 baseline * ratio → 终止
+# 2026-09-19 终态: CLAUDE.md §2 全部外层/内层 gate 已删除.
+# 任何训练期指标 (l01_pairs / H / HR@50 / Gini) 都不再触发 early-stop, 所有候选跑满 MAX_GLOBAL_STEPS;
+# 候选是否采用完全交由下游 stage3 test_R@10 裁决 (硬目标 > 0.065).
 
 
 @dataclass
@@ -227,7 +228,13 @@ def _parse_sid_metrics_stdout(stdout: str) -> Dict[str, float]:
 
 
 def should_early_stop(metrics: SidMetrics) -> tuple[bool, str]:
-    """返回 (是否终止, 原因)."""
+    """返回 (是否终止, 原因).
+
+    2026-09-19 决定: trainer 内层 gate 完全删除, 始终返回 (False, "");
+    SID 质量评估由外层 HR@50 hard gate (CLAUDE.md §2) 单独负责.
+    trainer 不再因 l01_pairs / H(L1|L0) / hitrate 触发自动 early-stop,
+    所有候选都会跑完 MAX_GLOBAL_STEPS, 供下游 stage3 验证.
+    """
     if not isinstance(metrics, SidMetrics):
         raise ValueError("should_early_stop: metrics 类型无效")
     if not np.isfinite(metrics.full_gini):
@@ -240,54 +247,13 @@ def should_early_stop(metrics: SidMetrics) -> tuple[bool, str]:
         raise ValueError("should_early_stop: n_items 和 n_unique_full 必须为正数")
     if metrics.l01_unique_pairs < 1 or not np.isfinite(metrics.h_l1_given_l0):
         raise ValueError("should_early_stop: 联合 SID 指标必须有效")
-    if np.isinf(metrics.hitrate_k50):
-        raise ValueError("should_early_stop: hitrate_k50 不得为 Inf")
-
-    reasons = []
-    if metrics.l01_unique_pairs < (
-        BASELINE_L01_UNIQUE_PAIRS * EARLY_STOP_JOINT_MIN_RATIO
-    ):
-        reasons.append(
-            f"l01_unique_pairs={metrics.l01_unique_pairs} < "
-            f"baseline*ratio={BASELINE_L01_UNIQUE_PAIRS * EARLY_STOP_JOINT_MIN_RATIO:.0f}"
-        )
-    if metrics.h_l1_given_l0 < (
-        BASELINE_H_L1_GIVEN_L0 * EARLY_STOP_JOINT_MIN_RATIO
-    ):
-        reasons.append(
-            f"H(L1|L0)={metrics.h_l1_given_l0:.4f} < "
-            f"baseline*ratio={BASELINE_H_L1_GIVEN_L0 * EARLY_STOP_JOINT_MIN_RATIO:.4f}"
-        )
-
     if not np.isfinite(metrics.hitrate_k50):
-        # HitRate 不可用时仍检查 Full/Layer Gini 以及跨层联合结构。
-        if metrics.full_gini > EARLY_STOP_FULL_GINI_MAX:
-            reasons.append(
-                f"full_gini={metrics.full_gini:.4f} > {EARLY_STOP_FULL_GINI_MAX}"
-            )
-        for layer_index, value in enumerate(metrics.per_layer_gini):
-            if value > EARLY_STOP_LAYER_GINI_MAX:
-                reasons.append(
-                    f"layer{layer_index}_gini={value:.4f} > {EARLY_STOP_LAYER_GINI_MAX}"
-                )
-    elif metrics.hitrate_k50 < BASELINE_HITRATE_K50 * EARLY_STOP_HITRATE_MIN_RATIO:
-        reasons.append(
-            f"hitrate_k50={metrics.hitrate_k50:.4f} < "
-            f"baseline*ratio={BASELINE_HITRATE_K50 * EARLY_STOP_HITRATE_MIN_RATIO:.4f}"
-        )
-    elif metrics.full_gini > EARLY_STOP_FULL_GINI_MAX:
-        reasons.append(
-            f"full_gini={metrics.full_gini:.4f} > {EARLY_STOP_FULL_GINI_MAX}"
-        )
-    else:
-        for layer_index, value in enumerate(metrics.per_layer_gini):
-            if value > EARLY_STOP_LAYER_GINI_MAX:
-                reasons.append(
-                    f"layer{layer_index}_gini={value:.4f} > {EARLY_STOP_LAYER_GINI_MAX}"
-                )
-                break
+        raise ValueError("should_early_stop: hitrate_k50 必须为有限数 (NaN/Inf 都不行)")
 
-    return bool(reasons), "; ".join(reasons)
+    # 训练期不因任何 SID 指标触发 early-stop;
+    # 所有候选 SID (含 catastrophic collapse 如 iter16 l01_pairs=375) 都会跑完 MAX_GLOBAL_STEPS,
+    # 是否采用完全由 stage3 test_R@10 (硬目标 > 0.065) 决定.
+    return False, ""
 
 
 def format_metrics(metrics: SidMetrics) -> str:
@@ -315,7 +281,7 @@ def write_quality_report(
         "early_stopped": early_stopped,
         "reason": reason,
         "baseline": {
-            "hitrate_k50": BASELINE_HITRATE_K50,
+            # 2026-09-19: BASELINE_HITRATE_K50 已删除 (HR@50 不再作 gate)
             "full_gini": BASELINE_FULL_GINI,
             "per_layer_gini": BASELINE_PER_LAYER_GINI,
             "l01_unique_pairs": BASELINE_L01_UNIQUE_PAIRS,

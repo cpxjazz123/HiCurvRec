@@ -10,7 +10,7 @@ import os
 _CONFIG_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter10"
 
 # === 机制标识 (R52 + R53 联动) ===
-MECHANISM_NAME = "iter10_gumbel_softmax_anneal"  # iter10: Gumbel-Softmax temperature anneal T_init=2.0 → T_final=0.5 over 20k steps. 训练时 Gumbel softmax + STE, 推理时硬离散 argmax. 与 cyclic c(t)+midpoint 正交. 论文: Jang et al. 2017 "Categorical Reparameterization with Gumbel-Softmax".
+MECHANISM_NAME = "iter10_partial_reconstruction_decoder_alignment"  # 逐前缀 partial reconstruction；保持三层 learned SID 与第四 collision token。
 SAVE_DIR_ROOT = os.path.join(_CONFIG_DIR, "out/decoder/instruments_hgrec_configs/hgrec_{}/".format(MECHANISM_NAME))
 CONFIG_PATH = os.path.join(_CONFIG_DIR, "configs/decoder_instruments_hgrec_{}.gin".format(MECHANISM_NAME))
 BEST_CKPT_PATH = os.path.join(SAVE_DIR_ROOT, "best_ckpt.pt")

@@ -59,7 +59,7 @@ torch.set_float32_matmul_precision("highest" if STRICT_DETERMINISTIC else "high"
 # 训练 / 吞吐
 BATCH_SIZE       = 4096   # 4 卡 DDP 每卡 1024 (8192 OOM @ 46GB L40S, 4096 安全)
 INFER_SIZE       = 1024   # 4 卡 DDP 每卡 256, 等效 4x throughput (vs 单卡 512)
-NUM_EPOCHS       = 100      # 2026-09-20 R53: 短训练上限, 严格 ablation 用 (避免 4x epoch 浪费 GPU)
+NUM_EPOCHS       = 150      # 2026-09-20 R53: 中等训练上限, 平衡 ablation 时长与收敛 (100→150 用户调整)
 EVAL_INTERVAL    = 5      # validate every N epochs (NO_EVAL=False 时生效)
 EVAL_START_EPOCH = 200    # iter11: 200 epoch 后才评估, 让 stage2 编码先充分学, 避免早期 valid 噪声
 EARLY_EVAL_EPOCHS = (50, 100, 150)  # iter17: 早期诊断点, 监控 valid 走势; 仅日志, 不影响 best_monitor / early_stop
@@ -108,7 +108,7 @@ MAX_LEN       = 20
 DATASET_NAME  = "Amazon_2023_Instruments"
 DATASET_PATH  = "./dataset/"
 CODEBOOK_SIZE = [256, 256, 256, 1]
-CODE_PATH     = "item_sids_iter33.json"  # iter33 R36-S0 per-item curvature (oracle_L0_seq top10=0.1010 = +199% vs baseline 0.0338, Stage 0 端 per-item emb scaling 巨大正信号)
+CODE_PATH     = "item_sids_recbole.json"  # curvature RQ-VAE 2026-09-20 final collision-extended SID
 TRAIN_FILE    = "train_recbole.parquet"
 VALID_FILE    = "valid_recbole.parquet"
 TEST_FILE     = "test_recbole.parquet"

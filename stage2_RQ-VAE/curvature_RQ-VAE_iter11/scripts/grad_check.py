@@ -64,7 +64,6 @@ model = rqtrain.RqVae(
     c_cyclic_max=rqtrain.C_CYCLIC_MAX,
     c_cyclic_period=rqtrain.C_CYCLIC_PERIOD,
     midpoint_layer_mask=rqtrain.MIDPOINT_LAYER_MASK,
-    per_layer_sk_eps=[0.5, 0.05, 0.05],
 ).to(device)
 
 # 用显式的临时 checkpoint 验证 state_dict 恢复路径，再从恢复后的模型做检查。

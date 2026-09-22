@@ -66,46 +66,19 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_cyclic_max: float = 1.0,
         c_cyclic_period: int = 50_000,
         midpoint_layer_mask: List[bool] | None = None,
-        per_layer_c_min: List[float] | None = None,
-        per_layer_c_max: List[float] | None = None,
-        per_layer_c_period: List[int] | None = None,
-        per_layer_manifold: List[str] | None = None,  # iter5
-        per_layer_sk_eps: List[float] | None = None,  # iter11 sweep: L0-only Gini knob
     ) -> None:
         super().__init__()
         if midpoint_layer_mask is None:
             midpoint_layer_mask = [True] + [False] * (n_layers - 1)
-        # === iter5 v375: per-layer c + manifold ===
-        if per_layer_c_min is None:
-            per_layer_c_min = [c_cyclic_min] * n_layers
-        if per_layer_c_max is None:
-            per_layer_c_max = [c_cyclic_max] * n_layers
-        if per_layer_c_period is None:
-            per_layer_c_period = [c_cyclic_period] * n_layers
-        if per_layer_manifold is None:
-            per_layer_manifold = ["poincare"] * n_layers
-        # === iter11 sweep: per-layer sk_eps ===
-        # 若不传, 每层用全局 sk_eps (保持旧行为).
-        if per_layer_sk_eps is None:
-            per_layer_sk_eps = [float(sk_eps)] * n_layers
-        if len(per_layer_sk_eps) != n_layers:
-            raise ValueError("Step1: per_layer_sk_eps 长度必须等于 n_layers")
-        if any(v <= 0 for v in per_layer_sk_eps):
-            raise ValueError("Step1: per_layer_sk_eps 必须全部为正数")
-        if len(per_layer_c_min) != n_layers or len(per_layer_c_max) != n_layers or len(per_layer_c_period) != n_layers or len(per_layer_manifold) != n_layers:
-            raise ValueError("Step1: per_layer_* 长度必须等于 n_layers")
-        for m in per_layer_manifold:
-            if m not in ("poincare", "sphere"):
-                raise ValueError(f"Step1: manifold 必须是 poincare/sphere, 实际 {m}")
         check_step1_config(
             input_dim=input_dim,
             embed_dim=embed_dim,
             hidden_dims=hidden_dims,
             codebook_size=codebook_size,
             n_layers=n_layers,
-            c_min=min(per_layer_c_min),
-            c_max=max(per_layer_c_max),
-            c_period=max(per_layer_c_period),
+            c_min=c_cyclic_min,
+            c_max=c_cyclic_max,
+            c_period=c_cyclic_period,
             sk_eps=sk_eps,
             sk_iters=sk_iters,
         )
@@ -125,7 +98,6 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             "c_cyclic_max": c_cyclic_max,
             "c_cyclic_period": c_cyclic_period,
             "midpoint_layer_mask": midpoint_layer_mask,
-            "per_layer_sk_eps": per_layer_sk_eps,
         }
         self.input_dim = input_dim
         self.embed_dim = embed_dim
@@ -140,14 +112,13 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     n_embed=codebook_size,
                     do_kmeans_init=codebook_kmeans_init,
                     commitment_weight=commitment_weight,
-                    sk_eps=per_layer_sk_eps[i],   # iter11 sweep: per-layer sk_eps
+                    sk_eps=sk_eps,
                     sk_iters=sk_iters,
-                    c_cyclic_min=per_layer_c_min[i],
-                    c_cyclic_max=per_layer_c_max[i],
-                    c_cyclic_period=per_layer_c_period[i],
-                    manifold_mode=per_layer_manifold[i],
+                    c_cyclic_min=c_cyclic_min,
+                    c_cyclic_max=c_cyclic_max,
+                    c_cyclic_period=c_cyclic_period,
                 )
-                for i in range(n_layers)
+                for _ in range(n_layers)
             ]
         )
         self.encoder = MLP(

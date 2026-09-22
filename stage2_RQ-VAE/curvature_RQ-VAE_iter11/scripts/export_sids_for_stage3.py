@@ -31,14 +31,14 @@ from curvature_config import SIDS_NPY  # noqa: E402
 
 # === 硬编码路径与常量 (项目规则: 禁止 CLI 参数) ===
 SOURCE_SIDS_NPY = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter11/"
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/"
     "out/rqvae/instruments/sids_final.npy"
 )
 STAGE3_JSON = Path(
     "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/dataset/Amazon_2023_Instruments/"
-    "item_sids_iter11.json"
+    "item_sids_recbole.json"
 )
-CODEBOOK_SIZES = [256, 256, 256]  # iter10 N_LAYERS=3, CODEBOOK_SIZE=256
+CODEBOOK_SIZES = [256, 256, 256]  # N_LAYERS=3, CODEBOOK_SIZE=256
 N_ITEMS = 24587
 
 
