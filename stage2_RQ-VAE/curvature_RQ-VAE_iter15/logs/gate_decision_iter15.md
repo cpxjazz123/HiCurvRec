@@ -1,27 +1,35 @@
 # gate_decision_iter15
 
-## Decision: **PENDING** (Stage3 test not finished at audit commit)
-
-Stage2 mechanism audit is **complete** (Agent D **ALIGNED**). Hard gate `test_recall@10 > 0.065` awaits `test_final.json` from Stage3 run `Sep-25-2026_22-46-35`.
-
-## Stage2 (complete)
+## Decision: **NO-GO** (hard target not met)
 
 - **Mechanism**: `iter15_fixed_residual_calibrated_curvature` (freeze `c_layer_scale` at residual `u_l=[0.001, 0.932889, 1.0]`, no behavior `b_l`)
-- **Training**: `global_step=100000`, ~1184 s wall time
-- **SID export**: `item_sids.json` (unique 23095/24587, hitrate@50=0.9968)
-- **Curvature snapshots**: `logs/curvature_snapshots.txt` (DE-1/DE-2/DE-3 satisfied)
-- **Agent D**: `logs/sid_quality_iter15.json`, `logs/sid_geometry_iter15.md`
+- **Stage2**: `global_step=100000`; SID export `item_sids.json` (unique 23095/24587, hitrate@50=0.9968); Agent D **ALIGNED**
+- **Stage3 run**: `Sep-25-2026_22-46-35`, 150 epochs train + beam test complete
 
-## Stage3 (in progress at commit time)
+## Stage3 test (n_eval=57439)
 
-- Run: `results/stage3_T5Train/curvature_RQ-VAE_iter15/logs/Amazon_2023_Instruments/Sep-25-2026_22-46-35`
-- Config: 150 epochs, vanilla TIGER / HG-Rec, `item_sids` from iter15
-- **Update this file** when `test_final.json` exists (compare vs iter11 **0.0598**, iter14 **0.0594**).
+| Metric | Value |
+|--------|-------|
+| test_recall@5 | 0.03787 |
+| test_recall@10 | **0.05824** |
+| test_ndcg@5 | 0.02538 |
+| test_ndcg@10 | 0.03194 |
+
+**Hard gate**: `test_recall@10 > 0.065` → **FAIL** (0.05824)
 
 ## A/B/C proxy (paper)
 
-| Iter | Mechanism | test_R@10 |
-|------|-----------|-----------|
-| iter11 | learnable `u_l` | 0.0598 |
-| iter14 | + behavior `b_l` | 0.0594 |
-| iter15 | frozen residual `u_l` | TBD |
+| Iter | Mechanism | test_R@10 | Δ vs iter15 |
+|------|-----------|-----------|-------------|
+| iter11 | learnable `u_l` | 0.0598 | +0.0016 |
+| iter14 | + behavior `b_l` | 0.0594 | +0.0012 |
+| **iter15** | frozen residual `u_l` | **0.0582** | — |
+
+vs iter8 best reference (0.0595): **-0.0013**
+
+## Notes
+
+- Mechanism hypotheses DE-1/DE-2/DE-3 satisfied (Stage2), but downstream **regressed** vs iter11/iter14 and below iter8.
+- Freezing `u_l` removed learnable layer-scale capacity without closing the 0.065 gap.
+- Do not PROMOTE; keep **iter11** (peak 0.0598) / **iter8** (0.0595) as references.
+- Failure attribution: `TRUE_MECHANISM_FAIL` — see `failure_attribution_iter15.md`.

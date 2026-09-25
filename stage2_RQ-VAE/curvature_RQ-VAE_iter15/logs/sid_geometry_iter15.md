@@ -1,6 +1,6 @@
 # Agent D — SID geometry (iter15)
 
-**Gate: ALIGNED** (mechanism direct effects observed; Stage3 gate pending).
+**Gate: ALIGNED** (mechanism direct effects observed). Stage3 gate: **NO-GO** (test_R@10=0.0582).
 
 ## Mechanism verification
 
