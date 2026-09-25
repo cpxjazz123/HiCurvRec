@@ -34,9 +34,12 @@ Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` 
 
 ## 8. Git 分支与推送规则
 
-- **只维护 `main` 分支**：所有开发、提交和后续迭代均必须在 `main` 分支上进行，不得创建、维护或推送其他长期分支。
-- **每次推送必须推送到 `main`**：完成一次提交后，必须使用 `git push origin main` 推送到远端 `main`；不得仅推送到临时分支或个人分支。
-- **推送后必须核验**：推送完成后必须比较本地 `main` 与远端 `origin/main` 的 commit hash；不一致时不得继续下一轮任务。
+- **唯一允许的远端**：所有 Git 远端操作只针对 GitHub 仓库 `https://github.com/cpxjazz123/HiCurvRec.git`。`origin` 必须指向该 URL；不得使用、添加、访问或推送到 GitLab 或任何其他远端。
+- **GitHub-only 网络操作**：`clone`、`fetch`、`pull`、`push`、`ls-remote`、远端分支/标签查询及其他会访问网络的 Git 操作，只能对上述 GitHub 仓库执行；禁止使用 `gitlab` 远端，即使该远端仍存在本地历史引用。
+- **只维护 `main` 分支**：所有开发、提交和后续迭代均必须在 `main` 分支上进行，不得创建、维护或推送其他长期分支；`main` 的上游必须是 `origin/main`。
+- **每次推送必须推送到 GitHub `main`**：完成一次提交后，必须使用 `git push origin main` 推送到 GitHub 远端 `main`；不得仅推送到临时分支、个人分支或其他服务。
+- **禁止未经授权强推**：不得使用 `git push --force` / `--force-with-lease` 改写 GitHub 历史，除非用户明确授权。
+- **推送前后必须核验**：操作前确认 `git remote -v` 中只有目标 GitHub URL；推送后比较 `git rev-parse main` 与 `git ls-remote origin refs/heads/main` 的 commit hash；不一致时不得继续下一轮任务。
 
 ## 9. 禁止使用 git worktree
 
@@ -53,3 +56,7 @@ Stage-2 训练产物必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneR
 ## 11. Stage-3 产物统一目录（2026-09-25 起生效）
 
 Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.json` / `training_metrics.jsonl` 等）必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter<N>/`（目录名与 `stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`、`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 完全同名同前缀），Stage3 `trainer.LOG_PATH` / `SAVE_PATH` 必须解析到该短名 `curvature_RQ-VAE_iter<N>` 子树（**不要**包含 `<descriptive>` 后缀）且 `<N>` 与当前 iter 编号一致。
+
+## 12. GitHub-only 强制执行
+
+本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。详细执行约束见项目根目录 `SKILL.md`。
