@@ -208,6 +208,11 @@ data/*.tfrecord.gz
 
 # Run logs (transient, regeneratable from reruns)
 logs/
+# Iter audit logs + Stage3 results logs (CLAUDE §13; parent `logs/` must be re-included explicitly)
+!stage2_RQ-VAE/curvature_RQ-VAE_iter*/logs/
+!stage2_RQ-VAE/curvature_RQ-VAE_iter*/logs/**
+!results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/
+!results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/**
 log_tensorboard/
 
 # Training artifacts: model checkpoints, pickle files, etc.

@@ -76,6 +76,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
         c_cyclic_period: int = 50_000,
         midpoint_layer_mask: List[bool] | None = None,
         residual_layer_norms: List[float] | None = None,
+        c_branch_mid: List[float] | None = None,
     ) -> None:
         super().__init__()
         if midpoint_layer_mask is None:
@@ -103,6 +104,18 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             layer_norms = [float(value) for value in residual_layer_norms]
             if any(not (0.0 < value <= 1.0) for value in layer_norms):
                 raise ValueError("residual_layer_norms 各值必须在 (0, 1] 内")
+        # iter12: per-layer behavior-branching multiplier. Default 1.0 = no warp
+        # (equivalent to iter11). When supplied, each layer's c_l(t) schedule is
+        # multiplied by its own branch_mid so layers with more behavior branches
+        # carry larger geometric capacity.
+        if c_branch_mid is None:
+            branch_mid = [1.0] * n_layers
+        else:
+            if len(c_branch_mid) != n_layers:
+                raise ValueError("c_branch_mid 长度必须等于 n_layers")
+            branch_mid = [float(value) for value in c_branch_mid]
+            if any(not (value > 0.0) for value in branch_mid):
+                raise ValueError("c_branch_mid 各值必须为正数")
 
         self._config = {
             "input_dim": input_dim,
@@ -118,6 +131,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
             "c_cyclic_period": c_cyclic_period,
             "midpoint_layer_mask": midpoint_layer_mask,
             "residual_layer_norms": list(layer_norms),
+            "c_branch_mid": list(branch_mid),
         }
         self.input_dim = input_dim
         self.embed_dim = embed_dim
@@ -138,6 +152,7 @@ class RqVae(nn.Module, PyTorchModelHubMixin):
                     c_cyclic_max=c_cyclic_max,
                     c_cyclic_period=c_cyclic_period,
                     c_layer_norm=layer_norms[index],
+                    c_branch_mid=branch_mid[index],
                 )
                 for index in range(n_layers)
             ]

@@ -40,6 +40,7 @@ Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` 
 - **每次推送必须推送到 GitHub `main`**：完成一次提交后，必须使用 `git push origin main` 推送到 GitHub 远端 `main`；不得仅推送到临时分支、个人分支或其他服务。
 - **禁止未经授权强推**：不得使用 `git push --force` / `--force-with-lease` 改写 GitHub 历史，除非用户明确授权。
 - **推送前后必须核验**：操作前确认 `git remote -v` 中只有目标 GitHub URL；推送后比较 `git rev-parse main` 与 `git ls-remote origin refs/heads/main` 的 commit hash；不一致时不得继续下一轮任务。
+- **每次迭代结束必须 commit + push（与 §13 绑定）**：不得以「训练/评测已在磁盘完成」代替 Git 同步；未 push 成功前不得宣称该 iter 闭环、不得启动下一 iter 的 mechanism 改动。
 
 ## 9. 禁止使用 git worktree
 
@@ -59,4 +60,30 @@ Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.
 
 ## 12. GitHub-only 强制执行
 
-本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。详细执行约束见项目根目录 `SKILL.md`。
+本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
+
+- **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
+- **curvature-RQ-VAE 迭代流程**（Agent A–G、MVG、Commit Discipline 脚本等）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+
+## 13. 每次迭代完成必须 commit + push（代码 + 产物）
+
+**迭代完成**指：该 `iter<N>` 的 Stage2（含 SID 导出）与 Stage3（含 `test_final.json` 或等价最终 test 记录）均已跑完，且已写入 `direction_decision_iter<N>.md`（或同目录下等价的 iter 决策/结果 markdown，若本轮尚未建文件则本轮 commit 中必须新建）。
+
+### 必须纳入版本库的范围
+
+1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、preflight、export 等）及本轮新增/修改的 `logs/*.md`（hypothesis / failure_attribution / gate_decision / direction_decision 等）。
+2. **Stage2 产物**（§0 / §10）：`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 下本轮训练产出（至少 `item_sids.json`、`rqvae_best.pth` 或最终 ckpt、`sids_for_hgrec.npy` 等实际用于 Stage3 的文件；`rqvae_step_*.pt` 若体积过大可只保留 best + 末 step，但须在 commit message 中说明删减策略）。
+3. **Stage3 产物**（§11）：`results/stage3_T5Train/curvature_RQ-VAE_iter<N>/` 下本轮 run 的 `logs/.../test_final.json`、`training_metrics.jsonl`、对应 `ckpt/.../HG_Rec_best.pth` 及 `_stage3_launcher.log`（或等价 launcher 日志）。
+
+不得只提交代码而遗漏 `results/` 中该 iter 目录；不得只提交 metrics 而遗漏 mechanism 源码变更。
+
+### 执行步骤（强制顺序）
+
+1. `git status`：确认无遗漏的 iter 路径；`git check-ignore -v` 排查 `.gitignore` 误排除产物（若产物被 ignore，须修正 ignore 规则或按项目约定添加例外后再提交，不得静默跳过）。
+2. 单次语义化 commit（建议 message：`iter<N>: <mechanism 简述> + stage2/3 results`），`git add` 覆盖上述三类路径。
+3. `git push origin main`（遵守 §8，禁止未授权 force）。
+4. 核验：`git rev-parse main` 与 `git ls-remote origin refs/heads/main` 一致；**不一致则 iter 视为未交付，禁止开下一 iter**。
+
+### 与监控/目标的关系
+
+流水线监控、goal complete、向用户汇报「iter 完成」之前，必须先满足本节 push 核验；仅本地存在 `test_final.json` 而未 push 时，只能报告「评测已结束，Git 待同步」，不得标记迭代闭环。

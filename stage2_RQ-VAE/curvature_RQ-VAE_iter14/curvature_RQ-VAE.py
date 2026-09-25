@@ -79,6 +79,7 @@ from curvature_config import (
     RQVAE_OUT_DIR as OUT_DIR,
     MECHANISM_NAME,
     _CONFIG_DIR as _CONFIG_DIR_RESULTS,
+    BEHAVIOR_BRANCH_FILE,
 )
 
 
@@ -266,6 +267,33 @@ def _load_layer_norms() -> list[float]:
     return [float(value) for value in layer_norms]
 
 
+def _load_branch_mid() -> list[float]:
+    """加载 scripts/computed_behavior_branching.json 写出的 per-layer branch_mid.
+
+    默认值全 1.0 (等价 iter11: 不修改 cyclic schedule). 文件缺失时给出 fallback
+    `[1.0, 1.0, 1.0]` 并打印 WARN, 训练入口只读一次.
+    """
+    branch_path = Path(BEHAVIOR_BRANCH_FILE)
+    if not branch_path.is_file():
+        baseline = [1.0] * N_LAYERS
+        print(
+            f"[Step4] WARN: 未找到 {branch_path}, 使用全 1.0 branch_mid "
+            f"(iter14 等价 iter11)",
+            flush=True,
+        )
+        return baseline
+    payload = json.loads(branch_path.read_text(encoding="utf-8"))
+    branch_mid = payload.get("branch_mid")
+    if branch_mid is None or len(branch_mid) != N_LAYERS:
+        raise ValueError(
+            f"branch_mid 必须长度 {N_LAYERS}; got {branch_mid!r}"
+        )
+    return [float(value) for value in branch_mid]
+
+
+SCRIPT_DIR = Path(os.path.abspath(__file__)).parent
+
+
 def main():
     # ---------- Step1 配置不变量 ----------
     check_step1_config(
@@ -346,10 +374,14 @@ def main():
 
     # ---------- Step3.5 iter1: 加载残差归一化尺度（所有 rank 一致）----------
     residual_layer_norms = _load_layer_norms()
+    # iter14: fixed soft behavior multiplier b_l (alpha=0.1). Precompute via scripts/compute_behavior_branching.py.
+    c_branch_mid = _load_branch_mid()
     if rank == 0:
         norm_str = "/".join(f"{value:.4f}" for value in residual_layer_norms)
+        branch_str = "/".join(f"{value:.4f}" for value in c_branch_mid)
         print(
             f"[Step3.5] residual_layer_norms (per-layer u_l) = [{norm_str}] | "
+            f"soft_behavior_b_l = [{branch_str}] | "
             f"mechanism={MECHANISM_NAME}",
             flush=True,
         )
@@ -370,28 +402,21 @@ def main():
         c_cyclic_period=C_CYCLIC_PERIOD,
         midpoint_layer_mask=MIDPOINT_LAYER_MASK,
         residual_layer_norms=residual_layer_norms,
+        c_branch_mid=c_branch_mid,
     ).to(device)
 
-    # iter13: warm-start from iter8's checkpoint. iter13 keeps iter8's mechanism
-    # and adds a learnable per-layer temperature `log_tau_l` (initialized to 0,
-    # i.e. tau_l=1) that multiplicatively modulates the Sinkhorn ε schedule.
+    # iter14: warm-start from iter8 (same as iter11). Only adds fixed soft b_l on c(t).
     iter8_ckpt_path = (
-        "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter8/"
-        "results/out/rqvae/instruments/rqvae_best.pth"
+        "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
+        "curvature_RQ-VAE_iter8/out/rqvae/instruments/rqvae_best.pth"
     )
     if os.path.isfile(iter8_ckpt_path):
         if rank == 0:
             warm_start_state = torch.load(
                 iter8_ckpt_path, map_location=device, weights_only=False
             )
-            # iter13: skip c_layer_scale (re-initialized to interior) AND log_tau_l
-            # (re-initialized to 0 -> tau_l = 1 identity) so the optimizer can drive
-            # log_tau_l during training.
             trainable_curvature_keys = {
                 f"layers.{index}.c_layer_scale"
-                for index in range(N_LAYERS)
-            } | {
-                f"layers.{index}.log_tau_l"
                 for index in range(N_LAYERS)
             }
             transferred_weights = {
@@ -407,14 +432,14 @@ def main():
                 or unexpected
             ):
                 raise RuntimeError(
-                    f"iter13 warm-start mismatch "
+                    f"iter14 warm-start mismatch "
                     f"(missing={sorted(missing)}, unexpected={sorted(unexpected)})"
                 )
             print(
-                f"[Step4] iter13 warm-start loaded {len(transferred_weights)} tensors "
+                f"[Step4] iter14 warm-start loaded {len(transferred_weights)} tensors "
                 f"from {iter8_ckpt_path}; "
                 f"c_layer_scale re-initialized in (0.001, 0.933, 1.0) for new range; "
-                f"log_tau_l re-initialized to 0 (tau_l=1 identity)",
+                f"period=50_000",
                 flush=True,
             )
         # Make sure every rank waits for the rank-0 warm-start before entering DDP.
@@ -423,7 +448,7 @@ def main():
     elif rank == 0:
         print(
             f"[Step4] WARN: iter8 warm-start checkpoint missing at {iter8_ckpt_path}; "
-            f"iter13 will train from random initialization",
+            f"iter14 will train from random initialization",
             flush=True,
         )
 
@@ -433,11 +458,7 @@ def main():
     if dist.is_available() and dist.is_initialized():
         model = DDP(
             model, device_ids=[local_rank], output_device=local_rank,
-            # iter13: find_unused_parameters=True because iter13 introduces
-            # log_tau_l (a new parameter not present in iter8's checkpoint).
-            # Without this, DDP can stash log_tau_l as "unused" and skip its
-            # gradient all-reduce, leaving parameter.grad = None on every rank.
-            find_unused_parameters=True,
+            find_unused_parameters=False,
         )
 
     if rank == 0:
