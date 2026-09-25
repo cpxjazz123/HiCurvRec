@@ -1,8 +1,5 @@
-from __future__ import annotations
-
 import torch
 from torch import nn, Tensor
-from typing import Optional
 
 
 class ReconstructionLoss(nn.Module):
@@ -39,7 +36,6 @@ class QuantizeLoss(nn.Module):
         query: Tensor,
         value: Tensor,
         c: Tensor,
-        log_tau_l: Optional[Tensor] = None,
         c_min_reference: float = 0.05,
         c_max_reference: float = 1.5,
     ) -> Tensor:
@@ -60,23 +56,19 @@ class QuantizeLoss(nn.Module):
         commitment_loss = _poincare_distance_t(
             query_h, value_h.detach(), c
         ).squeeze(-1).square()
-        # iter13: per-layer learnable commitment multiplier.
-        # `tau_l = exp(log_tau_l)` multiplies the commitment_weight (gradient flows
-        # through log_tau_l since it's a leaf parameter). The c-modulated term
-        # from iter11 is also kept so per-layer commitment is jointly modulated
-        # by (c) and (tau_l). When log_tau_l = 0 -> tau_l = 1 (identity).
-        c_modulation = 1.0
-        if log_tau_l is not None:
-            tau_l = torch.exp(log_tau_l).clamp(0.05, 20.0)
-            c_value = c.item()
-            if c_max_reference > c_min_reference and c_value > 0:
-                normalized = max(min(c_value / c_max_reference, 1.0), 1e-6)
-                c_modulation = float(normalized ** 0.25)
-            effective_commitment = self.commitment_weight * c_modulation * tau_l
+        # iter11: mild c-modulated commitment weight. We multiply the base
+        # commitment_weight by a power of normalized curvature, so high-c phases
+        # get slightly stronger commitment pull (the encoder pushes residuals
+        # toward codebook faster at high c) and low-c phases get a softer pull.
+        # The exponent 0.25 is gentle: ratio (c_min/c_max)**0.25 ≈ 0.43, so the
+        # low-c commitment weight is ~0.43x the high-c weight. Per-layer
+        # utilization should remain balanced because the assignment step is
+        # unchanged (Sinkhorn ε linear, 3 iters, iter8's mechanism).
+        c_value = c.item()
+        if c_value <= 0 or c_max_reference <= c_min_reference:
+            c_modulation = 1.0
         else:
-            c_value = c.item()
-            if c_max_reference > c_min_reference and c_value > 0:
-                normalized = max(min(c_value / c_max_reference, 1.0), 1e-6)
-                c_modulation = float(normalized ** 0.25)
-            effective_commitment = self.commitment_weight * c_modulation
+            normalized = max(min(c_value / c_max_reference, 1.0), 1e-6)
+            c_modulation = float(normalized ** 0.25)
+        effective_commitment = self.commitment_weight * c_modulation
         return codebook_loss + effective_commitment * commitment_loss

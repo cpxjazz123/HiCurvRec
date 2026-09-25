@@ -34,6 +34,7 @@ class Quantize(nn.Module):
         c_cyclic_max: float,
         c_cyclic_period: int,
         c_layer_norm: float = 1.0,
+        c_branch_mid: float = 1.0,
     ) -> None:
         super().__init__()
         if sk_eps <= 0:
@@ -46,6 +47,8 @@ class Quantize(nn.Module):
             raise ValueError("cyclic curvature period 必须为正数")
         if not 0 < c_layer_norm <= 1.0:
             raise ValueError("c_layer_norm 必须在 (0, 1] 内（对 c_cyclic_max 的归一化尺度）")
+        if not 0 < c_branch_mid:
+            raise ValueError("c_branch_mid 必须为正数（soft behavior multiplier b_l）")
 
         self.embed_dim = embed_dim
         self.n_embed = n_embed
@@ -61,13 +64,8 @@ class Quantize(nn.Module):
         self.c_layer_norm = float(c_layer_norm)
         initial = min(max(self.c_layer_norm, 1e-4), 1.0 - 1e-4)
         self.c_layer_scale = nn.Parameter(torch.tensor(initial, dtype=torch.float32))
-        # iter13: per-layer learnable commitment multiplier `log_tau_l`, applied
-        # to commitment_loss in `QuantizeLoss` (see modules/loss.py). Initialized
-        # to log_tau_l = 0 -> multiplier = 1 (identity, iter11 baseline). The
-        # optimizer can drive log_tau_l per layer: <0 sharpens commitment (drives
-        # residuals into codebook faster); >0 softens it. The gradient path
-        # through QuantizeLoss is well-defined (no Sinkhorn / argmax in between).
-        self.log_tau_l = nn.Parameter(torch.tensor(0.0, dtype=torch.float32))
+        # iter14: fixed soft behavior multiplier b_l (from compute_behavior_branching.py).
+        self.c_branch_mid = float(c_branch_mid)
         self._curriculum_step = 0
         self.quantize_loss = QuantizeLoss(commitment_weight)
         self._init_weights()
@@ -81,7 +79,7 @@ class Quantize(nn.Module):
         return self.embedding.weight.device
 
     def get_c(self) -> Tensor:
-        """Return cyclic curvature with a learnable bounded layer scale."""
+        """iter11 cyclic schedule multiplied by fixed soft behavior factor b_l."""
         phase = torch.tensor(
             torch.pi * self._curriculum_step / self.c_cyclic_period,
             device=self.device,
@@ -99,7 +97,13 @@ class Quantize(nn.Module):
                 dtype=self.embedding.weight.dtype,
             )
         )
-        return self.c_cyclic_min * torch.exp(exponent * log_ratio)
+        c_iter11 = self.c_cyclic_min * torch.exp(exponent * log_ratio)
+        branch = torch.tensor(
+            self.c_branch_mid,
+            device=self.device,
+            dtype=self.embedding.weight.dtype,
+        )
+        return (c_iter11 * branch).clamp(0.05, 1.5)
 
     def curvature_regularization(self) -> Tensor:
         """Keep learned layer scale near the residual-calibrated initialization."""
@@ -188,8 +192,8 @@ class Quantize(nn.Module):
         # curvature. effective_eps scales the configured sk_eps so high-c layers
         # get sharper assignments (more discriminative per-layer quantization)
         # while low-c layers stay soft (avoiding degenerate hard assignments).
-        # iter13 keeps iter8's ε schedule unchanged (Sinkhorn ε is not differentiable
-        # through argmax; we instead modulate the commitment loss in QuantizeLoss).
+        # Reference: "Optimal Transport for Discrete Representation"
+        # (Geneva & Zabaras 2022) — ε ∝ 1/c tightens assignments at high c.
         current_c = curvature.view(1, 1, 1)
         c_min_reference = torch.tensor(
             self.c_cyclic_min, device=centered.device, dtype=centered.dtype
@@ -198,16 +202,16 @@ class Quantize(nn.Module):
             self.c_cyclic_max, device=centered.device, dtype=centered.dtype
         )
         # Scale eps linearly with normalized curvature: eps_new = sk_eps * (c / c_max).
+        # At c = c_max -> eps stays at sk_eps; at c = c_min -> eps shrinks by factor
+        # c_min/c_max, softens assignment. The sign of the eps contrast flips for the
+        # behavior on the curvature axis vs. naive 1/c but keeps the high-c sharpening
+        # intent (and avoids numerical instability from c -> 0).
         c_scale = (
             current_c / c_max_reference.clamp_min(1e-12)
         ).view(1, 1)
-        effective_eps_tensor = (
-            (self.sk_eps * c_scale).clamp_min(1e-4)
-        )
-        # Pass the float to Sinkhorn (gradient path to log_tau_l lives in
-        # QuantizeLoss, not in this Sinkhorn step).
+        effective_eps = (self.sk_eps * c_scale).clamp_min(1e-4).item()
         assignments = _sinkhorn_algorithm(
-            centered.double(), effective_eps_tensor.item(), self.sk_iters
+            centered.double(), effective_eps, self.sk_iters
         )
         if not torch.isfinite(assignments).all().item():
             raise RuntimeError("Sinkhorn assignment 含 NaN 或 Inf")
@@ -220,7 +224,6 @@ class Quantize(nn.Module):
             query=x,
             value=embeddings,
             c=curvature_2d,
-            log_tau_l=self.log_tau_l,
         )
         if not torch.isfinite(loss).all().item():
             raise RuntimeError("Quantize loss 含 NaN 或 Inf")

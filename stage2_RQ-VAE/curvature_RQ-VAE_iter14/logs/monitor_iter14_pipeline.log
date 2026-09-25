@@ -1,0 +1,48 @@
+2026-09-25 20:43:36 monitor: waiting for Stage2 completion
+2026-09-25 20:43:36 monitor: waiting for Stage2 completion
+2026-09-25 20:53:53 monitor: waiting for Stage2 completion
+2026-09-25 20:53:53 monitor: waiting for Stage2 completion
+2026-09-25 20:59:50 monitor: waiting for Stage2 completion
+2026-09-25 20:59:50 monitor: waiting for Stage2 completion
+2026-09-25 21:02:37 monitor: Stage2 finished
+2026-09-25 21:02:37 monitor: Stage2 finished
+/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter14/logs/monitor_iter14_pipeline.sh: line 28: xit: command not found
+2026-09-25 21:02:50 watcher: STAGE2_DONE marker in log
+2026-09-25 21:02:50 monitor: Stage2 finished
+2026-09-25 21:02:50 monitor: Stage2 finished
+2026-09-25 21:02:50 monitor: running export_sids_for_stage3.py
+2026-09-25 21:02:50 monitor: running export_sids_for_stage3.py
+[export] 3-token unique=23003/24587 (collision rows=1584) -> extension 值域 [768, 803] (default=768)
+[export] 3-token unique=23003/24587 (collision rows=1584) -> extension 值域 [768, 803] (default=768)
+[export] wrote /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/sids_for_hgrec.npy: shape=(24587, 4)
+[export] wrote /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/dataset/Instruments/sids_for_hgrec.npy: shape=(24587, 4)
+[export] wrote /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/item_sids.json: n_items=24587
+[export] wrote /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter14/item_sids.json: n_items=24587
+[export] SID_WIRING_PASS: 4-token extension npy + JSON 校验通过
+[export] SID_WIRING_PASS: 4-token extension npy + JSON 校验通过
+2026-09-25 21:02:50 monitor: launching Stage3
+2026-09-25 21:02:50 monitor: launching Stage3
+2026-09-25 21:02:50 monitor: Stage3 launcher pid=2413645
+2026-09-25 21:02:50 monitor: Stage3 launcher pid=2413645
+2026-09-25 21:02:53 monitor: Stage2 finished
+2026-09-25 21:02:53 monitor: Stage2 finished
+/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter14/logs/monitor_iter14_pipeline.sh: line 28: xit: command not found
+2026-09-25 21:02:55 watcher: STAGE2_DONE marker in log
+2026-09-25 21:07:20 watcher: PIPELINE_ERROR Stage3 traceback
+2026-09-25 21:46:52 monitor: Stage3 test_final.json written at /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter14/logs/Amazon_2023_Instruments/Sep-25-2026_21-07-42/test_final.json
+2026-09-25 21:46:52 monitor: Stage3 test_final.json written at /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter14/logs/Amazon_2023_Instruments/Sep-25-2026_21-07-42/test_final.json
+{
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter14/ckpt/Amazon_2023_Instruments/Sep-25-2026_21-07-42/HG_Rec_best.pth",
+  "n_eval": 57439,
+  "test_recall@5": 0.0393634986681523,
+  "test_recall@10": 0.059436967913786797,
+  "test_ndcg@5": 0.02642883190454305,
+  "test_ndcg@10": 0.032907323875511554
+}{
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter14/ckpt/Amazon_2023_Instruments/Sep-25-2026_21-07-42/HG_Rec_best.pth",
+  "n_eval": 57439,
+  "test_recall@5": 0.0393634986681523,
+  "test_recall@10": 0.059436967913786797,
+  "test_ndcg@5": 0.02642883190454305,
+  "test_ndcg@10": 0.032907323875511554
+}/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter14/logs/monitor_iter14_pipeline.sh: line 67: g: command not found
