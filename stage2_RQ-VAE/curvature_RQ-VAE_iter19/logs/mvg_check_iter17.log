@@ -1,0 +1,16 @@
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy: shape=(24587, 768), train transitions=339519, active sources=24474/24587
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter17/out/decoder/instruments_hgrec_configs/hgrec_iter17_riemannian_adam_1_over_c/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+MVG PASS
+batch_shape=(640, 768) active_pairs=640
+initial_c_l=[0.050085, 0.244323, 0.273815]
+reference_mean_inverse_c=9.096748
+DE-1 c_l / m_l by curriculum step:
+  step=0: c=[0.05008510500192642, 0.24432340264320374, 0.27381470799446106] m=[2.1518873420111526, 0.44809989440280373, 0.40001276358604404]
+  step=50000: c=[0.27432742714881897, 1.338214635848999, 1.49974524974823] m=[0.39926785339673937, 0.08208496821666382, 0.07324986758238829]
+  step=100000: c=[0.05008510872721672, 0.24432344734668732, 0.27381473779678345] m=[2.1518871850886123, 0.44809981274886285, 0.4000127202066044]
+DE-2 gradient L2 norms by layer:
+  layer0: [0.03833722695708275]
+  layer1: [0.028489692136645317]
+  layer2: [0.025703804567456245]
+DE-3 five-step relative updates=[(0, 0.04763167998820698), (1, 0.10315319816669052), (2, 0.1008355832236253)]
+DE-4 200-step counterfactual: L_on=2.54342532 L_off=2.46642065 delta=7.700e-02 behavior_on=5.38333893 behavior_off=5.38952351
