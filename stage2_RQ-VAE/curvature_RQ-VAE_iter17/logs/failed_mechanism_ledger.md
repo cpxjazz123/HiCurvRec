@@ -1,0 +1,3 @@
+# Failed mechanism ledger
+
+- iter17 | inverse-curvature layerwise AdamW multiplier (`m_l(t)=[1/(c_l(t)+1e-3)]/M_ref`) | `TRUE_MECHANISM_FAIL` (qualified downstream target miss; not proof of causal mechanism failure) | MVG PASS; all three registered direct effects pass; descriptive SID geometry ALIGNED (`H(L1|L0)=5.5939` bits, 23,092 unique three-token SIDs / 24,587, 6.08% collision rate); Stage3 pipeline completed with iter17 four-token SID wiring | `test_recall@10=0.059071362662999005` vs strict target `>0.065` (shortfall 0.005928637337000995); iter11 `0.05976775361688052`, iter16 `0.05687773115827226` | classification records this run's downstream miss only; no causal effect or impossibility claim
