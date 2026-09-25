@@ -1,0 +1,72 @@
+{
+  "mechanism": "iter15_fixed_residual_calibrated_curvature",
+  "stage2_global_step": 100000,
+  "freeze_layer_scale": true,
+  "residual_u_calibrated": [
+    0.001,
+    0.932889,
+    1.0
+  ],
+  "curvature_snapshots": [
+    {
+      "step": 0,
+      "c": [
+        0.050085,
+        0.244323,
+        0.273861
+      ],
+      "u_learned": [
+        0.001,
+        0.932889,
+        1.0
+      ]
+    },
+    {
+      "step": 10000,
+      "c": [
+        0.08471,
+        0.413231,
+        0.463189
+      ],
+      "u_learned": [
+        0.001,
+        0.932889,
+        1.0
+      ]
+    },
+    {
+      "step": 50000,
+      "c": [
+        0.274327,
+        1.338215,
+        1.5
+      ],
+      "u_learned": [
+        0.001,
+        0.932889,
+        1.0
+      ]
+    },
+    {
+      "step": 100000,
+      "c": [
+        0.050085,
+        0.244323,
+        0.273861
+      ],
+      "u_learned": [
+        0.001,
+        0.932889,
+        1.0
+      ]
+    }
+  ],
+  "sid_final": {
+    "unique_3token": "23095/24587",
+    "hitrate_at_50": 0.9968,
+    "H_l1_given_l0": 5.5962,
+    "l01_pairs": 14579
+  },
+  "agent_d_gate": "ALIGNED",
+  "agent_d_notes": "DE-1/DE-2/DE-3 satisfied; no behavior b_l."
+}
