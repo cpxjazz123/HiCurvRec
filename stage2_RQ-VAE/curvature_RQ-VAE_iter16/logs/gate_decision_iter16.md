@@ -35,3 +35,5 @@ iter16 ranks **lowest** of all 16 iterations.
 - Stage-1 ceiling is still ~0.06. After 6 mechanism trials (iter11/12/13/14/15/16), **no** Stage-2 modification has lifted the HG-Rec T5 ceiling past 0.060.
 - Failure attribution: `TRUE_MECHANISM_FAIL` — see `failure_attribution_iter16.md`.
 - Do not PROMOTE; keep **iter11** (0.0598) / **iter8** (0.0595) as references.
+
+- Audit commit: `988103e42fe69ba334c577d2fd0e9a0390c54e2e`
