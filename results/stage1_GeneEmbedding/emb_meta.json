@@ -1,0 +1,19 @@
+{
+  "encoder": "sentence-transformers/sentence-t5-base",
+  "sem_emb_dim": 768,
+  "batch_size": 32,
+  "device": "cuda",
+  "metadata_fields": [
+    "title",
+    "categories",
+    "features",
+    "description"
+  ],
+  "input_path": "/fs04/ar57/wenyu/GeneRec/dataset/Amazon_2023_Instruments/Instruments.item.json",
+  "dim": 768,
+  "count": 24587,
+  "item_id_min": 0,
+  "item_id_max": 24586,
+  "output_npy": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+  "source": "RecBole3.0/src/recbole3/{model/rqvae,dataset/amazon2023}"
+}

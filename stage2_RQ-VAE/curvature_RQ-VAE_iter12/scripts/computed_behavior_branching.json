@@ -1,0 +1,42 @@
+{
+  "entropy": [
+    2.9613950179410296,
+    0.37882601480060585,
+    0.014701837881298745
+  ],
+  "branching": [
+    19.324911558712664,
+    1.4605688962651735,
+    1.0148104414712726
+  ],
+  "residual_norm": [
+    0.001,
+    0.932889,
+    1.0
+  ],
+  "raw_capacity": [
+    8769860.45228595,
+    0.16489961671657283,
+    0.00021614403708798786
+  ],
+  "branch_mid": [
+    2.0,
+    0.5,
+    0.5
+  ],
+  "source": {
+    "script": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter12/scripts/compute_behavior_branching.py",
+    "iter8_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter8/out/rqvae/instruments/rqvae_best.pth",
+    "iter8_raw_sids": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter8/out/rqvae/instruments/sids_raw.npy",
+    "train_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "n_train_rows": 396958,
+    "n_behavior_pairs": 339519,
+    "n_items": 24587,
+    "n_layers": 3,
+    "definition": [
+      "H(T0 | source)",
+      "H(T1 | source, T0)",
+      "H(T2 | source, T0, T1)"
+    ]
+  }
+}

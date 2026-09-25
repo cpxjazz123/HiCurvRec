@@ -1,0 +1,48 @@
+import os
+import gin
+import torch
+from data.schemas import TokenizedSeqBatch
+
+
+def eval_mode(fn):
+    def inner(self, *args, **kwargs):
+        was_training = self.training
+        self.eval()
+        out = fn(self, *args, **kwargs)
+        self.train(was_training)
+        return out
+
+    return inner
+
+
+def parse_config():
+    # R53 v3.8: config_path 硬编码从 curvature_config.py import (无 env var)
+    from curvature_config import CONFIG_PATH as _CONFIG_PATH
+    config_path = _CONFIG_PATH
+    try:
+        gin.parse_config_file(config_path)
+    except Exception as e:
+        # HG-Rec 路径兜底: gin binding 失败时靠 USE_HGREC_ARCH 硬编码 (curvature_config.py)
+        print(f"[parse_config] gin binding failed ({e}); falling back to USE_HGREC_ARCH=True", flush=True)
+
+
+@torch.no_grad
+def compute_debug_metrics(
+    batch: TokenizedSeqBatch, model_output=None, prefix: str = ""
+) -> dict:
+    seq_lengths = batch.seq_mask.sum(axis=1).to(torch.float32)
+    prefix = prefix + "_"
+    debug_metrics = {
+        prefix + f"seq_length_p{q}": torch.quantile(seq_lengths, q=q)
+        .detach()
+        .cpu()
+        .item()
+        for q in [0.25, 0.5, 0.75, 0.9, 1]
+    }
+    if model_output is not None:
+        loss_debug_metrics = {
+            prefix + f"loss_{d}": model_output.loss_d[d].detach().cpu().item()
+            for d in range(batch.sem_ids_fut.shape[1])
+        }
+        debug_metrics.update(loss_debug_metrics)
+    return debug_metrics
