@@ -29,3 +29,5 @@
 - Stage3: `results/stage3_T5Train/curvature_RQ-VAE_iter17/logs/Amazon_2023_Instruments/Sep-26-2026_02-33-02/test_final.json`
 - Stage2 direct effects and geometry: `mvg_check_iter17.log`, `sid_geometry_iter17.md`
 - Agent reports: `stage3_outcome_iter17.md`, `failure_attribution_iter17.md`
+
+Audit commit: `4375b37da709c4e0052a9f61c81788bde8877ee5`
