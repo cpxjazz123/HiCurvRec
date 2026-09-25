@@ -1,0 +1,25 @@
+2026-09-24 16:15:22,421 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'early_stop': 10, 'fast': True, 'bf16': True, 'use_lr_scheduler': True, 'lr_warmup_pct': 0.1, 'lr_min_factor': 0.2, 'compile': False, 'compile_mode': 'default', 'num_layers': 4, 'num_decoder_layers': 4, 'd_model': 128, 'd_ff': 1024, 'num_heads': 6, 'd_kv': 64, 'dropout_rate': 0.1, 'activation_function': 'relu', 'feed_forward_proj': 'relu', 'device': 'cuda', 'lr': 0.003, 'weight_decay': 0.05, 'vocab_size': 791, 'eos_token_id': 790, 'pad_token_id': 0, 'n_user_tokens': 1, 'max_len': 20, 'dataset_name': 'Amazon_2023_Instruments', 'dataset_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/', 'codebook_size': [256, 256, 256, 1], 'code_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids_iter1.json', 'train_file': 'train.parquet', 'valid_file': 'valid.parquet', 'test_file': 'test.parquet', 'log_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/logs/', 'save_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/', 'seed': 42, 'topk_list': [5, 10], 'beam_size': 20, 'no_eval': True, 'skip_test': False, 'screen_baseline_log': '', 'screen_start_epoch': 40, 'screen_window': 5, 'screen_min_ndcg_gain': 0.001, 'screen_min_recall_gain': 0.001, 'screen_skip_test_on_fail': True, 'num_workers': 4, 'prefetch_factor': 8, 'exclude_history': True, 'no_exclude_history': False, 'pin_memory': True, 'no_pin_memory': False, 'sid_length': 4, 'max_token_seq_len': 82, 'decoder_start_token_id': 0}
+2026-09-24 16:15:22,474 - INFO - #Embedding parameters: 101248
+#Non-embedding parameters: 4459648
+#Total trainable parameters: 4560896
+
+2026-09-24 16:15:35,549 - INFO - Epoch 1/150 train_loss=4.911856708526611
+2026-09-24 16:15:35,609 - INFO - Best train loss=4.911856708526611; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:15:47,316 - INFO - Epoch 2/150 train_loss=4.182312278747559
+2026-09-24 16:15:47,356 - INFO - Best train loss=4.182312278747559; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:15:59,148 - INFO - Epoch 3/150 train_loss=3.943623733520508
+2026-09-24 16:15:59,194 - INFO - Best train loss=3.943623733520508; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:16:10,798 - INFO - Epoch 4/150 train_loss=3.7663777351379393
+2026-09-24 16:16:10,841 - INFO - Best train loss=3.7663777351379393; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:16:22,677 - INFO - Epoch 5/150 train_loss=3.572743501663208
+2026-09-24 16:16:22,718 - INFO - Best train loss=3.572743501663208; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:16:34,355 - INFO - Epoch 6/150 train_loss=3.390506134033203
+2026-09-24 16:16:34,396 - INFO - Best train loss=3.390506134033203; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:16:46,001 - INFO - Epoch 7/150 train_loss=3.4394483757019043
+2026-09-24 16:16:46,004 - INFO - No train loss improvement; patience=1
+2026-09-24 16:16:57,704 - INFO - Epoch 8/150 train_loss=3.2280404567718506
+2026-09-24 16:16:57,758 - INFO - Best train loss=3.2280404567718506; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:17:09,529 - INFO - Epoch 9/150 train_loss=3.0714896965026854
+2026-09-24 16:17:09,569 - INFO - Best train loss=3.0714896965026854; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
+2026-09-24 16:17:21,169 - INFO - Epoch 10/150 train_loss=2.958952808380127
+2026-09-24 16:17:21,226 - INFO - Best train loss=2.958952808380127; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/unknown_variant/ckpt/Amazon_2023_Instruments/Sep-24-2026_16-15-22/HG_Rec_best.pth
