@@ -21,3 +21,5 @@
 
 - vs iter13 peak: R@10 ≈ flat; R@5 / NDCG@10 slightly below iter13.
 - Do not PROMOTE; keep iter8/iter13 as reference baselines for next direction.
+
+- Audit commit: `438b50a276cd0a4133049cb562e9f00d57b48d9f`
