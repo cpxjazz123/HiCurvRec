@@ -1,0 +1,346 @@
+{
+  "samples": [
+    "curvature_RQ-VAE",
+    "curvature_RQ-VAE_iter10",
+    "curvature_RQ-VAE_iter11",
+    "curvature_RQ-VAE_iter14",
+    "curvature_RQ-VAE_iter2",
+    "curvature_RQ-VAE_iter28",
+    "curvature_RQ-VAE_iter3",
+    "curvature_RQ-VAE_iter32",
+    "curvature_RQ-VAE_iter33",
+    "curvature_RQ-VAE_iter4",
+    "curvature_RQ-VAE_iter35",
+    "curvature_RQ-VAE_iter36",
+    "curvature_RQ-VAE_iter37",
+    "curvature_RQ-VAE_iter38",
+    "curvature_RQ-VAE_iter39",
+    "curvature_RQ-VAE_iter40",
+    "curvature_RQ-VAE_iter41"
+  ],
+  "y_true": [
+    0.059071362662999005,
+    0.056042062013614447,
+    0.060168178415362386,
+    0.057400024373683384,
+    0.05384843050888769,
+    0.0592976897230105,
+    0.05520639286895663,
+    0.058322742387576385,
+    0.05790490781524748,
+    0.0556068176674385,
+    0.057852678493706365,
+    0.05774821985062414,
+    0.05733038527829523,
+    0.05736520482598931,
+    0.05912359198454012,
+    0.0595762461045631,
+    0.05938473859224569
+  ],
+  "stage2_spearman": [
+    {
+      "feature": "l01_unique_pairs",
+      "rho": -0.3727775072218453,
+      "pval": 0.14057297583431247,
+      "n": 17
+    },
+    {
+      "feature": "full_gini",
+      "rho": 0.3335377696195458,
+      "pval": 0.1907688235360737,
+      "n": 17
+    },
+    {
+      "feature": "n_unique_full",
+      "rho": -0.3335377696195458,
+      "pval": 0.1907688235360737,
+      "n": 17
+    },
+    {
+      "feature": "h_l1_given_l0",
+      "rho": 0.3090129336181086,
+      "pval": 0.22748572664490205,
+      "n": 17
+    },
+    {
+      "feature": "gini_L0",
+      "rho": 0.2575107780150905,
+      "pval": 0.31836046535586976,
+      "n": 17
+    },
+    {
+      "feature": "gini_L2",
+      "rho": -0.23298594201365333,
+      "pval": 0.3681576289627079,
+      "n": 17
+    },
+    {
+      "feature": "avg_l1_per_l0",
+      "rho": -0.21428571428571433,
+      "pval": 0.6445115810207203,
+      "n": 7
+    },
+    {
+      "feature": "avg_l2_per_l01",
+      "rho": 0.10714285714285716,
+      "pval": 0.8191508555699912,
+      "n": 7
+    },
+    {
+      "feature": "avg_l2_per_l0",
+      "rho": -0.07142857142857144,
+      "pval": 0.8790481931481541,
+      "n": 7
+    },
+    {
+      "feature": "gini_L1",
+      "rho": 0.03433477040201207,
+      "pval": 0.8959173399280753,
+      "n": 17
+    }
+  ],
+  "geometric_spearman": [
+    {
+      "feature": "geom_intra_l0_norm_std_mean",
+      "rho": 0.6121212121212121,
+      "pval": 0.05997214247725524,
+      "n": 10
+    },
+    {
+      "feature": "geom_intra_l0_norm_var_mean",
+      "rho": 0.5515151515151515,
+      "pval": 0.09840117666963498,
+      "n": 10
+    },
+    {
+      "feature": "geom_n_l0_codes_with_>10_items",
+      "rho": -0.5222329678670935,
+      "pval": 0.12150291881711318,
+      "n": 10
+    },
+    {
+      "feature": "geom_h_l1_given_l0_std",
+      "rho": -0.49090909090909085,
+      "pval": 0.14965567342083677,
+      "n": 10
+    },
+    {
+      "feature": "geom_h_l2_given_l0_mean",
+      "rho": 0.47087685122759404,
+      "pval": 0.0564219493148998,
+      "n": 17
+    },
+    {
+      "feature": "geom_L0_util",
+      "rho": -0.41253762806683175,
+      "pval": 0.09983978402185813,
+      "n": 17
+    },
+    {
+      "feature": "geom_L2_max_freq_ratio",
+      "rho": -0.3939393939393939,
+      "pval": 0.25999776683488757,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_max",
+      "rho": 0.37194949554383877,
+      "pval": 0.2898886711708533,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_p90",
+      "rho": 0.37194949554383877,
+      "pval": 0.2898886711708533,
+      "n": 10
+    },
+    {
+      "feature": "geom_h_l1_given_l0_mean",
+      "rho": 0.34089522041997694,
+      "pval": 0.18056616699351258,
+      "n": 17
+    },
+    {
+      "feature": "geom_mean_ball_ratio",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_mean",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_min",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_p10",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_p50",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_std",
+      "rho": 0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_pairwise_dist_max",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_pairwise_dist_mean",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_pairwise_dist_p50",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_pairwise_dist_p90",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_pairwise_dist_std",
+      "rho": -0.32004956593307055,
+      "pval": 0.3673049476180079,
+      "n": 10
+    },
+    {
+      "feature": "geom_L1_max_freq_ratio",
+      "rho": -0.28484848484848485,
+      "pval": 0.42503815489214547,
+      "n": 10
+    },
+    {
+      "feature": "geom_L0_entropy",
+      "rho": -0.2820356140165277,
+      "pval": 0.2727532504348888,
+      "n": 17
+    },
+    {
+      "feature": "geom_L0_max_freq_ratio",
+      "rho": 0.27535471144096857,
+      "pval": 0.2847577820090455,
+      "n": 17
+    },
+    {
+      "feature": "geom_intra_l0_norm_std_max",
+      "rho": -0.2606060606060606,
+      "pval": 0.4670890543863402,
+      "n": 10
+    },
+    {
+      "feature": "geom_norm_entropy",
+      "rho": -0.2335496832484569,
+      "pval": 0.5160766337811764,
+      "n": 10
+    },
+    {
+      "feature": "geom_l0_centroid_norm_std",
+      "rho": -0.2121212121212121,
+      "pval": 0.5563057751029299,
+      "n": 10
+    },
+    {
+      "feature": "geom_l0_centroid_norm_mean",
+      "rho": 0.19079181101796572,
+      "pval": 0.5975064030830338,
+      "n": 10
+    },
+    {
+      "feature": "geom_L2_entropy",
+      "rho": 0.16363636363636364,
+      "pval": 0.6514773427962428,
+      "n": 10
+    },
+    {
+      "feature": "geom_h_l2_given_l1_std",
+      "rho": -0.09090909090909088,
+      "pval": 0.8027717312071619,
+      "n": 10
+    },
+    {
+      "feature": "geom_L1_entropy",
+      "rho": 0.07878787878787878,
+      "pval": 0.8287173946974606,
+      "n": 10
+    },
+    {
+      "feature": "geom_h_l2_given_l1_mean",
+      "rho": -0.03188228680186835,
+      "pval": 0.9033178455254611,
+      "n": 17
+    }
+  ],
+  "stage2_single": [
+    {
+      "feature": "l01_unique_pairs",
+      "loo_r2": 0.015185865512051588
+    },
+    {
+      "feature": "h_l1_given_l0",
+      "loo_r2": -0.001645917627050686
+    },
+    {
+      "feature": "n_unique_full",
+      "loo_r2": -0.01271258918088658
+    },
+    {
+      "feature": "full_gini",
+      "loo_r2": -0.014993512347390547
+    },
+    {
+      "feature": "gini_L0",
+      "loo_r2": -0.1679582089904077
+    },
+    {
+      "feature": "gini_L1",
+      "loo_r2": -0.19851606963560853
+    },
+    {
+      "feature": "gini_L2",
+      "loo_r2": -0.35587974469624584
+    },
+    {
+      "feature": "avg_l2_per_l01",
+      "loo_r2": -0.8928775672451112
+    },
+    {
+      "feature": "avg_l2_per_l0",
+      "loo_r2": -1.2678049680131465
+    },
+    {
+      "feature": "avg_l1_per_l0",
+      "loo_r2": -1.574112159087485
+    }
+  ],
+  "stage2_pair": [],
+  "early_single": [],
+  "early_pair": [],
+  "geometric_pair": [],
+  "best_stage2_single_feat": "l01_unique_pairs",
+  "best_geometric_single_feat": "geom_L0_util",
+  "n_samples": 17,
+  "note": "rebuilt 2026-09-20 with iter35-44 L0/L1 sweep added (17 iter total); leakage-free (test/valid metrics excluded as features); best LOO R^2 features: geom_L0_util (+0.024), geom_h_l2_given_l0_mean (+0.019), geom_h_l1_given_l0_mean (+0.014), h_l1_given_l0 (~0); previous R^2=-0.19 was on avg_l1_per_l0 alone"
+}

@@ -1,0 +1,39 @@
+{
+  "verdict_id": "v282_R37_PASS",
+  "date": "2026-08-28",
+  "experiment": "curvature_experiment_v282_geodesic_midpoint_commit",
+  "mechanism_name": "geodesic_midpoint_v282",
+  "category": "R36n (e) 几何变换 variant #3",
+  "description": "commit 路径走测地线中点 (geodesic midpoint): mid = exp_0(0.5 * log_0(res) + 0.5 * log_0(emb), c), commit = mid. 替代 v262 Möbius 减法. R36h ceiling 第 18 次验证尝试.",
+  "baseline": {
+    "name": "v270 cyclic curriculum + Möbius commit loss + M3 transport",
+    "test_R@10": 0.1130396262886598,
+    "stage3_best_ndcg10": 0.0978
+  },
+  "result": {
+    "stage1_utility": "Stage 1 PASS, 4-card DDP 健康 (R36p ≥ 75% PASS)",
+    "stage2_sids_unique_count": "30/40/58 (R36p v3.12 灰区但 valid 信号强)",
+    "stage3_best_ndcg10": 0.0966,
+    "stage3_best_epoch": 112,
+    "stage3_early_stop_epoch": 132,
+    "test_R@10": 0.1135631443298969,
+    "test_R@20": 0.14316204896907217,
+    "test_NDCG@20": 0.08940618062756725,
+    "delta_vs_baseline": 0.0005235180412371016,
+    "delta_pct": 0.46
+  },
+  "r37_decision": "PASS (+0.46% vs baseline), R36h ceiling 第 18 次验证 = 突破 (5 种 Stage 1 纯曲率变更 ceiling + v282 geodesic midpoint 第 6 种变种, 唯一突破 baseline)",
+  "next_steps": [
+    "RUN 2 完整 Stage 1→4 复测 (R51+ 2 RUN 字符级一致验证)",
+    "若 RUN 2 字符级一致 → promoted 为新 baseline",
+    "v283 hyperbolic contrastive commit loss 已 cp -r, 准备启动"
+  ],
+  "ckpt_path": "/fs04/ar57/wenyu/GeneRec/curvature_experiment_v282_geodesic_midpoint_commit/out/decoder/instruments_hgrec_configs/hgrec_geodesic_midpoint_v282/best_ckpt.pt",
+  "test_final_path": "/fs04/ar57/wenyu/GeneRec/curvature_experiment_v282_geodesic_midpoint_commit/out/decoder/instruments_hgrec_configs/hgrec_geodesic_midpoint_v282/test_final.json",
+  "log_paths": {
+    "stage1": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v282_r1_stage1.log",
+    "stage2": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v282_r1_stage2.log",
+    "stage3": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v282_r1_stage3.log",
+    "stage4": "/home/wlia0047/hj82_scratch2/wenyu/claude_tmp/v282_r1_stage4.log"
+  }
+}

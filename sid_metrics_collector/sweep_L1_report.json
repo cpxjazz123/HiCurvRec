@@ -1,0 +1,114 @@
+{
+  "generated": "2026-09-20",
+  "purpose": "L1-only sweep: sk_eps=[0.50, ?, 0.05], \u9a8c\u8bc1 L0 \u9501\u6b7b\u540e L1 \u662f\u5426\u7ed9\u751c\u70b9",
+  "iter_results": {
+    "iter11": {
+      "sk_eps_L1": 0.05
+    },
+    "iter39": {
+      "sk_eps_L1": 0.01
+    },
+    "iter40": {
+      "sk_eps_L1": 0.03
+    },
+    "iter41": {
+      "sk_eps_L1": 0.05
+    },
+    "iter42": {
+      "sk_eps_L1": 0.1
+    }
+  },
+  "geom_focus": {
+    "iter11": {
+      "L0_util": 0.22265625,
+      "L0_entropy": 3.9778306410139708,
+      "L0_mfr": 0.0305039248383292,
+      "hL1gL0": 4.392375014259727,
+      "hL2gL0": 4.926684991621334,
+      "hL2gL1": 4.184904552668281
+    },
+    "iter39": {
+      "L0_util": 0.22265625,
+      "L0_entropy": 3.9863713755475274,
+      "L0_mfr": 0.0305039248383292,
+      "hL1gL0": 4.338567903084504,
+      "hL2gL0": 4.920876936430544,
+      "hL2gL1": 4.151151072862185
+    },
+    "iter40": {
+      "L0_util": 0.25,
+      "L0_entropy": 4.063813375947726,
+      "L0_mfr": 0.03607597510879733,
+      "hL1gL0": 4.34485081822108,
+      "hL2gL0": 4.872015327425149,
+      "hL2gL1": 4.1881166020488365
+    },
+    "iter41": {
+      "L0_util": 0.22265625,
+      "L0_entropy": 3.9778306410139708,
+      "L0_mfr": 0.0305039248383292,
+      "hL1gL0": 4.392375014259727,
+      "hL2gL0": 4.926684991621334,
+      "hL2gL1": 4.184904552668281
+    },
+    "iter42": {
+      "L0_util": 0.25,
+      "L0_entropy": 4.090443787880073,
+      "L0_mfr": 0.030300565339407004,
+      "hL1gL0": 4.292191915422389,
+      "hL2gL0": 4.889242996746328,
+      "hL2gL1": 4.1646965637317965
+    }
+  },
+  "hierarchy": {
+    "iter11": {
+      "avg_l1_per_l0": 131.73684210526315,
+      "avg_l2_per_l0": 174.49122807017545,
+      "avg_l2_per_l01": 2.870821680649887,
+      "items_per_l0_mean": 431.35087719298247,
+      "items_per_l0_max": 750
+    },
+    "iter39": {
+      "avg_l1_per_l0": 127.78947368421052,
+      "avg_l2_per_l0": 174.3684210526316,
+      "avg_l2_per_l01": 2.9222954420647995,
+      "items_per_l0_mean": 431.35087719298247,
+      "items_per_l0_max": 750
+    },
+    "iter40": {
+      "avg_l1_per_l0": 124.03125,
+      "avg_l2_per_l0": 164.625,
+      "avg_l2_per_l01": 2.729402872260015,
+      "items_per_l0_mean": 384.171875,
+      "items_per_l0_max": 887
+    },
+    "iter41": {
+      "avg_l1_per_l0": 131.73684210526315,
+      "avg_l2_per_l0": 174.49122807017545,
+      "avg_l2_per_l01": 2.870821680649887,
+      "items_per_l0_mean": 431.35087719298247,
+      "items_per_l0_max": 750
+    },
+    "iter42": {
+      "avg_l1_per_l0": 118.21875,
+      "avg_l2_per_l0": 166.9375,
+      "avg_l2_per_l01": 2.852233676975945,
+      "items_per_l0_mean": 384.171875,
+      "items_per_l0_max": 745
+    }
+  },
+  "observation": {
+    "L0_locked": "L0_util \u2208 [0.2227, 0.2500], \u51e0\u4e4e\u4e0e L1 sk_eps \u65e0\u5173, L0 \u8def\u7531\u5bb9\u91cf\u7a33\u5b9a",
+    "L1_trend": "H(L1|L0) \u5355\u8c03\u4e0b\u964d (0.01\u21920.10): 4.339\u21924.292, \u4e0e L1 collapse \u5047\u8bbe\u4e00\u81f4",
+    "iter11_iter41_byte_identical": "iter11 \u4e0e iter41 (sk_eps_L1=0.05) \u4e09\u9879\u6838\u5fc3 (L0_util 0.2227, H(L1|L0) 4.392, avg_l1_per_l0 131.74) \u5b57\u8282\u7ea7\u76f8\u7b49, \u534f\u8bae\u5bf9\u9f50\u5b8c\u6210",
+    "L2_per_l01_trend": "iter11/iter41 (z=+0.82) vs iter40/iter42 (z=-1.22), L2/L01 \u6bd4\u4f8b\u5728 iter11 \u7565\u9ad8",
+    "absent_signal": "L1 sweep 5 \u70b9\u5185\u672a\u51fa\u73b0 iter35-38 sweep \u4e2d\u90a3\u79cd\"5 \u70b9\u4e4b\u4e00\u663e\u8457\u5f02\u5e38\"\u7684\u5f3a\u51e0\u4f55\u751c\u70b9, iter11 \u4e0e iter41 \u7b49\u4ef7"
+  },
+  "hypothesis": "L1 sweep \u5728\u56fa\u5b9a L0 \u7684\u524d\u63d0\u4e0b, \u6ca1\u6709\u4ea7\u751f\u80fd\u533a\u5206 5 \u70b9\u7684\u51e0\u4f55\u751c\u70b9; \u51b3\u5b9a test_R@10 \u7684\u5173\u952e\u53ef\u80fd\u5728 (L0_util, H(L1|L0)) \u8054\u5408\u4f4d\u7f6e, \u800c L1 sweep \u4e2d\u8fd9\u4e2a\u8054\u5408\u70b9\u51e0\u4e4e\u4e0d\u52a8",
+  "next_step": "\u542f\u52a8 iter39/40/41/42 4 \u4e2a Stage3, \u628a H(L1|L0) \u8d8b\u52bf\u4e0e test_R@10 \u5173\u8054; \u9884\u671f\u82e5 H(L1|L0) \u4e0e test_R@10 \u5355\u8c03, \u8bf4\u660e L1 \u662f\u6b21\u8981\u56e0\u7d20; \u82e5\u4ecd\u51fa\u73b0\u751c\u70b9, \u624d\u9700\u8981\u56de\u5230 Stage1",
+  "caveats": [
+    "iter11 \u4e0e iter41 \u914d\u7f6e\u5b8c\u5168\u76f8\u540c (L1=0.05), \u4f46 iter11 \u7528\u7684\u662f\u5386\u53f2 4-token SID \u800c iter41 \u7528 3-token; \u6bd4\u8f83\u65f6\u53ea\u7528\u524d 3 \u5217 (\u524d\u6587\u5df2\u786e\u8ba4)",
+    "iter11 Stage3 \u6570\u636e\u5df2\u662f\u5386\u53f2\u503c (test_R@10=0.0602), \u8fd9\u6b21\u65b0\u8dd1\u7684 iter41 \u5e94\u8be5\u590d\u73b0\u540c\u4e00\u6570\u5b57 (\u22480.0602) \u4f5c\u4e3a\u534f\u8bae\u63a7\u5236",
+    "iter39/40/42 Stage3 \u662f\u65b0\u5b9e\u9a8c, \u7b49 4 \u4e2a Stage3 \u5b8c\u6210\u540e\u624d\u80fd\u771f\u6b63\u56de\u7b54\"L1 \u662f\u5426\u6709\u751c\u70b9\""
+  ]
+}

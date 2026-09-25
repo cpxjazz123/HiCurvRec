@@ -1,0 +1,20 @@
+{
+  "encoder": "sentence-transformers/sentence-t5-base",
+  "sem_emb_dim": 768,
+  "batch_size": 32,
+  "device": "cuda",
+  "metadata_fields": [
+    "title",
+    "categories",
+    "features",
+    "description"
+  ],
+  "input_path": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/items.parquet",
+  "ids_json": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/item_ids.json",
+  "dim": 768,
+  "count": 24587,
+  "item_id_min": 0,
+  "item_id_max": 24586,
+  "output_npy": "/fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+  "source": "stage0 results/stage0_build_parquet/items.parquet; RecBole3.0/{model/rqvae,dataset/amazon2023} field order preserved"
+}
