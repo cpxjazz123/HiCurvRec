@@ -109,15 +109,18 @@ ACCEPT_A
 ACCEPT_B
 MERGE_AB
 REJECT_BOTH
+ABORT_ITERATION
 ```
 
 `MERGE_AB` is allowed only when the merged result is internally consistent and does not violate the one-factor rule or the active research contract.
 
-`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete.
+`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete but the **registered iteration is still potentially viable** after another independent proposal round.
+
+`ABORT_ITERATION` is mandatory when direct evidence shows that the **registered iteration itself is no longer viable** and continuing would require changing the registered hypothesis, mechanism equation, key mechanism constant, protocol, or one-factor definition. This verdict ends the current iteration; it is not a request for another proposal round inside the same iteration.
 
 Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
 
-Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the stage is blocked and the orchestrator must report the unresolved decision rather than silently continuing.
+Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the stage is blocked and the orchestrator must report the unresolved decision rather than silently continuing. `ABORT_ITERATION` terminates immediately and does not consume another replan round.
 
 ## 2.3 Judge hard gates and rubric
 
@@ -185,7 +188,7 @@ logs/deliberation/<STAGE_ID>/round_<R>/
 ```
 STAGE_ID=
 ROUND=
-VERDICT=ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH
+VERDICT=ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH | ABORT_ITERATION
 
 HARD_GATE_A=PASS | FAIL
 HARD_GATE_B=PASS | FAIL
@@ -208,7 +211,8 @@ REPLAN_CONSTRAINTS=
 For `ACCEPT_A`, `WHY_NOT_B` is required.  
 For `ACCEPT_B`, `WHY_NOT_A` is required.  
 For `MERGE_AB`, the judge must state exactly which parts came from A and B.  
-For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.
+For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.  
+For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.
 
 ## 2.7 Stage map
 
@@ -243,6 +247,101 @@ If a stage has multiple canonical files, Judge C must list all of them in `CANON
 - **S10/S12 interpretation:** separate observed facts from causal inference; do not overgeneralize a mapping failure into a family-level failure without evidence.
 - **S13 closure:** repository truth and remote verification dominate.
 - **S14 review:** compare only protocol-valid evidence and explicitly distinguish validated findings from unresolved hypotheses.
+
+## 2.9 Feasibility Abort — self-terminate clearly infeasible iterations
+
+The orchestrator must **end the current iteration without asking the user to rescue it** when direct evidence shows the registered mechanism cannot be meaningfully executed as specified.
+
+This is a scientific hygiene rule, not performance early stopping.
+
+### Mandatory abort conditions
+
+Use `ABORT_ITERATION` when one or more of the following is directly demonstrated:
+
+1. **Mechanism inactivity under the registered specification**  
+   The preregistered mechanism produces effectively zero intervention / no measurable direct effect at MVG or during execution, and making it active would require changing a registered mechanism constant, equation, mapping, or threshold.
+
+2. **Activation requires a qualitatively different regime**  
+   The mechanism can only be made active by moving into saturation, near-always-on clipping/gating, unstable dynamics, or another regime that changes the scientific interpretation of the registered experiment.
+
+3. **Unavoidable contract or one-factor violation**  
+   Continuing requires adding a second mechanism, changing Stage1/Stage3, changing the parent/protocol, or otherwise violating the registered single-factor experiment.
+
+4. **Mathematical / semantic impossibility discovered after registration**  
+   A required quantity is undefined, degenerate, unavailable with the declared provenance, or the registered mapping cannot produce the claimed behavior on the actual data.
+
+5. **Persistent mechanism-caused numerical invalidity**  
+   NaN/Inf, divergence, invalid manifold state, corrupted assignment, or equivalent failure persists after one implementation-level repair that does not alter the registered scientific mechanism.
+
+6. **Execution infeasibility that changes the experiment if worked around**  
+   The registered computation cannot fit available resources / runtime constraints, and reducing it would materially change the mechanism or locked protocol.
+
+7. **Direct evidence of destructive saturation before useful training**  
+   A mechanism-specific direct signal is already saturated/degenerate to the point that the intended comparison is no longer meaningful.
+
+### Not valid reasons to abort
+
+Do **not** abort merely because:
+
+- Gini, collision rate, entropy, utilization, or another Stage2 proxy looks worse;
+- an active, numerically valid mechanism appears unlikely to beat the target;
+- an intermediate loss is higher but finite and training is otherwise valid;
+- a completed candidate has `R@10 < 0.065`;
+- the result may be negative;
+- a small implementation bug can be repaired while preserving the exact registered mechanism.
+
+### Registered-spec immutability after hypothesis lock
+
+After S02/S04 are canonically accepted, the following are part of the registered experiment:
+
+- mechanism equation;
+- key mechanism constants / thresholds;
+- mapping direction;
+- parent and one-factor delta;
+- activation definition.
+
+If feasibility testing shows one of those choices is bad, **do not retune it inside the same iteration**.
+
+Example:
+
+```
+registered: trust_radius_fraction = 0.5
+MVG: mechanism intervention ≈ 0
+```
+
+If changing `0.5 → 0.05` is needed to obtain meaningful activation, the current iteration must end as:
+
+`ITERATION_ABORTED_INFEASIBLE`
+
+and `0.05` must be registered as a **new iteration** with its own S00–S08 deliberation.
+
+Implementation repairs that merely make the code match the already registered equation do not require a new iteration.
+
+### Abort procedure
+
+At the stage where infeasibility becomes clear:
+
+1. reopen that stage as the next deliberation round if needed;
+2. Agent A and Agent B independently assess the same abort evidence;
+3. Judge C may issue `ABORT_ITERATION`;
+4. stop pending/full Stage2 or Stage3 jobs for this iteration;
+5. do not launch later pipeline stages;
+6. create `logs/iteration_abort_iter<N>.md` containing:
+   - `STATUS=ITERATION_ABORTED_INFEASIBLE`;
+   - exact stage and step where abort occurred;
+   - direct evidence;
+   - why a same-iteration repair would alter the registered experiment;
+   - what remains scientifically unresolved;
+   - constraints for the next iteration;
+7. commit and push the mechanism code and all audit/abort evidence;
+8. start any revised mechanism as a new iteration from the last appropriate valid parent.
+
+An aborted iteration:
+
+- is **not** a clean scientific negative;
+- does **not** count toward the 3-clean-iteration Global Review trigger;
+- does **not** require Stage2/Stage3 completion;
+- must not be used as evidence that the broader mechanism family failed.
 
 ---
 
@@ -627,13 +726,17 @@ They describe what happened; they do not replace Stage3.
 
 A healthy run should not be stopped because a proxy looks worse.
 
-Early termination is reserved for actual invalid execution:
+Early termination is reserved for actual invalid execution **or a 2.9 Feasibility Abort**:
 
 - crash;
 - NaN/Inf;
 - corrupted checkpoint/export;
 - contract violation discovered during training;
-- fixed curvature unexpectedly changes.
+- fixed curvature unexpectedly changes;
+- registered mechanism is proven inactive and activation would require changing the registered spec;
+- continuing would require a new mechanism/protocol regime.
+
+When a Feasibility Abort condition is met, stop the current iteration rather than retuning it in place.
 
 For FCCR-1, log fixed curvature at multiple checkpoints to prove invariance.
 
@@ -658,7 +761,7 @@ Do not call a run good because Stage2 metrics look cleaner.
 
 # 12. Stage3 evaluation
 
-Every numerically valid, contract-valid candidate proceeds to the unchanged Stage3 protocol.
+Every numerically valid, contract-valid, **non-aborted** candidate proceeds to the unchanged Stage3 protocol. A candidate with a confirmed `ITERATION_ABORTED_INFEASIBLE` status does not proceed merely to satisfy pipeline completeness.
 
 Record exact:
 
@@ -698,6 +801,7 @@ Choose one:
 - `ACTIVE_NEUTRAL`
 - `ACTIVE_NEGATIVE`
 - `PIPELINE_INVALID`
+- `ITERATION_ABORTED_INFEASIBLE`
 
 A run where curvature was intended to be fixed but became learnable or time-varying is `CONTRACT_INVALID`, not a scientific failure of the closed-form hypothesis.
 
@@ -809,6 +913,8 @@ The corresponding deliberation directories for `S10_STAGE2_ANALYSIS` through `S1
 
 `S14_GLOBAL_REVIEW` deliberation is mandatory only when the Global Review trigger fires.
 
+For an aborted iteration, `logs/iteration_abort_iter<N>.md` plus the A/B/Judge evidence for the aborting stage replace the requirement to manufacture downstream Stage2/Stage3 artifacts that were never validly run.
+
 A rule written in this skill but not checked before launch/closure is not considered enforced.
 
 Before Stage2, run the skill-level deliberation checker from the iteration directory:
@@ -826,7 +932,7 @@ Expected output:
 
 # 18. Iteration loop
 
-Every arrow below means: **A and B independently complete the stage → Judge C adjudicates → canonical artifact only proceeds**.
+Every arrow below means: **A and B independently complete the stage → Judge C adjudicates → canonical artifact only proceeds**. At any stage, a Judge C verdict of `ABORT_ITERATION` exits the loop immediately into the abort-closure path in §2.9.
 
 ```
 S00  Source-of-truth extraction
@@ -875,7 +981,7 @@ A stage is not complete merely because Judge C chooses a candidate. The judge-ap
 
 Follow current `CLAUDE.md` for exact artifact paths and Git rules.
 
-An iteration is not closed until:
+A **normal** iteration is not closed until:
 
 - Stage2 completed;
 - Stage3 completed;
@@ -883,6 +989,17 @@ An iteration is not closed until:
 - mechanism code + Stage2 artifacts + Stage3 artifacts are committed;
 - push to `origin/main` succeeds;
 - local and remote main hashes match.
+
+An **aborted** iteration is closed when:
+
+- Judge C has issued `ABORT_ITERATION` from direct evidence;
+- `logs/iteration_abort_iter<N>.md` exists;
+- no later invalid pipeline stage was launched;
+- mechanism code + all evidence up to the abort point are committed;
+- push to `origin/main` succeeds;
+- local and remote main hashes match.
+
+Do not fabricate missing Stage2/Stage3 outputs for an aborted iteration.
 
 Before declaring closure, rerun the same deliberation checker from the iteration directory. Once result-classification artifacts exist it automatically enters `CLOSURE` mode and verifies S00–S13:
 
@@ -932,7 +1049,9 @@ Never:
 - let Judge C invent an unreviewed third mechanism after `REJECT_BOTH`;
 - propagate rejected A/B drafts as active instructions to the next stage;
 - run duplicate full Stage2/Stage3 jobs merely to satisfy the 2+1 protocol;
-- skip the closure-mode deliberation gate before marking an iteration complete.
+- skip the closure-mode deliberation gate before marking an iteration complete;
+- keep an iteration alive by retuning a registered mechanism constant after MVG proves the registered value infeasible;
+- spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification.
 
 ---
 
