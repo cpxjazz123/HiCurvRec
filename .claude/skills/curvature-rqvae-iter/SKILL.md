@@ -218,12 +218,12 @@ For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.
 | `S03_PROVENANCE` | Semantic/provenance | independently trace every formula input and semantic definition | `logs/mechanism_manifest_iter<N>.md` |
 | `S04_CONTRACT` | Mechanism contract | independently encode expected implementation invariants | `logs/mechanism_contract_iter<N>.json` |
 | `S05_ONE_FACTOR` | One-factor diff | independently identify parent, inherited mechanisms, and exact delta | `logs/one_factor_diff_iter<N>.md` |
-| `S06_IMPLEMENTATION` | Implementation design | independently produce complete patch plan/diff and tests | Judge-selected implementation plan; orchestrator applies once |
+| `S06_IMPLEMENTATION` | Implementation design | independently produce complete patch plan/diff and tests | `logs/implementation_plan_iter<N>.md`; orchestrator applies once |
 | `S07_PREFLIGHT` | Static/contract preflight | independently audit source against hypothesis + contract | `logs/preflight_contract_iter<N>.log` + judge decision |
 | `S08_MVG` | MVG | independently design/run lightweight verification and interpret evidence | `logs/mvg_check_iter<N>.log` + judge decision |
-| `S09_STAGE2_EXECUTION` | Stage2 run | independently audit launch command, inputs, outputs, invariants | one canonical launch plan; Stage2 runs once |
+| `S09_STAGE2_EXECUTION` | Stage2 run | independently audit launch command, inputs, outputs, invariants | `logs/stage2_execution_plan_iter<N>.md`; Stage2 runs once |
 | `S10_STAGE2_ANALYSIS` | SID/geometry analysis | independently analyze the same Stage2 outputs | `logs/sid_geometry_iter<N>.md` |
-| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | independently audit SID wiring, checkpoint, eval protocol and expected outputs | one canonical evaluation plan; Stage3 runs once |
+| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | independently audit SID wiring, checkpoint, eval protocol and expected outputs | `logs/stage3_evaluation_plan_iter<N>.md`; Stage3 runs once |
 | `S12_RESULT_CLASSIFICATION` | Causal/result interpretation | independently classify mechanism effect, confounds, promotion status | `logs/failure_attribution_iter<N>.md` + `logs/gate_decision_iter<N>.md` |
 | `S13_GIT_CLOSURE` | Commit/push closure | independently audit required artifacts, paths, git state, remote hash | `logs/git_closure_iter<N>.md` |
 | `S14_GLOBAL_REVIEW` | Direction selection when triggered | independently synthesize evidence and propose next research direction | `logs/global_review_after_iter<N>.md` |
@@ -784,8 +784,10 @@ logs/hypothesis_iter<N>.md
 logs/mechanism_manifest_iter<N>.md
 logs/mechanism_contract_iter<N>.json
 logs/one_factor_diff_iter<N>.md
+logs/implementation_plan_iter<N>.md
 logs/preflight_contract_iter<N>.log
 logs/mvg_check_iter<N>.log
+logs/stage2_execution_plan_iter<N>.md
 ```
 
 In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed A/B/Judge deliberation directory with a non-`REJECT_BOTH` final verdict before the Stage2 full run is launched.
@@ -794,6 +796,7 @@ After Stage2/Stage3, add:
 
 ```
 logs/sid_geometry_iter<N>.md
+logs/stage3_evaluation_plan_iter<N>.md
 logs/stage3_outcome_iter<N>.md
 logs/failure_attribution_iter<N>.md
 logs/gate_decision_iter<N>.md
