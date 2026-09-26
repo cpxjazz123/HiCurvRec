@@ -1,0 +1,15 @@
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy: shape=(24587, 768), train transitions=339519, active sources=24474/24587
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter23/out/decoder/instruments_hgrec_configs/hgrec_iter23_quantized_behavior/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+MVG PASS
+batch_shape=(640, 768) active_pairs=640
+DE-1 duplicate-target coverage: rows=79, extra-positive-pairs=94
+initial_c_l=[0.050085, 0.244323, 0.273815]
+initial_sinkhorn_eps_l=[0.049915, 0.0102323, 0.0091303]
+DE-1 epsilon endpoints (c_min,c_max)=[(0.05000000074505806, 0.0016666668234393, 0.0016666668234393, 0.05000000074505806), (0.05000000074505806, 0.0016666668234393, 0.0016666668234393, 0.05000000074505806), (0.05000000074505806, 0.0016666668234393, 0.0016666668234393, 0.05000000074505806)]
+DE-1 curvature cycle snapshots={0: [0.05008510500192642, 0.24432340264320374, 0.27381470799446106], 50000: [0.27432742714881897, 1.338214635848999, 1.49974524974823], 100000: [0.05008510872721672, 0.24432344734668732, 0.27381473779678345]}
+DE-1 epsilon cycle snapshots={0: [0.04991504177451134, 0.01023233961313963, 0.009130262769758701], 50000: [0.009113198146224022, 0.0018681606743484735, 0.0016669499455019832], 100000: [0.04991503804922104, 0.01023233775049448, 0.009130260907113552]}
+DE-2 component gradient norms={'reconstruction_loss': 0.23321928990638213, 'rqvae_loss': 0.07208215906679011, 'behavior_loss': 0.28351067042168715, 'curvature_regularization': 6.667773413937539e-05, 'quantized_behavior_delta': 0.17672019075492057}
+DE-2 quantized-minus-residual behavior delta gradient norm=0.17672019
+DE-2 quantizer parameter gradient L2 norms={'layers.0.embedding.weight': 0.045195721089839935, 'layers.1.embedding.weight': 0.03263907507061958, 'layers.2.embedding.weight': 0.030192071571946144}
+DE-3 five-step relative updates=[(0, 0.02437254718253976), (1, 0.23286215050314715), (2, 0.2594097170036007)]
+DE-4 200-step ON/OFF counterfactual: L_on=2.62702322 L_off=2.50168657 delta=1.253e-01 behavior_on=6.31473541 behavior_off=5.54444885 behavior_delta=7.703e-01

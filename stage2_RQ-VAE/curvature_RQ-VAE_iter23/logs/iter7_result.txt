@@ -1,0 +1,7 @@
+Iter7: widened cyclic curvature range + warm-start from iter4 + sharper behavior loss.
+
+Observed: full_gini 0.1225 (improved), collision 13.2% (improved), unique 21350 (+537), H(L1|L0)=5.1757 (+0.16). But test_R@10 = 0.0565, only +0.0003 vs iter4 (0.0562). Hard target 0.065 NOT met.
+
+Failure attribution: TRUE_MECHANISM_FAIL (class 3 — SID geometry OK but Stage-3 doesn't pick up the gain). Logged in failed_mechanism_ledger.md.
+
+Decision: archive iter7 (do not promote). Per iteration_bridge.md, the Stage-1 ceiling has been hit five times. To break 0.065 the next iteration must either attack Stage-3 directly (forbidden by project rules) or try a qualitatively different Stage-2 mechanism family (manifold replacement, Riemannian Adam).
