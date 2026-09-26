@@ -23,7 +23,10 @@ if [[ ! -f "$WORK/curvature_RQ-VAE.py" ]]; then
   exit 2
 fi
 
-# Mandatory contract preflight. No Stage2 launch if this fails.
+# Mandatory 2+1 deliberation gate. No Stage2 launch if any pre-Stage2 stage lacks A/B/Judge evidence.
+"$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py"
+
+# Mandatory contract preflight. Re-run the canonical contract check immediately before launch.
 "$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py"
 
 # Iteration-local MVG is mandatory and must be FCCR-1 aware.
