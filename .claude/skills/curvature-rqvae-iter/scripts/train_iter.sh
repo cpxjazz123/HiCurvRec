@@ -23,8 +23,55 @@ if [[ ! -f "$WORK/curvature_RQ-VAE.py" ]]; then
   exit 2
 fi
 
-# Mandatory 2+1 deliberation gate. No Stage2 launch if any pre-Stage2 stage lacks A/B/Judge evidence.
-"$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py"
+# Mandatory 2+1 deliberation gate. A confirmed feasibility abort must stop launch cleanly.
+DELIB_OUT="$("$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py")"
+printf '%s\n' "$DELIB_OUT"
+
+if grep -q '^DELIBERATION_ABORT_CONFIRMED
+
+# Iteration-local MVG is mandatory and must be FCCR-1 aware.
+if [[ ! -f "$WORK/scripts/mvg_check.py" ]]; then
+  echo "[train_iter] missing iteration-local scripts/mvg_check.py" >&2
+  exit 2
+fi
+MVG_OUT="$("$PY" "$WORK/scripts/mvg_check.py")"
+printf '%s\n' "$MVG_OUT"
+if ! grep -q '^MVG PASS$' <<<"$MVG_OUT"; then
+  echo "[train_iter] MVG did not emit exact 'MVG PASS'" >&2
+  exit 3
+fi
+
+mkdir -p "$WORK/logs"
+nohup "$PY" "$WORK/curvature_RQ-VAE.py" > "$WORK/logs/train_run.log" 2>&1 &
+echo "[train_iter] launched pid=$! work=$WORK"
+echo "[train_iter] log=$WORK/logs/train_run.log"
+ <<<"$DELIB_OUT"; then
+  echo "[train_iter] iteration is canonically aborted as infeasible; Stage2 will not launch" >&2
+  exit 4
+fi
+
+if ! grep -q '^DELIBERATION_GATE_PASS
+
+# Iteration-local MVG is mandatory and must be FCCR-1 aware.
+if [[ ! -f "$WORK/scripts/mvg_check.py" ]]; then
+  echo "[train_iter] missing iteration-local scripts/mvg_check.py" >&2
+  exit 2
+fi
+MVG_OUT="$("$PY" "$WORK/scripts/mvg_check.py")"
+printf '%s\n' "$MVG_OUT"
+if ! grep -q '^MVG PASS$' <<<"$MVG_OUT"; then
+  echo "[train_iter] MVG did not emit exact 'MVG PASS'" >&2
+  exit 3
+fi
+
+mkdir -p "$WORK/logs"
+nohup "$PY" "$WORK/curvature_RQ-VAE.py" > "$WORK/logs/train_run.log" 2>&1 &
+echo "[train_iter] launched pid=$! work=$WORK"
+echo "[train_iter] log=$WORK/logs/train_run.log"
+ <<<"$DELIB_OUT"; then
+  echo "[train_iter] deliberation gate did not emit exact 'DELIBERATION_GATE_PASS'" >&2
+  exit 3
+fi
 
 # Mandatory contract preflight. Re-run the canonical contract check immediately before launch.
 "$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py"
