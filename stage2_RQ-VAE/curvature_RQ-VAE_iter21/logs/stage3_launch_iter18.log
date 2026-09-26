@@ -1,0 +1,8 @@
+iter18 Stage3 launch audit
+
+Wrapper command:
+`nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 scripts/run_stage3_iter18.py > logs/_stage3_run.log 2>&1 &`
+
+The wrapper points Stage3 at `results/stage2_RQ-VAE/curvature_RQ-VAE_iter18/item_sids.json`, writes under `results/stage3_T5Train/curvature_RQ-VAE_iter18/`, sets variant `iter18_initial_curvature_beta2`, and pins `NCCL_IB_DISABLE=1`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=1`, `NCCL_TIMEOUT=3600`, and `TORCH_NCCL_BLOCKING_WAIT=1` before invoking the four-GPU Stage3 torchrun launcher. The Stage3 launcher uses port 50201 and visible devices `0,1,2,3` in the existing trainer.
+
+Launcher output is in `results/stage3_T5Train/curvature_RQ-VAE_iter18/logs/_stage3_launcher.log`. At 2026-09-26 04:45:41, torchrun emitted its startup banner; the first run summary reported `train=396958`, `valid=skipped`, `num_items=24587`, `vocab=847`, `n_digit=4`, `beam=20`, and `topk=[5, 10]`. NCCL version was `2.29.7+cuda13.2`; output contains rank IDs 0–3 and `Training Epoch 1/150` progress. Four nonfatal `NCCL WARN lib wrapper not initialized` notices appeared, followed by epoch 1 completion and epoch 2 progress. The run is active; no final test result is recorded here.
