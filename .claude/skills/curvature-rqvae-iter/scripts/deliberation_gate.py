@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Pre-Stage2 2+1 deliberation gate.
+"""2+1 deliberation gate for curvature-RQ-VAE iterations.
 
 Run with NO CLI arguments from:
   stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/
 
-The gate verifies that every pre-Stage2 pipeline stage has:
-- a same-source packet,
-- independent Agent A and Agent B artifacts,
-- a Judge C artifact with an acceptable verdict,
-- the expected canonical artifact materialized.
+Mode is inferred from canonical artifacts:
+- PRE_STAGE2: always checks S00..S09.
+- CLOSURE: if result-classification artifacts exist, additionally checks S10..S13.
+- GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.
 
-It does not judge scientific quality itself; it enforces that the required
-independent deliberation happened before Stage2 launches.
+The gate enforces process evidence. It does not substitute for scientific
+judgment or the mechanism-specific preflight/MVG.
 """
 from __future__ import annotations
 
@@ -19,17 +18,34 @@ import re
 from pathlib import Path
 
 
-STAGES = [
-    ("S00_SOURCE_TRUTH", "source_snapshot_iter{n}.md"),
-    ("S01_PROTOCOL_LOCK", "protocol_manifest_iter{n}.md"),
-    ("S02_HYPOTHESIS", "hypothesis_iter{n}.md"),
-    ("S03_PROVENANCE", "mechanism_manifest_iter{n}.md"),
-    ("S04_CONTRACT", "mechanism_contract_iter{n}.json"),
-    ("S05_ONE_FACTOR", "one_factor_diff_iter{n}.md"),
-    ("S06_IMPLEMENTATION", "implementation_plan_iter{n}.md"),
-    ("S07_PREFLIGHT", "preflight_contract_iter{n}.log"),
-    ("S08_MVG", "mvg_check_iter{n}.log"),
-    ("S09_STAGE2_EXECUTION", "stage2_execution_plan_iter{n}.md"),
+PRE_STAGE2 = [
+    ("S00_SOURCE_TRUTH", ["source_snapshot_iter{n}.md"]),
+    ("S01_PROTOCOL_LOCK", ["protocol_manifest_iter{n}.md"]),
+    ("S02_HYPOTHESIS", ["hypothesis_iter{n}.md"]),
+    ("S03_PROVENANCE", ["mechanism_manifest_iter{n}.md"]),
+    ("S04_CONTRACT", ["mechanism_contract_iter{n}.json"]),
+    ("S05_ONE_FACTOR", ["one_factor_diff_iter{n}.md"]),
+    ("S06_IMPLEMENTATION", ["implementation_plan_iter{n}.md"]),
+    ("S07_PREFLIGHT", ["preflight_contract_iter{n}.log"]),
+    ("S08_MVG", ["mvg_check_iter{n}.log"]),
+    ("S09_STAGE2_EXECUTION", ["stage2_execution_plan_iter{n}.md"]),
+]
+
+POST_STAGE2 = [
+    ("S10_STAGE2_ANALYSIS", ["sid_geometry_iter{n}.md"]),
+    (
+        "S11_STAGE3_EVALUATION",
+        ["stage3_evaluation_plan_iter{n}.md", "stage3_outcome_iter{n}.md"],
+    ),
+    (
+        "S12_RESULT_CLASSIFICATION",
+        ["failure_attribution_iter{n}.md", "gate_decision_iter{n}.md"],
+    ),
+    ("S13_GIT_CLOSURE", ["git_closure_iter{n}.md"]),
+]
+
+GLOBAL_REVIEW = [
+    ("S14_GLOBAL_REVIEW", ["global_review_after_iter{n}.md"]),
 ]
 
 ALLOWED_VERDICTS = {"ACCEPT_A", "ACCEPT_B", "MERGE_AB"}
@@ -52,8 +68,8 @@ def iter_id(work: Path) -> str:
     return match.group(1)
 
 
-def highest_round(stage_dir: Path) -> Path:
-    rounds = []
+def highest_round(stage_dir: Path) -> tuple[int, Path]:
+    rounds: list[tuple[int, Path]] = []
     for child in stage_dir.iterdir() if stage_dir.is_dir() else []:
         match = re.fullmatch(r"round_(\d+)", child.name)
         if match and child.is_dir():
@@ -64,10 +80,10 @@ def highest_round(stage_dir: Path) -> Path:
     number, path = rounds[-1]
     if number > 2:
         fail(f"automatic deliberation round exceeds maximum 2: {path}")
-    return path
+    return number, path
 
 
-def require_worker(path: Path, role: str, stage_id: str) -> None:
+def require_worker(path: Path, role: str, stage_id: str, source_packet: Path) -> None:
     text = read(path)
     required = [
         f"ROLE={role}",
@@ -79,13 +95,28 @@ def require_worker(path: Path, role: str, stage_id: str) -> None:
         if marker not in text:
             fail(f"{path} missing required marker: {marker}")
 
+    packet_name = source_packet.as_posix()
+    declared = re.search(r"^SOURCE_PACKET=(.+)\s*$", text, re.M)
+    if declared and declared.group(1).strip() not in {packet_name, str(source_packet)}:
+        # Relative declarations are allowed if they end with the exact packet path.
+        if not packet_name.endswith(declared.group(1).strip()):
+            fail(f"{path} SOURCE_PACKET does not match stage packet")
 
-def require_judge(path: Path, stage_id: str) -> str:
+
+def require_judge(
+    path: Path,
+    stage_id: str,
+    canonical_names: list[str],
+) -> tuple[str, str]:
     text = read(path)
     if f"STAGE_ID={stage_id}" not in text:
         fail(f"{path} has wrong/missing STAGE_ID")
 
-    match = re.search(r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH)\s*$", text, re.M)
+    match = re.search(
+        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH)\s*$",
+        text,
+        re.M,
+    )
     if not match:
         fail(f"{path} missing valid VERDICT")
     verdict = match.group(1)
@@ -112,7 +143,44 @@ def require_judge(path: Path, stage_id: str) -> str:
         if "MERGE_COMPONENTS_A=" not in text or "MERGE_COMPONENTS_B=" not in text:
             fail(f"{path} MERGE_AB requires MERGE_COMPONENTS_A/B")
 
-    return verdict
+    canonical_decl = re.search(r"^CANONICAL_ARTIFACT=(.+)\s*$", text, re.M)
+    if canonical_decl:
+        declared = canonical_decl.group(1)
+        for name in canonical_names:
+            if name not in declared:
+                fail(f"{path} does not declare canonical artifact {name}")
+
+    return verdict, text
+
+
+def check_stage(
+    logs: Path,
+    deliberation_root: Path,
+    n: str,
+    stage_id: str,
+    canonical_templates: list[str],
+) -> tuple[str, int, str, list[str]]:
+    stage_dir = deliberation_root / stage_id
+    round_number, round_dir = highest_round(stage_dir)
+
+    source_packet = round_dir / "source_packet.md"
+    agent_a = round_dir / "agent_a.md"
+    agent_b = round_dir / "agent_b.md"
+    judge = round_dir / "judge.md"
+
+    read(source_packet)
+    require_worker(agent_a, "AGENT_A", stage_id, source_packet)
+    require_worker(agent_b, "AGENT_B", stage_id, source_packet)
+
+    canonical_paths = [logs / template.format(n=n) for template in canonical_templates]
+    canonical_names = [path.name for path in canonical_paths]
+    verdict, _ = require_judge(judge, stage_id, canonical_names)
+
+    for canonical in canonical_paths:
+        if not canonical.is_file():
+            fail(f"{stage_id} judge completed but canonical artifact missing: {canonical}")
+
+    return stage_id, round_number, verdict, canonical_names
 
 
 def main() -> None:
@@ -121,32 +189,35 @@ def main() -> None:
     logs = work / "logs"
     deliberation_root = logs / "deliberation"
 
-    summary = []
+    stages = list(PRE_STAGE2)
+    phase = "PRE_STAGE2"
 
-    for stage_id, canonical_template in STAGES:
-        stage_dir = deliberation_root / stage_id
-        round_dir = highest_round(stage_dir)
+    gate_decision = logs / f"gate_decision_iter{n}.md"
+    failure_attribution = logs / f"failure_attribution_iter{n}.md"
+    if gate_decision.is_file() or failure_attribution.is_file():
+        stages.extend(POST_STAGE2)
+        phase = "CLOSURE"
 
-        source_packet = round_dir / "source_packet.md"
-        agent_a = round_dir / "agent_a.md"
-        agent_b = round_dir / "agent_b.md"
-        judge = round_dir / "judge.md"
+    global_review = logs / f"global_review_after_iter{n}.md"
+    if global_review.is_file():
+        if phase != "CLOSURE":
+            fail("global review exists before closure/result-classification artifacts")
+        stages.extend(GLOBAL_REVIEW)
+        phase = "GLOBAL_REVIEW"
 
-        read(source_packet)
-        require_worker(agent_a, "AGENT_A", stage_id)
-        require_worker(agent_b, "AGENT_B", stage_id)
-        verdict = require_judge(judge, stage_id)
-
-        canonical = logs / canonical_template.format(n=n)
-        if not canonical.is_file():
-            fail(f"{stage_id} judge completed but canonical artifact missing: {canonical}")
-
-        summary.append((stage_id, round_dir.name, verdict, canonical.name))
+    summary = [
+        check_stage(logs, deliberation_root, n, stage_id, templates)
+        for stage_id, templates in stages
+    ]
 
     print("DELIBERATION_GATE_PASS")
     print(f"iter={n}")
-    for stage_id, round_name, verdict, canonical in summary:
-        print(f"{stage_id}: {round_name} {verdict} -> {canonical}")
+    print(f"phase={phase}")
+    for stage_id, round_number, verdict, canonical_names in summary:
+        joined = ",".join(canonical_names)
+        print(
+            f"{stage_id}: round_{round_number} {verdict} -> {joined}"
+        )
 
 
 if __name__ == "__main__":
