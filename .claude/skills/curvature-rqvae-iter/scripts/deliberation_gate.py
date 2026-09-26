@@ -9,8 +9,9 @@ Mode is inferred from canonical artifacts:
 - CLOSURE: if result-classification artifacts exist, additionally checks S10..S13.
 - GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.\n- ABORTED: stops at the first Judge C ABORT_ITERATION and validates the abort artifact.
 
-The gate enforces process evidence. It does not substitute for scientific
-judgment or the mechanism-specific preflight/MVG.
+The gate enforces process evidence and autonomous continuation. Judge artifacts
+must declare USER_INPUT_REQUIRED=NO and a concrete AUTONOMOUS_NEXT_ACTION.
+It does not substitute for scientific judgment or the mechanism-specific preflight/MVG.
 """
 from __future__ import annotations
 
@@ -130,10 +131,30 @@ def require_judge(
         "CANONICAL_DECISION=",
         "CANONICAL_ARTIFACT=",
         "CONFIDENCE=",
+        "USER_INPUT_REQUIRED=NO",
+        "AUTONOMOUS_NEXT_ACTION=",
     ]
     for marker in required:
         if marker not in text:
             fail(f"{path} missing judge field: {marker}")
+
+    action = re.search(r"^AUTONOMOUS_NEXT_ACTION=(.+)\s*$", text, re.M)
+    if not action or not action.group(1).strip():
+        fail(f"{path} requires a non-empty AUTONOMOUS_NEXT_ACTION")
+
+    forbidden_user_decision_patterns = [
+        r"ask\s+the\s+user",
+        r"wait\s+for\s+(the\s+)?user",
+        r"need\s+user\s+decision",
+        r"pause\s+for\s+direction",
+        r"which\s+option\s+do\s+you\s+want",
+        r"should\s+i\s+continue",
+        r"do\s+you\s+want\s+me\s+to",
+        r"what\s+should\s+the\s+next\s+iteration",
+    ]
+    for pattern in forbidden_user_decision_patterns:
+        if re.search(pattern, text, re.I):
+            fail(f"{path} contains forbidden user-decision escalation: {pattern}")
 
     if verdict == "ACCEPT_A" and "WHY_NOT_B=" not in text:
         fail(f"{path} ACCEPT_A requires WHY_NOT_B")
