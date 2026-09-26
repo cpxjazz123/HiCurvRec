@@ -1,0 +1,36 @@
+{
+  "iter_id": "iter25",
+  "mechanism": "iter25_branching_raw_residual_curvature_prior",
+  "layer_scale_prior": [0.99, 0.1262333365, 0.0581856194],
+  "stage2_metrics_step100000": {
+    "hitrate_at_50": 0.9966,
+    "full_3token_gini": 0.0637,
+    "per_layer_gini": [0.1816, 0.2078, 0.2113],
+    "per_layer_mean_gini": 0.2002,
+    "unique_3token_sids": 22962,
+    "total_items": 24587,
+    "collision_rate": 0.066092,
+    "l01_pairs": 14800,
+    "H_l1_given_l0_bits": 5.5874
+  },
+  "comparator_baseline": {
+    "baseline_id": "iter18",
+    "full_3token_gini": 0.0642,
+    "per_layer_mean_gini": 0.2028,
+    "collision_rate": 0.066539,
+    "unique_3token_sids": 22951
+  },
+  "downstream_target": {
+    "adoption_threshold": 0.065,
+    "comparators": {
+      "canonical_iter11": 0.0597677536,
+      "best_completed_iter18": 0.0598896220,
+      "completed_iter24": 0.05619875
+    }
+  },
+  "notes": [
+    "HitRate@50 not computed; CLAUDE.md §2 removed it as a gate.",
+    "Stage2 metrics are descriptive only and cannot promote this iteration.",
+    "Stage3 test_R@10 is the sole adoption gate."
+  ]
+}
