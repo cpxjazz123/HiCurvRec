@@ -113,7 +113,7 @@ def require_judge(
         fail(f"{path} has wrong/missing STAGE_ID")
 
     match = re.search(
-        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH)\s*$",
+        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|ABORT_ITERATION)\s*$",
         text,
         re.M,
     )

@@ -1,0 +1,17 @@
+{
+  "contract_version": "CAO-1",
+  "active_curvature_contract": "iter18_cyclic_learnable_layer_scale",
+  "new_mechanism": "hyperbolic_codebook_trust_region",
+  "curvature_trainable": true,
+  "curvature_time_varying": true,
+  "uses_cyclic_schedule": true,
+  "introduces_trainable_parameter": false,
+  "introduces_new_auxiliary_loss": false,
+  "introduces_new_assignment_rule": false,
+  "trust_radius_fraction_default": 0.5,
+  "trust_radius_floor_default": 0.001,
+  "trust_log_every_global_steps": 1000,
+  "parent_iter": "iter18",
+  "parent_test_R10": 0.05988962203380978,
+  "scientific_question": "Does constraining AdamW codebook updates by the actual hyperbolic displacement relative to the current codebook's local geodesic spacing preserve Semantic-ID topology and improve downstream Stage3 R@10?"
+}
