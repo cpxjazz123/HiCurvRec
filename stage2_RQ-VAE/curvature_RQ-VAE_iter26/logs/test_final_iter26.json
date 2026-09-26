@@ -1,0 +1,38 @@
+{
+  "iter_id": "iter26",
+  "mechanism": "iter26_closed_form_with_raw_residual",
+  "layer_scale_prior": [0.6145357379232853, 0.5333020920777128, 0.3814078098431606],
+  "stage3_test": {
+    "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter26/ckpt/Amazon_2023_Instruments/Sep-26-2026_18-11-20/HG_Rec_best.pth",
+    "n_eval": 57439,
+    "test_recall_at_5": 0.03788366789115409,
+    "test_recall_at_10": 0.057017009349048554,
+    "test_ndcg_at_5": 0.025169911931406087,
+    "test_ndcg_at_10": 0.03133359761524377
+  },
+  "comparators": {
+    "canonical_iter11_test_recall_at_10": 0.0597677536,
+    "best_completed_iter18_test_recall_at_10": 0.0598896220,
+    "completed_iter25_test_recall_at_10": 0.0588276258,
+    "completed_iter24_test_recall_at_10": 0.05619875,
+    "adoption_threshold_test_recall_at_10": 0.065
+  },
+  "deltas": {
+    "iter26_vs_iter11": -0.00275074425,
+    "iter26_vs_iter18": -0.00287261,
+    "iter26_vs_iter25": -0.00181062,
+    "iter26_vs_iter24": 0.00081825
+  },
+  "decision": "NO-GO",
+  "decision_reason": "test_R@10 0.057017 is below the 0.065 adoption threshold, below canonical Iter11 (0.059768) and below best completed Iter18 (0.059890). Stage2 SID geometry tightened relative to Iter18 (full_gini 0.0681, collision 7.16%, unique 22827/24587, H(L1|L0) 5.4343) but downstream regressed further than Iter25. The hard contract — fixed c_l = [0.6145, 0.5333, 0.3814] for the entire 100k step run, invariant across step 0/25000/50000/100000 — was met. The corrected raw residual medians feed the closed-form mapping did not help, confirming that the closed-form mapping is not the binding lever. Class-3 ceiling holds.",
+  "stage2_descriptive": {
+    "full_3token_gini": 0.0681,
+    "per_layer_gini": [0.1078, 0.2585, 0.3230],
+    "per_layer_mean_gini": 0.2298,
+    "collision_rate": 0.07159,
+    "unique_3token_sids": 22827,
+    "h_l1_given_l0_bits": 5.4343,
+    "closed_form_c_l_locked": [0.6145357379232853, 0.5333020920777128, 0.3814078098431606],
+    "fixed_c_invariance_steps": [0, 25000, 50000, 100000]
+  }
+}
