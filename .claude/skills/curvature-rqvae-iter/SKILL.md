@@ -1,842 +1,696 @@
 ---
 name: curvature-rqvae-iter
-description: Scientifically controlled iteration workflow for curvature-aware RQ-VAE experiments in HiCurvRec. The goal is not merely to run successive variants, but to produce causally interpretable evidence about which curvature mechanisms help downstream generative recommendation. The workflow enforces protocol locking, canonical-baseline comparison, one-factor diffs, semantic/provenance validation before MVG, full Stage2→Stage3 evaluation, effect classification, periodic global review, and GitHub auditability.
+description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. The current research contract is fixed closed-form per-layer curvature computed before training from behavior branching and raw residual geometry. The skill enforces protocol locking, mechanism-contract validation, provenance checking, one-factor diffs, contract-aware MVG, full Stage2→Stage3 evaluation, and GitHub auditability.
 ---
 
 # curvature-rqvae-iter
 
 ## 0. Purpose
 
-This skill exists to answer **clean research questions** about curvature-aware RQ-VAE.
+This skill exists to produce **causally interpretable curvature experiments**, not an endless sequence of score tweaks.
 
-The objective is **not** “keep creating new iterations until one score is high.”  
-The objective is:
+Every iteration must answer one clean question:
 
 [
-	ext{one hypothesis} ightarrow 	ext{one controlled change} ightarrow
-	ext{verified activation} ightarrow 	ext{downstream evidence}
+	ext{hypothesis}
+ightarrow
+	ext{one controlled mechanism}
+ightarrow
+	ext{contract verification}
+ightarrow
+	ext{Stage2}
+ightarrow
+	ext{Stage3 evidence}
 ]
 
-A useful iteration must tell us **why** the result changed, not only whether the final score changed.
-
-The hard downstream target remains:
-
-- Amazon-2023 Instruments
-- Stage3 final `test_R@10 > 0.065`
-
-But target failure and mechanism failure are **different concepts**. A mechanism may be active and mildly positive while still failing the promotion threshold.
+The project-level target remains downstream `test_R@10 > 0.065`, but promotion failure and mechanism failure are not the same thing.
 
 ---
 
-# 1. Source-of-truth hierarchy
+# 1. Source of truth
 
-Before every iteration, read the current repository rules.
+Read current repository rules before every iteration.
 
 Priority:
 
-1. repository root `CLAUDE.md`
-2. this skill
-3. current protocol manifest / experiment registry
-4. iteration-local hypothesis / audit files
-5. historical reference files
+1. repository root `CLAUDE.md`;
+2. this skill;
+3. current iteration's machine-readable mechanism contract;
+4. current protocol manifest;
+5. iteration-local hypothesis/audit files;
+6. historical reference files.
 
-If this skill conflicts with current `CLAUDE.md`, **CLAUDE.md wins**.
+If a lower-priority source conflicts with a higher-priority source, the higher-priority source wins.
 
-Historical files such as `references/baseline_metrics.md`, old manuscript numbers, old Stage3 runs, or results from another protocol are **not automatically comparable** to the current run.
-
-Never use historical “best” values as the active baseline until protocol compatibility is proven.
-
----
-
-# 2. Non-negotiable project constraints
-
-Follow current `CLAUDE.md` exactly for:
-
-- GitHub-only remote policy
-- `main` branch only
-- no worktrees
-- no unauthorized force push
-- Stage2 / Stage3 artifact paths
-- no editing Stage1 embeddings
-- Stage3 trainer read-only during mechanism iterations
-- no unsupported CLI/config override patterns
-- mandatory Stage2 gradient-path validation
-- mandatory commit + push before an iteration is considered closed
-
-Do not duplicate volatile environment or launcher details here when `CLAUDE.md` already defines them.
-
-An iteration is not “complete” merely because training finished locally. It is complete only after its code, audit files, Stage2 artifacts, Stage3 artifacts, and final decision have been committed and pushed to `origin/main`.
+Historical files never override an actual protocol-compatible `test_final.json`.
 
 ---
 
-# 3. Core experimental rule: CONTROL BEFORE NOVELTY
+# 2. CURRENT RESEARCH CONTRACT — FCCR-1
 
-## 3.1 Canonical baseline
+Until the user explicitly changes the research hypothesis, the active contract is:
 
-Every experiment must name a **canonical baseline under the same protocol**.
+`FCCR-1 = Fixed Closed-Form Curvature Research Contract`
 
-The baseline is not “whatever the previous iteration was.”
+The scientific claim under test is:
 
-Default behavior:
+[
+(B_l,;m_l^{raw})
+ightarrow
+f(cdot)
+ightarrow
+c_l
+]
 
-- branch the new experiment from the canonical baseline mechanism;
-- add exactly one new mechanism;
-- keep all unrelated settings identical.
+where:
 
-A failed or exploratory mechanism must **not silently become the parent** of the next experiment.
+- (B_l) = behavior branching / effective branching statistic for RQ layer (l);
+- (m_l^{raw}) = **raw residual magnitude**, not normalized layer scale;
+- (c_l) = final per-layer curvature.
 
-Before editing code, record:
+## 2.1 Required curvature behavior
 
-```
-PARENT_ITER=
-PARENT_COMMIT=
-CANONICAL_BASELINE_ITER=
-CANONICAL_BASELINE_RUN=
-ACTIVE_MECHANISMS_BEFORE=
-NEW_MECHANISM=
-ACTIVE_MECHANISMS_AFTER=
-```
-
-If `ACTIVE_MECHANISMS_AFTER - ACTIVE_MECHANISMS_BEFORE` contains more than one conceptual change, this is not a single-factor iteration.
-
-## 3.2 Interaction experiments
-
-Mechanism stacking is allowed only when explicitly declared as an **interaction experiment**.
-
-Example:
+For FCCR-1:
 
 ```
-EXPERIMENT_TYPE=interaction
-PARENT=iter18
-MECHANISM_A=curvature_conditioned_beta2
-MECHANISM_B=<new mechanism>
-QUESTION=Does B add value on top of A?
+CURVATURE_SOURCE=closed_form
+CURVATURE_TRAINABLE=false
+CURVATURE_TIME_VARYING=false
+USES_CYCLIC_SCHEDULE=false
+USES_CURVATURE_REGULARIZATION=false
+NEW_CURVATURE_CONDITIONED_OPTIMIZER=false
+NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
 ```
 
-Interaction experiments must never be confused with clean single-mechanism ablations.
+The three final curvature values must be computed **before Stage2 training** and remain unchanged for the entire run.
 
-## 3.3 One-factor diff audit
+Allowed implementation pattern:
 
-Before MVG, compare the new iteration against its declared parent and write:
+```python
+self.register_buffer("fixed_c", torch.tensor(c_l, dtype=torch.float32))
+```
 
-`logs/one_factor_diff_iter<N>.md`
+`get_c()` may return `fixed_c`, but must not depend on training step, optimizer state, learnable curvature parameters, or a curriculum.
 
-It must contain:
+## 2.2 Forbidden under FCCR-1
 
-- changed source files;
-- changed constants;
-- changed losses;
-- changed optimizer groups;
-- changed curvature equations;
-- inherited mechanisms;
-- explicit statement that no unrelated mechanism was inherited accidentally.
+Unless the user explicitly changes the contract, do not introduce:
 
-If the diff contains an unexplained second mechanism, stop and fix it before training.
+- `nn.Parameter` for curvature, `c_layer_scale`, `log_c`, or equivalent;
+- learned curvature priors;
+- cyclic / scheduled `c(t)`;
+- curvature regularization whose purpose is to pull a trainable curvature toward a prior;
+- optimizer-side curvature learning such as curvature-conditioned LR or beta2 as the **new mechanism**;
+- a second new Sinkhorn / behavior / auxiliary-loss mechanism in the same iteration;
+- any mechanism whose purpose is to modify how curvature is learned, because FCCR-1 curvature is not learned.
+
+Existing downstream computations may **consume the fixed curvature** (e.g. Poincaré distance or a baseline quantization path) if those computations are held identical between parent and candidate. They must not change the curvature itself.
+
+## 2.3 What counts as a clean FCCR-1 iteration
+
+The only conceptual change should be the closed-form mapping:
+
+[
+(B_l,m_l^{raw})ightarrow[c_0,c_1,c_2]
+]
+
+or one clearly specified component of that mapping.
+
+Do not simultaneously add a new optimizer, behavior loss, Sinkhorn rule, manifold, or Stage3 change.
 
 ---
 
-# 4. Protocol Lock — mandatory before mechanism design
+# 3. Protocol Lock
 
-Before comparing scores, create:
+Before mechanism implementation, create:
 
 `logs/protocol_manifest_iter<N>.md`
 
-It must record at minimum:
+It must record:
 
 ```
 PROTOCOL_ID
 dataset/version
-Stage1 embedding path + hash or immutable identifier
-Stage2 parent commit
-Stage2 seed(s)
+Stage1 embedding path + immutable hash/id
+parent iteration + commit
+canonical baseline iteration
+canonical baseline test_final.json path
+canonical baseline test_R@10
+Stage2 seed
 Stage2 max steps
-codebook size / number of RQ layers
-Stage3 code commit/hash
-Stage3 seed(s)
+RQ layers / codebook size
+Stage3 code commit
+Stage3 seed
 Stage3 epochs
 beam size
 n_eval
-baseline run directory
-baseline test_final.json path
-baseline test_R@10
-baseline protocol ID
 ```
 
 Two runs may be directly ranked only if their protocol manifests are compatible.
 
-If a historical result uses a different Stage1 embedding, Stage3 trainer/configuration, evaluation population, beam setting, seed policy, dataset version, or other material protocol component, label it:
+If protocol compatibility is uncertain, mark the historical result:
 
 `HISTORICAL_NONCOMPARABLE`
 
 and do not call it the current best.
 
-## 4.1 Baseline disagreement rule
-
-If two repository files disagree about the same baseline score:
-
-1. resolve the exact run directory;
-2. read the actual `test_final.json`;
-3. verify the protocol manifest;
-4. use that run as the source of truth;
-5. document the discrepancy.
-
-Never select whichever number is more convenient.
+If repository records disagree about a baseline number, read the exact `test_final.json` for the declared baseline and document the discrepancy.
 
 ---
 
-# 5. Global Review — do not optimize only against the previous iteration
+# 4. Canonical parent and one-factor rule
 
-A **Global Review** is mandatory:
+The previous iteration is **not automatically the parent**.
 
-- every 3 completed iterations;
-- before switching mechanism families;
-- whenever 3 consecutive iterations remain within a narrow downstream band;
-- whenever historical baseline/protocol inconsistencies are discovered.
+Every new iteration must declare:
 
-Output:
+```
+PARENT_ITER=
+PARENT_COMMIT=
+CANONICAL_BASELINE_ITER=
+EXPERIMENT_TYPE=single_factor
+ACTIVE_MECHANISMS_BEFORE=
+NEW_MECHANISM=
+ACTIVE_MECHANISMS_AFTER=
+```
 
-`logs/global_review_after_iter<N>.md`
+For the current FCCR-1 core-hypothesis phase, interaction/stacking experiments are disabled.
 
-The review must group experiments by mechanism family, for example:
+A failed exploratory mechanism must never silently become the parent of the next experiment.
 
-- curvature parameterization;
-- optimizer-side curvature adaptation;
-- quantization/Sinkhorn;
-- behavior contrastive;
-- manifold replacement;
-- product-manifold / mixed curvature.
+Create:
 
-For every family, report:
+`logs/one_factor_diff_iter<N>.md`
 
-- exact comparable `test_R@10`;
-- delta vs canonical baseline;
-- activation status;
-- whether results are positive / neutral / negative;
-- whether another experiment in the same family is justified.
+It must list:
 
-The review must identify:
+- changed source files;
+- changed equations/constants;
+- inherited mechanisms;
+- optimizer differences;
+- loss differences;
+- Stage1/Stage3 differences;
+- explicit statement that the only conceptual change is the registered mechanism.
 
-1. **current strongest evidence-supported family**;
-2. **families to pause**;
-3. **unanswered core hypothesis**;
-4. **next experiment type**: ablation, replication, interaction, or new mechanism.
-
-Do not continue a local chain merely because the immediately previous iteration suggests another tweak.
+If an unexplained second mechanism is present, stop before training.
 
 ---
 
-# 6. Mechanism proposal
+# 5. Hypothesis registration
 
-## 6.1 Literature search
-
-Literature search remains useful, but literature novelty does not override experimental cleanliness.
-
-Agent A / literature search should answer:
-
-- what mechanism has prior evidence;
-- what exact failure mode it addresses;
-- what variable it changes;
-- whether it is compatible with the current curvature formulation.
-
-At least 3 candidates may be collected, but candidate count is less important than relevance.
-
-## 6.2 Direction selection
-
-Direction selection must prioritize:
-
-1. clean testability;
-2. relation to the current dominant unresolved question;
-3. ability to isolate one causal change;
-4. curvature relevance;
-5. literature support;
-6. implementation risk.
-
-A mechanism must not be selected merely because it is novel.
-
-If the previous family already produced repeated neutral/negative results, a new candidate from that family requires a specific structural reason why it is different.
-
----
-
-# 7. Hypothesis registration
-
-Before implementation, write:
+Create:
 
 `logs/hypothesis_iter<N>.md`
 
-It must contain five sections.
+It must contain:
 
 ## A. Research question
 
-One sentence only.
+One sentence.
 
-Example:
+## B. Exact equation
 
-> Does curvature-conditioned AdamW beta2 improve the learned SID representation compared with the same baseline using uniform beta2?
+Write the full mapping from (B_l,m_l^{raw}) to final (c_l).
 
-## B. Mechanism equation
+## C. Actual numeric substitution
 
-Write the actual formula, not only prose.
+Before training, substitute real values and print:
 
-## C. Direct-effect predictions
+```
+B = [...]
+raw_residual = [...]
+intermediate_terms = [...]
+fixed_curvature = [c0, c1, c2]
+```
 
-These are implementation/activation expectations.
+## D. Direct effects
 
-Examples:
+For FCCR-1, direct effects include:
 
-- `beta2_0 != beta2_1 != beta2_2`;
-- `c0(t) < c1(t) < c2(t)`;
-- reciprocal Sinkhorn epsilon decreases as curvature increases.
+- final fixed curvature values equal the preregistered numbers;
+- curvature is non-trainable;
+- curvature is invariant to step;
+- curvature is invariant to optimizer updates;
+- curvature is identical in train/eval mode.
 
-## D. Downstream rationale
+## E. Downstream rationale
 
-Explain the full chain:
+Explain:
 
 [
-	ext{mechanism}
+	ext{branching/residual structure}
 ightarrow
-	ext{optimization / geometry change}
+	ext{fixed geometry}
 ightarrow
-	ext{SID change}
+	ext{quantization behavior}
 ightarrow
 	ext{why Stage3 could benefit}
 ]
 
-Do not use “may improve” as the entire rationale.
+## F. Falsification
 
-## E. Falsification
-
-State what observation would contradict the hypothesis.
-
-Do not preregister Stage2 proxy thresholds as hard downstream success criteria.
+State observations that would invalidate the mechanism implementation or the scientific hypothesis.
 
 ---
 
-# 8. Semantic / Provenance Gate — mandatory before MVG
-
-This gate exists because code can be mathematically executable while using the **wrong semantic variable**.
+# 6. Semantic / Provenance Gate
 
 Create:
 
 `logs/mechanism_manifest_iter<N>.md`
 
-For every variable entering the new mechanism, record:
+For every formula input record:
 
-| Field | Required content |
+| Field | Required |
 |---|---|
-| symbol | e.g. `m_l`, `B_l`, `u_l` |
-| semantic meaning | e.g. raw residual median |
-| source file/script | exact provenance |
-| source iteration | which run generated it |
+| symbol | e.g. (B_l,m_l) |
+| semantic meaning | exact definition |
+| source file/script | provenance |
+| source iteration | producing run |
 | raw value | before transformation |
-| transformation | normalization/log/clip/etc. |
-| transformed value | actual value passed to formula |
-| units/scale | if meaningful |
+| transformation | log/normalize/clip/etc. |
+| transformed value | actual formula input |
 | expected range | sanity bound |
 
-Then substitute the actual values into the mechanism equation and print the resulting numbers.
-
-Example:
+For FCCR-1, the manifest must explicitly distinguish:
 
 ```
-raw_residual_median = [1.000, 0.10941, 0.09331]
-normalized_layer_scale = [0.001, 0.932889, 1.0]
-
-formula expects: raw_residual_median
-actual input: raw_residual_median
-PASS
+raw_residual_median
+!=
+normalized_layer_scale
+!=
+learnable_c_layer_scale
 ```
 
-Hard failure conditions:
+Hard FAIL if:
 
-- variable name and semantic meaning disagree;
-- raw and normalized quantities are confused;
-- source iteration is unknown;
-- formula expects current-run statistics but receives a historical fallback without explicit justification;
-- actual numeric result is inconsistent with the intended mechanism.
+- raw residual is replaced by normalized layer scale;
+- provenance is unknown;
+- a historical fallback is used without explicit justification;
+- the formula name implies one quantity while code supplies another;
+- actual substituted numbers differ from preregistration.
 
-If provenance fails, **do not run MVG or Stage2**.
+A provenance FAIL blocks MVG and Stage2.
 
 ---
 
-# 9. MVG — implementation verification only
+# 7. Machine-readable Mechanism Contract Gate
 
-MVG means mechanism verification.
+This gate exists to prevent an experiment from implementing a different parameterization than the scientific hypothesis.
 
-MVG answers:
+Create:
 
-> Did we implement the proposed mechanism correctly, and does it actually affect computation?
+`logs/mechanism_contract_iter<N>.json`
 
-MVG does **not** answer:
+Required FCCR-1 schema:
 
-> Is the mechanism scientifically good?
+```json
+{
+  "contract_version": "FCCR-1",
+  "curvature_source": "closed_form",
+  "curvature_trainable": false,
+  "curvature_time_varying": false,
+  "uses_cyclic_schedule": false,
+  "uses_curvature_regularization": false,
+  "new_curvature_conditioned_optimizer": false,
+  "new_curvature_conditioned_aux_loss": false,
+  "formula_inputs": ["behavior_branching", "raw_residual_median"],
+  "final_curvature_values": [0.0, 0.0, 0.0]
+}
+```
 
-Required checks:
+Replace the curvature values with the actual preregistered values.
 
-## Layer 1 — Graph
+Before MVG, run from the iteration directory:
+
+```bash
+python /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py
+```
+
+No CLI arguments are allowed.
+
+Expected output:
+
+`MECHANISM_CONTRACT_PASS`
+
+The preflight must block Stage2 if it detects any of the following:
+
+- missing mandatory preflight files;
+- trainable curvature parameter;
+- `get_c()` depends on curriculum step / time schedule;
+- missing fixed curvature buffer;
+- nonzero curvature regularization in the active loss;
+- contract JSON contradicts the source implementation.
+
+A textual statement such as “fixed curvature” is not enough. The code must satisfy the contract.
+
+---
+
+# 8. MVG — contract-aware mechanism verification
+
+MVG verifies implementation. It does not decide whether the scientific idea is good.
+
+The old rule “every new mechanism parameter must have a gradient and update” is **not valid for fixed curvature**.
+
+## 8.1 FCCR-1 MVG
+
+For fixed closed-form curvature, MVG must verify:
+
+### Layer A — Formula
+
+- code-computed (c_l) matches preregistered values;
+- values are finite and valid for the manifold.
+
+### Layer B — Immutability
+
+- curvature tensors have `requires_grad=False`;
+- curvature tensors are not in optimizer parameter groups;
+- no trainable curvature parameter exists;
+- after multiple optimizer steps, every (c_l) is unchanged within numerical tolerance.
+
+### Layer C — Time invariance
+
+Evaluate `get_c()` at multiple training steps, e.g. 0 / 25k / 50k / 100k.
+
+Require:
+
+[
+c_l(0)=c_l(25k)=c_l(50k)=c_l(100k)
+]
+
+within tolerance.
+
+### Layer D — Model gradient health
+
+The **rest of the model** must still train:
 
 - total loss requires grad;
-- required mechanism losses have valid grad functions;
-- no accidental detach breaks the intended path.
+- intended RQ-VAE/model parameters receive finite nonzero gradients;
+- no accidental detach was introduced by fixed-curvature implementation.
 
-## Layer 2 — Gradient
+### Layer E — Counterfactual mechanism activation
 
-- required mechanism terms produce finite, nonzero gradients on intended parameters;
-- gradients reach every intended layer.
+Using the same checkpoint/batch, compare:
 
-## Layer 3 — Update
+- candidate fixed closed-form curvature;
+- declared baseline curvature configuration.
 
-- after a few optimizer steps, intended parameters actually move;
-- optimizer groups cover exactly the expected parameters;
-- no accidental duplicate parameter groups.
+Require the registered direct output (distance/assignment/loss or another preregistered signal) to differ measurably.
 
-## Layer 4 — Counterfactual activation
+This proves the fixed curvature affects the system without making curvature trainable.
 
-Using same seed / same batch / same starting checkpoint:
+## 8.2 MVG interpretation
 
-- mechanism ON;
-- mechanism OFF;
+- `MVG PASS` = implementation matches the mechanism contract and affects computation;
+- `MVG FAIL` = implementation/activation invalid;
+- `MVG PASS` does not imply better Stage3 performance.
 
-must produce a measurable difference in the registered direct effect.
-
-MVG output:
-
-`MVG PASS` or `MVG FAIL`
-
-Interpretation:
-
-- `PASS` = implementation and activation are valid enough for training;
-- `FAIL` = implementation/activation problem;
-- `PASS` never means downstream improvement.
+If MVG was written for a learnable-curvature mechanism and checks curvature gradient/update, it is incompatible with FCCR-1 and must be rewritten before use.
 
 ---
 
-# 10. Stage2 policy
+# 9. Stage2 policy
 
 Run Stage2 according to current `CLAUDE.md`.
 
-## 10.1 No proxy performance gate
-
-The following are descriptive:
+Stage2 descriptive metrics are **not performance gates**:
 
 - Gini;
 - collision rate;
 - unique SID count;
 - per-layer utilization;
-- `H(L1|L0)`;
-- `H(L2|L0)`;
-- coarse/fine ratio;
-- historical hitrate fields.
+- (H(L1|L0));
+- (H(L2|L0));
+- coarse/fine ratios.
 
-They answer:
+They describe what happened; they do not replace Stage3.
 
-> What structure did this mechanism create?
+A healthy run should not be stopped because a proxy looks worse.
 
-They do **not** answer:
-
-> Is this mechanism good enough to skip Stage3?
-
-Do not stop a numerically healthy run only because a descriptive SID metric looks worse.
-
-Early termination is permitted only for genuine execution invalidity such as:
+Early termination is reserved for actual invalid execution:
 
 - crash;
-- NaN / Inf;
-- impossible curvature values caused by numerical failure;
+- NaN/Inf;
 - corrupted checkpoint/export;
-- mechanism proven inactive contrary to MVG assumptions.
+- contract violation discovered during training;
+- fixed curvature unexpectedly changes.
 
-Do not use loss plateau, Gini, collision, or unique-code heuristics as a substitute for downstream evaluation.
-
-## 10.2 Checkpoint trajectory
-
-For cyclic or time-varying curvature mechanisms, final-step SID may not represent the best learned geometry.
-
-At minimum preserve/analyze checkpoints around:
-
-- 25%;
-- 50%;
-- 75%;
-- 100%
-
-of the Stage2 schedule when available.
-
-Write:
-
-`logs/checkpoint_trajectory_iter<N>.md`
-
-Record descriptive SID statistics at those points.
-
-Important:
-
-- trajectory analysis is diagnostic;
-- do not choose a Stage2 checkpoint using **test** performance;
-- checkpoint selection must use a preregistered validation criterion if downstream checkpoint selection is performed.
+For FCCR-1, log fixed curvature at multiple checkpoints to prove invariance.
 
 ---
 
-# 11. Stage2 geometry analysis
+# 10. Stage2 geometry analysis
 
-After Stage2, write:
+Create:
 
 `logs/sid_geometry_iter<N>.md`
 
-The analyst must separate:
+Separate:
 
-### Direct mechanism effects
+1. **Contract compliance** — fixed curvature stayed fixed;
+2. **mechanism direct effect** — geometry/assignment changed as preregistered;
+3. **SID observations** — descriptive metrics;
+4. **interpretation limit** — Stage2 proxies are not assumed to predict Stage3.
 
-Did the registered mechanism produce the expected immediate behavior?
-
-### Geometry observations
-
-What changed in the SID structure?
-
-### Interpretation limits
-
-Explicitly state:
-
-> Stage2 geometry is descriptive and is not assumed to correlate with Stage3 unless historical correlation analysis supports that claim.
-
-Do not label a run “good” merely because SID metrics appear cleaner.
+Do not call a run good because Stage2 metrics look cleaner.
 
 ---
 
-# 12. Proxy usefulness audit
+# 11. Stage3 evaluation
 
-At each Global Review, compute or summarize the relationship between available Stage2 proxies and comparable Stage3 outcomes.
-
-Examples:
-
-[
-corr(	ext{Gini}, R@10)
-]
-
-[
-corr(H(L1|L0), R@10)
-]
-
-[
-corr(	ext{collision}, R@10)
-]
-
-Use only protocol-compatible iterations.
-
-If a proxy has weak or inconsistent relation to downstream results, Agent G must not use that proxy as the dominant justification for the next experiment.
-
-This prevents a self-reinforcing loop where the workflow optimizes a convenient Stage2 statistic that Stage3 does not care about.
-
----
-
-# 13. Stage3 evaluation
-
-All numerically valid and correctly activated candidates proceed to Stage3 under the same locked protocol.
-
-Stage3 is the primary downstream evidence.
+Every numerically valid, contract-valid candidate proceeds to the unchanged Stage3 protocol.
 
 Record exact:
 
 - run directory;
 - checkpoint;
-- `n_eval`;
+- n_eval;
 - R@5;
 - R@10;
 - NDCG@5;
 - NDCG@10;
-- baseline delta.
+- delta vs canonical baseline.
 
-Never compare a current test result against a value copied from a different protocol.
+Only protocol-compatible results may be directly compared.
+
+The adoption target remains:
+
+[
+test_R@10 > 0.065
+]
 
 ---
 
-# 14. Result classification — separate mechanism effect from promotion
+# 12. Result classification
 
-Do not use one label for both scientific interpretation and target attainment.
+Separate scientific effect from promotion.
 
-## 14.1 Mechanism status
+## Mechanism status
 
 Choose one:
 
-- `IMPLEMENTATION_INVALID`
+- `PROTOCOL_INVALID`
 - `PROVENANCE_INVALID`
+- `CONTRACT_INVALID`
+- `IMPLEMENTATION_INVALID`
 - `MECHANISM_INACTIVE`
 - `ACTIVE_POSITIVE`
 - `ACTIVE_NEUTRAL`
 - `ACTIVE_NEGATIVE`
-- `INTERACTION_UNRESOLVED`
 - `PIPELINE_INVALID`
 
-Suggested interpretation against the canonical baseline:
+A run where curvature was intended to be fixed but became learnable or time-varying is `CONTRACT_INVALID`, not a scientific failure of the closed-form hypothesis.
 
-- positive: consistent improvement larger than expected run noise / replicated gain;
-- neutral: within the uncertainty/noise band;
-- negative: reproducible regression;
-- unresolved: cannot isolate contribution because mechanisms are stacked or protocol changed.
-
-Do not call a mechanism negative solely because `R@10 < 0.065`.
-
-## 14.2 Promotion status
+## Promotion status
 
 Separately record:
 
-- `PROMOTION_PASS` if strict target is achieved under the locked protocol;
-- `PROMOTION_FAIL` otherwise.
+- `PROMOTION_PASS`
+- `PROMOTION_FAIL`
 
-Example:
+A mechanism can be `ACTIVE_POSITIVE + PROMOTION_FAIL`.
 
-```
-MECHANISM_STATUS=ACTIVE_POSITIVE
-PROMOTION_STATUS=PROMOTION_FAIL
-```
-
-is valid.
+Do not use `R@10 < 0.065` alone to label a mechanism failed.
 
 ---
 
-# 15. Replication and noise policy
+# 13. Replication / noise rule
 
-Tiny score differences should not be treated as discoveries.
+Tiny one-run deltas are not discoveries.
 
-If a mechanism appears to beat the canonical baseline by a small amount comparable to historical run-to-run variation:
+If candidate-baseline difference is comparable to historical run noise:
 
-1. do not promote the claim immediately;
-2. repeat baseline and candidate under the same protocol/seed policy;
-3. preferably use multiple seeds;
-4. report mean and spread.
-
-A difference such as `+0.0001 R@10` is evidence of “near parity” unless replicated.
+- call it near-parity / neutral;
+- replicate before claiming improvement;
+- use matched protocol and seed policy;
+- preferably report multiple seeds and spread.
 
 ---
 
-# 16. Failure ledger
+# 14. Global Review
 
-The failure ledger should store **scientifically interpretable evidence**, not every run below the hard target.
+Run a Global Review after **3 clean protocol-valid iterations**, not merely after 3 iteration numbers.
 
-Add a mechanism to the failed-mechanism ledger only when:
+Also trigger it when:
 
-- protocol is valid;
-- provenance is valid;
-- MVG passes;
-- the mechanism is isolated or the interaction is explicitly identified;
-- Stage3 comparison is protocol-compatible;
-- the negative result is meaningful enough to constrain future work.
+- a mechanism family repeatedly gives neutral/negative results;
+- protocol/baseline inconsistency is discovered;
+- a core hypothesis has still not received a clean test.
 
-Do not write implementation bugs, ambiguous stacked experiments, or non-comparable runs into the mechanism-failure ledger as if they were scientific failures.
+Output:
 
-For neutral results, use a separate “tested / inconclusive” record if needed.
+`logs/global_review_after_iter<N>.md`
 
----
+Report:
 
-# 17. Family-level stopping rules
+- protocol-compatible results only;
+- which hypotheses were cleanly tested;
+- which were confounded/invalid;
+- strongest evidence-supported direction;
+- paused directions;
+- unresolved core hypothesis.
 
-Pause a mechanism family when:
-
-- 3 clean experiments in the same family are neutral/negative;
-- further variants only tune strength without a new structural hypothesis;
-- the family repeatedly changes Stage2 proxies without downstream gain.
-
-A paused family can be reopened only with a structural exception documented in the next Global Review.
-
-Examples of a structural exception:
-
-- corrected semantic/provenance error;
-- new causal pathway;
-- different manifold;
-- interaction with a previously validated positive mechanism.
+Invalid-contract runs do not count as evidence against the scientific hypothesis.
 
 ---
 
-# 18. Core-hypothesis audit
+# 15. Current compatibility matrix
 
-The workflow must continuously track the project's central unanswered claims.
+Under FCCR-1:
 
-Example unresolved claim:
+| Mechanism | Status |
+|---|---|
+| branching + raw residual → fixed (c_l) | **ACTIVE / REQUIRED** |
+| alternative bounded closed-form mapping | **ALLOWED** as one-factor experiment |
+| learnable (c_l) / `c_layer_scale` | **FORBIDDEN** |
+| cyclic/scheduled (c(t)) | **FORBIDDEN** |
+| curvature regularization | **FORBIDDEN** |
+| curvature-conditioned LR / beta2 as new mechanism | **DEFERRED** |
+| new curvature-dependent Sinkhorn rule | **DEFERRED** |
+| new behavior-loss mechanism | **DEFERRED** |
+| manifold replacement | **DEFERRED** |
+| Stage1/Stage3 modification | **OUT OF SCOPE** for this skill unless user explicitly changes scope |
 
-[
-	ext{behavior branching} + 	ext{raw residual geometry}
-ightarrow 	ext{layer curvature}
-]
-
-If previous experiments used a transformed quantity in place of raw residual, they do **not** count as a clean test of this claim.
-
-Global Review must distinguish:
-
-- hypothesis tested cleanly;
-- hypothesis tested with confound;
-- hypothesis not yet tested.
-
-Do not abandon a central hypothesis based on an invalid or semantically mismatched experiment.
+“Deferred” means it may be studied later, after the fixed closed-form hypothesis has received a clean test or the user explicitly changes the contract.
 
 ---
 
-# 19. Recommended iteration loop
+# 16. Required preflight artifacts
 
-```
-0. Read CLAUDE.md
-   ↓
-1. Protocol Lock
-   ↓
-2. Global Review check
-   ↓
-3. Select canonical parent
-   ↓
-4. Literature / direction review
-   ↓
-5. Register one research hypothesis
-   ↓
-6. Semantic / Provenance Gate
-   ↓
-7. One-Factor Diff Audit
-   ↓
-8. MVG
-   ↓
-9. Stage2 full run
-   ↓
-10. Checkpoint trajectory + SID geometry
-   ↓
-11. Stage3 locked-protocol evaluation
-   ↓
-12. Mechanism-status classification
-   ↓
-13. Promotion decision
-   ↓
-14. Commit + push + remote hash verification
-   ↓
-15. Every 3 iters: Global Review
-```
-
----
-
-# 20. Required files per iteration
-
-Each iteration should contain or reference:
+Before Stage2, all must exist:
 
 ```
 logs/protocol_manifest_iter<N>.md
-logs/global_review_after_iter<N>.md          # when triggered
-logs/lit_search_iter<N>.md                   # if literature search used
-logs/direction_decision_iter<N>.md
 logs/hypothesis_iter<N>.md
 logs/mechanism_manifest_iter<N>.md
+logs/mechanism_contract_iter<N>.json
 logs/one_factor_diff_iter<N>.md
 logs/mvg_check_iter<N>.log
-logs/train_migrated.log
-logs/checkpoint_trajectory_iter<N>.md
+```
+
+Stage2 must not launch if any mandatory file is missing or any preflight gate is not PASS.
+
+After Stage2/Stage3, add:
+
+```
 logs/sid_geometry_iter<N>.md
 logs/stage3_outcome_iter<N>.md
 logs/failure_attribution_iter<N>.md
 logs/gate_decision_iter<N>.md
 ```
 
-The exact filename may vary for legacy iterations, but new iterations should follow this structure.
+A rule written in this skill but not checked before launch is not considered enforced.
 
 ---
 
-# 21. Gate decision template
-
-`logs/gate_decision_iter<N>.md` should contain:
+# 17. Iteration loop
 
 ```
-# Iter<N> Decision
-
-PROTOCOL_ID:
-PARENT_ITER:
-NEW_MECHANISM:
-EXPERIMENT_TYPE: single-factor | interaction | replication
-
-PROVENANCE: PASS | FAIL
-ONE_FACTOR_DIFF: PASS | FAIL
-MVG: PASS | FAIL
-STAGE2_COMPLETED: yes | no
-STAGE3_COMPLETED: yes | no
-
-CANONICAL_BASELINE_R@10:
-ITER_R@10:
-DELTA_R@10:
-
-MECHANISM_STATUS:
-PROMOTION_STATUS:
-
-INTERPRETATION:
-- what this iteration actually established
-- what it did not establish
-
-NEXT_ACTION:
-- continue family / replicate / interaction test / pause family / global review
-
-AUDIT_COMMIT:
+0. Read CLAUDE.md
+   ↓
+1. Resolve canonical baseline + Protocol Lock
+   ↓
+2. Register FCCR-1 hypothesis
+   ↓
+3. Semantic / Provenance Gate
+   ↓
+4. Mechanism Contract JSON
+   ↓
+5. One-Factor Diff
+   ↓
+6. preflight_contract.py → MECHANISM_CONTRACT_PASS
+   ↓
+7. FCCR-1 MVG → MVG PASS
+   ↓
+8. Stage2 full run
+   ↓
+9. Contract invariance + SID geometry audit
+   ↓
+10. Stage3 locked-protocol evaluation
+   ↓
+11. Mechanism status + Promotion status
+   ↓
+12. Commit + push + remote hash verification
+   ↓
+13. Global Review when triggered
 ```
 
 ---
 
-# 22. Curvature-specific design principles
+# 18. Git / artifact closure
 
-Curvature mechanisms remain the research focus, but the skill must not force every new idea into the same control path.
+Follow current `CLAUDE.md` for exact artifact paths and Git rules.
 
-Potential families include:
+An iteration is not closed until:
 
-- layer-wise learned curvature;
-- cyclic / scheduled curvature;
-- residual-calibrated curvature;
-- behavior-calibrated curvature;
-- optimizer-side curvature adaptation;
-- Riemannian optimization;
-- curvature-conditioned quantization;
-- manifold replacement;
-- mixed/product manifolds.
+- Stage2 completed;
+- Stage3 completed;
+- mandatory audit files exist;
+- mechanism code + Stage2 artifacts + Stage3 artifacts are committed;
+- push to `origin/main` succeeds;
+- local and remote main hashes match.
 
-Key rule:
-
-> Curvature must play a mathematically explicit role, and the mechanism must state exactly where curvature enters the computation.
-
-For any formula of the form:
-
-[
-c_l=f(B_l,m_l,ldots)
-]
-
-the Semantic / Provenance Gate must verify the exact meaning and numeric source of every input before training.
+Never claim an iteration is complete before that point.
 
 ---
 
-# 23. Current lessons that must influence future iterations
+# 19. Deprecated guidance
 
-The workflow should treat these as **empirical observations under the current protocol**, not universal truths:
+The following older skill ideas are explicitly retired under FCCR-1:
 
-1. Fixed or aggressively prescribed layer curvature has not produced a clear downstream gain.
-2. Learnable/cyclic curvature remains competitive with fixed alternatives.
-3. Strong curvature intervention inside Sinkhorn or behavior contrastive objectives can alter SID structure without improving Stage3.
-4. Optimizer-side curvature adaptation has been comparatively promising and should be studied with clean controls.
-5. Stage2 “cleaner” geometry does not reliably imply better Stage3 recall.
-6. Chaining failed mechanisms creates attribution ambiguity.
-7. Small `R@10` differences near the current ceiling require replication before being treated as meaningful.
-8. The branching + **raw** residual → curvature hypothesis has not been cleanly validated if prior runs used normalized layer scales in place of raw residual magnitudes.
+- generic “learnable/cyclic curvature remains competitive, so keep trying it” guidance;
+- generic candidate rotation across learnable/cyclic/optimizer/Sinkhorn/behavior mechanisms;
+- MVG rules requiring the curvature parameter itself to receive gradient/update;
+- using Stage2 proxy thresholds as a reason to skip Stage3;
+- treating every run below 0.065 as `TRUE_MECHANISM_FAIL`;
+- historical baseline numbers from incompatible protocols;
+- chaining the immediately previous experimental mechanism by default.
 
-These lessons guide experiment selection; they do not replace protocol-compatible evidence.
+Historical experiments may still be analyzed, but they do not define the active contract.
 
 ---
 
-# 24. Anti-patterns
+# 20. Anti-patterns
 
 Never:
 
-- silently inherit the previous failed mechanism;
-- call a stacked experiment a single-mechanism test;
-- treat MVG PASS as evidence of effectiveness;
-- treat Stage2 proxy improvement as proof of downstream improvement;
-- compare results across incompatible protocols;
-- use a transformed variable while naming it as the raw physical/statistical quantity;
-- declare a tiny one-run gain as a breakthrough;
-- continue the same mechanism family indefinitely through parameter tweaks;
-- let historical baseline files override an actual locked `test_final.json`;
-- mark every `R@10 < 0.065` result as `TRUE_MECHANISM_FAIL`.
+- say “fixed curvature” while implementing a trainable prior;
+- use raw-residual terminology for a normalized layer scale;
+- keep cyclic scheduling active in a fixed-curvature experiment;
+- retain curvature regularization for a non-trainable curvature;
+- require fixed curvature to have nonzero gradient;
+- let an optimizer update curvature under FCCR-1;
+- silently inherit behavior/Sinkhorn/optimizer mechanisms from a failed parent;
+- compare incompatible protocol results;
+- declare a core hypothesis failed from a contract-invalid run;
+- launch Stage2 with missing mandatory preflight files.
 
 ---
 
-# 25. Success definition
+# 21. Success definition
 
-A successful research iteration is not only one that crosses 0.065.
+A scientifically successful iteration leaves a defensible statement:
 
-It is one that leaves the repository with a defensible statement such as:
+> Under protocol P and FCCR-1, closed-form (f(B_l,m_l^{raw})) produced fixed curvature ([c_0,c_1,c_2]). The curvature was verified non-trainable and time-invariant, the mechanism changed the intended quantization behavior, and downstream R@10 changed by Δ relative to the canonical baseline.
 
-> Under protocol P, adding mechanism X to baseline B produced direct effect D, changed SID geometry in way G, and changed downstream R@10 by Δ. The mechanism was isolated, its inputs had verified provenance, and the comparison is reproducible.
-
-The project-level promotion target remains `test_R@10 > 0.065`, but the iteration system should optimize for **reliable scientific evidence first** and score second.
+Only after such a clean run may the project conclude whether the fixed branching+raw-residual curvature hypothesis is supported, neutral, or negative.
