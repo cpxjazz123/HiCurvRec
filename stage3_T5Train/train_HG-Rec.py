@@ -1196,17 +1196,16 @@ def _launch_via_torchrun():
     ]
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
-    # === NCCL 环境 (多 NUMA 4 卡, 2 个 mlx5 NIC, 无 NVLink) ===
-    # 之前 (2026-09-17 之前) 把 IB/P2P/SHM 三个全关, 等于封死所有 NCCL transport,
-    # 在跨 NUMA 节点上会导致 all_reduce 死锁 (rank 0 卡 cuMemcpyDtoHAsync_v2).
-    # 修复: 开启 IB 让 NCCL 走 mlx5 NIC, 保留 P2P 关闭 (无 NVLink), SHM 默认开.
-    env.setdefault("NCCL_IB_DISABLE", "0")  # 走 IB/RoCE via mlx5_0/mlx5_1
-    env.setdefault("NCCL_P2P_DISABLE", "1")  # 无 NVLink, P2P 强制 PCIe 反而慢且不稳
-    env.setdefault("NCCL_SHM_DISABLE", "0")  # 节点内最快通道, 默认开
+    # CLAUDE.md §5 mandates these child values and overrides the old recommendation.
+    # Disabling IB/P2P/SHM can close available NCCL transports; prior tuning associated it with
+    # cross-NUMA all-reduce deadlock/connectivity or performance risk.
+    env["NCCL_IB_DISABLE"] = "1"
+    env["NCCL_P2P_DISABLE"] = "1"
+    env["NCCL_SHM_DISABLE"] = "1"
     env.setdefault("NCCL_NET_GDR_LEVEL", "0")  # 关闭 GPU Direct RDMA, 多 NUMA 兼容性更好
-    env.setdefault("NCCL_SOCKET_IFNAME", "lo")  # 进程间协调走 lo, 数据走 IB
-    env.setdefault("NCCL_TIMEOUT", "3600")  # 1h (集体大 tensor 慢, 不要被 timeout kill)
-    env.setdefault("TORCH_NCCL_BLOCKING_WAIT", "1")  # 阻塞 wait, 出问题时有 stack 而不是 timeout
+    env.setdefault("NCCL_SOCKET_IFNAME", "lo")  # local socket interface for rendezvous
+    env["NCCL_TIMEOUT"] = "3600"  # 1h (collective timeout contract)
+    env["TORCH_NCCL_BLOCKING_WAIT"] = "1"  # expose blocked collective stacks
     env.setdefault("NCCL_DEBUG", "WARN")  # INFO 太噪; WARN 足够暴露卡死的 transport
     with open(_LAUNCHER["log"], "wb") as fout:
         rc = _subprocess.call(cmd, stdout=fout, stderr=_subprocess.STDOUT, env=env)

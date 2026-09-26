@@ -1,0 +1,50 @@
+ITER=29
+STAGE=S11_STAGE3_PRELAUNCH_GATE
+S11_ROUND_1=ACCEPT_A
+S11_ROUND_2=ACCEPT_A; logs/deliberation/S11_STAGE3_EVALUATION/round_2/judge.md
+PLAN=logs/stage3_evaluation_plan_iter29.md
+PLAN_HASH_CORRECTION=Only line 14 changed to the exact S10/current JSON SHA-256 `58665e08a97e122f47a77ed3616b67efdeb8eadba8253771a1498cb5e57487ff`; round-2 Judge classifies the prior string as a documentary transcription omission. JSON bytes/path/size and original conditional one-run authorization are unchanged.
+STAGE3_RUN_COUNT_BEFORE_LAUNCH=0
+USER_SUCCESS_CRITERION=test_recall@10 >= 0.065 (inclusive)
+
+AUTHORIZED_SOURCE_SCOPE
+`stage3_T5Train/train_HG-Rec.py` SHA256=9861eb6b2a5b0bfac546524c50d402aba5827e5079a228e2ae5501909bc937cb SIZE=56729 MTIME=2026-09-27 06:03:56 +1000 (epoch 1790453036).
+`_launch_via_torchrun()` has the five unconditional child values `NCCL_IB_DISABLE=1`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=1`, `NCCL_TIMEOUT=3600`, `TORCH_NCCL_BLOCKING_WAIT=1`. Adjacent comment states CLAUDE.md §5 overrides the old recommendation and retains the available-transport closure / cross-NUMA deadlock, connectivity, or performance warning. `git diff -- stage3_T5Train/train_HG-Rec.py` shows one hunk confined to this launcher environment block/comments; `NCCL_NET_GDR_LEVEL` remains 0, `NCCL_SOCKET_IFNAME` remains `lo`, `NCCL_DEBUG` remains WARN, command/process handling and model/data/evaluation code are unchanged. (The `NCCL_SOCKET_IFNAME` value is unchanged; only its obsolete IB-specific explanatory comment was clarified.)
+Wrapper `stage2_RQ-VAE/curvature_RQ-VAE_iter29/scripts/run_stage3_iter29.py` SHA256=1cab47ff035e69aecf3aa5a2e1cfe7777c114a60b753b5e935453d90271b2ec7 SIZE=1174 MTIME=2026-09-27 03:22:58 +1000 (epoch 1790443378).
+
+FINAL_NO_GPU_SMOKE
+`logs/stage3_launcher_smoke_iter29.log` records the corrected post-comment-patch smoke and final source hash above. Python 3.10 wrapper routing passed; exact launch argv was captured; the actual launcher was invoked with `_subprocess.call` stubbed (no child). Conflicting parent sentinels did not override all five required child values; `CUDA_VISIBLE_DEVICES=0,1,2,3`; parent sentinel values and locked Stage3 constants remained unchanged. A before/after result-tree snapshot was identical. `ITER29_STAGE3_LAUNCHER_SMOKE_PASS`. Temporary `/tmp` harness removed.
+
+STAGE2_SID_IDENTITY_AND_SHAPE
+`/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter29/item_sids.json` resolved exact CODE_PATH; SHA256=58665e08a97e122f47a77ed3616b67efdeb8eadba8253771a1498cb5e57487ff SIZE=1260651 MTIME=2026-09-27 05:06:19 +1000 (epoch 1790449579); matches S10 lines 28,32 and corrected S11 plan line 14.
+`/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter29/dataset/Instruments/sids_for_hgrec.npy` SHA256=a8efe6e1315166486aff162e1bc6a5722b5d5d9ac1b537b83bc003ec0ea7cde1 SIZE=786912 MTIME=2026-09-27 05:06:19 +1000 (epoch 1790449579); matches S10 lines 27,32 and S11 plan line 15.
+Final Python 3.10 data check: 24,587 exact string keys `0..24586`; four nonnegative integer IDs/row; JSON-to-NPY row equality; 24,587 unique tuples; max raw ID 780; NPY `(24587,4)` int64. `item2code()` returned 24,587 items, width 4, max semantic token 781; runtime vocabulary 784, EOS 783, user-token count 1. `STAGE3_INPUT_GPU_PREFLIGHT_PASS`.
+
+STAGE0_DATA_IDENTITY_AND_CARDINALITY
+All four S01 hashes rechecked and matched:
+train.parquet SHA256=80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815 SIZE=11152937 MTIME=2026-09-24 00:08:52 +1000 (epoch 1790172532).
+valid.parquet SHA256=48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9 SIZE=2317087 MTIME=2026-09-24 00:08:52 +1000 (epoch 1790172532).
+test.parquet SHA256=5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc SIZE=2546378 MTIME=2026-09-24 00:08:52 +1000 (epoch 1790172532).
+items.parquet SHA256=6408e3c0f98a65d817747477a22092c0848f7ed105dc9bf7b7327e9544a99af3 SIZE=10968789 MTIME=2026-09-24 00:08:51 +1000 (epoch 1790172531).
+Actual `GenRecDataset` rows match parquet metadata: train 396,958; test 57,439. `valid.parquet` hash/route retained; validation is intentionally skipped by `NO_EVAL=True`. `items.parquet` is identity evidence, not a direct trainer input. No split/window regeneration.
+
+LOCKED_STAGE3_CONSTANTS
+Actual trainer import asserted 37 values unchanged: seed 42; batch 4096; infer 1024; epochs 150; patience 10; FAST/BF16 true; COMPILE false; 4 encoder/decoder layers; d_model 128, d_ff 1024, 6 heads, d_kv 64, dropout .1, ReLU; LR .003, weight decay .05, cosine scheduler, warmup .10/min factor .20; dataset Amazon_2023_Instruments rooted at Stage0, train/valid/test parquet, MAX_LEN 20, one user token, codebook `[256,256,256,1]`, dynamic vocab; TOPK `[5,10]`, beam 20, NO_EVAL true, SKIP_TEST false, empty screen baseline, EXCLUDE_HISTORY true. Wrapper smoke routes the exact iter29 JSON, variant `iter29_bounded_rational_additive_mapping`, and short result root.
+
+RUNTIME / DESTINATION / RENDEZVOUS
+Prescribed Python `/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10` executable; size 17,467,520 bytes, mtime 2026-07-19 16:57:59 +1000 (epoch 1784444279). Prescribed torchrun `/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun` executable; size 211 bytes, mtime 2026-07-20 23:10:49 +1000 (epoch 1784553049). PyTorch 2.13.0+cu130, CUDA 13.0; CUDA available, 4 visible NVIDIA L40S devices, BF16 supported on each. Final `nvidia-smi`: GPUs 0–3 each 45,458/46,068 MiB free, utilization 0%.
+Fixed port 50201 check `ss -ltn 'sport = :50201'`: no listener (header only). Filesystem `df -h`: 500G total, 410G used, 91G free (82%). Result root and absolute outer-log parent exist; `logs/` and `ckpt/` writable. Fresh full result-tree inventory has zero files; only empty `logs/` and `ckpt/` directories exist, no timestamped runs, checkpoint, test, metrics, launcher/outer log, or `_ddp_sync` markers.
+`hub.ps` showed no existing `iter29-stage3` supervisor. Prepared supervisor identity `iter29-stage3`, `/bin/bash -c exec <prescribed python> scripts/run_stage3_iter29.py > <short-root>/logs/_stage3_run.log 2>&1`, `pty=false`, `restart=no`; start only once after this record. Both logs remain under the iter29 short-name result subtree.
+
+FINAL_GATE=PASS; ONE_STAGE3_LAUNCH_AUTHORIZED
+The preceding block is prelaunch gate evidence, not performance evidence; it records that no child/result existed at prelaunch. The supervised process start is recorded below. No retry/restart/second launch is permitted. Collect exit status, all-rank DDP logs, fresh checkpoint/metrics/final test, n_eval=57439, four finite metrics and actual `test_recall@10` before S12 classification.
+
+SUPERVISED_LAUNCH
+HUB_START=2026-09-27T06:11:02+10:00 prelaunch timestamp was captured immediately before the sole hub.start request; request returned `iter29-stage3`, PID 43614, `running`, restarts=0. At 2026-09-27T06:11:34+10:00, hub.describe reported uptime 18.1s. Exact invocation/cwd/PTY/restart policy match the approved S11 command; no readiness condition or retry wrapper was used.
+RUN_COMMAND=/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 scripts/run_stage3_iter29.py (no arguments), from `/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter29`; stdout/stderr redirected to `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter29/logs/_stage3_run.log`.
+RUN_COUNT=1; no second invocation authorized.
+
+EARLY_DDP_STARTUP_SNAPSHOT
+`_stage3_launcher.log` shows torchrun launched all four ranks (NCCL process output identifies ranks 0,1,2,3; `training_metrics.jsonl` train_start records `world_size=4`), runtime reports train=396958, valid=skipped, 24587 items, vocab=784, BF16 autocast enabled. Training reached epoch 15 with finite train loss 2.768906 and a fresh train-loss-best checkpoint; `HG_Rec.log`/metrics show epoch progress and checkpoint saves.
+Observed NCCL warnings at 2026-09-27 06:11:34 on each rank: `misc/ibvwrap.cc:173 NCCL WARN lib wrapper not initialized`; a c10d barrier device-context UserWarning also appeared. Training continued through epoch 15. A scan of currently available `_stage3_launcher.log` and `HG_Rec.log` found no Traceback, RuntimeError, FloatingPointError, OOM, NCCL ERR, or ERROR match. Continue monitoring; do not treat these warnings as proof of clean completion.
+METADATA_NOTE=The first `training_metrics.jsonl` train_start event has the exact iter29 `code_path` and correct short-root log/ckpt paths, but `variant=\"unknown_variant\"`. The trainer records this field via `config.get(\"variant\", \"unknown_variant\")` at line 843; source search found no other `variant` field consumer. Wrapper smoke independently asserted the requested `RQVAE_VARIANT=iter29_bounded_rational_additive_mapping`. Record the emitted value as a logging metadata discrepancy for S12; it does not identify a different SID input or result path. No postlaunch source change/retry is authorized.
