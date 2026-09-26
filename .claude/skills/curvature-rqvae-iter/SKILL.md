@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. The current research contract is fixed closed-form per-layer curvature computed before training from behavior branching and raw residual geometry. The skill enforces protocol locking, mechanism-contract validation, provenance checking, one-factor diffs, contract-aware MVG, full Stage2→Stage3 evaluation, and GitHub auditability.
+description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Every pipeline stage uses independent 2+1 deliberation: Agent A and Agent B solve the same stage independently, Judge C adjudicates from primary evidence, and only the judge-approved canonical artifact may propagate. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
 ---
 
 # curvature-rqvae-iter
@@ -46,7 +46,205 @@ Historical files never override an actual protocol-compatible `test_final.json`.
 
 ---
 
-# 2. CURRENT RESEARCH CONTRACT — FCCR-1
+# 2. Independent 2+1 Deliberation Protocol — mandatory at every pipeline stage
+
+Every pipeline stage must use:
+
+```
+same canonical source packet
+        ├──> Agent A (independent)
+        └──> Agent B (independent)
+                    ↓
+              Judge Agent C
+                    ↓
+    ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH
+                    ↓
+             canonical artifact
+                    ↓
+              next pipeline stage
+```
+
+This is the top-level execution protocol for the entire skill.
+
+## 2.1 Independence rules
+
+Agent A and Agent B must:
+
+- receive the same source packet and the same stage objective;
+- work independently and in parallel when the runtime supports parallel agents;
+- not read, summarize, quote, or react to the other worker's draft before Judge C decides;
+- use primary repository evidence rather than trusting historical summaries when exact evidence exists;
+- state assumptions, evidence, proposed output, risks, and self-rejection conditions;
+- write only candidate artifacts under the stage's `logs/deliberation/` directory;
+- never directly overwrite the canonical artifact or shared production code.
+
+The two workers should differ only by role identity (`A` vs `B`), not by hidden hints that steer one toward a preferred answer.
+
+Each worker artifact must begin with:
+
+```
+ROLE=AGENT_A | AGENT_B
+INDEPENDENCE_DECLARATION=I did not read the other candidate before completing this artifact.
+SOURCE_PACKET=<path>
+STAGE_ID=<stage id>
+```
+
+## 2.2 Judge C rules
+
+Judge C receives:
+
+1. the same canonical source packet;
+2. Agent A's completed artifact;
+3. Agent B's completed artifact;
+4. direct access to primary repository evidence needed to verify disputed facts.
+
+Judge C must not choose based on verbosity, writing style, or novelty alone.
+
+Allowed verdicts:
+
+```
+ACCEPT_A
+ACCEPT_B
+MERGE_AB
+REJECT_BOTH
+```
+
+`MERGE_AB` is allowed only when the merged result is internally consistent and does not violate the one-factor rule or the active research contract.
+
+`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete.
+
+Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
+
+Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the stage is blocked and the orchestrator must report the unresolved decision rather than silently continuing.
+
+## 2.3 Judge hard gates and rubric
+
+Hard gates are evaluated before comparative quality:
+
+- active contract compliance;
+- protocol compatibility;
+- semantic/provenance correctness;
+- one-factor causal isolation;
+- falsifiability;
+- reproducibility / sufficient implementation specificity;
+- no unsupported factual claims.
+
+A candidate failing a hard gate cannot win merely because its narrative is stronger.
+
+For candidates that pass hard gates, Judge C compares:
+
+- scientific rationale;
+- direct use of prior experimental evidence;
+- causal interpretability;
+- implementation clarity;
+- risk of hidden confounding;
+- expected information gain from the experiment;
+- cost proportionality.
+
+The judge may use qualitative ratings, but no simple additive score overrides hard gates.
+
+## 2.4 Canonical-only propagation
+
+After Judge C decides:
+
+- one canonical artifact is written to the normal pipeline path;
+- downstream workers may read the canonical artifact and `judge.md`;
+- downstream workers must not use rejected A/B drafts as active instructions;
+- rejected drafts remain in the repository only as audit evidence.
+
+This prevents later stages from blending mutually incompatible proposals.
+
+## 2.5 Side-effect / GPU-heavy stages
+
+For stages that mutate shared code, launch jobs, write checkpoints, evaluate Stage3, commit, or push:
+
+- Agent A and Agent B independently produce a complete **method / patch plan / wiring audit**, not two competing shared-state executions;
+- Judge C selects or merges the method;
+- the orchestrator applies the canonical method **once**;
+- Stage2 and Stage3 full GPU runs are never duplicated merely to satisfy the 2+1 protocol;
+- true scientific replication is a separate registered experiment and may intentionally run multiple seeds.
+
+No worktree may be used. This section does not override repository `CLAUDE.md` Git or no-Plan-Agent rules.
+
+## 2.6 Deliberation artifact layout
+
+Every stage uses:
+
+```
+logs/deliberation/<STAGE_ID>/round_<R>/
+    source_packet.md
+    agent_a.md
+    agent_b.md
+    judge.md
+```
+
+`judge.md` must contain:
+
+```
+STAGE_ID=
+ROUND=
+VERDICT=ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH
+
+HARD_GATE_A=PASS | FAIL
+HARD_GATE_B=PASS | FAIL
+
+EVIDENCE_FOR_A=
+EVIDENCE_FOR_B=
+PROBLEMS_A=
+PROBLEMS_B=
+
+WHY_NOT_A=
+WHY_NOT_B=
+
+CANONICAL_DECISION=
+CANONICAL_ARTIFACT=
+CONFIDENCE=HIGH | MEDIUM | LOW
+
+REPLAN_CONSTRAINTS=
+```
+
+For `ACCEPT_A`, `WHY_NOT_B` is required.  
+For `ACCEPT_B`, `WHY_NOT_A` is required.  
+For `MERGE_AB`, the judge must state exactly which parts came from A and B.  
+For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.
+
+## 2.7 Stage map
+
+| Stage ID | Pipeline stage | A/B independently complete | Judge-approved canonical output |
+|---|---|---|---|
+| `S00_SOURCE_TRUTH` | Read rules / source of truth | extract constraints, current repo facts, unresolved conflicts | `logs/source_snapshot_iter<N>.md` |
+| `S01_PROTOCOL_LOCK` | Baseline + protocol | reconstruct comparable protocol and baseline from primary files | `logs/protocol_manifest_iter<N>.md` |
+| `S02_HYPOTHESIS` | Research hypothesis | propose exact falsifiable hypothesis/equation under active contract | `logs/hypothesis_iter<N>.md` |
+| `S03_PROVENANCE` | Semantic/provenance | independently trace every formula input and semantic definition | `logs/mechanism_manifest_iter<N>.md` |
+| `S04_CONTRACT` | Mechanism contract | independently encode expected implementation invariants | `logs/mechanism_contract_iter<N>.json` |
+| `S05_ONE_FACTOR` | One-factor diff | independently identify parent, inherited mechanisms, and exact delta | `logs/one_factor_diff_iter<N>.md` |
+| `S06_IMPLEMENTATION` | Implementation design | independently produce complete patch plan/diff and tests | Judge-selected implementation plan; orchestrator applies once |
+| `S07_PREFLIGHT` | Static/contract preflight | independently audit source against hypothesis + contract | `logs/preflight_contract_iter<N>.log` + judge decision |
+| `S08_MVG` | MVG | independently design/run lightweight verification and interpret evidence | `logs/mvg_check_iter<N>.log` + judge decision |
+| `S09_STAGE2_EXECUTION` | Stage2 run | independently audit launch command, inputs, outputs, invariants | one canonical launch plan; Stage2 runs once |
+| `S10_STAGE2_ANALYSIS` | SID/geometry analysis | independently analyze the same Stage2 outputs | `logs/sid_geometry_iter<N>.md` |
+| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | independently audit SID wiring, checkpoint, eval protocol and expected outputs | one canonical evaluation plan; Stage3 runs once |
+| `S12_RESULT_CLASSIFICATION` | Causal/result interpretation | independently classify mechanism effect, confounds, promotion status | `logs/failure_attribution_iter<N>.md` + `logs/gate_decision_iter<N>.md` |
+| `S13_GIT_CLOSURE` | Commit/push closure | independently audit required artifacts, paths, git state, remote hash | `logs/git_closure_iter<N>.md` |
+| `S14_GLOBAL_REVIEW` | Direction selection when triggered | independently synthesize evidence and propose next research direction | `logs/global_review_after_iter<N>.md` |
+
+If a stage has multiple canonical files, Judge C must list all of them in `CANONICAL_ARTIFACT`.
+
+## 2.8 Stage-specific judge emphasis
+
+- **S00–S01 factual stages:** primary-source correctness and protocol comparability dominate.
+- **S02 hypothesis:** contract compliance, falsifiability, information gain, and causal isolation dominate.
+- **S03–S05 audit stages:** semantic exactness, provenance, and one-factor integrity dominate.
+- **S06 implementation:** fidelity to the canonical hypothesis/contract and minimal diff dominate.
+- **S07–S08 verification:** evidence beats intention; a claimed PASS without direct evidence is a FAIL.
+- **S09/S11 execution:** reproducibility, exact wiring, and no unintended protocol changes dominate.
+- **S10/S12 interpretation:** separate observed facts from causal inference; do not overgeneralize a mapping failure into a family-level failure without evidence.
+- **S13 closure:** repository truth and remote verification dominate.
+- **S14 review:** compare only protocol-valid evidence and explicitly distinguish validated findings from unresolved hypotheses.
+
+---
+
+# 3. CURRENT RESEARCH CONTRACT — FCCR-1
 
 Until the user explicitly changes the research hypothesis, the active contract is:
 
@@ -68,7 +266,7 @@ where:
 - (m_l^{raw}) = **raw residual magnitude**, not normalized layer scale;
 - (c_l) = final per-layer curvature.
 
-## 2.1 Required curvature behavior
+## 3.1 Required curvature behavior
 
 For FCCR-1:
 
@@ -92,7 +290,7 @@ self.register_buffer("fixed_c", torch.tensor(c_l, dtype=torch.float32))
 
 `get_c()` may return `fixed_c`, but must not depend on training step, optimizer state, learnable curvature parameters, or a curriculum.
 
-## 2.2 Forbidden under FCCR-1
+## 3.2 Forbidden under FCCR-1
 
 Unless the user explicitly changes the contract, do not introduce:
 
@@ -106,7 +304,7 @@ Unless the user explicitly changes the contract, do not introduce:
 
 Existing downstream computations may **consume the fixed curvature** (e.g. Poincaré distance or a baseline quantization path) if those computations are held identical between parent and candidate. They must not change the curvature itself.
 
-## 2.3 What counts as a clean FCCR-1 iteration
+## 3.3 What counts as a clean FCCR-1 iteration
 
 The only conceptual change should be the closed-form mapping:
 
@@ -120,7 +318,7 @@ Do not simultaneously add a new optimizer, behavior loss, Sinkhorn rule, manifol
 
 ---
 
-# 3. Protocol Lock
+# 4. Protocol Lock
 
 Before mechanism implementation, create:
 
@@ -158,7 +356,7 @@ If repository records disagree about a baseline number, read the exact `test_fin
 
 ---
 
-# 4. Canonical parent and one-factor rule
+# 5. Canonical parent and one-factor rule
 
 The previous iteration is **not automatically the parent**.
 
@@ -196,7 +394,7 @@ If an unexplained second mechanism is present, stop before training.
 
 ---
 
-# 5. Hypothesis registration
+# 6. Hypothesis registration
 
 Create:
 
@@ -253,7 +451,7 @@ State observations that would invalidate the mechanism implementation or the sci
 
 ---
 
-# 6. Semantic / Provenance Gate
+# 7. Semantic / Provenance Gate
 
 Create:
 
@@ -294,7 +492,7 @@ A provenance FAIL blocks MVG and Stage2.
 
 ---
 
-# 7. Machine-readable Mechanism Contract Gate
+# 8. Machine-readable Mechanism Contract Gate
 
 This gate exists to prevent an experiment from implementing a different parameterization than the scientific hypothesis.
 
@@ -346,13 +544,13 @@ A textual statement such as “fixed curvature” is not enough. The code must s
 
 ---
 
-# 8. MVG — contract-aware mechanism verification
+# 9. MVG — contract-aware mechanism verification
 
 MVG verifies implementation. It does not decide whether the scientific idea is good.
 
 The old rule “every new mechanism parameter must have a gradient and update” is **not valid for fixed curvature**.
 
-## 8.1 FCCR-1 MVG
+## 9.1 FCCR-1 MVG
 
 For fixed closed-form curvature, MVG must verify:
 
@@ -399,7 +597,7 @@ Require the registered direct output (distance/assignment/loss or another prereg
 
 This proves the fixed curvature affects the system without making curvature trainable.
 
-## 8.2 MVG interpretation
+## 9.2 MVG interpretation
 
 - `MVG PASS` = implementation matches the mechanism contract and affects computation;
 - `MVG FAIL` = implementation/activation invalid;
@@ -409,7 +607,7 @@ If MVG was written for a learnable-curvature mechanism and checks curvature grad
 
 ---
 
-# 9. Stage2 policy
+# 10. Stage2 policy
 
 Run Stage2 according to current `CLAUDE.md`.
 
@@ -439,7 +637,7 @@ For FCCR-1, log fixed curvature at multiple checkpoints to prove invariance.
 
 ---
 
-# 10. Stage2 geometry analysis
+# 11. Stage2 geometry analysis
 
 Create:
 
@@ -456,7 +654,7 @@ Do not call a run good because Stage2 metrics look cleaner.
 
 ---
 
-# 11. Stage3 evaluation
+# 12. Stage3 evaluation
 
 Every numerically valid, contract-valid candidate proceeds to the unchanged Stage3 protocol.
 
@@ -481,7 +679,7 @@ test_R@10 > 0.065
 
 ---
 
-# 12. Result classification
+# 13. Result classification
 
 Separate scientific effect from promotion.
 
@@ -514,7 +712,7 @@ Do not use `R@10 < 0.065` alone to label a mechanism failed.
 
 ---
 
-# 13. Replication / noise rule
+# 14. Replication / noise rule
 
 Tiny one-run deltas are not discoveries.
 
@@ -527,7 +725,7 @@ If candidate-baseline difference is comparable to historical run noise:
 
 ---
 
-# 14. Global Review
+# 15. Global Review
 
 Run a Global Review after **3 clean protocol-valid iterations**, not merely after 3 iteration numbers.
 
@@ -554,7 +752,7 @@ Invalid-contract runs do not count as evidence against the scientific hypothesis
 
 ---
 
-# 15. Current compatibility matrix
+# 16. Current compatibility matrix
 
 Under FCCR-1:
 
@@ -575,20 +773,22 @@ Under FCCR-1:
 
 ---
 
-# 16. Required preflight artifacts
+# 17. Required artifacts and deliberation evidence
 
-Before Stage2, all must exist:
+Before Stage2, all canonical artifacts must exist:
 
 ```
+logs/source_snapshot_iter<N>.md
 logs/protocol_manifest_iter<N>.md
 logs/hypothesis_iter<N>.md
 logs/mechanism_manifest_iter<N>.md
 logs/mechanism_contract_iter<N>.json
 logs/one_factor_diff_iter<N>.md
+logs/preflight_contract_iter<N>.log
 logs/mvg_check_iter<N>.log
 ```
 
-Stage2 must not launch if any mandatory file is missing or any preflight gate is not PASS.
+In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed A/B/Judge deliberation directory with a non-`REJECT_BOTH` final verdict before the Stage2 full run is launched.
 
 After Stage2/Stage3, add:
 
@@ -597,47 +797,76 @@ logs/sid_geometry_iter<N>.md
 logs/stage3_outcome_iter<N>.md
 logs/failure_attribution_iter<N>.md
 logs/gate_decision_iter<N>.md
+logs/git_closure_iter<N>.md
 ```
 
-A rule written in this skill but not checked before launch is not considered enforced.
+The corresponding deliberation directories for `S10_STAGE2_ANALYSIS` through `S13_GIT_CLOSURE` are also mandatory before the iteration is considered closed.
+
+`S14_GLOBAL_REVIEW` deliberation is mandatory only when the Global Review trigger fires.
+
+A rule written in this skill but not checked before launch/closure is not considered enforced.
+
+Before Stage2, run the skill-level deliberation checker from the iteration directory:
+
+```bash
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
+  /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
+```
+
+Expected output:
+
+`DELIBERATION_GATE_PASS`
 
 ---
 
-# 17. Iteration loop
+# 18. Iteration loop
+
+Every arrow below means: **A and B independently complete the stage → Judge C adjudicates → canonical artifact only proceeds**.
 
 ```
-0. Read CLAUDE.md
+S00  Source-of-truth extraction
    ↓
-1. Resolve canonical baseline + Protocol Lock
+S01  Resolve canonical baseline + Protocol Lock
    ↓
-2. Register FCCR-1 hypothesis
+S02  Register FCCR-1 hypothesis
    ↓
-3. Semantic / Provenance Gate
+S03  Semantic / Provenance Gate
    ↓
-4. Mechanism Contract JSON
+S04  Mechanism Contract JSON
    ↓
-5. One-Factor Diff
+S05  One-Factor Diff
    ↓
-6. preflight_contract.py → MECHANISM_CONTRACT_PASS
+S06  Independent implementation plans → Judge → apply canonical patch once
    ↓
-7. FCCR-1 MVG → MVG PASS
+S07  Independent static audits → Judge
+      + preflight_contract.py → MECHANISM_CONTRACT_PASS
    ↓
-8. Stage2 full run
+S08  Independent MVG verification → Judge → MVG PASS
    ↓
-9. Contract invariance + SID geometry audit
+S09  Independent Stage2 launch/wiring audits → Judge
+      + deliberation_gate.py → DELIBERATION_GATE_PASS
+      + Stage2 full run ONCE
    ↓
-10. Stage3 locked-protocol evaluation
+S10  Two independent Stage2/SID analyses → Judge
    ↓
-11. Mechanism status + Promotion status
+S11  Two independent Stage3 wiring/eval audits → Judge
+      + Stage3 full evaluation ONCE
    ↓
-12. Commit + push + remote hash verification
+S12  Two independent causal/result classifications → Judge
    ↓
-13. Global Review when triggered
+S13  Two independent Git/artifact closure audits → Judge
+      + commit + push + remote hash verification
+   ↓
+S14  If triggered: two independent Global Reviews → Judge
 ```
+
+A stage is not complete merely because A and B agree. Judge C must still verify the agreement against primary evidence.
+
+A stage is not complete merely because Judge C chooses a candidate. The judge-approved canonical artifact must actually be materialized at the path defined in the stage map.
 
 ---
 
-# 18. Git / artifact closure
+# 19. Git / artifact closure
 
 Follow current `CLAUDE.md` for exact artifact paths and Git rules.
 
@@ -654,7 +883,7 @@ Never claim an iteration is complete before that point.
 
 ---
 
-# 19. Deprecated guidance
+# 20. Deprecated guidance
 
 The following older skill ideas are explicitly retired under FCCR-1:
 
@@ -670,7 +899,7 @@ Historical experiments may still be analyzed, but they do not define the active 
 
 ---
 
-# 20. Anti-patterns
+# 21. Anti-patterns
 
 Never:
 
@@ -687,7 +916,7 @@ Never:
 
 ---
 
-# 21. Success definition
+# 22. Success definition
 
 A scientifically successful iteration leaves a defensible statement:
 
