@@ -15,6 +15,26 @@ Every iteration must answer one clean question.
 
 This rule has priority over pipeline-completeness pressure: **a clean early abort is preferable to an expensive invalid run.**
 
+**Non-negotiable autonomous-execution rule:** within every research workflow governed by this skill, **no state may require the user to decide the next step**. No Agent, Judge, or orchestrator may pause, stop, wait, or terminate merely to ask the user which option to choose, whether to continue, which parameter/mechanism to try, whether to change direction, or whether to launch the next valid stage.
+
+All such decisions must be made autonomously from repository evidence, the active contract, 2+1 deliberation, hard gates, one-factor rules, and the project objective.
+
+There is no valid workflow state named or equivalent to:
+
+```
+ASK_USER
+WAIT_FOR_USER
+NEED_USER_DECISION
+PAUSE_FOR_DIRECTION
+CONFIRM_NEXT_STEP
+CONFIRM_NEXT_ITERATION
+```
+
+When multiple choices exist, Agent A and Agent B independently evaluate them and Judge C selects the canonical action. When both are poor, use the replan/abort rules. When the current iteration is infeasible, abort it cleanly and autonomously open the next justified iteration. When an external hard blocker makes execution impossible, record `EXTERNAL_BLOCKER` and terminate that path cleanly; do **not** turn the blocker into an open-ended request for user direction.
+
+**Never use user consultation as a substitute for adjudication.** Uncertainty, low confidence, conflicting evidence, multiple plausible mechanisms, failed MVG, parameter choice, negative evidence, or research-direction choice are all internal decisions for the 2+1 process.
+
+
 Every non-aborted iteration must answer one clean question:
 
 [
@@ -63,7 +83,7 @@ same canonical source packet
                     ↓
               Judge Agent C
                     ↓
-    ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH
+    ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH | ABORT_ITERATION
                     ↓
              canonical artifact
                     ↓
@@ -126,7 +146,7 @@ ABORT_ITERATION
 
 Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
 
-Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the stage is blocked and the orchestrator must report the unresolved decision rather than silently continuing. `ABORT_ITERATION` terminates immediately and does not consume another replan round.
+Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the orchestrator must **not ask the user what to do next**. Judge C must autonomously choose one of: (a) `ABORT_ITERATION` for the current registered iteration; or (b) close the current iteration and register the next evidence-justified iteration/research contract. `ABORT_ITERATION` terminates immediately and does not consume another replan round.
 
 ## 2.3 Judge hard gates and rubric
 
@@ -210,6 +230,8 @@ WHY_NOT_B=
 CANONICAL_DECISION=
 CANONICAL_ARTIFACT=
 CONFIDENCE=HIGH | MEDIUM | LOW
+USER_INPUT_REQUIRED=NO
+AUTONOMOUS_NEXT_ACTION=
 
 REPLAN_CONSTRAINTS=
 ```
@@ -218,7 +240,8 @@ For `ACCEPT_A`, `WHY_NOT_B` is required.
 For `ACCEPT_B`, `WHY_NOT_A` is required.  
 For `MERGE_AB`, the judge must state exactly which parts came from A and B.  
 For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.  
-For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.
+For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.  
+For every verdict, `USER_INPUT_REQUIRED=NO` and a concrete `AUTONOMOUS_NEXT_ACTION` are mandatory.
 
 ## 2.7 Stage map
 
@@ -351,9 +374,37 @@ An aborted iteration:
 
 ---
 
+## 2.10 Autonomous Continuation — user-decision states are forbidden
+
+This rule applies to every new stage and iteration governed by this skill.
+
+At every decision point:
+
+1. Agent A and Agent B independently assess the available actions.
+2. Judge C applies the hard gates and evidence rubric.
+3. Judge C must output exactly one concrete `AUTONOMOUS_NEXT_ACTION`.
+4. The orchestrator executes that action without asking the user for a preference.
+5. If the current iteration is infeasible, use `ABORT_ITERATION`, close it cleanly, and autonomously register the next justified iteration.
+6. If accumulated evidence warrants changing the research contract, perform the transition **between iterations**, document it through 2+1 adjudication, and continue autonomously.
+7. If confidence is low, record `CONFIDENCE=LOW`; low confidence is not a reason to pause.
+8. If an external hard blocker prevents execution, record `EXTERNAL_BLOCKER`, preserve all evidence, and terminate that blocked path. Do not ask the user to choose an alternative path; Judge C selects the best available unblocked action, or closes the workflow if none exists.
+
+Forbidden output/actions include:
+
+- "Which option do you want?"
+- "Should I continue?"
+- "Do you want me to try X?"
+- "Which parameter should I use?"
+- "What should the next iteration be?"
+- any equivalent pause awaiting user preference.
+
+A workflow is invalid if it reaches a discretionary state requiring user choice.
+
+---
+
 # 3. CURRENT RESEARCH CONTRACT — FCCR-1
 
-Until the user explicitly changes the research hypothesis, the active contract is:
+Until a higher-priority instruction or a canonically adjudicated **between-iteration autonomous contract transition** changes the research hypothesis, the active contract is:
 
 `FCCR-1 = Fixed Closed-Form Curvature Research Contract`
 
@@ -399,7 +450,7 @@ self.register_buffer("fixed_c", torch.tensor(c_l, dtype=torch.float32))
 
 ## 3.2 Forbidden under FCCR-1
 
-Unless the user explicitly changes the contract, do not introduce:
+Unless the contract is changed by a higher-priority instruction or a canonically adjudicated **between-iteration autonomous contract transition**, do not introduce:
 
 - `nn.Parameter` for curvature, `c_layer_scale`, `log_c`, or equivalent;
 - learned curvature priors;
@@ -879,9 +930,9 @@ Under FCCR-1:
 | new curvature-dependent Sinkhorn rule | **DEFERRED** |
 | new behavior-loss mechanism | **DEFERRED** |
 | manifold replacement | **DEFERRED** |
-| Stage1/Stage3 modification | **OUT OF SCOPE** for this skill unless user explicitly changes scope |
+| Stage1/Stage3 modification | **OUT OF SCOPE** unless scope is changed by a higher-priority instruction or a canonically adjudicated between-iteration autonomous contract transition |
 
-“Deferred” means it may be studied later, after the fixed closed-form hypothesis has received a clean test or the user explicitly changes the contract.
+“Deferred” means it may be studied later, after the fixed closed-form hypothesis has received a clean test or an evidence-backed between-iteration autonomous contract transition canonically activates it.
 
 ---
 
@@ -1065,7 +1116,10 @@ Never:
 - run duplicate full Stage2/Stage3 jobs merely to satisfy the 2+1 protocol;
 - skip the closure-mode deliberation gate before marking an iteration complete;
 - keep an iteration alive by retuning a registered mechanism constant after MVG proves the registered value infeasible;
-- spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification.
+- spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification;
+- ask the user to choose the next research action, parameter, mechanism, direction, or whether to continue;
+- pause an authorized workflow waiting for user preference;
+- treat low confidence or multiple plausible options as requiring user input.
 
 ---
 
