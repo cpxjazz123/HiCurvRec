@@ -1,0 +1,13 @@
+DELIBERATION_GATE_PASS
+iter=29
+phase=PRE_STAGE2
+S00_SOURCE_TRUTH: round_1 MERGE_AB -> source_snapshot_iter29.md
+S01_PROTOCOL_LOCK: round_1 MERGE_AB -> protocol_manifest_iter29.md
+S02_HYPOTHESIS: round_1 ACCEPT_A -> hypothesis_iter29.md
+S03_PROVENANCE: round_1 MERGE_AB -> mechanism_manifest_iter29.md
+S04_CONTRACT: round_1 MERGE_AB -> mechanism_contract_iter29.json
+S05_ONE_FACTOR: round_2 MERGE_AB -> one_factor_diff_iter29.md
+S06_IMPLEMENTATION: round_2 ACCEPT_A -> implementation_plan_iter29.md
+S07_PREFLIGHT: round_2 ACCEPT_A -> preflight_contract_iter29.log
+S08_MVG: round_2 MERGE_AB -> mvg_check_iter29.log
+S09_STAGE2_EXECUTION: round_1 MERGE_AB -> stage2_execution_plan_iter29.md

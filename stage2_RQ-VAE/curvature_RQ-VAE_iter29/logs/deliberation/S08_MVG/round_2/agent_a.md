@@ -1,0 +1,23 @@
+ROLE=AGENT_A
+INDEPENDENCE_DECLARATION=I did not read the other candidate before completing this artifact.
+SOURCE_PACKET=stage2_RQ-VAE/curvature_RQ-VAE_iter29/logs/deliberation/S08_MVG/round_2/source_packet.md
+STAGE_ID=S08_MVG
+ROUND=2
+
+RESULT=MVG_PASS
+
+## Decision and evidence
+
+The sole recorded S08 invocation satisfies the registered FCCR-1 MVG acceptance criteria. The complete log records the authorized no-argument command and iter29 working directory, exit status 0, pre-run warm-start checkpoint digest `189e0affb156b9cdbd11f38a6fdb1127804e3f3095edd23c55f84825beb56c3b`, and `PRE_RUN_CHECKPOINT_HASH_MATCH=S01_REGISTERED`. These match the S01 manifest's iter8 checkpoint path and locked digest. The round-1 S08 Judge required this exact pre-run match before the one invocation and prohibited retry; the log records one invocation and no retry.
+
+The actual reported candidate vector `[1.3660953164241916, 0.7347829661951981, 0.6439958072706683]` matches both S04's `final_curvature_values` and the MVG helper's `EXPECTED_FIXED_C`. The logged control vector `[0.6145357379232853, 0.5333020920777128, 0.3814078098431606]` matches the helper's `CONTROL_FIXED_C`, the declared iter26 control. The actual live float32 curvature `[1.3660953044891357, 0.7347829937934875, 0.6439958214759827]` is consistent with the registered vector under the helper's `1e-6` buffer/invariance tolerance. Pre- and post-update snapshots show unchanged buffer and `get_c()` values in train and eval modes at steps 0, 25,000, 50,000, and 100,000.
+
+The primary helper source confirms that `MVG PASS` is printed only after its fail-fast checks complete: each `_fixed_c` is non-gradient, absent from model parameters and optimizer groups, and equal to target; it checks train/eval and multi-step invariance; requires finite differentiable loss and finite nonzero gradients on trainable model parameters; checks five optimizer steps produce updates while curvature stays fixed; and compares candidate/control state while allowing only fixed-curvature tensors to differ. Its counterfactual requires finite quantizer outputs and fails if both assignment and loss are unchanged within tolerance. The log records loss `5.275981903076172`, nonzero gradients on encoder, decoder, and all three codebook embeddings, five-step relative updates all above zero (minimum `0.005186018345566579`), candidate/control quantize losses `2.10162615776062` and `0.8013777732849121`, absolute loss delta `1.300248384475708`, assignment fraction changed `0.4062500298023224`, and tolerance `1e-8`. This is direct logged evidence of measurable candidate/control quantizer activation. S07's canonical preflight log also records `MECHANISM_CONTRACT_PASS` for iter29 with the same fixed-curvature values and non-trainable/time-invariant contract.
+
+## Protocol and evidence limits
+
+The log records the three S01 Stage1/Stage0 input paths and their canonical manifest SHA-256 values, explicitly labels them “not rehashed for S08,” and records the seeded training-transition batch rule: first 640 active source indices with observed train targets, no validation/test parquet. Primary helper code constructs the transition dataset from the configured embedding, item-ID sidecar, and train parquet, selects active sources with targets, and takes the first configured batch-size entries. Captured output confirms embedding shape `(24587, 768)`, `339519` train transitions, and `24474/24587` active sources. No batch fingerprint is emitted; I do not claim row-level batch identity or independent S08 revalidation of the input-file hashes. This is an explicit evidence limit, not a protocol failure: the S08 Judge required recording canonical identities and the deterministic batch rule, expressly said not to invent a fingerprint, and said input rehashing was not an additional S08 launch blocker. The recorded checkpoint digest is reported as matching S01; this assessment does not independently recompute any hashes.
+
+The S01 manifest identifies iter26 as the sole protocol-valid direct control and locks the Stage2 transition protocol. The log and primary helper evidence support the single S08 execution's checkpoint/control, batch construction, curvature immutability, model-gradient/update health, and direct quantizer-effect checks. Accordingly classify this observed result `MVG_PASS`. No further run is authorized or claimed.
+
+MVG PASS establishes only that the bounded check found the registered mechanism implementation fixed, time-invariant, and measurably active in the quantizer. It does not establish Stage2 training efficacy, SID-quality promotion, Stage3 performance, or whether Stage3 meets the `test_recall@10 >= 0.065` target. No Stage2 or Stage3 efficacy claim is made.
