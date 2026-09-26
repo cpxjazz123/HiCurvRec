@@ -1,0 +1,33 @@
+{
+  "iter_id": "iter25",
+  "mechanism": "iter25_branching_raw_residual_curvature_prior",
+  "layer_scale_prior": [0.99, 0.1262333365, 0.0581856194],
+  "stage3_test": {
+    "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter25/ckpt/Amazon_2023_Instruments/Sep-26-2026_16-34-15/HG_Rec_best.pth",
+    "n_eval": 57439,
+    "test_recall_at_5": 0.03906753251275266,
+    "test_recall_at_10": 0.05882762582914048,
+    "test_ndcg_at_5": 0.026214963027134015,
+    "test_ndcg_at_10": 0.03255499542719071
+  },
+  "comparators": {
+    "canonical_iter11_test_recall_at_10": 0.0597677536,
+    "best_completed_iter18_test_recall_at_10": 0.0598896220,
+    "completed_iter24_test_recall_at_10": 0.05619875,
+    "adoption_threshold_test_recall_at_10": 0.065
+  },
+  "deltas": {
+    "iter25_vs_iter11": -0.00094012776,
+    "iter25_vs_iter18": -0.00106199625,
+    "iter25_vs_iter24": 0.00262887
+  },
+  "decision": "NO-GO",
+  "decision_reason": "test_R@10 0.058828 < adoption threshold 0.065 and below canonical Iter11/Iter18; Stage2 SID geometry moved vs Iter18 (full_gini 0.0637 vs 0.0642, collision 6.6092% vs 6.6539%, H(L1|L0) 5.5874 vs 5.590675) but downstream recall regressed — class 3 pattern, persistent ceiling matches the iteration bridge's pre-registered risk.",
+  "stage2_descriptive": {
+    "full_3token_gini": 0.0637,
+    "per_layer_mean_gini": 0.2002,
+    "collision_rate": 0.066092,
+    "unique_3token_sids": 22962,
+    "h_l1_given_l0_bits": 5.5874
+  }
+}
