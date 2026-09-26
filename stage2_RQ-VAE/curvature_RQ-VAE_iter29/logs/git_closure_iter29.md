@@ -2,7 +2,7 @@
 
 ## Decision at pre-commit time
 
-`READY_FOR_COMMIT=YES` was conditional on the final pre-commit checks; those checks and the required closure-mode checker have passed. The approved five-path commit was pushed to GitHub `origin/main`, and local/remote hashes match. `GIT_CLOSURE_VERIFIED=YES`. The S14 Global Review remains required before starting the next iteration; this closure record does not substitute for that review.
+`READY_FOR_COMMIT=YES` was conditional on the final pre-commit checks; those checks and the required closure-mode checker passed. The S13 five-path commit `57b4a594d92435fd74fa4bba7c7c1439a33eb102` was pushed to GitHub `origin/main`, and local/remote hashes matched. `GIT_CLOSURE_VERIFIED=YES`. The separately triggered S14 Global Review is now also complete, passed the GLOBAL_REVIEW phase gate, and is synchronized to GitHub before iter30.
 ## Closure checker failure and authorized reconciliation
 
 The closure-mode `deliberation_gate.py` run failed with `DELIBERATION_GATE_FAIL: .../S11_STAGE3_EVALUATION/round_2/judge.md does not declare canonical artifact stage3_outcome_iter29.md`. The checker’s `POST_STAGE2` mapping at `.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py` assigns both `stage3_evaluation_plan_iter29.md` and `stage3_outcome_iter29.md` to S11 and checks each required basename against that S11 Judge’s `CANONICAL_ARTIFACT` declaration. This conflicts with skill §2.7, which maps the outcome classification to S12 while §17 separately requires the post-run outcome artifact.
@@ -13,7 +13,11 @@ The first checker rerun after the S11 addendum cleared the S11 missing-outcome d
 
 ## Post-commit and remote verification
 
-The approved commit `57b4a594d92435fd74fa4bba7c7c1439a33eb102` was created on `main` and `git push origin main` succeeded to the permitted GitHub remote. Fresh `git rev-parse main` and `git ls-remote origin refs/heads/main` both returned `57b4a594d92435fd74fa4bba7c7c1439a33eb102`; `GIT_CLOSURE_VERIFIED=YES`. The commit covered the documented five allowed top-level roots only. The recorded deliberation gate result remains `DELIBERATION_GATE_PASS`, `iter=29`, `phase=CLOSURE`. S12 round 2 has triggered S14; complete the required Global Review before selecting or starting the next iteration.
+The approved commit `57b4a594d92435fd74fa4bba7c7c1439a33eb102` was created on `main` and `git push origin main` succeeded to the permitted GitHub remote. Fresh `git rev-parse main` and `git ls-remote origin refs/heads/main` both returned `57b4a594d92435fd74fa4bba7c7c1439a33eb102`; `GIT_CLOSURE_VERIFIED=YES`. The commit covered the documented five allowed top-level roots only. The recorded deliberation gate result was `DELIBERATION_GATE_PASS`, `iter=29`, `phase=CLOSURE`. At that S13 closure point, S12 round 2 had triggered S14; the subsequent required review and synchronization are recorded below.
+
+## S14 Global Review synchronization
+
+After S13 closure, the required S14 deliberation gate returned `DELIBERATION_GATE_PASS`, `iter=29`, `phase=GLOBAL_REVIEW`. The S14 review was committed as `fa7801c4d0f9a7e1d96da968cc7e0be891b84bd6`, pushed successfully to the permitted GitHub `origin/main`, and fresh local `git rev-parse main` matched GitHub `git ls-remote origin refs/heads/main` at that hash. The S13 commit `57b4a594d92435fd74fa4bba7c7c1439a33eb102` remains the historical iter29 code/results closure step; S14 is a distinct subsequent review commit. S14 is synchronized before iter30.
 
 ## Required deliverables and primary checks
 
@@ -58,4 +62,4 @@ Unrelated user paths must remain untouched and unstaged: root `scripts/` (includ
 
 ## Conditional execution requirements
 
-Before commit, the required final `git status` and `git check-ignore -v` checks confirmed only the five documented roots, required artifacts unignored, transient exclusions intact, and `main` tracking `origin/main` with only the permitted GitHub origin. The approved single commit covered the five roots on `main`; push used only `git push origin main` without force. Post-push verification matched local `git rev-parse main` to GitHub-only `git ls-remote origin refs/heads/main`, as recorded above. Git closure is verified. S14 Global Review remains required before starting the next iteration.
+Before commit, the required final `git status` and `git check-ignore -v` checks confirmed only the five documented roots, required artifacts unignored, transient exclusions intact, and `main` tracking `origin/main` with only the permitted GitHub origin. The approved single S13 commit covered the five roots on `main`; push used only `git push origin main` without force. Post-push verification matched local `git rev-parse main` to GitHub-only `git ls-remote origin refs/heads/main`, as recorded above. Git closure is verified. S14 then passed the GLOBAL_REVIEW gate and its separate review commit was pushed with matching local/remote hashes; S14 is synchronized before iter30.
