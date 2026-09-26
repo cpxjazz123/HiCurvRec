@@ -1,0 +1,10 @@
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy: shape=(24587, 768), train transitions=339519, active sources=24474/24587
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter27/out/decoder/instruments_hgrec_configs/hgrec_iter27_hyperbolic_codebook_trust_region/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+  [Layer B note] clip_frac=0 across 5 steps; max displacement=1.169e-02; mechanism is geometrically defined but did not clamp yet (small initial step)
+[MVG iter27 PASS] component_grad_norms={'reconstruction_loss': 0.10477539414661487, 'rqvae_loss': 0.10097015210962965, 'behavior_loss': 0.23110197882746053, 'curvature_regularization': 6.667773413937539e-05}
+[MVG iter27 PASS] layer_gradient_norms_count=3 (all > 1e-12)
+[MVG iter27 PASS] five_step_relative_updates=[(0, 0.02463636667484029), (1, 0.1809171244148786), (2, 0.20952215256492338)]
+[MVG iter27 PASS] trust-region avg_clip_frac=0.0000 max_delta=1.169e-02
+[MVG iter27 PASS] 200-step ON/OFF loss_delta=1.798e-02 (> 1e-6 required); codebook_max_abs_diff_per_layer=[(0, 0.14628374576568604), (1, 0.12629322707653046), (2, 0.09790151566267014)]
+[MVG iter27 PASS] last_step_clip_frac_per_layer=['0.0000', '0.0000', '0.0000']
+[MVG iter27 PASS] curvature_cycle_snapshots=[[0.05008510500192642, 0.24432340264320374, 0.27381470799446106], [0.1667054444551468, 0.8132168054580688, 0.911376953125], [0.27432742714881897, 1.338214635848999, 1.49974524974823], [0.05008510872721672, 0.24432344734668732, 0.27381473779678345]]
