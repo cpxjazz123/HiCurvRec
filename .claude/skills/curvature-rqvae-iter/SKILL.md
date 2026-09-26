@@ -9,7 +9,13 @@ description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE e
 
 This skill exists to produce **causally interpretable curvature experiments**, not an endless sequence of score tweaks.
 
-Every iteration must answer one clean question:
+Every iteration must answer one clean question.
+
+**Non-negotiable feasibility rule:** if direct evidence shows that the registered iteration is clearly infeasible, operationally inactive, mathematically invalid, numerically unsustainable, or can only be rescued by changing the registered mechanism/protocol, the orchestrator must terminate the iteration autonomously with `ABORT_ITERATION`. It must not wait for the user to decide whether to continue, must not spend a full Stage2/Stage3 run on a known-infeasible specification, and must not retune a locked mechanism inside the same iteration. Any revised mechanism starts as a new iteration.
+
+This rule has priority over pipeline-completeness pressure: **a clean early abort is preferable to an expensive invalid run.**
+
+Every non-aborted iteration must answer one clean question:
 
 [
 	ext{hypothesis}
