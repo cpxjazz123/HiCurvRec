@@ -35,7 +35,7 @@ torch.set_float32_matmul_precision("high")
 # gradient, and a heavier behavior weight (0.05 -> 0.20) anchors tokens to next-item
 # neighborhoods during quantization.
 BEHAVIOR_LOSS_WEIGHT = 0.20
-CURVATURE_REG_WEIGHT = 0.005
+CURVATURE_REG_WEIGHT = 0.0
 BEHAVIOR_TEMPERATURE = 0.07
 
 

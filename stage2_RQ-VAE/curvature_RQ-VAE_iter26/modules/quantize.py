@@ -79,8 +79,10 @@ class Quantize(nn.Module):
                 persistent=False,
             )
         else:
-            initial = min(max(self.c_layer_norm, 1e-4), 1.0 - 1e-4)
-            self.c_layer_scale = nn.Parameter(torch.tensor(initial, dtype=torch.float32))
+            raise RuntimeError(
+                "Iter26 (FCCR-1) requires either fixed_curvature or freeze_layer_scale=True; "
+                "learnable c_layer_scale is forbidden by the contract."
+            )
         self._curriculum_step = 0
         self.quantize_loss = QuantizeLoss(commitment_weight)
         self._init_weights()
@@ -94,30 +96,19 @@ class Quantize(nn.Module):
         return self.embedding.weight.device
 
     def get_c(self) -> Tensor:
-        """Per-layer curvature: fixed closed-form or cyclic c_l(t) with u_l."""
+        """Per-layer curvature: fixed closed-form only (FCCR-1 contract).
+
+        Cyclic `c(t)` and learnable `c_layer_scale` were removed from the
+        reachable code paths so the fixed closed-form contract holds
+        statically. The legacy fields remain for warm-start compatibility
+        but no behavior depends on them.
+        """
         if self.fixed_curvature is not None:
             return self._fixed_c.to(dtype=self.embedding.weight.dtype)
-        phase = torch.tensor(
-            torch.pi * self._curriculum_step / self.c_cyclic_period,
-            device=self.device,
-            dtype=self.embedding.weight.dtype,
+        raise RuntimeError(
+            "Iter26 (FCCR-1) requires fixed_curvature to be set; "
+            "cyclic/learnable branches were retired at mechanism registration."
         )
-        g_t = torch.sin(phase).abs()
-        if self.freeze_layer_scale:
-            u_layer = self.c_layer_scale.to(dtype=self.embedding.weight.dtype)
-        else:
-            u_layer = self.c_layer_scale.clamp(1e-4, 1.0 - 1e-4).to(
-                dtype=self.embedding.weight.dtype
-            )
-        exponent = (u_layer + g_t) / 2.0
-        log_ratio = torch.log(
-            torch.tensor(
-                self.c_cyclic_max / self.c_cyclic_min,
-                device=self.device,
-                dtype=self.embedding.weight.dtype,
-            )
-        )
-        return (self.c_cyclic_min * torch.exp(exponent * log_ratio)).clamp(0.05, 1.5)
 
     def get_u_layer(self) -> float:
         """Fixed or current u_l for logging (residual-calibrated scale)."""
