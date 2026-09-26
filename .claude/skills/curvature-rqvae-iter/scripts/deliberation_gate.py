@@ -7,7 +7,7 @@ Run with NO CLI arguments from:
 Mode is inferred from canonical artifacts:
 - PRE_STAGE2: always checks S00..S09.
 - CLOSURE: if result-classification artifacts exist, additionally checks S10..S13.
-- GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.
+- GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.\n- ABORTED: stops at the first Judge C ABORT_ITERATION and validates the abort artifact.
 
 The gate enforces process evidence. It does not substitute for scientific
 judgment or the mechanism-specific preflight/MVG.
@@ -48,7 +48,7 @@ GLOBAL_REVIEW = [
     ("S14_GLOBAL_REVIEW", ["global_review_after_iter{n}.md"]),
 ]
 
-ALLOWED_VERDICTS = {"ACCEPT_A", "ACCEPT_B", "MERGE_AB"}
+ALLOWED_VERDICTS = {"ACCEPT_A", "ACCEPT_B", "MERGE_AB", "ABORT_ITERATION"}
 
 
 def fail(message: str) -> None:
@@ -142,6 +142,10 @@ def require_judge(
     if verdict == "MERGE_AB":
         if "MERGE_COMPONENTS_A=" not in text or "MERGE_COMPONENTS_B=" not in text:
             fail(f"{path} MERGE_AB requires MERGE_COMPONENTS_A/B")
+    if verdict == "ABORT_ITERATION":
+        for marker in ("ABORT_REASON=", "ABORT_EVIDENCE=", "NEXT_ITERATION_CONSTRAINTS="):
+            if marker not in text:
+                fail(f"{path} ABORT_ITERATION requires {marker}")
 
     canonical_decl = re.search(r"^CANONICAL_ARTIFACT=(.+)\s*$", text, re.M)
     if canonical_decl:
@@ -174,6 +178,34 @@ def check_stage(
 
     canonical_paths = [logs / template.format(n=n) for template in canonical_templates]
     canonical_names = [path.name for path in canonical_paths]
+
+    # Parse verdict before enforcing the normal stage canonical artifact.
+    judge_text = read(judge)
+    match = re.search(
+        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|ABORT_ITERATION)\s*$",
+        judge_text,
+        re.M,
+    )
+    if not match:
+        fail(f"{judge} missing valid VERDICT")
+    preliminary_verdict = match.group(1)
+
+    if preliminary_verdict == "ABORT_ITERATION":
+        abort_path = logs / f"iteration_abort_iter{n}.md"
+        verdict, _ = require_judge(judge, stage_id, [abort_path.name])
+        abort_text = read(abort_path)
+        required_abort = [
+            "STATUS=ITERATION_ABORTED_INFEASIBLE",
+            "ABORT_STAGE=",
+            "ABORT_EVIDENCE=",
+            "WHY_SAME_ITERATION_REPAIR_INVALID=",
+            "NEXT_ITERATION_CONSTRAINTS=",
+        ]
+        for marker in required_abort:
+            if marker not in abort_text:
+                fail(f"{abort_path} missing abort field: {marker}")
+        return stage_id, round_number, verdict, [abort_path.name]
+
     verdict, _ = require_judge(judge, stage_id, canonical_names)
 
     for canonical in canonical_paths:
@@ -205,10 +237,19 @@ def main() -> None:
         stages.extend(GLOBAL_REVIEW)
         phase = "GLOBAL_REVIEW"
 
-    summary = [
-        check_stage(logs, deliberation_root, n, stage_id, templates)
-        for stage_id, templates in stages
-    ]
+    summary = []
+    for stage_id, templates in stages:
+        result = check_stage(logs, deliberation_root, n, stage_id, templates)
+        summary.append(result)
+        if result[2] == "ABORT_ITERATION":
+            print("DELIBERATION_ABORT_CONFIRMED")
+            print(f"iter={n}")
+            print("phase=ABORTED")
+            print(f"abort_stage={stage_id}")
+            for sid, round_number, verdict, canonical_names in summary:
+                joined = ",".join(canonical_names)
+                print(f"{sid}: round_{round_number} {verdict} -> {joined}")
+            return
 
     print("DELIBERATION_GATE_PASS")
     print(f"iter={n}")
