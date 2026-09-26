@@ -66,6 +66,8 @@ same canonical source packet
 
 This is the top-level execution protocol for the entire skill.
 
+**Prospective scope:** this 2+1 requirement applies to new pipeline stages/iterations started after this protocol is introduced. Historical completed iterations are not invalidated solely because they predate 2+1 deliberation. If a historical mechanism is reopened or rerun, the new work must use 2+1.
+
 ## 2.1 Independence rules
 
 Agent A and Agent B must:
@@ -882,6 +884,15 @@ An iteration is not closed until:
 - push to `origin/main` succeeds;
 - local and remote main hashes match.
 
+Before declaring closure, rerun the same deliberation checker from the iteration directory. Once result-classification artifacts exist it automatically enters `CLOSURE` mode and verifies S00–S13:
+
+```bash
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \\
+  /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
+```
+
+Require `DELIBERATION_GATE_PASS` with `phase=CLOSURE` (or `phase=GLOBAL_REVIEW` when S14 is triggered).
+
 Never claim an iteration is complete before that point.
 
 ---
@@ -915,7 +926,13 @@ Never:
 - silently inherit behavior/Sinkhorn/optimizer mechanisms from a failed parent;
 - compare incompatible protocol results;
 - declare a core hypothesis failed from a contract-invalid run;
-- launch Stage2 with missing mandatory preflight files.
+- launch Stage2 with missing mandatory preflight files;
+- let Agent A or Agent B read the other's draft before both candidate artifacts are complete;
+- allow Judge C to select a hard-gate-failing candidate because it is more persuasive;
+- let Judge C invent an unreviewed third mechanism after `REJECT_BOTH`;
+- propagate rejected A/B drafts as active instructions to the next stage;
+- run duplicate full Stage2/Stage3 jobs merely to satisfy the 2+1 protocol;
+- skip the closure-mode deliberation gate before marking an iteration complete.
 
 ---
 
