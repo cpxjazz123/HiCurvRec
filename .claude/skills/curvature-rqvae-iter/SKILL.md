@@ -896,7 +896,7 @@ logs/mvg_check_iter<N>.log
 logs/stage2_execution_plan_iter<N>.md
 ```
 
-In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed A/B/Judge deliberation directory with a non-`REJECT_BOTH` final verdict before the Stage2 full run is launched.
+In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed A/B/Judge deliberation directory with a non-`REJECT_BOTH` final verdict before the Stage2 full run is launched. If an earlier stage canonically returns `ABORT_ITERATION`, no later pre-Stage2 stage is required and Stage2 must not launch.
 
 After Stage2/Stage3, add:
 
@@ -924,9 +924,15 @@ Before Stage2, run the skill-level deliberation checker from the iteration direc
   /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
 ```
 
-Expected output:
+Expected output for a runnable iteration:
 
 `DELIBERATION_GATE_PASS`
+
+For a canonically aborted iteration, the valid terminal output is:
+
+`DELIBERATION_ABORT_CONFIRMED`
+
+and no Stage2 launch is allowed.
 
 ---
 
@@ -1001,16 +1007,18 @@ An **aborted** iteration is closed when:
 
 Do not fabricate missing Stage2/Stage3 outputs for an aborted iteration.
 
-Before declaring closure, rerun the same deliberation checker from the iteration directory. Once result-classification artifacts exist it automatically enters `CLOSURE` mode and verifies S00–S13:
+Before declaring closure, rerun the same deliberation checker from the iteration directory:
 
 ```bash
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \\
   /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
 ```
 
-Require `DELIBERATION_GATE_PASS` with `phase=CLOSURE` (or `phase=GLOBAL_REVIEW` when S14 is triggered).
+For a normal completed iteration, require `DELIBERATION_GATE_PASS` with `phase=CLOSURE` (or `phase=GLOBAL_REVIEW` when S14 is triggered).
 
-Never claim an iteration is complete before that point.
+For an aborted iteration, require `DELIBERATION_ABORT_CONFIRMED` with `phase=ABORTED`. The checker stops at the aborting stage; correctly unlaunched downstream stages are not required.
+
+Never claim an iteration is complete before the applicable normal or aborted closure condition is met.
 
 ---
 
