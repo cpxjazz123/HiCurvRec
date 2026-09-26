@@ -1,0 +1,31 @@
+ITER=29
+STAGE=S11_STAGE3_EVALUATION_NO_GPU_LAUNCHER_SMOKE
+AUTHORIZATION=logs/deliberation/S11_STAGE3_EVALUATION/round_1/judge.md; ACCEPT_A
+PATCHED_SOURCE=stage3_T5Train/train_HG-Rec.py; SHA256=cfaa53e7cc2d077a989f8e17b28b70c6d9919cf74c0bfb9d021cf710b5b3c2a2
+WRAPPER=stage2_RQ-VAE/curvature_RQ-VAE_iter29/scripts/run_stage3_iter29.py; SHA256=1cab47ff035e69aecf3aa5a2e1cfe7777c114a60b753b5e935453d90271b2ec7
+
+SMOKE_ATTEMPT_1=wrapper route assertions passed; command hit 120-second tool timeout while importing the actual trainer; no torchrun child was invoked. This was incomplete, not a pass.
+SMOKE_ATTEMPT_2=actual launcher stub captured the expected child call but the disposable harness asserted parent sentinel values after restoring them and exited AssertionError; no torchrun child was invoked and no Stage3 result path was written.
+SMOKE_ATTEMPT_3=corrected disposable Python 3.10 smoke completed successfully; actual subprocess.call was replaced by a recorder returning 0; no child process/GPU training was started.
+
+WRAPPER_ROUTE_PASS
+CODE_PATH=/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter29/item_sids.json
+RQVAE_VARIANT=iter29_bounded_rational_additive_mapping
+LOG_PATH=/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter29/logs/
+SAVE_PATH=/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter29/ckpt/
+LAUNCHER_SCRIPT=/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter29/scripts/run_stage3_iter29.py
+LAUNCHER_LOG=/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter29/logs/_stage3_launcher.log
+LAUNCHER_ENV_PASS
+TORCHRUN_ARGV=['/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun', '--standalone', '--nproc_per_node=4', '--master_port=50201', '/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter29/scripts/run_stage3_iter29.py']
+CHILD_NCCL_ENV={'NCCL_IB_DISABLE': '1', 'NCCL_P2P_DISABLE': '1', 'NCCL_SHM_DISABLE': '1', 'NCCL_TIMEOUT': '3600', 'TORCH_NCCL_BLOCKING_WAIT': '1'}
+CUDA_VISIBLE_DEVICES=0,1,2,3
+PARENT_ENV_UNCHANGED=True; MODEL_DATA_EVAL_CONSTANTS_UNCHANGED=True
+TORCHRUN_CHILD_STARTED=False
+SMOKE_RESULT=ITER29_STAGE3_LAUNCHER_SMOKE_PASS
+POST_SMOKE_RESULT_TREE=Only the pre-existing empty results/stage3_T5Train/curvature_RQ-VAE_iter29/logs/ directory remained; no Stage3 result, checkpoint, or runtime log was created.
+
+POST_COMMENT_CORRECTION_SMOKE=PASS; command=/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 /tmp/iter29_stage3_launcher_smoke_final.py; disposable harness removed after completion
+FINAL_PATCHED_SOURCE_SHA256=9861eb6b2a5b0bfac546524c50d402aba5827e5079a228e2ae5501909bc937cb
+FINAL_WRAPPER_SHA256=1cab47ff035e69aecf3aa5a2e1cfe7777c114a60b753b5e935453d90271b2ec7
+WRAPPER_ROUTE_PASS; LAUNCHER_ENV_PASS; exact torchrun argv and five child values asserted despite conflicting parent sentinels; parent environment unchanged; locked model/evaluation constants unchanged; result-tree snapshot identical before/after; real torchrun child not invoked.
+FINAL_RESULT=ITER29_STAGE3_LAUNCHER_SMOKE_PASS
