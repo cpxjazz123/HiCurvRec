@@ -1,0 +1,5 @@
+iter17 Stage3 launch audit
+
+Attempt 1 started 2026-09-26 02:29 under the wrapper before its NCCL environment update. The invoking environment had no NCCL_* overrides; the read-only Stage3 launcher therefore used its `setdefault` values (`NCCL_IB_DISABLE=0`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=0`), which differ from the repository's required Stage3 settings. The torchrun PID recorded in `_stage3_launcher.log` was sent SIGTERM after epoch 10; no test result from this attempt is used.
+
+Before retry, `scripts/run_stage3_iter17.py` was updated to hard-code the required launcher environment (`NCCL_IB_DISABLE=1`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=1`, `NCCL_TIMEOUT=3600`, `TORCH_NCCL_BLOCKING_WAIT=1`) and compiled with the configured Stage3 Python 3.10 interpreter. Attempt 2 started 2026-09-26 02:32 via the same 4-rank, port-50201 wrapper; only this attempt will supply the final `test_final.json` and Stage3 checkpoint.
