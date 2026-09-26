@@ -1,0 +1,16 @@
+{
+  "contract_version": "CAO-1",
+  "active_curvature_contract": "iter18_cyclic_learnable_layer_scale",
+  "new_mechanism": "sinkhorn_riemannian_ema_codebook",
+  "curvature_trainable": true,
+  "curvature_time_varying": true,
+  "uses_cyclic_schedule": true,
+  "introduces_trainable_parameter": false,
+  "introduces_new_auxiliary_loss": false,
+  "introduces_new_assignment_rule": false,
+  "srema_beta_default": 0.99,
+  "srema_log_every_global_steps": 1000,
+  "parent_iter": "iter18",
+  "parent_test_R10": 0.05988962203380978,
+  "scientific_question": "Can replacing AdamW's Euclidean codebook update with a Sinkhorn-weighted Riemannian EMA (SREMA) — computed entirely on the Poincaré ball — improve downstream Stage3 R@10 over iter18?"
+}
