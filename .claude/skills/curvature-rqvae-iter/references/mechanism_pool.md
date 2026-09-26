@@ -1,43 +1,69 @@
-# Mechanism Pool (Rotate, Don't Stack)
+# Mechanism Pool — FCCR-1 Active Scope
 
-Each entry: mechanism name, description, paper citation, risk level.
+This file is subordinate to `.claude/skills/curvature-rqvae-iter/SKILL.md`.
 
-## Curvature Dynamics (1-3)
+## Active research contract
 
-1. **Cyclic c(t) curriculum (v318 baseline)** — `c(t) = c_min + (c_max - c_min)|sin(πt/T)|`, T=50_000. Paper: SGDR (Loshchilov & Hutter 2017) cyclical LR. Status: already promoted; iterate by varying T ∈ {25k, 100k}.
+Current contract: **FCCR-1 — Fixed Closed-Form Curvature**.
 
-2. **Layer-wise learned curvature** — Each RQ layer has independent `c_l` learned via sigmoid reparameterization with momentum-restricted drift (`Δc_l = clip(Δc_l, -ε, +ε)` per step). Paper: "Mixed-curvature product manifolds" (Guo et al. 2022).
+The active question is:
 
-3. **Lorentz (hyperboloid) RQ-VAE** — Replace Poincaré ball with Lorentz model. Distance: `d(x, y) = arccosh(-⟨x, y⟩_L / c)`. Paper: "Hyperbolic Neural Networks" (Nickel & Kiela 2018) extended by "Lorentzian Distance Learning for Recommender Systems" (Vinh Tran et al. 2020).
+[
+(B_l, m_l^{raw}) ightarrow f(cdot) ightarrow c_l
+]
 
-## Quantization Mechanics (4-6)
+with all (c_l) computed before Stage2 and fixed for the entire run.
 
-4. **Adaptive margin loss** — `margin = α / c_l`. Sharper separation at high curvature. Paper: "Adaptive Margin for RQ-VAE Tokenizer" (anon 2024).
+## Active candidate family
 
-5. **Sinkhorn c-dependent epsilon** — `ε = ε_0 / c`, tighter assignment at high curvature. Paper: "Optimal Transport for Discrete Representation" (Geneva & Zabaras 2022).
+Only the following are active unless the user explicitly changes the contract:
 
-6. **Riemannian Adam** — gradient rescaling by inverse metric `1/c`. Paper: "Riemannian Adam" (Bécigneul & Ganea 2019).
+1. **Alternative bounded closed-form mappings**
+   - Change only the mathematical mapping (f(B_l,m_l^{raw})).
+   - Curvature remains fixed, non-trainable, and time-invariant.
+   - No cyclic schedule, curvature regularization, optimizer-side curvature learning, or auxiliary curvature-learning loss.
 
-## Codebook Strategy (7-9)
+2. **Input-ablation variants of the same closed-form family**
+   - branching-only;
+   - raw-residual-only;
+   - branching + raw residual.
+   - These are allowed only as clean one-factor ablations under the same protocol.
 
-7. **Curriculum on quantization difficulty** — anneal codebook temperature `τ = 1/c`, sharpens assignment schedule. Paper: "Gumbel-Softmax with temperature annealing".
+3. **Sensitivity/robustness checks of a validated mapping**
+   - Small bounded changes to a preregistered coefficient or transform.
+   - Only after the base mapping receives a clean FCCR-1 run.
 
-8. **Negative c (partial spherical)** — items in low-density regions get `c < 0` (spherical interpolation). Paper: "Mixed-curvature manifolds" (Guo et al. 2022).
+## Deferred families
 
-9. **Product manifold M = H^{c1} × H^{c2} × S** — half hyperbolic, half spherical. Paper: "Product Manifold Learning" (Huang et al. 2023).
+These are not active candidates under FCCR-1:
 
-## Curriculum Variations (10)
+- learnable layer curvature;
+- cyclic or scheduled curvature;
+- curvature regularization;
+- curvature-conditioned LR / AdamW beta2;
+- curvature-dependent Sinkhorn redesign;
+- curvature-dependent behavior-loss redesign;
+- Riemannian optimizer as a new mechanism;
+- manifold replacement;
+- mixed/product manifolds;
+- Stage1 embedding changes;
+- Stage3 trainer changes.
 
-10. **Hierarchical curriculum (V-shape)** — `c(t) = c_min + (c_max - c_min) * sin²(πt/T)` (quadratic, no flat plateau). Alternative to v318 linear `|sin|`.
+They may be reopened only if the user explicitly changes the research contract.
 
-## Already Exhausted (Do Not Retry Without Modification)
+## Historical experiments
 
-- Vanilla RQ-VAE (curvature 1.0 constant) — Gini 0.038, collision 3.9%. **BASELINE**.
-- v318 cyclic-c |sin| — Gini 0.038, collision 3.9%, test_R@10 0.1179. **CURRENT BEST**.
+Historical iterations remain useful as evidence, but they must not be automatically inherited as mechanism parents.
 
-## Anti-Patterns (Avoid)
+Important observations:
 
-- **Stacking mechanisms**: pick exactly ONE per iteration.
-- **Increasing model capacity**: do not change hidden dims [512, 256, 128] or embed=32 or codebook=256 layers=3.
-- **Modifying the input pipeline**: do not change `item_emb.parquet` source.
-- **Adjusting the downstream trainer**: stage3 is read-only.
+- learnable/cyclic curvature can erase a closed-form prior;
+- stronger Stage2 geometry proxies do not guarantee Stage3 improvement;
+- optimizer-side curvature changes showed relative promise but are outside FCCR-1;
+- Sinkhorn/behavior mechanism stacking created attribution ambiguity;
+- Iter16 did not cleanly test branching + raw residual because it used the wrong residual semantics;
+- Iter25 used correct raw residual values but implemented them as a learnable prior, so it was contract-invalid for the fixed-curvature hypothesis.
+
+## Anti-pattern
+
+Do not rotate through this pool simply because something has not yet been tried. Candidate selection starts from the active contract and unresolved scientific question.
