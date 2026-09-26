@@ -1,31 +1,44 @@
 #!/usr/bin/env bash
-# Usage:  scripts/train_iter.sh <iter_id>
-# Example: scripts/train_iter.sh 1
-#
-# Hard-coded (Project Rules §1 / §3 / §4 / §5):
-#   - 0 argparse / 0 CLI flag (env-var ITER_ID is the only injected value)
-#   - 解释器: genrec_env python3.10 (裸 python3 无 torch)
-#   - 训练入口: stage2_RQ-VAE/curvature_RQ-VAE/curvature_RQ-VAE.py
-#   - launcher 由脚本内置的 _launch_via_torchrun 自动 fork 4 卡 DDP
 set -euo pipefail
 
-ITER_ID="${1:?Usage: train_iter.sh <iter_id>}"
-ROOT="/home/wlia0047/ar57/wenyu/GeneRec"
-WORK="${ROOT}/stage2_RQ-VAE/curvature_RQ-VAE_iter${ITER_ID}"
-LOG="${WORK}/logs/train_iter${ITER_ID}.log"
-PYTHON="/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
+# FCCR-1 Stage2 launcher.
+# Run with NO CLI arguments from:
+#   stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/
+#
+# Current CLAUDE.md is authoritative for interpreter/path policy.
 
-if [ ! -d "${WORK}" ]; then
-  echo "[train_iter] missing WORK=${WORK}; 先 cp -r curvature_RQ-VAE 到这里" >&2
+ROOT="/home/wlia0047/ar57/wenyu/GeneRec"
+PY="/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
+
+WORK="$(pwd -P)"
+NAME="$(basename "$WORK")"
+
+if [[ ! "$NAME" =~ ^curvature_RQ-VAE_iter[0-9]+$ ]]; then
+  echo "[train_iter] run from stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/; got $WORK" >&2
   exit 2
 fi
 
-mkdir -p "${WORK}/logs"
+if [[ ! -f "$WORK/curvature_RQ-VAE.py" ]]; then
+  echo "[train_iter] missing $WORK/curvature_RQ-VAE.py" >&2
+  exit 2
+fi
 
-echo "[train_iter] iter=${ITER_ID} work=${WORK} log=${LOG}"
-echo "[train_iter] launcher: ${PYTHON} curvature_RQ-VAE.py (内置 _launch_via_torchrun fork 4 卡 DDP)"
+# Mandatory contract preflight. No Stage2 launch if this fails.
+"$PY" "$ROOT/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py"
 
-cd "${WORK}"
-ITER_ID="${ITER_ID}" nohup "${PYTHON}" curvature_RQ-VAE.py > "${LOG}" 2>&1 &
-echo "[train_iter] wrapper pid=$!"
-echo "[train_iter] 监控: tail -f ${LOG}  或  tail -f ${WORK}/logs/train_migrated.log"
+# Iteration-local MVG is mandatory and must be FCCR-1 aware.
+if [[ ! -f "$WORK/scripts/mvg_check.py" ]]; then
+  echo "[train_iter] missing iteration-local scripts/mvg_check.py" >&2
+  exit 2
+fi
+MVG_OUT="$("$PY" "$WORK/scripts/mvg_check.py")"
+printf '%s\n' "$MVG_OUT"
+if ! grep -q '^MVG PASS$' <<<"$MVG_OUT"; then
+  echo "[train_iter] MVG did not emit exact 'MVG PASS'" >&2
+  exit 3
+fi
+
+mkdir -p "$WORK/logs"
+nohup "$PY" "$WORK/curvature_RQ-VAE.py" > "$WORK/logs/train_run.log" 2>&1 &
+echo "[train_iter] launched pid=$! work=$WORK"
+echo "[train_iter] log=$WORK/logs/train_run.log"
