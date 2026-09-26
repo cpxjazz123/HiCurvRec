@@ -1,36 +1,52 @@
-# Baseline Metrics for Promotion Gates
+# Baseline Registry — Current Protocol Only
 
-Last measured on 2026-09-15, Amazon-2023 Instruments dataset.
+This file is descriptive and subordinate to the Protocol Lock in `SKILL.md`.
 
-## SID Quality (Stage 2 output)
+## Current comparable protocol
 
-| Method | Collision Rate | Occupancy Gini | Embedding HitRate@500 |
-|---|---|---|---|
-| TIGER_RQ-VAE  | 7.04%  | 0.0672 | 0.4472 |
-| HG_RQ-VAE     | 1.59%  | 0.0157 | 0.4472 |
-| curvature_RQ-VAE (current) | 3.93% | 0.0381 | 0.4472 |
-| LETTER_RQ-VAE | 30.48% | 0.2705 | 0.4472 |
+For the current 2026-09-25/26 evaluation protocol, directly comparable runs use:
 
-**Note**: HitRate is identical because all 4 share the same input embedding (stage1 output). It measures embedding health, NOT SID quality. The differentiators are Gini + collision.
+- Amazon-2023 Instruments;
+- Stage3 `n_eval = 57439`;
+- the same Stage1 embedding source and current Stage3 trainer/protocol;
+- exact values read from each run's `test_final.json`.
 
-**Promotion gate**:
-- `Gini <= 0.038 + 0.005 = 0.043`
-- `collision_rate <= 3.93% × 1.10 = 4.32%`
-- `HR@500 >= 0.4472 - 0.005 = 0.4422`
+## Canonical reference
 
-## Downstream GR (Stage 3) — from previous v318 / v317 runs
+Canonical Iter11 formal run:
 
-| Metric | Value |
-|---|---|
-| test_R@10   | 0.1179 (v318) — well above 0.065 floor |
-| test_R@20   | 0.1533 |
-| test_NDCG@20| 0.0932 |
-| valid_ndcg@20 (Stage 3 epoch ~100) | 0.1005 |
+- run: `results/stage3_T5Train/curvature_RQ-VAE_iter11/logs/Amazon_2023_Instruments/Sep-25-2026_05-25-18/test_final.json`
+- `test_R@5 = 0.0388934348`
+- `test_R@10 = 0.0597677536`
+- `test_NDCG@5 = 0.0256396540`
+- `test_NDCG@10 = 0.0323597951`
+- `n_eval = 57439`
 
-These were achieved with the **v318 cyclic-c curriculum**. Any iteration must beat or match these.
+Best completed Iter17–25 observed so far:
 
-**Success target**:
-- `test_R@10 > 0.065`
-- `valid_ndcg@20 >= 0.070`
+- Iter18 `test_R@10 = 0.0598896220`, `n_eval = 57439`
 
-Since v318 baseline already exceeds both, the bar is in practice: **don't regress** the v318 numbers. If a new mechanism lands within 5% of v318 valid_ndcg@20 (≥0.095), it is a viable candidate for downstream stage3 full run.
+The Iter18-vs-Iter11 difference is tiny and should be treated as near-parity unless replicated.
+
+## Historical non-comparable results
+
+Older results around `test_R@10 ≈ 0.1179` used a different evaluation population/protocol (for example `n_eval = 24832`) and are:
+
+`HISTORICAL_NONCOMPARABLE`
+
+They must not be called the current best or used in current promotion deltas.
+
+## Stage2 metrics
+
+Gini, collision, unique SID count, layer utilization, and conditional entropy are descriptive only.
+
+They are not promotion gates and must not be used as substitutes for Stage3 evidence.
+
+## Baseline disagreement rule
+
+If any other repository file disagrees with the values above:
+
+1. read the exact run's `test_final.json`;
+2. verify protocol compatibility;
+3. use the exact file as source of truth;
+4. document the mismatch before comparing methods.
