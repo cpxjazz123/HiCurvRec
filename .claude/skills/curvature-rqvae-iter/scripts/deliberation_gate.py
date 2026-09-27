@@ -9,9 +9,7 @@ Mode is inferred from canonical artifacts:
 - CLOSURE: if result-classification artifacts exist, additionally checks S10..S13.
 - GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.\n- ABORTED: stops at the first Judge C ABORT_ITERATION and validates the abort artifact.
 
-The gate enforces process evidence and autonomous continuation. Judge artifacts
-must declare USER_INPUT_REQUIRED=NO, a performance-seeking iteration purpose, no sweep/replication/root-cause iteration, and a concrete AUTONOMOUS_NEXT_ACTION.
-It does not substitute for scientific judgment or the mechanism-specific preflight/MVG.
+The gate enforces process evidence and autonomous continuation. Scientific-decision rounds require independent A/B plus Judge; operational-repair rounds may use repair_record.md plus one repair verifier/Judge without redundant A/B regeneration. Judge artifacts must declare USER_INPUT_REQUIRED=NO and a concrete AUTONOMOUS_NEXT_ACTION. It does not substitute for scientific judgment or the mechanism-specific preflight/MVG.
 """
 from __future__ import annotations
 
@@ -51,6 +49,7 @@ GLOBAL_REVIEW = [
 
 ALLOWED_VERDICTS = {"ACCEPT_A", "ACCEPT_B", "MERGE_AB", "ABORT_ITERATION"}
 INTERMEDIATE_REPAIR_VERDICT = "REPAIR_AND_RERUN"
+REPAIR_PASS_VERDICT = "REPAIR_PASS"
 
 
 def fail(message: str) -> None:
@@ -228,6 +227,81 @@ def require_judge(
     return verdict, text
 
 
+def require_repair_record(path: Path, stage_id: str) -> str:
+    text = read(path)
+    required = [
+        "ROUND_TYPE=OPERATIONAL_REPAIR",
+        "LOCKED_SCIENCE_CHANGED=NO",
+    ]
+    for marker in required:
+        if marker not in text:
+            fail(f"{path} missing repair marker: {marker}")
+
+    if "PARALLEL_EXECUTION=YES" not in text:
+        reason = re.search(r"^SERIALIZATION_REASON=(.+)\s*$", text, re.M)
+        if not reason or not reason.group(1).strip():
+            fail(
+                f"{path} must declare PARALLEL_EXECUTION=YES or a concrete SERIALIZATION_REASON"
+            )
+
+    if "CHECKS_PASS=YES" not in text:
+        fail(f"{path} repair-only round has not established CHECKS_PASS=YES")
+
+    return text
+
+
+def require_repair_judge(
+    path: Path, stage_id: str, canonical_names: list[str]
+) -> tuple[str, str]:
+    text = read(path)
+    if f"STAGE_ID={stage_id}" not in text:
+        fail(f"{path} has wrong/missing STAGE_ID")
+    if "ROUND_TYPE=OPERATIONAL_REPAIR" not in text:
+        fail(f"{path} repair judge missing ROUND_TYPE=OPERATIONAL_REPAIR")
+
+    match = re.search(
+        r"^VERDICT=(REPAIR_PASS|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",
+        text,
+        re.M,
+    )
+    if not match:
+        fail(f"{path} repair judge missing valid repair verdict")
+    verdict = match.group(1)
+
+    required = [
+        "LOCKED_SCIENCE_CHANGED=NO",
+        "CANONICAL_DECISION=",
+        "CANONICAL_ARTIFACT=",
+        "USER_INPUT_REQUIRED=NO",
+        "AUTONOMOUS_NEXT_ACTION=",
+    ]
+    for marker in required:
+        if marker not in text:
+            fail(f"{path} missing repair-judge field: {marker}")
+
+    if verdict == INTERMEDIATE_REPAIR_VERDICT:
+        if "SAME_ITERATION_REPAIR=AUTHORIZED" not in text:
+            fail(f"{path} REPAIR_AND_RERUN requires SAME_ITERATION_REPAIR=AUTHORIZED")
+        fail(
+            f"{stage_id} latest operational-repair round still requires repair/rerun"
+        )
+
+    if verdict == "ABORT_ITERATION":
+        for marker in (
+            "ABORT_REASON=", "ABORT_EVIDENCE=", "NEXT_ITERATION_CONSTRAINTS="
+        ):
+            if marker not in text:
+                fail(f"{path} ABORT_ITERATION requires {marker}")
+
+    canonical_decl = re.search(r"^CANONICAL_ARTIFACT=(.+)\s*$", text, re.M)
+    if canonical_decl:
+        declared = canonical_decl.group(1)
+        for name in canonical_names:
+            if name not in declared:
+                fail(f"{path} does not declare canonical artifact {name}")
+
+    return verdict, text
+
 def check_stage(
     logs: Path,
     deliberation_root: Path,
@@ -241,14 +315,34 @@ def check_stage(
     source_packet = round_dir / "source_packet.md"
     agent_a = round_dir / "agent_a.md"
     agent_b = round_dir / "agent_b.md"
+    repair_record = round_dir / "repair_record.md"
     judge = round_dir / "judge.md"
 
     read(source_packet)
-    require_worker(agent_a, "AGENT_A", stage_id, source_packet)
-    require_worker(agent_b, "AGENT_B", stage_id, source_packet)
 
     canonical_paths = [logs / template.format(n=n) for template in canonical_templates]
     canonical_names = [path.name for path in canonical_paths]
+
+    # Operational-repair rounds intentionally bypass redundant A/B regeneration.
+    if repair_record.is_file():
+        require_repair_record(repair_record, stage_id)
+        verdict, _ = require_repair_judge(judge, stage_id, canonical_names)
+        if verdict == REPAIR_PASS_VERDICT:
+            for canonical in canonical_paths:
+                if not canonical.is_file():
+                    fail(
+                        f"{stage_id} repair passed but canonical artifact missing: {canonical}"
+                    )
+            return stage_id, round_number, verdict, canonical_names
+        if verdict == "ABORT_ITERATION":
+            abort_path = logs / f"iteration_abort_iter{n}.md"
+            read(abort_path)
+            return stage_id, round_number, verdict, [abort_path.name]
+        fail(f"{stage_id} unresolved operational repair")
+
+    # Normal scientific-decision round: independent A/B evidence is required.
+    require_worker(agent_a, "AGENT_A", stage_id, source_packet)
+    require_worker(agent_b, "AGENT_B", stage_id, source_packet)
 
     # Parse verdict before enforcing the normal stage canonical artifact.
     judge_text = read(judge)
