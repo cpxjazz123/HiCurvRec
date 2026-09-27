@@ -7,6 +7,8 @@ ABORT_STAGE=S08_MVG
 ABORT_ROUND=4
 PARENT_ITER=29
 S08_STATUS=HOLD_FOR_PROVENANCE
+ABORT_EVIDENCE=Round-2 Judge required actual selected batch IDs/provenance and device capture; raw output omitted both. The one authorized post-hoc reconstruction confirms only current input hashes and conditional IDs, not historical bytes or runtime device.
+WHY_SAME_ITERATION_REPAIR_INVALID=No further MVG invocation, data reconstruction, or device query is authorized; repeating cannot recover the original runtime observation, and treating source intent or post-hoc hashes as historical proof would waive the locked S08 gate.
 STAGE2_LAUNCHED=NO
 STAGE3_LAUNCHED=NO
 ```
@@ -33,6 +35,9 @@ This is a protocol/provenance abort, not evidence that HRA is inactive, invalid,
 
 Resume only from the last appropriate valid parent (Iter29 unless fresh primary evidence establishes otherwise). Do not reuse Iter31's MVG as a valid performance result, retry it in place, or fabricate Stage2/Stage3 artifacts. Any further mechanism must be registered through fresh 2+1 deliberation. Before its sole MVG invocation, its adjudicated capture path must preserve input identity, actual ordered batch IDs/provenance, and actual runtime device as contemporaneous runtime evidence; do not rely on a post-hoc reconstruction to satisfy that gate. Stage2 remains forbidden until the new iteration passes its own S08 and S09 Judge gates and immediate gradient-path requirements.
 
-## Closure
+## Closure status and unresolved gate conflict
 
-`logs/deliberation/S08_MVG/round_4/judge.md` is the canonical abort decision. Git closure is pending; this file records no commit, push, or remote-hash claim.
+- The abort evidence and Iter31 source/audit subtree were committed as `88a7468f218fe3226704a9f32cd3011d3aac9c15`, pushed to GitHub `origin/main`, and the local/remote `main` hashes matched at that commit.
+- The required no-argument `deliberation_gate.py` closure invocation exited nonzero. Its first failure is S00: it regex-matched `matched-seed` in the historical Judge action's negated phrase “without ... reviving matched-seed replication” and reported `AUTONOMOUS_NEXT_ACTION proposes forbidden iteration type`. The action itself does not authorize that cancelled direction.
+- The gate source also hard-rejects any stage whose highest numbered deliberation round exceeds 2 (`deliberation_gate.py:72-84`), while this S08 record contains rounds 3 and 4 explicitly required by the prior round-3 Judge. The invocation stopped at S00, so this second conflict is established from the checker source and existing directory state, not from a second gate execution.
+- Consequently the push/hash requirement is met, but `DELIBERATION_ABORT_CONFIRMED phase=ABORTED` was not produced. Do not claim formal abort closure or begin Iter32 until this incompatibility is resolved under the controlling workflow without rewriting deliberation history or weakening the gate.
