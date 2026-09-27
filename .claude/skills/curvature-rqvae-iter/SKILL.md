@@ -34,6 +34,24 @@ When multiple choices exist, Agent A and Agent B independently evaluate them and
 
 **Never use user consultation as a substitute for adjudication.** Uncertainty, low confidence, conflicting evidence, multiple plausible mechanisms, failed MVG, parameter choice, negative evidence, or research-direction choice are all internal decisions for the 2+1 process.
 
+**Non-negotiable forward-progress rule:** every new iteration must test **one forward-looking structural mechanism intended to improve downstream performance**. An iteration may not exist primarily to measure uncertainty, reproduce a previous result, search parameters, compare seeds, perform ablations, identify why a prior run behaved as it did, or isolate the root cause of a small delta. The iteration budget is reserved for mechanisms with a plausible path to materially improve the target metric.
+
+The following are forbidden as the primary purpose or mechanism of any iteration:
+
+- parameter sweep, grid search, random search, Bayesian search, or trying several values/ranges of the same mechanism;
+- different-seed / multi-seed / matched-seed replication;
+- rerunning the same mechanism only to estimate variance or noise;
+- hyperparameter sensitivity studies;
+- ablation-only iterations whose purpose is to identify which component caused an earlier result;
+- reverse-mapping / counterfactual / control iterations whose main purpose is causal attribution rather than improvement;
+- root-cause investigations of why a previous mechanism succeeded, failed, or produced a small delta;
+- diagnostic iterations whose output is explanation rather than a new performance-seeking mechanism.
+
+A small, neutral, or ambiguous delta is recorded as such and the workflow **moves forward to a distinct structural mechanism**. Do not spend a new iteration proving whether the small delta was noise.
+
+Diagnostics are allowed only as lightweight preflight/MVG checks needed to verify that the newly registered mechanism is active, valid, and executable. They must not become a performance sweep, seed study, parameter search, or substitute for the registered end-to-end experiment.
+
+
 
 Every non-aborted iteration must answer one clean question:
 
@@ -158,7 +176,8 @@ Hard gates are evaluated before comparative quality:
 - one-factor causal isolation;
 - falsifiability;
 - reproducibility / sufficient implementation specificity;
-- no unsupported factual claims.
+- no unsupported factual claims;
+- iteration purpose is a forward performance-seeking structural mechanism, not sweep/replication/root-cause analysis.
 
 A candidate failing a hard gate cannot win merely because its narrative is stronger.
 
@@ -193,7 +212,7 @@ For stages that mutate shared code, launch jobs, write checkpoints, evaluate Sta
 - Judge C selects or merges the method;
 - the orchestrator applies the canonical method **once**;
 - Stage2 and Stage3 full GPU runs are never duplicated merely to satisfy the 2+1 protocol;
-- true scientific replication is a separate registered experiment and may intentionally run multiple seeds.
+- multi-seed / matched-seed replication is not an allowed iteration type under this skill.
 
 No worktree may be used. This section does not override repository `CLAUDE.md` Git or no-Plan-Agent rules.
 
@@ -231,6 +250,9 @@ CANONICAL_DECISION=
 CANONICAL_ARTIFACT=
 CONFIDENCE=HIGH | MEDIUM | LOW
 USER_INPUT_REQUIRED=NO
+ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM
+SWEEP_OR_REPLICATION_ITERATION=NO
+ROOT_CAUSE_ITERATION=NO
 AUTONOMOUS_NEXT_ACTION=
 
 REPLAN_CONSTRAINTS=
@@ -241,7 +263,7 @@ For `ACCEPT_B`, `WHY_NOT_A` is required.
 For `MERGE_AB`, the judge must state exactly which parts came from A and B.  
 For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.  
 For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.  
-For every verdict, `USER_INPUT_REQUIRED=NO` and a concrete `AUTONOMOUS_NEXT_ACTION` are mandatory.
+For every verdict, `USER_INPUT_REQUIRED=NO`, `ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM`, `SWEEP_OR_REPLICATION_ITERATION=NO`, `ROOT_CAUSE_ITERATION=NO`, and a concrete `AUTONOMOUS_NEXT_ACTION` are mandatory.
 
 ## 2.7 Stage map
 
@@ -277,7 +299,54 @@ If a stage has multiple canonical files, Judge C must list all of them in `CANON
 - **S13 closure:** repository truth and remote verification dominate.
 - **S14 review:** compare only protocol-valid evidence and explicitly distinguish validated findings from unresolved hypotheses.
 
-## 2.9 Feasibility Abort — self-terminate clearly infeasible iterations
+## 2.9 Forward-Only Iteration Policy — no sweep, replication, or root-cause iterations
+
+Every iteration must answer:
+
+> What **new structural mechanism** are we introducing that could materially improve downstream performance?
+
+It must not answer:
+
+> Was the last +Δ real?  
+> Which seed is better?  
+> Which constant is best?  
+> Why did the last mechanism fail?  
+> Which component caused the gain/loss?
+
+### Forbidden iteration forms
+
+```
+SWEEP
+PARAMETER_SEARCH
+SEED_REPLICATION
+MATCHED_SEED_COMPARISON
+NOISE_ESTIMATION
+HYPERPARAMETER_SENSITIVITY
+ABLATION_ONLY
+ROOT_CAUSE_ANALYSIS
+MICRO_DELTA_ATTRIBUTION
+REVERSE_CONTROL_ONLY
+```
+
+If a Global Review or previous artifact proposes one of these as the next iteration, that proposal is automatically superseded by this section. The 2+1 process must instead select a distinct performance-seeking structural mechanism.
+
+### Parameter policy
+
+A new mechanism may contain fixed constants, but they must be chosen **before registration** from theory, geometry, scale analysis, prior evidence, or a deterministic rule. Do not create an iteration whose scientific contribution is trying several values.
+
+After S02/S04 lock, no in-iteration retuning is allowed. If the registered constant makes the mechanism infeasible, abort the iteration. The next iteration must not simply be another value of the same constant unless the changed value is inseparable from a genuinely new structural mechanism.
+
+### Seed policy
+
+Use the protocol-locked seed for comparability. Do not create extra runs solely with different seeds. A small effect that cannot be distinguished from historical noise is classified `ACTIVE_NEUTRAL`; the next iteration moves to a new structural mechanism instead of estimating variance.
+
+### Root-cause policy
+
+Failure attribution is descriptive bookkeeping only. It may state what is directly supported by evidence, but it must not launch a new iteration whose goal is to discover the cause of the previous result. Unknown causes may remain unresolved.
+
+---
+
+## 2.10 Feasibility Abort — self-terminate clearly infeasible iterations
 
 The orchestrator must **end the current iteration without asking the user to rescue it** when direct evidence shows the registered mechanism cannot be meaningfully executed as specified.
 
@@ -374,7 +443,7 @@ An aborted iteration:
 
 ---
 
-## 2.10 Autonomous Continuation — user-decision states are forbidden
+## 2.11 Autonomous Continuation — user-decision states are forbidden
 
 This rule applies to every new stage and iteration governed by this skill.
 
@@ -875,16 +944,19 @@ Do not use `R@10 < 0.065` alone to label a mechanism failed.
 
 ---
 
-# 14. Replication / noise rule
+# 14. Small-delta / noise rule — move forward, do not replicate
 
 Tiny one-run deltas are not discoveries.
 
 If candidate-baseline difference is comparable to historical run noise:
 
-- call it near-parity / neutral;
-- replicate before claiming improvement;
-- use matched protocol and seed policy;
-- preferably report multiple seeds and spread.
+- classify it as near-parity / `ACTIVE_NEUTRAL`;
+- report the uncertainty honestly;
+- **do not** create a multi-seed, matched-seed, repeated-run, or replication iteration;
+- **do not** create a root-cause or attribution iteration;
+- autonomously select a distinct structural mechanism with a plausible path to a materially larger downstream gain.
+
+The purpose of the workflow is performance progress, not precise variance estimation.
 
 ---
 
@@ -907,9 +979,11 @@ Report:
 - protocol-compatible results only;
 - which hypotheses were cleanly tested;
 - which were confounded/invalid;
-- strongest evidence-supported direction;
+- strongest evidence-supported **new structural performance mechanism**;
 - paused directions;
 - unresolved core hypothesis.
+
+Global Review must never select replication, multi-seed comparison, parameter sweep, sensitivity testing, ablation-only work, or root-cause investigation as the next iteration. If the evidence is ambiguous, ambiguity is recorded and the Judge still selects the strongest distinct forward mechanism.
 
 Invalid-contract runs do not count as evidence against the scientific hypothesis.
 
@@ -1031,7 +1105,7 @@ S12  Two independent causal/result classifications → Judge
 S13  Two independent Git/artifact closure audits → Judge
       + commit + push + remote hash verification
    ↓
-S14  If triggered: two independent Global Reviews → Judge
+S14  If triggered: two independent Global Reviews → Judge → select a NEW structural performance mechanism (never sweep/replication/root-cause)
 ```
 
 A stage is not complete merely because A and B agree. Judge C must still verify the agreement against primary evidence.
@@ -1119,7 +1193,12 @@ Never:
 - spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification;
 - ask the user to choose the next research action, parameter, mechanism, direction, or whether to continue;
 - pause an authorized workflow waiting for user preference;
-- treat low confidence or multiple plausible options as requiring user input.
+- treat low confidence or multiple plausible options as requiring user input;
+- use an iteration for parameter sweep/grid/random search or trying several values of one mechanism;
+- use an iteration for different-seed, matched-seed, or variance-estimation replication;
+- use an iteration to identify the root cause of a previous gain/loss;
+- use an iteration only for ablation, reverse-control, or micro-delta attribution;
+- let Global Review choose replication/noise estimation instead of a new structural performance mechanism.
 
 ---
 
