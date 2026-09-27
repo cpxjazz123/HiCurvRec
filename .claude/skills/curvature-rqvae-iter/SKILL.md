@@ -43,6 +43,19 @@ Main itself:
 
 Do not create or invoke any secondary reasoning workflow, role-based reviewer, delegated scientific-decision process, or separate sign-off layer.
 
+### No runtime Markdown
+
+During an iteration, main must not create, copy, rewrite, or regenerate runtime Markdown records.
+
+Allowed reads: static repository documentation such as root `CLAUDE.md` and this skill.
+
+Forbidden writes: any new Markdown under the active iteration `logs/` or active Stage2/Stage3 result directories.
+
+Canonical records use JSON. Streaming event records may use JSONL. Process output may use LOG/TXT.
+
+If an unfinished active iteration contains Markdown records created by an older workflow, main must migrate any still-required information into the canonical JSON records and remove those active-iteration Markdown files before continuing. Completed historical iterations are not rewritten solely for format migration.
+
+
 Independent **tool operations** may run concurrently when they do not conflict on mutable state or exclusive GPU resources. Concurrency never creates another scientific decision-maker.
 
 ### Autonomous execution
@@ -115,24 +128,24 @@ Do not create role-specific workflow directories, role-specific drafts, vote fil
 Canonical records are:
 
 ```
-logs/source_snapshot_iter<N>.md
-logs/protocol_manifest_iter<N>.md
-logs/hypothesis_iter<N>.md
-logs/mechanism_manifest_iter<N>.md
+logs/source_snapshot_iter<N>.json
+logs/protocol_manifest_iter<N>.json
+logs/hypothesis_iter<N>.json
+logs/mechanism_manifest_iter<N>.json
 logs/mechanism_contract_iter<N>.json
-logs/one_factor_diff_iter<N>.md
+logs/one_factor_diff_iter<N>.json
 logs/preflight_contract_iter<N>.log
 logs/mvg_check_iter<N>.log
-logs/sid_geometry_iter<N>.md
+logs/sid_geometry_iter<N>.json
 logs/stage3_protocol_gate_iter<N>.log
-logs/stage3_outcome_iter<N>.md
-logs/failure_attribution_iter<N>.md
-logs/gate_decision_iter<N>.md
-logs/git_closure_iter<N>.md
-logs/global_review_after_iter<N>.md   # only when P07 triggers
+logs/stage3_outcome_iter<N>.json
+logs/failure_attribution_iter<N>.json
+logs/gate_decision_iter<N>.json
+logs/git_closure_iter<N>.json
+logs/global_review_after_iter<N>.json   # only when P07 triggers
 ```
 
-Each record is written directly by main or by a deterministic checker invoked by main.
+Each record is written directly by main or by a deterministic checker invoked by main. Every canonical JSON record must be valid UTF-8 JSON with stable machine-readable keys.
 
 Historical review directories may remain in old iterations as immutable audit history. New work does not create them and the active workflow does not use them as authorization evidence.
 
@@ -230,10 +243,10 @@ A structural mechanism may consume fixed curvature while leaving curvature itsel
 Main creates:
 
 ```
-logs/hypothesis_iter<N>.md
-logs/mechanism_manifest_iter<N>.md
+logs/hypothesis_iter<N>.json
+logs/mechanism_manifest_iter<N>.json
 logs/mechanism_contract_iter<N>.json
-logs/one_factor_diff_iter<N>.md
+logs/one_factor_diff_iter<N>.json
 ```
 
 P01 records:
@@ -259,8 +272,8 @@ Do not implement until the scientific mechanism is unambiguous.
 After P01, main creates:
 
 ```
-logs/source_snapshot_iter<N>.md
-logs/protocol_manifest_iter<N>.md
+logs/source_snapshot_iter<N>.json
+logs/protocol_manifest_iter<N>.json
 ```
 
 Then main implements the registered design.
@@ -377,16 +390,18 @@ Not valid abort reasons:
 
 Create:
 
-`logs/iteration_abort_iter<N>.md`
+`logs/iteration_abort_iter<N>.json`
 
 with:
 
-```
-STATUS=ITERATION_ABORTED_INFEASIBLE
-ABORT_STAGE=
-ABORT_EVIDENCE=
-WHY_SAME_ITERATION_REPAIR_INVALID=
-NEXT_ITERATION_CONSTRAINTS=
+```json
+{
+  "status": "ITERATION_ABORTED_INFEASIBLE",
+  "abort_stage": "...",
+  "abort_evidence": [],
+  "why_same_iteration_repair_invalid": "...",
+  "next_iteration_constraints": []
+}
 ```
 
 Do not launch later invalid stages.
@@ -409,7 +424,7 @@ Stage2 descriptive metrics are not performance gates:
 
 Create:
 
-`logs/sid_geometry_iter<N>.md`
+`logs/sid_geometry_iter<N>.json`
 
 Stage2 proxies never replace Stage3.
 
@@ -450,7 +465,7 @@ Run Stage3 once to the locked completion condition and require the canonical fin
 
 Create:
 
-`logs/stage3_outcome_iter<N>.md`
+`logs/stage3_outcome_iter<N>.json`
 
 ---
 
@@ -459,8 +474,8 @@ Create:
 Main creates:
 
 ```
-logs/failure_attribution_iter<N>.md
-logs/gate_decision_iter<N>.md
+logs/failure_attribution_iter<N>.json
+logs/gate_decision_iter<N>.json
 ```
 
 Mechanism status:
@@ -481,7 +496,7 @@ Do not overstate causality from a single small point delta.
 
 A small / ambiguous delta becomes `ACTIVE_NEUTRAL`; do not create a replication iteration to estimate noise.
 
-Main records one concrete autonomous next action.
+Main records one concrete autonomous next action in `gate_decision_iter<N>.json` under `autonomous_next_action`.
 
 ---
 
@@ -498,7 +513,7 @@ A normal iteration is closed only when:
 
 Create:
 
-`logs/git_closure_iter<N>.md`
+`logs/git_closure_iter<N>.json`
 
 Before closure run:
 
@@ -521,7 +536,7 @@ Trigger after 3 clean protocol-valid iterations, or when a higher-priority repos
 
 Create:
 
-`logs/global_review_after_iter<N>.md`
+`logs/global_review_after_iter<N>.json`
 
 Main synthesizes protocol-valid evidence and chooses a new forward structural mechanism.
 
@@ -533,7 +548,7 @@ Do not choose replication, seed comparison, parameter sweep, sensitivity study, 
 
 Run before Stage2 and again before closure.
 
-The gate reads canonical artifacts only. Historical review directories are not authorization inputs.
+The gate reads canonical JSON/LOG artifacts only. Historical review directories are not authorization inputs. For an unfinished active iteration, any Markdown file under its `logs/` directory is a hard workflow failure until migrated/removed.
 
 Possible outputs:
 
@@ -549,6 +564,7 @@ WORKFLOW_GATE_FAIL
 
 Do not:
 
+- create any runtime Markdown record during an iteration;
 - delegate any phase or scientific decision;
 - create role-based review/sign-off files;
 - add a second scientific mechanism in the same iteration;
