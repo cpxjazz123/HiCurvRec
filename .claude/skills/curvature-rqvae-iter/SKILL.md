@@ -102,6 +102,10 @@ Every non-aborted iteration must answer one clean question:
 
 The project-level target remains downstream `test_R@10 > 0.065`, but promotion failure and mechanism failure are not the same thing.
 
+### New iteration directory copy
+
+When creating a new iteration by copying a parent or template directory, immediately delete the copied destination's entire `logs/` directory before doing any iteration work. Do not delete or modify the parent/source directory's `logs/`. Recreate a fresh destination `logs/` directory and populate it only with records generated for the new iteration under the active phase model; do not carry forward prior-round deliberations, decisions, metrics, or closure claims. Complete this cleanup before starting the P01 Research Agent or writing any new iteration artifacts.
+
 ---
 
 # 1. Source of truth
@@ -129,20 +133,19 @@ Historical files never override an actual protocol-compatible `test_final.json`.
 
 A Research Agent is used only when the output requires irreducible scientific judgment, such as selecting/formulating a mechanism, interpreting causal evidence, or choosing a new research direction from ambiguous evidence.
 
-The workflow is reduced to eight phases:
+The workflow uses seven numbered phases; P07 is conditional:
 
 | Phase | Type | Purpose | Research Agent? |
 |---|---|---|---|
-| `P00_LOCK` | deterministic | source truth + baseline/protocol lock + hashes | **No** |
-| `P01_RESEARCH_DESIGN` | scientific | hypothesis + mechanism semantics + one-factor design + falsification | **Yes** |
-| `P02_BUILD_VERIFY` | deterministic/action | implement locked design + preflight + provenance + MVG | **No** |
+| `P01_RESEARCH_DESIGN` | scientific | hypothesis + mechanism semantics + one-factor design + falsification | **Yes, first** |
+| `P02_BUILD_VERIFY` | deterministic/action | source/baseline/protocol/hash lock, then implement accepted design + preflight + provenance + MVG | **No** |
 | `P03_STAGE2` | deterministic/action | Stage2 run once + automatic SID/geometry metrics | **No** |
 | `P04_STAGE3` | deterministic/action | exact Stage3 protocol diff + Stage3 run once | **No** |
 | `P05_RESULT_DECISION` | scientific | causal/result interpretation + promotion status + next action | **Yes** |
 | `P06_CLOSURE` | deterministic/action | artifact completeness + commit/push + remote hash | **No** |
 | `P07_GLOBAL_REVIEW` | scientific, conditional | select a new structural direction when review trigger fires | **Yes** |
 
-A normal iteration therefore has **two mandatory Agent decisions** (`P01`, `P05`) plus an optional third (`P07`). All other phases are checker-driven.
+A normal iteration therefore has **two mandatory Agent decisions** (`P01`, `P05`) plus an optional third (`P07`). Start P01 directly with its Research Agent; do not require source, baseline, protocol, or hash locks first. Perform those deterministic locks in P02 before implementation and any Stage2/Stage3 launch.
 
 ## 2.1 Research Agent rule
 
@@ -207,7 +210,7 @@ The following are explicitly **not Agent stages**:
 - Stage3 execution and test-artifact completeness;
 - Git status, required-artifact existence, commit, push, and local/remote hash equality.
 
-These may run concurrently when independent.
+These may run concurrently when independent. They do not gate or delay P01; the Research Agent begins directly from the registered research question and available primary evidence.
 
 ## 2.4 Fast operational repair
 
@@ -233,9 +236,8 @@ The iteration launcher may change only iteration-specific wiring/metadata (`CODE
 
 | Phase | Required canonical evidence |
 |---|---|
-| `P00_LOCK` | `source_snapshot_iter<N>.md`, `protocol_manifest_iter<N>.md` |
-| `P01_RESEARCH_DESIGN` | `hypothesis_iter<N>.md`, `mechanism_manifest_iter<N>.md`, `mechanism_contract_iter<N>.json`, `one_factor_diff_iter<N>.md` |
-| `P02_BUILD_VERIFY` | source patch + `preflight_contract_iter<N>.log` + `mvg_check_iter<N>.log` |
+| `P01_RESEARCH_DESIGN` | Research Agent decision: `hypothesis_iter<N>.md`, `mechanism_manifest_iter<N>.md`, `mechanism_contract_iter<N>.json`, `one_factor_diff_iter<N>.md` |
+| `P02_BUILD_VERIFY` | deterministic `source_snapshot_iter<N>.md` + `protocol_manifest_iter<N>.md` lock, source patch, `preflight_contract_iter<N>.log`, and `mvg_check_iter<N>.log` |
 | `P03_STAGE2` | canonical Stage2 artifacts + `sid_geometry_iter<N>.md` |
 | `P04_STAGE3` | `stage3_protocol_gate_iter<N>.log` + canonical Stage3 `test_final.json` + `stage3_outcome_iter<N>.md` |
 | `P05_RESULT_DECISION` | `failure_attribution_iter<N>.md` + `gate_decision_iter<N>.md` |
@@ -404,7 +406,7 @@ If changing `0.5 → 0.05` is needed to obtain meaningful activation, the curren
 
 `ITERATION_ABORTED_INFEASIBLE`
 
-and `0.05` must be registered as a **new iteration** and pass the new iteration's P00–P02 workflow.
+and `0.05` must be registered as a **new iteration** and pass the new iteration's P01–P02 workflow.
 
 Implementation repairs that merely make the code match the already registered equation do not require a new iteration.
 
@@ -538,9 +540,9 @@ Do not simultaneously add a new optimizer, behavior loss, Sinkhorn rule, manifol
 
 ---
 
-# 4. Protocol Lock — deterministic, no Agent stage
+# 4. P02 Execution Lock — deterministic, no Agent stage
 
-Before mechanism implementation, create `logs/protocol_manifest_iter<N>.md`.
+P01 starts directly with the Research Agent; no source, baseline, protocol, or hash lock is a precondition. After P01 accepts the design, P02 must create `logs/source_snapshot_iter<N>.md` and `logs/protocol_manifest_iter<N>.md` before implementing the mechanism or launching any Stage2/Stage3 work. These records are P02 evidence, not a separate workflow phase.
 
 Apply the source-priority rules mechanically. If same-priority authoritative sources conflict, emit `PROTOCOL_CONFLICT` and block execution rather than asking an Agent to rationalize the conflict.
 
@@ -1029,7 +1031,7 @@ logs/preflight_contract_iter<N>.log
 logs/mvg_check_iter<N>.log
 ```
 
-Only `P01_RESEARCH_DESIGN` requires an Agent record. `P00_LOCK` and `P02_BUILD_VERIFY` are deterministic.
+`P01_RESEARCH_DESIGN` requires an Agent record and runs first. Source/protocol/hash locking and `P02_BUILD_VERIFY` are deterministic and happen after P01 acceptance, before Stage2.
 
 Run the no-argument workflow gate before Stage2:
 
@@ -1062,14 +1064,12 @@ Historical completed iterations using old S00–S14 deliberation directories rem
 # 18. Iteration loop — reduced phase model
 
 ```
-P00 LOCK                     [DETERMINISTIC]
-    source truth + baseline/protocol + hashes
-        ↓
-P01 RESEARCH_DESIGN          [RESEARCH AGENT]
+P01 RESEARCH_DESIGN          [RESEARCH AGENT — FIRST]
     hypothesis + mechanism semantics + one-factor design + falsification
         ↓
 P02 BUILD_VERIFY             [DETERMINISTIC + ACTION]
-    implement locked design once
+    source/baseline/protocol/hash lock
+    implement accepted design once
     preflight_contract.py → MECHANISM_CONTRACT_PASS
     MVG → MVG PASS
         ↓

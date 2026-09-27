@@ -246,6 +246,13 @@ results/**/_stage3_launcher.log
 
 # Claude session data (settings, locks, scheduled tasks)
 .claude/
+!.claude/
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/curvature-rqvae-iter/
+.claude/skills/curvature-rqvae-iter/*
+!.claude/skills/curvature-rqvae-iter/SKILL.md
 
 # Project root marker (used by tooling, not a deliverable)
 .project-root
