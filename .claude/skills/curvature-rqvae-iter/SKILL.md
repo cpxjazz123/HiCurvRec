@@ -1,92 +1,66 @@
 ---
 name: curvature-rqvae-iter
-description: Main-only research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. No delegated reasoning workflow is permitted. Independent tool operations may run concurrently when safe. The active curvature contract is FCCR-1 fixed closed-form curvature.
+description: Main-only, zero-bookkeeping-artifact workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. The workflow itself creates no Markdown, JSON, JSONL, LOG, TXT, report, manifest, decision, audit, review, or closure files. Only source-code changes and the experiment programs' native Stage2/Stage3 outputs are retained.
 ---
 
 # curvature-rqvae-iter
 
-## 0. Purpose
+## 0. Core rule
 
-This workflow produces causally interpretable, forward-moving experiments.
+There is one reasoning owner from start to finish: **main**.
 
-Every iteration must answer one clean question:
+Main performs:
 
 ```
-one hypothesis
-→ one controlled structural mechanism
-→ contract / implementation verification
+research design
+→ source/protocol inspection
+→ implementation
+→ preflight / MVG
 → Stage2
 → Stage3
-→ result classification
+→ result interpretation
+→ next-direction selection
+→ Git closure
 ```
 
-Project target: downstream `test_R@10 > 0.065`.
+No phase is delegated.
 
-Promotion failure and mechanism failure are different concepts.
+## 0.1 Zero workflow-artifact rule
 
-### Main-only rule
+The workflow itself must create **no bookkeeping artifact files of any kind**.
 
-There is exactly one reasoning owner from start to finish: **main**.
+Do not create any workflow-generated:
 
-Main itself:
+- Markdown;
+- JSON;
+- JSONL;
+- LOG;
+- TXT;
+- manifest;
+- hypothesis file;
+- mechanism description file;
+- protocol snapshot;
+- source snapshot;
+- audit file;
+- decision file;
+- result-summary file;
+- closure file;
+- review file;
+- abort file;
+- repair record;
+- direction record.
 
-- chooses and registers the research mechanism;
-- reads repository evidence;
-- locks parent, baseline, protocol, paths, and hashes;
-- edits code;
-- runs deterministic checks;
-- launches Stage2 and Stage3;
-- interprets results;
-- chooses the next direction;
-- writes canonical artifacts;
-- commits, pushes, and verifies the remote hash.
+Do not create a workflow `logs/` directory merely to store process records.
 
-Do not create or invoke any secondary reasoning workflow, role-based reviewer, delegated scientific-decision process, or separate sign-off layer.
+Scientific design, assumptions, one-factor constraints, repair decisions, abort decisions, result interpretation, promotion decisions, and next-direction choices remain in the active main context only.
 
-### No runtime Markdown
+Static repository documentation may be **read**. Existing historical workflow records from completed iterations may be read when needed, but new iterations do not create replacements.
 
-During an iteration, main must not create, copy, rewrite, or regenerate runtime Markdown records.
+### Important distinction
 
-Allowed reads: static repository documentation such as root `CLAUDE.md` and this skill.
+This zero-artifact rule applies to **workflow bookkeeping**.
 
-Forbidden writes: any new Markdown under the active iteration `logs/` or active Stage2/Stage3 result directories.
-
-Canonical records use JSON. Streaming event records may use JSONL. Process output may use LOG/TXT.
-
-If an unfinished active iteration contains Markdown records created by an older workflow, main must migrate any still-required information into the canonical JSON records and remove those active-iteration Markdown files before continuing. Completed historical iterations are not rewritten solely for format migration.
-
-
-Independent **tool operations** may run concurrently when they do not conflict on mutable state or exclusive GPU resources. Concurrency never creates another scientific decision-maker.
-
-### Autonomous execution
-
-No workflow state may require the user to choose the next step.
-
-Invalid states include:
-
-```
-ASK_USER
-WAIT_FOR_USER
-NEED_USER_DECISION
-PAUSE_FOR_DIRECTION
-CONFIRM_NEXT_STEP
-CONFIRM_NEXT_ITERATION
-```
-
-Main resolves uncertainty from repository evidence, the active contract, hard gates, one-factor rules, and the project objective.
-
-If an external blocker makes execution impossible, record `EXTERNAL_BLOCKER` and close that path cleanly.
-
-### New iteration directory
-
-When creating a new iteration from a parent/template:
-
-1. copy the source tree;
-2. immediately delete the destination's copied `logs/`;
-3. recreate an empty `logs/`;
-4. never copy prior decisions, metrics, closure claims, or historical review files into the new iteration.
-
-Do not modify the parent's logs.
+Stage2 / Stage3 programs may still produce their **native experiment outputs required for training/evaluation**, such as checkpoints, SID files, training metrics, and the evaluator's native final-test output. Do not create additional wrapper summaries around those outputs.
 
 ---
 
@@ -96,108 +70,62 @@ Priority:
 
 1. repository root `CLAUDE.md`;
 2. this skill;
-3. current iteration machine-readable mechanism contract;
-4. current protocol manifest;
-5. current iteration hypothesis / provenance records;
-6. historical files.
+3. current source code;
+4. current experiment configuration;
+5. native Stage2/Stage3 outputs;
+6. historical references.
 
 Higher-priority sources override lower-priority sources.
 
-A historical summary never overrides a protocol-compatible primary `test_final.json`.
+When comparing historical performance, read the actual native final-test output whenever available instead of relying on a historical summary.
 
 ---
 
-# 2. Main-only phase model
+# 2. Forward-only research policy
 
-| Phase | Main responsibility |
-|---|---|
-| `P01_RESEARCH_DESIGN` | hypothesis, exact mechanism, one-factor delta, falsification |
-| `P02_BUILD_VERIFY` | source/protocol/hash lock, implementation, preflight, provenance, MVG |
-| `P03_STAGE2` | Stage2 once, SID export, descriptive geometry metrics |
-| `P04_STAGE3` | Stage3 protocol gate, Stage3 once, final test |
-| `P05_RESULT_DECISION` | scientific interpretation, promotion, next action |
-| `P06_CLOSURE` | artifact completeness, commit/push, remote hash |
-| `P07_GLOBAL_REVIEW` | conditional cross-iteration review and new direction |
+Every new iteration tests one forward-looking structural mechanism with a plausible path to improving downstream `test_R@10`.
 
-No phase is delegated.
+Project target:
 
-## 2.1 Canonical records
-
-Do not create role-specific workflow directories, role-specific drafts, vote files, or separate decision wrappers.
-
-Canonical records are:
-
-```
-logs/source_snapshot_iter<N>.json
-logs/protocol_manifest_iter<N>.json
-logs/hypothesis_iter<N>.json
-logs/mechanism_manifest_iter<N>.json
-logs/mechanism_contract_iter<N>.json
-logs/one_factor_diff_iter<N>.json
-logs/preflight_contract_iter<N>.log
-logs/mvg_check_iter<N>.log
-logs/sid_geometry_iter<N>.json
-logs/stage3_protocol_gate_iter<N>.log
-logs/stage3_outcome_iter<N>.json
-logs/failure_attribution_iter<N>.json
-logs/gate_decision_iter<N>.json
-logs/git_closure_iter<N>.json
-logs/global_review_after_iter<N>.json   # only when P07 triggers
-```
-
-Each record is written directly by main or by a deterministic checker invoked by main. Every canonical JSON record must be valid UTF-8 JSON with stable machine-readable keys.
-
-Historical review directories may remain in old iterations as immutable audit history. New work does not create them and the active workflow does not use them as authorization evidence.
-
-## 2.2 Parallel tool execution
-
-Main batches independent reads, searches, hashes, static checks, and post-run metric extraction.
-
-Serialize only for:
-
-- true data dependency;
-- same-file/shared-artifact write conflict;
-- Git ref conflict;
-- exclusive GPU/memory conflict.
-
-Stage2 and Stage3 each execute once per valid scientific condition.
-
----
-
-# 3. Forward-only policy
-
-Every new iteration tests one forward-looking structural mechanism with a plausible path to better downstream recommendation performance.
+`test_R@10 > 0.065`
 
 Forbidden as the primary purpose of a new iteration:
 
-- parameter sweep / grid search / random search / Bayesian search;
+- parameter sweep;
+- grid/random/Bayesian search;
 - multi-seed or matched-seed replication;
-- rerunning the same mechanism only to estimate variance;
+- rerunning the same condition only to estimate variance;
 - hyperparameter sensitivity study;
-- ablation-only experiment;
-- reverse/control experiment whose main purpose is attribution;
-- root-cause investigation of a prior small delta;
+- ablation-only iteration;
+- reverse/control iteration whose main purpose is attribution;
+- root-cause-only iteration;
 - diagnostic-only iteration.
 
-A small or ambiguous result is recorded as such. The next iteration moves to a distinct structural mechanism.
+A small or ambiguous effect is recorded mentally by main and the workflow moves to a distinct structural mechanism.
 
-Diagnostics are lightweight P02 checks only.
+---
 
-## 3.1 Registered design immutability
+# 3. One-factor rule
 
-Once P01 registers the mechanism, freeze:
+Before editing code, main must establish in its active reasoning context:
 
-- equation;
-- mechanism constants;
-- parent;
-- one-factor delta;
-- data identity;
-- seed;
-- Stage3 protocol.
+- parent iteration;
+- active mechanisms before;
+- exact new mechanism;
+- active mechanisms after;
+- unchanged factors;
+- exact equation / algorithm;
+- coordinate / tensor semantics;
+- direct-effect expectation;
+- falsification condition.
 
-Do not retune the same iteration after seeing MVG or downstream results.
+No file is written for this.
 
-If a changed constant/equation is required, close the current iteration and register a new one.
+Once implementation begins, the registered scientific condition is frozen.
+
+Do not retune the same iteration after MVG or downstream results.
+
+If making the mechanism viable requires changing the equation, scientific constant, parent, data identity, seed, or Stage3 protocol, terminate that scientific condition and start a new iteration.
 
 ---
 
@@ -217,240 +145,134 @@ NEW_CURVATURE_CONDITIONED_OPTIMIZER=false
 NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
 ```
 
-Per-layer curvature values are computed before Stage2 and remain unchanged for the full run.
-
-Allowed pattern:
-
-```python
-self.register_buffer("fixed_c", torch.tensor(c_l, dtype=torch.float32))
-```
+Per-layer curvature is computed before Stage2 and stays fixed for the full run.
 
 Without an explicit between-iteration contract transition, do not introduce:
 
-- learnable curvature parameters;
+- learnable curvature;
 - learned curvature prior;
-- scheduled / cyclic curvature;
-- curvature regularization intended to update curvature;
+- cyclic/scheduled curvature;
+- curvature regularization intended to move curvature;
 - optimizer-side curvature learning;
 - a second unrelated scientific mechanism in the same iteration.
 
-A structural mechanism may consume fixed curvature while leaving curvature itself unchanged.
+A new structural mechanism may consume the fixed curvature while leaving curvature itself unchanged.
 
 ---
 
-# 5. P01 — Research design
+# 5. Phase A — Design in main
 
-Main creates:
+Main chooses one mechanism and checks that it is:
 
-```
-logs/hypothesis_iter<N>.json
-logs/mechanism_manifest_iter<N>.json
-logs/mechanism_contract_iter<N>.json
-logs/one_factor_diff_iter<N>.json
-```
+- structurally distinct from the prior failed/neutral mechanism;
+- one-factor relative to the chosen parent;
+- compatible with FCCR-1;
+- plausibly relevant to downstream recommendation quality;
+- falsifiable;
+- implementable without changing Stage3.
 
-P01 records:
-
-1. research question;
-2. exact equation / algorithm;
-3. coordinate and tensor semantics;
-4. parent iteration;
-5. active mechanisms before;
-6. active mechanisms after;
-7. exactly one conceptual delta;
-8. unchanged factors;
-9. downstream rationale;
-10. direct-effect expectation;
-11. falsification conditions.
-
-Do not implement until the scientific mechanism is unambiguous.
+Do not create a hypothesis, mechanism, protocol, or decision file.
 
 ---
 
-# 6. P02 — Lock, build, verify
+# 6. Phase B — Inspect, implement, verify in main
 
-After P01, main creates:
+Main directly inspects:
 
-```
-logs/source_snapshot_iter<N>.json
-logs/protocol_manifest_iter<N>.json
-```
+- current parent source;
+- current repository rules;
+- actual Stage1 path / identity;
+- Stage2 seed / steps / architecture;
+- current Stage3 trainer;
+- current Stage3 frozen protocol;
+- relevant native historical results.
 
-Then main implements the registered design.
+No source/protocol snapshot file is created.
 
-## 6.1 Protocol manifest
+Then implement the mechanism.
 
-Record at least:
+## 6.1 Deterministic preflight
 
-```
-PROTOCOL_ID=
-DATASET_VERSION=
-PARENT_ITER=
-PARENT_COMMIT=
-CANONICAL_BASELINE_ITER=
-CANONICAL_BASELINE_TEST_FINAL=
-CANONICAL_BASELINE_TEST_R10=
-STAGE1_EMBEDDING_PATH=
-STAGE1_EMBEDDING_SHA256=
-STAGE2_SEED=
-STAGE2_MAX_STEPS=
-RQ_LAYERS=
-CODEBOOK_SIZE=
-STAGE3_TRAINER_PATH=stage3_T5Train/train_HG-Rec.py
-STAGE3_TRAINER_SHA256=
-STAGE3_SEED=
-STAGE3_EPOCHS=
-STAGE3_EARLY_STOP=DISABLED
-STAGE3_NO_EVAL=
-STAGE3_SKIP_TEST=
-STAGE3_BEAM_SIZE=
-STAGE3_CODE_PATH=
-STAGE3_LOG_PATH=
-STAGE3_SAVE_PATH=
-```
+Run the existing preflight checker directly.
 
-Two runs may be directly ranked only when relevant protocol fields are compatible.
+The checker may print to stdout/stderr, but main must not redirect or copy its output into a workflow artifact file.
 
-Otherwise mark the historical result `HISTORICAL_NONCOMPARABLE`.
-
-## 6.2 One-factor gate
-
-Record:
-
-```
-PARENT_ITER=
-ACTIVE_MECHANISMS_BEFORE=
-ITERATION_DELTA=
-ACTIVE_MECHANISMS_AFTER=
-UNCHANGED_FACTORS=
-```
-
-Do not add a second scientific mechanism to rescue the current one.
-
-## 6.3 Preflight
-
-Run:
-
-```bash
-python /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py
-```
-
-Required:
+Required pass condition:
 
 `MECHANISM_CONTRACT_PASS`
 
-## 6.4 MVG
+## 6.2 MVG
 
 MVG verifies implementation, not scientific merit.
 
-It must establish, as applicable:
+Main checks, as applicable:
 
-- registered equation is actually executed;
-- source/target coordinate semantics are correct;
-- fixed curvature is non-trainable and time-invariant;
+- intended equation executes;
+- coordinate semantics are correct;
+- fixed curvature remains fixed;
 - tensors are finite;
 - intended gradients are finite/non-zero;
-- the registered intervention has a measurable direct computational effect;
-- required hashes, IDs, device, checkpoint identity, and runtime provenance are captured.
+- intervention has measurable direct computational effect;
+- runtime identity/path/device information is correct.
 
-Interpretation:
+Do not save an MVG report file.
 
-- `MVG PASS`: proceed.
-- `MVG IMPLEMENTATION FAIL`: repair implementation while preserving registered science.
-- `MVG EVIDENCE CAPTURE FAIL`: repair instrumentation and rerun.
-- `MVG MECHANISM FAIL`: the mechanism itself is inactive/invalid and making it viable requires changing locked science; abort.
+Interpretation exists only in main:
 
-`MVG PASS` does not imply better Stage3 performance.
+- `MVG PASS`: proceed;
+- implementation failure: repair code while preserving the registered mechanism, then rerun;
+- evidence/instrumentation failure: repair instrumentation, then rerun;
+- mechanism failure requiring changed science: stop this iteration condition.
 
-## 6.5 Operational repair
+## 6.3 Operational repair
 
-Operational defects stay in the same iteration when locked science is unchanged.
+Operational repairs remain in the same iteration when the registered science is unchanged.
 
 Examples:
 
 - checker/parser bug;
-- missing logging field;
 - wrong path;
-- missing hash/device/batch-ID capture;
-- stale worker / cleanup issue;
-- code that can be corrected to the already registered equation.
+- missing runtime print;
+- stale process;
+- source implementation mismatch that can be corrected to the already chosen equation.
 
-Main applies the smallest repair and reruns affected checks.
-
-## 6.6 Abort
-
-Use `ABORT_ITERATION` only when direct evidence shows the registered scientific condition cannot proceed without changing locked science.
-
-Not valid abort reasons:
-
-- unattractive Stage2 proxy;
-- worse Gini/collision/entropy;
-- repairable provenance omission;
-- checker/logging bug.
-
-Create:
-
-`logs/iteration_abort_iter<N>.json`
-
-with:
-
-```json
-{
-  "status": "ITERATION_ABORTED_INFEASIBLE",
-  "abort_stage": "...",
-  "abort_evidence": [],
-  "why_same_iteration_repair_invalid": "...",
-  "next_iteration_constraints": []
-}
-```
-
-Do not launch later invalid stages.
+Do not create a repair record.
 
 ---
 
-# 7. P03 — Stage2
+# 7. Phase C — Stage2
 
-Main runs Stage2 once under the locked protocol.
+Run Stage2 once under the locked condition.
 
-Stage2 descriptive metrics are not performance gates:
+Stage2 native outputs are allowed because they are experiment outputs, not workflow bookkeeping.
 
-- Gini;
-- collision statistics;
-- code utilization;
-- unique tuples;
-- L0/L1 pairs;
-- conditional entropy;
-- geometry summaries.
+Descriptive metrics such as Gini, collision, entropy, code utilization, unique tuples, and SID geometry are **not performance gates**.
 
-Create:
+Main may inspect them directly from native outputs or commands.
 
-`logs/sid_geometry_iter<N>.json`
+Do not generate a separate SID/geometry report.
 
-Stage2 proxies never replace Stage3.
+Every valid, non-aborted condition proceeds to Stage3.
 
 ---
 
-# 8. P04 — Stage3
+# 8. Phase D — Stage3
 
 Stage3 is a frozen evaluator.
 
-Immediately before launch run:
+Immediately before launch, run:
 
 ```bash
 python /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/stage3_protocol_gate.py
 ```
 
-Save stdout/stderr to:
-
-`logs/stage3_protocol_gate_iter<N>.log`
+Read its stdout/stderr directly. Do not redirect it into a workflow log file.
 
 Required:
 
 `STAGE3_PROTOCOL_PASS`
 
-A mismatch is `PROTOCOL_GATE_FAIL`; main must not bypass it.
-
-Repository-level Stage3 lock includes:
+Current frozen protocol includes:
 
 ```
 NUM_EPOCHS=150
@@ -461,102 +283,81 @@ SEED=42
 BEAM_SIZE=20
 ```
 
-Run Stage3 once to the locked completion condition and require the canonical final test.
+Main must not bypass `PROTOCOL_GATE_FAIL`.
 
-Create:
+Run Stage3 once to completion.
 
-`logs/stage3_outcome_iter<N>.json`
+Use the evaluator's native final-test output as the downstream evidence. Do not generate an additional Stage3 outcome summary.
 
 ---
 
-# 9. P05 — Result decision
+# 9. Phase E — Result decision in main
 
-Main creates:
-
-```
-logs/failure_attribution_iter<N>.json
-logs/gate_decision_iter<N>.json
-```
-
-Mechanism status:
+Main reads the native Stage2/Stage3 outputs and classifies the condition internally as one of:
 
 - `ACTIVE_POSITIVE`
 - `ACTIVE_NEUTRAL`
 - `ACTIVE_NEGATIVE`
-- invalid implementation / contract / pipeline classifications where applicable
+- invalid implementation / contract / pipeline condition
 
-Promotion:
+Promotion is internally:
 
 - `PROMOTION_PASS`
 - `PROMOTION_FAIL`
 
-A mechanism may be `ACTIVE_POSITIVE + PROMOTION_FAIL`.
+Do not write a result, failure-attribution, gate-decision, promotion, direction, or summary file.
 
-Do not overstate causality from a single small point delta.
+Do not overstate causality from one small point delta.
 
-A small / ambiguous delta becomes `ACTIVE_NEUTRAL`; do not create a replication iteration to estimate noise.
-
-Main records one concrete autonomous next action in `gate_decision_iter<N>.json` under `autonomous_next_action`.
+Main immediately selects the next valid action from current evidence.
 
 ---
 
-# 10. P06 — Closure
+# 10. Phase F — Closure
 
-A normal iteration is closed only when:
+No workflow closure artifact is created.
+
+A normal iteration is considered closed when:
 
 - Stage2 completed;
 - Stage3 completed;
-- required canonical artifacts exist;
-- mechanism code and required results are committed;
+- native required Stage2/Stage3 outputs exist;
+- source changes and required native experiment outputs are committed;
 - push to `origin/main` succeeds;
-- local and remote `main` hashes match.
+- local `main` hash equals remote `main` hash.
 
-Create:
+For an aborted scientific condition:
 
-`logs/git_closure_iter<N>.json`
+- do not fabricate downstream outputs;
+- commit only source changes that should be preserved plus any native outputs already legitimately produced;
+- push and verify remote hash;
+- continue to the next justified iteration.
 
-Before closure run:
-
-```bash
-/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
-  /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
-```
-
-Required:
-
-`WORKFLOW_GATE_PASS`
-
-For an aborted iteration, close with the abort record and all valid evidence up to the stopping point. Do not fabricate downstream outputs.
+Do not create a Git-closure record.
 
 ---
 
-# 11. P07 — Conditional global review
+# 11. Conditional global review
 
-Trigger after 3 clean protocol-valid iterations, or when a higher-priority repository rule explicitly requires it.
+After several clean protocol-valid iterations, main may perform a cross-iteration review entirely in active context.
 
-Create:
+Do not create a global-review file.
 
-`logs/global_review_after_iter<N>.json`
-
-Main synthesizes protocol-valid evidence and chooses a new forward structural mechanism.
-
-Do not choose replication, seed comparison, parameter sweep, sensitivity study, ablation-only work, or root-cause-only work.
+The next direction must still be a distinct forward structural mechanism, not replication, seed comparison, parameter sweep, sensitivity study, ablation-only work, or root-cause-only work.
 
 ---
 
-# 12. Workflow gate
+# 12. Git policy
 
-Run before Stage2 and again before closure.
+Follow root `CLAUDE.md`.
 
-The gate reads canonical JSON/LOG artifacts only. Historical review directories are not authorization inputs. For an unfinished active iteration, any Markdown file under its `logs/` directory is a hard workflow failure until migrated/removed.
+Commit:
 
-Possible outputs:
+1. mechanism source/config/script changes;
+2. native Stage2 outputs required by the project;
+3. native Stage3 outputs required by the project.
 
-```
-WORKFLOW_GATE_PASS
-WORKFLOW_ABORT_CONFIRMED
-WORKFLOW_GATE_FAIL
-```
+Do not commit newly generated workflow bookkeeping files because none should exist.
 
 ---
 
@@ -564,30 +365,15 @@ WORKFLOW_GATE_FAIL
 
 Do not:
 
-- create any runtime Markdown record during an iteration;
-- delegate any phase or scientific decision;
-- create role-based review/sign-off files;
-- add a second scientific mechanism in the same iteration;
-- retune a locked mechanism after seeing results;
-- use Stage2 proxies to skip a valid Stage3 run;
-- change Stage3 for an iteration-level mechanism;
-- reintroduce metric-triggered Stage3 early stopping;
-- run duplicate Stage2/Stage3 jobs for the same condition;
+- delegate any phase;
+- generate workflow Markdown/JSON/JSONL/LOG/TXT records;
+- create hypothesis/protocol/manifest/audit/decision/closure/review files;
+- create a workflow logs directory;
+- stack a second scientific mechanism;
+- retune a locked mechanism after results;
+- use Stage2 proxies to block a valid Stage3 run;
+- modify Stage3 for an iteration-level mechanism;
+- reintroduce Stage3 early stopping;
+- run duplicate Stage2/Stage3 jobs for one condition;
 - spend a new iteration on replication/noise estimation/root-cause-only work;
 - ask the user to choose the next research step.
-
----
-
-# 14. Success definition
-
-A successful iteration has:
-
-1. one registered mechanism;
-2. one-factor integrity;
-3. implementation matching the contract;
-4. MVG evidence of the intended intervention;
-5. Stage2 completion under the locked protocol;
-6. Stage3 completion under the frozen evaluator;
-7. result classification without overstated causality;
-8. committed and pushed evidence;
-9. an autonomously selected next action by main.
