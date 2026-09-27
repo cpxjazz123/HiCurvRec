@@ -1,0 +1,32 @@
+# Iter31 S02 HRA Hypothesis — Judge C
+
+```text
+STAGE_ID=S02_HYPOTHESIS
+ROUND=1
+VERDICT=MERGE_AB
+
+HARD_GATE_A=PASS
+HARD_GATE_B=PASS
+
+EVIDENCE_FOR_A=Candidate A correctly defines Quantize.forward's e_l as tangent-coordinate, defines q_l=exp0^{c_l}(e_l) before any log map, gives the exact common-c0 right-nested operation and preserves decoder-facing tangent semantics. It cites Iter29's quantization/residual/transport/Step6/decoder paths, distinguishes the paper's shared-curvature telescope from Iter29's heterogeneous-curvature transported cascade, records the canonical nonhomomorphism witness and the HRA-only Table 8 risk, and limits the change to Step6. Its proposed directional prediction uses the S01-locked Iter29 comparator and strict >0.065 target; it distinguishes invalid/inactive implementation from valid target failure and withholds execution authorization.
+EVIDENCE_FOR_B=Candidate B independently reaches the same conditional viability decision and exact equation, explicitly notes near-origin small-effect risk and requires measured actual-value activation, gradients, finite outputs and clipping checks. It correctly treats the S00 transfer witness as a counterexample to a universal homomorphism, not proof of ineffectiveness; correctly scopes Table 8's HRA-only result and the Beauty/shared-c paper setup; and preserves the FCCR-1/S04, no-training and Stage3-route boundaries.
+PROBLEMS_A=Candidate A's statements about helper projection/clamping are accurate but its report is partially elided in the read view; the primary helper source was checked directly. Its wording that an R@10 result at/below target falsifies the target-level prediction is properly interpreted as promotion failure only, not mechanism invalidity. The HRA-only adverse prior and lack of observed actual-model activation require explicit weight in the canonical rationale.
+PROBLEMS_B=Candidate B's report is likewise partially elided in the read view. Its directional prediction is stronger than merely beating Iter29: it predicts both improvement over 0.05921064085377531 and achievement of >0.065, which must remain separate observables. Neither candidate's S02 can resolve the active FCCR-1 conflict or authorize a contract/preflight change; those remain mandatory later gates.
+
+WHY_NOT_A=Not rejected. A provides the full coordinate derivation, explicit non-telescope boundary, concrete one-factor and falsification framing, and precise baseline-target delta. Retain these while adding B's explicit near-origin/activation caveat and making the promotion-versus-mechanism classification unambiguous.
+WHY_NOT_B=Not rejected. B provides a clear independent viability judgment, direct-effect and clipping concerns, and careful scope of its evidence. Retain these while using the full exact comparator/strict-target requirements and detailed scope/precondition wording supported by A and the canonical packet.
+
+MERGE_COMPONENTS_A=Use A's research question and full exact e_l tangent → q_l ball → q_l^0 transfer → right-nested h → z equation; its valid-unclipped coordinate identity, heterogeneous-curvature/no-telescope explanation, exact Step6-only boundary, paper HRA-only risk, and distinction between implementation invalidity and target-level falsification.
+MERGE_COMPONENTS_B=Use B's emphasis that near-origin values can make the nonlinear intervention small and that actual-model direct effect, clipping/saturation, finite values, shape, and intended gradients must be checked in later preflight/MVG; its explicit caveat that the arithmetic witness does not demonstrate model activation or ineffectiveness. Carry forward both candidates' FCCR-1/S04 and no-training boundary.
+
+CANONICAL_DECISION=MERGE_AB. The proposal is mathematically and semantically coherent as a narrowly specified common-reference, reverse-nested Step6 operation when each quantizer output e_l is first interpreted as tangent-coordinate and q_l=exp0^{c_l}(e_l) is formed. In the valid unclipped radial-map domain exp0^{c0}(log0^{c_l}(q_l))=exp0^{c0}(e_l), but actual projection/clamping prevents treating this as unconditional. The paper's exact HRA telescope requires paired left residual subtraction and reverse-nested aggregation at one shared curvature; Iter29's residual cascade has heterogeneous c_l and explicit residual transport, so this proposal is HRA-inspired, not a proof of exact telescope or transfer homomorphism. The direct S00 witness disproves universal addition-homomorphism, but does not make pointwise transfer undefined or demonstrate actual-model inactivity. The HRA-only Table 8 risk is material but belongs to a different residual-fidelity measure/setup and does not directly predict Instruments R@10. Therefore accept one falsifiable, forward performance-seeking hypothesis subject to later viability gates; no direct evidence here establishes infeasibility requiring abort.
+CANONICAL_ARTIFACT=stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/hypothesis_iter31.md; stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/deliberation/S02_HYPOTHESIS/round_1/judge.md
+CONFIDENCE=MEDIUM
+USER_INPUT_REQUIRED=NO
+ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM
+SWEEP_OR_REPLICATION_ITERATION=NO
+ROOT_CAUSE_ITERATION=NO
+NO_TRAINING_AUTHORIZATION=TRUE
+AUTONOMOUS_NEXT_ACTION=Materialize the canonical hypothesis and this Judge C report, then proceed to the next required independent adjudication stage only. At S04 explicitly decide whether the HRA aggregation scope receives a between-iteration contract transition and resolve the FCCR-1-hardcoded preflight path without bypass; do not code, alter a contract/checker, or run training from S02. Preserve S01's unresolved Stage3 routing constraint for later adjudication.
+REPLAN_CONSTRAINTS=Do not claim exact telescope, residual inversion, or a universal transfer homomorphism; do not apply log0 directly to tangent e_l; do not reassociate/reorder layers; do not add d-HSTE, losses, optimizer/Sinkhorn changes, curvature changes, or any other mechanism. Keep Iter29's exact result 0.05921064085377531 and n_eval=57439 as sole comparator and strict >0.065 target. HRA-only Table 8 is a risk prior, not an Instruments R@10 forecast or proof of inactivity. No Stage2/Stage3 authorization: actual activation, clipping, finite-output, shape and gradient checks and all later canonical gates remain required. S04 must explicitly adjudicate contract/preflight compatibility; no silent amendment/bypass. S01's Stage3 route conflict remains unresolved.
+```
