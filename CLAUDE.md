@@ -58,12 +58,29 @@ Stage-2 训练产物必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneR
 
 Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.json` / `training_metrics.jsonl` 等）必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter<N>/`（目录名与 `stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`、`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 完全同名同前缀），Stage3 `trainer.LOG_PATH` / `SAVE_PATH` 必须解析到该短名 `curvature_RQ-VAE_iter<N>` 子树（**不要**包含 `<descriptive>` 后缀）且 `<N>` 与当前 iter 编号一致。
 
+
+### Stage-3 冻结协议（机器校验；iteration 不得修改）
+
+以下字段是 Stage3 的权威锁定值，供 `stage3_protocol_gate.py` 直接解析。iteration launcher 只能修改 SID/输出路径与 variant 元数据，**不得修改训练超参数**。
+
+```text
+STAGE3_NUM_EPOCHS=150
+STAGE3_EARLY_STOP=DISABLED
+STAGE3_NO_EVAL=true
+STAGE3_SKIP_TEST=false
+STAGE3_SEED=42
+STAGE3_BEAM_SIZE=20
+STAGE3_SCREEN_BASELINE_LOG=
+```
+
+任何 trainer/launcher 与上述值不一致时必须在 Stage3 启动前返回 `PROTOCOL_GATE_FAIL`；不允许由 Agent 豁免。尤其禁止重新引入基于 train-loss 或 validation patience 的 early-stop。
+
 ## 12. GitHub-only 强制执行
 
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
 - **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（单一 Research Agent、MVG、Commit Discipline 脚本等）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **curvature-RQ-VAE 迭代流程**（Agent-minimal：仅研究设计/结果解释/Global Review 使用 Research Agent；其余用 deterministic gates）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 

@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Single-agent stage gate for curvature-RQ-VAE iterations.
+"""Agent-minimal workflow gate for curvature-RQ-VAE iterations.
 
-New/reopened stages use logs/stage_records/<STAGE_ID>/round_<R>/ with
-source_packet.md, agent.md, decision.md, and optional repair_record.md.
-Historical logs/deliberation A/B/Judge rounds remain readable for compatibility
-only and must not be generated for new work. Existing output strings are kept
-for caller compatibility.
+Only P01_RESEARCH_DESIGN, P05_RESULT_DECISION, and conditional
+P07_GLOBAL_REVIEW require Research Agent records. All other phases are
+validated from deterministic artifacts/checker outputs.
 """
 from __future__ import annotations
 import re
 from pathlib import Path
 
-PRE_STAGE2=[("S00_SOURCE_TRUTH",["source_snapshot_iter{n}.md"]),("S01_PROTOCOL_LOCK",["protocol_manifest_iter{n}.md"]),("S02_HYPOTHESIS",["hypothesis_iter{n}.md"]),("S03_PROVENANCE",["mechanism_manifest_iter{n}.md"]),("S04_CONTRACT",["mechanism_contract_iter{n}.json"]),("S05_ONE_FACTOR",["one_factor_diff_iter{n}.md"]),("S06_IMPLEMENTATION",["implementation_plan_iter{n}.md"]),("S07_PREFLIGHT",["preflight_contract_iter{n}.log"]),("S08_MVG",["mvg_check_iter{n}.log"]),("S09_STAGE2_EXECUTION",["stage2_execution_plan_iter{n}.md"])]
-POST_STAGE2=[("S10_STAGE2_ANALYSIS",["sid_geometry_iter{n}.md"]),("S11_STAGE3_EVALUATION",["stage3_evaluation_plan_iter{n}.md","stage3_outcome_iter{n}.md"]),("S12_RESULT_CLASSIFICATION",["failure_attribution_iter{n}.md","gate_decision_iter{n}.md"]),("S13_GIT_CLOSURE",["git_closure_iter{n}.md"])]
-GLOBAL_REVIEW=[("S14_GLOBAL_REVIEW",["global_review_after_iter{n}.md"])]
-LEGACY_ALLOWED={"ACCEPT_A","ACCEPT_B","MERGE_AB","ABORT_ITERATION"}
+DESIGN_ARTIFACTS=[
+"source_snapshot_iter{n}.md","protocol_manifest_iter{n}.md","hypothesis_iter{n}.md",
+"mechanism_manifest_iter{n}.md","mechanism_contract_iter{n}.json",
+"one_factor_diff_iter{n}.md","preflight_contract_iter{n}.log","mvg_check_iter{n}.log"]
+CLOSURE_ARTIFACTS=[
+"sid_geometry_iter{n}.md","stage3_protocol_gate_iter{n}.log","stage3_outcome_iter{n}.md",
+"failure_attribution_iter{n}.md","gate_decision_iter{n}.md","git_closure_iter{n}.md"]
+AGENT_PHASES={
+"P01_RESEARCH_DESIGN":["hypothesis_iter{n}.md","mechanism_manifest_iter{n}.md","mechanism_contract_iter{n}.json","one_factor_diff_iter{n}.md"],
+"P05_RESULT_DECISION":["failure_attribution_iter{n}.md","gate_decision_iter{n}.md"],
+"P07_GLOBAL_REVIEW":["global_review_after_iter{n}.md"]}
 
 def fail(m): raise RuntimeError(f"DELIBERATION_GATE_FAIL: {m}")
 def read(p):
@@ -31,113 +36,88 @@ def highest_round(d):
         if m and c.is_dir(): rs.append((int(m.group(1)),c))
     if not rs: fail(f"no stage round found under {d}")
     return sorted(rs)[-1]
-def packet_match(path,packet):
-    t=read(path); m=re.search(r"^SOURCE_PACKET=(.+)\s*$",t,re.M)
-    if not m: fail(f"{path} missing SOURCE_PACKET")
-    v=m.group(1).strip(); pn=packet.as_posix()
-    if v not in {pn,str(packet)} and not pn.endswith(v): fail(f"{path} SOURCE_PACKET mismatch")
-def require_agent(path,stage,packet):
-    t=read(path)
-    for x in ("ROLE=RESEARCH_AGENT",f"STAGE_ID={stage}","SOURCE_PACKET="):
-        if x not in t: fail(f"{path} missing {x}")
-    packet_match(path,packet)
-def forbidden_positive(action,pattern):
-    for m in re.finditer(pattern,action,re.I):
-        pre=action[max(0,m.start()-64):m.start()].lower()
-        if re.search(r"(?:do\s+not|don['’]?t|must\s+not|should\s+not|never|without|forbid(?:den)?|avoid)\b[^.;:]{0,48}$",pre,re.I): continue
-        return True
-    return False
-def common(path,t):
-    for x in ("CANONICAL_DECISION=","CANONICAL_ARTIFACT=","CONFIDENCE=","USER_INPUT_REQUIRED=NO","ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM","SWEEP_OR_REPLICATION_ITERATION=NO","ROOT_CAUSE_ITERATION=NO","AUTONOMOUS_NEXT_ACTION="):
-        if x not in t: fail(f"{path} missing {x}")
-    a=re.search(r"^AUTONOMOUS_NEXT_ACTION=(.+)\s*$",t,re.M)
-    if not a or not a.group(1).strip(): fail(f"{path} empty AUTONOMOUS_NEXT_ACTION")
-    for p in [r"ask\s+the\s+user",r"wait\s+for\s+(the\s+)?user",r"need\s+user\s+decision",r"pause\s+for\s+direction",r"which\s+option\s+do\s+you\s+want",r"should\s+i\s+continue",r"do\s+you\s+want\s+me\s+to",r"what\s+should\s+the\s+next\s+iteration"]:
-        if re.search(p,t,re.I): fail(f"{path} contains forbidden user-decision escalation")
-    act=a.group(1).strip()
-    for p in [r"\bparameter\s+sweep\b",r"\bgrid\s+search\b",r"\brandom\s+search\b",r"\bbayesian\s+(optimization|search)\b",r"\bmulti[- ]seed\b",r"\bmatched[- ]seed\b",r"\bseed\s+replication\b",r"\breplicat(e|ion)\b.*\bseed",r"\bnoise\s+estimation\b",r"\bvariance\s+estimation\b",r"\bsensitivity\s+(study|analysis|test)\b",r"\bablation[- ]only\b",r"\broot[- ]cause\b",r"\bwhy\s+.*(failed|worked|improved|dropped)\b",r"\bmicro[- ]delta\b"]:
-        if forbidden_positive(act,p): fail(f"{path} proposes forbidden iteration type")
-def require_decision(path,stage,names):
-    t=read(path)
-    if f"STAGE_ID={stage}" not in t: fail(f"{path} wrong/missing STAGE_ID")
-    m=re.search(r"^VERDICT=(ACCEPT|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",t,re.M)
-    if not m: fail(f"{path} missing valid VERDICT")
+def require_files(logs,n,templates):
+    names=[]
+    for t in templates:
+        name=t.format(n=n); read(logs/name); names.append(name)
+    return names
+def require_agent_phase(logs,root,n,phase):
+    r,rd=highest_round(root/phase); packet=rd/"source_packet.md"; agent=rd/"agent.md"; decision=rd/"decision.md"
+    read(packet); at=read(agent)
+    for x in ("ROLE=RESEARCH_AGENT",f"STAGE_ID={phase}","SOURCE_PACKET="):
+        if x not in at: fail(f"{agent} missing {x}")
+    dt=read(decision)
+    if f"STAGE_ID={phase}" not in dt: fail(f"{decision} wrong/missing STAGE_ID")
+    m=re.search(r"^VERDICT=(ACCEPT|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",dt,re.M)
+    if not m: fail(f"{decision} missing valid VERDICT")
     v=m.group(1)
-    if "HARD_GATE=" not in t: fail(f"{path} missing HARD_GATE")
-    common(path,t)
+    for x in ("HARD_GATE=","CANONICAL_DECISION=","CANONICAL_ARTIFACT=","CONFIDENCE=",
+              "USER_INPUT_REQUIRED=NO","ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM",
+              "SWEEP_OR_REPLICATION_ITERATION=NO","ROOT_CAUSE_ITERATION=NO","AUTONOMOUS_NEXT_ACTION="):
+        if x not in dt: fail(f"{decision} missing {x}")
     if v=="REPAIR_AND_RERUN":
-        if "SAME_ITERATION_REPAIR=AUTHORIZED" not in t: fail(f"{path} repair lacks authorization")
-        fail(f"{stage} latest round still requires repair/rerun")
-    if v=="ACCEPT" and "HARD_GATE=PASS" not in t: fail(f"{path} ACCEPT requires HARD_GATE=PASS")
+        if "SAME_ITERATION_REPAIR=AUTHORIZED" not in dt: fail(f"{decision} repair lacks authorization")
+        fail(f"{phase} still requires repair/rerun")
+    if v=="ACCEPT" and "HARD_GATE=PASS" not in dt: fail(f"{decision} ACCEPT requires HARD_GATE=PASS")
     if v=="ABORT_ITERATION":
         for x in ("ABORT_REASON=","ABORT_EVIDENCE=","NEXT_ITERATION_CONSTRAINTS="):
-            if x not in t: fail(f"{path} abort missing {x}")
-    d=re.search(r"^CANONICAL_ARTIFACT=(.+)\s*$",t,re.M)
-    if d:
+            if x not in dt: fail(f"{decision} abort missing {x}")
+        return r,v
+    names=require_files(logs,n,AGENT_PHASES[phase]); dec=re.search(r"^CANONICAL_ARTIFACT=(.+)\s*$",dt,re.M)
+    if dec:
         for name in names:
-            if name not in d.group(1): fail(f"{path} missing canonical artifact declaration {name}")
-    return v
-def require_repair(path):
-    t=read(path)
-    for x in ("ROUND_TYPE=OPERATIONAL_REPAIR","LOCKED_SCIENCE_CHANGED=NO"):
-        if x not in t: fail(f"{path} missing {x}")
-    if "PARALLEL_EXECUTION=YES" not in t:
-        m=re.search(r"^SERIALIZATION_REASON=(.+)\s*$",t,re.M)
-        if not m or not m.group(1).strip(): fail(f"{path} needs PARALLEL_EXECUTION or SERIALIZATION_REASON")
-    if "CHECKS_PASS=YES" not in t: fail(f"{path} CHECKS_PASS!=YES")
-def abort_artifact(logs,n):
-    p=logs/f"iteration_abort_iter{n}.md"; t=read(p)
-    for x in ("STATUS=ITERATION_ABORTED_INFEASIBLE","ABORT_STAGE=","ABORT_EVIDENCE=","WHY_SAME_ITERATION_REPAIR_INVALID=","NEXT_ITERATION_CONSTRAINTS="):
-        if x not in t: fail(f"{p} missing {x}")
-    return p
-def check_new(logs,root,n,stage,templates):
-    r,rd=highest_round(root/stage); packet=rd/"source_packet.md"; read(packet); require_agent(rd/"agent.md",stage,packet)
-    if (rd/"repair_record.md").is_file(): require_repair(rd/"repair_record.md")
-    paths=[logs/t.format(n=n) for t in templates]; names=[p.name for p in paths]; dec=rd/"decision.md"; raw=read(dec)
-    if "VERDICT=ABORT_ITERATION" in raw:
-        ap=abort_artifact(logs,n); v=require_decision(dec,stage,[ap.name]); return stage,r,v,[ap.name]
-    v=require_decision(dec,stage,names)
-    for p in paths:
-        if not p.is_file(): fail(f"{stage} canonical artifact missing: {p}")
-    return stage,r,v,names
-def legacy_worker(path,role,stage):
-    t=read(path)
-    for x in (f"ROLE={role}",f"STAGE_ID={stage}","SOURCE_PACKET="):
-        if x not in t: fail(f"{path} missing legacy {x}")
-def legacy_judge(path,stage,names):
-    t=read(path); m=re.search(r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",t,re.M)
-    if not m: fail(f"{path} missing legacy VERDICT")
-    v=m.group(1)
-    if v in {"REJECT_BOTH","REPAIR_AND_RERUN"} or v not in LEGACY_ALLOWED: fail(f"{stage} unresolved legacy verdict {v}")
-    for x in ("CANONICAL_ARTIFACT=","USER_INPUT_REQUIRED=NO","AUTONOMOUS_NEXT_ACTION="):
-        if x not in t: fail(f"{path} missing legacy {x}")
-    return v
-def check_legacy(logs,root,n,stage,templates):
-    r,rd=highest_round(root/stage); legacy_worker(rd/"agent_a.md","AGENT_A",stage); legacy_worker(rd/"agent_b.md","AGENT_B",stage)
-    paths=[logs/t.format(n=n) for t in templates]; names=[p.name for p in paths]; j=rd/"judge.md"; raw=read(j)
-    if "VERDICT=ABORT_ITERATION" in raw:
-        ap=abort_artifact(logs,n); v=legacy_judge(j,stage,[ap.name]); return stage,r,v,[ap.name]
-    v=legacy_judge(j,stage,names)
-    for p in paths:
-        if not p.is_file(): fail(f"{stage} legacy canonical artifact missing: {p}")
-    return stage,r,v,names
-def check_stage(logs,new,old,n,stage,templates):
-    if (new/stage).is_dir(): return check_new(logs,new,n,stage,templates)
-    if (old/stage).is_dir(): return check_legacy(logs,old,n,stage,templates)
-    fail(f"missing stage record for {stage}")
+            if name not in dec.group(1): fail(f"{decision} does not declare {name}")
+    return r,v
+def protocol_manifest(logs,n):
+    t=read(logs/f"protocol_manifest_iter{n}.md")
+    for x in ("PROTOCOL_ID=","CANONICAL_BASELINE_ITER=","CANONICAL_BASELINE_TEST_FINAL=",
+              "STAGE2_SEED=","STAGE2_MAX_STEPS=","STAGE3_TRAINER_PATH=","STAGE3_TRAINER_SHA256=",
+              "STAGE3_SEED=","STAGE3_EPOCHS=","STAGE3_EARLY_STOP=","STAGE3_NO_EVAL=",
+              "STAGE3_SKIP_TEST=","STAGE3_BEAM_SIZE=","STAGE3_SCREEN_BASELINE_LOG=",
+              "STAGE3_CODE_PATH=","STAGE3_LOG_PATH=","STAGE3_SAVE_PATH="):
+        if x not in t: fail(f"protocol manifest missing {x}")
+def deterministic_pre_stage2(logs,n):
+    if "MECHANISM_CONTRACT_PASS" not in read(logs/f"preflight_contract_iter{n}.log"):
+        fail("preflight missing MECHANISM_CONTRACT_PASS")
+    if "MVG PASS" not in read(logs/f"mvg_check_iter{n}.log"):
+        fail("MVG missing MVG PASS")
+def validate_abort(logs,n):
+    t=read(logs/f"iteration_abort_iter{n}.md")
+    for x in ("STATUS=ITERATION_ABORTED_INFEASIBLE","ABORT_STAGE=","ABORT_EVIDENCE=","NEXT_ITERATION_CONSTRAINTS="):
+        if x not in t: fail(f"abort artifact missing {x}")
+def legacy_gate(logs,n):
+    root=logs/"deliberation"; req=["S00_SOURCE_TRUTH","S01_PROTOCOL_LOCK","S02_HYPOTHESIS","S03_PROVENANCE","S04_CONTRACT","S05_ONE_FACTOR","S06_IMPLEMENTATION","S07_PREFLIGHT","S08_MVG","S09_STAGE2_EXECUTION"]
+    closure=(logs/f"gate_decision_iter{n}.md").is_file() or (logs/f"failure_attribution_iter{n}.md").is_file()
+    if closure: req+=["S10_STAGE2_ANALYSIS","S11_STAGE3_EVALUATION","S12_RESULT_CLASSIFICATION","S13_GIT_CLOSURE"]
+    for stage in req:
+        _,rd=highest_round(root/stage); jt=read(rd/"judge.md")
+        if not re.search(r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|ABORT_ITERATION)\s*$",jt,re.M):
+            fail(f"legacy {stage} has no terminal verdict")
+    print("DELIBERATION_GATE_PASS"); print(f"iter={n}"); print(f"phase={'CLOSURE' if closure else 'PRE_STAGE2'}"); print("mode=LEGACY_COMPAT")
 def main():
-    w=Path.cwd().resolve(); n=iter_id(w); logs=w/"logs"; new=logs/"stage_records"; old=logs/"deliberation"; stages=list(PRE_STAGE2); phase="PRE_STAGE2"
-    if (logs/f"gate_decision_iter{n}.md").is_file() or (logs/f"failure_attribution_iter{n}.md").is_file(): stages+=POST_STAGE2; phase="CLOSURE"
+    w=Path.cwd().resolve(); n=iter_id(w); logs=w/"logs"; root=logs/"stage_records"
+    if not (root/"P01_RESEARCH_DESIGN").is_dir():
+        if (logs/"deliberation").is_dir(): legacy_gate(logs,n); return
+        fail("missing P01_RESEARCH_DESIGN stage record")
+    if (logs/f"iteration_abort_iter{n}.md").is_file():
+        validate_abort(logs,n); print("DELIBERATION_ABORT_CONFIRMED"); print(f"iter={n}"); print("phase=ABORTED"); return
+    require_files(logs,n,DESIGN_ARTIFACTS); protocol_manifest(logs,n); deterministic_pre_stage2(logs,n)
+    dr,dv=require_agent_phase(logs,root,n,"P01_RESEARCH_DESIGN")
+    if dv!="ACCEPT": fail("P01_RESEARCH_DESIGN not accepted")
+    closure=(logs/f"stage3_outcome_iter{n}.md").is_file() or (logs/f"gate_decision_iter{n}.md").is_file() or (root/"P05_RESULT_DECISION").is_dir()
+    phase="PRE_STAGE2"
+    if closure:
+        require_files(logs,n,CLOSURE_ARTIFACTS)
+        if "STAGE3_PROTOCOL_PASS" not in read(logs/f"stage3_protocol_gate_iter{n}.log"): fail("Stage3 protocol gate did not pass")
+        rr,rv=require_agent_phase(logs,root,n,"P05_RESULT_DECISION")
+        if rv!="ACCEPT": fail("P05_RESULT_DECISION not accepted")
+        phase="CLOSURE"
     if (logs/f"global_review_after_iter{n}.md").is_file():
-        if phase!="CLOSURE": fail("global review exists before closure artifacts")
-        stages+=GLOBAL_REVIEW; phase="GLOBAL_REVIEW"
-    summary=[]
-    for stage,templates in stages:
-        x=check_stage(logs,new,old,n,stage,templates); summary.append(x)
-        if x[2]=="ABORT_ITERATION":
-            print("DELIBERATION_ABORT_CONFIRMED"); print(f"iter={n}"); print("phase=ABORTED"); print(f"abort_stage={stage}")
-            for sid,r,v,names in summary: print(f"{sid}: round_{r} {v} -> {','.join(names)}")
-            return
-    print("DELIBERATION_GATE_PASS"); print(f"iter={n}"); print(f"phase={phase}")
-    for sid,r,v,names in summary: print(f"{sid}: round_{r} {v} -> {','.join(names)}")
+        if phase!="CLOSURE": fail("global review exists before closure")
+        gr,gv=require_agent_phase(logs,root,n,"P07_GLOBAL_REVIEW")
+        if gv!="ACCEPT": fail("P07_GLOBAL_REVIEW not accepted")
+        phase="GLOBAL_REVIEW"
+    print("DELIBERATION_GATE_PASS"); print(f"iter={n}"); print(f"phase={phase}"); print(f"P01_RESEARCH_DESIGN: round_{dr} ACCEPT")
+    if phase in {"CLOSURE","GLOBAL_REVIEW"}: print(f"P05_RESULT_DECISION: round_{rr} ACCEPT")
+    if phase=="GLOBAL_REVIEW": print(f"P07_GLOBAL_REVIEW: round_{gr} ACCEPT")
 if __name__=="__main__": main()
