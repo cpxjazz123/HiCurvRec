@@ -1,8 +1,11 @@
 """Single-checkpoint, single-batch HRA Step6 effect and gradient check."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +35,62 @@ def _load_training_module():
     return module
 
 
+def _file_identity(path: str | Path) -> dict[str, object]:
+    resolved = Path(path).resolve()
+    before = resolved.stat()
+    digest = hashlib.sha256()
+    with resolved.open("rb") as source:
+        for chunk in iter(lambda: source.read(1 << 20), b""):
+            digest.update(chunk)
+    after = resolved.stat()
+    before_signature = (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+    )
+    after_signature = (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+    )
+    if before_signature != after_signature:
+        raise RuntimeError(f"MVG input changed while hashing: {resolved}")
+    return {
+        "path": str(resolved),
+        "size_bytes": int(before.st_size),
+        "mtime_ns": int(before.st_mtime_ns),
+        "sha256": digest.hexdigest(),
+    }
+
+
+def _pre_run_identities(rqtrain) -> dict[str, dict[str, object]]:
+    paths = {
+        "stage1_embedding": rqtrain.EMB_NPY,
+        "stage1_item_ids": rqtrain.ITEM_IDS_JSON,
+        "stage0_train_parquet": rqtrain.TRAIN_PARQUET,
+        "warm_start_checkpoint": REFERENCE_CKPT,
+    }
+    with ThreadPoolExecutor(max_workers=len(paths)) as executor:
+        identities = list(executor.map(_file_identity, paths.values()))
+    return dict(zip(paths.keys(), identities))
+
+
+def _runtime_device_identity(device: torch.device) -> dict[str, object]:
+    index = int(torch.cuda.current_device())
+    properties = torch.cuda.get_device_properties(index)
+    device_uuid = getattr(properties, "uuid", None)
+    return {
+        "runtime_device_string": str(torch.device("cuda", index)),
+        "requested_device": str(device),
+        "current_device_index": index,
+        "device_name": str(properties.name),
+        "total_memory_bytes": int(properties.total_memory),
+        "physical_uuid": str(device_uuid) if device_uuid is not None else "UNAVAILABLE",
+    }
+
+
 def _load_batch(rqtrain, device):
     dataset = rqtrain.TransitionDataset(
         rqtrain.EMB_NPY, rqtrain.ITEM_IDS_JSON, rqtrain.TRAIN_PARQUET
@@ -44,10 +103,16 @@ def _load_batch(rqtrain, device):
             f"Only {len(active_indices)} train-transition sources; need "
             f"{rqtrain.BATCH_SIZE} for the MVG batch"
         )
-    raw_batch = rqtrain.collate_items(
-        [dataset[index] for index in active_indices[: rqtrain.BATCH_SIZE]]
-    )
-    return rqtrain._build_seq_batch(*(value.to(device) for value in raw_batch))
+    selected_samples = [
+        dataset[index] for index in active_indices[: rqtrain.BATCH_SIZE]
+    ]
+    selected_pairs = [
+        [int(source_id), int(target_id)]
+        for source_id, target_id, _, _ in selected_samples
+    ]
+    raw_batch = rqtrain.collate_items(selected_samples)
+    batch = rqtrain._build_seq_batch(*(value.to(device) for value in raw_batch))
+    return batch, selected_pairs
 
 
 def _load_checkpoint(device):
@@ -383,13 +448,62 @@ def main() -> None:
     torch.manual_seed(rqtrain.SEED)
     np.random.seed(rqtrain.SEED)
 
+    runtime_device = _runtime_device_identity(device)
+    pre_run_identities = _pre_run_identities(rqtrain)
     fixed_c = rqtrain._load_closed_form_curvatures()
     if not np.allclose(fixed_c, EXPECTED_FIXED_C, rtol=0.0, atol=1e-9):
         raise RuntimeError(
             f"MVG FAIL: closed_form_c_l changed: live={fixed_c} expected={EXPECTED_FIXED_C}"
         )
     checkpoint_state = _load_checkpoint(device)
-    batch = _load_batch(rqtrain, device)
+    batch, selected_pairs = _load_batch(rqtrain, device)
+    provenance = {
+        "stage_id": "S08_MVG",
+        "iteration": 31,
+        "pre_run_identities": pre_run_identities,
+        "seed": {
+            "torch": int(rqtrain.SEED),
+            "numpy": int(rqtrain.SEED),
+            "selection_rule": (
+                "enumerate active TransitionDataset source rows in ascending order; "
+                "take the first BATCH_SIZE sources; select one target per source "
+                "with np.random.choice(dataset.next_items[source])"
+            ),
+            "batch_size": int(rqtrain.BATCH_SIZE),
+            "source_target_id_semantics": (
+                "dense Stage0 item IDs, validated against item_ids.json in "
+                "TransitionDataset"
+            ),
+        },
+        "ordered_source_target_pair_count": len(selected_pairs),
+        "batch_shapes": {
+            "source_embeddings": list(batch.x.shape),
+            "future_embeddings": list(batch.x_fut.shape),
+            "source_item_ids": list(batch.ids.shape),
+            "future_item_ids": list(batch.ids_fut.shape),
+        },
+        "runtime_device": runtime_device,
+        "software": {
+            "python": sys.version,
+            "numpy": np.__version__,
+            "torch": torch.__version__,
+            "torch_cuda": torch.version.cuda,
+        },
+    }
+    print("MVG_PROVENANCE_BEGIN")
+    print(json.dumps(provenance, sort_keys=True, indent=2, allow_nan=False))
+    print("MVG_SELECTED_SOURCE_TARGET_IDS_BEGIN")
+    for start in range(0, len(selected_pairs), 32):
+        print(
+            json.dumps(
+                selected_pairs[start : start + 32],
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+        )
+    print("MVG_SELECTED_SOURCE_TARGET_IDS_END")
+    print("MVG_PROVENANCE_END")
+
     model = _build_model(rqtrain, device, fixed_c, checkpoint_state)
     initial_c = _check_layer_buffers(model, fixed_c)
     snapshots = _check_invariance_across_steps(model, fixed_c)

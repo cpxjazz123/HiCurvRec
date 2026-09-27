@@ -1,0 +1,34 @@
+Iteration 4: behavior-conditioned trainable curvature
+Date: 2026-09-24
+
+Mechanism
+- Stage1 sentence_t5.npy and its item order were left unchanged.
+- Behavior signal uses only Stage0 train.parquet: (last history item, target item) transitions. Valid/test splits are not read.
+- Stage2 retains all-item reconstruction and adds an in-batch next-item contrastive loss over per-layer Poincare residual distances.
+- Each layer has a bounded trainable curvature scale, initialized from iter1 calibration [0.001, 0.932889, 1.0], with regularization toward that initialization.
+- MVG passed on a 640-pair batch. Behavior-loss gradients were nonzero for all three curvature parameters; temporary checkpoint round-trip passed.
+
+Stage2
+- Completed 100,000 global steps on 4 GPUs in 1,336.7 s; process exit 0.
+- Training data: 339,519 train-only transitions; 24,474/24,587 items had an outgoing transition.
+- Final descriptive SID metrics: full_gini=0.1408; per-layer Gini=[0.2001, 0.4615, 0.5441]; unique 3-token SIDs=20,813/24,587; l01_pairs=11,297; H(L1|L0)=5.0162.
+- 4-token export validated: 24,587 items; collision extension produced unique codes.
+- Risk: learned layer scales converged to the lower curvature bound together (logged c values became equal; curvature regularization term=0.623299). Behavior loss remained around 6.9 near the end. This is not evidence of useful layer-specific curvature.
+
+Stage3
+- Completed 150 epochs and final test; process exit 0. Mid-training validation was disabled by the existing Stage3 configuration.
+- n_eval=57,439; test_recall@5=0.0377444; test_recall@10=0.05619875; test_ndcg@5=0.0252765; test_ndcg@10=0.0312169.
+- Previous iter1 test_R@10 was 0.055224; this is a small +0.000975 increase, but remains below the hard adoption target >0.065.
+
+Decision
+- Do not promote iter4. Preserve it as an isolated research variant; no Stage1 or Stage3 source was changed.
+
+Artifacts
+- Stage2 log: logs/train_migrated.log
+- Stage2 checkpoint: results/out/rqvae/instruments/rqvae_best.pth
+- Raw 3-token SIDs: results/out/rqvae/instruments/sids_raw.npy
+- Stage3 4-token SID array: dataset/Instruments/sids_for_hgrec.npy
+- Stage3 item-code mapping: results/item_sids.json
+- MVG log: logs/mvg_check.log
+- Stage3 final metrics: /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/iter4_behavior_transition_curvature/logs/Amazon_2023_Instruments/Sep-24-2026_20-39-48/test_final.json
+- Stage3 checkpoint: /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/iter4_behavior_transition_curvature/ckpt/Amazon_2023_Instruments/Sep-24-2026_20-39-48/HG_Rec_best.pth

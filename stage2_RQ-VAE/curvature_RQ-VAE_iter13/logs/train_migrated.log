@@ -1,0 +1,315 @@
+W0925 11:22:08.829883 2148716 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W0925 11:22:08.829883 2148716 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W0925 11:22:08.829883 2148716 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0925 11:22:08.829883 2148716 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+[Step3] DDP rank=0/4 local_rank=0
+[Step0] cleaned 0 stale artifact(s) from /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments
+=== RQ-VAE Step1-Step12 训练循环 (world_size=4) ===
+[Step1] emb: /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy
+[Step1] out: /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments
+[Step1] per-GPU batch=640 | total=2560 | workers=4 | compile=False
+[Step1] hidden=[512, 256, 128] embed=32 codebook=256 layers=3
+[Step1] target: MAX_GLOBAL_STEPS=100000 | ckpt every 10000
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/decoder/instruments_hgrec_configs/hgrec_iter13_per_layer_temperature/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/decoder/instruments_hgrec_configs/hgrec_iter13_per_layer_temperature/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/decoder/instruments_hgrec_configs/hgrec_iter13_per_layer_temperature/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy: shape=(24587, 768), train transitions=339519, active sources=24474/24587
+[Step2] 24587 items | 9 batches/rank | 36 batches/epoch
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/decoder/instruments_hgrec_configs/hgrec_iter13_per_layer_temperature/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+[Step3.5] residual_layer_norms (per-layer u_l) = [0.0010/0.9329/1.0000] | mechanism=iter13_per_layer_temperature
+[Step4] iter13 warm-start loaded 11 tensors from /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter8/results/out/rqvae/instruments/rqvae_best.pth; c_layer_scale re-initialized in (0.001, 0.933, 1.0) for new range; log_tau_l re-initialized to 0 (tau_l=1 identity)
+[Step4] params=1146886 | DDP wrapped
+[Step5] optimizer covers 1 group(s)
+[train] start, target=100000 global steps (Step1-Step12 loop)
+[Step6] first transition batch ok x=(640, 768) x_fut=(640, 768) device=cuda:0
+[rank0]:[W925 11:22:15.474825123 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[Step7] first forward ok sem_ids.shape=(1280, 3)
+[Step8] first loss ok loss=2.5994 rl=1.2354 vl=0.1046 behavior=6.2968 curvature_reg=0.000000
+[rank1]:[W925 11:22:15.493200838 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank3]:[W925 11:22:15.494739791 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]:[W925 11:22:15.515780932 reducer.cpp:1457] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[Step9] first backward ok params_with_grad=17
+[Step10] first optimizer.step ok
+[Step11] first curvature sync step=4 c=[0.050/0.244/0.273]
+  step    328/100000 | loss=3.1272 | rl=1.3085 | vl=0.4975 | behavior=6.6055 | curv_reg=0.004196 | codes=253/256/256/256 | c=0.051/0.217/0.243 | ips_g=64.6 ips/rk=16.1 | elapsed=5.1s | eta=1543.3s
+  step    744/100000 | loss=3.0573 | rl=1.2865 | vl=0.4503 | behavior=6.6021 | curv_reg=0.018076 | codes=251/256/256/256 | c=0.052/0.193/0.214 | ips_g=73.6 ips/rk=18.4 | elapsed=10.1s | eta=1349.3s
+  step   1168/100000 | loss=3.1052 | rl=1.2846 | vl=0.4888 | behavior=6.6578 | curv_reg=0.038589 | codes=255/256/256/256 | c=0.053/0.174/0.191 | ips_g=77.3 ips/rk=19.3 | elapsed=15.1s | eta=1279.0s
+  step   1572/100000 | loss=2.9974 | rl=1.2685 | vl=0.4413 | behavior=6.4368 | curv_reg=0.061422 | codes=251/256/256/256 | c=0.054/0.159/0.177 | ips_g=78.0 ips/rk=19.5 | elapsed=20.2s | eta=1261.7s
+  step   1980/100000 | loss=2.9816 | rl=1.2659 | vl=0.4035 | behavior=6.5588 | curv_reg=0.088814 | codes=250/255/255/256 | c=0.056/0.146/0.163 | ips_g=78.6 ips/rk=19.6 | elapsed=25.2s | eta=1247.2s
+  step   2404/100000 | loss=3.0366 | rl=1.2664 | vl=0.4239 | behavior=6.7287 | curv_reg=0.118448 | codes=255/255/255/256 | c=0.057/0.135/0.152 | ips_g=79.5 ips/rk=19.9 | elapsed=30.2s | eta=1227.1s
+  step   2808/100000 | loss=2.9852 | rl=1.2513 | vl=0.4133 | behavior=6.5994 | curv_reg=0.150252 | codes=252/254/255/256 | c=0.058/0.126/0.142 | ips_g=79.7 ips/rk=19.9 | elapsed=35.2s | eta=1219.5s
+  step   3216/100000 | loss=3.0481 | rl=1.2681 | vl=0.4425 | behavior=6.6831 | curv_reg=0.183611 | codes=253/255/256/256 | c=0.059/0.118/0.134 | ips_g=79.9 ips/rk=20.0 | elapsed=40.3s | eta=1211.6s
+  step   3632/100000 | loss=3.0302 | rl=1.2666 | vl=0.4468 | behavior=6.5783 | curv_reg=0.216010 | codes=254/254/256/256 | c=0.061/0.111/0.128 | ips_g=80.2 ips/rk=20.1 | elapsed=45.3s | eta=1201.3s
+  step   4040/100000 | loss=3.0186 | rl=1.2436 | vl=0.4446 | behavior=6.6462 | curv_reg=0.250251 | codes=253/256/256/256 | c=0.062/0.105/0.122 | ips_g=80.3 ips/rk=20.1 | elapsed=50.3s | eta=1194.3s
+  step   4456/100000 | loss=3.1660 | rl=1.2808 | vl=0.5473 | behavior=6.6826 | curv_reg=0.285366 | codes=255/256/256/256 | c=0.063/0.100/0.117 | ips_g=80.6 ips/rk=20.1 | elapsed=55.3s | eta=1186.1s
+  step   4880/100000 | loss=3.0530 | rl=1.2645 | vl=0.4652 | behavior=6.6087 | curv_reg=0.323171 | codes=254/255/254/256 | c=0.065/0.094/0.112 | ips_g=80.9 ips/rk=20.2 | elapsed=60.3s | eta=1175.9s
+  step   5304/100000 | loss=3.1165 | rl=1.2713 | vl=0.5028 | behavior=6.7026 | curv_reg=0.363762 | codes=254/256/255/256 | c=0.066/0.090/0.106 | ips_g=81.2 ips/rk=20.3 | elapsed=65.3s | eta=1166.4s
+  step   5720/100000 | loss=3.0815 | rl=1.2613 | vl=0.4898 | behavior=6.6419 | curv_reg=0.402900 | codes=253/255/256/256 | c=0.068/0.085/0.102 | ips_g=81.3 ips/rk=20.3 | elapsed=70.4s | eta=1159.8s
+  step   6136/100000 | loss=3.1262 | rl=1.2687 | vl=0.5186 | behavior=6.6832 | curv_reg=0.444012 | codes=256/256/256/256 | c=0.069/0.081/0.098 | ips_g=81.4 ips/rk=20.3 | elapsed=75.4s | eta=1153.5s
+  step   6544/100000 | loss=3.2457 | rl=1.3033 | vl=0.5702 | behavior=6.8490 | curv_reg=0.484559 | codes=255/256/256/256 | c=0.071/0.078/0.095 | ips_g=81.3 ips/rk=20.3 | elapsed=80.4s | eta=1148.8s
+  step   6956/100000 | loss=3.2064 | rl=1.2978 | vl=0.5417 | behavior=6.8212 | curv_reg=0.525740 | codes=254/255/256/256 | c=0.072/0.075/0.091 | ips_g=81.4 ips/rk=20.3 | elapsed=85.5s | eta=1143.2s
+  step   7364/100000 | loss=3.1224 | rl=1.2585 | vl=0.5267 | behavior=6.6720 | curv_reg=0.556575 | codes=253/256/253/256 | c=0.074/0.074/0.088 | ips_g=81.4 ips/rk=20.3 | elapsed=90.5s | eta=1138.3s
+  step   7780/100000 | loss=3.1852 | rl=1.2899 | vl=0.5818 | behavior=6.5529 | curv_reg=0.575299 | codes=254/256/254/256 | c=0.075/0.075/0.086 | ips_g=81.5 ips/rk=20.4 | elapsed=95.5s | eta=1132.0s
+  step   8212/100000 | loss=3.2661 | rl=1.2838 | vl=0.5869 | behavior=6.9621 | curv_reg=0.596213 | codes=255/255/254/256 | c=0.077/0.077/0.083 | ips_g=81.7 ips/rk=20.4 | elapsed=100.6s | eta=1124.1s
+  step   8644/100000 | loss=3.2629 | rl=1.3138 | vl=0.5870 | behavior=6.7952 | curv_reg=0.616613 | codes=254/256/255/256 | c=0.079/0.079/0.080 | ips_g=81.8 ips/rk=20.5 | elapsed=105.6s | eta=1116.4s
+  step   9068/100000 | loss=3.3045 | rl=1.2795 | vl=0.6421 | behavior=6.8989 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.081/0.081/0.081 | ips_g=82.0 ips/rk=20.5 | elapsed=110.6s | eta=1109.5s
+  step   9492/100000 | loss=3.2036 | rl=1.2616 | vl=0.5838 | behavior=6.7750 | curv_reg=0.623299 | codes=254/254/253/256 | c=0.082/0.082/0.082 | ips_g=82.1 ips/rk=20.5 | elapsed=115.7s | eta=1102.9s
+  step   9904/100000 | loss=3.3243 | rl=1.2954 | vl=0.6455 | behavior=6.9010 | curv_reg=0.623299 | codes=256/256/253/256 | c=0.084/0.084/0.084 | ips_g=82.1 ips/rk=20.5 | elapsed=120.7s | eta=1097.8s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=10000)
+  [SID save step=10000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=10000] hitrate@50=0.9968 full_gini=0.0553 per_layer=[0.2051/0.1911/0.1940] unique=23172/24587 l01_pairs=14946 H_l1_given_l0=5.6427
+  step  10004/100000 | loss=3.2484 | rl=1.2872 | vl=0.5967 | behavior=6.8067 | curv_reg=0.623299 | codes=253/255/254/256 | c=0.085/0.085/0.085 | ips_g=74.9 ips/rk=18.7 | elapsed=133.6s | eta=1202.1s
+  step  10416/100000 | loss=3.3014 | rl=1.2788 | vl=0.6377 | behavior=6.9089 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.086/0.086/0.086 | ips_g=75.1 ips/rk=18.8 | elapsed=138.7s | eta=1192.7s
+  step  10824/100000 | loss=3.2177 | rl=1.2626 | vl=0.6093 | behavior=6.7137 | curv_reg=0.623299 | codes=254/254/255/256 | c=0.088/0.088/0.088 | ips_g=75.3 ips/rk=18.8 | elapsed=143.7s | eta=1184.0s
+  step  11220/100000 | loss=3.3937 | rl=1.2852 | vl=0.7072 | behavior=6.9911 | curv_reg=0.623299 | codes=255/256/254/256 | c=0.090/0.090/0.090 | ips_g=75.4 ips/rk=18.9 | elapsed=148.7s | eta=1176.8s
+  step  11616/100000 | loss=3.4710 | rl=1.3176 | vl=0.7449 | behavior=7.0271 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.092/0.092/0.092 | ips_g=75.6 ips/rk=18.9 | elapsed=153.7s | eta=1169.8s
+  step  12036/100000 | loss=3.3822 | rl=1.3086 | vl=0.7034 | behavior=6.8357 | curv_reg=0.623299 | codes=255/256/254/256 | c=0.094/0.094/0.094 | ips_g=75.8 ips/rk=19.0 | elapsed=158.8s | eta=1160.3s
+  step  12424/100000 | loss=3.4410 | rl=1.3036 | vl=0.7283 | behavior=7.0299 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.096/0.096/0.096 | ips_g=75.8 ips/rk=19.0 | elapsed=163.8s | eta=1154.8s
+  step  12820/100000 | loss=3.3669 | rl=1.2840 | vl=0.7145 | behavior=6.8263 | curv_reg=0.623299 | codes=254/253/254/256 | c=0.097/0.097/0.097 | ips_g=75.9 ips/rk=19.0 | elapsed=168.9s | eta=1148.6s
+  step  13240/100000 | loss=3.4617 | rl=1.2965 | vl=0.7896 | behavior=6.8619 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.099/0.099/0.099 | ips_g=76.1 ips/rk=19.0 | elapsed=173.9s | eta=1139.8s
+  step  13656/100000 | loss=3.4054 | rl=1.2912 | vl=0.7158 | behavior=6.9763 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.101/0.101/0.101 | ips_g=76.3 ips/rk=19.1 | elapsed=179.0s | eta=1131.6s
+  step  14084/100000 | loss=3.4502 | rl=1.2896 | vl=0.7560 | behavior=7.0072 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.104/0.104/0.104 | ips_g=76.6 ips/rk=19.1 | elapsed=184.0s | eta=1122.3s
+  step  14504/100000 | loss=3.3763 | rl=1.2755 | vl=0.7229 | behavior=6.8740 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.106/0.106/0.106 | ips_g=76.7 ips/rk=19.2 | elapsed=189.0s | eta=1114.0s
+  step  14928/100000 | loss=3.4815 | rl=1.3082 | vl=0.7784 | behavior=6.9591 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.108/0.108/0.108 | ips_g=77.0 ips/rk=19.2 | elapsed=194.0s | eta=1105.5s
+  step  15320/100000 | loss=3.4953 | rl=1.2747 | vl=0.7720 | behavior=7.2277 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.110/0.110/0.110 | ips_g=77.0 ips/rk=19.2 | elapsed=199.0s | eta=1100.0s
+  step  15736/100000 | loss=3.4782 | rl=1.2946 | vl=0.7899 | behavior=6.9527 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.112/0.112/0.112 | ips_g=77.1 ips/rk=19.3 | elapsed=204.2s | eta=1093.4s
+  step  16156/100000 | loss=3.4853 | rl=1.2943 | vl=0.7974 | behavior=6.9520 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.114/0.114/0.114 | ips_g=77.2 ips/rk=19.3 | elapsed=209.2s | eta=1085.6s
+  step  16580/100000 | loss=3.5863 | rl=1.3022 | vl=0.8667 | behavior=7.0712 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.117/0.117/0.117 | ips_g=77.4 ips/rk=19.4 | elapsed=214.2s | eta=1077.7s
+  step  16996/100000 | loss=3.6036 | rl=1.3095 | vl=0.8673 | behavior=7.1187 | curv_reg=0.623299 | codes=256/255/255/256 | c=0.119/0.119/0.119 | ips_g=77.5 ips/rk=19.4 | elapsed=219.2s | eta=1070.6s
+  step  17412/100000 | loss=3.4449 | rl=1.2667 | vl=0.7961 | behavior=6.8949 | curv_reg=0.623299 | codes=256/255/254/256 | c=0.121/0.121/0.121 | ips_g=77.6 ips/rk=19.4 | elapsed=224.2s | eta=1063.6s
+  step  17828/100000 | loss=3.6697 | rl=1.3206 | vl=0.9006 | behavior=7.2270 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.123/0.123/0.123 | ips_g=77.8 ips/rk=19.4 | elapsed=229.3s | eta=1056.7s
+  step  18256/100000 | loss=3.6000 | rl=1.3210 | vl=0.9007 | behavior=6.8755 | curv_reg=0.623299 | codes=255/255/256/256 | c=0.126/0.126/0.126 | ips_g=77.9 ips/rk=19.5 | elapsed=234.3s | eta=1049.1s
+  step  18660/100000 | loss=3.6145 | rl=1.3080 | vl=0.9111 | behavior=6.9612 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.128/0.128/0.128 | ips_g=78.0 ips/rk=19.5 | elapsed=239.3s | eta=1043.3s
+  step  19068/100000 | loss=3.5427 | rl=1.2895 | vl=0.8788 | behavior=6.8563 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.130/0.130/0.130 | ips_g=78.0 ips/rk=19.5 | elapsed=244.4s | eta=1037.2s
+  step  19496/100000 | loss=3.6612 | rl=1.3152 | vl=0.9197 | behavior=7.1158 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.133/0.133/0.133 | ips_g=78.2 ips/rk=19.5 | elapsed=249.4s | eta=1029.8s
+  step  19912/100000 | loss=3.5976 | rl=1.3239 | vl=0.8839 | behavior=6.9331 | curv_reg=0.623299 | codes=255/256/255/256 | c=0.135/0.135/0.135 | ips_g=78.3 ips/rk=19.6 | elapsed=254.4s | eta=1023.3s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=20000)
+  [SID save step=20000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=20000] hitrate@50=0.9975 full_gini=0.0464 per_layer=[0.1661/0.1603/0.1794] unique=23407/24587 l01_pairs=15856 H_l1_given_l0=5.7421
+  step  20004/100000 | loss=3.6786 | rl=1.3105 | vl=0.9481 | behavior=7.0840 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.136/0.136/0.136 | ips_g=74.9 ips/rk=18.7 | elapsed=267.2s | eta=1068.5s
+  step  20420/100000 | loss=3.6969 | rl=1.3121 | vl=0.9603 | behavior=7.1067 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.138/0.138/0.138 | ips_g=75.0 ips/rk=18.8 | elapsed=272.2s | eta=1060.8s
+  step  20848/100000 | loss=3.6080 | rl=1.2966 | vl=0.8852 | behavior=7.1155 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.141/0.141/0.141 | ips_g=75.2 ips/rk=18.8 | elapsed=277.2s | eta=1052.5s
+  step  21268/100000 | loss=3.6701 | rl=1.3008 | vl=0.9476 | behavior=7.0928 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.143/0.143/0.143 | ips_g=75.4 ips/rk=18.8 | elapsed=282.2s | eta=1044.7s
+  step  21660/100000 | loss=3.5670 | rl=1.2928 | vl=0.8578 | behavior=7.0664 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.146/0.146/0.146 | ips_g=75.4 ips/rk=18.9 | elapsed=287.2s | eta=1038.9s
+  step  22060/100000 | loss=3.7397 | rl=1.3261 | vl=0.9767 | behavior=7.1688 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.148/0.148/0.148 | ips_g=75.5 ips/rk=18.9 | elapsed=292.3s | eta=1032.7s
+  step  22452/100000 | loss=3.6524 | rl=1.2962 | vl=0.9396 | behavior=7.0672 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.151/0.151/0.151 | ips_g=75.5 ips/rk=18.9 | elapsed=297.3s | eta=1027.0s
+  step  22864/100000 | loss=3.7779 | rl=1.3166 | vl=0.9891 | behavior=7.3454 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.153/0.153/0.153 | ips_g=75.6 ips/rk=18.9 | elapsed=302.4s | eta=1020.1s
+  step  23268/100000 | loss=3.7740 | rl=1.3180 | vl=1.0220 | behavior=7.1547 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.156/0.156/0.156 | ips_g=75.7 ips/rk=18.9 | elapsed=307.4s | eta=1013.8s
+  step  23688/100000 | loss=3.6909 | rl=1.3163 | vl=0.9611 | behavior=7.0520 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.158/0.158/0.158 | ips_g=75.8 ips/rk=19.0 | elapsed=312.4s | eta=1006.5s
+  step  24096/100000 | loss=3.7575 | rl=1.3151 | vl=1.0017 | behavior=7.1881 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.161/0.161/0.161 | ips_g=75.9 ips/rk=19.0 | elapsed=317.4s | eta=999.9s
+  step  24520/100000 | loss=3.6694 | rl=1.3079 | vl=0.9618 | behavior=6.9828 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.163/0.163/0.163 | ips_g=76.0 ips/rk=19.0 | elapsed=322.5s | eta=992.7s
+  step  24944/100000 | loss=3.7264 | rl=1.3022 | vl=0.9868 | behavior=7.1716 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.166/0.166/0.166 | ips_g=76.2 ips/rk=19.0 | elapsed=327.5s | eta=985.5s
+  step  25364/100000 | loss=3.6224 | rl=1.2997 | vl=0.9417 | behavior=6.8894 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.169/0.169/0.169 | ips_g=76.3 ips/rk=19.1 | elapsed=332.5s | eta=978.5s
+  step  25768/100000 | loss=3.8581 | rl=1.3431 | vl=1.0640 | behavior=7.2394 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.171/0.171/0.171 | ips_g=76.3 ips/rk=19.1 | elapsed=337.5s | eta=972.4s
+  step  26184/100000 | loss=3.7604 | rl=1.3074 | vl=1.0072 | behavior=7.2136 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.174/0.174/0.174 | ips_g=76.4 ips/rk=19.1 | elapsed=342.6s | eta=965.8s
+  step  26576/100000 | loss=3.7356 | rl=1.2966 | vl=0.9988 | behavior=7.1852 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.176/0.176/0.176 | ips_g=76.5 ips/rk=19.1 | elapsed=347.6s | eta=960.3s
+  step  26968/100000 | loss=3.8076 | rl=1.3214 | vl=1.0723 | behavior=7.0540 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.179/0.179/0.179 | ips_g=76.5 ips/rk=19.1 | elapsed=352.6s | eta=954.9s
+  step  27372/100000 | loss=3.8037 | rl=1.3287 | vl=1.0444 | behavior=7.1377 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.181/0.181/0.181 | ips_g=76.5 ips/rk=19.1 | elapsed=357.7s | eta=949.0s
+  step  27792/100000 | loss=3.7048 | rl=1.3106 | vl=0.9858 | behavior=7.0262 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.184/0.184/0.184 | ips_g=76.6 ips/rk=19.2 | elapsed=362.7s | eta=942.3s
+  step  28220/100000 | loss=3.7472 | rl=1.3268 | vl=0.9975 | behavior=7.0988 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.187/0.187/0.187 | ips_g=76.8 ips/rk=19.2 | elapsed=367.7s | eta=935.2s
+  step  28620/100000 | loss=3.8551 | rl=1.3460 | vl=1.0584 | behavior=7.2385 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.189/0.189/0.189 | ips_g=76.8 ips/rk=19.2 | elapsed=372.7s | eta=929.5s
+  step  29012/100000 | loss=3.8254 | rl=1.3202 | vl=1.0836 | behavior=7.0920 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.192/0.192/0.192 | ips_g=76.8 ips/rk=19.2 | elapsed=377.7s | eta=924.2s
+  step  29404/100000 | loss=3.7555 | rl=1.3189 | vl=1.0240 | behavior=7.0475 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.194/0.194/0.194 | ips_g=76.8 ips/rk=19.2 | elapsed=382.7s | eta=918.8s
+  step  29800/100000 | loss=3.7826 | rl=1.3153 | vl=1.0451 | behavior=7.0952 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.197/0.197/0.197 | ips_g=76.9 ips/rk=19.2 | elapsed=387.8s | eta=913.4s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=30000)
+  [SID save step=30000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=30000] hitrate@50=0.9980 full_gini=0.0382 per_layer=[0.1405/0.1293/0.1354] unique=23621/24587 l01_pairs=16289 H_l1_given_l0=5.7941
+  step  30004/100000 | loss=3.7276 | rl=1.3117 | vl=1.0094 | behavior=7.0166 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.198/0.198/0.198 | ips_g=74.6 ips/rk=18.6 | elapsed=402.4s | eta=938.7s
+  step  30388/100000 | loss=3.7909 | rl=1.3173 | vl=1.0369 | behavior=7.1679 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.200/0.200/0.200 | ips_g=74.6 ips/rk=18.6 | elapsed=407.4s | eta=933.3s
+  step  30792/100000 | loss=3.8458 | rl=1.3226 | vl=1.0991 | behavior=7.1051 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.203/0.203/0.203 | ips_g=74.7 ips/rk=18.7 | elapsed=412.5s | eta=927.1s
+  step  31176/100000 | loss=3.9059 | rl=1.3369 | vl=1.1008 | behavior=7.3254 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.205/0.205/0.205 | ips_g=74.7 ips/rk=18.7 | elapsed=417.5s | eta=921.6s
+  step  31560/100000 | loss=3.8170 | rl=1.3210 | vl=1.0820 | behavior=7.0549 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.208/0.208/0.208 | ips_g=74.7 ips/rk=18.7 | elapsed=422.5s | eta=916.2s
+  step  31956/100000 | loss=3.8151 | rl=1.3230 | vl=1.0683 | behavior=7.1040 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.210/0.210/0.210 | ips_g=74.7 ips/rk=18.7 | elapsed=427.5s | eta=910.3s
+  step  32352/100000 | loss=3.9150 | rl=1.3515 | vl=1.1352 | behavior=7.1260 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.212/0.212/0.212 | ips_g=74.8 ips/rk=18.7 | elapsed=432.5s | eta=904.4s
+  step  32744/100000 | loss=3.8640 | rl=1.3205 | vl=1.1229 | behavior=7.0874 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.215/0.215/0.215 | ips_g=74.8 ips/rk=18.7 | elapsed=437.5s | eta=898.7s
+  step  33132/100000 | loss=4.0081 | rl=1.3588 | vl=1.1769 | behavior=7.3464 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.217/0.217/0.217 | ips_g=74.9 ips/rk=18.7 | elapsed=442.6s | eta=893.2s
+  step  33520/100000 | loss=4.0328 | rl=1.3438 | vl=1.2504 | behavior=7.1776 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.219/0.219/0.219 | ips_g=74.9 ips/rk=18.7 | elapsed=447.6s | eta=887.7s
+  step  33908/100000 | loss=3.9018 | rl=1.3423 | vl=1.1006 | behavior=7.2790 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.221/0.221/0.221 | ips_g=74.9 ips/rk=18.7 | elapsed=452.6s | eta=882.2s
+  step  34304/100000 | loss=3.9491 | rl=1.3574 | vl=1.1474 | behavior=7.2060 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.224/0.224/0.224 | ips_g=75.0 ips/rk=18.7 | elapsed=457.6s | eta=876.4s
+  step  34696/100000 | loss=3.8181 | rl=1.3363 | vl=1.0635 | behavior=7.0757 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.226/0.226/0.226 | ips_g=75.0 ips/rk=18.7 | elapsed=462.7s | eta=870.8s
+  step  35092/100000 | loss=3.9497 | rl=1.3700 | vl=1.1615 | behavior=7.0752 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.228/0.228/0.228 | ips_g=75.0 ips/rk=18.8 | elapsed=467.7s | eta=865.0s
+  step  35480/100000 | loss=3.9002 | rl=1.3283 | vl=1.1570 | behavior=7.0589 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.230/0.230/0.230 | ips_g=75.1 ips/rk=18.8 | elapsed=472.7s | eta=859.6s
+  step  35868/100000 | loss=3.8287 | rl=1.3137 | vl=1.1177 | behavior=6.9712 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.232/0.232/0.232 | ips_g=75.1 ips/rk=18.8 | elapsed=477.7s | eta=854.2s
+  step  36264/100000 | loss=3.8815 | rl=1.3363 | vl=1.1031 | behavior=7.1951 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.234/0.234/0.234 | ips_g=75.1 ips/rk=18.8 | elapsed=482.7s | eta=848.5s
+  step  36652/100000 | loss=3.9071 | rl=1.3246 | vl=1.1116 | behavior=7.3383 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.236/0.236/0.236 | ips_g=75.1 ips/rk=18.8 | elapsed=487.8s | eta=843.1s
+  step  37048/100000 | loss=3.9105 | rl=1.3490 | vl=1.1310 | behavior=7.1368 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.238/0.238/0.238 | ips_g=75.2 ips/rk=18.8 | elapsed=492.8s | eta=837.4s
+  step  37444/100000 | loss=3.9734 | rl=1.3339 | vl=1.1796 | behavior=7.2837 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.240/0.240/0.240 | ips_g=75.2 ips/rk=18.8 | elapsed=497.9s | eta=831.8s
+  step  37840/100000 | loss=3.9265 | rl=1.3358 | vl=1.1619 | behavior=7.1286 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.242/0.242/0.242 | ips_g=75.2 ips/rk=18.8 | elapsed=502.9s | eta=826.2s
+  step  38232/100000 | loss=3.9286 | rl=1.3220 | vl=1.1429 | behavior=7.3023 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.244/0.244/0.244 | ips_g=75.3 ips/rk=18.8 | elapsed=508.0s | eta=820.7s
+  step  38624/100000 | loss=3.9616 | rl=1.3325 | vl=1.2020 | behavior=7.1202 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.246/0.246/0.246 | ips_g=75.3 ips/rk=18.8 | elapsed=513.0s | eta=815.2s
+  step  39012/100000 | loss=4.0226 | rl=1.3752 | vl=1.1921 | behavior=7.2609 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.248/0.248/0.248 | ips_g=75.3 ips/rk=18.8 | elapsed=518.0s | eta=809.8s
+  step  39408/100000 | loss=3.9694 | rl=1.3583 | vl=1.1798 | behavior=7.1407 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.250/0.250/0.250 | ips_g=75.3 ips/rk=18.8 | elapsed=523.0s | eta=804.2s
+  step  39796/100000 | loss=3.8247 | rl=1.3440 | vl=1.0846 | behavior=6.9649 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.251/0.251/0.251 | ips_g=75.4 ips/rk=18.8 | elapsed=528.1s | eta=798.9s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=40000)
+  [SID save step=40000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=40000] hitrate@50=0.9983 full_gini=0.0346 per_layer=[0.1204/0.1165/0.1234] unique=23714/24587 l01_pairs=16699 H_l1_given_l0=5.8376
+  step  40004/100000 | loss=3.9838 | rl=1.3436 | vl=1.2030 | behavior=7.1706 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.252/0.252/0.252 | ips_g=73.8 ips/rk=18.4 | elapsed=542.4s | eta=813.4s
+  step  40400/100000 | loss=3.9814 | rl=1.3481 | vl=1.2184 | behavior=7.0589 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.254/0.254/0.254 | ips_g=73.8 ips/rk=18.5 | elapsed=547.4s | eta=807.6s
+  step  40796/100000 | loss=3.9400 | rl=1.3174 | vl=1.1820 | behavior=7.1877 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.255/0.255/0.255 | ips_g=73.8 ips/rk=18.5 | elapsed=552.5s | eta=801.7s
+  step  41188/100000 | loss=3.9524 | rl=1.3300 | vl=1.1968 | behavior=7.1127 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.257/0.257/0.257 | ips_g=73.9 ips/rk=18.5 | elapsed=557.5s | eta=796.1s
+  step  41584/100000 | loss=4.0855 | rl=1.3443 | vl=1.2990 | behavior=7.1954 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.258/0.258/0.258 | ips_g=73.9 ips/rk=18.5 | elapsed=562.6s | eta=790.3s
+  step  41976/100000 | loss=4.2279 | rl=1.3938 | vl=1.3442 | behavior=7.4339 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.260/0.260/0.260 | ips_g=74.0 ips/rk=18.5 | elapsed=567.6s | eta=784.6s
+  step  42372/100000 | loss=3.9355 | rl=1.3530 | vl=1.1664 | behavior=7.0649 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.261/0.261/0.261 | ips_g=74.0 ips/rk=18.5 | elapsed=572.6s | eta=778.8s
+  step  42764/100000 | loss=4.0198 | rl=1.3784 | vl=1.2168 | behavior=7.1075 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.262/0.262/0.262 | ips_g=74.0 ips/rk=18.5 | elapsed=577.6s | eta=773.1s
+  step  43160/100000 | loss=4.1897 | rl=1.3834 | vl=1.3383 | behavior=7.3244 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.263/0.263/0.263 | ips_g=74.1 ips/rk=18.5 | elapsed=582.6s | eta=767.3s
+  step  43548/100000 | loss=3.9186 | rl=1.3382 | vl=1.1583 | behavior=7.0951 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.265/0.265/0.265 | ips_g=74.1 ips/rk=18.5 | elapsed=587.7s | eta=761.8s
+  step  43936/100000 | loss=4.0563 | rl=1.3561 | vl=1.2521 | behavior=7.2252 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.266/0.266/0.266 | ips_g=74.1 ips/rk=18.5 | elapsed=592.7s | eta=756.3s
+  step  44320/100000 | loss=4.0743 | rl=1.3744 | vl=1.2810 | behavior=7.0789 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.267/0.267/0.267 | ips_g=74.2 ips/rk=18.5 | elapsed=597.7s | eta=750.9s
+  step  44684/100000 | loss=3.9830 | rl=1.3362 | vl=1.2202 | behavior=7.1173 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.268/0.268/0.268 | ips_g=74.1 ips/rk=18.5 | elapsed=602.7s | eta=746.1s
+  step  45080/100000 | loss=4.1351 | rl=1.3701 | vl=1.3004 | behavior=7.3072 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.268/0.268/0.268 | ips_g=74.2 ips/rk=18.5 | elapsed=607.7s | eta=740.4s
+  step  45472/100000 | loss=4.1031 | rl=1.3633 | vl=1.2944 | behavior=7.2111 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.269/0.269/0.269 | ips_g=74.2 ips/rk=18.6 | elapsed=612.8s | eta=734.8s
+  step  45868/100000 | loss=4.1230 | rl=1.3519 | vl=1.3137 | behavior=7.2716 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.270/0.270/0.270 | ips_g=74.2 ips/rk=18.6 | elapsed=617.8s | eta=729.1s
+  step  46260/100000 | loss=4.0525 | rl=1.3403 | vl=1.2634 | behavior=7.2284 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.271/0.271/0.271 | ips_g=74.3 ips/rk=18.6 | elapsed=622.9s | eta=723.6s
+  step  46652/100000 | loss=3.9833 | rl=1.3244 | vl=1.2014 | behavior=7.2723 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.271/0.271/0.271 | ips_g=74.3 ips/rk=18.6 | elapsed=627.9s | eta=718.0s
+  step  47032/100000 | loss=4.2993 | rl=1.3916 | vl=1.3790 | behavior=7.6277 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.272/0.272/0.272 | ips_g=74.3 ips/rk=18.6 | elapsed=632.9s | eta=712.8s
+  step  47424/100000 | loss=4.0706 | rl=1.3443 | vl=1.2675 | behavior=7.2789 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.272/0.272/0.272 | ips_g=74.3 ips/rk=18.6 | elapsed=637.9s | eta=707.2s
+  step  47804/100000 | loss=3.9786 | rl=1.3519 | vl=1.1974 | behavior=7.1310 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=74.3 ips/rk=18.6 | elapsed=643.0s | eta=702.0s
+  step  48196/100000 | loss=4.1434 | rl=1.3818 | vl=1.2850 | behavior=7.3674 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=74.4 ips/rk=18.6 | elapsed=648.0s | eta=696.5s
+  step  48588/100000 | loss=4.1274 | rl=1.4396 | vl=1.2655 | behavior=7.0957 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=74.4 ips/rk=18.6 | elapsed=653.0s | eta=691.0s
+  step  48972/100000 | loss=4.1437 | rl=1.3835 | vl=1.2976 | behavior=7.2975 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=74.4 ips/rk=18.6 | elapsed=658.0s | eta=685.7s
+  step  49360/100000 | loss=4.1418 | rl=1.3550 | vl=1.3141 | behavior=7.3482 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=74.4 ips/rk=18.6 | elapsed=663.1s | eta=680.3s
+  step  49744/100000 | loss=4.1274 | rl=1.3495 | vl=1.3075 | behavior=7.3361 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=74.5 ips/rk=18.6 | elapsed=668.1s | eta=675.0s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=50000)
+  [SID save step=50000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=50000] hitrate@50=0.9984 full_gini=0.0333 per_layer=[0.1173/0.0864/0.0799] unique=23748/24587 l01_pairs=16958 H_l1_given_l0=5.8691
+  step  50004/100000 | loss=4.1167 | rl=1.3547 | vl=1.3017 | behavior=7.2858 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=73.2 ips/rk=18.3 | elapsed=683.3s | eta=683.2s
+  step  50400/100000 | loss=4.1302 | rl=1.3812 | vl=1.2867 | behavior=7.2961 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=73.2 ips/rk=18.3 | elapsed=688.3s | eta=677.4s
+  step  50780/100000 | loss=4.1045 | rl=1.3536 | vl=1.2935 | behavior=7.2714 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=73.2 ips/rk=18.3 | elapsed=693.4s | eta=672.1s
+  step  51176/100000 | loss=4.0825 | rl=1.3570 | vl=1.2894 | behavior=7.1651 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.274/0.274/0.274 | ips_g=73.3 ips/rk=18.3 | elapsed=698.4s | eta=666.3s
+  step  51560/100000 | loss=4.0947 | rl=1.3421 | vl=1.2863 | behavior=7.3158 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=73.3 ips/rk=18.3 | elapsed=703.4s | eta=660.8s
+  step  51952/100000 | loss=4.1101 | rl=1.3435 | vl=1.3015 | behavior=7.3098 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=73.3 ips/rk=18.3 | elapsed=708.5s | eta=655.2s
+  step  52340/100000 | loss=4.1986 | rl=1.3885 | vl=1.3227 | behavior=7.4217 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.273/0.273/0.273 | ips_g=73.4 ips/rk=18.3 | elapsed=713.5s | eta=649.7s
+  step  52736/100000 | loss=4.1905 | rl=1.3673 | vl=1.3780 | behavior=7.2103 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.272/0.272/0.272 | ips_g=73.4 ips/rk=18.3 | elapsed=718.5s | eta=643.9s
+  step  53132/100000 | loss=4.1269 | rl=1.3621 | vl=1.3169 | behavior=7.2242 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.272/0.272/0.272 | ips_g=73.4 ips/rk=18.4 | elapsed=723.5s | eta=638.2s
+  step  53524/100000 | loss=4.0482 | rl=1.3626 | vl=1.2686 | behavior=7.0699 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.271/0.271/0.271 | ips_g=73.5 ips/rk=18.4 | elapsed=728.6s | eta=632.6s
+  step  53916/100000 | loss=4.2589 | rl=1.3773 | vl=1.4007 | behavior=7.3886 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.270/0.270/0.270 | ips_g=73.5 ips/rk=18.4 | elapsed=733.6s | eta=627.0s
+  step  54300/100000 | loss=4.1276 | rl=1.3576 | vl=1.3118 | behavior=7.2751 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.270/0.270/0.270 | ips_g=73.5 ips/rk=18.4 | elapsed=738.6s | eta=621.6s
+  step  54692/100000 | loss=4.2016 | rl=1.3664 | vl=1.3885 | behavior=7.2175 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.269/0.269/0.269 | ips_g=73.5 ips/rk=18.4 | elapsed=743.6s | eta=616.0s
+  step  55076/100000 | loss=4.0778 | rl=1.3594 | vl=1.2784 | behavior=7.1847 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.268/0.268/0.268 | ips_g=73.6 ips/rk=18.4 | elapsed=748.6s | eta=610.6s
+  step  55468/100000 | loss=4.0119 | rl=1.3380 | vl=1.2420 | behavior=7.1436 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.267/0.267/0.267 | ips_g=73.6 ips/rk=18.4 | elapsed=753.6s | eta=605.1s
+  step  55860/100000 | loss=4.0299 | rl=1.3203 | vl=1.2747 | behavior=7.1591 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.266/0.266/0.266 | ips_g=73.6 ips/rk=18.4 | elapsed=758.7s | eta=599.5s
+  step  56248/100000 | loss=4.1015 | rl=1.3531 | vl=1.3189 | behavior=7.1320 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.265/0.265/0.265 | ips_g=73.7 ips/rk=18.4 | elapsed=763.7s | eta=594.0s
+  step  56640/100000 | loss=4.1098 | rl=1.3564 | vl=1.3242 | behavior=7.1310 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.264/0.264/0.264 | ips_g=73.7 ips/rk=18.4 | elapsed=768.7s | eta=588.5s
+  step  57028/100000 | loss=4.2081 | rl=1.3486 | vl=1.3886 | behavior=7.3390 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.263/0.263/0.263 | ips_g=73.7 ips/rk=18.4 | elapsed=773.8s | eta=583.1s
+  step  57420/100000 | loss=4.2176 | rl=1.3921 | vl=1.4068 | behavior=7.0780 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.262/0.262/0.262 | ips_g=73.7 ips/rk=18.4 | elapsed=778.8s | eta=577.5s
+  step  57804/100000 | loss=4.1539 | rl=1.3674 | vl=1.3468 | behavior=7.1830 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.260/0.260/0.260 | ips_g=73.7 ips/rk=18.4 | elapsed=783.8s | eta=572.2s
+  step  58196/100000 | loss=4.1707 | rl=1.3566 | vl=1.3569 | behavior=7.2706 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.259/0.259/0.259 | ips_g=73.8 ips/rk=18.4 | elapsed=788.8s | eta=566.7s
+  step  58588/100000 | loss=4.3587 | rl=1.3947 | vl=1.4615 | behavior=7.4969 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.258/0.258/0.258 | ips_g=73.8 ips/rk=18.4 | elapsed=793.9s | eta=561.1s
+  step  58980/100000 | loss=4.1440 | rl=1.3400 | vl=1.3604 | behavior=7.2020 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.256/0.256/0.256 | ips_g=73.8 ips/rk=18.5 | elapsed=798.9s | eta=555.6s
+  step  59372/100000 | loss=4.2112 | rl=1.3707 | vl=1.3845 | behavior=7.2643 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.255/0.255/0.255 | ips_g=73.9 ips/rk=18.5 | elapsed=803.9s | eta=550.1s
+  step  59776/100000 | loss=4.1275 | rl=1.3386 | vl=1.3310 | behavior=7.2741 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.253/0.253/0.253 | ips_g=73.9 ips/rk=18.5 | elapsed=808.9s | eta=544.3s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=60000)
+  [SID save step=60000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=60000] hitrate@50=0.9984 full_gini=0.0329 per_layer=[0.1264/0.0911/0.0835] unique=23758/24587 l01_pairs=17098 H_l1_given_l0=5.8861
+  step  60004/100000 | loss=4.1242 | rl=1.3638 | vl=1.3059 | behavior=7.2570 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.252/0.252/0.252 | ips_g=72.9 ips/rk=18.2 | elapsed=823.3s | eta=548.8s
+  step  60400/100000 | loss=4.1045 | rl=1.3487 | vl=1.3010 | behavior=7.2586 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.250/0.250/0.250 | ips_g=72.9 ips/rk=18.2 | elapsed=828.3s | eta=543.1s
+  step  60800/100000 | loss=4.1258 | rl=1.3467 | vl=1.3208 | behavior=7.2756 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.249/0.249/0.249 | ips_g=73.0 ips/rk=18.2 | elapsed=833.4s | eta=537.3s
+  step  61224/100000 | loss=4.0597 | rl=1.3438 | vl=1.2618 | behavior=7.2552 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.247/0.247/0.247 | ips_g=73.0 ips/rk=18.3 | elapsed=838.4s | eta=531.0s
+  step  61636/100000 | loss=4.0785 | rl=1.3517 | vl=1.3015 | behavior=7.1110 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.245/0.245/0.245 | ips_g=73.1 ips/rk=18.3 | elapsed=843.4s | eta=524.9s
+  step  62052/100000 | loss=4.2381 | rl=1.3536 | vl=1.4208 | behavior=7.3029 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.243/0.243/0.243 | ips_g=73.1 ips/rk=18.3 | elapsed=848.4s | eta=518.8s
+  step  62472/100000 | loss=4.2157 | rl=1.3534 | vl=1.3978 | behavior=7.3066 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.241/0.241/0.241 | ips_g=73.2 ips/rk=18.3 | elapsed=853.4s | eta=512.6s
+  step  62884/100000 | loss=4.2071 | rl=1.3748 | vl=1.3649 | behavior=7.3215 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.239/0.239/0.239 | ips_g=73.3 ips/rk=18.3 | elapsed=858.4s | eta=506.7s
+  step  63292/100000 | loss=4.1654 | rl=1.3425 | vl=1.3448 | behavior=7.3747 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.237/0.237/0.237 | ips_g=73.3 ips/rk=18.3 | elapsed=863.5s | eta=500.8s
+  step  63720/100000 | loss=4.1385 | rl=1.3471 | vl=1.3503 | behavior=7.1897 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.234/0.234/0.234 | ips_g=73.4 ips/rk=18.3 | elapsed=868.6s | eta=494.5s
+  step  64148/100000 | loss=4.1193 | rl=1.3455 | vl=1.3371 | behavior=7.1679 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.232/0.232/0.232 | ips_g=73.4 ips/rk=18.4 | elapsed=873.6s | eta=488.3s
+  step  64564/100000 | loss=4.0679 | rl=1.3424 | vl=1.3246 | behavior=6.9892 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.230/0.230/0.230 | ips_g=73.5 ips/rk=18.4 | elapsed=878.6s | eta=482.2s
+  step  64984/100000 | loss=4.0621 | rl=1.3303 | vl=1.2946 | behavior=7.1698 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.228/0.228/0.228 | ips_g=73.5 ips/rk=18.4 | elapsed=883.7s | eta=476.2s
+  step  65412/100000 | loss=4.0730 | rl=1.3369 | vl=1.2966 | behavior=7.1821 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.225/0.225/0.225 | ips_g=73.6 ips/rk=18.4 | elapsed=888.7s | eta=469.9s
+  step  65816/100000 | loss=4.0847 | rl=1.3240 | vl=1.3192 | behavior=7.1918 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.223/0.223/0.223 | ips_g=73.6 ips/rk=18.4 | elapsed=893.7s | eta=464.2s
+  step  66208/100000 | loss=4.1198 | rl=1.3393 | vl=1.3242 | behavior=7.2656 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.221/0.221/0.221 | ips_g=73.7 ips/rk=18.4 | elapsed=898.7s | eta=458.7s
+  step  66604/100000 | loss=4.1465 | rl=1.3616 | vl=1.3477 | behavior=7.1704 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.218/0.218/0.218 | ips_g=73.7 ips/rk=18.4 | elapsed=903.8s | eta=453.2s
+  step  67032/100000 | loss=4.0121 | rl=1.3333 | vl=1.2606 | behavior=7.0755 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.216/0.216/0.216 | ips_g=73.8 ips/rk=18.4 | elapsed=908.8s | eta=447.0s
+  step  67448/100000 | loss=4.0421 | rl=1.3271 | vl=1.3187 | behavior=6.9656 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.214/0.214/0.214 | ips_g=73.8 ips/rk=18.5 | elapsed=913.8s | eta=441.0s
+  step  67864/100000 | loss=4.0396 | rl=1.3131 | vl=1.2803 | behavior=7.2151 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.211/0.211/0.211 | ips_g=73.9 ips/rk=18.5 | elapsed=918.8s | eta=435.1s
+  step  68288/100000 | loss=4.0514 | rl=1.3303 | vl=1.3117 | behavior=7.0316 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.208/0.208/0.208 | ips_g=73.9 ips/rk=18.5 | elapsed=923.9s | eta=429.0s
+  step  68708/100000 | loss=4.0021 | rl=1.3245 | vl=1.2643 | behavior=7.0508 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.206/0.206/0.206 | ips_g=74.0 ips/rk=18.5 | elapsed=928.9s | eta=423.0s
+  step  69128/100000 | loss=4.1072 | rl=1.3141 | vl=1.3467 | behavior=7.2165 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.203/0.203/0.203 | ips_g=74.0 ips/rk=18.5 | elapsed=933.9s | eta=417.1s
+  step  69548/100000 | loss=4.0572 | rl=1.3240 | vl=1.3042 | behavior=7.1288 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.201/0.201/0.201 | ips_g=74.1 ips/rk=18.5 | elapsed=939.0s | eta=411.1s
+  step  69972/100000 | loss=3.9659 | rl=1.3145 | vl=1.2611 | behavior=6.9353 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.198/0.198/0.198 | ips_g=74.1 ips/rk=18.5 | elapsed=944.0s | eta=405.1s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=70000)
+  [SID save step=70000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=70000] hitrate@50=0.9984 full_gini=0.0311 per_layer=[0.1388/0.1082/0.1042] unique=23805/24587 l01_pairs=17084 H_l1_given_l0=5.8998
+  step  70004/100000 | loss=4.0332 | rl=1.3050 | vl=1.3115 | behavior=7.0682 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.198/0.198/0.198 | ips_g=73.2 ips/rk=18.3 | elapsed=956.1s | eta=409.7s
+  step  70412/100000 | loss=4.0014 | rl=1.3141 | vl=1.2694 | behavior=7.0738 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.195/0.195/0.195 | ips_g=73.3 ips/rk=18.3 | elapsed=961.1s | eta=403.9s
+  step  70828/100000 | loss=3.9837 | rl=1.3051 | vl=1.2735 | behavior=7.0095 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.193/0.193/0.193 | ips_g=73.3 ips/rk=18.3 | elapsed=966.2s | eta=397.9s
+  step  71240/100000 | loss=3.9757 | rl=1.3251 | vl=1.2633 | behavior=6.9207 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.190/0.190/0.190 | ips_g=73.4 ips/rk=18.3 | elapsed=971.2s | eta=392.1s
+  step  71664/100000 | loss=3.9587 | rl=1.2972 | vl=1.2491 | behavior=7.0465 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.188/0.188/0.188 | ips_g=73.4 ips/rk=18.4 | elapsed=976.2s | eta=386.0s
+  step  72088/100000 | loss=4.1319 | rl=1.3271 | vl=1.3564 | behavior=7.2258 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.185/0.185/0.185 | ips_g=73.5 ips/rk=18.4 | elapsed=981.2s | eta=379.9s
+  step  72508/100000 | loss=4.0560 | rl=1.3411 | vl=1.3052 | behavior=7.0325 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.182/0.182/0.182 | ips_g=73.5 ips/rk=18.4 | elapsed=986.3s | eta=374.0s
+  step  72916/100000 | loss=4.0226 | rl=1.3040 | vl=1.3034 | behavior=7.0603 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.180/0.180/0.180 | ips_g=73.6 ips/rk=18.4 | elapsed=991.3s | eta=368.2s
+  step  73332/100000 | loss=4.1180 | rl=1.3341 | vl=1.3368 | behavior=7.2200 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.177/0.177/0.177 | ips_g=73.6 ips/rk=18.4 | elapsed=996.4s | eta=362.3s
+  step  73748/100000 | loss=4.1445 | rl=1.3380 | vl=1.3523 | behavior=7.2554 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.174/0.174/0.174 | ips_g=73.6 ips/rk=18.4 | elapsed=1001.4s | eta=356.5s
+  step  74172/100000 | loss=3.9806 | rl=1.2880 | vl=1.2756 | behavior=7.0691 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.172/0.172/0.172 | ips_g=73.7 ips/rk=18.4 | elapsed=1006.4s | eta=350.5s
+  step  74596/100000 | loss=3.9062 | rl=1.2970 | vl=1.2167 | behavior=6.9467 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.169/0.169/0.169 | ips_g=73.7 ips/rk=18.4 | elapsed=1011.5s | eta=344.5s
+  step  75024/100000 | loss=3.9698 | rl=1.3006 | vl=1.2565 | behavior=7.0481 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.166/0.166/0.166 | ips_g=73.8 ips/rk=18.5 | elapsed=1016.5s | eta=338.4s
+  step  75444/100000 | loss=3.9385 | rl=1.3000 | vl=1.2302 | behavior=7.0258 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.164/0.164/0.164 | ips_g=73.9 ips/rk=18.5 | elapsed=1021.5s | eta=332.5s
+  step  75860/100000 | loss=4.1116 | rl=1.3283 | vl=1.3598 | behavior=7.1023 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.161/0.161/0.161 | ips_g=73.9 ips/rk=18.5 | elapsed=1026.5s | eta=326.7s
+  step  76280/100000 | loss=4.0449 | rl=1.3126 | vl=1.3138 | behavior=7.0771 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.158/0.158/0.158 | ips_g=73.9 ips/rk=18.5 | elapsed=1031.6s | eta=320.8s
+  step  76692/100000 | loss=4.1816 | rl=1.3436 | vl=1.3999 | behavior=7.1749 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.156/0.156/0.156 | ips_g=74.0 ips/rk=18.5 | elapsed=1036.6s | eta=315.0s
+  step  77116/100000 | loss=3.9315 | rl=1.3043 | vl=1.2251 | behavior=6.9948 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.153/0.153/0.153 | ips_g=74.0 ips/rk=18.5 | elapsed=1041.6s | eta=309.1s
+  step  77540/100000 | loss=4.0536 | rl=1.3231 | vl=1.3439 | behavior=6.9174 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.151/0.151/0.151 | ips_g=74.1 ips/rk=18.5 | elapsed=1046.6s | eta=303.2s
+  step  77964/100000 | loss=3.9826 | rl=1.2987 | vl=1.2714 | behavior=7.0467 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.148/0.148/0.148 | ips_g=74.1 ips/rk=18.5 | elapsed=1051.6s | eta=297.2s
+  step  78380/100000 | loss=3.9807 | rl=1.2974 | vl=1.2887 | behavior=6.9575 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.146/0.146/0.146 | ips_g=74.2 ips/rk=18.5 | elapsed=1056.7s | eta=291.5s
+  step  78804/100000 | loss=4.0492 | rl=1.3202 | vl=1.3054 | behavior=7.1027 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.143/0.143/0.143 | ips_g=74.2 ips/rk=18.6 | elapsed=1061.7s | eta=285.6s
+  step  79220/100000 | loss=4.1524 | rl=1.3295 | vl=1.3922 | behavior=7.1380 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.140/0.140/0.140 | ips_g=74.3 ips/rk=18.6 | elapsed=1066.7s | eta=279.8s
+  step  79636/100000 | loss=3.9806 | rl=1.3049 | vl=1.2788 | behavior=6.9692 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.138/0.138/0.138 | ips_g=74.3 ips/rk=18.6 | elapsed=1071.8s | eta=274.1s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=80000)
+  [SID save step=80000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=80000] hitrate@50=0.9984 full_gini=0.0322 per_layer=[0.1534/0.1156/0.1174] unique=23774/24587 l01_pairs=16935 H_l1_given_l0=5.8951
+  step  80004/100000 | loss=4.1243 | rl=1.3487 | vl=1.3496 | behavior=7.1143 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.136/0.136/0.136 | ips_g=73.5 ips/rk=18.4 | elapsed=1087.8s | eta=271.9s
+  step  80428/100000 | loss=3.9801 | rl=1.3024 | vl=1.3010 | behavior=6.8679 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.133/0.133/0.133 | ips_g=73.6 ips/rk=18.4 | elapsed=1092.9s | eta=266.0s
+  step  80840/100000 | loss=4.0733 | rl=1.3256 | vl=1.3100 | behavior=7.1734 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.131/0.131/0.131 | ips_g=73.6 ips/rk=18.4 | elapsed=1097.9s | eta=260.2s
+  step  81240/100000 | loss=4.0029 | rl=1.3106 | vl=1.2743 | behavior=7.0743 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.129/0.129/0.129 | ips_g=73.7 ips/rk=18.4 | elapsed=1102.9s | eta=254.7s
+  step  81640/100000 | loss=4.0393 | rl=1.3343 | vl=1.3019 | behavior=6.9998 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.126/0.126/0.126 | ips_g=73.7 ips/rk=18.4 | elapsed=1107.9s | eta=249.2s
+  step  82032/100000 | loss=3.9480 | rl=1.2825 | vl=1.2754 | behavior=6.9348 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.124/0.124/0.124 | ips_g=73.7 ips/rk=18.4 | elapsed=1113.0s | eta=243.8s
+  step  82440/100000 | loss=3.9687 | rl=1.3151 | vl=1.2564 | behavior=6.9702 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.122/0.122/0.122 | ips_g=73.7 ips/rk=18.4 | elapsed=1118.0s | eta=238.1s
+  step  82848/100000 | loss=4.0206 | rl=1.3111 | vl=1.2953 | behavior=7.0557 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.120/0.120/0.120 | ips_g=73.8 ips/rk=18.4 | elapsed=1123.0s | eta=232.5s
+  step  83260/100000 | loss=3.9176 | rl=1.2878 | vl=1.2161 | behavior=7.0526 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.117/0.117/0.117 | ips_g=73.8 ips/rk=18.5 | elapsed=1128.1s | eta=226.8s
+  step  83664/100000 | loss=3.9763 | rl=1.3177 | vl=1.2458 | behavior=7.0488 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.115/0.115/0.115 | ips_g=73.8 ips/rk=18.5 | elapsed=1133.1s | eta=221.2s
+  step  84076/100000 | loss=4.0377 | rl=1.2973 | vl=1.3158 | behavior=7.1075 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.113/0.113/0.113 | ips_g=73.9 ips/rk=18.5 | elapsed=1138.1s | eta=215.6s
+  step  84492/100000 | loss=3.9566 | rl=1.2723 | vl=1.2950 | behavior=6.9310 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.111/0.111/0.111 | ips_g=73.9 ips/rk=18.5 | elapsed=1143.2s | eta=209.8s
+  step  84900/100000 | loss=4.0232 | rl=1.2991 | vl=1.2918 | behavior=7.1459 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.109/0.109/0.109 | ips_g=73.9 ips/rk=18.5 | elapsed=1148.2s | eta=204.2s
+  step  85308/100000 | loss=4.0283 | rl=1.3085 | vl=1.2913 | behavior=7.1273 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.107/0.107/0.107 | ips_g=74.0 ips/rk=18.5 | elapsed=1153.2s | eta=198.6s
+  step  85720/100000 | loss=3.9932 | rl=1.2980 | vl=1.2685 | behavior=7.1178 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.105/0.105/0.105 | ips_g=74.0 ips/rk=18.5 | elapsed=1158.2s | eta=192.9s
+  step  86136/100000 | loss=4.0166 | rl=1.2776 | vl=1.3101 | behavior=7.1288 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.102/0.102/0.102 | ips_g=74.0 ips/rk=18.5 | elapsed=1163.2s | eta=187.2s
+  step  86556/100000 | loss=3.9862 | rl=1.3102 | vl=1.2667 | behavior=7.0305 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.100/0.100/0.100 | ips_g=74.1 ips/rk=18.5 | elapsed=1168.3s | eta=181.5s
+  step  86976/100000 | loss=3.9644 | rl=1.2896 | vl=1.2584 | behavior=7.0658 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.098/0.098/0.098 | ips_g=74.1 ips/rk=18.5 | elapsed=1173.3s | eta=175.7s
+  step  87396/100000 | loss=4.0048 | rl=1.3116 | vl=1.2620 | behavior=7.1400 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.096/0.096/0.096 | ips_g=74.2 ips/rk=18.5 | elapsed=1178.3s | eta=169.9s
+  step  87820/100000 | loss=3.9551 | rl=1.2961 | vl=1.2578 | behavior=6.9905 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.094/0.094/0.094 | ips_g=74.2 ips/rk=18.6 | elapsed=1183.3s | eta=164.1s
+  step  88248/100000 | loss=3.9347 | rl=1.2865 | vl=1.2684 | behavior=6.8830 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.092/0.092/0.092 | ips_g=74.3 ips/rk=18.6 | elapsed=1188.4s | eta=158.3s
+  step  88668/100000 | loss=3.9393 | rl=1.2784 | vl=1.2863 | behavior=6.8577 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.090/0.090/0.090 | ips_g=74.3 ips/rk=18.6 | elapsed=1193.4s | eta=152.5s
+  step  89068/100000 | loss=3.9764 | rl=1.2956 | vl=1.3034 | behavior=6.8717 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.089/0.089/0.089 | ips_g=74.3 ips/rk=18.6 | elapsed=1198.4s | eta=147.1s
+  step  89452/100000 | loss=4.0075 | rl=1.2699 | vl=1.3327 | behavior=7.0086 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.087/0.087/0.087 | ips_g=74.3 ips/rk=18.6 | elapsed=1203.5s | eta=141.9s
+  step  89860/100000 | loss=4.0214 | rl=1.3000 | vl=1.3288 | behavior=6.9474 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.085/0.085/0.085 | ips_g=74.4 ips/rk=18.6 | elapsed=1208.5s | eta=136.4s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=90000)
+  [SID save step=90000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=90000] hitrate@50=0.9985 full_gini=0.0324 per_layer=[0.1743/0.1315/0.1194] unique=23768/24587 l01_pairs=16883 H_l1_given_l0=5.9013
+  step  90004/100000 | loss=3.9851 | rl=1.2815 | vl=1.2837 | behavior=7.0842 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.085/0.085/0.085 | ips_g=73.6 ips/rk=18.4 | elapsed=1222.2s | eta=135.7s
+  step  90432/100000 | loss=4.0365 | rl=1.3290 | vl=1.3183 | behavior=6.9301 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.083/0.083/0.083 | ips_g=73.7 ips/rk=18.4 | elapsed=1227.2s | eta=129.8s
+  step  90856/100000 | loss=4.0063 | rl=1.2971 | vl=1.3297 | behavior=6.8820 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.081/0.081/0.081 | ips_g=73.7 ips/rk=18.4 | elapsed=1232.3s | eta=124.0s
+  step  91280/100000 | loss=4.0310 | rl=1.3029 | vl=1.3252 | behavior=6.9990 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.079/0.079/0.079 | ips_g=73.8 ips/rk=18.4 | elapsed=1237.3s | eta=118.2s
+  step  91680/100000 | loss=4.0211 | rl=1.3003 | vl=1.3274 | behavior=6.9513 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.078/0.078/0.078 | ips_g=73.8 ips/rk=18.4 | elapsed=1242.3s | eta=112.7s
+  step  92104/100000 | loss=3.9453 | rl=1.2911 | vl=1.2603 | behavior=6.9540 | curv_reg=0.623299 | codes=256/255/255/256 | c=0.076/0.076/0.076 | ips_g=73.8 ips/rk=18.5 | elapsed=1247.3s | eta=106.9s
+  step  92524/100000 | loss=3.9890 | rl=1.2907 | vl=1.3216 | behavior=6.8677 | curv_reg=0.623299 | codes=254/256/256/256 | c=0.074/0.074/0.074 | ips_g=73.9 ips/rk=18.5 | elapsed=1252.4s | eta=101.2s
+  step  92948/100000 | loss=4.1144 | rl=1.3213 | vl=1.3946 | behavior=6.9768 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.073/0.073/0.073 | ips_g=73.9 ips/rk=18.5 | elapsed=1257.4s | eta=95.4s
+  step  93360/100000 | loss=3.9824 | rl=1.2941 | vl=1.3126 | behavior=6.8627 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.071/0.071/0.071 | ips_g=74.0 ips/rk=18.5 | elapsed=1262.4s | eta=89.8s
+  step  93764/100000 | loss=4.0301 | rl=1.2806 | vl=1.3374 | behavior=7.0449 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.070/0.070/0.070 | ips_g=74.0 ips/rk=18.5 | elapsed=1267.4s | eta=84.3s
+  step  94172/100000 | loss=4.1021 | rl=1.2848 | vl=1.4065 | behavior=7.0386 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.068/0.068/0.068 | ips_g=74.0 ips/rk=18.5 | elapsed=1272.4s | eta=78.7s
+  step  94572/100000 | loss=4.0356 | rl=1.3016 | vl=1.3305 | behavior=7.0016 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.067/0.067/0.067 | ips_g=74.0 ips/rk=18.5 | elapsed=1277.5s | eta=73.3s
+  step  94960/100000 | loss=4.0750 | rl=1.2919 | vl=1.3726 | behavior=7.0368 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.065/0.065/0.065 | ips_g=74.0 ips/rk=18.5 | elapsed=1282.5s | eta=68.1s
+  step  95352/100000 | loss=4.0343 | rl=1.2914 | vl=1.3514 | behavior=6.9420 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.064/0.064/0.064 | ips_g=74.1 ips/rk=18.5 | elapsed=1287.5s | eta=62.8s
+  step  95756/100000 | loss=3.9702 | rl=1.2959 | vl=1.3073 | behavior=6.8194 | curv_reg=0.623299 | codes=255/256/256/256 | c=0.063/0.063/0.063 | ips_g=74.1 ips/rk=18.5 | elapsed=1292.5s | eta=57.3s
+  step  96164/100000 | loss=4.0106 | rl=1.2933 | vl=1.3193 | behavior=6.9743 | curv_reg=0.623299 | codes=255/256/255/256 | c=0.061/0.061/0.061 | ips_g=74.1 ips/rk=18.5 | elapsed=1297.5s | eta=51.8s
+  step  96584/100000 | loss=3.9598 | rl=1.2782 | vl=1.2893 | behavior=6.9459 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.060/0.060/0.060 | ips_g=74.1 ips/rk=18.5 | elapsed=1302.6s | eta=46.1s
+  step  96996/100000 | loss=4.0627 | rl=1.2830 | vl=1.3651 | behavior=7.0573 | curv_reg=0.623299 | codes=256/256/255/256 | c=0.059/0.059/0.059 | ips_g=74.2 ips/rk=18.5 | elapsed=1307.6s | eta=40.5s
+  step  97404/100000 | loss=4.0685 | rl=1.3128 | vl=1.3860 | behavior=6.8329 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.057/0.057/0.057 | ips_g=74.2 ips/rk=18.6 | elapsed=1312.6s | eta=35.0s
+  step  97812/100000 | loss=4.1334 | rl=1.3353 | vl=1.4139 | behavior=6.9052 | curv_reg=0.623299 | codes=255/256/255/256 | c=0.056/0.056/0.056 | ips_g=74.2 ips/rk=18.6 | elapsed=1317.6s | eta=29.5s
+  step  98224/100000 | loss=4.0896 | rl=1.3507 | vl=1.3483 | behavior=6.9374 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.055/0.055/0.055 | ips_g=74.3 ips/rk=18.6 | elapsed=1322.7s | eta=23.9s
+  step  98636/100000 | loss=4.0652 | rl=1.2806 | vl=1.3531 | behavior=7.1419 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.054/0.054/0.054 | ips_g=74.3 ips/rk=18.6 | elapsed=1327.7s | eta=18.4s
+  step  99044/100000 | loss=4.1314 | rl=1.3055 | vl=1.3979 | behavior=7.1238 | curv_reg=0.623299 | codes=256/256/256/256 | c=0.053/0.053/0.053 | ips_g=74.3 ips/rk=18.6 | elapsed=1332.7s | eta=12.9s
+  step  99452/100000 | loss=4.1551 | rl=1.3315 | vl=1.4191 | behavior=7.0068 | curv_reg=0.623299 | codes=256/255/256/256 | c=0.051/0.051/0.051 | ips_g=74.3 ips/rk=18.6 | elapsed=1337.7s | eta=7.4s
+  step  99872/100000 | loss=4.0534 | rl=1.3037 | vl=1.3657 | behavior=6.9050 | curv_reg=0.623299 | codes=255/255/256/256 | c=0.050/0.050/0.050 | ips_g=74.4 ips/rk=18.6 | elapsed=1342.7s | eta=1.7s
+[Step12] saved /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/rqvae_best.pth (step=100000)
+  [SID save step=100000] wrote raw 3-token SIDs /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter13/results/out/rqvae/instruments/sids_raw.npy: shape=(24587, 3)
+  [SID metrics step=100000] hitrate@50=0.9982 full_gini=0.0482 per_layer=[0.1918/0.1653/0.1587] unique=23382/24587 l01_pairs=16598 H_l1_given_l0=5.8442
+[train] done at global_step=100000, total time=1356.0s

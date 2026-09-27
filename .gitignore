@@ -368,6 +368,23 @@ results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/tensorboard/
 results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/wait_*.log
 results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/_stage3_run*.log
 
+
+# Iter31 outputs are mandatory Stage2/Stage3 deliverables under CLAUDE.md §13.
+!results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/**
+!results/stage3_T5Train/curvature_RQ-VAE_iter31/ckpt/
+!results/stage3_T5Train/curvature_RQ-VAE_iter31/**
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/**/__pycache__/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/dataset/Instruments/item_emb.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/_ddp_sync/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/tensorboard/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/wait_*.log
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/_stage3_run*.log
+results/stage3_T5Train/curvature_RQ-VAE_iter31/**/__pycache__/
+results/stage3_T5Train/curvature_RQ-VAE_iter31/logs/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE_iter31/logs/tensorboard/
+results/stage3_T5Train/curvature_RQ-VAE_iter31/logs/wait_*.log
+results/stage3_T5Train/curvature_RQ-VAE_iter31/logs/_stage3_run*.log
+!results/stage3_T5Train/curvature_RQ-VAE_iter31/logs/_stage3_run.log
 # Independent working repositories in this workspace; commit them in their own repo.
 ETEGRec_amazon2023/
 LETTER_amazon2023/
