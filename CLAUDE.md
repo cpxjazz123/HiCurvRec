@@ -73,14 +73,14 @@ STAGE3_BEAM_SIZE=20
 STAGE3_SCREEN_BASELINE_LOG=
 ```
 
-任何 trainer/launcher 与上述值不一致时必须在 Stage3 启动前返回 `PROTOCOL_GATE_FAIL`；不允许由 Agent 豁免。尤其禁止重新引入基于 train-loss 或 validation patience 的 early-stop。
+任何 trainer/launcher 与上述值不一致时必须在 Stage3 启动前返回 `PROTOCOL_GATE_FAIL`；main 不得绕过或重新解释该失败。尤其禁止重新引入基于 train-loss 或 validation patience 的 early-stop。
 
 ## 12. GitHub-only 强制执行
 
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
 - **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（Agent-minimal：仅研究设计/结果解释/Global Review 使用 Research Agent；其余用 deterministic gates）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **curvature-RQ-VAE 迭代流程**（main-only：从研究设计、实现、验证、Stage2/Stage3、结果解释、下一轮选择到 Git closure 全部由 main 直接完成；禁止任何委派式子流程）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 
