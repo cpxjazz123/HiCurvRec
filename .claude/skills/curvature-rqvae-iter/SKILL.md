@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Every pipeline stage uses independent 2+1 deliberation: Agent A and Agent B solve the same stage independently, Judge C adjudicates from primary evidence, and only the judge-approved canonical artifact may propagate. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
+description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Scientific decisions use independent parallel 2+1 deliberation; deterministic checks and operational repairs use a fast repair path without redundant A/B re-review. All independent tasks must execute in parallel unless a real dependency, shared-state write conflict, or resource constraint requires serialization. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
 ---
 
 # curvature-rqvae-iter
@@ -34,6 +34,39 @@ When multiple choices exist, Agent A and Agent B independently evaluate them and
 
 **Never use user consultation as a substitute for adjudication.** Uncertainty, low confidence, conflicting evidence, multiple plausible mechanisms, failed MVG, parameter choice, negative evidence, or research-direction choice are all internal decisions for the 2+1 process.
 
+## 0.1 Mandatory parallel execution
+
+**Parallelism is the default, not an optimization.** Before executing any stage, the orchestrator must identify independent work items and launch all work that has no data dependency, shared-state write conflict, or exclusive-resource conflict concurrently.
+
+Required parallel behavior:
+
+- Agent A and Agent B must always be launched concurrently from the same frozen source packet. Sequential A-then-B execution is forbidden.
+- Independent repository reads, searches, file fetches, provenance lookups, and static inspections must be batched/concurrent.
+- Independent read-only checker commands and preflight checks must run concurrently when they do not mutate shared files, consume the same exclusive GPU resource, or depend on each other's output.
+- Independent post-run analyses of already materialized artifacts must run concurrently.
+- Independent artifact writes to different paths may run concurrently when no shared mutable state is touched.
+- A Judge may start only after all required parallel inputs for that decision have completed.
+- Stage2 and Stage3 remain single canonical executions and are not duplicated for parallelism; downstream stages that depend on their outputs wait for those outputs.
+- Mutations to the same source file, Git ref, checkpoint, shared log, or other shared mutable resource must be serialized.
+- GPU tasks that compete for the same reserved GPU/memory budget may be serialized; this is a resource dependency, not permission to serialize unrelated CPU/read-only work.
+
+If two tasks are executed serially despite being apparently independent, the orchestrator must record:
+
+```text
+SERIALIZATION_REASON=<actual dependency/write conflict/resource constraint>
+```
+
+"Easier to implement", "for caution", "to keep order", or "because this is how previous iterations ran" are not valid serialization reasons.
+
+For each stage packet, record a compact execution DAG or equivalent grouping:
+
+```text
+PARALLEL_GROUP_1=<independent tasks launched together>
+PARALLEL_GROUP_2=<tasks unblocked by group 1>
+SERIAL_DEPENDENCIES=<only true dependencies>
+```
+
+The goal is to minimize wall-clock latency without weakening scientific gates.
 **Non-negotiable forward-progress rule:** every new iteration must test **one forward-looking structural mechanism intended to improve downstream performance**. An iteration may not exist primarily to measure uncertainty, reproduce a previous result, search parameters, compare seeds, perform ablations, identify why a prior run behaved as it did, or isolate the root cause of a small delta. The iteration budget is reserved for mechanisms with a plausible path to materially improve the target metric.
 
 The following are forbidden as the primary purpose or mechanism of any iteration:
@@ -90,9 +123,9 @@ Historical files never override an actual protocol-compatible `test_final.json`.
 
 ---
 
-# 2. Independent 2+1 Deliberation Protocol — mandatory at every pipeline stage
+# 2. Independent 2+1 Deliberation Protocol — mandatory for scientific decisions
 
-Every pipeline stage must use:
+Every stage that makes a **scientific choice, interpretation, mechanism decision, contract decision, causal classification, or go/no-go judgment** must use:
 
 ```
 same canonical source packet
@@ -108,7 +141,7 @@ same canonical source packet
               next pipeline stage
 ```
 
-This is the top-level execution protocol for the entire skill.
+This is the top-level protocol for scientific decisions. Purely deterministic execution, checker repair, logging/provenance instrumentation repair, path correction, serialization repair, and other operational fixes use the fast-repair protocol in §2.5A instead of spawning a redundant fresh A/B pair.
 
 **Prospective scope:** this 2+1 requirement applies to new pipeline stages/iterations started after this protocol is introduced. Historical completed iterations are not invalidated solely because they predate 2+1 deliberation. If a historical mechanism is reopened or rerun, the new work must use 2+1.
 
@@ -117,7 +150,7 @@ This is the top-level execution protocol for the entire skill.
 Agent A and Agent B must:
 
 - receive the same source packet and the same stage objective;
-- work independently and in parallel when the runtime supports parallel agents;
+- work independently and **always in parallel**; launching A and then B sequentially is a protocol violation;
 - not read, summarize, quote, or react to the other worker's draft before Judge C decides;
 - use primary repository evidence rather than trusting historical summaries when exact evidence exists;
 - state assumptions, evidence, proposed output, risks, and self-rejection conditions;
@@ -167,7 +200,7 @@ ABORT_ITERATION
 
 Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
 
-Maximum automatic **research-proposal** adjudication rounds per stage: **2**. This limit applies to `REJECT_BOTH` replanning of competing scientific proposals. It does **not** apply to same-stage operational repair rounds authorized by `REPAIR_AND_RERUN`. S06/S07/S08 may create additional numbered repair rounds as needed to correct a localized implementation/checker/evidence-capture defect while preserving the exact registered experiment. Repair rounds must not introduce a new mechanism, retune a constant, change seed/data/checkpoint/protocol, or launch extra Stage2/Stage3 performance runs. If round 2 is still `REJECT_BOTH` on the scientific proposal itself, Judge C must autonomously select a valid proposal or close/register a new iteration; it must not ask the user.
+Maximum automatic **research-proposal** adjudication rounds per stage: **2**. This limit applies to `REJECT_BOTH` replanning of competing scientific proposals. Operational repair does not consume a research-proposal round and uses §2.5A fast repair rather than a fresh A/B pair. S06/S07/S08 may contain additional numbered `ROUND_TYPE=OPERATIONAL_REPAIR` rounds with `repair_record.md`, but these rounds may only repair localized implementation/checker/evidence-capture defects while preserving the exact registered experiment. If round 2 is still `REJECT_BOTH` on the scientific proposal itself, Judge C must autonomously select a valid proposal or close/register a new iteration; it must not ask the user.
 
 ## 2.3 Judge hard gates and rubric
 
@@ -207,6 +240,77 @@ After Judge C decides:
 
 This prevents later stages from blending mutually incompatible proposals.
 
+## 2.5A Fast operational repair — no redundant 2+1
+
+A repair that does **not** change the registered scientific experiment must not trigger a fresh full A/B/Judge cycle.
+
+This path applies only to localized operational defects such as:
+
+- checker/parser/AST bugs;
+- missing logging fields or runtime provenance capture;
+- wrong file path or routing string;
+- malformed/truncated serialization;
+- missing hash/device/batch-ID instrumentation;
+- source code that fails to implement the already accepted equation exactly;
+- deterministic audit tooling that can be corrected without changing mechanism, constants, data, seed policy, parent, protocol, one-factor delta, or evaluation.
+
+Fast-repair procedure:
+
+1. The current Judge (or deterministic checker result when no scientific judgment is needed) records the exact repair scope as `REPAIR_AND_RERUN`.
+2. The orchestrator scans the entire failing deterministic surface **once** and collects all independently detectable operational defects before editing. Do not repair one obvious bug, rerun, then discover another bug that the same static pass could have found.
+3. Independent repair edits to different files may be prepared concurrently; conflicting edits to the same file are applied serially.
+4. Apply the minimal repair batch.
+5. Run all independent deterministic checks for that stage **in parallel** and capture stdout/stderr/exit status plus required provenance in the same pass.
+6. Write `repair_record.md` containing:
+   - `ROUND_TYPE=OPERATIONAL_REPAIR`
+   - `LOCKED_SCIENCE_CHANGED=NO`
+   - exact files/lines changed;
+   - complete commands/checks;
+   - `PARALLEL_EXECUTION=YES` or a valid `SERIALIZATION_REASON`;
+   - complete outputs and provenance;
+   - whether all authorized checks now pass.
+7. A single repair verifier/Judge reviews `repair_record.md` and primary evidence. **Do not spawn new Agent A and Agent B** unless the repair exposes a new scientific ambiguity or requires choosing between scientifically distinct alternatives.
+8. If the repair passes, continue the same iteration. If the evidence reveals true mechanism infeasibility requiring a locked scientific change, return to the normal 2+1 path and consider `ABORT_ITERATION`.
+
+A fast-repair rerun replaces an invalid/incomplete verification attempt. It is not a seed replication, performance replication, sweep, ablation, or new iteration.
+
+### Consolidated deterministic checks
+
+For S07/S08, deterministic evidence must be gathered before expensive deliberation whenever possible:
+
+```text
+freeze source / contract
+        ↓
+identify all deterministic checks
+        ↓
+run independent checks concurrently
+        ↓
+collect all failures
+        ↓
+one consolidated operational repair batch if needed
+        ↓
+rerun failed/affected checks concurrently
+        ↓
+only then perform scientific interpretation/adjudication
+```
+
+Do not spend separate A/B/Judge rounds to discover deterministic facts that executable checkers can establish directly.
+
+### Pre-run provenance completeness for MVG
+
+Before the canonical MVG invocation, the checker must already be instrumented to emit contemporaneously:
+
+- exact input paths and pre-run hashes where required;
+- checkpoint path and hash;
+- seed and deterministic selection rule;
+- actual ordered batch/sample/item IDs;
+- batch shape/count;
+- actual runtime device string and, when available, physical device identity;
+- complete mechanism diagnostics;
+- component-wise gradient evidence required by the active contract;
+- stdout/stderr and exit status.
+
+A missing field discovered after execution is an evidence-capture repair: invalidate that verification attempt for gate purposes, fix instrumentation, and rerun S08 in the same iteration.
 ## 2.5 Side-effect / GPU-heavy stages
 
 For stages that mutate shared code, launch jobs, write checkpoints, evaluate Stage3, commit, or push:
@@ -296,7 +400,7 @@ If a stage has multiple canonical files, Judge C must list all of them in `CANON
 - **S02 hypothesis:** contract compliance, falsifiability, information gain, and causal isolation dominate.
 - **S03–S05 audit stages:** semantic exactness, provenance, and one-factor integrity dominate.
 - **S06 implementation:** fidelity to the canonical hypothesis/contract and minimal diff dominate.
-- **S07–S08 verification:** evidence beats intention; a claimed PASS without direct evidence is a FAIL.
+- **S07–S08 verification:** evidence beats intention. Run deterministic/read-only checks first and concurrently; consolidate operational defects into one repair batch; use fresh 2+1 only for genuinely scientific ambiguity, not checker/logging repair.
 - **S09/S11 execution:** reproducibility, exact wiring, and no unintended protocol changes dominate.
 - **S10/S12 interpretation:** separate observed facts from causal inference; do not overgeneralize a mapping failure into a family-level failure without evidence.
 - **S13 closure:** repository truth and remote verification dominate.
@@ -422,12 +526,14 @@ SAME_ITERATION_REPAIR=AUTHORIZED
 ### Mandatory same-iteration repair procedure
 
 1. Mark the defective verification attempt as **non-canonical for gate purposes**; do not reinterpret missing fields as observed facts.
-2. Patch only the implementation/checker/logging/capture path necessary to execute or document the **already registered** experiment.
-3. Preserve the locked mechanism equation, constants, parent, one-factor delta, seed policy, data identity, checkpoint identity policy, Stage1/Stage3 protocol, and evaluation definition.
-4. Before rerun, make the checker capture required provenance **contemporaneously**, including pre-run input hashes when required, actual ordered batch/sample IDs, selected checkpoint/hash, batch shape, and actual runtime device.
-5. Rerun the same S06/S07/S08 stage in the **same iteration** under the same registered protocol.
-6. Only the first complete, contract-valid repaired verification run becomes canonical evidence for that stage.
-7. Proceed normally if the repaired run passes. If the repaired run reveals true mechanism infeasibility that would require changing a locked scientific factor, then and only then use `ABORT_ITERATION`.
+2. Scan the full deterministic verification surface and collect all independently detectable operational defects before making the repair.
+3. Patch only implementation/checker/logging/capture paths necessary to execute or document the **already registered** experiment.
+4. Preserve the locked mechanism equation, constants, parent, one-factor delta, seed policy, data identity, checkpoint identity policy, Stage1/Stage3 protocol, and evaluation definition.
+5. Before rerun, make the checker capture required provenance **contemporaneously**, including pre-run input hashes when required, actual ordered batch/sample IDs, selected checkpoint/hash, batch shape, and actual runtime device.
+6. Rerun all independent affected checks **in parallel** in the same iteration; do not spawn a fresh A/B pair merely to confirm deterministic outputs.
+7. Record the repair in a repair-only round with `repair_record.md`; one verifier/Judge may accept the repaired stage directly if `LOCKED_SCIENCE_CHANGED=NO`.
+8. Only the first complete, contract-valid repaired verification run becomes canonical evidence for that stage.
+9. Proceed normally if the repaired run passes. If it reveals true mechanism infeasibility that would require changing a locked scientific factor, then and only then return to normal 2+1 and consider `ABORT_ITERATION`.
 
 A repaired MVG rerun is **not** a forbidden replication or seed study because it does not estimate performance variance and does not create a second scientific condition. It replaces an invalid/incomplete verification attempt before Stage2.
 
@@ -1120,7 +1226,7 @@ and no Stage2 launch is allowed.
 
 # 18. Iteration loop
 
-Every arrow below means: **A and B independently complete the stage → Judge C adjudicates → canonical artifact only proceeds**. At any stage, a Judge C verdict of `ABORT_ITERATION` exits the loop immediately into the abort-closure path in §2.9.
+Scientific-decision arrows below mean: **A and B launch concurrently → Judge C adjudicates → canonical artifact proceeds**. Deterministic verification/repair arrows use §2.5A fast repair and do not require redundant A/B regeneration. At any stage, a scientifically justified `ABORT_ITERATION` exits into the abort-closure path.
 
 ```
 S00  Source-of-truth extraction
@@ -1137,10 +1243,10 @@ S05  One-Factor Diff
    ↓
 S06  Independent implementation plans → Judge → apply canonical patch once
    ↓
-S07  Independent static audits → Judge
+S07  Concurrent deterministic preflight/checkers → consolidated repair if needed → parallel A/B only for scientific ambiguity → Judge
       + preflight_contract.py → MECHANISM_CONTRACT_PASS
    ↓
-S08  Independent MVG verification → Judge → PASS, or repair logging/checker and rerun S08 in the same iteration; abort only for true mechanism infeasibility
+S08  Pre-instrument provenance → canonical MVG → concurrent evidence analyses → Judge; operational repair uses fast repair without new A/B; abort only for true mechanism infeasibility
    ↓
 S09  Independent Stage2 launch/wiring audits → Judge
       + deliberation_gate.py → DELIBERATION_GATE_PASS
@@ -1244,6 +1350,10 @@ Never:
 - abort an otherwise viable iteration because a verification script omitted recoverable runtime/provenance fields;
 - impose a "sole MVG invocation" rule that prevents repairing and rerunning a defective verification capture;
 - treat a same-stage verification repair as a forbidden replication, seed study, or new scientific iteration;
+- run Agent A and Agent B sequentially;
+- serialize independent repository reads, source audits, deterministic checkers, or post-run analyses without a real dependency/resource conflict;
+- run a fresh full 2+1 cycle solely to confirm a checker/logging/path/provenance repair;
+- discover deterministic checker defects one-at-a-time when they could have been collected in one static/concurrent preflight pass;
 - spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification;
 - ask the user to choose the next research action, parameter, mechanism, direction, or whether to continue;
 - pause an authorized workflow waiting for user preference;
