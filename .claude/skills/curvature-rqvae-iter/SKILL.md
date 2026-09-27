@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Scientific decisions use independent parallel 2+1 deliberation; deterministic checks and operational repairs use a fast repair path without redundant A/B re-review. All independent tasks must execute in parallel unless a real dependency, shared-state write conflict, or resource constraint requires serialization. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
+description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Scientific decisions use one canonical Research Agent; deterministic checks and operational repairs use a fast repair path without duplicate independent-agent review. Independent deterministic tasks execute in parallel unless a real dependency, shared-state write conflict, or resource constraint requires serialization. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
 ---
 
 # curvature-rqvae-iter
@@ -17,7 +17,7 @@ This rule has priority over pipeline-completeness pressure: **a clean early abor
 
 **Non-negotiable autonomous-execution rule:** within every research workflow governed by this skill, **no state may require the user to decide the next step**. No Agent, Judge, or orchestrator may pause, stop, wait, or terminate merely to ask the user which option to choose, whether to continue, which parameter/mechanism to try, whether to change direction, or whether to launch the next valid stage.
 
-All such decisions must be made autonomously from repository evidence, the active contract, 2+1 deliberation, hard gates, one-factor rules, and the project objective.
+All such decisions must be made autonomously from repository evidence, the active contract, the single-agent canonical decision protocol, hard gates, one-factor rules, and the project objective.
 
 There is no valid workflow state named or equivalent to:
 
@@ -30,9 +30,9 @@ CONFIRM_NEXT_STEP
 CONFIRM_NEXT_ITERATION
 ```
 
-When multiple choices exist, Agent A and Agent B independently evaluate them and Judge C selects the canonical action. When both are poor, use the replan/abort rules. When the current iteration is infeasible, abort it cleanly and autonomously open the next justified iteration. When an external hard blocker makes execution impossible, record `EXTERNAL_BLOCKER` and terminate that path cleanly; do **not** turn the blocker into an open-ended request for user direction.
+When multiple choices exist, the Research Agent evaluates them against primary evidence and hard gates and records one canonical action. When no option is valid, use the replan/abort rules. When the current iteration is infeasible, abort it cleanly and autonomously open the next justified iteration. When an external hard blocker makes execution impossible, record `EXTERNAL_BLOCKER` and terminate that path cleanly; do **not** turn the blocker into an open-ended request for user direction.
 
-**Never use user consultation as a substitute for adjudication.** Uncertainty, low confidence, conflicting evidence, multiple plausible mechanisms, failed MVG, parameter choice, negative evidence, or research-direction choice are all internal decisions for the 2+1 process.
+**Never use user consultation as a substitute for evidence-based decision making.** Uncertainty, low confidence, conflicting evidence, multiple plausible mechanisms, failed MVG, parameter choice, negative evidence, or research-direction choice are internal decisions for the Research Agent under the locked contract and hard gates.
 
 ## 0.1 Mandatory parallel execution
 
@@ -40,12 +40,12 @@ When multiple choices exist, Agent A and Agent B independently evaluate them and
 
 Required parallel behavior:
 
-- Agent A and Agent B must always be launched concurrently from the same frozen source packet. Sequential A-then-B execution is forbidden.
+- Do not spawn duplicate independent research agents for the same scientific decision. Each stage has one canonical Research Agent decision path.
 - Independent repository reads, searches, file fetches, provenance lookups, and static inspections must be batched/concurrent.
 - Independent read-only checker commands and preflight checks must run concurrently when they do not mutate shared files, consume the same exclusive GPU resource, or depend on each other's output.
 - Independent post-run analyses of already materialized artifacts must run concurrently.
 - Independent artifact writes to different paths may run concurrently when no shared mutable state is touched.
-- A Judge may start only after all required parallel inputs for that decision have completed.
+- A scientific decision may be finalized only after all required deterministic evidence for that decision has completed.
 - Stage2 and Stage3 remain single canonical executions and are not duplicated for parallelism; downstream stages that depend on their outputs wait for those outputs.
 - Mutations to the same source file, Git ref, checkpoint, shared log, or other shared mutable resource must be serialized.
 - GPU tasks that compete for the same reserved GPU/memory budget may be serialized; this is a resource dependency, not permission to serialize unrelated CPU/read-only work.
@@ -123,88 +123,69 @@ Historical files never override an actual protocol-compatible `test_final.json`.
 
 ---
 
-# 2. Independent 2+1 Deliberation Protocol — mandatory for scientific decisions
+# 2. Single-Agent Canonical Decision Protocol
 
-Every stage that makes a **scientific choice, interpretation, mechanism decision, contract decision, causal classification, or go/no-go judgment** must use:
+Every stage that makes a **scientific choice, interpretation, mechanism decision, contract decision, causal classification, or go/no-go judgment** uses one canonical Research Agent. Do not create parallel independent candidate agents for the same decision.
 
 ```
-same canonical source packet
-        ├──> Agent A (independent)
-        └──> Agent B (independent)
-                    ↓
-              Judge Agent C
-                    ↓
-    ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH | ABORT_ITERATION
-                    ↓
-             canonical artifact
-                    ↓
-              next pipeline stage
+canonical source packet
+        ↓
+single Research Agent
+        ↓
+ACCEPT | REPAIR_AND_RERUN | ABORT_ITERATION
+        ↓
+canonical artifact
+        ↓
+deterministic gate/checker where applicable
+        ↓
+next pipeline stage
 ```
 
-This is the top-level protocol for scientific decisions. Purely deterministic execution, checker repair, logging/provenance instrumentation repair, path correction, serialization repair, and other operational fixes use the fast-repair protocol in §2.5A instead of spawning a redundant fresh A/B pair.
+This is the top-level protocol for scientific decisions. Deterministic repository reads, checker commands, provenance collection, and post-run analyses may still execute concurrently when they are independent. Parallelism applies to **work items**, not to duplicate scientific decision makers.
 
-**Prospective scope:** this 2+1 requirement applies to new pipeline stages/iterations started after this protocol is introduced. Historical completed iterations are not invalidated solely because they predate 2+1 deliberation. If a historical mechanism is reopened or rerun, the new work must use 2+1.
+Historical completed rounds that already contain `agent_a.md`, `agent_b.md`, and `judge.md` remain valid audit evidence. They are legacy format only. New or reopened stages must use the single-agent format below.
 
-## 2.1 Independence rules
+## 2.1 Research Agent rules
 
-Agent A and Agent B must:
+The Research Agent must:
 
-- receive the same source packet and the same stage objective;
-- work independently and **always in parallel**; launching A and then B sequentially is a protocol violation;
-- not read, summarize, quote, or react to the other worker's draft before Judge C decides;
+- receive the frozen source packet and exact stage objective;
 - use primary repository evidence rather than trusting historical summaries when exact evidence exists;
-- state assumptions, evidence, proposed output, risks, and self-rejection conditions;
-- write only candidate artifacts under the stage's `logs/deliberation/` directory;
-- never directly overwrite the canonical artifact or shared production code.
+- state assumptions, evidence, proposed action, risks, and self-rejection conditions;
+- apply the active research contract, protocol lock, one-factor rule, and hard gates before making a decision;
+- write one stage record only; do not generate competing candidate drafts;
+- never silently modify a locked mechanism or Stage3 protocol to rescue a result;
+- never directly create duplicate Stage2 or Stage3 executions.
 
-The two workers should differ only by role identity (`A` vs `B`), not by hidden hints that steer one toward a preferred answer.
-
-Each worker artifact must begin with:
+Each normal stage agent artifact must begin with:
 
 ```
-ROLE=AGENT_A | AGENT_B
-INDEPENDENCE_DECLARATION=I did not read the other candidate before completing this artifact.
+ROLE=RESEARCH_AGENT
 SOURCE_PACKET=<path>
 STAGE_ID=<stage id>
 ```
 
-## 2.2 Judge C rules
+## 2.2 Canonical decision rules
 
-Judge C receives:
-
-1. the same canonical source packet;
-2. Agent A's completed artifact;
-3. Agent B's completed artifact;
-4. direct access to primary repository evidence needed to verify disputed facts.
-
-Judge C must not choose based on verbosity, writing style, or novelty alone.
-
-Allowed verdicts:
+The stage decision must be one of:
 
 ```
-ACCEPT_A
-ACCEPT_B
-MERGE_AB
-REJECT_BOTH
+ACCEPT
 REPAIR_AND_RERUN
 ABORT_ITERATION
 ```
 
-`MERGE_AB` is allowed only when the merged result is internally consistent and does not violate the one-factor rule or the active research contract.
+`ACCEPT` means the current canonical stage output passes the applicable hard gates.
 
-`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete but the **registered iteration is still potentially viable** after another independent research-proposal round.
+`REPAIR_AND_RERUN` is mandatory when the registered scientific mechanism remains viable but the stage failed because of a repairable implementation, checker, logging, provenance-capture, serialization, routing, cleanup, or other operational defect. The repair must preserve the registered hypothesis, mechanism equation, key constants, parent, protocol, one-factor delta, seed policy, data identity, and evaluation definition.
 
-`REPAIR_AND_RERUN` is mandatory when the registered scientific mechanism remains viable but the current stage failed because of a repairable implementation, checker, logging, provenance-capture, serialization, routing, or other operational defect. The repair must preserve the registered hypothesis, mechanism equation, key constants, parent, protocol, one-factor delta, seed policy, data identity, and evaluation definition. After the repair, rerun the **same stage in the same iteration** and discard the defective verification attempt for gate purposes. This is verification repair, not a new experiment, replication study, sweep, or new iteration.
+`ABORT_ITERATION` is mandatory only when direct evidence shows that the **registered iteration itself is no longer scientifically or operationally viable** and continuing would require changing a locked scientific factor.
 
-`ABORT_ITERATION` is mandatory only when direct evidence shows that the **registered iteration itself is no longer scientifically or operationally viable** and continuing would require changing the registered hypothesis, mechanism equation, key mechanism constant, protocol, one-factor definition, or another locked scientific factor. This verdict ends the current iteration; it must not be used merely because a repairable verification record is incomplete.
+When the current proposal is unsupported but the iteration remains potentially viable, the same Research Agent may open a new numbered scientific-decision round with explicit `REPLAN_CONSTRAINTS`. Maximum automatic research-proposal rounds per stage: **2**. Operational repairs do not consume a research-proposal round.
 
-Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
+## 2.3 Hard gates and rubric
 
-Maximum automatic **research-proposal** adjudication rounds per stage: **2**. This limit applies to `REJECT_BOTH` replanning of competing scientific proposals. Operational repair does not consume a research-proposal round and uses §2.5A fast repair rather than a fresh A/B pair. S06/S07/S08 may contain additional numbered `ROUND_TYPE=OPERATIONAL_REPAIR` rounds with `repair_record.md`, but these rounds may only repair localized implementation/checker/evidence-capture defects while preserving the exact registered experiment. If round 2 is still `REJECT_BOTH` on the scientific proposal itself, Judge C must autonomously select a valid proposal or close/register a new iteration; it must not ask the user.
-
-## 2.3 Judge hard gates and rubric
-
-Hard gates are evaluated before comparative quality:
+Hard gates are evaluated before qualitative preference:
 
 - active contract compliance;
 - protocol compatibility;
@@ -215,70 +196,43 @@ Hard gates are evaluated before comparative quality:
 - no unsupported factual claims;
 - iteration purpose is a forward performance-seeking structural mechanism, not sweep/replication/root-cause analysis.
 
-A candidate failing a hard gate cannot win merely because its narrative is stronger.
+A stage that fails a hard gate cannot be accepted merely because its narrative is persuasive.
 
-For candidates that pass hard gates, Judge C compares:
-
-- scientific rationale;
-- direct use of prior experimental evidence;
-- causal interpretability;
-- implementation clarity;
-- risk of hidden confounding;
-- expected information gain from the experiment;
-- cost proportionality.
-
-The judge may use qualitative ratings, but no simple additive score overrides hard gates.
+For a hard-gate-valid stage, the Research Agent considers scientific rationale, direct prior evidence, causal interpretability, implementation clarity, hidden-confound risk, expected information gain, and cost proportionality.
 
 ## 2.4 Canonical-only propagation
 
-After Judge C decides:
+After the stage decision:
 
-- one canonical artifact is written to the normal pipeline path;
-- downstream workers may read the canonical artifact and `judge.md`;
-- downstream workers must not use rejected A/B drafts as active instructions;
-- rejected drafts remain in the repository only as audit evidence.
+- exactly one canonical artifact is written to the normal pipeline path;
+- downstream stages read only the canonical artifact and `decision.md`;
+- scratch notes and superseded drafts must not become active instructions;
+- a stage is not complete until the canonical artifact actually exists.
 
-This prevents later stages from blending mutually incompatible proposals.
+## 2.5A Fast operational repair — no duplicate research-agent review
 
-## 2.5A Fast operational repair — no redundant 2+1
+A repair that does **not** change the registered scientific experiment stays inside the same stage and does not trigger duplicate research-agent review.
 
-A repair that does **not** change the registered scientific experiment must not trigger a fresh full A/B/Judge cycle.
-
-This path applies only to localized operational defects such as:
-
-- checker/parser/AST bugs;
-- missing logging fields or runtime provenance capture;
-- wrong file path or routing string;
-- malformed/truncated serialization;
-- missing hash/device/batch-ID instrumentation;
-- source code that fails to implement the already accepted equation exactly;
-- deterministic audit tooling that can be corrected without changing mechanism, constants, data, seed policy, parent, protocol, one-factor delta, or evaluation.
+This path applies to localized operational defects such as checker/parser/AST bugs, missing logging fields, wrong paths, malformed serialization, missing hashes/device/batch-ID instrumentation, cleanup/process-exit defects, or source code that fails to implement the already accepted equation exactly.
 
 Fast-repair procedure:
 
-1. The current Judge (or deterministic checker result when no scientific judgment is needed) records the exact repair scope as `REPAIR_AND_RERUN`.
-2. The orchestrator scans the entire failing deterministic surface **once** and collects all independently detectable operational defects before editing. Do not repair one obvious bug, rerun, then discover another bug that the same static pass could have found.
-3. Independent repair edits to different files may be prepared concurrently; conflicting edits to the same file are applied serially.
+1. Record the exact repair scope as `REPAIR_AND_RERUN`.
+2. Scan the entire failing deterministic surface once and collect all independently detectable operational defects before editing.
+3. Independent repair edits to different files may be prepared concurrently; conflicting shared-state edits are serialized.
 4. Apply the minimal repair batch.
-5. Run all independent deterministic checks for that stage **in parallel** and capture stdout/stderr/exit status plus required provenance in the same pass.
-6. Write `repair_record.md` containing:
-   - `ROUND_TYPE=OPERATIONAL_REPAIR`
-   - `LOCKED_SCIENCE_CHANGED=NO`
-   - exact files/lines changed;
-   - complete commands/checks;
-   - `PARALLEL_EXECUTION=YES` or a valid `SERIALIZATION_REASON`;
-   - complete outputs and provenance;
-   - whether all authorized checks now pass.
-7. A single repair verifier/Judge reviews `repair_record.md` and primary evidence. **Do not spawn new Agent A and Agent B** unless the repair exposes a new scientific ambiguity or requires choosing between scientifically distinct alternatives.
-8. If the repair passes, continue the same iteration. If the evidence reveals true mechanism infeasibility requiring a locked scientific change, return to the normal 2+1 path and consider `ABORT_ITERATION`.
+5. Run all independent deterministic checks for that stage in parallel and capture stdout/stderr/exit status plus required provenance.
+6. Write `repair_record.md` containing `ROUND_TYPE=OPERATIONAL_REPAIR`, `LOCKED_SCIENCE_CHANGED=NO`, exact changes, commands/checks, outputs/provenance, and `CHECKS_PASS=YES|NO`.
+7. The Research Agent reviews the repair record and writes the canonical `decision.md`.
+8. If the repair passes, continue the same iteration. If it reveals true mechanism infeasibility requiring a locked scientific change, use `ABORT_ITERATION`.
 
 A fast-repair rerun replaces an invalid/incomplete verification attempt. It is not a seed replication, performance replication, sweep, ablation, or new iteration.
 
 ### Consolidated deterministic checks
 
-For S07/S08, deterministic evidence must be gathered before expensive deliberation whenever possible:
+For S07/S08, deterministic evidence must be gathered before scientific interpretation whenever possible:
 
-```text
+```
 freeze source / contract
         ↓
 identify all deterministic checks
@@ -291,10 +245,10 @@ one consolidated operational repair batch if needed
         ↓
 rerun failed/affected checks concurrently
         ↓
-only then perform scientific interpretation/adjudication
+single Research Agent decision
 ```
 
-Do not spend separate A/B/Judge rounds to discover deterministic facts that executable checkers can establish directly.
+Do not create separate research agents to discover deterministic facts that executable checkers can establish directly.
 
 ### Pre-run provenance completeness for MVG
 
@@ -311,48 +265,38 @@ Before the canonical MVG invocation, the checker must already be instrumented to
 - stdout/stderr and exit status.
 
 A missing field discovered after execution is an evidence-capture repair: invalidate that verification attempt for gate purposes, fix instrumentation, and rerun S08 in the same iteration.
+
 ## 2.5 Side-effect / GPU-heavy stages
 
 For stages that mutate shared code, launch jobs, write checkpoints, evaluate Stage3, commit, or push:
 
-- Agent A and Agent B independently produce a complete **method / patch plan / wiring audit**, not two competing shared-state executions;
-- Judge C selects or merges the method;
+- the Research Agent produces one complete method / patch plan / wiring audit;
 - the orchestrator applies the canonical method **once**;
-- Stage2 and Stage3 full GPU runs are never duplicated merely to satisfy the 2+1 protocol;
+- Stage2 and Stage3 full GPU runs are never duplicated;
 - multi-seed / matched-seed replication is not an allowed iteration type under this skill.
 
 No worktree may be used. This section does not override repository `CLAUDE.md` Git or no-Plan-Agent rules.
 
-## 2.6 Deliberation artifact layout
+## 2.6 Stage-record artifact layout
 
-Every stage uses:
+New or reopened stages use:
 
 ```
-logs/deliberation/<STAGE_ID>/round_<R>/
+logs/stage_records/<STAGE_ID>/round_<R>/
     source_packet.md
-    agent_a.md
-    agent_b.md
-    judge.md
+    agent.md
+    decision.md
+    repair_record.md   # only when applicable
 ```
 
-`judge.md` must contain:
+`decision.md` must contain:
 
 ```
 STAGE_ID=
 ROUND=
-VERDICT=ACCEPT_A | ACCEPT_B | MERGE_AB | REJECT_BOTH | ABORT_ITERATION
+VERDICT=ACCEPT | REPAIR_AND_RERUN | ABORT_ITERATION
 
-HARD_GATE_A=PASS | FAIL
-HARD_GATE_B=PASS | FAIL
-
-EVIDENCE_FOR_A=
-EVIDENCE_FOR_B=
-PROBLEMS_A=
-PROBLEMS_B=
-
-WHY_NOT_A=
-WHY_NOT_B=
-
+HARD_GATE=PASS | FAIL
 CANONICAL_DECISION=
 CANONICAL_ARTIFACT=
 CONFIDENCE=HIGH | MEDIUM | LOW
@@ -365,43 +309,42 @@ AUTONOMOUS_NEXT_ACTION=
 REPLAN_CONSTRAINTS=
 ```
 
-For `ACCEPT_A`, `WHY_NOT_B` is required.  
-For `ACCEPT_B`, `WHY_NOT_A` is required.  
-For `MERGE_AB`, the judge must state exactly which parts came from A and B.  
-For `REJECT_BOTH`, `REPLAN_CONSTRAINTS` is mandatory.  
+For `REPAIR_AND_RERUN`, `SAME_ITERATION_REPAIR=AUTHORIZED` is mandatory.  
 For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.  
 For every verdict, `USER_INPUT_REQUIRED=NO`, `ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM`, `SWEEP_OR_REPLICATION_ITERATION=NO`, `ROOT_CAUSE_ITERATION=NO`, and a concrete `AUTONOMOUS_NEXT_ACTION` are mandatory.
 
+The checker may accept legacy `logs/deliberation/.../agent_a.md + agent_b.md + judge.md` only for already materialized historical rounds. The legacy layout must not be generated for new work.
+
 ## 2.7 Stage map
 
-| Stage ID | Pipeline stage | A/B independently complete | Judge-approved canonical output |
+| Stage ID | Pipeline stage | Single Research Agent responsibility | Canonical output |
 |---|---|---|---|
 | `S00_SOURCE_TRUTH` | Read rules / source of truth | extract constraints, current repo facts, unresolved conflicts | `logs/source_snapshot_iter<N>.md` |
 | `S01_PROTOCOL_LOCK` | Baseline + protocol | reconstruct comparable protocol and baseline from primary files | `logs/protocol_manifest_iter<N>.md` |
-| `S02_HYPOTHESIS` | Research hypothesis | propose exact falsifiable hypothesis/equation under active contract | `logs/hypothesis_iter<N>.md` |
-| `S03_PROVENANCE` | Semantic/provenance | independently trace every formula input and semantic definition | `logs/mechanism_manifest_iter<N>.md` |
-| `S04_CONTRACT` | Mechanism contract | independently encode expected implementation invariants | `logs/mechanism_contract_iter<N>.json` |
-| `S05_ONE_FACTOR` | One-factor diff | independently identify parent, inherited mechanisms, and exact delta | `logs/one_factor_diff_iter<N>.md` |
-| `S06_IMPLEMENTATION` | Implementation design | independently produce complete patch plan/diff and tests | `logs/implementation_plan_iter<N>.md`; orchestrator applies once |
-| `S07_PREFLIGHT` | Static/contract preflight | independently audit source against hypothesis + contract | `logs/preflight_contract_iter<N>.log` + judge decision |
-| `S08_MVG` | MVG | independently design/run lightweight verification and interpret evidence | `logs/mvg_check_iter<N>.log` + judge decision |
-| `S09_STAGE2_EXECUTION` | Stage2 run | independently audit launch command, inputs, outputs, invariants | `logs/stage2_execution_plan_iter<N>.md`; Stage2 runs once |
-| `S10_STAGE2_ANALYSIS` | SID/geometry analysis | independently analyze the same Stage2 outputs | `logs/sid_geometry_iter<N>.md` |
-| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | independently audit SID wiring, checkpoint, eval protocol and expected outputs | `logs/stage3_evaluation_plan_iter<N>.md`; Stage3 runs once |
-| `S12_RESULT_CLASSIFICATION` | Causal/result interpretation | independently classify mechanism effect, confounds, promotion status | `logs/failure_attribution_iter<N>.md` + `logs/gate_decision_iter<N>.md` |
-| `S13_GIT_CLOSURE` | Commit/push closure | independently audit required artifacts, paths, git state, remote hash | `logs/git_closure_iter<N>.md` |
-| `S14_GLOBAL_REVIEW` | Direction selection when triggered | independently synthesize evidence and propose next research direction | `logs/global_review_after_iter<N>.md` |
+| `S02_HYPOTHESIS` | Research hypothesis | register exact falsifiable hypothesis/equation under active contract | `logs/hypothesis_iter<N>.md` |
+| `S03_PROVENANCE` | Semantic/provenance | trace every formula input and semantic definition | `logs/mechanism_manifest_iter<N>.md` |
+| `S04_CONTRACT` | Mechanism contract | encode expected implementation invariants | `logs/mechanism_contract_iter<N>.json` |
+| `S05_ONE_FACTOR` | One-factor diff | identify parent, inherited mechanisms, and exact delta | `logs/one_factor_diff_iter<N>.md` |
+| `S06_IMPLEMENTATION` | Implementation design | produce complete patch plan/diff and tests | `logs/implementation_plan_iter<N>.md`; orchestrator applies once |
+| `S07_PREFLIGHT` | Static/contract preflight | audit source against hypothesis + contract after deterministic checks | `logs/preflight_contract_iter<N>.log` + decision |
+| `S08_MVG` | MVG | run/interpret lightweight mechanism verification | `logs/mvg_check_iter<N>.log` + decision |
+| `S09_STAGE2_EXECUTION` | Stage2 run | audit launch command, inputs, outputs, invariants | `logs/stage2_execution_plan_iter<N>.md`; Stage2 runs once |
+| `S10_STAGE2_ANALYSIS` | SID/geometry analysis | analyze the Stage2 outputs | `logs/sid_geometry_iter<N>.md` |
+| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | audit SID wiring, checkpoint, frozen eval protocol and expected outputs | `logs/stage3_evaluation_plan_iter<N>.md`; Stage3 runs once |
+| `S12_RESULT_CLASSIFICATION` | Causal/result interpretation | classify mechanism effect, confounds, promotion status | `logs/failure_attribution_iter<N>.md` + `logs/gate_decision_iter<N>.md` |
+| `S13_GIT_CLOSURE` | Commit/push closure | audit required artifacts, paths, git state, remote hash | `logs/git_closure_iter<N>.md` |
+| `S14_GLOBAL_REVIEW` | Direction selection when triggered | synthesize evidence and select next research direction | `logs/global_review_after_iter<N>.md` |
 
-If a stage has multiple canonical files, Judge C must list all of them in `CANONICAL_ARTIFACT`.
+If a stage has multiple canonical files, `decision.md` must list all of them in `CANONICAL_ARTIFACT`.
 
-## 2.8 Stage-specific judge emphasis
+## 2.8 Stage-specific decision emphasis
 
 - **S00–S01 factual stages:** primary-source correctness and protocol comparability dominate.
 - **S02 hypothesis:** contract compliance, falsifiability, information gain, and causal isolation dominate.
 - **S03–S05 audit stages:** semantic exactness, provenance, and one-factor integrity dominate.
 - **S06 implementation:** fidelity to the canonical hypothesis/contract and minimal diff dominate.
-- **S07–S08 verification:** evidence beats intention. Run deterministic/read-only checks first and concurrently; consolidate operational defects into one repair batch; use fresh 2+1 only for genuinely scientific ambiguity, not checker/logging repair.
-- **S09/S11 execution:** reproducibility, exact wiring, and no unintended protocol changes dominate.
+- **S07–S08 verification:** evidence beats intention. Run deterministic/read-only checks first and concurrently; consolidate operational defects into one repair batch.
+- **S09/S11 execution:** reproducibility, exact wiring, frozen protocol, and no unintended protocol changes dominate.
 - **S10/S12 interpretation:** separate observed facts from causal inference; do not overgeneralize a mapping failure into a family-level failure without evidence.
 - **S13 closure:** repository truth and remote verification dominate.
 - **S14 review:** compare only protocol-valid evidence and explicitly distinguish validated findings from unresolved hypotheses.
@@ -435,7 +378,7 @@ MICRO_DELTA_ATTRIBUTION
 REVERSE_CONTROL_ONLY
 ```
 
-If a Global Review or previous artifact proposes one of these as the next iteration, that proposal is automatically superseded by this section. The 2+1 process must instead select a distinct performance-seeking structural mechanism.
+If a Global Review or previous artifact proposes one of these as the next iteration, that proposal is automatically superseded by this section. The single-agent canonical decision protocol must instead select a distinct performance-seeking structural mechanism.
 
 ### Parameter policy
 
@@ -516,7 +459,7 @@ CHECKER_REPAIR_REQUIRED
 EVIDENCE_CAPTURE_REPAIR_REQUIRED
 ```
 
-and Judge C must issue:
+and the stage decision must record:
 
 ```text
 VERDICT=REPAIR_AND_RERUN
@@ -530,10 +473,10 @@ SAME_ITERATION_REPAIR=AUTHORIZED
 3. Patch only implementation/checker/logging/capture paths necessary to execute or document the **already registered** experiment.
 4. Preserve the locked mechanism equation, constants, parent, one-factor delta, seed policy, data identity, checkpoint identity policy, Stage1/Stage3 protocol, and evaluation definition.
 5. Before rerun, make the checker capture required provenance **contemporaneously**, including pre-run input hashes when required, actual ordered batch/sample IDs, selected checkpoint/hash, batch shape, and actual runtime device.
-6. Rerun all independent affected checks **in parallel** in the same iteration; do not spawn a fresh A/B pair merely to confirm deterministic outputs.
-7. Record the repair in a repair-only round with `repair_record.md`; one verifier/Judge may accept the repaired stage directly if `LOCKED_SCIENCE_CHANGED=NO`.
+6. Rerun all independent affected checks **in parallel** in the same iteration; do not create duplicate research-agent review merely to confirm deterministic outputs.
+7. Record the repair in a repair-only round with `repair_record.md`; the Research Agent may accept the repaired stage directly if `LOCKED_SCIENCE_CHANGED=NO`.
 8. Only the first complete, contract-valid repaired verification run becomes canonical evidence for that stage.
-9. Proceed normally if the repaired run passes. If it reveals true mechanism infeasibility that would require changing a locked scientific factor, then and only then return to normal 2+1 and consider `ABORT_ITERATION`.
+9. Proceed normally if the repaired run passes. If it reveals true mechanism infeasibility that would require changing a locked scientific factor, then and only then return to the normal scientific-decision path and consider `ABORT_ITERATION`.
 
 A repaired MVG rerun is **not** a forbidden replication or seed study because it does not estimate performance variance and does not create a second scientific condition. It replaces an invalid/incomplete verification attempt before Stage2.
 
@@ -566,7 +509,7 @@ If changing `0.5 → 0.05` is needed to obtain meaningful activation, the curren
 
 `ITERATION_ABORTED_INFEASIBLE`
 
-and `0.05` must be registered as a **new iteration** with its own S00–S08 deliberation.
+and `0.05` must be registered as a **new iteration** with its own S00–S08 stage records.
 
 Implementation repairs that merely make the code match the already registered equation do not require a new iteration.
 
@@ -574,9 +517,9 @@ Implementation repairs that merely make the code match the already registered eq
 
 At the stage where infeasibility becomes clear:
 
-1. reopen that stage as the next deliberation round if needed;
-2. Agent A and Agent B independently assess the same abort evidence;
-3. Judge C may issue `ABORT_ITERATION`;
+1. reopen that stage as the next scientific-decision round if needed;
+2. the Research Agent assesses the abort evidence against the locked contract;
+3. the Research Agent records `ABORT_ITERATION` when the infeasibility gate is met;
 4. stop pending/full Stage2 or Stage3 jobs for this iteration;
 5. do not launch later pipeline stages;
 6. create `logs/iteration_abort_iter<N>.md` containing:
@@ -604,14 +547,14 @@ This rule applies to every new stage and iteration governed by this skill.
 
 At every decision point:
 
-1. Agent A and Agent B independently assess the available actions.
-2. Judge C applies the hard gates and evidence rubric.
-3. Judge C must output exactly one concrete `AUTONOMOUS_NEXT_ACTION`.
+1. The Research Agent assesses the available actions from primary evidence.
+2. The Research Agent applies the hard gates and evidence rubric.
+3. The Research Agent must output exactly one concrete `AUTONOMOUS_NEXT_ACTION`.
 4. The orchestrator executes that action without asking the user for a preference.
 5. If the current iteration is infeasible, use `ABORT_ITERATION`, close it cleanly, and autonomously register the next justified iteration.
-6. If accumulated evidence warrants changing the research contract, perform the transition **between iterations**, document it through 2+1 adjudication, and continue autonomously.
+6. If accumulated evidence warrants changing the research contract, perform the transition **between iterations**, document it through the single-agent canonical decision protocol, and continue autonomously.
 7. If confidence is low, record `CONFIDENCE=LOW`; low confidence is not a reason to pause.
-8. If an external hard blocker prevents execution, record `EXTERNAL_BLOCKER`, preserve all evidence, and terminate that blocked path. Do not ask the user to choose an alternative path; Judge C selects the best available unblocked action, or closes the workflow if none exists.
+8. If an external hard blocker prevents execution, record `EXTERNAL_BLOCKER`, preserve all evidence, and terminate that blocked path. Do not ask the user to choose an alternative path; the Research Agent selects the best available unblocked action, or closes the workflow if none exists.
 
 Forbidden output/actions include:
 
@@ -1167,7 +1110,7 @@ Under FCCR-1:
 
 ---
 
-# 17. Required artifacts and deliberation evidence
+# 17. Required artifacts and stage-decision evidence
 
 Before Stage2, all canonical artifacts must exist:
 
@@ -1184,7 +1127,7 @@ logs/mvg_check_iter<N>.log
 logs/stage2_execution_plan_iter<N>.md
 ```
 
-In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed A/B/Judge deliberation directory with a non-`REJECT_BOTH` final verdict before the Stage2 full run is launched. If an earlier stage canonically returns `ABORT_ITERATION`, no later pre-Stage2 stage is required and Stage2 must not launch.
+In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed single-agent stage record with a final `ACCEPT` decision before the Stage2 full run is launched. Already materialized legacy A/B/Judge rounds may be accepted only for historical compatibility. If an earlier stage canonically returns `ABORT_ITERATION`, no later pre-Stage2 stage is required and Stage2 must not launch.
 
 After Stage2/Stage3, add:
 
@@ -1197,11 +1140,11 @@ logs/gate_decision_iter<N>.md
 logs/git_closure_iter<N>.md
 ```
 
-The corresponding deliberation directories for `S10_STAGE2_ANALYSIS` through `S13_GIT_CLOSURE` are also mandatory before the iteration is considered closed.
+The corresponding single-agent stage records for `S10_STAGE2_ANALYSIS` through `S13_GIT_CLOSURE` are also mandatory before the iteration is considered closed.
 
-`S14_GLOBAL_REVIEW` deliberation is mandatory only when the Global Review trigger fires.
+`S14_GLOBAL_REVIEW` stage record is mandatory only when the Global Review trigger fires.
 
-For an aborted iteration, `logs/iteration_abort_iter<N>.md` plus the A/B/Judge evidence for the aborting stage replace the requirement to manufacture downstream Stage2/Stage3 artifacts that were never validly run.
+For an aborted iteration, `logs/iteration_abort_iter<N>.md` plus the single-agent decision evidence for the aborting stage replace the requirement to manufacture downstream Stage2/Stage3 artifacts that were never validly run.
 
 A rule written in this skill but not checked before launch/closure is not considered enforced.
 
@@ -1226,7 +1169,7 @@ and no Stage2 launch is allowed.
 
 # 18. Iteration loop
 
-Scientific-decision arrows below mean: **A and B launch concurrently → Judge C adjudicates → canonical artifact proceeds**. Deterministic verification/repair arrows use §2.5A fast repair and do not require redundant A/B regeneration. At any stage, a scientifically justified `ABORT_ITERATION` exits into the abort-closure path.
+Scientific-decision arrows below mean: **one Research Agent evaluates the frozen evidence → records one canonical decision → canonical artifact proceeds**. Deterministic verification/repair arrows use §2.5A fast repair. At any stage, a scientifically justified `ABORT_ITERATION` exits into the abort-closure path.
 
 ```
 S00  Source-of-truth extraction
@@ -1241,33 +1184,31 @@ S04  Mechanism Contract JSON
    ↓
 S05  One-Factor Diff
    ↓
-S06  Independent implementation plans → Judge → apply canonical patch once
+S06  Single implementation plan → apply canonical patch once
    ↓
-S07  Concurrent deterministic preflight/checkers → consolidated repair if needed → parallel A/B only for scientific ambiguity → Judge
+S07  Concurrent deterministic preflight/checkers → consolidated repair if needed → single Research Agent decision
       + preflight_contract.py → MECHANISM_CONTRACT_PASS
    ↓
-S08  Pre-instrument provenance → canonical MVG → concurrent evidence analyses → Judge; operational repair uses fast repair without new A/B; abort only for true mechanism infeasibility
+S08  Pre-instrument provenance → canonical MVG → concurrent deterministic evidence collection → single Research Agent decision; abort only for true mechanism infeasibility
    ↓
-S09  Independent Stage2 launch/wiring audits → Judge
+S09  Single Stage2 launch/wiring audit
       + deliberation_gate.py → DELIBERATION_GATE_PASS
       + Stage2 full run ONCE
    ↓
-S10  Two independent Stage2/SID analyses → Judge
+S10  Single Stage2/SID analysis
    ↓
-S11  Two independent Stage3 wiring/eval audits → Judge
+S11  Single Stage3 wiring/eval audit against the frozen protocol
       + Stage3 full evaluation ONCE
    ↓
-S12  Two independent causal/result classifications → Judge
+S12  Single causal/result classification
    ↓
-S13  Two independent Git/artifact closure audits → Judge
+S13  Single Git/artifact closure audit
       + commit + push + remote hash verification
    ↓
-S14  If triggered: two independent Global Reviews → Judge → select a NEW structural performance mechanism (never sweep/replication/root-cause)
+S14  If triggered: single Global Review → select a NEW structural performance mechanism (never sweep/replication/root-cause)
 ```
 
-A stage is not complete merely because A and B agree. Judge C must still verify the agreement against primary evidence.
-
-A stage is not complete merely because Judge C chooses a candidate. The judge-approved canonical artifact must actually be materialized at the path defined in the stage map.
+A stage is not complete merely because the Research Agent states a decision. The decision must be supported by primary evidence, and the canonical artifact must actually be materialized at the path defined in the stage map.
 
 ---
 
@@ -1286,7 +1227,7 @@ A **normal** iteration is not closed until:
 
 An **aborted** iteration is closed when:
 
-- Judge C has issued `ABORT_ITERATION` from direct evidence;
+- the Research Agent has recorded `ABORT_ITERATION` from direct evidence;
 - `logs/iteration_abort_iter<N>.md` exists;
 - no later invalid pipeline stage was launched;
 - mechanism code + all evidence up to the abort point are committed;
@@ -1340,19 +1281,17 @@ Never:
 - compare incompatible protocol results;
 - declare a core hypothesis failed from a contract-invalid run;
 - launch Stage2 with missing mandatory preflight files;
-- let Agent A or Agent B read the other's draft before both candidate artifacts are complete;
-- allow Judge C to select a hard-gate-failing candidate because it is more persuasive;
-- let Judge C invent an unreviewed third mechanism after `REJECT_BOTH`;
-- propagate rejected A/B drafts as active instructions to the next stage;
-- run duplicate full Stage2/Stage3 jobs merely to satisfy the 2+1 protocol;
+- spawn duplicate independent research agents for the same scientific decision;
+- accept a hard-gate-failing stage because its narrative is more persuasive;
+- propagate scratch or superseded drafts as active instructions to the next stage;
+- run duplicate full Stage2/Stage3 jobs;
 - skip the closure-mode deliberation gate before marking an iteration complete;
 - keep an iteration alive by retuning a registered mechanism constant after MVG proves the registered value infeasible;
 - abort an otherwise viable iteration because a verification script omitted recoverable runtime/provenance fields;
 - impose a "sole MVG invocation" rule that prevents repairing and rerunning a defective verification capture;
 - treat a same-stage verification repair as a forbidden replication, seed study, or new scientific iteration;
-- run Agent A and Agent B sequentially;
 - serialize independent repository reads, source audits, deterministic checkers, or post-run analyses without a real dependency/resource conflict;
-- run a fresh full 2+1 cycle solely to confirm a checker/logging/path/provenance repair;
+- create duplicate research-agent review solely to confirm a checker/logging/path/provenance repair;
 - discover deterministic checker defects one-at-a-time when they could have been collected in one static/concurrent preflight pass;
 - spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification;
 - ask the user to choose the next research action, parameter, mechanism, direction, or whether to continue;

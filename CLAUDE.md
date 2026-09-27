@@ -63,7 +63,7 @@ Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
 - **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（Agent A–G、MVG、Commit Discipline 脚本等）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **curvature-RQ-VAE 迭代流程**（单一 Research Agent、MVG、Commit Discipline 脚本等）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 
