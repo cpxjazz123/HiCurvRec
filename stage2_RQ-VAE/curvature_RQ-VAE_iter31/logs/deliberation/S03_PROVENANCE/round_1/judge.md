@@ -1,0 +1,32 @@
+# Iter31 S03 Provenance — Judge C
+
+```text
+STAGE_ID=S03_PROVENANCE
+ROUND=1
+VERDICT=MERGE_AB
+
+HARD_GATE_A=PASS
+HARD_GATE_B=PASS
+
+EVIDENCE_FOR_A=Agent A traces e_l through Quantize.forward's selected embedding/STE and the Step4→Step5 residual cascade; distinguishes tangent e_l from ball point q_l and quantizer IDs; records the inherited fixed curvature vector, explicit input-key discipline, arithmetic, and historical replay limits. Its source/value semantics agree with the packet and directly inspected Iter29 code/JSON, Iter10 calibration source/log, and Iter12 branching producer. Its proposed HRA flow and limitations are consistent with canonical S02.
+EVIDENCE_FOR_B=Agent B independently reaches the same limited historical-method/value provenance verdict and gives accurate source/target curvature arguments, right-nested ascending layer order, helper projection/log-clamp details, decoder interface, and current absence limits. Its distinction between missing historical replay and ambiguous/unknown formula input is correct. The exact registered-decimal arithmetic was independently recalculated in this adjudication and matches both candidates and the Iter29 JSON/function.
+PROBLEMS_A=No material factual error identified. Candidate A's general high confidence for semantic code paths is appropriate only as source-semantics confidence, not as current Iter31 runtime/value evidence; its detailed record does make that limitation. Neither candidate can establish actual clipping incidence, HRA activation, runtime output validity, or performance from provenance sources. Direct present/absent checks here confirm the Iter8 checkpoint is present, the Iter8 raw SID file is absent, and the historical calibration checkpoint path is absent; this Judge did not independently establish present availability of Stage1/Stage0 inputs, so does not assert it.
+PROBLEMS_B=No material factual error identified. Candidate B's direct availability statements concerning Stage1 embedding and Stage0 parquet were not independently checked in this adjudication and are not promoted as Judge findings. Its code-semantic PASS does not imply the HRA operation exists in Iter29 or has run in Iter31. Runtime domain, finite-output, projection/clamp incidence, and activation remain unobserved.
+
+WHY_NOT_A=Not rejected. A supplies the comprehensive table semantics, value transformations, and limits; merge with B's especially explicit source/target argument and runtime-availability caveat, while limiting every claim to what this Judge directly verified.
+WHY_NOT_B=Not rejected. B's formula/dataflow and replay distinctions are supported; merge with A's explicit exact formula/intermediates and full provenance table. Neither candidate is selected alone because the canonical record benefits from both complementary presentations and must state the Judge's narrower direct availability verification.
+
+MERGE_COMPONENTS_A=Use A's e_l and c_l provenance tracing, Iter10 residual-median method/value explanation, explicit distinction among raw residual median/normalized scale/learnable scale, arithmetic substitution, and separation of source facts from runtime inference.
+MERGE_COMPONENTS_B=Use B's explicit c0 alias, q_l and q_l^0 source/target curvature semantics, right-nested h and z decoder interface, projection/clamp/domain qualifications, and separation of absent historic replay from unknown formula semantics. Add Judge-verified direct path-availability observations and exact code/JSON evidence below.
+
+CANONICAL_DECISION=MERGE_AB. Pass S03 only as historical method/value provenance with reproducibility limitations. The exact saved Iter29 input vectors are semantically identified and the registered arithmetic reproduces the saved fixed-curvature decimals in [L0,L1,L2] order. The Iter29 loader explicitly requires branching and raw_residual_medians, recomputes the fixed mapping, and validates the saved intermediates/contract. Iter10 code/log support the recorded raw-residual measurement method/value; Iter12 code and the Iter29 JSON support the recorded conditional-entropy/exp(H) branching method/value. The Iter8 raw SID source required to rerun branching and the historical calibration checkpoint required to replay residual medians are absent at the checked paths. This is a historical replay/hash limitation, not an unknown or substituted formula input. The inherited vector is therefore not a newly measured, independently historically reproduced, or historically byte-identity-verified result. HRA remains an S02 proposal; Iter29 Step6 is still the Euclidean tangent embedding sum. The canonical manifest traces the registered proposed HRA semantics but does not claim Iter31 runtime execution, domain validity, clipping incidence, activation, or performance.
+CANONICAL_ARTIFACT=stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/mechanism_manifest_iter31.md; stage2_RQ-VAE/curvature_RQ-VAE_iter31/logs/deliberation/S03_PROVENANCE/round_1/judge.md
+CONFIDENCE=MEDIUM
+USER_INPUT_REQUIRED=NO
+ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM
+SWEEP_OR_REPLICATION_ITERATION=NO
+ROOT_CAUSE_ITERATION=NO
+AUTONOMOUS_NEXT_ACTION=Proceed to S04_CONTRACT for its independent A/B plus Judge C adjudication. S04 must explicitly resolve the HRA Step6 proposal's relationship to active FCCR-1 and the compatible contract/preflight path; retain the fixed inherited vector and all S03 semantic/provenance limits. Do not change a contract or checker, modify source, authorize code/training, or launch Stage2/Stage3 from S03. S04 passage is not training authorization; all later gates and root CLAUDE.md §6 checks remain mandatory.
+
+REPLAN_CONSTRAINTS=No fallback from raw_residual_medians to residual_norm, normalized_layer_scale, or learnable c_layer_scale; preserve exact values and [L0,L1,L2] order. No historical replay/hash claim; no rerunning historical producer/calibration. Preserve e_l as tangent and q_l as exp0^{c_l}(e_l), q_l^0's source c_l/target c0, h=q_0^0 ⊕_{c0}(q_1^0 ⊕_{c0} q_2^0), and z=log0^{c0}(h). Do not assume unclipped log/exp cancellation, transfer homomorphism, residual inversion, or exact telescope. S04/S07/S08 must address actual runtime domain/finiteness/clipping/direct-effect/gradient and buffer constraints only through their authorized gates. No contract/preflight bypass, code, training, Stage2/Stage3 authorization, runtime claim, or performance claim.
+```
