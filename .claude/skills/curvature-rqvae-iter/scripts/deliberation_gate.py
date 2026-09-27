@@ -10,7 +10,7 @@ Mode is inferred from canonical artifacts:
 - GLOBAL_REVIEW: if a global-review artifact exists, additionally checks S14.\n- ABORTED: stops at the first Judge C ABORT_ITERATION and validates the abort artifact.
 
 The gate enforces process evidence and autonomous continuation. Judge artifacts
-must declare USER_INPUT_REQUIRED=NO and a concrete AUTONOMOUS_NEXT_ACTION.
+must declare USER_INPUT_REQUIRED=NO, a performance-seeking iteration purpose, no sweep/replication/root-cause iteration, and a concrete AUTONOMOUS_NEXT_ACTION.
 It does not substitute for scientific judgment or the mechanism-specific preflight/MVG.
 """
 from __future__ import annotations
@@ -132,6 +132,9 @@ def require_judge(
         "CANONICAL_ARTIFACT=",
         "CONFIDENCE=",
         "USER_INPUT_REQUIRED=NO",
+        "ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM",
+        "SWEEP_OR_REPLICATION_ITERATION=NO",
+        "ROOT_CAUSE_ITERATION=NO",
         "AUTONOMOUS_NEXT_ACTION=",
     ]
     for marker in required:
@@ -155,6 +158,30 @@ def require_judge(
     for pattern in forbidden_user_decision_patterns:
         if re.search(pattern, text, re.I):
             fail(f"{path} contains forbidden user-decision escalation: {pattern}")
+
+    autonomous_action = action.group(1).strip()
+    forbidden_iteration_patterns = [
+        r"\bparameter\s+sweep\b",
+        r"\bgrid\s+search\b",
+        r"\brandom\s+search\b",
+        r"\bbayesian\s+(optimization|search)\b",
+        r"\bmulti[- ]seed\b",
+        r"\bmatched[- ]seed\b",
+        r"\bseed\s+replication\b",
+        r"\breplicat(e|ion)\b.*\bseed",
+        r"\bnoise\s+estimation\b",
+        r"\bvariance\s+estimation\b",
+        r"\bsensitivity\s+(study|analysis|test)\b",
+        r"\bablation[- ]only\b",
+        r"\broot[- ]cause\b",
+        r"\bwhy\s+.*(failed|worked|improved|dropped)\b",
+        r"\bmicro[- ]delta\b",
+    ]
+    for pattern in forbidden_iteration_patterns:
+        if re.search(pattern, autonomous_action, re.I):
+            fail(
+                f"{path} AUTONOMOUS_NEXT_ACTION proposes forbidden iteration type: {pattern}"
+            )
 
     if verdict == "ACCEPT_A" and "WHY_NOT_B=" not in text:
         fail(f"{path} ACCEPT_A requires WHY_NOT_B")
