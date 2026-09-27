@@ -57,8 +57,7 @@ INFER_SIZE       = 1024   # 4 卡 DDP 每卡 256, 等效 4x throughput (vs 单�
 NUM_EPOCHS       = 150      # 2026-09-22 恢复 post-R53 短训练设定
 EVAL_INTERVAL    = 5      # validate every N epochs (NO_EVAL=False 时生效)
 EVAL_START_EPOCH = 75     # 200/400=50% 比例 → 150x0.5=75, 保持 50% 比例
-EARLY_EVAL_EPOCHS = (25, 50, 75, 100, 125)  # 早期诊断点, 监控 valid 走势; 仅日志, 不影响 best_monitor / early_stop
-EARLY_STOP       = 10     # iter11: patience=10, 避免 valid 仍在涨时被截断
+EARLY_EVAL_EPOCHS = (25, 50, 75, 100, 125)  # 早期诊断点, 仅记录走势; 不影响训练长度
 FAST             = True   # A100 吞吐向: 关 deterministic, 开 cuDNN benchmark
 BF16             = True   # BF16 autocast (require CUDA+bf16-supported)
 COMPILE          = False  # torch.compile 总开关 (与 DDP functorch 旧栈有兼容问题)
@@ -169,7 +168,6 @@ SCREEN_START_EPOCH       = 40
 SCREEN_WINDOW            = 5
 SCREEN_MIN_NDCG_GAIN      = 0.001
 SCREEN_MIN_RECALL_GAIN   = 0.001
-SCREEN_SKIP_TEST_ON_FAIL = True
 
 # DataLoader
 NUM_WORKERS          = 4  # 2026-09-24: 16 -> 4 (建议 <= 8; 64 fork 进程在 4-rank DDP 下反而慢)
@@ -533,7 +531,6 @@ def main():
         "eval_interval":    EVAL_INTERVAL,
         "eval_start_epoch": EVAL_START_EPOCH,
         "early_eval_epochs": EARLY_EVAL_EPOCHS,
-        "early_stop":       EARLY_STOP,
         "fast":             FAST,
         "bf16":             BF16,
         "use_lr_scheduler": USE_LR_SCHEDULER,
@@ -582,7 +579,6 @@ def main():
         "screen_window":            SCREEN_WINDOW,
         "screen_min_ndcg_gain":     SCREEN_MIN_NDCG_GAIN,
         "screen_min_recall_gain":   SCREEN_MIN_RECALL_GAIN,
-        "screen_skip_test_on_fail": SCREEN_SKIP_TEST_ON_FAIL,
         # DataLoader (含拍平别名, 供 line 576-582 runtime 派生)
         "num_workers":         NUM_WORKERS,
         "prefetch_factor":     PREFETCH_FACTOR,
@@ -815,7 +811,6 @@ def main():
 
     best_monitor = -1.0
     best_train_loss = float("inf")
-    early_stop_counter = 0
     best_checkpoint = None
     screen_best_ndcg_gain = float("-inf")
     screen_best_recall_gain = float("-inf")
@@ -845,7 +840,7 @@ def main():
     _ddp_sync_dir = os.path.join(config["log_path"], "_ddp_sync")
     if rank == 0:
         os.makedirs(_ddp_sync_dir, exist_ok=True)
-    _early_stop_file = os.path.join(_ddp_sync_dir, "early_stop_signal.txt")
+    _validation_sync_file = os.path.join(_ddp_sync_dir, "validation_done.txt")
     _shutdown_file = os.path.join(_ddp_sync_dir, "shutdown_signal.txt")
     for epoch in range(1, config["num_epochs"] + 1):
         if train_sampler is not None:
@@ -866,34 +861,24 @@ def main():
             logging.info("Epoch %d/%d train_loss=%s", epoch, config["num_epochs"], train_loss)
             cur_lr = optimizer.param_groups[0]["lr"]
             n_ep = config["num_epochs"]
-            es = config["early_stop"]
             print(
                 f"[train] epoch={epoch}/{n_ep} done loss={train_loss:.6f} lr={cur_lr:.3e} "
-                f"patience={early_stop_counter}/{es} best_recall@10={best_monitor:.6f}",
+                f"best_recall@10={best_monitor:.6f}",
                 flush=True,
             )
-            _record("train", epoch=epoch, loss=train_loss, lr=cur_lr, patience=early_stop_counter, patience_max=es, best_recall_at_10=best_monitor, best_train_loss=best_train_loss, epoch_train_time_s=_epoch_train_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+            _record("train", epoch=epoch, loss=train_loss, lr=cur_lr, best_recall_at_10=best_monitor, best_train_loss=best_train_loss, epoch_train_time_s=_epoch_train_time_s, cumulative_time_s=round(time.time() - _T0, 3))
 
         if is_ddp:
             dist.barrier()
-        early_stop_signal = False
         should_validate = False
         if config["no_eval"] and rank == 0:
             if train_loss < best_train_loss:
                 best_train_loss = train_loss
-                early_stop_counter = 0
                 best_checkpoint = os.path.join(ckpt_path, "HG_Rec_best.pth")
                 raw_model = model.module if hasattr(model, "module") else model
                 torch.save(raw_model.state_dict(), best_checkpoint)
                 logging.info("Best train loss=%s; saved %s", best_train_loss, best_checkpoint)
                 _record("ckpt_saved", epoch=epoch, path=best_checkpoint, reason="new_best_train_loss", best_train_loss=best_train_loss)
-            else:
-                early_stop_counter += 1
-                logging.info(
-                    "No train loss improvement; patience=%d",
-                    early_stop_counter,
-                )
-                early_stop_signal = early_stop_counter >= config["early_stop"]
         elif not config["no_eval"] and rank == 0:
             should_validate = (
                 epoch >= config["eval_start_epoch"]
@@ -904,7 +889,7 @@ def main():
             # 上一版还保留了 dist.barrier() + dist.broadcast(monitor_tensor, src=0),
             # 在多 NUMA 拓扑上仍会死锁 (cuStreamSynchronize 60+ min).
             # 现在: rank 0 单卡 eval, 写结果到共享文件, 其他 rank 完全跳过 collective,
-            # 通过轮询文件获取 early_stop signal.
+            # 通过共享文件仅同步 validation 完成状态; validation 不得终止训练.
             # 信号文件目录: 所有 rank 都能计算 (LOG_PATH 硬编码, 与 ckpt_path 无关)
             if rank == 0:
                 _t_valid_start = time.time()
@@ -938,22 +923,18 @@ def main():
                 )
                 monitor_value = recalls["recall@10"]
                 if epoch in config["early_eval_epochs"]:
-                    # iter17: 早期诊断 eval, 仅记录, 不影响 best_monitor / early_stop / ckpt
+                    # 早期诊断 eval, 仅记录, 不影响 best_monitor / ckpt / 训练长度
                     logging.info(
                         "[early-val diagnostic] epoch=%d n_eval=%d recall=%s ndcg=%s",
                         epoch, n_eval_total, recalls, ndcgs,
                     )
                     print(
                         f"[early-val] epoch={epoch} n_eval={n_eval_total} "
-                        f"recall={recalls} ndcg={ndcgs} (diagnostic only, no best_monitor / early_stop impact)",
+                        f"recall={recalls} ndcg={ndcgs} (diagnostic only; training always continues)",
                         flush=True,
                     )
-                    # 写 "0" 信号文件以防其他 rank 进入 polling (向后兼容)
-                    with open(_early_stop_file, "w", encoding="utf-8") as _fh:
-                        _fh.write(f"{epoch}\t0\n")
                 elif monitor_value > best_monitor:
                     best_monitor = monitor_value
-                    early_stop_counter = 0
                     best_checkpoint = os.path.join(ckpt_path, "HG_Rec_best.pth")
                     raw_model = model.module if hasattr(model, "module") else model
                     torch.save(raw_model.state_dict(), best_checkpoint)
@@ -962,43 +943,37 @@ def main():
                         f"[valid] epoch={epoch} new best Recall@10={best_monitor:.6f} -> {best_checkpoint}",
                         flush=True,
                     )
-                    _record("valid", epoch=epoch, n_eval=n_eval_total, valid_elapsed_s=_t_valid_elapsed, recall_at_5=recalls["recall@5"], recall_at_10=recalls["recall@10"], ndcg_at_5=ndcgs["ndcg@5"], ndcg_at_10=ndcgs["ndcg@10"], ndcg_at_20=ndcgs.get("ndcg@20"), monitor_value=monitor_value, best_recall_at_10=best_monitor, patience=early_stop_counter, patience_max=config["early_stop"], is_new_best=True)
+                    _record("valid", epoch=epoch, n_eval=n_eval_total, valid_elapsed_s=_t_valid_elapsed, recall_at_5=recalls["recall@5"], recall_at_10=recalls["recall@10"], ndcg_at_5=ndcgs["ndcg@5"], ndcg_at_10=ndcgs["ndcg@10"], ndcg_at_20=ndcgs.get("ndcg@20"), monitor_value=monitor_value, best_recall_at_10=best_monitor, is_new_best=True)
                     _record("ckpt_saved", epoch=epoch, path=best_checkpoint, reason="new_best_valid", recall_at_10=best_monitor)
-                    # === 写文件给其他 rank 看 (替代 dist.broadcast) ===
-                    with open(_early_stop_file, "w", encoding="utf-8") as _fh:
-                        _fh.write(f"{epoch}\t0\n")  # 0 = 继续训练
                 else:
-                    early_stop_counter += 1
-                    logging.info("No Recall@10 improvement; patience=%d", early_stop_counter)
+                    logging.info(
+                        "Recall@10 did not improve; training continues through the fixed epoch budget"
+                    )
                     print(
-                        f"[valid] epoch={epoch} no Recall@10 improvement (current={monitor_value:.6f}, best={best_monitor:.6f}, patience={early_stop_counter}/{config['early_stop']})",
+                        f"[valid] epoch={epoch} no Recall@10 improvement "
+                        f"(current={monitor_value:.6f}, best={best_monitor:.6f}); training continues",
                         flush=True,
                     )
-                    _record("valid", epoch=epoch, n_eval=n_eval_total, valid_elapsed_s=_t_valid_elapsed, recall_at_5=recalls["recall@5"], recall_at_10=recalls["recall@10"], ndcg_at_5=ndcgs["ndcg@5"], ndcg_at_10=ndcgs["ndcg@10"], ndcg_at_20=ndcgs.get("ndcg@20"), monitor_value=monitor_value, best_recall_at_10=best_monitor, patience=early_stop_counter, patience_max=config["early_stop"], is_new_best=False)
-                    _should_stop = early_stop_counter >= config["early_stop"]
-                    with open(_early_stop_file, "w", encoding="utf-8") as _fh:
-                        _fh.write(f"{epoch}\t{1 if _should_stop else 0}\n")
-                    if _should_stop:
-                        early_stop_signal = True
+                    _record("valid", epoch=epoch, n_eval=n_eval_total, valid_elapsed_s=_t_valid_elapsed, recall_at_5=recalls["recall@5"], recall_at_10=recalls["recall@10"], ndcg_at_5=ndcgs["ndcg@5"], ndcg_at_10=ndcgs["ndcg@10"], ndcg_at_20=ndcgs.get("ndcg@20"), monitor_value=monitor_value, best_recall_at_10=best_monitor, is_new_best=False)
+
+                # Rank 0 publishes only "validation finished for this epoch".
+                # This is synchronization, never a stop/continue decision.
+                with open(_validation_sync_file, "w", encoding="utf-8") as _fh:
+                    _fh.write(f"{epoch}\n")
             else:
-                # === 非 rank 0: 完全不参与 validation, 不调任何 NCCL collective ===
-                # 通过轮询 _early_stop_file 文件获取 rank 0 的决策
-                # 等文件出现 (rank 0 eval 大约 25s)
+                # Non-rank-0 workers wait until rank 0 finishes validation for this epoch.
                 _wait_start = time.time()
-                while not os.path.exists(_early_stop_file):
-                    if time.time() - _wait_start > 120:  # 最长等 2 min
+                while True:
+                    if os.path.exists(_validation_sync_file):
+                        with open(_validation_sync_file, "r", encoding="utf-8") as _fh:
+                            _sig_line = _fh.readline().strip()
+                        if _sig_line and int(_sig_line) == epoch:
+                            break
+                    if time.time() - _wait_start > 120:
                         raise RuntimeError(
-                            f"rank {rank} waited 120s for _early_stop_file but it never appeared"
+                            f"rank {rank} waited 120s for validation completion at epoch {epoch}"
                         )
                     time.sleep(1.0)
-                # 读取 rank 0 的信号
-                with open(_early_stop_file, "r", encoding="utf-8") as _fh:
-                    _sig_line = _fh.readline().strip()
-                _sig_epoch, _sig_val = _sig_line.split("\t")
-                # 只采纳最新信号 (rank 0 当前 epoch 的)
-                if int(_sig_epoch) == epoch:
-                    if int(_sig_val) == 1:
-                        early_stop_signal = True
 
             if rank == 0 and screen_curve and epoch >= config["screen_start_epoch"] and not screen_decided:
                 baseline = _baseline_metrics_at(screen_curve, epoch)
@@ -1055,12 +1030,11 @@ def main():
                                 config["screen_min_ndcg_gain"],
                                 config["screen_min_recall_gain"],
                             )
-                            early_stop_signal = True
-        # === R7-fix v3: 同步 early_stop_signal (rank 0 已写文件, 其他 rank 已轮询),
-        # 不再调 dist.broadcast (多 NUMA 拓扑上会死锁). ===
-        if early_stop_signal:
-            _record("early_stop", epoch=epoch, trigger=("train_loss_patience_exhausted" if config["no_eval"] else "valid_patience_exhausted"), patience=early_stop_counter, patience_max=config["early_stop"], best_recall_at_10=best_monitor, best_train_loss=best_train_loss)
-            break
+                            logging.warning(
+                                "Screen is diagnostic only; training continues through epoch %d/%d",
+                                epoch,
+                                config["num_epochs"],
+                            )
 
     if rank == 0 and screen_curve:
         screen_summary = {
@@ -1076,20 +1050,14 @@ def main():
         }
         with open(os.path.join(log_path, "screen_summary.json"), "w", encoding="utf-8") as handle:
             json.dump(screen_summary, handle, indent=2)
-        if screen_failed and config["screen_skip_test_on_fail"]:
-            logging.info("Final test skipped because the early baseline screen failed")
-            print("[RecBole-aligned] screen failed; final test skipped", flush=True)
-            # === R7-fix v4: rank 0 写 shutdown 文件, 其他 rank 轮询退出 (避开 NCCL barrier 死锁) ===
-            if rank == 0:
-                with open(_shutdown_file, "w", encoding="utf-8") as _fh:
-                    _fh.write("screen_failed_skip_test\n")
-            if rank != 0:
-                _w = time.time()
-                while not os.path.exists(_shutdown_file):
-                    if time.time() - _w > 1800:
-                        break  # 30 min 安全上限
-                    time.sleep(2.0)
-            return
+        if screen_failed:
+            logging.warning(
+                "Screen failed, but screen is diagnostic only; final test will still run"
+            )
+            print(
+                "[RecBole-aligned] screen failed (diagnostic only); continuing to final test",
+                flush=True,
+            )
 
     if config["skip_test"]:
         if rank == 0:
