@@ -153,18 +153,21 @@ ACCEPT_A
 ACCEPT_B
 MERGE_AB
 REJECT_BOTH
+REPAIR_AND_RERUN
 ABORT_ITERATION
 ```
 
 `MERGE_AB` is allowed only when the merged result is internally consistent and does not violate the one-factor rule or the active research contract.
 
-`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete but the **registered iteration is still potentially viable** after another independent proposal round.
+`REJECT_BOTH` is mandatory when both candidates are unsupported, contract-invalid, confounded, irreproducible, or materially incomplete but the **registered iteration is still potentially viable** after another independent research-proposal round.
 
-`ABORT_ITERATION` is mandatory when direct evidence shows that the **registered iteration itself is no longer viable** and continuing would require changing the registered hypothesis, mechanism equation, key mechanism constant, protocol, or one-factor definition. This verdict ends the current iteration; it is not a request for another proposal round inside the same iteration.
+`REPAIR_AND_RERUN` is mandatory when the registered scientific mechanism remains viable but the current stage failed because of a repairable implementation, checker, logging, provenance-capture, serialization, routing, or other operational defect. The repair must preserve the registered hypothesis, mechanism equation, key constants, parent, protocol, one-factor delta, seed policy, data identity, and evaluation definition. After the repair, rerun the **same stage in the same iteration** and discard the defective verification attempt for gate purposes. This is verification repair, not a new experiment, replication study, sweep, or new iteration.
+
+`ABORT_ITERATION` is mandatory only when direct evidence shows that the **registered iteration itself is no longer scientifically or operationally viable** and continuing would require changing the registered hypothesis, mechanism equation, key mechanism constant, protocol, one-factor definition, or another locked scientific factor. This verdict ends the current iteration; it must not be used merely because a repairable verification record is incomplete.
 
 Judge C must not silently invent a third research mechanism after `REJECT_BOTH`. Instead it writes `REPLAN_CONSTRAINTS`, then fresh independent A2/B2 workers retry the same stage.
 
-Maximum automatic adjudication rounds per stage: **2**. If round 2 is also `REJECT_BOTH`, the orchestrator must **not ask the user what to do next**. Judge C must autonomously choose one of: (a) `ABORT_ITERATION` for the current registered iteration; or (b) close the current iteration and register the next evidence-justified iteration/research contract. `ABORT_ITERATION` terminates immediately and does not consume another replan round.
+Maximum automatic **research-proposal** adjudication rounds per stage: **2**. This limit applies to `REJECT_BOTH` replanning of competing scientific proposals. It does **not** apply to same-stage operational repair rounds authorized by `REPAIR_AND_RERUN`. S06/S07/S08 may create additional numbered repair rounds as needed to correct a localized implementation/checker/evidence-capture defect while preserving the exact registered experiment. Repair rounds must not introduce a new mechanism, retune a constant, change seed/data/checkpoint/protocol, or launch extra Stage2/Stage3 performance runs. If round 2 is still `REJECT_BOTH` on the scientific proposal itself, Judge C must autonomously select a valid proposal or close/register a new iteration; it must not ask the user.
 
 ## 2.3 Judge hard gates and rubric
 
@@ -386,7 +389,53 @@ Do **not** abort merely because:
 - an intermediate loss is higher but finite and training is otherwise valid;
 - a completed candidate has `R@10 < 0.065`;
 - the result may be negative;
-- a small implementation bug can be repaired while preserving the exact registered mechanism.
+- a small implementation bug can be repaired while preserving the exact registered mechanism;
+- a preflight/MVG run omitted batch IDs, runtime device, hashes, checkpoint identity, or other required audit fields;
+- the first verification attempt must be invalidated and rerun after instrumentation is fixed;
+- a prior incomplete verification observation cannot be historically reconstructed, when the same registered verification can simply be rerun faithfully.
+
+### Repairable verification / evidence failures
+
+The following are **not feasibility aborts** when the registered mechanism itself is still valid:
+
+- missing or incomplete logging of batch IDs, ordered sample IDs, runtime device, checkpoint hash, input hashes, or environment metadata;
+- a checker forgot to print or serialize an already-computable required field;
+- a verification artifact is truncated, malformed, routed to the wrong path, or missing a non-scientific audit field;
+- a small implementation bug prevents the code from faithfully executing the already registered equation;
+- a preflight/MVG script needs instrumentation so that required evidence is captured contemporaneously.
+
+Classify these as one of:
+
+```text
+IMPLEMENTATION_REPAIR_REQUIRED
+CHECKER_REPAIR_REQUIRED
+EVIDENCE_CAPTURE_REPAIR_REQUIRED
+```
+
+and Judge C must issue:
+
+```text
+VERDICT=REPAIR_AND_RERUN
+SAME_ITERATION_REPAIR=AUTHORIZED
+```
+
+### Mandatory same-iteration repair procedure
+
+1. Mark the defective verification attempt as **non-canonical for gate purposes**; do not reinterpret missing fields as observed facts.
+2. Patch only the implementation/checker/logging/capture path necessary to execute or document the **already registered** experiment.
+3. Preserve the locked mechanism equation, constants, parent, one-factor delta, seed policy, data identity, checkpoint identity policy, Stage1/Stage3 protocol, and evaluation definition.
+4. Before rerun, make the checker capture required provenance **contemporaneously**, including pre-run input hashes when required, actual ordered batch/sample IDs, selected checkpoint/hash, batch shape, and actual runtime device.
+5. Rerun the same S06/S07/S08 stage in the **same iteration** under the same registered protocol.
+6. Only the first complete, contract-valid repaired verification run becomes canonical evidence for that stage.
+7. Proceed normally if the repaired run passes. If the repaired run reveals true mechanism infeasibility that would require changing a locked scientific factor, then and only then use `ABORT_ITERATION`.
+
+A repaired MVG rerun is **not** a forbidden replication or seed study because it does not estimate performance variance and does not create a second scientific condition. It replaces an invalid/incomplete verification attempt before Stage2.
+
+### No artificial single-invocation rule
+
+Do not declare an otherwise lightweight and repeatable preflight/MVG check to be permanently "single-invocation only" merely for audit purity. If its evidence capture is defective, invalidate that attempt, repair the capture path, and rerun the same verification stage. Historical reconstruction is unnecessary when the registered verification can be rerun faithfully under the locked protocol.
+
+Missing runtime evidence is therefore an `EVIDENCE_CAPTURE_REPAIR_REQUIRED` condition, not `ITERATION_ABORTED_INFEASIBLE`, unless the missing fact is intrinsically unrecoverable **and** a faithful rerun would itself change the registered scientific experiment.
 
 ### Registered-spec immutability after hypothesis lock
 
@@ -826,8 +875,10 @@ This proves the fixed curvature affects the system without making curvature trai
 
 ## 9.2 MVG interpretation
 
-- `MVG PASS` = implementation matches the mechanism contract and affects computation;
-- `MVG FAIL` = implementation/activation invalid;
+- `MVG PASS` = implementation matches the mechanism contract, required evidence was captured, and the mechanism affects computation;
+- `MVG IMPLEMENTATION FAIL` = the checker/model implementation does not yet faithfully execute the registered mechanism; if repairable without changing locked science, issue `REPAIR_AND_RERUN`;
+- `MVG EVIDENCE CAPTURE FAIL` = the mechanism may be numerically valid, but required runtime/provenance evidence was not captured; issue `REPAIR_AND_RERUN`, fix instrumentation, and rerun S08 in the same iteration;
+- `MVG MECHANISM FAIL` = direct evidence shows the registered mechanism itself is inactive/invalid and making it viable would require changing a locked scientific factor; only this class may support `ABORT_ITERATION`;
 - `MVG PASS` does not imply better Stage3 performance.
 
 If MVG was written for a learnable-curvature mechanism and checks curvature gradient/update, it is incompatible with FCCR-1 and must be rewritten before use.
@@ -1089,7 +1140,7 @@ S06  Independent implementation plans → Judge → apply canonical patch once
 S07  Independent static audits → Judge
       + preflight_contract.py → MECHANISM_CONTRACT_PASS
    ↓
-S08  Independent MVG verification → Judge → MVG PASS
+S08  Independent MVG verification → Judge → PASS, or repair logging/checker and rerun S08 in the same iteration; abort only for true mechanism infeasibility
    ↓
 S09  Independent Stage2 launch/wiring audits → Judge
       + deliberation_gate.py → DELIBERATION_GATE_PASS
@@ -1190,6 +1241,9 @@ Never:
 - run duplicate full Stage2/Stage3 jobs merely to satisfy the 2+1 protocol;
 - skip the closure-mode deliberation gate before marking an iteration complete;
 - keep an iteration alive by retuning a registered mechanism constant after MVG proves the registered value infeasible;
+- abort an otherwise viable iteration because a verification script omitted recoverable runtime/provenance fields;
+- impose a "sole MVG invocation" rule that prevents repairing and rerunning a defective verification capture;
+- treat a same-stage verification repair as a forbidden replication, seed study, or new scientific iteration;
 - spend a full Stage2/Stage3 run on a mechanism already proven inactive under its registered specification;
 - ask the user to choose the next research action, parameter, mechanism, direction, or whether to continue;
 - pause an authorized workflow waiting for user preference;
