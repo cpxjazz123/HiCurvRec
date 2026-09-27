@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Scientific decisions use one canonical Research Agent; deterministic checks and operational repairs use a fast repair path without duplicate independent-agent review. Independent deterministic tasks execute in parallel unless a real dependency, shared-state write conflict, or resource constraint requires serialization. GPU-heavy Stage2/Stage3 execution occurs once after adjudication. The current research contract is FCCR-1 fixed closed-form curvature.
+description: Controlled research workflow for HiCurvRec curvature-aware RQ-VAE experiments. Only irreducible scientific judgments use a Research Agent. Anything decidable by explicit protocol, equality, file/hash checks, or executable checkers is a deterministic workflow phase and must not become an Agent stage. Independent deterministic tasks execute in parallel unless a real dependency, shared-state write conflict, or resource constraint requires serialization. GPU-heavy Stage2/Stage3 execution occurs once after deterministic gates. The current research contract is FCCR-1 fixed closed-form curvature.
 ---
 
 # curvature-rqvae-iter
@@ -123,179 +123,58 @@ Historical files never override an actual protocol-compatible `test_final.json`.
 
 ---
 
-# 2. Single-Agent Canonical Decision Protocol
+# 2. Agent-Minimal Workflow — programmatic facts are not Agent stages
 
-Every stage that makes a **scientific choice, interpretation, mechanism decision, contract decision, causal classification, or go/no-go judgment** uses one canonical Research Agent. Do not create parallel independent candidate agents for the same decision.
+**Core rule:** if a decision can be made from an explicit contract, exact equality, repository state, hashes, paths, process state, numeric validity, or a deterministic checker, it must be implemented as a programmatic gate/action. Do **not** create a Research Agent stage merely to restate or approve deterministic facts.
+
+A Research Agent is used only when the output requires irreducible scientific judgment, such as selecting/formulating a mechanism, interpreting causal evidence, or choosing a new research direction from ambiguous evidence.
+
+The workflow is reduced to eight phases:
+
+| Phase | Type | Purpose | Research Agent? |
+|---|---|---|---|
+| `P00_LOCK` | deterministic | source truth + baseline/protocol lock + hashes | **No** |
+| `P01_RESEARCH_DESIGN` | scientific | hypothesis + mechanism semantics + one-factor design + falsification | **Yes** |
+| `P02_BUILD_VERIFY` | deterministic/action | implement locked design + preflight + provenance + MVG | **No** |
+| `P03_STAGE2` | deterministic/action | Stage2 run once + automatic SID/geometry metrics | **No** |
+| `P04_STAGE3` | deterministic/action | exact Stage3 protocol diff + Stage3 run once | **No** |
+| `P05_RESULT_DECISION` | scientific | causal/result interpretation + promotion status + next action | **Yes** |
+| `P06_CLOSURE` | deterministic/action | artifact completeness + commit/push + remote hash | **No** |
+| `P07_GLOBAL_REVIEW` | scientific, conditional | select a new structural direction when review trigger fires | **Yes** |
+
+A normal iteration therefore has **two mandatory Agent decisions** (`P01`, `P05`) plus an optional third (`P07`). All other phases are checker-driven.
+
+## 2.1 Research Agent rule
+
+For `P01_RESEARCH_DESIGN`, `P05_RESULT_DECISION`, and conditional `P07_GLOBAL_REVIEW`, use one canonical Research Agent. The Agent must use primary evidence, apply the active contract and hard gates, state assumptions/risks/self-rejection conditions, and never override a deterministic gate.
+
+If a deterministic gate says `FAIL`, the Agent cannot reinterpret it as `PASS`. The only valid responses are operational repair (when locked science is unchanged) or iteration abort (when a locked scientific factor must change).
+
+## 2.2 Agent record layout
+
+Only the three scientific phases use agent records:
 
 ```
-canonical source packet
-        ↓
-single Research Agent
-        ↓
-ACCEPT | REPAIR_AND_RERUN | ABORT_ITERATION
-        ↓
-canonical artifact
-        ↓
-deterministic gate/checker where applicable
-        ↓
-next pipeline stage
+logs/stage_records/<P01_RESEARCH_DESIGN|P05_RESULT_DECISION|P07_GLOBAL_REVIEW>/round_<R>/
+    source_packet.md
+    agent.md
+    decision.md
 ```
 
-This is the top-level protocol for scientific decisions. Deterministic repository reads, checker commands, provenance collection, and post-run analyses may still execute concurrently when they are independent. Parallelism applies to **work items**, not to duplicate scientific decision makers.
-
-Historical completed rounds that already contain `agent_a.md`, `agent_b.md`, and `judge.md` remain valid audit evidence. They are legacy format only. New or reopened stages must use the single-agent format below.
-
-## 2.1 Research Agent rules
-
-The Research Agent must:
-
-- receive the frozen source packet and exact stage objective;
-- use primary repository evidence rather than trusting historical summaries when exact evidence exists;
-- state assumptions, evidence, proposed action, risks, and self-rejection conditions;
-- apply the active research contract, protocol lock, one-factor rule, and hard gates before making a decision;
-- write one stage record only; do not generate competing candidate drafts;
-- never silently modify a locked mechanism or Stage3 protocol to rescue a result;
-- never directly create duplicate Stage2 or Stage3 executions.
-
-Each normal stage agent artifact must begin with:
+`agent.md` begins with:
 
 ```
 ROLE=RESEARCH_AGENT
 SOURCE_PACKET=<path>
-STAGE_ID=<stage id>
+STAGE_ID=<phase id>
 ```
 
-## 2.2 Canonical decision rules
-
-The stage decision must be one of:
-
-```
-ACCEPT
-REPAIR_AND_RERUN
-ABORT_ITERATION
-```
-
-`ACCEPT` means the current canonical stage output passes the applicable hard gates.
-
-`REPAIR_AND_RERUN` is mandatory when the registered scientific mechanism remains viable but the stage failed because of a repairable implementation, checker, logging, provenance-capture, serialization, routing, cleanup, or other operational defect. The repair must preserve the registered hypothesis, mechanism equation, key constants, parent, protocol, one-factor delta, seed policy, data identity, and evaluation definition.
-
-`ABORT_ITERATION` is mandatory only when direct evidence shows that the **registered iteration itself is no longer scientifically or operationally viable** and continuing would require changing a locked scientific factor.
-
-When the current proposal is unsupported but the iteration remains potentially viable, the same Research Agent may open a new numbered scientific-decision round with explicit `REPLAN_CONSTRAINTS`. Maximum automatic research-proposal rounds per stage: **2**. Operational repairs do not consume a research-proposal round.
-
-## 2.3 Hard gates and rubric
-
-Hard gates are evaluated before qualitative preference:
-
-- active contract compliance;
-- protocol compatibility;
-- semantic/provenance correctness;
-- one-factor causal isolation;
-- falsifiability;
-- reproducibility / sufficient implementation specificity;
-- no unsupported factual claims;
-- iteration purpose is a forward performance-seeking structural mechanism, not sweep/replication/root-cause analysis.
-
-A stage that fails a hard gate cannot be accepted merely because its narrative is persuasive.
-
-For a hard-gate-valid stage, the Research Agent considers scientific rationale, direct prior evidence, causal interpretability, implementation clarity, hidden-confound risk, expected information gain, and cost proportionality.
-
-## 2.4 Canonical-only propagation
-
-After the stage decision:
-
-- exactly one canonical artifact is written to the normal pipeline path;
-- downstream stages read only the canonical artifact and `decision.md`;
-- scratch notes and superseded drafts must not become active instructions;
-- a stage is not complete until the canonical artifact actually exists.
-
-## 2.5A Fast operational repair — no duplicate research-agent review
-
-A repair that does **not** change the registered scientific experiment stays inside the same stage and does not trigger duplicate research-agent review.
-
-This path applies to localized operational defects such as checker/parser/AST bugs, missing logging fields, wrong paths, malformed serialization, missing hashes/device/batch-ID instrumentation, cleanup/process-exit defects, or source code that fails to implement the already accepted equation exactly.
-
-Fast-repair procedure:
-
-1. Record the exact repair scope as `REPAIR_AND_RERUN`.
-2. Scan the entire failing deterministic surface once and collect all independently detectable operational defects before editing.
-3. Independent repair edits to different files may be prepared concurrently; conflicting shared-state edits are serialized.
-4. Apply the minimal repair batch.
-5. Run all independent deterministic checks for that stage in parallel and capture stdout/stderr/exit status plus required provenance.
-6. Write `repair_record.md` containing `ROUND_TYPE=OPERATIONAL_REPAIR`, `LOCKED_SCIENCE_CHANGED=NO`, exact changes, commands/checks, outputs/provenance, and `CHECKS_PASS=YES|NO`.
-7. The Research Agent reviews the repair record and writes the canonical `decision.md`.
-8. If the repair passes, continue the same iteration. If it reveals true mechanism infeasibility requiring a locked scientific change, use `ABORT_ITERATION`.
-
-A fast-repair rerun replaces an invalid/incomplete verification attempt. It is not a seed replication, performance replication, sweep, ablation, or new iteration.
-
-### Consolidated deterministic checks
-
-For S07/S08, deterministic evidence must be gathered before scientific interpretation whenever possible:
-
-```
-freeze source / contract
-        ↓
-identify all deterministic checks
-        ↓
-run independent checks concurrently
-        ↓
-collect all failures
-        ↓
-one consolidated operational repair batch if needed
-        ↓
-rerun failed/affected checks concurrently
-        ↓
-single Research Agent decision
-```
-
-Do not create separate research agents to discover deterministic facts that executable checkers can establish directly.
-
-### Pre-run provenance completeness for MVG
-
-Before the canonical MVG invocation, the checker must already be instrumented to emit contemporaneously:
-
-- exact input paths and pre-run hashes where required;
-- checkpoint path and hash;
-- seed and deterministic selection rule;
-- actual ordered batch/sample/item IDs;
-- batch shape/count;
-- actual runtime device string and, when available, physical device identity;
-- complete mechanism diagnostics;
-- component-wise gradient evidence required by the active contract;
-- stdout/stderr and exit status.
-
-A missing field discovered after execution is an evidence-capture repair: invalidate that verification attempt for gate purposes, fix instrumentation, and rerun S08 in the same iteration.
-
-## 2.5 Side-effect / GPU-heavy stages
-
-For stages that mutate shared code, launch jobs, write checkpoints, evaluate Stage3, commit, or push:
-
-- the Research Agent produces one complete method / patch plan / wiring audit;
-- the orchestrator applies the canonical method **once**;
-- Stage2 and Stage3 full GPU runs are never duplicated;
-- multi-seed / matched-seed replication is not an allowed iteration type under this skill.
-
-No worktree may be used. This section does not override repository `CLAUDE.md` Git or no-Plan-Agent rules.
-
-## 2.6 Stage-record artifact layout
-
-New or reopened stages use:
-
-```
-logs/stage_records/<STAGE_ID>/round_<R>/
-    source_packet.md
-    agent.md
-    decision.md
-    repair_record.md   # only when applicable
-```
-
-`decision.md` must contain:
+`decision.md` contains:
 
 ```
 STAGE_ID=
 ROUND=
 VERDICT=ACCEPT | REPAIR_AND_RERUN | ABORT_ITERATION
-
 HARD_GATE=PASS | FAIL
 CANONICAL_DECISION=
 CANONICAL_ARTIFACT=
@@ -305,49 +184,65 @@ ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM
 SWEEP_OR_REPLICATION_ITERATION=NO
 ROOT_CAUSE_ITERATION=NO
 AUTONOMOUS_NEXT_ACTION=
-
 REPLAN_CONSTRAINTS=
 ```
 
-For `REPAIR_AND_RERUN`, `SAME_ITERATION_REPAIR=AUTHORIZED` is mandatory.  
-For `ABORT_ITERATION`, `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS` are mandatory; `CANONICAL_ARTIFACT` must point to `logs/iteration_abort_iter<N>.md`.  
-For every verdict, `USER_INPUT_REQUIRED=NO`, `ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM`, `SWEEP_OR_REPLICATION_ITERATION=NO`, `ROOT_CAUSE_ITERATION=NO`, and a concrete `AUTONOMOUS_NEXT_ACTION` are mandatory.
+For `REPAIR_AND_RERUN`, `SAME_ITERATION_REPAIR=AUTHORIZED` is mandatory. For `ABORT_ITERATION`, record `ABORT_REASON`, `ABORT_EVIDENCE`, and `NEXT_ITERATION_CONSTRAINTS`.
 
-The checker may accept legacy `logs/deliberation/.../agent_a.md + agent_b.md + judge.md` only for already materialized historical rounds. The legacy layout must not be generated for new work.
+Historical `logs/deliberation/Sxx/.../agent_a.md + agent_b.md + judge.md` directories remain audit evidence only. New or reopened work must not create them.
 
-## 2.7 Stage map
+## 2.3 Deterministic phase rule
 
-| Stage ID | Pipeline stage | Single Research Agent responsibility | Canonical output |
-|---|---|---|---|
-| `S00_SOURCE_TRUTH` | Read rules / source of truth | extract constraints, current repo facts, unresolved conflicts | `logs/source_snapshot_iter<N>.md` |
-| `S01_PROTOCOL_LOCK` | Baseline + protocol | reconstruct comparable protocol and baseline from primary files | `logs/protocol_manifest_iter<N>.md` |
-| `S02_HYPOTHESIS` | Research hypothesis | register exact falsifiable hypothesis/equation under active contract | `logs/hypothesis_iter<N>.md` |
-| `S03_PROVENANCE` | Semantic/provenance | trace every formula input and semantic definition | `logs/mechanism_manifest_iter<N>.md` |
-| `S04_CONTRACT` | Mechanism contract | encode expected implementation invariants | `logs/mechanism_contract_iter<N>.json` |
-| `S05_ONE_FACTOR` | One-factor diff | identify parent, inherited mechanisms, and exact delta | `logs/one_factor_diff_iter<N>.md` |
-| `S06_IMPLEMENTATION` | Implementation design | produce complete patch plan/diff and tests | `logs/implementation_plan_iter<N>.md`; orchestrator applies once |
-| `S07_PREFLIGHT` | Static/contract preflight | audit source against hypothesis + contract after deterministic checks | `logs/preflight_contract_iter<N>.log` + decision |
-| `S08_MVG` | MVG | run/interpret lightweight mechanism verification | `logs/mvg_check_iter<N>.log` + decision |
-| `S09_STAGE2_EXECUTION` | Stage2 run | audit launch command, inputs, outputs, invariants | `logs/stage2_execution_plan_iter<N>.md`; Stage2 runs once |
-| `S10_STAGE2_ANALYSIS` | SID/geometry analysis | analyze the Stage2 outputs | `logs/sid_geometry_iter<N>.md` |
-| `S11_STAGE3_EVALUATION` | Stage3 wiring/eval | audit SID wiring, checkpoint, frozen eval protocol and expected outputs | `logs/stage3_evaluation_plan_iter<N>.md`; Stage3 runs once |
-| `S12_RESULT_CLASSIFICATION` | Causal/result interpretation | classify mechanism effect, confounds, promotion status | `logs/failure_attribution_iter<N>.md` + `logs/gate_decision_iter<N>.md` |
-| `S13_GIT_CLOSURE` | Commit/push closure | audit required artifacts, paths, git state, remote hash | `logs/git_closure_iter<N>.md` |
-| `S14_GLOBAL_REVIEW` | Direction selection when triggered | synthesize evidence and select next research direction | `logs/global_review_after_iter<N>.md` |
+The following are explicitly **not Agent stages**:
 
-If a stage has multiple canonical files, `decision.md` must list all of them in `CANONICAL_ARTIFACT`.
+- source-of-truth extraction and protocol-field collection;
+- baseline lookup when source precedence is explicit;
+- hashes, paths, exact config comparisons, and provenance field presence;
+- one-factor source diff verification after the scientific design is locked;
+- implementation conformance to the accepted mechanism contract;
+- preflight and MVG pass/fail conditions that are explicitly defined;
+- Stage2 launch wiring and output checks;
+- Stage2 SID/geometry metric calculation;
+- Stage3 config/wiring comparison against the locked protocol;
+- Stage3 execution and test-artifact completeness;
+- Git status, required-artifact existence, commit, push, and local/remote hash equality.
 
-## 2.8 Stage-specific decision emphasis
+These may run concurrently when independent.
 
-- **S00–S01 factual stages:** primary-source correctness and protocol comparability dominate.
-- **S02 hypothesis:** contract compliance, falsifiability, information gain, and causal isolation dominate.
-- **S03–S05 audit stages:** semantic exactness, provenance, and one-factor integrity dominate.
-- **S06 implementation:** fidelity to the canonical hypothesis/contract and minimal diff dominate.
-- **S07–S08 verification:** evidence beats intention. Run deterministic/read-only checks first and concurrently; consolidate operational defects into one repair batch.
-- **S09/S11 execution:** reproducibility, exact wiring, frozen protocol, and no unintended protocol changes dominate.
-- **S10/S12 interpretation:** separate observed facts from causal inference; do not overgeneralize a mapping failure into a family-level failure without evidence.
-- **S13 closure:** repository truth and remote verification dominate.
-- **S14 review:** compare only protocol-valid evidence and explicitly distinguish validated findings from unresolved hypotheses.
+## 2.4 Fast operational repair
+
+A repair that does **not** change the registered scientific experiment stays inside the same phase and does not create another Agent decision. Checker/parser bugs, missing logging/provenance fields, wrong paths, malformed serialization, stale workers, cleanup failure, or code that does not faithfully implement the already accepted equation are operational repairs.
+
+Scan the full deterministic surface once, apply the minimal repair batch, rerun affected checks, and continue when they pass. If repair would change locked science, stop the repair path and use the appropriate scientific Agent phase or `ABORT_ITERATION`.
+
+## 2.5 Deterministic Stage3 protocol gate
+
+Stage3 is an evaluator, not a research-design stage. Immediately before Stage3, run:
+
+```bash
+python /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/stage3_protocol_gate.py
+```
+
+Expected output: `STAGE3_PROTOCOL_PASS`.
+
+The checker compares the authoritative Stage3 lock against both the shared Stage3 trainer and the current iteration launcher. It fails on training-protocol drift, including epochs, early-stop behavior, evaluation mode, test skipping, seed, beam size, disabled screen, trainer hash, SID wiring, or output paths.
+
+The iteration launcher may change only iteration-specific wiring/metadata (`CODE_PATH`, `RQVAE_VARIANT`, `LOG_PATH`, `SAVE_PATH`, launcher metadata). It must not override Stage3 training hyperparameters. A mismatch is `PROTOCOL_GATE_FAIL`; no Agent may waive it.
+
+## 2.6 Canonical phase outputs
+
+| Phase | Required canonical evidence |
+|---|---|
+| `P00_LOCK` | `source_snapshot_iter<N>.md`, `protocol_manifest_iter<N>.md` |
+| `P01_RESEARCH_DESIGN` | `hypothesis_iter<N>.md`, `mechanism_manifest_iter<N>.md`, `mechanism_contract_iter<N>.json`, `one_factor_diff_iter<N>.md` |
+| `P02_BUILD_VERIFY` | source patch + `preflight_contract_iter<N>.log` + `mvg_check_iter<N>.log` |
+| `P03_STAGE2` | canonical Stage2 artifacts + `sid_geometry_iter<N>.md` |
+| `P04_STAGE3` | `stage3_protocol_gate_iter<N>.log` + canonical Stage3 `test_final.json` + `stage3_outcome_iter<N>.md` |
+| `P05_RESULT_DECISION` | `failure_attribution_iter<N>.md` + `gate_decision_iter<N>.md` |
+| `P06_CLOSURE` | `git_closure_iter<N>.md` + remote hash verification |
+| `P07_GLOBAL_REVIEW` | `global_review_after_iter<N>.md` when triggered |
+
+New iterations do not require `implementation_plan_iter<N>.md`, `stage2_execution_plan_iter<N>.md`, or `stage3_evaluation_plan_iter<N>.md`.
 
 ## 2.9 Forward-Only Iteration Policy — no sweep, replication, or root-cause iterations
 
@@ -384,7 +279,7 @@ If a Global Review or previous artifact proposes one of these as the next iterat
 
 A new mechanism may contain fixed constants, but they must be chosen **before registration** from theory, geometry, scale analysis, prior evidence, or a deterministic rule. Do not create an iteration whose scientific contribution is trying several values.
 
-After S02/S04 lock, no in-iteration retuning is allowed. If the registered constant makes the mechanism infeasible, abort the iteration. The next iteration must not simply be another value of the same constant unless the changed value is inseparable from a genuinely new structural mechanism.
+After P01_RESEARCH_DESIGN is accepted, no in-iteration retuning is allowed. If the registered constant makes the mechanism infeasible, abort the iteration. The next iteration must not simply be another value of the same constant unless the changed value is inseparable from a genuinely new structural mechanism.
 
 ### Seed policy
 
@@ -488,7 +383,7 @@ Missing runtime evidence is therefore an `EVIDENCE_CAPTURE_REPAIR_REQUIRED` cond
 
 ### Registered-spec immutability after hypothesis lock
 
-After S02/S04 are canonically accepted, the following are part of the registered experiment:
+After P01_RESEARCH_DESIGN is canonically accepted, the following are part of the registered experiment:
 
 - mechanism equation;
 - key mechanism constants / thresholds;
@@ -509,7 +404,7 @@ If changing `0.5 → 0.05` is needed to obtain meaningful activation, the curren
 
 `ITERATION_ABORTED_INFEASIBLE`
 
-and `0.05` must be registered as a **new iteration** with its own S00–S08 stage records.
+and `0.05` must be registered as a **new iteration** and pass the new iteration's P00–P02 workflow.
 
 Implementation repairs that merely make the code match the already registered equation do not require a new iteration.
 
@@ -643,41 +538,46 @@ Do not simultaneously add a new optimizer, behavior loss, Sinkhorn rule, manifol
 
 ---
 
-# 4. Protocol Lock
+# 4. Protocol Lock — deterministic, no Agent stage
 
-Before mechanism implementation, create:
+Before mechanism implementation, create `logs/protocol_manifest_iter<N>.md`.
 
-`logs/protocol_manifest_iter<N>.md`
+Apply the source-priority rules mechanically. If same-priority authoritative sources conflict, emit `PROTOCOL_CONFLICT` and block execution rather than asking an Agent to rationalize the conflict.
 
-It must record:
+The manifest must contain:
 
+```text
+PROTOCOL_ID=
+DATASET_VERSION=
+STAGE1_EMBEDDING_PATH=
+STAGE1_EMBEDDING_SHA256=
+PARENT_ITER=
+PARENT_COMMIT=
+CANONICAL_BASELINE_ITER=
+CANONICAL_BASELINE_TEST_FINAL=
+CANONICAL_BASELINE_TEST_R10=
+STAGE2_SEED=
+STAGE2_MAX_STEPS=
+RQ_LAYERS=
+CODEBOOK_SIZE=
+
+STAGE3_TRAINER_PATH=stage3_T5Train/train_HG-Rec.py
+STAGE3_TRAINER_SHA256=
+STAGE3_SEED=
+STAGE3_EPOCHS=
+STAGE3_EARLY_STOP=DISABLED
+STAGE3_NO_EVAL=
+STAGE3_SKIP_TEST=
+STAGE3_BEAM_SIZE=
+STAGE3_SCREEN_BASELINE_LOG=
+STAGE3_CODE_PATH=
+STAGE3_LOG_PATH=
+STAGE3_SAVE_PATH=
 ```
-PROTOCOL_ID
-dataset/version
-Stage1 embedding path + immutable hash/id
-parent iteration + commit
-canonical baseline iteration
-canonical baseline test_final.json path
-canonical baseline test_R@10
-Stage2 seed
-Stage2 max steps
-RQ layers / codebook size
-Stage3 code commit
-Stage3 seed
-Stage3 epochs
-beam size
-n_eval
-```
 
-Two runs may be directly ranked only if their protocol manifests are compatible.
+The authoritative Stage3 values come from the repository-level frozen Stage3 protocol, not from whatever values happen to be present in a modified trainer. The trainer SHA is captured at lock time and checked again immediately before Stage3.
 
-If protocol compatibility is uncertain, mark the historical result:
-
-`HISTORICAL_NONCOMPARABLE`
-
-and do not call it the current best.
-
-If repository records disagree about a baseline number, read the exact `test_final.json` for the declared baseline and document the discrepancy.
+Two runs may be directly ranked only if their protocol manifests are compatible. If compatibility is uncertain, mark the historical result `HISTORICAL_NONCOMPARABLE`. If repository records disagree about a baseline number, read the exact declared baseline `test_final.json`.
 
 ---
 
@@ -926,7 +826,7 @@ This proves the fixed curvature affects the system without making curvature trai
 
 - `MVG PASS` = implementation matches the mechanism contract, required evidence was captured, and the mechanism affects computation;
 - `MVG IMPLEMENTATION FAIL` = the checker/model implementation does not yet faithfully execute the registered mechanism; if repairable without changing locked science, issue `REPAIR_AND_RERUN`;
-- `MVG EVIDENCE CAPTURE FAIL` = the mechanism may be numerically valid, but required runtime/provenance evidence was not captured; issue `REPAIR_AND_RERUN`, fix instrumentation, and rerun S08 in the same iteration;
+- `MVG EVIDENCE CAPTURE FAIL` = the mechanism may be numerically valid, but required runtime/provenance evidence was not captured; issue `REPAIR_AND_RERUN`, fix instrumentation, and rerun P02_BUILD_VERIFY in the same iteration;
 - `MVG MECHANISM FAIL` = direct evidence shows the registered mechanism itself is inactive/invalid and making it viable would require changing a locked scientific factor; only this class may support `ABORT_ITERATION`;
 - `MVG PASS` does not imply better Stage3 performance.
 
@@ -968,7 +868,9 @@ For FCCR-1, log fixed curvature at multiple checkpoints to prove invariance.
 
 ---
 
-# 11. Stage2 geometry analysis
+# 11. Stage2 geometry analysis — deterministic
+
+Generate this from canonical Stage2 artifacts; it is not a Research Agent stage.
 
 Create:
 
@@ -985,7 +887,9 @@ Do not call a run good because Stage2 metrics look cleaner.
 
 ---
 
-# 12. Stage3 evaluation
+# 12. Stage3 evaluation — deterministic frozen-protocol execution
+
+This is not a Research Agent stage. Immediately before launch, run `stage3_protocol_gate.py` and save stdout/stderr to `logs/stage3_protocol_gate_iter<N>.log`. Only `STAGE3_PROTOCOL_PASS` authorizes launch.
 
 Every numerically valid, contract-valid, **non-aborted** candidate proceeds to the unchanged Stage3 protocol. A candidate with a confirmed `ITERATION_ABORTED_INFEASIBLE` status does not proceed merely to satisfy pipeline completeness.
 
@@ -1010,7 +914,7 @@ test_R@10 > 0.065
 
 ---
 
-# 13. Result classification
+# 13. Result classification — P05 Research Agent
 
 Separate scientific effect from promotion.
 
@@ -1060,7 +964,7 @@ The purpose of the workflow is performance progress, not precise variance estima
 
 ---
 
-# 15. Global Review
+# 15. Global Review — P07 Research Agent (conditional)
 
 Run a Global Review after **3 clean protocol-valid iterations**, not merely after 3 iteration numbers.
 
@@ -1110,9 +1014,9 @@ Under FCCR-1:
 
 ---
 
-# 17. Required artifacts and stage-decision evidence
+# 17. Required evidence — Agent records only for scientific judgment
 
-Before Stage2, all canonical artifacts must exist:
+Before Stage2, require:
 
 ```
 logs/source_snapshot_iter<N>.md
@@ -1121,94 +1025,72 @@ logs/hypothesis_iter<N>.md
 logs/mechanism_manifest_iter<N>.md
 logs/mechanism_contract_iter<N>.json
 logs/one_factor_diff_iter<N>.md
-logs/implementation_plan_iter<N>.md
 logs/preflight_contract_iter<N>.log
 logs/mvg_check_iter<N>.log
-logs/stage2_execution_plan_iter<N>.md
 ```
 
-In addition, stages `S00_SOURCE_TRUTH` through `S09_STAGE2_EXECUTION` must each have a completed single-agent stage record with a final `ACCEPT` decision before the Stage2 full run is launched. Already materialized legacy A/B/Judge rounds may be accepted only for historical compatibility. If an earlier stage canonically returns `ABORT_ITERATION`, no later pre-Stage2 stage is required and Stage2 must not launch.
+Only `P01_RESEARCH_DESIGN` requires an Agent record. `P00_LOCK` and `P02_BUILD_VERIFY` are deterministic.
 
-After Stage2/Stage3, add:
-
-```
-logs/sid_geometry_iter<N>.md
-logs/stage3_evaluation_plan_iter<N>.md
-logs/stage3_outcome_iter<N>.md
-logs/failure_attribution_iter<N>.md
-logs/gate_decision_iter<N>.md
-logs/git_closure_iter<N>.md
-```
-
-The corresponding single-agent stage records for `S10_STAGE2_ANALYSIS` through `S13_GIT_CLOSURE` are also mandatory before the iteration is considered closed.
-
-`S14_GLOBAL_REVIEW` stage record is mandatory only when the Global Review trigger fires.
-
-For an aborted iteration, `logs/iteration_abort_iter<N>.md` plus the single-agent decision evidence for the aborting stage replace the requirement to manufacture downstream Stage2/Stage3 artifacts that were never validly run.
-
-A rule written in this skill but not checked before launch/closure is not considered enforced.
-
-Before Stage2, run the skill-level deliberation checker from the iteration directory:
+Run the no-argument workflow gate before Stage2:
 
 ```bash
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
   /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
 ```
 
-Expected output for a runnable iteration:
+Expected runnable output remains `DELIBERATION_GATE_PASS` for compatibility.
 
-`DELIBERATION_GATE_PASS`
+After Stage2/Stage3 require:
 
-For a canonically aborted iteration, the valid terminal output is:
+```
+logs/sid_geometry_iter<N>.md
+logs/stage3_protocol_gate_iter<N>.log
+logs/stage3_outcome_iter<N>.md
+logs/failure_attribution_iter<N>.md
+logs/gate_decision_iter<N>.md
+logs/git_closure_iter<N>.md
+```
 
-`DELIBERATION_ABORT_CONFIRMED`
+Only `P05_RESULT_DECISION` requires an Agent record. `P03_STAGE2`, `P04_STAGE3`, and `P06_CLOSURE` are deterministic/action phases.
 
-and no Stage2 launch is allowed.
+`P07_GLOBAL_REVIEW` requires an Agent record only when triggered. For an aborted iteration, `logs/iteration_abort_iter<N>.md` replaces downstream artifacts that were correctly never produced.
+
+Historical completed iterations using old S00–S14 deliberation directories remain readable as legacy evidence; new work must use the reduced phase model.
 
 ---
 
-# 18. Iteration loop
-
-Scientific-decision arrows below mean: **one Research Agent evaluates the frozen evidence → records one canonical decision → canonical artifact proceeds**. Deterministic verification/repair arrows use §2.5A fast repair. At any stage, a scientifically justified `ABORT_ITERATION` exits into the abort-closure path.
+# 18. Iteration loop — reduced phase model
 
 ```
-S00  Source-of-truth extraction
-   ↓
-S01  Resolve canonical baseline + Protocol Lock
-   ↓
-S02  Register FCCR-1 hypothesis
-   ↓
-S03  Semantic / Provenance Gate
-   ↓
-S04  Mechanism Contract JSON
-   ↓
-S05  One-Factor Diff
-   ↓
-S06  Single implementation plan → apply canonical patch once
-   ↓
-S07  Concurrent deterministic preflight/checkers → consolidated repair if needed → single Research Agent decision
-      + preflight_contract.py → MECHANISM_CONTRACT_PASS
-   ↓
-S08  Pre-instrument provenance → canonical MVG → concurrent deterministic evidence collection → single Research Agent decision; abort only for true mechanism infeasibility
-   ↓
-S09  Single Stage2 launch/wiring audit
-      + deliberation_gate.py → DELIBERATION_GATE_PASS
-      + Stage2 full run ONCE
-   ↓
-S10  Single Stage2/SID analysis
-   ↓
-S11  Single Stage3 wiring/eval audit against the frozen protocol
-      + Stage3 full evaluation ONCE
-   ↓
-S12  Single causal/result classification
-   ↓
-S13  Single Git/artifact closure audit
-      + commit + push + remote hash verification
-   ↓
-S14  If triggered: single Global Review → select a NEW structural performance mechanism (never sweep/replication/root-cause)
+P00 LOCK                     [DETERMINISTIC]
+    source truth + baseline/protocol + hashes
+        ↓
+P01 RESEARCH_DESIGN          [RESEARCH AGENT]
+    hypothesis + mechanism semantics + one-factor design + falsification
+        ↓
+P02 BUILD_VERIFY             [DETERMINISTIC + ACTION]
+    implement locked design once
+    preflight_contract.py → MECHANISM_CONTRACT_PASS
+    MVG → MVG PASS
+        ↓
+P03 STAGE2                   [DETERMINISTIC + GPU ACTION]
+    wiring checks → Stage2 RUN ONCE → SID export/metrics
+        ↓
+P04 STAGE3                   [DETERMINISTIC + GPU ACTION]
+    stage3_protocol_gate.py → STAGE3_PROTOCOL_PASS
+    Stage3 RUN ONCE → final test artifact
+        ↓
+P05 RESULT_DECISION          [RESEARCH AGENT]
+    scientific effect + promotion + autonomous next action
+        ↓
+P06 CLOSURE                  [DETERMINISTIC + ACTION]
+    artifact check → commit → push → local/remote hash equality
+        ↓
+P07 GLOBAL_REVIEW            [RESEARCH AGENT, CONDITIONAL]
+    select a new structural performance mechanism
 ```
 
-A stage is not complete merely because the Research Agent states a decision. The decision must be supported by primary evidence, and the canonical artifact must actually be materialized at the path defined in the stage map.
+No Agent is used to approve file existence, hashes, paths, exact config equality, process cleanup, preflight/MVG conditions, Stage2 metrics, Stage3 wiring, or Git closure. A deterministic `FAIL` cannot be overruled by an Agent.
 
 ---
 
@@ -1243,7 +1125,7 @@ Before declaring closure, rerun the same deliberation checker from the iteration
   /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/deliberation_gate.py
 ```
 
-For a normal completed iteration, require `DELIBERATION_GATE_PASS` with `phase=CLOSURE` (or `phase=GLOBAL_REVIEW` when S14 is triggered).
+For a normal completed iteration, require `DELIBERATION_GATE_PASS` with `phase=CLOSURE` (or `phase=GLOBAL_REVIEW` when P07 is triggered).
 
 For an aborted iteration, require `DELIBERATION_ABORT_CONFIRMED` with `phase=ABORTED`. The checker stops at the aborting stage; correctly unlaunched downstream stages are not required.
 
