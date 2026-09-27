@@ -1,0 +1,23 @@
+STAGE_ID=S06_IMPLEMENTATION
+ROUND=2
+VERDICT=ACCEPT_A
+
+HARD_GATE_A=PASS
+HARD_GATE_B=FAIL
+
+EVIDENCE_FOR_A=Agent A has the required header fields exactly: ROLE=AGENT_A, INDEPENDENCE_DECLARATION, SOURCE_PACKET, STAGE_ID, and ROUND. Its SOURCE_PACKET identifies the exact round-2 packet at stage2_RQ-VAE/curvature_RQ-VAE_iter30/logs/deliberation/S06_IMPLEMENTATION/round_2/source_packet.md. Its diagnosis is confirmed by the current launcher: curvature_RQ-VAE.py:754-766 places "-u" after _LAUNCHER["script"]. The locked torch/distributed/run.py parser at lines 630-635 defines training_script_args as nargs=REMAINDER. In its default Python mode, config_from_args at lines 831-856 inserts interpreter -u before the script and then appends the remainder; get_use_env at 707-718 defaults true. Thus the current worker command includes an unintended script remainder argument, while removing it leaves the worker command [PYTHON_EXEC, "-u", literal-wrapper-path], preserving unbuffered output and no script args. The root file's fixed no-argument dispatcher (lines 771 onward) and scripts/profile_routes.py route logic preserve the root operator command and literal wrapper identity. Agent A's proposed edit is confined to that argument and its now-false comment; its bounded smoke excludes execution and downstream gates.
+EVIDENCE_FOR_B=Agent B reaches the same technically correct diagnosis and minimal command repair, including the parser's remainder behavior, torchrun's interpreter-level -u insertion, and a bounded static smoke proposal. Its content is not eligible for selection because the mandatory candidate header/provenance gate fails.
+
+PROBLEMS_A=None material to the authorized correction. The suggested concise comment is optional; the necessary behavioral change is removing the trailing script argument and removing or correcting the misleading comment.
+PROBLEMS_B=The artifact uses INDEPENDENCE= instead of the required INDEPENDENCE_DECLARATION= and STAGE= instead of STAGE_ID=. It does include ROUND=2; that does not cure the missing required header keys. The diagnosis and patch are technically sound, but the artifact fails the exact candidate metadata gate.
+
+WHY_NOT_A=NOT_APPLICABLE: ACCEPT_A. Its exact required headers and source-packet identity pass, and the patch plan is directly supported by current primary sources.
+WHY_NOT_B=Reject as a candidate due to the mandatory header/provenance-format hard gate. Do not merge its proposal; A independently specifies the complete correction and bounded verification boundary.
+
+CANONICAL_DECISION=ACCEPT_A. Authorize only the minimal correction in stage2_RQ-VAE/curvature_RQ-VAE_iter30/curvature_RQ-VAE.py::_launch_via_torchrun: remove the final "-u" element after _LAUNCHER["script"], and remove or replace the adjacent inaccurate comment. Do not add -u elsewhere, change the torchrun executable/flags/port, selected wrapper path, root no-argument dispatcher, logging, subprocess handling, route order, or any scientific/protocol setting. The locked torchrun Python-mode command builder already inserts interpreter -u before the script and no training_script_args remain after this edit. After this separately applied correction, permit only the bounded CPU/static smoke: inspect/AST-check the launcher command construction and route identity, confirming the literal wrapper is the last torchrun operand and the script remainder is empty. Do not invoke torchrun or any worker.
+CANONICAL_ARTIFACT=stage2_RQ-VAE/curvature_RQ-VAE_iter30/logs/implementation_plan_iter30.md (existing canonical S06 plan; this round authorizes only the specific source correction and smoke boundary above); stage2_RQ-VAE/curvature_RQ-VAE_iter30/logs/deliberation/S06_IMPLEMENTATION/round_2/judge.md
+CONFIDENCE=HIGH
+USER_INPUT_REQUIRED=NO
+AUTONOMOUS_NEXT_ACTION=Apply the authorized one-argument correction once, perform only the bounded CPU/static smoke, then open a fresh S07_PREFLIGHT round-2 A/B/Judge audit. Keep preflight, MVG, gradients, Stage2, Stage3, and GPU work blocked pending their separate gates.
+
+REPLAN_CONSTRAINTS=Preserve FCCR-1, both registered curvature maps/vectors, S04 contract, all six profile labels/order, fixed root no-argument operator entrypoint, literal wrapper DDP identity, port/rank settings, paths, logs, Stage3, and all training/protocol settings. If the repaired worker command still has any script remainder, the selected wrapper is no longer the literal route wrapper, or unbuffered execution would require another script argument or selector, stop and reopen S06 rather than workaround. This adjudication alone does not authorize preflight, MVG, per-profile gradient checks, torchrun, Stage2, Stage3, or any GPU action.

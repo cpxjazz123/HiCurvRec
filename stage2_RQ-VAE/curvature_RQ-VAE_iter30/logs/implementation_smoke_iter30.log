@@ -1,0 +1,16 @@
+S06 bounded non-GPU implementation smoke: PASS
+
+- Compile-only check passed for all 49 iter30 Python sources. No source was executed by the compile step; zero source-tree `__pycache__` directories were created.
+- Pure FCCR-1 calculations passed for both registered maps. All registered intermediates and final vectors matched within absolute tolerance 1e-9.
+- The canonical explicit-input JSON and candidate-only S04 contract loaded successfully. A payload containing only the legacy `residual_norm` alias was rejected because `raw_residual_medians` was missing.
+- All six fixed profiles validated in canonical order with unique Stage2/Stage3 roots and the exact static `RQVAE_OUT_DIR`. Each Stage2, gradient, and Stage3 wrapper contained its one literal route label.
+- Synthetic collision extension and Stage3 four-token JSON validation passed, including repeated-triple occurrence numbering; a malformed extension was rejected.
+- Synthetic output-root checks accepted absent/empty roots and rejected nonempty roots, directory symlinks, and broken symlinks.
+- The unchanged Stage3 trainer source SHA256 matched the locked digest `9861eb6b2a5b0bfac546524c50d402aba5827e5079a228e2ae5501909bc937cb`; Stage2/Stage3 trainer modules were not imported.
+- During the original S06 smoke, no model/checkpoint load, gradient check, preflight, MVG, GPU, Stage2/Stage3 execution, or route-result read/write/output creation occurred.
+
+S06 round-2 no-argument dispatcher repair smoke: PASS
+
+- Ran the locked Python 3.9 interpreter against a disposable `/tmp` AST checker. The edited root launcher parses and its torchrun command contains only the fixed executable/options followed by `_LAUNCHER["script"]`; no trailing training-script argument remains.
+- Parsed the locked PyTorch `torch.distributed.run` source: `training_script_args` is `REMAINDER`, Python mode inserts interpreter `-u` before `training_script`, and then appends the empty remainder. The selected wrapper operand therefore receives no script argument while Python remains unbuffered.
+- No torchrun process, trainer/model/checkpoint import/load, preflight, gradients, MVG, GPU, Stage2/Stage3, or result creation occurred in this repair smoke.
