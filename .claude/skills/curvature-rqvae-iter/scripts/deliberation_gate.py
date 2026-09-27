@@ -50,6 +50,7 @@ GLOBAL_REVIEW = [
 ]
 
 ALLOWED_VERDICTS = {"ACCEPT_A", "ACCEPT_B", "MERGE_AB", "ABORT_ITERATION"}
+INTERMEDIATE_REPAIR_VERDICT = "REPAIR_AND_RERUN"
 
 
 def fail(message: str) -> None:
@@ -79,8 +80,6 @@ def highest_round(stage_dir: Path) -> tuple[int, Path]:
         fail(f"no deliberation round found under {stage_dir}")
     rounds.sort(key=lambda item: item[0])
     number, path = rounds[-1]
-    if number > 2:
-        fail(f"automatic deliberation round exceeds maximum 2: {path}")
     return number, path
 
 
@@ -104,6 +103,23 @@ def require_worker(path: Path, role: str, stage_id: str, source_packet: Path) ->
             fail(f"{path} SOURCE_PACKET does not match stage packet")
 
 
+def forbidden_action_is_positive(action: str, pattern: str) -> bool:
+    """Return True only when a forbidden research direction is positively proposed.
+
+    Mentions inside explicit negation/prohibition (e.g. 'do not use matched-seed
+    replication' or 'without parameter sweep') are audit constraints, not proposals.
+    """
+    for match in re.finditer(pattern, action, re.I):
+        prefix = action[max(0, match.start() - 64):match.start()].lower()
+        if re.search(
+            r"(?:do\s+not|don['’]?t|must\s+not|should\s+not|never|without|forbid(?:den)?|avoid)\b[^.;:]{0,48}$",
+            prefix,
+            re.I,
+        ):
+            continue
+        return True
+    return False
+
 def require_judge(
     path: Path,
     stage_id: str,
@@ -114,7 +130,7 @@ def require_judge(
         fail(f"{path} has wrong/missing STAGE_ID")
 
     match = re.search(
-        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|ABORT_ITERATION)\s*$",
+        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",
         text,
         re.M,
     )
@@ -122,6 +138,13 @@ def require_judge(
         fail(f"{path} missing valid VERDICT")
     verdict = match.group(1)
 
+    if verdict == INTERMEDIATE_REPAIR_VERDICT:
+        if "SAME_ITERATION_REPAIR=AUTHORIZED" not in text:
+            fail(f"{path} REPAIR_AND_RERUN requires SAME_ITERATION_REPAIR=AUTHORIZED")
+        fail(
+            f"{stage_id} latest round requests same-iteration repair/rerun; "
+            "complete the repaired verification round before passing the gate"
+        )
     if verdict not in ALLOWED_VERDICTS:
         fail(f"{stage_id} final verdict is {verdict}; stage is blocked")
 
@@ -178,7 +201,7 @@ def require_judge(
         r"\bmicro[- ]delta\b",
     ]
     for pattern in forbidden_iteration_patterns:
-        if re.search(pattern, autonomous_action, re.I):
+        if forbidden_action_is_positive(autonomous_action, pattern):
             fail(
                 f"{path} AUTONOMOUS_NEXT_ACTION proposes forbidden iteration type: {pattern}"
             )
@@ -230,7 +253,7 @@ def check_stage(
     # Parse verdict before enforcing the normal stage canonical artifact.
     judge_text = read(judge)
     match = re.search(
-        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|ABORT_ITERATION)\s*$",
+        r"^VERDICT=(ACCEPT_A|ACCEPT_B|MERGE_AB|REJECT_BOTH|REPAIR_AND_RERUN|ABORT_ITERATION)\s*$",
         judge_text,
         re.M,
     )
@@ -252,6 +275,34 @@ def check_stage(
         for marker in required_abort:
             if marker not in abort_text:
                 fail(f"{abort_path} missing abort field: {marker}")
+
+        repairable_abort_patterns = [
+            r"omitted.*batch.*id",
+            r"missing.*batch.*id",
+            r"omitted.*runtime.*device",
+            r"missing.*runtime.*device",
+            r"missing.*input.*hash",
+            r"missing.*checkpoint.*hash",
+            r"evidence[- ]capture",
+            r"logging.*(missing|omitted)",
+        ]
+        if any(re.search(p, abort_text, re.I | re.S) for p in repairable_abort_patterns):
+            scientific_infeasibility_patterns = [
+                r"mechanism.*inactive",
+                r"mathematical.*invalid",
+                r"numerical.*invalid",
+                r"requires changing.*(equation|constant|protocol|one-factor|parent)",
+                r"cannot.*execute.*as specified",
+            ]
+            if not any(
+                re.search(p, abort_text, re.I | re.S)
+                for p in scientific_infeasibility_patterns
+            ):
+                fail(
+                    f"{abort_path} appears to abort for a repairable evidence/logging "
+                    "failure without direct mechanism infeasibility; use "
+                    "REPAIR_AND_RERUN in the same iteration"
+                )
         return stage_id, round_number, verdict, [abort_path.name]
 
     verdict, _ = require_judge(judge, stage_id, canonical_names)
