@@ -15,7 +15,7 @@ Main performs:
 research design
 → source/protocol inspection
 → implementation
-→ preflight / MVG
+→ MVG
 → Stage2
 → Stage3
 → result interpretation
@@ -191,17 +191,7 @@ No source/protocol snapshot file is created.
 
 Then implement the mechanism.
 
-## 6.1 Deterministic preflight
-
-Run the existing preflight checker directly.
-
-The checker may print to stdout/stderr, but main must not redirect or copy its output into a workflow artifact file.
-
-Required pass condition:
-
-`MECHANISM_CONTRACT_PASS`
-
-## 6.2 MVG
+## 6.1 MVG
 
 MVG verifies implementation, not scientific merit.
 
@@ -224,7 +214,7 @@ Interpretation exists only in main:
 - evidence/instrumentation failure: repair instrumentation, then rerun;
 - mechanism failure requiring changed science: stop this iteration condition.
 
-## 6.3 Operational repair
+## 6.2 Operational repair
 
 Operational repairs remain in the same iteration when the registered science is unchanged.
 

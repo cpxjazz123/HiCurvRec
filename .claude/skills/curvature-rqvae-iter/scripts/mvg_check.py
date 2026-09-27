@@ -1,34 +1,24 @@
 #!/usr/bin/env python3
-"""FCCR-1 MVG template.
+"""FCCR-1 MVG guidance.
 
-This skill-level file intentionally does NOT implement a generic learnable-parameter
-MVG. The previous version assumed every new mechanism had trainable parameters and
-required gradient/update checks on them, which conflicts with the active FCCR-1
-fixed-curvature contract.
+The skill-level MVG is not a generic executable experiment gate because each
+iteration has a different structural mechanism. Run the iteration-local
+scripts/mvg_check.py directly from the iteration directory.
 
-For a new iteration:
-1. run scripts/preflight_contract.py from the iteration directory;
-2. create/maintain an iteration-local scripts/mvg_check.py that imports that exact
-   iteration's training module without CLI arguments;
-3. verify the FCCR-1 checks below.
+The iteration-local MVG should verify only the minimum runtime properties needed
+for the chosen mechanism:
+- the intended equation/path is actually executed;
+- fixed curvature remains non-trainable and time-invariant;
+- tensor shapes and values are finite;
+- intended gradients are finite/non-zero where applicable;
+- the intervention has a measurable direct computational effect.
 
-Required FCCR-1 checks:
-- Formula: runtime fixed c_l equals preregistered contract values.
-- Immutability: fixed curvature requires_grad=False and is absent from optimizer.
-- Time invariance: c_l identical at steps 0/25k/50k/100k.
-- Model health: non-curvature model parameters still receive finite nonzero grads.
-- Counterfactual activation: candidate fixed c_l changes a preregistered direct
-  signal relative to the declared baseline curvature configuration.
+It must print exactly 'MVG PASS' only when those checks succeed.
 
-The iteration-local MVG must print exactly 'MVG PASS' only after all checks pass.
-
-This file exits deliberately so an agent cannot accidentally run the obsolete
-generic MVG and treat it as evidence for FCCR-1.
+No hypothesis/protocol/manifest/preflight file is required.
 """
 
 raise RuntimeError(
-    "Skill-level generic MVG is retired under FCCR-1. "
-    "Run preflight_contract.py, then use an iteration-local no-CLI MVG that "
-    "verifies fixed-curvature formula, immutability, time invariance, model "
-    "gradient health, and a baseline counterfactual."
+    "Use the iteration-local scripts/mvg_check.py directly. "
+    "No preflight step or workflow record is required."
 )

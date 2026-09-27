@@ -88,7 +88,7 @@ STAGE3_SCREEN_BASELINE_LOG=
 
 ### 必须纳入版本库的范围
 
-1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、preflight、export 等）。**不提交 Skill 额外生成的流程记录，因为新流程不允许生成这类文件。**
+1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、export 等）。**不提交 Skill 额外生成的流程记录，因为新流程不允许生成这类文件。**
 2. **Stage2 产物**（§0 / §10）：`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 下本轮训练产出（至少 `item_sids.json`、`rqvae_best.pth` 或最终 ckpt、`sids_for_hgrec.npy` 等实际用于 Stage3 的文件；`rqvae_step_*.pt` 若体积过大可只保留 best + 末 step，但须在 commit message 中说明删减策略）。
 3. **Stage3 产物**（§11）：`results/stage3_T5Train/curvature_RQ-VAE_iter<N>/` 下本轮 run 的 `logs/.../test_final.json`、`training_metrics.jsonl`、对应 `ckpt/.../HG_Rec_best.pth` 及 `_stage3_launcher.log`（或等价 launcher 日志）。
 
