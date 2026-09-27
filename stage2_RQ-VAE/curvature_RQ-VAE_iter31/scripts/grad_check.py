@@ -20,7 +20,7 @@ def main() -> None:
     np.random.seed(rqtrain.SEED)
     fixed_c = rqtrain._load_closed_form_curvatures()
     checkpoint_state = mvg_check._load_checkpoint(device)
-    batch = mvg_check._load_batch(rqtrain, device)
+    batch, _ = mvg_check._load_batch(rqtrain, device)
     model = mvg_check._build_model(rqtrain, device, fixed_c, checkpoint_state)
     mvg_check._check_layer_buffers(model, fixed_c)
     mvg_check._check_gradients(model, batch)

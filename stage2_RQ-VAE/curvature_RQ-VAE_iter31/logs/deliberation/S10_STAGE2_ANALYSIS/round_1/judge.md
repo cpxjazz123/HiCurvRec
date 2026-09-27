@@ -1,0 +1,22 @@
+STAGE_ID=S10_STAGE2_ANALYSIS
+ROUND=1
+VERDICT=MERGE_AB
+HARD_GATE_A=PASS
+HARD_GATE_B=PASS
+EVIDENCE_FOR_A=Agent A's independently marked report cites the matching frozen packet SHA-256 and primary FCCR-1/HRA contracts, final training and S08 logs, completion record, and actual Stage2 artifacts. Its report correctly describes 2,146 as duplicate-excess rows divided by N (a duplicate-row fraction), reports the registered descriptive SID metrics and wiring, and limits S08 interpretation to a same-batch finite [640,32] output difference. Primary evidence confirms Stage2 completed at 100,000 steps, the c vector matched at 100,000 within 1e-6, hashes/shapes/parity/uniqueness are documented in the completion record, and S08 reports max abs difference 0.07198049873113632, L2 2.018216848373413, relative L2 0.08106279373168945.
+EVIDENCE_FOR_B=Agent B's independently marked report records the same frozen packet SHA-256 and confirms the contract, run, direct-effect, artifact-wiring, and exact registered SID metrics against primary evidence. It correctly distinguishes duplicate-excess-row rate 2146/24587 from collision-participation fraction 3744/24587, with 1,598 colliding keys. An independent count of actual raw SID tuples confirms 22,441 unique keys, 2,146 excess rows, 3,744 participating rows, 1,598 colliding keys, and maximum multiplicity 11.
+PROBLEMS_A=No material factual or contract error. The report's correct “duplicate-row fraction” terminology does not explicitly state the separately defined collision-participation fraction or call out the frozen packet's imprecise “collision-item fraction” label; the canonical merge must supply that correction and both rates.
+PROBLEMS_B=No material factual or contract error. The canonical artifact must preserve the exact registered S08 metric values and make explicit that neither collision definition is a gate; it must also state Stage3 remains unauthorized pending S11 Judge approval.
+WHY_NOT_A=Not rejected: its primary-evidence analysis and duplicate-excess-row interpretation are valid. Merge B's independently verified participation count and explicit packet-label correction to make the required distinction complete.
+WHY_NOT_B=Not rejected: its correction of the packet label and both rate definitions are supported by direct raw-tuple counts. Merge A's concise separation of contract compliance, same-batch direct effect, output wiring, descriptive statistics, and causal limits.
+MERGE_COMPONENTS_A=Retain A's independently corroborated FCCR-1 invariant/completed-run assessment, exact registered S08 direct-effect framing, shape/wiring/parity and registered SID metric reporting, and bounded causal interpretation; retain its correct characterization of 2,146 as a duplicate-row fraction.
+MERGE_COMPONENTS_B=Retain B's direct raw-tuple collision audit and distinction between duplicate-excess-row rate 2146/24587=0.08728189693740594 and collision-participation fraction 3744/24587=0.15227559279293937 across 1,598 colliding keys; explicitly correct the frozen packet's “collision-item fraction” label without editing the packet.
+CANONICAL_DECISION=Stage2 evidence supports a completed, contract-valid, non-aborted candidate with fixed FCCR-1 curvature, a registered finite same-batch HRA-versus-Euclidean Step6 direct effect, consistent final SID output wiring, and descriptive SID observations only. Treat all Stage2 SID statistics as non-gates. Explicitly report both collision rates and the naming correction; it does not invalidate the run or alter any registered metric. No Stage3 result is known and no promotion classification is made in S10. The candidate proceeds to separately adjudicated S11; Stage3 remains unauthorized until S11 Judge approval.
+CANONICAL_ARTIFACT=logs/sid_geometry_iter31.md
+CONFIDENCE=HIGH
+USER_INPUT_REQUIRED=NO
+ITERATION_PURPOSE=PERFORMANCE_SEEKING_MECHANISM
+SWEEP_OR_REPLICATION_ITERATION=NO
+ROOT_CAUSE_ITERATION=NO
+AUTONOMOUS_NEXT_ACTION=Preserve the S09 conditional execution record and frozen packet unchanged; use only the Judge-approved canonical S10 report as S11 input, then conduct the separately required S11 deliberation. Do not launch Stage3 before S11 Judge approval.
+REPLAN_CONSTRAINTS=No replan is required. Preserve the registered HRA-STEP6-1/FCCR-1 experiment, frozen packet, S09 conditional execution record, source/model/Stage2 artifacts, and all primary evidence. Do not rerun Stage2 or S08, edit frozen evidence, introduce a Stage2 metric gate, make a promotion classification in S10, or launch Stage3 before S11 Judge approval.

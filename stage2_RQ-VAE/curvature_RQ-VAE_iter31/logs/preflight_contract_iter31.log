@@ -1,0 +1,21 @@
+STAGE_ID=S07_PREFLIGHT
+ITERATION=31
+ROUND=4
+CHECKER=/home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py
+WORKING_DIRECTORY=/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter31
+COMMAND=python /home/wlia0047/ar57/wenyu/GeneRec/.claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py
+EXIT_STATUS=0
+STDOUT_BEGIN
+MECHANISM_CONTRACT_PASS
+iter=31
+contract=FCCR-1
+fixed_curvature=[1.3660953164241916, 0.7347829661951981, 0.6439958072706683]
+curvature_trainable=false
+curvature_time_varying=false
+uses_cyclic_schedule=false
+uses_curvature_regularization=false
+fixed_buffer_sites=['/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter31/modules/quantize.py:69']
+STDOUT_END
+STDERR_BEGIN
+[empty]
+STDERR_END

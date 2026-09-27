@@ -1,0 +1,9 @@
+[Step2] loaded /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy: shape=(24587, 768), train transitions=339519, active sources=24474/24587
+[Step4] WARN: 未找到 /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter4/results/out/decoder/instruments_hgrec_configs/hgrec_iter4_behavior_transition_curvature/layer_norms.json, 使用 iter1 已记录的残差尺度 [0.001, 0.932889, 1.0]
+MVG PASS
+temporary_checkpoint_roundtrip=PASS
+batch_shape=(640, 768) active_pairs=640
+behavior_loss=21.451071
+behavior_curvature_grad_norms=[0.4476836, 3.67075825, 2.79306316]
+curvature_updates=['1.000e-03', '1.000e-03', '1.000e-03']
+curvature_after_step=[0.3000180721282959, 0.5257190465927124, 0.5473600029945374]
