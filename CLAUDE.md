@@ -80,15 +80,15 @@ STAGE3_SCREEN_BASELINE_LOG=
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
 - **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（main-only + JSON-only runtime：从研究设计、实现、验证、Stage2/Stage3、结果解释、下一轮选择到 Git closure 全部由 main 直接完成；禁止任何委派式子流程；迭代过程中不生成 Markdown）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **curvature-RQ-VAE 迭代流程**（main-only + zero-bookkeeping-artifact：研究设计、实现、验证、Stage2/Stage3、结果解释、下一轮选择、Git closure 全部由 main 直接完成；Skill 不生成任何 Markdown/JSON/JSONL/LOG/TXT 等流程记录；仅保留训练/评测程序自身必要原生产物）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 
-**迭代完成**指：该 `iter<N>` 的 Stage2（含 SID 导出）与 Stage3（含 `test_final.json` 或等价最终 test 记录）均已跑完，且 canonical 结果/决策 JSON（至少 `logs/gate_decision_iter<N>.json` 与 `logs/git_closure_iter<N>.json`）已经生成。**迭代执行过程中禁止新建 Markdown；canonical 记录统一使用 JSON，流式事件使用 JSONL，运行输出使用 LOG/TXT。**
+**迭代完成**指：该 `iter<N>` 的 Stage2（含 SID 导出）与 Stage3（含程序原生 `test_final.json` 或等价最终 test 输出）均已跑完，且代码与项目要求保留的 Stage2/Stage3 原生产物已 commit + push 并完成本地/远端 hash 核验。**Skill 本身不生成任何额外流程产物；不得新增 hypothesis / protocol / manifest / audit / decision / review / closure 等 Markdown、JSON、JSONL、LOG 或 TXT 文件。**
 
 ### 必须纳入版本库的范围
 
-1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、preflight、export 等）及本轮新增/修改的 canonical `logs/*.json` / `logs/*.jsonl` / `logs/*.log`。迭代运行不得生成新的运行期 Markdown。
+1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、preflight、export 等）。**不提交 Skill 额外生成的流程记录，因为新流程不允许生成这类文件。**
 2. **Stage2 产物**（§0 / §10）：`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 下本轮训练产出（至少 `item_sids.json`、`rqvae_best.pth` 或最终 ckpt、`sids_for_hgrec.npy` 等实际用于 Stage3 的文件；`rqvae_step_*.pt` 若体积过大可只保留 best + 末 step，但须在 commit message 中说明删减策略）。
 3. **Stage3 产物**（§11）：`results/stage3_T5Train/curvature_RQ-VAE_iter<N>/` 下本轮 run 的 `logs/.../test_final.json`、`training_metrics.jsonl`、对应 `ckpt/.../HG_Rec_best.pth` 及 `_stage3_launcher.log`（或等价 launcher 日志）。
 
