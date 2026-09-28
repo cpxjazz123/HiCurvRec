@@ -129,9 +129,9 @@ If making the mechanism viable requires changing the equation, scientific consta
 
 ---
 
-# 4. Active curvature contract — FCCR-1
+## 4. Curvature contracts
 
-`FCCR-1 = Fixed Closed-Form Curvature Research Contract`
+### FCCR-1 — Fixed Closed-Form Curvature Research Contract (default)
 
 Required:
 
@@ -141,13 +141,37 @@ CURVATURE_TRAINABLE=false
 CURVATURE_TIME_VARYING=false
 USES_CYCLIC_SCHEDULE=false
 USES_CURVATURE_REGULARIZATION=false
-NEW_CURVATURE_CONDITIONED_OPTIMIZER=false
+USES_CURVATURE_CONDITIONED_OPTIMIZER=false
 NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
 ```
 
 Per-layer curvature is computed before Stage2 and stays fixed for the full run.
+FCCR-1 remains the default for every iteration unless a contract transition is
+explicitly authorized.
 
-Without an explicit between-iteration contract transition, do not introduce:
+### DCCR-1 — Dynamic Cyclic Curvature Research Contract
+
+This contract is available only after explicit user authorization, and applies
+only to the specifically authorized iteration. It does not change the default
+contract for later iterations.
+
+```
+CURVATURE_SOURCE=cyclic_schedule_with_trainable_layer_scale
+CURVATURE_TRAINABLE=true
+CURVATURE_TIME_VARYING=true
+USES_CYCLIC_SCHEDULE=true
+USES_CURVATURE_REGULARIZATION=true
+USES_CURVATURE_CONDITIONED_OPTIMIZER=true
+NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
+```
+
+The iteration must name its DCCR-1 parent and preserve the inherited cyclic
+schedule, layer scales, curvature regularization, and curvature-conditioned
+optimizer exactly unless one of those is the explicitly registered single
+mechanism. A transition to DCCR-1 does not authorize any other curvature or
+Stage3 protocol changes.
+
+Without an explicit contract transition, do not introduce:
 
 - learnable curvature;
 - learned curvature prior;
@@ -156,7 +180,8 @@ Without an explicit between-iteration contract transition, do not introduce:
 - optimizer-side curvature learning;
 - a second unrelated scientific mechanism in the same iteration.
 
-A new structural mechanism may consume the fixed curvature while leaving curvature itself unchanged.
+A structural mechanism may consume the curvature defined by the selected
+contract while leaving that contract unchanged.
 
 ---
 
@@ -166,7 +191,7 @@ Main chooses one mechanism and checks that it is:
 
 - structurally distinct from the prior failed/neutral mechanism;
 - one-factor relative to the chosen parent;
-- compatible with FCCR-1;
+- compatible with the explicitly selected curvature contract;
 - plausibly relevant to downstream recommendation quality;
 - falsifiable;
 - implementable without changing Stage3.
@@ -199,7 +224,7 @@ Main checks, as applicable:
 
 - intended equation executes;
 - coordinate semantics are correct;
-- fixed curvature remains fixed;
+- the selected curvature contract remains satisfied throughout the run;
 - tensors are finite;
 - intended gradients are finite/non-zero;
 - intervention has measurable direct computational effect;
