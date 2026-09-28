@@ -1,0 +1,183 @@
+W0928 22:19:30.640491 3758525 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W0928 22:19:30.640491 3758525 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W0928 22:19:30.640491 3758525 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0928 22:19:30.640491 3758525 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=4
+[Iter46 Geodesic Sinkhorn] max_global_steps=100000 eval_interval_steps=10000 batch_size_per_rank=1024 total_batch=4096 lr=0.001 c=1.0
+[RecBole RQ-VAE] initializing codebooks with KMeans
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter46/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[Iter46 Geodesic Sinkhorn] global_step=712/100000 local_updates=178 loss=0.00033107 recon=0.00015443 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=1484/100000 local_updates=371 loss=0.00021527 recon=0.00014686 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=2240/100000 local_updates=560 loss=0.00022767 recon=0.00017445 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=2980/100000 local_updates=745 loss=0.00018827 recon=0.00014897 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=3724/100000 local_updates=931 loss=0.00016091 recon=0.00013243 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=4492/100000 local_updates=1123 loss=0.00023878 recon=0.00015649 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=5256/100000 local_updates=1314 loss=0.00023997 recon=0.00015482 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=6000/100000 local_updates=1500 loss=0.00022334 recon=0.00015537 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=6736/100000 local_updates=1684 loss=0.00020216 recon=0.00015445 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=7472/100000 local_updates=1868 loss=0.00075176 recon=0.00016089 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=8192/100000 local_updates=2048 loss=0.00036427 recon=0.00014992 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=8896/100000 local_updates=2224 loss=0.00038743 recon=0.00014033 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=9620/100000 local_updates=2405 loss=0.00035738 recon=0.00014642 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=10000/100000 loss=0.00062492 recon=0.00015453 lr=1.000e-03 raw_unique=17148/24587 collision=0.302558 codebook_used=[256, 249, 253] assignment_entropy_nats=[1.218942, 4.414342, 5.004453]
+[Iter46 Geodesic Sinkhorn] global_step=10704/100000 local_updates=2676 loss=0.00032280 recon=0.00013522 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=11412/100000 local_updates=2853 loss=0.00022242 recon=0.00012775 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=12096/100000 local_updates=3024 loss=0.00026421 recon=0.00015465 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=12824/100000 local_updates=3206 loss=0.00095044 recon=0.00017769 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=13532/100000 local_updates=3383 loss=0.00026104 recon=0.00013247 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=14236/100000 local_updates=3559 loss=0.00047752 recon=0.00015193 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=14948/100000 local_updates=3737 loss=0.00027173 recon=0.00013479 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=15664/100000 local_updates=3916 loss=0.00042039 recon=0.00015995 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=16404/100000 local_updates=4101 loss=0.00058861 recon=0.00016845 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=17140/100000 local_updates=4285 loss=0.00034877 recon=0.00013580 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=17860/100000 local_updates=4465 loss=0.00015990 recon=0.00012310 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=18608/100000 local_updates=4652 loss=0.00019507 recon=0.00013573 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=19372/100000 local_updates=4843 loss=0.00017921 recon=0.00013224 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=20000/100000 loss=0.00037718 recon=0.00014327 lr=1.000e-03 raw_unique=14762/24587 collision=0.399601 codebook_used=[256, 219, 251] assignment_entropy_nats=[1.612462, 4.949345, 5.137917]
+[Iter46 Geodesic Sinkhorn] global_step=20736/100000 local_updates=5184 loss=0.00122075 recon=0.00014314 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=21508/100000 local_updates=5377 loss=0.00075314 recon=0.00016660 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=22240/100000 local_updates=5560 loss=0.00036472 recon=0.00014577 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=22952/100000 local_updates=5738 loss=0.00021839 recon=0.00013848 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=23660/100000 local_updates=5915 loss=0.00020160 recon=0.00012998 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=24388/100000 local_updates=6097 loss=0.00023045 recon=0.00013874 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=25128/100000 local_updates=6282 loss=0.00105462 recon=0.00018264 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=25872/100000 local_updates=6468 loss=0.00039099 recon=0.00012745 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=26632/100000 local_updates=6658 loss=0.00021406 recon=0.00012912 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=27356/100000 local_updates=6839 loss=0.00016343 recon=0.00012148 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=28120/100000 local_updates=7030 loss=0.00017146 recon=0.00012032 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=28876/100000 local_updates=7219 loss=0.00045096 recon=0.00013151 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=29624/100000 local_updates=7406 loss=0.00020706 recon=0.00013155 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=30000/100000 loss=0.00035420 recon=0.00013550 lr=1.000e-03 raw_unique=11385/24587 collision=0.536950 codebook_used=[256, 223, 246] assignment_entropy_nats=[1.653947, 5.037777, 5.002662]
+[Iter46 Geodesic Sinkhorn] global_step=30760/100000 local_updates=7690 loss=0.00024313 recon=0.00013030 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=31488/100000 local_updates=7872 loss=0.00016318 recon=0.00011642 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=32212/100000 local_updates=8053 loss=0.00041449 recon=0.00012600 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=32916/100000 local_updates=8229 loss=0.00022205 recon=0.00012624 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=33664/100000 local_updates=8416 loss=0.00072442 recon=0.00013119 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=34412/100000 local_updates=8603 loss=0.00068169 recon=0.00013557 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=35148/100000 local_updates=8787 loss=0.00025794 recon=0.00012704 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=35900/100000 local_updates=8975 loss=0.00019233 recon=0.00012014 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=36668/100000 local_updates=9167 loss=0.00016528 recon=0.00011440 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=37420/100000 local_updates=9355 loss=0.00020514 recon=0.00012472 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=38148/100000 local_updates=9537 loss=0.00021784 recon=0.00011091 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=38904/100000 local_updates=9726 loss=0.00047125 recon=0.00014743 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=39672/100000 local_updates=9918 loss=0.00017272 recon=0.00012456 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=40000/100000 loss=0.00030590 recon=0.00012843 lr=1.000e-03 raw_unique=20137/24587 collision=0.180990 codebook_used=[256, 256, 256] assignment_entropy_nats=[0.704138, 3.936496, 4.988673]
+[Iter46 Geodesic Sinkhorn] global_step=40744/100000 local_updates=10186 loss=0.00021733 recon=0.00012595 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=41484/100000 local_updates=10371 loss=0.00017954 recon=0.00011969 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=42228/100000 local_updates=10557 loss=0.00019075 recon=0.00011870 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=42956/100000 local_updates=10739 loss=0.00023532 recon=0.00012067 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=43688/100000 local_updates=10922 loss=0.00070661 recon=0.00015558 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=44408/100000 local_updates=11102 loss=0.00047840 recon=0.00013301 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=45180/100000 local_updates=11295 loss=0.00023940 recon=0.00011827 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=45932/100000 local_updates=11483 loss=0.00020250 recon=0.00011876 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=46680/100000 local_updates=11670 loss=0.00019908 recon=0.00011618 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=47420/100000 local_updates=11855 loss=0.00043948 recon=0.00014170 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=48192/100000 local_updates=12048 loss=0.00027093 recon=0.00012104 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=48952/100000 local_updates=12238 loss=0.00014673 recon=0.00011436 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=49716/100000 local_updates=12429 loss=0.00017500 recon=0.00012301 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=50000/100000 loss=0.00030840 recon=0.00012583 lr=1.000e-03 raw_unique=14753/24587 collision=0.399967 codebook_used=[256, 229, 248] assignment_entropy_nats=[0.807328, 4.490257, 4.94601]
+[Iter46 Geodesic Sinkhorn] global_step=50768/100000 local_updates=12692 loss=0.00019999 recon=0.00011879 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=51552/100000 local_updates=12888 loss=0.00024824 recon=0.00010691 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=52320/100000 local_updates=13080 loss=0.00034715 recon=0.00011804 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=53092/100000 local_updates=13273 loss=0.00027172 recon=0.00011890 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=53864/100000 local_updates=13466 loss=0.00026471 recon=0.00011495 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=54632/100000 local_updates=13658 loss=0.00044687 recon=0.00012768 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=55392/100000 local_updates=13848 loss=0.00031817 recon=0.00013413 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=56144/100000 local_updates=14036 loss=0.00015815 recon=0.00010493 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=56932/100000 local_updates=14233 loss=0.00017209 recon=0.00011369 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=57700/100000 local_updates=14425 loss=0.00083331 recon=0.00015544 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=58472/100000 local_updates=14618 loss=0.00015743 recon=0.00011224 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=59232/100000 local_updates=14808 loss=0.00016460 recon=0.00010114 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=60000/100000 loss=0.00030846 recon=0.00012335 lr=1.000e-03 raw_unique=18878/24587 collision=0.232196 codebook_used=[256, 234, 250] assignment_entropy_nats=[0.958843, 4.528172, 5.317322]
+[Iter46 Geodesic Sinkhorn] global_step=60772/100000 local_updates=15193 loss=0.00019362 recon=0.00010997 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=61536/100000 local_updates=15384 loss=0.00021294 recon=0.00011750 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=62308/100000 local_updates=15577 loss=0.00064889 recon=0.00014374 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=63096/100000 local_updates=15774 loss=0.00048626 recon=0.00013263 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=63868/100000 local_updates=15967 loss=0.00018584 recon=0.00011678 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=64628/100000 local_updates=16157 loss=0.00014482 recon=0.00010746 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=65404/100000 local_updates=16351 loss=0.00016185 recon=0.00011173 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=66192/100000 local_updates=16548 loss=0.00013677 recon=0.00009612 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=66948/100000 local_updates=16737 loss=0.00016214 recon=0.00011596 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=67724/100000 local_updates=16931 loss=0.00021865 recon=0.00012621 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=68500/100000 local_updates=17125 loss=0.00038919 recon=0.00014429 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=69276/100000 local_updates=17319 loss=0.00018417 recon=0.00011415 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=70000/100000 loss=0.00029027 recon=0.00012133 lr=1.000e-03 raw_unique=17259/24587 collision=0.298044 codebook_used=[256, 221, 245] assignment_entropy_nats=[0.992331, 4.627554, 5.279448]
+[Iter46 Geodesic Sinkhorn] global_step=70760/100000 local_updates=17690 loss=0.00022824 recon=0.00011914 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=71548/100000 local_updates=17887 loss=0.00016828 recon=0.00010926 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=72324/100000 local_updates=18081 loss=0.00132359 recon=0.00012225 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=73100/100000 local_updates=18275 loss=0.00046010 recon=0.00012177 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=73860/100000 local_updates=18465 loss=0.00016596 recon=0.00010973 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=74648/100000 local_updates=18662 loss=0.00015060 recon=0.00010619 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=75424/100000 local_updates=18856 loss=0.00025477 recon=0.00011071 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=76196/100000 local_updates=19049 loss=0.00021106 recon=0.00011571 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=76968/100000 local_updates=19242 loss=0.00026704 recon=0.00011695 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=77756/100000 local_updates=19439 loss=0.00017083 recon=0.00011210 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=78528/100000 local_updates=19632 loss=0.00013830 recon=0.00010610 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=79288/100000 local_updates=19822 loss=0.00034289 recon=0.00012454 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=80000/100000 loss=0.00028744 recon=0.00011950 lr=1.000e-03 raw_unique=6705/24587 collision=0.727295 codebook_used=[252, 201, 219] assignment_entropy_nats=[2.504075, 5.097108, 4.958013]
+[Iter46 Geodesic Sinkhorn] global_step=80788/100000 local_updates=20197 loss=0.00018638 recon=0.00011823 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=81564/100000 local_updates=20391 loss=0.00021557 recon=0.00011461 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=82324/100000 local_updates=20581 loss=0.00032616 recon=0.00011851 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=83100/100000 local_updates=20775 loss=0.00028447 recon=0.00010899 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=83876/100000 local_updates=20969 loss=0.00031436 recon=0.00013441 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=84652/100000 local_updates=21163 loss=0.00040227 recon=0.00012540 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=85412/100000 local_updates=21353 loss=0.00016912 recon=0.00011915 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=86204/100000 local_updates=21551 loss=0.00017965 recon=0.00011255 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=86980/100000 local_updates=21745 loss=0.00019362 recon=0.00010761 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=87756/100000 local_updates=21939 loss=0.00054273 recon=0.00014787 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=88512/100000 local_updates=22128 loss=0.00029086 recon=0.00012003 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=89300/100000 local_updates=22325 loss=0.00032804 recon=0.00011387 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=90000/100000 loss=0.00032630 recon=0.00012265 lr=1.000e-03 raw_unique=17719/24587 collision=0.279335 codebook_used=[256, 207, 228] assignment_entropy_nats=[0.938779, 4.62457, 5.263813]
+[Iter46 Geodesic Sinkhorn] global_step=90772/100000 local_updates=22693 loss=0.00017716 recon=0.00012067 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=91536/100000 local_updates=22884 loss=0.00017227 recon=0.00011110 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=92328/100000 local_updates=23082 loss=0.00017228 recon=0.00011366 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=93104/100000 local_updates=23276 loss=0.00032643 recon=0.00011907 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=93864/100000 local_updates=23466 loss=0.00040717 recon=0.00014637 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=94640/100000 local_updates=23660 loss=0.00023221 recon=0.00011927 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=95432/100000 local_updates=23858 loss=0.00019940 recon=0.00011451 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=96208/100000 local_updates=24052 loss=0.00029136 recon=0.00011789 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=96972/100000 local_updates=24243 loss=0.00026538 recon=0.00012441 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=97748/100000 local_updates=24437 loss=0.00027991 recon=0.00012659 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=98524/100000 local_updates=24631 loss=0.00030917 recon=0.00011913 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=99300/100000 local_updates=24825 loss=0.00037273 recon=0.00014111 lr=1.000e-03
+[Iter46 Geodesic Sinkhorn] global_step=100000/100000 loss=0.00029261 recon=0.00011880 lr=1.000e-03 raw_unique=17652/24587 collision=0.282060 codebook_used=[256, 232, 254] assignment_entropy_nats=[0.576346, 3.967757, 4.879722]
+[Iter46 Geodesic Sinkhorn] fixed_c=1 global_steps=100000 local_optimizer_steps=25000 raw_shape=(24587, 3) sid_shape=(24587, 4) unique=24587 -> /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter46/dataset/Instruments/sids_for_hgrec.npy
