@@ -1,0 +1,44 @@
+# Full RQ-VAE-Recommender training on Amazon Beauty
+# 默认 400000 iterations (TIGER paper standard), fp16, batch=640
+# 每 5000 iter eval + save ckpt
+
+import data.processed
+import modules.quantize
+
+# === 全量训练 ===
+train.iterations = 400000
+train.learning_rate = 0.001
+train.weight_decay = 0.0001
+train.batch_size = 640
+
+# === 模型 ===
+train.vae_input_dim = 768
+train.vae_n_cat_feats = 0
+train.vae_hidden_dims = [512, 256, 128]
+train.vae_embed_dim = 32
+train.vae_codebook_size = 256
+train.vae_codebook_normalize = False
+train.vae_sim_vq = False
+train.vae_n_layers = 3
+train.vae_codebook_mode = %modules.quantize.QuantizeForwardMode.STE
+train.commitment_weight = 0.25
+train.use_kmeans_init = True
+
+# === 数据 ===
+train.dataset_folder = "dataset/amazon"
+train.dataset = %data.processed.RecDataset.AMAZON
+train.dataset_split = "beauty"
+train.force_dataset_process = False
+
+# === 训练节奏 ===
+train.eval_every = 5000
+train.save_model_every = 5000
+train.do_eval = True
+
+# === 输出 ===
+train.save_dir_root = "out/rqvae/amazon/"
+train.wandb_logging = False
+
+# === fp16 加速 ===
+train.amp = True
+train.mixed_precision_type = "fp16"
