@@ -1,0 +1,168 @@
+W0928 19:58:35.668351 1643191 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W0928 19:58:35.668351 1643191 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W0928 19:58:35.668351 1643191 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0928 19:58:35.668351 1643191 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=4
+[Strict GFC] max_global_steps=100000 eval_interval_steps=10000 batch_size_per_rank=1024 total_batch=4096 lr=0.001 c=1.0
+[RecBole RQ-VAE] initializing codebooks with KMeans
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE_iter45/model/layers.py:64: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  dot = x_point @ y_point.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[Strict GFC] global_step=816/100000 local_updates=204 loss=0.00018833 recon=0.00017425 lr=1.000e-03
+[Strict GFC] global_step=1708/100000 local_updates=427 loss=0.00017370 recon=0.00016240 lr=1.000e-03
+[Strict GFC] global_step=2588/100000 local_updates=647 loss=0.00022611 recon=0.00016315 lr=1.000e-03
+[Strict GFC] global_step=3456/100000 local_updates=864 loss=0.00015315 recon=0.00014504 lr=1.000e-03
+[Strict GFC] global_step=4380/100000 local_updates=1095 loss=0.00019498 recon=0.00017794 lr=1.000e-03
+[Strict GFC] global_step=5284/100000 local_updates=1321 loss=0.00045750 recon=0.00017593 lr=1.000e-03
+[Strict GFC] global_step=6168/100000 local_updates=1542 loss=0.00035860 recon=0.00014397 lr=1.000e-03
+[Strict GFC] global_step=7076/100000 local_updates=1769 loss=0.00027681 recon=0.00016514 lr=1.000e-03
+[Strict GFC] global_step=7968/100000 local_updates=1992 loss=0.00024805 recon=0.00016094 lr=1.000e-03
+[Strict GFC] global_step=8836/100000 local_updates=2209 loss=0.00057984 recon=0.00017739 lr=1.000e-03
+[Strict GFC] global_step=9716/100000 local_updates=2429 loss=0.00057107 recon=0.00018990 lr=1.000e-03
+[Strict GFC] global_step=10000/100000 loss=0.00030531 recon=0.00017091 lr=1.000e-03 raw_unique=95/24587 collision=0.996136
+[Strict GFC] global_step=10876/100000 local_updates=2719 loss=0.00048368 recon=0.00016223 lr=1.000e-03
+[Strict GFC] global_step=11744/100000 local_updates=2936 loss=0.00032291 recon=0.00016394 lr=1.000e-03
+[Strict GFC] global_step=12644/100000 local_updates=3161 loss=0.00026385 recon=0.00017432 lr=1.000e-03
+[Strict GFC] global_step=13540/100000 local_updates=3385 loss=0.00049808 recon=0.00017949 lr=1.000e-03
+[Strict GFC] global_step=14444/100000 local_updates=3611 loss=0.00037335 recon=0.00015600 lr=1.000e-03
+[Strict GFC] global_step=15336/100000 local_updates=3834 loss=0.00040021 recon=0.00015767 lr=1.000e-03
+[Strict GFC] global_step=16264/100000 local_updates=4066 loss=0.00034287 recon=0.00016354 lr=1.000e-03
+[Strict GFC] global_step=17148/100000 local_updates=4287 loss=0.00052425 recon=0.00016608 lr=1.000e-03
+[Strict GFC] global_step=18024/100000 local_updates=4506 loss=0.00026859 recon=0.00015376 lr=1.000e-03
+[Strict GFC] global_step=18928/100000 local_updates=4732 loss=0.00023071 recon=0.00015567 lr=1.000e-03
+[Strict GFC] global_step=19772/100000 local_updates=4943 loss=0.00029377 recon=0.00015699 lr=1.000e-03
+[Strict GFC] global_step=20000/100000 loss=0.00035720 recon=0.00016622 lr=1.000e-03 raw_unique=161/24587 collision=0.993452
+[Strict GFC] global_step=20852/100000 local_updates=5213 loss=0.00033231 recon=0.00015715 lr=1.000e-03
+[Strict GFC] global_step=21776/100000 local_updates=5444 loss=0.00027349 recon=0.00014664 lr=1.000e-03
+[Strict GFC] global_step=22668/100000 local_updates=5667 loss=0.00031971 recon=0.00017438 lr=1.000e-03
+[Strict GFC] global_step=23536/100000 local_updates=5884 loss=0.00042399 recon=0.00016638 lr=1.000e-03
+[Strict GFC] global_step=24424/100000 local_updates=6106 loss=0.00029568 recon=0.00017541 lr=1.000e-03
+[Strict GFC] global_step=25316/100000 local_updates=6329 loss=0.00032688 recon=0.00017514 lr=1.000e-03
+[Strict GFC] global_step=26204/100000 local_updates=6551 loss=0.00029239 recon=0.00016155 lr=1.000e-03
+[Strict GFC] global_step=27052/100000 local_updates=6763 loss=0.00019253 recon=0.00016262 lr=1.000e-03
+[Strict GFC] global_step=27940/100000 local_updates=6985 loss=0.00021589 recon=0.00014009 lr=1.000e-03
+[Strict GFC] global_step=28804/100000 local_updates=7201 loss=0.00031408 recon=0.00017809 lr=1.000e-03
+[Strict GFC] global_step=29672/100000 local_updates=7418 loss=0.00022377 recon=0.00015244 lr=1.000e-03
+[Strict GFC] global_step=30000/100000 loss=0.00029172 recon=0.00016003 lr=1.000e-03 raw_unique=383/24587 collision=0.984423
+[Strict GFC] global_step=30920/100000 local_updates=7730 loss=0.00022344 recon=0.00016417 lr=1.000e-03
+[Strict GFC] global_step=31804/100000 local_updates=7951 loss=0.00019854 recon=0.00014531 lr=1.000e-03
+[Strict GFC] global_step=32664/100000 local_updates=8166 loss=0.00016367 recon=0.00014303 lr=1.000e-03
+[Strict GFC] global_step=33568/100000 local_updates=8392 loss=0.00017211 recon=0.00015148 lr=1.000e-03
+[Strict GFC] global_step=34444/100000 local_updates=8611 loss=0.00016570 recon=0.00014931 lr=1.000e-03
+[Strict GFC] global_step=35312/100000 local_updates=8828 loss=0.00017864 recon=0.00015538 lr=1.000e-03
+[Strict GFC] global_step=36196/100000 local_updates=9049 loss=0.00015481 recon=0.00013535 lr=1.000e-03
+[Strict GFC] global_step=37064/100000 local_updates=9266 loss=0.00014952 recon=0.00013390 lr=1.000e-03
+[Strict GFC] global_step=37948/100000 local_updates=9487 loss=0.00015111 recon=0.00013134 lr=1.000e-03
+[Strict GFC] global_step=38816/100000 local_updates=9704 loss=0.00015843 recon=0.00013790 lr=1.000e-03
+[Strict GFC] global_step=39712/100000 local_updates=9928 loss=0.00017371 recon=0.00015057 lr=1.000e-03
+[Strict GFC] global_step=40000/100000 loss=0.00017879 recon=0.00014345 lr=1.000e-03 raw_unique=171/24587 collision=0.993045
+[Strict GFC] global_step=40908/100000 local_updates=10227 loss=0.00035199 recon=0.00017216 lr=1.000e-03
+[Strict GFC] global_step=41796/100000 local_updates=10449 loss=0.00022915 recon=0.00015718 lr=1.000e-03
+[Strict GFC] global_step=42724/100000 local_updates=10681 loss=0.00031844 recon=0.00016334 lr=1.000e-03
+[Strict GFC] global_step=43584/100000 local_updates=10896 loss=0.00031269 recon=0.00017584 lr=1.000e-03
+[Strict GFC] global_step=44412/100000 local_updates=11103 loss=0.00020237 recon=0.00015507 lr=1.000e-03
+[Strict GFC] global_step=45308/100000 local_updates=11327 loss=0.00016917 recon=0.00014400 lr=1.000e-03
+[Strict GFC] global_step=46192/100000 local_updates=11548 loss=0.00019907 recon=0.00014950 lr=1.000e-03
+[Strict GFC] global_step=47048/100000 local_updates=11762 loss=0.00017744 recon=0.00015664 lr=1.000e-03
+[Strict GFC] global_step=47932/100000 local_updates=11983 loss=0.00016734 recon=0.00014275 lr=1.000e-03
+[Strict GFC] global_step=48812/100000 local_updates=12203 loss=0.00014609 recon=0.00012683 lr=1.000e-03
+[Strict GFC] global_step=49692/100000 local_updates=12423 loss=0.00017086 recon=0.00014517 lr=1.000e-03
+[Strict GFC] global_step=50000/100000 loss=0.00023591 recon=0.00014841 lr=1.000e-03 raw_unique=642/24587 collision=0.973889
+[Strict GFC] global_step=50884/100000 local_updates=12721 loss=0.00022187 recon=0.00013846 lr=1.000e-03
+[Strict GFC] global_step=51772/100000 local_updates=12943 loss=0.00025741 recon=0.00015670 lr=1.000e-03
+[Strict GFC] global_step=52652/100000 local_updates=13163 loss=0.00025974 recon=0.00015920 lr=1.000e-03
+[Strict GFC] global_step=53516/100000 local_updates=13379 loss=0.00044359 recon=0.00017811 lr=1.000e-03
+[Strict GFC] global_step=54420/100000 local_updates=13605 loss=0.00021778 recon=0.00014104 lr=1.000e-03
+[Strict GFC] global_step=55288/100000 local_updates=13822 loss=0.00024044 recon=0.00014959 lr=1.000e-03
+[Strict GFC] global_step=56152/100000 local_updates=14038 loss=0.00041558 recon=0.00015701 lr=1.000e-03
+[Strict GFC] global_step=57068/100000 local_updates=14267 loss=0.00032120 recon=0.00015662 lr=1.000e-03
+[Strict GFC] global_step=57976/100000 local_updates=14494 loss=0.00024304 recon=0.00014346 lr=1.000e-03
+[Strict GFC] global_step=58868/100000 local_updates=14717 loss=0.00024590 recon=0.00014084 lr=1.000e-03
+[Strict GFC] global_step=59780/100000 local_updates=14945 loss=0.00020313 recon=0.00013017 lr=1.000e-03
+[Strict GFC] global_step=60000/100000 loss=0.00032505 recon=0.00015476 lr=1.000e-03 raw_unique=564/24587 collision=0.977061
+[Strict GFC] global_step=60904/100000 local_updates=15226 loss=0.00064440 recon=0.00017404 lr=1.000e-03
+[Strict GFC] global_step=61784/100000 local_updates=15446 loss=0.00037838 recon=0.00014766 lr=1.000e-03
+[Strict GFC] global_step=62676/100000 local_updates=15669 loss=0.00039241 recon=0.00015156 lr=1.000e-03
+[Strict GFC] global_step=63580/100000 local_updates=15895 loss=0.00035449 recon=0.00014754 lr=1.000e-03
+[Strict GFC] global_step=64472/100000 local_updates=16118 loss=0.00050943 recon=0.00015916 lr=1.000e-03
+[Strict GFC] global_step=65372/100000 local_updates=16343 loss=0.00038779 recon=0.00015109 lr=1.000e-03
+[Strict GFC] global_step=66284/100000 local_updates=16571 loss=0.00035995 recon=0.00013927 lr=1.000e-03
+[Strict GFC] global_step=67192/100000 local_updates=16798 loss=0.00028356 recon=0.00015896 lr=1.000e-03
+[Strict GFC] global_step=68088/100000 local_updates=17022 loss=0.00057210 recon=0.00016203 lr=1.000e-03
+[Strict GFC] global_step=68988/100000 local_updates=17247 loss=0.00035112 recon=0.00016233 lr=1.000e-03
+[Strict GFC] global_step=69852/100000 local_updates=17463 loss=0.00070020 recon=0.00017488 lr=1.000e-03
+[Strict GFC] global_step=70000/100000 loss=0.00040154 recon=0.00015398 lr=1.000e-03 raw_unique=257/24587 collision=0.989547
+[Strict GFC] global_step=70868/100000 local_updates=17717 loss=0.00034120 recon=0.00015213 lr=1.000e-03
+[Strict GFC] global_step=71764/100000 local_updates=17941 loss=0.00031921 recon=0.00017946 lr=1.000e-03
+[Strict GFC] global_step=72644/100000 local_updates=18161 loss=0.00042454 recon=0.00015347 lr=1.000e-03
+[Strict GFC] global_step=73504/100000 local_updates=18376 loss=0.00045330 recon=0.00016212 lr=1.000e-03
+[Strict GFC] global_step=74380/100000 local_updates=18595 loss=0.00032554 recon=0.00014941 lr=1.000e-03
+[Strict GFC] global_step=75264/100000 local_updates=18816 loss=0.00028471 recon=0.00014973 lr=1.000e-03
+[Strict GFC] global_step=76148/100000 local_updates=19037 loss=0.00049493 recon=0.00015705 lr=1.000e-03
+[Strict GFC] global_step=77036/100000 local_updates=19259 loss=0.00059296 recon=0.00018214 lr=1.000e-03
+[Strict GFC] global_step=77944/100000 local_updates=19486 loss=0.00073229 recon=0.00015824 lr=1.000e-03
+[Strict GFC] global_step=78856/100000 local_updates=19714 loss=0.00028753 recon=0.00014394 lr=1.000e-03
+[Strict GFC] global_step=79748/100000 local_updates=19937 loss=0.00027613 recon=0.00014809 lr=1.000e-03
+[Strict GFC] global_step=80000/100000 loss=0.00042163 recon=0.00015137 lr=1.000e-03 raw_unique=421/24587 collision=0.982877
+[Strict GFC] global_step=80908/100000 local_updates=20227 loss=0.00025771 recon=0.00015459 lr=1.000e-03
+[Strict GFC] global_step=81804/100000 local_updates=20451 loss=0.00041555 recon=0.00013974 lr=1.000e-03
+[Strict GFC] global_step=82680/100000 local_updates=20670 loss=0.00027634 recon=0.00014466 lr=1.000e-03
+[Strict GFC] global_step=83580/100000 local_updates=20895 loss=0.00059714 recon=0.00015962 lr=1.000e-03
+[Strict GFC] global_step=84460/100000 local_updates=21115 loss=0.00025541 recon=0.00014272 lr=1.000e-03
+[Strict GFC] global_step=85312/100000 local_updates=21328 loss=0.00029525 recon=0.00015393 lr=1.000e-03
+[Strict GFC] global_step=86196/100000 local_updates=21549 loss=0.00028495 recon=0.00013606 lr=1.000e-03
+[Strict GFC] global_step=87100/100000 local_updates=21775 loss=0.00034562 recon=0.00015434 lr=1.000e-03
+[Strict GFC] global_step=87984/100000 local_updates=21996 loss=0.00024013 recon=0.00013319 lr=1.000e-03
+[Strict GFC] global_step=88876/100000 local_updates=22219 loss=0.00041487 recon=0.00014971 lr=1.000e-03
+[Strict GFC] global_step=89756/100000 local_updates=22439 loss=0.00036193 recon=0.00014776 lr=1.000e-03
+[Strict GFC] global_step=90000/100000 loss=0.00037692 recon=0.00014966 lr=1.000e-03 raw_unique=381/24587 collision=0.984504
+[Strict GFC] global_step=90864/100000 local_updates=22716 loss=0.00035427 recon=0.00015581 lr=1.000e-03
+[Strict GFC] global_step=91764/100000 local_updates=22941 loss=0.00054427 recon=0.00014761 lr=1.000e-03
+[Strict GFC] global_step=92660/100000 local_updates=23165 loss=0.00039112 recon=0.00015827 lr=1.000e-03
+[Strict GFC] global_step=93540/100000 local_updates=23385 loss=0.00054277 recon=0.00013649 lr=1.000e-03
+[Strict GFC] global_step=94396/100000 local_updates=23599 loss=0.00043545 recon=0.00015262 lr=1.000e-03
+[Strict GFC] global_step=95308/100000 local_updates=23827 loss=0.00043143 recon=0.00014907 lr=1.000e-03
+[Strict GFC] global_step=96212/100000 local_updates=24053 loss=0.00031134 recon=0.00015043 lr=1.000e-03
+[Strict GFC] global_step=97084/100000 local_updates=24271 loss=0.00058943 recon=0.00017356 lr=1.000e-03
+[Strict GFC] global_step=97992/100000 local_updates=24498 loss=0.00066346 recon=0.00015342 lr=1.000e-03
+[Strict GFC] global_step=98900/100000 local_updates=24725 loss=0.00055285 recon=0.00015654 lr=1.000e-03
+[Strict GFC] global_step=99796/100000 local_updates=24949 loss=0.00040011 recon=0.00014014 lr=1.000e-03
+[Strict GFC] global_step=100000/100000 loss=0.00041999 recon=0.00014979 lr=1.000e-03 raw_unique=289/24587 collision=0.988246
+[Strict GFC] fixed_c=1 global_steps=100000 local_optimizer_steps=25000 raw_shape=(24587, 3) sid_shape=(24587, 4) unique=24587 -> /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter45/dataset/Instruments/sids_for_hgrec.npy
