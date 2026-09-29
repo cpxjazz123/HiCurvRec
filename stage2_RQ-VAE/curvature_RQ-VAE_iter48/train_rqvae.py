@@ -86,16 +86,20 @@ _LAUNCHER = {
 }
 
 def configure_run(mode: str, launcher_script: str) -> None:
-    global RUN_MODE, METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS
-    if mode not in {"A", "CURRICULUM"}:
+    global RUN_MODE, METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
+    supported_modes = {
+        "A", "CURRICULUM", "BASELINE", "CURVATURE_ONLY", "BEHAVIOR_ONLY"
+    }
+    if mode not in supported_modes:
         raise ValueError(f"Unsupported Iter48 run mode: {mode}")
     RUN_MODE = mode
     LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
+    MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
     if mode == "A":
         SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "A"}
         METRICS_PATH = LOG_DIR / "training_metrics_A.jsonl"
         _LAUNCHER["log"] = str(LOG_DIR / "train_A_migrated.log")
-    else:
+    elif mode == "CURRICULUM":
         SNAPSHOT_STEPS = {
             20_000: "B",
             40_000: "C",
@@ -104,6 +108,19 @@ def configure_run(mode: str, launcher_script: str) -> None:
         }
         METRICS_PATH = LOG_DIR / "training_metrics_curriculum.jsonl"
         _LAUNCHER["log"] = str(LOG_DIR / "train_curriculum_migrated.log")
+    else:
+        versions = {
+            "BASELINE": "Baseline",
+            "CURVATURE_ONLY": "CurvatureOnly",
+            "BEHAVIOR_ONLY": "BehaviorOnly",
+        }
+        version = versions[mode]
+        MAX_GLOBAL_STEPS = 40_000
+        SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: version}
+        METRICS_PATH = LOG_DIR / f"training_metrics_{version}.jsonl"
+        _LAUNCHER["log"] = str(
+            LOG_DIR / f"train_{version.lower()}_migrated.log"
+        )
     _LAUNCHER["script"] = os.path.abspath(launcher_script)
 
 
@@ -330,9 +347,14 @@ def _tokenizer_config() -> SimpleNamespace:
         curvature_reg_weight=CURVATURE_REG_WEIGHT,
         behavior_loss_weight=BEHAVIOR_LOSS_WEIGHT,
         behavior_temperature=BEHAVIOR_TEMPERATURE,
-        curriculum_enabled=RUN_MODE == "CURRICULUM",
-        fixed_curvature=1.0 if RUN_MODE == "A" else C_CYCLIC_MIN,
+        curriculum_enabled=RUN_MODE in {"CURRICULUM", "CURVATURE_ONLY"},
+        behavior_curriculum_enabled=RUN_MODE in {"CURRICULUM", "BEHAVIOR_ONLY"},
+        fixed_curvature=(
+            1.0 if RUN_MODE in {"A", "BASELINE", "BEHAVIOR_ONLY"}
+            else C_CYCLIC_MIN
+        ),
     )
+
 
 
 def build_curvature_conditioned_adamw(model):
@@ -489,7 +511,7 @@ def main() -> None:
 
     if OPTIMIZER.lower() != "adamw":
         raise ValueError("Iter48 requires AdamW.")
-    if RUN_MODE == "CURRICULUM":
+    if RUN_MODE in {"CURRICULUM", "CURVATURE_ONLY"}:
         optimizer, initial_curvatures, initial_curvature_u, layer_beta2 = (
             build_curvature_conditioned_adamw(model)
         )
