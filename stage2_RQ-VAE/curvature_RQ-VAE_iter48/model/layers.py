@@ -162,6 +162,7 @@ class VQLayer(nn.Module):
         c_cyclic_period: int = 100_000,
         c_layer_norm: float = 1.0,
         curriculum_enabled: bool = False,
+        behavior_curriculum_enabled: bool | None = None,
         fixed_curvature: float = 1.0,
     ):
         super().__init__()
@@ -184,6 +185,11 @@ class VQLayer(nn.Module):
         self.c_cyclic_period = int(c_cyclic_period)
         self.c_layer_norm = float(c_layer_norm)
         self.curriculum_enabled = bool(curriculum_enabled)
+        self.behavior_curriculum_enabled = (
+            self.curriculum_enabled
+            if behavior_curriculum_enabled is None
+            else bool(behavior_curriculum_enabled)
+        )
         self.fixed_curvature = float(fixed_curvature)
         self._curriculum_step = 0
         initial_scale = min(max(self.c_layer_norm, 1e-4), 1.0 - 1e-4)
@@ -213,9 +219,9 @@ class VQLayer(nn.Module):
         return self._ramp(self._curriculum_step, 20_000, 40_000)
 
     def get_behavior_weight(self) -> float:
-        if not self.curriculum_enabled:
+        if not self.behavior_curriculum_enabled:
             return 0.0
-        return 0.20 * self.get_curvature_alpha()
+        return 0.20 * self._ramp(self._curriculum_step, 20_000, 40_000)
 
     def get_curvature(self) -> torch.Tensor:
         if not self.curriculum_enabled:
@@ -479,6 +485,9 @@ class RQLayer(nn.Module):
         self.behavior_loss_weight = float(config.behavior_loss_weight)
         self.behavior_temperature = float(config.behavior_temperature)
         self.curriculum_enabled = bool(config.curriculum_enabled)
+        self.behavior_curriculum_enabled = bool(
+            getattr(config, "behavior_curriculum_enabled", self.curriculum_enabled)
+        )
         self.fixed_curvature = float(config.fixed_curvature)
         if self.vq_type != "vq":
             raise ValueError("Iter48 requires TIGER's trainable VQ codebooks")
@@ -494,6 +503,7 @@ class RQLayer(nn.Module):
                     c_cyclic_max=self.c_cyclic_max,
                     c_cyclic_period=self.c_cyclic_period,
                     c_layer_norm=layer_norms[level],
+                    behavior_curriculum_enabled=self.behavior_curriculum_enabled,
                     curriculum_enabled=self.curriculum_enabled,
                     fixed_curvature=self.fixed_curvature,
                 )

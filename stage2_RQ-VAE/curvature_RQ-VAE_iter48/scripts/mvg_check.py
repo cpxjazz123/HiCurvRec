@@ -288,6 +288,126 @@ def main():
             f"Level {level} epsilon violated its floor",
         )
 
+    side_arms = (
+        ("BASELINE", False, False, 1.0),
+        ("CURVATURE_ONLY", True, False, training.C_CYCLIC_MIN),
+        ("BEHAVIOR_ONLY", False, True, 1.0),
+    )
+    for mode, curvature_enabled, behavior_enabled, fixed_curvature in side_arms:
+        training.set_seed(42)
+        arm = initialize_model(mode, all_embeddings, device)
+        checkpoint_round_trip(arm, device, mode.lower())
+        layers = arm.rq.vq_layers
+        require(training.MAX_GLOBAL_STEPS == 40_000, f"{mode} step budget changed")
+        require(
+            all(layer.curriculum_enabled is curvature_enabled for layer in layers)
+            and all(
+                layer.behavior_curriculum_enabled is behavior_enabled
+                for layer in layers
+            ),
+            f"{mode} mechanism toggles do not match the registered arm",
+        )
+        require(
+            [layer.sk_epsilon for layer in layers] == [0.003] * 3
+            and [layer.sk_iters for layer in layers] == [50] * 3,
+            f"{mode} Sinkhorn settings changed",
+        )
+        arm.set_curriculum_step(10_000)
+        require(
+            torch.allclose(
+                arm.get_curvatures(),
+                torch.full((3,), fixed_curvature, device=device),
+                atol=1e-7,
+            ),
+            f"{mode} initial curvature changed",
+        )
+        require(
+            arm.rq.get_effective_epsilons() == [0.003] * 3,
+            f"{mode} must use fixed Sinkhorn epsilon",
+        )
+        arm.set_curriculum_step(30_000)
+        require(
+            abs(
+                arm.rq.get_curriculum_alpha()
+                - (0.5 if mode == "CURVATURE_ONLY" else 0.0)
+            ) < 1e-12,
+            f"{mode} curvature schedule is not isolated",
+        )
+        expected_behavior_weight = 0.1 if mode == "BEHAVIOR_ONLY" else 0.0
+        require(
+            abs(arm.rq.get_behavior_weight() - expected_behavior_weight) < 1e-12,
+            f"{mode} behavior schedule is not isolated",
+        )
+        current_curvatures = arm.get_curvatures().detach()
+        if mode == "CURVATURE_ONLY":
+            require(
+                torch.all(current_curvatures > training.C_CYCLIC_MIN),
+                "Curvature-only arm failed to activate the C curvature ramp",
+            )
+            require_nonzero_finite_gradient(
+                arm.rq.curvature_regularization(),
+                [layer.c_layer_scale for layer in layers],
+                "curvature-only regularization",
+            )
+        else:
+            require(
+                torch.allclose(
+                    current_curvatures,
+                    torch.ones_like(current_curvatures),
+                    atol=1e-7,
+                ),
+                f"{mode} must keep baseline curvature fixed",
+            )
+
+        reconstructed, quant_loss, _, _, behavior_loss = arm(
+            paired_batch, behavior_ids=(source_ids, target_ids)
+        )
+        total_loss, _ = arm.compute_loss(
+            paired_batch, reconstructed, quant_loss, behavior_loss
+        )
+        require(
+            total_loss.requires_grad and total_loss.grad_fn is not None,
+            f"{mode} total loss is detached",
+        )
+        require(
+            torch.isfinite(total_loss) and torch.isfinite(behavior_loss),
+            f"{mode} loss is non-finite",
+        )
+        trainable_parameters = [
+            parameter for parameter in arm.parameters() if parameter.requires_grad
+        ]
+        require_nonzero_finite_gradient(
+            quant_loss, trainable_parameters, f"{mode} quantization loss"
+        )
+        if mode == "BEHAVIOR_ONLY":
+            require(
+                behavior_loss.item() > 0.0,
+                "Behavior-only arm did not compute its active behavior loss",
+            )
+            require_nonzero_finite_gradient(
+                behavior_loss, trainable_parameters, "behavior-only contrastive loss"
+            )
+            require(
+                all(not layer.c_layer_scale.requires_grad for layer in layers),
+                "Behavior-only arm unexpectedly trains curvature scales",
+            )
+        else:
+            require(
+                behavior_loss.item() == 0.0,
+                f"{mode} behavior loss must remain zero",
+            )
+        total_loss.backward()
+        require(
+            any(
+                parameter.grad is not None
+                and torch.isfinite(parameter.grad).all()
+                and torch.count_nonzero(parameter.grad).item() > 0
+                for parameter in arm.parameters()
+            ),
+            f"{mode} total-loss backward produced no finite nonzero gradient",
+        )
+
+
 
     tangent_x = torch.tensor([[0.2, -0.1], [0.35, 0.05]], device=device)
     tangent_q = torch.tensor(
@@ -324,8 +444,8 @@ def main():
         )
 
     print(
-        "MVG PASS: A fixed-c baseline; B-E curvature, behavior, and epsilon schedules; "
-        "quantization/contrastive/curvature gradients; stable Sinkhorn; checkpoint reload"
+        "MVG PASS: matched baseline, curvature-only, behavior-only, and Iter48-C "
+        "schedule/gradient checks; stable Sinkhorn; checkpoint reload"
     )
 
 
