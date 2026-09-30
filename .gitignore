@@ -872,3 +872,21 @@ results/stage3_T5Train/curvature_RQ-VAE_iter63/logs/tensorboard/
 results/stage3_T5Train/curvature_RQ-VAE_iter63/logs/wait_*.log
 results/stage3_T5Train/curvature_RQ-VAE_iter63/logs/_stage3_run*.log
 !results/stage3_T5Train/curvature_RQ-VAE_iter63/logs/_stage3_launcher.log
+
+# Iter64 Iter46 40k SID evaluation outputs are required deliverables.
+!results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/**
+!results/stage3_T5Train/curvature_RQ-VAE_iter64/ckpt/
+!results/stage3_T5Train/curvature_RQ-VAE_iter64/**
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/**/__pycache__/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/dataset/Instruments/item_emb.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/logs/_ddp_sync/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/logs/tensorboard/
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/logs/wait_*.log
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter64/logs/_stage3_run*.log
+results/stage3_T5Train/curvature_RQ-VAE_iter64/**/__pycache__/
+results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/*/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/tensorboard/
+results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/wait_*.log
+results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/_stage3_run*.log
+!results/stage3_T5Train/curvature_RQ-VAE_iter64/logs/_stage3_launcher.log
