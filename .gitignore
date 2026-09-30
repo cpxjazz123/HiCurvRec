@@ -374,6 +374,17 @@ results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/_ddp_sync/
 results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/tensorboard/
 results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/wait_*.log
 results/stage3_T5Train/curvature_RQ-VAE_iter*/logs/_stage3_run*.log
+# Iter62 topology-aware hyperbolic outputs are required deliverables.
+!results/stage2_RQ-VAE/curvature_RQ-VAE_iter62/**
+!results/stage3_T5Train/curvature_RQ-VAE_iter62/ckpt/
+!results/stage3_T5Train/curvature_RQ-VAE_iter62/**
+results/stage2_RQ-VAE/curvature_RQ-VAE_iter62/**/__pycache__/
+results/stage3_T5Train/curvature_RQ-VAE_iter62/**/__pycache__/
+results/stage3_T5Train/curvature_RQ-VAE_iter62/logs/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE_iter62/logs/*/_ddp_sync/
+results/stage3_T5Train/curvature_RQ-VAE_iter62/logs/tensorboard/
+results/stage3_T5Train/curvature_RQ-VAE_iter62/logs/wait_*.log
+results/stage3_T5Train/curvature_RQ-VAE_iter62/logs/_stage3_run*.log
 
 
 # Iter31 outputs are mandatory Stage2/Stage3 deliverables under CLAUDE.md §13.
