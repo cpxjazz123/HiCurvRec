@@ -202,7 +202,9 @@ class VQLayer(nn.Module):
         epsilon: float = 0.003,
         iterations: int = 50,
     ) -> torch.Tensor:
-        log_q = -distances / epsilon
+        # float64 keeps the alternating normalization from losing precision on
+        # small buckets, where epsilon=0.003 amplifies the distances ~333x.
+        log_q = -distances.double() / float(epsilon)
         batch_size, codebook_size = log_q.shape
         log_q = log_q - torch.logsumexp(log_q, dim=(0, 1), keepdim=True)
         log_codebook_size = math.log(codebook_size)
@@ -228,34 +230,140 @@ class VQLayer(nn.Module):
             raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
         return assignments
 
-    def _indices(self, distances: torch.Tensor, infer_use_sk: bool) -> torch.Tensor:
-        if self.use_sk and (self.training or infer_use_sk):
+    def _bucket_balanced_assignments(
+        self, distances: torch.Tensor, bucket: torch.Tensor
+    ) -> torch.Tensor:
+        """Balance codes inside each preceding-code bucket.
+
+        Plain Sinkhorn spreads the same total mass over every code in the whole
+        batch. That is the wrong constraint once residual quantization is
+        involved: an item's reachable codes at this level are already
+        determined by the code it received at the previous level, so a code
+        that only fits the residuals of some other bucket is being asked to
+        compete for mass it can never win.
+
+        Measured on the trained checkpoint, that mismatch cost most of the
+        second level's capacity: L0 used all 256 codes, but each L0 bucket only
+        reached ~37 of the 256 L1 codes, so (L0, L1) produced 9370 distinct
+        prefixes instead of the 65536 the codebook allows.
+
+        All buckets are then solved together in one batched Sinkhorn. The
+        grouping uses a sort plus split rather than a per-bucket boolean mask:
+        256 masked gathers measured 48 ms on their own against 0.76 ms for the
+        sort, which is the difference between a run that finishes in an hour
+        and one that needs four days.
+        """
+        n_codes = distances.shape[1]
+        n_rows = distances.shape[0]
+        centered = self.center_distance(distances).double()
+        assignment = torch.zeros_like(centered)
+
+        # Group rows by bucket in one pass: sort once, then split by counts.
+        order = torch.argsort(bucket, stable=True)
+        n_buckets = int(bucket.max()) + 1
+        counts = torch.bincount(bucket, minlength=n_buckets)
+        sizes = counts.tolist()
+        width = max(sizes)
+        if width == 0:
+            return assignment
+
+        # Build the (n_buckets, width) layout with one scatter instead of a
+        # Python loop over buckets: the loop cost dominated everything else.
+        # `within` is each row's position inside its own bucket, measured on the
+        # sorted order, so the scatter below consumes the sorted rows too.
+        slot = torch.arange(width, device=distances.device)
+        block_index = torch.repeat_interleave(
+            torch.arange(n_buckets, device=distances.device),
+            counts,
+        )
+        starts = (torch.cumsum(counts, 0) - counts).tolist()
+        sorted_position = torch.arange(n_rows, device=distances.device)
+        within = slot[
+            sorted_position
+            - torch.as_tensor(starts, device=distances.device)[block_index]
+        ]
+
+        padded = centered.new_zeros(n_buckets, width, n_codes)
+        valid = torch.zeros(
+            n_buckets, width, dtype=torch.bool, device=distances.device
+        )
+        padded[block_index, within] = centered[order]
+        valid[block_index, within] = True
+
+        log_q = -padded / float(self.get_effective_epsilon())
+        # The initial shift must ignore padding rows too, otherwise the zeros
+        # they contribute leak into every real row of the block.
+        initial = log_q.masked_fill(~valid.unsqueeze(-1), -torch.finfo(torch.float64).max)
+        log_q = log_q - torch.logsumexp(initial, dim=(1, 2), keepdim=True)
+        log_codebook_size = math.log(n_codes)
+        block_rows = valid.sum(dim=1).clamp_min(1).to(torch.float64)
+        big = torch.finfo(torch.float64).max
+        for _ in range(self.sk_iters):
+            # Column normalization per block, restricted to that block's rows.
+            masked = log_q.masked_fill(~valid.unsqueeze(-1), -big)
+            log_q = log_q - torch.logsumexp(masked, dim=1, keepdim=True)
+            log_q = log_q - log_codebook_size
+            log_q = log_q - torch.logsumexp(log_q, dim=2, keepdim=True)
+            log_q = log_q - torch.log(block_rows).view(-1, 1, 1)
+
+        # Undo the sort in one gather rather than a per-bucket scatter.
+        probabilities = torch.exp(log_q)[block_index, within]
+        assignment[order] = probabilities
+
+        if not torch.isfinite(assignment).all():
+            raise RuntimeError("Bucketed Sinkhorn assignment returned NaN or infinity.")
+        return assignment
+
+    def _indices(
+        self,
+        distances: torch.Tensor,
+        infer_use_sk: bool,
+        bucket: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if not (self.use_sk and (self.training or infer_use_sk)):
+            return torch.argmin(distances, dim=-1)
+        if bucket is None:
             return self._balanced_assignments(distances).argmax(dim=-1)
-        return torch.argmin(distances, dim=-1)
+        return self._bucket_balanced_assignments(distances, bucket).argmax(dim=-1)
 
     @torch.no_grad()
     def assignment_diagnostics(
-        self, x: torch.Tensor
+        self, x: torch.Tensor, bucket: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         latent = x.reshape(-1, self.dim)
-        assignments = self._balanced_assignments(self._distances(latent))
+        distances = self._distances(latent)
+        assignments = (
+            self._balanced_assignments(distances)
+            if bucket is None
+            else self._bucket_balanced_assignments(distances, bucket)
+        )
         ids = assignments.argmax(dim=-1)
+        # Shannon entropy of the assignment distribution per item. Terms with
+        # zero probability contribute 0, so they are dropped rather than clamped:
+        # clamping to the dtype's smallest normal makes log() return a huge
+        # negative and the whole entropy becomes -inf.
         probabilities = assignments / assignments.sum(
             dim=-1, keepdim=True
         ).clamp_min(torch.finfo(assignments.dtype).tiny)
+        positive = probabilities > 0
+        log_probabilities = torch.where(
+            positive, probabilities.log(), torch.zeros_like(probabilities)
+        )
         entropy = -(
-            probabilities
-            * probabilities.clamp_min(torch.finfo(probabilities.dtype).tiny).log()
+            probabilities * log_probabilities
         ).sum(dim=-1).mean()
         usage = torch.bincount(ids, minlength=self.n_embed)
         return ids.view(*x.shape[:-1]), usage, entropy
 
     def forward(
-        self, x: torch.Tensor, infer_use_sk: bool = False
+        self,
+        x: torch.Tensor,
+        infer_use_sk: bool = False,
+        bucket: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
         curvature = self.get_curvature()
-        embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
         onehot = F.one_hot(embed_ind, self.n_embed)
         used = onehot.sum(0)
         if (
@@ -279,7 +387,17 @@ class VQLayer(nn.Module):
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+    def init_codebook(
+        self,
+        x: torch.Tensor,
+        device: torch.device,
+        bucket: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Fit this level's codebook by KMeans; return the residual and the codes.
+
+        The codes are returned so the next level can balance inside the same
+        buckets instead of treating the whole batch as one pool.
+        """
         kmeans = KMeans(n_clusters=self.n_embed, n_init="auto").fit(
             x.detach().cpu().numpy()
         )
@@ -289,12 +407,13 @@ class VQLayer(nn.Module):
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
-        embed_ind = self._indices(self._distances(x), infer_use_sk=True).view(
-            *x.shape[:-1]
-        )
-        return _hyperbolic_residual(
+        embed_ind = self._indices(
+            self._distances(x), infer_use_sk=True, bucket=bucket
+        ).view(*x.shape[:-1])
+        residual = _hyperbolic_residual(
             x, self.embed_code(embed_ind), self.get_curvature()
         )
+        return residual, embed_ind
 
 
 
@@ -446,9 +565,13 @@ class RQLayer(nn.Module):
             x.shape[0], self.codebook_num, dtype=torch.long, device=x.device
         )
         residual = x
+        previous_codes: torch.Tensor | None = None
         for level, vq_layer in enumerate(self.vq_layers):
             curvature = vq_layer.get_curvature()
-            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
+            quant, quant_loss, unused, indices = vq_layer(
+                residual, infer_use_sk, previous_codes
+            )
+            previous_codes = indices
             residual = _hyperbolic_residual(residual, quant, curvature)
             quantized_x = quantized_x + quant
             sum_quant_loss = sum_quant_loss + quant_loss
@@ -470,9 +593,13 @@ class RQLayer(nn.Module):
         )
         residual = x
         stats = []
+        previous_codes: torch.Tensor | None = None
         for level, layer in enumerate(self.vq_layers):
-            indices, usage, entropy = layer.assignment_diagnostics(residual)
+            indices, usage, entropy = layer.assignment_diagnostics(
+                residual, previous_codes
+            )
             tokens[:, level] = indices
+            previous_codes = indices
             stats.append(
                 {
                     "usage_counts": usage,
@@ -492,6 +619,9 @@ class RQLayer(nn.Module):
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
+        previous_codes: torch.Tensor | None = None
         for vq_layer in self.vq_layers:
-            residual = vq_layer.init_codebook(residual, device)
+            residual, previous_codes = vq_layer.init_codebook(
+                residual, device, previous_codes
+            )
         return residual
