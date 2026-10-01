@@ -1,8 +1,14 @@
 # Project Rules
 
-## 0. Stage-2 产物路径速查（2026-09-25 起强制）
+## 0. Stage-2 产物路径速查（2026-10-01 起强制）
 
-Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` / `item_sids.json` / `rqvae_step_*.pt`）必须统一落在 `results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`，目录名与 `stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 完全同名同前缀（`curvature_RQ-VAE_iter` + iter 编号 `<N>`）；iter 子树只留代码/`configs/`/`scripts/`/`logs/`/`__pycache__`/输入副本，不得再写 `.pth` / `.npy` / `item_sids.json`；`MECHANISM_NAME` 保留完整 `iter<N>_<descriptive>` 字符串（仅供 Stage3 派生 `RQVAE_VARIANT`），目录名固定短名 `curvature_RQ-VAE_iter<N>`；启动前必须 `grep RQVAE_OUT_DIR $NEXT/curvature_config.py` 验证路径落在 `results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 下且 `<N>` 与当前 iter 编号一致。
+机制源码与产物只有一棵工作树，**不再按 iter 编号分目录**：
+
+- 源码：`stage2_RQ-VAE/curvature_RQ-VAE/`
+- Stage-2 产物：`results/stage2_RQ-VAE/curvature_RQ-VAE/`
+- Stage-3 产物：`results/stage3_T5Train/curvature_RQ-VAE/`
+
+Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` / `item_sids.json`）必须落在 `results/stage2_RQ-VAE/curvature_RQ-VAE/`，源码目录只留代码/`scripts/`/`logs/`/`__pycache__`/输入副本，不得再写 `.pth` / `.npy` / `item_sids.json`。**禁止**复制新目录或把 iter 编号写进任何路径、launcher 文件名、`MECHANISM_NAME`、`RQVAE_VARIANT`。启动前必须 `grep RQVAE_OUT_DIR stage2_RQ-VAE/curvature_RQ-VAE/curvature_config.py` 验证路径落在上述统一目录。迭代边界与回滚由 Git 承担，规则见 §14。
 
 ## 1. No CLI args — hard-code all parameters
 
@@ -16,7 +22,7 @@ Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` 
 - **所有其他指标**（3-token SID Gini、每层 mean Gini、collision rate、l01_unique_pairs、H(L1|L0)）只作为描述性指标记录到日志，**不作为任何层级的 gate**：经验上 L0 极端塌陷的合法变体（iter11 sk_eps=0.5 是当前最佳，full_gini=0.1143 远高于 baseline 0.0672，collision rate / l01_pairs / H 也偏高）会被 hard gate 误杀；trainer 内层 early-stop 也完全删除（`should_early_stop` 始终返回 `(False, "")`），所有候选跑满 `MAX_GLOBAL_STEPS` 由下游 stage3 `test_R@10` 决定是否采用。
 - **stage3 仍可跑**：stage2 gate 全空后所有 RQ-VAE 变体都自动进入下游；裁决完全交由 stage3 完整跑完后的 `test_R@10`（硬目标 > 0.065）。
 
-## 3. stage2 curvature_RQ-VAE 启动：cd 到该目录后用 `nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 curvature_RQ-VAE.py > logs/train_run.log 2>&1 &`（裸 `python3` 无 torch，会立刻 ModuleNotFoundError；脚本内置 `_launch_via_torchrun` 自动 fork 4 卡 DDP，训练输出落在 `logs/train_migrated.log`）。
+## 3. stage2 curvature_RQ-VAE 启动：cd 到 `stage2_RQ-VAE/curvature_RQ-VAE/` 后用 `nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 scripts/run_stage2_curvature.py > logs/train_run.log 2>&1 &`（裸 `python3` 无 torch，会立刻 ModuleNotFoundError；launcher 经 `train_rqvae._launch_via_torchrun` 自动 fork 4 卡 DDP，训练输出落在 `logs/train_hyperbolic_migrated.log`）。也可直接跑 `scripts/train_iter.sh`：它先执行 `scripts/mvg_check.py`，MVG 报告 `MVG PASS` 后再启动 Stage2。
 
 ## 4. 禁止进入 plan 模式
 
@@ -50,13 +56,13 @@ Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` 
 - **理由**：worktree 在共享 Git 仓库上会创建跨会话的状态分裂（未提交改动、orphan branch、stash 污染），与 §8 "只维护 main 分支" 铁律直接冲突；2026-09-22 已发生一次 EnterWorktree 误用并被强制退出
 - **例外**：仅 `/tmp/` 下的参考比较脚本与 `.claude/worktrees/` 下的代码可被纯读取用于历史回查
 
-## 10. Stage-2 产物统一目录（2026-09-25 起生效）
+## 10. Stage-2 产物统一目录（2026-10-01 起生效）
 
-Stage-2 训练产物必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`（目录名与 `stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 完全同名同前缀），iter 子树下禁写 `.pth` / `.npy` / `item_sids.json` 等产物文件，`MECHANISM_NAME` 保留完整 `iter<N>_<descriptive>` 字符串仅供 Stage3 派生 `RQVAE_VARIANT` 用、产物目录名固定短名 `curvature_RQ-VAE_iter<N>`，启动前必须 `grep RQVAE_OUT_DIR $NEXT/curvature_config.py` 验证路径落在该统一目录且 `<N>` 与当前 iter 编号一致。
+Stage-2 训练产物必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/`，与源码目录 `stage2_RQ-VAE/curvature_RQ-VAE/` 同名。源码树下禁写 `.pth` / `.npy` / `item_sids.json` 等产物文件。目录名、`MECHANISM_NAME`、`RQVAE_VARIANT` 与 launcher 文件名一律不带 iter 编号。启动前必须 `grep RQVAE_OUT_DIR stage2_RQ-VAE/curvature_RQ-VAE/curvature_config.py` 验证路径落在该统一目录。
 
-## 11. Stage-3 产物统一目录（2026-09-25 起生效）
+## 11. Stage-3 产物统一目录（2026-10-01 起生效）
 
-Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.json` / `training_metrics.jsonl` 等）必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter<N>/`（目录名与 `stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`、`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 完全同名同前缀），Stage3 `trainer.LOG_PATH` / `SAVE_PATH` 必须解析到该短名 `curvature_RQ-VAE_iter<N>` 子树（**不要**包含 `<descriptive>` 后缀）且 `<N>` 与当前 iter 编号一致。
+Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.json` / `training_metrics.jsonl` 等）必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE/`，与 Stage-2 源码与产物目录同名同前缀。Stage3 `trainer.LOG_PATH` / `SAVE_PATH` 必须解析到该子树，且不含任何 iter 编号后缀。
 
 
 ### Stage-3 冻结协议（机器校验；iteration 不得修改）
@@ -79,28 +85,38 @@ STAGE3_SCREEN_BASELINE_LOG=
 
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
-- **仓库内 Git 细则**：§8（分支/推送/hash 核验）与 §13（每轮 iter 代码+产物 commit+push）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（main-only + zero-bookkeeping-artifact：研究设计、实现、验证、Stage2/Stage3、结果解释、下一轮选择、Git closure 全部由 main 直接完成；Skill 不生成任何 Markdown/JSON/JSONL/LOG/TXT 等流程记录；仅保留训练/评测程序自身必要原生产物）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **仓库内 Git 细则**：§8（分支/推送/hash 核验）、§13（每轮代码+产物 commit+push）与 §14（接受/回滚门控）即完整约束，以本文件为准。
+- **curvature-RQ-VAE 迭代流程**（main-only + zero-bookkeeping-artifact：在 `stage2_RQ-VAE/curvature_RQ-VAE/` 原地迭代，研究设计、实现、验证、Stage2/Stage3、结果解释、接受或回滚、Git closure 全部由 main 直接完成；Skill 不生成任何 Markdown/JSON/JSONL/LOG/TXT 等流程记录；仅保留训练/评测程序自身必要原生产物）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13/§14 对齐；不再使用已删除的项目根 `SKILL.md`）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 
-**迭代完成**指：该 `iter<N>` 的 Stage2（含 SID 导出）与 Stage3（含程序原生 `test_final.json` 或等价最终 test 输出）均已跑完，且代码与项目要求保留的 Stage2/Stage3 原生产物已 commit + push 并完成本地/远端 hash 核验。**Skill 本身不生成任何额外流程产物；不得新增 hypothesis / protocol / manifest / audit / decision / review / closure 等 Markdown、JSON、JSONL、LOG 或 TXT 文件。**
+**迭代完成**指：在 `stage2_RQ-VAE/curvature_RQ-VAE/` 上原地修改的那一轮，其 Stage2（含 SID 导出）与 Stage3（含程序原生 `test_final.json`）均已跑完，且代码与 Stage2/Stage3 原生产物已 commit + push 并完成本地/远端 hash 核验。**Skill 本身不生成任何额外流程产物；不得新增 hypothesis / protocol / manifest / audit / decision / review / closure 等 Markdown、JSON、JSONL、LOG 或 TXT 文件。**
 
 ### 必须纳入版本库的范围
 
-1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/`）：`curvature_RQ-VAE.py`、`curvature_config.py`、`modules/`、`configs/`、`scripts/`（含 `run_stage3_iter<N>.py`、export 等）。**不提交 Skill 额外生成的流程记录，因为新流程不允许生成这类文件。**
-2. **Stage2 产物**（§0 / §10）：`results/stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/` 下本轮训练产出（至少 `item_sids.json`、`rqvae_best.pth` 或最终 ckpt、`sids_for_hgrec.npy` 等实际用于 Stage3 的文件；`rqvae_step_*.pt` 若体积过大可只保留 best + 末 step，但须在 commit message 中说明删减策略）。
-3. **Stage3 产物**（§11）：`results/stage3_T5Train/curvature_RQ-VAE_iter<N>/` 下本轮 run 的 `logs/.../test_final.json`、`training_metrics.jsonl`、对应 `ckpt/.../HG_Rec_best.pth` 及 `_stage3_launcher.log`（或等价 launcher 日志）。
+1. **代码**（`stage2_RQ-VAE/curvature_RQ-VAE/`）：`train_rqvae.py`、`curvature_config.py`、`model/`、`scripts/`（含 `run_stage2_curvature.py`、`run_stage3_curvature.py`、`mvg_check.py`）。
+2. **Stage2 产物**（§0 / §10）：`results/stage2_RQ-VAE/curvature_RQ-VAE/` 下本轮训练产出（至少 `item_sids.json`、`rqvae_best.pth`、`sids_for_hgrec.npy`）。
+3. **Stage3 产物**（§11）：`results/stage3_T5Train/curvature_RQ-VAE/` 下本轮 run 的 `logs/.../test_final.json`、`training_metrics.jsonl`、对应 `ckpt/.../HG_Rec_best.pth` 及 `_stage3_launcher.log`。
 
-不得只提交代码而遗漏 `results/` 中该 iter 目录；不得只提交 metrics 而遗漏 mechanism 源码变更。
+不得只提交代码而遗漏 `results/` 产物；不得只提交 metrics 而遗漏源码变更。**实现与其原生产物必须放进同一次 commit**，使 `git revert` 能把机制与产物作为整体撤销。
 
 ### 执行步骤（强制顺序）
 
-1. `git status`：确认无遗漏的 iter 路径；`git check-ignore -v` 排查 `.gitignore` 误排除产物（若产物被 ignore，须修正 ignore 规则或按项目约定添加例外后再提交，不得静默跳过）。
-2. 单次语义化 commit（建议 message：`iter<N>: <mechanism 简述> + stage2/3 results`），`git add` 覆盖上述三类路径。
+1. `git status`：确认无遗漏路径；`git check-ignore -v` 排查 `.gitignore` 误排除产物（若被 ignore，须修正规则后再提交，不得静默跳过）。
+2. 单次语义化 commit（建议 message：`<mechanism 简述> + stage2/3 results | test_R@10=<值> vs parent=<值>`），`git add` 覆盖上述三类路径。
 3. `git push origin main`（遵守 §8，禁止未授权 force）。
-4. 核验：`git rev-parse main` 与 `git ls-remote origin refs/heads/main` 一致；**不一致则 iter 视为未交付，禁止开下一 iter**。
+4. 核验：`git rev-parse main` 与 `git ls-remote origin refs/heads/main` 一致；**不一致则本轮视为未交付**。
+
+## 14. 迭代接受 / 回滚门控（2026-10-01 起强制）
+
+比较基准是本树上一次未被回滚的**父条件**，指标取各 run 自己的 `test_final.json` 的 `test_recall@10`（须协议可比，`n_eval = 57439`）。
+
+- **优于父条件** → 接受：保留新源码与其原生产物，commit + push + 核验 hash（§13）。
+- **劣于父条件** → 回滚：对实现 commit 执行 `git revert`，恢复父条件源码，再 commit + push + 核验 hash。**禁止** `git reset --hard` 已推送分支，**禁止**删除历史，失败尝试保留在历史中。
+- **持平或在噪声内** → 视为未改进，同样回滚，并在同一目录内换一个结构上不同的机制。
+
+被回滚的条件仍须完整跑一次 Stage2 与 Stage3，判定依据是它们的原生输出，不得用 Stage2 代理指标（collision / Gini / 熵）替代 Stage3 证据。回滚后工作树即恢复为父条件，下一轮始终从当前最佳条件出发。
 
 ### 与监控/目标的关系
 
-流水线监控、goal complete、向用户汇报「iter 完成」之前，必须先满足本节 push 核验；仅本地存在 `test_final.json` 而未 push 时，只能报告「评测已结束，Git 待同步」，不得标记迭代闭环。
+流水线监控、goal complete、向用户汇报之前，必须先满足本节 push 核验；仅本地存在 `test_final.json` 而未 push 时，只能报告「评测已结束，Git 待同步」，不得标记迭代闭环。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stateless frozen-Stage3 protocol gate.
 
-Run with no CLI arguments from stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/.
+Run with no CLI arguments from stage2_RQ-VAE/curvature_RQ-VAE/.
 The gate reads only root CLAUDE.md, the shared trainer, and the current launcher.
 It creates no workflow artifacts and requires no manifest.
 """
@@ -27,20 +27,15 @@ def sha256(path):
             h.update(chunk)
     return h.hexdigest()
 
-def iter_id(work):
-    """Accept both curvature_RQ-VAE_iter<N> and the base curvature_RQ-VAE name.
+def work_dir(work):
+    """The single in-place working directory; iteration numbers are gone.
 
-    The retained implementation was renamed from curvature_RQ-VAE_iter48 to the
-    unsuffixed curvature_RQ-VAE, so the gate must key the expected results
-    paths off the directory name itself rather than reconstructing it from a
-    numeric suffix.
+    Iterations now edit stage2_RQ-VAE/curvature_RQ-VAE in place and roll back
+    through Git, so there is exactly one accepted directory name.
     """
-    if work.name == "curvature_RQ-VAE":
-        return None
-    m = re.fullmatch(r"curvature_RQ-VAE_iter(\d+)", work.name)
-    if not m:
-        fail(f"run from curvature_RQ-VAE or curvature_RQ-VAE_iter<N>, got {work}")
-    return m.group(1)
+    if work.name != "curvature_RQ-VAE":
+        fail(f"run from stage2_RQ-VAE/curvature_RQ-VAE/, got {work}")
+    return "curvature_RQ-VAE"
 
 def kv(text,key):
     m=re.search(rf"^{re.escape(key)}=(.*)$",text,re.M)
@@ -92,7 +87,7 @@ def overrides(path):
 
 def main():
     work=Path.cwd().resolve()
-    n=iter_id(work)
+    variant_dir=work_dir(work)
     repo=work.parents[1]
     claude=read(repo/"CLAUDE.md")
 
@@ -121,10 +116,7 @@ def main():
     elif str(values.get("EARLY_STOP"))!=str(expected["EARLY_STOP"]):
         fail(f"trainer EARLY_STOP={values.get('EARLY_STOP')!r} != locked {expected['EARLY_STOP']!r}")
 
-    variant_dir = work.name
-    if n is not None:
-        variant_dir = f"curvature_RQ-VAE_iter{n}"
-    launcher = work / "scripts" / f"run_stage3_{'curvature' if n is None else f'iter{n}'}.py"
+    launcher = work / "scripts" / "run_stage3_curvature.py"
     ov = overrides(launcher)
     allowed={"CODE_PATH","RQVAE_VARIANT","LOG_PATH","SAVE_PATH"}
     forbidden=sorted(set(ov)-allowed)
@@ -147,7 +139,7 @@ def main():
         fail("RQVAE_VARIANT must be a non-empty literal string")
 
     print("STAGE3_PROTOCOL_PASS")
-    print(f"iter={n if n is not None else 'none (unsuffixed curvature_RQ-VAE)'}")
+    print(f"variant_dir={variant_dir}")
     print(f"trainer_sha256={sha256(trainer)}")
     print(f"launcher={launcher}")
     print(f"variant={ov['RQVAE_VARIANT']}")
