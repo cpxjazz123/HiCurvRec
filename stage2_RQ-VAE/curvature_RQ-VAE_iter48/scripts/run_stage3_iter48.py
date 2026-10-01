@@ -1,4 +1,4 @@
-"""Run frozen Stage3 evaluation against Iter48-A SIDs."""
+"""Run frozen Stage3 evaluation against the hyperbolic RQ-VAE SIDs."""
 import importlib.util
 import os
 import sys
@@ -15,23 +15,23 @@ except (ImportError, RuntimeError):
 STAGE3_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/stage3_T5Train"
 sys.path.insert(0, STAGE3_DIR)
 spec = importlib.util.spec_from_file_location(
-    "genrec_stage3_iter48_A", f"{STAGE3_DIR}/train_HG-Rec.py"
+    "genrec_stage3_iter48", f"{STAGE3_DIR}/train_HG-Rec.py"
 )
 if spec is None or spec.loader is None:
     raise RuntimeError("Could not load Stage3 trainer")
 trainer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trainer)
 trainer.CODE_PATH = (
-    "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
     "curvature_RQ-VAE_iter48/item_sids.json"
 )
-trainer.RQVAE_VARIANT = "iter48_A_cold_start_fixed_c1"
+trainer.RQVAE_VARIANT = "iter48_poincare_fixed_curvature"
 trainer.LOG_PATH = (
-    "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/"
     "curvature_RQ-VAE_iter48/logs/"
 )
 trainer.SAVE_PATH = (
-    "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/"
     "curvature_RQ-VAE_iter48/ckpt/"
 )
 trainer._LAUNCHER["script"] = os.path.abspath(__file__)
@@ -50,5 +50,5 @@ os.environ.update(
 if "RANK" in os.environ:
     trainer.main()
 else:
-    print("[Iter48 A] launching frozen Stage3 torchrun", flush=True)
+    print("[hyperbolic] launching frozen Stage3 torchrun", flush=True)
     trainer._launch_via_torchrun()

@@ -22,15 +22,6 @@ from sklearn.cluster import KMeans
 CURVATURE = 1.0
 _BALL_EPS = 1e-6
 
-# Curriculum phase boundaries, expressed against the 100k global-step reference
-# run. ``_phase_steps`` rescales them to the active budget so the registered
-# phase structure (alpha/behavior ramp, then epsilon ramp) is preserved when
-# the budget is aligned to the TIGER baseline.
-CURRICULUM_ALPHA_START = 20_000
-CURRICULUM_ALPHA_END = 40_000
-CURRICULUM_EPSILON_START = 40_000
-CURRICULUM_EPSILON_END = 60_000
-
 
 def _curvature_like(
     curvature: torch.Tensor | float, reference: torch.Tensor
@@ -157,7 +148,7 @@ class MLP(nn.Module):
 
 
 class VQLayer(nn.Module):
-    """Poincare VQ with staged curvature and Sinkhorn curricula."""
+    """Poincare VQ at a fixed curvature with balanced Sinkhorn assignment."""
 
     def __init__(
         self,
@@ -166,21 +157,11 @@ class VQLayer(nn.Module):
         beta: float = 0.25,
         sk_epsilon: float = 0.003,
         sk_iters: int = 50,
-        c_cyclic_min: float = 0.05,
-        c_cyclic_max: float = 1.5,
-        c_cyclic_period: int = 100_000,
-        c_layer_norm: float = 1.0,
-        curriculum_enabled: bool = False,
-        behavior_curriculum_enabled: bool | None = None,
-        fixed_curvature: float = 1.0,
+        curvature: float = 1.0,
     ):
         super().__init__()
-        if not 0.0 < c_cyclic_min <= c_cyclic_max:
-            raise ValueError("Invalid cyclic-curvature range.")
-        if c_cyclic_period <= 0:
-            raise ValueError("Cyclic-curvature period must be positive.")
-        if not 0.0 < c_layer_norm <= 1.0 or fixed_curvature <= 0.0:
-            raise ValueError("Invalid layer or fixed curvature.")
+        if curvature <= 0.0:
+            raise ValueError("Curvature must be positive.")
         if sk_epsilon <= 0.0 or sk_iters <= 0:
             raise ValueError("Sinkhorn epsilon and iteration count must be positive.")
         self.dim = int(codebook_dim)
@@ -189,22 +170,7 @@ class VQLayer(nn.Module):
         self.use_sk = True
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
-        self.c_cyclic_min = float(c_cyclic_min)
-        self.c_cyclic_max = float(c_cyclic_max)
-        self.c_cyclic_period = int(c_cyclic_period)
-        self.c_layer_norm = float(c_layer_norm)
-        self.curriculum_enabled = bool(curriculum_enabled)
-        self.behavior_curriculum_enabled = (
-            self.curriculum_enabled
-            if behavior_curriculum_enabled is None
-            else bool(behavior_curriculum_enabled)
-        )
-        self.fixed_curvature = float(fixed_curvature)
-        self._curriculum_step = 0
-        initial_scale = min(max(self.c_layer_norm, 1e-4), 1.0 - 1e-4)
-        self.c_layer_scale = nn.Parameter(
-            torch.tensor(initial_scale), requires_grad=self.curriculum_enabled
-        )
+        self.curvature = float(curvature)
         self.embed = nn.Embedding(self.n_embed, self.dim)
 
     def get_code_embs(self) -> nn.Parameter:
@@ -213,72 +179,11 @@ class VQLayer(nn.Module):
     def _copy_init_embed(self, init_embed: torch.Tensor) -> None:
         self.embed.weight.data.copy_(init_embed)
 
-    def set_curriculum_step(self, step: int) -> None:
-        if step < 0:
-            raise ValueError("Curriculum step must be nonnegative.")
-        self._curriculum_step = int(step)
-
-    @staticmethod
-    def _ramp(step: int, start: int, end: int) -> float:
-        return min(max((step - start) / float(end - start), 0.0), 1.0)
-
-    def _phase_steps(self, start_at_100k: int, end_at_100k: int) -> tuple[int, int]:
-        """Scale a curriculum phase from its 100k reference to this run's budget.
-
-        Iter48's curriculum stages were registered against a 100k global-step
-        budget. When the budget is aligned to the TIGER baseline (72k), the
-        phase boundaries must scale by the same factor, otherwise the
-        behavior/epsilon ramps terminate early and the mechanism itself
-        changes instead of only the training budget.
-        """
-        total = self.c_cyclic_period
-        return (
-            int(round(start_at_100k * total / 100_000)),
-            int(round(end_at_100k * total / 100_000)),
-        )
-
-    def get_curvature_alpha(self) -> float:
-        if not self.curriculum_enabled:
-            return 0.0
-        alpha_start, alpha_end = self._phase_steps(CURRICULUM_ALPHA_START, CURRICULUM_ALPHA_END)
-        return self._ramp(self._curriculum_step, alpha_start, alpha_end)
-
-    def get_behavior_weight(self) -> float:
-        if not self.behavior_curriculum_enabled:
-            return 0.0
-        alpha_start, alpha_end = self._phase_steps(CURRICULUM_ALPHA_START, CURRICULUM_ALPHA_END)
-        return 0.20 * self._ramp(self._curriculum_step, alpha_start, alpha_end)
-
     def get_curvature(self) -> torch.Tensor:
-        if not self.curriculum_enabled:
-            return self.c_layer_scale.new_tensor(self.fixed_curvature)
-        cyclic = abs(
-            math.sin(math.pi * self._curriculum_step / self.c_cyclic_period)
-        )
-        u_layer = self.c_layer_scale.clamp(1e-4, 1.0 - 1e-4)
-        exponent = (u_layer + cyclic) / 2.0
-        cyclic_curvature = self.c_cyclic_min * torch.exp(
-            exponent * math.log(self.c_cyclic_max / self.c_cyclic_min)
-        )
-        alpha = self.get_curvature_alpha()
-        return self.c_cyclic_min + alpha * (
-            cyclic_curvature - self.c_cyclic_min
-        )
+        return self.embed.weight.new_tensor(self.curvature)
 
     def get_effective_epsilon(self) -> float:
-        if not self.curriculum_enabled:
-            return self.sk_epsilon
-        eps_start, eps_end = self._phase_steps(CURRICULUM_EPSILON_START, CURRICULUM_EPSILON_END)
-        alpha = self._ramp(self._curriculum_step, eps_start, eps_end)
-        conditioned = self.sk_epsilon * float(
-            self.get_curvature().detach().item()
-        ) / self.c_cyclic_max
-        conditioned = max(conditioned, 1e-4)
-        return (1.0 - alpha) * self.sk_epsilon + alpha * conditioned
-
-    def curvature_regularization(self) -> torch.Tensor:
-        u_layer = self.c_layer_scale.clamp(1e-4, 1.0 - 1e-4)
-        return (u_layer - self.c_layer_norm) ** 2
+        return self.sk_epsilon
 
     @staticmethod
     def center_distance(distances: torch.Tensor) -> torch.Tensor:
@@ -484,7 +389,7 @@ class SimVQLayer(VQLayer):
 
 
 class RQLayer(nn.Module):
-    """TIGER residual stack with staged curvature and epsilon schedules."""
+    """TIGER residual stack in the Poincare ball at a fixed curvature."""
 
     def __init__(self, config: Any):
         super().__init__()
@@ -497,27 +402,16 @@ class RQLayer(nn.Module):
             sizes = [int(size) for size in config.codebook_size]
             if len(sizes) != self.codebook_num:
                 raise ValueError("codebook_size must have one entry per quantization level")
-        layer_norms = [float(value) for value in config.layer_curvature_norms]
-        if len(layer_norms) != self.codebook_num:
-            raise ValueError("layer_curvature_norms must match codebook_num")
+        curvatures = [float(value) for value in config.layer_curvatures]
+        if len(curvatures) != self.codebook_num:
+            raise ValueError("layer_curvatures must match codebook_num")
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
-        self.c_cyclic_min = float(config.c_cyclic_min)
-        self.c_cyclic_max = float(config.c_cyclic_max)
-        self.c_cyclic_period = int(config.c_cyclic_period)
-        self.curvature_reg_weight = float(config.curvature_reg_weight)
-        self.behavior_loss_weight = float(config.behavior_loss_weight)
-        self.behavior_temperature = float(config.behavior_temperature)
-        self.curriculum_enabled = bool(config.curriculum_enabled)
-        self.behavior_curriculum_enabled = bool(
-            getattr(config, "behavior_curriculum_enabled", self.curriculum_enabled)
-        )
-        self.fixed_curvature = float(config.fixed_curvature)
         if self.vq_type != "vq":
-            raise ValueError("Iter48 requires TIGER's trainable VQ codebooks")
+            raise ValueError("This model requires TIGER's trainable VQ codebooks")
         self.vq_layers = nn.ModuleList(
             [
                 VQLayer(
@@ -526,44 +420,22 @@ class RQLayer(nn.Module):
                     beta=self.vq_beta,
                     sk_epsilon=self.sk_epsilon,
                     sk_iters=self.sk_iters,
-                    c_cyclic_min=self.c_cyclic_min,
-                    c_cyclic_max=self.c_cyclic_max,
-                    c_cyclic_period=self.c_cyclic_period,
-                    c_layer_norm=layer_norms[level],
-                    behavior_curriculum_enabled=self.behavior_curriculum_enabled,
-                    curriculum_enabled=self.curriculum_enabled,
-                    fixed_curvature=self.fixed_curvature,
+                    curvature=curvatures[level],
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
         )
 
-    def set_curriculum_step(self, step: int) -> None:
-        for layer in self.vq_layers:
-            layer.set_curriculum_step(step)
-
     def get_curvatures(self) -> torch.Tensor:
         return torch.stack([layer.get_curvature() for layer in self.vq_layers])
 
-    def get_curriculum_alpha(self) -> float:
-        return self.vq_layers[0].get_curvature_alpha()
-
-    def get_behavior_weight(self) -> float:
-        return self.vq_layers[0].get_behavior_weight()
-
     def get_effective_epsilons(self) -> list[float]:
         return [layer.get_effective_epsilon() for layer in self.vq_layers]
-
-    def curvature_regularization(self) -> torch.Tensor:
-        return torch.stack(
-            [layer.curvature_regularization() for layer in self.vq_layers]
-        ).mean()
 
     def forward(
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
-        return_residuals: bool = False,
     ):
         quantized_x = torch.zeros(
             x.shape[0], self.codebook_dim, device=x.device, dtype=x.dtype
@@ -574,10 +446,7 @@ class RQLayer(nn.Module):
             x.shape[0], self.codebook_num, dtype=torch.long, device=x.device
         )
         residual = x
-        layer_residuals = []
         for level, vq_layer in enumerate(self.vq_layers):
-            if return_residuals:
-                layer_residuals.append(residual)
             curvature = vq_layer.get_curvature()
             quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             residual = _hyperbolic_residual(residual, quant, curvature)
@@ -585,15 +454,12 @@ class RQLayer(nn.Module):
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
-        result = (
+        return (
             quantized_x,
             sum_quant_loss / self.codebook_num,
             num_unused_codes,
             output,
         )
-        if return_residuals:
-            return (*result, torch.stack(layer_residuals, dim=0))
-        return result
 
     @torch.no_grad()
     def get_indices_with_stats(

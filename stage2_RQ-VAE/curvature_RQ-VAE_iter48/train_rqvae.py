@@ -1,8 +1,9 @@
-"""Train TIGER RQ-VAE with cyclic learnable Poincare curvature (4-card DDP).
+"""Train a hyperbolic RQ-VAE in the Poincare ball (4-card DDP).
 
-Keep Iter46's architecture, initialization, Sinkhorn, and SID export, while
-restoring Iter18's cyclic layer curvatures and curvature-conditioned AdamW.
-Train the fixed 100k-step budget; descriptive SID metrics never stop training.
+Pure hyperbolic quantization at a fixed per-level curvature: encoder,
+Poincare codebook assignment via balanced Sinkhorn, residual subtraction in
+the ball, and Möbius-style reconstruction. The Stage2 budget matches the
+TIGER baseline exactly; descriptive SID metrics never stop training.
 """
 
 from __future__ import annotations
@@ -33,13 +34,12 @@ import curvature_config as experiment
 
 EMBEDDING_FILE = Path(experiment.EMBEDDING_FILE)
 TRAIN_FILE = Path(experiment.TRAIN_FILE)
-METRICS_PATH = Path(experiment.STAGE2_LOG_DIR / "training_metrics_A.jsonl")
+METRICS_PATH = Path(experiment.STAGE2_LOG_DIR / "training_metrics_hyperbolic.jsonl")
 LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
-RUN_MODE = "A"
-SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "A"}
+SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "hyperbolic"}
 
 
-# === TIGER hyperparameters with the shared fixed-step iteration budget ===
+# === TIGER hyperparameters; the step budget is TIGER-aligned in curvature_config ===
 MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
 EVAL_INTERVAL_STEPS = int(experiment.EVAL_INTERVAL_STEPS)
 BATCH_SIZE_PER_RANK = 1024
@@ -61,20 +61,11 @@ OPTIMIZER = "AdamW"
 SEED = 42
 NUM_WORKERS = 0
 
-C_CYCLIC_MIN = 0.05
-C_CYCLIC_MAX = 1.5
-# One curvature cycle spans the whole run, so the period is the run's global
-# step budget. It is also the denominator that rescales the curriculum phase
-# boundaries in model/layers.py, so configure_run rebinds it to the active
-# mode's MAX_GLOBAL_STEPS before the model is built.
-C_CYCLIC_PERIOD = int(experiment.MAX_GLOBAL_STEPS)
-LAYER_CURVATURE_NORMS = (0.001, 0.932889, 1.0)
-CURVATURE_REG_WEIGHT = 0.005
-BEHAVIOR_LOSS_WEIGHT = 0.20
-BEHAVIOR_TEMPERATURE = 0.07
+# Fixed Poincare curvature per quantization level. Identical across levels
+# because the curvature curriculum was removed; only the level index varies.
+LAYER_CURVATURES = (1.0, 1.0, 1.0)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
-ADAMW_BETA2_SPAN = 0.009
 ADAMW_EPS = 1e-8
 
 
@@ -89,59 +80,19 @@ _LAUNCHER = {
     "visible_dev": "0,1,2,3",
 }
 
-def configure_run(mode: str, launcher_script: str) -> None:
-    global RUN_MODE, METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
-    global C_CYCLIC_PERIOD
-    supported_modes = {
-        "A", "CURRICULUM", "BASELINE", "CURVATURE_ONLY", "BEHAVIOR_ONLY"
-    }
-    if mode not in supported_modes:
-        raise ValueError(f"Unsupported Iter48 run mode: {mode}")
-    RUN_MODE = mode
+def configure_run(launcher_script: str) -> None:
+    """Point the single hyperbolic run at its own log and snapshot paths."""
+    global METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
     LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
     MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
-    if mode == "A":
-        SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "A"}
-        METRICS_PATH = LOG_DIR / "training_metrics_A.jsonl"
-        _LAUNCHER["log"] = str(LOG_DIR / "train_A_migrated.log")
-    elif mode == "CURRICULUM":
-        # Same item dataset and batch size as the A arm, so the TIGER-aligned
-        # budget applies; snapshots are rescaled to the 72k total.
-        SNAPSHOT_STEPS = {
-            14_400: "B",
-            28_800: "C",
-            43_200: "D",
-            72_000: "E",
-        }
-        METRICS_PATH = LOG_DIR / "training_metrics_curriculum.jsonl"
-        _LAUNCHER["log"] = str(LOG_DIR / "train_curriculum_migrated.log")
-    else:
-        versions = {
-            "BASELINE": "Baseline",
-            "CURVATURE_ONLY": "CurvatureOnly",
-            "BEHAVIOR_ONLY": "BehaviorOnly",
-        }
-        version = versions[mode]
-        # Transition-pair arms train on 2698387 pairs (110x the TIGER item
-        # dataset), so they keep a 40k global-step budget instead of the
-        # TIGER-aligned 72k. Matching step counts across a 110x dataset-size
-        # difference would not match training volume.
-        MAX_GLOBAL_STEPS = 40_000
-        SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: version}
-        METRICS_PATH = LOG_DIR / f"training_metrics_{version}.jsonl"
-        _LAUNCHER["log"] = str(
-            LOG_DIR / f"train_{version.lower()}_migrated.log"
-        )
+    SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "hyperbolic"}
+    METRICS_PATH = LOG_DIR / "training_metrics_hyperbolic.jsonl"
+    _LAUNCHER["log"] = str(LOG_DIR / "train_hyperbolic_migrated.log")
     _LAUNCHER["script"] = os.path.abspath(launcher_script)
-    # The curvature cycle and the curriculum phase rescaling both key off the
-    # budget resolved above, so rebind after every branch has run.
-    C_CYCLIC_PERIOD = MAX_GLOBAL_STEPS
 
 
 def _snapshot_paths(version: str) -> tuple[Path, Path, Path, Path]:
     root = Path(experiment.STAGE2_RESULT_DIR)
-    if version != "A":
-        root = root / "versions" / version
     return (
         root / "out/rqvae/instruments/rqvae_best.pth",
         root / "out/rqvae/instruments/sids_raw.npy",
@@ -168,7 +119,7 @@ def _save_snapshot(
             },
             "global_step": global_step,
             "local_optimizer_steps": local_optimizer_steps,
-            "run_mode": RUN_MODE,
+            "geometry": "poincare_fixed_curvature",
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
             "effective_epsilons": raw_module.rq.get_effective_epsilons(),
@@ -179,7 +130,7 @@ def _save_snapshot(
     np.save(raw_path, raw_tokens)
     sid = _extend_collisions(raw_tokens, codebook_sizes)
     if len(np.unique(sid, axis=0)) != len(sid):
-        raise RuntimeError(f"SID extension failed for Iter48 version {version}")
+        raise RuntimeError(f"SID extension failed for version {version}")
     sid_path.parent.mkdir(parents=True, exist_ok=True)
     np.save(sid_path, sid)
     payload = {
@@ -261,45 +212,6 @@ def load_embeddings(path: Path) -> np.ndarray:
         raise ValueError(f"Invalid embedding matrix: shape={embeddings.shape}")
     return embeddings
 
-class TransitionDataset(torch.utils.data.Dataset):
-    """Train-only history-to-target pairs for the behavior objective."""
-
-    def __init__(self, embeddings: torch.Tensor, frame: pd.DataFrame):
-        pairs = []
-        for history, target in frame[["history", "target"]].itertuples(
-            index=False, name=None
-        ):
-            if history is None or not isinstance(history, (list, tuple, np.ndarray)):
-                continue
-            if len(history) == 0:
-                continue
-            source_id = int(history[-1])
-            target_id = int(target)
-            if (
-                source_id < 0
-                or target_id < 0
-                or source_id >= len(embeddings)
-                or target_id >= len(embeddings)
-            ):
-                raise ValueError("Transition item ids do not match embedding rows")
-            pairs.append((source_id, target_id))
-        if not pairs:
-            raise ValueError("The training data contains no valid history-target pairs")
-        self.embeddings = embeddings
-        self.pairs = torch.tensor(pairs, dtype=torch.long)
-
-    def __len__(self) -> int:
-        return int(self.pairs.shape[0])
-
-    def __getitem__(self, index: int):
-        source_id, target_id = self.pairs[index]
-        return (
-            source_id,
-            target_id,
-            self.embeddings[source_id],
-            self.embeddings[target_id],
-        )
-
 
 def maybe_apply_pca(embeddings: np.ndarray, pca_dim: int, seed: int) -> np.ndarray:
     if pca_dim <= 0:
@@ -354,117 +266,8 @@ def _tokenizer_config() -> SimpleNamespace:
         fix_code_embs=False,
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
-        c_cyclic_min=C_CYCLIC_MIN,
-        c_cyclic_max=C_CYCLIC_MAX,
-        c_cyclic_period=C_CYCLIC_PERIOD,
-        layer_curvature_norms=LAYER_CURVATURE_NORMS,
-        curvature_reg_weight=CURVATURE_REG_WEIGHT,
-        behavior_loss_weight=BEHAVIOR_LOSS_WEIGHT,
-        behavior_temperature=BEHAVIOR_TEMPERATURE,
-        curriculum_enabled=RUN_MODE in {"CURRICULUM", "CURVATURE_ONLY"},
-        behavior_curriculum_enabled=RUN_MODE in {"CURRICULUM", "BEHAVIOR_ONLY"},
-        fixed_curvature=(
-            1.0 if RUN_MODE in {"A", "BASELINE", "BEHAVIOR_ONLY"}
-            else C_CYCLIC_MIN
-        ),
+        layer_curvatures=LAYER_CURVATURES,
     )
-
-
-
-def build_curvature_conditioned_adamw(model):
-    base_model = model.module if hasattr(model, "module") else model
-    base_model.set_curriculum_step(0)
-    layers = base_model.rq.vq_layers
-    initial_curvatures = [
-        float(layer.get_curvature().detach().item()) for layer in layers
-    ]
-    log_range = np.log(C_CYCLIC_MAX / C_CYCLIC_MIN)
-    curvature_u = [
-        float(
-            np.clip(
-                2.0 * np.log(max(curvature, C_CYCLIC_MIN) / C_CYCLIC_MIN)
-                / log_range,
-                0.0,
-                1.0,
-            )
-        )
-        for curvature in initial_curvatures
-    ]
-    layer_beta2 = [
-        ADAMW_BASE_BETA2 - ADAMW_BETA2_SPAN * value
-        for value in curvature_u
-    ]
-    if not all(
-        np.isfinite(value) and 0.990 <= value <= ADAMW_BASE_BETA2
-        for value in layer_beta2
-    ):
-        raise RuntimeError("Invalid curvature-conditioned AdamW beta2 values.")
-
-    layer_parameters = [[] for _ in layers]
-    scale_parameters = [[] for _ in layers]
-    other_parameters = []
-    for name, parameter in base_model.named_parameters():
-        if not parameter.requires_grad:
-            continue
-        layer_index = next(
-            (
-                index
-                for index in range(len(layers))
-                if name.startswith(f"rq.vq_layers.{index}.")
-            ),
-            None,
-        )
-        if layer_index is None:
-            other_parameters.append(parameter)
-        elif name.endswith(".c_layer_scale"):
-            scale_parameters[layer_index].append(parameter)
-        else:
-            layer_parameters[layer_index].append(parameter)
-    if any(not parameters for parameters in layer_parameters):
-        raise RuntimeError("Every RQ-VAE level needs its own AdamW parameter group.")
-
-    optimizer_groups = []
-    for index, (parameters, beta2) in enumerate(zip(layer_parameters, layer_beta2)):
-        optimizer_groups.append(
-            {
-                "params": parameters,
-                "lr": LR,
-                "betas": (ADAMW_BETA1, beta2),
-                "eps": ADAMW_EPS,
-                "weight_decay": WEIGHT_DECAY,
-                "curvature_layer_index": index,
-            }
-        )
-        if scale_parameters[index]:
-            optimizer_groups.append(
-                {
-                    "params": scale_parameters[index],
-                    "lr": LR,
-                    "betas": (ADAMW_BETA1, beta2),
-                    "eps": ADAMW_EPS,
-                    "weight_decay": 0.0,
-                    "curvature_layer_index": index,
-                    "parameter_role": "curvature_scale",
-                }
-            )
-    if other_parameters:
-        optimizer_groups.append(
-            {
-                "params": other_parameters,
-                "lr": LR,
-                "betas": (ADAMW_BETA1, ADAMW_BASE_BETA2),
-                "eps": ADAMW_EPS,
-                "weight_decay": WEIGHT_DECAY,
-                "curvature_layer_index": None,
-            }
-        )
-    return (
-        torch.optim.AdamW(optimizer_groups),
-        initial_curvatures,
-        curvature_u,
-        layer_beta2,
-    )
-
 
 
 
@@ -500,12 +303,8 @@ def main() -> None:
             find_unused_parameters=False,
         )
 
-    if RUN_MODE == "A":
-        train_dataset = TensorDataset(train_embeddings)
-        loader_batch_size = BATCH_SIZE_PER_RANK
-    else:
-        train_dataset = TransitionDataset(all_embeddings, train_frame)
-        loader_batch_size = BATCH_SIZE_PER_RANK // 2
+    train_dataset = TensorDataset(train_embeddings)
+    loader_batch_size = BATCH_SIZE_PER_RANK
     train_sampler = (
         DistributedSampler(
             train_dataset, num_replicas=world_size, rank=rank, shuffle=True,
@@ -524,44 +323,38 @@ def main() -> None:
     )
 
     if OPTIMIZER.lower() != "adamw":
-        raise ValueError("Iter48 requires AdamW.")
-    if RUN_MODE in {"CURRICULUM", "CURVATURE_ONLY"}:
-        optimizer, initial_curvatures, initial_curvature_u, layer_beta2 = (
-            build_curvature_conditioned_adamw(model)
-        )
-    else:
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=LR,
-            betas=(ADAMW_BETA1, ADAMW_BASE_BETA2),
-            eps=ADAMW_EPS,
-            weight_decay=WEIGHT_DECAY,
-        )
-        initial_curvatures = [1.0] * CODEBOOK_NUM
-        initial_curvature_u = [None] * CODEBOOK_NUM
-        layer_beta2 = [ADAMW_BASE_BETA2] * CODEBOOK_NUM
+        raise ValueError("This trainer requires AdamW.")
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=LR,
+        betas=(ADAMW_BETA1, ADAMW_BASE_BETA2),
+        eps=ADAMW_EPS,
+        weight_decay=WEIGHT_DECAY,
+    )
 
     raw_module = model.module if isinstance(model, DDP) else model
-    raw_module.set_curriculum_step(0)
+    layer_curvatures = [
+        float(layer.get_curvature().detach().item())
+        for layer in raw_module.rq.vq_layers
+    ]
     if rank == 0:
         print(
-            f"[Iter48 {RUN_MODE}] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
+            f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
-            f"effective_item_batch={BATCH_SIZE_PER_RANK} "
-            f"total_effective_batch={BATCH_SIZE_PER_RANK * world_size} "
-            f"initial_c={[round(value, 6) for value in initial_curvatures]} "
-            f"layer_beta2={[round(value, 6) for value in layer_beta2]}",
+            f"total_effective_batch={loader_batch_size * world_size} "
+            f"c={[round(value, 6) for value in layer_curvatures]}",
             flush=True,
         )
         _record(
-            rank, "train_start", run_mode=RUN_MODE, cold_start=True,
-            checkpoint_loaded=False, initialization="xavier_encoder_decoder_then_kmeans_codebooks",
+            rank, "train_start", geometry="poincare_fixed_curvature",
+            cold_start=True,
+            checkpoint_loaded=False,
+            initialization="xavier_encoder_decoder_then_kmeans_codebooks",
             max_global_steps=MAX_GLOBAL_STEPS,
             eval_interval_steps=EVAL_INTERVAL_STEPS,
             loader_batch_size=loader_batch_size,
-            effective_item_batch_size=BATCH_SIZE_PER_RANK,
-            total_effective_item_batch_size=BATCH_SIZE_PER_RANK * world_size,
-            dataset_kind="train_target_items" if RUN_MODE == "A" else "train_history_target_pairs",
+            total_effective_item_batch_size=loader_batch_size * world_size,
+            dataset_kind="train_target_items",
             dataset_size=len(train_dataset),
             lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES),
             codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE),
@@ -569,15 +362,8 @@ def main() -> None:
             sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM,
             xavier_init=XAVIER_INIT, seed=SEED, all_items=len(all_embeddings),
             train_target_items=len(train_embeddings), embedding_shape=list(embeddings.shape),
-            world_size=world_size, curvature_min=C_CYCLIC_MIN,
-            curvature_max=C_CYCLIC_MAX, curvature_period=C_CYCLIC_PERIOD,
-            layer_curvature_norms=list(LAYER_CURVATURE_NORMS),
-            initial_curvatures=initial_curvatures,
-            initial_curvature_u=initial_curvature_u,
-            beta2_by_layer=layer_beta2,
-            curvature_regularization_weight=CURVATURE_REG_WEIGHT,
-            behavior_loss_weight=BEHAVIOR_LOSS_WEIGHT,
-            behavior_temperature=BEHAVIOR_TEMPERATURE,
+            world_size=world_size,
+            layer_curvatures=layer_curvatures,
             snapshot_steps=SNAPSHOT_STEPS,
         )
 
@@ -600,7 +386,6 @@ def main() -> None:
     epoch = 0
     interval_loss_sum = 0.0
     interval_recon_sum = 0.0
-    interval_behavior_sum = 0.0
     interval_updates = 0
     last_progress_time = time.time()
 
@@ -608,26 +393,13 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         model.train()
-        for batch_values in loader:
-            if RUN_MODE == "A":
-                (batch,) = batch_values
-                behavior_ids = None
-                batch = batch.to(device, non_blocking=True)
-            else:
-                source_ids, target_ids, source_batch, target_batch = batch_values
-                source_ids = source_ids.to(device, non_blocking=True)
-                target_ids = target_ids.to(device, non_blocking=True)
-                source_batch = source_batch.to(device, non_blocking=True)
-                target_batch = target_batch.to(device, non_blocking=True)
-                batch = torch.cat((source_batch, target_batch), dim=0)
-                behavior_ids = (source_ids, target_ids)
+        for (batch,) in loader:
+            batch = batch.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _, behavior_loss = model(
-                batch, behavior_ids=behavior_ids
-            )
+            reconstructed, quant_loss, _, _ = model(batch)
             loss, recon_loss = raw_module.compute_loss(
-                batch, reconstructed, quant_loss, behavior_loss
+                batch, reconstructed, quant_loss
             )
             if not torch.isfinite(loss):
                 raise RuntimeError(
@@ -645,24 +417,18 @@ def main() -> None:
             if world_size > 1:
                 dist.all_reduce(step_tensor, op=dist.ReduceOp.SUM)
             global_step_sync = int(step_tensor.item())
-            raw_module.set_curriculum_step(global_step_sync)
 
             interval_loss_sum += float(loss.detach())
             interval_recon_sum += float(recon_loss.detach())
-            interval_behavior_sum += float(behavior_loss.detach())
             interval_updates += 1
 
             now = time.time()
             if rank == 0 and now - last_progress_time >= 5:
-                curvatures_now = raw_module.get_curvatures().detach().cpu().tolist()
                 print(
-                    f"[Iter48 {RUN_MODE}] global_step={global_step_sync}/"
+                    f"[hyperbolic] global_step={global_step_sync}/"
                     f"{MAX_GLOBAL_STEPS} local_updates={local_optimizer_steps} "
                     f"loss={float(loss.detach()):.8f} "
-                    f"recon={float(recon_loss.detach()):.8f} "
-                    f"behavior={float(behavior_loss.detach()):.8f} "
-                    f"behavior_weight={raw_module.rq.get_behavior_weight():.6f} "
-                    f"c={[round(value, 6) for value in curvatures_now]}",
+                    f"recon={float(recon_loss.detach()):.8f}",
                     flush=True,
                 )
                 last_progress_time = now
@@ -682,24 +448,18 @@ def main() -> None:
             recon_sum_tensor = torch.tensor(
                 interval_recon_sum, dtype=torch.float64, device=device
             )
-            behavior_sum_tensor = torch.tensor(
-                interval_behavior_sum, dtype=torch.float64, device=device
-            )
             updates_tensor = torch.tensor(
                 interval_updates, dtype=torch.int64, device=device
             )
             if world_size > 1:
                 dist.all_reduce(loss_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(recon_sum_tensor, op=dist.ReduceOp.SUM)
-                dist.all_reduce(behavior_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(updates_tensor, op=dist.ReduceOp.SUM)
             denominator = max(int(updates_tensor.item()), 1)
             avg_loss = float(loss_sum_tensor.item()) / denominator
             avg_recon = float(recon_sum_tensor.item()) / denominator
-            avg_behavior = float(behavior_sum_tensor.item()) / denominator
             interval_loss_sum = 0.0
             interval_recon_sum = 0.0
-            interval_behavior_sum = 0.0
             interval_updates = 0
 
             model.eval()
@@ -734,37 +494,25 @@ def main() -> None:
                         raw_module.get_curvatures().detach().cpu().tolist()
                     )
                     current_epsilons = raw_module.rq.get_effective_epsilons()
-                    curvature_reg_value = float(
-                        raw_module.curvature_regularization().detach().item()
-                    )
-                    curvature_alpha = raw_module.rq.get_curriculum_alpha()
-                    behavior_weight = raw_module.rq.get_behavior_weight()
 
                     print(
-                        f"[Iter48 {RUN_MODE}] global_step={global_step_sync}/"
+                        f"[hyperbolic] global_step={global_step_sync}/"
                         f"{MAX_GLOBAL_STEPS} loss={avg_loss:.8f} "
-                        f"recon={avg_recon:.8f} behavior={avg_behavior:.8f} "
-                        f"behavior_weight={behavior_weight:.6f} "
-                        f"curvature_alpha={curvature_alpha:.6f} "
+                        f"recon={avg_recon:.8f} "
                         f"c={[round(value, 6) for value in current_curvatures]} "
                         f"epsilon={[round(value, 7) for value in current_epsilons]} "
-                        f"curvature_reg={curvature_reg_value:.8f} "
                         f"raw_unique={raw_unique}/{len(raw_tokens)} "
                         f"collision={collision_v:.6f} "
                         f"codebook_used={codebook_used}",
                         flush=True,
                     )
                     _record(
-                        rank, "train", run_mode=RUN_MODE,
+                        rank, "train",
                         global_step=global_step_sync,
                         local_optimizer_steps=local_optimizer_steps,
-                        loss=avg_loss, recon=avg_recon, behavior_loss=avg_behavior,
-                        behavior_weight=behavior_weight,
-                        curvature_alpha=curvature_alpha,
+                        loss=avg_loss, recon=avg_recon,
                         current_curvatures=current_curvatures,
                         effective_epsilons=current_epsilons,
-                        beta2_by_layer=layer_beta2,
-                        curvature_regularization=curvature_reg_value,
                         raw_unique=raw_unique, raw_total=len(raw_tokens),
                         collision=collision_v, codebook_usage_counts=usage_counts,
                         codebook_used=codebook_used,
@@ -799,7 +547,7 @@ def main() -> None:
                 f"saved={sorted(saved_versions)}"
             )
         _record(
-            rank, "train_end", run_mode=RUN_MODE,
+            rank, "train_end",
             total_wall_time_s=round(time.time() - _T0, 3),
             global_step=global_step_sync,
             local_optimizer_steps=local_optimizer_steps,
@@ -831,7 +579,7 @@ def _launch_via_torchrun() -> None:
         _LAUNCHER["script"],
     ]
     print(
-        f"[Iter48 {RUN_MODE}] launching {_LAUNCHER['nproc']}-rank torchrun",
+        f"[hyperbolic] launching {_LAUNCHER['nproc']}-rank torchrun",
         flush=True,
     )
     with open(_LAUNCHER["log"], "w", encoding="utf-8") as fout:

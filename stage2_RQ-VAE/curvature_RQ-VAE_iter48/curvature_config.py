@@ -1,7 +1,7 @@
 from pathlib import Path
 
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
-MECHANISM_NAME = "iter48_cold_start_progressive_curvature_behavior_sinkhorn"
+MECHANISM_NAME = "iter48_poincare_fixed_curvature_hyperbolic"
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
@@ -20,13 +20,10 @@ SIDS_NPY = STAGE2_RESULT_DIR / "dataset/Instruments/sids_for_hgrec.npy"
 ITEM_SIDS_JSON = STAGE2_RESULT_DIR / "item_sids.json"
 STAGE2_LOG_DIR = REPO_ROOT / "stage2_RQ-VAE/curvature_RQ-VAE_iter48/logs"
 
-# Match the TIGER baseline Stage2 budget: 3000 epochs x 6 optimizer steps per
-# epoch (24556 train items / 4 ranks / batch 1024) = 18000 optimizer updates.
-# Iter48 counts global steps as (single-rank step x world_size), so the
-# equivalent budget is 18000 x 4 = 72000 global steps.
-# Only the A / CURRICULUM arms use the item dataset and are directly
-# comparable to the TIGER baseline; the transition-pair arms see a ~110x
-# larger dataset and keep their own budget.
+# Match the TIGER baseline Stage2 budget exactly: 3000 epochs x 6 optimizer
+# steps per epoch (24556 train target items / 4 ranks / batch 1024) = 18000
+# optimizer updates. This trainer counts global steps as
+# (single-rank step x world_size), so the equivalent budget is 18000 x 4.
 MAX_GLOBAL_STEPS = 72_000
 EVAL_INTERVAL_STEPS = 10_000
 
