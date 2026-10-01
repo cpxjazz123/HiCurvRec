@@ -63,7 +63,11 @@ NUM_WORKERS = 0
 
 C_CYCLIC_MIN = 0.05
 C_CYCLIC_MAX = 1.5
-C_CYCLIC_PERIOD = 100_000
+# One curvature cycle spans the whole run, so the period is the run's global
+# step budget. It is also the denominator that rescales the curriculum phase
+# boundaries in model/layers.py, so configure_run rebinds it to the active
+# mode's MAX_GLOBAL_STEPS before the model is built.
+C_CYCLIC_PERIOD = int(experiment.MAX_GLOBAL_STEPS)
 LAYER_CURVATURE_NORMS = (0.001, 0.932889, 1.0)
 CURVATURE_REG_WEIGHT = 0.005
 BEHAVIOR_LOSS_WEIGHT = 0.20
@@ -87,6 +91,7 @@ _LAUNCHER = {
 
 def configure_run(mode: str, launcher_script: str) -> None:
     global RUN_MODE, METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
+    global C_CYCLIC_PERIOD
     supported_modes = {
         "A", "CURRICULUM", "BASELINE", "CURVATURE_ONLY", "BEHAVIOR_ONLY"
     }
@@ -100,11 +105,13 @@ def configure_run(mode: str, launcher_script: str) -> None:
         METRICS_PATH = LOG_DIR / "training_metrics_A.jsonl"
         _LAUNCHER["log"] = str(LOG_DIR / "train_A_migrated.log")
     elif mode == "CURRICULUM":
+        # Same item dataset and batch size as the A arm, so the TIGER-aligned
+        # budget applies; snapshots are rescaled to the 72k total.
         SNAPSHOT_STEPS = {
-            20_000: "B",
-            40_000: "C",
-            60_000: "D",
-            100_000: "E",
+            14_400: "B",
+            28_800: "C",
+            43_200: "D",
+            72_000: "E",
         }
         METRICS_PATH = LOG_DIR / "training_metrics_curriculum.jsonl"
         _LAUNCHER["log"] = str(LOG_DIR / "train_curriculum_migrated.log")
@@ -115,6 +122,10 @@ def configure_run(mode: str, launcher_script: str) -> None:
             "BEHAVIOR_ONLY": "BehaviorOnly",
         }
         version = versions[mode]
+        # Transition-pair arms train on 2698387 pairs (110x the TIGER item
+        # dataset), so they keep a 40k global-step budget instead of the
+        # TIGER-aligned 72k. Matching step counts across a 110x dataset-size
+        # difference would not match training volume.
         MAX_GLOBAL_STEPS = 40_000
         SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: version}
         METRICS_PATH = LOG_DIR / f"training_metrics_{version}.jsonl"
@@ -122,6 +133,9 @@ def configure_run(mode: str, launcher_script: str) -> None:
             LOG_DIR / f"train_{version.lower()}_migrated.log"
         )
     _LAUNCHER["script"] = os.path.abspath(launcher_script)
+    # The curvature cycle and the curriculum phase rescaling both key off the
+    # budget resolved above, so rebind after every branch has run.
+    C_CYCLIC_PERIOD = MAX_GLOBAL_STEPS
 
 
 def _snapshot_paths(version: str) -> tuple[Path, Path, Path, Path]:

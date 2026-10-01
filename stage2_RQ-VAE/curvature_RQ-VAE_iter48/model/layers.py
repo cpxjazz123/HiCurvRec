@@ -22,6 +22,15 @@ from sklearn.cluster import KMeans
 CURVATURE = 1.0
 _BALL_EPS = 1e-6
 
+# Curriculum phase boundaries, expressed against the 100k global-step reference
+# run. ``_phase_steps`` rescales them to the active budget so the registered
+# phase structure (alpha/behavior ramp, then epsilon ramp) is preserved when
+# the budget is aligned to the TIGER baseline.
+CURRICULUM_ALPHA_START = 20_000
+CURRICULUM_ALPHA_END = 40_000
+CURRICULUM_EPSILON_START = 40_000
+CURRICULUM_EPSILON_END = 60_000
+
 
 def _curvature_like(
     curvature: torch.Tensor | float, reference: torch.Tensor
@@ -213,15 +222,32 @@ class VQLayer(nn.Module):
     def _ramp(step: int, start: int, end: int) -> float:
         return min(max((step - start) / float(end - start), 0.0), 1.0)
 
+    def _phase_steps(self, start_at_100k: int, end_at_100k: int) -> tuple[int, int]:
+        """Scale a curriculum phase from its 100k reference to this run's budget.
+
+        Iter48's curriculum stages were registered against a 100k global-step
+        budget. When the budget is aligned to the TIGER baseline (72k), the
+        phase boundaries must scale by the same factor, otherwise the
+        behavior/epsilon ramps terminate early and the mechanism itself
+        changes instead of only the training budget.
+        """
+        total = self.c_cyclic_period
+        return (
+            int(round(start_at_100k * total / 100_000)),
+            int(round(end_at_100k * total / 100_000)),
+        )
+
     def get_curvature_alpha(self) -> float:
         if not self.curriculum_enabled:
             return 0.0
-        return self._ramp(self._curriculum_step, 20_000, 40_000)
+        alpha_start, alpha_end = self._phase_steps(CURRICULUM_ALPHA_START, CURRICULUM_ALPHA_END)
+        return self._ramp(self._curriculum_step, alpha_start, alpha_end)
 
     def get_behavior_weight(self) -> float:
         if not self.behavior_curriculum_enabled:
             return 0.0
-        return 0.20 * self._ramp(self._curriculum_step, 20_000, 40_000)
+        alpha_start, alpha_end = self._phase_steps(CURRICULUM_ALPHA_START, CURRICULUM_ALPHA_END)
+        return 0.20 * self._ramp(self._curriculum_step, alpha_start, alpha_end)
 
     def get_curvature(self) -> torch.Tensor:
         if not self.curriculum_enabled:
@@ -242,7 +268,8 @@ class VQLayer(nn.Module):
     def get_effective_epsilon(self) -> float:
         if not self.curriculum_enabled:
             return self.sk_epsilon
-        alpha = self._ramp(self._curriculum_step, 40_000, 60_000)
+        eps_start, eps_end = self._phase_steps(CURRICULUM_EPSILON_START, CURRICULUM_EPSILON_END)
+        alpha = self._ramp(self._curriculum_step, eps_start, eps_end)
         conditioned = self.sk_epsilon * float(
             self.get_curvature().detach().item()
         ) / self.c_cyclic_max
