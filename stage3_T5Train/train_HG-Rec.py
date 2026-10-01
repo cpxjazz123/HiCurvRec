@@ -121,7 +121,7 @@ RESULTS_DIR    = "/home/wlia0047/ar57/wenyu/GeneRec/results"
 STAGE2_RESULTS  = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE"
 STAGE3_RESULTS = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train"
 CODEBOOK_SIZE = [256, 256, 256, 1]
-CODE_PATH     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+CODE_PATH     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
 TRAIN_FILE    = "train.parquet"
 VALID_FILE    = "valid.parquet"
 TEST_FILE     = "test.parquet"
@@ -151,6 +151,7 @@ _RQVAE_VARIANT_MAP = {
     "item_sids_iter23.json":          "iter25_dup2unique_L2_iter20",
     "item_sids_iter11.json":          "iter11_L0_collapse_sk05",
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json": "curvature_RQ-VAE_repaired",
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json": "tiger",
 }
 RQVAE_VARIANT  = _RQVAE_VARIANT_MAP.get(CODE_PATH, "unknown_variant")
 # 输出统一落到仓库 results/ 下, 跟 stage0/stage1/stage2 同层级.
