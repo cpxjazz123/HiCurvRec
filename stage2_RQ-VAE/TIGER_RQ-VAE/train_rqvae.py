@@ -3,8 +3,12 @@
 2026-09-22 改造 (CLAUDE.md §1 + §3):
 - 参数全部硬编码为模块常量 (禁 argparse/CLI flag)
 - 加 _launch_via_torchrun 自动 fork 4 卡 DDP (nproc=4, master_port=50202, 避免与 stage3 的 50201 冲突)
-- 加全程 metrics JSONL 收集器 (每个 train/eval/ckpt_saved/early_stop/train_end 一行)
+- 加全程 metrics JSONL 收集器 (每个 train/eval/ckpt_saved/train_end 一行)
 - 输出路径硬编码到 results/stage2_RQ-VAE/TIGER_RQ-VAE/
+
+2026-10-01 改造 (CLAUDE.md §2):
+- 删除 PATIENCE / stale 计数与 early-stop 分支, 固定跑满 EPOCHS
+- ckpt_saved 仅保留 best-collision 快照, 不再中断训练
 """
 
 from __future__ import annotations
@@ -69,7 +73,9 @@ OPTIMIZER           = "AdamW"
 SEED                = 42
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
-PATIENCE            = 10
+# CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
+# 候选是否采用完全交由下游 stage3 test_R@10 裁决.
+# 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
 
 
 # === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
@@ -265,7 +271,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, patience=PATIENCE, all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -278,7 +284,6 @@ def main() -> None:
 
     best_collision = float("inf")
     best_state: dict | None = None
-    stale = 0
     codebook_sizes = list(config.codebook_size)
 
     for epoch in range(1, EPOCHS + 1):
@@ -352,7 +357,6 @@ def main() -> None:
                 )
                 if collision_v < best_collision:
                     best_collision = collision_v
-                    stale = 0
                     best_state = {
                         name: value.detach().cpu().clone()
                         for name, value in raw_module.state_dict().items()
@@ -366,15 +370,6 @@ def main() -> None:
                         rank, "ckpt_saved", epoch=epoch, path=str(CHECKPOINT),
                         reason="new_best_collision", collision=collision_v, raw_unique=raw_unique,
                     )
-                else:
-                    stale += 1
-                    if stale >= PATIENCE:
-                        print(f"[RQ-VAE] early stop at epoch={epoch}", flush=True)
-                        _record(
-                            rank, "early_stop", epoch=epoch, patience=stale,
-                            patience_max=PATIENCE, best_collision=best_collision,
-                        )
-                        break
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
