@@ -31,6 +31,12 @@ _BALL_EPS = 1e-6
 TANGENT_RADIUS = 1.5
 
 
+def _rescale_to_radius(x: torch.Tensor, radius: float) -> torch.Tensor:
+    """Keep the direction, fix the norm, so gradient always reaches x."""
+    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True)
+    return x * (radius / norm.clamp_min(1e-6))
+
+
 def _curvature_like(
     curvature: torch.Tensor | float, reference: torch.Tensor
 ) -> torch.Tensor:
@@ -418,6 +424,7 @@ class RQLayer(nn.Module):
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
+        self.tangent_radius = float(config.tangent_radius)
         if self.vq_type != "vq":
             raise ValueError("This model requires TIGER's trainable VQ codebooks")
         self.vq_layers = nn.ModuleList(
@@ -455,6 +462,12 @@ class RQLayer(nn.Module):
         )
         residual = x
         for level, vq_layer in enumerate(self.vq_layers):
+            # Every level must quantize on the same shell. The Mobius
+            # subtraction returns a tiny residual (measured 0.007 and 0.005
+            # after the first two levels), which would drop levels 1 and 2
+            # back into the linear region of the expmap and leave them unable
+            # to separate anything.
+            residual = _rescale_to_radius(residual, self.tangent_radius)
             curvature = vq_layer.get_curvature()
             quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             residual = _hyperbolic_residual(residual, quant, curvature)
@@ -479,6 +492,7 @@ class RQLayer(nn.Module):
         residual = x
         stats = []
         for level, layer in enumerate(self.vq_layers):
+            residual = _rescale_to_radius(residual, self.tangent_radius)
             indices, usage, entropy = layer.assignment_diagnostics(residual)
             tokens[:, level] = indices
             stats.append(
@@ -501,5 +515,6 @@ class RQLayer(nn.Module):
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
         for vq_layer in self.vq_layers:
+            residual = _rescale_to_radius(residual, self.tangent_radius)
             residual = vq_layer.init_codebook(residual, device)
         return residual
