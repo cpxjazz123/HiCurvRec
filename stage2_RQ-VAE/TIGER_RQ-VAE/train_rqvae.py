@@ -8,7 +8,8 @@
 
 2026-10-01 改造 (CLAUDE.md §2):
 - 删除 PATIENCE / stale 计数与 early-stop 分支, 固定跑满 EPOCHS
-- ckpt_saved 仅保留 best-collision 快照, 不再中断训练
+- checkpoint 只在训练结束时保存一次 (final_epoch); 不再按 collision 最优
+  覆盖, 中途评估仅记录, Stage3 只接受训练终点权重
 """
 
 from __future__ import annotations
@@ -282,8 +283,10 @@ def main() -> None:
     if world_size > 1:
         dist.barrier()
 
-    best_collision = float("inf")
-    best_state: dict | None = None
+    # Stage3 only consumes the final-epoch weights, so tracking the best
+    # collision across epochs would be misleading; keep the last evaluation.
+    final_collision = float("inf")
+    final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
     for epoch in range(1, EPOCHS + 1):
@@ -343,6 +346,8 @@ def main() -> None:
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
+                final_collision = collision_v
+                final_raw_unique = raw_unique
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
                     f"lr={cur_lr:.3e} raw_unique={raw_unique}/{len(raw_tokens)} "
@@ -355,32 +360,34 @@ def main() -> None:
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
                 )
-                if collision_v < best_collision:
-                    best_collision = collision_v
-                    best_state = {
-                        name: value.detach().cpu().clone()
-                        for name, value in raw_module.state_dict().items()
-                    }
-                    CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
-                    torch.save(
-                        {"state_dict": best_state, "epoch": epoch, "collision": collision_v},
-                        CHECKPOINT,
-                    )
-                    _record(
-                        rank, "ckpt_saved", epoch=epoch, path=str(CHECKPOINT),
-                        reason="new_best_collision", collision=collision_v, raw_unique=raw_unique,
-                    )
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
         if world_size > 1:
             dist.barrier()
 
-    # === 训练结束: only rank 0 导出 SID ===
+    # === 训练结束: only rank 0 保存终点 checkpoint 并导出 SID ===
+    # Stage3 只接受训练终点权重；不保留任何中间或"最优 collision"快照。
     if rank == 0:
-        if best_state is None:
-            raise RuntimeError("RQ-VAE did not produce a validation checkpoint")
-        raw_module.load_state_dict(best_state)
+        final_state = {
+            name: value.detach().cpu().clone()
+            for name, value in raw_module.state_dict().items()
+        }
+        CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "state_dict": final_state,
+                "epoch": EPOCHS,
+                "collision": final_collision,
+                "selection": "final_epoch",
+            },
+            CHECKPOINT,
+        )
+        _record(
+            rank, "ckpt_saved", epoch=EPOCHS, path=str(CHECKPOINT),
+            reason="final_epoch", collision=final_collision,
+            raw_unique=final_raw_unique,
+        )
         raw_module.eval()
         # Skip DDP all_reduce inside VQLayer.forward during the export
         # inference pass — rank 1-3 are stuck in barrier, would deadlock.
@@ -402,7 +409,7 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), best_collision=best_collision, sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
 
     if world_size > 1:
         dist.barrier()
