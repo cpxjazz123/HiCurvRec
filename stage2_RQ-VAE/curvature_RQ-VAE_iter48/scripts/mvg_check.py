@@ -133,7 +133,13 @@ def main():
         "Residual-calibrated layer scales changed",
     )
 
-    curriculum.set_curriculum_step(10_000)
+    # Curriculum milestones are expressed as fractions of the run budget so the
+    # phase-structure assertions stay valid when the budget is aligned to the
+    # TIGER baseline (72k) instead of the 100k reference run.
+    def at(fraction: float) -> int:
+        return int(round(training.C_CYCLIC_PERIOD * fraction))
+
+    curriculum.set_curriculum_step(at(0.1))
     bootstrap_curvature = curriculum.get_curvatures().detach()
     require(
         torch.allclose(
@@ -149,13 +155,13 @@ def main():
         "B must keep fixed epsilon",
     )
 
-    curriculum.set_curriculum_step(20_000)
+    curriculum.set_curriculum_step(at(0.2))
     require(curriculum.rq.get_curriculum_alpha() == 0.0, "C ramp start changed")
-    curriculum.set_curriculum_step(30_000)
+    curriculum.set_curriculum_step(at(0.3))
     require(
         abs(curriculum.rq.get_curriculum_alpha() - 0.5) < 1e-12
         and abs(curriculum.rq.get_behavior_weight() - 0.1) < 1e-12,
-        "C curvature/behavior ramp is not halfway at 30k",
+        "C curvature/behavior ramp is not halfway through its phase",
     )
     c_mid = curriculum.get_curvatures().detach()
     require(
@@ -188,7 +194,7 @@ def main():
         np.allclose(initial_curvatures, [training.C_CYCLIC_MIN] * 3, atol=1e-8),
         "Curriculum optimizer did not initialize at c_min",
     )
-    curriculum.set_curriculum_step(30_000)
+    curriculum.set_curriculum_step(at(0.3))
 
     reconstructed, quant_loss, _, tokens, behavior_loss = curriculum(
         paired_batch, behavior_ids=(source_ids, target_ids)
@@ -236,13 +242,13 @@ def main():
         "Curriculum total-loss backward produced no finite nonzero gradient",
     )
 
-    curriculum.set_curriculum_step(40_000)
+    curriculum.set_curriculum_step(at(0.4))
     require(curriculum.rq.get_behavior_weight() == 0.2, "C behavior weight endpoint changed")
     require(
         curriculum.rq.get_effective_epsilons() == [0.003] * 3,
         "D epsilon ramp must start at the fixed base value",
     )
-    curriculum.set_curriculum_step(50_000)
+    curriculum.set_curriculum_step(at(0.5))
     epsilon_mid = curriculum.rq.get_effective_epsilons()
     for layer, epsilon in zip(layers, epsilon_mid):
         conditioned = max(
@@ -254,7 +260,7 @@ def main():
             abs(epsilon - (0.003 + conditioned) / 2.0) < 1e-9,
             "D epsilon interpolation changed",
         )
-    curriculum.set_curriculum_step(60_000)
+    curriculum.set_curriculum_step(at(0.6))
     epsilon_full = curriculum.rq.get_effective_epsilons()
     for layer, epsilon in zip(layers, epsilon_full):
         require(
@@ -268,7 +274,7 @@ def main():
             ) < 1e-9,
             "Epsilon endpoint is not curvature-conditioned",
         )
-    curriculum.set_curriculum_step(100_000)
+    curriculum.set_curriculum_step(at(1.0))
     tokens, assignment_stats = curriculum.get_indices_with_stats(
         all_embeddings[:512].to(device)
     )
@@ -298,7 +304,17 @@ def main():
         arm = initialize_model(mode, all_embeddings, device)
         checkpoint_round_trip(arm, device, mode.lower())
         layers = arm.rq.vq_layers
+        # Transition-pair arms intentionally keep a 40k budget: their dataset is
+        # 110x the TIGER baseline's, so TIGER-aligned steps would misalign data
+        # exposure rather than align it.
         require(training.MAX_GLOBAL_STEPS == 40_000, f"{mode} step budget changed")
+        require(
+            training.C_CYCLIC_PERIOD == training.MAX_GLOBAL_STEPS,
+            f"{mode} curvature cycle must span the run budget",
+        )
+
+        def at(fraction: float, _arm=arm) -> int:
+            return int(round(_arm.rq.vq_layers[0].c_cyclic_period * fraction))
         require(
             all(layer.curriculum_enabled is curvature_enabled for layer in layers)
             and all(
@@ -312,7 +328,7 @@ def main():
             and [layer.sk_iters for layer in layers] == [50] * 3,
             f"{mode} Sinkhorn settings changed",
         )
-        arm.set_curriculum_step(10_000)
+        arm.set_curriculum_step(at(0.1))
         require(
             torch.allclose(
                 arm.get_curvatures(),
@@ -325,7 +341,7 @@ def main():
             arm.rq.get_effective_epsilons() == [0.003] * 3,
             f"{mode} must use fixed Sinkhorn epsilon",
         )
-        arm.set_curriculum_step(30_000)
+        arm.set_curriculum_step(at(0.3))
         require(
             abs(
                 arm.rq.get_curriculum_alpha()
