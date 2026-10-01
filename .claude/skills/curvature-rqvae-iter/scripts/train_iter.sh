@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Run the mechanism's MVG check, then Stage2, from the single in-place
-# working directory. Iterations no longer create curvature_RQ-VAE_iter<N>/;
-# Git is the iteration boundary (see SKILL.md 0.2/0.3).
+# Run the mechanism's MVG check, then Stage2, from the single working
+# directory. See SKILL.md 0.2/0.3 for the accept/rollback gate.
 set -euo pipefail
 
 PY="/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"

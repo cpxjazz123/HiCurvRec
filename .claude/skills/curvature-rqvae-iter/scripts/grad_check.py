@@ -2,7 +2,7 @@
 """FCCR-1 gradient-check compatibility note.
 
 The old generic checker is retired because it:
-- required a CLI iter_id;
+- required a CLI run selector;
 - assumed learnable curvature flags;
 - could incorrectly require gradients/updates on fixed curvature.
 

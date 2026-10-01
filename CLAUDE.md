@@ -115,7 +115,7 @@ STAGE3_SCREEN_BASELINE_LOG=
 - **劣于父条件** → 回滚：对实现 commit 执行 `git revert`，恢复父条件源码，再 commit + push + 核验 hash。**禁止** `git reset --hard` 已推送分支，**禁止**删除历史，失败尝试保留在历史中。
 - **持平或在噪声内** → 视为未改进，同样回滚，并在同一目录内换一个结构上不同的机制。
 
-被回滚的条件仍须完整跑一次 Stage2 与 Stage3，判定依据是它们的原生输出，不得用 Stage2 代理指标（collision / Gini / 熵）替代 Stage3 证据。回滚后工作树即恢复为父条件，下一轮始终从当前最佳条件出发。
+被否决的条件仍须完整跑一次 Stage2 与 Stage3，判定依据是它们的原生输出，不得用 Stage2 代理指标（collision / Gini / 熵）替代 Stage3 证据。回滚后工作树即恢复为父条件，下一轮始终从当前最佳条件出发。**不为任何一轮新建 hypothesis / protocol / manifest / audit / decision / review / closure / 失败归档等记录文件**；被否决的尝试只以 revert commit 存在，不额外落盘。
 
 ### 与监控/目标的关系
 

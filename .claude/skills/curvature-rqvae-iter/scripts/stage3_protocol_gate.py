@@ -28,11 +28,7 @@ def sha256(path):
     return h.hexdigest()
 
 def work_dir(work):
-    """The single in-place working directory; iteration numbers are gone.
-
-    Iterations now edit stage2_RQ-VAE/curvature_RQ-VAE in place and roll back
-    through Git, so there is exactly one accepted directory name.
-    """
+    """The single working directory for the mechanism."""
     if work.name != "curvature_RQ-VAE":
         fail(f"run from stage2_RQ-VAE/curvature_RQ-VAE/, got {work}")
     return "curvature_RQ-VAE"
