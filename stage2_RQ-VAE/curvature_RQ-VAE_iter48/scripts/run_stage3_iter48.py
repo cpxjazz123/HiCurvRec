@@ -22,16 +22,16 @@ if spec is None or spec.loader is None:
 trainer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trainer)
 trainer.CODE_PATH = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
+    "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
     "curvature_RQ-VAE_iter48/item_sids.json"
 )
 trainer.RQVAE_VARIANT = "iter48_poincare_fixed_curvature"
 trainer.LOG_PATH = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/"
+    "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
     "curvature_RQ-VAE_iter48/logs/"
 )
 trainer.SAVE_PATH = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/"
+    "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
     "curvature_RQ-VAE_iter48/ckpt/"
 )
 trainer._LAUNCHER["script"] = os.path.abspath(__file__)
