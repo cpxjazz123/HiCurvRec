@@ -64,6 +64,12 @@ NUM_WORKERS = 0
 # Fixed Poincare curvature per quantization level. Identical across levels
 # because the curvature curriculum was removed; only the level index varies.
 LAYER_CURVATURES = (1.0, 1.0, 1.0)
+# Radius the encoder latent is normalized onto before expmap0. The encoder
+# otherwise settles near 0.024, where the Poincare expmap is linear and
+# curvature reduces to a constant 2x distance rescale, so the geometry has no
+# effect on the assignment. 1.5 is where the expmap compresses to ~0.60 and the
+# ball actually changes the metric.
+TANGENT_RADIUS = 1.5
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -267,6 +273,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
+        tangent_radius=TANGENT_RADIUS,
     )
 
 
