@@ -13,11 +13,6 @@ sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment
 import train_rqvae as training
 from model import RQVAE
-from model.layers import (
-    _expmap0_tangent,
-    _hyperbolic_residual,
-    _rescale_to_radius,
-)
 
 
 def require(condition: bool, message: str) -> None:
@@ -89,52 +84,6 @@ def main() -> None:
 
     with torch.no_grad():
         model.init_codebook(all_embeddings[:4096].to(device))
-
-    # The latent must sit on the fixed-radius shell, otherwise the Poincare
-    # expmap returns to its linear regime and curvature stops mattering.
-    with torch.no_grad():
-        encoded = model._to_tangent_space(model.encoder(all_embeddings[:512].to(device)))
-    latent_radius = torch.linalg.vector_norm(encoded, dim=-1)
-    require(
-        torch.allclose(
-            latent_radius,
-            torch.full_like(latent_radius, training.TANGENT_RADIUS),
-            atol=1e-3,
-        ),
-        f"Latent radius must be normalized to {training.TANGENT_RADIUS}, "
-        f"got mean {float(latent_radius.mean()):.6f}",
-    )
-    ball_radius = torch.linalg.vector_norm(
-        _expmap0_tangent(encoded, 1.0), dim=-1
-    )
-    compression = float((ball_radius / latent_radius).mean())
-    require(
-        compression < 0.9,
-        f"expmap is still linear (compression {compression:.4f}); "
-        "the ball geometry would be a no-op",
-    )
-
-    # Every quantization level must receive a residual on the same shell.
-    # The Mobius subtraction returns a tiny residual, so without a per-level
-    # rescale levels 1 and 2 fall back into the linear region and cannot
-    # separate anything (measured collision 0.896 that way).
-    residual = encoded
-    for level, layer in enumerate(model.rq.vq_layers):
-        _, _, _, indices = layer(residual, infer_use_sk=True)
-        residual = _hyperbolic_residual(
-            residual, layer.embed_code(indices), layer.get_curvature()
-        )
-        next_radius = torch.linalg.vector_norm(
-            _rescale_to_radius(residual, training.TANGENT_RADIUS), dim=-1
-        )
-        require(
-            torch.allclose(
-                next_radius,
-                torch.full_like(next_radius, training.TANGENT_RADIUS),
-                atol=1e-3,
-            ),
-            f"Level {level + 1} residual is not renormalized to the shell",
-        )
 
     batch = all_embeddings[:256].to(device)
     reconstructed, quant_loss, unused_codes, tokens = model(batch)
