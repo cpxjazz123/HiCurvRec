@@ -1,7 +1,7 @@
-W1001 23:41:31.681670 1748532 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
-W1001 23:41:31.681670 1748532 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
-W1001 23:41:31.681670 1748532 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
-W1001 23:41:31.681670 1748532 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W1002 00:50:40.509475 1910361 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W1002 00:50:40.509475 1910361 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W1002 00:50:40.509475 1910361 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1002 00:50:40.509475 1910361 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
 [hyperbolic] cold_start=true max_global_steps=72000 batch_size_per_rank=1024 total_effective_batch=4096 c=[1.0, 1.0, 1.0]
 [RecBole RQ-VAE] initializing codebooks with KMeans
 /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE/model/layers.py:104: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
@@ -44,227 +44,248 @@ W1001 23:41:31.681670 1748532 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python
   return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
   return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
-[hyperbolic] global_step=284/72000 local_updates=71 loss=0.00243540 recon=0.00018021
-[hyperbolic] global_step=580/72000 local_updates=145 loss=0.00045145 recon=0.00016870
-[hyperbolic] global_step=916/72000 local_updates=229 loss=0.00033457 recon=0.00014953
-[hyperbolic] global_step=1244/72000 local_updates=311 loss=0.00030830 recon=0.00015908
-[hyperbolic] global_step=1572/72000 local_updates=393 loss=0.00027781 recon=0.00014498
-[hyperbolic] global_step=1888/72000 local_updates=472 loss=0.00030796 recon=0.00015434
-[hyperbolic] global_step=2220/72000 local_updates=555 loss=0.00032130 recon=0.00015971
-[hyperbolic] global_step=2532/72000 local_updates=633 loss=0.00047710 recon=0.00015544
-[hyperbolic] global_step=2856/72000 local_updates=714 loss=0.00050619 recon=0.00016137
-[hyperbolic] global_step=3164/72000 local_updates=791 loss=0.00092872 recon=0.00016729
-[hyperbolic] global_step=3488/72000 local_updates=872 loss=0.00042717 recon=0.00015409
-[hyperbolic] global_step=3812/72000 local_updates=953 loss=0.00051615 recon=0.00014878
-[hyperbolic] global_step=4140/72000 local_updates=1035 loss=0.00044387 recon=0.00015314
-[hyperbolic] global_step=4468/72000 local_updates=1117 loss=0.00045239 recon=0.00014245
-[hyperbolic] global_step=4792/72000 local_updates=1198 loss=0.00044788 recon=0.00016081
-[hyperbolic] global_step=5120/72000 local_updates=1280 loss=0.00043557 recon=0.00016773
-[hyperbolic] global_step=5432/72000 local_updates=1358 loss=0.00064708 recon=0.00017198
-[hyperbolic] global_step=5760/72000 local_updates=1440 loss=0.00049239 recon=0.00013410
-[hyperbolic] global_step=6084/72000 local_updates=1521 loss=0.00045295 recon=0.00014269
-[hyperbolic] global_step=6416/72000 local_updates=1604 loss=0.00036560 recon=0.00013857
-[hyperbolic] global_step=6756/72000 local_updates=1689 loss=0.00052076 recon=0.00013903
-[hyperbolic] global_step=7092/72000 local_updates=1773 loss=0.00041163 recon=0.00013034
-[hyperbolic] global_step=7428/72000 local_updates=1857 loss=0.00048663 recon=0.00013765
-[hyperbolic] global_step=7752/72000 local_updates=1938 loss=0.00054299 recon=0.00015194
-[hyperbolic] global_step=8088/72000 local_updates=2022 loss=0.00070951 recon=0.00016611
-[hyperbolic] global_step=8424/72000 local_updates=2106 loss=0.00058353 recon=0.00017109
-[hyperbolic] global_step=8756/72000 local_updates=2189 loss=0.00049108 recon=0.00014587
-[hyperbolic] global_step=9088/72000 local_updates=2272 loss=0.00061943 recon=0.00015937
-[hyperbolic] global_step=9420/72000 local_updates=2355 loss=0.00056650 recon=0.00015822
-[hyperbolic] global_step=9760/72000 local_updates=2440 loss=0.00067008 recon=0.00015155
-[hyperbolic] global_step=10000/72000 loss=0.00116763 recon=0.00015325 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=24289/24587 collision=0.012120 codebook_used=[256, 256, 256]
-[hyperbolic] global_step=10332/72000 local_updates=2583 loss=0.00066512 recon=0.00015635
-[hyperbolic] global_step=10660/72000 local_updates=2665 loss=0.00052434 recon=0.00013046
-[hyperbolic] global_step=10992/72000 local_updates=2748 loss=0.00054537 recon=0.00014066
-[hyperbolic] global_step=11320/72000 local_updates=2830 loss=0.00059343 recon=0.00015373
-[hyperbolic] global_step=11648/72000 local_updates=2912 loss=0.00054335 recon=0.00012789
-[hyperbolic] global_step=11968/72000 local_updates=2992 loss=0.00051405 recon=0.00015377
-[hyperbolic] global_step=12288/72000 local_updates=3072 loss=0.00063006 recon=0.00017554
-[hyperbolic] global_step=12620/72000 local_updates=3155 loss=0.00056392 recon=0.00014333
-[hyperbolic] global_step=12952/72000 local_updates=3238 loss=0.00050401 recon=0.00013696
-[hyperbolic] global_step=13284/72000 local_updates=3321 loss=0.00056626 recon=0.00014563
-[hyperbolic] global_step=13616/72000 local_updates=3404 loss=0.00055629 recon=0.00014749
-[hyperbolic] global_step=13948/72000 local_updates=3487 loss=0.00057457 recon=0.00014107
-[hyperbolic] global_step=14276/72000 local_updates=3569 loss=0.00053009 recon=0.00014832
-[hyperbolic] global_step=14612/72000 local_updates=3653 loss=0.00056686 recon=0.00015119
-[hyperbolic] global_step=14940/72000 local_updates=3735 loss=0.00052821 recon=0.00013678
-[hyperbolic] global_step=15268/72000 local_updates=3817 loss=0.00055622 recon=0.00013201
-[hyperbolic] global_step=15600/72000 local_updates=3900 loss=0.00050639 recon=0.00014225
-[hyperbolic] global_step=15928/72000 local_updates=3982 loss=0.00046583 recon=0.00013124
-[hyperbolic] global_step=16268/72000 local_updates=4067 loss=0.00056706 recon=0.00013983
-[hyperbolic] global_step=16596/72000 local_updates=4149 loss=0.00049587 recon=0.00013707
-[hyperbolic] global_step=16928/72000 local_updates=4232 loss=0.00052025 recon=0.00013862
-[hyperbolic] global_step=17248/72000 local_updates=4312 loss=0.00060716 recon=0.00015683
-[hyperbolic] global_step=17572/72000 local_updates=4393 loss=0.00065559 recon=0.00013759
-[hyperbolic] global_step=17908/72000 local_updates=4477 loss=0.00041781 recon=0.00013897
-[hyperbolic] global_step=18232/72000 local_updates=4558 loss=0.00041170 recon=0.00013969
-[hyperbolic] global_step=18568/72000 local_updates=4642 loss=0.00049190 recon=0.00014559
-[hyperbolic] global_step=18896/72000 local_updates=4724 loss=0.00053423 recon=0.00016325
-[hyperbolic] global_step=19228/72000 local_updates=4807 loss=0.00056000 recon=0.00015677
-[hyperbolic] global_step=19556/72000 local_updates=4889 loss=0.00052182 recon=0.00016272
-[hyperbolic] global_step=19892/72000 local_updates=4973 loss=0.00054418 recon=0.00013347
-[hyperbolic] global_step=20000/72000 loss=0.00054624 recon=0.00014649 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23799/24587 collision=0.032049 codebook_used=[256, 256, 256]
-[hyperbolic] global_step=20328/72000 local_updates=5082 loss=0.00051457 recon=0.00015332
-[hyperbolic] global_step=20656/72000 local_updates=5164 loss=0.00049099 recon=0.00014314
-[hyperbolic] global_step=20988/72000 local_updates=5247 loss=0.00044956 recon=0.00013338
-[hyperbolic] global_step=21320/72000 local_updates=5330 loss=0.00053654 recon=0.00014193
-[hyperbolic] global_step=21656/72000 local_updates=5414 loss=0.00057276 recon=0.00013862
-[hyperbolic] global_step=21988/72000 local_updates=5497 loss=0.00054199 recon=0.00015566
-[hyperbolic] global_step=22320/72000 local_updates=5580 loss=0.00048345 recon=0.00013566
-[hyperbolic] global_step=22656/72000 local_updates=5664 loss=0.00049127 recon=0.00014176
-[hyperbolic] global_step=22980/72000 local_updates=5745 loss=0.00055388 recon=0.00015515
-[hyperbolic] global_step=23308/72000 local_updates=5827 loss=0.00054372 recon=0.00015961
-[hyperbolic] global_step=23636/72000 local_updates=5909 loss=0.00052765 recon=0.00014539
-[hyperbolic] global_step=23964/72000 local_updates=5991 loss=0.00062540 recon=0.00013730
-[hyperbolic] global_step=24292/72000 local_updates=6073 loss=0.00064452 recon=0.00015316
-[hyperbolic] global_step=24624/72000 local_updates=6156 loss=0.00044266 recon=0.00013319
-[hyperbolic] global_step=24960/72000 local_updates=6240 loss=0.00055687 recon=0.00014702
-[hyperbolic] global_step=25284/72000 local_updates=6321 loss=0.00060453 recon=0.00015868
-[hyperbolic] global_step=25612/72000 local_updates=6403 loss=0.00064886 recon=0.00016158
-[hyperbolic] global_step=25932/72000 local_updates=6483 loss=0.00048498 recon=0.00012281
-[hyperbolic] global_step=26256/72000 local_updates=6564 loss=0.00063842 recon=0.00016443
-[hyperbolic] global_step=26576/72000 local_updates=6644 loss=0.00063718 recon=0.00014558
-[hyperbolic] global_step=26900/72000 local_updates=6725 loss=0.00053115 recon=0.00015958
-[hyperbolic] global_step=27232/72000 local_updates=6808 loss=0.00048603 recon=0.00013623
-[hyperbolic] global_step=27560/72000 local_updates=6890 loss=0.00051567 recon=0.00014227
-[hyperbolic] global_step=27896/72000 local_updates=6974 loss=0.00050691 recon=0.00014857
-[hyperbolic] global_step=28224/72000 local_updates=7056 loss=0.00059907 recon=0.00014351
-[hyperbolic] global_step=28560/72000 local_updates=7140 loss=0.00059189 recon=0.00014898
-[hyperbolic] global_step=28872/72000 local_updates=7218 loss=0.00057889 recon=0.00014803
-[hyperbolic] global_step=29200/72000 local_updates=7300 loss=0.00049998 recon=0.00015298
-[hyperbolic] global_step=29524/72000 local_updates=7381 loss=0.00053482 recon=0.00014070
-[hyperbolic] global_step=29848/72000 local_updates=7462 loss=0.00058115 recon=0.00014162
-[hyperbolic] global_step=30000/72000 loss=0.00054773 recon=0.00014525 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23518/24587 collision=0.043478 codebook_used=[256, 256, 255]
-[hyperbolic] global_step=30332/72000 local_updates=7583 loss=0.00057611 recon=0.00013755
-[hyperbolic] global_step=30660/72000 local_updates=7665 loss=0.00049082 recon=0.00013145
-[hyperbolic] global_step=30992/72000 local_updates=7748 loss=0.00058158 recon=0.00014816
-[hyperbolic] global_step=31316/72000 local_updates=7829 loss=0.00058903 recon=0.00013794
-[hyperbolic] global_step=31644/72000 local_updates=7911 loss=0.00052042 recon=0.00015881
-[hyperbolic] global_step=31968/72000 local_updates=7992 loss=0.00057001 recon=0.00016877
-[hyperbolic] global_step=32296/72000 local_updates=8074 loss=0.00056069 recon=0.00014189
-[hyperbolic] global_step=32624/72000 local_updates=8156 loss=0.00051521 recon=0.00014850
-[hyperbolic] global_step=32952/72000 local_updates=8238 loss=0.00062958 recon=0.00016522
-[hyperbolic] global_step=33292/72000 local_updates=8323 loss=0.00047700 recon=0.00013419
-[hyperbolic] global_step=33628/72000 local_updates=8407 loss=0.00044242 recon=0.00014223
-[hyperbolic] global_step=33960/72000 local_updates=8490 loss=0.00057580 recon=0.00014963
-[hyperbolic] global_step=34300/72000 local_updates=8575 loss=0.00041712 recon=0.00012534
-[hyperbolic] global_step=34628/72000 local_updates=8657 loss=0.00043638 recon=0.00015073
-[hyperbolic] global_step=34956/72000 local_updates=8739 loss=0.00061657 recon=0.00014018
-[hyperbolic] global_step=35280/72000 local_updates=8820 loss=0.00046557 recon=0.00015310
-[hyperbolic] global_step=35608/72000 local_updates=8902 loss=0.00060258 recon=0.00015187
-[hyperbolic] global_step=35936/72000 local_updates=8984 loss=0.00056447 recon=0.00015599
-[hyperbolic] global_step=36268/72000 local_updates=9067 loss=0.00051054 recon=0.00014091
-[hyperbolic] global_step=36596/72000 local_updates=9149 loss=0.00053504 recon=0.00013831
-[hyperbolic] global_step=36924/72000 local_updates=9231 loss=0.00051895 recon=0.00015567
-[hyperbolic] global_step=37260/72000 local_updates=9315 loss=0.00052594 recon=0.00013623
-[hyperbolic] global_step=37592/72000 local_updates=9398 loss=0.00061014 recon=0.00015128
-[hyperbolic] global_step=37920/72000 local_updates=9480 loss=0.00050580 recon=0.00013330
-[hyperbolic] global_step=38252/72000 local_updates=9563 loss=0.00073731 recon=0.00014674
-[hyperbolic] global_step=38572/72000 local_updates=9643 loss=0.00049105 recon=0.00015298
-[hyperbolic] global_step=38900/72000 local_updates=9725 loss=0.00065822 recon=0.00014386
-[hyperbolic] global_step=39232/72000 local_updates=9808 loss=0.00050322 recon=0.00013952
-[hyperbolic] global_step=39568/72000 local_updates=9892 loss=0.00053113 recon=0.00015312
-[hyperbolic] global_step=39880/72000 local_updates=9970 loss=0.00060620 recon=0.00014173
-[hyperbolic] global_step=40000/72000 loss=0.00053593 recon=0.00014391 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23120/24587 collision=0.059666 codebook_used=[256, 256, 256]
-[hyperbolic] global_step=40332/72000 local_updates=10083 loss=0.00043381 recon=0.00014429
-[hyperbolic] global_step=40660/72000 local_updates=10165 loss=0.00045555 recon=0.00014329
-[hyperbolic] global_step=40992/72000 local_updates=10248 loss=0.00051709 recon=0.00013728
-[hyperbolic] global_step=41312/72000 local_updates=10328 loss=0.00048965 recon=0.00014848
-[hyperbolic] global_step=41636/72000 local_updates=10409 loss=0.00056461 recon=0.00013473
-[hyperbolic] global_step=41972/72000 local_updates=10493 loss=0.00062458 recon=0.00014107
-[hyperbolic] global_step=42308/72000 local_updates=10577 loss=0.00050930 recon=0.00014096
-[hyperbolic] global_step=42644/72000 local_updates=10661 loss=0.00056582 recon=0.00015077
-[hyperbolic] global_step=42960/72000 local_updates=10740 loss=0.00057261 recon=0.00014326
-[hyperbolic] global_step=43296/72000 local_updates=10824 loss=0.00052772 recon=0.00016362
-[hyperbolic] global_step=43628/72000 local_updates=10907 loss=0.00056824 recon=0.00015202
-[hyperbolic] global_step=43948/72000 local_updates=10987 loss=0.00051713 recon=0.00014209
-[hyperbolic] global_step=44284/72000 local_updates=11071 loss=0.00048755 recon=0.00014124
-[hyperbolic] global_step=44608/72000 local_updates=11152 loss=0.00053793 recon=0.00015370
-[hyperbolic] global_step=44936/72000 local_updates=11234 loss=0.00061814 recon=0.00013084
-[hyperbolic] global_step=45268/72000 local_updates=11317 loss=0.00055498 recon=0.00013324
-[hyperbolic] global_step=45600/72000 local_updates=11400 loss=0.00050673 recon=0.00012916
-[hyperbolic] global_step=45924/72000 local_updates=11481 loss=0.00052720 recon=0.00013687
-[hyperbolic] global_step=46252/72000 local_updates=11563 loss=0.00051901 recon=0.00014008
-[hyperbolic] global_step=46572/72000 local_updates=11643 loss=0.00058276 recon=0.00014773
-[hyperbolic] global_step=46900/72000 local_updates=11725 loss=0.00055668 recon=0.00013775
-[hyperbolic] global_step=47232/72000 local_updates=11808 loss=0.00048775 recon=0.00014404
-[hyperbolic] global_step=47560/72000 local_updates=11890 loss=0.00067876 recon=0.00014790
-[hyperbolic] global_step=47888/72000 local_updates=11972 loss=0.00054384 recon=0.00013434
-[hyperbolic] global_step=48216/72000 local_updates=12054 loss=0.00051837 recon=0.00013384
-[hyperbolic] global_step=48548/72000 local_updates=12137 loss=0.00049492 recon=0.00014071
-[hyperbolic] global_step=48872/72000 local_updates=12218 loss=0.00068613 recon=0.00015333
-[hyperbolic] global_step=49196/72000 local_updates=12299 loss=0.00051186 recon=0.00013792
-[hyperbolic] global_step=49516/72000 local_updates=12379 loss=0.00058948 recon=0.00013543
-[hyperbolic] global_step=49832/72000 local_updates=12458 loss=0.00066892 recon=0.00015940
-[hyperbolic] global_step=50000/72000 loss=0.00055134 recon=0.00014290 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23220/24587 collision=0.055598 codebook_used=[256, 256, 256]
-[hyperbolic] global_step=50324/72000 local_updates=12581 loss=0.00054842 recon=0.00013520
-[hyperbolic] global_step=50652/72000 local_updates=12663 loss=0.00050400 recon=0.00013521
-[hyperbolic] global_step=50980/72000 local_updates=12745 loss=0.00050232 recon=0.00012901
-[hyperbolic] global_step=51312/72000 local_updates=12828 loss=0.00060319 recon=0.00013465
-[hyperbolic] global_step=51632/72000 local_updates=12908 loss=0.00059030 recon=0.00014199
-[hyperbolic] global_step=51960/72000 local_updates=12990 loss=0.00050815 recon=0.00013081
-[hyperbolic] global_step=52280/72000 local_updates=13070 loss=0.00050578 recon=0.00015456
-[hyperbolic] global_step=52608/72000 local_updates=13152 loss=0.00058353 recon=0.00013887
-[hyperbolic] global_step=52920/72000 local_updates=13230 loss=0.00050334 recon=0.00011788
-[hyperbolic] global_step=53240/72000 local_updates=13310 loss=0.00065953 recon=0.00014685
-[hyperbolic] global_step=53568/72000 local_updates=13392 loss=0.00051940 recon=0.00012969
-[hyperbolic] global_step=53904/72000 local_updates=13476 loss=0.00045983 recon=0.00013729
-[hyperbolic] global_step=54236/72000 local_updates=13559 loss=0.00054834 recon=0.00014877
-[hyperbolic] global_step=54560/72000 local_updates=13640 loss=0.00050900 recon=0.00013747
-[hyperbolic] global_step=54892/72000 local_updates=13723 loss=0.00052052 recon=0.00013605
-[hyperbolic] global_step=55224/72000 local_updates=13806 loss=0.00059473 recon=0.00014716
-[hyperbolic] global_step=55560/72000 local_updates=13890 loss=0.00051537 recon=0.00013739
-[hyperbolic] global_step=55884/72000 local_updates=13971 loss=0.00057704 recon=0.00013456
-[hyperbolic] global_step=56208/72000 local_updates=14052 loss=0.00056419 recon=0.00014006
-[hyperbolic] global_step=56540/72000 local_updates=14135 loss=0.00056577 recon=0.00013886
-[hyperbolic] global_step=56864/72000 local_updates=14216 loss=0.00059638 recon=0.00014681
-[hyperbolic] global_step=57200/72000 local_updates=14300 loss=0.00057703 recon=0.00014800
-[hyperbolic] global_step=57520/72000 local_updates=14380 loss=0.00055788 recon=0.00013319
-[hyperbolic] global_step=57852/72000 local_updates=14463 loss=0.00057130 recon=0.00014215
-[hyperbolic] global_step=58180/72000 local_updates=14545 loss=0.00050066 recon=0.00013179
-[hyperbolic] global_step=58512/72000 local_updates=14628 loss=0.00055782 recon=0.00015136
-[hyperbolic] global_step=58832/72000 local_updates=14708 loss=0.00067507 recon=0.00017140
-[hyperbolic] global_step=59164/72000 local_updates=14791 loss=0.00047601 recon=0.00013246
-[hyperbolic] global_step=59496/72000 local_updates=14874 loss=0.00055239 recon=0.00014398
-[hyperbolic] global_step=59824/72000 local_updates=14956 loss=0.00050284 recon=0.00013198
-[hyperbolic] global_step=60000/72000 loss=0.00054728 recon=0.00014161 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22694/24587 collision=0.076992 codebook_used=[256, 255, 256]
-[hyperbolic] global_step=60332/72000 local_updates=15083 loss=0.00051456 recon=0.00014091
-[hyperbolic] global_step=60664/72000 local_updates=15166 loss=0.00052305 recon=0.00015001
-[hyperbolic] global_step=60996/72000 local_updates=15249 loss=0.00049762 recon=0.00013138
-[hyperbolic] global_step=61324/72000 local_updates=15331 loss=0.00064628 recon=0.00014087
-[hyperbolic] global_step=61652/72000 local_updates=15413 loss=0.00049651 recon=0.00014148
-[hyperbolic] global_step=61980/72000 local_updates=15495 loss=0.00059842 recon=0.00014552
-[hyperbolic] global_step=62312/72000 local_updates=15578 loss=0.00057430 recon=0.00015897
-[hyperbolic] global_step=62636/72000 local_updates=15659 loss=0.00050090 recon=0.00013262
-[hyperbolic] global_step=62968/72000 local_updates=15742 loss=0.00057339 recon=0.00012301
-[hyperbolic] global_step=63292/72000 local_updates=15823 loss=0.00063208 recon=0.00013803
-[hyperbolic] global_step=63624/72000 local_updates=15906 loss=0.00045547 recon=0.00014352
-[hyperbolic] global_step=63960/72000 local_updates=15990 loss=0.00052577 recon=0.00013458
-[hyperbolic] global_step=64292/72000 local_updates=16073 loss=0.00054497 recon=0.00016140
-[hyperbolic] global_step=64616/72000 local_updates=16154 loss=0.00046121 recon=0.00013792
-[hyperbolic] global_step=64940/72000 local_updates=16235 loss=0.00056585 recon=0.00014317
-[hyperbolic] global_step=65268/72000 local_updates=16317 loss=0.00048883 recon=0.00014822
-[hyperbolic] global_step=65600/72000 local_updates=16400 loss=0.00050390 recon=0.00013905
-[hyperbolic] global_step=65932/72000 local_updates=16483 loss=0.00046557 recon=0.00013436
-[hyperbolic] global_step=66256/72000 local_updates=16564 loss=0.00064309 recon=0.00015936
-[hyperbolic] global_step=66584/72000 local_updates=16646 loss=0.00053818 recon=0.00013349
-[hyperbolic] global_step=66920/72000 local_updates=16730 loss=0.00052313 recon=0.00015642
-[hyperbolic] global_step=67248/72000 local_updates=16812 loss=0.00052743 recon=0.00014564
-[hyperbolic] global_step=67576/72000 local_updates=16894 loss=0.00050525 recon=0.00014116
-[hyperbolic] global_step=67904/72000 local_updates=16976 loss=0.00054423 recon=0.00013040
-[hyperbolic] global_step=68232/72000 local_updates=17058 loss=0.00046431 recon=0.00013768
-[hyperbolic] global_step=68568/72000 local_updates=17142 loss=0.00050722 recon=0.00012589
-[hyperbolic] global_step=68904/72000 local_updates=17226 loss=0.00053538 recon=0.00014551
-[hyperbolic] global_step=69232/72000 local_updates=17308 loss=0.00049751 recon=0.00014745
-[hyperbolic] global_step=69560/72000 local_updates=17390 loss=0.00055943 recon=0.00015957
-[hyperbolic] global_step=69876/72000 local_updates=17469 loss=0.00068231 recon=0.00014784
-[hyperbolic] global_step=70000/72000 loss=0.00054680 recon=0.00014121 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23111/24587 collision=0.060032 codebook_used=[256, 256, 256]
-[hyperbolic] global_step=70320/72000 local_updates=17580 loss=0.00051693 recon=0.00013753
-[hyperbolic] global_step=70636/72000 local_updates=17659 loss=0.00057993 recon=0.00014406
-[hyperbolic] global_step=70944/72000 local_updates=17736 loss=0.00053333 recon=0.00014558
-[hyperbolic] global_step=71260/72000 local_updates=17815 loss=0.00051505 recon=0.00014266
-[hyperbolic] global_step=71572/72000 local_updates=17893 loss=0.00046571 recon=0.00013853
-[hyperbolic] global_step=71892/72000 local_updates=17973 loss=0.00056714 recon=0.00015861
-[hyperbolic] global_step=72000/72000 loss=0.00053363 recon=0.00014083 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22868/24587 collision=0.069915 codebook_used=[256, 255, 256]
+[hyperbolic] global_step=280/72000 local_updates=70 loss=0.04557331 recon=0.00018474 lr=2.367e-04
+[hyperbolic] global_step=560/72000 local_updates=140 loss=0.01239137 recon=0.00016267 lr=4.700e-04
+[hyperbolic] global_step=848/72000 local_updates=212 loss=0.00259160 recon=0.00017591 lr=7.100e-04
+[hyperbolic] global_step=1144/72000 local_updates=286 loss=0.00058544 recon=0.00016283 lr=9.567e-04
+[hyperbolic] global_step=1460/72000 local_updates=365 loss=0.00040821 recon=0.00016340 lr=9.963e-04
+[hyperbolic] global_step=1768/72000 local_updates=442 loss=0.00031408 recon=0.00016129 lr=9.920e-04
+[hyperbolic] global_step=2084/72000 local_updates=521 loss=0.00028744 recon=0.00016364 lr=9.875e-04
+[hyperbolic] global_step=2400/72000 local_updates=600 loss=0.00025822 recon=0.00014953 lr=9.831e-04
+[hyperbolic] global_step=2704/72000 local_updates=676 loss=0.00030810 recon=0.00016710 lr=9.788e-04
+[hyperbolic] global_step=3008/72000 local_updates=752 loss=0.00025003 recon=0.00015812 lr=9.745e-04
+[hyperbolic] global_step=3308/72000 local_updates=827 loss=0.00023101 recon=0.00015136 lr=9.702e-04
+[hyperbolic] global_step=3612/72000 local_updates=903 loss=0.00033505 recon=0.00017669 lr=9.659e-04
+[hyperbolic] global_step=3920/72000 local_updates=980 loss=0.00028616 recon=0.00017229 lr=9.616e-04
+[hyperbolic] global_step=4224/72000 local_updates=1056 loss=0.00025650 recon=0.00016053 lr=9.573e-04
+[hyperbolic] global_step=4516/72000 local_updates=1129 loss=0.00031351 recon=0.00014872 lr=9.532e-04
+[hyperbolic] global_step=4820/72000 local_updates=1205 loss=0.00026587 recon=0.00014335 lr=9.489e-04
+[hyperbolic] global_step=5120/72000 local_updates=1280 loss=0.00041548 recon=0.00016789 lr=9.446e-04
+[hyperbolic] global_step=5420/72000 local_updates=1355 loss=0.00034575 recon=0.00014650 lr=9.404e-04
+[hyperbolic] global_step=5720/72000 local_updates=1430 loss=0.00044792 recon=0.00016430 lr=9.362e-04
+[hyperbolic] global_step=6024/72000 local_updates=1506 loss=0.00046930 recon=0.00014658 lr=9.319e-04
+[hyperbolic] global_step=6336/72000 local_updates=1584 loss=0.00036277 recon=0.00013917 lr=9.275e-04
+[hyperbolic] global_step=6656/72000 local_updates=1664 loss=0.00029192 recon=0.00013574 lr=9.229e-04
+[hyperbolic] global_step=6960/72000 local_updates=1740 loss=0.00039082 recon=0.00013449 lr=9.186e-04
+[hyperbolic] global_step=7264/72000 local_updates=1816 loss=0.00060100 recon=0.00013242 lr=9.144e-04
+[hyperbolic] global_step=7580/72000 local_updates=1895 loss=0.00038719 recon=0.00013591 lr=9.099e-04
+[hyperbolic] global_step=7896/72000 local_updates=1974 loss=0.00054047 recon=0.00014362 lr=9.054e-04
+[hyperbolic] global_step=8204/72000 local_updates=2051 loss=0.00071095 recon=0.00015772 lr=9.011e-04
+[hyperbolic] global_step=8516/72000 local_updates=2129 loss=0.00041088 recon=0.00013248 lr=8.967e-04
+[hyperbolic] global_step=8828/72000 local_updates=2207 loss=0.00032734 recon=0.00012801 lr=8.923e-04
+[hyperbolic] global_step=9136/72000 local_updates=2284 loss=0.00072400 recon=0.00014006 lr=8.879e-04
+[hyperbolic] global_step=9444/72000 local_updates=2361 loss=0.00055574 recon=0.00013579 lr=8.836e-04
+[hyperbolic] global_step=9760/72000 local_updates=2440 loss=0.00059201 recon=0.00013934 lr=8.791e-04
+[hyperbolic] global_step=10000/72000 loss=0.00327487 recon=0.00015665 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=24066/24587 collision=0.021190 codebook_used=[256, 253, 256]
+[hyperbolic] global_step=10316/72000 local_updates=2579 loss=0.00063360 recon=0.00013336 lr=8.712e-04
+[hyperbolic] global_step=10620/72000 local_updates=2655 loss=0.00060349 recon=0.00015310 lr=8.669e-04
+[hyperbolic] global_step=10940/72000 local_updates=2735 loss=0.00040987 recon=0.00012449 lr=8.624e-04
+[hyperbolic] global_step=11252/72000 local_updates=2813 loss=0.00037963 recon=0.00012444 lr=8.580e-04
+[hyperbolic] global_step=11576/72000 local_updates=2894 loss=0.00040934 recon=0.00013179 lr=8.534e-04
+[hyperbolic] global_step=11888/72000 local_updates=2972 loss=0.00057550 recon=0.00014990 lr=8.490e-04
+[hyperbolic] global_step=12196/72000 local_updates=3049 loss=0.00059282 recon=0.00013165 lr=8.447e-04
+[hyperbolic] global_step=12520/72000 local_updates=3130 loss=0.00049379 recon=0.00013217 lr=8.401e-04
+[hyperbolic] global_step=12840/72000 local_updates=3210 loss=0.00039302 recon=0.00012756 lr=8.356e-04
+[hyperbolic] global_step=13160/72000 local_updates=3290 loss=0.00040019 recon=0.00012171 lr=8.311e-04
+[hyperbolic] global_step=13460/72000 local_updates=3365 loss=0.00062075 recon=0.00012301 lr=8.268e-04
+[hyperbolic] global_step=13780/72000 local_updates=3445 loss=0.00048382 recon=0.00012739 lr=8.223e-04
+[hyperbolic] global_step=14096/72000 local_updates=3524 loss=0.00114991 recon=0.00018174 lr=8.179e-04
+[hyperbolic] global_step=14404/72000 local_updates=3601 loss=0.00051981 recon=0.00012484 lr=8.135e-04
+[hyperbolic] global_step=14716/72000 local_updates=3679 loss=0.00060930 recon=0.00013931 lr=8.091e-04
+[hyperbolic] global_step=15024/72000 local_updates=3756 loss=0.00047077 recon=0.00013452 lr=8.047e-04
+[hyperbolic] global_step=15344/72000 local_updates=3836 loss=0.00059342 recon=0.00013672 lr=8.002e-04
+[hyperbolic] global_step=15656/72000 local_updates=3914 loss=0.00061574 recon=0.00013678 lr=7.958e-04
+[hyperbolic] global_step=15968/72000 local_updates=3992 loss=0.00063569 recon=0.00012946 lr=7.914e-04
+[hyperbolic] global_step=16272/72000 local_updates=4068 loss=0.00058811 recon=0.00012792 lr=7.871e-04
+[hyperbolic] global_step=16592/72000 local_updates=4148 loss=0.00042089 recon=0.00012288 lr=7.826e-04
+[hyperbolic] global_step=16908/72000 local_updates=4227 loss=0.00050709 recon=0.00011483 lr=7.781e-04
+[hyperbolic] global_step=17220/72000 local_updates=4305 loss=0.00056059 recon=0.00012443 lr=7.737e-04
+[hyperbolic] global_step=17536/72000 local_updates=4384 loss=0.00063980 recon=0.00012186 lr=7.693e-04
+[hyperbolic] global_step=17848/72000 local_updates=4462 loss=0.00099720 recon=0.00013591 lr=7.649e-04
+[hyperbolic] global_step=18164/72000 local_updates=4541 loss=0.00069024 recon=0.00014952 lr=7.604e-04
+[hyperbolic] global_step=18488/72000 local_updates=4622 loss=0.00062377 recon=0.00012882 lr=7.558e-04
+[hyperbolic] global_step=18800/72000 local_updates=4700 loss=0.00062576 recon=0.00013143 lr=7.514e-04
+[hyperbolic] global_step=19112/72000 local_updates=4778 loss=0.00067692 recon=0.00013075 lr=7.470e-04
+[hyperbolic] global_step=19420/72000 local_updates=4855 loss=0.00076479 recon=0.00013149 lr=7.427e-04
+[hyperbolic] global_step=19740/72000 local_updates=4935 loss=0.00047673 recon=0.00011899 lr=7.381e-04
+[hyperbolic] global_step=20000/72000 loss=0.00058314 recon=0.00013343 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=23309/24587 collision=0.051979 codebook_used=[256, 239, 256]
+[hyperbolic] global_step=20308/72000 local_updates=5077 loss=0.00061981 recon=0.00012546 lr=7.301e-04
+[hyperbolic] global_step=20616/72000 local_updates=5154 loss=0.00050628 recon=0.00012566 lr=7.258e-04
+[hyperbolic] global_step=20920/72000 local_updates=5230 loss=0.00060402 recon=0.00013554 lr=7.215e-04
+[hyperbolic] global_step=21224/72000 local_updates=5306 loss=0.00062973 recon=0.00012585 lr=7.172e-04
+[hyperbolic] global_step=21540/72000 local_updates=5385 loss=0.00055592 recon=0.00013532 lr=7.127e-04
+[hyperbolic] global_step=21856/72000 local_updates=5464 loss=0.00052118 recon=0.00011425 lr=7.082e-04
+[hyperbolic] global_step=22168/72000 local_updates=5542 loss=0.00059964 recon=0.00013015 lr=7.038e-04
+[hyperbolic] global_step=22472/72000 local_updates=5618 loss=0.00065426 recon=0.00012612 lr=6.995e-04
+[hyperbolic] global_step=22784/72000 local_updates=5696 loss=0.00070461 recon=0.00013956 lr=6.951e-04
+[hyperbolic] global_step=23096/72000 local_updates=5774 loss=0.00052054 recon=0.00012351 lr=6.907e-04
+[hyperbolic] global_step=23404/72000 local_updates=5851 loss=0.00060392 recon=0.00012571 lr=6.864e-04
+[hyperbolic] global_step=23708/72000 local_updates=5927 loss=0.00079522 recon=0.00014070 lr=6.821e-04
+[hyperbolic] global_step=24016/72000 local_updates=6004 loss=0.00082004 recon=0.00014101 lr=6.777e-04
+[hyperbolic] global_step=24332/72000 local_updates=6083 loss=0.00060930 recon=0.00013298 lr=6.733e-04
+[hyperbolic] global_step=24644/72000 local_updates=6161 loss=0.00064859 recon=0.00014716 lr=6.689e-04
+[hyperbolic] global_step=24956/72000 local_updates=6239 loss=0.00062018 recon=0.00011588 lr=6.645e-04
+[hyperbolic] global_step=25252/72000 local_updates=6313 loss=0.00073599 recon=0.00012678 lr=6.603e-04
+[hyperbolic] global_step=25564/72000 local_updates=6391 loss=0.00146075 recon=0.00011694 lr=6.559e-04
+[hyperbolic] global_step=25872/72000 local_updates=6468 loss=0.00063495 recon=0.00011644 lr=6.515e-04
+[hyperbolic] global_step=26180/72000 local_updates=6545 loss=0.00053788 recon=0.00011887 lr=6.472e-04
+[hyperbolic] global_step=26484/72000 local_updates=6621 loss=0.00057742 recon=0.00012119 lr=6.429e-04
+[hyperbolic] global_step=26788/72000 local_updates=6697 loss=0.00044251 recon=0.00011851 lr=6.386e-04
+[hyperbolic] global_step=27100/72000 local_updates=6775 loss=0.00055308 recon=0.00012305 lr=6.342e-04
+[hyperbolic] global_step=27408/72000 local_updates=6852 loss=0.00058071 recon=0.00013227 lr=6.298e-04
+[hyperbolic] global_step=27716/72000 local_updates=6929 loss=0.00068024 recon=0.00013806 lr=6.255e-04
+[hyperbolic] global_step=28020/72000 local_updates=7005 loss=0.00066324 recon=0.00013336 lr=6.212e-04
+[hyperbolic] global_step=28332/72000 local_updates=7083 loss=0.00069548 recon=0.00012551 lr=6.168e-04
+[hyperbolic] global_step=28640/72000 local_updates=7160 loss=0.00081532 recon=0.00013058 lr=6.124e-04
+[hyperbolic] global_step=28940/72000 local_updates=7235 loss=0.00059779 recon=0.00012290 lr=6.082e-04
+[hyperbolic] global_step=29248/72000 local_updates=7312 loss=0.00054584 recon=0.00011045 lr=6.038e-04
+[hyperbolic] global_step=29556/72000 local_updates=7389 loss=0.00050335 recon=0.00011916 lr=5.995e-04
+[hyperbolic] global_step=29856/72000 local_updates=7464 loss=0.00055844 recon=0.00012625 lr=5.953e-04
+[hyperbolic] global_step=30000/72000 loss=0.00064306 recon=0.00012792 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22695/24587 collision=0.076951 codebook_used=[256, 226, 256]
+[hyperbolic] global_step=30304/72000 local_updates=7576 loss=0.00056167 recon=0.00012933 lr=5.889e-04
+[hyperbolic] global_step=30604/72000 local_updates=7651 loss=0.00050723 recon=0.00011912 lr=5.847e-04
+[hyperbolic] global_step=30916/72000 local_updates=7729 loss=0.00062394 recon=0.00014620 lr=5.803e-04
+[hyperbolic] global_step=31224/72000 local_updates=7806 loss=0.00071387 recon=0.00012429 lr=5.759e-04
+[hyperbolic] global_step=31528/72000 local_updates=7882 loss=0.00123681 recon=0.00013444 lr=5.716e-04
+[hyperbolic] global_step=31832/72000 local_updates=7958 loss=0.00049237 recon=0.00010504 lr=5.673e-04
+[hyperbolic] global_step=32132/72000 local_updates=8033 loss=0.00067849 recon=0.00014130 lr=5.631e-04
+[hyperbolic] global_step=32440/72000 local_updates=8110 loss=0.00060692 recon=0.00012398 lr=5.588e-04
+[hyperbolic] global_step=32736/72000 local_updates=8184 loss=0.00055872 recon=0.00011063 lr=5.546e-04
+[hyperbolic] global_step=33044/72000 local_updates=8261 loss=0.00071931 recon=0.00011718 lr=5.502e-04
+[hyperbolic] global_step=33348/72000 local_updates=8337 loss=0.00069711 recon=0.00012826 lr=5.459e-04
+[hyperbolic] global_step=33656/72000 local_updates=8414 loss=0.00063189 recon=0.00013109 lr=5.416e-04
+[hyperbolic] global_step=33960/72000 local_updates=8490 loss=0.00055338 recon=0.00012534 lr=5.373e-04
+[hyperbolic] global_step=34264/72000 local_updates=8566 loss=0.00048638 recon=0.00011553 lr=5.330e-04
+[hyperbolic] global_step=34568/72000 local_updates=8642 loss=0.00080115 recon=0.00013985 lr=5.287e-04
+[hyperbolic] global_step=34872/72000 local_updates=8718 loss=0.00052629 recon=0.00013180 lr=5.244e-04
+[hyperbolic] global_step=35160/72000 local_updates=8790 loss=0.00074910 recon=0.00013969 lr=5.203e-04
+[hyperbolic] global_step=35460/72000 local_updates=8865 loss=0.00079378 recon=0.00013876 lr=5.161e-04
+[hyperbolic] global_step=35756/72000 local_updates=8939 loss=0.00090301 recon=0.00013354 lr=5.119e-04
+[hyperbolic] global_step=36056/72000 local_updates=9014 loss=0.00068141 recon=0.00012175 lr=5.077e-04
+[hyperbolic] global_step=36320/72000 local_updates=9080 loss=0.00044777 recon=0.00011343 lr=5.040e-04
+[hyperbolic] global_step=36616/72000 local_updates=9154 loss=0.00176956 recon=0.00013050 lr=4.998e-04
+[hyperbolic] global_step=36908/72000 local_updates=9227 loss=0.00056070 recon=0.00011708 lr=4.956e-04
+[hyperbolic] global_step=37204/72000 local_updates=9301 loss=0.00066246 recon=0.00011509 lr=4.915e-04
+[hyperbolic] global_step=37500/72000 local_updates=9375 loss=0.00058726 recon=0.00012081 lr=4.873e-04
+[hyperbolic] global_step=37792/72000 local_updates=9448 loss=0.00053647 recon=0.00011348 lr=4.832e-04
+[hyperbolic] global_step=38076/72000 local_updates=9519 loss=0.00046329 recon=0.00011341 lr=4.792e-04
+[hyperbolic] global_step=38360/72000 local_updates=9590 loss=0.00075760 recon=0.00013500 lr=4.751e-04
+[hyperbolic] global_step=38636/72000 local_updates=9659 loss=0.00071445 recon=0.00012938 lr=4.712e-04
+[hyperbolic] global_step=38916/72000 local_updates=9729 loss=0.00183216 recon=0.00014716 lr=4.673e-04
+[hyperbolic] global_step=39204/72000 local_updates=9801 loss=0.00060243 recon=0.00012029 lr=4.632e-04
+[hyperbolic] global_step=39496/72000 local_updates=9874 loss=0.00059105 recon=0.00012194 lr=4.591e-04
+[hyperbolic] global_step=39788/72000 local_updates=9947 loss=0.00038673 recon=0.00010731 lr=4.550e-04
+[hyperbolic] global_step=40000/72000 loss=0.00069373 recon=0.00012528 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22024/24587 collision=0.104242 codebook_used=[256, 219, 255]
+[hyperbolic] global_step=40276/72000 local_updates=10069 loss=0.00070515 recon=0.00012180 lr=4.481e-04
+[hyperbolic] global_step=40548/72000 local_updates=10137 loss=0.00088068 recon=0.00013120 lr=4.442e-04
+[hyperbolic] global_step=40824/72000 local_updates=10206 loss=0.00047609 recon=0.00010812 lr=4.403e-04
+[hyperbolic] global_step=41080/72000 local_updates=10270 loss=0.00071150 recon=0.00013175 lr=4.367e-04
+[hyperbolic] global_step=41360/72000 local_updates=10340 loss=0.00058493 recon=0.00011447 lr=4.328e-04
+[hyperbolic] global_step=41632/72000 local_updates=10408 loss=0.00116506 recon=0.00013122 lr=4.289e-04
+[hyperbolic] global_step=41896/72000 local_updates=10474 loss=0.00069856 recon=0.00012931 lr=4.252e-04
+[hyperbolic] global_step=42172/72000 local_updates=10543 loss=0.00061833 recon=0.00011980 lr=4.213e-04
+[hyperbolic] global_step=42460/72000 local_updates=10615 loss=0.00056382 recon=0.00012269 lr=4.172e-04
+[hyperbolic] global_step=42752/72000 local_updates=10688 loss=0.00055606 recon=0.00012427 lr=4.131e-04
+[hyperbolic] global_step=43028/72000 local_updates=10757 loss=0.00047738 recon=0.00011630 lr=4.092e-04
+[hyperbolic] global_step=43312/72000 local_updates=10828 loss=0.00037642 recon=0.00011283 lr=4.052e-04
+[hyperbolic] global_step=43588/72000 local_updates=10897 loss=0.00055068 recon=0.00011995 lr=4.013e-04
+[hyperbolic] global_step=43864/72000 local_updates=10966 loss=0.00163960 recon=0.00012645 lr=3.974e-04
+[hyperbolic] global_step=44140/72000 local_updates=11035 loss=0.00063026 recon=0.00012759 lr=3.935e-04
+[hyperbolic] global_step=44420/72000 local_updates=11105 loss=0.00048020 recon=0.00012657 lr=3.895e-04
+[hyperbolic] global_step=44696/72000 local_updates=11174 loss=0.00062074 recon=0.00011594 lr=3.856e-04
+[hyperbolic] global_step=44976/72000 local_updates=11244 loss=0.00061276 recon=0.00012523 lr=3.817e-04
+[hyperbolic] global_step=45264/72000 local_updates=11316 loss=0.00082617 recon=0.00013381 lr=3.776e-04
+[hyperbolic] global_step=45544/72000 local_updates=11386 loss=0.00052639 recon=0.00012173 lr=3.737e-04
+[hyperbolic] global_step=45828/72000 local_updates=11457 loss=0.00039262 recon=0.00011292 lr=3.697e-04
+[hyperbolic] global_step=46116/72000 local_updates=11529 loss=0.00057277 recon=0.00012104 lr=3.656e-04
+[hyperbolic] global_step=46396/72000 local_updates=11599 loss=0.00080357 recon=0.00012528 lr=3.616e-04
+[hyperbolic] global_step=46684/72000 local_updates=11671 loss=0.00049129 recon=0.00011440 lr=3.576e-04
+[hyperbolic] global_step=46968/72000 local_updates=11742 loss=0.00082350 recon=0.00013446 lr=3.536e-04
+[hyperbolic] global_step=47240/72000 local_updates=11810 loss=0.00081663 recon=0.00013138 lr=3.497e-04
+[hyperbolic] global_step=47528/72000 local_updates=11882 loss=0.00056028 recon=0.00011291 lr=3.456e-04
+[hyperbolic] global_step=47820/72000 local_updates=11955 loss=0.00075568 recon=0.00012853 lr=3.415e-04
+[hyperbolic] global_step=48108/72000 local_updates=12027 loss=0.00160946 recon=0.00012297 lr=3.375e-04
+[hyperbolic] global_step=48392/72000 local_updates=12098 loss=0.00076826 recon=0.00012256 lr=3.334e-04
+[hyperbolic] global_step=48664/72000 local_updates=12166 loss=0.00076875 recon=0.00014400 lr=3.296e-04
+[hyperbolic] global_step=48936/72000 local_updates=12234 loss=0.00048116 recon=0.00011514 lr=3.258e-04
+[hyperbolic] global_step=49216/72000 local_updates=12304 loss=0.00105738 recon=0.00014905 lr=3.218e-04
+[hyperbolic] global_step=49492/72000 local_updates=12373 loss=0.00040706 recon=0.00010381 lr=3.179e-04
+[hyperbolic] global_step=49772/72000 local_updates=12443 loss=0.00055592 recon=0.00012458 lr=3.140e-04
+[hyperbolic] global_step=50000/72000 loss=0.00069019 recon=0.00012341 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=21681/24587 collision=0.118193 codebook_used=[256, 224, 255]
+[hyperbolic] global_step=50272/72000 local_updates=12568 loss=0.00052605 recon=0.00011724 lr=3.069e-04
+[hyperbolic] global_step=50560/72000 local_updates=12640 loss=0.00065531 recon=0.00011544 lr=3.028e-04
+[hyperbolic] global_step=50840/72000 local_updates=12710 loss=0.00058202 recon=0.00011826 lr=2.989e-04
+[hyperbolic] global_step=51120/72000 local_updates=12780 loss=0.00051082 recon=0.00012230 lr=2.949e-04
+[hyperbolic] global_step=51412/72000 local_updates=12853 loss=0.00055091 recon=0.00011375 lr=2.908e-04
+[hyperbolic] global_step=51688/72000 local_updates=12922 loss=0.00092492 recon=0.00011767 lr=2.869e-04
+[hyperbolic] global_step=51964/72000 local_updates=12991 loss=0.00041759 recon=0.00011474 lr=2.830e-04
+[hyperbolic] global_step=52248/72000 local_updates=13062 loss=0.00043167 recon=0.00010773 lr=2.790e-04
+[hyperbolic] global_step=52528/72000 local_updates=13132 loss=0.00046139 recon=0.00011084 lr=2.750e-04
+[hyperbolic] global_step=52816/72000 local_updates=13204 loss=0.00089708 recon=0.00013117 lr=2.710e-04
+[hyperbolic] global_step=53104/72000 local_updates=13276 loss=0.00039167 recon=0.00011215 lr=2.669e-04
+[hyperbolic] global_step=53384/72000 local_updates=13346 loss=0.00038817 recon=0.00010527 lr=2.629e-04
+[hyperbolic] global_step=53656/72000 local_updates=13414 loss=0.00038303 recon=0.00010691 lr=2.591e-04
+[hyperbolic] global_step=53936/72000 local_updates=13484 loss=0.00070123 recon=0.00011116 lr=2.551e-04
+[hyperbolic] global_step=54220/72000 local_updates=13555 loss=0.00078350 recon=0.00012895 lr=2.511e-04
+[hyperbolic] global_step=54500/72000 local_updates=13625 loss=0.00230705 recon=0.00012387 lr=2.472e-04
+[hyperbolic] global_step=54784/72000 local_updates=13696 loss=0.00045799 recon=0.00012368 lr=2.432e-04
+[hyperbolic] global_step=55060/72000 local_updates=13765 loss=0.00091252 recon=0.00013016 lr=2.393e-04
+[hyperbolic] global_step=55336/72000 local_updates=13834 loss=0.00056984 recon=0.00011546 lr=2.354e-04
+[hyperbolic] global_step=55636/72000 local_updates=13909 loss=0.00061810 recon=0.00011256 lr=2.311e-04
+[hyperbolic] global_step=55920/72000 local_updates=13980 loss=0.00064089 recon=0.00011313 lr=2.271e-04
+[hyperbolic] global_step=56204/72000 local_updates=14051 loss=0.00040876 recon=0.00011522 lr=2.231e-04
+[hyperbolic] global_step=56480/72000 local_updates=14120 loss=0.00066879 recon=0.00012618 lr=2.192e-04
+[hyperbolic] global_step=56760/72000 local_updates=14190 loss=0.00097004 recon=0.00013410 lr=2.153e-04
+[hyperbolic] global_step=57048/72000 local_updates=14262 loss=0.00076816 recon=0.00011631 lr=2.112e-04
+[hyperbolic] global_step=57344/72000 local_updates=14336 loss=0.00061840 recon=0.00013004 lr=2.070e-04
+[hyperbolic] global_step=57636/72000 local_updates=14409 loss=0.00060306 recon=0.00011386 lr=2.029e-04
+[hyperbolic] global_step=57924/72000 local_updates=14481 loss=0.00250580 recon=0.00011143 lr=1.988e-04
+[hyperbolic] global_step=58200/72000 local_updates=14550 loss=0.00056954 recon=0.00012707 lr=1.949e-04
+[hyperbolic] global_step=58488/72000 local_updates=14622 loss=0.00088481 recon=0.00012736 lr=1.908e-04
+[hyperbolic] global_step=58772/72000 local_updates=14693 loss=0.00070336 recon=0.00013256 lr=1.868e-04
+[hyperbolic] global_step=59060/72000 local_updates=14765 loss=0.00047456 recon=0.00011625 lr=1.828e-04
+[hyperbolic] global_step=59352/72000 local_updates=14838 loss=0.00191099 recon=0.00013086 lr=1.786e-04
+[hyperbolic] global_step=59648/72000 local_updates=14912 loss=0.00035101 recon=0.00011756 lr=1.745e-04
+[hyperbolic] global_step=59940/72000 local_updates=14985 loss=0.00069793 recon=0.00011724 lr=1.703e-04
+[hyperbolic] global_step=60000/72000 loss=0.00069294 recon=0.00012077 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22362/24587 collision=0.090495 codebook_used=[256, 211, 255]
+[hyperbolic] global_step=60288/72000 local_updates=15072 loss=0.00083621 recon=0.00013410 lr=1.654e-04
+[hyperbolic] global_step=60580/72000 local_updates=15145 loss=0.00222947 recon=0.00013527 lr=1.613e-04
+[hyperbolic] global_step=60876/72000 local_updates=15219 loss=0.00235231 recon=0.00012668 lr=1.571e-04
+[hyperbolic] global_step=61168/72000 local_updates=15292 loss=0.00066936 recon=0.00011702 lr=1.530e-04
+[hyperbolic] global_step=61460/72000 local_updates=15365 loss=0.00049646 recon=0.00011096 lr=1.489e-04
+[hyperbolic] global_step=61752/72000 local_updates=15438 loss=0.00075749 recon=0.00012528 lr=1.447e-04
+[hyperbolic] global_step=62036/72000 local_updates=15509 loss=0.00069757 recon=0.00013232 lr=1.407e-04
+[hyperbolic] global_step=62336/72000 local_updates=15584 loss=0.00193814 recon=0.00012251 lr=1.365e-04
+[hyperbolic] global_step=62636/72000 local_updates=15659 loss=0.00034547 recon=0.00011057 lr=1.323e-04
+[hyperbolic] global_step=62936/72000 local_updates=15734 loss=0.00068108 recon=0.00011863 lr=1.280e-04
+[hyperbolic] global_step=63240/72000 local_updates=15810 loss=0.00132179 recon=0.00011146 lr=1.237e-04
+[hyperbolic] global_step=63528/72000 local_updates=15882 loss=0.00035630 recon=0.00010945 lr=1.197e-04
+[hyperbolic] global_step=63820/72000 local_updates=15955 loss=0.00053499 recon=0.00010994 lr=1.155e-04
+[hyperbolic] global_step=64112/72000 local_updates=16028 loss=0.00045954 recon=0.00011642 lr=1.114e-04
+[hyperbolic] global_step=64412/72000 local_updates=16103 loss=0.00049870 recon=0.00010728 lr=1.072e-04
+[hyperbolic] global_step=64708/72000 local_updates=16177 loss=0.00060495 recon=0.00010981 lr=1.030e-04
+[hyperbolic] global_step=65004/72000 local_updates=16251 loss=0.00043009 recon=0.00012069 lr=9.881e-05
+[hyperbolic] global_step=65304/72000 local_updates=16326 loss=0.00063238 recon=0.00012645 lr=9.458e-05
+[hyperbolic] global_step=65608/72000 local_updates=16402 loss=0.00053483 recon=0.00011962 lr=9.028e-05
+[hyperbolic] global_step=65904/72000 local_updates=16476 loss=0.00065907 recon=0.00012144 lr=8.610e-05
+[hyperbolic] global_step=66200/72000 local_updates=16550 loss=0.00040410 recon=0.00011576 lr=8.192e-05
+[hyperbolic] global_step=66492/72000 local_updates=16623 loss=0.00048863 recon=0.00010942 lr=7.780e-05
+[hyperbolic] global_step=66792/72000 local_updates=16698 loss=0.00052198 recon=0.00011874 lr=7.356e-05
+[hyperbolic] global_step=67088/72000 local_updates=16772 loss=0.00070871 recon=0.00011906 lr=6.938e-05
+[hyperbolic] global_step=67388/72000 local_updates=16847 loss=0.00035548 recon=0.00011119 lr=6.514e-05
+[hyperbolic] global_step=67684/72000 local_updates=16921 loss=0.00217928 recon=0.00012457 lr=6.096e-05
+[hyperbolic] global_step=67980/72000 local_updates=16995 loss=0.00043463 recon=0.00011306 lr=5.678e-05
+[hyperbolic] global_step=68280/72000 local_updates=17070 loss=0.00061195 recon=0.00011875 lr=5.254e-05
+[hyperbolic] global_step=68580/72000 local_updates=17145 loss=0.00048835 recon=0.00011365 lr=4.831e-05
+[hyperbolic] global_step=68880/72000 local_updates=17220 loss=0.00106847 recon=0.00012543 lr=4.407e-05
+[hyperbolic] global_step=69176/72000 local_updates=17294 loss=0.00058467 recon=0.00013166 lr=3.989e-05
+[hyperbolic] global_step=69476/72000 local_updates=17369 loss=0.00056896 recon=0.00011730 lr=3.565e-05
+[hyperbolic] global_step=69772/72000 local_updates=17443 loss=0.00049878 recon=0.00012199 lr=3.147e-05
+[hyperbolic] global_step=70000/72000 loss=0.00069931 recon=0.00011745 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22485/24587 collision=0.085492 codebook_used=[256, 255, 256]
+[hyperbolic] global_step=70296/72000 local_updates=17574 loss=0.00077292 recon=0.00012083 lr=2.407e-05
+[hyperbolic] global_step=70580/72000 local_updates=17645 loss=0.00042332 recon=0.00011178 lr=2.006e-05
+[hyperbolic] global_step=70872/72000 local_updates=17718 loss=0.00069296 recon=0.00012141 lr=1.593e-05
+[hyperbolic] global_step=71172/72000 local_updates=17793 loss=0.00056513 recon=0.00011469 lr=1.169e-05
+[hyperbolic] global_step=71480/72000 local_updates=17870 loss=0.00074860 recon=0.00012656 lr=7.345e-06
+[hyperbolic] global_step=71788/72000 local_updates=17947 loss=0.00067581 recon=0.00010483 lr=2.994e-06
+[hyperbolic] global_step=72000/72000 loss=0.00069038 recon=0.00011661 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=22519/24587 collision=0.084109 codebook_used=[256, 255, 256]
