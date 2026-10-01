@@ -172,10 +172,44 @@ def main() -> None:
         "TIGER batch size or single-snapshot contract changed",
     )
 
+    # The registered mechanism is per-bucket balancing. Judge it at full corpus
+    # size, not on the 512-item probe above: with 512 items and 256 first-level
+    # codes each bucket holds ~2 residuals, so second-level reach is capped by
+    # the sample count rather than by the mechanism.
+    #
+    # The mechanism's effect, measured on the parent checkpoint: global
+    # Sinkhorn let each L0 bucket reach only ~37 of 256 L1 codes, capping
+    # (L0, L1) at 9370 distinct prefixes. A silent fallback to global balancing
+    # must fail here instead of passing MVG and reverting to parent behaviour.
+    with torch.no_grad():
+        corpus = all_embeddings.to(device)
+        model.init_codebook(corpus)
+        corpus_tokens, _ = model.get_indices_with_stats(corpus)
+    full = corpus_tokens.cpu().numpy()
+    prefixes = [len(np.unique(full[:, : k + 1], axis=0)) for k in range(3)]
+    buckets = np.unique(full[:, 0])
+    per_bucket = [np.unique(full[full[:, 0] == b, 1]).size for b in buckets]
+    mean_bucket_reach = float(np.mean(per_bucket))
+    print(
+        f"  bucket reach: L0={prefixes[0]} L0L1={prefixes[1]} "
+        f"L0L1L2={prefixes[2]} L1-per-bucket={mean_bucket_reach:.1f}"
+    )
+    require(
+        prefixes[1] > prefixes[0] * 5,
+        f"Second level adds almost no reachable capacity (L0={prefixes[0]} "
+        f"L0L1={prefixes[1]}); per-bucket balancing is not in effect",
+    )
+    require(
+        mean_bucket_reach > 40.0,
+        f"Each L0 bucket reaches only {mean_bucket_reach:.1f} of 256 L1 codes; "
+        "expected the per-bucket mechanism to widen this well past the "
+        "global-Sinkhorn baseline of ~37",
+    )
+
     print(
         "MVG PASS: fixed-curvature Poincare geometry, quantization and "
         "reconstruction gradients, optimizer update, checkpoint reload, "
-        "balanced Sinkhorn assignment, TIGER-aligned 72k budget"
+        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget"
     )
 
 
