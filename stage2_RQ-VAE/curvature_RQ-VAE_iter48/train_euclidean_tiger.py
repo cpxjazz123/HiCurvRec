@@ -35,6 +35,9 @@ VERSIONS = {"BASELINE": "TIGERBaseline", "BEHAVIOR": "TIGERBehavior"}
 METRICS_PATH = LOG_DIR / "training_metrics_TIGERBaseline.jsonl"
 RUN_MODE = "BASELINE"
 
+# Trains on 2698387 transition pairs (110x the TIGER baseline's 24556-item
+# dataset), so it keeps the 40k global-step budget. Matching the TIGER step
+# count here would raise data exposure ~1.8x instead of aligning it.
 MAX_GLOBAL_STEPS = 40_000
 EVAL_INTERVAL_STEPS = 10_000
 BATCH_SIZE_PER_RANK = 1024
@@ -414,7 +417,7 @@ def main() -> None:
             sinkhorn_levels=[CODEBOOK_NUM - 1],
             behavior_enabled=RUN_MODE == "BEHAVIOR",
             behavior_weight_max=BEHAVIOR_WEIGHT_MAX if RUN_MODE == "BEHAVIOR" else 0.0,
-            behavior_ramp_steps=[20_000, 40_000] if RUN_MODE == "BEHAVIOR" else None,
+            behavior_ramp_steps=[round(20_000 * MAX_GLOBAL_STEPS / 100_000), round(40_000 * MAX_GLOBAL_STEPS / 100_000)] if RUN_MODE == "BEHAVIOR" else None,
             behavior_temperature=BEHAVIOR_TEMPERATURE if RUN_MODE == "BEHAVIOR" else None,
             training_geometry="euclidean",
             dataset_kind="train_history_target_pairs",
@@ -467,7 +470,9 @@ def main() -> None:
             if global_step % EVAL_INTERVAL_STEPS != 0 and global_step != MAX_GLOBAL_STEPS:
                 continue
             if global_step > MAX_GLOBAL_STEPS:
-                raise RuntimeError(f"Exceeded requested 40k steps: {global_step}")
+                raise RuntimeError(
+                    f"Exceeded requested {MAX_GLOBAL_STEPS} steps: {global_step}"
+                )
 
             train_loss = torch.tensor(float(np.mean(losses)), device=device)
             train_recon = torch.tensor(float(np.mean(recons)), device=device)

@@ -20,8 +20,14 @@ SIDS_NPY = STAGE2_RESULT_DIR / "dataset/Instruments/sids_for_hgrec.npy"
 ITEM_SIDS_JSON = STAGE2_RESULT_DIR / "item_sids.json"
 STAGE2_LOG_DIR = REPO_ROOT / "stage2_RQ-VAE/curvature_RQ-VAE_iter48/logs"
 
-# Match the other iterations' fixed 100k distributed-step budget.
-MAX_GLOBAL_STEPS = 100_000
+# Match the TIGER baseline Stage2 budget: 3000 epochs x 6 optimizer steps per
+# epoch (24556 train items / 4 ranks / batch 1024) = 18000 optimizer updates.
+# Iter48 counts global steps as (single-rank step x world_size), so the
+# equivalent budget is 18000 x 4 = 72000 global steps.
+# Only the A / CURRICULUM arms use the item dataset and are directly
+# comparable to the TIGER baseline; the transition-pair arms see a ~110x
+# larger dataset and keep their own budget.
+MAX_GLOBAL_STEPS = 72_000
 EVAL_INTERVAL_STEPS = 10_000
 
 STAGE3_RESULT_DIR = REPO_ROOT / "results/stage3_T5Train/curvature_RQ-VAE_iter48"
