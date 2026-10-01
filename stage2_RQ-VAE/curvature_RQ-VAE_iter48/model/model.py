@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .layers import MLP, RQLayer, TANGENT_RADIUS
+from .layers import MLP, RQLayer, _rescale_to_radius
 
 
 class RQVAE(nn.Module):
@@ -42,8 +42,7 @@ class RQVAE(nn.Module):
         needs. A clamp would be wrong here: once saturated it passes no
         gradient back to the encoder.
         """
-        radius = torch.linalg.vector_norm(encoded, dim=-1, keepdim=True)
-        return encoded * (self.tangent_radius / radius.clamp_min(1e-6))
+        return _rescale_to_radius(encoded, self.tangent_radius)
 
     def get_curvatures(self) -> torch.Tensor:
         return self.rq.get_curvatures()
