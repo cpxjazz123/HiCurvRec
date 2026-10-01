@@ -15,7 +15,7 @@ except (ImportError, RuntimeError):
 STAGE3_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/stage3_T5Train"
 sys.path.insert(0, STAGE3_DIR)
 spec = importlib.util.spec_from_file_location(
-    "genrec_stage3_iter48", f"{STAGE3_DIR}/train_HG-Rec.py"
+    "genrec_stage3_curvature", f"{STAGE3_DIR}/train_HG-Rec.py"
 )
 if spec is None or spec.loader is None:
     raise RuntimeError("Could not load Stage3 trainer")
@@ -23,16 +23,16 @@ trainer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trainer)
 trainer.CODE_PATH = (
     "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
-    "curvature_RQ-VAE_iter48/item_sids.json"
+    "curvature_RQ-VAE/item_sids.json"
 )
-trainer.RQVAE_VARIANT = "iter48_poincare_fixed_curvature"
+trainer.RQVAE_VARIANT = "curvature_poincare_fixed_curvature"
 trainer.LOG_PATH = (
     "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
-    "curvature_RQ-VAE_iter48/logs/"
+    "curvature_RQ-VAE/logs/"
 )
 trainer.SAVE_PATH = (
     "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/"
-    "curvature_RQ-VAE_iter48/ckpt/"
+    "curvature_RQ-VAE/ckpt/"
 )
 trainer._LAUNCHER["script"] = os.path.abspath(__file__)
 trainer._LAUNCHER["log"] = os.path.join(

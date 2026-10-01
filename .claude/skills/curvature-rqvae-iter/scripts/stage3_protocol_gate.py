@@ -28,9 +28,18 @@ def sha256(path):
     return h.hexdigest()
 
 def iter_id(work):
-    m=re.fullmatch(r"curvature_RQ-VAE_iter(\d+)",work.name)
+    """Accept both curvature_RQ-VAE_iter<N> and the base curvature_RQ-VAE name.
+
+    The retained implementation was renamed from curvature_RQ-VAE_iter48 to the
+    unsuffixed curvature_RQ-VAE, so the gate must key the expected results
+    paths off the directory name itself rather than reconstructing it from a
+    numeric suffix.
+    """
+    if work.name == "curvature_RQ-VAE":
+        return None
+    m = re.fullmatch(r"curvature_RQ-VAE_iter(\d+)", work.name)
     if not m:
-        fail(f"run from curvature_RQ-VAE_iter<N>, got {work}")
+        fail(f"run from curvature_RQ-VAE or curvature_RQ-VAE_iter<N>, got {work}")
     return m.group(1)
 
 def kv(text,key):
@@ -112,8 +121,11 @@ def main():
     elif str(values.get("EARLY_STOP"))!=str(expected["EARLY_STOP"]):
         fail(f"trainer EARLY_STOP={values.get('EARLY_STOP')!r} != locked {expected['EARLY_STOP']!r}")
 
-    launcher=work/"scripts"/f"run_stage3_iter{n}.py"
-    ov=overrides(launcher)
+    variant_dir = work.name
+    if n is not None:
+        variant_dir = f"curvature_RQ-VAE_iter{n}"
+    launcher = work / "scripts" / f"run_stage3_{'curvature' if n is None else f'iter{n}'}.py"
+    ov = overrides(launcher)
     allowed={"CODE_PATH","RQVAE_VARIANT","LOG_PATH","SAVE_PATH"}
     forbidden=sorted(set(ov)-allowed)
     if forbidden:
@@ -123,9 +135,9 @@ def main():
         fail(f"launcher missing required wiring fields: {missing}")
 
     expected_paths={
-        "CODE_PATH":str(repo/"results"/"stage2_RQ-VAE"/f"curvature_RQ-VAE_iter{n}"/"item_sids.json"),
-        "LOG_PATH":str(repo/"results"/"stage3_T5Train"/f"curvature_RQ-VAE_iter{n}"/"logs")+"/",
-        "SAVE_PATH":str(repo/"results"/"stage3_T5Train"/f"curvature_RQ-VAE_iter{n}"/"ckpt")+"/",
+        "CODE_PATH":str(repo/"results"/"stage2_RQ-VAE"/variant_dir/"item_sids.json"),
+        "LOG_PATH":str(repo/"results"/"stage3_T5Train"/variant_dir/"logs")+"/",
+        "SAVE_PATH":str(repo/"results"/"stage3_T5Train"/variant_dir/"ckpt")+"/",
     }
     for key,value in expected_paths.items():
         if ov.get(key)!=value:
@@ -135,7 +147,7 @@ def main():
         fail("RQVAE_VARIANT must be a non-empty literal string")
 
     print("STAGE3_PROTOCOL_PASS")
-    print(f"iter={n}")
+    print(f"iter={n if n is not None else 'none (unsuffixed curvature_RQ-VAE)'}")
     print(f"trainer_sha256={sha256(trainer)}")
     print(f"launcher={launcher}")
     print(f"variant={ov['RQVAE_VARIANT']}")
