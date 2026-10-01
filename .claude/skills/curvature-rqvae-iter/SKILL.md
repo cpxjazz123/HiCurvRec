@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Main-only, zero-bookkeeping-artifact workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. The workflow itself creates no Markdown, JSON, JSONL, LOG, TXT, report, manifest, decision, audit, review, or closure files. Only source-code changes and the experiment programs' native Stage2/Stage3 outputs are retained.
+description: Main-only, zero-bookkeeping-artifact workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. Every iteration edits stage2_RQ-VAE/curvature_RQ-VAE in place under a Git-gated accept/rollback policy instead of copying a new iteration directory. The workflow itself creates no Markdown, JSON, JSONL, LOG, TXT, report, manifest, decision, audit, review, or closure files. Only source-code changes and the experiment programs' native Stage2/Stage3 outputs are retained.
 ---
 
 # curvature-rqvae-iter
@@ -24,6 +24,52 @@ research design
 ```
 
 No phase is delegated.
+
+---
+
+## 0.2 Single-directory in-place iteration
+
+There is exactly one working tree for the mechanism:
+
+```
+stage2_RQ-VAE/curvature_RQ-VAE/
+results/stage2_RQ-VAE/curvature_RQ-VAE/
+results/stage3_T5Train/curvature_RQ-VAE/
+```
+
+Every iteration edits these paths in place. Do **not** copy the directory to a
+new `curvature_RQ-VAE_iter<N>/` and do not introduce an iteration number into
+any path, launcher filename, `MECHANISM_NAME`, or `RQVAE_VARIANT`.
+
+Git is the iteration boundary and the rollback mechanism. Main records the
+parent commit hash in active context before editing, so a losing condition can
+be reverted precisely.
+
+## 0.3 Accept / rollback policy
+
+Compare the new condition against the parent by Stage3 `test_recall@10` from
+each run's own native `test_final.json`, on a protocol-compatible population
+(`n_eval = 57439`).
+
+- **Better than parent** → accepted: keep the new source and its native
+  Stage2/Stage3 outputs, commit, push, verify the remote hash.
+- **Worse than parent** → rejected: `git revert` the implementation commit
+  (never `git reset --hard`; remote history must stay linear and auditable),
+  then push the revert and verify the remote hash. The tree returns to the
+  parent condition, which is the baseline for the next iteration.
+- **Equal or within noise** → treat as not better, revert, and choose a
+  genuinely different structural mechanism next. A neutral result must not be
+  kept as if it were progress.
+
+A rejected iteration still runs Stage2 and Stage3 exactly once; the decision is
+made on their native outputs, not on Stage2 proxies. Nothing about the reverted
+mechanism is recorded in a new file.
+
+Reverting returns the source to the parent, so the next iteration always starts
+from the best known condition rather than from an accumulating pile of
+half-working variants.
+
+---
 
 ## 0.1 Zero workflow-artifact rule
 
@@ -109,7 +155,7 @@ A small or ambiguous effect is recorded mentally by main and the workflow moves 
 
 Before editing code, main must establish in its active reasoning context:
 
-- parent iteration;
+- parent condition and its parent commit hash;
 - active mechanisms before;
 - exact new mechanism;
 - active mechanisms after;
@@ -123,9 +169,12 @@ No file is written for this.
 
 Once implementation begins, the registered scientific condition is frozen.
 
-Do not retune the same iteration after MVG or downstream results.
+Do not retune the same condition after MVG or downstream results.
 
-If making the mechanism viable requires changing the equation, scientific constant, parent, data identity, seed, or Stage3 protocol, terminate that scientific condition and start a new iteration.
+If the mechanism turns out to need a changed equation, scientific constant,
+data identity, seed, or Stage3 protocol, abandon this condition and start the
+next one in the same directory. Abandoning a condition is a normal outcome of
+the accept/rollback policy, not an exceptional case.
 
 ---
 
@@ -237,11 +286,11 @@ Interpretation exists only in main:
 - `MVG PASS`: proceed;
 - implementation failure: repair code while preserving the registered mechanism, then rerun;
 - evidence/instrumentation failure: repair instrumentation, then rerun;
-- mechanism failure requiring changed science: stop this iteration condition.
+- mechanism failure requiring changed science: abandon the condition and revert.
 
 ## 6.2 Operational repair
 
-Operational repairs remain in the same iteration when the registered science is unchanged.
+Operational repairs stay within the same condition when the registered science is unchanged.
 
 Examples:
 
@@ -332,7 +381,7 @@ Main immediately selects the next valid action from current evidence.
 
 No workflow closure artifact is created.
 
-A normal iteration is considered closed when:
+An **accepted** condition is closed when:
 
 - Stage2 completed;
 - Stage3 completed;
@@ -341,14 +390,16 @@ A normal iteration is considered closed when:
 - push to `origin/main` succeeds;
 - local `main` hash equals remote `main` hash.
 
-For an aborted scientific condition:
+A **rejected** condition is closed by rollback, not by deletion:
 
-- do not fabricate downstream outputs;
-- commit only source changes that should be preserved plus any native outputs already legitimately produced;
-- push and verify remote hash;
-- continue to the next justified iteration.
+- do not fabricate or keep downstream outputs as if they were the new best;
+- `git revert` the implementation commit, restoring the parent source;
+- commit the revert, push, and verify the remote hash;
+- the parent's native outputs, already in history, remain the baseline;
+- continue to the next justified condition in the same directory.
 
-Do not create a Git-closure record.
+Never delete history, never `git reset --hard` a pushed branch, and never leave
+a rejected mechanism in the tree. Do not create a Git-closure record.
 
 ---
 
@@ -372,6 +423,17 @@ Commit:
 2. native Stage2 outputs required by the project;
 3. native Stage3 outputs required by the project.
 
+Commit the implementation together with its native outputs, so a single
+`git revert` removes the mechanism and its artifacts as one unit.
+
+The commit message states the mechanism in one line and the measured
+`test_recall@10` against the parent, so the accept/rollback decision is
+readable from history alone.
+
+Rollback uses `git revert` only. Do not rewrite pushed history and do not
+delete a losing run's commit; the losing attempt stays visible in history and
+the tree returns to the parent.
+
 Do not commit newly generated workflow bookkeeping files because none should exist.
 
 ---
@@ -381,6 +443,10 @@ Do not commit newly generated workflow bookkeeping files because none should exi
 Do not:
 
 - delegate any phase;
+- copy the mechanism directory to a new iteration directory;
+- introduce an iteration number into any path, launcher filename, `MECHANISM_NAME`, or `RQVAE_VARIANT`;
+- keep a rejected mechanism in the tree instead of reverting it;
+- rewrite pushed history or `git reset --hard` to undo a condition;
 - generate workflow Markdown/JSON/JSONL/LOG/TXT records;
 - create hypothesis/protocol/manifest/audit/decision/closure/review files;
 - create a workflow logs directory;

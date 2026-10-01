@@ -6,8 +6,9 @@ The old generic checker is retired because it:
 - assumed learnable curvature flags;
 - could incorrectly require gradients/updates on fixed curvature.
 
-Under FCCR-1, gradient health is checked inside the iteration-local no-CLI
-scripts/mvg_check.py after scripts/preflight_contract.py passes.
+Under FCCR-1, gradient health is checked inside
+stage2_RQ-VAE/curvature_RQ-VAE/scripts/mvg_check.py, which takes no CLI
+arguments.
 
 Required model-gradient checks:
 - total loss requires grad;
@@ -19,5 +20,5 @@ This file exits deliberately to prevent accidental use of the obsolete checker.
 
 raise RuntimeError(
     "Generic grad_check.py is retired under FCCR-1. "
-    "Use preflight_contract.py and the iteration-local no-CLI mvg_check.py."
+    "Use the in-place stage2_RQ-VAE/curvature_RQ-VAE/scripts/mvg_check.py."
 )
