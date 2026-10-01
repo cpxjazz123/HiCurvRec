@@ -22,6 +22,14 @@ from sklearn.cluster import KMeans
 CURVATURE = 1.0
 _BALL_EPS = 1e-6
 
+# Radius the encoder latent is normalized onto before expmap0. At the radius
+# the encoder naturally chooses (~0.024) the Poincare expmap is linear to
+# within 1e-4, so curvature degenerates to a constant distance rescale and
+# every curvature yields the same code assignment. 1.5 puts the operating
+# point where the expmap compresses to ~0.60 of the tangent radius, which is
+# the regime where the ball geometry actually changes the metric.
+TANGENT_RADIUS = 1.5
+
 
 def _curvature_like(
     curvature: torch.Tensor | float, reference: torch.Tensor

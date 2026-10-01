@@ -13,6 +13,7 @@ sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment
 import train_rqvae as training
 from model import RQVAE
+from model.layers import _expmap0_tangent
 
 
 def require(condition: bool, message: str) -> None:
@@ -84,6 +85,30 @@ def main() -> None:
 
     with torch.no_grad():
         model.init_codebook(all_embeddings[:4096].to(device))
+
+    # The latent must sit on the fixed-radius shell, otherwise the Poincare
+    # expmap returns to its linear regime and curvature stops mattering.
+    with torch.no_grad():
+        encoded = model._to_tangent_space(model.encoder(all_embeddings[:512].to(device)))
+    latent_radius = torch.linalg.vector_norm(encoded, dim=-1)
+    require(
+        torch.allclose(
+            latent_radius,
+            torch.full_like(latent_radius, training.TANGENT_RADIUS),
+            atol=1e-3,
+        ),
+        f"Latent radius must be normalized to {training.TANGENT_RADIUS}, "
+        f"got mean {float(latent_radius.mean()):.6f}",
+    )
+    ball_radius = torch.linalg.vector_norm(
+        _expmap0_tangent(encoded, 1.0), dim=-1
+    )
+    compression = float((ball_radius / latent_radius).mean())
+    require(
+        compression < 0.9,
+        f"expmap is still linear (compression {compression:.4f}); "
+        "the ball geometry would be a no-op",
+    )
 
     batch = all_embeddings[:256].to(device)
     reconstructed, quant_loss, unused_codes, tokens = model(batch)
