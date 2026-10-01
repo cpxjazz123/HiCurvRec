@@ -7,8 +7,8 @@ PY="/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
 WORK="$(pwd -P)"
 NAME="$(basename "$WORK")"
 
-if [[ ! "$NAME" =~ ^curvature_RQ-VAE_iter[0-9]+$ ]]; then
-  echo "[train_iter] run from stage2_RQ-VAE/curvature_RQ-VAE_iter<N>/; got $WORK" >&2
+if [[ ! "$NAME" =~ ^curvature_RQ-VAE(_iter[0-9]+)?$ ]]; then
+  echo "[train_iter] run from stage2_RQ-VAE/curvature_RQ-VAE/ or curvature_RQ-VAE_iter<N>/; got $WORK" >&2
   exit 2
 fi
 
