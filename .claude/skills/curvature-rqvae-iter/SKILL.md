@@ -1,6 +1,6 @@
 ---
 name: curvature-rqvae-iter
-description: Main-only, zero-bookkeeping-artifact workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. Every iteration edits stage2_RQ-VAE/curvature_RQ-VAE in place under a Git-gated accept/rollback policy instead of copying a new iteration directory. The workflow itself creates no Markdown, JSON, JSONL, LOG, TXT, report, manifest, decision, audit, review, or closure files. Only source-code changes and the experiment programs' native Stage2/Stage3 outputs are retained.
+description: Main-only, zero-bookkeeping-artifact workflow for HiCurvRec curvature-aware RQ-VAE experiments. Main performs research design, implementation, verification, Stage2, Stage3, result interpretation, next-direction selection, and Git closure end-to-end. Every condition edits stage2_RQ-VAE/curvature_RQ-VAE in place under a Git-gated accept/rollback policy. The workflow itself creates no Markdown, JSON, JSONL, LOG, TXT, report, manifest, decision, audit, review, or closure files. Only source-code changes and the experiment programs' native Stage2/Stage3 outputs are retained.
 ---
 
 # curvature-rqvae-iter
@@ -27,9 +27,9 @@ No phase is delegated.
 
 ---
 
-## 0.2 Single-directory in-place iteration
+## 0.2 Single working tree
 
-There is exactly one working tree for the mechanism:
+The mechanism has exactly one working tree:
 
 ```
 stage2_RQ-VAE/curvature_RQ-VAE/
@@ -37,37 +37,34 @@ results/stage2_RQ-VAE/curvature_RQ-VAE/
 results/stage3_T5Train/curvature_RQ-VAE/
 ```
 
-Every iteration edits these paths in place. Do **not** copy the directory to a
-new `curvature_RQ-VAE_iter<N>/` and do not introduce an iteration number into
-any path, launcher filename, `MECHANISM_NAME`, or `RQVAE_VARIANT`.
+Every condition edits these paths directly. Never create a parallel
+directory, and never put a counter into any path, launcher filename,
+`MECHANISM_NAME`, or `RQVAE_VARIANT`.
 
-Git is the iteration boundary and the rollback mechanism. Main records the
-parent commit hash in active context before editing, so a losing condition can
-be reverted precisely.
+Git is the boundary and the undo mechanism. Main notes the current commit hash
+before editing so a losing condition can be reverted exactly.
 
 ## 0.3 Accept / rollback policy
 
-Compare the new condition against the parent by Stage3 `test_recall@10` from
-each run's own native `test_final.json`, on a protocol-compatible population
+Compare against the parent by Stage3 `test_recall@10` read from each run's own
+native `test_final.json`, on a protocol-compatible population
 (`n_eval = 57439`).
 
-- **Better than parent** → accepted: keep the new source and its native
-  Stage2/Stage3 outputs, commit, push, verify the remote hash.
-- **Worse than parent** → rejected: `git revert` the implementation commit
-  (never `git reset --hard`; remote history must stay linear and auditable),
-  then push the revert and verify the remote hash. The tree returns to the
-  parent condition, which is the baseline for the next iteration.
-- **Equal or within noise** → treat as not better, revert, and choose a
-  genuinely different structural mechanism next. A neutral result must not be
-  kept as if it were progress.
+- **Better** → keep it: commit the source with its native Stage2/Stage3
+  outputs, push, verify the remote hash.
+- **Worse** → `git revert` the implementation commit (never
+  `git reset --hard`; pushed history stays linear and auditable), push the
+  revert, verify the remote hash. The tree returns to the parent, which is the
+  baseline for the next condition.
+- **Equal or within noise** → treat as not better, revert, and pick a
+  genuinely different structural mechanism.
 
-A rejected iteration still runs Stage2 and Stage3 exactly once; the decision is
-made on their native outputs, not on Stage2 proxies. Nothing about the reverted
-mechanism is recorded in a new file.
+A rejected condition still runs Stage2 and Stage3 exactly once; the decision
+comes from their native outputs, never from Stage2 proxies. The revert commit
+is its only durable trace — no failure archive, ledger, or report is created.
 
-Reverting returns the source to the parent, so the next iteration always starts
-from the best known condition rather than from an accumulating pile of
-half-working variants.
+Reverting restores the source, so the next condition always starts from the
+best known state rather than from a pile of half-working variants.
 
 ---
 
@@ -100,7 +97,7 @@ Do not create a workflow `logs/` directory merely to store process records.
 
 Scientific design, assumptions, one-factor constraints, repair decisions, abort decisions, result interpretation, promotion decisions, and next-direction choices remain in the active main context only.
 
-Static repository documentation may be **read**. Existing historical workflow records from completed iterations may be read when needed, but new iterations do not create replacements.
+Static repository documentation may be **read**.
 
 ### Important distinction
 
@@ -118,36 +115,37 @@ Priority:
 2. this skill;
 3. current source code;
 4. current experiment configuration;
-5. native Stage2/Stage3 outputs;
-6. historical references.
+5. native Stage2/Stage3 outputs.
 
 Higher-priority sources override lower-priority sources.
 
-When comparing historical performance, read the actual native final-test output whenever available instead of relying on a historical summary.
+Always read the actual native final-test output rather than any summary of it.
 
 ---
 
 # 2. Forward-only research policy
 
-Every new iteration tests one forward-looking structural mechanism with a plausible path to improving downstream `test_R@10`.
+Each condition tests one forward-looking structural mechanism with a plausible
+path to improving downstream `test_R@10`.
 
 Project target:
 
 `test_R@10 > 0.065`
 
-Forbidden as the primary purpose of a new iteration:
+Forbidden as the primary purpose:
 
 - parameter sweep;
 - grid/random/Bayesian search;
 - multi-seed or matched-seed replication;
 - rerunning the same condition only to estimate variance;
 - hyperparameter sensitivity study;
-- ablation-only iteration;
-- reverse/control iteration whose main purpose is attribution;
-- root-cause-only iteration;
-- diagnostic-only iteration.
+- ablation-only work;
+- reverse/control work whose main purpose is attribution;
+- root-cause-only work;
+- diagnostic-only work.
 
-A small or ambiguous effect is recorded mentally by main and the workflow moves to a distinct structural mechanism.
+A small or ambiguous effect is recorded mentally by main and the workflow moves
+to a distinct structural mechanism.
 
 ---
 
@@ -195,14 +193,13 @@ NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
 ```
 
 Per-layer curvature is computed before Stage2 and stays fixed for the full run.
-FCCR-1 remains the default for every iteration unless a contract transition is
-explicitly authorized.
+FCCR-1 is always in force unless a contract transition is explicitly
+authorized.
 
 ### DCCR-1 — Dynamic Cyclic Curvature Research Contract
 
-This contract is available only after explicit user authorization, and applies
-only to the specifically authorized iteration. It does not change the default
-contract for later iterations.
+DCCR-1 is available only after explicit user authorization, and applies only
+to the specifically authorized work. It does not change the default contract.
 
 ```
 CURVATURE_SOURCE=cyclic_schedule_with_trainable_layer_scale
@@ -214,7 +211,7 @@ USES_CURVATURE_CONDITIONED_OPTIMIZER=true
 NEW_CURVATURE_CONDITIONED_AUX_LOSS=false
 ```
 
-The iteration must name its DCCR-1 parent and preserve the inherited cyclic
+Such a condition must name its DCCR-1 parent and preserve the inherited cyclic
 schedule, layer scales, curvature regularization, and curvature-conditioned
 optimizer exactly unless one of those is the explicitly registered single
 mechanism. A transition to DCCR-1 does not authorize any other curvature or
@@ -227,7 +224,7 @@ Without an explicit contract transition, do not introduce:
 - cyclic/scheduled curvature;
 - curvature regularization intended to move curvature;
 - optimizer-side curvature learning;
-- a second unrelated scientific mechanism in the same iteration.
+- a second unrelated scientific mechanism in the same condition.
 
 A structural mechanism may consume the curvature defined by the selected
 contract while leaving that contract unchanged.
@@ -238,8 +235,8 @@ contract while leaving that contract unchanged.
 
 Main chooses one mechanism and checks that it is:
 
-- structurally distinct from the prior failed/neutral mechanism;
-- one-factor relative to the chosen parent;
+- structurally distinct from the mechanism that failed or did nothing;
+- one-factor relative to the current condition;
 - compatible with the explicitly selected curvature contract;
 - plausibly relevant to downstream recommendation quality;
 - falsifiable;
@@ -253,13 +250,13 @@ Do not create a hypothesis, mechanism, protocol, or decision file.
 
 Main directly inspects:
 
-- current parent source;
+- current source;
 - current repository rules;
 - actual Stage1 path / identity;
 - Stage2 seed / steps / architecture;
 - current Stage3 trainer;
 - current Stage3 frozen protocol;
-- relevant native historical results.
+- the current native Stage3 result.
 
 No source/protocol snapshot file is created.
 
@@ -396,7 +393,7 @@ A **rejected** condition is closed by rollback, not by deletion:
 - `git revert` the implementation commit, restoring the parent source;
 - commit the revert, push, and verify the remote hash;
 - the parent's native outputs, already in history, remain the baseline;
-- continue to the next justified condition in the same directory.
+- continue with the next justified condition in the same working tree.
 
 Never delete history, never `git reset --hard` a pushed branch, and never leave
 a rejected mechanism in the tree. Do not create a Git-closure record.
@@ -405,11 +402,14 @@ a rejected mechanism in the tree. Do not create a Git-closure record.
 
 # 11. Conditional global review
 
-After several clean protocol-valid iterations, main may perform a cross-iteration review entirely in active context.
+Main may periodically step back and reassess the open question, entirely in
+active context.
 
 Do not create a global-review file.
 
-The next direction must still be a distinct forward structural mechanism, not replication, seed comparison, parameter sweep, sensitivity study, ablation-only work, or root-cause-only work.
+The next direction must still be a distinct forward structural mechanism, not
+replication, seed comparison, parameter sweep, sensitivity study,
+ablation-only work, or root-cause-only work.
 
 ---
 
@@ -428,11 +428,10 @@ Commit the implementation together with its native outputs, so a single
 
 The commit message states the mechanism in one line and the measured
 `test_recall@10` against the parent, so the accept/rollback decision is
-readable from history alone.
+readable from the commit itself.
 
 Rollback uses `git revert` only. Do not rewrite pushed history and do not
-delete a losing run's commit; the losing attempt stays visible in history and
-the tree returns to the parent.
+delete a losing run's commit; the tree returns to the parent.
 
 Do not commit newly generated workflow bookkeeping files because none should exist.
 
@@ -443,8 +442,8 @@ Do not commit newly generated workflow bookkeeping files because none should exi
 Do not:
 
 - delegate any phase;
-- copy the mechanism directory to a new iteration directory;
-- introduce an iteration number into any path, launcher filename, `MECHANISM_NAME`, or `RQVAE_VARIANT`;
+- create a parallel mechanism directory;
+- put a counter into any path, launcher filename, `MECHANISM_NAME`, or `RQVAE_VARIANT`;
 - keep a rejected mechanism in the tree instead of reverting it;
 - rewrite pushed history or `git reset --hard` to undo a condition;
 - generate workflow Markdown/JSON/JSONL/LOG/TXT records;
@@ -453,8 +452,8 @@ Do not:
 - stack a second scientific mechanism;
 - retune a locked mechanism after results;
 - use Stage2 proxies to block a valid Stage3 run;
-- modify Stage3 for an iteration-level mechanism;
+- modify Stage3 for a mechanism under test;
 - reintroduce Stage3 early stopping;
 - run duplicate Stage2/Stage3 jobs for one condition;
-- spend a new iteration on replication/noise estimation/root-cause-only work;
+- spend a condition on replication/noise estimation/root-cause-only work;
 - ask the user to choose the next research step.
