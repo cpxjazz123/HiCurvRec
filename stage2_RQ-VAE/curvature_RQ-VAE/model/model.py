@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .layers import MLP, RQLayer, _poincare_distance_tangent_pairs
+from .layers import MLP, RQLayer
 
 
 class RQVAE(nn.Module):
@@ -67,27 +67,3 @@ class RQVAE(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         recon_loss = F.mse_loss(reconstructed, embeddings)
         return recon_loss + quant_loss, recon_loss
-
-
-def behaviour_contrastive_loss(
-    source: torch.Tensor,
-    successor: torch.Tensor,
-    negatives: torch.Tensor,
-    temperature: float,
-) -> torch.Tensor:
-    """InfoNCE over items that really follow each other in train sequences.
-
-    The reconstruction objective only asks a code to reproduce its own item, so
-    nothing in the codebook distinguishes two items that are never purchased
-    together from two that always are. This term scores the source against its
-    observed successor and against a random item, in the same hyperbolic metric
-    the quantizer already uses, so the supervision enters the geometry instead
-    of offsetting the reconstruction target.
-    """
-    curvature = 1.0
-    positive = _poincare_distance_tangent_pairs(source, successor, curvature)
-    negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
-    logits = torch.stack(
-        (-positive / temperature, -negative / temperature), dim=-1
-    )
-    return F.cross_entropy(logits, torch.zeros(len(source), dtype=torch.long, device=source.device))
