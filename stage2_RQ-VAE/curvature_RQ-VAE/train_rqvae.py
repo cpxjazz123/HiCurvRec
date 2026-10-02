@@ -61,13 +61,9 @@ OPTIMIZER = "AdamW"
 SEED = 42
 NUM_WORKERS = 0
 
-# Fixed Poincare curvature per quantization level.
-LAYER_CURVATURES = (16.0, 128.0, 1.0)
-# Per-level tangent scale: a level quantizes in the ExpMap_c(alpha * z) frame
-# with its codebook scaled by the same alpha, so the working point
-# s = sqrt(c) * alpha * ||r|| moves out of the Poincare origin instead of being
-# left at ~0.11 by a codebook trained at alpha = 1. 1.0 disables the mechanism.
-LAYER_TANGENT_SCALES = (3.0, 1.0, 1.0)
+# Fixed Poincare curvature per quantization level. Identical across levels
+# because the curvature curriculum was removed; only the level index varies.
+LAYER_CURVATURES = (1.0, 1.0, 1.0)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -126,7 +122,6 @@ def _save_snapshot(
             "geometry": "poincare_fixed_curvature",
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
-            "tangent_scales": list(raw_module.rq.tangent_scales),
             "effective_epsilons": raw_module.rq.get_effective_epsilons(),
         },
         checkpoint_path,
@@ -272,7 +267,6 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
-        layer_tangent_scales=LAYER_TANGENT_SCALES,
     )
 
 
@@ -343,14 +337,12 @@ def main() -> None:
         float(layer.get_curvature().detach().item())
         for layer in raw_module.rq.vq_layers
     ]
-    layer_tangent_scales = [float(v) for v in raw_module.rq.tangent_scales]
     if rank == 0:
         print(
             f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
-            f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"alpha={layer_tangent_scales}",
+            f"c={[round(value, 6) for value in layer_curvatures]}",
             flush=True,
         )
         _record(
@@ -372,7 +364,6 @@ def main() -> None:
             train_target_items=len(train_embeddings), embedding_shape=list(embeddings.shape),
             world_size=world_size,
             layer_curvatures=layer_curvatures,
-            layer_tangent_scales=layer_tangent_scales,
             snapshot_steps=SNAPSHOT_STEPS,
         )
 
