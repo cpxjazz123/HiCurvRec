@@ -64,12 +64,6 @@ NUM_WORKERS = 0
 # Fixed Poincare curvature per quantization level. Identical across levels
 # because the curvature curriculum was removed; only the level index varies.
 LAYER_CURVATURES = (1.0, 1.0, 1.0)
-# Per-level fixed working radius for the tangent-space working point
-# s = sqrt(c) * ||r||. A level with a non-zero target overwrites the magnitude of
-# its input to target / sqrt(c) before the Poincare map and maps the result back
-# afterwards, so the encoder cannot shrink ||z|| to pull the level back to the
-# ball centre. 0.0 leaves that level untouched.
-LAYER_WORKING_RADII = (0.3, 0.0, 0.0)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -128,7 +122,6 @@ def _save_snapshot(
             "geometry": "poincare_fixed_curvature",
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
-            "working_radii": list(raw_module.rq.get_working_radii()),
             "effective_epsilons": raw_module.rq.get_effective_epsilons(),
         },
         checkpoint_path,
@@ -274,7 +267,6 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
-        layer_working_radii=LAYER_WORKING_RADII,
     )
 
 
@@ -345,14 +337,12 @@ def main() -> None:
         float(layer.get_curvature().detach().item())
         for layer in raw_module.rq.vq_layers
     ]
-    layer_working_radii = [float(v) for v in raw_module.rq.get_working_radii()]
     if rank == 0:
         print(
             f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
-            f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"radius={layer_working_radii}",
+            f"c={[round(value, 6) for value in layer_curvatures]}",
             flush=True,
         )
         _record(
@@ -374,7 +364,6 @@ def main() -> None:
             train_target_items=len(train_embeddings), embedding_shape=list(embeddings.shape),
             world_size=world_size,
             layer_curvatures=layer_curvatures,
-            layer_working_radii=layer_working_radii,
             snapshot_steps=SNAPSHOT_STEPS,
         )
 
