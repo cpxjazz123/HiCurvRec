@@ -33,11 +33,11 @@ class RQVAE(nn.Module):
 
     def forward(
         self, embeddings: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         encoded = self.encoder(embeddings)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens, encoded
+        return reconstructed, quant_loss, int(unused_codes), tokens
 
     @torch.no_grad()
     def get_indices(
