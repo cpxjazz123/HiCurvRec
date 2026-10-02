@@ -226,8 +226,13 @@ class VQLayer(nn.Module):
         return torch.exp(log_q + log_batch_size)
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
+        return self._distances_to(latent, self.get_code_embs())
+
+    def _distances_to(
+        self, latent: torch.Tensor, codes: torch.Tensor
+    ) -> torch.Tensor:
         return _pairwise_poincare_distance_tangents(
-            latent, self.get_code_embs(), self.get_curvature()
+            latent, codes, self.get_curvature()
         )
 
     def _balanced_assignments(self, distances: torch.Tensor) -> torch.Tensor:
@@ -540,6 +545,20 @@ class RQLayer(nn.Module):
         curvatures = [float(value) for value in config.layer_curvatures]
         if len(curvatures) != self.codebook_num:
             raise ValueError("layer_curvatures must match codebook_num")
+        # Optional per-level tangent scale: this level quantizes in the
+        # ExpMap_c(alpha * z) frame, i.e. both the residual and the codebook are
+        # scaled by the same alpha before the map, and the residual is divided
+        # back afterwards so the next level still sees an unscaled residual.
+        # Absent or 1.0 keeps the previous code path byte-for-byte.
+        scales = getattr(config, "layer_tangent_scales", None)
+        if scales is None:
+            scales = [1.0] * self.codebook_num
+        scales = [float(value) for value in scales]
+        if len(scales) != self.codebook_num:
+            raise ValueError("layer_tangent_scales must match codebook_num")
+        if any(not (value > 0.0) for value in scales):
+            raise ValueError("layer_tangent_scales must be positive")
+        self.tangent_scales = tuple(scales)
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
@@ -567,6 +586,88 @@ class RQLayer(nn.Module):
     def get_effective_epsilons(self) -> list[float]:
         return [layer.get_effective_epsilon() for layer in self.vq_layers]
 
+    def _scaled_quantize(
+        self,
+        layer: VQLayer,
+        residual: torch.Tensor,
+        infer_use_sk: bool,
+        bucket: torch.Tensor | None,
+        scale: float,
+    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+        """Quantize in the ExpMap_c(scale * z) frame.
+
+        The codebook stays stored in the residual's own scale and is multiplied
+        by ``scale`` here, so the assignment, the codebook loss and the
+        commitment loss all live in the same pushed-out frame the mechanism
+        targets. The straight-through estimate is applied there as well.
+        """
+        latent = scale * residual
+        codes = scale * layer.get_code_embs()
+        embed_ind = layer._indices(
+            layer._distances_to(latent, codes), infer_use_sk, bucket
+        )
+        onehot = F.one_hot(embed_ind, layer.n_embed)
+        used = onehot.sum(0)
+        if (
+            distributed.is_initialized()
+            and infer_use_sk is False
+            and not getattr(layer, "_skip_ddp_reduce", False)
+        ):
+            distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
+        unused_codes = int((used == 0).sum().item())
+        x_q = F.embedding(embed_ind, codes).view(residual.shape)
+        curvature = layer.get_curvature()
+        codebook_loss = _poincare_distance_tangent_pairs(
+            latent.detach(), x_q, curvature
+        ).square().mean()
+        commitment_loss = _poincare_distance_tangent_pairs(
+            latent, x_q.detach(), curvature
+        ).square().mean()
+        quant_loss = codebook_loss + layer.beta * commitment_loss
+        x_q = latent + (x_q - latent).detach()
+        return x_q, quant_loss, unused_codes, embed_ind.view(*residual.shape[:-1])
+
+    def _scaled_residual(
+        self,
+        residual: torch.Tensor,
+        quant_scaled: torch.Tensor,
+        curvature: torch.Tensor | float,
+        scale: float,
+    ) -> torch.Tensor:
+        return _hyperbolic_residual(
+            scale * residual, quant_scaled, curvature
+        ) / scale
+
+    def _scaled_assign(
+        self,
+        layer: VQLayer,
+        residual: torch.Tensor,
+        bucket: torch.Tensor | None,
+        scale: float,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        latent = scale * residual
+        distances = layer._distances_to(latent, scale * layer.get_code_embs())
+        assignments = (
+            layer._balanced_assignments(distances)
+            if bucket is None
+            else layer._bucket_balanced_assignments(distances, bucket)
+        )
+        if not torch.isfinite(assignments).all():
+            raise RuntimeError("Scaled assignment returned NaN or infinity.")
+        ids = assignments.argmax(dim=-1)
+        probabilities = assignments / assignments.sum(
+            dim=-1, keepdim=True
+        ).clamp_min(torch.finfo(assignments.dtype).tiny)
+        positive = probabilities > 0
+        log_probabilities = torch.where(
+            positive, probabilities.log(), torch.zeros_like(probabilities)
+        )
+        entropy = -(
+            probabilities * log_probabilities
+        ).sum(dim=-1).mean()
+        usage = torch.bincount(ids, minlength=layer.n_embed)
+        return ids.view(*residual.shape[:-1]), usage, entropy
+
     def forward(
         self,
         x: torch.Tensor,
@@ -584,12 +685,22 @@ class RQLayer(nn.Module):
         previous_codes: torch.Tensor | None = None
         for level, vq_layer in enumerate(self.vq_layers):
             curvature = vq_layer.get_curvature()
-            quant, quant_loss, unused, indices = vq_layer(
-                residual, infer_use_sk, previous_codes
-            )
+            scale = self.tangent_scales[level]
+            if scale == 1.0:
+                quant, quant_loss, unused, indices = vq_layer(
+                    residual, infer_use_sk, previous_codes
+                )
+                residual = _hyperbolic_residual(residual, quant, curvature)
+                quantized_x = quantized_x + quant
+            else:
+                quant, quant_loss, unused, indices = self._scaled_quantize(
+                    vq_layer, residual, infer_use_sk, previous_codes, scale
+                )
+                residual = self._scaled_residual(
+                    residual, quant, curvature, scale
+                )
+                quantized_x = quantized_x + quant / scale
             previous_codes = indices
-            residual = _hyperbolic_residual(residual, quant, curvature)
-            quantized_x = quantized_x + quant
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
@@ -611,9 +722,25 @@ class RQLayer(nn.Module):
         stats = []
         previous_codes: torch.Tensor | None = None
         for level, layer in enumerate(self.vq_layers):
-            indices, usage, entropy = layer.assignment_diagnostics(
-                residual, previous_codes
-            )
+            curvature = layer.get_curvature()
+            scale = self.tangent_scales[level]
+            if scale == 1.0:
+                indices, usage, entropy = layer.assignment_diagnostics(
+                    residual, previous_codes
+                )
+                residual = _hyperbolic_residual(
+                    residual, layer.embed_code(indices), curvature
+                )
+            else:
+                indices, usage, entropy = self._scaled_assign(
+                    layer, residual, previous_codes, scale
+                )
+                residual = self._scaled_residual(
+                    residual,
+                    scale * layer.embed_code(indices),
+                    curvature,
+                    scale,
+                )
             tokens[:, level] = indices
             previous_codes = indices
             stats.append(
@@ -628,16 +755,39 @@ class RQLayer(nn.Module):
                     ),
                 }
             )
-            residual = _hyperbolic_residual(
-                residual, layer.embed_code(indices), layer.get_curvature()
-            )
         return tokens, stats
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
         previous_codes: torch.Tensor | None = None
-        for vq_layer in self.vq_layers:
-            residual, previous_codes = vq_layer.init_codebook(
-                residual, device, previous_codes
+        for level, vq_layer in enumerate(self.vq_layers):
+            scale = self.tangent_scales[level]
+            if scale == 1.0:
+                residual, previous_codes = vq_layer.init_codebook(
+                    residual, device, previous_codes
+                )
+                continue
+            # KMeans still fits the stored (unscaled) frame, but the assignment
+            # and the residual subtraction happen in the pushed-out frame.
+            kmeans = KMeans(n_clusters=vq_layer.n_embed, n_init="auto").fit(
+                residual.detach().cpu().numpy()
             )
+            centers = torch.tensor(
+                kmeans.cluster_centers_, dtype=torch.float32, device=device
+            )
+            if distributed.is_initialized():
+                distributed.broadcast(centers, 0)
+            vq_layer._copy_init_embed(centers.clone())
+            indices = vq_layer._indices(
+                vq_layer._distances_to(scale * residual, scale * vq_layer.get_code_embs()),
+                infer_use_sk=True,
+                bucket=previous_codes,
+            ).view(*residual.shape[:-1])
+            residual = self._scaled_residual(
+                residual,
+                scale * vq_layer.embed_code(indices),
+                vq_layer.get_curvature(),
+                scale,
+            )
+            previous_codes = indices
         return residual
