@@ -21,6 +21,15 @@ from sklearn.cluster import KMeans
 
 CURVATURE = 1.0
 _BALL_EPS = 1e-6
+# Element budget for the padded block-diagonal Sinkhorn solve, which is
+# n_buckets x width x n_codes in float64 and is held across all 50
+# iterations. At 100M elements the block is ~320 MB, small against a 44 GB
+# card, and it covers training (width ~9) and full-corpus evaluation
+# (width ~100-200) alike. It exists because a batch that piles nearly all rows
+# into one bucket reaches width ~1024, i.e. 67M elements, and took the run out
+# with an OOM once the rest of the card was already full. Only such batches
+# fall back to the global solve; normal ones are untouched.
+_MAX_BUCKET_ELEMENTS = 100_000_000
 
 
 def _curvature_like(
@@ -266,6 +275,13 @@ class VQLayer(nn.Module):
         width = max(sizes)
         if width == 0:
             return assignment
+        # Cap the element count, not the width: a wide bucket is fine while few
+        # buckets are populated, which is the normal training case, and only a
+        # batch that piles many rows into one bucket needs the fallback.
+        if n_buckets * width * n_codes > _MAX_BUCKET_ELEMENTS:
+            return self.sinkhorn(
+                centered, self.get_effective_epsilon(), self.sk_iters
+            )
 
         # Build the (n_buckets, width) layout with one scatter instead of a
         # Python loop over buckets: the loop cost dominated everything else.
