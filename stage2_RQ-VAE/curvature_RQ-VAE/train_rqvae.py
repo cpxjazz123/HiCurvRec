@@ -258,6 +258,55 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     return result
 
 
+def _successor_mean_embeddings(
+    train_frame: pd.DataFrame,
+    train_ids: np.ndarray,
+    all_embeddings: torch.Tensor,
+) -> torch.Tensor:
+    """Mean embedding of each train item's observed successors, in row order.
+
+    An edge ``(source, target)`` is a consecutive pair in a train sequence, so
+    ``target`` genuinely follows ``source``. Items that never appear as a source
+    keep their own embedding, which makes the objective degrade to plain
+    reconstruction for them instead of asking for an undefined target.
+    """
+    sources: list[int] = []
+    targets: list[int] = []
+    for history, target in zip(
+        train_frame["seen_history"].to_numpy(),
+        train_frame["target"].to_numpy(dtype=np.int64),
+    ):
+        if history is None or len(history) == 0:
+            continue
+        source = int(history[-1])
+        if source < 0 or source >= all_embeddings.shape[0]:
+            raise ValueError(f"Transition source item {source} is outside embeddings")
+        sources.append(source)
+        targets.append(int(target))
+    if not sources:
+        raise ValueError("Training data has no usable item transitions")
+
+    rows = {int(item): index for index, item in enumerate(train_ids)}
+    source_rows = np.fromiter(
+        (rows[s] for s in sources if s in rows), dtype=np.int64,
+        count=sum(1 for s in sources if s in rows),
+    )
+    target_ids = np.asarray(targets, dtype=np.int64)
+    if source_rows.size == 0:
+        return all_embeddings[torch.from_numpy(train_ids)].clone()
+
+    totals = torch.zeros(
+        (len(train_ids), all_embeddings.shape[1]), dtype=all_embeddings.dtype
+    )
+    counts = torch.zeros(len(train_ids), dtype=all_embeddings.dtype)
+    totals.index_add_(0, torch.from_numpy(source_rows), all_embeddings[torch.from_numpy(target_ids)])
+    counts.index_add_(0, torch.from_numpy(source_rows), torch.ones(len(source_rows), dtype=all_embeddings.dtype))
+    observed = counts > 0
+    successor = all_embeddings[torch.from_numpy(train_ids)].clone()
+    successor[observed] = totals[observed] / counts[observed].unsqueeze(1)
+    return successor
+
+
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
     if len(sizes) == 1:
@@ -304,6 +353,16 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
+    # Behaviour-preserving reconstruction target: for every train target item,
+    # the mean embedding of the items that actually follow it in the train
+    # sequences. The decoder already reconstructs one vector from the quantized
+    # code; making that vector have to sit between the item and its observed
+    # successors puts the sequential signal into the codebook itself, which is
+    # what the downstream next-item task consumes. Items with no observed
+    # successor fall back to their own embedding, i.e. the previous objective.
+    successor_embeddings = _successor_mean_embeddings(
+        train_frame, train_ids, all_embeddings
+    )
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -314,7 +373,7 @@ def main() -> None:
             find_unused_parameters=False,
         )
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_embeddings, successor_embeddings)
     loader_batch_size = BATCH_SIZE_PER_RANK
     train_sampler = (
         DistributedSampler(
@@ -407,13 +466,14 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         model.train()
-        for (batch,) in loader:
+        for batch, successor in loader:
             batch = batch.to(device, non_blocking=True)
+            successor = successor.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch)
             loss, recon_loss = raw_module.compute_loss(
-                batch, reconstructed, quant_loss
+                successor, reconstructed, quant_loss
             )
             if not torch.isfinite(loss):
                 raise RuntimeError(
