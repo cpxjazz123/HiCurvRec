@@ -24,9 +24,9 @@ Stage-2 训练产物（`rqvae_best.pth` / `sids_raw.npy` / `sids_for_hgrec.npy` 
 
 ## 3. stage2 curvature_RQ-VAE 启动：cd 到 `stage2_RQ-VAE/curvature_RQ-VAE/` 后用 `nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 scripts/run_stage2_curvature.py > logs/train_run.log 2>&1 &`（裸 `python3` 无 torch，会立刻 ModuleNotFoundError；launcher 经 `train_rqvae._launch_via_torchrun` 自动 fork 4 卡 DDP，训练输出落在 `logs/train_hyperbolic_migrated.log`）。也可直接跑 `scripts/train_iter.sh`：它先执行 `scripts/mvg_check.py`，MVG 报告 `MVG PASS` 后再启动 Stage2。
 
-## 4. 禁止进入 plan 模式
+## 4. 未完成任务允许持续监控
 
-任何会话、任何任务（包括代码重构、规则修订、批量编辑等）都不得使用 EnterPlanMode / Plan agent，进入即视为违规，必须立即退出并直接执行；如确需事先规划，写简短要点到回复正文即可，禁止调用 Plan 工具链。
+未完成任务可通过读取运行日志、检查进程状态或使用 `sleep` 间隔轮询持续监控；可使用 `tail` 跟踪日志输出。任务完成后停止监控。监控不得造成重复启动训练或评测任务。
 
 ## 5. stage3 train_HG-Rec 启动：cd 到 stage3_T5Train 后用 `nohup /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 train_HG-Rec.py > logs/_stage3_run.log 2>&1 &`（裸 `python3` 无 torch；脚本内置 `_launch_via_torchrun` 自动 fork 4 卡 DDP，硬编码 `nproc_per_node=4 / master_port=50201 / CUDA_VISIBLE_DEVICES=0,1,2,3`，启动前会注入 `NCCL_IB_DISABLE=1 / NCCL_P2P_DISABLE=1 / NCCL_SHM_DISABLE=1 / NCCL_TIMEOUT=3600 / TORCH_NCCL_BLOCKING_WAIT=1`，训练输出落在 `logs/_stage3_launcher.log`）。
 
