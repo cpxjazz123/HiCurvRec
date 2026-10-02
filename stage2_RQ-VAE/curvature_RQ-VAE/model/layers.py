@@ -540,6 +540,22 @@ class RQLayer(nn.Module):
         curvatures = [float(value) for value in config.layer_curvatures]
         if len(curvatures) != self.codebook_num:
             raise ValueError("layer_curvatures must match codebook_num")
+        # Optional per-level working radius in the tangent frame, i.e. the
+        # working point s = sqrt(c) * ||r|| that a level quantizes at. A level
+        # with a non-zero target overwrites the magnitude of its input to
+        # target / sqrt(c) before the Poincare map and maps the result back
+        # afterwards, so the encoder cannot shrink ||z|| to pull the level back
+        # to the ball centre the way it cancels a plain multiplicative scale.
+        # 0.0 (or absent) keeps the previous code path.
+        radii = getattr(config, "layer_working_radii", None)
+        if radii is None:
+            radii = [0.0] * self.codebook_num
+        radii = [float(value) for value in radii]
+        if len(radii) != self.codebook_num:
+            raise ValueError("layer_working_radii must match codebook_num")
+        if any(not (0.0 <= value < 1.0) for value in radii):
+            raise ValueError("layer_working_radii must satisfy 0 <= r < 1")
+        self.working_radii = tuple(radii)
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
@@ -567,6 +583,50 @@ class RQLayer(nn.Module):
     def get_effective_epsilons(self) -> list[float]:
         return [layer.get_effective_epsilon() for layer in self.vq_layers]
 
+    def get_working_radii(self) -> tuple[float, ...]:
+        return self.working_radii
+
+    def _radius_for_level(
+        self,
+        level: int,
+        curvature: torch.Tensor | float,
+        residual: torch.Tensor,
+    ) -> torch.Tensor:
+        """Tangent norm target for this level, shaped (rows, 1).
+
+        The target is the configured working radius, so the level quantizes at a
+        pinned ``s`` whatever the encoder emits. A per-bucket statistic such as
+        the bucket's own mean residual norm was tried and rejected: it leaves the
+        buckets exactly as spread out as they were.
+        """
+        sqrt_c = _curvature_like(curvature, residual).sqrt()
+        return (self.working_radii[level] / sqrt_c.clamp_min(
+            torch.finfo(residual.dtype).tiny
+        )).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+
+    def _pin_to_radius(
+        self,
+        residual: torch.Tensor,
+        target_norm: torch.Tensor,
+    ) -> torch.Tensor:
+        """Overwrite the magnitude, keep only the direction."""
+        norm = torch.linalg.vector_norm(residual, dim=-1, keepdim=True)
+        return residual * (target_norm / norm.clamp_min(
+            torch.finfo(residual.dtype).tiny
+        ))
+
+    def _restore_norm(
+        self,
+        mapped: torch.Tensor,
+        source: torch.Tensor,
+        target_norm: torch.Tensor,
+    ) -> torch.Tensor:
+        """Inverse of the magnitude overwrite, back into the encoder's norms."""
+        norm = torch.linalg.vector_norm(source, dim=-1, keepdim=True)
+        return mapped * (norm / target_norm.clamp_min(
+            torch.finfo(mapped.dtype).tiny
+        ))
+
     def forward(
         self,
         x: torch.Tensor,
@@ -584,12 +644,30 @@ class RQLayer(nn.Module):
         previous_codes: torch.Tensor | None = None
         for level, vq_layer in enumerate(self.vq_layers):
             curvature = vq_layer.get_curvature()
-            quant, quant_loss, unused, indices = vq_layer(
-                residual, infer_use_sk, previous_codes
-            )
+            if self.working_radii[level] == 0.0:
+                quant, quant_loss, unused, indices = vq_layer(
+                    residual, infer_use_sk, previous_codes
+                )
+                residual = _hyperbolic_residual(residual, quant, curvature)
+                quantized_x = quantized_x + quant
+            else:
+                source = residual
+                target_norm = self._radius_for_level(level, curvature, source)
+                pinned = self._pin_to_radius(source, target_norm)
+                quant, quant_loss, unused, indices = vq_layer(
+                    pinned, infer_use_sk, previous_codes
+                )
+                # The code was chosen in the pinned frame, so the residual
+                # subtraction and the decoder input are computed there too and
+                # then mapped back to the encoder's own norms.
+                residual = self._restore_norm(
+                    _hyperbolic_residual(pinned, quant, curvature),
+                    source, target_norm,
+                )
+                quantized_x = quantized_x + self._restore_norm(
+                    quant, source, target_norm
+                )
             previous_codes = indices
-            residual = _hyperbolic_residual(residual, quant, curvature)
-            quantized_x = quantized_x + quant
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
@@ -611,9 +689,27 @@ class RQLayer(nn.Module):
         stats = []
         previous_codes: torch.Tensor | None = None
         for level, layer in enumerate(self.vq_layers):
-            indices, usage, entropy = layer.assignment_diagnostics(
-                residual, previous_codes
-            )
+            curvature = layer.get_curvature()
+            if self.working_radii[level] == 0.0:
+                indices, usage, entropy = layer.assignment_diagnostics(
+                    residual, previous_codes
+                )
+                residual = _hyperbolic_residual(
+                    residual, layer.embed_code(indices), curvature
+                )
+            else:
+                source = residual
+                target_norm = self._radius_for_level(level, curvature, source)
+                pinned = self._pin_to_radius(source, target_norm)
+                indices, usage, entropy = layer.assignment_diagnostics(
+                    pinned, previous_codes
+                )
+                residual = self._restore_norm(
+                    _hyperbolic_residual(
+                        pinned, layer.embed_code(indices), curvature
+                    ),
+                    source, target_norm,
+                )
             tokens[:, level] = indices
             previous_codes = indices
             stats.append(
@@ -628,16 +724,26 @@ class RQLayer(nn.Module):
                     ),
                 }
             )
-            residual = _hyperbolic_residual(
-                residual, layer.embed_code(indices), layer.get_curvature()
-            )
         return tokens, stats
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
         previous_codes: torch.Tensor | None = None
-        for vq_layer in self.vq_layers:
-            residual, previous_codes = vq_layer.init_codebook(
-                residual, device, previous_codes
+        for level, vq_layer in enumerate(self.vq_layers):
+            curvature = vq_layer.get_curvature()
+            if self.working_radii[level] == 0.0:
+                residual, previous_codes = vq_layer.init_codebook(
+                    residual, device, previous_codes
+                )
+                continue
+            # This level's frame has a pinned tangent norm, so the codebook is
+            # fitted on the pinned residuals and the residual handed to the next
+            # level is mapped back to the encoder's norms.
+            source = residual
+            target_norm = self._radius_for_level(level, curvature, source)
+            pinned = self._pin_to_radius(source, target_norm)
+            fitted, previous_codes = vq_layer.init_codebook(
+                pinned, device, previous_codes
             )
+            residual = self._restore_norm(fitted, source, target_norm)
         return residual
