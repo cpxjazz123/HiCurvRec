@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 
 SOURCE_DIR = Path(__file__).resolve().parents[1]
@@ -82,31 +83,58 @@ def main() -> None:
         "No learnable curvature scale should remain in the fixed-curvature model",
     )
 
+    train_frame = pd.read_parquet(experiment.TRAIN_FILE)
+    train_ids = np.unique(train_frame["target"].to_numpy(dtype=np.int64))
+    radial_targets, target_stats = training.build_transition_radial_targets(
+        train_frame, train_ids, len(all_embeddings)
+    )
+    print(
+        "  radial target: "
+        f"edges={int(target_stats['transition_edges'])} "
+        f"items={int(target_stats['train_items'])} "
+        f"radius_median={target_stats['radius_median']:.6f} "
+        f"range=[{target_stats['radius_min']:.6f},"
+        f"{target_stats['radius_max']:.6f}]"
+    )
+    train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
     with torch.no_grad():
-        model.init_codebook(all_embeddings[:4096].to(device))
+        model.init_codebook(train_embeddings[:4096].to(device))
 
-    batch = all_embeddings[:256].to(device)
-    reconstructed, quant_loss, unused_codes, tokens = model(batch)
+    batch = train_embeddings[:256].to(device)
+    batch_target_radii = torch.from_numpy(radial_targets[:256]).to(device)
+    reconstructed, quant_loss, unused_codes, tokens, encoded = model(batch)
     require(tokens.shape == (256, 3), "SID shape changed")
+    require(encoded.shape == (256, training.CODEBOOK_DIM), "Encoder output shape changed")
     require(
         reconstructed.shape == batch.shape,
         "Reconstruction shape must match the input embeddings",
     )
     require(
-        torch.isfinite(reconstructed).all() and torch.isfinite(quant_loss),
+        torch.isfinite(reconstructed).all()
+        and torch.isfinite(quant_loss).all()
+        and torch.isfinite(encoded).all(),
         "Forward pass produced non-finite values",
     )
 
-    total_loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+    base_loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+    radial_loss = training.radial_supervision_loss(encoded, batch_target_radii)
+    total_loss = base_loss + training.RADIAL_LOSS_WEIGHT * radial_loss
     require(
         total_loss.requires_grad and total_loss.grad_fn is not None,
         "Total loss is detached",
+    )
+    require(
+        torch.isfinite(radial_loss)
+        and torch.isfinite(batch_target_radii).all()
+        and bool((batch_target_radii > 0).all()),
+        "Radial loss targets are invalid",
     )
     parameters = list(model.parameters())
     require_nonzero_finite_gradient(
         quant_loss, parameters, "quantization/commitment loss"
     )
     require_nonzero_finite_gradient(recon_loss, parameters, "reconstruction loss")
+    require_nonzero_finite_gradient(radial_loss, parameters, "transition radial loss")
 
     total_loss.backward()
     require(
@@ -207,9 +235,9 @@ def main() -> None:
     )
 
     print(
-        "MVG PASS: fixed-curvature Poincare geometry, quantization and "
-        "reconstruction gradients, optimizer update, checkpoint reload, "
-        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget"
+        "MVG PASS: fixed-curvature Poincare geometry, transition radial "
+        "loss gradient, quantization/reconstruction gradients, optimizer "
+        "update, checkpoint reload, per-bucket Sinkhorn, 72k budget"
     )
 
 
