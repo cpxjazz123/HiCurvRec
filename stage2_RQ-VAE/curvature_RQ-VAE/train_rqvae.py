@@ -1,4 +1,10 @@
-"""Train a fixed-curvature hyperbolic RQ-VAE with transition radial supervision."""
+"""Train a hyperbolic RQ-VAE in the Poincare ball (4-card DDP).
+
+Pure hyperbolic quantization at a fixed per-level curvature: encoder,
+Poincare codebook assignment via balanced Sinkhorn, residual subtraction in
+the ball, and Möbius-style reconstruction. The Stage2 budget matches the
+TIGER baseline exactly; descriptive SID metrics never stop training.
+"""
 
 from __future__ import annotations
 
@@ -28,9 +34,9 @@ import curvature_config as experiment
 
 EMBEDDING_FILE = Path(experiment.EMBEDDING_FILE)
 TRAIN_FILE = Path(experiment.TRAIN_FILE)
-METRICS_PATH = Path(experiment.STAGE2_LOG_DIR / "training_metrics_radial.jsonl")
+METRICS_PATH = Path(experiment.STAGE2_LOG_DIR / "training_metrics_hyperbolic.jsonl")
 LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
-SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "transition_radial"}
+SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "hyperbolic"}
 
 
 # === TIGER hyperparameters; the step budget is TIGER-aligned in curvature_config ===
@@ -55,35 +61,33 @@ OPTIMIZER = "AdamW"
 SEED = 42
 NUM_WORKERS = 0
 
-# Fixed Poincare curvature per quantization level.
+# Fixed Poincare curvature per quantization level. Identical across levels
+# because the curvature curriculum was removed; only the level index varies.
 LAYER_CURVATURES = (1.0, 1.0, 1.0)
-RADIAL_TARGET_RADIUS = 0.1
-RADIAL_CENTRALITY_SLOPE = 0.25
-RADIAL_LOSS_WEIGHT = 0.001
-RADIAL_LOG_EPS = 1e-8
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
 
 
 
+# === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
 _LAUNCHER = {
     "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
     "script":      os.path.abspath(__file__),
     "nproc":       4,
     "master_port": 50202,
-    "log":         str(LOG_DIR / "train_transition_radial.log"),
+    "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
 }
 
 def configure_run(launcher_script: str) -> None:
-    """Use native output paths for this transition-radial condition."""
+    """Point the single hyperbolic run at its own log and snapshot paths."""
     global METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
     LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
     MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
-    SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "transition_radial"}
-    METRICS_PATH = LOG_DIR / "training_metrics_radial.jsonl"
-    _LAUNCHER["log"] = str(LOG_DIR / "train_transition_radial.log")
+    SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "hyperbolic"}
+    METRICS_PATH = LOG_DIR / "training_metrics_hyperbolic.jsonl"
+    _LAUNCHER["log"] = str(LOG_DIR / "train_hyperbolic_migrated.log")
     _LAUNCHER["script"] = os.path.abspath(launcher_script)
 
 
@@ -207,67 +211,6 @@ def load_embeddings(path: Path) -> np.ndarray:
     if embeddings.ndim != 2 or not np.isfinite(embeddings).all():
         raise ValueError(f"Invalid embedding matrix: shape={embeddings.shape}")
     return embeddings
-def build_transition_radial_targets(
-    train_frame: pd.DataFrame, train_ids: np.ndarray, item_count: int
-) -> tuple[np.ndarray, dict[str, float]]:
-    """Set smaller tangent radii for items central in train-only transitions."""
-    targets = train_frame["target"].to_numpy(dtype=np.int64)
-    history_values = train_frame["seen_history"].to_numpy()
-    source_ids: list[int] = []
-    edge_targets: list[int] = []
-    for history, target in zip(history_values, targets):
-        if history is None or len(history) == 0:
-            continue
-        source = int(history[-1])
-        if source < 0 or source >= item_count:
-            raise ValueError(f"Transition source item {source} is outside embeddings")
-        source_ids.append(source)
-        edge_targets.append(int(target))
-    if not source_ids:
-        raise ValueError("Training data has no usable item transitions")
-    degree = np.bincount(
-        np.concatenate(
-            (
-                np.asarray(source_ids, dtype=np.int64),
-                np.asarray(edge_targets, dtype=np.int64),
-            )
-        ),
-        minlength=item_count,
-    )
-    log_degree = np.log1p(degree[train_ids].astype(np.float64))
-    spread = float(log_degree.std())
-    if not np.isfinite(spread) or spread <= 0.0:
-        raise ValueError("Transition centrality has no finite variation")
-    centrality = (log_degree - float(log_degree.mean())) / spread
-    radii = RADIAL_TARGET_RADIUS * np.exp(
-        -RADIAL_CENTRALITY_SLOPE * centrality
-    )
-    if not np.isfinite(radii).all() or np.any(radii <= 0.0):
-        raise ValueError("Transition radial targets are not finite and positive")
-    stats = {
-        "transition_edges": float(len(source_ids)),
-        "train_items": float(len(train_ids)),
-        "centrality_mean": float(centrality.mean()),
-        "centrality_std": float(centrality.std()),
-        "radius_mean": float(radii.mean()),
-        "radius_median": float(np.median(radii)),
-        "radius_min": float(radii.min()),
-        "radius_max": float(radii.max()),
-    }
-    return radii.astype(np.float32), stats
-
-
-def radial_supervision_loss(
-    encoded: torch.Tensor, target_radii: torch.Tensor
-) -> torch.Tensor:
-    """Match log tangent radius to the fixed train-graph target."""
-    radius = torch.linalg.vector_norm(encoded, dim=-1).clamp_min(RADIAL_LOG_EPS)
-    target = target_radii.to(device=encoded.device, dtype=encoded.dtype).clamp_min(
-        RADIAL_LOG_EPS
-    )
-    return (radius.log() - target.log()).square().mean()
-
-
 
 
 def maybe_apply_pca(embeddings: np.ndarray, pca_dim: int, seed: int) -> np.ndarray:
@@ -347,13 +290,9 @@ def main() -> None:
     train_ids = np.unique(train_frame["target"].to_numpy(dtype=np.int64))
     if train_ids.size == 0 or train_ids.min() < 0 or train_ids.max() >= len(embeddings):
         raise ValueError("Training target item ids do not match the embedding rows")
-    train_radial_targets, radial_target_stats = build_transition_radial_targets(
-        train_frame, train_ids, len(embeddings)
-    )
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
-    radial_targets = torch.from_numpy(train_radial_targets)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -364,7 +303,7 @@ def main() -> None:
             find_unused_parameters=False,
         )
 
-    train_dataset = TensorDataset(train_embeddings, radial_targets)
+    train_dataset = TensorDataset(train_embeddings)
     loader_batch_size = BATCH_SIZE_PER_RANK
     train_sampler = (
         DistributedSampler(
@@ -400,21 +339,14 @@ def main() -> None:
     ]
     if rank == 0:
         print(
-            f"[transition-radial] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
+            f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
-            f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"target_radius_mean={radial_target_stats['radius_mean']:.6f} "
-            f"target_radius_median={radial_target_stats['radius_median']:.6f}",
+            f"c={[round(value, 6) for value in layer_curvatures]}",
             flush=True,
         )
         _record(
             rank, "train_start", geometry="poincare_fixed_curvature",
-            mechanism="transition_graph_radial_supervision",
-            radial_loss_weight=RADIAL_LOSS_WEIGHT,
-            radial_target_radius=RADIAL_TARGET_RADIUS,
-            radial_centrality_slope=RADIAL_CENTRALITY_SLOPE,
-            radial_target_stats=radial_target_stats,
             cold_start=True,
             checkpoint_loaded=False,
             initialization="xavier_encoder_decoder_then_kmeans_codebooks",
@@ -454,7 +386,6 @@ def main() -> None:
     epoch = 0
     interval_loss_sum = 0.0
     interval_recon_sum = 0.0
-    interval_radial_sum = 0.0
     interval_updates = 0
     last_progress_time = time.time()
 
@@ -462,20 +393,17 @@ def main() -> None:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         model.train()
-        for batch, target_radii in loader:
+        for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
-            target_radii = target_radii.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _, encoded = model(batch)
-            base_loss, recon_loss = raw_module.compute_loss(
+            reconstructed, quant_loss, _, _ = model(batch)
+            loss, recon_loss = raw_module.compute_loss(
                 batch, reconstructed, quant_loss
             )
-            radial_loss = radial_supervision_loss(encoded, target_radii)
-            loss = base_loss + RADIAL_LOSS_WEIGHT * radial_loss
-            if not torch.isfinite(loss) or not torch.isfinite(radial_loss):
+            if not torch.isfinite(loss):
                 raise RuntimeError(
-                    f"RQ-VAE/radial loss became non-finite at distributed step {global_step_sync}"
+                    f"RQ-VAE loss became non-finite at distributed step {global_step_sync}"
                 )
             loss.backward()
             if GRADIENT_CLIP_NORM > 0:
@@ -492,17 +420,15 @@ def main() -> None:
 
             interval_loss_sum += float(loss.detach())
             interval_recon_sum += float(recon_loss.detach())
-            interval_radial_sum += float(radial_loss.detach())
             interval_updates += 1
 
             now = time.time()
             if rank == 0 and now - last_progress_time >= 5:
                 print(
-                    f"[transition-radial] global_step={global_step_sync}/"
+                    f"[hyperbolic] global_step={global_step_sync}/"
                     f"{MAX_GLOBAL_STEPS} local_updates={local_optimizer_steps} "
                     f"loss={float(loss.detach()):.8f} "
-                    f"recon={float(recon_loss.detach()):.8f} "
-                    f"radial={float(radial_loss.detach()):.8f}",
+                    f"recon={float(recon_loss.detach()):.8f}",
                     flush=True,
                 )
                 last_progress_time = now
@@ -522,24 +448,18 @@ def main() -> None:
             recon_sum_tensor = torch.tensor(
                 interval_recon_sum, dtype=torch.float64, device=device
             )
-            radial_sum_tensor = torch.tensor(
-                interval_radial_sum, dtype=torch.float64, device=device
-            )
             updates_tensor = torch.tensor(
                 interval_updates, dtype=torch.int64, device=device
             )
             if world_size > 1:
                 dist.all_reduce(loss_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(recon_sum_tensor, op=dist.ReduceOp.SUM)
-                dist.all_reduce(radial_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(updates_tensor, op=dist.ReduceOp.SUM)
             denominator = max(int(updates_tensor.item()), 1)
             avg_loss = float(loss_sum_tensor.item()) / denominator
             avg_recon = float(recon_sum_tensor.item()) / denominator
-            avg_radial = float(radial_sum_tensor.item()) / denominator
             interval_loss_sum = 0.0
             interval_recon_sum = 0.0
-            interval_radial_sum = 0.0
             interval_updates = 0
 
             model.eval()
@@ -576,9 +496,9 @@ def main() -> None:
                     current_epsilons = raw_module.rq.get_effective_epsilons()
 
                     print(
-                        f"[transition-radial] global_step={global_step_sync}/"
+                        f"[hyperbolic] global_step={global_step_sync}/"
                         f"{MAX_GLOBAL_STEPS} loss={avg_loss:.8f} "
-                        f"recon={avg_recon:.8f} radial={avg_radial:.8f} "
+                        f"recon={avg_recon:.8f} "
                         f"c={[round(value, 6) for value in current_curvatures]} "
                         f"epsilon={[round(value, 7) for value in current_epsilons]} "
                         f"raw_unique={raw_unique}/{len(raw_tokens)} "
@@ -590,10 +510,7 @@ def main() -> None:
                         rank, "train",
                         global_step=global_step_sync,
                         local_optimizer_steps=local_optimizer_steps,
-                        loss=avg_loss, recon=avg_recon, radial=avg_radial,
-                        radial_loss_weight=RADIAL_LOSS_WEIGHT,
-                        radial_target_radius=RADIAL_TARGET_RADIUS,
-                        radial_centrality_slope=RADIAL_CENTRALITY_SLOPE,
+                        loss=avg_loss, recon=avg_recon,
                         current_curvatures=current_curvatures,
                         effective_epsilons=current_epsilons,
                         raw_unique=raw_unique, raw_total=len(raw_tokens),
