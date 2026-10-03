@@ -2,7 +2,8 @@
 
 Pure Poincare-ball geometry: codebook assignment, quantization loss and
 reconstruction all run in hyperbolic space at a fixed curvature. The
-behavior-contrastive auxiliary objective is not part of this model.
+transition-ranking auxiliary objective is applied to origin-tangent encoder
+outputs before quantization.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .layers import MLP, RQLayer
+from .layers import MLP, RQLayer, _poincare_distance_tangent_pairs
 
 
 class RQVAE(nn.Module):
@@ -67,3 +68,21 @@ class RQVAE(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         recon_loss = F.mse_loss(reconstructed, embeddings)
         return recon_loss + quant_loss, recon_loss
+
+
+def behaviour_ranking_loss(
+    source: torch.Tensor,
+    successor: torch.Tensor,
+    negatives: torch.Tensor,
+    curvature: float,
+    margin: float,
+) -> torch.Tensor:
+    """Hinge ranking over real transition successors and shuffled negatives.
+
+    Each input is an origin-tangent encoder vector. The distance helper maps
+    both endpoints to the fixed-curvature Poincare ball before measuring the
+    geodesic distance; no quantized-code equality is involved.
+    """
+    positive = _poincare_distance_tangent_pairs(source, successor, curvature)
+    negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
+    return F.relu(positive + margin - negative).mean()

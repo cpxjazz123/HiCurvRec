@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 
 
 from model import RQVAE
+from model.model import behaviour_ranking_loss
 import curvature_config as experiment
 
 
@@ -84,6 +85,15 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
 LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
+
+
+# Pairwise hyperbolic ranking uses the same transition construction, in-batch
+# negative permutation, and auxiliary weight as the previous effective
+# behaviour-contrastive condition. The margin is the rounded median of
+# d_H(A,B-) - d_H(A,B+) on a deterministic 1024-pair sample from the accepted
+# parent, so about half the sampled constraints begin active.
+BEHAVIOUR_LOSS_WEIGHT = 0.1
+BEHAVIOUR_MARGIN = 0.4
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -269,6 +279,29 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     return result
 
 
+def _transition_pairs(train_frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """Source and successor item ids from consecutive train-sequence events."""
+    sources: list[int] = []
+    successors: list[int] = []
+    for history, target in zip(
+        train_frame["seen_history"].to_numpy(),
+        train_frame["target"].to_numpy(dtype=np.int64),
+    ):
+        if history is None or len(history) == 0:
+            continue
+        source = int(history[-1])
+        if source < 0:
+            raise ValueError("Transition source item is negative")
+        sources.append(source)
+        successors.append(int(target))
+    if not sources:
+        raise ValueError("Training data has no usable item transitions")
+    return (
+        np.asarray(sources, dtype=np.int64),
+        np.asarray(successors, dtype=np.int64),
+    )
+
+
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
     if len(sizes) == 1:
@@ -343,6 +376,28 @@ def main() -> None:
         pin_memory=device.type == "cuda",
         persistent_workers=False,
     )
+    source_ids, successor_ids = _transition_pairs(train_frame)
+    source_embeddings = all_embeddings[torch.from_numpy(source_ids)]
+    successor_embeddings = all_embeddings[torch.from_numpy(successor_ids)]
+    pair_dataset = TensorDataset(source_embeddings, successor_embeddings)
+    pair_sampler = (
+        DistributedSampler(
+            pair_dataset, num_replicas=world_size, rank=rank, shuffle=True,
+            seed=SEED, drop_last=False,
+        )
+        if world_size > 1 else None
+    )
+    pair_loader = DataLoader(
+        pair_dataset,
+        batch_size=loader_batch_size,
+        shuffle=(pair_sampler is None),
+        sampler=pair_sampler,
+        num_workers=NUM_WORKERS,
+        pin_memory=device.type == "cuda",
+        persistent_workers=False,
+    )
+    pair_iter = iter(pair_loader)
+
 
     if OPTIMIZER.lower() != "adamw":
         raise ValueError("This trainer requires AdamW.")
@@ -389,6 +444,9 @@ def main() -> None:
             world_size=world_size,
             layer_curvatures=layer_curvatures,
             layer_working_radii=layer_working_radii,
+            behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
+            behaviour_margin=BEHAVIOUR_MARGIN,
+            behaviour_pairs=len(source_ids),
             snapshot_steps=SNAPSHOT_STEPS,
         )
 
@@ -412,11 +470,14 @@ def main() -> None:
     interval_loss_sum = 0.0
     interval_recon_sum = 0.0
     interval_updates = 0
+    interval_behaviour_sum = 0.0
     last_progress_time = time.time()
 
     while global_step_sync < MAX_GLOBAL_STEPS:
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
+        if pair_sampler is not None:
+            pair_sampler.set_epoch(epoch)
         model.train()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
@@ -426,6 +487,30 @@ def main() -> None:
             loss, recon_loss = raw_module.compute_loss(
                 batch, reconstructed, quant_loss
             )
+            try:
+                pair_batch = next(pair_iter)
+            except StopIteration:
+                if pair_sampler is not None:
+                    pair_sampler.set_epoch(epoch + 1)
+                pair_iter = iter(pair_loader)
+                pair_batch = next(pair_iter)
+            pair_sources, pair_successors = (
+                tensor.to(device, non_blocking=True) for tensor in pair_batch
+            )
+            encoded_source = raw_module.encoder(pair_sources)
+            encoded_successor = raw_module.encoder(pair_successors)
+            negatives = encoded_source[
+                torch.randperm(encoded_source.shape[0], device=device)
+            ]
+            ranking_loss = behaviour_ranking_loss(
+                encoded_source,
+                encoded_successor,
+                negatives,
+                curvature=layer_curvatures[0],
+                margin=BEHAVIOUR_MARGIN,
+            )
+            loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
+            interval_behaviour_sum += float(ranking_loss.detach())
             if not torch.isfinite(loss):
                 raise RuntimeError(
                     f"RQ-VAE loss became non-finite at distributed step {global_step_sync}"
@@ -476,15 +561,21 @@ def main() -> None:
             updates_tensor = torch.tensor(
                 interval_updates, dtype=torch.int64, device=device
             )
+            behaviour_sum_tensor = torch.tensor(
+                interval_behaviour_sum, dtype=torch.float64, device=device
+            )
             if world_size > 1:
                 dist.all_reduce(loss_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(recon_sum_tensor, op=dist.ReduceOp.SUM)
+                dist.all_reduce(behaviour_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(updates_tensor, op=dist.ReduceOp.SUM)
             denominator = max(int(updates_tensor.item()), 1)
             avg_loss = float(loss_sum_tensor.item()) / denominator
             avg_recon = float(recon_sum_tensor.item()) / denominator
+            avg_behaviour = float(behaviour_sum_tensor.item()) / denominator
             interval_loss_sum = 0.0
             interval_recon_sum = 0.0
+            interval_behaviour_sum = 0.0
             interval_updates = 0
 
             model.eval()
@@ -528,6 +619,7 @@ def main() -> None:
                         f"epsilon={[round(value, 7) for value in current_epsilons]} "
                         f"raw_unique={raw_unique}/{len(raw_tokens)} "
                         f"collision={collision_v:.6f} "
+                        f"behaviour={avg_behaviour:.8f} "
                         f"codebook_used={codebook_used}",
                         flush=True,
                     )
@@ -536,6 +628,9 @@ def main() -> None:
                         global_step=global_step_sync,
                         local_optimizer_steps=local_optimizer_steps,
                         loss=avg_loss, recon=avg_recon,
+                        behaviour=avg_behaviour,
+                        behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
+                        behaviour_margin=BEHAVIOUR_MARGIN,
                         current_curvatures=current_curvatures,
                         effective_epsilons=current_epsilons,
                         raw_unique=raw_unique, raw_total=len(raw_tokens),
