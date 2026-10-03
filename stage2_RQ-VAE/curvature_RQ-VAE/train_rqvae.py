@@ -72,7 +72,18 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # level alone left the second and third working at s ~ 0.006, i.e. still in the
 # linear region; all three are pinned so the whole stack quantizes on the same
 # nonlinear shell. 0.0 leaves a level untouched.
-LAYER_WORKING_RADII = (0.3, 0.3, 0.3)
+#
+# Depth of the working point has a peak, and the three points measured on this
+# axis put it at 0.3: d_H/d_E rose 2.12 -> 2.22 -> 2.35 as s went 0.3 -> 0.4 ->
+# 0.5, every Stage2 number improved monotonically, and the downstream recall
+# fell 7.7% then 16.4%. So s = 0.3 is the best value *tried*, but only the
+# deeper side of it has been explored. s = 0.2 tests the shallower side, where the
+# metric factor 2/(1-s^2) is 2.08 against 2.0 at the origin, i.e. almost
+# Euclidean with the ball's regularizing effect still present. If the peak is
+# genuine, this should be worse than 0.3 and the axis is closed on both sides;
+# if it is better, the whole curve is shifted and the geometry line is not
+# exhausted.
+LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
