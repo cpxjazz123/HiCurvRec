@@ -499,8 +499,8 @@ def main() -> None:
             )
             encoded_source = raw_module.encoder(pair_sources)
             encoded_successor = raw_module.encoder(pair_successors)
-            negatives = encoded_source[
-                torch.randperm(encoded_source.shape[0], device=device)
+            negatives = encoded_successor[
+                torch.randperm(encoded_successor.shape[0], device=device)
             ]
             ranking_loss = behaviour_ranking_loss(
                 encoded_source,
