@@ -280,20 +280,41 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
 
 
 def _transition_pairs(train_frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-    """Source and successor item ids from consecutive train-sequence events."""
+    """Source and successor item ids from consecutive train-sequence events.
+
+    Every consecutive hop inside a sequence is a real transition, not just the
+    last one before the target. The parent kept only ``history[-1] -> target``,
+    which left 2.36M of the 2.70M consecutive pairs in the training histories
+    unused and gave the ranking loss one constraint per sequence (339,519 of
+    them) for a mean history length of 6.8. The geometry, weight and margin are
+    untouched, so this changes only how much of the observed behaviour the
+    ranking objective sees.
+    """
     sources: list[int] = []
     successors: list[int] = []
     for history, target in zip(
         train_frame["seen_history"].to_numpy(),
         train_frame["target"].to_numpy(dtype=np.int64),
     ):
-        if history is None or len(history) == 0:
+        items = [] if history is None else [int(value) for value in history]
+        if items:
+            if min(items) < 0:
+                raise ValueError("Transition source item is negative")
+            for position in range(len(items) - 1):
+                source = items[position]
+                successor = items[position + 1]
+                # A repeated item is a self-transition: the distance is zero by
+                # construction and the constraint is vacuous.
+                if source == successor:
+                    continue
+                sources.append(source)
+                successors.append(successor)
+        if not items:
             continue
-        source = int(history[-1])
-        if source < 0:
-            raise ValueError("Transition source item is negative")
-        sources.append(source)
+        source = items[-1]
         successors.append(int(target))
+        if source != int(target):
+            sources.append(source)
     if not sources:
         raise ValueError("Training data has no usable item transitions")
     return (
