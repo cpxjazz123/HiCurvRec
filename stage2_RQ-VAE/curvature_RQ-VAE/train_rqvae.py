@@ -73,6 +73,14 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # linear region; all three are pinned so the whole stack quantizes on the same
 # nonlinear shell. 0.0 leaves a level untouched.
 LAYER_WORKING_RADII = (0.3, 0.3, 0.3)
+# Magnitude of the residual each level hands to the next one, in the same
+# tangent units as the working radius. Pinning only the level's own input leaves
+# the residual free to drift back to the encoder's scale on the way out, so on
+# the accepted three-level pin the residual entering level 1 measured 4.8 while
+# levels 2 and 3 saw 0.21 and 0.17, an order of magnitude apart. Pinning the
+# handoff as well keeps every level on the same shell. 0.0 keeps the previous
+# free-running residual.
+LAYER_RESIDUAL_RADII = (0.3, 0.3, 0.3)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -132,6 +140,7 @@ def _save_snapshot(
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
             "working_radii": list(raw_module.rq.get_working_radii()),
+            "residual_radii": list(raw_module.rq.get_residual_radii()),
             "effective_epsilons": raw_module.rq.get_effective_epsilons(),
         },
         checkpoint_path,
@@ -278,6 +287,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
+        layer_residual_radii=LAYER_RESIDUAL_RADII,
     )
 
 
@@ -349,13 +359,15 @@ def main() -> None:
         for layer in raw_module.rq.vq_layers
     ]
     layer_working_radii = [float(v) for v in raw_module.rq.get_working_radii()]
+    layer_residual_radii = [float(v) for v in raw_module.rq.get_residual_radii()]
     if rank == 0:
         print(
             f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
             f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"radius={layer_working_radii}",
+            f"radius={layer_working_radii} "
+            f"residual_radius={layer_residual_radii}",
             flush=True,
         )
         _record(
@@ -378,6 +390,7 @@ def main() -> None:
             world_size=world_size,
             layer_curvatures=layer_curvatures,
             layer_working_radii=layer_working_radii,
+            layer_residual_radii=layer_residual_radii,
             snapshot_steps=SNAPSHOT_STEPS,
         )
 

@@ -556,6 +556,23 @@ class RQLayer(nn.Module):
         if any(not (0.0 <= value < 1.0) for value in radii):
             raise ValueError("layer_working_radii must satisfy 0 <= r < 1")
         self.working_radii = tuple(radii)
+        # Optional per-level control over the magnitude of the residual handed to
+        # the next level. Pinning only the level's own input is not enough: the
+        # residual is mapped back into the encoder's units on the way out, so
+        # after the first level it can drift to whatever scale the encoder
+        # happens to use, and the deeper levels then leave the nonlinear region
+        # entirely. With this set, the level instead emits a residual at the
+        # target radius, so every level works on the same shell.
+        # 0.0 (or absent) keeps the previous handoff.
+        handoffs = getattr(config, "layer_residual_radii", None)
+        if handoffs is None:
+            handoffs = [0.0] * self.codebook_num
+        handoffs = [float(value) for value in handoffs]
+        if len(handoffs) != self.codebook_num:
+            raise ValueError("layer_residual_radii must match codebook_num")
+        if any(not (0.0 <= value < 1.0) for value in handoffs):
+            raise ValueError("layer_residual_radii must satisfy 0 <= r < 1")
+        self.residual_radii = tuple(handoffs)
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
@@ -585,6 +602,9 @@ class RQLayer(nn.Module):
 
     def get_working_radii(self) -> tuple[float, ...]:
         return self.working_radii
+
+    def get_residual_radii(self) -> tuple[float, ...]:
+        return self.residual_radii
 
     def _radius_for_level(
         self,
@@ -667,6 +687,17 @@ class RQLayer(nn.Module):
                 quantized_x = quantized_x + self._restore_norm(
                     quant, source, target_norm
                 )
+                if self.residual_radii[level] > 0.0:
+                    # Emit the next level's residual directly at its own target
+                    # radius instead of the encoder's scale, so every level
+                    # works on the shell the configuration asks for.
+                    sqrt_c = _curvature_like(curvature, residual).sqrt().clamp_min(
+                        torch.finfo(residual.dtype).tiny
+                    )
+                    handoff = (
+                        self.residual_radii[level] / sqrt_c
+                    ).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+                    residual = self._pin_to_radius(residual, handoff)
             previous_codes = indices
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
@@ -710,6 +741,14 @@ class RQLayer(nn.Module):
                     ),
                     source, target_norm,
                 )
+                if self.residual_radii[level] > 0.0:
+                    sqrt_c = _curvature_like(curvature, residual).sqrt().clamp_min(
+                        torch.finfo(residual.dtype).tiny
+                    )
+                    handoff = (
+                        self.residual_radii[level] / sqrt_c
+                    ).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+                    residual = self._pin_to_radius(residual, handoff)
             tokens[:, level] = indices
             previous_codes = indices
             stats.append(
@@ -746,4 +785,12 @@ class RQLayer(nn.Module):
                 pinned, device, previous_codes
             )
             residual = self._restore_norm(fitted, source, target_norm)
+            if self.residual_radii[level] > 0.0:
+                sqrt_c = _curvature_like(curvature, residual).sqrt().clamp_min(
+                    torch.finfo(residual.dtype).tiny
+                )
+                handoff = (
+                    self.residual_radii[level] / sqrt_c
+                ).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+                residual = self._pin_to_radius(residual, handoff)
         return residual
