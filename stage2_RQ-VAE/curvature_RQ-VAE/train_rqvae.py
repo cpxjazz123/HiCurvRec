@@ -72,17 +72,7 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # level alone left the second and third working at s ~ 0.006, i.e. still in the
 # linear region; all three are pinned so the whole stack quantizes on the same
 # nonlinear shell. 0.0 leaves a level untouched.
-#
-# s = 0.3 is the accepted value, but it is still shallow: the local metric
-# factor 2/(1-s^2) is 2.20 there, against 2.0 at the origin, so the accepted
-# condition is only 10% away from the Euclidean limit. s = 0.5 raises the factor
-# to 2.67 and s = 0.7 would reach 3.92, which is where the ball geometry is
-# genuinely curved rather than locally rescaled. Curvature itself cannot supply
-# this: with s pinned, the distance carries a 1/sqrt(c) prefactor while the
-# tangent norm shrinks by the same 1/sqrt(c), so c is only a reparameterization
-# and the working point is the one quantity that decides how nonlinear the
-# quantizer is. Raising it is the remaining lever inside the geometry line.
-LAYER_WORKING_RADII = (0.5, 0.5, 0.5)
+LAYER_WORKING_RADII = (0.3, 0.3, 0.3)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
