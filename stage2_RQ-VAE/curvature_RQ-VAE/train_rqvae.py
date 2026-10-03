@@ -72,7 +72,15 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # level alone left the second and third working at s ~ 0.006, i.e. still in the
 # linear region; all three are pinned so the whole stack quantizes on the same
 # nonlinear shell. 0.0 leaves a level untouched.
-LAYER_WORKING_RADII = (0.3, 0.3, 0.3)
+#
+# The accepted value is 0.3, where the local metric factor 2/(1-s^2) is 2.20.
+# Pushing to 0.5 (factor 2.67) made the geometry measurably more curved
+# (d_H/d_E 2.12 -> 2.35) and improved every Stage2 number, yet cost 16% of the
+# downstream recall, so curvature depth is harmful past some point rather than
+# merely diminishing. 0.4 sits between the accepted point and the rejected one
+# and is the last untested step on that axis; it establishes whether 0.3 is a
+# genuine peak or only the best of the two values tried so far.
+LAYER_WORKING_RADII = (0.4, 0.4, 0.4)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
