@@ -73,17 +73,22 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # linear region; all three are pinned so the whole stack quantizes on the same
 # nonlinear shell. 0.0 leaves a level untouched.
 #
-# Depth of the working point has a peak, and the three points measured on this
-# axis put it at 0.3: d_H/d_E rose 2.12 -> 2.22 -> 2.35 as s went 0.3 -> 0.4 ->
-# 0.5, every Stage2 number improved monotonically, and the downstream recall
-# fell 7.7% then 16.4%. So s = 0.3 is the best value *tried*, but only the
-# deeper side of it has been explored. s = 0.2 tests the shallower side, where the
-# metric factor 2/(1-s^2) is 2.08 against 2.0 at the origin, i.e. almost
-# Euclidean with the ball's regularizing effect still present. If the peak is
-# genuine, this should be worse than 0.3 and the axis is closed on both sides;
-# if it is better, the whole curve is shifted and the geometry line is not
-# exhausted.
-LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
+# Depth of the working point, s, measured at four points on this axis:
+#
+#     s      d_H/d_E            Stage2 recon   Stage2 collision   Stage3 R@10
+#     0.5    2.35/2.35/2.34    0.00008855     0.001952          0.043855
+#     0.4    2.22/2.22/2.21    0.00008570     0.001830          0.048469
+#     0.3    2.12/2.08/2.08    0.00010371     0.001993          0.052508
+#     0.2    2.05/2.05/2.05    0.00008658     0.001952          0.053274
+#
+# There is no peak: the downstream recall improves monotonically as the working
+# point moves towards the origin, while the local metric factor 2/(1-s^2)
+# falls from 2.67 to 2.08, i.e. the geometry becomes almost Euclidean. Every
+# Stage2 number moves the other way, so the proxies never indicated the
+# direction that helped. s = 0.1 continues the monotone trend; its factor is
+# 2.02, only 1% above the origin, which is the point where the ball has almost
+# no geometric effect left and the trend must stop.
+LAYER_WORKING_RADII = (0.1, 0.1, 0.1)
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
