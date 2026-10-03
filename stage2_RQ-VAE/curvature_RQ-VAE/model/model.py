@@ -3,8 +3,7 @@
 Pure Poincare-ball geometry: codebook assignment, quantization loss and
 reconstruction all run in hyperbolic space at a fixed curvature. The
 transition-ranking auxiliary objective is applied to origin-tangent encoder
-outputs, rescaled onto the same working shell the residual quantizer
-quantizes at so both objectives read the same point of the ball.
+outputs before quantization.
 """
 
 from __future__ import annotations
@@ -15,12 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .layers import (
-    MLP,
-    RQLayer,
-    _curvature_like,
-    _poincare_distance_tangent_pairs,
-)
+from .layers import MLP, RQLayer, _poincare_distance_tangent_pairs
 
 
 class RQVAE(nn.Module):
@@ -76,50 +70,19 @@ class RQVAE(nn.Module):
         return recon_loss + quant_loss, recon_loss
 
 
-def _rescale_to_working_radius(
-    x: torch.Tensor, target_radius: float, curvature: torch.Tensor | float
-) -> torch.Tensor:
-    """Project each tangent vector onto the working shell, direction kept.
-
-    The quantization levels overwrite the magnitude of their input to
-    ``target_radius / sqrt(c)`` before the Poincare map, so the encoder latent
-    only ever reaches RQ at that radius. Ranking on the raw latent therefore
-    measured distances in a region the quantizer discards. Scaling the vectors
-    onto the same shell first makes the ranking loss and the residual
-    subtraction read the same point of the ball.
-    """
-    if target_radius == 0.0:
-        return x
-    sqrt_c = _curvature_like(curvature, x).sqrt()
-    target_norm = (target_radius / sqrt_c.clamp_min(
-        torch.finfo(x.dtype).tiny
-    )).to(dtype=x.dtype)
-    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True)
-    return x * (target_norm / norm.clamp_min(torch.finfo(x.dtype).tiny))
-
-
 def behaviour_ranking_loss(
     source: torch.Tensor,
     successor: torch.Tensor,
     negatives: torch.Tensor,
     curvature: float,
     margin: float,
-    working_radius: float = 0.0,
 ) -> torch.Tensor:
     """Hinge ranking over real transition successors and shuffled negatives.
 
     Each input is an origin-tangent encoder vector. The distance helper maps
     both endpoints to the fixed-curvature Poincare ball before measuring the
     geodesic distance; no quantized-code equality is involved.
-
-    ``working_radius`` is the shell the residual quantizer actually works on.
-    A non-zero value measures the ranking on that shell, so the auxiliary loss
-    optimizes the same region of the ball that RQ keeps; the encoder's own
-    magnitude no longer decides where the loss is evaluated.
     """
-    source = _rescale_to_working_radius(source, working_radius, curvature)
-    successor = _rescale_to_working_radius(successor, working_radius, curvature)
-    negatives = _rescale_to_working_radius(negatives, working_radius, curvature)
     positive = _poincare_distance_tangent_pairs(source, successor, curvature)
     negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
     return F.relu(positive + margin - negative).mean()
