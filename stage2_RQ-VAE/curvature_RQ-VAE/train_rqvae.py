@@ -84,7 +84,31 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # genuine, this should be worse than 0.3 and the axis is closed on both sides;
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
-LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
+#
+# The uniform shell was measured rather than assumed, and it is the weakest
+# part of the model. Walking the three levels under s = 0.2 gives per-level
+# losses of 0.000957 (level 0) against 0.139 and 0.131 (levels 1 and 2), so
+# the three-level average is ~90% decided by the two deep levels and level 0
+# is barely trained: 79 of its 256 codes go unused. The cause is that the pin
+# overwrites every level to the same radius, but the levels do not hold the
+# same thing. Level 0 quantizes the encoder latent, whose natural norm is 2.07,
+# so pinning it to 0.2 compresses it 10x and its coarse codes end up trivially
+# bracketing the data. Levels 1 and 2 quantize residuals, which do live near
+# 0.2, so the uniform shell suits them.
+#
+# So the radius is matched per level to what the level actually quantizes, but
+# the encoder's own scale of 2.07 is not reachable: the working point is
+# s = sqrt(c) * ||r||, and s must stay below 1 or the shell leaves the
+# Poincare ball and the map clamps every direction back to the boundary. The
+# legal range therefore tops out just under 1, and level 0 takes 0.9, which
+# moves it from the near-linear region it was stuck in into the nonlinear part
+# of the ball without leaving it. Levels 1 and 2 keep 0.2.
+#
+# Removing the shell everywhere was already tested and cost 12% (0.052752),
+# and moving the ranking loss onto this shell cost 13.5% (0.051951), so both of
+# those stay rejected; the asymmetry between the two objectives is deliberate,
+# not an oversight.
+LAYER_WORKING_RADII = (0.9, 0.2, 0.2)
 
 
 # Pairwise hyperbolic ranking uses the same transition construction, in-batch
