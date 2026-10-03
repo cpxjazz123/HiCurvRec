@@ -84,22 +84,6 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # genuine, this should be worse than 0.3 and the axis is closed on both sides;
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
-#
-# Removing the pin was measured rather than assumed: with (0, 0, 0) the Stage2
-# loss looked five times better (0.027 against 0.126) and yet test_R@10 fell
-# from 0.060081 to 0.052752, i.e. 12%. That is the signature of a loss
-# optimizing a region the quantizer throws away, so the pin stays, and it
-# matters more with the ranking loss present than without it (0.050906 ->
-# 0.053274 without any ranking, 0.052752 -> 0.060081 with it).
-#
-# The remaining inconsistency is therefore closed from the other side. The pin
-# overwrites the encoder's magnitude to 0.2 / sqrt(c) before the Poincare map,
-# so the ranking loss below used to measure its distances at whatever radius
-# the encoder emitted (~0.086) and then had that magnitude discarded one line
-# later. It now measures on the same s = 0.2 shell the residual quantizer works
-# on, so both objectives read the same point of the ball and the encoder
-# optimizes the direction there, where the result is kept, rather than a
-# magnitude that is overwritten anyway.
 LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 
 
@@ -108,12 +92,6 @@ LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 # behaviour-contrastive condition. The margin is the rounded median of
 # d_H(A,B-) - d_H(A,B+) on a deterministic 1024-pair sample from the accepted
 # parent, so about half the sampled constraints begin active.
-#
-# The distances are now measured on the LAYER_WORKING_RADII shell rather than
-# on the raw encoder latent. The margin was calibrated in the parent's raw
-# latent frame and is carried over unchanged, so the absolute distance scale
-# shifts with the shell; what the condition tests is whether ranking inside
-# the region RQ keeps beats ranking outside it, not a retuned margin.
 BEHAVIOUR_LOSS_WEIGHT = 0.1
 BEHAVIOUR_MARGIN = 0.4
 ADAMW_BETA1 = 0.9
@@ -530,7 +508,6 @@ def main() -> None:
                 negatives,
                 curvature=layer_curvatures[0],
                 margin=BEHAVIOUR_MARGIN,
-                working_radius=LAYER_WORKING_RADII[0],
             )
             loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
             interval_behaviour_sum += float(ranking_loss.detach())
