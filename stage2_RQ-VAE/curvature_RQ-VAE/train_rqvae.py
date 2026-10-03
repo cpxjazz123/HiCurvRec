@@ -84,17 +84,7 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # genuine, this should be worse than 0.3 and the axis is closed on both sides;
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
-#
-# The working radius is now 0.0 on all three levels, so no level is pinned.
-# The transition ranking above optimizes the raw encoder latent directly, so
-# the encoder is free to choose the radius it wants; the earlier s = 0.2 pin
-# overwrote that magnitude right after the ranking loss had shaped it. This
-# asks whether the pin is still earning its place now that the loss is
-# behaviour-aware, or whether it is fighting the ranking geometry. Measured
-# without any ranking loss the pin helped (0.050906 -> 0.053274), so a
-# regression here would mean the two still divide the work; no regression
-# would mean the ranking loss already picks a better radius on its own.
-LAYER_WORKING_RADII = (0.0, 0.0, 0.0)
+LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 
 
 # Pairwise hyperbolic ranking uses the same transition construction, in-batch
