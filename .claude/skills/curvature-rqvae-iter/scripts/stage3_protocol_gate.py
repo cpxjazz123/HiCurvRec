@@ -10,6 +10,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import re
+import os
 from pathlib import Path
 
 def fail(message):
@@ -28,10 +29,12 @@ def sha256(path):
     return h.hexdigest()
 
 def work_dir(work):
-    """The single working directory for the mechanism."""
-    if work.name != "curvature_RQ-VAE":
-        fail(f"run from stage2_RQ-VAE/curvature_RQ-VAE/, got {work}")
-    return "curvature_RQ-VAE"
+    """Return the mechanism result-directory name used by the frozen protocol."""
+    if work.name == "curvature_RQ-VAE":
+        return work.name
+    if re.fullmatch(r"curvature_RQ-VAE_iter[0-9]+", work.name):
+        return work.name
+    fail(f"run from a curvature_RQ-VAE mechanism directory, got {work}")
 
 def kv(text,key):
     m=re.search(rf"^{re.escape(key)}=(.*)$",text,re.M)
@@ -82,7 +85,9 @@ def overrides(path):
     return out
 
 def main():
-    work=Path.cwd().resolve()
+    physical_work=Path.cwd()
+    logical_work=Path(os.environ.get("PWD", str(physical_work))).absolute()
+    work=logical_work if logical_work.is_dir() and logical_work.samefile(physical_work) else physical_work
     variant_dir=work_dir(work)
     repo=work.parents[1]
     claude=read(repo/"CLAUDE.md")
@@ -112,7 +117,13 @@ def main():
     elif str(values.get("EARLY_STOP"))!=str(expected["EARLY_STOP"]):
         fail(f"trainer EARLY_STOP={values.get('EARLY_STOP')!r} != locked {expected['EARLY_STOP']!r}")
 
-    launcher = work / "scripts" / "run_stage3_curvature.py"
+    iter_match = re.fullmatch(r"curvature_RQ-VAE_iter([0-9]+)", variant_dir)
+    launcher_name = (
+        f"run_stage3_iter{iter_match.group(1)}.py"
+        if iter_match
+        else "run_stage3_curvature.py"
+    )
+    launcher = work / "scripts" / launcher_name
     ov = overrides(launcher)
     allowed={"CODE_PATH","RQVAE_VARIANT","LOG_PATH","SAVE_PATH"}
     forbidden=sorted(set(ov)-allowed)
