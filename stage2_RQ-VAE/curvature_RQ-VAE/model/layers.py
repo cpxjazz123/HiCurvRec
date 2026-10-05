@@ -556,6 +556,15 @@ class RQLayer(nn.Module):
         if any(not (0.0 <= value < 1.0) for value in radii):
             raise ValueError("layer_working_radii must satisfy 0 <= r < 1")
         self.working_radii = tuple(radii)
+        # Whether the per-level pin is expressed in metric working-point
+        # coordinates (s = sqrt(c) * ||v||, curvature-compensated so s is
+        # constant across curvatures) or as a plain tangent norm (||v|| fixed,
+        # so s = sqrt(c) * radius grows with c). True is the frozen protocol's
+        # definition and the default; False is opt-in and is the only way to
+        # change curvature without the depth moving to compensate.
+        self.pin_in_s_coordinates = bool(
+            getattr(config, "pin_in_s_coordinates", True)
+        )
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
@@ -598,11 +607,27 @@ class RQLayer(nn.Module):
         pinned ``s`` whatever the encoder emits. A per-bucket statistic such as
         the bucket's own mean residual norm was tried and rejected: it leaves the
         buckets exactly as spread out as they were.
+
+        With ``pin_in_s_coordinates`` (the default, and the frozen protocol),
+        the target is scaled by 1/sqrt(c) so the metric working point
+        s = sqrt(c) * ||v|| stays constant across curvatures. That makes a
+        curvature change a pure geometry change: the depth in the ball is held
+        fixed and only the metric factor moves.
+
+        With the flag off, ||v|| is held at the configured radius instead, so
+        s = sqrt(c) * radius grows with c. The depth and the metric factor then
+        both move, which is why it is opt-in rather than a consequence of the
+        constant.
         """
-        sqrt_c = _curvature_like(curvature, residual).sqrt()
-        return (self.working_radii[level] / sqrt_c.clamp_min(
-            torch.finfo(residual.dtype).tiny
-        )).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+        radius = self.working_radii[level]
+        if not self.pin_in_s_coordinates:
+            target = torch.full_like(residual[:, :1], radius)
+        else:
+            sqrt_c = _curvature_like(curvature, residual).sqrt()
+            target = (
+                radius / sqrt_c.clamp_min(torch.finfo(residual.dtype).tiny)
+            ).to(dtype=residual.dtype)
+        return target.expand(residual.shape[0], 1)
 
     def _pin_to_radius(
         self,

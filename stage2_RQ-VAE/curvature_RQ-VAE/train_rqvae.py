@@ -86,6 +86,17 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # exhausted.
 LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 
+# How the per-level pin above is interpreted. True (the default and the frozen
+# protocol) treats it as a metric working point: the tangent target is scaled
+# by 1/sqrt(c), so s = sqrt(c) * ||v|| stays at 0.2 whatever the curvature, and
+# changing curvature moves only the metric factor. False treats it as a plain
+# tangent norm: ||v|| stays at 0.2 and s = sqrt(c) * 0.2 grows with curvature,
+# so the depth and the metric factor move together.
+#
+# The default is left True so this file's behaviour is unchanged until a run
+# explicitly opts into the other reading.
+PIN_IN_S_COORDINATES = True
+
 
 # Pairwise hyperbolic ranking uses the same transition construction, in-batch
 # negative permutation, and auxiliary weight as the previous effective
@@ -322,6 +333,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
+        pin_in_s_coordinates=PIN_IN_S_COORDINATES,
     )
 
 
