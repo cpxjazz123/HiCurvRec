@@ -66,9 +66,18 @@ def main() -> None:
     model = build_model(all_embeddings, device)
     layers = model.rq.vq_layers
     require(len(layers) == 3, "Expected three residual quantization levels")
+    # Curvature is per-level configuration, not a frozen constant: assert it
+    # matches what the run registered and stays positive, rather than pinning
+    # it to 1.0 (which is only the parent's value).
+    expected_curvatures = [float(value) for value in training.LAYER_CURVATURES]
     require(
-        [layer.curvature for layer in layers] == [1.0, 1.0, 1.0],
-        "Fixed Poincare curvature must be 1.0 at every level",
+        [layer.curvature for layer in layers] == expected_curvatures,
+        f"Poincare curvature {layers[0].curvature} != registered "
+        f"{expected_curvatures}",
+    )
+    require(
+        all(value > 0.0 for value in expected_curvatures),
+        "Curvature must be positive at every level",
     )
     require(
         [layer.sk_epsilon for layer in layers] == [0.003] * 3
@@ -84,6 +93,66 @@ def main() -> None:
 
     with torch.no_grad():
         model.init_codebook(all_embeddings[:4096].to(device))
+
+    # Assert the metric working point s = sqrt(c) * ||v|| that each level
+    # actually quantizes at. This is the per-level quantity the mechanism is
+    # about, so a silent fallback to the other pin reading fails here rather
+    # than at Stage3.
+    with torch.no_grad():
+        probe = model.encoder(all_embeddings[:512].to(device))
+        captured = []
+
+        def _capture(i):
+            def hook(_module, args):
+                captured.append(
+                    (i, torch.linalg.vector_norm(args[0].detach(), dim=-1))
+                )
+            return hook
+
+        handles = [
+            layer.register_forward_pre_hook(_capture(i))
+            for i, layer in enumerate(layers)
+        ]
+        model.rq(probe)
+        for handle in handles:
+            handle.remove()
+    require(
+        len(captured) == 3,
+        f"Expected three VQ inputs to inspect, captured {len(captured)}",
+    )
+    realized = {}
+    for i, measured in captured:
+        curvature = float(layers[i].curvature)
+        radius = float(training.LAYER_WORKING_RADII[i])
+        observed_s = float((curvature ** 0.5) * float(measured.mean()))
+        observed_norm = float(measured.mean())
+        expected_s = (
+            (curvature ** 0.5) * radius
+            if not training.PIN_IN_S_COORDINATES
+            else radius
+        )
+        require(
+            abs(observed_s - expected_s) < 1e-5,
+            f"L{i + 1} working point s={observed_s:.6f}, expected "
+            f"{expected_s:.6f} (c={curvature}, "
+            f"pin_in_s_coordinates={training.PIN_IN_S_COORDINATES})",
+        )
+        if not training.PIN_IN_S_COORDINATES:
+            require(
+                abs(observed_norm - radius) < 1e-5,
+                f"L{i + 1} ||v||={observed_norm:.6f}, expected {radius} "
+                "with an absolute pin",
+            )
+        realized[i] = (observed_norm, observed_s)
+    print(
+        "  working point: "
+        + " ".join(
+            f"L{i + 1}(c={layers[i].curvature},||v||={realized[i][0]:.4f},"
+            f"s={realized[i][1]:.4f})"
+            for i in sorted(realized)
+        )
+        + f" pin_in_s_coordinates={training.PIN_IN_S_COORDINATES}"
+    )
 
     batch = all_embeddings[:256].to(device)
     reconstructed, quant_loss, unused_codes, tokens = model(batch)
