@@ -65,20 +65,14 @@ NUM_WORKERS = 0
 # Fixed Poincare curvature per quantization level. Identical across levels
 # because the curvature curriculum was removed; only the level index varies.
 LAYER_CURVATURES = (1.0, 1.0, 1.0)
-# Working point of the tangent-space quantization per level, as a ball radius
-# rho = sqrt(c) * ||r|| (see model.layers._ball_radius). A level with a non-zero
-# target sends every row to that radius along its radial geodesic before the
-# Poincare map and brings the result back afterwards, so the encoder cannot
-# shrink ||z|| to pull the level back towards the ball centre the way it cancels
-# a plain multiplicative scale. Pinning the first level alone left the second
-# and third working at s ~ 0.006, i.e. still in the linear region; all three are
-# pinned so the whole stack quantizes on the same nonlinear shell. 0.0 leaves a
-# level untouched.
-#
-# At c = 1 this coincides numerically with the previous tangent-norm
-# definition, so the registered value is unchanged and the parent's behaviour is
-# preserved; the difference only appears under a per-level curvature, where the
-# two definitions part company.
+# Working point of the tangent-space quantization, s = sqrt(c) * ||r||, per
+# level. A level with a non-zero target overwrites the magnitude of its input to
+# target / sqrt(c) before the Poincare map and maps the result back afterwards,
+# so the encoder cannot shrink ||z|| to pull the level back towards the ball
+# centre the way it cancels a plain multiplicative scale. Pinning the first
+# level alone left the second and third working at s ~ 0.006, i.e. still in the
+# linear region; all three are pinned so the whole stack quantizes on the same
+# nonlinear shell. 0.0 leaves a level untouched.
 #
 # Depth of the working point has a peak, and the three points measured on this
 # axis put it at 0.3: d_H/d_E rose 2.12 -> 2.22 -> 2.35 as s went 0.3 -> 0.4 ->
@@ -91,20 +85,6 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
 LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
-
-# Per-level codeword radius, in the same ball-relative units as
-# LAYER_WORKING_RADII (rho = sqrt(c) * ||e||, so 0.0 = free codewords,
-# 1.0 = the ball boundary). Pinning codewords to the level's own working shell
-# is a natural-looking idea, and the support for it is already wired, but it
-# was measured on the real pinned latents and it loses: clustering the pinned
-# tangents and re-projecting the centers onto rho = 0.2 costs 1.6% mean
-# quantization error versus leaving the codewords free (0.132207 vs 0.130157).
-# The residuals at each level are already concentrated on their shell, so the
-# shell adds no information the centers do not already have while removing the
-# freedom to sit where the data actually is. The parent's free-codeword
-# behaviour is therefore kept, and the residual pin remains the working
-# radius. Registered as 0.0, i.e. no change to the parent's quantizer.
-LAYER_CODEBOOK_RADII = (0.0, 0.0, 0.0)
 
 
 # Pairwise hyperbolic ranking uses the same transition construction, in-batch
@@ -173,7 +153,6 @@ def _save_snapshot(
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
             "working_radii": list(raw_module.rq.get_working_radii()),
-            "codebook_radii": list(raw_module.rq.get_codebook_radii()),
             "effective_epsilons": raw_module.rq.get_effective_epsilons(),
         },
         checkpoint_path,
@@ -343,7 +322,6 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
-        layer_codebook_radii=LAYER_CODEBOOK_RADII,
     )
 
 
@@ -437,17 +415,13 @@ def main() -> None:
         for layer in raw_module.rq.vq_layers
     ]
     layer_working_radii = [float(v) for v in raw_module.rq.get_working_radii()]
-    layer_codebook_radii = [
-        float(v) for v in raw_module.rq.get_codebook_radii()
-    ]
     if rank == 0:
         print(
             f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
             f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"radius={layer_working_radii} "
-            f"codebook_radius={layer_codebook_radii}",
+            f"radius={layer_working_radii}",
             flush=True,
         )
         _record(
@@ -470,7 +444,6 @@ def main() -> None:
             world_size=world_size,
             layer_curvatures=layer_curvatures,
             layer_working_radii=layer_working_radii,
-            layer_codebook_radii=layer_codebook_radii,
             behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
             behaviour_margin=BEHAVIOUR_MARGIN,
             behaviour_pairs=len(source_ids),
