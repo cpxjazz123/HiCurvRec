@@ -33,6 +33,7 @@ import torch.distributed as dist
 import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import Subset
 from tqdm import tqdm
 
 from data.dataloader import GenRecDataLoader
@@ -342,6 +343,11 @@ def evaluate(
     back to item ids before metrics are computed. Invalid tuples, duplicate
     items and items in the complete seen history are skipped, then the
     deterministic item order fills a short list just like RecBole.
+
+    The return value is the *raw* accumulator triple, not the normalized
+    ratios: a per-shard run must be reducible by weighting each shard by its
+    own ``n_eval``, and ratios cannot be re-weighted after the fact. Callers
+    that hold the whole split reduce with :func:`reduce_metric_sums`.
     """
     raw_model = model.module if hasattr(model, "module") else model
     raw_model.eval()
@@ -460,9 +466,32 @@ def evaluate(
 
     if n_eval == 0:
         raise ValueError("Cannot evaluate an empty split")
-    # RecBole's metric registry uses lowercase result keys.
-    recalls = {f"recall@{k}": recall_sums[k] / n_eval for k in topk_list}
-    ndcgs = {f"ndcg@{k}": ndcg_sums[k] / n_eval for k in topk_list}
+    return recall_sums, ndcg_sums, n_eval
+
+
+def reduce_metric_sums(shards):
+    """Combine per-shard ``(recall_sums, ndcg_sums, n_eval)`` into global metrics.
+
+    Each shard accumulates unnormalized hit counts and gains over its own
+    samples, so the reduction is a plain sum and the denominators sum too.
+    This keeps the result identical to evaluating the whole split in one pass
+    regardless of how the split was partitioned.
+    """
+    recall_sums: dict[int, float] = {}
+    ndcg_sums: dict[int, float] = {}
+    n_eval = 0
+    for shard_recalls, shard_ndcgs, shard_n in shards:
+        if shard_n <= 0:
+            continue
+        n_eval += int(shard_n)
+        for key, value in shard_recalls.items():
+            recall_sums[key] = recall_sums.get(key, 0.0) + value
+        for key, value in shard_ndcgs.items():
+            ndcg_sums[key] = ndcg_sums.get(key, 0.0) + value
+    if n_eval == 0:
+        raise ValueError("Cannot reduce empty evaluation shards")
+    recalls = {f"recall@{k}": recall_sums[k] / n_eval for k in sorted(recall_sums)}
+    ndcgs = {f"ndcg@{k}": ndcg_sums[k] / n_eval for k in sorted(ndcg_sums)}
     return recalls, ndcgs, n_eval
 
 
@@ -909,8 +938,12 @@ def main():
                     exclude_history=config["exclude_history"],
                     use_bf16=config["bf16"],
                 )
+                # Single full-split pass: reduce the raw accumulators straight
+                # back to the global ratios.
+                recalls, ndcgs, n_eval_total = reduce_metric_sums(
+                    [(recalls, ndcgs, n_eval_local)]
+                )
                 _t_valid_elapsed = time.time() - _t_valid_start
-                n_eval_total = n_eval_local
                 print(
                     f"[valid] epoch={epoch} rank=0/0 DONE "
                     f"n_eval={n_eval_total} elapsed={_t_valid_elapsed:.1f}s",
@@ -1076,37 +1109,102 @@ def main():
 
     # RecBole reloads the best checkpoint and evaluates test automatically.
     # === R7-fix v4: rank 0 单独做 test eval, 其他 rank 等 shutdown 文件 ===
-    if rank == 0:
-        test_dataset = _build_dataset(config, config["test_file"], "evaluation", code_file)
-        test_loader = GenRecDataLoader(
-            test_dataset,
-            batch_size=config["infer_size"],
-            shuffle=False,
-            sample_collator=make_sample_collator(
-                test_dataset, include_eval_metadata=True
-            ),
-            max_token_seq_len=test_dataset.max_token_seq_len,
-            include_seen=True,
-            **loader_options,
+    # === 2026-10-05: 4 卡分片 test, 无任何 NCCL collective ===
+    # 之前只有 rank 0 评测, 其余 rank 空转等 shutdown 文件, 8.2 分钟里只有
+    # 一张卡在算 (GPU util 23%). 这里让每个 rank 评测 test 的一个确定性分片,
+    # 各自把未归一化的累加量写到自己的文件, rank 0 最后做一次纯文件归约.
+    # 与 R7-fix 同构的关键点: 全程没有 dist.barrier / all_reduce / broadcast,
+    # 因此不会重蹈多 NUMA 拓扑下 NCCL collective 死锁.
+    # 分片是 range(rank, n, world_size) 的连续升序切片, 与 rank 到达顺序无关,
+    # 所以结果是可复现的, 且 reduce 后与单卡全量评测逐位一致.
+    test_dataset = _build_dataset(config, config["test_file"], "evaluation", code_file)
+    test_shard = Subset(
+        test_dataset,
+        list(range(rank, len(test_dataset), world_size)),
+    )
+    test_loader = GenRecDataLoader(
+        test_shard,
+        batch_size=config["infer_size"],
+        shuffle=False,
+        sampler=None,
+        sample_collator=make_sample_collator(
+            test_dataset, include_eval_metadata=True
+        ),
+        max_token_seq_len=test_dataset.max_token_seq_len,
+        include_seen=True,
+        **loader_options,
+    )
+    raw_model = model.module if hasattr(model, "module") else model
+    if best_checkpoint is not None and os.path.exists(best_checkpoint):
+        raw_model.load_state_dict(torch.load(best_checkpoint, map_location=device))
+    _t_test_start = time.time()
+    shard_recalls, shard_ndcgs, shard_n = evaluate(
+        raw_model,
+        test_loader,
+        test_dataset,
+        config["topk_list"],
+        config["beam_size"],
+        device,
+        exclude_history=config["exclude_history"],
+        use_bf16=config["bf16"],
+    )
+    _test_elapsed = time.time() - _t_test_start
+    _shard_dir = os.path.join(log_path, "_test_shards")
+    os.makedirs(_shard_dir, exist_ok=True)
+    _shard_path = os.path.join(_shard_dir, f"rank{rank}.json")
+    with open(_shard_path, "w", encoding="utf-8") as _fh:
+        json.dump(
+            {
+                "rank": rank,
+                "recall_sums": {str(k): float(v) for k, v in shard_recalls.items()},
+                "ndcg_sums": {str(k): float(v) for k, v in shard_ndcgs.items()},
+                "n_eval": int(shard_n),
+                "elapsed_s": round(_test_elapsed, 3),
+            },
+            _fh,
+            indent=2,
         )
-        raw_model = model.module if hasattr(model, "module") else model
-        if best_checkpoint is not None and os.path.exists(best_checkpoint):
-            raw_model.load_state_dict(torch.load(best_checkpoint, map_location=device))
-        test_recalls, test_ndcgs, _n_test = evaluate(
-            raw_model,
-            test_loader,
-            test_dataset,
-            config["topk_list"],
-            config["beam_size"],
-            device,
-            exclude_history=config["exclude_history"],
-            use_bf16=config["bf16"],
+    print(
+        f"[test] rank={rank}/{world_size} shard n_eval={shard_n} "
+        f"elapsed={_test_elapsed:.1f}s",
+        flush=True,
+    )
+
+    if rank == 0:
+        # Pure file reduction: no collective, just read the shards that are
+        # already on disk. The wait is bounded so a crashed rank cannot hang
+        # the run forever.
+        _deadline = time.time() + 1800
+        _shards = []
+        while True:
+            _paths = [
+                os.path.join(_shard_dir, f"rank{other}.json")
+                for other in range(world_size)
+            ]
+            if all(os.path.exists(path) for path in _paths):
+                _shards = [json.load(open(path, encoding="utf-8")) for path in _paths]
+                break
+            if time.time() > _deadline:
+                raise RuntimeError(
+                    "Timed out waiting for all test shards; "
+                    f"missing {[p for p in _paths if not os.path.exists(p)]}"
+                )
+            time.sleep(2.0)
+        recalls, ndcgs, n_eval_total = reduce_metric_sums(
+            [
+                (
+                    {int(k): float(v) for k, v in s["recall_sums"].items()},
+                    {int(k): float(v) for k, v in s["ndcg_sums"].items()},
+                    int(s["n_eval"]),
+                )
+                for s in _shards
+            ]
         )
         test_result = {
             "best_checkpoint": best_checkpoint,
-            "n_eval": len(test_dataset),
-            **{f"test_{key}": value for key, value in test_recalls.items()},
-            **{f"test_{key}": value for key, value in test_ndcgs.items()},
+            "n_eval": n_eval_total,
+            **{f"test_{key}": value for key, value in recalls.items()},
+            **{f"test_{key}": value for key, value in ndcgs.items()},
         }
         logging.info("Test=%s", test_result)
         with open(os.path.join(log_path, "test_final.json"), "w", encoding="utf-8") as handle:
@@ -1122,9 +1220,9 @@ def main():
             test_ndcg_at_10=test_result.get("test_ndcg@10"),
             test_ndcg_at_20=test_result.get("test_ndcg@20"),
             best_checkpoint=best_checkpoint,
+            test_shard_world_size=world_size,
         )
         _record("train_end", total_wall_time_s=round(time.time() - _T0, 3))
-        # === rank 0 完成 test eval, 通知其他 rank 退出 ===
         with open(_shutdown_file, "w", encoding="utf-8") as _fh:
             _fh.write("test_done\n")
     else:
