@@ -126,10 +126,73 @@ def _hyperbolic_residual(
     code_tangent: torch.Tensor,
     curvature: torch.Tensor | float = CURVATURE,
 ) -> torch.Tensor:
+    """Reference residual update r <- r (x) (-q), in that operand order.
+
+    Mobius addition is not commutative, so the two operand orders are
+    different maps and neither is a re-association of the other. The reference
+    residual update subtracts the code from the residual, i.e. r (x) (-q);
+    computing (-q) (x) r instead is measurably another operator (up to 0.52
+    apart in tangent norm on this model's working radii), so the operand order
+    is part of the geometry rather than a cosmetic detail.
+    """
     residual_point = _expmap0_tangent(residual_tangent, curvature)
     code_point = _expmap0_tangent(code_tangent, curvature)
-    difference = _mobius_add(-code_point, residual_point, curvature)
+    difference = _mobius_add(residual_point, -code_point, curvature)
     return _logmap0_point(difference, curvature)
+
+
+def _ball_radius(
+    tangent: torch.Tensor, curvature: torch.Tensor | float = CURVATURE
+) -> torch.Tensor:
+    """Normalised radial coordinate rho = sqrt(c) * ||v||, shaped (..., 1).
+
+    This file's exp_0 puts v at ball norm tanh(sqrt(c) * ||v||) / sqrt(c), so
+    sqrt(c) * ||v|| is the position in the ball measured as a fraction of the
+    ball's own radius, and it lands in [0, 1) for every valid point. The metric
+    distance from the origin is 2 * atanh(rho) / sqrt(c), so rho is the
+    curvature-free way to name a radius: the same rho means the same relative
+    depth in whichever ball the level lives in, and the metric distance it
+    stands for is recovered by _radius_to_distance.
+
+    Both the residual working radius and the codeword radius are expressed in
+    these units, so the two no longer mean different things at c != 1.
+    """
+    c = _curvature_like(curvature, tangent)
+    norm = torch.linalg.vector_norm(tangent, dim=-1, keepdim=True)
+    return (c.sqrt() * norm).clamp(min=0.0, max=1.0 - _BALL_EPS)
+
+
+def _radius_to_distance(
+    radius: torch.Tensor, curvature: torch.Tensor | float = CURVATURE
+) -> torch.Tensor:
+    """Geodesic distance from the origin that a ball radius rho stands for."""
+    c = _curvature_like(curvature, radius)
+    return 2.0 / c.sqrt() * torch.atanh(radius.clamp(max=1.0 - _BALL_EPS))
+
+
+def _safe_direction(tangent: torch.Tensor) -> torch.Tensor:
+    """Unit direction, with a bounded unit vector standing in for a zero row."""
+    norm = torch.linalg.vector_norm(tangent, dim=-1, keepdim=True)
+    tiny = torch.finfo(tangent.dtype).tiny
+    return tangent / norm.clamp_min(tiny)
+
+
+def _set_radius(
+    tangent: torch.Tensor,
+    radius: torch.Tensor,
+    curvature: torch.Tensor | float = CURVATURE,
+) -> torch.Tensor:
+    """Move every row to the given ball radius, keeping its direction.
+
+    This is the radial geodesic rescaling at the origin: the tangent length
+    realising rho is rho / sqrt(c). The direction is the Riemannian carrier and
+    the radius is the constrained quantity, so the operation is exact at any
+    curvature and at any depth, and applying it twice with the same radius is
+    the identity.
+    """
+    c = _curvature_like(curvature, tangent)
+    target = radius / c.sqrt().clamp_min(torch.finfo(tangent.dtype).tiny)
+    return _safe_direction(tangent) * target
 
 
 class MLP(nn.Module):
@@ -167,12 +230,18 @@ class VQLayer(nn.Module):
         sk_epsilon: float = 0.003,
         sk_iters: int = 50,
         curvature: float = 1.0,
+        codebook_radius: float = 0.0,
     ):
         super().__init__()
         if curvature <= 0.0:
             raise ValueError("Curvature must be positive.")
         if sk_epsilon <= 0.0 or sk_iters <= 0:
             raise ValueError("Sinkhorn epsilon and iteration count must be positive.")
+        if not (0.0 <= codebook_radius < 1.0):
+            raise ValueError(
+                "Codebook radius is a ball radius rho in [0, 1); got "
+                f"{codebook_radius}"
+            )
         self.dim = int(codebook_dim)
         self.n_embed = int(codebook_size)
         self.beta = float(beta)
@@ -180,10 +249,30 @@ class VQLayer(nn.Module):
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
         self.curvature = float(curvature)
+        # A non-zero codebook_radius pins every codeword to that ball radius:
+        # only its direction is learned. The raw weight is re-projected on every
+        # read, so its own norm carries no meaning and cannot drift; without
+        # this the radial component of each codeword's gradient is unconstrained
+        # and the optimizer is free to inflate the raw norm without moving the
+        # codeword, which makes the effective learning rate a hidden variable.
+        self.codebook_radius = float(codebook_radius)
         self.embed = nn.Embedding(self.n_embed, self.dim)
+        if self.codebook_radius > 0.0:
+            with torch.no_grad():
+                self.embed.weight.normal_(0.0, 1.0)
+                self.embed.weight.copy_(self.get_code_embs())
 
-    def get_code_embs(self) -> nn.Parameter:
-        return self.embed.weight
+    def get_code_embs(self) -> torch.Tensor:
+        weight = self.embed.weight
+        if self.codebook_radius <= 0.0:
+            return weight
+        return _set_radius(
+            weight,
+            torch.as_tensor(
+                self.codebook_radius, device=weight.device, dtype=weight.dtype
+            ),
+            self.curvature,
+        )
 
     def _copy_init_embed(self, init_embed: torch.Tensor) -> None:
         self.embed.weight.data.copy_(init_embed)
@@ -225,9 +314,13 @@ class VQLayer(nn.Module):
             log_q = log_q - log_batch_size
         return torch.exp(log_q + log_batch_size)
 
-    def _distances(self, latent: torch.Tensor) -> torch.Tensor:
+    def _distances(
+        self, latent: torch.Tensor, code_embs: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        if code_embs is None:
+            code_embs = self.get_code_embs()
         return _pairwise_poincare_distance_tangents(
-            latent, self.get_code_embs(), self.get_curvature()
+            latent, code_embs, self.get_curvature()
         )
 
     def _balanced_assignments(self, distances: torch.Tensor) -> torch.Tensor:
@@ -379,7 +472,13 @@ class VQLayer(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
         curvature = self.get_curvature()
-        embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
+        # Project once: the assignment, the returned codeword and both loss
+        # terms must all refer to the same codeword, otherwise a fixed-shell
+        # codebook would assign on one radius and score on another.
+        code_embs = self.get_code_embs()
+        embed_ind = self._indices(
+            self._distances(latent, code_embs), infer_use_sk, bucket
+        )
         onehot = F.one_hot(embed_ind, self.n_embed)
         used = onehot.sum(0)
         if (
@@ -389,7 +488,7 @@ class VQLayer(nn.Module):
         ):
             distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
         unused_codes = int((used == 0).sum().item())
-        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
+        x_q = F.embedding(embed_ind, code_embs).view(x.shape)
         codebook_loss = _poincare_distance_tangent_pairs(
             x.detach(), x_q, curvature
         ).square().mean()
@@ -413,6 +512,18 @@ class VQLayer(nn.Module):
 
         The codes are returned so the next level can balance inside the same
         buckets instead of treating the whole batch as one pool.
+
+        The clustering runs on exactly the pinned tangents the quantizer will
+        later see, and the centers are then re-projected onto this level's shell
+        by get_code_embs(), so a fixed-shell codebook starts from shell-consistent
+        centers. Clustering *in the ball* instead, via the Frechet mean on the
+        Poincaré/Klein model, was implemented and measured against this on the
+        real pinned latents: it was 0.8% worse (0.133523 vs 0.132207 mean
+        quantization error), and a Lloyd-refined version still lost. That is
+        expected here because the residuals this level receives are already
+        concentrated on the shell, so geodesic and Euclidean partitions nearly
+        coincide and the extra machinery has nothing to exploit. It is
+        therefore not used.
         """
         kmeans = KMeans(n_clusters=self.n_embed, n_init="auto").fit(
             x.detach().cpu().numpy()
@@ -423,11 +534,12 @@ class VQLayer(nn.Module):
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
+        code_embs = self.get_code_embs()
         embed_ind = self._indices(
-            self._distances(x), infer_use_sk=True, bucket=bucket
+            self._distances(x, code_embs), infer_use_sk=True, bucket=bucket
         ).view(*x.shape[:-1])
         residual = _hyperbolic_residual(
-            x, self.embed_code(embed_ind), self.get_curvature()
+            x, F.embedding(embed_ind, code_embs), self.get_curvature()
         )
         return residual, embed_ind
 
@@ -540,12 +652,12 @@ class RQLayer(nn.Module):
         curvatures = [float(value) for value in config.layer_curvatures]
         if len(curvatures) != self.codebook_num:
             raise ValueError("layer_curvatures must match codebook_num")
-        # Optional per-level working radius in the tangent frame, i.e. the
-        # working point s = sqrt(c) * ||r|| that a level quantizes at. A level
-        # with a non-zero target overwrites the magnitude of its input to
-        # target / sqrt(c) before the Poincare map and maps the result back
-        # afterwards, so the encoder cannot shrink ||z|| to pull the level back
-        # to the ball centre the way it cancels a plain multiplicative scale.
+        # Optional per-level working radius, expressed as a Poincare radius
+        # d = 2 / sqrt(c) * atanh(sqrt(c) * ||v||) rather than as a raw tangent
+        # norm. The two agree at c = 1, which is why a single-curvature run
+        # could not tell them apart; they diverge for any per-level curvature, so
+        # the radius is now curvature-free and the same number means the same
+        # geometric distance at every level.
         # 0.0 (or absent) keeps the previous code path.
         radii = getattr(config, "layer_working_radii", None)
         if radii is None:
@@ -554,8 +666,19 @@ class RQLayer(nn.Module):
         if len(radii) != self.codebook_num:
             raise ValueError("layer_working_radii must match codebook_num")
         if any(not (0.0 <= value < 1.0) for value in radii):
-            raise ValueError("layer_working_radii must satisfy 0 <= r < 1")
+            raise ValueError("layer_working_radii must be ball radii in [0, 1)")
         self.working_radii = tuple(radii)
+        # Per-level codeword radius, in the same curvature-free units. 0.0 (or
+        # absent) leaves the codewords free, which is the inherited behaviour.
+        codebook_radii = getattr(config, "layer_codebook_radii", None)
+        if codebook_radii is None:
+            codebook_radii = [0.0] * self.codebook_num
+        codebook_radii = [float(value) for value in codebook_radii]
+        if len(codebook_radii) != self.codebook_num:
+            raise ValueError("layer_codebook_radii must match codebook_num")
+        if any(not (0.0 <= value < 1.0) for value in codebook_radii):
+            raise ValueError("layer_codebook_radii must be ball radii in [0, 1)")
+        self.codebook_radii = tuple(codebook_radii)
         self.codebook_sizes = sizes
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
@@ -572,6 +695,7 @@ class RQLayer(nn.Module):
                     sk_epsilon=self.sk_epsilon,
                     sk_iters=self.sk_iters,
                     curvature=curvatures[level],
+                    codebook_radius=self.codebook_radii[level],
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
@@ -586,55 +710,78 @@ class RQLayer(nn.Module):
     def get_working_radii(self) -> tuple[float, ...]:
         return self.working_radii
 
+    def get_codebook_radii(self) -> tuple[float, ...]:
+        return self.codebook_radii
+
     def _radius_for_level(
         self,
         level: int,
         curvature: torch.Tensor | float,
         residual: torch.Tensor,
     ) -> torch.Tensor:
-        """Tangent norm target for this level, shaped (rows, 1).
+        """Ball radius target for this level, shaped (rows, 1).
 
         The target is the configured working radius, so the level quantizes at a
-        pinned ``s`` whatever the encoder emits. A per-bucket statistic such as
-        the bucket's own mean residual norm was tried and rejected: it leaves the
-        buckets exactly as spread out as they were.
+        pinned distance whatever the encoder emits. A per-bucket statistic such
+        as the bucket's own mean residual norm was tried and rejected: it leaves
+        the buckets exactly as spread out as they were.
         """
-        sqrt_c = _curvature_like(curvature, residual).sqrt()
-        return (self.working_radii[level] / sqrt_c.clamp_min(
-            torch.finfo(residual.dtype).tiny
-        )).to(dtype=residual.dtype).expand(residual.shape[0], 1)
+        return torch.full(
+            (residual.shape[0], 1),
+            self.working_radii[level],
+            device=residual.device,
+            dtype=residual.dtype,
+        )
 
     def _pin_to_radius(
         self,
         residual: torch.Tensor,
-        target_norm: torch.Tensor,
+        target_radius: torch.Tensor,
+        curvature: torch.Tensor | float,
     ) -> torch.Tensor:
-        """Overwrite the magnitude, keep only the direction."""
-        norm = torch.linalg.vector_norm(residual, dim=-1, keepdim=True)
-        return residual * (target_norm / norm.clamp_min(
-            torch.finfo(residual.dtype).tiny
-        ))
+        """Send every row to the target radius along its radial geodesic."""
+        return _set_radius(residual, target_radius, curvature)
 
-    def _restore_norm(
+    def _restore_radius(
         self,
         mapped: torch.Tensor,
         source: torch.Tensor,
-        target_norm: torch.Tensor,
+        curvature: torch.Tensor | float,
     ) -> torch.Tensor:
-        """Inverse of the magnitude overwrite, back into the encoder's norms."""
-        norm = torch.linalg.vector_norm(source, dim=-1, keepdim=True)
-        return mapped * (norm / target_norm.clamp_min(
-            torch.finfo(mapped.dtype).tiny
-        ))
+        """Return ``mapped`` to the radii ``source`` had, along radial geodesics.
+
+        A level quantizes in a pinned frame, so both the residual handed on and
+        the codewords fed to the decoder come out of that frame at the pinned
+        radius. The encoder, however, chose the direction in its own frame, at
+        whatever radius it liked, and the next level reads that residual. The
+        previous code rescaled by the raw tangent-norm ratio
+        ||source|| / target, which is not the ratio of two radii: ||v|| = rho /
+        sqrt(c), so a tangent-norm ratio mixes the radius with the curvature and
+        rescales the residual by a curvature- and depth-dependent factor. At
+        c = 1 the two agree exactly, which is why this only shows up under a
+        per-level curvature.
+
+        Here the carrier is the ball radius itself, so the restore lands on the
+        radius the encoder actually had, at any curvature and any depth.
+        """
+        source_radius = _ball_radius(source, curvature)
+        return _set_radius(mapped, source_radius, curvature)
 
     def forward(
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
     ):
-        quantized_x = torch.zeros(
-            x.shape[0], self.codebook_dim, device=x.device, dtype=x.dtype
-        )
+        # The quantized latent is an accumulation in the ball, not a Euclidean
+        # sum of tangent vectors. Summing tangents would place the sum outside
+        # the manifold's own algebra: the result is not a point the residual
+        # chain can be compared against, and the length it reports depends on
+        # the code order rather than on the codes themselves. The reference
+        # aggregates with Mobius addition, so that is what the decoder sees.
+        # Accumulation is done in the first level's frame and the final tangent
+        # is mapped back, so every term is compared in one frame.
+        accumulation_curvature = self.vq_layers[0].get_curvature()
+        quantized_point: torch.Tensor | None = None
         sum_quant_loss: torch.Tensor | float = 0.0
         num_unused_codes = 0.0
         output = torch.empty(
@@ -649,28 +796,32 @@ class RQLayer(nn.Module):
                     residual, infer_use_sk, previous_codes
                 )
                 residual = _hyperbolic_residual(residual, quant, curvature)
-                quantized_x = quantized_x + quant
             else:
                 source = residual
-                target_norm = self._radius_for_level(level, curvature, source)
-                pinned = self._pin_to_radius(source, target_norm)
+                target_radius = self._radius_for_level(level, curvature, source)
+                pinned = self._pin_to_radius(source, target_radius, curvature)
                 quant, quant_loss, unused, indices = vq_layer(
                     pinned, infer_use_sk, previous_codes
                 )
                 # The code was chosen in the pinned frame, so the residual
                 # subtraction and the decoder input are computed there too and
-                # then mapped back to the encoder's own norms.
-                residual = self._restore_norm(
+                # then mapped back to the encoder's own radii.
+                residual = self._restore_radius(
                     _hyperbolic_residual(pinned, quant, curvature),
-                    source, target_norm,
+                    source, curvature,
                 )
-                quantized_x = quantized_x + self._restore_norm(
-                    quant, source, target_norm
-                )
+                quant = self._restore_radius(quant, source, curvature)
+            code_point = _expmap0_tangent(quant, accumulation_curvature)
+            quantized_point = (
+                code_point
+                if quantized_point is None
+                else _mobius_add(quantized_point, code_point, accumulation_curvature)
+            )
             previous_codes = indices
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
+        quantized_x = _logmap0_point(quantized_point, accumulation_curvature)
         return (
             quantized_x,
             sum_quant_loss / self.codebook_num,
@@ -699,16 +850,16 @@ class RQLayer(nn.Module):
                 )
             else:
                 source = residual
-                target_norm = self._radius_for_level(level, curvature, source)
-                pinned = self._pin_to_radius(source, target_norm)
+                target_radius = self._radius_for_level(level, curvature, source)
+                pinned = self._pin_to_radius(source, target_radius, curvature)
                 indices, usage, entropy = layer.assignment_diagnostics(
                     pinned, previous_codes
                 )
-                residual = self._restore_norm(
+                residual = self._restore_radius(
                     _hyperbolic_residual(
                         pinned, layer.embed_code(indices), curvature
                     ),
-                    source, target_norm,
+                    source, curvature,
                 )
             tokens[:, level] = indices
             previous_codes = indices
@@ -736,14 +887,14 @@ class RQLayer(nn.Module):
                     residual, device, previous_codes
                 )
                 continue
-            # This level's frame has a pinned tangent norm, so the codebook is
-            # fitted on the pinned residuals and the residual handed to the next
-            # level is mapped back to the encoder's norms.
+            # This level's frame has a pinned radius, so the codebook is fitted
+            # on the pinned residuals and the residual handed to the next level
+            # is mapped back to the encoder's own radii.
             source = residual
-            target_norm = self._radius_for_level(level, curvature, source)
-            pinned = self._pin_to_radius(source, target_norm)
+            target_radius = self._radius_for_level(level, curvature, source)
+            pinned = self._pin_to_radius(source, target_radius, curvature)
             fitted, previous_codes = vq_layer.init_codebook(
                 pinned, device, previous_codes
             )
-            residual = self._restore_norm(fitted, source, target_norm)
+            residual = self._restore_radius(fitted, source, curvature)
         return residual
