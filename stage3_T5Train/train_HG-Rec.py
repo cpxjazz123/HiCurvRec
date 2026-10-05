@@ -692,14 +692,6 @@ def main():
         ckpt_path = os.path.join(config["save_path"], config["dataset_name"], cur_time)
         ensure_dir(log_path)
         ensure_dir(ckpt_path)
-        # Publish the run directory name so the other ranks can write their
-        # test shards into the same directory. This is a file hand-off, not a
-        # collective, which is what keeps the eval path off NCCL entirely.
-        _run_dir_sync = os.path.join(config["log_path"], "_ddp_sync")
-        os.makedirs(_run_dir_sync, exist_ok=True)
-        with open(os.path.join(_run_dir_sync, "run_dir.txt"), "w",
-                  encoding="utf-8") as _fh:
-            _fh.write(cur_time + "\n")
         logging.basicConfig(
             filename=os.path.join(log_path, "HG_Rec.log"),
             level=logging.INFO,
@@ -718,18 +710,6 @@ def main():
             print("[AMP] BF16 autocast enabled for train/eval", flush=True)
     else:
         log_path = ckpt_path = None
-        # The run directory name is chosen by rank 0 and published to
-        # _ddp_sync/run_dir.txt, so every rank can resolve the same path
-        # without a collective. Wait for it, bounded, in case this rank gets
-        # here first.
-        _run_dir_file = os.path.join(config["log_path"], "_ddp_sync", "run_dir.txt")
-        _deadline_run = time.time() + 300
-        while not os.path.exists(_run_dir_file):
-            if time.time() > _deadline_run:
-                raise RuntimeError("rank 0 never published the run directory name")
-            time.sleep(0.5)
-        with open(_run_dir_file, encoding="utf-8") as _fh:
-            cur_time = _fh.read().strip()
 
     train_collator = make_sample_collator(train_dataset)
     eval_collator = (
@@ -1169,13 +1149,7 @@ def main():
         use_bf16=config["bf16"],
     )
     _test_elapsed = time.time() - _t_test_start
-    # Every rank can resolve `cur_time` (rank 0 publishes it to
-    # _ddp_sync/run_dir.txt, the others read it back), so the shard directory
-    # is built from the same rank-independent prefix rather than from
-    # `log_path`, which is rank-0 only.
-    _shard_dir = os.path.join(
-        config["log_path"], config["dataset_name"], cur_time, "_test_shards"
-    )
+    _shard_dir = os.path.join(log_path, "_test_shards")
     os.makedirs(_shard_dir, exist_ok=True)
     _shard_path = os.path.join(_shard_dir, f"rank{rank}.json")
     with open(_shard_path, "w", encoding="utf-8") as _fh:
