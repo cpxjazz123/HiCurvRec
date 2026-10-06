@@ -1,0 +1,251 @@
+{
+  "geometry": "poincare_behavior_ranking_estimator",
+  "mechanism": "iter96_behavior_ranking_curvature_estimator",
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "parent_curvatures": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "probe_curvatures": [
+    0.9,
+    1.0,
+    1.1
+  ],
+  "negatives_per_pair": 20,
+  "bootstrap_samples": 2000,
+  "confidence_z": 1.96,
+  "behavior_pairs_total": 339519,
+  "levels": [
+    {
+      "level": 1,
+      "behavior_pair_count": 339519,
+      "families": {
+        "global": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.8308769170502976,
+              "ranking_ci95": 0.0007168561653967451
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.8308767697831344,
+              "ranking_ci95": 0.0007168573930916323
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.8308769170502976,
+              "ranking_ci95": 0.0007168561653967451
+            }
+          ],
+          "parent_quality": 0.8308767697831344,
+          "parent_ci95": 0.0007168573930916323,
+          "best_candidate": 0.9,
+          "best_quality": 0.8308769170502976,
+          "best_ci95": 0.0007168561653967451,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": false
+        },
+        "hard": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.8309361184499247,
+              "ranking_ci95": 0.0007122135678630306
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.8309358239155983,
+              "ranking_ci95": 0.0007122071217732621
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.8309358239155983,
+              "ranking_ci95": 0.0007122126117003663
+            }
+          ],
+          "parent_quality": 0.8309358239155983,
+          "parent_ci95": 0.0007122071217732621,
+          "best_candidate": 0.9,
+          "best_quality": 0.8309361184499247,
+          "best_ci95": 0.0007122135678630306,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": false
+        }
+      },
+      "selected_curvature": 1.0,
+      "reason": "no candidate beats the parent beyond noise (best 0.9 +0.00000)"
+    },
+    {
+      "level": 2,
+      "behavior_pair_count": 24132,
+      "families": {
+        "global": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.6496436267197083,
+              "ranking_ci95": 0.003669747873288356
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.6496436267197083,
+              "ranking_ci95": 0.003669747873288356
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.6496436267197083,
+              "ranking_ci95": 0.003669747873288356
+            }
+          ],
+          "parent_quality": 0.6496436267197083,
+          "parent_ci95": 0.003669747873288356,
+          "best_candidate": 0.9,
+          "best_quality": 0.6496436267197083,
+          "best_ci95": 0.003669747873288356,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": true
+        },
+        "hard": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.6321212497928063,
+              "ranking_ci95": 0.0040172458658910325
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.6321212497928063,
+              "ranking_ci95": 0.0040172458658910325
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.6321212497928063,
+              "ranking_ci95": 0.0040172458658910325
+            }
+          ],
+          "parent_quality": 0.6321212497928063,
+          "parent_ci95": 0.0040172458658910325,
+          "best_candidate": 0.9,
+          "best_quality": 0.6321212497928063,
+          "best_ci95": 0.0040172458658910325,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": true
+        }
+      },
+      "selected_curvature": 1.0,
+      "reason": "parent is the local maximum of the hard-negative ranking"
+    },
+    {
+      "level": 3,
+      "behavior_pair_count": 541,
+      "families": {
+        "global": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.6402033271719039,
+              "ranking_ci95": 0.023778850324660462
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.6402033271719039,
+              "ranking_ci95": 0.023778850324660462
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.6402033271719039,
+              "ranking_ci95": 0.023778850324660462
+            }
+          ],
+          "parent_quality": 0.6402033271719039,
+          "parent_ci95": 0.023778850324660462,
+          "best_candidate": 0.9,
+          "best_quality": 0.6402033271719039,
+          "best_ci95": 0.023778850324660462,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": true
+        },
+        "hard": {
+          "candidates": [
+            {
+              "curvature": 0.9,
+              "ranking_quality": 0.6303142329020333,
+              "ranking_ci95": 0.02438049264526935
+            },
+            {
+              "curvature": 1.0,
+              "ranking_quality": 0.6303142329020333,
+              "ranking_ci95": 0.02438049264526935
+            },
+            {
+              "curvature": 1.1,
+              "ranking_quality": 0.6303142329020333,
+              "ranking_ci95": 0.02438049264526935
+            }
+          ],
+          "parent_quality": 0.6303142329020333,
+          "parent_ci95": 0.02438049264526935,
+          "best_candidate": 0.9,
+          "best_quality": 0.6303142329020333,
+          "best_ci95": 0.02438049264526935,
+          "parent_significantly_beaten": false,
+          "parent_is_local_max": true
+        }
+      },
+      "selected_curvature": 1.0,
+      "reason": "parent is the local maximum of the hard-negative ranking"
+    }
+  ],
+  "selected_curvatures": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "recovers_parent": true,
+  "quantization_diagnostics": {
+    "0.9": {
+      "assignment_margins": [
+        0.002575926948338747,
+        0.007600238546729088,
+        0.009509382769465446
+      ],
+      "codebook_used": [
+        256,
+        256,
+        256
+      ],
+      "collision": 0.0009761255948265157,
+      "raw_unique": 24563
+    },
+    "1.0": {
+      "assignment_margins": [
+        0.0032908166758716106,
+        0.010827156715095043,
+        0.015213166363537312
+      ],
+      "codebook_used": [
+        256,
+        256,
+        256
+      ],
+      "collision": 0.0009761255948265157,
+      "raw_unique": 24563
+    },
+    "1.1": {
+      "assignment_margins": [
+        0.002621851861476898,
+        0.007751030847430229,
+        0.009569120593369007
+      ],
+      "codebook_used": [
+        256,
+        256,
+        256
+      ],
+      "collision": 0.00093545369504211,
+      "raw_unique": 24564
+    }
+  }
+}
