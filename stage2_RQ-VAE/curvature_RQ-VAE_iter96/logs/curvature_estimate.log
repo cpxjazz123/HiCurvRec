@@ -1,0 +1,18 @@
+iter96 frozen behaviour-ranking curvature estimator
+parent checkpoint: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth
+probe curvatures: [0.9, 1.0, 1.1]  negatives/pair: 20
+behaviour pairs: 339519
+L1  N=339519
+  global  Q(0.9)=0.8309+-0.0007  Q(1.0)=0.8309+-0.0007  Q(1.1)=0.8309+-0.0007
+  hard    Q(0.9)=0.8309+-0.0007  Q(1.0)=0.8309+-0.0007  Q(1.1)=0.8309+-0.0007
+  chosen=1.00  no candidate beats the parent beyond noise (best 0.9 +0.00000)
+L2  N=24132
+  global  Q(0.9)=0.6496+-0.0037  Q(1.0)=0.6496+-0.0037  Q(1.1)=0.6496+-0.0037
+  hard    Q(0.9)=0.6321+-0.0040  Q(1.0)=0.6321+-0.0040  Q(1.1)=0.6321+-0.0040
+  chosen=1.00  parent is the local maximum of the hard-negative ranking
+L3  N=541
+  global  Q(0.9)=0.6402+-0.0238  Q(1.0)=0.6402+-0.0238  Q(1.1)=0.6402+-0.0238
+  hard    Q(0.9)=0.6303+-0.0244  Q(1.0)=0.6303+-0.0244  Q(1.1)=0.6303+-0.0244
+  chosen=1.00  parent is the local maximum of the hard-negative ranking
+selected curvatures: [1.0, 1.0, 1.0]
+recovers parent (1,1,1): True
