@@ -1,0 +1,10 @@
+iter95 frozen curvature estimator
+parent checkpoint: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth
+parent curvatures: [1.0, 1.0, 1.0]
+probe curvatures: [0.9, 1.0, 1.1]
+behaviour pairs: 339519
+L1  G(0.9)=+0.01584+-0.00007  G(1.0)=+0.01503+-0.00007  G(1.1)=+0.01433+-0.00007  g=-0.0076  h=+0.011  chosen=1.00  reason=best=0.9 rejected: margin 0.002576 < parent 0.003291
+L2  G(0.9)=+0.04742+-0.00155  G(1.0)=+0.04647+-0.00167  G(1.1)=+0.03566+-0.00120  g=-0.0588  h=-0.985  chosen=1.00  reason=best=0.9 gain=+0.00095 within noise (ci95 0.00155 + 0.00167)
+L3  G(0.9)=+0.12886+-0.01221  G(1.0)=+0.17993+-0.01832  G(1.1)=+0.10812+-0.01061  g=-0.1037  h=-12.287  chosen=1.00  reason=parent is the best of the probed candidates
+selected curvatures: [1.0, 1.0, 1.0]
+recovers parent (1,1,1): True
