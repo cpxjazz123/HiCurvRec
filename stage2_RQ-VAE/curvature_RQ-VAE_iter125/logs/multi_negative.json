@@ -1,0 +1,50 @@
+{
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "pairs": 20000,
+  "nce_negatives": 16,
+  "nce_temperature": 0.1,
+  "step_size": 0.01,
+  "populations": {
+    "persistent": 5960,
+    "rotating": 6838,
+    "never": 7202
+  },
+  "counterfactual": {
+    "persistent": {
+      "pairs": 5960,
+      "base_margin": -0.0004098593888666806,
+      "delta_pairwise": 0.0006697398904185967,
+      "delta_multi": 0.00038950496271952686,
+      "multi_minus_pair": -0.0002802349276990699
+    },
+    "rotating": {
+      "pairs": 6838,
+      "base_margin": 0.004942282829482711,
+      "delta_pairwise": 0.0002540983226990344,
+      "delta_multi": 0.00035395541013978176,
+      "multi_minus_pair": 9.985708744074737e-05
+    },
+    "never": {
+      "pairs": 7202,
+      "base_margin": 0.010019627909500114,
+      "delta_pairwise": 0.0,
+      "delta_multi": 0.00034336516076543204,
+      "multi_minus_pair": 0.00034336516076543204
+    }
+  },
+  "gradient_alignment": {
+    "persistent": {
+      "cosine_p50": 0.5893471837043762,
+      "cosine_mean": 0.5779658053953188
+    },
+    "rotating": {
+      "cosine_p50": 0.0,
+      "cosine_mean": 0.2181826726252632
+    },
+    "never": {
+      "cosine_p50": 0.0,
+      "cosine_mean": 0.0
+    }
+  },
+  "verdict": "InfoNCE does not give the persistent pairs a better separation direction locally, so training it is not justified"
+}
