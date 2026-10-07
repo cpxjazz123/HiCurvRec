@@ -65,7 +65,6 @@ NUM_WORKERS = 0
 # Fixed Poincare curvature per quantization level. Identical across levels
 # because the curvature curriculum was removed; only the level index varies.
 LAYER_CURVATURES = (1.0, 1.0, 1.0)
-CURVATURE_RESIDUAL_ENCODER = True
 # Working point of the tangent-space quantization, s = sqrt(c) * ||r||, per
 # level. A level with a non-zero target overwrites the magnitude of its input to
 # target / sqrt(c) before the Poincare map and maps the result back afterwards,
@@ -334,7 +333,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
-        curvature_residual_encoder=CURVATURE_RESIDUAL_ENCODER,
+        pin_in_s_coordinates=PIN_IN_S_COORDINATES,
     )
 
 
@@ -439,8 +438,6 @@ def main() -> None:
         )
         _record(
             rank, "train_start", geometry="poincare_fixed_curvature",
-            mechanism=experiment.MECHANISM_NAME,
-            curvature_residual_encoder=CURVATURE_RESIDUAL_ENCODER,
             cold_start=True,
             checkpoint_loaded=False,
             initialization="xavier_encoder_decoder_then_kmeans_codebooks",
