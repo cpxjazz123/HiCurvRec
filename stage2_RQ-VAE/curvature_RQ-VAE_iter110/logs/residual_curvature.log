@@ -1,0 +1,38 @@
+reference: parent c_res = (1, 1, 1)
+   ||r1|| p5/p25/p50/p75/p95=0.09084/0.11503/0.13550/0.16158/0.21943
+   ||r2|| p5/p25/p50/p75/p95=0.08068/0.10297/0.12211/0.14658/0.20463
+   ||r3|| p5/p25/p50/p75/p95=0.07035/0.09022/0.10841/0.13104/0.18467
+   E1=||r2||/||r1||=0.90882   E2=||r3||/||r2||=0.88963
+   behaviour gap r2=+0.08352  r3=+0.06208   recomposition=15.52698
+sweep: c_res,1 (produces r_2), other transition at 1.0
+   c_res,1=0.5   |r2|= -1.31%  |r3|= -1.33%  cos(r2)=0.99782  cos(r3)=0.98005
+        behaviour gap r2=+0.08375 (+0.00023)  r3=+0.06196 (-0.00012)  recomposition=15.73289 (+1.33%)  flip L2= 1.49% L3= 6.93%
+   c_res,1=0.75  |r2|= -0.66%  |r3|= -0.70%  cos(r2)=0.99755  cos(r3)=0.97905
+        behaviour gap r2=+0.08368 (+0.00015)  r3=+0.06160 (-0.00048)  recomposition=15.62946 (+0.66%)  flip L2= 1.60% L3= 7.28%
+   c_res,1=1.0   |r2|= +0.00%  |r3|= +0.00%  cos(r2)=1.00000  cos(r3)=1.00000
+        behaviour gap r2=+0.08352 (+0.00000)  r3=+0.06208 (+0.00000)  recomposition=15.52698 (+0.00%)  flip L2= 0.00% L3= 0.00%
+   c_res,1=1.5   |r2|= +1.32%  |r3|= +1.27%  cos(r2)=0.99760  cos(r3)=0.97822
+        behaviour gap r2=+0.08340 (-0.00012)  r3=+0.06171 (-0.00037)  recomposition=15.32481 (-1.30%)  flip L2= 1.61% L3= 7.54%
+   c_res,1=2.0   |r2|= +2.64%  |r3|= +2.60%  cos(r2)=0.99770  cos(r3)=0.97916
+        behaviour gap r2=+0.08355 (+0.00003)  r3=+0.06093 (-0.00115)  recomposition=15.12631 (-2.58%)  flip L2= 1.55% L3= 7.26%
+sweep: c_res,2 (produces r_3), other transition at 1.0
+   c_res,2=0.5   |r3|= -0.18%  |r3|=    n/a  cos(r3)=0.99739  cos(r3)=   n/a
+        behaviour gap r2=+0.08423 (+0.00071)  r3=+0.06249 (+0.00041)  recomposition=15.52700 (+0.00%)  flip L2= 0.00% L3= 0.93%
+   c_res,2=0.75  |r3|= -0.10%  |r3|=    n/a  cos(r3)=0.99778  cos(r3)=   n/a
+        behaviour gap r2=+0.08388 (+0.00036)  r3=+0.06244 (+0.00036)  recomposition=15.52699 (+0.00%)  flip L2= 0.00% L3= 0.80%
+   c_res,2=1.0   |r3|= +0.00%  |r3|=    n/a  cos(r3)=1.00000  cos(r3)=   n/a
+        behaviour gap r2=+0.08352 (+0.00000)  r3=+0.06208 (+0.00000)  recomposition=15.52698 (+0.00%)  flip L2= 0.00% L3= 0.00%
+   c_res,2=1.5   |r3|= +0.20%  |r3|=    n/a  cos(r3)=0.99759  cos(r3)=   n/a
+        behaviour gap r2=+0.08281 (-0.00072)  r3=+0.06135 (-0.00073)  recomposition=15.52696 (-0.00%)  flip L2= 0.00% L3= 0.88%
+   c_res,2=2.0   |r3|= +0.37%  |r3|=    n/a  cos(r3)=0.99664  cos(r3)=   n/a
+        behaviour gap r2=+0.08209 (-0.00144)  r3=+0.06072 (-0.00135)  recomposition=15.52695 (-0.00%)  flip L2= 0.00% L3= 1.16%
+screen
+   c_res_1=0.5   geometry=1 behaviour=1 recomposition=1 no_churn=1 -> TRAIN
+   c_res_1=0.75  geometry=0 behaviour=1 recomposition=1 no_churn=1 -> drop
+   c_res_1=1.5   geometry=1 behaviour=1 recomposition=1 no_churn=1 -> TRAIN
+   c_res_1=2.0   geometry=1 behaviour=1 recomposition=1 no_churn=1 -> TRAIN
+   c_res_2=0.5   geometry=0 behaviour=1 recomposition=1 no_churn=1 -> drop
+   c_res_2=0.75  geometry=0 behaviour=1 recomposition=1 no_churn=1 -> drop
+   c_res_2=1.5   geometry=0 behaviour=1 recomposition=1 no_churn=1 -> drop
+   c_res_2=2.0   geometry=0 behaviour=1 recomposition=1 no_churn=1 -> drop
+survivors for stage 3: ['c_res_1=0.5', 'c_res_1=1.5', 'c_res_1=2.0']
