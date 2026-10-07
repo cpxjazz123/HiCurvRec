@@ -1,0 +1,18 @@
+pairs: persistent=5960  rotating=6838  never=7202
+one probe step of 0.01 along each unit-normalised gradient; K=16, tau=0.1
+
+1. angular margin change after one unit-normalised step
+   population        n   base margin   d(pairwise)   d(multi-neg)  multi - pair
+   persistent     5960     -0.000410      0.000670       0.000390     -0.000280
+   rotating       6838      0.004942      0.000254       0.000354      0.000100
+   never          7202      0.010020      0.000000       0.000343      0.000343
+
+2. do the two objectives even point the same way?
+   population    cos(g_pair, g_multi) p50      mean
+   persistent                      0.5893    0.5780
+   rotating                        0.0000    0.2182
+   never                           0.0000    0.0000
+
+verdict
+   persistent multi-minus-pair = -0.000280   rotating = +0.000100   cosine at persistent = +0.5893
+   InfoNCE does not give the persistent pairs a better separation direction locally, so training it is not justified
