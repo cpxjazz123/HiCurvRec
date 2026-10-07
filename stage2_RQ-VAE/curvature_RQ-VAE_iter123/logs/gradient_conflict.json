@@ -1,0 +1,66 @@
+{
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "pairs": 20000,
+  "checkpoints_used": 5,
+  "populations": {
+    "persistent": 5960,
+    "rotating": 6838,
+    "never": 7202
+  },
+  "behaviour_weight": 0.1,
+  "beta_quant": 0.25,
+  "conflict": {
+    "persistent": {
+      "pairs": 5960,
+      "cosine_p50": -0.01731686294078827,
+      "cosine_mean": -0.015518547967076302,
+      "fraction_negative": 0.5338926174496644,
+      "behaviour_norm_p50": 0.696225643157959
+    },
+    "rotating": {
+      "pairs": 6838,
+      "cosine_p50": 0.0,
+      "cosine_mean": 0.011824213899672031,
+      "fraction_negative": 0.16671541386370284,
+      "behaviour_norm_p50": 0.27394863963127136
+    },
+    "never": {
+      "pairs": 7202,
+      "cosine_p50": 0.0,
+      "cosine_mean": 0.0,
+      "fraction_negative": 0.0,
+      "behaviour_norm_p50": 0.0
+    }
+  },
+  "norms": {
+    "persistent": {
+      "behaviour_mean": 0.696225643157959,
+      "other_mean": 6.494789772659715e-08
+    },
+    "rotating": {
+      "behaviour_mean": 0.27394863963127136,
+      "other_mean": 6.263210394763519e-08
+    },
+    "never": {
+      "behaviour_mean": 0.0,
+      "other_mean": 6.007120134654542e-08
+    }
+  },
+  "reconstruction_only": {
+    "persistent": {
+      "cosine_p50": -0.01731686294078827,
+      "fraction_negative": 0.5338926174496644
+    },
+    "rotating": {
+      "cosine_p50": 0.0,
+      "fraction_negative": 0.16671541386370284
+    },
+    "never": {
+      "cosine_p50": 0.0,
+      "fraction_negative": 0.0
+    }
+  },
+  "verdict": "the other Stage2 terms actively oppose the behaviour gradient on these pairs, so the conflict is a weighting problem",
+  "opposed": true,
+  "silent": false
+}
