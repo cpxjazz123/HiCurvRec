@@ -1,0 +1,18 @@
+anchors with >= 2 transitions: 23946 of 24587 items; measuring 6000
+pairs over 5 checkpoints: persistent=53358  rotating=214424  never=71737
+mean transitions per measured anchor: 14.21
+
+1. gradient consistency C_A = ||sum g|| / sum ||g||
+   population        n     C_A p50      mean      sum|g|
+   persistent        4      0.8490    0.8444     12.5338
+   mixed          3402      0.6405    0.6455     97.9221
+   other          2594      0.6911    0.6936     32.4304
+
+2. the gradient budget that survives summation
+   persistent  share of sum|g_i| before summation  0.01%   after  0.01%
+   mixed       share of sum|g_i| before summation 80.88%   after 79.83%
+   other       share of sum|g_i| before summation 19.12%   after 20.16%
+
+verdict
+   self-cancelling: False
+   the constraints agree; there is no self-conflict, so the limit is what a pairwise objective can express rather than interference
