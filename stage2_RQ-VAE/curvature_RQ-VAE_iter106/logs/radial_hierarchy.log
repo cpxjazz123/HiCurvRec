@@ -1,0 +1,13 @@
+1. is 'more used' explained by 'covers more directions'?
+   L1  corr(usage,s_e)=-0.3879  corr(spread,s_e)=+0.3841  corr(usage,spread)=-0.9937  (n=244)
+   L2  corr(usage,s_e)=-0.6915  corr(spread,s_e)=+0.5679  corr(usage,spread)=-0.7446  (n=208)
+   L3  corr(usage,s_e)=-0.4972  corr(spread,s_e)=+0.3635  corr(usage,spread)=-0.7257  (n=215)
+2. frozen sweep of c at L2, others pinned at (1.0, 1.0, 1.0)
+   c=0.5   s_e p5/p50/p95=0.04681/0.05973/0.07530  spread=0.04236  corr(usage,s_e)=-0.6863  flip= 4.40%  gap=0.010920  beh_gain=+0.0029  collision=0.004067
+   c=0.75  s_e p5/p50/p95=0.05732/0.07315/0.09222  spread=0.05188  corr(usage,s_e)=-0.6908  flip= 2.72%  gap=0.010960  beh_gain=+0.0029  collision=0.004230
+   c=1.0   s_e p5/p50/p95=0.06619/0.08446/0.10649  spread=0.05991  corr(usage,s_e)=-0.6921  flip= 0.00%  gap=0.010975  beh_gain=+0.0030  collision=0.004433
+   c=1.5   s_e p5/p50/p95=0.08107/0.10345/0.13042  spread=0.07337  corr(usage,s_e)=-0.6955  flip= 3.53%  gap=0.010988  beh_gain=+0.0028  collision=0.004271
+   c=2.0   s_e p5/p50/p95=0.09361/0.11945/0.15059  spread=0.08472  corr(usage,s_e)=-0.6980  flip= 5.84%  gap=0.010997  beh_gain=+0.0036  collision=0.004189
+3. frozen verdict
+   max |d median radius| = 0.034986   max |d behaviour gain| = 0.000600   usage-radius sign flipped = False
+   curvature moves the radial hierarchy in an orderly way and the behaviour signal survives, so it is a real control
