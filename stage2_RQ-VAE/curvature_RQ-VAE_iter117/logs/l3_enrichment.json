@@ -1,0 +1,74 @@
+{
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "pairs_total": 339519,
+  "levels": {
+    "L1": {
+      "eligible_positives": 339519,
+      "matched_pairs": 1358076,
+      "positive_rate": 0.05478927541610337,
+      "negative_rate": 0.00390625,
+      "difference": 0.05088302541610337,
+      "enrichment": 14.026054506522463,
+      "z_score": 249.19983561563126,
+      "feasible": true,
+      "level": 1,
+      "chance_rate": 0.00390625
+    },
+    "L2": {
+      "eligible_positives": 18602,
+      "matched_pairs": 74408,
+      "positive_rate": 0.011020320395656381,
+      "negative_rate": 0.006222449199010859,
+      "difference": 0.004797871196645522,
+      "enrichment": 1.7710583153347734,
+      "z_score": 10.010023905007738,
+      "feasible": true,
+      "level": 2
+    },
+    "L3": {
+      "eligible_positives": 205,
+      "matched_pairs": 148,
+      "positive_rate": 0.02027027027027027,
+      "negative_rate": 0.0,
+      "difference": 0.02027027027027027,
+      "enrichment": Infinity,
+      "z_score": 1.7408953798403535,
+      "feasible": true,
+      "level": 3
+    }
+  },
+  "prefix_groups": {
+    "prefix1": {
+      "groups": 256,
+      "p50": 96.0,
+      "singletons": 0
+    },
+    "prefix2": {
+      "groups": 18805,
+      "p50": 1.0,
+      "singletons": 14112
+    },
+    "prefix3": {
+      "groups": 24478,
+      "p50": 1.0,
+      "singletons": 24369
+    }
+  },
+  "curve": [
+    {
+      "level": 1,
+      "enrichment": 14.026054506522463,
+      "feasible": true
+    },
+    {
+      "level": 2,
+      "enrichment": 1.7710583153347734,
+      "feasible": true
+    },
+    {
+      "level": 3,
+      "enrichment": Infinity,
+      "feasible": true
+    }
+  ]
+}

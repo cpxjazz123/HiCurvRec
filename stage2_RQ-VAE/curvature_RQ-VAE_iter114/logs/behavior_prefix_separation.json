@@ -1,0 +1,49 @@
+{
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "pairs": 50000,
+  "levels": {
+    "L1": {
+      "positive": 0.06002,
+      "negative": 0.00394,
+      "gap": 0.05608,
+      "ratio": 15.233502538071065
+    },
+    "L2": {
+      "positive": 0.0015,
+      "negative": 0.00012,
+      "gap": 0.00138,
+      "ratio": 12.5
+    },
+    "L3": {
+      "positive": 6e-05,
+      "negative": 0.0,
+      "gap": 6e-05,
+      "ratio": Infinity
+    }
+  },
+  "conditional": {
+    "P(L2 | L1)": {
+      "positive": 0.024991669443518827,
+      "negative": 0.030456852791878174,
+      "gap": -0.005465183348359347
+    },
+    "P(L3 | L2)": {
+      "positive": 0.04,
+      "negative": 0.0,
+      "gap": 0.04
+    }
+  },
+  "pooled": {
+    "L1_to_L2": {
+      "positive": 0.024991669443518827,
+      "negative": 0.030456852791878174,
+      "gap": -0.005465183348359347
+    },
+    "L2_to_L3": {
+      "positive": 0.04,
+      "negative": 0.0,
+      "gap": 0.04
+    }
+  },
+  "strongest_level": 1
+}
