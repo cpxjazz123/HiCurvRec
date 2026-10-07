@@ -1,0 +1,21 @@
+real behaviour pairs: 50000  (one random negative per anchor, never its own successor)
+
+prefix agreement rates
+   prefix        positive    negative         G_l     ratio
+   L1            6.0020%     0.3940%    +5.6080%      15.2x
+   L2            0.1500%     0.0120%    +0.1380%      12.5x
+   L3            0.0060%     0.0000%    +0.0060%       infx
+
+conditional retention: does a deeper level undo the previous one?
+   conditional                     positive    negative        diff
+   P(L2 | L1)                         2.50%       3.05%      -0.55%
+   P(L3 | L2)                         4.00%       0.00%      +4.00%
+
+pooled view over pairs that agree on the prefix so far
+   pool                            positive    negative           G
+   agree L1 -> also L2             2.50%       3.05%      -0.55%
+   agree L2 -> also L3             4.00%       0.00%      +4.00%
+
+where the behaviour signal lives
+   largest G_l at L1 (gap +5.6080%, positive rate 6.0020%)
+   G_l = P(prefix | positive) - P(prefix | negative); a rate that is small for positives but smaller for negatives still means the level keeps behaviour pairs together
