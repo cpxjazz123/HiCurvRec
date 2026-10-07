@@ -1,0 +1,19 @@
+probe level L2 (the only codebook with radial freedom); corpus rows=24587
+hard band = parent gap <= 0.00129967  (2459 rows, 10.00%)
+  hard  parent gap: p50=0.00063428  easy  parent gap: p50=0.00929449
+  behaviour (all rows, n=20000): pos=0.045%  neg=0.005%  gain=+0.00040
+  behaviour (hard rows only, n=1807): pos=0.111%  neg=0.000%  gain=+0.00111
+
+per-curvature comparison against the parent
+c=0.5: hard dgap=+0.002846  easy dgap=-0.000377  selective=True
+       top1 stability all=95.60% hard=95.57%  flips=1081
+       behaviour gain all +0.00040 -> +0.00045 (+0.00005)   hard +0.00111 -> +0.00111 (+0.00000)
+       flips on hard behaviour rows: 101  beneficial=2.0%  harmful=1.0%  neutral=97.0%
+c=2.0: hard dgap=+0.003895  easy dgap=-0.000408  selective=True
+       top1 stability all=94.16% hard=94.75%  flips=1437
+       behaviour gain all +0.00040 -> +0.00045 (+0.00005)   hard +0.00111 -> +0.00111 (+0.00000)
+       flips on hard behaviour rows: 116  beneficial=0.9%  harmful=2.6%  neutral=96.6%
+
+verdict
+   c=0.5: selective=1 hard_gap_grew=1 behaviour_helped=0 -> fail
+   c=2.0: selective=1 hard_gap_grew=1 behaviour_helped=0 -> fail
