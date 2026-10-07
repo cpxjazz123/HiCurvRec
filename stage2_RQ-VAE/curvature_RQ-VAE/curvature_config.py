@@ -1,7 +1,7 @@
 from pathlib import Path
 
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
-MECHANISM_NAME = "poincare_fixed_curvature_hyperbolic"
+MECHANISM_NAME = "fixed_curvature_mobius_encoder_residual"
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
