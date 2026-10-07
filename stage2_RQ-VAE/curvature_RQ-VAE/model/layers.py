@@ -130,81 +130,19 @@ def _hyperbolic_residual(
     code_point = _expmap0_tangent(code_tangent, curvature)
     difference = _mobius_add(-code_point, residual_point, curvature)
     return _logmap0_point(difference, curvature)
-def _expmap0_tangent_stable(
-    x: torch.Tensor, curvature: torch.Tensor | float
-) -> torch.Tensor:
-    c = _curvature_like(curvature, x)
-    sqrt_c = c.sqrt()
-    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True)
-    scaled_norm = sqrt_c * norm
-    eps = torch.finfo(x.dtype).eps
-    ratio = torch.tanh(scaled_norm) / scaled_norm.clamp_min(eps)
-    square = scaled_norm.square()
-    series = 1.0 - square / 3.0 + 2.0 * square.square() / 15.0
-    scale = torch.where(scaled_norm < eps, series, ratio)
-    point = scale * x
-    point_norm = torch.linalg.vector_norm(point, dim=-1, keepdim=True)
-    max_norm = (1.0 - _BALL_EPS) / sqrt_c
-    return point * torch.clamp(
-        max_norm / point_norm.clamp_min(eps), max=1.0
-    )
-
-
-def _logmap0_point_stable(
-    x: torch.Tensor, curvature: torch.Tensor | float
-) -> torch.Tensor:
-    c = _curvature_like(curvature, x)
-    sqrt_c = c.sqrt()
-    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True)
-    scaled_norm = sqrt_c * norm
-    scaled = scaled_norm.clamp(max=1.0 - _BALL_EPS)
-    eps = torch.finfo(x.dtype).eps
-    ratio = torch.atanh(scaled) / (sqrt_c * norm.clamp_min(eps))
-    square = scaled_norm.square()
-    series = 1.0 + square / 3.0 + square.square() / 5.0
-    scale = torch.where(scaled_norm < eps, series, ratio)
-    return scale * x
-
-
 
 
 class MLP(nn.Module):
-    """MLP with an optional fixed-curvature Möbius residual branch."""
+    """RecBole3.0's dropout/linear/ReLU MLP helper."""
 
-    def __init__(
-        self,
-        hidden_sizes: list[int],
-        dropout: float = 0.0,
-        residual_curvature: float | None = None,
-    ):
+    def __init__(self, hidden_sizes: list[int], dropout: float = 0.0):
         super().__init__()
         modules: list[nn.Module] = []
-        layer_sizes = list(zip(hidden_sizes[:-1], hidden_sizes[1:]))
-        for input_size, output_size in layer_sizes:
-            modules.extend(
-                (
-                    nn.Dropout(p=dropout),
-                    nn.Linear(input_size, output_size),
-                    nn.ReLU(),
-                )
-            )
+        for input_size, output_size in zip(hidden_sizes[:-1], hidden_sizes[1:]):
+            modules.extend((nn.Dropout(p=dropout), nn.Linear(input_size, output_size), nn.ReLU()))
         if modules:
             modules.pop()  # no activation after the output projection
         self.mlp = nn.Sequential(*modules)
-        if residual_curvature is not None:
-            residual_curvature = float(residual_curvature)
-            if not math.isfinite(residual_curvature) or residual_curvature <= 0.0:
-                raise ValueError("Residual curvature must be finite and positive")
-        self.residual_curvature = residual_curvature
-        if residual_curvature is None:
-            self.residual_weights = nn.ParameterList()
-        else:
-            self.residual_weights = nn.ParameterList(
-                [
-                    nn.Parameter(torch.zeros(output_size, input_size))
-                    for input_size, output_size in layer_sizes
-                ]
-            )
 
     def init_tiger_weights(self) -> None:
         """Use the Xavier initialization used by the upstream TIGER RQ-VAE."""
@@ -215,37 +153,7 @@ class MLP(nn.Module):
                     nn.init.zeros_(module.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.residual_curvature is None:
-            return self.mlp(x)
-
-        curvature = self.residual_curvature
-        n_layers = len(self.residual_weights)
-        layer_index = 0
-        for module in self.mlp:
-            if isinstance(module, nn.Dropout):
-                x = module(x)
-            elif isinstance(module, nn.Linear):
-                residual_input = x
-                main = module(x)
-                if layer_index < n_layers - 1:
-                    main = F.relu(main)
-                residual = F.linear(
-                    residual_input, self.residual_weights[layer_index]
-                )
-                main_point = _expmap0_tangent_stable(main, curvature)
-                residual_point = _expmap0_tangent_stable(residual, curvature)
-                x = _logmap0_point_stable(
-                    _mobius_add(main_point, residual_point, curvature),
-                    curvature,
-                )
-                layer_index += 1
-
-        if layer_index != n_layers:
-            raise RuntimeError(
-                f"Curvature residual branch expected {n_layers} linear layers, "
-                f"executed {layer_index}"
-            )
-        return x
+        return self.mlp(x)
 
 
 class VQLayer(nn.Module):

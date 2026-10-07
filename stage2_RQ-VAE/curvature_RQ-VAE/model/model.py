@@ -1,7 +1,8 @@
 """Standalone RecBole3.0-compatible hyperbolic RQ-VAE wrapper for HG-Rec.
 
-The encoder may compose tangent residuals with fixed-curvature Mobius addition.
-The transition-ranking auxiliary objective acts on origin-tangent encoder
+Pure Poincare-ball geometry: codebook assignment, quantization loss and
+reconstruction all run in hyperbolic space at a fixed curvature. The
+transition-ranking auxiliary objective is applied to origin-tangent encoder
 outputs before quantization.
 """
 
@@ -24,16 +25,7 @@ class RQVAE(nn.Module):
         self.config = config
         hidden_sizes = tuple(int(size) for size in config.hidden_sizes)
         self.encoder_sizes = (int(in_dim), *hidden_sizes, int(config.codebook_dim))
-        residual_curvature = (
-            float(config.layer_curvatures[0])
-            if getattr(config, "curvature_residual_encoder", False)
-            else None
-        )
-        self.encoder = MLP(
-            list(self.encoder_sizes),
-            dropout=float(config.dropout),
-            residual_curvature=residual_curvature,
-        )
+        self.encoder = MLP(list(self.encoder_sizes), dropout=float(config.dropout))
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
