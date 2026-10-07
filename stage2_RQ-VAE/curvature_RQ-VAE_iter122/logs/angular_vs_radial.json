@@ -1,0 +1,70 @@
+{
+  "parent_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth",
+  "curvature": 1.0,
+  "latent_norm_mean": 2.063298773958533,
+  "latent_norm_std": 0.05762289285507341,
+  "cosine": {
+    "random": [
+      0.970854502916336,
+      0.9784641921520233,
+      0.988392174243927,
+      0.9947484880685806,
+      0.9964076387882232
+    ],
+    "positive": [
+      0.9825127738714218,
+      0.9864687025547028,
+      0.9934774041175842,
+      0.9974414736032486,
+      0.9984451806545257
+    ],
+    "negative": [
+      0.9727482640743256,
+      0.9791904628276825,
+      0.9883320927619934,
+      0.9944565802812576,
+      0.996286489367485
+    ],
+    "positive_minus_random_p50": 0.0050852298736572266,
+    "positive_minus_negative_p50": 0.00514531135559082
+  },
+  "attribution": {
+    "positive": {
+      "spearman_distance_vs_neg_cosine": 0.9160270953654824,
+      "spearman_distance_vs_norm_gap": 0.15683573079073537
+    },
+    "negative": {
+      "spearman_distance_vs_neg_cosine": 0.8902118773872362,
+      "spearman_distance_vs_norm_gap": 0.06687698269845561
+    },
+    "random": {
+      "spearman_distance_vs_neg_cosine": 0.9049824662904686,
+      "spearman_distance_vs_norm_gap": 0.08916605493806785
+    }
+  },
+  "checkpoints_used": 5,
+  "by_population": {
+    "persistent": {
+      "pairs": 5960,
+      "cosine_margin_p50": -4.9114227294921875e-05,
+      "hyperbolic_margin_p50": 0.004416704177856445,
+      "cosine_positive_p50": 0.9906756281852722,
+      "cosine_negative_p50": 0.9910248517990112
+    },
+    "rotating": {
+      "pairs": 6838,
+      "cosine_margin_p50": 0.0045855045318603516,
+      "hyperbolic_margin_p50": 0.4716346263885498,
+      "cosine_positive_p50": 0.9933552443981171,
+      "cosine_negative_p50": 0.9885231256484985
+    },
+    "never": {
+      "pairs": 7202,
+      "cosine_margin_p50": 0.009253650903701782,
+      "hyperbolic_margin_p50": 0.962180495262146,
+      "cosine_positive_p50": 0.9955078065395355,
+      "cosine_negative_p50": 0.9857898354530334
+    }
+  },
+  "verdict": "the encoder does carry angular structure, the metric tracks it, and the angular margin collapses exactly where the hyperbolic one does; the limit is how much angular range the encoder learned"
+}
