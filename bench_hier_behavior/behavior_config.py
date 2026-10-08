@@ -9,7 +9,7 @@ VALID_FILE = REPO_ROOT / "results/stage0_build_parquet/valid.parquet"
 TEST_FILE = REPO_ROOT / "results/stage0_build_parquet/test.parquet"
 RESULT_DIR = (
     REPO_ROOT
-    / "results/stage2_RQ-VAE/curvature_RQ-VAE/behavior_multiscale_cones"
+    / "results/stage2_RQ-VAE/curvature_RQ-VAE/behavior_node_prototype_cones"
 )
 
 SEEDS = (42, 43, 44)
