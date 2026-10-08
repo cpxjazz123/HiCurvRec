@@ -1,8 +1,8 @@
-"""Build train-only multi-scale item hierarchies from user transitions.
+"""Build a fit-user behavior tree and project heldout transitions into it.
 
 No catalogue labels, item text, or Semantic IDs participate in the hierarchy.
-Users are split before fitting transition profiles so fit and heldout trees are
-derived from disjoint behavior records.
+Fit users determine profile transforms and tree centers; heldout users are
+assigned to those frozen centers for out-of-sample hierarchy checks.
 """
 
 from __future__ import annotations
@@ -51,40 +51,114 @@ class BehaviorHierarchy:
     n_heldout_users: int
 
 
+@dataclass(frozen=True)
+class _KMeansProjection:
+    estimator: KMeans | None
+    raw_to_label: np.ndarray
+    n_labels: int
+
+    def predict(self, features: np.ndarray) -> np.ndarray:
+        if self.estimator is None:
+            return np.zeros(len(features), dtype=np.int32)
+        raw = self.estimator.predict(features).astype(np.int32, copy=False)
+        return self.raw_to_label[raw]
+
+
+@dataclass(frozen=True)
+class _BehaviorTreeProjection:
+    coarse: _KMeansProjection
+    fine_by_coarse: dict[int, _KMeansProjection]
+    fine_offsets: dict[int, int]
+    fine_parent: np.ndarray
+
+
+def _fit_kmeans(
+    features: np.ndarray, n_clusters: int, seed: int
+) -> tuple[_KMeansProjection, np.ndarray]:
+    n_clusters = min(int(n_clusters), len(features))
+    if n_clusters <= 1:
+        projection = _KMeansProjection(None, np.zeros(1, dtype=np.int32), 1)
+        return projection, np.zeros(len(features), dtype=np.int32)
+    estimator = KMeans(
+        n_clusters=n_clusters,
+        n_init=10,
+        max_iter=200,
+        random_state=seed,
+        algorithm="lloyd",
+    ).fit(features)
+    raw_labels = estimator.labels_.astype(np.int32, copy=False)
+    observed = np.unique(raw_labels)
+    raw_to_label = np.full(n_clusters, -1, dtype=np.int32)
+    raw_to_label[observed] = np.arange(len(observed), dtype=np.int32)
+    for raw_label in np.flatnonzero(raw_to_label < 0):
+        nearest = observed[
+            np.argmin(
+                np.sum(
+                    (estimator.cluster_centers_[observed]
+                     - estimator.cluster_centers_[raw_label]) ** 2,
+                    axis=1,
+                )
+            )
+        ]
+        raw_to_label[raw_label] = raw_to_label[nearest]
+    projection = _KMeansProjection(estimator, raw_to_label, len(observed))
+    return projection, projection.predict(features)
+
+
 def _cluster_behavior_profiles(
     coarse_behavior: np.ndarray,
     fine_behavior: np.ndarray,
     n_coarse: int,
     children_per_coarse: int,
     seed: int,
-) -> tuple[np.ndarray, np.ndarray, list[int]]:
-    coarse_labels = _fit_kmeans(coarse_behavior, n_coarse, seed)
-    coarse_values = np.unique(coarse_labels)
-    coarse_remap = {int(label): index for index, label in enumerate(coarse_values)}
-    item_coarse = np.fromiter(
-        (coarse_remap[int(label)] for label in coarse_labels),
-        dtype=np.int32,
-        count=len(coarse_behavior),
-    )
-
+) -> tuple[np.ndarray, np.ndarray, _BehaviorTreeProjection]:
+    coarse_projection, item_coarse = _fit_kmeans(coarse_behavior, n_coarse, seed)
     item_fine = np.full(len(fine_behavior), -1, dtype=np.int32)
+    fine_by_coarse: dict[int, _KMeansProjection] = {}
+    fine_offsets: dict[int, int] = {}
     fine_parent: list[int] = []
     next_fine = 0
-    for coarse_id in range(len(coarse_values)):
+    for coarse_id in range(coarse_projection.n_labels):
         members = np.flatnonzero(item_coarse == coarse_id)
-        local = _fit_kmeans(
+        projection, local = _fit_kmeans(
             fine_behavior[members],
             min(children_per_coarse, len(members)),
             seed + 104729 * (coarse_id + 1),
         )
-        for local_id in np.unique(local):
-            child_items = members[local == local_id]
-            item_fine[child_items] = next_fine
-            fine_parent.append(coarse_id)
-            next_fine += 1
+        fine_by_coarse[coarse_id] = projection
+        fine_offsets[coarse_id] = next_fine
+        item_fine[members] = next_fine + local
+        fine_parent.extend([coarse_id] * projection.n_labels)
+        next_fine += projection.n_labels
     if np.any(item_fine < 0):
         raise RuntimeError("Recursive behavior clustering left items unassigned")
-    return item_coarse, item_fine, fine_parent
+    tree_projection = _BehaviorTreeProjection(
+        coarse=coarse_projection,
+        fine_by_coarse=fine_by_coarse,
+        fine_offsets=fine_offsets,
+        fine_parent=np.asarray(fine_parent, dtype=np.int32),
+    )
+    return item_coarse, item_fine, tree_projection
+
+
+def _project_behavior_profiles(
+    tree: _BehaviorTreeProjection,
+    coarse_behavior: np.ndarray,
+    fine_behavior: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    item_coarse = tree.coarse.predict(coarse_behavior)
+    item_fine = np.full(len(fine_behavior), -1, dtype=np.int32)
+    for coarse_id, projection in tree.fine_by_coarse.items():
+        members = np.flatnonzero(item_coarse == coarse_id)
+        if len(members) == 0:
+            continue
+        item_fine[members] = (
+            tree.fine_offsets[coarse_id]
+            + projection.predict(fine_behavior[members])
+        )
+    if np.any(item_fine < 0):
+        raise RuntimeError("Frozen behavior tree left projected items unassigned")
+    return item_coarse, item_fine
 
 
 def transition_records(
@@ -128,19 +202,6 @@ def _edge_split(edges: list[HierarchyEdge], rng: np.random.Generator):
     return train, test
 
 
-def _fit_kmeans(x: np.ndarray, n_clusters: int, seed: int) -> np.ndarray:
-    n_clusters = min(int(n_clusters), len(x))
-    if n_clusters <= 1:
-        return np.zeros(len(x), dtype=np.int32)
-    labels = KMeans(
-        n_clusters=n_clusters,
-        n_init=10,
-        max_iter=200,
-        random_state=seed,
-        algorithm="lloyd",
-    ).fit_predict(x)
-    _, labels = np.unique(labels, return_inverse=True)
-    return labels.astype(np.int32, copy=False)
 
 
 def build_behavior_hierarchy(
@@ -153,11 +214,11 @@ def build_behavior_hierarchy(
     behavior_user_fraction: float = 0.8,
     svd_dim: int = 64,
 ) -> BehaviorHierarchy:
-    """Fit a user-disjoint hierarchy with coarse lag-2 and fine lag-1 profiles.
+    """Fit a user-disjoint behavior tree and project heldout users into it.
 
-    Both scales use TF-IDF-weighted incoming and outgoing transitions with
-    separate 64-D SVDs. Fit users determine the profile transforms; heldout
-    users supply an independently constructed hierarchy for generalization
+    Both scales use fit-user TF-IDF-weighted transition profiles and separate
+    SVDs. K-means centers are fit on fit-user profiles only; heldout profiles
+    use those same frozen centers, preserving node identity for generalization
     checks. Text and Semantic IDs are absent.
     """
     if not 0.0 < behavior_user_fraction < 1.0:
@@ -300,7 +361,7 @@ def build_behavior_hierarchy(
         heldout_lag2_degree == 0
     ]
 
-    item_coarse, item_fine, fine_parent = _cluster_behavior_profiles(
+    item_coarse, item_fine, tree_projection = _cluster_behavior_profiles(
         coarse_behavior, behavior, n_coarse, children_per_coarse, seed
     )
     heldout_item_coarse = np.full(n_items, -1, dtype=np.int32)
@@ -308,17 +369,14 @@ def build_behavior_hierarchy(
     (
         heldout_item_coarse[heldout_behavior_covered],
         heldout_item_fine[heldout_behavior_covered],
-        heldout_fine_parent,
-    ) = _cluster_behavior_profiles(
+    ) = _project_behavior_profiles(
+        tree_projection,
         heldout_coarse_behavior[heldout_behavior_covered],
         heldout_behavior[heldout_behavior_covered],
-        n_coarse,
-        children_per_coarse,
-        seed + 1000003,
     )
-    n_coarse_actual = int(item_coarse.max()) + 1
-    next_fine = int(item_fine.max()) + 1
-
+    fine_parent = tree_projection.fine_parent
+    n_coarse_actual = tree_projection.coarse.n_labels
+    next_fine = len(fine_parent)
     root_node = 0
     coarse_offset = 1
     fine_offset = coarse_offset + n_coarse_actual
@@ -386,55 +444,44 @@ def build_behavior_hierarchy(
         train, test = _edge_split(edges, rng)
         train_edges.extend(train)
         test_edges.extend(test)
-    heldout_n_coarse = int(heldout_item_coarse.max()) + 1
-    heldout_n_fine = int(heldout_item_fine.max()) + 1
-    heldout_coarse_offset = 1
-    heldout_fine_offset = heldout_coarse_offset + heldout_n_coarse
-    heldout_item_offset = heldout_fine_offset + heldout_n_fine
     heldout_node_items: dict[int, np.ndarray] = {
-        0: np.flatnonzero(heldout_behavior_covered).astype(np.int64),
+        root_node: np.flatnonzero(heldout_behavior_covered).astype(np.int64),
     }
-    heldout_coarse_nodes = np.arange(
-        heldout_coarse_offset, heldout_fine_offset, dtype=np.int64
-    )
-    heldout_fine_nodes = np.arange(
-        heldout_fine_offset, heldout_item_offset, dtype=np.int64
-    )
+    heldout_coarse_nodes = coarse_nodes
+    heldout_fine_nodes = fine_nodes
     for coarse_id, node in enumerate(heldout_coarse_nodes):
-        heldout_node_items[int(node)] = np.flatnonzero(
-            heldout_item_coarse == coarse_id
+        members = np.flatnonzero(
+            (heldout_item_coarse == coarse_id) & heldout_behavior_covered
         ).astype(np.int64)
+        if len(members):
+            heldout_node_items[int(node)] = members
     for fine_id, node in enumerate(heldout_fine_nodes):
-        heldout_node_items[int(node)] = np.flatnonzero(
-            heldout_item_fine == fine_id
+        members = np.flatnonzero(
+            (heldout_item_fine == fine_id) & heldout_behavior_covered
         ).astype(np.int64)
+        if len(members):
+            heldout_node_items[int(node)] = members
     for item_id in np.flatnonzero(heldout_behavior_covered):
-        heldout_node_items[heldout_item_offset + item_id] = np.asarray(
+        heldout_node_items[item_offset + int(item_id)] = np.asarray(
             [item_id], dtype=np.int64
         )
 
     heldout_edges_by_level: list[list[HierarchyEdge]] = [[], [], []]
-    heldout_parent_for_fine = (
-        np.asarray(heldout_fine_parent, dtype=np.int64) + heldout_coarse_offset
-    )
-    heldout_parent_for_item = heldout_fine_offset + heldout_item_fine
+    parent_node_for_item = fine_offset + heldout_item_fine
     for child in heldout_coarse_nodes:
-        heldout_edges_by_level[0].append(HierarchyEdge(0, 0, int(child), -1))
+        if int(child) in heldout_node_items:
+            heldout_edges_by_level[0].append(HierarchyEdge(0, root_node, int(child), -1))
     for fine_id, child in enumerate(heldout_fine_nodes):
-        heldout_edges_by_level[1].append(
-            HierarchyEdge(
-                1,
-                int(heldout_parent_for_fine[fine_id]),
-                int(child),
-                -1,
+        if int(child) in heldout_node_items:
+            heldout_edges_by_level[1].append(
+                HierarchyEdge(1, int(parent_node_for_fine[fine_id]), int(child), -1)
             )
-        )
     for item_id in np.flatnonzero(heldout_behavior_covered):
         heldout_edges_by_level[2].append(
             HierarchyEdge(
                 2,
-                int(heldout_parent_for_item[item_id]),
-                heldout_item_offset + int(item_id),
+                int(parent_node_for_item[item_id]),
+                item_offset + int(item_id),
                 -1,
             )
         )
