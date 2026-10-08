@@ -51,11 +51,13 @@ class ResidualQuantizer(nn.Module):
         )
         return assignments.argmax(dim=-1)
 
-    def forward(self, latent: torch.Tensor):
+    def forward(self, latent: torch.Tensor, *, return_prefixes: bool = False):
         residual = latent
         quantized = torch.zeros_like(latent)
+        codebook_prefix = torch.zeros_like(latent) if return_prefixes else None
         loss = latent.new_zeros(())
         indices = []
+        prefixes = []
         for level, codebook in enumerate(self.codes):
             with torch.no_grad():
                 ids = self.assign(residual, level)
@@ -65,14 +67,22 @@ class ResidualQuantizer(nn.Module):
             loss = loss + cfg.VQ_BETA * distance(
                 residual, code.detach()
             ).square().mean()
-            # Straight-through: the decoder reads the code, the gradient reaches
-            # the encoder through the residual it was quantizing. Without it the
-            # reconstruction term trains the codebooks and decoder only.
+            # The decoder uses the ordinary encoder straight-through path.
             quantized = quantized + (residual + (code - residual).detach())
+            # Cone losses need gradients to both the encoder and every codebook
+            # contributing to a prefix, without changing its forward value.
+            if return_prefixes:
+                codebook_prefix = codebook_prefix + code
+                prefixes.append(
+                    quantized + codebook_prefix - codebook_prefix.detach()
+                )
             residual = self.geometry.residual(residual, code)
             indices.append(ids)
         tokens = torch.stack(indices, dim=-1)
-        return quantized, loss / len(self.codes), tokens
+        result = (quantized, loss / len(self.codes), tokens)
+        if return_prefixes:
+            return (*result, prefixes)
+        return result
 
     @torch.no_grad()
     def init_codebooks(self, latent: torch.Tensor, seed: int) -> None:
@@ -89,39 +99,69 @@ class ResidualQuantizer(nn.Module):
 
 
 class RQVAE(nn.Module):
-    def __init__(self, geometry_name: str, in_dim: int, codebook_dim: int):
+    def __init__(
+        self,
+        geometry_name: str,
+        in_dim: int,
+        codebook_dim: int,
+        *,
+        normalize_latent: bool = False,
+        include_root: bool = False,
+        hidden_sizes: tuple[int, ...] | None = None,
+    ):
         super().__init__()
         self.geometry_name = geometry_name
         self.geometry = make_geometry(geometry_name)
         self.in_dim = int(in_dim)
+        self.normalize_latent = bool(normalize_latent)
+        hidden = cfg.HIDDEN_SIZES if hidden_sizes is None else hidden_sizes
         self.encoder = _MLP(
-            [in_dim, *cfg.HIDDEN_SIZES, codebook_dim], dropout=cfg.DROPOUT
+            [in_dim, *hidden, codebook_dim], dropout=cfg.DROPOUT
         )
         self.decoder = _MLP(
-            [codebook_dim, *reversed(cfg.HIDDEN_SIZES), in_dim], dropout=cfg.DROPOUT
+            [codebook_dim, *reversed(hidden), in_dim], dropout=cfg.DROPOUT
         )
         self.encoder.init_tiger_weights()
         self.decoder.init_tiger_weights()
         self.rq = ResidualQuantizer(
             self.geometry, cfg.CODEBOOK_SIZE, codebook_dim
         )
+        if include_root:
+            self.root_direction = nn.Parameter(torch.zeros(codebook_dim))
+        else:
+            self.register_parameter("root_direction", None)
 
-    def encode(self, features: torch.Tensor) -> torch.Tensor:
-        latent = self.encoder(features)
+    def _normalize(self, latent: torch.Tensor) -> torch.Tensor:
         norm = torch.linalg.vector_norm(latent, dim=-1, keepdim=True)
         return latent * (
             cfg.LATENT_RADIUS / norm.clamp_min(torch.finfo(latent.dtype).tiny)
         )
 
-    def forward(self, features: torch.Tensor):
+    def encode(self, features: torch.Tensor) -> torch.Tensor:
+        return self._normalize(self.encoder(features))
+
+    def _training_latent(self, features: torch.Tensor) -> torch.Tensor:
         latent = self.encoder(features)
-        quantized, quant_loss, tokens = self.rq(latent)
+        return self._normalize(latent) if self.normalize_latent else latent
+
+    def forward(self, features: torch.Tensor, *, return_prefixes: bool = False):
+        latent = self._training_latent(features)
+        if return_prefixes:
+            quantized, quant_loss, tokens, prefixes = self.rq(
+                latent, return_prefixes=True
+            )
+        else:
+            quantized, quant_loss, tokens = self.rq(latent)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, tokens, latent
+        result = (reconstructed, quant_loss, tokens, latent)
+        if return_prefixes:
+            return (*result, prefixes)
+        return result
 
     @torch.no_grad()
     def init_codebooks(self, features: torch.Tensor, seed: int) -> None:
-        self.rq.init_codebooks(self.encoder(features), seed)
+        latent = self._training_latent(features)
+        self.rq.init_codebooks(latent, seed)
 
 
 def _to_point(geometry: Geometry, tangent: torch.Tensor) -> torch.Tensor:
