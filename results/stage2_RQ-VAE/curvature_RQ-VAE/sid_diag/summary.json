@@ -185,6 +185,36 @@
       "checkpoint_global_step": 72000,
       "generated_at_utc": "2026-10-08T09:38:31.496695+00:00",
       "stage3_launched": false
+    },
+    "D18": {
+      "device": "cuda:0",
+      "torch_version": "2.8.0+cu128",
+      "script": "stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag_cones.py",
+      "script_sha256": "2f747d600379664135f8a5a48b5e5d6171235233d40804dbbada3f56fbeaf395",
+      "pairs_used": 40000,
+      "fixed_apertures_deg": [
+        2.0,
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        45.0
+      ],
+      "metric_apertures": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "curvature_grid": [
+        0.25,
+        0.5,
+        1.0,
+        2.0,
+        4.0
+      ],
+      "bootstrap_replicates": 200
     }
   },
   "codeword_usage": {
@@ -2090,5 +2120,2534 @@
         "hyperbolic_median_rank_delta_after_minus_before": -354.5
       }
     }
+  },
+  "D18": {
+    "device": "cuda:0",
+    "curvature": 1.0,
+    "pairs_used": 40000,
+    "max_partners_per_source": 24,
+    "representations": [
+      "Encoder",
+      "L1-L1",
+      "L1-L2",
+      "L1-L3"
+    ],
+    "apex_geometry_validation": {
+      "samples": 4096,
+      "curvature": 1.0,
+      "apex_angle_median_degrees_independent": 54.445552825927734,
+      "apex_angle_median_degrees_law_of_cosines": 54.44554901123047,
+      "max_abs_difference_degrees": 4.57763671875e-05,
+      "degenerate_pair_angle_max_degrees": 0.0011960400734096766
+    },
+    "angular_clustering": {
+      "Encoder": {
+        "pairs": 40000,
+        "curvature": 1.0,
+        "apex_radius_median": 4.273558139801025,
+        "angle_to_partner_axis_radians": {
+          "positive": {
+            "min": 0.22333873808383942,
+            "q10": 0.3822344481945038,
+            "q25": 0.4305572733283043,
+            "median": 0.49508024752140045,
+            "mean": 0.5098849084377289,
+            "q75": 0.5720909535884857,
+            "q90": 0.6563709497451782,
+            "max": 1.233742594718933
+          },
+          "matched_negative": {
+            "min": 0.1698937565088272,
+            "q10": 0.3019521415233612,
+            "q25": 0.33518028259277344,
+            "median": 0.3776875287294388,
+            "mean": 0.3881746981177479,
+            "q75": 0.42959941178560257,
+            "q90": 0.487152224779129,
+            "max": 0.9183022379875183
+          },
+          "random_negative": {
+            "min": 0.1435553878545761,
+            "q10": 0.29093247652053833,
+            "q25": 0.3253433108329773,
+            "median": 0.36824823915958405,
+            "mean": 0.37716434728987513,
+            "q75": 0.4186070114374161,
+            "q90": 0.47454299926757815,
+            "max": 0.9442983865737915
+          }
+        },
+        "in_sample_partner_angle_radians": {
+          "min": 0.32530367374420166,
+          "q10": 0.44904644787311554,
+          "q25": 0.4716363698244095,
+          "median": 0.49834075570106506,
+          "mean": 0.5094115875400603,
+          "q75": 0.5351428538560867,
+          "q90": 0.5815785408020019,
+          "max": 1.1563361883163452
+        },
+        "partner_to_partner_angle_degrees_median": 34.4083381138411,
+        "paired_auc_positive_closer_than_matched": 0.16105,
+        "paired_auc_positive_closer_than_in_sample_partners": 0.531475,
+        "paired_auc_positive_closer_than_random": 0.13905,
+        "directional_concentration_mean_resultant": {
+          "positive": 0.8286709189414978,
+          "matched_negative": 0.8829556107521057,
+          "random_negative": 0.8894137740135193
+        },
+        "bootstrap_positive_coverage": {
+          "2.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "5.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "10.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "20.0": {
+            "mean": 0.037140625000000003,
+            "std": 0.0002594999698940253
+          },
+          "30.0": {
+            "mean": 0.603766375,
+            "std": 0.00043059985412793834
+          },
+          "45.0": {
+            "mean": 0.979173375,
+            "std": 0.00012000201821218932
+          }
+        },
+        "bootstrap_replicates": 200
+      },
+      "L1-L1": {
+        "pairs": 40000,
+        "curvature": 1.0,
+        "apex_radius_median": 4.27206563949585,
+        "angle_to_partner_axis_radians": {
+          "positive": {
+            "min": 0.0,
+            "q10": 0.39853090345859526,
+            "q25": 0.47165022045373917,
+            "median": 0.5751319229602814,
+            "mean": 0.664456701335503,
+            "q75": 0.7037827521562576,
+            "q90": 0.8411618888378143,
+            "max": 3.1415927410125732
+          },
+          "matched_negative": {
+            "min": 0.0,
+            "q10": 0.34447313845157623,
+            "q25": 0.3880947306752205,
+            "median": 0.4489738941192627,
+            "mean": 0.4766818596136858,
+            "q75": 0.532941460609436,
+            "q90": 0.6338467717170715,
+            "max": 3.1415927410125732
+          },
+          "random_negative": {
+            "min": 0.0,
+            "q10": 0.3324870079755783,
+            "q25": 0.379677951335907,
+            "median": 0.44198788702487946,
+            "mean": 0.4657540628946619,
+            "q75": 0.5243453830480576,
+            "q90": 0.6221783876419067,
+            "max": 3.1415927410125732
+          }
+        },
+        "in_sample_partner_angle_radians": {
+          "min": 0.0,
+          "q10": 0.48331186175346375,
+          "q25": 0.5332910269498825,
+          "median": 0.6071159839630127,
+          "mean": 0.6734466209789273,
+          "q75": 0.728201687335968,
+          "q90": 0.9413328170776366,
+          "max": 3.1415927410125732
+        },
+        "partner_to_partner_angle_degrees_median": 38.78603174914488,
+        "paired_auc_positive_closer_than_matched": 0.2630125,
+        "paired_auc_positive_closer_than_in_sample_partners": 0.59315,
+        "paired_auc_positive_closer_than_random": 0.2455125,
+        "directional_concentration_mean_resultant": {
+          "positive": 0.7272335886955261,
+          "matched_negative": 0.8438810110092163,
+          "random_negative": 0.8509110808372498
+        },
+        "bootstrap_positive_coverage": {
+          "2.0": {
+            "mean": 0.015161500000000001,
+            "std": 0.00020232770447963877
+          },
+          "5.0": {
+            "mean": 0.032523875,
+            "std": 4.976805576873619e-05
+          },
+          "10.0": {
+            "mean": 0.03412662500000001,
+            "std": 8.320719620320949e-06
+          },
+          "20.0": {
+            "mean": 0.0488695,
+            "std": 0.00017425125537567882
+          },
+          "30.0": {
+            "mean": 0.37369024999999995,
+            "std": 0.0003882958762335737
+          },
+          "45.0": {
+            "mean": 0.8537600000000001,
+            "std": 0.00023849790355472903
+          }
+        },
+        "bootstrap_replicates": 200
+      },
+      "L1-L2": {
+        "pairs": 40000,
+        "curvature": 1.0,
+        "apex_radius_median": 4.27225923538208,
+        "angle_to_partner_axis_radians": {
+          "positive": {
+            "min": 0.18797935545444489,
+            "q10": 0.39873058497905733,
+            "q25": 0.45826275646686554,
+            "median": 0.5462603867053986,
+            "mean": 0.576120616902411,
+            "q75": 0.6564201563596725,
+            "q90": 0.792760545015335,
+            "max": 1.598533034324646
+          },
+          "matched_negative": {
+            "min": 0.15617579221725464,
+            "q10": 0.32309575080871583,
+            "q25": 0.3644324690103531,
+            "median": 0.4195236265659332,
+            "mean": 0.4376915053743869,
+            "q75": 0.4912096783518791,
+            "q90": 0.5745710730552673,
+            "max": 1.4257146120071411
+          },
+          "random_negative": {
+            "min": 0.1511206179857254,
+            "q10": 0.31279014647006986,
+            "q25": 0.3560834899544716,
+            "median": 0.412013903260231,
+            "mean": 0.427948638683185,
+            "q75": 0.48216162621974945,
+            "q90": 0.5636264979839325,
+            "max": 1.36479651927948
+          }
+        },
+        "in_sample_partner_angle_radians": {
+          "min": 0.32288607954978943,
+          "q10": 0.48342564702033997,
+          "q25": 0.5191565752029419,
+          "median": 0.564738541841507,
+          "mean": 0.5773727373160422,
+          "q75": 0.6185547113418579,
+          "q90": 0.6864675581455231,
+          "max": 1.6617636680603027
+        },
+        "partner_to_partner_angle_degrees_median": 37.503643241907476,
+        "paired_auc_positive_closer_than_matched": 0.212275,
+        "paired_auc_positive_closer_than_in_sample_partners": 0.5581125,
+        "paired_auc_positive_closer_than_random": 0.19435,
+        "directional_concentration_mean_resultant": {
+          "positive": 0.7908799648284912,
+          "matched_negative": 0.8624163866043091,
+          "random_negative": 0.8685129284858704
+        },
+        "bootstrap_positive_coverage": {
+          "2.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "5.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "10.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "20.0": {
+            "mean": 0.025814500000000004,
+            "std": 0.0002404729714541741
+          },
+          "30.0": {
+            "mean": 0.43411387500000004,
+            "std": 0.0004426955606000578
+          },
+          "45.0": {
+            "mean": 0.894915375,
+            "std": 0.00018664266493757526
+          }
+        },
+        "bootstrap_replicates": 200
+      },
+      "L1-L3": {
+        "pairs": 40000,
+        "curvature": 1.0,
+        "apex_radius_median": 4.273854732513428,
+        "angle_to_partner_axis_radians": {
+          "positive": {
+            "min": 0.20675398409366608,
+            "q10": 0.3904405444860458,
+            "q25": 0.44626207649707794,
+            "median": 0.5248037278652191,
+            "mean": 0.5464730854026973,
+            "q75": 0.6221367120742798,
+            "q90": 0.730778294801712,
+            "max": 1.4063732624053955
+          },
+          "matched_negative": {
+            "min": 0.14620341360569,
+            "q10": 0.3148029088973999,
+            "q25": 0.35361458361148834,
+            "median": 0.40451207756996155,
+            "mean": 0.4191698932748288,
+            "q75": 0.4685475006699562,
+            "q90": 0.5429485261440277,
+            "max": 1.2855888605117798
+          },
+          "random_negative": {
+            "min": 0.1487644463777542,
+            "q10": 0.3050148904323578,
+            "q25": 0.3446183428168297,
+            "median": 0.39553268253803253,
+            "mean": 0.4092250613987446,
+            "q75": 0.45986804366111755,
+            "q90": 0.5307208836078643,
+            "max": 1.2058207988739014
+          }
+        },
+        "in_sample_partner_angle_radians": {
+          "min": 0.3015516996383667,
+          "q10": 0.46584801077842714,
+          "q25": 0.4973512887954712,
+          "median": 0.5373466610908508,
+          "mean": 0.5467397378087043,
+          "q75": 0.5834940075874329,
+          "q90": 0.63765110373497,
+          "max": 1.4695936441421509
+        },
+        "partner_to_partner_angle_degrees_median": 36.00408203982035,
+        "paired_auc_positive_closer_than_matched": 0.19915,
+        "paired_auc_positive_closer_than_in_sample_partners": 0.5413625,
+        "paired_auc_positive_closer_than_random": 0.1779,
+        "directional_concentration_mean_resultant": {
+          "positive": 0.8085881471633911,
+          "matched_negative": 0.870574414730072,
+          "random_negative": 0.8765931129455566
+        },
+        "bootstrap_positive_coverage": {
+          "2.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "5.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "10.0": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "20.0": {
+            "mean": 0.030650125,
+            "std": 0.00022275964485292223
+          },
+          "30.0": {
+            "mean": 0.49495562500000007,
+            "std": 0.00040260431489863666
+          },
+          "45.0": {
+            "mean": 0.9385566249999999,
+            "std": 0.0001833623035822827
+          }
+        },
+        "bootstrap_replicates": 200
+      }
+    },
+    "cones": {
+      "Encoder": {
+        "angle_2deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_2deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_5deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_5deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_10deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 7.5e-05,
+          "random_negative_rate": 0.000275,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_10deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_20deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.0372,
+          "matched_negative_false_positive_rate": 0.328925,
+          "random_negative_rate": 0.388975,
+          "coverage_over_false_positive": 0.11309569050695445,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_20deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_30deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.605375,
+          "matched_negative_false_positive_rate": 0.94475,
+          "random_negative_rate": 0.9571,
+          "coverage_over_false_positive": 0.6407779835935433,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_30deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_45deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.97925,
+          "matched_negative_false_positive_rate": 0.9995,
+          "random_negative_rate": 0.999525,
+          "coverage_over_false_positive": 0.9797398699349674,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_45deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.02|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.03155078942948021,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11364090442657471
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.02|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.03155078942948021,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11364090442657471
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.05|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.04423465579748154,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.07964851076379419,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.2804633378982544
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.05|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.04423465579748154,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.07964851076379419,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.2804633378982544
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.1|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.10653117299079895,
+            "q10": 0.14401765167713165,
+            "q25": 0.15195107460021973,
+            "median": 0.15949037671089172,
+            "mean": 0.16165197156183422,
+            "q75": 0.16902045905590057,
+            "q90": 0.18130822479724884,
+            "max": 0.5598809123039246
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.1|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.10653117299079895,
+            "q10": 0.14401765167713165,
+            "q25": 0.15195107460021973,
+            "median": 0.15949037671089172,
+            "mean": 0.16165197156183422,
+            "q75": 0.16902045905590057,
+            "q90": 0.18130822479724884,
+            "max": 0.5598809123039246
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.2|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.21489132940769196,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.3195939362049103,
+            "mean": 0.3234385856933892,
+            "q75": 0.338619589805603,
+            "q90": 0.36207687854766846,
+            "max": 1.1206485033035278
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.2|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.21489132940769196,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.3195939362049103,
+            "mean": 0.3234385856933892,
+            "q75": 0.338619589805603,
+            "q90": 0.36207687854766846,
+            "max": 1.1206485033035278
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.4|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.4329586923122406,
+            "q10": 0.5814821720123291,
+            "q25": 0.609093427658081,
+            "median": 0.6431576013565063,
+            "mean": 0.6506944486923516,
+            "q75": 0.6807004809379578,
+            "q90": 0.7271236181259155,
+            "max": 2.252379894256592
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.4|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.4329586923122406,
+            "q10": 0.5814821720123291,
+            "q25": 0.609093427658081,
+            "median": 0.6431576013565063,
+            "mean": 0.6506944486923516,
+            "q75": 0.6807004809379578,
+            "q90": 0.7271236181259155,
+            "max": 2.252379894256592
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.16105,
+          "angular_margin_degrees_median_matched_minus_positive": -6.726107120513916,
+          "axis_opening_angle_degrees_median": 2.511194944381714,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        }
+      },
+      "L1-L1": {
+        "angle_2deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.000175,
+          "matched_negative_false_positive_rate": 0.0009,
+          "random_negative_rate": 0.00115,
+          "coverage_over_false_positive": 0.19444444444444445,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_2deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.01595,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 7.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "angle_5deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.00575,
+          "matched_negative_false_positive_rate": 0.002,
+          "random_negative_rate": 0.0022,
+          "coverage_over_false_positive": 2.875,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_5deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0268,
+          "matched_negative_false_positive_rate": 2.5e-05,
+          "random_negative_rate": 0.0001,
+          "coverage_over_false_positive": 1072.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "angle_10deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.007275,
+          "matched_negative_false_positive_rate": 0.002075,
+          "random_negative_rate": 0.002375,
+          "coverage_over_false_positive": 3.5060240963855422,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_10deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.02685,
+          "matched_negative_false_positive_rate": 2.5e-05,
+          "random_negative_rate": 0.0001,
+          "coverage_over_false_positive": 1074.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "angle_20deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.021875,
+          "matched_negative_false_positive_rate": 0.10845,
+          "random_negative_rate": 0.13725,
+          "coverage_over_false_positive": 0.20170585523282616,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_20deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.02685,
+          "matched_negative_false_positive_rate": 0.004575,
+          "random_negative_rate": 0.00565,
+          "coverage_over_false_positive": 5.868852459016393,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "angle_30deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.3472,
+          "matched_negative_false_positive_rate": 0.707575,
+          "random_negative_rate": 0.72595,
+          "coverage_over_false_positive": 0.4906900328587076,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_30deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.02685,
+          "matched_negative_false_positive_rate": 0.021375,
+          "random_negative_rate": 0.022375,
+          "coverage_over_false_positive": 1.256140350877193,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "angle_45deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.82715,
+          "matched_negative_false_positive_rate": 0.951975,
+          "random_negative_rate": 0.9551,
+          "coverage_over_false_positive": 0.8688778591874787,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "angle_45deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.02685,
+          "matched_negative_false_positive_rate": 0.026425,
+          "random_negative_rate": 0.026675,
+          "coverage_over_false_positive": 1.0160832544938505,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "metric_reach_0.02|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.03178210582067258,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11534988135099411
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.00045,
+          "random_negative_rate": 0.00045,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "metric_reach_0.02|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.03178210582067258,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11534988135099411
+          },
+          "positive_coverage": 0.0082,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 2.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "metric_reach_0.05|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.04845663905143738,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.07986169901322573,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.2818552255630493
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.000475,
+          "random_negative_rate": 0.00045,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "metric_reach_0.05|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.04845663905143738,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.07986169901322573,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.2818552255630493
+          },
+          "positive_coverage": 0.008225,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 2.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "metric_reach_0.1|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.10279206931591034,
+            "q10": 0.14401765167713165,
+            "q25": 0.15195107460021973,
+            "median": 0.16071254014968872,
+            "mean": 0.1618907646244392,
+            "q75": 0.17017418146133423,
+            "q90": 0.18130822479724884,
+            "max": 0.5605794787406921
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.000475,
+          "random_negative_rate": 0.00045,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "metric_reach_0.1|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.10279206931591034,
+            "q10": 0.14401765167713165,
+            "q25": 0.15195107460021973,
+            "median": 0.16071254014968872,
+            "mean": 0.1618907646244392,
+            "q75": 0.17017418146133423,
+            "q90": 0.18130822479724884,
+            "max": 0.5605794787406921
+          },
+          "positive_coverage": 0.00825,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 2.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "metric_reach_0.2|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.21306245028972626,
+            "q10": 0.2893909811973572,
+            "q25": 0.30325788259506226,
+            "median": 0.32020556926727295,
+            "mean": 0.3238302086915821,
+            "q75": 0.33919697999954224,
+            "q90": 0.36207687854766846,
+            "max": 1.1211724281311035
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.000475,
+          "random_negative_rate": 0.00045,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "metric_reach_0.2|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.21306245028972626,
+            "q10": 0.2893909811973572,
+            "q25": 0.30325788259506226,
+            "median": 0.32020556926727295,
+            "mean": 0.3238302086915821,
+            "q75": 0.33919697999954224,
+            "q90": 0.36207687854766846,
+            "max": 1.1211724281311035
+          },
+          "positive_coverage": 0.00835,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 2.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        },
+        "metric_reach_0.4|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.4302384853363037,
+            "q10": 0.5818185806274414,
+            "q25": 0.6097355484962463,
+            "median": 0.6440697312355042,
+            "mean": 0.6514397909276187,
+            "q75": 0.6821362376213074,
+            "q90": 0.7281992435455322,
+            "max": 2.253161668777466
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.000475,
+          "random_negative_rate": 0.000475,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.97315
+        },
+        "metric_reach_0.4|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.4302384853363037,
+            "q10": 0.5818185806274414,
+            "q25": 0.6097355484962463,
+            "median": 0.6440697312355042,
+            "mean": 0.6514397909276187,
+            "q75": 0.6821362376213074,
+            "q90": 0.7281992435455322,
+            "max": 2.253161668777466
+          },
+          "positive_coverage": 0.00875,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 2.5e-05,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.2630125,
+          "angular_margin_degrees_median_matched_minus_positive": -7.228320598602295,
+          "axis_opening_angle_degrees_median": 2.154768228530884,
+          "axis_opening_share_satisfied_by_positive": 0.02685
+        }
+      },
+      "L1-L2": {
+        "angle_2deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_2deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_5deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_5deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_10deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.000125,
+          "random_negative_rate": 0.000275,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_10deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_20deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.0258,
+          "matched_negative_false_positive_rate": 0.186525,
+          "random_negative_rate": 0.22125,
+          "coverage_over_false_positive": 0.13831926015279453,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_20deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_30deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.43475,
+          "matched_negative_false_positive_rate": 0.8234,
+          "random_negative_rate": 0.84225,
+          "coverage_over_false_positive": 0.5279936847218849,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_30deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_45deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.8952,
+          "matched_negative_false_positive_rate": 0.991075,
+          "random_negative_rate": 0.99265,
+          "coverage_over_false_positive": 0.9032616098680725,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_45deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.02|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.031801117640640586,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.10467831045389175
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.02|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.031801117640640586,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.10467831045389175
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.05|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.04845663905143738,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.0798274920443073,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.27411243319511414
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.05|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.04845663905143738,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.0798274920443073,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.27411243319511414
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.1|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.10653117299079895,
+            "q10": 0.14401765167713165,
+            "q25": 0.15065784752368927,
+            "median": 0.15949037671089172,
+            "mean": 0.16181069598086179,
+            "q75": 0.17017418146133423,
+            "q90": 0.18130822479724884,
+            "max": 0.5507192015647888
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.1|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.10653117299079895,
+            "q10": 0.14401765167713165,
+            "q25": 0.15065784752368927,
+            "median": 0.15949037671089172,
+            "mean": 0.16181069598086179,
+            "q75": 0.17017418146133423,
+            "q90": 0.18130822479724884,
+            "max": 0.5507192015647888
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.2|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.21489132940769196,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.32020556926727295,
+            "mean": 0.3236661747790873,
+            "q75": 0.33919697999954224,
+            "q90": 0.36207687854766846,
+            "max": 1.1039354801177979
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.2|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.21489132940769196,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.32020556926727295,
+            "mean": 0.3236661747790873,
+            "q75": 0.33919697999954224,
+            "q90": 0.36207687854766846,
+            "max": 1.1039354801177979
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.4|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.4329586923122406,
+            "q10": 0.5818185806274414,
+            "q25": 0.6087720394134521,
+            "median": 0.6437658071517944,
+            "mean": 0.6511049906603992,
+            "q75": 0.6818493604660034,
+            "q90": 0.7271236181259155,
+            "max": 2.2196431159973145
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.4|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.4329586923122406,
+            "q10": 0.5818185806274414,
+            "q25": 0.6087720394134521,
+            "median": 0.6437658071517944,
+            "mean": 0.6511049906603992,
+            "q75": 0.6818493604660034,
+            "q90": 0.7271236181259155,
+            "max": 2.2196431159973145
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.212275,
+          "angular_margin_degrees_median_matched_minus_positive": -7.261479377746582,
+          "axis_opening_angle_degrees_median": 2.309781551361084,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        }
+      },
+      "L1-L3": {
+        "angle_2deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_2deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 2.0,
+            "q10": 2.0,
+            "q25": 2.0,
+            "median": 2.0,
+            "mean": 2.0,
+            "q75": 2.0,
+            "q90": 2.0,
+            "max": 2.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_5deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_5deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 5.0,
+            "q10": 5.0,
+            "q25": 5.0,
+            "median": 5.0,
+            "mean": 5.0,
+            "q75": 5.0,
+            "q90": 5.0,
+            "max": 5.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_10deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.00015,
+          "random_negative_rate": 0.00025,
+          "coverage_over_false_positive": 0.0,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_10deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 10.0,
+            "q10": 10.0,
+            "q25": 10.0,
+            "median": 10.0,
+            "mean": 10.0,
+            "q75": 10.0,
+            "q90": 10.0,
+            "max": 10.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_20deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.030625,
+          "matched_negative_false_positive_rate": 0.229075,
+          "random_negative_rate": 0.271175,
+          "coverage_over_false_positive": 0.13368983957219252,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_20deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 20.0,
+            "q10": 20.0,
+            "q25": 20.0,
+            "median": 20.0,
+            "mean": 20.0,
+            "q75": 20.0,
+            "q90": 20.0,
+            "max": 20.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_30deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.4958,
+          "matched_negative_false_positive_rate": 0.8728,
+          "random_negative_rate": 0.8898,
+          "coverage_over_false_positive": 0.5680568285976169,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_30deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 29.999999999999996,
+            "q10": 29.999999999999996,
+            "q25": 29.999999999999996,
+            "median": 29.999999999999996,
+            "mean": 29.999999999999993,
+            "q75": 29.999999999999996,
+            "q90": 29.999999999999996,
+            "max": 29.999999999999996
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "angle_45deg|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.938925,
+          "matched_negative_false_positive_rate": 0.99595,
+          "random_negative_rate": 0.9971,
+          "coverage_over_false_positive": 0.9427431095938551,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "angle_45deg|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 45.0,
+            "q10": 45.0,
+            "q25": 45.0,
+            "median": 45.0,
+            "mean": 45.0,
+            "q75": 45.0,
+            "q90": 45.0,
+            "max": 45.0
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.02|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.031254507098905746,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11014342308044434
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.02|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.02797645330429077,
+            "median": 0.03426402062177658,
+            "mean": 0.031254507098905746,
+            "q75": 0.04423465579748154,
+            "q90": 0.04845663905143738,
+            "max": 0.11014342308044434
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.05|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.04423465579748154,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.0795209351124242,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.27411243319511414
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.05|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.04423465579748154,
+            "q10": 0.06852804124355316,
+            "q25": 0.07401873916387558,
+            "median": 0.07912936806678772,
+            "mean": 0.0795209351124242,
+            "q75": 0.08622922748327255,
+            "q90": 0.09065408259630203,
+            "max": 0.27411243319511414
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.1|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.10835234820842743,
+            "q10": 0.14401765167713165,
+            "q25": 0.15065784752368927,
+            "median": 0.15949037671089172,
+            "mean": 0.16143617237899452,
+            "q75": 0.16902045905590057,
+            "q90": 0.18130822479724884,
+            "max": 0.5475120544433594
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.1|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.10835234820842743,
+            "q10": 0.14401765167713165,
+            "q25": 0.15065784752368927,
+            "median": 0.15949037671089172,
+            "mean": 0.16143617237899452,
+            "q75": 0.16902045905590057,
+            "q90": 0.18130822479724884,
+            "max": 0.5475120544433594
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.2|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.2157999724149704,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.3189810514450073,
+            "mean": 0.3230526495419443,
+            "q75": 0.3380412459373474,
+            "q90": 0.36153602600097656,
+            "max": 1.095751166343689
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.2|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.2157999724149704,
+            "q10": 0.2887140214443207,
+            "q25": 0.30261194705963135,
+            "median": 0.3189810514450073,
+            "mean": 0.3230526495419443,
+            "q75": 0.3380412459373474,
+            "q90": 0.36153602600097656,
+            "max": 1.095751166343689
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        },
+        "metric_reach_0.4|opens_away_from_root": {
+          "orientation": "opens_away_from_root",
+          "aperture_degrees": {
+            "min": 0.4320538341999054,
+            "q10": 0.5808087587356567,
+            "q25": 0.6087720394134521,
+            "median": 0.6425489187240601,
+            "mean": 0.6499359327122569,
+            "q75": 0.6804129481315613,
+            "q90": 0.7257768511772156,
+            "max": 2.2022039890289307
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 1.0
+        },
+        "metric_reach_0.4|opens_toward_root": {
+          "orientation": "opens_toward_root",
+          "aperture_degrees": {
+            "min": 0.4320538341999054,
+            "q10": 0.5808087587356567,
+            "q25": 0.6087720394134521,
+            "median": 0.6425489187240601,
+            "mean": 0.6499359327122569,
+            "q75": 0.6804129481315613,
+            "q90": 0.7257768511772156,
+            "max": 2.2022039890289307
+          },
+          "positive_coverage": 0.0,
+          "matched_negative_false_positive_rate": 0.0,
+          "random_negative_rate": 0.0,
+          "coverage_over_false_positive": Infinity,
+          "positive_closer_than_matched_auc": 0.19915,
+          "angular_margin_degrees_median_matched_minus_positive": -6.892205238342285,
+          "axis_opening_angle_degrees_median": 2.4100937843322754,
+          "axis_opening_share_satisfied_by_positive": 0.0
+        }
+      }
+    },
+    "cone_definition": "Cone with apex p, axis u and half-aperture psi contains z when angle(d(p,z), u) <= psi and d(p,z) turns no further from the origin than d(p,u) does (Ganea et al. 2018). Apertures are fixed angles or the inversion of cosh d = cosh^2 rho - sinh^2 rho cos(theta) at the apex radius. The axis is the mean partner direction with the evaluated positive removed, so no pair contributes to its own cone.",
+    "hierarchy": {
+      "radial_vs_metric_rows": [
+        {
+          "representation": "Encoder",
+          "hierarchy_metric": "in_degree",
+          "spearman_rho_vs_radius": 0.2105108046030299,
+          "radius_median": 4.2537617683410645
+        },
+        {
+          "representation": "Encoder",
+          "hierarchy_metric": "out_degree",
+          "spearman_rho_vs_radius": 0.2661248158873436,
+          "radius_median": 4.2537617683410645
+        },
+        {
+          "representation": "Encoder",
+          "hierarchy_metric": "pagerank",
+          "spearman_rho_vs_radius": 0.11684871777372953,
+          "radius_median": 4.2537617683410645
+        },
+        {
+          "representation": "Encoder",
+          "hierarchy_metric": "k_core",
+          "spearman_rho_vs_radius": 0.28562910183381307,
+          "radius_median": 4.2537617683410645
+        },
+        {
+          "representation": "Encoder",
+          "hierarchy_metric": "depth_to_sink",
+          "spearman_rho_vs_radius": 0.04100783104610831,
+          "radius_median": 4.2537617683410645
+        },
+        {
+          "representation": "L1-L1",
+          "hierarchy_metric": "in_degree",
+          "spearman_rho_vs_radius": 0.210638582254504,
+          "radius_median": 4.252414226531982
+        },
+        {
+          "representation": "L1-L1",
+          "hierarchy_metric": "out_degree",
+          "spearman_rho_vs_radius": 0.2651475718000083,
+          "radius_median": 4.252414226531982
+        },
+        {
+          "representation": "L1-L1",
+          "hierarchy_metric": "pagerank",
+          "spearman_rho_vs_radius": 0.1186702977731544,
+          "radius_median": 4.252414226531982
+        },
+        {
+          "representation": "L1-L1",
+          "hierarchy_metric": "k_core",
+          "spearman_rho_vs_radius": 0.2842211700175458,
+          "radius_median": 4.252414226531982
+        },
+        {
+          "representation": "L1-L1",
+          "hierarchy_metric": "depth_to_sink",
+          "spearman_rho_vs_radius": 0.041096807895281404,
+          "radius_median": 4.252414226531982
+        },
+        {
+          "representation": "L1-L2",
+          "hierarchy_metric": "in_degree",
+          "spearman_rho_vs_radius": 0.21064718009380132,
+          "radius_median": 4.252558708190918
+        },
+        {
+          "representation": "L1-L2",
+          "hierarchy_metric": "out_degree",
+          "spearman_rho_vs_radius": 0.2663418279303696,
+          "radius_median": 4.252558708190918
+        },
+        {
+          "representation": "L1-L2",
+          "hierarchy_metric": "pagerank",
+          "spearman_rho_vs_radius": 0.11809809896936321,
+          "radius_median": 4.252558708190918
+        },
+        {
+          "representation": "L1-L2",
+          "hierarchy_metric": "k_core",
+          "spearman_rho_vs_radius": 0.28492751129791916,
+          "radius_median": 4.252558708190918
+        },
+        {
+          "representation": "L1-L2",
+          "hierarchy_metric": "depth_to_sink",
+          "spearman_rho_vs_radius": 0.04137092441399726,
+          "radius_median": 4.252558708190918
+        },
+        {
+          "representation": "L1-L3",
+          "hierarchy_metric": "in_degree",
+          "spearman_rho_vs_radius": 0.2090047182603021,
+          "radius_median": 4.254454612731934
+        },
+        {
+          "representation": "L1-L3",
+          "hierarchy_metric": "out_degree",
+          "spearman_rho_vs_radius": 0.2653547101882624,
+          "radius_median": 4.254454612731934
+        },
+        {
+          "representation": "L1-L3",
+          "hierarchy_metric": "pagerank",
+          "spearman_rho_vs_radius": 0.11611338460881046,
+          "radius_median": 4.254454612731934
+        },
+        {
+          "representation": "L1-L3",
+          "hierarchy_metric": "k_core",
+          "spearman_rho_vs_radius": 0.2837468911341795,
+          "radius_median": 4.254454612731934
+        },
+        {
+          "representation": "L1-L3",
+          "hierarchy_metric": "depth_to_sink",
+          "spearman_rho_vs_radius": 0.041051108352714506,
+          "radius_median": 4.254454612731934
+        }
+      ],
+      "metric_cross_correlation": [
+        {
+          "metric_a": "in_degree",
+          "metric_b": "out_degree",
+          "spearman_rho": 0.9262250203250765
+        },
+        {
+          "metric_a": "in_degree",
+          "metric_b": "pagerank",
+          "spearman_rho": 0.9457849054871091
+        },
+        {
+          "metric_a": "in_degree",
+          "metric_b": "k_core",
+          "spearman_rho": 0.9427218857689739
+        },
+        {
+          "metric_a": "in_degree",
+          "metric_b": "depth_to_sink",
+          "spearman_rho": 0.061576208874008886
+        },
+        {
+          "metric_a": "out_degree",
+          "metric_b": "pagerank",
+          "spearman_rho": 0.8479742103193588
+        },
+        {
+          "metric_a": "out_degree",
+          "metric_b": "k_core",
+          "spearman_rho": 0.9538528755311231
+        },
+        {
+          "metric_a": "out_degree",
+          "metric_b": "depth_to_sink",
+          "spearman_rho": 0.06143881518357493
+        },
+        {
+          "metric_a": "pagerank",
+          "metric_b": "k_core",
+          "spearman_rho": 0.8357315489762311
+        },
+        {
+          "metric_a": "pagerank",
+          "metric_b": "depth_to_sink",
+          "spearman_rho": 0.061383045521727714
+        },
+        {
+          "metric_a": "k_core",
+          "metric_b": "depth_to_sink",
+          "spearman_rho": 0.06159207983811733
+        }
+      ],
+      "notes": "in_degree, out_degree and PageRank are popularity-flavoured; k_core and depth_to_sink are structural. They are reported side by side and the cross-correlation block shows how far the two families agree, so radial position is never read as popularity alone."
+    },
+    "curvature_sensitivity": {
+      "rows": [
+        {
+          "curvature": 0.25,
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.8415,
+          "conformal_factor_median": 5.295094457967413,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0
+        },
+        {
+          "curvature": 0.5,
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.843025,
+          "conformal_factor_median": 11.28918043415373,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0
+        },
+        {
+          "curvature": 1.0,
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.843975,
+          "conformal_factor_median": 36.89567280712863,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0
+        },
+        {
+          "curvature": 2.0,
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.841975,
+          "conformal_factor_median": 211.7344680300174,
+          "apex_radius_median": 4.273569853435591,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0
+        },
+        {
+          "curvature": 4.0,
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.83675,
+          "conformal_factor_median": 2576.9986529677863,
+          "apex_radius_median": 4.273569853435712,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.9049
+        }
+      ],
+      "detail": {
+        "0.25": {
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.8415,
+          "angle_medians_degrees": {
+            "positive": 5.650373213699659,
+            "matched_negative": 7.495325605718346,
+            "random_negative": 7.699552071703091
+          },
+          "conformal_factor_median": 5.295094457967413,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0,
+          "interpretation": "The angle column is curvature-free by construction: it is the angle between frozen tangent coordinates, so it is identical at every curvature. The geodesic column reads the same frozen tangent coordinates through exp_0 and the curvature-c metric. The reported tangent norm is not a ball radius; exp_0 maps it to a valid point inside the ball. The boundary share uses c||exp_0(z)||^2 >= 0.999, not the unbounded tangent coordinates. Nothing is retrained, so this is a frozen-representation re-read."
+        },
+        "0.5": {
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.843025,
+          "angle_medians_degrees": {
+            "positive": 5.650373213699659,
+            "matched_negative": 7.495325605718346,
+            "random_negative": 7.699552071703091
+          },
+          "conformal_factor_median": 11.28918043415373,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0,
+          "interpretation": "The angle column is curvature-free by construction: it is the angle between frozen tangent coordinates, so it is identical at every curvature. The geodesic column reads the same frozen tangent coordinates through exp_0 and the curvature-c metric. The reported tangent norm is not a ball radius; exp_0 maps it to a valid point inside the ball. The boundary share uses c||exp_0(z)||^2 >= 0.999, not the unbounded tangent coordinates. Nothing is retrained, so this is a frozen-representation re-read."
+        },
+        "1.0": {
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.843975,
+          "angle_medians_degrees": {
+            "positive": 5.650373213699659,
+            "matched_negative": 7.495325605718346,
+            "random_negative": 7.699552071703091
+          },
+          "conformal_factor_median": 36.89567280712863,
+          "apex_radius_median": 4.273569853435578,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0,
+          "interpretation": "The angle column is curvature-free by construction: it is the angle between frozen tangent coordinates, so it is identical at every curvature. The geodesic column reads the same frozen tangent coordinates through exp_0 and the curvature-c metric. The reported tangent norm is not a ball radius; exp_0 maps it to a valid point inside the ball. The boundary share uses c||exp_0(z)||^2 >= 0.999, not the unbounded tangent coordinates. Nothing is retrained, so this is a frozen-representation re-read."
+        },
+        "2.0": {
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.841975,
+          "angle_medians_degrees": {
+            "positive": 5.650373213699659,
+            "matched_negative": 7.495325605718346,
+            "random_negative": 7.699552071703091
+          },
+          "conformal_factor_median": 211.7344680300174,
+          "apex_radius_median": 4.273569853435591,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.0,
+          "interpretation": "The angle column is curvature-free by construction: it is the angle between frozen tangent coordinates, so it is identical at every curvature. The geodesic column reads the same frozen tangent coordinates through exp_0 and the curvature-c metric. The reported tangent norm is not a ball radius; exp_0 maps it to a valid point inside the ball. The boundary share uses c||exp_0(z)||^2 >= 0.999, not the unbounded tangent coordinates. Nothing is retrained, so this is a frozen-representation re-read."
+        },
+        "4.0": {
+          "angular_auc_positive_closer_than_matched": 0.838075,
+          "geodesic_auc_positive_closer_than_matched": 0.83675,
+          "angle_medians_degrees": {
+            "positive": 5.650373213699659,
+            "matched_negative": 7.495325605718346,
+            "random_negative": 7.699552071703091
+          },
+          "conformal_factor_median": 2576.9986529677863,
+          "apex_radius_median": 4.273569853435712,
+          "median_tangent_norm": 2.1367785839620295,
+          "share_near_ball_boundary": 0.9049,
+          "interpretation": "The angle column is curvature-free by construction: it is the angle between frozen tangent coordinates, so it is identical at every curvature. The geodesic column reads the same frozen tangent coordinates through exp_0 and the curvature-c metric. The reported tangent norm is not a ball radius; exp_0 maps it to a valid point inside the ball. The boundary share uses c||exp_0(z)||^2 >= 0.999, not the unbounded tangent coordinates. Nothing is retrained, so this is a frozen-representation re-read."
+        }
+      },
+      "curvature_grid": [
+        0.25,
+        0.5,
+        1.0,
+        2.0,
+        4.0
+      ]
+    },
+    "outputs": [
+      "cone_coverage_by_representation.csv",
+      "angular_clustering_positive_vs_matched.csv",
+      "hierarchy_radial_relationships.csv",
+      "hierarchy_metric_cross_correlation.csv",
+      "curvature_sensitivity.csv",
+      "cone_coverage_by_representation.svg",
+      "curvature_sensitivity.svg",
+      "hierarchy_radial_relationships.svg",
+      "REPORT_D18.md"
+    ]
   }
 }
