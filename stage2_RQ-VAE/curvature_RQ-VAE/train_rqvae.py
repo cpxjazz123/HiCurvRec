@@ -1,9 +1,8 @@
 """Train a hyperbolic RQ-VAE in the Poincare ball (4-card DDP).
 
-Pure hyperbolic quantization at a fixed per-level curvature: encoder,
-Poincare codebook assignment via balanced Sinkhorn, residual subtraction in
-the ball, and Möbius-style reconstruction. The Stage2 budget matches the
-TIGER baseline exactly; descriptive SID metrics never stop training.
+Fixed-curvature codebook assignment, balanced Sinkhorn, and true three-level
+residual subtraction remain unchanged. Behavior supervision preserves the
+encoder's geodesic ranking at the differentiable L1 codeword prefix.
 """
 
 from __future__ import annotations
@@ -29,7 +28,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 
 
 from model import RQVAE
-from model.model import behaviour_ranking_loss
+from model.model import residual_behaviour_preservation_loss
 import curvature_config as experiment
 
 
@@ -98,11 +97,9 @@ LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 PIN_IN_S_COORDINATES = True
 
 
-# Pairwise hyperbolic ranking uses the same transition construction, in-batch
-# negative permutation, and auxiliary weight as the previous effective
-# behaviour-contrastive condition. The margin is the rounded median of
-# d_H(A,B-) - d_H(A,B+) on a deterministic 1024-pair sample from the accepted
-# parent, so about half the sampled constraints begin active.
+# The existing transition objective is applied to the variable-radius L1
+# prefix. Its detached encoder geodesic gap is the target; the configured
+# weight and minimum margin remain unchanged.
 BEHAVIOUR_LOSS_WEIGHT = 0.1
 BEHAVIOUR_MARGIN = 0.4
 ADAMW_BETA1 = 0.9
@@ -458,6 +455,7 @@ def main() -> None:
             layer_working_radii=layer_working_radii,
             behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
             behaviour_margin=BEHAVIOUR_MARGIN,
+            behaviour_mechanism="curvature_aware_l1_residual_preservation",
             behaviour_pairs=len(source_ids),
             snapshot_steps=SNAPSHOT_STEPS,
         )
@@ -511,13 +509,27 @@ def main() -> None:
             )
             encoded_source = raw_module.encoder(pair_sources)
             encoded_successor = raw_module.encoder(pair_successors)
-            negatives = encoded_source[
-                torch.randperm(encoded_source.shape[0], device=device)
-            ]
-            ranking_loss = behaviour_ranking_loss(
+            negative_indices = torch.randperm(
+                encoded_source.shape[0], device=device
+            )
+            encoded_negatives = encoded_source[negative_indices]
+            pair_prefix = raw_module.rq.first_level_codeword_contribution(
+                torch.cat(
+                    (encoded_source, encoded_successor, encoded_negatives), dim=0
+                )
+            )
+            (
+                prefix_source,
+                prefix_successor,
+                prefix_negatives,
+            ) = pair_prefix.split(encoded_source.shape[0], dim=0)
+            ranking_loss = residual_behaviour_preservation_loss(
                 encoded_source,
                 encoded_successor,
-                negatives,
+                encoded_negatives,
+                prefix_source,
+                prefix_successor,
+                prefix_negatives,
                 curvature=layer_curvatures[0],
                 margin=BEHAVIOUR_MARGIN,
             )
