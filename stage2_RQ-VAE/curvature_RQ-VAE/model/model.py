@@ -1,9 +1,8 @@
 """Standalone RecBole3.0-compatible hyperbolic RQ-VAE wrapper for HG-Rec.
 
 Pure Poincare-ball geometry: codebook assignment, quantization loss and
-reconstruction all run in hyperbolic space at a fixed curvature. The
-transition-ranking auxiliary objective is applied to origin-tangent encoder
-outputs before quantization.
+reconstruction run at fixed curvature. Behavior preservation supervises the
+curvature-aware L1 codeword prefix against encoder-space geodesic rankings.
 """
 
 from __future__ import annotations
@@ -70,19 +69,36 @@ class RQVAE(nn.Module):
         return recon_loss + quant_loss, recon_loss
 
 
-def behaviour_ranking_loss(
+def residual_behaviour_preservation_loss(
     source: torch.Tensor,
     successor: torch.Tensor,
     negatives: torch.Tensor,
+    prefix_source: torch.Tensor,
+    prefix_successor: torch.Tensor,
+    prefix_negatives: torch.Tensor,
     curvature: float,
     margin: float,
 ) -> torch.Tensor:
-    """Hinge ranking over real transition successors and shuffled negatives.
+    """Preserve encoder geodesic ranking after the first residual codeword.
 
-    Each input is an origin-tangent encoder vector. The distance helper maps
-    both endpoints to the fixed-curvature Poincare ball before measuring the
-    geodesic distance; no quantized-code equality is involved.
+    The detached encoder gap is a teacher target with a minimum margin. The
+    student gap is measured on the restored-norm L1 prefix, so the codebook is
+    directly trainable through Poincare distance rather than a straight-through
+    quantizer output.
     """
-    positive = _poincare_distance_tangent_pairs(source, successor, curvature)
-    negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
-    return F.relu(positive + margin - negative).mean()
+    with torch.no_grad():
+        teacher_positive = _poincare_distance_tangent_pairs(
+            source, successor, curvature
+        )
+        teacher_negative = _poincare_distance_tangent_pairs(
+            source, negatives, curvature
+        )
+        target_gap = (teacher_negative - teacher_positive).clamp_min(margin)
+    student_positive = _poincare_distance_tangent_pairs(
+        prefix_source, prefix_successor, curvature
+    )
+    student_negative = _poincare_distance_tangent_pairs(
+        prefix_source, prefix_negatives, curvature
+    )
+    student_gap = student_negative - student_positive
+    return F.relu(target_gap - student_gap).mean()
