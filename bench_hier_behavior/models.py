@@ -1,9 +1,12 @@
-"""One RQ-VAE, four matched geometry/supervision arms.
+"""One RQ-VAE, four arms.
 
-The encoder, decoder, quantizer, codebooks, and training schedule are shared.
-Each arm swaps only the geometry plug-in and whether hierarchy supervision is
-enabled. Cone arms add one trainable tangent prototype per behavior-tree node;
-Euclidean and hyperbolic cone arms have identical prototype counts and shapes.
+The quantizer, encoder and decoder are shared verbatim; an arm only swaps the
+geometry plug-in and switches on the hierarchy loss. Encoder/decoder/codebook
+shapes are identical across arms and their initial values come from the same
+seed, so the four arms start from the same initial function up to the geometry
+plug-in. The hierarchy loss adds no parameters: a parent apex is the mean of its
+own children's encoder outputs, so ``euclid_rq`` / ``euclid_rq_hier`` and
+``hyp_rq`` / ``hyp_rq_cone`` have identical parameter counts.
 """
 
 from __future__ import annotations
