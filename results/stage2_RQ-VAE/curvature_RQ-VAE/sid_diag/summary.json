@@ -10,7 +10,8 @@
       "stage2_RQ-VAE/curvature_RQ-VAE/train_rqvae.py": "9d87553dca3be5e0b91a36c5461e88e74fbe1e9a31307625d7f997ff9aba9f7c",
       "stage2_RQ-VAE/curvature_RQ-VAE/model/model.py": "95e27639d7c6f8de1e4738030b7e42028aa3481956c59a2ee6aa9afc7604cb8d",
       "stage2_RQ-VAE/curvature_RQ-VAE/model/layers.py": "922b3e6bb2c9c9a8a977c0356c3cc676c4630a7e66124c6483b162c7e16b6f6b",
-      "stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag.py": "5b5337ea24ab32ae1d8182a5ef4ed2a8e97a379cfd8b0d383cfdacb4bb98ff9d"
+      "stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag.py": "2542fa57bcc187056925163dc53c95e83fbac3db1706591a22581f0b19f38336",
+      "stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag_geometry.py": "969737df6badaa8d1cae21cc08e2e53360f93f0dd0a2da24b0580a6f4a77d8ec"
     },
     "input_sha256": {
       "results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/rqvae_best.pth": "dccf5b7c9d24274e393b38090444ac8828caa007cf5ddad7e0eb3444c51a48aa",
@@ -175,6 +176,15 @@
       "tie_handling": "Equal-frequency items may straddle a boundary; item_id is the deterministic tie-break.",
       "head_rank_end_exclusive": 4918,
       "mid_rank_end_exclusive": 12294
+    },
+    "D14-D17": {
+      "source_commit_before_diagnostics": "d8ae364885cdacad6c3297990c46fbc2693d6e79",
+      "diagnostic_script": "stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag_geometry.py",
+      "diagnostic_script_sha256": "969737df6badaa8d1cae21cc08e2e53360f93f0dd0a2da24b0580a6f4a77d8ec",
+      "behavior_pair_sample_sha256": "245adbf60422b3328b2f36b1cfbe55fe1857c895dd09f029ff775efc8144337c",
+      "checkpoint_global_step": 72000,
+      "generated_at_utc": "2026-10-08T09:38:31.496695+00:00",
+      "stage3_launched": false
     }
   },
   "codeword_usage": {
@@ -1171,5 +1181,914 @@
     "sparse_L1L2_prefix": 100,
     "frequent_behavior_pair_lcp0": 100,
     "geometry_near_sid_lcp0": 100
+  },
+  "D14-D17": {
+    "device": "cpu",
+    "free_gib_before": null,
+    "total_gib": null,
+    "local_reencoding_mismatches_vs_saved": {
+      "L1": 382,
+      "L2": 2040,
+      "L3": 6589
+    },
+    "D14_angular_loss_and_neighborhood_retention": {
+      "pair_count": 200000,
+      "by_representation": {
+        "Encoder": {
+          "positive_angle_radians": {
+            "min": 0.020707346753046887,
+            "q10": 0.07071719421964213,
+            "q25": 0.08371452249965054,
+            "median": 0.09852507323939375,
+            "mean": 0.09912597521722373,
+            "q75": 0.11377715517593638,
+            "q90": 0.12808375700056338,
+            "max": 0.22736527471711046
+          },
+          "matched_negative_angle_radians": {
+            "min": 0.028396453394658853,
+            "q10": 0.09972042398261825,
+            "q25": 0.11446931669026159,
+            "median": 0.13076096904890738,
+            "mean": 0.13158608396633642,
+            "q75": 0.14734635205665106,
+            "q90": 0.16355595833871178,
+            "max": 0.29825250135306663
+          },
+          "random_negative_angle_radians": {
+            "min": 0.028639695946403424,
+            "q10": 0.10305795511746402,
+            "q25": 0.11772997722427453,
+            "median": 0.13448232893254813,
+            "mean": 0.13585165286912917,
+            "q75": 0.1519582776484105,
+            "q90": 0.16955450935515173,
+            "max": 0.31643910086075966
+          },
+          "paired_auc_positive_closer_than_matched": 0.8355,
+          "paired_auc_positive_closer_than_random": 0.861305,
+          "l1_unshared_positive_auc_vs_matched": 0.8240783546385989,
+          "positive_angle_change_vs_encoder": {
+            "min": 0.0,
+            "q10": 0.0,
+            "q25": 0.0,
+            "median": 0.0,
+            "mean": 0.0,
+            "q75": 0.0,
+            "q90": 0.0,
+            "max": 0.0
+          },
+          "share_positive_angle_decreased_vs_encoder": 0.0,
+          "angular_positive_target_catalog_rank_sample": {
+            "source_count": 1000,
+            "median_rank": 1463.75,
+            "mean_rank_percentile": 0.13517097128447086,
+            "hit_probability_at_k_random_tie_break": {
+              "1": 0.0,
+              "10": 0.02,
+              "50": 0.073,
+              "100": 0.11
+            }
+          }
+        },
+        "L1-L1": {
+          "positive_angle_radians": {
+            "min": 0.0,
+            "q10": 0.04449653422868556,
+            "q25": 0.06161565488652432,
+            "median": 0.08018021396306282,
+            "mean": 0.07817908667704147,
+            "q75": 0.09930627760963762,
+            "q90": 0.11552104693544892,
+            "max": 0.2189978137623428
+          },
+          "matched_negative_angle_radians": {
+            "min": 0.0,
+            "q10": 0.07457979488730994,
+            "q25": 0.09143114537474252,
+            "median": 0.10958333663623337,
+            "mean": 0.10920399892833628,
+            "q75": 0.12619901956623816,
+            "q90": 0.14228506980646147,
+            "max": 0.2521608521853438
+          },
+          "random_negative_angle_radians": {
+            "min": 0.0,
+            "q10": 0.07594905855386606,
+            "q25": 0.09324568721269133,
+            "median": 0.11155910739070028,
+            "mean": 0.11194819720482918,
+            "q75": 0.12884815850762193,
+            "q90": 0.1468701706047661,
+            "max": 0.2521608607682921
+          },
+          "paired_auc_positive_closer_than_matched": 0.7702175,
+          "paired_auc_positive_closer_than_random": 0.78491,
+          "l1_unshared_positive_auc_vs_matched": 0.7531312827239203,
+          "positive_angle_change_vs_encoder": {
+            "min": -0.1609783380036233,
+            "q10": -0.04895248047929614,
+            "q25": -0.0327791467212971,
+            "median": -0.01898402971753895,
+            "mean": -0.020946888540182264,
+            "q75": -0.006220156310984319,
+            "q90": 0.005362604174464719,
+            "max": 0.07154368979558944
+          },
+          "share_positive_angle_decreased_vs_encoder": 0.84185,
+          "angular_positive_target_catalog_rank_sample": {
+            "source_count": 1000,
+            "median_rank": 2871.5,
+            "mean_rank_percentile": 0.20768382412755226,
+            "hit_probability_at_k_random_tie_break": {
+              "1": 0.00475030525030525,
+              "10": 0.011029296225997411,
+              "50": 0.027759538856879096,
+              "100": 0.05926776137072716
+            }
+          }
+        },
+        "L1-L2": {
+          "positive_angle_radians": {
+            "min": 0.015505060918119594,
+            "q10": 0.05472118461585238,
+            "q25": 0.07059440460791853,
+            "median": 0.0878285761904653,
+            "mean": 0.08817082643015488,
+            "q75": 0.10583109590225934,
+            "q90": 0.12181374994159364,
+            "max": 0.24434186214234413
+          },
+          "matched_negative_angle_radians": {
+            "min": 0.01889922386458387,
+            "q10": 0.0838903657943173,
+            "q25": 0.10005118666672345,
+            "median": 0.11762577432811469,
+            "mean": 0.11813923627229493,
+            "q75": 0.13491526310905722,
+            "q90": 0.15166738859659712,
+            "max": 0.27916236923803894
+          },
+          "random_negative_angle_radians": {
+            "min": 0.01778772149086992,
+            "q10": 0.08571636582460182,
+            "q25": 0.10216491702964244,
+            "median": 0.1200535815857201,
+            "mean": 0.12131189749435099,
+            "q75": 0.13822348943782023,
+            "q90": 0.15675795764467398,
+            "max": 0.2949049005140138
+          },
+          "paired_auc_positive_closer_than_matched": 0.78644,
+          "paired_auc_positive_closer_than_random": 0.805135,
+          "l1_unshared_positive_auc_vs_matched": 0.770720221904465,
+          "positive_angle_change_vs_encoder": {
+            "min": -0.10697278100580354,
+            "q10": -0.03161663457834677,
+            "q25": -0.02165072152257712,
+            "median": -0.010957593194108745,
+            "mean": -0.010955148787068852,
+            "q75": -0.0001813104869025639,
+            "q90": 0.009669033161974518,
+            "max": 0.0705732223798447
+          },
+          "share_positive_angle_decreased_vs_encoder": 0.753355,
+          "angular_positive_target_catalog_rank_sample": {
+            "source_count": 1000,
+            "median_rank": 2556.5,
+            "mean_rank_percentile": 0.19205696331245425,
+            "hit_probability_at_k_random_tie_break": {
+              "1": 0.0,
+              "10": 0.009,
+              "50": 0.036,
+              "100": 0.057
+            }
+          }
+        },
+        "L1-L3": {
+          "positive_angle_radians": {
+            "min": 0.01817621032063434,
+            "q10": 0.06108674137267492,
+            "q25": 0.0754155897339413,
+            "median": 0.09187057168135201,
+            "mean": 0.0924828026047399,
+            "q75": 0.10896691535113197,
+            "q90": 0.12431561601731335,
+            "max": 0.244914605223011
+          },
+          "matched_negative_angle_radians": {
+            "min": 0.024957356314073732,
+            "q10": 0.0891697402121781,
+            "q25": 0.10477195224509087,
+            "median": 0.12202577745585766,
+            "mean": 0.12258466780022206,
+            "q75": 0.13902818437578945,
+            "q90": 0.15534508811519018,
+            "max": 0.28390191275466325
+          },
+          "random_negative_angle_radians": {
+            "min": 0.025990075488326134,
+            "q10": 0.09153230953960985,
+            "q25": 0.10732368318673915,
+            "median": 0.12486869000230479,
+            "mean": 0.12610297065983833,
+            "q75": 0.14264715541203812,
+            "q90": 0.16085882801206214,
+            "max": 0.31334396938756276
+          },
+          "paired_auc_positive_closer_than_matched": 0.799675,
+          "paired_auc_positive_closer_than_random": 0.820725,
+          "l1_unshared_positive_auc_vs_matched": 0.7851590637867825,
+          "positive_angle_change_vs_encoder": {
+            "min": -0.07781829644408961,
+            "q10": -0.02356994804885453,
+            "q25": -0.015599004405928896,
+            "median": -0.006800560619115666,
+            "mean": -0.006643172612483848,
+            "q75": 0.0021518078779193713,
+            "q90": 0.010526841890907189,
+            "max": 0.06667678267938501
+          },
+          "share_positive_angle_decreased_vs_encoder": 0.69649,
+          "angular_positive_target_catalog_rank_sample": {
+            "source_count": 1000,
+            "median_rank": 2333.5,
+            "mean_rank_percentile": 0.1763298625233873,
+            "hit_probability_at_k_random_tie_break": {
+              "1": 0.001,
+              "10": 0.007,
+              "50": 0.036,
+              "100": 0.071
+            }
+          }
+        }
+      },
+      "angular_neighborhood_retention_vs_encoder": {
+        "Encoder": {
+          "10": {
+            "mean_recall": 1.0,
+            "mean_jaccard": 1.0
+          },
+          "50": {
+            "mean_recall": 1.0,
+            "mean_jaccard": 1.0
+          },
+          "100": {
+            "mean_recall": 1.0,
+            "mean_jaccard": 1.0
+          }
+        },
+        "L1-L1": {
+          "10": {
+            "mean_recall": 0.0441,
+            "mean_jaccard": 0.02382378740970072
+          },
+          "50": {
+            "mean_recall": 0.16796,
+            "mean_jaccard": 0.09514509781943349
+          },
+          "100": {
+            "mean_recall": 0.26293,
+            "mean_jaccard": 0.1576494604247273
+          }
+        },
+        "L1-L2": {
+          "10": {
+            "mean_recall": 0.1185,
+            "mean_jaccard": 0.06720682834537324
+          },
+          "50": {
+            "mean_recall": 0.23674,
+            "mean_jaccard": 0.140212894789833
+          },
+          "100": {
+            "mean_recall": 0.29760000000000003,
+            "mean_jaccard": 0.18203438369189076
+          }
+        },
+        "L1-L3": {
+          "10": {
+            "mean_recall": 0.18690000000000004,
+            "mean_jaccard": 0.11000817276978267
+          },
+          "50": {
+            "mean_recall": 0.30966000000000005,
+            "mean_jaccard": 0.1903501426962342
+          },
+          "100": {
+            "mean_recall": 0.36815,
+            "mean_jaccard": 0.2331888749441558
+          }
+        }
+      }
+    },
+    "D15_hyperbolic_radial_angular_coupling": {
+      "curvature": 1.0,
+      "exact_cosh_decomposition": "cosh(d_H)=cosh(r_i-r_j)+sinh(r_i)*sinh(r_j)*(1-cos(theta)); the angular term is coupled to both radii.",
+      "by_representation": {
+        "Encoder": {
+          "pair_medians": {
+            "positive": {
+              "radial_difference": 0.07149494390209332,
+              "angle_radians": 0.09852507323939375,
+              "radial_cosh_term": 1.0025568523419612,
+              "angular_cosh_term": 6.157608998472249,
+              "angular_cosh_fraction": 0.8593820332678495,
+              "hyperbolic_distance": 2.657391487712189,
+              "euclidean_tangent_distance": 0.21705041938199962,
+              "angle_only_hyperbolic_distance": 2.6564123776266437,
+              "angle_only_euclidean_scale2": 0.42025673784475115
+            },
+            "matched_negative": {
+              "radial_difference": 0.08191654661825254,
+              "angle_radians": 0.13076096904890738,
+              "radial_cosh_term": 1.0033570369080884,
+              "angular_cosh_term": 10.957918145569431,
+              "angular_cosh_fraction": 0.9157421743407005,
+              "hyperbolic_distance": 3.1734917035319854,
+              "euclidean_tangent_distance": 0.28553530911730757,
+              "angle_only_hyperbolic_distance": 3.1727910837235047,
+              "angle_only_euclidean_scale2": 0.5584977450498707
+            },
+            "random_negative": {
+              "radial_difference": 0.09152769004993955,
+              "angle_radians": 0.13448232893254813,
+              "radial_cosh_term": 1.0041915839836961,
+              "angular_cosh_term": 11.31782170035667,
+              "angular_cosh_fraction": 0.9180285006950426,
+              "hyperbolic_distance": 3.2034269765856087,
+              "euclidean_tangent_distance": 0.29381963044709336,
+              "angle_only_hyperbolic_distance": 3.202543376762806,
+              "angle_only_euclidean_scale2": 0.5728924259839938
+            }
+          },
+          "positive_vs_matched_auc": {
+            "hyperbolic": 0.84295,
+            "tangent_euclidean": 0.83275,
+            "angle_only_hyperbolic": 0.842895,
+            "angle_only_euclidean_scale2": 0.838155
+          },
+          "max_law_of_cosines_vs_direct_distance_error": 4.5197179332490123e-13
+        },
+        "L1-L1": {
+          "pair_medians": {
+            "positive": {
+              "radial_difference": 0.0716211931964188,
+              "angle_radians": 0.08018021396306282,
+              "radial_cosh_term": 1.002565894209424,
+              "angular_cosh_term": 4.039987316962762,
+              "angular_cosh_fraction": 0.800562373666742,
+              "hyperbolic_distance": 2.3019672916181944,
+              "euclidean_tangent_distance": 0.1800908793869675,
+              "angle_only_hyperbolic_distance": 2.300560470765406,
+              "angle_only_euclidean_scale2": 0.34167185782699083
+            },
+            "matched_negative": {
+              "radial_difference": 0.08236192751999116,
+              "angle_radians": 0.10958333663623337,
+              "radial_cosh_term": 1.003393661306715,
+              "angular_cosh_term": 7.674268279879893,
+              "angular_cosh_fraction": 0.883912743488626,
+              "hyperbolic_distance": 2.851035750291543,
+              "euclidean_tangent_distance": 0.24211867237636564,
+              "angle_only_hyperbolic_distance": 2.8501804023008486,
+              "angle_only_euclidean_scale2": 0.46785070706240806
+            },
+            "random_negative": {
+              "radial_difference": 0.09192947838691623,
+              "angle_radians": 0.11155910739070028,
+              "radial_cosh_term": 1.004228491165661,
+              "angular_cosh_term": 7.7694024384709675,
+              "angular_cosh_fraction": 0.8849807993924581,
+              "hyperbolic_distance": 2.8623130129769856,
+              "euclidean_tangent_distance": 0.24726611292135256,
+              "angle_only_hyperbolic_distance": 2.8611509125303884,
+              "angle_only_euclidean_scale2": 0.4747493986420592
+            }
+          },
+          "positive_vs_matched_auc": {
+            "hyperbolic": 0.770355,
+            "tangent_euclidean": 0.76849,
+            "angle_only_hyperbolic": 0.770315,
+            "angle_only_euclidean_scale2": 0.7709525
+          },
+          "max_law_of_cosines_vs_direct_distance_error": 9.967165545313156e-09
+        },
+        "L1-L2": {
+          "pair_medians": {
+            "positive": {
+              "radial_difference": 0.07139974343312083,
+              "angle_radians": 0.0878285761904653,
+              "radial_cosh_term": 1.0025500447327957,
+              "angular_cosh_term": 4.864120227906169,
+              "angular_cosh_fraction": 0.8284730686329339,
+              "hyperbolic_distance": 2.455735694312942,
+              "euclidean_tangent_distance": 0.1954858511291076,
+              "angle_only_hyperbolic_distance": 2.454651576478531,
+              "angle_only_euclidean_scale2": 0.37441997447832553
+            },
+            "matched_negative": {
+              "radial_difference": 0.08219405728901075,
+              "angle_radians": 0.11762577432811469,
+              "radial_cosh_term": 1.0033798336936641,
+              "angular_cosh_term": 8.859123282638626,
+              "angular_cosh_fraction": 0.897808399790107,
+              "hyperbolic_distance": 2.979848099098317,
+              "euclidean_tangent_distance": 0.2585481634647763,
+              "angle_only_hyperbolic_distance": 2.97896872584971,
+              "angle_only_euclidean_scale2": 0.5024752703652402
+            },
+            "random_negative": {
+              "radial_difference": 0.09162201276178994,
+              "angle_radians": 0.1200535815857201,
+              "radial_cosh_term": 1.004200233650237,
+              "angular_cosh_term": 9.015684448775415,
+              "angular_cosh_fraction": 0.8992125526327834,
+              "hyperbolic_distance": 2.995830161831898,
+              "euclidean_tangent_distance": 0.2644934970235967,
+              "angle_only_hyperbolic_distance": 2.9947989325856654,
+              "angle_only_euclidean_scale2": 0.5113641676408704
+            }
+          },
+          "positive_vs_matched_auc": {
+            "hyperbolic": 0.78866,
+            "tangent_euclidean": 0.78465,
+            "angle_only_hyperbolic": 0.788605,
+            "angle_only_euclidean_scale2": 0.7878
+          },
+          "max_law_of_cosines_vs_direct_distance_error": 7.107647803650252e-13
+        },
+        "L1-L3": {
+          "pair_medians": {
+            "positive": {
+              "radial_difference": 0.07091197105032876,
+              "angle_radians": 0.09187057168135201,
+              "radial_cosh_term": 1.0025153075744484,
+              "angular_cosh_term": 5.344208617919183,
+              "angular_cosh_fraction": 0.8415033518243579,
+              "hyperbolic_distance": 2.535521451549849,
+              "euclidean_tangent_distance": 0.20357374368912942,
+              "angle_only_hyperbolic_distance": 2.534419978886186,
+              "angle_only_euclidean_scale2": 0.391813473547726
+            },
+            "matched_negative": {
+              "radial_difference": 0.08171409148906417,
+              "angle_radians": 0.12202577745585766,
+              "radial_cosh_term": 1.0033404544917706,
+              "angular_cosh_term": 9.562231286903579,
+              "angular_cosh_fraction": 0.9046072114980779,
+              "hyperbolic_distance": 3.048983326739524,
+              "euclidean_tangent_distance": 0.2676068758428209,
+              "angle_only_hyperbolic_distance": 3.048185526526485,
+              "angle_only_euclidean_scale2": 0.5212528527529623
+            },
+            "random_negative": {
+              "radial_difference": 0.09119324894991987,
+              "angle_radians": 0.12486869000230479,
+              "radial_cosh_term": 1.0041609867645693,
+              "angular_cosh_term": 9.76545494224094,
+              "angular_cosh_fraction": 0.9062790929711058,
+              "hyperbolic_distance": 3.068291491745545,
+              "euclidean_tangent_distance": 0.27414445958415323,
+              "angle_only_hyperbolic_distance": 3.0673297646153905,
+              "angle_only_euclidean_scale2": 0.5319055149956651
+            }
+          },
+          "positive_vs_matched_auc": {
+            "hyperbolic": 0.80388,
+            "tangent_euclidean": 0.79865,
+            "angle_only_hyperbolic": 0.80378,
+            "angle_only_euclidean_scale2": 0.801755
+          },
+          "max_law_of_cosines_vs_direct_distance_error": 4.560796185160143e-13
+        }
+      }
+    },
+    "D16_L1_assignment_boundary": {
+      "l1_unshared_positive_pair_count": 186026,
+      "local_assignment_mismatches_vs_saved": 382,
+      "local_assignment_mismatches_vs_cpu_full_reencoding": 0,
+      "positive_target_vs_control_boundary_proximity": {
+        "positive": {
+          "saved_code_probability_gap_signed": {
+            "min": -0.9503024500854541,
+            "q10": 0.7080884839576065,
+            "q25": 0.9847595870411855,
+            "median": 0.9999723385520352,
+            "mean": 0.9173829588211624,
+            "q75": 0.999999998741974,
+            "q90": 0.9999999999999747,
+            "max": 1.0
+          },
+          "absolute_saved_code_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.7111005710152284,
+            "q25": 0.9847595870411855,
+            "median": 0.9999723385520352,
+            "mean": 0.9218655616895104,
+            "q75": 0.999999998741974,
+            "q90": 0.9999999999999747,
+            "max": 1.0
+          },
+          "local_sinkhorn_top1_top2_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.7111005710152284,
+            "q25": 0.9847595870411855,
+            "median": 0.9999723385520352,
+            "mean": 0.9218541972263161,
+            "q75": 0.999999998741974,
+            "q90": 0.9999999999999747,
+            "max": 1.0
+          },
+          "nearest_codeword_distance_gap": {
+            "min": 1.6763806343078613e-07,
+            "q10": 0.0003076363354921341,
+            "q25": 0.0008330345153808594,
+            "median": 0.001988324336707592,
+            "mean": 0.0026554898042876825,
+            "q75": 0.0038628075271844864,
+            "q90": 0.006012395024299622,
+            "max": 0.01986686885356903
+          },
+          "saved_assignment_rank_in_raw_distance_order": {
+            "min": 1.0,
+            "q10": 1.0,
+            "q25": 1.0,
+            "median": 1.0,
+            "mean": 1.4117273929450722,
+            "q75": 1.0,
+            "q90": 2.0,
+            "max": 27.0
+          }
+        },
+        "matched_negative": {
+          "saved_code_probability_gap_signed": {
+            "min": -0.9503024500854541,
+            "q10": 0.723445936839551,
+            "q25": 0.9849161276766764,
+            "median": 0.9999760781229097,
+            "mean": 0.9190515593867833,
+            "q75": 0.9999999989781232,
+            "q90": 0.9999999999999867,
+            "max": 1.0
+          },
+          "absolute_saved_code_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.7249241294663497,
+            "q25": 0.9849161276766764,
+            "median": 0.9999760781229097,
+            "mean": 0.9236490277599577,
+            "q75": 0.9999999989781232,
+            "q90": 0.9999999999999867,
+            "max": 1.0
+          },
+          "local_sinkhorn_top1_top2_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.7249241294663497,
+            "q25": 0.9849161276766764,
+            "median": 0.9999760781229097,
+            "mean": 0.9236392975887776,
+            "q75": 0.9999999989781232,
+            "q90": 0.9999999999999867,
+            "max": 1.0
+          },
+          "nearest_codeword_distance_gap": {
+            "min": 1.6763806343078613e-07,
+            "q10": 0.0003153085708618164,
+            "q25": 0.000871678814291954,
+            "median": 0.002032257616519928,
+            "mean": 0.002719667363674083,
+            "q75": 0.003953322768211365,
+            "q90": 0.006129292771220207,
+            "max": 0.01986686885356903
+          },
+          "saved_assignment_rank_in_raw_distance_order": {
+            "min": 1.0,
+            "q10": 1.0,
+            "q25": 1.0,
+            "median": 1.0,
+            "mean": 1.4120015481706858,
+            "q75": 1.0,
+            "q90": 2.0,
+            "max": 27.0
+          }
+        },
+        "random_negative": {
+          "saved_code_probability_gap_signed": {
+            "min": -0.9503024500854541,
+            "q10": 0.6587775174548212,
+            "q25": 0.9766457577429992,
+            "median": 0.999940756653563,
+            "mean": 0.9085953406390963,
+            "q75": 0.9999999949692132,
+            "q90": 0.9999999999999059,
+            "max": 1.0
+          },
+          "absolute_saved_code_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.6609003395046281,
+            "q25": 0.9766457577429992,
+            "median": 0.999940756653563,
+            "mean": 0.9144210519855216,
+            "q75": 0.9999999949692132,
+            "q90": 0.9999999999999059,
+            "max": 1.0
+          },
+          "local_sinkhorn_top1_top2_probability_gap": {
+            "min": 0.0003262870323323397,
+            "q10": 0.6609003395046281,
+            "q25": 0.9766457577429992,
+            "median": 0.999940756653563,
+            "mean": 0.9144076516182601,
+            "q75": 0.9999999949692132,
+            "q90": 0.9999999999999059,
+            "max": 1.0
+          },
+          "nearest_codeword_distance_gap": {
+            "min": 1.6763806343078613e-07,
+            "q10": 0.0002972632646560669,
+            "q25": 0.0007995888590812683,
+            "median": 0.0018867719918489456,
+            "mean": 0.0025391389445055075,
+            "q75": 0.0036447979509830475,
+            "q90": 0.005696699023246765,
+            "max": 0.01986686885356903
+          },
+          "saved_assignment_rank_in_raw_distance_order": {
+            "min": 1.0,
+            "q10": 1.0,
+            "q25": 1.0,
+            "median": 1.0,
+            "mean": 1.4781750938040918,
+            "q75": 2.0,
+            "q90": 3.0,
+            "max": 27.0
+          }
+        },
+        "positive_closer_to_boundary_than_matched_negative": {
+          "absolute_saved_code_gap_lower_is_closer_fraction": 0.5021717394342726,
+          "local_top2_gap_lower_is_closer_fraction": 0.5021717394342726,
+          "nearest_distance_gap_lower_is_closer_fraction": 0.5060905464827498
+        },
+        "positive_closer_to_boundary_than_random_negative": {
+          "absolute_saved_code_gap_lower_is_closer_fraction": 0.47959962585875093,
+          "local_top2_gap_lower_is_closer_fraction": 0.47960500145141,
+          "nearest_distance_gap_lower_is_closer_fraction": 0.48651263801834155
+        }
+      },
+      "positive_vs_control_candidate_proximity": {
+        "positive": {
+          "2": {
+            "target_saved_code_in_source_raw_top_k": 0.05412684381008148,
+            "source_saved_code_in_target_raw_top_k": 0.052471160888671875,
+            "mean_candidate_set_intersection_over_k": 0.07550288669325793
+          },
+          "5": {
+            "target_saved_code_in_source_raw_top_k": 0.15576854348182678,
+            "source_saved_code_in_target_raw_top_k": 0.15186049044132233,
+            "mean_candidate_set_intersection_over_k": 0.15351294980271576
+          },
+          "10": {
+            "target_saved_code_in_source_raw_top_k": 0.26907530426979065,
+            "source_saved_code_in_target_raw_top_k": 0.2623450458049774,
+            "mean_candidate_set_intersection_over_k": 0.22809876038833282
+          }
+        },
+        "matched_negative": {
+          "2": {
+            "target_saved_code_in_source_raw_top_k": 0.010181372053921223,
+            "source_saved_code_in_target_raw_top_k": 0.010272757150232792,
+            "mean_candidate_set_intersection_over_k": 0.011665036070226743
+          },
+          "5": {
+            "target_saved_code_in_source_raw_top_k": 0.025442680343985558,
+            "source_saved_code_in_target_raw_top_k": 0.025501811876893044,
+            "mean_candidate_set_intersection_over_k": 0.028296044638921446
+          },
+          "10": {
+            "target_saved_code_in_source_raw_top_k": 0.04916517063975334,
+            "source_saved_code_in_target_raw_top_k": 0.049987636506557465,
+            "mean_candidate_set_intersection_over_k": 0.05464182426112479
+          }
+        },
+        "random_negative": {
+          "2": {
+            "target_saved_code_in_source_raw_top_k": 0.008144022896885872,
+            "source_saved_code_in_target_raw_top_k": 0.008353671059012413,
+            "mean_candidate_set_intersection_over_k": 0.009721759323965467
+          },
+          "5": {
+            "target_saved_code_in_source_raw_top_k": 0.020459504798054695,
+            "source_saved_code_in_target_raw_top_k": 0.020943308249115944,
+            "mean_candidate_set_intersection_over_k": 0.02393751411093073
+          },
+          "10": {
+            "target_saved_code_in_source_raw_top_k": 0.04123616963624954,
+            "source_saved_code_in_target_raw_top_k": 0.04268220439553261,
+            "mean_candidate_set_intersection_over_k": 0.04784384978443874
+          }
+        }
+      },
+      "raw_distance_candidate_definition": "Top-K codewords by Poincare distance before the corpus-level Sinkhorn balancing; balanced assignment margins are reported separately."
+    },
+    "D17_L3_geometric_compensation": {
+      "same_behavior_pair_sample_count": 200000,
+      "from": "L1-L2",
+      "to": "L1-L3",
+      "per_class_distance_changes": {
+        "positive": {
+          "angle_before_median": 0.0878285761904653,
+          "angle_after_median": 0.09187057168135201,
+          "angle_delta_after_minus_before": {
+            "min": -0.038586606481923885,
+            "q10": -0.007770162248366591,
+            "q25": -0.001973801350180035,
+            "median": 0.00430479575610878,
+            "mean": 0.004311976174585007,
+            "q75": 0.010678191728136836,
+            "q90": 0.01636279168748821,
+            "max": 0.05458965422535515
+          },
+          "share_angle_decreased": 0.32308,
+          "hyperbolic_distance_before_median": 2.455735694312942,
+          "hyperbolic_distance_after_median": 2.535521451549849,
+          "hyperbolic_distance_delta_after_minus_before": {
+            "min": -0.7611150662624546,
+            "q10": -0.13954581456369067,
+            "q25": -0.034084623733117825,
+            "median": 0.08350846207499418,
+            "mean": 0.09259578583640075,
+            "q75": 0.2105551628016329,
+            "q90": 0.33585066817493653,
+            "max": 1.1314139635258607
+          },
+          "share_hyperbolic_distance_decreased": 0.31753
+        },
+        "matched_negative": {
+          "angle_before_median": 0.11762577432811469,
+          "angle_after_median": 0.12202577745585766,
+          "angle_delta_after_minus_before": {
+            "min": -0.04003382155952706,
+            "q10": -0.007579812631305689,
+            "q25": -0.0018345252931120937,
+            "median": 0.004429344152063176,
+            "mean": 0.004445431527927168,
+            "q75": 0.01078485568334291,
+            "q90": 0.016457221187219217,
+            "max": 0.05718643533925846
+          },
+          "share_angle_decreased": 0.317215,
+          "hyperbolic_distance_before_median": 2.979848099098317,
+          "hyperbolic_distance_after_median": 3.048983326739524,
+          "hyperbolic_distance_delta_after_minus_before": {
+            "min": -0.7399229293611047,
+            "q10": -0.11341910963601838,
+            "q25": -0.025702386067452898,
+            "median": 0.06985548441023148,
+            "mean": 0.07384527868549945,
+            "q75": 0.16954102379302505,
+            "q90": 0.2660593870844559,
+            "max": 1.1200697101264394
+          },
+          "share_hyperbolic_distance_decreased": 0.31169
+        },
+        "random_negative": {
+          "angle_before_median": 0.1200535815857201,
+          "angle_after_median": 0.12486869000230479,
+          "angle_delta_after_minus_before": {
+            "min": -0.039489658610667944,
+            "q10": -0.007593914506412183,
+            "q25": -0.0016652345674329043,
+            "median": 0.00476700046529769,
+            "mean": 0.004791073165487316,
+            "q75": 0.011292644902867445,
+            "q90": 0.017169832901258918,
+            "max": 0.05994465719395137
+          },
+          "share_angle_decreased": 0.30853,
+          "hyperbolic_distance_before_median": 2.995830161831898,
+          "hyperbolic_distance_after_median": 3.068291491745545,
+          "hyperbolic_distance_delta_after_minus_before": {
+            "min": -0.6558226235027358,
+            "q10": -0.1098641921363769,
+            "q25": -0.02256640800740961,
+            "median": 0.07316957161822346,
+            "mean": 0.07793379571828042,
+            "q75": 0.17474411439137894,
+            "q90": 0.2713959208286043,
+            "max": 0.9963134922994548
+          },
+          "share_hyperbolic_distance_decreased": 0.302785
+        }
+      },
+      "positive_ranking_margin_change": {
+        "matched_negative": {
+          "angular_auc_before": 0.78644,
+          "angular_auc_after": 0.799675,
+          "angular_margin_delta_after_minus_before": {
+            "min": -0.06385744765298026,
+            "q10": -0.015343051605067286,
+            "q25": -0.007919635821115423,
+            "median": 0.00014285072598285015,
+            "mean": 0.00013345535334216078,
+            "q75": 0.008211694848437104,
+            "q90": 0.015605332172291259,
+            "max": 0.057938882832021185
+          },
+          "share_angular_margin_improved": 0.50487,
+          "hyperbolic_auc_before": 0.78866,
+          "hyperbolic_auc_after": 0.80388,
+          "hyperbolic_margin_delta_after_minus_before": {
+            "min": -1.3080733197726344,
+            "q10": -0.30296879871627624,
+            "q25": -0.1603553168042673,
+            "median": -0.014025547491079537,
+            "mean": -0.018750507150901312,
+            "q75": 0.12809872482909695,
+            "q90": 0.2591676869867505,
+            "max": 1.2396089956933798
+          },
+          "share_hyperbolic_margin_improved": 0.473725
+        },
+        "random_negative": {
+          "angular_auc_before": 0.805135,
+          "angular_auc_after": 0.820725,
+          "angular_margin_delta_after_minus_before": {
+            "min": -0.05845616858006661,
+            "q10": -0.015310788882881277,
+            "q25": -0.007743554676191023,
+            "median": 0.000511026767876354,
+            "mean": 0.0004790969909023097,
+            "q75": 0.008665276369704936,
+            "q90": 0.01619583166572616,
+            "max": 0.07707547025025847
+          },
+          "share_angular_margin_improved": 0.516615,
+          "hyperbolic_auc_before": 0.797655,
+          "hyperbolic_auc_after": 0.815305,
+          "hyperbolic_margin_delta_after_minus_before": {
+            "min": -1.27587905986872,
+            "q10": -0.29978165388640465,
+            "q25": -0.15713873453065774,
+            "median": -0.009352849440734445,
+            "mean": -0.014661990118120326,
+            "q75": 0.13229169027976162,
+            "q90": 0.26472689206370187,
+            "max": 1.1075112651968249
+          },
+          "share_hyperbolic_margin_improved": 0.48266
+        }
+      },
+      "catalog_rank_sample": {
+        "sample_sources": 1000,
+        "angular_before": {
+          "source_count": 1000,
+          "median_rank": 2556.5,
+          "mean_rank_percentile": 0.19205696331245425,
+          "hit_probability_at_k_random_tie_break": {
+            "1": 0.0,
+            "10": 0.009,
+            "50": 0.036,
+            "100": 0.057
+          }
+        },
+        "angular_after": {
+          "source_count": 1000,
+          "median_rank": 2333.5,
+          "mean_rank_percentile": 0.1763298625233873,
+          "hit_probability_at_k_random_tie_break": {
+            "1": 0.001,
+            "10": 0.007,
+            "50": 0.036,
+            "100": 0.071
+          }
+        },
+        "hyperbolic_before": {
+          "source_count": 1000,
+          "median_rank": 2702.5,
+          "mean_rank_percentile": 0.20016253152200436,
+          "hit_probability_at_k_random_tie_break": {
+            "1": 0.002,
+            "10": 0.009,
+            "50": 0.035,
+            "100": 0.058
+          }
+        },
+        "hyperbolic_after": {
+          "source_count": 1000,
+          "median_rank": 2348.0,
+          "mean_rank_percentile": 0.1828225819572114,
+          "hit_probability_at_k_random_tie_break": {
+            "1": 0.001,
+            "10": 0.008,
+            "50": 0.038,
+            "100": 0.066
+          }
+        },
+        "angular_hit_at_10_delta_after_minus_before": -0.001999999999999999,
+        "hyperbolic_hit_at_10_delta_after_minus_before": -0.0009999999999999992,
+        "hyperbolic_median_rank_delta_after_minus_before": -354.5
+      }
+    }
   }
 }

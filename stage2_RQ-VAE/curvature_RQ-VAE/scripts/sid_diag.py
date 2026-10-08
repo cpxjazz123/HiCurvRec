@@ -1,13 +1,12 @@
-"""Frozen, CPU-only audit of the latest Stage2 checkpoint and its semantic IDs.
+"""Frozen Stage2 SID and geometry diagnostics.
 
-Run from any directory with the Stage2 Python environment:
-    python3.9 stage2_RQ-VAE/curvature_RQ-VAE/scripts/sid_diag.py
-
-All inputs are read-only. Outputs are written to the unified Stage2 result tree.
+Run sid_diag.py for the CPU SID audit, or sid_diag_geometry.py for D14-D17.
+Both hardcoded runners read frozen inputs and avoid GPU contention.
 """
 from __future__ import annotations
 
 import csv
+import copy
 import hashlib
 import html
 import json
@@ -30,13 +29,16 @@ MAX_BEHAVIOUR_PAIRS = 200_000
 N_GEOMETRY_PAIRS = 100_000
 SEED = 42
 DEVICE = torch.device("cpu")
+DIAGNOSTIC_DEVICE = torch.device("cpu")
 
 sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment  # noqa: E402
 import train_rqvae as trainer  # noqa: E402
 from model import RQVAE  # noqa: E402
-from model.layers import (  # noqa: E402
+from model.layers import (
+    _expmap0_tangent,
     _hyperbolic_residual,
+    _pairwise_poincare_distance_tangents,
     _poincare_distance_tangent_pairs,
 )
 
@@ -569,6 +571,561 @@ def residual_audit(
         }
         summary["by_level"][f"L{level + 1}"] = level_summary
     return per_item_rows, summary_rows, summary
+
+
+def paired_lower_auc(left: np.ndarray, right: np.ndarray) -> float:
+    left = np.asarray(left, dtype=np.float64)
+    right = np.asarray(right, dtype=np.float64)
+    valid = np.isfinite(left) & np.isfinite(right)
+    if not valid.any():
+        return float("nan")
+    delta = left[valid] - right[valid]
+    return float(((delta < 0).sum() + 0.5 * (delta == 0).sum()) / len(delta))
+
+
+def paired_geometry_features(
+    vectors: torch.Tensor,
+    left_ids: np.ndarray,
+    right_ids: np.ndarray,
+    chunk_size: int = 40_000,
+) -> dict[str, np.ndarray]:
+    keys = (
+        "angle_radians",
+        "radial_difference",
+        "radial_cosh_term",
+        "angular_cosh_term",
+        "angular_cosh_fraction",
+        "hyperbolic_distance",
+        "euclidean_tangent_distance",
+        "angle_only_hyperbolic_distance",
+        "angle_only_euclidean_scale2",
+        "law_distance_abs_error",
+    )
+    output = {key: np.empty(len(left_ids), dtype=np.float64) for key in keys}
+    left = torch.as_tensor(left_ids, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    right = torch.as_tensor(right_ids, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    with torch.no_grad():
+        for start in range(0, len(left_ids), chunk_size):
+            stop = min(len(left_ids), start + chunk_size)
+            # Double precision prevents acosh cancellation for clipped near-boundary points.
+            x = vectors[left[start:stop]].to(torch.float64)
+            y = vectors[right[start:stop]].to(torch.float64)
+            nx = torch.linalg.vector_norm(x, dim=-1).clamp_min(1e-12)
+            ny = torch.linalg.vector_norm(y, dim=-1).clamp_min(1e-12)
+            cosine = ((x * y).sum(-1) / (nx * ny)).clamp(-1.0, 1.0)
+            angle = torch.acos(cosine)
+            x_point = _expmap0_tangent(x, 1.0)
+            y_point = _expmap0_tangent(y, 1.0)
+            point_norm_x = torch.linalg.vector_norm(x_point, dim=-1).clamp(max=1.0 - 1e-6)
+            point_norm_y = torch.linalg.vector_norm(y_point, dim=-1).clamp(max=1.0 - 1e-6)
+            rho_x, rho_y = 2.0 * torch.atanh(point_norm_x), 2.0 * torch.atanh(point_norm_y)
+            radial_term = torch.cosh(rho_x - rho_y)
+            angular_term = torch.sinh(rho_x) * torch.sinh(rho_y) * (1.0 - cosine)
+            cosh_distance = (radial_term + angular_term).clamp_min(1.0)
+            law_distance = torch.acosh(cosh_distance)
+            direct_distance = _poincare_distance_tangent_pairs(x, y, 1.0)
+            rho_mean = 0.5 * (rho_x + rho_y)
+            angle_only_cosh = (
+                torch.cosh(rho_mean).square()
+                - torch.sinh(rho_mean).square() * cosine
+            ).clamp_min(1.0)
+            output["angle_radians"][start:stop] = angle.cpu().numpy()
+            output["radial_difference"][start:stop] = torch.abs(rho_x - rho_y).cpu().numpy()
+            output["radial_cosh_term"][start:stop] = radial_term.cpu().numpy()
+            output["angular_cosh_term"][start:stop] = angular_term.cpu().numpy()
+            output["angular_cosh_fraction"][start:stop] = (
+                angular_term / cosh_distance
+            ).cpu().numpy()
+            output["hyperbolic_distance"][start:stop] = direct_distance.cpu().numpy()
+            output["euclidean_tangent_distance"][start:stop] = (
+                torch.linalg.vector_norm(x - y, dim=-1).cpu().numpy()
+            )
+            output["angle_only_hyperbolic_distance"][start:stop] = (
+                torch.acosh(angle_only_cosh).cpu().numpy()
+            )
+            output["angle_only_euclidean_scale2"][start:stop] = (
+                2.0 * rho_mean * torch.sin(angle / 2.0)
+            ).cpu().numpy()
+            output["law_distance_abs_error"][start:stop] = (
+                torch.abs(law_distance - direct_distance).cpu().numpy()
+            )
+    return output
+
+
+def catalog_rank_and_neighbors(
+    vectors: torch.Tensor,
+    source_ids: np.ndarray,
+    target_ids: np.ndarray,
+    metric: str,
+    top_k: int = 100,
+    batch_size: int = 32,
+) -> tuple[dict[str, Any], np.ndarray]:
+    sources = torch.as_tensor(source_ids, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    targets = torch.as_tensor(target_ids, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    ranks = np.empty(len(source_ids), dtype=np.float64)
+    hit_probabilities = {
+        k: np.empty(len(source_ids), dtype=np.float64) for k in (1, 10, 50, 100)
+    }
+    neighbor_ids = np.empty((len(source_ids), min(top_k, vectors.shape[0] - 1)), dtype=np.int64)
+    normalized = None
+    if metric == "angle":
+        normalized = vectors / torch.linalg.vector_norm(
+            vectors, dim=-1, keepdim=True
+        ).clamp_min(1e-12)
+    elif metric != "hyperbolic":
+        raise ValueError(f"Unsupported catalog metric: {metric}")
+    candidate_count = vectors.shape[0] - 1
+    with torch.no_grad():
+        for start in range(0, len(source_ids), batch_size):
+            stop = min(len(source_ids), start + batch_size)
+            query = sources[start:stop]
+            if metric == "angle":
+                score = normalized[query] @ normalized.T
+                score[torch.arange(stop - start, device=DIAGNOSTIC_DEVICE), query] = -torch.inf
+                target_score = (normalized[query] * normalized[targets[start:stop]]).sum(-1)
+                better = score > target_score.unsqueeze(-1)
+                equal = score == target_score.unsqueeze(-1)
+                top = torch.topk(score, k=neighbor_ids.shape[1], dim=-1, largest=True).indices
+            else:
+                score = _pairwise_poincare_distance_tangents(
+                    vectors[query], vectors, 1.0
+                )
+                score[torch.arange(stop - start, device=DIAGNOSTIC_DEVICE), query] = torch.inf
+                target_score = score.gather(
+                    1, targets[start:stop, None]
+                ).squeeze(1)
+                better = score < target_score.unsqueeze(-1)
+                equal = score == target_score.unsqueeze(-1)
+                top = torch.topk(score, k=neighbor_ids.shape[1], dim=-1, largest=False).indices
+            less_count = better.sum(-1)
+            equal_count = equal.sum(-1).clamp_min(1)
+            ranks[start:stop] = (
+                less_count.to(torch.float64)
+                + (equal_count.to(torch.float64) + 1.0) / 2.0
+            ).cpu().numpy()
+            for k in hit_probabilities:
+                remaining = (k - less_count).clamp_min(0).to(torch.float64)
+                hit_probabilities[k][start:stop] = (
+                    torch.minimum(remaining, equal_count) / equal_count
+                ).cpu().numpy()
+            neighbor_ids[start:stop] = top.cpu().numpy()
+    return {
+        "source_count": int(len(source_ids)),
+        "median_rank": float(np.median(ranks)),
+        "mean_rank_percentile": float(np.mean(ranks / candidate_count)),
+        "hit_probability_at_k_random_tie_break": {
+            str(k): float(np.mean(values)) for k, values in hit_probabilities.items()
+        },
+    }, neighbor_ids
+
+
+def d14_d17_diagnostics(
+    model: RQVAE,
+    encoder_inputs: torch.Tensor,
+    tokens: np.ndarray,
+    pair_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    free_bytes = total_bytes = 0
+    if DIAGNOSTIC_DEVICE.type == "cuda":
+        free_bytes, total_bytes = torch.cuda.mem_get_info(DIAGNOSTIC_DEVICE)
+        if free_bytes < 8 * 1024**3:
+            raise RuntimeError(
+                f"{DIAGNOSTIC_DEVICE} has only {free_bytes / 1024**3:.2f} GiB free; refusing to compete"
+            )
+    analysis_model = copy.deepcopy(model).to(DIAGNOSTIC_DEVICE).eval()
+    input_tensor = encoder_inputs.to(DIAGNOSTIC_DEVICE)
+    tokens_gpu = torch.as_tensor(tokens, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    with torch.no_grad():
+        encoded = analysis_model.encoder(input_tensor)
+        reproduced, _ = analysis_model.rq.get_indices_with_stats(encoded)
+    sid_mismatches = {
+        f"L{level + 1}": int((reproduced[:, level] != tokens_gpu[:, level]).sum().item())
+        for level in range(3)
+    }
+
+    representations: dict[str, torch.Tensor] = {"Encoder": encoded}
+    residual = encoded.detach().clone()
+    cumulative = torch.zeros(
+        len(tokens), analysis_model.rq.codebook_dim,
+        device=DIAGNOSTIC_DEVICE, dtype=encoded.dtype,
+    )
+    with torch.no_grad():
+        for level, layer in enumerate(analysis_model.rq.vq_layers):
+            curvature = layer.get_curvature()
+            source = residual
+            code_ids = tokens_gpu[:, level]
+            if analysis_model.rq.working_radii[level] == 0.0:
+                code = layer.embed_code(code_ids)
+                cumulative = cumulative + code
+                residual = _hyperbolic_residual(source, code, curvature)
+            else:
+                target_norm = analysis_model.rq._radius_for_level(level, curvature, source)
+                pinned = analysis_model.rq._pin_to_radius(source, target_norm)
+                code = layer.embed_code(code_ids)
+                contribution = analysis_model.rq._restore_norm(code, source, target_norm)
+                cumulative = cumulative + contribution
+                residual = analysis_model.rq._restore_norm(
+                    _hyperbolic_residual(pinned, code, curvature),
+                    source, target_norm,
+                )
+            representations[f"L1-L{level + 1}"] = cumulative.clone()
+
+    pair_frame = pd.DataFrame(pair_rows)
+    pair_frame = pair_frame[
+        pair_frame["source_item"] != pair_frame["positive_successor"]
+    ].reset_index(drop=True)
+    pair_arrays = {
+        "source": pair_frame["source_item"].to_numpy(dtype=np.int64),
+        "positive": pair_frame["positive_successor"].to_numpy(dtype=np.int64),
+        "matched_negative": pair_frame["matched_negative"].to_numpy(dtype=np.int64),
+        "random_negative": pair_frame["random_negative"].to_numpy(dtype=np.int64),
+    }
+    classes = ("positive", "matched_negative", "random_negative")
+    representation_names = ("Encoder", "L1-L1", "L1-L2", "L1-L3")
+    pair_features: dict[str, dict[str, dict[str, np.ndarray]]] = {}
+    for name in representation_names:
+        pair_features[name] = {}
+        for pair_class in classes:
+            pair_features[name][pair_class] = paired_geometry_features(
+                representations[name], pair_arrays["source"], pair_arrays[pair_class]
+            )
+
+    unshared_mask = pair_frame["positive_lcp"].to_numpy(dtype=np.int8) == 0
+    all_rank_sample = (
+        pair_frame.sample(frac=1.0, random_state=SEED)
+        .drop_duplicates("source_item", keep="first")
+        .head(1_000)
+        .reset_index(drop=True)
+    )
+    rank_sources = all_rank_sample["source_item"].to_numpy(dtype=np.int64)
+    rank_targets = all_rank_sample["positive_successor"].to_numpy(dtype=np.int64)
+
+    d14: dict[str, Any] = {"pair_count": int(len(pair_frame)), "by_representation": {}}
+    angular_ranks: dict[str, dict[str, Any]] = {}
+    angular_neighbors: dict[str, np.ndarray] = {}
+    for name in representation_names:
+        positive = pair_features[name]["positive"]["angle_radians"]
+        matched = pair_features[name]["matched_negative"]["angle_radians"]
+        random = pair_features[name]["random_negative"]["angle_radians"]
+        unshared_positive = positive[unshared_mask]
+        unshared_matched = matched[unshared_mask]
+        positive_change = positive - pair_features["Encoder"]["positive"]["angle_radians"]
+        rank_summary, neighbor_ids = catalog_rank_and_neighbors(
+            representations[name], rank_sources, rank_targets, "angle"
+        )
+        angular_ranks[name] = rank_summary
+        angular_neighbors[name] = neighbor_ids
+        d14["by_representation"][name] = {
+            "positive_angle_radians": percentile_summary(positive),
+            "matched_negative_angle_radians": percentile_summary(matched),
+            "random_negative_angle_radians": percentile_summary(random),
+            "paired_auc_positive_closer_than_matched": paired_lower_auc(positive, matched),
+            "paired_auc_positive_closer_than_random": paired_lower_auc(positive, random),
+            "l1_unshared_positive_auc_vs_matched": paired_lower_auc(
+                unshared_positive, unshared_matched
+            ),
+            "positive_angle_change_vs_encoder": percentile_summary(positive_change),
+            "share_positive_angle_decreased_vs_encoder": float((positive_change < 0).mean()),
+            "angular_positive_target_catalog_rank_sample": rank_summary,
+        }
+    d14["angular_neighborhood_retention_vs_encoder"] = {}
+    base_neighbors = angular_neighbors["Encoder"]
+    for name in representation_names:
+        d14["angular_neighborhood_retention_vs_encoder"][name] = {}
+        for k in (10, 50, 100):
+            intersection_sizes = np.fromiter(
+                (
+                    len(np.intersect1d(base_neighbors[row, :k], angular_neighbors[name][row, :k]))
+                    for row in range(len(base_neighbors))
+                ),
+                dtype=np.int64,
+                count=len(base_neighbors),
+            )
+            d14["angular_neighborhood_retention_vs_encoder"][name][str(k)] = {
+                "mean_recall": float(np.mean(intersection_sizes / k)),
+                "mean_jaccard": float(np.mean(intersection_sizes / (2 * k - intersection_sizes))),
+            }
+
+    d15: dict[str, Any] = {
+        "curvature": 1.0,
+        "exact_cosh_decomposition": (
+            "cosh(d_H)=cosh(r_i-r_j)+sinh(r_i)*sinh(r_j)*(1-cos(theta)); "
+            "the angular term is coupled to both radii."
+        ),
+        "by_representation": {},
+    }
+    for name in representation_names:
+        feature = pair_features[name]
+        d15["by_representation"][name] = {
+            "pair_medians": {
+                pair_class: {
+                    key: float(np.median(feature[pair_class][key]))
+                    for key in (
+                        "radial_difference",
+                        "angle_radians",
+                        "radial_cosh_term",
+                        "angular_cosh_term",
+                        "angular_cosh_fraction",
+                        "hyperbolic_distance",
+                        "euclidean_tangent_distance",
+                        "angle_only_hyperbolic_distance",
+                        "angle_only_euclidean_scale2",
+                    )
+                }
+                for pair_class in classes
+            },
+            "positive_vs_matched_auc": {
+                "hyperbolic": paired_lower_auc(
+                    feature["positive"]["hyperbolic_distance"],
+                    feature["matched_negative"]["hyperbolic_distance"],
+                ),
+                "tangent_euclidean": paired_lower_auc(
+                    feature["positive"]["euclidean_tangent_distance"],
+                    feature["matched_negative"]["euclidean_tangent_distance"],
+                ),
+                "angle_only_hyperbolic": paired_lower_auc(
+                    feature["positive"]["angle_only_hyperbolic_distance"],
+                    feature["matched_negative"]["angle_only_hyperbolic_distance"],
+                ),
+                "angle_only_euclidean_scale2": paired_lower_auc(
+                    feature["positive"]["angle_only_euclidean_scale2"],
+                    feature["matched_negative"]["angle_only_euclidean_scale2"],
+                ),
+            },
+            "max_law_of_cosines_vs_direct_distance_error": float(
+                np.max(feature["positive"]["law_distance_abs_error"])
+            ),
+        }
+
+    l1_layer = analysis_model.rq.vq_layers[0]
+    with torch.no_grad():
+        if analysis_model.rq.working_radii[0] == 0.0:
+            l1_frame = encoded
+        else:
+            l1_curvature = l1_layer.get_curvature()
+            l1_target_norm = analysis_model.rq._radius_for_level(
+                0, l1_curvature, encoded
+            )
+            l1_frame = analysis_model.rq._pin_to_radius(encoded, l1_target_norm)
+        l1_distances = l1_layer._distances(l1_frame)
+        l1_probabilities = l1_layer._balanced_assignments(l1_distances)
+        l1_assignment = l1_probabilities.argmax(-1)
+        raw_nearest_values, raw_nearest_codes = torch.topk(
+            l1_distances, k=10, dim=-1, largest=False, sorted=True
+        )
+        sinkhorn_top_values, _ = torch.topk(
+            l1_probabilities, k=2, dim=-1, largest=True, sorted=True
+        )
+        local_top2_gap = sinkhorn_top_values[:, 0] - sinkhorn_top_values[:, 1]
+        raw_gap = raw_nearest_values[:, 1] - raw_nearest_values[:, 0]
+        saved_probability = l1_probabilities.gather(
+            1, tokens_gpu[:, 0, None]
+        ).squeeze(1)
+        competing_probability = l1_probabilities.clone()
+        competing_probability.scatter_(1, tokens_gpu[:, 0, None], -torch.inf)
+        saved_probability_gap = saved_probability - competing_probability.max(-1).values
+        assigned_distance = l1_distances.gather(1, tokens_gpu[:, 0, None]).squeeze(1)
+        assigned_distance_rank = (
+            (l1_distances < assigned_distance.unsqueeze(-1)).sum(-1) + 1
+        )
+    saved_margin_cpu = saved_probability_gap.cpu().numpy()
+    local_margin_cpu = local_top2_gap.cpu().numpy()
+    raw_gap_cpu = raw_gap.cpu().numpy()
+    rank_cpu = assigned_distance_rank.cpu().numpy()
+    src_unshared = pair_arrays["source"][unshared_mask]
+    targets_unshared = {
+        pair_class: pair_arrays[pair_class][unshared_mask]
+        for pair_class in classes
+    }
+    src_unshared_gpu = torch.as_tensor(src_unshared, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+    targets_unshared_gpu = {
+        pair_class: torch.as_tensor(target_ids, device=DIAGNOSTIC_DEVICE, dtype=torch.long)
+        for pair_class, target_ids in targets_unshared.items()
+    }
+    d16: dict[str, Any] = {
+        "l1_unshared_positive_pair_count": int(unshared_mask.sum()),
+        "local_assignment_mismatches_vs_saved": int(
+            (l1_assignment != tokens_gpu[:, 0]).sum().item()
+        ),
+        "local_assignment_mismatches_vs_cpu_full_reencoding": int(
+            (l1_assignment != reproduced[:, 0]).sum().item()
+        ),
+        "positive_target_vs_control_boundary_proximity": {},
+        "positive_vs_control_candidate_proximity": {},
+    }
+    for pair_class in ("positive", "matched_negative", "random_negative"):
+        target_ids = targets_unshared[pair_class]
+        saved_gap = saved_margin_cpu[target_ids]
+        d16["positive_target_vs_control_boundary_proximity"][pair_class] = {
+            "saved_code_probability_gap_signed": percentile_summary(saved_gap),
+            "absolute_saved_code_probability_gap": percentile_summary(np.abs(saved_gap)),
+            "local_sinkhorn_top1_top2_probability_gap": percentile_summary(
+                local_margin_cpu[target_ids]
+            ),
+            "nearest_codeword_distance_gap": percentile_summary(raw_gap_cpu[target_ids]),
+            "saved_assignment_rank_in_raw_distance_order": percentile_summary(rank_cpu[target_ids]),
+        }
+    for control in ("matched_negative", "random_negative"):
+        positive_ids = targets_unshared["positive"]
+        negative_ids = targets_unshared[control]
+        d16["positive_target_vs_control_boundary_proximity"][f"positive_closer_to_boundary_than_{control}"] = {
+            "absolute_saved_code_gap_lower_is_closer_fraction": paired_lower_auc(
+                np.abs(saved_margin_cpu[positive_ids]),
+                np.abs(saved_margin_cpu[negative_ids]),
+            ),
+            "local_top2_gap_lower_is_closer_fraction": paired_lower_auc(
+                local_margin_cpu[positive_ids], local_margin_cpu[negative_ids]
+            ),
+            "nearest_distance_gap_lower_is_closer_fraction": paired_lower_auc(
+                raw_gap_cpu[positive_ids], raw_gap_cpu[negative_ids]
+            ),
+        }
+    with torch.no_grad():
+        candidate_metrics: dict[str, Any] = {}
+        for pair_class in classes:
+            target_ids = targets_unshared[pair_class]
+            candidate_metrics[pair_class] = {}
+            for k in (2, 5, 10):
+                target_ids_gpu = targets_unshared_gpu[pair_class]
+                source_candidates = raw_nearest_codes[src_unshared_gpu, :k]
+                target_candidates = raw_nearest_codes[target_ids_gpu, :k]
+                assigned_target_code = tokens_gpu[target_ids_gpu, 0]
+                assigned_source_code = tokens_gpu[src_unshared_gpu, 0]
+                overlap_counts = []
+                for start in range(0, len(src_unshared), 20_000):
+                    stop = min(len(src_unshared), start + 20_000)
+                    matches = (
+                        source_candidates[start:stop, :, None]
+                        == target_candidates[start:stop, None, :]
+                    )
+                    overlap_counts.append(matches.any(-1).sum(-1).cpu().numpy())
+                overlap = np.concatenate(overlap_counts) if overlap_counts else np.array([], dtype=np.int64)
+                candidate_metrics[pair_class][str(k)] = {
+                    "target_saved_code_in_source_raw_top_k": float(
+                        (source_candidates == assigned_target_code[:, None]).any(-1).float().mean().cpu()
+                    ),
+                    "source_saved_code_in_target_raw_top_k": float(
+                        (target_candidates == assigned_source_code[:, None]).any(-1).float().mean().cpu()
+                    ),
+                    "mean_candidate_set_intersection_over_k": float(np.mean(overlap / k)) if len(overlap) else 0.0,
+                }
+        d16["positive_vs_control_candidate_proximity"] = candidate_metrics
+    d16["raw_distance_candidate_definition"] = (
+        "Top-K codewords by Poincare distance before the corpus-level Sinkhorn balancing; "
+        "balanced assignment margins are reported separately."
+    )
+
+    before_name, after_name = "L1-L2", "L1-L3"
+    d17: dict[str, Any] = {
+        "same_behavior_pair_sample_count": int(len(pair_frame)),
+        "from": before_name,
+        "to": after_name,
+        "per_class_distance_changes": {},
+    }
+    for pair_class in classes:
+        before = pair_features[before_name][pair_class]
+        after = pair_features[after_name][pair_class]
+        angle_delta = after["angle_radians"] - before["angle_radians"]
+        distance_delta = after["hyperbolic_distance"] - before["hyperbolic_distance"]
+        d17["per_class_distance_changes"][pair_class] = {
+            "angle_before_median": float(np.median(before["angle_radians"])),
+            "angle_after_median": float(np.median(after["angle_radians"])),
+            "angle_delta_after_minus_before": percentile_summary(angle_delta),
+            "share_angle_decreased": float((angle_delta < 0).mean()),
+            "hyperbolic_distance_before_median": float(np.median(before["hyperbolic_distance"])),
+            "hyperbolic_distance_after_median": float(np.median(after["hyperbolic_distance"])),
+            "hyperbolic_distance_delta_after_minus_before": percentile_summary(distance_delta),
+            "share_hyperbolic_distance_decreased": float((distance_delta < 0).mean()),
+        }
+    d17["positive_ranking_margin_change"] = {}
+    for negative_class in ("matched_negative", "random_negative"):
+        before_angle_margin = (
+            pair_features[before_name][negative_class]["angle_radians"]
+            - pair_features[before_name]["positive"]["angle_radians"]
+        )
+        after_angle_margin = (
+            pair_features[after_name][negative_class]["angle_radians"]
+            - pair_features[after_name]["positive"]["angle_radians"]
+        )
+        before_h_margin = (
+            pair_features[before_name][negative_class]["hyperbolic_distance"]
+            - pair_features[before_name]["positive"]["hyperbolic_distance"]
+        )
+        after_h_margin = (
+            pair_features[after_name][negative_class]["hyperbolic_distance"]
+            - pair_features[after_name]["positive"]["hyperbolic_distance"]
+        )
+        d17["positive_ranking_margin_change"][negative_class] = {
+            "angular_auc_before": paired_lower_auc(
+                pair_features[before_name]["positive"]["angle_radians"],
+                pair_features[before_name][negative_class]["angle_radians"],
+            ),
+            "angular_auc_after": paired_lower_auc(
+                pair_features[after_name]["positive"]["angle_radians"],
+                pair_features[after_name][negative_class]["angle_radians"],
+            ),
+            "angular_margin_delta_after_minus_before": percentile_summary(
+                after_angle_margin - before_angle_margin
+            ),
+            "share_angular_margin_improved": float(
+                ((after_angle_margin - before_angle_margin) > 0).mean()
+            ),
+            "hyperbolic_auc_before": paired_lower_auc(
+                pair_features[before_name]["positive"]["hyperbolic_distance"],
+                pair_features[before_name][negative_class]["hyperbolic_distance"],
+            ),
+            "hyperbolic_auc_after": paired_lower_auc(
+                pair_features[after_name]["positive"]["hyperbolic_distance"],
+                pair_features[after_name][negative_class]["hyperbolic_distance"],
+            ),
+            "hyperbolic_margin_delta_after_minus_before": percentile_summary(
+                after_h_margin - before_h_margin
+            ),
+            "share_hyperbolic_margin_improved": float(
+                ((after_h_margin - before_h_margin) > 0).mean()
+            ),
+        }
+    hyperbolic_rank_before, _ = catalog_rank_and_neighbors(
+        representations[before_name], rank_sources, rank_targets, "hyperbolic"
+    )
+    hyperbolic_rank_after, _ = catalog_rank_and_neighbors(
+        representations[after_name], rank_sources, rank_targets, "hyperbolic"
+    )
+    d17["catalog_rank_sample"] = {
+        "sample_sources": int(len(rank_sources)),
+        "angular_before": angular_ranks[before_name],
+        "angular_after": angular_ranks[after_name],
+        "hyperbolic_before": hyperbolic_rank_before,
+        "hyperbolic_after": hyperbolic_rank_after,
+        "angular_hit_at_10_delta_after_minus_before": (
+            angular_ranks[after_name]["hit_probability_at_k_random_tie_break"]["10"]
+            - angular_ranks[before_name]["hit_probability_at_k_random_tie_break"]["10"]
+        ),
+        "hyperbolic_hit_at_10_delta_after_minus_before": (
+            hyperbolic_rank_after["hit_probability_at_k_random_tie_break"]["10"]
+            - hyperbolic_rank_before["hit_probability_at_k_random_tie_break"]["10"]
+        ),
+        "hyperbolic_median_rank_delta_after_minus_before": (
+            hyperbolic_rank_after["median_rank"] - hyperbolic_rank_before["median_rank"]
+        ),
+    }
+    del analysis_model, input_tensor, encoded, representations, l1_distances, l1_probabilities
+    if DIAGNOSTIC_DEVICE.type == "cuda":
+        torch.cuda.synchronize(DIAGNOSTIC_DEVICE)
+    return {
+        "device": str(DIAGNOSTIC_DEVICE),
+        "free_gib_before": (
+            free_bytes / 1024**3 if DIAGNOSTIC_DEVICE.type == "cuda" else None
+        ),
+        "total_gib": (
+            total_bytes / 1024**3 if DIAGNOSTIC_DEVICE.type == "cuda" else None
+        ),
+        "local_reencoding_mismatches_vs_saved": sid_mismatches,
+        "D14_angular_loss_and_neighborhood_retention": d14,
+        "D15_hyperbolic_radial_angular_coupling": d15,
+        "D16_L1_assignment_boundary": d16,
+        "D17_L3_geometric_compensation": d17,
+    }
 
 
 def main() -> None:
