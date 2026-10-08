@@ -1,8 +1,8 @@
-"""Build a train-only item hierarchy from directed user transitions.
+"""Build train-only multi-scale item hierarchies from user transitions.
 
-No catalogue labels, item text, or Semantic IDs participate in this hierarchy.
-The user split is by user ID, so the held-out transition edges are independent
-of the profiles and clusters used to construct the tree.
+No catalogue labels, item text, or Semantic IDs participate in the hierarchy.
+Users are split before fitting transition profiles so fit and heldout trees are
+derived from disjoint behavior records.
 """
 
 from __future__ import annotations
@@ -52,27 +52,28 @@ class BehaviorHierarchy:
 
 
 def _cluster_behavior_profiles(
-    behavior: np.ndarray,
+    coarse_behavior: np.ndarray,
+    fine_behavior: np.ndarray,
     n_coarse: int,
     children_per_coarse: int,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, list[int]]:
-    coarse_labels = _fit_kmeans(behavior, n_coarse, seed)
+    coarse_labels = _fit_kmeans(coarse_behavior, n_coarse, seed)
     coarse_values = np.unique(coarse_labels)
     coarse_remap = {int(label): index for index, label in enumerate(coarse_values)}
     item_coarse = np.fromiter(
         (coarse_remap[int(label)] for label in coarse_labels),
         dtype=np.int32,
-        count=len(behavior),
+        count=len(coarse_behavior),
     )
 
-    item_fine = np.full(len(behavior), -1, dtype=np.int32)
+    item_fine = np.full(len(fine_behavior), -1, dtype=np.int32)
     fine_parent: list[int] = []
     next_fine = 0
     for coarse_id in range(len(coarse_values)):
         members = np.flatnonzero(item_coarse == coarse_id)
         local = _fit_kmeans(
-            behavior[members],
+            fine_behavior[members],
             min(children_per_coarse, len(members)),
             seed + 104729 * (coarse_id + 1),
         )
@@ -87,9 +88,11 @@ def _cluster_behavior_profiles(
 
 
 def transition_records(
-    frame: pd.DataFrame, n_items: int
+    frame: pd.DataFrame, n_items: int, *, lag: int = 1
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Extract directed transitions and their user IDs."""
+    """Extract directed user transitions at the requested history lag."""
+    if lag < 1:
+        raise ValueError("Transition lag must be positive")
     sources: list[int] = []
     targets: list[int] = []
     users: list[int] = []
@@ -98,9 +101,9 @@ def transition_records(
         frame["seen_history"].to_numpy(),
         frame["target"].to_numpy(dtype=np.int64),
     ):
-        if history is None or len(history) == 0:
+        if history is None or len(history) < lag:
             continue
-        source = int(history[-1])
+        source = int(history[-lag])
         target = int(target)
         if not (0 <= source < n_items and 0 <= target < n_items):
             raise ValueError(f"Transition item ID outside catalogue: {source}->{target}")
@@ -150,12 +153,12 @@ def build_behavior_hierarchy(
     behavior_user_fraction: float = 0.8,
     svd_dim: int = 64,
 ) -> BehaviorHierarchy:
-    """Fit a three-level interest tree from a user-disjoint transition split.
+    """Fit a user-disjoint hierarchy with coarse lag-2 and fine lag-1 profiles.
 
-    Item profiles concatenate TF-IDF-weighted outgoing and incoming transition
-    distributions. A 64-D randomized SVD supplies the features for recursive
-    K-means. The hierarchy is therefore determined by observed behavior; text
-    embeddings are intentionally absent from this function.
+    Both scales use TF-IDF-weighted incoming and outgoing transitions with
+    separate 64-D SVDs. Fit users determine the profile transforms; heldout
+    users supply an independently constructed hierarchy for generalization
+    checks. Text and Semantic IDs are absent.
     """
     if not 0.0 < behavior_user_fraction < 1.0:
         raise ValueError("behavior_user_fraction must be strictly between 0 and 1")
@@ -175,6 +178,14 @@ def build_behavior_hierarchy(
     )
     if len(fit_sources) == 0 or len(heldout_sources) == 0:
         raise ValueError("User-disjoint behavior split has an empty transition side")
+    fit_lag2_sources, fit_lag2_targets, _ = transition_records(
+        fit_frame, n_items, lag=2
+    )
+    heldout_lag2_sources, heldout_lag2_targets, _ = transition_records(
+        heldout_frame, n_items, lag=2
+    )
+    if len(fit_lag2_sources) == 0 or len(heldout_lag2_sources) == 0:
+        raise ValueError("User-disjoint split has an empty lag-2 transition side")
 
     counts = coo_matrix(
         (np.ones(len(fit_sources), dtype=np.float32), (fit_sources, fit_targets)),
@@ -188,6 +199,24 @@ def build_behavior_hierarchy(
         dtype=np.float32,
     ).tocsr()
     heldout_counts.sum_duplicates()
+    lag2_counts = coo_matrix(
+        (
+            np.ones(len(fit_lag2_sources), dtype=np.float32),
+            (fit_lag2_sources, fit_lag2_targets),
+        ),
+        shape=(n_items, n_items),
+        dtype=np.float32,
+    ).tocsr()
+    lag2_counts.sum_duplicates()
+    heldout_lag2_counts = coo_matrix(
+        (
+            np.ones(len(heldout_lag2_sources), dtype=np.float32),
+            (heldout_lag2_sources, heldout_lag2_targets),
+        ),
+        shape=(n_items, n_items),
+        dtype=np.float32,
+    ).tocsr()
+    heldout_lag2_counts.sum_duplicates()
     heldout_degree = (
         np.asarray(heldout_counts.sum(axis=0)).ravel()
         + np.asarray(heldout_counts.sum(axis=1)).ravel()
@@ -196,6 +225,12 @@ def build_behavior_hierarchy(
     outgoing_tfidf = TfidfTransformer(norm="l2", sublinear_tf=True).fit(counts)
     incoming_tfidf = TfidfTransformer(norm="l2", sublinear_tf=True).fit(
         counts.T.tocsr()
+    )
+    lag2_outgoing_tfidf = TfidfTransformer(norm="l2", sublinear_tf=True).fit(
+        lag2_counts
+    )
+    lag2_incoming_tfidf = TfidfTransformer(norm="l2", sublinear_tf=True).fit(
+        lag2_counts.T.tocsr()
     )
     profiles = hstack(
         (
@@ -211,6 +246,20 @@ def build_behavior_hierarchy(
         ),
         format="csr",
     )
+    coarse_profiles = hstack(
+        (
+            lag2_outgoing_tfidf.transform(lag2_counts),
+            lag2_incoming_tfidf.transform(lag2_counts.T.tocsr()),
+        ),
+        format="csr",
+    )
+    heldout_coarse_profiles = hstack(
+        (
+            lag2_outgoing_tfidf.transform(heldout_lag2_counts),
+            lag2_incoming_tfidf.transform(heldout_lag2_counts.T.tocsr()),
+        ),
+        format="csr",
+    )
     actual_svd_dim = min(svd_dim, n_items - 1, profiles.shape[1] - 1)
     if actual_svd_dim < 2:
         raise ValueError(f"Behavior transition matrix rank is too small: {actual_svd_dim}")
@@ -219,14 +268,40 @@ def build_behavior_hierarchy(
         n_iter=7,
         random_state=seed,
     )
+    coarse_svd = TruncatedSVD(
+        n_components=actual_svd_dim,
+        n_iter=7,
+        random_state=seed,
+    )
     behavior = svd.fit_transform(profiles).astype(np.float32, copy=False)
     heldout_behavior = svd.transform(heldout_profiles).astype(np.float32, copy=False)
-    for coordinates in (behavior, heldout_behavior):
+    coarse_behavior = coarse_svd.fit_transform(coarse_profiles).astype(
+        np.float32, copy=False
+    )
+    heldout_coarse_behavior = coarse_svd.transform(heldout_coarse_profiles).astype(
+        np.float32, copy=False
+    )
+    for coordinates in (
+        behavior,
+        heldout_behavior,
+        coarse_behavior,
+        heldout_coarse_behavior,
+    ):
         norms = np.linalg.norm(coordinates, axis=1, keepdims=True)
         coordinates /= np.maximum(norms, np.finfo(np.float32).tiny)
+    lag2_degree = np.asarray(lag2_counts.sum(axis=0)).ravel() + np.asarray(
+        lag2_counts.sum(axis=1)
+    ).ravel()
+    heldout_lag2_degree = np.asarray(heldout_lag2_counts.sum(axis=0)).ravel() + np.asarray(
+        heldout_lag2_counts.sum(axis=1)
+    ).ravel()
+    coarse_behavior[lag2_degree == 0] = behavior[lag2_degree == 0]
+    heldout_coarse_behavior[heldout_lag2_degree == 0] = heldout_behavior[
+        heldout_lag2_degree == 0
+    ]
 
     item_coarse, item_fine, fine_parent = _cluster_behavior_profiles(
-        behavior, n_coarse, children_per_coarse, seed
+        coarse_behavior, behavior, n_coarse, children_per_coarse, seed
     )
     heldout_item_coarse = np.full(n_items, -1, dtype=np.int32)
     heldout_item_fine = np.full(n_items, -1, dtype=np.int32)
@@ -235,6 +310,7 @@ def build_behavior_hierarchy(
         heldout_item_fine[heldout_behavior_covered],
         heldout_fine_parent,
     ) = _cluster_behavior_profiles(
+        heldout_coarse_behavior[heldout_behavior_covered],
         heldout_behavior[heldout_behavior_covered],
         n_coarse,
         children_per_coarse,
