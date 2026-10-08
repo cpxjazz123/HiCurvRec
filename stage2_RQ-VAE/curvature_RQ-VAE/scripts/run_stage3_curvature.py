@@ -25,7 +25,7 @@ trainer.CODE_PATH = (
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
     "curvature_RQ-VAE/item_sids.json"
 )
-trainer.RQVAE_VARIANT = "curvature_l1_residual_behavior_preservation"
+trainer.RQVAE_VARIANT = "curvature_poincare_fixed_curvature"
 trainer.LOG_PATH = (
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/"
     "curvature_RQ-VAE/logs/"

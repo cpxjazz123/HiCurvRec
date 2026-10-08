@@ -652,33 +652,6 @@ class RQLayer(nn.Module):
             torch.finfo(mapped.dtype).tiny
         ))
 
-    def first_level_codeword_contribution(
-        self, x: torch.Tensor
-    ) -> torch.Tensor:
-        """Return the differentiable L1 prefix using the training assignment.
-
-        Assignment is discrete, as in the residual forward pass; embedding the
-        selected codeword directly preserves codebook gradients. The pinned
-        path restores the source norm exactly as ``forward`` does.
-        """
-        level = 0
-        layer = self.vq_layers[level]
-        curvature = layer.get_curvature()
-        target_norm: torch.Tensor | None = None
-        if self.working_radii[level] == 0.0:
-            assignment_input = x
-        else:
-            target_norm = self._radius_for_level(level, curvature, x)
-            assignment_input = self._pin_to_radius(x, target_norm)
-        with torch.no_grad():
-            indices = layer._indices(
-                layer._distances(assignment_input), infer_use_sk=False
-            )
-        contribution = layer.embed_code(indices)
-        if target_norm is not None:
-            contribution = self._restore_norm(contribution, x, target_norm)
-        return contribution
-
     def forward(
         self,
         x: torch.Tensor,
