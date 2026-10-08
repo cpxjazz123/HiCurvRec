@@ -1,8 +1,9 @@
-"""Train a fixed-curvature product-Poincare RQ-VAE (4-card DDP).
+"""Train a hyperbolic RQ-VAE in the Poincare ball (4-card DDP).
 
-The 32-D representation is a product of four independent curvature-1
-Poincare factors. Stage2 preserves TIGER's budget and reports descriptive SID
-metrics without using them as training gates.
+Pure hyperbolic quantization at a fixed per-level curvature: encoder,
+Poincare codebook assignment via balanced Sinkhorn, residual subtraction in
+the ball, and Möbius-style reconstruction. The Stage2 budget matches the
+TIGER baseline exactly; descriptive SID metrics never stop training.
 """
 
 from __future__ import annotations
@@ -49,7 +50,6 @@ HIDDEN_SIZES = (512, 256, 128)
 CODEBOOK_NUM = 3
 CODEBOOK_SIZE = (256, 256, 256)
 CODEBOOK_DIM = 32
-PRODUCT_POINCARE_FACTORS = 4
 BETA = 0.25
 VQ_TYPE = "vq"
 EMA_DECAY = 0.99
@@ -334,7 +334,6 @@ def _tokenizer_config() -> SimpleNamespace:
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
         pin_in_s_coordinates=PIN_IN_S_COORDINATES,
-        product_poincare_factors=PRODUCT_POINCARE_FACTORS,
     )
 
 
@@ -430,16 +429,15 @@ def main() -> None:
     layer_working_radii = [float(v) for v in raw_module.rq.get_working_radii()]
     if rank == 0:
         print(
-            f"[product-Poincare] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
+            f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
             f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"radius={layer_working_radii} "
-            f"product_factors={PRODUCT_POINCARE_FACTORS}",
+            f"radius={layer_working_radii}",
             flush=True,
         )
         _record(
-            rank, "train_start", geometry="product_poincare_fixed_curvature",
+            rank, "train_start", geometry="poincare_fixed_curvature",
             cold_start=True,
             checkpoint_loaded=False,
             initialization="xavier_encoder_decoder_then_kmeans_codebooks",
@@ -457,7 +455,6 @@ def main() -> None:
             train_target_items=len(train_embeddings), embedding_shape=list(embeddings.shape),
             world_size=world_size,
             layer_curvatures=layer_curvatures,
-            product_poincare_factors=PRODUCT_POINCARE_FACTORS,
             layer_working_radii=layer_working_radii,
             behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
             behaviour_margin=BEHAVIOUR_MARGIN,
@@ -523,7 +520,6 @@ def main() -> None:
                 negatives,
                 curvature=layer_curvatures[0],
                 margin=BEHAVIOUR_MARGIN,
-                product_factors=PRODUCT_POINCARE_FACTORS,
             )
             loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
             interval_behaviour_sum += float(ranking_loss.detach())
