@@ -50,25 +50,24 @@ def _sample_roles(
         picks = rng.integers(0, len(edges), size=cfg.HIERARCHY_EDGES_PER_LEVEL)
         for pick in picks:
             edge = edges[int(pick)]
-            anchor_items = None
-            child_item = None
-            negative_item = None
-            if level < 2:
-                anchor_items = _members(
-                    hierarchy, edge.child, cfg.PROTOTYPE_ITEMS, rng
-                )
+            if level == 0:
+                parent_ids = None
+                child_ids = _members(hierarchy, edge.child, cfg.PROTOTYPE_ITEMS, rng)
+                negative_ids = None
+            elif level == 1:
+                parent_ids = _members(hierarchy, edge.parent, cfg.PROTOTYPE_ITEMS, rng)
+                child_ids = _members(hierarchy, edge.child, cfg.PROTOTYPE_ITEMS, rng)
+                negative_ids = _members(hierarchy, edge.negative, cfg.PROTOTYPE_ITEMS, rng)
             else:
-                child_item = int(hierarchy.node_items[edge.child][0])
-                negative_item = int(hierarchy.node_items[edge.negative][0])
+                parent_ids = _members(hierarchy, edge.parent, cfg.PROTOTYPE_ITEMS, rng)
+                child_ids = _members(hierarchy, edge.child, 1, rng)
+                negative_ids = _members(hierarchy, edge.negative, 1, rng)
             roles.append(
                 {
                     "level": level,
-                    "parent_node": edge.parent,
-                    "child_node": edge.child,
-                    "negative_node": edge.negative if level == 1 else None,
-                    "anchor_items": anchor_items,
-                    "child_item": child_item,
-                    "negative_item": negative_item,
+                    "parent": parent_ids,
+                    "child": child_ids,
+                    "negative": negative_ids,
                 }
             )
     return roles
@@ -81,14 +80,16 @@ def _represent_hierarchy_sample(
     roles: list[dict],
     k_by_level: tuple[float, float, float],
 ) -> tuple[torch.Tensor, list[torch.Tensor]]:
-    item_arrays = []
-    for role in roles:
-        if role["anchor_items"] is not None:
-            item_arrays.append(role["anchor_items"])
-        if role["child_item"] is not None:
-            item_arrays.append(np.asarray([role["child_item"]], dtype=np.int64))
-            item_arrays.append(np.asarray([role["negative_item"]], dtype=np.int64))
-    item_ids = np.unique(np.concatenate(item_arrays))
+    item_ids = np.unique(
+        np.concatenate(
+            [
+                array
+                for role in roles
+                for key in ("parent", "child", "negative")
+                if (array := role[key]) is not None
+            ]
+        )
+    )
     positions = {int(item): index for index, item in enumerate(item_ids)}
     selected = torch.as_tensor(item_ids, dtype=torch.long, device=features.device)
     latent = model._training_latent(features[selected])
@@ -99,39 +100,32 @@ def _represent_hierarchy_sample(
         parents = []
         children = []
         negatives = []
-        anchors = []
         for role in level_roles:
             if level == 0:
                 parent = model.root_direction
-                child = model.coarse_node_prototypes[role["child_node"] - 1]
-            elif level == 1:
-                parent = model.coarse_node_prototypes[role["parent_node"] - 1]
-                child = model.fine_node_prototypes[
-                    role["child_node"] - 1 - hierarchy.n_coarse
-                ]
-                negatives.append(
-                    model.fine_node_prototypes[
-                        role["negative_node"] - 1 - hierarchy.n_coarse
-                    ]
-                )
             else:
-                parent = model.fine_node_prototypes[
-                    role["parent_node"] - 1 - hierarchy.n_coarse
-                ]
-                child = prefixes[2][positions[role["child_item"]]]
-                negatives.append(prefixes[2][positions[role["negative_item"]]])
-            parents.append(parent)
-            children.append(child)
-            if level < 2:
-                anchor_positions = torch.as_tensor(
-                    [positions[int(item)] for item in role["anchor_items"]],
+                parent_positions = torch.as_tensor(
+                    [positions[int(item)] for item in role["parent"]],
                     dtype=torch.long,
                     device=features.device,
                 )
-                anchor = prefixes[level][anchor_positions].mean(dim=0)
-                anchors.append(model.geometry.pair_distance(child, anchor).square())
+                parent = prefixes[level][parent_positions].mean(dim=0)
+            child_positions = torch.as_tensor(
+                [positions[int(item)] for item in role["child"]],
+                dtype=torch.long,
+                device=features.device,
+            )
+            if role["negative"] is not None:
+                negative_positions = torch.as_tensor(
+                    [positions[int(item)] for item in role["negative"]],
+                    dtype=torch.long,
+                    device=features.device,
+                )
+                negatives.append(prefixes[level][negative_positions].mean(dim=0))
+            parents.append(parent)
+            children.append(prefixes[level][child_positions].mean(dim=0))
         negative_tangent = torch.stack(negatives) if negatives else None
-        cone_loss, _, _, _ = entailment_margin_loss(
+        total, _, _, _ = entailment_margin_loss(
             model.geometry_name,
             model.geometry,
             torch.stack(parents),
@@ -142,9 +136,7 @@ def _represent_hierarchy_sample(
             radial_margin=cfg.CONE_RADIAL_MARGIN,
             radial_weight=cfg.CONE_RADIAL_WEIGHT,
         )
-        if anchors:
-            cone_loss = cone_loss + torch.stack(anchors).mean()
-        losses.append(cone_loss)
+        losses.append(total)
     return torch.stack(losses).mean(), losses
 
 
@@ -161,54 +153,6 @@ def _all_item_representations(
         [prefix.detach().cpu().numpy().astype(np.float32, copy=False) for prefix in prefixes],
     )
 
-def _initialize_behavior_node_prototypes(
-    model: RQVAE,
-    features: torch.Tensor,
-    hierarchy: BehaviorHierarchy,
-) -> None:
-    _, prefixes = _all_item_representations(model, features)
-    coarse_nodes = [
-        hierarchy.node_items[1 + index] for index in range(hierarchy.n_coarse)
-    ]
-    fine_nodes = [
-        hierarchy.node_items[1 + hierarchy.n_coarse + index]
-        for index in range(hierarchy.n_fine)
-    ]
-    coarse = np.stack(
-        [prefixes[0][items].mean(axis=0) for items in coarse_nodes]
-    )
-    fine = np.stack(
-        [prefixes[1][items].mean(axis=0) for items in fine_nodes]
-    )
-    model.register_parameter(
-        "coarse_node_prototypes",
-        torch.nn.Parameter(torch.as_tensor(coarse, device=features.device)),
-    )
-    model.register_parameter(
-        "fine_node_prototypes",
-        torch.nn.Parameter(torch.as_tensor(fine, device=features.device)),
-    )
-
-
-def _node_tangent_overrides(
-    model: RQVAE, hierarchy: BehaviorHierarchy
-) -> dict[int, np.ndarray]:
-    if not hasattr(model, "coarse_node_prototypes"):
-        return {}
-    coarse = model.coarse_node_prototypes.detach().cpu().numpy()
-    fine = model.fine_node_prototypes.detach().cpu().numpy()
-    overrides = {
-        1 + index: tangent for index, tangent in enumerate(coarse)
-    }
-    fine_offset = 1 + hierarchy.n_coarse
-    overrides.update(
-        {
-            fine_offset + index: tangent
-            for index, tangent in enumerate(fine)
-        }
-    )
-    return overrides
-
 
 def _calibrate_cone_k(
     model: RQVAE,
@@ -217,15 +161,12 @@ def _calibrate_cone_k(
     *,
     target_coverage: float,
     device: str,
-    node_tangent_overrides: dict[int, np.ndarray] | None = None,
 ) -> tuple[float, float, float]:
     root = model.root_direction.detach().cpu().numpy().astype(np.float32)
     values = []
     for level in range(3):
         edges = [edge for edge in hierarchy.train_edges if edge.level == level]
         reps = _node_representations(hierarchy, prefix_tangents[level], root)
-        if node_tangent_overrides:
-            reps.update(node_tangent_overrides)
         apex = np.stack([
             root if edge.parent == 0 else reps[edge.parent] for edge in edges
         ])
@@ -256,7 +197,6 @@ def _hierarchy_edge_arrays(
     k_by_level: tuple[float, float, float],
     device: str,
     node_items: dict[int, np.ndarray] | None = None,
-    node_tangent_overrides: dict[int, np.ndarray] | None = None,
 ) -> dict:
     by_level = {}
     all_correct = []
@@ -273,8 +213,6 @@ def _hierarchy_edge_arrays(
             root_tangent,
             node_items=node_items,
         )
-        if node_tangent_overrides:
-            reps.update(node_tangent_overrides)
         parent = np.stack(
             [
                 root_tangent if edge.parent == 0 else reps[edge.parent]
@@ -331,8 +269,6 @@ def _hierarchy_edge_arrays(
         "edge_coverage": np.asarray(all_coverage, dtype=np.float32),
         "edge_radial": np.asarray(all_radial, dtype=np.float32),
     }
-
-
 
 
 def _json_hierarchy(result: dict) -> dict:
@@ -415,18 +351,14 @@ def _train_one(
         model.root_direction[0] = 0.2
     train_tensor = torch.as_tensor(train_ids, dtype=torch.long, device=device)
     model.init_codebooks(all_features[train_tensor], seed)
-    if arm.endswith("cone"):
-        _initialize_behavior_node_prototypes(model, all_features, hierarchy)
     model.eval()
     _, initial_prefixes = _all_item_representations(model, all_features)
-    node_tangent_overrides = _node_tangent_overrides(model, hierarchy)
     k_by_level = _calibrate_cone_k(
         model,
         hierarchy,
         initial_prefixes,
         target_coverage=cfg.CONE_TRAIN_COVERAGE,
         device=device,
-        node_tangent_overrides=node_tangent_overrides,
     )
     model.train()
     optimizer = torch.optim.AdamW(
@@ -490,7 +422,6 @@ def _train_one(
             break
 
     tokens, prefix_tangents = _all_item_representations(model, all_features)
-    node_tangent_overrides = _node_tangent_overrides(model, hierarchy)
     hierarchy_train = _hierarchy_edge_arrays(
         hierarchy.train_edges,
         hierarchy,
@@ -499,7 +430,6 @@ def _train_one(
         model,
         k_by_level,
         device,
-        node_tangent_overrides=node_tangent_overrides,
     )
     hierarchy_fit_edge_test = _hierarchy_edge_arrays(
         hierarchy.test_edges,
@@ -509,7 +439,6 @@ def _train_one(
         model,
         k_by_level,
         device,
-        node_tangent_overrides=node_tangent_overrides,
     )
     hierarchy_test = _hierarchy_edge_arrays(
         hierarchy.heldout_edges,
@@ -520,7 +449,6 @@ def _train_one(
         k_by_level,
         device,
         node_items=hierarchy.heldout_node_items,
-        node_tangent_overrides=node_tangent_overrides,
     )
     sid_metrics = sid_hierarchy_metrics(tokens, hierarchy)
     valid_ranking = evaluate_next_item_ranking(
@@ -592,15 +520,6 @@ def _train_one(
         "valid_ranking": valid_ranking["metrics"],
         "test_ranking": test_ranking["metrics"],
         "heldout_behavior_ranking": heldout_ranking["metrics"],
-        "behavior_node_prototypes": arm.endswith("cone"),
-        "n_behavior_node_prototypes": (
-            hierarchy.n_coarse + hierarchy.n_fine if arm.endswith("cone") else 0
-        ),
-        "behavior_node_prototype_parameters": (
-            cfg.CODEBOOK_DIM * (hierarchy.n_coarse + hierarchy.n_fine)
-            if arm.endswith("cone")
-            else 0
-        ),
         "parameter_count": int(sum(parameter.numel() for parameter in model.parameters())),
     }
     run_dir = cfg.RESULT_DIR / f"{arm}_seed{seed}"
@@ -616,99 +535,6 @@ def _train_one(
     )
     return {
         "metrics": output_metrics,
-        "test_per_user": test_ranking["per_user"],
-        "valid_per_user": valid_ranking["per_user"],
-        "heldout_per_user": heldout_ranking["per_user"],
-        "test_edge_correct": hierarchy_test["edge_correct"],
-        "test_edge_coverage": hierarchy_test["edge_coverage"],
-        "test_edge_radial": hierarchy_test["edge_radial"],
-    }
-
-
-def _load_completed_run(
-    arm: str,
-    seed: int,
-    all_features: torch.Tensor,
-    hierarchy: BehaviorHierarchy,
-    heldout_frame: pd.DataFrame,
-    valid_frame: pd.DataFrame,
-    test_frame: pd.DataFrame,
-    device: str,
-) -> dict:
-    run_dir = cfg.RESULT_DIR / f"{arm}_seed{seed}"
-    with (run_dir / "metrics.json").open() as handle:
-        metrics = json.load(handle)
-    if (
-        metrics["arm"] != arm
-        or int(metrics["seed"]) != seed
-        or int(metrics["train_steps"]) != cfg.TRAIN_STEPS
-    ):
-        raise ValueError(f"Saved metrics are incomplete or mismatched in {run_dir}")
-    checkpoint = torch.load(run_dir / "rqvae.pth", map_location=device)
-    if checkpoint["arm"] != arm or checkpoint["seed"] != seed:
-        raise ValueError(f"Checkpoint identity mismatch in {run_dir}")
-    model = RQVAE(
-        "poincare" if arm.startswith("hyp_") else "euclid",
-        in_dim=all_features.shape[1],
-        codebook_dim=cfg.CODEBOOK_DIM,
-        normalize_latent=True,
-        include_root=True,
-        hidden_sizes=cfg.HIDDEN_SIZES,
-    ).to(device)
-    if arm.endswith("cone"):
-        model.register_parameter(
-            "coarse_node_prototypes",
-            torch.nn.Parameter(
-                torch.zeros(hierarchy.n_coarse, cfg.CODEBOOK_DIM, device=device)
-            ),
-        )
-        model.register_parameter(
-            "fine_node_prototypes",
-            torch.nn.Parameter(
-                torch.zeros(hierarchy.n_fine, cfg.CODEBOOK_DIM, device=device)
-            ),
-        )
-    model.load_state_dict(checkpoint["state_dict"], strict=True)
-    model.eval()
-    tokens = np.load(run_dir / "sids.npy")
-    _, prefix_tangents = _all_item_representations(model, all_features)
-    hierarchy_test = _hierarchy_edge_arrays(
-        hierarchy.heldout_edges,
-        hierarchy,
-        prefix_tangents,
-        model.root_direction.detach().cpu().numpy(),
-        model,
-        tuple(checkpoint["k_by_level"]),
-        device,
-        node_items=hierarchy.heldout_node_items,
-        node_tangent_overrides=_node_tangent_overrides(model, hierarchy),
-    )
-    valid_ranking = evaluate_next_item_ranking(
-        valid_frame,
-        tokens,
-        hierarchy.fit_sources,
-        hierarchy.fit_targets,
-        alpha=cfg.BEHAVIOR_SCORE_ALPHA,
-        seed=seed + 11,
-    )
-    test_ranking = evaluate_next_item_ranking(
-        test_frame,
-        tokens,
-        hierarchy.fit_sources,
-        hierarchy.fit_targets,
-        alpha=cfg.BEHAVIOR_SCORE_ALPHA,
-        seed=seed + 17,
-    )
-    heldout_ranking = evaluate_next_item_ranking(
-        heldout_frame,
-        tokens,
-        hierarchy.fit_sources,
-        hierarchy.fit_targets,
-        alpha=cfg.BEHAVIOR_SCORE_ALPHA,
-        seed=seed + 23,
-    )
-    return {
-        "metrics": metrics,
         "test_per_user": test_ranking["per_user"],
         "valid_per_user": valid_ranking["per_user"],
         "heldout_per_user": heldout_ranking["per_user"],
@@ -970,40 +796,20 @@ def main() -> None:
         raise ValueError("Training target IDs do not match item embedding rows")
     all_features = torch.as_tensor(embeddings, dtype=torch.float32, device=device)
     results = {}
-    reused_completed_runs = []
     for seed in cfg.SEEDS:
         for arm in cfg.GEOMETRY_ARMS:
-            run_dir = cfg.RESULT_DIR / f"{arm}_seed{seed}"
-            complete = all(
-                (run_dir / name).is_file()
-                for name in ("metrics.json", "rqvae.pth", "sids.npy")
+            print(f"[Stage2] start arm={arm} seed={seed}", flush=True)
+            result = _train_one(
+                arm,
+                seed,
+                all_features,
+                train_ids,
+                hierarchy,
+                heldout_frame,
+                valid_frame,
+                test_frame,
+                device,
             )
-            if complete:
-                reused_completed_runs.append(f"{arm}_seed{seed}")
-                print(f"[Stage2] reuse arm={arm} seed={seed}", flush=True)
-                result = _load_completed_run(
-                    arm,
-                    seed,
-                    all_features,
-                    hierarchy,
-                    heldout_frame,
-                    valid_frame,
-                    test_frame,
-                    device,
-                )
-            else:
-                print(f"[Stage2] start arm={arm} seed={seed}", flush=True)
-                result = _train_one(
-                    arm,
-                    seed,
-                    all_features,
-                    train_ids,
-                    hierarchy,
-                    heldout_frame,
-                    valid_frame,
-                    test_frame,
-                    device,
-                )
             results[(arm, seed)] = result
             print(
                 f"[Stage2] done arm={arm} seed={seed} "
@@ -1044,12 +850,6 @@ def main() -> None:
             "paired deltas over three fixed seeds; no item bootstrap"
         ),
         "elapsed_seconds": time.time() - started,
-        "resumed_completed_runs": reused_completed_runs,
-        "elapsed_seconds_scope": (
-            "this invocation; prior timed-out training time is excluded"
-            if reused_completed_runs
-            else "full invocation"
-        ),
         "stage3_started": False,
     }
     cfg.RESULT_DIR.mkdir(parents=True, exist_ok=True)
