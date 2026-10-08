@@ -27,6 +27,7 @@ import math
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from . import bench_config as cfg
 
@@ -126,3 +127,40 @@ def coverage_at(factors: np.ndarray, xi: np.ndarray, k: float) -> float:
         return 0.0
     aperture = np.arcsin(np.clip(k * factors, 0.0, 1.0))
     return float(np.mean(xi <= aperture))
+
+
+def entailment_margin_loss(
+    geometry: str,
+    model_geometry,
+    apex_tangent: torch.Tensor,
+    child_tangent: torch.Tensor,
+    negative_tangent: torch.Tensor | None,
+    *,
+    k: float,
+    angle_margin: float = 0.05,
+    radial_margin: float = 0.02,
+    radial_weight: float = 1.0,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Train positive parent-child containment and reject non-descendants.
+
+    A root-to-coarse edge has no valid negative descendant: every coarse node
+    belongs beneath that root. Passing ``None`` therefore trains only positive
+    cone containment and outward radial order for that level.
+    """
+    apex_point = model_geometry.to_point(apex_tangent)
+    child_point = model_geometry.to_point(child_tangent)
+    factor = FACTOR[geometry](apex_point)
+    aperture = torch.asin((float(k) * factor).clamp(0.0, 1.0))
+    positive_xi = xi_pairs(geometry, apex_point, child_point)
+    positive_loss = F.relu(positive_xi - aperture + angle_margin).mean()
+    if negative_tangent is None:
+        negative_loss = positive_loss.new_zeros(())
+    else:
+        negative_point = model_geometry.to_point(negative_tangent)
+        negative_xi = xi_pairs(geometry, apex_point, negative_point)
+        negative_loss = F.relu(aperture + angle_margin - negative_xi).mean()
+    apex_radius = torch.linalg.vector_norm(apex_point, dim=-1)
+    child_radius = torch.linalg.vector_norm(child_point, dim=-1)
+    radial_loss = F.relu(apex_radius + radial_margin - child_radius).mean()
+    total = positive_loss + negative_loss + float(radial_weight) * radial_loss
+    return total, positive_loss, negative_loss, radial_loss
