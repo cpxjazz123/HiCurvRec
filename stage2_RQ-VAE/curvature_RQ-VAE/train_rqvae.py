@@ -47,18 +47,9 @@ BATCH_SIZE_PER_RANK = 1024
 LR = 1e-3
 WEIGHT_DECAY = 1e-4
 HIDDEN_SIZES = (512, 256, 128)
-CODEBOOK_NUM = 4
-CODEBOOK_SIZE = (256, 256, 256, 256)
+CODEBOOK_NUM = 3
+CODEBOOK_SIZE = (256, 256, 256)
 CODEBOOK_DIM = 32
-# Level-owned coordinate blocks: the four levels partition the 32-D latent
-# (8 dims each) instead of refining one residual chain, so SID position L is
-# the code of the L-th block and each level quantizes in its own Poincare ball.
-# Depth alone adds almost nothing here (three levels already resolve 24565 of
-# 24587 items), so the added level is given its own coordinates to encode.
-# Widths follow the parent checkpoint's latent variance share, which is close
-# to uniform and where the behaviour signal sits too (17.8% / 41.6% / 40.5% of
-# the d(neg)^2 - d(pos)^2 gap in the parent's three quarters).
-CODEBOOK_BLOCK_SIZES = (8, 8, 8, 8)
 BETA = 0.25
 VQ_TYPE = "vq"
 EMA_DECAY = 0.99
@@ -71,15 +62,9 @@ OPTIMIZER = "AdamW"
 SEED = 42
 NUM_WORKERS = 0
 
-# Fixed Poincare curvature per quantization level. The hierarchy gains a fourth
-# refinement level, and curvature is what keeps the added level a hyperbolic
-# one: every level quantizes at the same metric working point s = sqrt(c)||r||,
-# so the shell it works on stays nonlinear and its distances stay geodesic
-# instead of the fourth level degenerating into an extra Euclidean split of the
-# residual. Curvature stays at 1.0 on every level because the per-level c sweep
-# (iter88/89/90/91/92) already lost on every level individually; the variable
-# under test here is depth, not c.
-LAYER_CURVATURES = (1.0, 1.0, 1.0, 1.0)
+# Fixed Poincare curvature per quantization level. Identical across levels
+# because the curvature curriculum was removed; only the level index varies.
+LAYER_CURVATURES = (1.0, 1.0, 1.0)
 # Working point of the tangent-space quantization, s = sqrt(c) * ||r||, per
 # level. A level with a non-zero target overwrites the magnitude of its input to
 # target / sqrt(c) before the Poincare map and maps the result back afterwards,
@@ -99,7 +84,7 @@ LAYER_CURVATURES = (1.0, 1.0, 1.0, 1.0)
 # genuine, this should be worse than 0.3 and the axis is closed on both sides;
 # if it is better, the whole curve is shifted and the geometry line is not
 # exhausted.
-LAYER_WORKING_RADII = (0.2, 0.2, 0.2, 0.2)
+LAYER_WORKING_RADII = (0.2, 0.2, 0.2)
 
 # How the per-level pin above is interpreted. True (the default and the frozen
 # protocol) treats it as a metric working point: the tangent target is scaled
@@ -349,7 +334,6 @@ def _tokenizer_config() -> SimpleNamespace:
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
         pin_in_s_coordinates=PIN_IN_S_COORDINATES,
-        codebook_block_sizes=CODEBOOK_BLOCK_SIZES,
     )
 
 
@@ -443,19 +427,17 @@ def main() -> None:
         for layer in raw_module.rq.vq_layers
     ]
     layer_working_radii = [float(v) for v in raw_module.rq.get_working_radii()]
-    layer_block_bounds = [list(bounds) for bounds in raw_module.rq.block_bounds]
     if rank == 0:
         print(
             f"[hyperbolic] cold_start=true max_global_steps={MAX_GLOBAL_STEPS} "
             f"batch_size_per_rank={loader_batch_size} "
             f"total_effective_batch={loader_batch_size * world_size} "
             f"c={[round(value, 6) for value in layer_curvatures]} "
-            f"radius={layer_working_radii} "
-            f"blocks={layer_block_bounds}",
+            f"radius={layer_working_radii}",
             flush=True,
         )
         _record(
-            rank, "train_start", geometry="poincare_fixed_curvature_block_aligned",
+            rank, "train_start", geometry="poincare_fixed_curvature",
             cold_start=True,
             checkpoint_loaded=False,
             initialization="xavier_encoder_decoder_then_kmeans_codebooks",
@@ -474,8 +456,6 @@ def main() -> None:
             world_size=world_size,
             layer_curvatures=layer_curvatures,
             layer_working_radii=layer_working_radii,
-            codebook_block_sizes=list(CODEBOOK_BLOCK_SIZES),
-            layer_block_bounds=layer_block_bounds,
             behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
             behaviour_margin=BEHAVIOUR_MARGIN,
             behaviour_pairs=len(source_ids),
