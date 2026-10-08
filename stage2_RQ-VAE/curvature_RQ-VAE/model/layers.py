@@ -157,13 +157,7 @@ class MLP(nn.Module):
 
 
 class VQLayer(nn.Module):
-    """Poincare VQ at a fixed curvature over this level's coordinate block.
-
-    A level owns a contiguous slice of the latent: assignment, the quantization
-    losses and the Mobius residual run on that slice alone, in the level's own
-    Poincare ball, so the code a level emits depends only on the coordinates it
-    owns. A level that owns the whole latent is the plain residual case.
-    """
+    """Poincare VQ at a fixed curvature with balanced Sinkhorn assignment."""
 
     def __init__(
         self,
@@ -173,8 +167,6 @@ class VQLayer(nn.Module):
         sk_epsilon: float = 0.003,
         sk_iters: int = 50,
         curvature: float = 1.0,
-        block_start: int = 0,
-        block_stop: int | None = None,
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -182,14 +174,6 @@ class VQLayer(nn.Module):
         if sk_epsilon <= 0.0 or sk_iters <= 0:
             raise ValueError("Sinkhorn epsilon and iteration count must be positive.")
         self.dim = int(codebook_dim)
-        start = int(block_start)
-        stop = self.dim if block_stop is None else int(block_stop)
-        if not (0 <= start < stop <= self.dim):
-            raise ValueError("Level block must be a non-empty slice of codebook_dim")
-        self.block_start = start
-        self.block_stop = stop
-        self.block_width = stop - start
-        self.block = slice(start, stop)
         self.n_embed = int(codebook_size)
         self.beta = float(beta)
         self.use_sk = True
@@ -201,15 +185,8 @@ class VQLayer(nn.Module):
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
 
-    def get_block_code_embs(self) -> torch.Tensor:
-        """Codebook rows for the coordinates this level owns."""
-        return self.embed.weight[:, self.block]
-
     def _copy_init_embed(self, init_embed: torch.Tensor) -> None:
         self.embed.weight.data.copy_(init_embed)
-
-    def _copy_init_block(self, centers: torch.Tensor) -> None:
-        self.embed.weight.data[:, self.block] = centers
 
     def get_curvature(self) -> torch.Tensor:
         return self.embed.weight.new_tensor(self.curvature)
@@ -250,9 +227,7 @@ class VQLayer(nn.Module):
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
         return _pairwise_poincare_distance_tangents(
-            latent[:, self.block],
-            self.get_block_code_embs(),
-            self.get_curvature(),
+            latent, self.get_code_embs(), self.get_curvature()
         )
 
     def _balanced_assignments(self, distances: torch.Tensor) -> torch.Tensor:
@@ -403,7 +378,6 @@ class VQLayer(nn.Module):
         bucket: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
-        latent_block = latent[:, self.block]
         curvature = self.get_curvature()
         embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
         onehot = F.one_hot(embed_ind, self.n_embed)
@@ -415,21 +389,15 @@ class VQLayer(nn.Module):
         ):
             distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
         unused_codes = int((used == 0).sum().item())
-        quantized_block = F.embedding(embed_ind, self.get_block_code_embs())
+        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
         codebook_loss = _poincare_distance_tangent_pairs(
-            latent_block.detach(), quantized_block, curvature
+            x.detach(), x_q, curvature
         ).square().mean()
         commitment_loss = _poincare_distance_tangent_pairs(
-            latent_block, quantized_block.detach(), curvature
+            x, x_q.detach(), curvature
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
-        # Straight-through inside the owned block only: coordinates this level
-        # does not own pass through untouched, so the next level sees them
-        # exactly as the encoder produced them.
-        x_q = latent.clone()
-        x_q[:, self.block] = latent_block + (
-            quantized_block - latent_block
-        ).detach()
+        x_q = x + (x_q - x).detach()
         return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
 
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
@@ -446,25 +414,20 @@ class VQLayer(nn.Module):
         The codes are returned so the next level can balance inside the same
         buckets instead of treating the whole batch as one pool.
         """
-        latent = x.view(-1, self.dim)
-        latent_block = latent[:, self.block]
         kmeans = KMeans(n_clusters=self.n_embed, n_init="auto").fit(
-            latent_block.detach().cpu().numpy()
+            x.detach().cpu().numpy()
         )
         centers = torch.tensor(
             kmeans.cluster_centers_, dtype=torch.float32, device=device
         )
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
-        self._copy_init_block(centers.clone())
+        self._copy_init_embed(centers.clone())
         embed_ind = self._indices(
-            self._distances(latent), infer_use_sk=True, bucket=bucket
+            self._distances(x), infer_use_sk=True, bucket=bucket
         ).view(*x.shape[:-1])
-        residual = latent.clone()
-        residual[:, self.block] = _hyperbolic_residual(
-            latent_block,
-            F.embedding(embed_ind, self.get_block_code_embs()),
-            self.get_curvature(),
+        residual = _hyperbolic_residual(
+            x, self.embed_code(embed_ind), self.get_curvature()
         )
         return residual, embed_ind
 
@@ -609,26 +572,6 @@ class RQLayer(nn.Module):
         self.sk_iters = int(config.sk_iters)
         if self.vq_type != "vq":
             raise ValueError("This model requires TIGER's trainable VQ codebooks")
-        # Level-owned coordinate blocks. The widths partition the latent, so each
-        # level quantizes its own coordinates in its own Poincare ball and the
-        # SID becomes one code per block instead of a nested residual
-        # refinement. Absent (or None) keeps every level on the whole latent.
-        widths = getattr(config, "codebook_block_sizes", None)
-        if widths is None:
-            widths = [self.codebook_dim] * self.codebook_num
-        widths = [int(width) for width in widths]
-        if len(widths) != self.codebook_num or sum(widths) != self.codebook_dim:
-            raise ValueError(
-                "codebook_block_sizes must have one entry per level and sum to "
-                "codebook_dim"
-            )
-        bounds = []
-        offset = 0
-        for width in widths:
-            bounds.append((offset, offset + width))
-            offset += width
-        self.block_bounds = tuple(bounds)
-        self.block_widths = tuple(widths)
         self.vq_layers = nn.ModuleList(
             [
                 VQLayer(
@@ -638,8 +581,6 @@ class RQLayer(nn.Module):
                     sk_epsilon=self.sk_epsilon,
                     sk_iters=self.sk_iters,
                     curvature=curvatures[level],
-                    block_start=bounds[level][0],
-                    block_stop=bounds[level][1],
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
@@ -692,47 +633,24 @@ class RQLayer(nn.Module):
         self,
         residual: torch.Tensor,
         target_norm: torch.Tensor,
-        level: int,
     ) -> torch.Tensor:
-        """Overwrite the magnitude of this level's block, keep its direction."""
-        block = self.vq_layers[level].block
-        norm = torch.linalg.vector_norm(residual[:, block], dim=-1, keepdim=True)
-        pinned = residual.clone()
-        pinned[:, block] = residual[:, block] * (target_norm / norm.clamp_min(
+        """Overwrite the magnitude, keep only the direction."""
+        norm = torch.linalg.vector_norm(residual, dim=-1, keepdim=True)
+        return residual * (target_norm / norm.clamp_min(
             torch.finfo(residual.dtype).tiny
         ))
-        return pinned
 
     def _restore_norm(
         self,
         mapped: torch.Tensor,
         source: torch.Tensor,
         target_norm: torch.Tensor,
-        level: int,
     ) -> torch.Tensor:
         """Inverse of the magnitude overwrite, back into the encoder's norms."""
-        block = self.vq_layers[level].block
-        norm = torch.linalg.vector_norm(source[:, block], dim=-1, keepdim=True)
-        restored = mapped.clone()
-        restored[:, block] = mapped[:, block] * (norm / target_norm.clamp_min(
+        norm = torch.linalg.vector_norm(source, dim=-1, keepdim=True)
+        return mapped * (norm / target_norm.clamp_min(
             torch.finfo(mapped.dtype).tiny
         ))
-        return restored
-
-    def _subtract_block(
-        self,
-        residual: torch.Tensor,
-        quantized: torch.Tensor,
-        level: int,
-        curvature: torch.Tensor,
-    ) -> torch.Tensor:
-        """Mobius residual inside this level's block; other blocks pass through."""
-        block = self.vq_layers[level].block
-        updated = residual.clone()
-        updated[:, block] = _hyperbolic_residual(
-            residual[:, block], quantized[:, block], curvature
-        )
-        return updated
 
     def forward(
         self,
@@ -755,12 +673,12 @@ class RQLayer(nn.Module):
                 quant, quant_loss, unused, indices = vq_layer(
                     residual, infer_use_sk, previous_codes
                 )
-                residual = self._subtract_block(residual, quant, level, curvature)
+                residual = _hyperbolic_residual(residual, quant, curvature)
                 quantized_x = quantized_x + quant
             else:
                 source = residual
                 target_norm = self._radius_for_level(level, curvature, source)
-                pinned = self._pin_to_radius(source, target_norm, level)
+                pinned = self._pin_to_radius(source, target_norm)
                 quant, quant_loss, unused, indices = vq_layer(
                     pinned, infer_use_sk, previous_codes
                 )
@@ -768,11 +686,11 @@ class RQLayer(nn.Module):
                 # subtraction and the decoder input are computed there too and
                 # then mapped back to the encoder's own norms.
                 residual = self._restore_norm(
-                    self._subtract_block(pinned, quant, level, curvature),
-                    source, target_norm, level,
+                    _hyperbolic_residual(pinned, quant, curvature),
+                    source, target_norm,
                 )
                 quantized_x = quantized_x + self._restore_norm(
-                    quant, source, target_norm, level
+                    quant, source, target_norm
                 )
             previous_codes = indices
             sum_quant_loss = sum_quant_loss + quant_loss
@@ -801,21 +719,21 @@ class RQLayer(nn.Module):
                 indices, usage, entropy = layer.assignment_diagnostics(
                     residual, previous_codes
                 )
-                residual = self._subtract_block(
-                    residual, layer.embed_code(indices), level, curvature
+                residual = _hyperbolic_residual(
+                    residual, layer.embed_code(indices), curvature
                 )
             else:
                 source = residual
                 target_norm = self._radius_for_level(level, curvature, source)
-                pinned = self._pin_to_radius(source, target_norm, level)
+                pinned = self._pin_to_radius(source, target_norm)
                 indices, usage, entropy = layer.assignment_diagnostics(
                     pinned, previous_codes
                 )
                 residual = self._restore_norm(
-                    self._subtract_block(
-                        pinned, layer.embed_code(indices), level, curvature
+                    _hyperbolic_residual(
+                        pinned, layer.embed_code(indices), curvature
                     ),
-                    source, target_norm, level,
+                    source, target_norm,
                 )
             tokens[:, level] = indices
             previous_codes = indices
@@ -848,9 +766,9 @@ class RQLayer(nn.Module):
             # level is mapped back to the encoder's norms.
             source = residual
             target_norm = self._radius_for_level(level, curvature, source)
-            pinned = self._pin_to_radius(source, target_norm, level)
+            pinned = self._pin_to_radius(source, target_norm)
             fitted, previous_codes = vq_layer.init_codebook(
                 pinned, device, previous_codes
             )
-            residual = self._restore_norm(fitted, source, target_norm, level)
+            residual = self._restore_norm(fitted, source, target_norm)
         return residual
