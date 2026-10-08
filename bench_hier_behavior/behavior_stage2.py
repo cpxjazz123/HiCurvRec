@@ -837,6 +837,9 @@ def main() -> None:
         "heldout_behavior_transitions": int(len(hierarchy.heldout_sources)),
         "coarse_interests": cfg.COARSE_INTERESTS,
         "fine_interests_per_coarse": cfg.FINE_INTERESTS_PER_COARSE,
+        "hierarchy_coarse_lag": 2,
+        "hierarchy_fine_lag": 1,
+        "coarse_profile_fallback": "lag1",
         "behavior_item_coverage": float(np.mean(hierarchy.behavior_covered)),
         "heldout_behavior_item_coverage": float(
             np.mean(hierarchy.heldout_behavior_covered)
