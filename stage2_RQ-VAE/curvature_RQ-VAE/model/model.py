@@ -1,10 +1,4 @@
-"""Standalone RecBole3.0-compatible hyperbolic RQ-VAE wrapper for HG-Rec.
-
-Pure Poincare-ball geometry: codebook assignment, quantization loss and
-reconstruction all run in hyperbolic space at a fixed curvature. The
-transition-ranking auxiliary objective is applied to origin-tangent encoder
-outputs before quantization.
-"""
+"""RQ-VAE with fixed-curvature product-Poincare quantization and behavior loss."""
 
 from __future__ import annotations
 
@@ -76,13 +70,13 @@ def behaviour_ranking_loss(
     negatives: torch.Tensor,
     curvature: float,
     margin: float,
+    product_factors: int = 1,
 ) -> torch.Tensor:
-    """Hinge ranking over real transition successors and shuffled negatives.
-
-    Each input is an origin-tangent encoder vector. The distance helper maps
-    both endpoints to the fixed-curvature Poincare ball before measuring the
-    geodesic distance; no quantized-code equality is involved.
-    """
-    positive = _poincare_distance_tangent_pairs(source, successor, curvature)
-    negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
+    """Pairwise hinge over transition successors and shuffled negatives."""
+    positive = _poincare_distance_tangent_pairs(
+        source, successor, curvature, product_factors=product_factors
+    )
+    negative = _poincare_distance_tangent_pairs(
+        source, negatives, curvature, product_factors=product_factors
+    )
     return F.relu(positive + margin - negative).mean()

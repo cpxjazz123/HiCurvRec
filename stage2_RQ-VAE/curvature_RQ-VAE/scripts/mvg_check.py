@@ -1,4 +1,4 @@
-"""MVG for the hyperbolic RQ-VAE: geometry, gradients, and checkpoint reload."""
+"""MVG for fixed-curvature product-Poincare geometry and gradients."""
 from __future__ import annotations
 
 import sys
@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import pandas as pd
 
 SOURCE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_DIR))
@@ -13,6 +14,11 @@ sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment
 import train_rqvae as training
 from model import RQVAE
+from model.layers import (
+    _hyperbolic_residual,
+    _pairwise_poincare_distance_tangents,
+    _poincare_distance_tangent_pairs,
+)
 
 
 def require(condition: bool, message: str) -> None:
@@ -44,6 +50,101 @@ def build_model(embeddings, device):
     training.initialize_tiger_weights(model)
     return model
 
+def check_product_geometry(device: torch.device) -> None:
+    factors = training.PRODUCT_POINCARE_FACTORS
+    dimension = training.CODEBOOK_DIM
+    block_dim = dimension // factors
+    curvature = float(training.LAYER_CURVATURES[0])
+    x = torch.linspace(-0.7, 0.8, 4 * dimension, device=device).reshape(
+        4, dimension
+    )
+    y = torch.flip(x, dims=(-1,)) * 0.73
+    expected_pairs = torch.stack(
+        [
+            _poincare_distance_tangent_pairs(
+                x[:, factor * block_dim : (factor + 1) * block_dim],
+                y[:, factor * block_dim : (factor + 1) * block_dim],
+                curvature,
+            )
+            for factor in range(factors)
+        ],
+        dim=-1,
+    ).norm(dim=-1)
+    actual_pairs = _poincare_distance_tangent_pairs(
+        x, y, curvature, product_factors=factors
+    )
+    require(
+        torch.allclose(actual_pairs, expected_pairs, atol=1e-5, rtol=1e-5),
+        "Product pair distance is not the factorwise geodesic norm",
+    )
+    expected_matrix = torch.stack(
+        [
+            _pairwise_poincare_distance_tangents(
+                x[:, factor * block_dim : (factor + 1) * block_dim],
+                y[:, factor * block_dim : (factor + 1) * block_dim],
+                curvature,
+            )
+            for factor in range(factors)
+        ],
+        dim=-1,
+    ).norm(dim=-1)
+    actual_matrix = _pairwise_poincare_distance_tangents(
+        x, y, curvature, product_factors=factors
+    )
+    require(
+        torch.allclose(actual_matrix, expected_matrix, atol=1e-5, rtol=1e-5),
+        "Product codebook distance is not the factorwise geodesic norm",
+    )
+    expected_residual = torch.cat(
+        [
+            _hyperbolic_residual(
+                x[:, factor * block_dim : (factor + 1) * block_dim],
+                y[:, factor * block_dim : (factor + 1) * block_dim],
+                curvature,
+            )
+            for factor in range(factors)
+        ],
+        dim=-1,
+    )
+    actual_residual = _hyperbolic_residual(
+        x, y, curvature, product_factors=factors
+    )
+    require(
+        torch.allclose(actual_residual, expected_residual, atol=1e-5, rtol=1e-5),
+        "Product residual does not split into independent factors",
+    )
+    single_distance = _poincare_distance_tangent_pairs(x, y, curvature)
+    require(
+        torch.max(torch.abs(actual_pairs - single_distance)) > 1e-4,
+        "Product geometry silently fell back to one Poincare ball",
+    )
+    print(f"  product geometry: factors={factors} block_dim={block_dim}")
+
+
+def sampled_behaviour_loss(model, all_embeddings, device: torch.device):
+    frame = pd.read_parquet(experiment.TRAIN_FILE)
+    source_ids, successor_ids = training._transition_pairs(frame)
+    count = min(training.BATCH_SIZE_PER_RANK, len(source_ids))
+    selected = np.random.default_rng(training.SEED).choice(
+        len(source_ids), size=count, replace=False
+    )
+    source = model.encoder(
+        all_embeddings[torch.from_numpy(source_ids[selected])].to(device)
+    )
+    successor = model.encoder(
+        all_embeddings[torch.from_numpy(successor_ids[selected])].to(device)
+    )
+    negative = source[torch.randperm(count, device=device)]
+    return training.behaviour_ranking_loss(
+        source,
+        successor,
+        negative,
+        curvature=float(training.LAYER_CURVATURES[0]),
+        margin=training.BEHAVIOUR_MARGIN,
+        product_factors=training.PRODUCT_POINCARE_FACTORS,
+    )
+
+
 
 def checkpoint_round_trip(model, device, label: str) -> None:
     path = Path(f"/tmp/mvg_hyperbolic_{label}.pth")
@@ -66,6 +167,11 @@ def main() -> None:
     model = build_model(all_embeddings, device)
     layers = model.rq.vq_layers
     require(len(layers) == 3, "Expected three residual quantization levels")
+    require(
+        [layer.product_factors for layer in layers]
+        == [training.PRODUCT_POINCARE_FACTORS] * len(layers),
+        "VQ levels do not use the registered product-Poincare factor count",
+    )
     # Curvature is per-level configuration, not a frozen constant: assert it
     # matches what the run registered and stays positive, rather than pinning
     # it to 1.0 (which is only the parent's value).
@@ -90,6 +196,7 @@ def main() -> None:
         ),
         "No learnable curvature scale should remain in the fixed-curvature model",
     )
+    check_product_geometry(device)
 
     with torch.no_grad():
         model.init_codebook(all_embeddings[:4096].to(device))
@@ -176,8 +283,22 @@ def main() -> None:
         quant_loss, parameters, "quantization/commitment loss"
     )
     require_nonzero_finite_gradient(recon_loss, parameters, "reconstruction loss")
+    behaviour_loss = sampled_behaviour_loss(model, all_embeddings, device)
+    require(
+        behaviour_loss.requires_grad and behaviour_loss.grad_fn is not None,
+        "Product-Poincare behavior loss is detached",
+    )
+    require_nonzero_finite_gradient(
+        behaviour_loss, model.encoder.parameters(), "product-Poincare behavior loss"
+    )
+    combined_loss = total_loss + training.BEHAVIOUR_LOSS_WEIGHT * behaviour_loss
+    require(
+        combined_loss.requires_grad and combined_loss.grad_fn is not None,
+        "Combined Stage2 loss is detached",
+    )
+    require(torch.isfinite(combined_loss), "Combined Stage2 loss is non-finite")
 
-    total_loss.backward()
+    combined_loss.backward()
     require(
         any(
             parameter.grad is not None
@@ -185,7 +306,7 @@ def main() -> None:
             and torch.count_nonzero(parameter.grad).item() > 0
             for parameter in parameters
         ),
-        "Total-loss backward produced no finite nonzero gradient",
+        "Combined-loss backward produced no finite nonzero gradient",
     )
 
     optimizer = torch.optim.AdamW(
@@ -276,11 +397,10 @@ def main() -> None:
     )
 
     print(
-        "MVG PASS: fixed-curvature Poincare geometry, quantization and "
-        "reconstruction gradients, optimizer update, checkpoint reload, "
-        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget"
+        "MVG PASS: fixed-curvature product-Poincare geometry and behavior, "
+        "quantization gradients, reconstruction, optimizer update, checkpoint "
+        "reload, per-bucket Sinkhorn assignment, and TIGER-aligned 72k budget"
     )
-
 
 if __name__ == "__main__":
     main()

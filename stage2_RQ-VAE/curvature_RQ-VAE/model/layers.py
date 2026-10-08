@@ -1,9 +1,8 @@
-"""RQ-VAE layers migrated from RecBole3.0.
+"""RQ-VAE layers using a fixed-curvature product of Poincare spaces.
 
-The implementation retains TIGER's model, codebook initialization, balanced
-geodesic Sinkhorn assignment, and straight-through losses. Each VQ layer uses
-cyclic learnable Poincare curvature with origin-tangent code vectors/residuals.
-The HG-Rec runner consumes generated integer SIDs without changing T5.
+Each residual level keeps TIGER's codebooks, balanced geodesic Sinkhorn
+assignment, and straight-through losses; latent vectors are split into
+independent fixed-curvature factors for distances and Möbius residuals.
 """
 
 from __future__ import annotations
@@ -87,7 +86,18 @@ def _poincare_distance_tangent_pairs(
     x: torch.Tensor,
     y: torch.Tensor,
     curvature: torch.Tensor | float = CURVATURE,
+    product_factors: int = 1,
 ) -> torch.Tensor:
+    if product_factors <= 0 or x.shape[-1] % product_factors:
+        raise ValueError("Product factors must evenly divide the latent dimension")
+    if product_factors > 1:
+        block_dim = x.shape[-1] // product_factors
+        x_blocks = x.reshape(*x.shape[:-1], product_factors, block_dim)
+        y_blocks = y.reshape(*y.shape[:-1], product_factors, block_dim)
+        factor_distances = _poincare_distance_tangent_pairs(
+            x_blocks, y_blocks, curvature
+        )
+        return torch.linalg.vector_norm(factor_distances, dim=-1)
     c = _curvature_like(curvature, x)
     sqrt_c = c.sqrt()
     x_point = _expmap0_tangent(x, c)
@@ -98,12 +108,36 @@ def _poincare_distance_tangent_pairs(
         (sqrt_c * norm).clamp(max=1.0 - _BALL_EPS)
     )
 
-
 def _pairwise_poincare_distance_tangents(
     x: torch.Tensor,
     y: torch.Tensor,
     curvature: torch.Tensor | float = CURVATURE,
+    product_factors: int = 1,
 ) -> torch.Tensor:
+    if product_factors <= 0 or x.shape[-1] % product_factors:
+        raise ValueError("Product factors must evenly divide the latent dimension")
+    if product_factors > 1:
+        block_dim = x.shape[-1] // product_factors
+        x_blocks = x.reshape(x.shape[0], product_factors, block_dim)
+        y_blocks = y.reshape(y.shape[0], product_factors, block_dim)
+        c = _curvature_like(curvature, x)
+        sqrt_c = c.sqrt()
+        x_point = _expmap0_tangent(x_blocks, c)
+        y_point = _expmap0_tangent(y_blocks, c)
+        x2 = (x_point * x_point).sum(dim=-1).transpose(0, 1).unsqueeze(-1)
+        y2 = (y_point * y_point).sum(dim=-1).transpose(0, 1).unsqueeze(1)
+        dot = x_point.transpose(0, 1) @ y_point.transpose(0, 1).transpose(1, 2)
+        difference2 = (x2 + y2 - 2.0 * dot).clamp_min(0.0)
+        denominator = (
+            1.0 - 2.0 * c * dot + c.square() * x2 * y2
+        ).clamp_min(torch.finfo(x.dtype).tiny)
+        mobius_norm = sqrt_c * torch.sqrt(
+            difference2.clamp_min(1e-12) / denominator
+        )
+        factor_distances = (2.0 / sqrt_c) * torch.atanh(
+            mobius_norm.clamp(max=1.0 - _BALL_EPS)
+        )
+        return torch.linalg.vector_norm(factor_distances, dim=0)
     c = _curvature_like(curvature, x)
     sqrt_c = c.sqrt()
     x_point = _expmap0_tangent(x, c)
@@ -125,7 +159,21 @@ def _hyperbolic_residual(
     residual_tangent: torch.Tensor,
     code_tangent: torch.Tensor,
     curvature: torch.Tensor | float = CURVATURE,
+    product_factors: int = 1,
 ) -> torch.Tensor:
+    if product_factors <= 0 or residual_tangent.shape[-1] % product_factors:
+        raise ValueError("Product factors must evenly divide the latent dimension")
+    if product_factors > 1:
+        block_dim = residual_tangent.shape[-1] // product_factors
+        residual_blocks = residual_tangent.reshape(
+            *residual_tangent.shape[:-1], product_factors, block_dim
+        )
+        code_blocks = code_tangent.reshape(
+            *code_tangent.shape[:-1], product_factors, block_dim
+        )
+        return _hyperbolic_residual(
+            residual_blocks, code_blocks, curvature
+        ).reshape_as(residual_tangent)
     residual_point = _expmap0_tangent(residual_tangent, curvature)
     code_point = _expmap0_tangent(code_tangent, curvature)
     difference = _mobius_add(-code_point, residual_point, curvature)
@@ -157,7 +205,7 @@ class MLP(nn.Module):
 
 
 class VQLayer(nn.Module):
-    """Poincare VQ at a fixed curvature with balanced Sinkhorn assignment."""
+    """Balanced VQ over one Poincare ball or a fixed-curvature product."""
 
     def __init__(
         self,
@@ -167,6 +215,7 @@ class VQLayer(nn.Module):
         sk_epsilon: float = 0.003,
         sk_iters: int = 50,
         curvature: float = 1.0,
+        product_factors: int = 1,
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -174,6 +223,9 @@ class VQLayer(nn.Module):
         if sk_epsilon <= 0.0 or sk_iters <= 0:
             raise ValueError("Sinkhorn epsilon and iteration count must be positive.")
         self.dim = int(codebook_dim)
+        self.product_factors = int(product_factors)
+        if self.product_factors <= 0 or self.dim % self.product_factors:
+            raise ValueError("Product factors must evenly divide codebook_dim")
         self.n_embed = int(codebook_size)
         self.beta = float(beta)
         self.use_sk = True
@@ -227,7 +279,10 @@ class VQLayer(nn.Module):
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
         return _pairwise_poincare_distance_tangents(
-            latent, self.get_code_embs(), self.get_curvature()
+            latent,
+            self.get_code_embs(),
+            self.get_curvature(),
+            product_factors=self.product_factors,
         )
 
     def _balanced_assignments(self, distances: torch.Tensor) -> torch.Tensor:
@@ -391,10 +446,10 @@ class VQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
         codebook_loss = _poincare_distance_tangent_pairs(
-            x.detach(), x_q, curvature
+            x.detach(), x_q, curvature, product_factors=self.product_factors
         ).square().mean()
         commitment_loss = _poincare_distance_tangent_pairs(
-            x, x_q.detach(), curvature
+            x, x_q.detach(), curvature, product_factors=self.product_factors
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
         x_q = x + (x_q - x).detach()
@@ -427,7 +482,10 @@ class VQLayer(nn.Module):
             self._distances(x), infer_use_sk=True, bucket=bucket
         ).view(*x.shape[:-1])
         residual = _hyperbolic_residual(
-            x, self.embed_code(embed_ind), self.get_curvature()
+            x,
+            self.embed_code(embed_ind),
+            self.get_curvature(),
+            product_factors=self.product_factors,
         )
         return residual, embed_ind
 
@@ -524,13 +582,23 @@ class SimVQLayer(VQLayer):
 
 
 class RQLayer(nn.Module):
-    """TIGER residual stack in the Poincare ball at a fixed curvature."""
+    """TIGER residual stack over fixed-curvature product Poincare factors."""
 
     def __init__(self, config: Any):
         super().__init__()
         self.config = config
         self.codebook_num = int(config.codebook_num)
         self.codebook_dim = int(config.codebook_dim)
+        self.product_poincare_factors = int(
+            getattr(config, "product_poincare_factors", 1)
+        )
+        if (
+            self.product_poincare_factors <= 0
+            or self.codebook_dim % self.product_poincare_factors
+        ):
+            raise ValueError(
+                "Product factors must evenly divide codebook_dim"
+            )
         if isinstance(config.codebook_size, int):
             sizes = [int(config.codebook_size)] * self.codebook_num
         else:
@@ -581,6 +649,7 @@ class RQLayer(nn.Module):
                     sk_epsilon=self.sk_epsilon,
                     sk_iters=self.sk_iters,
                     curvature=curvatures[level],
+                    product_factors=self.product_poincare_factors,
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
@@ -673,7 +742,10 @@ class RQLayer(nn.Module):
                 quant, quant_loss, unused, indices = vq_layer(
                     residual, infer_use_sk, previous_codes
                 )
-                residual = _hyperbolic_residual(residual, quant, curvature)
+                residual = _hyperbolic_residual(
+                    residual, quant, curvature,
+                    product_factors=self.product_poincare_factors,
+                )
                 quantized_x = quantized_x + quant
             else:
                 source = residual
@@ -686,8 +758,14 @@ class RQLayer(nn.Module):
                 # subtraction and the decoder input are computed there too and
                 # then mapped back to the encoder's own norms.
                 residual = self._restore_norm(
-                    _hyperbolic_residual(pinned, quant, curvature),
-                    source, target_norm,
+                    _hyperbolic_residual(
+                        pinned,
+                        quant,
+                        curvature,
+                        product_factors=self.product_poincare_factors,
+                    ),
+                    source,
+                    target_norm,
                 )
                 quantized_x = quantized_x + self._restore_norm(
                     quant, source, target_norm
@@ -720,7 +798,10 @@ class RQLayer(nn.Module):
                     residual, previous_codes
                 )
                 residual = _hyperbolic_residual(
-                    residual, layer.embed_code(indices), curvature
+                    residual,
+                    layer.embed_code(indices),
+                    curvature,
+                    product_factors=self.product_poincare_factors,
                 )
             else:
                 source = residual
@@ -731,9 +812,13 @@ class RQLayer(nn.Module):
                 )
                 residual = self._restore_norm(
                     _hyperbolic_residual(
-                        pinned, layer.embed_code(indices), curvature
+                        pinned,
+                        layer.embed_code(indices),
+                        curvature,
+                        product_factors=self.product_poincare_factors,
                     ),
-                    source, target_norm,
+                    source,
+                    target_norm,
                 )
             tokens[:, level] = indices
             previous_codes = indices
