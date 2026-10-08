@@ -20,32 +20,40 @@ from .layers import MLP, RQLayer, _poincare_distance_tangent_pairs
 class RQVAE(nn.Module):
     """Encode item embeddings into residual-quantized semantic identifiers."""
 
-    def __init__(self, config: Any, *, in_dim: int):
+    def __init__(self, config: Any, *, in_dim: int, context_dim: int = 0):
         super().__init__()
         self.config = config
         hidden_sizes = tuple(int(size) for size in config.hidden_sizes)
-        self.encoder_sizes = (int(in_dim), *hidden_sizes, int(config.codebook_dim))
+        codebook_dim = int(config.codebook_dim)
+        self.in_dim = int(in_dim)
+        self.context_dim = int(context_dim)
+        self.encoder_sizes = (
+            self.in_dim + self.context_dim,
+            *hidden_sizes,
+            codebook_dim,
+        )
+        self.decoder_sizes = (codebook_dim, *reversed(hidden_sizes), self.in_dim)
         self.encoder = MLP(list(self.encoder_sizes), dropout=float(config.dropout))
         self.rq = RQLayer(config)
-        self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
+        self.decoder = MLP(list(self.decoder_sizes), dropout=float(config.dropout))
 
     def get_curvatures(self) -> torch.Tensor:
         return self.rq.get_curvatures()
 
     def forward(
         self, embeddings: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         encoded = self.encoder(embeddings)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        quantized, quant_loss, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        return reconstructed, quant_loss, tokens
 
     @torch.no_grad()
     def get_indices(
         self, embeddings: torch.Tensor, *, infer_use_sk: bool = False
     ) -> torch.Tensor:
         encoded = self.encoder(embeddings)
-        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
+        _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
 
     @torch.no_grad()

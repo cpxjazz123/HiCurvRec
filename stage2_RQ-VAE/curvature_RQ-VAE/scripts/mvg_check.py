@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 
 SOURCE_DIR = Path(__file__).resolve().parents[1]
@@ -39,10 +40,21 @@ def require_nonzero_finite_gradient(
 
 def build_model(embeddings, device):
     model = RQVAE(
-        training._tokenizer_config(), in_dim=int(embeddings.shape[1])
+        training._tokenizer_config(),
+        in_dim=int(embeddings.shape[1]),
+        context_dim=int(embeddings.shape[1]),
     ).to(device)
     training.initialize_tiger_weights(model)
     return model
+
+
+def encoder_inputs(embeddings, device):
+    """Raw embedding plus the curvature-moved behaviour-context channel."""
+    frame = pd.read_parquet(experiment.TRAIN_FILE)
+    source_ids, successor_ids = training._transition_pairs(frame)
+    centroid = training._behaviour_context(embeddings, source_ids, successor_ids)
+    channel = training._curvature_context_channel(embeddings, centroid)
+    return torch.cat([embeddings, channel], dim=1).to(device), centroid.to(device)
 
 
 def checkpoint_round_trip(model, device, label: str) -> None:
@@ -64,6 +76,7 @@ def main() -> None:
     torch.manual_seed(42)
 
     model = build_model(all_embeddings, device)
+    all_inputs, all_centroid = encoder_inputs(all_embeddings, device)
     layers = model.rq.vq_layers
     require(len(layers) == 3, "Expected three residual quantization levels")
     # Curvature is per-level configuration, not a frozen constant: assert it
@@ -92,14 +105,14 @@ def main() -> None:
     )
 
     with torch.no_grad():
-        model.init_codebook(all_embeddings[:4096].to(device))
+        model.init_codebook(all_inputs[:4096])
 
     # Assert the metric working point s = sqrt(c) * ||v|| that each level
     # actually quantizes at. This is the per-level quantity the mechanism is
     # about, so a silent fallback to the other pin reading fails here rather
     # than at Stage3.
     with torch.no_grad():
-        probe = model.encoder(all_embeddings[:512].to(device))
+        probe = model.encoder(all_inputs[:512])
         captured = []
 
         def _capture(i):
@@ -154,8 +167,26 @@ def main() -> None:
         + f" pin_in_s_coordinates={training.PIN_IN_S_COORDINATES}"
     )
 
+    batch_inputs, batch_centroid = all_inputs, all_centroid
+    # The context channel must be a curvature move, not a copy and not an
+    # arithmetic mean: a silent fallback to either fails here.
+    channel = batch_inputs[:, all_embeddings.shape[1]:]
+    require(
+        torch.isfinite(channel).all(),
+        "Behaviour-context channel is non-finite",
+    )
+    require(
+        float(torch.linalg.vector_norm(channel - all_embeddings.to(device), dim=-1).mean())
+        > 1e-6,
+        "Behaviour-context channel equals the raw embedding",
+    )
+    arithmetic = 0.5 * (all_embeddings.to(device) + batch_centroid)
+    require(
+        float((channel - arithmetic).abs().max()) > 1e-6,
+        "Behaviour-context channel collapsed to the arithmetic mean",
+    )
     batch = all_embeddings[:256].to(device)
-    reconstructed, quant_loss, unused_codes, tokens = model(batch)
+    reconstructed, quant_loss, tokens = model(batch_inputs[:256])
     require(tokens.shape == (256, 3), "SID shape changed")
     require(
         reconstructed.shape == batch.shape,
@@ -214,7 +245,7 @@ def main() -> None:
 
     checkpoint_round_trip(model, device, "hyperbolic")
 
-    tokens, stats = model.get_indices_with_stats(all_embeddings[:512].to(device))
+    tokens, stats = model.get_indices_with_stats(all_inputs[:512])
     require(tokens.shape == (512, 3), "Final SID assignment shape changed")
     for level, stat in enumerate(stats):
         require(
@@ -251,7 +282,7 @@ def main() -> None:
     # (L0, L1) at 9370 distinct prefixes. A silent fallback to global balancing
     # must fail here instead of passing MVG and reverting to parent behaviour.
     with torch.no_grad():
-        corpus = all_embeddings.to(device)
+        corpus = all_inputs
         model.init_codebook(corpus)
         corpus_tokens, _ = model.get_indices_with_stats(corpus)
     full = corpus_tokens.cpu().numpy()

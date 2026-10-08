@@ -195,14 +195,20 @@ class VQLayer(nn.Module):
         return self.sk_epsilon
 
     @staticmethod
-    def center_distance(distances: torch.Tensor) -> torch.Tensor:
+    def center_distance(
+        distances: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Scale the distance matrix into [0, 1] and hand back the amplitude.
+
+        The degeneracy check is left to the caller because reading the
+        amplitude is a host sync: the bucketed assignment already reads one
+        device scalar per level and validates the amplitude in that same read.
+        """
         max_distance = distances.max()
         min_distance = distances.min()
         middle = (max_distance + min_distance) / 2
         amplitude = max_distance - middle + 1e-5
-        if not bool(amplitude > 0):
-            raise ValueError("Cannot center a constant distance matrix.")
-        return (distances - middle) / amplitude
+        return (distances - middle) / amplitude, amplitude
 
     @torch.no_grad()
     def sinkhorn(
@@ -231,9 +237,11 @@ class VQLayer(nn.Module):
         )
 
     def _balanced_assignments(self, distances: torch.Tensor) -> torch.Tensor:
-        centered = self.center_distance(distances).double()
+        centered, amplitude = self.center_distance(distances)
+        if not bool(amplitude > 0):
+            raise ValueError("Cannot center a constant distance matrix.")
         assignments = self.sinkhorn(
-            centered, self.get_effective_epsilon(), self.sk_iters
+            centered.double(), self.get_effective_epsilon(), self.sk_iters
         )
         if not torch.isfinite(assignments).all():
             raise RuntimeError("Sinkhorn assignment returned NaN or infinity.")
@@ -264,15 +272,27 @@ class VQLayer(nn.Module):
         """
         n_codes = distances.shape[1]
         n_rows = distances.shape[0]
-        centered = self.center_distance(distances).double()
-        assignment = torch.zeros_like(centered)
 
         # Group rows by bucket in one pass: sort once, then split by counts.
         order = torch.argsort(bucket, stable=True)
-        n_buckets = int(bucket.max()) + 1
-        counts = torch.bincount(bucket, minlength=n_buckets)
-        sizes = counts.tolist()
-        width = max(sizes)
+        # bincount already returns max(bucket) + 1 entries, so the bucket count
+        # is a shape on the host and not another device read.
+        counts = torch.bincount(bucket)
+        n_buckets = counts.numel()
+        centered, amplitude = self.center_distance(distances)
+        centered = centered.double()
+        assignment = torch.zeros_like(centered)
+
+        # The only host read this level needs: the widest bucket, which sizes
+        # the padded layout, and the centering amplitude, which is the
+        # degeneracy guard. Both are read together so the level costs one sync
+        # per step instead of four.
+        amplitude_value, width_value = torch.stack(
+            (amplitude, counts.max().to(amplitude.dtype))
+        ).tolist()
+        if not amplitude_value > 0:
+            raise ValueError("Cannot center a constant distance matrix.")
+        width = int(width_value)
         if width == 0:
             return assignment
         # Cap the element count, not the width: a wide bucket is fine while few
@@ -292,12 +312,12 @@ class VQLayer(nn.Module):
             torch.arange(n_buckets, device=distances.device),
             counts,
         )
-        starts = (torch.cumsum(counts, 0) - counts).tolist()
+        # The bucket starts stay on the device: they are only ever used as a
+        # gather index, so reading them back to the host and straight back to
+        # the device was a sync that bought nothing.
+        starts = torch.cumsum(counts, 0) - counts
         sorted_position = torch.arange(n_rows, device=distances.device)
-        within = slot[
-            sorted_position
-            - torch.as_tensor(starts, device=distances.device)[block_index]
-        ]
+        within = slot[sorted_position - starts[block_index]]
 
         padded = centered.new_zeros(n_buckets, width, n_codes)
         valid = torch.zeros(
@@ -376,19 +396,16 @@ class VQLayer(nn.Module):
         x: torch.Tensor,
         infer_use_sk: bool = False,
         bucket: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         latent = x.view(-1, self.dim)
         curvature = self.get_curvature()
-        embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
-        onehot = F.one_hot(embed_ind, self.n_embed)
-        used = onehot.sum(0)
-        if (
-            distributed.is_initialized()
-            and infer_use_sk is False
-            and not getattr(self, "_skip_ddp_reduce", False)
-        ):
-            distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
-        unused_codes = int((used == 0).sum().item())
+        # The assignment is a discrete argmax, so nothing can flow back through
+        # the distance matrix: computing it outside autograd drops its graph
+        # without touching a single assigned code. The per-step cross-rank
+        # reduction that used to sit here only fed an `unused_codes` counter
+        # nobody read; the real usage counts come from the diagnostic pass.
+        with torch.no_grad():
+            embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
         codebook_loss = _poincare_distance_tangent_pairs(
             x.detach(), x_q, curvature
@@ -398,7 +415,7 @@ class VQLayer(nn.Module):
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
         x_q = x + (x_q - x).detach()
-        return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
+        return x_q, quant_loss, embed_ind.view(*x.shape[:-1])
 
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
@@ -468,9 +485,10 @@ class EMAVQLayer(VQLayer):
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
-    ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         latent = x.view(-1, self.dim)
-        embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        with torch.no_grad():
+            embed_ind = self._indices(self._distances(latent), infer_use_sk)
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
 
         if self.training:
@@ -480,21 +498,15 @@ class EMAVQLayer(VQLayer):
             if distributed.is_initialized():
                 distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
                 distributed.all_reduce(embed_sum, op=distributed.ReduceOp.SUM)
-            unused_codes = int((used == 0).sum().item())
             self.cluster_size.data.mul_(self.decay).add_(used, alpha=1 - self.decay)
             self.embed_avg.data.mul_(self.decay).add_(embed_sum, alpha=1 - self.decay)
             n = self.cluster_size.sum()
             norm_w = n * (self.cluster_size + self.eps) / (n + self.n_embed * self.eps)
             self.embed.data.copy_(self.embed_avg / norm_w.unsqueeze(1))
-        else:
-            used = F.one_hot(embed_ind, self.n_embed).sum(0)
-            if distributed.is_initialized():
-                distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
-            unused_codes = int((used == 0).sum().item())
 
         quant_loss = self.beta * F.mse_loss(x, x_q.detach())
         x_q = x + (x_q - x).detach()
-        return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
+        return x_q, quant_loss, embed_ind.view(*x.shape[:-1])
 
 
 class SimVQLayer(VQLayer):
@@ -661,7 +673,6 @@ class RQLayer(nn.Module):
             x.shape[0], self.codebook_dim, device=x.device, dtype=x.dtype
         )
         sum_quant_loss: torch.Tensor | float = 0.0
-        num_unused_codes = 0.0
         output = torch.empty(
             x.shape[0], self.codebook_num, dtype=torch.long, device=x.device
         )
@@ -670,7 +681,7 @@ class RQLayer(nn.Module):
         for level, vq_layer in enumerate(self.vq_layers):
             curvature = vq_layer.get_curvature()
             if self.working_radii[level] == 0.0:
-                quant, quant_loss, unused, indices = vq_layer(
+                quant, quant_loss, indices = vq_layer(
                     residual, infer_use_sk, previous_codes
                 )
                 residual = _hyperbolic_residual(residual, quant, curvature)
@@ -679,7 +690,7 @@ class RQLayer(nn.Module):
                 source = residual
                 target_norm = self._radius_for_level(level, curvature, source)
                 pinned = self._pin_to_radius(source, target_norm)
-                quant, quant_loss, unused, indices = vq_layer(
+                quant, quant_loss, indices = vq_layer(
                     pinned, infer_use_sk, previous_codes
                 )
                 # The code was chosen in the pinned frame, so the residual
@@ -694,14 +705,8 @@ class RQLayer(nn.Module):
                 )
             previous_codes = indices
             sum_quant_loss = sum_quant_loss + quant_loss
-            num_unused_codes += unused
             output[:, level] = indices
-        return (
-            quantized_x,
-            sum_quant_loss / self.codebook_num,
-            num_unused_codes,
-            output,
-        )
+        return quantized_x, sum_quant_loss / self.codebook_num, output
 
     @torch.no_grad()
     def get_indices_with_stats(

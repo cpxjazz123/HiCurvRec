@@ -30,6 +30,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 
 from model import RQVAE
 from model.model import behaviour_ranking_loss
+from model.layers import _expmap0_tangent, _logmap0_point, _mobius_add
 import curvature_config as experiment
 
 
@@ -58,6 +59,11 @@ SK_ITERS = 50
 PCA_DIM = 0
 XAVIER_INIT = True
 GRADIENT_CLIP_NORM = 1.0
+# How often the training loss is read back to the host to catch a non-finite
+# value. Every read is a device sync, and the loss cannot become non-finite
+# without the weights it produced also being non-finite, so a strided check
+# still stops the run long before the next diagnostic interval reports it.
+FINITE_CHECK_STRIDE = 50
 OPTIMIZER = "AdamW"
 SEED = 42
 NUM_WORKERS = 0
@@ -105,6 +111,24 @@ PIN_IN_S_COORDINATES = True
 # parent, so about half the sampled constraints begin active.
 BEHAVIOUR_LOSS_WEIGHT = 0.1
 BEHAVIOUR_MARGIN = 0.4
+
+# Behaviour-context channel. A frozen probe on the parent checkpoint shows the
+# first-level codebook already extracts everything this representation supports:
+# a balanced 256-way clustering of the encoder output shares a cluster across a
+# real transition 7.09% of the time against 0.41% at random, and the emitted L0
+# code reaches 7.11% / 0.43%. The quantizer is not the bottleneck; the
+# representation is, so the mechanism puts behaviour structure into the
+# encoder's input rather than into another loss term.
+#
+# The channel is the geodesic move from an item towards the centroid of the
+# items it actually leads to: exp-map both endpoints into the ball, take the
+# Mobius difference, read the displacement back in the origin-tangent frame and
+# add `weight` times it. Curvature is what defines that displacement, so the
+# context enters as a metric distance rather than an arithmetic blend. The raw
+# embedding stays as its own encoder channel, so item identity is never traded
+# away for context.
+BEHAVIOUR_CONTEXT_WEIGHT = 0.5
+CONTEXT_CURVATURE = 1.0
 ADAMW_BETA1 = 0.9
 ADAMW_BASE_BETA2 = 0.999
 ADAMW_EPS = 1e-8
@@ -338,6 +362,49 @@ def _tokenizer_config() -> SimpleNamespace:
 
 
 
+def _behaviour_context(
+    embeddings: torch.Tensor,
+    source_ids: np.ndarray,
+    successor_ids: np.ndarray,
+) -> torch.Tensor:
+    """Mean embedding of the items each item actually leads to.
+
+    Built from the training transitions only. An item with no outgoing
+    transition keeps its own embedding, which makes the curvature displacement
+    below exactly zero for it instead of a pull towards a global centroid.
+    """
+    successor_index = torch.from_numpy(successor_ids)
+    totals = torch.zeros_like(embeddings)
+    counts = torch.zeros(embeddings.shape[0], dtype=embeddings.dtype)
+    totals.index_add_(0, torch.from_numpy(source_ids), embeddings[successor_index])
+    counts.index_add_(0, torch.from_numpy(source_ids), torch.ones(len(source_ids)))
+    covered = counts > 0
+    centroid = totals / counts.clamp_min(1.0).unsqueeze(1)
+    return torch.where(covered.unsqueeze(1), centroid, embeddings)
+
+
+def _curvature_context_channel(
+    embeddings: torch.Tensor,
+    context: torch.Tensor,
+    weight: float = BEHAVIOUR_CONTEXT_WEIGHT,
+    curvature: float = CONTEXT_CURVATURE,
+) -> torch.Tensor:
+    """Move along the ball's geodesic from an item towards its behaviour centroid.
+
+    The displacement is log_0(exp_0(context) (-) exp_0(item)), i.e. the tangent
+    vector whose length is the hyperbolic distance between the two points, so
+    the channel is `weight` times that metric distance and not a linear blend.
+    Both arguments are origin-tangent vectors, the frame the residual stack and
+    the behaviour hinge already work in.
+    """
+    item_point = _expmap0_tangent(embeddings, curvature)
+    context_point = _expmap0_tangent(context, curvature)
+    displacement = _logmap0_point(
+        _mobius_add(-item_point, context_point, curvature), curvature
+    )
+    return embeddings + weight * displacement
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
@@ -360,8 +427,22 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
+    transition_sources, transition_successors = _transition_pairs(train_frame)
+    behaviour_centroid = _behaviour_context(
+        all_embeddings, transition_sources, transition_successors
+    )
+    context_channel = _curvature_context_channel(
+        all_embeddings, behaviour_centroid
+    )
+    # The encoder reads the raw embedding and the curvature-moved context as two
+    # channels; the reconstruction target stays the raw embedding alone, so the
+    # codes still have to carry item identity.
+    encoder_inputs = torch.cat([all_embeddings, context_channel], dim=1)
+    train_inputs = encoder_inputs[torch.from_numpy(train_ids)]
     config = _tokenizer_config()
-    model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
+    model = RQVAE(
+        config, in_dim=embeddings.shape[1], context_dim=context_channel.shape[1]
+    ).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
@@ -370,7 +451,7 @@ def main() -> None:
             find_unused_parameters=False,
         )
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_inputs, train_embeddings)
     loader_batch_size = BATCH_SIZE_PER_RANK
     train_sampler = (
         DistributedSampler(
@@ -388,10 +469,10 @@ def main() -> None:
         pin_memory=device.type == "cuda",
         persistent_workers=False,
     )
-    source_ids, successor_ids = _transition_pairs(train_frame)
-    source_embeddings = all_embeddings[torch.from_numpy(source_ids)]
-    successor_embeddings = all_embeddings[torch.from_numpy(successor_ids)]
-    pair_dataset = TensorDataset(source_embeddings, successor_embeddings)
+    source_ids, successor_ids = transition_sources, transition_successors
+    source_inputs = encoder_inputs[torch.from_numpy(source_ids)]
+    successor_inputs = encoder_inputs[torch.from_numpy(successor_ids)]
+    pair_dataset = TensorDataset(source_inputs, successor_inputs)
     pair_sampler = (
         DistributedSampler(
             pair_dataset, num_replicas=world_size, rank=rank, shuffle=True,
@@ -470,7 +551,7 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
+        raw_module.init_codebook(train_inputs.to(device))
     if world_size > 1:
         dist.barrier()
 
@@ -479,10 +560,14 @@ def main() -> None:
     local_optimizer_steps = 0
     global_step_sync = 0
     epoch = 0
-    interval_loss_sum = 0.0
-    interval_recon_sum = 0.0
+    # The interval averages are accumulated on the device and read once per
+    # diagnostic interval. Reading a loss per step is a host sync on every
+    # iteration, and the value itself is only ever reported at the end of the
+    # interval.
+    interval_loss_sum = torch.zeros((), dtype=torch.float64, device=device)
+    interval_recon_sum = torch.zeros((), dtype=torch.float64, device=device)
+    interval_behaviour_sum = torch.zeros((), dtype=torch.float64, device=device)
     interval_updates = 0
-    interval_behaviour_sum = 0.0
     last_progress_time = time.time()
 
     while global_step_sync < MAX_GLOBAL_STEPS:
@@ -491,13 +576,14 @@ def main() -> None:
         if pair_sampler is not None:
             pair_sampler.set_epoch(epoch)
         model.train()
-        for (batch,) in loader:
-            batch = batch.to(device, non_blocking=True)
+        for batch_inputs, batch_targets in loader:
+            batch_inputs = batch_inputs.to(device, non_blocking=True)
+            batch_targets = batch_targets.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _ = model(batch_inputs)
             loss, recon_loss = raw_module.compute_loss(
-                batch, reconstructed, quant_loss
+                batch_targets, reconstructed, quant_loss
             )
             try:
                 pair_batch = next(pair_iter)
@@ -522,8 +608,14 @@ def main() -> None:
                 margin=BEHAVIOUR_MARGIN,
             )
             loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
-            interval_behaviour_sum += float(ranking_loss.detach())
-            if not torch.isfinite(loss):
+            interval_behaviour_sum += ranking_loss.detach().double()
+            # A non-finite loss poisons the weights, so the check stays, but on
+            # a fixed stride instead of every step: each read is a host sync
+            # and the failure it guards against is not a per-step event.
+            if (
+                local_optimizer_steps % FINITE_CHECK_STRIDE == 0
+                and not bool(torch.isfinite(loss))
+            ):
                 raise RuntimeError(
                     f"RQ-VAE loss became non-finite at distributed step {global_step_sync}"
                 )
@@ -533,15 +625,13 @@ def main() -> None:
             optimizer.step()
 
             local_optimizer_steps += 1
-            step_tensor = torch.tensor(
-                local_optimizer_steps, dtype=torch.int64, device=device
-            )
-            if world_size > 1:
-                dist.all_reduce(step_tensor, op=dist.ReduceOp.SUM)
-            global_step_sync = int(step_tensor.item())
+            # DDP runs the same sampler length on every rank, so the global step
+            # is the local count times the world size. The interval reduction
+            # below is what still verifies that assumption.
+            global_step_sync = local_optimizer_steps * world_size
 
-            interval_loss_sum += float(loss.detach())
-            interval_recon_sum += float(recon_loss.detach())
+            interval_loss_sum += loss.detach().double()
+            interval_recon_sum += recon_loss.detach().double()
             interval_updates += 1
 
             now = time.time()
@@ -564,105 +654,107 @@ def main() -> None:
                     break
                 continue
 
-            loss_sum_tensor = torch.tensor(
-                interval_loss_sum, dtype=torch.float64, device=device
-            )
-            recon_sum_tensor = torch.tensor(
-                interval_recon_sum, dtype=torch.float64, device=device
-            )
+            loss_sum_tensor = interval_loss_sum
+            recon_sum_tensor = interval_recon_sum
+            behaviour_sum_tensor = interval_behaviour_sum
             updates_tensor = torch.tensor(
                 interval_updates, dtype=torch.int64, device=device
             )
-            behaviour_sum_tensor = torch.tensor(
-                interval_behaviour_sum, dtype=torch.float64, device=device
+            step_counter_tensor = torch.tensor(
+                local_optimizer_steps, dtype=torch.int64, device=device
             )
             if world_size > 1:
                 dist.all_reduce(loss_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(recon_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(behaviour_sum_tensor, op=dist.ReduceOp.SUM)
                 dist.all_reduce(updates_tensor, op=dist.ReduceOp.SUM)
+                dist.all_reduce(step_counter_tensor, op=dist.ReduceOp.SUM)
+            # The global step is derived from the local counter, so confirm the
+            # ranks really did run the same number of updates.
+            if int(step_counter_tensor.item()) != local_optimizer_steps * world_size:
+                raise RuntimeError(
+                    "Ranks disagree on the optimizer step count: "
+                    f"sum={int(step_counter_tensor.item())} "
+                    f"expected={local_optimizer_steps * world_size}"
+                )
             denominator = max(int(updates_tensor.item()), 1)
             avg_loss = float(loss_sum_tensor.item()) / denominator
             avg_recon = float(recon_sum_tensor.item()) / denominator
             avg_behaviour = float(behaviour_sum_tensor.item()) / denominator
-            interval_loss_sum = 0.0
-            interval_recon_sum = 0.0
-            interval_behaviour_sum = 0.0
+            interval_loss_sum = torch.zeros((), dtype=torch.float64, device=device)
+            interval_recon_sum = torch.zeros((), dtype=torch.float64, device=device)
+            interval_behaviour_sum = torch.zeros(
+                (), dtype=torch.float64, device=device
+            )
             interval_updates = 0
 
             model.eval()
-            for layer in raw_module.rq.vq_layers:
-                layer._skip_ddp_reduce = True
-            try:
-                if rank == 0:
-                    with torch.no_grad():
-                        raw_tokens, layer_stats = raw_module.get_indices_with_stats(
-                            all_embeddings.to(device)
-                        )
-                    raw_tokens = raw_tokens.cpu().numpy().astype(np.int64)
-                    usage_counts = [
-                        stat["usage_counts"].detach().cpu().tolist()
-                        for stat in layer_stats
-                    ]
-                    codebook_used = [
-                        sum(count > 0 for count in usage)
-                        for usage in usage_counts
-                    ]
-                    assignment_entropy_nats = [
-                        float(stat["assignment_entropy_nats"].item())
-                        for stat in layer_stats
-                    ]
-                    assignment_entropy_normalized = [
-                        entropy / float(np.log(len(usage)))
-                        for entropy, usage in zip(assignment_entropy_nats, usage_counts)
-                    ]
-                    raw_unique = int(len(np.unique(raw_tokens, axis=0)))
-                    collision_v = 1.0 - raw_unique / len(raw_tokens)
-                    current_curvatures = (
-                        raw_module.get_curvatures().detach().cpu().tolist()
+            if rank == 0:
+                with torch.no_grad():
+                    raw_tokens, layer_stats = raw_module.get_indices_with_stats(
+                        encoder_inputs.to(device)
                     )
-                    current_epsilons = raw_module.rq.get_effective_epsilons()
+                raw_tokens = raw_tokens.cpu().numpy().astype(np.int64)
+                usage_counts = [
+                    stat["usage_counts"].detach().cpu().tolist()
+                    for stat in layer_stats
+                ]
+                codebook_used = [
+                    sum(count > 0 for count in usage)
+                    for usage in usage_counts
+                ]
+                assignment_entropy_nats = [
+                    float(stat["assignment_entropy_nats"].item())
+                    for stat in layer_stats
+                ]
+                assignment_entropy_normalized = [
+                    entropy / float(np.log(len(usage)))
+                    for entropy, usage in zip(assignment_entropy_nats, usage_counts)
+                ]
+                raw_unique = int(len(np.unique(raw_tokens, axis=0)))
+                collision_v = 1.0 - raw_unique / len(raw_tokens)
+                current_curvatures = (
+                    raw_module.get_curvatures().detach().cpu().tolist()
+                )
+                current_epsilons = raw_module.rq.get_effective_epsilons()
 
-                    print(
-                        f"[hyperbolic] global_step={global_step_sync}/"
-                        f"{MAX_GLOBAL_STEPS} loss={avg_loss:.8f} "
-                        f"recon={avg_recon:.8f} "
-                        f"c={[round(value, 6) for value in current_curvatures]} "
-                        f"epsilon={[round(value, 7) for value in current_epsilons]} "
-                        f"raw_unique={raw_unique}/{len(raw_tokens)} "
-                        f"collision={collision_v:.6f} "
-                        f"behaviour={avg_behaviour:.8f} "
-                        f"codebook_used={codebook_used}",
-                        flush=True,
-                    )
-                    _record(
-                        rank, "train",
-                        global_step=global_step_sync,
-                        local_optimizer_steps=local_optimizer_steps,
-                        loss=avg_loss, recon=avg_recon,
-                        behaviour=avg_behaviour,
-                        behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
-                        behaviour_margin=BEHAVIOUR_MARGIN,
-                        current_curvatures=current_curvatures,
-                        effective_epsilons=current_epsilons,
-                        raw_unique=raw_unique, raw_total=len(raw_tokens),
-                        collision=collision_v, codebook_usage_counts=usage_counts,
-                        codebook_used=codebook_used,
-                        assignment_entropy_nats=assignment_entropy_nats,
-                        assignment_entropy_normalized=assignment_entropy_normalized,
-                    )
-                    version = SNAPSHOT_STEPS.get(global_step_sync)
-                    if version is not None:
-                        _save_snapshot(
-                            raw_module, raw_tokens, version, global_step_sync,
-                            local_optimizer_steps, codebook_sizes, rank,
-                        )
+                print(
+                    f"[hyperbolic] global_step={global_step_sync}/"
+                    f"{MAX_GLOBAL_STEPS} loss={avg_loss:.8f} "
+                    f"recon={avg_recon:.8f} "
+                    f"c={[round(value, 6) for value in current_curvatures]} "
+                    f"epsilon={[round(value, 7) for value in current_epsilons]} "
+                    f"raw_unique={raw_unique}/{len(raw_tokens)} "
+                    f"collision={collision_v:.6f} "
+                    f"behaviour={avg_behaviour:.8f} "
+                    f"codebook_used={codebook_used}",
+                    flush=True,
+                )
+                _record(
+                    rank, "train",
+                    global_step=global_step_sync,
+                    local_optimizer_steps=local_optimizer_steps,
+                    loss=avg_loss, recon=avg_recon,
+                    behaviour=avg_behaviour,
+                    behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
+                    behaviour_margin=BEHAVIOUR_MARGIN,
+                    current_curvatures=current_curvatures,
+                    effective_epsilons=current_epsilons,
+                    raw_unique=raw_unique, raw_total=len(raw_tokens),
+                    collision=collision_v, codebook_usage_counts=usage_counts,
+                    codebook_used=codebook_used,
+                    assignment_entropy_nats=assignment_entropy_nats,
+                    assignment_entropy_normalized=assignment_entropy_normalized,
+                )
                 version = SNAPSHOT_STEPS.get(global_step_sync)
                 if version is not None:
-                    saved_versions.add(version)
-            finally:
-                for layer in raw_module.rq.vq_layers:
-                    layer._skip_ddp_reduce = False
+                    _save_snapshot(
+                        raw_module, raw_tokens, version, global_step_sync,
+                        local_optimizer_steps, codebook_sizes, rank,
+                    )
+            version = SNAPSHOT_STEPS.get(global_step_sync)
+            if version is not None:
+                saved_versions.add(version)
             if world_size > 1:
                 dist.barrier()
             model.train()
