@@ -65,7 +65,8 @@ def main() -> None:
 
     model = build_model(all_embeddings, device)
     layers = model.rq.vq_layers
-    require(len(layers) == 3, "Expected three residual quantization levels")
+    levels = training.CODEBOOK_NUM
+    require(len(layers) == levels, f"Expected {levels} residual quantization levels")
     # Curvature is per-level configuration, not a frozen constant: assert it
     # matches what the run registered and stays positive, rather than pinning
     # it to 1.0 (which is only the parent's value).
@@ -80,8 +81,8 @@ def main() -> None:
         "Curvature must be positive at every level",
     )
     require(
-        [layer.sk_epsilon for layer in layers] == [0.003] * 3
-        and [layer.sk_iters for layer in layers] == [50] * 3,
+        [layer.sk_epsilon for layer in layers] == [0.003] * levels
+        and [layer.sk_iters for layer in layers] == [50] * levels,
         "Sinkhorn settings changed",
     )
     require(
@@ -89,6 +90,25 @@ def main() -> None:
             name.endswith("c_layer_scale") for name, _ in model.named_parameters()
         ),
         "No learnable curvature scale should remain in the fixed-curvature model",
+    )
+    # Level-owned blocks are the mechanism. Assert the levels tile the latent,
+    # then assert a level's code cannot see the coordinates it does not own: a
+    # silent fallback to whole-latent quantization passes the partition check and
+    # fails the invariance check.
+    blocks = [(layer.block_start, layer.block_stop) for layer in layers]
+    require(
+        blocks[0][0] == 0
+        and blocks[-1][1] == training.CODEBOOK_DIM
+        and all(
+            blocks[level][1] == blocks[level + 1][0]
+            for level in range(len(blocks) - 1)
+        ),
+        f"Level blocks {blocks} do not tile the latent without gaps or overlap",
+    )
+    require(
+        list(training.CODEBOOK_BLOCK_SIZES)
+        == [stop - start for start, stop in blocks],
+        "Registered block widths disagree with the levels' own blocks",
     )
 
     with torch.no_grad():
@@ -103,9 +123,16 @@ def main() -> None:
         captured = []
 
         def _capture(i):
+            block = layers[i].block
+
             def hook(_module, args):
                 captured.append(
-                    (i, torch.linalg.vector_norm(args[0].detach(), dim=-1))
+                    (
+                        i,
+                        torch.linalg.vector_norm(
+                            args[0].detach()[:, block], dim=-1
+                        ),
+                    )
                 )
             return hook
 
@@ -117,8 +144,8 @@ def main() -> None:
         for handle in handles:
             handle.remove()
     require(
-        len(captured) == 3,
-        f"Expected three VQ inputs to inspect, captured {len(captured)}",
+        len(captured) == levels,
+        f"Expected {levels} VQ inputs to inspect, captured {len(captured)}",
     )
     realized = {}
     for i, measured in captured:
@@ -154,9 +181,43 @@ def main() -> None:
         + f" pin_in_s_coordinates={training.PIN_IN_S_COORDINATES}"
     )
 
+    # A level's codes may depend on its own block and on the blocks of shallower
+    # levels (per-bucket balancing groups it by their codes), never on a deeper
+    # block. Perturbing deeper blocks must leave every shallower token column
+    # untouched; whole-latent quantization moves all of them and fails here.
+    with torch.no_grad():
+        base_latent = model.encoder(all_embeddings[:256].to(device))
+        reference_tokens, _ = model.rq.get_indices_with_stats(base_latent)
+        for level in range(levels):
+            generator = torch.Generator().manual_seed(1000 + level)
+            noise = torch.randn(base_latent.shape, generator=generator).to(device)
+            perturbed = base_latent.clone()
+            for deeper, (start, stop) in enumerate(blocks):
+                if deeper > level:
+                    perturbed[:, start:stop] = (
+                        perturbed[:, start:stop] + 0.35 * noise[:, start:stop]
+                    )
+            perturbed_tokens, _ = model.rq.get_indices_with_stats(perturbed)
+            for shallower in range(level + 1):
+                require(
+                    torch.equal(
+                        reference_tokens[:, shallower],
+                        perturbed_tokens[:, shallower],
+                    ),
+                    f"L{shallower + 1} codes moved when only deeper blocks "
+                    "changed; the level is not confined to its own block",
+                )
+    print(
+        "  level blocks: "
+        + " ".join(
+            f"L{level + 1}=[{start}:{stop}]"
+            for level, (start, stop) in enumerate(blocks)
+        )
+    )
+
     batch = all_embeddings[:256].to(device)
     reconstructed, quant_loss, unused_codes, tokens = model(batch)
-    require(tokens.shape == (256, 3), "SID shape changed")
+    require(tokens.shape == (256, levels), "SID shape changed")
     require(
         reconstructed.shape == batch.shape,
         "Reconstruction shape must match the input embeddings",
@@ -215,7 +276,7 @@ def main() -> None:
     checkpoint_round_trip(model, device, "hyperbolic")
 
     tokens, stats = model.get_indices_with_stats(all_embeddings[:512].to(device))
-    require(tokens.shape == (512, 3), "Final SID assignment shape changed")
+    require(tokens.shape == (512, levels), "Final SID assignment shape changed")
     for level, stat in enumerate(stats):
         require(
             torch.isfinite(stat["usage_counts"]).all()
@@ -255,13 +316,21 @@ def main() -> None:
         model.init_codebook(corpus)
         corpus_tokens, _ = model.get_indices_with_stats(corpus)
     full = corpus_tokens.cpu().numpy()
-    prefixes = [len(np.unique(full[:, : k + 1], axis=0)) for k in range(3)]
+    prefixes = [
+        len(np.unique(full[:, : k + 1], axis=0)) for k in range(levels)
+    ]
     buckets = np.unique(full[:, 0])
     per_bucket = [np.unique(full[full[:, 0] == b, 1]).size for b in buckets]
     mean_bucket_reach = float(np.mean(per_bucket))
     print(
-        f"  bucket reach: L0={prefixes[0]} L0L1={prefixes[1]} "
-        f"L0L1L2={prefixes[2]} L1-per-bucket={mean_bucket_reach:.1f}"
+        "  bucket reach: "
+        + " ".join(f"depth{d + 1}={count}" for d, count in enumerate(prefixes))
+        + f" L1-per-bucket={mean_bucket_reach:.1f}"
+    )
+    require(
+        prefixes[-1] / len(full) > 0.99,
+        f"Full SID uniqueness {prefixes[-1]}/{len(full)} is below 99%; the "
+        "deepest level is not separating the corpus",
     )
     require(
         prefixes[1] > prefixes[0] * 5,
