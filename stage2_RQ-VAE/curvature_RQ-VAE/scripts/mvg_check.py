@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 
 SOURCE_DIR = Path(__file__).resolve().parents[1]
@@ -13,6 +14,7 @@ sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment
 import train_rqvae as training
 from model import RQVAE
+from model.model import residual_behaviour_preservation_loss
 
 
 def require(condition: bool, message: str) -> None:
@@ -166,7 +168,41 @@ def main() -> None:
         "Forward pass produced non-finite values",
     )
 
-    total_loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+    base_loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+    source_ids, successor_ids = training._transition_pairs(
+        pd.read_parquet(experiment.TRAIN_FILE)
+    )
+    pair_count = min(256, len(source_ids))
+    require(pair_count >= 2, "Behavior gradient probe needs at least two pairs")
+    pair_sources = all_embeddings[
+        torch.from_numpy(source_ids[:pair_count])
+    ].to(device)
+    pair_successors = all_embeddings[
+        torch.from_numpy(successor_ids[:pair_count])
+    ].to(device)
+    encoded_source = model.encoder(pair_sources)
+    encoded_successor = model.encoder(pair_successors)
+    negative_indices = torch.randperm(pair_count, device=device)
+    encoded_negatives = encoded_source[negative_indices]
+    pair_prefix = model.rq.first_level_codeword_contribution(
+        torch.cat(
+            (encoded_source, encoded_successor, encoded_negatives), dim=0
+        )
+    )
+    prefix_source, prefix_successor, prefix_negatives = pair_prefix.split(
+        pair_count, dim=0
+    )
+    behaviour_loss = residual_behaviour_preservation_loss(
+        encoded_source,
+        encoded_successor,
+        encoded_negatives,
+        prefix_source,
+        prefix_successor,
+        prefix_negatives,
+        curvature=training.LAYER_CURVATURES[0],
+        margin=training.BEHAVIOUR_MARGIN,
+    )
+    total_loss = base_loss + training.BEHAVIOUR_LOSS_WEIGHT * behaviour_loss
     require(
         total_loss.requires_grad and total_loss.grad_fn is not None,
         "Total loss is detached",
@@ -176,6 +212,38 @@ def main() -> None:
         quant_loss, parameters, "quantization/commitment loss"
     )
     require_nonzero_finite_gradient(recon_loss, parameters, "reconstruction loss")
+    require_nonzero_finite_gradient(
+        behaviour_loss, parameters, "L1 residual behavior-preservation loss"
+    )
+    encoder_parameters = list(model.encoder.parameters())
+    codebook_parameters = [layer.get_code_embs() for layer in layers]
+    mechanism_gradients = torch.autograd.grad(
+        behaviour_loss,
+        encoder_parameters + codebook_parameters,
+        retain_graph=True,
+        allow_unused=True,
+    )
+    encoder_gradients = mechanism_gradients[:len(encoder_parameters)]
+    codebook_gradients = mechanism_gradients[len(encoder_parameters):]
+    require(
+        any(
+            gradient is not None
+            and torch.isfinite(gradient).all()
+            and torch.count_nonzero(gradient).item() > 0
+            for gradient in encoder_gradients
+        ),
+        "Behavior preservation did not reach the encoder",
+    )
+    require(
+        codebook_gradients[0] is not None
+        and torch.isfinite(codebook_gradients[0]).all()
+        and torch.count_nonzero(codebook_gradients[0]).item() > 0,
+        "Behavior preservation did not reach the L1 codebook",
+    )
+    require(
+        codebook_gradients[1] is None and codebook_gradients[2] is None,
+        "L1 preservation unexpectedly changed later-level codebooks",
+    )
 
     total_loss.backward()
     require(
@@ -276,9 +344,10 @@ def main() -> None:
     )
 
     print(
-        "MVG PASS: fixed-curvature Poincare geometry, quantization and "
-        "reconstruction gradients, optimizer update, checkpoint reload, "
-        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget"
+        "MVG PASS: fixed-curvature Poincare geometry, L1 behavior gradients "
+        "to encoder/codebook, quantization and reconstruction gradients, "
+        "optimizer update, checkpoint reload, per-bucket Sinkhorn assignment, "
+        "TIGER-aligned 72k budget"
     )
 
 
