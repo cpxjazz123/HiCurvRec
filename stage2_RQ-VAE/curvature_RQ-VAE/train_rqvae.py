@@ -49,6 +49,7 @@ CATEGORY_CONE_MARGIN = float(experiment.CATEGORY_CONE_MARGIN)
 CATEGORY_CONE_APERTURE_DEG = float(experiment.CATEGORY_CONE_APERTURE_DEG)
 CATEGORY_CONE_RADIAL_WEIGHT = float(experiment.CATEGORY_CONE_RADIAL_WEIGHT)
 CATEGORY_CONE_RADIAL_MARGIN = float(experiment.CATEGORY_CONE_RADIAL_MARGIN)
+CATEGORY_CONE_RADIUS_BAND = tuple(experiment.CATEGORY_CONE_RADIUS_BAND)
 CATEGORY_CONE_HOLDOUT_FRACTION = float(experiment.CATEGORY_CONE_HOLDOUT_FRACTION)
 CATEGORY_CONE_DATA_SEED = int(experiment.CATEGORY_CONE_DATA_SEED)
 CATEGORY_CONE_CALIBRATION_ITEMS = int(experiment.CATEGORY_CONE_CALIBRATION_ITEMS)
@@ -470,6 +471,8 @@ def main() -> None:
             radial_weight=CATEGORY_CONE_RADIAL_WEIGHT,
             radial_margin=CATEGORY_CONE_RADIAL_MARGIN,
             device=device,
+            radius_band_low=CATEGORY_CONE_RADIUS_BAND[0],
+            radius_band_high=CATEGORY_CONE_RADIUS_BAND[1],
         )
     if world_size > 1:
         model = DDP(
