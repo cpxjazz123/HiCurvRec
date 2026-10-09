@@ -190,6 +190,36 @@ def main() -> None:
             "opposite point outside",
         )
 
+    # Build the supervision module exactly as the trainer builds it. A wrong
+    # keyword here once survived two rounds because the cone was off in both,
+    # so the construction path itself is now covered.
+    from model.category_cone import CategoryCone
+    from curvature_config import (
+        CATEGORY_CONE_DATA_SEED,
+        CATEGORY_CONE_HOLDOUT_FRACTION,
+        CATEGORY_CONE_MARGIN,
+        CATEGORY_CONE_RADIAL_MARGIN,
+        CATEGORY_CONE_RADIAL_WEIGHT,
+    )
+
+    supervised = CategoryCone(
+        geometry="poincare",
+        codebook_dim=32,
+        holdout_fraction=CATEGORY_CONE_HOLDOUT_FRACTION,
+        data_seed=CATEGORY_CONE_DATA_SEED,
+        margin=CATEGORY_CONE_MARGIN,
+        radial_weight=CATEGORY_CONE_RADIAL_WEIGHT,
+        radial_margin=CATEGORY_CONE_RADIAL_MARGIN,
+        device=torch.device(DEVICE),
+    )
+    check(
+        "cone module builds with the trainer's keywords",
+        bool(supervised.prototypes.coarse.shape[0] >= 1)
+        and bool(supervised.heldout_index.size > 0),
+        f"supervised={supervised.supervised_index.size} "
+        f"heldout={supervised.heldout_index.size}",
+    )
+
     generator = torch.Generator(device=DEVICE).manual_seed(0)
     coarse_ids = torch.arange(30, device=DEVICE)
     fine_ids = torch.arange(59, device=DEVICE)
