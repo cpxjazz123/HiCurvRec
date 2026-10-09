@@ -25,11 +25,14 @@ GEOMETRIES = {"euclid": "euclid", "poincare": "poincare"}
 # The mechanism under test. One entry per arm pair, so a later round can point
 # this at whatever survived without touching the loop below.
 MECHANISM = {
-    "name": "aligned",
-    "level_aligned": True,
+    "name": "coarse_l1",
+    "cone": True,
+    "coarse_level": 1,
+    "level_aligned": False,
     "metric_margin": False,
     "separation_weight": 0.0,
     "separation_gap": 0.0,
+    "smoothness": 0.0,
     "l2_codes": 256,
 }
 
@@ -68,19 +71,23 @@ def configure(geometry: str, seed: int):
     experiment.SIDS_NPY = arm_dir / "dataset/Instruments/sids_for_hgrec.npy"
     experiment.ITEM_SIDS_JSON = arm_dir / "item_sids.json"
     experiment.STAGE2_LOG_DIR = arm_dir / "logs"
-    experiment.CATEGORY_CONE_ENABLED = True
+    experiment.CATEGORY_CONE_ENABLED = MECHANISM["cone"]
     experiment.CATEGORY_CONE_METRIC_MARGIN = MECHANISM["metric_margin"]
     experiment.CATEGORY_CONE_SEPARATION_WEIGHT = MECHANISM["separation_weight"]
     experiment.CATEGORY_CONE_SEPARATION_GAP = MECHANISM["separation_gap"]
     experiment.CATEGORY_CONE_LEVEL_ALIGNED = MECHANISM["level_aligned"]
+    experiment.CATEGORY_CONE_COARSE_LEVEL = MECHANISM["coarse_level"]
+    experiment.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"]
 
     trainer.GEOMETRY = geometry
     trainer.SEED = int(seed)
-    trainer.CATEGORY_CONE_ENABLED = True
+    trainer.CATEGORY_CONE_ENABLED = MECHANISM["cone"]
     trainer.CATEGORY_CONE_METRIC_MARGIN = MECHANISM["metric_margin"]
     trainer.CATEGORY_CONE_SEPARATION_WEIGHT = MECHANISM["separation_weight"]
     trainer.CATEGORY_CONE_SEPARATION_GAP = MECHANISM["separation_gap"]
     trainer.CATEGORY_CONE_LEVEL_ALIGNED = MECHANISM["level_aligned"]
+    trainer.CATEGORY_CONE_COARSE_LEVEL = MECHANISM["coarse_level"]
+    trainer.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"]
     trainer.CODEBOOK_SIZE = (256, MECHANISM["l2_codes"], 256)
     trainer.BATCH_SIZE_PER_RANK = 1024
     trainer.MAX_GLOBAL_STEPS = 72_000
@@ -102,7 +109,9 @@ if "RANK" in os.environ:
     trainer = configure(geometry, seed)
     print(
         f"[multiseed] geometry={geometry} seed={seed} "
-        f"l2={MECHANISM['l2_codes']} aligned={MECHANISM['level_aligned']}",
+        f"l2={MECHANISM['l2_codes']} cone={MECHANISM['cone']} "
+        f"coarse_level={MECHANISM['coarse_level']} "
+        f"smoothness={MECHANISM['smoothness']}",
         flush=True,
     )
     trainer.main()

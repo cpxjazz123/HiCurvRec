@@ -56,6 +56,7 @@ CATEGORY_CONE_SEPARATION_WEIGHT = float(experiment.CATEGORY_CONE_SEPARATION_WEIG
 CATEGORY_CONE_SEPARATION_GAP = float(experiment.CATEGORY_CONE_SEPARATION_GAP)
 CATEGORY_CONE_LEVEL_ALIGNED = bool(experiment.CATEGORY_CONE_LEVEL_ALIGNED)
 CATEGORY_CONE_COARSE_LEVEL = int(experiment.CATEGORY_CONE_COARSE_LEVEL)
+QUANT_SMOOTHNESS_WEIGHT = float(experiment.QUANT_SMOOTHNESS_WEIGHT)
 CATEGORY_CONE_DATA_SEED = int(experiment.CATEGORY_CONE_DATA_SEED)
 CATEGORY_CONE_CALIBRATION_ITEMS = int(experiment.CATEGORY_CONE_CALIBRATION_ITEMS)
 BEHAVIOUR_LOSS_ENABLED = bool(experiment.BEHAVIOUR_LOSS_ENABLED)
@@ -373,6 +374,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
+        smoothness_weight=QUANT_SMOOTHNESS_WEIGHT,
         layer_working_radii=LAYER_WORKING_RADII,
         geometry=experiment.GEOMETRY,
         layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),

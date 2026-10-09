@@ -220,6 +220,7 @@ class VQLayer(nn.Module):
         curvature: float = 1.0,
         geometry: str = "poincare",
         assignment_mode: str = "bucket",
+        smoothness_weight: float = 0.0,
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -240,6 +241,9 @@ class VQLayer(nn.Module):
                 f"{assignment_mode!r}"
             )
         self.assignment_mode = str(assignment_mode)
+        if smoothness_weight < 0.0:
+            raise ValueError("smoothness_weight must not be negative.")
+        self.smoothness_weight = float(smoothness_weight)
         (
             self._pairwise_fn,
             self._pair_fn,
@@ -466,6 +470,41 @@ class VQLayer(nn.Module):
         usage = torch.bincount(ids, minlength=self.n_embed)
         return ids.view(*x.shape[:-1]), usage, entropy
 
+    def _smoothness_loss(
+        self,
+        latent: torch.Tensor,
+        quantized: torch.Tensor,
+        pairs: int = 64,
+    ) -> torch.Tensor:
+        """Keep the quantiser a smooth function of the input, in the arm's metric.
+
+        Stage3 has to learn content -> SID from the item's text embedding, and the
+        SID is the quantiser's output. Nothing about the partition changes here:
+        the term only asks that two latents the metric calls close are not sent to
+        code vectors the metric calls far apart, which is what makes that map
+        learnable. The distances are the arm's own, so in the hyperbolic arm the
+        requirement is expressed in hyperbolic units and grows where the metric
+        grows, while in the euclidean arm it is the plain Euclidean statement.
+        """
+        if self.smoothness_weight <= 0.0 or latent.shape[0] < 2:
+            return latent.sum() * 0.0
+        curvature = self.get_curvature()
+        count = latent.shape[0]
+        pairs = min(int(pairs), count - 1)
+        index = torch.randint(0, count, (count, pairs), device=latent.device)
+        source = latent.unsqueeze(1).expand(count, pairs, latent.shape[-1])
+        partner = latent[index]
+        latent_distance = self._pair_fn(source, partner, curvature).square()
+        quantized_distance = self._pair_fn(
+            quantized.unsqueeze(1).expand(count, pairs, quantized.shape[-1]),
+            quantized[index],
+            curvature,
+        ).square()
+        with torch.no_grad():
+            scale = latent_distance.median().clamp_min(1e-8)
+        weight = torch.exp(-latent_distance / scale).detach()
+        return (weight * quantized_distance).mean()
+
     def forward(
         self,
         x: torch.Tensor,
@@ -490,6 +529,10 @@ class VQLayer(nn.Module):
             x, x_q.detach(), curvature
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
+        if self.smoothness_weight > 0.0:
+            quant_loss = quant_loss + self.smoothness_weight * self._smoothness_loss(
+                latent, x_q.view(-1, self.dim)
+            )
         # The straight-through output is what the decoder consumes, and it
         # deliberately detaches the codebook: gradients reach the codebook only
         # through quant_loss. ``x_q_code`` carries the same forward value with
@@ -680,6 +723,7 @@ class RQLayer(nn.Module):
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
+        self.smoothness_weight = float(getattr(config, "smoothness_weight", 0.0))
         if self.vq_type != "vq":
             raise ValueError("This model requires TIGER's trainable VQ codebooks")
         self.vq_layers = nn.ModuleList(
@@ -693,6 +737,7 @@ class RQLayer(nn.Module):
                     curvature=curvatures[level],
                     geometry=self.geometry,
                     assignment_mode=assignment_modes[level],
+                    smoothness_weight=self.smoothness_weight,
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]

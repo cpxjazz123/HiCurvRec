@@ -100,6 +100,18 @@ ARMS = {
         "metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
         "sidarm_ME_euclid_metriccone",
     ),
+    # Metric-smooth quantiser arms: no cone, no partition change, judged on the
+    # same held-out containment readings and then on Stage3.
+    "SE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "smoothness_arms/A_euclid_smooth_s42/item_sids.json",
+        "sidarm_SE_euclid_smooth",
+    ),
+    "SH": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "smoothness_arms/B_poincare_smooth_s42/item_sids.json",
+        "sidarm_SH_poincare_smooth",
+    ),
     # Coarse cone moved onto level 1, level 2 left to reconstruction, at the
     # production 256 codes per level so the numbers compare to the bar.
     "CLE": (
@@ -189,6 +201,11 @@ else:
     for arm in ARMS:
         if finished(ARMS[arm][1]):
             print(f"[sidarm] arm {arm} already evaluated, skipping", flush=True)
+            continue
+        if not Path(ARMS[arm][0]).is_file():
+            # An arm whose Stage2 has not run yet. Skipping keeps a batch that
+            # was queued before that round existed from aborting on it.
+            print(f"[sidarm] arm {arm} has no SIDs yet, skipping", flush=True)
             continue
         print(f"[sidarm] ===== arm {arm} =====", flush=True)
         preflight(ARMS[arm][0])
