@@ -29,10 +29,21 @@ PKG = Path(__file__).resolve().parents[1]
 # one-sided rejection loss; "fixed_rejection" is round five, the signed
 # rejection loss, and it only trains the two cone arms because the two no-cone
 # baselines are unaffected by the loss change and are reused by reference.
-SWEEP = "fixed_rejection"
+SWEEP = "fixed_radius"
 RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE" / (
-    "l2_cone_arms" if SWEEP == "baseline" else "l2_cone_arms_fixed_rejection"
+    "l2_cone_arms"
+    if SWEEP == "baseline"
+    else (
+        "l2_cone_arms_fixed_rejection"
+        if SWEEP == "fixed_rejection"
+        else "l2_cone_arms_fixed_radius"
+    )
 )
+# Short validation budget for the radius-controlled run: the question is whether
+# positive containment, negative containment and reconstruction stay stable
+# together, not the final structure numbers.
+STEPS = 6_000 if SWEEP == "fixed_radius" else 18_000
+EVAL_EVERY = 3_000 if SWEEP == "fixed_radius" else 9_000
 SEED = 42
 L2_CODES = 64
 # Same four arms as the cone round, now on a second level small enough that the
@@ -90,16 +101,21 @@ def _run_arm(job: tuple[int, str, str, bool]) -> dict:
     experiment.STAGE2_LOG_DIR = arm_dir / "logs"
     experiment.CATEGORY_CONE_ENABLED = cone
     experiment.GEOMETRY = geometry
+    if SWEEP == "fixed_radius":
+        experiment.CATEGORY_CONE_RADIUS_BAND = (1.0, 1.0)
 
     import torch as _torch
 
     _torch.set_num_threads(2)
     trainer.CODEBOOK_SIZE = (256, l2, 256)
     trainer.BATCH_SIZE_PER_RANK = 1024
-    trainer.MAX_GLOBAL_STEPS = 18_000
-    trainer.EVAL_INTERVAL_STEPS = 9_000
+    trainer.MAX_GLOBAL_STEPS = STEPS
+    trainer.EVAL_INTERVAL_STEPS = EVAL_EVERY
     trainer.CATEGORY_CONE_ENABLED = cone
     trainer.GEOMETRY = geometry
+    trainer.CATEGORY_CONE_RADIUS_BAND = (
+        (1.0, 1.0) if SWEEP == "fixed_radius" else (0.6, 1.4)
+    )
     trainer.BEHAVIOUR_LOSS_ENABLED = False
     trainer.LOG_DIR = arm_dir / "logs"
     trainer.METRICS_PATH = trainer.LOG_DIR / "training_metrics.jsonl"

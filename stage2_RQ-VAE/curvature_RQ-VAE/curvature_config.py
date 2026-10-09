@@ -19,6 +19,13 @@ GEOMETRY = "poincare"
 # that decides how many items share an L1+L2 prefix.
 LAYER_ASSIGNMENT_MODES = ("bucket", "bucket", "bucket")
 
+# Category prototype radius band, relative to the initial radius, measured in
+# the arm's own point space. (0.6, 1.4) is what rounds four and five ran with
+# and the Euclidean arm drove straight to the upper edge; (1.0, 1.0) pins the
+# radius so that only the direction of a prototype can move, which is the
+# controlled comparison against that escape.
+CATEGORY_CONE_RADIUS_BAND = (0.6, 1.4)
+
 CATEGORY_CONE_ENABLED = False
 CATEGORY_CONE_WEIGHT = 0.5
 CATEGORY_CONE_MARGIN = 0.01
