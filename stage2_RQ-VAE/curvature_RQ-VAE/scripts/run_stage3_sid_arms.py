@@ -61,6 +61,11 @@ ARMS = {
         "l2_cone_arms/B_poincare_nocone_s42/item_sids.json",
         "sidarm_B_l2_64_nocone",
     ),
+    "D": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms/D_poincare_cone_s42/item_sids.json",
+        "sidarm_D_l2_64_cone",
+    ),
 }
 
 
