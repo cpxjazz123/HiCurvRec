@@ -96,7 +96,9 @@ def configure(name: str) -> None:
     trainer.BATCH_SIZE_PER_RANK = 1024
     trainer.MAX_GLOBAL_STEPS = 72_000
     trainer.EVAL_INTERVAL_STEPS = 9_000
-    trainer.BEHAVIOUR_LOSS_ENABLED = False
+    # Keep the behaviour loss on, as the bar and the accepted model do, so this
+    # arm differs from the bar in the mechanism and nothing else.
+    trainer.BEHAVIOUR_LOSS_ENABLED = True
     trainer.LOG_DIR = arm_dir / "logs"
     trainer.METRICS_PATH = trainer.LOG_DIR / "training_metrics.jsonl"
     trainer.SNAPSHOT_STEPS = {trainer.MAX_GLOBAL_STEPS: "arm"}
