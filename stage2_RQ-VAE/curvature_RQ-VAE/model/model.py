@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .layers import MLP, RQLayer, _poincare_distance_tangent_pairs
+from .layers import MLP, RQLayer, _resolve_geometry
 
 
 class RQVAE(nn.Module):
@@ -84,6 +84,7 @@ def behaviour_ranking_loss(
     negatives: torch.Tensor,
     curvature: float,
     margin: float,
+    geometry: str = "poincare",
 ) -> torch.Tensor:
     """Hinge ranking over real transition successors and shuffled negatives.
 
@@ -91,6 +92,7 @@ def behaviour_ranking_loss(
     both endpoints to the fixed-curvature Poincare ball before measuring the
     geodesic distance; no quantized-code equality is involved.
     """
-    positive = _poincare_distance_tangent_pairs(source, successor, curvature)
-    negative = _poincare_distance_tangent_pairs(source, negatives, curvature)
+    pair_fn = _resolve_geometry(geometry)[1]
+    positive = pair_fn(source, successor, curvature)
+    negative = pair_fn(source, negatives, curvature)
     return F.relu(positive + margin - negative).mean()
