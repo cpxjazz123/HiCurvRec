@@ -112,6 +112,65 @@ ARMS = {
         "smoothness_arms/B_poincare_smooth_s42/item_sids.json",
         "sidarm_SH_poincare_smooth",
     ),
+    # Position test: the same smoothness term at the same per-level weight,
+    # applied to level 3 alone and to levels 1-2 together.
+    "PLE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "position_arms/A_euclid_l3only_s42/item_sids.json",
+        "sidarm_PLE_euclid_l3only",
+    ),
+    "PLP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "position_arms/B_poincare_l3only_s42/item_sids.json",
+        "sidarm_PLP_poincare_l3only",
+    ),
+    "PME": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "position_arms/C_euclid_l12only_s42/item_sids.json",
+        "sidarm_PME_euclid_l12only",
+    ),
+    "PMP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "position_arms/D_poincare_l12only_s42/item_sids.json",
+        "sidarm_PMP_poincare_l12only",
+    ),
+    # The surviving mechanism at two further seeds: metric-smooth quantisation,
+    # hyperbolic arm only, against the bar's own seed spread.
+    "M43": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "multiseed_arms/smooth_poincare_s43/item_sids.json",
+        "sidarm_M43_smooth_poincare_s43",
+    ),
+    "M44": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "multiseed_arms/smooth_poincare_s44/item_sids.json",
+        "sidarm_M44_smooth_poincare_s44",
+    ),
+    # Cone-family separation: the last implemented mechanism, which asks
+    # different categories' cones to stay apart by a margin in the arm's metric.
+    "SPE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "separation_arms/A_euclid_separation_s42/item_sids.json",
+        "sidarm_SPE_euclid_separation",
+    ),
+    "SPP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "separation_arms/B_poincare_separation_s42/item_sids.json",
+        "sidarm_SPP_poincare_separation",
+    ),
+    # The bar's own configuration at two further training seeds: the noise the
+    # configuration has against itself, which every mechanism comparison needs
+    # before its few-percent differences can be read.
+    "E43": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "euclid_l2_256_72k_s43/item_sids.json",
+        "sidarm_E43_euclid_l2_256_72k_s43",
+    ),
+    "E44": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "euclid_l2_256_72k_s44/item_sids.json",
+        "sidarm_E44_euclid_l2_256_72k_s44",
+    ),
     # Coarse cone moved onto level 1, level 2 left to reconstruction, at the
     # production 256 codes per level so the numbers compare to the bar.
     "CLE": (

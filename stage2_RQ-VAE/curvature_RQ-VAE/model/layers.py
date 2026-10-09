@@ -723,7 +723,17 @@ class RQLayer(nn.Module):
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
-        self.smoothness_weight = float(getattr(config, "smoothness_weight", 0.0))
+        # A per-level weight lets the same term be applied to one level only, which
+        # is what separates "smoothing the prefix" from "smoothing the level that
+        # disambiguates"; the scalar stays the default so existing runs are
+        # unchanged.
+        per_level = getattr(config, "smoothness_weights", None)
+        if per_level is None:
+            per_level = (getattr(config, "smoothness_weight", 0.0),) * self.codebook_num
+        if len(per_level) != self.codebook_num:
+            raise ValueError("smoothness_weights must have one entry per level")
+        self.smoothness_weights = tuple(float(value) for value in per_level)
+        self.smoothness_weight = self.smoothness_weights[0]
         if self.vq_type != "vq":
             raise ValueError("This model requires TIGER's trainable VQ codebooks")
         self.vq_layers = nn.ModuleList(
@@ -737,7 +747,7 @@ class RQLayer(nn.Module):
                     curvature=curvatures[level],
                     geometry=self.geometry,
                     assignment_mode=assignment_modes[level],
-                    smoothness_weight=self.smoothness_weight,
+                    smoothness_weight=self.smoothness_weights[level],
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
