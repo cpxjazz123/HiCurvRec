@@ -61,7 +61,14 @@ def euclid_xi_pairs(apex: torch.Tensor, point: torch.Tensor) -> torch.Tensor:
 
 def poincare_xi_pairs(apex: torch.Tensor, point: torch.Tensor,
                       curvature: float) -> torch.Tensor:
-    """Xi in the Poincare ball, from the paper's Eq. (27)-(28)."""
+    """Xi in the Poincare ball, from the paper's Eq. (27)-(28).
+
+    ``xi(x, y)`` is the angle at the apex between the geodesic towards the
+    origin and the geodesic towards ``y``, so a descendant sitting further out
+    along the apex's own spoke scores zero and the apex's own ancestor
+    direction scores pi. The angle is returned as the paper defines it; taking
+    its supplement would invert entailment.
+    """
     apex_sq = (apex * apex).sum(-1)
     point_sq = (point * point).sum(-1)
     dot = (apex * point).sum(-1)
@@ -73,7 +80,7 @@ def poincare_xi_pairs(apex: torch.Tensor, point: torch.Tensor,
     )
     numerator = dot * (1.0 + apex_sq) - apex_sq * (1.0 + point_sq)
     angle = torch.arccos(_clamp_cosine(numerator / denominator))
-    return _outside(math.pi - angle)
+    return _outside(angle)
 
 
 def euclid_aperture_factor(apex: torch.Tensor) -> torch.Tensor:
