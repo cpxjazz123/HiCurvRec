@@ -1,0 +1,35 @@
+{
+  "arms": [
+    {
+      "arm": "C_nearest_argmin",
+      "gpu": 2,
+      "modes": [
+        "bucket",
+        "argmin",
+        "bucket"
+      ],
+      "seconds": 884.4
+    },
+    {
+      "arm": "B_global_sinkhorn",
+      "gpu": 1,
+      "modes": [
+        "bucket",
+        "global",
+        "bucket"
+      ],
+      "seconds": 1005.9
+    },
+    {
+      "arm": "A_bucket_sinkhorn",
+      "gpu": 0,
+      "modes": [
+        "bucket",
+        "bucket",
+        "bucket"
+      ],
+      "seconds": 2433.5
+    }
+  ],
+  "seed": 42
+}

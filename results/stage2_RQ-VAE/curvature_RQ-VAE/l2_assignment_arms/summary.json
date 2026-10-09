@@ -1,0 +1,199 @@
+{
+  "arms": {
+    "A_bucket_sinkhorn": {
+      "arm": "A_bucket_sinkhorn",
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_256": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 2,
+        "mean_items_per_prefix": 1.0003254811017535,
+        "prefixes_over_256_items": 0
+      },
+      "sharing_coarse": {
+        "cross_share": 0.0,
+        "n_pairs": 283446145,
+        "share_all": 2.8224056460531506e-08,
+        "shared_pairs": 8,
+        "within_over_cross": 105433.24947172671,
+        "within_share": 1.0543324947172671e-07
+      },
+      "sharing_fine": {
+        "cross_share": 4.095971160168758e-09,
+        "n_pairs": 277925676,
+        "share_all": 2.8784674072358826e-08,
+        "shared_pairs": 8,
+        "within_over_cross": 50.58697016623464,
+        "within_share": 2.0720277088121445e-07
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.36544968877034983,
+        "coarse_vs_L1_ami_control": -0.00021952365324737335,
+        "coarse_vs_L1_purity": 0.8536749265014699,
+        "codeword_usage": {
+          "L1": {
+            "gini": 0.038416039217879366,
+            "normalized_entropy": 0.9995861554501276,
+            "used_codewords": 256
+          },
+          "L2": {
+            "gini": 0.12992304749461098,
+            "normalized_entropy": 0.9950564414666332,
+            "used_codewords": 256
+          },
+          "L3": {
+            "gini": 0.16085688702363038,
+            "normalized_entropy": 0.9925891764486713,
+            "used_codewords": 256
+          }
+        },
+        "fine_vs_L1L2_ami": 9.959075949331499e-05,
+        "full_sid_collision_rate": 0.0,
+        "full_sid_unique": 24587,
+        "l1l2_prefix_clusters": 24579,
+        "l1l2_prefix_singleton_fraction": 0.9996745188982464
+      },
+      "training": {
+        "codebook_used": [
+          256,
+          256,
+          256
+        ],
+        "collision": 0.0,
+        "global_step": 18000,
+        "loss": 0.10534896483355098,
+        "recon": 9.606888981296733e-05
+      }
+    },
+    "B_global_sinkhorn": {
+      "arm": "B_global_sinkhorn",
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_256": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 2,
+        "mean_items_per_prefix": 1.0001627140706992,
+        "prefixes_over_256_items": 0
+      },
+      "sharing_coarse": {
+        "cross_share": 0.0,
+        "n_pairs": 283446145,
+        "share_all": 1.4112028230265753e-08,
+        "shared_pairs": 4,
+        "within_over_cross": 52716.624735863355,
+        "within_share": 5.2716624735863354e-08
+      },
+      "sharing_fine": {
+        "cross_share": 0.0,
+        "n_pairs": 277925676,
+        "share_all": 1.4392337036179413e-08,
+        "shared_pairs": 4,
+        "within_over_cross": 118401.58336069397,
+        "within_share": 1.1840158336069397e-07
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.3634112110309629,
+        "coarse_vs_L1_ami_control": -0.00046821878413766296,
+        "coarse_vs_L1_purity": 0.8524989500209996,
+        "codeword_usage": {
+          "L1": {
+            "gini": 0.041350770986700286,
+            "normalized_entropy": 0.9994708093348009,
+            "used_codewords": 256
+          },
+          "L2": {
+            "gini": 0.13533812965184855,
+            "normalized_entropy": 0.9947454728248067,
+            "used_codewords": 256
+          },
+          "L3": {
+            "gini": 0.11934740030300565,
+            "normalized_entropy": 0.9958121068070303,
+            "used_codewords": 256
+          }
+        },
+        "fine_vs_L1L2_ami": 5.805812556093748e-05,
+        "full_sid_collision_rate": 0.0,
+        "full_sid_unique": 24587,
+        "l1l2_prefix_clusters": 24583,
+        "l1l2_prefix_singleton_fraction": 0.9998372859293008
+      },
+      "training": {
+        "codebook_used": [
+          256,
+          256,
+          256
+        ],
+        "collision": 0.0,
+        "global_step": 18000,
+        "loss": 0.10205072134236495,
+        "recon": 9.405019164114492e-05
+      }
+    },
+    "C_nearest_argmin": {
+      "arm": "C_nearest_argmin",
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_256": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 2,
+        "mean_items_per_prefix": 1.0000406735540552,
+        "prefixes_over_256_items": 0
+      },
+      "sharing_coarse": {
+        "cross_share": 0.0,
+        "n_pairs": 283446145,
+        "share_all": 3.528007057566438e-09,
+        "shared_pairs": 1,
+        "within_over_cross": 13179.156183965839,
+        "within_share": 1.3179156183965839e-08
+      },
+      "sharing_fine": {
+        "cross_share": 0.0,
+        "n_pairs": 277925676,
+        "share_all": 3.5980842590448533e-09,
+        "shared_pairs": 1,
+        "within_over_cross": 29600.395840173493,
+        "within_share": 2.9600395840173493e-08
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.35818879128498377,
+        "coarse_vs_L1_ami_control": -0.00039384007452719226,
+        "coarse_vs_L1_purity": 0.8423351532969341,
+        "codeword_usage": {
+          "L1": {
+            "gini": 0.035153708006263475,
+            "normalized_entropy": 0.9996145735331937,
+            "used_codewords": 256
+          },
+          "L2": {
+            "gini": 0.07424512318501647,
+            "normalized_entropy": 0.9984026752505948,
+            "used_codewords": 256
+          },
+          "L3": {
+            "gini": 0.08275444721804205,
+            "normalized_entropy": 0.9979433814819179,
+            "used_codewords": 256
+          }
+        },
+        "fine_vs_L1L2_ami": 1.4514817245279288e-05,
+        "full_sid_collision_rate": 0.0,
+        "full_sid_unique": 24587,
+        "l1l2_prefix_clusters": 24586,
+        "l1l2_prefix_singleton_fraction": 0.9999593264459449
+      },
+      "training": {
+        "codebook_used": [
+          256,
+          256,
+          256
+        ],
+        "collision": 0.0,
+        "global_step": 18000,
+        "loss": 0.09086524553348621,
+        "recon": 8.870463396629526e-05
+      }
+    }
+  }
+}
