@@ -112,6 +112,18 @@ ARMS = {
         "smoothness_arms/B_poincare_smooth_s42/item_sids.json",
         "sidarm_SH_poincare_smooth",
     ),
+    # The smoothness chain extended onto the encoder, at the equal-pressure
+    # quantiser weights.
+    "ESE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "encoder_smooth_arms/A_euclid_encodersmooth_s42/item_sids.json",
+        "sidarm_ESE_euclid_encodersmooth",
+    ),
+    "ESP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "encoder_smooth_arms/B_poincare_encodersmooth_s42/item_sids.json",
+        "sidarm_ESP_poincare_encodersmooth",
+    ),
     # The same mechanism with both arms at equal relative pressure, which is the
     # matched pair the first smoothness round did not have.
     "SFE": (
