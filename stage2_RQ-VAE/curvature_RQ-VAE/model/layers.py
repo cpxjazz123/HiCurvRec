@@ -219,6 +219,7 @@ class VQLayer(nn.Module):
         sk_iters: int = 50,
         curvature: float = 1.0,
         geometry: str = "poincare",
+        assignment_mode: str = "bucket",
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -233,6 +234,12 @@ class VQLayer(nn.Module):
         self.sk_iters = int(sk_iters)
         self.curvature = float(curvature)
         self.geometry = str(geometry)
+        if str(assignment_mode) not in ("bucket", "global", "argmin"):
+            raise ValueError(
+                "assignment_mode must be 'bucket', 'global' or 'argmin', got "
+                f"{assignment_mode!r}"
+            )
+        self.assignment_mode = str(assignment_mode)
         (
             self._pairwise_fn,
             self._pair_fn,
@@ -414,9 +421,19 @@ class VQLayer(nn.Module):
         infer_use_sk: bool,
         bucket: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        """Pick one code per row.
+
+        ``bucket`` balances codes inside each preceding-code bucket, ``global``
+        balances over the whole batch ignoring the preceding code, and
+        ``argmin`` takes the nearest code with no balancing at all. The bucket
+        mode spreads the items of one preceding code across as many codes as it
+        can, which is the opposite of what shared semantic prefixes need.
+        """
+        if self.assignment_mode == "argmin":
+            return torch.argmin(distances, dim=-1)
         if not (self.use_sk and (self.training or infer_use_sk)):
             return torch.argmin(distances, dim=-1)
-        if bucket is None:
+        if self.assignment_mode == "global" or bucket is None:
             return self._balanced_assignments(distances).argmax(dim=-1)
         return self._bucket_balanced_assignments(distances, bucket).argmax(dim=-1)
 
@@ -648,6 +665,17 @@ class RQLayer(nn.Module):
         # Geometry plug-in: "poincare" is the frozen protocol, "euclid" is its
         # flat limit. Nothing else about the layer changes between them.
         self.geometry = str(getattr(config, "geometry", "poincare"))
+        # Per-level assignment rule. The default is the frozen protocol; the
+        # second level can be moved to global or nearest-only balancing to test
+        # whether bucket balancing is what keeps prefixes item-unique.
+        modes = getattr(config, "layer_assignment_modes", None)
+        if modes is None:
+            modes = ["bucket"] * self.codebook_num
+        if len(modes) != self.codebook_num:
+            raise ValueError(
+                "layer_assignment_modes must have one entry per quantization level"
+            )
+        assignment_modes = [str(mode) for mode in modes]
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
@@ -664,6 +692,7 @@ class RQLayer(nn.Module):
                     sk_iters=self.sk_iters,
                     curvature=curvatures[level],
                     geometry=self.geometry,
+                    assignment_mode=assignment_modes[level],
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]

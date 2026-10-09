@@ -1,0 +1,58 @@
+{
+  "arms": [
+    [
+      "A_euclid_nocone_s42",
+      "euclid",
+      false
+    ],
+    [
+      "B_poincare_nocone_s42",
+      "poincare",
+      false
+    ],
+    [
+      "C_euclid_cone_s42",
+      "euclid",
+      true
+    ],
+    [
+      "D_poincare_cone_s42",
+      "poincare",
+      true
+    ]
+  ],
+  "note": "one process per GPU, no DDP; an identical seed gives both geometries the same data order, and the cone module draws its negative partners and prototypes from DATA_SEED alone",
+  "outcomes": [
+    {
+      "arm": "A_euclid_nocone_s42",
+      "cone": false,
+      "geometry": "euclid",
+      "gpu": 0,
+      "seconds": 2213.5
+    },
+    {
+      "arm": "B_poincare_nocone_s42",
+      "cone": false,
+      "geometry": "poincare",
+      "gpu": 1,
+      "seconds": 2401.3
+    },
+    {
+      "arm": "D_poincare_cone_s42",
+      "cone": true,
+      "geometry": "poincare",
+      "gpu": 3,
+      "seconds": 2923.5
+    },
+    {
+      "arm": "C_euclid_cone_s42",
+      "cone": true,
+      "geometry": "euclid",
+      "gpu": 2,
+      "seconds": 3143.3
+    }
+  ],
+  "seeds": [
+    42
+  ]
+}

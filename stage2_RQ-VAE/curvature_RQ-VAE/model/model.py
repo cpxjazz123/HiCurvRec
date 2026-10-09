@@ -40,10 +40,20 @@ class RQVAE(nn.Module):
     def get_curvatures(self) -> torch.Tensor:
         return self.rq.get_curvatures()
 
-    def forward(
-        self, embeddings: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor, return_prefixes: bool = False):
+        """Reconstruct from the quantized representation.
+
+        With ``return_prefixes`` the per-level code-space accumulations come
+        back as a fourth element for the cone supervision; the reconstruction
+        path is unchanged either way.
+        """
         encoded = self.encoder(embeddings)
+        if return_prefixes:
+            quantized, quant_loss, tokens, prefixes = self.rq(
+                encoded, return_prefixes=True
+            )
+            reconstructed = self.decoder(quantized)
+            return reconstructed, quant_loss, tokens, prefixes
         quantized, quant_loss, tokens = self.rq(encoded)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, tokens
