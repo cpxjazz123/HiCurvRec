@@ -32,6 +32,14 @@ def _arm_dir(seed: int) -> Path:
     return RESULTS / f"{ARM_PREFIX}_s{seed}"
 
 
+def _is_complete(seed: int) -> bool:
+    """True when this seed already exported its SIDs."""
+    directory = _arm_dir(seed)
+    return (directory / "item_sids.json").is_file() and (
+        directory / "logs/training_metrics.jsonl"
+    ).is_file()
+
+
 def _load_trainer():
     if "CUDA_VISIBLE_DEVICES" not in os.environ:
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
@@ -87,6 +95,9 @@ if "RANK" in os.environ:
     trainer.main()
 else:
     for seed in SEEDS:
+        if _is_complete(seed):
+            print(f"[baseline-seed] seed {seed} already complete, skipping", flush=True)
+            continue
         print(f"[baseline-seed] ===== seed {seed} =====", flush=True)
         trainer = configure(seed)
         # launch_arm blocks and returns; the trainer's own launcher ends the
