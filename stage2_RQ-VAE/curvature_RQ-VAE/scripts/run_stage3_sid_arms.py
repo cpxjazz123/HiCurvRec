@@ -28,6 +28,7 @@ import importlib.util
 import json
 import os
 import sys
+from pathlib import Path
 
 try:
     import torch
@@ -49,6 +50,8 @@ trainer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trainer)
 
 RESULTS = "/home/wlia0047/ar57/wenyu/GeneRec/results"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from launch_utils import launch_arm  # noqa: E402
 
 # name -> (item_sids.json, variant directory under results/stage3_T5Train)
 ARMS = {
@@ -79,6 +82,28 @@ ARMS = {
         f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
         "euclid_l2_256_72k_s42/item_sids.json",
         "sidarm_E72_euclid_l2_256_72k",
+    ),
+    # The round-five hyperbolic cone arm, the one whose held-out containment
+    # already has the shape the mechanism is supposed to produce: 0.91 positive
+    # against 0.29/0.16 negative, while its euclidean twin collapsed to zero.
+    # It has never been through Stage3, so it is the direct test of whether that
+    # containment advantage transfers.
+    "R5D": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms_fixed_rejection/D_poincare_cone_s42/item_sids.json",
+        "sidarm_R5D_poincare_cone_rejection_fixed",
+    ),
+    # Metric-margin cone arms: the same objective in both geometries, which for
+    # euclid degenerates to the plain angular cone loss.
+    "ME": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
+        "sidarm_ME_euclid_metriccone",
+    ),
+    "MP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "metric_cone_arms/B_poincare_metriccone_s42/item_sids.json",
+        "sidarm_MP_poincare_metriccone",
     ),
 }
 
@@ -156,6 +181,7 @@ else:
         print(f"[sidarm] ===== arm {arm} =====", flush=True)
         preflight(ARMS[arm][0])
         configure(arm)
-        os.environ["SIDARM"] = arm
-        trainer._launch_via_torchrun()
+        # launch_arm blocks and returns; the trainer's own launcher ends the
+        # process, which would leave every later arm unrun.
+        launch_arm(trainer, {"SIDARM": arm})
     print("[sidarm] both arms finished", flush=True)
