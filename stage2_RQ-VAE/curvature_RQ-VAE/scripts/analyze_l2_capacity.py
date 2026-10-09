@@ -21,7 +21,11 @@ import numpy as np
 PKG = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PKG / "scripts"))
 
-from category_structure import load_category_supervision, structure_metrics  # noqa: E402
+from category_structure import (  # noqa: E402
+    codebook_sizes_from_checkpoint,
+    load_category_supervision,
+    structure_metrics,
+)
 from analyze_l2_assignment import prefix_ids, sharing  # noqa: E402
 
 RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms"
@@ -60,7 +64,9 @@ def main() -> None:
     for name, l2 in ARMS:
         arm_dir = RESULTS / f"{name}_s{SEED}"
         tokens = np.load(arm_dir / "out/rqvae/instruments/sids_raw.npy")
-        report = structure_metrics(tokens, coarse, fine)
+        report = structure_metrics(
+            tokens, coarse, fine, codebook_sizes_from_checkpoint(arm_dir)
+        )
         l12 = prefix_ids(tokens, 2)
         coarse_rows, fine_rows = coarse >= 0, fine >= 0
         coarse_sharing = sharing(

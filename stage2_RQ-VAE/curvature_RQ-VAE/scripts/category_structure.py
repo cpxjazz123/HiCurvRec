@@ -47,7 +47,29 @@ OUTPUT_DIR = ROOT / "results/stage2_RQ-VAE/curvature_RQ-VAE/category_structure"
 # single marketplace name ("Musical Instruments") and carries no information.
 COARSE_LEVEL = 1
 FINE_LEVEL = 2
+# Fallback used when a run ships 256 codes at every level, which is the
+# case for the accepted model. Runs that change a level's codebook size must
+# pass the real sizes: scoring a 32-code level against 256 codes would count
+# 224 codes that do not exist, which inflates Gini and deflates the normalised
+# entropy of that level.
 N_CODES = 256
+
+
+def codebook_sizes_from_checkpoint(arm_dir: Path) -> list[int]:
+    """Per-level codebook sizes taken from the run's own checkpoint."""
+    import torch
+
+    checkpoint_path = arm_dir / "out/rqvae/instruments/rqvae_best.pth"
+    if not checkpoint_path.is_file():
+        return [N_CODES] * 3
+    state = torch.load(checkpoint_path, map_location="cpu").get("state_dict", {})
+    sizes: list[int] = []
+    for level in range(3):
+        weight = state.get(f"rq.vq_layers.{level}.embed.weight")
+        if weight is None:
+            return [N_CODES] * 3
+        sizes.append(int(weight.shape[0]))
+    return sizes
 CONTROL_SEED = 2026
 
 
@@ -217,12 +239,28 @@ def structure_metrics(
     tokens: np.ndarray,
     coarse: np.ndarray,
     fine: np.ndarray,
+    code_sizes: list[int] | None = None,
 ) -> dict[str, Any]:
     """Category agreement plus the frozen usage/collision readings."""
     if tokens.shape[0] != len(coarse) or tokens.shape[0] != len(fine):
         raise ValueError("Token rows and supervision rows disagree")
     diag = _sid_diag()
+    if code_sizes is None:
+        code_sizes = [N_CODES] * tokens.shape[1]
+    if len(code_sizes) != tokens.shape[1]:
+        raise ValueError("code_sizes must have one entry per quantization level")
     usage_rows, usage = diag.code_usage(tokens, n_codes=N_CODES)
+    for level, size in enumerate(code_sizes):
+        # Re-score this level against its own codebook size.
+        block = usage[f"L{level + 1}"]
+        block["codewords"] = int(size)
+        block["used_codewords"] = min(int(block["used_codewords"]), int(size))
+        block["unused_codewords"] = int(size) - int(block["used_codewords"])
+        counts = np.bincount(tokens[:, level], minlength=size).astype(np.float64)
+        block["gini"] = diag.gini(counts)
+        block["normalized_entropy"] = (
+            diag.entropy_bits(counts) / np.log2(size) if size > 1 else 0.0
+        )
     _, _, prefixes = diag.prefix_audit(tokens)
     del usage_rows
 
