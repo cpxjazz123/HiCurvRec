@@ -65,6 +65,13 @@ CATEGORY_CONE_LEVEL_ALIGNED = False
 # level that already carries the category, leaving level 2 to the reconstruction
 # objective so the L1L2 prefix keeps the item identity that makes it unique.
 CATEGORY_CONE_COARSE_LEVEL = 2
+# Weight on keeping the quantiser a smooth function of the input in the arm's
+# metric: latents the metric calls close should not be sent to code vectors the
+CATEGORY_CONE_COARSE_LEVEL = 2
+# Weight on keeping the quantiser a smooth function of the input in the arm's
+# metric, so that Stage3's content-to-SID map is easier to fit. It changes no
+# partition and creates no sharing. Zero disables it.
+QUANT_SMOOTHNESS_WEIGHT = 0.0
 CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # The behaviour-context channel is the previous mechanism. The four-arm cone
 # comparison is self-contained, so it is switched off in every arm; the cone

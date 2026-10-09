@@ -1,0 +1,375 @@
+[coarse-l1] arm=A_euclid_coarse_l1 geometry=euclid codebook=(256, 256, 256) steps=72000 metric_margin=False level_aligned=False coarse_level=1 l2=256 metric_margin=False
+[coarse-l1] arm=A_euclid_coarse_l1 geometry=euclid codebook=(256, 256, 256) steps=72000 metric_margin=False level_aligned=False coarse_level=1 l2=256 metric_margin=False
+[coarse-l1] arm=A_euclid_coarse_l1 geometry=euclid codebook=(256, 256, 256) steps=72000 metric_margin=False level_aligned=False coarse_level=1 l2=256 metric_margin=False
+[coarse-l1] arm=A_euclid_coarse_l1 geometry=euclid codebook=(256, 256, 256) steps=72000 metric_margin=False level_aligned=False coarse_level=1 l2=256 metric_margin=False
+[hyperbolic] cold_start=true max_global_steps=72000 batch_size_per_rank=1024 total_effective_batch=4096 c=[1.0, 1.0, 1.0] radius=[0.2, 0.2, 0.2]
+[RecBole RQ-VAE] initializing codebooks with KMeans
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/functional.py:1510: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return _VF.cdist(x1, x2, p, None)  # type: ignore[attr-defined]
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[cone] calibrated K proto=0.171010 q2=0.171010 q3=0.342020 supervised=22227 heldout=2360
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE/model/cones.py:305: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  cosine = (direction @ direction.transpose(0, 1)).clamp(-1.0 + COS_EPS, 1.0 - COS_EPS)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE/model/cones.py:305: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  cosine = (direction @ direction.transpose(0, 1)).clamp(-1.0 + COS_EPS, 1.0 - COS_EPS)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE/model/cones.py:305: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  cosine = (direction @ direction.transpose(0, 1)).clamp(-1.0 + COS_EPS, 1.0 - COS_EPS)
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/curvature_RQ-VAE/model/cones.py:305: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  cosine = (direction @ direction.transpose(0, 1)).clamp(-1.0 + COS_EPS, 1.0 - COS_EPS)
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[hyperbolic] global_step=92/72000 local_updates=23 loss=1.70249832 recon=0.00036696
+[hyperbolic] global_step=304/72000 local_updates=76 loss=0.88251877 recon=0.00023215
+[hyperbolic] global_step=512/72000 local_updates=128 loss=0.68202907 recon=0.00022186
+[hyperbolic] global_step=708/72000 local_updates=177 loss=0.46096489 recon=0.00022052
+[hyperbolic] global_step=892/72000 local_updates=223 loss=0.38141158 recon=0.00020349
+[hyperbolic] global_step=1040/72000 local_updates=260 loss=0.30604744 recon=0.00020238
+[hyperbolic] global_step=1192/72000 local_updates=298 loss=0.23878363 recon=0.00021503
+[hyperbolic] global_step=1296/72000 local_updates=324 loss=0.22583480 recon=0.00021314
+[hyperbolic] global_step=1396/72000 local_updates=349 loss=0.18348163 recon=0.00021007
+[hyperbolic] global_step=1476/72000 local_updates=369 loss=0.13861516 recon=0.00021236
+[hyperbolic] global_step=1584/72000 local_updates=396 loss=0.14413470 recon=0.00023079
+[hyperbolic] global_step=1676/72000 local_updates=419 loss=0.10662710 recon=0.00021061
+[hyperbolic] global_step=1780/72000 local_updates=445 loss=0.08115537 recon=0.00020825
+[hyperbolic] global_step=1864/72000 local_updates=466 loss=0.09049516 recon=0.00019340
+[hyperbolic] global_step=1944/72000 local_updates=486 loss=0.07800138 recon=0.00020561
+[hyperbolic] global_step=2056/72000 local_updates=514 loss=0.06974661 recon=0.00020436
+[hyperbolic] global_step=2132/72000 local_updates=533 loss=0.06889068 recon=0.00020818
+[hyperbolic] global_step=2232/72000 local_updates=558 loss=0.07084709 recon=0.00018485
+[hyperbolic] global_step=2320/72000 local_updates=580 loss=0.05337567 recon=0.00019274
+[hyperbolic] global_step=2408/72000 local_updates=602 loss=0.05562917 recon=0.00019080
+[hyperbolic] global_step=2488/72000 local_updates=622 loss=0.04386688 recon=0.00019593
+[hyperbolic] global_step=2564/72000 local_updates=641 loss=0.03869696 recon=0.00022201
+[hyperbolic] global_step=2632/72000 local_updates=658 loss=0.04832092 recon=0.00021063
+[hyperbolic] global_step=2704/72000 local_updates=676 loss=0.04777838 recon=0.00022622
+[hyperbolic] global_step=2768/72000 local_updates=692 loss=0.04160307 recon=0.00020666
+[hyperbolic] global_step=2832/72000 local_updates=708 loss=0.04200414 recon=0.00020754
+[hyperbolic] global_step=2908/72000 local_updates=727 loss=0.03568392 recon=0.00021226
+[hyperbolic] global_step=2972/72000 local_updates=743 loss=0.04021693 recon=0.00018574
+[hyperbolic] global_step=3020/72000 local_updates=755 loss=0.03458581 recon=0.00022408
+[hyperbolic] global_step=3076/72000 local_updates=769 loss=0.03568219 recon=0.00019986
+[hyperbolic] global_step=3144/72000 local_updates=786 loss=0.04114790 recon=0.00022195
+[hyperbolic] global_step=3204/72000 local_updates=801 loss=0.03168460 recon=0.00019176
+[hyperbolic] global_step=3256/72000 local_updates=814 loss=0.03434753 recon=0.00019190
+[hyperbolic] global_step=3320/72000 local_updates=830 loss=0.03273076 recon=0.00021516
+[hyperbolic] global_step=3372/72000 local_updates=843 loss=0.03351483 recon=0.00020184
+[hyperbolic] global_step=3432/72000 local_updates=858 loss=0.03578098 recon=0.00021404
+[hyperbolic] global_step=3492/72000 local_updates=873 loss=0.03626901 recon=0.00018403
+[hyperbolic] global_step=3548/72000 local_updates=887 loss=0.03719590 recon=0.00021740
+[hyperbolic] global_step=3604/72000 local_updates=901 loss=0.03587823 recon=0.00019178
+[hyperbolic] global_step=3652/72000 local_updates=913 loss=0.03438035 recon=0.00023602
+[hyperbolic] global_step=3700/72000 local_updates=925 loss=0.03182848 recon=0.00019055
+[hyperbolic] global_step=3756/72000 local_updates=939 loss=0.03372415 recon=0.00020667
+[hyperbolic] global_step=3812/72000 local_updates=953 loss=0.03648383 recon=0.00019815
+[hyperbolic] global_step=3864/72000 local_updates=966 loss=0.03233175 recon=0.00020256
+[hyperbolic] global_step=3912/72000 local_updates=978 loss=0.03520346 recon=0.00019514
+[hyperbolic] global_step=3956/72000 local_updates=989 loss=0.03070088 recon=0.00018684
+[hyperbolic] global_step=4004/72000 local_updates=1001 loss=0.03080333 recon=0.00021619
+[hyperbolic] global_step=4048/72000 local_updates=1012 loss=0.03224677 recon=0.00019397
+[hyperbolic] global_step=4096/72000 local_updates=1024 loss=0.02879715 recon=0.00021195
+[hyperbolic] global_step=4140/72000 local_updates=1035 loss=0.03092993 recon=0.00021014
+[hyperbolic] global_step=4188/72000 local_updates=1047 loss=0.03158549 recon=0.00022421
+[hyperbolic] global_step=4232/72000 local_updates=1058 loss=0.02637479 recon=0.00017783
+[hyperbolic] global_step=4284/72000 local_updates=1071 loss=0.02942763 recon=0.00021152
+[hyperbolic] global_step=4328/72000 local_updates=1082 loss=0.03185011 recon=0.00021169
+[hyperbolic] global_step=4368/72000 local_updates=1092 loss=0.03745963 recon=0.00022505
+[hyperbolic] global_step=4408/72000 local_updates=1102 loss=0.03284673 recon=0.00022500
+[hyperbolic] global_step=4456/72000 local_updates=1114 loss=0.03013562 recon=0.00019712
+[hyperbolic] global_step=4496/72000 local_updates=1124 loss=0.02870742 recon=0.00021019
+[hyperbolic] global_step=4536/72000 local_updates=1134 loss=0.02972695 recon=0.00022359
+[hyperbolic] global_step=4576/72000 local_updates=1144 loss=0.02765913 recon=0.00021890
+[hyperbolic] global_step=4616/72000 local_updates=1154 loss=0.03270546 recon=0.00023874
+[hyperbolic] global_step=4660/72000 local_updates=1165 loss=0.02622048 recon=0.00018989
+[hyperbolic] global_step=4712/72000 local_updates=1178 loss=0.02969198 recon=0.00021270
+[hyperbolic] global_step=4756/72000 local_updates=1189 loss=0.03193011 recon=0.00021124
+[hyperbolic] global_step=4796/72000 local_updates=1199 loss=0.03283188 recon=0.00024059
+[hyperbolic] global_step=4840/72000 local_updates=1210 loss=0.02744167 recon=0.00021359
+[hyperbolic] global_step=4880/72000 local_updates=1220 loss=0.02863305 recon=0.00019988
+[hyperbolic] global_step=4924/72000 local_updates=1231 loss=0.02841490 recon=0.00023032
+[hyperbolic] global_step=4968/72000 local_updates=1242 loss=0.02888712 recon=0.00021748
+[hyperbolic] global_step=5012/72000 local_updates=1253 loss=0.03323392 recon=0.00021238
+[hyperbolic] global_step=5048/72000 local_updates=1262 loss=0.03492065 recon=0.00020360
+[hyperbolic] global_step=5084/72000 local_updates=1271 loss=0.03423767 recon=0.00022528
+[hyperbolic] global_step=5124/72000 local_updates=1281 loss=0.02874197 recon=0.00019812
+[hyperbolic] global_step=5164/72000 local_updates=1291 loss=0.02909737 recon=0.00020704
+[hyperbolic] global_step=5200/72000 local_updates=1300 loss=0.02848760 recon=0.00020351
+[hyperbolic] global_step=5236/72000 local_updates=1309 loss=0.02739286 recon=0.00022112
+[hyperbolic] global_step=5272/72000 local_updates=1318 loss=0.02662325 recon=0.00022337
+[hyperbolic] global_step=5312/72000 local_updates=1328 loss=0.02800838 recon=0.00022278
+[hyperbolic] global_step=5348/72000 local_updates=1337 loss=0.02917175 recon=0.00018781
+[hyperbolic] global_step=5380/72000 local_updates=1345 loss=0.02488372 recon=0.00021930
+[hyperbolic] global_step=5416/72000 local_updates=1354 loss=0.02768475 recon=0.00019115
+[hyperbolic] global_step=5452/72000 local_updates=1363 loss=0.03048646 recon=0.00021128
+[hyperbolic] global_step=5492/72000 local_updates=1373 loss=0.02628457 recon=0.00020305
+[hyperbolic] global_step=5528/72000 local_updates=1382 loss=0.02707585 recon=0.00022468
+[hyperbolic] global_step=5560/72000 local_updates=1390 loss=0.02772554 recon=0.00022143
+[hyperbolic] global_step=5600/72000 local_updates=1400 loss=0.02512054 recon=0.00022183
+[hyperbolic] global_step=5636/72000 local_updates=1409 loss=0.02789820 recon=0.00021488
+[hyperbolic] global_step=5668/72000 local_updates=1417 loss=0.02478027 recon=0.00019578
+[hyperbolic] global_step=5700/72000 local_updates=1425 loss=0.02612468 recon=0.00020023
+[hyperbolic] global_step=5736/72000 local_updates=1434 loss=0.02578164 recon=0.00020905
+[hyperbolic] global_step=5768/72000 local_updates=1442 loss=0.02447898 recon=0.00018661
+[hyperbolic] global_step=5800/72000 local_updates=1450 loss=0.02338925 recon=0.00020675
+[hyperbolic] global_step=5832/72000 local_updates=1458 loss=0.02875321 recon=0.00019075
+[hyperbolic] global_step=5864/72000 local_updates=1466 loss=0.02668567 recon=0.00016569
+[hyperbolic] global_step=5892/72000 local_updates=1473 loss=0.02836509 recon=0.00020376
+[hyperbolic] global_step=5928/72000 local_updates=1482 loss=0.02576603 recon=0.00020981
+[hyperbolic] global_step=5968/72000 local_updates=1492 loss=0.02573786 recon=0.00021479
+[hyperbolic] global_step=6004/72000 local_updates=1501 loss=0.02713843 recon=0.00021229
+[hyperbolic] global_step=6040/72000 local_updates=1510 loss=0.02517292 recon=0.00024489
+[hyperbolic] global_step=6076/72000 local_updates=1519 loss=0.02239486 recon=0.00020861
+[hyperbolic] global_step=6108/72000 local_updates=1527 loss=0.02716709 recon=0.00019763
+[hyperbolic] global_step=6140/72000 local_updates=1535 loss=0.02571155 recon=0.00019093
+[hyperbolic] global_step=6172/72000 local_updates=1543 loss=0.02730882 recon=0.00020702
+[hyperbolic] global_step=6204/72000 local_updates=1551 loss=0.02619687 recon=0.00020414
+[hyperbolic] global_step=6236/72000 local_updates=1559 loss=0.02486976 recon=0.00021139
+[hyperbolic] global_step=6268/72000 local_updates=1567 loss=0.02519354 recon=0.00020346
+[hyperbolic] global_step=6300/72000 local_updates=1575 loss=0.02572623 recon=0.00021501
+[hyperbolic] global_step=6336/72000 local_updates=1584 loss=0.03008449 recon=0.00019872
+[hyperbolic] global_step=6368/72000 local_updates=1592 loss=0.02688001 recon=0.00020336
+[hyperbolic] global_step=6400/72000 local_updates=1600 loss=0.02681068 recon=0.00020830
+[hyperbolic] global_step=6432/72000 local_updates=1608 loss=0.02687382 recon=0.00024802
+[hyperbolic] global_step=6464/72000 local_updates=1616 loss=0.02797437 recon=0.00021099
+[hyperbolic] global_step=6484/72000 local_updates=1621 loss=0.02840216 recon=0.00022150
+[hyperbolic] global_step=6508/72000 local_updates=1627 loss=0.02517980 recon=0.00019496
+[hyperbolic] global_step=6540/72000 local_updates=1635 loss=0.02676413 recon=0.00020352
+[hyperbolic] global_step=6572/72000 local_updates=1643 loss=0.03221148 recon=0.00023153
+[hyperbolic] global_step=6608/72000 local_updates=1652 loss=0.02668999 recon=0.00021819
+[hyperbolic] global_step=6640/72000 local_updates=1660 loss=0.02764788 recon=0.00020492
+[hyperbolic] global_step=6672/72000 local_updates=1668 loss=0.02635346 recon=0.00021893
+[hyperbolic] global_step=6704/72000 local_updates=1676 loss=0.02664124 recon=0.00020856
+[hyperbolic] global_step=6736/72000 local_updates=1684 loss=0.02612430 recon=0.00022148
+[hyperbolic] global_step=6768/72000 local_updates=1692 loss=0.02788595 recon=0.00023823
+[hyperbolic] global_step=6800/72000 local_updates=1700 loss=0.02746855 recon=0.00019755
+[hyperbolic] global_step=6828/72000 local_updates=1707 loss=0.02567835 recon=0.00019564
+[hyperbolic] global_step=6856/72000 local_updates=1714 loss=0.02496210 recon=0.00019364
+[hyperbolic] global_step=6888/72000 local_updates=1722 loss=0.02869188 recon=0.00022103
+[hyperbolic] global_step=6920/72000 local_updates=1730 loss=0.02738346 recon=0.00020847
+[hyperbolic] global_step=6952/72000 local_updates=1738 loss=0.02412473 recon=0.00019217
+[hyperbolic] global_step=6984/72000 local_updates=1746 loss=0.02421824 recon=0.00021535
+[hyperbolic] global_step=7016/72000 local_updates=1754 loss=0.02587080 recon=0.00021500
+[hyperbolic] global_step=7048/72000 local_updates=1762 loss=0.02505105 recon=0.00019577
+[hyperbolic] global_step=7080/72000 local_updates=1770 loss=0.02967044 recon=0.00019408
+[hyperbolic] global_step=7112/72000 local_updates=1778 loss=0.02471671 recon=0.00022882
+[hyperbolic] global_step=7144/72000 local_updates=1786 loss=0.02725103 recon=0.00018932
+[hyperbolic] global_step=7172/72000 local_updates=1793 loss=0.02827011 recon=0.00020569
+[hyperbolic] global_step=7208/72000 local_updates=1802 loss=0.02538617 recon=0.00018847
+[hyperbolic] global_step=7240/72000 local_updates=1810 loss=0.02810963 recon=0.00019622
+[hyperbolic] global_step=7268/72000 local_updates=1817 loss=0.02900629 recon=0.00019128
+[hyperbolic] global_step=7300/72000 local_updates=1825 loss=0.02574718 recon=0.00021469
+[hyperbolic] global_step=7332/72000 local_updates=1833 loss=0.02822027 recon=0.00020550
+[hyperbolic] global_step=7364/72000 local_updates=1841 loss=0.02877444 recon=0.00021888
+[hyperbolic] global_step=7392/72000 local_updates=1848 loss=0.02681345 recon=0.00020935
+[hyperbolic] global_step=7424/72000 local_updates=1856 loss=0.02927942 recon=0.00020270
+[hyperbolic] global_step=7452/72000 local_updates=1863 loss=0.02867182 recon=0.00021137
+[hyperbolic] global_step=7480/72000 local_updates=1870 loss=0.03169103 recon=0.00021011
+[hyperbolic] global_step=7512/72000 local_updates=1878 loss=0.03130404 recon=0.00019893
+[hyperbolic] global_step=7544/72000 local_updates=1886 loss=0.03861452 recon=0.00020431
+[hyperbolic] global_step=7576/72000 local_updates=1894 loss=0.03458960 recon=0.00021140
+[hyperbolic] global_step=7608/72000 local_updates=1902 loss=0.04128548 recon=0.00022021
+[hyperbolic] global_step=7640/72000 local_updates=1910 loss=0.04544949 recon=0.00019464
+[hyperbolic] global_step=7668/72000 local_updates=1917 loss=0.04765263 recon=0.00020021
+[hyperbolic] global_step=7704/72000 local_updates=1926 loss=0.05219680 recon=0.00020918
+[hyperbolic] global_step=7736/72000 local_updates=1934 loss=0.06274543 recon=0.00018903
+[hyperbolic] global_step=7776/72000 local_updates=1944 loss=0.07225578 recon=0.00017939
+[hyperbolic] global_step=7808/72000 local_updates=1952 loss=0.10980590 recon=0.00021668
+[hyperbolic] global_step=7840/72000 local_updates=1960 loss=0.11104409 recon=0.00020229
+[hyperbolic] global_step=7872/72000 local_updates=1968 loss=0.18402021 recon=0.00022784
+[hyperbolic] global_step=7912/72000 local_updates=1978 loss=0.23754773 recon=0.00021302
+[hyperbolic] global_step=7948/72000 local_updates=1987 loss=0.32539511 recon=0.00020624
+[hyperbolic] global_step=7980/72000 local_updates=1995 loss=0.41492400 recon=0.00018173
+[hyperbolic] global_step=8012/72000 local_updates=2003 loss=0.46043032 recon=0.00020595
+[hyperbolic] global_step=8040/72000 local_updates=2010 loss=0.47804087 recon=0.00021452
+[hyperbolic] global_step=8084/72000 local_updates=2021 loss=0.51573688 recon=0.00019733
+[hyperbolic] global_step=8120/72000 local_updates=2030 loss=0.63232011 recon=0.00017230
+[hyperbolic] global_step=8148/72000 local_updates=2037 loss=0.66975081 recon=0.00021067
+[hyperbolic] global_step=8180/72000 local_updates=2045 loss=0.72865528 recon=0.00019444
+[hyperbolic] global_step=8212/72000 local_updates=2053 loss=0.76183045 recon=0.00019343
+[hyperbolic] global_step=8248/72000 local_updates=2062 loss=0.75300652 recon=0.00020599
+[hyperbolic] global_step=8276/72000 local_updates=2069 loss=0.71679378 recon=0.00020855
+[hyperbolic] global_step=8312/72000 local_updates=2078 loss=0.82358325 recon=0.00020782
+[hyperbolic] global_step=8360/72000 local_updates=2090 loss=0.80248690 recon=0.00021881
+[hyperbolic] global_step=8404/72000 local_updates=2101 loss=0.88229024 recon=0.00021824
+[hyperbolic] global_step=8440/72000 local_updates=2110 loss=0.89577317 recon=0.00019486
+[hyperbolic] global_step=8472/72000 local_updates=2118 loss=0.93800008 recon=0.00020956
+[hyperbolic] global_step=8512/72000 local_updates=2128 loss=0.95517468 recon=0.00020349
+[hyperbolic] global_step=8556/72000 local_updates=2139 loss=1.07100582 recon=0.00019949
+[hyperbolic] global_step=8632/72000 local_updates=2158 loss=1.24301314 recon=0.00021865
+[hyperbolic] global_step=8688/72000 local_updates=2172 loss=1.30889308 recon=0.00019795
+[hyperbolic] global_step=8740/72000 local_updates=2185 loss=1.31742156 recon=0.00017082
+[hyperbolic] global_step=8776/72000 local_updates=2194 loss=1.29259753 recon=0.00019107
+[hyperbolic] global_step=8812/72000 local_updates=2203 loss=1.31177604 recon=0.00020140
+[hyperbolic] global_step=8848/72000 local_updates=2212 loss=1.32813227 recon=0.00019767
+[hyperbolic] global_step=8888/72000 local_updates=2222 loss=1.32886064 recon=0.00018728
+[hyperbolic] global_step=8928/72000 local_updates=2232 loss=1.32786500 recon=0.00019977
+[hyperbolic] global_step=8968/72000 local_updates=2242 loss=1.32134867 recon=0.00020338
+[hyperbolic] global_step=9000/72000 loss=0.43868813 recon=0.18950891 c=[1.0, 1.0, 1.0] epsilon=[0.003, 0.003, 0.003] raw_unique=253/24587 collision=0.989710 behaviour=0.41942402 codebook_used=[250, 100, 96]
+[hyperbolic] global_step=9040/72000 local_updates=2260 loss=1.32447386 recon=0.00019194
+[hyperbolic] global_step=9076/72000 local_updates=2269 loss=1.31937361 recon=0.00019939
+[hyperbolic] global_step=9112/72000 local_updates=2278 loss=1.31314683 recon=0.00021808
+[hyperbolic] global_step=9152/72000 local_updates=2288 loss=1.30967474 recon=0.00021971
+[hyperbolic] global_step=9200/72000 local_updates=2300 loss=1.34299195 recon=0.00020216
+[hyperbolic] global_step=9236/72000 local_updates=2309 loss=1.32358801 recon=0.00020139
+[hyperbolic] global_step=9276/72000 local_updates=2319 loss=1.30885482 recon=0.00018927
+[hyperbolic] global_step=9308/72000 local_updates=2327 loss=1.33225060 recon=0.00021299
+[hyperbolic] global_step=9344/72000 local_updates=2336 loss=1.28780055 recon=0.00020126
+[hyperbolic] global_step=9380/72000 local_updates=2345 loss=1.31051743 recon=0.00018679
+[hyperbolic] global_step=9416/72000 local_updates=2354 loss=1.29172695 recon=0.00019138
+[hyperbolic] global_step=9456/72000 local_updates=2364 loss=1.30764592 recon=0.00020468
+[hyperbolic] global_step=9488/72000 local_updates=2372 loss=1.31084454 recon=0.00020258
+[hyperbolic] global_step=9524/72000 local_updates=2381 loss=1.31371319 recon=0.00019401
+[hyperbolic] global_step=9560/72000 local_updates=2390 loss=1.31896055 recon=0.00020696
+[hyperbolic] global_step=9588/72000 local_updates=2397 loss=1.30834079 recon=0.00021251
+[hyperbolic] global_step=9628/72000 local_updates=2407 loss=1.32700443 recon=0.00018902
+[hyperbolic] global_step=9668/72000 local_updates=2417 loss=1.31398153 recon=0.00018598
+[hyperbolic] global_step=9700/72000 local_updates=2425 loss=1.32299280 recon=0.00020589
+[hyperbolic] global_step=9744/72000 local_updates=2436 loss=1.31250167 recon=0.00018241
+[hyperbolic] global_step=9784/72000 local_updates=2446 loss=1.29114485 recon=0.00020408
+[hyperbolic] global_step=9816/72000 local_updates=2454 loss=1.31674159 recon=0.00022056
+[hyperbolic] global_step=9836/72000 local_updates=2459 loss=1.32814026 recon=0.00020363
+[hyperbolic] global_step=9864/72000 local_updates=2466 loss=1.33464181 recon=0.00021497
+[hyperbolic] global_step=9904/72000 local_updates=2476 loss=1.31689715 recon=0.00023852
+[hyperbolic] global_step=9936/72000 local_updates=2484 loss=1.30361676 recon=0.00020259
+[hyperbolic] global_step=9968/72000 local_updates=2492 loss=1.33619726 recon=0.00017945
+[hyperbolic] global_step=10004/72000 local_updates=2501 loss=1.33919668 recon=0.00020222
+[hyperbolic] global_step=10044/72000 local_updates=2511 loss=1.34274805 recon=0.00019855
+[hyperbolic] global_step=10076/72000 local_updates=2519 loss=1.32131338 recon=0.00020556
+[hyperbolic] global_step=10108/72000 local_updates=2527 loss=1.32885885 recon=0.00019369
+[hyperbolic] global_step=10152/72000 local_updates=2538 loss=1.33129776 recon=0.00020375
+[hyperbolic] global_step=10184/72000 local_updates=2546 loss=1.31577361 recon=0.00020927
+[hyperbolic] global_step=10212/72000 local_updates=2553 loss=1.32668686 recon=0.00020546
+[hyperbolic] global_step=10244/72000 local_updates=2561 loss=1.32452893 recon=0.00019960
+[hyperbolic] global_step=10276/72000 local_updates=2569 loss=1.33285439 recon=0.00020117
+[hyperbolic] global_step=10312/72000 local_updates=2578 loss=1.32335043 recon=0.00019646
+[hyperbolic] global_step=10348/72000 local_updates=2587 loss=1.33826327 recon=0.00019809
+[hyperbolic] global_step=10376/72000 local_updates=2594 loss=1.32460237 recon=0.00021402
+[hyperbolic] global_step=10412/72000 local_updates=2603 loss=1.32102716 recon=0.00020651
+[hyperbolic] global_step=10448/72000 local_updates=2612 loss=1.32785285 recon=0.00019482
+[hyperbolic] global_step=10484/72000 local_updates=2621 loss=1.34025943 recon=0.00020118
+[hyperbolic] global_step=10524/72000 local_updates=2631 loss=1.31660736 recon=0.00017768
+[hyperbolic] global_step=10572/72000 local_updates=2643 loss=1.31372142 recon=0.00021001
+[hyperbolic] global_step=10608/72000 local_updates=2652 loss=1.33621538 recon=0.00024736
+[hyperbolic] global_step=10632/72000 local_updates=2658 loss=1.27109826 recon=0.00021052
+[hyperbolic] global_step=10664/72000 local_updates=2666 loss=1.33196986 recon=0.00020925
+[hyperbolic] global_step=10696/72000 local_updates=2674 loss=1.30449164 recon=0.00018083
+[hyperbolic] global_step=10728/72000 local_updates=2682 loss=1.32430565 recon=0.00022719
+[hyperbolic] global_step=10760/72000 local_updates=2690 loss=1.31838143 recon=0.00020499
+[hyperbolic] global_step=10800/72000 local_updates=2700 loss=1.32873285 recon=0.00020781
+[hyperbolic] global_step=10832/72000 local_updates=2708 loss=1.33150077 recon=0.00019130
+[hyperbolic] global_step=10864/72000 local_updates=2716 loss=1.30427587 recon=0.00020769
+[hyperbolic] global_step=10900/72000 local_updates=2725 loss=1.31384158 recon=0.00023155
+[hyperbolic] global_step=10936/72000 local_updates=2734 loss=1.32654274 recon=0.00018891
+[hyperbolic] global_step=10968/72000 local_updates=2742 loss=1.33072627 recon=0.00021242
+[hyperbolic] global_step=11000/72000 local_updates=2750 loss=1.33727121 recon=0.00022874
+[hyperbolic] global_step=11032/72000 local_updates=2758 loss=1.32067525 recon=0.00018828
+[hyperbolic] global_step=11064/72000 local_updates=2766 loss=1.32380402 recon=0.00021676
+[hyperbolic] global_step=11100/72000 local_updates=2775 loss=1.32797587 recon=0.00022840
+[hyperbolic] global_step=11136/72000 local_updates=2784 loss=1.31977010 recon=0.00019903
+[hyperbolic] global_step=11172/72000 local_updates=2793 loss=1.31918955 recon=0.00021213
+[hyperbolic] global_step=11208/72000 local_updates=2802 loss=1.30501819 recon=0.00017985
+[hyperbolic] global_step=11240/72000 local_updates=2810 loss=1.30739474 recon=0.00020430
+[hyperbolic] global_step=11276/72000 local_updates=2819 loss=1.32770360 recon=0.00022845
+[hyperbolic] global_step=11312/72000 local_updates=2828 loss=1.33061063 recon=0.00022517
+[hyperbolic] global_step=11344/72000 local_updates=2836 loss=1.31616187 recon=0.00024102
+[hyperbolic] global_step=11376/72000 local_updates=2844 loss=1.31913066 recon=0.00018560
+[hyperbolic] global_step=11412/72000 local_updates=2853 loss=1.32181287 recon=0.00018303
+[hyperbolic] global_step=11444/72000 local_updates=2861 loss=1.31375802 recon=0.00025069
+[hyperbolic] global_step=11476/72000 local_updates=2869 loss=1.32020509 recon=0.00020710
+[hyperbolic] global_step=11512/72000 local_updates=2878 loss=1.32732308 recon=0.00020470
+[hyperbolic] global_step=11544/72000 local_updates=2886 loss=1.33211207 recon=0.00020827
+[hyperbolic] global_step=11572/72000 local_updates=2893 loss=1.32769656 recon=0.00020801
+[hyperbolic] global_step=11608/72000 local_updates=2902 loss=1.31882477 recon=0.00021951
+[hyperbolic] global_step=11640/72000 local_updates=2910 loss=1.31279123 recon=0.00019377
+[hyperbolic] global_step=11672/72000 local_updates=2918 loss=1.33316171 recon=0.00019946
+[hyperbolic] global_step=11704/72000 local_updates=2926 loss=1.32917261 recon=0.00022363
+[hyperbolic] global_step=11740/72000 local_updates=2935 loss=1.33252859 recon=0.00020724
+[hyperbolic] global_step=11772/72000 local_updates=2943 loss=1.33559084 recon=0.00021854
+[hyperbolic] global_step=11800/72000 local_updates=2950 loss=1.33310211 recon=0.00021596
+[hyperbolic] global_step=11828/72000 local_updates=2957 loss=1.34062326 recon=0.00020607
+[hyperbolic] global_step=11852/72000 local_updates=2963 loss=1.32752979 recon=0.00019867
+[hyperbolic] global_step=11880/72000 local_updates=2970 loss=1.33511901 recon=0.00019763
+[hyperbolic] global_step=11908/72000 local_updates=2977 loss=1.33101475 recon=0.00018537
+[hyperbolic] global_step=11936/72000 local_updates=2984 loss=1.32587373 recon=0.00019824
+[hyperbolic] global_step=11968/72000 local_updates=2992 loss=1.34033394 recon=0.00022330
+[hyperbolic] global_step=11996/72000 local_updates=2999 loss=1.33656013 recon=0.00019797
+[hyperbolic] global_step=12020/72000 local_updates=3005 loss=1.33118165 recon=0.00018812
+[hyperbolic] global_step=12048/72000 local_updates=3012 loss=1.33760071 recon=0.00022809
+[hyperbolic] global_step=12076/72000 local_updates=3019 loss=1.33160758 recon=0.00022745
+[hyperbolic] global_step=12104/72000 local_updates=3026 loss=1.34229887 recon=0.00021757
+[hyperbolic] global_step=12136/72000 local_updates=3034 loss=1.34065306 recon=0.00018416
+[hyperbolic] global_step=12164/72000 local_updates=3041 loss=1.33584976 recon=0.00018264
+[hyperbolic] global_step=12192/72000 local_updates=3048 loss=1.34286594 recon=0.00019708
+[hyperbolic] global_step=12220/72000 local_updates=3055 loss=1.33112931 recon=0.00018287
+[hyperbolic] global_step=12252/72000 local_updates=3063 loss=1.33991098 recon=0.00021877
+[hyperbolic] global_step=12280/72000 local_updates=3070 loss=1.32377744 recon=0.00019253
+[hyperbolic] global_step=12308/72000 local_updates=3077 loss=1.32229257 recon=0.00020494
+[hyperbolic] global_step=12336/72000 local_updates=3084 loss=1.33573139 recon=0.00022436
+[hyperbolic] global_step=12368/72000 local_updates=3092 loss=1.33613980 recon=0.00022033
+[hyperbolic] global_step=12396/72000 local_updates=3099 loss=1.34030199 recon=0.00023746
+[hyperbolic] global_step=12428/72000 local_updates=3107 loss=1.32993937 recon=0.00019443
+[hyperbolic] global_step=12456/72000 local_updates=3114 loss=1.33715487 recon=0.00021042
+[hyperbolic] global_step=12484/72000 local_updates=3121 loss=1.33841920 recon=0.00019781
+[hyperbolic] global_step=12512/72000 local_updates=3128 loss=1.33073533 recon=0.00020401
+[hyperbolic] global_step=12544/72000 local_updates=3136 loss=1.33100545 recon=0.00020246
+W1010 06:17:39.833480 2659642 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py:723] Received Signals.SIGTERM death signal, shutting down workers
+W1010 06:17:39.863844 2659642 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2659648 closing signal SIGTERM
+W1010 06:17:39.878657 2659642 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2659649 closing signal SIGTERM
+W1010 06:17:39.878978 2659642 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2659650 closing signal SIGTERM
+W1010 06:17:39.879250 2659642 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2659651 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    result = agent.run()
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 715, in run
+    result = self._invoke_run(role)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 879, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 2659642 got signal: 15
