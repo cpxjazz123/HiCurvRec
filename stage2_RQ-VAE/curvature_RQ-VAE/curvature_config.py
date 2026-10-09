@@ -60,6 +60,11 @@ CATEGORY_CONE_SEPARATION_GAP = 0.0
 # into a single cone and is what cost the round-four arms their fine-code
 # discriminability.
 CATEGORY_CONE_LEVEL_ALIGNED = False
+# Which level the coarse cone supervises. 2 is the historical setting and the
+# source of the merge this program measured; 1 moves the coarse cone onto the
+# level that already carries the category, leaving level 2 to the reconstruction
+# objective so the L1L2 prefix keeps the item identity that makes it unique.
+CATEGORY_CONE_COARSE_LEVEL = 2
 CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # The behaviour-context channel is the previous mechanism. The four-arm cone
 # comparison is self-contained, so it is switched off in every arm; the cone

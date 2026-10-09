@@ -100,6 +100,18 @@ ARMS = {
         "metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
         "sidarm_ME_euclid_metriccone",
     ),
+    # Coarse cone moved onto level 1, level 2 left to reconstruction, at the
+    # production 256 codes per level so the numbers compare to the bar.
+    "CLE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "coarse_l1_arms/A_euclid_coarse_l1_s42/item_sids.json",
+        "sidarm_CLE_euclid_coarse_l1",
+    ),
+    "CLP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "coarse_l1_arms/B_poincare_coarse_l1_s42/item_sids.json",
+        "sidarm_CLP_poincare_coarse_l1",
+    ),
     "MP": (
         f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
         "metric_cone_arms/B_poincare_metriccone_s42/item_sids.json",

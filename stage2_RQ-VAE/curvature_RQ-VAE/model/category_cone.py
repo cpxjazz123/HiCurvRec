@@ -111,6 +111,7 @@ class CategoryCone(nn.Module):
         separation_weight: float = 0.0,
         separation_gap: float = 0.0,
         level_aligned: bool = False,
+        coarse_level: int = 2,
     ) -> None:
         super().__init__()
         self.radius_band_low = float(radius_band_low)
@@ -120,6 +121,9 @@ class CategoryCone(nn.Module):
         self.separation_weight = float(separation_weight)
         self.separation_gap = float(separation_gap)
         self.level_aligned = bool(level_aligned)
+        if int(coarse_level) not in (1, 2):
+            raise ValueError(f'coarse_level must be 1 or 2, got {coarse_level}')
+        self.coarse_level = int(coarse_level)
         self.margin = float(margin)
         self.radial_weight = float(radial_weight)
         self.radial_margin = float(radial_margin)
@@ -451,6 +455,8 @@ class CategoryCone(nn.Module):
         # fine one, so the level that Stage3 reads for fine discrimination is the
         # level the fine cone supervises.
         if self.level_aligned:
+            # Coarse cone on level 1 and fine cone on level 2: every level is
+            # supervised by the granularity it must discriminate.
             q1 = prefixes[0][index]
             loss_cq2, positive_cq2, negative_cq2 = objective(
                 self.geometry, curvature, apex_coarse, q1, q1[partner_q2_index],
@@ -464,11 +470,23 @@ class CategoryCone(nn.Module):
                 float(self.k_q3), self.margin,
             )[:3]
             loss_cq2 = loss_cq2 + loss_fq2
-        else:
+        elif self.coarse_level == 2:
             loss_cq2, positive_cq2, negative_cq2 = objective(
                 self.geometry, curvature, apex_coarse, q2, q2[partner_q2_index],
                 float(self.k_q2), self.margin,
             )[:3]
+        else:
+            # Level 1 takes the coarse cone and level 2 is left to the
+            # reconstruction objective. Level 1 already carries the category at
+            # an AMI of 0.32 while level 2 carries item identity, and that split
+            # is what keeps the L1L2 prefix unique; supervising level 2 with the
+            # coarse cone is what merges fine categories under one coarse one.
+            q1 = prefixes[0][index]
+            loss_cq2, positive_cq2, negative_cq2 = objective(
+                self.geometry, curvature, apex_coarse, q1, q1[partner_q2_index],
+                float(self.k_q2), self.margin,
+            )[:3]
+            loss_fq2 = torch.zeros((), device=items.device)
         loss_fq3, positive_fq3, negative_fq3 = objective(
             self.geometry, curvature, apex_fine, q3, q3[partner_q3_index],
             float(self.k_q3), self.margin,
@@ -570,7 +588,7 @@ class CategoryCone(nn.Module):
                 "cone_total": float(total.detach()),
                 "cone_prototype_pair": float(loss_pf.detach()),
                 "cone_coarse_to_q2": float(loss_cq2.detach()),
-                "cone_fine_to_q2": float(loss_fq2.detach()) if self.level_aligned else 0.0,
+                "cone_fine_to_q2": float(loss_fq2.detach()) if (self.level_aligned or self.coarse_level == 1) else 0.0,
                 "cone_fine_to_q3": float(loss_fq3.detach()),
                 "cone_radial": float(radial.detach()),
                 "cone_separation": float(separation.detach()),
@@ -692,6 +710,7 @@ class CategoryCone(nn.Module):
             "separation_weight": self.separation_weight,
             "separation_gap": self.separation_gap,
             "level_aligned": self.level_aligned,
+            "coarse_level": self.coarse_level,
             "radius_band": [self.radius_band_low, self.radius_band_high],
             "radial_weight": self.radial_weight,
             "radial_margin": self.radial_margin,
