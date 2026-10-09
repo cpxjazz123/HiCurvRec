@@ -463,7 +463,6 @@ def main() -> None:
         # that must be synchronised and stepped by every rank.
         model.category_cone = CategoryCone(
             geometry=experiment.GEOMETRY,
-        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
             codebook_dim=CODEBOOK_DIM,
             holdout_fraction=CATEGORY_CONE_HOLDOUT_FRACTION,
             data_seed=CATEGORY_CONE_DATA_SEED,
@@ -834,7 +833,6 @@ def main() -> None:
                         "cone_train",
                         global_step=global_step_sync,
                         geometry=experiment.GEOMETRY,
-        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
                         cone_weight=CATEGORY_CONE_WEIGHT,
                         **{
                             key: value / denominator
@@ -845,7 +843,6 @@ def main() -> None:
                         rank, "cone_containment",
                         global_step=global_step_sync,
                         geometry=experiment.GEOMETRY,
-        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
                         **cone_containment,
                         **raw_module.category_cone.aperture_report(),
                     )
