@@ -259,6 +259,19 @@ def _init_points(
     return direction * radius
 
 
+_ADJACENCY_CACHE: dict[tuple[int, str], torch.Tensor] = {}
+
+
+def _adjacency_keys(data: PaperConeData, device: str) -> torch.Tensor:
+    """Device copy of the blocked-pair keys, built once per dataset and device."""
+    key = (id(data), device)
+    cached = _ADJACENCY_CACHE.get(key)
+    if cached is None:
+        cached = torch.as_tensor(data.adjacency_keys, dtype=torch.int64, device=device)
+        _ADJACENCY_CACHE[key] = cached
+    return cached
+
+
 def _sample_negatives(
     data: PaperConeData,
     apex: torch.Tensor,
@@ -275,7 +288,7 @@ def _sample_negatives(
         )
     else:
         negatives = _sample_from(probabilities, (apex.shape[0], count), generator)
-    keys = torch.as_tensor(data.adjacency_keys, dtype=torch.int64, device=device)
+    keys = _adjacency_keys(data, device)
     uniform_rows = torch.zeros(apex.shape[0], dtype=torch.bool, device=device)
     if len(data.uniform_nodes):
         blocked = torch.as_tensor(data.uniform_nodes, dtype=torch.int64, device=device)
@@ -381,7 +394,14 @@ def _sample_from(
 
 
 def train_initializer(
-    data: PaperConeData, dim: int, seed: int, device: str
+    data: PaperConeData,
+    dim: int,
+    seed: int,
+    device: str,
+    *,
+    batch: int | None = None,
+    learning_rate: float | None = None,
+    update_cap: float | None = None,
 ) -> torch.Tensor:
     """Poincare NLL warm start shared by both cone arms.
 
@@ -394,6 +414,9 @@ def train_initializer(
     # zero-gradient guard for coincident points. Starting from the same
     # well-conditioned radius band the cone stage uses keeps the distance law
     # finite without that guard, and is applied to both arms identically.
+    batch = cfg.PAPER_BATCH if batch is None else batch
+    learning_rate = cfg.PAPER_INIT_LR if learning_rate is None else learning_rate
+    update_cap = cfg.PAPER_UPDATE_CAP if update_cap is None else update_cap
     generator = torch.Generator(device=device).manual_seed(seed + 991)
     embeddings = torch.nn.Parameter(
         _init_points(data.n_nodes, dim, device, generator)
@@ -403,14 +426,14 @@ def train_initializer(
     train_v = torch.as_tensor(data.train_v, dtype=torch.long, device=device)
     order = torch.Generator(device="cpu").manual_seed(seed + 13)
     for epoch in range(1, cfg.PAPER_INIT_EPOCHS + 1):
-        learning_rate = (
-            cfg.PAPER_INIT_LR
+        epoch_lr = (
+            learning_rate
             if epoch > cfg.PAPER_INIT_BURN_IN
-            else cfg.PAPER_INIT_LR / 10.0
+            else learning_rate / 10.0
         )
         permutation = torch.randperm(len(train_u), generator=order)
-        for start in range(0, len(train_u), cfg.PAPER_BATCH):
-            index = permutation[start : start + cfg.PAPER_BATCH]
+        for start in range(0, len(train_u), batch):
+            index = permutation[start : start + batch]
             apex = train_u[index]
             child = train_v[index]
             negatives = _sample_negatives(data, apex, generator, device, probabilities)
@@ -440,8 +463,8 @@ def train_initializer(
             with torch.no_grad():
                 _apply_update(
                     embeddings,
-                    learning_rate * scale.unsqueeze(-1) * gradient,
-                    cfg.PAPER_UPDATE_CAP,
+                    epoch_lr * scale.unsqueeze(-1) * gradient,
+                    update_cap,
                 )
                 _project(embeddings, cfg.PAPER_INIT_MIN_RADIUS, 1.0 - 1e-4)
             del loss, gradient
@@ -505,66 +528,110 @@ def train_one(
     seed: int,
     device: str,
     init_points: torch.Tensor | None = None,
+    *,
+    batch: int | None = None,
+    learning_rate: float | None = None,
+    update_cap: float | None = None,
+    steps_cap: int | None = None,
 ) -> dict:
+    """Train one cone arm.
+
+    Only the rows a chunk touches are gathered into a differentiable leaf, so a
+    step costs the touched rows rather than the whole 82k-node table. That is
+    what makes a near-reference batch size affordable: the reference's own
+    10-pair step count is out of reach, but 64-pair steps are not.
+    """
     k = cfg.PAPER_K
+    batch = cfg.PAPER_BATCH if batch is None else batch
+    learning_rate = (
+        cfg.PAPER_LR_BY_GEOMETRY[geometry]
+        if learning_rate is None
+        else learning_rate
+    )
+    update_cap = cfg.PAPER_UPDATE_CAP if update_cap is None else update_cap
     started = time.time()
     generator = torch.Generator(device=device).manual_seed(seed)
-    embeddings = (
+    table = (
         _init_points(data.n_nodes, dim, device, generator)
         if init_points is None
         else prepare_cone_init(init_points).clone()
     )
-    _clip(geometry, embeddings, k, cfg.PAPER_EPSILON)
-    embeddings = torch.nn.Parameter(embeddings)
-    optimizer_scale = cfg.PAPER_LR_BY_GEOMETRY[geometry]
+    _clip(geometry, table, k, cfg.PAPER_EPSILON)
     train_u = torch.as_tensor(data.train_u, dtype=torch.long, device=device)
     train_v = torch.as_tensor(data.train_v, dtype=torch.long, device=device)
-
     epoch_order = torch.Generator(device="cpu").manual_seed(seed + 17)
+
+    steps_per_epoch = math.ceil(len(train_u) / batch)
+    epochs = cfg.PAPER_EPOCHS
+    if steps_cap is not None:
+        epochs = max(1, min(epochs, math.ceil(steps_cap / steps_per_epoch)))
     curve: list[dict] = []
-    for epoch in range(1, cfg.PAPER_EPOCHS + 1):
+    step = 0
+    for epoch in range(1, epochs + 1):
         permutation = torch.randperm(len(train_u), generator=epoch_order)
         epoch_loss = 0.0
-        for start in range(0, len(train_u), cfg.PAPER_BATCH):
-            index = permutation[start : start + cfg.PAPER_BATCH]
-            apex = train_u[index]
-            child = train_v[index]
-            negatives = _sample_negatives(data, apex, generator, device)
-            parent_points = embeddings[apex]
-            positive_energy = energy(geometry, parent_points, embeddings[child], k)
-            flat_parent = parent_points.unsqueeze(1).expand(-1, negatives.shape[1], -1)
+        for start in range(0, len(train_u), batch):
+            index = permutation[start : start + batch]
+            apex_index = train_u[index]
+            child_index = train_v[index]
+            negative_index = _sample_negatives(data, apex_index, generator, device)
+            touched = torch.cat(
+                [apex_index, child_index, negative_index.reshape(-1)]
+            )
+            unique, inverse = torch.unique(touched, return_inverse=True)
+            sub = table[unique].detach().clone().requires_grad_(True)
+            positions = inverse.reshape(-1)
+            count = apex_index.shape[0]
+            negative_count = negative_index.shape[1]
+            apex_row = positions[:count]
+            child_row = positions[count : count + count]
+            negative_row = positions[count + count :].reshape(count, negative_count)
+            parent_points = sub[apex_row]
+            positive_energy = energy(geometry, parent_points, sub[child_row], k)
+            flat_parent = parent_points.unsqueeze(1).expand(-1, negative_count, -1)
             negative_energy = energy(
                 geometry,
                 flat_parent.reshape(-1, dim),
-                embeddings[negatives.reshape(-1)],
+                sub[negative_row.reshape(-1)],
                 k,
-            ).reshape(negatives.shape)
+            ).reshape(negative_row.shape)
             loss = positive_energy.sum() + torch.relu(
                 cfg.PAPER_MARGIN - negative_energy
             ).sum()
-            with torch.no_grad():
-                scale = (
-                    (1.0 - _norms(embeddings).square()).clamp_min(1e-12).square() / 4.0
-                    if geometry == "poincare"
-                    else torch.ones(data.n_nodes, device=device)
+            if not bool(torch.isfinite(loss)):
+                raise RuntimeError(
+                    f"Non-finite cone loss geometry={geometry} dim={dim} "
+                    f"ratio={data.ratio} seed={seed} step={step}"
                 )
-            gradient = torch.autograd.grad(loss, embeddings)[0]
-            # The distance law is singular for coincident points, exactly as
-            # in the reference, which zeroes those gradients explicitly.
-            gradient = torch.nan_to_num(
-                gradient, nan=0.0, posinf=0.0, neginf=0.0
-            )
+            gradient = torch.autograd.grad(loss, sub)[0]
+            # The distance law is singular for coincident points, exactly as in
+            # the reference, which zeroes those gradients explicitly.
+            gradient = torch.nan_to_num(gradient, nan=0.0, posinf=0.0, neginf=0.0)
             with torch.no_grad():
-                _apply_update(
-                    embeddings,
-                    optimizer_scale * scale.unsqueeze(-1) * gradient,
-                    cfg.PAPER_UPDATE_CAP,
-                )
-                _clip(geometry, embeddings, k, cfg.PAPER_EPSILON)
+                if geometry == "poincare":
+                    scale = (
+                        (1.0 - _norms(sub).square()).clamp_min(1e-12).square() / 4.0
+                    )
+                else:
+                    scale = torch.ones(sub.shape[0], device=device)
+                update = learning_rate * scale.unsqueeze(-1) * gradient
+                if update_cap is not None:
+                    row_norm = _norms(update).clamp_min(1e-12)
+                    limit = update_cap * _norms(sub)
+                    update = update * (limit / row_norm).clamp_max(1.0).unsqueeze(-1)
+                # Advanced indexing returns a copy, so the projection has to
+                # run on the fresh tensor that is written back; clipping
+                # ``table[unique]`` in place would silently be a no-op.
+                updated = sub.detach() - update
+                _clip(geometry, updated, k, cfg.PAPER_EPSILON)
+                table[unique] = updated
             epoch_loss += float(loss.detach())
-            del loss, gradient
-        if epoch % 20 == 0 or epoch == cfg.PAPER_EPOCHS:
-            validation = _evaluate(geometry, embeddings.detach(), data, "valid", device)
+            step += 1
+            del loss, gradient, sub
+        if epoch % 20 == 0 or epoch == epochs:
+            validation = _evaluate(
+                geometry, table, data, "valid", device
+            )
             curve.append(
                 {
                     "epoch": epoch,
@@ -574,8 +641,8 @@ def train_one(
                 }
             )
 
-    valid_scores = _evaluate(geometry, embeddings.detach(), data, "valid", device)
-    test_scores = _evaluate(geometry, embeddings.detach(), data, "test", device)
+    valid_scores = _evaluate(geometry, table, data, "valid", device)
+    test_scores = _evaluate(geometry, table, data, "test", device)
     threshold = valid_scores["best_threshold"]
     test_classification = _classification(
         test_scores["positive"], test_scores["negative"], threshold
@@ -594,11 +661,13 @@ def train_one(
         "margin": float(cfg.PAPER_MARGIN),
         "n_nodes": int(data.n_nodes),
         "training": {
-            "epochs": int(cfg.PAPER_EPOCHS),
-            "batch": int(cfg.PAPER_BATCH),
-            "learning_rate": float(cfg.PAPER_LR_BY_GEOMETRY[geometry]),
+            "epochs": int(epochs),
+            "batch": int(batch),
+            "learning_rate": float(learning_rate),
+            "update_cap": None if update_cap is None else float(update_cap),
             "negatives": int(cfg.PAPER_NEGATIVES),
             "n_train_pairs": int(data.n_train),
+            "steps": int(step),
             "elapsed_seconds": float(time.time() - started),
         },
         "valid": {
