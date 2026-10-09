@@ -346,6 +346,9 @@ appimage-extracted/
 **/*.out
 **/ckpt*/
 **/rqvae_runs/
+# 2026-10-09 规则: semantic-cone 研究的 per-positive AUC 向量是配对 bootstrap 的
+# 唯一证据，必须随代码一起进 git，否则 summary.json 的置信区间无法复算。
+!results/bench_semantic_cones/**
 # 2026-09-25 user instruction: `results/stage3_T5Train/**/logs/_stage3_launcher.log`
 # IS pushed. We don't ignore the bare `logs/` directory; only specific transient
 # sub-dirs that we want to keep out of git.
