@@ -33,6 +33,7 @@ import torch.nn as nn
 from .cones import (
     CategoryPrototypes,
     aperture,
+    apex_angle,
     k_for_aperture,
     aperture_factor,
     containment_loss,
@@ -197,8 +198,11 @@ class CategoryCone(nn.Module):
         """Pick a negative partner per row, inside the batch, deterministically.
 
         ``q2`` rejects only a shared coarse category. ``q3`` rejects a shared
-        coarse *and* fine category, so a sibling fine category is preferred and
-        another coarse category is the fallback.
+        coarse *and* fine category, so any different fine category qualifies -
+        including one from an unrelated coarse category. Drawing a partner that
+        shares the coarse category but differs at the fine level is *not* what
+        this does; that is the semi-hard sampler and it is deliberately not
+        mixed in here so the rejection-loss fix can be judged on its own.
 
         The implementation groups the rows by the key they must differ on and
         draws each group's partners from the complementary rows. That is linear
@@ -376,7 +380,7 @@ class CategoryCone(nn.Module):
                 "cone_fine_to_q3": 0.0,
                 "cone_radial": 0.0,
                 "cone_rows": 0,
-                "nonzero_negative_ratio": 0.0,
+                "negative_gap_active_ratio": 0.0,
                 "negative_containment": 0.0,
                 "radial_order_rate": 0.0,
             }
@@ -475,27 +479,37 @@ class CategoryCone(nn.Module):
                     ).reshape(-1),
                 ]
             )
-            # Per-pair negative energies, not the batch means: the diagnostic
-            # is the share of individual negative partners that still sit inside
-            # the cone and therefore still produce gradient.
+            # Per-pair diagnostics on the rejection term itself. Two different
+            # quantities: how many negatives are inside the cone, and how many
+            # still have a non-zero gradient. Under the old one-sided energy the
+            # second was zero for the first group, so reporting only a loss
+            # activation test overstated the signal the model was getting.
+            # The signed rejection gap, the same quantity the loss uses. Using
+            # ``margin - energy`` here would keep reporting the pre-fix
+            # activation test, which is not the same thing: an in-cone negative
+            # has zero energy, so that form can read lower than the containment
+            # rate while the gradient is in fact active.
+            def _gap(apex_tangent, point_tangent, k):
+                apex_point = to_point(self.geometry, apex_tangent, curvature)
+                point_point = to_point(self.geometry, point_tangent, curvature)
+                return (
+                    self.margin
+                    + aperture(self.geometry, apex_point, k)
+                    - apex_angle(self.geometry, apex_point, point_point)
+                )
+
             negative_margin_gap = torch.cat(
                 [
-                    self.margin
-                    - energy(
-                        self.geometry,
+                    _gap(
                         self.prototypes.coarse[prototype_coarse_index],
                         self.prototypes.fine[negative_fine_index],
                         float(self.k_proto),
                     ).reshape(-1),
-                    self.margin
-                    - energy(
-                        self.geometry, apex_coarse, q2[partner_q2_index],
-                        float(self.k_q2),
+                    _gap(
+                        apex_coarse, q2[partner_q2_index], float(self.k_q2)
                     ).reshape(-1),
-                    self.margin
-                    - energy(
-                        self.geometry, apex_fine, q3[partner_q3_index],
-                        float(self.k_q3),
+                    _gap(
+                        apex_fine, q3[partner_q3_index], float(self.k_q3)
                     ).reshape(-1),
                 ]
             )
@@ -510,7 +524,7 @@ class CategoryCone(nn.Module):
                 "cone_rows": int(len(rows)),
                 "negative_containment": float(negative_containment.float().mean()),
                 "positive_containment": float(positive_containment.float().mean()),
-                "nonzero_negative_ratio": float(
+                "negative_gap_active_ratio": float(
                     (negative_margin_gap > 0).float().mean()
                 ),
                 "radial_order_rate": float(
