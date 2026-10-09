@@ -1,0 +1,213 @@
+{
+  "metrics": {
+    "coarse_vs_L1": {
+      "ami": 0.23723754866970545,
+      "ami_control": 0.00017292370305020295,
+      "concentration_label_to_cluster": 0.04115917681646367,
+      "n_clusters": 256,
+      "n_items": 23810,
+      "n_labels": 30,
+      "purity_cluster_to_label": 0.6895422091558169
+    },
+    "codeword_usage": {
+      "L1": {
+        "codewords": 256,
+        "entropy_bits": 7.983048220009857,
+        "gini": 0.08505240955586285,
+        "items": 24587,
+        "normalized_entropy": 0.9978810275012321,
+        "top_k_share": {
+          "1": 0.005246675072192622,
+          "10": 0.05002643673485989,
+          "20": 0.09740919998373124,
+          "5": 0.02550128116484321,
+          "50": 0.23300931386505064
+        },
+        "unused_codewords": 0,
+        "used_codewords": 256,
+        "used_frequency": {
+          "max": 129.0,
+          "mean": 96.04296875,
+          "median": 97.0,
+          "min": 57.0,
+          "q10": 77.5,
+          "q25": 86.0,
+          "q75": 107.0,
+          "q90": 113.0
+        }
+      },
+      "L2": {
+        "codewords": 256,
+        "entropy_bits": 7.979776330924885,
+        "gini": 0.09431702347785414,
+        "items": 24587,
+        "normalized_entropy": 0.9974720413656106,
+        "top_k_share": {
+          "1": 0.006344816366372474,
+          "10": 0.05531378370683695,
+          "20": 0.1056249237401879,
+          "5": 0.028795705047382762,
+          "50": 0.2458209622971489
+        },
+        "unused_codewords": 0,
+        "used_codewords": 256,
+        "used_frequency": {
+          "max": 156.0,
+          "mean": 96.04296875,
+          "median": 93.0,
+          "min": 58.0,
+          "q10": 77.5,
+          "q25": 84.75,
+          "q75": 107.0,
+          "q90": 118.5
+        }
+      },
+      "L3": {
+        "codewords": 256,
+        "entropy_bits": 7.984573693237303,
+        "gini": 0.08054799665473625,
+        "items": 24587,
+        "normalized_entropy": 0.9980717116546629,
+        "top_k_share": {
+          "1": 0.005531378370683695,
+          "10": 0.05083987473054866,
+          "20": 0.09842599747834221,
+          "5": 0.026192703461178673,
+          "50": 0.2345548460568593
+        },
+        "unused_codewords": 0,
+        "used_codewords": 256,
+        "used_frequency": {
+          "max": 136.0,
+          "mean": 96.04296875,
+          "median": 96.0,
+          "min": 49.0,
+          "q10": 80.0,
+          "q25": 87.0,
+          "q75": 105.0,
+          "q90": 113.5
+        }
+      }
+    },
+    "fine_vs_L1L2": {
+      "ami": 1.809387887941238e-11,
+      "ami_control": 1.809387887941238e-11,
+      "concentration_label_to_cluster": 0.002502438817491623,
+      "n_clusters": 23577,
+      "n_items": 23577,
+      "n_labels": 59,
+      "purity_cluster_to_label": 1.0
+    },
+    "full_sid_collision_rate": 0.0,
+    "full_sid_unique": 24587,
+    "l1l2_prefix_clusters": 24587,
+    "l1l2_prefix_singleton_fraction": 1.0,
+    "prefix_structure": {
+      "L1": {
+        "clusters": {
+          "max": 129.0,
+          "mean": 96.04296875,
+          "median": 97.0,
+          "min": 57.0,
+          "q10": 77.5,
+          "q25": 86.0,
+          "q75": 107.0,
+          "q90": 113.0
+        },
+        "collision_pairs": 1195286,
+        "items": 24587,
+        "singleton_cluster_fraction": 0.0,
+        "singleton_clusters": 0,
+        "unique_prefixes": 256
+      },
+      "L1-L2": {
+        "clusters": {
+          "max": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "q10": 1.0,
+          "q25": 1.0,
+          "q75": 1.0,
+          "q90": 1.0
+        },
+        "collision_pairs": 0,
+        "items": 24587,
+        "singleton_cluster_fraction": 1.0,
+        "singleton_clusters": 24587,
+        "unique_prefixes": 24587
+      },
+      "L1-L2-L3": {
+        "clusters": {
+          "max": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "q10": 1.0,
+          "q25": 1.0,
+          "q75": 1.0,
+          "q90": 1.0
+        },
+        "collision_pairs": 0,
+        "items": 24587,
+        "singleton_cluster_fraction": 1.0,
+        "singleton_clusters": 24587,
+        "unique_prefixes": 24587
+      },
+      "L1-to-L2": {
+        "children_per_parent": {
+          "max": 129.0,
+          "mean": 96.04296875,
+          "median": 97.0,
+          "min": 57.0,
+          "q10": 77.5,
+          "q25": 86.0,
+          "q75": 107.0,
+          "q90": 113.0
+        },
+        "conditional_entropy_bits": 6.602559873767641,
+        "parent_nodes": 256,
+        "parents_with_one_child": 0
+      },
+      "L1L2-to-L3": {
+        "children_per_parent": {
+          "max": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "q10": 1.0,
+          "q25": 1.0,
+          "q75": 1.0,
+          "q90": 1.0
+        },
+        "conditional_entropy_bits": 0.0,
+        "parent_nodes": 24587,
+        "parents_with_one_child": 24587
+      },
+      "conditional_entropy_bits": {
+        "H(L2|L1)": 6.602559873767641,
+        "H(L3|L1,L2)": 0.0
+      }
+    }
+  },
+  "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE/out/rqvae/instruments/sids_raw.npy",
+  "supervision": {
+    "ambiguous_fraction": 0.0023099538009239817,
+    "ambiguous_titles": 55,
+    "coarse_labelled_items": 23810,
+    "coarse_nodes": 30,
+    "fine_labelled_items": 23577,
+    "fine_nodes": 59,
+    "items": 24587,
+    "matched_fraction": 0.968397933867491,
+    "matched_titles": 23810,
+    "signature": {
+      "coarse_level": 1,
+      "fine_level": 2,
+      "items_mtime_ns": 1790172531000000000,
+      "items_size": 10968789,
+      "raw_mtime_ns": 1788572152000000000,
+      "raw_size": 631877970
+    }
+  }
+}
