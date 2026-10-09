@@ -181,14 +181,29 @@ def containment_loss(
     k: float,
     margin: float,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Positive containment plus negative rejection for one edge type."""
+    """Positive containment plus negative rejection for one edge type.
+
+    The positive term is the one-sided cone energy ``relu(xi - psi)``. The
+    negative term must NOT be built from that energy: for a negative that has
+    already fallen inside the cone the energy is clamped to zero, so
+    ``relu(margin - energy)`` is a constant with a zero gradient and the item
+    can never be pushed back out. Rejection therefore uses the signed angle
+    difference ``relu(margin + psi - xi)``, which stays active for every
+    negative inside the cone or near its boundary and vanishes only once the
+    negative is comfortably outside.
+    """
     apex = to_point(geometry, apex_tangent, curvature)
     point = to_point(geometry, point_tangent, curvature)
     negative = to_point(geometry, negative_tangent, curvature)
     positive = energy(geometry, apex, point, k)
-    negative_energy = energy(geometry, apex, negative, k)
-    total = positive.mean() + F.relu(float(margin) - negative_energy).mean()
-    return total, positive.mean(), negative_energy.mean()
+    negative_gap = (
+        float(margin)
+        + aperture(geometry, apex, k)
+        - apex_angle(geometry, apex, negative)
+    )
+    negative = F.relu(negative_gap)
+    total = positive.mean() + negative.mean()
+    return total, positive.mean(), negative.mean()
 
 
 class CategoryPrototypes(nn.Module):

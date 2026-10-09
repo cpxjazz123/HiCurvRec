@@ -250,6 +250,65 @@ def main() -> None:
             f"loss={float(inside.detach()):.6f}",
         )
 
+    # The negative rejection term must stay active for a negative that is
+    # already inside the cone. Building it from the one-sided energy would give
+    # a positive loss with a zero gradient there, so a mis-assigned item could
+    # never be pushed back out. These checks back-propagate the negative term on
+    # its own, and confirm the positive term is untouched.
+    for geometry in ("euclid", "poincare"):
+        curvature, k, margin = 1.0, 0.20, 0.05
+        apex = torch.tensor([[0.35, 0.0]], dtype=torch.float64, device=DEVICE)
+        child = torch.tensor([[0.37, 0.0]], dtype=torch.float64, device=DEVICE)
+        inside = torch.tensor([[0.36, 0.0]], dtype=torch.float64, device=DEVICE)
+        opposite = torch.tensor([[-1.2, 0.0]], dtype=torch.float64, device=DEVICE)
+        psi = float(aperture(geometry, to_point(geometry, apex, curvature), k))
+        near_boundary = torch.tensor(
+            [[0.35 * (1.0) + psi * 0.6, 0.0]], dtype=torch.float64, device=DEVICE
+        )
+
+        def rejection(negative_point):
+            """Loss and gradient of the rejection term alone."""
+            apex_t = apex.clone().requires_grad_(True)
+            _, positive_term, negative_term = containment_loss(
+                geometry, curvature, apex_t, child, negative_point, k, margin
+            )
+            negative_term.sum().backward()
+            grad = apex_t.grad
+            return (
+                float(negative_term.detach()),
+                float(positive_term.detach()),
+                0.0 if grad is None else float(grad.norm()),
+            )
+
+        inside_loss, positive_inside, inside_grad = rejection(inside)
+        boundary_loss, _, boundary_grad = rejection(near_boundary)
+        far_loss, positive_far, far_grad = rejection(opposite)
+        check(
+            f"{geometry}: in-cone negative keeps a rejection gradient",
+            inside_loss > 0.0 and inside_grad > 0.0,
+            f"loss={inside_loss:.4f} grad={inside_grad:.3e}",
+        )
+        check(
+            f"{geometry}: near-boundary negative keeps a rejection gradient",
+            boundary_loss > 0.0 and boundary_grad > 0.0,
+            f"loss={boundary_loss:.4f} grad={boundary_grad:.3e}",
+        )
+        check(
+            f"{geometry}: a comfortably outside negative costs nothing",
+            far_loss == 0.0 and far_grad == 0.0,
+            f"loss={far_loss:.4f} grad={far_grad:.3e}",
+        )
+        check(
+            f"{geometry}: the positive term is unchanged by the negative one",
+            positive_inside == 0.0 and positive_far == 0.0,
+            f"positive inside={positive_inside:.4f} far={positive_far:.4f}",
+        )
+        check(
+            f"{geometry}: the in-cone negative costs more than the far one",
+            inside_loss > far_loss,
+            f"inside={inside_loss:.4f} far={far_loss:.4f}",
+        )
+
     if FAILURES:
         raise SystemExit(f"cone supervision invariants failed: {FAILURES}")
     print("all cone supervision invariants hold", flush=True)

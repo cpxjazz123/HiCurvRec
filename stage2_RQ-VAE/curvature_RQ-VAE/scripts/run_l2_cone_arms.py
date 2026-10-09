@@ -25,18 +25,27 @@ import time
 from pathlib import Path
 
 PKG = Path(__file__).resolve().parents[1]
-RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms"
+# SWEEP selects which grid this entry point runs. "baseline" is round four, the
+# one-sided rejection loss; "fixed_rejection" is round five, the signed
+# rejection loss, and it only trains the two cone arms because the two no-cone
+# baselines are unaffected by the loss change and are reused by reference.
+SWEEP = "fixed_rejection"
+RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE" / (
+    "l2_cone_arms" if SWEEP == "baseline" else "l2_cone_arms_fixed_rejection"
+)
 SEED = 42
 L2_CODES = 64
 # Same four arms as the cone round, now on a second level small enough that the
 # L1+L2 prefix actually carries category structure. The capacity round supplies
 # the two no-cone baselines at exactly this setting.
-ARMS = [
+ALL_ARMS = [
     ("A_euclid_nocone", "euclid", False),
     ("B_poincare_nocone", "poincare", False),
     ("C_euclid_cone", "euclid", True),
     ("D_poincare_cone", "poincare", True),
 ]
+CONE_ARMS = [arm for arm in ALL_ARMS if arm[2]]
+ARMS = ALL_ARMS if SWEEP == "baseline" else CONE_ARMS
 
 
 def _arm_dir(name: str) -> Path:
@@ -128,7 +137,7 @@ def main() -> None:
     RESULTS.mkdir(parents=True, exist_ok=True)
     pending = [(name, geometry, cone) for name, geometry, cone in ARMS if not _is_complete(name)]
     print(
-        f"[cone64] {len(pending)} arms over {gpu_count} gpus: "
+        f"[cone64-{SWEEP}] {len(pending)} arms over {gpu_count} gpus: "
         f"{[name for name, _, _ in pending]}",
         flush=True,
     )
@@ -148,10 +157,12 @@ def main() -> None:
     while not results.empty():
         finished.append(results.get())
     for outcome in finished:
-        print(f"[cone64] finished {outcome}", flush=True)
+        print(f"[cone64-{SWEEP}] finished {outcome}", flush=True)
     with (RESULTS / "arms.json").open("w") as handle:
-        json.dump({"arms": finished, "seed": SEED}, handle, indent=2, sort_keys=True)
-    print("[cone64] complete", flush=True)
+        json.dump(
+            {"arms": finished, "seed": SEED, "sweep": SWEEP}, handle, indent=2, sort_keys=True
+        )
+    print(f"[cone64-{SWEEP}] complete", flush=True)
 
 
 if __name__ == "__main__":
