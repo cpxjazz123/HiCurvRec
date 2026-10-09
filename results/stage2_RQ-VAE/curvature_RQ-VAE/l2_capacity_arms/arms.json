@@ -1,0 +1,49 @@
+{
+  "arms": [
+    {
+      "arm": "L2_32",
+      "codebook_size": [
+        256,
+        32,
+        256
+      ],
+      "gpu": 3,
+      "l2_codes": 32,
+      "seconds": 1146.4
+    },
+    {
+      "arm": "L2_64",
+      "codebook_size": [
+        256,
+        64,
+        256
+      ],
+      "gpu": 2,
+      "l2_codes": 64,
+      "seconds": 1161.3
+    },
+    {
+      "arm": "L2_128",
+      "codebook_size": [
+        256,
+        128,
+        256
+      ],
+      "gpu": 1,
+      "l2_codes": 128,
+      "seconds": 1411.7
+    },
+    {
+      "arm": "L2_256_baseline",
+      "codebook_size": [
+        256,
+        256,
+        256
+      ],
+      "gpu": 0,
+      "l2_codes": 256,
+      "seconds": 2472.9
+    }
+  ],
+  "seed": 42
+}
