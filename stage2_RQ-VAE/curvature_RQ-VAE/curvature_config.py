@@ -41,6 +41,25 @@ CATEGORY_CONE_RADIAL_WEIGHT = 1.0
 CATEGORY_CONE_RADIAL_MARGIN = 0.02
 CATEGORY_CONE_HOLDOUT_FRACTION = 0.10
 CATEGORY_CONE_DATA_SEED = 2026
+# Measure the cone margin in the arm's own metric instead of in radians. A cone
+# is an angular object and the Poincare ball is conformal, so the same aperture
+# selects the same points in either arm; the distance from a point to the cone
+# boundary is the angular gap times the conformal factor, which grows without
+# bound near the ball's boundary. Weighting each hinge by that factor is what
+# makes the two arms differ, and for euclid the factor is identically one.
+CATEGORY_CONE_METRIC_MARGIN = False
+# A gap required between different fine categories' cones, measured in the
+# arm's own metric. Containment alone is satisfied by widening cones until
+# they overlap, and overlapping cones share codes; this term is what asks
+# for the fine-category discriminability Stage3 depends on. Zero disables it.
+CATEGORY_CONE_SEPARATION_WEIGHT = 0.0
+CATEGORY_CONE_SEPARATION_GAP = 0.0
+# Give each level the cone of the granularity it has to discriminate: level 1
+# the coarse category, level 2 the fine one. The default gives level 2 the
+# coarse cone, which merges every fine category under one coarse category
+# into a single cone and is what cost the round-four arms their fine-code
+# discriminability.
+CATEGORY_CONE_LEVEL_ALIGNED = False
 CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # The behaviour-context channel is the previous mechanism. The four-arm cone
 # comparison is self-contained, so it is switched off in every arm; the cone
