@@ -3,6 +3,12 @@ from pathlib import Path
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 MECHANISM_NAME = "poincare_behaviour_context_channel"
 
+# Geometry plug-in for the RQ-VAE: "poincare" is the frozen protocol, "euclid"
+# is its flat limit (identity maps, Euclidean distances, tangent subtraction).
+# Everything else in the model and trainer is shared, so a two-arm comparison
+# differs only in this switch.
+GEOMETRY = "poincare"
+
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
 
