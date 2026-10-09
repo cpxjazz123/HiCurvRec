@@ -71,6 +71,15 @@ ARMS = {
         "l2_cone_arms/A_euclid_nocone_s42/item_sids.json",
         "sidarm_A4_euclid_l2_64_nocone",
     ),
+    # The euclidean counterpart of the accepted model: same 72,000 Stage2
+    # steps, same 256 codes per level, same seed, no cone, and zero raw
+    # three-token collisions like the hyperbolic model, so this pair differs by
+    # geometry alone.
+    "E72": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "euclid_l2_256_72k_s42/item_sids.json",
+        "sidarm_E72_euclid_l2_256_72k",
+    ),
 }
 
 
