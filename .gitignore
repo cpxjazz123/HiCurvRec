@@ -717,6 +717,19 @@ results/stage3_T5Train/curvature_RQ-VAE_iter47/logs/wait_*.log
 results/stage3_T5Train/curvature_RQ-VAE_iter47/logs/_stage3_run*.log
 # Iter48 cold-start curriculum outputs are mandatory Stage2/Stage3 deliverables.
 !results/stage2_RQ-VAE/curvature_RQ-VAE/**
+
+# 2026-10-09: the broad re-inclusion above would also pull every checkpoint
+# and .npy back in. The project rule is that large weights stay out of git and
+# regenerate from the run, so the ablation arm trees are re-excluded for those
+# two extensions only; their metrics, SIDs and summaries still land in git.
+results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_capacity_arms/**/*.npy
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.pth
+results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/**/*.npy
 !results/stage3_T5Train/curvature_RQ-VAE/ckpt/
 !results/stage3_T5Train/curvature_RQ-VAE/**
 results/stage2_RQ-VAE/curvature_RQ-VAE/**/__pycache__/
