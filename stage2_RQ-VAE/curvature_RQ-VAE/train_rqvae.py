@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 
 
 from model import RQVAE
+from model.category_cone import CategoryCone
 from model.model import behaviour_ranking_loss
 from model.layers import _expmap0_tangent, _logmap0_point, _mobius_add
 import curvature_config as experiment
@@ -42,6 +43,17 @@ SNAPSHOT_STEPS = {int(experiment.MAX_GLOBAL_STEPS): "hyperbolic"}
 
 
 # === TIGER hyperparameters; the step budget is TIGER-aligned in curvature_config ===
+CATEGORY_CONE_ENABLED = bool(experiment.CATEGORY_CONE_ENABLED)
+CATEGORY_CONE_WEIGHT = float(experiment.CATEGORY_CONE_WEIGHT)
+CATEGORY_CONE_MARGIN = float(experiment.CATEGORY_CONE_MARGIN)
+CATEGORY_CONE_APERTURE_DEG = float(experiment.CATEGORY_CONE_APERTURE_DEG)
+CATEGORY_CONE_RADIAL_WEIGHT = float(experiment.CATEGORY_CONE_RADIAL_WEIGHT)
+CATEGORY_CONE_RADIAL_MARGIN = float(experiment.CATEGORY_CONE_RADIAL_MARGIN)
+CATEGORY_CONE_HOLDOUT_FRACTION = float(experiment.CATEGORY_CONE_HOLDOUT_FRACTION)
+CATEGORY_CONE_DATA_SEED = int(experiment.CATEGORY_CONE_DATA_SEED)
+CATEGORY_CONE_CALIBRATION_ITEMS = int(experiment.CATEGORY_CONE_CALIBRATION_ITEMS)
+BEHAVIOUR_LOSS_ENABLED = bool(experiment.BEHAVIOUR_LOSS_ENABLED)
+
 MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
 EVAL_INTERVAL_STEPS = int(experiment.EVAL_INTERVAL_STEPS)
 BATCH_SIZE_PER_RANK = 1024
@@ -149,7 +161,6 @@ def configure_run(launcher_script: str) -> None:
     """Point the single hyperbolic run at its own log and snapshot paths."""
     global METRICS_PATH, LOG_DIR, SNAPSHOT_STEPS, MAX_GLOBAL_STEPS
     LOG_DIR = Path(experiment.STAGE2_LOG_DIR)
-    MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
     SNAPSHOT_STEPS = {MAX_GLOBAL_STEPS: "hyperbolic"}
     METRICS_PATH = LOG_DIR / "training_metrics_hyperbolic.jsonl"
     _LAUNCHER["log"] = str(LOG_DIR / "train_hyperbolic_migrated.log")
@@ -358,6 +369,7 @@ def _tokenizer_config() -> SimpleNamespace:
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
         geometry=experiment.GEOMETRY,
+        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
         pin_in_s_coordinates=PIN_IN_S_COORDINATES,
     )
 
@@ -446,13 +458,29 @@ def main() -> None:
     ).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
+    if CATEGORY_CONE_ENABLED:
+        # Attached before the DDP wrap: its prototypes are trainable parameters
+        # that must be synchronised and stepped by every rank.
+        model.category_cone = CategoryCone(
+            geometry=experiment.GEOMETRY,
+        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
+            codebook_dim=CODEBOOK_DIM,
+            holdout_fraction=CATEGORY_CONE_HOLDOUT_FRACTION,
+            data_seed=CATEGORY_CONE_DATA_SEED,
+            margin=CATEGORY_CONE_MARGIN,
+            radial_weight=CATEGORY_CONE_RADIAL_WEIGHT,
+            radial_margin=CATEGORY_CONE_RADIAL_MARGIN,
+            device=device,
+        )
     if world_size > 1:
         model = DDP(
             model, device_ids=[local_rank], output_device=local_rank,
             find_unused_parameters=False,
         )
 
-    train_dataset = TensorDataset(train_inputs, train_embeddings)
+    train_dataset = TensorDataset(
+        train_inputs, train_embeddings, torch.from_numpy(train_ids)
+    )
     loader_batch_size = BATCH_SIZE_PER_RANK
     train_sampler = (
         DistributedSampler(
@@ -556,6 +584,34 @@ def main() -> None:
     if world_size > 1:
         dist.barrier()
 
+    if CATEGORY_CONE_ENABLED:
+        # One full-catalogue pass so the prefixes are indexed by item id, then
+        # fit the three aperture constants on the supervised items alone: the
+        # held-out items never inform K.
+        with torch.no_grad():
+            encoded_all = raw_module.encoder(encoder_inputs.to(device))
+            _, _, _, prefixes_all = raw_module.rq(
+                encoded_all, return_prefixes=True
+            )
+            cone_report = raw_module.category_cone.calibrate(
+                prefixes_all,
+                layer_curvatures[0],
+                CATEGORY_CONE_APERTURE_DEG,
+                CATEGORY_CONE_CALIBRATION_ITEMS,
+            )
+        del prefixes_all
+        if rank == 0:
+            _record(
+                rank, "cone_calibration", **raw_module.category_cone.state_report()
+            )
+            print(
+                f"[cone] calibrated K proto={cone_report['k_proto']:.6f} "
+                f"q2={cone_report['k_q2']:.6f} q3={cone_report['k_q3']:.6f} "
+                f"supervised={raw_module.category_cone.supervised_index.size} "
+                f"heldout={raw_module.category_cone.heldout_index.size}",
+                flush=True,
+            )
+
     codebook_sizes = list(config.codebook_size)
     saved_versions = set()
     local_optimizer_steps = 0
@@ -568,6 +624,7 @@ def main() -> None:
     interval_loss_sum = torch.zeros((), dtype=torch.float64, device=device)
     interval_recon_sum = torch.zeros((), dtype=torch.float64, device=device)
     interval_behaviour_sum = torch.zeros((), dtype=torch.float64, device=device)
+    interval_cone_sum: dict[str, float] = {}
     interval_updates = 0
     last_progress_time = time.time()
 
@@ -577,15 +634,37 @@ def main() -> None:
         if pair_sampler is not None:
             pair_sampler.set_epoch(epoch)
         model.train()
-        for batch_inputs, batch_targets in loader:
+        for batch_inputs, batch_targets, batch_ids in loader:
             batch_inputs = batch_inputs.to(device, non_blocking=True)
             batch_targets = batch_targets.to(device, non_blocking=True)
+            batch_ids = batch_ids.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _ = model(batch_inputs)
+            if CATEGORY_CONE_ENABLED:
+                (
+                    reconstructed,
+                    quant_loss,
+                    _,
+                    cone_prefixes,
+                ) = model(batch_inputs, return_prefixes=True)
+            else:
+                reconstructed, quant_loss, _ = model(batch_inputs)
+                cone_prefixes = None
             loss, recon_loss = raw_module.compute_loss(
                 batch_targets, reconstructed, quant_loss
             )
+            cone_diagnostics = {}
+            if CATEGORY_CONE_ENABLED:
+                cone_total, cone_diagnostics = raw_module.category_cone.loss(
+                    batch_ids, cone_prefixes, layer_curvatures[0],
+                    global_step_sync,
+                )
+                loss = loss + CATEGORY_CONE_WEIGHT * cone_total
+                for key, value in cone_diagnostics.items():
+                    if isinstance(value, float):
+                        interval_cone_sum[key] = (
+                            interval_cone_sum.get(key, 0.0) + value
+                        )
             try:
                 pair_batch = next(pair_iter)
             except StopIteration:
@@ -608,7 +687,8 @@ def main() -> None:
                 curvature=layer_curvatures[0],
                 margin=BEHAVIOUR_MARGIN,
             )
-            loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
+            if BEHAVIOUR_LOSS_ENABLED:
+                loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
             interval_behaviour_sum += ranking_loss.detach().double()
             # A non-finite loss poisons the weights, so the check stays, but on
             # a fixed stride instead of every step: each read is a host sync
@@ -624,6 +704,11 @@ def main() -> None:
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
+            if CATEGORY_CONE_ENABLED:
+                # Applied on every rank from identical parameters, so the ranks
+                # stay in step: it is a deterministic function of the
+                # synchronised weights, not local state.
+                raw_module.category_cone.project_prototypes(layer_curvatures[0])
 
             local_optimizer_steps += 1
             # DDP runs the same sampler length on every rank, so the global step
@@ -695,6 +780,18 @@ def main() -> None:
                     raw_tokens, layer_stats = raw_module.get_indices_with_stats(
                         encoder_inputs.to(device)
                     )
+                    cone_containment = {}
+                    if CATEGORY_CONE_ENABLED:
+                        encoded_eval = raw_module.encoder(
+                            encoder_inputs.to(device)
+                        )
+                        _, _, _, prefixes_eval = raw_module.rq(
+                            encoded_eval, return_prefixes=True
+                        )
+                        cone_containment = raw_module.category_cone.evaluate(
+                            prefixes_eval, layer_curvatures[0]
+                        )
+                        del prefixes_eval
                 raw_tokens = raw_tokens.cpu().numpy().astype(np.int64)
                 usage_counts = [
                     stat["usage_counts"].detach().cpu().tolist()
@@ -731,6 +828,28 @@ def main() -> None:
                     f"codebook_used={codebook_used}",
                     flush=True,
                 )
+                if CATEGORY_CONE_ENABLED:
+                    _record(
+                        rank,
+                        "cone_train",
+                        global_step=global_step_sync,
+                        geometry=experiment.GEOMETRY,
+        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
+                        cone_weight=CATEGORY_CONE_WEIGHT,
+                        **{
+                            key: value / denominator
+                            for key, value in interval_cone_sum.items()
+                        },
+                    )
+                    _record(
+                        rank, "cone_containment",
+                        global_step=global_step_sync,
+                        geometry=experiment.GEOMETRY,
+        layer_assignment_modes=tuple(experiment.LAYER_ASSIGNMENT_MODES),
+                        **cone_containment,
+                        **raw_module.category_cone.aperture_report(),
+                    )
+                    interval_cone_sum = {}
                 _record(
                     rank, "train",
                     global_step=global_step_sync,

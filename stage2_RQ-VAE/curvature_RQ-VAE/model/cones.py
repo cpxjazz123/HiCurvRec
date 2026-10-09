@@ -25,6 +25,17 @@ import torch.nn.functional as F
 
 from .layers import _expmap0_tangent, _logmap0_point, _mobius_add
 
+
+def from_point(
+    geometry: str, point: torch.Tensor, curvature: torch.Tensor | float
+) -> torch.Tensor:
+    """Inverse of :func:`to_point`."""
+    if geometry == EUCLID:
+        return point
+    if geometry == POINCARE:
+        return _logmap0_point(point, curvature)
+    raise ValueError(f"Unknown geometry: {geometry}")
+
 NORM_EPS = 1e-6
 COS_EPS = 1e-7
 EUCLID = "euclid"
@@ -92,6 +103,24 @@ def energy(
 ) -> torch.Tensor:
     """Cone energy: 0 when the point sits inside the apex's cone."""
     return torch.relu(apex_angle(geometry, apex, point) - aperture(geometry, apex, k))
+
+
+def k_for_aperture(
+    geometry: str, apex: torch.Tensor, target_degrees: float
+) -> float:
+    """K that opens the aperture to ``target_degrees`` at the median apex.
+
+    Fitting K to a coverage target is meaningless on this data: at
+    initialisation a prototype sits nowhere near the items it has to contain, so
+    no aperture reaches the requested share and the fit pins to its cap, leaving
+    a half space that constrains nothing. Specifying the aperture width directly
+    puts both arms at the same initial cone width instead.
+    """
+    factors = aperture_factor(geometry, apex)
+    median = float(factors.median())
+    if median <= 0.0:
+        return 0.0
+    return float(math.sin(math.radians(float(target_degrees)))) / median
 
 
 def coverage_at(
