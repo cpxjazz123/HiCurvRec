@@ -72,6 +72,9 @@ CATEGORY_CONE_COARSE_LEVEL = 2
 # metric, so that Stage3's content-to-SID map is easier to fit. It changes no
 # partition and creates no sharing. Zero disables it.
 QUANT_SMOOTHNESS_WEIGHT = 0.0
+# Optional per-level override, one entry per quantisation level. None applies
+# the scalar above to every level.
+QUANT_SMOOTHNESS_WEIGHTS = None
 CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # The behaviour-context channel is the previous mechanism. The four-arm cone
 # comparison is self-contained, so it is switched off in every arm; the cone

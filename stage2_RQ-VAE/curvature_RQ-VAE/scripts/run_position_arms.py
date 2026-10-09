@@ -1,4 +1,25 @@
-"""Euclidean against hyperbolic cone separation, measured in each arm's metric.
+"""Smooth the quantiser at one level at a time, to separate position from mechanism.
+
+The all-levels smoothness run was the first arm in this program above the bar, and
+its transfer concentrated at level 3, the level that disambiguates. The coarse
+cone, by contrast, put its structure on level 1 and lost 17%. Those two runs use
+different mechanisms, so they do not settle whether the position or the mechanism
+is what decides the outcome. This round applies the *same* term, at the *same*
+per-level weight, to one subset of levels at a time: level 3 alone, and levels 1
+and 2 together.
+
+Stage3 has to learn content -> SID from the item text, and the SID is the
+quantiser's output. This round asks the quantiser to be a smooth function of the
+input in the arm's own metric: two latents the metric calls close should not be
+sent to code vectors the metric calls far apart. No partition changes and no
+sharing is created, so this is the one lever that does not trade against the
+uniqueness the Stage3 numbers reward. Cones are off; the parent is the production
+protocol, 256 codes per level and 72,000 updates.
+
+The weight is normalized per arm from the measured ratio of the term to the
+quantiser's own loss at initialization (0.248 hyperbolic, 0.744 euclidean), so
+both arms start with the term at the same quarter of that loss instead of the
+euclidean arm being pushed three times harder by the same constant.
 
 The two arms differ in one thing: whether the cone margin is measured in the
 arm's own metric. The Poincare ball is conformal, so a cone of a given aperture
@@ -24,20 +45,19 @@ from pathlib import Path
 PKG = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from launch_utils import launch_arm  # noqa: E402
-RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/separation_arms"
+RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/position_arms"
 SEED = 42
 ARMS = {
-    "A_euclid_separation": "euclid",
-    "B_poincare_separation": "poincare",
+    "A_euclid_l3only": "euclid",
+    "B_poincare_l3only": "poincare",
+    "C_euclid_l12only": "euclid",
+    "D_poincare_l12only": "poincare",
 }
-# Frozen before the run, from the measured geometry of the saved arms: the
-# cones of different fine categories already overlap (worst pair by 0.53 rad),
-# and at this gap the requirement is 0.019 rad in the hyperbolic arm against
-# 0.050 rad in the euclidean one, so the same demand costs the hyperbolic arm
-# less angle. The weight keeps that term comparable to the containment terms
-# instead of dominating them.
-SEPARATION_WEIGHT = 0.25
-SEPARATION_GAP = 0.05
+# Normalized from the measured init ratios so both arms carry the same relative
+# pressure; see the module docstring.
+SMOOTHNESS_WEIGHT = {"poincare": 1.0, "euclid": 0.34}
+# which levels carry the term, keyed by the arm name fragment
+LEVEL_MASK = {"l3only": (0.0, 0.0, 1.0), "l12only": (1.0, 1.0, 0.0)}
 
 
 def _arm_dir(name: str) -> Path:
@@ -61,7 +81,7 @@ def _load_trainer(gpu: int = 0):
     import curvature_config as experiment
 
     spec = importlib.util.spec_from_file_location(
-        "generec_train_rqvae_separation", PKG / "train_rqvae.py"
+        "generec_train_rqvae_position", PKG / "train_rqvae.py"
     )
     trainer = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(trainer)
@@ -82,28 +102,31 @@ def configure(name: str) -> None:
     experiment.SIDS_NPY = arm_dir / "dataset/Instruments/sids_for_hgrec.npy"
     experiment.ITEM_SIDS_JSON = arm_dir / "item_sids.json"
     experiment.STAGE2_LOG_DIR = arm_dir / "logs"
-    experiment.CATEGORY_CONE_ENABLED = True
-    experiment.CATEGORY_CONE_METRIC_MARGIN = True
-    experiment.CATEGORY_CONE_SEPARATION_WEIGHT = SEPARATION_WEIGHT
-    experiment.CATEGORY_CONE_SEPARATION_GAP = SEPARATION_GAP
+    experiment.CATEGORY_CONE_ENABLED = False
+    experiment.CATEGORY_CONE_METRIC_MARGIN = False
 
     trainer.GEOMETRY = geometry
-    trainer.CATEGORY_CONE_ENABLED = True
-    trainer.CATEGORY_CONE_METRIC_MARGIN = True
-    trainer.CATEGORY_CONE_SEPARATION_WEIGHT = SEPARATION_WEIGHT
-    trainer.CATEGORY_CONE_SEPARATION_GAP = SEPARATION_GAP
-    trainer.CODEBOOK_SIZE = (256, 64, 256)
+    trainer.CATEGORY_CONE_ENABLED = False
+    trainer.CATEGORY_CONE_METRIC_MARGIN = False
+    mask = LEVEL_MASK[name.split('_')[-1]]
+    per_level = tuple(value * SMOOTHNESS_WEIGHT[geometry] for value in mask)
+    experiment.QUANT_SMOOTHNESS_WEIGHT = SMOOTHNESS_WEIGHT[geometry]
+    experiment.QUANT_SMOOTHNESS_WEIGHTS = per_level
+    trainer.QUANT_SMOOTHNESS_WEIGHT = SMOOTHNESS_WEIGHT[geometry]
+    trainer.QUANT_SMOOTHNESS_WEIGHTS = per_level
+    trainer.CODEBOOK_SIZE = (256, 256, 256)
     trainer.BATCH_SIZE_PER_RANK = 1024
     trainer.MAX_GLOBAL_STEPS = 72_000
     trainer.EVAL_INTERVAL_STEPS = 9_000
-    # Keep the behaviour loss on, as the bar and the accepted model do, so this
-    # arm differs from the bar in the mechanism and nothing else.
+    # Keep the behaviour loss on. The bar and the accepted model both run it, so
+    # turning it off here would make this arm differ from the bar in two ways and
+    # leave the comparison unable to say which one moved Stage3.
     trainer.BEHAVIOUR_LOSS_ENABLED = True
     trainer.LOG_DIR = arm_dir / "logs"
     trainer.METRICS_PATH = trainer.LOG_DIR / "training_metrics.jsonl"
     trainer.SNAPSHOT_STEPS = {trainer.MAX_GLOBAL_STEPS: "arm"}
     trainer._LAUNCHER["script"] = os.path.abspath(__file__)
-    trainer._LAUNCHER["log"] = str(trainer.LOG_DIR / "train_separation.log")
+    trainer._LAUNCHER["log"] = str(trainer.LOG_DIR / "train_position.log")
     return trainer
 
 
@@ -113,22 +136,20 @@ if "RANK" in os.environ:
         raise RuntimeError(f"CONE_ARM must name an arm, got {name!r}")
     trainer = configure(name)
     print(
-        f"[separation] arm={name} geometry={ARMS[name]} "
+        f"[position] arm={name} geometry={ARMS[name]} "
         f"codebook={trainer.CODEBOOK_SIZE} steps={trainer.MAX_GLOBAL_STEPS} "
-        f"metric_margin={trainer.CATEGORY_CONE_METRIC_MARGIN} "
-        f"separation_weight={trainer.CATEGORY_CONE_SEPARATION_WEIGHT} "
-        f"separation_gap={trainer.CATEGORY_CONE_SEPARATION_GAP}",
+        f"smoothness_per_level={trainer.QUANT_SMOOTHNESS_WEIGHTS} cone={trainer.CATEGORY_CONE_ENABLED}",
         flush=True,
     )
     trainer.main()
 else:
     for name in ARMS:
         if _is_complete(name):
-            print(f"[separation] arm {name} already complete, skipping", flush=True)
+            print(f"[position] arm {name} already complete, skipping", flush=True)
             continue
-        print(f"[separation] ===== arm {name} =====", flush=True)
+        print(f"[position] ===== arm {name} =====", flush=True)
         trainer = configure(name)
         # launch_arm blocks and returns; _launch_via_torchrun would end the
         # process here and the remaining arms would never run.
         launch_arm(trainer, {"CONE_ARM": name})
-    print("[separation] both arms finished", flush=True)
+    print("[position] both arms finished", flush=True)

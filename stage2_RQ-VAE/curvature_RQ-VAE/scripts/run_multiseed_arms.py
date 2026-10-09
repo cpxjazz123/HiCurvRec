@@ -20,19 +20,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from launch_utils import launch_arm  # noqa: E402
 RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/multiseed_arms"
 SEEDS = (42, 43, 44)
-GEOMETRIES = {"euclid": "euclid", "poincare": "poincare"}
+# Only the hyperbolic arm: the claim to confirm is that the hyperbolic model
+# beats the euclidean baseline, and that baseline's own seeds are measured
+# separately by run_euclid_baseline_seeds.
+GEOMETRIES = {"poincare": "poincare"}
 
 # The mechanism under test. One entry per arm pair, so a later round can point
 # this at whatever survived without touching the loop below.
+# The mechanism that survived its round: metric-smooth quantization, which was
+# the first arm in this program to come in above the 0.059158 bar (0.060499 at
+# seed 42). Weights are the per-arm values normalized from the measured ratio of
+# the term to the quantiser's own loss at initialization.
 MECHANISM = {
-    "name": "coarse_l1",
-    "cone": True,
-    "coarse_level": 1,
+    "name": "smooth",
+    "cone": False,
+    "coarse_level": 2,
     "level_aligned": False,
     "metric_margin": False,
     "separation_weight": 0.0,
     "separation_gap": 0.0,
-    "smoothness": 0.0,
+    "smoothness": {"poincare": 1.0, "euclid": 0.34},
     "l2_codes": 256,
 }
 
@@ -77,7 +84,7 @@ def configure(geometry: str, seed: int):
     experiment.CATEGORY_CONE_SEPARATION_GAP = MECHANISM["separation_gap"]
     experiment.CATEGORY_CONE_LEVEL_ALIGNED = MECHANISM["level_aligned"]
     experiment.CATEGORY_CONE_COARSE_LEVEL = MECHANISM["coarse_level"]
-    experiment.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"]
+    experiment.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"][geometry]
 
     trainer.GEOMETRY = geometry
     trainer.SEED = int(seed)
@@ -87,12 +94,13 @@ def configure(geometry: str, seed: int):
     trainer.CATEGORY_CONE_SEPARATION_GAP = MECHANISM["separation_gap"]
     trainer.CATEGORY_CONE_LEVEL_ALIGNED = MECHANISM["level_aligned"]
     trainer.CATEGORY_CONE_COARSE_LEVEL = MECHANISM["coarse_level"]
-    trainer.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"]
+    trainer.QUANT_SMOOTHNESS_WEIGHT = MECHANISM["smoothness"][geometry]
     trainer.CODEBOOK_SIZE = (256, MECHANISM["l2_codes"], 256)
     trainer.BATCH_SIZE_PER_RANK = 1024
     trainer.MAX_GLOBAL_STEPS = 72_000
     trainer.EVAL_INTERVAL_STEPS = 9_000
-    trainer.BEHAVIOUR_LOSS_ENABLED = False
+    # On, so a multi-seed confirmation of any mechanism is comparable to the bar.
+    trainer.BEHAVIOUR_LOSS_ENABLED = True
     trainer.LOG_DIR = arm_dir / "logs"
     trainer.METRICS_PATH = trainer.LOG_DIR / "training_metrics.jsonl"
     trainer.SNAPSHOT_STEPS = {trainer.MAX_GLOBAL_STEPS: "arm"}
@@ -111,7 +119,7 @@ if "RANK" in os.environ:
         f"[multiseed] geometry={geometry} seed={seed} "
         f"l2={MECHANISM['l2_codes']} cone={MECHANISM['cone']} "
         f"coarse_level={MECHANISM['coarse_level']} "
-        f"smoothness={MECHANISM['smoothness']}",
+        f"smoothness={MECHANISM['smoothness'][geometry]}",
         flush=True,
     )
     trainer.main()
