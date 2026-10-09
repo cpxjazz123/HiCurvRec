@@ -454,7 +454,8 @@ class VQLayer(nn.Module):
         x: torch.Tensor,
         infer_use_sk: bool = False,
         bucket: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        return_code: bool = False,
+    ):
         latent = x.view(-1, self.dim)
         curvature = self.get_curvature()
         # The assignment is a discrete argmax, so nothing can flow back through
@@ -472,7 +473,15 @@ class VQLayer(nn.Module):
             x, x_q.detach(), curvature
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
+        # The straight-through output is what the decoder consumes, and it
+        # deliberately detaches the codebook: gradients reach the codebook only
+        # through quant_loss. ``x_q_code`` carries the same forward value with
+        # the codebook path intact, so a supervision term placed on it actually
+        # updates the codebooks instead of only the encoder.
+        code_output = x_q
         x_q = x + (x_q - x).detach()
+        if return_code:
+            return x_q, quant_loss, embed_ind.view(*x.shape[:-1]), code_output
         return x_q, quant_loss, embed_ind.view(*x.shape[:-1])
 
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
@@ -735,10 +744,25 @@ class RQLayer(nn.Module):
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
+        return_prefixes: bool = False,
     ):
+        """Quantize residually.
+
+        With ``return_prefixes`` the per-level running sums are returned as an
+        extra list. Entry ``l`` is the representation the decoder would receive
+        if it stopped after level ``l``: it is the same accumulation the model
+        feeds the decoder, not a sum of raw codebook vectors. The last entry is
+        therefore identical to the returned ``quantized_x``, and the list
+        carries gradient to exactly the codebooks that formed it.
+        """
         quantized_x = torch.zeros(
             x.shape[0], self.codebook_dim, device=x.device, dtype=x.dtype
         )
+        # Supervision path: identical forward value, codebooks in the graph.
+        code_prefix: torch.Tensor | None = (
+            torch.zeros_like(quantized_x) if return_prefixes else None
+        )
+        prefixes: list[torch.Tensor] = []
         sum_quant_loss: torch.Tensor | float = 0.0
         output = torch.empty(
             x.shape[0], self.codebook_num, dtype=torch.long, device=x.device
@@ -748,17 +772,22 @@ class RQLayer(nn.Module):
         for level, vq_layer in enumerate(self.vq_layers):
             curvature = vq_layer.get_curvature()
             if self.working_radii[level] == 0.0:
-                quant, quant_loss, indices = vq_layer(
-                    residual, infer_use_sk, previous_codes
+                # return_code only aliases the pre-straight-through tensor,
+                # so asking for it always costs nothing and keeps both paths on
+                # one code path.
+                quant, quant_loss, indices, code_quant = vq_layer(
+                    residual, infer_use_sk, previous_codes, return_code=True
                 )
                 residual = vq_layer._residual_fn(residual, quant, curvature)
                 quantized_x = quantized_x + quant
+                if return_prefixes:
+                    code_prefix = code_prefix + code_quant
             else:
                 source = residual
                 target_norm = self._radius_for_level(level, curvature, source)
                 pinned = self._pin_to_radius(source, target_norm)
-                quant, quant_loss, indices = vq_layer(
-                    pinned, infer_use_sk, previous_codes
+                quant, quant_loss, indices, code_quant = vq_layer(
+                    pinned, infer_use_sk, previous_codes, return_code=True
                 )
                 # The code was chosen in the pinned frame, so the residual
                 # subtraction and the decoder input are computed there too and
@@ -770,9 +799,17 @@ class RQLayer(nn.Module):
                 quantized_x = quantized_x + self._restore_norm(
                     quant, source, target_norm
                 )
+                if return_prefixes:
+                    code_prefix = code_prefix + self._restore_norm(
+                        code_quant, source, target_norm
+                    )
             previous_codes = indices
             sum_quant_loss = sum_quant_loss + quant_loss
             output[:, level] = indices
+            if return_prefixes:
+                prefixes.append(code_prefix)
+        if return_prefixes:
+            return quantized_x, sum_quant_loss / self.codebook_num, output, prefixes
         return quantized_x, sum_quant_loss / self.codebook_num, output
 
     @torch.no_grad()
