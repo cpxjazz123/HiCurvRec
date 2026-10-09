@@ -75,5 +75,41 @@ PAPER_INIT_MIN_RADIUS = 1e-3
 PAPER_DEPTH_CUTS = (("shallow", 1, 3), ("mid", 4, 5), ("deep", 6, 10_000))
 PAPER_DEGREE_CUTS = (("few", 0, 655), ("mid", 656, 5_424), ("many", 5_425, 10**9))
 
+# --------------------------------------------------------------------------
+# Faithful-optimisation round. The reference steps one 10-pair batch at a time,
+# which is ~11.2M updates per run at 50% supervision; a step costs ~3.4ms here
+# because it is kernel-launch bound, so the exact count is out of reach. This
+# round instead sweeps the batch size down towards the reference on the decisive
+# cell, and crosses the Poincare warm start with the cold start, to separate
+# "optimisation granularity" from "geometry" as the cause of the low-dimension
+# deficit.
+# --------------------------------------------------------------------------
+FAITHFUL_RESULT_DIR = (
+    REPO_ROOT / "results/bench_semantic_cones/paper_wordnet_cones_faithful"
+)
+FAITHFUL_LR = {"euclid": 3e-4, "poincare": 3e-4}  # the reference's own values
+FAITHFUL_UPDATE_CAP = None  # the reference has no trust region
+FAITHFUL_EPOCHS = 300
+# Granularity ladder at the reference learning rate, on the decisive cell.
+# 256 and 64 are deliberately absent for now: a step costs ~3.4ms whatever the
+# batch (the loop is kernel-launch bound), so the 256-pair cell costs 33 minutes
+# and the 64-pair cell 99. The three cheap rungs answer whether the gap closes
+# under a 32x refinement; a finer rung is only worth 33 minutes if it does.
+FAITHFUL_BATCHES = (32_768, 4_096, 1_024)
+FAITHFUL_DIMS = (5, 10)
+FAITHFUL_RATIOS = ("0percent", "50percent")
+FAITHFUL_INITS = ("cold", "warm")
+FAITHFUL_SEED = 42
+# Init axis runs in the regime where both arms actually converge (wide chunk,
+# per-arm tuned lr), so it costs ~30s per cell instead of ~25 minutes and does
+# not confound the initialisation effect with under-training.
+FAITHFUL_BASE_BATCH = 32_768
+FAITHFUL_GRID_DIM = 5
+FAITHFUL_GRID_RATIO = "50percent"
+# Per-arm learning rates that reach a plateau at the wide chunk; used by the
+# init axis.
+FAITHFUL_COARSE_LR = {"euclid": 0.3, "poincare": 1.0}
+FAITHFUL_COARSE_CAP = 0.05
+
 BOOTSTRAP_SAMPLES = 2_000
 BOOTSTRAP_SEED = 2026
