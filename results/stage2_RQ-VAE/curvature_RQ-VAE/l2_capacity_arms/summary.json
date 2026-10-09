@@ -1,0 +1,228 @@
+{
+  "arms": {
+    "L2_128": {
+      "codeword_usage": {
+        "L1": {
+          "gini": 0.033914803808923415,
+          "normalized_entropy": 0.9996449319678021,
+          "used_codewords": 256
+        },
+        "L2": {
+          "gini": 0.5438517750742262,
+          "normalized_entropy": 0.8726979891654962,
+          "used_codewords": 128
+        },
+        "L3": {
+          "gini": 0.12641001215073006,
+          "normalized_entropy": 0.9952783511509624,
+          "used_codewords": 256
+        }
+      },
+      "global_step": 18000,
+      "l2_codes": 128,
+      "loss": 0.10608573531607787,
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_l3_codes": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 3,
+        "mean_items_per_prefix": 1.0280565311925072,
+        "prefixes_over_l3_codes": 0
+      },
+      "recon": 9.652830507790593e-05,
+      "sharing_coarse": {
+        "cross_share": 2.986962107923826e-07,
+        "n_pairs": 283446145,
+        "share_all": 2.31790063682115e-06,
+        "shared_pairs": 657,
+        "within_over_cross": 26.25275328621494,
+        "within_share": 7.841597929459673e-06
+      },
+      "sharing_fine": {
+        "cross_share": 4.014051736965383e-07,
+        "n_pairs": 277925676,
+        "share_all": 2.33515668412011e-06,
+        "shared_pairs": 649,
+        "within_over_cross": 40.63180839882695,
+        "within_share": 1.6309818107935593e-05
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.36451274881905915,
+        "coarse_vs_L1_ami_control": -0.00018776744288289519,
+        "fine_vs_L1L2_ami": 0.007759469069040366,
+        "full_sid_collision_rate": 0.0005694065969821249,
+        "full_sid_unique": 24573,
+        "l1l2_prefix_clusters": 23916,
+        "l1l2_prefix_singleton_fraction": 0.9719852818197023
+      }
+    },
+    "L2_256_baseline": {
+      "codeword_usage": {
+        "L1": {
+          "gini": 0.038416039217879366,
+          "normalized_entropy": 0.9995861554501276,
+          "used_codewords": 256
+        },
+        "L2": {
+          "gini": 0.12992304749461098,
+          "normalized_entropy": 0.9950564414666332,
+          "used_codewords": 256
+        },
+        "L3": {
+          "gini": 0.16085688702363038,
+          "normalized_entropy": 0.9925891764486713,
+          "used_codewords": 256
+        }
+      },
+      "global_step": 18000,
+      "l2_codes": 256,
+      "loss": 0.10534896483355098,
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_l3_codes": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 2,
+        "mean_items_per_prefix": 1.0003254811017535,
+        "prefixes_over_l3_codes": 0
+      },
+      "recon": 9.606888981296733e-05,
+      "sharing_coarse": {
+        "cross_share": 0.0,
+        "n_pairs": 283446145,
+        "share_all": 2.8224056460531506e-08,
+        "shared_pairs": 8,
+        "within_over_cross": 105433.24947172671,
+        "within_share": 1.0543324947172671e-07
+      },
+      "sharing_fine": {
+        "cross_share": 4.095971160168758e-09,
+        "n_pairs": 277925676,
+        "share_all": 2.8784674072358826e-08,
+        "shared_pairs": 8,
+        "within_over_cross": 50.58697016623464,
+        "within_share": 2.0720277088121445e-07
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.36544968877034983,
+        "coarse_vs_L1_ami_control": -0.00021952365324737335,
+        "fine_vs_L1L2_ami": 9.959075949331499e-05,
+        "full_sid_collision_rate": 0.0,
+        "full_sid_unique": 24587,
+        "l1l2_prefix_clusters": 24579,
+        "l1l2_prefix_singleton_fraction": 0.9996745188982464
+      }
+    },
+    "L2_32": {
+      "codeword_usage": {
+        "L1": {
+          "gini": 0.039292073809330134,
+          "normalized_entropy": 0.9995337557361038,
+          "used_codewords": 256
+        },
+        "L2": {
+          "gini": 0.8855240129438321,
+          "normalized_entropy": 0.6228801246984406,
+          "used_codewords": 32
+        },
+        "L3": {
+          "gini": 0.17357893017651604,
+          "normalized_entropy": 0.9914880643670194,
+          "used_codewords": 256
+        }
+      },
+      "global_step": 18000,
+      "l2_codes": 32,
+      "loss": 0.10436616789632373,
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_l3_codes": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 9,
+        "mean_items_per_prefix": 3.0131127450980393,
+        "prefixes_over_l3_codes": 0
+      },
+      "recon": 9.634479470292314e-05,
+      "sharing_coarse": {
+        "cross_share": 2.1795188026205466e-05,
+        "n_pairs": 283446145,
+        "share_all": 0.00010120793846040842,
+        "shared_pairs": 28687,
+        "within_over_cross": 14.610929278989486,
+        "within_share": 0.0003184479508731665
+      },
+      "sharing_fine": {
+        "cross_share": 2.5677643203097942e-05,
+        "n_pairs": 277925676,
+        "share_all": 0.00010145158376802868,
+        "shared_pairs": 28196,
+        "within_over_cross": 25.276769929927923,
+        "within_share": 0.0006490478795874842
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.36600224243743446,
+        "coarse_vs_L1_ami_control": -0.0004071227291156721,
+        "fine_vs_L1L2_ami": 0.1876448451300711,
+        "full_sid_collision_rate": 0.11152234920893156,
+        "full_sid_unique": 21845,
+        "l1l2_prefix_clusters": 8160,
+        "l1l2_prefix_singleton_fraction": 0.08700980392156862
+      }
+    },
+    "L2_64": {
+      "codeword_usage": {
+        "L1": {
+          "gini": 0.03642851786513198,
+          "normalized_entropy": 0.9996087294791647,
+          "used_codewords": 256
+        },
+        "L2": {
+          "gini": 0.769039374211982,
+          "normalized_entropy": 0.7483881913257705,
+          "used_codewords": 64
+        },
+        "L3": {
+          "gini": 0.15214642773620204,
+          "normalized_entropy": 0.9934441776452223,
+          "used_codewords": 256
+        }
+      },
+      "global_step": 18000,
+      "l2_codes": 64,
+      "loss": 0.1058792426718606,
+      "prefix_capacity": {
+        "collision_forced": false,
+        "items_in_prefixes_over_l3_codes": 0,
+        "l3_codes": 256,
+        "max_items_in_one_prefix": 4,
+        "mean_items_per_prefix": 1.5525036307381448,
+        "prefixes_over_l3_codes": 0
+      },
+      "recon": 9.605921700211992e-05,
+      "sharing_coarse": {
+        "cross_share": 6.022101024039972e-06,
+        "n_pairs": 283446145,
+        "share_all": 3.187907177217034e-05,
+        "shared_pairs": 9036,
+        "within_over_cross": 17.039387024351072,
+        "within_share": 0.00010261291004835801
+      },
+      "sharing_fine": {
+        "cross_share": 7.208909241897014e-06,
+        "n_pairs": 277925676,
+        "share_all": 3.1968978641613524e-05,
+        "shared_pairs": 8885,
+        "within_over_cross": 29.255857340456313,
+        "within_share": 0.00021090282036123612
+      },
+      "structure": {
+        "coarse_vs_L1_ami": 0.36694011593867204,
+        "coarse_vs_L1_ami_control": -0.0003646191023534473,
+        "fine_vs_L1L2_ami": 0.09011433802304437,
+        "full_sid_collision_rate": 0.03152072233294012,
+        "full_sid_unique": 23812,
+        "l1l2_prefix_clusters": 15837,
+        "l1l2_prefix_singleton_fraction": 0.4891709288375324
+      }
+    }
+  }
+}
