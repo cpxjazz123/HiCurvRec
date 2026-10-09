@@ -1,0 +1,440 @@
+{
+  "baseline/A_euclid_nocone": {
+    "aperture_deg": {
+      "coarse_max": 0.0,
+      "coarse_median": 0.0,
+      "fine_median": 0.0
+    },
+    "codebook_weight_norm_mean": [
+      0.19955119490623474,
+      0.06942380964756012,
+      0.12614275515079498
+    ],
+    "collision": 0.020417293691788352,
+    "encoder_weight_norm": [
+      51.891780853271484,
+      0.6793318390846252,
+      27.845552444458008,
+      1.1178985834121704,
+      16.188634872436523,
+      0.8810761570930481,
+      7.387267112731934,
+      0.6536989808082581
+    ],
+    "fine_ami": 0.08592760138866203,
+    "geometry": "euclid",
+    "k": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.5,
+        "median": 0.5,
+        "min": 0.4999999403953552
+      },
+      "fine": {
+        "max": 1.0,
+        "median": 1.0,
+        "min": 0.9999998807907104
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 1.6330300569534302,
+      "cone_fine_to_q3": 1.87008535861969,
+      "cone_positive_fine_q3": 1.87008535861969,
+      "cone_positive_proto_q2": 1.6330300569534302,
+      "cone_prototype_pair": 2.018341302871704,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 5.521456718444824,
+      "negative_containment": 0.0,
+      "negative_gap_active_ratio": 0.0,
+      "positive_containment": 0.0,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 1.3659254312515259,
+        "value": 5.555416584014893
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      }
+    }
+  },
+  "baseline/B_poincare_nocone": {
+    "aperture_deg": {
+      "coarse_max": 0.0,
+      "coarse_median": 0.0,
+      "fine_median": 0.0
+    },
+    "codebook_weight_norm_mean": [
+      0.2000373899936676,
+      0.06546580791473389,
+      0.12558624148368835
+    ],
+    "collision": 0.03152072233294012,
+    "encoder_weight_norm": [
+      51.56972122192383,
+      0.6228302717208862,
+      27.703182220458984,
+      1.0118049383163452,
+      16.639833450317383,
+      0.7397615313529968,
+      7.732791423797607,
+      0.8648197650909424
+    ],
+    "fine_ami": 0.09011433802304437,
+    "geometry": "poincare",
+    "k": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.4621172249317169,
+        "median": 0.46211719512939453,
+        "min": 0.46211716532707214
+      },
+      "fine": {
+        "max": 0.7615942358970642,
+        "median": 0.7615941762924194,
+        "min": 0.7615941166877747
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 2.3746511936187744,
+      "cone_fine_to_q3": 2.8546409606933594,
+      "cone_positive_fine_q3": 2.8546409606933594,
+      "cone_positive_proto_q2": 2.3746511936187744,
+      "cone_prototype_pair": 2.4383153915405273,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 7.667607307434082,
+      "negative_containment": 0.0,
+      "negative_gap_active_ratio": 0.0,
+      "positive_containment": 0.0,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 1.6022144556045532,
+        "value": 7.692831039428711
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      }
+    }
+  },
+  "baseline/C_euclid_cone": {
+    "aperture_deg": {
+      "coarse_max": 34.75257110595703,
+      "coarse_median": 26.018388748168945,
+      "fine_median": 11.465424537658691
+    },
+    "codebook_weight_norm_mean": [
+      0.2043124884366989,
+      0.059674061834812164,
+      0.1287568211555481
+    ],
+    "collision": 0.07874079798267375,
+    "encoder_weight_norm": [
+      55.44679260253906,
+      0.3473587930202484,
+      36.622230529785156,
+      0.4669070243835449,
+      30.844257354736328,
+      1.2468132972717285,
+      15.600889205932617,
+      0.09322917461395264
+    ],
+    "fine_ami": 0.04970609949171887,
+    "geometry": "euclid",
+    "k": [
+      0.1710100769996643,
+      0.1710100769996643,
+      0.3420201539993286
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.49910685420036316,
+        "median": 0.3810042142868042,
+        "min": 0.29999998211860657
+      },
+      "fine": {
+        "max": 1.0453144311904907,
+        "median": 0.8603131175041199,
+        "min": 0.6243209838867188
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 0.03589928522706032,
+      "cone_fine_to_q3": 0.02035563997924328,
+      "cone_positive_fine_q3": 0.0002935271477326751,
+      "cone_positive_proto_q2": 0.00019850728858727962,
+      "cone_prototype_pair": 0.0,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 0.05625492334365845,
+      "negative_containment": 0.29839810729026794,
+      "negative_gap_active_ratio": 0.3203769028186798,
+      "positive_containment": 0.9908362627029419,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.13450461626052856,
+        "value": 0.11821373552083969
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 1.8349480628967285,
+        "value": 0.2385723888874054
+      }
+    }
+  },
+  "baseline/D_poincare_cone": {
+    "aperture_deg": {
+      "coarse_max": 41.997440338134766,
+      "coarse_median": 41.15994644165039,
+      "fine_median": 17.598264694213867
+    },
+    "codebook_weight_norm_mean": [
+      0.20129549503326416,
+      0.05976320058107376,
+      0.12463592737913132
+    ],
+    "collision": 0.04343758896978078,
+    "encoder_weight_norm": [
+      72.84774780273438,
+      0.9018784165382385,
+      35.50199890136719,
+      1.209898829460144,
+      22.847810745239258,
+      0.634114682674408,
+      7.408926010131836,
+      0.33090463280677795
+    ],
+    "fine_ami": 0.06576081042982855,
+    "geometry": "poincare",
+    "k": [
+      0.20097126066684723,
+      0.20097126066684723,
+      0.6202297210693359
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.3851039707660675,
+        "median": 0.28052353858947754,
+        "min": 0.27727028727531433
+      },
+      "fine": {
+        "max": 0.5313413739204407,
+        "median": 0.49912139773368835,
+        "min": 0.47577324509620667
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 0.03569880127906799,
+      "cone_fine_to_q3": 0.04428382217884064,
+      "cone_positive_fine_q3": 0.00015915317635517567,
+      "cone_positive_proto_q2": 0.0002655704156495631,
+      "cone_prototype_pair": 0.0,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 0.07998262345790863,
+      "negative_containment": 0.22892814874649048,
+      "negative_gap_active_ratio": 0.23830388486385345,
+      "positive_containment": 0.994464099407196,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.3246844708919525,
+        "value": 0.15306493639945984
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 5.0290021896362305,
+        "value": 0.504250705242157
+      }
+    }
+  },
+  "fixed/C_euclid_cone": {
+    "aperture_deg": {
+      "coarse_max": 20.049400329589844,
+      "coarse_median": 14.140478134155273,
+      "fine_median": 7.016205310821533
+    },
+    "codebook_weight_norm_mean": [
+      0.20839092135429382,
+      0.022946074604988098,
+      0.07353655248880386
+    ],
+    "collision": 0.7396591694798065,
+    "encoder_weight_norm": [
+      321.99053955078125,
+      10.244489669799805,
+      192.51419067382812,
+      2.6958563327789307,
+      113.0799789428711,
+      0.21643002331256866,
+      49.79628372192383,
+      0.0682777389883995
+    ],
+    "fine_ami": 0.11922031340695427,
+    "geometry": "euclid",
+    "k": [
+      0.1710100769996643,
+      0.1710100769996643,
+      0.3420201539993286
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.7000000476837158,
+        "median": 0.6999999284744263,
+        "min": 0.4988185167312622
+      },
+      "fine": {
+        "max": 1.4000000953674316,
+        "median": 1.399999976158142,
+        "min": 1.3982387781143188
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 1.323998212814331,
+      "cone_fine_to_q3": 1.3239978551864624,
+      "cone_positive_fine_q3": 1.3239978551864624,
+      "cone_positive_proto_q2": 1.323998212814331,
+      "cone_prototype_pair": 0.0010493025183677673,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 2.649045467376709,
+      "negative_containment": 0.0,
+      "negative_gap_active_ratio": 0.0,
+      "positive_containment": 0.0003297997754998505,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.5829699039459229,
+        "value": 2.7185680866241455
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      }
+    }
+  },
+  "fixed/D_poincare_cone": {
+    "aperture_deg": {
+      "coarse_max": 41.997440338134766,
+      "coarse_median": 41.121726989746094,
+      "fine_median": 18.122608184814453
+    },
+    "codebook_weight_norm_mean": [
+      0.2047993242740631,
+      0.07041941583156586,
+      0.10532131791114807
+    ],
+    "collision": 0.06849147923699517,
+    "encoder_weight_norm": [
+      65.66848754882812,
+      0.892647385597229,
+      31.46861457824707,
+      1.1012897491455078,
+      21.498659133911133,
+      0.6597443222999573,
+      7.450571537017822,
+      0.28735363483428955
+    ],
+    "fine_ami": 0.0741997318553709,
+    "geometry": "poincare",
+    "k": [
+      0.20097126066684723,
+      0.20097126066684723,
+      0.6202297210693359
+    ],
+    "prototype_radius_point_space": {
+      "coarse": {
+        "max": 0.38632676005363464,
+        "median": 0.280756413936615,
+        "min": 0.27727028727531433
+      },
+      "fine": {
+        "max": 0.5209298133850098,
+        "median": 0.4905959963798523,
+        "min": 0.4634849429130554
+      }
+    },
+    "recomputed_diagnostics": {
+      "cone_coarse_to_q2": 0.004130364395678043,
+      "cone_fine_to_q3": 0.0031121503561735153,
+      "cone_positive_fine_q3": 0.0009870730573311448,
+      "cone_positive_proto_q2": 0.0018184792716056108,
+      "cone_prototype_pair": 0.0,
+      "cone_radial": 0.0,
+      "cone_rows": 21217,
+      "cone_total": 0.007242514751851559,
+      "negative_containment": 0.0687161386013031,
+      "negative_gap_active_ratio": 0.10504122823476791,
+      "positive_containment": 0.9346054196357727,
+      "radial_order_rate": 1.0
+    },
+    "term_gradients": {
+      "positive": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.8527292609214783,
+        "value": 0.14410971105098724
+      },
+      "radial": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 0.0,
+        "value": 0.0
+      },
+      "rejection": {
+        "codebook_grad_norm": null,
+        "prototype_grad_norm": 3.978787899017334,
+        "value": 0.07629808783531189
+      }
+    }
+  }
+}

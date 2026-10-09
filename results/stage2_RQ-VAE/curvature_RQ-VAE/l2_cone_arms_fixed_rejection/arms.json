@@ -1,0 +1,32 @@
+{
+  "arms": [
+    {
+      "arm": "D_poincare_cone",
+      "codebook_size": [
+        256,
+        64,
+        256
+      ],
+      "cone": true,
+      "geometry": "poincare",
+      "gpu": 1,
+      "l2_codes": 64,
+      "seconds": 1496.4
+    },
+    {
+      "arm": "C_euclid_cone",
+      "codebook_size": [
+        256,
+        64,
+        256
+      ],
+      "cone": true,
+      "geometry": "euclid",
+      "gpu": 0,
+      "l2_codes": 64,
+      "seconds": 1980.7
+    }
+  ],
+  "seed": 42,
+  "sweep": "fixed_rejection"
+}
