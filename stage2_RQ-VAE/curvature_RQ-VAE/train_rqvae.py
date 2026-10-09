@@ -196,7 +196,7 @@ def _save_snapshot(
             },
             "global_step": global_step,
             "local_optimizer_steps": local_optimizer_steps,
-            "geometry": "poincare_fixed_curvature",
+            "geometry": f"{experiment.GEOMETRY}_fixed_curvature",
             "version": version,
             "curvatures": raw_module.get_curvatures().detach().cpu().tolist(),
             "working_radii": list(raw_module.rq.get_working_radii()),
