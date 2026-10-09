@@ -130,6 +130,9 @@ def configure(name: str) -> None:
     trainer.CATEGORY_CONE_METRIC_MARGIN = False
     experiment.QUANT_SMOOTHNESS_WEIGHT = SMOOTHNESS_WEIGHT[geometry]
     trainer.QUANT_SMOOTHNESS_WEIGHT = SMOOTHNESS_WEIGHT[geometry]
+    # the new term of this round: the chain's input -> latent step
+    experiment.ENCODER_SMOOTHNESS_WEIGHT = ENCODER_WEIGHT[geometry]
+    trainer.ENCODER_SMOOTHNESS_WEIGHT = ENCODER_WEIGHT[geometry]
     trainer.CODEBOOK_SIZE = (256, 256, 256)
     trainer.BATCH_SIZE_PER_RANK = 1024
     trainer.MAX_GLOBAL_STEPS = 72_000
@@ -154,7 +157,9 @@ if "RANK" in os.environ:
     print(
         f"[encoder-smooth] arm={name} geometry={ARMS[name]} "
         f"codebook={trainer.CODEBOOK_SIZE} steps={trainer.MAX_GLOBAL_STEPS} "
-        f"smoothness={trainer.QUANT_SMOOTHNESS_WEIGHT} cone={trainer.CATEGORY_CONE_ENABLED}",
+        f"smoothness={trainer.QUANT_SMOOTHNESS_WEIGHT} "
+        f"encoder_smoothness={trainer.ENCODER_SMOOTHNESS_WEIGHT} "
+        f"cone={trainer.CATEGORY_CONE_ENABLED}",
         flush=True,
     )
     trainer.main()
