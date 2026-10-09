@@ -206,6 +206,113 @@ def containment_loss(
     return total, positive.mean(), negative.mean()
 
 
+CONFORMAL_FLOOR = 1e-3
+
+
+def conformal_factor(
+    geometry: str, point: torch.Tensor, curvature: torch.Tensor | float
+) -> torch.Tensor:
+    """``lambda(x)``: how much the arm's metric stretches at ``x``.
+
+    A cone is an angular object and the Poincare ball is conformal, so the same
+    aperture selects the same points in both arms. What the geometries disagree
+    about is how far a point sits from the cone boundary once distance is
+    measured with the arm's own metric, and that distance is the angular gap
+    multiplied by this factor. For euclid the factor is identically one.
+    """
+    if geometry == EUCLID:
+        return torch.ones_like(point[..., 0])
+    if geometry == POINCARE:
+        norm_sq = point.square().sum(dim=-1)
+        return 2.0 / (1.0 - float(curvature) * norm_sq).clamp_min(CONFORMAL_FLOOR)
+    raise ValueError(f"Unknown geometry: {geometry}")
+
+
+def metric_containment_loss(
+    geometry: str,
+    curvature: torch.Tensor | float,
+    apex_tangent: torch.Tensor,
+    point_tangent: torch.Tensor,
+    negative_tangent: torch.Tensor,
+    k: float,
+    margin: float,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
+    """Cone supervision measured in the arm's own metric.
+
+    Each hinge is weighted by the conformal factor at the point it acts on, so
+    the objective is the gap to the cone boundary in metric units rather than in
+    radians. Near the ball's boundary the hyperbolic factor grows without bound,
+    which is the geometric statement that a fixed angular gap buys an
+    exponentially larger separation there; a Euclidean cone cannot reproduce
+    that. Both weights are divided by their batch mean so the two arms keep the
+    same overall loss scale and only the relative emphasis differs - for euclid
+    the weights are all one and this reduces exactly to ``containment_loss``.
+    """
+    apex = to_point(geometry, apex_tangent, curvature)
+    point = to_point(geometry, point_tangent, curvature)
+    negative = to_point(geometry, negative_tangent, curvature)
+    positive = energy(geometry, apex, point, k)
+    negative_gap = (
+        float(margin)
+        + aperture(geometry, apex, k)
+        - apex_angle(geometry, apex, negative)
+    )
+    negative = F.relu(negative_gap)
+    positive_weight = conformal_factor(geometry, point, curvature)
+    negative_weight = conformal_factor(geometry, negative, curvature)
+    scale = 0.5 * (positive_weight.mean() + negative_weight.mean())
+    scale = scale.clamp_min(CONFORMAL_FLOOR)
+    positive = positive * positive_weight / scale
+    negative = negative * negative_weight / scale
+    total = positive.mean() + negative.mean()
+    return total, positive.mean(), negative.mean(), float(scale)
+
+
+def cone_separation_loss(
+    geometry: str,
+    curvature: torch.Tensor | float,
+    apex_tangent: torch.Tensor,
+    k: float,
+    metric_gap: float,
+) -> torch.Tensor:
+    """Keep different categories' cones apart by a margin in the arm's metric.
+
+    Containment alone is satisfied by widening cones until they cover their
+    categories, and wide cones of different categories then overlap, which is
+    how supervised codebooks lose the fine-category discriminability Stage3
+    needs. This term asks for a gap between every pair of cones, and it asks for
+    it in metric units: the required angular gap is ``metric_gap`` divided by
+    the conformal factor at the pair.
+
+    That division is the hyperbolic part. Near the ball's boundary the factor is
+    large, so the same metric gap is met by a much smaller angular gap, and the
+    number of cones that fit in the space grows with the volume the metric
+    provides rather than with the angle alone. A Euclidean cone has no such
+    factor, so it must buy separation with angle it does not have to spare.
+    """
+    apex = to_point(geometry, apex_tangent, curvature)
+    count = apex.shape[0]
+    if count < 2:
+        return apex.sum() * 0.0
+    # The separation of two cones is the angle between their axes, measured at
+    # the origin. ``apex_angle`` cannot serve here: it is the angle at one apex
+    # between the geodesic to the origin and the geodesic to the other point,
+    # which for two prototypes at equal radius is already near a right angle and
+    # would leave the term satisfied no matter how close the axes are. The
+    # metric is conformal, so an angle at the origin is the Euclidean angle
+    # between the directions, which is what this computes.
+    direction = apex / apex.norm(dim=-1, keepdim=True).clamp_min(NORM_EPS)
+    cosine = (direction @ direction.transpose(0, 1)).clamp(-1.0 + COS_EPS, 1.0 - COS_EPS)
+    angles = torch.acos(cosine)
+    psi = aperture(geometry, apex, k)
+    factor = conformal_factor(geometry, apex, curvature)
+    off_diagonal = ~torch.eye(count, dtype=torch.bool, device=apex.device)
+    pair_factor = 0.5 * (factor.unsqueeze(1) + factor.unsqueeze(0))
+    required = float(metric_gap) / pair_factor.clamp_min(CONFORMAL_FLOOR)
+    deficit = (psi.unsqueeze(1) + psi.unsqueeze(0) + required - angles).clamp_min(0.0)
+    return deficit[off_diagonal].mean()
+
+
 class CategoryPrototypes(nn.Module):
     """Learnable tangent-space prototypes, one per coarse and fine category.
 

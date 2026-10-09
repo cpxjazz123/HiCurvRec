@@ -38,7 +38,10 @@ from .cones import (
     aperture_factor,
     containment_loss,
     containment_rate,
+    cone_separation_loss,
+    conformal_factor,
     energy,
+    metric_containment_loss,
     from_point,
     radial_order_loss,
     to_point,
@@ -104,11 +107,19 @@ class CategoryCone(nn.Module):
         device: torch.device,
         radius_band_low: float = 0.6,
         radius_band_high: float = 1.4,
+        metric_margin: bool = False,
+        separation_weight: float = 0.0,
+        separation_gap: float = 0.0,
+        level_aligned: bool = False,
     ) -> None:
         super().__init__()
         self.radius_band_low = float(radius_band_low)
         self.radius_band_high = float(radius_band_high)
         self.geometry = geometry
+        self.metric_margin = bool(metric_margin)
+        self.separation_weight = float(separation_weight)
+        self.separation_gap = float(separation_gap)
+        self.level_aligned = bool(level_aligned)
         self.margin = float(margin)
         self.radial_weight = float(radial_weight)
         self.radial_margin = float(radial_margin)
@@ -416,21 +427,52 @@ class CategoryCone(nn.Module):
         prototype_fine_index = torch.as_tensor(
             prototype_fine, dtype=torch.long, device=items.device
         )
-        loss_pf, positive_pf, negative_pf = containment_loss(
+        # The metric variant weights each hinge by the conformal factor at the
+        # point it acts on, so the objective is the gap to the cone boundary in
+        # the arm's own metric. For euclid the weights are identically one and
+        # the two functions agree exactly.
+        objective = (
+            metric_containment_loss if self.metric_margin else containment_loss
+        )
+        loss_pf, positive_pf, negative_pf = objective(
             self.geometry, curvature,
             self.prototypes.coarse[prototype_coarse_index],
             self.prototypes.fine[prototype_fine_index],
             self.prototypes.fine[negative_fine_index],
             float(self.k_proto), self.margin,
-        )
-        loss_cq2, positive_cq2, negative_cq2 = containment_loss(
-            self.geometry, curvature, apex_coarse, q2, q2[partner_q2_index],
-            float(self.k_q2), self.margin,
-        )
-        loss_fq3, positive_fq3, negative_fq3 = containment_loss(
+        )[:3]
+        # Level-aligned supervision gives each level the cone of the granularity
+        # that level has to discriminate. The default hands level 2 the coarse
+        # cone, which pulls every fine category under one coarse category into a
+        # single cone and merges their codes; that merge is what the round-four
+        # arms measured as a shrinking same-fine against different-fine sharing
+        # gap, and it is the reason a containment advantage failed to reach
+        # Stage3. Aligned, level 1 carries the coarse category and level 2 the
+        # fine one, so the level that Stage3 reads for fine discrimination is the
+        # level the fine cone supervises.
+        if self.level_aligned:
+            q1 = prefixes[0][index]
+            loss_cq2, positive_cq2, negative_cq2 = objective(
+                self.geometry, curvature, apex_coarse, q1, q1[partner_q2_index],
+                float(self.k_q2), self.margin,
+            )[:3]
+            # The fine cone's aperture constant is the one calibrated at the
+            # fine prototypes' scale; k_q2 was fitted at the coarse scale and
+            # would open a much narrower cone here.
+            loss_fq2, positive_fq2, negative_fq2 = objective(
+                self.geometry, curvature, apex_fine, q2, q2[partner_q2_index],
+                float(self.k_q3), self.margin,
+            )[:3]
+            loss_cq2 = loss_cq2 + loss_fq2
+        else:
+            loss_cq2, positive_cq2, negative_cq2 = objective(
+                self.geometry, curvature, apex_coarse, q2, q2[partner_q2_index],
+                float(self.k_q2), self.margin,
+            )[:3]
+        loss_fq3, positive_fq3, negative_fq3 = objective(
             self.geometry, curvature, apex_fine, q3, q3[partner_q3_index],
             float(self.k_q3), self.margin,
-        )
+        )[:3]
         # The radial term spans every prototype, not only the ones in this
         # batch, so each prototype parameter receives a gradient on every step.
         # Distributed training runs with find_unused_parameters=False and would
@@ -442,7 +484,18 @@ class CategoryCone(nn.Module):
             self.prototypes.fine,
             self.radial_margin,
         )
-        total = loss_pf + loss_cq2 + loss_fq3 + self.radial_weight * radial
+        # Separation is what keeps the cones from being widened into each
+        # other: containment alone is satisfied by covering the category,
+        # and two covered categories whose cones overlap end up sharing
+        # codes, which is the transfer failure this term targets.
+        separation = cone_separation_loss(
+            self.geometry, curvature, self.prototypes.fine,
+            float(self.k_proto), self.separation_gap,
+        )
+        total = (
+            loss_pf + loss_cq2 + loss_fq3 + self.radial_weight * radial
+            + self.separation_weight * separation
+        )
 
         with torch.no_grad():
             negative_containment = torch.cat(
@@ -517,8 +570,10 @@ class CategoryCone(nn.Module):
                 "cone_total": float(total.detach()),
                 "cone_prototype_pair": float(loss_pf.detach()),
                 "cone_coarse_to_q2": float(loss_cq2.detach()),
+                "cone_fine_to_q2": float(loss_fq2.detach()) if self.level_aligned else 0.0,
                 "cone_fine_to_q3": float(loss_fq3.detach()),
                 "cone_radial": float(radial.detach()),
+                "cone_separation": float(separation.detach()),
                 "cone_positive_proto_q2": float(positive_cq2.detach()),
                 "cone_positive_fine_q3": float(positive_fq3.detach()),
                 "cone_rows": int(len(rows)),
@@ -555,8 +610,50 @@ class CategoryCone(nn.Module):
             fine = self.fine_of_item[index]
             apex_coarse = self.prototypes.coarse[coarse]
             apex_fine = self.prototypes.fine[fine]
+            # Rejection, which the training diagnostics only measure on the
+            # supervised batch, measured here on the pool itself. Members are
+            # sorted by fine category and shifted by the largest category block,
+            # so every item is tested against a cone of a category it does not
+            # belong to, deterministically and without sampling.
+            order = torch.argsort(fine)
+            sorted_fine = fine[order]
+            if len(pool) > 1:
+                counts = torch.unique_consecutive(sorted_fine, return_counts=True)[1]
+                shift = int(counts.max().item())
+            else:
+                shift = 0
+            partner = order[torch.roll(torch.arange(len(pool)), -shift)] if shift else order
+            negative_coarse = self.coarse_of_item[index[partner]]
+            negative_fine = self.fine_of_item[index[partner]]
             report[name] = {
                 "n_items": int(len(pool)),
+                "coarse_q2_negative_containment": float(
+                    containment_rate(
+                        self.geometry, curvature,
+                        self.prototypes.coarse[negative_coarse],
+                        prefixes[1][index], float(self.k_q2),
+                    ).float().mean()
+                ),
+                "fine_q3_negative_containment": float(
+                    containment_rate(
+                        self.geometry, curvature,
+                        self.prototypes.fine[negative_fine],
+                        prefixes[2][index], float(self.k_q3),
+                    ).float().mean()
+                ),
+                "fine_q2_containment": float(
+                    containment_rate(
+                        self.geometry, curvature, apex_fine,
+                        prefixes[1][index], float(self.k_q2),
+                    ).float().mean()
+                ),
+                "fine_q2_negative_containment": float(
+                    containment_rate(
+                        self.geometry, curvature,
+                        self.prototypes.fine[negative_fine],
+                        prefixes[1][index], float(self.k_q2),
+                    ).float().mean()
+                ),
                 "coarse_q2_containment": float(
                     containment_rate(
                         self.geometry, curvature, apex_coarse,
@@ -591,6 +688,10 @@ class CategoryCone(nn.Module):
             "heldout_items": int(self.heldout_index.size),
             "labelled_items": int(self.labelled_index.size),
             "margin": self.margin,
+            "metric_margin": self.metric_margin,
+            "separation_weight": self.separation_weight,
+            "separation_gap": self.separation_gap,
+            "level_aligned": self.level_aligned,
             "radius_band": [self.radius_band_low, self.radius_band_high],
             "radial_weight": self.radial_weight,
             "radial_margin": self.radial_margin,
