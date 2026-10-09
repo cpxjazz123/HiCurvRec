@@ -112,6 +112,18 @@ ARMS = {
         "smoothness_arms/B_poincare_smooth_s42/item_sids.json",
         "sidarm_SH_poincare_smooth",
     ),
+    # The same mechanism with both arms at equal relative pressure, which is the
+    # matched pair the first smoothness round did not have.
+    "SFE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "smooth_fair_arms/A_euclid_smoothfair_s42/item_sids.json",
+        "sidarm_SFE_euclid_smoothfair",
+    ),
+    "SFP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
+        "sidarm_SFP_poincare_smoothfair",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (

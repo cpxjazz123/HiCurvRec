@@ -75,6 +75,10 @@ QUANT_SMOOTHNESS_WEIGHT = 0.0
 # Optional per-level override, one entry per quantisation level. None applies
 # the scalar above to every level.
 QUANT_SMOOTHNESS_WEIGHTS = None
+# Weight on keeping the encoder a smooth map from the input space into the
+# arm's metric, one step upstream of the quantiser's own smoothness. Zero
+# disables it.
+ENCODER_SMOOTHNESS_WEIGHT = 0.0
 CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # The behaviour-context channel is the previous mechanism. The four-arm cone
 # comparison is self-contained, so it is switched off in every arm; the cone
