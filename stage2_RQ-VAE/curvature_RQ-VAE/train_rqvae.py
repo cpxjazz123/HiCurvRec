@@ -357,6 +357,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         layer_working_radii=LAYER_WORKING_RADII,
+        geometry=experiment.GEOMETRY,
         pin_in_s_coordinates=PIN_IN_S_COORDINATES,
     )
 

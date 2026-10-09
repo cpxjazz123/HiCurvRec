@@ -132,6 +132,57 @@ def _hyperbolic_residual(
     return _logmap0_point(difference, curvature)
 
 
+def _pairwise_euclid_distance_tangents(
+    left: torch.Tensor,
+    right: torch.Tensor,
+    curvature: torch.Tensor | float | None = None,
+) -> torch.Tensor:
+    """Flat limit of the pairwise ball distance."""
+    del curvature
+    return torch.cdist(left, right)
+
+
+def _euclid_distance_tangent_pairs(
+    left: torch.Tensor,
+    right: torch.Tensor,
+    curvature: torch.Tensor | float | None = None,
+) -> torch.Tensor:
+    """Flat limit of the geodesic distance between tangent vectors."""
+    del curvature
+    return torch.linalg.vector_norm(left - right, dim=-1)
+
+
+def _euclid_residual(
+    residual_tangent: torch.Tensor,
+    code_tangent: torch.Tensor,
+    curvature: torch.Tensor | float | None = None,
+) -> torch.Tensor:
+    """Flat limit of the Mobius subtraction: plain tangent subtraction."""
+    del curvature
+    return residual_tangent - code_tangent
+
+
+def _resolve_geometry(geometry: str):
+    """Map a geometry name onto (pairwise, pairs, residual).
+
+    The curvature argument is threaded through uniformly so the call sites do
+    not branch; the flat limit simply ignores it.
+    """
+    if geometry == "poincare":
+        return (
+            _pairwise_poincare_distance_tangents,
+            _poincare_distance_tangent_pairs,
+            _hyperbolic_residual,
+        )
+    if geometry == "euclid":
+        return (
+            _pairwise_euclid_distance_tangents,
+            _euclid_distance_tangent_pairs,
+            _euclid_residual,
+        )
+    raise ValueError(f"Unknown geometry: {geometry}")
+
+
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
 
@@ -167,6 +218,7 @@ class VQLayer(nn.Module):
         sk_epsilon: float = 0.003,
         sk_iters: int = 50,
         curvature: float = 1.0,
+        geometry: str = "poincare",
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -180,6 +232,12 @@ class VQLayer(nn.Module):
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
         self.curvature = float(curvature)
+        self.geometry = str(geometry)
+        (
+            self._pairwise_fn,
+            self._pair_fn,
+            self._residual_fn,
+        ) = _resolve_geometry(self.geometry)
         self.embed = nn.Embedding(self.n_embed, self.dim)
 
     def get_code_embs(self) -> nn.Parameter:
@@ -232,7 +290,7 @@ class VQLayer(nn.Module):
         return torch.exp(log_q + log_batch_size)
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
-        return _pairwise_poincare_distance_tangents(
+        return self._pairwise_fn(
             latent, self.get_code_embs(), self.get_curvature()
         )
 
@@ -407,10 +465,10 @@ class VQLayer(nn.Module):
         with torch.no_grad():
             embed_ind = self._indices(self._distances(latent), infer_use_sk, bucket)
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
-        codebook_loss = _poincare_distance_tangent_pairs(
+        codebook_loss = self._pair_fn(
             x.detach(), x_q, curvature
         ).square().mean()
-        commitment_loss = _poincare_distance_tangent_pairs(
+        commitment_loss = self._pair_fn(
             x, x_q.detach(), curvature
         ).square().mean()
         quant_loss = codebook_loss + self.beta * commitment_loss
@@ -443,7 +501,7 @@ class VQLayer(nn.Module):
         embed_ind = self._indices(
             self._distances(x), infer_use_sk=True, bucket=bucket
         ).view(*x.shape[:-1])
-        residual = _hyperbolic_residual(
+        residual = self._residual_fn(
             x, self.embed_code(embed_ind), self.get_curvature()
         )
         return residual, embed_ind
@@ -578,6 +636,9 @@ class RQLayer(nn.Module):
             getattr(config, "pin_in_s_coordinates", True)
         )
         self.codebook_sizes = sizes
+        # Geometry plug-in: "poincare" is the frozen protocol, "euclid" is its
+        # flat limit. Nothing else about the layer changes between them.
+        self.geometry = str(getattr(config, "geometry", "poincare"))
         self.vq_type = str(config.vq_type)
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
@@ -593,6 +654,7 @@ class RQLayer(nn.Module):
                     sk_epsilon=self.sk_epsilon,
                     sk_iters=self.sk_iters,
                     curvature=curvatures[level],
+                    geometry=self.geometry,
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]
@@ -632,6 +694,11 @@ class RQLayer(nn.Module):
         constant.
         """
         radius = self.working_radii[level]
+        if self.geometry == "euclid":
+            # No conformal factor in the flat limit, so the tangent norm itself
+            # is the working point. With unit curvatures this is the same 0.2 the
+            # Poincare arm pins to, so only the metric differs between arms.
+            return torch.full_like(residual[:, :1], radius)
         if not self.pin_in_s_coordinates:
             target = torch.full_like(residual[:, :1], radius)
         else:
@@ -684,7 +751,7 @@ class RQLayer(nn.Module):
                 quant, quant_loss, indices = vq_layer(
                     residual, infer_use_sk, previous_codes
                 )
-                residual = _hyperbolic_residual(residual, quant, curvature)
+                residual = vq_layer._residual_fn(residual, quant, curvature)
                 quantized_x = quantized_x + quant
             else:
                 source = residual
@@ -697,7 +764,7 @@ class RQLayer(nn.Module):
                 # subtraction and the decoder input are computed there too and
                 # then mapped back to the encoder's own norms.
                 residual = self._restore_norm(
-                    _hyperbolic_residual(pinned, quant, curvature),
+                    vq_layer._residual_fn(pinned, quant, curvature),
                     source, target_norm,
                 )
                 quantized_x = quantized_x + self._restore_norm(
@@ -724,7 +791,7 @@ class RQLayer(nn.Module):
                 indices, usage, entropy = layer.assignment_diagnostics(
                     residual, previous_codes
                 )
-                residual = _hyperbolic_residual(
+                residual = layer._residual_fn(
                     residual, layer.embed_code(indices), curvature
                 )
             else:
@@ -735,7 +802,7 @@ class RQLayer(nn.Module):
                     pinned, previous_codes
                 )
                 residual = self._restore_norm(
-                    _hyperbolic_residual(
+                    layer._residual_fn(
                         pinned, layer.embed_code(indices), curvature
                     ),
                     source, target_norm,
