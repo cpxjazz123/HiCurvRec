@@ -36,6 +36,10 @@ class RQVAE(nn.Module):
         self.encoder = MLP(list(self.encoder_sizes), dropout=float(config.dropout))
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.decoder_sizes), dropout=float(config.dropout))
+        self.encoder_smoothness_weight = float(
+            getattr(config, "encoder_smoothness_weight", 0.0)
+        )
+        self.geometry = str(getattr(config, "geometry", "poincare"))
 
     def get_curvatures(self) -> torch.Tensor:
         return self.rq.get_curvatures()
@@ -48,6 +52,9 @@ class RQVAE(nn.Module):
         path is unchanged either way.
         """
         encoded = self.encoder(embeddings)
+        if self.encoder_smoothness_weight > 0.0:
+            self._last_embeddings = embeddings
+            self._last_encoded = encoded
         if return_prefixes:
             quantized, quant_loss, tokens, prefixes = self.rq(
                 encoded, return_prefixes=True
@@ -85,7 +92,51 @@ class RQVAE(nn.Module):
         quant_loss: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         recon_loss = F.mse_loss(reconstructed, embeddings)
-        return recon_loss + quant_loss, recon_loss
+        total = recon_loss + quant_loss
+        if self.encoder_smoothness_weight > 0.0 and getattr(self, "_last_encoded", None) is not None:
+            total = total + self.encoder_smoothness_weight * encoder_metric_smoothness(
+                self._last_embeddings,
+                self._last_encoded,
+                self.geometry,
+                self.get_curvatures()[0],
+            )
+        return total, recon_loss
+
+
+def encoder_metric_smoothness(
+    embeddings: torch.Tensor,
+    encoded: torch.Tensor,
+    geometry: str,
+    curvature: torch.Tensor,
+    pairs: int = 64,
+) -> torch.Tensor:
+    """Keep the encoder a smooth map from the input space into the arm's metric.
+
+    The quantiser's own smoothness term asks that nearby latents get nearby
+    codes. This one acts one step upstream: inputs the input space calls close
+    should not be sent to latents the arm's metric calls far apart. Together they
+    make content -> latent -> code a Lipschitz chain, which is what Stage3 has to
+    learn. The distances between latents are the arm's own, so in the hyperbolic
+    arm the requirement is stated in hyperbolic units.
+    """
+    count = embeddings.shape[0]
+    if count < 2:
+        return encoded.sum() * 0.0
+    pairs = min(int(pairs), count - 1)
+    index = torch.randint(0, count, (count, pairs), device=embeddings.device)
+    source = embeddings.unsqueeze(1).expand(count, pairs, embeddings.shape[-1])
+    partner = embeddings[index]
+    input_distance = (source - partner).square().sum(dim=-1)
+    with torch.no_grad():
+        scale = input_distance.median().clamp_min(1e-8)
+    weight = torch.exp(-input_distance / scale).detach()
+    _, pairwise_fn, _ = _resolve_geometry(geometry)
+    latent_distance = pairwise_fn(
+        encoded.unsqueeze(1).expand(count, pairs, encoded.shape[-1]),
+        encoded[index],
+        curvature,
+    )
+    return (weight * latent_distance.square()).mean()
 
 
 def behaviour_ranking_loss(
