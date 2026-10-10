@@ -481,3 +481,10 @@ results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_*/**/__pycache__/
 results/stage3_T5Train/tiger_hyp_fix_*/**/__pycache__/
 results/stage3_T5Train/tiger_hyp_fix_*/logs/_ddp_sync/
 results/stage3_T5Train/tiger_hyp_fix_*/logs/*/_ddp_sync/
+
+# Behaviour-fork-aware arms (creative Exp2): radial hierarchy + angular sibling
+# coherence, hyperbolic grouping vs its matched Euclidean control.
+!results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/**
+!results/stage3_T5Train/tiger_fork_*/
+!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/**
