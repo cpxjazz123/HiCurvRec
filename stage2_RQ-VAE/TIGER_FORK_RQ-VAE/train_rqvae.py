@@ -98,33 +98,31 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "fork_euclid_group"
+EXPERIMENT_ARM = "fork_radial_corr"
+FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
-    # The fork-structure term groups an item with its behaviour siblings. In the
-    # hyperbolic arm that grouping is measured with the geodesic distance; in
-    # the control the same term uses the plain Euclidean distance on the SAME
-    # ball-mapped points. Both arms keep the ball map and the Euclidean
-    # discriminative term, so the only variable is the metric used for grouping.
+    # Fork-structure term ablation. All arms keep the ball map, the Euclidean
+    # discriminative term and the detached trace, so the variables are only the
+    # two fork components and the metric used for grouping.
     #
-    # Rationale: Exp4 showed the geodesic metric is harmful when it has to
-    # discriminate one specific successor out of 512 candidates, because it
-    # reorders exactly the nearest candidates. Whether it helps a *grouping*
-    # relation, which is what the behaviour-fork structure is, was not tested.
-    #
-    # A COORDS="ball" vs "raw" switch was tried first and discarded: expmap0
-    # preserves direction and only squashes the radius monotonically, so at c=1
-    # the ball radius tanh(sqrt(c)*||x||)/sqrt(c) equals tanh(||x||) exactly and
-    # the two arms were bit-identical. A monotone transform is not a contrast.
-    "fork_hyp_group":    {"group_distance": "poincare"},
-    "fork_euclid_group": {"group_distance": "euclid"},
+    # fork_hyp_group / fork_euclid_group : full terms, grouping metric differs
+    # fork_ang_only                      : radial weight 0, isolates the angular term
+    # fork_radial_corr                   : radial term switched from absolute MSE to
+    #                                      a scale-free correlation, because MSE on the
+    #                                      absolute radius lost to latent-norm growth
+    "fork_hyp_group":    {"group_distance": "poincare", "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    "fork_euclid_group": {"group_distance": "euclid",   "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    "fork_ang_only":     {"group_distance": "euclid",   "radial_mode": "off",  "radial_weight": 0.0},
+    "fork_radial_corr":  {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
+RADIAL_MODE = _ARM["radial_mode"]            # "mse" | "corr" | "off"
+FORK_RADIAL_WEIGHT = _ARM["radial_weight"]
 CURVATURE = 1.0
 TARGET_RADIUS_FRACTION = 0.7
 RHO_LO = 0.35
 RHO_HI = 0.92
-FORK_RADIAL_WEIGHT = 0.05
 FORK_ANGULAR_WEIGHT = 0.05
 FORK_ANGULAR_TEMPERATURE = 0.1
 FORK_SIBLINGS_PER_ITEM = 8
@@ -132,8 +130,6 @@ FORK_ANGULAR_MAX_PAIRS = 2048
 DISTANCE_NORMALIZATION = "rms"
 TEMPERATURE_CALIBRATION_ENABLED = True
 TARGET_LOGIT_SPREAD = 5.0
-# Fixed by the Exp4/Exp6 outcome, not swept here: the ball map stays, the
-# discriminative contrastive term stays Euclidean, the trace stays detached.
 GEOMETRY = "euclid"
 USE_BALL = True
 TRACE_GRADIENT = "detached"
@@ -597,7 +593,22 @@ def fork_geometry_terms(
     ).clamp_min(1e-12)
 
     # (A) radial hierarchy: behaviour forks nearer the origin.
-    radial_loss = F.mse_loss(radius, radius_target)
+    #
+    # MSE on the absolute radius failed: the reconstruction objective drives the
+    # latent norm up, the 0.05 weight could not oppose it, and every point
+    # saturated at the boundary (rho_mean 1.0000 against a target mean of 0.617).
+    # The mechanism's actual claim is an ORDERING, so the corrected form is a
+    # scale-free correlation between radius and target, which cannot be
+    # satisfied by pushing everything to a constant.
+    if RADIAL_MODE == "off":
+        radial_loss = torch.zeros((), device=radius.device)
+    elif RADIAL_MODE == "corr":
+        r_c = radius - radius.mean()
+        t_c = radius_target - radius_target.mean()
+        denom = (r_c.norm() * t_c.norm()).clamp_min(1e-8)
+        radial_loss = 1.0 - (r_c * t_c).sum() / denom
+    else:
+        radial_loss = F.mse_loss(radius, radius_target)
 
     # (B) angular branch coherence: items sharing a successor align directions.
     valid = batch_siblings >= 0
@@ -812,7 +823,7 @@ def main() -> None:
         _record(
             rank, "geometry_resolved", arm=EXPERIMENT_ARM, geometry=GEOMETRY,
             codebook_init_sha256=_init_sha,
-            group_distance=GROUP_DISTANCE, curvature=CURVATURE, fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
+            group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, curvature=CURVATURE, fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
             target_radius_fraction=TARGET_RADIUS_FRACTION,
             ball_normalizer=ball_normalizer,
             resolved_temperature=resolved_temperature,
