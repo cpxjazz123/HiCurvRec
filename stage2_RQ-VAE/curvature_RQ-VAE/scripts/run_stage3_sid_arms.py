@@ -180,6 +180,52 @@ ARMS = {
         "metric_cone_256_arms/B_poincare_metriccone256_s42/item_sids.json",
         "sidarm_MCP256_poincare_metriccone256_s42",
     ),
+    # The cone families' euclidean arms. Every one of these has had its Stage2
+    # SIDs on disk since its round ran, and none was ever evaluated downstream:
+    # three of the four geometry pairs were left with only their hyperbolic half
+    # measured. Each pair is one independent test of whether the geometry's
+    # containment advantage reaches Stage3, so the missing halves are the
+    # evidence the claim needs and they cost nothing but the batch slot.
+    "C2E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms/C_euclid_cone_s42/item_sids.json",
+        "sidarm_C2E_l2cone_euclid_s42",
+    ),
+    "R2E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms_fixed_radius/C_euclid_cone_s42/item_sids.json",
+        "sidarm_R2E_radius_euclid_s42",
+    ),
+    "R2P": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms_fixed_radius/D_poincare_cone_s42/item_sids.json",
+        "sidarm_R2P_radius_poincare_s42",
+    ),
+    "C3E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_cone_arms_fixed_rejection/C_euclid_cone_s42/item_sids.json",
+        "sidarm_C3E_rejection_euclid_s42",
+    ),
+    "K1E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "category_cone_arms/C_euclid_cone_s42/item_sids.json",
+        "sidarm_K1E_categorycone_euclid_s42",
+    ),
+    "K1P": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "category_cone_arms/D_poincare_cone_s42/item_sids.json",
+        "sidarm_K1P_categorycone_poincare_s42",
+    ),
+    "K0E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "category_cone_arms/A_euclid_nocone_s42/item_sids.json",
+        "sidarm_K0E_categorynocone_euclid_s42",
+    ),
+    "K0P": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "category_cone_arms/B_poincare_nocone_s42/item_sids.json",
+        "sidarm_K0P_categorynocone_poincare_s42",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
