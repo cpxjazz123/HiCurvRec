@@ -410,6 +410,28 @@ results/stage3_T5Train/tiger/logs/tensorboard/
 results/stage3_T5Train/tiger/logs/wait_*.log
 results/stage3_T5Train/tiger/logs/_stage3_run*.log
 
+# TIGER + behaviour-ranking ablation arm B. Same deliverables as the TIGER
+# baseline above; re-included for the same reason after the global
+# **/*.pth / **/*.npy / **/ckpt* / logs/ rules.
+!results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**
+!results/stage3_T5Train/tiger_behavior/ckpt/
+!results/stage3_T5Train/tiger_behavior/**
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/tensorboard/
+results/stage3_T5Train/tiger_behavior/**/__pycache__/
+results/stage3_T5Train/tiger_behavior/logs/_ddp_sync/
+results/stage3_T5Train/tiger_behavior/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_behavior/logs/tensorboard/
+results/stage3_T5Train/tiger_behavior/logs/wait_*.log
+results/stage3_T5Train/tiger_behavior/logs/_stage3_run*.log
+# Stage2 behaviour-ranking trajectory is the direct evidence for this arm's
+# verdict, so its native metrics stream is kept even though the TIGER baseline
+# tree never tracked its own. The parent `logs/` rule shadows a bare `!file`
+# pattern, so the directory has to be re-included first.
+!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_BEHAVIOR_RQ-VAE/logs/training_metrics.jsonl
+
 # 2026-10-10: the Stage3 arm trees under results/stage3_T5Train/ carry the native
 # deliverables the project rule requires in git: test_final.json and
 # training_metrics.jsonl under logs/, and HG_Rec_best.pth under ckpt/. The broad
