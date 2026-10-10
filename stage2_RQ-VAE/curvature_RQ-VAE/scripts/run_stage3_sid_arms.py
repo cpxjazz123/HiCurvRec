@@ -170,18 +170,6 @@ ARMS = {
         "multiseed_arms/smooth_poincare_s44/item_sids.json",
         "sidarm_M44_smooth_poincare_s44",
     ),
-    # Cone-family separation: the last implemented mechanism, which asks
-    # different categories' cones to stay apart by a margin in the arm's metric.
-    "SPE": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "separation_arms/A_euclid_separation_s42/item_sids.json",
-        "sidarm_SPE_euclid_separation",
-    ),
-    "SPP": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "separation_arms/B_poincare_separation_s42/item_sids.json",
-        "sidarm_SPP_poincare_separation",
-    ),
     # The bar's own configuration at two further training seeds: the noise the
     # configuration has against itself, which every mechanism comparison needs
     # before its few-percent differences can be read.
