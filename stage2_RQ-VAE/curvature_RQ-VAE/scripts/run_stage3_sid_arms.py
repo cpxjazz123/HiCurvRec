@@ -216,6 +216,18 @@ ARMS = {
         "category_cone_arms/B_poincare_nocone_s42/item_sids.json",
         "sidarm_K0P_categorynocone_poincare_s42",
     ),
+    # Prefix-scoped smoothness: the same term, restricted to pairs that share
+    # a preceding code. The bar to beat is SE's 0.060499.
+    "PSE": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "prefix_smooth_arms/A_euclid_prefixsmooth_s42/item_sids.json",
+        "sidarm_PSE_euclid_prefixsmooth_s42",
+    ),
+    "PSP": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "prefix_smooth_arms/B_poincare_prefixsmooth_s42/item_sids.json",
+        "sidarm_PSP_poincare_prefixsmooth_s42",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
