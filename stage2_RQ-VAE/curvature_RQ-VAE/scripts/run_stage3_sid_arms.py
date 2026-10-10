@@ -153,11 +153,6 @@ ARMS = {
         "l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
         "sidarm_L2AG_global_sinkhorn_s42",
     ),
-    "L2AN": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "l2_assignment_arms/C_nearest_argmin_s42/item_sids.json",
-        "sidarm_L2AN_nearest_argmin_s42",
-    ),
     # The metric cone at the bar's own codebook, where the geometry's effect
     # has never been asked to carry a result the project would keep.
     "MCE256": (
