@@ -9,7 +9,7 @@ import importlib.util
 import os
 import sys
 
-ARM = "exp4_euclid_delta"
+ARM = "fix_carry_euclid_raw"
 STAGE3_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/stage3_T5Train"
 sys.path.insert(0, STAGE3_DIR)
 spec = importlib.util.spec_from_file_location(

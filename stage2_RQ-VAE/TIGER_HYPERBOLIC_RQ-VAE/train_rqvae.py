@@ -11,7 +11,9 @@ what ran, and each writes to its own results directory:
 
   geometry        "euclid" | "poincare"  -- the metric inside the contrastive term
   CURVATURE       positive c of the ball of curvature -c (Exp3 sweeps it)
-  TANGENT_SCALE   fixed radius fraction of the ball image; see hyperbolic.py
+  TARGET_RADIUS_FRACTION
+                  median training latent maps to this fraction of the radius;
+                  the normalizer derived from it is fixed for the whole run
   transition      "none" | "euclid_delta" | "mobius_add"  (Exp4 / Exp5)
   distance_normalization
                   "rms" | "none". Distance matrices are rescaled to unit RMS
@@ -41,6 +43,7 @@ parameter-matched by construction.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -81,38 +84,35 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "exp4_euclid_delta"
+EXPERIMENT_ARM = "fix_carry_euclid_raw"
+# Every arm here is post-repair: fixed training-set normalizer (Exp1) and an
+# intact per-level residual gradient path (Exp2). The three arms differ only in
+# the geometry of the behaviour contrastive term, so the Exp4 comparison is:
+#
+#   fix_euclid_raw  raw latent, plain Euclidean distance   (the rebuilt baseline)
+#   fix_euclid_ball same fixed ball map, Euclidean metric  (isolates the map)
+#   fix_poincare    same fixed ball map, Poincare metric   (isolates the metric)
 _ARMS = {
-    # Exp2: Poincare vs parameter-matched Euclidean, both on the same ball map.
-    "exp2_poincare_c1":    {"geometry": "poincare", "curvature": 1.0, "transition": "none"},
-    "exp2_euclid_matched": {"geometry": "euclid",   "curvature": 1.0, "transition": "none"},
-    # Exp3: curvature sweep on whichever Exp2 geometry wins.
-    "exp3_hyp_c0p1":       {"geometry": "poincare", "curvature": 0.1, "transition": "none"},
-    "exp3_hyp_c0p5":       {"geometry": "poincare", "curvature": 0.5, "transition": "none"},
-    "exp3_hyp_c5":         {"geometry": "poincare", "curvature": 5.0, "transition": "none"},
-    # Exp4/5: directional A->B transition, Euclidean vs Mobius.
-    "exp4_euclid_delta":   {"geometry": "euclid",   "curvature": 1.0, "transition": "euclid_delta"},
-    "exp5_mobius_add":     {"geometry": "poincare", "curvature": 1.0, "transition": "mobius_add"},
+    # (trace, use_ball, geometry). `trace` selects whether the behaviour loss
+    # sees a gradient-carrying residual stream or the original detached one.
+    "fix_det_euclid_raw":  {"geometry": "euclid",   "use_ball": False, "trace": "detached"},
+    "fix_det_euclid_ball": {"geometry": "euclid",   "use_ball": True,  "trace": "detached"},
+    "fix_det_poincare":    {"geometry": "poincare", "use_ball": True,  "trace": "detached"},
+    "fix_carry_euclid_raw": {"geometry": "euclid",  "use_ball": False, "trace": "carrying"},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 GEOMETRY = _ARM["geometry"]                 # "euclid" | "poincare"
-CURVATURE = _ARM["curvature"]               # positive c of ball curvature -c
-# Held CONSTANT across curvatures on purpose. The mean image radius fraction is
-# tanh(sqrt(c) * TANGENT_SCALE), so fixing the tangent scale alone would let a
-# curvature sweep also change how close to the boundary the points sit, and any
-# Exp3 effect would be ambiguous between the two. Deriving the scale from a
-# target radius fraction makes only `curvature` move.
-TARGET_RADIUS_FRACTION = 0.7
-TANGENT_SCALE = float(__import__("math").atanh(TARGET_RADIUS_FRACTION) / (CURVATURE ** 0.5))
-TRANSITION = _ARM["transition"]             # "none" | "euclid_delta" | "mobius_add"
+USE_BALL = _ARM["use_ball"]                 # False = operate on the raw latent
+TRACE_GRADIENT = _ARM["trace"]              # "detached" (original) | "carrying" (repair)
+CURVATURE = 1.0                             # positive c of ball curvature -c
+TARGET_RADIUS_FRACTION = 0.7                # median latent -> this fraction of R
 DISTANCE_NORMALIZATION = "rms"              # "rms" | "none"
-# Temperature is CALIBRATED, not hand-set. The two geometries have different
-# distance tails (Poincare p99 ~2.6x RMS, Euclidean ~1.7x), so one shared
-# temperature would enter softmax at different sharpness and any difference
-# between the arms would be partly a sharpness artefact. Instead every arm is
-# calibrated by the same procedure: at initialisation, binary-search the
-# temperature that makes the mean per-row logit spread equal TARGET_LOGIT_SPREAD.
-# The resolved value is recorded in the metrics stream.
+# Temperature is CALIBRATED, not hand-set. The geometries have different
+# distance tails, so one shared temperature would enter softmax at different
+# sharpness and any difference between arms would be partly a sharpness
+# artefact. Every arm is calibrated by the same procedure: binary-search the
+# temperature making the mean per-row logit spread equal TARGET_LOGIT_SPREAD.
+# The resolved value is recorded in the metrics stream before training starts.
 TEMPERATURE_CALIBRATION_ENABLED = True
 TARGET_LOGIT_SPREAD = 5.0
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE") / EXPERIMENT_ARM
@@ -156,8 +156,6 @@ PAIR_BATCH_SIZE_PER_RANK = 512   # 每卡 pair 数; source+target 单独一次�
 # RESAMPLE_PAIRS=True 每 epoch 重建 pair 迭代器 (修复 cycle 缓存);
 # False 复现基线的一次性 cycle 行为。
 RESAMPLE_PAIRS          = True
-# FALSE_NEGATIVE_MASK=True 除重复 target 外, 再屏蔽同 anchor 的其它已知真实后继。
-FALSE_NEGATIVE_MASK     = False  # Exp1 verdict: the FN mask raised matched AUC but not Stage3.
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -308,107 +306,118 @@ class TransitionPairs(torch.utils.data.Dataset):
 def _residuals_with_trace(
     raw_module: RQVAE, embeddings: torch.Tensor
 ) -> torch.Tensor:
-    """Per-level pre-quantization residuals, matching iter48's ResidualTraceRQLayer.
+    """Residual entering each quantization level, with a live gradient to the encoder.
 
-    ``model/`` stays byte-identical to the baseline, so the trace is produced by
-    walking the unchanged quantizer stack rather than by patching it.
+    ``model/layers.py`` applies a straight-through estimator as
+    ``x_q = x + (e - x).detach()``. Subtracting that from ``x`` cancels exactly:
+
+        residual_1 = x - x_q = -(e - x).detach()
+
+    so the residual is algebraically disconnected from ``x`` and the behaviour
+    loss on levels 2 and 3 delivered *zero* gradient to the encoder. Measured on
+    a real pair batch: level 1 gave an encoder gradient L1-norm of 46.4 with 8/8
+    parameters non-zero, while levels 2 and 3 gave exactly 0.0 with 0/8, and the
+    three-level mean loss carried exactly one third of the level-1 gradient.
+    Two thirds of the intended supervision was inert.
+
+    The fix is to build the trace the way the residual is actually defined --
+    ``encoded - sum of the chosen codewords`` -- where each codeword is the raw
+    lookup, detached because the codebook is not what the behaviour loss should
+    move. Then ``d residual_k / d encoded = I`` and every level supervises the
+    encoder.
+
+    This touches only the trace used by the behaviour term. The quantizer, the
+    reconstruction loss and the SID export keep using the original STE forward
+    unchanged, so the RQ-VAE's own optimisation is untouched.
     """
-    residual = raw_module.encoder(embeddings)
-    traces = [residual]
+    encoded = raw_module.encoder(embeddings)
+    residual = encoded
+    traces: list[torch.Tensor] = []
     for vq_layer in raw_module.rq.vq_layers:
-        quant, _, _, _ = vq_layer(residual)
-        residual = residual - quant
         traces.append(residual)
-    # iter48 records the residual *entering* each level; drop the final remainder.
+        _, _, _, indices = vq_layer(residual)
+        # Raw codeword lookup, detached: a constant offset, not a gradient path.
+        codeword = vq_layer.embed_code(indices).detach()
+        residual = residual - codeword
+        if TRACE_GRADIENT == "detached":
+            # The original iter48 / STE semantics: each level quantizes the
+            # *detached* error of the level above, so only level 1 reaches the
+            # encoder. Kept as an explicit arm because making levels 2 and 3
+            # live turned out to collapse the codebook.
+            residual = residual.detach()
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
-
-
-def _successor_indicator(train_frame: pd.DataFrame, n_items: int):
-    """Sparse indicator of every known ``anchor -> successor`` item pair.
-
-    Used by the false-negative mask: a candidate that happens to be another real
-    successor of the same anchor must not be pushed away. 323,633 distinct edges
-    over 24,474 anchors, so a CSR of shape (n_items, n_items) is cheap.
-    """
-    from scipy.sparse import csr_matrix
-
-    rows: list[int] = []
-    cols: list[int] = []
-    for history, target in zip(
-        train_frame["seen_history"].to_numpy(),
-        train_frame["target"].to_numpy(dtype=np.int64),
-    ):
-        if history is None or len(history) == 0:
-            continue
-        rows.append(int(history[-1]))
-        cols.append(int(target))
-    data = np.ones(len(rows), dtype=np.bool_)
-    matrix = csr_matrix(
-        (data, (np.asarray(rows), np.asarray(cols))),
-        shape=(n_items, n_items),
-        dtype=np.bool_,
-    )
-    matrix.sum_duplicates()
-    matrix.data[:] = True
-    return matrix
-
-
-def _transition_shift(
-    z_anchor: torch.Tensor, transition_weight: torch.Tensor
-) -> torch.Tensor:
-    """Move the anchor along the learned A->B direction for the arm's geometry.
-
-    The transition models "where does a purchase at this anchor tend to land".
-    Both arms carry exactly one 32x32 matrix, zero-initialised so the arm starts
-    as the stateless baseline and learns the shift:
-
-      euclid_delta  a' = a + a W^T                      (linear tangent shift)
-      mobius_add    a' = a (+) mobius_matvec(W, a, c)    (ball translation)
-
-    Same parameter count and same zero-init in both arms, so Exp4 vs Exp5
-    compares the geometry of the shift, not its capacity.
-    """
-    if TRANSITION == "mobius_add":
-        return mobius_add(
-            z_anchor, mobius_matvec(transition_weight, z_anchor, CURVATURE), CURVATURE
-        )
-    return _inside_ball(z_anchor + z_anchor @ transition_weight.t())
-
-
-def _inside_ball(x: torch.Tensor) -> torch.Tensor:
-    limit = (1.0 - 1e-5) / (CURVATURE ** 0.5)
-    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True).clamp_min(1e-12)
-    return torch.where(norm > limit, x * (limit / norm), x)
 
 
 def _geodesic_block(
     anchors: torch.Tensor,
     candidates: torch.Tensor,
-    transition_weight: torch.Tensor | None,
+    normalizer,
 ) -> torch.Tensor:
     """Distance matrix between two residual blocks under the arm's geometry.
 
-    Both arms share the same ball map and the same tangent scale, so only the
-    metric differs. ``transition`` adds the directional operator of Exp4/5 on
-    top of the metric.
+    The whole point of this function is that anchors and candidates are mapped
+    together, in ONE ``encode_ball`` call, so both halves are divided by the same
+    normalizer and therefore live in the same ball. An earlier version mapped
+    them in two separate calls, each with its own scale, which made the returned
+    matrix meaningless as a distance. ``fix_euclid_raw`` skips the map entirely
+    and measures the raw latents, which is the rebuilt baseline.
+
+    ``normalizer`` is fixed before training starts, so it is a constant here and
+    the map stays a pure function of the latent.
     """
-    z_a = encode_ball(anchors, CURVATURE, TANGENT_SCALE)
-    z_c = encode_ball(candidates, CURVATURE, TANGENT_SCALE)
-    if TRANSITION != "none" and transition_weight is not None:
-        z_a = _transition_shift(z_a, transition_weight)
+    if USE_BALL:
+        size = anchors.shape[0]
+        mapped = encode_ball(torch.cat((anchors, candidates), dim=0), CURVATURE, normalizer)
+        mapped_anchors, mapped_candidates = mapped[:size], mapped[size:]
+    else:
+        mapped_anchors, mapped_candidates = anchors, candidates
     if GEOMETRY == "poincare":
-        return pair_poincare_distance(z_a, z_c, CURVATURE)
+        return pair_poincare_distance(mapped_anchors, mapped_candidates, CURVATURE)
+    # Floor before the sqrt. The same item can appear as an anchor in one pair
+    # and as another pair's candidate, so two rows of this matrix describe the
+    # identical mapped point and the squared distance is exactly 0 for 496 of
+    # 262144 entries. sqrt'(0) is infinite, which propagates inf into the
+    # the weights become NaN, and the level-3 Sinkhorn then raises inside
+    # center_distance (whose guard actually fires on NaN, not on a constant
+    # matrix). These rows are masked out of the cross-entropy anyway, so a
+    # finite floor changes nothing except removing the inf.
+    #
+    # The Poincare branch never needed this because acosh is already floored at
+    # 1 + ACOSH_EPS, which is why only the Euclidean arms crashed.
     return torch.sqrt(
-        spatial_sq_distance(z_a[:, None, :], z_c[None, :, :]).clamp_min(0.0)
+        spatial_sq_distance(
+            mapped_anchors[:, None, :], mapped_candidates[None, :, :]
+        ).clamp_min(1e-12)
     )
+
+
+def resolve_normalizer(raw_module: RQVAE, train_embeddings: torch.Tensor) -> float:
+    """Fixed ball scale from training-set statistics, computed once.
+
+    Maps the *median* latent norm to ``TARGET_RADIUS_FRACTION`` of the radius.
+
+    The latent norm is heavy-tailed (median 0.0567, p99 0.164, max 0.418, i.e.
+    max/median 7.4), so using the RMS or the mean as the base would put the bulk
+    of the items well below the intended radius while a thin tail saturates at
+    the boundary. Anchoring on the median gives a radius distribution with
+    p10 0.620 / p50 0.700 / p90 0.843 / p99 0.987 and only 0.82% of items past
+    0.99 R, which keeps the radial coordinate -- the dimension that carries
+    hierarchy -- informative instead of collapsing it.
+
+    The value is a constant for the whole run: it cannot depend on the batch, or
+    identical items would receive different coordinates.
+    """
+    with torch.no_grad():
+        norms = torch.linalg.vector_norm(raw_module.encoder(train_embeddings), dim=-1)
+        median = float(torch.median(norms).clamp_min(1e-12))
+    return float(np.arctanh(TARGET_RADIUS_FRACTION) / (CURVATURE ** 0.5) / median)
 
 
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
     target_ids: torch.Tensor,
-    successor_indicator=None,
-    transition_weight: torch.Tensor | None = None,
+    normalizer,
     temperature: float | None = None,
 ) -> torch.Tensor:
     """iter48's three-level contrastive loss over residual vectors.
@@ -417,15 +426,13 @@ def behavior_contrastive_loss(
     targets in the second half, exactly as iter48 fed
     ``cat(source_emb, target_emb)`` through the quantizer.
 
-    ``successor_indicator``, when given, additionally masks candidates that are
-    other known successors of the same anchor (false negatives).
     """
     batch_size = int(source_ids.shape[0])
     losses: list[torch.Tensor] = []
     for level in range(residuals.shape[0]):
         source = residuals[level, :batch_size]
         candidates = residuals[level, batch_size:]
-        distances = _geodesic_block(source, candidates, transition_weight)
+        distances = _geodesic_block(source, candidates, normalizer)
         if DISTANCE_NORMALIZATION == "rms":
             rms = distances.detach().square().mean().sqrt().clamp_min(1e-8)
             distances = distances / rms
@@ -434,14 +441,6 @@ def behavior_contrastive_loss(
         # keep only rows whose source and target differ.
         duplicate_targets = target_ids[:, None].eq(target_ids[None, :])
         duplicate_targets.fill_diagonal_(False)
-        if successor_indicator is not None:
-            rows = successor_indicator[source_ids.cpu().numpy()]
-            blocked = torch.from_numpy(
-                np.asarray(rows[:, target_ids.cpu().numpy()].todense())
-            ).to(device=logits.device, dtype=torch.bool)
-            # The diagonal is the true successor, never a false negative.
-            blocked.fill_diagonal_(False)
-            duplicate_targets = duplicate_targets | blocked
         logits = logits.masked_fill(duplicate_targets, -torch.inf)
         valid = source_ids.ne(target_ids)
         if bool(valid.any()):
@@ -457,7 +456,7 @@ def calibrate_temperature(
     pair_batch: torch.Tensor,
     source_ids: torch.Tensor,
     target_ids: torch.Tensor,
-    transition_weight: torch.Tensor | None,
+    normalizer,
 ) -> float:
     """Solve for the temperature giving TARGET_LOGIT_SPREAD at initialisation.
 
@@ -470,7 +469,7 @@ def calibrate_temperature(
         spreads = []
         for level in range(residuals.shape[0]):
             distances = _geodesic_block(
-                residuals[level, :half], residuals[level, half:], transition_weight
+                residuals[level, :half], residuals[level, half:], normalizer
             )
             rms = distances.square().mean().sqrt().clamp_min(1e-8)
             spreads.append(distances / rms)
@@ -534,25 +533,10 @@ def main() -> None:
     # batch above keeps exactly the rows, order and Sinkhorn balancing the
     # baseline sees.
     pair_dataset = TransitionPairs(train_frame)
-    successor_indicator = (
-        _successor_indicator(train_frame, len(embeddings))
-        if FALSE_NEGATIVE_MASK
-        else None
-    )
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
-    if TRANSITION != "none":
-        # Registered on the module (not on model/) so DDP and the optimizer pick
-        # it up while `model/` stays byte-identical to TIGER. Zero-init makes the
-        # arm start exactly at the stateless baseline.
-        model.register_parameter(
-            "transition_weight",
-            nn.Parameter(
-                torch.zeros(config.codebook_dim, config.codebook_dim, device=device)
-            ),
-        )
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
@@ -607,7 +591,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="behaviour_geometry", experiment_arm=EXPERIMENT_ARM, geometry=GEOMETRY, curvature=CURVATURE, tangent_scale=TANGENT_SCALE, target_radius_fraction=TARGET_RADIUS_FRACTION, transition=TRANSITION, distance_normalization=DISTANCE_NORMALIZATION, resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, temperature_calibration_enabled=TEMPERATURE_CALIBRATION_ENABLED, target_logit_spread=TARGET_LOGIT_SPREAD, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182")
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="behaviour_geometry_repaired", experiment_arm=EXPERIMENT_ARM, geometry=GEOMETRY, curvature=CURVATURE, target_radius_fraction=TARGET_RADIUS_FRACTION, distance_normalization=DISTANCE_NORMALIZATION, resample_pairs=RESAMPLE_PAIRS, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, temperature_calibration_enabled=TEMPERATURE_CALIBRATION_ENABLED, target_logit_spread=TARGET_LOGIT_SPREAD, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182")
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -618,25 +602,41 @@ def main() -> None:
     if world_size > 1:
         dist.barrier()
 
-    transition_weight = (
-        getattr(raw_module, "transition_weight", None)
-        if TRANSITION != "none"
-        else None
+    # Exp1 repair: one fixed normalizer from training-set statistics, so the
+    # ball map cannot depend on batch membership and anchors and candidates share
+    # a single ball. Constant for the whole run.
+    ball_normalizer = resolve_normalizer(raw_module, train_embeddings.to(device))
+    normalizer = torch.as_tensor(
+        ball_normalizer, dtype=torch.float32, device=device
     )
     # Fix the arm's temperature with the same procedure for every arm.
     resolved_temperature = BEHAVIOR_TEMPERATURE
+    calibrate_pairs = pair_dataset.pairs[:PAIR_BATCH_SIZE_PER_RANK].to(device)
+    calibrate_batch = all_embeddings[
+        torch.cat((calibrate_pairs[:, 0], calibrate_pairs[:, 1])).cpu()
+    ].to(device)
     if TEMPERATURE_CALIBRATION_ENABLED:
-        calibrate_pairs = pair_dataset.pairs[:PAIR_BATCH_SIZE_PER_RANK].to(device)
-        calibrate_batch = all_embeddings[
-            torch.cat((calibrate_pairs[:, 0], calibrate_pairs[:, 1])).cpu()
-        ].to(device)
         resolved_temperature = calibrate_temperature(
             raw_module, calibrate_batch, calibrate_pairs[:, 0], calibrate_pairs[:, 1],
-            transition_weight,
+            normalizer,
         )
+    # Checksum of the initial codebooks: proves the arms being compared started
+    # from the same quantization, which the multi-threaded KMeans did not
+    # guarantee before.
+    _init_parts = [
+        layer.embed.weight.detach().cpu().numpy().tobytes()
+        for layer in raw_module.rq.vq_layers
+    ]
+    _init_sha = hashlib.sha256(b"".join(_init_parts)).hexdigest()
+    if rank == 0:
         _record(
-            rank, "temperature_calibrated", resolved_temperature=resolved_temperature,
-            target_logit_spread=TARGET_LOGIT_SPREAD, arm=EXPERIMENT_ARM,
+            rank, "geometry_resolved", arm=EXPERIMENT_ARM, geometry=GEOMETRY,
+            codebook_init_sha256=_init_sha,
+            use_ball=USE_BALL, trace_gradient=TRACE_GRADIENT, curvature=CURVATURE,
+            target_radius_fraction=TARGET_RADIUS_FRACTION,
+            ball_normalizer=ball_normalizer,
+            resolved_temperature=resolved_temperature,
+            target_logit_spread=TARGET_LOGIT_SPREAD,
         )
 
     # Stage3 only consumes the final-epoch weights, so tracking the best
@@ -680,8 +680,8 @@ def main() -> None:
             ].to(device, non_blocking=True)
             residuals = _residuals_with_trace(raw_module, pair_batch)
             behavior_loss = behavior_contrastive_loss(
-                residuals, source_ids, target_ids, successor_indicator,
-                transition_weight, resolved_temperature,
+                residuals, source_ids, target_ids, normalizer,
+                resolved_temperature,
             )
             loss = loss + epoch_weight * behavior_loss
             if not torch.isfinite(loss):
