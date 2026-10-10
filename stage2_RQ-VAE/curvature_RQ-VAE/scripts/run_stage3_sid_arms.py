@@ -168,6 +168,18 @@ ARMS = {
         "l2_assignment_arms/C_nearest_argmin_s42/item_sids.json",
         "sidarm_L2AN_nearest_argmin_s42",
     ),
+    # The metric cone at the bar's own codebook, where the geometry's effect
+    # has never been asked to carry a result the project would keep.
+    "MCE256": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "metric_cone_256_arms/A_euclid_metriccone256_s42/item_sids.json",
+        "sidarm_MCE256_euclid_metriccone256_s42",
+    ),
+    "MCP256": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "metric_cone_256_arms/B_poincare_metriccone256_s42/item_sids.json",
+        "sidarm_MCP256_poincare_metriccone256_s42",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
