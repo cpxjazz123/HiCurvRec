@@ -443,3 +443,30 @@ results/stage3_T5Train/tiger_behavior/logs/_stage3_run*.log
 !results/stage3_T5Train/sidarm_*/ckpt*/
 !results/stage3_T5Train/sidarm_*/logs/
 !results/stage3_T5Train/sidarm_*/**
+
+# Behaviour-sampling arms (Exp1: per-epoch pair resampling, false-negative mask)
+# and behaviour-geometry arms (Exp2-5: Poincare vs parameter-matched Euclidean).
+# Same deliverables as the TIGER baseline: Stage2 SID/ckpt/metrics and Stage3
+# test_final.json / training_metrics.jsonl / HG_Rec_best.pth / launcher log.
+!results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**
+!results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**
+!results/stage3_T5Train/tiger_sample_*/
+!results/stage3_T5Train/tiger_hyp_*/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**/tensorboard/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/**/__pycache__/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/_ddp_sync/
+results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**/tensorboard/
+results/stage3_T5Train/tiger_sample_*/**/__pycache__/
+results/stage3_T5Train/tiger_sample_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_*/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_sample_*/logs/tensorboard/
+results/stage3_T5Train/tiger_hyp_*/**/__pycache__/
+results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_*/logs/*/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
+!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs/**
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/
+!stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/logs/**
