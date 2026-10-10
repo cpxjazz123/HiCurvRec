@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "fork_radial_corr"
+EXPERIMENT_ARM = "fork_more_sib"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -114,8 +114,18 @@ _ARMS = {
     "fork_euclid_group": {"group_distance": "euclid",   "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
     "fork_ang_only":     {"group_distance": "euclid",   "radial_mode": "off",  "radial_weight": 0.0},
     "fork_radial_corr":  {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    # The behaviour-sibling pool is far larger than the supervision actually
+    # used: median pool 316, p90 1781, while each step sampled 8 per item capped
+    # at 2048 pairs, i.e. about 2.5% of the available signal. This arm raises
+    # both the per-item cap and the pair cap to use more of it. Same terms, same
+    # weights, same metric; only the amount of behaviour signal changes.
+    "fork_more_sib":     {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "siblings": 32, "max_pairs": 8192},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
+# Per-arm sampling of the behaviour-sibling signal.
+FORK_SIBLINGS_PER_ITEM = _ARM.get("siblings", 8)
+FORK_ANGULAR_MAX_PAIRS = _ARM.get("max_pairs", 2048)
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
 RADIAL_MODE = _ARM["radial_mode"]            # "mse" | "corr" | "off"
 FORK_RADIAL_WEIGHT = _ARM["radial_weight"]
@@ -125,8 +135,6 @@ RHO_LO = 0.35
 RHO_HI = 0.92
 FORK_ANGULAR_WEIGHT = 0.05
 FORK_ANGULAR_TEMPERATURE = 0.1
-FORK_SIBLINGS_PER_ITEM = 8
-FORK_ANGULAR_MAX_PAIRS = 2048
 DISTANCE_NORMALIZATION = "rms"
 TEMPERATURE_CALIBRATION_ENABLED = True
 TARGET_LOGIT_SPREAD = 5.0
