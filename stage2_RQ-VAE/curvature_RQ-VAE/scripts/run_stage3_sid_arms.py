@@ -136,6 +136,18 @@ ARMS = {
         "smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
         "sidarm_SFP_poincare_smoothfair",
     ),
+    # The same mechanism inside the bar's own geometry, at the two further
+    # seeds, so the paired test has three euclidean differences as well.
+    "M43E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "multiseed_arms/smooth_euclid_s43/item_sids.json",
+        "sidarm_M43E_smooth_euclid_s43",
+    ),
+    "M44E": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "multiseed_arms/smooth_euclid_s44/item_sids.json",
+        "sidarm_M44E_smooth_euclid_s44",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
