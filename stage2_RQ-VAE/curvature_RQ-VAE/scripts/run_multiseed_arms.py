@@ -23,10 +23,11 @@ RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/multiseed_
 # directory; repeating it here under a different name would train an arm nothing
 # evaluates.
 SEEDS = (43, 44)
-# Only the hyperbolic arm: the claim to confirm is that the hyperbolic model
-# beats the euclidean baseline, and that baseline's own seeds are measured
-# separately by run_euclid_baseline_seeds.
-GEOMETRIES = {"poincare": "poincare"}
+# Both geometries. The hyperbolic arm is the claim under test against the bar;
+# the euclidean arm is the same mechanism inside the bar's own geometry, whose
+# effect at seed 42 (+0.001341) is nearly four times the hyperbolic one and
+# therefore the only one a paired test has a chance of resolving.
+GEOMETRIES = {"poincare": "poincare", "euclid": "euclid"}
 
 # The mechanism under test. One entry per arm pair, so a later round can point
 # this at whatever survived without touching the loop below.
@@ -49,6 +50,18 @@ MECHANISM = {
 
 def _arm_dir(name: str, seed: int) -> Path:
     return RESULTS / f"{name}_s{seed}"
+
+
+def _is_complete(name: str, seed: int) -> bool:
+    """True when this arm already exported its SIDs.
+
+    Without this, a later invocation that only wants the arms one geometry left
+    out would retrain the ones already on disk.
+    """
+    directory = _arm_dir(name, seed)
+    return (directory / "item_sids.json").is_file() and (
+        directory / "logs/training_metrics.jsonl"
+    ).is_file()
 
 
 def _load_trainer():
@@ -129,6 +142,10 @@ if "RANK" in os.environ:
 else:
     for seed in SEEDS:
         for geometry in GEOMETRIES:
+            name = f"{MECHANISM['name']}_{geometry}"
+            if _is_complete(name, seed):
+                print(f"[multiseed] {name} seed {seed} already complete, skipping", flush=True)
+                continue
             print(f"[multiseed] ===== {geometry} seed {seed} =====", flush=True)
             trainer = configure(geometry, seed)
             # launch_arm blocks and returns; _launch_via_torchrun would end the
