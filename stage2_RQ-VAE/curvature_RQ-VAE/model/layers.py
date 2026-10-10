@@ -221,6 +221,7 @@ class VQLayer(nn.Module):
         geometry: str = "poincare",
         assignment_mode: str = "bucket",
         smoothness_weight: float = 0.0,
+        smoothness_scope: str = "global",
     ):
         super().__init__()
         if curvature <= 0.0:
@@ -244,6 +245,15 @@ class VQLayer(nn.Module):
         if smoothness_weight < 0.0:
             raise ValueError("smoothness_weight must not be negative.")
         self.smoothness_weight = float(smoothness_weight)
+        if str(smoothness_scope) not in ("global", "prefix"):
+            raise ValueError(
+                "smoothness_scope must be 'global' or 'prefix', got "
+                f"{smoothness_scope!r}"
+            )
+        # "global" draws pairs from the whole batch; "prefix" draws them from
+        # inside one preceding-code bucket, so the term constrains the levels
+        # that carry a hierarchy instead of the batch at large.
+        self.smoothness_scope = str(smoothness_scope)
         (
             self._pairwise_fn,
             self._pair_fn,
@@ -470,10 +480,29 @@ class VQLayer(nn.Module):
         usage = torch.bincount(ids, minlength=self.n_embed)
         return ids.view(*x.shape[:-1]), usage, entropy
 
+    def _prefix_partners(
+        self, bucket: torch.Tensor, count: int, device
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Pair every row with the next row inside its own bucket, cyclically.
+
+        One stable sort groups the rows, and a cyclic shift inside each group
+        gives every row a partner that shares its preceding code. The loss is a
+        mean, so computing it in the grouped order changes nothing.
+        """
+        order = torch.argsort(bucket, stable=True)
+        counts = torch.bincount(bucket, minlength=1)
+        starts = torch.cumsum(counts, 0) - counts
+        repeated_starts = torch.repeat_interleave(starts, counts)
+        repeated_counts = torch.repeat_interleave(counts, counts)
+        local = torch.arange(order.numel(), device=device) - repeated_starts
+        partner = repeated_starts + (local + 1) % repeated_counts
+        return order, partner
+
     def _smoothness_loss(
         self,
         latent: torch.Tensor,
         quantized: torch.Tensor,
+        bucket: torch.Tensor | None = None,
         pairs: int = 64,
     ) -> torch.Tensor:
         """Keep the quantiser a smooth function of the input, in the arm's metric.
@@ -490,6 +519,24 @@ class VQLayer(nn.Module):
             return latent.sum() * 0.0
         curvature = self.get_curvature()
         count = latent.shape[0]
+        if self.smoothness_scope == "prefix" and bucket is not None:
+            order, partner_index = self._prefix_partners(
+                bucket.reshape(-1), count, latent.device
+            )
+            grouped = latent[order]
+            grouped_q = quantized[order]
+            source = grouped
+            partner = grouped[partner_index]
+            quantized = grouped_q
+            quantized_partner = grouped_q[partner_index]
+            latent_distance = self._pair_fn(source, partner, curvature).square()
+            quantized_distance = self._pair_fn(
+                quantized, quantized_partner, curvature
+            ).square()
+            with torch.no_grad():
+                scale = latent_distance.median().clamp_min(1e-8)
+            weight = torch.exp(-latent_distance / scale).detach()
+            return (weight * quantized_distance).mean()
         pairs = min(int(pairs), count - 1)
         index = torch.randint(0, count, (count, pairs), device=latent.device)
         source = latent.unsqueeze(1).expand(count, pairs, latent.shape[-1])
@@ -531,7 +578,7 @@ class VQLayer(nn.Module):
         quant_loss = codebook_loss + self.beta * commitment_loss
         if self.smoothness_weight > 0.0:
             quant_loss = quant_loss + self.smoothness_weight * self._smoothness_loss(
-                latent, x_q.view(-1, self.dim)
+                latent, x_q.view(-1, self.dim), bucket
             )
         # The straight-through output is what the decoder consumes, and it
         # deliberately detaches the codebook: gradients reach the codebook only
@@ -734,6 +781,7 @@ class RQLayer(nn.Module):
             raise ValueError("smoothness_weights must have one entry per level")
         self.smoothness_weights = tuple(float(value) for value in per_level)
         self.smoothness_weight = self.smoothness_weights[0]
+        scope = str(getattr(config, "smoothness_scope", "global"))
         if self.vq_type != "vq":
             raise ValueError("This model requires TIGER's trainable VQ codebooks")
         self.vq_layers = nn.ModuleList(
@@ -748,6 +796,7 @@ class RQLayer(nn.Module):
                     geometry=self.geometry,
                     assignment_mode=assignment_modes[level],
                     smoothness_weight=self.smoothness_weights[level],
+                    smoothness_scope=scope,
                 )
                 for level, size in enumerate(self.codebook_sizes)
             ]

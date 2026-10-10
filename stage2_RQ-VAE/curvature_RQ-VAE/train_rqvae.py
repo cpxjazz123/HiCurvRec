@@ -57,6 +57,9 @@ CATEGORY_CONE_SEPARATION_GAP = float(getattr(experiment, "CATEGORY_CONE_SEPARATI
 CATEGORY_CONE_LEVEL_ALIGNED = bool(getattr(experiment, "CATEGORY_CONE_LEVEL_ALIGNED", False))
 CATEGORY_CONE_COARSE_LEVEL = int(getattr(experiment, "CATEGORY_CONE_COARSE_LEVEL", 2))
 QUANT_SMOOTHNESS_WEIGHT = float(getattr(experiment, "QUANT_SMOOTHNESS_WEIGHT", 0.0))
+# "global" draws smoothness pairs from the batch at large; "prefix" draws them
+# from inside one preceding-code bucket, which is where the hierarchy lives.
+QUANT_SMOOTHNESS_SCOPE = "global"
 QUANT_SMOOTHNESS_WEIGHTS = getattr(experiment, "QUANT_SMOOTHNESS_WEIGHTS", None)
 # getattr so a process that cached an older curvature_config cannot crash here.
 ENCODER_SMOOTHNESS_WEIGHT = float(getattr(experiment, "ENCODER_SMOOTHNESS_WEIGHT", 0.0))
@@ -378,6 +381,7 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_iters=SK_ITERS,
         layer_curvatures=LAYER_CURVATURES,
         smoothness_weight=QUANT_SMOOTHNESS_WEIGHT,
+        smoothness_scope=QUANT_SMOOTHNESS_SCOPE,
         smoothness_weights=QUANT_SMOOTHNESS_WEIGHTS,
         encoder_smoothness_weight=ENCODER_SMOOTHNESS_WEIGHT,
         layer_working_radii=LAYER_WORKING_RADII,
