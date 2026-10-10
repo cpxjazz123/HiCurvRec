@@ -138,16 +138,6 @@ ARMS = {
     ),
     # The same mechanism inside the bar's own geometry, at the two further
     # seeds, so the paired test has three euclidean differences as well.
-    "M43E": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "multiseed_arms/smooth_euclid_s43/item_sids.json",
-        "sidarm_M43E_smooth_euclid_s43",
-    ),
-    "M44E": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "multiseed_arms/smooth_euclid_s44/item_sids.json",
-        "sidarm_M44E_smooth_euclid_s44",
-    ),
     # The three assignment modes, whose Stage2 ran long ago and whose Stage3
     # never did. This is the direct check of whether the discrete code
     # assignment itself moves the recommendation metric: bucket balances codes
@@ -250,29 +240,9 @@ ARMS = {
     ),
     # The surviving mechanism at two further seeds: metric-smooth quantisation,
     # hyperbolic arm only, against the bar's own seed spread.
-    "M43": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "multiseed_arms/smooth_poincare_s43/item_sids.json",
-        "sidarm_M43_smooth_poincare_s43",
-    ),
-    "M44": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "multiseed_arms/smooth_poincare_s44/item_sids.json",
-        "sidarm_M44_smooth_poincare_s44",
-    ),
     # The bar's own configuration at two further training seeds: the noise the
     # configuration has against itself, which every mechanism comparison needs
     # before its few-percent differences can be read.
-    "E43": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "euclid_l2_256_72k_s43/item_sids.json",
-        "sidarm_E43_euclid_l2_256_72k_s43",
-    ),
-    "E44": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "euclid_l2_256_72k_s44/item_sids.json",
-        "sidarm_E44_euclid_l2_256_72k_s44",
-    ),
     # Coarse cone moved onto level 1, level 2 left to reconstruction, at the
     # production 256 codes per level so the numbers compare to the bar.
     "CLE": (
@@ -330,6 +300,44 @@ def configure(arm):
     trainer._LAUNCHER["log"] = os.path.join(trainer.LOG_PATH, "_stage3_launcher.log")
 
 
+CONE_PICTURE_MIN = 0.5
+
+
+def _cone_picture_ok(code_path: str) -> bool:
+    """True when a cone arm's Stage2 containment picture is worth Stage3.
+
+    A cone arm whose Stage2 never satisfied the cone is not a candidate for
+    Stage3: its containment collapsed, which is the geometric requirement this
+    project judges cone mechanisms on. The euclidean cone arms all read exactly
+    zero positive containment while their loss diverged, so Stage3 on them would
+    spend a batch slot measuring a broken arm. Arms with no cone events are not
+    cone arms and pass through.
+
+    The hyperbolic nonlinearity is not gated here because it is fixed by the
+    protocol: curvature 1.0 with the encoder latents at ball radius ~0.97 puts
+    the conformal factor near 37, and every arm runs that same operating point.
+    """
+    arm_dir = Path(code_path).parent
+    for metrics in (arm_dir / "logs/training_metrics.jsonl",):
+        if not metrics.is_file():
+            return True
+        containment = []
+        for line in metrics.read_text().splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("event") == "cone_containment":
+                containment.append(row)
+        if not containment:
+            return True
+        held = containment[-1].get("heldout", {})
+        positive = held.get("coarse_q2_containment")
+        if positive is None:
+            return True
+        return float(positive) >= CONE_PICTURE_MIN
+    return True
+
+
 def finished(variant):
     """True when this arm already produced its final-test event."""
     pattern = (
@@ -362,6 +370,13 @@ else:
     for arm in ARMS:
         if finished(ARMS[arm][1]):
             print(f"[sidarm] arm {arm} already evaluated, skipping", flush=True)
+            continue
+        if not _cone_picture_ok(ARMS[arm][0]):
+            print(
+                f"[sidarm] arm {arm} Stage2 containment below "
+                f"{CONE_PICTURE_MIN}, skipping Stage3",
+                flush=True,
+            )
             continue
         if not Path(ARMS[arm][0]).is_file():
             # An arm whose Stage2 has not run yet. Skipping keeps a batch that
