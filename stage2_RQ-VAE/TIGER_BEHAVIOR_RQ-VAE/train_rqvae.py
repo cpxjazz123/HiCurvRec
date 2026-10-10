@@ -1,20 +1,22 @@
-"""Train TIGER RQ-VAE + Behavior Ranking Loss (4 卡 DDP), export HG-Rec SIDs.
+"""TIGER + the historical Iter48 behaviour-contrastive mechanism (arm C).
 
-Strict ablation arm B against the untouched TIGER baseline (arm A, test_R@10
-= 0.053674). The quantizer is byte-identical to TIGER: L1/L2 argmin, L3 global
-Sinkhorn, no bucket Sinkhorn, no hyperbolic geometry, no behaviour-context
-encoder input, no smoothness and no cone loss.
+Arm C isolates the iter48 mechanism (commit 348aed182) on top of the current
+TIGER recipe. Everything the current baseline fixes stays fixed: 3000 epochs,
+the deduplicated-item batch, AdamW warmup + linear decay, codebook sizes and
+KMeans init, seed 42, 1024 items per rank. `model/` is byte-identical to the
+baseline, so L1/L2 argmin and L3 global Sinkhorn are unchanged.
 
-The ONLY difference from arm A is one additive term on the encoder latent:
+What is ported from iter48, and only this:
+  * the full `history[-1] -> target` transition stream with duplicates kept,
+    drawn by an INDEPENDENT sampler so the item batch is untouched;
+  * a three-level residual contrastive loss, `cdist(p=2)` logits scaled by
+    1/temperature, cross-entropy against the true successor, duplicate-target
+    candidates masked out and source==target rows dropped;
+  * the delayed ramp 0 -> behaviour_weight_max.
 
-    ranking = mean( relu( MARGIN + ||z_a - z_pos||_2 - ||z_a - z_neg||_2) )
-    loss   = (recon_mse + vq_loss) + WEIGHT * ranking
-
-``z`` are pre-quantization encoder outputs, distance is plain Euclidean,
-``pos`` is the real next item of the anchor's training sequence and ``neg`` is
-drawn by shuffling the positives inside the batch. Batch composition, sampler
-seed, optimizer, schedule and codebook init are untouched, so the batch a rank
-sees is the same sequence of rows TIGER would see.
+The ramp is expressed in epochs instead of the original 40,000 global steps:
+iter48 raised the weight over the last 50% of its budget, so here it ramps over
+the last 50% of the 3000-epoch budget, i.e. from epoch 1500 to epoch 3000.
 
 2026-09-22 改造 (CLAUDE.md §1 + §3):
 - 参数全部硬编码为模块常量 (禁 argparse/CLI flag)
@@ -38,6 +40,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from itertools import cycle
 from types import SimpleNamespace
 from typing import Any
 
@@ -91,11 +94,13 @@ OPTIMIZER           = "AdamW"
 SEED                = 42
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
-# === 唯一新增机制: 行为 Ranking Loss (臂 B 相对臂 A 的唯一变量) ===
-# 正样本 = 训练序列真实转移 (seen_history 末位商品 -> target);
-# 负样本 = batch 内随机打乱同一批正样本; 距离 = 编码器隐层欧氏距离。
-BEHAVIOR_RANKING_WEIGHT  = 0.1
-BEHAVIOR_RANKING_MARGIN  = 0.4
+# === 唯一新增机制: 历史 Iter48 (348aed182) 行为对比监督 ===
+# 权重上限与温度沿用历史值; ramp 从 epoch RAMP_START_EPOCH 起线性升到
+# BEHAVIOR_WEIGHT_MAX, 对应历史 20k/40k global step 的后半程。
+BEHAVIOR_WEIGHT_MAX     = 0.20
+BEHAVIOR_TEMPERATURE    = 0.07
+RAMP_START_EPOCH        = 1500
+PAIR_BATCH_SIZE_PER_RANK = 512   # 每卡 pair 数; source+target 单独一次前向
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -213,65 +218,84 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     return result
 
 
-def _successor_rows(
-    train_frame: pd.DataFrame, train_ids: np.ndarray
-) -> np.ndarray:
-    """Row index of each training row's real next item, -1 when it has none.
+def behavior_weight(epoch: int) -> float:
+    """iter48's delayed ramp, re-expressed in epochs over the 3000-epoch budget."""
+    span = max(EPOCHS - RAMP_START_EPOCH, 1)
+    alpha = min(max((epoch - RAMP_START_EPOCH) / span, 0.0), 1.0)
+    return BEHAVIOR_WEIGHT_MAX * alpha
 
-    ``train_ids`` is the sorted array whose order defines ``train_embeddings``
-    rows, so the table is indexed by that row space and is deterministic: a
-    source seen in several sequences keeps its first successor.
+
+class TransitionPairs(torch.utils.data.Dataset):
+    """The full ``history[-1] -> target`` stream, duplicates kept (iter48)."""
+
+    def __init__(self, train_frame: pd.DataFrame) -> None:
+        pairs: list[tuple[int, int]] = []
+        for history, target in zip(
+            train_frame["seen_history"].to_numpy(),
+            train_frame["target"].to_numpy(dtype=np.int64),
+        ):
+            if history is None or len(history) == 0:
+                continue
+            pairs.append((int(history[-1]), int(target)))
+        if not pairs:
+            raise ValueError("Training parquet contains no history-target pairs")
+        self.pairs = torch.tensor(pairs, dtype=torch.long)
+
+    def __len__(self) -> int:
+        return int(self.pairs.shape[0])
+
+    def __getitem__(self, index: int) -> torch.Tensor:
+        return self.pairs[index]
+
+
+def _residuals_with_trace(
+    raw_module: RQVAE, embeddings: torch.Tensor
+) -> torch.Tensor:
+    """Per-level pre-quantization residuals, matching iter48's ResidualTraceRQLayer.
+
+    ``model/`` stays byte-identical to the baseline, so the trace is produced by
+    walking the unchanged quantizer stack rather than by patching it.
     """
-    row_of_item = np.full(int(train_ids[-1]) + 1, -1, dtype=np.int64)
-    row_of_item[train_ids] = np.arange(len(train_ids), dtype=np.int64)
-    successor = np.full(len(train_ids), -1, dtype=np.int64)
-    for history, target in zip(
-        train_frame["seen_history"].to_numpy(),
-        train_frame["target"].to_numpy(dtype=np.int64),
-    ):
-        if history is None or len(history) == 0:
-            continue
-        source_row = row_of_item[int(history[-1])]
-        target_row = row_of_item[int(target)]
-        if source_row >= 0 and target_row >= 0 and successor[source_row] < 0:
-            successor[source_row] = target_row
-    return successor
+    residual = raw_module.encoder(embeddings)
+    traces = [residual]
+    for vq_layer in raw_module.rq.vq_layers:
+        quant, _, _, _ = vq_layer(residual)
+        residual = residual - quant
+        traces.append(residual)
+    # iter48 records the residual *entering* each level; drop the final remainder.
+    return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
 
 
-def _shuffled_negatives(
-    positives: torch.Tensor, generator: torch.Generator
+def behavior_contrastive_loss(
+    residuals: torch.Tensor,
+    source_ids: torch.Tensor,
+    target_ids: torch.Tensor,
 ) -> torch.Tensor:
-    """In-batch negatives: permute the positives, then break fixed points."""
-    order = torch.randperm(
-        positives.size(0), device=positives.device, generator=generator
-    )
-    fixed = order.eq(torch.arange(order.numel(), device=order.device))
-    if bool(fixed.any()):
-        # A fixed point would make the negative equal the positive and drop the
-        # margin term to zero for that row; rotate those rows onto a neighbour.
-        order[fixed] = (order[fixed] + 1) % order.numel()
-    return positives[order]
+    """iter48's three-level contrastive loss over residual vectors.
 
-
-def behavior_ranking_loss(
-    raw_module: RQVAE,
-    anchors: torch.Tensor,
-    positives: torch.Tensor,
-    negatives: torch.Tensor,
-) -> torch.Tensor:
-    """Mean margin hinge over Euclidean distances of encoder latents."""
-    anchor_latent = raw_module.encoder(anchors)
-    positive_latent = raw_module.encoder(positives)
-    negative_latent = raw_module.encoder(negatives)
-    positive_distance = torch.linalg.vector_norm(
-        anchor_latent - positive_latent, dim=-1
-    )
-    negative_distance = torch.linalg.vector_norm(
-        anchor_latent - negative_latent, dim=-1
-    )
-    return F.relu(
-        BEHAVIOR_RANKING_MARGIN + positive_distance - negative_distance
-    ).mean()
+    ``residuals`` holds the pair batch with sources in the first half and
+    targets in the second half, exactly as iter48 fed
+    ``cat(source_emb, target_emb)`` through the quantizer.
+    """
+    batch_size = int(source_ids.shape[0])
+    losses: list[torch.Tensor] = []
+    for level in range(residuals.shape[0]):
+        source = residuals[level, :batch_size]
+        candidates = residuals[level, batch_size:]
+        distances = torch.cdist(source, candidates, p=2)
+        logits = -distances / BEHAVIOR_TEMPERATURE
+        # iter48's filter: drop candidates sharing the anchor's own target, then
+        # keep only rows whose source and target differ.
+        duplicate_targets = target_ids[:, None].eq(target_ids[None, :])
+        duplicate_targets.fill_diagonal_(False)
+        logits = logits.masked_fill(duplicate_targets, -torch.inf)
+        valid = source_ids.ne(target_ids)
+        if bool(valid.any()):
+            labels = torch.arange(batch_size, device=source_ids.device)
+            losses.append(F.cross_entropy(logits[valid], labels[valid]))
+    if not losses:
+        return residuals.sum() * 0.0
+    return torch.stack(losses).mean()
 
 
 def _tokenizer_config() -> SimpleNamespace:
@@ -317,12 +341,10 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
-    # Behaviour positives: real next item per training row, resolved once so the
-    # sampler, batch size and batch contents stay identical to arm A.
-    successor_rows = _successor_rows(train_frame, train_ids)
-    if int((successor_rows >= 0).sum()) == 0:
-        raise ValueError("No training row resolves to a real successor item")
-    train_row_ids = torch.arange(len(train_ids), dtype=torch.long)
+    # iter48's full transition stream, drawn by its own sampler so the item
+    # batch above keeps exactly the rows, order and Sinkhorn balancing the
+    # baseline sees.
+    pair_dataset = TransitionPairs(train_frame)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -330,9 +352,7 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    # Second column carries the row index only; TensorDataset returns element i
-    # of every column, so the embedding batch TIGER would produce is unchanged.
-    train_dataset = TensorDataset(train_embeddings, train_row_ids)
+    train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -343,6 +363,28 @@ def main() -> None:
         pin_memory=device.type == "cuda",
         persistent_workers=False,  # 2026-09-24: 关闭避免每个 epoch 都 fork 一次
     )
+
+    # Independent sampler: a different seed offset keeps the pair stream from
+    # being phase-locked to the item stream.
+    pair_sampler = (
+        DistributedSampler(
+            pair_dataset, num_replicas=world_size, rank=rank,
+            shuffle=True, seed=SEED + 1, drop_last=False,
+        )
+        if world_size > 1
+        else None
+    )
+    pair_loader = DataLoader(
+        pair_dataset,
+        batch_size=PAIR_BATCH_SIZE_PER_RANK,
+        shuffle=(pair_sampler is None),
+        sampler=pair_sampler,
+        num_workers=NUM_WORKERS,
+        pin_memory=device.type == "cuda",
+        persistent_workers=False,
+        drop_last=False,
+    )
+    pair_cycle = cycle(pair_loader)
 
     if OPTIMIZER.lower() == "adagrad":
         optimizer = torch.optim.Adagrad(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -363,7 +405,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, behavior_ranking_weight=BEHAVIOR_RANKING_WEIGHT, behavior_ranking_margin=BEHAVIOR_RANKING_MARGIN, behavior_ranking_metric="euclidean_encoder_latent", behavior_pairs=int((successor_rows >= 0).sum()))
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive", behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182")
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -374,14 +416,6 @@ def main() -> None:
     if world_size > 1:
         dist.barrier()
 
-    # Behaviour pair tables live on device so the added term costs no H2D copy.
-    train_embeddings_device = train_embeddings.to(device)
-    successor_device = torch.from_numpy(successor_rows).to(device)
-    # Own generator per rank so in-batch shuffling is reproducible and never
-    # consumes the global RNG stream that arm A relies on.
-    neg_generator = torch.Generator(device=device)
-    neg_generator.manual_seed(SEED + rank)
-
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
     final_collision = float("inf")
@@ -391,31 +425,32 @@ def main() -> None:
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
+        if pair_sampler is not None:
+            pair_sampler.set_epoch(epoch - 1)
         model.train()
         losses: list[float] = []
         recons: list[float] = []
-        rankings: list[float] = []
-        ranked_pairs = 0
+        behaviors: list[float] = []
+        epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
-        for batch, row_index in loader:
+        for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
-            row_index = row_index.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
-            positive_rows = successor_device[row_index]
-            has_successor = positive_rows >= 0
-            batch_ranking = torch.zeros((), device=device)
-            if bool(has_successor.any()):
-                anchors = batch[has_successor]
-                positives = train_embeddings_device[positive_rows[has_successor]]
-                negatives = _shuffled_negatives(positives, neg_generator)
-                batch_ranking = behavior_ranking_loss(
-                    raw_module, anchors, positives, negatives
+            behavior_loss = torch.zeros((), device=device)
+            if epoch_weight > 0.0:
+                pairs = next(pair_cycle).to(device, non_blocking=True)
+                source_ids, target_ids = pairs[:, 0], pairs[:, 1]
+                pair_batch = all_embeddings[
+                    torch.cat((source_ids, target_ids)).cpu()
+                ].to(device, non_blocking=True)
+                residuals = _residuals_with_trace(raw_module, pair_batch)
+                behavior_loss = behavior_contrastive_loss(
+                    residuals, source_ids, target_ids
                 )
-                loss = loss + BEHAVIOR_RANKING_WEIGHT * batch_ranking
-                ranked_pairs += int(has_successor.sum())
+                loss = loss + epoch_weight * behavior_loss
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -425,30 +460,27 @@ def main() -> None:
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
-            rankings.append(float(batch_ranking.detach()))
+            behaviors.append(float(behavior_loss.detach()))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
         local_loss = torch.tensor(float(np.mean(losses)) if losses else 0.0, device=device)
         local_recon = torch.tensor(float(np.mean(recons)) if recons else 0.0, device=device)
-        local_rank_loss = torch.tensor(float(np.mean(rankings)) if rankings else 0.0, device=device)
-        local_ranked_pairs = torch.tensor(float(ranked_pairs), device=device)
+        local_behavior = torch.tensor(float(np.mean(behaviors)) if behaviors else 0.0, device=device)
         if world_size > 1:
             dist.all_reduce(local_loss, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
-            dist.all_reduce(local_rank_loss, op=dist.ReduceOp.SUM)
-            dist.all_reduce(local_ranked_pairs, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_behavior, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
-        avg_ranking = float(local_rank_loss.item()) / max(world_size, 1)
-        epoch_ranked_pairs = int(local_ranked_pairs.item())
+        avg_behavior = float(local_behavior.item()) / max(world_size, 1)
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
-                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} rank={avg_ranking:.6f} pairs={epoch_ranked_pairs} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_ranking=avg_ranking, behavior_ranked_pairs=epoch_ranked_pairs, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -476,7 +508,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_ranking=avg_ranking, behavior_ranked_pairs=epoch_ranked_pairs, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
