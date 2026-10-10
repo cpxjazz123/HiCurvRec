@@ -19,7 +19,10 @@ PKG = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from launch_utils import launch_arm  # noqa: E402
 RESULTS = PKG.parent.parent / "results/stage2_RQ-VAE/curvature_RQ-VAE/multiseed_arms"
-SEEDS = (42, 43, 44)
+# seed 42 already exists as the registered smoothness arm, in its own results
+# directory; repeating it here under a different name would train an arm nothing
+# evaluates.
+SEEDS = (43, 44)
 # Only the hyperbolic arm: the claim to confirm is that the hyperbolic model
 # beats the euclidean baseline, and that baseline's own seeds are measured
 # separately by run_euclid_baseline_seeds.
