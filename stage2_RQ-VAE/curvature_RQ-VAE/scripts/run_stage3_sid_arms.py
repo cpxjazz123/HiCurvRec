@@ -148,6 +148,26 @@ ARMS = {
         "multiseed_arms/smooth_euclid_s44/item_sids.json",
         "sidarm_M44E_smooth_euclid_s44",
     ),
+    # The three assignment modes, whose Stage2 ran long ago and whose Stage3
+    # never did. This is the direct check of whether the discrete code
+    # assignment itself moves the recommendation metric: bucket balances codes
+    # inside each preceding-code bucket, global balances over the whole batch,
+    # and argmin takes the nearest code with no balancing at all.
+    "L2AB": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_assignment_arms/A_bucket_sinkhorn_s42/item_sids.json",
+        "sidarm_L2AB_bucket_sinkhorn_s42",
+    ),
+    "L2AG": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
+        "sidarm_L2AG_global_sinkhorn_s42",
+    ),
+    "L2AN": (
+        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
+        "l2_assignment_arms/C_nearest_argmin_s42/item_sids.json",
+        "sidarm_L2AN_nearest_argmin_s42",
+    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
