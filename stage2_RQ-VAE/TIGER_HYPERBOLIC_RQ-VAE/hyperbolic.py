@@ -62,29 +62,32 @@ def ball_radius(c: float) -> float:
     return 1.0 / (c ** 0.5)
 
 
-def encode_ball(latent: torch.Tensor, c: float, tangent_scale: float) -> torch.Tensor:
-    """Map an unconstrained encoder latent into the ball, preserving relative radii.
+def encode_ball(latent: torch.Tensor, c: float, normalizer) -> torch.Tensor:
+    """Map an encoder latent into the ball with a FIXED, batch-independent scale.
 
-    Two failure modes have to be avoided at once.
+    ``normalizer`` is a scalar (or 1-element tensor) computed once from the
+    training set as ``atanh(target_radius_fraction) / median(||latent||)``. The
+    map is then a pure function of the latent: the same item always receives the
+    same ball coordinate, no matter which items share its batch and no matter
+    whether it is being used as an anchor or as a candidate.
 
-    A raw 32-d MLP latent has norm near ``sqrt(32)`` and grows, so
-    ``sqrt(c) * ||x||`` saturates ``tanh`` and pins every point to the boundary,
-    where distances collapse.
+    An earlier version divided by the *batch* RMS. That was wrong in two
+    separately measurable ways:
 
-    Normalising each point to a unit direction and rescaling by a constant fixes
-    that but goes too far the other way: every image then has *identical* norm
-    ``tanh(sqrt(c) * tangent_scale) / sqrt(c)``, so the radial coordinate -- the
-    dimension that encodes hierarchy in a hyperbolic space -- carries no
-    information and the model degenerates to an angular-only representation on a
-    sphere.
+      * one item's ``||z||`` moved between 0.5046 and 0.5561 purely from batch
+        membership (0.700 when encoded alone), so the "distance" between two
+        items was not a function of the items;
+      * anchors and candidates were mapped by two separate calls, each dividing
+        by its own RMS (0.064164 vs 0.062453), which placed them in two
+        different balls and made the reported distance meaningless as a metric.
 
-    Rescaling by the *batch* RMS instead keeps each point's radius relative to
-    its peers, so hierarchy stays representable, while holding the overall scale
-    near ``tangent_scale`` so ``tanh`` is not saturated. Only the ball image is
-    affected; the RQ-VAE path keeps using the raw latent.
+    A fixed normalizer removes both. It is a constant within a run, exactly like
+    the temperature, and only needs recomputing if the encoder's output scale is
+    deliberately changed.
     """
-    rms = latent.square().sum(-1).mean().sqrt().clamp_min(NORM_FLOOR)
-    return expmap0(latent / rms * tangent_scale, c)
+    if not torch.is_tensor(normalizer):
+        normalizer = torch.as_tensor(normalizer, dtype=latent.dtype, device=latent.device)
+    return expmap0(latent * normalizer, c)
 
 
 def poincare_distance(x: torch.Tensor, y: torch.Tensor, c: float) -> torch.Tensor:
