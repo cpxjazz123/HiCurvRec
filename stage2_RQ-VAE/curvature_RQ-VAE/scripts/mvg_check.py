@@ -97,6 +97,15 @@ def main() -> None:
         and [layer.sk_iters for layer in layers] == [50] * 3,
         "Sinkhorn settings changed",
     )
+    # The smoothness scope decides where the smoothness pairs come from, so a
+    # silent fallback to the global pairing would train a different mechanism
+    # than the one registered. Assert the registered value reached every layer.
+    expected_scope = str(getattr(training, "QUANT_SMOOTHNESS_SCOPE", "global"))
+    require(
+        all(layer.smoothness_scope == expected_scope for layer in layers),
+        f"smoothness scope {[layer.smoothness_scope for layer in layers]} != "
+        f"registered {expected_scope}",
+    )
     require(
         not any(
             name.endswith("c_layer_scale") for name, _ in model.named_parameters()
