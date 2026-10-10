@@ -71,12 +71,18 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "resample_fn_mask"          # "resample" | "resample_fn_mask"
+EXPERIMENT_ARM = "resample_s44"          # arm name; see _ARM_DIR
+# Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
+# standard errors, so the same configuration is re-run under other seeds to see
+# whether the gain survives. Every other constant is untouched.
 _ARM_DIR = {
-    "resample":        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+    "resample":         "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
     "resample_fn_mask": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
-}[EXPERIMENT_ARM]
-_OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR
+    "resample_s43":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+    "resample_s44":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+}
+_ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
+_OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
@@ -103,7 +109,7 @@ XAVIER_INIT         = True
 WARMUP_EPOCHS       = 50
 GRADIENT_CLIP_NORM  = 1.0
 OPTIMIZER           = "AdamW"
-SEED                = 42
+SEED                = _ARM_SEED
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
 # === 唯一新增机制: 历史 Iter48 (348aed182) 行为对比监督 ===
