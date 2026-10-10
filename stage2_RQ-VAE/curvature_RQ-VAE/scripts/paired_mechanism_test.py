@@ -32,9 +32,16 @@ PAIRS = {
     43: ("sidarm_M43_smooth_poincare_s43", "sidarm_E43_euclid_l2_256_72k_s43"),
     44: ("sidarm_M44_smooth_poincare_s44", "sidarm_E44_euclid_l2_256_72k_s44"),
 }
-# The mechanism's effect inside one geometry, for contrast: euclidean mechanism
-# against the euclidean bar at seed 42.
-EUCLIDEAN_PAIR = ("sidarm_SE_euclid_smooth", "sidarm_E72_euclid_l2_256_72k")
+# The mechanism's effect inside the bar's own geometry, over the same three
+# seeds. The hyperbolic effect is smaller than the seed spread, so no number of
+# seeds resolves it on its own; the euclidean effect is nearly four times as
+# large and the same size as the spread, so this is the side a paired test has a
+# chance of settling.
+EUCLIDEAN_PAIRS = {
+    42: ("sidarm_SE_euclid_smooth", "sidarm_E72_euclid_l2_256_72k"),
+    43: ("sidarm_M43E_smooth_euclid_s43", "sidarm_E43_euclid_l2_256_72k_s43"),
+    44: ("sidarm_M44E_smooth_euclid_s44", "sidarm_E44_euclid_l2_256_72k_s44"),
+}
 
 
 def _test_recall(variant: str) -> float | None:
@@ -50,10 +57,11 @@ def _test_recall(variant: str) -> float | None:
     return None
 
 
-def main() -> None:
+def _report(label: str, pairs: dict[int, tuple[str, str]]) -> list[float]:
     differences = []
+    print(f"=== {label} ===")
     print(f"{'seed':>5} {'mechanism':>12} {'bar':>10} {'difference':>12}")
-    for seed, (mechanism, bar) in sorted(PAIRS.items()):
+    for seed, (mechanism, bar) in sorted(pairs.items()):
         m = _test_recall(mechanism)
         b = _test_recall(bar)
         if m is None or b is None:
@@ -64,16 +72,19 @@ def main() -> None:
         print(f"{seed:>5} {m:>12.6f} {b:>10.6f} {m - b:>+12.6f}")
     if differences:
         mean = sum(differences) / len(differences)
-        print(f"\npaired differences: n={len(differences)} mean={mean:+.6f} "
+        print(f"paired differences: n={len(differences)} mean={mean:+.6f} "
               f"min={min(differences):+.6f} max={max(differences):+.6f} "
               f"all positive={all(d > 0 for d in differences)}")
         if len(differences) > 1:
             print(f"spread across seeds: {max(differences) - min(differences):.6f} "
                   f"({100 * (max(differences) - min(differences)) / abs(mean):.1f}% of the mean)")
-    m = _test_recall(EUCLIDEAN_PAIR[0])
-    b = _test_recall(EUCLIDEAN_PAIR[1])
-    if m is not None and b is not None:
-        print(f"\nfor contrast, euclidean mechanism minus euclidean bar at seed 42: {m - b:+.6f}")
+    print()
+    return differences
+
+
+def main() -> None:
+    _report("hyperbolic mechanism minus euclidean bar", PAIRS)
+    _report("euclidean mechanism minus euclidean bar", EUCLIDEAN_PAIRS)
 
 
 if __name__ == "__main__":
