@@ -168,19 +168,6 @@ ARMS = {
         "l2_assignment_arms/C_nearest_argmin_s42/item_sids.json",
         "sidarm_L2AN_nearest_argmin_s42",
     ),
-    # The curvature-scale round: the same production protocol, with the
-    # curvature set so the Poincare conformal factor is order one instead of
-    # order one percent at the code radius the protocol fixes.
-    "CSE": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "curvature_scale_arms/A_euclid_c25_s42/item_sids.json",
-        "sidarm_CSE_euclid_c25_s42",
-    ),
-    "CSP": (
-        f"{RESULTS}/stage2_RQ-VAE/curvature_RQ-VAE/"
-        "curvature_scale_arms/B_poincare_c25_s42/item_sids.json",
-        "sidarm_CSP_poincare_c25_s42",
-    ),
     # Position test: the same smoothness term at the same per-level weight,
     # applied to level 3 alone and to levels 1-2 together.
     "PLE": (
