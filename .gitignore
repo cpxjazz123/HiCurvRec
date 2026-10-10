@@ -1078,3 +1078,14 @@ results/stage3_T5Train/curvature_RQ-VAE_iter67/logs/_stage3_run*.log
 !results/stage2_RQ-VAE/_cancelled_iter103_cres_half/dataset/Instruments/
 !results/stage2_RQ-VAE/_cancelled_iter103_cres_half/dataset/Instruments/sids_for_hgrec.npy
 !results/stage2_RQ-VAE/_cancelled_iter103_cres_half/item_sids.json
+
+# 2026-10-10: the Stage3 arm trees under results/stage3_T5Train/ carry the native
+# deliverables the project rule requires in git: test_final.json and
+# training_metrics.jsonl under logs/, and HG_Rec_best.pth under ckpt/. The broad
+# logs/ and ckpt*/ rules earlier in this file drop all three silently, so the arm
+# trees are re-included the same way the unified curvature_RQ-VAE tree already
+# is. Only these arm trees are re-included; nothing else changes.
+!results/stage3_T5Train/sidarm_*/
+!results/stage3_T5Train/sidarm_*/ckpt*/
+!results/stage3_T5Train/sidarm_*/logs/
+!results/stage3_T5Train/sidarm_*/**

@@ -1178,7 +1178,13 @@ def main():
     )
     os.makedirs(_shard_dir, exist_ok=True)
     _shard_path = os.path.join(_shard_dir, f"rank{rank}.json")
-    with open(_shard_path, "w", encoding="utf-8") as _fh:
+    # Publish the shard atomically and flush it to stable storage. Two separate
+    # runs on this filesystem lost one rank's shard to a non-atomic write: the
+    # rank logged its shard as written, the file never became visible, and rank 0
+    # then spent 30 minutes waiting for it. The metric is unchanged; only the
+    # durability of the hand-off is.
+    _shard_tmp = _shard_path + ".partial"
+    with open(_shard_tmp, "w", encoding="utf-8") as _fh:
         json.dump(
             {
                 "rank": rank,
@@ -1190,6 +1196,12 @@ def main():
             _fh,
             indent=2,
         )
+        _fh.flush()
+        try:
+            os.fsync(_fh.fileno())
+        except OSError:
+            pass
+    os.replace(_shard_tmp, _shard_path)
     print(
         f"[test] rank={rank}/{world_size} shard n_eval={shard_n} "
         f"elapsed={_test_elapsed:.1f}s",
