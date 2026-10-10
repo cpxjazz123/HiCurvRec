@@ -1,10 +1,10 @@
-"""Run frozen Stage3 against the TIGER + behaviour-ranking SIDs.
+"""Run frozen Stage3 against the TIGER + iter48 residual-contrastive SIDs.
 
-Ablation arm B of the TIGER behaviour-supervision study. Only CODE_PATH,
-RQVAE_VARIANT, LOG_PATH and SAVE_PATH are wired; every frozen Stage3 field
-(num_epochs=150, early stop disabled, no_eval, skip_test, seed=42, beam=20)
-stays exactly as the shared trainer defines it, so arm B and the arm A TIGER
-baseline are protocol-comparable.
+Ablation arm C: TIGER + the historical iter48 behaviour-contrastive
+mechanism, ported onto the current TIGER recipe. Only CODE_PATH, RQVAE_VARIANT,
+LOG_PATH and SAVE_PATH are wired; every frozen Stage3 field (150 epochs,
+early stop disabled, no_eval, skip_test, seed=42, beam=20) stays as the shared
+trainer defines it, so arm C and the TIGER baseline are protocol-comparable.
 """
 import importlib.util
 import os

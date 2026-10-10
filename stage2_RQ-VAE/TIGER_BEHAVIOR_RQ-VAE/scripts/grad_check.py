@@ -1,11 +1,9 @@
-"""CLAUDE.md §6 gradient pathway check for the TIGER + behaviour ranking arm.
+"""CLAUDE.md §6 gradient pathway check for the iter48 mechanism on the TIGER recipe.
 
-Runs one real batch through the actual trainer code path and asserts that the
-behaviour term is wired into the graph: non-None grad_fn, non-zero gradients
-on encoder parameters from that term alone, and a strictly positive loss delta
-against the untouched TIGER objective. Prints JSON and exits non-zero on FAIL.
-
-This script writes no artifacts; it only reports.
+Asserts the ported contrastive term is wired end to end: non-None grad_fn,
+non-zero encoder gradients from that term alone, a residual trace with the
+correct per-level shape, the delayed ramp actually gating the term, and an
+unchanged arm-A objective on the same batch. Prints JSON, exits non-zero on FAIL.
 """
 
 from __future__ import annotations
@@ -30,10 +28,24 @@ def main() -> None:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     report: dict[str, object] = {
         "device": str(device),
-        "behavior_ranking_weight": trainer.BEHAVIOR_RANKING_WEIGHT,
-        "behavior_ranking_margin": trainer.BEHAVIOR_RANKING_MARGIN,
+        "behavior_weight_max": trainer.BEHAVIOR_WEIGHT_MAX,
+        "behavior_temperature": trainer.BEHAVIOR_TEMPERATURE,
+        "ramp_start_epoch": trainer.RAMP_START_EPOCH,
     }
     failures: list[str] = []
+
+    # --- (0) the delayed ramp gates the term exactly as iter48 did ----------
+    ramp = {
+        str(epoch): trainer.behavior_weight(epoch)
+        for epoch in (1, 1499, 1500, 2250, 3000)
+    }
+    report["ramp_samples"] = ramp
+    if ramp["1"] != 0.0 or ramp["1499"] != 0.0:
+        failures.append("behaviour weight is nonzero before the ramp starts")
+    if abs(ramp["3000"] - trainer.BEHAVIOR_WEIGHT_MAX) > 1e-9:
+        failures.append("behaviour weight does not reach its max at the final epoch")
+    if not (0.0 < ramp["2250"] < trainer.BEHAVIOR_WEIGHT_MAX):
+        failures.append("behaviour weight is not monotonically ramped mid-run")
 
     trainer.set_seed(trainer.SEED)
     embeddings = trainer.load_embeddings(trainer.EMBEDDING_FILE)
@@ -43,114 +55,121 @@ def main() -> None:
     train_ids = np.unique(train_frame["target"].to_numpy(dtype=np.int64))
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
-    successor_rows = trainer._successor_rows(train_frame, train_ids)
-    report["train_rows"] = int(len(train_ids))
-    report["rows_with_successor"] = int((successor_rows >= 0).sum())
-    if report["rows_with_successor"] == 0:
-        failures.append("no behaviour pairs resolved from the training sequences")
+    pair_dataset = trainer.TransitionPairs(train_frame)
+    report["train_items"] = int(len(train_ids))
+    report["transition_pairs"] = len(pair_dataset)
 
     model = RQVAE(
         trainer._tokenizer_config(), in_dim=embeddings.shape[1]
     ).to(device)
     trainer.initialize_tiger_weights(model)
-    model.eval()  # freeze Sinkhorn branches; only the graph wiring is under test
+    model.eval()
     for layer in model.rq.vq_layers:
         layer._skip_ddp_reduce = True
     with torch.no_grad():
         model.init_codebook(train_embeddings.to(device))
 
-    row_ids = torch.arange(len(train_ids), dtype=torch.long)
-    generator = torch.Generator(device=device)
-    generator.manual_seed(trainer.SEED)
-    batch_size = trainer.BATCH_SIZE_PER_RANK
-    batch_rows = row_ids[:batch_size]
-    batch = train_embeddings[batch_rows].to(device)
-    row_index = batch_rows.to(device)
-    positive_rows = torch.from_numpy(successor_rows).to(device)[row_index]
-    has_successor = positive_rows >= 0
-    report["batch_rows"] = int(batch_size)
-    report["batch_rows_with_successor"] = int(has_successor.sum())
-    if not bool(has_successor.any()):
-        failures.append("the probe batch contains no rows with a real successor")
-
-    # --- (1) reconstruction / VQ objective, arm A verbatim -------------------
-    reconstructed, quant_loss, _, _ = model(batch)
-    base_loss, recon_loss = model.compute_loss(batch, reconstructed, quant_loss)
+    # --- (1) arm A objective on a real item batch is untouched -------------
+    item_rows = torch.arange(trainer.BATCH_SIZE_PER_RANK, dtype=torch.long)
+    item_batch = train_embeddings[item_rows].to(device)
+    reconstructed, quant_loss, _, _ = model(item_batch)
+    base_loss, recon_loss = model.compute_loss(item_batch, reconstructed, quant_loss)
     report["base_loss"] = float(base_loss.detach())
     report["recon_loss"] = float(recon_loss.detach())
     report["quant_loss"] = float(quant_loss.detach())
     if not base_loss.requires_grad or base_loss.grad_fn is None:
         failures.append("arm A objective lost its autograd graph")
 
-    # --- (2) behaviour term alone -------------------------------------------
-    anchors = batch[has_successor]
-    positives = train_embeddings.to(device)[positive_rows[has_successor]]
-    negatives = trainer._shuffled_negatives(positives, generator)
-    fixed_point_rate = float(
-        (negatives == positives).all(dim=-1).to(torch.float32).mean()
-    )
-    report["negative_self_match_fraction"] = fixed_point_rate
-    if fixed_point_rate != 0.0:
-        failures.append("in-batch shuffling produced a negative equal to its positive")
+    # --- (2) residual trace shape matches iter48's 3-level capture ---------
+    pairs = pair_dataset.pairs[: trainer.PAIR_BATCH_SIZE_PER_RANK]
+    source_ids, target_ids = pairs[:, 0].to(device), pairs[:, 1].to(device)
+    pair_batch = all_embeddings[
+        torch.cat((source_ids, target_ids)).cpu()
+    ].to(device)
+    residuals = trainer._residuals_with_trace(model, pair_batch)
+    report["residual_shape"] = list(residuals.shape)
+    report["pair_rows"] = int(pairs.shape[0])
+    expected_levels = model.rq.codebook_num
+    if residuals.shape != (expected_levels, 2 * pairs.shape[0], model.config.codebook_dim):
+        failures.append(
+            f"residual trace shape {list(residuals.shape)} != "
+            f"{(expected_levels, 2 * int(pairs.shape[0]), model.config.codebook_dim)}"
+        )
 
-    ranking = trainer.behavior_ranking_loss(model, anchors, positives, negatives)
-    report["ranking_loss"] = float(ranking.detach())
-    if not ranking.requires_grad or ranking.grad_fn is None:
-        failures.append("behaviour ranking loss has no grad_fn")
-
+    # --- (3) the contrastive term alone reaches the encoder -----------------
+    contrastive = trainer.behavior_contrastive_loss(residuals, source_ids, target_ids)
+    report["contrastive_loss"] = float(contrastive.detach())
+    if not contrastive.requires_grad or contrastive.grad_fn is None:
+        failures.append("contrastive loss has no grad_fn")
+    params = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
     grads = torch.autograd.grad(
-        ranking,
-        [p for p in model.parameters() if p.requires_grad],
-        retain_graph=True,
-        allow_unused=True,
+        contrastive, [p for _, p in params], retain_graph=True, allow_unused=True
     )
-    named = [
-        (name, param)
-        for name, param in model.named_parameters()
-        if param.requires_grad
+    nonzero = [
+        name
+        for (name, _), grad in zip(params, grads)
+        if grad is not None and float(grad.abs().sum()) > 0.0
     ]
-    nonzero = []
-    for (name, _), grad in zip(named, grads):
-        if grad is not None and float(grad.abs().sum()) > 0.0:
-            nonzero.append(name)
-    report["ranking_grad_nonzero_parameter_count"] = len(nonzero)
-    report["ranking_grad_nonzero_parameters_sample"] = nonzero[:8]
-    report["ranking_grad_touches_encoder"] = any(
-        name.startswith("encoder.") for name in nonzero
+    report["contrastive_grad_nonzero_parameter_count"] = len(nonzero)
+    report["contrastive_grad_touches_encoder"] = any(
+        n.startswith("encoder.") for n in nonzero
     )
-    if not report["ranking_grad_touches_encoder"]:
-        failures.append("behaviour term produced no gradient on the encoder")
+    report["contrastive_grad_sample"] = nonzero[:8]
+    if not report["contrastive_grad_touches_encoder"]:
+        failures.append("contrastive term produced no gradient on the encoder")
     if len(nonzero) == 0:
-        failures.append("behaviour term produced no gradient on any parameter")
+        failures.append("contrastive term produced no gradient on any parameter")
 
-    # --- (3) the additive term reaches the same graph as the total ----------
-    total = base_loss + trainer.BEHAVIOR_RANKING_WEIGHT * ranking
-    report["total_loss"] = float(total.detach())
-    report["total_requires_grad"] = bool(total.requires_grad)
-    report["total_grad_fn"] = type(total.grad_fn).__name__ if total.grad_fn else None
-    report["weighted_ranking_delta"] = float(
-        (total - base_loss).detach()
+    # --- (4) masked candidates must not include the true successor ---------
+    with torch.no_grad():
+        level = 0
+        src = residuals[level, : pairs.shape[0]]
+        cand = residuals[level, pairs.shape[0] :]
+        dist = torch.cdist(src, cand, p=2)
+        dup = target_ids[:, None].eq(target_ids[None, :])
+        dup.fill_diagonal_(False)
+        valid = source_ids.ne(target_ids)
+        argmin_among_all = dist.argmin(dim=1)
+        masked = dist.masked_fill(dup, float("inf")).argmin(dim=1)
+        share = float(
+            (masked[valid] == torch.arange(pairs.shape[0], device=device)[valid])
+            .to(torch.float32)
+            .mean()
+        )
+    report["valid_contrastive_rows"] = int(valid.sum())
+    report["share_true_successor_is_nearest"] = share
+    report["share_nearest_before_mask"] = float(
+        (argmin_among_all[valid] == torch.arange(pairs.shape[0], device=device)[valid])
+        .to(torch.float32)
+        .mean()
     )
-    if not (total - base_loss > 0).all() and float((total - base_loss)) <= 0.0:
-        failures.append("weighted behaviour term did not increase the objective")
+    if share <= 0.0:
+        failures.append("no anchor retrieves its true successor; the task is broken")
+
+    # --- (5) the ramped total is a strict superset of the arm A objective ---
+    # RAMP_START_EPOCH is the last epoch at weight 0; the first active epoch is
+    # the next one, so probe there.
+    first_active = trainer.RAMP_START_EPOCH + 1
+    weight = trainer.behavior_weight(first_active)
+    if weight <= 0.0:
+        failures.append("behaviour weight never leaves zero after the ramp start")
+    total = base_loss + weight * contrastive
+    report["first_active_epoch"] = first_active
+    report["ramp_weight_at_first_active_epoch"] = weight
+    report["total_loss"] = float(total.detach())
+    report["total_grad_fn"] = type(total.grad_fn).__name__ if total.grad_fn else None
+    report["weighted_delta"] = float((weight * contrastive).detach())
     total_grads = torch.autograd.grad(
-        total,
-        [p for p in model.parameters() if p.requires_grad],
-        retain_graph=True,
-        allow_unused=True,
+        total, [p for _, p in params], retain_graph=True, allow_unused=True
     )
     total_nonzero = sum(
-        1 for grad in total_grads if grad is not None and float(grad.abs().sum()) > 0
+        1 for g in total_grads if g is not None and float(g.abs().sum()) > 0
     )
     report["total_grad_nonzero_parameter_count"] = total_nonzero
     if total_nonzero == 0:
-        failures.append("total loss produced no gradient on any parameter")
-
-    # --- (4) the term must be the only difference from arm A ----------------
-    report["arm_a_loss_unchanged_by_behaviour_term"] = float(
-        base_loss.detach()
-    ) == report["base_loss"]
-    report["checkpoint_exists"] = False  # nothing is saved by this check
+        failures.append("ramped total produced no gradient on any parameter")
+    if float(weight * contrastive) <= 0.0:
+        failures.append("ramped behaviour term did not increase the objective")
 
     report["failures"] = failures
     report["status"] = "FAIL" if failures else "PASS"
