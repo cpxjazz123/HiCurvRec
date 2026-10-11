@@ -553,3 +553,10 @@ results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
 # Recorded so the clustering cannot drift between the diagnostic and a run.
 # Scoped to this one path, after the global **/*.npz rule.
 !results/stage3_T5Train/monotonicity/behaviour_clusters_s42.npz
+
+# The INDEPENDENT validation pair set (step 7): the positives come from
+# valid.parquet and every one of them is a held-out interaction, so the scored
+# relations never entered training. It travels with the results for the same
+# reason as the train-based set: the reported sharing rates and enrichment
+# ratios cannot be recomputed without it. Scoped to this one path.
+!results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz

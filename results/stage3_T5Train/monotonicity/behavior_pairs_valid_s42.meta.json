@@ -1,0 +1,53 @@
+{
+  "purpose": "independent validation behaviour pairs: the relations are drawn from valid.parquet, so they never entered training",
+  "relation": "valid_transition: history[-1] -> target, from valid.parquet",
+  "seed": 42,
+  "k_negatives": 10,
+  "item_id_space": "raw item ids as stored in stage0_build_parquet and used as the keys of every item_sids.json; no re-indexing",
+  "dtype": "int32",
+  "shapes": {
+    "anchors": [
+      52855
+    ],
+    "positives": [
+      52855
+    ],
+    "negatives": [
+      52855,
+      10
+    ]
+  },
+  "filters": {
+    "rows_in_valid_parquet": 57439,
+    "distinct_transitions": 56630,
+    "dropped_invalid_item_id": 0,
+    "dropped_self_loop": 0,
+    "kept_pairs": 56630,
+    "distinct_anchors": 17054,
+    "mean_positives_per_anchor": 3.3206285915327785,
+    "dropped_also_a_train_transition": 3775,
+    "held_out_pairs": 52855,
+    "held_out_anchors": 16929
+  },
+  "negative_construction": {
+    "k_negatives": 10,
+    "positives": 52855,
+    "negative_draws": 528550,
+    "bin_fallbacks": 126,
+    "pools_shorter_than_k": 0,
+    "invariant_violations": 0,
+    "distinct_negatives": 24533,
+    "max_negatives_per_positive_distinct": 10
+  },
+  "negative_semantics": "unobserved in BOTH splits, not proven irrelevant: no observed train or valid relation to that anchor",
+  "checks": {
+    "no_invariant_violations": true,
+    "no_negative_equals_positive": true,
+    "no_negative_equals_anchor": true,
+    "no_negative_is_a_train_or_valid_successor_of_its_anchor": true,
+    "ten_distinct_per_row": true,
+    "all_ids_in_range": true,
+    "positive_is_always_a_valid_successor": true,
+    "no_positive_is_a_train_successor": true
+  }
+}
