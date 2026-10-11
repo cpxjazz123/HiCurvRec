@@ -1,0 +1,48 @@
+{
+  "graph": {
+    "nodes": 24587,
+    "edges": 315391,
+    "total_edge_weight": 323633.0,
+    "source": "train.parquet transitions, symmetrised, weight = transition count",
+    "isolated_items_added_explicitly": 113
+  },
+  "clustering": {
+    "chosen_resolution": 4.0,
+    "resolution_search": [
+      {
+        "resolution": 1.0,
+        "n_communities": 39
+      },
+      {
+        "resolution": 2.0,
+        "n_communities": 74
+      },
+      {
+        "resolution": 4.0,
+        "n_communities": 199
+      },
+      {
+        "resolution": 8.0,
+        "n_communities": 464
+      }
+    ],
+    "selection_rule": "largest community count not exceeding the codebook capacity"
+  },
+  "n_clusters": 199,
+  "l1_codebook_capacity": 256,
+  "seed": 42,
+  "cluster_size": {
+    "min": 1,
+    "max": 1458,
+    "median": 60.0,
+    "mean": 123.55276381909547,
+    "singletons": 31
+  },
+  "behaviour_alignment": {
+    "transitions_total": 323633,
+    "transitions_within_cluster": 79052,
+    "fraction_within": 0.24426433645518225
+  },
+  "note": "the L1 consistency term maps cluster c to L1 codeword index c, so the cluster count must not exceed the codebook capacity",
+  "reproduce": "cd /home/wlia0047/ar57/wenyu/GeneRec && OMP_NUM_THREADS=8 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 stage2_RQ-VAE/TIGER_FORK_RQ-VAE/scripts/build_behaviour_clusters.py"
+}

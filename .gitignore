@@ -548,3 +548,8 @@ results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
 # arm is measured on exactly these pairs, so the file has to travel with the
 # results or the sharing rates cannot be recomputed. Scoped to this one path.
 !results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz
+
+# The Louvain behaviour partition the step 4 cluster-consistency term supervises.
+# Recorded so the clustering cannot drift between the diagnostic and a run.
+# Scoped to this one path, after the global **/*.npz rule.
+!results/stage3_T5Train/monotonicity/behaviour_clusters_s42.npz
