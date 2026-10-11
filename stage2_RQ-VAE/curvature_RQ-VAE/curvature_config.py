@@ -85,27 +85,6 @@ CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # arms are still compared against it as the parent condition at accept time.
 BEHAVIOUR_LOSS_ENABLED = True
 
-# Where the pairwise behaviour hinge is applied.
-#
-# "encoder" is the parent condition: the hinge ranks origin-tangent ENCODER
-# outputs, so it shapes the latent that the quantizer then reads.
-#
-# "prefix_l12" moves the SAME hinge -- same transition pairs, same in-batch
-# negative permutation, same margin, same weight -- onto the QUANTIZED L1+L2
-# prefix representation, i.e. `RQLayer(..., return_prefixes=True)` entry 1. That
-# tensor is the running sum of the first two quantized codes and carries
-# gradient into the L1 and L2 codebooks themselves, so the hinge can move the
-# code vectors that decide which items share an L1+L2 prefix.
-#
-# Registered reason: across this repository's 38 evaluated models the L1+L2
-# enrichment ratio is the strongest correlate of downstream test_R@10
-# (Spearman 0.891), and the L1-only encoder hinge has never moved it. The
-# quantizer, not the latent, is where the prefix Stage3 conditions on is formed,
-# so that is where the behaviour signal has to arrive. The two settings are
-# mutually exclusive by construction: the hinge is relocated, never added, so
-# the condition stays one-factor.
-BEHAVIOUR_RANKING_SPACE = "prefix_l12"
-
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
 
