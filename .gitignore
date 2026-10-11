@@ -495,3 +495,38 @@ results/stage3_T5Train/tiger_hyp_fix_*/logs/*/_ddp_sync/
 !results/stage3_T5Train/tiger_fork_*/logs/**
 !results/stage3_T5Train/tiger_fork_*/ckpt/
 !results/stage3_T5Train/tiger_fork_*/ckpt/**
+
+# TIGER behaviour-supervision sample arms and the hyperbolic repair arms.
+# These two families were missing an un-ignore block entirely, so the generic
+# `logs/` rule above shadowed every one of their Stage 3 native outputs. The
+# effect was that Exp1a resample -- the best model in the repository at
+# test_R@10 = 0.063633 -- had its SID tracked while its own test_final.json,
+# checkpoint and metrics stream were silently dropped, which is exactly what
+# CLAUDE.md section 13 forbids. Same shape as the tiger_fork_* block above:
+# un-ignore the directory itself first, because git does not descend into an
+# excluded directory, then its contents, then the binaries the global
+# **/*.pth and **/*.npy rules would otherwise drop.
+!results/stage3_T5Train/tiger_sample_resample*/
+!results/stage3_T5Train/tiger_sample_resample*/logs/
+!results/stage3_T5Train/tiger_sample_resample*/logs/**
+!results/stage3_T5Train/tiger_sample_resample*/ckpt/
+!results/stage3_T5Train/tiger_sample_resample*/ckpt/**
+!results/stage3_T5Train/tiger_hyp_*/
+!results/stage3_T5Train/tiger_hyp_*/logs/
+!results/stage3_T5Train/tiger_hyp_*/logs/**
+!results/stage3_T5Train/tiger_hyp_*/ckpt/
+!results/stage3_T5Train/tiger_hyp_*/ckpt/**
+# Binaries inside these two families are deliverables, not build products.
+!results/stage3_T5Train/tiger_sample_resample*/**/*.pth
+!results/stage3_T5Train/tiger_sample_resample*/**/*.npy
+!results/stage3_T5Train/tiger_hyp_*/**/*.pth
+!results/stage3_T5Train/tiger_hyp_*/**/*.npy
+# Runtime noise stays ignored, after the rules above so it still wins.
+results/stage3_T5Train/tiger_sample_resample*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_resample*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_resample*/logs/wait_*.log
+results/stage3_T5Train/tiger_sample_resample*/logs/_stage3_run*.log
+results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
+results/stage3_T5Train/tiger_hyp_*/logs/wait_*.log
+results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
