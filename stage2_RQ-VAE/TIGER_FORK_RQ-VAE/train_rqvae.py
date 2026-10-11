@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "prefix_sib"
+EXPERIMENT_ARM = "nce_euclid_group"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -131,12 +131,27 @@ _ARMS = {
                           "prefix_mode": "sibling"},
     "prefix_rand":       {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                           "prefix_mode": "random"},
+    # Which quantization levels the behaviour-fork terms act on. fork_radial_corr
+    # is levels=(0,), i.e. the encoder latent only. These two arms answer the
+    # explicit question of what behaviour supervision does at L2 and L3, now that
+    # the repair round gave every level a live gradient path (L1/L2/L3 all 8/8
+    # parameters non-zero; before the repair L2 and L3 were exactly 0).
+    "level_l23_add":     {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "levels": (0, 1, 2)},
+    "level_l23_only":    {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "levels": (1, 2)},
+    # Re-runs of the two geometry arms with BOTH defects fixed: real item ids in
+    # the dataset column, and the sibling distance actually inside the InfoNCE
+    # objective. New directories so the earlier, defective runs stay on record.
+    "nce_euclid_group":  {"group_distance": "euclid",   "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    "nce_hyp_group":     {"group_distance": "poincare", "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
 FORK_SIBLINGS_PER_ITEM = _ARM.get("siblings", 8)
 FORK_ANGULAR_MAX_PAIRS = _ARM.get("max_pairs", 2048)
 PREFIX_MODE = _ARM.get("prefix_mode", "off")   # "off" | "sibling" | "random"
+FORK_LEVELS = _ARM.get("levels", (0,))        # residual levels the fork terms act on
 PREFIX_WEIGHT = 0.05
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
 RADIAL_MODE = _ARM["radial_mode"]            # "mse" | "corr" | "off"
@@ -602,7 +617,10 @@ def fork_geometry_terms(
     """
     radius_target = radius_target[row_ids]
     batch_siblings = siblings[row_ids]
-    latent = raw_module.encoder(batch_embeddings)
+    # Full residual trace so the terms can act at any level; level 0 is the
+    # encoder latent, which is what fork_radial_corr used.
+    batch_residuals = _residuals_with_trace(raw_module, batch_embeddings)
+    latent = batch_residuals[0]
 
     # Both arms use the ball radius: the geometry switch for THIS experiment is
     # the metric inside the grouping term, not the coordinate system.
@@ -635,44 +653,86 @@ def fork_geometry_terms(
     valid = batch_siblings >= 0
     anchor_pos, sibling_pos = valid.nonzero(as_tuple=True)
     angular_loss = torch.zeros((), device=radius.device)
-    positive_cosine = torch.zeros((), device=radius.device)
+    positive_distance = torch.zeros((), device=radius.device)
     n_pairs = int(anchor_pos.numel())
     if n_pairs > FORK_ANGULAR_MAX_PAIRS:
         keep = torch.randperm(n_pairs, device=radius.device)[:FORK_ANGULAR_MAX_PAIRS]
         anchor_pos, sibling_pos = anchor_pos[keep], sibling_pos[keep]
         n_pairs = int(anchor_pos.numel())
+
     if n_pairs > 0:
+        anchor_ids = row_ids[anchor_pos]                 # real item ids
+        batch_ids = row_ids                              # real item ids, (B,)
         sibling_ids = batch_siblings[anchor_pos, sibling_pos]
-        sibling_latent = raw_module.encoder(
-            all_embeddings[sibling_ids.cpu()].to(batch_embeddings.device)
-        )
-        anchor_dir = direction[anchor_pos]
+
+        # Every side is mapped by ONE encode_ball call, so anchor, sibling and
+        # batch all live in the same space and the two arms differ only in the
+        # metric used below.
         if GROUP_DISTANCE == "poincare":
-            # Both sides mapped into the same ball by one call, so anchor and
-            # sibling live in one space.
-            z_anchor = encode_ball(
-                latent[anchor_pos], CURVATURE, normalizer
-            )
-            z_sibling = encode_ball(sibling_latent, CURVATURE, normalizer)
-            d_positive = poincare_distance(z_anchor, z_sibling, CURVATURE)
-            d_all = pair_poincare_distance(
-                z_anchor, encode_ball(latent, CURVATURE, normalizer), CURVATURE
+            def _metric(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+                return poincare_distance(a, b, CURVATURE)
+
+            def _metric_matrix(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+                return pair_poincare_distance(a, b, CURVATURE)
+        else:
+            def _metric(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+                return torch.linalg.vector_norm(a - b, dim=-1)
+
+            def _metric_matrix(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+                return torch.cdist(a, b, p=2)
+
+        sibling_emb = all_embeddings[sibling_ids.cpu()].to(batch_embeddings.device)
+        anchor_latent_l = latent[anchor_pos]
+        sibling_latent_l = raw_module.encoder(sibling_emb)
+
+        # Positive: the anchor's real behaviour sibling, i.e. an item that shares
+        # at least one purchase successor. This distance MUST be in the loss; the
+        # earlier version computed it and then optimised cross_entropy against
+        # the anchor's own batch position, which is self-identification and does
+        # no sibling aggregation at all.
+        positive_distance = _metric(
+            encode_ball(anchor_latent_l, CURVATURE, normalizer),
+            encode_ball(sibling_latent_l, CURVATURE, normalizer),
+        )
+        # Negatives: the batch, minus the anchor itself and minus every KNOWN
+        # positive of that anchor, so no true sibling is pushed away.
+        negative_distance = _metric_matrix(
+            encode_ball(anchor_latent_l, CURVATURE, normalizer),
+            encode_ball(latent, CURVATURE, normalizer),
+        )
+        sibling_table = siblings[anchor_ids]                      # (N, cap) real ids
+        known_positive = (
+            sibling_table[:, :, None] == batch_ids[None, None, :]
+        ).any(dim=1)                                              # (N, B)
+        exclude = known_positive | (anchor_ids[:, None] == batch_ids[None, :])
+
+        # The scale must come from the UNMASKED distances: masking first makes
+        # the mean infinite and every logit degenerate to NaN.
+        scale = negative_distance.detach().square().mean().sqrt().clamp_min(1e-8)
+        # InfoNCE over {positive} U {negatives}; column 0 is the positive, so the
+        # positive distance is a term of the objective and not merely reported.
+        logits = torch.cat(
+            [(-positive_distance / scale / FORK_ANGULAR_TEMPERATURE)[:, None],
+             -negative_distance / scale / FORK_ANGULAR_TEMPERATURE],
+            dim=1,
+        )
+        logits = logits.masked_fill(
+            torch.cat([torch.zeros_like(exclude[:, :1]), exclude], dim=1),
+            float("-inf"),
+        )
+        # A row whose negatives are all excluded has no defined softmax; drop it.
+        usable = torch.isfinite(logits[:, 1:]).any(dim=1)
+        if bool(usable.any()):
+            angular_loss = F.cross_entropy(
+                logits[usable],
+                torch.zeros(int(usable.sum()), dtype=torch.long, device=radius.device),
             )
         else:
-            z_anchor = encode_ball(latent[anchor_pos], CURVATURE, normalizer)
-            z_all = encode_ball(latent, CURVATURE, normalizer)
-            z_sibling = encode_ball(sibling_latent, CURVATURE, normalizer)
-            d_positive = torch.linalg.vector_norm(z_anchor - z_sibling, dim=-1)
-            d_all = torch.cdist(z_anchor, z_all, p=2)
-        positive_cosine = -d_positive
-        # The scale is fixed so the term cannot silently become a no-op or
-        # dominate; distances are rescaled to unit RMS like the main term.
-        rms = d_all.detach().square().mean().sqrt().clamp_min(1e-8)
-        logits = -d_all / rms / FORK_ANGULAR_TEMPERATURE
-        angular_loss = F.cross_entropy(logits, anchor_pos)
-    if n_pairs == 0:
-        anchor_pos = torch.zeros(0, dtype=torch.long, device=radius.device)
-        sibling_ids = torch.zeros(0, dtype=torch.long, device=radius.device)
+            angular_loss = torch.zeros((), device=radius.device)
+        positive_cosine = -positive_distance
+    else:
+        positive_cosine = torch.zeros((), device=radius.device)
+
     # (C) behaviour entering the quantization: pull the L1 codewords of branch
     # partners together so the L1 prefix carries branch information. Uses the
     # latents already computed above, so it costs no extra encoder pass.
@@ -810,7 +870,11 @@ def main() -> None:
     # The second column carries each row's position in the item universe, which
     # is the index space the radius target and the sibling table use. TensorDataset
     # returns element i of every column, so the embedding batch is unchanged.
-    train_row_ids = torch.arange(len(train_ids), dtype=torch.long)
+    # REAL item ids, not position indices. train_ids has gaps (24556 items over
+    # an id range of 0..24586), so arange(len(train_ids)) disagreed with the true
+    # id from the first gap onward -- 70.1% of rows were mis-indexed -- and both
+    # radius_target[row_ids] and siblings[row_ids] read the wrong item's entry.
+    train_row_ids = torch.from_numpy(train_ids.copy())
     train_dataset = TensorDataset(train_embeddings, train_row_ids)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
