@@ -12,7 +12,7 @@ PY2=/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9
 PY3=/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10
 LOG=$TREE/logs/fork_driver.log
 
-ARMS="prefix_sib prefix_rand"
+ARMS="nce_euclid_group nce_hyp_group"
 mkdir -p "$TREE/logs"
 echo "=== fork driver start $(date -Is) ===" >> "$LOG"
 for ARM in $ARMS; do
