@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "nce_hyp_group"
+EXPERIMENT_ARM = "nce_euclid_radius_control"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -145,12 +145,45 @@ _ARMS = {
     # objective. New directories so the earlier, defective runs stay on record.
     "nce_euclid_group":  {"group_distance": "euclid",   "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
     "nce_hyp_group":     {"group_distance": "poincare", "radial_mode": "mse",  "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    # Exp: does the hyperbolic arm improve once boundary saturation is removed?
+    # One added mechanism only: a soft hinge on the PRE-MAP tangent norm. Same
+    # seed, init, codebook, sampling, positives/negatives, weights and Stage3; the
+    # two arms differ only in group_distance.
+    "nce_euclid_radius_control": {"group_distance": "euclid",   "radial_mode": "mse",
+                                   "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                                   "radius_control": True},
+    "nce_hyp_radius_control":    {"group_distance": "poincare", "radial_mode": "mse",
+                                   "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                                   "radius_control": True},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
 FORK_SIBLINGS_PER_ITEM = _ARM.get("siblings", 8)
 FORK_ANGULAR_MAX_PAIRS = _ARM.get("max_pairs", 2048)
 PREFIX_MODE = _ARM.get("prefix_mode", "off")   # "off" | "sibling" | "random"
+# --- tangent-norm budget -------------------------------------------------------
+# The encoder's median norm grows 3.6x (Euclidean arm) and 9.4x (hyperbolic arm)
+# over training while the ball normalizer stays frozen at its initialisation value,
+# so tanh saturates and both the radial MSE and the behaviour InfoNCE lose their
+# gradient through it. This penalty acts on the norm BEFORE the map, where the
+# gradient is the plain radial direction x/||x|| and stays finite.
+#
+# budget = RADIUS_BUDGET_FACTOR * median(||encoder(x)||) at initialisation. With
+# normalizer 16.795 and median 0.05164, factor 2.0 puts the ceiling at radius
+# tanh(16.795 * 0.1033) = 0.939, so items below the budget still spread over a
+# wide radial range instead of piling on the boundary.
+RADIUS_BUDGET_FACTOR = 2.0
+# Set by scripts/precheck_radius.py: the weight at which the control's gradient
+# norm matches the reconstruction gradient's, measured at the saturated
+# operating point. NOT chosen against Recall@10 and identical for both arms.
+#   control grad norm at weight 1 : 21.4069
+#   reconstruction grad norm      : 0.04528
+#   => weight                    : 0.04528 / 21.4069
+# Matching the radial-MSE gradient instead would give 9.6e-06, because that
+# gradient is already 2.0e-04 from the saturated tanh; that target would simply
+# reproduce the failure the control exists to fix.
+RADIUS_CONTROL_WEIGHT = 0.0021153
+RADIUS_CONTROL_ENABLED = _ARM.get("radius_control", False)
 FORK_LEVELS = _ARM.get("levels", (0,))        # residual levels the fork terms act on
 PREFIX_WEIGHT = 0.05
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
@@ -464,6 +497,72 @@ def resolve_normalizer(raw_module: RQVAE, train_embeddings: torch.Tensor) -> flo
         norms = torch.linalg.vector_norm(raw_module.encoder(train_embeddings), dim=-1)
         median = float(torch.median(norms).clamp_min(1e-12))
     return float(np.arctanh(TARGET_RADIUS_FRACTION) / (CURVATURE ** 0.5) / median)
+
+
+PROBE_EPOCHS = (1, 500, 1000, 1500, 2000, 2500, 3000)
+
+
+def tangent_norm_control(
+    raw_module: RQVAE, embeddings: torch.Tensor, budget: float
+) -> torch.Tensor:
+    """Squared hinge on the encoder norm, measured BEFORE the ball map.
+
+    Deliberately not a penalty on the radius: once tanh has saturated the radius
+    gradient vanishes and the constraint can no longer act, which is exactly the
+    regime the runs ended up in. The tangent norm has gradient x/||x||, defined
+    everywhere, so the control keeps its grip where the other terms lose theirs.
+    """
+    latent = raw_module.encoder(embeddings)
+    norm = torch.linalg.vector_norm(latent, dim=-1)
+    return torch.relu(norm - budget).pow(2).mean()
+
+
+def saturation_probe(
+    raw_module: RQVAE,
+    train_embeddings: torch.Tensor,
+    normalizer: float,
+    initial_median_norm: float,
+    epoch: int,
+    rank: int,
+) -> None:
+    """Record the required diagnostics using the TRAINING normalizer.
+
+    The training-time value is what the losses actually saw; any recomputed value
+    is context only and must not be read as evidence of no saturation.
+    """
+    if rank != 0:
+        return
+    with torch.no_grad():
+        latent = raw_module.encoder(train_embeddings)
+        norms = torch.linalg.vector_norm(latent, dim=-1)
+        median_norm = float(torch.median(norms))
+        z = encode_ball(latent, CURVATURE, torch.tensor(normalizer, device=norms.device))
+        radius = (
+            (CURVATURE ** 0.5)
+            * torch.linalg.vector_norm(z, dim=-1)
+            / ball_radius(CURVATURE)
+        ).cpu().numpy()
+        norms_np = norms.cpu().numpy()
+        tokens = raw_module.get_indices(train_embeddings)
+    quantiles = np.percentile(radius, [10, 50, 90, 99])
+    codes_used = [int(len(torch.unique(tokens[:, k]))) for k in range(tokens.shape[1])]
+    prefixes = int(len(torch.unique(tokens[:, :2], dim=0)))
+    triples = int(len(torch.unique(tokens, dim=0)))
+    _record(
+        rank, "saturation_probe", epoch=epoch,
+        latent_norm_mean=float(norms_np.mean()), latent_norm_median=median_norm,
+        latent_norm_growth_x=median_norm / initial_median_norm,
+        training_normalizer=float(normalizer),
+        radius_mean=float(radius.mean()), radius_std=float(radius.std()),
+        radius_p10=float(quantiles[0]), radius_p50=float(quantiles[1]),
+        radius_p90=float(quantiles[2]), radius_p99=float(quantiles[3]),
+        frac_gt_0p95=float((radius > 0.95).mean()),
+        frac_gt_0p99=float((radius > 0.99).mean()),
+        frac_gt_0p999=float((radius > 0.999).mean()),
+        codebook_codes_used=codes_used,
+        distinct_prefixes_l1l2=prefixes, unique_triples=triples,
+        collision=1.0 - triples / len(tokens),
+    )
 
 
 def behavior_contrastive_loss(
@@ -941,6 +1040,23 @@ def main() -> None:
     # ball map cannot depend on batch membership and anchors and candidates share
     # a single ball. Constant for the whole run.
     ball_normalizer = resolve_normalizer(raw_module, train_embeddings.to(device))
+    with torch.no_grad():
+        initial_median_norm = float(
+            torch.median(
+                torch.linalg.vector_norm(
+                    raw_module.encoder(train_embeddings.to(device)), dim=-1
+                )
+            )
+        )
+    tangent_budget = RADIUS_BUDGET_FACTOR * initial_median_norm
+    if rank == 0:
+        print(
+            f"[RecBole RQ-VAE] tangent budget={tangent_budget:.6f} "
+            f"(factor {RADIUS_BUDGET_FACTOR} x initial median norm "
+            f"{initial_median_norm:.6f}), radius control "
+            f"{'ON' if RADIUS_CONTROL_ENABLED else 'OFF'} weight {RADIUS_CONTROL_WEIGHT}",
+            flush=True,
+        )
     # Own generator for the control arm's random partner shuffle, so it cannot
     # perturb any other stream.
     prefix_generator = torch.Generator(device=device)
@@ -973,7 +1089,7 @@ def main() -> None:
         _record(
             rank, "geometry_resolved", arm=EXPERIMENT_ARM, geometry=GEOMETRY,
             codebook_init_sha256=_init_sha,
-            group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, prefix_mode=PREFIX_MODE, curvature=CURVATURE, fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
+            group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, prefix_mode=PREFIX_MODE, curvature=CURVATURE, radius_control_enabled=RADIUS_CONTROL_ENABLED, radius_control_weight=RADIUS_CONTROL_WEIGHT, radius_budget_factor=RADIUS_BUDGET_FACTOR, tangent_budget=tangent_budget, initial_median_norm=initial_median_norm, probe_epochs=list(PROBE_EPOCHS), fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
             target_radius_fraction=TARGET_RADIUS_FRACTION,
             ball_normalizer=ball_normalizer,
             resolved_temperature=resolved_temperature,
@@ -1006,6 +1122,7 @@ def main() -> None:
         fork_radius_means: list[float] = []
         fork_pos_cosines: list[float] = []
         fork_prefixes: list[float] = []
+        fork_controls: list[float] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
         for batch, row_index in loader:
@@ -1048,6 +1165,10 @@ def main() -> None:
                     FORK_RADIAL_WEIGHT * radial_term
                     + FORK_ANGULAR_WEIGHT * angular_term
                 )
+                if RADIUS_CONTROL_ENABLED:
+                    control_term = tangent_norm_control(raw_module, batch, tangent_budget)
+                    loss = loss + epoch_weight * RADIUS_CONTROL_WEIGHT * control_term
+                    fork_controls.append(float(control_term.detach()))
                 fork_radials.append(float(radial_term.detach()))
                 fork_angulars.append(float(angular_term.detach()))
                 fork_radius_means.append(fork_stats["radius_mean"])
@@ -1084,8 +1205,12 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
+
+        if epoch in PROBE_EPOCHS:
+            saturation_probe(raw_module, train_embeddings.to(device),
+                             ball_normalizer, initial_median_norm, epoch, rank)
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
         model.eval()
@@ -1112,7 +1237,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
