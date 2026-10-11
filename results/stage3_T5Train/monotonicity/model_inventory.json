@@ -1,0 +1,1052 @@
+{
+  "n_stage3_results_scanned": 57,
+  "n_models_valid": 38,
+  "n_runs_excluded": 19,
+  "protocol_required": {
+    "seed": 42,
+    "beam_size": 20,
+    "num_epochs": 150,
+    "no_eval": true,
+    "skip_test": false,
+    "test_file": "test.parquet",
+    "screen_baseline_log": "",
+    "early_stop": null,
+    "screen_skip_test_on_fail": null,
+    "sid_length": 4
+  },
+  "stage3_repeat_noise": {
+    "models_with_repeat_runs": 0,
+    "max_recall_spread": null,
+    "per_model_spreads": {}
+  },
+  "models": [
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "sid_sha256": "b08567c7fbaf06e5",
+      "sid_mtime": 1791616249.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.0636327234109229,
+      "recall@10_runs": [
+        0.0636327234109229
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03478122381932672,
+      "n_eval": 57439,
+      "vocab_size": 781,
+      "stage3_runs": [
+        "tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-10-2026_18-16-53"
+      ]
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask/item_sids.json",
+      "sid_sha256": "eb1237df0acad348",
+      "sid_mtime": 1791619142.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.06356308431553474,
+      "recall@10_runs": [
+        0.06356308431553474
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03424071764008098,
+      "n_eval": 57439,
+      "vocab_size": 779,
+      "stage3_runs": [
+        "tiger_sample_resample_fn_mask/logs/Amazon_2023_Instruments/Oct-10-2026_19-03-20"
+      ]
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43/item_sids.json",
+      "sid_sha256": "5ed70aadbe517fac",
+      "sid_mtime": 1791632975.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.06302338132627658,
+      "recall@10_runs": [
+        0.06302338132627658
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03409746536067439,
+      "n_eval": 57439,
+      "vocab_size": 783,
+      "stage3_runs": [
+        "tiger_sample_resample_s43/logs/Amazon_2023_Instruments/Oct-10-2026_22-55-05"
+      ]
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44/item_sids.json",
+      "sid_sha256": "0936671326dd2518",
+      "sid_mtime": 1791635870.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.06237921969393618,
+      "recall@10_runs": [
+        0.06237921969393618
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03425979668081985,
+      "n_eval": 57439,
+      "vocab_size": 780,
+      "stage3_runs": [
+        "tiger_sample_resample_s44/logs/Amazon_2023_Instruments/Oct-10-2026_23-43-17"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_radial_corr",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_radial_corr/item_sids.json",
+      "sid_sha256": "f302449845c011a7",
+      "sid_mtime": 1791670428.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.061943975347760236,
+      "recall@10_runs": [
+        0.061943975347760236
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.033636915859782686,
+      "n_eval": 57439,
+      "vocab_size": 802,
+      "stage3_runs": [
+        "tiger_fork_fork_radial_corr/logs/Amazon_2023_Instruments/Oct-11-2026_09-18-51"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_more_sib",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_more_sib/item_sids.json",
+      "sid_sha256": "3ceb2d57a7443bc8",
+      "sid_mtime": 1791673808.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.061874336252372084,
+      "recall@10_runs": [
+        0.061874336252372084
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.033466234417934844,
+      "n_eval": 57439,
+      "vocab_size": 792,
+      "stage3_runs": [
+        "tiger_fork_fork_more_sib/logs/Amazon_2023_Instruments/Oct-11-2026_10-14-41"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/prefix_sib",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/prefix_sib/item_sids.json",
+      "sid_sha256": "15b540a23491e965",
+      "sid_mtime": 1791677095.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.06161318964466651,
+      "recall@10_runs": [
+        0.06161318964466651
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03392435119245935,
+      "n_eval": 57439,
+      "vocab_size": 811,
+      "stage3_runs": [
+        "tiger_fork_prefix_sib/logs/Amazon_2023_Instruments/Oct-11-2026_11-08-38"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_euclid_group",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_euclid_group/item_sids.json",
+      "sid_sha256": "84126c626920322f",
+      "sid_mtime": 1791664117.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.0615609603231254,
+      "recall@10_runs": [
+        0.0615609603231254
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03394764101228238,
+      "n_eval": 57439,
+      "vocab_size": 797,
+      "stage3_runs": [
+        "tiger_fork_fork_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_07-33-38"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched/item_sids.json",
+      "sid_sha256": "cc6e729ccab9f00d",
+      "sid_mtime": 1791625411.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.061317223489266874,
+      "recall@10_runs": [
+        0.061317223489266874
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.033332163188099236,
+      "n_eval": 57439,
+      "vocab_size": 826,
+      "stage3_runs": [
+        "tiger_hyp_exp2_euclid_matched/logs/Amazon_2023_Instruments/Oct-10-2026_20-48-17"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_ang_only",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_ang_only/item_sids.json",
+      "sid_sha256": "65819d4075542a75",
+      "sid_mtime": 1791667407.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.060847159595396855,
+      "recall@10_runs": [
+        0.060847159595396855
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.032880030184471346,
+      "n_eval": 57439,
+      "vocab_size": 788,
+      "stage3_runs": [
+        "tiger_fork_fork_ang_only/logs/Amazon_2023_Instruments/Oct-11-2026_08-28-09"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta/item_sids.json",
+      "sid_sha256": "8c28fb6944d2283b",
+      "sid_mtime": 1791629240.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.060760110726161665,
+      "recall@10_runs": [
+        0.060760110726161665
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03288927783916417,
+      "n_eval": 57439,
+      "vocab_size": 788,
+      "stage3_runs": [
+        "tiger_hyp_exp4_euclid_delta/logs/Amazon_2023_Instruments/Oct-10-2026_21-52-08"
+      ]
+    },
+    {
+      "model": "smoothness_arms/A_euclid_smooth_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/A_euclid_smooth_s42/item_sids.json",
+      "sid_sha256": "16b024dff4b814e4",
+      "sid_mtime": 1791581022.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.0604989641184561,
+      "recall@10_runs": [
+        0.0604989641184561
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03295148832490338,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_SE_euclid_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-14-14"
+      ]
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s43",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s43/item_sids.json",
+      "sid_sha256": "0a72486f6f6bc5d6",
+      "sid_mtime": 1791589526.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.06042932502306795,
+      "recall@10_runs": [
+        0.06042932502306795
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03305685935419115,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_E43_euclid_l2_256_72k_s43/logs/Amazon_2023_Instruments/Oct-10-2026_10-51-54"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_radius_control/item_sids.json",
+      "sid_sha256": "858ac30df43405b0",
+      "sid_mtime": 1791689297.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05978516339072756,
+      "recall@10_runs": [
+        0.05978516339072756
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03290562241118571,
+      "n_eval": 57439,
+      "vocab_size": 789,
+      "stage3_runs": [
+        "tiger_fork_nce_euclid_radius_control/logs/Amazon_2023_Instruments/Oct-11-2026_14-41-31"
+      ]
+    },
+    {
+      "model": "smooth_fair_arms/A_euclid_smoothfair_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/A_euclid_smoothfair_s42/item_sids.json",
+      "sid_sha256": "9590324d1b3377fa",
+      "sid_mtime": 1791701255.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.059541426556869025,
+      "recall@10_runs": [
+        0.059541426556869025
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03280680602967149,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_SFE_euclid_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_18-31-28"
+      ]
+    },
+    {
+      "model": "smoothness_arms/B_poincare_smooth_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/B_poincare_smooth_s42/item_sids.json",
+      "sid_sha256": "8abe6860ac8fae59",
+      "sid_mtime": 1791583494.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05950660700917495,
+      "recall@10_runs": [
+        0.05950660700917495
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.032857600145857924,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_SH_poincare_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-48-53"
+      ]
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s42/item_sids.json",
+      "sid_sha256": "9f9067d6d5839521",
+      "sid_mtime": 1791557293.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.059158411532234195,
+      "recall@10_runs": [
+        0.059158411532234195
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03270374329614224,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_E72_euclid_l2_256_72k/logs/Amazon_2023_Instruments/Oct-10-2026_01-55-10"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_group",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_group/item_sids.json",
+      "sid_sha256": "4484e382f405d5e0",
+      "sid_mtime": 1791680492.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05901913334145789,
+      "recall@10_runs": [
+        0.05901913334145789
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03240469165803009,
+      "n_eval": 57439,
+      "vocab_size": 779,
+      "stage3_runs": [
+        "tiger_fork_nce_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-04-59"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_hyp_group",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_hyp_group/item_sids.json",
+      "sid_sha256": "c48ae84b67b69a0a",
+      "sid_mtime": 1791683516.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05882762582914048,
+      "recall@10_runs": [
+        0.05882762582914048
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03181798945550038,
+      "n_eval": 57439,
+      "vocab_size": 799,
+      "stage3_runs": [
+        "tiger_fork_nce_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-55-55"
+      ]
+    },
+    {
+      "model": "smooth_fair_arms/B_poincare_smoothfair_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
+      "sid_sha256": "b21f89a613921de0",
+      "sid_mtime": 1791703424.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.058688347638364176,
+      "recall@10_runs": [
+        0.058688347638364176
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03250005026794084,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_SFP_poincare_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_19-07-42"
+      ]
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s44",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s44/item_sids.json",
+      "sid_sha256": "fabb437555769491",
+      "sid_mtime": 1791592808.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05867093786451714,
+      "recall@10_runs": [
+        0.05867093786451714
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.032159901835191664,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_E44_euclid_l2_256_72k_s44/logs/Amazon_2023_Instruments/Oct-10-2026_12-34-44"
+      ]
+    },
+    {
+      "model": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+      "sid_sha256": "73bb967663f25f0a",
+      "sid_mtime": 1791447231.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05828792283988231,
+      "recall@10_runs": [
+        0.05828792283988231
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03188666115998626,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_A_l2_256_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-18-19"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball/item_sids.json",
+      "sid_sha256": "0a8f1c6cd576c021",
+      "sid_mtime": 1791646685.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05760894165984784,
+      "recall@10_runs": [
+        0.05760894165984784
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.031614301679687325,
+      "n_eval": 57439,
+      "vocab_size": 789,
+      "stage3_runs": [
+        "tiger_hyp_fix_det_euclid_ball/logs/Amazon_2023_Instruments/Oct-11-2026_02-41-20"
+      ]
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_hyp_group",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_hyp_group/item_sids.json",
+      "sid_sha256": "c468711bf505fccd",
+      "sid_mtime": 1791661153.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_FORK_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.057173697313671897,
+      "recall@10_runs": [
+        0.057173697313671897
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.031261827118429064,
+      "n_eval": 57439,
+      "vocab_size": 789,
+      "stage3_runs": [
+        "tiger_fork_fork_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_06-42-27"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1/item_sids.json",
+      "sid_sha256": "a19a90139b6d014d",
+      "sid_mtime": 1791622410.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.0551889830951096,
+      "recall@10_runs": [
+        0.0551889830951096
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.03057611661010281,
+      "n_eval": 57439,
+      "vocab_size": 825,
+      "stage3_runs": [
+        "tiger_hyp_exp2_poincare_c1/logs/Amazon_2023_Instruments/Oct-10-2026_19-58-02"
+      ]
+    },
+    {
+      "model": "l2_cone_arms/A_euclid_nocone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/A_euclid_nocone_s42/item_sids.json",
+      "sid_sha256": "5cd26e761f1c0b83",
+      "sid_mtime": 1791533251.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.053918069604275844,
+      "recall@10_runs": [
+        0.053918069604275844
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.029524254857286953,
+      "n_eval": 57439,
+      "vocab_size": 582,
+      "stage3_runs": [
+        "sidarm_A4_euclid_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-10-2026_00-41-15"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw/item_sids.json",
+      "sid_sha256": "9064df1523f0ba67",
+      "sid_mtime": 1791655658.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.053813610961193616,
+      "recall@10_runs": [
+        0.053813610961193616
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.029685096021230116,
+      "n_eval": 57439,
+      "vocab_size": 1594,
+      "stage3_runs": [
+        "tiger_hyp_fix_carry_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_05-13-32"
+      ]
+    },
+    {
+      "model": "TIGER_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "sid_sha256": "53273cb605dc3210",
+      "sid_mtime": 1790909005.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05367433277041731,
+      "recall@10_runs": [
+        0.05367433277041731
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.029444663223495537,
+      "n_eval": 57439,
+      "vocab_size": 813,
+      "stage3_runs": [
+        "tiger/logs/Amazon_2023_Instruments/Oct-01-2026_18-07-15"
+      ]
+    },
+    {
+      "model": "l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/A_bucket_sinkhorn_s42/item_sids.json",
+      "sid_sha256": "f2655ce037dc49fa",
+      "sid_mtime": 1791527430.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05313462978115914,
+      "recall@10_runs": [
+        0.05313462978115914
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.028994537719220934,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_L2AB_bucket_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_13-32-56"
+      ]
+    },
+    {
+      "model": "l2_cone_arms/B_poincare_nocone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/B_poincare_nocone_s42/item_sids.json",
+      "sid_sha256": "c9f990c353af78c4",
+      "sid_mtime": 1791533452.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05262974633959505,
+      "recall@10_runs": [
+        0.05262974633959505
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.028887437838582296,
+      "n_eval": 57439,
+      "vocab_size": 582,
+      "stage3_runs": [
+        "sidarm_B_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-57-36"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw/item_sids.json",
+      "sid_sha256": "7cc7c8e2d9e6503d",
+      "sid_mtime": 1791643823.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.05200299448110169,
+      "recall@10_runs": [
+        0.05200299448110169
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.028365394652759737,
+      "n_eval": 57439,
+      "vocab_size": 805,
+      "stage3_runs": [
+        "tiger_hyp_fix_det_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_01-54-17"
+      ]
+    },
+    {
+      "model": "l2_assignment_arms/B_global_sinkhorn_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
+      "sid_sha256": "1019d2502683a3ba",
+      "sid_mtime": 1791526003.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.051863716290325386,
+      "recall@10_runs": [
+        0.051863716290325386
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.02832119215030391,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_L2AG_global_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_14-09-20"
+      ]
+    },
+    {
+      "model": "coarse_l1_arms/B_poincare_coarse_l1_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/coarse_l1_arms/B_poincare_coarse_l1_s42/item_sids.json",
+      "sid_sha256": "6fd8cc3ed6f5d961",
+      "sid_mtime": 1791576931.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.04832953219937673,
+      "recall@10_runs": [
+        0.04832953219937673
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.02661758010980225,
+      "n_eval": 57439,
+      "vocab_size": 772,
+      "stage3_runs": [
+        "sidarm_CLP_poincare_coarse_l1/logs/Amazon_2023_Instruments/Oct-10-2026_07-22-04"
+      ]
+    },
+    {
+      "model": "l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/D_poincare_cone_s42/item_sids.json",
+      "sid_sha256": "7d892b1f5b12ec9a",
+      "sid_mtime": 1791538817.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.04725012622086039,
+      "recall@10_runs": [
+        0.04725012622086039
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.02533764415348952,
+      "n_eval": 57439,
+      "vocab_size": 582,
+      "stage3_runs": [
+        "sidarm_R5D_poincare_cone_rejection_fixed/logs/Amazon_2023_Instruments/Oct-10-2026_04-07-33"
+      ]
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare/item_sids.json",
+      "sid_sha256": "25e30c50e172d058",
+      "sid_mtime": 1791650502.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.046536325493131844,
+      "recall@10_runs": [
+        0.046536325493131844
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.026006974089175707,
+      "n_eval": 57439,
+      "vocab_size": 819,
+      "stage3_runs": [
+        "tiger_hyp_fix_det_poincare/logs/Amazon_2023_Instruments/Oct-11-2026_03-46-46"
+      ]
+    },
+    {
+      "model": "l2_cone_arms/D_poincare_cone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/D_poincare_cone_s42/item_sids.json",
+      "sid_sha256": "08eb05f4ada000f6",
+      "sid_mtime": 1791535172.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.0458225247654033,
+      "recall@10_runs": [
+        0.0458225247654033
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.024861682355637193,
+      "n_eval": 57439,
+      "vocab_size": 582,
+      "stage3_runs": [
+        "sidarm_D_l2_64_cone/logs/Amazon_2023_Instruments/Oct-09-2026_23-44-56"
+      ]
+    },
+    {
+      "model": "metric_cone_arms/B_poincare_metriccone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/B_poincare_metriccone_s42/item_sids.json",
+      "sid_sha256": "c24f515a853b497d",
+      "sid_mtime": 1791565325.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.04556137815769773,
+      "recall@10_runs": [
+        0.04556137815769773
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.024414688445720846,
+      "n_eval": 57439,
+      "vocab_size": 584,
+      "stage3_runs": [
+        "sidarm_MP_poincare_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_05-16-30"
+      ]
+    },
+    {
+      "model": "metric_cone_arms/A_euclid_metriccone_s42",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
+      "sid_sha256": "2798778d1034824d",
+      "sid_mtime": 1791563247.0,
+      "sid_info": {
+        "n_items": 24587,
+        "n_tokens": 4,
+        "levels_analysed": 3,
+        "collision_token_present": true
+      },
+      "family": "curvature_RQ-VAE",
+      "n_stage3_runs": 1,
+      "recall@10": 0.03219067184317276,
+      "recall@10_runs": [
+        0.03219067184317276
+      ],
+      "recall@10_spread": 0.0,
+      "ndcg@10": 0.017654854187119418,
+      "n_eval": 57439,
+      "vocab_size": 652,
+      "stage3_runs": [
+        "sidarm_ME_euclid_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_04-41-54"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_15-23-32",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-08-2026_14-50-16",
+      "reason": "protocol deviation: sid_length=5 (expected 4)"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Sep-29-2026_03-42-07",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/B/Amazon_2023_Instruments/Sep-29-2026_04-23-29",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/B/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/C/Amazon_2023_Instruments/Sep-29-2026_05-03-40",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/C/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/D/Amazon_2023_Instruments/Sep-29-2026_05-44-22",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/D/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/E/Amazon_2023_Instruments/Sep-29-2026_06-24-52",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/E/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/ablation/Baseline/Amazon_2023_Instruments/Sep-29-2026_10-53-24",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/Baseline/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/ablation/BehaviorOnly/Amazon_2023_Instruments/Sep-29-2026_12-15-37",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/BehaviorOnly/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/ablation/CurvatureOnly/Amazon_2023_Instruments/Sep-29-2026_11-34-58",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/CurvatureOnly/item_sids.json"
+    },
+    {
+      "run": "curvature_RQ-VAE_repaired/logs/Amazon_2023_Instruments/Sep-24-2026_13-51-46",
+      "reason": "protocol deviation: early_stop=10 (expected None); screen_skip_test_on_fail=True (expected None)"
+    },
+    {
+      "run": "tiger/logs/Sep-24-2026_01-20-42",
+      "reason": "protocol deviation: early_stop=10 (expected None); screen_skip_test_on_fail=True (expected None)"
+    },
+    {
+      "run": "tiger_behavior/logs/Amazon_2023_Instruments/Oct-10-2026_16-25-18",
+      "reason": "SID file missing on disk: /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_R48/item_sids.json"
+    },
+    {
+      "run": "unknown_variant/logs/Amazon_2023_Instruments/Sep-24-2026_16-17-58",
+      "reason": "protocol deviation: early_stop=10 (expected None); screen_skip_test_on_fail=True (expected None)"
+    },
+    {
+      "run": "tiger/logs/Amazon_2023_Instruments/Oct-01-2026_13-41-50",
+      "reason": "SID at results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json no longer matches the run: vocab_size recorded 799, file now implies 813; the file was overwritten after the run"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_04-52-03",
+      "reason": "SID at results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json no longer matches the run: vocab_size recorded 774, file now implies 772; the file was overwritten after the run"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_14-16-47",
+      "reason": "SID at results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json no longer matches the run: vocab_size recorded 774, file now implies 772; the file was overwritten after the run"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_20-34-59",
+      "reason": "SID at results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json no longer matches the run: vocab_size recorded 774, file now implies 772; the file was overwritten after the run"
+    },
+    {
+      "run": "curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_22-42-48",
+      "reason": "SID at results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json no longer matches the run: vocab_size recorded 793, file now implies 772; the file was overwritten after the run"
+    }
+  ]
+}
