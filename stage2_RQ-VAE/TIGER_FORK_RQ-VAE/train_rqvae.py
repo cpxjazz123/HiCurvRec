@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "cluster_s42"
+EXPERIMENT_ARM = "hyper_l1_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -184,6 +184,23 @@ _ARMS = {
     "cluster_s42": {"group_distance": "euclid", "radial_mode": "mse",
                     "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                     "cluster_assign": True, "cluster_weight": 0.05},
+    # Step 2 of the hyperbolic programme: the ONLY change is that the L1
+    # codeword SELECTION distance becomes the Poincare geodesic instead of the
+    # squared Euclidean one. The residual chain, the codebook capacity, the
+    # training budget, the data split and Stage 3 are untouched, and the matched
+    # Euclidean control is the plain recipe in the same tree. Single seed 42.
+    "hyper_l1_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                     "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                     "l1_geodesic": True, "l1_geodesic_curvature": 1.0},
+    # Step 6 curvature settings for the same arm, swept only if step 2 shows a
+    # trend. The near-zero curvature is the Euclidean limit, kept explicit so a
+    # pure distance rescaling cannot be mistaken for a hyperbolic gain.
+    "hyper_l1_s42_c025": {"group_distance": "euclid", "radial_mode": "mse",
+                          "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "l1_geodesic": True, "l1_geodesic_curvature": 0.25},
+    "hyper_l1_s42_c400": {"group_distance": "euclid", "radial_mode": "mse",
+                          "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "l1_geodesic": True, "l1_geodesic_curvature": 4.0},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -235,6 +252,8 @@ RADIUS_CONTROL_ENABLED = _ARM.get("radius_control", False)
 # O(1) as the encoder scale drifts and no separate temperature has to be tuned.
 # The three-level residual quantiser, the codebook capacity, the budget and the
 # split are untouched; only the L1 layer receives this extra gradient.
+L1_GEODESIC_ENABLED = _ARM.get("l1_geodesic", False)
+L1_GEODESIC_CURVATURE = _ARM.get("l1_geodesic_curvature", 1.0)
 L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
@@ -1301,7 +1320,7 @@ def load_canonical_pairs(path: Path) -> dict:
     }
 
 
-def _tokenizer_config() -> SimpleNamespace:
+def _tokenizer_config(l1_geodesic: dict | None = None) -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
     if len(sizes) == 1:
         sizes *= CODEBOOK_NUM
@@ -1319,6 +1338,9 @@ def _tokenizer_config() -> SimpleNamespace:
         fix_code_embs=False,
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
+        # Handed to RQLayer, which gives it to the L1 VQLayer only. `None` keeps
+        # every level on the squared Euclidean selection distance.
+        l1_geodesic=l1_geodesic,
     )
 
 
@@ -1380,7 +1402,11 @@ def main() -> None:
             f"{canonical['negatives'].shape[1]} negatives each, seed 42",
             flush=True,
         )
-    config = _tokenizer_config()
+    config = _tokenizer_config(
+        {"normalizer": 1.0, "curvature": L1_GEODESIC_CURVATURE}
+        if L1_GEODESIC_ENABLED
+        else None
+    )
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
@@ -1461,6 +1487,20 @@ def main() -> None:
     # ball map cannot depend on batch membership and anchors and candidates share
     # a single ball. Constant for the whole run.
     ball_normalizer = resolve_normalizer(raw_module, train_embeddings.to(device))
+    if L1_GEODESIC_ENABLED:
+        # The L1 codeword-SELECTION distance is the Poincare geodesic. Both sides
+        # are mapped with the SAME run-constant normalizer the rest of the
+        # geometry uses, so an item's distance to a codeword is a function of the
+        # latent alone and the two sides share one ball. L2/L3 keep the squared
+        # Euclidean selection distance they always used.
+        raw_module.rq.vq_layers[0].geodesic_normalizer = float(ball_normalizer)
+        if rank == 0:
+            print(
+                f"[RecBole RQ-VAE] L1 codeword selection = Poincare geodesic "
+                f"(curvature={L1_GEODESIC_CURVATURE}, "
+                f"normalizer={ball_normalizer:.6f}); L2/L3 Euclidean",
+                flush=True,
+            )
     with torch.no_grad():
         initial_median_norm = float(
             torch.median(

@@ -51,6 +51,9 @@ class VQLayer(nn.Module):
         beta: float = 0.25,
         sk_epsilon: float = -1.0,
         sk_iters: int = -1,
+        geodesic: bool = False,
+        geodesic_normalizer: float = 1.0,
+        geodesic_curvature: float = 1.0,
     ):
         super().__init__()
         self.dim = int(codebook_dim)
@@ -60,6 +63,15 @@ class VQLayer(nn.Module):
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
         self.embed = nn.Embedding(self.n_embed, self.dim)
+        # When set, the CODEWORD SELECTION distance is the Poincare geodesic
+        # instead of the squared Euclidean one. This is the only thing that
+        # changes: the quantiser still returns the same four-tuple, the residual
+        # chain is untouched, and the codebook capacity is identical. It is a
+        # property of the layer, not a global switch, so only the L1 layer is
+        # given it and L2 and L3 keep the Euclidean distance they always used.
+        self.geodesic = bool(geodesic)
+        self.geodesic_normalizer = float(geodesic_normalizer)
+        self.geodesic_curvature = float(geodesic_curvature)
 
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
@@ -97,6 +109,22 @@ class VQLayer(nn.Module):
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
         code_embs = self.get_code_embs()
+        if self.geodesic:
+            # Map BOTH sides with one fixed, batch-independent scale, then take
+            # the geodesic distance. The normaliser is a constant of the run, not
+            # a statistic of the current batch, so an item's distance to a
+            # codeword does not depend on what else is in the batch.
+            from hyperbolic import encode_ball, pair_poincare_distance
+
+            nz = self.geodesic_normalizer
+            mapped_x = encode_ball(latent, self.geodesic_curvature, nz)
+            mapped_c = encode_ball(code_embs, self.geodesic_curvature, nz)
+            # All-pairs (N, K) matrix. poincare_distance alone only broadcasts
+            # when the two sides already share their leading dims, so it cannot
+            # turn (N, D) against (K, D) into a distance matrix.
+            return pair_poincare_distance(
+                mapped_x, mapped_c, self.geodesic_curvature
+            ).clamp_min(1e-6)
         return (
             latent.pow(2).sum(1, keepdim=True)
             - 2 * latent @ code_embs.t()
@@ -256,11 +284,25 @@ class RQLayer(nn.Module):
         self.sk_iters = int(config.sk_iters)
 
         layers: list[nn.Module] = []
+        # Set by the caller when the FIRST level's codeword selection should use
+        # the Poincare geodesic. Only level 0 receives it: the residual chain and
+        # the deeper levels must keep the Euclidean distance they always used, or
+        # the change would not be "only the L1 selection distance".
+        geodesic_cfg = getattr(config, "l1_geodesic", None)
         for level, size in enumerate(self.codebook_sizes):
             epsilon = self.sk_epsilon if level == self.codebook_num - 1 else -1.0
             iterations = self.sk_iters if level == self.codebook_num - 1 else -1
+            extra = (
+                dict(
+                    geodesic=True,
+                    geodesic_normalizer=float(geodesic_cfg["normalizer"]),
+                    geodesic_curvature=float(geodesic_cfg["curvature"]),
+                )
+                if (geodesic_cfg and level == 0 and self.vq_type == "vq")
+                else {}
+            )
             if self.vq_type == "vq":
-                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations)
+                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, **extra)
             elif self.vq_type == "ema":
                 layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, config.ema_decay)
             elif self.vq_type == "simvq":
