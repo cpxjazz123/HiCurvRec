@@ -488,3 +488,10 @@ results/stage3_T5Train/tiger_hyp_fix_*/logs/*/_ddp_sync/
 !results/stage3_T5Train/tiger_fork_*/
 !stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/
 !stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs/**
+# The `!` above only re-includes the directory itself; the generic `logs/` and
+# `**/ckpt*/` rules still drop the Stage3 native outputs, which CLAUDE.md §13
+# requires in the repository. Re-include their contents.
+!results/stage3_T5Train/tiger_fork_*/logs/
+!results/stage3_T5Train/tiger_fork_*/logs/**
+!results/stage3_T5Train/tiger_fork_*/ckpt/
+!results/stage3_T5Train/tiger_fork_*/ckpt/**

@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "nce_euclid_radius_control"
+EXPERIMENT_ARM = "nce_hyp_radius_control"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -1202,15 +1202,23 @@ def main() -> None:
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
+        # Rank-0 only and must run no collective: VQLayer.forward would
+        # all_reduce the code-usage count and hang the other three ranks.
+        if epoch in PROBE_EPOCHS:
+            for layer in raw_module.rq.vq_layers:
+                layer._skip_ddp_reduce = True
+            try:
+                saturation_probe(raw_module, train_embeddings.to(device),
+                                 ball_normalizer, initial_median_norm, epoch, rank)
+            finally:
+                for layer in raw_module.rq.vq_layers:
+                    layer._skip_ddp_reduce = False
+
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
                 _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
-
-        if epoch in PROBE_EPOCHS:
-            saturation_probe(raw_module, train_embeddings.to(device),
-                             ball_normalizer, initial_median_norm, epoch, rank)
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
         model.eval()
