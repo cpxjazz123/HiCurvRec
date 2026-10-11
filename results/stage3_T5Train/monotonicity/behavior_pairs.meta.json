@@ -1,0 +1,54 @@
+{
+  "relation": "test_transition: history[-1] -> target, from test.parquet",
+  "source_rows": {
+    "rows_in_test_parquet": 57439,
+    "distinct_transitions": 56636,
+    "dropped_invalid_item_id": 0,
+    "dropped_self_loop": 0,
+    "kept_pairs": 56636,
+    "distinct_anchors": 16828,
+    "dropped_by_old_one_per_anchor_rule": 39808,
+    "old_one_per_anchor_pairs": 16828,
+    "mean_successors_per_anchor": 3.3655811742334203
+  },
+  "seed": 20261011,
+  "relation_offset": 1,
+  "rng_seed_used": 20262011,
+  "k_negatives": 10,
+  "item_id_space": "raw item ids as stored in stage0_build_parquet and used as the keys of every item_sids.json; no re-indexing",
+  "dtype": "int32",
+  "shapes": {
+    "anchors": [
+      56636
+    ],
+    "positives": [
+      56636
+    ],
+    "negatives": [
+      56636,
+      10
+    ]
+  },
+  "negative_construction": {
+    "k_negatives": 10,
+    "positives": 56636,
+    "negative_draws": 566360,
+    "bin_fallbacks": 190,
+    "pools_shorter_than_k": 0,
+    "invariant_violations": 0,
+    "distinct_negatives": 24528,
+    "max_negatives_per_positive_distinct": 10
+  },
+  "checks": {
+    "n_positives_matches_metrics": true,
+    "n_anchors_matches_metrics": true,
+    "negative_draws_matches_metrics": true,
+    "no_invariant_violations": true,
+    "no_negative_equals_positive": true,
+    "no_negative_equals_anchor": true,
+    "negatives_are_ten_distinct_per_row": true,
+    "all_ids_in_range": true
+  },
+  "negative_semantics": "unobserved, not proven irrelevant: each negative is an item with no observed relation to that anchor in either train or test",
+  "reproduce": "cd /home/wlia0047/ar57/wenyu/GeneRec && OMP_NUM_THREADS=8 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 stage2_RQ-VAE/TIGER_FORK_RQ-VAE/scripts/export_behavior_pairs.py"
+}
