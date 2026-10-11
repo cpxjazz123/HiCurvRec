@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "l1_soft_s42"
+EXPERIMENT_ARM = "cluster_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -177,6 +177,13 @@ _ARMS = {
     "l1_soft_s42_w02": {"group_distance": "euclid", "radial_mode": "mse",
                         "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                         "l1_soft_assign": True, "l1_soft_weight": 0.02},
+    # Step 4. One added mechanism relative to the plain TIGER recipe: the L1
+    # assignment is pulled toward a Louvain partition of the behaviour graph,
+    # cluster index to codeword index. The three-level residual quantiser, the
+    # codebook capacity, the budget, the split and Stage 3 are unchanged, seed 42.
+    "cluster_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                    "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                    "cluster_assign": True, "cluster_weight": 0.05},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -232,6 +239,24 @@ L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
 N_ITEMS = 24587
+# === Step 4 of the behaviour programme: cluster-consistency on the L1 assignment ===
+#
+# A Louvain partition of the behaviour graph gives every item a behaviour group,
+# and the group index is used directly as the target L1 codeword. This is the
+# structural difference from step 3, which failed: there the target was
+# argmax q_a, a quantity the encoder controls and could drive to a single
+# codeword. Here the 199 targets are fixed in advance and spread over the
+# codebook, so nothing rewards concentrating the assignment.
+#
+# Louvain resolution was chosen as the largest community count that still fits
+# the 256-entry L1 codebook, which is 199 at resolution 4.0. The coarser
+# partitions were rejected: at resolution 1.0 there are only 39 communities,
+# which would strand 217 codewords unused, a collapse by construction.
+BEHAVIOUR_CLUSTER_PATH = Path(
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behaviour_clusters_s42.npz"
+)
+CLUSTER_ASSIGN_ENABLED = _ARM.get("cluster_assign", False)
+CLUSTER_WEIGHT = _ARM.get("cluster_weight", 0.05)
 CANONICAL_PAIRS = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz"
 )
@@ -760,6 +785,64 @@ def radial_force_probe(
         globals()["_residuals_with_trace"] = original_trace
 
 
+def cluster_assign_loss(
+    raw_module,
+    latent: torch.Tensor,
+    targets: torch.Tensor,
+    margin: float = 0.0,
+) -> tuple[torch.Tensor, dict]:
+    """Pull each item's L1 codeword toward its behaviour group, by margin.
+
+    ``targets`` holds the cluster index of each item, which is also its target L1
+    codeword index.
+
+    The first version of this term was -log q_i[cluster(i)] with a softmax over
+    the L1 codewords. It failed, and the failure is recorded here because the same
+    trap caught step 3. Measured on the full objective over 1200 steps, L1 usage
+    fell to 3 of 256 codewords and the target probability froze at exactly
+    1/256, the uniform value, with the loss motionless from step 100 onward.
+
+    Two reasons, both specific to routing this through a softmax over codewords.
+    The temperature is the detached mean squared distance, so the logits are
+    -d2/mean(d2): scaling the encoder output scales d2 and the temperature by the
+    same factor and leaves the logits unchanged. The term is scale-invariant, so it
+    can only reshape the geometry, never push items apart, and with the codebook
+    frozen at its KMeans initialisation the cheapest way for the encoder to satisfy
+    a soft target spread over 199 codes is to collapse onto a few of them.
+
+    This version states the same claim without a softmax. The target codeword must
+    be closer to the item than every other codeword by at least the margin:
+
+        L = mean_i relu( margin + d2[i, c(i)] - min_{k != c(i)} d2[i, k] )
+
+    The gradient flows through the distances themselves, so it does not vanish
+    when the assignment is already flat, and an item that already sits on its
+    cluster's codeword contributes exactly zero.
+    """
+    layer = raw_module.rq.vq_layers[0]
+    codes = layer.get_code_embs().detach()
+    d2 = (
+        latent.pow(2).sum(-1, keepdim=True)
+        - 2 * latent @ codes.t()
+        + codes.pow(2).sum(-1).unsqueeze(0)
+    )
+    tgt = targets.clamp(0, codes.shape[0] - 1)
+    d_tgt = d2.gather(1, tgt.unsqueeze(1)).squeeze(1)
+    # Nearest competing codeword. The target's own entry is pushed to +inf so a
+    # codebook that has already collapsed onto the target cannot make the minimum
+    # disappear.
+    masked = d2.scatter(1, tgt.unsqueeze(1), float("inf"))
+    d_best_other = masked.min(dim=1).values
+    loss = torch.relu(margin + d_tgt - d_best_other)
+    stats = {
+        "mean_d_target": float(d_tgt.detach().mean()),
+        "mean_d_best_other": float(d_best_other.detach().mean()),
+        "frac_violating": float((loss > 0).float().mean()),
+        "n_clusters_in_batch": int(tgt.unique().numel()),
+    }
+    return loss.mean(), stats
+
+
 def l1_soft_assignment_loss(
     raw_module,
     anchor_latent: torch.Tensor,
@@ -1277,6 +1360,19 @@ def main() -> None:
     )
     fork_siblings = torch.from_numpy(siblings_np)
     canonical = load_canonical_pairs(CANONICAL_PAIRS) if L1_SOFT_ASSIGN_ENABLED else None
+    behaviour_cluster = None
+    if CLUSTER_ASSIGN_ENABLED:
+        behaviour_cluster = np.load(BEHAVIOUR_CLUSTER_PATH)["cluster"].astype(np.int64)
+        if behaviour_cluster.shape[0] != N_ITEMS:
+            raise ValueError(
+                f"cluster assignment covers {behaviour_cluster.shape[0]} items, expected {N_ITEMS}"
+            )
+        if rank == 0:
+            print(
+                f"[RecBole RQ-VAE] behaviour clusters: {len(np.unique(behaviour_cluster))} "
+                f"groups from the Louvain partition, seed 42",
+                flush=True,
+            )
     if rank == 0 and canonical is not None:
         print(
             f"[RecBole RQ-VAE] canonical pairs: {len(canonical['anchors'])} "
@@ -1458,6 +1554,9 @@ def main() -> None:
         fork_prefixes: list[float] = []
         fork_controls: list[float] = []
         l1_soft_losses: list[float] = []
+        cluster_losses: list[float] = []
+        cluster_target_probs: list[float] = []
+        cluster_on_target: list[float] = []
         l1_soft_ppos: list[float] = []
         l1_soft_pneg: list[float] = []
         epoch_weight = behavior_weight(epoch)
@@ -1485,6 +1584,19 @@ def main() -> None:
                 resolved_temperature,
             )
             loss = loss + epoch_weight * behavior_loss
+            if CLUSTER_ASSIGN_ENABLED and epoch_weight > 0.0:
+                # Every item in the batch carries its behaviour group, so this
+                # needs no pair sampling: it is a per-item assignment target.
+                lat = raw_module.encoder(batch)
+                tgt = torch.as_tensor(
+                    behaviour_cluster[row_index.cpu().numpy()],
+                    dtype=torch.long, device=lat.device,
+                )
+                cl_loss, cl_stats = cluster_assign_loss(raw_module, lat, tgt)
+                loss = loss + epoch_weight * CLUSTER_WEIGHT * cl_loss
+                cluster_losses.append(float(cl_loss.detach()))
+                cluster_target_probs.append(cl_stats["target_prob"])
+                cluster_on_target.append(cl_stats["frac_already_on_target"])
             if L1_SOFT_ASSIGN_ENABLED and epoch_weight > 0.0:
                 # Same canonical pairs the metric is computed on, looked up by
                 # (anchor, positive) so the negatives are the matched ones and
@@ -1595,7 +1707,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1623,7 +1735,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
