@@ -1,0 +1,110 @@
+{
+  "label": "TIGER_FORK_RQ-VAE__nce_euclid_radius_control",
+  "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_radius_control/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768,
+      769,
+      770,
+      771,
+      772,
+      773,
+      774,
+      775
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.11704616031121672,
+      "p_share_neg": 0.013627164102548257,
+      "gap": 0.10341899620866846,
+      "er": 8.589179629041766,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.14550098087818064,
+      "macro_p_share_neg": 0.014043542956769132,
+      "sampled_precision_given_share": 0.4620526457027152,
+      "macro_gap": 0.1314574379214115
+    },
+    "L1_L2": {
+      "p_share_pos": 0.008877339455494342,
+      "p_share_neg": 0.0003593576674813755,
+      "gap": 0.008517981788012967,
+      "er": 24.703353396388653,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.010929161362779705,
+      "macro_p_share_neg": 0.0003125774983385351,
+      "sampled_precision_given_share": 0.7118434093161546,
+      "macro_gap": 0.01061658386444117
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.001069112235155253,
+      "p_share_neg": 1.1432703092700683e-05,
+      "gap": 0.0010576795320625524,
+      "er": 93.51351351351352,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0013832750997282185,
+      "macro_p_share_neg": 5.701188937119332e-06,
+      "sampled_precision_given_share": 0.9033942558746736,
+      "macro_gap": 0.0013775739107910992
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 37880,
+      "p_retain_pos": 0.07584477296726505,
+      "n_effective_neg": 44102,
+      "p_retain_neg": 0.026370686136683145
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 2873,
+      "p_retain_pos": 0.12043160459450052,
+      "n_effective_neg": 1163,
+      "p_retain_neg": 0.03181427343078246
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.11704616031121672,
+      "mean_L1_group_size_of_positives": 290.06666810862924,
+      "mean_L1_group_size_of_negatives": 288.81324648598877,
+      "frac_positives_in_singleton_group": 0.00029663229645926096,
+      "L1_max_group": 551
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 236,
+        "capacity": 256,
+        "utilisation": 0.921875
+      },
+      "L2": {
+        "distinct_codes": 252,
+        "capacity": 256,
+        "utilisation": 0.984375
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 23320,
+        "n_items": 24587,
+        "collision_rate": 0.05153129702688408
+      }
+    }
+  },
+  "stage3": {
+    "model": "TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+    "recall@10": 0.05978516339072756,
+    "ndcg@10": 0.03290562241118571,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "tiger_fork_nce_euclid_radius_control/logs/Amazon_2023_Instruments/Oct-11-2026_14-41-31"
+    ]
+  }
+}

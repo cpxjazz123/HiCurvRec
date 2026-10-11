@@ -1,0 +1,103 @@
+{
+  "label": "curvature_RQ-VAE__euclid_l2_256_72k_s44",
+  "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s44/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.07235047105826661,
+      "p_share_neg": 0.005120615017627992,
+      "gap": 0.06722985604063862,
+      "er": 14.129254163649529,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0967862401123823,
+      "macro_p_share_neg": 0.004908305247008951,
+      "sampled_precision_given_share": 0.5855653087253357,
+      "macro_gap": 0.09187793486537334
+    },
+    "L1_L2": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 23415,
+      "p_retain_pos": 0.0,
+      "n_effective_neg": 16572,
+      "p_retain_neg": 0.0
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 0,
+      "p_retain_pos": null,
+      "n_effective_neg": 0,
+      "p_retain_neg": null
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.07235047105826661,
+      "mean_L1_group_size_of_positives": 100.01620044927434,
+      "mean_L1_group_size_of_negatives": 99.67528651280927,
+      "frac_positives_in_singleton_group": 0.0,
+      "L1_max_group": 124
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L2": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 24587,
+        "n_items": 24587,
+        "collision_rate": 0.0
+      }
+    }
+  },
+  "stage3": {
+    "model": "curvature_RQ-VAE/euclid_l2_256_72k_s44",
+    "recall@10": 0.05867093786451714,
+    "ndcg@10": 0.032159901835191664,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "sidarm_E44_euclid_l2_256_72k_s44/logs/Amazon_2023_Instruments/Oct-10-2026_12-34-44"
+    ]
+  }
+}

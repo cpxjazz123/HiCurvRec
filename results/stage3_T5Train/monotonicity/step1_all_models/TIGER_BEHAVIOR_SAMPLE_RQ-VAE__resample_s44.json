@@ -1,0 +1,110 @@
+{
+  "label": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample_s44",
+  "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768,
+      769,
+      770,
+      771,
+      772,
+      773,
+      774,
+      775
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.10592244919399443,
+      "p_share_neg": 0.005343089239972438,
+      "gap": 0.100579359954022,
+      "er": 19.82419616007402,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.13999389908788284,
+      "macro_p_share_neg": 0.0057450422028519224,
+      "sampled_precision_given_share": 0.664701776157605,
+      "macro_gap": 0.1342488568850309
+    },
+    "L1_L2": {
+      "p_share_pos": 0.008574527319525512,
+      "p_share_neg": 7.199513028646646e-05,
+      "gap": 0.008502532189239046,
+      "er": 119.09871244635194,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.012890971936566778,
+      "macro_p_share_neg": 8.410937757437933e-05,
+      "sampled_precision_given_share": 0.9225398936170213,
+      "macro_gap": 0.0128068625589924
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0012205183031396675,
+      "p_share_neg": 4.325887656697556e-06,
+      "gap": 0.00121619241548297,
+      "er": 282.14285714285717,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0017588749377936829,
+      "macro_p_share_neg": 6.984550793445427e-06,
+      "sampled_precision_given_share": 0.9657701711491442,
+      "macro_gap": 0.0017518903870002375
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 34280,
+      "p_retain_pos": 0.08095099183197199,
+      "n_effective_neg": 17292,
+      "p_retain_neg": 0.013474439046958131
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 2775,
+      "p_retain_pos": 0.14234234234234233,
+      "n_effective_neg": 233,
+      "p_retain_neg": 0.060085836909871244
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.10592244919399443,
+      "mean_L1_group_size_of_positives": 109.60207395413941,
+      "mean_L1_group_size_of_negatives": 111.91061325637374,
+      "frac_positives_in_singleton_group": 9.269759264351905e-06,
+      "L1_max_group": 225
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 235,
+        "capacity": 256,
+        "utilisation": 0.91796875
+      },
+      "L2": {
+        "distinct_codes": 254,
+        "capacity": 256,
+        "utilisation": 0.9921875
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 23628,
+        "n_items": 24587,
+        "collision_rate": 0.03900435189327689
+      }
+    }
+  },
+  "stage3": {
+    "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+    "recall@10": 0.06237921969393618,
+    "ndcg@10": 0.03425979668081985,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "tiger_sample_resample_s44/logs/Amazon_2023_Instruments/Oct-10-2026_23-43-17"
+    ]
+  }
+}

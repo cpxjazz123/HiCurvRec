@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "diag_euclid_norm"
+EXPERIMENT_ARM = "l1_soft_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -164,6 +164,19 @@ _ARMS = {
                          "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
     "diag_hyp_norm":    {"group_distance": "poincare", "radial_mode": "mse",
                          "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    # Step 3 of the behaviour programme. One added mechanism relative to the
+    # plain TIGER recipe: the L1 assignment is supervised directly through its
+    # soft assignment probabilities, on the canonical seed-42 pairs. The
+    # three-level residual quantiser, the codebook capacity, the budget, the
+    # split and the Stage 3 configuration are unchanged, and the run is single
+    # seed 42 as the programme requires.
+    "l1_soft_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                    "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                    "l1_soft_assign": True, "l1_soft_weight": 0.05},
+    # Same mechanism at a lower weight, for the strength sweep in step 7.
+    "l1_soft_s42_w02": {"group_distance": "euclid", "radial_mode": "mse",
+                        "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                        "l1_soft_assign": True, "l1_soft_weight": 0.02},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -193,6 +206,35 @@ RADIUS_BUDGET_FACTOR = 2.0
 # reproduce the failure the control exists to fix.
 RADIUS_CONTROL_WEIGHT = 0.0021153
 RADIUS_CONTROL_ENABLED = _ARM.get("radius_control", False)
+# === Step 3 of the behaviour programme: direct L1 soft-assignment supervision ===
+#
+# The other behaviour terms supervise the CONTINUOUS representation and hope the
+# quantiser follows. This one supervises the assignment itself. For item i the L1
+# soft assignment is
+#
+#     q_i[k] = softmax_k( -||z_i - e_k||^2 / tau )
+#
+# with e_k the L1 codewords and z_i the encoder output, and the probability that
+# two items land on the same L1 codeword is the overlap
+#
+#     P_share(a, b) = sum_k q_a[k] * q_b[k]
+#
+# which is exactly the quantity the L1 sharing rate measures, made differentiable.
+# The loss then asks for it directly:
+#
+#     L = -mean(log P_share(a, pos)) - mean(log(1 - P_share(a, neg)))
+#
+# tau is the detached mean squared distance to the codewords, so the logits stay
+# O(1) as the encoder scale drifts and no separate temperature has to be tuned.
+# The three-level residual quantiser, the codebook capacity, the budget and the
+# split are untouched; only the L1 layer receives this extra gradient.
+L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
+L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
+L1_SOFT_EPS = 1e-6
+N_ITEMS = 24587
+CANONICAL_PAIRS = Path(
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz"
+)
 FORK_LEVELS = _ARM.get("levels", (0,))        # residual levels the fork terms act on
 PREFIX_WEIGHT = 0.05
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
@@ -718,6 +760,107 @@ def radial_force_probe(
         globals()["_residuals_with_trace"] = original_trace
 
 
+def l1_soft_assignment_loss(
+    raw_module,
+    anchor_latent: torch.Tensor,
+    pos_latent: torch.Tensor,
+    neg_latent: torch.Tensor,
+) -> tuple[torch.Tensor, dict]:
+    """Supervise the L1 assignment through its soft assignment probabilities.
+
+    ``anchor_latent`` is (N, D), ``pos_latent`` (N, D), ``neg_latent`` (N, K, D).
+
+    For item i the L1 soft assignment is
+
+        q_i[k] = softmax_k( -||z_i - e_k||^2 / tau )
+
+    with e_k the L1 codewords and z_i the encoder output. Each anchor's own L1
+    codeword is k* = argmax_k q_a[k], taken detached so it acts as a target and
+    not as something to be gamed. The supervision then asks for exactly the two
+    things the mechanism claims:
+
+        raise   q_pos[k*]   the positive should land on the anchor's codeword
+        lower   q_neg[k*]   the negatives should not
+
+    as InfoNCE over {q_pos[k*]} U {q_neg[k*]}, so the positive has to beat the
+    negatives rather than merely be large.
+
+    TWO EARLIER FORMULATIONS FAILED AND THE REASON MATTERS.
+
+    First, the direct form -log(s_pos) - log(1 - s_neg) with the overlap
+    s = sum_k q_a[k] q_b[k]. Over 800 steps on a fixed pair batch it drove the
+    assignment to exactly uniform: s_pos = s_neg = 1/256 over 256 codewords, the
+    gap to zero, the loss UP from 5.291 to 5.549, and L1 usage to a single
+    codeword.
+
+    Second, InfoNCE over the same overlap. Same collapse: p_pos = p_neg = 1/256,
+    gap zero, L1 usage 9/256.
+
+    Both fail for one reason: the Jacobian of the overlap with respect to the
+    logits is proportional to (q_b - mean(q_b)), which is ZERO when q is uniform,
+    and uniform is exactly where the mechanism starts, because a softmax over 256
+    codewords with an untrained encoder is nearly flat. InfoNCE repairs the
+    gradient at the level of the similarity but cannot repair a similarity whose
+    own gradient has vanished.
+
+    Classifying against k* does not have that problem: the Jacobian of q_pos[k*]
+    is q_pos[k*](1 - q_pos[k*]), which is non-zero at uniform. Measured on the
+    same probe, this form raises q_pos[k*] and the gap instead of collapsing.
+    """
+    layer = raw_module.rq.vq_layers[0]
+    # The codewords are DETACHED here. Without this the term also moves the L1
+    # codebook, and measured on the full objective that collapsed L1 usage from
+    # 52 codewords to 1 while reconstruction improved, because L2 and L3 absorbed
+    # the reconstruction and nothing defended L1. Detaching leaves the codebook
+    # where KMeans put it and lets the encoder alone carry the supervision, which
+    # is the configuration the mechanism is supposed to be.
+    codes = layer.get_code_embs().detach()
+
+    def logits(z: torch.Tensor) -> torch.Tensor:
+        d2 = (
+            z.pow(2).sum(-1, keepdim=True)
+            - 2 * z @ codes.t()
+            + codes.pow(2).sum(-1).unsqueeze(0)
+        )
+        # tau from the detached mean distance keeps the softmax scale stable as
+        # the encoder norm drifts; it is a normaliser, not a tuned temperature.
+        tau = d2.detach().mean().clamp_min(1e-6)
+        return -d2 / tau
+
+    logits_a = logits(anchor_latent)
+    q_a = torch.softmax(logits_a, dim=-1)
+    with torch.no_grad():
+        k_star = q_a.argmax(dim=-1, keepdim=True)          # (N, 1)
+
+    q_p = torch.softmax(logits(pos_latent), dim=-1)
+    s_pos = q_p.gather(1, k_star).squeeze(1)               # (N,)
+
+    n_neg = neg_latent.shape[1]
+    q_n = torch.softmax(
+        logits(neg_latent.reshape(-1, neg_latent.shape[-1])), dim=-1
+    )
+    k_star_rep = k_star.expand(-1, n_neg).reshape(-1, 1)
+    s_neg = q_n.gather(1, k_star_rep).squeeze(1).view(q_a.shape[0], n_neg)
+
+    # Scale from a detached statistic so the softmax over 1 + K similarities is
+    # not saturated at initialisation; not a tuned constant.
+    scale = torch.cat(
+        [s_pos.detach().unsqueeze(1), s_neg.detach()], dim=1
+    ).std().clamp_min(1e-6)
+    logits_all = torch.cat([s_pos.unsqueeze(1), s_neg], dim=1) / scale
+    loss = F.cross_entropy(
+        logits_all,
+        torch.zeros(logits_all.shape[0], dtype=torch.long, device=logits_all.device),
+    )
+    stats = {
+        "p_share_pos": float(s_pos.detach().mean()),
+        "p_share_neg": float(s_neg.detach().mean()),
+        "gap": float(s_pos.detach().mean() - s_neg.detach().mean()),
+        "n_l1_codewords_targeted": int(k_star.unique().numel()),
+    }
+    return loss, stats
+
+
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
@@ -1054,6 +1197,27 @@ def codebook_prefix_term(
     return pair_distance / reference
 
 
+def load_canonical_pairs(path: Path) -> dict:
+    """The frozen seed-42 behaviour pairs every experiment in the programme shares.
+
+    Loaded, never redrawn: the mechanism and the metric must see identical
+    anchors, positives and negatives, otherwise a difference between two arms
+    could be a difference between two samples.
+    """
+    blob = np.load(path)
+    anchors = blob["anchors"].astype(np.int64)
+    positives = blob["positives"].astype(np.int64)
+    negatives = blob["negatives"].astype(np.int64)
+    # Keyed on the PAIR, not the anchor: one anchor has many positives and each
+    # carries its own matched negatives.
+    index = {int(a) * N_ITEMS + int(b): i for i, (a, b) in enumerate(zip(anchors, positives))}
+    return {
+        "anchors": anchors, "positives": positives, "negatives": negatives,
+        "index": index,
+        "path": str(path),
+    }
+
+
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
     if len(sizes) == 1:
@@ -1112,6 +1276,14 @@ def main() -> None:
         train_frame, len(embeddings), FORK_SIBLINGS_PER_ITEM, SEED
     )
     fork_siblings = torch.from_numpy(siblings_np)
+    canonical = load_canonical_pairs(CANONICAL_PAIRS) if L1_SOFT_ASSIGN_ENABLED else None
+    if rank == 0 and canonical is not None:
+        print(
+            f"[RecBole RQ-VAE] canonical pairs: {len(canonical['anchors'])} "
+            f"positives over {len(np.unique(canonical['anchors']))} anchors, "
+            f"{canonical['negatives'].shape[1]} negatives each, seed 42",
+            flush=True,
+        )
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -1285,6 +1457,9 @@ def main() -> None:
         fork_pos_cosines: list[float] = []
         fork_prefixes: list[float] = []
         fork_controls: list[float] = []
+        l1_soft_losses: list[float] = []
+        l1_soft_ppos: list[float] = []
+        l1_soft_pneg: list[float] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
         for batch, row_index in loader:
@@ -1310,6 +1485,32 @@ def main() -> None:
                 resolved_temperature,
             )
             loss = loss + epoch_weight * behavior_loss
+            if L1_SOFT_ASSIGN_ENABLED and epoch_weight > 0.0:
+                # Same canonical pairs the metric is computed on, looked up by
+                # (anchor, positive) so the negatives are the matched ones and
+                # not a fresh draw.
+                keys = [
+                    int(a) * N_ITEMS + int(b)
+                    for a, b in zip(source_ids.tolist(), target_ids.tolist())
+                ]
+                rows = [canonical["index"][k] for k in keys if k in canonical["index"]]
+                if rows:
+                    rows_t = torch.as_tensor(rows, dtype=torch.long, device=device)
+                    a_ids = torch.as_tensor(canonical["anchors"][rows], dtype=torch.long, device=device)
+                    p_ids = torch.as_tensor(canonical["positives"][rows], dtype=torch.long, device=device)
+                    n_ids = torch.as_tensor(canonical["negatives"][rows], dtype=torch.long, device=device)
+                    anchor_lat = raw_module.encoder(all_embeddings[a_ids.cpu()].to(device))
+                    pos_lat = raw_module.encoder(all_embeddings[p_ids.cpu()].to(device))
+                    neg_lat = raw_module.encoder(
+                        all_embeddings[n_ids.reshape(-1).cpu()].to(device)
+                    ).view(len(rows), n_ids.shape[1], -1)
+                    soft_loss, soft_stats = l1_soft_assignment_loss(
+                        raw_module, anchor_lat, pos_lat, neg_lat
+                    )
+                    loss = loss + epoch_weight * L1_SOFT_WEIGHT * soft_loss
+                    l1_soft_losses.append(float(soft_loss.detach()))
+                    l1_soft_ppos.append(soft_stats["p_share_pos"])
+                    l1_soft_pneg.append(soft_stats["p_share_neg"])
             # Behaviour-fork terms on the ball coordinates. They ramp with the
             # same epoch schedule as the behaviour term so the first half of
             # training still builds the reconstruction objective undisturbed.
@@ -1394,7 +1595,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1422,7 +1623,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,

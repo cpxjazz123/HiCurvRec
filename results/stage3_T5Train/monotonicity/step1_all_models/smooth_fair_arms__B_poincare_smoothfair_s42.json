@@ -1,0 +1,103 @@
+{
+  "label": "smooth_fair_arms__B_poincare_smoothfair_s42",
+  "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.06310852107170777,
+      "p_share_neg": 0.005008141938553856,
+      "gap": 0.05810037913315391,
+      "er": 12.601184600197433,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0841739525567209,
+      "macro_p_share_neg": 0.005009470064730051,
+      "sampled_precision_given_share": 0.5575453155710854,
+      "macro_gap": 0.07916448249199085
+    },
+    "L1_L2": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 20424,
+      "p_retain_pos": 0.0,
+      "n_effective_neg": 16208,
+      "p_retain_neg": 0.0
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 0,
+      "p_retain_pos": null,
+      "n_effective_neg": 0,
+      "p_retain_neg": null
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.06310852107170777,
+      "mean_L1_group_size_of_positives": 96.5558240352498,
+      "mean_L1_group_size_of_negatives": 96.81555094814188,
+      "frac_positives_in_singleton_group": 0.0,
+      "L1_max_group": 243
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L2": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 24587,
+        "n_items": 24587,
+        "collision_rate": 0.0
+      }
+    }
+  },
+  "stage3": {
+    "model": "smooth_fair_arms/B_poincare_smoothfair_s42",
+    "recall@10": 0.058688347638364176,
+    "ndcg@10": 0.03250005026794084,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "sidarm_SFP_poincare_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_19-07-42"
+    ]
+  }
+}

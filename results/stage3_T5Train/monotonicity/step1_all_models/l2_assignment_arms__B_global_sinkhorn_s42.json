@@ -1,0 +1,103 @@
+{
+  "label": "l2_assignment_arms__B_global_sinkhorn_s42",
+  "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.04097851578794499,
+      "p_share_neg": 0.0042980783789045,
+      "gap": 0.036680437409040485,
+      "er": 9.534148094895757,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.05369063175906452,
+      "macro_p_share_neg": 0.0040730867675191325,
+      "sampled_precision_given_share": 0.48807596054762253,
+      "macro_gap": 0.04961754499154539
+    },
+    "L1_L2": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0,
+      "p_share_neg": 0.0,
+      "gap": 0.0,
+      "er": null,
+      "er_undefined_reason": "negative sharing rate is zero",
+      "macro_p_share_pos": 0.0,
+      "macro_p_share_neg": 0.0,
+      "sampled_precision_given_share": null,
+      "macro_gap": 0.0
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 13262,
+      "p_retain_pos": 0.0,
+      "n_effective_neg": 13910,
+      "p_retain_neg": 0.0
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 0,
+      "p_retain_pos": null,
+      "n_effective_neg": 0,
+      "p_retain_neg": null
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.04097851578794499,
+      "mean_L1_group_size_of_positives": 96.40606798441445,
+      "mean_L1_group_size_of_negatives": 96.5953617214561,
+      "frac_positives_in_singleton_group": 0.0,
+      "L1_max_group": 127
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L2": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 24587,
+        "n_items": 24587,
+        "collision_rate": 0.0
+      }
+    }
+  },
+  "stage3": {
+    "model": "l2_assignment_arms/B_global_sinkhorn_s42",
+    "recall@10": 0.051863716290325386,
+    "ndcg@10": 0.02832119215030391,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "sidarm_L2AG_global_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_14-09-20"
+    ]
+  }
+}

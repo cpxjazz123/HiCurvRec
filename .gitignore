@@ -543,3 +543,8 @@ results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
 # from, so it has to travel with the reports or those numbers cannot be checked.
 # Re-included after the global **/*.npz rule, scoped to this one directory.
 !results/stage3_T5Train/monotonicity/behavior_pairs.npz
+
+# The canonical seed-42 behaviour pair set the whole programme shares. Every
+# arm is measured on exactly these pairs, so the file has to travel with the
+# results or the sharing rates cannot be recomputed. Scoped to this one path.
+!results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz

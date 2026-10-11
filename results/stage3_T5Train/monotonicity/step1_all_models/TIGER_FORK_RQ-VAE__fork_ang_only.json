@@ -1,0 +1,110 @@
+{
+  "label": "TIGER_FORK_RQ-VAE__fork_ang_only",
+  "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_ang_only/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768,
+      769,
+      770,
+      771,
+      772,
+      773,
+      774,
+      775
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.10637666739794767,
+      "p_share_neg": 0.007309205179941477,
+      "gap": 0.09906746221800619,
+      "er": 14.553794123863875,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.12956872052383167,
+      "macro_p_share_neg": 0.00702817813653564,
+      "sampled_precision_given_share": 0.5927309665645123,
+      "macro_gap": 0.12254054238729603
+    },
+    "L1_L2": {
+      "p_share_pos": 0.008756832585057765,
+      "p_share_neg": 0.00015356901181276322,
+      "gap": 0.008603263573245002,
+      "er": 57.02213279678068,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.009928555871774828,
+      "macro_p_share_neg": 0.000116631380178727,
+      "sampled_precision_given_share": 0.8507955568898229,
+      "macro_gap": 0.0098119244915961
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0015264203588632804,
+      "p_share_neg": 1.544959877391984e-05,
+      "gap": 0.0015109707600893605,
+      "er": 98.8,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0016265619065801375,
+      "macro_p_share_neg": 7.881115339726454e-06,
+      "sampled_precision_given_share": 0.9080882352941176,
+      "macro_gap": 0.001618680791240411
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 34427,
+      "p_retain_pos": 0.08231911000087141,
+      "n_effective_neg": 23655,
+      "p_retain_neg": 0.021010357218347073
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 2834,
+      "p_retain_pos": 0.1743119266055046,
+      "n_effective_neg": 497,
+      "p_retain_neg": 0.1006036217303823
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.10637666739794767,
+      "mean_L1_group_size_of_positives": 141.8640775199068,
+      "mean_L1_group_size_of_negatives": 143.77668871839398,
+      "frac_positives_in_singleton_group": 9.269759264351904e-05,
+      "L1_max_group": 254
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 252,
+        "capacity": 256,
+        "utilisation": 0.984375
+      },
+      "L2": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 23702,
+        "n_items": 24587,
+        "collision_rate": 0.03599463130922842
+      }
+    }
+  },
+  "stage3": {
+    "model": "TIGER_FORK_RQ-VAE/fork_ang_only",
+    "recall@10": 0.060847159595396855,
+    "ndcg@10": 0.032880030184471346,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "tiger_fork_fork_ang_only/logs/Amazon_2023_Instruments/Oct-11-2026_08-28-09"
+    ]
+  }
+}
