@@ -1,0 +1,1402 @@
+{
+  "n_models": 38,
+  "pairs_file": "behavior_pairs_s42.npz",
+  "recall_range": [
+    0.03219067184317276,
+    0.0636327234109229
+  ],
+  "families": {
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+    "TIGER_FORK_RQ-VAE": 9,
+    "TIGER_HYPERBOLIC_RQ-VAE": 7,
+    "TIGER_RQ-VAE": 1,
+    "coarse_l1_arms": 1,
+    "curvature_RQ-VAE": 4,
+    "l2_assignment_arms": 2,
+    "l2_cone_arms": 3,
+    "l2_cone_arms_fixed_rejection": 1,
+    "metric_cone_arms": 2,
+    "smooth_fair_arms": 2,
+    "smoothness_arms": 2
+  },
+  "correlations": {
+    "L1_er": {
+      "n": 38,
+      "spearman": 0.8019476966845388,
+      "spearman_p": 1.4318163289720142e-09,
+      "kendall": 0.6671408250355619,
+      "kendall_p": 3.71915507085745e-09,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1 enrichment ratio",
+      "classification": "positive",
+      "dropped_undefined": 0
+    },
+    "L1_p_share_pos": {
+      "n": 38,
+      "spearman": 0.37761243024400915,
+      "spearman_p": 0.019424816666326825,
+      "kendall": 0.3001422475106686,
+      "kendall_p": 0.007985745173986331,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1 positive sharing",
+      "classification": "positive",
+      "dropped_undefined": 0
+    },
+    "L1_p_share_neg": {
+      "n": 38,
+      "spearman": 0.1764963343910712,
+      "spearman_p": 0.28914404395920645,
+      "kendall": 0.10099573257467995,
+      "kendall_p": 0.3720686126362883,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1 negative sharing",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_gap": {
+      "n": 38,
+      "spearman": 0.5835430572272676,
+      "spearman_p": 0.0001203252372812586,
+      "kendall": 0.4452347083926032,
+      "kendall_p": 8.319455051135322e-05,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1 positive minus negative",
+      "classification": "positive",
+      "dropped_undefined": 0
+    },
+    "L1_L2_er": {
+      "n": 28,
+      "spearman": 0.8905309250136835,
+      "spearman_p": 2.203146577628649e-10,
+      "kendall": 0.7460317460317459,
+      "kendall_p": 3.1491527051364944e-10,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1+L2 enrichment ratio",
+      "classification": "positive",
+      "dropped_undefined": 10
+    },
+    "L1_L2_gap": {
+      "n": 38,
+      "spearman": 0.19831883432076383,
+      "spearman_p": 0.23264201111446978,
+      "kendall": 0.11468430666906092,
+      "kendall_p": 0.3219584892539845,
+      "status": null,
+      "group": "behaviour",
+      "description": "L1+L2 gap",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L2_given_L1_pos": {
+      "n": 38,
+      "spearman": 0.14111997230620055,
+      "spearman_p": 0.3980532751185749,
+      "kendall": 0.0676343347022667,
+      "kendall_p": 0.559148741936184,
+      "status": null,
+      "group": "refinement",
+      "description": "L2 retention given shared L1",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L3_given_L2_pos": {
+      "n": 27,
+      "spearman": 0.0036630036630036626,
+      "spearman_p": 0.9855328397301535,
+      "kendall": 0.019943019943019946,
+      "kendall_p": 0.9014438986735968,
+      "status": null,
+      "group": "refinement",
+      "description": "L3 retention given shared L1+L2",
+      "classification": "no_association",
+      "dropped_undefined": 11
+    },
+    "collision_rate": {
+      "n": 38,
+      "spearman": -0.2118885794654366,
+      "spearman_p": 0.20156862699430955,
+      "kendall": -0.14223486588337733,
+      "kendall_p": 0.22134678996563661,
+      "status": null,
+      "group": "structure",
+      "description": "three-token collision rate",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_prefixes": {
+      "n": 38,
+      "spearman": -0.2156910816579476,
+      "spearman_p": 0.19340756306074106,
+      "kendall": -0.17398268723288723,
+      "kendall_p": 0.14600505660565521,
+      "status": null,
+      "group": "structure",
+      "description": "distinct L1 prefixes",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_L2_prefixes": {
+      "n": 38,
+      "spearman": 0.11273014320452653,
+      "spearman_p": 0.5004038091667289,
+      "kendall": 0.12482528503332983,
+      "kendall_p": 0.2733533637273837,
+      "status": null,
+      "group": "structure",
+      "description": "distinct L1+L2 prefixes",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_L2_L3_prefixes": {
+      "n": 38,
+      "spearman": 0.2118885794654366,
+      "spearman_p": 0.20156862699430955,
+      "kendall": 0.14223486588337733,
+      "kendall_p": 0.22134678996563661,
+      "status": null,
+      "group": "structure",
+      "description": "distinct full triples",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_max_group": {
+      "n": 38,
+      "spearman": 0.0364412346239811,
+      "spearman_p": 0.8280471975797168,
+      "kendall": 0.007122514349029191,
+      "kendall_p": 0.9498704530360561,
+      "status": null,
+      "group": "structure",
+      "description": "largest L1 group",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_frac_pos_in_singleton": {
+      "n": 38,
+      "spearman": 0.1307269881666917,
+      "spearman_p": 0.434037394185804,
+      "kendall": 0.07216327754377233,
+      "kendall_p": 0.5468035034122749,
+      "status": null,
+      "group": "coverage",
+      "description": "positives landing in singleton L1 groups",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_mean_group_of_positives": {
+      "n": 38,
+      "spearman": 0.03906335485282854,
+      "spearman_p": 0.8158798954120041,
+      "kendall": -0.001422475106685633,
+      "kendall_p": 0.9899693355111908,
+      "status": null,
+      "group": "coverage",
+      "description": "mean L1 group size of positives",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    },
+    "L1_codebook_utilisation": {
+      "n": 38,
+      "spearman": -0.2156910816579476,
+      "spearman_p": 0.19340756306074106,
+      "kendall": -0.17398268723288723,
+      "kendall_p": 0.14600505660565521,
+      "status": null,
+      "group": "structure",
+      "description": "L1 codebook utilisation",
+      "classification": "no_association",
+      "dropped_undefined": 0
+    }
+  },
+  "within_family": {
+    "L1_er": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.45,
+        "spearman_p": 0.22421610749233659,
+        "kendall": 0.3333333333333333,
+        "kendall_p": 0.25951829805996474,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.9285714285714288,
+        "spearman_p": 0.0025194724037946874,
+        "kendall": 0.8095238095238096,
+        "kendall_p": 0.010714285714285714,
+        "status": null,
+        "classification": "positive"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_p_share_pos": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.31666666666666665,
+        "spearman_p": 0.4063970144863861,
+        "kendall": 0.16666666666666666,
+        "kendall_p": 0.612202380952381,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.39285714285714296,
+        "spearman_p": 0.38331687042697266,
+        "kendall": -0.23809523809523814,
+        "kendall_p": 0.5619047619047619,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_p_share_neg": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.06666666666666667,
+        "spearman_p": 0.8646897846262037,
+        "kendall": 0.0,
+        "kendall_p": 1.0,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.8571428571428573,
+        "spearman_p": 0.01369732661532562,
+        "kendall": -0.7142857142857143,
+        "kendall_p": 0.03015873015873016,
+        "status": null,
+        "classification": "negative"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_gap": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.6166666666666666,
+        "spearman_p": 0.07692880993776309,
+        "kendall": 0.3333333333333333,
+        "kendall_p": 0.25951829805996474,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.07142857142857144,
+        "spearman_p": 0.8790481931481541,
+        "kendall": -0.04761904761904762,
+        "kendall_p": 1.0,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_L2_er": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.31666666666666665,
+        "spearman_p": 0.4063970144863861,
+        "kendall": 0.16666666666666666,
+        "kendall_p": 0.612202380952381,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.9642857142857145,
+        "spearman_p": 0.0004541491691941689,
+        "kendall": 0.9047619047619049,
+        "kendall_p": 0.002777777777777778,
+        "status": null,
+        "classification": "positive"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_L2_gap": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.21666666666666667,
+        "spearman_p": 0.5755148957119259,
+        "kendall": 0.1111111111111111,
+        "kendall_p": 0.761414241622575,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.6071428571428572,
+        "spearman_p": 0.1482311614811614,
+        "kendall": -0.33333333333333337,
+        "kendall_p": 0.3813492063492063,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L2_given_L1_pos": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.03333333333333333,
+        "spearman_p": 0.932156735540504,
+        "kendall": 0.0,
+        "kendall_p": 1.0,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.6071428571428572,
+        "spearman_p": 0.1482311614811614,
+        "kendall": -0.4285714285714286,
+        "kendall_p": 0.2388888888888889,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L3_given_L2_pos": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.5333333333333333,
+        "spearman_p": 0.13922686754397814,
+        "kendall": 0.3888888888888889,
+        "kendall_p": 0.18018077601410934,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.07142857142857144,
+        "spearman_p": 0.8790481931481541,
+        "kendall": 0.04761904761904762,
+        "kendall_p": 1.0,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 0,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "collision_rate": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.6,
+        "spearman_p": 0.0876228290414024,
+        "kendall": -0.5,
+        "kendall_p": 0.07517636684303351,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.8571428571428573,
+        "spearman_p": 0.01369732661532562,
+        "kendall": -0.7142857142857143,
+        "kendall_p": 0.03015873015873016,
+        "status": null,
+        "classification": "negative"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_prefixes": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.1176512129542425,
+        "spearman_p": 0.7630703618815533,
+        "kendall": -0.11433239009500588,
+        "kendall_p": 0.6732899796599957,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.6666937223947136,
+        "spearman_p": 0.10192046024618232,
+        "kendall": 0.48795003647426666,
+        "kendall_p": 0.12873504895794796,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_L2_prefixes": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.48333333333333334,
+        "spearman_p": 0.18746985521554207,
+        "kendall": 0.3333333333333333,
+        "kendall_p": 0.25951829805996474,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.8571428571428573,
+        "spearman_p": 0.01369732661532562,
+        "kendall": 0.7142857142857143,
+        "kendall_p": 0.03015873015873016,
+        "status": null,
+        "classification": "positive"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_L2_L3_prefixes": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.6,
+        "spearman_p": 0.0876228290414024,
+        "kendall": 0.5,
+        "kendall_p": 0.07517636684303351,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.8571428571428573,
+        "spearman_p": 0.01369732661532562,
+        "kendall": 0.7142857142857143,
+        "kendall_p": 0.03015873015873016,
+        "status": null,
+        "classification": "positive"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_max_group": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.31666666666666665,
+        "spearman_p": 0.4063970144863861,
+        "kendall": -0.16666666666666666,
+        "kendall_p": 0.612202380952381,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.7500000000000002,
+        "spearman_p": 0.05218140045705776,
+        "kendall": -0.5238095238095238,
+        "kendall_p": 0.1361111111111111,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_frac_pos_in_singleton": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": 0.2677847708018314,
+        "spearman_p": 0.4860296141888535,
+        "kendall": 0.19720265943665385,
+        "kendall_p": 0.463071015014588,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.9642857142857145,
+        "spearman_p": 0.0004541491691941689,
+        "kendall": -0.9047619047619049,
+        "kendall_p": 0.002777777777777778,
+        "status": null,
+        "classification": "negative"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_mean_group_of_positives": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.016666666666666666,
+        "spearman_p": 0.9660548039946861,
+        "kendall": 0.05555555555555555,
+        "kendall_p": 0.919455467372134,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": -0.8571428571428573,
+        "spearman_p": 0.01369732661532562,
+        "kendall": -0.7142857142857143,
+        "kendall_p": 0.03015873015873016,
+        "status": null,
+        "classification": "negative"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    },
+    "L1_codebook_utilisation": {
+      "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "TIGER_FORK_RQ-VAE": {
+        "n": 9,
+        "spearman": -0.1176512129542425,
+        "spearman_p": 0.7630703618815533,
+        "kendall": -0.11433239009500588,
+        "kendall_p": 0.6732899796599957,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_HYPERBOLIC_RQ-VAE": {
+        "n": 7,
+        "spearman": 0.6666937223947136,
+        "spearman_p": 0.10192046024618232,
+        "kendall": 0.48795003647426666,
+        "kendall_p": 0.12873504895794796,
+        "status": null,
+        "classification": "no_association"
+      },
+      "TIGER_RQ-VAE": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "coarse_l1_arms": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "curvature_RQ-VAE": {
+        "n": 4,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_assignment_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms": {
+        "n": 3,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "l2_cone_arms_fixed_rejection": {
+        "n": 1,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "metric_cone_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smooth_fair_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      },
+      "smoothness_arms": {
+        "n": 2,
+        "status": "too few models",
+        "classification": "undetermined"
+      }
+    }
+  },
+  "counterexamples": [
+    {
+      "model": "TIGER_FORK_RQ-VAE__prefix_sib",
+      "recall@10": 0.06161318964466651,
+      "L1_er": 3.9759292142846308,
+      "predicted_from_er": 0.04911431479624962,
+      "residual": 0.012498874848416892
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__nce_euclid_radius_control",
+      "recall@10": 0.05978516339072756,
+      "L1_er": 8.589179629041766,
+      "predicted_from_er": 0.05365238598263566,
+      "residual": 0.0061327774080918995
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__nce_hyp_group",
+      "recall@10": 0.05882762582914048,
+      "L1_er": 7.849732662995771,
+      "predicted_from_er": 0.05292498931677515,
+      "residual": 0.0059026365123653265
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__nce_euclid_group",
+      "recall@10": 0.05901913334145789,
+      "L1_er": 8.452169333069985,
+      "predicted_from_er": 0.05351760845692432,
+      "residual": 0.005501524884533572
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE__fix_carry_euclid_raw",
+      "recall@10": 0.053813610961193616,
+      "L1_er": 3.678455695527008,
+      "predicted_from_er": 0.04882168901554877,
+      "residual": 0.0049919219456448435
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__fork_more_sib",
+      "recall@10": 0.061874336252372084,
+      "L1_er": 14.030380308238163,
+      "predicted_from_er": 0.05900491485091848,
+      "residual": 0.0028694214014536035
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__fork_radial_corr",
+      "recall@10": 0.061943975347760236,
+      "L1_er": 14.583270421259249,
+      "predicted_from_er": 0.05954879486296218,
+      "residual": 0.0023951804847980526
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE__fork_euclid_group",
+      "recall@10": 0.0615609603231254,
+      "L1_er": 14.271207689093188,
+      "predicted_from_er": 0.05924181762004955,
+      "residual": 0.0023191427030758507
+    }
+  ],
+  "caveat": "observational points from heterogeneous experiments; no causal claim is made",
+  "er_residual_fit": {
+    "slope": 0.000983703631580325,
+    "intercept": 0.04520317878925152,
+    "r": 0.7686378115248876
+  }
+}
