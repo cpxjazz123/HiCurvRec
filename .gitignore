@@ -537,3 +537,9 @@ results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
 # Re-included after the global **/*.parquet rule above.
 !results/stage0_build_parquet/
 !results/stage0_build_parquet/*.parquet
+
+# The frozen positive/negative pair index for the behaviour analysis. It is the
+# input every published sharing rate, gap and enrichment ratio was computed
+# from, so it has to travel with the reports or those numbers cannot be checked.
+# Re-included after the global **/*.npz rule, scoped to this one directory.
+!results/stage3_T5Train/monotonicity/behavior_pairs.npz
