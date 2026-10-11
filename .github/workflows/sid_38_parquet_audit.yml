@@ -1,0 +1,42 @@
+name: SID 38 Parquet Audit
+on:
+  push:
+    branches:
+      - analysis/sid-38-parquet-audit-20261011
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  compute:
+    if: ${{ github.event.head_commit.message != 'Save completed 38-model Parquet audit' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install analysis dependencies
+        run: python -m pip install 'numpy<2' pandas pyarrow scipy matplotlib scikit-learn
+      - name: Run exact Parquet-based scoring and all correlations
+        env:
+          MPLBACKEND: Agg
+          OMP_NUM_THREADS: '2'
+        run: python -u scripts/run_sid_38_parquet_audit.py
+      - name: Save findings to isolated branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/stage3_T5Train/monotonicity/missing3_*.json
+          git add -f results/stage3_T5Train/monotonicity/missing3_*.csv
+          git add -f results/stage3_T5Train/monotonicity/unified_metrics_38.json
+          git add -f results/stage3_T5Train/monotonicity/unified_metrics_38.csv
+          git add -f results/stage3_T5Train/monotonicity/common_L1_intersection_38.json
+          git add -f results/stage3_T5Train/monotonicity/monotonicity_38.json
+          git add -f results/stage3_T5Train/monotonicity/monotonicity_38.csv
+          git add -f results/stage3_T5Train/monotonicity/monotonicity_report_38.md
+          git add -f results/stage3_T5Train/monotonicity/figures38/
+          git commit -m "Save completed 38-model Parquet audit"
+          git push
