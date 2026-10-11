@@ -1,0 +1,51 @@
+{
+  "purpose": "canonical behaviour pairs shared by every experiment in the programme",
+  "relation": "train_transition: history[-1] -> target, from train.parquet",
+  "seed": 42,
+  "k_negatives": 10,
+  "one_negative_control": "negatives[:, 0] of this same file, not a second draw",
+  "item_id_space": "raw item ids as stored in stage0_build_parquet and used as the keys of every item_sids.json; no re-indexing",
+  "dtype": "int32",
+  "shapes": {
+    "anchors": [
+      323633
+    ],
+    "positives": [
+      323633
+    ],
+    "negatives": [
+      323633,
+      10
+    ]
+  },
+  "filters": {
+    "rows_in_train_parquet": 396958,
+    "distinct_transitions": 323633,
+    "dropped_invalid_item_id": 0,
+    "dropped_self_loop": 0,
+    "kept_pairs": 323633,
+    "distinct_anchors": 24474,
+    "mean_positives_per_anchor": 13.22354335212879
+  },
+  "negative_construction": {
+    "k_negatives": 10,
+    "positives": 323633,
+    "negative_draws": 3236330,
+    "bin_fallbacks": 574,
+    "pools_shorter_than_k": 0,
+    "invariant_violations": 0,
+    "distinct_negatives": 24540,
+    "max_negatives_per_positive_distinct": 10
+  },
+  "negative_semantics": "unobserved, not proven irrelevant: no observed train relation to that anchor",
+  "checks": {
+    "no_invariant_violations": true,
+    "no_negative_equals_positive": true,
+    "no_negative_equals_anchor": true,
+    "no_negative_is_a_train_successor_of_its_anchor": true,
+    "ten_distinct_per_row": true,
+    "all_ids_in_range": true,
+    "positive_is_always_a_train_successor": true
+  },
+  "reproduce": "cd /home/wlia0047/ar57/wenyu/GeneRec && OMP_NUM_THREADS=8 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 stage2_RQ-VAE/TIGER_FORK_RQ-VAE/scripts/build_behavior_pairs_s42.py"
+}

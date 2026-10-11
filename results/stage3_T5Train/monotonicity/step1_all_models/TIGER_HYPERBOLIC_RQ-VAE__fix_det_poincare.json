@@ -1,0 +1,110 @@
+{
+  "label": "TIGER_HYPERBOLIC_RQ-VAE__fix_det_poincare",
+  "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768,
+      769,
+      770,
+      771,
+      772,
+      773,
+      774,
+      775
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.10988681623938226,
+      "p_share_neg": 0.033869228416138035,
+      "gap": 0.07601758782324422,
+      "er": 3.244444038973835,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.11588908861124758,
+      "macro_p_share_neg": 0.03213940351693437,
+      "sampled_precision_given_share": 0.2449664198381264,
+      "macro_gap": 0.08374968509431321
+    },
+    "L1_L2": {
+      "p_share_pos": 0.020745721233619563,
+      "p_share_neg": 0.0043960288351311515,
+      "gap": 0.01634969239848841,
+      "er": 4.71919589512898,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.022598047532478863,
+      "macro_p_share_neg": 0.00420900899048026,
+      "sampled_precision_given_share": 0.32061506136287665,
+      "macro_gap": 0.018389038541998602
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0017179953836598864,
+      "p_share_neg": 0.0002697499945926404,
+      "gap": 0.001448245389067246,
+      "er": 6.368843069873998,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0019731113106668196,
+      "macro_p_share_neg": 0.00027080257873273285,
+      "sampled_precision_given_share": 0.38908327501749473,
+      "macro_gap": 0.0017023087319340867
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 35563,
+      "p_retain_pos": 0.18879172173326209,
+      "n_effective_neg": 109612,
+      "p_retain_neg": 0.12979418311863664
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 6714,
+      "p_retain_pos": 0.0828120345546619,
+      "n_effective_neg": 14227,
+      "p_retain_neg": 0.06136219863639559
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.10988681623938226,
+      "mean_L1_group_size_of_positives": 778.6146499275413,
+      "mean_L1_group_size_of_negatives": 768.2606328773642,
+      "frac_positives_in_singleton_group": 0.00038623996934799605,
+      "L1_max_group": 1343
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 101,
+        "capacity": 256,
+        "utilisation": 0.39453125
+      },
+      "L2": {
+        "distinct_codes": 108,
+        "capacity": 256,
+        "utilisation": 0.421875
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 9872,
+        "n_items": 24587,
+        "collision_rate": 0.5984870053280189
+      }
+    }
+  },
+  "stage3": {
+    "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+    "recall@10": 0.046536325493131844,
+    "ndcg@10": 0.026006974089175707,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "tiger_hyp_fix_det_poincare/logs/Amazon_2023_Instruments/Oct-11-2026_03-46-46"
+    ]
+  }
+}

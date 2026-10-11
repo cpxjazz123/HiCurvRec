@@ -1,0 +1,110 @@
+{
+  "label": "TIGER_FORK_RQ-VAE__nce_hyp_group",
+  "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_hyp_group/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      768,
+      769,
+      770,
+      771,
+      772,
+      773,
+      774,
+      775
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.12157598267173002,
+      "p_share_neg": 0.015487913778879163,
+      "gap": 0.10608806889285086,
+      "er": 7.849732662995771,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.10891745442493396,
+      "macro_p_share_neg": 0.008942883922256171,
+      "sampled_precision_given_share": 0.4397675198390522,
+      "macro_gap": 0.09997457050267779
+    },
+    "L1_L2": {
+      "p_share_pos": 0.01382121106314869,
+      "p_share_neg": 0.0006238547984908832,
+      "gap": 0.013197356264657806,
+      "er": 22.154531946508172,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.012950980544031,
+      "macro_p_share_neg": 0.0005318438072896837,
+      "sampled_precision_given_share": 0.6890018484288355,
+      "macro_gap": 0.012419136736741316
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.0017210853034146704,
+      "p_share_neg": 4.418585249341075e-05,
+      "gap": 0.0016768994509212597,
+      "er": 38.95104895104895,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.0016618292642863349,
+      "macro_p_share_neg": 3.274518748802241e-05,
+      "sampled_precision_given_share": 0.7957142857142857,
+      "macro_gap": 0.0016290840767983125
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 39346,
+      "p_retain_pos": 0.11368372896863722,
+      "n_effective_neg": 50124,
+      "p_retain_neg": 0.04028010533875988
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 4473,
+      "p_retain_pos": 0.12452492734182875,
+      "n_effective_neg": 2019,
+      "p_retain_neg": 0.070827142149579
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.12157598267173002,
+      "mean_L1_group_size_of_positives": 168.76516918855617,
+      "mean_L1_group_size_of_negatives": 171.65225795886082,
+      "frac_positives_in_singleton_group": 5.8708475340895396e-05,
+      "L1_max_group": 645
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 245,
+        "capacity": 256,
+        "utilisation": 0.95703125
+      },
+      "L2": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 21959,
+        "n_items": 24587,
+        "collision_rate": 0.10688575263350553
+      }
+    }
+  },
+  "stage3": {
+    "model": "TIGER_FORK_RQ-VAE/nce_hyp_group",
+    "recall@10": 0.05882762582914048,
+    "ndcg@10": 0.03181798945550038,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "tiger_fork_nce_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-55-55"
+    ]
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "label": "l2_cone_arms__A_euclid_nocone_s42",
+  "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/A_euclid_nocone_s42/item_sids.json",
+  "sid_token_info": {
+    "n_tokens_stored": 4,
+    "levels_analysed": 3,
+    "collision_token_values": [
+      576,
+      577,
+      578
+    ],
+    "collision_token_dropped": true
+  },
+  "pairs_file": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+  "seed": 42,
+  "metrics": {
+    "k_negatives": 10,
+    "n_positive_pairs": 323633,
+    "n_negative_pairs": 3236330,
+    "n_anchors": 24474,
+    "L1": {
+      "p_share_pos": 0.04391702947474454,
+      "p_share_neg": 0.004313836969653898,
+      "gap": 0.03960319250509064,
+      "er": 10.180502829310221,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.05751469609634208,
+      "macro_p_share_neg": 0.004088009617252664,
+      "sampled_precision_given_share": 0.5044722084191098,
+      "macro_gap": 0.053426686479089415
+    },
+    "L1_L2": {
+      "p_share_pos": 0.0009146162474160546,
+      "p_share_neg": 3.800601298384281e-05,
+      "gap": 0.0008766102344322118,
+      "er": 24.0650406504065,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.001459781577656005,
+      "macro_p_share_neg": 3.454620752248949e-05,
+      "sampled_precision_given_share": 0.7064439140811456,
+      "macro_gap": 0.0014252353701335154
+    },
+    "L1_L2_L3": {
+      "p_share_pos": 0.00012668670994614269,
+      "p_share_neg": 2.4719358038271746e-06,
+      "gap": 0.0001242147741423155,
+      "er": 51.24999999999999,
+      "er_undefined_reason": null,
+      "macro_p_share_pos": 0.00018272571264967187,
+      "macro_p_share_neg": 2.169402379460153e-06,
+      "sampled_precision_given_share": 0.8367346938775511,
+      "macro_gap": 0.00018055631027021171
+    },
+    "L2_given_L1": {
+      "n_effective_pos": 14213,
+      "p_retain_pos": 0.020826004362203616,
+      "n_effective_neg": 13961,
+      "p_retain_neg": 0.00881025714490366
+    },
+    "L3_given_L2": {
+      "n_effective_pos": 296,
+      "p_retain_pos": 0.13851351351351351,
+      "n_effective_neg": 123,
+      "p_retain_neg": 0.06504065040650407
+    },
+    "L1_coverage": {
+      "frac_positives_sharing": 0.04391702947474454,
+      "mean_L1_group_size_of_positives": 96.13377498586361,
+      "mean_L1_group_size_of_negatives": 96.17397854977706,
+      "frac_positives_in_singleton_group": 0.0,
+      "L1_max_group": 129
+    },
+    "codebook": {
+      "L1": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "L2": {
+        "distinct_codes": 64,
+        "capacity": 256,
+        "utilisation": 0.25
+      },
+      "L3": {
+        "distinct_codes": 256,
+        "capacity": 256,
+        "utilisation": 1.0
+      },
+      "full_sid": {
+        "distinct_triples": 24085,
+        "n_items": 24587,
+        "collision_rate": 0.020417293691788352
+      }
+    }
+  },
+  "stage3": {
+    "model": "l2_cone_arms/A_euclid_nocone_s42",
+    "recall@10": 0.053918069604275844,
+    "ndcg@10": 0.029524254857286953,
+    "n_eval": 57439,
+    "stage3_runs": [
+      "sidarm_A4_euclid_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-10-2026_00-41-15"
+    ]
+  }
+}
