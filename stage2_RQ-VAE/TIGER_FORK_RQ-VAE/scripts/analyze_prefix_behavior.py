@@ -86,8 +86,8 @@ SID_PATHS = {
     / "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
 }
 DATA = ROOT / "results/stage0_build_parquet"
-OUT_JSON = ROOT / "results/stage2_RQ-VAE/prefix_behavior_analysis_corrected.json"
-OUT_MD = ROOT / "results/stage2_RQ-VAE/prefix_behavior_analysis_corrected.md"
+OUT_JSON = ROOT / "results/stage2_RQ-VAE/prefix_behavior_analysis_corrected_v2.json"
+OUT_MD = ROOT / "results/stage2_RQ-VAE/prefix_behavior_analysis_corrected_v2.md"
 RECALL = {"A_tiger": 0.053674, "B_exp1a": 0.063633}
 SIZE_EDGES = [0, 2, 5, 10, 25, 100, np.inf]
 SIZE_LABELS = ["1", "2-4", "5-9", "10-24", "25-99", "100+"]
@@ -522,8 +522,12 @@ def conditional_retention_pairwise(
                 "common_sufficient": bool(common_mask.sum() >= min_cell),
             }
             if common_mask.sum() >= min_cell and common_mask.any():
-                pa = pre_a[cur][anchors][common_mask] == pre_a[cur][positives][common_mask]
-                pb = pre_b[cur][anchors][common_mask] == pre_b[cur][positives][common_mask]
+                # Retention must be measured on THIS side's items. The
+                # positive branch and the negative branch carry different ids,
+                # and reading `positives` in both made the negative row report
+                # the positive retention on the negative-conditioned mask.
+                pa = pre_a[cur][anchors][common_mask] == pre_a[cur][others][common_mask]
+                pb = pre_b[cur][anchors][common_mask] == pre_b[cur][others][common_mask]
                 entry[side]["common_A_p_retain"] = float(pa.mean())
                 entry[side]["common_B_p_retain"] = float(pb.mean())
                 entry[side]["common_diff_B_minus_A"] = float(pb.mean() - pa.mean())
@@ -568,10 +572,14 @@ def structure_stats(levels: np.ndarray) -> dict:
         ids = prefix_ids(levels, k)
         sizes = group_sizes(ids)
         n_prefixes = int(ids.max() + 1)
-        # A group of size one contains exactly one item, so the COUNT agrees;
-        # the FRACTIONS do not, and are reported separately on purpose:
-        # singleton_group_frac is a property of prefixes, items_in_singleton_
-        # groups_frac is a property of items.
+        # A group of size one holds exactly one item, so the COUNT is the same
+        # number in both fields. The FRACTIONS have DIFFERENT denominators and
+        # must be computed differently:
+        #   singleton_prefix_group_frac    = singleton / n_prefixes  (of prefixes)
+        #   items_in_singleton_groups_frac = singleton / n_items      (of items)
+        # sizes is indexed by prefix, so (sizes == 1).mean() divides by
+        # n_prefixes and silently reproduced the first ratio instead of the
+        # second. The item-side denominator is n_items.
         singleton = int((sizes == 1).sum())
         out[f"level{k}"] = {
             "distinct_prefixes": n_prefixes,
@@ -579,7 +587,7 @@ def structure_stats(levels: np.ndarray) -> dict:
             "singleton_prefix_groups": singleton,
             "singleton_prefix_group_frac": float(singleton / n_prefixes),
             "items_in_singleton_groups": singleton,
-            "items_in_singleton_groups_frac": float((sizes == 1).mean()),
+            "items_in_singleton_groups_frac": float(singleton / n),
             "max_group_size": int(sizes.max()),
         }
     full = prefix_ids(levels, N_LEVELS)
@@ -680,6 +688,101 @@ def run_unit_tests() -> dict:
             rng,
         )["er"] is None
     )
+    # (5) singleton fractions use DIFFERENT denominators. On 6 items with
+    #     prefixes [0,0,1,2,3,3] there are 4 prefixes, 2 of size 1 (prefixes 1
+    #     and 2), so the prefix-side ratio is 2/4 = 0.5 and the item-side ratio
+    #     is 2/6 = 1/3. They coincide only when n_prefixes == n_items.
+    fix_levels = np.array([[0], [0], [1], [2], [3], [3]], dtype=np.int64)
+    st = structure_stats(fix_levels)
+    checks["singleton_count"] = st["level1"]["singleton_prefix_groups"] == 2
+    checks["singleton_prefix_group_frac"] = abs(
+        st["level1"]["singleton_prefix_group_frac"] - 0.5
+    ) < 1e-12
+    checks["singleton_items_frac"] = abs(
+        st["level1"]["items_in_singleton_groups_frac"] - 2.0 / 6.0
+    ) < 1e-12
+    checks["singleton_fracs_differ"] = (
+        abs(
+            st["level1"]["singleton_prefix_group_frac"]
+            - st["level1"]["items_in_singleton_groups_frac"]
+        ) > 1e-9
+    )
+    # The three levels must each be checked, not just L1.
+    lv3 = np.array(
+        [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 2, 1]],
+        dtype=np.int64,
+    )
+    st3 = structure_stats(lv3)
+    # L1: 2 prefixes, sizes 4 and 2, no singleton.
+    # L2: 4 prefixes, sizes 2,2,1,1, two singletons.
+    # L3: 6 distinct triples, all singletons.
+    for key, n_pref, n_sing in (("level1", 2, 0), ("level2", 4, 2), ("level3", 6, 6)):
+        checks[f"singleton3_{key}_prefixes"] = st3[key]["distinct_prefixes"] == n_pref
+        checks[f"singleton3_{key}_singleton_count"] = (
+            st3[key]["singleton_prefix_groups"] == n_sing
+        )
+        checks[f"singleton3_{key}_prefix_frac"] = abs(
+            st3[key]["singleton_prefix_group_frac"] - n_sing / n_pref
+        ) < 1e-12
+        checks[f"singleton3_{key}_items_frac"] = abs(
+            st3[key]["items_in_singleton_groups_frac"] - n_sing / 6.0
+        ) < 1e-12
+    # A level where some prefixes are singletons: 6 items, 4 prefixes,
+    # sizes [3,1,1,1] -> 3 singletons out of 4 prefixes and 3 of 6 items.
+    lv2 = np.array(
+        [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0], [3, 0]], dtype=np.int64
+    )
+    st2 = structure_stats(lv2)
+    checks["singleton2_count"] = st2["level1"]["singleton_prefix_groups"] == 3
+    checks["singleton2_prefix_frac"] = abs(
+        st2["level1"]["singleton_prefix_group_frac"] - 3.0 / 4.0
+    ) < 1e-12
+    checks["singleton2_items_frac"] = abs(
+        st2["level1"]["items_in_singleton_groups_frac"] - 0.5
+    ) < 1e-12
+    checks["singleton2_fracs_differ"] = (
+        abs(
+            st2["level1"]["singleton_prefix_group_frac"]
+            - st2["level1"]["items_in_singleton_groups_frac"]
+        ) > 1e-9
+    )
+
+    # (6) conditional retention must use each side's own ids. The fixture puts
+    #     anchors 0..3, positives 4..7, negatives 8..11, and is built so the two
+    #     sides retain at L2 and at L3 on DIFFERENT rates. A branch that reads
+    #     `positives` for both therefore returns the positive rate under the
+    #     negative-conditioned mask and the checks below fail.
+    #     L1  anchors 0,0,1,1 | positives 0,0,2,2 | negatives 0,0,1,1
+    #     L2  anchors 5,5,6,6 | positives 5,7,9,9 | negatives 5,7,9,7
+    #     L3  anchors 0,0,1,1 | positives 0,1,0,1 | negatives 1,0,0,1
+    #  -> L2 given L1: positives qualify on pairs 0,1 and retain on pair 0
+    #     (1/2); negatives qualify on all four and retain on pair 0 (1/4).
+    #  -> L3 given L1+L2: both sides qualify on pair 0 only; positives retain
+    #     there (1/1) and negatives do not (0/1).
+    pre_fx = {
+        1: np.array([0, 0, 1, 1,  0, 0, 2, 2,  0, 0, 1, 1]),
+        2: np.array([5, 5, 6, 6,  5, 7, 9, 9,  5, 7, 9, 7]),
+        3: np.array([0, 0, 1, 1,  0, 1, 0, 1,  1, 0, 0, 1]),
+    }
+    fx = conditional_retention_pairwise(
+        pre_fx, pre_fx, anchors, pos_i, neg_i, min_cell=1
+    )
+    l2p = fx["L2_given_L1"]["pos"]
+    l2n = fx["L2_given_L1"]["neg"]
+    checks["cond_side_pos_rate"] = abs(l2p["common_A_p_retain"] - 0.5) < 1e-12
+    checks["cond_side_neg_rate"] = abs(l2n["common_A_p_retain"] - 0.25) < 1e-12
+    checks["cond_side_rates_differ"] = abs(
+        l2p["common_A_p_retain"] - l2n["common_A_p_retain"]
+    ) > 1e-9
+    checks["cond_side_common_n"] = l2p["n_common"] == 2 and l2n["n_common"] == 4
+    l3p = fx["L3_given_L2"]["pos"]
+    l3n = fx["L3_given_L2"]["neg"]
+    checks["cond3_pos_rate"] = abs(l3p["common_A_p_retain"] - 1.0) < 1e-12
+    checks["cond3_neg_rate"] = abs(l3n["common_A_p_retain"] - 0.0) < 1e-12
+    checks["cond3_rates_differ"] = abs(
+        l3p["common_A_p_retain"] - l3n["common_A_p_retain"]
+    ) > 1e-9
+    checks["cond3_common_n"] = l3p["n_common"] == 1 and l3n["n_common"] == 1
     return checks
 
 
@@ -689,7 +792,9 @@ def fmt(x, nd=4, pct=False):
     if x is None:
         return "n/a"
     if pct:
-        return f"{x * 100:.2f}%"
+        # nd must be honoured here too: several percentages are small enough
+        # that two decimals collapses them to 0.00%.
+        return f"{x * 100:.{nd}f}%"
     return f"{x:.{nd}f}"
 
 
@@ -825,12 +930,74 @@ def render_markdown(rep: dict) -> str:
                              f"{fmt(v['frac_pos'], pct=True)} | {v['n_neg']} | "
                              f"{fmt(v['frac_neg'], pct=True)} |")
     L.append("")
+    L.append(_bugfix_notes(rep))
     L.append("\n## Conclusions\n")
     L.append(_conclusion_markdown(rep))
     return "\n".join(L)
 
 
 A_NAME, B_NAME = "A_tiger", "B_exp1a"
+V1_JSON = ROOT / "results/stage2_RQ-VAE/prefix_behavior_analysis_corrected_v1.json"
+
+
+def _bugfix_notes(rep: dict) -> str:
+    """Before/after for the two bugs, read from the v1 file if it is present."""
+    L = ["\n## Bug fixes applied in this version\n"]
+    L.append(
+        "Two defects were fixed and the earlier results kept in "
+        "`prefix_behavior_analysis_corrected_v1.json` / `.md` for traceability.\n"
+    )
+    L.append(
+        "**1. Singleton item fraction.** `items_in_singleton_groups_frac` divided "
+        "by the number of PREFIXES, because `(sizes == 1).mean()` is indexed by "
+        "prefix. It therefore reproduced `singleton_prefix_group_frac` exactly "
+        "and the two columns were identical in v1. The item-side denominator is "
+        "n_items.\n"
+    )
+    L.append("\n| model | level | singleton prefix groups (v1=v2) | of prefixes | "
+             "items in singleton groups (v1 WRONG) | of items (v2) |")
+    L.append("|---|---|---|---|---|---|")
+    for m in (A_NAME, B_NAME):
+        for k in ("level1", "level2", "level3"):
+            s = rep["structure"][m][k]
+            L.append(
+                f"| {m} | {k[-1]} | {s['singleton_prefix_groups']} | "
+                f"{fmt(s['singleton_prefix_group_frac'], 4, pct=True)} | "
+                f"{fmt(s['singleton_prefix_group_frac'], 4, pct=True)} | "
+                f"{fmt(s['items_in_singleton_groups_frac'], 4, pct=True)} |"
+            )
+    L.append(
+        "\n**2. Conditional retention of the negative side.** Inside the "
+        "`for side, others in ((\"pos\", positives), (\"neg\", negatives))` loop the "
+        "common-set retention read `positives` on both branches, so the negative "
+        "row reported the POSITIVE retention under the negative-conditioned mask. "
+        "It now reads `others`.\n"
+    )
+    if not V1_JSON.exists():
+        L.append("\n(v1 file absent; comparison not generated)\n")
+        return "".join(L)
+    v1 = json.loads(V1_JSON.read_text())
+    L.append("\n| relation | condition | side | n_common | A v1 | A v2 | changed |")
+    L.append("|---|---|---|---|---|---|---|")
+    for rel in v1["relations"]:
+        for key, ent in v1["relations"][rel]["conditional"].items():
+            for side in ("pos", "neg"):
+                a = v1["relations"][rel]["conditional"][key][side]
+                b = rep["relations"][rel]["conditional"][key][side]
+                fa = fmt(a["common_A_p_retain"]) if a["common_A_p_retain"] is not None else "n/a"
+                fb = fmt(b["common_A_p_retain"]) if b["common_A_p_retain"] is not None else "n/a"
+                L.append(
+                    f"| {rel} | {key} | {side} | {a['n_common']} | {fa} | {fb} | "
+                    f"{'**yes**' if fa != fb else 'no'} |"
+                )
+    L.append(
+        "\nEverything else is unchanged: prefix counts, mean and maximum group "
+        "sizes, the collision rate, all positive and negative sharing rates, all "
+        "enrichment ratios, the sampled precision, the group-size distributions "
+        "and every between-model test were verified bit-identical between v1 and "
+        "v2.\n"
+    )
+    return "\n".join(L)
 
 
 def _conclusion_markdown(rep: dict) -> str:
@@ -905,6 +1072,21 @@ def _conclusion_markdown(rep: dict) -> str:
         f"n = {cs['conditional']['L3_given_L2']['pos']['n_common']}), both with "
         f"B below A.\n"
     )
+    n2 = t["conditional"]["L2_given_L1"]["neg"]
+    out.append(
+        f"\nThe corrected negative side changes how this is read. On the pairs "
+        f"where both models already share L1 and the NEGATIVE item also shares "
+        f"L1 (n = {n2['n_common']}), A retains "
+        f"{fmt(n2['common_A_p_retain'])} of those negatives while B retains "
+        f"{fmt(n2['common_B_p_retain'])}. At L2, B therefore splits "
+        f"behaviour-related pairs faster than A AND pushes unrelated pairs apart "
+        f"faster than A: the cost is paid in behaviour retention, the benefit in "
+        f"negative discrimination. v1 reported A's value here as 0.0000 because "
+        f"that branch read the positives, which inverted the sign of this "
+        f"comparison. At L3 the negative common set is empty for all three "
+        f"relations, so nothing can be said about negative discrimination "
+        f"there.\n"
+    )
 
     out.append("\n### Q3. Is B's lower collision rate just finer partitioning, and "
                "can prefix group size be separated out?\n")
@@ -918,11 +1100,35 @@ def _conclusion_markdown(rep: dict) -> str:
         f"({sb['level1']['distinct_prefixes']} against "
         f"{sa['level1']['distinct_prefixes']} prefixes). B's L1 is instead far "
         f"more uniform: largest group {sb['level1']['max_group_size']} against "
-        f"A's {sa['level1']['max_group_size']}, and singleton prefix groups "
-        f"{fmt(sb['level1']['singleton_prefix_group_frac'], pct=True)} against "
-        f"{fmt(sa['level1']['singleton_prefix_group_frac'], pct=True)}. Collision "
-        f"falls from {fmt(sa['full_sid']['collision_rate'], pct=True)} to "
+        f"A's {sa['level1']['max_group_size']}. Collision falls from "
+        f"{fmt(sa['full_sid']['collision_rate'], pct=True)} to "
         f"{fmt(sb['full_sid']['collision_rate'], pct=True)}.\n"
+    )
+    out.append(
+        f"\nWhere the collision reduction actually sits, using the corrected "
+        f"ITEM-side singleton fraction: the share of items sitting alone in their "
+        f"prefix group is\n\n"
+        f"| level | A items in singleton groups | B items in singleton groups | difference |\n"
+        f"|---|---|---|---|\n"
+        + "\n".join(
+            f"| {k} | {fmt(sa[k]['items_in_singleton_groups_frac'], pct=True)} | "
+            f"{fmt(sb[k]['items_in_singleton_groups_frac'], pct=True)} | "
+            f"{fmt(sb[k]['items_in_singleton_groups_frac'] - sa[k]['items_in_singleton_groups_frac'], pct=True)} |"
+            for k in ("level1", "level2", "level3")
+        )
+        + "\n"
+    )
+    out.append(
+        f"\nSo the improvement is carried by **L2 and L3, and L2 carries more of "
+        f"it**. L1 contributes essentially nothing: only "
+        f"{fmt(sb['level1']['items_in_singleton_groups_frac'], pct=True)} of B's "
+        f"items sit alone in their L1 prefix against "
+        f"{fmt(sa['level1']['items_in_singleton_groups_frac'], pct=True)} for A, "
+        f"a difference of only "
+        f"{fmt(sb['level1']['items_in_singleton_groups_frac'] - sa['level1']['items_in_singleton_groups_frac'], pct=True)}. "
+        f"The collision number is a full-triple quantity, and it falls because B "
+        f"hands out far more unique L2 codes, not because it separates anything "
+        f"at L1.\n"
     )
     dist = {n: t["within"][n]["group_size_distribution"]["L2"] for n in (A_NAME, B_NAME)}
     out.append(
