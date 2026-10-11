@@ -75,6 +75,42 @@ MM.INVENTORY = temporary_inventory
 MM.OUT_JSON = OUT / "missing3_metrics.json"
 MM.OUT_CSV = OUT / "missing3_metrics.csv"
 MM.N_BOOT = 400  # Point statistics unchanged; bootstrap CI for three new arms.
+
+# Compute macro rates by anchor group using vectorized bincount; the upstream
+# implementation loops over every anchor and masks the full pair vector each
+# time, which is O(n_anchors * n_pairs). This is arithmetically identical but O(N).
+def _fast_sharing(pre_ids, anchors, positives, negatives_flat, rng):
+    k = negatives_flat.shape[1]
+    pos_bool = pre_ids[positives] == pre_ids[anchors]
+    na = negatives_flat.ravel()
+    a_repeat = np.repeat(anchors, k)
+    neg_bool = pre_ids[na] == pre_ids[a_repeat]
+    uniq, ids = np.unique(anchors, return_inverse=True)
+    pos_sums = np.bincount(ids, weights=pos_bool, minlength=len(uniq))
+    pos_counts = np.bincount(ids, minlength=len(uniq))
+    neg_ids = np.repeat(ids, k)
+    neg_sums = np.bincount(neg_ids, weights=neg_bool, minlength=len(uniq))
+    neg_counts = np.bincount(neg_ids, minlength=len(uniq))
+    p = float(pos_bool.mean())
+    n = float(neg_bool.mean())
+    total_shared = int(pos_bool.sum()) + int(neg_bool.sum())
+    return {
+        "p_share_pos": p, "p_share_neg": n, "gap": p - n,
+        "er": p / n if n > 0 else None,
+        "er_undefined_reason": None if n > 0 else "negative sharing rate is zero",
+        "macro_p_share_pos": float(np.mean(pos_sums / pos_counts)),
+        "macro_p_share_neg": float(np.mean(neg_sums / neg_counts)),
+        "macro_gap": float(np.mean(pos_sums / pos_counts)
+                           - np.mean(neg_sums / neg_counts)),
+        "n_positive_pairs": int(len(anchors)), "n_negative_pairs": int(len(na)),
+        "n_anchors": int(len(uniq)),
+        "pos_ci": MM.anchor_cluster_bootstrap(pos_bool.astype(float), anchors, rng)["ci"],
+        "neg_ci": MM.anchor_cluster_bootstrap(neg_bool.astype(float), a_repeat, rng)["ci"],
+        "sampled_precision_given_share": (
+            int(pos_bool.sum()) / total_shared if total_shared else None),
+    }
+
+MM.sharing = _fast_sharing
 MM.main()
 computed = json.loads(MM.OUT_JSON.read_text())
 assert len(computed["models"]) == 3
