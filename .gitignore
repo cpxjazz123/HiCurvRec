@@ -530,3 +530,10 @@ results/stage3_T5Train/tiger_hyp_*/logs/_ddp_sync/
 results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
 results/stage3_T5Train/tiger_hyp_*/logs/wait_*.log
 results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
+
+# The stage-0 split files are the data every Stage 2 and Stage 3 result in this
+# repository is built from, and the offline behaviour analysis reads them
+# directly. Without them no committed metric can be recomputed from a clone.
+# Re-included after the global **/*.parquet rule above.
+!results/stage0_build_parquet/
+!results/stage0_build_parquet/*.parquet
