@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "fork_more_sib"
+EXPERIMENT_ARM = "prefix_sib"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -121,11 +121,23 @@ _ARMS = {
     # weights, same metric; only the amount of behaviour signal changes.
     "fork_more_sib":     {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                           "siblings": 32, "max_pairs": 8192},
+    # Behaviour entering the QUANTIZATION itself, not only the encoder. The L1
+    # codebook is pulled so that items in one behaviour branch share nearby L1
+    # codewords, which is what makes the L1 prefix carry branch information. The
+    # term has gradient to the codebook weights and zero extra parameters.
+    # Control: the identical term on random pairs, so parameter count, compute
+    # and loss form match and only the behaviour information differs.
+    "prefix_sib":        {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "prefix_mode": "sibling"},
+    "prefix_rand":       {"group_distance": "euclid",   "radial_mode": "corr", "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "prefix_mode": "random"},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
 FORK_SIBLINGS_PER_ITEM = _ARM.get("siblings", 8)
 FORK_ANGULAR_MAX_PAIRS = _ARM.get("max_pairs", 2048)
+PREFIX_MODE = _ARM.get("prefix_mode", "off")   # "off" | "sibling" | "random"
+PREFIX_WEIGHT = 0.05
 GROUP_DISTANCE = _ARM["group_distance"]      # metric used for the sibling term
 RADIAL_MODE = _ARM["radial_mode"]            # "mse" | "corr" | "off"
 FORK_RADIAL_WEIGHT = _ARM["radial_weight"]
@@ -574,7 +586,8 @@ def fork_geometry_terms(
     siblings: torch.Tensor,
     normalizer,
     all_embeddings: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    prefix_rng: torch.Generator,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict]:
     """Radial hierarchy and angular branch-coherence terms for the fork arm.
 
     Both are parameter-free and act on whichever coordinate system the arm
@@ -657,6 +670,18 @@ def fork_geometry_terms(
         rms = d_all.detach().square().mean().sqrt().clamp_min(1e-8)
         logits = -d_all / rms / FORK_ANGULAR_TEMPERATURE
         angular_loss = F.cross_entropy(logits, anchor_pos)
+    if n_pairs == 0:
+        anchor_pos = torch.zeros(0, dtype=torch.long, device=radius.device)
+        sibling_ids = torch.zeros(0, dtype=torch.long, device=radius.device)
+    # (C) behaviour entering the quantization: pull the L1 codewords of branch
+    # partners together so the L1 prefix carries branch information. Uses the
+    # latents already computed above, so it costs no extra encoder pass.
+    if PREFIX_MODE != "off" and n_pairs > 0:
+        prefix_loss = codebook_prefix_term(
+            raw_module, latent[anchor_pos], sibling_latent, prefix_rng
+        )
+    else:
+        prefix_loss = torch.zeros((), device=radius.device)
     stats = {
         "radius_mean": float(radius.detach().mean()),
         "radius_std": float(radius.detach().std()),
@@ -665,7 +690,56 @@ def fork_geometry_terms(
         "target_radius_mean": float(radius_target.detach().mean()),
         "target_radius_std": float(radius_target.detach().std()),
     }
-    return radial_loss, angular_loss, stats
+    return radial_loss, angular_loss, prefix_loss, stats
+
+
+def codebook_prefix_term(
+    raw_module,
+    anchor_latent: torch.Tensor,
+    sibling_latent: torch.Tensor,
+    rng: torch.Generator,
+) -> torch.Tensor:
+    """Pull the L1 codewords of behaviour-branch partners together.
+
+    The L1 codebook is what the L1 prefix is made of, so this is where behaviour
+    has to act for the prefix to carry branch information. The term reads the L1
+    assignment (an argmin, hence non-differentiable) and then penalises the
+    distance between the two chosen codeword VECTORS, so the gradient lands on
+    the codebook weights themselves. No extra parameters.
+
+    ``PREFIX_MODE == "random"`` replaces the partner with a random item, which
+    keeps the loss form, the parameter count and the compute identical and
+    removes only the behaviour information; that is the control for whether the
+    behaviour structure matters at all.
+
+    Both arguments are ENCODER LATENTS, i.e. what the L1 quantizer actually
+    sees, not raw item embeddings.
+    """
+    codebook = raw_module.rq.vq_layers[0].get_code_embs()
+
+    def l1_index(x: torch.Tensor) -> torch.Tensor:
+        d = (
+            x.pow(2).sum(1, keepdim=True)
+            - 2 * x @ codebook.t()
+            + codebook.pow(2).sum(1, keepdim=True).t()
+        )
+        return d.argmin(dim=-1)
+
+    if PREFIX_MODE == "random":
+        # Same number of pairs, same shapes, no behaviour relation.
+        order = torch.randperm(
+            sibling_latent.shape[0], device=sibling_latent.device, generator=rng
+        )
+        sibling_latent = sibling_latent[order]
+    anchor_code = l1_index(anchor_latent)
+    sibling_code = l1_index(sibling_latent)
+    pair_distance = (codebook[anchor_code] - codebook[sibling_code]).pow(2).sum(-1).mean()
+    # Normalise by the typical distance between two arbitrary codewords, so the
+    # term is dimensionless: 0 means "branch partners are as close as any two
+    # codewords" and 1 means "they are as far apart as typical". Without this the
+    # raw value is ~2e-3 and any weight would be meaningless.
+    reference = torch.cdist(codebook, codebook, p=2).pow(2).mean().detach().clamp_min(1e-12)
+    return pair_distance / reference
 
 
 def _tokenizer_config() -> SimpleNamespace:
@@ -803,6 +877,10 @@ def main() -> None:
     # ball map cannot depend on batch membership and anchors and candidates share
     # a single ball. Constant for the whole run.
     ball_normalizer = resolve_normalizer(raw_module, train_embeddings.to(device))
+    # Own generator for the control arm's random partner shuffle, so it cannot
+    # perturb any other stream.
+    prefix_generator = torch.Generator(device=device)
+    prefix_generator.manual_seed(SEED + rank)
     radius_target = radius_target.to(device)
     fork_siblings = fork_siblings.to(device)
     normalizer = torch.as_tensor(
@@ -831,7 +909,7 @@ def main() -> None:
         _record(
             rank, "geometry_resolved", arm=EXPERIMENT_ARM, geometry=GEOMETRY,
             codebook_init_sha256=_init_sha,
-            group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, curvature=CURVATURE, fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
+            group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, prefix_mode=PREFIX_MODE, curvature=CURVATURE, fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
             target_radius_fraction=TARGET_RADIUS_FRACTION,
             ball_normalizer=ball_normalizer,
             resolved_temperature=resolved_temperature,
@@ -863,6 +941,7 @@ def main() -> None:
         fork_angulars: list[float] = []
         fork_radius_means: list[float] = []
         fork_pos_cosines: list[float] = []
+        fork_prefixes: list[float] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
         for batch, row_index in loader:
@@ -895,9 +974,11 @@ def main() -> None:
                 # `batch` already holds this step's item embeddings and
                 # `row_index` their positions in the item universe, which is the
                 # space the radius target and the sibling table are indexed by.
-                radial_term, angular_term, fork_stats = fork_geometry_terms(
+                (
+                    radial_term, angular_term, prefix_term, fork_stats,
+                ) = fork_geometry_terms(
                     raw_module, batch, row_index, radius_target, fork_siblings,
-                    normalizer, all_embeddings,
+                    normalizer, all_embeddings, prefix_generator,
                 )
                 loss = loss + epoch_weight * (
                     FORK_RADIAL_WEIGHT * radial_term
@@ -907,6 +988,9 @@ def main() -> None:
                 fork_angulars.append(float(angular_term.detach()))
                 fork_radius_means.append(fork_stats["radius_mean"])
                 fork_pos_cosines.append(fork_stats["positive_distance_mean"])
+                if PREFIX_MODE != "off":
+                    loss = loss + epoch_weight * PREFIX_WEIGHT * prefix_term
+                    fork_prefixes.append(float(prefix_term.detach()))
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -936,7 +1020,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -964,7 +1048,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
