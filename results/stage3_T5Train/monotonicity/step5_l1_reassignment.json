@@ -1,0 +1,245 @@
+{
+  "seed": 42,
+  "frozen": "encoder weights loaded from TIGER_RQ-VAE/rqvae_best.pth and never updated",
+  "objective": {
+    "definition": "F = #{positive pairs sharing L1} - lambda * #{negative pairs sharing L1}",
+    "lambda": 0.10446485737026562,
+    "mean_behaviour_degree": 25.65510228982796,
+    "mean_negative_degree": 245.58596006019442,
+    "passes": [
+      {
+        "pass": 1,
+        "moved": 16634,
+        "objective": 63642.73025403835,
+        "pos_inside": 76225,
+        "neg_inside": 120445
+      },
+      {
+        "pass": 2,
+        "moved": 10416,
+        "objective": 92157.78784019535,
+        "pos_inside": 126849,
+        "neg_inside": 332085
+      },
+      {
+        "pass": 3,
+        "moved": 5271,
+        "objective": 102540.2792444531,
+        "pos_inside": 147613,
+        "neg_inside": 431463
+      },
+      {
+        "pass": 4,
+        "moved": 2807,
+        "objective": 107091.40552566633,
+        "pos_inside": 156988,
+        "neg_inside": 477640
+      },
+      {
+        "pass": 5,
+        "moved": 1422,
+        "objective": 108728.07633107892,
+        "pos_inside": 160207,
+        "neg_inside": 492787
+      },
+      {
+        "pass": 6,
+        "moved": 1051,
+        "objective": 110065.88770171086,
+        "pos_inside": 162567,
+        "neg_inside": 502572
+      },
+      {
+        "pass": 7,
+        "moved": 974,
+        "objective": 111579.970807963,
+        "pos_inside": 164884,
+        "neg_inside": 510258
+      },
+      {
+        "pass": 8,
+        "moved": 766,
+        "objective": 112646.67001743228,
+        "pos_inside": 165932,
+        "neg_inside": 510079
+      },
+      {
+        "pass": 9,
+        "moved": 602,
+        "objective": 113343.32564718554,
+        "pos_inside": 166742,
+        "neg_inside": 511164
+      },
+      {
+        "pass": 10,
+        "moved": 607,
+        "objective": 114187.43994076402,
+        "pos_inside": 167911,
+        "neg_inside": 514274
+      },
+      {
+        "pass": 11,
+        "moved": 493,
+        "objective": 114988.38482586431,
+        "pos_inside": 168994,
+        "neg_inside": 516974
+      },
+      {
+        "pass": 12,
+        "moved": 256,
+        "objective": 115325.15261148066,
+        "pos_inside": 169507,
+        "neg_inside": 518661
+      },
+      {
+        "pass": 13,
+        "moved": 108,
+        "objective": 115425.15090236827,
+        "pos_inside": 169593,
+        "neg_inside": 518527
+      },
+      {
+        "pass": 14,
+        "moved": 83,
+        "objective": 115522.5300951174,
+        "pos_inside": 169740,
+        "neg_inside": 519002
+      },
+      {
+        "pass": 15,
+        "moved": 41,
+        "objective": 115571.41217166245,
+        "pos_inside": 169801,
+        "neg_inside": 519118
+      },
+      {
+        "pass": 16,
+        "moved": 14,
+        "objective": 115583.02550220909,
+        "pos_inside": 169824,
+        "neg_inside": 519227
+      },
+      {
+        "pass": 17,
+        "moved": 5,
+        "objective": 115586.60849733581,
+        "pos_inside": 169835,
+        "neg_inside": 519298
+      },
+      {
+        "pass": 18,
+        "moved": 1,
+        "objective": 115586.87724333422,
+        "pos_inside": 169836,
+        "neg_inside": 519305
+      },
+      {
+        "pass": 19,
+        "moved": 2,
+        "objective": 115588.80311389678,
+        "pos_inside": 169842,
+        "neg_inside": 519344
+      },
+      {
+        "pass": 20,
+        "moved": 1,
+        "objective": 115589.23699559241,
+        "pos_inside": 169851,
+        "neg_inside": 519426
+      },
+      {
+        "pass": 21,
+        "moved": 1,
+        "objective": 115590.40127673345,
+        "pos_inside": 169853,
+        "neg_inside": 519434
+      },
+      {
+        "pass": 22,
+        "moved": 0,
+        "objective": 115590.40127673345,
+        "pos_inside": 169853,
+        "neg_inside": 519434
+      }
+    ]
+  },
+  "voronoi_round_trip_keep_rate": 0.371944523528694,
+  "variants": {
+    "initial": {
+      "recall@10": 0.053674,
+      "L1": {
+        "p_share_pos": 0.08163259000163765,
+        "p_share_neg": 0.012085912128862014,
+        "gap": 0.06954667787277564,
+        "er": 6.754359053024492
+      },
+      "L1_L2": {
+        "p_share_pos": 0.00805851072047659,
+        "p_share_neg": 0.0004585440916099409,
+        "gap": 0.0075999666288666485,
+        "er": 17.57412398921833
+      },
+      "L1_L2_L3": {
+        "p_share_pos": 0.001653107068809423,
+        "p_share_neg": 3.182617347427487e-05,
+        "gap": 0.0016212808953351482,
+        "er": 51.94174757281554
+      },
+      "collision_rate": 0.15447187538129903,
+      "distinct_triples": 20789,
+      "l1_codewords_used": 256,
+      "l1_max_group": 666
+    },
+    "optimised": {
+      "recall@10": 0.053674,
+      "L1": {
+        "p_share_pos": 0.544718863651111,
+        "p_share_neg": 0.17611152138378966,
+        "gap": 0.36860734226732134,
+        "er": 3.093033660552149
+      },
+      "L1_L2": {
+        "p_share_pos": 0.03435063791393338,
+        "p_share_neg": 0.0047099646822172025,
+        "gap": 0.029640673231716173,
+        "er": 7.293183756478384
+      },
+      "L1_L2_L3": {
+        "p_share_pos": 0.004974770805202189,
+        "p_share_neg": 0.00028859850509682265,
+        "gap": 0.004686172300105366,
+        "er": 17.237687366167023
+      },
+      "collision_rate": 0.4140806117053728,
+      "distinct_triples": 14406,
+      "l1_codewords_used": 62,
+      "l1_max_group": 5885
+    },
+    "voronoi": {
+      "recall@10": 0.053674,
+      "L1": {
+        "p_share_pos": 0.1885747127147108,
+        "p_share_neg": 0.047030432619664865,
+        "gap": 0.14154428009504594,
+        "er": 4.009631683376477
+      },
+      "L1_L2": {
+        "p_share_pos": 0.014674028915469066,
+        "p_share_neg": 0.0015211674952801475,
+        "gap": 0.013152861420188918,
+        "er": 9.646556977452773
+      },
+      "L1_L2_L3": {
+        "p_share_pos": 0.0023019902173140564,
+        "p_share_neg": 0.00010134936795691416,
+        "gap": 0.002200640849357142,
+        "er": 22.713414634146343
+      },
+      "collision_rate": 0.2903566925611095,
+      "distinct_triples": 17448,
+      "l1_codewords_used": 63,
+      "l1_max_group": 2297
+    }
+  },
+  "recall_note": "Recall@10 is the baseline's 0.053674 and is IDENTICAL for all three variants by construction: no model was retrained and no Stage 3 was run. The comparison is of the SID statistics only."
+}
