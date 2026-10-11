@@ -360,10 +360,12 @@ def main() -> None:
     ).to(device)
     item_batch = train_emb[torch.arange(T.BATCH_SIZE_PER_RANK, dtype=torch.long)].to(device)
     item_rows = torch.arange(T.BATCH_SIZE_PER_RANK, dtype=torch.long, device=device)
-    radial_term, angular_term, fork_stats = T.fork_geometry_terms(
+    pf_rng = torch.Generator(device=device); pf_rng.manual_seed(T.SEED)
+    radial_term, angular_term, prefix_term, fork_stats = T.fork_geometry_terms(
         model, item_batch, item_rows, radius_target, siblings, normalizer,
-        all_emb.to(device),
+        all_emb.to(device), pf_rng,
     )
+    report["prefix_term"] = float(prefix_term.detach())
     report["fork_stats"] = fork_stats
     report["fork_radial_term"] = float(radial_term.detach())
     report["fork_angular_term"] = float(angular_term.detach())
@@ -387,15 +389,37 @@ def main() -> None:
         failures.append("fork terms produced no gradient")
     # the terms must actually move when the coordinates move, else they are inert
     probe = item_batch.clone().requires_grad_(True)
-    r2, a2, _ = T.fork_geometry_terms(
+    pf_rng2 = torch.Generator(device=device); pf_rng2.manual_seed(T.SEED)
+    r2, a2, p2, _ = T.fork_geometry_terms(
         model, probe, item_rows, radius_target, siblings, normalizer,
-        all_emb.to(device),
+        all_emb.to(device), pf_rng2,
     )
     (T.FORK_RADIAL_WEIGHT * r2 + T.FORK_ANGULAR_WEIGHT * a2).backward()
     report["fork_grad_on_input"] = float(probe.grad.abs().sum()) if probe.grad is not None else 0.0
     if report["fork_grad_on_input"] <= 0.0:
         failures.append("fork terms do not depend on the representation")
     model.zero_grad(set_to_none=True)
+
+    # --- the codebook-prefix term must reach the QUANTIZER -----------------
+    if T.PREFIX_MODE != "off":
+        if not torch.isfinite(prefix_term):
+            failures.append("prefix term is not finite")
+        grads = torch.autograd.grad(
+            prefix_term, [p for p in model.parameters() if p.requires_grad],
+            retain_graph=True, allow_unused=True,
+        )
+        names = [n for n, _ in model.named_parameters() if _.requires_grad]
+        touched = [
+            n for n, g in zip(names, grads)
+            if g is not None and float(g.abs().sum()) > 0
+        ]
+        report["prefix_grad_params"] = touched[:6]
+        report["prefix_touches_l1_codebook"] = any(
+            "rq.vq_layers.0" in n for n in touched
+        )
+        if not report["prefix_touches_l1_codebook"]:
+            failures.append("prefix term does not reach the L1 codebook")
+        model.zero_grad(set_to_none=True)
 
     report["failures"] = failures
     report["status"] = "FAIL" if failures else "PASS"
