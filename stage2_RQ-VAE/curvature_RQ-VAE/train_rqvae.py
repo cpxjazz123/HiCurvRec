@@ -66,6 +66,13 @@ ENCODER_SMOOTHNESS_WEIGHT = float(getattr(experiment, "ENCODER_SMOOTHNESS_WEIGHT
 CATEGORY_CONE_DATA_SEED = int(experiment.CATEGORY_CONE_DATA_SEED)
 CATEGORY_CONE_CALIBRATION_ITEMS = int(experiment.CATEGORY_CONE_CALIBRATION_ITEMS)
 BEHAVIOUR_LOSS_ENABLED = bool(experiment.BEHAVIOUR_LOSS_ENABLED)
+# "encoder" ranks origin-tangent encoder outputs (the parent condition);
+# "prefix_l12" ranks the quantized L1+L2 prefix representation, which carries
+# gradient into the L1 and L2 codebooks. getattr so a cached older config
+# cannot crash here.
+BEHAVIOUR_RANKING_SPACE = str(
+    getattr(experiment, "BEHAVIOUR_RANKING_SPACE", "encoder")
+)
 
 MAX_GLOBAL_STEPS = int(experiment.MAX_GLOBAL_STEPS)
 EVAL_INTERVAL_STEPS = int(experiment.EVAL_INTERVAL_STEPS)
@@ -592,6 +599,7 @@ def main() -> None:
             behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
             behaviour_margin=BEHAVIOUR_MARGIN,
             behaviour_pairs=len(source_ids),
+            behaviour_ranking_space=BEHAVIOUR_RANKING_SPACE,
             snapshot_steps=SNAPSHOT_STEPS,
         )
 
@@ -700,12 +708,32 @@ def main() -> None:
             )
             encoded_source = raw_module.encoder(pair_sources)
             encoded_successor = raw_module.encoder(pair_successors)
-            negatives = encoded_source[
-                torch.randperm(encoded_source.shape[0], device=device)
+            if BEHAVIOUR_RANKING_SPACE == "prefix_l12":
+                # Same transition pairs, same in-batch negative permutation, same
+                # margin and weight as the encoder-space hinge; only the space the
+                # hinge is measured in moves. Entry 1 of the prefix list is the
+                # running sum of the first two quantized codes, so this term
+                # carries gradient into the L1 and L2 codebooks -- the tensors
+                # that decide which items share an L1+L2 prefix -- instead of
+                # reaching only the encoder. Relocation, not addition: the
+                # encoder-space hinge is not computed on this path.
+                _, _, _, prefix_source_levels = raw_module.rq(
+                    encoded_source, return_prefixes=True
+                )
+                _, _, _, prefix_successor_levels = raw_module.rq(
+                    encoded_successor, return_prefixes=True
+                )
+                ranking_source = prefix_source_levels[1]
+                ranking_successor = prefix_successor_levels[1]
+            else:
+                ranking_source = encoded_source
+                ranking_successor = encoded_successor
+            negatives = ranking_source[
+                torch.randperm(ranking_source.shape[0], device=device)
             ]
             ranking_loss = behaviour_ranking_loss(
-                encoded_source,
-                encoded_successor,
+                ranking_source,
+                ranking_successor,
                 negatives,
                 curvature=layer_curvatures[0],
                 margin=BEHAVIOUR_MARGIN,
