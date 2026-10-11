@@ -1,0 +1,2334 @@
+{
+  "corrections": [
+    "common-successor neighbours built from the reverse adjacency predecessors, not two-hop descendants",
+    "test-relation negatives exclude train AND test edges",
+    "P(pos|share) replaced by sampled_precision_given_share and labelled non-identifiable for the population",
+    "between-model paired tests with cluster bootstrap and Wilcoxon",
+    "conditional retention compared on the common condition set",
+    "singleton prefix-group and singleton item fractions separated",
+    "group-size strata matched on positive and negative bucket",
+    "integer seed offsets replace Python hash()",
+    "fourth SID token excluded from the level analysis"
+  ],
+  "seed": 20261011,
+  "n_boot": 2000,
+  "min_cell": 30,
+  "n_items": 24587,
+  "recall_at_10": {
+    "A_tiger": 0.053674,
+    "B_exp1a": 0.063633
+  },
+  "unit_tests": {
+    "cs_0_is_1": true,
+    "cs_1_is_0": true,
+    "cs_3_is_5": true,
+    "cs_5_is_3": true,
+    "cs_6_is_empty": true,
+    "old_rule_differs": true,
+    "cs_pairs": true,
+    "precision_all_pos": true,
+    "precision_two_thirds": true,
+    "precision_undefined_when_denominator_zero": true,
+    "cond_mask": true,
+    "cond_retention": "True",
+    "cond_effective_n": true,
+    "delta_pos": true,
+    "delta_neg": true,
+    "did_zero": true,
+    "cluster_count": true,
+    "er_none_on_zero_denominator": true,
+    "singleton_count": true,
+    "singleton_prefix_group_frac": true,
+    "singleton_items_frac": true,
+    "singleton_fracs_differ": true,
+    "singleton3_level1_prefixes": true,
+    "singleton3_level1_singleton_count": true,
+    "singleton3_level1_prefix_frac": true,
+    "singleton3_level1_items_frac": true,
+    "singleton3_level2_prefixes": true,
+    "singleton3_level2_singleton_count": true,
+    "singleton3_level2_prefix_frac": true,
+    "singleton3_level2_items_frac": true,
+    "singleton3_level3_prefixes": true,
+    "singleton3_level3_singleton_count": true,
+    "singleton3_level3_prefix_frac": true,
+    "singleton3_level3_items_frac": true,
+    "singleton2_count": true,
+    "singleton2_prefix_frac": true,
+    "singleton2_items_frac": true,
+    "singleton2_fracs_differ": true,
+    "cond_side_pos_rate": true,
+    "cond_side_neg_rate": true,
+    "cond_side_rates_differ": true,
+    "cond_side_common_n": true,
+    "cond3_pos_rate": true,
+    "cond3_neg_rate": true,
+    "cond3_rates_differ": true,
+    "cond3_common_n": true
+  },
+  "sid_token_info": {
+    "A_tiger": {
+      "n_tokens_stored": 4,
+      "levels_analysed": 3,
+      "collision_token_values": [
+        768,
+        769,
+        770,
+        771,
+        772,
+        773,
+        774,
+        775
+      ],
+      "collision_token_dropped": true
+    },
+    "B_exp1a": {
+      "n_tokens_stored": 4,
+      "levels_analysed": 3,
+      "collision_token_values": [
+        768,
+        769,
+        770,
+        771,
+        772,
+        773,
+        774,
+        775
+      ],
+      "collision_token_dropped": true
+    }
+  },
+  "relation_counts": {
+    "train_transition": 323633,
+    "test_transition": 56636,
+    "test_pairs_absent_from_train": 53253,
+    "common_successor": 3099025
+  },
+  "structure": {
+    "A_tiger": {
+      "n_items": 24587,
+      "level1": {
+        "distinct_prefixes": 247,
+        "mean_group_size": 99.5425101214575,
+        "singleton_prefix_groups": 8,
+        "singleton_prefix_group_frac": 0.032388663967611336,
+        "items_in_singleton_groups": 8,
+        "items_in_singleton_groups_frac": 0.00032537519827551144,
+        "max_group_size": 859
+      },
+      "level2": {
+        "distinct_prefixes": 7414,
+        "mean_group_size": 3.3162934987860804,
+        "singleton_prefix_groups": 3859,
+        "singleton_prefix_group_frac": 0.5205017534394389,
+        "items_in_singleton_groups": 3859,
+        "items_in_singleton_groups_frac": 0.15695286126814983,
+        "max_group_size": 111
+      },
+      "level3": {
+        "distinct_prefixes": 20223,
+        "mean_group_size": 1.2157938980368888,
+        "singleton_prefix_groups": 17837,
+        "singleton_prefix_group_frac": 0.8820155268753399,
+        "items_in_singleton_groups": 17837,
+        "items_in_singleton_groups_frac": 0.7254646764550372,
+        "max_group_size": 42
+      },
+      "full_sid": {
+        "distinct_triples": 20223,
+        "collision_rate": 0.17749217065929146,
+        "largest_group": 42
+      }
+    },
+    "B_exp1a": {
+      "n_items": 24587,
+      "level1": {
+        "distinct_prefixes": 241,
+        "mean_group_size": 102.02074688796681,
+        "singleton_prefix_groups": 1,
+        "singleton_prefix_group_frac": 0.004149377593360996,
+        "items_in_singleton_groups": 1,
+        "items_in_singleton_groups_frac": 4.067189978443893e-05,
+        "max_group_size": 253
+      },
+      "level2": {
+        "distinct_prefixes": 16145,
+        "mean_group_size": 1.5228863425209043,
+        "singleton_prefix_groups": 11438,
+        "singleton_prefix_group_frac": 0.7084546299163827,
+        "items_in_singleton_groups": 11438,
+        "items_in_singleton_groups_frac": 0.4652051897344125,
+        "max_group_size": 25
+      },
+      "level3": {
+        "distinct_prefixes": 23695,
+        "mean_group_size": 1.0376450728001687,
+        "singleton_prefix_groups": 22993,
+        "singleton_prefix_group_frac": 0.9703734965182528,
+        "items_in_singleton_groups": 22993,
+        "items_in_singleton_groups_frac": 0.9351689917436043,
+        "max_group_size": 10
+      },
+      "full_sid": {
+        "distinct_triples": 23695,
+        "collision_rate": 0.03627933460771948,
+        "largest_group": 10
+      }
+    }
+  },
+  "relations": {
+    "train_transition": {
+      "relation_kind": "train_transition",
+      "n_positive_pairs": 24474,
+      "negative_construction": {
+        "negatives": 24474,
+        "distinct_negatives": 12995,
+        "fallback_bin_matches": 0,
+        "violations": {},
+        "negative_equals_positive": 0,
+        "negative_equals_anchor": 0
+      },
+      "within": {
+        "A_tiger": {
+          "levels": {
+            "L1": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.09577510827817276,
+              "p_share_neg": 0.013156819481899158,
+              "n_neg_share_zero": 24152,
+              "diff": 0.0826182887962736,
+              "diff_ci": [
+                0.07865489907657106,
+                0.08658167851597613
+              ],
+              "er": 7.306966289334433,
+              "er_ci": [
+                6.555202748577717,
+                8.211867559523808
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 2298,
+                "c": 276,
+                "n_discordant": 2574,
+                "p": 0.0
+              },
+              "sampled_precision_given_share": 0.8792198049512379,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "10-24": {
+                  "n": 43,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "25-99": {
+                  "n": 648,
+                  "p_share_pos": 0.06018518518518518,
+                  "p_share_neg": 0.007716049382716049
+                },
+                "100+": {
+                  "n": 15405,
+                  "p_share_pos": 0.10866601752677701,
+                  "p_share_neg": 0.01700746510873093
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.013115959794067173,
+              "p_share_neg": 0.00040859687831984963,
+              "n_neg_share_zero": 24464,
+              "diff": 0.012707362915747323,
+              "diff_ci": [
+                0.01127727384162785,
+                0.014300890741194738
+              ],
+              "er": 32.22951888827573,
+              "er_ci": [
+                18.586764705882356,
+                81.0
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 321,
+                "c": 10,
+                "n_discordant": 331,
+                "p": 1.7891960484140454e-81
+              },
+              "sampled_precision_given_share": 0.9697885196374623,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 621,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 1673,
+                  "p_share_pos": 0.007770472205618649,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 1117,
+                  "p_share_pos": 0.008057296329453895,
+                  "p_share_neg": 0.0
+                },
+                "10-24": {
+                  "n": 1551,
+                  "p_share_pos": 0.018697614442295292,
+                  "p_share_neg": 0.0
+                },
+                "25-99": {
+                  "n": 341,
+                  "p_share_pos": 0.03225806451612903,
+                  "p_share_neg": 0.002932551319648094
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.0032279153387268123,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 24474,
+              "diff": 0.0032279153387268123,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 79,
+                "c": 0,
+                "n_discordant": 79,
+                "p": 3.308722450212117e-24
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 13339,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 937,
+                  "p_share_pos": 0.0064034151547491995,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 59,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "1": {
+                "n_pos": 8,
+                "n_neg": 4,
+                "frac_pos": 0.0003268775026558797,
+                "frac_neg": 0.00016343875132793985
+              },
+              "2-4": {
+                "n_pos": 59,
+                "n_neg": 27,
+                "frac_pos": 0.0024107215820871127,
+                "frac_neg": 0.001103211571463594
+              },
+              "5-9": {
+                "n_pos": 111,
+                "n_neg": 127,
+                "frac_pos": 0.004535425349350331,
+                "frac_neg": 0.00518918035466209
+              },
+              "10-24": {
+                "n_pos": 985,
+                "n_neg": 805,
+                "frac_pos": 0.04024679251450519,
+                "frac_neg": 0.0328920487047479
+              },
+              "25-99": {
+                "n_pos": 4484,
+                "n_neg": 3504,
+                "frac_pos": 0.18321484023862059,
+                "frac_neg": 0.14317234616327532
+              },
+              "100+": {
+                "n_pos": 18827,
+                "n_neg": 20007,
+                "frac_pos": 0.7692653428127809,
+                "frac_neg": 0.8174797744545231
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 4215,
+                "n_neg": 3552,
+                "frac_pos": 0.17222358421181663,
+                "frac_neg": 0.1451336111792106
+              },
+              "2-4": {
+                "n_pos": 6820,
+                "n_neg": 5927,
+                "frac_pos": 0.27866307101413745,
+                "frac_neg": 0.24217536978017487
+              },
+              "5-9": {
+                "n_pos": 5123,
+                "n_neg": 5305,
+                "frac_pos": 0.20932418076325898,
+                "frac_neg": 0.21676064394868022
+              },
+              "10-24": {
+                "n_pos": 5764,
+                "n_neg": 6359,
+                "frac_pos": 0.23551524066356133,
+                "frac_neg": 0.25982675492359236
+              },
+              "25-99": {
+                "n_pos": 2421,
+                "n_neg": 3170,
+                "frac_pos": 0.0989213042412356,
+                "frac_neg": 0.12952521042739235
+              },
+              "100+": {
+                "n_pos": 131,
+                "n_neg": 161,
+                "frac_pos": 0.00535261910599003,
+                "frac_neg": 0.006578409740949579
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 18262,
+                "n_neg": 17832,
+                "frac_pos": 0.7461796191877094,
+                "frac_neg": 0.7286099534199558
+              },
+              "2-4": {
+                "n_pos": 4659,
+                "n_neg": 4934,
+                "frac_pos": 0.19036528560921795,
+                "frac_neg": 0.20160169976301381
+              },
+              "5-9": {
+                "n_pos": 1108,
+                "n_neg": 1158,
+                "frac_pos": 0.04527253411783934,
+                "frac_neg": 0.04731551850943859
+              },
+              "10-24": {
+                "n_pos": 385,
+                "n_neg": 472,
+                "frac_pos": 0.01573097981531421,
+                "frac_neg": 0.0192857726566969
+              },
+              "25-99": {
+                "n_pos": 60,
+                "n_neg": 78,
+                "frac_pos": 0.002451581269919098,
+                "frac_neg": 0.003187055650894827
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.6576775353436299,
+            "L2": 0.21667892457301627,
+            "L3": 0.5857236250715044
+          }
+        },
+        "B_exp1a": {
+          "levels": {
+            "L1": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.14243687178229958,
+              "p_share_neg": 0.0051483206668301055,
+              "n_neg_share_zero": 24348,
+              "diff": 0.13728855111546948,
+              "diff_ci": [
+                0.13275210427392334,
+                0.1415379586499959
+              ],
+              "er": 27.582481180105308,
+              "er_ci": [
+                23.56698382055525,
+                33.122094307561596
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 3457,
+                "c": 97,
+                "n_discordant": 3554,
+                "p": 0.0
+              },
+              "sampled_precision_given_share": 0.9651162790697675,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "25-99": {
+                  "n": 5119,
+                  "p_share_pos": 0.07579605391678063,
+                  "p_share_neg": 0.005665168978316077
+                },
+                "100+": {
+                  "n": 7669,
+                  "p_share_pos": 0.20133002999087235,
+                  "p_share_neg": 0.007562915634372148
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.012952521042739234,
+              "p_share_neg": 4.085968783198496e-05,
+              "n_neg_share_zero": 24473,
+              "diff": 0.012911661354907249,
+              "diff_ci": [
+                0.011481572280787776,
+                0.014423469804690692
+              ],
+              "er": 326.64899639732386,
+              "er_ci": [
+                85.0,
+                350.0
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 317,
+                "c": 1,
+                "n_discordant": 318,
+                "p": 1.1947638057173634e-93
+              },
+              "sampled_precision_given_share": 0.9968553459119497,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 5610,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 4032,
+                  "p_share_pos": 0.010912698412698412,
+                  "p_share_neg": 0.000248015873015873
+                },
+                "5-9": {
+                  "n": 140,
+                  "p_share_pos": 0.06428571428571428,
+                  "p_share_neg": 0.0
+                },
+                "10-24": {
+                  "n": 50,
+                  "p_share_pos": 0.1,
+                  "p_share_neg": 0.0
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 24474,
+              "p_share_pos": 0.001961265015935278,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 24474,
+              "diff": 0.001961265015935278,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 48,
+                "c": 0,
+                "n_discordant": 48,
+                "p": 7.105427357601022e-15
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 21247,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 115,
+                  "p_share_pos": 0.05217391304347826,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "25-99": {
+                "n_pos": 11144,
+                "n_neg": 10780,
+                "frac_pos": 0.45534036119964044,
+                "frac_neg": 0.4404674348287979
+              },
+              "100+": {
+                "n_pos": 13330,
+                "n_neg": 13694,
+                "frac_pos": 0.5446596388003596,
+                "frac_neg": 0.5595325651712021
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 11881,
+                "n_neg": 11570,
+                "frac_pos": 0.48545395113181333,
+                "frac_neg": 0.472746588216066
+              },
+              "2-4": {
+                "n_pos": 9761,
+                "n_neg": 10100,
+                "frac_pos": 0.3988314129280052,
+                "frac_neg": 0.41268284710304814
+              },
+              "5-9": {
+                "n_pos": 1799,
+                "n_neg": 1910,
+                "frac_pos": 0.07350657840974095,
+                "frac_neg": 0.07804200375909127
+              },
+              "10-24": {
+                "n_pos": 1013,
+                "n_neg": 863,
+                "frac_pos": 0.041390863773800766,
+                "frac_neg": 0.03526191059900302
+              },
+              "25-99": {
+                "n_pos": 20,
+                "n_neg": 31,
+                "frac_pos": 0.0008171937566396993,
+                "frac_neg": 0.001266650322791534
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 22735,
+                "n_neg": 22861,
+                "frac_pos": 0.9289450028601781,
+                "frac_neg": 0.9340933235270082
+              },
+              "2-4": {
+                "n_pos": 1627,
+                "n_neg": 1497,
+                "frac_pos": 0.06647871210263953,
+                "frac_neg": 0.06116695268448149
+              },
+              "5-9": {
+                "n_pos": 108,
+                "n_neg": 97,
+                "frac_pos": 0.004412846285854376,
+                "frac_neg": 0.003963389719702542
+              },
+              "10-24": {
+                "n_pos": 4,
+                "n_neg": 19,
+                "frac_pos": 0.00016343875132793985,
+                "frac_neg": 0.0007763340688077144
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.5225136879954237,
+            "L2": 0.40173245076407615,
+            "L3": 0.8728446514668627
+          }
+        }
+      },
+      "between": {
+        "L1": {
+          "A": {
+            "p_share_pos": 0.09577510827817276,
+            "p_share_neg": 0.013156819481899158
+          },
+          "B": {
+            "p_share_pos": 0.14243687178229958,
+            "p_share_neg": 0.0051483206668301055
+          },
+          "A_er": 7.279503105590063,
+          "B_er": 27.666666666666664,
+          "delta_pos": {
+            "mean": 0.046661763504126826,
+            "ci": [
+              0.04196289940344856,
+              0.0513606276048051
+            ],
+            "n_clusters": 24474
+          },
+          "delta_neg": {
+            "mean": -0.008008498815069053,
+            "ci": [
+              -0.009561166952684481,
+              -0.006333251613957669
+            ],
+            "n_clusters": 24474
+          },
+          "did": {
+            "mean": 0.05467026231919588,
+            "ci": [
+              0.049767099779357685,
+              0.059697025414725824
+            ],
+            "n_clusters": 24474
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 3474,
+            "p": 1.2443432518022412e-83
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 382,
+            "p": 1.1454882968493302e-23
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 3755,
+            "p": 2.45141473165569e-103
+          },
+          "sufficient": true
+        },
+        "L2": {
+          "A": {
+            "p_share_pos": 0.013115959794067173,
+            "p_share_neg": 0.00040859687831984963
+          },
+          "B": {
+            "p_share_pos": 0.012952521042739234,
+            "p_share_neg": 4.085968783198496e-05
+          },
+          "A_er": 32.1,
+          "B_er": 317.0,
+          "delta_pos": {
+            "mean": -0.00016343875132793985,
+            "ci": [
+              -0.001961265015935278,
+              0.0015536896298112227
+            ],
+            "n_clusters": 24474
+          },
+          "delta_neg": {
+            "mean": -0.00036773719048786466,
+            "ci": [
+              -0.0006537550053117594,
+              -0.00012257906349595488
+            ],
+            "n_clusters": 24474
+          },
+          "did": {
+            "mean": 0.00020429843915992482,
+            "ci": [
+              -0.0016354090054751982,
+              0.0020031461959630573
+            ],
+            "n_clusters": 24474
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 494,
+            "p": 0.8571772912621058
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 11,
+            "p": 0.01171875
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 505,
+            "p": 0.8239269463283863
+          },
+          "sufficient": true
+        },
+        "L3": {
+          "A": {
+            "p_share_pos": 0.0032279153387268123,
+            "p_share_neg": 0.0
+          },
+          "B": {
+            "p_share_pos": 0.001961265015935278,
+            "p_share_neg": 0.0
+          },
+          "A_er": null,
+          "B_er": null,
+          "delta_pos": {
+            "mean": -0.001266650322791534,
+            "ci": [
+              -0.0020838440794312334,
+              -0.0004494565661518346
+            ],
+            "n_clusters": 24474
+          },
+          "delta_neg": {
+            "mean": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n_clusters": 24474
+          },
+          "did": {
+            "mean": -0.001266650322791534,
+            "ci": [
+              -0.002042984391599248,
+              -0.0004903162539838195
+            ],
+            "n_clusters": 24474
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 101,
+            "p": 0.002038155997088634
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 0,
+            "p": 1.0
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 101,
+            "p": 0.002038155997088634
+          },
+          "sufficient": true
+        }
+      },
+      "conditional": {
+        "L2_given_L1": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.1369453924914676,
+                "n_effective": 2344
+              },
+              "B": {
+                "p_retain": 0.09093516924842227,
+                "n_effective": 3486
+              }
+            },
+            "n_common": 1178,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.19100169779286927,
+            "common_B_p_retain": 0.15619694397283532,
+            "common_diff_B_minus_A": -0.03480475382003395
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.031055900621118012,
+                "n_effective": 322
+              },
+              "B": {
+                "p_retain": 0.007936507936507936,
+                "n_effective": 126
+              }
+            },
+            "n_common": 33,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.030303030303030304,
+            "common_B_p_retain": 0.0,
+            "common_diff_B_minus_A": -0.030303030303030304
+          }
+        },
+        "L3_given_L2": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.24610591900311526,
+                "n_effective": 321
+              },
+              "B": {
+                "p_retain": 0.15141955835962145,
+                "n_effective": 317
+              }
+            },
+            "n_common": 72,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.4583333333333333,
+            "common_B_p_retain": 0.3194444444444444,
+            "common_diff_B_minus_A": -0.1388888888888889
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": null,
+                "n_effective": 10
+              },
+              "B": {
+                "p_retain": null,
+                "n_effective": 1
+              }
+            },
+            "n_common": 0,
+            "common_sufficient": false,
+            "common_A_p_retain": null,
+            "common_B_p_retain": null,
+            "common_diff_B_minus_A": null,
+            "common_note": "common set n=0 below min_cell=30; no paired comparison"
+          }
+        }
+      }
+    },
+    "test_transition": {
+      "relation_kind": "test_transition",
+      "n_positive_pairs": 16828,
+      "negative_construction": {
+        "negatives": 16828,
+        "distinct_negatives": 10259,
+        "fallback_bin_matches": 1,
+        "violations": {},
+        "negative_equals_positive": 0,
+        "negative_equals_anchor": 0
+      },
+      "within": {
+        "A_tiger": {
+          "levels": {
+            "L1": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.0971594960779653,
+              "p_share_neg": 0.013786546232469693,
+              "n_neg_share_zero": 16596,
+              "diff": 0.0833729498454956,
+              "diff_ci": [
+                0.07844069408129309,
+                0.08795014261944377
+              ],
+              "er": 7.027711089379171,
+              "er_ci": [
+                6.134054519432891,
+                8.124431962647066
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 1610,
+                "c": 207,
+                "n_discordant": 1817,
+                "p": 5.135680514137012e-269
+              },
+              "sampled_precision_given_share": 0.8757364756293519,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "25-99": {
+                  "n": 356,
+                  "p_share_pos": 0.03932584269662921,
+                  "p_share_neg": 0.008426966292134831
+                },
+                "100+": {
+                  "n": 11617,
+                  "p_share_pos": 0.10665404149091848,
+                  "p_share_neg": 0.01575277610398554
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.012063227953410981,
+              "p_share_neg": 0.0007130972189208462,
+              "n_neg_share_zero": 16816,
+              "diff": 0.011350130734490135,
+              "diff_ci": [
+                0.009626812455431424,
+                0.013134359400998328
+              ],
+              "er": 17.12908937605396,
+              "er_ci": [
+                10.249305555555555,
+                36.841666666666626
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 203,
+                "c": 12,
+                "n_discordant": 215,
+                "p": 6.0107188910147434e-46
+              },
+              "sampled_precision_given_share": 0.9441860465116279,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 362,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 979,
+                  "p_share_pos": 0.005107252298263534,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 769,
+                  "p_share_pos": 0.005201560468140442,
+                  "p_share_neg": 0.0
+                },
+                "10-24": {
+                  "n": 1224,
+                  "p_share_pos": 0.012254901960784314,
+                  "p_share_neg": 0.0
+                },
+                "25-99": {
+                  "n": 361,
+                  "p_share_pos": 0.024930747922437674,
+                  "p_share_neg": 0.0
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.0030900879486570002,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 16828,
+              "diff": 0.0030900879486570002,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 52,
+                "c": 0,
+                "n_discordant": 52,
+                "p": 4.440892098500637e-16
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 8698,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 735,
+                  "p_share_pos": 0.004081632653061225,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 46,
+                  "p_share_pos": 0.021739130434782608,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "1": {
+                "n_pos": 6,
+                "n_neg": 4,
+                "frac_pos": 0.0003565486094604231,
+                "frac_neg": 0.0002376990729736154
+              },
+              "2-4": {
+                "n_pos": 18,
+                "n_neg": 13,
+                "frac_pos": 0.0010696458283812693,
+                "frac_neg": 0.0007725219871642501
+              },
+              "5-9": {
+                "n_pos": 73,
+                "n_neg": 73,
+                "frac_pos": 0.004338008081768481,
+                "frac_neg": 0.004338008081768481
+              },
+              "10-24": {
+                "n_pos": 460,
+                "n_neg": 487,
+                "frac_pos": 0.027335393391965772,
+                "frac_neg": 0.028939862134537676
+              },
+              "25-99": {
+                "n_pos": 2292,
+                "n_neg": 2339,
+                "frac_pos": 0.13620156881388162,
+                "frac_neg": 0.1389945329213216
+              },
+              "100+": {
+                "n_pos": 13979,
+                "n_neg": 13912,
+                "frac_pos": 0.8306988352745425,
+                "frac_neg": 0.8267173758022344
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 2272,
+                "n_neg": 2322,
+                "frac_pos": 0.13501307344901356,
+                "frac_neg": 0.13798431186118373
+              },
+              "2-4": {
+                "n_pos": 4002,
+                "n_neg": 3981,
+                "frac_pos": 0.2378179225101022,
+                "frac_neg": 0.23657000237699072
+              },
+              "5-9": {
+                "n_pos": 3482,
+                "n_neg": 3679,
+                "frac_pos": 0.2069170430235322,
+                "frac_neg": 0.21862372236748276
+              },
+              "10-24": {
+                "n_pos": 4539,
+                "n_neg": 4451,
+                "frac_pos": 0.26972902305681007,
+                "frac_neg": 0.26449964345139054
+              },
+              "25-99": {
+                "n_pos": 2401,
+                "n_neg": 2271,
+                "frac_pos": 0.14267886855241266,
+                "frac_neg": 0.13495364868077014
+              },
+              "100+": {
+                "n_pos": 132,
+                "n_neg": 124,
+                "frac_pos": 0.007844069408129309,
+                "frac_neg": 0.0073686712621820775
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 12046,
+                "n_neg": 12110,
+                "frac_pos": 0.7158307582600428,
+                "frac_neg": 0.7196339434276207
+              },
+              "2-4": {
+                "n_pos": 3350,
+                "n_neg": 3467,
+                "frac_pos": 0.1990729736154029,
+                "frac_neg": 0.20602567149988116
+              },
+              "5-9": {
+                "n_pos": 892,
+                "n_neg": 842,
+                "frac_pos": 0.05300689327311624,
+                "frac_neg": 0.05003565486094604
+              },
+              "10-24": {
+                "n_pos": 464,
+                "n_neg": 356,
+                "frac_pos": 0.027573092464939386,
+                "frac_neg": 0.02115521749465177
+              },
+              "25-99": {
+                "n_pos": 76,
+                "n_neg": 53,
+                "frac_pos": 0.004516282386498692,
+                "frac_neg": 0.003149512716900404
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.7114927501782743,
+            "L2": 0.21957451865937722,
+            "L3": 0.5632873781792251
+          }
+        },
+        "B_exp1a": {
+          "levels": {
+            "L1": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.10042785833135251,
+              "p_share_neg": 0.006358450202044212,
+              "n_neg_share_zero": 16721,
+              "diff": 0.0940694081293083,
+              "diff_ci": [
+                0.0895531257428096,
+                0.09882487520798668
+              ],
+              "er": 15.795998878190147,
+              "er_ci": [
+                13.185236087170647,
+                19.48385150663942
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 1680,
+                "c": 97,
+                "n_discordant": 1777,
+                "p": 0.0
+              },
+              "sampled_precision_given_share": 0.9404563160823595,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "25-99": {
+                  "n": 3294,
+                  "p_share_pos": 0.046751669702489375,
+                  "p_share_neg": 0.006375227686703097
+                },
+                "100+": {
+                  "n": 5594,
+                  "p_share_pos": 0.1363961387200572,
+                  "p_share_neg": 0.010010725777618877
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.006299025433800808,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 16828,
+              "diff": 0.006299025433800808,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 106,
+                "c": 0,
+                "n_discordant": 106,
+                "p": 2.465190328815665e-32
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 3736,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 2853,
+                  "p_share_pos": 0.005958640028040659,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 90,
+                  "p_share_pos": 0.011111111111111112,
+                  "p_share_neg": 0.0
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 16828,
+              "p_share_pos": 0.0008319467554076539,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 16828,
+              "diff": 0.0008319467554076539,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 14,
+                "c": 0,
+                "n_discordant": 14,
+                "p": 0.00012207031250000005
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 14630,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 65,
+                  "p_share_pos": 0.015384615384615385,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "1": {
+                "n_pos": 1,
+                "n_neg": 0,
+                "frac_pos": 5.942476824340385e-05,
+                "frac_neg": 0.0
+              },
+              "25-99": {
+                "n_pos": 7247,
+                "n_neg": 7280,
+                "frac_pos": 0.4306512954599477,
+                "frac_neg": 0.43261231281198004
+              },
+              "100+": {
+                "n_pos": 9580,
+                "n_neg": 9548,
+                "frac_pos": 0.5692892797718089,
+                "frac_neg": 0.56738768718802
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 8066,
+                "n_neg": 7803,
+                "frac_pos": 0.47932018065129545,
+                "frac_neg": 0.46369146660328026
+              },
+              "2-4": {
+                "n_pos": 6788,
+                "n_neg": 7104,
+                "frac_pos": 0.40337532683622535,
+                "frac_neg": 0.42215355360114093
+              },
+              "5-9": {
+                "n_pos": 1343,
+                "n_neg": 1309,
+                "frac_pos": 0.07980746375089137,
+                "frac_neg": 0.07778702163061564
+              },
+              "10-24": {
+                "n_pos": 622,
+                "n_neg": 606,
+                "frac_pos": 0.03696220584739719,
+                "frac_neg": 0.036011409555502735
+              },
+              "25-99": {
+                "n_pos": 9,
+                "n_neg": 6,
+                "frac_pos": 0.0005348229141906347,
+                "frac_neg": 0.0003565486094604231
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 15693,
+                "n_neg": 15689,
+                "frac_pos": 0.9325528880437366,
+                "frac_neg": 0.932315188970763
+              },
+              "2-4": {
+                "n_pos": 1061,
+                "n_neg": 1063,
+                "frac_pos": 0.06304967910625149,
+                "frac_neg": 0.0631685286427383
+              },
+              "5-9": {
+                "n_pos": 67,
+                "n_neg": 67,
+                "frac_pos": 0.003981459472308058,
+                "frac_neg": 0.003981459472308058
+              },
+              "10-24": {
+                "n_pos": 7,
+                "n_neg": 9,
+                "frac_pos": 0.00041597337770382697,
+                "frac_neg": 0.0005348229141906347
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.5281673401473734,
+            "L2": 0.39689802709769434,
+            "L3": 0.8732469693368196
+          }
+        }
+      },
+      "between": {
+        "L1": {
+          "A": {
+            "p_share_pos": 0.0971594960779653,
+            "p_share_neg": 0.013786546232469693
+          },
+          "B": {
+            "p_share_pos": 0.10042785833135251,
+            "p_share_neg": 0.006358450202044212
+          },
+          "A_er": 7.047413793103448,
+          "B_er": 15.794392523364486,
+          "delta_pos": {
+            "mean": 0.0032683622533872117,
+            "ci": [
+              -0.0020798668885191347,
+              0.008142678868552406
+            ],
+            "n_clusters": 16828
+          },
+          "delta_neg": {
+            "mean": -0.007428096030425481,
+            "ci": [
+              -0.009331174233420489,
+              -0.005526503446636558
+            ],
+            "n_clusters": 16828
+          },
+          "did": {
+            "mean": 0.010696458283812693,
+            "ci": [
+              0.00546559305918707,
+              0.01592583788923223
+            ],
+            "n_clusters": 16828
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 1939,
+            "p": 0.2116531386389121
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 275,
+            "p": 4.7802618500077707e-14
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 2167,
+            "p": 0.0001264841662454765
+          },
+          "sufficient": true
+        },
+        "L2": {
+          "A": {
+            "p_share_pos": 0.012063227953410981,
+            "p_share_neg": 0.0007130972189208462
+          },
+          "B": {
+            "p_share_pos": 0.006299025433800808,
+            "p_share_neg": 0.0
+          },
+          "A_er": 16.916666666666668,
+          "B_er": null,
+          "delta_pos": {
+            "mean": -0.005764202519610174,
+            "ci": [
+              -0.007606370335155693,
+              -0.0038626099358212503
+            ],
+            "n_clusters": 16828
+          },
+          "delta_neg": {
+            "mean": -0.0007130972189208462,
+            "ci": [
+              -0.001129070596624673,
+              -0.0003565486094604231
+            ],
+            "n_clusters": 16828
+          },
+          "did": {
+            "mean": -0.005051105300689327,
+            "ci": [
+              -0.006894758735440931,
+              -0.0032089374851438078
+            ],
+            "n_clusters": 16828
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 259,
+            "p": 1.6673504974254977e-09
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 12,
+            "p": 0.00048828125
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 271,
+            "p": 2.425271230155559e-07
+          },
+          "sufficient": true
+        },
+        "L3": {
+          "A": {
+            "p_share_pos": 0.0030900879486570002,
+            "p_share_neg": 0.0
+          },
+          "B": {
+            "p_share_pos": 0.0008319467554076539,
+            "p_share_neg": 0.0
+          },
+          "A_er": null,
+          "B_er": null,
+          "delta_pos": {
+            "mean": -0.002258141193249346,
+            "ci": [
+              -0.0032089374851438078,
+              -0.0014247088186356155
+            ],
+            "n_clusters": 16828
+          },
+          "delta_neg": {
+            "mean": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n_clusters": 16828
+          },
+          "did": {
+            "mean": -0.002258141193249346,
+            "ci": [
+              -0.003149512716900404,
+              -0.0013667696695982886
+            ],
+            "n_clusters": 16828
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 60,
+            "p": 9.305730297692049e-07
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 0,
+            "p": 1.0
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 60,
+            "p": 9.305730297692049e-07
+          },
+          "sufficient": true
+        }
+      },
+      "conditional": {
+        "L2_given_L1": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.12415902140672783,
+                "n_effective": 1635
+              },
+              "B": {
+                "p_retain": 0.06272189349112427,
+                "n_effective": 1690
+              }
+            },
+            "n_common": 693,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.18326118326118326,
+            "common_B_p_retain": 0.10822510822510822,
+            "common_diff_B_minus_A": -0.07503607503607504
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.05172413793103448,
+                "n_effective": 232
+              },
+              "B": {
+                "p_retain": 0.0,
+                "n_effective": 107
+              }
+            },
+            "n_common": 32,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.0625,
+            "common_B_p_retain": 0.0,
+            "common_diff_B_minus_A": -0.0625
+          }
+        },
+        "L3_given_L2": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.2561576354679803,
+                "n_effective": 203
+              },
+              "B": {
+                "p_retain": 0.1320754716981132,
+                "n_effective": 106
+              }
+            },
+            "n_common": 25,
+            "common_sufficient": false,
+            "common_A_p_retain": null,
+            "common_B_p_retain": null,
+            "common_diff_B_minus_A": null,
+            "common_note": "common set n=25 below min_cell=30; no paired comparison"
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": null,
+                "n_effective": 12
+              },
+              "B": {
+                "p_retain": null,
+                "n_effective": 0
+              }
+            },
+            "n_common": 0,
+            "common_sufficient": false,
+            "common_A_p_retain": null,
+            "common_B_p_retain": null,
+            "common_diff_B_minus_A": null,
+            "common_note": "common set n=0 below min_cell=30; no paired comparison"
+          }
+        }
+      }
+    },
+    "common_succ": {
+      "relation_kind": "common_succ",
+      "n_positive_pairs": 24130,
+      "negative_construction": {
+        "negatives": 24130,
+        "distinct_negatives": 12072,
+        "fallback_bin_matches": 0,
+        "violations": {},
+        "negative_equals_positive": 0,
+        "negative_equals_anchor": 0
+      },
+      "within": {
+        "A_tiger": {
+          "levels": {
+            "L1": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.06796518856195607,
+              "p_share_neg": 0.01077496891835889,
+              "n_neg_share_zero": 23870,
+              "diff": 0.05719021964359718,
+              "diff_ci": [
+                0.05399917115623705,
+                0.060671363447990054
+              ],
+              "er": 6.3207501048976615,
+              "er_ci": [
+                5.584626328720417,
+                7.207414958061508
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 1611,
+                "c": 231,
+                "n_discordant": 1842,
+                "p": 2.2758250052989192e-254
+              },
+              "sampled_precision_given_share": 0.8631578947368421,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "25-99": {
+                  "n": 445,
+                  "p_share_pos": 0.04943820224719101,
+                  "p_share_neg": 0.0022471910112359553
+                },
+                "100+": {
+                  "n": 16523,
+                  "p_share_pos": 0.07323125340434546,
+                  "p_share_neg": 0.013254251649216245
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.01106506423539163,
+              "p_share_neg": 0.00020721094073767094,
+              "n_neg_share_zero": 24125,
+              "diff": 0.010857853294653958,
+              "diff_ci": [
+                0.009573145462080398,
+                0.012225445503522586
+              ],
+              "er": 53.281864457530695,
+              "er_ci": [
+                26.58888888888889,
+                253.25000000000003
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 267,
+                "c": 5,
+                "n_discordant": 272,
+                "p": 3.210897184474803e-72
+              },
+              "sampled_precision_given_share": 0.9816176470588235,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 482,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 1376,
+                  "p_share_pos": 0.0029069767441860465,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 1076,
+                  "p_share_pos": 0.006505576208178439,
+                  "p_share_neg": 0.0
+                },
+                "10-24": {
+                  "n": 1715,
+                  "p_share_pos": 0.021574344023323616,
+                  "p_share_neg": 0.0
+                },
+                "25-99": {
+                  "n": 475,
+                  "p_share_pos": 0.029473684210526315,
+                  "p_share_neg": 0.0
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.0037712391214256113,
+              "p_share_neg": 8.288437629506838e-05,
+              "n_neg_share_zero": 24128,
+              "diff": 0.003688354745130543,
+              "diff_ci": [
+                0.0029423953584749277,
+                0.0045171985080812264
+              ],
+              "er": 46.24255535759735,
+              "er_ci": [
+                16.400000000000002,
+                104.0
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 91,
+                "c": 2,
+                "n_discordant": 93,
+                "p": 8.829183686722454e-25
+              },
+              "sampled_precision_given_share": 0.978494623655914,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 12547,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 959,
+                  "p_share_pos": 0.009384775808133473,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 60,
+                  "p_share_pos": 0.03333333333333333,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "1": {
+                "n_pos": 4,
+                "n_neg": 7,
+                "frac_pos": 0.00016576875259013675,
+                "frac_neg": 0.00029009531703273934
+              },
+              "2-4": {
+                "n_pos": 26,
+                "n_neg": 30,
+                "frac_pos": 0.0010774968918358888,
+                "frac_neg": 0.0012432656444260257
+              },
+              "5-9": {
+                "n_pos": 113,
+                "n_neg": 106,
+                "frac_pos": 0.0046829672606713635,
+                "frac_neg": 0.004392871943638624
+              },
+              "10-24": {
+                "n_pos": 759,
+                "n_neg": 731,
+                "frac_pos": 0.03145462080397845,
+                "frac_neg": 0.030294239535847492
+              },
+              "25-99": {
+                "n_pos": 3102,
+                "n_neg": 3470,
+                "frac_pos": 0.12855366763365106,
+                "frac_neg": 0.14380439287194363
+              },
+              "100+": {
+                "n_pos": 20126,
+                "n_neg": 19786,
+                "frac_pos": 0.8340654786572731,
+                "frac_neg": 0.8199751346871115
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 3232,
+                "n_neg": 3422,
+                "frac_pos": 0.1339411520928305,
+                "frac_neg": 0.141815167840862
+              },
+              "2-4": {
+                "n_pos": 5652,
+                "n_neg": 5824,
+                "frac_pos": 0.23423124740986323,
+                "frac_neg": 0.24135930377123913
+              },
+              "5-9": {
+                "n_pos": 5087,
+                "n_neg": 5183,
+                "frac_pos": 0.21081641110650642,
+                "frac_neg": 0.2147948611686697
+              },
+              "10-24": {
+                "n_pos": 6647,
+                "n_neg": 6249,
+                "frac_pos": 0.27546622461665976,
+                "frac_neg": 0.2589722337339411
+              },
+              "25-99": {
+                "n_pos": 3332,
+                "n_neg": 3280,
+                "frac_pos": 0.1380853709075839,
+                "frac_neg": 0.13593037712391215
+              },
+              "100+": {
+                "n_pos": 180,
+                "n_neg": 172,
+                "frac_pos": 0.0074595938665561546,
+                "frac_neg": 0.00712805636137588
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 17269,
+                "n_neg": 17529,
+                "frac_pos": 0.7156651471197679,
+                "frac_neg": 0.7264401160381269
+              },
+              "2-4": {
+                "n_pos": 4942,
+                "n_neg": 4872,
+                "frac_pos": 0.20480729382511398,
+                "frac_neg": 0.20190634065478658
+              },
+              "5-9": {
+                "n_pos": 1268,
+                "n_neg": 1195,
+                "frac_pos": 0.052548694571073355,
+                "frac_neg": 0.049523414836303355
+              },
+              "10-24": {
+                "n_pos": 562,
+                "n_neg": 457,
+                "frac_pos": 0.023290509738914215,
+                "frac_neg": 0.018939079983423125
+              },
+              "25-99": {
+                "n_pos": 89,
+                "n_neg": 77,
+                "frac_pos": 0.003688354745130543,
+                "frac_neg": 0.0031910484873601324
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.7031910484873601,
+            "L2": 0.21234977206796518,
+            "L3": 0.5622047244094488
+          }
+        },
+        "B_exp1a": {
+          "levels": {
+            "L1": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.07297969332780771,
+              "p_share_neg": 0.004061334438458351,
+              "n_neg_share_zero": 24032,
+              "diff": 0.06891835888934936,
+              "diff_ci": [
+                0.06556154164939909,
+                0.0724823870700373
+              ],
+              "er": 17.96275895835246,
+              "er_ci": [
+                14.834504132231405,
+                22.43760146103896
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 1750,
+                "c": 87,
+                "n_discordant": 1837,
+                "p": 0.0
+              },
+              "sampled_precision_given_share": 0.9472834857450242,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "25-99": {
+                  "n": 4837,
+                  "p_share_pos": 0.04155468265453793,
+                  "p_share_neg": 0.0035145751498862933
+                },
+                "100+": {
+                  "n": 7839,
+                  "p_share_pos": 0.1044776119402985,
+                  "p_share_neg": 0.005868095420334226
+                }
+              }
+            },
+            "L2": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.006092001657687526,
+              "p_share_neg": 8.288437629506838e-05,
+              "n_neg_share_zero": 24128,
+              "diff": 0.0060091172813924575,
+              "diff_ci": [
+                0.005014504765851637,
+                0.007003729796933278
+              ],
+              "er": 71.9273619631902,
+              "er_ci": [
+                27.0,
+                164.0
+              ],
+              "degenerate": null,
+              "mcnemar": {
+                "b": 147,
+                "c": 2,
+                "n_discordant": 149,
+                "p": 3.1321823274589805e-41
+              },
+              "sampled_precision_given_share": 0.9865771812080537,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 5495,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 4034,
+                  "p_share_pos": 0.006445215666831929,
+                  "p_share_neg": 0.0
+                },
+                "5-9": {
+                  "n": 148,
+                  "p_share_pos": 0.013513513513513514,
+                  "p_share_neg": 0.0
+                },
+                "10-24": {
+                  "n": 53,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                }
+              }
+            },
+            "L3": {
+              "n_pairs": 24130,
+              "p_share_pos": 0.0014090343970161625,
+              "p_share_neg": 0.0,
+              "n_neg_share_zero": 24130,
+              "diff": 0.0014090343970161625,
+              "diff_ci": null,
+              "er": null,
+              "er_ci": null,
+              "degenerate": "zero rate on one side; enrichment undefined",
+              "mcnemar": {
+                "b": 34,
+                "c": 0,
+                "n_discordant": 34,
+                "p": 1.164153218269349e-10
+              },
+              "sampled_precision_given_share": 1.0,
+              "sampled_precision_note": "property of the balanced pos/neg sample; the population P(behaviour-related | shared prefix) is not identified without the positive prior and the negative sampling rate",
+              "by_matched_group_size": {
+                "1": {
+                  "n": 20821,
+                  "p_share_pos": 0.0,
+                  "p_share_neg": 0.0
+                },
+                "2-4": {
+                  "n": 116,
+                  "p_share_pos": 0.017241379310344827,
+                  "p_share_neg": 0.0
+                }
+              }
+            }
+          },
+          "group_size_distribution": {
+            "L1": {
+              "1": {
+                "n_pos": 0,
+                "n_neg": 1,
+                "frac_pos": 0.0,
+                "frac_neg": 4.144218814753419e-05
+              },
+              "25-99": {
+                "n_pos": 10686,
+                "n_neg": 10441,
+                "frac_pos": 0.44285122254455034,
+                "frac_neg": 0.43269788644840446
+              },
+              "100+": {
+                "n_pos": 13444,
+                "n_neg": 13688,
+                "frac_pos": 0.5571487774554497,
+                "frac_neg": 0.567260671363448
+              }
+            },
+            "L2": {
+              "1": {
+                "n_pos": 11499,
+                "n_neg": 11351,
+                "frac_pos": 0.47654372150849567,
+                "frac_neg": 0.4704102776626606
+              },
+              "2-4": {
+                "n_pos": 9622,
+                "n_neg": 9974,
+                "frac_pos": 0.39875673435557396,
+                "frac_neg": 0.41334438458350603
+              },
+              "5-9": {
+                "n_pos": 2008,
+                "n_neg": 1839,
+                "frac_pos": 0.08321591380024865,
+                "frac_neg": 0.07621218400331538
+              },
+              "10-24": {
+                "n_pos": 980,
+                "n_neg": 940,
+                "frac_pos": 0.04061334438458351,
+                "frac_neg": 0.03895565685868214
+              },
+              "25-99": {
+                "n_pos": 21,
+                "n_neg": 26,
+                "frac_pos": 0.000870285951098218,
+                "frac_neg": 0.0010774968918358888
+              }
+            },
+            "L3": {
+              "1": {
+                "n_pos": 22400,
+                "n_neg": 22411,
+                "frac_pos": 0.9283050145047659,
+                "frac_neg": 0.9287608785743887
+              },
+              "2-4": {
+                "n_pos": 1613,
+                "n_neg": 1595,
+                "frac_pos": 0.06684624948197265,
+                "frac_neg": 0.06610029009531704
+              },
+              "5-9": {
+                "n_pos": 101,
+                "n_neg": 115,
+                "frac_pos": 0.004185661002900953,
+                "frac_neg": 0.004765851636966432
+              },
+              "10-24": {
+                "n_pos": 16,
+                "n_neg": 9,
+                "frac_pos": 0.000663075010360547,
+                "frac_neg": 0.0003729796933278077
+              }
+            }
+          },
+          "matched_coverage": {
+            "L1": 0.5253211769581434,
+            "L2": 0.40323249067550765,
+            "L3": 0.8676750932449233
+          }
+        }
+      },
+      "between": {
+        "L1": {
+          "A": {
+            "p_share_pos": 0.06796518856195607,
+            "p_share_neg": 0.01077496891835889
+          },
+          "B": {
+            "p_share_pos": 0.07297969332780771,
+            "p_share_neg": 0.004061334438458351
+          },
+          "A_er": 6.3076923076923075,
+          "B_er": 17.96938775510204,
+          "delta_pos": {
+            "mean": 0.005014504765851637,
+            "ci": [
+              0.001533360961458765,
+              0.008578532946539577
+            ],
+            "n_clusters": 24130
+          },
+          "delta_neg": {
+            "mean": -0.006713634479900539,
+            "ci": [
+              -0.008122668876916702,
+              -0.005345006216328227
+            ],
+            "n_clusters": 24130
+          },
+          "did": {
+            "mean": 0.011728139245752176,
+            "ci": [
+              0.007915457936179031,
+              0.015457936179030253
+            ],
+            "n_clusters": 24130
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 1857,
+            "p": 0.0049867929634440636
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 300,
+            "p": 8.513634529819754e-21
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 2101,
+            "p": 1.0701435522156453e-09
+          },
+          "sufficient": true
+        },
+        "L2": {
+          "A": {
+            "p_share_pos": 0.01106506423539163,
+            "p_share_neg": 0.00020721094073767094
+          },
+          "B": {
+            "p_share_pos": 0.006092001657687526,
+            "p_share_neg": 8.288437629506838e-05
+          },
+          "A_er": 53.400000000000006,
+          "B_er": 73.5,
+          "delta_pos": {
+            "mean": -0.004973062577704103,
+            "ci": [
+              -0.0064235391628678,
+              -0.003522585992540406
+            ],
+            "n_clusters": 24130
+          },
+          "delta_neg": {
+            "mean": -0.00012432656444260256,
+            "ci": [
+              -0.0003315375051802735,
+              8.288437629506838e-05
+            ],
+            "n_clusters": 24130
+          },
+          "did": {
+            "mean": -0.004848736013261501,
+            "ci": [
+              -0.006257770410277663,
+              -0.0034801077496891893
+            ],
+            "n_clusters": 24130
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 294,
+            "p": 2.5863960582808883e-12
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 7,
+            "p": 0.453125
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 301,
+            "p": 1.5433102298757177e-11
+          },
+          "sufficient": true
+        },
+        "L3": {
+          "A": {
+            "p_share_pos": 0.0037712391214256113,
+            "p_share_neg": 8.288437629506838e-05
+          },
+          "B": {
+            "p_share_pos": 0.0014090343970161625,
+            "p_share_neg": 0.0
+          },
+          "A_er": 45.5,
+          "B_er": null,
+          "delta_pos": {
+            "mean": -0.002362204724409449,
+            "ci": [
+              -0.0031496062992125984,
+              -0.0016162453377538335
+            ],
+            "n_clusters": 24130
+          },
+          "delta_neg": {
+            "mean": -8.288437629506838e-05,
+            "ci": [
+              -0.00020721094073767094,
+              0.0
+            ],
+            "n_clusters": 24130
+          },
+          "did": {
+            "mean": -0.0022793203481143802,
+            "ci": [
+              -0.0031081641110650643,
+              -0.0014919187733112309
+            ],
+            "n_clusters": 24130
+          },
+          "delta_pos_wilcoxon": {
+            "n_nonzero": 93,
+            "p": 3.4081281464721695e-09
+          },
+          "delta_neg_wilcoxon": {
+            "n_nonzero": 2,
+            "p": 0.5
+          },
+          "did_wilcoxon": {
+            "n_nonzero": 95,
+            "p": 1.6722799715523686e-08
+          },
+          "sufficient": true
+        }
+      },
+      "conditional": {
+        "L2_given_L1": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.1628048780487805,
+                "n_effective": 1640
+              },
+              "B": {
+                "p_retain": 0.08347529812606473,
+                "n_effective": 1761
+              }
+            },
+            "n_common": 772,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.2603626943005181,
+            "common_B_p_retain": 0.1411917098445596,
+            "common_diff_B_minus_A": -0.11917098445595853
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.019230769230769232,
+                "n_effective": 260
+              },
+              "B": {
+                "p_retain": 0.02040816326530612,
+                "n_effective": 98
+              }
+            },
+            "n_common": 29,
+            "common_sufficient": false,
+            "common_A_p_retain": null,
+            "common_B_p_retain": null,
+            "common_diff_B_minus_A": null,
+            "common_note": "common set n=29 below min_cell=30; no paired comparison"
+          }
+        },
+        "L3_given_L2": {
+          "pos": {
+            "own_condition": {
+              "A": {
+                "p_retain": 0.3408239700374532,
+                "n_effective": 267
+              },
+              "B": {
+                "p_retain": 0.23129251700680273,
+                "n_effective": 147
+              }
+            },
+            "n_common": 60,
+            "common_sufficient": true,
+            "common_A_p_retain": 0.5166666666666667,
+            "common_B_p_retain": 0.4,
+            "common_diff_B_minus_A": -0.1166666666666667
+          },
+          "neg": {
+            "own_condition": {
+              "A": {
+                "p_retain": null,
+                "n_effective": 5
+              },
+              "B": {
+                "p_retain": null,
+                "n_effective": 2
+              }
+            },
+            "n_common": 0,
+            "common_sufficient": false,
+            "common_A_p_retain": null,
+            "common_B_p_retain": null,
+            "common_diff_B_minus_A": null,
+            "common_note": "common set n=0 below min_cell=30; no paired comparison"
+          }
+        }
+      }
+    }
+  },
+  "conclusions": {
+    "q1_l1_selectivity": {
+      "delta_pos": {
+        "mean": 0.0032683622533872117,
+        "ci": [
+          -0.0020798668885191347,
+          0.008142678868552406
+        ],
+        "n_clusters": 16828
+      },
+      "wilcoxon_p": 0.2116531386389121,
+      "delta_neg": {
+        "mean": -0.007428096030425481,
+        "ci": [
+          -0.009331174233420489,
+          -0.005526503446636558
+        ],
+        "n_clusters": 16828
+      },
+      "did": {
+        "mean": 0.010696458283812693,
+        "ci": [
+          0.00546559305918707,
+          0.01592583788923223
+        ],
+        "n_clusters": 16828
+      },
+      "did_p": 0.0001264841662454765
+    },
+    "q2_l2_l3": {
+      "L2_delta_pos": {
+        "mean": -0.005764202519610174,
+        "ci": [
+          -0.007606370335155693,
+          -0.0038626099358212503
+        ],
+        "n_clusters": 16828
+      },
+      "L3_delta_pos": {
+        "mean": -0.002258141193249346,
+        "ci": [
+          -0.0032089374851438078,
+          -0.0014247088186356155
+        ],
+        "n_clusters": 16828
+      },
+      "L2_common": {
+        "own_condition": {
+          "A": {
+            "p_retain": 0.12415902140672783,
+            "n_effective": 1635
+          },
+          "B": {
+            "p_retain": 0.06272189349112427,
+            "n_effective": 1690
+          }
+        },
+        "n_common": 693,
+        "common_sufficient": true,
+        "common_A_p_retain": 0.18326118326118326,
+        "common_B_p_retain": 0.10822510822510822,
+        "common_diff_B_minus_A": -0.07503607503607504
+      },
+      "L3_common": {
+        "own_condition": {
+          "A": {
+            "p_retain": 0.2561576354679803,
+            "n_effective": 203
+          },
+          "B": {
+            "p_retain": 0.1320754716981132,
+            "n_effective": 106
+          }
+        },
+        "n_common": 25,
+        "common_sufficient": false,
+        "common_A_p_retain": null,
+        "common_B_p_retain": null,
+        "common_diff_B_minus_A": null,
+        "common_note": "common set n=25 below min_cell=30; no paired comparison"
+      }
+    },
+    "q3_collision": {
+      "A_collision": 0.17749217065929146,
+      "B_collision": 0.03627933460771948,
+      "A_prefixes_L2_L3": [
+        7414,
+        20223
+      ],
+      "B_prefixes_L2_L3": [
+        16145,
+        23695
+      ],
+      "A_max_group_L1": 859,
+      "B_max_group_L1": 253,
+      "A_singleton_prefix_group_frac_L1": 0.032388663967611336,
+      "B_singleton_prefix_group_frac_L1": 0.004149377593360996
+    }
+  }
+}
