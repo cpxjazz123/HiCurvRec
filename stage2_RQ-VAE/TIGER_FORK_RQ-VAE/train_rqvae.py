@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyper_l1_s42"
+EXPERIMENT_ARM = "hyper_l1_br_euclid_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -201,6 +201,25 @@ _ARMS = {
     "hyper_l1_s42_c400": {"group_distance": "euclid", "radial_mode": "mse",
                           "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                           "l1_geodesic": True, "l1_geodesic_curvature": 4.0},
+    # Step 3 of the hyperbolic programme. On top of the accepted step-2 arm
+    # (L1 codeword selection on the Poincare geodesic) one bounded term is added:
+    # the negatives that currently share an L1 codeword with their anchor are
+    # pushed out of that group by a margin hinge measured between the shared
+    # prototype and the nearest alternative prototype. Positives that correctly
+    # share the anchor's codeword get the mirror hinge so they stay. The L1
+    # prototypes are detached inside the term, so it cannot move them.
+    "hyper_l1_br_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                        "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                        "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                        "l1_boundary_repulsion": True, "l1_br_geometry": "geodesic"},
+    # Step 4: the same term with the SAME sampling, margin, weights and budget,
+    # differing only in that the two distances are squared Euclidean. This is the
+    # control that says whether any gain comes from the hard negatives or from the
+    # geometry the hinge is measured in.
+    "hyper_l1_br_euclid_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                               "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                               "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                               "l1_boundary_repulsion": True, "l1_br_geometry": "euclid"},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -257,6 +276,28 @@ L1_GEODESIC_CURVATURE = _ARM.get("l1_geodesic_curvature", 1.0)
 L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
+# === Step 3 of the hyperbolic programme: L1 boundary repulsion ===
+#
+# Registered mechanism, one factor on top of the accepted hyper_l1_s42: a
+# bounded margin hinge on the items that CURRENTLY share an L1 codeword they
+# should not. A canonical-pair negative is a HARD negative when it takes the same
+# L1 codeword as its anchor; the hinge asks the nearest ALTERNATIVE prototype to
+# be closer than the shared one by L1_BR_MARGIN, which moves the negative across
+# the boundary. A positive that correctly shares its anchor's codeword gets the
+# mirror hinge, so the term cannot buy selectivity by dissolving the positive
+# sharing the metric rewards.
+#
+# Both distances are divided by one detached mean computed over the three
+# distance matrices of the step, so the margin is dimensionless and the geodesic
+# arm and its Euclidean control keep literally the same sampling, margin, weights
+# and budget. The L1 prototypes are detached inside the term: it moves the
+# representation, never the prototypes.
+L1_BOUNDARY_REPULSION_ENABLED = _ARM.get("l1_boundary_repulsion", False)
+L1_BR_GEOMETRY = _ARM.get("l1_br_geometry", "geodesic")   # "geodesic" | "euclid"
+L1_BR_WEIGHT = 0.05          # weight on the hard-negative hinge
+L1_BR_POS_WEIGHT = 0.02      # weight on the positive-preservation hinge
+L1_BR_MARGIN = 0.05          # dimensionless, both hinges
+L1_BR_MAX_HARD = 512         # bounded number of hard negatives used per step
 N_ITEMS = 24587
 # === Step 4 of the behaviour programme: cluster-consistency on the L1 assignment ===
 #
@@ -963,6 +1004,118 @@ def l1_soft_assignment_loss(
     return loss, stats
 
 
+def l1_boundary_repulsion(
+    raw_module,
+    anchor_latent: torch.Tensor,
+    pos_latent: torch.Tensor,
+    neg_latent: torch.Tensor,
+    geometry: str,
+    normalizer,
+    margin: float,
+    max_hard: int,
+) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    """Push hard negatives across the L1 boundary and hold the positives.
+
+    ``anchor_latent`` is (N, D), ``pos_latent`` (N, D), ``neg_latent`` (N, K, D).
+
+    A canonical-pair negative is a HARD negative when it currently takes the same
+    L1 codeword as its anchor -- exactly the wrong-shared group the behaviour
+    metric counts. For each such negative the hinge asks the nearest ALTERNATIVE
+    prototype to be closer than the shared one by ``margin``:
+
+        L_hard = mean_j relu(margin + d(z_j, c_shared) - d(z_j, c_alt))
+
+    A positive that correctly shares the anchor's codeword gets the mirror hinge,
+    which asks the shared prototype to stay closer than its nearest alternative:
+
+        L_pos  = mean_j relu(margin + d(z_j, c_shared) - d(z_j, c_alt))
+
+    Both matrices are divided by ONE detached mean taken over the three distance
+    matrices of the step, so the margin is dimensionless and the geodesic arm and
+    its Euclidean control keep literally the same sampling, margin, weights and
+    budget. The codewords are DETACHED: the term moves the representation, never
+    the prototypes. Step 3's earlier softmax form let the term move the L1
+    codebook and collapsed it from 52 codewords to 1.
+    """
+    layer = raw_module.rq.vq_layers[0]
+    codes = layer.get_code_embs().detach()
+    curv = float(getattr(layer, "geodesic_curvature", CURVATURE))
+    nz = float(getattr(layer, "geodesic_normalizer", normalizer))
+
+    def dist(z: torch.Tensor) -> torch.Tensor:
+        z = z.reshape(-1, z.shape[-1])
+        if geometry == "geodesic":
+            return pair_poincare_distance(
+                encode_ball(z, curv, nz), encode_ball(codes, curv, nz), curv
+            )
+        return (
+            z.pow(2).sum(-1, keepdim=True)
+            - 2 * z @ codes.t()
+            + codes.pow(2).sum(-1).unsqueeze(0)
+        )
+
+    d_a = dist(anchor_latent)                       # (N, K)
+    d_p = dist(pos_latent)                          # (N, K)
+    d_n = dist(neg_latent)                          # (N*K, K)
+    with torch.no_grad():
+        scale = torch.cat(
+            [d_a.detach().reshape(-1), d_p.detach().reshape(-1), d_n.detach().reshape(-1)]
+        ).mean().clamp_min(1e-6)
+        code_a = d_a.argmin(dim=1)                  # (N,)
+        code_p = d_p.argmin(dim=1)                  # (N,)
+        n_neg = neg_latent.shape[1]
+        code_n = d_n.argmin(dim=1).view(-1, n_neg)  # (N, K)
+    dn_a = d_a / scale
+    dn_p = d_p / scale
+    dn_n = d_n / scale
+
+    def hinge(dn: torch.Tensor, shared: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        d_shared = dn.gather(1, shared.unsqueeze(1)).squeeze(1)
+        masked = dn.scatter(1, shared.unsqueeze(1), float("inf"))
+        d_alt = masked.min(dim=1).values
+        return torch.relu(margin + d_shared - d_alt), d_shared, d_alt
+
+    def bounded(index: torch.Tensor) -> torch.Tensor:
+        if index.numel() > max_hard:
+            stride = int(index.numel() // max_hard) + 1
+            index = index[::stride][:max_hard]
+        return index
+
+    # Hard negatives: the negative takes the anchor's own L1 codeword.
+    hard = (code_n == code_a.unsqueeze(1)).reshape(-1)
+    idx_hard = bounded(hard.nonzero(as_tuple=True)[0])
+    if idx_hard.numel() > 0:
+        lh, dh_shared, dh_alt = hinge(dn_n[idx_hard], code_n.reshape(-1)[idx_hard])
+        loss_hard = lh.mean()
+        violating = float((lh > 0).float().mean())
+    else:
+        loss_hard = torch.zeros((), device=d_n.device, dtype=d_n.dtype)
+        dh_shared = dh_alt = torch.zeros(1, device=d_n.device, dtype=d_n.dtype)
+        violating = 0.0
+
+    # Positives that correctly share the anchor's codeword.
+    pos_ok = (code_p == code_a)
+    idx_pos = bounded(pos_ok.nonzero(as_tuple=True)[0])
+    if idx_pos.numel() > 0:
+        lp, dp_shared, dp_alt = hinge(dn_p[idx_pos], code_a[idx_pos])
+        loss_pos = lp.mean()
+    else:
+        loss_pos = torch.zeros((), device=d_p.device, dtype=d_p.dtype)
+        dp_shared = dp_alt = torch.zeros(1, device=d_p.device, dtype=d_p.dtype)
+
+    stats = {
+        "n_hard": int(idx_hard.numel()),
+        "n_pos_ok": int(idx_pos.numel()),
+        "frac_hard_violating": violating,
+        "mean_d_shared_hard": float(dh_shared.detach().mean()),
+        "mean_d_alt_hard": float(dh_alt.detach().mean()),
+        "mean_d_shared_pos": float(dp_shared.detach().mean()),
+        "mean_d_alt_pos": float(dp_alt.detach().mean()),
+        "scale": float(scale),
+    }
+    return loss_hard, loss_pos, stats
+
+
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
@@ -1381,7 +1534,11 @@ def main() -> None:
         train_frame, len(embeddings), FORK_SIBLINGS_PER_ITEM, SEED
     )
     fork_siblings = torch.from_numpy(siblings_np)
-    canonical = load_canonical_pairs(CANONICAL_PAIRS) if L1_SOFT_ASSIGN_ENABLED else None
+    canonical = (
+        load_canonical_pairs(CANONICAL_PAIRS)
+        if (L1_SOFT_ASSIGN_ENABLED or L1_BOUNDARY_REPULSION_ENABLED)
+        else None
+    )
     behaviour_cluster = None
     if CLUSTER_ASSIGN_ENABLED:
         behaviour_cluster = np.load(BEHAVIOUR_CLUSTER_PATH)["cluster"].astype(np.int64)
@@ -1599,6 +1756,9 @@ def main() -> None:
         cluster_on_target: list[float] = []
         l1_soft_ppos: list[float] = []
         l1_soft_pneg: list[float] = []
+        l1_br_hard: list[float] = []
+        l1_br_pos: list[float] = []
+        l1_br_nhard: list[int] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
         for batch, row_index in loader:
@@ -1663,6 +1823,34 @@ def main() -> None:
                     l1_soft_losses.append(float(soft_loss.detach()))
                     l1_soft_ppos.append(soft_stats["p_share_pos"])
                     l1_soft_pneg.append(soft_stats["p_share_neg"])
+            if L1_BOUNDARY_REPULSION_ENABLED and epoch_weight > 0.0:
+                # Same canonical rows as the soft term: the negatives are the
+                # matched ones the metric uses, never a fresh draw.
+                keys = [
+                    int(a) * N_ITEMS + int(b)
+                    for a, b in zip(source_ids.tolist(), target_ids.tolist())
+                ]
+                rows = [canonical["index"][k] for k in keys if k in canonical["index"]]
+                if rows:
+                    rows_t = torch.as_tensor(rows, dtype=torch.long, device=device)
+                    a_ids = torch.as_tensor(canonical["anchors"][rows], dtype=torch.long, device=device)
+                    p_ids = torch.as_tensor(canonical["positives"][rows], dtype=torch.long, device=device)
+                    n_ids = torch.as_tensor(canonical["negatives"][rows], dtype=torch.long, device=device)
+                    anchor_lat = raw_module.encoder(all_embeddings[a_ids.cpu()].to(device))
+                    pos_lat = raw_module.encoder(all_embeddings[p_ids.cpu()].to(device))
+                    neg_lat = raw_module.encoder(
+                        all_embeddings[n_ids.reshape(-1).cpu()].to(device)
+                    ).view(len(rows), n_ids.shape[1], -1)
+                    br_hard, br_pos, br_stats = l1_boundary_repulsion(
+                        raw_module, anchor_lat, pos_lat, neg_lat,
+                        L1_BR_GEOMETRY, normalizer, L1_BR_MARGIN, L1_BR_MAX_HARD,
+                    )
+                    loss = loss + epoch_weight * (
+                        L1_BR_WEIGHT * br_hard + L1_BR_POS_WEIGHT * br_pos
+                    )
+                    l1_br_hard.append(float(br_hard.detach()))
+                    l1_br_pos.append(float(br_pos.detach()))
+                    l1_br_nhard.append(br_stats["n_hard"])
             # Behaviour-fork terms on the ball coordinates. They ramp with the
             # same epoch schedule as the behaviour term so the first half of
             # training still builds the reconstruction objective undisturbed.
@@ -1747,7 +1935,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1775,7 +1963,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
