@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "nce_euclid_radius_control"
+EXPERIMENT_ARM = "diag_euclid_norm"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -155,6 +155,15 @@ _ARMS = {
     "nce_hyp_radius_control":    {"group_distance": "poincare", "radial_mode": "mse",
                                    "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                                    "radius_control": True},
+    # Diagnostic re-runs of the two baseline arms. Identical in EVERY training
+    # parameter to nce_euclid_group / nce_hyp_group; they exist only because
+    # neither baseline kept intermediate state, so the per-term radial force at
+    # epochs 1000/1500/1750/2000/2500/3000 cannot be recovered afterwards.
+    # Separate directories so the original results stay untouched.
+    "diag_euclid_norm": {"group_distance": "euclid",   "radial_mode": "mse",
+                         "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
+    "diag_hyp_norm":    {"group_distance": "poincare", "radial_mode": "mse",
+                         "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -500,6 +509,12 @@ def resolve_normalizer(raw_module: RQVAE, train_embeddings: torch.Tensor) -> flo
 
 
 PROBE_EPOCHS = (1, 500, 1000, 1500, 2000, 2500, 3000)
+# Epochs at which the per-term radial force is measured and a real intermediate
+# snapshot is written. 1750 is included because the behaviour ramp opens at 1500,
+# so it is the first epoch where a term other than reconstruction can act at
+# full strength.
+DIAG_SNAPSHOT_EPOCHS = (1000, 1500, 1750, 2000, 2500, 3000)
+DIAG_SNAPSHOT_DIR = _OUT / "snapshots"
 
 
 def tangent_norm_control(
@@ -563,6 +578,144 @@ def saturation_probe(
         distinct_prefixes_l1l2=prefixes, unique_triples=triples,
         collision=1.0 - triples / len(tokens),
     )
+
+
+def _radial_force(
+    loss: torch.Tensor, base: torch.Tensor, level: int | None = None
+) -> float:
+    """d(loss)/dlog||latent|| along the encoder's own radial direction.
+
+    Positive means the term is lowered by growing the norm, i.e. it pushes the
+    norm OUT; negative means it pulls back. The gradient is taken w.r.t. the
+    stacked residual trace and indexed afterwards: asking autograd for the
+    gradient of a view like ``residuals[0]`` returns None even when the true
+    gradient is non-zero, which would report every residual-level term as zero.
+    """
+    if not loss.requires_grad:
+        return 0.0
+    grad = torch.autograd.grad(
+        loss, base, retain_graph=True, allow_unused=True
+    )[0]
+    if grad is None:
+        return 0.0
+    if level is not None:
+        grad, base = grad[level], base[level]
+    direction = base / torch.linalg.vector_norm(base, dim=-1, keepdim=True).clamp_min(1e-12)
+    return float((grad * direction).sum())
+
+
+def radial_force_probe(
+    raw_module,
+    batch,
+    row_index,
+    pair_batch,
+    pairs,
+    radius_target,
+    fork_siblings,
+    normalizer,
+    all_embeddings,
+    resolved_temperature,
+    epoch: int,
+    rank: int,
+    snapshot_dir=None,
+) -> None:
+    """Per-term radial force and the intermediate snapshot for this epoch.
+
+    Which term is pushing the latent norm outward, and by how much, cannot be
+    read off the final checkpoint: by then every term has moved. The force is
+    measured at the epochs where the two arms actually part company, and a real
+    snapshot is written so later states are never reconstructed from the final
+    weights.
+    """
+    if rank != 0:
+        return
+    captured: list[torch.Tensor] = []
+    residuals_seen: list[torch.Tensor] = []
+    hook = raw_module.encoder.register_forward_hook(
+        lambda _m, _i, out: captured.append(out)
+    )
+    # Rebound through globals(): assigning the name inside this function would
+    # make it local, and the read below would raise UnboundLocalError.
+    original_trace = globals()["_residuals_with_trace"]
+
+    def recording_trace(*a, **kw):
+        out = original_trace(*a, **kw)
+        residuals_seen.append(out)
+        return out
+
+    globals()["_residuals_with_trace"] = recording_trace
+    try:
+        with torch.no_grad():
+            latent_now = raw_module.encoder(batch)
+            norm_now = torch.linalg.vector_norm(latent_now, dim=-1)
+            z_now = encode_ball(latent_now, CURVATURE, normalizer)
+            radius_now = (
+                (CURVATURE ** 0.5) * torch.linalg.vector_norm(z_now, dim=-1)
+                / ball_radius(CURVATURE)
+            )
+            q_now = torch.quantile(
+                radius_now.float(),
+                torch.tensor([0.1, 0.5, 0.9, 0.99], device=radius_now.device),
+            )
+
+        reconstructed, quant_loss, _, _ = raw_module(batch)
+        _, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+        f_recon = _radial_force(recon_loss, captured[-1])
+
+        residuals = recording_trace(raw_module, pair_batch)
+        behavior_loss = behavior_contrastive_loss(
+            residuals, pairs[:, 0], pairs[:, 1], normalizer, resolved_temperature,
+        )
+        f_behavior = _radial_force(behavior_loss, residuals, level=0)
+        per_level = []
+        for level in range(residuals.shape[0]):
+            lvl = behavior_contrastive_loss(
+                residuals[level: level + 1], pairs[:, 0], pairs[:, 1],
+                normalizer, resolved_temperature,
+            )
+            per_level.append(_radial_force(lvl, residuals, level=level))
+
+        residuals_seen.clear()
+        radial_term, angular_term, _, fork_stats = fork_geometry_terms(
+            raw_module, batch, row_index, radius_target, fork_siblings,
+            normalizer, all_embeddings,
+            torch.Generator(device=batch.device).manual_seed(SEED),
+        )
+        fork_residuals = residuals_seen[-1]
+        f_radial = _radial_force(radial_term, fork_residuals, level=0)
+        f_angular = _radial_force(angular_term, fork_residuals, level=0)
+
+        separation = fork_stats.get("positive_distance_mean", 0.0)
+        _record(
+            rank, "radial_force", epoch=epoch,
+            latent_norm_mean=float(norm_now.mean()),
+            latent_norm_median=float(torch.median(norm_now)),
+            radius_mean=float(radius_now.mean()), radius_std=float(radius_now.std()),
+            radius_p10=float(q_now[0]), radius_p50=float(q_now[1]),
+            radius_p90=float(q_now[2]), radius_p99=float(q_now[3]),
+            frac_gt_0p95=float((radius_now > 0.95).float().mean()),
+            frac_gt_0p99=float((radius_now > 0.99).float().mean()),
+            force_recon=f_recon, force_behavior_3layer=f_behavior,
+            force_behavior_per_level=per_level,
+            force_sibling_nce=f_angular, force_radial_mse=f_radial,
+            positive_distance_mean=separation,
+        )
+        if snapshot_dir is not None:
+            snapshot_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(
+                {
+                    "state_dict": {
+                        k: v.detach().cpu().clone()
+                        for k, v in raw_module.state_dict().items()
+                    },
+                    "epoch": epoch, "arm": EXPERIMENT_ARM,
+                    "ball_normalizer": float(normalizer),
+                },
+                snapshot_dir / f"ep{epoch:04d}.pth",
+            )
+    finally:
+        hook.remove()
+        globals()["_residuals_with_trace"] = original_trace
 
 
 def behavior_contrastive_loss(
@@ -1085,10 +1238,19 @@ def main() -> None:
         for layer in raw_module.rq.vq_layers
     ]
     _init_sha = hashlib.sha256(b"".join(_init_parts)).hexdigest()
+    # Encoder weights are hashed separately: the codebook hash alone proves the
+    # quantizer matched, not the encoder, and a norm comparison is meaningless
+    # unless both arms provably started from the same weights.
+    _encoder_sha = hashlib.sha256(
+        b"".join(
+            v.detach().cpu().numpy().tobytes()
+            for v in raw_module.encoder.state_dict().values()
+        )
+    ).hexdigest()
     if rank == 0:
         _record(
             rank, "geometry_resolved", arm=EXPERIMENT_ARM, geometry=GEOMETRY,
-            codebook_init_sha256=_init_sha,
+            codebook_init_sha256=_init_sha, encoder_init_sha256=_encoder_sha,
             group_distance=GROUP_DISTANCE, radial_mode=RADIAL_MODE, prefix_mode=PREFIX_MODE, curvature=CURVATURE, radius_control_enabled=RADIUS_CONTROL_ENABLED, radius_control_weight=RADIUS_CONTROL_WEIGHT, radius_budget_factor=RADIUS_BUDGET_FACTOR, tangent_budget=tangent_budget, initial_median_norm=initial_median_norm, probe_epochs=list(PROBE_EPOCHS), fork_radial_weight=FORK_RADIAL_WEIGHT, fork_angular_weight=FORK_ANGULAR_WEIGHT,
             target_radius_fraction=TARGET_RADIUS_FRACTION,
             ball_normalizer=ball_normalizer,
@@ -1210,6 +1372,21 @@ def main() -> None:
             try:
                 saturation_probe(raw_module, train_embeddings.to(device),
                                  ball_normalizer, initial_median_norm, epoch, rank)
+            finally:
+                for layer in raw_module.rq.vq_layers:
+                    layer._skip_ddp_reduce = False
+
+        # Per-term radial force plus a real intermediate snapshot. Also
+        # rank-0-only and collective-free, for the same reason as above.
+        if epoch in DIAG_SNAPSHOT_EPOCHS:
+            for layer in raw_module.rq.vq_layers:
+                layer._skip_ddp_reduce = True
+            try:
+                radial_force_probe(
+                    raw_module, batch, row_index, pair_batch, pairs,
+                    radius_target, fork_siblings, normalizer, all_embeddings,
+                    resolved_temperature, epoch, rank, DIAG_SNAPSHOT_DIR,
+                )
             finally:
                 for layer in raw_module.rq.vq_layers:
                     layer._skip_ddp_reduce = False
