@@ -14,6 +14,7 @@ sys.path.insert(0, str(SOURCE_DIR))
 import curvature_config as experiment
 import train_rqvae as training
 from model import RQVAE
+from model.model import behaviour_ranking_loss
 
 
 def require(condition: bool, message: str) -> None:
@@ -315,10 +316,119 @@ def main() -> None:
         "global-Sinkhorn baseline of ~37",
     )
 
+    # --- Registered mechanism: the behaviour hinge ranks the QUANTIZED L1+L2
+    # prefix, not the encoder output. Verify the space that is actually used,
+    # that the prefix tensor is the quantized running sum (so the codebooks can
+    # receive gradient), that gradient reaches exactly the levels that form that
+    # prefix, and that the relocation has a measurable computational effect.
+    require(
+        training.BEHAVIOUR_RANKING_SPACE == "prefix_l12",
+        f"registered ranking space {training.BEHAVIOUR_RANKING_SPACE!r} is not "
+        "the one this MVG verifies",
+    )
+    pair_frame = pd.read_parquet(experiment.TRAIN_FILE)
+    pair_source_ids, pair_successor_ids = training._transition_pairs(pair_frame)
+    pair_count = 256
+    pair_source = all_inputs[
+        torch.from_numpy(np.asarray(pair_source_ids[:pair_count], dtype=np.int64))
+    ].to(device)
+    pair_successor = all_inputs[
+        torch.from_numpy(np.asarray(pair_successor_ids[:pair_count], dtype=np.int64))
+    ].to(device)
+    # Grad enabled on purpose: the hinge has to reach the encoder as well, and a
+    # detached encoder output would make that check vacuous.
+    encoded_pair_source = model.encoder(pair_source)
+    encoded_pair_successor = model.encoder(pair_successor)
+    _, _, _, prefix_source_levels = model.rq(
+        encoded_pair_source, return_prefixes=True
+    )
+    _, _, _, prefix_successor_levels = model.rq(
+        encoded_pair_successor, return_prefixes=True
+    )
+    require(
+        len(prefix_source_levels) == 3,
+        f"expected three prefix levels, got {len(prefix_source_levels)}",
+    )
+    prefix_source = prefix_source_levels[1]
+    prefix_successor = prefix_successor_levels[1]
+    require(
+        prefix_source.shape == encoded_pair_source.shape,
+        f"L1+L2 prefix shape {tuple(prefix_source.shape)} != encoder shape "
+        f"{tuple(encoded_pair_source.shape)}",
+    )
+    require(
+        torch.isfinite(prefix_source).all()
+        and torch.isfinite(prefix_successor).all(),
+        "L1+L2 prefix is non-finite",
+    )
+    # The prefix must be the quantized running sum, not a passthrough of the
+    # latent: a silent fallback to the encoder output fails here.
+    require(
+        float((prefix_source - encoded_pair_source).abs().max()) > 1e-6,
+        "L1+L2 prefix equals the encoder output; the hinge would be ranking the "
+        "latent, not the quantized prefix",
+    )
+    permutation = torch.randperm(prefix_source.shape[0], device=device)
+    prefix_ranking = behaviour_ranking_loss(
+        prefix_source,
+        prefix_successor,
+        prefix_source[permutation],
+        curvature=training.LAYER_CURVATURES[0],
+        margin=training.BEHAVIOUR_MARGIN,
+    )
+    encoder_ranking = behaviour_ranking_loss(
+        encoded_pair_source,
+        encoded_pair_successor,
+        encoded_pair_source[permutation],
+        curvature=training.LAYER_CURVATURES[0],
+        margin=training.BEHAVIOUR_MARGIN,
+    )
+    require(
+        torch.isfinite(prefix_ranking) and torch.isfinite(encoder_ranking),
+        "Behaviour hinge produced a non-finite value",
+    )
+    require(
+        abs(float(prefix_ranking) - float(encoder_ranking)) > 1e-6,
+        "The prefix-space and encoder-space hinges are numerically identical; "
+        "the relocation has no computational effect",
+    )
+    print(
+        f"  behaviour hinge: prefix_l12={float(prefix_ranking):.6f} "
+        f"encoder={float(encoder_ranking):.6f}"
+    )
+    # Gradient must reach the codebooks that form the L1+L2 prefix (levels 1 and
+    # 2) and must NOT reach level 3, whose codes lie outside that prefix.
+    prefix_gradients = torch.autograd.grad(
+        prefix_ranking,
+        [layers[i].get_code_embs() for i in range(3)],
+        retain_graph=True,
+        allow_unused=True,
+    )
+    for index in (0, 1):
+        gradient = prefix_gradients[index]
+        require(
+            gradient is not None
+            and torch.isfinite(gradient).all()
+            and torch.count_nonzero(gradient).item() > 0,
+            f"L{index + 1} codebook received no finite nonzero gradient from the "
+            "L1+L2 prefix hinge",
+        )
+    third_gradient = prefix_gradients[2]
+    require(
+        third_gradient is None or torch.count_nonzero(third_gradient).item() == 0,
+        "L3 codebook received gradient from an L1+L2 prefix hinge",
+    )
+    require_nonzero_finite_gradient(
+        prefix_ranking,
+        list(model.encoder.parameters()),
+        "L1+L2 prefix hinge into the encoder",
+    )
+
     print(
         "MVG PASS: fixed-curvature Poincare geometry, quantization and "
         "reconstruction gradients, optimizer update, checkpoint reload, "
-        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget"
+        "per-bucket Sinkhorn assignment, TIGER-aligned 72k budget, "
+        "L1+L2 prefix behaviour hinge"
     )
 
 
