@@ -1,0 +1,77 @@
+{
+  "seed": 42,
+  "frozen": "Exp1a resample encoder and L1 codebook, loaded and never updated",
+  "checkpoint": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/rqvae_best.pth",
+  "ball_normalizer": 2.18221185839571,
+  "geometry": {
+    "pre_map_norm_mean": 0.39646419882774353,
+    "post_map_radius_mean": 0.6907836198806763,
+    "post_map_radius_std": 0.0778898149728775,
+    "post_map_radius_p50": 0.699999988079071,
+    "post_map_radius_p99": 0.856473982334137,
+    "frac_radii_above_0.95": 0.0,
+    "prototype_radius_mean": 0.6663122177124023,
+    "frac_items_inside_ball": 1.0,
+    "distinct_item_directions": 24549
+  },
+  "ordering": {
+    "assignment_change_rate": 0.09289462119340897,
+    "mean_rank_spearman": 0.9602115173985187,
+    "rank_spearman_p05": 0.9222983598709107,
+    "rank_spearman_p50": 0.9614264965057373,
+    "topk_identical_rate": {
+      "1": 0.9071053862571716,
+      "5": 0.5419123768806458,
+      "20": 0.22175131738185883
+    },
+    "spearman_distance_pointwise": 0.9572608961622346
+  },
+  "grouping": {
+    "train_pairs": {
+      "n_pairs": 323633,
+      "negative_violations": 0,
+      "euclidean": {
+        "p_share_pos": 0.10649099442887468,
+        "p_share_neg": 0.005216402530026296,
+        "gap": 0.10127459189884838,
+        "er": 20.414642814832362
+      },
+      "geodesic": {
+        "p_share_pos": 0.1045010861067938,
+        "p_share_neg": 0.005206205794835508,
+        "gap": 0.0992948803119583,
+        "er": 20.072407858033117
+      }
+    },
+    "valid_relations": {
+      "n_pairs": 56630,
+      "negative_violations": 0,
+      "euclidean": {
+        "p_share_pos": 0.09253046088645595,
+        "p_share_neg": 0.005062687621402084,
+        "gap": 0.08746777326505387,
+        "er": 18.2769445413324
+      },
+      "geodesic": {
+        "p_share_pos": 0.09127670845841426,
+        "p_share_neg": 0.005092707045735476,
+        "gap": 0.08618400141267879,
+        "er": 17.92302357836338
+      }
+    }
+  },
+  "wrongly_shared_negatives": {
+    "train_pairs": {
+      "wrongly_shared_negatives": 16882,
+      "radius_gap_positive_mean": -0.0019904577638953924,
+      "radius_gap_abs_mean": 0.039491843432188034,
+      "radial_overlap": 0.9446370601654053
+    },
+    "valid_relations": {
+      "wrongly_shared_negatives": 2867,
+      "radius_gap_positive_mean": -0.001347143086604774,
+      "radius_gap_abs_mean": 0.04100554436445236,
+      "radial_overlap": 0.9416126608848572
+    }
+  }
+}

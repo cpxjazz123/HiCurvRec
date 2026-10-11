@@ -1,0 +1,95 @@
+{
+  "seed": 42,
+  "normalizer": 2.18221185839571,
+  "frozen": "Exp1a resample encoder and item representations never updated",
+  "layout_rule": "target radius from sqrt(cluster size), direction of each prototype fixed",
+  "as_trained": {
+    "prototype_radius_mean": 0.6663122177124023,
+    "prototype_radius_std": 0.08073221892118454,
+    "prototype_radius_cv": 0.12116274982690811,
+    "radial_share_of_distance_spread": 0.0027515897700226455,
+    "l1_cluster_size": {
+      "min": 0,
+      "max": 253,
+      "median": 94.0
+    }
+  },
+  "variants": {
+    "as_trained": {
+      "tag": "as trained (frozen codebook)",
+      "train_pairs": {
+        "p_share_pos": 0.1045010861067938,
+        "p_share_neg": 0.005206205794835508,
+        "gap": 0.0992948803119583,
+        "er": 20.072407858033117
+      },
+      "valid_relations": {
+        "p_share_pos": 0.09127670845841426,
+        "p_share_neg": 0.005092707045735476,
+        "gap": 0.08618400141267879,
+        "er": 17.92302357836338
+      },
+      "change_vs_euclidean": 0.09289461910765852
+    },
+    "relayout_r030_092": {
+      "tag": "prototypes re-laid to radius [0.3,0.92]",
+      "train_pairs": {
+        "p_share_pos": 0.10840674467684074,
+        "p_share_neg": 0.007147293384790797,
+        "gap": 0.10125945129204994,
+        "er": 15.167524101854653
+      },
+      "valid_relations": {
+        "p_share_pos": 0.09230090058273001,
+        "p_share_neg": 0.006976867384778386,
+        "gap": 0.08532403319795162,
+        "er": 13.22956213616806
+      },
+      "change_vs_euclidean": 0.44454386464391754,
+      "prototype_radius_mean": 0.6100000143051147,
+      "prototype_radius_std": 0.18003109097480774,
+      "prototype_radius_cv": 0.29513293504714966,
+      "radial_share_of_distance_spread": 0.013535150645802664
+    },
+    "relayout_r015_095": {
+      "tag": "prototypes re-laid to radius [0.15,0.95]",
+      "train_pairs": {
+        "p_share_pos": 0.11325791869185158,
+        "p_share_neg": 0.008404581733012393,
+        "gap": 0.10485333695883918,
+        "er": 13.475735294117648
+      },
+      "valid_relations": {
+        "p_share_pos": 0.0953911354405792,
+        "p_share_neg": 0.008122903054917889,
+        "gap": 0.08726823238566131,
+        "er": 11.743478260869564
+      },
+      "change_vs_euclidean": 0.5033147598324318,
+      "prototype_radius_mean": 0.550000011920929,
+      "prototype_radius_std": 0.23229816555976868,
+      "prototype_radius_cv": 0.42236030101776123,
+      "radial_share_of_distance_spread": 0.022334105791276006
+    },
+    "relayout_r045_090": {
+      "tag": "prototypes re-laid to radius [0.45,0.9]",
+      "train_pairs": {
+        "p_share_pos": 0.10707498926252886,
+        "p_share_neg": 0.007231648194096399,
+        "gap": 0.09984334106843246,
+        "er": 14.80644334301829
+      },
+      "valid_relations": {
+        "p_share_pos": 0.09201836482429808,
+        "p_share_neg": 0.007126964506445347,
+        "gap": 0.08489140031785274,
+        "er": 12.91129831516353
+      },
+      "change_vs_euclidean": 0.44198153495749787,
+      "prototype_radius_mean": 0.675000011920929,
+      "prototype_radius_std": 0.13066771626472473,
+      "prototype_radius_cv": 0.19358180463314056,
+      "radial_share_of_distance_spread": 0.007176212055853157
+    }
+  }
+}

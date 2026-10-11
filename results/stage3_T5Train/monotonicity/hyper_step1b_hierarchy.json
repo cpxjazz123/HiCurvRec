@@ -1,0 +1,80 @@
+{
+  "seed": 42,
+  "normalizer_used": 2.18221185839571,
+  "n_items": 24587,
+  "n_codewords": 256,
+  "curvature_1.0": {
+    "prototype_radius": {
+      "radius_mean": 0.6663122177124023,
+      "radius_std": 0.08073221892118454,
+      "radius_cv": 0.12116274982690811,
+      "radius_min": 0.40586650371551514,
+      "radius_max": 0.8556255102157593
+    },
+    "item_radius": {
+      "radius_mean": 0.6907836198806763,
+      "radius_std": 0.0778898149728775
+    },
+    "radial_var_share_of_distance_spread": 0.022821082954597637,
+    "assignment_change_rate": 0.09289462119340897,
+    "flipped_rank_agreement_mean": 0.9589008296592326
+  },
+  "curvature_0.25": {
+    "prototype_radius": {
+      "radius_mean": 0.7721247673034668,
+      "radius_std": 0.12583890557289124,
+      "radius_cv": 0.1629774272441864,
+      "radius_min": 0.42411792278289795,
+      "radius_max": 1.1276068687438965
+    },
+    "item_radius": {
+      "radius_mean": 0.4055119454860687,
+      "radius_std": 0.06294522434473038
+    },
+    "radial_var_share_of_distance_spread": 0.0536944818672666,
+    "assignment_change_rate": 0.0202952791005373,
+    "flipped_rank_agreement_mean": 0.9950788153542413
+  },
+  "curvature_4.0": {
+    "prototype_radius": {
+      "radius_mean": 0.45772701501846313,
+      "radius_std": 0.02387610636651516,
+      "radius_cv": 0.052162326872348785,
+      "radius_min": 0.3484647274017334,
+      "radius_max": 0.4939829707145691
+    },
+    "item_radius": {
+      "radius_mean": 0.9285890460014343,
+      "radius_std": 0.04221830517053604
+    },
+    "radial_var_share_of_distance_spread": 0.002038493421289582,
+    "assignment_change_rate": 0.3132956624031067,
+    "flipped_rank_agreement_mean": 0.8028946913274607
+  },
+  "normalizer_sweep": {
+    "normalizer_x0.5": {
+      "item_radius_p50": 0.4083673655986786,
+      "frac_items_outside_ball": 0.0,
+      "assignment_change_rate": 0.0202952791005373,
+      "prototype_radius_cv": 0.1629774272441864
+    },
+    "normalizer_x1.0": {
+      "item_radius_p50": 0.699999988079071,
+      "frac_items_outside_ball": 0.0,
+      "assignment_change_rate": 0.09289462119340897,
+      "prototype_radius_cv": 0.12116274982690811
+    },
+    "normalizer_x2.0": {
+      "item_radius_p50": 0.9395973086357117,
+      "frac_items_outside_ball": 0.0,
+      "assignment_change_rate": 0.3132956624031067,
+      "prototype_radius_cv": 0.052162326872348785
+    },
+    "normalizer_x4.0": {
+      "item_radius_p50": 0.998062252998352,
+      "frac_items_outside_ball": 0.0,
+      "assignment_change_rate": 0.7661365866661072,
+      "prototype_radius_cv": 0.007243838626891375
+    }
+  }
+}
