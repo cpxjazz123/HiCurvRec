@@ -1,0 +1,130 @@
+{
+  "nce_euclid_group": {
+    "normalizer": 4.692923975172597,
+    "curvature": 1.0,
+    "before": {
+      "item_r_gt_0.99": 0.046875,
+      "code_r_gt_0.99": 0.4453125,
+      "code_r_median": 0.9814447164535522
+    },
+    "gradient": {
+      "premap": {
+        "grad_norm": 0.0009328321320936084,
+        "grad_norm_ratio_vs_premap": 1.0,
+        "cosine_vs_premap_grad": 1.0,
+        "encoder_grad_norm": 0.0034464369527995586,
+        "loss_value": 0.0018433700315654278,
+        "encoder_grad_ratio_vs_reconstruction": 7.912063794318778,
+        "one_step_ball_dist_before": 1.2994250059127808,
+        "one_step_ball_dist_after": 1.2949659824371338,
+        "one_step_ball_dist_delta": -0.004459023475646973
+      },
+      "ball": {
+        "grad_norm": 0.005874613765627146,
+        "grad_norm_ratio_vs_premap": 6.2976108599973015,
+        "cosine_vs_premap_grad": 0.7494077682495117,
+        "encoder_grad_norm": 0.01312702801078558,
+        "loss_value": 0.00887481588870287,
+        "encoder_grad_ratio_vs_reconstruction": 30.13601713119327,
+        "one_step_ball_dist_before": 1.2994250059127808,
+        "one_step_ball_dist_after": 1.2879040241241455,
+        "one_step_ball_dist_delta": -0.011520981788635254
+      },
+      "ball_over_nz2": {
+        "grad_norm": 0.000266742572421208,
+        "grad_norm_ratio_vs_premap": 0.2859491683916831,
+        "cosine_vs_premap_grad": 0.7494077682495117,
+        "encoder_grad_norm": 0.013609778136014938,
+        "loss_value": 0.0004029696574434638,
+        "encoder_grad_ratio_vs_reconstruction": 31.244277586800163,
+        "one_step_ball_dist_before": 1.2994250059127808,
+        "one_step_ball_dist_after": 1.2879202365875244,
+        "one_step_ball_dist_delta": -0.011504769325256348
+      },
+      "tangent": {
+        "grad_norm": 0.6872466206550598,
+        "grad_norm_ratio_vs_premap": 736.7312906692365,
+        "cosine_vs_premap_grad": -0.033803217113018036,
+        "encoder_grad_norm": 12.415492057800293,
+        "loss_value": 1.3810436725616455,
+        "encoder_grad_ratio_vs_reconstruction": 28502.52784092845,
+        "one_step_ball_dist_before": 1.2994250059127808,
+        "one_step_ball_dist_after": 1.2929613590240479,
+        "one_step_ball_dist_delta": -0.00646364688873291
+      },
+      "_reconstruction_only": {
+        "encoder_grad_norm": 0.00043559266487136483,
+        "loss_value": 0.00015309808077290654
+      }
+    },
+    "after_tangent_step": {
+      "item_r_gt_0.99": 0.046875,
+      "code_r_gt_0.99": 0.4453125,
+      "code_r_median": 0.9814447164535522
+    }
+  },
+  "hyper_l1_s42": {
+    "normalizer": 6.820980942516287,
+    "curvature": 1.0,
+    "before": {
+      "item_r_gt_0.99": 0.005859375,
+      "code_r_gt_0.99": 0.01953125,
+      "code_r_median": 0.8898395895957947
+    },
+    "gradient": {
+      "premap": {
+        "grad_norm": 0.003672898281365633,
+        "grad_norm_ratio_vs_premap": 1.0,
+        "cosine_vs_premap_grad": 0.9999999403953552,
+        "encoder_grad_norm": 0.003937292844057083,
+        "loss_value": 0.0009888906497508287,
+        "encoder_grad_ratio_vs_reconstruction": 2.4940298959819462,
+        "one_step_ball_dist_before": 1.7189109325408936,
+        "one_step_ball_dist_after": 1.7183951139450073,
+        "one_step_ball_dist_delta": -0.0005158185958862305
+      },
+      "ball": {
+        "grad_norm": 0.11917157471179962,
+        "grad_norm_ratio_vs_premap": 32.44619523399652,
+        "cosine_vs_premap_grad": 0.996894359588623,
+        "encoder_grad_norm": 0.05884925648570061,
+        "loss_value": 0.02030312642455101,
+        "encoder_grad_ratio_vs_reconstruction": 37.27734025503917,
+        "one_step_ball_dist_before": 1.7189109325408936,
+        "one_step_ball_dist_after": 1.7183952331542969,
+        "one_step_ball_dist_delta": -0.0005156993865966797
+      },
+      "ball_over_nz2": {
+        "grad_norm": 0.0025614090263843536,
+        "grad_norm_ratio_vs_premap": 0.697380877488387,
+        "cosine_vs_premap_grad": 0.996894359588623,
+        "encoder_grad_norm": 0.06003061681985855,
+        "loss_value": 0.00043638446368277073,
+        "encoder_grad_ratio_vs_reconstruction": 38.025658479771764,
+        "one_step_ball_dist_before": 1.7189109325408936,
+        "one_step_ball_dist_after": 1.71839439868927,
+        "one_step_ball_dist_delta": -0.0005165338516235352
+      },
+      "tangent": {
+        "grad_norm": 5.32923698425293,
+        "grad_norm_ratio_vs_premap": 1450.9623125940334,
+        "cosine_vs_premap_grad": 0.9463576078414917,
+        "encoder_grad_norm": 23.722755432128906,
+        "loss_value": 1.133256196975708,
+        "encoder_grad_ratio_vs_reconstruction": 15026.888678626268,
+        "one_step_ball_dist_before": 1.7189109325408936,
+        "one_step_ball_dist_after": 1.7038099765777588,
+        "one_step_ball_dist_delta": -0.015100955963134766
+      },
+      "_reconstruction_only": {
+        "encoder_grad_norm": 0.0015786871081218123,
+        "loss_value": 0.0002693092101253569
+      }
+    },
+    "after_tangent_step": {
+      "item_r_gt_0.99": 0.005859375,
+      "code_r_gt_0.99": 0.01953125,
+      "code_r_median": 0.8898395895957947
+    }
+  }
+}
