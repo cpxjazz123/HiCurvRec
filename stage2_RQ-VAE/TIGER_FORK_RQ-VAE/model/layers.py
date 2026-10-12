@@ -54,6 +54,7 @@ class VQLayer(nn.Module):
         geodesic: bool = False,
         geodesic_normalizer: float = 1.0,
         geodesic_curvature: float = 1.0,
+        geodesic_codebook_loss: bool = False,
     ):
         super().__init__()
         self.dim = int(codebook_dim)
@@ -72,6 +73,16 @@ class VQLayer(nn.Module):
         self.geodesic = bool(geodesic)
         self.geodesic_normalizer = float(geodesic_normalizer)
         self.geodesic_curvature = float(geodesic_curvature)
+        # When set together with `geodesic`, the quantisation OBJECTIVE moves into
+        # the same ball the selection already measures in: the codeword is pulled
+        # toward the mapped item and the item is committed toward the mapped
+        # codeword, both as squared distance between the two MAPPED points. The
+        # squared chordal distance is used rather than the raw arc because the arc
+        # has a hard floor at acosh(1 + 1e-7) = 4.47e-4 with exactly zero gradient
+        # below it, and that floor is precisely the region a codebook has to
+        # tighten into. Nothing else changes: the residual chain, the capacity,
+        # the straight-through value the decoder receives, L2 and L3.
+        self.geodesic_codebook_loss = bool(geodesic_codebook_loss)
 
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
@@ -157,7 +168,21 @@ class VQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
 
         x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
-        quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
+        if self.geodesic and self.geodesic_codebook_loss:
+            # Geometry-consistent objective: the codebook is moved in the same ball
+            # the selection measures, not in the pre-map Euclidean space. `x_q` and
+            # the straight-through value the decoder receives are unchanged, so the
+            # single changed variable is the space the codebook is trained in.
+            from hyperbolic import encode_ball
+
+            curv = self.geodesic_curvature
+            nz = self.geodesic_normalizer
+            z_b = encode_ball(latent, curv, nz)
+            e_sel = self.get_code_embs()[embed_ind]
+            e_b = encode_ball(e_sel, curv, nz)
+            quant_loss = F.mse_loss(e_b, z_b.detach()) + self.beta * F.mse_loss(z_b, e_b.detach())
+        else:
+            quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
         x_q = x + (x_q - x).detach()
         return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
 
@@ -297,6 +322,8 @@ class RQLayer(nn.Module):
                     geodesic=True,
                     geodesic_normalizer=float(geodesic_cfg["normalizer"]),
                     geodesic_curvature=float(geodesic_cfg["curvature"]),
+                    geodesic_codebook_loss=(str(geodesic_cfg.get("codebook_loss", "euclid"))
+                                            == "ball_mse"),
                 )
                 if (geodesic_cfg and level == 0 and self.vq_type == "vq")
                 else {}

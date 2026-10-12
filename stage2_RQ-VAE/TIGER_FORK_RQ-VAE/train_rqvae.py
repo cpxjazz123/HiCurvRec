@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyper_l1_initfix_s42"
+EXPERIMENT_ARM = "hyper_l1_gcloss_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -235,6 +235,35 @@ _ARMS = {
                              "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                              "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
                              "init_normalizer_first": True},
+    # Step 4 of the collapse root-cause programme. ONE variable against
+    # hyper_l1_s42: the quantisation OBJECTIVE for the L1 layer moves into the same
+    # ball the selection already measures. Today the L1 codeword is chosen by the
+    # Poincare geodesic (verified: 30.5% of items get a different codeword than
+    # under the Euclidean rule, per-item ranking Spearman 0.9436) and then moved by
+    # a Euclidean squared MSE in the PRE-MAP space, so the codebook is optimised in
+    # a geometry the selection never uses. Here the codeword is pulled toward the
+    # mapped item and the item is committed toward the mapped codeword, both as
+    # squared distance between the two mapped points. The residual chain, the
+    # capacity, the straight-through value the decoder receives, L2/L3, the budget
+    # and the seed are unchanged.
+    "hyper_l1_gcloss_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                            "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                            "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                            "l1_geodesic_codebook_loss": "ball_mse"},
+    # Step 4 of the collapse root-cause programme. ONE variable against
+    # hyper_l1_s42: the quantisation OBJECTIVE for the L1 layer moves into the same
+    # ball the selection already measures. Today the L1 codeword is chosen by the
+    # Poincare geodesic (verified: 30.5% of items get a different codeword than
+    # under the Euclidean rule) and then moved by a Euclidean squared MSE in the
+    # PRE-MAP space, so the codebook is optimised in a geometry the selection never
+    # uses. Here the codeword is pulled toward the mapped item and the item is
+    # committed toward the mapped codeword, both as squared distance between the
+    # two mapped points. The residual chain, the capacity, the straight-through
+    # value the decoder receives, L2/L3, the budget and the seed are unchanged.
+    "hyper_l1_gcloss_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                            "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                            "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                            "l1_geodesic_codebook_loss": "ball_mse"},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -292,6 +321,9 @@ L1_GEODESIC_CURVATURE = _ARM.get("l1_geodesic_curvature", 1.0)
 # normalizer from the INITIAL encoder, before any codebook exists. One variable,
 # no new loss, no new parameter.
 INIT_NORMALIZER_FIRST = _ARM.get("init_normalizer_first", False)
+# Step 4: "euclid" keeps the pre-map squared MSE the codebook has always been
+# trained by; "ball_mse" moves the L1 objective into the ball the selection uses.
+L1_GEODESIC_CODEBOOK_LOSS = _ARM.get("l1_geodesic_codebook_loss", "euclid")
 L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
@@ -1579,7 +1611,8 @@ def main() -> None:
             flush=True,
         )
     config = _tokenizer_config(
-        {"normalizer": 1.0, "curvature": L1_GEODESIC_CURVATURE}
+        {"normalizer": 1.0, "curvature": L1_GEODESIC_CURVATURE,
+         "codebook_loss": L1_GEODESIC_CODEBOOK_LOSS}
         if L1_GEODESIC_ENABLED
         else None
     )
