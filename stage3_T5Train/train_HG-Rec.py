@@ -24,6 +24,7 @@ import os
 import random
 import time
 import re
+import tempfile
 import threading
 from pathlib import Path
 
@@ -161,6 +162,29 @@ SAVE_PATH     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/" + RQ
 SEED          = 42
 
 PER_USER_DUMP = False
+
+class RunDirectoryNotPublishedError(RuntimeError):
+    """The run-directory publication file exists but has no complete value."""
+
+
+def _publish_run_dir(sync_dir, run_dir):
+    destination = os.path.join(sync_dir, "run_dir.txt")
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=sync_dir, prefix=".run_dir.", delete=False
+    ) as temp_file:
+        temp_file.write(run_dir + "\n")
+        temp_path = temp_file.name
+    os.replace(temp_path, destination)
+
+
+def _read_run_dir(path):
+    with open(path, encoding="utf-8") as run_dir_file:
+        run_dir = run_dir_file.read().strip()
+    if not run_dir:
+        raise RunDirectoryNotPublishedError(
+            f"run-directory publication at {path!r} is empty"
+        )
+    return run_dir
 
 def global_row_index(rank, local_row_index, world_size):
     return rank + local_row_index * world_size
@@ -713,9 +737,7 @@ def main():
         # R7-fix notes: collectives deadlock on this multi-NUMA topology).
         _run_dir_sync = os.path.join(config["log_path"], "_ddp_sync")
         os.makedirs(_run_dir_sync, exist_ok=True)
-        with open(os.path.join(_run_dir_sync, "run_dir.txt"), "w",
-                  encoding="utf-8") as _fh:
-            _fh.write(cur_time + "\n")
+        _publish_run_dir(_run_dir_sync, cur_time)
         logging.basicConfig(
             filename=os.path.join(log_path, "HG_Rec.log"),
             level=logging.INFO,
@@ -739,12 +761,17 @@ def main():
         # collective. Wait for it, bounded, in case this rank arrives first.
         _run_dir_file = os.path.join(config["log_path"], "_ddp_sync", "run_dir.txt")
         _deadline_run = time.time() + 300
-        while not os.path.exists(_run_dir_file):
+        while True:
             if time.time() > _deadline_run:
                 raise RuntimeError("rank 0 never published the run directory name")
+            if os.path.exists(_run_dir_file):
+                try:
+                    cur_time = _read_run_dir(_run_dir_file)
+                except RunDirectoryNotPublishedError:
+                    pass
+                else:
+                    break
             time.sleep(0.5)
-        with open(_run_dir_file, encoding="utf-8") as _fh:
-            cur_time = _fh.read().strip()
 
     train_collator = make_sample_collator(train_dataset)
     eval_collator = (
