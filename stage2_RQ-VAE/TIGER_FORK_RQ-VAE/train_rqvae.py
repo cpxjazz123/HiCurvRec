@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyper_l1_br_euclid_s42"
+EXPERIMENT_ARM = "hyper_l1_initfix_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -220,6 +220,21 @@ _ARMS = {
                                "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                                "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
                                "l1_boundary_repulsion": True, "l1_br_geometry": "euclid"},
+    # Step 3 of the collapse root-cause programme. ONE variable changes against
+    # hyper_l1_s42: the run-constant ball normalizer is resolved from the INITIAL
+    # encoder BEFORE the codebooks exist, so the KMeans centres and the level-1
+    # assignment that immediately follows them are fitted under the same geometry
+    # training will use. Everything else -- capacity, budget, split, seed, losses,
+    # the L1 geodesic selection -- is identical.
+    #
+    # Measured cause: at the construction default of 1.0 the map is linear, the
+    # geodesic assignment agrees with the Euclidean one on 99.37% of items, and
+    # 41.80% of items later take a different L1 codeword than the one the centres
+    # were fitted under.
+    "hyper_l1_initfix_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                             "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                             "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                             "init_normalizer_first": True},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -273,6 +288,10 @@ RADIUS_CONTROL_ENABLED = _ARM.get("radius_control", False)
 # split are untouched; only the L1 layer receives this extra gradient.
 L1_GEODESIC_ENABLED = _ARM.get("l1_geodesic", False)
 L1_GEODESIC_CURVATURE = _ARM.get("l1_geodesic_curvature", 1.0)
+# Step 3 of the collapse root-cause programme: resolve the run-constant ball
+# normalizer from the INITIAL encoder, before any codebook exists. One variable,
+# no new loss, no new parameter.
+INIT_NORMALIZER_FIRST = _ARM.get("init_normalizer_first", False)
 L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
@@ -1635,6 +1654,21 @@ def main() -> None:
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
+    if INIT_NORMALIZER_FIRST and L1_GEODESIC_ENABLED:
+        # The run-constant ball normalizer is resolved from the INITIAL encoder,
+        # before any codebook exists, so init_codebook's KMeans centres and the
+        # level-1 assignment it computes right after them are fitted under the same
+        # geometry training will use. At the construction default of 1.0 the map is
+        # linear, so the geodesic assignment at init is essentially the Euclidean
+        # one, while training runs at the resolved normalizer.
+        _init_nz = resolve_normalizer(raw_module, train_embeddings.to(device))
+        raw_module.rq.vq_layers[0].geodesic_normalizer = float(_init_nz)
+        if rank == 0:
+            print(
+                f"[RecBole RQ-VAE] L1 normalizer resolved BEFORE codebook init: "
+                f"{float(_init_nz):.6f}",
+                flush=True,
+            )
     with torch.no_grad():
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
@@ -1954,11 +1988,21 @@ def main() -> None:
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
+                # Per-level occupancy, so a collapse that shows up first at L1 is
+                # visible at the epoch it happens and not only at the end.
+                level_codes = [int(len(np.unique(raw_tokens[:, k]))) for k in range(raw_tokens.shape[1])]
+                level_shares = []
+                for k in range(raw_tokens.shape[1]):
+                    cnt = np.bincount(raw_tokens[:, k], minlength=int(CODEBOOK_SIZE[k]))
+                    lvl = cnt[cnt > 0]
+                    level_shares.append(float(lvl.max() / len(raw_tokens)))
                 final_collision = collision_v
                 final_raw_unique = raw_unique
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
                     f"lr={cur_lr:.3e} raw_unique={raw_unique}/{len(raw_tokens)} "
+                    f"L1/L2/L3_codes={level_codes[0]}/{level_codes[1]}/{level_codes[2]} "
+                    f"L1_top_share={level_shares[0]:.4f} "
                     f"collision={collision_v:.6f} time={epoch_time_s}s",
                     flush=True,
                 )
@@ -1967,6 +2011,9 @@ def main() -> None:
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
+                    l1_codes=level_codes[0], l2_codes=level_codes[1], l3_codes=level_codes[2],
+                    l1_top_share=level_shares[0], l2_top_share=level_shares[1],
+                    l3_top_share=level_shares[2],
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
