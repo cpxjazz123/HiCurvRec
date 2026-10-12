@@ -1,0 +1,88 @@
+{
+  "nce_euclid_group": {
+    "normalizer_recorded": 11.921757725170167,
+    "normalizer_reestimated": 4.692923975172597,
+    "codeword_norm_median": 0.4988022446632385,
+    "codeword_norm_std": 0.34671786427497864,
+    "codeword_ball_radius_median": 0.9999862909317017,
+    "item_norm_median": 0.18481026589870453,
+    "item_ball_radius_median": 0.9758989810943604,
+    "assignments": {
+      "euclid": {
+        "geometry": "euclid",
+        "distinct_codewords": 236,
+        "share_on_single_furthest_out_codeword": 0.0002440313987066336,
+        "chosen_radius_mean": 0.197981595993042,
+        "chosen_radius_std": 0.14741741120815277,
+        "spearman_item_radius_vs_chosen_radius": 0.8670251352642958,
+        "spearman_item_radius_vs_chosen_ball_radius": 0.8670214773278129,
+        "top10_codewords_share": 0.22145849432627
+      },
+      "geodesic": {
+        "geometry": "geodesic",
+        "distinct_codewords": 51,
+        "share_on_single_furthest_out_codeword": 0.0,
+        "chosen_radius_mean": 0.08960187435150146,
+        "chosen_radius_std": 0.027157709002494812,
+        "spearman_item_radius_vs_chosen_radius": 0.11846040999933168,
+        "spearman_item_radius_vs_chosen_ball_radius": 0.11846040999933168,
+        "top10_codewords_share": 0.7967218448773742
+      },
+      "angular_only": {
+        "geometry": "angular_only",
+        "distinct_codewords": 247,
+        "share_on_single_furthest_out_codeword": 0.0001220156993533168,
+        "chosen_radius_mean": 0.3497333824634552,
+        "chosen_radius_std": 0.26517120003700256,
+        "spearman_item_radius_vs_chosen_radius": 0.27642759081634505,
+        "spearman_item_radius_vs_chosen_ball_radius": 0.27667130330411366,
+        "top10_codewords_share": 0.11912799446862163
+      }
+    },
+    "geodesic_vs_euclid_change_rate": 0.766299307346344,
+    "geodesic_vs_angular_change_rate": 0.8488632440567017
+  },
+  "hyper_l1_s42": {
+    "normalizer_recorded": 11.921757725170167,
+    "normalizer_reestimated": 6.820980942516287,
+    "codeword_norm_median": 0.20863094925880432,
+    "codeword_norm_std": 0.06761462241411209,
+    "codeword_ball_radius_median": 0.9862706661224365,
+    "item_norm_median": 0.12715187668800354,
+    "item_ball_radius_median": 0.9079760313034058,
+    "assignments": {
+      "euclid": {
+        "geometry": "euclid",
+        "distinct_codewords": 98,
+        "share_on_single_furthest_out_codeword": 0.0,
+        "chosen_radius_mean": 0.03554993495345116,
+        "chosen_radius_std": 0.04974909871816635,
+        "spearman_item_radius_vs_chosen_radius": 0.3292682391754048,
+        "spearman_item_radius_vs_chosen_ball_radius": 0.3292682391754048,
+        "top10_codewords_share": 0.9787285964127385
+      },
+      "geodesic": {
+        "geometry": "geodesic",
+        "distinct_codewords": 1,
+        "share_on_single_furthest_out_codeword": 0.0,
+        "chosen_radius_mean": 0.019295740872621536,
+        "chosen_radius_std": 0.0,
+        "spearman_item_radius_vs_chosen_radius": -0.032940584036790434,
+        "spearman_item_radius_vs_chosen_ball_radius": -0.032940584036790434,
+        "top10_codewords_share": 1.0
+      },
+      "angular_only": {
+        "geometry": "angular_only",
+        "distinct_codewords": 201,
+        "share_on_single_furthest_out_codeword": 0.0013015007931020458,
+        "chosen_radius_mean": 0.14811871945858002,
+        "chosen_radius_std": 0.10334960371255875,
+        "spearman_item_radius_vs_chosen_radius": 0.07315414233853039,
+        "spearman_item_radius_vs_chosen_ball_radius": 0.07315314205294232,
+        "top10_codewords_share": 0.6318786350510432
+      }
+    },
+    "geodesic_vs_euclid_change_rate": 0.09948346763849258,
+    "geodesic_vs_angular_change_rate": 0.6427786946296692
+  }
+}
