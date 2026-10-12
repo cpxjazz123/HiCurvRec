@@ -207,6 +207,60 @@ def test_t4_real_forward_reconstruction() -> None:
         f"T4 the real forward also returns a quantisation loss ({float(quant_loss):.6e})")
 
 
+def test_t5_angular_selection() -> None:
+    """The radius-free angular selection must be radius-free, must differ from the
+    Euclidean rule, and must equal the angular-cosine rule."""
+    torch.manual_seed(17)
+    from model.layers import VQLayer
+
+    nz = 3.0
+    geo = VQLayer(32, 8, 0.25, geodesic=True, geodesic_normalizer=nz,
+                  geodesic_curvature=CURV, geodesic_angular_only=True)
+    euc = VQLayer(32, 8, 0.25, geodesic=True, geodesic_normalizer=nz,
+                  geodesic_curvature=CURV, geodesic_angular_only=False)
+    with torch.no_grad():
+        geo.embed.weight.copy_(torch.randn_like(geo.embed.weight) * 0.4)
+        euc.embed.weight.copy_(geo.embed.weight.clone())
+    z = torch.randn(256, 8) * 0.3
+
+    a_ang = geo._distances(z).argmin(-1)
+    a_geo = euc._distances(z).argmin(-1)
+    d_euc = z.pow(2).sum(1, keepdim=True) - 2 * z @ geo.get_code_embs().t() \
+        + geo.get_code_embs().pow(2).sum(1)
+    a_euc = d_euc.argmin(-1)
+    req(bool(torch.isfinite(geo._distances(z)).all()) and float(geo._distances(z).min()) > 0.0,
+        "T5 the angular selection distance is finite and positive")
+
+    # radius-free: rescaling the codewords AND the latents by any positive factor
+    # must leave the selection untouched
+    with torch.no_grad():
+        geo.embed.weight.mul_(7.0)
+        a_scaled = geo._distances(z * 0.2).argmin(-1)
+    req(bool((a_ang == a_scaled).all()),
+        f"T5 the selection is radius-free ({(a_ang == a_scaled).float().mean():.4f} unchanged "
+        f"under a 7x codeword and 0.2x latent rescale)")
+
+    # equals the angular-cosine rule: the chart distance between unit vectors is a
+    # monotone function of their cosine, so the argmin must agree exactly
+    z_b = H.encode_ball(z, CURV, nz)
+    e_b = H.encode_ball(geo.get_code_embs().detach(), CURV, nz)
+    zu = z_b / z_b.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    eu = e_b / e_b.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    a_cos = (zu @ eu.t()).argmax(-1)
+    req(bool((a_ang == a_cos).all()),
+        f"T5 the angular selection IS the angular-cosine rule "
+        f"({int((a_ang == a_cos).sum())}/{len(a_ang)} agree)")
+
+    # and it is not the Euclidean rule
+    dis = float((a_ang != a_euc).float().mean())
+    req(dis > 0.0,
+        f"T5 and it disagrees with the Euclidean rule on {dis:.4f} of items, so it is "
+        f"a genuinely different selection")
+    req(float((a_ang != a_geo).float().mean()) > 0.0,
+        f"T5 and it disagrees with the full geodesic rule on "
+        f"{float((a_ang != a_geo).float().mean()):.4f} of items")
+
+
 def main() -> int:
     print("=== T2: Riemannian log map ===", flush=True)
     test_t2_riemannian_log()
@@ -216,6 +270,8 @@ def main() -> int:
     test_t1_zero_grad_discipline()
     print("\n=== T4: reconstruction gradient from the real forward ===", flush=True)
     test_t4_real_forward_reconstruction()
+    print("\n=== T5: radius-free angular selection ===", flush=True)
+    test_t5_angular_selection()
     print("\n" + "=" * 74)
     print("ALL REGRESSION TESTS PASS" if _ok[0] else "REGRESSION TESTS FAILED")
     print("=" * 74)

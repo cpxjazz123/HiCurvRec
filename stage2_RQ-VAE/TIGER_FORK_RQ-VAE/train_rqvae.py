@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "diag_hyper_l1_s42"
+EXPERIMENT_ARM = "hyper_l1_angsel_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -271,6 +271,23 @@ _ARMS = {
     "diag_hyper_l1_s42": {"group_distance": "euclid", "radial_mode": "mse",
                           "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                           "l1_geodesic": True, "l1_geodesic_curvature": 1.0},
+    # Step 4/5 of the root-cause programme. ONE variable against hyper_l1_s42: the
+    # L1 SELECTION distance becomes the radius-free angular distance in the ball.
+    # Everything else -- the codebook objective, L2/L3, capacity, budget, seed,
+    # normalizer, init order -- is identical.
+    #
+    # Offline (selection_rule_comparison.json, frozen checkpoints, recorded
+    # normalizer): on the healthy control the full geodesic rule keeps 51/256
+    # codewords with 79.67% of items on ten; the angular rule keeps 247/256 with
+    # 11.91% on ten. On the collapsed arm the geodesic rule keeps 1/256, the angular
+    # rule 201/256. Rejected alternatives: dividing by the codeword's own distance
+    # from the origin keeps 245 on the control but lands 95.92% of items on the
+    # single OUTERMOST codeword on the collapsed arm, i.e. it moves the degeneracy
+    # rather than removing it.
+    "hyper_l1_angsel_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                            "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                            "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
+                            "l1_geodesic_selection": "angular"},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -331,6 +348,9 @@ INIT_NORMALIZER_FIRST = _ARM.get("init_normalizer_first", False)
 # Step 4: "euclid" keeps the pre-map squared MSE the codebook has always been
 # trained by; "ball_mse" moves the L1 objective into the ball the selection uses.
 L1_GEODESIC_CODEBOOK_LOSS = _ARM.get("l1_geodesic_codebook_loss", "euclid")
+# Step 4: "geodesic" is the full ball distance (the current rule); "angular" is the
+# radius-free angular part of the ball.
+L1_GEODESIC_SELECTION = _ARM.get("l1_geodesic_selection", "geodesic")
 L1_SOFT_ASSIGN_ENABLED = _ARM.get("l1_soft_assign", False)
 L1_SOFT_WEIGHT = _ARM.get("l1_soft_weight", 0.05)
 L1_SOFT_EPS = 1e-6
@@ -1619,7 +1639,8 @@ def main() -> None:
         )
     config = _tokenizer_config(
         {"normalizer": 1.0, "curvature": L1_GEODESIC_CURVATURE,
-         "codebook_loss": L1_GEODESIC_CODEBOOK_LOSS}
+         "codebook_loss": L1_GEODESIC_CODEBOOK_LOSS,
+         "selection": L1_GEODESIC_SELECTION}
         if L1_GEODESIC_ENABLED
         else None
     )

@@ -55,6 +55,7 @@ class VQLayer(nn.Module):
         geodesic_normalizer: float = 1.0,
         geodesic_curvature: float = 1.0,
         geodesic_codebook_loss: bool = False,
+        geodesic_angular_only: bool = False,
     ):
         super().__init__()
         self.dim = int(codebook_dim)
@@ -83,6 +84,17 @@ class VQLayer(nn.Module):
         # tighten into. Nothing else changes: the residual chain, the capacity,
         # the straight-through value the decoder receives, L2 and L3.
         self.geodesic_codebook_loss = bool(geodesic_codebook_loss)
+        # Radius-free (angular) selection. The full geodesic distance between two
+        # points grows with BOTH radii, so with items pinned near the boundary the
+        # nearest codeword is the one with the smallest norm whatever its angle and
+        # the rule stops discriminating by angle at all -- measured on a healthy
+        # codebook it keeps 51 of 256 codewords and puts 79.67% of items on ten of
+        # them. This branch projects both sides onto a common radius first, so the
+        # distance is the angular part of the ball alone and the radial term cannot
+        # dominate. It is still the ball's geometry, not the Euclidean rule: on the
+        # same codebook the Euclidean rule keeps 236 codewords but disagrees with
+        # this one on 51% of items.
+        self.geodesic_angular_only = bool(geodesic_angular_only)
 
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
@@ -128,6 +140,15 @@ class VQLayer(nn.Module):
             from hyperbolic import encode_ball, pair_poincare_distance
 
             nz = self.geodesic_normalizer
+            if self.geodesic_angular_only:
+                # Radius-free: normalise both sides to the same radius, then take the
+                # chart distance. Monotone in the angle between the two directions,
+                # so it is the ball's angular channel and nothing else.
+                mx = encode_ball(latent, self.geodesic_curvature, nz)
+                mc = encode_ball(code_embs, self.geodesic_curvature, nz)
+                mx = mx / mx.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+                mc = mc / mc.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+                return (mx[:, None, :] - mc[None, :, :]).pow(2).sum(-1).clamp_min(1e-6)
             mapped_x = encode_ball(latent, self.geodesic_curvature, nz)
             mapped_c = encode_ball(code_embs, self.geodesic_curvature, nz)
             # All-pairs (N, K) matrix. poincare_distance alone only broadcasts
@@ -324,6 +345,8 @@ class RQLayer(nn.Module):
                     geodesic_curvature=float(geodesic_cfg["curvature"]),
                     geodesic_codebook_loss=(str(geodesic_cfg.get("codebook_loss", "euclid"))
                                             == "ball_mse"),
+                    geodesic_angular_only=(str(geodesic_cfg.get("selection", "geodesic"))
+                                           == "angular"),
                 )
                 if (geodesic_cfg and level == 0 and self.vq_type == "vq")
                 else {}
