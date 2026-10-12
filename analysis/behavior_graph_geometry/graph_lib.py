@@ -180,6 +180,44 @@ def average_clustering_fast(g: nx.Graph) -> dict:
     }
 
 
+def bfs_distances_scipy(g: nx.Graph, sources: list) -> np.ndarray:
+    """Same distances as bfs_distances, computed by scipy's C shortest_path.
+
+    NetworkX's BFS is a Python loop; 2000 sources on a 24.5k-node, 315k-edge component
+    is minutes of pure Python. scipy.sparse.csgraph does the same unweighted shortest
+    paths in C. A unit test pins the two implementations against each other.
+    """
+    from scipy import sparse
+    from scipy.sparse.csgraph import shortest_path
+    nodes = list(g.nodes())
+    n = len(nodes)
+    idx = {v: i for i, v in enumerate(nodes)}
+    rows, cols = [], []
+    for a, b in g.edges():
+        rows.append(idx[a]); cols.append(idx[b])
+        rows.append(idx[b]); cols.append(idx[a])
+    A = sparse.csr_matrix((np.ones(len(rows), dtype=np.int8), (rows, cols)), shape=(n, n))
+    src = np.array([idx[s] for s in sources], dtype=np.int64)
+    # scipy returns the rows in the order the indices were passed; D[i, j] is the
+    # distance from sources[i] to the node at POSITION j of g.nodes(), which is NOT
+    # the same as the distance to sources[j] unless the node list is index-aligned.
+    # Callers that work in source space must go through source_submatrix first.
+    D = shortest_path(A, method="D", unweighted=True, directed=False, indices=src)
+    return np.asarray(D, dtype=np.int32)
+
+
+def source_submatrix(D: np.ndarray, source_positions: np.ndarray) -> np.ndarray:
+    """Restrict a distance matrix to a set of sources, in SOURCE order.
+
+    bfs_distances_scipy returns rows in the order the sources were passed but keeps
+    EVERY node as a column. A quadruple of source indices therefore cannot be looked
+    up in D directly: D[a, b] would read the distance to the node at POSITION b, not
+    to source b. This returns M[i, j] = distance from source i to source j, which is
+    what gromov_delta_matrix needs.
+    """
+    return D[:, source_positions]
+
+
 def path_metrics_sampled(g: nx.Graph, seed: int = 42, sources: int = 200) -> dict:
     """Diameter and mean shortest path from a seeded BFS sample.
 
@@ -202,8 +240,13 @@ def path_metrics_sampled(g: nx.Graph, seed: int = 42, sources: int = 200) -> dic
         # exclude the source itself: a node's distance to itself is 0 and would bias
         # the mean down by exactly the 1/n a naive average over the row carries
         vals = np.fromiter((v for k, v in d.items() if k != s), dtype=np.int64)
+        if vals.size == 0:
+            continue          # isolated source inside a disconnected subgraph
         eccs.append(int(vals.max()))
-        means.append(float(vals.mean()) if vals.size else 0.0)
+        means.append(float(vals.mean()))
+    if not eccs:
+        return {"nodes": int(n), "diameter_estimate": 0, "mean_distance_estimate": 0.0,
+                "sources_sampled": 0, "exact": False}
     eccs = np.array(eccs)
     return {
         "nodes": int(n),

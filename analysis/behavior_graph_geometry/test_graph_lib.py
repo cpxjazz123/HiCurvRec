@@ -98,6 +98,7 @@ def test_graph_stats_and_distance() -> None:
     # triangle inequality on every triple of a random graph
     g = nx.gnp_random_graph(60, 0.08, seed=3)
     nodes = list(g.nodes())
+    rng_pairs = np.random.default_rng(7).choice
     dm = L.bfs_distances(g, nodes)
     finite = dm >= 0
     ok = True
@@ -109,6 +110,25 @@ def test_graph_stats_and_distance() -> None:
                 ok = False
                 break
     req(ok, "T1 the unweighted graph distance satisfies the triangle inequality")
+
+    # the scipy shortest-path implementation must agree with the networkx one.
+    # The source list is deliberately UNSORTED and sparse: scipy returns its rows in
+    # ascending index order, so a sorted list would hide a mis-alignment whose only
+    # visible symptom is a non-zero diagonal.
+    pick = sorted(int(x) for x in rng_pairs(len(nodes), size=13, replace=False))
+    src = [nodes[i] for i in pick][::-1]
+    dn = L.bfs_distances(g, src)
+    ds = L.bfs_distances_scipy(g, src)
+    req(dn.shape == ds.shape and np.array_equal(dn, ds),
+        f"T1 scipy and networkx BFS agree on an UNSORTED source list ({dn.shape})")
+    # the source-order submatrix is what a quadruple of source indices needs, and its
+    # diagonal is zero; the raw matrix keeps every node as a column, so ITS diagonal
+    # is only zero when the source list happens to be index-aligned
+    pos = np.array([nodes.index(v) for v in src], dtype=np.int64)
+    sub = L.source_submatrix(ds, pos)
+    diag_ok = float(np.max(np.abs(np.diag(sub))))
+    req(diag_ok == 0.0,
+        f"T1 the source-order submatrix has a zero diagonal (max {diag_ok})")
 
 
 def test_gromov_delta() -> None:
@@ -162,6 +182,32 @@ def test_gromov_delta() -> None:
     summ = L.delta_summary(base)
     req(summ["n_quads"] == 200 and summ["max"] >= summ["median"] >= 0.0,
         f"T1 delta summary is ordered ({summ['median']:.3f} <= {summ['max']:.3f})")
+
+
+def test_tree_metric_on_scipy_path() -> None:
+    """A tree metric must give delta == 0 through the scipy path too."""
+    t = nx.random_labeled_tree(60, seed=5)
+    nodes = sorted(t.nodes())
+    order = [nodes[i] for i in rng_choice_unsorted(len(nodes), 25)]
+    D = L.bfs_distances_scipy(t, order)
+    pos = np.array([nodes.index(v) for v in order], dtype=np.int64)
+    req(float(np.max(np.abs(np.diag(L.source_submatrix(D, pos))))) == 0.0,
+        "T1 the source-order submatrix has a zero diagonal on a tree")
+    rng = np.random.default_rng(2)
+    q = rng.choice(len(order), size=(4000, 4))
+    # D's rows are the sources but its columns are ALL nodes, so the quadruple of
+    # source indices has to be read through the source-order submatrix. Reading
+    # gromov_delta_matrix(D, q) directly treats a source index as a node position
+    # and produces a plausible-looking, entirely wrong delta.
+    pos = np.array([nodes.index(v) for v in order], dtype=np.int64)
+    delta = L.gromov_delta_matrix(L.source_submatrix(D, pos), q)
+    req(float(delta.max()) == 0.0,
+        f"T1 a tree metric gives delta == 0 on every sampled quadruple "
+        f"(max {float(delta.max())}) with an unsorted source list")
+
+
+def rng_choice_unsorted(n, size):
+    return np.random.default_rng(11).choice(n, size=size, replace=False)
 
 
 def test_tree_likeness_and_null() -> None:
@@ -275,6 +321,7 @@ def main() -> int:
     print("\n=== undirected symmetry ===", flush=True); test_undirected_symmetry()
     print("\n=== graph stats and distance ===", flush=True); test_graph_stats_and_distance()
     print("\n=== Gromov delta ===", flush=True); test_gromov_delta()
+    print("\n=== tree metric on the scipy path ===", flush=True); test_tree_metric_on_scipy_path()
     print("\n=== tree-likeness and null model ===", flush=True); test_tree_likeness_and_null()
     print("\n=== power law ===", flush=True); test_powerlaw()
     print("\n=== distortion ===", flush=True); test_distortion()
