@@ -9,7 +9,13 @@ import numpy as np
 
 ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 STAGE3_ROOT = ROOT / "results/stage3_T5Train"
-ARMS = ("resample", "resample_proj_sym", "resample_proj_dir")
+ARMS = (
+    "resample",
+    "resample_proj_sym",
+    "resample_proj_dir",
+    "crowd_couser_w3",
+    "crowd_posattract_w3",
+)
 BOOTSTRAP_RESAMPLES = 1000
 BOOTSTRAP_SEED = 42
 METRICS = ("recall@10", "recall@5", "ndcg@10", "ndcg@5")
