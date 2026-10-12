@@ -60,6 +60,9 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
+from scripts.crowding_losses import MatchedParameters, crowding_loss
+from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
+                                      crowding_record, crowding_train_fields)
 
 
 # === 硬编码路径常量 (CLAUDE.md §1) ===
@@ -71,20 +74,33 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "resample_proj_dir"    # arm name; see _ARM_DIR
+EXPERIMENT_ARM = "crowd_parammatch_w3"    # arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
 _ARM_DIR = {
-    "resample":         "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+    "resample": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
     "resample_fn_mask": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
-    "resample_s43":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
-    "resample_s44":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+    "resample_s43": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+    "resample_s44": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
     "resample_proj_sym": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym",
     "resample_proj_dir": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir",
-    "resample_l1only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
-    "resample_l2only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l2only",
-    "resample_l3only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l3only",
+    "resample_l1only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
+    "resample_l2only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l2only",
+    "resample_l3only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l3only",
+    **{f"crowd_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_{m}_w{level}"
+       for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
+                 "random", "scale", "parammatch") for level in (1, 2, 3)},
+}
+_CROWD_LEVEL_SETTINGS = {
+    "w1": {"strength": 0.05, "tau": 0.20, "depth": 1, "k": 5, "concentration": 1.0},
+    "w2": {"strength": 0.10, "tau": 0.10, "depth": 1, "k": 20, "concentration": 4.0},
+    "w3": {"strength": 0.20, "tau": 0.05, "depth": 2, "k": 50, "concentration": 16.0},
+}
+_ARM_CROWDING = {
+    f"crowd_{m}_w{level}": (m, level - 1, dict(_CROWD_LEVEL_SETTINGS[f"w{level}"], mechanism=m))
+    for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
+              "random", "scale", "parammatch") for level in (1, 2, 3)
 }
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
@@ -96,6 +112,7 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
 _ARM_ACTIVE_LEVELS = {"resample_l1only": (0,), "resample_l2only": (1,), "resample_l3only": (2,)}
 ACTIVE_LEVELS = _ARM_ACTIVE_LEVELS.get(EXPERIMENT_ARM, (0, 1, 2))
+_CROWD_CONFIG = _ARM_CROWDING.get(EXPERIMENT_ARM)
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -481,6 +498,8 @@ def main() -> None:
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
+    if _CROWD_CONFIG and _CROWD_CONFIG[0] == "parammatch":
+        model.add_module("crowding_control", MatchedParameters(CODEBOOK_SIZE[_CROWD_CONFIG[1]] * CODEBOOK_DIM).to(device))
     if world_size > 1:
         model = DDP(
             model,
@@ -543,10 +562,20 @@ def main() -> None:
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
+    if _CROWD_CONFIG is None:
+        crowding_metadata = None
+    else:
+        crowding_mechanism, crowding_level, crowding_parameters = _CROWD_CONFIG
+        crowding_metadata = crowding_record(
+            {**crowding_parameters, "mechanism": crowding_mechanism},
+            EPOCHS,
+            RAMP_START_EPOCH,
+            CODEBOOK_SIZE[crowding_level] * CODEBOOK_DIM if crowding_mechanism == "parammatch" else 0,
+        )
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters())
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters(), crowding=crowding_metadata)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -561,6 +590,9 @@ def main() -> None:
     final_collision = float("inf")
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
+    crowd_graph = None
+    if _CROWD_CONFIG and _CROWD_CONFIG[0] in {"couser", "simweight", "density", "random"}:
+        crowd_graph = np.load("/home/wlia0047/ar57/wenyu/GeneRec/results/crowding/graph_s42.npz")
 
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
@@ -577,15 +609,25 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         behaviors: list[float] = []
+        crowds: list[float] = []
         epoch_weight = behavior_weight(epoch)
+        crowd_config_for_ramp = None if _CROWD_CONFIG is None else {
+            **_CROWD_CONFIG[2], "mechanism": _CROWD_CONFIG[0]
+        }
+        epoch_crowding_weight = crowding_ramp_weight(
+            epoch, crowd_config_for_ramp, RAMP_START_EPOCH, EPOCHS
+        )
         _epoch_t0 = time.time()
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
-            loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            base_loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
+            crowd_value = torch.zeros((), device=device)
+            crowd_metric = torch.zeros((), device=device)
+            crowding_weight = epoch_crowding_weight
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -607,9 +649,65 @@ def main() -> None:
                     behavior_loss = behavior_contrastive_loss(
                         residuals, source_ids, target_ids, successor_indicator
                     )
-                loss = loss + epoch_weight * behavior_loss
+                if _CROWD_CONFIG is not None:
+                    mechanism, crowd_level, crowd_config = _CROWD_CONFIG
+                    n_pairs = int(source_ids.shape[0])
+                    crowd_target_ids = target_ids
+                    if mechanism == "couser":
+                        graph_neighbors = crowd_graph["neighbors"]
+                        slots = source_ids.cpu().numpy() % crowd_config["k"]
+                        selected = graph_neighbors[source_ids.cpu().numpy(), slots]
+                        selected = np.where(selected >= 0, selected, target_ids.cpu().numpy())
+                        crowd_target_ids = torch.as_tensor(selected, device=device, dtype=torch.long)
+                    crowd_pair_batch = all_embeddings[
+                        torch.cat((source_ids, crowd_target_ids)).cpu()
+                    ].to(device, non_blocking=True)
+                    local_pairs = torch.stack((torch.arange(n_pairs, device=device),
+                                               torch.arange(n_pairs, 2 * n_pairs, device=device)), dim=1)
+                    latent = raw_module.encoder(crowd_pair_batch)
+                    graph_weights = torch.ones(n_pairs, device=device)
+                    graph_degrees = torch.ones(len(latent), device=device)
+                    if crowd_graph is not None:
+                        graph_degrees = torch.as_tensor(crowd_graph["degree"], device=device)[
+                            torch.cat((source_ids, crowd_target_ids))]
+                        if mechanism == "simweight":
+                            neigh = crowd_graph["neighbors"][source_ids.cpu().numpy()]
+                            pair_match = neigh == target_ids.cpu().numpy()[:, None]
+                            slots = pair_match.argmax(axis=1)
+                            found = pair_match.any(axis=1)
+                            raw_weights = crowd_graph["weights"][source_ids.cpu().numpy(), slots]
+                            graph_weights = torch.as_tensor(np.where(found, raw_weights, 0.0), device=device)
+                    random_local = torch.stack((torch.arange(n_pairs, device=device),
+                                               torch.randperm(n_pairs, device=device) + n_pairs), dim=1)
+                    crowd_value = crowding_loss(
+                        mechanism, latent, local_pairs, strength=crowd_config["strength"],
+                        codebook=(tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers[:crowd_config["depth"]])
+                                  if mechanism == "prefixshare" else raw_module.rq.vq_layers[crowd_level].get_code_embs()),
+                        tau=crowd_config["tau"], depth=crowd_config["depth"],
+                        concentration=crowd_config["concentration"],
+                        pair_weights=graph_weights,
+                        degrees=graph_degrees,
+                        negatives=torch.roll(local_pairs[:, 1], 1),
+                        random_pairs=random_local,
+                        param_block=getattr(raw_module, "crowding_control", None),
+                    )
+                    crowd_metric = crowd_value.detach()
+            loss = assemble_losses(
+                base_loss, behavior_loss, epoch_weight, crowd_value, crowding_weight,
+                _CROWD_CONFIG is not None,
+            )
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
+            # The parameter-matched control's block is used by NOTHING except the crowding
+            # term, and assemble_losses() above overwrites `loss` unconditionally, so the
+            # zero-weighted edge has to be added AFTER it and immediately before backward.
+            # DDP refuses a parameter that never receives a gradient; multiplying by 0.0
+            # keeps the value identical (the block is finite) and only satisfies the reducer.
+            _crowd_control = getattr(raw_module, "crowding_control", None)
+            if _crowd_control is not None:
+                loss = loss + 0.0 * sum(
+                    parameter.square().mean() for parameter in _crowd_control.parameters()
+                )
             loss.backward()
             if directional_heads is not None and epoch_weight > 0.0 and world_size > 1:
                 for parameter in directional_heads.parameters():
@@ -623,26 +721,30 @@ def main() -> None:
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
             behaviors.append(float(behavior_loss.detach()))
+            crowds.append(float(crowd_metric.detach()))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
         local_loss = torch.tensor(float(np.mean(losses)) if losses else 0.0, device=device)
         local_recon = torch.tensor(float(np.mean(recons)) if recons else 0.0, device=device)
         local_behavior = torch.tensor(float(np.mean(behaviors)) if behaviors else 0.0, device=device)
+        local_crowding = torch.tensor(float(np.mean(crowds)) if crowds else 0.0, device=device)
         if world_size > 1:
             dist.all_reduce(local_loss, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_behavior, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_crowding, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         avg_behavior = float(local_behavior.item()) / max(world_size, 1)
+        avg_crowding = float(local_crowding.item()) / max(world_size, 1)
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -673,7 +775,7 @@ def main() -> None:
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
-                    raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
+                    **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
