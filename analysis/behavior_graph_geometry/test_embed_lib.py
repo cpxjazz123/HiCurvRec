@@ -72,6 +72,80 @@ def test_distances() -> None:
         f"T1 its diagonal sits at the floor ({float(DA.diagonal().max()):.3e})")
 
 
+def test_chunked_and_memory_shape() -> None:
+    """The chunked top-k must equal the full-matrix top-k, and the distance must be
+    the same value whether it is built by the expansion form or directly."""
+    torch.manual_seed(0)
+    X = (torch.randn(37, 5, dtype=torch.float64) * 0.15)
+    direct = E.poincare_pairwise(X, X)
+    expand = (X.pow(2).sum(-1, keepdim=True) + X.pow(2).sum(-1).unsqueeze(0)
+              - 2.0 * (X @ X.t())).clamp_min(0)
+    num = 2.0 * expand
+    x2 = X.pow(2).sum(-1, keepdim=True)
+    den = (1.0 - x2).clamp_min(1e-12) * (1.0 - x2).clamp_min(1e-12).t()
+    manual = (torch.acosh((1.0 + num / den).clamp_min(1.0 + 1e-7)))
+    req(float((manual - direct).abs().max()) < 1e-6,
+        f"T1 the expansion form reproduces the direct chord form "
+        f"({float((manual - direct).abs().max()):.2e})")
+
+    # paired_distance must agree with the outer product on the same entries, and must
+    # be usable on a pair list far larger than the matrix it would otherwise build
+    rngp = np.random.default_rng(1)
+    pi = rngp.integers(0, 37, 5000)
+    pj = rngp.integers(0, 37, 5000)
+    for kind in ("euclid", "poincare"):
+        # the outer product's DIAGONAL is the matching-entry reference; the whole
+        # matrix is not comparable to a pair-length vector
+        outer = E.distance(kind, X[torch.as_tensor(pi)], X[torch.as_tensor(pj)]).numpy()
+        chunked = E.paired_distance(kind, X, pi, pj, chunk=97)
+        req(float(np.abs(np.diag(outer) - chunked).max()) < 1e-5,
+            f"T1 paired_distance matches the outer product's diagonal for {kind} "
+            f"(max {float(np.abs(np.diag(outer) - chunked).max()):.2e})")
+
+    for kind in ("euclid", "poincare"):
+        rk = E.topk_neighbours(kind, X, 4, chunk=7)
+        full = E.distance(kind, X, X).cpu().numpy()
+        np.fill_diagonal(full, np.inf)
+        want = np.argsort(full, axis=1)[:, :4]
+        req(bool((rk == want).all()),
+            f"T1 chunked top-k equals the full-matrix top-k for {kind}")
+
+
+def test_training_objective_is_paired() -> None:
+    """The training loss must compare ONE distance per pair against ONE target.
+
+    torch only warns when a (batch, batch) matrix is broadcast against a (batch,)
+    target, and the run then trains on a different objective while looking healthy.
+    The test promotes that warning to an error.
+    """
+    import warnings
+    n, dim = 64, 8
+    rng = np.random.default_rng(0)
+    pairs = rng.integers(0, n, size=(400, 2))
+    pairs = pairs[pairs[:, 0] != pairs[:, 1]]
+    true = rng.uniform(0.5, 6.0, pairs.shape[0])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        X, scale, hist = E.train_metric_embedding(
+            "euclid", n_nodes=n, dim=dim, train_pairs=pairs, train_dists=true,
+            steps=50, lr=0.05, batch=64, seed=1, device="cpu", log_every=25)
+    req(np.isfinite(hist[-1]["loss"]),
+        "T1 the training objective runs with broadcast warnings promoted to errors")
+    # the paired distance must agree with the outer product's diagonal
+    Xi = torch.as_tensor(pairs[:20, 0])
+    Yj = torch.as_tensor(pairs[:20, 1])
+    Xr = torch.nn.Embedding(n, dim)
+    with torch.no_grad():
+        Xr.weight.copy_(torch.randn(n, dim))
+    with torch.no_grad():
+        got = E.paired_row_distance("euclid", Xr(Xi), Xr(Yj)).numpy()
+    with torch.no_grad():
+        ref = np.diag(E.distance("euclid", Xr(Xi), Xr(Yj)).numpy())
+    req(np.abs(got - ref).max() < 1e-6,
+        f"T1 the row-wise training distance is the diagonal of the outer product "
+        f"({np.abs(got - ref).max():.2e})")
+
+
 def test_identical_protocol() -> None:
     """Both geometries must see the same pairs, the same target distances and the
     same budget, and the harness must not silently differentiate them."""
@@ -150,6 +224,8 @@ def test_evaluation_metrics() -> None:
 
 def main() -> int:
     print("=== distances ===", flush=True); test_distances()
+    print("\n=== chunked top-k and the expansion form ===", flush=True); test_chunked_and_memory_shape()
+    print("\n=== the training objective is paired, not an outer product ===", flush=True); test_training_objective_is_paired()
     print("\n=== identical protocol for both geometries ===", flush=True); test_identical_protocol()
     print("\n=== evaluation metrics ===", flush=True); test_evaluation_metrics()
     print("\n" + "=" * 72)

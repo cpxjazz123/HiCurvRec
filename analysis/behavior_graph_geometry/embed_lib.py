@@ -16,6 +16,10 @@ import math
 import numpy as np
 import torch
 
+# The distortion statistics live with the graph side of the study; they are shared
+# rather than duplicated so the step-4 and step-5 numbers are computed identically.
+import graph_lib as _L
+
 C_DEFAULT = 1.0
 BALL_EPS = 1e-5
 
@@ -37,13 +41,86 @@ def poincare_pairwise(X: torch.Tensor, Y: torch.Tensor, c: float = C_DEFAULT) ->
     Y = _inside(Y, c, cmax)
     x2 = (c ** 0.5) ** 2 * X.pow(2).sum(-1, keepdim=True)
     y2 = (c ** 0.5) ** 2 * Y.pow(2).sum(-1, keepdim=True)
-    num = 2.0 * c * (X[:, None, :] - Y[None, :, :]).pow(2).sum(-1)
+    # ||x_i - y_j||^2 by the expansion ||x||^2 + ||y||^2 - 2 x.y, which touches
+    # (n, m) and never (n, m, D): the direct (X[:,None,:] - Y[None,:,:]) form
+    # materialises a 3-D tensor and dies at 24556 x 24556 x 32. The expansion is the
+    # same value up to float cancellation, and it is clamped at 0.
+    d2 = (X.pow(2).sum(-1, keepdim=True) + Y.pow(2).sum(-1).unsqueeze(0)
+          - 2.0 * (X @ Y.t())).clamp_min(0.0)
+    num = 2.0 * c * d2
     # The denominator MUST be formed as (n,1) * (1,m). Written as
     # (1-x2) * (1-y2) it broadcasts (n,1) against (m,1) and silently returns an
     # (m, n) matrix whenever n != m; with n == m the square case hides it.
     den = (1.0 - x2).clamp_min(1e-12) * (1.0 - y2).clamp_min(1e-12).t()
     arg = 1.0 + num / den
     return (torch.acosh(arg.clamp_min(1.0 + 1e-7)) / math.sqrt(c)).clamp_min(1e-6)
+
+
+def paired_row_distance(kind: str, Xi: torch.Tensor, Yj: torch.Tensor,
+                        c: float = C_DEFAULT) -> torch.Tensor:
+    """Element-wise distance d(Xi_t, Yj_t): one distance per ROW, not an outer product."""
+    if kind == "euclid":
+        return (Xi - Yj).pow(2).sum(-1).clamp_min(0.0).sqrt().clamp_min(1e-9)
+    xi2 = c * Xi.pow(2).sum(-1)
+    yj2 = c * Yj.pow(2).sum(-1)
+    num = 2.0 * c * (Xi - Yj).pow(2).sum(-1)
+    den = (1.0 - xi2).clamp_min(1e-12) * (1.0 - yj2).clamp_min(1e-12)
+    return (torch.acosh((1.0 + num / den).clamp_min(1.0 + 1e-7)) / math.sqrt(c)).clamp_min(1e-6)
+
+
+def paired_distance(kind: str, X: torch.Tensor, i_idx: np.ndarray, j_idx: np.ndarray,
+                    chunk: int = 4096, c: float = C_DEFAULT) -> np.ndarray:
+    """Distances between MATCHING index pairs d(X[i_t], X[j_t]), not an outer product.
+
+    The evaluation set holds ~100k pairs. Taking distance(X[i_array], X[j_array])
+    there builds a 100k x 100k matrix, 40 GB at float32; only the matching entries
+    are wanted, so the pairs are walked in chunks.
+    """
+    ii = torch.as_tensor(np.asarray(i_idx), dtype=torch.long, device=X.device)
+    jj = torch.as_tensor(np.asarray(j_idx), dtype=torch.long, device=X.device)
+    out = np.empty(ii.numel(), dtype=np.float64)
+    for s0 in range(0, ii.numel(), chunk):
+        e0 = min(s0 + chunk, ii.numel())
+        Xi = X[ii[s0:e0]]
+        Yj = X[jj[s0:e0]]
+        # euclid must return the DISTANCE, matching euclidean_pairwise, not its square
+        d = (Xi - Yj).pow(2).sum(-1).clamp_min(0.0).sqrt().clamp_min(1e-9) if kind == "euclid" else \
+            (torch.acosh((1.0 + 2.0 * c * (Xi - Yj).pow(2).sum(-1)
+                          / ((1.0 - c * Xi.pow(2).sum(-1)).clamp_min(1e-12)
+                             * (1.0 - c * Yj.pow(2).sum(-1)).clamp_min(1e-12)).t())
+             .clamp_min(1.0 + 1e-7)) / math.sqrt(c)).clamp_min(1e-6)
+        out[s0:e0] = d.detach().cpu().numpy()
+    return out
+
+
+def topk_neighbours(kind: str, X: torch.Tensor, k: int, chunk: int = 4096,
+                    c: float = C_DEFAULT) -> np.ndarray:
+    """(N, k) indices of each node's nearest neighbours, computed in row chunks.
+
+    The full (N, N) matrix is never materialised: on a 24556-node graph in float64 it
+    is 4.8 GB, and the previous implementation additionally tried to build an
+    (N, N, D) intermediate.
+    """
+    N = X.shape[0]
+    best_d = torch.full((N, k), float("inf"), device=X.device, dtype=X.dtype)
+    best_i = torch.zeros((N, k), device=X.device, dtype=torch.long)
+    for s in range(0, N, chunk):
+        e = min(s + chunk, N)
+        d = distance(kind, X[s:e], X, c)          # column j is node j
+        # A node must not be its own nearest neighbour. The self distance is the
+        # floor of the metric, i.e. the SMALLEST possible value, so without this the
+        # ranking degenerates to "every node is nearest to itself" and the
+        # neighbourhood-preservation metric becomes meaningless.
+        rows_local = torch.arange(e - s, device=X.device, dtype=torch.long)
+        d[rows_local, rows_local + s] = float("inf")
+        col_idx = (torch.arange(N, device=X.device, dtype=torch.long)
+                   .unsqueeze(0).expand(e - s, N))
+        cat_d = torch.cat([best_d[s:e], d], dim=1)
+        cat_i = torch.cat([best_i[s:e], col_idx], dim=1)
+        vals, idx = torch.topk(cat_d, k, dim=1, largest=False)
+        best_d[s:e] = vals
+        best_i[s:e] = torch.gather(cat_i, 1, idx)
+    return best_i.cpu().numpy()
 
 
 def _inside(X: torch.Tensor, c: float, cmax: float) -> torch.Tensor:
@@ -93,7 +170,10 @@ def train_metric_embedding(kind: str, n_nodes: int, dim: int,
                              dtype=torch.long, device=device)
         opt.zero_grad(set_to_none=True)
         opt_s.zero_grad(set_to_none=True)
-        d = distance(kind, X[tp[idx, 0]], X[tp[idx, 1]], c)
+        # MUST be one distance per training pair. distance(X[a_batch], X[b_batch])
+        # is an OUTER PRODUCT here -- (batch, batch) -- and broadcasting it against a
+        # (batch,) target silently trains on a different objective; torch only warns.
+        d = paired_row_distance(kind, X[tp[idx, 0]], X[tp[idx, 1]], c)
         scale = torch.nn.functional.softplus(raw_scale)
         loss = torch.nn.functional.mse_loss(d, scale * td[idx])
         loss.backward()
@@ -122,16 +202,15 @@ def fit_scale_eval(true_d: np.ndarray, emb_d: np.ndarray) -> float:
 def evaluate(kind: str, X: torch.Tensor, pairs: np.ndarray, true_d: np.ndarray,
              k_neighbours: tuple, neighbours_true: dict, n_nodes: int,
              c: float = C_DEFAULT, device: str = "cpu") -> dict:
-    tp = torch.as_tensor(pairs, dtype=torch.long, device=device)
-    d_raw = distance(kind, X[tp[:, 0]], X[tp[:, 1]], c).cpu().numpy()
+    d_raw = paired_distance(kind, X, pairs[:, 0], pairs[:, 1], c=c)
     scale = fit_scale_eval(true_d, d_raw)
     d = d_raw * scale
     from scipy import stats
     out = {
         "n_eval_pairs": int(pairs.shape[0]),
         "fitted_scale": scale,
-        "normalised_stress": normalised_stress(true_d, d),
-        "mean_relative_distortion": mean_relative_distortion(true_d, d),
+        "normalised_stress": _L.normalised_stress(true_d, d),
+        "mean_relative_distortion": _L.mean_relative_distortion(true_d, d),
         "spearman": float(stats.spearmanr(d, true_d).statistic),
         "radius_p99": float(np.quantile(ball_radii(X, c).cpu().numpy(), 0.99)) if kind == "poincare" else None,
         "radius_median": float(np.median(ball_radii(X, c).cpu().numpy())) if kind == "poincare" else None,
@@ -139,11 +218,11 @@ def evaluate(kind: str, X: torch.Tensor, pairs: np.ndarray, true_d: np.ndarray,
         "all_finite": bool(np.isfinite(d).all()),
         "neighbourhood_preservation": {},
     }
-    full = distance(kind, X, X, c).cpu().numpy()
-    np.fill_diagonal(full, np.inf)
+    kmax = max(k_neighbours)
+    emb_rank = topk_neighbours(kind, X, kmax, chunk=4096, c=c)
     for k in k_neighbours:
-        out["neighbourhood_preservation"][str(k)] = neighbourhood_preservation(
-            neighbours_true, full, k, n_nodes)
+        out["neighbourhood_preservation"][str(k)] = neighbourhood_preservation_from_rank(
+            neighbours_true, emb_rank[:, :k], k)
     return out
 
 
@@ -151,8 +230,7 @@ def grouped_distortion(kind: str, X: torch.Tensor, pairs: np.ndarray, true_d: np
                        groups: dict, key: str, scale: float, c: float = C_DEFAULT,
                        device: str = "cpu") -> dict:
     """Distortion broken down by a per-pair grouping variable."""
-    tp = torch.as_tensor(pairs, dtype=torch.long, device=device)
-    d = distance(kind, X[tp[:, 0]], X[tp[:, 1]], c).cpu().numpy() * scale
+    d = paired_distance(kind, X, pairs[:, 0], pairs[:, 1], c=c) * scale
     out = {}
     for name, mask in groups.items():
         m = np.asarray(mask, dtype=bool)
@@ -160,10 +238,24 @@ def grouped_distortion(kind: str, X: torch.Tensor, pairs: np.ndarray, true_d: np
             continue
         out[name] = {
             "n": int(m.sum()),
-            "normalised_stress": normalised_stress(true_d[m], d[m]),
-            "mean_relative_distortion": mean_relative_distortion(true_d[m], d[m]),
+            "normalised_stress": _L.normalised_stress(true_d[m], d[m]),
+            "mean_relative_distortion": _L.mean_relative_distortion(true_d[m], d[m]),
         }
     return out
+
+
+def neighbourhood_preservation_from_rank(neighbours_true: dict, emb_rank: np.ndarray,
+                                         k: int) -> float:
+    """Share of each node's k nearest graph neighbours inside its k nearest embedding
+    neighbours, given the embedding ranking already computed in chunks."""
+    hits = 0
+    total = 0
+    for i, nb in neighbours_true.items():
+        if not nb:
+            continue
+        total += 1
+        hits += len(set(nb[:k]) & set(emb_rank[i].tolist()))
+    return float(hits / (total * k)) if total and k else float("nan")
 
 
 def mean_auc(scores: np.ndarray, labels: np.ndarray) -> float:
