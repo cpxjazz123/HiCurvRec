@@ -26,9 +26,9 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 # === 硬编码配置 (按需手动改 3 个值即可, 无 CLI flag) ===
-CKPT_PATH    = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/iter10_gumbel_softmax_anneal/ckpt/Amazon_2023_Instruments/Sep-18-2026_14-47-18/HG_Rec_best.pth"
-SID_JSON     = "/home/wlia0047/ar57/wenyu/GeneRec/stage3_T5Train/dataset/Amazon_2023_Instruments/item_sids_iter10.json"
-LABEL        = "iter10_gumbel_softmax_anneal"
+CKPT_PATH    = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_sample_resample_proj_dir/ckpt/Amazon_2023_Instruments/Oct-12-2026_19-06-45/HG_Rec_best.pth"
+SID_JSON     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir/item_sids.json"
+LABEL        = "C_resample_proj_dir"
 # ============================================
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -59,7 +59,7 @@ def build_model(sid_json: str, device: torch.device) -> tuple[HG_Rec, GenRecData
         "codebook_size": [256, 256, 256, 1],
         "sid_length": 4,
         "exclude_history": True,
-        "dataset_path":  "./dataset/",
+        "dataset_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/",
         "dataset_name":  "Amazon_2023_Instruments",
         # T5 架构参数 (与 train_HG-Rec.py 硬编码一致)
         "num_layers": 4,
@@ -74,7 +74,7 @@ def build_model(sid_json: str, device: torch.device) -> tuple[HG_Rec, GenRecData
         "exclude_history": True,
         "bf16": False,
     }
-    ds = _mod._build_dataset(config, "valid_recbole.parquet", "evaluation", sid_json)
+    ds = _mod._build_dataset(config, "valid.parquet", "evaluation", sid_json)
     config["vocab_size"]            = ds.vocab_size
     config["eos_token_id"]          = ds.eos_token
     config["pad_token_id"]          = ds.pad_token_id
