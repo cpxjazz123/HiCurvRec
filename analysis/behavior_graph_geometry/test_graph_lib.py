@@ -85,9 +85,13 @@ def test_graph_stats_and_distance() -> None:
     p = nx.path_graph(5)                       # a-b-c-d-e
     s = L.graph_stats(p)
     req(s["nodes"] == 5 and s["edges"] == 4, f"T1 path stats ({s['nodes']}/{s['edges']})")
-    req(abs(s["diameter_lcc"] - 4) < 1e-9, f"T1 path diameter 4 ({s['diameter_lcc']})")
-    req(abs(s["average_shortest_path_lcc"] - 2.0) < 1e-9,
-        f"T1 path average distance 2.0 ({s['average_shortest_path_lcc']})")
+    pm = s["path_metrics_sampled"]
+    req(pm["diameter_estimate"] == 4 and pm["exact"],
+        f"T1 path diameter 4, exact on a small graph ({pm})")
+    req(abs(pm["mean_distance_estimate"] - 2.0) < 1e-9,
+        f"T1 path average distance 2.0 ({pm['mean_distance_estimate']})")
+    req(s["clustering"]["average_clustering"] == 0.0,
+        f"T1 a path has no triangles ({s['clustering']})")
 
     d = L.bfs_distances(p, [0, 4])
     req(d[0, 4] == 4 and d[1, 0] == 4, "T1 BFS distance symmetric on a path")
