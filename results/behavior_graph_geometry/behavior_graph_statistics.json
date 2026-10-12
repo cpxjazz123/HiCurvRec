@@ -1,0 +1,124 @@
+{
+  "study": "behavior_graph_geometry",
+  "step": 1,
+  "seed": 42,
+  "provenance": {
+    "git_sha": "088a1aed9eb67d50ecb539c63f63aa24b85ead1e",
+    "train_parquet": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "train_parquet_bytes": 11152937,
+    "python": "3.10.20",
+    "platform": "Linux-5.14.0-687.17.1.el9_8.x86_64-x86_64-with-glibc2.34",
+    "numpy": "1.26.4",
+    "networkx": "3.4.2",
+    "pandas": "2.3.3",
+    "test_or_valid_used": false
+  },
+  "data_audit": {
+    "rows": 396958,
+    "users": 57439,
+    "users_already_in_history_length_order": 57439,
+    "users_with_a_repeated_item": 0,
+    "history_column_used": "seen_history",
+    "order_source": "len(seen_history) ascending, ties broken by row index",
+    "timestamp_column_present": false
+  },
+  "transitions": {
+    "directed_distinct_pairs": 323633,
+    "directed_total_count": 339519,
+    "self_loops_distinct_items": 0,
+    "self_loops_total_count": 0,
+    "weight_min": 1,
+    "weight_max": 37,
+    "weight_mean": 1.0490864652244982,
+    "weight_median": 1.0,
+    "share_of_weight_one": 0.9676856192044693
+  },
+  "directed_graph": {
+    "nodes": 24556,
+    "edges": 323633,
+    "weakly_connected_components": 1,
+    "isolated_nodes": 31
+  },
+  "undirected_graph": {
+    "nodes": 24556,
+    "edges": 315391,
+    "mean_degree": 25.687489819188794,
+    "median_degree": 13.0,
+    "isolated_nodes": 0,
+    "connected_components": 1,
+    "component_sizes_top10": [
+      24556
+    ],
+    "lcc_nodes": 24556,
+    "lcc_edges": 315391,
+    "lcc_fraction_of_nodes": 1.0,
+    "density": 0.001046120538350185,
+    "clustering": {
+      "nodes": 24556,
+      "average_clustering": 0.04344572280636957,
+      "global_clustering_transitivity": 0.03884055730807407,
+      "method": "exact sparse triangle count (A^2 .* A)"
+    },
+    "assortativity_degree": -0.0016766942887028401,
+    "path_metrics_sampled": {
+      "nodes": 24556,
+      "sources_sampled": 400,
+      "diameter_estimate": 7,
+      "eccentricity_mean": 5.625,
+      "eccentricity_p95": 6.0,
+      "mean_distance_estimate": 3.1728317043372023,
+      "mean_distance_se": 0.015304347598964207,
+      "exact": false
+    },
+    "is_connected": true,
+    "lcc": {
+      "nodes": 24556,
+      "edges": 315391,
+      "mean_degree": 25.687489819188794,
+      "median_degree": 13.0,
+      "isolated_nodes": 0,
+      "connected_components": 1,
+      "component_sizes_top10": [
+        24556
+      ],
+      "lcc_nodes": 24556,
+      "lcc_edges": 315391,
+      "lcc_fraction_of_nodes": 1.0,
+      "density": 0.001046120538350185,
+      "clustering": {
+        "nodes": 24556,
+        "average_clustering": 0.04344572280636957,
+        "global_clustering_transitivity": 0.03884055730807407,
+        "method": "exact sparse triangle count (A^2 .* A)"
+      },
+      "assortativity_degree": -0.0016766942887028401,
+      "path_metrics_sampled": {
+        "nodes": 24556,
+        "sources_sampled": 400,
+        "diameter_estimate": 7,
+        "eccentricity_mean": 5.625,
+        "eccentricity_p95": 6.0,
+        "mean_distance_estimate": 3.1728317043372023,
+        "mean_distance_se": 0.015304347598964207,
+        "exact": false
+      },
+      "is_connected": true
+    }
+  },
+  "direction_asymmetry": {
+    "unordered_pairs_with_any_direction": 315391,
+    "pairs_seen_in_both_directions": 8242,
+    "pairs_seen_in_one_direction_only": 307149,
+    "share_seen_in_both_directions": 0.026132641705058166,
+    "mean_relative_count_gap_on_both_direction_pairs": 0.11925194833368981,
+    "median_relative_count_gap_on_both_direction_pairs": 0.0
+  },
+  "item_universe": {
+    "n_items_declared": 24587,
+    "items_appearing_in_train": 24556,
+    "items_with_an_outgoing_transition": 24474,
+    "items_with_an_incoming_transition": 24524,
+    "items_with_an_undirected_edge": 24556,
+    "items_with_no_transition_at_all": 0
+  }
+}

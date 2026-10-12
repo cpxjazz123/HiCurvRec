@@ -133,13 +133,87 @@ def graph_stats(g: nx.Graph) -> dict:
         "lcc_edges": int(lcc.number_of_edges()),
         "lcc_fraction_of_nodes": float(lcc.number_of_nodes() / n) if n else 0.0,
         "density": float(2 * m / (n * (n - 1))) if n > 1 else 0.0,
-        "average_clustering": float(nx.average_clustering(g)) if n else 0.0,
+        "clustering": average_clustering_fast(g) if n else {"average_clustering": 0.0},
         "assortativity_degree": float(nx.degree_assortativity_coefficient(g)) if m else float("nan"),
-        "diameter_lcc": int(nx.diameter(lcc)) if lcc.number_of_nodes() else 0,
-        "average_shortest_path_lcc": (
-            float(nx.average_shortest_path_length(lcc)) if lcc.number_of_nodes() > 1 else 0.0
-        ),
+        # Path metrics on a large component are sampled, not enumerated: exact
+        # average shortest path on ~20k nodes needs one BFS per node and is not a
+        # feasible Python loop. The sample is seeded and its size is recorded, and
+        # the estimate is reported as an estimate.
+        "path_metrics_sampled": path_metrics_sampled(lcc, seed=42, sources=400),
         "is_connected": bool(nx.is_connected(g)) if n else False,
+    }
+
+
+def average_clustering_fast(g: nx.Graph) -> dict:
+    """Exact average local clustering coefficient, via sparse triangle counting.
+
+    NetworkX's average_clustering enumerates every neighbour pair of every node in
+    Python, which is O(sum d^2) and takes tens of minutes on a 20k-node heavy-tailed
+    graph. The number of triangles through each node is instead
+    (A^2 .* A).sum(axis=1) / 2 with A the sparse adjacency, which is a couple of
+    sparse products, and the local coefficient is triangles / C(d, 2). Same value,
+    seconds instead of minutes.
+    """
+    from scipy import sparse
+    nodes = list(g.nodes())
+    n = len(nodes)
+    if n < 3:
+        return {"nodes": n, "average_clustering": 0.0, "global_clustering_transitivity": 0.0,
+                "method": "exact sparse triangle count"}
+    idx = {v: i for i, v in enumerate(nodes)}
+    rows, cols = [], []
+    for a, b in g.edges():
+        rows.append(idx[a]); cols.append(idx[b])
+        rows.append(idx[b]); cols.append(idx[a])
+    A = sparse.csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n))
+    A2 = A @ A
+    triangles = np.asarray(A2.multiply(A).sum(axis=1)).ravel() / 2.0
+    deg = np.asarray(A.sum(axis=1)).ravel()
+    denom = deg * (deg - 1) / 2.0
+    local = np.divide(triangles, denom, out=np.zeros_like(triangles), where=denom > 0)
+    total_denom = denom.sum()
+    return {
+        "nodes": int(n),
+        "average_clustering": float(local.mean()),
+        "global_clustering_transitivity": float(triangles.sum() / total_denom) if total_denom > 0 else 0.0,
+        "method": "exact sparse triangle count (A^2 .* A)",
+    }
+
+
+def path_metrics_sampled(g: nx.Graph, seed: int = 42, sources: int = 200) -> dict:
+    """Diameter and mean shortest path from a seeded BFS sample.
+
+    Exact values would need one BFS per node. The sample is drawn with a fixed seed
+    so the numbers are reproducible, and the sample size is reported with them.
+    """
+    n = g.number_of_nodes()
+    if n == 0:
+        return {"nodes": 0}
+    if n == 1:
+        return {"nodes": 1, "diameter_estimate": 0, "mean_distance_estimate": 0.0,
+                "sources_sampled": 1, "exact": n <= 1}
+    nodes = list(g.nodes())
+    rng = np.random.default_rng(seed)
+    k = min(sources, n)
+    src = [nodes[i] for i in rng.choice(n, size=k, replace=False)]
+    eccs, means = [], []
+    for s in src:
+        d = nx.single_source_shortest_path_length(g, s)
+        # exclude the source itself: a node's distance to itself is 0 and would bias
+        # the mean down by exactly the 1/n a naive average over the row carries
+        vals = np.fromiter((v for k, v in d.items() if k != s), dtype=np.int64)
+        eccs.append(int(vals.max()))
+        means.append(float(vals.mean()) if vals.size else 0.0)
+    eccs = np.array(eccs)
+    return {
+        "nodes": int(n),
+        "sources_sampled": int(k),
+        "diameter_estimate": int(eccs.max()),
+        "eccentricity_mean": float(eccs.mean()),
+        "eccentricity_p95": float(np.quantile(eccs, 0.95)),
+        "mean_distance_estimate": float(np.mean(means)),
+        "mean_distance_se": float(np.std(means, ddof=1) / np.sqrt(len(means))) if len(means) > 1 else 0.0,
+        "exact": bool(k == n),
     }
 
 
