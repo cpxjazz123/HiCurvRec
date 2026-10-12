@@ -40,22 +40,71 @@ from model import RQVAE  # noqa: E402
 
 REPO = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 STAGE2 = REPO / "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE"
+LOGS = REPO / "stage2_RQ-VAE/TIGER_FORK_RQ-VAE/logs"
 ARMS = ["nce_euclid_group", "hyper_l1_s42"]
 CURV = T.L1_GEODESIC_CURVATURE
 BETA = 0.25
 
 
 def mobius_sub(x, y, c):
-    """x -_c y = x (+) (-y): the ball is a group under (+) and -y is y's inverse."""
-    return H.mobius_add(x, -y, c)
+    """q -_c p = (-p) (+) q. The ball is a group under Boachy-Mobius (+), the
+    inverse of p is -p, and (+) is commutative, so (-p) (+) q == q (+) (-p)."""
+    return H.mobius_add(-y, x, c)
 
 
-def log_map_at(p, q, c):
-    """log_p(q): the tangent vector at p whose exponential map is q."""
+def log_map_p(p, q, c):
+    """The plain chart log map: the tangent vector at p whose exponential map is q.
+
+        log_p(q) = arctanh(sqrt(c) ||q -_c p||) / sqrt(c) * (q -_c p) / ||q -_c p||
+    """
     d = mobius_sub(q, p, c)
-    nd = (c ** 0.5) * torch.linalg.vector_norm(d, dim=-1, keepdim=True).clamp_min(H.NORM_FLOOR)
-    scale = torch.atanh(nd.clamp(max=1.0 - H.BOUNDARY_EPS)) / nd
-    return scale * d
+    nd = torch.linalg.vector_norm(d, dim=-1, keepdim=True).clamp_min(H.NORM_FLOOR)
+    return (torch.atanh((c ** 0.5 * nd).clamp(max=1.0 - H.BOUNDARY_EPS))
+            / (c ** 0.5 * nd)) * d
+
+
+def riemannian_log_p(p, q, c):
+    """The RIEMANNIAN logarithm at p, in the standard Poincare-ball form.
+
+        log_p(q) = 2 / (sqrt(c) * lambda_p) * arctanh(sqrt(c)||-p (+) q||)
+                   * (-p (+) q) / ||-p (+) q||
+        lambda_p = 2 / (1 - c ||p||^2)   the conformal (metric) factor at p
+
+    which simplifies to  ((1 - c||p||^2) / sqrt(c)) * arctanh(...) * (-p (+) q)/||-p (+) q||.
+
+    Two things matter and are both checked by the regression test:
+      * the direction is (-p) (+) q, and the Euclidean gradient of d_c(., p) is a
+        NEGATIVE constant multiple of this vector -- verified against central
+        differences of the geodesic distance, so the direction is not assumed;
+      * the metric factor (1 - c||p||^2) is what separates it from the plain chart
+        log map: log^riem = (1 - c||p||^2) * log^plain.
+    """
+    d = mobius_sub(q, p, c)
+    nd = torch.linalg.vector_norm(d, dim=-1, keepdim=True).clamp_min(H.NORM_FLOOR)
+    lam_p = 2.0 / (1.0 - c * p.pow(2).sum(-1, keepdim=True)).clamp_min(H.NORM_FLOOR)
+    return ((2.0 / (c ** 0.5 * lam_p))
+            * torch.atanh((c ** 0.5 * nd).clamp(max=1.0 - H.BOUNDARY_EPS))
+            * d / nd)
+
+
+def read_training_normalizer(arm: str):
+    """The ball normalizer the arm ACTUALLY trained with, read from its own record.
+
+    It is resolved once from the initial encoder and frozen for the run; reading
+    it back from the run's record is the only way to reproduce the geometry the
+    checkpoint sits in. Re-estimating it from the FINAL encoder gives a different
+    number, because the encoder's norm has moved.
+    """
+    mpath = LOGS / arm / "training_metrics.jsonl"
+    if not mpath.is_file():
+        return None
+    for line in reversed(mpath.read_text(encoding="utf-8").splitlines()):
+        if "ball_normalizer" not in line:
+            continue
+        rec = json.loads(line)
+        if rec.get("ball_normalizer") is not None:
+            return float(rec["ball_normalizer"])
+    return None
 
 
 def enc(x, c, nz):
@@ -66,18 +115,44 @@ def ball_dist(z_b, e_b, c):
     return float(H.poincare_distance(z_b, e_b, c))
 
 
-def objectives(z, e_sel, layer, nz):
+def candidate_objectives(z, e_sel, layer, nz):
+    """All candidates for ONE CURRENT, non-accumulated backward.
+
+    The caller must call model.zero_grad(set_to_none=True) before every one of
+    them -- the encoder gradient from a previous candidate would otherwise
+    accumulate and every measurement after the first would be wrong.
+    """
     c = layer.geodesic_curvature
     z_b, e_b = enc(z, c, nz), enc(e_sel, c, nz)
+    ball = F.mse_loss(e_b, z_b.detach()) + BETA * F.mse_loss(z_b, e_b.detach())
     return {
         "premap": F.mse_loss(e_sel, z.detach()) + BETA * F.mse_loss(z, e_sel.detach()),
-        "ball": F.mse_loss(e_b, z_b.detach()) + BETA * F.mse_loss(z_b, e_b.detach()),
-        "ball_over_nz2": (F.mse_loss(e_b, z_b.detach()) + BETA * F.mse_loss(z_b, e_b.detach()))
-        / (nz ** 2),
-        # NOT detached: the prototype is the base point of the log map, so the
-        # codebook must be able to move through it as well as through the vector.
-        "tangent": (log_map_at(e_b, z_b, c) ** 2).sum(-1).mean(),
+        "ball": ball,
+        "ball_over_nz2": ball / (nz ** 2),
+        # the RIEMANNIAN logarithm, not the plain log map, and the prototype is
+        # the base point so it is NOT detached
+        "tangent": (riemannian_log_p(e_b, z_b, c) ** 2).sum(-1).mean(),
+        # squared geodesic distance between mapped item and mapped codeword, the
+        # same metric the selection argmin uses
+        "geo2": (H.poincare_distance(z_b, e_b, c) ** 2).mean(),
     }
+
+
+def real_reconstruction_gradient(m, x):
+    """The encoder gradient of the REAL objective on this batch.
+
+    Forward through the actual RQ-VAE (encode -> residual quantise -> decode),
+    then the reconstruction loss. A decoder applied to a bare encoder latent skips
+    the straight-through estimator and the commitment terms, and measures a
+    different function than the one training minimises.
+    """
+    m.zero_grad(set_to_none=True)
+    reconstructed, _quant_loss, _, _ = m(x)
+    loss = F.mse_loss(reconstructed, x.detach())
+    loss.backward()
+    return (torch.cat([p.grad.reshape(-1) for p in m.encoder.parameters()
+                       if p.grad is not None]),
+            float(loss.detach()))
 
 
 def selected_rows(layer, z):
@@ -99,6 +174,7 @@ def main() -> None:
     emb = T.maybe_apply_pca(T.load_embeddings(T.EMBEDDING_FILE), T.PCA_DIM, T.SEED)
     all_emb = torch.from_numpy(emb)
     dev = torch.device("cuda:0")
+    names = ["premap", "ball", "ball_over_nz2", "tangent", "geo2"]
     report = {}
     for arm in ARMS:
         ck = STAGE2 / arm / "rqvae_best.pth"
@@ -111,84 +187,98 @@ def main() -> None:
         m.load_state_dict(blob["state_dict"])
         m.eval()
         layer = m.rq.vq_layers[0]
-        nz = float(T.resolve_normalizer(m, all_emb.to(dev)))
+        # The normalizer the run TRAINED with, from the run's own record. Re-estimating
+        # it from this final encoder would put the checkpoint in a geometry it never
+        # saw.
+        nz_recorded = read_training_normalizer(arm)
+        nz_reestimated = float(T.resolve_normalizer(m, all_emb.to(dev)))
+        nz = nz_recorded if nz_recorded is not None else nz_reestimated
         layer.geodesic_normalizer = nz
+        entry = {
+            "normalizer_used": nz,
+            "normalizer_recorded": nz_recorded,
+            "normalizer_reestimated_from_final_encoder": nz_reestimated,
+        }
+        x = all_emb[:4096].to(dev)
         with torch.no_grad():
-            z = m.encoder(all_emb[:4096].to(dev))
-            layer._probe_z = z
-        entry = {"normalizer": nz, "curvature": CURV, "before": saturation(layer, nz)}
+            z_meas = m.encoder(x)
+            layer._probe_z = z_meas
+        entry["before"] = saturation(layer, nz)
+        entry["ball_radius_with_recorded_normalizer"] = {
+            "item_median": float(enc(z_meas, CURV, nz).norm(dim=-1).median()),
+            "item_share_gt_0.99": float((enc(z_meas, CURV, nz).norm(dim=-1) > 0.99).float().mean()),
+            "code_median": float(enc(layer.get_code_embs(), CURV, nz).norm(dim=-1).median()),
+            "code_share_gt_0.99": float((enc(layer.get_code_embs(), CURV, nz).norm(dim=-1) > 0.99).float().mean()),
+        }
 
-        # per-objective gradient on the SELECTED codewords, and its cosine vs premap
-        grads = {}
-        enc_norm, loss_val = {}, {}
-        for name in ("premap", "ball", "ball_over_nz2", "tangent"):
-            layer.zero_grad(set_to_none=True)
-            # z must carry a grad_fn here; the no_grad block above was only for
-            # the saturation measurement.
-            z_grad = m.encoder(all_emb[:4096].to(dev))
-            idx, e_sel = selected_rows(layer, z_grad)
-            loss = objectives(z_grad, e_sel, layer, nz)[name]
-            loss.backward()
-            g = layer.get_code_embs().grad.detach().clone()
-            enc_grad = torch.cat([p.grad.reshape(-1) for p in m.encoder.parameters()
-                                  if p.grad is not None])
-            grads[name] = g
-            enc_norm[name] = float(enc_grad.norm())
-            loss_val[name] = float(loss.detach())
-        # The reconstruction term alone, for the relative-weight measurement. The
-        # encoder gradient is shared between it and the codebook term, so the ratio
-        # of their contributions to that gradient IS the effective step each
-        # objective gets -- and it is scale-invariant in neither direction.
-        m.zero_grad(set_to_none=True)
-        z_rec = m.encoder(all_emb[:4096].to(dev))
-        rec = F.mse_loss(m.decoder(z_rec), all_emb[:4096].to(dev))
-        rec.backward()
-        rec_norm = float(torch.cat([p.grad.reshape(-1) for p in m.encoder.parameters()
-                                    if p.grad is not None]).norm())
-        base = grads["premap"].reshape(-1)
+        # ---- gradient table: zero_grad before EVERY candidate, per candidate
+        rec_grad, rec_loss = real_reconstruction_gradient(m, x)
         rows = {}
-        for name, g in grads.items():
-            flat = g.reshape(-1)
-            denom = float(flat.norm()) * float(base.norm())
+        for name in names:
+            m.zero_grad(set_to_none=True)          # <- the defect this fixes
+            z = m.encoder(x)                       # carries grad_fn
+            idx, e_sel = selected_rows(layer, z)
+            loss = candidate_objectives(z, e_sel, layer, nz)[name]
+            loss.backward()
+            cb = layer.get_code_embs().grad.detach().clone()
+            en = torch.cat([p.grad.reshape(-1) for p in m.encoder.parameters()
+                            if p.grad is not None]).detach().clone()
             rows[name] = {
-                "grad_norm": float(flat.norm()),
-                "grad_norm_ratio_vs_premap": float(flat.norm()) / max(float(base.norm()), 1e-30),
-                "cosine_vs_premap_grad": float((flat * base).sum() / denom) if denom > 0 else float("nan"),
+                "loss_value": float(loss.detach()),
+                "codebook_grad_norm": float(cb.reshape(-1).norm()),
+                "encoder_grad_norm": float(en.norm()),
+                "encoder_over_reconstruction": float(en.norm()) / max(float(rec_grad.norm()), 1e-30),
             }
-        rows["_reconstruction_only"] = {"encoder_grad_norm": rec_norm,
-                                        "loss_value": float(rec.detach())}
-        for name in ("premap", "ball", "ball_over_nz2", "tangent"):
-            rows[name]["encoder_grad_norm"] = enc_norm[name]
-            rows[name]["loss_value"] = loss_val[name]
-            rows[name]["encoder_grad_ratio_vs_reconstruction"] = (
-                enc_norm[name] / max(rec_norm, 1e-30))
+        base = None
+        for name in names:
+            m.zero_grad(set_to_none=True)
+            z = m.encoder(x)
+            idx, e_sel = selected_rows(layer, z)
+            candidate_objectives(z, e_sel, layer, nz)[name].backward()
+            en = torch.cat([p.grad.reshape(-1) for p in m.encoder.parameters()
+                            if p.grad is not None]).detach()
+            if base is None:
+                base = en.clone()
+            denom = float(en.norm()) * float(base.norm())
+            rows[name]["cosine_encoder_grad_vs_premap"] = (
+                float((en * base).sum()) / denom if denom > 0 else float("nan"))
+        rows["_reconstruction_only"] = {"loss_value": rec_loss,
+                                        "encoder_grad_norm": float(rec_grad.norm())}
         entry["gradient"] = rows
 
-        # ONE step at the arm's own learning rate (AdamW default lr 1e-3 here),
-        # starting each time from the same weights, measured by the ball distance.
-        lr = 1e-3
+        # ---- one CONTROLLED step per parameter group, measured, not inferred.
+        # AdamW's step is not a function of the gradient norm, so the effect is
+        # measured by the change it produces, separately for encoder and codebook.
         c = layer.geodesic_curvature
-        for name in ("premap", "ball", "ball_over_nz2", "tangent"):
-            m.load_state_dict(blob["state_dict"])  # full model, not the layer
-            layer.geodesic_normalizer = nz
-            with torch.no_grad():
-                z = m.encoder(all_emb[:4096].to(dev))
-                layer._probe_z = z
-                _, e_sel = selected_rows(layer, z)
-                before = ball_dist(enc(z[0:1], c, nz), enc(e_sel[0:1], c, nz), c)
-            opt = torch.optim.AdamW([layer.get_code_embs()], lr=lr, weight_decay=0.0)
-            opt.zero_grad(set_to_none=True)
-            idx, e_sel = selected_rows(layer, z)
-            objectives(z, e_sel, layer, nz)[name].backward()
-            opt.step()
-            with torch.no_grad():
-                z = m.encoder(all_emb[:4096].to(dev))
-                _, e_sel = selected_rows(layer, z)
-                after = ball_dist(enc(z[0:1], c, nz), enc(e_sel[0:1], c, nz), c)
-            rows[name]["one_step_ball_dist_before"] = before
-            rows[name]["one_step_ball_dist_after"] = after
-            rows[name]["one_step_ball_dist_delta"] = after - before
-        entry["after_tangent_step"] = saturation(layer, nz)
+        lr = 1e-3
+        for name in names:
+            for group in ("codebook", "encoder"):
+                m.load_state_dict(blob["state_dict"])
+                layer.geodesic_normalizer = nz
+                with torch.no_grad():
+                    z0 = m.encoder(x)
+                    _, e0 = selected_rows(layer, z0)
+                    d0 = ball_dist(enc(z0[0:1], c, nz), enc(e0[0:1], c, nz), c)
+                    r0 = float(enc(z0, c, nz).norm(dim=-1).median())
+                params = [layer.get_code_embs()] if group == "codebook" else list(m.encoder.parameters())
+                opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
+                m.zero_grad(set_to_none=True)
+                z = m.encoder(x)
+                idx, e_sel = selected_rows(layer, z)
+                candidate_objectives(z, e_sel, layer, nz)[name].backward()
+                torch.nn.utils.clip_grad_norm_(params, 1.0)
+                opt.step()
+                with torch.no_grad():
+                    z1 = m.encoder(x)
+                    _, e1 = selected_rows(layer, z1)
+                    d1 = ball_dist(enc(z1[0:1], c, nz), enc(e1[0:1], c, nz), c)
+                    r1 = float(enc(z1, c, nz).norm(dim=-1).median())
+                    finite = bool(torch.isfinite(z1).all())
+                rows[name][f"step_{group}"] = {
+                    "ball_dist_before": d0, "ball_dist_after": d1, "ball_dist_delta": d1 - d0,
+                    "item_radius_median_before": r0, "item_radius_median_after": r1,
+                    "finite": finite,
+                }
         report[arm] = entry
 
     print(json.dumps(report, indent=2))

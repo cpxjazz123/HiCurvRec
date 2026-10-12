@@ -1,130 +1,276 @@
 {
   "nce_euclid_group": {
-    "normalizer": 4.692923975172597,
-    "curvature": 1.0,
+    "normalizer_used": 11.921757725170167,
+    "normalizer_recorded": 11.921757725170167,
+    "normalizer_reestimated_from_final_encoder": 4.692923975172597,
     "before": {
-      "item_r_gt_0.99": 0.046875,
-      "code_r_gt_0.99": 0.4453125,
-      "code_r_median": 0.9814447164535522
+      "item_r_gt_0.99": 0.460205078125,
+      "code_r_gt_0.99": 0.76953125,
+      "code_r_median": 0.999985933303833
+    },
+    "ball_radius_with_recorded_normalizer": {
+      "item_median": 0.9877602458000183,
+      "item_share_gt_0.99": 0.460205078125,
+      "code_median": 0.999985933303833,
+      "code_share_gt_0.99": 0.76953125
     },
     "gradient": {
       "premap": {
-        "grad_norm": 0.0009328321320936084,
-        "grad_norm_ratio_vs_premap": 1.0,
-        "cosine_vs_premap_grad": 1.0,
-        "encoder_grad_norm": 0.0034464369527995586,
-        "loss_value": 0.0018433700315654278,
-        "encoder_grad_ratio_vs_reconstruction": 7.912063794318778,
-        "one_step_ball_dist_before": 1.2994250059127808,
-        "one_step_ball_dist_after": 1.2949659824371338,
-        "one_step_ball_dist_delta": -0.004459023475646973
+        "loss_value": 0.002551573794335127,
+        "codebook_grad_norm": 0.0028571125585585833,
+        "encoder_grad_norm": 0.00537644699215889,
+        "encoder_over_reconstruction": 14.676210918625513,
+        "cosine_encoder_grad_vs_premap": 1.00000001545098,
+        "step_codebook": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.600351333618164,
+          "ball_dist_delta": 0.008319377899169922,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9877602458000183,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 11.112146377563477,
+          "ball_dist_delta": 6.520114421844482,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9984290599822998,
+          "finite": true
+        }
       },
       "ball": {
-        "grad_norm": 0.005874613765627146,
-        "grad_norm_ratio_vs_premap": 6.2976108599973015,
-        "cosine_vs_premap_grad": 0.7494077682495117,
-        "encoder_grad_norm": 0.01312702801078558,
-        "loss_value": 0.00887481588870287,
-        "encoder_grad_ratio_vs_reconstruction": 30.13601713119327,
-        "one_step_ball_dist_before": 1.2994250059127808,
-        "one_step_ball_dist_after": 1.2879040241241455,
-        "one_step_ball_dist_delta": -0.011520981788635254
+        "loss_value": 0.023928411304950714,
+        "codebook_grad_norm": 0.09624044597148895,
+        "encoder_grad_norm": 0.06144459918141365,
+        "encoder_over_reconstruction": 167.7267345352786,
+        "cosine_encoder_grad_vs_premap": 0.03880194057660709,
+        "step_codebook": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.517252445220947,
+          "ball_dist_delta": -0.07477951049804688,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9877602458000183,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.947676658630371,
+          "ball_dist_delta": 0.35564470291137695,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9991014003753662,
+          "finite": true
+        }
       },
       "ball_over_nz2": {
-        "grad_norm": 0.000266742572421208,
-        "grad_norm_ratio_vs_premap": 0.2859491683916831,
-        "cosine_vs_premap_grad": 0.7494077682495117,
-        "encoder_grad_norm": 0.013609778136014938,
-        "loss_value": 0.0004029696574434638,
-        "encoder_grad_ratio_vs_reconstruction": 31.244277586800163,
-        "one_step_ball_dist_before": 1.2994250059127808,
-        "one_step_ball_dist_after": 1.2879202365875244,
-        "one_step_ball_dist_delta": -0.011504769325256348
+        "loss_value": 0.00016835780115798116,
+        "codebook_grad_norm": 0.0006771376356482506,
+        "encoder_grad_norm": 0.00043231769814155996,
+        "encoder_over_reconstruction": 1.1801075563533991,
+        "cosine_encoder_grad_vs_premap": 0.03880397522762686,
+        "step_codebook": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.5174455642700195,
+          "ball_dist_delta": -0.07458639144897461,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9877602458000183,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.863711833953857,
+          "ball_dist_delta": 0.2716798782348633,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9988489151000977,
+          "finite": true
+        }
       },
       "tangent": {
-        "grad_norm": 0.6872466206550598,
-        "grad_norm_ratio_vs_premap": 736.7312906692365,
-        "cosine_vs_premap_grad": -0.033803217113018036,
-        "encoder_grad_norm": 12.415492057800293,
-        "loss_value": 1.3810436725616455,
-        "encoder_grad_ratio_vs_reconstruction": 28502.52784092845,
-        "one_step_ball_dist_before": 1.2994250059127808,
-        "one_step_ball_dist_after": 1.2929613590240479,
-        "one_step_ball_dist_delta": -0.00646364688873291
+        "loss_value": 1.9278538227081299,
+        "codebook_grad_norm": 37.497310638427734,
+        "encoder_grad_norm": 19.85022735595703,
+        "encoder_over_reconstruction": 54185.62182117128,
+        "cosine_encoder_grad_vs_premap": 0.9798684290205395,
+        "step_codebook": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.709000110626221,
+          "ball_dist_delta": 0.11696815490722656,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9877602458000183,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 11.547150611877441,
+          "ball_dist_delta": 6.955118656158447,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9990137219429016,
+          "finite": true
+        }
+      },
+      "geo2": {
+        "loss_value": 46.620208740234375,
+        "codebook_grad_norm": 126.18047332763672,
+        "encoder_grad_norm": 456.48345947265625,
+        "encoder_over_reconstruction": 1246073.3904482166,
+        "cosine_encoder_grad_vs_premap": 0.9892519103547006,
+        "step_codebook": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 4.483823776245117,
+          "ball_dist_delta": -0.10820817947387695,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.9877602458000183,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 4.592031955718994,
+          "ball_dist_after": 11.227399826049805,
+          "ball_dist_delta": 6.6353678703308105,
+          "item_radius_median_before": 0.9877602458000183,
+          "item_radius_median_after": 0.998833179473877,
+          "finite": true
+        }
       },
       "_reconstruction_only": {
-        "encoder_grad_norm": 0.00043559266487136483,
-        "loss_value": 0.00015309808077290654
+        "loss_value": 0.00019234877254348248,
+        "encoder_grad_norm": 0.0003663375391624868
       }
-    },
-    "after_tangent_step": {
-      "item_r_gt_0.99": 0.046875,
-      "code_r_gt_0.99": 0.4453125,
-      "code_r_median": 0.9814447164535522
     }
   },
   "hyper_l1_s42": {
-    "normalizer": 6.820980942516287,
-    "curvature": 1.0,
+    "normalizer_used": 11.921757725170167,
+    "normalizer_recorded": 11.921757725170167,
+    "normalizer_reestimated_from_final_encoder": 6.820980942516287,
     "before": {
-      "item_r_gt_0.99": 0.005859375,
-      "code_r_gt_0.99": 0.01953125,
-      "code_r_median": 0.8898395895957947
+      "item_r_gt_0.99": 0.0693359375,
+      "code_r_gt_0.99": 0.3984375,
+      "code_r_median": 0.986179530620575
+    },
+    "ball_radius_with_recorded_normalizer": {
+      "item_median": 0.9256115555763245,
+      "item_share_gt_0.99": 0.0693359375,
+      "code_median": 0.986179530620575,
+      "code_share_gt_0.99": 0.3984375
     },
     "gradient": {
       "premap": {
-        "grad_norm": 0.003672898281365633,
-        "grad_norm_ratio_vs_premap": 1.0,
-        "cosine_vs_premap_grad": 0.9999999403953552,
-        "encoder_grad_norm": 0.003937292844057083,
         "loss_value": 0.0009888906497508287,
-        "encoder_grad_ratio_vs_reconstruction": 2.4940298959819462,
-        "one_step_ball_dist_before": 1.7189109325408936,
-        "one_step_ball_dist_after": 1.7183951139450073,
-        "one_step_ball_dist_delta": -0.0005158185958862305
+        "codebook_grad_norm": 0.003672898281365633,
+        "encoder_grad_norm": 0.003937292844057083,
+        "encoder_over_reconstruction": 11.79839830208998,
+        "cosine_encoder_grad_vs_premap": 1.0000000262036848,
+        "step_codebook": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 3.0512242317199707,
+          "ball_dist_delta": 0.01101994514465332,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9256115555763245,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 10.289896965026855,
+          "ball_dist_delta": 7.249692678451538,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9623878598213196,
+          "finite": true
+        }
       },
       "ball": {
-        "grad_norm": 0.11917157471179962,
-        "grad_norm_ratio_vs_premap": 32.44619523399652,
-        "cosine_vs_premap_grad": 0.996894359588623,
-        "encoder_grad_norm": 0.05884925648570061,
-        "loss_value": 0.02030312642455101,
-        "encoder_grad_ratio_vs_reconstruction": 37.27734025503917,
-        "one_step_ball_dist_before": 1.7189109325408936,
-        "one_step_ball_dist_after": 1.7183952331542969,
-        "one_step_ball_dist_delta": -0.0005156993865966797
+        "loss_value": 0.03050485998392105,
+        "codebook_grad_norm": 0.2479812502861023,
+        "encoder_grad_norm": 0.050706978887319565,
+        "encoder_over_reconstruction": 151.9473296255507,
+        "cosine_encoder_grad_vs_premap": 0.7181429999129129,
+        "step_codebook": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 3.0343785285949707,
+          "ball_dist_delta": -0.00582575798034668,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9256115555763245,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 5.443288326263428,
+          "ball_dist_delta": 2.4030840396881104,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9504876732826233,
+          "finite": true
+        }
       },
       "ball_over_nz2": {
-        "grad_norm": 0.0025614090263843536,
-        "grad_norm_ratio_vs_premap": 0.697380877488387,
-        "cosine_vs_premap_grad": 0.996894359588623,
-        "encoder_grad_norm": 0.06003061681985855,
-        "loss_value": 0.00043638446368277073,
-        "encoder_grad_ratio_vs_reconstruction": 38.025658479771764,
-        "one_step_ball_dist_before": 1.7189109325408936,
-        "one_step_ball_dist_after": 1.71839439868927,
-        "one_step_ball_dist_delta": -0.0005165338516235352
+        "loss_value": 0.000214629020774737,
+        "codebook_grad_norm": 0.001744770328514278,
+        "encoder_grad_norm": 0.00035676907282322645,
+        "encoder_over_reconstruction": 1.0690857372697737,
+        "cosine_encoder_grad_vs_premap": 0.7181410443737186,
+        "step_codebook": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 3.0343706607818604,
+          "ball_dist_delta": -0.005833625793457031,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9256115555763245,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 5.260402202606201,
+          "ball_dist_delta": 2.220197916030884,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9445117712020874,
+          "finite": true
+        }
       },
       "tangent": {
-        "grad_norm": 5.32923698425293,
-        "grad_norm_ratio_vs_premap": 1450.9623125940334,
-        "cosine_vs_premap_grad": 0.9463576078414917,
-        "encoder_grad_norm": 23.722755432128906,
-        "loss_value": 1.133256196975708,
-        "encoder_grad_ratio_vs_reconstruction": 15026.888678626268,
-        "one_step_ball_dist_before": 1.7189109325408936,
-        "one_step_ball_dist_after": 1.7038099765777588,
-        "one_step_ball_dist_delta": -0.015100955963134766
+        "loss_value": 3.1033387184143066,
+        "codebook_grad_norm": 30.482126235961914,
+        "encoder_grad_norm": 65.74897003173828,
+        "encoder_over_reconstruction": 197021.80333309728,
+        "cosine_encoder_grad_vs_premap": 0.9996726155525535,
+        "step_codebook": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 3.096143960952759,
+          "ball_dist_delta": 0.055939674377441406,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9256115555763245,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 10.616477966308594,
+          "ball_dist_delta": 7.576273679733276,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9641867876052856,
+          "finite": true
+        }
+      },
+      "geo2": {
+        "loss_value": 13.789411544799805,
+        "codebook_grad_norm": 72.33324432373047,
+        "encoder_grad_norm": 292.0830383300781,
+        "encoder_over_reconstruction": 875249.1013474928,
+        "cosine_encoder_grad_vs_premap": 0.9996728271469495,
+        "step_codebook": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 3.0229299068450928,
+          "ball_dist_delta": -0.01727437973022461,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9256115555763245,
+          "finite": true
+        },
+        "step_encoder": {
+          "ball_dist_before": 3.0402042865753174,
+          "ball_dist_after": 10.609138488769531,
+          "ball_dist_delta": 7.568934202194214,
+          "item_radius_median_before": 0.9256115555763245,
+          "item_radius_median_after": 0.9641602635383606,
+          "finite": true
+        }
       },
       "_reconstruction_only": {
-        "encoder_grad_norm": 0.0015786871081218123,
-        "loss_value": 0.0002693092101253569
+        "loss_value": 0.00017415154434274882,
+        "encoder_grad_norm": 0.0003337141824886203
       }
-    },
-    "after_tangent_step": {
-      "item_r_gt_0.99": 0.005859375,
-      "code_r_gt_0.99": 0.01953125,
-      "code_r_median": 0.8898395895957947
     }
   }
 }
