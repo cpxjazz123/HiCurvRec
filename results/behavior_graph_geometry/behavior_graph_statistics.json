@@ -120,5 +120,457 @@
     "items_with_an_incoming_transition": 24524,
     "items_with_an_undirected_edge": 24556,
     "items_with_no_transition_at_all": 0
+  },
+  "power_law_analysis": {
+    "method": {
+      "xmin": "chosen by minimising the KS distance over candidate xmin, Clauset et al.",
+      "alpha": "discrete MLE, alpha = 1 + n / sum(ln(x / (xmin - 0.5)))",
+      "alternatives": "truncated (conditional) MLE on the SAME tail, KS against the conditional CDF",
+      "comparison": "normalised log-likelihood ratio R ~ N(0,1) under the null that the two models are indistinguishable",
+      "seed": 42,
+      "caveat": "a straight log-log CCDF is not evidence by itself; the verdict fields separate long tail, power-law support and popularity concentration"
+    },
+    "distributions": {
+      "item_interaction_count": {
+        "name": "item_interaction_count",
+        "note": "how often an item appears anywhere in a user sequence",
+        "n_positive": 24556,
+        "min": 1.0,
+        "max": 1914.0,
+        "mean": 16.165417820491935,
+        "median": 8.0,
+        "std": 40.013067010076924,
+        "gini": 0.5777701834899434,
+        "share_top_1pct": 0.18290348097279813,
+        "share_top_5pct": 0.38020647020591597,
+        "share_top_10pct": 0.4998639654573028,
+        "powerlaw": {
+          "xmin": 24.0,
+          "alpha": 2.3762513952286524,
+          "ks": 0.0604031687514493,
+          "n_tail": 3368,
+          "loglik": -15371.558238201196
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.050475059382422804,
+            "loglik": -15262.958029992431,
+            "params": {
+              "mu": -2.668193527808941,
+              "sigma": 2.2474009921453764
+            },
+            "vuong_vs_powerlaw": {
+              "R": -27.70585017890733,
+              "p_two_sided": 0.0,
+              "n": 3368,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.18597718461021817,
+            "loglik": -15964.984315942595,
+            "params": {
+              "scale": 42.1062945368171
+            },
+            "vuong_vs_powerlaw": {
+              "R": 7.587245737565978,
+              "p_two_sided": 3.26405569239796e-14,
+              "n": 3368,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 17.875,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "item_degree_undirected": {
+        "name": "item_degree_undirected",
+        "note": "distinct neighbours in the undirected graph",
+        "n_positive": 24556,
+        "min": 1.0,
+        "max": 2220.0,
+        "mean": 25.687489819188794,
+        "median": 13.0,
+        "std": 52.94705554172837,
+        "gini": 0.5585270150187466,
+        "share_top_1pct": 0.15664841419063955,
+        "share_top_5pct": 0.3520471414846968,
+        "share_top_10pct": 0.4753020853480283,
+        "powerlaw": {
+          "xmin": 29.0,
+          "alpha": 2.3819587357766125,
+          "ks": 0.046444144976952324,
+          "n_tail": 5020,
+          "loglik": -23844.217095251028
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.047279871355190614,
+            "loglik": -23703.137647030468,
+            "params": {
+              "mu": -1.509491001407795,
+              "sigma": 2.088954954359288
+            },
+            "vuong_vs_powerlaw": {
+              "R": -27.72938036999766,
+              "p_two_sided": 0.0,
+              "n": 5020,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.17691220025146076,
+            "loglik": -24612.748946204847,
+            "params": {
+              "scale": 49.54780876494024
+            },
+            "vuong_vs_powerlaw": {
+              "R": 9.248878466114457,
+              "p_two_sided": 0.0,
+              "n": 5020,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 16.726923076923132,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "item_strength_undirected": {
+        "name": "item_strength_undirected",
+        "note": "summed undirected transition weight",
+        "n_positive": 24556,
+        "min": 1.0,
+        "max": 3262.0,
+        "mean": 27.6526307216159,
+        "median": 13.0,
+        "std": 68.65117382490764,
+        "gini": 0.5813250429438509,
+        "share_top_1pct": 0.18346690465040247,
+        "share_top_5pct": 0.38111416445029583,
+        "share_top_10pct": 0.5012561889025356,
+        "powerlaw": {
+          "xmin": 30.0,
+          "alpha": 2.3393662739321215,
+          "ks": 0.04353820424641915,
+          "n_tail": 4995,
+          "loglik": -24169.13413018243
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.046646646646646646,
+            "loglik": -24044.921123818836,
+            "params": {
+              "mu": -4.16765172170793,
+              "sigma": 2.554309472199765
+            },
+            "vuong_vs_powerlaw": {
+              "R": -31.113051400596444,
+              "p_two_sided": 0.0,
+              "n": 4995,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.20028710549187434,
+            "loglik": -25240.278826079273,
+            "params": {
+              "scale": 57.576176176176176
+            },
+            "vuong_vs_powerlaw": {
+              "R": 9.96896374567486,
+              "p_two_sided": 0.0,
+              "n": 4995,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 18.57307692307698,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "out_degree_weighted": {
+        "name": "out_degree_weighted",
+        "note": "summed count of transitions leaving the item",
+        "n_positive": 24474,
+        "min": 1.0,
+        "max": 1667.0,
+        "mean": 13.872640353027704,
+        "median": 7.0,
+        "std": 34.35765528597719,
+        "gini": 0.5818515088606876,
+        "share_top_1pct": 0.1824551792388644,
+        "share_top_5pct": 0.3796370748028829,
+        "share_top_10pct": 0.4997923532998153,
+        "powerlaw": {
+          "xmin": 22.0,
+          "alpha": 2.393025294809479,
+          "ks": 0.061905924021543206,
+          "n_tail": 3117,
+          "loglik": -13883.54469119316
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.05453962143086301,
+            "loglik": -13774.477277680879,
+            "params": {
+              "mu": -3.1809582122987026,
+              "sigma": 2.293439184039647
+            },
+            "vuong_vs_powerlaw": {
+              "R": -30.210533680968386,
+              "p_two_sided": 0.0,
+              "n": 3117,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.18467306391232852,
+            "loglik": -14414.857255501454,
+            "params": {
+              "scale": 37.50946422842477
+            },
+            "vuong_vs_powerlaw": {
+              "R": 7.171998170849788,
+              "p_two_sided": 7.391864897954292e-13,
+              "n": 3117,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 17.428571428571427,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "in_degree_weighted": {
+        "name": "in_degree_weighted",
+        "note": "summed count of transitions entering the item",
+        "n_positive": 24524,
+        "min": 1.0,
+        "max": 1595.0,
+        "mean": 13.844356548687001,
+        "median": 6.0,
+        "std": 34.43939437692234,
+        "gini": 0.584228407106157,
+        "share_top_1pct": 0.18411340749707675,
+        "share_top_5pct": 0.3826766690523947,
+        "share_top_10pct": 0.5028319475493271,
+        "powerlaw": {
+          "xmin": 24.0,
+          "alpha": 2.4117480872795154,
+          "ks": 0.062217252973312515,
+          "n_tail": 2804,
+          "loglik": -12674.799680008082
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.05349500713266762,
+            "loglik": -12583.592743662462,
+            "params": {
+              "mu": -3.2446884528108617,
+              "sigma": 2.301671416241394
+            },
+            "vuong_vs_powerlaw": {
+              "R": -27.66083439637718,
+              "p_two_sided": 0.0,
+              "n": 2804,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.18551530325643417,
+            "loglik": -13147.717987552352,
+            "params": {
+              "scale": 40.001426533523535
+            },
+            "vuong_vs_powerlaw": {
+              "R": 7.04332425924327,
+              "p_two_sided": 1.8771650900362147e-12,
+              "n": 2804,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 20.166666666666668,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "out_neighbours": {
+        "name": "out_neighbours",
+        "note": "distinct successors of the item",
+        "n_positive": 24474,
+        "min": 1.0,
+        "max": 1295.0,
+        "mean": 13.22354335212879,
+        "median": 7.0,
+        "std": 28.95245388320824,
+        "gini": 0.567175099390102,
+        "share_top_1pct": 0.1644671587878863,
+        "share_top_5pct": 0.3604762184326073,
+        "share_top_10pct": 0.4829266483949412,
+        "powerlaw": {
+          "xmin": 22.0,
+          "alpha": 2.4405599105038194,
+          "ks": 0.06491406302763136,
+          "n_tail": 3038,
+          "loglik": -13357.718245179844
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.05924950625411455,
+            "loglik": -13244.62289560571,
+            "params": {
+              "mu": -1.6159337375608978,
+              "sigma": 1.9976367266493953
+            },
+            "vuong_vs_powerlaw": {
+              "R": -27.647284588958485,
+              "p_two_sided": 0.0,
+              "n": 3038,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.16755619366818836,
+            "loglik": -13748.582244581972,
+            "params": {
+              "scale": 33.97202106649111
+            },
+            "vuong_vs_powerlaw": {
+              "R": 6.3420750966985215,
+              "p_two_sided": 2.2669066623848266e-10,
+              "n": 3038,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 16.142857142857142,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "in_neighbours": {
+        "name": "in_neighbours",
+        "note": "distinct predecessors of the item",
+        "n_positive": 24524,
+        "min": 1.0,
+        "max": 1226.0,
+        "mean": 13.196582939161637,
+        "median": 6.0,
+        "std": 28.5268170078783,
+        "gini": 0.5687874857733852,
+        "share_top_1pct": 0.16403457002221652,
+        "share_top_5pct": 0.3622961811681751,
+        "share_top_10pct": 0.48497835511211773,
+        "powerlaw": {
+          "xmin": 24.0,
+          "alpha": 2.466668837039083,
+          "ks": 0.06287585366865207,
+          "n_tail": 2744,
+          "loglik": -12226.032189691483
+        },
+        "alternatives": {
+          "lognormal": {
+            "family": "lognormal",
+            "ks": 0.05721574344023324,
+            "loglik": -12130.610893017969,
+            "params": {
+              "mu": -1.628971411691546,
+              "sigma": 1.9958531254310399
+            },
+            "vuong_vs_powerlaw": {
+              "R": -25.907872075859817,
+              "p_two_sided": 0.0,
+              "n": 2744,
+              "favours": "model_2"
+            }
+          },
+          "exponential": {
+            "family": "exponential",
+            "ks": 0.16969388165904487,
+            "loglik": -12562.665445963767,
+            "params": {
+              "scale": 35.81013119533527
+            },
+            "vuong_vs_powerlaw": {
+              "R": 6.256752345120028,
+              "p_two_sided": 3.9307690435919085e-10,
+              "n": 2744,
+              "favours": "model_1"
+            }
+          }
+        },
+        "verdict": {
+          "long_tail": true,
+          "tail_ratio_p99_over_median": 18.666666666666668,
+          "powerlaw_supported_vs_lognormal": false,
+          "powerlaw_supported_vs_exponential": true,
+          "is_only_popularity_concentration": false
+        }
+      },
+      "transition_weight": {
+        "name": "transition_weight",
+        "note": "how often a given directed transition was observed",
+        "n_positive": 323633,
+        "min": 1.0,
+        "max": 37.0,
+        "mean": 1.0490864652244982,
+        "median": 1.0,
+        "std": 0.38631282745600326,
+        "gini": 0.045722832469357606,
+        "share_top_1pct": 0.03504958485386679,
+        "share_top_5pct": 0.09445126782300843,
+        "share_top_10pct": 0.1421098671944722,
+        "powerlaw": {
+          "xmin": NaN,
+          "alpha": NaN,
+          "ks": Infinity,
+          "n_tail": 0
+        },
+        "status": "no admissible power-law fit"
+      },
+      "self_loop_count": {
+        "name": "self_loop_count",
+        "note": "repeated consecutive purchases of one item",
+        "n": 0,
+        "status": "too few positive values"
+      }
+    }
   }
 }
