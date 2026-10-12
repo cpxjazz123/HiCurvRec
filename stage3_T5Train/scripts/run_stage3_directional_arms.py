@@ -4,11 +4,12 @@ import os
 import shutil
 import sys
 
-ARM = "resample_proj_dir"
+ARM = "resample_l1only"
 ARM_CODE_PATHS = {
     "resample": "resample/item_sids.json",
     "resample_proj_sym": "resample_proj_sym/item_sids.json",
     "resample_proj_dir": "resample_proj_dir/item_sids.json",
+    "resample_l1only": "resample_l1only/item_sids.json",
 }
 if ARM not in ARM_CODE_PATHS:
     raise ValueError(f"Unsupported directional Stage2 arm: {ARM}")

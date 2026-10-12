@@ -82,6 +82,9 @@ _ARM_DIR = {
     "resample_s44":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
     "resample_proj_sym": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym",
     "resample_proj_dir": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir",
+    "resample_l1only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
+    "resample_l2only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l2only",
+    "resample_l3only":  "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l3only",
 }
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
@@ -91,6 +94,8 @@ CHECKPOINT     = _OUT / "rqvae_best.pth"
 LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs") / EXPERIMENT_ARM
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
+_ARM_ACTIVE_LEVELS = {"resample_l1only": (0,), "resample_l2only": (1,), "resample_l3only": (2,)}
+ACTIVE_LEVELS = _ARM_ACTIVE_LEVELS.get(EXPERIMENT_ARM, (0, 1, 2))
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -382,7 +387,7 @@ def behavior_contrastive_loss(
     """iter48's three-level contrastive loss over residual vectors."""
     batch_size = int(source_ids.shape[0])
     losses: list[torch.Tensor] = []
-    for level in range(residuals.shape[0]):
+    for level in ACTIVE_LEVELS:
         source = residuals[level, :batch_size]
         candidates = residuals[level, batch_size:]
         logits = -torch.cdist(source, candidates, p=2) / BEHAVIOR_TEMPERATURE
@@ -541,7 +546,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters())
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters())
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
