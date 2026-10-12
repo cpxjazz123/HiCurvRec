@@ -1,9 +1,10 @@
 """Stage3 launcher for the directional-contrastive Stage2 arms."""
 import importlib.util
 import os
+import shutil
 import sys
 
-ARM = "resample"
+ARM = "resample_proj_dir"
 ARM_CODE_PATHS = {
     "resample": "resample/item_sids.json",
     "resample_proj_sym": "resample_proj_sym/item_sids.json",
@@ -48,5 +49,8 @@ os.environ.update(
 if "RANK" in os.environ:
     trainer.main()
 else:
-    print(f"[{trainer.RQVAE_VARIANT}] launching frozen Stage3 torchrun", flush=True)
+    sync_dir = os.path.join(trainer.LOG_PATH, "_ddp_sync")
+    if os.path.exists(sync_dir):
+        shutil.rmtree(sync_dir)
+    print(f"[{trainer.RQVAE_VARIANT}] cleared DDP sync directory: {sync_dir}", flush=True)
     trainer._launch_via_torchrun()
