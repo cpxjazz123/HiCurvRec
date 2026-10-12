@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyper_l1_ang_s42"
+EXPERIMENT_ARM = "hyper_l1_br_euclid_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -220,18 +220,6 @@ _ARMS = {
                                "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                                "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
                                "l1_boundary_repulsion": True, "l1_br_geometry": "euclid"},
-    # Step 5, in the form the step-3/4 result permits. The boundary-repulsion
-    # premise holds in its Euclidean form (that arm is the tree's best) but not in
-    # the Poincare form, which collapses the representation whenever the ball
-    # metric enters the gradient path. So the angular term is measured in the
-    # LOCAL EUCLIDEAN CHART at the anchor's L1 prototype: direction only, no ball
-    # metric, one factor on top of the accepted hyper_l1_s42. Hard negatives must
-    # leave the anchor's residual direction; positives that correctly share the
-    # anchor's codeword must keep it.
-    "hyper_l1_ang_s42": {"group_distance": "euclid", "radial_mode": "mse",
-                         "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
-                         "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
-                         "l1_angular": True},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -310,23 +298,6 @@ L1_BR_WEIGHT = 0.05          # weight on the hard-negative hinge
 L1_BR_POS_WEIGHT = 0.02      # weight on the positive-preservation hinge
 L1_BR_MARGIN = 0.05          # dimensionless, both hinges
 L1_BR_MAX_HARD = 512         # bounded number of hard negatives used per step
-# === Step 5 of the hyperbolic programme: local-chart angular separation ===
-#
-# One factor on top of the accepted hyper_l1_s42. c is the anchor's L1 prototype
-# (detached) and the residual direction is u = z - c, normalised. A canonical-pair
-# negative that shares the anchor's codeword must leave the anchor's residual
-# DIRECTION and a positive that correctly shares it must keep it, both measured as
-# a cosine in the LOCAL EUCLIDEAN CHART at the prototype -- direction only, no
-# ball metric, because measured in the Poincare metric the same kind of term
-# collapsed the representation to a single code (see hyper_l1_br_s42).
-#
-# The anchor's direction is detached so the term cannot satisfy itself by rotating
-# the target, and the codeword is detached so the prototypes never move.
-L1_ANGULAR_ENABLED = _ARM.get("l1_angular", False)
-L1_ANG_MARGIN = 0.2          # cosine margin: the boundary cosine is 1 - margin
-L1_ANG_WEIGHT = 0.05         # weight on the hard-negative direction hinge
-L1_ANG_POS_WEIGHT = 0.02     # weight on the positive direction hinge
-L1_ANG_MAX = 512             # bounded number of hard negatives used per step
 N_ITEMS = 24587
 # === Step 4 of the behaviour programme: cluster-consistency on the L1 assignment ===
 #
@@ -1145,101 +1116,6 @@ def l1_boundary_repulsion(
     return loss_hard, loss_pos, stats
 
 
-def l1_angular_separation(
-    raw_module,
-    anchor_latent: torch.Tensor,
-    pos_latent: torch.Tensor,
-    neg_latent: torch.Tensor,
-    margin: float,
-    max_hard: int,
-) -> tuple[torch.Tensor, torch.Tensor, dict]:
-    """Direction-only separation in the local Euclidean chart at the L1 prototype.
-
-    ``anchor_latent`` is (N, D), ``pos_latent`` (N, D), ``neg_latent`` (N, K, D).
-
-    c is the anchor's L1 prototype (detached) and the residual direction is
-    u = z - c, normalised. A canonical-pair negative that shares the anchor's
-    codeword is a HARD negative and must leave the anchor's residual DIRECTION;
-    a positive that correctly shares it must keep it. Both are a cosine in the
-    local Euclidean chart at the prototype:
-
-        L_hard = mean_j relu(cos(u_n_j, u_a) - (1 - margin))
-        L_pos  = mean_j relu((1 - margin) - cos(u_p_j, u_a))
-
-    Direction only, so the term is scale-free and no ball metric enters the
-    gradient path -- measured in the Poincare metric the analogous hinge
-    collapsed the representation to a single code (hyper_l1_br_s42). The anchor's
-    direction and the codewords are detached, so the term cannot satisfy itself
-    by rotating the target or moving the prototypes.
-    """
-    layer = raw_module.rq.vq_layers[0]
-    codes = layer.get_code_embs().detach()
-
-    def d2(z: torch.Tensor) -> torch.Tensor:
-        z = z.reshape(-1, z.shape[-1])
-        return (
-            z.pow(2).sum(-1, keepdim=True)
-            - 2 * z @ codes.t()
-            + codes.pow(2).sum(-1).unsqueeze(0)
-        )
-
-    def unit(u: torch.Tensor) -> torch.Tensor:
-        return u / u.norm(dim=-1, keepdim=True).clamp_min(1e-6)
-
-    def bounded(index: torch.Tensor) -> torch.Tensor:
-        if index.numel() > max_hard:
-            stride = int(index.numel() // max_hard) + 1
-            index = index[::stride][:max_hard]
-        return index
-
-    n_neg = neg_latent.shape[1]
-    with torch.no_grad():
-        code_a = d2(anchor_latent).argmin(dim=1)                 # (N,)
-        code_n = d2(neg_latent).argmin(dim=1).view(-1, n_neg)    # (N, K)
-        code_p = d2(pos_latent).argmin(dim=1)                    # (N,)
-    c_a = codes[code_a]                                          # (N, D)
-    u_a = unit(anchor_latent - c_a)
-    u_p = unit(pos_latent - c_a)
-    u_n = unit(neg_latent.reshape(-1, neg_latent.shape[-1]) - c_a.repeat_interleave(n_neg, dim=0))
-    # The anchor's direction is the target (detached); the item directions keep
-    # their gradient. Both cosines must stay OUTSIDE any no_grad block, or the
-    # term would carry no gradient at all.
-    u_a_t = u_a.detach()
-    cos_p = (u_p * u_a_t).sum(-1)                                # (N,)
-    cos_n = (u_n * u_a_t.repeat_interleave(n_neg, dim=0)).sum(-1).view(-1, n_neg)
-
-    threshold = 1.0 - margin
-    hard = (code_n == code_a.unsqueeze(1)).reshape(-1)
-    idx_hard = bounded(hard.nonzero(as_tuple=True)[0])
-    if idx_hard.numel() > 0:
-        loss_hard = torch.relu(cos_n.reshape(-1)[idx_hard] - threshold).mean()
-        mean_cos_hard = float(cos_n.reshape(-1)[idx_hard].detach().mean())
-        frac_hard_above = float((cos_n.reshape(-1)[idx_hard] > threshold).float().mean())
-    else:
-        loss_hard = torch.zeros((), device=anchor_latent.device, dtype=anchor_latent.dtype)
-        mean_cos_hard = 0.0
-        frac_hard_above = 0.0
-
-    pos_ok = (code_p == code_a)
-    idx_pos = bounded(pos_ok.nonzero(as_tuple=True)[0])
-    if idx_pos.numel() > 0:
-        loss_pos = torch.relu(threshold - cos_p[idx_pos]).mean()
-        mean_cos_pos = float(cos_p[idx_pos].detach().mean())
-    else:
-        loss_pos = torch.zeros((), device=anchor_latent.device, dtype=anchor_latent.dtype)
-        mean_cos_pos = 0.0
-
-    stats = {
-        "n_hard": int(idx_hard.numel()),
-        "n_pos_ok": int(idx_pos.numel()),
-        "mean_cos_hard": mean_cos_hard,
-        "mean_cos_pos": mean_cos_pos,
-        "frac_hard_above": frac_hard_above,
-        "threshold": float(threshold),
-    }
-    return loss_hard, loss_pos, stats
-
-
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
@@ -1660,7 +1536,7 @@ def main() -> None:
     fork_siblings = torch.from_numpy(siblings_np)
     canonical = (
         load_canonical_pairs(CANONICAL_PAIRS)
-        if (L1_SOFT_ASSIGN_ENABLED or L1_BOUNDARY_REPULSION_ENABLED or L1_ANGULAR_ENABLED)
+        if (L1_SOFT_ASSIGN_ENABLED or L1_BOUNDARY_REPULSION_ENABLED)
         else None
     )
     behaviour_cluster = None
@@ -1883,9 +1759,6 @@ def main() -> None:
         l1_br_hard: list[float] = []
         l1_br_pos: list[float] = []
         l1_br_nhard: list[int] = []
-        l1_ang_hard: list[float] = []
-        l1_ang_pos: list[float] = []
-        l1_ang_nhard: list[int] = []
         epoch_weight = behavior_weight(epoch)
         _epoch_t0 = time.time()
         for batch, row_index in loader:
@@ -1978,32 +1851,6 @@ def main() -> None:
                     l1_br_hard.append(float(br_hard.detach()))
                     l1_br_pos.append(float(br_pos.detach()))
                     l1_br_nhard.append(br_stats["n_hard"])
-            if L1_ANGULAR_ENABLED and epoch_weight > 0.0:
-                # Same canonical rows: the negatives are the matched ones.
-                keys = [
-                    int(a) * N_ITEMS + int(b)
-                    for a, b in zip(source_ids.tolist(), target_ids.tolist())
-                ]
-                rows = [canonical["index"][k] for k in keys if k in canonical["index"]]
-                if rows:
-                    a_ids = torch.as_tensor(canonical["anchors"][rows], dtype=torch.long, device=device)
-                    p_ids = torch.as_tensor(canonical["positives"][rows], dtype=torch.long, device=device)
-                    n_ids = torch.as_tensor(canonical["negatives"][rows], dtype=torch.long, device=device)
-                    anchor_lat = raw_module.encoder(all_embeddings[a_ids.cpu()].to(device))
-                    pos_lat = raw_module.encoder(all_embeddings[p_ids.cpu()].to(device))
-                    neg_lat = raw_module.encoder(
-                        all_embeddings[n_ids.reshape(-1).cpu()].to(device)
-                    ).view(len(rows), n_ids.shape[1], -1)
-                    ang_hard, ang_pos, ang_stats = l1_angular_separation(
-                        raw_module, anchor_lat, pos_lat, neg_lat,
-                        L1_ANG_MARGIN, L1_ANG_MAX,
-                    )
-                    loss = loss + epoch_weight * (
-                        L1_ANG_WEIGHT * ang_hard + L1_ANG_POS_WEIGHT * ang_pos
-                    )
-                    l1_ang_hard.append(float(ang_hard.detach()))
-                    l1_ang_pos.append(float(ang_pos.detach()))
-                    l1_ang_nhard.append(ang_stats["n_hard"])
             # Behaviour-fork terms on the ball coordinates. They ramp with the
             # same epoch schedule as the behaviour term so the first half of
             # training still builds the reconstruction objective undisturbed.
@@ -2088,7 +1935,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, l1_ang_hard=float(np.mean(l1_ang_hard)) if l1_ang_hard else 0.0, l1_ang_pos=float(np.mean(l1_ang_pos)) if l1_ang_pos else 0.0, l1_ang_n_hard=float(np.mean(l1_ang_nhard)) if l1_ang_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -2116,7 +1963,7 @@ def main() -> None:
                     flush=True,
                 )
                 _record(
-                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, l1_ang_hard=float(np.mean(l1_ang_hard)) if l1_ang_hard else 0.0, l1_ang_pos=float(np.mean(l1_ang_pos)) if l1_ang_pos else 0.0, l1_ang_n_hard=float(np.mean(l1_ang_nhard)) if l1_ang_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr,
+                    rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, fork_radial=float(np.mean(fork_radials)) if fork_radials else 0.0, fork_angular=float(np.mean(fork_angulars)) if fork_angulars else 0.0, fork_radius_mean=float(np.mean(fork_radius_means)) if fork_radius_means else 0.0, fork_positive_distance=float(np.mean(fork_pos_cosines)) if fork_pos_cosines else 0.0, prefix_loss=float(np.mean(fork_prefixes)) if fork_prefixes else 0.0, radius_control_loss=float(np.mean(fork_controls)) if fork_controls else 0.0, l1_soft_loss=float(np.mean(l1_soft_losses)) if l1_soft_losses else 0.0, l1_soft_p_share_pos=float(np.mean(l1_soft_ppos)) if l1_soft_ppos else 0.0, l1_soft_p_share_neg=float(np.mean(l1_soft_pneg)) if l1_soft_pneg else 0.0, l1_br_hard=float(np.mean(l1_br_hard)) if l1_br_hard else 0.0, l1_br_pos=float(np.mean(l1_br_pos)) if l1_br_pos else 0.0, l1_br_n_hard=float(np.mean(l1_br_nhard)) if l1_br_nhard else 0.0, cluster_loss=float(np.mean(cluster_losses)) if cluster_losses else 0.0, cluster_target_prob=float(np.mean(cluster_target_probs)) if cluster_target_probs else 0.0, cluster_frac_on_target=float(np.mean(cluster_on_target)) if cluster_on_target else 0.0, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
