@@ -1,0 +1,102 @@
+{
+  "nce_euclid_group": {
+    "normalizer_recorded": 11.921757725170167,
+    "item_ball_radius_median": 0.9758989810943604,
+    "codeword_norm_median": 0.4988022446632385,
+    "codeword_ball_radius_median": 0.999985933303833,
+    "rules": {
+      "euclid": {
+        "distinct_codewords": 236,
+        "top10_share": 0.22145849432627,
+        "share_on_single_furthest_out": 0.0002440313987066336,
+        "chosen_norm_mean": 0.197981595993042,
+        "chosen_norm_std": 0.14741741120815277
+      },
+      "geodesic": {
+        "distinct_codewords": 51,
+        "top10_share": 0.7967218448773742,
+        "share_on_single_furthest_out": 0.0,
+        "chosen_norm_mean": 0.08960187435150146,
+        "chosen_norm_std": 0.027157709002494812
+      },
+      "angular_cos": {
+        "distinct_codewords": 247,
+        "top10_share": 0.11912799446862163,
+        "share_on_single_furthest_out": 0.0001220156993533168,
+        "chosen_norm_mean": 0.3497333824634552,
+        "chosen_norm_std": 0.26517120003700256
+      },
+      "geodesic_radius_norm": {
+        "distinct_codewords": 245,
+        "top10_share": 0.2442347582055558,
+        "share_on_single_furthest_out": 0.0006914222963354618,
+        "chosen_norm_mean": 0.7105222940444946,
+        "chosen_norm_std": 0.23005665838718414
+      },
+      "chart_tangent": {
+        "distinct_codewords": 247,
+        "top10_share": 0.11912799446862163,
+        "share_on_single_furthest_out": 0.0001220156993533168,
+        "chosen_norm_mean": 0.349778413772583,
+        "chosen_norm_std": 0.26518192887306213
+      }
+    },
+    "agreement_with_euclid": {
+      "euclid": 1.0,
+      "geodesic": 0.2337007361613861,
+      "angular_cos": 0.4884288445113271,
+      "geodesic_radius_norm": 0.06385488266156912,
+      "chart_tangent": 0.48834750071175825
+    }
+  },
+  "hyper_l1_s42": {
+    "normalizer_recorded": 11.921757725170167,
+    "item_ball_radius_median": 0.9079760313034058,
+    "codeword_norm_median": 0.20863094925880432,
+    "codeword_ball_radius_median": 0.986179530620575,
+    "rules": {
+      "euclid": {
+        "distinct_codewords": 98,
+        "top10_share": 0.9787285964127385,
+        "share_on_single_furthest_out": 0.0,
+        "chosen_norm_mean": 0.03554993495345116,
+        "chosen_norm_std": 0.04974909871816635
+      },
+      "geodesic": {
+        "distinct_codewords": 1,
+        "top10_share": 1.0,
+        "share_on_single_furthest_out": 0.0,
+        "chosen_norm_mean": 0.019295740872621536,
+        "chosen_norm_std": 0.0
+      },
+      "angular_cos": {
+        "distinct_codewords": 201,
+        "top10_share": 0.6318786350510432,
+        "share_on_single_furthest_out": 0.0013015007931020458,
+        "chosen_norm_mean": 0.14811871945858002,
+        "chosen_norm_std": 0.10334960371255875
+      },
+      "geodesic_radius_norm": {
+        "distinct_codewords": 62,
+        "top10_share": 0.9908488225485013,
+        "share_on_single_furthest_out": 0.9592467564159922,
+        "chosen_norm_mean": 0.5554418563842773,
+        "chosen_norm_std": 0.043514493852853775
+      },
+      "chart_tangent": {
+        "distinct_codewords": 201,
+        "top10_share": 0.6319599788506121,
+        "share_on_single_furthest_out": 0.0012608288933176068,
+        "chosen_norm_mean": 0.1480850726366043,
+        "chosen_norm_std": 0.1033150777220726
+      }
+    },
+    "agreement_with_euclid": {
+      "euclid": 1.0,
+      "geodesic": 0.9005165331272623,
+      "angular_cos": 0.3959816163012974,
+      "geodesic_radius_norm": 0.0,
+      "chart_tangent": 0.39606296010086633
+    }
+  }
+}
