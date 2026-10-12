@@ -1,0 +1,850 @@
+{
+  "falsification_framing": "Raw, RMS-normalized, globally median-distance-matched Euclidean, and log1p(Euclidean) preserve within-level ordering; their AUC must be bit-identical. Only Poincare may change ordering.",
+  "verdict_rule": "Negative only when Poincare AUC is inside the raw-Euclidean anchor-bootstrap 95% interval AND matched positive-negative discordance is below 0.01.",
+  "curvature_interpretation": "The specified radius-matched map makes tested curvature rankings equivalent; curvature changes the distance scale, not rankings, in these frozen representations.",
+  "encode_ball_scale_semantics": "encode_ball divides latent by point_rms = sqrt(mean(sum(latent**2))); the target-radius tangent_scale passed is normalizer * point_rms, so the effective raw-vector multiplier is normalizer. The normalizer-only sensitivity row deliberately reproduces the smaller scale obtained by passing normalizer directly.",
+  "tangent_scale_sensitivity": [
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.4392739362271916,
+      "effective_raw_vector_multiplier": 1.0912485979130362,
+      "point_rms_used_by_encode_ball": 0.4025424977106804,
+      "median_raw_norm": 0.39738906851872535,
+      "auc": 0.7782234414908713,
+      "ordering_error_rate": 0.2217765585091287,
+      "discordant_fraction_vs_euclidean": 0.016577428814681678,
+      "max_sqrt_c_norm": 0.680887568231404,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 0.8785478724543831,
+      "effective_raw_vector_multiplier": 2.1824971958260724,
+      "point_rms_used_by_encode_ball": 0.4025424977106804,
+      "median_raw_norm": 0.39738906851872535,
+      "auc": 0.7777599091855075,
+      "ordering_error_rate": 0.22224009081449247,
+      "discordant_fraction_vs_euclidean": 0.05733610822060354,
+      "max_sqrt_c_norm": 0.93042347922487,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 1.7570957449087663,
+      "effective_raw_vector_multiplier": 4.364994391652145,
+      "point_rms_used_by_encode_ball": 0.4025424977106804,
+      "median_raw_norm": 0.39738906851872535,
+      "auc": 0.7561044366663513,
+      "ordering_error_rate": 0.2438955633336487,
+      "discordant_fraction_vs_euclidean": 0.14526724056380663,
+      "max_sqrt_c_norm": 0.9974053043003019,
+      "near_boundary_fraction_ge_0.99": 0.006344816366372474
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 2.1824971958260724,
+      "effective_raw_vector_multiplier": 5.421780826218999,
+      "point_rms_used_by_encode_ball": 0.4025424977106804,
+      "median_raw_norm": 0.39738906851872535,
+      "auc": 0.7407794910604484,
+      "ordering_error_rate": 0.2592205089395516,
+      "discordant_fraction_vs_euclidean": 0.17970863683662852,
+      "max_sqrt_c_norm": 0.9994803262893018,
+      "near_boundary_fraction_ge_0.99": 0.0837841135559442
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.45087180321916037,
+      "effective_raw_vector_multiplier": 3.2044981810426836,
+      "point_rms_used_by_encode_ball": 0.1406996595867797,
+      "median_raw_norm": 0.13532548291412194,
+      "auc": 0.517415570901523,
+      "ordering_error_rate": 0.482584429098477,
+      "discordant_fraction_vs_euclidean": 0.03461356541481411,
+      "max_sqrt_c_norm": 0.749589327277989,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 0.9017436064383207,
+      "effective_raw_vector_multiplier": 6.408996362085367,
+      "point_rms_used_by_encode_ball": 0.1406996595867797,
+      "median_raw_norm": 0.13532548291412194,
+      "auc": 0.5099536467694636,
+      "ordering_error_rate": 0.49004635323053636,
+      "discordant_fraction_vs_euclidean": 0.09122126572698894,
+      "max_sqrt_c_norm": 0.9598526532016364,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 1.8034872128766415,
+      "effective_raw_vector_multiplier": 12.817992724170734,
+      "point_rms_used_by_encode_ball": 0.1406996595867797,
+      "median_raw_norm": 0.13532548291412194,
+      "auc": 0.5018276416611485,
+      "ordering_error_rate": 0.49817235833885154,
+      "discordant_fraction_vs_euclidean": 0.1590691514520859,
+      "max_sqrt_c_norm": 0.9991610913983722,
+      "near_boundary_fraction_ge_0.99": 0.023711717574327898
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 6.408996362085367,
+      "effective_raw_vector_multiplier": 45.550901693066805,
+      "point_rms_used_by_encode_ball": 0.1406996595867797,
+      "median_raw_norm": 0.13532548291412194,
+      "auc": 0.5065972944849115,
+      "ordering_error_rate": 0.49340270551508847,
+      "discordant_fraction_vs_euclidean": 0.18409800397313406,
+      "max_sqrt_c_norm": 0.9999999999980056,
+      "near_boundary_fraction_ge_0.99": 0.9924756985398788
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.4628905039742344,
+      "effective_raw_vector_multiplier": 4.510612667401512,
+      "point_rms_used_by_encode_ball": 0.10262253447731699,
+      "median_raw_norm": 0.09613999157609894,
+      "auc": 0.501271402894712,
+      "ordering_error_rate": 0.49872859710528805,
+      "discordant_fraction_vs_euclidean": 0.03609497682338473,
+      "max_sqrt_c_norm": 0.8147271460356034,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 0.9257810079484688,
+      "effective_raw_vector_multiplier": 9.021225334803024,
+      "point_rms_used_by_encode_ball": 0.10262253447731699,
+      "median_raw_norm": 0.09613999157609894,
+      "auc": 0.4966966228360609,
+      "ordering_error_rate": 0.503303377163939,
+      "discordant_fraction_vs_euclidean": 0.09005392110490966,
+      "max_sqrt_c_norm": 0.9793686522480347,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 1.8515620158969377,
+      "effective_raw_vector_multiplier": 18.042450669606048,
+      "point_rms_used_by_encode_ball": 0.10262253447731699,
+      "median_raw_norm": 0.09613999157609894,
+      "auc": 0.492258064516129,
+      "ordering_error_rate": 0.507741935483871,
+      "discordant_fraction_vs_euclidean": 0.14846655945511306,
+      "max_sqrt_c_norm": 0.9997827375673164,
+      "near_boundary_fraction_ge_0.99": 0.05177532842559076
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 9.021225334803024,
+      "effective_raw_vector_multiplier": 87.9068654925592,
+      "point_rms_used_by_encode_ball": 0.10262253447731699,
+      "median_raw_norm": 0.09613999157609894,
+      "auc": 0.5111966701352757,
+      "ordering_error_rate": 0.4888033298647243,
+      "discordant_fraction_vs_euclidean": 0.23154290038785355,
+      "max_sqrt_c_norm": 1.0,
+      "near_boundary_fraction_ge_0.99": 0.9999186562004311
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.5616468765597048,
+      "effective_raw_vector_multiplier": 2.828046519422676,
+      "point_rms_used_by_encode_ball": 0.19859888184383923,
+      "median_raw_norm": 0.1533391550912511,
+      "auc": 0.6455548197899915,
+      "ordering_error_rate": 0.3544451802100085,
+      "discordant_fraction_vs_euclidean": 0.022232522940119195,
+      "max_sqrt_c_norm": 0.9872575946763056,
+      "near_boundary_fraction_ge_0.99": 0.0
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 1.1232937531194096,
+      "effective_raw_vector_multiplier": 5.656093038845352,
+      "point_rms_used_by_encode_ball": 0.19859888184383923,
+      "median_raw_norm": 0.1533391550912511,
+      "auc": 0.6339116450666918,
+      "ordering_error_rate": 0.36608835493330816,
+      "discordant_fraction_vs_euclidean": 0.06075678743732854,
+      "max_sqrt_c_norm": 0.9999177744777847,
+      "near_boundary_fraction_ge_0.99": 0.023874405173465653
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 2.246587506238819,
+      "effective_raw_vector_multiplier": 11.312186077690704,
+      "point_rms_used_by_encode_ball": 0.19859888184383923,
+      "median_raw_norm": 0.1533391550912511,
+      "auc": 0.6106063759341595,
+      "ordering_error_rate": 0.38939362406584055,
+      "discordant_fraction_vs_euclidean": 0.12260145681581686,
+      "max_sqrt_c_norm": 0.9999999966192037,
+      "near_boundary_fraction_ge_0.99": 0.1240086224427543
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 5.656093038845352,
+      "effective_raw_vector_multiplier": 28.479984309744545,
+      "point_rms_used_by_encode_ball": 0.19859888184383923,
+      "median_raw_norm": 0.1533391550912511,
+      "auc": 0.5751262889036042,
+      "ordering_error_rate": 0.4248737110963958,
+      "discordant_fraction_vs_euclidean": 0.20553968404124492,
+      "max_sqrt_c_norm": 1.0,
+      "near_boundary_fraction_ge_0.99": 0.9999593281002156
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.6820730267639372,
+      "effective_raw_vector_multiplier": 7.343908053239765,
+      "point_rms_used_by_encode_ball": 0.09287603028513418,
+      "median_raw_norm": 0.05904897783350129,
+      "auc": 0.540630025541576,
+      "ordering_error_rate": 0.459369974458424,
+      "discordant_fraction_vs_euclidean": 0.0336108220603538,
+      "max_sqrt_c_norm": 0.9993234497093682,
+      "near_boundary_fraction_ge_0.99": 0.0015048602920242405
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 1.3641460535278744,
+      "effective_raw_vector_multiplier": 14.68781610647953,
+      "point_rms_used_by_encode_ball": 0.09287603028513418,
+      "median_raw_norm": 0.05904897783350129,
+      "auc": 0.538633998675622,
+      "ordering_error_rate": 0.461366001324378,
+      "discordant_fraction_vs_euclidean": 0.07136505534008135,
+      "max_sqrt_c_norm": 0.9999997709849644,
+      "near_boundary_fraction_ge_0.99": 0.057591410094765524
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 2.728292107055749,
+      "effective_raw_vector_multiplier": 29.37563221295906,
+      "point_rms_used_by_encode_ball": 0.09287603028513418,
+      "median_raw_norm": 0.05904897783350129,
+      "auc": 0.5357619903509602,
+      "ordering_error_rate": 0.46423800964903983,
+      "discordant_fraction_vs_euclidean": 0.10999905401570334,
+      "max_sqrt_c_norm": 0.9999999999999738,
+      "near_boundary_fraction_ge_0.99": 0.22040102493187458
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 14.68781610647953,
+      "effective_raw_vector_multiplier": 158.14431410760324,
+      "point_rms_used_by_encode_ball": 0.09287603028513418,
+      "median_raw_norm": 0.05904897783350129,
+      "auc": 0.53264591807776,
+      "ordering_error_rate": 0.46735408192224004,
+      "discordant_fraction_vs_euclidean": 0.28209062529562007,
+      "max_sqrt_c_norm": 1.0000000000000002,
+      "near_boundary_fraction_ge_0.99": 0.99963395290194
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "half_target_radius_scale",
+      "tangent_scale_passed": 0.6677060254246753,
+      "effective_raw_vector_multiplier": 8.457208210120477,
+      "point_rms_used_by_encode_ball": 0.07895111588072909,
+      "median_raw_norm": 0.05127581739421891,
+      "auc": 0.5365017500709488,
+      "ordering_error_rate": 0.4634982499290512,
+      "discordant_fraction_vs_euclidean": 0.03330810708542238,
+      "max_sqrt_c_norm": 0.9995096403648306,
+      "near_boundary_fraction_ge_0.99": 0.0010167974946109733
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "target_radius_scale",
+      "tangent_scale_passed": 1.3354120508493506,
+      "effective_raw_vector_multiplier": 16.914416420240954,
+      "point_rms_used_by_encode_ball": 0.07895111588072909,
+      "median_raw_norm": 0.05127581739421891,
+      "auc": 0.5350581780342446,
+      "ordering_error_rate": 0.4649418219657554,
+      "discordant_fraction_vs_euclidean": 0.0701466275659824,
+      "max_sqrt_c_norm": 0.9999998797147455,
+      "near_boundary_fraction_ge_0.99": 0.05384959531459715
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "double_target_radius_scale",
+      "tangent_scale_passed": 2.670824101698701,
+      "effective_raw_vector_multiplier": 33.82883284048191,
+      "point_rms_used_by_encode_ball": 0.07895111588072909,
+      "median_raw_norm": 0.05127581739421891,
+      "auc": 0.5340402989310378,
+      "ordering_error_rate": 0.46595970106896223,
+      "discordant_fraction_vs_euclidean": 0.10856115788477912,
+      "max_sqrt_c_norm": 0.9999999999999927,
+      "near_boundary_fraction_ge_0.99": 0.21893683653963478
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "curvature": 1.0,
+      "scale_name": "normalizer_passed_directly",
+      "tangent_scale_passed": 16.914416420240954,
+      "effective_raw_vector_multiplier": 214.23910519255293,
+      "point_rms_used_by_encode_ball": 0.07895111588072909,
+      "median_raw_norm": 0.05127581739421891,
+      "auc": 0.5192432125626715,
+      "ordering_error_rate": 0.4807567874373285,
+      "discordant_fraction_vs_euclidean": 0.3245388326553779,
+      "max_sqrt_c_norm": 1.0000000000000002,
+      "near_boundary_fraction_ge_0.99": 1.0
+    }
+  ],
+  "verdicts": [
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "c": 0.25,
+      "raw_auc": 0.776690946930281,
+      "poincare_auc": 0.7777599091855075,
+      "raw_auc_bootstrap_95_ci": [
+        0.7741683852048056,
+        0.7789866143222023
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.05733610822060354,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "c": 0.5,
+      "raw_auc": 0.776690946930281,
+      "poincare_auc": 0.7777599091855075,
+      "raw_auc_bootstrap_95_ci": [
+        0.7741683852048056,
+        0.7789866143222023
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.05733610822060354,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "c": 1.0,
+      "raw_auc": 0.776690946930281,
+      "poincare_auc": 0.7777599091855075,
+      "raw_auc_bootstrap_95_ci": [
+        0.7741683852048056,
+        0.7789866143222023
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.05733610822060354,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "c": 2.0,
+      "raw_auc": 0.776690946930281,
+      "poincare_auc": 0.7777599091855075,
+      "raw_auc_bootstrap_95_ci": [
+        0.7741683852048056,
+        0.7789866143222023
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.05733610822060354,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L1",
+      "c": 4.0,
+      "raw_auc": 0.776690946930281,
+      "poincare_auc": 0.7777599091855075,
+      "raw_auc_bootstrap_95_ci": [
+        0.7741683852048056,
+        0.7789866143222023
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.05733610822060354,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "c": 0.25,
+      "raw_auc": 0.5218787248131681,
+      "poincare_auc": 0.5099536467694636,
+      "raw_auc_bootstrap_95_ci": [
+        0.5192772679973512,
+        0.5241350865575631
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09122126572698894,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "c": 0.5,
+      "raw_auc": 0.5218787248131681,
+      "poincare_auc": 0.5099536467694636,
+      "raw_auc_bootstrap_95_ci": [
+        0.5192772679973512,
+        0.5241350865575631
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09122126572698894,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "c": 1.0,
+      "raw_auc": 0.5218787248131681,
+      "poincare_auc": 0.5099536467694636,
+      "raw_auc_bootstrap_95_ci": [
+        0.5192772679973512,
+        0.5241350865575631
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09122126572698894,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "c": 2.0,
+      "raw_auc": 0.5218787248131681,
+      "poincare_auc": 0.5099536467694636,
+      "raw_auc_bootstrap_95_ci": [
+        0.5192772679973512,
+        0.5241350865575631
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09122126572698894,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L2",
+      "c": 4.0,
+      "raw_auc": 0.5218787248131681,
+      "poincare_auc": 0.5099536467694636,
+      "raw_auc_bootstrap_95_ci": [
+        0.5192772679973512,
+        0.5241350865575631
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09122126572698894,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "c": 0.25,
+      "raw_auc": 0.5056607700312175,
+      "poincare_auc": 0.4966966228360609,
+      "raw_auc_bootstrap_95_ci": [
+        0.50315864156655,
+        0.5080690095544413
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09005392110490966,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "c": 0.5,
+      "raw_auc": 0.5056607700312175,
+      "poincare_auc": 0.4966966228360609,
+      "raw_auc_bootstrap_95_ci": [
+        0.50315864156655,
+        0.5080690095544413
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09005392110490966,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "c": 1.0,
+      "raw_auc": 0.5056607700312175,
+      "poincare_auc": 0.4966966228360609,
+      "raw_auc_bootstrap_95_ci": [
+        0.50315864156655,
+        0.5080690095544413
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09005392110490966,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "c": 2.0,
+      "raw_auc": 0.5056607700312175,
+      "poincare_auc": 0.4966966228360609,
+      "raw_auc_bootstrap_95_ci": [
+        0.50315864156655,
+        0.5080690095544413
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09005392110490966,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "Exp1a",
+      "level": "L3",
+      "c": 4.0,
+      "raw_auc": 0.5056607700312175,
+      "poincare_auc": 0.4966966228360609,
+      "raw_auc_bootstrap_95_ci": [
+        0.50315864156655,
+        0.5080690095544413
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.09005392110490966,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": false,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. Radial coordinate remains variable without saturation."
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "c": 0.25,
+      "raw_auc": 0.6504152871062341,
+      "poincare_auc": 0.6339116450666918,
+      "raw_auc_bootstrap_95_ci": [
+        0.6473846372150223,
+        0.6527617065556711
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.06075678743732854,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "c": 0.5,
+      "raw_auc": 0.6504152871062341,
+      "poincare_auc": 0.6339116450666918,
+      "raw_auc_bootstrap_95_ci": [
+        0.6473846372150223,
+        0.6527617065556711
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.06075678743732854,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "c": 1.0,
+      "raw_auc": 0.6504152871062341,
+      "poincare_auc": 0.6339116450666918,
+      "raw_auc_bootstrap_95_ci": [
+        0.6473846372150223,
+        0.6527617065556711
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.06075678743732854,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "c": 2.0,
+      "raw_auc": 0.6504152871062341,
+      "poincare_auc": 0.6339116450666918,
+      "raw_auc_bootstrap_95_ci": [
+        0.6473846372150223,
+        0.6527617065556711
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.06075678743732854,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L1",
+      "c": 4.0,
+      "raw_auc": 0.6504152871062341,
+      "poincare_auc": 0.6339116450666918,
+      "raw_auc_bootstrap_95_ci": [
+        0.6473846372150223,
+        0.6527617065556711
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.06075678743732854,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "c": 0.25,
+      "raw_auc": 0.5418579131586415,
+      "poincare_auc": 0.538633998675622,
+      "raw_auc_bootstrap_95_ci": [
+        0.5395231766152682,
+        0.5446086935956863
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.07136505534008135,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "c": 0.5,
+      "raw_auc": 0.5418579131586415,
+      "poincare_auc": 0.538633998675622,
+      "raw_auc_bootstrap_95_ci": [
+        0.5395231766152682,
+        0.5446086935956863
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.07136505534008135,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "c": 1.0,
+      "raw_auc": 0.5418579131586415,
+      "poincare_auc": 0.538633998675622,
+      "raw_auc_bootstrap_95_ci": [
+        0.5395231766152682,
+        0.5446086935956863
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.07136505534008135,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "c": 2.0,
+      "raw_auc": 0.5418579131586415,
+      "poincare_auc": 0.538633998675622,
+      "raw_auc_bootstrap_95_ci": [
+        0.5395231766152682,
+        0.5446086935956863
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.07136505534008135,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L2",
+      "c": 4.0,
+      "raw_auc": 0.5418579131586415,
+      "poincare_auc": 0.538633998675622,
+      "raw_auc_bootstrap_95_ci": [
+        0.5395231766152682,
+        0.5446086935956863
+      ],
+      "raw_auc_ci_contains_poincare_auc": false,
+      "discordant_fraction": 0.07136505534008135,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare DOES MORE THAN RESCALING raw Euclidean: AUC is outside the raw Euclidean 95% bootstrap interval and matched positive-negative orderings are discordant; curvature values are ranking-equivalent under this radius-matched map. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "c": 0.25,
+      "raw_auc": 0.5375177372055624,
+      "poincare_auc": 0.5350581780342446,
+      "raw_auc_bootstrap_95_ci": [
+        0.5346059029420112,
+        0.5400180683000663
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.0701466275659824,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "c": 0.5,
+      "raw_auc": 0.5375177372055624,
+      "poincare_auc": 0.5350581780342446,
+      "raw_auc_bootstrap_95_ci": [
+        0.5346059029420112,
+        0.5400180683000663
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.0701466275659824,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "c": 1.0,
+      "raw_auc": 0.5375177372055624,
+      "poincare_auc": 0.5350581780342446,
+      "raw_auc_bootstrap_95_ci": [
+        0.5346059029420112,
+        0.5400180683000663
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.0701466275659824,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "c": 2.0,
+      "raw_auc": 0.5375177372055624,
+      "poincare_auc": 0.5350581780342446,
+      "raw_auc_bootstrap_95_ci": [
+        0.5346059029420112,
+        0.5400180683000663
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.0701466275659824,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    },
+    {
+      "model": "TIGER",
+      "level": "L3",
+      "c": 4.0,
+      "raw_auc": 0.5375177372055624,
+      "poincare_auc": 0.5350581780342446,
+      "raw_auc_bootstrap_95_ci": [
+        0.5346059029420112,
+        0.5400180683000663
+      ],
+      "raw_auc_ci_contains_poincare_auc": true,
+      "discordant_fraction": 0.0701466275659824,
+      "discordant_fraction_negligible_lt_0.01": false,
+      "radial_saturation_flag": true,
+      "verdict": "Poincare changes matched positive-negative ordering, but its AUC remains inside the raw Euclidean bootstrap interval; it is not a mere rescaling, yet this comparison does not establish an AUC shift. RADIAL SATURATION FLAG: do not interpret this as a curvature advantage."
+    }
+  ]
+}
