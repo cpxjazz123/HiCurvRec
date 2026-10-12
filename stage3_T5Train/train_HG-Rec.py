@@ -160,6 +160,11 @@ LOG_PATH      = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/" + RQ
 SAVE_PATH     = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/" + RQVAE_VARIANT + "/ckpt/"
 SEED          = 42
 
+PER_USER_DUMP = False
+
+def global_row_index(rank, local_row_index, world_size):
+    return rank + local_row_index * world_size
+
 # 评估 / Screen
 TOPK_LIST                = [5, 10]   # 必须包含 10 (RecBole 监控 ndcg@10)
 BEAM_SIZE                = 20        # >= max(TOPK_LIST)
@@ -360,6 +365,7 @@ def evaluate(
 
     recall_sums = {k: 0.0 for k in topk_list}
     ndcg_sums = {k: 0.0 for k in topk_list}
+    per_user = [] if PER_USER_DUMP else None
     n_eval = 0
     with torch.inference_mode():
         for batch in tqdm(
@@ -458,6 +464,13 @@ def evaluate(
                     rank_value = selected.index(target_item)
                 except ValueError:
                     rank_value = None
+                if PER_USER_DUMP:
+                    per_user.append(
+                        {
+                            "local_row_index": n_eval + row_index,
+                            "target_rank": rank_value,
+                        }
+                    )
                 for k in topk_list:
                     if rank_value is not None and rank_value < k:
                         recall_sums[k] += 1.0
@@ -466,6 +479,8 @@ def evaluate(
 
     if n_eval == 0:
         raise ValueError("Cannot evaluate an empty split")
+    if PER_USER_DUMP:
+        return recall_sums, ndcg_sums, n_eval, per_user
     return recall_sums, ndcg_sums, n_eval
 
 
@@ -948,7 +963,7 @@ def main():
                     f"[valid] epoch={epoch}/{n_ep} START (single_rank beam={config['beam_size']} topk={config['topk_list']})",
                     flush=True,
                 )
-                recalls, ndcgs, n_eval_local = evaluate(
+                _valid_eval = evaluate(
                     model,
                     valid_loader_full,
                     valid_dataset,
@@ -958,6 +973,10 @@ def main():
                     exclude_history=config["exclude_history"],
                     use_bf16=config["bf16"],
                 )
+                if PER_USER_DUMP:
+                    recalls, ndcgs, n_eval_local, _ = _valid_eval
+                else:
+                    recalls, ndcgs, n_eval_local = _valid_eval
                 # Single full-split pass: reduce the raw accumulators straight
                 # back to the global ratios.
                 recalls, ndcgs, n_eval_total = reduce_metric_sums(
@@ -1158,7 +1177,7 @@ def main():
     if best_checkpoint is not None and os.path.exists(best_checkpoint):
         raw_model.load_state_dict(torch.load(best_checkpoint, map_location=device))
     _t_test_start = time.time()
-    shard_recalls, shard_ndcgs, shard_n = evaluate(
+    _test_eval = evaluate(
         raw_model,
         test_loader,
         test_dataset,
@@ -1168,6 +1187,10 @@ def main():
         exclude_history=config["exclude_history"],
         use_bf16=config["bf16"],
     )
+    if PER_USER_DUMP:
+        shard_recalls, shard_ndcgs, shard_n, shard_per_user = _test_eval
+    else:
+        shard_recalls, shard_ndcgs, shard_n = _test_eval
     _test_elapsed = time.time() - _t_test_start
     # Every rank can resolve `cur_time` (rank 0 publishes it, the others read it
     # back), so the shard directory is built from the rank-independent prefix.
@@ -1184,18 +1207,17 @@ def main():
     # then spent 30 minutes waiting for it. The metric is unchanged; only the
     # durability of the hand-off is.
     _shard_tmp = _shard_path + ".partial"
+    _shard_payload = {
+        "rank": rank,
+        "recall_sums": {str(k): float(v) for k, v in shard_recalls.items()},
+        "ndcg_sums": {str(k): float(v) for k, v in shard_ndcgs.items()},
+        "n_eval": int(shard_n),
+        "elapsed_s": round(_test_elapsed, 3),
+    }
+    if PER_USER_DUMP:
+        _shard_payload["per_user"] = shard_per_user
     with open(_shard_tmp, "w", encoding="utf-8") as _fh:
-        json.dump(
-            {
-                "rank": rank,
-                "recall_sums": {str(k): float(v) for k, v in shard_recalls.items()},
-                "ndcg_sums": {str(k): float(v) for k, v in shard_ndcgs.items()},
-                "n_eval": int(shard_n),
-                "elapsed_s": round(_test_elapsed, 3),
-            },
-            _fh,
-            indent=2,
-        )
+        json.dump(_shard_payload, _fh, indent=2)
         _fh.flush()
         try:
             os.fsync(_fh.fileno())

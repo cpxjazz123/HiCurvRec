@@ -71,7 +71,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "resample_s44"          # arm name; see _ARM_DIR
+EXPERIMENT_ARM = "resample_proj_dir"    # arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -80,6 +80,8 @@ _ARM_DIR = {
     "resample_fn_mask": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
     "resample_s43":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
     "resample_s44":     "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+    "resample_proj_sym": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym",
+    "resample_proj_dir": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir",
 }
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
@@ -88,6 +90,7 @@ OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
 LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs") / EXPERIMENT_ARM
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
+DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -320,49 +323,102 @@ def _successor_indicator(train_frame: pd.DataFrame, n_items: int):
     return matrix
 
 
+def _contrastive_ce(
+    logits: torch.Tensor,
+    source_ids: torch.Tensor,
+    target_ids: torch.Tensor,
+    successor_indicator=None,
+) -> torch.Tensor | None:
+    """Apply the shared duplicate/false-negative mask and positive-label CE."""
+    batch_size = int(source_ids.shape[0])
+    duplicate_targets = target_ids[:, None].eq(target_ids[None, :])
+    duplicate_targets.fill_diagonal_(False)
+    if successor_indicator is not None:
+        rows = successor_indicator[source_ids.cpu().numpy()]
+        blocked = torch.from_numpy(
+            np.asarray(rows[:, target_ids.cpu().numpy()].todense())
+        ).to(device=logits.device, dtype=torch.bool)
+        blocked.fill_diagonal_(False)
+        duplicate_targets = duplicate_targets | blocked
+    logits = logits.masked_fill(duplicate_targets, -torch.inf)
+    valid = source_ids.ne(target_ids)
+    if not bool(valid.any()):
+        return None
+    labels = torch.arange(batch_size, device=source_ids.device)
+    return F.cross_entropy(logits[valid], labels[valid])
+
+
+class DirectionalHeads(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        # Keep Linear's constructor from advancing the global RNG used by the
+        # encoder and sklearn KMeans; initialize tensors from this local stream.
+        generator = torch.Generator().manual_seed(SEED + 7919)
+        with torch.random.fork_rng(devices=[]):
+            self.f_source = nn.Linear(CODEBOOK_DIM, CODEBOOK_DIM)
+            self.f_target = nn.Linear(CODEBOOK_DIM, CODEBOOK_DIM)
+        with torch.no_grad():
+            for layer in (self.f_source, self.f_target):
+                bound = 1.0 / CODEBOOK_DIM**0.5
+                layer.weight.uniform_(-bound, bound, generator=generator)
+                layer.bias.uniform_(-bound, bound, generator=generator)
+
+    def project_source(self, x: torch.Tensor) -> torch.Tensor:
+        return F.normalize(self.f_source(F.normalize(x, dim=-1)), dim=-1)
+
+    def project_target(self, x: torch.Tensor) -> torch.Tensor:
+        return F.normalize(self.f_target(F.normalize(x, dim=-1)), dim=-1)
+
+    def n_parameters(self) -> int:
+        return sum(parameter.numel() for parameter in self.parameters())
+
+
 def behavior_contrastive_loss(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
     target_ids: torch.Tensor,
     successor_indicator=None,
 ) -> torch.Tensor:
-    """iter48's three-level contrastive loss over residual vectors.
-
-    ``residuals`` holds the pair batch with sources in the first half and
-    targets in the second half, exactly as iter48 fed
-    ``cat(source_emb, target_emb)`` through the quantizer.
-
-    ``successor_indicator``, when given, additionally masks candidates that are
-    other known successors of the same anchor (false negatives).
-    """
+    """iter48's three-level contrastive loss over residual vectors."""
     batch_size = int(source_ids.shape[0])
     losses: list[torch.Tensor] = []
     for level in range(residuals.shape[0]):
         source = residuals[level, :batch_size]
         candidates = residuals[level, batch_size:]
-        distances = torch.cdist(source, candidates, p=2)
-        logits = -distances / BEHAVIOR_TEMPERATURE
-        # iter48's filter: drop candidates sharing the anchor's own target, then
-        # keep only rows whose source and target differ.
-        duplicate_targets = target_ids[:, None].eq(target_ids[None, :])
-        duplicate_targets.fill_diagonal_(False)
-        if successor_indicator is not None:
-            rows = successor_indicator[source_ids.cpu().numpy()]
-            blocked = torch.from_numpy(
-                np.asarray(rows[:, target_ids.cpu().numpy()].todense())
-            ).to(device=logits.device, dtype=torch.bool)
-            # The diagonal is the true successor, never a false negative.
-            blocked.fill_diagonal_(False)
-            duplicate_targets = duplicate_targets | blocked
-        logits = logits.masked_fill(duplicate_targets, -torch.inf)
-        valid = source_ids.ne(target_ids)
-        if bool(valid.any()):
-            labels = torch.arange(batch_size, device=source_ids.device)
-            losses.append(F.cross_entropy(logits[valid], labels[valid]))
+        logits = -torch.cdist(source, candidates, p=2) / BEHAVIOR_TEMPERATURE
+        loss = _contrastive_ce(logits, source_ids, target_ids, successor_indicator)
+        if loss is not None:
+            losses.append(loss)
     if not losses:
         return residuals.sum() * 0.0
     return torch.stack(losses).mean()
 
+
+def directional_residual_loss(
+    residuals: torch.Tensor,
+    source_ids: torch.Tensor,
+    target_ids: torch.Tensor,
+    heads: DirectionalHeads,
+    symmetric: bool,
+    successor_indicator=None,
+) -> torch.Tensor:
+    """Contrast each source projection with target projections per residual level."""
+    batch_size = int(source_ids.shape[0])
+    losses: list[torch.Tensor] = []
+    for level in range(residuals.shape[0]):
+        source = residuals[level, :batch_size]
+        candidates = residuals[level, batch_size:]
+        logits = heads.project_source(source) @ heads.project_target(candidates).T
+        if symmetric:
+            reverse = heads.project_source(candidates) @ heads.project_target(source).T
+            logits = 0.5 * (logits + reverse)
+        logits = logits / BEHAVIOR_TEMPERATURE
+        loss = _contrastive_ce(logits, source_ids, target_ids, successor_indicator)
+        if loss is not None:
+            losses.append(loss)
+    if not losses:
+        return residuals.sum() * 0.0
+    return torch.stack(losses).mean()
 
 def _tokenizer_config() -> SimpleNamespace:
     sizes = list(CODEBOOK_SIZE)
@@ -421,7 +477,17 @@ def main() -> None:
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
-        model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
+        model = DDP(
+            model,
+            device_ids=[local_rank],
+            output_device=local_rank,
+            find_unused_parameters=False,
+        )
+    raw_module = model.module if isinstance(model, DDP) else model
+    directional_heads = None
+    if DIRECTIONAL_MODE != "none":
+        directional_heads = DirectionalHeads().to(device)
+        raw_module.directional_heads = directional_heads
 
     train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
@@ -455,10 +521,11 @@ def main() -> None:
         persistent_workers=False,
         drop_last=False,
     )
+    parameters = list(model.parameters())
     if OPTIMIZER.lower() == "adagrad":
-        optimizer = torch.optim.Adagrad(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+        optimizer = torch.optim.Adagrad(parameters, lr=LR, weight_decay=WEIGHT_DECAY)
     else:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+        optimizer = torch.optim.AdamW(parameters, lr=LR, weight_decay=WEIGHT_DECAY)
     total_steps = max(1, EPOCHS * len(loader))
     warmup_steps = max(0, WARMUP_EPOCHS * len(loader))
 
@@ -474,12 +541,11 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182")
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters())
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
-    raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
@@ -527,13 +593,24 @@ def main() -> None:
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
                 residuals = _residuals_with_trace(raw_module, pair_batch)
-                behavior_loss = behavior_contrastive_loss(
-                    residuals, source_ids, target_ids, successor_indicator
-                )
+                if DIRECTIONAL_MODE != "none":
+                    behavior_loss = directional_residual_loss(
+                        residuals, source_ids, target_ids, directional_heads,
+                        DIRECTIONAL_MODE == "sym", successor_indicator,
+                    )
+                else:
+                    behavior_loss = behavior_contrastive_loss(
+                        residuals, source_ids, target_ids, successor_indicator
+                    )
                 loss = loss + epoch_weight * behavior_loss
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
+            if directional_heads is not None and epoch_weight > 0.0 and world_size > 1:
+                for parameter in directional_heads.parameters():
+                    if parameter.grad is not None:
+                        dist.all_reduce(parameter.grad, op=dist.ReduceOp.SUM)
+                        parameter.grad /= world_size
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
