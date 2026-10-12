@@ -362,6 +362,51 @@ def ks_distance_powerlaw(x: np.ndarray, xmin: float, alpha: float) -> float:
     return float(np.max(np.abs(cdf_emp - fit_at_tail)))
 
 
+def ks_distance_powerlaw_fast(x: np.ndarray, xmin: float, alpha: float) -> float:
+    """Discrete power-law KS distance by a cumulative table.
+
+    The reference implementation calls scipy's incomplete zeta once per distinct tail
+    value, which makes an xmin scan of a few hundred candidates unusable. The pmf is
+    k^-alpha normalised over [xmin, kmax] and cumulated once, so the CDF at every
+    observation is a lookup. Same statistic, O(kmax) instead of O(tail * zeta).
+    """
+    tail = np.sort(np.asarray(x, dtype=np.float64))
+    tail = tail[tail >= xmin]
+    if tail.size < 2:
+        return float("nan")
+    kmin, kmax = int(xmin), int(tail.max())
+    ks = np.arange(kmin, kmax + 1, dtype=np.float64)
+    pmf = ks ** (-alpha)
+    total = pmf.sum()
+    if total <= 0:
+        return float("nan")
+    cdf = np.cumsum(pmf / total)
+    cdf_at = cdf[(tail - kmin).astype(np.int64)]
+    emp = np.arange(1, tail.size + 1) / tail.size
+    return float(np.max(np.abs(emp - cdf_at)))
+
+
+def vuong_like_test(loglik_1: float, loglik_2: float, per_point_diff: np.ndarray) -> dict:
+    """Clauset-style normalised log-likelihood ratio between two fitted models.
+
+    R = (l1 - l2) / (sqrt(n) * sigma) with sigma the standard deviation of the
+    per-point log-likelihood difference; under the null the two models are
+    indistinguishable and R is approximately standard normal.
+    """
+    d = np.asarray(per_point_diff, dtype=np.float64)
+    n = d.size
+    if n < 2:
+        return {"R": float("nan"), "p_two_sided": float("nan"), "n": int(n)}
+    sigma = d.std(ddof=1)
+    if sigma <= 0:
+        return {"R": float("inf") if loglik_1 > loglik_2 else 0.0, "p_two_sided": 0.0, "n": int(n)}
+    from scipy import stats
+    R = float((loglik_1 - loglik_2) / (math.sqrt(n) * sigma))
+    p = float(2 * (1 - stats.norm.cdf(abs(R))))
+    return {"R": R, "p_two_sided": p, "n": int(n),
+            "favours": "model_1" if R > 0 else "model_2"}
+
+
 def fit_xmin(x: np.ndarray, min_tail: int, max_candidates: int) -> dict:
     """Choose xmin by minimising the KS distance, as Clauset et al. prescribe."""
     xs = np.sort(np.asarray(x, dtype=np.float64))
@@ -376,7 +421,7 @@ def fit_xmin(x: np.ndarray, min_tail: int, max_candidates: int) -> dict:
         alpha, _ = powerlaw_mle(xs, float(xmin))
         if not np.isfinite(alpha) or alpha <= 1.0:
             continue
-        ks = ks_distance_powerlaw(xs, float(xmin), alpha)
+        ks = ks_distance_powerlaw_fast(xs, float(xmin), alpha)
         if np.isfinite(ks) and ks < best["ks"]:
             best = {"xmin": float(xmin), "alpha": alpha, "ks": ks, "n_tail": tail_n}
     return best

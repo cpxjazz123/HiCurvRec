@@ -209,6 +209,22 @@ def test_powerlaw() -> None:
     req(np.isfinite(pl) and np.isfinite(alt["loglik"]),
         f"T1 both log-likelihoods are finite (pl {pl:.1f}, ln {alt['loglik']:.1f})")
 
+    # the fast KS must agree with the incomplete-zeta reference
+    xs_tail = x[x >= fit["xmin"]]
+    k_fast = L.ks_distance_powerlaw_fast(x, fit["xmin"], fit["alpha"])
+    k_ref = L.ks_distance_powerlaw(x, fit["xmin"], fit["alpha"])
+    req(abs(k_fast - k_ref) < 0.01,
+        f"T1 the cumulative-table KS agrees with the incomplete-zeta reference "
+        f"({k_fast:.4f} vs {k_ref:.4f})")
+
+    # the normalised log-likelihood ratio behaves: identical models give R = 0
+    d = rng.normal(0.0, 1.0, 500)
+    v = L.vuong_like_test(0.0, 0.0, d)
+    req(abs(v["R"]) < 1e-9, f"T1 the ratio test is 0 for identical models ({v})")
+    v2 = L.vuong_like_test(10.0, 0.0, d)
+    req(v2["R"] > 0 and v2["favours"] == "model_1",
+        f"T1 and favours the model with the higher likelihood ({v2['R']:.2f})")
+
     g = L.gini(np.ones(100))
     req(abs(g) < 1e-9, f"T1 Gini of a constant is 0 ({g})")
     g2 = L.gini(np.array([0.0] * 99 + [100.0]))
