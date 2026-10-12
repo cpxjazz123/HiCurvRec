@@ -98,7 +98,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyper_l1_gcloss_s42"
+EXPERIMENT_ARM = "diag_hyper_l1_s42"
 FORK_RADIAL_WEIGHT_DEFAULT = 0.05
 _ARMS = {
     # Fork-structure term ablation. All arms keep the ball map, the Euclidean
@@ -264,6 +264,13 @@ _ARMS = {
                             "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
                             "l1_geodesic": True, "l1_geodesic_curvature": 1.0,
                             "l1_geodesic_codebook_loss": "ball_mse"},
+    # Root-cause step 3. Identical in EVERY training parameter to hyper_l1_s42; it
+    # exists only so the per-epoch L1 occupancy / encoder-norm / ball-radius
+    # instrumentation can be run without overwriting hyper_l1_s42's own committed
+    # logs and artifacts. Same precedent as diag_euclid_norm / diag_hyp_norm.
+    "diag_hyper_l1_s42": {"group_distance": "euclid", "radial_mode": "mse",
+                          "radial_weight": FORK_RADIAL_WEIGHT_DEFAULT,
+                          "l1_geodesic": True, "l1_geodesic_curvature": 1.0},
 }
 _ARM = _ARMS[EXPERIMENT_ARM]
 # Per-arm sampling of the behaviour-sibling signal.
@@ -2029,6 +2036,17 @@ def main() -> None:
                     cnt = np.bincount(raw_tokens[:, k], minlength=int(CODEBOOK_SIZE[k]))
                     lvl = cnt[cnt > 0]
                     level_shares.append(float(lvl.max() / len(raw_tokens)))
+                # Step 3 of the collapse root-cause programme: the ordering question
+                # is whether L1 occupancy falls BEFORE the encoder norm grows, so both
+                # have to be on the same record.
+                _enc_all = raw_module.encoder(all_embeddings.to(device))
+                encoder_norm_median = float(_enc_all.norm(dim=-1).median())
+                proto_norm_median = float(
+                    raw_module.rq.vq_layers[0].get_code_embs().norm(dim=-1).median()
+                )
+                _r = encode_ball(_enc_all, CURVATURE, ball_normalizer).norm(dim=-1)
+                ball_radius_median = float(_r.median())
+                ball_radius_share_gt099 = float((_r > 0.99).float().mean())
                 final_collision = collision_v
                 final_raw_unique = raw_unique
                 print(
@@ -2047,6 +2065,10 @@ def main() -> None:
                     l1_codes=level_codes[0], l2_codes=level_codes[1], l3_codes=level_codes[2],
                     l1_top_share=level_shares[0], l2_top_share=level_shares[1],
                     l3_top_share=level_shares[2],
+                    encoder_norm_median=encoder_norm_median,
+                    proto_norm_median=proto_norm_median,
+                    ball_radius_median=ball_radius_median,
+                    ball_radius_share_gt099=ball_radius_share_gt099,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
