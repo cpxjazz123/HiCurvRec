@@ -267,7 +267,7 @@ def delta_summary(delta: np.ndarray) -> dict:
 
 
 # --------------------------------------------------------------------- tree-likeness
-def tree_likeness(g: nx.Graph, root) -> dict:
+def tree_likeness(g: nx.Graph, root, sources: int = 200, seed: int = 42) -> dict:
     """How close the graph is to a tree, measured against its own BFS tree.
 
     A BFS tree has n-1 edges; every remaining edge of the graph is a non-tree edge.
@@ -278,7 +278,11 @@ def tree_likeness(g: nx.Graph, root) -> dict:
         return {"nodes": 0}
     bfs = nx.bfs_tree(g, root)
     non_tree = g.number_of_edges() - bfs.number_of_edges()
-    sample_nodes = list(g.nodes())
+    # sampled sources: one BFS per node is not feasible on a 24.5k-node component
+    nodes = list(g.nodes())
+    rng = np.random.default_rng(seed)
+    k = min(sources, len(nodes))
+    sample_nodes = [nodes[i] for i in rng.choice(len(nodes), size=k, replace=False)]
     dg = bfs_distances(g, sample_nodes)
     dt = bfs_distances(bfs, sample_nodes)
     finite = (dg >= 0) & (dt >= 0)
@@ -292,6 +296,8 @@ def tree_likeness(g: nx.Graph, root) -> dict:
         "mean_tree_distance_excess": float(diff.mean()) if diff.size else 0.0,
         "p95_tree_distance_excess": float(np.quantile(diff, 0.95)) if diff.size else 0.0,
         "share_of_pairs_exactly_preserved": float((diff == 0).mean()) if diff.size else 0.0,
+        "sources_sampled": int(k),
+        "exact": bool(k == len(nodes)),
     }
 
 
