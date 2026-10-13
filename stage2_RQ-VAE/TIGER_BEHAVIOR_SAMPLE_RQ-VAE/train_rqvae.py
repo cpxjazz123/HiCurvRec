@@ -77,6 +77,7 @@ _GEOMETRY_ARM_CONFIGS = {
     **_BASE_GEOMETRY_ARM_CONFIGS,
     "B_E": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "B_H": dict(_BASE_GEOMETRY_ARM_CONFIGS["H1"]),
+    "B_E_nocb": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -91,7 +92,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "bw01"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "B_E_nocb"    # THE switch: arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -209,7 +210,7 @@ def _resolve_geometry_arm(arm: str) -> dict:
     }
 
 def _resolve_quant_arm(arm: str) -> dict:
-    group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B")}[arm]
+    group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B"), "B_E_nocb": ("E0", "B")}[arm]
     baseline = _resolve_geometry_arm(group_a_arm)
     return {
         **baseline,
@@ -239,9 +240,10 @@ def _quantized_ranking_loss(
     return _quant_rank_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
-        arm={"B_E": "E0", "B_H": "H1"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+        arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
         curvature=1.0, weight=weight,
         level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
+        detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
     )
 
 
@@ -258,7 +260,7 @@ def _geometry_loss_for_pairs(
     anchors = torch.arange(batch_size, device=latent.device)
     positives = anchors + batch_size
     negatives = positives + batch_size
-    geometry_arm = {"B_E": "E0", "B_H": "H1"}.get(arm, arm)
+    geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -1082,7 +1084,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    if EXPERIMENT_ARM in {"B_E", "B_H"}:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1151,7 +1153,7 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
-            if EXPERIMENT_ARM in {"B_E", "B_H"}:
+            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
@@ -1274,7 +1276,7 @@ def main() -> None:
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
         quantized_metric_fields = {}
-        if EXPERIMENT_ARM in {"B_E", "B_H"} and epoch_weight > 0.0:
+        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"} and epoch_weight > 0.0:
             quantized_metric_fields = {
                 "quantized_ranking_loss": avg_quantized_metrics[0],
                 "quantized_encoder_grad_norm": avg_quantized_metrics[1],
