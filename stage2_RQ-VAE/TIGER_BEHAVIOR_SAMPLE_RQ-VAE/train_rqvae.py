@@ -117,7 +117,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "CF_ALIGN"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "CF_ALIGN_DIV_RANK"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # E2: which collaborative-alignment components this arm carries. None for every
 # arm outside the CF_* family, so their code path is untouched.
@@ -1275,6 +1275,14 @@ def main() -> None:
                 loss = _compose_quantized_loss(loss, quantized_term)
                 loss = _ac_compose(loss, anti_collapse_term)
             if _CF_CONFIG is not None:
+                # The CF arms compose the same two auxiliary terms, and this branch
+                # has to do it explicitly: the set above does not contain them, and
+                # without this the diversity term was computed and then dropped, so
+                # CF_ALIGN_DIV came out bit-identical to CF_ALIGN. Both composers
+                # leave the loss untouched when their term is zero, which is what
+                # CF_ALIGN's two components are.
+                loss = _compose_quantized_loss(loss, quantized_term)
+                loss = _ac_compose(loss, anti_collapse_term)
                 loss = loss + cf_term
                 if not cf_fields_list:
                     # The ramp keeps every term in this family switched off until
