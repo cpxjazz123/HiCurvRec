@@ -79,7 +79,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "c2_poslocal_w2"    # arm name; see _ARM_DIR
+EXPERIMENT_ARM = "cap_d16_l1c512"    # THE switch: arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -141,6 +141,28 @@ else:
 # Fixed before the epoch loop; the sampler reads these.
 _C2_WIDTH = CROWDING2_SUCCESSORS
 _C2_NEG = CROWDING2_NEGATIVES
+
+# === Capacity round: vary representation dimension, codebook size, or encoder width ===
+# Only ONE of these moves per arm. Behaviour supervision, data, pair sampling,
+# optimizer, learning rate, epochs and the evaluation protocol are untouched.
+# cap_d32_wide is the parameter-matched control: HIDDEN_SIZES (528,256,128) with
+# codebook_dim 32 gives exactly 1,182,272 parameters, identical to codebook_dim 64
+# with (512,256,128). The extra parameters live inside the encoder/decoder MLPs,
+# so they participate in the prediction, unlike a side-car parameter block.
+_CAPACITY_ARMS = {
+    "cap_d8":         dict(codebook_dim=8,   codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
+    "cap_d16":        dict(codebook_dim=16,  codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
+    "cap_d64":        dict(codebook_dim=64,  codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
+    "cap_d128":       dict(codebook_dim=128, codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
+    "cap_l1c128":     dict(codebook_dim=32,  codebook_size=(128, 256, 256), hidden=(512, 256, 128)),
+    "cap_l1c512":     dict(codebook_dim=32,  codebook_size=(512, 256, 256), hidden=(512, 256, 128)),
+    "cap_d16_l1c512": dict(codebook_dim=16,  codebook_size=(512, 256, 256), hidden=(512, 256, 128)),
+    "cap_d64_l1c128": dict(codebook_dim=64,  codebook_size=(128, 256, 256), hidden=(512, 256, 128)),
+    "cap_d32_wide":   dict(codebook_dim=32,  codebook_size=(256, 256, 256), hidden=(528, 256, 128)),
+}
+_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _CAPACITY_ARMS})
+if EXPERIMENT_ARM not in _ARM_DIR:
+    raise KeyError(f"EXPERIMENT_ARM {EXPERIMENT_ARM!r} is not a known arm")
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
@@ -164,6 +186,14 @@ HIDDEN_SIZES        = (512, 256, 128)
 CODEBOOK_NUM        = 3
 CODEBOOK_SIZE       = (256, 256, 256)
 CODEBOOK_DIM        = 32
+CAPACITY_ARM = EXPERIMENT_ARM if EXPERIMENT_ARM in _CAPACITY_ARMS else ""
+if CAPACITY_ARM and CAPACITY_ARM not in _CAPACITY_ARMS:
+    raise KeyError(f"unknown capacity arm {CAPACITY_ARM!r}; choose from {sorted(_CAPACITY_ARMS)}")
+if CAPACITY_ARM:
+    _cap = _CAPACITY_ARMS[CAPACITY_ARM]
+    CODEBOOK_DIM = int(_cap["codebook_dim"])
+    CODEBOOK_SIZE = tuple(int(x) for x in _cap["codebook_size"])
+    HIDDEN_SIZES = tuple(int(x) for x in _cap["hidden"])
 BETA                = 0.25
 VQ_TYPE             = "vq"
 EMA_DECAY           = 0.99
@@ -717,9 +747,11 @@ def main() -> None:
         np.log(_edge_counts, out=_pmi, where=_edge_counts > 0)
         _pmi += np.log(max(_n_users, 1)) - np.log(np.maximum(_pop[_indices], 1.0))
         _pmi = np.maximum(_pmi, 0.0)
-        _buckets, _bucket_sizes = _popularity_deciles(_pop)
+        _buckets, _bucket_sizes, _item_bucket = _popularity_deciles(_pop)
+        _buckets_t = torch.as_tensor(_buckets, device=device)
+        _item_bucket_t = torch.as_tensor(_item_bucket, device=device)
         c2_gen = torch.Generator(device=device).manual_seed(SEED + 104729 + rank)
-        c2_state = (_indptr, _indices, _buckets, _bucket_sizes, _pop, _pmi, c2_gen)
+        c2_state = (_indptr, _indices, _buckets_t, _item_bucket_t, _pmi, c2_gen)
 
     parameters = list(model.parameters())
     if OPTIMIZER.lower() == "adagrad":
