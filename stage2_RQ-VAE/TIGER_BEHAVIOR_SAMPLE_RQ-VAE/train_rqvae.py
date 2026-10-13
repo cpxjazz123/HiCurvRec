@@ -64,6 +64,11 @@ from scripts.crowding_losses import MatchedParameters, crowding_loss
 from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
                                       crowding_record, crowding_train_fields)
 
+import crowding_losses2 as _crowd2
+
+from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
+                                install_nearest_assignment as _install_hyp_assignment,
+                                mechanism_loss as _hyp_mechanism_loss)
 
 # === 硬编码路径常量 (CLAUDE.md §1) ===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
@@ -91,6 +96,7 @@ _ARM_DIR = {
     **{f"crowd_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_{m}_w{level}"
        for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
                  "random", "scale", "parammatch") for level in (1, 2, 3)},
+    **{name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _HYP_ARM_CONFIGS},
 }
 _CROWD_LEVEL_SETTINGS = {
     "w1": {"strength": 0.05, "tau": 0.20, "depth": 1, "k": 5, "concentration": 1.0},
@@ -102,6 +108,39 @@ _ARM_CROWDING = {
     for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
               "random", "scale", "parammatch") for level in (1, 2, 3)
 }
+
+# === Round 2: positive/negative competition crowding (crowding_losses2) ===
+# The six mechanisms and three controls are additive to Exp1a's behaviour term.
+# Strength ladder is fixed up front at 0.5 / 2.0 / 8.0 (fourfold steps, 16x
+# span) and is NOT retuned against any measured metric table.
+CROWDING2_MECHANISM = ""      # "" disables; else a name from _crowd2.MECHANISMS / _crowd2.CONTROLS
+CROWDING2_LEVEL = 2           # 1 -> 0.5, 2 -> 2.0, 3 -> 8.0
+CROWDING2_SUCCESSORS = 8      # padded successor slots per anchor (GPU-vectorised)
+CROWDING2_NEGATIVES = 4       # in-batch matched negatives per anchor
+CROWDING2_ANCHORS = 512       # anchors per step; keeps the additive term cheap
+CROWDING2_RAMP_START = 21     # begin after the same warmup the behaviour term uses
+
+_ARM_DIR.update({
+    f"c2_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/c2_{m}_w{level}"
+    for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
+              "random", "scale", "behonly") for level in (1, 2, 3)
+})
+_ARM_CROWDING2 = {
+    f"c2_{m}_w{level}": (m, level)
+    for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
+              "random", "scale", "behonly") for level in (1, 2, 3)
+}
+_CROWDING2_CONFIG = _ARM_CROWDING2.get(EXPERIMENT_ARM) if CROWDING2_MECHANISM == "" else None
+if CROWDING2_MECHANISM:
+    _CROWDING2_CONFIG = (CROWDING2_MECHANISM, CROWDING2_LEVEL)
+elif EXPERIMENT_ARM in _ARM_CROWDING2:
+    _CROWDING2_CONFIG = _ARM_CROWDING2[EXPERIMENT_ARM]
+else:
+    _CROWDING2_CONFIG = None
+
+# Fixed before the epoch loop; the sampler reads these.
+_C2_WIDTH = CROWDING2_SUCCESSORS
+_C2_NEG = CROWDING2_NEGATIVES
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
 _OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
@@ -112,6 +151,7 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
 _ARM_ACTIVE_LEVELS = {"resample_l1only": (0,), "resample_l2only": (1,), "resample_l3only": (2,)}
 ACTIVE_LEVELS = _ARM_ACTIVE_LEVELS.get(EXPERIMENT_ARM, (0, 1, 2))
+_HYP_CONFIG = _HYP_ARM_CONFIGS.get(EXPERIMENT_ARM)
 _CROWD_CONFIG = _ARM_CROWDING.get(EXPERIMENT_ARM)
 
 
@@ -172,11 +212,14 @@ _T0 = time.time()
 # Truncate-on-train_start: every fresh run starts with an empty metrics file
 # so a single ``training_metrics.jsonl`` always represents exactly one run
 # (no leftover rows from a prior failed attempt).
+_HYP_METRIC_FIELDS = {}
 _metrics_truncated = False
 def _record(rank, event, **fields):
     if rank != 0:
         return
     rec = {"event": event, "timestamp": time.time(), "wall_time_s": round(time.time() - _T0, 3)}
+    if event == "train" and _HYP_CONFIG is not None:
+        fields.update(_HYP_METRIC_FIELDS)
     rec.update(fields)
     METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
     global _metrics_truncated
@@ -313,6 +356,112 @@ def _residuals_with_trace(
         traces.append(residual)
     # iter48 records the residual *entering* each level; drop the final remainder.
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
+
+
+def _successor_counts(train_frame: pd.DataFrame, n_items: int):
+    """Successor CSR with real co-occurrence counts, plus item popularity.
+
+    Returns (indptr, indices, edge_counts, popularity, n_users) as numpy arrays.
+    ``indptr`` is the CSR row pointer over item ids; ``indices`` holds the
+    successor ids sorted within each row; ``edge_counts[i]`` is the number of
+    users exhibiting exactly that ``indptr[r] -> indices[i]`` transition, which
+    is the co-occurrence count the PMI weights are computed from. Per-anchor
+    successor counts are derivable as ``indptr[r+1] - indptr[r]``.
+    """
+    rows: list[int] = []
+    cols: list[int] = []
+    bought: list[np.ndarray] = []
+    for user, history, target in zip(
+        train_frame["user"].to_numpy(),
+        train_frame["history"].to_numpy(),
+        train_frame["target"].to_numpy(dtype=np.int64),
+    ):
+        if history is not None and len(history) > 0:
+            rows.append(int(history[-1]))
+            cols.append(int(target))
+            bought.append(np.asarray(history, dtype=np.int64))
+        bought.append(np.asarray([target], dtype=np.int64))
+    rows_a = np.asarray(rows, dtype=np.int64)
+    cols_a = np.asarray(cols, dtype=np.int64)
+    popularity = np.bincount(np.concatenate(bought), minlength=n_items).astype(np.float64)
+    order = np.lexsort((cols_a, rows_a))
+    rows_s, cols_s = rows_a[order], cols_a[order]
+    uniq_rows, _starts, row_counts = np.unique(rows_s, return_index=True, return_counts=True)
+    indptr = np.zeros(n_items + 1, dtype=np.int64)
+    indptr[uniq_rows + 1] = row_counts
+    indptr = np.cumsum(indptr)
+    indices = cols_s
+    # Run-length encode identical consecutive transitions to get per-edge counts.
+    edge_id = rows_s * np.int64(n_items) + cols_s
+    change = np.empty(len(edge_id), dtype=bool)
+    change[0] = True
+    change[1:] = edge_id[1:] != edge_id[:-1]
+    run_starts = np.flatnonzero(change)
+    run_lengths = np.diff(np.append(run_starts, len(edge_id)))
+    # Expand back to one count per successor position so it aligns with `indices`.
+    edge_counts = np.repeat(run_lengths.astype(np.float64), run_lengths)
+    return indptr, indices, edge_counts, popularity, int(train_frame["user"].nunique())
+
+
+def _popularity_deciles(popularity: np.ndarray, n_buckets: int = 10):
+    """Rank items into popularity buckets; used to match negatives by popularity.
+
+    Returns (bucket_padded, bucket_counts, item_bucket) where ``bucket_padded``
+    is an (n_buckets, max_size) int64 array of item ids padded with -1, and
+    ``item_bucket`` maps each item id to its bucket.
+    """
+    rank = np.argsort(np.argsort(popularity, kind="stable"), kind="stable")
+    bucket = np.minimum((rank * n_buckets) // len(popularity), n_buckets - 1)
+    groups = [np.flatnonzero(bucket == b).astype(np.int64) for b in range(n_buckets)]
+    max_size = max(1, max(len(g) for g in groups))
+    padded = np.full((n_buckets, max_size), -1, dtype=np.int64)
+    counts = np.zeros(n_buckets, dtype=np.int64)
+    for b, g in enumerate(groups):
+        counts[b] = len(g)
+        if len(g):
+            padded[b, : len(g)] = g
+    return padded, counts, bucket.astype(np.int64)
+
+
+def _crowding2_sampler(indptr, indices, bucket_padded_t, item_bucket_t,
+                       pmi_per_edge, n_anchor, device, generator):
+    """GPU-vectorised successor-set sample: B anchors x S successors + matched negatives.
+
+    Everything is one gather over precomputed index tensors; there is no Python
+    loop over anchors, successors or negatives (CLAUDE.md section 15, item 8).
+    PMI weights come from the observed transition counts, so shared-user
+    evidence - not adjacency alone - drives the couserw attraction.
+    """
+    ptr = torch.as_tensor(indptr, device=device)
+    per_anchor = ptr[1:] - ptr[:-1]
+    eligible = torch.nonzero(per_anchor >= 1, as_tuple=True)[0]
+    n_eligible = eligible.numel()
+    # Sample a fixed number of anchors, not the whole catalogue: this term is
+    # additive to the behaviour loss and must not dominate the step cost.
+    b = min(int(n_anchor), int(n_eligible))
+    pick = eligible[torch.randint(n_eligible, (b,), device=device, generator=generator)]
+    start = ptr[pick]
+    width = per_anchor[pick].float().unsqueeze(1)
+    slot = (torch.rand(b, _C2_WIDTH, device=device, generator=generator) * width).long()
+    slot = torch.minimum(slot, per_anchor[pick].unsqueeze(1) - 1)
+    flat = torch.as_tensor(indices, device=device)
+    succ = flat[start.unsqueeze(1) + slot]
+    mask = torch.arange(_C2_WIDTH, device=device).unsqueeze(0) < per_anchor[pick].unsqueeze(1)
+
+    # Popularity-matched negatives: sample from the anchor's own popularity bucket,
+    # which is what makes them hard rather than uniformly easy. The bucket map is
+    # precomputed once, so nothing is re-sorted per batch.
+    bucket = item_bucket_t[pick]
+    width = bucket_padded_t.shape[1]
+    sizes = (bucket_padded_t != -1).sum(dim=1)[bucket].unsqueeze(1)
+    neg_slot = (torch.rand(b, _C2_NEG, device=device, generator=generator) * sizes.float()).long()
+    neg_slot = torch.minimum(neg_slot, sizes - 1)
+    flat_pools = bucket_padded_t.reshape(-1)
+    negatives = flat_pools[bucket.unsqueeze(1) * width + neg_slot]
+
+    pmi_edges = torch.as_tensor(pmi_per_edge, device=device, dtype=torch.float32)
+    pmi = pmi_edges[(start.unsqueeze(1) + slot).reshape(-1)].view(b, _C2_WIDTH) * mask
+    return pick, succ, mask, negatives, pmi
 
 
 def _successor_indicator(train_frame: pd.DataFrame, n_items: int):
@@ -494,6 +643,11 @@ def main() -> None:
         if FALSE_NEGATIVE_MASK
         else None
     )
+    _hyp_degrees = None
+    if _HYP_CONFIG is not None:
+        _hyp_degrees = np.bincount(
+            pair_dataset.pairs[:, 0].numpy(), minlength=len(embeddings)
+        ).astype(np.float32)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -508,6 +662,11 @@ def main() -> None:
             find_unused_parameters=False,
         )
     raw_module = model.module if isinstance(model, DDP) else model
+    if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] in {"assign", "joint"}:
+        _install_hyp_assignment(
+            raw_module.rq.vq_layers[0], _HYP_CONFIG["curvature"],
+            _HYP_CONFIG["distance"] == "euclidean",
+        )
     directional_heads = None
     if DIRECTIONAL_MODE != "none":
         directional_heads = DirectionalHeads().to(device)
@@ -545,6 +704,23 @@ def main() -> None:
         persistent_workers=False,
         drop_last=False,
     )
+    # === Round 2 crowding precompute (successor CSR, popularity-matched negative
+    # pools, PMI weights). All numpy, all once, no per-batch Python loops. ===
+    c2_state = None
+    if _CROWDING2_CONFIG is not None:
+        _indptr, _indices, _edge_counts, _pop, _n_users = _successor_counts(
+            train_frame, len(all_embeddings))
+        # PMI(a,p) = log(C_ap * C / (C_a * C_p)) over the observed transition graph,
+        # clipped at zero. C_ap is the per-edge user count, C_a the outgoing row
+        # count, C_p the number of users who ever bought p.
+        _pmi = np.zeros(len(_indices), dtype=np.float64)
+        np.log(_edge_counts, out=_pmi, where=_edge_counts > 0)
+        _pmi += np.log(max(_n_users, 1)) - np.log(np.maximum(_pop[_indices], 1.0))
+        _pmi = np.maximum(_pmi, 0.0)
+        _buckets, _bucket_sizes = _popularity_deciles(_pop)
+        c2_gen = torch.Generator(device=device).manual_seed(SEED + 104729 + rank)
+        c2_state = (_indptr, _indices, _buckets, _bucket_sizes, _pop, _pmi, c2_gen)
+
     parameters = list(model.parameters())
     if OPTIMIZER.lower() == "adagrad":
         optimizer = torch.optim.Adagrad(parameters, lr=LR, weight_decay=WEIGHT_DECAY)
@@ -610,6 +786,7 @@ def main() -> None:
         recons: list[float] = []
         behaviors: list[float] = []
         crowds: list[float] = []
+        hyperbolic_weights = []
         epoch_weight = behavior_weight(epoch)
         crowd_config_for_ramp = None if _CROWD_CONFIG is None else {
             **_CROWD_CONFIG[2], "mechanism": _CROWD_CONFIG[0]
@@ -617,7 +794,11 @@ def main() -> None:
         epoch_crowding_weight = crowding_ramp_weight(
             epoch, crowd_config_for_ramp, RAMP_START_EPOCH, EPOCHS
         )
+        epoch_hyp_alpha = epoch_weight / BEHAVIOR_WEIGHT_MAX
+        if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] in {"assign", "joint"}:
+            raw_module.rq.vq_layers[0]._hyp_assignment_active = epoch_hyp_alpha > 0.0
         _epoch_t0 = time.time()
+        hyperbolic_losses = []
         for (batch,) in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
@@ -628,6 +809,8 @@ def main() -> None:
             crowd_value = torch.zeros((), device=device)
             crowd_metric = torch.zeros((), device=device)
             crowding_weight = epoch_crowding_weight
+            hyp_value = torch.zeros((), device=device)
+            hyp_weight = 0.0
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -696,6 +879,59 @@ def main() -> None:
                 base_loss, behavior_loss, epoch_weight, crowd_value, crowding_weight,
                 _CROWD_CONFIG is not None,
             )
+            crowd2_value = torch.zeros((), device=device)
+            if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
+                mech2, level2 = _CROWDING2_CONFIG
+                (_indptr, _indices, _buckets_t, _item_bucket_t,
+                 _pmi2, _c2_gen) = c2_state
+                pick, succ, succ_mask, negs, pmi_w = _crowding2_sampler(
+                    _indptr, _indices, _buckets_t, _item_bucket_t,
+                    _pmi2, CROWDING2_ANCHORS, device, _c2_gen,
+                )
+                # One embedding lookup for anchors and their successors together;
+                # z therefore indexes anchors at 0..B-1 and successors at B..B+S-1.
+                mech_ids = torch.cat((pick, succ.reshape(-1)))
+                mech_emb = all_embeddings[mech_ids.cpu()].to(device, non_blocking=True)
+                mech_z = raw_module.encoder(mech_emb)
+                mech_res = _residuals_with_trace(raw_module, mech_emb)
+                b_anchor = mech_z.shape[0] // (1 + _C2_WIDTH)
+                anchor_idx = torch.arange(b_anchor, device=device)
+                pos_idx = b_anchor + torch.arange(_C2_WIDTH, device=device).unsqueeze(0)
+                pos_idx = pos_idx.expand(b_anchor, _C2_WIDTH)
+                neg_idx = torch.roll(anchor_idx, 1).unsqueeze(1).expand(-1, _C2_NEG)
+                crowd2 = _crowd2.mechanism_loss2(
+                    mech2, mech_z, anchor_idx, pos_idx, succ_mask, neg_idx,
+                    torch.stack([layer.get_code_embs()
+                                for layer in raw_module.rq.vq_layers], dim=0),
+                    residual_levels=mech_res,
+                    pmi_weights=pmi_w,
+                    random_pairs=torch.stack((anchor_idx, torch.roll(anchor_idx, 7)), dim=1),
+                    behavior_loss=behavior_loss,
+                    strength=_crowd2.STRENGTHS[level2 - 1],
+                )
+                crowd2_value = next(iter(crowd2["losses"].values())).detach()
+                # Additive composition: Exp1a's behaviour term is untouched, and
+                # additive_total returns that identical tensor at zero weight.
+                loss = _crowd2.additive_total(loss, crowd2)
+                crowds.append(float(crowd2_value))
+            if _HYP_CONFIG is not None and epoch_weight > 0.0:
+                hyp_latent = raw_module.encoder(pair_batch)
+                hyp_positive = torch.arange(len(source_ids), device=device)
+                hyp_degree = torch.as_tensor(
+                    _hyp_degrees[source_ids.cpu().numpy()], device=device,
+                )
+                hyp_codebooks = (
+                    tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
+                    if _HYP_CONFIG["mechanism"] == "perlayer"
+                    else raw_module.rq.vq_layers[0].get_code_embs()
+                )
+                hyp_value = _hyp_mechanism_loss(
+                    _HYP_CONFIG["mechanism"], hyp_latent, hyp_codebooks,
+                    hyp_positive, _HYP_CONFIG["curvature"], _HYP_CONFIG["strength"],
+                    hyp_degree, euclidean=_HYP_CONFIG["distance"] == "euclidean",
+                )
+                hyp_weight = _HYP_CONFIG["strength"] * epoch_hyp_alpha
+                loss = loss + hyp_value * hyp_weight
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             # The parameter-matched control's block is used by NOTHING except the crowding
@@ -722,6 +958,9 @@ def main() -> None:
             recons.append(float(recon_loss.detach()))
             behaviors.append(float(behavior_loss.detach()))
             crowds.append(float(crowd_metric.detach()))
+            if _HYP_CONFIG is not None:
+                hyperbolic_losses.append(float(hyp_value.detach()))
+                hyperbolic_weights.append(hyp_weight)
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
@@ -738,6 +977,12 @@ def main() -> None:
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         avg_behavior = float(local_behavior.item()) / max(world_size, 1)
         avg_crowding = float(local_crowding.item()) / max(world_size, 1)
+        _HYP_METRIC_FIELDS.clear()
+        if _HYP_CONFIG is not None:
+            _HYP_METRIC_FIELDS.update({
+                "hyperbolic_loss": float(np.mean(hyperbolic_losses)),
+                "hyperbolic_weight": float(np.mean(hyperbolic_weights)),
+            })
         cur_lr = optimizer.param_groups[0]["lr"]
 
         # === 非 eval 间隔: 只 log train 行 ===
