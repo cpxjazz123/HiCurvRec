@@ -943,14 +943,7 @@ def main() -> None:
             model,
             device_ids=[local_rank],
             output_device=local_rank,
-            # The CF projection is registered from step 0 but only receives gradient
-            # once the behaviour ramp opens at RAMP_START_EPOCH, because every term in
-            # this family is gated by that weight. That is precisely the condition
-            # find_unused_parameters=False rejects, and it aborts the run on the first
-            # backward with "Expected to have finished reduction in the prior
-            # iteration". Scoped to the CF arms so the rest of the family keeps the
-            # cheaper setting it has always used.
-            find_unused_parameters=_CF_CONFIG is not None,
+            find_unused_parameters=False,
         )
     raw_module = model.module if isinstance(model, DDP) else model
     if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] in {"assign", "joint"}:
@@ -1283,6 +1276,19 @@ def main() -> None:
                 loss = _ac_compose(loss, anti_collapse_term)
             if _CF_CONFIG is not None:
                 loss = loss + cf_term
+                if not cf_fields_list:
+                    # The ramp keeps every term in this family switched off until
+                    # RAMP_START_EPOCH, so the collaborative loss is not computed yet
+                    # and the projection takes no part in the backward. It is still a
+                    # parameter of the DDP-wrapped module, and with
+                    # find_unused_parameters=False DDP aborts on the first backward
+                    # when a parameter never receives a gradient. A zero-multiplied
+                    # touch keeps it in the graph and contributes exactly zero, so the
+                    # projection's weights are unchanged while the reducer stays
+                    # satisfied. find_unused_parameters=True is not an option here:
+                    # the step measures per-term gradient norms with autograd.grad,
+                    # which trips DDP's mark-ready-once check under that setting.
+                    loss = loss + 0.0 * raw_module.cf_projection.projection.weight.sum()
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
