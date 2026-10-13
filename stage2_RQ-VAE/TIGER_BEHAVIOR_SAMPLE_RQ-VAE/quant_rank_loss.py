@@ -6,7 +6,10 @@ import torch
 import torch.nn.functional as F
 
 import geom_losses
+
 from quant_rank_config import LEVEL_WEIGHTS
+
+MARGIN = 0.05
 
 
 def quantized_representation(
@@ -77,6 +80,38 @@ def quantized_ranking_loss(
     positive_distance = geom_losses.distance(arm, anchor, positive, curvature)
     negative_distance = geom_losses.distance(arm, anchor, negative, curvature)
     return float(weight) * F.softplus(positive_distance - negative_distance).mean()
+
+
+def quantized_ranking_loss_margin(
+    residuals: torch.Tensor,
+    token_ids: torch.Tensor,
+    vq_layers,
+    anchors: torch.Tensor,
+    positives: torch.Tensor,
+    negatives: torch.Tensor,
+    *,
+    arm: str = "E1",
+    curvature: float = 1.0,
+    weight: float = 0.2,
+    level_weights=LEVEL_WEIGHTS,
+    detach_codebook: bool = False,
+    margin: float = MARGIN,
+) -> torch.Tensor:
+    """Weighted softplus ranking on actual quantized representations.
+
+    The three index tensors address real rows of ``residuals``/``token_ids``;
+    negatives are never derived from a codebook index or item-id arithmetic.
+    """
+    z_q = quantized_representation(
+        residuals, token_ids, vq_layers, level_weights=level_weights,
+        detach_codebook=detach_codebook,
+    )
+    anchor = z_q[anchors]
+    positive = z_q[positives]
+    negative = z_q[negatives]
+    positive_distance = geom_losses.distance(arm, anchor, positive, curvature)
+    negative_distance = geom_losses.distance(arm, anchor, negative, curvature)
+    return float(weight) * F.relu(positive_distance - negative_distance + float(margin)).mean()
 
 
 def compose_loss(behavior_loss: torch.Tensor, quantized_term: torch.Tensor) -> torch.Tensor:
