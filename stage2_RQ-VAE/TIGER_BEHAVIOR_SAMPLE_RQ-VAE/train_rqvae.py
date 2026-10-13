@@ -1288,7 +1288,12 @@ def main() -> None:
                     # satisfied. find_unused_parameters=True is not an option here:
                     # the step measures per-term gradient norms with autograd.grad,
                     # which trips DDP's mark-ready-once check under that setting.
-                    loss = loss + 0.0 * raw_module.cf_projection.projection.weight.sum()
+                    # Touches every parameter of the projection, not just the weight:
+                    # the bias is what DDP reported missing (parameter index 20).
+                    loss = loss + 0.0 * sum(
+                        parameter.sum()
+                        for parameter in raw_module.cf_projection.parameters()
+                    )
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
