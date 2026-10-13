@@ -66,9 +66,18 @@ from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
 
 import crowding_losses2 as _crowd2
 
-from arm_geometry import ARM_CONFIGS as _GEOMETRY_ARM_CONFIGS
+from arm_geometry import ARM_CONFIGS as _BASE_GEOMETRY_ARM_CONFIGS
 from geom_losses import compose_loss as _geometry_compose
 from geom_losses import geometry_loss as _geometry_loss
+from quant_rank_config import GROUP_CONFIGS as _QUANT_RANK_GROUP_CONFIGS
+from quant_rank_loss import compose_loss as _quant_rank_compose
+from quant_rank_loss import quantized_ranking_loss as _quant_rank_loss
+
+_GEOMETRY_ARM_CONFIGS = {
+    **_BASE_GEOMETRY_ARM_CONFIGS,
+    "B_E": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "B_H": dict(_BASE_GEOMETRY_ARM_CONFIGS["H1"]),
+}
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
                                 mechanism_loss as _hyp_mechanism_loss)
@@ -82,7 +91,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "E1"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "B_H"    # THE switch: arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -193,6 +202,42 @@ def _resolve_geometry_arm(arm: str) -> dict:
                            / _ARM_DIR[arm]),
     }
 
+def _resolve_quant_arm(arm: str) -> dict:
+    group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B")}[arm]
+    baseline = _resolve_geometry_arm(group_a_arm)
+    return {
+        **baseline,
+        "group_a_geometry_arm": group_a_arm,
+        "level_weights": _QUANT_RANK_GROUP_CONFIGS[group]["level_weights"],
+        "quantized_ranking": True,
+    }
+
+
+def _compose_quantized_loss(
+    behavior_loss: torch.Tensor, quantized_term: torch.Tensor
+) -> torch.Tensor:
+    return _quant_rank_compose(behavior_loss, quantized_term)
+
+
+def _quantized_ranking_loss(
+    residuals: torch.Tensor,
+    token_ids: torch.Tensor,
+    model: nn.Module,
+    anchors: torch.Tensor,
+    positives: torch.Tensor,
+    negatives: torch.Tensor,
+    *,
+    weight: float = 0.2,
+) -> torch.Tensor:
+    raw_module = model.module if isinstance(model, DDP) else model
+    return _quant_rank_loss(
+        residuals, token_ids, raw_module.rq.vq_layers,
+        anchors, positives, negatives,
+        arm={"B_E": "E0", "B_H": "H1"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+        curvature=1.0, weight=weight,
+        level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
+    )
+
 
 def _geometry_loss_for_pairs(
     arm: str,
@@ -207,9 +252,10 @@ def _geometry_loss_for_pairs(
     anchors = torch.arange(batch_size, device=latent.device)
     positives = anchors + batch_size
     negatives = positives + batch_size
+    geometry_arm = {"B_E": "E0", "B_H": "H1"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
-        arm, latent, codebook, anchors, positives, negatives,
+        geometry_arm, latent, codebook, anchors, positives, negatives,
         curvature=1.0, weight=arm_weight,
     )
 
@@ -264,6 +310,28 @@ def _geometry_gradient_norms(geometry_term: torch.Tensor, model: nn.Module) -> d
     return {
         "encoder": norm(gradients[:split]),
         "codebook": norm(gradients[split:]),
+    }
+
+
+def _quantized_gradient_norms(quantized_term: torch.Tensor, model: nn.Module) -> dict[str, float]:
+    raw_module = model.module if isinstance(model, DDP) else model
+    encoder_parameters = tuple(raw_module.encoder.parameters())
+    codebook_parameters = tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
+    gradients = torch.autograd.grad(
+        quantized_term, encoder_parameters + codebook_parameters,
+        retain_graph=True, allow_unused=True,
+    )
+
+    def norm(values):
+        present = [gradient.detach().square().sum() for gradient in values if gradient is not None]
+        return float(torch.sqrt(torch.stack(present).sum())) if present else 0.0
+
+    split = len(encoder_parameters)
+    return {
+        "encoder": norm(gradients[:split]),
+        "codebook_l1": norm(gradients[split:split + 1]),
+        "codebook_l2": norm(gradients[split + 1:split + 2]),
+        "codebook_l3": norm(gradients[split + 2:]),
     }
 
 
@@ -465,6 +533,24 @@ def _residuals_with_trace(
         traces.append(residual)
     # iter48 records the residual *entering* each level; drop the final remainder.
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
+
+
+def _residuals_and_tokens_with_trace(
+    raw_module: RQVAE, embeddings: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return residual traces and token IDs from the same real RQ layer calls."""
+    residual = raw_module.encoder(embeddings)
+    traces = []
+    tokens = []
+    for vq_layer in raw_module.rq.vq_layers:
+        traces.append(residual)
+        quant, _, _, token_ids = vq_layer(residual)
+        tokens.append(token_ids)
+        residual = residual - quant
+    return (
+        torch.stack(traces[:raw_module.rq.codebook_num], dim=0),
+        torch.stack(tokens, dim=0),
+    )
 
 
 def _successor_counts(train_frame: pd.DataFrame, n_items: int):
@@ -910,6 +996,11 @@ def main() -> None:
         geometry_values: list[float] = []
         geometry_encoder_norms: list[float] = []
         geometry_codebook_norms: list[float] = []
+        quantized_values: list[float] = []
+        quantized_encoder_norms: list[float] = []
+        quantized_codebook_l1_norms: list[float] = []
+        quantized_codebook_l2_norms: list[float] = []
+        quantized_codebook_l3_norms: list[float] = []
         hyperbolic_weights = []
         epoch_weight = behavior_weight(epoch)
         crowd_config_for_ramp = None if _CROWD_CONFIG is None else {
@@ -938,6 +1029,7 @@ def main() -> None:
             geometry_value = torch.zeros((), device=device)
             geometry_encoder_norm = 0.0
             geometry_codebook_norm = 0.0
+            quantized_term = torch.zeros((), device=device)
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -978,6 +1070,26 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
+                    if EXPERIMENT_ARM in {"B_E", "B_H"}:
+                        quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
+                            raw_module, geometry_item_batch,
+                        )
+                        pair_count = int(source_ids.shape[0])
+                        quant_anchors = torch.arange(pair_count, device=device)
+                        quant_positives = quant_anchors + pair_count
+                        quant_negatives = quant_positives + pair_count
+                        quantized_term = _quantized_ranking_loss(
+                            quant_residuals, quant_tokens, raw_module,
+                            quant_anchors, quant_positives, quant_negatives,
+                            weight=0.2 * epoch_hyp_alpha,
+                        )
+                        quant_norms = _quantized_gradient_norms(
+                            quantized_term, raw_module,
+                        )
+                        quantized_encoder_norms.append(quant_norms["encoder"])
+                        quantized_codebook_l1_norms.append(quant_norms["codebook_l1"])
+                        quantized_codebook_l2_norms.append(quant_norms["codebook_l2"])
+                        quantized_codebook_l3_norms.append(quant_norms["codebook_l3"])
                 if _CROWD_CONFIG is not None:
                     mechanism, crowd_level, crowd_config = _CROWD_CONFIG
                     n_pairs = int(source_ids.shape[0])
@@ -1027,6 +1139,8 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
+            if EXPERIMENT_ARM in {"B_E", "B_H"}:
+                loss = _compose_quantized_loss(loss, quantized_term)
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1108,6 +1222,7 @@ def main() -> None:
             geometry_values.append(float(geometry_value.detach()))
             geometry_encoder_norms.append(geometry_encoder_norm)
             geometry_codebook_norms.append(geometry_codebook_norm)
+            quantized_values.append(float(quantized_term.detach()))
             crowds.append(float(crowd_metric.detach()))
             if _HYP_CONFIG is not None:
                 hyperbolic_losses.append(float(hyp_value.detach()))
@@ -1122,6 +1237,13 @@ def main() -> None:
         local_geometry = torch.tensor(float(np.mean(geometry_values)) if geometry_values else 0.0, device=device)
         local_geometry_encoder_grad = torch.tensor(float(np.mean(geometry_encoder_norms)) if geometry_encoder_norms else 0.0, device=device)
         local_geometry_codebook_grad = torch.tensor(float(np.mean(geometry_codebook_norms)) if geometry_codebook_norms else 0.0, device=device)
+        local_quantized_metrics = torch.tensor([
+            float(np.mean(quantized_values)) if quantized_values else 0.0,
+            float(np.mean(quantized_encoder_norms)) if quantized_encoder_norms else 0.0,
+            float(np.mean(quantized_codebook_l1_norms)) if quantized_codebook_l1_norms else 0.0,
+            float(np.mean(quantized_codebook_l2_norms)) if quantized_codebook_l2_norms else 0.0,
+            float(np.mean(quantized_codebook_l3_norms)) if quantized_codebook_l3_norms else 0.0,
+        ], device=device)
         if world_size > 1:
             dist.all_reduce(local_loss, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
@@ -1130,6 +1252,7 @@ def main() -> None:
             dist.all_reduce(local_geometry, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_geometry_encoder_grad, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_geometry_codebook_grad, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_quantized_metrics, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         avg_behavior = float(local_behavior.item()) / max(world_size, 1)
@@ -1137,6 +1260,16 @@ def main() -> None:
         avg_geometry = float(local_geometry.item()) / max(world_size, 1)
         avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
+        avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
+        quantized_metric_fields = {}
+        if EXPERIMENT_ARM in {"B_E", "B_H"} and epoch_weight > 0.0:
+            quantized_metric_fields = {
+                "quantized_ranking_loss": avg_quantized_metrics[0],
+                "quantized_encoder_grad_norm": avg_quantized_metrics[1],
+                "quantized_codebook_l1_grad_norm": avg_quantized_metrics[2],
+                "quantized_codebook_l2_grad_norm": avg_quantized_metrics[3],
+                "quantized_codebook_l3_grad_norm": avg_quantized_metrics[4],
+            }
         _HYP_METRIC_FIELDS.clear()
         if _HYP_CONFIG is not None:
             _HYP_METRIC_FIELDS.update({
@@ -1148,8 +1281,8 @@ def main() -> None:
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
-                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight))
+                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} quantized_metrics={quantized_metric_fields} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1174,6 +1307,7 @@ def main() -> None:
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
                     f"geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} "
                     f"geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} "
+                    f"quantized_metrics={quantized_metric_fields} "
                     f"lr={cur_lr:.3e} raw_unique={raw_unique}/{len(raw_tokens)} "
                     f"collision={collision_v:.6f} time={epoch_time_s}s",
                     flush=True,
@@ -1186,6 +1320,7 @@ def main() -> None:
                     geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
+                    **quantized_metric_fields,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
