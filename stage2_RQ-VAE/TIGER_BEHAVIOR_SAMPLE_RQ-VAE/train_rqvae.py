@@ -66,6 +66,9 @@ from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
 
 import crowding_losses2 as _crowd2
 
+from arm_geometry import ARM_CONFIGS as _GEOMETRY_ARM_CONFIGS
+from geom_losses import compose_loss as _geometry_compose
+from geom_losses import geometry_loss as _geometry_loss
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
                                 mechanism_loss as _hyp_mechanism_loss)
@@ -79,7 +82,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "cap_d16_l1c512"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "E1"    # THE switch: arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -96,7 +99,7 @@ _ARM_DIR = {
     **{f"crowd_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_{m}_w{level}"
        for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
                  "random", "scale", "parammatch") for level in (1, 2, 3)},
-    **{name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _HYP_ARM_CONFIGS},
+    **{name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _GEOMETRY_ARM_CONFIGS},
 }
 _CROWD_LEVEL_SETTINGS = {
     "w1": {"strength": 0.05, "tau": 0.20, "depth": 1, "k": 5, "concentration": 1.0},
@@ -142,25 +145,16 @@ else:
 _C2_WIDTH = CROWDING2_SUCCESSORS
 _C2_NEG = CROWDING2_NEGATIVES
 
-# === Capacity round: vary representation dimension, codebook size, or encoder width ===
-# Only ONE of these moves per arm. Behaviour supervision, data, pair sampling,
-# optimizer, learning rate, epochs and the evaluation protocol are untouched.
-# cap_d32_wide is the parameter-matched control: HIDDEN_SIZES (528,256,128) with
-# codebook_dim 32 gives exactly 1,182,272 parameters, identical to codebook_dim 64
-# with (512,256,128). The extra parameters live inside the encoder/decoder MLPs,
-# so they participate in the prediction, unlike a side-car parameter block.
-_CAPACITY_ARMS = {
-    "cap_d8":         dict(codebook_dim=8,   codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
-    "cap_d16":        dict(codebook_dim=16,  codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
-    "cap_d64":        dict(codebook_dim=64,  codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
-    "cap_d128":       dict(codebook_dim=128, codebook_size=(256, 256, 256), hidden=(512, 256, 128)),
-    "cap_l1c128":     dict(codebook_dim=32,  codebook_size=(128, 256, 256), hidden=(512, 256, 128)),
-    "cap_l1c512":     dict(codebook_dim=32,  codebook_size=(512, 256, 256), hidden=(512, 256, 128)),
-    "cap_d16_l1c512": dict(codebook_dim=16,  codebook_size=(512, 256, 256), hidden=(512, 256, 128)),
-    "cap_d64_l1c128": dict(codebook_dim=64,  codebook_size=(128, 256, 256), hidden=(512, 256, 128)),
-    "cap_d32_wide":   dict(codebook_dim=32,  codebook_size=(256, 256, 256), hidden=(528, 256, 128)),
-}
-_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _CAPACITY_ARMS})
+# === Capacity freeze: all future arms retain this representation capacity. ===
+_CAPACITY_ARMS = frozenset((
+    "cap_d8", "cap_d16", "cap_d64", "cap_d128", "cap_l1c128",
+    "cap_l1c512", "cap_d16_l1c512", "cap_d64_l1c128", "cap_d32_wide",
+))
+if EXPERIMENT_ARM in _CAPACITY_ARMS:
+    raise RuntimeError(
+        f"Capacity freeze is active: capacity arm {EXPERIMENT_ARM!r} is closed "
+        "and cannot be selected."
+    )
 if EXPERIMENT_ARM not in _ARM_DIR:
     raise KeyError(f"EXPERIMENT_ARM {EXPERIMENT_ARM!r} is not a known arm")
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
@@ -173,8 +167,104 @@ METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
 _ARM_ACTIVE_LEVELS = {"resample_l1only": (0,), "resample_l2only": (1,), "resample_l3only": (2,)}
 ACTIVE_LEVELS = _ARM_ACTIVE_LEVELS.get(EXPERIMENT_ARM, (0, 1, 2))
+# Restored 2026-10-13: this definition was deleted by the geometry wiring edit and the
+# training loop still reads it at line ~759, so every arm died with a NameError.
 _HYP_CONFIG = _HYP_ARM_CONFIGS.get(EXPERIMENT_ARM)
+# Restored 2026-10-13: the geometry-wiring edit deleted this module-level line while
+# the training loop still reads it at line ~771, so every arm died with a NameError.
 _CROWD_CONFIG = _ARM_CROWDING.get(EXPERIMENT_ARM)
+
+_GEOMETRY_CONFIG = _GEOMETRY_ARM_CONFIGS.get(EXPERIMENT_ARM)
+
+def _resolve_geometry_arm(arm: str) -> dict:
+    """Resolve a geometry arm against the trainer's frozen shared settings."""
+    if arm not in _GEOMETRY_ARM_CONFIGS:
+        raise KeyError(f"{arm!r} is not a geometry arm")
+    shared = (
+        CODEBOOK_DIM, CODEBOOK_SIZE, HIDDEN_SIZES, EPOCHS, LR, OPTIMIZER,
+        BATCH_SIZE_PER_RANK, BETA, BEHAVIOR_WEIGHT_MAX,
+        BEHAVIOR_TEMPERATURE, RAMP_START_EPOCH, PAIR_BATCH_SIZE_PER_RANK,
+        RESAMPLE_PAIRS, FALSE_NEGATIVE_MASK, SEED,
+    )
+    return {
+        "shared": shared,
+        "geometry": _GEOMETRY_ARM_CONFIGS[arm],
+        "output_dir": str(Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")
+                           / _ARM_DIR[arm]),
+    }
+
+
+def _geometry_loss_for_pairs(
+    arm: str,
+    latent: torch.Tensor,
+    source_ids: torch.Tensor,
+    codebook: torch.Tensor,
+    *,
+    weight: float | None = None,
+) -> torch.Tensor:
+    """Apply geometry to packed source, positive and matched-negative item rows."""
+    batch_size = int(source_ids.shape[0])
+    anchors = torch.arange(batch_size, device=latent.device)
+    positives = anchors + batch_size
+    negatives = positives + batch_size
+    arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
+    return _geometry_loss(
+        arm, latent, codebook, anchors, positives, negatives,
+        curvature=1.0, weight=arm_weight,
+    )
+
+
+def _matched_geometry_negative_ids(
+    source_ids: torch.Tensor,
+    target_ids: torch.Tensor,
+    bucket_padded_t: torch.Tensor,
+    item_bucket_t: torch.Tensor,
+) -> torch.Tensor:
+    """Sample a distinct, real negative from each source's popularity bucket."""
+    buckets = item_bucket_t[source_ids]
+    candidates = bucket_padded_t[buckets]
+    valid = (
+        (candidates >= 0)
+        & (candidates != source_ids.unsqueeze(1))
+        & (candidates != target_ids.unsqueeze(1))
+    )
+    sizes = valid.sum(dim=1)
+    slots = (torch.rand(len(source_ids), device=source_ids.device) *
+             sizes.float()).long()
+    positions = valid.cumsum(dim=1)
+    selected = (positions > slots.unsqueeze(1)).to(torch.int64).argmax(dim=1)
+    return candidates.gather(1, selected.unsqueeze(1)).squeeze(1)
+
+
+
+
+def _compose_geometry_loss(behavior_loss: torch.Tensor, geometry_term: torch.Tensor) -> torch.Tensor:
+    return _geometry_compose(behavior_loss, geometry_term)
+
+
+def _geometry_gradient_norms(geometry_term: torch.Tensor, model: nn.Module) -> dict[str, float]:
+    """Measure encoder and VQ-codebook gradients from this geometry term only."""
+    raw_module = model.module if isinstance(model, DDP) else model
+    encoder_parameters = tuple(raw_module.encoder.parameters())
+    codebook_parameters = tuple(
+        layer.get_code_embs() for layer in raw_module.rq.vq_layers
+    )
+    gradients = torch.autograd.grad(
+        geometry_term, encoder_parameters + codebook_parameters,
+        retain_graph=True, allow_unused=True,
+    )
+
+    def norm(values):
+        present = [gradient.detach().square().sum() for gradient in values if gradient is not None]
+        if not present:
+            return 0.0
+        return float(torch.sqrt(torch.stack(present).sum()))
+
+    split = len(encoder_parameters)
+    return {
+        "encoder": norm(gradients[:split]),
+        "codebook": norm(gradients[split:]),
+    }
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -186,14 +276,9 @@ HIDDEN_SIZES        = (512, 256, 128)
 CODEBOOK_NUM        = 3
 CODEBOOK_SIZE       = (256, 256, 256)
 CODEBOOK_DIM        = 32
-CAPACITY_ARM = EXPERIMENT_ARM if EXPERIMENT_ARM in _CAPACITY_ARMS else ""
-if CAPACITY_ARM and CAPACITY_ARM not in _CAPACITY_ARMS:
-    raise KeyError(f"unknown capacity arm {CAPACITY_ARM!r}; choose from {sorted(_CAPACITY_ARMS)}")
-if CAPACITY_ARM:
-    _cap = _CAPACITY_ARMS[CAPACITY_ARM]
-    CODEBOOK_DIM = int(_cap["codebook_dim"])
-    CODEBOOK_SIZE = tuple(int(x) for x in _cap["codebook_size"])
-    HIDDEN_SIZES = tuple(int(x) for x in _cap["hidden"])
+assert CODEBOOK_DIM == 32, "Capacity freeze requires CODEBOOK_DIM=32"
+assert len(CODEBOOK_SIZE) == 3, "Capacity freeze requires exactly three RQ-VAE levels"
+assert CODEBOOK_SIZE == (256, 256, 256), "Capacity freeze requires CODEBOOK_SIZE=(256,256,256)"
 BETA                = 0.25
 VQ_TYPE             = "vq"
 EMA_DECAY           = 0.99
@@ -207,18 +292,12 @@ OPTIMIZER           = "AdamW"
 SEED                = _ARM_SEED
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
-# === 唯一新增机制: 历史 Iter48 (348aed182) 行为对比监督 ===
-# 权重上限与温度沿用历史值; ramp 从 epoch RAMP_START_EPOCH 起线性升到
-# BEHAVIOR_WEIGHT_MAX, 对应历史 20k/40k global step 的后半程。
 BEHAVIOR_WEIGHT_MAX     = 0.20
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
-PAIR_BATCH_SIZE_PER_RANK = 512   # 每卡 pair 数; source+target 单独一次前向
-# === 实验 1 的两个开关 ===
-# RESAMPLE_PAIRS=True 每 epoch 重建 pair 迭代器 (修复 cycle 缓存);
-# False 复现基线的一次性 cycle 行为。
+PAIR_BATCH_SIZE_PER_RANK = 512
 RESAMPLE_PAIRS          = True
-# FALSE_NEGATIVE_MASK=True 除重复 target 外, 再屏蔽同 anchor 的其它已知真实后继。
+
 FALSE_NEGATIVE_MASK     = EXPERIMENT_ARM == "resample_fn_mask"
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
@@ -662,6 +741,16 @@ def main() -> None:
     if train_ids.size == 0 or train_ids.min() < 0 or train_ids.max() >= len(embeddings):
         raise ValueError("Training target item ids do not match the embedding rows")
 
+    geometry_bucket_padded_t = geometry_item_bucket_t = None
+    if _GEOMETRY_CONFIG is not None:
+        _, _, _, geometry_popularity, _ = _successor_counts(
+            train_frame, len(embeddings)
+        )
+        geometry_buckets, _, geometry_item_bucket = _popularity_deciles(
+            geometry_popularity
+        )
+        geometry_bucket_padded_t = torch.as_tensor(geometry_buckets, device=device)
+        geometry_item_bucket_t = torch.as_tensor(geometry_item_bucket, device=device)
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
     # iter48's full transition stream, drawn by its own sampler so the item
@@ -818,6 +907,9 @@ def main() -> None:
         recons: list[float] = []
         behaviors: list[float] = []
         crowds: list[float] = []
+        geometry_values: list[float] = []
+        geometry_encoder_norms: list[float] = []
+        geometry_codebook_norms: list[float] = []
         hyperbolic_weights = []
         epoch_weight = behavior_weight(epoch)
         crowd_config_for_ramp = None if _CROWD_CONFIG is None else {
@@ -843,6 +935,9 @@ def main() -> None:
             crowding_weight = epoch_crowding_weight
             hyp_value = torch.zeros((), device=device)
             hyp_weight = 0.0
+            geometry_value = torch.zeros((), device=device)
+            geometry_encoder_norm = 0.0
+            geometry_codebook_norm = 0.0
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -864,6 +959,25 @@ def main() -> None:
                     behavior_loss = behavior_contrastive_loss(
                         residuals, source_ids, target_ids, successor_indicator
                     )
+                if _GEOMETRY_CONFIG is not None:
+                    geometry_negative_ids = _matched_geometry_negative_ids(
+                        source_ids, target_ids, geometry_bucket_padded_t,
+                        geometry_item_bucket_t,
+                    )
+                    geometry_item_ids = torch.cat(
+                        (source_ids, target_ids, geometry_negative_ids)
+                    )
+                    geometry_item_batch = all_embeddings[
+                        geometry_item_ids.cpu()
+                    ].to(device, non_blocking=True)
+                    geometry_latent = raw_module.encoder(geometry_item_batch)
+                    geometry_value = _geometry_loss_for_pairs(
+                        EXPERIMENT_ARM, geometry_latent, source_ids,
+                        raw_module.rq.vq_layers[0].get_code_embs(),
+                    )
+                    geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
+                    geometry_encoder_norm = geometry_norms["encoder"]
+                    geometry_codebook_norm = geometry_norms["codebook"]
                 if _CROWD_CONFIG is not None:
                     mechanism, crowd_level, crowd_config = _CROWD_CONFIG
                     n_pairs = int(source_ids.shape[0])
@@ -911,6 +1025,8 @@ def main() -> None:
                 base_loss, behavior_loss, epoch_weight, crowd_value, crowding_weight,
                 _CROWD_CONFIG is not None,
             )
+            if _GEOMETRY_CONFIG is not None:
+                loss = _compose_geometry_loss(loss, geometry_value)
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -989,6 +1105,9 @@ def main() -> None:
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
             behaviors.append(float(behavior_loss.detach()))
+            geometry_values.append(float(geometry_value.detach()))
+            geometry_encoder_norms.append(geometry_encoder_norm)
+            geometry_codebook_norms.append(geometry_codebook_norm)
             crowds.append(float(crowd_metric.detach()))
             if _HYP_CONFIG is not None:
                 hyperbolic_losses.append(float(hyp_value.detach()))
@@ -1000,15 +1119,24 @@ def main() -> None:
         local_recon = torch.tensor(float(np.mean(recons)) if recons else 0.0, device=device)
         local_behavior = torch.tensor(float(np.mean(behaviors)) if behaviors else 0.0, device=device)
         local_crowding = torch.tensor(float(np.mean(crowds)) if crowds else 0.0, device=device)
+        local_geometry = torch.tensor(float(np.mean(geometry_values)) if geometry_values else 0.0, device=device)
+        local_geometry_encoder_grad = torch.tensor(float(np.mean(geometry_encoder_norms)) if geometry_encoder_norms else 0.0, device=device)
+        local_geometry_codebook_grad = torch.tensor(float(np.mean(geometry_codebook_norms)) if geometry_codebook_norms else 0.0, device=device)
         if world_size > 1:
             dist.all_reduce(local_loss, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_recon, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_behavior, op=dist.ReduceOp.SUM)
             dist.all_reduce(local_crowding, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_geometry, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_geometry_encoder_grad, op=dist.ReduceOp.SUM)
+            dist.all_reduce(local_geometry_codebook_grad, op=dist.ReduceOp.SUM)
         avg_loss = float(local_loss.item()) / max(world_size, 1)
         avg_recon = float(local_recon.item()) / max(world_size, 1)
         avg_behavior = float(local_behavior.item()) / max(world_size, 1)
         avg_crowding = float(local_crowding.item()) / max(world_size, 1)
+        avg_geometry = float(local_geometry.item()) / max(world_size, 1)
+        avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
+        avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         _HYP_METRIC_FIELDS.clear()
         if _HYP_CONFIG is not None:
             _HYP_METRIC_FIELDS.update({
@@ -1020,8 +1148,8 @@ def main() -> None:
         # === 非 eval 间隔: 只 log train 行 ===
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
-                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight))
+                print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight))
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1044,6 +1172,8 @@ def main() -> None:
                 final_raw_unique = raw_unique
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
+                    f"geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} "
+                    f"geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} "
                     f"lr={cur_lr:.3e} raw_unique={raw_unique}/{len(raw_tokens)} "
                     f"collision={collision_v:.6f} time={epoch_time_s}s",
                     flush=True,
@@ -1051,6 +1181,9 @@ def main() -> None:
                 _record(
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
+                    geometry_loss=avg_geometry,
+                    geometry_encoder_grad_norm=avg_geometry_encoder_grad,
+                    geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
                 )
