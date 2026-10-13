@@ -117,7 +117,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "DIGER"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "CF_ALIGN"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # E2: which collaborative-alignment components this arm carries. None for every
 # arm outside the CF_* family, so their code path is untouched.
@@ -943,7 +943,14 @@ def main() -> None:
             model,
             device_ids=[local_rank],
             output_device=local_rank,
-            find_unused_parameters=False,
+            # The CF projection is registered from step 0 but only receives gradient
+            # once the behaviour ramp opens at RAMP_START_EPOCH, because every term in
+            # this family is gated by that weight. That is precisely the condition
+            # find_unused_parameters=False rejects, and it aborts the run on the first
+            # backward with "Expected to have finished reduction in the prior
+            # iteration". Scoped to the CF arms so the rest of the family keeps the
+            # cheaper setting it has always used.
+            find_unused_parameters=_CF_CONFIG is not None,
         )
     raw_module = model.module if isinstance(model, DDP) else model
     if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] in {"assign", "joint"}:
