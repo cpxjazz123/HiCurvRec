@@ -60,6 +60,10 @@ class VQLayer(nn.Module):
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
         self.embed = nn.Embedding(self.n_embed, self.dim)
+        # Injected by the trainer for hyperbolic codeword assignment. None means the
+        # squared-Euclidean assignment below, so every existing arm is unchanged
+        # bit for bit. Set it to fn(latent, code_embs) -> [N, n_embed] distances.
+        self.hyperbolic_distance_fn = None
 
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
@@ -97,6 +101,11 @@ class VQLayer(nn.Module):
 
     def _distances(self, latent: torch.Tensor) -> torch.Tensor:
         code_embs = self.get_code_embs()
+        if self.hyperbolic_distance_fn is not None:
+            # Geodesic assignment happens here, inside the forward pass, so the
+            # curvature genuinely participates in code selection rather than being
+            # applied to the finished codes afterwards.
+            return self.hyperbolic_distance_fn(latent, code_embs)
         return (
             latent.pow(2).sum(1, keepdim=True)
             - 2 * latent @ code_embs.t()
