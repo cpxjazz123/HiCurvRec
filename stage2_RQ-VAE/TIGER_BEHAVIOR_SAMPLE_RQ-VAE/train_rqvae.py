@@ -93,6 +93,13 @@ _GEOMETRY_ARM_CONFIGS = {
     "LETTER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "LETTER_nodiv": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "DIGER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    # E4: the MARGIN recipe with its codebook-direct ranking coefficient scaled down.
+    # Margin, loss form, behaviour sampling, initialisation, ramp and the encoder's own
+    # behaviour weight are all held at MARGIN's, so the coefficient is the only change.
+    "MARGIN_RW001": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "MARGIN_RW005": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "MARGIN_RW02": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "MARGIN_RW05": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -107,7 +114,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "DIGER"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "MARGIN_RW05"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
@@ -159,6 +166,18 @@ _ARM_BEHAVIOR_WEIGHT = {
     "bw001": 0.002,
     "bw01":  0.02,
 }
+# E4. The coefficient on the codebook-direct behavioural ranking term, which is a
+# different quantity from BEHAVIOR_WEIGHT_MAX: that one scales the encoder's own
+# contrastive loss and stays at 0.20 for every arm here. MARGIN itself ran this term
+# at 0.20 and these arms hold everything else fixed while scaling only this.
+_RANKING_WEIGHT_MAX = 0.2
+_ARM_RANKING_WEIGHT = {
+    "MARGIN_RW001": 0.001,
+    "MARGIN_RW005": 0.005,
+    "MARGIN_RW02":  0.02,
+    "MARGIN_RW05":  0.05,
+}
+_RANKING_WEIGHT = _ARM_RANKING_WEIGHT.get(EXPERIMENT_ARM, _RANKING_WEIGHT_MAX)
 _ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
@@ -228,7 +247,9 @@ def _resolve_geometry_arm(arm: str) -> dict:
 def _resolve_quant_arm(arm: str) -> dict:
     group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B"), "B_E_nocb": ("E0", "B"),
                           "MARGIN": ("E0", "B"), "LETTER": ("E0", "B"),
-                          "LETTER_nodiv": ("E0", "B"), "DIGER": ("E0", "B")}[arm]
+                          "LETTER_nodiv": ("E0", "B"), "DIGER": ("E0", "B"),
+                          "MARGIN_RW001": ("E0", "B"), "MARGIN_RW005": ("E0", "B"),
+                          "MARGIN_RW02": ("E0", "B"), "MARGIN_RW05": ("E0", "B")}[arm]
     baseline = _resolve_geometry_arm(group_a_arm)
     return {
         **baseline,
@@ -255,12 +276,16 @@ def _quantized_ranking_loss(
     weight: float = 0.2,
 ) -> torch.Tensor:
     raw_module = model.module if isinstance(model, DDP) else model
-    ranking_loss = _quant_rank_margin_loss if EXPERIMENT_ARM == "MARGIN" else _quant_rank_loss
+    margin_arms = {
+        "MARGIN", "MARGIN_RW001", "MARGIN_RW005", "MARGIN_RW02", "MARGIN_RW05",
+    }
+    ranking_loss = _quant_rank_margin_loss if EXPERIMENT_ARM in margin_arms else _quant_rank_loss
     return ranking_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
         arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-             "LETTER_nodiv": "E0", "DIGER": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+             "LETTER_nodiv": "E0", "DIGER": "E0",
+             "MARGIN_RW001": "E0", "MARGIN_RW005": "E0", "MARGIN_RW02": "E0", "MARGIN_RW05": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
         curvature=1.0, weight=weight,
         level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
         detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
@@ -299,7 +324,8 @@ def _geometry_loss_for_pairs(
     positives = anchors + batch_size
     negatives = positives + batch_size
     geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-                    "LETTER_nodiv": "E0", "DIGER": "E0"}.get(arm, arm)
+                    "LETTER_nodiv": "E0", "DIGER": "E0",
+             "MARGIN_RW001": "E0", "MARGIN_RW005": "E0", "MARGIN_RW02": "E0", "MARGIN_RW05": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -1124,7 +1150,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "MARGIN_RW001", "MARGIN_RW005", "MARGIN_RW02", "MARGIN_RW05"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1135,7 +1161,7 @@ def main() -> None:
                         quantized_term = _quantized_ranking_loss(
                             quant_residuals, quant_tokens, raw_module,
                             quant_anchors, quant_positives, quant_negatives,
-                            weight=0.2 * epoch_hyp_alpha,
+                            weight=_RANKING_WEIGHT * epoch_hyp_alpha,
                         )
                         anti_collapse_term = _anti_collapse_term(
                             quant_residuals, quant_tokens, model, quantized_term,
@@ -1196,7 +1222,7 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
-            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "MARGIN_RW001", "MARGIN_RW005", "MARGIN_RW02", "MARGIN_RW05"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
                 loss = _ac_compose(loss, anti_collapse_term)
             crowd2_value = torch.zeros((), device=device)
@@ -1320,7 +1346,7 @@ def main() -> None:
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
         quantized_metric_fields = {}
-        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"} and epoch_weight > 0.0:
+        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "MARGIN_RW001", "MARGIN_RW005", "MARGIN_RW02", "MARGIN_RW05"} and epoch_weight > 0.0:
             quantized_metric_fields = {
                 "quantized_ranking_loss": avg_quantized_metrics[0],
                 "quantized_encoder_grad_norm": avg_quantized_metrics[1],
