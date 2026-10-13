@@ -1,0 +1,392 @@
+{
+  "arms": {
+    "B_E": {
+      "auc": {
+        "continuous": 0.7712969444707218,
+        "cumulative_quantised": 0.6806366474316526,
+        "residual_1": 0.7712969444707218,
+        "residual_2": 0.7624955065745909,
+        "residual_3": 0.7577618011541009
+      },
+      "codebook_health": {
+        "full_sid_uniqueness": 1.0,
+        "joint_assignment_entropy_nats": 3.5920564119192657,
+        "levels": [
+          {
+            "capacity": 256,
+            "distinct_codes": 32,
+            "gini": 0.9955332403810957,
+            "level": 1,
+            "normalized_entropy": 0.03784272515786633,
+            "top1_share": 0.9550982226379794
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 130,
+            "gini": 0.9903246952149509,
+            "level": 2,
+            "normalized_entropy": 0.06308811600004204,
+            "top1_share": 0.9512750640582421
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 118,
+            "gini": 0.9072186584882256,
+            "level": 3,
+            "normalized_entropy": 0.6150404110574642,
+            "top1_share": 0.1527229836905682
+          }
+        ],
+        "three_digit_uniqueness": 0.016960182210111033
+      },
+      "distance": {
+        "negative": {
+          "mean": 0.6129304290243235,
+          "median": 0.5636336505413055,
+          "p05": 0.36724133640527723,
+          "p95": 1.0689107894897456
+        },
+        "positive": {
+          "mean": 0.45234385098639884,
+          "median": 0.4291780889034271,
+          "p05": 0.2648710161447525,
+          "p95": 0.7035837411880493
+        }
+      },
+      "gradient": {
+        "behavior_weight": 0.2,
+        "encoder": {
+          "behaviour_norm": 0.6229649782180786,
+          "cosine": 0.23018649220466614,
+          "norm_ratio": 206.0903778076172,
+          "reconstruction_norm": 0.0030227757524698973
+        },
+        "last_layer": {
+          "behaviour_norm": 0.027715066447854042,
+          "cosine": 0.3046343922615051,
+          "norm_ratio": 57.644412994384766,
+          "reconstruction_norm": 0.00048079362022690475
+        },
+        "temperature": 0.07
+      },
+      "separation": {
+        "mean_negative_minus_positive": 0.16058647632598877,
+        "negative_not_farther_fraction": 0.24085514864906937
+      }
+    },
+    "B_H": {
+      "auc": {
+        "continuous": 0.7731548576293633,
+        "cumulative_quantised": 0.7520508939551603,
+        "residual_1": 0.7731548576293633,
+        "residual_2": 0.6967420300823006,
+        "residual_3": 0.6133554063002554
+      },
+      "codebook_health": {
+        "full_sid_uniqueness": 1.0,
+        "joint_assignment_entropy_nats": 7.550758072947836,
+        "levels": [
+          {
+            "capacity": 256,
+            "distinct_codes": 9,
+            "gini": 0.9911772163643389,
+            "level": 1,
+            "normalized_entropy": 0.1705637561013078,
+            "top1_share": 0.7521047708138447
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 157,
+            "gini": 0.8799087487798429,
+            "level": 2,
+            "normalized_entropy": 0.6670278532481951,
+            "top1_share": 0.11416602269492009
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.32184961183755645,
+            "level": 3,
+            "normalized_entropy": 0.9702459406481276,
+            "top1_share": 0.011672835238133974
+          }
+        ],
+        "three_digit_uniqueness": 0.18680603570992801
+      },
+      "distance": {
+        "mapped_radius": {
+          "fraction_above_0_9": 0.0,
+          "fraction_below_0_1": 0.0,
+          "median": 0.7364271879196167,
+          "p05": 0.6993404030799866,
+          "p95": 0.77030348777771
+        },
+        "negative": {
+          "mean": 0.37829234173485277,
+          "median": 0.3672836571931839,
+          "p05": 0.19730677008628844,
+          "p95": 0.598893815279007
+        },
+        "positive": {
+          "mean": 0.25933057679223126,
+          "median": 0.2528424859046936,
+          "p05": 0.09530373886227608,
+          "p95": 0.44472742080688477
+        }
+      },
+      "gradient": {
+        "behavior_weight": 0.2,
+        "encoder": {
+          "behaviour_norm": 0.35254859924316406,
+          "cosine": -0.043288324028253555,
+          "norm_ratio": 178.7355499267578,
+          "reconstruction_norm": 0.0019724592566490173
+        },
+        "last_layer": {
+          "behaviour_norm": 0.012833066284656525,
+          "cosine": 0.11079401522874832,
+          "norm_ratio": 23.582780838012695,
+          "reconstruction_norm": 0.0005441710236482322
+        },
+        "temperature": 0.07
+      },
+      "separation": {
+        "mean_negative_minus_positive": 0.11896181106567383,
+        "negative_not_farther_fraction": 0.2287296067338976
+      }
+    },
+    "E0": {
+      "auc": {
+        "continuous": 0.7711436950146627,
+        "cumulative_quantised": 0.7655453599470249,
+        "residual_1": 0.7711436950146627,
+        "residual_2": 0.5283227698420206,
+        "residual_3": 0.5145870778545076
+      },
+      "codebook_health": {
+        "full_sid_uniqueness": 1.0,
+        "joint_assignment_entropy_nats": 10.06577252074795,
+        "levels": [
+          {
+            "capacity": 256,
+            "distinct_codes": 244,
+            "gini": 0.24563809762272748,
+            "level": 1,
+            "normalized_entropy": 0.9778066408831263,
+            "top1_share": 0.00878513035343881
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.14097531851181522,
+            "level": 2,
+            "normalized_entropy": 0.9921233871608742,
+            "top1_share": 0.009435880749989831
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.05233663241753783,
+            "level": 3,
+            "normalized_entropy": 0.9992254780954294,
+            "top1_share": 0.004921299873917111
+          }
+        ],
+        "three_digit_uniqueness": 0.9705942164558506
+      },
+      "distance": {
+        "negative": {
+          "mean": 0.5439431967171073,
+          "median": 0.5027820467948914,
+          "p05": 0.33163258582353594,
+          "p95": 0.9230781257152547
+        },
+        "positive": {
+          "mean": 0.40138029745055964,
+          "median": 0.38557860255241394,
+          "p05": 0.22614883929491045,
+          "p95": 0.6112767696380614
+        }
+      },
+      "gradient": {
+        "behavior_weight": 0.2,
+        "encoder": {
+          "behaviour_norm": 0.40679630637168884,
+          "cosine": -0.05649174749851227,
+          "norm_ratio": 601.1747436523438,
+          "reconstruction_norm": 0.0006766690057702363
+        },
+        "last_layer": {
+          "behaviour_norm": 0.022926807403564453,
+          "cosine": 0.01409000251442194,
+          "norm_ratio": 97.39646911621094,
+          "reconstruction_norm": 0.00023539669928140938
+        },
+        "temperature": 0.07
+      },
+      "separation": {
+        "mean_negative_minus_positive": 0.1425628364086151,
+        "negative_not_farther_fraction": 0.2360935881746361
+      }
+    },
+    "H1": {
+      "auc": {
+        "continuous": 0.7742635512250496,
+        "cumulative_quantised": 0.7690313120802195,
+        "residual_1": 0.7742635512250496,
+        "residual_2": 0.5977674770598808,
+        "residual_3": 0.5247526251064233
+      },
+      "codebook_health": {
+        "full_sid_uniqueness": 1.0,
+        "joint_assignment_entropy_nats": 9.699782686783355,
+        "levels": [
+          {
+            "capacity": 256,
+            "distinct_codes": 12,
+            "gini": 0.9589323435657056,
+            "level": 1,
+            "normalized_entropy": 0.44356960654604755,
+            "top1_share": 0.10957009801927849
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 174,
+            "gini": 0.47212846855045343,
+            "level": 2,
+            "normalized_entropy": 0.9156703562398887,
+            "top1_share": 0.012486273233822752
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.08826008790214335,
+            "level": 3,
+            "normalized_entropy": 0.9974875185386345,
+            "top1_share": 0.006710863464432424
+          }
+        ],
+        "three_digit_uniqueness": 0.7637776060519786
+      },
+      "distance": {
+        "mapped_radius": {
+          "fraction_above_0_9": 0.0,
+          "fraction_below_0_1": 0.0,
+          "median": 0.7444753050804138,
+          "p05": 0.7129020690917969,
+          "p95": 0.7731172442436218
+        },
+        "negative": {
+          "mean": 0.3406149419884318,
+          "median": 0.3313230872154236,
+          "p05": 0.1757090538740158,
+          "p95": 0.538655924797058
+        },
+        "positive": {
+          "mean": 0.23116740612565947,
+          "median": 0.22603990137577057,
+          "p05": 0.0806945562362671,
+          "p95": 0.40070356428623183
+        }
+      },
+      "gradient": {
+        "behavior_weight": 0.2,
+        "encoder": {
+          "behaviour_norm": 0.32158344984054565,
+          "cosine": 0.0004719747230410576,
+          "norm_ratio": 500.1848449707031,
+          "reconstruction_norm": 0.0006429292261600494
+        },
+        "last_layer": {
+          "behaviour_norm": 0.010566805489361286,
+          "cosine": 0.06279075890779495,
+          "norm_ratio": 48.707237243652344,
+          "reconstruction_norm": 0.0002169452782254666
+        },
+        "temperature": 0.07
+      },
+      "separation": {
+        "mean_negative_minus_positive": 0.10944750905036926,
+        "negative_not_farther_fraction": 0.22664353852142288
+      }
+    },
+    "resample": {
+      "auc": {
+        "continuous": 0.776690946930281,
+        "cumulative_quantised": 0.7731681014095166,
+        "residual_1": 0.776690946930281,
+        "residual_2": 0.5218806167817615,
+        "residual_3": 0.5056569860940309
+      },
+      "codebook_health": {
+        "full_sid_uniqueness": 1.0,
+        "joint_assignment_entropy_nats": 10.053913183356286,
+        "levels": [
+          {
+            "capacity": 256,
+            "distinct_codes": 241,
+            "gini": 0.23837276177451505,
+            "level": 1,
+            "normalized_entropy": 0.9782228973921852,
+            "top1_share": 0.01028999064546305
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.1874747389372433,
+            "level": 2,
+            "normalized_entropy": 0.9887257955063856,
+            "top1_share": 0.010208646845894172
+          },
+          {
+            "capacity": 256,
+            "distinct_codes": 256,
+            "gini": 0.0719980007219263,
+            "level": 3,
+            "normalized_entropy": 0.997916358609508,
+            "top1_share": 0.010371334445031927
+          }
+        ],
+        "three_digit_uniqueness": 0.9636393215927116
+      },
+      "distance": {
+        "negative": {
+          "mean": 0.430616911554674,
+          "median": 0.42478205263614655,
+          "p05": 0.2785264074802399,
+          "p95": 0.597866940498352
+        },
+        "positive": {
+          "mean": 0.3218878066576674,
+          "median": 0.32520440220832825,
+          "p05": 0.14929976016283036,
+          "p95": 0.4810861021280288
+        }
+      },
+      "gradient": {
+        "behavior_weight": 0.2,
+        "encoder": {
+          "behaviour_norm": 0.31202277541160583,
+          "cosine": -0.1649223268032074,
+          "norm_ratio": 482.09588623046875,
+          "reconstruction_norm": 0.0006472214008681476
+        },
+        "last_layer": {
+          "behaviour_norm": 0.013484656810760498,
+          "cosine": 0.04585125297307968,
+          "norm_ratio": 43.22514724731445,
+          "reconstruction_norm": 0.00031196323106996715
+        },
+        "temperature": 0.07
+      },
+      "separation": {
+        "mean_negative_minus_positive": 0.10872906446456909,
+        "negative_not_farther_fraction": 0.21955197363994308
+      }
+    }
+  },
+  "fixed_batch": {
+    "pair_file": "behavior_pairs_valid_s42.npz",
+    "pair_rows": 512
+  }
+}

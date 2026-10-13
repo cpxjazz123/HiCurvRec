@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -47,11 +48,7 @@ class CapacityFreezeTests(unittest.TestCase):
         source = source_path.read_text(encoding="utf-8")
         for arm in CLOSED_ARMS:
             with self.subTest(arm=arm):
-                selected_source = source.replace(
-                    'EXPERIMENT_ARM = "resample"',
-                    'EXPERIMENT_ARM = "{}"'.format(arm),
-                    1,
-                )
+                selected_source = re.sub(r'(?m)^EXPERIMENT_ARM\s*=\s*"[^"]*"', 'EXPERIMENT_ARM = "{}"'.format(arm), source, count=1)
                 self.assertNotEqual(selected_source, source, "hard-coded arm switch not found")
                 namespace = {
                     "__file__": str(source_path),
