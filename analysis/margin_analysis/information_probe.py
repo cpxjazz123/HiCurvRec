@@ -16,7 +16,7 @@ ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 ARM_ROOT = ROOT / "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE"
 EMBEDDINGS_PATH = ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 OUTPUT_PATH = ROOT / "results/margin_analysis/information_probe.json"
-ARMS = ("resample", "B_E", "LETTER", "MARGIN", "DIGER", "B_E_nocb")
+ARMS = ("resample", "B_E", "LETTER", "MARGIN", "DIGER", "B_E_nocb", "DIGER_FIX")
 CODEBOOK_SIZE = 256
 CHUNK_ROWS = 1024
 
