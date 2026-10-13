@@ -71,13 +71,26 @@ from geom_losses import compose_loss as _geometry_compose
 from geom_losses import geometry_loss as _geometry_loss
 from quant_rank_config import GROUP_CONFIGS as _QUANT_RANK_GROUP_CONFIGS
 from quant_rank_loss import compose_loss as _quant_rank_compose
+from quant_rank_loss import quantized_representation as _quantized_representation
 from quant_rank_loss import quantized_ranking_loss as _quant_rank_loss
+import anti_collapse_losses as _ac
+from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
+                                  DIVERSITY_WEIGHT as _AC_DIVERSITY_WEIGHT,
+                                  GUMBEL_TAU as _AC_GUMBEL_TAU, ARM_FLAGS)
+from anti_collapse_losses import compose as _ac_compose
+
+_AC_ALIGN = _ac.align_loss
+_AC_DIVERSITY = _ac.diversity_loss
+_AC_GUMBEL = _ac.gumbel_quantized_representation
 
 _GEOMETRY_ARM_CONFIGS = {
     **_BASE_GEOMETRY_ARM_CONFIGS,
     "B_E": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "B_H": dict(_BASE_GEOMETRY_ARM_CONFIGS["H1"]),
     "B_E_nocb": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "LETTER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "LETTER_nodiv": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "DIGER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -92,7 +105,8 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "B_E_nocb"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "LETTER"    # THE switch: arm name; see _ARM_DIR
+_ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -210,7 +224,8 @@ def _resolve_geometry_arm(arm: str) -> dict:
     }
 
 def _resolve_quant_arm(arm: str) -> dict:
-    group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B"), "B_E_nocb": ("E0", "B")}[arm]
+    group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B"), "B_E_nocb": ("E0", "B"),
+                          "LETTER": ("E0", "B"), "LETTER_nodiv": ("E0", "B"), "DIGER": ("E0", "B")}[arm]
     baseline = _resolve_geometry_arm(group_a_arm)
     return {
         **baseline,
@@ -240,11 +255,30 @@ def _quantized_ranking_loss(
     return _quant_rank_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
-        arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+        arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "LETTER": "E0",
+             "LETTER_nodiv": "E0", "DIGER": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
         curvature=1.0, weight=weight,
         level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
         detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
     )
+def _anti_collapse_term(residuals, token_ids, model, quantized_term):
+    raw_module = model.module if isinstance(model, DDP) else model
+    flags = _ANTI_COLLAPSE_FLAGS
+    if flags is None:
+        return torch.zeros((), device=residuals.device)
+    total = torch.zeros((), device=residuals.device)
+    if flags["use_gumbel"]:
+        q = _AC_GUMBEL(residuals, raw_module.rq.vq_layers, _AC_GUMBEL_TAU)
+    else:
+        q = _quantized_representation(residuals, token_ids, raw_module.rq.vq_layers)
+    if flags["use_align"]:
+        total = total + _AC_ALIGN_WEIGHT * _AC_ALIGN(residuals, q)
+    if flags["use_diversity"]:
+        total = total + _AC_DIVERSITY(
+            residuals, raw_module.rq.vq_layers, _AC_GUMBEL_TAU)
+    return total
+
+
 
 
 def _geometry_loss_for_pairs(
@@ -260,7 +294,8 @@ def _geometry_loss_for_pairs(
     anchors = torch.arange(batch_size, device=latent.device)
     positives = anchors + batch_size
     negatives = positives + batch_size
-    geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0"}.get(arm, arm)
+    geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "LETTER": "E0",
+                    "LETTER_nodiv": "E0", "DIGER": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -1044,6 +1079,7 @@ def main() -> None:
             geometry_encoder_norm = 0.0
             geometry_codebook_norm = 0.0
             quantized_term = torch.zeros((), device=device)
+            anti_collapse_term = torch.zeros((), device=device)
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -1084,7 +1120,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"}:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "LETTER", "LETTER_nodiv", "DIGER"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1096,6 +1132,9 @@ def main() -> None:
                             quant_residuals, quant_tokens, raw_module,
                             quant_anchors, quant_positives, quant_negatives,
                             weight=0.2 * epoch_hyp_alpha,
+                        )
+                        anti_collapse_term = _anti_collapse_term(
+                            quant_residuals, quant_tokens, model, quantized_term,
                         )
                         quant_norms = _quantized_gradient_norms(
                             quantized_term, raw_module,
@@ -1153,8 +1192,9 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
-            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"}:
+            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "LETTER", "LETTER_nodiv", "DIGER"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
+                loss = _ac_compose(loss, anti_collapse_term)
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1276,7 +1316,7 @@ def main() -> None:
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
         quantized_metric_fields = {}
-        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb"} and epoch_weight > 0.0:
+        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "LETTER", "LETTER_nodiv", "DIGER"} and epoch_weight > 0.0:
             quantized_metric_fields = {
                 "quantized_ranking_loss": avg_quantized_metrics[0],
                 "quantized_encoder_grad_norm": avg_quantized_metrics[1],
