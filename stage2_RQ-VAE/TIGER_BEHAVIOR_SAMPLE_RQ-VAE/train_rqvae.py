@@ -91,7 +91,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "B_H"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "bw01"    # THE switch: arm name; see _ARM_DIR
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -137,6 +137,12 @@ _ARM_DIR.update({
     for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
               "random", "scale", "behonly") for level in (1, 2, 3)
 })
+_ARM_BEHAVIOR_WEIGHT = {
+    "bw0":   0.0,
+    "bw001": 0.002,
+    "bw01":  0.02,
+}
+_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
     for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
@@ -361,6 +367,12 @@ SEED                = _ARM_SEED
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
 BEHAVIOR_WEIGHT_MAX     = 0.20
+# Behaviour-weight sweep arms. The diagnostic found the behaviour term's encoder gradient
+# is 179x to 601x the reconstruction gradient's, so this sweeps that magnitude. Everything
+# else is identical to the resample baseline. The override MUST sit after the assignment
+# above; putting it earlier silently does nothing.
+if EXPERIMENT_ARM in _ARM_BEHAVIOR_WEIGHT:
+    BEHAVIOR_WEIGHT_MAX = _ARM_BEHAVIOR_WEIGHT[EXPERIMENT_ARM]
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
 PAIR_BATCH_SIZE_PER_RANK = 512
@@ -1009,7 +1021,7 @@ def main() -> None:
         epoch_crowding_weight = crowding_ramp_weight(
             epoch, crowd_config_for_ramp, RAMP_START_EPOCH, EPOCHS
         )
-        epoch_hyp_alpha = epoch_weight / BEHAVIOR_WEIGHT_MAX
+        epoch_hyp_alpha = epoch_weight / BEHAVIOR_WEIGHT_MAX if BEHAVIOR_WEIGHT_MAX > 0.0 else 0.0
         if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] in {"assign", "joint"}:
             raw_module.rq.vq_layers[0]._hyp_assignment_active = epoch_hyp_alpha > 0.0
         _epoch_t0 = time.time()
