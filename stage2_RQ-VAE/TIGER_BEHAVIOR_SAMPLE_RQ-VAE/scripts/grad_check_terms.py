@@ -157,9 +157,12 @@ def main() -> None:
         if not report["terms"][name].get("has_grad_fn"):
             failures.append(f"{name} has no grad_fn")
     # The encoder must see the reconstruction, behaviour and ranking terms. The
-    # codebooks must NOT see the first two: this recipe updates them by EMA and the
-    # behaviour term acts on the residual trace, so a non-zero codebook gradient there
-    # would mean something is wired differently from the design.
+    # codebooks must NOT see recon_loss: VQLayer's forward returns
+    # x_q = x + (x_q - x).detach(), so the reconstruction path is cut from the
+    # codebook by design. The codebook is not left untrained, though -- the VQ
+    # commitment term inside base_loss does reach it, at 1.176e-04 / 6.865e-05 /
+    # 5.348e-05 on L1/L2/L3, so the ranking term's 6.59e-03 is roughly 56x stronger
+    # than the training signal the codebook otherwise gets.
     for name in ("reconstruction", "behavior_contrastive"):
         if report["terms"][name].get("encoder", 0.0) <= 0.0:
             failures.append(f"{name} puts no gradient on the encoder")
