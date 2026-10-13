@@ -7,7 +7,8 @@ def _distribution(values):
     x = np.asarray(values, dtype=np.float64).reshape(-1)
     if not len(x):
         return {"n": 0}
-    return {"n": int(len(x)), "mean": float(x.mean()), "std": float(x.std()),
+    return {"n": int(len(x)), "mean": float(x.mean()), "median": float(np.median(x)),
+            "std": float(x.std()),
             **{f"p{p:02d}": float(np.percentile(x, p)) for p in (0, 5, 25, 50, 75, 95, 99, 100)}}
 
 
@@ -67,29 +68,35 @@ def angle_radius_dependence(points, max_points=2048, seed=42):
 
 def ranking_difference(euclidean_distances, geodesic_distances):
     e, g = np.asarray(euclidean_distances), np.asarray(geodesic_distances)
-    ae = float(np.mean(e[:, 1] > e[:, 0]) + .5 * np.mean(e[:, 1] == e[:, 0]))
-    ag = float(np.mean(g[:, 1] > g[:, 0]) + .5 * np.mean(g[:, 1] == g[:, 0]))
+    if e.shape != g.shape or e.ndim != 2 or e.shape[1] < 2:
+        raise ValueError("distance matrices must match with positive and negatives")
+    ei, gi = e[:, 1:] > e[:, :1], g[:, 1:] > g[:, :1]
+    et, gt = e[:, 1:] == e[:, :1], g[:, 1:] == g[:, :1]
+    ae = float(np.mean(ei) + .5 * np.mean(et))
+    ag = float(np.mean(gi) + .5 * np.mean(gt))
     return {"mapped_euclidean_auc": ae, "geodesic_auc": ag, "auc_difference": ag - ae,
-            "ranking_disagreement_fraction": float(np.mean(np.sign(e[:, 1] - e[:, 0]) !=
-                                                              np.sign(g[:, 1] - g[:, 0])))}
+            "ranking_disagreement_fraction": float(np.mean(np.sign(e[:, 1:] - e[:, :1]) !=
+                                                              np.sign(g[:, 1:] - g[:, :1])))}
 
 
 def shared_local_scales(euclidean_vectors, hyperbolic_vectors, anchors, reference_ids):
-    """Same anchors/reference IDs/median rule; distances remain each metric's native units."""
+    """Common raw-tangent reference scale for all arms; no per-arm rescaling."""
     anchors, refs = np.asarray(anchors, dtype=np.int64), np.unique(reference_ids)
-    output = {}
-    for name, vectors in (("euclidean", euclidean_vectors), ("hyperbolic", hyperbolic_vectors)):
-        d = np.linalg.norm(vectors[anchors, None] - vectors[refs][None], axis=-1)
-        d[anchors[:, None] == refs[None]] = np.nan
-        with np.errstate(all="ignore"):
-            output[name] = np.nanmedian(d, axis=1)
-    return output
+    d = np.linalg.norm(np.asarray(euclidean_vectors)[anchors, None] -
+                       np.asarray(euclidean_vectors)[refs][None], axis=-1)
+    d[anchors[:, None] == refs[None]] = np.nan
+    with np.errstate(all="ignore"):
+        scale = np.nanmedian(d, axis=1)
+    return {"euclidean": scale.copy(), "hyperbolic": scale.copy()}
 
 
-def pipeline_spaces(vectors, cumulative_reconstruction):
-    return {"continuous_encoder": vectors["encoder"],
-            "per_level_residual": {k: vectors[k] for k in ("L1", "L2", "L3")},
-            "cumulative_reconstruction": np.asarray(cumulative_reconstruction).copy()}
+def pipeline_spaces(vectors, cumulative_reconstruction, semantic_ids=None):
+    stages = {"continuous_encoder": vectors["encoder"],
+              "per_level_residual": {k: vectors[k] for k in ("L1", "L2", "L3")},
+              "cumulative_reconstruction": np.asarray(cumulative_reconstruction).copy()}
+    if semantic_ids is not None:
+        stages["semantic_id"] = np.asarray(semantic_ids).copy()
+    return stages
 
 
 def codebook_statistics(codes, size=256):
