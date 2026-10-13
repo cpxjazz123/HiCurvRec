@@ -556,19 +556,6 @@ results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
 
-# E2 collaborative-alignment arms. Same shadowing problem as the blocks above: the
-# generic `logs/` rule matches first, so without this git add stages nothing and the
-# test_final.json, checkpoint and metrics stream are dropped on write.
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/logs/
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/logs/**
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/ckpt/
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/ckpt/**
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/**/*.pth
-!results/stage3_T5Train/tiger_sample_CF_ALIGN*/**/*.npy
-results/stage3_T5Train/tiger_sample_CF_ALIGN*/logs/_ddp_sync/
-results/stage3_T5Train/tiger_sample_CF_ALIGN*/logs/tensorboard/
-
 # The stage-0 split files are the data every Stage 2 and Stage 3 result in this
 # repository is built from, and the offline behaviour analysis reads them
 # directly. Without them no committed metric can be recomputed from a clone.
