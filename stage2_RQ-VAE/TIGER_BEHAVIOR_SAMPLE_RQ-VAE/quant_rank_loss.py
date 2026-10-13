@@ -15,6 +15,7 @@ def quantized_representation(
     vq_layers,
     *,
     level_weights=LEVEL_WEIGHTS,
+    detach_codebook: bool = False,
 ) -> torch.Tensor:
     """Build the weighted sum of selected embeddings with encoder/codebook STE.
 
@@ -40,6 +41,8 @@ def quantized_representation(
         if weight == 0:
             continue
         codebook = layer.get_code_embs()
+        if detach_codebook:
+            codebook = codebook.detach()
         selected = F.embedding(token_ids[level], codebook)
         quantized_sum = quantized_sum + float(weight) * selected
     return quantized_sum + (encoder_latent - encoder_latent.detach())
@@ -57,6 +60,7 @@ def quantized_ranking_loss(
     curvature: float = 1.0,
     weight: float = 0.2,
     level_weights=LEVEL_WEIGHTS,
+    detach_codebook: bool = False,
 ) -> torch.Tensor:
     """Weighted softplus ranking on actual quantized representations.
 
@@ -65,6 +69,7 @@ def quantized_ranking_loss(
     """
     z_q = quantized_representation(
         residuals, token_ids, vq_layers, level_weights=level_weights,
+        detach_codebook=detach_codebook,
     )
     anchor = z_q[anchors]
     positive = z_q[positives]
