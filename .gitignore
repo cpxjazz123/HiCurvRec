@@ -531,6 +531,31 @@ results/stage3_T5Train/tiger_hyp_*/logs/tensorboard/
 results/stage3_T5Train/tiger_hyp_*/logs/wait_*.log
 results/stage3_T5Train/tiger_hyp_*/logs/_stage3_run*.log
 
+# The anti-collapse arms from the MARGIN/DIGER round. Same shadowing problem as the
+# resample block above: the generic `logs/` rule matched first, so `git add` staged
+# nothing for MARGIN or B_E_nocb and their test_final.json would have been dropped the
+# moment it was written. Un-ignore the directory itself first, because git does not
+# descend into an excluded directory, then logs and ckpt, then the binaries.
+!results/stage3_T5Train/tiger_sample_MARGIN*/
+!results/stage3_T5Train/tiger_sample_MARGIN*/logs/
+!results/stage3_T5Train/tiger_sample_MARGIN*/logs/**
+!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/
+!results/stage3_T5Train/tiger_sample_MARGIN*/ckpt/**
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/**
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/ckpt/**
+!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.pth
+!results/stage3_T5Train/tiger_sample_MARGIN*/**/*.npy
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.pth
+!results/stage3_T5Train/tiger_sample_B_E_nocb*/**/*.npy
+# Runtime noise stays ignored, after the rules above so it still wins.
+results/stage3_T5Train/tiger_sample_MARGIN*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
+results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
+
 # The stage-0 split files are the data every Stage 2 and Stage 3 result in this
 # repository is built from, and the offline behaviour analysis reads them
 # directly. Without them no committed metric can be recomputed from a clone.
