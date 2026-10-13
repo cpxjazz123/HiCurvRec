@@ -75,6 +75,7 @@ from quant_rank_loss import quantized_representation as _quantized_representatio
 from quant_rank_loss import quantized_ranking_loss as _quant_rank_loss
 from quant_rank_loss import quantized_ranking_loss_margin as _quant_rank_margin_loss
 from quant_rank_loss import soft_quantized_ranking_loss as _quant_rank_soft_loss
+from quant_rank_loss import soft_quantized_representation as _quant_rank_soft_rep
 from quant_rank_loss import SOFT_TAU as _QUANT_SOFT_TAU
 import anti_collapse_losses as _ac
 from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
