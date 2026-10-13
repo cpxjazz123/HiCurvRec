@@ -25,10 +25,13 @@ class GeometryMeasurementTests(unittest.TestCase):
                    "L1": np.array([[1., 0.], [0., 1.], [-1., 0.]]),
                    "L2": np.array([[0., 1.], [1., 0.], [0., -1.]]),
                    "L3": np.array([[1., 1.], [-1., 1.], [1., -1.]])}
-        stages = M.pipeline_spaces(vectors, vectors["L1"] + vectors["L2"] + vectors["L3"])
-        self.assertEqual(set(stages), {"continuous_encoder", "per_level_residual", "cumulative_reconstruction"})
-        self.assertIsNot(stages["continuous_encoder"], stages["cumulative_reconstruction"])
+        codes = np.array([[1, 1, 1], [2, 1, 3], [3, 2, 1]])
+        stages = M.pipeline_spaces(vectors, vectors["L1"] + vectors["L2"] + vectors["L3"], codes)
+        self.assertEqual(set(stages), {"continuous_encoder", "per_level_residual",
+                                       "cumulative_reconstruction", "semantic_id"})
         self.assertFalse(np.shares_memory(stages["continuous_encoder"], stages["cumulative_reconstruction"]))
+        self.assertFalse(np.shares_memory(stages["semantic_id"], stages["continuous_encoder"]))
+        self.assertIsNot(stages["per_level_residual"]["L1"], stages["semantic_id"])
 
     def test_comparable_cross_arm_normalisation_uses_shared_scale(self):
         raw = np.array([[0., 0.], [1., 0.], [0., 2.], [2., 2.]])
