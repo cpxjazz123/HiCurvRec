@@ -1,0 +1,116 @@
+{
+  "auc_function": "competition.behavioral_auc -> crowding_diagnostic.distances.auc_neg_farther_than_pos",
+  "auc_convention": "P(d_negative > d_positive) + 0.5 * P(tie)",
+  "triples": 52855,
+  "trace_context": "torch.no_grad()",
+  "rows": [
+    {
+      "arm": "resample",
+      "continuous_encoder_auc": 0.776690946930281,
+      "residual_l1_auc": 0.776690946930281,
+      "residual_l2_auc": 0.5218787248131682,
+      "residual_l3_auc": 0.5056607700312173,
+      "cumulative_quantized_auc": 0.7731681014095166,
+      "codebook": {
+        "distinct_codes_per_level": [
+          241,
+          256,
+          256
+        ],
+        "l1_top1_share": 0.01028999064546305,
+        "l1_normalized_entropy": 0.9782239602343472,
+        "three_digit_uniqueness": 23695
+      }
+    },
+    {
+      "arm": "B_E",
+      "continuous_encoder_auc": 0.7712969444707217,
+      "residual_l1_auc": 0.7712969444707217,
+      "residual_l2_auc": 0.762495506574591,
+      "residual_l3_auc": 0.757761801154101,
+      "cumulative_quantized_auc": 0.6806366474316526,
+      "codebook": {
+        "distinct_codes_per_level": [
+          32,
+          130,
+          118
+        ],
+        "l1_top1_share": 0.9550982226379794,
+        "l1_normalized_entropy": 0.03786577539620004,
+        "three_digit_uniqueness": 417
+      }
+    },
+    {
+      "arm": "LETTER",
+      "continuous_encoder_auc": 0.7694560590294203,
+      "residual_l1_auc": 0.7694560590294203,
+      "residual_l2_auc": 0.6631274240847602,
+      "residual_l3_auc": 0.6555084665594552,
+      "cumulative_quantized_auc": 0.7384656134708164,
+      "codebook": {
+        "distinct_codes_per_level": [
+          157,
+          215,
+          256
+        ],
+        "l1_top1_share": 0.3705616789360231,
+        "l1_normalized_entropy": 0.35473484561727087,
+        "three_digit_uniqueness": 3202
+      }
+    },
+    {
+      "arm": "MARGIN",
+      "continuous_encoder_auc": 0.7720291363163373,
+      "residual_l1_auc": 0.7720291363163373,
+      "residual_l2_auc": 0.7157109071989407,
+      "residual_l3_auc": 0.6816933118910224,
+      "cumulative_quantized_auc": 0.7624690190142844,
+      "codebook": {
+        "distinct_codes_per_level": [
+          212,
+          255,
+          256
+        ],
+        "l1_top1_share": 0.1152234920893155,
+        "l1_normalized_entropy": 0.6899601993897946,
+        "three_digit_uniqueness": 14336
+      }
+    },
+    {
+      "arm": "DIGER",
+      "continuous_encoder_auc": 0.7714615457383406,
+      "residual_l1_auc": 0.7714615457383406,
+      "residual_l2_auc": 0.7632522940119193,
+      "residual_l3_auc": 0.7530526913253239,
+      "cumulative_quantized_auc": 0.6818276416611483,
+      "codebook": {
+        "distinct_codes_per_level": [
+          44,
+          129,
+          122
+        ],
+        "l1_top1_share": 0.957741896123968,
+        "l1_normalized_entropy": 0.038979619926559364,
+        "three_digit_uniqueness": 527
+      }
+    },
+    {
+      "arm": "B_E_nocb",
+      "continuous_encoder_auc": 0.7694844385583199,
+      "residual_l1_auc": 0.7694844385583199,
+      "residual_l2_auc": 0.5388629268754139,
+      "residual_l3_auc": 0.5232560779491062,
+      "cumulative_quantized_auc": 0.764014757355028,
+      "codebook": {
+        "distinct_codes_per_level": [
+          248,
+          256,
+          256
+        ],
+        "l1_top1_share": 0.009110505551714321,
+        "l1_normalized_entropy": 0.9833622099895332,
+        "three_digit_uniqueness": 23910
+      }
+    }
+  ]
+}
