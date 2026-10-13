@@ -75,13 +75,6 @@ from quant_rank_loss import quantized_representation as _quantized_representatio
 from quant_rank_loss import quantized_ranking_loss as _quant_rank_loss
 from quant_rank_loss import quantized_ranking_loss_margin as _quant_rank_margin_loss
 import anti_collapse_losses as _ac
-import cf_alignment as _cf
-from cf_alignment import ARM_COMPONENTS as _CF_ARM_COMPONENTS
-from cf_alignment import CF_WEIGHT as _CF_WEIGHT
-from cf_alignment import CFProjection as _CFProjection
-from cf_alignment import aligned_rows as _cf_aligned_rows
-from cf_alignment import cf_alignment_loss as _cf_alignment_loss
-from cf_alignment import load_cf_table as _load_cf_table
 from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
                                   DIVERSITY_WEIGHT as _AC_DIVERSITY_WEIGHT,
                                   GUMBEL_TAU as _AC_GUMBEL_TAU, ARM_FLAGS)
@@ -100,9 +93,6 @@ _GEOMETRY_ARM_CONFIGS = {
     "LETTER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "LETTER_nodiv": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "DIGER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
-    "CF_ALIGN": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
-    "CF_ALIGN_DIV": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
-    "CF_ALIGN_DIV_RANK": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -117,13 +107,8 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "CF_ALIGN_DIV_RANK"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "DIGER"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
-# E2: which collaborative-alignment components this arm carries. None for every
-# arm outside the CF_* family, so their code path is untouched.
-_CF_CONFIG = _CF_ARM_COMPONENTS.get(EXPERIMENT_ARM)
-# Empty for non-CF arms so the component checks below are plain dict lookups.
-_CF_COMPONENTS = _CF_CONFIG or {}
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
@@ -275,8 +260,7 @@ def _quantized_ranking_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
         arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-             "LETTER_nodiv": "E0", "DIGER": "E0", "CF_ALIGN": "E0",
-             "CF_ALIGN_DIV": "E0", "CF_ALIGN_DIV_RANK": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+             "LETTER_nodiv": "E0", "DIGER": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
         curvature=1.0, weight=weight,
         level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
         detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
@@ -315,8 +299,7 @@ def _geometry_loss_for_pairs(
     positives = anchors + batch_size
     negatives = positives + batch_size
     geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-                    "LETTER_nodiv": "E0", "DIGER": "E0", "CF_ALIGN": "E0",
-                    "CF_ALIGN_DIV": "E0", "CF_ALIGN_DIV_RANK": "E0"}.get(arm, arm)
+                    "LETTER_nodiv": "E0", "DIGER": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -929,15 +912,6 @@ def main() -> None:
         initialize_tiger_weights(model)
     if _CROWD_CONFIG and _CROWD_CONFIG[0] == "parammatch":
         model.add_module("crowding_control", MatchedParameters(CODEBOOK_SIZE[_CROWD_CONFIG[1]] * CODEBOOK_DIM).to(device))
-    if _CF_CONFIG is not None:
-        # Registered as a submodule for the same reason crowding_control is: it has
-        # to be inside model.parameters() before DDP wraps the module and before the
-        # optimizer reads them, and DDP has to keep the projection's gradient in sync
-        # across ranks.
-        model.add_module(
-            "cf_projection",
-            _CFProjection(CODEBOOK_DIM, _cf.CF_PROJECTION_DIM).to(device),
-        )
     if world_size > 1:
         model = DDP(
             model,
@@ -1006,12 +980,6 @@ def main() -> None:
         _item_bucket_t = torch.as_tensor(_item_bucket, device=device)
         c2_gen = torch.Generator(device=device).manual_seed(SEED + 104729 + rank)
         c2_state = (_indptr, _indices, _buckets_t, _item_bucket_t, _pmi, c2_gen)
-
-    cf_table = None
-    if _CF_CONFIG is not None:
-        # Frozen for the whole run: loaded once, never registered as a parameter,
-        # never written to.
-        cf_table = _load_cf_table().to(device)
 
     parameters = list(model.parameters())
     if OPTIMIZER.lower() == "adagrad":
@@ -1116,9 +1084,6 @@ def main() -> None:
             geometry_codebook_norm = 0.0
             quantized_term = torch.zeros((), device=device)
             anti_collapse_term = torch.zeros((), device=device)
-            cf_term = torch.zeros((), device=device)
-            cf_grad_fields: dict[str, float] = {}
-            cf_fields_list: list[dict[str, float]] = []
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -1159,10 +1124,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    quant_arm = EXPERIMENT_ARM in {
-                        "B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER",
-                    }
-                    if quant_arm or _CF_CONFIG is not None:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1170,11 +1132,13 @@ def main() -> None:
                         quant_anchors = torch.arange(pair_count, device=device)
                         quant_positives = quant_anchors + pair_count
                         quant_negatives = quant_positives + pair_count
-                    if quant_arm or _CF_COMPONENTS.get("ranking", False):
                         quantized_term = _quantized_ranking_loss(
                             quant_residuals, quant_tokens, raw_module,
                             quant_anchors, quant_positives, quant_negatives,
                             weight=0.2 * epoch_hyp_alpha,
+                        )
+                        anti_collapse_term = _anti_collapse_term(
+                            quant_residuals, quant_tokens, model, quantized_term,
                         )
                         quant_norms = _quantized_gradient_norms(
                             quantized_term, raw_module,
@@ -1183,45 +1147,6 @@ def main() -> None:
                         quantized_codebook_l1_norms.append(quant_norms["codebook_l1"])
                         quantized_codebook_l2_norms.append(quant_norms["codebook_l2"])
                         quantized_codebook_l3_norms.append(quant_norms["codebook_l3"])
-                    if quant_arm or _CF_COMPONENTS.get("diversity", False):
-                        anti_collapse_term = _anti_collapse_term(
-                            quant_residuals, quant_tokens, model, quantized_term,
-                        )
-                    if _CF_CONFIG is not None:
-                        # Every row of the geometry batch -- source, target and matched
-                        # negative alike -- is asked to pick its OWN frozen CF row out
-                        # of the batch, which is the form LETTER's paper uses. The
-                        # representation is the family's hard codebook lookup, so this
-                        # term's gradient lands on the selected codeword of each level.
-                        cf_representation = _quantized_representation(
-                            quant_residuals, quant_tokens, raw_module.rq.vq_layers,
-                        )
-                        cf_targets = cf_table[geometry_item_ids]
-                        cf_keep = _cf_aligned_rows(cf_targets)
-                        if bool(cf_keep.any()):
-                            cf_term = _cf_alignment_loss(
-                                cf_representation[cf_keep], cf_targets[cf_keep],
-                                raw_module.cf_projection, weight=_CF_WEIGHT,
-                            )
-                            cf_norms = _quantized_gradient_norms(cf_term, raw_module)
-                            cf_projection_grad = torch.autograd.grad(
-                                cf_term,
-                                [raw_module.cf_projection.projection.weight],
-                                retain_graph=True, allow_unused=True,
-                            )[0]
-                            cf_grad_fields = {
-                                "cf_encoder_grad_norm": cf_norms["encoder"],
-                                "cf_codebook_l1_grad_norm": cf_norms["codebook_l1"],
-                                "cf_codebook_l2_grad_norm": cf_norms["codebook_l2"],
-                                "cf_codebook_l3_grad_norm": cf_norms["codebook_l3"],
-                                "cf_projection_grad_norm": (
-                                    0.0 if cf_projection_grad is None
-                                    else float(cf_projection_grad.norm())
-                                ),
-                                "cf_rows_kept": int(cf_keep.sum()),
-                                "cf_alignment_loss": float(cf_term.detach()),
-                            }
-                            cf_fields_list.append(cf_grad_fields)
                 if _CROWD_CONFIG is not None:
                     mechanism, crowd_level, crowd_config = _CROWD_CONFIG
                     n_pairs = int(source_ids.shape[0])
@@ -1274,34 +1199,6 @@ def main() -> None:
             if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
                 loss = _ac_compose(loss, anti_collapse_term)
-            if _CF_CONFIG is not None:
-                # The CF arms compose the same two auxiliary terms, and this branch
-                # has to do it explicitly: the set above does not contain them, and
-                # without this the diversity term was computed and then dropped, so
-                # CF_ALIGN_DIV came out bit-identical to CF_ALIGN. Both composers
-                # leave the loss untouched when their term is zero, which is what
-                # CF_ALIGN's two components are.
-                loss = _compose_quantized_loss(loss, quantized_term)
-                loss = _ac_compose(loss, anti_collapse_term)
-                loss = loss + cf_term
-                if not cf_fields_list:
-                    # The ramp keeps every term in this family switched off until
-                    # RAMP_START_EPOCH, so the collaborative loss is not computed yet
-                    # and the projection takes no part in the backward. It is still a
-                    # parameter of the DDP-wrapped module, and with
-                    # find_unused_parameters=False DDP aborts on the first backward
-                    # when a parameter never receives a gradient. A zero-multiplied
-                    # touch keeps it in the graph and contributes exactly zero, so the
-                    # projection's weights are unchanged while the reducer stays
-                    # satisfied. find_unused_parameters=True is not an option here:
-                    # the step measures per-term gradient norms with autograd.grad,
-                    # which trips DDP's mark-ready-once check under that setting.
-                    # Touches every parameter of the projection, not just the weight:
-                    # the bias is what DDP reported missing (parameter index 20).
-                    loss = loss + 0.0 * sum(
-                        parameter.sum()
-                        for parameter in raw_module.cf_projection.parameters()
-                    )
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1422,19 +1319,6 @@ def main() -> None:
         avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
-        cf_metric_fields = {}
-        if _CF_CONFIG is not None and cf_fields_list:
-            cf_keys = sorted(cf_fields_list[0])
-            cf_local = torch.tensor(
-                [[float(row[key]) for key in cf_keys] for row in cf_fields_list],
-                device=device,
-            ).mean(dim=0)
-            if world_size > 1:
-                dist.all_reduce(cf_local, op=dist.ReduceOp.SUM)
-                cf_local = cf_local / max(world_size, 1)
-            cf_metric_fields = {
-                key: float(value) for key, value in zip(cf_keys, cf_local)
-            }
         quantized_metric_fields = {}
         if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"} and epoch_weight > 0.0:
             quantized_metric_fields = {
@@ -1456,7 +1340,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} quantized_metrics={quantized_metric_fields} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **cf_metric_fields)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1494,7 +1378,7 @@ def main() -> None:
                     geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
-                    **quantized_metric_fields, **cf_metric_fields,
+                    **quantized_metric_fields,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
