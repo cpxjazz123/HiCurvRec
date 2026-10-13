@@ -74,6 +74,8 @@ from quant_rank_loss import compose_loss as _quant_rank_compose
 from quant_rank_loss import quantized_representation as _quantized_representation
 from quant_rank_loss import quantized_ranking_loss as _quant_rank_loss
 from quant_rank_loss import quantized_ranking_loss_margin as _quant_rank_margin_loss
+from quant_rank_loss import soft_quantized_ranking_loss as _quant_rank_soft_loss
+from quant_rank_loss import SOFT_TAU as _QUANT_SOFT_TAU
 import anti_collapse_losses as _ac
 from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
                                   DIVERSITY_WEIGHT as _AC_DIVERSITY_WEIGHT,
@@ -93,6 +95,7 @@ _GEOMETRY_ARM_CONFIGS = {
     "LETTER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "LETTER_nodiv": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "DIGER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "DIGER_FIX": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -107,7 +110,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "DIGER"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "DIGER_FIX"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
@@ -228,7 +231,8 @@ def _resolve_geometry_arm(arm: str) -> dict:
 def _resolve_quant_arm(arm: str) -> dict:
     group_a_arm, group = {"B_E": ("E0", "B"), "B_H": ("H1", "B"), "B_E_nocb": ("E0", "B"),
                           "MARGIN": ("E0", "B"), "LETTER": ("E0", "B"),
-                          "LETTER_nodiv": ("E0", "B"), "DIGER": ("E0", "B")}[arm]
+                          "LETTER_nodiv": ("E0", "B"), "DIGER": ("E0", "B"),
+                          "DIGER_FIX": ("E0", "B")}[arm]
     baseline = _resolve_geometry_arm(group_a_arm)
     return {
         **baseline,
@@ -255,20 +259,43 @@ def _quantized_ranking_loss(
     weight: float = 0.2,
 ) -> torch.Tensor:
     raw_module = model.module if isinstance(model, DDP) else model
+    arm_token = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
+                 "LETTER_nodiv": "E0", "DIGER": "E0", "DIGER_FIX": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM)
+    level_weights = _QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"]
+    if EXPERIMENT_ARM in ("DIGER", "DIGER_FIX"):
+        # E1 DIGER-fix. Until now the DIGER arm computed a Gumbel-Softmax
+        # representation and dropped it: _anti_collapse_term only ever consumed
+        # that tensor under use_align, which DIGER sets to False, so the term was
+        # identically zero and DIGER ran the same hard-lookup recipe as B_E. The
+        # soft assignment now enters where the plan puts it, in the behaviour
+        # ranking loss itself, so all three codebooks see a dense gradient over
+        # all 256 codewords instead of the single selected row.
+        return _quant_rank_soft_loss(
+            residuals, raw_module.rq.vq_layers, anchors, positives, negatives,
+            arm=arm_token, curvature=1.0, weight=weight,
+            tau=_QUANT_SOFT_TAU, level_weights=level_weights,
+        )
     ranking_loss = _quant_rank_margin_loss if EXPERIMENT_ARM == "MARGIN" else _quant_rank_loss
     return ranking_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
-        arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-             "LETTER_nodiv": "E0", "DIGER": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+        arm=arm_token,
         curvature=1.0, weight=weight,
-        level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
+        level_weights=level_weights,
         detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
     )
 def _anti_collapse_term(residuals, token_ids, model, quantized_term):
     raw_module = model.module if isinstance(model, DDP) else model
     flags = _ANTI_COLLAPSE_FLAGS
     if flags is None:
+        return torch.zeros((), device=residuals.device)
+    # ``q`` below is consumed by the alignment term and by nothing else, so an arm
+    # that asks for neither alignment nor diversity has no anti-collapse term at
+    # all. Returning early states that in the code instead of leaving it to
+    # compose()'s zero guard -- which is how the DIGER arm spent a whole run
+    # computing a Gumbel representation that reached no loss, and why DIGER's
+    # numbers came out indistinguishable from B_E's.
+    if not (flags["use_align"] or flags["use_diversity"]):
         return torch.zeros((), device=residuals.device)
     total = torch.zeros((), device=residuals.device)
     if flags["use_gumbel"]:
@@ -299,7 +326,7 @@ def _geometry_loss_for_pairs(
     positives = anchors + batch_size
     negatives = positives + batch_size
     geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-                    "LETTER_nodiv": "E0", "DIGER": "E0"}.get(arm, arm)
+                    "LETTER_nodiv": "E0", "DIGER": "E0", "DIGER_FIX": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -1124,7 +1151,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "DIGER_FIX"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1196,7 +1223,7 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
-            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "DIGER_FIX"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
                 loss = _ac_compose(loss, anti_collapse_term)
             crowd2_value = torch.zeros((), device=device)
@@ -1320,7 +1347,7 @@ def main() -> None:
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
         quantized_metric_fields = {}
-        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"} and epoch_weight > 0.0:
+        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "DIGER_FIX"} and epoch_weight > 0.0:
             quantized_metric_fields = {
                 "quantized_ranking_loss": avg_quantized_metrics[0],
                 "quantized_encoder_grad_norm": avg_quantized_metrics[1],

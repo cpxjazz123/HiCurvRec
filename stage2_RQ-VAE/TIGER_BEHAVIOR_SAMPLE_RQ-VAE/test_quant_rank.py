@@ -177,5 +177,90 @@ class QuantizedRankingTests(unittest.TestCase):
             self.assertTrue(torch.equal(original, selected))
 
 
+    def soft_loss(self, *, tau=None):
+        residuals, _, _ = self.encode_and_quantize()
+        kwargs = {} if tau is None else {"tau": tau}
+        return quant_rank_loss.soft_quantized_ranking_loss(
+            residuals, self.layers,
+            self.anchors, self.positives, self.negatives,
+            arm="E1", weight=0.2,
+            level_weights=quant_rank_config.LEVEL_WEIGHTS,
+            **kwargs,
+        )
+
+    def codebook_rows_with_gradient(self, loss):
+        for layer in self.layers:
+            layer.embed.weight.grad = None
+        self.encoder.weight.grad = None
+        loss.backward(retain_graph=True)
+        counts = []
+        for layer in self.layers:
+            gradient = layer.embed.weight.grad
+            self.assertIsNotNone(gradient)
+            counts.append(int((gradient.abs().sum(dim=-1) > 0).sum()))
+        return counts
+
+    def test_t9_soft_assignment_moves_every_codeword(self):
+        residuals, tokens, _ = self.encode_and_quantize()
+        hard = quant_rank_loss.quantized_ranking_loss(
+            residuals, tokens, self.layers,
+            self.anchors, self.positives, self.negatives,
+            arm="E1", weight=0.2, level_weights=quant_rank_config.LEVEL_WEIGHTS,
+        )
+        for level, rows in enumerate(self.codebook_rows_with_gradient(hard)):
+            codebook_rows = self.layers[level].embed.weight.shape[0]
+            self.assertGreater(rows, 0, "hard path moved no L%d codeword" % (level + 1))
+            self.assertLess(rows, codebook_rows,
+                            "hard path should only move the selected rows at L%d" % (level + 1))
+        for level, rows in enumerate(self.codebook_rows_with_gradient(self.soft_loss())):
+            codebook_rows = self.layers[level].embed.weight.shape[0]
+            self.assertEqual(rows, codebook_rows,
+                             "soft path must give every L%d codeword a gradient" % (level + 1))
+
+    def test_t10_soft_path_adds_no_second_straight_through_gradient(self):
+        # quantized_representation has to add z - z.detach() because an embedding
+        # lookup hands the encoder nothing. The soft path reaches the encoder
+        # through the softmax score already, so an identity term there would count
+        # that same gradient twice. A doubled term shows up as a Jacobian of
+        # exactly 1.0, which is what the hard path produces and the soft must not.
+        residuals, _, _ = self.encode_and_quantize()
+        probe = torch.zeros_like(residuals[0])
+        probe[0, 0] = 1.0
+        soft = quant_rank_loss.soft_quantized_representation(residuals, self.layers)
+        soft_jacobian = torch.autograd.grad(
+            soft, residuals, grad_outputs=probe, retain_graph=True)[0]
+        hard = quant_rank_loss.quantized_representation(residuals, self.token_ids, self.layers)
+        hard_jacobian = torch.autograd.grad(
+            hard, residuals, grad_outputs=probe, retain_graph=True)[0]
+        self.assertAlmostEqual(float(hard_jacobian[0, 0, 0]), 1.0, places=6)
+        self.assertNotAlmostEqual(float(soft_jacobian[0, 0, 0]), 1.0, places=6)
+        self.assertNotEqual(float(soft_jacobian[0, 0, 0]), 0.0)
+
+    def test_t11_soft_ranking_loss_reaches_the_encoder_and_all_three_codebooks(self):
+        self.soft_loss().backward()
+        self.assertIsNotNone(self.encoder.weight.grad)
+        self.assertGreater(self.encoder.weight.grad.norm().item(), 0.0)
+        for level, layer in enumerate(self.layers):
+            self.assertIsNotNone(layer.embed.weight.grad,
+                                 "L%d codebook received no gradient" % (level + 1))
+            self.assertGreater(layer.embed.weight.grad.norm().item(), 0.0,
+                               "L%d codebook gradient is zero" % (level + 1))
+
+    def test_t12_temperature_changes_what_the_codebooks_receive(self):
+        # The temperature arms are only meaningful if tau actually moves the
+        # gradient the codebooks see. Sharpening the assignment must not leave the
+        # three codebook gradients identical.
+        received = []
+        for tau in (0.05, 5.0):
+            loss = self.soft_loss(tau=tau)
+            for layer in self.layers:
+                layer.embed.weight.grad = None
+            self.encoder.weight.grad = None
+            loss.backward(retain_graph=True)
+            received.append(tuple(
+                round(float(layer.embed.weight.grad.norm()), 8) for layer in self.layers))
+        self.assertNotEqual(received[0], received[1])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
