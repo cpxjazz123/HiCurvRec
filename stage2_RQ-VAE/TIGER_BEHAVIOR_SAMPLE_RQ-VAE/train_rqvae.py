@@ -114,7 +114,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "ANCHOR_W1"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "STE_FIX"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
@@ -183,6 +183,15 @@ _ARM_ANCHOR_WEIGHT = {
 }
 _ANCHOR_WEIGHT = _ARM_ANCHOR_WEIGHT.get(EXPERIMENT_ARM, 0.0)
 _ANCHOR_ACTIVE = EXPERIMENT_ARM in _ARM_ANCHOR_WEIGHT
+
+# The STE repair, as a single arm on the resample recipe: no quantised ranking term,
+# no geometry term, no anti-collapse term, same seed, budget, schedule, optimiser and
+# behaviour sampling. Its only difference from `resample` is that the residual trace
+# keeps L2 and L3 attached to the encoder, so the backward path is the one variable
+# between it and the baseline.
+_ARM_DIR.update({"STE_FIX": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX"})
+_STE_FIX_ARMS = frozenset({"STE_FIX"})
+_STE_FIX_ACTIVE = EXPERIMENT_ARM in _STE_FIX_ARMS
 _ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
@@ -600,18 +609,36 @@ class TransitionPairs(torch.utils.data.Dataset):
 
 
 def _residuals_with_trace(
-    raw_module: RQVAE, embeddings: torch.Tensor
+    raw_module: RQVAE, embeddings: torch.Tensor,
+    *, carry_encoder_gradients: bool = False,
 ) -> torch.Tensor:
     """Per-level pre-quantization residuals, matching iter48's ResidualTraceRQLayer.
 
     ``model/`` stays byte-identical to the baseline, so the trace is produced by
     walking the unchanged quantizer stack rather than by patching it.
+
+    ``carry_encoder_gradients`` repairs the backward path and nothing else. The
+    quantizer returns ``x + (x_q - x).detach()``, so chaining ``residual = residual -
+    quant`` makes level 2 exactly ``-(x_q - residual).detach()``: the right value,
+    severed from the encoder. Every level past the first therefore carries a
+    behavioural loss whose gradient cannot reach the encoder at all. Rebuilding the
+    chain from the quantised VALUE instead leaves the forward value bit-identical and
+    keeps each level attached through the residual it was formed from, while the
+    detach on the quantised value keeps the codebook out of it, as the behaviour term
+    requires.
     """
     residual = raw_module.encoder(embeddings)
     traces = [residual]
     for vq_layer in raw_module.rq.vq_layers:
-        quant, _, _, _ = vq_layer(residual)
-        residual = residual - quant
+        quant, _, _, token_ids = vq_layer(residual)
+        if carry_encoder_gradients:
+            with torch.no_grad():
+                quantised = F.embedding(
+                    token_ids, vq_layer.get_code_embs()
+                ).view(residual.shape)
+            residual = residual - quantised
+        else:
+            residual = residual - quant
         traces.append(residual)
     # iter48 records the residual *entering* each level; drop the final remainder.
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
@@ -1138,7 +1165,10 @@ def main() -> None:
                 pair_batch = all_embeddings[
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
-                residuals = _residuals_with_trace(raw_module, pair_batch)
+                residuals = _residuals_with_trace(
+                    raw_module, pair_batch,
+                    carry_encoder_gradients=_STE_FIX_ACTIVE,
+                )
                 if DIRECTIONAL_MODE != "none":
                     behavior_loss = directional_residual_loss(
                         residuals, source_ids, target_ids, directional_heads,
