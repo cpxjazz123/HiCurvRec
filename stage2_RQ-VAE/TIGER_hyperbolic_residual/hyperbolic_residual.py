@@ -1,0 +1,76 @@
+"""M6: Geometry-Consistent Residual Correction.
+
+Mechanism (the single variable relative to TIGER_CROWDING_CTRL)
+--------------------------------------------------------------
+The residual that RQ carries from one level to the next is updated in the ball
+instead of in flat space: the subtraction ``x - q`` becomes a Mobius subtraction
+in the ball, mapped back to tangent space. Level 1 is untouched (its input is the
+raw encoder output and the crowded L1 condition must stay exactly as in the
+control); levels 2 and 3 receive a residual whose geometry matches the ball the
+codewords live in.
+
+Math
+----
+With ``B(.) = expmap0(., c)`` and ``T(.) = logmap0(., c)``:
+
+    r = T( B(x) +_c (-B(q)) )
+
+``+_c`` is the Mobius addition of ``hyperbolic.mobius_add``. In the flat limit the
+expression degenerates to ``x - q``, so the mechanism is a strict generalisation of
+the control's residual rule rather than a different pipeline.
+
+Composition with the shared layer
+---------------------------------
+Geometry only: it changes which residual vector each level receives, never the
+codebooks, the losses, the capacity mask or the sampling. The shared layer's
+capacity mask keeps L1 at 128 codewords because L1's own update is unchanged.
+
+What is completely unchanged relative to the control
+---------------------------------------------------
+L1 capacity mask and diagnostics, L1's residual rule, all losses, pair sampling,
+codebook sizes and parameters, optimiser, schedule, seed, epochs, evaluation
+interval. Levels 1 and 2 assignment distances also stay Euclidean, exactly as in
+the control: this tree adds no ball metric to the assignment.
+
+Fixed parameters (no sweep): ``c = 1.0``.
+"""
+from __future__ import annotations
+
+import torch
+
+from hyperbolic import expmap0, logmap0, mobius_add
+
+MOBIUS_CURVATURE = 1.0
+
+
+def _mobius_residual(residual: torch.Tensor, quant: torch.Tensor,
+                    c: float = MOBIUS_CURVATURE) -> torch.Tensor:
+    """``logmap0(expmap0(x) +_c (-expmap0(q)))``: the ball-consistent residual."""
+    if not torch.isfinite(residual).all() or not torch.isfinite(quant).all():
+        raise ValueError("residual and quant must be finite")
+    ball_x = expmap0(residual, c)
+    ball_q = expmap0(quant, c)
+    return logmap0(mobius_add(ball_x, -ball_q, c), c)
+
+
+def _trace_with_mobius_residual(module, embeddings: torch.Tensor,
+                               with_tokens: bool = False):
+    """Residual trace using the same level-by-level update rule as ``RQLayer``.
+
+    Level 0 consumes the encoder output unchanged and its residual is the plain
+    Euclidean remainder; only the later levels use the Mobius correction. Keeping
+    the trace identical to the forward is what stops the behaviour term from being
+    trained on a different residual path than the mechanism actually builds.
+    """
+    residual = module.encoder(embeddings)
+    traces = [residual]
+    tokens = []
+    for level, vq_layer in enumerate(module.rq.vq_layers):
+        quant, _, _, indices = vq_layer(residual)
+        tokens.append(indices)
+        residual = residual - quant if level == 0 else _mobius_residual(residual, quant)
+        traces.append(residual)
+    stacked = torch.stack(traces[: module.rq.codebook_num], dim=0)
+    if with_tokens:
+        return stacked, torch.stack(tokens, dim=0)
+    return stacked
