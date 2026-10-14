@@ -1,0 +1,19 @@
+{
+  "tree": "TIGER_CROWDING_CTRL",
+  "attempt": 1,
+  "status": "FAILED_TECHNICAL (interrupted by operator)",
+  "started_launched_at": 1791991368.762521,
+  "killed_at": "2026-10-15T02:23:07+11:00",
+  "smoke": {
+    "passed": true,
+    "dead_terms": [],
+    "nonfinite_terms": [],
+    "checkpoint_source": "result_dir",
+    "checkpoint_probe": {
+      "total_param_grad_norm_max": 0.052059195935726166,
+      "recon_param_grad_norm_max": 0.05031634867191315
+    }
+  },
+  "reason": "The first dispatch ran the smoke and started training while crowding_diagnostics.py still used tokens[:, q-1] for beh_auc_at_q / beh_conflict_at_q (q>=2 ignored the parent codewords). The common-layer module was corrected at 02:21:54 and the run was stopped after 19 s of training (epoch ~1, no crossing of the EVAL_INTERVAL=50 boundary, so no crowding event existed yet). Metrics file was truncated by the trainer on the next train_start (by design), so this record is the durable trace.",
+  "artifact_state_after_kill": {"rqvae_best.pth": "deleted by the worker after smoke pass", "archived_probe": "artifact_archive/TIGER_CROWDING_CTRL_1791991292/rqvae_best.pth"}
+}
