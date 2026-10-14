@@ -556,6 +556,17 @@ results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
 
+# E5 anchor arms. Same shadowing problem as the blocks above.
+!results/stage3_T5Train/tiger_sample_ANCHOR*/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/logs/**
+!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/
+!results/stage3_T5Train/tiger_sample_ANCHOR*/ckpt/**
+!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.pth
+!results/stage3_T5Train/tiger_sample_ANCHOR*/**/*.npy
+results/stage3_T5Train/tiger_sample_ANCHOR*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_ANCHOR*/logs/tensorboard/
+
 # The stage-0 split files are the data every Stage 2 and Stage 3 result in this
 # repository is built from, and the offline behaviour analysis reads them
 # directly. Without them no committed metric can be recomputed from a clone.

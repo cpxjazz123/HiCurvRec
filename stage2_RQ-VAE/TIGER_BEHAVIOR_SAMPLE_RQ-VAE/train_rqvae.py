@@ -93,6 +93,13 @@ _GEOMETRY_ARM_CONFIGS = {
     "LETTER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "LETTER_nodiv": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
     "DIGER": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    # E5: continued training from the BASELINE checkpoint, with a frozen copy of that
+    # checkpoint's codebooks as an anchor. ANCHOR_CTRL differs from the other three
+    # only in that its anchor coefficient is zero.
+    "ANCHOR_CTRL": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "ANCHOR_W001": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "ANCHOR_W01": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
+    "ANCHOR_W1": dict(_BASE_GEOMETRY_ARM_CONFIGS["E0"]),
 }
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
@@ -107,7 +114,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "DIGER"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "ANCHOR_W1"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
@@ -159,6 +166,23 @@ _ARM_BEHAVIOR_WEIGHT = {
     "bw001": 0.002,
     "bw01":  0.02,
 }
+
+# E5. Continued training from the BASELINE checkpoint, with a frozen copy of that
+# checkpoint's codebooks pulled toward the current ones by an L2 penalty. The four arms
+# differ only in the coefficient, so ANCHOR_CTRL -- same checkpoint, same budget, same
+# MARGIN behavioural loss, coefficient zero -- isolates the anchoring itself.
+_ANCHOR_BASELINE_CHECKPOINT = (
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/rqvae_best.pth"
+)
+_ARM_ANCHOR_WEIGHT = {
+    "ANCHOR_CTRL": 0.0,
+    "ANCHOR_W001": 0.01,
+    "ANCHOR_W01":  0.1,
+    "ANCHOR_W1":   1.0,
+}
+_ANCHOR_WEIGHT = _ARM_ANCHOR_WEIGHT.get(EXPERIMENT_ARM, 0.0)
+_ANCHOR_ACTIVE = EXPERIMENT_ARM in _ARM_ANCHOR_WEIGHT
 _ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
@@ -255,12 +279,16 @@ def _quantized_ranking_loss(
     weight: float = 0.2,
 ) -> torch.Tensor:
     raw_module = model.module if isinstance(model, DDP) else model
-    ranking_loss = _quant_rank_margin_loss if EXPERIMENT_ARM == "MARGIN" else _quant_rank_loss
+    # E5 keeps MARGIN's behavioural loss exactly; its own variable is the codebook
+    # anchor, so the form here has to match MARGIN's rather than drift to softplus.
+    margin_arms = {"MARGIN", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"}
+    ranking_loss = _quant_rank_margin_loss if EXPERIMENT_ARM in margin_arms else _quant_rank_loss
     return ranking_loss(
         residuals, token_ids, raw_module.rq.vq_layers,
         anchors, positives, negatives,
         arm={"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-             "LETTER_nodiv": "E0", "DIGER": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
+             "LETTER_nodiv": "E0", "DIGER": "E0",
+             "ANCHOR_CTRL": "E0", "ANCHOR_W001": "E0", "ANCHOR_W01": "E0", "ANCHOR_W1": "E0"}.get(EXPERIMENT_ARM, EXPERIMENT_ARM),
         curvature=1.0, weight=weight,
         level_weights=_QUANT_RANK_GROUP_CONFIGS["B"]["level_weights"],
         detach_codebook=(EXPERIMENT_ARM == "B_E_nocb"),
@@ -299,7 +327,8 @@ def _geometry_loss_for_pairs(
     positives = anchors + batch_size
     negatives = positives + batch_size
     geometry_arm = {"B_E": "E0", "B_H": "H1", "B_E_nocb": "E0", "MARGIN": "E0", "LETTER": "E0",
-                    "LETTER_nodiv": "E0", "DIGER": "E0"}.get(arm, arm)
+                    "LETTER_nodiv": "E0", "DIGER": "E0",
+             "ANCHOR_CTRL": "E0", "ANCHOR_W001": "E0", "ANCHOR_W01": "E0", "ANCHOR_W1": "E0"}.get(arm, arm)
     arm_weight = _GEOMETRY_ARM_CONFIGS[arm]["weight"] if weight is None else weight
     return _geometry_loss(
         geometry_arm, latent, codebook, anchors, positives, negatives,
@@ -912,6 +941,18 @@ def main() -> None:
         initialize_tiger_weights(model)
     if _CROWD_CONFIG and _CROWD_CONFIG[0] == "parammatch":
         model.add_module("crowding_control", MatchedParameters(CODEBOOK_SIZE[_CROWD_CONFIG[1]] * CODEBOOK_DIM).to(device))
+    if _ANCHOR_ACTIVE:
+        # Warm start from the baseline. The anchor is only meaningful if the codebooks
+        # begin where the baseline left them, so the checkpoint load comes first and
+        # the frozen copy is taken from what was just loaded.
+        anchor_state = torch.load(_ANCHOR_BASELINE_CHECKPOINT, map_location="cpu")
+        model.load_state_dict(anchor_state["state_dict"])
+        model.register_buffer(
+            "codebook_anchor",
+            torch.stack([
+                layer.get_code_embs().detach().clone() for layer in model.rq.vq_layers
+            ]).to(device),
+        )
     if world_size > 1:
         model = DDP(
             model,
@@ -1084,6 +1125,8 @@ def main() -> None:
             geometry_codebook_norm = 0.0
             quantized_term = torch.zeros((), device=device)
             anti_collapse_term = torch.zeros((), device=device)
+            anchor_term = torch.zeros((), device=device)
+            anchor_fields: dict[str, float] = {}
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -1124,7 +1167,7 @@ def main() -> None:
                     geometry_norms = _geometry_gradient_norms(geometry_value, raw_module)
                     geometry_encoder_norm = geometry_norms["encoder"]
                     geometry_codebook_norm = geometry_norms["codebook"]
-                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+                    if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"}:
                         quant_residuals, quant_tokens = _residuals_and_tokens_with_trace(
                             raw_module, geometry_item_batch,
                         )
@@ -1147,6 +1190,24 @@ def main() -> None:
                         quantized_codebook_l1_norms.append(quant_norms["codebook_l1"])
                         quantized_codebook_l2_norms.append(quant_norms["codebook_l2"])
                         quantized_codebook_l3_norms.append(quant_norms["codebook_l3"])
+                    if _ANCHOR_ACTIVE:
+                        # The frozen baseline codebook, pulled toward the current one.
+                        # This is the only counterweight the ranking term has: at
+                        # coefficient 0.2 it supplies about 56x the 1.18e-04 the VQ
+                        # commitment term gives L1, so a coefficient of zero here is a
+                        # genuine control rather than a formality.
+                        anchor_gap = torch.stack([
+                            (layer.get_code_embs()
+                             - raw_module.codebook_anchor[level]).pow(2).sum()
+                            for level, layer in enumerate(raw_module.rq.vq_layers)
+                        ])
+                        anchor_term = anchor_gap.sum() * (_ANCHOR_WEIGHT * epoch_hyp_alpha)
+                        anchor_fields = {
+                            "anchor_loss": float(anchor_term.detach()),
+                            "anchor_drift_l1": float(anchor_gap[0].detach()),
+                            "anchor_drift_l2": float(anchor_gap[1].detach()),
+                            "anchor_drift_l3": float(anchor_gap[2].detach()),
+                        }
                 if _CROWD_CONFIG is not None:
                     mechanism, crowd_level, crowd_config = _CROWD_CONFIG
                     n_pairs = int(source_ids.shape[0])
@@ -1196,9 +1257,11 @@ def main() -> None:
             )
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
-            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"}:
+            if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"}:
                 loss = _compose_quantized_loss(loss, quantized_term)
                 loss = _ac_compose(loss, anti_collapse_term)
+            if _ANCHOR_ACTIVE:
+                loss = loss + anchor_term
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1319,8 +1382,21 @@ def main() -> None:
         avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
+        anchor_metric_fields = {}
+        if _ANCHOR_ACTIVE and anchor_fields:
+            anchor_local = torch.tensor(
+                [float(anchor_fields[key]) for key in sorted(anchor_fields)],
+                device=device,
+            )
+            if world_size > 1:
+                dist.all_reduce(anchor_local, op=dist.ReduceOp.SUM)
+                anchor_local = anchor_local / max(world_size, 1)
+            anchor_metric_fields = {
+                key: float(value)
+                for key, value in zip(sorted(anchor_fields), anchor_local)
+            }
         quantized_metric_fields = {}
-        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER"} and epoch_weight > 0.0:
+        if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"} and epoch_weight > 0.0:
             quantized_metric_fields = {
                 "quantized_ranking_loss": avg_quantized_metrics[0],
                 "quantized_encoder_grad_norm": avg_quantized_metrics[1],
@@ -1340,7 +1416,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} quantized_metrics={quantized_metric_fields} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **anchor_metric_fields)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1378,7 +1454,7 @@ def main() -> None:
                     geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
-                    **quantized_metric_fields,
+                    **quantized_metric_fields, **anchor_metric_fields,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
