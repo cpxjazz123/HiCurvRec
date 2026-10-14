@@ -2,7 +2,7 @@ import importlib.util
 import os
 import sys
 
-ARM = "MARGIN_RW001"
+ARM = "STE_FIX"
 STAGE3_DIR = "/home/wlia0047/ar57/wenyu/GeneRec/stage3_T5Train"
 sys.path.insert(0, STAGE3_DIR)
 spec = importlib.util.spec_from_file_location(
