@@ -85,6 +85,18 @@ CATEGORY_CONE_CALIBRATION_ITEMS = 8_192
 # arms are still compared against it as the parent condition at accept time.
 BEHAVIOUR_LOSS_ENABLED = True
 
+# ---------------------------------------------------------------------------
+# Within-L1 hard-negative supervision on q2 = e1 + e2, the same condition that was
+# developed against the behaviour-sample baseline, ported here through the tree's own
+# return_prefixes path rather than by importing that tree's substrate.
+#
+# Off by default so the baseline condition is byte-identical; the mechanism is one
+# switch away. Weight is fixed as instructed -- no sweep.
+# ---------------------------------------------------------------------------
+L2HN_ENABLED = True
+L2HN_WEIGHT = 0.005
+L2HN_WIDTH = 32
+
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
 
@@ -92,13 +104,10 @@ STAGE2_RESULT_DIR = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
     "curvature_RQ-VAE"
 )
-RQVAE_OUT_DIR = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
-    "curvature_RQ-VAE/out/rqvae/instruments"
-)
+RQVAE_OUT_DIR = str(STAGE2_RESULT_DIR)
 RQVAE_CKPT_PATH = Path(RQVAE_OUT_DIR) / "rqvae_best.pth"
 RAW_SIDS_NPY = Path(RQVAE_OUT_DIR) / "sids_raw.npy"
-SIDS_NPY = STAGE2_RESULT_DIR / "dataset/Instruments/sids_for_hgrec.npy"
+SIDS_NPY = STAGE2_RESULT_DIR / "sids_for_hgrec.npy"
 ITEM_SIDS_JSON = STAGE2_RESULT_DIR / "item_sids.json"
 STAGE2_LOG_DIR = REPO_ROOT / "stage2_RQ-VAE/curvature_RQ-VAE/logs"
 
