@@ -29,7 +29,6 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 
 
 from model import RQVAE
-import l2hn
 from model.category_cone import CategoryCone
 from model.model import behaviour_ranking_loss
 from model.layers import _expmap0_tangent, _logmap0_point, _mobius_add
@@ -138,13 +137,6 @@ PIN_IN_S_COORDINATES = True
 BEHAVIOUR_LOSS_WEIGHT = 0.1
 BEHAVIOUR_MARGIN = 0.4
 
-# Within-L1 hard-negative supervision on q2 = e1 + e2. Off for the baseline; the
-# mechanism is one switch away and its weight is fixed as instructed.
-L2HN_ENABLED = experiment.L2HN_ENABLED
-L2HN_WEIGHT = experiment.L2HN_WEIGHT
-L2HN_WIDTH = experiment.L2HN_WIDTH
-_L2HN_STATE: dict[str, object] = {}
-
 # Behaviour-context channel. A frozen probe on the parent checkpoint shows the
 # first-level codebook already extracts everything this representation supports:
 # a balanced 256-way clustering of the encoder output shares a cluster across a
@@ -189,11 +181,12 @@ def configure_run(launcher_script: str) -> None:
 
 
 def _snapshot_paths(version: str) -> tuple[Path, Path, Path, Path]:
+    root = Path(experiment.STAGE2_RESULT_DIR)
     return (
-        Path(experiment.RQVAE_CKPT_PATH),
-        Path(experiment.RAW_SIDS_NPY),
-        Path(experiment.SIDS_NPY),
-        Path(experiment.ITEM_SIDS_JSON),
+        root / "out/rqvae/instruments/rqvae_best.pth",
+        root / "out/rqvae/instruments/sids_raw.npy",
+        root / "dataset/Instruments/sids_for_hgrec.npy",
+        root / "item_sids.json",
     )
 
 def _save_snapshot(
@@ -464,20 +457,6 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
-
-    if L2HN_ENABLED:
-        # Frozen baseline L1 partition, loaded once. The pool has to be global -- the
-        # pair batch holds 512 sources over 256 codewords, about two per codeword --
-        # and a frozen partition keeps the term's target coherent while the live
-        # assignment drifts underneath it.
-        _code_of_item, _groups, _sizes, _code_index = l2hn.load_l1_partition()
-        _L2HN_STATE.update(
-            code_of_item=_code_of_item,
-            groups=_groups,
-            sizes=_sizes,
-            code_index=_code_index,
-            generator=torch.Generator().manual_seed(SEED + 15485863 + rank),
-        )
     transition_sources, transition_successors = _transition_pairs(train_frame)
     behaviour_centroid = _behaviour_context(
         all_embeddings, transition_sources, transition_successors
@@ -545,14 +524,7 @@ def main() -> None:
     source_ids, successor_ids = transition_sources, transition_successors
     source_inputs = encoder_inputs[torch.from_numpy(source_ids)]
     successor_inputs = encoder_inputs[torch.from_numpy(successor_ids)]
-    # The IDs travel with the inputs. pair_sources/pair_successors are encoder-INPUT
-    # vectors, not item ids -- encoder_inputs is all_embeddings concatenated with the
-    # context channel -- so anything that needs to index the item space has to read
-    # these two tensors and not the feature vectors.
-    pair_dataset = TensorDataset(
-        source_inputs, successor_inputs,
-        torch.from_numpy(source_ids), torch.from_numpy(successor_ids),
-    )
+    pair_dataset = TensorDataset(source_inputs, successor_inputs)
     pair_sampler = (
         DistributedSampler(
             pair_dataset, num_replicas=world_size, rank=rank, shuffle=True,
@@ -675,8 +647,6 @@ def main() -> None:
     interval_loss_sum = torch.zeros((), dtype=torch.float64, device=device)
     interval_recon_sum = torch.zeros((), dtype=torch.float64, device=device)
     interval_behaviour_sum = torch.zeros((), dtype=torch.float64, device=device)
-    interval_l2hn_sum = 0.0
-    interval_l2hn_rows_sum = 0.0
     interval_cone_sum: dict[str, float] = {}
     interval_updates = 0
     last_progress_time = time.time()
@@ -725,10 +695,9 @@ def main() -> None:
                     pair_sampler.set_epoch(epoch + 1)
                 pair_iter = iter(pair_loader)
                 pair_batch = next(pair_iter)
-            (
-                pair_sources, pair_successors,
-                pair_source_ids, pair_successor_ids,
-            ) = (tensor.to(device, non_blocking=True) for tensor in pair_batch)
+            pair_sources, pair_successors = (
+                tensor.to(device, non_blocking=True) for tensor in pair_batch
+            )
             encoded_source = raw_module.encoder(pair_sources)
             encoded_successor = raw_module.encoder(pair_successors)
             negatives = encoded_source[
@@ -744,66 +713,6 @@ def main() -> None:
             if BEHAVIOUR_LOSS_ENABLED:
                 loss = loss + BEHAVIOUR_LOSS_WEIGHT * ranking_loss
             interval_behaviour_sum += ranking_loss.detach().double()
-
-            l2hn_term = torch.zeros((), device=device)
-            l2hn_rows = 0.0
-            if L2HN_ENABLED:
-                # q2 comes from this tree's own return_prefixes path, not from an
-                # imported substrate. The straight-through form keeps the forward
-                # value equal to prefixes[1] while the gradient reaches the encoder
-                # alone: the prefix itself also carries codebook gradient, which this
-                # condition must not use. Verified on the real model before wiring --
-                # forward value identical, encoder 4.42e+03, codebooks [0, 0, 0].
-                # Prefixes only, taken straight off the latent the encoder already
-                # produced, so the exact tensors the STE will use are the ones the
-                # quantiser sees. Calling the full model here would run the encoder
-                # again and build a decoder and quant-loss graph for nothing.
-                # (An earlier note here blamed a host OOM killer for a killed run.
-                # That was wrong: 1.3 TB of RAM was free and the SIGKILL matched the
-                # harness deadline, not memory pressure.)
-                _pair_encoded = torch.cat((encoded_source, encoded_successor))
-                _, _, _, _pair_prefixes = raw_module.rq(
-                    _pair_encoded, return_prefixes=True
-                )
-                _pair_q2 = l2hn.cumulative_q2(_pair_encoded, _pair_prefixes)
-                _rows = int(pair_sources.shape[0])
-                _frozen = _L2HN_STATE["code_of_item"]
-                # Cast explicitly: the pair loader hands these over as whatever dtype
-                # the dataset produced, and numpy indexing rejects anything but an
-                # integer or boolean array.
-                _src_ids = pair_source_ids.detach().cpu().numpy().astype(np.int64)
-                _dst_ids = pair_successor_ids.detach().cpu().numpy().astype(np.int64)
-                _ambiguous = torch.from_numpy(
-                    _frozen[_src_ids] == _frozen[_dst_ids]
-                ).to(device=device)
-                l2hn_rows = float(int(_ambiguous.sum()))
-                if l2hn_rows:
-                    _hn_ids = l2hn.sample_within_l1_negatives(
-                        pair_source_ids[_ambiguous], pair_successor_ids[_ambiguous],
-                        _L2HN_STATE["code_of_item"], _L2HN_STATE["groups"],
-                        _L2HN_STATE["sizes"], _L2HN_STATE["code_index"],
-                        width=L2HN_WIDTH, generator=_L2HN_STATE["generator"],
-                    )
-                    _hn_batch = torch.as_tensor(
-                        _hn_ids.reshape(-1).cpu().numpy(), dtype=torch.long, device=device
-                    )
-                    _hn_emb = encoder_inputs[_hn_batch.cpu()].to(device)
-                    _hn_encoded = raw_module.encoder(_hn_emb)
-                    _, _, _, _hn_prefixes = raw_module.rq(
-                        _hn_encoded, return_prefixes=True
-                    )
-                    _hn_q2 = l2hn.cumulative_q2(_hn_encoded, _hn_prefixes).reshape(
-                        int(l2hn_rows), _hn_ids.shape[1], -1
-                    )
-                    l2hn_term = l2hn.within_l1_ranking_loss(
-                        _pair_q2[:_rows][_ambiguous],
-                        _pair_q2[_rows:][_ambiguous],
-                        _hn_q2,
-                        weight=L2HN_WEIGHT,
-                    )
-                    loss = loss + l2hn_term
-                    interval_l2hn_sum += float(l2hn_term.detach())
-                interval_l2hn_rows_sum += l2hn_rows
             # A non-finite loss poisons the weights, so the check stays, but on
             # a fixed stride instead of every step: each read is a host sync
             # and the failure it guards against is not a per-step event.
@@ -857,7 +766,6 @@ def main() -> None:
             loss_sum_tensor = interval_loss_sum
             recon_sum_tensor = interval_recon_sum
             behaviour_sum_tensor = interval_behaviour_sum
-
             updates_tensor = torch.tensor(
                 interval_updates, dtype=torch.int64, device=device
             )
@@ -882,30 +790,11 @@ def main() -> None:
             avg_loss = float(loss_sum_tensor.item()) / denominator
             avg_recon = float(recon_sum_tensor.item()) / denominator
             avg_behaviour = float(behaviour_sum_tensor.item()) / denominator
-            # Same reduction as avg_loss/avg_recon/avg_behaviour above: all-reduce the
-            # RAW local sums, then divide by the already-global denominator exactly
-            # once. Dividing by the global denominator before the all-reduce and then
-            # by world_size again would report these four times too small.
-            l2hn_sum_tensor = torch.tensor(
-                interval_l2hn_sum, dtype=torch.float64, device=device
-            )
-            l2hn_rows_tensor = torch.tensor(
-                interval_l2hn_rows_sum, dtype=torch.float64, device=device
-            )
-            if world_size > 1:
-                dist.all_reduce(l2hn_sum_tensor, op=dist.ReduceOp.SUM)
-                dist.all_reduce(l2hn_rows_tensor, op=dist.ReduceOp.SUM)
-            l2hn_metric_fields = {
-                "l2hn_loss": float(l2hn_sum_tensor.item()) / denominator,
-                "l2hn_rows": float(l2hn_rows_tensor.item()) / denominator,
-            }
             interval_loss_sum = torch.zeros((), dtype=torch.float64, device=device)
             interval_recon_sum = torch.zeros((), dtype=torch.float64, device=device)
             interval_behaviour_sum = torch.zeros(
                 (), dtype=torch.float64, device=device
             )
-            interval_l2hn_sum = 0.0
-            interval_l2hn_rows_sum = 0.0
             interval_updates = 0
 
             model.eval()
@@ -990,7 +879,6 @@ def main() -> None:
                     behaviour=avg_behaviour,
                     behaviour_loss_weight=BEHAVIOUR_LOSS_WEIGHT,
                     behaviour_margin=BEHAVIOUR_MARGIN,
-                    **l2hn_metric_fields,
                     current_curvatures=current_curvatures,
                     effective_epsilons=current_epsilons,
                     raw_unique=raw_unique, raw_total=len(raw_tokens),
