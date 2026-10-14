@@ -114,7 +114,7 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "ANCHOR_W1"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "L2COND_W01"    # THE switch: arm name; see _ARM_DIR
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
@@ -183,6 +183,16 @@ _ARM_ANCHOR_WEIGHT = {
 }
 _ANCHOR_WEIGHT = _ARM_ANCHOR_WEIGHT.get(EXPERIMENT_ARM, 0.0)
 _ANCHOR_ACTIVE = EXPERIMENT_ARM in _ARM_ANCHOR_WEIGHT
+
+# E1: conditional behaviour supervision on q2 = e1 + e2, for L1-ambiguous pairs only.
+# Four arms on the resample recipe -- no quantised ranking term, no geometry term, no
+# anti-collapse term -- differing only in the weight. L2COND_CTRL carries the identical
+# code path at weight zero, so the comparison is the term being on or off rather than
+# two different configurations.
+import l2_conditional as _l2cond  # noqa: E402
+_L2COND_WEIGHT = _l2cond.ARM_WEIGHT.get(EXPERIMENT_ARM, 0.0)
+_L2COND_ACTIVE = EXPERIMENT_ARM in _l2cond.ARM_WEIGHT
+_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _l2cond.ARM_WEIGHT})
 _ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
@@ -1127,6 +1137,8 @@ def main() -> None:
             anti_collapse_term = torch.zeros((), device=device)
             anchor_term = torch.zeros((), device=device)
             anchor_fields: dict[str, float] = {}
+            l2cond_term = torch.zeros((), device=device)
+            l2cond_fields: dict[str, float] = {}
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -1138,7 +1150,25 @@ def main() -> None:
                 pair_batch = all_embeddings[
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
-                residuals = _residuals_with_trace(raw_module, pair_batch)
+                pair_tokens = None
+                if _L2COND_ACTIVE:
+                    # The q2 term needs the codeword ids, so this arm takes the same
+                    # trace through the combined helper. Both helpers walk the identical
+                    # chain and return identical residual values; the combined one also
+                    # hands back the token ids.
+                    residuals, pair_tokens = _residuals_and_tokens_with_trace(
+                        raw_module, pair_batch,
+                    )
+                else:
+                    residuals = _residuals_with_trace(raw_module, pair_batch)
+                l2cond_term = torch.zeros((), device=device)
+                l2cond_fields: dict[str, float] = {}
+                if _L2COND_ACTIVE:
+                    l2cond_term, l2cond_fields = _l2cond.l2_conditional_ranking_loss(
+                        residuals[0], pair_tokens, raw_module.rq.vq_layers,
+                        source_ids, target_ids,
+                        weight=_L2COND_WEIGHT * epoch_weight,
+                    )
                 if DIRECTIONAL_MODE != "none":
                     behavior_loss = directional_residual_loss(
                         residuals, source_ids, target_ids, directional_heads,
@@ -1262,6 +1292,8 @@ def main() -> None:
                 loss = _ac_compose(loss, anti_collapse_term)
             if _ANCHOR_ACTIVE:
                 loss = loss + anchor_term
+            if _L2COND_ACTIVE:
+                loss = loss + l2cond_term
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1382,6 +1414,19 @@ def main() -> None:
         avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
+        l2cond_metric_fields = {}
+        if _L2COND_ACTIVE and l2cond_fields:
+            l2cond_local = torch.tensor(
+                [float(l2cond_fields[key]) for key in sorted(l2cond_fields)],
+                device=device,
+            )
+            if world_size > 1:
+                dist.all_reduce(l2cond_local, op=dist.ReduceOp.SUM)
+                l2cond_local = l2cond_local / max(world_size, 1)
+            l2cond_metric_fields = {
+                key: float(value)
+                for key, value in zip(sorted(l2cond_fields), l2cond_local)
+            }
         anchor_metric_fields = {}
         if _ANCHOR_ACTIVE and anchor_fields:
             anchor_local = torch.tensor(
@@ -1416,7 +1461,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} quantized_metrics={quantized_metric_fields} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **anchor_metric_fields)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **anchor_metric_fields, **l2cond_metric_fields)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1454,7 +1499,7 @@ def main() -> None:
                     geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
-                    **quantized_metric_fields, **anchor_metric_fields,
+                    **quantized_metric_fields, **anchor_metric_fields, **l2cond_metric_fields,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
