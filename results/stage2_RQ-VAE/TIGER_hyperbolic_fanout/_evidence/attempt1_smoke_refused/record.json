@@ -1,0 +1,12 @@
+{
+  "tree": "TIGER_hyperbolic_fanout",
+  "attempt": 1,
+  "status": "FAILED_TECHNICAL (MCP smoke refused; no training started)",
+  "refused": "the one-epoch gradient smoke failed, so no training was started",
+  "error": "ValueError: only one element tensors can be converted to Python scalars",
+  "cause": "the smoke wraps every public callable of the tree's modules as a gradient probe and converts the returned tensor to a Python float. M1 exposed three public helpers that return multi-element grad-carrying tensors (trace_with_fanout, angular_penalty, fanout_distance), so the probe crashed on the trace helper's (3, 2B, d) output before any dead-term verdict could be produced.",
+  "fix": "renamed the non-scalar helpers to private names (_trace_with_fanout, _angular_penalty, _fanout_distance) in both the module and the trainer's import alias, so the smoke probes only scalar loss terms. Same audit applied to M5/M6/M10 (their trace helpers) - all four trees re-checked.",
+  "smoke_passed": false,
+  "dead_terms": null,
+  "nonfinite_terms": null
+}
