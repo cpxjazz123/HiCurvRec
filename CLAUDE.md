@@ -65,9 +65,9 @@ Stage-2 训练产物必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneR
 Stage-3 训练产物（`HG_Rec_best.pth` / `_stage3_launcher.log` / `test_final.json` / `training_metrics.jsonl` 等）必须统一落在仓库级 `/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE/`，与 Stage-2 源码与产物目录同名同前缀。Stage3 `trainer.LOG_PATH` / `SAVE_PATH` 必须解析到该子树，且不含任何 iter 编号后缀。
 
 
-### Stage-3 冻结协议（机器校验；iteration 不得修改）
+### Stage-3 冻结协议（人工核对；iteration 不得修改）
 
-以下字段是 Stage3 的权威锁定值，供 `stage3_protocol_gate.py` 直接解析。iteration launcher 只能修改 SID/输出路径与 variant 元数据，**不得修改训练超参数**。
+以下字段是 Stage3 的权威锁定值。原由 `stage3_protocol_gate.py` 自动校验；该脚本已于 2026-10-14 随 skill `curvature-rqvae-iter` 一并删除，因此现在**必须人工核对** `stage3_T5Train/train_HG-Rec.py` 与当前 launcher 是否与本表一致，不一致即不得启动 Stage3。iteration launcher 只能修改 SID/输出路径与 variant 元数据，**不得修改训练超参数**。
 
 ```text
 STAGE3_NUM_EPOCHS=150
@@ -86,7 +86,7 @@ STAGE3_SCREEN_BASELINE_LOG=
 本项目后续任何 Git 操作均以 `https://github.com/cpxjazz123/HiCurvRec.git` 为唯一目标。若发现 `origin` 指向其他地址，先修正为该 GitHub URL；不得通过 GitLab 或其他远端进行同步、备份、分支/标签操作或历史改写。
 
 - **仓库内 Git 细则**：§8（分支/推送/hash 核验）、§13（每轮代码+产物 commit+push）与 §14（接受/回滚门控）即完整约束，以本文件为准。
-- **curvature-RQ-VAE 迭代流程**（main-only + zero-bookkeeping-artifact：在 `stage2_RQ-VAE/curvature_RQ-VAE/` 原地迭代，研究设计、实现、验证、Stage2/Stage3、结果解释、接受或回滚、Git closure 全部由 main 直接完成；Skill 不生成任何 Markdown/JSON/JSONL/LOG/TXT 等流程记录；仅保留训练/评测程序自身必要原生产物）：见用户 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（与 §13/§14 对齐；不再使用已删除的项目根 `SKILL.md`）。
+- **curvature-RQ-VAE 迭代流程**（main-only + zero-bookkeeping-artifact：在 `stage2_RQ-VAE/curvature_RQ-VAE/` 原地迭代，研究设计、实现、验证、Stage2/Stage3、结果解释、接受或回滚、Git closure 全部由 main 直接完成；Skill 不生成任何 Markdown/JSON/JSONL/LOG/TXT 等流程记录；仅保留训练/评测程序自身必要原生产物）：见原 skill **`~/.claude/skills/curvature-rqvae-iter/SKILL.md`**（该 skill 及其项目级副本已于 2026-10-14 删除，随附的 `stage3_protocol_gate.py` 一并移除；迭代流程现以本文件 §13/§14 为唯一准则）。
 
 ## 13. 每次迭代完成必须 commit + push（代码 + 产物）
 
@@ -169,8 +169,8 @@ main **不得**亲自执行具体任务，包括但不限于：写/改实现代�
 
 ### 与 skill 的冲突裁决
 
-`~/.claude/skills/curvature-rqvae-iter/SKILL.md` 的 §0「No phase is delegated」与 §13 反模式中的 "delegate any phase" 与本节冲突。
-按该 skill 自述的优先级（仓库根 `CLAUDE.md` > skill），**以本节为准**：研究设计、机制选择、结果解释与接受/回滚裁决仍由 main 持有，但实现、训练、评测、度量等**执行环节必须派子 agent**。
+原 skill `curvature-rqvae-iter` 已于 2026-10-14 删除（其 §0「No phase is delegated」与 §13 反模式中的 "delegate any phase" 曾与本节冲突）。
+该 skill 删除后，**本节即为唯一准则**：研究设计、机制选择、结果解释与接受/回滚裁决仍由 main 持有，但实现、训练、评测、度量等**执行环节必须派子 agent**。
 
 main 保留且不得下放的部分（子 agent 不得自行决定）：选哪个机制、父条件是什么、什么算成功、结果算不算改进、是否回滚。
 
