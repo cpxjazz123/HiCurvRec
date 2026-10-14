@@ -1,0 +1,12 @@
+{
+  "tree": "TIGER_behavior_conflict_separation",
+  "stage2": "finished: final_collision 0.109977, artifacts present (rqvae_best.pth / sids_for_hgrec.npy / item_sids.json)",
+  "stage3_attempt1": {
+    "variant": "TIGER_behavior_conflict_separation__behavior_conflict_separation",
+    "launched_at": 1791998540.3299448,
+    "status": "exited_incomplete",
+    "progress_at_death": "38/150 epochs, last train record wall_time_s 460.891",
+    "cause": "external: the Slurm GPU allocation hosting the run was cancelled (squeue showed job 61018313 CANCELLED at that time); the launcher log stops mid-epoch 39 with no traceback and the trainer never wrote test_final.json",
+    "action": "retry stage3_start via MCP once a GPU allocation is available again"
+  }
+}
