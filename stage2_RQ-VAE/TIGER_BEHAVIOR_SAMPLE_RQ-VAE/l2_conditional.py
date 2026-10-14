@@ -98,14 +98,18 @@ def l2_conditional_ranking_loss(
     # from what L1's own term sees; only the representation and the row filter do.
     logits = -torch.cdist(anchor_rows, candidates, p=2) / TEMPERATURE
     duplicate = target_ids[:, None].eq(target_ids[None, :])
-    # Select the rows of the duplicate mask that correspond to the ambiguous anchors,
-    # so the block is (ambiguous rows x candidates). The diagonal stays unmasked: for
-    # anchor i the candidate at index i is its own true successor, which is the
-    # positive, exactly as in _contrastive_ce.
+    # Select the rows of the duplicate mask belonging to the ambiguous anchors, so the
+    # block is (ambiguous rows x candidates). The true successor of anchor r is
+    # candidate r, because the batch is laid out as [sources | targets]. Once the rows
+    # have been filtered, that column is no longer the block's diagonal, so the block's
+    # own diagonal must NOT be what gets un-masked: doing so scores a different item as
+    # the positive while leaving the real successor masked out.
     duplicate = duplicate[ambiguous_rows].clone()
-    duplicate.fill_diagonal_(False)
+    duplicate[
+        torch.arange(anchor_rows.shape[0], device=device), ambiguous_rows
+    ] = False
     logits = logits.masked_fill(duplicate, -torch.inf)
-    labels = torch.arange(anchor_rows.shape[0], device=device)
+    labels = ambiguous_rows
     loss = float(weight) * F.cross_entropy(logits, labels)
     rows["l2cond_loss"] = float(loss.detach())
     rows["l2cond_rows"] = float(anchor_rows.shape[0])
