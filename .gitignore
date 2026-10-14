@@ -556,6 +556,17 @@ results/stage3_T5Train/tiger_sample_MARGIN*/logs/tensorboard/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/_ddp_sync/
 results/stage3_T5Train/tiger_sample_B_E_nocb*/logs/tensorboard/
 
+# The STE repair arm. Same shadowing problem as the blocks above.
+!results/stage3_T5Train/tiger_sample_STE_FIX*/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/logs/**
+!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/
+!results/stage3_T5Train/tiger_sample_STE_FIX*/ckpt/**
+!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.pth
+!results/stage3_T5Train/tiger_sample_STE_FIX*/**/*.npy
+results/stage3_T5Train/tiger_sample_STE_FIX*/logs/_ddp_sync/
+results/stage3_T5Train/tiger_sample_STE_FIX*/logs/tensorboard/
+
 # E5 anchor arms. Same shadowing problem as the blocks above.
 !results/stage3_T5Train/tiger_sample_ANCHOR*/
 !results/stage3_T5Train/tiger_sample_ANCHOR*/logs/
