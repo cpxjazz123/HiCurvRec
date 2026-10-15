@@ -274,6 +274,74 @@ def stage2_child_env(cwd: Path, layout: dict) -> dict:
     return env
 
 
+# The single-card launch contract a trainer has to declare: it reads this variable
+# and skips the fixed 4-rank torchrun launcher when it says 1.
+SINGLE_GPU_MARKER = re.compile(r'SINGLE_GPU_ENV\s*=\s*["\']GENREC_SINGLE_GPU["\']')
+
+
+def tree_supports_single_gpu(tree: Path) -> bool:
+    """Whether this tree's own trainer honours the single-card launch contract.
+
+    A tree without the marker keeps a launcher that unconditionally forks
+    ``torchrun --nproc_per_node=4`` over ``CUDA_VISIBLE_DEVICES=0,1,2,3``, so
+    promising it a single card would only produce a doomed launch; the caller has
+    to be told instead.
+    """
+    entry = tree / "train_rqvae.py"
+    if not entry.is_file():
+        return False
+    try:
+        return bool(
+            SINGLE_GPU_MARKER.search(
+                entry.read_text(encoding="utf-8", errors="replace")
+            )
+        )
+    except OSError:
+        return False
+
+
+def stage2_launch_decision(gpu_probe: dict) -> str | None:
+    """``None`` -> dispatch, otherwise the refusal reason for this probed layout.
+
+    Pure on purpose: the decision is a function of the probe and the tree's
+    declared capability, so it can be exercised without launching anything.
+    """
+    mode = gpu_probe.get("mode")
+    if mode == "none":
+        return (
+            "no CUDA device is visible to this server "
+            f"(CUDA_VISIBLE_DEVICES={gpu_probe.get('cuda_visible_devices')!r}, "
+            f"physical={gpu_probe.get('physical')}); both the 4-rank and the "
+            "single-card layouts need at least one card"
+        )
+    if mode == "single-gpu" and not gpu_probe.get("entrypoint_supports_single_gpu"):
+        return (
+            f"{gpu_probe.get('visible_count')} CUDA device(s) visible, but this tree's "
+            "trainer has no single-card launch path (it forks 4-rank torchrun); run it "
+            "on a 4-card allocation, or add the single-card contract to the tree's "
+            "trainer first"
+        )
+    return None
+
+
+def stage3_launch_decision(gpu_probe: dict) -> str | None:
+    """``None`` -> dispatch, otherwise why Stage3 must not start on this layout.
+
+    Stage3's trainer still forks a fixed 4-rank torchrun and its per-rank batch
+    semantics are part of the frozen protocol, so there is no single-card Stage3
+    layout to select yet; refusing is the honest answer rather than attempting a
+    run the protocol was not written for.
+    """
+    mode = gpu_probe.get("mode")
+    if mode == "ddp":
+        return None
+    return (
+        f"stage3 requires the 4-rank layout but {gpu_probe.get('visible_count')} CUDA "
+        f"device(s) are visible (mode={mode}); the Stage3 trainer has no single-card "
+        "launch path yet"
+    )
+
+
 # --------------------------------------------------------------------------
 # Stage2 tree resolution: which tree to run is a parameter, not a constant
 # --------------------------------------------------------------------------
@@ -1050,6 +1118,10 @@ def tool_stage2_start(source_dir: str) -> dict:
     # machine, not a per-tree choice. Zero visible cards means no layout works, and
     # saying so up front beats a crash inside the trainer.
     gpu_probe = probe_gpu_layout()
+    # Only the source tree's trainer carries the single-card launch contract so far;
+    # the other trees keep a launcher that unconditionally forks 4 ranks, so a
+    # single-card promise has to be refused rather than attempted.
+    gpu_probe["entrypoint_supports_single_gpu"] = tree_supports_single_gpu(tree)
     context = {
         "tree": str(tree),
         "arm": arm,
@@ -1065,17 +1137,9 @@ def tool_stage2_start(source_dir: str) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    if gpu_probe["mode"] == "none":
-        return {
-            "started": False,
-            "refused": (
-                "no CUDA device is visible to this server "
-                f"(CUDA_VISIBLE_DEVICES={gpu_probe['cuda_visible_devices']!r}, "
-                f"physical={gpu_probe['physical']}); both the 4-rank and the single-card "
-                "layouts need at least one card"
-            ),
-            **context,
-        }
+    refusal = stage2_launch_decision(gpu_probe)
+    if refusal is not None:
+        return {"started": False, "refused": refusal, **context}
     cmd = [python, str(entry)]
     existing = stage_processes(entry)
     state_key = f"stage2__{tree.name}"
@@ -1645,6 +1709,15 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
     context["protocol"] = protocol
     if not protocol["ok"]:
         return {"started": False, "refused": "frozen Stage3 protocol mismatch", **context}
+    # Stage3's trainer still forks a fixed 4-rank torchrun and its per-rank batch
+    # semantics are the frozen protocol, so a single-card Stage3 launch is not
+    # implemented. Saying so is the honest outcome: attempting it would land on a
+    # card the layout never provisioned for.
+    stage3_probe = probe_gpu_layout()
+    context["gpu_probe"] = stage3_probe
+    stage3_refusal = stage3_launch_decision(stage3_probe)
+    if stage3_refusal is not None:
+        return {"started": False, "refused": stage3_refusal, **context}
     harness = HARNESS_DIR / f"run_stage3_param_{re.sub(r'[^A-Za-z0-9._-]+', '_', chosen_variant)}.py"
     cmd = [PY3, str(harness)]
     run_log = RESULT3_ROOT / chosen_variant / "logs" / "_stage3_run.log"
