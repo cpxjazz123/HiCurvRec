@@ -74,31 +74,51 @@ C_MAX = 4.0
 CODEBOOK_K = 256
 INITIAL_CURVATURE = 1.0
 
-# The curvature is read by the assignment closures at call time and is mirrored
-# into a registered buffer on the RQ module (see ``bind_curvature_buffer``) so it
-# travels in ``state_dict()``. Reloading a checkpoint therefore restores the same
-# curvature, and with it the same code assignment, instead of silently resetting
-# to 1.0.
-_CURVATURE_VALUE = INITIAL_CURVATURE
-_CURVATURE_BUFFER: torch.Tensor | None = None
+# The curvature is instance-local state: a registered buffer on each patched layer,
+# read by that layer's own assignment closure. It used to be a module-level pointer,
+# so binding a second model in the same process silently changed the curvature the
+# first model assigned with, and re-binding overwrote the buffer from that global.
 
 
-def bind_curvature_buffer(rq_module: torch.nn.Module) -> torch.Tensor:
-    """Register the curvature as persistent state on ``rq_module``.
+def ensure_curvature_buffers(module) -> list:
+    """Register ``_adaptive_curvature`` on each layer of ``module`` if absent.
 
-    Returns the buffer so callers can inspect or restore it. Re-binding (an arm
-    re-installed on a fresh module) reuses the existing buffer if it is already
-    on that module.
+    Idempotent and non-destructive: an existing buffer is left untouched, so
+    installing twice cannot reset a curvature that was already trained. Returns the
+    buffers the caller writes to when the curvature changes.
     """
-    global _CURVATURE_BUFFER
-    existing = getattr(rq_module, "_adaptive_curvature", None)
-    if existing is None:
-        existing = torch.tensor(float(_CURVATURE_VALUE), dtype=torch.float64)
-        rq_module.register_buffer("_adaptive_curvature", existing)
-    else:
-        existing.fill_(float(_CURVATURE_VALUE))
-    _CURVATURE_BUFFER = existing
-    return existing
+    layers = getattr(module, "vq_layers", None)
+    if layers is None:
+        layers = module.rq.vq_layers
+    buffers = []
+    for layer in layers:
+        buffer = getattr(layer, "_adaptive_curvature", None)
+        if buffer is None:
+            buffer = torch.tensor(float(INITIAL_CURVATURE), dtype=torch.float64)
+            layer.register_buffer("_adaptive_curvature", buffer)
+        buffers.append(buffer)
+    return buffers
+
+
+def current_curvature(layer=None, buffers=None) -> float:
+    """The curvature this layer assigns with, or the first bound buffer's."""
+    if layer is not None and hasattr(layer, "_adaptive_curvature"):
+        return float(layer._adaptive_curvature.item())
+    if buffers:
+        return float(buffers[0].item())
+    return float(INITIAL_CURVATURE)
+
+
+def set_curvature(value: float, buffers) -> float:
+    """Validate the curvature and write it into this model's own buffers."""
+    if not math.isfinite(float(value)):
+        raise ValueError("curvature must be finite")
+    clamped = float(min(max(float(value), C_MIN), C_MAX))
+    for buffer in buffers:
+        with torch.no_grad():
+            buffer.fill_(clamped)
+    return clamped
+
 
 
 def curvature_from_counts(counts, k: int = CODEBOOK_K, c_min: float = C_MIN,
@@ -134,27 +154,7 @@ def curvature_from_counts(counts, k: int = CODEBOOK_K, c_min: float = C_MIN,
     return float(min(max(curvature, c_min), c_max))
 
 
-def current_curvature() -> float:
-    """The curvature every assignment closure reads at call time."""
-    if _CURVATURE_BUFFER is not None:
-        return float(_CURVATURE_BUFFER.item())
-    return float(_CURVATURE_VALUE)
-
-
-def set_curvature(value: float) -> float:
-    """Set the curvature (module value and bound buffer) after validating it."""
-    global _CURVATURE_VALUE
-    if not math.isfinite(float(value)):
-        raise ValueError("curvature must be finite")
-    clamped = float(min(max(float(value), C_MIN), C_MAX))
-    _CURVATURE_VALUE = clamped
-    if _CURVATURE_BUFFER is not None:
-        with torch.no_grad():
-            _CURVATURE_BUFFER.fill_(clamped)
-    return clamped
-
-
-def update_curvature_from_tokens(tokens, k: int = CODEBOOK_K,
+def update_curvature_from_tokens(tokens, buffers, k: int = CODEBOOK_K,
                                 usable_k: int | None = None) -> float:
     """Refresh the curvature from an ``(N, 3)`` SID matrix's L1 usage histogram.
 
@@ -168,7 +168,7 @@ def update_curvature_from_tokens(tokens, k: int = CODEBOOK_K,
         raise ValueError("usable_k cannot exceed the codebook size")
     level1 = level1[level1 < limit]
     counts = torch.bincount(level1, minlength=limit)[:limit]
-    return set_curvature(curvature_from_counts(counts, limit, usable_k=limit))
+    return set_curvature(curvature_from_counts(counts, limit, usable_k=limit), buffers)
 
 
 def install_adaptive_assignment(layer, level: int) -> None:
@@ -185,9 +185,16 @@ def install_adaptive_assignment(layer, level: int) -> None:
     """
     if getattr(layer, "_adaptive_curvature_active", False):
         return
+    if not hasattr(layer, "_adaptive_curvature"):
+        layer.register_buffer(
+            "_adaptive_curvature",
+            torch.tensor(float(INITIAL_CURVATURE), dtype=torch.float64),
+        )
 
     def distances(self, latent):
-        c = current_curvature()
+        # This layer's own buffer: two models in one process must not be able
+        # to change each other's curvature.
+        c = float(self._adaptive_curvature.item())
         # One scale for both sides, derived from the codebook: encoding the items
         # and the codewords separately gave each its own scale, so the same
         # vector landed in two places and the mapping drifted with every batch.
