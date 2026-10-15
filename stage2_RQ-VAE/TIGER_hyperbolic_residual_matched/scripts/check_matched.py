@@ -28,38 +28,56 @@ def check(name, ok, detail=""):
 torch.manual_seed(0)
 d, k = 8, 16
 
-# --- the Euclidean limit: Mobius addition collapses to the sum -------------
+# --- what is verified, and what is not --------------------------------------
+# The naive mirrored addition is NOT the inverse. That much is measured.
+# Whether some gyrogroup-correct cancellation exists is NOT settled here: the
+# earlier claim that none exists was withdrawn, so nothing below asserts it.
 x = torch.randn(5, d) * 0.1
 y = torch.randn(5, d) * 0.1
-for c in (1e-6, 1e-8):
-    pass
-sum_euclid = x + y
-sum_ball = mobius_add(x, y, 1e-8)
-check("as c -> 0 the Mobius addition becomes the Euclidean sum",
-      torch.allclose(sum_ball, sum_euclid, atol=1e-5),
-      f"max|diff| = {float((sum_ball - sum_euclid).abs().max()):.2e}")
-
-sum_ball_1 = mobius_add(x, y, 1.0)
-check("at c = 1 it is a different operation", not torch.allclose(sum_ball_1, sum_euclid, atol=1e-3),
-      f"max|diff| = {float((sum_ball_1 - sum_euclid).abs().max()):.4f}")
-
-# --- subtraction and addition are inverse operations ----------------------
-r = torch.randn(5, d) * 0.1
-q = torch.randn(5, d) * 0.1
 c = MOBIUS_CURVATURE
-residual = _mobius_residual(r, q, c)
-restored = logmap0(mobius_add(expmap0(residual, c), expmap0(q, c), c), c)
-deviation = float((restored - r).abs().max())
-check("NEGATIVE RESULT: (r (-) q) (+) q != r -- Mobius addition is not a group law",
+
+radial_naive = logmap0(mobius_add(expmap0(_mobius_residual(x, y, c), c),
+                                  expmap0(y, c), c), c)
+deviation = float((radial_naive - x).abs().max())
+check("NEGATIVE RESULT: the naive (r (-) q) (+) q does not recover r",
       deviation > 1e-3, f"max|diff| = {deviation:.2e} at c = {c}")
 
-# associativity is the structural reason, checked directly rather than asserted
+# Left cancellation in the gyrogroup sense: the map F_q is injective, which is a
+# fact about the map, not about the formula that was tried.
 a, b, d_ = torch.randn(3, 6, d) * 0.1
 left = mobius_add(mobius_add(a, b, c), d_, c)
 right = mobius_add(a, mobius_add(b, d_, c), c)
 assoc_gap = float((left - right).abs().max())
-check("and Mobius addition is not associative, which is why", assoc_gap > 1e-4,
-      f"|(a+b)+d - a+(b+d)|_max = {assoc_gap:.2e}")
+check("Mobius addition is not associative, so bracketing matters",
+      assoc_gap > 1e-4, f"|(a+b)+d - a+(b+d)|_max = {assoc_gap:.2e}")
+
+# Injectivity of F_q for a fixed q, sampled: distinct inputs stay distinct.
+q_fixed = torch.randn(1, d) * 0.1
+samples = torch.randn(64, d) * 0.1
+mapped = logmap0(mobius_add(expmap0(samples, c), expmap0(q_fixed.expand_as(samples), c), c), c)
+pairs = torch.cdist(mapped, mapped) + torch.eye(64) * 1e9
+min_sep = float(pairs.min())
+check("F_q maps distinct inputs to distinct outputs (injectivity holds here)",
+      min_sep > 0, f"closest pair after mapping = {min_sep:.4f}")
+
+# --- the decoder input the probe measures is the one the forward builds ----
+from hyperbolic_residual import decoder_input  # noqa: E402
+per_level = [torch.randn(4, d) * 0.1, torch.randn(4, d) * 0.1, torch.randn(4, d) * 0.1]
+matched = decoder_input(per_level, c, matched=True)
+naive = per_level[0]
+for q in per_level[1:]:
+    naive = naive + q
+check("the shared helper reproduces the matched accumulation",
+      not torch.allclose(matched, naive, atol=1e-3),
+      f"max|diff vs the Euclidean sum| = {float((matched - naive).abs().max()):.4f}")
+flat = decoder_input(per_level, c, matched=False)
+check("with matched=False the helper is exactly the Euclidean sum",
+      torch.allclose(flat, naive, atol=1e-6),
+      f"max|diff| = {float((flat - naive).abs().max()):.2e}")
+limit = decoder_input(per_level, 1e-8, matched=True)
+check("as c -> 0 the matched accumulation becomes the Euclidean sum",
+      torch.allclose(limit, naive, atol=1e-4),
+      f"max|diff| = {float((limit - naive).abs().max()):.2e}")
 
 # --- shapes and finite gradients through the real layer ------------------
 layer = VQLayer(codebook_size=k, codebook_dim=d)

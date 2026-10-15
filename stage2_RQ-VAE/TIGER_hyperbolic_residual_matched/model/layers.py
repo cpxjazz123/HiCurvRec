@@ -19,8 +19,7 @@ from sklearn.cluster import KMeans
 # M6: the tree-root mechanism module. Every entry point of this tree (trainer, the
 # grad-check scripts, the MCP smoke) runs with the tree root on sys.path, which is
 # also where ``hyperbolic.py`` lives.
-from hyperbolic import expmap0, logmap0, mobius_add
-from hyperbolic_residual import MOBIUS_CURVATURE, _mobius_residual
+from hyperbolic_residual import MOBIUS_CURVATURE, _mobius_residual, decoder_input
 
 
 class MLP(nn.Module):
@@ -308,21 +307,11 @@ class RQLayer(nn.Module):
             # residual used Mobius subtraction, Euclidean addition at level 0 where it
             # used Euclidean subtraction. Adding the Euclidean sum here is what made
             # the two sides of the quantiser use different laws.
-            if level == 0:
-                quantized_x = quantized_x + quant
-            else:
-                # Mirror of _mobius_residual, which maps in, subtracts in the ball and
-                # maps back out. mobius_add takes points *inside* the ball, so the
-                # codes -- which live in the tangent space -- have to be mapped in
-                # first; adding them directly would silently mix the two spaces.
-                quantized_x = logmap0(
-                    mobius_add(
-                        expmap0(quantized_x, MOBIUS_CURVATURE),
-                        expmap0(quant, MOBIUS_CURVATURE),
-                        MOBIUS_CURVATURE,
-                    ),
-                    MOBIUS_CURVATURE,
-                )
+            # Built by the shared helper, so the forward pass and the diagnostic
+            # cannot drift apart: level 0 Euclidean, deeper levels Mobius.
+            quantized_x = decoder_input(
+                [quantized_x, quant] if level else [quant], MOBIUS_CURVATURE, matched=True
+            )
             sum_quant_loss = sum_quant_loss + quant_loss
             num_unused_codes += unused
             output[:, level] = indices
