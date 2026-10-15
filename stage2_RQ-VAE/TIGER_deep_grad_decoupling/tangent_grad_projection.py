@@ -149,13 +149,21 @@ def project_deep_supervision(rq_module, residuals: torch.Tensor) -> torch.Tensor
     with torch.no_grad():
         index = l1._indices(l1._distances(residuals[0]), False)
     codes = l1.get_code_embs()
-    expanded = index.unsqueeze(0).expand(residuals.shape[0], -1)
-    return TangentProjection.apply(residuals, codes, expanded)
+    # Level 0 of the trace is the L1 residual, and the behaviour term consumes
+    # every level of the trace (see directional_residual_loss). Projecting the whole
+    # trace therefore also projected L1's behaviour component, which is not what
+    # this arm claims to decouple. Only the deep levels -- 1 and 2, the ones fed by
+    # L2 and L3 -- are projected now, and level 0 passes through untouched.
+    rows = [residuals[0]]
+    for level in range(1, residuals.shape[0]):
+        rows.append(TangentProjection.apply(residuals[level], codes, index))
+    return torch.stack(rows, dim=0)
 
 
 def decoupled_scope_note() -> str:
     """One line for the metrics: what this arm does and does not touch."""
     return (
-        "projection applied only to the deep supervision trace; reconstruction and "
-        "L1 gradients are untouched; radial component routed to the L1 codeword"
+        "projection applied to the deep levels (L2/L3) of the supervision trace; "
+        "reconstruction and L1 gradients are untouched; radial component routed "
+        "to the L1 codeword"
     )
