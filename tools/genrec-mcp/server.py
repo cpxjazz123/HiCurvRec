@@ -324,22 +324,62 @@ def stage2_launch_decision(gpu_probe: dict) -> str | None:
     return None
 
 
+def stage3_supports_single_gpu() -> bool:
+    """Whether the Stage3 trainer honours the single-card launch contract.
+
+    Stage3 has one shared trainer instead of per-tree copies, so the capability is
+    a property of that one file: the same marker the Stage2 trees carry, so a
+    trainer that loses the branch is refused rather than promised a single card.
+    """
+    entry = STAGE3_DIR / "train_HG-Rec.py"
+    if not entry.is_file():
+        return False
+    try:
+        return bool(
+            SINGLE_GPU_MARKER.search(
+                entry.read_text(encoding="utf-8", errors="replace")
+            )
+        )
+    except OSError:
+        return False
+
+
 def stage3_launch_decision(gpu_probe: dict) -> str | None:
     """``None`` -> dispatch, otherwise why Stage3 must not start on this layout.
 
-    Stage3's trainer still forks a fixed 4-rank torchrun and its per-rank batch
-    semantics are part of the frozen protocol, so there is no single-card Stage3
-    layout to select yet; refusing is the honest answer rather than attempting a
-    run the protocol was not written for.
+    Both layouts are the trainer's own business: the fixed 4-rank fork when the
+    host offers 4 cards, and the single-card branch (same trainer, no torchrun,
+    smaller infer batch) when it does not. Only a host with no card at all, or a
+    trainer that has lost the single-card contract, is refused.
     """
     mode = gpu_probe.get("mode")
-    if mode == "ddp":
-        return None
-    return (
-        f"stage3 requires the 4-rank layout but {gpu_probe.get('visible_count')} CUDA "
-        f"device(s) are visible (mode={mode}); the Stage3 trainer has no single-card "
-        "launch path yet"
-    )
+    if mode == "none":
+        return (
+            "no CUDA device is visible to this server "
+            f"(CUDA_VISIBLE_DEVICES={gpu_probe.get('cuda_visible_devices')!r}, "
+            f"physical={gpu_probe.get('physical')}); both the 4-rank and the "
+            "single-card layouts need at least one card"
+        )
+    if mode == "single-gpu" and not gpu_probe.get("entrypoint_supports_single_gpu"):
+        return (
+            f"{gpu_probe.get('visible_count')} CUDA device(s) visible, but the Stage3 "
+            "trainer has no single-card launch path (it forks 4-rank torchrun); run it "
+            "on a 4-card allocation, or add the single-card contract to the trainer first"
+        )
+    return None
+
+
+def stage3_child_env(cwd: Path, layout: dict) -> dict:
+    """Child environment: ``logical_env`` plus the layout this host was probed as.
+
+    The trainer reads ``GENREC_SINGLE_GPU`` to skip the 4-rank fork. The device
+    list is left exactly as the caller set it, so an operator who pinned one
+    specific card is not overridden.
+    """
+    env = logical_env(cwd)
+    env["GENREC_STAGE3_MODE"] = str(layout.get("mode") or "none")
+    env["GENREC_SINGLE_GPU"] = "1" if layout.get("mode") == "single-gpu" else "0"
+    return env
 
 
 # --------------------------------------------------------------------------
@@ -631,7 +671,10 @@ os.environ.update(
         "TORCH_NCCL_BLOCKING_WAIT": "1",
     }}
 )
-if "RANK" in os.environ:
+if "RANK" in os.environ or os.environ.get(trainer.LAUNCHED_ENV):
+    # RANK set: a torchrun rank. LAUNCHED_ENV set: the trainer's single-card branch
+    # already re-executed this harness once, so it must run main() rather than
+    # launch again (it has no RANK to stop the recursion).
     trainer.main()
 else:
     trainer._launch_via_torchrun()
@@ -1593,6 +1636,7 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     if stale_test is not None and test_final is None:
         test_final = None
     latest_train = _last_record(metrics, "train") if metrics else None
+    train_start = _last_record(metrics, "train_start") if metrics else None
     test_result = None
     if test_final is not None:
         try:
@@ -1636,6 +1680,19 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
         "launched_at": state.get("launched_at"),
         "live_processes": live,
         "gpu_processes": _gpu_processes(),
+        # Which layout produced these numbers: the probe this run was dispatched
+        # with, and the trainer's own train_start record. A single-card run has a
+        # global train batch of 4096 against the 4-card 16384, so the two are not
+        # interchangeable when comparing results.
+        "launch": {
+            "dispatch_mode": state.get("mode"),
+            "reported_mode": (train_start or {}).get("launch_mode"),
+            "world_size": (train_start or {}).get("world_size"),
+            "train_batch_per_process": (train_start or {}).get("batch_size"),
+            "global_train_batch": (train_start or {}).get("global_train_batch"),
+            "infer_batch_per_process": (train_start or {}).get("infer_size"),
+            "cuda_visible_devices": (train_start or {}).get("cuda_visible_devices"),
+        },
         "latest_train": latest_train,
         "progress": progress,
         "total_epochs": total_epochs,
@@ -1716,20 +1773,21 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
     context["protocol"] = protocol
     if not protocol["ok"]:
         return {"started": False, "refused": "frozen Stage3 protocol mismatch", **context}
-    # Stage3's trainer still forks a fixed 4-rank torchrun and its per-rank batch
-    # semantics are the frozen protocol, so a single-card Stage3 launch is not
-    # implemented. Saying so is the honest outcome: attempting it would land on a
-    # card the layout never provisioned for.
+    # The trainer owns both layouts: 4-rank torchrun on a 4-card host, its own
+    # single-card branch otherwise. The probe decides which one, and the trainer
+    # declares whether it can do the second.
     stage3_probe = probe_gpu_layout()
+    stage3_probe["entrypoint_supports_single_gpu"] = stage3_supports_single_gpu()
     context["gpu_probe"] = stage3_probe
     stage3_refusal = stage3_launch_decision(stage3_probe)
     if stage3_refusal is not None:
         return {"started": False, "refused": stage3_refusal, **context}
+    launch_mode = stage3_probe.get("mode")
     harness = HARNESS_DIR / f"run_stage3_param_{re.sub(r'[^A-Za-z0-9._-]+', '_', chosen_variant)}.py"
     cmd = [PY3, str(harness)]
     run_log = RESULT3_ROOT / chosen_variant / "logs" / "_stage3_run.log"
     live = stage3_processes()
-    context.update({"cmd": " ".join(cmd), "cwd": str(STAGE3_DIR), "run_log": str(run_log), "harness": str(harness)})
+    context.update({"cmd": " ".join(cmd), "cwd": str(STAGE3_DIR), "run_log": str(run_log), "harness": str(harness), "launch_mode": launch_mode})
     if live:
         return {
             "started": False,
@@ -1747,7 +1805,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
             stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
-            env=logical_env(STAGE3_DIR),
+            env=stage3_child_env(STAGE3_DIR, stage3_probe),
         )
     state = {
         "pid": child.pid,
@@ -1759,6 +1817,8 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "run_log": str(run_log),
         "native_log": str(RESULT3_ROOT / chosen_variant / "logs/_stage3_launcher.log"),
         "harness": str(harness),
+        "mode": launch_mode,
+        "gpu_probe": stage3_probe,
     }
     save_state(f"stage3__{chosen_variant}", state)
     return {"started": True, **state, "protocol": protocol}
@@ -1810,8 +1870,11 @@ TOOLS: dict[str, dict] = {
         "argument: the item_sids.json path (a directory containing it is also accepted). The path "
         "must live under results/stage2_RQ-VAE/; the variant directory name is derived from its own "
         "location, and the launcher is generated for that call outside the repository, so nothing "
-        "about the SID is hardcoded and the trainer receives no command-line arguments. Refuses when "
-        "the path is outside the Stage2 results root, when the frozen protocol differs, or when a "
+        "about the SID is hardcoded and the trainer receives no command-line arguments. The visible "
+        "cards decide the layout: 4 or more run the frozen 4-rank DDP, fewer run the trainer's own "
+        "single-card branch (train batch stays 4096 per process and the infer batch shrinks, so the "
+        "global train batch is 4096 against the 4-card 16384). Refuses when the path is outside the "
+        "Stage2 results root, when the frozen protocol differs, when no card is visible, or when a "
         "stage3 process is already live.",
     },
 }

@@ -9,6 +9,13 @@ compat issues on this stack. Enable manually only after verifying.
 `python3 train_HG-Rec.py` 自动 fork torchrun --nproc_per_node=4 (硬编码 4 卡).
 如果在 torchrun 下调用 (RANK 已 set), 直接执行 main, 不再二次 fork.
 
+=== 单卡路径 (genrec MCP 探测后选布局) ===
+genrec MCP 派发前探测可见卡数: >= 4 卡走上面的 4 卡 DDP; 少于 4 卡时写
+GENREC_SINGLE_GPU=1 且只暴露一张卡, 于是本脚本不 fork torchrun, 单进程直跑
+main() 里原有的 world_size=1 分支 (infer batch 缩到 SINGLE_GPU_INFER_SIZE)。
+batch 语义随之变化: 单卡每步全局 batch 4096, 4 卡是 16384, 所以单卡结果不能与
+4 卡基线直接比较。详见单卡常量块处的注释。
+
 
 
 The hyperbolic component only supplies the SID file.  The sequence model,
@@ -54,9 +61,33 @@ torch.set_float32_matmul_precision("high")
 
 # === 模块级常量 (CLAUDE.md §4 + §1 R30/R43: 全部硬编码, 禁止 argparse / CLI flag) ===
 # 训练 / 吞吐
-BATCH_SIZE       = 4096   # 4 卡 DDP 每卡 1024 (8192 OOM @ 46GB L40S, 4096 安全)
-INFER_SIZE       = 1024   # 4 卡 DDP 每卡 256, 等效 4x throughput (vs 单卡 512)
+# BATCH_SIZE / INFER_SIZE 都是「每个进程」的 batch: main() 把它们原样传给
+# GenRecDataLoader, 代码里没有按 world_size 缩放的地方 (DistributedSampler 只分样本,
+# 不缩 batch)。所以 4 卡 DDP 下每步的全局 train batch = BATCH_SIZE * 4 = 16384,
+# test/valid 的 infer batch 是每 rank INFER_SIZE。
+BATCH_SIZE       = 4096   # 每 rank micro-batch (8192 OOM @ 46GB L40S, 4096 安全)
+INFER_SIZE       = 1024   # 每 rank beam 生成 batch (4 卡时在 46GB 卡上跑通过 test)
 NUM_EPOCHS       = 150      # 2026-09-22 恢复 post-R53 短训练设定
+
+# === 单卡训练路径 (single-GPU run; 冻结超参一律不改) ===
+# genrec MCP 在派发前探测本机可见卡数: >= 4 卡走原来的 4 卡 DDP; 少于 4 卡时写
+# GENREC_SINGLE_GPU=1 并且只暴露一张卡, 于是本脚本不 fork torchrun, 单进程直跑
+# (main() 本来就有 world_size=1 的非 DDP 分支, 缺的只是这个入口分支)。
+# 约定与 stage2 的单卡路径完全一致 (同名 env、同一个 marker), 所以 genrec MCP 能用
+# 同一个 SINGLE_GPU_MARKER 判定入口是否支持单卡。
+#
+# batch 语义 (不要拿单卡数字与 4 卡基线直接比):
+#   train  BATCH_SIZE 原样不动。单卡每步的全局 batch 是 4096, 4 卡是 16384, 单卡每
+#          epoch 的 optimizer 步数是 4 倍。这是为了保住超参与显存峰值 (单卡 peak
+#          = 今天 4 卡里每张卡的 peak), 代价是优化轨迹不同。
+#   infer  INFER_SIZE 是每 rank 值且随 beam=20 的生成峰值线性涨, 4 卡时在 46GB 卡上
+#          才装得下; 单卡 (40GB) 用 SINGLE_GPU_INFER_SIZE。infer batch 只影响吞吐,
+#          不影响指标: 每行独立 beam search, 按行 reduce, 所以缩小它不改 test 数字。
+SINGLE_GPU_MODE = None            # None = 自动; True = 强制单卡; False = 强制 4 卡 DDP
+REFERENCE_WORLD_SIZE = 4          # = _LAUNCHER["nproc"], 冻结数字所依赖的布局
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"      # MCP 探测后写入的启动模式
+LAUNCHED_ENV = "GENREC_STAGE3_LAUNCHED"    # 本进程已被 launcher 拉起, 不再二次 fork
+SINGLE_GPU_INFER_SIZE = 512       # 单卡 beam 生成 batch; 实测峰值见 skill 文档
 EVAL_INTERVAL    = 5      # validate every N epochs (NO_EVAL=False 时生效)
 EVAL_START_EPOCH = 75     # 200/400=50% 比例 → 150x0.5=75, 保持 50% 比例
 EARLY_EVAL_EPOCHS = (25, 50, 75, 100, 125)  # 早期诊断点, 仅记录走势; 不影响训练长度
@@ -701,6 +732,24 @@ def main():
             raise RuntimeError("--bf16 requires a CUDA GPU with BF16 support")
     set_seed(config["seed"])
 
+    # 单卡布局: 只缩 infer batch。INFER_SIZE 是每 rank 值, beam=20 的生成峰值随 batch
+    # 线性涨, 4 卡时它在 46GB 卡上才装得下, 单卡 (40GB) 改用 SINGLE_GPU_INFER_SIZE;
+    # infer batch 不进指标 (每行独立 beam search, 按行 reduce), 所以不改变 test 数字。
+    # train 的 BATCH_SIZE 一律不动: 单卡 peak 等于今天 4 卡里每张卡的 peak。world_size=4
+    # 时本段不生效, 4 卡路径逐值不变。
+    launch_mode = "single-gpu" if world_size == 1 else f"ddp{world_size}"
+    if world_size < REFERENCE_WORLD_SIZE:
+        config["infer_size"] = SINGLE_GPU_INFER_SIZE
+    if rank == 0:
+        print(
+            f"[layout] mode={launch_mode} world_size={world_size} "
+            f"train_batch={config['batch_size']}/process "
+            f"global_train_batch={config['batch_size'] * world_size} "
+            f"infer_batch={config['infer_size']}/process "
+            f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}",
+            flush=True,
+        )
+
     screen_curve = _load_validation_curve(config["screen_baseline_log"])
     if config["screen_baseline_log"] and not screen_curve:
         raise ValueError(
@@ -927,7 +976,7 @@ def main():
                     os.fsync(_fh.fileno())
                 except OSError:
                     pass
-    _record("train_start", num_epochs=config["num_epochs"], no_eval=config["no_eval"], batch_size=config["batch_size"], code_path=config["code_path"], variant=config.get("variant", "unknown_variant"), log_path=log_path, ckpt_path=ckpt_path, rank=rank, world_size=world_size)
+    _record("train_start", num_epochs=config["num_epochs"], no_eval=config["no_eval"], batch_size=config["batch_size"], infer_size=config["infer_size"], global_train_batch=config["batch_size"] * world_size, launch_mode=launch_mode, code_path=config["code_path"], variant=config.get("variant", "unknown_variant"), log_path=log_path, ckpt_path=ckpt_path, rank=rank, world_size=world_size, cuda_visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"))
     # === R7-fix v6: 共享信号目录 (所有 rank 都知道, 与 ckpt_path 无关) ===
     _ddp_sync_dir = os.path.join(config["log_path"], "_ddp_sync")
     if rank == 0:
@@ -1333,23 +1382,42 @@ _LAUNCHER = {
     "master_port": 50201,
     "log":        "logs/_stage3_launcher_curvature_repaired.log",
     "visible_dev": "0,1,2,3",            # 4 卡
+    "single_visible_dev": "0",           # 单卡
 }
 
 
+def resolve_single_gpu() -> bool:
+    """True -> 单进程单卡跑 (不 fork torchrun), main() 走非 DDP 分支。
+
+    优先级: 常量 (None/True/False) > MCP 写入的 ``GENREC_SINGLE_GPU`` > torchrun 的
+    rank 子进程 (一定是多卡) > 本进程可见 CUDA 卡数 <= 1。与 stage2 的同名函数同一套
+    约定, 于是 genrec MCP 用同一个 marker 就能判定本入口支持单卡。
+    """
+    if SINGLE_GPU_MODE is not None:
+        return bool(SINGLE_GPU_MODE)
+    forced = os.environ.get(SINGLE_GPU_ENV)
+    if forced is not None and forced.strip() != "":
+        return forced.strip() not in ("0", "false", "False")
+    if int(os.environ.get("RANK", -1)) >= 0:
+        return False          # torchrun 拉起的 rank 子进程: 一定是多卡路径
+    return torch.cuda.device_count() <= 1
+
+
 def _launch_via_torchrun():
-    """Fork torchrun subprocess with hard-coded flags."""
+    """Fork torchrun subprocess with hard-coded flags (4 卡 DDP)。
+
+    单卡模式 (``GENREC_SINGLE_GPU=1``, 或自动判定只可见 <= 1 张卡): 不 fork torchrun,
+    直接跑本脚本的一个副本并只暴露一张卡; 训练循环走 main() 里原有的 world_size=1
+    分支, infer batch 由 main() 缩到 ``SINGLE_GPU_INFER_SIZE``。
+    """
+    if int(os.environ.get("RANK", -1)) >= 0:
+        return  # 已经在 torchrun 启动的子进程里
+    if os.environ.get(LAUNCHED_ENV):
+        return  # 单卡分支拉起的子进程没有 RANK, 必须靠这个标记, 否则它会再次 fork 自己
     log_dir = os.path.dirname(_LAUNCHER["log"])
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
-    cmd = [
-        _LAUNCHER["torchrun"],
-        "--standalone",
-        f"--nproc_per_node={_LAUNCHER['nproc']}",
-        f"--master_port={_LAUNCHER['master_port']}",
-        _LAUNCHER["script"],
-    ]
     env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
     # CLAUDE.md §5 mandates these child values and overrides the old recommendation.
     # Disabling IB/P2P/SHM can close available NCCL transports; prior tuning associated it with
     # cross-NUMA all-reduce deadlock/connectivity or performance risk.
@@ -1361,15 +1429,53 @@ def _launch_via_torchrun():
     env["NCCL_TIMEOUT"] = "3600"  # 1h (collective timeout contract)
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"  # expose blocked collective stacks
     env.setdefault("NCCL_DEBUG", "WARN")  # INFO 太噪; WARN 足够暴露卡死的 transport
+    if resolve_single_gpu():
+        # Only pick a device list when the caller has not pinned one: an operator who
+        # exported CUDA_VISIBLE_DEVICES=2 keeps card 2, and the MCP's probe counted
+        # exactly that card.
+        if "CUDA_VISIBLE_DEVICES" not in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["single_visible_dev"]
+        env[LAUNCHED_ENV] = "1"     # 子进程据此跳过 __main__ 里的再次 fork
+        cmd = [_sys.executable, _LAUNCHER["script"]]
+        banner = (
+            f"[RecBole HG-Rec] launching single-GPU run "
+            f"(CUDA_VISIBLE_DEVICES={env.get('CUDA_VISIBLE_DEVICES', '<inherited>')}, "
+            f"train_batch={BATCH_SIZE} per process, infer_batch={SINGLE_GPU_INFER_SIZE})"
+        )
+    else:
+        env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
+        # An inherited device list wins here too: the MCP probes exactly what
+        # CUDA_VISIBLE_DEVICES selects and reports that count, so silently
+        # replacing it with "0,1,2,3" would launch on cards the probe never saw.
+        if "CUDA_VISIBLE_DEVICES" in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = os.environ["CUDA_VISIBLE_DEVICES"]
+        cmd = [
+            _LAUNCHER["torchrun"],
+            "--standalone",
+            f"--nproc_per_node={_LAUNCHER['nproc']}",
+            f"--master_port={_LAUNCHER['master_port']}",
+            _LAUNCHER["script"],
+        ]
+        banner = (
+            f"[RecBole HG-Rec] launching {_LAUNCHER['nproc']}-GPU DDP run "
+            f"(CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']})"
+        )
     with open(_LAUNCHER["log"], "wb") as fout:
+        print(banner, flush=True)
+        # This log is opened in binary mode because the child's stdout goes here
+        # verbatim, so the banner has to be encoded, not written as text.
+        fout.write((banner + "\n").encode("utf-8"))
+        fout.flush()
         rc = _subprocess.call(cmd, stdout=fout, stderr=_subprocess.STDOUT, env=env)
     _sys.exit(rc)
 
 
 if __name__ == "__main__":
     # Already a torchrun worker (RANK set) -> main directly.
+    # GENREC_STAGE3_LAUNCHED means the single-GPU branch already re-executed this
+    # script once; without it that child would fork itself forever.
     # Otherwise, fork torchrun.
-    if "RANK" in os.environ:
+    if "RANK" in os.environ or os.environ.get(LAUNCHED_ENV):
         try:
             main()
         finally:
