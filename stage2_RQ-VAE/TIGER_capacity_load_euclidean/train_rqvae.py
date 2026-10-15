@@ -71,7 +71,7 @@ from geom_losses import compose_loss as _geometry_compose
 from scripts.capacity_mask import install_level_capacity
 from crowding_diagnostics import crowding_report, full_item_recon_mse
 # === M9 唯一机制: L2/L3 的使用计数负载再分配 (容量不变, 不加损失) ===
-from load_radius import install_load_radius
+from load_radius import install_, suppress_load_updatesload_radius
 from geom_losses import geometry_loss as _geometry_loss
 from quant_rank_config import GROUP_CONFIGS as _QUANT_RANK_GROUP_CONFIGS
 from quant_rank_loss import compose_loss as _quant_rank_compose
@@ -1203,7 +1203,11 @@ def main() -> None:
                 pair_batch = all_embeddings[
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
-                residuals = _residuals_with_trace(raw_module, pair_batch)
+                # Auxiliary quantiser walk: it re-runs the levels on the pair
+                # batch, which must not count as another load observation or
+                # decay the EMA a second time in this step.
+                with suppress_load_updates():
+                    residuals = _residuals_with_trace(raw_module, pair_batch)
                 if DIRECTIONAL_MODE != "none":
                     behavior_loss = directional_residual_loss(
                         residuals, source_ids, target_ids, directional_heads,
@@ -1341,7 +1345,8 @@ def main() -> None:
                 mech_ids = torch.cat((pick, succ.reshape(-1)))
                 mech_emb = all_embeddings[mech_ids.cpu()].to(device, non_blocking=True)
                 mech_z = raw_module.encoder(mech_emb)
-                mech_res = _residuals_with_trace(raw_module, mech_emb)
+                with suppress_load_updates():
+                    mech_res = _residuals_with_trace(raw_module, mech_emb)
                 b_anchor = mech_z.shape[0] // (1 + _C2_WIDTH)
                 anchor_idx = torch.arange(b_anchor, device=device)
                 pos_idx = b_anchor + torch.arange(_C2_WIDTH, device=device).unsqueeze(0)

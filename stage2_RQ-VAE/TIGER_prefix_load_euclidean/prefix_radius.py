@@ -31,6 +31,7 @@ decays every slot each step, and is a persistent buffer.
 """
 from __future__ import annotations
 
+import contextlib
 from types import MethodType
 
 import torch
@@ -110,7 +111,7 @@ def install_prefix_radius(layer, level: int, decay: float = PREFIX_DECAY,
     def indices(self, distance_matrix, infer_use_sk):
         chosen = original_indices(distance_matrix, infer_use_sk)
         keys = getattr(self, "_prefix_key", None)
-        if self.training and keys is not None:
+        if self.training and keys is not None and not _SUPPRESSED[0]:
             with torch.no_grad():
                 keys = keys.to(torch.long)
                 slot = keys.reshape(-1) * n_embed + chosen.reshape(-1).to(torch.long)
@@ -122,6 +123,7 @@ def install_prefix_radius(layer, level: int, decay: float = PREFIX_DECAY,
                 # cannot keep steering assignments with a stale load.
                 flat.mul_(float(decay))
                 flat[unique] += (1.0 - float(decay)) * batch_counts
+                _record_load_update()
         return chosen
 
     layer._distances = MethodType(distances, layer)
@@ -132,3 +134,44 @@ def install_prefix_radius(layer, level: int, decay: float = PREFIX_DECAY,
     layer._prefix_radius_strength = float(strength)
     layer._prefix_radius_decay = float(decay)
     layer.prefix_counts = counts
+
+
+# Load-EMA update boundary.
+#
+# The EMA is defined as **one update per optimizer step, from the main training
+# batch**. Auxiliary quantiser calls -- the behaviour residual trace, mechanism
+# traces, diagnostics -- walk the same layers in training mode, so a wrapper that
+# updated on every call would decay the state once per quantiser forward rather
+# than once per step, and would mix the pair-batch distribution into the measured
+# load. Those call sites now run inside ``suppress_load_updates()``.
+_SUPPRESSED = [False]
+_UPDATE_COUNT = [0]
+
+
+@contextlib.contextmanager
+def suppress_load_updates():
+    """Run a quantiser call without advancing the load EMA.
+
+    Use around any auxiliary forward: behaviour traces, mechanism traces,
+    diagnostics. Assignment, Sinkhorn and gradients are unaffected -- only the
+    occupancy observation is skipped.
+    """
+    previous = _SUPPRESSED[0]
+    _SUPPRESSED[0] = True
+    try:
+        yield
+    finally:
+        _SUPPRESSED[0] = previous
+
+
+def load_update_count() -> int:
+    """How many EMA updates have happened. One per optimizer step, by definition."""
+    return _UPDATE_COUNT[0]
+
+
+def reset_load_update_count() -> None:
+    _UPDATE_COUNT[0] = 0
+
+
+def _record_load_update() -> None:
+    _UPDATE_COUNT[0] += 1
