@@ -72,7 +72,7 @@ from scripts.capacity_mask import install_level_capacity
 from crowding_diagnostics import crowding_report, full_item_recon_mse
 # === M10 唯一机制: L2/L3 按「已生成前缀」分桶的码字负载平衡 ===
 from prefix_aware_selection import _trace_with_prefix_keys
-from prefix_radius import install_, suppress_load_updatesprefix_radius
+from prefix_radius import install_prefix_radius, suppress_load_updates
 from geom_losses import geometry_loss as _geometry_loss
 from quant_rank_config import GROUP_CONFIGS as _QUANT_RANK_GROUP_CONFIGS
 from quant_rank_loss import compose_loss as _quant_rank_compose
