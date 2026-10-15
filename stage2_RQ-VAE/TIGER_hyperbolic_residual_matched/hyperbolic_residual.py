@@ -35,16 +35,25 @@ Common notation, and what the two sides must agree on
     decoder input:      z_hat = q_0 + q_1 + ...            (previous arm, Euclidean)
 
 The tempting move is to mirror it: ``r (-) q = log_0(exp_0(r) +_c (-exp_0(q)))``
-looks like a translation whose inverse is ``r (+) q``. It is not. **Mobius addition
-is not a group law** -- it is neither closed nor associative -- so the naive
-mirroring does not recover ``r``. The tree's checks measure the failure directly:
-``(r (-) q) (+) q`` differs from ``r`` by 6.0e-02 at c = 1, while the same
-mirroring on the Euclidean pair differs by only 3.7e-02 by accident of the small
-vectors used, not by construction.
+looks like a translation whose inverse is ``r (+) q``. It is not, and the tree's
+checks measure that directly: ``(r (-) q) (+) q`` differs from ``r`` by 6.03e-02 at
+c = 1, and Mobius addition is not associative (1.90e-02).
 
-That settles the choice the report leaves open. Option (b), a mathematically
-consistent reconstruction, does not exist for this residual rule, because the rule
-has no inverse. So this tree takes option (a) and *says so*: level 0 is untouched
+**What that does and does not show.** It shows the naive mirrored addition is not
+the inverse, and that the naive mirroring cannot be justified by associativity.
+It does **not** show that no inverse exists. Mobius addition forms a gyrogroup, in
+which left cancellation is available but must be written with the correct operation
+order and the gyration term; non-associativity alone rules out only the bracketing
+that was tried here. An earlier version of this file claimed the stronger,
+unproven conclusion that "a mathematically consistent reconstruction does not
+exist"; that claim is withdrawn. Deriving the true cancellation is open work.
+
+So the arm is built on what is verified: the two sides combine under the same law,
+and the naive inverse does not work. Whether a gyrogroup-correct inverse gives a
+better reconstruction is not answered here.
+
+This tree therefore takes the half of option (b) that is available -- pairing the
+laws -- and states the rest as open rather than settled: level 0 is untouched
 (Euclidean in, Euclidean out) and levels 1-2 combine their codes under the same
 Mobius law the residual used, which makes the two sides consistent in *law* while
 the residual path stays non-invertible. The arm is named for that, not for an
@@ -127,41 +136,62 @@ def _trace_with_mobius_residual(module, embeddings: torch.Tensor,
     return stacked
 
 
-def reconstruction_deviation(module, embeddings: torch.Tensor) -> dict:
-    """Compare this arm's decoder input with the plain Euclidean walk.
+def decoder_input(quant_per_level, c: float = MOBIUS_CURVATURE, matched: bool = True):
+    """Build the decoder input the layer actually feeds the decoder.
 
-    Both walks use the same codebooks and the same encoder, so the only
-    difference is the residual rule. Reports the relative L2 deviation, the worst
-    per-row deviation, and the cosine agreement -- enough to say whether the
-    reconstruction is close to the control's or has drifted.
+    Level 0 is added Euclidean and the deeper levels with the Mobius law when
+    ``matched`` is true. Both the forward pass and the diagnostic call this, so the
+    probe cannot measure a different reconstruction than the one being trained.
+
+    ``quant_per_level`` is an iterable of ``(N, d)`` code batches in level order.
+    """
+    levels = list(quant_per_level)
+    if not levels:
+        raise ValueError("decoder_input needs at least one level")
+    total = levels[0]
+    for quant in levels[1:]:
+        if matched:
+            total = logmap0(mobius_add(expmap0(total, c), expmap0(quant, c), c), c)
+        else:
+            total = total + quant
+    return total
+
+
+def reconstruction_deviation(module, embeddings: torch.Tensor) -> dict:
+    """Compare this arm's decoder input with the plain Euclidean control.
+
+    Both walks use the same encoder, the same codebooks and the same residual rule,
+    and the assignments are held fixed by taking the codes once from the arm's own
+    assignment. Only the decoder accumulation differs: the arm's matched Mobius
+    accumulation versus the control's Euclidean sum. The residual-rule difference is
+    reported separately, so the two comparisons stay independently interpretable.
 
     Returns a plain dict so the trainer can record it directly.
     """
     with torch.no_grad():
-        def walk(mobius: bool) -> tuple[torch.Tensor, torch.Tensor]:
+        def walk(mobius_residual: bool) -> tuple[torch.Tensor, torch.Tensor]:
             residual = module.encoder(embeddings)
-            total = torch.zeros_like(residual)
+            per_level = []
             for level, layer in enumerate(module.rq.vq_layers):
                 quant, _, _, _ = layer(residual)
+                per_level.append(quant)
                 residual = (
-                    residual - quant if (level == 0 or not mobius)
+                    residual - quant if (level == 0 or not mobius_residual)
                     else _mobius_residual(residual, quant, MOBIUS_CURVATURE)
                 )
-                total = total + quant
-            return total, residual
+            return decoder_input(per_level, MOBIUS_CURVATURE, matched=True), residual
 
         arm_input, arm_residual = walk(True)
         plain_input, plain_residual = walk(False)
         scale = plain_input.norm().clamp_min(1e-12)
         deviation = (arm_input - plain_input).norm(dim=-1)
-        agreement = torch.nn.functional.cosine_similarity(
-            arm_input, plain_input, dim=-1
-        )
+        agreement = torch.nn.functional.cosine_similarity(arm_input, plain_input, dim=-1)
         return {
             "recon_dev_rel": float((arm_input - plain_input).norm() / scale),
             "recon_dev_max_row": float(deviation.max()),
             "recon_cos_min": float(agreement.min()),
             "residual_dev_rel": float(
-                (arm_residual - plain_residual).norm() / plain_residual.norm().clamp_min(1e-12)
+                (arm_residual - plain_residual).norm()
+                / plain_residual.norm().clamp_min(1e-12)
             ),
         }
