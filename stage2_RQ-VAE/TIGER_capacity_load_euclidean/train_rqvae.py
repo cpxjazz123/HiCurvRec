@@ -71,7 +71,7 @@ from geom_losses import compose_loss as _geometry_compose
 from scripts.capacity_mask import install_level_capacity
 from crowding_diagnostics import crowding_report, full_item_recon_mse
 # === M9 唯一机制: L2/L3 的使用计数负载再分配 (容量不变, 不加损失) ===
-from load_radius import install_, suppress_load_updatesload_radius
+from load_radius import install_load_radius, suppress_load_updates
 from geom_losses import geometry_loss as _geometry_loss
 from quant_rank_config import GROUP_CONFIGS as _QUANT_RANK_GROUP_CONFIGS
 from quant_rank_loss import compose_loss as _quant_rank_compose

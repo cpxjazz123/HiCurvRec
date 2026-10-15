@@ -158,40 +158,72 @@ def decoder_input(quant_per_level, c: float = MOBIUS_CURVATURE, matched: bool = 
 
 
 def reconstruction_deviation(module, embeddings: torch.Tensor) -> dict:
-    """Compare this arm's decoder input with the plain Euclidean control.
+    """Two separate comparisons, each isolating one rule.
 
-    Both walks use the same encoder, the same codebooks and the same residual rule,
-    and the assignments are held fixed by taking the codes once from the arm's own
-    assignment. Only the decoder accumulation differs: the arm's matched Mobius
-    accumulation versus the control's Euclidean sum. The residual-rule difference is
-    reported separately, so the two comparisons stay independently interpretable.
+    The previous version called ``decoder_input(..., matched=True)`` in *both* walks,
+    so the "control" it compared against was also a Mobius accumulation and the
+    reported number measured neither rule cleanly. It also ran two quantisation
+    walks, so the codes could differ between the two sides while the docstring
+    claimed the assignments were held fixed. Both are fixed by splitting the
+    question:
 
-    Returns a plain dict so the trainer can record it directly.
+    * ``decoder_*`` -- **decoder rule only**. One quantisation walk, its per-level
+      codes then accumulated twice: the arm's matched Mobius rule against the
+      control's Euclidean sum. Codes are identical by construction here.
+    * ``residual_*`` -- **residual rule only**, with the decoder rule held at the
+      matched one on both sides, so a difference is attributable to the residual
+      path. Codes may legitimately differ here and ``residual_codes_changed``
+      reports how many items ended up on a different code, so the two effects are
+      not confounded.
+
+    Every value is a plain float for the metrics stream.
     """
     with torch.no_grad():
-        def walk(mobius_residual: bool) -> tuple[torch.Tensor, torch.Tensor]:
+        def quantise(residual_rule_mobius: bool):
             residual = module.encoder(embeddings)
-            per_level = []
+            per_level, per_level_indices = [], []
             for level, layer in enumerate(module.rq.vq_layers):
-                quant, _, _, _ = layer(residual)
+                quant, _, _, indices = layer(residual)
                 per_level.append(quant)
+                per_level_indices.append(indices.detach())
                 residual = (
-                    residual - quant if (level == 0 or not mobius_residual)
+                    residual - quant
+                    if (level == 0 or not residual_rule_mobius)
                     else _mobius_residual(residual, quant, MOBIUS_CURVATURE)
                 )
-            return decoder_input(per_level, MOBIUS_CURVATURE, matched=True), residual
+            return per_level, per_level_indices, residual
 
-        arm_input, arm_residual = walk(True)
-        plain_input, plain_residual = walk(False)
-        scale = plain_input.norm().clamp_min(1e-12)
-        deviation = (arm_input - plain_input).norm(dim=-1)
-        agreement = torch.nn.functional.cosine_similarity(arm_input, plain_input, dim=-1)
+        # (a) decoder rule, fixed codes: one walk, two accumulations.
+        codes, _, _ = quantise(True)
+        matched = decoder_input(codes, MOBIUS_CURVATURE, matched=True)
+        euclid = decoder_input(codes, MOBIUS_CURVATURE, matched=False)
+        decoder_scale = euclid.norm().clamp_min(1e-12)
+        decoder_cos = torch.nn.functional.cosine_similarity(matched, euclid, dim=-1)
+
+        # (b) residual rule, decoder rule held the same on both sides.
+        arm_codes, arm_indices, arm_residual = quantise(True)
+        ctrl_codes, ctrl_indices, ctrl_residual = quantise(False)
+        arm_decoded = decoder_input(arm_codes, MOBIUS_CURVATURE, matched=True)
+        ctrl_decoded = decoder_input(ctrl_codes, MOBIUS_CURVATURE, matched=True)
+        residual_scale = ctrl_decoded.norm().clamp_min(1e-12)
+        # How many items landed on a different code because the residual rule
+        # differed. Reported so the residual comparison is not silently mixing in
+        # an assignment change.
+        codes_changed = int(sum(
+            int(a.reshape(-1).ne(b.reshape(-1)).sum())
+            for a, b in zip(arm_indices, ctrl_indices)
+        ))
+
         return {
-            "recon_dev_rel": float((arm_input - plain_input).norm() / scale),
-            "recon_dev_max_row": float(deviation.max()),
-            "recon_cos_min": float(agreement.min()),
+            # decoder rule, codes identical
+            "decoder_dev_rel": float((matched - euclid).norm() / decoder_scale),
+            "decoder_dev_max_row": float((matched - euclid).norm(dim=-1).max()),
+            "decoder_cos_min": float(decoder_cos.min()),
+            # residual rule, decoder rule shared
             "residual_dev_rel": float(
-                (arm_residual - plain_residual).norm()
-                / plain_residual.norm().clamp_min(1e-12)
+                (arm_residual - ctrl_residual).norm()
+                / ctrl_residual.norm().clamp_min(1e-12)
             ),
+            "residual_recon_dev_rel": float((arm_decoded - ctrl_decoded).norm() / residual_scale),
+            "residual_codes_changed": int(codes_changed),
         }
