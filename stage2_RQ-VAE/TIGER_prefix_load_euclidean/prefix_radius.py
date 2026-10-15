@@ -103,9 +103,12 @@ def install_prefix_radius(layer, level: int, decay: float = PREFIX_DECAY,
             return (latent.pow(2).sum(1, keepdim=True)
                     - 2.0 * cross
                     + radii.pow(2).sum(-1))
-        scale = shared_tangent_scale(self.get_code_embs(), c)
-        points = encode_points(latent, c, scale)
-        moved = encode_points(radii, c, scale)
+        # Items and per-prefix candidate positions must share one reference
+        # RMS. Otherwise the candidate frame drifts with the batch's prefixes.
+        book = self.get_code_embs()
+        scale = shared_tangent_scale(book, c)
+        points = encode_points(latent, c, scale, reference=book)
+        moved = encode_points(radii, c, scale, reference=book)
         return poincare_distance(points.unsqueeze(1), moved, c)
 
     def indices(self, distance_matrix, infer_use_sk):
