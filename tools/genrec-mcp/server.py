@@ -1492,9 +1492,12 @@ def tool_stage2_status(source_dir: str) -> dict:
         "tree": str(tree),
         "arm": tree_arm(tree),
         "result_dir": str(result_dir),
-        # The recorded layout is the one that run was dispatched with; a tree that
-        # never ran has no record, so the host's current probe is what is shown.
-        "gpu_probe": state.get("gpu_probe") or probe_gpu_layout(),
+        # Two different facts, kept apart on purpose: ``gpu_probe`` is the layout this
+        # run was dispatched with (null when the tree never ran), ``current_gpu_probe``
+        # is what this host looks like right now. A stale launch record must not be
+        # mistaken for present-day availability, or the other way round.
+        "gpu_probe": state.get("gpu_probe"),
+        "current_gpu_probe": probe_gpu_layout(),
         "worker_pid": state.get("worker_pid"),
         "worker_alive": worker_alive,
         "worker_log": worker_log,
@@ -1625,6 +1628,10 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
         "variant": variant,
         "sid": str(sid_logical),
         "result_dir": str(paths["result_dir"]),
+        # Same split as stage2_status: the layout this run was dispatched with, and
+        # what the host offers right now.
+        "gpu_probe": state.get("gpu_probe"),
+        "current_gpu_probe": probe_gpu_layout(),
         "pid": state.get("pid"),
         "launched_at": state.get("launched_at"),
         "live_processes": live,
