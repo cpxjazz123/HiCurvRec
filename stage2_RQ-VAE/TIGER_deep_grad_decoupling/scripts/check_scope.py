@@ -80,10 +80,14 @@ l1 = rq.rq.vq_layers[0]
 with torch.no_grad():
     index = l1._indices(l1._distances(raw[0]), False)
 unit = torch.nn.functional.normalize(l1.get_code_embs()[index].detach(), dim=-1)
-expanded = unit.unsqueeze(0).expand(levels, -1, -1)
-dot = (scoped_grad * expanded).sum(dim=-1).abs().max()
-check("the deep gradient is orthogonal to the assigned code direction",
-      float(dot) < 1e-5, f"max |sum_d g_d u_d| = {float(dot):.2e}")
+# Only the deep levels are projected: level 0 is the L1 residual and passes
+# through on purpose, so asserting orthogonality across all levels would fail a
+# correct implementation -- which is exactly what this check used to do.
+deep_unit = unit.unsqueeze(0).expand(levels - 1, -1, -1)
+dot = (scoped_grad[1:] * deep_unit).sum(dim=-1).abs().max()
+check("the deep (L2/L3) gradient is orthogonal to the assigned code direction",
+      float(dot) < 1e-5,
+      f"max |sum_d g_d u_d| over levels 1-2 = {float(dot):.2e}")
 
 # --- excluded paths are bit-identical to the control ---------------------
 enc = torch.nn.Linear(d, d)
@@ -103,6 +107,17 @@ arm_grad = enc.weight.grad.clone()
 check("with no deep trace in the graph, the two paths are bit-identical",
       torch.equal(control_grad, arm_grad),
       "the projection is attached to the deep trace, not to the encoder")
+
+# Level 0 is deliberately unprojected. Assert that against the baseline the script
+# already computed, rather than by orthogonality: an unprojected row keeps its
+# radial component, which is exactly what the earlier version got wrong.
+check("the L1 (level 0) gradient equals the unprojected baseline",
+      torch.allclose(scoped_grad[0], plain_grad[0]),
+      f"max|diff| = {float((scoped_grad[0] - plain_grad[0]).abs().max()):.2e}")
+radial0 = (scoped_grad[0] * unit).sum(dim=-1).abs().max()
+check("and it still carries a nonzero radial component",
+      float(radial0) > 1e-3,
+      f"max |sum_d g_d u_d| on level 0 = {float(radial0):.3e} (non-zero is expected)")
 
 check("gradient is finite", bool(torch.isfinite(scoped_grad).all()))
 print(f"\n  scope: {decoupled_scope_note()}")
