@@ -37,6 +37,21 @@ evaluation interval.
 
 Fixed parameters (no sweep): none beyond the operator itself (``c`` is not used;
 the direction is the codeword's Euclidean unit vector, exactly as specified).
+
+Classification of this operator
+------------------------------
+This arm is a **Euclidean control**, not a hyperbolic mechanism. The projection
+removes the component of the gradient along the assigned L1 codeword in the ordinary
+inner product; no Poincare metric, ball map or Riemannian gradient is involved.
+"Tangent" is used in its Euclidean sense -- the tangent complement of one direction
+in a normed space -- and the arm is named for that, not for ball geometry.
+
+The hyperbolic reading was tested and does not hold: taking the same component in the
+Poincare inner product cancels the conformal factor and yields the identical
+operator (see TIGER_riemannian_grad_decoupling, which records that derivation and
+measurement). An operator that is provably the Euclidean one must not be reported as
+hyperbolic, so it is filed as the control it is.
+
 """
 from __future__ import annotations
 
