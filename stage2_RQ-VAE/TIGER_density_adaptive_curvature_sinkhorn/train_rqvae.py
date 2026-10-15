@@ -71,7 +71,7 @@ from geom_losses import compose_loss as _geometry_compose
 from scripts.capacity_mask import install_level_capacity
 from crowding_diagnostics import crowding_report, full_item_recon_mse
 # === M3 唯一机制: 由 L1 使用密度决定的曲率, 喂给三层测地分配闭包 ===
-from adaptive_curvature import (bind_curvature_buffer, current_curvature,
+from adaptive_curvature import (current_curvature, ensure_curvature_buffers,
                                 install_adaptive_assignment, set_curvature,
                                 update_curvature_from_tokens)
 from geom_losses import geometry_loss as _geometry_loss
@@ -1029,8 +1029,8 @@ def main() -> None:
     # The curvature is assign-time state that decides the exported codes, so it is
     # registered on the RQ module: a reloaded checkpoint then assigns with the
     # curvature it was exported under instead of resetting to 1.0.
-    bind_curvature_buffer(raw_module.rq)
-    assert current_curvature() == 1.0
+    _curvature_buffers = ensure_curvature_buffers(raw_module.rq)
+    assert current_curvature(buffers=_curvature_buffers) == 1.0
     # === 共同层: L1 容量掩码。必须装在所有其它 _distances 补丁之后，因为本包装器
     # 捕获当时已安装的距离函数，从而与测地分配等机制叠加而不是互相覆盖。===
     install_level_capacity(raw_module.rq.vq_layers[0], CROWDING_L1_ALLOWED)
@@ -1509,7 +1509,8 @@ def main() -> None:
                 # 只统计可分配的 L1 码字: 被容量掩码封掉的那 128 个永远不会成为码,
                 # 归一化基数也要用可分配数量, 否则均衡分布的归一化熵只到
                 # ln(128)/ln(256)=0.875, 曲率永远降不到 c_min.
-                update_curvature_from_tokens(raw_tokens, usable_k=CROWDING_L1_ALLOWED)
+                update_curvature_from_tokens(raw_tokens, _curvature_buffers,
+                                            usable_k=CROWDING_L1_ALLOWED)
                 # 共同层: 每次评估记录一次拥挤诊断 (全量 item 的 SID + 训练转移流).
                 _record(
                     rank, "crowding", epoch=epoch,
@@ -1544,9 +1545,10 @@ def main() -> None:
         if world_size > 1:
             dist.barrier()
             # M3: rank 0 用全量 SID 得到了新曲率; 广播给其余 rank, 保证四卡同曲率.
-            _curvature_broadcast = torch.tensor([current_curvature()], device=device)
+            _curvature_broadcast = torch.tensor(
+                [current_curvature(buffers=_curvature_buffers)], device=device)
             dist.broadcast(_curvature_broadcast, 0)
-            set_curvature(float(_curvature_broadcast.item()))
+            set_curvature(float(_curvature_broadcast.item()), _curvature_buffers)
     # Stage3 只接受训练终点权重；不保留任何中间或"最优 collision"快照。
     if rank == 0:
         raw_module.eval()
