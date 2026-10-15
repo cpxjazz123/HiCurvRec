@@ -93,9 +93,10 @@ def install_load_radius(layer, decay: float = USAGE_DECAY,
             return (latent.pow(2).sum(1, keepdim=True)
                     - 2 * latent @ codes.t()
                     + codes.pow(2).sum(1).t())
-        scale = shared_tangent_scale(self.get_code_embs(), c)
-        points = encode_points(latent, c, scale)
-        moved = encode_points(codes, c, scale)
+        book = self.get_code_embs()
+        scale = shared_tangent_scale(book, c)
+        points = encode_points(latent, c, scale, reference=book)
+        moved = encode_points(codes, c, scale, reference=book)
         return pair_poincare_distance(points, moved, c)
 
     def indices(self, distance_matrix, infer_use_sk):
