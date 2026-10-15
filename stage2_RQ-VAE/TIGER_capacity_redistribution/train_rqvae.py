@@ -470,7 +470,39 @@ _LAUNCHER = {
     "master_port": 50202,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
+    "single_visible_dev": "0",
 }
+
+
+# === 单卡训练路径 (single-GPU run; 上面的超参一律不改) ===
+# 4 卡 DDP 时: 每进程 batch 1024, pair 512, 全局 item batch 4096。单卡运行时只有一个
+# 进程, 于是把它的 batch 放大到 4 卡的全局值 (1024 -> 4096, 512 -> 2048): 全局 item
+# batch 相同, 本数据集上实测每 epoch 的迭代步数也相同 (6 步) 与 WARMUP 步数相同。
+# 注意这只是「名义全局 batch 相同」, 不是轨迹等价: DDP 的 DistributedSampler 会把每
+# 个分片补齐到 4, 单进程的采样不补齐, 数据分组、pair 流的取样与 float 累加顺序、
+# 随机数流都不同。任何超参都不改。
+# 启动方式由 genrec MCP 决定: 它在派发前探测本机可见卡数, 少于 4 卡时设
+# GENREC_SINGLE_GPU=1, 于是本树走单卡路径 (不 fork torchrun)。
+SINGLE_GPU_MODE = None      # None = 自动; True = 强制单卡; False = 强制 4 卡 DDP
+REFERENCE_WORLD_SIZE = 4    # = _LAUNCHER["nproc"], 只用于 batch 缩放
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"   # MCP 探测后写入的启动模式
+LAUNCHED_ENV = "GENREC_STAGE2_LAUNCHED"   # 本进程已被 launcher 拉起, 不再二次 fork
+
+
+def resolve_single_gpu() -> bool:
+    """True -> 单进程单卡跑, 该进程的 batch 按 4 卡的全局 batch 放大。
+
+    优先级: 常量 (None/True/False) > MCP 写入的 ``GENREC_SINGLE_GPU`` > torchrun 的
+    rank 子进程 (一定是多卡) > 本进程可见 CUDA 卡数 <= 1。
+    """
+    if SINGLE_GPU_MODE is not None:
+        return bool(SINGLE_GPU_MODE)
+    forced = os.environ.get(SINGLE_GPU_ENV)
+    if forced is not None and forced.strip() != "":
+        return forced.strip() not in ("0", "false", "False")
+    if int(os.environ.get("RANK", -1)) >= 0:
+        return False          # torchrun 拉起的 rank 子进程: 一定是多卡路径
+    return torch.cuda.device_count() <= 1
 
 
 # === 2026-09-22: 全程训练 metrics JSONL 收集器 (rank 0 only) ===
@@ -898,6 +930,8 @@ def _tokenizer_config() -> SimpleNamespace:
 
 
 def main() -> None:
+    # === 运行模式: 单卡 (one process) 或 4 卡 DDP ===
+    single_gpu = resolve_single_gpu()
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
@@ -910,6 +944,15 @@ def main() -> None:
         rank, world_size, local_rank = 0, 1, 0
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    # 单卡时: 一个进程承担 4 卡的全局 batch (每进程 1024 -> 4096, 512 -> 2048), 于是全局
+    # item batch 相同; 多卡时每进程仍是 1024/512, 全局 batch 由 world_size 相乘 ——
+    # 与改动前逐值相同。注意这不是轨迹等价: 采样分片/补齐、随机数流、float 累加顺序
+    # 都不同, 这里只保证超参与名义全局 batch 不变。
+    batch_scale = REFERENCE_WORLD_SIZE if single_gpu else 1
+    loader_item_batch = BATCH_SIZE_PER_RANK * batch_scale
+    loader_pair_batch = PAIR_BATCH_SIZE_PER_RANK * batch_scale
+    global_item_batch = loader_item_batch * world_size
+    global_pair_batch = loader_pair_batch * world_size
     set_seed(SEED + rank)
     embeddings = maybe_apply_pca(load_embeddings(EMBEDDING_FILE), PCA_DIM, SEED)
     train_frame = pd.read_parquet(TRAIN_FILE)
@@ -988,7 +1031,7 @@ def main() -> None:
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
-        batch_size=BATCH_SIZE_PER_RANK,
+        batch_size=loader_item_batch,
         shuffle=(train_sampler is None),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
@@ -1008,7 +1051,7 @@ def main() -> None:
     )
     pair_loader = DataLoader(
         pair_dataset,
-        batch_size=PAIR_BATCH_SIZE_PER_RANK,
+        batch_size=loader_pair_batch,
         shuffle=(pair_sampler is None),
         sampler=pair_sampler,
         num_workers=NUM_WORKERS,
@@ -1065,7 +1108,7 @@ def main() -> None:
     if rank == 0:
         print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters(), crowding_l1_allowed=CROWDING_L1_ALLOWED, crowding_mechanism=CROWDING_MECHANISM, crowding=crowding_metadata)
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=global_item_batch, item_batch=loader_item_batch, pair_batch=loader_pair_batch, global_item_batch=global_item_batch, global_pair_batch=global_pair_batch, single_gpu=bool(single_gpu), mode=("single-gpu" if single_gpu else f"ddp{world_size}"), cuda_visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"), lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters(), crowding_l1_allowed=CROWDING_L1_ALLOWED, crowding_mechanism=CROWDING_MECHANISM, crowding=crowding_metadata)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -1541,28 +1584,61 @@ def main() -> None:
 
 
 def _launch_via_torchrun() -> None:
-    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP."""
+    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP.
+
+    单卡模式 (SINGLE_GPU_MODE=True, 或自动判定只可见 <= 1 张卡): 不再 fork torchrun,
+    直接跑本脚本的一个进程, 只暴露一张卡; batch 由 main() 放大到 4 卡的总 batch。
+    """
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
+    if os.environ.get(LAUNCHED_ENV):
+        return  # 已经是本脚本单卡分支拉起的子进程: 没有 RANK 可用, 必须靠这个标记,
+                # 否则子进程会再次走 _launch_via_torchrun 无限 fork 自己。
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
-    env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
     env["NCCL_IB_DISABLE"]     = "1"
     env["NCCL_P2P_DISABLE"]    = "1"
     env["NCCL_SHM_DISABLE"]    = "1"
     env["NCCL_TIMEOUT"]        = "3600"
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
-    cmd = [
-        _LAUNCHER["torchrun"],
-        "--standalone",
-        f"--nproc_per_node={_LAUNCHER['nproc']}",
-        f"--master_port={_LAUNCHER['master_port']}",
-        _LAUNCHER["script"],
-    ]
+    if resolve_single_gpu():
+        # Only pick a device list when the caller has not pinned one: an operator who
+        # exported CUDA_VISIBLE_DEVICES=2 keeps card 2, and the MCP's probe counted
+        # exactly that card.
+        if "CUDA_VISIBLE_DEVICES" not in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["single_visible_dev"]
+        env[LAUNCHED_ENV] = "1"     # 子进程据此跳过 __main__ 里的再次 fork
+        cmd = [sys.executable, _LAUNCHER["script"]]
+        banner = (
+            f"[RecBole RQ-VAE] launching single-GPU run "
+            f"(CUDA_VISIBLE_DEVICES={env.get('CUDA_VISIBLE_DEVICES', '<inherited>')}, "
+            f"item_batch={BATCH_SIZE_PER_RANK * REFERENCE_WORLD_SIZE}, "
+            f"pair_batch={PAIR_BATCH_SIZE_PER_RANK * REFERENCE_WORLD_SIZE})"
+        )
+    else:
+        env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
+        # An inherited device list wins here too: the MCP probes exactly what
+        # CUDA_VISIBLE_DEVICES selects and reports that count, so silently
+        # replacing it with "0,1,2,3" would launch on cards the probe never saw.
+        if "CUDA_VISIBLE_DEVICES" in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = os.environ["CUDA_VISIBLE_DEVICES"]
+        cmd = [
+            _LAUNCHER["torchrun"],
+            "--standalone",
+            f"--nproc_per_node={_LAUNCHER['nproc']}",
+            f"--master_port={_LAUNCHER['master_port']}",
+            _LAUNCHER["script"],
+        ]
+        banner = (
+            f"[RecBole RQ-VAE] launching {_LAUNCHER['nproc']}-GPU DDP run "
+            f"(CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']})"
+        )
     with open(_LAUNCHER["log"], "w", encoding="utf-8") as fout:
+        print(banner, flush=True)
+        fout.write(banner + "\n")
+        fout.flush()
         rc = subprocess.call(cmd, stdout=fout, stderr=subprocess.STDOUT, env=env)
     sys.exit(rc)
-
 
 if __name__ == "__main__":
     _launch_via_torchrun()
