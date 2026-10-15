@@ -118,8 +118,8 @@ def _fanout_distance(latent: torch.Tensor, codes: torch.Tensor,
     do the opposite and concentrate them.
     """
     scale = shared_tangent_scale(codes, c)
-    points = encode_points(latent, c, scale)
-    code_points = encode_points(codes, c, scale)
+    points = encode_points(latent, c, scale, reference=codes)
+    code_points = encode_points(codes, c, scale, reference=codes)
     geodesic = pair_poincare_distance(points, code_points, c)
     return geodesic - float(strength) * _angular_penalty(latent, codes)
 

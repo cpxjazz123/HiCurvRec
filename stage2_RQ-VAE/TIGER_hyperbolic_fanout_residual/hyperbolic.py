@@ -62,7 +62,8 @@ def ball_radius(c: float) -> float:
     return 1.0 / (c ** 0.5)
 
 
-def encode_ball(latent: torch.Tensor, c: float, tangent_scale: float) -> torch.Tensor:
+def encode_ball(latent: torch.Tensor, c: float, tangent_scale: float,
+                reference: torch.Tensor | None = None) -> torch.Tensor:
     """Map an unconstrained encoder latent into the ball, preserving relative radii.
 
     Two failure modes have to be avoided at once.
@@ -83,7 +84,12 @@ def encode_ball(latent: torch.Tensor, c: float, tangent_scale: float) -> torch.T
     near ``tangent_scale`` so ``tanh`` is not saturated. Only the ball image is
     affected; the RQ-VAE path keeps using the raw latent.
     """
-    rms = latent.square().sum(-1).mean().sqrt().clamp_min(NORM_FLOOR)
+    # The RMS comes from ``reference`` when one is given: using the input's
+    # own RMS made the image depend on which rows shared the tensor, so items
+    # and codewords landed in different frames and the mapping moved with
+    # batch composition. Two-sided distances pass the codebook here.
+    source = latent if reference is None else reference
+    rms = source.square().sum(-1).mean().sqrt().clamp_min(NORM_FLOOR)
     return expmap0(latent / rms * tangent_scale, c)
 
 

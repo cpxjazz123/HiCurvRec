@@ -198,9 +198,10 @@ def install_adaptive_assignment(layer, level: int) -> None:
         # One scale for both sides, derived from the codebook: encoding the items
         # and the codewords separately gave each its own scale, so the same
         # vector landed in two places and the mapping drifted with every batch.
-        scale = shared_tangent_scale(self.get_code_embs(), c)
-        points = encode_points(latent, c, scale)
-        codes = encode_points(self.get_code_embs(), c, scale)
+        book = self.get_code_embs()
+        scale = shared_tangent_scale(book, c)
+        points = encode_points(latent, c, scale, reference=book)
+        codes = encode_points(book, c, scale, reference=book)
         return pair_poincare_distance(points, codes, c)
 
     layer._distances = MethodType(distances, layer)

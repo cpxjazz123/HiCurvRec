@@ -63,16 +63,28 @@ def shared_tangent_scale(reference: torch.Tensor, c: float,
     ``tangent_scale_for_median_radius`` reads the statistics of whatever tensor
     it is given, so encoding items and codewords separately placed the same
     vector in two different places and moved the mapping with every batch. The
-    scale is now derived from the reference alone, which makes the mapping a
-    property of the model rather than of the batch it was measured on.
+    scale is derived from the reference alone -- and ``encode_points`` is called
+    with the same reference, which also supplies the RMS ``encode_ball`` divides
+    by. Both halves are needed: threading the scale alone still left the ball map
+    normalising by each tensor's own RMS, so the mapping kept drifting with batch
+    composition until the reference was passed through as well.
     """
     return tangent_scale_for_median_radius(reference, c, target_fraction)
 
 
 def encode_points(latent: torch.Tensor, c: float,
-                  tangent_scale: float | None = None) -> torch.Tensor:
+                  tangent_scale: float | None = None,
+                  reference: torch.Tensor | None = None) -> torch.Tensor:
+    """Map into the ball under the scale and RMS of ``reference``.
+
+    Every two-sided distance passes the codebook as the reference, so the
+    same vector lands in the same place no matter which batch it arrived in
+    and no matter which side of the distance it is on. Callers that map a
+    single tensor (``pair_order``) may leave it out and keep the historical
+    per-tensor behaviour.
+    """
     scale = tangent_scale if tangent_scale is not None else tangent_scale_for_median_radius(latent, c)
-    return encode_ball(latent, c, scale)
+    return encode_ball(latent, c, scale, reference)
 
 
 def pair_order(latent: torch.Tensor, pairs, c: float) -> tuple[int, ...]:
@@ -98,7 +110,8 @@ def nearest_assignments(latent: torch.Tensor, codebook: torch.Tensor, c: float,
                         euclidean: bool = False) -> torch.Tensor:
     """Return non-gradient nearest-code IDs using the selected distance geometry."""
     scale = shared_tangent_scale(codebook, c)
-    x, codes = encode_points(latent, c, scale), encode_points(codebook, c, scale)
+    x = encode_points(latent, c, scale, reference=codebook)
+    codes = encode_points(codebook, c, scale, reference=codebook)
     return _distances(x, codes, c, euclidean).argmin(dim=-1)
 
 
@@ -112,9 +125,10 @@ def install_nearest_assignment(layer, c: float, euclidean: bool) -> None:
             return original_distances(latent)
         if euclidean:
             return torch.cdist(latent, self.get_code_embs(), p=2).square()
-        scale = shared_tangent_scale(self.get_code_embs(), c)
-        x = encode_points(latent, c, scale)
-        codes = encode_points(self.get_code_embs(), c, scale)
+        book = self.get_code_embs()
+        scale = shared_tangent_scale(book, c)
+        x = encode_points(latent, c, scale, reference=book)
+        codes = encode_points(book, c, scale, reference=book)
         return pair_poincare_distance(x, codes, c)
 
     # ``_indices`` is deliberately left alone. It is the only place that
@@ -134,7 +148,8 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
     else:
         source_raw = target_raw = latent
     scale = shared_tangent_scale(target_raw, c)
-    x, target = encode_points(source_raw, c, scale), encode_points(target_raw, c, scale)
+    x = encode_points(source_raw, c, scale, reference=target_raw)
+    target = encode_points(target_raw, c, scale, reference=target_raw)
     positive = positive.to(device=x.device, dtype=torch.long).remainder(target.shape[0])
     rows = torch.arange(count, device=x.device)
     if mechanism == "perlayer":
@@ -142,9 +157,10 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
         layer_losses = []
         for level, factor in enumerate((1.0, 2.0, 4.0)):
             layer_c = c * factor
-            layer_scale = shared_tangent_scale(codebooks[level], layer_c)
-            layer_x = encode_points(source_raw, layer_c, layer_scale)
-            layer_codes = encode_points(codebooks[level], layer_c, layer_scale)
+            book = codebooks[level]
+            layer_scale = shared_tangent_scale(book, layer_c)
+            layer_x = encode_points(source_raw, layer_c, layer_scale, reference=book)
+            layer_codes = encode_points(book, layer_c, layer_scale, reference=book)
             distances = _distances(layer_x, layer_codes, layer_c, euclidean)
             assignment = distances.detach().argmin(dim=-1)
             consistency = distances[rows, assignment].mean()
@@ -156,7 +172,7 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
 
     code_scale = (None if isinstance(codebook, (tuple, list))
                  else shared_tangent_scale(codebook, c))
-    codes = (encode_points(codebook, c, code_scale)
+    codes = (encode_points(codebook, c, code_scale, reference=codebook)
              if code_scale is not None else None)
     if mechanism == "radial_scale":
         return _info_nce_matrix(-_distances(x, target, c, euclidean) * strength, positive)
@@ -222,8 +238,9 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
 
 def _info_nce(source, target, positive, c, euclidean):
     scale = shared_tangent_scale(target, c)
-    distances = _distances(encode_points(source, c, scale),
-                           encode_points(target, c, scale), c, euclidean)
+    distances = _distances(encode_points(source, c, scale, reference=target),
+                           encode_points(target, c, scale, reference=target),
+                           c, euclidean)
     return _info_nce_matrix(distances, positive)
 
 

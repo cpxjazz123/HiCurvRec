@@ -131,8 +131,9 @@ def install_radial(layer, factors: torch.Tensor, c: float = RADIAL_CURVATURE,
     def distances(self, latent):
         codes_embs = self.get_code_embs()
         scale = shared_tangent_scale(codes_embs, c)
-        points = encode_points(latent, c, scale)
-        codes = encode_points(codes_embs, c, scale) * self._radial_factors.unsqueeze(-1)
+        points = encode_points(latent, c, scale, reference=codes_embs)
+        codes = encode_points(codes_embs, c, scale, reference=codes_embs) \
+            * self._radial_factors.unsqueeze(-1)
         matrix = pair_poincare_distance(points, codes, c)
         if constraint is not None:
             matrix = matrix.masked_fill(torch.isinf(constraint(latent)), float("inf"))
