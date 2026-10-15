@@ -79,9 +79,13 @@ def install_prefix_radius(layer, level: int, decay: float = PREFIX_DECAY,
         )
     counts = layer._prefix_counts
     flat = counts.view(-1)
-    directions = torch.nn.functional.normalize(codes_base.detach().clone(), dim=-1)
 
     def distances(self, latent):
+        # Live codebook directions on every call: a snapshot taken at installation
+        # would pin the candidate geometry to positions the VQ objective has since
+        # moved, and it was never in state_dict(), so a reload could silently
+        # change distances and exported SIDs for identical weights and counters.
+        directions = torch.nn.functional.normalize(self.get_code_embs(), dim=-1)
         # Each row has its own candidate positions: the radius is per (prefix,
         # codeword) cell, so a codeword's position depends on which prefix the row
         # came from. That makes this (N, K, d), not a single shared (K, d) matrix --

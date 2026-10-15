@@ -77,11 +77,15 @@ def install_load_radius(layer, decay: float = USAGE_DECAY,
             torch.zeros(n_embed, dtype=torch.float32, device=codes_base.device),
         )
     usage = layer._usage_ema
-    directions = torch.nn.functional.normalize(
-        codes_base.detach().clone(), dim=-1
-    )   # fixed unit directions: the radius moves, the direction does not
 
     def distances(self, latent):
+        # Directions come from the *live* codebook on every call. A snapshot taken
+        # at installation would keep assigning codes at positions the VQ objective
+        # has since moved away from, so the learned codewords and the SID selection
+        # would disagree; and it lived only in a closure, so it was absent from
+        # state_dict() and a reloaded model would rebuild it from whatever weights it
+        # happened to hold.
+        directions = torch.nn.functional.normalize(self.get_code_embs(), dim=-1)
         radii = load_radii(usage, strength).unsqueeze(-1)
         codes = directions * radii
         if geometry == "euclidean":
