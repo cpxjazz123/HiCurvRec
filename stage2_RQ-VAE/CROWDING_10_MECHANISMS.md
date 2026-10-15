@@ -95,6 +95,38 @@ Downstream: the control scores 0.0635979 / 0.0350768 against the baseline's 0.06
 (-0.22 % / -0.10 % relative). Under this protocol the L1 capacity cut alone is nearly free, so
 any mechanism's gain or loss must be read against the control, not the baseline.
 
+### 3.1 Dynamics: what the condition does over the run, and where mechanisms diverge
+
+Read from the `crowding` events of the committed metrics (60 events per run, one every 50 epochs):
+
+| epoch | tree | `level1_unused` | `collision_at_2` | `collision_at_3` | `recon_mse` |
+|---|---|---|---|---|---|
+| 500 | control / M2 (identical pre-ramp) | 128 | 0.7946 | 0.2186 | 0.00008460 |
+| 500 | M1 | 129 | 0.7395 | 0.1855 | 0.00008676 |
+| 1500 | all three (last epoch with `behavior_weight = 0`) | 128 | 0.7924 / 0.7415 / 0.7924 | 0.2370 / 0.2020 / 0.2370 | 0.00007379 / 0.00007521 / 0.00007379 |
+| 1550 | control | 135 | 0.7273 | 0.1703 | 0.00012114 |
+| 1550 | M1 | 134 | 0.7524 | 0.1918 | 0.00012117 |
+| 1550 | M2 | 223 | 0.9788 | 0.7105 | 0.00016083 |
+| 3000 | control | 131 | 0.5026 | 0.0588 | 0.00014054 |
+| 3000 | M1 | 135 | 0.5832 | 0.0762 | 0.00014062 |
+| 3000 | M2 | 181 | 0.6974 | 0.1100 | 0.00014117 |
+
+Three things this shows, all from the runs that exist:
+
+* **Before the ramp (epochs <= 1500)** all three trees are the *same run*: `recon_mse` falls to
+  ~7.4e-5 and `level1_unused` sits exactly at 128, i.e. all 128 selectable L1 codewords are in
+  use, which is the capacity condition behaving as designed. M2's term is gated on
+  `epoch_weight > 0` exactly like the behaviour term, so pre-ramp its objective is the control's.
+* **The ramp is where every divergence appears.** From epoch 1500 the behaviour term reshapes the
+  codebooks (`recon_mse` doubles to ~1.4e-4, `collision_at_2` falls 0.79 -> 0.50 in the control), and
+  that is also where a mechanism's own effect becomes visible.
+* **M2 collapses part of the L1 codebook when it switches on.** At epoch 1550 only
+  `256 - 223 = 33` of the 128 selectable codewords are used (26 % utilisation), with
+  `collision_at_3` spiking to 0.7105 and `recon_mse` at its worst of the run; the run then recovers
+  only partially (47 of 128 in use at epoch 3000, `collision_at_3` 0.1100). This is a genuine
+  in-capacity collapse, unlike the control's, where the 128-codeword cap holds and 125 of 128
+  codes stay used.
+
 ## 4. Mechanisms
 
 Each tree differs from the control only by its own operator plus identity, as audited per tree
@@ -133,6 +165,10 @@ fixed `weight = 0.005`, `margin = 0.05`; no new sampler, no change to
 * Measured: crowding **increased** (`level1_unused` 131 -> 181, `level1_top1_share` 0.0213 ->
   0.0430, `collision_at_2` 0.5026 -> 0.6974, `collision_at_3` 0.0588 -> 0.1100), while
   `beh_auc_at_1` rose 0.5731 -> 0.5876.
+* Mechanism of the effect (3.1): the term is identical to nothing pre-ramp, then at the ramp it
+  drives a partial in-capacity collapse - 33 of the 128 selectable L1 codewords in use at epoch
+  1550 with `collision_at_3` 0.7105, recovering only to 47 by epoch 3000. The margin objective
+  competes with the codebook balance at weight 0.005 and wins locally.
 * Stage3: attempt 1 was killed at epoch 38/150 by the lost GPU allocation (5.7); result pending.
 
 ### M3-M10 (implemented, verified, runs pending)
@@ -243,7 +279,8 @@ the mechanisms must be judged against the control.
 
 **Q2 - Which single hyperbolic mechanism mitigates it?** Partially answered: M1 does not - its
 pre-registered operator concentrates level 2 and costs 0.93 % recall@10 versus the control. M2's
-loss raises crowding further (section 4.2) and its Stage3 verdict is pending; M3-M10 are pending.
+loss raises crowding further and, at the ramp, partially collapses the L1 codebook inside the
+capacity (3.1, 4.2); its Stage3 verdict is pending. M3-M10 are pending.
 
 **Q3 - Does any mechanism beat the original 0.0637372 baseline?** No mechanism that has finished
 does: the control reaches 0.0635979 and M1 0.0630060, both below the baseline. Rows M2-M10 are
@@ -258,3 +295,15 @@ then poll `stage3_status` on the same path until `finished` with `test_final_sta
 Per-tree checks: `python3 -m py_compile train_rqvae.py <mechanism module>`,
 `CUDA_VISIBLE_DEVICES="" python3 scripts/grad_check.py`, and the targeted mechanism check used for
 that tree. Per-tree audit: `diff -ru --exclude=logs --exclude=__pycache__ TIGER_CROWDING_CTRL TIGER_<slug>`.
+
+**What a fresh clone does and does not contain.** This commit's tree sources are self-contained: the
+eleven trees and both common-layer modules were extracted from `HEAD` into a scratch directory and
+verified there (`crowding_diagnostics.py` and `scripts/capacity_mask.py` byte-identical across all
+eleven trees; each mechanism tree differing from the control only by its own module, `train_rqvae.py`
+and, for M1/M5/M6/M10, `model/layers.py`; M6 additionally `hyperbolic.py`). What the repository's
+`.gitignore` deliberately excludes is *not* on GitHub: `logs/`, `**/*.pth` and `**/*.npy`. So a fresh
+clone has every source file and every `item_sids.json`, but not the Stage2 logs, not the checkpoints
+and not the SID matrices. Before re-dispatching a Stage2 run from a fresh clone, restore those from
+`~/artifact_archive/` (the probe checkpoint the MCP fall back to) or re-seed the probe checkpoint from
+a sibling tree's `rqvae_best.pth`; the MCP fails closed with "no checkpoint to probe" otherwise. All of
+them are present in this working tree, which is where the remaining runs are meant to execute.
