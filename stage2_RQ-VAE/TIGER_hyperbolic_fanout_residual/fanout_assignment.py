@@ -2,52 +2,70 @@
 
 Mechanism (the single variable relative to TIGER_CROWDING_CTRL)
 --------------------------------------------------------------
-Levels 2 and 3 are assigned *parent-conditioned*: a candidate child codeword is
-penalised when it continues in the same direction as the anchor, measured from
-the anchor's own parent codeword. Under L1 crowding, items that share an L1
-prefix are forced apart inside that prefix instead of piling onto one child.
+A candidate child codeword that continues in the same direction as the anchor is
+made *farther*, so a row is not drawn onto the child it already points at.
 
-Math
-----
-With ``x`` the anchor's residual entering the level, ``p`` the codeword its
-parent level assigned to that row (L1 for level 2, L2 for level 3), and ``c`` a
-candidate codeword of the level:
+Math -- this is the formula the code executes
+--------------------------------------------
+With ``r`` the anchor's residual entering the level (the parent level's codeword has
+already been subtracted), ``C`` the level's candidate codewords and ``s`` the
+strength:
 
-    u_x = (x - p) / ||x - p||        direction of the anchor inside its parent
-    u_c = (c - p) / ||c - p||        direction of the candidate inside that parent
+    u_r = r / ||r||                direction of the anchor, in residual space
+    u_c = C / ||C||                direction of the candidate, in residual space
 
-    d_fanout(x, c) = d_P(x, c) + strength * (1 - cos(u_x, u_c))
+    d_fanout(r, C) = d_P(r, C) - s * (1 - cos(u_r, u_c))
 
-``d_P`` is the curvature-``c`` Poincare distance between ``encode_points(x, c)``
-and ``encode_points(c, c)`` -- the same geodesic used by the geodesic-assignment
-patch in ``scripts/hyp_losses.py`` -- so the mechanism is a hyperbolic one and
-composes with that patch instead of replacing it. ``cos`` is expanded so no
-``(N, K, d)`` tensor is materialised:
+``d_P`` is the curvature-``c`` Poincare distance between ``encode_points(r, c)`` and
+``encode_points(C, c)`` -- the same geodesic the assignment patch in
+``scripts/hyp_losses.py`` uses, so the mechanism composes with it rather than
+replacing it -- and both sides share one tangent scale, derived from the codebook.
 
-    <x - p, c - p> = <x, c> - <x, p> - <p, c> + <p, p>
-    ||c - p||      = sqrt(||c||^2 - 2<p, c> + ||p||^2)
+Sign: ``1 - cos`` is smallest when the directions agree, and the term is
+*subtracted*, so an aligned child is the farthest candidate. Adding it would pull
+the rows of one parent onto a single child, which is the opposite of a fan-out.
+The same choice is pinned by a test that measures the margin against the aligned
+child with and without the term.
 
-The penalty costs one extra ``(N, d) @ (d, K)`` product per level. It is
-computed from the *raw* residual and the *raw* codewords (the angular term is a
-Euclidean direction comparison, exactly as specified); only the distance term is
-mapped into the ball. Parent codewords are detached: the term changes which
-child is selected, never the codebook gradient, which stays exactly the
-commitment + reconstruction objective the control has.
+How the parent conditioning works: **implicitly, through the residual.**
+``install_fanout`` checks only that the layer carries ``_fanout_parent_indices``;
+``_fanout_distance`` never reads a parent index or any other row of the same
+parent bucket. The residual ``r`` exists only for items that landed on that
+parent, so the conditioning is carried by the geometry of ``r`` rather than by an
+explicit sibling comparison.
+
+What this does *not* guarantee -- measured, not asserted
+--------------------------------------------------------
+The term is an itemwise angular re-ranking, not an occupancy constraint, and
+``scripts/check_within_parent.py`` measures what that is worth inside one parent
+bucket (12 candidate children, 48 rows):
+
+  * identical residuals            -> 1 child used, entropy 0.0
+  * near-identical residuals       -> 1 child used, entropy 0.0 (0.01 perturbation)
+  * separable residuals            -> 8 of 12 children, entropy 0.830
+  * the same rows without the term -> 10 of 12 children, entropy 0.846
+
+So the arm does **not** deliver within-parent spread: it slightly *reduces* child
+occupancy against the plain geodesic (8 vs 10 of 12) while still making an aligned
+child the farthest candidate. Both facts are recorded because the second is easy to
+mistake for success if only the aligned-child margin is measured.
+
+Guaranteeing sibling separation would need an explicit occupancy or repulsion
+term computed against the other rows of the same bucket -- a different mechanism,
+not a fix to this one -- and it is not claimed here.
+
+Cost and gradients
+------------------
+The penalty costs one ``(N, d) @ (d, K)`` product per level and is computed from
+the raw residual and raw codewords; only the distance term is mapped into the
+ball. The codebook gradient stays exactly the commitment plus reconstruction
+objective the control has.
 
 Composition with the shared layer
 ---------------------------------
 ``scripts/capacity_mask.py`` is installed *after* this module, so the wrapper it
 puts on L1 sits on top and the +inf sentinel it writes for the 128 disabled L1
-codewords always wins the argmin; this mechanism only ever re-ranks the
-codewords that the capacity constraint leaves selectable.
-
-What is completely unchanged relative to the control
----------------------------------------------------
-codebook sizes and parameters, level-1 assignment, all losses (reconstruction,
-commitment, behaviour contrastive), pair sampling, optimiser, schedule, seed,
-epochs, evaluation interval.
-
-Fixed parameters (no sweep): ``c = 1.0``, ``strength = 0.5``.
+codewords keeps them unreachable.
 """
 from __future__ import annotations
 
