@@ -187,9 +187,10 @@ def sigma_target(reliability: torch.Tensor) -> torch.Tensor:
 def wrapped_normal_sample(mean: torch.Tensor, sigma: torch.Tensor, generator: torch.Generator,
                           curvature: float = CURVATURE) -> torch.Tensor:
     """``Exp_mu(sigma * eps)`` -- a local perturbation used only inside the loss."""
-    noise = torch.randn(mean.shape, generator=generator, device=mean.device,
-                        dtype=mean.dtype)
-    return _expmap_x(mean, sigma.unsqueeze(-1) * noise, curvature)
+    # The generator is a CPU generator, so the noise is drawn there and moved; a
+    # CUDA generator would have to be threaded through the trainer for nothing.
+    noise = torch.randn(mean.shape, generator=generator, dtype=mean.dtype)
+    return _expmap_x(mean, sigma.unsqueeze(-1) * noise.to(mean.device), curvature)
 
 
 def uncertainty_weighted_rank_loss(anchor: torch.Tensor, positive: torch.Tensor,
@@ -239,7 +240,12 @@ def sigma_log_penalty(sigma: torch.Tensor) -> torch.Tensor:
 
 
 class UncertaintyScaleHead(nn.Module):
-    """The encoder's tangent-space scale branch; owned by the trainer, not the model."""
+    """The item's tangent-space scale, read off its deterministic mean.
+
+    Owned by the trainer, not the model, so ``state_dict`` keeps the shape the
+    checkpoint probe expects. The quantizer never sees it: code selection is driven
+    by the mean alone.
+    """
 
     def __init__(self, dim: int) -> None:
         super().__init__()

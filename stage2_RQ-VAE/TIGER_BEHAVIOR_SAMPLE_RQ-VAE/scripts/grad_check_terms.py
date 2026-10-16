@@ -33,10 +33,7 @@ import anti_collapse_losses as anti_collapse  # noqa: E402
 import train_rqvae as trainer  # noqa: E402
 from model import RQVAE  # noqa: E402
 
-CHECKPOINT = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
-    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/rqvae_best.pth"
-)
+CHECKPOINT = trainer._OUT / "rqvae_best.pth"
 
 
 def flat(values) -> torch.Tensor:
