@@ -1,0 +1,14 @@
+{
+  "why": "Stage2 re-run of the source tree under the new launch protocol (GPU probe -> single-card mode). stage2_start archives and then replaces the arm's artifacts, so the set that produced the programme's baseline row is copied here first.",
+  "git_head": "d22cfdb19c7404f822ab497ba54e8e6322d65aa5",
+  "trainer_sha256": "73ae5a9a314ad05f99260412332625ca3fb3ce0a3881c17ea987c541c0c3668b",
+  "trainer_uncommitted": true,
+  "trainer_note": "the trainer carries uncommitted pre-existing protocol edits plus the uncommitted single-card launch block; the sha256 pins the exact file this run uses",
+  "server_head": "d22cfdb",
+  "archived_artifacts": [
+    "item_sids.json",
+    "rqvae_best.pth",
+    "sids_for_hgrec.npy",
+    "training_metrics.jsonl"
+  ]
+}
