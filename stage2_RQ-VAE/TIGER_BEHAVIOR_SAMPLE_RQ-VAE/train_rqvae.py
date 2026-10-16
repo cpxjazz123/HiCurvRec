@@ -114,26 +114,19 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "L2COND_W01"    # THE switch: arm name; see _ARM_DIR
+EXPERIMENT_ARM = "resample"    # 唯一机制: resample (Stage3 test_recall@10 = 0.0637372)
+# === 唯一机制 (CLAUDE.md §1: 只有 resample, 没有可选臂) ===
+# resample 是本树唯一允许的机制 (Stage3 test_recall@10 = 0.0637372)。其余臂与其
+# 查表仅作历史记录保留在文件里, 但一旦被选中即在导入时失败, 不允许运行。
+if EXPERIMENT_ARM != "resample":
+    raise RuntimeError(
+        f"only the 'resample' mechanism may run in this tree; got {EXPERIMENT_ARM!r}"
+    )
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
 # standard errors, so the same configuration is re-run under other seeds to see
 # whether the gain survives. Every other constant is untouched.
-_ARM_DIR = {
-    "resample": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
-    "resample_fn_mask": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
-    "resample_s43": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
-    "resample_s44": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
-    "resample_proj_sym": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym",
-    "resample_proj_dir": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir",
-    "resample_l1only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
-    "resample_l2only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l2only",
-    "resample_l3only": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l3only",
-    **{f"crowd_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_{m}_w{level}"
-       for m in ("posattract", "couser", "simweight", "density", "softassign", "prefixshare",
-                 "random", "scale", "parammatch") for level in (1, 2, 3)},
-    **{name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _GEOMETRY_ARM_CONFIGS},
-}
+# 输出目录不再来自查表：见下面的「路径自动解析」，由 TREE_NAME + EXPERIMENT_ARM 推导。
 _CROWD_LEVEL_SETTINGS = {
     "w1": {"strength": 0.05, "tau": 0.20, "depth": 1, "k": 5, "concentration": 1.0},
     "w2": {"strength": 0.10, "tau": 0.10, "depth": 1, "k": 20, "concentration": 4.0},
@@ -156,11 +149,6 @@ CROWDING2_NEGATIVES = 4       # in-batch matched negatives per anchor
 CROWDING2_ANCHORS = 512       # anchors per step; keeps the additive term cheap
 CROWDING2_RAMP_START = 21     # begin after the same warmup the behaviour term uses
 
-_ARM_DIR.update({
-    f"c2_{m}_w{level}": f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/c2_{m}_w{level}"
-    for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
-              "random", "scale", "behonly") for level in (1, 2, 3)
-})
 _ARM_BEHAVIOR_WEIGHT = {
     "bw0":   0.0,
     "bw001": 0.002,
@@ -171,10 +159,8 @@ _ARM_BEHAVIOR_WEIGHT = {
 # checkpoint's codebooks pulled toward the current ones by an L2 penalty. The four arms
 # differ only in the coefficient, so ANCHOR_CTRL -- same checkpoint, same budget, same
 # MARGIN behavioural loss, coefficient zero -- isolates the anchoring itself.
-_ANCHOR_BASELINE_CHECKPOINT = (
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/"
-    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/rqvae_best.pth"
-)
+# ANCHOR arms load this tree's own weights; the path is derived further down from
+# TREE_NAME so a copy of this tree never points at another tree's checkpoint.
 _ARM_ANCHOR_WEIGHT = {
     "ANCHOR_CTRL": 0.0,
     "ANCHOR_W001": 0.01,
@@ -184,16 +170,6 @@ _ARM_ANCHOR_WEIGHT = {
 _ANCHOR_WEIGHT = _ARM_ANCHOR_WEIGHT.get(EXPERIMENT_ARM, 0.0)
 _ANCHOR_ACTIVE = EXPERIMENT_ARM in _ARM_ANCHOR_WEIGHT
 
-# E1: conditional behaviour supervision on q2 = e1 + e2, for L1-ambiguous pairs only.
-# Four arms on the resample recipe -- no quantised ranking term, no geometry term, no
-# anti-collapse term -- differing only in the weight. L2COND_CTRL carries the identical
-# code path at weight zero, so the comparison is the term being on or off rather than
-# two different configurations.
-import l2_conditional as _l2cond  # noqa: E402
-_L2COND_WEIGHT = _l2cond.ARM_WEIGHT.get(EXPERIMENT_ARM, 0.0)
-_L2COND_ACTIVE = EXPERIMENT_ARM in _l2cond.ARM_WEIGHT
-_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _l2cond.ARM_WEIGHT})
-_ARM_DIR.update({name: f"TIGER_BEHAVIOR_SAMPLE_RQ-VAE/{name}" for name in _ARM_BEHAVIOR_WEIGHT})
 _ARM_CROWDING2 = {
     f"c2_{m}_w{level}": (m, level)
     for m in ("poslocal", "multipos", "couserw", "hncontrast", "prefixbal", "margincomp",
@@ -221,14 +197,23 @@ if EXPERIMENT_ARM in _CAPACITY_ARMS:
         f"Capacity freeze is active: capacity arm {EXPERIMENT_ARM!r} is closed "
         "and cannot be selected."
     )
-if EXPERIMENT_ARM not in _ARM_DIR:
-    raise KeyError(f"EXPERIMENT_ARM {EXPERIMENT_ARM!r} is not a known arm")
+# === 路径自动解析 ===
+# 树名取自本文件所在目录，仓库根是唯一固定常量。复制本树改名后，输出/日志/ckpt
+# 会自己跟着新目录名走，不必改任何一行路径，也不会把产物写回源树。
+# 用 __file__ 的原样拼写（不 resolve）：仓库同时以 /home 与 /fs04 可见，日志统一保留
+# 调用方给的拼写；相对启动时退回 cwd（MCP 启动即以树目录为 cwd）。
+_THIS_FILE = Path(__file__)
+TREE_DIR  = (_THIS_FILE.parent if _THIS_FILE.is_absolute() else Path.cwd())
+TREE_NAME = TREE_DIR.name
+REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
+OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / _ARM_DIR[EXPERIMENT_ARM]
+_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
-LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/logs") / EXPERIMENT_ARM
+_ANCHOR_BASELINE_CHECKPOINT = str(CHECKPOINT)
+LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / TREE_NAME / "logs" / EXPERIMENT_ARM
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 DIRECTIONAL_MODE = {"resample_proj_sym": "sym", "resample_proj_dir": "dir"}.get(EXPERIMENT_ARM, "none")
 _ARM_ACTIVE_LEVELS = {"resample_l1only": (0,), "resample_l2only": (1,), "resample_l3only": (2,)}
@@ -255,8 +240,7 @@ def _resolve_geometry_arm(arm: str) -> dict:
     return {
         "shared": shared,
         "geometry": _GEOMETRY_ARM_CONFIGS[arm],
-        "output_dir": str(Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")
-                           / _ARM_DIR[arm]),
+        "output_dir": str(OUT_ROOT / TREE_NAME / arm),
     }
 
 def _resolve_quant_arm(arm: str) -> dict:
@@ -472,7 +456,38 @@ _LAUNCHER = {
     "master_port": 50202,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
+    "single_visible_dev": "0",
 }
+
+# === 单卡训练路径 (single-GPU run; 上面的超参一律不改) ===
+# 4 卡 DDP 时: 每进程 batch 1024, pair 512, 全局 item batch 4096。单卡运行时只有一个
+# 进程, 于是把它的 batch 放大到 4 卡的全局值 (1024 -> 4096, 512 -> 2048): 全局 item
+# batch 相同, 本数据集上实测每 epoch 的迭代步数也相同 (6 步) 与 WARMUP 步数相同。
+# 注意这只是「名义全局 batch 相同」, 不是轨迹等价: DDP 的 DistributedSampler 会把每
+# 个分片补齐到 4, 单进程的采样不补齐, 数据分组、pair 流的取样与 float 累加顺序、
+# 随机数流都不同。任何超参都不改。
+# 启动方式由 genrec MCP 决定: 它在派发前探测本机可见卡数, 少于 4 卡时设
+# GENREC_SINGLE_GPU=1, 于是本树走单卡路径 (不 fork torchrun)。
+SINGLE_GPU_MODE = None      # None = 自动; True = 强制单卡; False = 强制 4 卡 DDP
+REFERENCE_WORLD_SIZE = 4    # = _LAUNCHER["nproc"], 只用于 batch 缩放
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"   # MCP 探测后写入的启动模式
+LAUNCHED_ENV = "GENREC_STAGE2_LAUNCHED"   # 本进程已被 launcher 拉起, 不再二次 fork
+
+
+def resolve_single_gpu() -> bool:
+    """True -> 单进程单卡跑, 该进程的 batch 按 4 卡的全局 batch 放大。
+
+    优先级: 常量 (None/True/False) > MCP 写入的 ``GENREC_SINGLE_GPU`` > torchrun 的
+    rank 子进程 (一定是多卡) > 本进程可见 CUDA 卡数 <= 1。
+    """
+    if SINGLE_GPU_MODE is not None:
+        return bool(SINGLE_GPU_MODE)
+    forced = os.environ.get(SINGLE_GPU_ENV)
+    if forced is not None and forced.strip() != "":
+        return forced.strip() not in ("0", "false", "False")
+    if int(os.environ.get("RANK", -1)) >= 0:
+        return False          # torchrun 拉起的 rank 子进程: 一定是多卡路径
+    return torch.cuda.device_count() <= 1
 
 
 # === 2026-09-22: 全程训练 metrics JSONL 收集器 (rank 0 only) ===
@@ -900,6 +915,8 @@ def _tokenizer_config() -> SimpleNamespace:
 
 
 def main() -> None:
+    # === 运行模式: 单卡 (one process) 或 4 卡 DDP ===
+    single_gpu = resolve_single_gpu()
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
@@ -911,6 +928,15 @@ def main() -> None:
     else:
         rank, world_size, local_rank = 0, 1, 0
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # 单卡时: 一个进程承担 4 卡的全局 batch (每进程 1024 -> 4096, 512 -> 2048), 于是全局
+    # item batch 相同; 多卡时每进程仍是 1024/512, 全局 batch 由 world_size 相乘 ——
+    # 与改动前逐值相同。注意这不是轨迹等价: 采样分片/补齐、随机数流、float 累加顺序
+    # 都不同, 这里只保证超参与名义全局 batch 不变。
+    batch_scale = REFERENCE_WORLD_SIZE if single_gpu else 1
+    loader_item_batch = BATCH_SIZE_PER_RANK * batch_scale
+    loader_pair_batch = PAIR_BATCH_SIZE_PER_RANK * batch_scale
+    global_item_batch = loader_item_batch * world_size
+    global_pair_batch = loader_pair_batch * world_size
 
     set_seed(SEED + rank)
     embeddings = maybe_apply_pca(load_embeddings(EMBEDDING_FILE), PCA_DIM, SEED)
@@ -985,7 +1011,7 @@ def main() -> None:
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
-        batch_size=BATCH_SIZE_PER_RANK,
+        batch_size=loader_item_batch,
         shuffle=(train_sampler is None),
         sampler=train_sampler,
         num_workers=NUM_WORKERS,
@@ -1005,7 +1031,7 @@ def main() -> None:
     )
     pair_loader = DataLoader(
         pair_dataset,
-        batch_size=PAIR_BATCH_SIZE_PER_RANK,
+        batch_size=loader_pair_batch,
         shuffle=(pair_sampler is None),
         sampler=pair_sampler,
         num_workers=NUM_WORKERS,
@@ -1060,9 +1086,10 @@ def main() -> None:
             CODEBOOK_SIZE[crowding_level] * CODEBOOK_DIM if crowding_mechanism == "parammatch" else 0,
         )
     if rank == 0:
-        print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size}", flush=True)
-        print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
-        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters(), crowding=crowding_metadata)
+        mode = "single-gpu" if single_gpu else f"ddp{world_size}"
+        print(f"[RecBole RQ-VAE] device={device} all_items={len(all_embeddings)} train_items={len(train_embeddings)} world_size={world_size} mode={mode}", flush=True)
+        print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} loader_item_batch={loader_item_batch} loader_pair_batch={loader_pair_batch} global_item_batch={global_item_batch} lr={LR}", flush=True)
+        _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=global_item_batch, item_batch=loader_item_batch, pair_batch=loader_pair_batch, global_item_batch=global_item_batch, global_pair_batch=global_pair_batch, single_gpu=bool(single_gpu), mode=mode, cuda_visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"), lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size, mechanism="iter48_residual_contrastive_corrected_sampling", experiment_arm=EXPERIMENT_ARM, active_levels=list(ACTIVE_LEVELS), resample_pairs=RESAMPLE_PAIRS, false_negative_mask=FALSE_NEGATIVE_MASK, behavior_weight_max=BEHAVIOR_WEIGHT_MAX, behavior_temperature=BEHAVIOR_TEMPERATURE, behavior_ramp_start_epoch=RAMP_START_EPOCH, pair_batch_size_per_rank=PAIR_BATCH_SIZE_PER_RANK, transition_pairs=len(pair_dataset), pair_sampler_seed=SEED + 1, source="348aed182", directional_mode=DIRECTIONAL_MODE, directional_head_parameters=0 if directional_heads is None else directional_heads.n_parameters(), crowding=crowding_metadata)
 
     # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
     if rank == 0:
@@ -1137,8 +1164,6 @@ def main() -> None:
             anti_collapse_term = torch.zeros((), device=device)
             anchor_term = torch.zeros((), device=device)
             anchor_fields: dict[str, float] = {}
-            l2cond_term = torch.zeros((), device=device)
-            l2cond_fields: dict[str, float] = {}
             if epoch_weight > 0.0:
                 try:
                     pairs = next(pair_iter)
@@ -1150,25 +1175,7 @@ def main() -> None:
                 pair_batch = all_embeddings[
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
-                pair_tokens = None
-                if _L2COND_ACTIVE:
-                    # The q2 term needs the codeword ids, so this arm takes the same
-                    # trace through the combined helper. Both helpers walk the identical
-                    # chain and return identical residual values; the combined one also
-                    # hands back the token ids.
-                    residuals, pair_tokens = _residuals_and_tokens_with_trace(
-                        raw_module, pair_batch,
-                    )
-                else:
-                    residuals = _residuals_with_trace(raw_module, pair_batch)
-                l2cond_term = torch.zeros((), device=device)
-                l2cond_fields: dict[str, float] = {}
-                if _L2COND_ACTIVE:
-                    l2cond_term, l2cond_fields = _l2cond.l2_conditional_ranking_loss(
-                        residuals[0], pair_tokens, raw_module.rq.vq_layers,
-                        source_ids, target_ids,
-                        weight=_L2COND_WEIGHT * epoch_weight,
-                    )
+                residuals = _residuals_with_trace(raw_module, pair_batch)
                 if DIRECTIONAL_MODE != "none":
                     behavior_loss = directional_residual_loss(
                         residuals, source_ids, target_ids, directional_heads,
@@ -1292,8 +1299,6 @@ def main() -> None:
                 loss = _ac_compose(loss, anti_collapse_term)
             if _ANCHOR_ACTIVE:
                 loss = loss + anchor_term
-            if _L2COND_ACTIVE:
-                loss = loss + l2cond_term
             crowd2_value = torch.zeros((), device=device)
             if c2_state is not None and epoch > CROWDING2_RAMP_START and epoch_weight > 0.0:
                 mech2, level2 = _CROWDING2_CONFIG
@@ -1414,19 +1419,6 @@ def main() -> None:
         avg_geometry_encoder_grad = float(local_geometry_encoder_grad.item()) / max(world_size, 1)
         avg_geometry_codebook_grad = float(local_geometry_codebook_grad.item()) / max(world_size, 1)
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
-        l2cond_metric_fields = {}
-        if _L2COND_ACTIVE and l2cond_fields:
-            l2cond_local = torch.tensor(
-                [float(l2cond_fields[key]) for key in sorted(l2cond_fields)],
-                device=device,
-            )
-            if world_size > 1:
-                dist.all_reduce(l2cond_local, op=dist.ReduceOp.SUM)
-                l2cond_local = l2cond_local / max(world_size, 1)
-            l2cond_metric_fields = {
-                key: float(value)
-                for key, value in zip(sorted(l2cond_fields), l2cond_local)
-            }
         anchor_metric_fields = {}
         if _ANCHOR_ACTIVE and anchor_fields:
             anchor_local = torch.tensor(
@@ -1461,7 +1453,7 @@ def main() -> None:
         if epoch % EVAL_INTERVAL != 0 and epoch != EPOCHS:
             if rank == 0:
                 print(f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} beh={avg_behavior:.6f} geometry={avg_geometry:.6f} geometry_encoder_grad_norm={avg_geometry_encoder_grad:.8g} geometry_codebook_grad_norm={avg_geometry_codebook_grad:.8g} quantized_metrics={quantized_metric_fields} w={epoch_weight:.3f} lr={cur_lr:.3e} time={epoch_time_s}s", flush=True)
-                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **anchor_metric_fields, **l2cond_metric_fields)
+                _record(rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, behavior_contrastive=avg_behavior, behavior_weight=epoch_weight, geometry_loss=avg_geometry, geometry_encoder_grad_norm=avg_geometry_encoder_grad, geometry_codebook_grad_norm=avg_geometry_codebook_grad, lr=cur_lr, epoch_time_s=epoch_time_s, cumulative_time_s=round(time.time() - _T0, 3), **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight), **quantized_metric_fields, **anchor_metric_fields)
             continue
 
         # === eval 间隔: only rank 0 跑 (避免 4 卡 N× 全集评估) ===
@@ -1499,7 +1491,7 @@ def main() -> None:
                     geometry_codebook_grad_norm=avg_geometry_codebook_grad,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     **crowding_train_fields(_CROWD_CONFIG, avg_crowding, epoch_crowding_weight),
-                    **quantized_metric_fields, **anchor_metric_fields, **l2cond_metric_fields,
+                    **quantized_metric_fields, **anchor_metric_fields,
                 )
         finally:
             for layer in raw_module.rq.vq_layers:
@@ -1558,25 +1550,59 @@ def main() -> None:
 
 
 def _launch_via_torchrun() -> None:
-    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP."""
+    """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP.
+
+    单卡模式 (SINGLE_GPU_MODE=True, 或自动判定只可见 <= 1 张卡): 不再 fork torchrun,
+    直接跑本脚本的一个进程, 只暴露一张卡; batch 由 main() 放大到 4 卡的总 batch。
+    """
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
+    if os.environ.get(LAUNCHED_ENV):
+        return  # 已经是本脚本单卡分支拉起的子进程: 没有 RANK 可用, 必须靠这个标记,
+                # 否则子进程会再次走 _launch_via_torchrun 无限 fork 自己。
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
-    env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
     env["NCCL_IB_DISABLE"]     = "1"
     env["NCCL_P2P_DISABLE"]    = "1"
     env["NCCL_SHM_DISABLE"]    = "1"
     env["NCCL_TIMEOUT"]        = "3600"
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
-    cmd = [
-        _LAUNCHER["torchrun"],
-        "--standalone",
-        f"--nproc_per_node={_LAUNCHER['nproc']}",
-        f"--master_port={_LAUNCHER['master_port']}",
-        _LAUNCHER["script"],
-    ]
+    if resolve_single_gpu():
+        # Only pick a device list when the caller has not pinned one: an operator who
+        # exported CUDA_VISIBLE_DEVICES=2 keeps card 2, and the MCP's probe counted
+        # exactly that card.
+        if "CUDA_VISIBLE_DEVICES" not in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["single_visible_dev"]
+        env[LAUNCHED_ENV] = "1"     # 子进程据此跳过 __main__ 里的再次 fork
+        cmd = [sys.executable, _LAUNCHER["script"]]
+        banner = (
+            f"[RecBole RQ-VAE] launching single-GPU run "
+            f"(CUDA_VISIBLE_DEVICES={env.get('CUDA_VISIBLE_DEVICES', '<inherited>')}, "
+            f"item_batch={BATCH_SIZE_PER_RANK * REFERENCE_WORLD_SIZE}, "
+            f"pair_batch={PAIR_BATCH_SIZE_PER_RANK * REFERENCE_WORLD_SIZE})"
+        )
+    else:
+        env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["visible_dev"]
+        # An inherited device list wins here too: the MCP probes exactly what
+        # CUDA_VISIBLE_DEVICES selects and reports that count, so silently
+        # replacing it with "0,1,2,3" would launch on cards the probe never saw.
+        if "CUDA_VISIBLE_DEVICES" in os.environ:
+            env["CUDA_VISIBLE_DEVICES"] = os.environ["CUDA_VISIBLE_DEVICES"]
+        cmd = [
+            _LAUNCHER["torchrun"],
+            "--standalone",
+            f"--nproc_per_node={_LAUNCHER['nproc']}",
+            f"--master_port={_LAUNCHER['master_port']}",
+            _LAUNCHER["script"],
+        ]
+        banner = (
+            f"[RecBole RQ-VAE] launching {_LAUNCHER['nproc']}-GPU DDP run "
+            f"(CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']})"
+        )
     with open(_LAUNCHER["log"], "w", encoding="utf-8") as fout:
+        print(banner, flush=True)
+        fout.write(banner + "\n")
+        fout.flush()
         rc = subprocess.call(cmd, stdout=fout, stderr=subprocess.STDOUT, env=env)
     sys.exit(rc)
 

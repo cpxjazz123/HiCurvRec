@@ -996,11 +996,9 @@ def main() -> None:
             raw_module.rq.vq_layers[0], _HYP_CONFIG["curvature"],
             _HYP_CONFIG["distance"] == "euclidean",
         )
-    directional_heads = None
-    if DIRECTIONAL_MODE != "none":
-        directional_heads = DirectionalHeads().to(device)
-        raw_module.directional_heads = directional_heads
 
+    # Issue #23's two new modules replace the directional residual heads entirely,
+    # so nothing is instantiated here.
     train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(

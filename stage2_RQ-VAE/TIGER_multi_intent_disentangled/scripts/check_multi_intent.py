@@ -166,9 +166,9 @@ def main() -> None:
     aligned = [tangents[0], tangents[0] * 1.0 + 0.0]
     orthogonal_like = [tangents[0], torch.roll(tangents[0], shifts=1, dims=-1)]
     report["decorrelation_aligned"] = float(
-        intent.intent_decorrelation_loss(aligned).detach())
+        intent.intent_decorrelation_loss(torch.stack(aligned)).detach())
     report["decorrelation_rotated"] = float(
-        intent.intent_decorrelation_loss(orthogonal_like).detach())
+        intent.intent_decorrelation_loss(torch.stack(orthogonal_like)).detach())
     if report["decorrelation_aligned"] <= report["decorrelation_rotated"]:
         failures.append("decorrelation does not penalise duplicated branches")
 

@@ -244,7 +244,7 @@ def build_neighbour_pairs(frame_pairs: np.ndarray, n_items: int) -> dict[str, np
 
 def neighbour_batch(view: dict, batch: int, generator: torch.Generator,
                     device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
-    """Draw (anchor, partner) pairs from the neighbour view."""
+    """Draw (anchor, partner) pairs from the neighbour view -- the distortion term."""
     anchors = view["anchors"]
     left, right = view["left"], view["right"]
     picks = anchors[torch.randint(anchors.shape[0], (batch,), generator=generator).numpy()]
@@ -256,3 +256,15 @@ def neighbour_batch(view: dict, batch: int, generator: torch.Generator,
         partner[index] = row[int(torch.randint(row.shape[0], (1,), generator=generator))]
     return (torch.as_tensor(picks, device=device),
             torch.as_tensor(partner, device=device))
+
+
+def behaviour_triple_batch(view: dict, batch: int, generator: torch.Generator,
+                           device: torch.device) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Draw (anchor, partner, negative) triples from the same neighbour view.
+
+    The positive is an item the anchor actually has evidence about; the negative is
+    drawn from the whole item space, which is what the ranking hinge needs.
+    """
+    anchor, partner = neighbour_batch(view, batch, generator, device)
+    negative = torch.randint(int(view["item_space"]), (batch,), generator=generator)
+    return anchor, partner, negative.to(device)

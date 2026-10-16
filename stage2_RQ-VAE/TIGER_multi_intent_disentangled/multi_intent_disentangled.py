@@ -162,19 +162,22 @@ def intent_ranking_loss(anchor: torch.Tensor, positive: torch.Tensor, negative: 
     ).mean()
 
 
-def intent_decorrelation_loss(tangents: list[torch.Tensor]) -> torch.Tensor:
+def intent_decorrelation_loss(stacked: torch.Tensor) -> torch.Tensor:
     """Push the intent branches apart in tangent space.
 
-    Squared cosine, so parallel *and* antiparallel duplication are both penalised:
-    two intents that encode the same direction up to a sign still encode the same
-    relation.
+    ``stacked`` is ``(intents, rows, dim)``. Squared cosine, so parallel *and*
+    antiparallel duplication are both penalised: two intents that encode the same
+    direction up to a sign still encode the same relation. It takes one stacked
+    tensor rather than a list of them so the launcher's gradient probe can see the
+    term it is checking.
     """
-    unit = [F.normalize(t, dim=-1) for t in tangents]
-    if len(unit) < 2:
-        return tangents[0].sum() * 0.0
+    intents = int(stacked.shape[0])
+    if intents < 2:
+        return stacked.sum() * 0.0
+    unit = F.normalize(stacked, dim=-1)
     terms: list[torch.Tensor] = []
-    for first in range(len(unit)):
-        for second in range(first + 1, len(unit)):
+    for first in range(intents):
+        for second in range(first + 1, intents):
             terms.append((unit[first] * unit[second]).sum(-1).square().mean())
     return torch.stack(terms).mean()
 

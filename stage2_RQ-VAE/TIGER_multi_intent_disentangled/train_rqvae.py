@@ -1034,10 +1034,6 @@ def main() -> None:
             raw_module.rq.vq_layers[0], _HYP_CONFIG["curvature"],
             _HYP_CONFIG["distance"] == "euclidean",
         )
-    directional_heads = None
-    if DIRECTIONAL_MODE != "none":
-        directional_heads = DirectionalHeads().to(device)
-        raw_module.directional_heads = directional_heads
 
     train_dataset = TensorDataset(train_embeddings)
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
@@ -1261,7 +1257,7 @@ def main() -> None:
                         branch[offset + 2 * count:offset + 3 * count],
                     )
                     offset += 3 * count
-                decorrelation = intent_decorrelation_loss(tangents)
+                decorrelation = intent_decorrelation_loss(torch.stack(tangents))
                 behavior_loss = behavior_contrastive_loss(
                     residuals, intent_losses, decorrelation,
                 )
@@ -1316,24 +1312,6 @@ def main() -> None:
                         quantized_codebook_l1_norms.append(quant_norms["codebook_l1"])
                         quantized_codebook_l2_norms.append(quant_norms["codebook_l2"])
                         quantized_codebook_l3_norms.append(quant_norms["codebook_l3"])
-                    if _ANCHOR_ACTIVE:
-                        # The frozen baseline codebook, pulled toward the current one.
-                        # This is the only counterweight the ranking term has: at
-                        # coefficient 0.2 it supplies about 56x the 1.18e-04 the VQ
-                        # commitment term gives L1, so a coefficient of zero here is a
-                        # genuine control rather than a formality.
-                        anchor_gap = torch.stack([
-                            (layer.get_code_embs()
-                             - raw_module.codebook_anchor[level]).pow(2).sum()
-                            for level, layer in enumerate(raw_module.rq.vq_layers)
-                        ])
-                        anchor_term = anchor_gap.sum() * (_ANCHOR_WEIGHT * epoch_hyp_alpha)
-                        anchor_fields = {
-                            "anchor_loss": float(anchor_term.detach()),
-                            "anchor_drift_l1": float(anchor_gap[0].detach()),
-                            "anchor_drift_l2": float(anchor_gap[1].detach()),
-                            "anchor_drift_l3": float(anchor_gap[2].detach()),
-                        }
                 if _CROWD_CONFIG is not None:
                     mechanism, crowd_level, crowd_config = _CROWD_CONFIG
                     n_pairs = int(source_ids.shape[0])
@@ -1516,16 +1494,16 @@ def main() -> None:
         avg_quantized_metrics = local_quantized_metrics.div(max(world_size, 1)).tolist()
         anchor_metric_fields = {}
         if intent_fields:
-            anchor_local = torch.tensor(
-                [float(anchor_fields[key]) for key in sorted(anchor_fields)],
+            intent_local = torch.tensor(
+                [float(intent_fields[key]) for key in sorted(intent_fields)],
                 device=device,
             )
             if world_size > 1:
-                dist.all_reduce(anchor_local, op=dist.ReduceOp.SUM)
-                anchor_local = anchor_local / max(world_size, 1)
+                dist.all_reduce(intent_local, op=dist.ReduceOp.SUM)
+                intent_local = intent_local / max(world_size, 1)
             anchor_metric_fields = {
                 key: float(value)
-                for key, value in zip(sorted(anchor_fields), anchor_local)
+                for key, value in zip(sorted(intent_fields), intent_local)
             }
         quantized_metric_fields = {}
         if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"} and epoch_weight > 0.0:
