@@ -813,16 +813,35 @@ def _probe(key, out, args):
     if tensor is None or not tensor.requires_grad or key in probes:
         return
     best = 0.0
+    # ``torch.autograd.grad`` refuses a non-scalar output ("grad can be implicitly
+    # created only for scalar outputs"), and that RuntimeError was being swallowed
+    # into grad=0.0, which ``dead_terms`` then read as a dead term. Differentiating the
+    # sum asks the same question -- is this output wired into the graph -- and for a
+    # one-element tensor the sum is the tensor, so scalar terms probe exactly as before.
+    surrogate = tensor.sum()
     for arg in args:
         if not torch.is_tensor(arg) or not arg.requires_grad:
             continue
         try:
-            grad = torch.autograd.grad(tensor, arg, retain_graph=True, allow_unused=True)[0]
+            grad = torch.autograd.grad(surrogate, arg, retain_graph=True, allow_unused=True)[0]
         except RuntimeError:
             continue
         if grad is not None:
             best = max(best, float(grad.abs().sum()))
-    probes[key] = {"loss": float(tensor.detach().abs()), "grad": best}
+    magnitude = tensor.detach().abs()
+    if magnitude.numel() == 0:
+        return
+    # ``_wrap_public`` wraps every public callable the tree defines, so this also sees
+    # helpers that hand back a tensor rather than a reduced loss -- residuals, a
+    # projection, per-sample terms. Those carry no scalar loss, and ``float()`` on them
+    # raised "only one element tensors can be converted to Python scalars", killing
+    # the whole smoke. The gradient is still the thing worth asserting, so reduce the
+    # magnitude to a number and say plainly that it was not a scalar term.
+    record = {"loss": float(magnitude) if magnitude.numel() == 1 else float(magnitude.mean()), "grad": best}
+    if magnitude.numel() != 1:
+        record["reduction"] = "mean_abs"
+        record["shape"] = list(magnitude.shape)
+    probes[key] = record
 
 
 def _wrap(fn, key):
