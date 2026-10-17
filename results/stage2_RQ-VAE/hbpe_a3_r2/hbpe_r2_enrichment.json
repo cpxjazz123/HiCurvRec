@@ -1,0 +1,545 @@
+{
+  "metadata": {
+    "issue": 36,
+    "stage2_only": true,
+    "no_stage3_job": "this round starts, queues and references no Stage 3 job and reports no Recall@10 or NDCG@10",
+    "valid_pairs_path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "n_held_out_transitions": 52855,
+    "negatives_per_transition": 10,
+    "replicates": 1000,
+    "seed": 42,
+    "confidence": 0.95,
+    "paired_bootstrap_note": "delta intervals resample the SAME rows for both arms in each replicate; marginal CI overlap is reported for context only and is not a difference test",
+    "baseline_check": {
+      "L1_ER_expected": 16.3895,
+      "L1_ER_actual": 16.38953942232631,
+      "L1_ER_match": true,
+      "L1L2_ER_expected": 58.3871,
+      "L1L2_ER_actual": 58.38709677419355,
+      "L1L2_ER_match": true
+    },
+    "round": "a3"
+  },
+  "results": [
+    {
+      "arm": "resample",
+      "label": "Exp1a Resample (canonical baseline)",
+      "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "l1_distinct_codes": 241,
+      "l1_effective_usage_exp_H": 226.8809521259733,
+      "l1_entropy_nats": 5.424425439940975,
+      "l1_max_possible_entropy": 5.545177444479562,
+      "l12_distinct_prefixes": 16145,
+      "l123_unique_tokens": 23695,
+      "full_3token_collision": 0.03627933460771948,
+      "n_items": 24587,
+      "levels": {
+        "1": {
+          "prefix_level": "L1",
+          "pos_count": 4199,
+          "neg_count": 2562,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.07944376123356352,
+          "neg_share": 0.004847223536089301,
+          "gap": 0.07459653769747422,
+          "gap_ci95": [
+            0.07216862170087976,
+            0.07681780342446315
+          ],
+          "er": 16.38953942232631,
+          "er_ci95": [
+            15.588198990192353,
+            17.21849414837102
+          ]
+        },
+        "2": {
+          "prefix_level": "L1+L2",
+          "pos_count": 181,
+          "neg_count": 31,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.003424463153911645,
+          "neg_share": 5.865102639296188e-05,
+          "gap": 0.0033658121275186833,
+          "gap_ci95": [
+            0.0028776369312269417,
+            0.003872907009743638
+          ],
+          "er": 58.38709677419355,
+          "er_ci95": [
+            41.49821428571428,
+            90.01190476190473
+          ]
+        }
+      },
+      "paired_delta_vs": {
+        "hbpe_a2": {
+          "1": {
+            "delta_er": -9.891816774782942,
+            "delta_er_ci95": [
+              -10.713107578097528,
+              -9.098520069729016
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": -32.142037485656004,
+            "delta_er_ci95": [
+              -62.95388155407565,
+              -15.066078749542273
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a3": {
+          "1": {
+            "delta_er": -9.67859756834154,
+            "delta_er_ci95": [
+              -10.499165778289356,
+              -8.894091976866255
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": -30.426897769218424,
+            "delta_er_ci95": [
+              -60.220225694444444,
+              -12.960775157520406
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        }
+      }
+    },
+    {
+      "arm": "hbpe_a2",
+      "label": "HBPE-A2 (#32) no negative cap",
+      "sid_sha256": "ecc90ac9f610460278771b25e90a47a9cd9193d72b506f8f1156247ba1322676",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HBPE_A2/hbpe_a2/item_sids.json",
+      "l1_distinct_codes": 58,
+      "l1_effective_usage_exp_H": 54.947626172383444,
+      "l1_entropy_nats": 4.006380480141852,
+      "l1_max_possible_entropy": 5.529429087511423,
+      "l12_distinct_prefixes": 6481,
+      "l123_unique_tokens": 21304,
+      "full_3token_collision": 0.13352584699231296,
+      "n_items": 24587,
+      "levels": {
+        "1": {
+          "prefix_level": "L1",
+          "pos_count": 6705,
+          "neg_count": 10319,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.12685649418219658,
+          "neg_share": 0.01952322391448302,
+          "gap": 0.10733327026771355,
+          "gap_ci95": [
+            0.10438936713650553,
+            0.11029453221076531
+          ],
+          "er": 6.497722647543367,
+          "er_ci95": [
+            6.322793960580194,
+            6.698735650614459
+          ]
+        },
+        "2": {
+          "prefix_level": "L1+L2",
+          "pos_count": 664,
+          "neg_count": 253,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.012562671459653769,
+          "neg_share": 0.00047866805411030176,
+          "gap": 0.012084003405543468,
+          "gap_ci95": [
+            0.011149323621227888,
+            0.01310382177655851
+          ],
+          "er": 26.245059288537547,
+          "er_ci95": [
+            22.856547619047614,
+            30.349539925140355
+          ]
+        }
+      },
+      "paired_delta_vs": {
+        "resample": {
+          "1": {
+            "delta_er": 9.891816774782942,
+            "delta_er_ci95": [
+              9.098520069729016,
+              10.713107578097528
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 32.142037485656004,
+            "delta_er_ci95": [
+              15.066078749542273,
+              62.95388155407565
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a3": {
+          "1": {
+            "delta_er": 0.21321920644140047,
+            "delta_er_ci95": [
+              0.016689544106535975,
+              0.40690146335403155
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 1.7151397164375801,
+            "delta_er_ci95": [
+              -3.2553458525103145,
+              6.649676061662128
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": false
+          }
+        }
+      }
+    },
+    {
+      "arm": "hbpe_a3",
+      "label": "HBPE-A3 (#33) inactive coverage floors",
+      "sid_sha256": "e2636ca912880d5a79417dea95a9bb8caf65cc66764ce1bd04d962ebdfeefa0e",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HBPE_A3/hbpe_a3/item_sids.json",
+      "l1_distinct_codes": 55,
+      "l1_effective_usage_exp_H": 51.45304800564519,
+      "l1_entropy_nats": 3.9406697026175443,
+      "l1_max_possible_entropy": 5.53338948872752,
+      "l12_distinct_prefixes": 6701,
+      "l123_unique_tokens": 21630,
+      "full_3token_collision": 0.1202668076625859,
+      "n_items": 24587,
+      "levels": {
+        "1": {
+          "prefix_level": "L1",
+          "pos_count": 7225,
+          "neg_count": 10766,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.1366947308674676,
+          "neg_share": 0.020368933875697662,
+          "gap": 0.11632579699176995,
+          "gap_ci95": [
+            0.1134902563617444,
+            0.11908636836628514
+          ],
+          "er": 6.710941853984767,
+          "er_ci95": [
+            6.527977457427772,
+            6.905667557203866
+          ]
+        },
+        "2": {
+          "prefix_level": "L1+L2",
+          "pos_count": 562,
+          "neg_count": 201,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.010632863494465992,
+          "neg_share": 0.0003802856872575915,
+          "gap": 0.0102525778072084,
+          "gap_ci95": [
+            0.009370920442720651,
+            0.011140100274335447
+          ],
+          "er": 27.960199004975127,
+          "er_ci95": [
+            23.838925691244242,
+            32.56987230646449
+          ]
+        }
+      },
+      "paired_delta_vs": {
+        "resample": {
+          "1": {
+            "delta_er": 9.67859756834154,
+            "delta_er_ci95": [
+              8.894091976866255,
+              10.499165778289356
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 30.426897769218424,
+            "delta_er_ci95": [
+              12.960775157520406,
+              60.220225694444444
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a2": {
+          "1": {
+            "delta_er": -0.21321920644140047,
+            "delta_er_ci95": [
+              -0.40690146335403155,
+              -0.016689544106535975
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": -1.7151397164375801,
+            "delta_er_ci95": [
+              -6.649676061662128,
+              3.2553458525103145
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": false
+          }
+        }
+      }
+    },
+    {
+      "arm": "a3r2_negcap",
+      "label": "A3-R2 + negative-sharing cap 0.01",
+      "sid_sha256": "f27883e385945f64b1f0ed299a8598236ae14862f0c33ef0f3e1eaf8bbc7e7fa",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HBPE_A3_R2_NEGCAP/a3r2_negcap/item_sids.json",
+      "l1_distinct_codes": 145,
+      "l1_effective_usage_exp_H": 103.57286047025701,
+      "l1_entropy_nats": 4.640275330933862,
+      "l1_max_possible_entropy": 5.537334267018537,
+      "l12_distinct_prefixes": 9169,
+      "l123_unique_tokens": 23390,
+      "full_3token_collision": 0.048684264041973346,
+      "n_items": 24587,
+      "levels": {
+        "1": {
+          "prefix_level": "L1",
+          "pos_count": 2232,
+          "neg_count": 5857,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.04222873900293255,
+          "neg_share": 0.011081260051083152,
+          "gap": 0.031147478951849397,
+          "gap_ci95": [
+            0.02935952133194589,
+            0.032876880143789616
+          ],
+          "er": 3.81082465425986,
+          "er_ci95": [
+            3.6310203465296538,
+            3.9920755994525274
+          ]
+        },
+        "2": {
+          "prefix_level": "L1+L2",
+          "pos_count": 114,
+          "neg_count": 86,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.00215684419638634,
+          "neg_share": 0.00016270929902563618,
+          "gap": 0.001994134897360704,
+          "gap_ci95": [
+            0.0016006054299498628,
+            0.0023916374988175193
+          ],
+          "er": 13.255813953488373,
+          "er_ci95": [
+            9.910673701298702,
+            17.467499999999998
+          ]
+        }
+      },
+      "paired_delta_vs": {
+        "resample": {
+          "1": {
+            "delta_er": 12.578714768066448,
+            "delta_er_ci95": [
+              11.772342711193925,
+              13.410911063118158
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 45.13128282070518,
+            "delta_er_ci95": [
+              27.569495360293267,
+              76.19600115074799
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a2": {
+          "1": {
+            "delta_er": 2.686897993283507,
+            "delta_er_ci95": [
+              2.4403896914057066,
+              2.9268164815492166
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 12.989245335049175,
+            "delta_er_ci95": [
+              8.0799958881579,
+              18.13540626484649
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a3": {
+          "1": {
+            "delta_er": 2.9001171997249076,
+            "delta_er_ci95": [
+              2.663049546479212,
+              3.1418545782467566
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 14.704385051486755,
+            "delta_er_ci95": [
+              9.453290609128695,
+              20.46819050559719
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        }
+      }
+    },
+    {
+      "arm": "a3r2_negcap_occ",
+      "label": "A3-R2 + negative cap 0.01 + occupancy guard 0.01",
+      "sid_sha256": "60c15f3f834f489943268de5680dcf2efd7b2621d764c2233c535a28359cb6af",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HBPE_A3_R2_NEGCAP_OCC/a3r2_negcap_occ/item_sids.json",
+      "l1_distinct_codes": 101,
+      "l1_effective_usage_exp_H": 80.68637661708603,
+      "l1_entropy_nats": 4.3905697458711925,
+      "l1_max_possible_entropy": 5.537334267018537,
+      "l12_distinct_prefixes": 7865,
+      "l123_unique_tokens": 23247,
+      "full_3token_collision": 0.054500345711148146,
+      "n_items": 24587,
+      "levels": {
+        "1": {
+          "prefix_level": "L1",
+          "pos_count": 2483,
+          "neg_count": 7164,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.046977580172169145,
+          "neg_share": 0.013554063002554158,
+          "gap": 0.03342351716961499,
+          "gap_ci95": [
+            0.031616639863778266,
+            0.03540648945227509
+          ],
+          "er": 3.4659408151870466,
+          "er_ci95": [
+            3.315034047699166,
+            3.631217748732127
+          ]
+        },
+        "2": {
+          "prefix_level": "L1+L2",
+          "pos_count": 106,
+          "neg_count": 116,
+          "pos_pairs": 52855,
+          "total_neg_draws": 528550,
+          "pos_share": 0.0020054867089206317,
+          "neg_share": 0.0002194683568252767,
+          "gap": 0.001786018352095355,
+          "gap_ci95": [
+            0.0013923942862548483,
+            0.002185318323715826
+          ],
+          "er": 9.137931034482758,
+          "er_ci95": [
+            6.911451208390333,
+            11.93556616194865
+          ]
+        }
+      },
+      "paired_delta_vs": {
+        "resample": {
+          "1": {
+            "delta_er": 12.923598607139262,
+            "delta_er_ci95": [
+              12.122564453868161,
+              13.754832915483416
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 49.24916573971079,
+            "delta_er_ci95": [
+              32.63425843642708,
+              81.837481302769
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a2": {
+          "1": {
+            "delta_er": 3.0317818323563204,
+            "delta_er_ci95": [
+              2.8158720975673504,
+              3.271536528018368
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 17.10712825405479,
+            "delta_er_ci95": [
+              13.048013976040558,
+              21.802180662022963
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        },
+        "hbpe_a3": {
+          "1": {
+            "delta_er": 3.245001038797721,
+            "delta_er_ci95": [
+              3.0323061812925687,
+              3.458354073905805
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          },
+          "2": {
+            "delta_er": 18.82226797049237,
+            "delta_er_ci95": [
+              14.252979145978156,
+              24.07404847612601
+            ],
+            "replicates_used": 1000,
+            "significant_at_95": true
+          }
+        }
+      }
+    }
+  ]
+}
