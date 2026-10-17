@@ -1,0 +1,538 @@
+{
+  "metadata": {
+    "replicates": 1000,
+    "seed": 42,
+    "confidence": 0.95,
+    "valid_pairs_path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "n_held_out_transitions": 52855,
+    "negatives_per_transition": 10,
+    "canonical_baseline_checks": {
+      "L1_ER_expected": 16.38953942232631,
+      "L1_ER_actual": 16.38953942232631,
+      "L1_ER_match": true,
+      "L1L2_ER_expected": 58.38709677419355,
+      "L1L2_ER_actual": 58.38709677419355,
+      "L1L2_ER_match": true
+    }
+  },
+  "results": [
+    {
+      "arm": "resample",
+      "display_name": "Exp1a Resample (baseline)",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "source_sid_sha": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 241,
+      "L1L2_prefixes": 16145,
+      "full_collision": 0.03627933460771948,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 4199,
+      "neg_count": 2562,
+      "pos_share": 0.07944376123356352,
+      "neg_share": 0.004847223536089301,
+      "gap": 0.07459653769747422,
+      "gap_ci95": [
+        0.07216862170087976,
+        0.07681780342446315
+      ],
+      "er": 16.38953942232631,
+      "er_status": "defined",
+      "er_ci95": [
+        15.588198990192353,
+        17.21849414837102
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.0,
+        "neg_share_diff": 0.0,
+        "gap_diff": 0.0,
+        "er_diff": 0.0,
+        "er_ratio": 1.0
+      }
+    },
+    {
+      "arm": "resample",
+      "display_name": "Exp1a Resample (baseline)",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "source_sid_sha": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 241,
+      "L1L2_prefixes": 16145,
+      "full_collision": 0.03627933460771948,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 181,
+      "neg_count": 31,
+      "pos_share": 0.003424463153911645,
+      "neg_share": 5.865102639296188e-05,
+      "gap": 0.0033658121275186833,
+      "gap_ci95": [
+        0.0028776369312269417,
+        0.003872907009743638
+      ],
+      "er": 58.38709677419355,
+      "er_status": "defined",
+      "er_ci95": [
+        41.49821428571428,
+        90.01190476190473
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.0,
+        "neg_share_diff": 0.0,
+        "gap_diff": 0.0,
+        "er_diff": 0.0,
+        "er_ratio": 1.0
+      }
+    },
+    {
+      "arm": "idea1_#22",
+      "display_name": "Idea 1 (#22) semantic_bounded_residual",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_semantic_bounded_residual/semantic_bounded_residual/item_sids.json",
+      "source_sid_sha": "ebbf1f15160d350fe7c683591717eb16964511150a18acf770c909a154b5251f",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 256,
+      "L1L2_prefixes": 19261,
+      "full_collision": 0.011957538536625067,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 622,
+      "neg_count": 2092,
+      "pos_share": 0.011768044650458803,
+      "neg_share": 0.003957998297228266,
+      "gap": 0.007810046353230537,
+      "gap_ci95": [
+        0.0068677513953268364,
+        0.008722117112855926
+      ],
+      "er": 2.9732313575525815,
+      "er_status": "defined",
+      "er_ci95": [
+        2.705490999607445,
+        3.2338689672280263
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": -0.06767571658310471,
+        "neg_share_diff": -0.0008892252388610347,
+        "gap_diff": -0.06678649134424368,
+        "er_diff": -13.416308064773727,
+        "er_ratio": 0.1814103057406457
+      }
+    },
+    {
+      "arm": "idea1_#22",
+      "display_name": "Idea 1 (#22) semantic_bounded_residual",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_semantic_bounded_residual/semantic_bounded_residual/item_sids.json",
+      "source_sid_sha": "ebbf1f15160d350fe7c683591717eb16964511150a18acf770c909a154b5251f",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 256,
+      "L1L2_prefixes": 19261,
+      "full_collision": 0.011957538536625067,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 28,
+      "neg_count": 9,
+      "pos_share": 0.0005297512061299783,
+      "neg_share": 1.702771733989216e-05,
+      "gap": 0.0005127234887900861,
+      "gap_ci95": [
+        0.0003216346608646297,
+        0.000717103396083625
+      ],
+      "er": 31.11111111111111,
+      "er_status": "defined",
+      "er_ci95": [
+        15.710317460317464,
+        75.0
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": -0.002894711947781667,
+        "neg_share_diff": -4.162330905306972e-05,
+        "gap_diff": -0.002853088638728597,
+        "er_diff": -27.27598566308244,
+        "er_ratio": 0.532842234499693
+      }
+    },
+    {
+      "arm": "idea2_#23",
+      "display_name": "Idea 2 (#23) relational_structure_distill",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_relational_structure_distill/relational_structure_distill/item_sids.json",
+      "source_sid_sha": "a53b409caff81566ea11560d7f9f5095d1c9be04082154d63d2d5059d47b635f",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 25,
+      "L1L2_prefixes": 4886,
+      "full_collision": 0.06889819823483956,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 9298,
+      "neg_count": 25874,
+      "pos_share": 0.1759152398070192,
+      "neg_share": 0.048952795383596634,
+      "gap": 0.12696244442342258,
+      "gap_ci95": [
+        0.12359412543751774,
+        0.1300242171979945
+      ],
+      "er": 3.593568833578109,
+      "er_status": "defined",
+      "er_ci95": [
+        3.5129584579256417,
+        3.6683427485858946
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.09647147857345569,
+        "neg_share_diff": 0.04410557184750733,
+        "gap_diff": 0.05236590672594836,
+        "er_diff": -12.7959705887482,
+        "er_ratio": 0.21925990358721398
+      }
+    },
+    {
+      "arm": "idea2_#23",
+      "display_name": "Idea 2 (#23) relational_structure_distill",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_relational_structure_distill/relational_structure_distill/item_sids.json",
+      "source_sid_sha": "a53b409caff81566ea11560d7f9f5095d1c9be04082154d63d2d5059d47b635f",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 25,
+      "L1L2_prefixes": 4886,
+      "full_collision": 0.06889819823483956,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 239,
+      "neg_count": 238,
+      "pos_share": 0.004521804938038028,
+      "neg_share": 0.0004502885252104815,
+      "gap": 0.004071516412827547,
+      "gap_ci95": [
+        0.0035017973701636554,
+        0.004628038974553023
+      ],
+      "er": 10.042016806722689,
+      "er_status": "defined",
+      "er_ci95": [
+        8.463729296066253,
+        12.016856038189925
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.0010973417841263831,
+        "neg_share_diff": 0.00039163749881751964,
+        "gap_diff": 0.0007057042853088639,
+        "er_diff": -48.345079967470866,
+        "er_ratio": 0.17199034309856537
+      }
+    },
+    {
+      "arm": "idea3_#24",
+      "display_name": "Idea 3 (#24) uncertainty_behavioral",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_uncertainty_behavioral/uncertainty_behavioral/item_sids.json",
+      "source_sid_sha": "f5f7f1bcf14ff69b49b9ebb6e300f0be06e781a6c6dfd6d06ad0126eac638462",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 36,
+      "L1L2_prefixes": 3467,
+      "full_collision": 0.1960792288607801,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 9143,
+      "neg_count": 24298,
+      "pos_share": 0.1729826884873711,
+      "neg_share": 0.04597105288052218,
+      "gap": 0.12701163560684892,
+      "gap_ci95": [
+        0.12389707690852333,
+        0.13032754706271873
+      ],
+      "er": 3.762861140834637,
+      "er_status": "defined",
+      "er_ci95": [
+        3.6836997792374198,
+        3.845792064476692
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.0935389272538076,
+        "neg_share_diff": 0.04112382934443288,
+        "gap_diff": 0.052415097909374694,
+        "er_diff": -12.626678281491671,
+        "er_ratio": 0.22958919368464728
+      }
+    },
+    {
+      "arm": "idea3_#24",
+      "display_name": "Idea 3 (#24) uncertainty_behavioral",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_uncertainty_behavioral/uncertainty_behavioral/item_sids.json",
+      "source_sid_sha": "f5f7f1bcf14ff69b49b9ebb6e300f0be06e781a6c6dfd6d06ad0126eac638462",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 36,
+      "L1L2_prefixes": 3467,
+      "full_collision": 0.1960792288607801,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 955,
+      "neg_count": 791,
+      "pos_share": 0.0180683000662189,
+      "neg_share": 0.0014965471573171886,
+      "gap": 0.016571752908901713,
+      "gap_ci95": [
+        0.015425219941348973,
+        0.017797985053448113
+      ],
+      "er": 12.073324905183313,
+      "er_status": "defined",
+      "er_ci95": [
+        11.004474086999943,
+        13.240668090602028
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.014643836912307256,
+        "neg_share_diff": 0.0014378961309242267,
+        "gap_diff": 0.01320594078138303,
+        "er_diff": -46.31377186901024,
+        "er_ratio": 0.20678070279595728
+      }
+    },
+    {
+      "arm": "idea4_#25",
+      "display_name": "Idea 4 (#25) multi_intent_disentangled",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_multi_intent_disentangled/multi_intent_disentangled/item_sids.json",
+      "source_sid_sha": "477a879505e39ff760465dd3063115433eaa733a82261afd12dbdca14da2f96b",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 86,
+      "L1L2_prefixes": 8350,
+      "full_collision": 0.04669134095253591,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 6543,
+      "neg_count": 14507,
+      "pos_share": 0.123791505061016,
+      "neg_share": 0.027446788383312836,
+      "gap": 0.09634471667770315,
+      "gap_ci95": [
+        0.09365466843250402,
+        0.0989596064705326
+      ],
+      "er": 4.510236437581858,
+      "er_status": "defined",
+      "er_ci95": [
+        4.38497536224284,
+        4.622443755946094
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.04434774382745248,
+        "neg_share_diff": 0.022599564847223537,
+        "gap_diff": 0.021748178980228933,
+        "er_diff": -11.87930298474445,
+        "er_ratio": 0.27518994410775705
+      }
+    },
+    {
+      "arm": "idea4_#25",
+      "display_name": "Idea 4 (#25) multi_intent_disentangled",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_multi_intent_disentangled/multi_intent_disentangled/item_sids.json",
+      "source_sid_sha": "477a879505e39ff760465dd3063115433eaa733a82261afd12dbdca14da2f96b",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 86,
+      "L1L2_prefixes": 8350,
+      "full_collision": 0.04669134095253591,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 207,
+      "neg_count": 194,
+      "pos_share": 0.003916374988175196,
+      "neg_share": 0.0003670419071043421,
+      "gap": 0.0035493330810708545,
+      "gap_ci95": [
+        0.003019392678081544,
+        0.004111342351716962
+      ],
+      "er": 10.670103092783505,
+      "er_status": "defined",
+      "er_ci95": [
+        8.799660194174757,
+        12.739410299003321
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.0004919118342635513,
+        "neg_share_diff": 0.0003083908807113802,
+        "gap_diff": 0.0001835209535521712,
+        "er_diff": -47.716993681410045,
+        "er_ratio": 0.18274762203109868
+      }
+    },
+    {
+      "arm": "idea5_#26",
+      "display_name": "Idea 5 (#26) invertible_hyperbolic_flow",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_invertible_hyperbolic_flow/invertible_hyperbolic_flow/item_sids.json",
+      "source_sid_sha": "753123ea1b083080dbc27bd2625c7d69df66e5afc13b80b8a5088cd241f38029",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 1,
+      "L1L2_prefixes": 1,
+      "full_collision": 0.9895879936551837,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 52855,
+      "neg_count": 528550,
+      "pos_share": 1.0,
+      "neg_share": 1.0,
+      "gap": 0.0,
+      "gap_ci95": [
+        0.0,
+        0.0
+      ],
+      "er": 1.0,
+      "er_status": "trivial_collapse_er_1",
+      "er_ci95": [
+        1.0,
+        1.0
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.9205562387664364,
+        "neg_share_diff": 0.9951527764639106,
+        "gap_diff": -0.07459653769747422,
+        "er_diff": -15.389539422326308,
+        "er_ratio": 0.061014527268397234
+      }
+    },
+    {
+      "arm": "idea5_#26",
+      "display_name": "Idea 5 (#26) invertible_hyperbolic_flow",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_invertible_hyperbolic_flow/invertible_hyperbolic_flow/item_sids.json",
+      "source_sid_sha": "753123ea1b083080dbc27bd2625c7d69df66e5afc13b80b8a5088cd241f38029",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 1,
+      "L1L2_prefixes": 1,
+      "full_collision": 0.9895879936551837,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 52855,
+      "neg_count": 528550,
+      "pos_share": 1.0,
+      "neg_share": 1.0,
+      "gap": 0.0,
+      "gap_ci95": [
+        0.0,
+        0.0
+      ],
+      "er": 1.0,
+      "er_status": "trivial_collapse_er_1",
+      "er_ci95": [
+        1.0,
+        1.0
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": 0.9965755368460884,
+        "neg_share_diff": 0.9999413489736071,
+        "gap_diff": -0.0033658121275186833,
+        "er_diff": -57.38709677419355,
+        "er_ratio": 0.01712707182320442
+      }
+    },
+    {
+      "arm": "idea6_#27",
+      "display_name": "Idea 6 (#27) multiscale_behavioral_spectrum",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_multiscale_behavioral_spectrum/multiscale_behavioral_spectrum/item_sids.json",
+      "source_sid_sha": "943bf3c1ad5156f8e87d884e83d2212059676505709dfe24684f31072ef6f4a8",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 190,
+      "L1L2_prefixes": 9400,
+      "full_collision": 0.045186480660511674,
+      "prefix_level": "L1",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 1886,
+      "neg_count": 6508,
+      "pos_share": 0.035682527670040674,
+      "neg_share": 0.012312931605335352,
+      "gap": 0.023369596064705324,
+      "gap_ci95": [
+        0.02161933591902375,
+        0.02498959417273673
+      ],
+      "er": 2.897971727105101,
+      "er_status": "defined",
+      "er_ci95": [
+        2.744959840228534,
+        3.037737452568957
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": -0.04376123356352284,
+        "neg_share_diff": 0.007465708069246051,
+        "gap_diff": -0.0512269416327689,
+        "er_diff": -13.491567695221207,
+        "er_ratio": 0.1768183749664984
+      }
+    },
+    {
+      "arm": "idea6_#27",
+      "display_name": "Idea 6 (#27) multiscale_behavioral_spectrum",
+      "source_sid_path": "results/stage2_RQ-VAE/TIGER_multiscale_behavioral_spectrum/multiscale_behavioral_spectrum/item_sids.json",
+      "source_sid_sha": "943bf3c1ad5156f8e87d884e83d2212059676505709dfe24684f31072ef6f4a8",
+      "pair_set": "valid_s42",
+      "n_items": 24587,
+      "L1_codes": 190,
+      "L1L2_prefixes": 9400,
+      "full_collision": 0.045186480660511674,
+      "prefix_level": "L1+L2",
+      "n_pairs": 52855,
+      "n_negatives_per_pair": 10,
+      "total_negative_pairs": 528550,
+      "pos_count": 78,
+      "neg_count": 104,
+      "pos_share": 0.0014757355027906537,
+      "neg_share": 0.0001967647337054205,
+      "gap": 0.0012789707690852331,
+      "gap_ci95": [
+        0.0009572888090057705,
+        0.0015797937754233279
+      ],
+      "er": 7.5,
+      "er_status": "defined",
+      "er_ci95": [
+        5.619723458359822,
+        10.0
+      ],
+      "delta_vs_resample": {
+        "pos_share_diff": -0.0019487276511209915,
+        "neg_share_diff": 0.00013811370731245861,
+        "gap_diff": -0.0020868413584334503,
+        "er_diff": -50.88709677419355,
+        "er_ratio": 0.12845303867403315
+      }
+    }
+  ]
+}
