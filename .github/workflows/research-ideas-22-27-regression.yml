@@ -2,10 +2,11 @@ name: Research ideas 22-27 CPU regression
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/tdd-six-ideas-*']
     paths:
       - ".github/workflows/research-ideas-22-27-regression.yml"
       - "scripts/check_research_ideas_22_27.py"
+      - "scripts/test_mechanism_contracts_tdd.py"
       - "stage2_RQ-VAE/TIGER_semantic_bounded_residual/**"
       - "stage2_RQ-VAE/TIGER_relational_structure_distill/**"
       - "stage2_RQ-VAE/TIGER_uncertainty_behavioral/**"
@@ -42,7 +43,7 @@ jobs:
       - name: Install CPU test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install numpy scipy
+          python -m pip install numpy scipy scikit-learn
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Compile six mechanism modules
         run: |
@@ -54,5 +55,7 @@ jobs:
             stage2_RQ-VAE/TIGER_multi_intent_disentangled/multi_intent_disentangled.py \
             stage2_RQ-VAE/TIGER_invertible_hyperbolic_flow/invertible_hyperbolic_flow.py \
             stage2_RQ-VAE/TIGER_multiscale_behavioral_spectrum/multiscale_behavioral_spectrum.py
+      - name: Run TDD contracts
+        run: python scripts/test_mechanism_contracts_tdd.py
       - name: Run six mechanism regressions
         run: python scripts/check_research_ideas_22_27.py

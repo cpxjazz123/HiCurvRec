@@ -1178,7 +1178,9 @@ def main() -> None:
             # Step 5: the same two objectives on the decoder-side representation.
             # The straight-through proxy refuses gradient to every codebook, so the
             # replay reaches its head and the encoder and stops there.
-            replayed = recovery_head(triple_quantized, codebooks)
+            replayed = recovery_head(
+                _rel.decoder_reencoded_latent(raw_module, triple_quantized), codebooks
+            )
             replay_loss = relational_ranking_loss(
                 replayed[:triple_count], replayed[triple_count:2 * triple_count],
                 replayed[3 * triple_count:],

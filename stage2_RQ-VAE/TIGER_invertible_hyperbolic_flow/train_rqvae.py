@@ -1209,7 +1209,10 @@ def main() -> None:
             )
             codebooks = tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
             count = int(rank_anchor.shape[0])
-            recovered_base = base_recovery(triple_quantized, hyperbolic_flow, codebooks)
+            recovered_base = base_recovery(
+                _flow.decoder_reencoded_latent(raw_module, triple_quantized),
+                hyperbolic_flow, codebooks,
+            )
             base_ids = torch.cat((dist_anchor, dist_partner))
             base_embeddings = all_embeddings[base_ids.cpu()].to(device, non_blocking=True)
             # These predictions come from triple_embeddings, not the separate

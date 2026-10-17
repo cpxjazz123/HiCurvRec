@@ -1220,7 +1220,9 @@ def main() -> None:
                 raw_module, intent_embeddings,
             )
             codebooks = tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
-            replayed_points = intent_recovery(intent_quantized, codebooks)
+            replayed_points = intent_recovery(
+                _intent.decoder_reencoded_latent(raw_module, intent_quantized), codebooks
+            )
             replay_term = torch.zeros((), device=device)
             offset = 0
             for position, triple in enumerate(intent_triples.values()):

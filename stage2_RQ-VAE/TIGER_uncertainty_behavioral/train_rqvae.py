@@ -1212,7 +1212,9 @@ def main() -> None:
             )
             triple_count = int(triple["anchor"].shape[0])
             codebooks = tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
-            replayed, predicted_reliability = recovery_head(triple_quantized, codebooks)
+            replayed, predicted_reliability = recovery_head(
+                _unc.decoder_reencoded_latent(raw_module, triple_quantized), codebooks
+            )
             recovery_term = RELIABILITY_RECOVERY_WEIGHT * epoch_hyp_alpha * (
                 reliability_recovery_loss(
                     predicted_reliability[:triple_count], triple["reliability"],
