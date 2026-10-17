@@ -205,14 +205,15 @@ def build_relational_teacher(histories: list[list[int]], n_items: int) -> dict[s
             for b in range(a + 1, items.size):
                 right = items[b]
                 counts[(int(left), int(right))] = counts.get((int(left), int(right)), 0) + 1
-    popularity = np.zeros(n_items, dtype=np.float64)
-    for (left, right), value in counts.items():
-        popularity[left] += value
-        popularity[right] += value
+    support = np.zeros(n_items, dtype=np.float64)
+    for history in histories:
+        unique = np.unique(np.asarray(history, dtype=np.int64))
+        if unique.size:
+            support[unique] += 1.0
     neighbours: dict[int, dict[int, float]] = {}
     for (left, right), value in counts.items():
-        denominator = np.sqrt(popularity[left] * popularity[right]) + 1.0
-        similarity = value / denominator
+        denominator = np.sqrt(max(support[left], 1.0) * max(support[right], 1.0))
+        similarity = np.clip(value / denominator, 0.0, 1.0)
         neighbours.setdefault(left, {})[right] = similarity
         neighbours.setdefault(right, {})[left] = similarity
     anchors: list[int] = []
@@ -235,21 +236,26 @@ def build_relational_teacher(histories: list[list[int]], n_items: int) -> dict[s
     weak_array = np.asarray(weak, dtype=np.int64)
     if anchors_array.size == 0:
         raise RuntimeError("behaviour teacher produced no triple")
-    delta_strong = 1.0 - np.asarray(
+    # Item/user binary incidence columns form an explicit Euclidean Hilbert
+    # representation. Their chord distances sqrt(2 - 2 cosine) form valid
+    # triangles, unlike arbitrary 1 - similarity distances.
+    sim_strong = np.asarray(
         [neighbours[int(a)][int(b)] for a, b in zip(anchors_array, strong_array)],
         dtype=np.float64,
     )
-    delta_weak = 1.0 - np.asarray(
+    sim_weak = np.asarray(
         [neighbours[int(a)][int(b)] for a, b in zip(anchors_array, weak_array)],
         dtype=np.float64,
     )
-    delta_pair = np.ones_like(delta_weak)
-    for index, (anchor, best, worst) in enumerate(
-            zip(anchors_array, strong_array, weak_array)):
-        delta_pair[index] = 1.0 - float(neighbours.get(int(best), {}).get(int(worst), 0.0))
-    ratio_target = np.clip(
-        delta_weak / np.maximum(delta_strong, TEACHER_FLOOR), 1.0, 4.0,
-    ).astype(np.float32)
+    sim_pair = np.asarray(
+        [neighbours.get(int(b), {}).get(int(w), 0.0)
+         for b, w in zip(strong_array, weak_array)], dtype=np.float64,
+    )
+    delta_strong = np.sqrt(np.maximum(2.0 - 2.0 * sim_strong, TEACHER_FLOOR))
+    delta_weak = np.sqrt(np.maximum(2.0 - 2.0 * sim_weak, TEACHER_FLOOR))
+    delta_pair = np.sqrt(np.maximum(2.0 - 2.0 * sim_pair, TEACHER_FLOOR))
+    ratio_target = np.clip(delta_weak / np.maximum(delta_strong, TEACHER_FLOOR),
+                           1.0, 4.0).astype(np.float32)
     cosine = (delta_strong ** 2 + delta_weak ** 2 - delta_pair ** 2) / np.maximum(
         2.0 * delta_strong * delta_weak, TEACHER_FLOOR,
     )
@@ -272,6 +278,18 @@ def teacher_triples(teacher: dict[str, np.ndarray], batch: int, generator: torch
     available = int(teacher["anchor"].shape[0])
     picks = torch.randint(available, (batch,), generator=generator)
     negative = torch.randint(int(teacher["item_space"]), (batch,), generator=generator)
+    # Avoid drawing the anchor itself or an explicitly labelled positive/weak
+    # neighbour as a negative; the underlying co-occurrence graph can still
+    # contain other unobserved positives, so negatives remain noisy.
+    anchors = torch.from_numpy(teacher["anchor"][picks.numpy()])
+    positives = torch.from_numpy(teacher["strong"][picks.numpy()])
+    weak = torch.from_numpy(teacher["weak"][picks.numpy()])
+    for _ in range(12):
+        bad = (negative == anchors) | (negative == positives) | (negative == weak)
+        if not bool(bad.any()):
+            break
+        negative[bad] = torch.randint(int(teacher["item_space"]), (int(bad.sum()),),
+                                      generator=generator)
     return {
         "anchor": torch.as_tensor(teacher["anchor"][picks.numpy()], device=device),
         "strong": torch.as_tensor(teacher["strong"][picks.numpy()], device=device),
