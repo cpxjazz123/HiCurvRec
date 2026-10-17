@@ -1,0 +1,13 @@
+{
+  "issue": 45,
+  "arm": "hbpe_r3_09",
+  "mechanism": "Within-run L1 assignment trust region",
+  "stage3_allowed": false,
+  "hard_l1_er": 15.070380353399223,
+  "hard_l1l2_er": 55.820895522388064,
+  "baseline_l1_er": 16.38953942232631,
+  "baseline_l1l2_er": 58.38709677419355,
+  "l1_exceeds_baseline": false,
+  "l1l2_exceeds_baseline": false,
+  "reason": "Stage 2 Hard L1 ER=15.070380 (baseline=16.389539), Hard L1+L2 ER=55.820896 (baseline=58.387097). Failed dual threshold gate -> Stage 3 refused."
+}

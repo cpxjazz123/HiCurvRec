@@ -1,0 +1,13 @@
+{
+  "issue": 42,
+  "arm": "hbpe_r3_06",
+  "mechanism": "Encoder gradient budget",
+  "stage3_allowed": true,
+  "hard_l1_er": 16.42940946421588,
+  "hard_l1l2_er": 67.6470588235294,
+  "baseline_l1_er": 16.38953942232631,
+  "baseline_l1l2_er": 58.38709677419355,
+  "l1_exceeds_baseline": true,
+  "l1l2_exceeds_baseline": true,
+  "reason": "Stage 2 Hard L1 ER=16.429409 (baseline=16.389539), Hard L1+L2 ER=67.647059 (baseline=58.387097). BOTH exceed baseline strictly -> Stage 3 allowed."
+}
