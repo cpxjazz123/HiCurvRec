@@ -162,6 +162,20 @@ def _hyperbolic_angle(first: torch.Tensor, second: torch.Tensor, opposite: torch
     return torch.where(degenerate, neutral, angle).to(first.dtype)
 
 
+
+def decoder_reencoded_latent(model: nn.Module, quantized: torch.Tensor) -> torch.Tensor:
+    """Route behaviour recovery through the *actual* RQ-VAE Decoder.
+
+    Re-encode the decoder's text reconstruction to codebook dimensionality
+    before feeding an auxiliary behavioural head. The existing VQ STE controls
+    the gradient to the codebooks; no new assignment operation is introduced.
+    Where an encoder forward wrapper exists, use its unwrapped text-MLP to
+    avoid applying a behaviour transform twice.
+    """
+    reconstructed_text = model.decoder(quantized)
+    text_encoder = getattr(model.encoder, "unwrapped_forward", model.encoder)
+    return text_encoder(reconstructed_text)
+
 class _BlockCodebookGradient(torch.autograd.Function):
     """Identity forward that refuses to pass gradient back into the codebooks."""
 
