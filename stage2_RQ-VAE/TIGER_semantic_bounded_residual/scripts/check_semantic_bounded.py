@@ -152,17 +152,17 @@ def main() -> None:
     if float(representation.norm(dim=-1).max()) >= limit:
         failures.append("representation left the Poincare ball")
 
-    # The budget must not carry gradient into the codebook.
+    # The budget is a safety bound derived from detached inputs, so it must carry
+    # no gradient at all -- which subsumes "it never reaches a codebook".
     latent_probe = latent.detach().requires_grad_(True)
     codebook_probe = model.rq.vq_layers[0].get_code_embs()
-    _z, _a, _b, budget_grad = branch(latent_probe, codebook_probe)
-    budget_grad.sum().backward()
-    codebook_grad = codebook_probe.grad
-    report["budget_codebook_grad"] = (
-        0.0 if codebook_grad is None else float(codebook_grad.abs().sum())
+    _z, _a, _b, budget_value = branch(latent_probe, codebook_probe)
+    report["budget_requires_grad"] = bool(budget_value.requires_grad)
+    report["budget_codebook_grad"] = 0.0 if codebook_probe.grad is None else float(
+        codebook_probe.grad.abs().sum()
     )
-    if codebook_grad is not None and float(codebook_grad.abs().sum()) > 0.0:
-        failures.append("perturbation budget passed gradient into the codebook")
+    if budget_value.requires_grad:
+        failures.append("perturbation budget is differentiable; it should be a detached bound")
 
     # --- (3) the behaviour term reaches the encoder and no codebook --------
     model.zero_grad(set_to_none=True)
