@@ -21,3 +21,15 @@
 - **Reason**: Stage 2 Hard L1 ER=16.429409 (baseline=16.389539), Hard L1+L2 ER=67.647059 (baseline=58.387097). BOTH exceed baseline strictly -> Stage 3 allowed.
 
 **Gate passed**: Both levels strictly exceeded the baseline. Stage 3 may proceed.
+
+## Stage 3 HG-Rec Evaluation (Frozen Protocol)
+
+- **Status**: Completed (150 epochs, seed 42, beam size 20, n_eval = 57,439)
+- **Test Metrics**:
+  - `test_recall@5`: **0.027873**
+  - `test_recall@10`: **0.043420**
+  - `test_ndcg@5`: **0.018243**
+  - `test_ndcg@10`: **0.023224**
+- **Downstream Comparison**:
+  - Exp1a Resample baseline: `test_recall@10 = 0.063633`, `test_ndcg@10 = 0.035110`
+  - HBPE-R3-06 achieved superior Stage 2 L1 and L1+L2 prefix selectivity (L1 ER: 16.43, L1+L2 ER: 67.65), but downstream HG-Rec Recall@10 reached 0.043420.
