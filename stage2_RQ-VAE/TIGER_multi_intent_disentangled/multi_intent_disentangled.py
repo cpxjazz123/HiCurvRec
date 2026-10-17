@@ -76,6 +76,20 @@ def _geodesic(x: torch.Tensor, y: torch.Tensor, c: float = CURVATURE) -> torch.T
     return torch.acosh(argument.clamp_min(1.0 + 1e-12)).to(x.dtype) / sqrt_c
 
 
+
+def decoder_reencoded_latent(model: nn.Module, quantized: torch.Tensor) -> torch.Tensor:
+    """Route behaviour recovery through the *actual* RQ-VAE Decoder.
+
+    Re-encode the decoder's text reconstruction to codebook dimensionality
+    before feeding an auxiliary behavioural head. The existing VQ STE controls
+    the gradient to the codebooks; no new assignment operation is introduced.
+    Where an encoder forward wrapper exists, use its unwrapped text-MLP to
+    avoid applying a behaviour transform twice.
+    """
+    reconstructed_text = model.decoder(quantized)
+    text_encoder = getattr(model.encoder, "unwrapped_forward", model.encoder)
+    return text_encoder(reconstructed_text)
+
 class _BlockCodebookGradient(torch.autograd.Function):
     """Identity forward that refuses to pass gradient back into the codebooks."""
 
@@ -183,8 +197,15 @@ class MultiIntentGate(nn.Module):
     def __init__(self, latent_dim: int, text_dim: int, intents: int = 3) -> None:
         super().__init__()
         self.intents = int(intents)
+        # Intents live in distinct lower-dimensional tangent spaces.
+        self.intent_dim = max(2, int(latent_dim) // self.intents)
         self.branches = nn.ModuleList(
-            nn.Linear(latent_dim, latent_dim, bias=False) for _ in range(self.intents)
+            nn.Linear(latent_dim, self.intent_dim, bias=False)
+            for _ in range(self.intents)
+        )
+        self.projections = nn.ModuleList(
+            nn.Linear(self.intent_dim, latent_dim, bias=False)
+            for _ in range(self.intents)
         )
         for branch in self.branches:
             nn.init.normal_(branch.weight, std=1.0 / latent_dim ** 0.5)
@@ -193,8 +214,9 @@ class MultiIntentGate(nn.Module):
     def forward(self, latent: torch.Tensor, text_embedding: torch.Tensor):
         tangents = _intent_tangents(latent, self)
         weights = F.softmax(self.weight(text_embedding), dim=-1)
-        mixed = sum(weight.unsqueeze(-1) * tangent
-                    for weight, tangent in zip(weights.T, tangents))
+        mixed = sum(weight.unsqueeze(-1) * projection(tangent)
+                    for weight, projection, tangent
+                    in zip(weights.T, self.projections, tangents))
         return mixed, weights, tangents
 
     def intent_points(self, tangents: list[torch.Tensor],
@@ -206,7 +228,8 @@ class MultiIntentGate(nn.Module):
 
 
 def fuse_intents(points: list[torch.Tensor], weights: torch.Tensor,
-                 curvature: float = CURVATURE) -> tuple[torch.Tensor, list[torch.Tensor]]:
+                 curvature: float = CURVATURE,
+                 projections: nn.ModuleList | None = None) -> tuple[torch.Tensor, list[torch.Tensor]]:
     """``Log_o`` back to the tangent space, gate, then ``Exp_o`` once.
 
     ``Log_o`` of each branch's own point is the tangent that produced it, so this
@@ -214,10 +237,15 @@ def fuse_intents(points: list[torch.Tensor], weights: torch.Tensor,
     and the item leaves as a single hyperbolic point.
     """
     tangents = [_logmap0(point, curvature) for point in points]
+    representations = ([projection(tangent)
+                        for projection, tangent in zip(projections, tangents)]
+                       if projections is not None else tangents)
     mixed = sum(weight.unsqueeze(-1) * tangent
-                for weight, tangent in zip(weights.T, tangents))
-    rms = mixed.square().sum(-1).mean().sqrt().clamp_min(1e-12)
-    return _expmap0(mixed / rms * TANGENT_SCALE, curvature), tangents
+                for weight, tangent in zip(weights.T, representations))
+    # Fixed dimensional reference instead of the current item's peer batch.
+    # This retains per-item radial differences and gives stable SID inference.
+    reference = max(float(mixed.shape[-1]) ** 0.5, 1.0)
+    return _expmap0(mixed * (TANGENT_SCALE / reference), curvature), tangents
 
 
 def install_multi_intent_encoder(model: nn.Module, gate: nn.Module,
@@ -234,7 +262,8 @@ def install_multi_intent_encoder(model: nn.Module, gate: nn.Module,
     def patched_forward(embeddings: torch.Tensor) -> torch.Tensor:
         latent = original_forward(embeddings)
         _mixed, weights, tangents = gate(latent, embeddings)
-        fused, _back = fuse_intents(gate.intent_points(tangents, curvature), weights, curvature)
+        fused, _back = fuse_intents(gate.intent_points(tangents, curvature), weights,
+                                    curvature, projections=gate.projections)
         gate.last_points = gate.intent_points(tangents, curvature)
         gate.last_weights = weights
         gate.last_tangents = tangents

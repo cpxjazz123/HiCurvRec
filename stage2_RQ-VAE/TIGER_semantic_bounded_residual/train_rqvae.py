@@ -107,6 +107,7 @@ from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
 
 # === Issue #22: semantic_anchored_bounded_residual 唯一机制模块 ===
 # 本树由 stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE 复制而来，只跑这一个机制。
+import semantic_bounded_residual as _sem
 from semantic_bounded_residual import (SemanticAnchorRecoveryHead,
                                         SemanticBoundedResidual,
                                         install_semantic_bounded_encoder,
@@ -1126,7 +1127,7 @@ def main() -> None:
             # quantizer's continuous output. Its gradient cannot reach a codebook,
             # and the reconstruction target stays the original text embedding.
             recovered_anchor = anchor_recovery_head(
-                raw_module.last_quantized,
+                _sem.decoder_reencoded_latent(raw_module, raw_module.last_quantized),
                 tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers),
             )
             recovery_value = semantic_anchor_recovery_loss(
