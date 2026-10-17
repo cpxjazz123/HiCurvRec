@@ -1135,7 +1135,10 @@ def main() -> None:
             )
             codebooks = tuple(layer.get_code_embs() for layer in raw_module.rq.vq_layers)
             detached_codebooks = tuple(codebook.detach() for codebook in codebooks)
-            predicted_bands = recovery_heads(cumulative, detached_codebooks)
+            predicted_bands = recovery_heads(
+                [_spectrum.decoder_reencoded_latent(raw_module, q) for q in cumulative],
+                detached_codebooks,
+            )
             band_losses: dict[int, torch.Tensor] = {}
             for depth in range(min(len(predicted_bands), spectrum_t.shape[0])):
                 band_losses[depth] = band_coordinate_loss(
@@ -1143,8 +1146,12 @@ def main() -> None:
                 ) + band_relation_loss(
                     predicted_bands[depth], spectrum_t[depth, spectrum_ids]
                 )
-            recovery_term = SPECTRUM_DEPTH_WEIGHT * epoch_hyp_alpha * (
-                torch.stack([band_losses[depth] for depth in sorted(band_losses)]).mean()
+            # Three depths are supervised once through the genuine decoder path.
+            depth_losses = torch.stack(
+                [band_losses[depth] for depth in sorted(band_losses)]
+            )
+            behavior_loss, recovery_term = _spectrum.compose_spectrum_supervision(
+                depth_losses, epoch_hyp_alpha, SPECTRUM_DEPTH_WEIGHT
             )
             if epoch_weight > 0.0:
                 try:
@@ -1159,9 +1166,9 @@ def main() -> None:
                 ].to(device, non_blocking=True)
                 residuals = _residuals_with_trace(raw_module, pair_batch)
                 del residuals  # this arm supervises the cumulative representations
-                behavior_loss = behavior_contrastive_loss(
-                    torch.stack([band_losses[depth] for depth in sorted(band_losses)])
-                )
+                # Depth supervision is already in recovery_term; the base
+                # behaviour-weight schedule must not apply it a second time.
+                behavior_loss = depth_losses.sum() * 0.0
                 spectrum_fields = {
                     f"band_{depth}_loss": float(value.detach())
                     for depth, value in sorted(band_losses.items())
