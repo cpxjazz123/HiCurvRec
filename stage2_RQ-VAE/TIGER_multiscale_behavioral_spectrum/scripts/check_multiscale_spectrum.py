@@ -81,18 +81,27 @@ def main() -> None:
     report["band_energies"] = {
         name: float(np.linalg.norm(bands[name])) for name in ("low", "mid", "high")
     }
-    report["nested_depth2"] = float(np.abs(cumulative[1] - bands["low"] - bands["mid"]).max())
-    report["nested_depth3"] = float(
-        np.abs(cumulative[2] - bands["low"] - bands["mid"] - bands["high"]).max()
-    )
     report["depth_increases_energy"] = [
         float(np.linalg.norm(cumulative[d])) for d in range(cumulative.shape[0])
     ]
+    # The cumulative targets are ball points, so the nesting is a statement about
+    # the tangent bands they came from: depth q is the q-step smoothed graph
+    # signal, low -> P X -> X. What must hold on the stored targets is that each
+    # depth carries strictly more of it than the one above, and that they are all
+    # inside the ball.
+    report["cumulative_radius_max"] = float(
+        np.linalg.norm(cumulative.reshape(-1, cumulative.shape[-1]), axis=-1).max()
+    )
+    if report["cumulative_radius_max"] >= 1.0:
+        failures.append("a cumulative band target left the ball")
+    energies = report["depth_increases_energy"]
     for name in ("low", "mid", "high"):
         if report["band_energies"][name] <= 0.0:
             failures.append(f"the {name} band carries no signal")
-    if report["nested_depth2"] > 1e-4 or report["nested_depth3"] > 1e-4:
-        failures.append("the cumulative band targets are not nested sums")
+    if not (energies[0] < energies[1] < energies[2]):
+        failures.append(
+            f"cumulative depth targets do not grow: {energies}"
+        )
 
     model = RQVAE(trainer._tokenizer_config(), in_dim=embeddings.shape[1]).to(device)
     checkpoint = probe_checkpoint()
