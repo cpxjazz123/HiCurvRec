@@ -12,7 +12,6 @@ Total enrichment loss = 0.02 * L_ER1 + 0.02 * L_ER12 + 0.01 * (L_cov1 + L_cov12)
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn.functional as F
 from scipy.sparse import csr_matrix
