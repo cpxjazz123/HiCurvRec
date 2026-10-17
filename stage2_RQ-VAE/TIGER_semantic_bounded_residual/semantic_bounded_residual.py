@@ -229,6 +229,7 @@ def install_semantic_bounded_encoder(model: nn.Module, codebooks_getter,
     branch = SemanticBoundedResidual(dim, curvature).to(next(model.parameters()).device)
     encoder = model.encoder
     original_forward = encoder.forward
+    encoder.unwrapped_forward = original_forward
 
     def patched_forward(embeddings: torch.Tensor) -> torch.Tensor:
         latent = original_forward(embeddings)
