@@ -136,6 +136,26 @@ def test_idea4_intent_latents_are_low_dimensional_and_fuse_to_original_dim():
     assert len(recovered) == 3
 
 
+
+
+def test_idea4_fused_item_is_batch_invariant():
+    m = load(NAMES[3], NAMES[3] + ".py")
+    torch.manual_seed(107)
+    gate = m.MultiIntentGate(12, 20, intents=3)
+    a = torch.randn(1, 12) * 0.3
+    b = torch.randn(5, 12) * 0.01
+    c = torch.randn(5, 12) * 4.0
+    text_a, text_b, text_c = (torch.randn(n, 20) for n in (1, 5, 5))
+    def fused(latent, texts):
+        _, weights, tangents = gate(latent, texts)
+        return m.fuse_intents(gate.intent_points(tangents), weights,
+                              projections=gate.projections)[0]
+    original = fused(a, text_a)
+    tiny = fused(torch.cat([a, b]), torch.cat([text_a, text_b]))[:1]
+    large = fused(torch.cat([a, c]), torch.cat([text_a, text_c]))[:1]
+    assert torch.allclose(original, tiny, atol=1e-7)
+    assert torch.allclose(original, large, atol=1e-7)
+
 def test_idea5_flow_changes_both_coordinate_halves_and_inverts():
     m = load(NAMES[4], NAMES[4] + ".py")
     flow = m.HyperbolicCouplingFlow(8, 4)
@@ -203,6 +223,7 @@ if __name__ == "__main__":
               test_idea2_teacher_preserves_valid_triangle_and_encoder_geometry,
               test_idea3_uncertainty_grows_when_reliability_falls,
               test_idea4_intent_latents_are_low_dimensional_and_fuse_to_original_dim,
+              test_idea4_fused_item_is_batch_invariant,
               test_idea5_flow_changes_both_coordinate_halves_and_inverts,
               test_idea6_each_depth_supervised_once,
               test_training_scripts_really_use_decoder_route_and_depth_loss_once,
