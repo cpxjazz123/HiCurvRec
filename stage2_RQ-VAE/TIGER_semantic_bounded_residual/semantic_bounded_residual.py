@@ -109,25 +109,31 @@ def _hyperbolic_distance(x: torch.Tensor, y: torch.Tensor,
 
 def _perturbation_budget(anchor: torch.Tensor, codebook: torch.Tensor,
                          c: float = CURVATURE, eps: float = MARGIN_EPS) -> torch.Tensor:
-    """Half the nearest/second-nearest codeword margin, with a detached codebook."""
-    distances = _hyperbolic_distance(anchor.unsqueeze(1), codebook.detach().unsqueeze(0), c)
-    nearest = torch.topk(distances, k=2, dim=-1, largest=False).values
-    return torch.clamp((nearest[:, 1] - nearest[:, 0]) / 2.0 - eps, min=0.0)
+    """Conservative geodesic budget that preserves the existing Euclidean NN.
+
+    The unmodified first VQ layer selects by squared Euclidean distance.
+    A Euclidean displacement shorter than half the nearest/runner-up distance
+    gap cannot change that choice. Poincare geodesic length is at least twice
+    the Euclidean chord length, so a geodesic step <= (d2-d1)-eps suffices.
+    The budget is for the representation only; the VQ assignment is untouched.
+    """
+    del c
+    with torch.no_grad():
+        distances = torch.cdist(anchor.detach().float(), codebook.detach().float(), p=2)
+        nearest = torch.topk(distances, k=2, dim=-1, largest=False).values
+        return ((nearest[:, 1] - nearest[:, 0]) - eps).clamp_min(0.0).to(anchor.dtype)
 
 
 def _bound_to_budget(residual: torch.Tensor, anchor: torch.Tensor,
                      budget: torch.Tensor, c: float = CURVATURE) -> torch.Tensor:
-    """Keep the residual's geodesic length inside the anchor's decision margin.
+    """Bound the Lorentz-exponential geodesic step by the NN safety budget.
 
-    ``budget`` is a geodesic distance (half the nearest/second-nearest codeword
-    margin), and pushing the anchor by a tangent of length ``L`` moves it exactly
-    ``L``, so the bound is ``||v|| <= tanh(sqrt(c) * budget / 2) / sqrt(c)``.
+    _expmap_x parameterises the travelled hyperbolic distance by ||residual||,
+    so no tanh or Poincare-coordinate rescaling belongs in this bound.
     """
-    del anchor  # the step length is independent of the base point
-    sqrt_c = c ** 0.5
-    allowed = torch.tanh(sqrt_c * budget.unsqueeze(-1) / 2.0) / sqrt_c
-    norm_residual = torch.linalg.vector_norm(residual, dim=-1, keepdim=True).clamp_min(1e-12)
-    return residual * torch.clamp(allowed / norm_residual.clamp_min(1e-12), max=1.0)
+    del anchor, c
+    length = torch.linalg.vector_norm(residual, dim=-1, keepdim=True).clamp_min(1e-12)
+    return residual * (budget.unsqueeze(-1) / length).clamp(max=1.0)
 
 
 class _BlockCodebookGradient(torch.autograd.Function):
