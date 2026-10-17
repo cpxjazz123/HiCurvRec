@@ -242,8 +242,10 @@ def fuse_intents(points: list[torch.Tensor], weights: torch.Tensor,
                        if projections is not None else tangents)
     mixed = sum(weight.unsqueeze(-1) * tangent
                 for weight, tangent in zip(weights.T, representations))
-    rms = mixed.square().sum(-1).mean().sqrt().clamp_min(1e-12)
-    return _expmap0(mixed / rms * TANGENT_SCALE, curvature), tangents
+    # Fixed dimensional reference instead of the current item's peer batch.
+    # This retains per-item radial differences and gives stable SID inference.
+    reference = max(float(mixed.shape[-1]) ** 0.5, 1.0)
+    return _expmap0(mixed * (TANGENT_SCALE / reference), curvature), tangents
 
 
 def install_multi_intent_encoder(model: nn.Module, gate: nn.Module,
