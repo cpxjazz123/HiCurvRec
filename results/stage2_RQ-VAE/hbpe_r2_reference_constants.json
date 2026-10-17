@@ -1,0 +1,69 @@
+{
+  "purpose": "frozen-reference constants for the HBPE R2 rounds; the canonical Resample export is a threshold measurer only, never a warm start",
+  "teacher_checkpoint": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/rqvae_best.pth",
+  "teacher_checkpoint_sha256": "ff1623df671be0fe5443a9e5d9c922f256fe7e4905623c1b48af9fe43ec993fa",
+  "train_pairs_sha256": "ed1b4ad1d626621ecfab578abaf77089310ecc074ed97c47297ade4891128693",
+  "train_items": 24556,
+  "seed": 42,
+  "eps": 1e-08,
+  "H_REF_L1": 5.4243431727412155,
+  "H_REF_L1_distinct_codes": 241,
+  "H_REF_L1_effective_codes_exp_H": 226.86228803309504,
+  "H_REF_L1_max_possible": 5.545177444479562,
+  "teacher_reference_distance_gaps": {
+    "D_ref1": 0.010180339217185974,
+    "D_ref2": 0.0018397057428956032
+  },
+  "teacher_soft_negative_sharing_endpoints": {
+    "tau_1.0": {
+      "T1": 0.010180339217185974,
+      "T2": 0.0018397057428956032,
+      "B1_neg": 0.004531256388872862,
+      "B2_neg": 0.004578893538564444,
+      "B12_neg": 2.07481406005888e-05
+    },
+    "tau_0.2": {
+      "T1": 0.002036067843437195,
+      "T2": 0.0003679411485791207,
+      "B1_neg": 0.004449417814612389,
+      "B2_neg": 0.004907681606709957,
+      "B12_neg": 2.1836325969340833e-05
+    }
+  },
+  "negative_sampler_audit": {
+    "sampler": "anchor popularity decile, excluding anchor/target/observed successors",
+    "rows": 339519,
+    "k_negatives": 10,
+    "bucket_match_rate_vs_anchor": 0.9999855678180013,
+    "bucket_match_rate_vs_positive": 0.34065310041558794,
+    "bucket_histogram_of_negatives": [
+      43324,
+      84893,
+      131936,
+      0,
+      144295,
+      234421,
+      277040,
+      293894,
+      473326,
+      1712061
+    ],
+    "bucket_histogram_of_anchors": [
+      4332,
+      8489,
+      13193,
+      0,
+      14429,
+      23441,
+      27703,
+      29389,
+      47332,
+      171211
+    ],
+    "duplicate_draws_within_row": 0,
+    "false_negatives_drawn": 0,
+    "negative_equals_anchor": 0,
+    "negative_equals_positive": 0,
+    "distinct_negative_items": 24587
+  }
+}
