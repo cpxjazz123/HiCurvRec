@@ -161,6 +161,32 @@ def test_idea6_each_depth_supervised_once():
 
 
 
+
+
+def test_real_vq_ste_behavior_gradients_reach_decoder_but_not_codebook():
+    """Use the actual unchanged VQLayer, not a hand-written mock STE."""
+    folder = ROOT / ("TIGER_" + NAMES[1])
+    spec = importlib.util.spec_from_file_location("_real_vq_contract", folder / "model" / "layers.py")
+    layers = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(layers)
+    for name in NAMES:
+        m = load(name, name + ".py")
+        torch.manual_seed(96)
+        encoder = nn.Linear(6, 4)
+        decoder = nn.Linear(4, 6)
+        toy = nn.Module()
+        toy.encoder, toy.decoder = encoder, decoder
+        vq = layers.VQLayer(12, 4, sk_epsilon=-1.0, sk_iters=-1)
+        inp = torch.randn(10, 6)
+        z = encoder(inp)
+        q, _, _, _ = vq(z)
+        out = m.decoder_reencoded_latent(toy, q)
+        out.square().mean().backward()
+        assert decoder.weight.grad is not None and decoder.weight.grad.abs().sum() > 0, name
+        assert encoder.weight.grad is not None and encoder.weight.grad.abs().sum() > 0, name
+        assert all(p.grad is None or p.grad.abs().sum() == 0
+                   for p in vq.parameters()), name
+
 def test_training_scripts_really_use_decoder_route_and_depth_loss_once():
     for name in NAMES:
         trainer = (ROOT / ("TIGER_" + name) / "train_rqvae.py").read_text()
@@ -179,7 +205,8 @@ if __name__ == "__main__":
               test_idea4_intent_latents_are_low_dimensional_and_fuse_to_original_dim,
               test_idea5_flow_changes_both_coordinate_halves_and_inverts,
               test_idea6_each_depth_supervised_once,
-              test_training_scripts_really_use_decoder_route_and_depth_loss_once]
+              test_training_scripts_really_use_decoder_route_and_depth_loss_once,
+              test_real_vq_ste_behavior_gradients_reach_decoder_but_not_codebook]
     failures = []
     for check in checks:
         try:
