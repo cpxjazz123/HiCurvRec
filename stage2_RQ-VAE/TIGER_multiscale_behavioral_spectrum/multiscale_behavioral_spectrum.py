@@ -87,35 +87,49 @@ def _ste_without_codebook_gradient(quantized: torch.Tensor,
 
 def build_behaviour_spectrum(interactions: list[list[int]], n_items: int,
                              dim: int) -> dict[str, np.ndarray]:
-    """Split each item's collaborative signal into low / mid / high frequency bands.
+    """Collaborative graph diffusion bands: low=P^2 X, mid=PX-P^2X, high=X-PX.
 
-    The raw collaborative vector is the item's normalised row of the interaction
-    matrix. Propagating it over the item-item graph ``alpha`` times smooths out the
-    fine structure, which is the low band; the first difference against the raw
-    signal is what the smoothing removed, and a second, stronger propagation splits
-    that remainder into the mid band and the high band. The cumulative targets are
-    then the running sums, so depth 3 strictly adds to depth 2.
+    X is a deterministic random projection of the item-user incidence matrix;
+    P is the row-normalised item-item co-occurrence adjacency. These are
+    bona fide graph-filter frequency bands, not an exact eigen-decomposition.
     """
-    raw = np.zeros((n_items, dim), dtype=np.float64)
-    for history in interactions:
+    from scipy.sparse import csr_matrix, diags
+    rows, cols = [], []
+    for user, history in enumerate(interactions):
         items = np.unique(np.asarray(history, dtype=np.int64))
-        if items.size:
-            raw[items] += 1.0
-    mass = raw.sum(axis=1, keepdims=True)
-    raw = raw / np.maximum(mass, 1.0)
-    raw = raw + raw.mean(axis=0, keepdims=True) * 1e-3   # break the all-zero row
-    low = raw.copy()
-    for _ in range(PROPAGATION_STEPS):
-        low = PROPAGATION_ALPHA * low + (1.0 - PROPAGATION_ALPHA) * low.mean(
-            axis=0, keepdims=True)
-    mid = raw - low
-    high = mid - PROPAGATION_ALPHA * mid
-    cumulative = np.stack([low, low + mid, low + mid + high], axis=0)
+        items = items[(items >= 0) & (items < n_items)]
+        rows.extend([user] * len(items))
+        cols.extend(items.tolist())
+    if not rows:
+        raise RuntimeError("no collaborative interactions for spectrum")
+    H = csr_matrix((np.ones(len(rows), dtype=np.float32), (rows, cols)),
+                   shape=(len(interactions), n_items), dtype=np.float32)
+    H.data[:] = 1.0
+    # Project sparse collaborative columns; unlike per-item degree counts this
+    # produces distinguishable feature vectors for different user audiences.
+    projection = np.random.default_rng(42).standard_normal(
+        (H.shape[0], dim)).astype(np.float32) / dim ** 0.5
+    raw = np.asarray(H.T @ projection, dtype=np.float32)
+    degree = np.asarray(H.sum(axis=0)).reshape(-1, 1).astype(np.float32)
+    raw = raw / np.sqrt(np.maximum(degree, 1.0))
+    adjacency = (H.T @ H).tocsr()
+    adjacency.setdiag(0.0)
+    adjacency.eliminate_zeros()
+    row_sum = np.asarray(adjacency.sum(axis=1)).ravel().astype(np.float32)
+    transition = diags(1.0 / np.maximum(row_sum, 1.0)) @ adjacency
+    first = np.asarray(transition @ raw, dtype=np.float32)
+    second = np.asarray(transition @ first, dtype=np.float32)
+    low, mid, high = second, first - second, raw - first
+    cumulative = np.stack((low, first, raw), axis=0)
+    # A shared scale keeps the low/mid/high depth targets comparable. Convert
+    # targets to ball points for the geodesic decoder-side distillation.
+    rms = np.sqrt(np.mean(np.sum(raw.astype(np.float64) ** 2, axis=-1)))
+    tangent = cumulative * (TANGENT_SCALE / max(float(rms), 1e-8))
+    radius = np.linalg.norm(tangent, axis=-1, keepdims=True)
+    ball = np.tanh(radius / 2.0) * tangent / np.maximum(radius, 1e-12)
     return {
-        "low": low.astype(np.float32),
-        "mid": mid.astype(np.float32),
-        "high": high.astype(np.float32),
-        "cumulative": cumulative.astype(np.float32),
+        "low": low, "mid": mid, "high": high,
+        "cumulative": ball.astype(np.float32),
     }
 
 
@@ -168,20 +182,25 @@ def cumulative_representations(raw_module, embeddings: torch.Tensor) -> list[tor
 
 def band_relation_loss(predicted: torch.Tensor, target: torch.Tensor,
                        margin: float = 0.1) -> torch.Tensor:
-    """Relational distillation of one band: compare the induced pairwise order.
+    """Preserve teacher-local pairwise neighbour ordering at each RQ depth.
 
-    The teacher is a fixed spectrum per item, so what can be asked of the model is
-    which items it places *closer together* than the teacher does -- not the raw
-    coordinates. The loss is the hinge on that ordering.
+    Comparisons use *matching sample indices* in teacher and student spaces;
+    target order determines positives and negatives. Both are in the ball.
     """
-    third = int(predicted.shape[0]) // 3
-    if third == 0 or int(target.shape[0]) < 1 + 2 * third:
+    if predicted.shape[0] < 3:
         return predicted.sum() * 0.0
-    anchor = predicted[:third]
-    near = target[1:1 + third]
-    far = target[1 + third:1 + 2 * third]
-    hinge = F.relu(margin - _geodesic(anchor, near) + _geodesic(anchor, far))
-    return hinge.mean() + _geodesic(predicted, target).mean()
+    teacher_dist = torch.cdist(target.detach(), target.detach())
+    teacher_dist.fill_diagonal_(float("inf"))
+    near_ids = teacher_dist.argmin(dim=1)
+    far_ids = teacher_dist.argmax(dim=1)
+    # infinity diagonal is excluded explicitly for the distant neighbour.
+    teacher_dist.fill_diagonal_(-1.0)
+    far_ids = teacher_dist.argmax(dim=1)
+    anchor = predicted
+    positive = predicted[near_ids]
+    negative = predicted[far_ids]
+    hinge = F.relu(margin + _geodesic(anchor, positive) - _geodesic(anchor, negative))
+    return hinge.mean()
 
 
 def band_coordinate_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
