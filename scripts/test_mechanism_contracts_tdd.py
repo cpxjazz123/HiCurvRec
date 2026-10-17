@@ -159,6 +159,17 @@ def test_idea6_each_depth_supervised_once():
     assert depth_losses.grad is not None
 
 
+
+
+def test_training_scripts_really_use_decoder_route_and_depth_loss_once():
+    for name in NAMES:
+        trainer = (ROOT / ("TIGER_" + name) / "train_rqvae.py").read_text()
+        assert "decoder_reencoded_latent(raw_module," in trainer, name
+        assert '"auxiliary_state_dicts"' in trainer, name
+    spectrum = (ROOT / ("TIGER_" + NAMES[5]) / "train_rqvae.py").read_text()
+    assert "_spectrum.compose_spectrum_supervision(" in spectrum
+    assert "behavior_loss = behavior_contrastive_loss(\n                    torch.stack([band_losses" not in spectrum
+
 if __name__ == "__main__":
     checks = [test_all_six_same_item_independent_of_other_batch_members,
               test_all_six_behaviour_recovery_updates_real_decoder_not_codebooks,
@@ -167,7 +178,8 @@ if __name__ == "__main__":
               test_idea3_uncertainty_grows_when_reliability_falls,
               test_idea4_intent_latents_are_low_dimensional_and_fuse_to_original_dim,
               test_idea5_flow_changes_both_coordinate_halves_and_inverts,
-              test_idea6_each_depth_supervised_once]
+              test_idea6_each_depth_supervised_once,
+              test_training_scripts_really_use_decoder_route_and_depth_loss_once]
     failures = []
     for check in checks:
         try:
