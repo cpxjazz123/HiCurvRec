@@ -1491,6 +1491,10 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": final_state,
+                # Legacy RQVAE checkpoint remains consumable; auxiliary learned
+                # transforms and heads are stored separately for exact restoration.
+                "auxiliary_state_dicts": {"relational_recovery_head": recovery_head.state_dict()},
+                "mechanism": EXPERIMENT_ARM,
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",
