@@ -1064,6 +1064,7 @@ def main() -> None:
     if _CROWD_CONFIG and _CROWD_CONFIG[0] in {"couser", "simweight", "density", "random"}:
         crowd_graph = np.load("/home/wlia0047/ar57/wenyu/GeneRec/results/crowding/graph_s42.npz")
 
+    spectrum_generator = torch.Generator().manual_seed(SEED + 27183)
     for epoch in range(1, EPOCHS + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -1106,7 +1107,7 @@ def main() -> None:
             optimizer.zero_grad(set_to_none=True)
             spectrum_ids = torch.randint(
                 len(all_embeddings), (_spectrum.TRIANGLES_PER_DEPTH * 3,),
-                generator=torch.Generator().manual_seed(SEED + epoch),
+                generator=spectrum_generator,
             )
             spectrum_embeddings = all_embeddings[spectrum_ids.cpu()].to(
                 device, non_blocking=True,
@@ -1476,6 +1477,10 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": final_state,
+                # Legacy RQVAE checkpoint remains consumable; auxiliary learned
+                # transforms and heads are stored separately for exact restoration.
+                "auxiliary_state_dicts": {"multiscale_recovery_heads": recovery_heads.state_dict()},
+                "mechanism": EXPERIMENT_ARM,
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",

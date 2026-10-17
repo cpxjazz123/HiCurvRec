@@ -1212,9 +1212,11 @@ def main() -> None:
             recovered_base = base_recovery(triple_quantized, hyperbolic_flow, codebooks)
             base_ids = torch.cat((dist_anchor, dist_partner))
             base_embeddings = all_embeddings[base_ids.cpu()].to(device, non_blocking=True)
-            base_reference = _semantic_base(raw_module, base_embeddings)
+            # These predictions come from triple_embeddings, not the separate
+            # distortion-neighbour sample.
+            base_reference = _semantic_base(raw_module, triple_embeddings).detach()
             recovery_term = FLOW_RECOVERY_WEIGHT * epoch_hyp_alpha * _flow._geodesic(
-                recovered_base[:count], base_reference[:count]
+                recovered_base, base_reference
             ).mean()
             if epoch_weight > 0.0:
                 try:
@@ -1241,7 +1243,7 @@ def main() -> None:
                         base_for_pairs[:FLOW_NEIGHBOURS_PER_STEP],
                         hyperbolic_flow, _flow.CURVATURE,
                     ),
-                    base_for_pairs[:FLOW_NEIGHBOURS_PER_STEP],
+                    base_for_pairs[FLOW_NEIGHBOURS_PER_STEP:],
                     hyperbolic_flow_forward(
                         base_for_pairs[FLOW_NEIGHBOURS_PER_STEP:],
                         hyperbolic_flow, _flow.CURVATURE,
@@ -1575,6 +1577,10 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": final_state,
+                # Legacy RQVAE checkpoint remains consumable; auxiliary learned
+                # transforms and heads are stored separately for exact restoration.
+                "auxiliary_state_dicts": {"hyperbolic_flow": hyperbolic_flow.state_dict(), "semantic_base_recovery_head": base_recovery.state_dict()},
+                "mechanism": EXPERIMENT_ARM,
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",

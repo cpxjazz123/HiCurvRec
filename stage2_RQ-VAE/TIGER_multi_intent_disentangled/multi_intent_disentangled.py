@@ -98,30 +98,24 @@ def _ste_without_codebook_gradient(quantized: torch.Tensor,
 
 
 def build_intent_views(frame_pairs: dict[str, np.ndarray], n_items: int) -> dict[str, dict]:
-    """Turn each behaviour view into (anchor, positive) pairs, popularity-aware.
-
-    ``frame_pairs`` holds one ``(left, right)`` array per view. A view keeps only
-    the pairs whose left item has at least ``MIN_NEIGHBOURS`` partners, so every
-    anchor in the returned index has a real neighbour to be ranked against.
-    """
+    """Sorted, directed adjacency indices for each independent behaviour view."""
     views: dict[str, dict] = {}
-    popularity = np.zeros(n_items, dtype=np.float64)
-    for pairs in frame_pairs.values():
-        if pairs.size:
-            np.add.at(popularity, pairs[:, 0], 1.0)
-            np.add.at(popularity, pairs[:, 1], 1.0)
     for name, pairs in frame_pairs.items():
         if pairs.size == 0:
             raise RuntimeError(f"behaviour view {name!r} produced no pair")
-        degree = np.zeros(n_items, dtype=np.int64)
-        np.add.at(degree, pairs[:, 0], 1)
-        np.add.at(degree, pairs[:, 1], 1)
-        order = np.argsort(degree, kind="stable")
-        keep = degree[order] >= MIN_NEIGHBOURS
+        pairs = np.asarray(pairs, dtype=np.int64).reshape(-1, 2)
+        pairs = pairs[(pairs[:, 0] >= 0) & (pairs[:, 0] < n_items) &
+                      (pairs[:, 1] >= 0) & (pairs[:, 1] < n_items) &
+                      (pairs[:, 0] != pairs[:, 1])]
+        pairs = np.unique(pairs, axis=0)
+        pairs = pairs[np.lexsort((pairs[:, 1], pairs[:, 0]))]
+        if not pairs.size:
+            raise RuntimeError(f"behaviour view {name!r} has no legal pair")
+        offsets = np.searchsorted(pairs[:, 0], np.arange(n_items + 1), side="left")
+        anchors = np.flatnonzero(np.diff(offsets) >= 1).astype(np.int64)
         views[name] = {
-            "pairs": pairs,
-            "anchors": order[keep].astype(np.int64),
-            "item_space": np.int64(n_items),
+            "pairs": pairs, "offsets": offsets,
+            "anchors": anchors, "item_space": np.int64(n_items),
         }
     return views
 
@@ -131,26 +125,23 @@ MIN_NEIGHBOURS = 2
 
 def view_triples(view: dict, batch: int, generator: torch.Generator,
                  device: torch.device) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Draw ``batch`` (anchor, positive, negative) triples from one view."""
-    pairs = view["pairs"]
-    anchors = view["anchors"]
-    pick = torch.randint(anchors.shape[0], (batch,), generator=generator).numpy()
-    left = anchors[pick]
-    # The positive is any partner of that anchor; the neighbours are small, so a
-    # short scan over the anchor's own row is enough.
-    starts = np.searchsorted(pairs[:, 0], pairs[:, 0], side="left")
-    ends = np.searchsorted(pairs[:, 0], pairs[:, 0], side="right")
+    """Draw genuine (anchor, positive, negative) triples from a CSR-style view."""
+    pairs, anchors, offsets = view["pairs"], view["anchors"], view["offsets"]
+    picked = torch.randint(len(anchors), (batch,), generator=generator).numpy()
+    left = anchors[picked]
     positive = np.empty(batch, dtype=np.int64)
+    negative = torch.randint(int(view["item_space"]), (batch,), generator=generator).numpy()
     for index, item in enumerate(left):
-        row = pairs[starts[item]:ends[item], 1]
-        positive[index] = row[int(torch.randint(row.shape[0], (1,), generator=generator))]
-    negative = torch.randint(
-        int(view["item_space"]), (batch,), generator=generator).numpy()
-    return (
-        torch.as_tensor(left, device=device),
-        torch.as_tensor(positive, device=device),
-        torch.as_tensor(negative, device=device),
-    )
+        neighbours = pairs[offsets[item]:offsets[item + 1], 1]
+        positive[index] = neighbours[int(torch.randint(len(neighbours), (1,), generator=generator))]
+        # Do not sample observed partners or the item itself as negative.
+        for _ in range(30):
+            if negative[index] != item and negative[index] not in neighbours:
+                break
+            negative[index] = int(torch.randint(int(view["item_space"]), (1,), generator=generator))
+    return (torch.as_tensor(left, device=device),
+            torch.as_tensor(positive, device=device),
+            torch.as_tensor(negative, device=device))
 
 
 def intent_ranking_loss(anchor: torch.Tensor, positive: torch.Tensor, negative: torch.Tensor,
@@ -238,6 +229,7 @@ def install_multi_intent_encoder(model: nn.Module, gate: nn.Module,
     """
     encoder = model.encoder
     original_forward = encoder.forward
+    encoder.unwrapped_forward = original_forward
 
     def patched_forward(embeddings: torch.Tensor) -> torch.Tensor:
         latent = original_forward(embeddings)
