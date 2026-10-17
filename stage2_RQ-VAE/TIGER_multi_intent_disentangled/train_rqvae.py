@@ -658,15 +658,23 @@ def _build_intent_views(train_frame: pd.DataFrame, n_items: int) -> dict[str, di
     import itertools
 
     last_history = train_frame.groupby("user")["seen_history"].last()
+    last_targets = train_frame.groupby("user")["target"].last()
     transition: set[tuple[int, int]] = set()
     cooccurrence: set[tuple[int, int]] = set()
-    for history in last_history:
-        items = [] if history is None else [int(item) for item in history]
-        if len(items) >= 2:
-            transition.add((min(items[-2], items[-1]), max(items[-2], items[-1])))
-        unique = sorted(set(items))
-        for pair in itertools.combinations(unique, 2):
-            cooccurrence.add(pair)
+    # Directed transitions must retain order and include the actual target item.
+    for history, target in zip(train_frame["seen_history"], train_frame["target"]):
+        if history is not None and len(history) > 0:
+            source = int(history[-1])
+            target = int(target)
+            if source != target:
+                transition.add((source, target))
+    # Undirected similarity views need both adjacency directions for sampling.
+    for history, target in zip(last_history, last_targets):
+        items = sorted(set(int(item) for item in (history if history is not None else []))
+                       | {int(target)})
+        for left_item, right_item in itertools.combinations(items, 2):
+            cooccurrence.add((left_item, right_item))
+            cooccurrence.add((right_item, left_item))
     if not transition or not cooccurrence:
         raise RuntimeError("behaviour views need both transition and co-occurrence pairs")
     left = np.asarray([pair[0] for pair in cooccurrence], dtype=np.int64)
@@ -1241,7 +1249,10 @@ def main() -> None:
                 # Issue #25 step 3: every branch is ranked against its own view on
                 # its own hyperbolic point, and the branches are pushed apart in
                 # tangent space so they cannot collapse onto one relation.
-                latent = raw_module.encoder(embeddings=intent_embeddings)
+                # The quantizer's encoder wrapper already applies the gate.
+                # Use the original text-to-latent function to avoid
+                # applying the intent transform twice.
+                latent = raw_module.encoder.unwrapped_forward(intent_embeddings)
                 _mixed, _weights, tangents = intent_gate(latent, intent_embeddings)
                 points = intent_gate.intent_points(tangents, _intent.CURVATURE)
                 # Row blocks follow the view order, three consecutive blocks per
@@ -1583,6 +1594,10 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": final_state,
+                # Legacy RQVAE checkpoint remains consumable; auxiliary learned
+                # transforms and heads are stored separately for exact restoration.
+                "auxiliary_state_dicts": {"multi_intent_gate": intent_gate.state_dict(), "intent_recovery_heads": intent_recovery.state_dict()},
+                "mechanism": EXPERIMENT_ARM,
                 "epoch": EPOCHS,
                 "collision": final_collision,
                 "selection": "final_epoch",
