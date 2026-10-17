@@ -68,14 +68,24 @@ def _lorentz_inner(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
     ).sum(-1, keepdim=True)
 
 
-def _expmap_x(x: torch.Tensor, v: torch.Tensor, c: float = CURVATURE) -> torch.Tensor:
-    """Exponential map at a base point: a geodesic of length ``||v||`` along ``v``."""
+def _expmap_x(x: torch.Tensor, v: torch.Tensor,
+              c: float = CURVATURE) -> torch.Tensor:
+    """Exp_x(PT_{origin->x}(v)): isotropic origin-tangent noise on H^d.
+
+    For c=1, transport in the Lorentz model from o=(1,0,..) to p has
+    V=(<p_sp,v>, v + <p_sp,v> p_sp/(1+p_time)). The Lorentz norm of V
+    equals the Euclidean norm of v. This avoids treating coordinate noise
+    at an arbitrary point as an orthonormal hyperbolic tangent vector.
+    """
     base = _to_hyperboloid(x, c)
-    time = (base[..., 1:] * v.double()).sum(-1, keepdim=True) / base[..., :1]
-    tangent = torch.cat([time, v.double()], dim=-1)
-    unit = tangent / _lorentz_inner(tangent, tangent).clamp_min(1e-24).sqrt()
-    length = torch.linalg.vector_norm(v.double(), dim=-1, keepdim=True)
-    return _from_hyperboloid(torch.cosh(length) * base + torch.sinh(length) * unit).to(x.dtype)
+    noise = v.double()
+    dot = (base[..., 1:] * noise).sum(-1, keepdim=True)
+    tangent = torch.cat(
+        [dot, noise + dot * base[..., 1:] / (1.0 + base[..., :1])], dim=-1
+    )
+    length = torch.linalg.vector_norm(noise, dim=-1, keepdim=True).clamp_min(1e-12)
+    lifted = torch.cosh(length) * base + (torch.sinh(length) / length) * tangent
+    return _from_hyperboloid(lifted).to(x.dtype)
 
 
 def _geodesic(x: torch.Tensor, y: torch.Tensor, c: float = CURVATURE) -> torch.Tensor:
@@ -190,7 +200,9 @@ def wrapped_normal_sample(mean: torch.Tensor, sigma: torch.Tensor, generator: to
     # The generator is a CPU generator, so the noise is drawn there and moved; a
     # CUDA generator would have to be threaded through the trainer for nothing.
     noise = torch.randn(mean.shape, generator=generator, dtype=mean.dtype)
-    return _expmap_x(mean, sigma.unsqueeze(-1) * noise.to(mean.device), curvature)
+    # Keep sigma the RMS geodesic step rather than sigma * sqrt(dim).
+    tangent = sigma.unsqueeze(-1) * noise.to(mean.device) / mean.shape[-1] ** 0.5
+    return _expmap_x(mean, tangent, curvature)
 
 
 def uncertainty_weighted_rank_loss(anchor: torch.Tensor, positive: torch.Tensor,
