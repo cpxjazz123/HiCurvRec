@@ -199,7 +199,10 @@ class SemanticBaseRecoveryHead(nn.Module):
     def forward(self, quantized: torch.Tensor, flow: HyperbolicCouplingFlow,
                 codebooks: tuple[torch.Tensor, ...]) -> torch.Tensor:
         continuous = _ste_without_codebook_gradient(quantized, codebooks)
-        return hyperbolic_flow_inverse(self.head(continuous), flow, self.curvature)
+        # The inverse Log map requires a valid ball point. The head emits a
+        # tangent vector; map it into the ball before applying F^{-1}.
+        return hyperbolic_flow_inverse(_expmap0(self.head(continuous), self.curvature),
+                                       flow, self.curvature)
 
     def n_parameters(self) -> int:
         return sum(parameter.numel() for parameter in self.parameters())
@@ -227,33 +230,30 @@ def _ste_without_codebook_gradient(quantized: torch.Tensor,
 
 
 def build_neighbour_pairs(frame_pairs: np.ndarray, n_items: int) -> dict[str, np.ndarray]:
-    """Anchor/partner pairs for the distortion term, from the given pair stream."""
+    """Build valid sorted adjacency for observed neighbour pairs."""
     if frame_pairs.size == 0:
         raise RuntimeError("neighbour view produced no pair")
-    degree = np.zeros(n_items, dtype=np.int64)
-    np.add.at(degree, frame_pairs[:, 0], 1)
-    order = np.argsort(degree, kind="stable")
-    anchors = order[degree[order] >= 1].astype(np.int64)
+    pairs = np.asarray(frame_pairs, dtype=np.int64).reshape(-1, 2)
+    pairs = pairs[np.lexsort((pairs[:, 1], pairs[:, 0]))]
+    offsets = np.searchsorted(pairs[:, 0], np.arange(n_items + 1), side="left")
+    anchors = np.flatnonzero(np.diff(offsets) > 0).astype(np.int64)
     return {
-        "left": frame_pairs[:, 0].astype(np.int64),
-        "right": frame_pairs[:, 1].astype(np.int64),
-        "anchors": anchors,
+        "left": pairs[:, 0], "right": pairs[:, 1],
+        "offsets": offsets, "anchors": anchors,
         "item_space": np.int64(n_items),
     }
 
 
 def neighbour_batch(view: dict, batch: int, generator: torch.Generator,
                     device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
-    """Draw (anchor, partner) pairs from the neighbour view -- the distortion term."""
-    anchors = view["anchors"]
-    left, right = view["left"], view["right"]
-    picks = anchors[torch.randint(anchors.shape[0], (batch,), generator=generator).numpy()]
-    starts = np.searchsorted(left, left, side="left")
-    ends = np.searchsorted(left, left, side="right")
+    """Draw (anchor, partner) from the same observed adjacency row."""
+    anchors, offsets = view["anchors"], view["offsets"]
+    right = view["right"]
+    picks = anchors[torch.randint(len(anchors), (batch,), generator=generator).numpy()]
     partner = np.empty(batch, dtype=np.int64)
     for index, item in enumerate(picks):
-        row = right[starts[item]:ends[item]]
-        partner[index] = row[int(torch.randint(row.shape[0], (1,), generator=generator))]
+        row = right[offsets[item]:offsets[item + 1]]
+        partner[index] = row[int(torch.randint(len(row), (1,), generator=generator))]
     return (torch.as_tensor(picks, device=device),
             torch.as_tensor(partner, device=device))
 
