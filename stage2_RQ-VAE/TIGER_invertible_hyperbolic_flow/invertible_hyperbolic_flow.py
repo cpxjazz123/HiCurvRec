@@ -119,13 +119,19 @@ class HyperbolicCouplingFlow(nn.Module):
         self.layers = nn.ModuleList(CouplingLayer(dim) for _ in range(layers))
 
     def forward(self, tangent: torch.Tensor) -> torch.Tensor:
-        for layer in self.layers:
+        # Swap the conditioning and transformed halves between coupling
+        # layers. Without mixing, half of the representation never changes.
+        for index, layer in enumerate(self.layers):
             tangent = layer(tangent)
+            if index < len(self.layers) - 1:
+                tangent = tangent.roll(shifts=self.dim // 2, dims=-1)
         return tangent
 
     def inverse(self, tangent: torch.Tensor) -> torch.Tensor:
-        for layer in reversed(self.layers):
-            tangent = layer.inverse(tangent)
+        for index in range(len(self.layers) - 1, -1, -1):
+            if index < len(self.layers) - 1:
+                tangent = tangent.roll(shifts=-(self.dim // 2), dims=-1)
+            tangent = self.layers[index].inverse(tangent)
         return tangent
 
     def n_parameters(self) -> int:
@@ -207,6 +213,20 @@ class SemanticBaseRecoveryHead(nn.Module):
     def n_parameters(self) -> int:
         return sum(parameter.numel() for parameter in self.parameters())
 
+
+
+def decoder_reencoded_latent(model: nn.Module, quantized: torch.Tensor) -> torch.Tensor:
+    """Route behaviour recovery through the *actual* RQ-VAE Decoder.
+
+    Re-encode the decoder's text reconstruction to codebook dimensionality
+    before feeding an auxiliary behavioural head. The existing VQ STE controls
+    the gradient to the codebooks; no new assignment operation is introduced.
+    Where an encoder forward wrapper exists, use its unwrapped text-MLP to
+    avoid applying a behaviour transform twice.
+    """
+    reconstructed_text = model.decoder(quantized)
+    text_encoder = getattr(model.encoder, "unwrapped_forward", model.encoder)
+    return text_encoder(reconstructed_text)
 
 class _BlockCodebookGradient(torch.autograd.Function):
     """Identity forward that refuses to pass gradient back into the codebooks."""
