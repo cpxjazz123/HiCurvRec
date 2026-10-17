@@ -63,29 +63,15 @@ def ball_radius(c: float) -> float:
 
 
 def encode_ball(latent: torch.Tensor, c: float, tangent_scale: float) -> torch.Tensor:
-    """Map an unconstrained encoder latent into the ball, preserving relative radii.
+    """Deterministic per-item exponential map without batch statistics.
 
-    Two failure modes have to be avoided at once.
-
-    A raw 32-d MLP latent has norm near ``sqrt(32)`` and grows, so
-    ``sqrt(c) * ||x||`` saturates ``tanh`` and pins every point to the boundary,
-    where distances collapse.
-
-    Normalising each point to a unit direction and rescaling by a constant fixes
-    that but goes too far the other way: every image then has *identical* norm
-    ``tanh(sqrt(c) * tangent_scale) / sqrt(c)``, so the radial coordinate -- the
-    dimension that encodes hierarchy in a hyperbolic space -- carries no
-    information and the model degenerates to an angular-only representation on a
-    sphere.
-
-    Rescaling by the *batch* RMS instead keeps each point's radius relative to
-    its peers, so hierarchy stays representable, while holding the overall scale
-    near ``tangent_scale`` so ``tanh`` is not saturated. Only the ball image is
-    affected; the RQ-VAE path keeps using the raw latent.
+    Scale by a fixed dimensional reference, not the current mini-batch RMS.
+    Thus the same frozen item has the same point in pair batches, training
+    batches, and complete SID export. The individual norm is *not*
+    normalised away, so radial differences remain representable.
     """
-    rms = latent.square().sum(-1).mean().sqrt().clamp_min(NORM_FLOOR)
-    return expmap0(latent / rms * tangent_scale, c)
-
+    reference = max(float(latent.shape[-1]) ** 0.5, 1.0)
+    return expmap0(latent * (tangent_scale / reference), c)
 
 def poincare_distance(x: torch.Tensor, y: torch.Tensor, c: float) -> torch.Tensor:
     """Geodesic distance in the ball, shape broadcast over leading dims."""
