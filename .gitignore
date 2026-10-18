@@ -626,3 +626,7 @@ results/stage3_T5Train/tiger_sample_ANCHOR*/logs/tensorboard/
 # 2026-10-19 (issue #71): the DDP audit persists its per-rank tensors only so the parent process can
 # read them back; they are multi-MB scratch, the small JSON summaries are the evidence.
 results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/ddp_artifacts/*.pt
+
+# 2026-10-19 (CGV): per-rank gradient tensors exist only so the G5 parent process can read them
+# back across the process boundary; the JSON summaries and the certificates are the evidence.
+results/stage2_RQ-VAE/_cgv/g5_*/*.pt
