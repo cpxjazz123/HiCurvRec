@@ -1,0 +1,11 @@
+$PY results/stage2_RQ-VAE/r45_gradient_integrity_audit/test_testkit_model_construction.py
+  tiny_model built a real RQVAE for all 11 arms
+pass test_tiny_model_constructs_a_real_rqvae
+  forward/backward through the constructed model: 15 parameter tensors with gradients
+pass test_tiny_model_drives_a_real_forward_and_backward
+  identical weights for the same seed
+pass test_tiny_model_is_deterministic_for_a_given_seed
+
+3/3 passed
+ALL TESTS PASSED
+rc=0

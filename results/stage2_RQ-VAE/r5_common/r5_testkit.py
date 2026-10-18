@@ -36,15 +36,37 @@ def arm_dir(arm: str) -> Path:
     return REPO_ROOT / "results/stage2_RQ-VAE" / arm
 
 
-def tiny_model(T, seed: int = 0):
-    torch.manual_seed(seed)
-    model = T.RQVAE(
-        hidden_channels=[12, 10, 8],
-        latent_dim=8,
-        num_codebooks=3,
-        codebook_size=[8, 8, 8],
+def tiny_model(T, seed: int = 0, in_dim: int = 12, codebook_dim: int = 4,
+               hidden: int = 8, size: int = 5):
+    """A real ``RQVAE`` built from the arm's own tokenizer config, on CPU.
+
+    Issue #72: the previous body called ``T.RQVAE(hidden_channels=..., latent_dim=...,
+    num_codebooks=..., codebook_size=...)``, but ``RQVAE.__init__(self, config, *, in_dim)``
+    accepts none of those keyword names, so every call raised
+    ``TypeError: unexpected keyword argument 'hidden_channels'``. Because the committed R5 arm
+    suites only grep source text or assert module flags, that never surfaced and no R5 test ever
+    constructed a model. This now mirrors the working ``r4_common.r4_testkit.tiny_model``.
+    """
+    from types import SimpleNamespace  # noqa: PLC0415
+
+    base = T._tokenizer_config()
+    config = SimpleNamespace(
+        hidden_sizes=[hidden, hidden],
+        codebook_num=3,
+        codebook_size=(size, size, size),
+        codebook_dim=codebook_dim,
+        dropout=0.0,
+        beta=base.beta,
+        vq_type=base.vq_type,
+        ema_decay=base.ema_decay,
+        fix_code_embs=False,
+        sk_epsilon=base.sk_epsilon,
+        sk_iters=base.sk_iters,
     )
-    return model, None
+    torch.manual_seed(seed)
+    model = T.RQVAE(config, in_dim=in_dim)
+    model.eval()
+    return model, config
 
 
 def check_train_only(T) -> None:
