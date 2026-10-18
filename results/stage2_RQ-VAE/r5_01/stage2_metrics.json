@@ -1,0 +1,21 @@
+{
+  "arm": "r5_01",
+  "issue": 61,
+  "metric_name": "hard_l1_enrichment_ratio",
+  "metric_definition": "pos_share / neg_share on SID column 0",
+  "held_out_pairs": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+  "held_out_pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+  "canonical_sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+  "canonical_sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+  "baseline_er_l1": 16.38953942232631,
+  "n_positive_rows": 52855,
+  "n_negatives_per_row": 10,
+  "pos_share": 0.07963295809289565,
+  "neg_share": 0.004915334405448869,
+  "ER_L1": 16.20092378752887,
+  "exceeds_baseline_strictly": false,
+  "train_end_epoch": 3000,
+  "item_sids_sha256": "c6890564f1a72046b881f419cd10d4b36e0e21142e506656a670b147b1fbed00",
+  "checkpoint_sha256": "b54e8d466b02100f76da62ec21eae231e688f46d5441240a9eb7620b5f58f50e",
+  "sid_error": null
+}
