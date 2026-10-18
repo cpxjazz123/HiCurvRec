@@ -76,8 +76,19 @@ def test_stage3_gate_fail_closed_and_mock_launcher() -> None:
 
         # Prepare valid files using canonical SID as fixture
         sid_path.write_bytes(r4_gate.CANONICAL_SID_PATH.read_bytes())
-        ckpt_path.write_bytes(b"checkpoint-bytes")
-        metrics_path.write_text(json.dumps({"event": "train_end", "epoch": 3000}) + "\n", encoding="utf-8")
+        # Issue #72: the strict gate requires completion to be PROVABLE, so the positive fixture
+        # must supply the same evidence a real run does: a readable checkpoint carrying its own
+        # epoch metadata, and a linked ckpt_saved record. The previous fixture wrote the byte
+        # string b"checkpoint-bytes" and a lone train_end row, so it satisfied the old gate only
+        # because that gate defaulted a missing epoch to 3000 and never opened the checkpoint.
+        import torch  # noqa: PLC0415
+
+        torch.save({"state_dict": {}, "epoch": 3000, "selection": "final_epoch"}, ckpt_path)
+        metrics_path.write_text(
+            json.dumps({"event": "ckpt_saved", "epoch": 3000,
+                        "path": str(ckpt_path), "reason": "final_epoch"}) + "\n"
+            + json.dumps({"event": "train_end", "epoch": 3000}) + "\n",
+            encoding="utf-8")
 
         # 2. Equal to baseline (canonical Resample SID has ER_L1 == 16.38953942232631) -> False
         m_eq, gate_eq = r4_gate.evaluate(
