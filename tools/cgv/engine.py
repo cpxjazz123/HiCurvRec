@@ -94,6 +94,7 @@ def _pcgrad(g_l1: torch.Tensor, g_ref: torch.Tensor, *, eps: float = 1e-12) -> t
 
 MECHANISMS: dict[str, dict[str, Any]] = {
     "r4_08": {
+        "parent": "BEHAVIOR_SAMPLE_RQ-VAE",
         "detector": ("R4_08_PCGRAD_ENC",),
         "on_flag": "R4_08_PCGRAD_ENC",
         "rule": "project_l1_against_base",
@@ -101,6 +102,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project g_L1 against g_base when dot < 0",
     },
     "r5_01": {
+        "parent": "r4_08",
         "detector": ("R5_01_REVERSE_PCGRAD",),
         "on_flag": "R5_01_REVERSE_PCGRAD",
         "rule": "project_base_against_l1",
@@ -108,6 +110,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project g_base against g_L1, assemble the unprojected g_L1",
     },
     "r5_02": {
+        "parent": "r4_08",
         "detector": ("R5_02_RECON_REF",),
         "on_flag": "R5_02_RECON_REF",
         "rule": "project_l1_against_base",
@@ -115,6 +118,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project g_L1 against the recon-only gradient, assemble full g_base",
     },
     "r5_03": {
+        "parent": "r4_08",
         "detector": ("R5_03_QUANT_REF",),
         "on_flag": "R5_03_QUANT_REF",
         "rule": "project_l1_against_base",
@@ -122,6 +126,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project g_L1 against the quant-only gradient",
     },
     "r5_04": {
+        "parent": "r4_08",
         "detector": ("R5_04_BLOCKWISE",),
         "on_flag": "R5_04_BLOCKWISE",
         "rule": "blockwise_l1_against_base",
@@ -129,6 +134,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "per-Linear-block projection instead of one global vector",
     },
     "r5_05": {
+        "parent": "r4_08",
         "detector": ("R5_05_ALPHA",),
         "on_flag": "R5_05_ALPHA",
         "rule": "project_l1_against_base",
@@ -137,6 +143,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "half-strength projection",
     },
     "r5_06": {
+        "parent": "r4_08",
         "detector": ("R5_06_NORM_PRESERVE",),
         "on_flag": "R5_06_NORM_PRESERVE",
         "rule": "norm_restoring_projection",
@@ -144,6 +151,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "restore the original ||g_L1|| after projecting",
     },
     "r5_07": {
+        "parent": "r4_08",
         "detector": ("R5_07_COS_THRESHOLD",),
         "on_flag": "R5_07_COS_THRESHOLD",
         "rule": "cosine_gated_projection",
@@ -151,6 +159,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project only when cos(g_L1, g_base) < -0.2",
     },
     "r5_08": {
+        "parent": "r4_08",
         "detector": ("R5_08_LATE_START_EPOCH",),
         "on_flag": "R5_08_LATE_START_EPOCH",
         "rule": "project_l1_against_base",
@@ -158,6 +167,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "apply the projection only from epoch 2250",
     },
     "r5_09": {
+        "parent": "r4_08",
         "detector": ("R5_09_EMA_DECAY",),
         "on_flag": "R5_09_EMA_DECAY",
         "rule": "project_l1_against_base",
@@ -167,6 +177,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "summary": "project g_L1 against the EMA-smoothed base gradient",
     },
     "r5_10": {
+        "parent": "r4_08",
         "detector": ("R5_10_INTERLEVEL",),
         "on_flag": "R5_10_INTERLEVEL",
         "rule": "project_l1_against_base",
@@ -453,10 +464,15 @@ def identify_arm(T) -> str | None:
 # --------------------------------------------------------------------------------------
 # G1 -- forward consistency
 # --------------------------------------------------------------------------------------
-def gate_g1(T, spec) -> dict:
-    """The mechanism must not change the forward: identical model weights and inputs must give
-    identical reconstructed embeddings, quantisation loss, tokens and losses with the mechanism
-    on and off."""
+def gate_g1(T, spec, tree: Path | None = None) -> dict:
+    """The mechanism must not change the forward.
+
+    Two comparisons are required, and the second is the one that actually bites:
+      * with the mechanism's own flag ON vs OFF -- catches a flag-gated forward change;
+      * the arm's tree vs its declared PARENT tree -- catches an UNCONDITIONAL forward change,
+        which the flag comparison is blind to by construction (both sides mutate identically).
+    A gradient-only mechanism must match the parent bitwise on every forward observable.
+    """
     case_on = build_case(T)
     fingerprint_on = {
         "reconstructed": case_on["reconstructed"],
@@ -486,24 +502,70 @@ def gate_g1(T, spec) -> dict:
             setattr(T, flag, saved)
 
     diffs = {
-        "reconstructed": float((fingerprint_on["reconstructed"] - case_off["reconstructed"].detach())
-                               .abs().max()),
-        "quant_loss": abs(float(fingerprint_on["quant_loss"]) - float(case_off["quant_loss"])),
-        "base_loss": abs(fingerprint_on["base_loss"] - float(case_off["base_loss"].detach())),
-        "recon_loss": abs(fingerprint_on["recon_loss"] - float(case_off["recon_loss"].detach())),
-        "tokens": int((tok_on != tok_off).sum()),
+        "flag_on_vs_off_reconstructed":
+            float((fingerprint_on["reconstructed"] - case_off["reconstructed"].detach())
+                  .abs().max()),
+        "flag_on_vs_off_quant_loss":
+            abs(float(fingerprint_on["quant_loss"]) - float(case_off["quant_loss"])),
+        "flag_on_vs_off_base_loss":
+            abs(fingerprint_on["base_loss"] - float(case_off["base_loss"].detach())),
+        "flag_on_vs_off_recon_loss":
+            abs(fingerprint_on["recon_loss"] - float(case_off["recon_loss"].detach())),
+        "flag_on_vs_off_tokens": int((tok_on != tok_off).sum()),
     }
-    worst = max(diffs["reconstructed"], diffs["quant_loss"], diffs["base_loss"],
-                diffs["recon_loss"])
-    ok = worst == 0.0 and diffs["tokens"] == 0
+
+    parent_name = spec.get("parent")
+    compared_to_parent = False
+    if parent_name:
+        if tree is None:
+            diffs["parent_missing"] = 1.0
+        else:
+            parent_tree = REPO_ROOT / "stage2_RQ-VAE" / f"TIGER_{parent_name}"
+            if not parent_tree.is_dir():
+                diffs["parent_missing"] = 1.0
+            else:
+                P, ppath, pmods = load_trainer(parent_tree, module_name="cgv_parent_trainer")
+                try:
+                    torch.manual_seed(1234)
+                    parent_model = P.RQVAE(P._tokenizer_config(), in_dim=IN_DIM)
+                    parent_emb = torch.randn(
+                        2 * N_SRC,
+                        IN_DIM,
+                        generator=torch.Generator().manual_seed(1235),
+                    )
+                    parent_reconstructed, parent_quant_loss, _, _ = parent_model.forward(parent_emb)
+                    parent_base_loss, parent_recon_loss = parent_model.compute_loss(
+                        parent_emb, parent_reconstructed, parent_quant_loss)
+                    parent_model.eval()
+                    with torch.no_grad():
+                        parent_tokens = parent_model.get_indices(
+                            parent_emb, infer_use_sk=False)
+                    diffs["parent_reconstructed"] = float(
+                        (fingerprint_on["reconstructed"]
+                         - parent_reconstructed.detach()).abs().max())
+                    diffs["parent_quant_loss"] = abs(
+                        float(fingerprint_on["quant_loss"]) - float(parent_quant_loss.detach()))
+                    diffs["parent_base_loss"] = abs(
+                        fingerprint_on["base_loss"] - float(parent_base_loss.detach()))
+                    diffs["parent_recon_loss"] = abs(
+                        fingerprint_on["recon_loss"] - float(parent_recon_loss.detach()))
+                    diffs["parent_tokens"] = int((tok_on != parent_tokens).sum())
+                    compared_to_parent = True
+                finally:
+                    unload_trainer(ppath, pmods, module_name="cgv_parent_trainer")
+
+    worst = max(v for k, v in diffs.items() if isinstance(v, float))
+    token_diffs = sum(v for k, v in diffs.items() if k.endswith("tokens"))
+    ok = worst == 0.0 and token_diffs == 0
     return {
         "gate": "G1", "title": GATE_TITLES["G1"], "passed": ok,
         "detail": ("forward is bitwise identical with the mechanism on and off"
-                   if ok else "the mechanism changed the forward pass"),
+                   + (f" and against the {parent_name} parent" if compared_to_parent else ""))
+        if ok else "the mechanism changed the forward pass",
         "measurements": diffs,
         "finding": None if ok else (
             "a gradient-only mechanism must leave the forward bitwise identical; it changed "
-            f"{diffs}"),
+            f"{ {k: v for k, v in diffs.items() if v} }"),
     }
 
 
@@ -912,7 +974,29 @@ def gate_g6(T, spec, tmp: Path) -> dict:
     A plain two-epoch run is not enough: the behaviour weight ramps from 0, so an early run never
     reaches the mechanism. The ramp is forced open and the mechanism's functions are counted.
     """
-    counter = {"projection": 0, "conflicting": 0, "steps": 0}
+    counter = {
+        "projection": 0,
+        "conflicting": 0,
+        "optimizer_steps": 0,
+        "parameter_update_steps": 0,
+    }
+    real_step = torch.optim.AdamW.step
+
+    def counting_step(self, *args, **kwargs):
+        before = [
+            (parameter, parameter.detach().clone())
+            for group in self.param_groups
+            for parameter in group["params"]
+            if parameter.grad is not None
+        ]
+        result = real_step(self, *args, **kwargs)
+        counter["optimizer_steps"] += 1
+        if any(not torch.equal(previous, parameter.detach())
+               for parameter, previous in before):
+            counter["parameter_update_steps"] += 1
+        return result
+
+    torch.optim.AdamW.step = counting_step
 
     def instrument(module, fn_name):
         original = getattr(module, fn_name)
@@ -954,6 +1038,7 @@ def gate_g6(T, spec, tmp: Path) -> dict:
             except Exception as exc:  # noqa: BLE001
                 error = f"{type(exc).__name__}: {exc}"
     finally:
+        torch.optim.AdamW.step = real_step
         T.EPOCHS = saved_epochs
         if saved_weight_max is not None:
             T.BEHAVIOR_WEIGHT_MAX = saved_weight_max
@@ -963,25 +1048,40 @@ def gate_g6(T, spec, tmp: Path) -> dict:
             T.R4_08_PCGRAD_ENC = saved_gate
 
     produced = sorted(p.name for p in (tmp / "out").glob("*"))
-    passed = error is None and counter["projection"] > 0
+    passed = (
+        error is None
+        and counter["projection"] > 0
+        and counter["optimizer_steps"] > 0
+        and counter["parameter_update_steps"] > 0
+    )
+    if error is not None:
+        failure = f"main() raised {error}"
+    elif counter["projection"] == 0:
+        failure = "the verified gradient surgery was never reached"
+    elif counter["optimizer_steps"] == 0:
+        failure = "optimizer.step() was never called"
+    elif counter["parameter_update_steps"] == 0:
+        failure = "optimizer.step() was called but no parameter with a gradient changed"
+    else:
+        failure = "the real training entry did not satisfy the G6 checks"
     return {
         "gate": "G6", "title": GATE_TITLES["G6"], "passed": passed,
-        "detail": (f"the real training entry executed the gradient surgery "
-                   f"{counter['projection']} time(s) ({counter['conflicting']} on a genuine "
-                   f"conflict) in {time.time() - started:.1f}s")
-        if passed else
-        (f"the real training entry never reached the verified gradient surgery "
-         f"({counter['projection']} calls)"
-         + (f"; main() raised {error}" if error else "")),
+        "detail": (
+            f"the real training entry executed the gradient surgery "
+            f"{counter['projection']} time(s) ({counter['conflicting']} on a genuine conflict), "
+            f"called AdamW.step() {counter['optimizer_steps']} time(s), and changed parameters in "
+            f"{counter['parameter_update_steps']} step(s) in {time.time() - started:.1f}s"
+            if passed else f"the real training entry failed G6: {failure}"
+        ),
         "measurements": {"projection_calls": counter["projection"],
                          "conflicting_calls": counter["conflicting"],
+                         "optimizer_steps": counter["optimizer_steps"],
+                         "parameter_update_steps": counter["parameter_update_steps"],
                          "epochs_run": G6_EPOCHS,
                          "isolated_outputs": produced,
                          "elapsed_s": round(time.time() - started, 1),
                          "error": error},
-        "finding": None if passed else (
-            "training does not execute the code path the other gates verified -- either the "
-            "ramp keeps the behaviour weight at 0, or the mechanism is gated off"),
+        "finding": None if passed else f"training failed the G6 real-path check: {failure}",
     }
 
 
@@ -1032,7 +1132,7 @@ def run_cgv(tree: Path, *, gates: tuple[str, ...] = GATES) -> dict:
                                         "finding": None}
                 continue
             if gate == "G1":
-                result["gates"][gate] = gate_g1(T, spec)
+                result["gates"][gate] = gate_g1(T, spec, tree)
             elif gate == "G2":
                 result["gates"][gate] = gate_g2(T, spec)
             elif gate == "G3":
