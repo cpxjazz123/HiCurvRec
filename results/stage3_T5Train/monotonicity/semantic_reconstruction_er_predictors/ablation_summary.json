@@ -1,0 +1,698 @@
+{
+  "n_models_total": 38,
+  "n_models_recon": 32,
+  "n_models_full": 38,
+  "feature_sets_full": {
+    "M0": [
+      "log_er_l1"
+    ],
+    "M9": [
+      "log_er_l1",
+      "N_sem"
+    ]
+  },
+  "feature_sets_recon": {
+    "M0": [
+      "log_er_l1"
+    ],
+    "M8": [
+      "log_er_l1",
+      "R_cos_uniform"
+    ],
+    "M10": [
+      "log_er_l1",
+      "R_cos_uniform",
+      "log_er_l1:R_cos"
+    ]
+  },
+  "targets": {
+    "recall@10": {
+      "full_38": {
+        "sets": {
+          "M0": {
+            "features": [
+              "log_er_l1"
+            ],
+            "metrics": {
+              "mae": 0.0037528532923091088,
+              "rmse": 0.005460114402141783,
+              "oof_r2": 0.2959868715702424,
+              "oof_spearman": 0.6367217419849,
+              "n": 38
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 34,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 29,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 31,
+                "n_test": 7,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 37,
+                "n_test": 1,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 17,
+                "alpha": 0.1
+              }
+            ]
+          },
+          "M9": {
+            "features": [
+              "log_er_l1",
+              "N_sem"
+            ],
+            "metrics": {
+              "mae": 0.004417292427175722,
+              "rmse": 0.006631594342582963,
+              "oof_r2": -0.03851596700890503,
+              "oof_spearman": 0.3708283181967392,
+              "n": 38
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 34,
+                "n_test": 4,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 29,
+                "n_test": 9,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 31,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 37,
+                "n_test": 1,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 17,
+                "alpha": 100.0
+              }
+            ]
+          }
+        },
+        "deltas_vs_M0": {
+          "M9": {
+            "delta_mae": -0.0006644391348666128,
+            "ci95": [
+              -0.001373948266571058,
+              0.0001548554687300723
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.17704905657470754,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0017200738685566649,
+              "TIGER_FORK_RQ-VAE": 7.613178660469729e-05,
+              "TIGER_HYPERBOLIC_RQ-VAE": 0.0004148743374785002,
+              "TIGER_RQ-VAE": -0.002068382415491163,
+              "curvature_RQ-VAE": -0.0011699597457061903
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 0.001055634733690052,
+              "TIGER_FORK_RQ-VAE": -0.0007405709214713101,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.001079313472345113,
+              "TIGER_RQ-VAE": 0.00140394328062455,
+              "curvature_RQ-VAE": 0.0005055206108395775
+            }
+          }
+        }
+      },
+      "recon_32": {
+        "sets": {
+          "M0": {
+            "features": [
+              "log_er_l1"
+            ],
+            "metrics": {
+              "mae": 0.002834793969460892,
+              "rmse": 0.0046659782778142745,
+              "oof_r2": 0.476025119761889,
+              "oof_spearman": 0.7342375366568914,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 0.1
+              }
+            ]
+          },
+          "M8": {
+            "features": [
+              "log_er_l1",
+              "R_cos_uniform"
+            ],
+            "metrics": {
+              "mae": 0.004539464407498554,
+              "rmse": 0.006479508790538791,
+              "oof_r2": -0.010436925180630663,
+              "oof_spearman": 0.48350439882697943,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 100.0
+              }
+            ]
+          },
+          "M10": {
+            "features": [
+              "log_er_l1",
+              "R_cos_uniform",
+              "log_er_l1:R_cos"
+            ],
+            "metrics": {
+              "mae": 0.004496019744501719,
+              "rmse": 0.006344282365761533,
+              "oof_r2": 0.031298327229841494,
+              "oof_spearman": 0.4736070381231671,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 100.0
+              }
+            ]
+          }
+        },
+        "deltas_vs_M0": {
+          "M8": {
+            "delta_mae": -0.0017046704380376618,
+            "ci95": [
+              -0.0037651918228565682,
+              -4.444476424785536e-05
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.6013383887513518,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0006084783597724505,
+              "TIGER_FORK_RQ-VAE": -0.0001205679803725811,
+              "TIGER_HYPERBOLIC_RQ-VAE": 6.647143509784211e-05,
+              "TIGER_RQ-VAE": -0.0004783036871064683,
+              "curvature_RQ-VAE": -0.0046379477375764165
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0010961920782652113,
+              "TIGER_FORK_RQ-VAE": -0.0015841024576650807,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.001771141873135504,
+              "TIGER_RQ-VAE": -0.0012263667509311935,
+              "curvature_RQ-VAE": 0.0029332772995387547
+            }
+          },
+          "M10": {
+            "delta_mae": -0.0016612257750408272,
+            "ci95": [
+              -0.0037771584185136175,
+              -4.239854953709445e-06
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.58601287886779,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 5.5632271294691477e-05,
+              "TIGER_FORK_RQ-VAE": 1.0844307581707804e-05,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.0001114529886143828,
+              "TIGER_RQ-VAE": -0.0009296639579479821,
+              "curvature_RQ-VAE": -0.004706319797861087
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0017168580463355187,
+              "TIGER_FORK_RQ-VAE": -0.001672070082622535,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.0015497727864264444,
+              "TIGER_RQ-VAE": -0.0007315618170928451,
+              "curvature_RQ-VAE": 0.0030450940228202595
+            }
+          }
+        }
+      }
+    },
+    "ndcg@10": {
+      "full_38": {
+        "sets": {
+          "M0": {
+            "features": [
+              "log_er_l1"
+            ],
+            "metrics": {
+              "mae": 0.0021022243142411034,
+              "rmse": 0.003101630685472062,
+              "oof_r2": 0.23805798188746807,
+              "oof_spearman": 0.6211839369734107,
+              "n": 38
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 34,
+                "n_test": 4,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 29,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 31,
+                "n_test": 7,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 37,
+                "n_test": 1,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 17,
+                "alpha": 0.1
+              }
+            ]
+          },
+          "M9": {
+            "features": [
+              "log_er_l1",
+              "N_sem"
+            ],
+            "metrics": {
+              "mae": 0.0024191677686627414,
+              "rmse": 0.003675566049451888,
+              "oof_r2": -0.07001586589942299,
+              "oof_spearman": 0.3697341065762118,
+              "n": 38
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 34,
+                "n_test": 4,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 29,
+                "n_test": 9,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 31,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 37,
+                "n_test": 1,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 17,
+                "alpha": 100.0
+              }
+            ]
+          }
+        },
+        "deltas_vs_M0": {
+          "M9": {
+            "delta_mae": -0.000316943454421638,
+            "ci95": [
+              -0.0007498926124194444,
+              0.00017847912282435122
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.15076576380292397,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0008374859279221929,
+              "TIGER_FORK_RQ-VAE": 4.39747341369175e-05,
+              "TIGER_HYPERBOLIC_RQ-VAE": 0.0004296410133564027,
+              "TIGER_RQ-VAE": -0.0014500458548869222,
+              "curvature_RQ-VAE": -0.0006263012589513887
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 0.0005205424735005549,
+              "TIGER_FORK_RQ-VAE": -0.0003609181885585555,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.0007465844677780407,
+              "TIGER_RQ-VAE": 0.0011331024004652842,
+              "curvature_RQ-VAE": 0.00030935780452975067
+            }
+          }
+        }
+      },
+      "recon_32": {
+        "sets": {
+          "M0": {
+            "features": [
+              "log_er_l1"
+            ],
+            "metrics": {
+              "mae": 0.0015812178042829402,
+              "rmse": 0.0026464745298150918,
+              "oof_r2": 0.42245235425532923,
+              "oof_spearman": 0.7133431085043987,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 0.1
+              }
+            ]
+          },
+          "M8": {
+            "features": [
+              "log_er_l1",
+              "R_cos_uniform"
+            ],
+            "metrics": {
+              "mae": 0.0023867322731344655,
+              "rmse": 0.0035069317092601016,
+              "oof_r2": -0.014161217021116057,
+              "oof_spearman": 0.43804985337243396,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 1.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 100.0
+              }
+            ]
+          },
+          "M10": {
+            "features": [
+              "log_er_l1",
+              "R_cos_uniform",
+              "log_er_l1:R_cos"
+            ],
+            "metrics": {
+              "mae": 0.0023774274004889732,
+              "rmse": 0.003426207037745534,
+              "oof_r2": 0.03199057390751181,
+              "oof_spearman": 0.42778592375366564,
+              "n": 32
+            },
+            "folds": [
+              {
+                "held_family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+                "n_train": 28,
+                "n_test": 4,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_FORK_RQ-VAE",
+                "n_train": 23,
+                "n_test": 9,
+                "alpha": 0.1
+              },
+              {
+                "held_family": "TIGER_HYPERBOLIC_RQ-VAE",
+                "n_train": 25,
+                "n_test": 7,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "TIGER_RQ-VAE",
+                "n_train": 31,
+                "n_test": 1,
+                "alpha": 10.0
+              },
+              {
+                "held_family": "curvature_RQ-VAE",
+                "n_train": 21,
+                "n_test": 11,
+                "alpha": 100.0
+              }
+            ]
+          }
+        },
+        "deltas_vs_M0": {
+          "M8": {
+            "delta_mae": -0.0008055144688515253,
+            "ci95": [
+              -0.0018025355487397406,
+              -2.171407505813412e-06
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.5094266372853136,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.00011300669720383169,
+              "TIGER_FORK_RQ-VAE": -8.395683657271089e-05,
+              "TIGER_HYPERBOLIC_RQ-VAE": 4.211115537343835e-05,
+              "TIGER_RQ-VAE": -0.00019603636636802285,
+              "curvature_RQ-VAE": -0.002242506036956831
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0006925077716476936,
+              "TIGER_FORK_RQ-VAE": -0.0007215576322788144,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.0008476256242249637,
+              "TIGER_RQ-VAE": -0.0006094781024835025,
+              "curvature_RQ-VAE": 0.0014369915681053055
+            }
+          },
+          "M10": {
+            "delta_mae": -0.0007962095962060331,
+            "ci95": [
+              -0.0018133200309324298,
+              1.9088938582200463e-05
+            ],
+            "lower_bound_gt_zero": false,
+            "replicates": 2000,
+            "n_families": 5,
+            "relative_improvement": -0.5035420130290671,
+            "family_deltas": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 9.668353761736054e-05,
+              "TIGER_FORK_RQ-VAE": -5.2393732861491515e-06,
+              "TIGER_HYPERBOLIC_RQ-VAE": -4.738184862425874e-05,
+              "TIGER_RQ-VAE": -0.00044675073939450666,
+              "curvature_RQ-VAE": -0.002276351199065712
+            },
+            "leave_one_family_out": {
+              "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": -0.0008928931338233936,
+              "TIGER_FORK_RQ-VAE": -0.0007909702229198839,
+              "TIGER_HYPERBOLIC_RQ-VAE": -0.0007488277475817743,
+              "TIGER_RQ-VAE": -0.00034945885681152643,
+              "curvature_RQ-VAE": 0.001480141602859679
+            }
+          }
+        }
+      }
+    }
+  },
+  "topk_screening": {
+    "raw_ER": {
+      "precision_at_k": 0.9,
+      "hits": 9,
+      "k": 10,
+      "true_top_families": {
+        "TIGER_FORK_RQ-VAE": 5
+      },
+      "selected_families": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+        "TIGER_HYPERBOLIC_RQ-VAE": 1,
+        "TIGER_FORK_RQ-VAE": 4
+      }
+    },
+    "M0": {
+      "precision_at_k": 0.5,
+      "hits": 5,
+      "k": 10,
+      "true_top_families": {
+        "curvature_RQ-VAE": 0
+      },
+      "selected_families": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+        "TIGER_HYPERBOLIC_RQ-VAE": 1,
+        "curvature_RQ-VAE": 0
+      }
+    },
+    "M9": {
+      "precision_at_k": 0.5,
+      "hits": 5,
+      "k": 10,
+      "true_top_families": {
+        "curvature_RQ-VAE": 0
+      },
+      "selected_families": {
+        "TIGER_HYPERBOLIC_RQ-VAE": 1,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+        "curvature_RQ-VAE": 0
+      }
+    },
+    "scope": "All rankings use the same full 38-model pool; recon-subset TopK is not compared."
+  }
+}
