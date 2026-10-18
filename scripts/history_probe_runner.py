@@ -80,6 +80,15 @@ def run_arm(
     tr_idx, dev_idx = split_by_user(users, cfg.dev_user_fraction)
     n_tr, n_dev = len(tr_idx), len(dev_idx)
 
+    # Runtime guard: the split is a scattered set of SOURCE row ids, so anything
+    # that assumes a contiguous [train | dev] layout is wrong. Assert the two index
+    # sets are disjoint, cover every row exactly once, and share no user.
+    assert set(tr_idx.tolist()).isdisjoint(dev_idx.tolist()), "train/dev rows overlap"
+    assert n_tr + n_dev == len(users), "split does not cover every row"
+    assert set(users[tr_idx].tolist()).isdisjoint(users[dev_idx].tolist()), \
+        "a user appears on both sides of the split"
+    assert tr_idx.max() < len(users) and dev_idx.max() < len(users), "row id out of range"
+
     seq_all, _ = build_sequences(hist, targets, tokens_by_level, cfg.seq_len)
     del hist
     seq_all_t = torch.from_numpy(seq_all).to(device)
@@ -89,22 +98,17 @@ def run_arm(
         for l in range(len(LEVELS))
     ]
 
-    # Priors are fitted on the probe-TRAIN rows only and scored on the dev rows, so
-    # the reference never sees the rows it is being tested on.
-    # `targets` here are ITEM ids, not row indices; every train target is present in
-    # this arm's catalogue (asserted above), so the tables are exactly 256 wide.
-    priors_dev = [
-        torch.as_tensor(p, device=device, dtype=torch.float32)
-        for p in train_frequency_prior(tokens_by_level, targets[dev_idx])
-    ]
+    # The frequency prior is a TRAIN-only reference, fitted once per arm from
+    # targets[tr_idx] and used unchanged for both train and dev scoring. Fitting it
+    # on the dev labels would make G_H1 a measurement of memorisation, not of the
+    # information a history carries.
     priors_train = [
         torch.as_tensor(p, device=device, dtype=torch.float32)
         for p in train_frequency_prior(tokens_by_level, targets[tr_idx])
     ]
 
     train_rows = torch.from_numpy(tr_idx).to(device)
-    dev_rows = torch.arange(n_tr, n_tr + n_dev, device=device)
-    all_rows = torch.cat([train_rows, dev_rows])
+    dev_rows = torch.from_numpy(dev_idx).to(device)
 
     results: list[dict[str, Any]] = []
     for seed in seeds:
@@ -131,21 +135,32 @@ def run_arm(
                 torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
                 opt.step()
 
-        metrics = evaluate_probe(
-            model, seq_all_t, tgt_tokens, all_rows, dev_rows, priors_dev
-        )
+        metrics = evaluate_probe(model, seq_all_t, tgt_tokens, dev_rows, priors_train)
         train_metrics = evaluate_probe(
-            model, seq_all_t, tgt_tokens, all_rows, train_rows, priors_train
+            model, seq_all_t, tgt_tokens, train_rows, priors_train
         )
+        assert metrics["_n_scored"] == n_dev, "dev scoring did not cover dev_idx"
+        assert train_metrics["_n_scored"] == n_tr, "train scoring did not cover tr_idx"
+        metrics.pop("_n_scored", None)
         metrics["seed"] = seed
         metrics["seq_len"] = cfg.seq_len
         metrics["train_rows"] = n_tr
         metrics["dev_rows"] = n_dev
+        metrics["dev_row_id_sha256"] = _index_digest(dev_idx)
+        metrics["train_row_id_sha256"] = _index_digest(tr_idx)
         metrics["train_gain_l1"] = train_metrics["gain_l1"]
         metrics["train_probe_ce_l1"] = train_metrics["probe_ce_l1"]
+        metrics["train_prior_ce_l1"] = train_metrics["prior_ce_l1"]
         metrics["fit_seconds"] = round(time.time() - started, 2)
         results.append(metrics)
         del model, opt
         if device.type == "cuda":
             torch.cuda.empty_cache()
     return results
+
+
+def _index_digest(idx: np.ndarray) -> str:
+    """Hash of the exact scored row ids, so a leakage regression is visible in the CSV."""
+    import hashlib
+
+    return hashlib.sha256(np.ascontiguousarray(idx, dtype=np.int64).tobytes()).hexdigest()

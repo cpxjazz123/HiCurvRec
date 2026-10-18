@@ -218,7 +218,19 @@ def target_ambiguity(
     valid_targets: np.ndarray,
     catalogue_ids: np.ndarray,
 ) -> dict[str, Any]:
-    """F3: ambiguity weighted by how often an item is asked for as a valid target."""
+    """F3: ambiguity weighted by how often an item is asked for as a valid target.
+
+    Three distinct averages are reported and they are NOT interchangeable:
+
+      A_target            mean over held-out valid TARGETS of log m(y)
+                          (demand weighted; duplicate targets intentionally kept)
+      A_catalogue_uniform mean over CATALOGUE ITEMS of log m(i)
+                          (item weighted -- the correct reading of "uniform over the
+                          catalogue")
+      A_group_uniform     mean over OCCUPIED three-token groups of log(group size)
+                          (group weighted; kept only for audit, never called
+                          catalogue-uniform)
+    """
     code = np.full(sid.shape[0], -1, dtype=np.int64)
     code[catalogue_ids] = (
         sid[catalogue_ids, 0] * CODEBOOK_CAPACITY * CODEBOOK_CAPACITY
@@ -228,7 +240,11 @@ def target_ambiguity(
     group_size = np.bincount(code[catalogue_ids], minlength=CODEBOOK_CAPACITY ** 3)
     m = group_size[code[valid_targets]]
     log_m = np.log(m)
-    cat_m = group_size[group_size > 0]
+
+    occupied = group_size[group_size > 0]
+    # Item-uniform means "one draw per catalogue ITEM", so the per-item value is
+    # log of ITS group's size -- index the table by code, not by item id.
+    cat_log = np.log(group_size[code[catalogue_ids]])
 
     return {
         "A_target": float(log_m.mean()),
@@ -238,35 +254,23 @@ def target_ambiguity(
         "amb_p90_group_size": float(np.quantile(m, 0.90)),
         "amb_p99_group_size": float(np.quantile(m, 0.99)),
         "amb_max_group_size": int(m.max()),
-        "A_catalogue_uniform": float(np.log(cat_m).mean()),
-        "amb_distinct_catalogue_codes": int(cat_m.size),
+        "A_catalogue_uniform": float(cat_log.mean()),
+        "A_group_uniform": float(np.log(occupied).mean()),
+        "amb_distinct_catalogue_codes": int(occupied.size),
         "amb_valid_target_rows": int(len(valid_targets)),
         "amb_distinct_valid_targets": int(len(np.unique(valid_targets))),
     }
 
 
 def load_valid_target_ids() -> np.ndarray:
-    """Target item ids of the held-out valid pairs, in pair order, with repeats kept.
+    """Target item ids of the frozen held-out valid pairs, in pair order.
 
-    F3 weights a target by how often it is actually asked for, so duplicates are
-    intentional and are NOT deduplicated.
+    Read straight from ``behavior_pairs_valid_s42.npz['positives']`` rather than
+    re-derived from parquet: re-deriving invites a filter that silently disagrees
+    with the ER features, which is exactly the defect this round is repairing.
+    Duplicates are intentional -- F3 weights an item by how often it is asked for.
     """
-    import pandas as pd
-
-    df = pd.read_parquet(VALID_PARQUET, columns=["seen_history", "target"])
-    rows = [
-        (int(h[-1]), int(t))
-        for h, t in zip(df["seen_history"].to_numpy(), df["target"].to_numpy(dtype=np.int64))
-        if h is not None and len(h) > 0
-    ]
-    train = pd.read_parquet(TRAIN_PARQUET, columns=["seen_history", "target"])
-    train_pairs = {
-        (int(h[-1]), int(t))
-        for h, t in zip(train["seen_history"].to_numpy(), train["target"].to_numpy(dtype=np.int64))
-        if h is not None and len(h) > 0
-    }
-    held = np.array([t for (_, t) in rows if _ not in train_pairs], dtype=np.int64)
-    return held
+    return np.load(VALID_PAIRS)["positives"].astype(np.int64)
 
 
 def load_catalogue_ids() -> np.ndarray:
