@@ -20,8 +20,11 @@ import numpy as np
 
 import joint_prefix_lofo as L47
 
-OUT_DIR = Path(
+OLD_OUT_DIR = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/history_hierarchy_predictors"
+)
+OUT_DIR = Path(
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/history_hierarchy_predictors_fix48"
 )
 FEATURES_CSV = OUT_DIR / "per_model_features.csv"
 PROBES_CSV = OUT_DIR / "probe_scores.csv"

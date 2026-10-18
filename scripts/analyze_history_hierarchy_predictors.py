@@ -37,7 +37,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import history_hierarchy_features as H  # noqa: E402
 import joint_prefix_lofo as L47  # noqa: E402
 
-OUT_DIR = H.REPO_ROOT / "results/stage3_T5Train/monotonicity/history_hierarchy_predictors"
+OLD_OUT_DIR = H.REPO_ROOT / "results/stage3_T5Train/monotonicity/history_hierarchy_predictors"
+# The repaired round writes to its own directory; the #48 snapshot is preserved.
+OUT_DIR = H.REPO_ROOT / "results/stage3_T5Train/monotonicity/history_hierarchy_predictors_fix48"
 FEATURES_CSV = OUT_DIR / "per_model_features.csv"
 PROBES_CSV = OUT_DIR / "probe_scores.csv"
 

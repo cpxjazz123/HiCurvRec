@@ -166,24 +166,49 @@ def train_frequency_prior(
     return priors
 
 
+def conditional_prior_rows(
+    priors: list[torch.Tensor],
+    tokens_by_level: list[torch.Tensor],
+    rows: torch.Tensor,
+    level: int,
+) -> torch.Tensor:
+    """The prior's [B, 256] distribution for one level.
+
+    Level 1's table is the un-conditioned marginal, broadcast over the batch.
+    Deeper levels are indexed by the target's true earlier tokens only -- the same
+    context the probe is given, so the comparison is like-for-like. The result is
+    always a per-example distribution over the 256 code tokens, never a per-example
+    scalar, so callers can gather the true token and rank the vocabulary.
+    """
+    dist = priors[level - 1]
+    if level == 1:
+        return dist.unsqueeze(0).expand(rows.shape[0], -1)
+    cond = tuple(tokens_by_level[l][rows].long() for l in range(level - 1))
+    return dist[cond]
+
+
 def evaluate_probe(
     model: HistoryProbe,
     seq: torch.Tensor,
     tokens_by_level: list[torch.Tensor],
-    targets: torch.Tensor,
     idx: torch.Tensor,
     priors: list[torch.Tensor],
     batch_size: int = 4096,
 ) -> dict[str, Any]:
-    """Per-level NLL and top-B accuracy for the probe and the matched prior.
+    """Per-level NLL and Top-B accuracy for the probe and for the matched prior.
 
-    The prior sees exactly the same conditioning as the probe: the target's true
-    earlier levels, and nothing else. Evaluation is batched because a whole dev
-    split through the GRU at once is tens of gigabytes.
+    ``idx`` is an explicit index tensor into the ORIGINAL row order. It is never
+    synthesised from a range, because the train/dev split is a scattered set of
+    source rows rather than a contiguous block.
+
+    Evaluation is batched: a whole dev split through the GRU at once is tens of
+    gigabytes.
     """
     model.eval()
     sums: dict[str, float] = {}
     total = int(idx.numel())
+    if total == 0:
+        raise ValueError("evaluate_probe received an empty index set")
     with torch.no_grad():
         for start in range(0, total, batch_size):
             rows = idx[start : start + batch_size]
@@ -194,21 +219,26 @@ def evaluate_probe(
                 logits = logits_all[level - 1]
                 tgt = tokens_by_level[level - 1][rows]
 
-                # Index every conditioning level in ONE advanced-indexing call.
-                # Chaining `prior[prior[c1]][c2]` would materialise a (B, 256, 256)
-                # intermediate, which is gigabytes at this batch size.
-                prior_rows = priors[level - 1]
-                if level > 1:
-                    cond = tuple(
-                        tokens_by_level[l][rows].long() for l in range(level - 1)
+                prior_rows = conditional_prior_rows(
+                    priors, tokens_by_level, rows, level
+                )
+                if prior_rows.shape != (rows.shape[0], CODEBOOK_CAPACITY):
+                    raise ValueError(
+                        f"level {level}: prior must be [B, {CODEBOOK_CAPACITY}], "
+                        f"got {tuple(prior_rows.shape)}"
                     )
-                    prior_rows = prior_rows[cond]
-                if level == 1:
-                    prior_rows = prior_rows[tgt]
+                if not torch.isfinite(prior_rows).all():
+                    raise ValueError(f"level {level}: prior contains non-finite values")
+                row_sums = prior_rows.sum(dim=-1)
+                if not torch.allclose(row_sums, torch.ones_like(row_sums), atol=1e-4):
+                    raise ValueError(f"level {level}: prior rows are not normalised")
+
+                # Cross-entropy is the NLL of the TRUE token, not of the whole row.
+                true_p = prior_rows.gather(1, tgt[:, None]).squeeze(1).clamp_min(1e-12)
 
                 vals = {
                     f"probe_ce_l{level}": F.cross_entropy(logits, tgt).item() * len(rows),
-                    f"prior_ce_l{level}": -torch.log(prior_rows).sum().item(),
+                    f"prior_ce_l{level}": -torch.log(true_p).sum().item(),
                 }
                 for b in (1, 5, 20):
                     vals[f"probe_top{b}_acc_l{level}"] = float(
@@ -218,6 +248,7 @@ def evaluate_probe(
                         .sum()
                         .item()
                     )
+                    # Top-B ranks the 256 code tokens, never the batch axis.
                     vals[f"prior_top{b}_acc_l{level}"] = float(
                         (prior_rows.topk(b, dim=-1).indices == tgt[:, None])
                         .any(dim=1)
@@ -234,5 +265,5 @@ def evaluate_probe(
         gain = prior_nll - out[f"probe_ce_l{level}"]
         out[f"gain_l{level}"] = gain
         out[f"rel_gain_l{level}"] = gain / prior_nll if prior_nll else float("nan")
-    out["_dev_n"] = total
+    out["_n_scored"] = total
     return out
