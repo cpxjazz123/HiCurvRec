@@ -1,0 +1,13 @@
+$PY .../test_gate_strict_epoch.py   # AFTER the strict gate patch
+pass test_positive_control_gate_can_be_true
+pass test_train_end_epoch_returns_explicit_value
+pass test_missing_epoch_in_train_end_must_fail_closed
+pass test_gate_fails_closed_without_epoch_even_with_high_er
+pass test_stage3_launcher_never_called_on_false_gate
+pass test_fail_closed_matrix
+pass test_pairs_sha_mismatch_fails_closed
+pass test_r4_and_r5_gates_share_the_same_defect
+
+8/8 passed
+ALL TESTS PASSED
+rc=0

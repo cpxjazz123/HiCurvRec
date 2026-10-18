@@ -1,0 +1,292 @@
+{
+  "device": "cuda",
+  "torch": "2.8.0+cu128",
+  "arms": [
+    {
+      "arm": "r4_08",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 91/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.03981778988896567,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 134,
+      "fp32_sensitivity_rows": 91
+    },
+    {
+      "arm": "r5_01",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 122/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.04107861878228336,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 202,
+      "fp32_sensitivity_rows": 122
+    },
+    {
+      "arm": "r5_02",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 109/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.0430715418717208,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 190,
+      "fp32_sensitivity_rows": 109
+    },
+    {
+      "arm": "r5_03",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 108/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.040712571684223375,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 177,
+      "fp32_sensitivity_rows": 108
+    },
+    {
+      "arm": "r5_04",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 134/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.04063122788465445,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 189,
+      "fp32_sensitivity_rows": 134
+    },
+    {
+      "arm": "r5_05",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 134/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.03892300809370808,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 205,
+      "fp32_sensitivity_rows": 134
+    },
+    {
+      "arm": "r5_06",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 123/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.045064464961158346,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 208,
+      "fp32_sensitivity_rows": 123
+    },
+    {
+      "arm": "r5_07",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 110/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.03754016350103717,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 166,
+      "fp32_sensitivity_rows": 110
+    },
+    {
+      "arm": "r5_08",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 115/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.041444665880343234,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 189,
+      "fp32_sensitivity_rows": 115
+    },
+    {
+      "arm": "r5_09",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 127/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.04502379306137394,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 198,
+      "fp32_sensitivity_rows": 127
+    },
+    {
+      "arm": "r5_10",
+      "device": "cuda",
+      "verdict": "VERIFIED",
+      "detail": "checkpoint state_dict re-exports the committed SID exactly under the production configuration (24587 items x 4 tokens, 0 differing cells); under full fp32 125/24587 items flip, so the export is bit-reproducible only at the trainer's TF32 setting",
+      "checkpoint_epoch": 3000,
+      "checkpoint_selection": "final_epoch",
+      "checkpoint_collision": 0.043315573270427454,
+      "embedding_shape": [
+        24587,
+        768
+      ],
+      "embedding_sha_source": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+      "production_config": {
+        "precision": "high",
+        "allow_tf32": true,
+        "device": "cuda"
+      },
+      "shape_match": true,
+      "exact_match": true,
+      "differing_cells": 0,
+      "differing_rows": 0,
+      "total_cells": 98348,
+      "fp32_sensitivity_cells": 217,
+      "fp32_sensitivity_rows": 125
+    }
+  ]
+}

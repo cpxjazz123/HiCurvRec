@@ -1,0 +1,36 @@
+{
+  "arm": "r5_08",
+  "issue": 68,
+  "reported_historical_gate": {
+    "train_end_3000": true,
+    "stage3_allowed": false,
+    "measured_er_l1": 15.68685376661743,
+    "source": "results/stage2_RQ-VAE/r5_08/gate.json (unchanged by this audit)"
+  },
+  "strictly_verified_gate": {
+    "train_end_3000": false,
+    "strict_completion_proved": false,
+    "train_end_epoch_explicit": false,
+    "ckpt_saved_record_at_expected_epoch": true,
+    "checkpoint_readable": true,
+    "checkpoint_metadata_epoch": 3000,
+    "checkpoint_metadata_epoch_is_expected": true,
+    "checkpoint_path_matches": true,
+    "sid_linked_to_checkpoint": "not_recorded",
+    "ER_L1_above_baseline": false,
+    "stage3_allowed": false,
+    "train_end_epoch": null
+  },
+  "independent_corroboration": {
+    "ckpt_saved_epochs": [
+      3000
+    ],
+    "checkpoint_metadata": {
+      "epoch": 3000,
+      "selection": "final_epoch"
+    },
+    "sid_reproduction": "see sid_reproduction.json (11/11 exact under the trainer's TF32 setting)"
+  },
+  "uncertainty": "The strict gate reports completion UNPROVEN because the historical train_end record carries no epoch. That is a missing-evidence verdict, not a claim that the runs were incomplete: the ckpt_saved(epoch=3000) record, the checkpoint's own epoch metadata and the byte-exact SID reproduction all corroborate completion.",
+  "strict_verdict": "stage3_allowed_false"
+}

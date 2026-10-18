@@ -618,3 +618,11 @@ results/stage3_T5Train/tiger_sample_ANCHOR*/logs/tensorboard/
 # reason as the train-based set: the reported sharing rates and enrichment
 # ratios cannot be recomputed without it. Scoped to this one path.
 !results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz
+
+# 2026-10-19 (issue #71): the R4/R5 gradient-integrity audit must publish its small run logs and
+# manifests as evidence, while the blanket logs/ rule above stays in force everywhere else.
+!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/
+!results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/**
+# 2026-10-19 (issue #71): the DDP audit persists its per-rank tensors only so the parent process can
+# read them back; they are multi-MB scratch, the small JSON summaries are the evidence.
+results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/ddp_artifacts/*.pt
