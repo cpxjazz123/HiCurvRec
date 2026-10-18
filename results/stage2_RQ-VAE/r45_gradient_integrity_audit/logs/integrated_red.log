@@ -1,0 +1,32 @@
+R5_TEST_TREE=/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r4_08 $PY results/stage2_RQ-VAE/r45_gradient_integrity_audit/test_integrated_r4_r5.py
+conflict seeds (recomputed scan, 0..39): [1, 4, 5, 6, 7, 10, 11, 12, 13, 15, 16, 22, 23, 24, 26, 28, 29, 30, 32, 36, 37]
+seeds used as conflict fixtures: [1, 4, 5, 12, 16, 30, 32, 36]
+  PCGrad-off vs plain: worst encoder-grad abs diff 4.470e-08 (float32 reassociation noise)
+pass test_r4_08_disabled_matches_plain_resample_backward
+pass test_r4_08_projection_matches_hand_computed_assembly
+  dot-scan: {'no_conflict': 9, 'conflict': 11} over seeds 0..19
+pass test_r4_08_projection_only_acts_on_negative_dot
+pass test_r4_08_zero_base_gradient_is_passthrough
+pass test_r4_08_non_finite_gradient_fails_closed
+pass test_unused_parameters_get_zero_gradients
+pass test_absent_l1_term_is_handled
+pass test_non_encoder_gradients_untouched_without_clipping
+  shared clip multiplier 0.463740 from total_norm 2.1564
+pass test_clipping_multiplier_shared_not_equality
+FAIL test_r5_01_projects_base_and_keeps_l1_unprojected
+     r5_01 must assemble g_base_projected + scale * (g_l1_original + g_other)
+  [RED] train_rqvae has no flag 'R5_01_REVERSE_PCGRAD'; treating it as parent behaviour
+FAIL test_r5_01_off_is_pcgrad_free_not_r4_08
+     R5-01 with its delta off must reproduce the PCGrad-free assembly, off by 0.005059297662228346
+  [RED] train_rqvae has no flag 'R5_02_RECON_REF'; treating it as parent behaviour
+FAIL test_r5_02_disabled_parity_is_pcgrad_free
+     R5-02 delta off must reproduce the PCGrad-free assembly, off by 0.005059297662228346
+FAIL test_r5_02_uses_recon_only_reference_and_full_base
+     r5_02 must project g_L1 against g_recon and assemble the full g_base
+  reference-choice divergence at seed 1: flips=False l2=2.135356e-01 dot_base=-3.0019e-03 dot_recon=-1.0018e-03
+FAIL test_r5_02_reference_choice_changes_the_decision
+     r5_02 must follow the recon reference, not the base reference
+
+9/14 passed
+INTEGRATED_TESTS_RED
+rc=1

@@ -1,0 +1,42 @@
+$PY results/stage2_RQ-VAE/r45_gradient_integrity_audit/test_ddp_gradient_equivalence.py
+  -> test_two_ranks_complete_without_deadlock
+    [Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+    [Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+    scenario r4_08: ranks exited [0, 0] in 6.7s
+    [r4_08] driver exited 0 in 9.7s
+  both ranks finished with no deadlock
+pass test_two_ranks_complete_without_deadlock
+  -> test_projection_consumes_globally_pooled_components
+  production pooled ['0.03234116', '4.82487631', '0.00000000'] == independent mean ['0.03234116', '4.82487631', '0.00000000']
+pass test_projection_consumes_globally_pooled_components
+  -> test_no_double_averaging
+  ||mean|| = 0.032341, ||sum|| = 0.064682, ratio = 2.000000000 (exactly 2)
+pass test_no_double_averaging
+  -> test_projection_uses_globally_averaged_both_gradients
+    [Gloo] Rank 0 is connected to 1[Gloo] Rank  peer ranks. Expected number of connected peer ranks is : 1
+    1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+    scenario r4_08_synth: ranks exited [0, 0] in 3.2s
+    [r4_08_synth] driver exited 0 in 6.2s
+  local dots -185248.0 / +370496.0, projections fired = 0, ranks bitwise identical
+pass test_projection_uses_globally_averaged_both_gradients
+  -> test_ranks_synchronised_after_step
+  weights bitwise identical across ranks after the step
+pass test_ranks_synchronised_after_step
+  -> test_decoder_codebook_gradients_reduced_but_not_touched_by_projection
+  non-encoder ||grad|| reduced by the reducer: 0.22215609 -> 0.19291170
+pass test_decoder_codebook_gradients_reduced_but_not_touched_by_projection
+  -> test_r5_04_per_layer_pooled_norms
+  4 blocks; pooled global dot +2.1326e-03; block dots ['+1.707e-05', '+1.008e-03', '+9.781e-04', '+1.295e-04']
+  a block decision differs from the whole-vector decision: False
+pass test_r5_04_per_layer_pooled_norms
+  -> test_r5_09_ema_buffers_identical_on_both_ranks
+    [Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+    [Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+    scenario r5_09: ranks exited [0, 0] in 13.2s
+    [r5_09] driver exited 0 in 16.3s
+  EMA buffers identical across ranks (8 tensors), first |m| sums [0.127286404371, 0.013501757756, 3.599045991898]
+pass test_r5_09_ema_buffers_identical_on_both_ranks
+
+8/8 passed
+ALL TESTS PASSED
+rc=0

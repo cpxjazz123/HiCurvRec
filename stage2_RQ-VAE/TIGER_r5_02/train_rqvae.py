@@ -38,6 +38,7 @@ The delayed ramp stays as the baseline's: 0 at epoch 1500, 0.2 at epoch 3000.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -603,6 +604,16 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
             result[item_id, :-1] = np.asarray(row, dtype=np.int64)
             result[item_id, -1] = int(offsets[-1] + occurrence)
     return result
+
+
+
+def _sha256_file(path) -> str:
+    """SHA256 of a finished artefact, for provenance recorded in the train_end event."""
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def behavior_weight(epoch: int) -> float:
@@ -1720,7 +1731,14 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(rank, "train_end", epoch=EPOCHS, total_wall_time_s=round(time.time() - _T0, 3),
+                 final_collision=final_collision, checkpoint_selection="final_epoch",
+                 sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID),
+                 output_json=str(OUTPUT_JSON),
+                 # issue #71: log the epoch EXPLICITLY and the exported SID digest so the
+                 # shared gate can prove completion instead of defaulting it to 3000.
+                 output_json_sha256=_sha256_file(OUTPUT_JSON),
+                 unique_after_extend=len(np.unique(sid, axis=0)))
 
     if world_size > 1:
         dist.barrier()

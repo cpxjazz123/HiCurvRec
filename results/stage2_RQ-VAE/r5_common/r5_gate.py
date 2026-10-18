@@ -83,7 +83,13 @@ def hard_l1_er(sid_matrix: np.ndarray) -> dict[str, Any]:
 
 
 def train_end_epoch(metrics_path: Path) -> int | None:
-    """Epoch of the last ``train_end`` row, or None when the run never finished."""
+    """Epoch of the last ``train_end`` row, or None when the run never finished.
+
+    STRICT (issue #71): the epoch must be *explicitly present* in the record. The previous
+    implementation used ``int(row.get("epoch", 3000))``, which promoted any epoch-less
+    ``train_end`` to 3000 by the default value itself -- a fail-open, because a malformed or
+    truncated record then looked like a complete run. A missing epoch now fails closed.
+    """
     if not metrics_path.is_file():
         return None
     epoch: int | None = None
@@ -91,8 +97,96 @@ def train_end_epoch(metrics_path: Path) -> int | None:
         for line in handle:
             row = json.loads(line)
             if row.get("event") == "train_end":
-                epoch = int(row.get("epoch", 3000))
+                raw = row.get("epoch")
+                epoch = None if raw is None else int(raw)
     return epoch
+
+
+def ckpt_saved_epochs(metrics_path: Path) -> list[int]:
+    """Epochs of every ``ckpt_saved`` record, in file order."""
+    epochs: list[int] = []
+    if not metrics_path.is_file():
+        return epochs
+    with metrics_path.open() as handle:
+        for line in handle:
+            row = json.loads(line)
+            if row.get("event") == "ckpt_saved" and row.get("epoch") is not None:
+                epochs.append(int(row["epoch"]))
+    return epochs
+
+
+def checkpoint_metadata(ckpt_path: Path) -> dict[str, Any] | None:
+    """``{epoch, selection}`` read from a saved checkpoint, or None when unreadable.
+
+    STRICT (issue #71): the checkpoint's OWN metadata must corroborate completion; previously
+    the gate never opened the checkpoint and trusted the JSONL alone.
+    """
+    try:
+        import torch
+
+        payload = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    except Exception:  # noqa: BLE001 - any failure must fail the gate closed
+        return None
+    if not isinstance(payload, dict) or payload.get("epoch") is None:
+        return None
+    return {"epoch": int(payload["epoch"]), "selection": payload.get("selection")}
+
+
+def strict_completion(
+    metrics_path: Path,
+    ckpt_path: Path,
+    item_sids_path: Path | None = None,
+    expected_epoch: int = 3000,
+) -> dict[str, Any]:
+    """STRICT (issue #71 §1): prove 3000-epoch completion instead of assuming it.
+
+    Requires ALL of:
+      * a ``train_end`` row whose ``epoch`` is explicitly ``expected_epoch``;
+      * a ``ckpt_saved`` row for the same epoch;
+      * a readable checkpoint whose own metadata ``epoch == expected_epoch``;
+      * a ``train_end``/``ckpt_saved`` path that actually points at this checkpoint.
+    """
+    epoch = train_end_epoch(metrics_path)
+    saved = ckpt_saved_epochs(metrics_path)
+    meta = checkpoint_metadata(ckpt_path) if ckpt_path.is_file() else None
+    declared_path = None
+    declared_sid_sha = None
+    if metrics_path.is_file():
+        with metrics_path.open() as handle:
+            for line in handle:
+                row = json.loads(line)
+                if row.get("event") in {"train_end", "ckpt_saved"} and row.get("path"):
+                    declared_path = str(row["path"])
+                if row.get("event") == "train_end" and row.get("output_json_sha256"):
+                    declared_sid_sha = str(row["output_json_sha256"])
+    # Runs predating this field record nothing, which is an explicit uncertainty rather than a
+    # pass: "not_recorded". The audit manifest supplies the byte-level SID<->checkpoint proof for
+    # those runs (see verify_sid_from_checkpoint.py). A recorded-but-different SHA is False.
+    if declared_sid_sha is None:
+        sid_linkage: Any = "not_recorded"
+    elif item_sids_path is None or not item_sids_path.is_file():
+        sid_linkage = False
+    else:
+        sid_linkage = declared_sid_sha == sha256_file(item_sids_path)
+    return {
+        "train_end_epoch_explicit": epoch is not None,
+        "train_end_epoch": epoch,
+        "train_end_epoch_is_expected": epoch == expected_epoch,
+        "ckpt_saved_record_at_expected_epoch": expected_epoch in saved,
+        "checkpoint_readable": meta is not None,
+        "checkpoint_metadata_epoch": None if meta is None else meta["epoch"],
+        "checkpoint_metadata_epoch_is_expected": bool(meta and meta["epoch"] == expected_epoch),
+        "checkpoint_selection": None if meta is None else meta["selection"],
+        "checkpoint_path_declared": declared_path,
+        "checkpoint_path_matches": bool(declared_path and Path(declared_path).name
+                                        == ckpt_path.name),
+        "sid_linked_to_checkpoint": sid_linkage,
+        "strict_completion_proved": bool(
+            epoch == expected_epoch
+            and expected_epoch in saved
+            and meta is not None
+            and meta["epoch"] == expected_epoch),
+    }
 
 
 def evaluate(
@@ -126,6 +220,8 @@ def evaluate(
             sid_error = f"{type(exc).__name__}: {exc}"
 
     epoch = train_end_epoch(metrics_path)
+    ckpt_path = item_sids_path.parent / "rqvae_best.pth"
+    completion = strict_completion(metrics_path, ckpt_path, item_sids_path)
     expected_canonical_sha = canonical_sid_sha or CANONICAL_SID_SHA256
     actual_canonical_sha = sha256_file(CANONICAL_SID_PATH) if CANONICAL_SID_PATH.is_file() else None
     actual_pairs_sha = sha256_file(PAIRS_PATH) if PAIRS_PATH.is_file() else None
@@ -154,6 +250,7 @@ def evaluate(
         **er,
         "exceeds_baseline_strictly": positive_delta,
         "train_end_epoch": epoch,
+        "strict_completion": completion,
         "item_sids_sha256": sid_sha,
         "checkpoint_sha256": ckpt_sha,
         "sid_error": sid_error,
@@ -165,6 +262,16 @@ def evaluate(
         "issue": issue,
         "tests_passed": bool(tests_passed),
         "train_end_3000": epoch == 3000,
+        "strict_completion_proved": completion["strict_completion_proved"],
+        "train_end_epoch_explicit": completion["train_end_epoch_explicit"],
+        "ckpt_saved_record_at_expected_epoch":
+            completion["ckpt_saved_record_at_expected_epoch"],
+        "checkpoint_readable": completion["checkpoint_readable"],
+        "checkpoint_metadata_epoch": completion["checkpoint_metadata_epoch"],
+        "checkpoint_metadata_epoch_is_expected":
+            completion["checkpoint_metadata_epoch_is_expected"],
+        "checkpoint_path_matches": completion["checkpoint_path_matches"],
+        "sid_linked_to_checkpoint": completion["sid_linked_to_checkpoint"],
         "hashes_valid": hashes_valid,
         "pos_neg_support_valid": bool(pos_neg_support_valid),
         "isfinite_ER_L1": finite_er,
@@ -178,6 +285,8 @@ def evaluate(
     gate["stage3_allowed"] = bool(
         gate["tests_passed"]
         and gate["train_end_3000"]
+        and gate["strict_completion_proved"]
+        and gate["sid_linked_to_checkpoint"] is not False
         and gate["hashes_valid"]
         and gate["pos_neg_support_valid"]
         and gate["isfinite_ER_L1"]
