@@ -1,0 +1,63 @@
+{
+  "git_sha": "83f490509b7f3ccd46498db96fe0aef45a6e569e",
+  "task": "Issue #50: Semantic reconstruction quality vs L1 Hard ER for Stage 3 Recall",
+  "inputs": {
+    "sentence_t5": {
+      "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+      "shape": [
+        24587,
+        768
+      ],
+      "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+    },
+    "model_inventory": {
+      "path": "results/stage3_T5Train/monotonicity/model_inventory.json",
+      "n_models": 38,
+      "families": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+        "TIGER_FORK_RQ-VAE": 9,
+        "TIGER_HYPERBOLIC_RQ-VAE": 7,
+        "curvature_RQ-VAE": 17,
+        "TIGER_RQ-VAE": 1
+      }
+    },
+    "valid_behavior_pairs": {
+      "path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "canonical_l1_hard_er": 16.38953942232631,
+      "positives": 52855,
+      "negatives_per_positive": 10
+    }
+  },
+  "coverage": {
+    "total_models": 38,
+    "neighborhood_available": 38,
+    "recon_available": 32,
+    "recon_missing": 6,
+    "missing_models": [
+      "l2_cone_arms/A_euclid_nocone_s42",
+      "l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "l2_cone_arms/B_poincare_nocone_s42",
+      "l2_assignment_arms/B_global_sinkhorn_s42",
+      "l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "l2_cone_arms/D_poincare_cone_s42"
+    ],
+    "missing_reason": "checkpoints_never_committed_to_git"
+  },
+  "feature_definitions": {
+    "N_sem": "Tie-aware expected Top-20 text-neighbor prefix overlap under uniform random tie-breaking",
+    "semantic_AUC": "Semantic pair discrimination AUC between Top-20 text positives and matched negatives",
+    "R_cos_uniform": "Catalogue-uniform mean cosine similarity between Sentence-T5 and faithful 3-token SID reconstruction",
+    "R_mse_uniform": "Catalogue-uniform mean squared error per item dimension (diff_sq / 768)",
+    "R_norm_uniform": "Catalogue-uniform relative reconstruction norm (diff_sq / norm_sq)",
+    "log_er_l1": "Natural logarithm of held-out valid L1 Hard behavioral ER (from #49 audited recheck)"
+  },
+  "lofo_protocol": {
+    "model": "Ridge (train-fold-only standardization, inner grouped CV alpha grid [0.1, 1.0, 10.0, 100.0])",
+    "outer_cv": "Leave-One-Family-Out (5 families)",
+    "bootstrap": "Paired 95% family-cluster bootstrap (2000 replicates, seed 42)",
+    "subsets": {
+      "full_38": "M0 (log_er_l1) vs M9 (log_er_l1 + N_sem)",
+      "recon_32": "M0 (log_er_l1) vs M8 (log_er_l1 + R_cos) vs M10 (log_er_l1 + R_cos + log_er_l1:R_cos)"
+    }
+  }
+}
