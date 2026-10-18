@@ -1,0 +1,231 @@
+{
+  "arm": "r5_01",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r5_01",
+  "trainer": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r5_01/train_rqvae.py",
+  "trainer_sha256": "a158077f98ac118156cedf5677b267ff5aa6d40b27b8fdcd4c9bf84aecaeb2ec",
+  "checked_utc": "2026-10-18T14:53:52Z",
+  "gates": {
+    "G1": {
+      "gate": "G1",
+      "title": "forward consistency",
+      "passed": true,
+      "detail": "forward is bitwise identical with the mechanism on and off",
+      "measurements": {
+        "reconstructed": 0.0,
+        "quant_loss": 0.0,
+        "base_loss": 0.0,
+        "recon_loss": 0.0,
+        "tokens": 0
+      },
+      "finding": null
+    },
+    "G2": {
+      "gate": "G2",
+      "title": "gradient path",
+      "passed": true,
+      "detail": "the declared reference term 'l1_loss' delivers gradient to the encoder (norm 6.425e+00) and is read by this arm",
+      "measurements": {
+        "discovered_dependencies": {
+          "base_loss": 0.08373689651489258,
+          "l1_loss": 1.0722733736038208,
+          "other_loss": 0.019131401553750038
+        },
+        "encoder_gradient_norms": {
+          "base_loss": 0.031023873016238213,
+          "l1_loss": 6.4248833656311035,
+          "other_loss": 0.0,
+          "recon_loss": 0.005502329207956791,
+          "quant_loss": 0.030582280829548836
+        },
+        "declared_reference_term": "l1_loss",
+        "declared_reference_effective_term": "l1_loss",
+        "declared_reference_norm": 6.4248833656311035
+      },
+      "warnings": [
+        "other_loss is read by the shared assembly but delivers no encoder gradient (norm 0.000e+00)"
+      ],
+      "finding": null
+    },
+    "G3": {
+      "gate": "G3",
+      "title": "gradient direction",
+      "passed": true,
+      "detail": "max deviation from project_base_against_l1 over 8 (seed, epoch) probes = 0.000e+00; the mechanism changes the encoder gradient on 8/8 probes (e.g. ['seed1@epoch3000', 'seed4@epoch3000', 'seed5@epoch3000', 'seed12@epoch3000', 'seed16@epoch3000', 'seed30@epoch3000', 'seed32@epoch3000', 'seed36@epoch3000'])",
+      "measurements": {
+        "per_seed": [
+          {
+            "seed": 1,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.0030019304249435663,
+            "distance_from_parent_rule": 0.01912345178425312
+          },
+          {
+            "seed": 4,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.0025006704963743687,
+            "distance_from_parent_rule": 0.01553130242973566
+          },
+          {
+            "seed": 5,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.004801199771463871,
+            "distance_from_parent_rule": 0.022561151534318924
+          },
+          {
+            "seed": 12,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.0034940876066684723,
+            "distance_from_parent_rule": 0.01943790167570114
+          },
+          {
+            "seed": 16,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.0026198916602879763,
+            "distance_from_parent_rule": 0.014079177752137184
+          },
+          {
+            "seed": 30,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.011487807147204876,
+            "distance_from_parent_rule": 0.05717629939317703
+          },
+          {
+            "seed": 32,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.006130796857178211,
+            "distance_from_parent_rule": 0.04183030128479004
+          },
+          {
+            "seed": 36,
+            "epoch": 3000,
+            "deviation_from_formula": 0.0,
+            "dot_l1_base": -0.006698114797472954,
+            "distance_from_parent_rule": 0.04942304268479347
+          }
+        ],
+        "max_deviation_from_formula": 0.0,
+        "seeds_where_mechanism_differs": [
+          "seed1@epoch3000",
+          "seed4@epoch3000",
+          "seed5@epoch3000",
+          "seed12@epoch3000",
+          "seed16@epoch3000",
+          "seed30@epoch3000",
+          "seed32@epoch3000",
+          "seed36@epoch3000"
+        ],
+        "rule": "project_base_against_l1",
+        "reference_term": "l1_loss",
+        "distinguishes_from_parent": true
+      },
+      "finding": null
+    },
+    "G4": {
+      "gate": "G4",
+      "title": "parameter update",
+      "passed": true,
+      "detail": "encoder moved 1.002e-03, non-encoder 1.036e-03, both within 1.192e-07 of the closed-form AdamW prediction, optimizer recorded exactly [1] step(s)",
+      "measurements": {
+        "encoder_max_abs_delta": 0.0010017752647399902,
+        "non_encoder_max_abs_delta": 0.0010361671447753906,
+        "encoder_update_prediction_error": 1.4901161193847656e-08,
+        "non_encoder_update_prediction_error": 1.1920928955078125e-07,
+        "optimizer_steps": [
+          1
+        ]
+      },
+      "finding": null
+    },
+    "G5": {
+      "gate": "G5",
+      "title": "DDP consistency",
+      "passed": true,
+      "detail": "the projection consumed the mean over the ranks' local gradients (production ['0.03234116', '4.82487631', '0.00000000'] == independent ['0.03234116', '4.82487631', '0.00000000']) and both ranks hold bitwise identical weights after the AdamW step",
+      "measurements": {
+        "production_pooled_component_norms": [
+          0.032341163605451584,
+          4.824876308441162,
+          0.0
+        ],
+        "independent_pooled_component_norms": [
+          0.032341163605451584,
+          4.824876308441162,
+          0.0
+        ],
+        "pooled_components_match": true,
+        "ranks_bitwise_identical": true,
+        "local_batch_rows": {
+          "0": 24,
+          "1": 20
+        },
+        "elapsed_s": 8.3
+      },
+      "finding": null
+    },
+    "G6": {
+      "gate": "G6",
+      "title": "real training entry",
+      "passed": true,
+      "detail": "the real training entry executed the gradient surgery 48 time(s) (48 on a genuine conflict) in 3.7s",
+      "measurements": {
+        "projection_calls": 48,
+        "conflicting_calls": 48,
+        "epochs_run": 2,
+        "isolated_outputs": [],
+        "elapsed_s": 3.7,
+        "error": null
+      },
+      "finding": null
+    }
+  },
+  "passed": true,
+  "mechanism": {
+    "name": "r5_01",
+    "detector": [
+      "R5_01_REVERSE_PCGRAD"
+    ],
+    "on_flag": "R5_01_REVERSE_PCGRAD",
+    "rule": "project_base_against_l1",
+    "reference_term": "l1_loss",
+    "summary": "project g_base against g_L1, assemble the unprojected g_L1"
+  },
+  "summary": {
+    "G1": {
+      "passed": true,
+      "title": "forward consistency",
+      "prevents": "unintended changes to the loss, the quantisation result, or the sampling"
+    },
+    "G2": {
+      "passed": true,
+      "title": "gradient path",
+      "prevents": "a loss term that contributes nothing to the targeted parameters (the R5-10 class)"
+    },
+    "G3": {
+      "passed": true,
+      "title": "gradient direction",
+      "prevents": "wrong projection direction, coefficient, or sign"
+    },
+    "G4": {
+      "passed": true,
+      "title": "parameter update",
+      "prevents": "a mechanism that is present but has no effect on the parameters"
+    },
+    "G5": {
+      "passed": true,
+      "title": "DDP consistency",
+      "prevents": "double all-reduce, or per-rank divergence under DDP"
+    },
+    "G6": {
+      "passed": true,
+      "title": "real training entry",
+      "prevents": "tests passing against a code path training never executes"
+    }
+  }
+}

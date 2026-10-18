@@ -1199,6 +1199,21 @@ def tool_stage2_start(source_dir: str) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
+    # CGV: a mechanism may only train once all six verification gates pass, and the certificate
+    # must still describe this exact trainer source. Checked before anything is archived or
+    # dispatched, so a refusal has no side effect.
+    try:
+        cgv_engine = _cgv_engine()
+        cgv_ok, cgv_why = cgv_engine.certificate_is_valid(Path(tree))
+    except Exception as exc:  # noqa: BLE001 - fail closed, never train unverified
+        cgv_ok, cgv_why = False, f"CGV could not be evaluated ({type(exc).__name__}: {exc})"
+    context["cgv_gate"] = {"passed": cgv_ok, "note": cgv_why}
+    if not cgv_ok:
+        return {
+            "started": False,
+            "refused": f"CGV gate: {cgv_why}",
+            **context,
+        }
     refusal = stage2_launch_decision(gpu_probe)
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
@@ -1855,6 +1870,104 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
 
 
 
+# --------------------------------------------------------------------------
+# CGV -- Computational Graph & Gradient Verification
+# --------------------------------------------------------------------------
+def _cgv_engine():
+    """Import the CGV engine on demand so a missing checkout cannot kill the server."""
+    # the package root, not the package directory: `cgv.engine` needs `cgv/__init__.py`
+    tools_dir = REPO / "tools"
+    if str(tools_dir) not in sys.path:
+        sys.path.insert(0, str(tools_dir))
+    import cgv.engine as engine  # noqa: PLC0415
+
+    return engine
+
+
+def cgv_gate_table() -> dict:
+    """The six gates, what each verifies, and what each one prevents."""
+    engine = _cgv_engine()
+    return {
+        gate: {
+            "title": engine.GATE_TITLES[gate],
+            "verifies": {
+                "G1": "the mechanism changes only the computation it declares",
+                "G2": "every loss term it depends on reaches its target parameters",
+                "G3": "the executed gradient matches the mechanism's own formula",
+                "G4": "the optimizer really performs the predicted update",
+                "G5": "multi-rank gradients match an independent pooled reference",
+                "G6": "the verified path is the one training actually executes",
+            }[gate],
+            "prevents": engine.GATE_PREVENTS[gate],
+        }
+        for gate in engine.GATES
+    }
+
+
+def tool_cgv_check(source_dir: str) -> dict:
+    """Run the six CGV gates against one Stage2 tree and issue its certificate.
+
+    Every new mechanism must pass all six gates BEFORE it is allowed to train; stage2_start
+    refuses a tree whose certificate is missing, failing, or stale relative to the trainer
+    source. This tool starts no training and writes only its certificate.
+    """
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {
+            "passed": False,
+            "refused": problem,
+            "available_trees": [item.name for item in stage2_trees()],
+        }
+    engine = _cgv_engine()
+    try:
+        result = engine.run_cgv(Path(tree))
+    except Exception as exc:  # noqa: BLE001 - report, never crash the server
+        return {"passed": False, "refused": f"CGV could not run: {type(exc).__name__}: {exc}"}
+    certificate = engine.write_certificate(result)
+    trainable, why = engine.certificate_is_valid(Path(tree))
+    return {
+        "passed": bool(result.get("passed")),
+        "arm": result.get("arm"),
+        "mechanism": result.get("mechanism"),
+        "tree": result.get("tree"),
+        "trainer_sha256": result.get("trainer_sha256"),
+        "checked_utc": result.get("checked_utc"),
+        "certificate": str(certificate),
+        "trainable_now": trainable,
+        "trainable_note": why,
+        "gates": {
+            gate: {
+                "passed": result["gates"].get(gate, {}).get("passed"),
+                "title": result["gates"].get(gate, {}).get("title"),
+                "detail": result["gates"].get(gate, {}).get("detail"),
+                "measurements": result["gates"].get(gate, {}).get("measurements"),
+                "finding": result["gates"].get(gate, {}).get("finding"),
+            }
+            for gate in engine.GATES
+            if gate in result.get("gates", {})
+        },
+        "refused": result.get("refused"),
+    }
+
+
+def tool_cgv_status(source_dir: str) -> dict:
+    """Read-only: the CGV certificate for one Stage2 tree, and whether it still covers the code."""
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {"refused": problem, "available_trees": [item.name for item in stage2_trees()]}
+    engine = _cgv_engine()
+    certificate = engine.load_certificate(Path(tree))
+    trainable, why = engine.certificate_is_valid(Path(tree))
+    return {
+        "tree": str(tree),
+        "gate_table": cgv_gate_table(),
+        "certificate": certificate,
+        "has_certificate": certificate is not None,
+        "trainable_now": trainable,
+        "trainable_note": why,
+    }
+
+
 TOOLS: dict[str, dict] = {
     "stage2_start": {
         "fn": tool_stage2_start,
@@ -1865,6 +1978,26 @@ TOOLS: dict[str, dict] = {
         "worker owns the rest: status is smoke_pending and stage2_status(source_dir) reports the "
         "smoke verdict, then the launched run. Existing artifacts no longer block a run (they are "
         "copied to the archive first), and a live run of the same tree still refuses.",
+    },
+    "cgv_check": {
+        "fn": tool_cgv_check,
+        "args": {"source_dir": "string"},
+        "description": "Computational Graph & Gradient Verification. Runs the six mandatory CGV "
+        "gates against one Stage2 tree and writes its certificate: G1 forward consistency, G2 "
+        "gradient path (catches a loss term that delivers nothing to the targeted parameters), "
+        "G3 gradient direction against the mechanism's own registered formula, G4 parameter update "
+        "against a closed-form AdamW prediction, G5 two-rank gloo DDP against an independent "
+        "pooled reference, and G6 the real training entry with its outputs isolated to a "
+        "temporary directory. A tree may only train once all six pass; stage2_start refuses "
+        "otherwise, and refuses again if the trainer changes after certification. source_dir is "
+        "required because several trees exist. Starts no training.",
+    },
+    "cgv_status": {
+        "fn": tool_cgv_status,
+        "args": {"source_dir": "string"},
+        "description": "Read-only: the CGV certificate for one Stage2 tree, the six-gate table with "
+        "what each gate verifies and prevents, and whether the certificate is still valid for the "
+        "current trainer source. Runs no gate and starts nothing.",
     },
     "stage2_status": {
         "fn": tool_stage2_status,
