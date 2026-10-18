@@ -1,0 +1,442 @@
+{
+  "issue": 48,
+  "git_sha": "ce9a179563fc4eda12000f72683a93941ee32b06",
+  "inputs": {
+    "model_inventory": {
+      "path": "results/stage3_T5Train/monotonicity/model_inventory.json",
+      "sha256": "bcbcd0e59482a1b46fb0e2d259b4acc1a28283179f9e4d2a654828906f242555"
+    },
+    "issue47_manifest": {
+      "path": "results/stage3_T5Train/monotonicity/joint_prefix_predictors/manifest.json",
+      "sha256": "31c97b5fd7fafa69f53f449e3edc388a3b5bc9545bf906238d33bf85b797ad67"
+    },
+    "issue47_features": {
+      "path": "results/stage3_T5Train/monotonicity/joint_prefix_predictors/stage2_valid_features.csv",
+      "sha256": "b4714d5b546825e2e65e15fc6645e11237467ff1e53217d3c36b2027da0d8611"
+    },
+    "valid_pairs": {
+      "path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+    },
+    "train_parquet": {
+      "path": "results/stage0_build_parquet/train.parquet",
+      "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+    },
+    "valid_parquet": {
+      "path": "results/stage0_build_parquet/valid.parquet",
+      "sha256": "48a291d174654ffb014d4d023029600168c7bdffc25d2c1982c93ed422b353e9"
+    },
+    "test_parquet": {
+      "path": "results/stage0_build_parquet/test.parquet",
+      "sha256": "5290abf0073d798401b56bd0a9ec5f710ed2c01ae9fa4cb8bd3906c1a55f0bfc",
+      "role": "frozen Stage 3 outcome labels only; never read by probes or features"
+    }
+  },
+  "models": [
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "sid_source": "repo",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask/item_sids.json",
+      "sid_sha256": "eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6",
+      "sid_source": "repo",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43/item_sids.json",
+      "sid_sha256": "5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d",
+      "sid_source": "repo",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44/item_sids.json",
+      "sid_sha256": "0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31",
+      "sid_source": "repo",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_radial_corr",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_radial_corr/item_sids.json",
+      "sid_sha256": "f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_more_sib",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_more_sib/item_sids.json",
+      "sid_sha256": "3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/prefix_sib",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/prefix_sib/item_sids.json",
+      "sid_sha256": "15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_euclid_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_euclid_group/item_sids.json",
+      "sid_sha256": "84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched/item_sids.json",
+      "sid_sha256": "cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_ang_only",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_ang_only/item_sids.json",
+      "sid_sha256": "65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta/item_sids.json",
+      "sid_sha256": "8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "smoothness_arms/A_euclid_smooth_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/A_euclid_smooth_s42/item_sids.json",
+      "sid_sha256": "16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s43",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s43/item_sids.json",
+      "sid_sha256": "0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_radius_control/item_sids.json",
+      "sid_sha256": "858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "smooth_fair_arms/A_euclid_smoothfair_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/A_euclid_smoothfair_s42/item_sids.json",
+      "sid_sha256": "9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "smoothness_arms/B_poincare_smooth_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/B_poincare_smooth_s42/item_sids.json",
+      "sid_sha256": "8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s42/item_sids.json",
+      "sid_sha256": "9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_group/item_sids.json",
+      "sid_sha256": "4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_hyp_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_hyp_group/item_sids.json",
+      "sid_sha256": "c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "smooth_fair_arms/B_poincare_smoothfair_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
+      "sid_sha256": "b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s44",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s44/item_sids.json",
+      "sid_sha256": "fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "curvature_RQ-VAE",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+      "sid_sha256": "73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball/item_sids.json",
+      "sid_sha256": "0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_hyp_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_hyp_group/item_sids.json",
+      "sid_sha256": "c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1/item_sids.json",
+      "sid_sha256": "a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_cone_arms/A_euclid_nocone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/A_euclid_nocone_s42/item_sids.json",
+      "sid_sha256": "5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw/item_sids.json",
+      "sid_sha256": "9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_RQ-VAE",
+      "family": "TIGER_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+      "sid_source": "repo",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/A_bucket_sinkhorn_s42/item_sids.json",
+      "sid_sha256": "f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_cone_arms/B_poincare_nocone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/B_poincare_nocone_s42/item_sids.json",
+      "sid_sha256": "c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw/item_sids.json",
+      "sid_sha256": "7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_assignment_arms/B_global_sinkhorn_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
+      "sid_sha256": "1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "coarse_l1_arms/B_poincare_coarse_l1_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/coarse_l1_arms/B_poincare_coarse_l1_s42/item_sids.json",
+      "sid_sha256": "6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/D_poincare_cone_s42/item_sids.json",
+      "sid_sha256": "7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare/item_sids.json",
+      "sid_sha256": "25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "l2_cone_arms/D_poincare_cone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/D_poincare_cone_s42/item_sids.json",
+      "sid_sha256": "08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "metric_cone_arms/B_poincare_metriccone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/B_poincare_metriccone_s42/item_sids.json",
+      "sid_sha256": "c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    },
+    {
+      "model": "metric_cone_arms/A_euclid_metriccone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
+      "sid_sha256": "2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb",
+      "sid_source": "git_history",
+      "sid_sha_match_inventory": "True"
+    }
+  ],
+  "sid_recovery_counts": {
+    "git_history": 33,
+    "repo": 5
+  },
+  "families": {
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+    "TIGER_FORK_RQ-VAE": 9,
+    "TIGER_HYPERBOLIC_RQ-VAE": 7,
+    "curvature_RQ-VAE": 17,
+    "TIGER_RQ-VAE": 1
+  },
+  "n_families": 5,
+  "reference_checks": {
+    "resample_valid_l1_er": 16.38953942232631,
+    "expected_l1_er": 16.38953942232631,
+    "l1_matches": true,
+    "l1l2_er_from_issue47": 58.38709677419355,
+    "l1l2_carried_from_issue47": "the L1+L2 reference is reused unchanged from #47; this round recomputes L1 and adds the conditional D2 on top of it",
+    "expected_l1l2_er": 58.38709677419355,
+    "three_token_definition": "prefix and ambiguity use tokens [c1,c2,c3] only; the fourth collision-extension token is excluded everywhere",
+    "no_step9_train_pair_er_mixed": true
+  },
+  "probe": {
+    "config": {
+      "seq_len": 20,
+      "token_embed_dim": 128,
+      "gru_hidden": 128,
+      "gru_layers": 1,
+      "dropout": 0.1,
+      "lr": 0.001,
+      "weight_decay": 0.0,
+      "batch_size": 512,
+      "epochs": 6,
+      "dev_user_fraction": 0.1,
+      "grad_clip": 5.0,
+      "label_smoothing": 0.0
+    },
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "primary_seq_len": 20,
+    "ablation_seq_len": 1,
+    "split": {
+      "unit": "user",
+      "dev_fraction": 0.1,
+      "seed": 20240719,
+      "note": "train.parquet only; valid/test never read"
+    },
+    "trained_from_scratch": true,
+    "reused_stage3_weights": false,
+    "teacher_forcing": "level l is conditioned on the target's true earlier levels on BOTH the probe and the prior; level 1 has no conditioning on either side",
+    "probe_runs": 228
+  },
+  "statistics": {
+    "chrd_bootstrap": {
+      "replicates": 2000,
+      "seed": 20240720,
+      "unit": "anchor cluster"
+    },
+    "regression": {
+      "model": "Ridge",
+      "alpha_grid": [
+        0.1,
+        1.0,
+        10.0,
+        100.0
+      ],
+      "inner_cv": "grouped leave-one-training-family-out",
+      "outer_cv": "leave-one-family-out",
+      "scaling": "training folds only",
+      "seed": 20240717
+    }
+  },
+  "feature_sets": {
+    "M0": [
+      "log_er_l1"
+    ],
+    "M4": [
+      "log_er_l1",
+      "G_H1"
+    ],
+    "M5": [
+      "log_er_l1",
+      "D2"
+    ],
+    "M6": [
+      "log_er_l1",
+      "A_target"
+    ],
+    "M7": [
+      "log_er_l1",
+      "G_H1",
+      "D2"
+    ]
+  },
+  "complete_case": {
+    "n_kept": 38,
+    "dropped": []
+  }
+}
