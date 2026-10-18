@@ -1,0 +1,531 @@
+{
+  "issue": 47,
+  "git_sha": "27c9794153d3e0e4b6374d5879e734dc6ae1d0cb",
+  "inputs": {
+    "model_inventory": {
+      "path": "results/stage3_T5Train/monotonicity/model_inventory.json",
+      "sha256": "bcbcd0e59482a1b46fb0e2d259b4acc1a28283179f9e4d2a654828906f242555"
+    },
+    "valid_pairs": {
+      "path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+    },
+    "step9_association": {
+      "path": "results/stage3_T5Train/monotonicity/step9_recall_association.csv",
+      "sha256": "42024869b5329c9b407870ec7256636a90f8f36e8fc01d057a61f7d723cdd17c",
+      "role": "historical train-pair association only, never a feature"
+    }
+  },
+  "split_proof": {
+    "protocol_required": {
+      "seed": 42,
+      "beam_size": 20,
+      "num_epochs": 150,
+      "no_eval": true,
+      "skip_test": false,
+      "test_file": "test.parquet",
+      "screen_baseline_log": "",
+      "early_stop": null,
+      "screen_skip_test_on_fail": null,
+      "sid_length": 4
+    },
+    "feature_pairs": "valid.parquet transitions dropped from train (held-out)",
+    "stage3_pairs": "test.parquet",
+    "leakage_controls": [
+      "all features computed only on behavior_pairs_valid_s42.npz",
+      "no feature or threshold derived from test.parquet",
+      "model selection uses Stage 3 inventory scores, never Stage 2 features",
+      "train/test overlap is not re-derived here; the valid pairs carry a dropped_also_a_train_transition filter recorded in their meta file"
+    ]
+  },
+  "counts": {
+    "n_inventory_models": 38,
+    "n_features_computed": 38,
+    "n_complete_case_l1": 38,
+    "n_held_out_transitions": 52855,
+    "negatives_per_transition": 10
+  },
+  "statistics": {
+    "feature_bootstrap": {
+      "replicates": 2000,
+      "seed": 20240718,
+      "unit": "anchor cluster (all transitions of one anchor move together)",
+      "scope": "uncertainty of the behavioural feature measurement; NOT the downstream benefit of retraining Stage 3"
+    },
+    "regression": {
+      "model": "Ridge (linear)",
+      "alpha_grid": [
+        0.1,
+        1.0,
+        10.0,
+        100.0
+      ],
+      "inner_cv": "grouped leave-one-training-family-out",
+      "outer_cv": "leave-one-family-out over inventory families",
+      "scaling": "train folds only",
+      "seed": 20240717
+    }
+  },
+  "feature_sets": {
+    "M0": [
+      "log_er_l1"
+    ],
+    "M1": [
+      "log_er_l1",
+      "gap_l1"
+    ],
+    "M2": [
+      "log_er_l1",
+      "eff_usage_ratio_l1",
+      "collision_l3"
+    ],
+    "M3": [
+      "log_er_l1",
+      "gap_l1",
+      "eff_usage_ratio_l1",
+      "collision_l3"
+    ]
+  },
+  "historical_thresholds": {
+    "note": "Old train-pair thresholds (ER>=14, Gap>=0.095, L1 distinct>=230, collision<=0.08) came from post-hoc exploration of these same 38 models. Reproduced here only as an old-phenomenon check; they are NOT applied to the valid-side ER and are NOT confirmatory generalisation evidence.",
+    "train_pair_er_min": 14.0,
+    "train_pair_gap_min": 0.095,
+    "l1_distinct_min": 230,
+    "collision_max": 0.08
+  },
+  "excluded_log": [
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "sid_sha_inventory": "b08567c7fbaf06e5",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "sid_sha_match": true,
+      "sid_source": "repo"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask/item_sids.json",
+      "sid_sha_inventory": "eb1237df0acad348",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6",
+      "sid_sha_match": true,
+      "sid_source": "repo"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43/item_sids.json",
+      "sid_sha_inventory": "5ed70aadbe517fac",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d",
+      "sid_sha_match": true,
+      "sid_source": "repo"
+    },
+    {
+      "model": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44/item_sids.json",
+      "sid_sha_inventory": "0936671326dd2518",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31",
+      "sid_sha_match": true,
+      "sid_source": "repo"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_radial_corr",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_radial_corr/item_sids.json",
+      "sid_sha_inventory": "f302449845c011a7",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_more_sib",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_more_sib/item_sids.json",
+      "sid_sha_inventory": "3ceb2d57a7443bc8",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/prefix_sib",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/prefix_sib/item_sids.json",
+      "sid_sha_inventory": "15b540a23491e965",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_euclid_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_euclid_group/item_sids.json",
+      "sid_sha_inventory": "84126c626920322f",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched/item_sids.json",
+      "sid_sha_inventory": "cc6e729ccab9f00d",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_ang_only",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_ang_only/item_sids.json",
+      "sid_sha_inventory": "65819d4075542a75",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta/item_sids.json",
+      "sid_sha_inventory": "8c28fb6944d2283b",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "smoothness_arms/A_euclid_smooth_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/A_euclid_smooth_s42/item_sids.json",
+      "sid_sha_inventory": "16b024dff4b814e4",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s43",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s43/item_sids.json",
+      "sid_sha_inventory": "0a72486f6f6bc5d6",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_radius_control/item_sids.json",
+      "sid_sha_inventory": "858ac30df43405b0",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "smooth_fair_arms/A_euclid_smoothfair_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/A_euclid_smoothfair_s42/item_sids.json",
+      "sid_sha_inventory": "9590324d1b3377fa",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "smoothness_arms/B_poincare_smooth_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smoothness_arms/B_poincare_smooth_s42/item_sids.json",
+      "sid_sha_inventory": "8abe6860ac8fae59",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s42/item_sids.json",
+      "sid_sha_inventory": "9f9067d6d5839521",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_euclid_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_euclid_group/item_sids.json",
+      "sid_sha_inventory": "4484e382f405d5e0",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/nce_hyp_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/nce_hyp_group/item_sids.json",
+      "sid_sha_inventory": "c48ae84b67b69a0a",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "smooth_fair_arms/B_poincare_smoothfair_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/smooth_fair_arms/B_poincare_smoothfair_s42/item_sids.json",
+      "sid_sha_inventory": "b21f89a613921de0",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "curvature_RQ-VAE/euclid_l2_256_72k_s44",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/euclid_l2_256_72k_s44/item_sids.json",
+      "sid_sha_inventory": "fabb437555769491",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "curvature_RQ-VAE",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+      "sid_sha_inventory": "73bb967663f25f0a",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball/item_sids.json",
+      "sid_sha_inventory": "0a8f1c6cd576c021",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_FORK_RQ-VAE/fork_hyp_group",
+      "family": "TIGER_FORK_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/fork_hyp_group/item_sids.json",
+      "sid_sha_inventory": "c468711bf505fccd",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1/item_sids.json",
+      "sid_sha_inventory": "a19a90139b6d014d",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "l2_cone_arms/A_euclid_nocone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/A_euclid_nocone_s42/item_sids.json",
+      "sid_sha_inventory": "5cd26e761f1c0b83",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw/item_sids.json",
+      "sid_sha_inventory": "9064df1523f0ba67",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_RQ-VAE",
+      "family": "TIGER_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "sid_sha_inventory": "53273cb605dc3210",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+      "sid_sha_match": true,
+      "sid_source": "repo"
+    },
+    {
+      "model": "l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/A_bucket_sinkhorn_s42/item_sids.json",
+      "sid_sha_inventory": "f2655ce037dc49fa",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "l2_cone_arms/B_poincare_nocone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/B_poincare_nocone_s42/item_sids.json",
+      "sid_sha_inventory": "c9f990c353af78c4",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw/item_sids.json",
+      "sid_sha_inventory": "7cc7c8e2d9e6503d",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "l2_assignment_arms/B_global_sinkhorn_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/B_global_sinkhorn_s42/item_sids.json",
+      "sid_sha_inventory": "1019d2502683a3ba",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "coarse_l1_arms/B_poincare_coarse_l1_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/coarse_l1_arms/B_poincare_coarse_l1_s42/item_sids.json",
+      "sid_sha_inventory": "6fd8cc3ed6f5d961",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms_fixed_rejection/D_poincare_cone_s42/item_sids.json",
+      "sid_sha_inventory": "7d892b1f5b12ec9a",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare/item_sids.json",
+      "sid_sha_inventory": "25e30c50e172d058",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "l2_cone_arms/D_poincare_cone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_cone_arms/D_poincare_cone_s42/item_sids.json",
+      "sid_sha_inventory": "08eb05f4ada000f6",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "metric_cone_arms/B_poincare_metriccone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/B_poincare_metriccone_s42/item_sids.json",
+      "sid_sha_inventory": "c24f515a853b497d",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    },
+    {
+      "model": "metric_cone_arms/A_euclid_metriccone_s42",
+      "family": "curvature_RQ-VAE",
+      "sid_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/metric_cone_arms/A_euclid_metriccone_s42/item_sids.json",
+      "sid_sha_inventory": "2798778d1034824d",
+      "stage3_runs": 1,
+      "n_eval": 57439,
+      "sid_sha_measured": "2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb",
+      "sid_sha_match": true,
+      "sid_source": "git_history"
+    }
+  ],
+  "family_sizes": {
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+    "TIGER_FORK_RQ-VAE": 9,
+    "TIGER_HYPERBOLIC_RQ-VAE": 7,
+    "curvature_RQ-VAE": 17,
+    "TIGER_RQ-VAE": 1
+  },
+  "n_families": 5,
+  "family_sizes_computed": {
+    "TIGER_BEHAVIOR_SAMPLE_RQ-VAE": 4,
+    "TIGER_FORK_RQ-VAE": 9,
+    "TIGER_HYPERBOLIC_RQ-VAE": 7,
+    "curvature_RQ-VAE": 17,
+    "TIGER_RQ-VAE": 1
+  }
+}
