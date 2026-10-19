@@ -83,6 +83,35 @@ MECHANISM_TYPES = (
 AGGREGATIONS = ("ddp_mean", "ddp_sum", "none")
 FORWARD_EFFECTS = ("none", "changes_forward")
 
+# Strict key sets. A declaration is a CLAIM, and a claim whose parts nobody reads is worse than
+# no claim: a key nobody checks is indistinguishable from a check nobody performed. So every key
+# must be either understood and acted on, or absent.
+SCHEMA_KEYS = {
+    "mechanism": {"id", "type", "summary", "entrypoints", "executor", "activation",
+                  "mathematics"},
+    "model": {"adapter", "factory", "tokenizer_config", "forward", "parameter_groups", "probe"},
+    "forward_contract": {"observables", "declared_effect", "invariants", "oracle", "atol"},
+    "gradient_contract": {
+        "target", "mode", "rule", "reference_term", "oracle", "probe_weight", "probe_seeds",
+        "atol", "rtol", "eps_flag", "alpha", "alpha_flag", "cos_threshold", "cos_threshold_flag",
+        "blocks", "ema", "loss_terms", "expected_paths", "additional_targets",
+        "jacobian_expectations", "effect",
+    },
+    "update_contract": {
+        "optimizer", "lr", "weight_decay", "clip_norm", "atol", "requires_parameter_change",
+        "oracle", "verify_step_reaches_model", "verify_optimizer_state",
+    },
+    "distributed_contract": {
+        "world_size", "aggregation", "rank_batch_sizes", "atol", "oracle",
+        "verify_encoder_and_codebook_gradients", "verify_rank_parameter_identity",
+    },
+    "runtime_contract": {
+        "entrypoint", "isolation", "force", "reset", "observe", "train_entry_hash_required",
+    },
+}
+OBSERVABLE_NAMES = ("mechanism_calls", "optimizer_steps", "parameter_updates",
+                    "target_encoder_update")
+
 
 class ContractError(Exception):
     """A contract that cannot be loaded, resolved or trusted."""
@@ -161,6 +190,60 @@ def spec_sha256(spec: dict[str, Any]) -> str:
     return hashlib.sha256(canonical_json(spec).encode("utf-8")).hexdigest()
 
 
+def code_tree_sha256(tree: Path) -> tuple[str | None, int]:
+    """A hash over the mechanism's WHOLE active source tree, not just its entry point.
+
+    A mechanism lives partly outside its ``train_rqvae.py`` -- the quantiser it rewrites the
+    gradient of lives in ``model/layers.py``. Binding only the entry point would let a change
+    there alter exactly what the certificate attests to while leaving the certificate valid.
+    Every file the training entry can execute is therefore included, and only the directories
+    that hold run OUTPUT are excluded, since those change on every run by design.
+    """
+    tree = Path(tree)
+    if not tree.is_dir():
+        return None, 0
+    skip_dirs = {"__pycache__", "logs", "results", ".git"}
+    digest = hashlib.sha256()
+    count = 0
+    for path in sorted(tree.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(tree)
+        if any(part in skip_dirs for part in relative.parts):
+            continue
+        if path.suffix in (".pyc", ".pyo"):
+            continue
+        digest.update(str(relative).encode("utf-8"))
+        digest.update(_sha256(path).encode("ascii"))
+        count += 1
+    return digest.hexdigest(), count
+
+
+def train_config_sha256(trainer) -> str | None:
+    """A hash of the training constants a certificate depends on.
+
+    The gates reason about a declared optimiser, clipping and batch shape. If the trainer's real
+    constants stopped matching that declaration, every gate would be describing a run that does
+    not exist, so the constants are bound to the certificate as well.
+    """
+    names = (
+        "EPOCHS", "LR", "WEIGHT_DECAY", "OPTIMIZER", "GRADIENT_CLIP_NORM", "BATCH_SIZE",
+        "PAIR_BATCH_SIZE", "CODEBOOK_NUM", "CODEBOOK_SIZE", "CODEBOOK_DIM", "SEED",
+        "BEHAVIOR_TEMPERATURE", "BEHAVIOR_WEIGHT_MAX", "RAMP_START_EPOCH", "WARMUP_EPOCHS",
+        "NUM_GPUS", "ACTIVE_LEVELS", "DIRECTIONAL_MODE",
+    )
+    payload = {}
+    for name in names:
+        if hasattr(trainer, name):
+            value = getattr(trainer, name)
+            if isinstance(value, (str, int, float, bool, list, tuple)):
+                payload[name] = value if not isinstance(value, tuple) else list(value)
+    if not payload:
+        return None
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str)
+                          .encode("utf-8")).hexdigest()
+
+
 def fingerprint(spec: dict[str, Any]) -> dict[str, Any]:
     """Everything a certificate binds to: the declaration and the verifier that judged it."""
     return {
@@ -168,7 +251,6 @@ def fingerprint(spec: dict[str, Any]) -> dict[str, Any]:
         "spec_sha256": spec_sha256(spec),
         "oracles_sha256": _sha256(CGV_DIR / "oracles.py"),
         "adapter_sha256": _sha256(CGV_DIR / "adapters.py"),
-        "negative_suite_sha256": _sha256(CGV_DIR / "negative_suite.py"),
     }
 
 
@@ -210,11 +292,25 @@ def _require(mapping: Any, key: str, where: str, problems: list[str]) -> Any:
 
 
 def validate(contract: dict[str, Any]) -> list[str]:
-    """Structural validation. Returns a list of problems; empty means the contract is usable."""
+    """Structural validation. Returns a list of problems; empty means the contract is usable.
+
+    Unknown keys are problems, not trivia. A declaration that carries a check nobody performs
+    reads exactly like a declaration whose checks all passed, which is the failure mode this
+    whole tool exists to prevent.
+    """
     problems: list[str] = []
     version = contract.get("schema_version")
     if version != SCHEMA_VERSION:
         problems.append(f"schema_version must be {SCHEMA_VERSION}, found {version!r}")
+    for group, allowed in SCHEMA_KEYS.items():
+        section = contract.get(group)
+        if isinstance(section, dict):
+            unknown = sorted(set(section) - allowed)
+            if unknown:
+                problems.append(
+                    f"{group} declares keys CGV does not act on: {unknown}. Either the "
+                    "declaration means something CGV cannot check, or the key is a typo; both "
+                    "must be resolved before this mechanism may be verified")
 
     mechanism = _require(contract, "mechanism", "contract", problems)
     if mechanism is not None:
@@ -315,6 +411,17 @@ def validate(contract: dict[str, Any]) -> list[str]:
             for item in observe:
                 if not isinstance(item, dict) or "name" not in item:
                     problems.append("each runtime_contract.observe entry needs a name")
+                    continue
+                if item["name"] not in OBSERVABLE_NAMES:
+                    problems.append(
+                        f"runtime_contract.observe names {item['name']!r}, which CGV does not "
+                        f"measure; known observables are {list(OBSERVABLE_NAMES)}")
+                if item["name"] not in ("optimizer_steps", "parameter_updates",
+                                        "target_encoder_update") \
+                        and not item.get("target"):
+                    problems.append(
+                        f"observable {item['name']!r} needs a 'target' naming the trainer symbol "
+                        "to instrument")
     return problems
 
 

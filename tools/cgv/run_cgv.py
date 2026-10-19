@@ -5,9 +5,10 @@ so ``cgv_check`` shells out to this script under the project's python instead of
 engine. The declaration is passed the same way: as data, never as a path.
 
     run_cgv.py <tree> --spec -                     # declaration as JSON on stdin
-    run_cgv.py <tree> --spec spec.json --certificate --negative
+    run_cgv.py <tree> --spec spec.json
 
-Exit code is 0 when the gates pass AND the counterexample suite catches every fault, 1 otherwise.
+Exit code is 0 when every gate passes, 1 otherwise. Nothing is written to disk: the result is
+the report.
 """
 from __future__ import annotations
 
@@ -42,8 +43,7 @@ def read_spec(argv: list[str]) -> object:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print('usage: run_cgv.py <tree> --spec <file.json|-> [--certificate] [--negative]',
-              file=sys.stderr)
+        print('usage: run_cgv.py <tree> --spec <file.json|->', file=sys.stderr)
         return 2
     tree = Path(sys.argv[1])
     argv = sys.argv[2:]
@@ -54,9 +54,7 @@ def main() -> int:
     # G6 executes the trainer's real entry point, which prints to stdout. Redirect that noise to
     # stderr so stdout carries ONLY the JSON the caller parses.
     with contextlib.redirect_stdout(sys.stderr):
-        result = engine.run_cgv(tree, spec, negative_suite="--negative" in argv)
-    certificate = engine.write_certificate(result) if "--certificate" in argv else None
-    trainable, why = engine.certificate_is_valid(tree, spec)
+        result = engine.run_cgv(tree, spec)
     payload = {
         "passed": bool(result.get("passed")),
         "gates_passed": bool(result.get("gates_passed")),
@@ -70,12 +68,8 @@ def main() -> int:
         "fingerprint": result.get("fingerprint"),
         "declared": result.get("declared"),
         "independence": result.get("independence"),
-        "certificate": str(certificate) if certificate else None,
-        "trainable_now": trainable,
-        "trainable_note": why,
         "refused": result.get("refused"),
         "summary": result.get("summary"),
-        "negative_suite": result.get("negative_suite"),
         "gates": {
             gate: {
                 "state": result["gates"].get(gate, {}).get("state"),

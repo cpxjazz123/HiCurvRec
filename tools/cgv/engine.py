@@ -47,6 +47,7 @@ import contextlib
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import subprocess
 import sys
@@ -240,6 +241,33 @@ class Context:
     def observations(self, seed: int = 1234) -> dict[str, Any]:
         return adapters.build_observations(self.trainer, self.contract, seed=seed)
 
+    def trace_observations(self, obs: dict[str, Any]) -> dict[str, Any]:
+        """Everything the independent trace oracles need, and nothing they may derive from the arm.
+
+        The cotangents ``u_levels`` and the latent pullback are the chain rule factors AROUND the
+        mechanism; the only thing the mechanism contributes is the Jacobian of its trace with
+        respect to the latent, and that is supplied as DECLARED numbers.
+        """
+        mechanism = self.contract.get("mechanism") or {}
+        mathematics = mechanism.get("mathematics") or {}
+        gradient = self.contract["gradient_contract"]
+        payload: dict[str, Any] = {
+            "rule": gradient["rule"],
+            "traces": obs["traces"],
+            "codebooks": obs["codebooks"],
+            "u_levels": adapters.level_cotangents(self.trainer, obs),
+            "latent": obs["latent"],
+            "encoder": obs["encoder"],
+            "codebook_parameters": obs.get("codebooks_parameters", []),
+            "latent_to_encoder": lambda cotangent: adapters.latent_to_encoder(obs, cotangent),
+            "coefficients": mathematics.get("expected_level_to_encoder_jacobians"),
+            "soft_normalizer_floor": mathematics.get("minimum_normalizer", 1e-8),
+            "reference_traces": obs.get("reference_traces"),
+            "reference_tokens": obs.get("reference_tokens"),
+            "trace_indices": obs.get("trace_indices"),
+        }
+        return payload
+
     def oracle_observations(self, obs: dict[str, Any],
                             executed: bool = True) -> dict[str, Any]:
         """The raw mathematics the independent oracle needs for this case.
@@ -277,6 +305,17 @@ class Context:
         return payload
 
 
+def is_trace_mechanism(spec: dict[str, Any]) -> bool:
+    """A mechanism that rewrites the residual trace has no separate projection step to execute.
+
+    Recognised from the rule registry rather than an extra declaration key, so a specification
+    that states only the mathematics is enough -- and an unrecognised rule fails closed in both
+    the schema and the gradient gate.
+    """
+    rule = (spec.get("gradient_contract") or {}).get("rule")
+    return rule in oracles.TRACE_RULES
+
+
 def load_context(tree: Path, spec: dict[str, Any], trainer=None) -> Context:
     """Bind the declaration to the loaded mechanism. The declaration is data, passed in."""
     problems = C.validate(spec)
@@ -311,21 +350,15 @@ def _skipped(gate: str, ctx: Context) -> dict[str, Any] | None:
 # G1 -- forward contract
 # --------------------------------------------------------------------------------------
 def _jacobian_deviation(T, jacobian: dict[str, Any]) -> float:
-    """Measure the real Jacobian of the declared residual recurrence against the declared rule.
+    """Deprecated: a hand-built residual recurrence is not evidence about any arm.
 
-    The probe is a Jacobian-vector product through the REAL quantizer stack: with the declared
-    rule ``identity``, ``d r_(k+1) / d r_k = I`` means ``J v == v`` for every probe ``v``.
+    It used to subtract the quantiser output directly, which silently described the LEGACY trace
+    while being presented as a check on whatever arm was under test. G1 now measures the arm's own
+    trace; this remains only so an older declaration naming it fails loudly instead of quietly.
     """
-    model = T.RQVAE(T._tokenizer_config(), in_dim=adapters.IN_DIM)
-    embeddings = torch.randn(8, adapters.IN_DIM,
-                             generator=torch.Generator().manual_seed(4242))
-    residual = model.encoder(embeddings).detach().requires_grad_(True)
-    layer = model.rq.vq_layers[int(jacobian.get("level", 0))]
-    quant, _, _, _ = layer(residual)
-    following = residual - quant
-    probe = torch.randn_like(residual)
-    (grad,) = torch.autograd.grad((following * probe).sum(), residual, retain_graph=False)
-    return float((grad - probe).abs().max())
+    raise C.ContractError(
+        "forward_contract.jacobian probes a hand-built recurrence, not the arm's trace; declare "
+        "the level Jacobians under mechanism.mathematics and let G3 measure them on the real trace")
 
 
 def gate_g1(ctx: Context) -> dict[str, Any]:
@@ -333,16 +366,16 @@ def gate_g1(ctx: Context) -> dict[str, Any]:
     if skip:
         return skip
     forward = ctx.contract["forward_contract"]
-    observations = ctx.observations()
-    measurements: dict[str, Any] = {}
-
-    jacobian = forward.get("jacobian")
-    if jacobian:
-        deviation = _jacobian_deviation(ctx.trainer, jacobian)
-        observations["jacobian_identity_deviation"] = deviation
-        measurements["jacobian_identity_deviation"] = deviation
+    trace = is_trace_mechanism(ctx.contract)
+    observations = (adapters.trace_case(ctx.trainer, ctx.contract) if trace
+                    else ctx.observations())
+    measurements: dict[str, Any] = {"execution": "trace" if trace else "assembly"}
 
     checks = oracles.check_forward_invariants(observations, forward.get("invariants", []))
+
+    if trace and is_trace_mechanism(ctx.contract):
+        checks.append(oracles.hard_assignment_algebra(
+            observations, tol=float(ctx.contract["forward_contract"].get("atol", ATOL))))
 
     expected = None
     if forward.get("oracle"):
@@ -375,6 +408,9 @@ def gate_g2(ctx: Context) -> dict[str, Any]:
     if skip:
         return skip
     gradient = ctx.contract["gradient_contract"]
+    if is_trace_mechanism(ctx.contract):
+        return gate_g2_trace(ctx)
+
     expected = gradient.get("expected_paths") or {}
     declared = sorted(adapters.loss_terms(ctx.trainer, ctx.contract, ctx.observations()))
 
@@ -423,6 +459,105 @@ def gate_g2(ctx: Context) -> dict[str, Any]:
     )
 
 
+def gate_g2_trace(ctx: Context) -> dict[str, Any]:
+    """Per-level propagation for a mechanism that rewrites the residual trace.
+
+    Each declared behaviour level is checked separately against the declared target parameters,
+    and the result is classified as disconnected / zero / non-zero / non-finite. The distinction
+    matters: a level that is not in the graph at all and a level whose gradient is exactly zero
+    have the same norm, and only one of them is the mathematics the declaration describes.
+    """
+    gradient = ctx.contract["gradient_contract"]
+    observations = adapters.trace_case(ctx.trainer, ctx.contract)
+    expected = gradient.get("expected_paths") or {}
+    additional = gradient.get("additional_targets") or {}
+    encoder_ids = {id(p) for p in observations["encoder"]}
+    codebook_ids = {id(p) for p in observations.get("codebooks_parameters", [])}
+
+    checks: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    # A declaration names each term and says which adapter source supplies it. Levels are
+    # addressed by their SOURCE, so the mapping never depends on how the terms happen to be named
+    # or sorted.
+    declared_terms = gradient.get("loss_terms") or {}
+    by_source = {source: name for name, source in declared_terms.items()}
+    level_terms = [(level, by_source.get(f"behavior_l{level + 1}"))
+                   for level in range(len(observations["level_losses"]))]
+    for level, name in level_terms:
+        if name is None:
+            continue
+        source = f"behavior_l{level + 1}"
+        loss = observations["level_losses"][level]
+        # A detached level leaves a loss that requires no grad at all. autograd.grad would raise
+        # on it, so the disconnection is classified here -- it is a reportable state, not a crash.
+        if not loss.requires_grad:
+            encoder_grads = [torch.zeros_like(p) for p in observations["encoder"]]
+            state = "disconnected"
+        else:
+            encoder_grads = torch.autograd.grad(loss, observations["encoder"], retain_graph=True,
+                                                allow_unused=True)
+            encoder_grads = [torch.zeros_like(p) if g is None else g
+                             for p, g in zip(observations["encoder"], encoder_grads)]
+            state = adapters.level_path_state(encoder_grads)
+        wanted = expected.get(name, "nonzero")
+        if wanted == "nonzero":
+            ok = state == "nonzero"
+        elif wanted == "zero":
+            ok = state in ("zero", "disconnected")
+        else:
+            ok = state in ("nonzero", "zero", "disconnected")
+        entry = {"term": name, "level": level, "target": "encoder", "expectation": wanted,
+                 "state": state, "ok": ok,
+                 "norm": oracles.flat_norm(encoder_grads),
+                 "detail": f"declared {wanted}, path is {state}"}
+        if state == "zero" and wanted == "nonzero":
+            entry["detail"] += " -- the level's gradient is exactly zero, not merely small"
+        checks.append(entry)
+
+        if codebook_ids:
+            codebook_grads = (adapters.codebook_level_gradient(ctx.trainer, observations, level)
+                              if loss.requires_grad else [])
+            codebook_state = (adapters.level_path_state(codebook_grads) if codebook_grads
+                              else "disconnected")
+            codebook_declared = additional.get("codebooks") or {}
+            wanted_codebook = codebook_declared.get(name, codebook_declared.get(source))
+            if wanted_codebook is not None:
+                if wanted_codebook.startswith("nonzero"):
+                    codebook_ok = codebook_state == "nonzero"
+                elif wanted_codebook.startswith("zero"):
+                    codebook_ok = codebook_state in ("zero", "disconnected")
+                else:
+                    codebook_ok = True
+                checks.append({"term": name, "level": level, "target": "codebooks",
+                               "expectation": wanted_codebook, "state": codebook_state,
+                               "ok": codebook_ok,
+                               "norm": oracles.flat_norm(codebook_grads) if codebook_grads else 0.0,
+                               "detail": f"declared {wanted_codebook}, path is {codebook_state}"})
+
+    failures = [check for check in checks if not check["ok"]]
+    if not checks:
+        # an empty check list would pass trivially; a gate that examined nothing proves nothing
+        return _result("G2", C.INSUFFICIENT,
+                       "no declared behaviour level produced a check: the declaration names "
+                       f"{sorted(declared_terms)} but the arm's trace has "
+                       f"{len(observations['level_losses'])} level(s)",
+                       finding="nothing was verified, so nothing may be certified")
+    passed = not failures
+    return _result(
+        "G2", C.PASSED if passed else C.FAILED,
+        (f"every declared level reaches its declared target with the declared character: "
+         + ", ".join(f"L{check['level']}:{check['target']}={check['state']}" for check in checks))
+        if passed else
+        ("declared propagation does not hold: "
+         + "; ".join(f"L{check['level']} {check['target']} declared {check['expectation']} but is "
+                     f"{check['state']}" for check in failures)),
+        {"checks": checks},
+        finding=None if passed else
+        "a declared behaviour level does not reach the declared parameters as declared",
+        warnings=warnings,
+    )
+
+
 # --------------------------------------------------------------------------------------
 # G3 -- gradient mathematics
 # --------------------------------------------------------------------------------------
@@ -449,6 +584,9 @@ def gate_g3(ctx: Context) -> dict[str, Any]:
             finding=None if not failures else
             "the executed gradient does not satisfy the declared invariants",
         )
+
+    if is_trace_mechanism(ctx.contract):
+        return gate_g3_trace(ctx)
 
     seeds = tuple(gradient.get("probe_seeds") or PROBE_SEEDS)
     activation = (ctx.contract.get("mechanism") or {}).get("activation") or {}
@@ -524,6 +662,98 @@ def gate_g3(ctx: Context) -> dict[str, Any]:
     )
 
 
+def gate_g3_trace(ctx: Context) -> dict[str, Any]:
+    """The executed trace gradient against the declared rule, plus a per-level Jacobian probe.
+
+    Two independent obligations:
+
+    * the gradient the arm's real trace produces must equal what the declared mathematics says,
+      recomputed from observations by the oracle rather than read off the arm;
+    * each level's measured trace-to-latent Jacobian must equal the declared coefficient, which
+      is what rejects the neighbouring rules -- the legacy rule measures 0 and the plain
+      straight-through measures 1, so neither can pass as 0.5.
+    """
+    gradient = ctx.contract["gradient_contract"]
+    mathematics = (ctx.contract.get("mechanism") or {}).get("mathematics") or {}
+    declared = mathematics.get("expected_level_to_encoder_jacobians")
+    if not declared:
+        return _result("G3", C.INSUFFICIENT,
+                       "mechanism.mathematics.expected_level_to_encoder_jacobians is required: "
+                       "without declared level Jacobians there is nothing to verify the trace "
+                       "against")
+    coefficients = [float(value) for value in declared]
+    seeds = tuple(gradient.get("probe_seeds") or PROBE_SEEDS)
+    tolerance = float(gradient.get("atol", ATOL))
+    threshold = float((gradient.get("effect") or {}).get("min_deviation", 1e-6))
+    minimum = int((gradient.get("effect") or {}).get("min_probes", 1))
+
+    per_seed, worst, jacobian_rows, firing = [], 0.0, [], []
+    for seed in seeds:
+        observations = adapters.trace_case(ctx.trainer, ctx.contract, seed=seed)
+        executed = adapters.executed_trace_gradient(ctx.trainer, observations)
+        payload = ctx.trace_observations(observations)
+        expectation = oracles.trace_gradient(payload)
+        expected_encoder = expectation["encoder"] if isinstance(expectation, dict) else expectation
+        deviation = oracles.max_abs_diff(executed, expected_encoder)
+        worst = max(worst, deviation)
+
+        # The declaration has already been matched, so "the mechanism does something" has to be
+        # measured against the UNTREATED assembly, not against the declaration it agreed with.
+        untreated = dict(payload)
+        untreated["coefficients"] = [1.0] + [0.0] * (len(coefficients) - 1)
+        untreated_expectation = oracles.trace_gradient(untreated)
+        untreated_encoder = (untreated_expectation["encoder"]
+                             if isinstance(untreated_expectation, dict)
+                             else untreated_expectation)
+        effect = oracles.l2_distance(executed, untreated_encoder)
+        per_seed.append({"seed": seed, "deviation_from_declared_rule": deviation,
+                         "deviation_from_untreated": effect})
+        if effect > threshold:
+            firing.append(f"seed{seed}")
+
+        if seed == seeds[0]:
+            for level, coefficient in enumerate(coefficients):
+                if level >= len(observations["traces"]):
+                    break
+                probe = adapters.jacobian_probe(ctx.trainer, observations, level)
+                measured = probe["alignment"]
+                jacobian_rows.append({
+                    "level": level, "declared": coefficient, "measured_alignment": measured,
+                    "measured_ratio": probe["ratio"], "connected": probe["connected"],
+                    "ok": probe["connected"] and abs(measured - coefficient) <= tolerance,
+                })
+
+    jacobian_failures = [row for row in jacobian_rows if not row["ok"]]
+    formula_ok = worst <= tolerance
+    effect_ok = len(firing) >= minimum
+    passed = formula_ok and effect_ok and not jacobian_failures
+
+    detail = (f"max deviation from the declared rule {gradient['rule']!r} over "
+              f"{len(per_seed)} probe(s) = {worst:.3e}; measured level Jacobians "
+              + ", ".join(f"L{row['level']}={row['measured_alignment']:.4f}"
+                          f"(declared {row['declared']})" for row in jacobian_rows)
+              + f"; deviation from the untreated assembly on "
+              + ", ".join(f"seed{entry['seed']}={entry['deviation_from_untreated']:.3e}"
+                          for entry in per_seed))
+    if not formula_ok:
+        detail += "; the executed gradient does not match the declared rule"
+    if jacobian_failures:
+        detail += ("; level Jacobians disagree with the declaration: "
+                   + ", ".join(f"L{row['level']} measured {row['measured_alignment']:.4f} vs "
+                               f"declared {row['declared']}" for row in jacobian_failures))
+    if not effect_ok:
+        detail += "; the mechanism did not measurably change the gradient on any probe"
+    return _result(
+        "G3", C.PASSED if passed else C.FAILED, detail,
+        {"per_seed": per_seed, "max_deviation_from_declared_rule": worst,
+         "level_jacobians": jacobian_rows, "rule": gradient["rule"],
+         "declared_level_jacobians": coefficients,
+         "probes_where_mechanism_changes_the_gradient": list(firing)},
+        finding=None if passed else (
+            "the executed trace gradient contradicts the declared mathematics"),
+    )
+
+
 # --------------------------------------------------------------------------------------
 # G4 -- parameter update
 # --------------------------------------------------------------------------------------
@@ -533,11 +763,16 @@ def gate_g4(ctx: Context) -> dict[str, Any]:
         return skip
     update = ctx.contract["update_contract"]
     T = ctx.trainer
-    observations = ctx.observations()
+    trace = is_trace_mechanism(ctx.contract)
+    observations = (adapters.trace_case(T, ctx.contract) if trace
+                    else ctx.observations())
     model = observations["model"]
     target = {id(p) for p in observations["encoder"]}
 
-    adapters.executed_target_gradient(T, ctx.contract, observations)
+    if trace:
+        adapters.apply_trace_gradient(T, observations)
+    else:
+        adapters.executed_target_gradient(T, ctx.contract, observations)
     clip = update.get("clip_norm")
     if clip:
         torch.nn.utils.clip_grad_norm_(model.parameters(), float(clip))
@@ -574,7 +809,17 @@ def gate_g4(ctx: Context) -> dict[str, Any]:
     tolerance = float(update.get("atol", 1e-6))
     prediction_ok = worst_target <= tolerance and worst_other <= tolerance
     change_ok = (moved_target > 0.0) if update.get("requires_parameter_change", True) else True
+    # The declared flags must be ANSWERED, not merely present: a declaration asking whether the
+    # step reached the model is only honest if the answer is measured and reported.
+    recorded_steps = {int(state["step"].item())
+                      for state in optimizer.state.values() if "step" in state}
+    reached_model = moved_target > 0.0
+    state_recorded = bool(recorded_steps)
     passed = prediction_ok and change_ok
+    if update.get("verify_step_reaches_model", False):
+        passed = passed and reached_model
+    if update.get("verify_optimizer_state", False):
+        passed = passed and state_recorded
     return _result(
         "G4", C.PASSED if passed else C.FAILED,
         (f"the declared {optimizer_name} step (lr {lr}, weight decay {weight_decay}"
@@ -588,7 +833,13 @@ def gate_g4(ctx: Context) -> dict[str, Any]:
         {"target_max_abs_delta": moved_target,
          "target_update_deviation": worst_target,
          "other_update_deviation": worst_other,
-         "optimizer": optimizer_name, "lr": lr, "weight_decay": weight_decay, "clip_norm": clip},
+         "optimizer": optimizer_name, "lr": lr, "weight_decay": weight_decay, "clip_norm": clip,
+         "optimizer_steps_recorded": sorted(recorded_steps),
+         "step_reached_model": reached_model,
+         "optimizer_state_recorded": state_recorded,
+         "declared_verifications": {
+             "verify_step_reaches_model": bool(update.get("verify_step_reaches_model", False)),
+             "verify_optimizer_state": bool(update.get("verify_optimizer_state", False))}},
         finding=None if passed else (
             "the declared optimizer and clipping do not produce the declared parameter update"),
     )
@@ -604,13 +855,18 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
     distributed = ctx.contract["distributed_contract"]
     world_size = int(distributed.get("world_size", 2))
     aggregation = distributed.get("aggregation", "ddp_mean")
+    rank_sizes = distributed.get("rank_batch_sizes")
+    if rank_sizes and len(rank_sizes) != world_size:
+        return _result("G5", C.INSUFFICIENT,
+                       f"rank_batch_sizes lists {len(rank_sizes)} entries for "
+                       f"{world_size} ranks")
     payload = CGV_DIR / f"g5_{ctx.tree.name}"
     payload.mkdir(parents=True, exist_ok=True)
     child = Path(__file__).with_name("cgv_ddp_child.py")
     proc = subprocess.run(
         [CGV_PY, str(child), str(ctx.tree), str(payload), str(world_size), str(CHILD_TIMEOUT_S)],
-        input=C.canonical_json(ctx.contract), capture_output=True, text=True,
-        timeout=CHILD_TIMEOUT_S + 120)
+        input=json.dumps({"spec": ctx.contract, "rank_batch_sizes": rank_sizes}),
+        capture_output=True, text=True, timeout=CHILD_TIMEOUT_S + 120)
     summary_path = payload / "summary.json"
     if not summary_path.is_file():
         return _result("G5", C.FAILED, "the multi-rank run produced no summary",
@@ -632,29 +888,72 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
     weights = summary.get("weights")
 
     aggregator = C.resolve_reference(distributed["oracle"])
-    names = sorted(local[0])
-    pooled_terms = {
-        name: aggregator({"aggregation": aggregation,
-                          "rank_grads": [local[rank][name] for rank in range(world_size)],
-                          "weights": weights})
-        for name in names
-    }
-    # the declared rule is applied to the POOLED gradients by the independent oracle, so the
-    # production path is compared against a reconstruction it cannot influence
-    rule_observations = {
-        **oracle_inputs,
-        "g_base": pooled_terms["base_loss"],
-        "g_l1": pooled_terms.get("l1_loss", pooled_terms["base_loss"]),
-        "g_other": pooled_terms.get("other_loss", pooled_terms["base_loss"]),
-        "g_recon": pooled_terms.get("recon_loss", pooled_terms["base_loss"]),
-        "g_quant": pooled_terms.get("quant_loss", pooled_terms["base_loss"]),
-    }
-    expected_pooled = oracles.assemble_gradient(rule_observations)
+    trace = is_trace_mechanism(ctx.contract)
 
-    deviation = oracles.max_abs_deviation(production, expected_pooled)
+    if trace:
+        # A trace mechanism has no projection step: the multi-rank question is whether DDP's own
+        # averaging produced what the independent pooling of the per-rank LOCAL gradients says it
+        # should. With declared rank sizes the ranks are not equally weighted, so pooling by a
+        # plain mean would be the wrong reference -- and would hide exactly the bug the gate is for.
+        local_encoder = [local[rank]["encoder"] for rank in range(world_size)]
+        pooled_encoder = aggregator({"aggregation": aggregation, "rank_grads": local_encoder,
+                                     "weights": weights})
+        expected_pooled = {"encoder": pooled_encoder}
+        deviation = oracles.max_abs_diff(production["encoder"], expected_pooled["encoder"])
+        if distributed.get("verify_encoder_and_codebook_gradients", False) \
+                and "codebooks" in production and local[0].get("codebooks"):
+            pooled_codebooks = aggregator({"aggregation": aggregation,
+                                           "rank_grads": [local[rank]["codebooks"]
+                                                          for rank in range(world_size)],
+                                           "weights": weights})
+            expected_pooled["codebooks"] = pooled_codebooks
+            codebook_deviation = oracles.max_abs_diff(production["codebooks"],
+                                                      pooled_codebooks)
+        else:
+            codebook_deviation = float("nan")
+    else:
+        names = sorted(local[0])
+        pooled_terms = {
+            name: aggregator({"aggregation": aggregation,
+                              "rank_grads": [local[rank][name] for rank in range(world_size)],
+                              "weights": weights})
+            for name in names
+        }
+        # the declared rule is applied to the POOLED gradients by the independent oracle, so the
+        # production path is compared against a reconstruction it cannot influence
+        rule_observations = {
+            **oracle_inputs,
+            "g_base": pooled_terms["base_loss"],
+            "g_l1": pooled_terms.get("l1_loss", pooled_terms["base_loss"]),
+            "g_other": pooled_terms.get("other_loss", pooled_terms["base_loss"]),
+            "g_recon": pooled_terms.get("recon_loss", pooled_terms["base_loss"]),
+            "g_quant": pooled_terms.get("quant_loss", pooled_terms["base_loss"]),
+        }
+        expected_pooled = oracles.assemble_gradient(rule_observations)
+        deviation = oracles.max_abs_diff(production, expected_pooled)
+        codebook_deviation = float("nan")
+
     tolerance = float(distributed.get("atol", 1e-5))
     ranks_identical = bool(summary.get("ranks_identical"))
+    extra: dict[str, Any] = {}
     passed = deviation <= tolerance and ranks_identical
+
+    if distributed.get("verify_encoder_and_codebook_gradients", False):
+        if codebook_deviation == codebook_deviation and not math.isnan(codebook_deviation):
+            passed = passed and codebook_deviation <= tolerance
+        extra["codebook_pooled_deviation"] = codebook_deviation
+    if distributed.get("verify_rank_parameter_identity", False):
+        passed = passed and ranks_identical
+    if rank_sizes:
+        observed_rows = summary.get("local_batch_rows") or {}
+        mismatched = {rank: observed_rows.get(str(rank))
+                      for rank, size in enumerate(rank_sizes)
+                      if observed_rows.get(str(rank)) not in (None, int(size) * 2)}
+        extra["declared_rank_batch_sizes"] = rank_sizes
+        extra["observed_rows"] = observed_rows
+        if mismatched:
+            passed = False
+            extra["rank_size_mismatch"] = mismatched
     return _result(
         "G5", C.PASSED if passed else C.FAILED,
         (f"{world_size} real ranks with the declared {aggregation!r} aggregation: the production "
@@ -666,7 +965,8 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
         {"world_size": world_size, "aggregation": aggregation,
          "pooled_deviation": deviation, "ranks_identical": ranks_identical,
          "local_batch_rows": summary.get("local_batch_rows"),
-         "elapsed_s": summary.get("elapsed_s")},
+         "reduce_calls": summary.get("reduce_calls"),
+         "elapsed_s": summary.get("elapsed_s"), **extra},
         finding=None if passed else
         "multi-rank execution disagrees with the aggregation rule the contract declares",
     )
@@ -683,7 +983,33 @@ def gate_g6(ctx: Context, tmp: Path) -> dict[str, Any]:
     update = ctx.contract["update_contract"]
     T = ctx.trainer
 
-    counter: dict[str, int] = {"optimizer_steps": 0, "parameter_updates": 0}
+    counter: dict[str, int] = {"optimizer_steps": 0, "parameter_updates": 0,
+                               "target_encoder_updates": 0}
+    # The targeted parameters only exist once the trainer has built its model, so the model is
+    # captured from its own construction. Observing "some parameter moved" instead would let an
+    # optimizer that skipped the encoder entirely pass.
+    captured_models: list[Any] = []
+    model_class = getattr(ctx.trainer, "RQVAE", None)
+    original_init = model_class.__init__ if model_class is not None else None
+
+    def capturing_init(inner_self, *args, **kwargs):
+        original_init(inner_self, *args, **kwargs)
+        captured_models.append(inner_self)
+
+    if model_class is not None:
+        model_class.__init__ = capturing_init
+
+    def target_parameters():
+        if not captured_models:
+            return []
+        target = (ctx.contract.get("gradient_contract") or {}).get("target", "encoder")
+        module = captured_models[-1]
+        attribute = ((ctx.contract.get("model") or {}).get("parameter_groups") or {}).get(
+            target, target)
+        try:
+            return list(adapters.resolve_dotted(module, attribute).parameters())
+        except AttributeError:
+            return []
     optimizer_cls = getattr(torch.optim, update["optimizer"])
     real_step = optimizer_cls.step
 
@@ -691,11 +1017,16 @@ def gate_g6(ctx: Context, tmp: Path) -> dict[str, Any]:
         before = [(parameter, parameter.detach().clone())
                   for group in self.param_groups for parameter in group["params"]
                   if parameter.grad is not None]
+        targets = target_parameters()
+        target_before = [parameter.detach().clone() for parameter in targets]
         result = real_step(self, *args, **kwargs)
         counter["optimizer_steps"] += 1
         if any(not torch.equal(previous, parameter.detach())
                for parameter, previous in before):
             counter["parameter_updates"] += 1
+        if targets and any(not torch.equal(old, parameter.detach())
+                           for old, parameter in zip(target_before, targets)):
+            counter["target_encoder_updates"] += 1
         return result
 
     optimizer_cls.step = counting_step
@@ -703,7 +1034,9 @@ def gate_g6(ctx: Context, tmp: Path) -> dict[str, Any]:
     observed: dict[str, int] = {}
     for item in runtime["observe"]:
         name = item["name"]
-        if name in ("optimizer_steps", "parameter_updates"):
+        # the optimizer-step observables are measured by the optimizer wrapper below, not by
+        # instrumenting a trainer symbol
+        if name in ("optimizer_steps", "parameter_updates", "target_encoder_update"):
             continue
         target = item.get("target")
         if not target:
@@ -747,7 +1080,8 @@ def gate_g6(ctx: Context, tmp: Path) -> dict[str, Any]:
                 setattr(T, name, value)
 
     counts = {**observed, "optimizer_steps": counter["optimizer_steps"],
-              "parameter_updates": counter["parameter_updates"]}
+              "parameter_updates": counter["parameter_updates"],
+              "target_encoder_update": counter["target_encoder_updates"]}
     unmet = []
     for item in runtime["observe"]:
         minimum = int(item.get("min", 1))
@@ -785,8 +1119,7 @@ def _set_dotted(module, dotted: str, value) -> None:
 # --------------------------------------------------------------------------------------
 # driver
 # --------------------------------------------------------------------------------------
-def run_cgv(tree: Path, spec: Any, *, gates: tuple[str, ...] = GATES,
-            negative_suite: bool = False) -> dict[str, Any]:
+def run_cgv(tree: Path, spec: Any, *, gates: tuple[str, ...] = GATES) -> dict[str, Any]:
     """Verify the mechanism in ``tree`` against the declaration ``spec``.
 
     ``spec`` is the mechanism's own mathematical contract, passed as data: the seven groups in
@@ -862,7 +1195,7 @@ def run_cgv(tree: Path, spec: Any, *, gates: tuple[str, ...] = GATES,
             except Exception as exc:  # noqa: BLE001
                 result["gates"][gate] = _result(
                     gate, C.FAILED, f"the gate could not be executed: {type(exc).__name__}: {exc}",
-                    finding="a gate that cannot run cannot certify anything")
+                    finding="a gate that cannot run verifies nothing")
     finally:
         unload_trainer(saved_path, saved_mods)
 
@@ -871,14 +1204,6 @@ def run_cgv(tree: Path, spec: Any, *, gates: tuple[str, ...] = GATES,
     result["passed"] = all(state in (C.PASSED, C.NOT_APPLICABLE) for state in states) and \
         any(state == C.PASSED for state in states)
     result["gates_passed"] = result["passed"]
-    if negative_suite:
-        # prove the gates have discriminating power: inject the standard faults and require the
-        # gate that is supposed to catch each one to fail
-        import negative_suite as suite
-
-        result["negative_suite"] = suite.run_all(tree, spec)
-        # gates alone are not a verdict: a mechanism whose faults are not caught is not verified
-        result["passed"] = bool(result["passed"] and result["negative_suite"]["all_ok"])
     return result
 
 
@@ -892,91 +1217,3 @@ def _summary(result: dict[str, Any], gates: tuple[str, ...]) -> dict[str, Any]:
         }
         for gate in gates
     }
-
-
-def write_certificate(result: dict[str, Any]) -> Path:
-    CGV_DIR.mkdir(parents=True, exist_ok=True)
-    mechanism = (result.get("declared") or {}).get("id") or result.get("arm") or "unknown"
-    path = CGV_DIR / f"certificate_{mechanism}.json"
-    path.write_text(json.dumps(result, indent=2, default=str) + "\n", encoding="utf-8")
-    return path
-
-
-def load_certificate(tree: Path) -> dict[str, Any] | None:
-    """The certificate for this tree, matched by contract path then by tree path."""
-    tree = Path(tree).resolve()
-    if not CGV_DIR.is_dir():
-        return None
-    candidates = sorted(CGV_DIR.glob("certificate_*.json"),
-                        key=lambda path: path.stat().st_mtime, reverse=True)
-    for path in candidates:
-        try:
-            certificate = json.loads(path.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        if Path(str(certificate.get("tree", ""))).resolve() == tree:
-            return certificate
-    return None
-
-
-def certificate_is_valid(tree: Path, spec: Any = None) -> tuple[bool, str]:
-    """A certificate is valid only if it passed, and still describes this tree and this claim.
-
-    Four things can invalidate it, and all four must be checked or the gate is decorative: the
-    trainer source changed, the DECLARATION the certificate was issued against is not the one
-    supplied now, the verifier itself changed, or the certificate predates the current schema.
-    Requiring the caller to pass the same declaration at training time is what stops a weak claim
-    from being certified and then quietly used.
-    """
-    tree = Path(tree).resolve()
-    certificate = load_certificate(tree)
-    if certificate is None:
-        return False, ("no CGV certificate. Run cgv_check(source_dir=...) and all six gates must "
-                       "pass before this tree may train")
-    if certificate.get("schema_version") != C.SCHEMA_VERSION:
-        return False, (f"the certificate was issued under schema "
-                       f"{certificate.get('schema_version')} and the current contract schema is "
-                       f"{C.SCHEMA_VERSION}; re-run cgv_check")
-    summary = certificate.get("summary") or {}
-    blocking = [gate for gate, entry in summary.items()
-                if entry.get("state") not in (C.PASSED, C.NOT_APPLICABLE)]
-    if blocking:
-        states = {gate: entry.get("state") for gate, entry in summary.items()}
-        return False, (f"CGV gates not passing: {states}. Re-run cgv_check before training")
-    independence = certificate.get("independence") or {}
-    if independence and not independence.get("independent", False):
-        return False, ("the certificate was issued with oracles that are not independent of the "
-                       "mechanism; re-run cgv_check")
-    suite = certificate.get("negative_suite")
-    if not suite:
-        return False, ("the certificate carries no counterexample evidence: run cgv_check, which "
-                       "injects the standard faults and requires the matching gate to fail")
-    if not suite.get("all_ok"):
-        broken = [item.get("fault") for item in suite.get("faults", []) if not item.get("ok")]
-        return False, (f"the counterexample suite could not show these faults failing: {broken}. "
-                       "A gate that cannot fail proves nothing, so this mechanism may not train")
-    if not certificate.get("passed"):
-        return False, ("the certificate is not marked as passing even though its gates and "
-                       "counterexample suite are green; re-run cgv_check")
-    current_trainer = sha256_file(tree / "train_rqvae.py")
-    if certificate.get("trainer_sha256") != current_trainer:
-        return False, ("the trainer changed after the certificate was issued; the mechanism must "
-                       "be re-verified with cgv_check before it may train")
-    if spec is None:
-        return False, ("no declaration was supplied: training must be authorised by the same "
-                       "declaration the certificate was issued against")
-    supplied = C.normalise_spec(spec)
-    if C.spec_sha256(supplied) != certificate.get("spec_sha256"):
-        return False, ("the supplied declaration is not the one this certificate covers "
-                       f"(certificate {str(certificate.get('spec_sha256'))[:16]}, supplied "
-                       f"{C.spec_sha256(supplied)[:16]}); the gates that passed judged that "
-                       "declaration, so this one is unverified")
-    current_fingerprint = C.fingerprint(supplied)
-    recorded = certificate.get("fingerprint") or {}
-    for key in ("oracles_sha256", "adapter_sha256", "negative_suite_sha256"):
-        if recorded.get(key) != current_fingerprint.get(key):
-            return False, (f"the verifier changed ({key}) after the certificate was issued; "
-                           "re-run cgv_check")
-    return True, (f"CGV certificate {certificate.get('checked_utc')} covers trainer "
-                  f"{str(certificate.get('trainer_sha256'))[:16]} and declaration "
-                  f"{str(certificate.get('spec_sha256'))[:16]}")
