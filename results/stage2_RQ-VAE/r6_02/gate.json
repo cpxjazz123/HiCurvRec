@@ -1,0 +1,105 @@
+{
+  "arm": "r6_02",
+  "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_02",
+  "spec_sha256": null,
+  "preconditions": {
+    "frozen_pairs_present": {
+      "ok": true,
+      "detail": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
+    },
+    "frozen_pairs_sha256": {
+      "ok": true,
+      "detail": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0 != 04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+    },
+    "metrics_present": {
+      "ok": true,
+      "detail": "3003 rows in /home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_02/logs/resample/training_metrics.jsonl"
+    },
+    "train_end_present": {
+      "ok": true,
+      "detail": "1 train_end rows"
+    },
+    "train_end_epoch_explicit": {
+      "ok": true,
+      "detail": "epochs seen: [3000]"
+    },
+    "train_end_epoch_is_3000": {
+      "ok": true,
+      "detail": "declared [3000], required 3000"
+    },
+    "ckpt_saved_present": {
+      "ok": true,
+      "detail": "1 ckpt_saved rows"
+    },
+    "ckpt_saved_epoch_3000": {
+      "ok": true,
+      "detail": "epochs seen: [3000]"
+    },
+    "checkpoint_readable": {
+      "ok": true,
+      "detail": "epoch metadata = 3000"
+    },
+    "checkpoint_epoch_is_3000": {
+      "ok": true,
+      "detail": "3000 != 3000"
+    },
+    "sids_present": {
+      "ok": true,
+      "detail": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r6_02/sids_for_hgrec.npy"
+    },
+    "item_map_present": {
+      "ok": true,
+      "detail": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r6_02/item_sids.json"
+    },
+    "sids_shape": {
+      "ok": true,
+      "detail": "shape (24587, 4); column 0 is the native hard SID"
+    },
+    "pair_count": {
+      "ok": true,
+      "detail": "52855 pairs, required 52855"
+    },
+    "negative_count": {
+      "ok": true,
+      "detail": "(52855, 10) negatives, required 10"
+    },
+    "indices_in_range": {
+      "ok": true,
+      "detail": "max index 24586 vs 24587 items"
+    },
+    "pos_share_finite": {
+      "ok": true,
+      "detail": "0.28941443572036707"
+    },
+    "neg_share_finite": {
+      "ok": true,
+      "detail": "0.10013432977012582"
+    },
+    "neg_share_positive": {
+      "ok": true,
+      "detail": "0.10013432977012582"
+    },
+    "er_finite": {
+      "ok": true,
+      "detail": "2.8902618750708537"
+    },
+    "er_above_baseline": {
+      "ok": false,
+      "detail": "2.8902618750708537 > 16.38953942232631 required (equal is a FAIL)"
+    }
+  },
+  "metric": {
+    "pos_share": 0.28941443572036707,
+    "neg_share": 0.10013432977012582,
+    "hard_l1_er": 2.8902618750708537,
+    "baseline_hard_l1_er": 16.38953942232631,
+    "delta_vs_baseline": -13.499277547255454,
+    "sid_sha256": "25b4dbba2a8f9650a7b4133b5a4eb9f37f062258c8cbbf38a60408186e3860e5",
+    "frozen_pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "baseline_reference_sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10"
+  },
+  "stage3_allowed": false,
+  "failures": [
+    "er_above_baseline: 2.8902618750708537 > 16.38953942232631 required (equal is a FAIL)"
+  ]
+}

@@ -524,6 +524,12 @@ def aggregate(observations: dict[str, Any]) -> list[torch.Tensor]:
 # --------------------------------------------------------------------------------------
 TRACE_RULES = ("half_ste_residual", "direct_latent_bridge", "soft_codeword_surrogate")
 
+# Rules whose trace-to-latent Jacobian is DATA DEPENDENT rather than a constant coefficient.
+# Demanding a constant level Jacobian of these would be demanding a representation that does not
+# exist, so the gradient gate verifies them by the VJP the oracle derives instead -- which is a
+# different check, not a weaker one.
+VJP_RULES = ("soft_codeword_surrogate",)
+
 
 def _weighted_latent_pullback(obs: dict, coefficients) -> list[torch.Tensor]:
     """Sum_k c_k * J_encoder^T u_k, with the coefficients read from the DECLARATION.
@@ -592,35 +598,55 @@ def _soft_codeword(trace: torch.Tensor, codebook: torch.Tensor, floor: float):
 def soft_codeword_behavior_gradient(observations: dict) -> dict[str, Any]:
     """r6_04: hard forward, soft codeword backward.
 
-    r_next = trace - (q_hard.detach() + (q_soft - q_soft.detach())), so the backward is
-    ``dr_next = dtrace - dq_soft``: the soft surrogate REPLACES the straight-through identity.
-    This is what distinguishes the rule from both alternatives, so the oracle differentiates the
-    declared surrogate itself and returns the encoder AND codebook pullbacks.
+    ``r_next = r - (q_hard.detach() + (q_soft - q_soft.detach()))``, so the backward is
+    ``dr_next = dr - dq_soft``: the soft surrogate REPLACES the straight-through identity. That
+    makes the trace-to-latent Jacobian data dependent -- ``I - J(q_soft, r)`` -- so there is no
+    constant level coefficient to declare, and asking for one would be demanding a representation
+    that does not exist.
+
+    The expectation is therefore the VJP of the DECLARED recurrence, rebuilt here from the
+    observed level-0 trace, the raw codebooks and the observed hard assignment. The arm's own graph
+    is never differentiated: the surrogate, the normalisation and the composition are all this
+    function's, so a wrong implementation disagrees with it.
     """
-    coefficients = declared_coefficients(observations)
+    traces = observations["traces"]
+    codebooks = observations["codebooks"]
+    indices = observations["trace_indices"]
+    cotangents = observations["u_levels"]
     floor = float(observations.get("soft_normalizer_floor", 1e-8))
+
+    latent = traces[0].detach().requires_grad_(True)
+    local_codebooks = [codebook.detach().requires_grad_(True) for codebook in codebooks]
+
+    # The observed trace is [latent, r1, r2]: the FIRST entry is the residual entering level 0,
+    # not the result of the first subtraction. Starting the rebuild one step late would pair every
+    # cotangent with the wrong level, which shows up as a plausible-looking but wrong expectation.
+    rebuilt = [latent]
+    residual = latent
+    for level, codebook in enumerate(local_codebooks):
+        soft = _soft_codeword(residual, codebook, floor)
+        hard = codebook[indices[level]].detach()
+        residual = residual - (hard + (soft - soft.detach()))
+        rebuilt.append(residual)
+
     encoder_total = None
     codebook_total = None
-    for level, (trace, codebook, cotangent) in enumerate(
-            zip(observations["traces"], observations["codebooks"], observations["u_levels"])):
-        coefficient = float(coefficients[level])
-        if coefficient == 0.0:
-            continue
-        local_trace = trace.detach().requires_grad_(True)
-        local_codebook = codebook.detach().requires_grad_(True)
-        soft = _soft_codeword(local_trace, local_codebook, floor)
-        # the surrogate enters the residual with a minus sign, so the VJP is the cotangent minus
-        # the surrogate's own VJP
-        weight = cotangent * coefficient
-        (grad_trace, grad_codebook) = torch.autograd.grad(
-            (weight * soft).sum(), (local_trace, local_codebook), retain_graph=False)
-        trace_pullback = (weight - grad_trace) * 1.0
-        encoder_part = observations["latent_to_encoder"](trace_pullback)
-        encoder_total = (encoder_part if encoder_total is None else
-                         [a + b for a, b in zip(encoder_total, encoder_part)])
-        codebook_part = [-grad_codebook * 1.0]
-        codebook_total = (codebook_part if codebook_total is None else
-                          [a + b for a, b in zip(codebook_total, codebook_part)])
+    for level, cotangent in enumerate(cotangents):
+        if level >= len(rebuilt):
+            break
+        inputs = [latent] + local_codebooks
+        found = torch.autograd.grad((rebuilt[level] * cotangent).sum(), inputs,
+                                    retain_graph=True, allow_unused=True)
+        grad_latent = found[0]
+        grad_codebooks = [torch.zeros_like(p) if g is None else g
+                          for p, g in zip(local_codebooks, found[1:])]
+        if grad_latent is not None:
+            encoder_part = observations["latent_to_encoder"](grad_latent)
+            encoder_total = (encoder_part if encoder_total is None else
+                             [a + b for a, b in zip(encoder_total, encoder_part)])
+        codebook_total = (grad_codebooks if codebook_total is None else
+                          [a + b for a, b in zip(codebook_total, grad_codebooks)])
+
     if encoder_total is None:
         encoder_total = [torch.zeros_like(p) for p in observations["encoder"]]
     if codebook_total is None:

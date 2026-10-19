@@ -208,7 +208,8 @@ TREE_NAME = TREE_DIR.name
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM
+RESULT_DIR_NAME = "r6_03"   # the issue requires results/stage2_RQ-VAE/r6_03/
+_OUT = OUT_ROOT / RESULT_DIR_NAME
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
@@ -439,6 +440,10 @@ if EXPERIMENT_ARM in _ARM_BEHAVIOR_WEIGHT:
     BEHAVIOR_WEIGHT_MAX = _ARM_BEHAVIOR_WEIGHT[EXPERIMENT_ARM]
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
+# R6-03 (issue #75): the single mechanism of this tree. The bridge is forward-exactly zero, so the
+# hard forward, the quantiser recurrence and the SID export are untouched; only the CE-facing deep
+# traces gain a direct path back to the latent.
+R6_03_BRIDGE_COEFFICIENT = 0.5
 PAIR_BATCH_SIZE_PER_RANK = 512
 RESAMPLE_PAIRS          = True
 
@@ -632,12 +637,19 @@ def _residuals_with_trace(
     ``model/`` stays byte-identical to the baseline, so the trace is produced by
     walking the unchanged quantizer stack rather than by patching it.
     """
-    residual = raw_module.encoder(embeddings)
+    latent = raw_module.encoder(embeddings)
+    residual = latent
     traces = [residual]
-    for vq_layer in raw_module.rq.vq_layers:
+    for level, vq_layer in enumerate(raw_module.rq.vq_layers):
         quant, _, _, _ = vq_layer(residual)
+        # The recurrence that feeds the NEXT quantiser is never bridged: only the trace the
+        # contrastive loss sees is.
         residual = residual - quant
-        traces.append(residual)
+        if level + 1 < raw_module.rq.codebook_num:
+            bridge = R6_03_BRIDGE_COEFFICIENT * (latent - latent.detach())
+            traces.append(residual + bridge)
+        else:
+            traces.append(residual)
     # iter48 records the residual *entering* each level; drop the final remainder.
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
 
@@ -1542,7 +1554,8 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(rank, "train_end", epoch=EPOCHS,
+                total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
 
     if world_size > 1:
         dist.barrier()

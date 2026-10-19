@@ -526,6 +526,18 @@ def codebook_level_gradient(trainer, obs: dict[str, Any], level: int) -> list[to
     return [torch.zeros_like(p) if g is None else g for p, g in zip(codebooks, grads)]
 
 
+def codebook_total_gradient(trainer, obs: dict[str, Any]) -> list[torch.Tensor]:
+    """The gradient the arm's real trace sends to the codebooks, summed over levels."""
+    codebooks = obs.get("codebooks_parameters")
+    if not codebooks:
+        return []
+    total = obs["level_losses"][0]
+    for loss in obs["level_losses"][1:]:
+        total = total + loss
+    grads = torch.autograd.grad(total, codebooks, retain_graph=True, allow_unused=True)
+    return [torch.zeros_like(p) if g is None else g for p, g in zip(codebooks, grads)]
+
+
 def level_path_state(grads) -> str:
     """Classify a declared path as disconnected, exactly zero, non-zero, or non-finite.
 
