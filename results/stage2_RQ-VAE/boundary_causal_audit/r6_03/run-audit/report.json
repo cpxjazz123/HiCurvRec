@@ -1,0 +1,877 @@
+{
+  "audit": "stage2_boundary_causal_audit",
+  "status": "valid",
+  "failures": [],
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_03",
+  "mechanism_id": "r6_03",
+  "assembly": {
+    "assembly": "pooled_level_mean",
+    "nonlinear_gradient_route": false,
+    "intervention_mode": "loss_term_removed_before_assembly",
+    "recomputed_through_true_assembly": true,
+    "supported_interventions": [
+      "CTRL",
+      "FULL",
+      "NO-DEEP",
+      "BASE-ONLY"
+    ],
+    "no_deep_is_negative_control": false,
+    "note": "the arm assembles a level mean, so removing a level before assembly is exact"
+  },
+  "audit_config": {
+    "seed": 42,
+    "baseline_steps": 32,
+    "behavior_active_steps": 128,
+    "behavior_weight_active": 0.2,
+    "assignment_population": "train_only_all_items",
+    "train_pairs": "original_train_only",
+    "optimizer": "production",
+    "gradient_clip": "production",
+    "device_layout": "production_if_available",
+    "output_isolation": true,
+    "fork_steps": [
+      32,
+      96,
+      160
+    ],
+    "propagation_steps": 8,
+    "pair_limit": 8000
+  },
+  "forks": {
+    "96": {
+      "branches": {
+        "CTRL": {
+          "l1_assignment": "tensor([140, 140, 195,  ..., 114,  16,  88], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 115,
+            "capacity": 256,
+            "used_fraction": 0.44921875,
+            "entropy_nats": 2.6096415061919735,
+            "entropy_norm": 0.47061460743514566,
+            "effective_codes": 13.594176550061212,
+            "max_code_share": 0.15853906535974294
+          },
+          "tuple_collision": {
+            "collision": 0.8125025419937365,
+            "unique": 4610,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.10112499445676804
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0004954589530825615,
+          "l1_margin_p10": 8.203461766242981e-05,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 115,
+              "capacity": 256,
+              "used_fraction": 0.44921875,
+              "entropy_nats": 2.6096415061919735,
+              "entropy_norm": 0.47061460743514566,
+              "effective_codes": 13.594176550061212,
+              "max_code_share": 0.15853906535974294
+            },
+            "level_1": {
+              "used_codes": 150,
+              "capacity": 256,
+              "used_fraction": 0.5859375,
+              "entropy_nats": 2.8250082881958374,
+              "entropy_norm": 0.5094531809812943,
+              "effective_codes": 16.861084733482205,
+              "max_code_share": 0.2772603408305202
+            },
+            "level_2": {
+              "used_codes": 249,
+              "capacity": 256,
+              "used_fraction": 0.97265625,
+              "entropy_nats": 4.414515284400414,
+              "entropy_norm": 0.7960999135916262,
+              "effective_codes": 82.64177343946609,
+              "max_code_share": 0.08036767397405133
+            }
+          }
+        },
+        "origin": {
+          "l1_assignment": "tensor([140, 140, 195,  ..., 114,  16,  88], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 115,
+            "capacity": 256,
+            "used_fraction": 0.44921875,
+            "entropy_nats": 2.6096415061919735,
+            "entropy_norm": 0.47061460743514566,
+            "effective_codes": 13.594176550061212,
+            "max_code_share": 0.15853906535974294
+          },
+          "tuple_collision": {
+            "collision": 0.8125025419937365,
+            "unique": 4610,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.10112499445676804
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0004954589530825615,
+          "l1_margin_p10": 8.203461766242981e-05,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 115,
+              "capacity": 256,
+              "used_fraction": 0.44921875,
+              "entropy_nats": 2.6096415061919735,
+              "entropy_norm": 0.47061460743514566,
+              "effective_codes": 13.594176550061212,
+              "max_code_share": 0.15853906535974294
+            },
+            "level_1": {
+              "used_codes": 150,
+              "capacity": 256,
+              "used_fraction": 0.5859375,
+              "entropy_nats": 2.8250082881958374,
+              "entropy_norm": 0.5094531809812943,
+              "effective_codes": 16.861084733482205,
+              "max_code_share": 0.2772603408305202
+            },
+            "level_2": {
+              "used_codes": 249,
+              "capacity": 256,
+              "used_fraction": 0.97265625,
+              "entropy_nats": 4.414515284400414,
+              "entropy_norm": 0.7960999135916262,
+              "effective_codes": 82.64177343946609,
+              "max_code_share": 0.08036767397405133
+            }
+          }
+        },
+        "FULL": {
+          "l1_assignment": "tensor([140, 140, 195,  ..., 114,  16,  88], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 113,
+            "capacity": 256,
+            "used_fraction": 0.44140625,
+            "entropy_nats": 2.605001607761945,
+            "entropy_norm": 0.46977786262824184,
+            "effective_codes": 13.531247057754246,
+            "max_code_share": 0.15300768698905926
+          },
+          "tuple_collision": {
+            "collision": 0.8114450725993412,
+            "unique": 4636,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.10113749653100967
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.000508258119225502,
+          "l1_margin_p10": 8.312352292705327e-05,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 113,
+              "capacity": 256,
+              "used_fraction": 0.44140625,
+              "entropy_nats": 2.605001607761945,
+              "entropy_norm": 0.46977786262824184,
+              "effective_codes": 13.531247057754246,
+              "max_code_share": 0.15300768698905926
+            },
+            "level_1": {
+              "used_codes": 151,
+              "capacity": 256,
+              "used_fraction": 0.58984375,
+              "entropy_nats": 2.842543317048495,
+              "entropy_norm": 0.512615393377241,
+              "effective_codes": 17.159351758730114,
+              "max_code_share": 0.27233904095660305
+            },
+            "level_2": {
+              "used_codes": 248,
+              "capacity": 256,
+              "used_fraction": 0.96875,
+              "entropy_nats": 4.445018402017745,
+              "entropy_norm": 0.8016007506563981,
+              "effective_codes": 85.20144570141225,
+              "max_code_share": 0.07788668808720055
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 929,
+              "switched_codebook_only": 310,
+              "switched_joint": 968,
+              "additive_prediction": 1239,
+              "interaction": -271,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1733,
+              "switched_codebook_only": 339,
+              "switched_joint": 1805,
+              "additive_prediction": 2072,
+              "interaction": -267,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 3666,
+              "switched_codebook_only": 477,
+              "switched_joint": 3652,
+              "additive_prediction": 4143,
+              "interaction": -491,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        },
+        "NO-DEEP": {
+          "l1_assignment": "tensor([140, 140, 195,  ..., 114,  16,  88], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 113,
+            "capacity": 256,
+            "used_fraction": 0.44140625,
+            "entropy_nats": 2.602775165631228,
+            "entropy_norm": 0.4693763530006404,
+            "effective_codes": 13.501154031845125,
+            "max_code_share": 0.15239760849229267
+          },
+          "tuple_collision": {
+            "collision": 0.8116484320982633,
+            "unique": 4631,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.1005374938249588
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0005095875822007656,
+          "l1_margin_p10": 8.297162275994197e-05,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 113,
+              "capacity": 256,
+              "used_fraction": 0.44140625,
+              "entropy_nats": 2.602775165631228,
+              "entropy_norm": 0.4693763530006404,
+              "effective_codes": 13.501154031845125,
+              "max_code_share": 0.15239760849229267
+            },
+            "level_1": {
+              "used_codes": 150,
+              "capacity": 256,
+              "used_fraction": 0.5859375,
+              "entropy_nats": 2.838520228863617,
+              "entropy_norm": 0.5118898822055682,
+              "effective_codes": 17.090456851476436,
+              "max_code_share": 0.26993939886932117
+            },
+            "level_2": {
+              "used_codes": 249,
+              "capacity": 256,
+              "used_fraction": 0.97265625,
+              "entropy_nats": 4.441054279742846,
+              "entropy_norm": 0.8008858732129639,
+              "effective_codes": 84.86436530801579,
+              "max_code_share": 0.07882214178224264
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 945,
+              "switched_codebook_only": 310,
+              "switched_joint": 1019,
+              "additive_prediction": 1255,
+              "interaction": -236,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1776,
+              "switched_codebook_only": 351,
+              "switched_joint": 1817,
+              "additive_prediction": 2127,
+              "interaction": -310,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 3648,
+              "switched_codebook_only": 513,
+              "switched_joint": 3670,
+              "additive_prediction": 4161,
+              "interaction": -491,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        },
+        "BASE-ONLY": {
+          "l1_assignment": "tensor([140, 140, 195,  ..., 114,  16,  88], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 113,
+            "capacity": 256,
+            "used_fraction": 0.44140625,
+            "entropy_nats": 2.602283068351409,
+            "entropy_norm": 0.4692876097124866,
+            "effective_codes": 13.494511785121446,
+            "max_code_share": 0.15280432749013706
+          },
+          "tuple_collision": {
+            "collision": 0.8121364948956766,
+            "unique": 4619,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.10046249628067017
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0005085915327072144,
+          "l1_margin_p10": 8.319169864989817e-05,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 113,
+              "capacity": 256,
+              "used_fraction": 0.44140625,
+              "entropy_nats": 2.602283068351409,
+              "entropy_norm": 0.4692876097124866,
+              "effective_codes": 13.494511785121446,
+              "max_code_share": 0.15280432749013706
+            },
+            "level_1": {
+              "used_codes": 150,
+              "capacity": 256,
+              "used_fraction": 0.5859375,
+              "entropy_nats": 2.8359403007513393,
+              "entropy_norm": 0.511424626018889,
+              "effective_codes": 17.046421529800835,
+              "max_code_share": 0.27030544596738115
+            },
+            "level_2": {
+              "used_codes": 247,
+              "capacity": 256,
+              "used_fraction": 0.96484375,
+              "entropy_nats": 4.444459374552164,
+              "entropy_norm": 0.8014999373873588,
+              "effective_codes": 85.15382906390212,
+              "max_code_share": 0.07829340708504494
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 855,
+              "switched_codebook_only": 331,
+              "switched_joint": 944,
+              "additive_prediction": 1186,
+              "interaction": -242,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1624,
+              "switched_codebook_only": 372,
+              "switched_joint": 1683,
+              "additive_prediction": 1996,
+              "interaction": -313,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 3398,
+              "switched_codebook_only": 517,
+              "switched_joint": 3427,
+              "additive_prediction": 3915,
+              "interaction": -488,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        }
+      },
+      "frozen_identity": "35f57a68fa089eb461e7f8d294e82198c9875cad984f7dd12905872a57f58729",
+      "frozen_checksum": "10fabc0ef3a3db4e3a9b55ff9d1749bf43afbab88e6c140cbe20dec15c82b069",
+      "comparison": {
+        "CTRL": {
+          "l1_switches_vs_origin": 0,
+          "l1_switch_fraction_vs_origin": 0.0,
+          "negative_same_l1_code_delta_vs_origin": 0.0,
+          "tuple_collision_delta_vs_origin": 0.0,
+          "l1_effective_codes_delta_vs_origin": 0.0
+        },
+        "FULL": {
+          "l1_switches_vs_origin": 968,
+          "l1_switch_fraction_vs_origin": 0.03937039899133689,
+          "negative_same_l1_code_delta_vs_origin": 1.2502074241638184e-05,
+          "tuple_collision_delta_vs_origin": -0.0010574693943953273,
+          "l1_effective_codes_delta_vs_origin": -0.06292949230696543
+        },
+        "NO-DEEP": {
+          "l1_switches_vs_origin": 1019,
+          "l1_switch_fraction_vs_origin": 0.04144466588034327,
+          "negative_same_l1_code_delta_vs_origin": -0.0005875006318092346,
+          "tuple_collision_delta_vs_origin": -0.0008541098954731874,
+          "l1_effective_codes_delta_vs_origin": -0.09302251821608643
+        },
+        "BASE-ONLY": {
+          "l1_switches_vs_origin": 944,
+          "l1_switch_fraction_vs_origin": 0.03839427339651035,
+          "negative_same_l1_code_delta_vs_origin": -0.0006624981760978699,
+          "tuple_collision_delta_vs_origin": -0.000366047098059874,
+          "l1_effective_codes_delta_vs_origin": -0.0996647649397655
+        },
+        "Delta_deep": {
+          "negative_same_l1_code_FULL_minus_NO-DEEP": 0.0006000027060508728,
+          "tuple_collision_FULL_minus_NO-DEEP": -0.0002033594989221399,
+          "l1_effective_codes_FULL_minus_NO-DEEP": 0.030093025909120996,
+          "direction": "a POSITIVE negative_same_l1_code difference means the deep gradients increased unrelated-item sharing, i.e. local harm"
+        },
+        "Delta_base_only": {
+          "negative_same_l1_code_BASE_ONLY_minus_FULL": -0.0006750002503395081,
+          "note": "if BASE-ONLY reproduces most of FULL's harmful transitions, the drift is base-driven and the deep-gradient explanation is rejected"
+        }
+      }
+    },
+    "160": {
+      "branches": {
+        "CTRL": {
+          "l1_assignment": "tensor([220,  43,  43,  ...,  88, 207, 167], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 72,
+            "capacity": 256,
+            "used_fraction": 0.28125,
+            "entropy_nats": 2.517941214621292,
+            "entropy_norm": 0.4540776629480089,
+            "effective_codes": 12.403035172329666,
+            "max_code_share": 0.24350266400943588
+          },
+          "tuple_collision": {
+            "collision": 0.7675194208321471,
+            "unique": 5716,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.1158749982714653
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0023813359439373016,
+          "l1_margin_p10": 0.0003739737148862332,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 72,
+              "capacity": 256,
+              "used_fraction": 0.28125,
+              "entropy_nats": 2.517941214621292,
+              "entropy_norm": 0.4540776629480089,
+              "effective_codes": 12.403035172329666,
+              "max_code_share": 0.24350266400943588
+            },
+            "level_1": {
+              "used_codes": 144,
+              "capacity": 256,
+              "used_fraction": 0.5625,
+              "entropy_nats": 3.3640871999842417,
+              "entropy_norm": 0.606668990066913,
+              "effective_codes": 28.907098852343868,
+              "max_code_share": 0.1240086224427543
+            },
+            "level_2": {
+              "used_codes": 254,
+              "capacity": 256,
+              "used_fraction": 0.9921875,
+              "entropy_nats": 4.9174549089973,
+              "entropy_norm": 0.8867984763756867,
+              "effective_codes": 136.65437240851418,
+              "max_code_share": 0.0481555293447757
+            }
+          }
+        },
+        "origin": {
+          "l1_assignment": "tensor([220,  43,  43,  ...,  88, 207, 167], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 72,
+            "capacity": 256,
+            "used_fraction": 0.28125,
+            "entropy_nats": 2.517941214621292,
+            "entropy_norm": 0.4540776629480089,
+            "effective_codes": 12.403035172329666,
+            "max_code_share": 0.24350266400943588
+          },
+          "tuple_collision": {
+            "collision": 0.7675194208321471,
+            "unique": 5716,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.1158749982714653
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0023813359439373016,
+          "l1_margin_p10": 0.0003739737148862332,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 72,
+              "capacity": 256,
+              "used_fraction": 0.28125,
+              "entropy_nats": 2.517941214621292,
+              "entropy_norm": 0.4540776629480089,
+              "effective_codes": 12.403035172329666,
+              "max_code_share": 0.24350266400943588
+            },
+            "level_1": {
+              "used_codes": 144,
+              "capacity": 256,
+              "used_fraction": 0.5625,
+              "entropy_nats": 3.3640871999842417,
+              "entropy_norm": 0.606668990066913,
+              "effective_codes": 28.907098852343868,
+              "max_code_share": 0.1240086224427543
+            },
+            "level_2": {
+              "used_codes": 254,
+              "capacity": 256,
+              "used_fraction": 0.9921875,
+              "entropy_nats": 4.9174549089973,
+              "entropy_norm": 0.8867984763756867,
+              "effective_codes": 136.65437240851418,
+              "max_code_share": 0.0481555293447757
+            }
+          }
+        },
+        "FULL": {
+          "l1_assignment": "tensor([220,  43,  43,  ...,  88, 207, 167], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 71,
+            "capacity": 256,
+            "used_fraction": 0.27734375,
+            "entropy_nats": 2.5205973985770287,
+            "entropy_norm": 0.45455667087558765,
+            "effective_codes": 12.436023707770762,
+            "max_code_share": 0.24610566559563996
+          },
+          "tuple_collision": {
+            "collision": 0.7670313580347338,
+            "unique": 5728,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.11608749628067017
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0024268915876746178,
+          "l1_margin_p10": 0.0003763463464565575,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 71,
+              "capacity": 256,
+              "used_fraction": 0.27734375,
+              "entropy_nats": 2.5205973985770287,
+              "entropy_norm": 0.45455667087558765,
+              "effective_codes": 12.436023707770762,
+              "max_code_share": 0.24610566559563996
+            },
+            "level_1": {
+              "used_codes": 141,
+              "capacity": 256,
+              "used_fraction": 0.55078125,
+              "entropy_nats": 3.3640985514977153,
+              "entropy_norm": 0.6066710371634374,
+              "effective_codes": 28.90742699352842,
+              "max_code_share": 0.12791312482206044
+            },
+            "level_2": {
+              "used_codes": 252,
+              "capacity": 256,
+              "used_fraction": 0.984375,
+              "entropy_nats": 4.920108758849183,
+              "entropy_norm": 0.8872770633782587,
+              "effective_codes": 137.01751424331047,
+              "max_code_share": 0.04713873185016472
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 684,
+              "switched_codebook_only": 226,
+              "switched_joint": 766,
+              "additive_prediction": 910,
+              "interaction": -144,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1817,
+              "switched_codebook_only": 370,
+              "switched_joint": 1929,
+              "additive_prediction": 2187,
+              "interaction": -258,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 4395,
+              "switched_codebook_only": 499,
+              "switched_joint": 4341,
+              "additive_prediction": 4894,
+              "interaction": -553,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        },
+        "NO-DEEP": {
+          "l1_assignment": "tensor([220,  43,  43,  ...,  88, 207, 167], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 71,
+            "capacity": 256,
+            "used_fraction": 0.27734375,
+            "entropy_nats": 2.5203610687787483,
+            "entropy_norm": 0.4545140518970885,
+            "effective_codes": 12.433085052056127,
+            "max_code_share": 0.24557693089844226
+          },
+          "tuple_collision": {
+            "collision": 0.7655264977427095,
+            "unique": 5765,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.11602499336004257
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.0024267248809337616,
+          "l1_margin_p10": 0.0003758128732442856,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 71,
+              "capacity": 256,
+              "used_fraction": 0.27734375,
+              "entropy_nats": 2.5203610687787483,
+              "entropy_norm": 0.4545140518970885,
+              "effective_codes": 12.433085052056127,
+              "max_code_share": 0.24557693089844226
+            },
+            "level_1": {
+              "used_codes": 142,
+              "capacity": 256,
+              "used_fraction": 0.5546875,
+              "entropy_nats": 3.365164544300889,
+              "entropy_norm": 0.6068632749797827,
+              "effective_codes": 28.9382585328417,
+              "max_code_share": 0.1276690934233538
+            },
+            "level_2": {
+              "used_codes": 252,
+              "capacity": 256,
+              "used_fraction": 0.984375,
+              "entropy_nats": 4.925084948677156,
+              "entropy_norm": 0.888174453926676,
+              "effective_codes": 137.70103866710605,
+              "max_code_share": 0.047057388050595846
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 622,
+              "switched_codebook_only": 235,
+              "switched_joint": 712,
+              "additive_prediction": 857,
+              "interaction": -145,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1675,
+              "switched_codebook_only": 380,
+              "switched_joint": 1788,
+              "additive_prediction": 2055,
+              "interaction": -267,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 4082,
+              "switched_codebook_only": 502,
+              "switched_joint": 4036,
+              "additive_prediction": 4584,
+              "interaction": -548,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        },
+        "BASE-ONLY": {
+          "l1_assignment": "tensor([220,  43,  43,  ...,  88, 207, 167], device='cuda:0')",
+          "l1_usage": {
+            "used_codes": 72,
+            "capacity": 256,
+            "used_fraction": 0.28125,
+            "entropy_nats": 2.5193533801883445,
+            "entropy_norm": 0.4543323284805715,
+            "effective_codes": 12.42056268448875,
+            "max_code_share": 0.2452108838003823
+          },
+          "tuple_collision": {
+            "collision": 0.7657705291414162,
+            "unique": 5759,
+            "items": 24587
+          },
+          "same_code_rates": {
+            "positive_same_l1_code": 1.0,
+            "negative_same_l1_code": 0.1160999983549118
+          },
+          "l1_margin_tie_fraction": 0.0,
+          "l1_margin_median": 0.002430252730846405,
+          "l1_margin_p10": 0.00037401317968033254,
+          "raw_levels": {
+            "level_0": {
+              "used_codes": 72,
+              "capacity": 256,
+              "used_fraction": 0.28125,
+              "entropy_nats": 2.5193533801883445,
+              "entropy_norm": 0.4543323284805715,
+              "effective_codes": 12.42056268448875,
+              "max_code_share": 0.2452108838003823
+            },
+            "level_1": {
+              "used_codes": 141,
+              "capacity": 256,
+              "used_fraction": 0.55078125,
+              "entropy_nats": 3.365005370645916,
+              "entropy_norm": 0.606834570099449,
+              "effective_codes": 28.93365269103655,
+              "max_code_share": 0.12722170252572498
+            },
+            "level_2": {
+              "used_codes": 253,
+              "capacity": 256,
+              "used_fraction": 0.98828125,
+              "entropy_nats": 4.926080407751641,
+              "entropy_norm": 0.888353971910447,
+              "effective_codes": 137.83818266490664,
+              "max_code_share": 0.04709805995038028
+            }
+          },
+          "source_attribution": {
+            "level_0": {
+              "switched_encoder_only": 553,
+              "switched_codebook_only": 236,
+              "switched_joint": 655,
+              "additive_prediction": 789,
+              "interaction": -134,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_1": {
+              "switched_encoder_only": 1550,
+              "switched_codebook_only": 385,
+              "switched_joint": 1663,
+              "additive_prediction": 1935,
+              "interaction": -272,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            },
+            "level_2": {
+              "switched_encoder_only": 3820,
+              "switched_codebook_only": 510,
+              "switched_joint": 3744,
+              "additive_prediction": 4330,
+              "interaction": -586,
+              "note": "single-move counts are geometric counterfactuals for one update, not an additive decomposition; a non-zero interaction means the two motions are not separable"
+            }
+          }
+        }
+      },
+      "frozen_identity": "d8c3d4dc4a6891e151050444d463beb5074662eba41e226a70a7dd39403e9acb",
+      "frozen_checksum": "a605c30b0e77a6e377b6354da6d8696425b1dfa225a93864ef9e4eedaa71a69e",
+      "comparison": {
+        "CTRL": {
+          "l1_switches_vs_origin": 0,
+          "l1_switch_fraction_vs_origin": 0.0,
+          "negative_same_l1_code_delta_vs_origin": 0.0,
+          "tuple_collision_delta_vs_origin": 0.0,
+          "l1_effective_codes_delta_vs_origin": 0.0
+        },
+        "FULL": {
+          "l1_switches_vs_origin": 766,
+          "l1_switch_fraction_vs_origin": 0.031154675234880223,
+          "negative_same_l1_code_delta_vs_origin": 0.0002124980092048645,
+          "tuple_collision_delta_vs_origin": -0.0004880627974133134,
+          "l1_effective_codes_delta_vs_origin": 0.03298853544109548
+        },
+        "NO-DEEP": {
+          "l1_switches_vs_origin": 712,
+          "l1_switch_fraction_vs_origin": 0.02895839264652052,
+          "negative_same_l1_code_delta_vs_origin": 0.0001499950885772705,
+          "tuple_collision_delta_vs_origin": -0.0019929230894375483,
+          "l1_effective_codes_delta_vs_origin": 0.03004987972646056
+        },
+        "BASE-ONLY": {
+          "l1_switches_vs_origin": 655,
+          "l1_switch_fraction_vs_origin": 0.0266400943588075,
+          "negative_same_l1_code_delta_vs_origin": 0.00022500008344650269,
+          "tuple_collision_delta_vs_origin": -0.0017488916907308916,
+          "l1_effective_codes_delta_vs_origin": 0.017527512159084324
+        },
+        "Delta_deep": {
+          "negative_same_l1_code_FULL_minus_NO-DEEP": 6.2502920627594e-05,
+          "tuple_collision_FULL_minus_NO-DEEP": 0.0015048602920242349,
+          "l1_effective_codes_FULL_minus_NO-DEEP": 0.002938655714634919,
+          "direction": "a POSITIVE negative_same_l1_code difference means the deep gradients increased unrelated-item sharing, i.e. local harm"
+        },
+        "Delta_base_only": {
+          "negative_same_l1_code_BASE_ONLY_minus_FULL": 1.2502074241638184e-05,
+          "note": "if BASE-ONLY reproduces most of FULL's harmful transitions, the drift is base-driven and the deep-gradient explanation is rejected"
+        }
+      }
+    }
+  },
+  "branch_metrics": {
+    "96": {
+      "origin_checksum": "10fabc0ef3a3db4e3a9b55ff9d1749bf43afbab88e6c140cbe20dec15c82b069",
+      "FULL": {
+        "param_sha256": "c5d5986a2699b8f6c97f53dcf5cfe06665aed8716468c00a7c8f7de4d64037db",
+        "max_param_delta_vs_frozen": 0.00017598271369934082
+      },
+      "NO-DEEP": {
+        "param_sha256": "cc6410ecbd9aa3afef6a3f8329af6e5c2dbfc9c58ad358fb1ef5f58aae820f95",
+        "max_param_delta_vs_frozen": 0.00017838552594184875
+      },
+      "BASE-ONLY": {
+        "param_sha256": "0baa1abee5171cd0defbe7ad0b4ad1d38e121aacb6caad5ad4c3cfd0a35ec849",
+        "max_param_delta_vs_frozen": 0.00018128007650375366
+      }
+    },
+    "160": {
+      "origin_checksum": "a605c30b0e77a6e377b6354da6d8696425b1dfa225a93864ef9e4eedaa71a69e",
+      "FULL": {
+        "param_sha256": "5b28c57f18ceeb9143646442334c87a6954aed9359d2da885b88e8184675e4d9",
+        "max_param_delta_vs_frozen": 0.0003687571734189987
+      },
+      "NO-DEEP": {
+        "param_sha256": "8e15b31c8a85a43fc875860b46b6da914552e4c70fc302ce97b593642b0bdfab",
+        "max_param_delta_vs_frozen": 0.00037101656198501587
+      },
+      "BASE-ONLY": {
+        "param_sha256": "923784c879fb33d207d60e866cb4ee6ce5cb226cec5f97d462c4f1265a09a7d9",
+        "max_param_delta_vs_frozen": 0.0003745611757040024
+      }
+    }
+  },
+  "executed_steps": 3888,
+  "production_artifacts_unchanged": true,
+  "elapsed_s": 49.18,
+  "control_parity": {
+    "parity_established": false,
+    "compared_fork_steps": [
+      160,
+      96
+    ],
+    "mismatched_fork_steps": [
+      160,
+      96
+    ],
+    "fork_steps_without_a_probe_reference": [],
+    "note": "the audit's frozen origin is compared against the independent probe run on the same arm, protocol and seed; if the two ever disagreed, the audit's own hooks would have changed training and no branch contrast could be trusted"
+  },
+  "adjudication": {
+    "verdict": "inconclusive",
+    "reason": "control parity not established: the audit's frozen origin does not reproduce the independent probe run at the fork steps [160, 96]",
+    "no_causal_claim": true,
+    "frozen_states": {
+      "96": "35f57a68fa089eb461e7f8d294e82198c9875cad984f7dd12905872a57f58729",
+      "160": "d8c3d4dc4a6891e151050444d463beb5074662eba41e226a70a7dd39403e9acb"
+    }
+  }
+}
