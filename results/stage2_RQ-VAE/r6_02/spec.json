@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "mechanism": {
+    "id": "r6_02",
+    "type": "gradient_routing",
+    "summary": "Half-strength Residual Gradient Retention",
+    "entrypoints": [
+      "_residuals_with_trace"
+    ],
+    "executor": "_residuals_with_trace",
+    "activation": {},
+    "mathematics": {
+      "ste_gradient_weight": 0.5,
+      "expected_level_to_encoder_jacobians": [
+        1,
+        0.5,
+        0.25
+      ]
+    }
+  },
+  "model": {
+    "adapter": "rqvae",
+    "factory": "RQVAE",
+    "tokenizer_config": "_tokenizer_config",
+    "forward": "forward",
+    "parameter_groups": {
+      "encoder": "encoder",
+      "decoder": "decoder",
+      "codebooks": "rq"
+    },
+    "probe": {
+      "n_src": 24,
+      "in_dim": 32
+    }
+  },
+  "forward_contract": {
+    "observables": [
+      "reconstructed",
+      "quant_loss",
+      "base_loss",
+      "recon_loss",
+      "tokens",
+      "residuals",
+      "codewords",
+      "behavior_level_losses"
+    ],
+    "declared_effect": "none",
+    "oracle": "oracles:hard_residual_trace_forward",
+    "atol": 1e-06,
+    "invariants": [
+      {
+        "name": "finite"
+      },
+      {
+        "name": "shape",
+        "observable": "reconstructed",
+        "expected": [
+          48,
+          32
+        ]
+      },
+      {
+        "name": "tokens_in_range",
+        "min": 0,
+        "max": 255
+      },
+      {
+        "name": "levels",
+        "expected": 3
+      },
+      {
+        "name": "residual_identity",
+        "tol": 1e-05
+      },
+      {
+        "name": "behavior_trace_hard_forward_exact"
+      },
+      {
+        "name": "hard_sid_unchanged_by_backward_surrogate"
+      }
+    ]
+  },
+  "gradient_contract": {
+    "target": "encoder",
+    "mode": "formula",
+    "rule": "half_ste_residual",
+    "oracle": "oracles:half_ste_behavior_gradient",
+    "probe_weight": 0.5,
+    "probe_seeds": [
+      1,
+      4,
+      5,
+      12,
+      16,
+      30,
+      32,
+      36
+    ],
+    "atol": 1e-05,
+    "rtol": 1e-05,
+    "loss_terms": {
+      "base_loss": "base_loss",
+      "l1_loss": "behavior_l1",
+      "l2_loss": "behavior_l2",
+      "l3_loss": "behavior_l3",
+      "other_loss": "behavior_other"
+    },
+    "expected_paths": {
+      "base_loss": "nonzero",
+      "l1_loss": "nonzero",
+      "l2_loss": "nonzero",
+      "l3_loss": "nonzero",
+      "other_loss": "nonzero"
+    },
+    "additional_targets": {
+      "codebooks": {
+        "behavior_l2": "zero_behavior_only",
+        "behavior_l3": "zero_behavior_only"
+      }
+    },
+    "jacobian_expectations": {
+      "ste_gradient_weight": 0.5,
+      "expected_level_to_encoder_jacobians": [
+        1,
+        0.5,
+        0.25
+      ]
+    },
+    "effect": {
+      "min_deviation": 1e-06,
+      "min_probes": 3
+    }
+  },
+  "update_contract": {
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "clip_norm": 1,
+    "atol": 1e-06,
+    "requires_parameter_change": true,
+    "oracle": "oracles:optimizer_update",
+    "verify_step_reaches_model": true,
+    "verify_optimizer_state": true
+  },
+  "distributed_contract": {
+    "world_size": 2,
+    "aggregation": "ddp_mean",
+    "rank_batch_sizes": [
+      24,
+      20
+    ],
+    "atol": 1e-05,
+    "oracle": "oracles:aggregate",
+    "verify_encoder_and_codebook_gradients": true,
+    "verify_rank_parameter_identity": true
+  },
+  "runtime_contract": {
+    "entrypoint": "main",
+    "isolation": "required",
+    "force": {
+      "BEHAVIOR_WEIGHT_MAX": 0.2,
+      "RAMP_START_EPOCH": 0
+    },
+    "observe": [
+      {
+        "name": "mechanism_calls",
+        "target": "_residuals_with_trace",
+        "min": 1
+      },
+      {
+        "name": "optimizer_steps",
+        "min": 1
+      },
+      {
+        "name": "parameter_updates",
+        "min": 1
+      },
+      {
+        "name": "target_encoder_update",
+        "min": 1
+      }
+    ],
+    "train_entry_hash_required": true
+  }
+}

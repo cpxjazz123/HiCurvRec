@@ -46,6 +46,72 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def bind_cgv_evidence(result: dict, tree: Path, result_dir: Path, failures: list[str]) -> None:
+    """Bind this verdict to the CGV verification it depends on, by reading that report.
+
+    Taking the hash from a command line would only record what the caller said. Reading the
+    captured report binds the verdict to the artifact that actually justified it, including the
+    trainer hash it was produced against: a later edit to the mechanism then shows up as a
+    mismatch instead of passing silently.
+    """
+    report_path = result_dir / "cgv_check_report.json"
+    entry: dict = {"report": str(report_path), "present": report_path.is_file()}
+    result["cgv"] = entry
+    if not report_path.is_file():
+        failures.append(f"cgv_report_missing: no CGV report at {report_path}")
+        entry["ok"] = False
+        return
+    # The declaration itself is the deliverable, so the hash is RECOMPUTED from it rather than
+    # read out of the report. A report that merely asserts its own hash would be self-certifying.
+    spec_path = result_dir / "spec.json"
+    entry["spec_file"] = str(spec_path)
+    recomputed = None
+    if spec_path.is_file():
+        declared = json.loads(spec_path.read_text())
+        payload = json.dumps(declared, indent=2, sort_keys=True, default=str)
+        recomputed = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        entry["spec_sha256_recomputed"] = recomputed
+    else:
+        failures.append(f"spec_missing: no declaration at {spec_path} to bind this verdict to")
+
+    report = json.loads(report_path.read_text())
+    gates = {gate: entry_state.get("state")
+             for gate, entry_state in (report.get("gates") or {}).items()}
+    entry.update({
+        "spec_sha256": report.get("spec_sha256"),
+        "trainer_sha256": report.get("trainer_sha256"),
+        "checked_utc": report.get("checked_utc"),
+        "gates": gates,
+        "cgv_passed": bool(report.get("passed")),
+    })
+    ok = (bool(report.get("passed"))
+          and all(state == "passed" for state in gates.values())
+          and len(gates) == 6)
+    entry["ok"] = ok
+    if not ok:
+        failures.append(f"cgv_not_all_passed: {gates}")
+    reported = report.get("spec_sha256")
+    if recomputed and reported and recomputed != reported:
+        ok = False
+        entry["ok"] = False
+        failures.append(
+            f"cgv_spec_mismatch: the declaration on disk hashes to {recomputed} but the CGV report "
+            f"covers {reported}; the verification did not judge this declaration")
+    recorded = result.get("spec_sha256")
+    if recorded and reported and recorded != reported:
+        ok = False
+        entry["ok"] = False
+        failures.append(
+            f"cgv_spec_mismatch: gate judged declaration {recorded} but the CGV report covers "
+            f"{reported}")
+    current_trainer = sha256(tree / "train_rqvae.py")
+    if report.get("trainer_sha256") and report["trainer_sha256"] != current_trainer:
+        entry["ok"] = False
+        failures.append("cgv_stale: the CGV report predates the current trainer source")
+    if not ok:
+        result["cgv"]["ok"] = entry["ok"]
+
+
 def evaluate(tree: Path, arm: str, spec_sha: str | None) -> dict:
     result: dict = {"arm": arm, "tree": str(tree), "spec_sha256": spec_sha,
                     "preconditions": {}, "metric": {}, "stage3_allowed": False}
@@ -58,6 +124,10 @@ def evaluate(tree: Path, arm: str, spec_sha: str | None) -> dict:
         return ok
 
     result_dir = REPO / "results/stage2_RQ-VAE" / arm
+    bind_cgv_evidence(result, tree, result_dir, failures)
+    if spec_sha is None:
+        spec_sha = result.get("cgv", {}).get("spec_sha256")
+        result["spec_sha256"] = spec_sha
     metrics_path = tree / "logs/resample/training_metrics.jsonl"
     sids_path = result_dir / "sids_for_hgrec.npy"
     items_path = result_dir / "item_sids.json"
