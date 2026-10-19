@@ -61,6 +61,10 @@ def max_abs_deviation(left: Sequence[torch.Tensor],
     return max(float((a - b).abs().max()) for a, b in zip(left, right))
 
 
+# the same comparison under the name the gates use
+max_abs_diff = max_abs_deviation
+
+
 def l2_distance(left: Sequence[torch.Tensor], right: Sequence[torch.Tensor]) -> float:
     return float(torch.sqrt(sum(((a - b) ** 2).sum() for a, b in zip(left, right))))
 
@@ -345,7 +349,7 @@ def check_forward_invariants(observations: dict[str, Any],
             # The trace keeps the residual ENTERING each level, so the final remainder is absent
             # and the chain can be checked for every level whose successor was recorded.
             residuals = observations.get("residuals")
-            codewords = observations.get("codewords")
+            codewords = observations.get("hard_quantized") or observations.get("codewords")
             if residuals is None or not codewords or len(residuals) < 2:
                 results.append({"name": name, "ok": False, "measurement": float("nan"),
                                 "detail": "observations lack the residuals/codewords pair"})
@@ -359,6 +363,35 @@ def check_forward_invariants(observations: dict[str, Any],
                             "measurement": worst,
                             "detail": f"max |r_k - q_k - r_(k+1)| over {steps} level(s) = "
                                       f"{worst:.3e}"})
+        elif name == "behavior_trace_hard_forward_exact":
+            traces = observations.get("traces")
+            reference = observations.get("reference_traces")
+            if traces is None or not reference:
+                results.append({"name": name, "ok": False, "measurement": float("nan"),
+                                "detail": "the arm's trace or the untouched control walk is "
+                                          "missing"})
+                continue
+            worst = max(float((a - b).abs().max())
+                        for a, b in zip(traces, reference))
+            tol = float(item.get("atol", 1e-5))
+            results.append({"name": name, "ok": worst <= tol, "measurement": worst,
+                            "detail": f"max |arm trace - control trace| = {worst:.3e} "
+                                      f"(tol {tol:.1e})"})
+        elif name == "hard_sid_unchanged_by_backward_surrogate":
+            observed = observations["tensors"].get("tokens")
+            reference = observations.get("reference_tokens")
+            if reference is not None and observed is not None \
+                    and reference.shape != observed.shape and reference.dim() == 2:
+                # the control walk is level-major, the export path is item-major
+                reference = reference.t()
+            if observed is None or reference is None:
+                results.append({"name": name, "ok": False, "measurement": float("nan"),
+                                "detail": "no hard SID observation was supplied"})
+                continue
+            differing = int((observed != reference).sum())
+            results.append({"name": name, "ok": differing == 0,
+                            "measurement": float(differing),
+                            "detail": f"{differing} hard SID entries differ from the control walk"})
         elif name == "jacobian_identity":
             # declared rule dr_{k+1}/dr_k = I: verified by the engine through autograd, the
             # observation carries the measured deviation
@@ -484,3 +517,165 @@ def aggregate(observations: dict[str, Any]) -> list[torch.Tensor]:
     if rule == "ddp_mean" and observations.get("weights") is not None:
         return ddp_mean_pool(observations["rank_grads"], observations["weights"])
     return AGGREGATIONS[rule](observations["rank_grads"])
+
+
+# --------------------------------------------------------------------------------------
+# residual-trace mechanisms: the independent reference for a declared backward rule
+# --------------------------------------------------------------------------------------
+TRACE_RULES = ("half_ste_residual", "direct_latent_bridge", "soft_codeword_surrogate")
+
+
+def _weighted_latent_pullback(obs: dict, coefficients) -> list[torch.Tensor]:
+    """Sum_k c_k * J_encoder^T u_k, with the coefficients read from the DECLARATION.
+
+    The chain rule factor that belongs to the mechanism is exactly ``c_k``: the Jacobian of that
+    level's trace with respect to the latent. Everything else here is the encoder's own autograd,
+    which the mechanism does not touch. So the oracle can disagree with the arm about the rule
+    without sharing any of its code.
+    """
+    total = None
+    for coefficient, cotangent in zip(coefficients, obs["u_levels"]):
+        if coefficient == 0.0:
+            continue
+        contribution = obs["latent_to_encoder"](cotangent * float(coefficient))
+        total = contribution if total is None else [a + b for a, b in zip(total, contribution)]
+    if total is None:
+        return [torch.zeros_like(p) for p in obs["encoder"]]
+    return total
+
+
+def declared_coefficients(observations: dict) -> list[float]:
+    coefficients = observations.get("coefficients")
+    if not coefficients:
+        raise ValueError(
+            "the declaration must state mechanism.mathematics.expected_level_to_encoder_jacobians")
+    traces = observations["traces"]
+    if len(coefficients) != len(traces):
+        raise ValueError(
+            f"the declaration lists {len(coefficients)} level Jacobians but the arm's trace has "
+            f"{len(traces)} levels")
+    return [float(value) for value in coefficients]
+
+
+def half_ste_behavior_gradient(observations: dict) -> list[torch.Tensor]:
+    """r6_02: q_mix = stopgrad(q) + w*(q - stopgrad(q)), r_next = r - q_mix.
+
+    The declared Jacobian per level is read from the declaration, so declaring 1.0 (the
+    full-detach rule) or 0.0 (the legacy rule) instead of 0.5 changes the expectation rather than
+    quietly passing.
+    """
+    return _weighted_latent_pullback(observations, declared_coefficients(observations))
+
+
+def direct_latent_bridge_gradient(observations: dict) -> list[torch.Tensor]:
+    """r6_03: the CE-facing deep traces carry an extra b*(z - stopgrad(z)) bridge.
+
+    Same pullback, different declared coefficients ([1, 0.5, 0.5] rather than [1, 0.5, 0.25]).
+    The rule is distinguished by its coefficients and by the bridge's own check, not by a name.
+    """
+    return _weighted_latent_pullback(observations, declared_coefficients(observations))
+
+
+def _soft_codeword(trace: torch.Tensor, codebook: torch.Tensor, floor: float):
+    """The declared soft surrogate, rebuilt from observations with its OWN autograd.
+
+    d_j = ||r - c_j||^2, s = stopgrad(mean_j d_j) clamped, p = softmax(-d_j / s),
+    q_soft = sum_j p_j c_j. Rebuilding it here, rather than reading the arm's tensor, is what
+    makes the expectation independent of the arm's implementation.
+    """
+    distances = torch.cdist(trace, codebook, p=2).square()
+    scale = distances.mean(dim=-1, keepdim=True).detach().clamp_min(floor)
+    weights = torch.softmax(-distances / scale, dim=-1)
+    return weights @ codebook
+
+
+def soft_codeword_behavior_gradient(observations: dict) -> dict[str, Any]:
+    """r6_04: hard forward, soft codeword backward.
+
+    r_next = trace - (q_hard.detach() + (q_soft - q_soft.detach())), so the backward is
+    ``dr_next = dtrace - dq_soft``: the soft surrogate REPLACES the straight-through identity.
+    This is what distinguishes the rule from both alternatives, so the oracle differentiates the
+    declared surrogate itself and returns the encoder AND codebook pullbacks.
+    """
+    coefficients = declared_coefficients(observations)
+    floor = float(observations.get("soft_normalizer_floor", 1e-8))
+    encoder_total = None
+    codebook_total = None
+    for level, (trace, codebook, cotangent) in enumerate(
+            zip(observations["traces"], observations["codebooks"], observations["u_levels"])):
+        coefficient = float(coefficients[level])
+        if coefficient == 0.0:
+            continue
+        local_trace = trace.detach().requires_grad_(True)
+        local_codebook = codebook.detach().requires_grad_(True)
+        soft = _soft_codeword(local_trace, local_codebook, floor)
+        # the surrogate enters the residual with a minus sign, so the VJP is the cotangent minus
+        # the surrogate's own VJP
+        weight = cotangent * coefficient
+        (grad_trace, grad_codebook) = torch.autograd.grad(
+            (weight * soft).sum(), (local_trace, local_codebook), retain_graph=False)
+        trace_pullback = (weight - grad_trace) * 1.0
+        encoder_part = observations["latent_to_encoder"](trace_pullback)
+        encoder_total = (encoder_part if encoder_total is None else
+                         [a + b for a, b in zip(encoder_total, encoder_part)])
+        codebook_part = [-grad_codebook * 1.0]
+        codebook_total = (codebook_part if codebook_total is None else
+                          [a + b for a, b in zip(codebook_total, codebook_part)])
+    if encoder_total is None:
+        encoder_total = [torch.zeros_like(p) for p in observations["encoder"]]
+    if codebook_total is None:
+        codebook_total = [torch.zeros_like(p) for p in observations.get("codebook_parameters", [])]
+    return {"encoder": encoder_total, "codebooks": codebook_total}
+
+
+def trace_gradient(observations: dict) -> Any:
+    """Dispatch the declared trace rule to its independent reference."""
+    rule = observations["rule"]
+    if rule == "half_ste_residual":
+        return half_ste_behavior_gradient(observations)
+    if rule == "direct_latent_bridge":
+        return direct_latent_bridge_gradient(observations)
+    if rule == "soft_codeword_surrogate":
+        return soft_codeword_behavior_gradient(observations)
+    return assemble_gradient(observations)
+
+
+def hard_residual_trace_forward(observations: dict) -> dict[str, Any]:
+    """The forward the declaration promises: the legacy hard residual recurrence, bit for bit.
+
+    The arm's backward surrogate must be invisible here. Two independent checks:
+
+    1. the arm's trace and tokens equal the ones the untouched control walk produces;
+    2. algebraically, ``traces[k] - traces[k+1]`` equals the hard codeword the quantiser selected,
+       which needs the codebooks and the selected indices and nothing else.
+
+    The control walk is used because the last level assigns codewords with Sinkhorn, whose
+    assignment cannot be re-derived from distances alone by an outside observer. Check 2 does not
+    depend on it.
+    """
+    traces = observations["traces"]
+    codebooks = observations["codebooks"]
+    indices = observations["trace_indices"]
+    reference = observations["reference_traces"]
+    # the control walk stacks per level ([levels, N]); get_indices reports per item
+    # ([N, levels]), so the comparison is made in the item-major layout the export path uses
+    expected = {"tokens": observations["reference_tokens"].t().contiguous()}
+    if reference is not None:
+        expected["residuals"] = torch.stack([trace.detach() for trace in reference], dim=0)
+    return expected
+
+
+def hard_assignment_algebra(observations: dict, tol: float = 1e-5) -> dict[str, Any]:
+    """traces[k] - traces[k+1] == codebook_k[indices[k]], the hard subtraction with no surrogate."""
+    traces = observations["traces"]
+    codebooks = observations["codebooks"]
+    indices = observations["trace_indices"]
+    worst = 0.0
+    checked = 0
+    for level in range(len(traces) - 1):
+        hard = codebooks[level][indices[level]]
+        worst = max(worst, float((traces[level] - traces[level + 1] - hard).abs().max()))
+        checked += 1
+    return {"name": "hard_assignment_algebra", "ok": worst <= tol and checked > 0,
+            "measurement": worst,
+            "detail": f"max |r_k - r_(k+1) - hard codeword| over {checked} level(s) = {worst:.3e}"}
