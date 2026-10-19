@@ -132,7 +132,7 @@ STAGE3_SCREEN_BASELINE_LOG=
 ## 17. 每个新 Stage2 运行前必须通过 CGV 六项检查（2026-10-19 起强制；契约式验证）
 
 **任何 Stage2 训练启动前，该机制必须先通过 genrec MCP 的 `cgv_check`，且六项全部为 PASS。**
-`cgv_check` 只运行并**返回报告，不落盘、不发证书**；`stage2_start` 不校验验证结果，也不因缺证书而拒绝。六门的结果以调用返回的报告为准。
+`stage2_start` 同样强制这道门：它接收同一份 `spec`，**先跑六门**，任一门未过就在归档与派发之前拒绝，无任何副作用。`cgv_check` 只运行并返回报告。两处都**不落盘、不发证书**——判定是当场算出来的，不是查出来的。
 
 标准调用序列（`source_dir` 必填，本仓库有多棵树）：
 
@@ -147,7 +147,7 @@ write xd://mcp__genrec_cgv_check
 
 只读查看用 `cgv_status`（不跑门、不启动）。
 
-`stage2_start` 不接收 `spec`，也不做验证闸门：验证是显式的独立一步，顺序由人保证——先 `cgv_check` 读报告，确认六门全 PASS，再 `stage2_start`。
+`stage2_start(source_dir, spec)`：缺少 `spec` 直接拒绝；给了就当场跑六门，`passed` 为真才启动。因此「先验证再训练」由机器保证，不依赖人记得顺序。
 
 ### 验证对象是「机制自己声明的数学契约」，不是与父版本比对
 
@@ -185,7 +185,7 @@ CGV 不比较新旧模型、不需要 baseline checkpoint、不要求机制提�
 
 1. **声明必填**：`cgv_check` 与 `stage2_start` 都必须收到 `spec`；缺失或非对象一律拒绝。命令行的对应形式是 `--spec -`（stdin 上的 JSON）。新增机制时先写出它的数学声明。
 2. **G3 fail-closed**：`mode: formula` 必须给出 `oracles:` 引用；无 oracle 一律拒绝，不得以「未被识别」蒙混过关。
-3. **无持久化凭据**：CGV 不写证书、不做训练闸门。声明改动、验证器改动都必须由人重新跑一次 `cgv_check` 并阅读报告——没有机器强制，纪律靠记录维持。
+3. **无持久化凭据，但门禁有效**：CGV 不写证书、不留任何裁决文件；`stage2_start` 每次启动都重新验证一遍。因此改动声明或验证器**不可能**被漏掉——没有可过期的凭据可依赖。代价是每次启动多花一次六门的时间。
 4. **禁止手工绕过**：`nohup` 直跑 `train_rqvae.py`、`tools/r5_launch_wave.py`、自建 launcher 等一切旁路一律禁止。`cgv_check` 返回 refused 时按其指出的问题修，不绕开。
 5. **输出隔离不得削弱**：G6 会执行真实训练入口，`tools/cgv/engine.py::isolated_outputs` 按「trainer 会写的文件名」发现并重定向产物路径，**输入**（stage1 embeddings、stage0 parquet、dataset）一律不动。任何改动隔离逻辑的提交，都必须先用哈希前后比对证明生产产物零变化。
 6. **门失败即结论，不得手改**：门拦下机制说明该机制在该处无效。正确处置是记录发现、换一个结构上不同的机制，禁止改门禁、放宽容差或改写已上报的指标来「通过」。

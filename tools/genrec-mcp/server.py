@@ -1156,7 +1156,7 @@ def run_stage2_smoke(
     }
 
 
-def tool_stage2_start(source_dir: str) -> dict:
+def tool_stage2_start(source_dir: str, spec: dict | None = None) -> dict:
     """Start one Stage2 run in the given tree. Every call really trains.
 
     The tree's runnable entrypoint is validated (an unwired launcher is
@@ -1200,11 +1200,23 @@ def tool_stage2_start(source_dir: str) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    # Verification is a separate, explicit step (cgv_check). Nothing is persisted and nothing is
-    # enforced here: training proceeds on the caller's own judgement of the verification report.
-    context["cgv_gate"] = {"enforced": False,
-                           "note": "run cgv_check(source_dir, spec) and read its report; no "
-                                   "certificate is kept and training is not gated on one"}
+    # CGV is a HARD gate: a mechanism may only train once all six gates pass. The report is not
+    # persisted and no certificate exists -- the check is run here, on the declaration this call
+    # supplies, before anything is archived or dispatched, so a refusal has no side effect.
+    verification = run_cgv_verification(Path(tree), spec)
+    gate_states = {gate: (verification.get("summary") or {}).get(gate, {}).get("state")
+                   for gate in CGV_GATES} if verification.get("passed") or \
+        verification.get("gates") else {}
+    context["cgv_gate"] = {"passed": bool(verification.get("passed")),
+                           "gates": gate_states,
+                           "note": verification.get("refused")
+                                   or "all six gates passed on the supplied declaration"}
+    if not verification.get("passed"):
+        return {
+            "started": False,
+            "refused": f"CGV gate: {verification.get('refused') or gate_states}",
+            **context,
+        }
     refusal = stage2_launch_decision(gpu_probe)
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
@@ -1923,6 +1935,32 @@ def _sha256_file(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+def run_cgv_verification(tree: Path, spec: dict) -> dict:
+    """Run the six gates under the project's interpreter and return the report.
+
+    Pure execution: nothing is written, and no verdict is kept. The caller decides what the
+    report means -- cgv_check hands it back, the stage2 gate refuses on it.
+    """
+    if not isinstance(spec, dict) or not spec:
+        return {"passed": False, "refused": (
+            "spec is required: CGV verifies a mechanism against the mathematical behaviour the "
+            "caller declares, so the declaration travels with the call as the seven contract "
+            "groups (mechanism, model, forward_contract, gradient_contract, update_contract, "
+            "distributed_contract, runtime_contract). CGV reads no declaration from the tree.")}
+    try:
+        proc = subprocess.run([CGV_PY, str(CGV_RUNNER), str(tree), "--spec", "-"],
+                              input=json.dumps(spec), capture_output=True, text=True,
+                              timeout=CGV_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return {"passed": False, "refused": f"CGV did not finish within {CGV_TIMEOUT_S}s"}
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {"passed": False,
+                "refused": f"CGV produced no readable result (rc={proc.returncode})",
+                "stderr_tail": (proc.stderr or proc.stdout or "").strip()[-800:]}
+
+
 def tool_cgv_check(source_dir: str, spec: dict) -> dict:
     """Run the six CGV gates against one Stage2 tree and report the result.
 
@@ -1934,26 +1972,7 @@ def tool_cgv_check(source_dir: str, spec: dict) -> dict:
     if tree is None:
         return {"passed": False, "refused": problem,
                 "available_trees": [item.name for item in stage2_trees()]}
-    if not isinstance(spec, dict) or not spec:
-        return {"passed": False, "tree": str(tree), "refused": (
-            "spec is required: CGV verifies a mechanism against the mathematical behaviour the "
-            "caller declares, so the declaration travels with the call as the seven contract "
-            "groups (mechanism, model, forward_contract, gradient_contract, update_contract, "
-            "distributed_contract, runtime_contract). CGV reads no declaration from the tree.")}
-    try:
-        proc = subprocess.run(
-            [CGV_PY, str(CGV_RUNNER), str(tree), "--spec", "-"],
-            input=json.dumps(spec), capture_output=True, text=True, timeout=CGV_TIMEOUT_S)
-    except subprocess.TimeoutExpired:
-        return {"passed": False, "arm": None, "refused": f"CGV did not finish within "
-                  f"{CGV_TIMEOUT_S}s", "trainable_now": False}
-    try:
-        payload = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        tail = (proc.stderr or proc.stdout or "").strip()[-800:]
-        return {"passed": False, "arm": None,
-                "refused": f"CGV produced no readable result (rc={proc.returncode})",
-                "stderr_tail": tail, "trainable_now": False}
+    payload = run_cgv_verification(tree, spec)
     payload.setdefault("gate_table", cgv_gate_table())
     return payload
 
@@ -1985,13 +2004,16 @@ def tool_cgv_status(source_dir: str, spec: dict | None = None) -> dict:
 TOOLS: dict[str, dict] = {
     "stage2_start": {
         "fn": tool_stage2_start,
-        "args": {"source_dir": "string"},
+        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)"},
         "description": "Start one Stage2 run in the given Stage2 tree, e.g. "
         "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE. source_dir is required because several trees "
         "exist. The call returns as soon as the existing artifacts have been archived and a detached "
         "worker owns the rest: status is smoke_pending and stage2_status(source_dir) reports the "
         "smoke verdict, then the launched run. Existing artifacts no longer block a run (they are "
-        "copied to the archive first), and a live run of the same tree still refuses.",
+        "copied to the archive first), and a live run of the same tree still refuses. spec is the "
+        "mechanism's mathematical declaration; it is REQUIRED, and the six CGV gates are run "
+        "against it before anything is archived or dispatched -- if any gate fails the run is "
+        "refused with no side effect. Nothing is persisted and no certificate is kept.",
     },
     "cgv_check": {
         "fn": tool_cgv_check,
