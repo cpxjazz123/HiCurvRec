@@ -176,3 +176,80 @@ def gaming_diagnostics(posteriors: torch.Tensor, hard_indices: torch.Tensor,
         "reading": "a uniform posterior scores well on the separation loss while collapsing hard "
                    "diversity; if hard_effective_codes falls while the loss falls, reject",
     }
+
+
+# --------------------------------------------------------------------------------------
+# independent analytic VJP
+# --------------------------------------------------------------------------------------
+def analytic_grad_latents(model, latents: torch.Tensor, posteriors: torch.Tensor,
+                          pair_index: torch.Tensor, *, tau: float = DEFAULT_TAU,
+                          lambda_weight: float = DEFAULT_LAMBDA) -> torch.Tensor | None:
+    """d L_sep / d z, derived from the softmax Jacobian rather than from any backward pass.
+
+    With ``u_i(m) = -d(z_i, c_m)/tau`` and ``p_i = softmax(u_i)``:
+
+        d<p_i, p_j> / d u_i(m) = p_i(m) * [ p_j(m) - <p_i, p_j> ]
+        d u_i(m) / d z_i       = -(1/tau) * (z_i - c_m) / ||z_i - c_m||
+
+    and the chain of both terms together. This is written out so the test can compare it against
+    central finite differences of the SMOOTH loss; it is never used as the production gradient, so
+    the comparison is between two independent routes rather than between a backward and itself.
+    """
+    if pair_index.numel() == 0 or lambda_weight == 0.0:
+        return None
+    layer = model.rq.vq_layers[0]
+    codebook = layer.get_code_embs()
+    flat = latents.reshape(-1, layer.dim)
+    if posteriors.shape[0] != flat.shape[0]:
+        return None
+    left = posteriors[pair_index[:, 0]]
+    right = posteriors[pair_index[:, 1]]
+    inner = (left * right).sum(dim=-1)                                  # <p_i, p_j> per pair
+    residual = inner.reshape(-1, 1)
+    # BOTH sides of the pair contribute. A pair (i, j) moves z_i through p_i and z_j through p_j,
+    # and dropping the j-side leaves the partner's latent with exactly zero gradient, which no
+    # aggregate statistic would reveal.
+    weight_i = left * (right - residual)                                # d<pi,pj> / d u_i
+    weight_j = right * (left - residual)                                # d<pi,pj> / d u_j
+    # The host quantizer's distance is the SQUARED expansion |z|^2 - 2 z.c + |c|^2, so
+    # d d / d z = 2 (z - c). Differentiating the TRUE Euclidean distance instead would give a
+    # plausible-looking gradient for a different function; a test asserts this assumption.
+    grad_d = 2.0 * (flat.unsqueeze(1) - codebook.unsqueeze(0))           # [N, K, dim]
+    gradient = torch.zeros_like(flat)
+    gradient.index_add_(0, pair_index[:, 0],
+                        (-(weight_i / tau).unsqueeze(-1) * grad_d[pair_index[:, 0]])
+                        .sum(dim=1))
+    gradient.index_add_(0, pair_index[:, 1],
+                        (-(weight_j / tau).unsqueeze(-1) * grad_d[pair_index[:, 1]])
+                        .sum(dim=1))
+    return (lambda_weight / float(pair_index.shape[0])) * gradient
+
+
+def analytic_grad_codebook(model, latents: torch.Tensor, posteriors: torch.Tensor,
+                           pair_index: torch.Tensor, *, tau: float = DEFAULT_TAU,
+                           lambda_weight: float = DEFAULT_LAMBDA) -> torch.Tensor | None:
+    """d L_sep / d c, same derivation with the sign flipped for the codebook side."""
+    if pair_index.numel() == 0 or lambda_weight == 0.0:
+        return None
+    layer = model.rq.vq_layers[0]
+    codebook = layer.get_code_embs()
+    flat = latents.reshape(-1, layer.dim)
+    if posteriors.shape[0] != flat.shape[0]:
+        return None
+    left = posteriors[pair_index[:, 0]]
+    right = posteriors[pair_index[:, 1]]
+    inner = (left * right).sum(dim=-1)
+    residual = inner.reshape(-1, 1)
+    weight_i = left * (right - residual)
+    weight_j = right * (left - residual)
+    # d d / d c = -2 (z - c); both pair sides reach the codebook
+    grad_d = -2.0 * (flat.unsqueeze(1) - codebook.unsqueeze(0))
+    codes = torch.arange(codebook.shape[0]).expand(pair_index.shape[0], codebook.shape[0])
+    gradient = torch.zeros_like(codebook)
+    gradient.index_add_(0, codes.reshape(-1),
+                        ((-(weight_i / tau).unsqueeze(-1) * grad_d[pair_index[:, 0]])
+                         .reshape(-1, layer.dim)))
+    gradient.index_add_(0, codes.reshape(-1),
+                        ((-(weight_j / tau).unsqueeze(-1) * grad_d[pair_index[:, 1]])
+                         .reshape(-1, layer.dim)))
+    return (lambda_weight / float(pair_index.shape[0])) * gradient
