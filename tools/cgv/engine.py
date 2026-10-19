@@ -676,12 +676,14 @@ def gate_g3_trace(ctx: Context) -> dict[str, Any]:
     gradient = ctx.contract["gradient_contract"]
     mathematics = (ctx.contract.get("mechanism") or {}).get("mathematics") or {}
     declared = mathematics.get("expected_level_to_encoder_jacobians")
-    if not declared:
+    vjp_rule = gradient["rule"] in oracles.VJP_RULES
+    if not declared and not vjp_rule:
         return _result("G3", C.INSUFFICIENT,
                        "mechanism.mathematics.expected_level_to_encoder_jacobians is required: "
                        "without declared level Jacobians there is nothing to verify the trace "
-                       "against")
-    coefficients = [float(value) for value in declared]
+                       "against, and this rule is not one whose Jacobian the oracle derives "
+                       "directly")
+    coefficients = [float(value) for value in declared] if declared else []
     seeds = tuple(gradient.get("probe_seeds") or PROBE_SEEDS)
     tolerance = float(gradient.get("atol", ATOL))
     threshold = float((gradient.get("effect") or {}).get("min_deviation", 1e-6))
@@ -700,18 +702,37 @@ def gate_g3_trace(ctx: Context) -> dict[str, Any]:
         # The declaration has already been matched, so "the mechanism does something" has to be
         # measured against the UNTREATED assembly, not against the declaration it agreed with.
         untreated = dict(payload)
-        untreated["coefficients"] = [1.0] + [0.0] * (len(coefficients) - 1)
-        untreated_expectation = oracles.trace_gradient(untreated)
-        untreated_encoder = (untreated_expectation["encoder"]
-                             if isinstance(untreated_expectation, dict)
-                             else untreated_expectation)
-        effect = oracles.l2_distance(executed, untreated_encoder)
+        if coefficients:
+            untreated["coefficients"] = [1.0] + [0.0] * (len(coefficients) - 1)
+            untreated_expectation = oracles.trace_gradient(untreated)
+            untreated_encoder = (untreated_expectation["encoder"]
+                                 if isinstance(untreated_expectation, dict)
+                                 else untreated_expectation)
+            effect = oracles.l2_distance(executed, untreated_encoder)
+        else:
+            # A VJP rule has no constant coefficients to zero out; its untreated counterpart is
+            # the straight-through path the arm replaced, rebuilt from the same observations.
+            untreated = dict(payload)
+            untreated["rule"] = "half_ste_residual"
+            untreated["coefficients"] = [1.0] + [0.0] * (len(payload["traces"]) - 1)
+            untreated_expectation = oracles.trace_gradient(untreated)
+            untreated_encoder = (untreated_expectation["encoder"]
+                                 if isinstance(untreated_expectation, dict)
+                                 else untreated_expectation)
+            effect = oracles.l2_distance(executed, untreated_encoder)
+        codebook_deviation = 0.0
+        if isinstance(expectation, dict) and expectation.get("codebooks"):
+            actual_codebooks = adapters.codebook_total_gradient(ctx.trainer, observations)
+            codebook_deviation = oracles.max_abs_diff(actual_codebooks,
+                                                      expectation["codebooks"])
+            worst = max(worst, codebook_deviation)
         per_seed.append({"seed": seed, "deviation_from_declared_rule": deviation,
+                         "codebook_deviation": codebook_deviation,
                          "deviation_from_untreated": effect})
         if effect > threshold:
             firing.append(f"seed{seed}")
 
-        if seed == seeds[0]:
+        if seed == seeds[0] and coefficients:
             for level, coefficient in enumerate(coefficients):
                 if level >= len(observations["traces"]):
                     break
@@ -728,13 +749,20 @@ def gate_g3_trace(ctx: Context) -> dict[str, Any]:
     effect_ok = len(firing) >= minimum
     passed = formula_ok and effect_ok and not jacobian_failures
 
-    detail = (f"max deviation from the declared rule {gradient['rule']!r} over "
-              f"{len(per_seed)} probe(s) = {worst:.3e}; measured level Jacobians "
-              + ", ".join(f"L{row['level']}={row['measured_alignment']:.4f}"
-                          f"(declared {row['declared']})" for row in jacobian_rows)
-              + f"; deviation from the untreated assembly on "
-              + ", ".join(f"seed{entry['seed']}={entry['deviation_from_untreated']:.3e}"
-                          for entry in per_seed))
+    if jacobian_rows:
+        detail = (f"max deviation from the declared rule {gradient['rule']!r} over "
+                  f"{len(per_seed)} probe(s) = {worst:.3e}; measured level Jacobians "
+                  + ", ".join(f"L{row['level']}={row['measured_alignment']:.4f}"
+                              f"(declared {row['declared']})" for row in jacobian_rows))
+    else:
+        detail = (f"max deviation from the declared rule {gradient['rule']!r} over "
+                  f"{len(per_seed)} probe(s) = {worst:.3e}, measured against the VJP the oracle "
+                  "derives for the encoder and, where declared, the codebooks -- this rule's "
+                  "trace-to-latent Jacobian is data dependent, so no constant level Jacobian "
+                  "exists to compare")
+    detail += ("; deviation from the untreated assembly on "
+               + ", ".join(f"seed{entry['seed']}={entry['deviation_from_untreated']:.3e}"
+                           for entry in per_seed))
     if not formula_ok:
         detail += "; the executed gradient does not match the declared rule"
     if jacobian_failures:

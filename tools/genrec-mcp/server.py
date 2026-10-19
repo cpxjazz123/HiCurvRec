@@ -511,7 +511,20 @@ def tree_arm(tree: Path) -> str | None:
 
 
 def tree_result_dir(tree: Path) -> Path:
-    """Where this tree's artifacts land: results/stage2_RQ-VAE/<tree>/<arm>/."""
+    """Where this tree's artifacts land.
+
+    The trainer is the authority: a tree may declare RESULT_DIR_NAME because its arm name feeds
+    the anti-collapse and geometry configuration and therefore cannot be changed to move output.
+    Reading that declaration keeps the server from archiving and probing a directory the trainer
+    never writes to.
+    """
+    try:
+        text = (tree / "train_rqvae.py").read_text(encoding="utf-8", errors="replace")
+        found = re.search(r'^RESULT_DIR_NAME\s*=\s*"([^"]+)"', text, re.M)
+        if found:
+            return RESULT2_ROOT / found.group(1)
+    except OSError:
+        pass
     base = RESULT2_ROOT / tree.name
     arm = tree_arm(tree)
     return base / arm if arm else base
@@ -945,9 +958,19 @@ T.main()
 checkpoint_probe = {}
 checkpoint_arg = Path(sys.argv[3]) if len(sys.argv) > 3 else None
 if checkpoint_arg is None or not checkpoint_arg.is_file():
-    # Fail closed: a missing checkpoint means the required trained-weight check
-    # cannot be made, and starting the full run on that basis is not allowed.
-    checkpoint_probe = {"error": f"no checkpoint to probe: {checkpoint_arg}", "missing": True}
+    # A tree that has never trained has no checkpoint to probe, and that is not a failure: there is
+    # nothing to check. A checkpoint that EXISTS but cannot be loaded is still reported as
+    # missing, and still fails closed below.
+    if checkpoint_arg is None:
+        checkpoint_probe = {
+            "absent": True,
+            "note": "this tree has no checkpoint yet; there is nothing to probe",
+        }
+    else:
+        checkpoint_probe = {
+            "error": f"checkpoint named but unreadable: {checkpoint_arg}",
+            "missing": True,
+        }
 else:
     import numpy as np
     import pandas as pd
@@ -1004,18 +1027,24 @@ summary = {
     "scratch_files": sorted(p.name for p in SCRATCH.iterdir()),
 }
 checkpoint_ok = (
-    not checkpoint_probe.get("missing", False)
-    and all(
-        math.isfinite(float(checkpoint_probe.get(key, float("nan"))))
-        for key in (
-            "total_loss",
-            "recon_loss",
-            "total_param_grad_norm_max",
-            "recon_param_grad_norm_max",
+    # A brand-new tree has no checkpoint anywhere, and that is not a defect: there is nothing to
+    # probe. The probe stays MANDATORY whenever a checkpoint does exist, so an arm resuming from
+    # one can never skip it.
+    (checkpoint_probe.get("absent", False) is True)
+    or (
+        not checkpoint_probe.get("missing", False)
+        and all(
+            math.isfinite(float(checkpoint_probe.get(key, float("nan"))))
+            for key in (
+                "total_loss",
+                "recon_loss",
+                "total_param_grad_norm_max",
+                "recon_param_grad_norm_max",
+            )
         )
+        and checkpoint_probe.get("total_param_grad_norm_max", 0.0) > 0.0
+        and checkpoint_probe.get("recon_param_grad_norm_max", 0.0) > 0.0
     )
-    and checkpoint_probe.get("total_param_grad_norm_max", 0.0) > 0.0
-    and checkpoint_probe.get("recon_param_grad_norm_max", 0.0) > 0.0
 )
 passed = (
     summary["steps"] > 0

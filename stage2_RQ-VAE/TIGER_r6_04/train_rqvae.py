@@ -208,7 +208,8 @@ TREE_NAME = TREE_DIR.name
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM
+RESULT_DIR_NAME = "r6_04"   # the issue requires results/stage2_RQ-VAE/r6_04/
+_OUT = OUT_ROOT / RESULT_DIR_NAME
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
@@ -439,6 +440,9 @@ if EXPERIMENT_ARM in _ARM_BEHAVIOR_WEIGHT:
     BEHAVIOR_WEIGHT_MAX = _ARM_BEHAVIOR_WEIGHT[EXPERIMENT_ARM]
 BEHAVIOR_TEMPERATURE    = 0.07
 RAMP_START_EPOCH        = 1500
+# R6-04 (issue #76): the single mechanism of this tree. Hard forward, soft codeword backward.
+R6_04_SOFT_TEMPERATURE_MULTIPLIER = 1.0
+R6_04_MINIMUM_NORMALIZER          = 1e-8
 PAIR_BATCH_SIZE_PER_RANK = 512
 RESAMPLE_PAIRS          = True
 
@@ -635,8 +639,19 @@ def _residuals_with_trace(
     residual = raw_module.encoder(embeddings)
     traces = [residual]
     for vq_layer in raw_module.rq.vq_layers:
-        quant, _, _, _ = vq_layer(residual)
-        residual = residual - quant
+        quant_hard, _, _, _ = vq_layer(residual)
+        # The hard codeword stays the forward value and the hard assignment; only the backward is
+        # replaced, by a smooth surrogate over the same codebook with the temperature fixed at 1.
+        # The normaliser is detached per item, so the surrogate adds a differentiable path to the
+        # codebooks without letting them move the scale.
+        codebook = vq_layer.get_code_embs()
+        squared = torch.cdist(residual, codebook, p=2).square()
+        scale = squared.mean(dim=-1, keepdim=True).detach().clamp_min(
+            R6_04_MINIMUM_NORMALIZER)
+        weights = torch.softmax(-R6_04_SOFT_TEMPERATURE_MULTIPLIER * squared / scale, dim=-1)
+        quant_soft = weights @ codebook
+        quant_behavior = quant_hard.detach() + (quant_soft - quant_soft.detach())
+        residual = residual - quant_behavior
         traces.append(residual)
     # iter48 records the residual *entering* each level; drop the final remainder.
     return torch.stack(traces[: raw_module.rq.codebook_num], dim=0)
@@ -1542,7 +1557,8 @@ def main() -> None:
         payload = {str(item_id): [int(value) for value in row] for item_id, row in enumerate(sid)}
         OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"[RecBole RQ-VAE] exported raw_shape={raw_tokens.shape} sid_shape={sid.shape} unique={len(np.unique(sid, axis=0))} -> {OUTPUT_SID}", flush=True)
-        _record(rank, "train_end", total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
+        _record(rank, "train_end", epoch=EPOCHS,
+                total_wall_time_s=round(time.time() - _T0, 3), final_collision=final_collision, checkpoint_selection="final_epoch", sid_shape=list(sid.shape), output_sid=str(OUTPUT_SID), output_json=str(OUTPUT_JSON), unique_after_extend=len(np.unique(sid, axis=0)))
 
     if world_size > 1:
         dist.barrier()
