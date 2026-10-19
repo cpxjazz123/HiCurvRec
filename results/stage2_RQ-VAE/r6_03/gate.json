@@ -1,7 +1,7 @@
 {
   "arm": "r6_03",
   "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_03",
-  "spec_sha256": null,
+  "spec_sha256": "f166ba02d373568cdb9cb2b6bfc839f7aadc3fd787957d901635f2069bfe4fe7",
   "preconditions": {
     "frozen_pairs_present": {
       "ok": true,
@@ -99,6 +99,25 @@
     "baseline_reference_sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10"
   },
   "stage3_allowed": false,
+  "cgv": {
+    "report": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r6_03/cgv_check_report.json",
+    "present": true,
+    "spec_file": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r6_03/spec.json",
+    "spec_sha256_recomputed": "f166ba02d373568cdb9cb2b6bfc839f7aadc3fd787957d901635f2069bfe4fe7",
+    "spec_sha256": "f166ba02d373568cdb9cb2b6bfc839f7aadc3fd787957d901635f2069bfe4fe7",
+    "trainer_sha256": "ae978e330354e41454e1ccf872118b02dd9dd9a64dfcd3c710d7234ce96b290b",
+    "checked_utc": "2026-10-19T05:21:30Z",
+    "gates": {
+      "G1": "passed",
+      "G2": "passed",
+      "G3": "passed",
+      "G4": "passed",
+      "G5": "passed",
+      "G6": "passed"
+    },
+    "cgv_passed": true,
+    "ok": true
+  },
   "failures": [
     "er_above_baseline: 1.8233611326609775 > 16.38953942232631 required (equal is a FAIL)"
   ]

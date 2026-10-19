@@ -80,3 +80,23 @@ the issue defines, and it fails by a wide margin.
 | `item_sids.json` | 1.3 MB | `ef09df22e66a27425ce2ce7ebb964d2dc7d4ee356cf4553e22f04c51b788608f` | NO (gitignored) |
 
 The checkpoint and the SID array are gitignored, so their bytes exist only at the paths and hashes above; they are not in the repository.
+
+## Audit binding
+
+This verdict is bound to the verification it depends on, not merely filed beside it:
+
+| item | value |
+|:--|:--|
+| declaration on disk | `spec.json` |
+| declaration sha256 (RECOMPUTED by the gate) | `1a79ab1d73e98e7498d029d119690b817c113e4ea3b305e35a5b950f67fceb59` |
+| declaration sha256 (as covered by the CGV report) | `1a79ab1d73e98e7498d029d119690b817c113e4ea3b305e35a5b950f67fceb59` |
+| the two agree | True |
+| trainer sha256 the CGV report judged | `02f31155c173c39dde984e7886df7b6a9939e34fbc029b526ac8f550d885472c` |
+| trainer sha256 now | unchanged, otherwise the gate records `cgv_stale` |
+| CGV gates in that report | `{"G1": "passed", "G2": "passed", "G3": "passed", "G4": "passed", "G5": "passed", "G6": "passed"}` |
+| CGV verified at | `2026-10-19T05:19:52Z` |
+
+The gate RE-HASHES `spec.json` and refuses when it disagrees with the report, so neither a doctored
+report nor an edited declaration can pass unnoticed. Both tamper modes were exercised: falsifying
+the hash inside the report, and silently changing `update_contract.lr` in the declaration on disk.
+Both produced `cgv.ok = false` and a `cgv_spec_mismatch` failure.
