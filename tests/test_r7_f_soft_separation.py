@@ -139,9 +139,12 @@ def test_exclusion_mask_removes_self_and_false_negatives() -> None:
     source = torch.tensor([0, 0, 1])
     target = torch.tensor([5, 6, 7])
     # row 0 pairs an item with itself, row 1 with its observed target (a false negative),
-    # row 2 with an unrelated item that must survive
-    candidates = torch.tensor([[3, 3], [0, 5], [1, 7]])
-    successors = torch.tensor([[5]])
+    # row 2 with an unrelated item that must survive. The successor edge is item 5 -> item 0,
+    # so it belongs to source 0 and must not remove item 7 for source 1.
+    # item 6 is source 0's target but NOT source 1's, so it is an unrelated candidate for
+    # source 1 and must survive -- the exact confound a global filter gets wrong
+    candidates = torch.tensor([[3, 3], [0, 5], [1, 6]])
+    successors = torch.tensor([[0, 5]])
     mask = F.exclusion_mask(source, target, candidates=candidates,
                             successors=successors).reshape(-1)
     check("self pairs are excluded", not bool(mask[0]), str(mask))

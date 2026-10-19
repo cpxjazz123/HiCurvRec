@@ -74,14 +74,83 @@ def separation_loss(posteriors: torch.Tensor, pair_index: torch.Tensor, *,
             "max_p_same": float(values.detach().max())}
 
 
+def _successor_lookup(successors) -> dict[int, set[int]]:
+    """Per-source successor sets from EITHER a host CSR (i, j) or a flat edge list."""
+    if successors is None:
+        return {}
+    if hasattr(successors, "tocsr"):                    # scipy CSR built by the host trainer
+        matrix = successors.tocsr()
+        return {int(row): set(int(col) for col in matrix.indices[matrix.indptr[row]:
+                                                                 matrix.indptr[row + 1]])
+                for row in range(matrix.shape[0]) if matrix.indptr[row] < matrix.indptr[row + 1]}
+    if isinstance(successors, torch.Tensor) and successors.dim() == 2:
+        return {int(row): set(int(value) for value in successors[row].tolist())
+                for row in range(successors.shape[0]) if int(successors[row].any())}
+    return {}
+
+
+def source_conditioned_mask(source_ids: torch.Tensor, target_ids: torch.Tensor, *,
+                            candidates: torch.Tensor,
+                            successors) -> torch.Tensor:
+    """True where a candidate pair may be used as an UNRELATED pair.
+
+    Built per source, because "unrelated" is a property of the SOURCE, not of the item:
+
+      - ``j == i`` is excluded;
+      - ``j`` equal to THIS source's observed target is excluded -- the old implementation ignored
+        ``target_ids`` entirely and so admitted the true positive as an unrelated candidate;
+      - ``j`` among THIS source's known train successors is excluded (the false-negative case the
+        host's own CSR exists for);
+      - ``j`` that happens to be a successor of a DIFFERENT source is KEPT. A global
+        ``torch.isin`` over successor values wrongly dropped those, and did so silently.
+
+    The graph is indexed by ITEM id. Candidate rows are pairs of item ids, never positions within
+    a pair batch, and mixing the two is the other way this mask can be wrong without failing.
+    """
+    lookup = _successor_lookup(successors)
+    keep = torch.ones(candidates.shape[0], dtype=torch.bool)
+    for row in range(candidates.shape[0]):
+        item_i = int(candidates[row, 0])
+        item_j = int(candidates[row, 1])
+        if item_i == item_j:
+            keep[row] = False
+            continue
+        # The source of THIS candidate is item_i. The observed target is looked up per row from the
+        # batch's own source/target pairing, which is what makes the exclusion source-conditioned.
+        batch_position = int(source_ids.eq(item_i).nonzero()[0]) if bool(source_ids.eq(item_i).any()) \
+            else -1
+        if batch_position >= 0 and int(target_ids[batch_position]) == item_j:
+            keep[row] = False
+            continue
+        if item_j in lookup.get(item_i, ()):
+            keep[row] = False
+    return keep
+
+
+def valid_pair_indices(source_ids: torch.Tensor, target_ids: torch.Tensor, *,
+                       candidates: torch.Tensor, successors) -> dict[str, Any]:
+    """The surviving candidates plus the per-step counts the issue requires to be logged."""
+    mask = source_conditioned_mask(source_ids, target_ids, candidates=candidates,
+                                   successors=successors)
+    return {
+        "valid": candidates[mask],
+        "mask": mask,
+        "candidate_count": int(candidates.shape[0]),
+        "valid_count": int(mask.sum()),
+        "empty_count": int((~mask).sum()),
+    }
+
+
 def exclusion_mask(source_ids: torch.Tensor, target_ids: torch.Tensor, *,
-                   candidates: torch.Tensor, successors: torch.Tensor | None) -> torch.Tensor:
-    """True where a candidate pair may be used: not self, not the target, not a false negative."""
-    mask = candidates[:, 0:1] != candidates[:, 1:2]
-    if successors is not None and successors.numel():
-        # keep the column shape: broadcasting a [n] mask against [n, 1] would build [n, n]
-        mask = mask & ~torch.isin(candidates[:, 1], successors.reshape(-1)).reshape(-1, 1)
-    return mask
+                   candidates: torch.Tensor, successors) -> torch.Tensor:
+    """Compatibility name, now source-conditioned.
+
+    The #85 version of this function took a flat successor tensor, ignored ``target_ids`` and
+    filtered globally. Both defects are demonstrated in tests/test_r7_f_masks.py before and after
+    this change; the source-conditioned version is the one every call site now uses.
+    """
+    return source_conditioned_mask(source_ids, target_ids, candidates=candidates,
+                                   successors=successors)
 
 
 def gaming_diagnostics(posteriors: torch.Tensor, hard_indices: torch.Tensor,
