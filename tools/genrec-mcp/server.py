@@ -1156,7 +1156,7 @@ def run_stage2_smoke(
     }
 
 
-def tool_stage2_start(source_dir: str) -> dict:
+def tool_stage2_start(source_dir: str, spec: dict | None = None) -> dict:
     """Start one Stage2 run in the given tree. Every call really trains.
 
     The tree's runnable entrypoint is validated (an unwired launcher is
@@ -1200,11 +1200,12 @@ def tool_stage2_start(source_dir: str) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    # CGV: a mechanism may only train once all six verification gates pass, and the certificate
-    # must still describe this exact trainer source. Checked before anything is archived or
-    # dispatched, so a refusal has no side effect.
+    # CGV: a mechanism may only train once its verification certificate covers BOTH this exact
+    # trainer source and the declaration supplied with this call. Requiring the declaration again
+    # is what stops a weak claim being certified and then quietly trained. Checked before anything
+    # is archived or dispatched, so a refusal has no side effect.
     try:
-        cgv_ok, cgv_why = cgv_certificate_state(Path(tree))
+        cgv_ok, cgv_why = cgv_certificate_state(Path(tree), spec)
     except Exception as exc:  # noqa: BLE001 - fail closed, never train unverified
         cgv_ok, cgv_why = False, f"CGV could not be evaluated ({type(exc).__name__}: {exc})"
     context["cgv_gate"] = {"passed": cgv_ok, "note": cgv_why}
@@ -1882,29 +1883,38 @@ CGV_PY = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
 CGV_TIMEOUT_S = 2400
 
 CGV_GATES = ("G1", "G2", "G3", "G4", "G5", "G6")
+CGV_SCHEMA_VERSION = 1
 CGV_TITLES = {
-    "G1": "forward consistency",
-    "G2": "gradient path",
-    "G3": "gradient direction",
+    "G1": "forward contract",
+    "G2": "gradient propagation",
+    "G3": "gradient mathematics",
     "G4": "parameter update",
-    "G5": "DDP consistency",
+    "G5": "distributed consistency",
     "G6": "real training entry",
 }
 CGV_VERIFIES = {
-    "G1": "the mechanism changes only the computation it declares",
-    "G2": "every loss term it depends on reaches its target parameters",
-    "G3": "the executed gradient matches the mechanism's own formula",
-    "G4": "the optimizer really performs the predicted update",
-    "G5": "multi-rank gradients match an independent pooled reference",
-    "G6": "the verified path is the one training actually executes",
+    "G1": "the observed forward satisfies the declared formula and invariants",
+    "G2": "every declared loss path reaches the declared parameters with the declared character",
+    "G3": "the executed gradient equals the mechanism's own declared rule, and changes it",
+    "G4": "the declared optimizer and clipping produce the declared update",
+    "G5": "multi-rank execution matches the declared aggregation rule",
+    "G6": "formal training executes the declared mechanism and moves a parameter",
 }
 CGV_PREVENTS = {
-    "G1": "unintended changes to the loss, the quantisation result, or the sampling",
-    "G2": "a loss term that contributes nothing to the targeted parameters (the R5-10 class)",
-    "G3": "wrong projection direction, coefficient, or sign",
-    "G4": "a mechanism that is present but has no effect on the parameters",
-    "G5": "double all-reduce, or per-rank divergence under DDP",
-    "G6": "tests passing against a code path training never executes",
+    "G1": "a forward that violates the declared formula, invariants or output constraints",
+    "G2": "a declared loss path that delivers nothing to the declared parameters",
+    "G3": "an executed gradient that contradicts the mechanism's declared rule",
+    "G4": "an update the declared optimizer and clipping do not produce",
+    "G5": "an aggregation rule the multi-rank execution does not satisfy",
+    "G6": "a mechanism formal training never executes, or that never moves a parameter",
+}
+CGV_STATES = {
+    "passed": "the declared behaviour was verified",
+    "failed": "the declaration was contradicted by the real computation",
+    "not_applicable": "the contract explicitly declares the mechanism has no effect in this "
+                      "dimension, with a reason",
+    "insufficient_evidence": "the contract leaves this gate nothing testable; never counts as "
+                             "success",
 }
 
 
@@ -1927,11 +1937,11 @@ def _sha256_file(path: Path) -> str | None:
 def cgv_certificate_for(tree: Path) -> dict | None:
     """Read the certificate covering this tree. Pure file IO: needs no torch, so it runs in the
     server's own interpreter."""
-    trainer = tree / "train_rqvae.py"
-    for name in CGV_GATES and [f"r4_08"] + [f"r5_{i:02d}" for i in range(1, 11)]:
-        path = CGV_DIR / f"certificate_{name}.json"
-        if not path.is_file():
-            continue
+    if not CGV_DIR.is_dir():
+        return None
+    candidates = sorted(CGV_DIR.glob("certificate_*.json"),
+                        key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in candidates:
         try:
             certificate = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -1941,24 +1951,73 @@ def cgv_certificate_for(tree: Path) -> dict | None:
     return None
 
 
-def cgv_certificate_state(tree: Path) -> tuple[bool, str]:
-    """Valid only if every gate passed AND the certificate still describes this trainer source."""
+def _cgv_fingerprint(spec: dict) -> dict:
+    """The hashes a certificate binds to: the declaration it judged and the verifier that judged
+    it. Read straight from disk, because the verifier is part of what a certificate attests to."""
+    cgv = REPO / "tools/cgv"
+    declared = json.dumps(spec, indent=2, sort_keys=True, default=str)
+    return {
+        "spec_sha256": hashlib.sha256(declared.encode("utf-8")).hexdigest(),
+        "oracles_sha256": _sha256_file(cgv / "oracles.py"),
+        "adapter_sha256": _sha256_file(cgv / "adapters.py"),
+        "negative_suite_sha256": _sha256_file(cgv / "negative_suite.py"),
+    }
+
+
+def cgv_certificate_state(tree: Path, spec: dict | None) -> tuple[bool, str]:
+    """Valid only if the declaration passed, the gates could fail, and nothing has changed since."""
     certificate = cgv_certificate_for(tree)
     if certificate is None:
         return False, ("no CGV certificate. Run cgv_check(source_dir=...) and all six gates must "
                        "pass before this tree may train")
+    if certificate.get("schema_version") != CGV_SCHEMA_VERSION:
+        return False, (f"the certificate was issued under CGV schema "
+                       f"{certificate.get('schema_version')} and the current schema is "
+                       f"{CGV_SCHEMA_VERSION}; re-run cgv_check")
+    summary = certificate.get("summary") or {}
+    blocking = [gate for gate in CGV_GATES
+                if (summary.get(gate) or {}).get("state") not in ("passed", "not_applicable")]
+    if blocking:
+        states = {gate: (summary.get(gate) or {}).get("state") for gate in CGV_GATES}
+        return False, f"CGV gates not passing: {states}. Re-run cgv_check before training"
+    independence = certificate.get("independence") or {}
+    if not independence.get("independent", False):
+        return False, ("the certificate's oracles are not independent of the mechanism; re-run "
+                       "cgv_check")
+    suite = certificate.get("negative_suite")
+    if not suite or not suite.get("all_ok"):
+        broken = ([item.get("fault") for item in (suite or {}).get("faults", [])
+                   if not item.get("ok")] if suite else "no counterexample evidence at all")
+        return False, (f"the certificate carries no passing counterexample evidence ({broken}); "
+                       "re-run cgv_check so the standard faults are injected and the matching "
+                       "gates are required to fail")
     if not certificate.get("passed"):
-        failed = [gate for gate in CGV_GATES
-                  if (certificate.get("gates", {}).get(gate) or {}).get("passed") is not True]
-        return False, f"CGV gates not passing: {failed}. Re-run cgv_check before training"
+        return False, ("the certificate is not marked as passing even though its gates and "
+                       "counterexample suite are green; re-run cgv_check")
     current = _sha256_file(tree / "train_rqvae.py")
     if certificate.get("trainer_sha256") != current:
         return False, ("the trainer changed after the certificate was issued; the mechanism must "
                        "be re-verified with cgv_check before it may train")
-    return True, f"CGV certificate {certificate.get('checked_utc')} covers trainer {str(current)[:16]}"
+    if spec is None:
+        return False, ("no declaration was supplied: a run must be authorised by the same "
+                       "declaration its certificate covers, so that the gates that passed judged "
+                       "the claim this run relies on")
+    declared = json.dumps(spec, indent=2, sort_keys=True, default=str)
+    supplied_hash = hashlib.sha256(declared.encode("utf-8")).hexdigest()
+    if supplied_hash != certificate.get("spec_sha256"):
+        return False, ("the supplied declaration is not the one this certificate covers "
+                       f"(certificate {str(certificate.get('spec_sha256'))[:16]}, supplied "
+                       f"{supplied_hash[:16]}); this claim is unverified")
+    recorded = certificate.get("fingerprint") or {}
+    for key, value in _cgv_fingerprint(spec).items():
+        if recorded.get(key) != value:
+            return False, (f"the verifier changed ({key}) after the certificate was issued; "
+                           "re-run cgv_check")
+    return True, (f"CGV certificate {certificate.get('checked_utc')} covers trainer "
+                  f"{str(current)[:16]} and declaration {supplied_hash[:16]}")
 
 
-def tool_cgv_check(source_dir: str) -> dict:
+def tool_cgv_check(source_dir: str, spec: dict) -> dict:
     """Run the six CGV gates against one Stage2 tree and issue its certificate.
 
     The gates execute in the project's own interpreter: this server runs on a torch-less one, so
@@ -1969,9 +2028,16 @@ def tool_cgv_check(source_dir: str) -> dict:
     if tree is None:
         return {"passed": False, "refused": problem,
                 "available_trees": [item.name for item in stage2_trees()]}
+    if not isinstance(spec, dict) or not spec:
+        return {"passed": False, "tree": str(tree), "refused": (
+            "spec is required: CGV verifies a mechanism against the mathematical behaviour the "
+            "caller declares, so the declaration travels with the call as the seven contract "
+            "groups (mechanism, model, forward_contract, gradient_contract, update_contract, "
+            "distributed_contract, runtime_contract). CGV reads no declaration from the tree.")}
     try:
-        proc = subprocess.run([CGV_PY, str(CGV_RUNNER), str(tree), "--certificate"],
-                              capture_output=True, text=True, timeout=CGV_TIMEOUT_S)
+        proc = subprocess.run(
+            [CGV_PY, str(CGV_RUNNER), str(tree), "--spec", "-", "--certificate", "--negative"],
+            input=json.dumps(spec), capture_output=True, text=True, timeout=CGV_TIMEOUT_S)
     except subprocess.TimeoutExpired:
         return {"passed": False, "arm": None, "refused": f"CGV did not finish within "
                   f"{CGV_TIMEOUT_S}s", "trainable_now": False}
@@ -1986,17 +2052,25 @@ def tool_cgv_check(source_dir: str) -> dict:
     return payload
 
 
-def tool_cgv_status(source_dir: str) -> dict:
-    """Read-only: the CGV certificate for one Stage2 tree, and whether it still covers the code."""
+def tool_cgv_status(source_dir: str, spec: dict | None = None) -> dict:
+    """Read-only: the CGV certificate for one Stage2 tree, and whether it covers this declaration."""
     tree, problem = resolve_stage2_tree(source_dir)
     if tree is None:
         return {"refused": problem, "available_trees": [item.name for item in stage2_trees()]}
-    trainable, why = cgv_certificate_state(Path(tree))
+    trainable, why = cgv_certificate_state(Path(tree), spec)
+    certificate = cgv_certificate_for(Path(tree))
     return {
         "tree": str(tree),
         "gate_table": cgv_gate_table(),
-        "certificate": cgv_certificate_for(Path(tree)),
-        "has_certificate": cgv_certificate_for(Path(tree)) is not None,
+        "gate_states": CGV_STATES,
+        "certificate": certificate,
+        "has_certificate": certificate is not None,
+        "certified_declaration_sha256": (certificate or {}).get("spec_sha256"),
+        "supplied_declaration_sha256": (json.dumps(spec, indent=2, sort_keys=True, default=str)
+                                        and hashlib.sha256(
+                                            json.dumps(spec, indent=2, sort_keys=True,
+                                                       default=str).encode("utf-8")).hexdigest())
+        if isinstance(spec, dict) and spec else None,
         "trainable_now": trainable,
         "trainable_note": why,
     }
@@ -2005,33 +2079,44 @@ def tool_cgv_status(source_dir: str) -> dict:
 TOOLS: dict[str, dict] = {
     "stage2_start": {
         "fn": tool_stage2_start,
-        "args": {"source_dir": "string"},
+        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)"},
         "description": "Start one Stage2 run in the given Stage2 tree, e.g. "
         "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE. source_dir is required because several trees "
         "exist. The call returns as soon as the existing artifacts have been archived and a detached "
         "worker owns the rest: status is smoke_pending and stage2_status(source_dir) reports the "
         "smoke verdict, then the launched run. Existing artifacts no longer block a run (they are "
-        "copied to the archive first), and a live run of the same tree still refuses.",
+        "copied to the archive first), and a live run of the same tree still refuses. spec is the "
+        "mechanism's mathematical declaration; it must be the same declaration the CGV "
+        "certificate covers, otherwise the run is refused before anything is archived.",
     },
     "cgv_check": {
         "fn": tool_cgv_check,
-        "args": {"source_dir": "string"},
-        "description": "Computational Graph & Gradient Verification. Runs the six mandatory CGV "
-        "gates against one Stage2 tree and writes its certificate: G1 forward consistency, G2 "
-        "gradient path (catches a loss term that delivers nothing to the targeted parameters), "
-        "G3 gradient direction against the mechanism's own registered formula, G4 parameter update "
-        "against a closed-form AdamW prediction, G5 two-rank gloo DDP against an independent "
-        "pooled reference, and G6 the real training entry with its outputs isolated to a "
-        "temporary directory. A tree may only train once all six pass; stage2_start refuses "
-        "otherwise, and refuses again if the trainer changes after certification. source_dir is "
-        "required because several trees exist. Starts no training.",
+        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)"},
+        "description": "Contract-based verification of one Stage2 mechanism. The declaration is "
+        "the spec ARGUMENT: seven groups (mechanism, model, forward_contract, gradient_contract, "
+        "update_contract, distributed_contract, runtime_contract). Nothing is read from the "
+        "mechanism's tree, so a tree supplies CGV with no files at all -- no baseline, no parent "
+        "version, no declaration on disk, no required on/off switch. Three roles stay apart: the "
+        "contract states the claim, the adapter executes the real code, and an independent oracle "
+        "in tools/cgv/oracles.py recomputes the expected mathematics (an oracle that resolves to "
+        "the mechanism itself is refused). Gates: G1 forward contract, G2 gradient propagation, "
+        "G3 gradient mathematics against the declared rule, G4 parameter update against an "
+        "independent closed-form prediction, G5 multi-rank execution against the declared "
+        "aggregation rule, G6 the real training entry with outputs isolated to a temporary "
+        "directory. A gate is passed / failed / not_applicable (declared, with a reason) / "
+        "insufficient_evidence; the last NEVER counts as success. The call also runs the "
+        "counterexample suite, which injects seven standard faults and requires the matching gate "
+        "to fail, because a gate that cannot fail proves nothing. Writes the certificate, which "
+        "binds the declaration's hash and the verifier's own hashes; stage2_start refuses unless "
+        "it is given the same spec. Starts no training.",
     },
     "cgv_status": {
         "fn": tool_cgv_status,
-        "args": {"source_dir": "string"},
+        "args": {"source_dir": "string", "spec": "object (optional, the declaration)"},
         "description": "Read-only: the CGV certificate for one Stage2 tree, the six-gate table with "
-        "what each gate verifies and prevents, and whether the certificate is still valid for the "
-        "current trainer source. Runs no gate and starts nothing.",
+        "what each gate verifies and prevents, the meaning of each gate state, the hash of the "
+        "declaration the certificate covers, and whether the supplied spec is that same "
+        "declaration for the current trainer source. Runs no gate and starts nothing.",
     },
     "stage2_status": {
         "fn": tool_stage2_status,

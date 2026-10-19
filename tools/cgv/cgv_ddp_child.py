@@ -1,18 +1,28 @@
-"""G5 driver: a real two-rank gloo DDP run compared against an independent pooled reference.
+"""Real multi-rank execution for CGV's distributed gate (G5).
 
-Runs as its own process (``cgv.engine`` spawns it) so the gloo store is created and torn down in
-a pristine interpreter. Each rank persists its result to ``payload/`` because a forked child gets
-a COPY of the parent's memory, so nothing it writes to a module global reaches the parent.
+Runs the declared number of ranks with gloo, executes the mechanism's real assembly on each rank
+through a genuine ``DistributedDataParallel`` wrapper, and hands the parent everything it needs to
+judge the result INDEPENDENTLY:
 
-Usage: cgv_ddp_child.py <tree> <payload_dir> <timeout_s>
+    rank_<i>_local.pt     the rank's own term gradients, computed without DDP averaging
+    production_pooled.pt  the gradient the real DDP + mechanism path produced
+    rank_<i>.json         rank metadata (batch rows, parameter digest)
+
+The parent pools the local gradients with the independent aggregation oracle and applies the
+independent gradient oracle to the pooled result, then compares that with ``production_pooled``.
+The child deliberately does NOT decide whether the aggregation is correct: if it did, a wrong
+aggregation would be checked against itself.
+
+The declaration is passed on stdin, for the same reason the engine takes it as an argument: the
+tree supplies no declaration of its own.
 """
 from __future__ import annotations
 
 import json
-import math
+import os
 import sys
-import tempfile
 import time
+import traceback
 from pathlib import Path
 
 import torch
@@ -20,233 +30,143 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-SEED = 2024
-IN_DIM = 32
-N_SRC = 24
-BEHAVIOR_WEIGHT = 0.5
-RANK_ROWS = {0: 24, 1: 20}
-CTX = mp.get_context("fork")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import adapters  # noqa: E402
+import contract as C  # noqa: E402
+import engine as E  # noqa: E402
 
 
-def _arm_kwargs(T, case):
-    import inspect
-
-    accepted = inspect.signature(T._r4_08_apply_projection).parameters
-    kwargs = {}
-    if "recon_loss" in accepted:
-        kwargs["recon_loss"] = case["recon_loss"]
-    if "encoder_module" in accepted:
-        kwargs["encoder_module"] = case["model"].encoder
-    return kwargs
-
-
-def _make_batch(rows: int, offset: int):
-    generator = torch.Generator().manual_seed(SEED + 100 * offset + rows)
-    emb = torch.randn(2 * rows, IN_DIM, generator=generator)
-    source_ids = torch.arange(rows)
-    target_ids = (torch.arange(rows) + 1) % rows
-    return emb, source_ids, target_ids
-
-
-def _build_local(T, rows: int, offset: int):
-    torch.manual_seed(SEED)
-    model = T.RQVAE(T._tokenizer_config(), in_dim=IN_DIM)
-    emb, source_ids, target_ids = _make_batch(rows, offset)
-    reconstructed, quant_loss, _, _ = model.forward(emb)
-    base_loss, recon_loss = model.compute_loss(emb, reconstructed, quant_loss)
-    residuals = T._residuals_with_trace(model, emb)
-    l1_loss, other_loss, valid = T.behavior_contrastive_components(
-        residuals, source_ids, target_ids, None)
-    encoder = list(model.encoder.parameters())
-    return {"model": model, "emb": emb, "base_loss": base_loss, "recon_loss": recon_loss,
-            "l1_loss": l1_loss, "other_loss": other_loss, "valid_levels": valid,
-            "encoder": encoder,
-            "non_encoder": [p for p in model.parameters() if not any(p is q for q in encoder)]}
-
-
-def _local_grads(T, case, key: str):
-    return T._r4_08_encoder_gradients(case[key], case["encoder"], retain=True)
-
-
-def child(rank: int, init_file: str, module_name: str, tree: str, payload: str) -> None:
-    result: dict = {"rank": rank, "ok": False}
-    tensors: dict[str, torch.Tensor] = {}
+def _rank(rank: int, tree: str, payload: str, world_size: int, spec_text: str) -> None:
+    torch.set_num_threads(1)
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    out = Path(payload)
     try:
-        sys.path.insert(0, tree)
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(module_name, Path(tree) / "train_rqvae.py")
-        T = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = T
+        contract = C.normalise_spec(spec_text, source="the declaration on the child's stdin")
+        trainer, saved_path, saved_mods = E.load_trainer(Path(tree), module_name="cgv_rank")
         try:
-            spec.loader.exec_module(T)
-        except RuntimeError:
-            import ast
+            seed = 1000 + rank
+            # DDP broadcasts parameters at construction, so the wrapper is created FIRST and every
+            # per-rank gradient is then taken at that same synchronised parameter point. Taking
+            # the local gradients before the broadcast would compare gradients evaluated at
+            # different parameters, and the difference would look like an aggregation failure.
+            base = adapters.build_observations(trainer, contract, seed=1000)
+            model = base["model"]
+            ddp = DDP(model, device_ids=None)
 
-            entry = Path(tree) / "train_rqvae.py"
-            parsed = ast.parse(entry.read_text(encoding="utf-8"), filename=str(entry))
-            parsed.body = [
-                n for n in parsed.body
-                if not (isinstance(n, ast.If)
-                        and ast.unparse(n.test).startswith("EXPERIMENT_ARM !="))]
-            T = type(sys)(module_name)
-            T.__file__ = str(entry)
-            sys.modules[module_name] = T
-            exec(compile(parsed, str(entry), "exec"), T.__dict__)  # noqa: S102
+            # the rank's own view: plain forward, term gradients computed WITHOUT DDP averaging
+            local_obs = adapters.build_observations(trainer, contract, seed=seed, model=model)
+            terms = adapters.loss_terms(trainer, contract, local_obs)
+            local = {name: [tensor.detach().clone()
+                            for tensor in adapters.term_gradient(trainer, local_obs, terms[name])]
+                     for name in terms}
+            torch.save(local, out / f"rank_{rank}_local.pt")
 
-        dist.init_process_group(backend="gloo", init_method=f"file://{init_file}",
-                                rank=rank, world_size=2)
-        rows = RANK_ROWS[rank]
-        base_case = _build_local(T, rows, offset=rank)
-        model = base_case["model"]
-        wrapped = DDP(model, device_ids=None, find_unused_parameters=False)
-        case = dict(base_case)
-        emb, source_ids, target_ids = _make_batch(rows, rank)
-        reconstructed, quant_loss, _, _ = wrapped(emb)
-        case["base_loss"], case["recon_loss"] = model.compute_loss(emb, reconstructed, quant_loss)
-        residuals = T._residuals_with_trace(model, emb)
-        (case["l1_loss"], case["other_loss"],
-         case["valid_levels"]) = T.behavior_contrastive_components(
-            residuals, source_ids, target_ids, None)
+            # the production path: a real DDP wrapper, so the framework performs the declared
+            # aggregation during backward, and the mechanism then runs on the averaged gradient
+            observations = adapters.build_observations(trainer, contract, seed=seed, model=model)
+            reconstructed, quant_loss, _, _ = ddp(observations["embeddings"])
+            base_loss, recon_loss = model.compute_loss(observations["embeddings"], reconstructed,
+                                                       quant_loss)
+            residuals = trainer._residuals_with_trace(model, observations["embeddings"])
+            n_src = observations["n_src"]
+            l1_loss, other_loss, valid = trainer.behavior_contrastive_components(
+                residuals, torch.arange(n_src), (torch.arange(n_src) + 1) % n_src, None)
+            observations.update({
+                "ddp": ddp,
+                "base_loss": base_loss,
+                "recon_loss": recon_loss,
+                "quant_loss": quant_loss,
+                "l1_loss": l1_loss,
+                "other_loss": other_loss,
+                "valid_levels": int(valid),
+                "scale": observations["weight"] / max(int(valid), 1),
+            })
+            production = adapters.executed_target_gradient(trainer, contract, observations)
+            torch.save(production, out / f"rank_{rank}_production.pt")
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
-        model.zero_grad(set_to_none=False)
-        case["base_loss"].backward(retain_graph=True)
-        pooled = []
-        for key in ("base_loss", "l1_loss", "other_loss"):
-            grads = T._r4_08_global_average(_local_grads(T, case, key))
-            pooled.append(float(torch.cat([g.reshape(-1) for g in grads]).norm()))
-        T._r4_08_apply_projection(case["base_loss"], case["l1_loss"], case["other_loss"],
-                                  case["encoder"], BEHAVIOR_WEIGHT,
-                                  valid_levels=case["valid_levels"], **_arm_kwargs(T, case))
+            # one declared optimizer step, so the ranks can be compared afterwards
+            update = contract["update_contract"]
+            optimizer_cls = getattr(torch.optim, update["optimizer"])
+            optimizer = optimizer_cls(model.parameters(), lr=float(update.get("lr", 1e-3)),
+                                      weight_decay=float(update.get("weight_decay", 0.01)))
+            optimizer.step()
+            digest = torch.cat([p.detach().reshape(-1) for p in model.parameters()]).sum().item()
+            rows = int(observations["embeddings"].shape[0])
+
+            gathered: list[Any] = [None] * world_size
+            dist.all_gather_object(gathered, {"digest": digest, "rows": rows})
+            if rank == 0:
+                gradient = contract["gradient_contract"]
+                oracle_inputs = {
+                    "scale": float(observations["scale"]),
+                    "rule": gradient["rule"],
+                    "reference_term": gradient.get("reference_term"),
+                    "alpha": float(adapters.declared_value(trainer, gradient, "alpha", 1.0)),
+                    "eps": float(adapters.declared_value(trainer, gradient, "eps", 1e-12)),
+                    "gate_open": True,
+                }
+                if gradient.get("cos_threshold_flag"):
+                    oracle_inputs["cos_threshold"] = float(
+                        adapters.declared_value(trainer, gradient, "cos_threshold", -0.2))
+                if gradient.get("blocks"):
+                    oracle_inputs["blocks"] = adapters.structural_blocks(
+                        trainer, contract, observations)
+                (out / "oracle_inputs.json").write_text(json.dumps(oracle_inputs, indent=2))
+                pooled = [torch.zeros_like(tensor) for tensor in production]
+                for source in range(world_size):
+                    piece = torch.load(out / f"rank_{source}_production.pt", weights_only=False)
+                    for index, tensor in enumerate(piece):
+                        pooled[index] = pooled[index] + tensor / world_size
+                torch.save(pooled, out / "production_pooled.pt")
+                digests = [item["digest"] for item in gathered]
+                (out / "summary.json").write_text(json.dumps({
+                    "ok": True,
+                    "weights": None,
+                    "ranks_identical": len(set(digests)) == 1,
+                    "local_batch_rows": {str(i): gathered[i]["rows"] for i in range(world_size)},
+                    "elapsed_s": round(time.time() - started_at, 1),
+                }, indent=2))
+        finally:
+            E.unload_trainer(saved_path, saved_mods)
+    except Exception:  # noqa: BLE001
+        (out / f"rank_{rank}_error.txt").write_text(traceback.format_exc())
         if rank == 0:
-            tensors["encoder_grads"] = torch.cat(
-                [p.grad.detach().reshape(-1).clone() for p in case["encoder"]])
-            tensors["nonencoder_grads"] = torch.cat(
-                [p.grad.detach().reshape(-1).clone() for p in case["non_encoder"]])
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        optimizer.step()
-        flat = torch.cat([p.detach().reshape(-1).clone() for p in model.parameters()])
-        gathered = [torch.zeros_like(flat) for _ in range(2)]
-        dist.all_gather(gathered, flat)
-        tensors["gathered"] = torch.stack(gathered)
-        result = {"rank": rank, "ok": True, "rows": rows, "pooled_component_norms": pooled}
-    except Exception as exc:  # noqa: BLE001
-        result = {"rank": rank, "ok": False, "error": f"{type(exc).__name__}: {exc}"}
+            (out / "summary.json").write_text(json.dumps({
+                "ok": False,
+                "error": traceback.format_exc().strip().splitlines()[-1],
+                "measurements": {"traceback": traceback.format_exc()[-2000:]},
+            }, indent=2))
+        raise
     finally:
-        try:
-            dist.destroy_process_group()
-        except Exception:  # noqa: BLE001
-            pass
-        out = Path(payload)
-        out.mkdir(parents=True, exist_ok=True)
-        (out / f"rank{rank}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
-        if tensors:
-            torch.save(tensors, out / f"rank{rank}.pt")
+        dist.destroy_process_group()
 
 
-def _independent_reference(T, tree_payload: Path):
-    """Mean over the two ranks' LOCAL gradients, computed in one process without DDP."""
-    cases = [_build_local(T, RANK_ROWS[r], offset=r) for r in (0, 1)]
-    encoder = cases[0]["encoder"]
-    pooled = {}
-    for key in ("base_loss", "l1_loss", "other_loss"):
-        per_rank = [_local_grads(T, c, key) for c in cases]
-        pooled[key] = [(per_rank[0][i] + per_rank[1][i]) / 2.0 for i in range(len(encoder))]
-    return [float(torch.cat([g.reshape(-1) for g in pooled[k]]).norm())
-            for k in ("base_loss", "l1_loss", "other_loss")]
+started_at = time.time()
 
 
-def main(tree: str, payload: str, timeout_s: int) -> int:
-    payload_dir = Path(payload)
-    payload_dir.mkdir(parents=True, exist_ok=True)
-    module_name = f"cgv_g5_{Path(tree).name.replace('-', '_')}"
-    started = time.time()
-    with tempfile.TemporaryDirectory() as tmp:
-        init_file = str(Path(tmp) / "gloo_store")
-        procs = [CTX.Process(target=child, args=(r, init_file, module_name, tree, payload))
-                 for r in (0, 1)]
-        for p in procs:
-            p.start()
-        deadline = time.time() + timeout_s
-        for p in procs:
-            p.join(timeout=max(1, int(deadline - time.time())))
-        hung = [p.pid for p in procs if p.is_alive()]
-        for p in procs:
-            if p.is_alive():
-                p.terminate()
-            p.join(5)
-    elapsed = round(time.time() - started, 1)
-    ranks = []
-    for r in (0, 1):
-        path = payload_dir / f"rank{r}.json"
-        ranks.append(json.loads(path.read_text()) if path.is_file()
-                     else {"rank": r, "ok": False, "error": "no result file"})
-    if hung or any(not r.get("ok") for r in ranks):
-        summary = {
-            "passed": False,
-            "detail": f"the two-rank run did not complete (hung={hung}, ranks={ranks})",
-            "measurements": {"ranks": ranks, "elapsed_s": elapsed},
-            "finding": "G5 could not execute the two-rank path; treated as a failure, not a skip",
-        }
-        (payload_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-        print(json.dumps(summary), flush=True)
-        return 1
-
-    tensors0 = torch.load(payload_dir / "rank0.pt", weights_only=False)
-    sys.path.insert(0, tree)
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(module_name, Path(tree) / "train_rqvae.py")
-    T = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = T
+def main(tree: str, payload: str, world_size: int = 2, timeout: int = 900) -> int:
+    spec_text = sys.stdin.read()
+    os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
+    os.environ.setdefault("MASTER_PORT", str(29500 + (os.getpid() % 500)))
+    os.environ.setdefault("GLOO_SOCKET_IFNAME", "lo")
+    summary = Path(payload) / "summary.json"
+    if summary.is_file():
+        summary.unlink()
     try:
-        spec.loader.exec_module(T)
-    except RuntimeError:
-        import ast
-
-        entry = Path(tree) / "train_rqvae.py"
-        parsed = ast.parse(entry.read_text(encoding="utf-8"), filename=str(entry))
-        parsed.body = [
-            n for n in parsed.body
-            if not (isinstance(n, ast.If)
-                    and ast.unparse(n.test).startswith("EXPERIMENT_ARM !="))]
-        T = type(sys)(module_name)
-        T.__file__ = str(entry)
-        sys.modules[module_name] = T
-        exec(compile(parsed, str(entry), "exec"), T.__dict__)  # noqa: S102
-    reference = _independent_reference(T, payload_dir)
-
-    pooled_match = all(abs(a - b) <= 1e-5 * max(abs(b), 1.0)
-                       for a, b in zip(ranks[0]["pooled_component_norms"], reference))
-    gathered = tensors0["gathered"]
-    ranks_identical = bool(torch.equal(gathered[0], gathered[1]))
-    passed = pooled_match and ranks_identical
-    summary = {
-        "passed": passed,
-        "detail": (f"the projection consumed the mean over the ranks' local gradients "
-                   f"(production {['%.8f' % v for v in ranks[0]['pooled_component_norms']]} == "
-                   f"independent {['%.8f' % v for v in reference]}) and both ranks hold "
-                   f"bitwise identical weights after the AdamW step"
-                   if passed else
-                   (f"pooled components match={pooled_match}, ranks identical="
-                    f"{ranks_identical}")),
-        "measurements": {
-            "production_pooled_component_norms": ranks[0]["pooled_component_norms"],
-            "independent_pooled_component_norms": reference,
-            "pooled_components_match": pooled_match,
-            "ranks_bitwise_identical": ranks_identical,
-            "local_batch_rows": {str(r): RANK_ROWS[r] for r in (0, 1)},
-            "elapsed_s": elapsed,
-        },
-        "finding": None if passed else
-        ("gradients are not globally pooled (double averaging or per-rank PCGrad) or the ranks "
-         "diverged"),
-    }
-    (payload_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(json.dumps(summary), flush=True)
-    return 0 if passed else 1
+        mp.spawn(_rank, args=(tree, payload, int(world_size), spec_text), nprocs=int(world_size),
+                 join=True)
+    except Exception:  # noqa: BLE001
+        if not summary.is_file():
+            summary.write_text(json.dumps({
+                "ok": False, "error": "the rank processes failed",
+                "measurements": {"traceback": traceback.format_exc()[-2000:]},
+            }, indent=2))
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1], sys.argv[2], int(sys.argv[3])))
+    sys.exit(main(sys.argv[1], sys.argv[2],
+                  int(sys.argv[3]) if len(sys.argv) > 3 else 2,
+                  int(sys.argv[4]) if len(sys.argv) > 4 else 900))

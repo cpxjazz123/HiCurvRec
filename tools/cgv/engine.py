@@ -1,31 +1,45 @@
 """CGV -- Computational Graph & Gradient Verification.
 
-Six gates that every Stage2 mechanism must pass BEFORE training is allowed to start.
+CGV verifies a mechanism against the mathematical behaviour that mechanism DECLARES. It never
+compares two versions of a mechanism, never needs a baseline checkpoint, and never requires the
+mechanism to have an on/off switch. A declaration that mentions a switch is honoured; one that
+mentions none is verified exactly the same way.
 
-    G1 forward consistency   the mechanism changes only the computation it declares
-    G2 gradient path         every loss term it depends on reaches its target parameters
-    G3 gradient direction    the executed gradient matches the mechanism's own formula
-    G4 parameter update      the optimizer really performs the predicted update
-    G5 DDP consistency       multi-rank gradients match an independent pooled reference
-    G6 real training entry   the verified path is the one training actually executes
+The declaration is an ARGUMENT. It arrives as data on the call and CGV reads nothing from the
+mechanism's tree: a mechanism hands over no files to be judged by.
 
-Design notes
-------------
-*Output isolation is mandatory.* Some gates execute the trainer's real ``main()``. The
-trainer writes its checkpoint, SID export and metrics into its production result directory, so
-:func:`isolated_outputs` redirects every one of those paths into a temporary directory FIRST.
-Without it, merely verifying a mechanism destroys the artifacts of the run under audit -- a
-mistake this module exists partly to make impossible.
+The three roles are kept apart on purpose:
 
-*Dependency discovery is functional, not declared.* G2 finds which loss terms an arm actually
-depends on by substituting a random probe tensor into each candidate term and observing whether
-the executed encoder gradient changes. An arm that reads a term is then required to receive a
-non-zero gradient through it. This is what catches a term that participates in the objective but
-contributes nothing to the target parameters.
+    contract (contract.py)   what the mechanism claims, as data
+    adapter  (adapters.py)   how to execute the real mechanism, and nothing else
+    oracle   (oracles.py)    an independent mathematical reference, importing no mechanism
 
-*Unknown mechanisms fail closed.* G3 needs the mechanism's own formula. An arm whose mechanism is
-absent from :data:`MECHANISMS` is refused with an actionable message rather than passed by
-default, so a new mechanism cannot skip the direction check by being unrecognised.
+Gates
+-----
+    G1 forward contract        the observed forward satisfies the declared formula and invariants
+    G2 gradient propagation    every declared loss path reaches the declared parameters, with the
+                               declared zero/non-zero/finite character
+    G3 gradient mathematics    the executed gradient equals the declared rule, and the mechanism
+                               demonstrably changes it
+    G4 parameter update        the declared optimizer and clipping produce the declared update
+    G5 distributed consistency multi-rank execution matches the declared aggregation rule
+    G6 real training entry     formal training executes the declared mechanism and moves a
+                               parameter
+
+Gate outcomes
+-------------
+A gate is ``passed``, ``failed``, ``not_applicable`` (the contract explicitly declares that the
+mechanism has no effect in that dimension, and says why) or ``insufficient_evidence`` (the
+contract leaves the gate nothing testable). ``not_applicable`` is a declaration and is reported
+as such. ``insufficient_evidence`` NEVER counts as success: a mechanism whose behaviour cannot be
+stated cannot be verified, and the certificate says so instead of passing it.
+
+Output isolation
+----------------
+G6 executes the trainer's real entry point. :func:`isolated_outputs` redirects every path the
+trainer WRITES into a temporary directory first, discovered from the filenames a trainer writes
+rather than listed by hand. Without it, merely verifying a mechanism would overwrite the
+artifacts of the run under audit.
 """
 from __future__ import annotations
 
@@ -33,7 +47,6 @@ import contextlib
 import hashlib
 import importlib.util
 import json
-import math
 import os
 import subprocess
 import sys
@@ -46,152 +59,29 @@ from typing import Any
 
 import torch
 
-REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
+import adapters
+import contract as C
+import oracles
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CGV_DIR = REPO_ROOT / "results/stage2_RQ-VAE/_cgv"
-CGV_PY = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
+CGV_PY = "/home/wlia0047/ar57/scratch/wenyu/genrec_env_v2/bin/python3.9"
+if not Path(CGV_PY).exists():
+    CGV_PY = sys.executable
 
-N_SRC = 24
-IN_DIM = 32
-BEHAVIOR_WEIGHT = 0.5
-CHILD_TIMEOUT_S = 240
+CHILD_TIMEOUT_S = 900
 G6_EPOCHS = 2
+ATOL = 1e-5
+RTOL = 1e-5
 
-ATOL, RTOL = 1e-5, 1e-5
+PROBE_SEEDS = (1, 4, 5, 12, 16, 30, 32, 36)
 
-GATES = ("G1", "G2", "G3", "G4", "G5", "G6")
+GATES = C.GATES
+GATE_TITLES = C.GATE_TITLES
+GATE_PREVENTS = C.GATE_PREVENTS
 
-GATE_TITLES = {
-    "G1": "forward consistency",
-    "G2": "gradient path",
-    "G3": "gradient direction",
-    "G4": "parameter update",
-    "G5": "DDP consistency",
-    "G6": "real training entry",
-}
-
-GATE_PREVENTS = {
-    "G1": "unintended changes to the loss, the quantisation result, or the sampling",
-    "G2": "a loss term that contributes nothing to the targeted parameters (the R5-10 class)",
-    "G3": "wrong projection direction, coefficient, or sign",
-    "G4": "a mechanism that is present but has no effect on the parameters",
-    "G5": "double all-reduce, or per-rank divergence under DDP",
-    "G6": "tests passing against a code path training never executes",
-}
-
-
-# --------------------------------------------------------------------------------------
-# mechanism registry: the formula G3 verifies, keyed by the arm's own mechanism flag
-# --------------------------------------------------------------------------------------
-def _pcgrad(g_l1: torch.Tensor, g_ref: torch.Tensor, *, eps: float = 1e-12) -> torch.Tensor:
-    base_sq = float((g_ref * g_ref).sum())
-    if base_sq <= 0.0:
-        return g_l1
-    dot = float((g_l1 * g_ref).sum())
-    if dot >= 0.0:
-        return g_l1
-    return g_l1 - (dot / (base_sq + eps)) * g_ref
-
-
-MECHANISMS: dict[str, dict[str, Any]] = {
-    "r4_08": {
-        "parent": "BEHAVIOR_SAMPLE_RQ-VAE",
-        "detector": ("R4_08_PCGRAD_ENC",),
-        "on_flag": "R4_08_PCGRAD_ENC",
-        "rule": "project_l1_against_base",
-        "reference_term": "base_loss",
-        "summary": "project g_L1 against g_base when dot < 0",
-    },
-    "r5_01": {
-        "parent": "r4_08",
-        "detector": ("R5_01_REVERSE_PCGRAD",),
-        "on_flag": "R5_01_REVERSE_PCGRAD",
-        "rule": "project_base_against_l1",
-        "reference_term": "l1_loss",
-        "summary": "project g_base against g_L1, assemble the unprojected g_L1",
-    },
-    "r5_02": {
-        "parent": "r4_08",
-        "detector": ("R5_02_RECON_REF",),
-        "on_flag": "R5_02_RECON_REF",
-        "rule": "project_l1_against_base",
-        "reference_term": "recon_loss",
-        "summary": "project g_L1 against the recon-only gradient, assemble full g_base",
-    },
-    "r5_03": {
-        "parent": "r4_08",
-        "detector": ("R5_03_QUANT_REF",),
-        "on_flag": "R5_03_QUANT_REF",
-        "rule": "project_l1_against_base",
-        "reference_term": "quant_loss",
-        "summary": "project g_L1 against the quant-only gradient",
-    },
-    "r5_04": {
-        "parent": "r4_08",
-        "detector": ("R5_04_BLOCKWISE",),
-        "on_flag": "R5_04_BLOCKWISE",
-        "rule": "blockwise_l1_against_base",
-        "reference_term": "base_loss",
-        "summary": "per-Linear-block projection instead of one global vector",
-    },
-    "r5_05": {
-        "parent": "r4_08",
-        "detector": ("R5_05_ALPHA",),
-        "on_flag": "R5_05_ALPHA",
-        "rule": "project_l1_against_base",
-        "reference_term": "base_loss",
-        "alpha": 0.5,
-        "summary": "half-strength projection",
-    },
-    "r5_06": {
-        "parent": "r4_08",
-        "detector": ("R5_06_NORM_PRESERVE",),
-        "on_flag": "R5_06_NORM_PRESERVE",
-        "rule": "norm_restoring_projection",
-        "reference_term": "base_loss",
-        "summary": "restore the original ||g_L1|| after projecting",
-    },
-    "r5_07": {
-        "parent": "r4_08",
-        "detector": ("R5_07_COS_THRESHOLD",),
-        "on_flag": "R5_07_COS_THRESHOLD",
-        "rule": "cosine_gated_projection",
-        "reference_term": "base_loss",
-        "summary": "project only when cos(g_L1, g_base) < -0.2",
-    },
-    "r5_08": {
-        "parent": "r4_08",
-        "detector": ("R5_08_LATE_START_EPOCH",),
-        "on_flag": "R5_08_LATE_START_EPOCH",
-        "rule": "project_l1_against_base",
-        "reference_term": "base_loss",
-        "summary": "apply the projection only from epoch 2250",
-    },
-    "r5_09": {
-        "parent": "r4_08",
-        "detector": ("R5_09_EMA_DECAY",),
-        "on_flag": "R5_09_EMA_DECAY",
-        "rule": "project_l1_against_base",
-        "reference_term": "ema_of_base",
-        "warmup_steps": 2,          # the first call only seeds the buffer with g_base
-        "ema_seed_offset": 1,       # ... so the priming step must use a DIFFERENT batch
-        "summary": "project g_L1 against the EMA-smoothed base gradient",
-    },
-    "r5_10": {
-        "parent": "r4_08",
-        "detector": ("R5_10_INTERLEVEL",),
-        "on_flag": "R5_10_INTERLEVEL",
-        "rule": "project_l1_against_base",
-        "reference_term": "other_loss",
-        "summary": "project g_L1 against the L2+L3 behaviour gradient",
-    },
-}
-
-
-# --------------------------------------------------------------------------------------
-# isolation and loading
-# --------------------------------------------------------------------------------------
-# The files a trainer WRITES. Inputs (stage1 embeddings, stage0 parquet, dataset frames) share
-# the repository root, so "anything under the repo" is the wrong rule: it would move the inputs
+# The files a trainer WRITES. Inputs (stage1 embeddings, stage0 parquet, dataset frames) share the
+# repository root, so "anything under the repo" would be the wrong rule: it would move the inputs
 # into a temporary directory and the run would fail before it ever reached the mechanism.
 TRAINER_WRITES = {
     "training_metrics.jsonl",
@@ -204,18 +94,16 @@ TRAINER_WRITES = {
 TRAINER_OUTPUT_DIRS = {"logs", "results"}
 
 
+# --------------------------------------------------------------------------------------
+# isolation and loading
+# --------------------------------------------------------------------------------------
 @contextlib.contextmanager
 def isolated_outputs(T, tmp: Path):
     """Redirect every path the trainer WRITES into ``tmp``.
 
-    MANDATORY before executing anything that can reach the trainer's artifact-writing code.
-    ``train_rqvae.main()`` writes its checkpoint, SID export and metrics into its production
-    directories, so verifying a mechanism without this redirection overwrites the very artifacts
-    being audited.
-
     The redirection is DISCOVERED, not listed by hand. ``METRICS_PATH`` for instance is computed
     from ``LOG_DIR`` at import time, so reassigning ``LOG_DIR`` afterwards silently leaves the
-    metrics stream pointing at the real run -- which is exactly how a two-epoch verification
+    metrics stream pointing at the real run -- which is exactly how a two-epoch verification once
     truncated a 3003-line training log. Seeds are the module paths named like something a trainer
     writes, and the redirection then expands to every module path underneath them. Read-only
     inputs are left exactly where they are.
@@ -329,868 +217,766 @@ def sha256_file(path: Path) -> str | None:
     return digest.hexdigest()
 
 
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 # --------------------------------------------------------------------------------------
-# shared mini-case
+# context
 # --------------------------------------------------------------------------------------
-def flat(grads):
-    return torch.cat([g.reshape(-1) for g in grads])
+class Context:
+    """Everything a gate needs: the real trainer, the declaration, and the independence proof."""
+
+    def __init__(self, tree: Path, trainer, spec: dict[str, Any]) -> None:
+        self.tree = tree
+        self.trainer = trainer
+        self.contract = spec
+        self.fingerprint = C.fingerprint(spec)
+        self.independence = C.independence_report(spec)
+
+    def gate_state(self, gate: str) -> tuple[str, str]:
+        if not self.independence["independent"]:
+            return C.INSUFFICIENT, (
+                "the declared oracles are not independent of the mechanism: "
+                + "; ".join(self.independence["problems"]))
+        return C.gate_state(gate, self.contract)
+
+    def observations(self, seed: int = 1234) -> dict[str, Any]:
+        return adapters.build_observations(self.trainer, self.contract, seed=seed)
+
+    def oracle_observations(self, obs: dict[str, Any],
+                            executed: bool = True) -> dict[str, Any]:
+        """The raw mathematics the independent oracle needs for this case.
+
+        Every value is an OBSERVATION (a gradient the real graph produced, a declared constant, a
+        structural block list). No expected value is computed here -- that is the oracle's job.
+        """
+        gradient = self.contract["gradient_contract"]
+        T = self.trainer
+        terms = adapters.loss_terms(T, self.contract, obs)
+        g_base = adapters.term_gradient(T, obs, terms["base_loss"])
+        g_l1 = adapters.term_gradient(T, obs, terms["l1_loss"]) if "l1_loss" in terms else None
+        g_other = (adapters.term_gradient(T, obs, terms["other_loss"])
+                   if "other_loss" in terms else None)
+        if g_l1 is None or g_other is None:
+            raise ValueError("the declared assembly needs both a behaviour l1 term and other term")
+        payload: dict[str, Any] = {
+            "rule": gradient["rule"],
+            "reference_term": gradient.get("reference_term"),
+            "alpha": adapters.declared_value(T, gradient, "alpha", 1.0),
+            "eps": adapters.declared_value(T, gradient, "eps", 1e-12),
+            "scale": obs["scale"],
+            "g_base": g_base,
+            "g_l1": g_l1,
+            "g_other": g_other,
+            "g_recon": adapters.term_gradient(T, obs, terms["recon_loss"])
+            if "recon_loss" in terms else g_base,
+            "g_quant": adapters.term_gradient(T, obs, terms["quant_loss"])
+            if "quant_loss" in terms else g_base,
+        }
+        if gradient.get("cos_threshold_flag"):
+            payload["cos_threshold"] = adapters.declared_value(T, gradient, "cos_threshold", -0.2)
+        if gradient.get("blocks"):
+            payload["blocks"] = adapters.structural_blocks(T, self.contract, obs)
+        return payload
 
 
-def unflatten(flat_vec, template):
-    out, offset = [], 0
-    for g in template:
-        count = g.numel()
-        out.append(flat_vec[offset:offset + count].view_as(g))
-        offset += count
-    return out
+def load_context(tree: Path, spec: dict[str, Any], trainer=None) -> Context:
+    """Bind the declaration to the loaded mechanism. The declaration is data, passed in."""
+    problems = C.validate(spec)
+    if problems:
+        raise C.ContractError("; ".join(problems))
+    return Context(Path(tree).resolve(), trainer, spec)
 
 
-def build_case(T, seed: int = 1234, n_src: int = N_SRC):
-    """A deterministic mini training case for one trainer module."""
-    torch.manual_seed(seed)
-    model = T.RQVAE(T._tokenizer_config(), in_dim=IN_DIM)
-    emb = torch.randn(2 * n_src, IN_DIM, generator=torch.Generator().manual_seed(seed + 1))
-    reconstructed, quant_loss, _, _ = model.forward(emb)
-    base_loss, recon_loss = model.compute_loss(emb, reconstructed, quant_loss)
-    residuals = T._residuals_with_trace(model, emb)
-    l1_loss, other_loss, valid = T.behavior_contrastive_components(
-        residuals, torch.arange(n_src), (torch.arange(n_src) + 1) % n_src, None)
-    encoder = list(model.encoder.parameters())
+def _result(gate: str, state: str, detail: str, measurements: dict | None = None,
+            finding: str | None = None, warnings: list | None = None) -> dict[str, Any]:
     return {
-        "T": T, "model": model, "emb": emb,
-        "reconstructed": reconstructed.detach(), "quant_loss": quant_loss.detach(),
-        "base_loss": base_loss, "recon_loss": recon_loss,
-        "l1_loss": l1_loss, "other_loss": other_loss, "valid_levels": valid,
-        "encoder": encoder,
-        "non_encoder": [p for p in model.parameters() if not any(p is q for q in encoder)],
-        "scale": BEHAVIOR_WEIGHT / max(valid, 1),
+        "gate": gate,
+        "title": GATE_TITLES[gate],
+        "state": state,
+        "passed": True if state == C.PASSED else (False if state == C.FAILED else None),
+        "detail": detail,
+        "measurements": measurements or {},
+        "finding": finding,
+        "warnings": warnings or [],
     }
 
 
-def arm_kwargs(T, case) -> dict:
-    import inspect
-
-    accepted = inspect.signature(T._r4_08_apply_projection).parameters
-    kwargs = {}
-    if "recon_loss" in accepted:
-        kwargs["recon_loss"] = case["recon_loss"]
-    if "encoder_module" in accepted:
-        kwargs["encoder_module"] = case["model"].encoder
-    return kwargs
-
-
-def term_grads(T, case, key: str):
-    """Encoder gradient of one named loss term, before any pooling."""
-    source = {
-        "base_loss": case["base_loss"],
-        "l1_loss": case["l1_loss"],
-        "other_loss": case["other_loss"],
-        "recon_loss": case["recon_loss"],
-        "quant_loss": case["base_loss"] - case["recon_loss"],
-    }[key]
-    grads = T._r4_08_encoder_gradients(source, case["encoder"], retain=True)
-    return [torch.zeros_like(p) if g is None else g
-            for p, g in zip(case["encoder"], grads)]
-
-
-def max_abs_diff(a, b) -> float:
-    return max(float((x - y).abs().max()) for x, y in zip(a, b))
-
-
-def l2(a, b) -> float:
-    return float(torch.sqrt(sum(((x - y) ** 2).sum() for x, y in zip(a, b))))
-
-
-def executed_encoder_grad(T, case_hook=None,
-                          epoch: int | None = None,
-                          seed: int = 1234) -> tuple[list[torch.Tensor], dict]:
-    """Run the production gradient assembly on a FRESH case and return what it wrote.
-
-    A fresh case per call is required, not a convenience: ``_r4_08_apply_projection`` ends with
-    an ``autograd.grad(..., retain_graph=False)`` for the L2+L3 term, which frees the graph, so
-    the same case cannot be executed twice.
-
-    ``case_hook(case) -> dict`` lets a caller substitute loss terms built ON THIS CASE's graph.
-    That anchoring matters: a probe anchored on a different case's parameters would carry a zero
-    gradient, and substituting it would look like "this term is unused" for every arm.
-    """
-    case = build_case(T, seed=seed)
-    if case_hook is not None:
-        case.update(case_hook(case))
-    model = case["model"]
-    model.zero_grad(set_to_none=False)
-    gated = False
-    if epoch is not None and hasattr(T, "R5_08_LATE_START_EPOCH"):
-        gated = epoch < T.R5_08_LATE_START_EPOCH
-    if gated:
-        # Production takes the `else: loss.backward()` branch when the projection is off, and
-        # that `loss` is the FULLY ASSEMBLED one. Backwarding base_loss alone here would drop the
-        # behaviour term and compare against the wrong expectation.
-        assembled = (case["base_loss"]
-                     + BEHAVIOR_WEIGHT * (case["l1_loss"] + case["other_loss"])
-                     / max(case["valid_levels"], 1))
-        assembled.backward()
-    else:
-        case["base_loss"].backward(retain_graph=True)
-        T._r4_08_apply_projection(case["base_loss"], case["l1_loss"], case["other_loss"],
-                                  case["encoder"], BEHAVIOR_WEIGHT,
-                                  valid_levels=case["valid_levels"], **arm_kwargs(T, case))
-    return [p.grad.detach().clone() for p in case["encoder"]], case
-
-
-def detect_mechanism(T) -> tuple[str | None, dict | None]:
-    """Identify the mechanism from the arm's own flags.
-
-    ``R4_08_PCGRAD_ENC`` is present in EVERY arm, so the parent must be tested LAST; otherwise
-    every arm would be certified against the parent rule.
-    """
-    ordered = sorted(MECHANISMS.items(), key=lambda kv: kv[0] == "r4_08")
-    for name, spec in ordered:
-        if all(hasattr(T, flag) for flag in spec["detector"]):
-            return name, spec
-    return None, None
-
-
-def identify_arm(T) -> str | None:
-    """The arm the trainer actually declares, not one guessed from the directory name."""
-    arm = getattr(T, "EXPERIMENT_ARM", None)
-    return str(arm) if arm else None
+def _skipped(gate: str, ctx: Context) -> dict[str, Any] | None:
+    state, reason = ctx.gate_state(gate)
+    if state == C.PASSED:
+        return None
+    return _result(gate, state, reason,
+                   finding=None if state == C.NOT_APPLICABLE else reason)
 
 
 # --------------------------------------------------------------------------------------
-# G1 -- forward consistency
+# G1 -- forward contract
 # --------------------------------------------------------------------------------------
-def gate_g1(T, spec, tree: Path | None = None) -> dict:
-    """The mechanism must not change the forward.
+def _jacobian_deviation(T, jacobian: dict[str, Any]) -> float:
+    """Measure the real Jacobian of the declared residual recurrence against the declared rule.
 
-    Two comparisons are required, and the second is the one that actually bites:
-      * with the mechanism's own flag ON vs OFF -- catches a flag-gated forward change;
-      * the arm's tree vs its declared PARENT tree -- catches an UNCONDITIONAL forward change,
-        which the flag comparison is blind to by construction (both sides mutate identically).
-    A gradient-only mechanism must match the parent bitwise on every forward observable.
+    The probe is a Jacobian-vector product through the REAL quantizer stack: with the declared
+    rule ``identity``, ``d r_(k+1) / d r_k = I`` means ``J v == v`` for every probe ``v``.
     """
-    case_on = build_case(T)
-    fingerprint_on = {
-        "reconstructed": case_on["reconstructed"],
-        "quant_loss": case_on["quant_loss"],
-        "base_loss": float(case_on["base_loss"].detach()),
-        "recon_loss": float(case_on["recon_loss"].detach()),
-    }
-    tokens_on = T.RQVAE(T._tokenizer_config(), in_dim=IN_DIM)
-    tokens_on.load_state_dict(case_on["model"].state_dict())
-    tokens_on.eval()
-    with torch.no_grad():
-        tok_on = tokens_on.get_indices(case_on["emb"], infer_use_sk=False)
+    model = T.RQVAE(T._tokenizer_config(), in_dim=adapters.IN_DIM)
+    embeddings = torch.randn(8, adapters.IN_DIM,
+                             generator=torch.Generator().manual_seed(4242))
+    residual = model.encoder(embeddings).detach().requires_grad_(True)
+    layer = model.rq.vq_layers[int(jacobian.get("level", 0))]
+    quant, _, _, _ = layer(residual)
+    following = residual - quant
+    probe = torch.randn_like(residual)
+    (grad,) = torch.autograd.grad((following * probe).sum(), residual, retain_graph=False)
+    return float((grad - probe).abs().max())
 
-    flag = spec.get("on_flag")
-    saved = getattr(T, flag) if flag else None
-    if saved is not None:
-        setattr(T, flag, False if isinstance(saved, bool) else 0)
-    try:
-        case_off = build_case(T)
-        tokens_off_model = T.RQVAE(T._tokenizer_config(), in_dim=IN_DIM)
-        tokens_off_model.load_state_dict(case_off["model"].state_dict())
-        tokens_off_model.eval()
-        with torch.no_grad():
-            tok_off = tokens_off_model.get_indices(case_off["emb"], infer_use_sk=False)
-    finally:
-        if saved is not None:
-            setattr(T, flag, saved)
 
-    diffs = {
-        "flag_on_vs_off_reconstructed":
-            float((fingerprint_on["reconstructed"] - case_off["reconstructed"].detach())
-                  .abs().max()),
-        "flag_on_vs_off_quant_loss":
-            abs(float(fingerprint_on["quant_loss"]) - float(case_off["quant_loss"])),
-        "flag_on_vs_off_base_loss":
-            abs(fingerprint_on["base_loss"] - float(case_off["base_loss"].detach())),
-        "flag_on_vs_off_recon_loss":
-            abs(fingerprint_on["recon_loss"] - float(case_off["recon_loss"].detach())),
-        "flag_on_vs_off_tokens": int((tok_on != tok_off).sum()),
-    }
+def gate_g1(ctx: Context) -> dict[str, Any]:
+    skip = _skipped("G1", ctx)
+    if skip:
+        return skip
+    forward = ctx.contract["forward_contract"]
+    observations = ctx.observations()
+    measurements: dict[str, Any] = {}
 
-    parent_name = spec.get("parent")
-    compared_to_parent = False
-    if parent_name:
-        if tree is None:
-            diffs["parent_missing"] = 1.0
+    jacobian = forward.get("jacobian")
+    if jacobian:
+        deviation = _jacobian_deviation(ctx.trainer, jacobian)
+        observations["jacobian_identity_deviation"] = deviation
+        measurements["jacobian_identity_deviation"] = deviation
+
+    checks = oracles.check_forward_invariants(observations, forward.get("invariants", []))
+
+    expected = None
+    if forward.get("oracle"):
+        oracle = C.resolve_reference(forward["oracle"])
+        expected = oracle(observations)
+        checks.extend(oracles.compare_forward(observations, expected, float(
+            forward.get("atol", ATOL))))
+
+    failures = [check for check in checks if not check["ok"]]
+    measurements["checks"] = checks
+    measurements["declared_effect"] = forward.get("declared_effect", "none")
+    passed = not failures
+    return _result(
+        "G1", C.PASSED if passed else C.FAILED,
+        (f"the forward satisfies {len(checks)} declared check(s): "
+         + ", ".join(check["name"] for check in checks))
+        if passed else
+        ("the forward violates the declared contract: "
+         + "; ".join(f"{check['name']} -> {check['detail']}" for check in failures)),
+        measurements,
+        finding=None if passed else
+        "the mechanism's forward does not satisfy what its contract declares")
+
+
+# --------------------------------------------------------------------------------------
+# G2 -- gradient propagation
+# --------------------------------------------------------------------------------------
+def gate_g2(ctx: Context) -> dict[str, Any]:
+    skip = _skipped("G2", ctx)
+    if skip:
+        return skip
+    gradient = ctx.contract["gradient_contract"]
+    expected = gradient.get("expected_paths") or {}
+    declared = sorted(adapters.loss_terms(ctx.trainer, ctx.contract, ctx.observations()))
+
+    checks, warnings = [], []
+    for name in declared:
+        # a fresh case per term: the mechanism's assembly frees the graph it runs on, so a shared
+        # case would fail on the second term instead of reporting its gradient
+        case = ctx.observations()
+        term = adapters.loss_terms(ctx.trainer, ctx.contract, case)[name]
+        grads = adapters.term_gradient(ctx.trainer, case, term)
+        norm = oracles.flat_norm(grads)
+        finite = all(bool(torch.isfinite(g).all()) for g in grads)
+        read = adapters.probe_substitution(ctx.trainer, ctx.contract, name, seed=case["seed"])
+        expectation = expected.get(name, "nonzero")
+        if expectation == "nonzero":
+            ok = finite and norm > 0.0
+        elif expectation == "zero":
+            ok = finite and norm == 0.0
         else:
-            parent_tree = REPO_ROOT / "stage2_RQ-VAE" / f"TIGER_{parent_name}"
-            if not parent_tree.is_dir():
-                diffs["parent_missing"] = 1.0
-            else:
-                P, ppath, pmods = load_trainer(parent_tree, module_name="cgv_parent_trainer")
-                try:
-                    torch.manual_seed(1234)
-                    parent_model = P.RQVAE(P._tokenizer_config(), in_dim=IN_DIM)
-                    parent_emb = torch.randn(
-                        2 * N_SRC,
-                        IN_DIM,
-                        generator=torch.Generator().manual_seed(1235),
-                    )
-                    parent_reconstructed, parent_quant_loss, _, _ = parent_model.forward(parent_emb)
-                    parent_base_loss, parent_recon_loss = parent_model.compute_loss(
-                        parent_emb, parent_reconstructed, parent_quant_loss)
-                    parent_model.eval()
-                    with torch.no_grad():
-                        parent_tokens = parent_model.get_indices(
-                            parent_emb, infer_use_sk=False)
-                    diffs["parent_reconstructed"] = float(
-                        (fingerprint_on["reconstructed"]
-                         - parent_reconstructed.detach()).abs().max())
-                    diffs["parent_quant_loss"] = abs(
-                        float(fingerprint_on["quant_loss"]) - float(parent_quant_loss.detach()))
-                    diffs["parent_base_loss"] = abs(
-                        fingerprint_on["base_loss"] - float(parent_base_loss.detach()))
-                    diffs["parent_recon_loss"] = abs(
-                        fingerprint_on["recon_loss"] - float(parent_recon_loss.detach()))
-                    diffs["parent_tokens"] = int((tok_on != parent_tokens).sum())
-                    compared_to_parent = True
-                finally:
-                    unload_trainer(ppath, pmods, module_name="cgv_parent_trainer")
+            ok = finite
+        if read <= 1e-6 and expectation != "zero":
+            warnings.append(
+                f"{name} reaches the declared parameters but the mechanism does not consume it "
+                f"(probe substitution moved the executed gradient by {read:.3e})")
+        checks.append({"term": name, "expectation": expectation, "ok": ok,
+                       "gradient_norm": norm, "finite": finite,
+                       "read_by_mechanism": read,
+                       "detail": f"declared {expectation}, norm {norm:.6e}, finite={finite}"})
 
-    worst = max(v for k, v in diffs.items() if isinstance(v, float))
-    token_diffs = sum(v for k, v in diffs.items() if k.endswith("tokens"))
-    ok = worst == 0.0 and token_diffs == 0
-    return {
-        "gate": "G1", "title": GATE_TITLES["G1"], "passed": ok,
-        "detail": ("forward is bitwise identical with the mechanism on and off"
-                   + (f" and against the {parent_name} parent" if compared_to_parent else ""))
-        if ok else "the mechanism changed the forward pass",
-        "measurements": diffs,
-        "finding": None if ok else (
-            "a gradient-only mechanism must leave the forward bitwise identical; it changed "
-            f"{ {k: v for k, v in diffs.items() if v} }"),
-    }
+    failures = [check for check in checks if not check["ok"]]
+    passed = not failures
+    return _result(
+        "G2", C.PASSED if passed else C.FAILED,
+        (f"every declared loss path reaches the {gradient.get('target')!r} parameters with the "
+         f"declared character: "
+         + ", ".join(f"{c['term']}={c['expectation']}(norm {c['gradient_norm']:.3e})"
+                     for c in checks))
+        if passed else
+        ("declared propagation does not hold: "
+         + "; ".join(f"{c['term']} declared {c['expectation']} -> {c['detail']}"
+                     for c in failures)),
+        {"checks": checks, "target": gradient.get("target")},
+        finding=None if passed else
+        "a declared loss path does not deliver the gradient the contract claims",
+        warnings=warnings,
+    )
 
 
 # --------------------------------------------------------------------------------------
-# G2 -- gradient path
+# G3 -- gradient mathematics
 # --------------------------------------------------------------------------------------
-def _probe_substitution(T, key: str, seed: int = 77) -> float:
-    """Replace one loss term with a random probe and see whether the encoder gradient moves.
+def gate_g3(ctx: Context) -> dict[str, Any]:
+    skip = _skipped("G3", ctx)
+    if skip:
+        return skip
+    gradient = ctx.contract["gradient_contract"]
+    mode = gradient["mode"]
+    T = ctx.trainer
 
-    The probe is built on top of the base loss's graph so it REQUIRES GRAD and carries a
-    non-zero encoder gradient of its own. A detached scalar would make the arm's
-    ``autograd.grad`` raise, and a zero-gradient probe would be indistinguishable from the real
-    term -- neither would answer the question this probe exists to answer.
-    """
-    reference, _ = executed_encoder_grad(T)
+    if mode == "invariants":
+        observations = ctx.observations()
+        executed = adapters.executed_target_gradient(T, ctx.contract, observations)
+        checks = oracles.check_gradient_invariants(executed, gradient["invariants"])
+        failures = [check for check in checks if not check["ok"]]
+        return _result(
+            "G3", C.PASSED if not failures else C.FAILED,
+            (f"the executed gradient satisfies {len(checks)} declared invariant(s)")
+            if not failures else
+            ("the executed gradient violates the declared invariants: "
+             + "; ".join(f"{c['name']} -> {c['detail']}" for c in failures)),
+            {"checks": checks},
+            finding=None if not failures else
+            "the executed gradient does not satisfy the declared invariants",
+        )
 
-    def hook(case):
-        raw = torch.randn((), generator=torch.Generator().manual_seed(seed))
-        return {key: case["base_loss"] * 3.7 + raw}
+    seeds = tuple(gradient.get("probe_seeds") or PROBE_SEEDS)
+    activation = (ctx.contract.get("mechanism") or {}).get("activation") or {}
+    epochs: list[int | None] = [None]
+    if activation.get("epoch_gate"):
+        gate_value = int(getattr(T, activation["epoch_gate"]))
+        epochs = [gate_value, max(0, gate_value - 1)]
 
-    moved, _ = executed_encoder_grad(T, case_hook=hook)
-    return l2(moved, reference)
-
-
-def gate_g2(T, spec) -> dict:
-    """Every loss term the mechanism DEPENDS ON must deliver gradient to its target parameters.
-
-    Dependency discovery is functional: a random probe carrying its own non-zero encoder
-    gradient is substituted for each candidate term, and the term counts as "read" when the
-    executed encoder gradient moves.
-
-    Only the mechanism's DECLARED reference term is blocking. A term that is merely added by the
-    shared assembly is reported as a warning instead: it is a family-wide property, and failing
-    every arm on it would make the gate useless for judging a new mechanism. The declared term is
-    the mechanism's own claim, so a zero gradient there means the mechanism cannot work, which is
-    exactly the failure this gate exists to catch.
-    """
-    dependencies = {}
-    # base_loss is included because a mechanism may reference it directly, through a split of it
-    # (r5_03 uses base - recon), or through an EMA of it (r5_09).
-    for key in ("base_loss", "l1_loss", "other_loss", "recon_loss"):
-        moved = _probe_substitution(T, key)
-        if moved > 1e-6:
-            dependencies[key] = moved
-
-    declared = spec.get("reference_term")
-    case = build_case(T)
-    norms = {}
-    for key in ("base_loss", "l1_loss", "other_loss", "recon_loss", "quant_loss"):
-        norms[key] = float(flat(term_grads(T, case, key)).norm())
-
-    # A derived reference has no substitution of its own; it is assembled from terms the probe
-    # can reach. `ema_of_base` seeds with g_base on the first step, so its gradient is g_base's.
-    READS = {
-        "quant_loss": lambda: "base_loss" in dependencies or "recon_loss" in dependencies,
-        "ema_of_base": lambda: "base_loss" in dependencies,
-        "base_loss": lambda: True,
-    }
-    effective = {"quant_loss": "quant_loss", "ema_of_base": "base_loss"}.get(declared, declared)
-    declared_norm = norms.get(effective, 0.0)
-    declared_read = READS.get(declared, lambda: declared in dependencies)()
-    blocking = []
-    if declared_norm <= 0.0:
-        blocking.append(
-            f"the declared reference term {declared!r} has encoder gradient norm "
-            f"{declared_norm:.3e}: the mechanism projects against a vector that carries no "
-            "gradient, so it can never change the update")
-    if not declared_read:
-        blocking.append(f"the declared reference term {declared!r} is never read by this arm")
-
-    warnings = [f"{key} is read by the shared assembly but delivers no encoder gradient "
-                f"(norm {norms[key]:.3e})" for key in sorted(dependencies)
-                if norms.get(key, 0.0) <= 0.0]
-    passed = not blocking
-    return {
-        "gate": "G2", "title": GATE_TITLES["G2"], "passed": passed,
-        "detail": (f"the declared reference term {declared!r} delivers gradient to the encoder "
-                   f"(norm {declared_norm:.3e}) and is read by this arm")
-        if passed else "; ".join(blocking),
-        "measurements": {"discovered_dependencies": dependencies,
-                         "encoder_gradient_norms": norms,
-                         "declared_reference_term": declared,
-                         "declared_reference_effective_term": effective,
-                         "declared_reference_norm": declared_norm},
-        "warnings": warnings,
-        "finding": None if passed else "; ".join(blocking),
-    }
-
-
-# --------------------------------------------------------------------------------------
-# G3 -- gradient direction
-# --------------------------------------------------------------------------------------
-def _reference_gradient(T, spec, case, *, epoch: int | None = None,
-                        ema_ref: list[torch.Tensor] | None = None) -> list[torch.Tensor]:
-    """Rebuild the encoder gradient from the mechanism's declared formula.
-
-    ``epoch`` makes the reference epoch-aware: an arm whose mechanism is gated off below a
-    threshold must produce the UNPROJECTED assembly at such an epoch, not the projected one.
-    ``ema_ref`` supplies the lagged EMA reference for the mechanisms that use one.
-    """
-    g_base = term_grads(T, case, "base_loss")
-    g_l1 = term_grads(T, case, "l1_loss")
-    g_other = term_grads(T, case, "other_loss")
-
-    ref_term = spec.get("reference_term")
-    if ref_term == "base_loss":
-        g_ref = g_base
-    elif ref_term == "l1_loss":
-        g_ref = g_l1
-    elif ref_term == "recon_loss":
-        g_ref = term_grads(T, case, "recon_loss")
-    elif ref_term == "quant_loss":
-        g_ref = term_grads(T, case, "quant_loss")
-    elif ref_term == "other_loss":
-        g_ref = g_other
-    elif ref_term == "ema_of_base":
-        g_ref = ema_ref if ema_ref is not None else g_base
-    else:
-        raise KeyError(ref_term)
-
-    rule = spec["rule"]
-    alpha = float(spec.get("alpha", 1.0))
-    eps = float(getattr(T, "R4_08_EPS", 1e-12))
-
-    if epoch is not None and hasattr(T, "R5_08_LATE_START_EPOCH") and \
-            epoch < T.R5_08_LATE_START_EPOCH:
-        # the gate is closed: the arm must fall back to the plain, unprojected assembly
-        return [g_base[i] + case["scale"] * (g_l1[i] + g_other[i])
-                for i in range(len(g_base))]
-
-    if rule == "project_base_against_l1":
-        base_proj = unflatten(_pcgrad(flat(g_base), flat(g_l1), eps=eps), g_base)
-        return [base_proj[i] + case["scale"] * (g_l1[i] + g_other[i])
-                for i in range(len(g_base))]
-    if rule == "blockwise_l1_against_base":
-        blocks = T._r5_04_linear_blocks(case["model"].encoder, case["encoder"])
-        projected = [g.clone() for g in g_l1]
-        for block in blocks:
-            b = torch.cat([g_base[i].reshape(-1) for i in block])
-            l = torch.cat([g_l1[i].reshape(-1) for i in block])
-            out = _pcgrad(l, b, eps=eps)
-            offset = 0
-            for i in block:
-                count = g_l1[i].numel()
-                projected[i] = out[offset:offset + count].view_as(g_l1[i])
-                offset += count
-        return [g_base[i] + case["scale"] * (projected[i] + g_other[i])
-                for i in range(len(g_base))]
-    if rule == "norm_restoring_projection":
-        out = _pcgrad(flat(g_l1), flat(g_ref), eps=eps)
-        norm = float(torch.linalg.vector_norm(flat(g_l1)))
-        proj_norm = float(torch.linalg.vector_norm(out))
-        if proj_norm <= 1e-8 * max(norm, 1e-12):
-            out = torch.zeros_like(out)
-        else:
-            out = out * (norm / proj_norm)
-        projected = unflatten(out, g_l1)
-        return [g_base[i] + case["scale"] * (projected[i] + g_other[i])
-                for i in range(len(g_base))]
-    if rule == "cosine_gated_projection":
-        threshold = float(getattr(T, "R5_07_COS_THRESHOLD", -0.2))
-        l = flat(g_l1)
-        r = flat(g_ref)
-        lsq = float((l * l).sum())
-        rsq = float((r * r).sum())
-        if rsq <= 0.0 or lsq <= 0.0:
-            out = l
-        else:
-            cos = float((l * r).sum()) / (math.sqrt(lsq) * math.sqrt(rsq) + eps)
-            out = _pcgrad(l, r, eps=eps) if cos < threshold else l
-        projected = unflatten(out, g_l1)
-        return [g_base[i] + case["scale"] * (projected[i] + g_other[i])
-                for i in range(len(g_base))]
-
-    # default family rule
-    if alpha != 1.0:
-        base_sq = float((flat(g_ref) * flat(g_ref)).sum())
-        dot = float(flat(g_l1) @ flat(g_ref))
-        out = (flat(g_l1) if base_sq <= 0.0 or dot >= 0.0
-               else flat(g_l1) - alpha * (dot / (base_sq + eps)) * flat(g_ref))
-    else:
-        out = _pcgrad(flat(g_l1), flat(g_ref), eps=eps)
-    projected = unflatten(out, g_l1)
-    return [g_base[i] + case["scale"] * (projected[i] + g_other[i])
-            for i in range(len(g_base))]
-
-
-def _reset_ema(T) -> None:
-    """R5-09 keeps its EMA in module-global state; a leftover buffer would make the executed
-    reference lag and stop matching the first-step formula."""
-    state = getattr(T, "R5_09_EMA_STATE", None)
-    if state is not None:
-        state["buffers"] = None
-
-
-def gate_g3(T, spec) -> dict:
-    """The executed gradient must match the mechanism's declared formula on every probe seed,
-    and the formula must be non-vacuous: on at least one seed the mechanism must actually fire
-    and differ from the parent rule.
-
-    Scanning seeds is not optional. On a seed with no gradient conflict the projection is a
-    passthrough, so EVERY PCGrad variant collapses onto the parent rule and a single-seed check
-    would either pass a broken mechanism or refuse a working one, depending on which seed it
-    happened to pick.
-    """
-    seeds = (1, 4, 5, 12, 16, 30, 32, 36)
-    distinguishes = spec is not MECHANISMS["r4_08"]
-    warmup = int(spec.get("warmup_steps", 1))
-    # an epoch-gated mechanism (R5-08) IS the parent rule once its gate opens; its difference is
-    # visible while the gate is CLOSED, so that epoch must be probed as well
-    epochs = [T.EPOCHS]
-    if hasattr(T, "R5_08_LATE_START_EPOCH"):
-        epochs.append(1)
-    per_seed = []
-    worst_formula = 0.0
-    fired_seeds = []
+    ema = gradient.get("ema") or {}
+    per_probe, worst, effect_probes = [], 0.0, []
     for index, seed in enumerate(seeds):
-      for epoch in epochs:
-        _reset_ema(T)
-        ema_ref = None
-        g_base = term_grads(T, build_case(T, seed=seed), "base_loss")
-        for step_index in range(warmup):
-            if step_index == warmup - 1:
-                # prime on a DIFFERENT batch: with the same batch the EMA converges to g_base
-                # immediately and can never lag, so the mechanism would look like the parent
-                step_seed = seed
+        for epoch in epochs:
+            if ema:
+                offset = int(ema.get("prime_seed_offset", 1))
+                prime_seed = seeds[(index + offset) % len(seeds)]
+                series, _primed = adapters.prime_ema(T, ctx.contract, prime_seed)
+                observations = ctx.observations(seed=seed)
+                payload = ctx.oracle_observations(observations)
+                payload["ema_reference"] = oracles.ema_reference(
+                    series + [payload["g_base"]], float(
+                        adapters.declared_value(T, ema, "decay", 0.9)))
             else:
-                offset = int(spec.get("ema_seed_offset", 1))
-                step_seed = seeds[(index + offset * (step_index + 1)) % len(seeds)]
-            executed, _ = executed_encoder_grad(T, epoch=epoch, seed=step_seed)
-            if step_index == warmup - 2:
-                prime_grads = term_grads(T, build_case(T, seed=step_seed), "base_loss")
-                decay = float(getattr(T, "R5_09_EMA_DECAY", 0.9))
-                ema_ref = [decay * a + (1.0 - decay) * b for a, b in zip(prime_grads, g_base)]
-        case = build_case(T, seed=seed)
-        reference = _reference_gradient(T, spec, case, epoch=epoch, ema_ref=ema_ref)
-        diff = max_abs_diff(executed, reference)
-        worst_formula = max(worst_formula, diff)
-        entry = {"seed": seed, "epoch": epoch, "deviation_from_formula": diff,
-                 "dot_l1_base":
-                 float(torch.cat([g.reshape(-1) for g in term_grads(T, case, "l1_loss")])
-                       @ torch.cat([g.reshape(-1) for g in term_grads(T, case, "base_loss")]))}
-        if distinguishes:
-            parent_case = build_case(T, seed=seed)
-            # the parent arm has no epoch gate, so its reference is always its projected rule;
-            # passing the child's epoch here would make parent and child agree while the gate
-            # is closed and hide exactly the difference this gate is meant to measure
-            parent_reference = _reference_gradient(T, MECHANISMS["r4_08"], parent_case)
-            entry["distance_from_parent_rule"] = l2(executed, parent_reference)
-            if entry["distance_from_parent_rule"] > 1e-6:
-                fired_seeds.append(f"seed{seed}@epoch{epoch}")
-        per_seed.append(entry)
+                observations = ctx.observations(seed=seed)
+                payload = ctx.oracle_observations(observations)
 
-    formula_ok = worst_formula < ATOL
-    non_vacuous = (bool(fired_seeds) if distinguishes else True)
-    passed = formula_ok and non_vacuous
-    total = len(seeds) * len(epochs)
-    detail_bits = [f"max deviation from {spec['rule']} over {total} (seed, epoch) probes = "
-                   f"{worst_formula:.3e}"]
-    if distinguishes:
-        detail_bits.append(
-            f"the mechanism changes the encoder gradient on {len(fired_seeds)}/{total} probes"
-            + (f" (e.g. {fired_seeds})" if fired_seeds else ""))
-    else:
-        detail_bits.append("this arm is the parent rule itself")
-    return {
-        "gate": "G3", "title": GATE_TITLES["G3"], "passed": passed,
-        "detail": "; ".join(detail_bits) if passed else
-        ("; ".join(detail_bits) + " -- " + (
-            "the executed gradient does not match the declared formula"
+            payload["gate_open"] = adapters.activation_open(T, ctx.contract, epoch)
+            executed = adapters.executed_target_gradient(T, ctx.contract, observations,
+                                                        epoch=epoch)
+            expected = oracles.assemble_gradient(payload)
+            unprojected = oracles.unprojected_gradient(payload)
+            deviation = oracles.max_abs_deviation(executed, expected)
+            effect = oracles.l2_distance(executed, unprojected)
+            worst = max(worst, deviation)
+            threshold = float((gradient.get("effect") or {}).get("min_deviation", 1e-6))
+            if effect > threshold:
+                effect_probes.append(f"seed{seed}@epoch{epoch}" if epoch is not None
+                                     else f"seed{seed}")
+            per_probe.append({
+                "seed": seed, "epoch": epoch,
+                "deviation_from_declared_rule": deviation,
+                "deviation_from_unprojected": effect,
+                "gate_open": payload["gate_open"],
+            })
+
+    minimum = int((gradient.get("effect") or {}).get("min_probes", 1))
+    tolerance = float(gradient.get("atol", ATOL))
+    formula_ok = worst <= tolerance
+    effect_ok = len(effect_probes) >= minimum
+    passed = formula_ok and effect_ok
+    total = len(per_probe)
+    detail = (f"max deviation from the declared rule {gradient['rule']!r} over {total} probe(s) "
+              f"= {worst:.3e}")
+    if not effect_ok:
+        detail += (f"; the mechanism leaves the gradient identical to the unprojected assembly on "
+                   f"all {total} probe(s), so it cannot be shown to do anything")
+    elif effect_probes:
+        detail += (f"; the mechanism changes the gradient on {len(effect_probes)}/{total} probe(s) "
+                   f"by up to {max(p['deviation_from_unprojected'] for p in per_probe):.3e}")
+    if not formula_ok:
+        detail += "; the executed gradient does not match the declared rule"
+    return _result(
+        "G3", C.PASSED if passed else C.FAILED, detail,
+        {"per_probe": per_probe,
+         "max_deviation_from_declared_rule": worst,
+         "probes_where_mechanism_changes_the_gradient": effect_probes,
+         "rule": gradient["rule"],
+         "reference_term": gradient.get("reference_term"),
+         "mode": mode},
+        finding=None if passed else (
+            "the executed gradient contradicts the mechanism's own declared formula"
             if not formula_ok else
-            "the projection never fires on any probe seed, so the mechanism is indistinguishable "
-            "from the parent rule and cannot be shown to do anything")),
-        "measurements": {"per_seed": per_seed,
-                         "max_deviation_from_formula": worst_formula,
-                         "seeds_where_mechanism_differs": fired_seeds,
-                         "rule": spec["rule"],
-                         "reference_term": spec.get("reference_term"),
-                         "distinguishes_from_parent": distinguishes},
-        "finding": None if passed else (
-            f"the mechanism's declared formula {spec['rule']!r} with reference "
-            f"{spec.get('reference_term')!r} does not reproduce the executed gradient"
-            if not formula_ok else
-            "the projection never changes the encoder gradient on any probe seed: direction, "
-            "trigger condition or coefficient leave the mechanism inert"),
-    }
+            "the mechanism never changes the gradient it declares to change"),
+    )
 
 
 # --------------------------------------------------------------------------------------
 # G4 -- parameter update
 # --------------------------------------------------------------------------------------
-def _adamw_first_step(param: torch.Tensor, clipped_grad: torch.Tensor,
-                      lr: float, weight_decay: float, eps: float = 1e-8) -> torch.Tensor:
-    """Closed-form AdamW first step, derived independently of torch.optim internals.
+def gate_g4(ctx: Context) -> dict[str, Any]:
+    skip = _skipped("G4", ctx)
+    if skip:
+        return skip
+    update = ctx.contract["update_contract"]
+    T = ctx.trainer
+    observations = ctx.observations()
+    model = observations["model"]
+    target = {id(p) for p in observations["encoder"]}
 
-    With bias correction, ``v_hat == g**2`` on the first step, so ``g_hat == g/(|g|+eps)``.
-    """
-    direction = clipped_grad / (clipped_grad.abs() + eps)
-    return param * (1.0 - lr * weight_decay) - lr * direction
-
-
-def gate_g4(T, spec) -> dict:
-    """One real optimizer step: every parameter must move by exactly what AdamW predicts from the
-    gradient that was verified, and the targeted parameters must actually move."""
-    lr, weight_decay, eps = 1e-3, 0.01, 1e-8
-    case = build_case(T)
-    model = case["model"]
-    before = [p.detach().clone() for p in model.parameters()]
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    model.zero_grad(set_to_none=False)
-    case["base_loss"].backward(retain_graph=True)
-    T._r4_08_apply_projection(case["base_loss"], case["l1_loss"], case["other_loss"],
-                              case["encoder"], BEHAVIOR_WEIGHT,
-                              valid_levels=case["valid_levels"], **arm_kwargs(T, case))
-    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    adapters.executed_target_gradient(T, ctx.contract, observations)
+    clip = update.get("clip_norm")
+    if clip:
+        torch.nn.utils.clip_grad_norm_(model.parameters(), float(clip))
+    params_before = [p.detach().clone() for p in model.parameters()]
     clipped = [None if p.grad is None else p.grad.detach().clone() for p in model.parameters()]
+
+    lr = float(update.get("lr", 1e-3))
+    weight_decay = float(update.get("weight_decay", 0.01))
+    optimizer_name = update["optimizer"]
+    optimizer_cls = getattr(torch.optim, optimizer_name, None)
+    if optimizer_cls is None:
+        raise C.ContractError(f"the declared optimizer {optimizer_name!r} does not exist")
+    optimizer = optimizer_cls(model.parameters(), lr=lr, weight_decay=weight_decay)
     optimizer.step()
-    after = [p.detach().clone() for p in model.parameters()]
+    params_after = [p.detach().clone() for p in model.parameters()]
 
-    enc_index = {id(p) for p in case["encoder"]}
-    nonenc_index = {id(p) for p in case["non_encoder"]}
-    enc_moved = 0.0
-    nonenc_moved = 0.0
-    worst_enc = 0.0
-    worst_nonenc = 0.0
-    for param, old, grad, new in zip(model.parameters(), before, clipped, after):
-        if grad is None:
+    oracle = C.resolve_reference(update["oracle"])
+    expected = oracle({"optimizer": optimizer_name, "lr": lr, "weight_decay": weight_decay,
+                       "params_before": params_before, "clipped_grads": clipped})
+
+    worst_target, worst_other, moved_target = 0.0, 0.0, 0.0
+    for parameter, before, after, want in zip(model.parameters(), params_before, params_after,
+                                              expected):
+        if parameter.grad is None:
             continue
-        expected = _adamw_first_step(old, grad, lr, weight_decay, eps)
-        delta = float((new - expected).abs().max())
-        moved = float((new - old).abs().max())
-        if id(param) in enc_index:
-            enc_moved = max(enc_moved, moved)
-            worst_enc = max(worst_enc, delta)
-        elif id(param) in nonenc_index:
-            nonenc_moved = max(nonenc_moved, moved)
-            worst_nonenc = max(worst_nonenc, delta)
-    steps = {int(state["step"].item()) for state in optimizer.state.values() if "step" in state}
+        deviation = float((after - want).abs().max())
+        moved = float((after - before).abs().max())
+        if id(parameter) in target:
+            worst_target = max(worst_target, deviation)
+            moved_target = max(moved_target, moved)
+        else:
+            worst_other = max(worst_other, deviation)
 
-    prediction_ok = worst_enc < 1e-6 and worst_nonenc < 1e-6
-    passed = prediction_ok and enc_moved > 0.0 and steps == {1}
-    return {
-        "gate": "G4", "title": GATE_TITLES["G4"], "passed": passed,
-        "detail": (f"encoder moved {enc_moved:.3e}, non-encoder {nonenc_moved:.3e}, both within "
-                   f"{max(worst_enc, worst_nonenc):.3e} of the closed-form AdamW prediction, "
-                   f"optimizer recorded exactly {sorted(steps)} step(s)")
+    tolerance = float(update.get("atol", 1e-6))
+    prediction_ok = worst_target <= tolerance and worst_other <= tolerance
+    change_ok = (moved_target > 0.0) if update.get("requires_parameter_change", True) else True
+    passed = prediction_ok and change_ok
+    return _result(
+        "G4", C.PASSED if passed else C.FAILED,
+        (f"the declared {optimizer_name} step (lr {lr}, weight decay {weight_decay}"
+         + (f", clip {clip}" if clip else "") + f") moved the declared target parameters by "
+         f"{moved_target:.3e}, within {max(worst_target, worst_other):.3e} of the independent "
+         f"update oracle")
         if passed else
-        (f"encoder moved {enc_moved:.3e} (prediction off by {worst_enc:.3e}), non-encoder "
-         f"{nonenc_moved:.3e} (off by {worst_nonenc:.3e}), optimizer steps {sorted(steps)}"),
-        "measurements": {"encoder_max_abs_delta": enc_moved,
-                         "non_encoder_max_abs_delta": nonenc_moved,
-                         "encoder_update_prediction_error": worst_enc,
-                         "non_encoder_update_prediction_error": worst_nonenc,
-                         "optimizer_steps": sorted(steps)},
-        "finding": None if passed else (
-            "the optimizer did not perform the predicted update, or the targeted parameters did "
-            "not move at all: the mechanism is present in the graph but has no effect"),
-    }
+        (f"the declared optimizer did not produce the declared update: target deviation "
+         f"{worst_target:.3e}, other-parameter deviation {worst_other:.3e}, target movement "
+         f"{moved_target:.3e}"),
+        {"target_max_abs_delta": moved_target,
+         "target_update_deviation": worst_target,
+         "other_update_deviation": worst_other,
+         "optimizer": optimizer_name, "lr": lr, "weight_decay": weight_decay, "clip_norm": clip},
+        finding=None if passed else (
+            "the declared optimizer and clipping do not produce the declared parameter update"),
+    )
 
 
 # --------------------------------------------------------------------------------------
-# G5 -- DDP consistency (real two-rank gloo, run in a fresh subprocess)
+# G5 -- distributed consistency
 # --------------------------------------------------------------------------------------
-DDP_DRIVER = '''
-import sys, json
-sys.path.insert(0, {engine!r})
-from pathlib import Path
-import cgv_ddp_child as C
-sys.exit(C.main({tree!r}, {tag!r}, {timeout!r}))
-'''
-
-
-def gate_g5(tree: Path, spec) -> dict:
-    payload = CGV_DIR / f"g5_{tree.name}"
+def gate_g5(ctx: Context) -> dict[str, Any]:
+    skip = _skipped("G5", ctx)
+    if skip:
+        return skip
+    distributed = ctx.contract["distributed_contract"]
+    world_size = int(distributed.get("world_size", 2))
+    aggregation = distributed.get("aggregation", "ddp_mean")
+    payload = CGV_DIR / f"g5_{ctx.tree.name}"
     payload.mkdir(parents=True, exist_ok=True)
+    child = Path(__file__).with_name("cgv_ddp_child.py")
     proc = subprocess.run(
-        [CGV_PY, str(Path(__file__).with_name("cgv_ddp_child.py")),
-         str(tree), str(payload), str(CHILD_TIMEOUT_S)],
-        capture_output=True, text=True, timeout=CHILD_TIMEOUT_S + 120)
+        [CGV_PY, str(child), str(ctx.tree), str(payload), str(world_size), str(CHILD_TIMEOUT_S)],
+        input=C.canonical_json(ctx.contract), capture_output=True, text=True,
+        timeout=CHILD_TIMEOUT_S + 120)
     summary_path = payload / "summary.json"
     if not summary_path.is_file():
-        return {
-            "gate": "G5", "title": GATE_TITLES["G5"], "passed": False,
-            "detail": "the two-rank DDP run produced no summary",
-            "measurements": {"driver_rc": proc.returncode,
-                             "stderr_tail": proc.stderr.strip()[-600:]},
-            "finding": "G5 could not execute the two-rank path; treat as a failure, not a skip",
-        }
+        return _result("G5", C.FAILED, "the multi-rank run produced no summary",
+                       {"driver_rc": proc.returncode,
+                        "stderr_tail": proc.stderr.strip()[-800:]},
+                       finding="G5 could not execute the multi-rank path; that is a failure, not "
+                               "a skip")
     summary = json.loads(summary_path.read_text())
-    return {
-        "gate": "G5", "title": GATE_TITLES["G5"],
-        "passed": bool(summary.get("passed")),
-        "detail": summary.get("detail", ""),
-        "measurements": summary.get("measurements", {}),
-        "finding": summary.get("finding"),
+    if not summary.get("ok"):
+        return _result("G5", C.FAILED,
+                       summary.get("error", "the multi-rank run failed"),
+                       summary.get("measurements", {}),
+                       finding="the declared multi-rank execution could not be completed")
+
+    local = [torch.load(payload / f"rank_{rank}_local.pt", weights_only=False)
+             for rank in range(world_size)]
+    production = torch.load(payload / "production_pooled.pt", weights_only=False)
+    oracle_inputs = json.loads((payload / "oracle_inputs.json").read_text())
+    weights = summary.get("weights")
+
+    aggregator = C.resolve_reference(distributed["oracle"])
+    names = sorted(local[0])
+    pooled_terms = {
+        name: aggregator({"aggregation": aggregation,
+                          "rank_grads": [local[rank][name] for rank in range(world_size)],
+                          "weights": weights})
+        for name in names
     }
+    # the declared rule is applied to the POOLED gradients by the independent oracle, so the
+    # production path is compared against a reconstruction it cannot influence
+    rule_observations = {
+        **oracle_inputs,
+        "g_base": pooled_terms["base_loss"],
+        "g_l1": pooled_terms.get("l1_loss", pooled_terms["base_loss"]),
+        "g_other": pooled_terms.get("other_loss", pooled_terms["base_loss"]),
+        "g_recon": pooled_terms.get("recon_loss", pooled_terms["base_loss"]),
+        "g_quant": pooled_terms.get("quant_loss", pooled_terms["base_loss"]),
+    }
+    expected_pooled = oracles.assemble_gradient(rule_observations)
+
+    deviation = oracles.max_abs_deviation(production, expected_pooled)
+    tolerance = float(distributed.get("atol", 1e-5))
+    ranks_identical = bool(summary.get("ranks_identical"))
+    passed = deviation <= tolerance and ranks_identical
+    return _result(
+        "G5", C.PASSED if passed else C.FAILED,
+        (f"{world_size} real ranks with the declared {aggregation!r} aggregation: the production "
+         f"pooled gradient matches the independent pooled reference within {deviation:.3e}, and "
+         f"both ranks hold bitwise identical parameters after a step")
+        if passed else
+        (f"the multi-rank execution does not match the declared aggregation: deviation "
+         f"{deviation:.3e} (tolerance {tolerance:.1e}), ranks identical={ranks_identical}"),
+        {"world_size": world_size, "aggregation": aggregation,
+         "pooled_deviation": deviation, "ranks_identical": ranks_identical,
+         "local_batch_rows": summary.get("local_batch_rows"),
+         "elapsed_s": summary.get("elapsed_s")},
+        finding=None if passed else
+        "multi-rank execution disagrees with the aggregation rule the contract declares",
+    )
 
 
 # --------------------------------------------------------------------------------------
 # G6 -- real training entry
 # --------------------------------------------------------------------------------------
-def gate_g6(T, spec, tmp: Path) -> dict:
-    """Execute the trainer's real ``main()`` -- with outputs isolated -- and prove the verified
-    gradient surgery is actually reached by the training loop.
+def gate_g6(ctx: Context, tmp: Path) -> dict[str, Any]:
+    skip = _skipped("G6", ctx)
+    if skip:
+        return skip
+    runtime = ctx.contract["runtime_contract"]
+    update = ctx.contract["update_contract"]
+    T = ctx.trainer
 
-    A plain two-epoch run is not enough: the behaviour weight ramps from 0, so an early run never
-    reaches the mechanism. The ramp is forced open and the mechanism's functions are counted.
-    """
-    counter = {
-        "projection": 0,
-        "conflicting": 0,
-        "optimizer_steps": 0,
-        "parameter_update_steps": 0,
-    }
-    real_step = torch.optim.AdamW.step
+    counter: dict[str, int] = {"optimizer_steps": 0, "parameter_updates": 0}
+    optimizer_cls = getattr(torch.optim, update["optimizer"])
+    real_step = optimizer_cls.step
 
     def counting_step(self, *args, **kwargs):
-        before = [
-            (parameter, parameter.detach().clone())
-            for group in self.param_groups
-            for parameter in group["params"]
-            if parameter.grad is not None
-        ]
+        before = [(parameter, parameter.detach().clone())
+                  for group in self.param_groups for parameter in group["params"]
+                  if parameter.grad is not None]
         result = real_step(self, *args, **kwargs)
         counter["optimizer_steps"] += 1
         if any(not torch.equal(previous, parameter.detach())
                for parameter, previous in before):
-            counter["parameter_update_steps"] += 1
+            counter["parameter_updates"] += 1
         return result
 
-    torch.optim.AdamW.step = counting_step
+    optimizer_cls.step = counting_step
 
-    def instrument(module, fn_name):
-        original = getattr(module, fn_name)
+    observed: dict[str, int] = {}
+    for item in runtime["observe"]:
+        name = item["name"]
+        if name in ("optimizer_steps", "parameter_updates"):
+            continue
+        target = item.get("target")
+        if not target:
+            raise C.ContractError(f"observable {name!r} needs a target symbol to instrument")
+        symbol = adapters.resolve_dotted(T, target)
+        if not callable(symbol):
+            raise C.ContractError(f"observable {name!r} target {target!r} is not callable")
+        observed[name] = 0
 
-        def wrapper(*args, **kwargs):
-            counter["projection"] += 1
-            try:
-                first, second = args[0], args[1]
-                if float(first.reshape(-1) @ second.reshape(-1)) < 0.0:
-                    counter["conflicting"] += 1
-            except Exception:  # noqa: BLE001
-                pass
-            return original(*args, **kwargs)
+        def wrapper(*args, __name=name, __original=symbol, **kwargs):
+            observed[__name] += 1
+            return __original(*args, **kwargs)
 
-        setattr(module, fn_name, wrapper)
+        _set_dotted(T, target, wrapper)
 
-    instrument(T, "r4_project_conflict")
-
-    saved_epochs = T.EPOCHS
-    saved_weight_max = getattr(T, "BEHAVIOR_WEIGHT_MAX", None)
-    saved_ramp = getattr(T, "RAMP_START_EPOCH", None)
-    saved_gate = getattr(T, "R4_08_PCGRAD_ENC", None)
+    saved: dict[str, Any] = {"EPOCHS": T.EPOCHS}
     T.EPOCHS = G6_EPOCHS
-    if saved_weight_max is not None:
-        T.BEHAVIOR_WEIGHT_MAX = 1.0
-    if saved_ramp is not None:
-        T.RAMP_START_EPOCH = 0
-    if hasattr(T, "R5_08_LATE_START_EPOCH"):
-        T.R5_08_LATE_START_EPOCH = 0
-    if hasattr(T, "R5_09_EMA_STATE"):
-        T.R5_09_EMA_STATE["buffers"] = None
+    for name, value in (runtime.get("force") or {}).items():
+        saved[name] = getattr(T, name, None)
+        setattr(T, name, value)
+    reset = runtime.get("reset")
+    if reset:
+        state = getattr(T, reset, None)
+        if isinstance(state, dict):
+            state["buffers"] = None
 
     error = None
     started = time.time()
     try:
         with isolated_outputs(T, tmp):
+            entrypoint = adapters.resolve_dotted(T, runtime["entrypoint"])
             try:
-                T.main()
+                entrypoint()
             except Exception as exc:  # noqa: BLE001
                 error = f"{type(exc).__name__}: {exc}"
     finally:
-        torch.optim.AdamW.step = real_step
-        T.EPOCHS = saved_epochs
-        if saved_weight_max is not None:
-            T.BEHAVIOR_WEIGHT_MAX = saved_weight_max
-        if saved_ramp is not None:
-            T.RAMP_START_EPOCH = saved_ramp
-        if saved_gate is not None:
-            T.R4_08_PCGRAD_ENC = saved_gate
+        optimizer_cls.step = real_step
+        T.EPOCHS = saved.pop("EPOCHS")
+        for name, value in saved.items():
+            if value is not None:
+                setattr(T, name, value)
 
-    produced = sorted(p.name for p in (tmp / "out").glob("*"))
-    passed = (
-        error is None
-        and counter["projection"] > 0
-        and counter["optimizer_steps"] > 0
-        and counter["parameter_update_steps"] > 0
+    counts = {**observed, "optimizer_steps": counter["optimizer_steps"],
+              "parameter_updates": counter["parameter_updates"]}
+    unmet = []
+    for item in runtime["observe"]:
+        minimum = int(item.get("min", 1))
+        if counts.get(item["name"], 0) < minimum:
+            unmet.append(f"{item['name']}: {counts.get(item['name'], 0)} < {minimum}")
+    passed = error is None and not unmet
+    produced = sorted(path.name for path in (tmp / "out").glob("*"))
+    return _result(
+        "G6", C.PASSED if passed else C.FAILED,
+        (f"the real entry point {runtime['entrypoint']!r} ran in {time.time() - started:.1f}s and "
+         f"satisfied every declared observable: "
+         + ", ".join(f"{name}={count}" for name, count in sorted(counts.items())))
+        if passed else
+        (f"the real entry point did not satisfy the declared observables: {'; '.join(unmet)}"
+         + (f"; entry raised {error}" if error else "")),
+        {"counts": counts, "epochs_run": G6_EPOCHS, "isolated_outputs": produced,
+         "elapsed_s": round(time.time() - started, 1), "error": error},
+        finding=None if passed else
+        "formal training does not execute the declared mechanism, or never moves a parameter",
     )
-    if error is not None:
-        failure = f"main() raised {error}"
-    elif counter["projection"] == 0:
-        failure = "the verified gradient surgery was never reached"
-    elif counter["optimizer_steps"] == 0:
-        failure = "optimizer.step() was never called"
-    elif counter["parameter_update_steps"] == 0:
-        failure = "optimizer.step() was called but no parameter with a gradient changed"
-    else:
-        failure = "the real training entry did not satisfy the G6 checks"
-    return {
-        "gate": "G6", "title": GATE_TITLES["G6"], "passed": passed,
-        "detail": (
-            f"the real training entry executed the gradient surgery "
-            f"{counter['projection']} time(s) ({counter['conflicting']} on a genuine conflict), "
-            f"called AdamW.step() {counter['optimizer_steps']} time(s), and changed parameters in "
-            f"{counter['parameter_update_steps']} step(s) in {time.time() - started:.1f}s"
-            if passed else f"the real training entry failed G6: {failure}"
-        ),
-        "measurements": {"projection_calls": counter["projection"],
-                         "conflicting_calls": counter["conflicting"],
-                         "optimizer_steps": counter["optimizer_steps"],
-                         "parameter_update_steps": counter["parameter_update_steps"],
-                         "epochs_run": G6_EPOCHS,
-                         "isolated_outputs": produced,
-                         "elapsed_s": round(time.time() - started, 1),
-                         "error": error},
-        "finding": None if passed else f"training failed the G6 real-path check: {failure}",
-    }
+
+
+def _set_dotted(module, dotted: str, value) -> None:
+    head, _, tail = dotted.partition(".")
+    if not tail:
+        setattr(module, head, value)
+        return
+    target = getattr(module, head)
+    parts = tail.split(".")
+    for part in parts[:-1]:
+        target = getattr(target, part)
+    setattr(target, parts[-1], value)
 
 
 # --------------------------------------------------------------------------------------
 # driver
 # --------------------------------------------------------------------------------------
-def run_cgv(tree: Path, *, gates: tuple[str, ...] = GATES) -> dict:
+def run_cgv(tree: Path, spec: Any, *, gates: tuple[str, ...] = GATES,
+            negative_suite: bool = False) -> dict[str, Any]:
+    """Verify the mechanism in ``tree`` against the declaration ``spec``.
+
+    ``spec`` is the mechanism's own mathematical contract, passed as data: the seven groups in
+    :mod:`contract`. Nothing is read from the tree except the mechanism's code, and the tree
+    supplies no declaration of its own.
+    """
     tree = Path(tree).resolve()
     trainer_path = tree / "train_rqvae.py"
-    trainer_sha = sha256_file(trainer_path)
     result: dict[str, Any] = {
         "arm": None,
         "tree": str(tree),
         "trainer": str(trainer_path),
-        "trainer_sha256": trainer_sha,
+        "trainer_sha256": sha256_file(trainer_path),
         "checked_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "schema_version": C.SCHEMA_VERSION,
         "gates": {},
         "passed": False,
     }
-    if trainer_sha is None:
+    if result["trainer_sha256"] is None:
         result["refused"] = f"no train_rqvae.py in {tree}"
+        for gate in GATES:
+            result["gates"][gate] = _result(gate, C.INSUFFICIENT, result["refused"])
+        result["summary"] = _summary(result, GATES)
         return result
-
-    T, saved_path, saved_mods = load_trainer(tree)
-    detected, spec = detect_mechanism(T)
-    if spec is None:
-        result["refused"] = (
-            f"{tree.name}: no registered mechanism. CGV verifies the gradient change against the "
-            f"mechanism's own formula, so the formula must be added to tools/cgv/engine.py "
-            f"MECHANISMS before this arm can be certified.")
-        result["gates"] = {"G3": {"gate": "G3", "title": GATE_TITLES["G3"], "passed": False,
-                                  "detail": "unregistered mechanism",
-                                  "measurements": {}, "finding": result["refused"]}}
-        unload_trainer(saved_path, saved_mods)
-        return result
-    arm = identify_arm(T)
-    result["arm"] = arm
-    result["mechanism"] = {"name": detected, **spec}
-    if detected != arm:
-        result["mechanism_name_mismatch"] = f"tree looks like {arm} but implements {detected}"
 
     try:
+        spec = C.normalise_spec(spec)
+    except C.ContractError as exc:
+        result["refused"] = str(exc)
+        for gate in GATES:
+            result["gates"][gate] = _result(gate, C.INSUFFICIENT, str(exc))
+        result["summary"] = _summary(result, GATES)
+        return result
+
+    result["spec"] = spec
+    result["spec_sha256"] = C.spec_sha256(spec)
+    result["fingerprint"] = C.fingerprint(spec)
+    result["declared"] = C.describe(spec)
+    problems = C.validate(spec)
+    if problems:
+        result["refused"] = "the declaration is invalid: " + "; ".join(problems)
+        for gate in GATES:
+            result["gates"][gate] = _result(gate, C.INSUFFICIENT, result["refused"])
+        result["summary"] = _summary(result, GATES)
+        return result
+
+    trainer, saved_path, saved_mods = load_trainer(tree)
+    try:
+        result["arm"] = getattr(trainer, "EXPERIMENT_ARM", None)
+        ctx = load_context(tree, spec, trainer=trainer)
+        result["independence"] = ctx.independence
+        result["mechanism"] = (spec.get("mechanism") or {}).get("id")
         for gate in GATES:
             if gate not in gates:
-                result["gates"][gate] = {"gate": gate, "title": GATE_TITLES[gate],
-                                        "passed": None, "skipped": True,
-                                        "detail": "not selected", "measurements": {},
-                                        "finding": None}
+                result["gates"][gate] = _result(gate, C.NOT_APPLICABLE, "not selected")
+                result["gates"][gate]["passed"] = None
+                result["gates"][gate]["skipped"] = True
                 continue
-            if gate == "G1":
-                result["gates"][gate] = gate_g1(T, spec, tree)
-            elif gate == "G2":
-                result["gates"][gate] = gate_g2(T, spec)
-            elif gate == "G3":
-                result["gates"][gate] = gate_g3(T, spec)
-            elif gate == "G4":
-                result["gates"][gate] = gate_g4(T, spec)
-            elif gate == "G5":
-                result["gates"][gate] = gate_g5(tree, spec)
-            elif gate == "G6":
-                with tempfile.TemporaryDirectory() as raw:
-                    result["gates"][gate] = gate_g6(T, spec, Path(raw))
+            try:
+                if gate == "G1":
+                    result["gates"][gate] = gate_g1(ctx)
+                elif gate == "G2":
+                    result["gates"][gate] = gate_g2(ctx)
+                elif gate == "G3":
+                    result["gates"][gate] = gate_g3(ctx)
+                elif gate == "G4":
+                    result["gates"][gate] = gate_g4(ctx)
+                elif gate == "G5":
+                    result["gates"][gate] = gate_g5(ctx)
+                elif gate == "G6":
+                    with tempfile.TemporaryDirectory() as raw:
+                        result["gates"][gate] = gate_g6(ctx, Path(raw))
+            except Exception as exc:  # noqa: BLE001
+                result["gates"][gate] = _result(
+                    gate, C.FAILED, f"the gate could not be executed: {type(exc).__name__}: {exc}",
+                    finding="a gate that cannot run cannot certify anything")
     finally:
         unload_trainer(saved_path, saved_mods)
 
-    result["passed"] = all(result["gates"][g].get("passed") is True for g in gates)
-    result["summary"] = {
-        g: {"passed": result["gates"][g].get("passed"),
-            "title": GATE_TITLES[g],
-            "prevents": GATE_PREVENTS[g]}
-        for g in gates
-    }
+    result["summary"] = _summary(result, gates)
+    states = [result["gates"][gate].get("state") for gate in gates]
+    result["passed"] = all(state in (C.PASSED, C.NOT_APPLICABLE) for state in states) and \
+        any(state == C.PASSED for state in states)
+    result["gates_passed"] = result["passed"]
+    if negative_suite:
+        # prove the gates have discriminating power: inject the standard faults and require the
+        # gate that is supposed to catch each one to fail
+        import negative_suite as suite
+
+        result["negative_suite"] = suite.run_all(tree, spec)
+        # gates alone are not a verdict: a mechanism whose faults are not caught is not verified
+        result["passed"] = bool(result["passed"] and result["negative_suite"]["all_ok"])
     return result
 
 
-def write_certificate(result: dict) -> Path:
+def _summary(result: dict[str, Any], gates: tuple[str, ...]) -> dict[str, Any]:
+    return {
+        gate: {
+            "state": result["gates"][gate].get("state"),
+            "passed": result["gates"][gate].get("passed"),
+            "title": GATE_TITLES[gate],
+            "prevents": GATE_PREVENTS[gate],
+        }
+        for gate in gates
+    }
+
+
+def write_certificate(result: dict[str, Any]) -> Path:
     CGV_DIR.mkdir(parents=True, exist_ok=True)
-    arm = result.get("arm") or (result.get("mechanism") or {}).get("name") or "unknown"
-    path = CGV_DIR / f"certificate_{arm}.json"
+    mechanism = (result.get("declared") or {}).get("id") or result.get("arm") or "unknown"
+    path = CGV_DIR / f"certificate_{mechanism}.json"
     path.write_text(json.dumps(result, indent=2, default=str) + "\n", encoding="utf-8")
     return path
 
 
-def load_certificate(tree: Path) -> dict | None:
-    """Find a certificate for this tree by mechanism name, then arm name."""
-    for name in MECHANISMS:
-        path = CGV_DIR / f"certificate_{name}.json"
-        if path.is_file():
-            try:
-                cert = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            if str(Path(cert.get("tree", "")).resolve()) == str(Path(tree).resolve()):
-                return cert
+def load_certificate(tree: Path) -> dict[str, Any] | None:
+    """The certificate for this tree, matched by contract path then by tree path."""
+    tree = Path(tree).resolve()
+    if not CGV_DIR.is_dir():
+        return None
+    candidates = sorted(CGV_DIR.glob("certificate_*.json"),
+                        key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in candidates:
+        try:
+            certificate = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if Path(str(certificate.get("tree", ""))).resolve() == tree:
+            return certificate
     return None
 
 
-def certificate_is_valid(tree: Path, gates: tuple[str, ...] = GATES) -> tuple[bool, str]:
-    """A certificate is valid only if it passed every gate AND still describes this trainer."""
-    tree = Path(tree)
-    cert = load_certificate(tree)
-    if cert is None:
+def certificate_is_valid(tree: Path, spec: Any = None) -> tuple[bool, str]:
+    """A certificate is valid only if it passed, and still describes this tree and this claim.
+
+    Four things can invalidate it, and all four must be checked or the gate is decorative: the
+    trainer source changed, the DECLARATION the certificate was issued against is not the one
+    supplied now, the verifier itself changed, or the certificate predates the current schema.
+    Requiring the caller to pass the same declaration at training time is what stops a weak claim
+    from being certified and then quietly used.
+    """
+    tree = Path(tree).resolve()
+    certificate = load_certificate(tree)
+    if certificate is None:
         return False, ("no CGV certificate. Run cgv_check(source_dir=...) and all six gates must "
                        "pass before this tree may train")
-    if not cert.get("passed"):
-        failed = [g for g in gates if (cert.get("gates", {}).get(g) or {}).get("passed") is not True]
-        return False, f"CGV gates not passing: {failed}. Re-run cgv_check before training"
-    current = sha256_file(tree / "train_rqvae.py")
-    if cert.get("trainer_sha256") != current:
+    if certificate.get("schema_version") != C.SCHEMA_VERSION:
+        return False, (f"the certificate was issued under schema "
+                       f"{certificate.get('schema_version')} and the current contract schema is "
+                       f"{C.SCHEMA_VERSION}; re-run cgv_check")
+    summary = certificate.get("summary") or {}
+    blocking = [gate for gate, entry in summary.items()
+                if entry.get("state") not in (C.PASSED, C.NOT_APPLICABLE)]
+    if blocking:
+        states = {gate: entry.get("state") for gate, entry in summary.items()}
+        return False, (f"CGV gates not passing: {states}. Re-run cgv_check before training")
+    independence = certificate.get("independence") or {}
+    if independence and not independence.get("independent", False):
+        return False, ("the certificate was issued with oracles that are not independent of the "
+                       "mechanism; re-run cgv_check")
+    suite = certificate.get("negative_suite")
+    if not suite:
+        return False, ("the certificate carries no counterexample evidence: run cgv_check, which "
+                       "injects the standard faults and requires the matching gate to fail")
+    if not suite.get("all_ok"):
+        broken = [item.get("fault") for item in suite.get("faults", []) if not item.get("ok")]
+        return False, (f"the counterexample suite could not show these faults failing: {broken}. "
+                       "A gate that cannot fail proves nothing, so this mechanism may not train")
+    if not certificate.get("passed"):
+        return False, ("the certificate is not marked as passing even though its gates and "
+                       "counterexample suite are green; re-run cgv_check")
+    current_trainer = sha256_file(tree / "train_rqvae.py")
+    if certificate.get("trainer_sha256") != current_trainer:
         return False, ("the trainer changed after the certificate was issued; the mechanism must "
                        "be re-verified with cgv_check before it may train")
-    return True, f"CGV certificate {cert.get('checked_utc')} covers trainer {current[:16]}"
+    if spec is None:
+        return False, ("no declaration was supplied: training must be authorised by the same "
+                       "declaration the certificate was issued against")
+    supplied = C.normalise_spec(spec)
+    if C.spec_sha256(supplied) != certificate.get("spec_sha256"):
+        return False, ("the supplied declaration is not the one this certificate covers "
+                       f"(certificate {str(certificate.get('spec_sha256'))[:16]}, supplied "
+                       f"{C.spec_sha256(supplied)[:16]}); the gates that passed judged that "
+                       "declaration, so this one is unverified")
+    current_fingerprint = C.fingerprint(supplied)
+    recorded = certificate.get("fingerprint") or {}
+    for key in ("oracles_sha256", "adapter_sha256", "negative_suite_sha256"):
+        if recorded.get(key) != current_fingerprint.get(key):
+            return False, (f"the verifier changed ({key}) after the certificate was issued; "
+                           "re-run cgv_check")
+    return True, (f"CGV certificate {certificate.get('checked_utc')} covers trainer "
+                  f"{str(certificate.get('trainer_sha256'))[:16]} and declaration "
+                  f"{str(certificate.get('spec_sha256'))[:16]}")
