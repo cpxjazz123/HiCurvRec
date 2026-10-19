@@ -1,0 +1,110 @@
+{
+  "arm": "r6_04",
+  "kind": "measurement_plus_mechanism_probe",
+  "steps": {
+    "96": {
+      "FULL": {
+        "crossing": {
+          "items": 1004,
+          "l1_identity_changed": 10,
+          "l1_change_rate": 0.009960159659385681,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.002146773273125291,
+          "margin_after_mean": 0.002216686261817813,
+          "margin_after_min": 6.002373993396759e-07
+        },
+        "update_sha256": "5c3b8f51b70b6c9791fadb59d0babc3cc6fff399949409ccd0d3b157ac5c7234",
+        "no_learning_signal": false
+      },
+      "NO-DEEP": {
+        "crossing": {
+          "items": 1004,
+          "l1_identity_changed": 11,
+          "l1_change_rate": 0.01095617562532425,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.002146773273125291,
+          "margin_after_mean": 0.002207535784691572,
+          "margin_after_min": 4.993751645088196e-06
+        },
+        "update_sha256": "e069caa56f45623aaf0d7fa31b93d2aed0502963821c30a922676224aab49f18",
+        "no_learning_signal": false
+      },
+      "BASE-ONLY": {
+        "crossing": {
+          "items": 1004,
+          "l1_identity_changed": 11,
+          "l1_change_rate": 0.01095617562532425,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.002146773273125291,
+          "margin_after_mean": 0.0022112904116511345,
+          "margin_after_min": 2.4400651454925537e-07
+        },
+        "update_sha256": "1b78cd9cfbb47897075e67c5a34689f1953058961f52e3a48ba4653d093322fc",
+        "no_learning_signal": false
+      },
+      "deep_attributable_crossings": {
+        "definition": "items that change their L1 code under FULL but not under NO-DEEP, which is the only attribution a same-state counterfactual supports",
+        "full_changed": 10,
+        "no_deep_changed": 11,
+        "delta": -1
+      }
+    },
+    "160": {
+      "FULL": {
+        "crossing": {
+          "items": 1024,
+          "l1_identity_changed": 9,
+          "l1_change_rate": 0.0087890625,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.009166721254587173,
+          "margin_after_mean": 0.009223522618412971,
+          "margin_after_min": 4.433095455169678e-06
+        },
+        "update_sha256": "0b8e715db76817981fffc822604972a1cba68d8100c5a5da858e61e8de5d71cc",
+        "no_learning_signal": false
+      },
+      "NO-DEEP": {
+        "crossing": {
+          "items": 1024,
+          "l1_identity_changed": 9,
+          "l1_change_rate": 0.0087890625,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.009166721254587173,
+          "margin_after_mean": 0.009229810908436775,
+          "margin_after_min": 2.2258609533309937e-05
+        },
+        "update_sha256": "cdd6c040a763693ecb9d7aec5df4d1c6f2c35da1228aff8b47fb9e0106bf2c35",
+        "no_learning_signal": false
+      },
+      "BASE-ONLY": {
+        "crossing": {
+          "items": 1024,
+          "l1_identity_changed": 8,
+          "l1_change_rate": 0.0078125,
+          "below_delta_after": 0,
+          "below_delta_rate": 0.0,
+          "margin_before_mean": 0.009166721254587173,
+          "margin_after_mean": 0.009206714108586311,
+          "margin_after_min": 6.067566573619843e-07
+        },
+        "update_sha256": "573fc0e02e6cd336f64d456cde09e431ec1650990452c252adf7cb80d732b934",
+        "no_learning_signal": false
+      },
+      "deep_attributable_crossings": {
+        "definition": "items that change their L1 code under FULL but not under NO-DEEP, which is the only attribution a same-state counterfactual supports",
+        "full_changed": 9,
+        "no_deep_changed": 9,
+        "delta": 0
+      }
+    }
+  },
+  "delta": 0.0,
+  "blockers": [],
+  "status": "supported",
+  "elapsed_s": 0.3
+}

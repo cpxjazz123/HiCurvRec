@@ -1,0 +1,134 @@
+{
+  "arm": "r6_02",
+  "trainer_sha256": "b812b5be01dae5a3e22cbffbb275fdd770802306bc24d758e7a41f1894884310",
+  "kind": "observational",
+  "steps": {
+    "96": {
+      "applied_weight": 0.2,
+      "levels_present": [
+        0,
+        1,
+        2
+      ],
+      "base_encoder_l2": 0.0003861912859391088,
+      "per_level": {
+        "0": {
+          "encoder_l2": 0.8570388353027386,
+          "all_params_l2": null,
+          "cosine_vs_base": 0.09841095476170549
+        },
+        "1": {
+          "encoder_l2": 0.5427095698356562,
+          "all_params_l2": null,
+          "cosine_vs_base": -0.3945270205725542
+        },
+        "2": {
+          "encoder_l2": 0.4064395830031684,
+          "all_params_l2": null,
+          "cosine_vs_base": -0.46849992725127443
+        }
+      },
+      "deep_weighted_encoder_l2": 0.08653220964682555,
+      "assembled_total_encoder_l2": 0.08643776403733881,
+      "weighted_to_base_ratio": 224.06567107386564,
+      "cosine_base_vs_weighted_deep": -0.2466815504880155,
+      "dot_base_vs_weighted_deep": -8.243600432592815e-06,
+      "additivity": {
+        "definition": "sum of per-level weighted encoder norms versus the assembled deep norm",
+        "sum_of_level_weighted_norms": 0.12041253254277087,
+        "assembled_deep_norm": 0.08653220964682555,
+        "exactly_additive": false
+      },
+      "clip": {
+        "norm": 1.0,
+        "encoder_preclip_l2": 0.08643776403733881,
+        "encoder_postclip_l2": 0.08643776403733881,
+        "all_params_preclip_l2": 0.0864412308664823,
+        "all_params_postclip_l2": 0.0864412308664823,
+        "cosine_preclip_vs_base": -0.2424838647068054,
+        "cosine_postclip_vs_base": -0.2424838647068054
+      },
+      "realized_step": {
+        "update_l2": 0.030717248043050212,
+        "cosine_update_vs_assembled_gradient": -0.17722129967011616,
+        "cosine_update_vs_base_gradient": 0.040089364890311334,
+        "cosine_update_vs_weighted_deep": -0.1772068590004942,
+        "cosine_update_vs_sign_of_gradient": -0.29246026609039977,
+        "cosine_update_vs_adam_direction": -0.9669880872090098,
+        "adam_direction_l2": 1328.8272687784238,
+        "expected_sign": -1.0,
+        "adam_alignment_verdict": "the realised update is the optimizer's own AdamW step",
+        "reading": "AdamW updates p -= lr * m/sqrt(v), so the realised update is expected to be ANTI-parallel to that direction and roughly ORTHOGONAL to this step's own gradient, because m and v are exponential averages over the training history rather than the current step. A large negative cosine against the Adam direction is what makes the orthogonality against the gradient explicable instead of mysterious.",
+        "update_sha256": "439db93063839525773fb38654d8f83a0db6dbddac98b2b32b881b9aa06f1460",
+        "base_loss": 0.00042817997746169567,
+        "behavior_loss": 6.082293510437012,
+        "projection_applied": false
+      }
+    },
+    "160": {
+      "applied_weight": 0.2,
+      "levels_present": [
+        0,
+        1,
+        2
+      ],
+      "base_encoder_l2": 0.0004139396615215537,
+      "per_level": {
+        "0": {
+          "encoder_l2": 1.0380945951603084,
+          "all_params_l2": null,
+          "cosine_vs_base": 0.3072676805300216
+        },
+        "1": {
+          "encoder_l2": 0.6683840349033119,
+          "all_params_l2": null,
+          "cosine_vs_base": -0.528004476187722
+        },
+        "2": {
+          "encoder_l2": 0.4451859488948434,
+          "all_params_l2": null,
+          "cosine_vs_base": -0.6177465149939112
+        }
+      },
+      "deep_weighted_encoder_l2": 0.09491089089581177,
+      "assembled_total_encoder_l2": 0.09482200138617254,
+      "weighted_to_base_ratio": 229.28677707987592,
+      "cosine_base_vs_weighted_deep": -0.21700980737738834,
+      "dot_base_vs_weighted_deep": -8.525747211492737e-06,
+      "additivity": {
+        "definition": "sum of per-level weighted encoder norms versus the assembled deep norm",
+        "sum_of_level_weighted_norms": 0.14344430526389756,
+        "assembled_deep_norm": 0.09491089089581177,
+        "exactly_additive": false
+      },
+      "clip": {
+        "norm": 1.0,
+        "encoder_preclip_l2": 0.09482200138617254,
+        "encoder_postclip_l2": 0.09482200138617254,
+        "all_params_preclip_l2": 0.09482404403720121,
+        "all_params_postclip_l2": 0.09482404403720121,
+        "cosine_preclip_vs_base": -0.21284878730050855,
+        "cosine_postclip_vs_base": -0.21284878730050855
+      },
+      "realized_step": {
+        "update_l2": 0.03685623312277848,
+        "cosine_update_vs_assembled_gradient": -0.21674902310096053,
+        "cosine_update_vs_base_gradient": 0.07428098748336837,
+        "cosine_update_vs_weighted_deep": -0.21686987744858452,
+        "cosine_update_vs_sign_of_gradient": -0.3410891050186914,
+        "cosine_update_vs_adam_direction": -0.9463097414291053,
+        "adam_direction_l2": 722.0611076287045,
+        "expected_sign": -1.0,
+        "adam_alignment_verdict": "the realised update is the optimizer's own AdamW step",
+        "reading": "AdamW updates p -= lr * m/sqrt(v), so the realised update is expected to be ANTI-parallel to that direction and roughly ORTHOGONAL to this step's own gradient, because m and v are exponential averages over the training history rather than the current step. A large negative cosine against the Adam direction is what makes the orthogonality against the gradient explicable instead of mysterious.",
+        "update_sha256": "676036f39c1c6fda15baa9d260ec2a2d84ca10cced843dcb2ab18718ed91db3f",
+        "base_loss": 0.0005594600806944072,
+        "behavior_loss": 5.9457221031188965,
+        "projection_applied": false
+      }
+    }
+  },
+  "blockers": [],
+  "status": "supported",
+  "elapsed_s": 7.01
+}

@@ -74,6 +74,41 @@ Two consequences, and the second is the important one:
 `FULL` parity is a **within-run** statement: same process, same tensors, same selected cuBLAS
 algorithm. It is exactly the guarantee a counterfactual branch needs, and it holds.
 
+## The noise floor, in the units the earlier issues used
+
+Two hook-free runs of `r6_02`, identical seed and protocol, measured on the fixed train-item
+population at the same steps (`tools/r7_a_noise_floor.py`):
+
+| step | L1 used codes | raw three-level tuple collision | L1 entropy (normalised) |
+|:--|:--|:--|:--|
+| 96, run 1 | 44 | 0.7042 | 0.5032 |
+| 96, run 2 | 39 | 0.7689 | 0.5036 |
+| **spread** | **±5** | **0.065** | 0.0004 |
+| 160, run 1 | 33 | 0.6611 | 0.4923 |
+| 160, run 2 | 39 | 0.7178 | 0.5110 |
+| **spread** | **±6** | **0.057** | 0.0187 |
+
+Two consequences, and they change what earlier issues are allowed to claim.
+
+**Issue #79's divergence was inside the noise.** It measured an audited origin of 117 L1 codes
+against a probe's 110 — a gap of 7. Run-to-run spread on the same arm at the same step is ±5 to ±6.
+That gap is therefore **not evidence that instrumentation perturbed the run**; it is a measurement of
+the environment. #79's refusal to make a causal claim still stands on its own rule, but its stated
+diagnosis was wrong.
+
+**Issue #78's fine ordering does not survive; its coarse separation does.** At step 160 the raw
+three-level tuple collisions were `[0.4391, 0.7442, 0.7666, 0.9165]`, sorted:
+
+| consecutive gap | size | in units of the measured noise |
+|:--|:--|:--|
+| r4_08 → r6_02 | 0.3051 | **4.7x — real** |
+| r6_02 → r6_03 | 0.0224 | **0.3x — not distinguishable** |
+| r6_03 → r6_04 | 0.1499 | **2.3x — real** |
+
+So the healthy-versus-failed separation that motivated this whole programme is real and larger than
+the noise, while the ordering *within* the failed cluster is not. Any threshold fitted on those four
+numbers is fitting three points and a noise band.
+
 ## What was measured
 
 Per arm and step: the L1 assignments before and after each single update, the switch counts, and

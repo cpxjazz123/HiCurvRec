@@ -67,7 +67,19 @@ def build_frozen_branch(tree: Path, bundle: dict[str, Any], *, module_name: str)
     # exactly the arm's construction: every parameter, the arm's lr and weight decay
     optimizer = optimizer_cls(list(model.parameters()), lr=trainer.LR,
                               weight_decay=trainer.WEIGHT_DECAY)
-    optimizer.load_state_dict(copy.deepcopy(bundle["optimizer_state"]))
+    frozen_optimizer = bundle.get("optimizer_state") or {}
+    if not frozen_optimizer.get("param_groups"):
+        # an INITIALISATION snapshot: no optimizer has run yet, so there are no moments to load.
+        # A replay is impossible from here and ``assemble_and_step`` says so, but a read-only
+        # observer only needs the model, so the branch is still built.
+        if bundle.get("step") == 0:
+            return {"trainer": trainer, "model": model, "optimizer": None,
+                    "saved_path": saved_path, "saved_mods": saved_mods,
+                    "module_name": module_name, "tree": tree,
+                    "initialisation_only": True}
+        raise ReplayError("the frozen bundle carries no optimizer state but it is not the "
+                          "initialisation snapshot, so this is not a replayable step")
+    optimizer.load_state_dict(copy.deepcopy(frozen_optimizer))
     return {"trainer": trainer, "model": model, "optimizer": optimizer,
             "saved_path": saved_path, "saved_mods": saved_mods, "module_name": module_name,
             "tree": tree}
@@ -167,6 +179,9 @@ def assemble_and_step(branch: dict[str, Any], bundle: dict[str, Any], *,
     """
     if intervention not in INTERVENTIONS:
         raise ReplayError(f"unknown intervention {intervention!r}")
+    if branch.get("initialisation_only"):
+        raise ReplayError("this bundle is the initialisation snapshot: no optimizer step has run, "
+                          "so there is nothing to replay")
     trainer, model, optimizer = branch["trainer"], branch["model"], branch["optimizer"]
     model.train()
     optimizer.zero_grad(set_to_none=True)

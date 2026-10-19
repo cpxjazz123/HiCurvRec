@@ -19,7 +19,7 @@ TRACKS = {
     "A": {"issue": 80, "dir": "r7_a_parity"},
     "B": {"issue": 81, "dir": "r7_b_gradients"},
     "C": {"issue": 82, "dir": "r7_c_geometry"},
-    "D": {"issue": 83, "dir": "r7_d_backtest"},
+    "D": {"issue": 83, "dir": "r7_d_backtest", "file": "manifest.json"},
     "E": {"issue": 84, "dir": "r7_e_voronoi"},
     "F": {"issue": 85, "dir": "r7_f_separation"},
 }
@@ -39,12 +39,28 @@ def track_status(letter: str) -> dict[str, Any]:
     if not directory.is_dir():
         return {"status": "blocked", "why": f"{directory} does not exist: the track produced no "
                                            f"report, so it has no evidence to contribute"}
-    summary = read(directory / "report.json")
+    summary = read(directory / TRACKS[letter].get("file", "report.json"))
+    if summary is None and TRACKS[letter].get("file"):
+        # a track may still have delivered its per-arm reports even when its summary has another
+        # name; fall back to those rather than calling the track blocked
+        per_arm = sorted(directory.glob("*/report.json"))
+        if not per_arm:
+            return {"status": "blocked", "why": f"{directory} has no report the synthesis can read"}
+        statuses = [read(path) or {} for path in per_arm]
+        summary = {"arms": [{"arm": path.parent.name,
+                             "status": value.get("status", "unknown")}
+                            for path, value in zip(per_arm, statuses)]}
     if summary is None:
         return {"status": "blocked", "why": f"{directory}/report.json is missing or unreadable"}
     statuses = [arm.get("status") for arm in summary.get("arms", []) if isinstance(arm, dict)]
     if summary.get("status"):
         statuses.append(summary["status"])
+    if not statuses and "calibratable" in summary:
+        # a backtest resolves by producing its manifest, not by declaring a per-arm status
+        return {"status": "supported",
+                "arms": summary.get("cohort_measured"),
+                "calibratable": summary.get("calibratable"),
+                "outcome": summary.get("outcome")}
     if not statuses:
         return {"status": "blocked", "why": "no arm reported a status"}
     resolved = [value for value in statuses if value == "supported"]
@@ -116,9 +132,14 @@ def main() -> int:
                                          "a linearisation that looks satisfied but still crosses "
                                          "must be counted",
             "cost": "one extra autograd per guarded item",
-            "blocker": "AdamW is not linear in the gradient, so a gradient-side constraint is "
-                       "not a guarantee on the parameter update",
-            "r7_01_candidate": "TENTATIVE: only if the realised violation rate is low",
+            "blocker": None,
+            "r7_01_candidate": "REJECTED as a candidate",
+            "verdict": "the pilot measured the thing it was built for. Deep-attributable L1 "
+                       "identity changes are +7/-2 (r4_08), +5/+1 (r6_02), +4/-2 (r6_03), "
+                       "-1/0 (r6_04) at steps 96/160, against a measured run-to-run floor of "
+                       "+/-5 to +/-6 on the same arm and step. The effect is inside the noise "
+                       "and changes sign. Protecting L1 boundaries would be protecting something "
+                       "that is not breaking.",
         },
         {
             "track": "F", "issue": 85,
@@ -129,12 +150,17 @@ def main() -> int:
                                          "collapsing hard diversity; entropy, effective codes "
                                          "and margins are monitored separately",
             "cost": "one softmax over the L1 codebook per step",
-            "blocker": "a soft term is a relaxation and cannot promise distinct hard codes",
-            "r7_01_candidate": "TENTATIVE: only if hard diversity holds while the loss falls",
+            "blocker": "no measurement: the prototype has its math, its independent VJP oracle "
+                       "and its gaming diagnostics, but no pilot was run, so there is nothing to "
+                       "evaluate",
+            "r7_01_candidate": "NOT EVALUATED: the hypothesis class is the only one consistent "
+                               "with tracks B, C and E, but it has no evidence of its own",
         },
     ]
 
-    candidates = [row for row in rows if row["r7_01_candidate"] and not row["blocker"]]
+    candidates = [row for row in rows
+                  if row["r7_01_candidate"] and not row["blocker"]
+                  and row["r7_01_candidate"].startswith("TENTATIVE")]
     promoted = candidates[0] if candidates and parity else None
 
     summary = {
@@ -154,9 +180,19 @@ def main() -> int:
             "rule": "at most one full 3000-epoch candidate, and only if its own track resolved it "
                     "AND track A established control parity; otherwise the honest outcome is that "
                     "no candidate survived",
-            "outcome": (promoted["track"] if promoted
-                        else "no candidate survived: track A parity is the gate for any causal "
-                             "claim, and neither E nor F has a resolved measurement yet"),
+            "outcome": (promoted["track"] if promoted else
+                        "NO CANDIDATE SURVIVED, and that is the finding rather than a shortfall. "
+                        "Control parity is established, so the hypotheses could be tested rather "
+                        "than merely asserted. Track E, the only candidate with a measurement, "
+                        "was rejected on it: deep-attributable L1 boundary crossings are inside "
+                        "the run-to-run noise floor and change sign, so protecting boundaries "
+                        "protects something that is not breaking. Track F's hypothesis class is "
+                        "the only one consistent with all three measured tracks -- tracks B, C and "
+                        "E independently point at occupancy and distribution rather than gradient "
+                        "direction or boundary fragility -- but F has no pilot of its own, so it "
+                        "cannot be promoted on the strength of other tracks' agreement. "
+                        "Promoting it would repeat exactly the error this programme was opened "
+                        "to correct."),
         },
     }
     (OUTPUT / "report.json").write_text(json.dumps(summary, indent=2, default=str))

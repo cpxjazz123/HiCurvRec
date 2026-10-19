@@ -77,6 +77,7 @@ def l1_geometry(model, embeddings: torch.Tensor, *, chunk: int = 8192) -> dict[s
     all_winner = []
     all_second = []
     all_tied = []
+    all_index = []
     with torch.no_grad():
         for start in range(0, embeddings.shape[0], chunk):
             block = embeddings[start:start + chunk].to(device)
@@ -85,19 +86,24 @@ def l1_geometry(model, embeddings: torch.Tensor, *, chunk: int = 8192) -> dict[s
                 trace = trace[0]
             distance = layer._distances(trace.reshape(-1, layer.dim))
             ordered, index = distance.sort(dim=1)
-            winner = ordered[:, 0]
-            runner_up = ordered[:, 1]
-            margin = runner_up - winner
+            # ``ordered`` is the sorted DISTANCES and ``index`` the sorted CODE INDICES: the winner
+            # is index[:, 0]. Taking ordered[:, 0] instead silently labels every item with its
+            # smallest distance, which is a number, not a code.
+            nearest, runner_up_distance = ordered[:, 0], ordered[:, 1]
+            winner, runner_up = index[:, 0], index[:, 1]
+            margin = runner_up_distance - nearest
             tied = margin <= 0.0
             all_margin.append(margin.double().cpu())
-            all_winner.append(winner.cpu())
-            all_second.append(runner_up.cpu())
+            all_winner.append(nearest.cpu())
+            all_second.append(runner_up_distance.cpu())
             all_tied.append(tied.cpu())
+            all_index.append(winner.cpu())
     model.train(was_training)
     margin = torch.cat(all_margin)
     winner = torch.cat(all_winner)
     runner_up = torch.cat(all_second)
     tied = torch.cat(all_tied)
+    indices = torch.cat(all_index)
     return {
         "items": int(margin.numel()),
         "margin_mean": float(margin.mean()),
@@ -107,7 +113,7 @@ def l1_geometry(model, embeddings: torch.Tensor, *, chunk: int = 8192) -> dict[s
         "exact_ties": int(tied.sum()),
         "exact_tie_rate": float(tied.float().mean()),
         "margin_below_1e_3": int((margin < 1e-3).sum()),
-        "indices": winner.to(torch.long),
+        "indices": indices.to(torch.long),
         "winner_distance_mean": float(torch.cat(all_winner).mean()),
         "runner_up_distance_mean": float(torch.cat(all_second).mean()),
     }
@@ -181,7 +187,12 @@ def run_arm(arm: str) -> dict:
                     "snapshot_steps": list(SNAPSHOT_STEPS), "snapshots": {}, "blockers": []}
     report["capture_failures"] = capture.get("failures", [])
 
-    embeddings = None
+    # ONE fixed item population for every snapshot, including the initialisation. Each captured
+    # batch is its epoch's last and is therefore partial at an epoch boundary, so measuring each
+    # snapshot against its own batch would compare different populations rather than different
+    # models. Step 8 is the first snapshot with a batch and defines the population from then on.
+    reference = torch.load(out / "step_0008" / "bundle.pt", weights_only=False)
+    fixed_population = reference["item_batch"].to(G.DEVICE)
     for step in SNAPSHOT_STEPS:
         path = out / f"step_{step:04d}" / "bundle.pt"
         if not path.is_file():
@@ -189,8 +200,7 @@ def run_arm(arm: str) -> dict:
             continue
         bundle = torch.load(path, weights_only=False)
         branch = G.build_frozen_branch(tree, bundle, module_name=f"r7c_{arm}_{step}")
-        population = bundle["item_batch"]
-        geometry = l1_geometry(branch["model"], population.to(G.DEVICE))
+        geometry = l1_geometry(branch["model"], fixed_population)
         indices = geometry.pop("indices")
         codebook_size = branch["model"].rq.vq_layers[0].n_embed
         report["snapshots"][str(step)] = {
@@ -198,21 +208,26 @@ def run_arm(arm: str) -> dict:
             "occupancy": occupancy(indices, codebook_size),
             "deep_active": float(bundle["applied_weight"]) > 0.0,
         }
-        embeddings = population
         G.release_branch(branch)
 
     ordered = sorted(report["snapshots"], key=int)
+    ordered_int = [int(value) for value in ordered]
     for previous, current in zip(ordered, ordered[1:]):
-        left = torch.load(out / f"step_{previous:04d}" / "bundle.pt", weights_only=False)
-        right = torch.load(out / f"step_{current:04d}" / "bundle.pt", weights_only=False)
-        before = G.hard_assignments(G.build_frozen_branch(
-            tree, left, module_name=f"r7c_{arm}_{previous}_cmp")["model"],
-            left["item_batch"].to(G.DEVICE))
+        left = torch.load(out / f"step_{int(previous):04d}" / "bundle.pt", weights_only=False)
+        right = torch.load(out / f"step_{int(current):04d}" / "bundle.pt", weights_only=False)
+        # Compare on ONE fixed population. The captured item batch is the epoch's last, which is
+        # partial at an epoch boundary, so the two snapshots do not cover the same items; scoring
+        # them against each other would compare different populations rather than different models.
+        population = fixed_population
+        earlier = G.build_frozen_branch(tree, left, module_name=f"r7c_{arm}_{previous}_cmp")
+        before = G.hard_assignments(earlier["model"], population)
+        G.release_branch(earlier)
         after_branch = G.build_frozen_branch(tree, right, module_name=f"r7c_{arm}_{current}_cmp")
-        after = G.hard_assignments(after_branch["model"], right["item_batch"].to(G.DEVICE))
+        after = G.hard_assignments(after_branch["model"], population)
         report["snapshots"][current]["switches_from_previous"] = switches(before["indices"],
                                                                         after["indices"])
         G.release_branch(after_branch)
+    report["fixed_population_items"] = int(fixed_population.shape[0])
     report["status"] = "supported" if not report["blockers"] else "blocked"
     report["elapsed_s"] = round(time.time() - started, 2)
     return report

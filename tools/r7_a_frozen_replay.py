@@ -246,7 +246,7 @@ def capture_from_run(tree: Path, spec: dict[str, Any], *,
         "components": getattr(trainer, "behavior_contrastive_components", None),
     }
     state: dict[str, Any] = {"step": 0, "slot": None, "pending": None, "bundles": {},
-                             "last_weight": 0.0}
+                             "last_weight": 0.0, "initial_saved": False}
     models: list[Any] = []
     scheduler_holder: dict[str, Any] = {}
     fork_set = set(int(value) for value in fork_steps)
@@ -255,10 +255,26 @@ def capture_from_run(tree: Path, spec: dict[str, Any], *,
     def capturing_init(inner_self, *args, **kwargs):
         originals["init"](inner_self, *args, **kwargs)
         models.append(inner_self)
+        # Step 0 is the post-KMeans initialisation: there is no optimizer and no minibatch yet, so
+        # what is captured is the model state alone. A geometry observer can measure it; a replay
+        # cannot, and says so rather than pretending otherwise.
+        if 0 in fork_set and not state["initial_saved"] and save_root is not None:
+            (Path(save_root) / "step_0000").mkdir(parents=True, exist_ok=True)
+            torch.save({"model_state": {name: value.detach().clone().cpu()
+                                        for name, value in inner_self.state_dict().items()},
+                        "training_mode": inner_self.training,
+                        "applied_weight": 0.0, "item_batch": None, "pair_embeddings": None,
+                        "source_ids": None, "target_ids": None, "successor": None,
+                        "optimizer_state": {}, "step": 0,
+                        "summary": {"note": "initialisation only; no optimizer step has run"}},
+                       Path(save_root) / "step_0000" / "bundle.pt")
+            state["initial_saved"] = True
+
+    has_behavior_weight = hasattr(trainer, "behavior_weight")
 
     def weight_schedule(epoch, current=None):
         if current is None:
-            return originals["weight"](epoch)
+            return originals["weight"](epoch) if has_behavior_weight else 0.0
         step_about_to_run = state["step"] + 1
         if step_about_to_run <= baseline_steps or step_about_to_run > budget:
             state["last_weight"] = 0.0
@@ -286,7 +302,7 @@ def capture_from_run(tree: Path, spec: dict[str, Any], *,
         # ``zero_grad`` is the first call of every loop iteration, before the forward. Arming here
         # is what makes the capture see the step that is about to run rather than the previous one.
         step_about_to_run = state["step"] + 1
-        if (step_about_to_run in fork_set and step_about_to_run >= baseline_steps
+        if (step_about_to_run in fork_set
                 and step_about_to_run not in state["bundles"]):
             state["slot"] = {"item_batch": None, "pair_embeddings": None, "source_ids": None,
                              "target_ids": None, "successor": None}
@@ -370,7 +386,10 @@ def capture_from_run(tree: Path, spec: dict[str, Any], *,
 
     # The weight ramp IS the frozen protocol, so it belongs to both arms of the non-perturbation
     # control. Only the read-only capture hooks are conditional.
-    trainer.behavior_weight = weight_schedule
+    if has_behavior_weight:
+        trainer.behavior_weight = weight_schedule
+    # the loop reads the module global at run time, so installing it works whether or not the tree
+    # ever defined one
     trainer._PROBE_STEP_WEIGHT_HOOK = weight_schedule
     if instrument:
         trainer.RQVAE.__init__ = capturing_init
@@ -402,7 +421,8 @@ def capture_from_run(tree: Path, spec: dict[str, Any], *,
         trainer.RQVAE.__init__ = originals["init"]
         if instrument:
             trainer.RQVAE.forward = originals["forward"]
-        trainer.behavior_weight = originals["weight"]
+        if originals.get("weight") is not None:
+            trainer.behavior_weight = originals["weight"]
         trainer._PROBE_STEP_WEIGHT_HOOK = originals["hook"]
         trainer.EPOCHS = originals["epochs"]
         trainer.SEED = originals["seed"]
