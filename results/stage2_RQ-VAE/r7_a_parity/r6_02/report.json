@@ -1,0 +1,381 @@
+{
+  "arm": "r6_02",
+  "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_02",
+  "trainer_sha256": "b812b5be01dae5a3e22cbffbb275fdd770802306bc24d758e7a41f1894884310",
+  "fork_steps": [
+    32,
+    96,
+    160
+  ],
+  "steps": {
+    "32": {
+      "deep_active": false,
+      "capture_problems": [],
+      "capture": {
+        "step": 32,
+        "parameter_sha256": "8681c153cc7f7783e851b3d90697dcf39d345c5c2f915a1ec79a16622bb08202",
+        "optimizer_sha256": "e050090ac8206a3ead80f2c19a1b17b178fb96a322d3d534f5b25c0a27160f0a",
+        "applied_behavior_weight": 0.0,
+        "lr_at_step": 2.666666666666667e-05,
+        "item_batch_sha256": "a806724b5d10a0857912b8406f118229890262d77193658ddad85b96be64c17f",
+        "pair_embeddings_sha256": null,
+        "source_ids_sha256": null,
+        "target_ids_sha256": null,
+        "source_hashes": {
+          "train_rqvae.py": "b812b5be01dae5a3e22cbffbb275fdd770802306bc24d758e7a41f1894884310",
+          "model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+          "model/layers.py": "ac52f7a598c59084f5d1221e07e8c9ac8b833208766edef232d208671ab868bf"
+        },
+        "training_mode": true,
+        "parameter_sha256_after_reference": "2f1dc2a1fd30898fa36e3962338b45f9c799b7ed9b71d7867ddc202caeb2caae",
+        "has_optimizer_moments": true
+      },
+      "FULL": {
+        "intervention": "FULL",
+        "deep_present": false,
+        "applied_weight": 0.0,
+        "lr": 2.666666666666667e-05,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.00045600204612128437,
+        "behavior_loss": 0.0,
+        "parameter_sha256": "2f1dc2a1fd30898fa36e3962338b45f9c799b7ed9b71d7867ddc202caeb2caae",
+        "update_sha256": "dcec28ad3c2ffffb666b4e55ab6d106c0dcad4d74e600645d21cd151e0d605b9"
+      },
+      "full_control_parity": {
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "tensor": null
+      },
+      "FULL_switches": {
+        "items": 1024,
+        "l1_switched": 87,
+        "l1_switch_rate": 0.0849609375,
+        "used_codes_before": 104,
+        "used_codes_after": 104,
+        "used_codes_delta": 0
+      },
+      "NO-DEEP": {
+        "intervention": "NO-DEEP",
+        "deep_present": false,
+        "applied_weight": 0.0,
+        "lr": 2.666666666666667e-05,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.00045600204612128437,
+        "behavior_loss": 0.0,
+        "parameter_sha256": "2f1dc2a1fd30898fa36e3962338b45f9c799b7ed9b71d7867ddc202caeb2caae",
+        "update_sha256": "dcec28ad3c2ffffb666b4e55ab6d106c0dcad4d74e600645d21cd151e0d605b9",
+        "switches": {
+          "items": 1024,
+          "l1_switched": 87,
+          "l1_switch_rate": 0.0849609375,
+          "used_codes_before": 104,
+          "used_codes_after": 104,
+          "used_codes_delta": 0
+        },
+        "state_difference_vs_FULL": {
+          "identical": true,
+          "max_abs_diff": 0.0,
+          "tensor": null
+        }
+      },
+      "BASE-ONLY": {
+        "intervention": "BASE-ONLY",
+        "deep_present": false,
+        "applied_weight": 0.0,
+        "lr": 2.666666666666667e-05,
+        "projection_applied": false,
+        "no_learning_signal": true,
+        "base_loss": 0.0,
+        "behavior_loss": 0.0,
+        "parameter_sha256": "8681c153cc7f7783e851b3d90697dcf39d345c5c2f915a1ec79a16622bb08202",
+        "update_sha256": "f88d09ccc06c9ac3915bb042e8653037cb697b2a91c6723984e099e043d06983",
+        "switches": {
+          "items": 1024,
+          "l1_switched": 0,
+          "l1_switch_rate": 0.0,
+          "used_codes_before": 104,
+          "used_codes_after": 104,
+          "used_codes_delta": 0
+        },
+        "state_difference_vs_FULL": {
+          "identical": false,
+          "max_abs_diff": 3.545443178154528e-05,
+          "tensor": "decoder.mlp.7.bias"
+        }
+      }
+    },
+    "96": {
+      "deep_active": true,
+      "capture_problems": [],
+      "capture": {
+        "step": 96,
+        "parameter_sha256": "dd71370ffa8e2e3c19f52d6c1981f7ddc4858eb3f03220f5cb3e08fd29885b98",
+        "optimizer_sha256": "c33b3f368d02230bd5818487d91ab6534e07f79ff6430297c5d893627700aebd",
+        "applied_behavior_weight": 0.2,
+        "lr_at_step": 8e-05,
+        "item_batch_sha256": "2bf7ce26a552c468fd8b6d48000bda82634339f60ca7e7815142d1d9f43afc42",
+        "pair_embeddings_sha256": "6fd004cc91fc5a69abd0a2068de3a9b0e9b4b1cc5925cd51d23182b7ab29c4d4",
+        "source_ids_sha256": "b8d942d3f22970b81abc12eb56c75d0341599f4fb7ded2ef603e06398516f137",
+        "target_ids_sha256": "406674c179d7646e36bd2b95ab87b7376f56c5f2eefada46c5fe14e646f09982",
+        "source_hashes": {
+          "train_rqvae.py": "b812b5be01dae5a3e22cbffbb275fdd770802306bc24d758e7a41f1894884310",
+          "model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+          "model/layers.py": "ac52f7a598c59084f5d1221e07e8c9ac8b833208766edef232d208671ab868bf"
+        },
+        "training_mode": true,
+        "parameter_sha256_after_reference": "420718334b5de9a10bcf26f8dd9d424a0520a0ff720a4a8879c15835f206056c",
+        "has_optimizer_moments": true
+      },
+      "FULL": {
+        "intervention": "FULL",
+        "deep_present": true,
+        "applied_weight": 0.2,
+        "lr": 8e-05,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0004281822475604713,
+        "behavior_loss": 6.082343101501465,
+        "parameter_sha256": "420718334b5de9a10bcf26f8dd9d424a0520a0ff720a4a8879c15835f206056c",
+        "update_sha256": "097abb969d2e4660fa3ae8f3007974b4b419435e49e74e9d2cf9981964d4bea2"
+      },
+      "full_control_parity": {
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "tensor": null
+      },
+      "FULL_switches": {
+        "items": 1004,
+        "l1_switched": 39,
+        "l1_switch_rate": 0.038844622671604156,
+        "used_codes_before": 48,
+        "used_codes_after": 47,
+        "used_codes_delta": -1
+      },
+      "NO-DEEP": {
+        "intervention": "NO-DEEP",
+        "deep_present": false,
+        "applied_weight": 0.2,
+        "lr": 8e-05,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0004281822475604713,
+        "behavior_loss": 0.0,
+        "parameter_sha256": "8dd59da940ee4ee3c00db3135236817c062198d8b42e606f6cc059ca4ec3b42c",
+        "update_sha256": "5ceb3abcb8605eef31043a5cd59aafcf6696a7cd4ec0ce67bec9a2670266b58c",
+        "switches": {
+          "items": 1004,
+          "l1_switched": 36,
+          "l1_switch_rate": 0.03585657477378845,
+          "used_codes_before": 48,
+          "used_codes_after": 48,
+          "used_codes_delta": 0
+        },
+        "state_difference_vs_FULL": {
+          "identical": false,
+          "max_abs_diff": 0.00011315196752548218,
+          "tensor": "encoder.mlp.7.weight"
+        }
+      },
+      "BASE-ONLY": {
+        "intervention": "BASE-ONLY",
+        "deep_present": true,
+        "applied_weight": 0.2,
+        "lr": 8e-05,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0,
+        "behavior_loss": 6.082343101501465,
+        "parameter_sha256": "7f8c721550d466b54575ac912bf72c6a0930027107d183befd158aec3b41b68f",
+        "update_sha256": "a145b4f7af992b80dd0e2468eee4b8eaaa36e51b5ec38247d770f4ed2976e12e",
+        "switches": {
+          "items": 1004,
+          "l1_switched": 33,
+          "l1_switch_rate": 0.03286852687597275,
+          "used_codes_before": 48,
+          "used_codes_after": 48,
+          "used_codes_delta": 0
+        },
+        "state_difference_vs_FULL": {
+          "identical": false,
+          "max_abs_diff": 0.00017308257520198822,
+          "tensor": "rq.vq_layers.0.embed.weight"
+        }
+      }
+    },
+    "160": {
+      "deep_active": true,
+      "capture_problems": [],
+      "capture": {
+        "step": 160,
+        "parameter_sha256": "4e61db958662fe4923ebab3af9e98f0131b46db17b70d6fbedf99d3337c3fe08",
+        "optimizer_sha256": "c3be8b39ca421da39c5341814cdf6d70f6115ecaba7bb5da74c7d22d41678e3f",
+        "applied_behavior_weight": 0.2,
+        "lr_at_step": 0.00013333333333333334,
+        "item_batch_sha256": "bfe2a25e333505dd1a4654ae5e51b36e73b5cca5f4c4248f217a125d5202c439",
+        "pair_embeddings_sha256": "6f90d0c0cd2b7a3a641a99851d4bb8f2926bad61a2a7120ad644fe269bbead1c",
+        "source_ids_sha256": "6faa6da805b496410a2cc5c0a41775bdfb44b2f4071d7fe8e7c0745180215736",
+        "target_ids_sha256": "36e6af8f7784bac6f646f0246e33706be537f31416f807b9e650f7c1ab5ce9d7",
+        "source_hashes": {
+          "train_rqvae.py": "b812b5be01dae5a3e22cbffbb275fdd770802306bc24d758e7a41f1894884310",
+          "model/model.py": "22f8752db26432e70085ff38d291e127cd3def3043d188c25c0144f6a49fc09f",
+          "model/layers.py": "ac52f7a598c59084f5d1221e07e8c9ac8b833208766edef232d208671ab868bf"
+        },
+        "training_mode": true,
+        "parameter_sha256_after_reference": "91954ba301fb3d9ee6b1285411673a21b65f7c870d64608bea1c03006e90e1df",
+        "has_optimizer_moments": true
+      },
+      "FULL": {
+        "intervention": "FULL",
+        "deep_present": true,
+        "applied_weight": 0.2,
+        "lr": 0.00013333333333333334,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0005594610702246428,
+        "behavior_loss": 5.945700645446777,
+        "parameter_sha256": "91954ba301fb3d9ee6b1285411673a21b65f7c870d64608bea1c03006e90e1df",
+        "update_sha256": "3e805cc33f9afe78d5fed8063429827d47fd7f78790116e2fd337382c1a21a84"
+      },
+      "full_control_parity": {
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "tensor": null
+      },
+      "FULL_switches": {
+        "items": 1024,
+        "l1_switched": 19,
+        "l1_switch_rate": 0.0185546875,
+        "used_codes_before": 36,
+        "used_codes_after": 35,
+        "used_codes_delta": -1
+      },
+      "NO-DEEP": {
+        "intervention": "NO-DEEP",
+        "deep_present": false,
+        "applied_weight": 0.2,
+        "lr": 0.00013333333333333334,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0005594610702246428,
+        "behavior_loss": 0.0,
+        "parameter_sha256": "92c118424b5a109490a8b854153b5c593ba2a17c5507d2df942cb93c135fdef0",
+        "update_sha256": "f72e59038099c023e42b6a5a74a8367ce6eb5aac7dfb4710868d5e22ba337905",
+        "switches": {
+          "items": 1024,
+          "l1_switched": 18,
+          "l1_switch_rate": 0.017578125,
+          "used_codes_before": 36,
+          "used_codes_after": 35,
+          "used_codes_delta": -1
+        },
+        "state_difference_vs_FULL": {
+          "identical": false,
+          "max_abs_diff": 0.00016341730952262878,
+          "tensor": "encoder.mlp.4.weight"
+        }
+      },
+      "BASE-ONLY": {
+        "intervention": "BASE-ONLY",
+        "deep_present": true,
+        "applied_weight": 0.2,
+        "lr": 0.00013333333333333334,
+        "projection_applied": false,
+        "no_learning_signal": false,
+        "base_loss": 0.0,
+        "behavior_loss": 5.945700645446777,
+        "parameter_sha256": "b6e59e7e2f381d843382e9bd3b9cde549afbdf4ff5788c3bf7dc71effbb9f313",
+        "update_sha256": "60f12ffdc70f426097a19ce7ed24d63aedfb9b15f7b358453eb2c2dcc98b1242",
+        "switches": {
+          "items": 1024,
+          "l1_switched": 19,
+          "l1_switch_rate": 0.0185546875,
+          "used_codes_before": 36,
+          "used_codes_after": 35,
+          "used_codes_delta": -1
+        },
+        "state_difference_vs_FULL": {
+          "identical": false,
+          "max_abs_diff": 0.0003646840341389179,
+          "tensor": "rq.vq_layers.0.embed.weight"
+        }
+      }
+    }
+  },
+  "blockers": [],
+  "capture": {
+    "instrumented": true,
+    "final_parameter_sha256": "88f6dbb9718ce5a7b7cb60e0fc4d8cdacba138bbdb8aaf358c21febffa78359e",
+    "fork_steps": [
+      32,
+      96,
+      160
+    ],
+    "executed_steps": 3888,
+    "failures": [],
+    "elapsed_s": 51.54,
+    "schedule": {
+      "baseline_steps": 32,
+      "active_steps": 128,
+      "active_weight": 0.2,
+      "seed": 42,
+      "budget": 160
+    }
+  },
+  "non_perturbation_control": {
+    "definition": "an instrumented run must reach the same parameters as a hook-free run, established only after two hook-free runs are shown to agree",
+    "instrumented_sha256": "88f6dbb9718ce5a7b7cb60e0fc4d8cdacba138bbdb8aaf358c21febffa78359e",
+    "hook_free_sha256_1": "44347c3a2a24f28f1ad404767850d1a381a24b6c366ccbf39f42d5016169272d",
+    "hook_free_sha256_2": "381529a2b12d7d538c345f7804c49dc7ad1bc806ebf5c87a3474c8e3e709731f",
+    "instrumented_steps": 3888,
+    "hook_free_steps": 3888,
+    "environment_bit_reproducible": false,
+    "instrumented_matches_hook_free": false,
+    "verdict": "environment not bit-reproducible",
+    "reason": "two runs of the UNMODIFIED trainer with no hooks at all reached different parameters, so a difference against the instrumented run measures the environment, not the capture"
+  },
+  "negative_control": {
+    "definition": "at a step with zero deep weight, NO-DEEP removes a term that was never applied and must therefore reproduce FULL bit for bit",
+    "inert_steps": [
+      {
+        "record": {
+          "step": "32",
+          "deep_active": false,
+          "full_l1_switched": 87,
+          "NO-DEEP_l1_switched": 87,
+          "NO-DEEP_max_abs_diff_vs_FULL": 0.0
+        },
+        "expected": "NO-DEEP must be bitwise identical to FULL when the deep weight is zero, because nothing was there to remove",
+        "note": "BASE-ONLY is never inert: the base term is live at every step, so removing it legitimately changes the update at every step"
+      }
+    ],
+    "live_steps": [
+      {
+        "record": {
+          "step": "96",
+          "deep_active": true,
+          "full_l1_switched": 39,
+          "NO-DEEP_l1_switched": 36,
+          "NO-DEEP_max_abs_diff_vs_FULL": 0.00011315196752548218
+        },
+        "expected": "NO-DEEP must be bitwise identical to FULL when the deep weight is zero, because nothing was there to remove",
+        "note": "BASE-ONLY is never inert: the base term is live at every step, so removing it legitimately changes the update at every step"
+      },
+      {
+        "record": {
+          "step": "160",
+          "deep_active": true,
+          "full_l1_switched": 19,
+          "NO-DEEP_l1_switched": 18,
+          "NO-DEEP_max_abs_diff_vs_FULL": 0.00016341730952262878
+        },
+        "expected": "NO-DEEP must be bitwise identical to FULL when the deep weight is zero, because nothing was there to remove",
+        "note": "BASE-ONLY is never inert: the base term is live at every step, so removing it legitimately changes the update at every step"
+      }
+    ],
+    "harness_is_inert_where_it_should_be": true
+  },
+  "status": "supported",
+  "elapsed_s": 141.25
+}
