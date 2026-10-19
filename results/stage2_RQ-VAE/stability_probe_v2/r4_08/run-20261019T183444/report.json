@@ -1,0 +1,879 @@
+{
+  "probe": "stage2_stability_probe",
+  "status": "valid",
+  "status_reason": "",
+  "risk": "high",
+  "risk_note": "risk is a HEURISTIC early-warning indicator, not a validated predictor, and never a performance gate: the frozen Hard-L1 ER remains the only Stage2 acceptance criterion",
+  "risk_calibration": {
+    "status": "uncalibrated",
+    "measurement_version": 2,
+    "supersedes": "version 1 divided the per-level gradient norm by the total pre-clip norm of every parameter and every loss, which is not the base-loss encoder gradient, and regenerated contrastive labels with a cyclic shift instead of observing the trainer's own terms. Those values are invalid and are not comparable with version 2; the version-1 reports are left in place and are not claimed to be correct",
+    "risk_labels_reevaluated": "after the correction the labels were recomputed on the same four arms; the outcome is recorded in RETROSPECTIVE_v2.md rather than asserted here",
+    "reference_arms": {
+      "healthy": {
+        "arm": "r4_08",
+        "reference_hard_l1_er_historical": 16.402628,
+        "tuple3_collision_at_160": 0.4769,
+        "negative_same_code_rate_at_160": 0.0734
+      },
+      "collapsed": {
+        "r6_02": {
+          "reference_hard_l1_er_historical": 2.8902618750708537,
+          "tuple3_collision_at_160": 0.7893,
+          "negative_same_code_rate_at_160": 0.1169
+        },
+        "r6_03": {
+          "reference_hard_l1_er_historical": 1.8233611326609775,
+          "tuple3_collision_at_160": 0.8158,
+          "negative_same_code_rate_at_160": 0.1203
+        },
+        "r6_04": {
+          "reference_hard_l1_er_historical": 1.5416677050365089,
+          "tuple3_collision_at_160": 0.9386,
+          "negative_same_code_rate_at_160": 0.2547
+        }
+      }
+    },
+    "note": "these reference values were measured by the ER gate on those arms' finished runs; the probe itself never reads the held-out artifact and never reports Hard-L1 ER",
+    "false_positive_observed": "the healthy reference arm also reaches risk=high under these indicators, so a high verdict is not evidence of collapse",
+    "no_automatic_action": "this probe must not cancel, approve or retune a run. A risk verdict recommends review; the frozen Hard-L1 ER decides Stage3 admission"
+  },
+  "fired_indicators": [
+    "deep_gradient_domination",
+    "l1_effective_codes_drop",
+    "negative_train_pair_match_rise"
+  ],
+  "risk_evidence": [
+    {
+      "indicator": "l1_entropy_drop",
+      "description": "normalized L1 entropy fell by more than half of its step-0 value",
+      "fired": false,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "l1_effective_codes_drop",
+      "description": "effective L1 code count fell by more than half of its step-0 value",
+      "fired": true,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "l1_collision_rise",
+      "description": "L1-only collision rose by more than 0.20 absolute",
+      "fired": false,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "negative_train_pair_match_rise",
+      "description": "same-code rate on fixed train-only negatives rose by more than 50% relative",
+      "fired": true,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "deep_gradient_domination",
+      "description": "a behaviour level's WEIGHTED encoder gradient exceeded ||grad(base_loss, encoder)||, both measured on the same step",
+      "fired": true,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "clipping_saturation",
+      "description": "every measured step clipped at the clip norm",
+      "fired": false,
+      "classification": "heuristic"
+    },
+    {
+      "indicator": "max_code_share_rise",
+      "description": "the most used L1 code exceeded 25% of all items",
+      "fired": false,
+      "classification": "heuristic"
+    }
+  ],
+  "protocol_failures": [],
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r4_08",
+  "arm": "r4_08",
+  "spec_sha256": "90b59345a00056101391bab12685ee759a67f443fc9b20cb382e3cb34abece8d",
+  "declaration": {
+    "schema_version": 1,
+    "mechanism": {
+      "id": "r4_08",
+      "type": "gradient_routing",
+      "summary": "project g_L1 against g_base when the two conflict",
+      "entrypoints": [
+        "r4_project_conflict"
+      ],
+      "executor": "_r4_08_apply_projection",
+      "activation": {
+        "requires": [
+          "R4_08_PCGRAD_ENC"
+        ]
+      }
+    },
+    "model": {
+      "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
+      "parameter_groups": {
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq"
+      },
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
+    },
+    "forward_contract": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
+      ],
+      "declared_effect": "none",
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        },
+        {
+          "name": "residual_identity",
+          "tol": 0.0001
+        }
+      ]
+    },
+    "gradient_contract": {
+      "target": "encoder",
+      "mode": "formula",
+      "rule": "project_l1_against_base",
+      "reference_term": "base_loss",
+      "oracle": "oracles:assemble_gradient",
+      "eps_flag": "R4_08_EPS",
+      "probe_weight": 0.5,
+      "probe_seeds": [
+        1,
+        4,
+        5,
+        12,
+        16,
+        30,
+        32,
+        36
+      ],
+      "atol": 1e-05,
+      "effect": {
+        "min_deviation": 1e-06,
+        "min_probes": 1
+      },
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "nonzero",
+        "other_loss": "zero"
+      }
+    },
+    "update_contract": {
+      "optimizer": "AdamW",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
+    },
+    "distributed_contract": {
+      "world_size": 2,
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate"
+    },
+    "runtime_contract": {
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
+      "observe": [
+        {
+          "name": "mechanism_calls",
+          "target": "r4_project_conflict",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
+    }
+  },
+  "probe_config": {
+    "seed": 42,
+    "baseline_steps": 32,
+    "behavior_active_steps": 128,
+    "behavior_weight_active": 0.2,
+    "snapshot_steps": [
+      0,
+      8,
+      16,
+      32,
+      64,
+      96,
+      128,
+      160
+    ],
+    "assignment_population": "train_only_all_items",
+    "train_pairs": "original_train_only",
+    "optimizer": "production",
+    "gradient_clip": "production",
+    "device_layout": "production_if_available",
+    "output_isolation": true
+  },
+  "probe_config_sha256": "0586a65d266e01679f8ad9e8a950573d0db1d5a5b0248219f76ca1f89e1a7f2e",
+  "snapshots": [
+    {
+      "measurement_version": 2,
+      "step": 0,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 0.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.86082703920189,
+          "entropy_norm": 0.8765863830094438,
+          "effective_codes": 129.13095431856055,
+          "max_code_share": 0.018139667303859762
+        },
+        "level_2": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.995183497042949,
+          "entropy_norm": 0.9008158074392816,
+          "effective_codes": 147.70004541858628,
+          "max_code_share": 0.017936307804937567
+        },
+        "level_3": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 5.062316065473878,
+          "entropy_norm": 0.9129222853839616,
+          "effective_codes": 157.95592927404905,
+          "max_code_share": 0.016228088013991133
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.8765863830094438,
+      "l1_effective_codes": 129.13095431856055,
+      "l1_max_code_share": 0.018139667303859762,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.04681335665188924,
+      "tuple3_unique": 23436,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.0364999994635582,
+      "negative_same_code_rate": 0.009634999558329582,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0014486269792541862,
+      "clip_factor_min": 0.0014486269792541862,
+      "clip_factor_mean": 0.0014486269792541862,
+      "update_to_weight_ratio_mean": 0.0
+    },
+    {
+      "measurement_version": 2,
+      "step": 8,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.8124116097079686,
+          "entropy_norm": 0.86785529550527,
+          "effective_codes": 123.02795545965218,
+          "max_code_share": 0.02391507707325009
+        },
+        "level_2": {
+          "used_codes": 255,
+          "capacity": 256,
+          "used_fraction": 0.99609375,
+          "entropy_nats": 4.962931522938877,
+          "entropy_norm": 0.8949995870519286,
+          "effective_codes": 143.0124261929575,
+          "max_code_share": 0.02090535648920161
+        },
+        "level_3": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 5.0377541993853585,
+          "entropy_norm": 0.9084928750838509,
+          "effective_codes": 154.12349542381244,
+          "max_code_share": 0.017000854109895474
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.86785529550527,
+      "l1_effective_codes": 123.02795545965218,
+      "l1_max_code_share": 0.02391507707325009,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.04815552934477574,
+      "tuple3_unique": 23403,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.038750000298023224,
+      "negative_same_code_rate": 0.010484999977052212,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0014332020655274391,
+      "clip_factor_min": 0.0014300895854830742,
+      "clip_factor_mean": 0.001443264467525296,
+      "update_to_weight_ratio_mean": 1.530275541744636e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 16,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.444370868653607,
+          "entropy_norm": 0.8014839765097417,
+          "effective_codes": 85.14629278125294,
+          "max_code_share": 0.08264530036197991
+        },
+        "level_2": {
+          "used_codes": 254,
+          "capacity": 256,
+          "used_fraction": 0.9921875,
+          "entropy_nats": 4.694583076346404,
+          "entropy_norm": 0.8466064654107763,
+          "effective_codes": 109.35320719763567,
+          "max_code_share": 0.048074185545206816
+        },
+        "level_3": {
+          "used_codes": 253,
+          "capacity": 256,
+          "used_fraction": 0.98828125,
+          "entropy_nats": 4.895691313261052,
+          "entropy_norm": 0.8828736974206121,
+          "effective_codes": 133.71241183385786,
+          "max_code_share": 0.032049457030137875
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.8014839765097417,
+      "l1_effective_codes": 85.14629278125294,
+      "l1_max_code_share": 0.08264530036197991,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.10123235856346846,
+      "tuple3_unique": 22098,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.04884999990463257,
+      "negative_same_code_rate": 0.020615000277757645,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0014015346532687545,
+      "clip_factor_min": 0.0014015346532687545,
+      "clip_factor_mean": 0.00143102108995663,
+      "update_to_weight_ratio_mean": 2.9899619329099936e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 32,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 247,
+          "capacity": 256,
+          "used_fraction": 0.96484375,
+          "entropy_nats": 3.5620721773633095,
+          "entropy_norm": 0.6423729831963249,
+          "effective_codes": 35.23613707238554,
+          "max_code_share": 0.14983527880587302
+        },
+        "level_2": {
+          "used_codes": 249,
+          "capacity": 256,
+          "used_fraction": 0.97265625,
+          "entropy_nats": 3.940417571531282,
+          "entropy_norm": 0.7106026111849891,
+          "effective_codes": 51.440076728059886,
+          "max_code_share": 0.12705901492658722
+        },
+        "level_3": {
+          "used_codes": 240,
+          "capacity": 256,
+          "used_fraction": 0.9375,
+          "entropy_nats": 4.434078922104916,
+          "entropy_norm": 0.7996279589788804,
+          "effective_codes": 84.27446578118655,
+          "max_code_share": 0.07390084190832553
+        }
+      },
+      "l1_used_codes": 247,
+      "l1_entropy_norm": 0.6423729831963249,
+      "l1_effective_codes": 35.23613707238554,
+      "l1_max_code_share": 0.14983527880587302,
+      "l1_collision": 0.9899540407532436,
+      "l1_unique": 247,
+      "tuple3_collision": 0.3621425956806442,
+      "tuple3_unique": 15683,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.08919999748468399,
+      "negative_same_code_rate": 0.0615449994802475,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0013293992960825562,
+      "clip_factor_min": 0.0013293992960825562,
+      "clip_factor_mean": 0.00139656431201729,
+      "update_to_weight_ratio_mean": 6.490826116572162e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 64,
+      "active_optimizer_steps": 32,
+      "mechanism_call_count": 96,
+      "applied_behavior_weight": 0.2,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 175,
+          "capacity": 256,
+          "used_fraction": 0.68359375,
+          "entropy_nats": 2.8931554518715803,
+          "entropy_norm": 0.5217426278669997,
+          "effective_codes": 18.050176296884015,
+          "max_code_share": 0.27799243502664006
+        },
+        "level_2": {
+          "used_codes": 185,
+          "capacity": 256,
+          "used_fraction": 0.72265625,
+          "entropy_nats": 3.4800053511607487,
+          "entropy_norm": 0.6275733077983335,
+          "effective_codes": 32.45989577351923,
+          "max_code_share": 0.1436531500386383
+        },
+        "level_3": {
+          "used_codes": 242,
+          "capacity": 256,
+          "used_fraction": 0.9453125,
+          "entropy_nats": 4.497496507241615,
+          "entropy_norm": 0.8110644884266139,
+          "effective_codes": 89.79205591902871,
+          "max_code_share": 0.047708138447146865
+        }
+      },
+      "l1_used_codes": 175,
+      "l1_entropy_norm": 0.5217426278669997,
+      "l1_effective_codes": 18.050176296884015,
+      "l1_max_code_share": 0.27799243502664006,
+      "l1_collision": 0.9928824175377232,
+      "l1_unique": 175,
+      "tuple3_collision": 0.6463578313743035,
+      "tuple3_unique": 8695,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.26854997873306274,
+      "negative_same_code_rate": 0.13279999792575836,
+      "attribution": {
+        "g_base_enc_norm": 0.00036222435301169753,
+        "levels": [
+          {
+            "level": 0,
+            "raw_norm": 0.9154375195503235,
+            "weighted_norm": 0.061029167970021565,
+            "norm_over_base": 168.48444192831704,
+            "cosine_with_base": -0.15132819509851814,
+            "undefined_reason": null
+          },
+          {
+            "level": 1,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          },
+          {
+            "level": 2,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          }
+        ],
+        "max_norm_over_base": 168.48444192831704,
+        "ratios_defined": 1
+      },
+      "preclip_total_norm": 0.06034008786082268,
+      "clip_factor_min": 0.0013293992960825562,
+      "clip_factor_mean": 0.032221511710304185,
+      "update_to_weight_ratio_mean": 1.586388016547329e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 96,
+      "active_optimizer_steps": 64,
+      "mechanism_call_count": 192,
+      "applied_behavior_weight": 0.2,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 131,
+          "capacity": 256,
+          "used_fraction": 0.51171875,
+          "entropy_nats": 2.713569725077628,
+          "entropy_norm": 0.4893566981844902,
+          "effective_codes": 15.083021769181594,
+          "max_code_share": 0.20763004839956073
+        },
+        "level_2": {
+          "used_codes": 215,
+          "capacity": 256,
+          "used_fraction": 0.83984375,
+          "entropy_nats": 3.5625822405284353,
+          "entropy_norm": 0.6424649663961832,
+          "effective_codes": 35.2541143123617,
+          "max_code_share": 0.14121283605157198
+        },
+        "level_3": {
+          "used_codes": 251,
+          "capacity": 256,
+          "used_fraction": 0.98046875,
+          "entropy_nats": 4.942060979368873,
+          "entropy_norm": 0.8912358583382909,
+          "effective_codes": 140.05861021133398,
+          "max_code_share": 0.030910643836173587
+        }
+      },
+      "l1_used_codes": 131,
+      "l1_entropy_norm": 0.4893566981844902,
+      "l1_effective_codes": 15.083021769181594,
+      "l1_max_code_share": 0.20763004839956073,
+      "l1_collision": 0.9946719811282385,
+      "l1_unique": 131,
+      "tuple3_collision": 0.6984992068979542,
+      "tuple3_unique": 7413,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.21754999458789825,
+      "negative_same_code_rate": 0.09908999502658844,
+      "attribution": {
+        "g_base_enc_norm": 0.00024227598623838276,
+        "levels": [
+          {
+            "level": 0,
+            "raw_norm": 0.7957367300987244,
+            "weighted_norm": 0.05304911533991496,
+            "norm_over_base": 218.96150816911054,
+            "cosine_with_base": -0.07701504205702361,
+            "undefined_reason": null
+          },
+          {
+            "level": 1,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          },
+          {
+            "level": 2,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          }
+        ],
+        "max_norm_over_base": 218.96150816911054,
+        "ratios_defined": 1
+      },
+      "preclip_total_norm": 0.05289631336927414,
+      "clip_factor_min": 0.0013293992960825562,
+      "clip_factor_mean": 0.03922816800938259,
+      "update_to_weight_ratio_mean": 2.7657445638491827e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 128,
+      "active_optimizer_steps": 96,
+      "mechanism_call_count": 288,
+      "applied_behavior_weight": 0.2,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 122,
+          "capacity": 256,
+          "used_fraction": 0.4765625,
+          "entropy_nats": 2.9442078407990597,
+          "entropy_norm": 0.5309492564084007,
+          "effective_codes": 18.99560887851764,
+          "max_code_share": 0.12596087363240738
+        },
+        "level_2": {
+          "used_codes": 227,
+          "capacity": 256,
+          "used_fraction": 0.88671875,
+          "entropy_nats": 4.190247081716526,
+          "entropy_norm": 0.7556560856114855,
+          "effective_codes": 66.03910600042131,
+          "max_code_share": 0.09773457518200675
+        },
+        "level_3": {
+          "used_codes": 255,
+          "capacity": 256,
+          "used_fraction": 0.99609375,
+          "entropy_nats": 5.1958226788974535,
+          "entropy_norm": 0.9369984515229707,
+          "effective_codes": 180.5165889152338,
+          "max_code_share": 0.01635010371334445
+        }
+      },
+      "l1_used_codes": 122,
+      "l1_entropy_norm": 0.5309492564084007,
+      "l1_effective_codes": 18.99560887851764,
+      "l1_max_code_share": 0.12596087363240738,
+      "l1_collision": 0.9950380282262985,
+      "l1_unique": 122,
+      "tuple3_collision": 0.5689998779843006,
+      "tuple3_unique": 10597,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.22794999182224274,
+      "negative_same_code_rate": 0.07723499834537506,
+      "attribution": {
+        "g_base_enc_norm": 0.00024655667948536575,
+        "levels": [
+          {
+            "level": 0,
+            "raw_norm": 1.0826821327209473,
+            "weighted_norm": 0.07217880884806314,
+            "norm_over_base": 292.74732689749453,
+            "cosine_with_base": -0.23305075822739146,
+            "undefined_reason": null
+          },
+          {
+            "level": 1,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          },
+          {
+            "level": 2,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          }
+        ],
+        "max_norm_over_base": 292.74732689749453,
+        "ratios_defined": 1
+      },
+      "preclip_total_norm": 0.07019241899251938,
+      "clip_factor_min": 0.0013293992960825562,
+      "clip_factor_mean": 0.04419551670707733,
+      "update_to_weight_ratio_mean": 3.9639962223001475e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 160,
+      "active_optimizer_steps": 128,
+      "mechanism_call_count": 384,
+      "applied_behavior_weight": 0.2,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 116,
+          "capacity": 256,
+          "used_fraction": 0.453125,
+          "entropy_nats": 3.020681670202638,
+          "entropy_norm": 0.5447403082131922,
+          "effective_codes": 20.50526474911754,
+          "max_code_share": 0.14694757392117785
+        },
+        "level_2": {
+          "used_codes": 229,
+          "capacity": 256,
+          "used_fraction": 0.89453125,
+          "entropy_nats": 4.551240538985374,
+          "entropy_norm": 0.8207565194358765,
+          "effective_codes": 94.74987635349457,
+          "max_code_share": 0.04331557327042746
+        },
+        "level_3": {
+          "used_codes": 255,
+          "capacity": 256,
+          "used_fraction": 0.99609375,
+          "entropy_nats": 5.3370625045130575,
+          "entropy_norm": 0.9624692010219275,
+          "effective_codes": 207.90110387897647,
+          "max_code_share": 0.01370643022735592
+        }
+      },
+      "l1_used_codes": 116,
+      "l1_entropy_norm": 0.5447403082131922,
+      "l1_effective_codes": 20.50526474911754,
+      "l1_max_code_share": 0.14694757392117785,
+      "l1_collision": 0.995282059625005,
+      "l1_unique": 116,
+      "tuple3_collision": 0.4391345019725872,
+      "tuple3_unique": 13790,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.24229998886585236,
+      "negative_same_code_rate": 0.07025499641895294,
+      "attribution": {
+        "g_base_enc_norm": 0.00019162570242770016,
+        "levels": [
+          {
+            "level": 0,
+            "raw_norm": 0.9045531153678894,
+            "weighted_norm": 0.06030354102452596,
+            "norm_over_base": 314.6944290903686,
+            "cosine_with_base": -0.3396410496637417,
+            "undefined_reason": null
+          },
+          {
+            "level": 1,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          },
+          {
+            "level": 2,
+            "raw_norm": 0.0,
+            "weighted_norm": 0.0,
+            "norm_over_base": null,
+            "cosine_with_base": null,
+            "undefined_reason": "zero denominator: ||g_Lk_enc_weighted|| == 0"
+          }
+        ],
+        "max_norm_over_base": 314.6944290903686,
+        "ratios_defined": 1
+      },
+      "preclip_total_norm": 0.05671970546245575,
+      "clip_factor_min": 0.0013293992960825562,
+      "clip_factor_mean": 0.047773268145829204,
+      "update_to_weight_ratio_mean": 5.120007952269577e-06
+    }
+  ],
+  "schedule": {
+    "configured_baseline_steps": 32,
+    "configured_active_steps": 128,
+    "observed_baseline_steps": 32,
+    "observed_active_steps": 128,
+    "agrees": true,
+    "applied_weights_seen": [
+      0.0,
+      0.2
+    ]
+  },
+  "executed_steps": 160,
+  "active_optimizer_steps": 128,
+  "mechanism_call_count": 384,
+  "gradient_samples": 384,
+  "nonfinite_step_count": 0,
+  "clip_step_count": 0,
+  "production_artifacts_before": {
+    "trainer": "18231f691736d2edd52e4429c136e7488dbf43cf548d0d8bbfcc32d4f593acee",
+    "frozen_heldout_pairs": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "result:rqvae_best.pth": null,
+    "result:sids_for_hgrec.npy": null,
+    "result:item_sids.json": null,
+    "log:train_migrated.log": null,
+    "log:training_metrics.jsonl": null
+  },
+  "production_artifacts_after": {
+    "trainer": "18231f691736d2edd52e4429c136e7488dbf43cf548d0d8bbfcc32d4f593acee",
+    "frozen_heldout_pairs": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "result:rqvae_best.pth": null,
+    "result:sids_for_hgrec.npy": null,
+    "result:item_sids.json": null,
+    "log:train_migrated.log": null,
+    "log:training_metrics.jsonl": null
+  },
+  "production_artifacts_unchanged": true,
+  "elapsed_s": 12.7,
+  "environment": {
+    "torch": "2.8.0+cu128",
+    "cuda_available": true,
+    "device_count": 4
+  }
+}

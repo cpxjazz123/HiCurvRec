@@ -1,0 +1,182 @@
+{
+  "passed": true,
+  "gates_passed": true,
+  "arm": "resample",
+  "mechanism": "r6_04",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_04",
+  "trainer_sha256": "d2529222cb86980f158e348172a28038089004f89ead3c16f7971a2e599e0921",
+  "checked_utc": "2026-10-19T07:27:37Z",
+  "schema_version": 1,
+  "spec_sha256": "ba72757be6c89de715a3a85f2c12fc473f99f6dfaff3173e1b1fa60a6ca63686",
+  "fingerprint": {
+    "schema_version": 1,
+    "spec_sha256": "ba72757be6c89de715a3a85f2c12fc473f99f6dfaff3173e1b1fa60a6ca63686",
+    "oracles_sha256": "55055328b534cb2af1ecd3abad9aa81d2184784da8a4f6a96cfb1342ca7e93f7",
+    "adapter_sha256": "90a64fec0355ea39868ba8639a9a1f8f9585f58ff6e9bec7d26df93fcb3f7f2c"
+  },
+  "declared": {
+    "id": "r6_04",
+    "type": "quantization",
+    "entrypoints": [
+      "_residuals_with_trace"
+    ],
+    "activation": {},
+    "forward": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens",
+        "residuals",
+        "codewords",
+        "behavior_level_losses"
+      ],
+      "invariants": [
+        "finite",
+        "shape",
+        "tokens_in_range",
+        "levels",
+        "residual_identity",
+        "behavior_trace_hard_forward_exact",
+        "hard_sid_unchanged_by_backward_surrogate"
+      ],
+      "declared_effect": "none"
+    },
+    "gradient": {
+      "mode": "formula",
+      "target": "encoder",
+      "rule": "soft_codeword_surrogate",
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "nonzero",
+        "l2_loss": "nonzero",
+        "l3_loss": "nonzero",
+        "other_loss": "nonzero"
+      }
+    },
+    "update": {
+      "optimizer": "AdamW"
+    },
+    "distributed": {
+      "world_size": 2,
+      "aggregation": "ddp_mean",
+      "rank_batch_sizes": [
+        24,
+        20
+      ],
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate",
+      "verify_encoder_and_codebook_gradients": true,
+      "verify_rank_parameter_identity": true
+    },
+    "runtime": {
+      "entrypoint": "main",
+      "observe": [
+        "mechanism_calls",
+        "optimizer_steps",
+        "parameter_updates",
+        "target_encoder_update"
+      ]
+    }
+  },
+  "independence": {
+    "independent": true,
+    "oracles": [
+      "oracles:aggregate",
+      "oracles:hard_residual_trace_forward",
+      "oracles:optimizer_update",
+      "oracles:soft_codeword_behavior_gradient"
+    ],
+    "problems": []
+  },
+  "refused": null,
+  "summary": {
+    "G1": {
+      "state": "passed",
+      "passed": true,
+      "title": "forward contract",
+      "prevents": "a forward that violates the declared formula, invariants or output constraints"
+    },
+    "G2": {
+      "state": "passed",
+      "passed": true,
+      "title": "gradient propagation",
+      "prevents": "a declared loss path that does not reach the declared parameters, or a non-finite one"
+    },
+    "G3": {
+      "state": "passed",
+      "passed": true,
+      "title": "gradient mathematics",
+      "prevents": "an executed gradient that contradicts the declared gradient rule"
+    },
+    "G4": {
+      "state": "passed",
+      "passed": true,
+      "title": "parameter update",
+      "prevents": "an update that the declared optimizer and clipping do not produce"
+    },
+    "G5": {
+      "state": "passed",
+      "passed": true,
+      "title": "distributed consistency",
+      "prevents": "an aggregation rule that the multi-rank execution does not satisfy"
+    },
+    "G6": {
+      "state": "passed",
+      "passed": true,
+      "title": "real training entry",
+      "prevents": "a mechanism that formal training never executes, or that never moves a parameter"
+    }
+  },
+  "gates": {
+    "G1": {
+      "state": "passed",
+      "passed": true,
+      "title": "forward contract",
+      "detail": "the forward satisfies 10 declared check(s): finite, shape, tokens_in_range, levels, residual_identity, behavior_trace_hard_forward_exact, hard_sid_unchanged_by_backward_surrogate, hard_assignment_algebra, forward_oracle:tokens, forward_oracle:residuals",
+      "warnings": [],
+      "finding": null
+    },
+    "G2": {
+      "state": "passed",
+      "passed": true,
+      "title": "gradient propagation",
+      "detail": "every declared level reaches its declared target with the declared character: L0:encoder=nonzero, L1:encoder=nonzero, L1:codebooks=nonzero, L2:encoder=nonzero, L2:codebooks=nonzero",
+      "warnings": [],
+      "finding": null
+    },
+    "G3": {
+      "state": "passed",
+      "passed": true,
+      "title": "gradient mathematics",
+      "detail": "max deviation from the declared rule 'soft_codeword_surrogate' over 8 probe(s) = 5.364e-07, measured against the VJP the oracle derives for the encoder and, where declared, the codebooks -- this rule's trace-to-latent Jacobian is data dependent, so no constant level Jacobian exists to compare; deviation from the untreated assembly on seed1=1.621e+01, seed4=1.027e+01, seed5=1.103e+01, seed12=1.495e+01, seed16=1.137e+01, seed30=1.164e+01, seed32=1.465e+01, seed36=1.443e+01",
+      "warnings": [],
+      "finding": null
+    },
+    "G4": {
+      "state": "passed",
+      "passed": true,
+      "title": "parameter update",
+      "detail": "the declared AdamW step (lr 0.001, weight decay 0.0001, clip 1) moved the declared target parameters by 1.000e-03, within 1.192e-07 of the independent update oracle",
+      "warnings": [],
+      "finding": null
+    },
+    "G5": {
+      "state": "passed",
+      "passed": true,
+      "title": "distributed consistency",
+      "detail": "2 real ranks with the declared 'ddp_mean' aggregation: the production pooled gradient matches the independent pooled reference within 0.000e+00, and both ranks hold bitwise identical parameters after a step",
+      "warnings": [],
+      "finding": null
+    },
+    "G6": {
+      "state": "passed",
+      "passed": true,
+      "title": "real training entry",
+      "detail": "the real entry point 'main' ran in 4.8s and satisfied every declared observable: mechanism_calls=48, optimizer_steps=48, parameter_updates=48, target_encoder_update=48",
+      "warnings": [],
+      "finding": null
+    }
+  }
+}

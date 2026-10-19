@@ -202,6 +202,15 @@ CGV 不比较新旧模型、不需要 baseline checkpoint、不要求机制提�
 **它不是门禁**：`risk` 是**启发式**提示，不是经过验证的预测器，**不得**用它取消/批准/调参任何一次运行，
 也**不得**进入 `stage3_allowed`。冻结的 Hard-L1 ER 仍是 Stage3 准入的唯一性能判据。
 
+**测量版本 2**（issue #78）：v1 的 `level_norm_over_base` 用的是**全参数全 loss 的 pre-clip 范数**作分母，
+不是 `‖∇_encoder(base_loss)‖`；且逐级 CE 用**循环位移伪造标签**并丢弃真实 `successor_indicator`。
+v1 的比值与 `deep_gradient_domination` 因此**无效**，其报告留在 `stability_probe/` 且不声称为正确。
+v2 改为观察训练器**自己构建的** loss（真实 batch / source-target / 重复与假负样本 mask / 温度），
+分母为同一步的 `‖g_base_enc‖`，比值在分母为零或该级断连时显式标为 `undefined` 并给出原因。
+`preclip_total_norm` 仍单独报告，**不再**充当分母。
+调度改为经训练器的**探针专用逐步 hook**（生产为 `None`，A/B 实测参数与 SID 逐位相同），
+实现精确 32 基线 + 128 活跃步、8 个快照（含真实 step 0），并断言配置与实测调度一致。
+
 **已实测的假阳性**：在完全相同的协议下，健康参照臂 `r4_08`（历史 ER 16.402628）**同样**得到 `risk = high`。
 因此二元指标目前**不具判别力**，任何自动中止策略都无依据；探针报告里 `risk_calibration` 字段固定记录这一点。
 真正与最终 ER 单调对应的是**三级元组碰撞率**与**负样本同码率**（见

@@ -91,10 +91,11 @@ RISK_RULES = {
         and snap.get("negative_same_code_rate", 0.0)
         > 1.5 * first["negative_same_code_rate"]),
     "deep_gradient_domination": (
-        "a deep behaviour level exceeded the base encoder gradient norm on every snapshot",
+        "a behaviour level's WEIGHTED encoder gradient exceeded ||grad(base_loss, encoder)||, "
+        "both measured on the same step",
         lambda snap, _first: snap is not None
-        and bool(snap.get("level_norm_over_base"))
-        and max(snap["level_norm_over_base"]) > 1.0),
+        and (snap.get("attribution") or {}).get("max_norm_over_base") is not None
+        and snap["attribution"]["max_norm_over_base"] > 1.0),
     "clipping_saturation": (
         "every measured step clipped at the clip norm",
         lambda snap, _first: snap is not None and snap.get("clip_factor_min", 0.0) >= 1.0),
@@ -117,6 +118,16 @@ WATCH_RULES = ("l1_entropy_drop", "l1_effective_codes_drop", "max_code_share_ris
 # threshold: one healthy arm and three failures cannot calibrate a predictor.
 RISK_CALIBRATION = {
     "status": "uncalibrated",
+    "measurement_version": 2,
+    "supersedes": ("version 1 divided the per-level gradient norm by the total pre-clip norm of "
+                   "every parameter and every loss, which is not the base-loss encoder gradient, "
+                   "and regenerated contrastive labels with a cyclic shift instead of observing "
+                   "the trainer's own terms. Those values are invalid and are not comparable with "
+                   "version 2; the version-1 reports are left in place and are not claimed to be "
+                   "correct"),
+    "risk_labels_reevaluated": ("after the correction the labels were recomputed on the same four "
+                                "arms; the outcome is recorded in RETROSPECTIVE_v2.md rather than "
+                                "asserted here"),
     "reference_arms": {
         "healthy": {"arm": "r4_08", "reference_hard_l1_er_historical": 16.402628,
                     "tuple3_collision_at_160": 0.4769, "negative_same_code_rate_at_160": 0.0734},
@@ -259,10 +270,13 @@ def classify_status(snapshots: list[dict[str, Any]], config: dict[str, Any],
     elif not snapshots:
         status = "inconclusive"
         reason = "no snapshot was produced"
-    elif not any(snapshot.get("finite_fraction", 1.0) >= 1.0 for snapshot in snapshots):
+    elif any(snapshot.get("nonfinite_steps", 0) > 0 for snapshot in snapshots):
         status = "invalid"
-        reason = "a measured step produced a non-finite value"
-    elif max(snapshot.get("mechanism_active_steps", 0) for snapshot in snapshots) < 2:
+        worst = max(snapshot.get("nonfinite_steps", 0) for snapshot in snapshots)
+        reason = (f"{worst} optimizer step(s) produced a non-finite measurement. A finite early "
+                  "snapshot does not excuse a non-finite later one, so this is a failure rather "
+                  "than an advisory field")
+    elif max(snapshot.get("active_optimizer_steps", 0) for snapshot in snapshots) < 2:
         status = "invalid"
         reason = ("the behaviour path executed on fewer than two steps, so this run cannot test "
                   "the failure mode it exists to detect. The behaviour weight is consulted once "
@@ -330,6 +344,10 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
         "preclip_norms": [], "level_norms": [], "base_derived": [], "weights_before": None,
         "losses": [], "recons": [], "behaviors": [], "quants": [], "finite": 0, "sampled": 0,
         "clip_index": 0, "baseline_observed": 0, "steps_per_epoch": 0,
+        "observed_ce": [], "observed_base": None, "active_optimizer_steps": 0,
+        "mechanism_call_count": 0, "applied_weights": [], "zero_measured": False,
+        "nonfinite_detail": [], "step_gradients": [], "schedule": [],
+        "current_weight": 0.0,
     }
 
     def note(message: str) -> None:
@@ -345,10 +363,13 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
             originals = {
                 "init": model_class.__init__,
                 "trace": trainer._residuals_with_trace,
+                "ce": trainer._contrastive_ce,
+                "compute_loss": model_class.compute_loss,
                 "weight": trainer.behavior_weight,
                 "step": getattr(torch.optim, trainer.OPTIMIZER).step,
                 "clip": torch.nn.utils.clip_grad_norm_,
                 "backward": torch.Tensor.backward,
+                "hook": getattr(trainer, "_PROBE_STEP_WEIGHT_HOOK", None),
             }
             optimizer_cls = getattr(torch.optim, trainer.OPTIMIZER)
 
@@ -356,33 +377,65 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
                 originals["init"](inner_self, *args, **kwargs)
                 captured_models.append(inner_self)
 
+            def observing_ce(logits, source_ids, target_ids, successor_indicator=None):
+                """Record the loss the TRAINER built, on the batch the TRAINER chose.
+
+                The previous version regenerated a contrastive target with a cyclic shift and
+                dropped `successor_indicator`, so the gradients it reported were not the training
+                terms at all. Observing the call keeps the real labels, the real mask and the real
+                temperature, and the value is returned unchanged.
+                """
+                loss = originals["ce"](logits, source_ids, target_ids, successor_indicator)
+                if state["active"] and loss is not None:
+                    state["observed_ce"].append(loss)
+                    state["mechanism_call_count"] += 1
+                return loss
+
+            def observing_compute_loss(inner_self, embeddings, reconstructed, quant_loss):
+                base_loss, recon_loss = originals["compute_loss"](
+                    inner_self, embeddings, reconstructed, quant_loss)
+                if state["active"]:
+                    state["observed_base"] = base_loss
+                    state["applied_weights"].append(
+                        float(state.get("current_weight", 0.0)))
+                return base_loss, recon_loss
+
             def tracing_trace(raw_module, embeddings):
-                # Counting the active window HERE, rather than from the configured step numbers,
-                # is what makes the count evidence. A schedule expressed in steps is consulted
-                # once per EPOCH, so a budget shorter than one epoch can leave the behaviour path
-                # untouched while a config-derived counter happily reports "active".
-                if state["step"] >= int(config["baseline_steps"]):
-                    state["active"] += 1
-                else:
-                    state["baseline_observed"] += 1
+                # The active window is counted where the mechanism actually runs, and the hook that
+                # sets the per-step weight reads this same counter, so the schedule and the count
+                # cannot disagree.
                 stacked = originals["trace"](raw_module, embeddings)
-                captured_traces.append({
-                    "traces": [stacked[i] for i in range(int(stacked.shape[0]))],
-                    "n_src": int(embeddings.shape[0]) // 2,
-                })
                 return stacked
 
-            def weight_schedule(epoch: int) -> float:
-                """0 during the baseline window, the declared weight afterwards.
+            def weight_schedule(epoch: int, current: float | None = None) -> float:
+                """The probe's schedule, in OPTIMIZER STEPS.
 
-                Production ramps from epoch 1500, so a 160-step run would never touch the behaviour
-                path and could not reproduce the failure this probe exists to catch. Only the
-                SCHEDULE is replaced; the loss, optimizer, clipping and aggregation are the real
-                ones, and the original function is restored before this process returns.
+                Production's weight is an epoch constant evaluated once per epoch, so a schedule
+                expressed in steps cannot be expressed through it. The trainer therefore exposes a
+                probe-only hook evaluated per mini-batch; this function is what that hook calls.
+                The step about to run is ``state["step"] + 1``, so steps 1..baseline use exactly 0
+                and steps baseline+1..budget use exactly the declared weight.
                 """
-                if state["step"] < int(config["baseline_steps"]):
-                    return 0.0
-                return float(config["behavior_weight_active"])
+                if current is None:
+                    # The per-EPOCH read. Production evaluates the weight once per epoch and the
+                    # crowding ramp, the hyperbolic alpha and the gating that follows all read
+                    # that value, so this must return exactly what production returns. Only the
+                    # per-step hook below replaces the behaviour weight, and only for the
+                    # behaviour term.
+                    return originals["weight"](epoch)
+                step_about_to_run = state["step"] + 1
+                if step_about_to_run <= int(config["baseline_steps"]):
+                    applied = 0.0
+                elif step_about_to_run > budget:
+                    applied = 0.0
+                else:
+                    applied = float(config["behavior_weight_active"])
+                state["current_weight"] = applied
+                # The SAME value decides whether the observers record, so the schedule and what
+                # was observed cannot disagree: there is one source of truth, not a flag beside it.
+                state["active"] = applied > 0.0
+                state["schedule"].append({"step": step_about_to_run, "weight": applied})
+                return applied
 
             def level_terms(entry: dict[str, Any]) -> list[torch.Tensor]:
                 """Per-level contrastive terms, built with the trainer's own primitives."""
@@ -398,32 +451,41 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
                                  else torch.zeros((), device=trace.device))
                 return terms
 
-            def sampling_backward(self, *args, **kwargs):
-                """Sample per-level behaviour gradients from THIS graph, then backward once.
+            def _encoder_grad(loss, encoder):
+                """The real VJP of a loss the trainer built, on this step's graph."""
+                if loss is None or not loss.requires_grad:
+                    return None
+                grads = torch.autograd.grad(loss, encoder, retain_graph=True, allow_unused=True)
+                if all(g is None for g in grads):
+                    return None
+                return [torch.zeros_like(p) if g is None else g for p, g in zip(encoder, grads)]
 
-                Sampling here rather than after the optimizer step is what makes the numbers
-                describe the computation that actually ran: the graph is still alive, and the
-                trainer's own backward follows with the graph intact, so there is no second
-                backward and no extra optimizer step.
+            def sampling_backward(self, *args, **kwargs):
+                """Sample the TRUE per-term gradients from THIS graph, then backward exactly once.
+
+                The terms come from the trainer's own loss construction, observed as it ran: the
+                real pair minibatch, the real source/target ids, the real duplicate and
+                false-negative mask, the real temperature. Sampling before the trainer's own
+                backward keeps the graph alive, so there is no second backward, no extra optimizer
+                step and no mutation of `.grad`.
                 """
                 try:
-                    if captured_traces and captured_models:
+                    if captured_models and state["active"]:
                         model = captured_models[-1]
                         encoder = [p for p in model.encoder.parameters()]
-                        terms = level_terms(captured_traces[-1])
-                        rows = []
-                        for loss in terms:
-                            grads = torch.autograd.grad(loss, encoder, retain_graph=True,
-                                                        allow_unused=True)
-                            rows.append(oracles.flat_norm([
-                                torch.zeros_like(p) if g is None else g
-                                for p, g in zip(encoder, grads)]))
-                            state["sampled"] += 1
-                        state["level_norms"].append(rows)
-                        state["behaviors"].append(float(sum(float(t) for t in terms) / len(terms)))
-                        captured_traces.pop()
+                        g_base = _encoder_grad(state["observed_base"], encoder)
+                        g_levels = [_encoder_grad(loss, encoder) for loss in state["observed_ce"]]
+                        state["step_gradients"].append({
+                            "g_base": g_base,
+                            "g_levels_raw": g_levels,
+                            "level_count": len([g for g in g_levels if g is not None]),
+                        })
+                        state["sampled"] += len(g_levels)
                 except Exception as exc:  # noqa: BLE001
                     note(f"gradient sampling failed: {type(exc).__name__}: {exc}")
+                finally:
+                    state["observed_ce"] = []
+                    state["observed_base"] = None
                 return originals["backward"](self, *args, **kwargs)
 
             def sampling_clip(parameters, max_norm, *args, **kwargs):
@@ -439,6 +501,14 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
 
             def measured_step(self, *args, **kwargs):
                 models = captured_models
+                # Step 0: measured at the top of the first optimizer step, where the parameters
+                # are still the cold initial ones -- the gradients exist but have not been applied.
+                if models and 0 in snapshot_set and not state["zero_measured"]:
+                    state["zero_measured"] = True
+                    try:
+                        snapshots.append(measure(models[-1], state, config, snapshots))
+                    except Exception as exc:  # noqa: BLE001
+                        note(f"step-0 snapshot failed: {type(exc).__name__}: {exc}")
                 weights_before = None
                 if models:
                     weights_before = [p.detach().clone()
@@ -446,6 +516,8 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
                 result = originals["step"](self, *args, **kwargs)
                 state["step"] += 1
                 step = state["step"]
+                if state["step"] > int(config["baseline_steps"]):
+                    state["active_optimizer_steps"] += 1
                 if weights_before and models:
                     moved = 0.0
                     scale = 0.0
@@ -461,7 +533,7 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
                 state["clip_index"] = len(state["preclip_norms"])
                 state["finite"] += 1 if finite else 0
                 state["nonfinite"] += 0 if finite else 1
-                if models and (step in snapshot_set or step == budget):
+                if models and step in snapshot_set and step not in {s["step"] for s in snapshots}:
                     try:
                         snapshots.append(measure(models[-1], state, config, snapshots))
                     except Exception as exc:  # noqa: BLE001
@@ -472,7 +544,10 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
 
             model_class.__init__ = capturing_init
             trainer._residuals_with_trace = tracing_trace
+            trainer._contrastive_ce = observing_ce
+            model_class.compute_loss = observing_compute_loss
             trainer.behavior_weight = weight_schedule
+            trainer._PROBE_STEP_WEIGHT_HOOK = weight_schedule
             optimizer_cls.step = measured_step
             torch.nn.utils.clip_grad_norm_ = sampling_clip
             torch.Tensor.backward = sampling_backward
@@ -490,7 +565,10 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
                 note(f"the training loop raised {type(exc).__name__}: {exc}")
             model_class.__init__ = originals["init"]
             trainer._residuals_with_trace = originals["trace"]
+            trainer._contrastive_ce = originals["ce"]
+            model_class.compute_loss = originals["compute_loss"]
             trainer.behavior_weight = originals["weight"]
+            trainer._PROBE_STEP_WEIGHT_HOOK = originals["hook"]
             optimizer_cls.step = originals["step"]
             torch.nn.utils.clip_grad_norm_ = originals["clip"]
             torch.Tensor.backward = originals["backward"]
@@ -508,6 +586,31 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
         note(f"the probe modified production artifacts: {changed}")
     if not snapshots:
         note("the probe produced no snapshots")
+
+    # The configured schedule must be what actually ran, not merely what was asked for: the
+    # issue requires asserting the two agree, so the observed weights are compared step by step.
+    expected_active = int(config["behavior_active_steps"])
+    expected_baseline = int(config["baseline_steps"])
+    schedule_rows = state["schedule"]
+    baseline_steps_seen = [row for row in schedule_rows if row["weight"] == 0.0]
+    active_steps_seen = [row for row in schedule_rows
+                         if row["weight"] == float(config["behavior_weight_active"])]
+    schedule_agrees = (len(schedule_rows) == budget
+                       and len(baseline_steps_seen) == expected_baseline
+                       and len(active_steps_seen) == expected_active
+                       and all(row["step"] <= expected_baseline
+                               for row in baseline_steps_seen)
+                       and all(row["step"] > expected_baseline
+                               for row in active_steps_seen))
+    if not schedule_agrees:
+        failures.append(
+            f"schedule_mismatch: configured {expected_baseline} baseline + {expected_active} "
+            f"active, observed {len(baseline_steps_seen)} baseline + {len(active_steps_seen)} "
+            f"active over {len(schedule_rows)} step(s)")
+    if state["active_optimizer_steps"] != expected_active:
+        failures.append(
+            f"active_step_mismatch: expected_active_steps={expected_active} "
+            f"observed_active_steps={state['active_optimizer_steps']}")
 
     status, reason, fired, evidence = classify_status(snapshots, config, failures)
     return {
@@ -530,8 +633,17 @@ def run_probe(tree: Path, spec: dict[str, Any], config: dict[str, Any], out_dir:
         "probe_config_sha256": hashlib.sha256(
             json.dumps(config, sort_keys=True, default=str).encode("utf-8")).hexdigest(),
         "snapshots": snapshots,
+        "schedule": {
+            "configured_baseline_steps": expected_baseline,
+            "configured_active_steps": expected_active,
+            "observed_baseline_steps": len(baseline_steps_seen),
+            "observed_active_steps": len(active_steps_seen),
+            "agrees": schedule_agrees,
+            "applied_weights_seen": sorted({row["weight"] for row in schedule_rows}),
+        },
         "executed_steps": state["step"],
-        "mechanism_active_steps": state["active"],
+        "active_optimizer_steps": state["active_optimizer_steps"],
+        "mechanism_call_count": state["mechanism_call_count"],
         "gradient_samples": state["sampled"],
         "nonfinite_step_count": state["nonfinite"],
         "clip_step_count": state.get("clipped", 0),
@@ -552,7 +664,8 @@ def _failure(config: dict[str, Any], failures: list[str]) -> dict[str, Any]:
             "risk": "unknown", "risk_note": "the probe did not execute",
             "fired_indicators": [], "risk_evidence": [], "protocol_failures": failures,
             "probe_config": config, "snapshots": [], "executed_steps": 0,
-            "mechanism_active_steps": 0, "production_artifacts_unchanged": True}
+            "active_optimizer_steps": 0, "mechanism_call_count": 0,
+            "production_artifacts_unchanged": True}
 
 
 def shutil_rmtree(path: Path) -> None:
@@ -601,9 +714,66 @@ def _train_only_pairs(trainer, limit: int = 20000) -> tuple[torch.Tensor, torch.
     return left, right, negatives
 
 
+MEASUREMENT_VERSION = 2
+
+
+def _norm(grads) -> float | None:
+    if grads is None:
+        return None
+    return float(torch.linalg.vector_norm(torch.cat([g.reshape(-1) for g in grads])))
+
+
+def attribute_gradients(step_record: dict[str, Any], weight: float,
+                        valid_levels: int) -> dict[str, Any]:
+    """Per-term encoder gradient attribution, with the CORRECT denominator.
+
+    ``level_norm_over_base`` previously divided by ``preclip_total_norm`` -- the norm of EVERY
+    parameter's gradient from EVERY loss, pre-clipping. That is not the base-loss encoder gradient
+    and the two are not interchangeable, so the ratio and the `deep_gradient_domination` indicator
+    built on it were wrong. The denominator here is ``||grad(base_loss, encoder_parameters)||``
+    from the SAME step.
+
+    A ratio is UNDEFINED when either norm is exactly zero; it is reported as ``None`` with a
+    reason rather than as 0 or as a fabricated large number.
+    """
+    g_base = step_record.get("g_base")
+    base_norm = _norm(g_base)
+    rows = []
+    for index, grads in enumerate(step_record.get("g_levels_raw") or []):
+        raw = _norm(grads)
+        if raw is None:
+            rows.append({"level": index, "raw_norm": None, "weighted_norm": None,
+                         "norm_over_base": None, "cosine_with_base": None,
+                         "undefined_reason": "the level's gradient is disconnected from the "
+                                             "encoder parameters on this step"})
+            continue
+        weighted = raw * (weight / max(valid_levels, 1))
+        if base_norm is None or base_norm == 0.0 or weighted == 0.0:
+            rows.append({"level": index, "raw_norm": raw, "weighted_norm": weighted,
+                         "norm_over_base": None, "cosine_with_base": None,
+                         "undefined_reason": "zero denominator: "
+                                             + ("||g_base_enc|| == 0" if not base_norm
+                                                else "||g_Lk_enc_weighted|| == 0")})
+            continue
+        flat_base = torch.cat([g.reshape(-1) for g in g_base])
+        flat_level = torch.cat([g.reshape(-1) for g in grads])
+        cosine = float((flat_level * flat_base).sum()) / (
+            float(torch.linalg.vector_norm(flat_level)) * float(torch.linalg.vector_norm(flat_base)))
+        rows.append({"level": index, "raw_norm": raw, "weighted_norm": weighted,
+                     "norm_over_base": weighted / base_norm, "cosine_with_base": cosine,
+                     "undefined_reason": None})
+    ratios = [row["norm_over_base"] for row in rows if row["norm_over_base"] is not None]
+    return {
+        "g_base_enc_norm": base_norm,
+        "levels": rows,
+        "max_norm_over_base": max(ratios) if ratios else None,
+        "ratios_defined": len(ratios),
+    }
+
+
 def measure(model, state: dict[str, Any], config: dict[str, Any],
             previous: list[dict[str, Any]]) -> dict[str, Any]:
-    """One snapshot: RAW SID occupancy, the two collisions kept apart, and step telemetry."""
+    """One snapshot: RAW SID occupancy, the two collisions kept apart, and TRUE attribution."""
     model.eval()
     embeddings = _probe_embeddings(model)
     with torch.no_grad():
@@ -629,16 +799,19 @@ def measure(model, state: dict[str, Any], config: dict[str, Any],
     except Exception:  # noqa: BLE001
         pass
 
-    level_rows = state["level_norms"][-1] if state["level_norms"] else []
+    record = state["step_gradients"][-1] if state["step_gradients"] else {}
+    weight = state["applied_weights"][-1] if state["applied_weights"] else 0.0
+    attribution = attribute_gradients(record, weight, int(config.get("valid_levels", 3)))
     preclip = state["preclip_norms"][-1] if state["preclip_norms"] else 0.0
-    ratio = [value / preclip if preclip > 0 else 0.0 for value in level_rows]
-    clip_factors = state["clip_factors"]
 
     return {
+        "measurement_version": MEASUREMENT_VERSION,
         "step": state["step"],
-        "mechanism_active_steps": state["active"],
+        "active_optimizer_steps": state["active_optimizer_steps"],
+        "mechanism_call_count": state["mechanism_call_count"],
+        "applied_behavior_weight": weight,
         "nonfinite_steps": state["nonfinite"],
-        "finite_fraction": (state["finite"] / max(state["step"], 1)),
+        "finite_fraction": state["finite"] / max(state["step"], 1),
         "levels": per_level,
         "l1_used_codes": per_level["level_1"]["used_codes"],
         "l1_entropy_norm": per_level["level_1"]["entropy_norm"],
@@ -651,16 +824,13 @@ def measure(model, state: dict[str, Any], config: dict[str, Any],
         "items_measured": int(l1.numel()),
         "positive_same_code_rate": positive_rate,
         "negative_same_code_rate": negative_rate,
-        "level_grad_norms": level_rows,
-        "level_norm_over_base": ratio,
-        "max_level_norm_over_base": max(ratio) if ratio else 0.0,
+        "attribution": attribution,
         "preclip_total_norm": preclip,
-        "clip_factor_min": min(clip_factors) if clip_factors else 0.0,
-        "clip_factor_mean": (sum(clip_factors) / len(clip_factors)) if clip_factors else 0.0,
+        "clip_factor_min": min(state["clip_factors"]) if state["clip_factors"] else 0.0,
+        "clip_factor_mean": (sum(state["clip_factors"]) / len(state["clip_factors"]))
+        if state["clip_factors"] else 0.0,
         "update_to_weight_ratio_mean": (sum(state["update_ratio"]) / len(state["update_ratio"]))
         if state["update_ratio"] else 0.0,
-        "behavior_loss_proxy": (sum(state["behaviors"]) / len(state["behaviors"]))
-        if state["behaviors"] else 0.0,
     }
 
 
@@ -693,7 +863,8 @@ def render_markdown(result: dict[str, Any]) -> str:
         f"- declaration sha256: `{result['spec_sha256']}`",
         f"- probe config sha256: `{result['probe_config_sha256']}`",
         f"- executed steps: {result['executed_steps']} "
-        f"(behaviour-active {result['mechanism_active_steps']})",
+        f"(behaviour-active optimizer steps {result['active_optimizer_steps']}, "
+        f"mechanism calls {result['mechanism_call_count']})",
         f"- elapsed: {result['elapsed_s']}s",
         "",
         f"## status = `{result['status']}`",
@@ -719,13 +890,14 @@ def render_markdown(result: dict[str, Any]) -> str:
     lines += [
         "## Snapshots (RAW hard SIDs; L1-only and 3-level tuple kept separate)",
         "",
-        "| step | active | L1 used/256 | L1 H/log256 | L1 eff.codes | L1 max share | "
-        "L1 collision | 3-level collision |",
-        "|--:|--:|--:|--:|--:|--:|--:|--:|",
+        "| step | active steps | mechanism calls | L1 used/256 | L1 H/log256 | L1 eff.codes | "
+        "L1 max share | L1 collision | 3-level collision |",
+        "|--:|--:|--:|--:|--:|--:|--:|--:|--:|",
     ]
     for snap in result["snapshots"]:
         lines.append(
-            f"| {snap['step']} | {snap['mechanism_active_steps']} | "
+            f"| {snap['step']} | {snap.get('active_optimizer_steps', 0)} | "
+            f"{snap.get('mechanism_call_count', 0)} | "
             f"{snap['l1_used_codes']}/256 | {snap['l1_entropy_norm']:.4f} | "
             f"{snap['l1_effective_codes']:.1f} | {snap['l1_max_code_share']:.4f} | "
             f"{snap['l1_collision']:.4f} | {snap['tuple3_collision']:.4f} |")
@@ -761,6 +933,8 @@ def main() -> int:
                         help="omit to use the documented diagnostic defaults")
     parser.add_argument("--out", default=None)
     parser.add_argument("--worker", action="store_true")
+    parser.add_argument("--out-root", default="results/stage2_RQ-VAE/stability_probe_v2",
+                        help="never overwrite a previous measurement version's reports")
     arguments = parser.parse_args()
 
     # The declaration arrives as data. A caller that also needs to carry the probe configuration
@@ -792,7 +966,7 @@ def main() -> int:
 
     tree = Path(arguments.tree)
     out_dir = Path(arguments.out) if arguments.out else \
-        REPO_ROOT / "results/stage2_RQ-VAE/stability_probe" / \
+        REPO_ROOT / arguments.out_root / \
         tree.name.split("TIGER_")[-1] / time.strftime("run-%Y%m%dT%H%M%S")
     # The training loop prints its own banners to stdout. Redirect that noise to stderr so
     # stdout carries ONLY the JSON the caller parses.
@@ -803,7 +977,8 @@ def main() -> int:
     (out_dir / "report.md").write_text(render_markdown(result))
     print(json.dumps({"status": result["status"], "risk": result["risk"],
                       "executed_steps": result["executed_steps"],
-                      "mechanism_active_steps": result["mechanism_active_steps"],
+                      "active_optimizer_steps": result["active_optimizer_steps"],
+                      "mechanism_call_count": result["mechanism_call_count"],
                       "fired_indicators": result.get("fired_indicators"),
                       "report": str(out_dir / "report.json")}, indent=2))
     return 0 if result["status"] == "valid" else 1

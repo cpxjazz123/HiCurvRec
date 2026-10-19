@@ -1,0 +1,731 @@
+{
+  "probe": "stage2_stability_probe",
+  "status": "invalid",
+  "status_reason": "",
+  "risk": "unknown",
+  "risk_note": "risk is a HEURISTIC early-warning indicator, not a validated predictor, and never a performance gate: the frozen Hard-L1 ER remains the only Stage2 acceptance criterion",
+  "risk_calibration": {
+    "status": "uncalibrated",
+    "measurement_version": 2,
+    "supersedes": "version 1 divided the per-level gradient norm by the total pre-clip norm of every parameter and every loss, which is not the base-loss encoder gradient, and regenerated contrastive labels with a cyclic shift instead of observing the trainer's own terms. Those values are invalid and are not comparable with version 2; the version-1 reports are left in place and are not claimed to be correct",
+    "risk_labels_reevaluated": "after the correction the labels were recomputed on the same four arms; the outcome is recorded in RETROSPECTIVE_v2.md rather than asserted here",
+    "reference_arms": {
+      "healthy": {
+        "arm": "r4_08",
+        "reference_hard_l1_er_historical": 16.402628,
+        "tuple3_collision_at_160": 0.4769,
+        "negative_same_code_rate_at_160": 0.0734
+      },
+      "collapsed": {
+        "r6_02": {
+          "reference_hard_l1_er_historical": 2.8902618750708537,
+          "tuple3_collision_at_160": 0.7893,
+          "negative_same_code_rate_at_160": 0.1169
+        },
+        "r6_03": {
+          "reference_hard_l1_er_historical": 1.8233611326609775,
+          "tuple3_collision_at_160": 0.8158,
+          "negative_same_code_rate_at_160": 0.1203
+        },
+        "r6_04": {
+          "reference_hard_l1_er_historical": 1.5416677050365089,
+          "tuple3_collision_at_160": 0.9386,
+          "negative_same_code_rate_at_160": 0.2547
+        }
+      }
+    },
+    "note": "these reference values were measured by the ER gate on those arms' finished runs; the probe itself never reads the held-out artifact and never reports Hard-L1 ER",
+    "false_positive_observed": "the healthy reference arm also reaches risk=high under these indicators, so a high verdict is not evidence of collapse",
+    "no_automatic_action": "this probe must not cancel, approve or retune a run. A risk verdict recommends review; the frozen Hard-L1 ER decides Stage3 admission"
+  },
+  "fired_indicators": [],
+  "risk_evidence": [],
+  "protocol_failures": [
+    "schedule_mismatch: configured 32 baseline + 128 active, observed 0 baseline + 0 active over 0 step(s)"
+  ],
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r4_08",
+  "arm": "r4_08",
+  "spec_sha256": "90b59345a00056101391bab12685ee759a67f443fc9b20cb382e3cb34abece8d",
+  "declaration": {
+    "schema_version": 1,
+    "mechanism": {
+      "id": "r4_08",
+      "type": "gradient_routing",
+      "summary": "project g_L1 against g_base when the two conflict",
+      "entrypoints": [
+        "r4_project_conflict"
+      ],
+      "executor": "_r4_08_apply_projection",
+      "activation": {
+        "requires": [
+          "R4_08_PCGRAD_ENC"
+        ]
+      }
+    },
+    "model": {
+      "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
+      "parameter_groups": {
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq"
+      },
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
+    },
+    "forward_contract": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
+      ],
+      "declared_effect": "none",
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        },
+        {
+          "name": "residual_identity",
+          "tol": 0.0001
+        }
+      ]
+    },
+    "gradient_contract": {
+      "target": "encoder",
+      "mode": "formula",
+      "rule": "project_l1_against_base",
+      "reference_term": "base_loss",
+      "oracle": "oracles:assemble_gradient",
+      "eps_flag": "R4_08_EPS",
+      "probe_weight": 0.5,
+      "probe_seeds": [
+        1,
+        4,
+        5,
+        12,
+        16,
+        30,
+        32,
+        36
+      ],
+      "atol": 1e-05,
+      "effect": {
+        "min_deviation": 1e-06,
+        "min_probes": 1
+      },
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "nonzero",
+        "other_loss": "zero"
+      }
+    },
+    "update_contract": {
+      "optimizer": "AdamW",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
+    },
+    "distributed_contract": {
+      "world_size": 2,
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate"
+    },
+    "runtime_contract": {
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
+      "observe": [
+        {
+          "name": "mechanism_calls",
+          "target": "r4_project_conflict",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
+    }
+  },
+  "probe_config": {
+    "seed": 42,
+    "baseline_steps": 32,
+    "behavior_active_steps": 128,
+    "behavior_weight_active": 0.2,
+    "snapshot_steps": [
+      0,
+      8,
+      16,
+      32,
+      64,
+      96,
+      128,
+      160
+    ],
+    "assignment_population": "train_only_all_items",
+    "train_pairs": "original_train_only",
+    "optimizer": "production",
+    "gradient_clip": "production",
+    "device_layout": "production_if_available",
+    "output_isolation": true
+  },
+  "probe_config_sha256": "0586a65d266e01679f8ad9e8a950573d0db1d5a5b0248219f76ca1f89e1a7f2e",
+  "snapshots": [
+    {
+      "measurement_version": 2,
+      "step": 0,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 0.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.86082703920189,
+          "entropy_norm": 0.8765863830094438,
+          "effective_codes": 129.13095431856055,
+          "max_code_share": 0.018139667303859762
+        },
+        "level_2": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.984369677048479,
+          "entropy_norm": 0.8988656768793956,
+          "effective_codes": 146.11144859497594,
+          "max_code_share": 0.015699353316793428
+        },
+        "level_3": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 5.078586974865898,
+          "entropy_norm": 0.9158565304202892,
+          "effective_codes": 160.5470385750545,
+          "max_code_share": 0.017285557408386547
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.8765863830094438,
+      "l1_effective_codes": 129.13095431856055,
+      "l1_max_code_share": 0.018139667303859762,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.047870826046284676,
+      "tuple3_unique": 23410,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.0364999994635582,
+      "negative_same_code_rate": 0.009634999558329582,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0014483247650787234,
+      "clip_factor_min": 0.0014483247650787234,
+      "clip_factor_mean": 0.0014483247650787234,
+      "update_to_weight_ratio_mean": 0.0
+    },
+    {
+      "measurement_version": 2,
+      "step": 8,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.813446424687515,
+          "entropy_norm": 0.8680419108101737,
+          "effective_codes": 123.15533252534591,
+          "max_code_share": 0.023630373774759017
+        },
+        "level_2": {
+          "used_codes": 255,
+          "capacity": 256,
+          "used_fraction": 0.99609375,
+          "entropy_nats": 4.949230573556255,
+          "entropy_norm": 0.8925288005857062,
+          "effective_codes": 141.06638194931813,
+          "max_code_share": 0.021718794484890388
+        },
+        "level_3": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 5.051824337751766,
+          "entropy_norm": 0.9110302399395805,
+          "effective_codes": 156.30736195406743,
+          "max_code_share": 0.01561800951722455
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.8680419108101737,
+      "l1_effective_codes": 123.15533252534591,
+      "l1_max_code_share": 0.023630373774759017,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.04966038963679997,
+      "tuple3_unique": 23366,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.038750000298023224,
+      "negative_same_code_rate": 0.01047499943524599,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0014341144124045968,
+      "clip_factor_min": 0.0014302765484899282,
+      "clip_factor_mean": 0.001443502987967804,
+      "update_to_weight_ratio_mean": 1.5284659808773222e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 16,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.45008778619904,
+          "entropy_norm": 0.8025149475837376,
+          "effective_codes": 85.63446119609804,
+          "max_code_share": 0.08191320616586001
+        },
+        "level_2": {
+          "used_codes": 254,
+          "capacity": 256,
+          "used_fraction": 0.9921875,
+          "entropy_nats": 4.675453777987037,
+          "entropy_norm": 0.8431567474259333,
+          "effective_codes": 107.2812379125226,
+          "max_code_share": 0.04856224834262008
+        },
+        "level_3": {
+          "used_codes": 256,
+          "capacity": 256,
+          "used_fraction": 1.0,
+          "entropy_nats": 4.917761989926419,
+          "entropy_norm": 0.8868538543923856,
+          "effective_codes": 136.69634280398574,
+          "max_code_share": 0.02855167364867613
+        }
+      },
+      "l1_used_codes": 256,
+      "l1_entropy_norm": 0.8025149475837376,
+      "l1_effective_codes": 85.63446119609804,
+      "l1_max_code_share": 0.08191320616586001,
+      "l1_collision": 0.9895879936551837,
+      "l1_unique": 256,
+      "tuple3_collision": 0.09850734127791105,
+      "tuple3_unique": 22165,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.04899999871850014,
+      "negative_same_code_rate": 0.020419999957084656,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.001400914043188095,
+      "clip_factor_min": 0.001400914043188095,
+      "clip_factor_mean": 0.001431187782145571,
+      "update_to_weight_ratio_mean": 2.9771520446446307e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 32,
+      "active_optimizer_steps": 0,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 247,
+          "capacity": 256,
+          "used_fraction": 0.96484375,
+          "entropy_nats": 3.5917989100366015,
+          "entropy_norm": 0.6477338094225237,
+          "effective_codes": 36.29931643263463,
+          "max_code_share": 0.14788302761621994
+        },
+        "level_2": {
+          "used_codes": 245,
+          "capacity": 256,
+          "used_fraction": 0.95703125,
+          "entropy_nats": 3.8352459509391634,
+          "entropy_norm": 0.691636289251176,
+          "effective_codes": 46.304814980265135,
+          "max_code_share": 0.14133485175092528
+        },
+        "level_3": {
+          "used_codes": 244,
+          "capacity": 256,
+          "used_fraction": 0.953125,
+          "entropy_nats": 4.531716542136493,
+          "entropy_norm": 0.81723562275685,
+          "effective_codes": 92.91792179629014,
+          "max_code_share": 0.057591410094765524
+        }
+      },
+      "l1_used_codes": 247,
+      "l1_entropy_norm": 0.6477338094225237,
+      "l1_effective_codes": 36.29931643263463,
+      "l1_max_code_share": 0.14788302761621994,
+      "l1_collision": 0.9899540407532436,
+      "l1_unique": 247,
+      "tuple3_collision": 0.35652987351039167,
+      "tuple3_unique": 15821,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.08794999867677689,
+      "negative_same_code_rate": 0.05951499938964844,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0013290653005242348,
+      "clip_factor_min": 0.0013290653005242348,
+      "clip_factor_mean": 0.0013970507789053954,
+      "update_to_weight_ratio_mean": 6.485036227703392e-07
+    },
+    {
+      "measurement_version": 2,
+      "step": 64,
+      "active_optimizer_steps": 32,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 35,
+          "capacity": 256,
+          "used_fraction": 0.13671875,
+          "entropy_nats": 0.574384823409988,
+          "entropy_norm": 0.10358276703693409,
+          "effective_codes": 1.7760376140181664,
+          "max_code_share": 0.8643185423191118
+        },
+        "level_2": {
+          "used_codes": 119,
+          "capacity": 256,
+          "used_fraction": 0.46484375,
+          "entropy_nats": 2.4556638373536046,
+          "entropy_norm": 0.44284675503005094,
+          "effective_codes": 11.654167453248778,
+          "max_code_share": 0.3395290194004962
+        },
+        "level_3": {
+          "used_codes": 227,
+          "capacity": 256,
+          "used_fraction": 0.88671875,
+          "entropy_nats": 3.8648254400989632,
+          "entropy_norm": 0.696970562041535,
+          "effective_codes": 47.69494608091844,
+          "max_code_share": 0.0973685280839468
+        }
+      },
+      "l1_used_codes": 35,
+      "l1_entropy_norm": 0.10358276703693409,
+      "l1_effective_codes": 1.7760376140181664,
+      "l1_max_code_share": 0.8643185423191118,
+      "l1_collision": 0.9985764835075447,
+      "l1_unique": 35,
+      "tuple3_collision": 0.9095863667791922,
+      "tuple3_unique": 2223,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.8230999708175659,
+      "negative_same_code_rate": 0.7847349643707275,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0012747904984280467,
+      "clip_factor_min": 0.001247504958882928,
+      "clip_factor_mean": 0.00134384774537466,
+      "update_to_weight_ratio_mean": 1.5683148902189892e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 96,
+      "active_optimizer_steps": 64,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 14,
+          "capacity": 256,
+          "used_fraction": 0.0546875,
+          "entropy_nats": 0.4747530446111595,
+          "entropy_norm": 0.08561548288843208,
+          "effective_codes": 1.6076171387442977,
+          "max_code_share": 0.873795094968886
+        },
+        "level_2": {
+          "used_codes": 164,
+          "capacity": 256,
+          "used_fraction": 0.640625,
+          "entropy_nats": 3.79252582755588,
+          "entropy_norm": 0.6839322754822725,
+          "effective_codes": 44.36832560385805,
+          "max_code_share": 0.07540570220034978
+        },
+        "level_3": {
+          "used_codes": 238,
+          "capacity": 256,
+          "used_fraction": 0.9296875,
+          "entropy_nats": 4.47294396326139,
+          "entropy_norm": 0.8066367592464291,
+          "effective_codes": 87.61427692523849,
+          "max_code_share": 0.10826859722617643
+        }
+      },
+      "l1_used_codes": 14,
+      "l1_entropy_norm": 0.08561548288843208,
+      "l1_effective_codes": 1.6076171387442977,
+      "l1_max_code_share": 0.873795094968886,
+      "l1_collision": 0.9994305934030179,
+      "l1_unique": 14,
+      "tuple3_collision": 0.8241753772318705,
+      "tuple3_unique": 4323,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.8200500011444092,
+      "negative_same_code_rate": 0.793624997138977,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.0005862798425368965,
+      "clip_factor_min": 0.0005862798425368965,
+      "clip_factor_mean": 0.0012051584969109779,
+      "update_to_weight_ratio_mean": 2.594362264657821e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 128,
+      "active_optimizer_steps": 96,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 19,
+          "capacity": 256,
+          "used_fraction": 0.07421875,
+          "entropy_nats": 0.4514913157239281,
+          "entropy_norm": 0.08142053527491805,
+          "effective_codes": 1.570652778960547,
+          "max_code_share": 0.8967340464473096
+        },
+        "level_2": {
+          "used_codes": 184,
+          "capacity": 256,
+          "used_fraction": 0.71875,
+          "entropy_nats": 3.7397740772006878,
+          "entropy_norm": 0.6744191894028165,
+          "effective_codes": 42.088480343496606,
+          "max_code_share": 0.14316508724122504
+        },
+        "level_3": {
+          "used_codes": 251,
+          "capacity": 256,
+          "used_fraction": 0.98046875,
+          "entropy_nats": 4.799548991037796,
+          "entropy_norm": 0.8655356909842321,
+          "effective_codes": 121.45562758773653,
+          "max_code_share": 0.054419001911579286
+        }
+      },
+      "l1_used_codes": 19,
+      "l1_entropy_norm": 0.08142053527491805,
+      "l1_effective_codes": 1.570652778960547,
+      "l1_max_code_share": 0.8967340464473096,
+      "l1_collision": 0.9992272339040956,
+      "l1_unique": 19,
+      "tuple3_collision": 0.7626794647577988,
+      "tuple3_unique": 5835,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.8474499583244324,
+      "negative_same_code_rate": 0.8256949782371521,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.00019458268070593476,
+      "clip_factor_min": 0.00017824926180765033,
+      "clip_factor_mean": 0.0009884514013265289,
+      "update_to_weight_ratio_mean": 3.4553718364542476e-06
+    },
+    {
+      "measurement_version": 2,
+      "step": 160,
+      "active_optimizer_steps": 128,
+      "mechanism_call_count": 0,
+      "applied_behavior_weight": 0.0,
+      "nonfinite_steps": 0,
+      "finite_fraction": 1.0,
+      "levels": {
+        "level_1": {
+          "used_codes": 18,
+          "capacity": 256,
+          "used_fraction": 0.0703125,
+          "entropy_nats": 0.5422149145768075,
+          "entropy_norm": 0.09778134604449913,
+          "effective_codes": 1.7198118831404325,
+          "max_code_share": 0.8602106804408833
+        },
+        "level_2": {
+          "used_codes": 182,
+          "capacity": 256,
+          "used_fraction": 0.7109375,
+          "entropy_nats": 4.078823972765964,
+          "entropy_norm": 0.7355623897710596,
+          "effective_codes": 59.0759540508173,
+          "max_code_share": 0.07760198478870949
+        },
+        "level_3": {
+          "used_codes": 253,
+          "capacity": 256,
+          "used_fraction": 0.98828125,
+          "entropy_nats": 5.268565092294106,
+          "entropy_norm": 0.9501165914066764,
+          "effective_codes": 194.13719353439163,
+          "max_code_share": 0.01561800951722455
+        }
+      },
+      "l1_used_codes": 18,
+      "l1_entropy_norm": 0.09778134604449913,
+      "l1_effective_codes": 1.7198118831404325,
+      "l1_max_code_share": 0.8602106804408833,
+      "l1_collision": 0.9992679058038801,
+      "l1_unique": 18,
+      "tuple3_collision": 0.655020946028389,
+      "tuple3_unique": 8482,
+      "items_measured": 24587,
+      "positive_same_code_rate": 0.7882499694824219,
+      "negative_same_code_rate": 0.7657549977302551,
+      "attribution": {
+        "g_base_enc_norm": null,
+        "levels": [],
+        "max_norm_over_base": null,
+        "ratios_defined": 0
+      },
+      "preclip_total_norm": 0.00016529959975741804,
+      "clip_factor_min": 0.00015376678493339568,
+      "clip_factor_mean": 0.0008269514944004186,
+      "update_to_weight_ratio_mean": 4.393361314252207e-06
+    }
+  ],
+  "schedule": {
+    "configured_baseline_steps": 32,
+    "configured_active_steps": 128,
+    "observed_baseline_steps": 0,
+    "observed_active_steps": 0,
+    "agrees": false,
+    "applied_weights_seen": []
+  },
+  "executed_steps": 160,
+  "active_optimizer_steps": 128,
+  "mechanism_call_count": 0,
+  "gradient_samples": 0,
+  "nonfinite_step_count": 0,
+  "clip_step_count": 0,
+  "production_artifacts_before": {
+    "trainer": "959d987918d25202599267827e1162dcc9ddd44ac0afa316cbe9e1f378d87d2e",
+    "frozen_heldout_pairs": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "result:rqvae_best.pth": null,
+    "result:sids_for_hgrec.npy": null,
+    "result:item_sids.json": null,
+    "log:train_migrated.log": null,
+    "log:training_metrics.jsonl": null
+  },
+  "production_artifacts_after": {
+    "trainer": "959d987918d25202599267827e1162dcc9ddd44ac0afa316cbe9e1f378d87d2e",
+    "frozen_heldout_pairs": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "result:rqvae_best.pth": null,
+    "result:sids_for_hgrec.npy": null,
+    "result:item_sids.json": null,
+    "log:train_migrated.log": null,
+    "log:training_metrics.jsonl": null
+  },
+  "production_artifacts_unchanged": true,
+  "elapsed_s": 10.64,
+  "environment": {
+    "torch": "2.8.0+cu128",
+    "cuda_available": true,
+    "device_count": 4
+  }
+}

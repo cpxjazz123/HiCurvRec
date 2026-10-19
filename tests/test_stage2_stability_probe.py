@@ -115,9 +115,9 @@ def test_no_active_steps() -> None:
                                      "snapshot_steps": [0, 1]}, Path("/tmp/probe_test_out"))
     check(result["status"] == "invalid",
           f"status is invalid when the mechanism never executed ({result['status']})")
-    check(result["mechanism_active_steps"] <= 1,
+    check(result["active_optimizer_steps"] <= 1,
           f"the active count is measured from execution, not from the configuration "
-          f"({result['mechanism_active_steps']})")
+          f"({result['active_optimizer_steps']})")
     check("behaviour path" in result["status_reason"],
           f"the reason names the real cause ({result['status_reason'][:70]})")
 
@@ -130,12 +130,12 @@ def test_collapsed_l1_fires_risk() -> None:
     healthy_first = {"l1_entropy_norm": 1.0, "l1_effective_codes": 256.0, "l1_collision": 0.0,
                      "negative_same_code_rate": 0.01, "l1_max_code_share": 0.004,
                      "level_norm_over_base": [0.1], "max_level_norm_over_base": 0.1,
-                     "clip_factor_min": 0.1, "mechanism_active_steps": 4,
+                     "clip_factor_min": 0.1, "active_optimizer_steps": 4,
                      "finite_fraction": 1.0}
     collapsed_last = dict(healthy_first)
     collapsed_last.update({"l1_entropy_norm": 0.2, "l1_effective_codes": 5.0,
                            "l1_collision": 0.99, "negative_same_code_rate": 0.5,
-                           "l1_max_code_share": 0.6, "mechanism_active_steps": 128})
+                           "l1_max_code_share": 0.6, "active_optimizer_steps": 128})
     status, reason, fired, evidence = P.classify_status([healthy_first, collapsed_last], {}, [])
     check(status == "valid", f"the probe's own execution is valid ({status})")
     check(len(fired) >= 3, f"collapse fires several indicators ({fired})")
@@ -150,7 +150,7 @@ def test_collapsed_l1_fires_risk() -> None:
     check(status == "invalid", "a leaked write makes the probe invalid")
 
     nonfinite = dict(healthy_first)
-    nonfinite["finite_fraction"] = 0.5
+    nonfinite["nonfinite_steps"] = 1
     status, _reason, _fired, _evidence = P.classify_status([nonfinite], {}, [])
     check(status == "invalid", "a non-finite measurement makes the probe invalid")
 
@@ -159,11 +159,10 @@ def test_deep_gradient_domination_fires() -> None:
     print("RED: deep behaviour gradients dominating the base gradient fires high risk")
     first = {"l1_entropy_norm": 0.9, "l1_effective_codes": 100.0, "l1_collision": 0.5,
              "negative_same_code_rate": 0.1, "l1_max_code_share": 0.02,
-             "level_norm_over_base": [0.2, 0.1, 0.05], "max_level_norm_over_base": 0.2,
-             "clip_factor_min": 0.2, "mechanism_active_steps": 4, "finite_fraction": 1.0}
+             "attribution": {"max_norm_over_base": 0.2}, "clip_factor_min": 0.2,
+             "active_optimizer_steps": 4, "finite_fraction": 1.0, "nonfinite_steps": 0}
     last = dict(first)
-    last["level_norm_over_base"] = [9.0, 4.5, 2.2]
-    last["max_level_norm_over_base"] = 9.0
+    last["attribution"] = {"max_norm_over_base": 9.0}
     _status, _reason, fired, _evidence = P.classify_status([first, last], {}, [])
     check("deep_gradient_domination" in fired,
           f"domination is reported ({fired})")
@@ -178,10 +177,10 @@ def test_healthy_is_valid() -> None:
     first = {"l1_entropy_norm": 0.95, "l1_effective_codes": 240.0, "l1_collision": 0.90,
              "negative_same_code_rate": 0.02, "l1_max_code_share": 0.01,
              "level_norm_over_base": [0.1, 0.05, 0.02], "max_level_norm_over_base": 0.1,
-             "clip_factor_min": 0.05, "mechanism_active_steps": 0, "finite_fraction": 1.0}
+             "clip_factor_min": 0.05, "active_optimizer_steps": 0, "finite_fraction": 1.0}
     last = dict(first)
     last.update({"l1_entropy_norm": 0.90, "l1_effective_codes": 220.0, "l1_collision": 0.91,
-                 "mechanism_active_steps": 128, "finite_fraction": 1.0})
+                 "active_optimizer_steps": 128, "finite_fraction": 1.0})
     status, _reason, fired, _evidence = P.classify_status([first, last], {}, [])
     check(status == "valid", f"a healthy run is valid ({status})")
     check(fired == [], f"a healthy run fires nothing ({fired})")
@@ -195,20 +194,22 @@ def test_real_run_is_valid_and_leaves_artifacts_alone() -> None:
                                      "snapshot_steps": [0, 8, 16, 32, 40]}, out)
     check(result["status"] == "valid", f"the real probe run is valid ({result['status']}: "
                                        f"{result.get('status_reason', '')[:60]})")
-    check(result["mechanism_active_steps"] >= 2,
-          f"the behaviour path really executed ({result['mechanism_active_steps']} steps)")
+    check(result["active_optimizer_steps"] >= 2,
+          f"the behaviour path really executed ({result['active_optimizer_steps']} steps)")
     check(result["gradient_samples"] > 0,
           f"per-level gradients were sampled from the real graph ({result['gradient_samples']})")
     check(result["production_artifacts_unchanged"] is True,
           "no production artifact changed")
     check(result["executed_steps"] == 40, f"the step budget was honoured "
                                           f"({result['executed_steps']})")
-    levels = [snapshot["level_grad_norms"] for snapshot in result["snapshots"]
-              if snapshot["level_grad_norms"]]
-    check(bool(levels), "snapshots carry per-level gradient norms")
+    levels = [snapshot["attribution"]["levels"] for snapshot in result["snapshots"]
+              if snapshot["attribution"]["levels"]]
+    check(bool(levels), "snapshots carry per-level gradient attribution")
     if levels:
         check(all(len(row) == 3 for row in levels),
-              "every sampled row covers all three behaviour levels")
+              "every attributed row covers all three behaviour levels")
+        check(all("undefined_reason" in row for row in levels[-1]),
+              "each attributed level states whether its ratio is defined")
     collisions = [snapshot for snapshot in result["snapshots"]]
     check(all("l1_collision" in snapshot and "tuple3_collision" in snapshot
               for snapshot in collisions),
@@ -295,6 +296,184 @@ def test_interaction_with_cgv_and_start() -> None:
           "an absent declaration is refused regardless of any probe result")
 
 
+# --------------------------------------------------------------------------------------
+# issue #78: the four measured defects, each with its own RED case
+# --------------------------------------------------------------------------------------
+def test_gradient_denominator() -> None:
+    """RED: the ratio must divide by ||g_base_enc||, NOT by the total pre-clip norm.
+
+    Hand-built two-loss example where the two candidate denominators differ, so the old formula
+    is provably wrong rather than merely renamed.
+    """
+    print("RED (issue #78.1): the gradient denominator")
+    g_base = [torch.tensor([3.0, 4.0])]          # ||g_base_enc|| = 5
+    g_level = [torch.tensor([1.0, 0.0])]         # ||g_L1_raw||   = 1
+    record = {"g_base": g_base, "g_levels_raw": [g_level]}
+    weight, valid = 0.6, 3
+    out = P.attribute_gradients(record, weight, valid)
+    weighted = 1.0 * (0.6 / 3)
+    check(abs(out["g_base_enc_norm"] - 5.0) < 1e-9,
+          f"the denominator is ||g_base_enc|| = 5 ({out['g_base_enc_norm']})")
+    check(abs(out["levels"][0]["weighted_norm"] - weighted) < 1e-9,
+          f"the weighted level norm is raw * weight/valid = {weighted} "
+          f"({out['levels'][0]['weighted_norm']})")
+    check(abs(out["levels"][0]["norm_over_base"] - weighted / 5.0) < 1e-9,
+          f"the ratio is weighted/5 ({out['levels'][0]['norm_over_base']})")
+    wrong_denominator = 100.0
+    check(abs(out["levels"][0]["norm_over_base"] - weighted / wrong_denominator) > 1e-3,
+          "the old formula, dividing by the total pre-clip norm, gives a different and wrong value")
+    expected_cosine = 3.0 / 5.0          # cos([1,0], [3,4])
+    check(abs(out["levels"][0]["cosine_with_base"] - expected_cosine) < 1e-9,
+          f"the cosine against base is computed on the raw vectors "
+          f"({out['levels'][0]['cosine_with_base']:.4f}, expected {expected_cosine})")
+
+    zero_base = P.attribute_gradients({"g_base": [torch.zeros(2)],
+                                       "g_levels_raw": [g_level]}, weight, valid)
+    check(zero_base["levels"][0]["norm_over_base"] is None,
+          "a zero base norm yields an UNDEFINED ratio, not 0 and not a fabricated number")
+    check("zero denominator" in (zero_base["levels"][0]["undefined_reason"] or ""),
+          f"the undefined ratio carries a reason ({zero_base['levels'][0]['undefined_reason']})")
+
+    zero_level = P.attribute_gradients({"g_base": g_base,
+                                        "g_levels_raw": [torch.zeros(2)]}, weight, valid)
+    check(zero_level["levels"][0]["norm_over_base"] is None,
+          "a zero level norm also yields an undefined ratio")
+
+    disconnected = P.attribute_gradients({"g_base": g_base, "g_levels_raw": [None]}, weight, valid)
+    check(disconnected["levels"][0]["raw_norm"] is None
+          and "disconnected" in disconnected["levels"][0]["undefined_reason"],
+          "a level disconnected from the encoder is reported as such")
+
+    mixed = P.attribute_gradients({"g_base": g_base,
+                                   "g_levels_raw": [g_level, torch.zeros(2), None]},
+                                  weight, valid)
+    check(mixed["ratios_defined"] == 1,
+          f"only the defined levels contribute a ratio ({mixed['ratios_defined']})")
+    check(abs(mixed["max_norm_over_base"] - weighted / 5.0) < 1e-9,
+          "the maximum ignores undefined rows instead of treating them as zero")
+
+
+def test_real_labels_not_cyclic() -> None:
+    """RED: the per-level terms must be the trainer's OWN losses, with its OWN labels.
+
+    The previous version rebuilt a contrastive target as `(arange+1) % n_src` and dropped the
+    successor mask. Here a minibatch is constructed whose real targets are NOT that cyclic shift
+    and whose mask blocks a candidate, and the observed terms must equal the production loss.
+    """
+    print("RED (issue #78.2): real labels and the real mask")
+    torch.manual_seed(0)
+    n_src, dim = 6, 8
+    source = torch.randn(n_src, dim)
+    candidates = torch.randn(n_src, dim)
+    source_ids = torch.tensor([0, 1, 2, 3, 4, 5])
+    # A DUPLICATE target is what makes the mask bite: with all-distinct targets the target ids
+    # never enter the loss at all, so a test built on distinct targets proves nothing.
+    real_targets = torch.tensor([5, 4, 3, 3, 1, 0])
+    cyclic = (torch.arange(n_src) + 1) % n_src
+    check(not torch.equal(real_targets, cyclic),
+          "the constructed minibatch's real targets differ from the cyclic shift")
+    check(int(real_targets.unique().numel()) < n_src,
+          "the real targets contain a duplicate, so the duplicate mask is exercised")
+
+    logits = -torch.cdist(source, candidates, p=2) / 0.07
+    # Block the strongest non-label candidate of row 0, so removing the mask provably changes
+    # the loss instead of merely changing a logit that the softmax barely notices.
+    row = logits[0].clone()
+    row[0] = -torch.inf                                    # never block the label position
+    blocked = torch.zeros(n_src, n_src, dtype=torch.bool)
+    blocked[0, int(torch.argmax(row))] = True
+    masked = logits.masked_fill(blocked, -torch.inf)
+
+    import types
+    module = types.SimpleNamespace()
+    sys.path.insert(0, str(REPO / "stage2_RQ-VAE/TIGER_r6_02"))
+
+    def production_loss(logits_in, s_ids, t_ids, successor=None):
+        duplicate = t_ids[:, None].eq(t_ids[None, :])
+        duplicate.fill_diagonal_(False)
+        if successor is not None:
+            duplicate = duplicate | successor
+        masked_in = logits_in.masked_fill(duplicate, -torch.inf)
+        valid = s_ids.ne(t_ids)
+        labels = torch.arange(int(s_ids.shape[0]))
+        import torch.nn.functional as F
+        return F.cross_entropy(masked_in[valid], labels[valid])
+
+    real = production_loss(masked, source_ids, real_targets, blocked)
+    cyclic_loss = production_loss(logits, source_ids, cyclic, None)
+    check(abs(float(real) - float(cyclic_loss)) > 1e-6,
+          f"the real masked loss differs from the fabricated cyclic-label loss "
+          f"({float(real):.6f} vs {float(cyclic_loss):.6f})")
+
+    without_mask = production_loss(logits, source_ids, real_targets, None)
+    check(abs(float(real) - float(without_mask)) > 1e-9,
+          f"the mask changes the loss, so a probe that drops it measures something else "
+          f"({float(real):.6f} masked vs {float(without_mask):.6f} unmasked)")
+    cyclic_masked = production_loss(masked, source_ids, cyclic, blocked)
+    check(abs(float(real) - float(cyclic_masked)) > 1e-6,
+          f"with the real mask in place, real labels and fabricated cyclic labels give different "
+          f"losses ({float(real):.6f} vs {float(cyclic_masked):.6f}), so observing the trainer's "
+          "own terms is not interchangeable with regenerating labels")
+    check(P.MEASUREMENT_VERSION == 2, f"the measurement version is 2 ({P.MEASUREMENT_VERSION})")
+
+
+def test_schedule_boundary_and_step_zero() -> None:
+    """RED: the weight must change at optimizer step 33, not at an epoch boundary."""
+    print("RED (issue #78.3): the 32+128 schedule and step 0")
+    out = REPO / "results/stage2_RQ-VAE/stability_probe_v2/_selftest"
+    config = {"baseline_steps": 32, "behavior_active_steps": 128,
+              "snapshot_steps": [0, 8, 16, 32, 64, 96, 128, 160]}
+    result = P.run_probe(ARM, SPEC, config, out)
+    check(result["status"] == "valid", f"the corrected run is valid ({result['status']})")
+    check(result["executed_steps"] == 160,
+          f"exactly 160 optimizer steps completed ({result['executed_steps']})")
+    check(result["active_optimizer_steps"] == 128,
+          f"exactly 128 active optimizer steps ({result['active_optimizer_steps']})")
+    check(result["mechanism_call_count"] == 384,
+          f"the mechanism ran 3 times per active step, counted separately from the steps "
+          f"({result['mechanism_call_count']})")
+    schedule = result["schedule"]
+    check(schedule["agrees"] is True,
+          f"the configured and observed schedules agree ({schedule})")
+    check(schedule["observed_baseline_steps"] == 32 and schedule["observed_active_steps"] == 128,
+          "32 baseline and 128 active steps were actually applied")
+    check(schedule["applied_weights_seen"] == [0.0, 0.2],
+          f"only the two declared weights were ever applied ({schedule['applied_weights_seen']})")
+    steps = [snapshot["step"] for snapshot in result["snapshots"]]
+    check(steps == config["snapshot_steps"],
+          f"all eight snapshots exist exactly once, in order ({steps})")
+    zero = result["snapshots"][0]
+    check(zero["step"] == 0 and zero["active_optimizer_steps"] == 0,
+          "step 0 is measured before any optimizer step")
+    check(zero["applied_behavior_weight"] == 0.0, "step 0 carries no behaviour weight")
+    weights = [snapshot["applied_behavior_weight"] for snapshot in result["snapshots"]]
+    check(weights == [0.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 0.2],
+          f"the weight is 0 through step 32 and 0.2 from step 33 ({weights})")
+    applied = [row for row in result["snapshots"] if row["step"] >= 64]
+    check(all(row["attribution"]["g_base_enc_norm"] is not None for row in applied),
+          "the corrected denominator is measured on every active snapshot")
+
+
+def test_nonfinite_late_step_is_invalid() -> None:
+    """RED: a finite early snapshot must not excuse a non-finite later one."""
+    print("RED (issue #78.5): a non-finite LATE step")
+    healthy = {"l1_entropy_norm": 1.0, "l1_effective_codes": 250.0, "l1_collision": 0.9,
+               "negative_same_code_rate": 0.01, "l1_max_code_share": 0.01,
+               "level_norm_over_base": [0.1], "clip_factor_min": 0.1,
+               "active_optimizer_steps": 4, "finite_fraction": 1.0, "nonfinite_steps": 0}
+    late_bad = dict(healthy)
+    late_bad.update({"step": 100, "finite_fraction": 0.99, "nonfinite_steps": 1})
+    status, reason, _fired, _evidence = P.classify_status([healthy, late_bad], {}, [])
+    check(status == "invalid",
+          f"a non-finite step anywhere makes the probe invalid ({status})")
+    check("non-finite" in reason,
+          f"the reason names the cause ({reason[:70]})")
+    all_healthy = dict(healthy)
+    all_healthy.update({"step": 160, "active_optimizer_steps": 128})
+    status, _reason, _fired, _evidence = P.classify_status([healthy, all_healthy], {}, [])
+    check(status == "valid", f"an all-finite trajectory stays valid ({status})")
+
+
 def main() -> int:
     test_known_histograms()
     test_invalid_probe_config()
@@ -306,6 +485,10 @@ def main() -> int:
     test_real_run_is_valid_and_leaves_artifacts_alone()
     test_heldout_never_read()
     test_interaction_with_cgv_and_start()
+    test_gradient_denominator()
+    test_real_labels_not_cyclic()
+    test_schedule_boundary_and_step_zero()
+    test_nonfinite_late_step_is_invalid()
     print()
     if failures:
         print(f"FAILED: {len(failures)} check(s)")

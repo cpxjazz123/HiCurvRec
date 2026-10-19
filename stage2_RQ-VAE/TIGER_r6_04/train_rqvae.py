@@ -598,6 +598,15 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     return result
 
 
+# Probe-only diagnostic injection point (issue #78). Left at None in every production run: the
+# guarded call below then cannot execute, so `epoch_weight` keeps the exact per-epoch value
+# `behavior_weight(epoch)` returns and the training path is bit-identical. An isolated stability
+# probe installs a callable here so the behaviour weight can change at a chosen OPTIMIZER STEP
+# rather than only at an epoch boundary -- production's weight is an epoch constant, and the
+# issue requires a schedule expressed in steps.
+_PROBE_STEP_WEIGHT_HOOK = None
+
+
 def behavior_weight(epoch: int) -> float:
     """iter48's delayed ramp, re-expressed in epochs over the 3000-epoch budget."""
     span = max(EPOCHS - RAMP_START_EPOCH, 1)
@@ -1161,6 +1170,10 @@ def main() -> None:
         _epoch_t0 = time.time()
         hyperbolic_losses = []
         for (batch,) in loader:
+            if _PROBE_STEP_WEIGHT_HOOK is not None:
+                # Probe-only: re-evaluated per mini-batch. With the hook at its production value
+                # of None this branch never runs and epoch_weight is untouched.
+                epoch_weight = _PROBE_STEP_WEIGHT_HOOK(epoch, epoch_weight)
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(batch)
