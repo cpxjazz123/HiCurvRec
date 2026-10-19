@@ -2,12 +2,12 @@
 
 The MCP server itself runs on a torch-less interpreter (its other tools only spawn subprocesses),
 so ``cgv_check`` shells out to this script under the project's python instead of importing the
-engine in-process.
+engine. The declaration is passed the same way: as data, never as a path.
 
-    cgv/run_cgv.py <tree>                 # run the six gates, print JSON, do NOT write a certificate
-    cgv/run_cgv.py <tree> --certificate   # ... and write results/stage2_RQ-VAE/_cgv/certificate_<arm>.json
+    run_cgv.py <tree> --spec -                     # declaration as JSON on stdin
+    run_cgv.py <tree> --spec spec.json --certificate --negative
 
-Exit code is 0 when every gate passes, 1 otherwise (so a caller can branch without parsing).
+Exit code is 0 when the gates pass AND the counterexample suite catches every fault, 1 otherwise.
 """
 from __future__ import annotations
 
@@ -20,37 +20,65 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+import contract as C  # noqa: E402
 import engine  # noqa: E402
+
+
+def read_spec(argv: list[str]) -> object:
+    """The declaration arrives on stdin or as a JSON file, because that is what a caller has."""
+    if "--spec" not in argv:
+        print(json.dumps({"passed": False, "refused": C.ContractError(
+            "no declaration supplied: CGV verifies a mechanism against the mathematical "
+            "behaviour the caller declares, so pass it with --spec - (JSON on stdin) or "
+            "--spec <file.json>. CGV does not read a declaration from the mechanism's tree.")}
+        ), flush=True)
+        raise SystemExit(2)
+    value = argv[argv.index("--spec") + 1]
+    if value == "-":
+        return C.normalise_spec(sys.stdin.read(), source="the declaration on stdin")
+    return C.normalise_spec(Path(value).read_text(encoding="utf-8"),
+                            source=f"the declaration in {value}")
 
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("usage: run_cgv.py <tree> [--certificate]", file=sys.stderr)
+        print('usage: run_cgv.py <tree> --spec <file.json|-> [--certificate] [--negative]',
+              file=sys.stderr)
         return 2
     tree = Path(sys.argv[1])
+    argv = sys.argv[2:]
     if not tree.is_dir():
         print(json.dumps({"passed": False, "refused": f"no such tree: {tree}"}), flush=True)
         return 2
-    # G6 executes the trainer's real main(), which prints to stdout. Redirect that noise to
+    spec = read_spec(argv)
+    # G6 executes the trainer's real entry point, which prints to stdout. Redirect that noise to
     # stderr so stdout carries ONLY the JSON the caller parses.
     with contextlib.redirect_stdout(sys.stderr):
-        result = engine.run_cgv(tree)
-    certificate = engine.write_certificate(result) if "--certificate" in sys.argv[3:] else None
-    trainable, why = engine.certificate_is_valid(tree)
+        result = engine.run_cgv(tree, spec, negative_suite="--negative" in argv)
+    certificate = engine.write_certificate(result) if "--certificate" in argv else None
+    trainable, why = engine.certificate_is_valid(tree, spec)
     payload = {
         "passed": bool(result.get("passed")),
+        "gates_passed": bool(result.get("gates_passed")),
         "arm": result.get("arm"),
         "mechanism": result.get("mechanism"),
         "tree": result.get("tree"),
         "trainer_sha256": result.get("trainer_sha256"),
         "checked_utc": result.get("checked_utc"),
+        "schema_version": result.get("schema_version"),
+        "spec_sha256": result.get("spec_sha256"),
+        "fingerprint": result.get("fingerprint"),
+        "declared": result.get("declared"),
+        "independence": result.get("independence"),
         "certificate": str(certificate) if certificate else None,
         "trainable_now": trainable,
         "trainable_note": why,
         "refused": result.get("refused"),
         "summary": result.get("summary"),
+        "negative_suite": result.get("negative_suite"),
         "gates": {
             gate: {
+                "state": result["gates"].get(gate, {}).get("state"),
                 "passed": result["gates"].get(gate, {}).get("passed"),
                 "title": result["gates"].get(gate, {}).get("title"),
                 "detail": result["gates"].get(gate, {}).get("detail"),

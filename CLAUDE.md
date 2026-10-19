@@ -129,43 +129,80 @@ STAGE3_SCREEN_BASELINE_LOG=
    - **禁止**：不得为了"向量化"而改变机制语义、指标定义、采样分布或超参；效率优化只允许改变计算方式，不允许改变被计算的对象。
 
 
-## 17. 每个新 Stage2 运行前必须通过 CGV 六项检查（2026-10-19 起强制）
+## 17. 每个新 Stage2 运行前必须通过 CGV 六项检查（2026-10-19 起强制；契约式验证）
 
 **任何 Stage2 训练启动前，该机制必须先通过 genrec MCP 的 `cgv_check`，且六项全部为 PASS。**
-`stage2_start` 会自行校验：证书缺失、任一门未过、或 `train_rqvae.py` 在发证后被改动，都直接拒绝启动，且拒绝发生在归档与派发之前（无任何副作用）。
+`stage2_start` 会自行校验：证书缺失、任一门未通过、反例证据缺失或未全绿、声明或源码在发证后被改动，都直接拒绝启动，且拒绝发生在归档与派发之前（无任何副作用）。
 
 标准调用序列（`source_dir` 必填，本仓库有多棵树）：
 
 ```
 write xd://mcp__genrec_cgv_check
-{"source_dir": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_<臂名>"}
+{"source_dir": ".../stage2_RQ-VAE/TIGER_<臂名>",
+ "spec": {"schema_version": 1, "mechanism": {...}, "model": {...},
+          "forward_contract": {...}, "gradient_contract": {...},
+          "update_contract": {...}, "distributed_contract": {...},
+          "runtime_contract": {...}}}
 ```
 
-返回 `passed: true` 且 `gates` 里 G1–G6 全为 `true` 后，才允许 `stage2_start`。只读查看用 `cgv_status`（不跑门、不启动）。
+只读查看用 `cgv_status`（不跑门、不启动）。
 
-### 六项检查
+`stage2_start` 必须传**同一份** `spec`：证书绑定的是声明的哈希，因此训练只能被证书实际检验过的那份声明授权，不存在「用一个弱声明过检、再偷偷用另一个跑」的可能。
+
+### 验证对象是「机制自己声明的数学契约」，不是与父版本比对
+
+CGV 不比较新旧模型、不需要 baseline checkpoint、不要求机制提供开关。三个角色严格分离：
+
+| 角色 | 位置 | 职责 |
+|:--|:--|:--|
+| 契约 spec | **调用的 `spec` 参数** | 机制声称自己做什么（7 组：mechanism / model / forward_contract / gradient_contract / update_contract / distributed_contract / runtime_contract） |
+| 适配器 adapter | `tools/cgv/adapters.py` | 唯一接触机制实现的模块：造真实 mini case、跑真实代码路径、交出原始观测 |
+| 独立 Oracle | `tools/cgv/oracles.py` | 纯数学参考，**不得** import 任何机制实现 |
+
+**声明是参数，不是文件。** CGV 只从机制树读它的代码；树不向 CGV 提交任何文件，包括声明本身。契约随调用传入，并被写入证书（`spec_sha256`）。
+
+**独立 Oracle 是硬约束**：oracle 只能引用验证器自己的 `oracles:` / `adapters:` 模块，且不得是机制自己声明的 `entrypoints`。否则该机制一律判 `insufficient_evidence`，证书不予签发。理由：实现写错时，用它自己当参考只会重复同一个错误。
+
+### 六项检查与门的四种状态
 
 | 门 | 验证什么 | 防止什么 |
 |:--|:--|:--|
-| **G1 前向一致性** | 同一权重与输入下比较机制开/关，并与声明的父条件比较前向、loss 与 SID | 无条件或条件性改变重建、量化结果、SID 或 loss |
-| **G2 梯度路径** | 机制依赖的每个 loss 项都能把梯度传到目标参数 | R5-10 那类零梯度问题 |
-| **G3 梯度方向** | 实际梯度符合该机制自己的数学公式 | 投影方向、系数、符号错误 |
-| **G4 参数更新** | 完整反向后 optimizer 真的执行了预期更新 | 机制存在但不起作用 |
-| **G5 DDP 一致性** | 多卡梯度与独立池化参考一致 | 重复 AllReduce、不同 GPU 更新不一致 |
-| **G6 真实训练入口** | 正式 `main()` 触达已验证机制、调用真实 AdamW.step()，且至少一个有梯度参数实际改变 | 测试路径未被训练采用、optimizer 未调用或参数未更新 |
+| **G1 前向契约** | 实测前向满足声明的公式与不变量（形状、取值范围、层数、残差递推、有限性、可选 Jacobian 规则） | 前向违反自己声明的公式、不变量或输出约束 |
+| **G2 梯度传播** | 声明的每条 loss 路径都以声明的性质（nonzero/zero/finite）到达声明的目标参数 | 声明的 loss 路径根本没把梯度送到目标参数 |
+| **G3 梯度数学** | 实测梯度等于机制自己声明的规则，且机制确实改变了梯度 | 实测梯度与机制自己声明的规则矛盾 |
+| **G4 参数更新** | 声明的 optimizer 与梯度裁剪产生的更新等于独立闭式预测 | 更新不是声明的 optimizer 与裁剪所能产生 |
+| **G5 分布式一致性** | 多卡实测符合声明的聚合规则（逐 rank 局部梯度由独立 Oracle 池化后与生产路径对照） | 多卡执行不满足自己声明的聚合规则 |
+| **G6 真实训练入口** | 正式入口执行了声明的机制、调用真实 optimizer，且至少一个有梯度参数实际改变 | 正式训练根本没执行该机制，或从未移动参数 |
+
+门的四种状态必须在报告与证书里如实区分：
+
+- `passed`：声明被实测证实；
+- `failed`：实测与声明矛盾；
+- `not_applicable`：契约**显式声明**该维度无效果并给出理由（如「该机制不改变梯度」）；
+- `insufficient_evidence`：契约在该维度没有任何可检验的陈述。**绝不等于通过**，并直接阻止证书签发。
+
+### 反例套件（证明门真的会失败）
+
+`tools/cgv/negative_suite.py` 注入 7 个标准故障，每个都要求对应的门失败：
+
+| 故障 | 期望失败的门 |
+|:--|:--|
+| `detached_behaviour_gradient` / `detached_reference_gradient` | G2 |
+| `inert_mechanism` / `wrong_coefficient` / `wrong_direction` | G3 |
+| `mechanism_unreachable` / `inert_optimizer` | G6 |
+
+故障只在运行期注入，绝不改写被验证的树。证书必须携带 `negative_suite.all_ok: true` 才可用于启动训练：**一个不会失败的门什么也证明不了**。
 
 ### 强制约束
 
-1. **G3 fail-closed**：机制必须先在 `tools/cgv/engine.py` 的 `MECHANISMS` 注册表登记自己的公式；未登记的机制一律拒绝，并给出补登记提示。**不得**以「未被识别」蒙混过关。
-2. **G2 的阻断口径**：只有机制**自己声明的参考项**梯度为零才阻断；共享装配里其它只读但静默的项以 `warnings` 上报。理由：家族级遗留问题若一并阻断，所有臂都会被挡死，工具将失去判别力。
-3. **证书绑定源码哈希**：`train_rqvae.py` 一旦改动，证书立即失效，必须重跑 `cgv_check`。改完机制不重验就开跑，等于没验。
+1. **声明必填**：`cgv_check` 与 `stage2_start` 都必须收到 `spec`；缺失或非对象一律拒绝。命令行的对应形式是 `--spec -`（stdin 上的 JSON）。新增机制时先写出它的数学声明。
+2. **G3 fail-closed**：`mode: formula` 必须给出 `oracles:` 引用；无 oracle 一律拒绝，不得以「未被识别」蒙混过关。
+3. **证书绑定四样东西**：`train_rqvae.py` 的哈希、`spec` 的规范化哈希、以及验证器自身的 `oracles.py` / `adapters.py` / `negative_suite.py` 哈希。任一变动，或传入的 `spec` 与证书那份不同，证书立即失效，必须重跑 `cgv_check`。
 4. **禁止手工绕过**：`nohup` 直跑 `train_rqvae.py`、`tools/r5_launch_wave.py`、自建 launcher 等一切旁路一律禁止。`cgv_check` 返回 refused 时按其指出的问题修，不绕开。
-5. **输出隔离是 CGV 的前置保证，不得削弱**：G6 会执行真实训练入口，`tools/cgv/engine.py::isolated_outputs` 负责把 trainer 的产物路径重定向到临时目录。重定向按「trainer 会写的文件名」发现并向下展开，**输入**（stage1 embeddings、stage0 parquet、dataset）一律不动。
-   - 已知教训：`METRICS_PATH` 在导入时由 `LOG_DIR` 计算，只改 `LOG_DIR` 会让验证把真实 `training_metrics.jsonl` 截断成 2 行。任何改动隔离逻辑的提交，都必须先用 md5 前后比对证明生产产物零变化。
-   - **禁止**为了让 G6 通过而放宽隔离，或把输出重定向回生产目录。
-6. **门失败即结论，不得手改**：某机制被 G2/G3 拦下，说明机制本身在该处无效（如 R5-10 的参考项梯度恒为 0）。正确处置是记录发现、必要时另开 issue，禁止改门禁、放宽容差或改写已上报的指标来「通过」。
-7. **G1/G6 必须 fail-closed**：G1 声明父条件时，父树缺失必须判失败；G6 必须观测真实 `AdamW.step()` 调用及至少一个有梯度参数发生变化，不得用调用次数替代参数变化。不得削弱输出隔离。
+5. **输出隔离不得削弱**：G6 会执行真实训练入口，`tools/cgv/engine.py::isolated_outputs` 按「trainer 会写的文件名」发现并重定向产物路径，**输入**（stage1 embeddings、stage0 parquet、dataset）一律不动。任何改动隔离逻辑的提交，都必须先用哈希前后比对证明生产产物零变化。
+6. **门失败即结论，不得手改**：门拦下机制说明该机制在该处无效。正确处置是记录发现、换一个结构上不同的机制，禁止改门禁、放宽容差或改写已上报的指标来「通过」。
+7. **声明必须如实**：契约要写出实测性质（例如本家族 L2+L3 行为项对 encoder 无梯度，就声明 `zero`），不得为了让门通过而写与事实不符的声明；若机制的**前提**与之冲突（例如某机制声称投影到该梯度），就声明 `nonzero` 并让 G2 如实拒绝它。
 
 ### 与 §6 的关系
 
-§6 的梯度通路检查是单次 `loss.backward()` 的最低要求；本节的 CGV 是它的完整替代与加强，覆盖 DDP、参数更新与真实入口。二者都不可省略。
+§6 的梯度通路检查是单次 `loss.backward()` 的最低要求；本节的 CGV 是它的完整替代与加强，覆盖契约、独立 Oracle、DDP、参数更新、真实入口与反例证据。二者都不可省略。
