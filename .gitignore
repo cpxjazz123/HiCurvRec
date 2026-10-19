@@ -630,3 +630,7 @@ results/stage2_RQ-VAE/r45_gradient_integrity_audit/logs/ddp_artifacts/*.pt
 # 2026-10-19: CGV is stateless -- it persists no certificate and no verdict. Everything under
 # _cgv is the payload one G5 run hands to its own parent process, regenerated on every check.
 results/stage2_RQ-VAE/_cgv/
+
+# R7 track-A frozen replay bundles: large intermediates, reproducible from tools/r7_a_frozen_replay.py
+results/stage2_RQ-VAE/r7_a_parity/*/step_*/bundle.pt
+results/stage2_RQ-VAE/r7_c_geometry/*/step_*/bundle.pt
