@@ -1909,6 +1909,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
 # CGV -- Computational Graph & Gradient Verification
 # --------------------------------------------------------------------------
 CGV_RUNNER = REPO / "tools/cgv/run_cgv.py"
+PROBE_RUNNER = REPO / "tools/stage2_stability_probe.py"
 CGV_PY = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
 CGV_TIMEOUT_S = 2400
 
@@ -2006,6 +2007,38 @@ def tool_cgv_check(source_dir: str, spec: dict) -> dict:
     return payload
 
 
+def tool_stage2_stability_probe(source_dir: str, spec: dict, probe_config: dict | None = None) -> dict:
+    """Run the isolated short-run stability probe (issue #77).
+
+    A diagnostic, not a gate: it reports `status` for its own execution and a HEURISTIC `risk`,
+    and it never unlocks Stage3, never retunes training and never redefines a failed ER as a CGV
+    failure. It reuses the arm's real loaders, loss, optimizer, clipping and DDP; only the
+    behaviour-weight schedule and the epoch bound are probe-local, because production ramps from
+    epoch 1500 and a short run would otherwise never touch the behaviour path at all.
+    """
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {"refused": problem, "available_trees": [item.name for item in stage2_trees()]}
+    if not isinstance(spec, dict) or not spec:
+        return {"status": "invalid", "risk": "unknown",
+                "refused": "spec is required: the probe is run against the arm's own declaration"}
+    payload = {"spec": spec, "probe_config": probe_config or {}}
+    try:
+        proc = subprocess.run([CGV_PY, str(PROBE_RUNNER), str(tree), "--spec", "-",
+                               "--probe-config", "-"],
+                              input=json.dumps(payload), capture_output=True, text=True,
+                              timeout=CGV_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return {"status": "invalid", "risk": "unknown",
+                "refused": f"the probe did not finish within {CGV_TIMEOUT_S}s"}
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {"status": "invalid", "risk": "unknown",
+                "refused": f"the probe produced no readable result (rc={proc.returncode})",
+                "stderr_tail": (proc.stderr or proc.stdout or "").strip()[-800:]}
+
+
 def tool_cgv_status(source_dir: str, spec: dict | None = None) -> dict:
     """Read-only: the gate table for one Stage2 tree, and whether it has ever been verified here.
 
@@ -2062,6 +2095,20 @@ TOOLS: dict[str, dict] = {
         "insufficient_evidence; the last NEVER counts as success. The call also runs the "
         "counterexample suite, which injects seven standard faults and requires the matching gate "
         "Reads and reports. Starts no training.",
+    },
+    "stage2_stability_probe": {
+        "fn": tool_stage2_stability_probe,
+        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)",
+                 "probe_config": "object (optional; omit for the documented defaults)"},
+        "description": "Isolated short-run Stage2 stability diagnostic. Runs the arm's REAL "
+        "loaders, loss assembly, optimizer, clipping and DDP for a bounded step budget (default "
+        "32 baseline steps then 128 with a forced positive behaviour weight) and reports "
+        "per-snapshot L1 occupancy/entropy/collision, the three-level tuple collision separately, "
+        "train-only pair proxies and per-level gradient norms against the base gradient. Returns "
+        "status {valid,invalid,inconclusive} for the diagnostic's own execution and a HEURISTIC "
+        "risk {low,watch,high,unknown}. It is NOT a gate: a risk verdict never unlocks Stage3, "
+        "never retunes training and never replaces the frozen Hard-L1 ER criterion. The frozen "
+        "held-out pairs are never read. Production artifacts are hashed before and after.",
     },
     "cgv_status": {
         "fn": tool_cgv_status,
