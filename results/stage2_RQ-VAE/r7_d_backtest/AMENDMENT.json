@@ -1,0 +1,30 @@
+{
+  "amends": "PREREGISTRATION.json",
+  "reason_for_amendment": "The preregistration was written BEFORE any indicator was computed and is left byte-identical. This file records what the EXECUTION of that protocol revealed about the cohort itself, and the resulting exclusions. No indicator value influenced any exclusion, and no threshold, split or decision rule was changed.",
+  "hash_of_preregistration_at_amendment": "see manifest.json: preregistration_sha256",
+  "execution_time_findings": [
+    {
+      "arm": "TIGER_RQ-VAE",
+      "action": "excluded",
+      "reason": "this tree has no behaviour term at all: it defines no behavior_weight and no behaviour loss path, so the frozen v2 behaviour-active 160-step protocol cannot be applied to it without editing shared trainer code, which the preregistration forbids. Its published Hard-L1 ER is the baseline reference itself (16.38953942232631), and a baseline cannot serve as a positive example of a mechanism's health.",
+      "evidence": "grep for 'behavior_weight' in stage2_RQ-VAE/TIGER_RQ-VAE/train_rqvae.py returns 0 matches; the two other trees return 5."
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "action": "attempted under the same protocol",
+      "reason": "this tree does define a behaviour weight, so the protocol applies. Its weight hook is evaluated per epoch rather than per optimizer step, which is a documented deviation from the v2 protocol's per-step ramp and is recorded as such if the arm is included."
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "action": "excluded after measurement",
+      "reason": "the frozen v2 protocol requires the behaviour-active schedule, and this tree's per-epoch weight hook did not deliver the per-step ramp: the applied deep weight was ZERO at every captured step, so the arm ran the whole 160-step window with no deep term. Its measurements are therefore not comparable to the mechanism arms and it is excluded rather than reported as a healthy counterexample.",
+      "measured": {
+        "step_160_l1_effective_codes": 1.7,
+        "applied_deep_weight_at_step_160": 0.0
+      },
+      "why_this_matters": "this is the most informative single measurement in the track. With NO deep term at all the L1 effective-code count collapses to 1.70 at step 160, BELOW the failed r6_04's 3.6 and far below healthy r4_08's 19.6. The occupancy indicator therefore separates DEEP-ACTIVE from DEEP-INACTIVE runs, not healthy from failed arms. An arm whose deep term does not fire scores as worse than an arm that genuinely collapsed, while being perfectly healthy."
+    }
+  ],
+  "consequence_if_the_baseline_behaviour_arm_is_unusable": "The cohort falls back to the four mechanism arms -- r4_08 healthy, r6_02, r6_03 and r6_04 failed -- which is the same four arms issue #78 used. The preregistration's own decision rules cover this case: a four-arm cohort with a single healthy example cannot calibrate any early stop, and the honest outcome is UNCALIBRATABLE rather than a fitted threshold.",
+  "no_leak_statement": "The frozen held-out pair artifact was never opened by any pilot, probe or observer in this track. The outcome labels are published immutable historical Hard-L1 ER values read from results/stage2_RQ-VAE/<arm>/stage2_metrics.json and gate.json."
+}

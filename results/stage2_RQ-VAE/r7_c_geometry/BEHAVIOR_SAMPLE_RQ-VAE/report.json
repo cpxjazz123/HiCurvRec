@@ -1,0 +1,240 @@
+{
+  "arm": "BEHAVIOR_SAMPLE_RQ-VAE",
+  "kind": "observational_read_only",
+  "snapshot_steps": [
+    0,
+    8,
+    16,
+    32,
+    64,
+    96,
+    128,
+    160
+  ],
+  "snapshots": {
+    "0": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 1.6507007405161858,
+        "margin_p05": 1.6423983573913574,
+        "margin_p50": 1.6507072448730469,
+        "margin_median": 1.6507072448730469,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 0,
+        "winner_distance_mean": 16.18886375427246,
+        "runner_up_distance_mean": 17.839563369750977
+      },
+      "occupancy": {
+        "used_codes": 1,
+        "codebook_size": 256,
+        "gini": -0.99609375,
+        "entropy": -0.0,
+        "effective_codes": 1.0,
+        "max_share": 1.0
+      },
+      "deep_active": false
+    },
+    "8": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.00019780305342465,
+        "margin_p05": 4.55480767413974e-06,
+        "margin_p50": 7.0138368755579e-05,
+        "margin_median": 6.978027522563934e-05,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 997,
+        "winner_distance_mean": 0.0006067868089303374,
+        "runner_up_distance_mean": 0.0008045898866839707
+      },
+      "occupancy": {
+        "used_codes": 162,
+        "codebook_size": 256,
+        "gini": -0.6740875244140625,
+        "entropy": 4.6999455461727155,
+        "effective_codes": 109.94118557079015,
+        "max_share": 0.025390625
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 1020,
+        "switch_rate": 0.99609375
+      }
+    },
+    "16": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.00015652716570002667,
+        "margin_p05": 5.597248673439027e-06,
+        "margin_p50": 6.311119068413973e-05,
+        "margin_median": 6.299489177763462e-05,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 1005,
+        "winner_distance_mean": 0.0006638976628892124,
+        "runner_up_distance_mean": 0.0008204248733818531
+      },
+      "occupancy": {
+        "used_codes": 149,
+        "codebook_size": 256,
+        "gini": -0.7537994384765625,
+        "entropy": 4.3845367978170975,
+        "effective_codes": 80.20106529923436,
+        "max_share": 0.078125
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 432,
+        "switch_rate": 0.421875
+      }
+    },
+    "32": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.00012453302929316123,
+        "margin_p05": 4.471931606531143e-06,
+        "margin_p50": 6.640981882810593e-05,
+        "margin_median": 6.634602323174477e-05,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 1015,
+        "winner_distance_mean": 0.0009162490023300052,
+        "runner_up_distance_mean": 0.0010407819645479321
+      },
+      "occupancy": {
+        "used_codes": 107,
+        "codebook_size": 256,
+        "gini": -0.8916015625,
+        "entropy": 3.463063076472677,
+        "effective_codes": 31.914583759773368,
+        "max_share": 0.1298828125
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 620,
+        "switch_rate": 0.60546875
+      }
+    },
+    "64": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.001055605669534998,
+        "margin_p05": 9.15580429136753e-05,
+        "margin_p50": 0.0008905399590730667,
+        "margin_median": 0.0008898451924324036,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 562,
+        "winner_distance_mean": 0.0027691766154021025,
+        "runner_up_distance_mean": 0.0038247820921242237
+      },
+      "occupancy": {
+        "used_codes": 12,
+        "codebook_size": 256,
+        "gini": -0.9933700561523438,
+        "entropy": 0.7245114256117247,
+        "effective_codes": 2.0637225716229883,
+        "max_share": 0.77734375
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 1022,
+        "switch_rate": 0.998046875
+      }
+    },
+    "96": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.002430223850751645,
+        "margin_p05": 0.0006911488715559245,
+        "margin_p50": 0.002474062144756317,
+        "margin_median": 0.002473382279276848,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 78,
+        "winner_distance_mean": 0.0026537245139479637,
+        "runner_up_distance_mean": 0.005083947908133268
+      },
+      "occupancy": {
+        "used_codes": 6,
+        "codebook_size": 256,
+        "gini": -0.9947357177734375,
+        "entropy": 0.4800234883188177,
+        "effective_codes": 1.6161123615094837,
+        "max_share": 0.873046875
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 286,
+        "switch_rate": 0.279296875
+      }
+    },
+    "128": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.002106030706272577,
+        "margin_p05": 0.000591473700478673,
+        "margin_p50": 0.0020927637815475464,
+        "margin_median": 0.0020920205861330032,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 105,
+        "winner_distance_mean": 0.001214343006722629,
+        "runner_up_distance_mean": 0.0033203735947608948
+      },
+      "occupancy": {
+        "used_codes": 5,
+        "codebook_size": 256,
+        "gini": -0.9946136474609375,
+        "entropy": 0.4708350932615518,
+        "effective_codes": 1.6013308956445504,
+        "max_share": 0.8876953125
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 44,
+        "switch_rate": 0.04296875
+      }
+    },
+    "160": {
+      "margin": {
+        "items": 1024,
+        "margin_mean": 0.002570643602666678,
+        "margin_p05": 0.0007933028042316437,
+        "margin_p50": 0.002340385690331459,
+        "margin_median": 0.002340080216526985,
+        "exact_ties": 0,
+        "exact_tie_rate": 0.0,
+        "margin_below_1e_3": 71,
+        "winner_distance_mean": 0.0011219605803489685,
+        "runner_up_distance_mean": 0.003692604135721922
+      },
+      "occupancy": {
+        "used_codes": 5,
+        "codebook_size": 256,
+        "gini": -0.9944610595703125,
+        "entropy": 0.5334786836569074,
+        "effective_codes": 1.704852648198718,
+        "max_share": 0.8583984375
+      },
+      "deep_active": false,
+      "switches_from_previous": {
+        "items": 1024,
+        "switched": 79,
+        "switch_rate": 0.0771484375
+      }
+    }
+  },
+  "blockers": [],
+  "capture_failures": [],
+  "fixed_population_items": 1024,
+  "status": "supported",
+  "elapsed_s": 47.31
+}

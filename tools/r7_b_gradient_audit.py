@@ -32,6 +32,11 @@ BUNDLE_ROOT = REPO_ROOT / "results/stage2_RQ-VAE/r7_a_parity"
 OUTPUT_ROOT = REPO_ROOT / "results/stage2_RQ-VAE/r7_b_gradients"
 
 
+def on_cpu(vector):
+    """Gradients live on the device, the state comparison lives on the host; meet in one place."""
+    return None if vector is None else vector.detach().to(torch.float64).cpu()
+
+
 def norm(vector) -> float | None:
     return None if vector is None else float(vector.norm())
 
@@ -106,7 +111,8 @@ def decompose(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str, Any]:
     behaviour = (torch.stack(list(level_losses.values())).mean() if level_losses
                  else torch.zeros((), device=device))
     assembled = base_loss + weight * behaviour
-    g_total = grads_of(assembled, retain=False)
+    # the graph must survive: the real clip below calls .backward() on the same assembled
+    g_total = grads_of(assembled, retain=True)
     total_encoder = join([g_total[index] for index in encoder_positions])
 
     per_level = {}
@@ -126,11 +132,14 @@ def decompose(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str, Any]:
     # the actual clip, applied to the real gradient, so 'preclip' and 'postclip' are the real ones
     model.zero_grad(set_to_none=True)
     assembled.backward()
-    preclip = join([parameter.grad for parameter in parameters])
+    # encoder-only, because everything else here is compared against an encoder gradient
+    preclip = join([parameters[index].grad for index in encoder_positions])
+    all_preclip = join([parameter.grad for parameter in parameters])
     clip = float(getattr(trainer, "GRADIENT_CLIP_NORM", 0.0) or 0.0)
-    if clip > 0 and preclip is not None:
+    if clip > 0:
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-    postclip = join([parameter.grad for parameter in parameters])
+    postclip = join([parameters[index].grad for index in encoder_positions])
+    all_postclip = join([parameter.grad for parameter in parameters])
 
     return {
         "applied_weight": weight,
@@ -156,11 +165,35 @@ def decompose(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str, Any]:
                                          for level in level_losses)
                                      - float(deep_encoder.norm())) < 1e-9),
         },
-        "clip": {"norm": clip, "preclip_l2": norm(preclip), "postclip_l2": norm(postclip),
-                 "cosine_preclip_vs_base": cosine(preclip, base_encoder)},
+        "clip": {"norm": clip, "encoder_preclip_l2": norm(preclip),
+                 "encoder_postclip_l2": norm(postclip),
+                 "all_params_preclip_l2": norm(all_preclip),
+                 "all_params_postclip_l2": norm(all_postclip),
+                 "cosine_preclip_vs_base": cosine(preclip, base_encoder),
+                 "cosine_postclip_vs_base": cosine(postclip, base_encoder)},
         "_vectors": {"assembled_encoder": total_encoder, "base_encoder": base_encoder,
                      "deep_weighted_encoder": deep_encoder},
     }
+
+
+def adam_direction(branch: dict[str, Any], *, eps: float = 1e-8) -> torch.Tensor | None:
+    """m / sqrt(v) exactly as the optimizer will use it, read BEFORE the step.
+
+    AdamW SUBTRACTS this direction, so the realised update should be ANTI-parallel to it. That is
+    the control that separates "the update is the optimizer's" from "two vectors were misaligned".
+    """
+    optimizer = branch["optimizer"]
+    parts = []
+    for name, parameter in branch["model"].named_parameters():
+        if not name.startswith("encoder."):
+            continue
+        entry = optimizer.state.get(parameter)
+        if not entry or "exp_avg" not in entry or "exp_avg_sq" not in entry:
+            return None
+        first = entry["exp_avg"].to(torch.float64).cpu()
+        second = entry["exp_avg_sq"].to(torch.float64).cpu()
+        parts.append((first / (second.sqrt() + eps)).reshape(-1))
+    return torch.cat(parts) if parts else None
 
 
 def realized_step(branch: dict[str, Any], bundle: dict[str, Any],
@@ -168,15 +201,49 @@ def realized_step(branch: dict[str, Any], bundle: dict[str, Any],
     """Whether the AdamW step follows the gradient the arm assembled, or its preconditioned image."""
     before = {name: value.detach().clone().cpu()
               for name, value in branch["model"].state_dict().items()}
+    # read BEFORE the step: AdamW rewrites m and v as part of stepping, so a direction read after
+    # the step is a different vector from the one the step actually used
+    adam = on_cpu(adam_direction(branch))
     step = G.assemble_and_step(branch, bundle, intervention="FULL")
     after = branch["model"].state_dict()
+    # The gradient vectors are ENCODER-only, so the update vector has to be encoder-only too:
+    # a cosine between an encoder gradient and an all-parameter update is meaningless.
+    # The ORDER MUST match adam_direction() and the gradient vectors, all of which walk
+    # named_parameters(). Sorting here instead silently permutes the update relative to the vectors
+    # it is compared against, and a cosine over a permuted vector is noise -- which is exactly what
+    # the Adam-direction control below is there to expose.
     delta = torch.cat([(after[name].detach().to(torch.float64).cpu() - before[name].to(torch.float64)
-                        ).reshape(-1) for name in sorted(before) if name in after])
+                        ).reshape(-1) for name, _ in branch["model"].named_parameters()
+                       if name in after and name.startswith("encoder.")])
+    delta = on_cpu(delta)
+    vectors = {key: on_cpu(value) for key, value in vectors.items()}
+    # Control for the near-zero cosine above: AdamW updates p -= lr * m/sqrt(v), so the realised
+    # step should be ANTI-parallel to that direction and roughly orthogonal to THIS step's own
+    # gradient, because m and v are exponential averages over the training history. A large
+    # negative cosine against the Adam direction makes that orthogonality explicable; a near-zero
+    # one means the vectors disagree in ORDER and the comparison is meaningless.
+    gradient = vectors.get("assembled_encoder")
+    signed = None if gradient is None else torch.sign(gradient)
     return {
         "update_l2": norm(delta),
         "cosine_update_vs_assembled_gradient": cosine(delta, vectors.get("assembled_encoder")),
         "cosine_update_vs_base_gradient": cosine(delta, vectors.get("base_encoder")),
         "cosine_update_vs_weighted_deep": cosine(delta, vectors.get("deep_weighted_encoder")),
+        "cosine_update_vs_sign_of_gradient": cosine(delta, signed),
+        "cosine_update_vs_adam_direction": cosine(delta, adam),
+        "adam_direction_l2": norm(adam),
+        "expected_sign": -1.0,
+        "adam_alignment_verdict": (
+            "the realised update is the optimizer's own AdamW step" if (
+                cosine(delta, adam) is not None and cosine(delta, adam) < -0.9)
+            else "the realised update does NOT match the AdamW direction, so the near-zero "
+                 "cosine against the gradient is unexplained and must not be attributed to Adam"),
+        "reading": "AdamW updates p -= lr * m/sqrt(v), so the realised update is expected to be "
+                   "ANTI-parallel to that direction and roughly ORTHOGONAL to this step's own "
+                   "gradient, because m and v are exponential averages over the training history "
+                   "rather than the current step. A large negative cosine against the Adam "
+                   "direction is what makes the orthogonality against the gradient explicable "
+                   "instead of mysterious.",
         "update_sha256": step["update_sha256"],
         "base_loss": step["base_loss"],
         "behavior_loss": step["behavior_loss"],
@@ -213,6 +280,7 @@ def main() -> int:
         print(f"=== {arm} ===", flush=True)
         report = run_arm(arm)
         reports.append(report)
+        (OUTPUT_ROOT / arm).mkdir(parents=True, exist_ok=True)
         (OUTPUT_ROOT / arm / "report.json").write_text(json.dumps(report, indent=2, default=str))
         print(f"{arm}: {report['status']}", flush=True)
     (OUTPUT_ROOT / "report.json").write_text(json.dumps({"arms": reports}, indent=2, default=str))

@@ -1,0 +1,50 @@
+{
+  "definition": "two runs of the UNMODIFIED trainer, no hooks, identical seed and protocol; the spread below is what a cross-run comparison can attribute to the code",
+  "arm": "r6_02",
+  "cublas_workspace_config": "pinned by the caller when set",
+  "runs_identical": false,
+  "run_1_sha256": "360a01025b97223cddad477fd8f295bea5db651ccf5bce80656493645a69830a",
+  "run_2_sha256": "ae949f1b53e00c6a1f948c20eac887113b91b3c35430b9b23ec91e12e295276e",
+  "per_step": [
+    {
+      "step": 96,
+      "run_1": {
+        "l1_used_codes": 44,
+        "l2_used_codes": 34,
+        "l3_used_codes": 45,
+        "raw_tuple3_collision": 0.704183266932271,
+        "l1_entropy_norm": 0.5032376350299688
+      },
+      "run_2": {
+        "l1_used_codes": 39,
+        "l2_used_codes": 28,
+        "l3_used_codes": 30,
+        "raw_tuple3_collision": 0.7689243027888446,
+        "l1_entropy_norm": 0.5036060575995821
+      },
+      "l1_used_codes_delta": 5,
+      "tuple3_collision_delta": -0.06474103585657365,
+      "l1_entropy_delta": -0.00036842256961333586
+    },
+    {
+      "step": 160,
+      "run_1": {
+        "l1_used_codes": 33,
+        "l2_used_codes": 39,
+        "l3_used_codes": 82,
+        "raw_tuple3_collision": 0.6611328125,
+        "l1_entropy_norm": 0.4923329006334521
+      },
+      "run_2": {
+        "l1_used_codes": 39,
+        "l2_used_codes": 37,
+        "l3_used_codes": 63,
+        "raw_tuple3_collision": 0.7177734375,
+        "l1_entropy_norm": 0.5110056956342255
+      },
+      "l1_used_codes_delta": -6,
+      "tuple3_collision_delta": -0.056640625,
+      "l1_entropy_delta": -0.0186727950007734
+    }
+  ]
+}
