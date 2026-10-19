@@ -234,6 +234,67 @@ def test_heldout_never_read() -> None:
           f"the held-out artifact hash is recorded and unchanged ({str(before)[:16]})")
 
 
+def test_interaction_with_cgv_and_start() -> None:
+    """The probe must not be able to bypass CGV, and must not look like a Stage3 permission.
+
+    Only REFUSAL paths are exercised: `stage2_start` with a declaration the mechanism contradicts
+    must refuse before anything is archived or dispatched, which has no side effect. No valid
+    start is attempted, because that would launch a real 3000-epoch run.
+    """
+    print("interaction: cgv_check -> probe -> stage2_start")
+    import importlib.util
+
+    server_path = REPO / "tools/genrec-mcp/server.py"
+    spec_module = importlib.util.spec_from_file_location("genrec_server_for_test", server_path)
+    server = importlib.util.module_from_spec(spec_module)
+    spec_module.loader.exec_module(server)
+
+    check("stage2_stability_probe" in server.TOOLS,
+          "the probe is registered as an MCP tool")
+
+    # a probe report must carry no permission of any kind
+    report = P.run_probe(ARM, SPEC, {"baseline_steps": 4, "behavior_active_steps": 12,
+                                     "snapshot_steps": [0, 4, 8, 16]},
+                         REPO / "results/stage2_RQ-VAE/stability_probe/_selftest")
+    check("stage3_allowed" not in report,
+          "the probe report contains no stage3_allowed field")
+    blob = json.dumps(report)
+    check('"hard_l1_er"' not in blob,
+          "the probe reports no field named hard_l1_er: it never measures the held-out metric")
+    check("pos_share" not in blob and "neg_share" not in blob,
+          "the probe reports neither held-out pos_share nor neg_share")
+    check("reference_hard_l1_er_historical" in blob,
+          "the reference values it quotes are named as historical, not as its own measurement")
+    check(report["risk"] in ("low", "watch", "high", "unknown"),
+          f"risk is one of the four declared levels ({report['risk']})")
+    check(report["status"] in ("valid", "invalid", "inconclusive"),
+          f"status is one of the three declared levels ({report['status']})")
+
+    # the ER gate must not read probe output: it decides on the frozen metric alone
+    gate_source = (REPO / "tools/stage2_hard_l1_er_gate.py").read_text()
+    check("stability_probe" not in gate_source,
+          "the ER gate does not consult the stability probe")
+
+    # a declaration the mechanism contradicts must be refused by the LIVE gate, with no dispatch
+    wrong = json.loads(json.dumps(SPEC))
+    wrong["mechanism"]["mathematics"]["expected_level_to_encoder_jacobians"] = [1, 0.25, 0.0625]
+    refused = server.tool_stage2_start(str(ARM), wrong)
+    check(refused.get("started") is False,
+          f"a contradicting declaration is refused ({refused.get('started')})")
+    check("CGV gate" in str(refused.get("refused")),
+          f"the refusal names the CGV gate ({str(refused.get('refused'))[:60]})")
+    check((refused.get("cgv_gate") or {}).get("passed") is False,
+          "the refusal reports the gate verdict")
+    check("worker_pid" not in refused and "status" not in refused,
+          "no worker was dispatched and no smoke was queued")
+
+    # a probe verdict cannot substitute for the gate: the same call without a valid declaration
+    # is still refused
+    missing = server.tool_stage2_start(str(ARM), None)
+    check(missing.get("started") is False,
+          "an absent declaration is refused regardless of any probe result")
+
+
 def main() -> int:
     test_known_histograms()
     test_invalid_probe_config()
@@ -244,6 +305,7 @@ def main() -> int:
     test_healthy_is_valid()
     test_real_run_is_valid_and_leaves_artifacts_alone()
     test_heldout_never_read()
+    test_interaction_with_cgv_and_start()
     print()
     if failures:
         print(f"FAILED: {len(failures)} check(s)")

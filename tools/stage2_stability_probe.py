@@ -118,17 +118,22 @@ WATCH_RULES = ("l1_entropy_drop", "l1_effective_codes_drop", "max_code_share_ris
 RISK_CALIBRATION = {
     "status": "uncalibrated",
     "reference_arms": {
-        "healthy": {"arm": "r4_08", "historical_hard_l1_er": 16.402628,
+        "healthy": {"arm": "r4_08", "reference_hard_l1_er_historical": 16.402628,
                     "tuple3_collision_at_160": 0.4769, "negative_same_code_rate_at_160": 0.0734},
         "collapsed": {
-            "r6_02": {"hard_l1_er": 2.8902618750708537, "tuple3_collision_at_160": 0.7893,
+            "r6_02": {"reference_hard_l1_er_historical": 2.8902618750708537,
+                      "tuple3_collision_at_160": 0.7893,
                       "negative_same_code_rate_at_160": 0.1169},
-            "r6_03": {"hard_l1_er": 1.8233611326609775, "tuple3_collision_at_160": 0.8158,
+            "r6_03": {"reference_hard_l1_er_historical": 1.8233611326609775,
+                      "tuple3_collision_at_160": 0.8158,
                       "negative_same_code_rate_at_160": 0.1203},
-            "r6_04": {"hard_l1_er": 1.5416677050365089, "tuple3_collision_at_160": 0.9386,
+            "r6_04": {"reference_hard_l1_er_historical": 1.5416677050365089,
+                      "tuple3_collision_at_160": 0.9386,
                       "negative_same_code_rate_at_160": 0.2547},
         },
     },
+    "note": ("these reference values were measured by the ER gate on those arms' finished runs; "
+             "the probe itself never reads the held-out artifact and never reports Hard-L1 ER"),
     "false_positive_observed": ("the healthy reference arm also reaches risk=high under these "
                                "indicators, so a high verdict is not evidence of collapse"),
     "no_automatic_action": ("this probe must not cancel, approve or retune a run. A risk verdict "
