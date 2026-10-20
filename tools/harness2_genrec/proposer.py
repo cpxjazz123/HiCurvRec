@@ -1,23 +1,26 @@
 """The two proposers: the real one for the machine, the scripted one for the pipeline.
 
-`GenrecProposer` is the framework's `Proposer` with one change: the host's provider
-configuration wins. The framework's own `Proposer.env()` drops ``ANTHROPIC_BASE_URL`` /
-``ANTHROPIC_AUTH_TOKEN`` and forces ``CLAUDE_CODE_USE_VERTEX=1`` (``core/proposer.py:46``
-and ``core/proposer.py:105``); this machine has no Vertex credentials and a working
-Anthropic-compatible endpoint instead. No credential is written to disk or to the
-repository -- the environment is inherited, never recorded.
+`OpenCodeProposer` is the real editor: OpenCode, in an isolated scratch workspace, with
+the evidence on disk next to it. It replaces the Claude Code proposer that issue #101
+asked for: issue #102 makes OpenCode the execution backend, and the production path must
+not depend on Claude Code or Vertex credentials.
 
 `ScriptedProposer` is the offline stand-in: no model, no network, deterministic edits.
-It exists so the pipeline can be exercised end to end before a single token is spent,
-and so the false-success rejection can be demonstrated on demand.
+It stays as the deterministic CI path.
 """
 
 from __future__ import annotations
 
+import json
 import os
+import shutil
+import tempfile
 from pathlib import Path
+from typing import Any, Dict, List
 
 from harness2.core.proposer import Proposer, Reply
+
+from . import opencode
 
 #: Never forwarded to a child session: the host's provider selection is ours, not theirs.
 _DROP = (
@@ -139,14 +142,163 @@ if __name__ == "__main__":
 
 
 class GenrecProposer(Proposer):
-    """The framework's proposer, pointed at the provider this machine actually has."""
+    """Deprecated: the Claude Code proposer issue #101 asked for.
+
+    Kept only so that an old configuration fails with a reason instead of silently
+    running a different agent. Issue #102 makes OpenCode the execution backend.
+    """
 
     def env(self) -> dict[str, str]:
-        e = {k: v for k, v in os.environ.items() if k not in _DROP}
-        model = os.environ.get("HARNESS2_GENREC_MODEL", "").strip()
-        if model:
-            e["ANTHROPIC_MODEL"] = model
-        return e
+        raise NotImplementedError(
+            "the Claude Code proposer was retired by issue #102: use OpenCodeProposer. "
+            "The production path must not depend on Claude Code or Vertex credentials."
+        )
+
+
+def _copy_context(source: Path, destination: Path) -> Dict[str, Any]:
+    """Copy the evidence tree into the agent's workspace, file by file.
+
+    The framework builds the evidence of the parallel candidates concurrently, and a
+    directory that is being written while it is being read can lose a file between the
+    directory listing and the copy. A file that vanished is recorded and the copy
+    continues: the agent gets the evidence that exists, and the gap is in the audit
+    rather than in a crash.
+    """
+    copied = 0
+    missing: List[str] = []
+    for path in sorted(Path(source).rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(source)
+        target = Path(destination) / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.copy2(path, target)
+            copied += 1
+        except FileNotFoundError:
+            missing.append(relative.as_posix())
+    return {"copied": copied, "missing": missing}
+
+
+class OpenCodeProposer(Proposer):
+    """The real editor: OpenCode, in an isolated scratch workspace.
+
+    The evidence is copied into the workspace next to the agent, the agent edits
+    ``context/harness/`` in place, and the edited tree comes back as the proposal. The
+    full trajectory -- the event stream, the tool calls with their inputs and outputs,
+    the cost, the tokens, the exit status -- is written to the audit directory, with
+    every secret redacted.
+    """
+
+    def __init__(
+        self,
+        spec,
+        audit_dir=None,
+        *,
+        model: str = "",
+        timeout: int = 1800,
+        repo_root: Path | None = None,
+        use_mcp: bool = True,
+    ) -> None:
+        super().__init__(spec, audit_dir=audit_dir)
+        self.model = model or opencode.model_name()
+        self.timeout = int(timeout)
+        self.repo_root = Path(repo_root) if repo_root else None
+        self.use_mcp = bool(use_mcp)
+        self._workspaces: List[Path] = []
+
+    def cleanup(self) -> None:
+        """Remove the scratch workspaces this proposer made."""
+        for workspace in self._workspaces:
+            shutil.rmtree(workspace, ignore_errors=True)
+        self._workspaces = []
+
+    def call(self, mission, context_dir, label, **kwargs) -> Reply:
+        context = Path(context_dir)
+        workspace = Path(tempfile.mkdtemp(prefix="h2-proposer-"))
+        # The workspace holds the edited harness, and the caller reads it from the reply
+        # after this returns, so it cannot be removed here. The previous one can.
+        for previous in self._workspaces:
+            shutil.rmtree(previous, ignore_errors=True)
+        self._workspaces = [workspace]
+        copied = _copy_context(context, workspace / "context")
+        prompt = self._prompt(mission, kwargs.get("system", ""))
+        mcp = None
+        if self.use_mcp and self.repo_root is not None:
+            mcp = opencode.mcp_server_block(self.repo_root)
+        result = opencode.run_agent(
+            workspace,
+            prompt,
+            model=self.model,
+            timeout=kwargs.get("timeout") or self.timeout,
+            mcp=mcp,
+            title=label,
+        )
+        result["copied_context_files"] = copied
+        self._audit(label, mission, result)
+        harness = workspace / "context" / "harness"
+        text = result.get("text") or ""
+        if not text.strip():
+            text = result.get("stdout") or ""
+        reply = Reply(
+            label=label,
+            text=text,
+            ok=not result.get("errors") and harness.is_dir(),
+            cost_usd=float(result.get("cost") or 0.0),
+            wall_s=float(result.get("elapsed_s") or 0.0),
+            attempts=1,
+            channel="opencode",
+            workspace=harness if harness.is_dir() else None,
+        )
+        self._calls.append(reply)
+        return reply
+
+    def _prompt(self, mission: str, system: str) -> str:
+        parts = []
+        if system:
+            parts.append(system)
+        parts.append(str(mission))
+        parts.append(
+            "\n\n# HOW TO WORK IN THIS DIRECTORY\n\n"
+            "The evidence is on disk under `context/`. Read it -- the mission points at the\n"
+            "files. The harness you are editing is `context/harness/`: change those files in\n"
+            "place with your normal tools, and create new ones where a new component is the\n"
+            "right lever. Files you do not touch are inherited unchanged.\n\n"
+            "When you are done, reply with ONE `<notes>` block and nothing else: for each\n"
+            "change, the moment in the evidence that motivated it."
+        )
+        return "\n\n".join(parts)
+
+    def _audit(self, label: str, mission: str, result: dict) -> None:
+        if not self.audit_dir:
+            return
+        directory = Path(self.audit_dir)
+        directory.mkdir(parents=True, exist_ok=True)
+        safe = "".join(ch if ch.isalnum() or ch in "-._" else "_" for ch in label)
+        (directory / f"{safe}.mission.md").write_text(str(mission), encoding="utf-8")
+        (directory / f"{safe}.json").write_text(
+            json.dumps(
+                {
+                    "label": label,
+                    "model": result.get("model"),
+                    "argv": result.get("argv"),
+                    "exit_code": result.get("exit_code"),
+                    "timed_out": result.get("timed_out"),
+                    "elapsed_s": result.get("elapsed_s"),
+                    "cost": result.get("cost"),
+                    "tokens": result.get("tokens"),
+                    "tool_calls": result.get("tool_calls"),
+                    "errors": result.get("errors"),
+                    "text": result.get("text"),
+                    "stdout": result.get("stdout"),
+                    "stderr": result.get("stderr"),
+                    "workspace": result.get("workspace"),
+                },
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
 
 
 class ScriptedProposer(Proposer):
@@ -256,4 +408,4 @@ class ScriptedProposer(Proposer):
         )
 
 
-__all__ = ["GenrecProposer", "ScriptedProposer"]
+__all__ = ["GenrecProposer", "OpenCodeProposer", "ScriptedProposer"]

@@ -41,6 +41,7 @@ import signal
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 PROTOCOL_VERSION = "2024-11-05"
@@ -1185,13 +1186,20 @@ def run_stage2_smoke(
     }
 
 
-def tool_stage2_start(source_dir: str, spec: dict | None = None) -> dict:
+def tool_stage2_start(source_dir: str, spec: dict | None = None,
+                      admission: str | None = None) -> dict:
     """Start one Stage2 run in the given tree. Every call really trains.
 
     The tree's runnable entrypoint is validated (an unwired launcher is
     refused), the hardcoded arm and its result directory are reported, a live
     run of the same tree refuses, and existing artifacts in the arm's directory
     must be moved away first.
+
+    The launch is gated by independent evidence: either the Harness2
+    controller's admission record (issue #102) or, on the legacy path, a
+    seven-group CGV declaration. The admission record is bound to the digest of
+    the tree's source, so a tree that changed after the verdict cannot be
+    launched on that verdict.
     """
     tree, problem = resolve_stage2_tree(source_dir)
     if tree is None:
@@ -1229,21 +1237,45 @@ def tool_stage2_start(source_dir: str, spec: dict | None = None) -> dict:
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    # CGV is a HARD gate: a mechanism may only train once all six gates pass. The report is not
-    # persisted and no certificate exists -- the check is run here, on the declaration this call
-    # supplies, before anything is archived or dispatched, so a refusal has no side effect.
-    verification = run_cgv_verification(Path(tree), spec)
-    gate_states = {gate: (verification.get("summary") or {}).get(gate, {}).get("state")
-                   for gate in CGV_GATES} if verification.get("passed") or \
-        verification.get("gates") else {}
-    context["cgv_gate"] = {"passed": bool(verification.get("passed")),
-                           "gates": gate_states,
-                           "note": verification.get("refused")
-                                   or "all six gates passed on the supplied declaration"}
-    if not verification.get("passed"):
+    # The launch is gated by independent evidence, and the gate is checked before anything is
+    # archived or dispatched, so a refusal has no side effect.
+    if admission:
+        ok, detail, record = verify_admission(admission, Path(tree))
+        context["admission"] = {"verified": ok, "detail": detail,
+                                "mechanism_id": record.get("mechanism_id"),
+                                "proposal_sha256": record.get("proposal_sha256"),
+                                "judges": record.get("judges"),
+                                "tree_digest": record.get("tree_digest")}
+        if not ok:
+            return {
+                "started": False,
+                "refused": f"admission record: {detail}",
+                **context,
+            }
+    elif spec:
+        # The legacy path: the CGV's six gates, run here, on the declaration this call
+        # supplies. The report is not persisted and no certificate exists.
+        verification = run_cgv_verification(Path(tree), spec)
+        gate_states = {gate: (verification.get("summary") or {}).get(gate, {}).get("state")
+                       for gate in CGV_GATES} if verification.get("passed") or \
+            verification.get("gates") else {}
+        context["cgv_gate"] = {"passed": bool(verification.get("passed")),
+                               "gates": gate_states,
+                               "note": verification.get("refused")
+                                       or "all six gates passed on the supplied declaration"}
+        if not verification.get("passed"):
+            return {
+                "started": False,
+                "refused": f"CGV gate: {verification.get('refused') or gate_states}",
+                **context,
+            }
+    else:
         return {
             "started": False,
-            "refused": f"CGV gate: {verification.get('refused') or gate_states}",
+            "refused": (
+                "the launch path needs independent evidence: an admission record from the "
+                "Harness2 controller (issue #102), or a seven-group declaration for the legacy "
+                "CGV path. Refusing to train on nothing."),
             **context,
         }
     refusal = stage2_launch_decision(gpu_probe)
@@ -1965,6 +1997,72 @@ def _sha256_file(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+ADMISSION_MAX_AGE_S = 24 * 3600
+
+
+def _code_tree_sha256(tree: Path) -> tuple[str | None, int]:
+    """The digest of a tree's active source, using the verifier's own implementation.
+
+    The same function the CGV and the Harness2 controller use, so the three agree on
+    what "the tree" means.
+    """
+    import importlib.util
+
+    path = REPO / "tools" / "cgv" / "contract.py"
+    if not path.is_file():
+        return None, 0
+    spec = importlib.util.spec_from_file_location("cgv_contract_for_admission", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.code_tree_sha256(tree)
+
+
+def verify_admission(path: str, tree: Path) -> tuple[bool, str, dict]:
+    """Check the Harness2 controller's admission record against the live tree.
+
+    The record is bound to the digest of the tree's source: if the tree changed after
+    the verdict, the verdict is about a different tree and the launch is refused. A
+    record that is missing, stale, forged or bound to another tree is refused too --
+    there is no path from a cold run to a run without evidence.
+    """
+    record_path = Path(path)
+    if not record_path.is_file():
+        return False, f"no admission record at {record_path}", {}
+    try:
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"the admission record is unreadable: {exc}", {}
+    if not isinstance(record, dict):
+        return False, "the admission record is not an object", {}
+    if record.get("judge_verdict") != "passed":
+        return False, (
+            f"the admission record says the judges returned {record.get('judge_verdict')!r}"
+        ), record
+    if not record.get("proposal_sha256"):
+        return False, "the admission record names no frozen proposal", record
+    live, _count = _code_tree_sha256(tree)
+    if record.get("tree_digest") != live:
+        return False, (
+            "the tree changed after the verdict: the record was issued for "
+            f"{str(record.get('tree_digest'))[:16]} and the tree is now {str(live)[:16]}"
+        ), record
+    issued = record.get("issued_utc")
+    age: float | None = None
+    if isinstance(issued, str):
+        try:
+            age = time.time() - datetime.fromisoformat(issued).timestamp()
+        except ValueError:
+            age = None
+    if age is None:
+        return False, f"the admission record carries no usable issue time ({issued!r})", record
+    if age > ADMISSION_MAX_AGE_S:
+        return False, (
+            f"the admission record is stale: it was issued {age / 3600:.1f}h ago and the limit "
+            f"is {ADMISSION_MAX_AGE_S / 3600:.0f}h"
+        ), record
+    return True, "the admission record matches the tree and the judges passed", record
+
+
 def run_cgv_verification(tree: Path, spec: dict) -> dict:
     """Run the six gates under the project's interpreter and return the report.
 
@@ -2066,16 +2164,23 @@ def tool_cgv_status(source_dir: str, spec: dict | None = None) -> dict:
 TOOLS: dict[str, dict] = {
     "stage2_start": {
         "fn": tool_stage2_start,
-        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)"},
+        "args": {"source_dir": "string",
+                 "admission": "string (optional: path to the Harness2 controller's admission "
+                              "record)",
+                 "spec": "object (optional: the legacy seven-group mechanism declaration)"},
         "description": "Start one Stage2 run in the given Stage2 tree, e.g. "
         "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE. source_dir is required because several trees "
         "exist. The call returns as soon as the existing artifacts have been archived and a detached "
         "worker owns the rest: status is smoke_pending and stage2_status(source_dir) reports the "
         "smoke verdict, then the launched run. Existing artifacts no longer block a run (they are "
-        "copied to the archive first), and a live run of the same tree still refuses. spec is the "
-        "mechanism's mathematical declaration; it is REQUIRED, and the six CGV gates are run "
-        "against it before anything is archived or dispatched -- if any gate fails the run is "
-        "refused with no side effect. Nothing is persisted and no certificate is kept.",
+        "copied to the archive first), and a live run of the same tree still refuses. The run is "
+        "gated by independent evidence, checked before anything is archived or dispatched, so a "
+        "refusal has no side effect: pass admission (the Harness2 controller's admission record, "
+        "issue #102) or, on the legacy path, spec (the seven-group declaration the six CGV gates "
+        "are run against). The admission record is bound to the digest of the tree's source: a "
+        "tree that changed after the verdict, a stale record, or a record bound to another tree is "
+        "refused. With neither, the run is refused: there is no path from a cold run to a run "
+        "without evidence.",
     },
     "cgv_check": {
         "fn": tool_cgv_check,
