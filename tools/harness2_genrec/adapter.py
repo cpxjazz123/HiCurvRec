@@ -80,7 +80,7 @@ class GenrecAdapter:
         self.repo = Path(repo)
         self.runs_root = Path(runs_root)
         self.substrate = LocalSubstrate()
-        self._task_ids = list(task_ids) if task_ids else tasks.all_tasks()
+        self._task_ids = list(task_ids) if task_ids else None
         self._base_tree = repo_surface_tree(self.repo)
         channel = channel or ChannelSpec("opencode", "local/deterministic")
         self.spec = BenchSpec(

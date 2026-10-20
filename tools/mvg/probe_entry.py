@@ -36,8 +36,13 @@ if str(CGV_DIR) not in sys.path:
     sys.path.insert(0, str(CGV_DIR))
 
 
-def probe(tree: Path, epochs: int, out_dir: Path) -> Dict[str, Any]:
-    """Run the trainer's real entry for ``epochs`` epochs and report what moved."""
+def probe(tree: Path, epochs: int, out_dir: Path, baseline_tree: Path | None = None) -> Dict[str, Any]:
+    """Run the trainer's real entry for ``epochs`` epochs and report what moved.
+
+    The host's behaviour term is inactive until its ramp opens (epoch 1500 by default),
+    so the probe **forces the activation on**: a short probe that never reaches the
+    mechanism's regime would report a healthy arm for a mechanism that only acts later.
+    """
     import torch
 
     import engine as cgv_engine  # noqa: E402  (the verifier's own loader and isolation)
@@ -99,6 +104,10 @@ def probe(tree: Path, epochs: int, out_dir: Path) -> Dict[str, Any]:
             "RAMP_START_EPOCH": 0,
             "BEHAVIOR_WEIGHT_MAX": 1.0,
         }
+        # The mechanism's own switch, when the tree declares one: a probe that leaves it
+        # off measures the host, not the mechanism.
+        if hasattr(trainer, "MVG_MECHANISM_ENABLED"):
+            forced["MVG_MECHANISM_ENABLED"] = True
         saved = {name: getattr(trainer, name, None) for name in forced}
         for name, value in forced.items():
             setattr(trainer, name, value)
@@ -126,6 +135,7 @@ def probe(tree: Path, epochs: int, out_dir: Path) -> Dict[str, Any]:
         metrics = _last_metrics(out_dir)
         loss_finite = bool(metrics.get("loss_finite", True))
         sid_change = _sid_change(out_dir)
+        occupancy = _occupancy(out_dir)
 
         ok = (
             error is None
@@ -133,6 +143,7 @@ def probe(tree: Path, epochs: int, out_dir: Path) -> Dict[str, Any]:
             and encoder_update > 0.0
             and codebook_update > 0.0
             and sid_change["changed"] > 0
+            and not occupancy.get("collapse_suspected")
         )
         return {
             "ok": ok,
@@ -143,11 +154,12 @@ def probe(tree: Path, epochs: int, out_dir: Path) -> Dict[str, Any]:
             "codebook_update": codebook_update,
             "hard_sid_changed": sid_change["changed"],
             "hard_sid_rows": sid_change["rows"],
+            "occupancy": occupancy,
             "detail": (
-                "the real entry ran, the declared parameters moved and the exported hard SIDs "
-                "changed"
+                "the real entry ran, the declared parameters moved, the exported hard SIDs "
+                "changed and the code did not collapse"
                 if ok
-                else f"the probe did not show the mechanism acting: {error or metrics}"
+                else f"the probe did not show a healthy mechanism: {error or metrics or occupancy}"
             ),
             "metrics": metrics,
         }
@@ -189,6 +201,48 @@ def _finite(value: Any) -> bool:
     return number == number and abs(number) != float("inf")
 
 
+def _occupancy(out_dir: Path) -> Dict[str, Any]:
+    """How much of the code the exported SIDs actually use.
+
+    A mechanism can be mathematically faithful and still destroy the code: if the level-0
+    codebook collapses onto a handful of entries, the SID's first token stops carrying
+    information, whatever the loss says. The numbers are the arm's own; the caller
+    compares them with the host's.
+    """
+    exported = sorted(out_dir.rglob("item_sids.json")) or sorted(out_dir.rglob("sids_for_hgrec.npy"))
+    if not exported:
+        return {"available": False, "collapse_suspected": False}
+    try:
+        import numpy as np
+    except Exception:  # pragma: no cover - numpy is always present in the project env
+        return {"available": False, "collapse_suspected": False}
+    path = exported[-1]
+    if path.suffix == ".json":
+        import json as _json
+
+        document = _json.loads(path.read_text(encoding="utf-8"))
+        max_id = max(int(k) for k in document)
+        matrix = np.zeros((max_id + 1, 4), dtype=np.int64)
+        for key, value in document.items():
+            matrix[int(key)] = value
+    else:
+        matrix = np.load(path)
+    items = int(matrix.shape[0])
+    unique_l1 = int(len(np.unique(matrix[:, 0])))
+    unique_l1l2 = int(len(np.unique(matrix[:, :2], axis=0)))
+    collision = float(1.0 - len(np.unique(matrix[:, :3], axis=0)) / items) if items else 0.0
+    return {
+        "available": True,
+        "items": items,
+        "unique_l1": unique_l1,
+        "l1_fraction": round(unique_l1 / items, 6) if items else 0.0,
+        "unique_l1l2": unique_l1l2,
+        "l1l2_fraction": round(unique_l1l2 / items, 6) if items else 0.0,
+        "collision_3token": round(collision, 6),
+        "collapse_suspected": False,
+    }
+
+
 def _sid_change(out_dir: Path) -> Dict[str, int]:
     """How many exported SID entries differ from the ones the run started with."""
     exported = sorted(out_dir.rglob("sids_for_hgrec.npy"))
@@ -208,11 +262,40 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--tree", required=True, help="the arm tree to probe")
     parser.add_argument("--epochs", type=int, default=2, help="how many epochs to run")
     parser.add_argument("--out", required=True, help="directory for the probe's outputs")
+    parser.add_argument(
+        "--baseline-tree",
+        default="",
+        help="the host to compare against; the probe flags a collapse when the arm's code "
+        "occupancy falls far below the host's under the same budget",
+    )
     args = parser.parse_args(argv)
     tree = Path(args.tree)
     if not tree.is_absolute():
         tree = REPO_ROOT / tree
-    report = probe(tree, args.epochs, Path(args.out))
+    baseline = Path(args.baseline_tree) if args.baseline_tree else None
+    if baseline is not None and not baseline.is_absolute():
+        baseline = REPO_ROOT / baseline
+    report = probe(tree, args.epochs, Path(args.out), baseline_tree=baseline)
+    if baseline is not None:
+        host = probe(baseline, args.epochs, Path(args.out) / "baseline", baseline_tree=baseline)
+        report["baseline_occupancy"] = host.get("occupancy", {})
+        arm_l1 = report.get("occupancy", {}).get("unique_l1")
+        host_l1 = host.get("occupancy", {}).get("unique_l1")
+        if arm_l1 is not None and host_l1:
+            ratio = float(arm_l1) / float(host_l1)
+            report["occupancy_ratio_vs_host"] = round(ratio, 4)
+            report["occupancy"].update(
+                {
+                    "host_unique_l1": host_l1,
+                    "collapse_suspected": bool(ratio < 0.5),
+                }
+            )
+            if report["occupancy"]["collapse_suspected"]:
+                report["ok"] = False
+                report["detail"] = (
+                    f"the code collapsed: the arm uses {arm_l1} level-0 entries against the "
+                    f"host's {host_l1} ({ratio:.1%} of it)"
+                )
     text = json.dumps(report, indent=2, default=str)
     # The trainer's own prints go to stdout, so the report is also written to a file: the
     # caller reads the file, not the stream.
