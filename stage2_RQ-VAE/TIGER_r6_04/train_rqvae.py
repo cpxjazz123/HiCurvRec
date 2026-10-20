@@ -64,6 +64,52 @@ from scripts.crowding_losses import MatchedParameters, crowding_loss
 from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
                                       crowding_record, crowding_train_fields)
 
+
+# --- R7-F auxiliary loss (issue #88) ---------------------------------------------
+# OFF by default. When R7_F_ENABLED is unset the hook module is never imported and the
+# production loss graph is byte-identical to the host without this block. When enabled, L_sep is
+# composed inside the host's own loss graph, BEFORE backward, BEFORE R6-04's surrogate composition
+# or R4-08's PCGrad projection, and BEFORE the optimizer step.
+R7_F_ENABLED = os.environ.get("R7_F_ENABLED", "0") == "1"
+R7_F_STEP_LOG = os.environ.get("R7_F_STEP_LOG", "")
+R7_F_SNAPSHOT_DIR = os.environ.get("R7_F_SNAPSHOT_DIR", "")
+if not R7_F_SNAPSHOT_DIR and R7_F_STEP_LOG:
+    R7_F_SNAPSHOT_DIR = os.path.join(os.path.dirname(R7_F_STEP_LOG), "snapshots")
+R7_F_SNAPSHOT_STEPS = tuple(int(v) for v in os.environ.get(
+    "R7_F_SNAPSHOT_STEPS", "0,8,16,32,64,96,128,160").split(",") if v.strip())
+R7_F_STEP_SCHEDULE = os.environ.get("R7_F_STEP_SCHEDULE", "0") == "1"
+R7_F_MAX_STEPS = int(os.environ.get("R7_F_MAX_STEPS", "0"))
+R7_F_BASELINE_STEPS = int(os.environ.get("R7_F_BASELINE_STEPS", "32"))
+R7_F_ACTIVE_WEIGHT = float(os.environ.get("R7_F_ACTIVE_WEIGHT", "0.20"))
+_R7F_SCHEDULE_STEP = [0]
+if R7_F_STEP_SCHEDULE:
+    def _r7f_step_weight(epoch, current=None):
+        """The 32 + 128 OPTIMIZER-step schedule the issue specifies.
+
+        One optimizer step is taken per minibatch in this trainer, so the minibatch counter is
+        the optimizer-step counter. The production ramp (RAMP_START_EPOCH=1500) is untouched:
+        this schedule is installed only when R7_F_STEP_SCHEDULE=1.
+        """
+        if current is None:
+            return current
+        _R7F_SCHEDULE_STEP[0] += 1
+        step = _R7F_SCHEDULE_STEP[0]
+        if step <= R7_F_BASELINE_STEPS:
+            return 0.0
+        if R7_F_MAX_STEPS and step > R7_F_MAX_STEPS:
+            return 0.0
+        return R7_F_ACTIVE_WEIGHT
+_R7F = None
+if R7_F_ENABLED:
+    try:
+        import sys as _r7f_sys
+        _r7f_sys.path.insert(0, os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
+        import r7_f_host_hook as _R7F
+    except Exception as _r7f_exc:  # fail closed: a broken hook must not silently disable itself
+        raise RuntimeError(f"R7_F_ENABLED=1 but the auxiliary loss hook could not be loaded: "
+                           f"{_r7f_exc}")
+
 import crowding_losses2 as _crowd2
 
 from arm_geometry import ARM_CONFIGS as _BASE_GEOMETRY_ARM_CONFIGS
@@ -605,6 +651,8 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
 # rather than only at an epoch boundary -- production's weight is an epoch constant, and the
 # issue requires a schedule expressed in steps.
 _PROBE_STEP_WEIGHT_HOOK = None
+if R7_F_STEP_SCHEDULE:
+    _PROBE_STEP_WEIGHT_HOOK = _r7f_step_weight
 
 
 def behavior_weight(epoch: int) -> float:
@@ -1133,6 +1181,8 @@ def main() -> None:
         crowd_graph = np.load("/home/wlia0047/ar57/wenyu/GeneRec/results/crowding/graph_s42.npz")
 
     for epoch in range(1, EPOCHS + 1):
+        if R7_F_MAX_STEPS and _R7F_SCHEDULE_STEP[0] >= R7_F_MAX_STEPS:
+            break
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
         if pair_sampler is not None:
@@ -1169,7 +1219,9 @@ def main() -> None:
             raw_module.rq.vq_layers[0]._hyp_assignment_active = epoch_hyp_alpha > 0.0
         _epoch_t0 = time.time()
         hyperbolic_losses = []
+        _r7f_step = 0
         for (batch,) in loader:
+            _r7f_step += 1
             if _PROBE_STEP_WEIGHT_HOOK is not None:
                 # Probe-only: re-evaluated per mini-batch. With the hook at its production value
                 # of None this branch never runs and epoch_weight is untouched.
@@ -1320,6 +1372,32 @@ def main() -> None:
                 base_loss, behavior_loss, epoch_weight, crowd_value, crowding_weight,
                 _CROWD_CONFIG is not None,
             )
+            _r7f_sep = None
+            _r7f_grads = {"encoder": None, "l1_codebook": None}
+            if R7_F_ENABLED and _R7F is not None:
+                # The level-0 residual IS the encoder latent the L1 quantizer consumes, so the
+                # separation term is computed on the host's own geometry rather than on a
+                # reconstruction of it. It is composed into the loss BEFORE backward, BEFORE
+                # R6-04's surrogate composition or R4-08's PCGrad projection, and BEFORE the
+                # optimizer step.
+                if epoch_weight > 0.0:
+                    _r7f_sep = _R7F.separation_loss(
+                        raw_module, residuals[0], source_ids, target_ids, successor_indicator,
+                        step=_r7f_step)
+                    if _r7f_sep["loss"] is not None:
+                        loss = loss + _r7f_sep["loss"]
+                        # The separation term's own gradient norms must be read BEFORE the host's
+                        # backward frees the graph; retain_graph keeps it alive for that backward.
+                        _r7f_grads = {
+                            "encoder": _R7F.grad_norm(
+                                _r7f_sep["loss"],
+                                [p for n, p in raw_module.named_parameters()
+                                 if n.startswith("encoder.")], raw_module, retain=True),
+                            "l1_codebook": _R7F.grad_norm(
+                                _r7f_sep["loss"],
+                                [raw_module.rq.vq_layers[0].get_code_embs()], raw_module,
+                                retain=True),
+                        }
             if _GEOMETRY_CONFIG is not None:
                 loss = _compose_geometry_loss(loss, geometry_value)
             if EXPERIMENT_ARM in {"B_E", "B_H", "B_E_nocb", "MARGIN", "LETTER", "LETTER_nodiv", "DIGER", "ANCHOR_CTRL", "ANCHOR_W001", "ANCHOR_W01", "ANCHOR_W1"}:
@@ -1402,6 +1480,37 @@ def main() -> None:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
             scheduler.step()
+            if R7_F_ENABLED and _R7F is not None and R7_F_STEP_LOG:
+                # Per-step provenance the issue requires, written AFTER the optimizer step so the
+                # recorded LR, Adam step and model digest are the ones that were applied.
+                _r7f_record = {
+                    "step": _r7f_step,
+                    "item_batch_sha256": _R7F.sha256_tensor(batch),
+                    "pair_item_ids_sha256": _R7F.sha256_tensor(
+                        torch.stack([source_ids, target_ids], dim=1)) if epoch_weight > 0.0 else None,
+                    "applied_weight": float(epoch_weight),
+                    "behavior_loss": float(behavior_loss.detach()),
+                    "base_loss": float(base_loss.detach()),
+                    "sep_loss": (float(_r7f_sep["loss"].detach())
+                                 if _r7f_sep is not None and _r7f_sep["loss"] is not None else None),
+                    "valid_negative_count": (_r7f_sep["valid_count"]
+                                             if _r7f_sep is not None else 0),
+                    "mean_p_same": (_r7f_sep["mean_p_same"] if _r7f_sep is not None else None),
+                    "tau": (_r7f_sep["tau"] if _r7f_sep is not None else None),
+                    "lambda": (_r7f_sep["lambda"] if _r7f_sep is not None else None),
+                    "lr": float(optimizer.param_groups[0]["lr"]),
+                    "scheduler_step": int(getattr(scheduler, "last_epoch", -1)),
+                    "adam_step": int(next(iter(optimizer.state_dict()["state"].values()),
+                                           {"step": torch.tensor(0)})["step"]),
+                    "model_digest": _R7F.model_digest(raw_module),
+                }
+                _r7f_record["sep_grad_norm_encoder"] = _r7f_grads["encoder"]
+                _r7f_record["sep_grad_norm_L1_codebook"] = _r7f_grads["l1_codebook"]
+                with open(R7_F_STEP_LOG, "a", encoding="utf-8") as _fh:
+                    _fh.write(json.dumps(_r7f_record) + "\n")
+                if R7_F_SNAPSHOT_DIR and _r7f_step in R7_F_SNAPSHOT_STEPS:
+                    _R7F.save_snapshot(raw_module, optimizer, scheduler, _r7f_step,
+                                       R7_F_SNAPSHOT_DIR)
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
             behaviors.append(float(behavior_loss.detach()))

@@ -30,7 +30,34 @@ import r7_a_frozen_replay as FR  # noqa: E402
 import r7_a_replay_engine as RE  # noqa: E402
 import r7_f_soft_separation as FS  # noqa: E402
 
-ARMS = ("r6_04","r4_08")
+ARMS = ("r6_04", "r4_08")
+
+# The issue's machine-checkable verdict vocabulary. A measurement JSON existing is NOT a verdict.
+VERDICTS = ("invalid_protocol", "invalid_metrics", "blocked_cgv",
+            "supported_pilot", "rejected_pilot", "inconclusive")
+
+
+def adjudicate(execution_ok: bool, metrics_ok: bool, cgv_ok: bool, *,
+               improvement: bool | None, harm: bool | None) -> dict[str, Any]:
+    """The single place a verdict is decided, so a report cannot assert one by hand."""
+    if not execution_ok:
+        verdict = "invalid_protocol"
+    elif not metrics_ok:
+        verdict = "invalid_metrics"
+    elif not cgv_ok:
+        verdict = "blocked_cgv"
+    elif improvement is None:
+        verdict = "inconclusive"
+    elif harm:
+        verdict = "rejected_pilot"
+    elif improvement:
+        verdict = "supported_pilot"
+    else:
+        verdict = "rejected_pilot"
+    return {"verdict": verdict,
+            "in_vocabulary": verdict in VERDICTS,
+            "rule": "execution -> metrics -> CGV -> measured effect; a missing stage short-circuits "
+                    "to its own status and never to a success verdict"}
 BASELINE_STEPS = 32
 ACTIVE_STEPS = 128
 SNAPSHOT_STEPS = (32, 64, 96, 128, 160)
@@ -42,33 +69,46 @@ def tree_of(arm: str) -> Path:
     return REPO_ROOT / f"stage2_RQ-VAE/TIGER_{arm}"
 
 
-def host_successor_graph(trainer) -> Any:
-    """The host trainer builds (n_items, n_items) from the training parquet.
+class InvalidProtocol(RuntimeError):
+    """A condition the issue requires to be a HARD failure, not a silent degradation."""
 
-    Returns a torch tensor (n_items, n_items) of bool with True where j is a successor of i.
-    Falls back to None (so source_conditioned_mask receives no exclusion graph) if the host does
-    not expose the trainer frame; the pilot reports it.
+    def __init__(self, status: str, reason: str):
+        super().__init__(f"{status}: {reason}")
+        self.status = status
+        self.reason = reason
+
+
+def host_successor_graph(trainer, train_frame) -> Any:
+    """The (n_items, n_items) adjacency over TRUE train transitions.
+
+    A missing or unreadable training relationship graph is an InvalidProtocol. Returning None
+    would make every candidate look unrelated, which is how the #87 pilot silently excluded
+    nothing at all.
     """
-    try:
-        frame = trainer._train_frame
-    except AttributeError:
-        return None
-    if not hasattr(trainer, "_successor_indicator"):
-        return None
+    import numpy as np
     from scipy.sparse import csr_matrix
+    if train_frame is None:
+        raise InvalidProtocol("invalid_protocol",
+                              "the training frame is unavailable, so the source-conditioned "
+                              "exclusion cannot be applied and every candidate would be treated "
+                              "as unrelated")
     rows: list[int] = []
     cols: list[int] = []
-    for history, target in zip(frame["seen_history"].to_numpy(),
-                               frame["target"].to_numpy(dtype=int)):
+    for history, target in zip(train_frame["seen_history"].to_numpy(),
+                               train_frame["target"].to_numpy(dtype=np.int64)):
         if history is None or len(history) == 0:
             continue
         rows.append(int(history[-1]))
         cols.append(int(target))
-    matrix = csr_matrix(([True] * len(rows), (rows, cols)), shape=(trainer.INPUT_DIM, trainer.INPUT_DIM))
+    if not rows:
+        raise InvalidProtocol("invalid_protocol",
+                              "the training frame contains no transitions, so the "
+                              "source-conditioned exclusion has nothing to exclude")
+    n_items = int(max(rows + cols)) + 1
+    matrix = csr_matrix(([True] * len(rows), (rows, cols)), shape=(n_items, n_items))
     matrix.sum_duplicates()
     matrix.data[:] = True
-    # convert to torch for the mask; small enough to fit on host
-    return torch.tensor(matrix.toarray(), dtype=torch.bool)
+    return matrix
 
 
 def preregister_tau(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str, Any]:
@@ -77,7 +117,10 @@ def preregister_tau(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str,
     layer = model.rq.vq_layers[0]
     with torch.no_grad():
         batch = bundle["item_batch"].to(RE.DEVICE)
-        trace = model.encoder(batch) if hasattr(model, "encoder") else None
+        # The ENCODER's latent, which is what the L1 quantizer consumes. Measuring the gap on the
+        # raw item embedding -- as the #87 pilot did -- reports a median of 0 and forces the tau
+        # floor, which the issue forbids presenting as a valid preregistration.
+        trace = model.encoder(batch)
         if isinstance(trace, tuple):
             trace = trace[0]
         distance = layer._distances(trace.reshape(-1, layer.dim))
@@ -86,6 +129,10 @@ def preregister_tau(branch: dict[str, Any], bundle: dict[str, Any]) -> dict[str,
     median_gap = float(margin.median())
     tau = max(TAU_FLOOR, median_gap)
     return {"tau": tau, "median_gap": median_gap,
+            "gap_p05": float(margin.quantile(0.05)),
+            "gap_p95": float(margin.quantile(0.95)),
+            "gap_mean": float(margin.mean()),
+            "measured_on": "encoder latent z with the host's native L1 distance",
             "subset_sha256": FR.tensor_digest(bundle["item_batch"]),
             "subset_size": int(bundle["item_batch"].shape[0])}
 
@@ -211,8 +258,15 @@ def _snapshot_from_branch(branch: dict[str, Any], *, tau: float) -> dict[str, An
         left = torch.randint(0, n, (256,), generator=generator)
         right = (left + torch.randint(1, max(2, n), (256,), generator=generator)) % n
         pairs = torch.stack([left, right], dim=1)
+        # The CANONICAL hard L1 identity: the host's own argmin over the encoder latent's
+        # native L1 distance. The #87 pilot took argmax over a soft posterior built on RAW item
+        # embeddings, which is not the host's hard SID and is not even the right geometry.
+        # The CANONICAL hard SID: the model's own get_indices(embeddings, infer_use_sk=False).
+        # The #87 pilot took argmax over a soft posterior built on RAW item embeddings, which is
+        # neither the host's hard identity nor the right geometry.
+        tokens = model.get_indices(population, infer_use_sk=False)
+        l1 = tokens[:, 0]
         posteriors = FS.posterior(model, population, tau=tau)
-        l1 = posteriors.argmax(dim=-1)
         same = FS.same_code_probability(posteriors[pairs[:, 0]], posteriors[pairs[:, 1]])
         entropy = float(-(posteriors * posteriors.clamp_min(1e-12).log()).sum(1).mean())
         metrics = {
