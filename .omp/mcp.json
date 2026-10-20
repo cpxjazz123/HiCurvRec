@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "genrec": {
+      "type": "stdio",
+      "command": "/usr/bin/python3",
+      "args": ["/home/wlia0047/ar57/wenyu/GeneRec/tools/genrec-mcp/server.py"],
+      "cwd": "/home/wlia0047/ar57/wenyu/GeneRec",
+      "instructions": false,
+      "timeout": 120000
+    }
+  }
+}
