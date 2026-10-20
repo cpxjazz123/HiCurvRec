@@ -139,13 +139,16 @@ path.
 
 * **The static check is literal-based.** A candidate that hardcodes a value through an
   expression rather than a literal slips past `validate_tree`. The independent-reference
-  comparison of MVG's M1 (production against a reference implementation, forward value *and*
-  intermediates) is what closes this; until then the runtime gate catches only the cases where
-  the lie changes the reported verdict.
+  comparison of the forward oracle (production against a reference implementation, forward
+  value *and* intermediates) is what closes this; until then the runtime gate catches only
+  the cases where the lie changes the reported verdict.
 * **The runtime gate needs a mutated fixture to exist.** A task with no held-out fixture has
   no mutation detection at all; `LocalSubstrate.preflight` refuses to run such a task.
-* **The offline proposer is scripted.** It demonstrates the plumbing and the gates; it does not
-  show a model improving a harness. That is P1.
+* **The offline proposer is scripted.** It demonstrates the plumbing and the gates; the real
+  editor is OpenCode (§3), and the offline path stays as the deterministic CI path.
+* **The independent checks read code, not prose.** A candidate that explains a defect in a
+  comment is not substituting the operation; a static rule that fired on the explanation
+  would reject a correct repair for saying why it was wrong.
 
 ## 6. The one extension point used
 
