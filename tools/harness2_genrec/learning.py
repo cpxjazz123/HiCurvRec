@@ -137,6 +137,50 @@ def _check(tree: Path, proposal_path: Path, module: str, entrypoint: str, out: P
     }
 
 
+def _version_claim(
+    record: Dict[str, Any],
+    proposal: Dict[str, Any],
+    corrections: Dict[str, str],
+    out_dir: Path,
+    preserved: Path,
+) -> Dict[str, Any]:
+    """A measured contradiction versions the proposal. The original is never rewritten."""
+    revised = dict(proposal)
+    revised["schema_version"] = 1
+    revised["version"] = f"{proposal.get('version', '1.0.0')}+v2"
+    targets = dict(revised.get("gradient_targets") or {})
+    for name, expectation in corrections.items():
+        targets[name] = expectation
+    revised["gradient_targets"] = targets
+    history = dict(revised.get("revision") or {})
+    history.update(
+        {
+            "supersedes": str(preserved / "proposal.json"),
+            "reason": (
+                "measured: "
+                + "; ".join(f"{name} -> {expectation}" for name, expectation in sorted(corrections.items()))
+                + "; the original declaration contradicts the measurement, so the target "
+                "is corrected to what was measured"
+            ),
+            "measured_utc": _now(),
+        }
+    )
+    revised["revision"] = history
+    (out_dir / "proposal_v2.json").write_text(
+        json.dumps(revised, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    record["status"] = "invalid_specification"
+    record["note"] = (
+        "the original claim contradicts the measurement; a versioned proposal v2 records "
+        "the corrected claim and the measurement behind it"
+    )
+    record["finished_utc"] = _now()
+    (out_dir / "repair.json").write_text(
+        json.dumps(record, indent=2, default=str) + "\n", encoding="utf-8"
+    )
+    return record
+
+
 def repair_arm(arm_dir: Path, out_dir: Path, *, model: str = "", timeout: int = 1800) -> Dict[str, Any]:
     """Repair one mechanism's fidelity, prototype first."""
     arm_dir = Path(arm_dir)
@@ -229,41 +273,9 @@ Write the prototype, then report what you changed and why.
         if isinstance(entry, dict) and entry.get("verdict") == "saturation"
     ]
     if impossible:
-        # The claim cannot be implemented. The proposal is versioned, never rewritten.
-        revised = dict(proposal)
-        revised["schema_version"] = 1
-        revised["version"] = f"{proposal.get('version', '1.0.0')}+v2"
-        targets = dict(revised.get("gradient_targets") or {})
-        for name in impossible:
-            targets[name] = "finite"
-        revised["gradient_targets"] = targets
-        history = dict(revised.get("revision") or {})
-        history.update(
-            {
-                "supersedes": str(preserved / "proposal.json"),
-                "reason": (
-                    "measured: the loss does not depend on "
-                    + ", ".join(impossible)
-                    + " at all, so the original claim was impossible; the target is now "
-                    "declared finite for those paths"
-                ),
-                "measured_utc": _now(),
-            }
+        return _version_claim(
+            record, proposal, {name: "finite" for name in impossible}, out_dir, preserved
         )
-        revised["revision"] = history
-        (out_dir / "proposal_v2.json").write_text(
-            json.dumps(revised, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
-        record["status"] = "invalid_specification"
-        record["note"] = (
-            "the original claim was impossible; a versioned proposal v2 records the revised "
-            "claim and the measurement behind it"
-        )
-        record["finished_utc"] = _now()
-        (out_dir / "repair.json").write_text(
-            json.dumps(record, indent=2, default=str) + "\n", encoding="utf-8"
-        )
-        return record
 
     if not prototype_report.get("ok"):
         # The prototype exists but still does not deliver. One bounded repair, then it stays
@@ -285,6 +297,21 @@ Write the prototype, then report what you changed and why.
         prototype_report = _check(tree, proposal_path, prototype_module, entrypoint, out_dir / "prototype_check.json")
         record["prototype_check"] = prototype_report
         record["stages"].append({"name": "prototype_repair", "tokens": second.get("tokens")})
+        diagnosis = prototype_report.get("diagnosis") or {}
+        record["diagnosis"] = diagnosis
+        impossible = [
+            name for name, entry in diagnosis.items()
+            if isinstance(entry, dict) and entry.get("verdict") == "impossible specification"
+        ]
+        incorrect = [
+            name for name, entry in diagnosis.items()
+            if isinstance(entry, dict)
+            and entry.get("verdict") == "declaration incorrect (measured nonzero)"
+        ]
+        if impossible or incorrect:
+            corrections = {name: "finite" for name in impossible}
+            corrections.update({name: "nonzero" for name in incorrect})
+            return _version_claim(record, proposal, corrections, out_dir, preserved)
         if not prototype_report.get("ok"):
             record["status"] = "unresolved"
             record["note"] = (
