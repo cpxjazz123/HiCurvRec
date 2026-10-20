@@ -600,11 +600,29 @@ class Campaign:
         )
         server = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(server)
+        # The launch's smoke probe needs real trained weights to probe the gradient path
+        # with. A parent arm's checkpoint of the same architecture is copied in and marked
+        # smoke-only; the launch archives it before the cold run, so the run itself still
+        # starts from scratch.
+        result_dir = Path(str(server.tree_result_dir(tree)))
+        probe_checkpoint = result_dir / "rqvae_best.pth"
+        seeded = None
+        if not probe_checkpoint.is_file():
+            for parent in ("TIGER_r8_control", "TIGER_BEHAVIOR_SAMPLE_RQ-VAE"):
+                source = Path(str(server.tree_result_dir(
+                    REPO_ROOT / "stage2_RQ-VAE" / parent
+                ))) / "rqvae_best.pth"
+                if source.is_file():
+                    result_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, probe_checkpoint)
+                    seeded = {"source": str(source), "target": str(probe_checkpoint)}
+                    break
         result = server.tool_stage2_start(source_dir=str(tree), admission=str(admission))
         record = {
             "mechanism_id": arm["mechanism_id"],
             "started": bool(result.get("started")),
             "refused": result.get("refused"),
+            "probe_checkpoint": seeded,
             "launch": result,
         }
         if not result.get("started"):
