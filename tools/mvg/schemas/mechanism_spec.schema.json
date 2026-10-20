@@ -171,6 +171,11 @@
         "source_digests": { "type": "object" },
         "dataset_digests": { "type": "object" }
       }
+    },
+    "judges": {
+      "type": "array",
+      "description": "The independent checks this mechanism's declaration calls for. Harness2 selects from the registry; an unknown name is refused.",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
     }
   },
   "$defs": {

@@ -66,7 +66,7 @@ import oracles
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CGV_DIR = REPO_ROOT / "results/stage2_RQ-VAE/_cgv"
-CGV_PY = "/home/wlia0047/ar57/scratch/wenyu/genrec_env_v2/bin/python3.9"
+CGV_PY = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
 if not Path(CGV_PY).exists():
     CGV_PY = sys.executable
 

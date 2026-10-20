@@ -1,9 +1,27 @@
-# MVG -- the Mechanism Verification Gate
+# MVG -- the independent checks, as callable judges
 
-The gate that stands between a Stage-2 mechanism and an expensive cold run. It is
-**independent** of the mechanism: the reference implementation it compares against never
-imports the code under test, and the specification it checks against is frozen before the
-implementation exists (issue #101 §A/§B).
+The checks that stand between a Stage-2 mechanism and an expensive cold run. They are
+**independent** of the mechanism: the reference implementation they compare against never
+imports the code under test, and the specification they check against is frozen before the
+implementation exists.
+
+Issue #101 wrote them as a mandatory sequence (M0 to M5, every one, every time). Issue #102
+retires that shape: Harness2 is the single controller, and it selects the checks a
+mechanism actually needs. What survives is the content of the checks and the rule that the
+code under test may not edit any of it. `tools/mvg/judges.py` is the registry:
+
+| judge | question | applies to |
+|---|---|---|
+| `contract_audit` | does the implementation agree with the frozen declaration, and does it contain a forbidden substitution? | `forbidden_substitutions`, `integration` |
+| `forward_oracle` | does it compute the declared objective, forward value and intermediates, where an independent implementation computes the same numbers? | `objective` |
+| `derivative_evidence` | is the gradient the derivative of the declared loss, and does it reach the declared targets? | `gradient_targets` |
+| `property_checks` | do the declared metamorphic and semantic properties hold? | `invariants` |
+| `integration_on_off` | is the mechanism-off tree the frozen host, and does the mechanism-on tree move the parameters the export reads? | `integration` |
+
+A mechanism's frozen declaration names the judges it calls for (`"judges": [...]` in the
+specification); when it does not, the selection follows the declaration's structure. An
+unknown judge name is refused at validation time, and a judge that cannot run is
+`blocked` -- never a pass.
 
 ```
 tools/mvg/

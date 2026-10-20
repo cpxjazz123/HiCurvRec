@@ -92,6 +92,52 @@ MVG_MECHANISM_WEIGHT = 0.05
 MVG_MECHANISM_LEVEL = 0
 
 
+def mvg_mechanism_inputs(observations: dict) -> dict:
+    """The tensors the MVG mechanism reads, taken from the verifier's observations.
+
+    The CGV builds one mini case from the real model and hands it over; this provider
+    turns it into the mechanism's own inputs. It is a provider, not a judge: it computes
+    nothing about whether the mechanism is correct.
+    """
+    model = observations["model"]
+    residuals = observations["residuals"]
+    pairs = int(observations["n_src"])
+    device = residuals.device
+    source_ids = torch.arange(pairs, device=device)
+    target_ids = (torch.arange(pairs, device=device) + 1) % pairs
+    return {
+        "z_src": residuals[MVG_MECHANISM_LEVEL, :pairs],
+        "z_tgt": residuals[MVG_MECHANISM_LEVEL, pairs:2 * pairs],
+        "codebook": model.rq.vq_layers[0].get_code_embs(),
+        "mask": source_ids.ne(target_ids).to(dtype=torch.float32),
+    }
+
+
+def mvg_mechanism_executor(
+    base_loss,
+    l1_loss,
+    other_loss,
+    encoder,
+    weight,
+    valid_levels: int = 1,
+    mechanism_inputs: dict | None = None,
+) -> None:
+    """The mechanism's real assembly, as the verifier executes it.
+
+    The term is added to the host's loss graph and backwarded, so the gradient the
+    verifier reads is the one the training loop would produce.
+    """
+    if mechanism_inputs is None:
+        raise RuntimeError("the MVG executor needs the mechanism's inputs")
+    term = masked_directed_codebook_margin(
+        mechanism_inputs["z_src"],
+        mechanism_inputs["z_tgt"],
+        mechanism_inputs["codebook"],
+        mechanism_inputs["mask"],
+    )
+    (MVG_MECHANISM_WEIGHT * term).backward()
+
+
 # --- R7-F auxiliary loss (issue #88) ---------------------------------------------
 # OFF by default. When R7_F_ENABLED is unset the hook module is never imported and the
 # production loss graph is byte-identical to the host without this block. When enabled, L_sep is

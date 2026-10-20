@@ -30,6 +30,17 @@ SPECS_DIR = MVG_DIR / "specs"
 
 CASE_ROLES = ("positive", "negative", "boundary", "degenerate")
 GRADIENT_EXPECTATIONS = ("nonzero", "zero", "finite")
+
+#: The judges a declaration may ask for. Kept here, and not read from ``judges.py``, so that
+#: validating a specification never imports torch: the validator has to run wherever the
+#: specification does, including in an environment with no torch at all.
+KNOWN_JUDGES = (
+    "contract_audit",
+    "forward_oracle",
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off",
+)
 CGV_GROUPS = (
     "mechanism",
     "model",
@@ -263,6 +274,18 @@ def validate_spec(doc: Any) -> List[str]:
         for key in ("source_digests", "dataset_digests"):
             if not isinstance(provenance.get(key), dict):
                 problems.append(f"provenance.{key}: missing")
+
+    judges = doc.get("judges")
+    if judges is not None:
+        if not isinstance(judges, list) or not all(isinstance(name, str) for name in judges):
+            problems.append("judges: must be a list of judge names")
+        else:
+            unknown = [name for name in judges if name not in KNOWN_JUDGES]
+            if unknown:
+                problems.append(
+                    f"judges: {unknown} are not judges this repository knows; "
+                    f"known judges are {sorted(KNOWN_JUDGES)}"
+                )
 
     return problems
 
