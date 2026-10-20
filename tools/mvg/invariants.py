@@ -296,20 +296,67 @@ def diagnose_gradient_failure(
         requires_grad = tensor.detach().clone().requires_grad_(True)
         differentiable = dict(case)
         differentiable[name] = requires_grad
+        failure = ""
         try:
             value = _loss(entry, differentiable, parameters)
+            if not value.requires_grad:
+                # The loss has no graph at all: this input does not reach it, and the
+                # forward measurement above already says whether anything does.
+                raise RuntimeError("the loss carries no graph")
             grad = torch.autograd.grad(value, requires_grad, allow_unused=True)[0]
             local = 0.0 if grad is None else float(grad.abs().max())
         except Exception as exc:  # noqa: BLE001
             local = 0.0
-            diagnosis[name] = {"error": f"{type(exc).__name__}: {exc}"}
-            continue
-        if expectation != "nonzero":
+            failure = f"{type(exc).__name__}: {exc}"
+
+        if failure:
+            if forward_move <= 1e-12:
+                verdict = "impossible specification"
+                reason = (
+                    f"the loss does not depend on {name} at all (a finite step moves it by "
+                    f"{forward_move:.3e}) and carries no graph through it, so no "
+                    "implementation of this formula can deliver a gradient to it; the "
+                    "declaration is wrong, not the code"
+                )
+            else:
+                verdict = "missing gradient (wiring)"
+                reason = (
+                    f"the loss depends on {name} (a finite step moves it by "
+                    f"{forward_move:.3e}) but the backward pass cannot reach it ({failure}): "
+                    "a detach, a stop-gradient, a no_grad block, or a detached call site"
+                )
             diagnosis[name] = {
                 "expectation": expectation,
+                "base_loss": base,
+                "forward_dependence": forward_move,
+                "local_gradient": 0.0,
+                "verdict": verdict,
+                "reason": reason,
+            }
+            continue
+        if expectation != "nonzero":
+            if local > 0.0:
+                verdict = "declaration incorrect (measured nonzero)"
+                reason = (
+                    f"{name} was declared zero but carries a gradient of {local:.3e}; the "
+                    "measurement contradicts the declaration, so the declaration is what has "
+                    "to change"
+                )
+            elif forward_move > 1e-12:
+                verdict = "undeclared influence"
+                reason = (
+                    f"{name} was declared zero but a finite step moves the loss by "
+                    f"{forward_move:.3e}"
+                )
+            else:
+                verdict = "matches the declaration"
+            diagnosis[name] = {
+                "expectation": expectation,
+                "base_loss": base,
                 "forward_dependence": forward_move,
                 "local_gradient": local,
-                "verdict": "matches the declaration",
+                "verdict": verdict,
+                "reason": reason,
             }
             continue
         if forward_move <= 1e-12:
