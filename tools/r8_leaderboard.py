@@ -64,13 +64,26 @@ def lane_row(lane: str, issue: int, mechanism: str) -> dict:
 
     # A best-checkpoint is written DURING training, so its presence does not mean the run
     # finished. Completion is the epoch-3000 marker in the trainer's own log.
-    # the epoch marker can live in the lane's own stdout OR in the tree's training log
-    logs = [directory / "production_stdout.log"]
-    tree_log = STAGE2.parent / "stage2_RQ-VAE" / f"TIGER_{lane}" / "logs"
-    if tree_log.is_dir():
-        logs.extend(sorted(tree_log.rglob("*.log")))
+    # Completion is taken from the DURABLE trainer record first: the tree's own
+    # training_metrics.jsonl carries a train_end event with the final epoch and the checkpoint
+    # selection. The stdout capture is a fallback because /tmp is cleaned.
     completed = False
     epochs = 0
+    metrics = STAGE2 / f"TIGER_{lane}" / "logs" / lane / "training_metrics.jsonl"
+    if metrics.is_file():
+        for line in metrics.read_text(errors="replace").splitlines():
+            if '"train_end"' in line:
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if record.get("event") == "train_end":
+                    completed = True
+                    epochs = max(epochs, int(record.get("epoch", 0)))
+    logs = [directory / "production_stdout.log"]
+    tree_log = STAGE2 / f"TIGER_{lane}" / "logs"
+    if tree_log.is_dir():
+        logs.extend(sorted(tree_log.rglob("*.log")))
     for candidate in logs:
         if not candidate.is_file():
             continue
