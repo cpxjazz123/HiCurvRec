@@ -96,10 +96,13 @@ def gate_m5(mut: G.MechanismUnderTest) -> G.GateResult:
     problems: List[str] = []
     try:
         for mutant in MUT.MUTANTS:
-            copy = _copy_tree(mut.tree, scratch_root / mutant.id)
+            copy = _copy_tree(mut.baseline_tree, scratch_root / mutant.id)
             patched, detail = _apply_mutant(copy, mutant, mut.integration)
             if not patched:
-                problems.append(f"{mutant.id}: {detail}")
+                problems.append(
+                    f"{mutant.id}: {detail} (the catalogue is injected into the tree the "
+                    "specification was written against)"
+                )
                 rows.append(
                     {
                         "mutant": mutant.id,
@@ -170,10 +173,11 @@ def run(
     out_dir: Optional[Path] = None,
     *,
     skip_m5: bool = False,
+    baseline_tree: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Run every gate over the tree and return the report."""
     doc = SPEC.load_spec(spec_path)
-    mut = G.MechanismUnderTest(tree, doc)
+    mut = G.MechanismUnderTest(tree, doc, baseline_tree=baseline_tree)
 
     results: Dict[str, G.GateResult] = {}
     for gate, function in GATE_FUNCTIONS.items():

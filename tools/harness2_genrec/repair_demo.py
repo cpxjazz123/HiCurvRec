@@ -56,24 +56,29 @@ def _copy_tree(source: Path, destination: Path) -> None:
         shutil.copy2(path, target)
 
 
-def run_judges(tree: Path, spec_path: Path, out_dir: Path) -> Dict[str, Any]:
+def run_judges(
+    tree: Path, spec_path: Path, out_dir: Path, baseline_tree: Path | None = None
+) -> Dict[str, Any]:
     """Run the independent judges over the tree and return their report."""
     out_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env["PYTHONPATH"] = str(REPO_ROOT)
+    command = [
+        PROJECT_PYTHON,
+        "-m",
+        "tools.mvg.cli",
+        "run",
+        "--tree",
+        str(tree),
+        "--spec",
+        str(spec_path),
+        "--out",
+        str(out_dir),
+    ]
+    if baseline_tree is not None:
+        command += ["--baseline-tree", str(baseline_tree)]
     completed = subprocess.run(
-        [
-            PROJECT_PYTHON,
-            "-m",
-            "tools.mvg.cli",
-            "run",
-            "--tree",
-            str(tree),
-            "--spec",
-            str(spec_path),
-            "--out",
-            str(out_dir),
-        ],
+        command,
         cwd=str(REPO_ROOT),
         env=env,
         capture_output=True,
@@ -144,7 +149,9 @@ def run(
         encoding="utf-8",
     )
 
-    first = run_judges(workspace, Path(spec_path), out_dir / "judges_before")
+    first = run_judges(
+        workspace, Path(spec_path), out_dir / "judges_before", baseline_tree=Path(tree)
+    )
     if first["verdict"] == "passed":
         raise RuntimeError(
             f"the judge accepted the defective implementation: the defect {mutant.id!r} is not "
@@ -179,7 +186,9 @@ def run(
         json.dumps(repair, indent=2, default=str), encoding="utf-8"
     )
 
-    second = run_judges(workspace, Path(spec_path), out_dir / "judges_after")
+    second = run_judges(
+        workspace, Path(spec_path), out_dir / "judges_after", baseline_tree=Path(tree)
+    )
 
     return {
         "mutant": mutant.id,

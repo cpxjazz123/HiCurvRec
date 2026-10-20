@@ -81,7 +81,45 @@ while `inv1` and the composed `agg1` are adopted, reflected into an `EXPERIENCE.
 2. a candidate is rejected for a false success, statically and at runtime -- two tests;
 3. the library travels: the second task's evidence carries the first task's lesson -- one test.
 
-## 3. What comes next (issue #102 order)
+## 3. The OpenCode backend (issue #102)
+
+`opencode.py` is the execution backend. Everything in it was measured against the
+installed CLI, not assumed:
+
+* the flags come from `opencode run --help`, and the preflight refuses to run if the
+  installed CLI does not have them;
+* the event stream is JSONL (`step_start` / `tool_use` / `step_finish` / `text` / `error`),
+  and the tool calls carry their inputs, their outputs, the cost and the tokens;
+* the MCP server is configured in the workspace's own `opencode.json` under
+  `mcp.servers.<name>`, and the genrec MCP is wired there;
+* the provider is explicit: OpenCode's own stored credentials (the default), an
+  operator-written config, or the operator's Anthropic-compatible endpoint. A credential
+  travels through the child environment only, is never written to a file, and is redacted
+  out of every log line that is kept.
+
+`--standalone` is used for every run: the background service keeps the environment it was
+started with, so a key exported afterwards is invisible to it, and a private server per run
+is also the isolation the issue asks for.
+
+Measured on this machine: `openai/gpt-6-luna` works on the stored ChatGPT OAuth;
+`gpt-5.5` is listed by the CLI and refused by that account; the MiniMax key is a 401. A
+model can be listed and still be unusable, which is why the preflight probes with a real
+call.
+
+### The commands
+
+```bash
+cd /home/wlia0047/ar57/wenyu/GeneRec
+V=/home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python
+
+$V -m tools.harness2_genrec.cli preflight            # can the backend be used here?
+$V -m tools.harness2_genrec.cli mcp-check            # prove the genrec MCP is callable
+$V -m tools.harness2_genrec.cli repair-demo          # reject a defect, repair it, recheck
+$V -m tools.harness2_genrec.cli lifecycle --proposal ... --skip-stage2
+$V -m tools.harness2_genrec.cli sweep --k 1          # the harness-optimisation loop
+```
+
+## 4. What comes next (issue #102 order)
 
 `P0 reuse -> P1 real OpenCode -> P2 unified lifecycle -> P3 parallel research`
 
@@ -97,7 +135,7 @@ Harness2 proposer and the task-execution substrate, and the production path must
 on Claude Code or Vertex credentials. The P0 scripted mode stays as the deterministic CI
 path.
 
-## 4. Known gaps in what is built
+## 5. Known gaps in what is built
 
 * **The static check is literal-based.** A candidate that hardcodes a value through an
   expression rather than a literal slips past `validate_tree`. The independent-reference
@@ -109,7 +147,7 @@ path.
 * **The offline proposer is scripted.** It demonstrates the plumbing and the gates; it does not
   show a model improving a harness. That is P1.
 
-## 5. The one extension point used
+## 6. The one extension point used
 
 The framework resolves its per-surface prompt text from a module-level dict built at import time
 (`core/prompts.py:617`) and exposes no public registration hook, so a surface it does not ship

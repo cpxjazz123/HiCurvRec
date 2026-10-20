@@ -129,8 +129,12 @@ def _to_list(value: Any) -> List[Any]:
 class MechanismUnderTest:
     """The mechanism, its specification, and the independent reference beside it."""
 
-    def __init__(self, tree: Path, spec_doc: Dict[str, Any]) -> None:
+    def __init__(self, tree: Path, spec_doc: Dict[str, Any], baseline_tree: Path | None = None) -> None:
         self.tree = Path(tree).resolve()
+        # The tree the specification was written against. The mutation suite injects its
+        # defects there: a tree that has been repaired since would no longer match the
+        # catalogue, and a mutant that no longer applies proves nothing.
+        self.baseline_tree = Path(baseline_tree).resolve() if baseline_tree else self.tree
         self.spec = spec_doc
         self.integration: Dict[str, Any] = spec_doc["integration"]
         self.module_path = self.tree / f"{self.integration['module']}.py"
@@ -209,6 +213,27 @@ class MechanismUnderTest:
 # --------------------------------------------------------------------------------------
 # M0 -- contract and static audit
 # --------------------------------------------------------------------------------------
+def _code_only(source: str) -> str:
+    """The source with comments and string literals removed.
+
+    A textual audit is an audit of **code**. A candidate that writes "the margin was
+    symmetric" in a comment has not substituted a symmetric operation, and a rule that
+    fires on the word would reject a correct repair for its explanation.
+    """
+    import io
+    import tokenize
+
+    pieces: List[str] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(source).readline):
+            if token.type in (tokenize.COMMENT, tokenize.STRING):
+                continue
+            pieces.append(token.string)
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return source
+    return "\n".join(pieces)
+
+
 def gate_m0(mut: MechanismUnderTest) -> GateResult:
     problems: List[str] = []
     measurements: Dict[str, Any] = {}
@@ -272,13 +297,15 @@ def gate_m0(mut: MechanismUnderTest) -> GateResult:
                 "the specification"
             )
 
-    # the forbidden substitutions
+    # the forbidden substitutions, read against the CODE: a comment that explains the
+    # defect is not the defect.
+    code = _code_only(source)
     for entry in mut.spec["forbidden_substitutions"]:
         pattern = entry["pattern"]
-        found = re.search(pattern, source)
+        found = re.search(pattern, code)
         if found:
             problems.append(
-                f"forbidden substitution {entry['id']!r}: the source contains {found.group(0)!r} "
+                f"forbidden substitution {entry['id']!r}: the code contains {found.group(0)!r} "
                 f"({entry['why']})"
             )
 

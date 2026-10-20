@@ -583,7 +583,7 @@
     },
     {
       "id": "no_symmetric_averaging",
-      "pattern": "symmetric|0\\.5\\s*\\*\\s*\\(\\s*\\w+\\s*\\+\\s*\\w+\\s*\\)",
+      "pattern": "(?s)0\\.5\\s*\\*\\s*\\(.{0,200}?\\+.{0,200}?\\)",
       "why": "the mechanism is directed: the source and the target play different roles, and averaging the two directions would make it a similarity rather than a transition"
     },
     {

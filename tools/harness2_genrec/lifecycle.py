@@ -221,9 +221,9 @@ class MechanismRun:
         return frozen
 
     def implement(self) -> Stage:
-        """The agent writes the mechanism in an isolated copy of the tree."""
+        """The agent writes the mechanism in its own arm tree."""
         started = _now()
-        workspace = self.root / "arm"
+        workspace = self.arm_tree()
         if workspace.exists():
             shutil.rmtree(workspace, ignore_errors=True)
         self._copy_tree(Path(self.config.base_tree), workspace)
@@ -270,6 +270,40 @@ class MechanismRun:
         """Run the independent judges the proposal asked for."""
         started = _now()
         spec_path = self.root / "mechanism_spec.json"
+        source = self.proposal.get("mechanism_spec_path")
+        if not source:
+            stage = Stage(
+                name="verify",
+                state="blocked_preflight",
+                ok=False,
+                detail=(
+                    "the proposal names no frozen specification: the judges check the "
+                    "implementation against a specification, not against the proposal's prose"
+                ),
+                started=started,
+                finished=_now(),
+            )
+            self._record(stage)
+            self._advance("blocked_preflight")
+            return stage
+        spec_source = Path(source)
+        if not spec_source.is_absolute():
+            spec_source = Path(self.config.repo_root) / spec_source
+        if not spec_source.is_file():
+            stage = Stage(
+                name="verify",
+                state="blocked_preflight",
+                ok=False,
+                detail=f"the frozen specification is missing: {spec_source}",
+                started=started,
+                finished=_now(),
+            )
+            self._record(stage)
+            self._advance("blocked_preflight")
+            return stage
+        shutil.copy2(spec_source, spec_path)
+        self.manifest["mechanism_spec_path"] = str(spec_path)
+        self.manifest["mechanism_spec_sha256"] = _sha256(spec_path)
         judges = list(self.proposal.get("judges") or [])
         report_dir = self.root / "judges"
         report_dir.mkdir(parents=True, exist_ok=True)
@@ -279,11 +313,13 @@ class MechanismRun:
             "tools.mvg.cli",
             "run",
             "--tree",
-            str(self.root / "arm"),
+            str(self.arm_tree()),
             "--spec",
             str(spec_path),
             "--out",
             str(report_dir),
+            "--baseline-tree",
+            str(self.config.base_tree),
         ]
         env = dict(os.environ)
         env["PYTHONPATH"] = str(self.config.repo_root)
@@ -357,7 +393,7 @@ class MechanismRun:
             diagnostics = self._last_diagnostics()
             prompt = self._repair_prompt(diagnostics, attempt)
             result = opencode.run_agent(
-                self.root / "arm",
+                self.arm_tree(),
                 prompt,
                 model=self.config.model or opencode.model_name(),
                 timeout=self.config.timeout,
@@ -409,7 +445,7 @@ class MechanismRun:
             PROJECT_PYTHON,
             str(self.config.repo_root / "tools" / "mvg" / "probe_entry.py"),
             "--tree",
-            str(self.root / "arm"),
+            str(self.arm_tree()),
             "--epochs",
             str(self.config.probe_epochs),
             "--out",
@@ -462,8 +498,8 @@ class MechanismRun:
             "run_id": self.run_id,
             "mechanism_id": self.proposal.get("mechanism_id", ""),
             "proposal_sha256": self.manifest.get("proposal_sha256", ""),
-            "tree_digest": _tree_digest(self.root / "arm"),
-            "tree_path": str(self.root / "arm"),
+            "tree_digest": _tree_digest(self.arm_tree()),
+            "tree_path": str(self.arm_tree()),
             "judges": list(self.proposal.get("judges") or []),
             "judge_verdict": "passed",
             "probe": {
@@ -493,7 +529,158 @@ class MechanismRun:
         self._advance("admitted")
         return stage
 
+    def stage2(self) -> Stage:
+        """The cold run, launched through the MCP with the admission record."""
+        started = _now()
+        admission = self.root / "admission.json"
+        if not admission.is_file():
+            stage = Stage(
+                name="stage2",
+                state="blocked_preflight",
+                ok=False,
+                detail="no admission record: the mechanism is not admitted",
+                started=started,
+                finished=_now(),
+            )
+            self._record(stage)
+            self._advance("blocked_preflight")
+            return stage
+        server = self._mcp_server()
+        result = server.tool_stage2_start(
+            source_dir=str(self.arm_tree()), admission=str(admission)
+        )
+        if not result.get("started"):
+            stage = Stage(
+                name="stage2",
+                state="blocked_preflight",
+                ok=False,
+                detail=f"the launch refused: {result.get('refused')}",
+                started=started,
+                finished=_now(),
+                measurements={"refusal": result.get("refused")},
+            )
+            self._record(stage)
+            self._advance("blocked_preflight")
+            return stage
+        self._advance("stage2_running")
+        self.manifest["stage2_launch"] = result
+        final = self._await_stage2(server)
+        ok = final.get("status") in ("finished", "idle")
+        stage = Stage(
+            name="stage2",
+            state="stage2_complete" if ok else "artifact_corrupt",
+            ok=ok,
+            detail=f"the cold run finished with status {final.get('status')!r}"
+            if ok
+            else f"the cold run ended with status {final.get('status')!r}",
+            started=started,
+            finished=_now(),
+            measurements={"final_status": final.get("status"), "launch": result},
+        )
+        self._record(stage)
+        if ok:
+            self._advance("stage2_complete")
+        else:
+            self._advance("artifact_corrupt")
+        return stage
+
+    def evaluate(self) -> Stage:
+        """The frozen evaluation, once."""
+        started = _now()
+        server = self._mcp_server()
+        result_dir = Path(str(server.tree_result_dir(self.arm_tree())))
+        candidates = sorted(result_dir.rglob("sids_for_hgrec.npy"))
+        if not candidates:
+            stage = Stage(
+                name="evaluate",
+                state="artifact_corrupt",
+                ok=False,
+                detail=f"no exported SID file under {result_dir}",
+                started=started,
+                finished=_now(),
+            )
+            self._record(stage)
+            self._advance("artifact_corrupt")
+            return stage
+        sid_path = candidates[-1]
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(self.config.repo_root)
+        completed = subprocess.run(
+            [
+                PROJECT_PYTHON,
+                str(self.config.repo_root / "tools" / "mvg" / "er_eval.py"),
+                "--sid",
+                str(sid_path),
+                "--out",
+                str(self.root / "er_eval.json"),
+            ],
+            cwd=str(self.config.repo_root),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=3600,
+        )
+        try:
+            report = json.loads(completed.stdout or "{}")
+        except json.JSONDecodeError:
+            report = {"ok": False, "error": (completed.stderr or completed.stdout or "")[-400:]}
+        ok = bool(report.get("ok"))
+        above = report.get("above_frozen_threshold")
+        stage = Stage(
+            name="evaluate",
+            state="er_evaluated" if ok else "artifact_corrupt",
+            ok=ok,
+            detail=(
+                f"the frozen L1 ER is {report.get('l1_er')} against the frozen threshold "
+                f"{report.get('frozen_threshold')} "
+                f"({'above' if above else 'below'})"
+                if ok
+                else f"the evaluation did not run: {report.get('error')}"
+            ),
+            started=started,
+            finished=_now(),
+            artifacts=[str(self.root / "er_eval.json")],
+            measurements=report,
+        )
+        self._record(stage)
+        if ok:
+            self._advance("er_evaluated")
+        else:
+            self._advance("artifact_corrupt")
+        return stage
+
     # -- helpers ---------------------------------------------------------
+    def _mcp_server(self):
+        """The genrec MCP server, imported as a module. It is stdlib-only."""
+        import importlib.util
+
+        path = Path(self.config.repo_root) / "tools" / "genrec-mcp" / "server.py"
+        spec = importlib.util.spec_from_file_location("genrec_mcp_for_lifecycle", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def _await_stage2(self, server, *, poll_s: int = 60, budget_s: int = 6 * 3600) -> Dict[str, Any]:
+        """Watch the run until it ends or the budget runs out."""
+        deadline = time.time() + budget_s
+        last: Dict[str, Any] = {}
+        while time.time() < deadline:
+            last = server.tool_stage2_status(source_dir=str(self.arm_tree()))
+            status = str(last.get("status", ""))
+            if status in ("finished", "idle", "refused", "worker_gone"):
+                return last
+            time.sleep(poll_s)
+        return last or {"status": "timeout"}
+
+    def arm_tree(self) -> Path:
+        """The arm tree this mechanism lives in.
+
+        A tree of its own, under ``stage2_RQ-VAE/``, so the launch path can find it and no
+        historical tree is ever touched.
+        """
+        name = self.config.arm_name or f"TIGER_r9_{self.proposal.get('mechanism_id', 'arm')}"
+        return Path(self.config.repo_root) / "stage2_RQ-VAE" / name
+
     def _copy_tree(self, source: Path, destination: Path) -> None:
         """Copy the tree's code. Artefacts and logs never come along."""
         destination.mkdir(parents=True, exist_ok=True)
