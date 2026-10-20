@@ -357,7 +357,7 @@ class Campaign:
                 (arm_dir / f"repair_{attempt}.json").write_text(
                     json.dumps(repair, indent=2, default=str) + "\n", encoding="utf-8"
                 )
-                verdict = invariants.verify_mechanism(tree, frozen)
+                verdict = self._verify(tree, arm_dir, frozen, module_name, entrypoint)
                 (arm_dir / "verification.json").write_text(
                     json.dumps(verdict, indent=2, default=str) + "\n", encoding="utf-8"
                 )
