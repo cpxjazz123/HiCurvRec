@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "mechanism_id": "masked_directed_codebook_margin",
+  "version": "1.0.0",
+  "title": "Masked directed codebook margin with a relational codebook term",
+  "equation": "A[b,c] = ||z_src[b] - E[c]||_1 ; B[b,c] = ||z_tgt[b] - E[c]||_1 ; c*_src = argmin_c A[b,c] ; c*_tgt = argmin_c B[b,c] ; r[b] = max(0, margin + B[b,c*_tgt] - A[b,c*_src]) ; p[b] = softmax_c(-A[b,c]/temperature) ; q[b] = softmax_c(-B[b,c]/temperature) ; G[i,j] = ||E[i] - E[j]||_1 ; s[b] = sum_{i,j} p[b,i] q[b,j] G[i,j] ; L = sum_b mask[b] (r[b] + structural_weight * s[b]) / sum_b mask[b]",
+  "symbols": {
+    "z_src": "the source residual of the pair, [B, D]",
+    "z_tgt": "the target residual of the pair, [B, D]",
+    "E": "the level-0 codebook entries, [C, D]",
+    "mask": "1 for a valid pair, 0 for an invalid one, [B]"
+  },
+  "parameters": {
+    "temperature": 0.1,
+    "margin": 0.5,
+    "structural_weight": 0.1
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "mechanism_spec_path": "tools/mvg/specs/masked_directed_codebook_margin.json",
+  "hypotheses": [
+    "Holding the level-0 codebook entry of the target closer to the target than the source's entry is to the source pushes the encoder to separate the two items in the level-0 code, which is where the SID's first token is decided.",
+    "Comparing the two codebook assignments through the codebook's own pairwise geometry adds a term that is sensitive to the RELATION between the two assignments rather than to their distance, so it should not collapse when one level-0 entry dominates."
+  ],
+  "expected_failure_modes": [
+    "the margin term's clamp makes the gradient vanish once the target is closer than the source, so the term can sit at zero and contribute nothing",
+    "the argmin is a discrete selection, so the loss is not differentiable at a tie and a finite-difference check at such a point measures a jump",
+    "the relational term is symmetric under exchanging the two assignments, so the directional content of the mechanism comes from the margin term alone",
+    "the codebook path can be silently detached, leaving the encoder to learn a term the codebook cannot see"
+  ],
+  "tests": [
+    {
+      "id": "direction_matters",
+      "kind": "metamorphic",
+      "statement": "swapping the source and the target changes the loss: the mechanism is a directed transition, not a similarity"
+    },
+    {
+      "id": "codebook_permutation_equivariant",
+      "kind": "metamorphic",
+      "statement": "permuting the codebook rows leaves the loss unchanged"
+    },
+    {
+      "id": "masked_pair_contributes_nothing",
+      "kind": "numeric",
+      "statement": "a masked pair contributes nothing and the denominator counts only the valid pairs"
+    },
+    {
+      "id": "finite_on_ties_and_degeneracy",
+      "kind": "numeric",
+      "statement": "the loss is finite at a tie in the argmin, on identical codebook rows, and when every pair is masked out"
+    },
+    {
+      "id": "reaches_three_gradient_targets",
+      "kind": "gradient",
+      "statement": "the gradient reaches the source residual, the target residual and the level-0 codebook"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "forward_oracle",
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off"
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_detached_path",
+      "pattern": "\\.detach\\s*\\(",
+      "why": "the specification declares nonzero gradient targets on the source residual, the target residual and the codebook; a detach anywhere in the mechanism silently cuts one of them off"
+    },
+    {
+      "id": "no_distance_mse_substitution",
+      "pattern": "mse_loss|MSELoss",
+      "why": "the relational term is a discrepancy between two codebook assignments measured through the codebook's own geometry; a per-element mean squared error is a different quantity that happens to be computable"
+    },
+    {
+      "id": "no_symmetric_averaging",
+      "pattern": "(?s)0\\.5\\s*\\*\\s*\\(.{0,200}?\\+.{0,200}?\\)",
+      "why": "the mechanism is directed: the source and the target play different roles, and averaging the two directions would make it a similarity rather than a transition"
+    }
+  ],
+  "provenance": {
+    "authored_by": "main agent (issue #102, the reference mechanism of the MVG programme)",
+    "authored_at": "2026-10-20",
+    "review": "the frozen specification was written first and the independent reference implementation was written from the equation; the judges compare the production module with that reference on the forward value and on the intermediates"
+  }
+}

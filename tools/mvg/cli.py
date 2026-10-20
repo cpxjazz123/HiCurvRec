@@ -44,7 +44,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         spec_path = REPO_ROOT / spec_path
     out_dir = Path(args.out) if args.out else None
 
-    report = runner.run(tree, spec_path, out_dir, skip_m5=args.skip_m5)
+    report = runner.run(
+        tree,
+        spec_path,
+        out_dir,
+        skip_m5=args.skip_m5,
+        baseline_tree=Path(args.baseline_tree) if args.baseline_tree else None,
+    )
 
     print(f"mechanism : {report['mechanism']['id']} v{report['mechanism']['version']}")
     print(f"tree      : {report['mechanism']['tree']}")
@@ -82,6 +88,12 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument("--tree", required=True, help="the arm tree that hosts the mechanism")
     run.add_argument("--spec", required=True, help="the frozen MechanismSpec")
     run.add_argument("--out", default="", help="directory for mvg_report.json")
+    run.add_argument(
+        "--baseline-tree",
+        default="",
+        help="the tree the specification was written against; the mutation suite injects its "
+        "defects there, so a repaired tree does not make the suite vacuous",
+    )
     run.add_argument("--skip-m5", action="store_true", help="skip the mutation suite")
     run.set_defaults(func=cmd_run)
 

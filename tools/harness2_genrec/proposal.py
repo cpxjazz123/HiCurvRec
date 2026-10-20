@@ -49,8 +49,13 @@ def proposal_digest(doc: Dict[str, Any]) -> str:
     return hashlib.sha256(canonical_json(doc).encode("utf-8")).hexdigest()
 
 
-def validate_proposal(doc: Any) -> List[str]:
-    """Every problem in the proposal. An empty list means it may be frozen."""
+def validate_proposal(doc: Any, *, require_frozen: bool = False) -> List[str]:
+    """Every problem in the proposal. An empty list means it may be frozen.
+
+    ``require_frozen`` asks for the digest as well: that is the check on a proposal that
+    has already been frozen, where a digest that does not match the content means the
+    content was edited after the freeze.
+    """
     problems: List[str] = []
     if not isinstance(doc, dict):
         return ["the proposal must be an object"]
@@ -144,8 +149,18 @@ def validate_proposal(doc: Any) -> List[str]:
         for key in ("authored_by", "authored_at"):
             if not isinstance(provenance.get(key), str) or not provenance.get(key, "").strip():
                 problems.append(f"provenance.{key}: missing")
-        if not isinstance(provenance.get("frozen_digest"), str):
-            problems.append("provenance.frozen_digest: missing")
+        if require_frozen:
+            if not isinstance(provenance.get("frozen_digest"), str):
+                problems.append("provenance.frozen_digest: missing")
+        elif isinstance(provenance.get("frozen_digest"), str):
+            expected = proposal_digest(
+                {k: v for k, v in doc.items() if k != "provenance"}
+            )
+            if provenance["frozen_digest"] != expected:
+                problems.append(
+                    "provenance.frozen_digest does not match the content: the proposal was "
+                    "edited after it was frozen"
+                )
 
     return problems
 
@@ -172,7 +187,7 @@ def freeze(doc: Dict[str, Any]) -> Dict[str, Any]:
         {k: v for k, v in frozen.items() if k != "provenance"}
     )
     frozen["provenance"] = provenance
-    problems = validate_proposal(frozen)
+    problems = validate_proposal(frozen, require_frozen=True)
     if problems:
         raise ProposalError(
             "the frozen proposal is not valid:\n  - " + "\n  - ".join(problems)

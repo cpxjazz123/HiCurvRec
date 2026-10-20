@@ -189,6 +189,46 @@ def cmd_repair_demo(args: argparse.Namespace) -> int:
     return 0 if report["rejected_then_repaired"] else 1
 
 
+def cmd_lifecycle(args: argparse.Namespace) -> int:
+    """Run one mechanism through the whole lifecycle."""
+    from .lifecycle import LifecycleConfig, MechanismRun
+    from .proposal import load_proposal
+
+    proposal = load_proposal(Path(args.proposal))
+    runs_root = Path(args.runs_dir)
+    runs_root.mkdir(parents=True, exist_ok=True)
+    config = LifecycleConfig(
+        repo_root=REPO_ROOT,
+        runs_root=runs_root,
+        base_tree=Path(args.base_tree) if args.base_tree else REPO_ROOT
+        / "stage2_RQ-VAE"
+        / "TIGER_r9_mvg_reference",
+        model=args.model,
+        timeout=args.timeout,
+        max_repair_attempts=args.max_repair_attempts,
+        probe_epochs=args.probe_epochs,
+        arm_name=args.arm,
+    )
+    run = MechanismRun(config, proposal)
+    stages = [run.freeze_proposal()]
+    stages.append(run.implement())
+    verify = run.verify()
+    stages.append(verify)
+    if not verify.ok:
+        stages.append(run.repair())
+    stages.append(run.probe())
+    if all(stage.ok for stage in stages if stage.name != "freeze_proposal"):
+        stages.append(run.admit())
+        if not args.skip_stage2:
+            stages.append(run.stage2())
+            stages.append(run.evaluate())
+    for stage in stages:
+        print(f"  {stage.name:<16} {stage.state:<22} {stage.detail[:90]}")
+    print(f"\nstate    : {run.state}")
+    print(f"manifest : {run.root / 'manifest.json'}")
+    return 0 if run.state in ("er_evaluated", "stage3_complete") else 1
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -222,6 +262,18 @@ def _build_parser() -> argparse.ArgumentParser:
     repair.add_argument("--model", default="")
     repair.add_argument("--timeout", type=int, default=1800)
     repair.set_defaults(func=cmd_repair_demo)
+
+    life = sub.add_parser("lifecycle", help="run one mechanism through the whole lifecycle")
+    life.add_argument("--proposal", required=True, help="the frozen proposal (JSON)")
+    life.add_argument("--base-tree", default="", help="the tree the mechanism is built on")
+    life.add_argument("--arm", default="", help="the arm tree the mechanism lives in")
+    life.add_argument("--runs-dir", default="/tmp/h2_lifecycle")
+    life.add_argument("--model", default="")
+    life.add_argument("--timeout", type=int, default=1800)
+    life.add_argument("--max-repair-attempts", type=int, default=3)
+    life.add_argument("--probe-epochs", type=int, default=2)
+    life.add_argument("--skip-stage2", action="store_true", help="stop before the cold run")
+    life.set_defaults(func=cmd_lifecycle)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
