@@ -155,6 +155,87 @@ def _report() -> None:
         assert written["verdict"] == report["verdict"]
 
 
+def _campaign_checks() -> None:
+    """The campaign's own machinery: the rubric and the mechanism-specific checks."""
+    import tempfile
+
+    from tools.harness2_genrec import ideation
+    from tools.mvg import invariants
+
+    proposal = {
+        "mechanism_id": "behaviour_ranking_margin",
+        "version": "1.0.0",
+        "title": "Behaviour ranking margin",
+        "equation": "L = sum_b mask_b * relu(margin - (s_tgt_b - s_src_b))",
+        "symbols": {"s_tgt_b": "the behaviour-conditioned score of the target"},
+        "parameters": {"margin": 0.1, "temperature": 0.05},
+        "target_paths": ["encoder", "hard_sid_export"],
+        "hypotheses": ["the behaviour term separates the pair without touching the codebook"],
+        "expected_failure_modes": ["the margin term vanishes when the pair is already separated"],
+        "tests": [{"id": "t1", "kind": "numeric", "statement": "the loss is zero when separated"}],
+        "judges": ["contract_audit", "integration_on_off"],
+        "forbidden_substitutions": [
+            {"id": "no_detach", "pattern": r"\.detach\(", "why": "cuts the path"}
+        ],
+        "invariants": [
+            {"id": "perm", "transform": "permute_codebook", "expect": "unchanged", "tolerance": 1e-6},
+            {"id": "dir", "transform": "swap_source_target", "expect": "changed", "min_delta": 1e-6},
+            {"id": "zero", "transform": "mask_all", "expect": "zero", "tolerance": 1e-6},
+        ],
+        "gradient_targets": {"source": "nonzero", "target": "nonzero", "codebook": "nonzero"},
+        "inputs": {
+            "source": {"shape": [4, 4], "seed": 11},
+            "target": {"shape": [4, 4], "seed": 12},
+            "codebook": {"shape": [5, 4], "seed": 13},
+            "mask": {"seed": 17, "valid_fraction": 0.75},
+        },
+        "activation": {"kind": "term", "weight": 0.05},
+        "differentiation": {
+            "vs_r8": [{"lane": "r8_01_directed_l1_transition_nce", "why": "no contrastive NCE"}],
+            "vs_reference_arm": "it never touches the codebook geometry",
+            "occupancy_preservation": "it only reorders the logits",
+        },
+    }
+    verdict = ideation.critique(proposal)
+    assert verdict.ok, verdict.problems
+    # a proposal that does not declare what it must does not qualify
+    incomplete = dict(proposal)
+    del incomplete["invariants"]
+    assert not ideation.critique(incomplete).ok
+    # the portfolio takes one of two proposals that say the same thing
+    twin = dict(proposal)
+    twin["mechanism_id"] = "behaviour_ranking_margin_again"
+    portfolio = ideation.select_portfolio([proposal, twin], size=6)
+    assert len(portfolio) == 1, portfolio
+
+    module_source = (
+        "import torch\n\n\n"
+        "def mechanism_loss(source, target, codebook, mask, *, margin=0.1, temperature=0.05):\n"
+        "    a = torch.cdist(source, codebook, p=2)\n"
+        "    b = torch.cdist(target, codebook, p=2)\n"
+        "    d_src = a.gather(1, a.argmin(dim=1)[:, None]).squeeze(1)\n"
+        "    d_tgt = b.gather(1, b.argmin(dim=1)[:, None]).squeeze(1)\n"
+        "    per_pair = torch.clamp(margin - (d_tgt - d_src), min=0.0)\n"
+        "    weights = mask.to(per_pair.dtype)\n"
+        "    valid = weights.sum()\n"
+        "    if float(valid) <= 0.0:\n"
+        "        return per_pair.sum() * 0.0\n"
+        "    return (per_pair * weights).sum() / valid\n"
+    )
+    with tempfile.TemporaryDirectory(prefix="mvg-campaign-") as tmp:
+        tree = Path(tmp)
+        (tree / "demo_mechanism.py").write_text(module_source)
+        report = invariants.verify_mechanism(
+            tree, proposal, module="demo_mechanism", entrypoint="mechanism_loss"
+        )
+        assert report["ok"], report.get("failed")
+
+
+@check("the campaign's rubric and mechanism checks have teeth")
+def _campaign() -> None:
+    _campaign_checks()
+
+
 def main() -> int:
     try:
         import torch

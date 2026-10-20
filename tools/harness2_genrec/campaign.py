@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from . import ideation
 from . import opencode
 from .lifecycle import LifecycleConfig, MechanismRun
-from .proposal import freeze, proposal_digest
+from .proposal import proposal_digest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROJECT_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
@@ -83,6 +83,7 @@ class CampaignConfig:
     rounds: int = 2
     cold_run: bool = True
     harness_evolution: bool = True
+    fresh: bool = False
 
     @classmethod
     def load(cls, path: Path) -> "CampaignConfig":
@@ -105,6 +106,7 @@ class CampaignConfig:
             rounds=int(document.get("rounds", 2)),
             cold_run=bool(document.get("cold_run", True)),
             harness_evolution=bool(document.get("harness_evolution", True)),
+            fresh=bool(document.get("fresh", False)),
         )
 
 
@@ -113,6 +115,7 @@ class Campaign:
 
     def __init__(self, config: CampaignConfig) -> None:
         self.config = config
+        self.fresh = bool(config.fresh)
         self.out = Path(config.out_dir)
         self.out.mkdir(parents=True, exist_ok=True)
         self.arms_dir = self.out / "arms"
@@ -180,6 +183,10 @@ class Campaign:
     # -- 1. ideation ------------------------------------------------------
     def ideate(self, round_index: int, *, evidence: str) -> List[Dict[str, Any]]:
         """Ask the researcher for one mechanism per angle, then critique and select."""
+        saved = self.out / f"ideation_round{round_index}.json"
+        if saved.is_file() and not self.fresh:
+            # Resumed: the proposals are already frozen and critiqued.
+            return json.loads(saved.read_text(encoding="utf-8"))
         angles = self.config.angles or list(ideation.ANGLES)
         proposals: List[Dict[str, Any]] = []
         for angle in angles:
@@ -261,6 +268,10 @@ class Campaign:
         arm_dir = self.arms_dir / mechanism_id
         arm_dir.mkdir(parents=True, exist_ok=True)
         arm_name = f"TIGER_c1_{mechanism_id}"
+        saved = arm_dir / "arm.json"
+        if saved.is_file() and not self.fresh:
+            # Resumed: this arm already ran.
+            return json.loads(saved.read_text(encoding="utf-8"))
         # The module and the entry point are a CAMPAIGN CONVENTION, not the researcher's
         # choice: the checker has to find them, and a convention is more reliable than an
         # instruction.
@@ -268,7 +279,7 @@ class Campaign:
         entrypoint = "mechanism_loss"
 
         # the frozen proposal, before anything is implemented
-        frozen = freeze(dict(proposal))
+        frozen = _freeze_proposal(dict(proposal))
         (arm_dir / "proposal.json").write_text(
             json.dumps(frozen, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
@@ -526,6 +537,9 @@ class Campaign:
         already know collapses cannot be trusted to qualify anything.
         """
         tree = self.config.regression_tree
+        saved = self.out / "regression_control.json"
+        if saved.is_file() and not self.fresh:
+            return json.loads(saved.read_text(encoding="utf-8"))
         if not Path(tree).is_dir():
             return {
                 "ok": False,
@@ -553,6 +567,8 @@ class Campaign:
     # -- 6. the cold run ---------------------------------------------------
     def cold_run(self, arm: Dict[str, Any]) -> Dict[str, Any]:
         """The cold 3000-epoch run, launched through the controller's admission path."""
+        if arm.get("cold_run") and not self.fresh:
+            return arm["cold_run"]
         tree = Path(arm["tree"])
         admission = self.arms_dir / arm["mechanism_id"] / "admission.json"
         if not admission.is_file():
@@ -761,6 +777,9 @@ def evaluate_harness(campaign: "Campaign") -> Dict[str, Any]:
     against.
     """
     workspace = campaign.out / "harness_candidate"
+    saved = campaign.out / "harness_evolution.json"
+    if saved.is_file() and not campaign.fresh:
+        return json.loads(saved.read_text(encoding="utf-8"))
     if workspace.exists():
         shutil.rmtree(workspace, ignore_errors=True)
     workspace.mkdir(parents=True, exist_ok=True)
@@ -924,6 +943,25 @@ def execute(config: CampaignConfig) -> Dict[str, Any]:
 # --------------------------------------------------------------------------------------
 # helpers
 # --------------------------------------------------------------------------------------
+def _freeze_proposal(proposal: Dict[str, Any]) -> Dict[str, Any]:
+    """Freeze a campaign proposal: the content, its digest, and who wrote it.
+
+    The campaign's proposals are not the lifecycle's proposals: they carry the checker's
+    contract (the inputs, the invariants, the differentiation) rather than the lifecycle's
+    fields, so they are frozen against their own schema.
+    """
+    frozen = dict(proposal)
+    frozen["schema_version"] = 1
+    provenance = dict(frozen.get("provenance") or {})
+    provenance.setdefault("authored_by", "OpenCode, the campaign's researcher")
+    provenance.setdefault("authored_at", _now())
+    provenance["frozen_digest"] = proposal_digest(
+        {key: value for key, value in frozen.items() if key != "provenance"}
+    )
+    frozen["provenance"] = provenance
+    return frozen
+
+
 def _copy_tree(source: Path, destination: Path) -> None:
     for path in sorted(Path(source).rglob("*")):
         if not path.is_file():
