@@ -283,7 +283,8 @@ def grad_norm(loss: torch.Tensor | None, parameters: list, model, *, retain: boo
     return total ** 0.5
 
 
-def save_snapshot(model, optimizer, scheduler, step: int, directory: str) -> str:
+def save_snapshot(model, optimizer, scheduler, step: int, directory: str,
+                  *, label: str | None = None) -> str:
     """Persist the model/optimizer/scheduler at a declared step."""
     from pathlib import Path
     import torch
@@ -291,6 +292,7 @@ def save_snapshot(model, optimizer, scheduler, step: int, directory: str) -> str
     target.mkdir(parents=True, exist_ok=True)
     payload = {
         "step": step,
+        "label": label,
         "model_state": {name: value.detach().clone().cpu()
                         for name, value in model.state_dict().items()},
         "optimizer_state": {key: value for key, value in optimizer.state_dict().items()},

@@ -1,0 +1,68 @@
+{
+  "issue": 89,
+  "baseline_main": "77a8bb64b4da7bcf43b9a6ecb6013389d2817b59",
+  "written_before_reading_the_evaluation_pairs": true,
+  "primary_frozen_arm": {
+    "host": "R4-08 behaviour-gradient host",
+    "treatment": "R7-F source-conditioned train-only soft L1 same-code repulsion",
+    "source_tree": "stage2_RQ-VAE/TIGER_r7_f_primary",
+    "results_dir": "results/stage2_RQ-VAE/r7_f_primary",
+    "arm_constant": "r7_f_primary",
+    "rationale_for_choosing_this_host_BEFORE_the_final_ER": "the issue designates the original healthy R4-08 behaviour-gradient host as the primary full-run candidate. R6-04 is the mechanistic anti-collapse comparison and is NOT a licence to pick whichever host has the better held-out ER after the fact.",
+    "progress_retroactively_forbidden": "no other host, lambda, tau or seed may be selected after the final ER is visible"
+  },
+  "frozen_hyperparameters": {
+    "lambda": 0.10,
+    "tau": 0.001,
+    "tau_rule": "tau = max(1e-3, median(native squared d_second - d_best)) computed ONCE at the matched post-step32 cold state on the ENCODER-produced L1 latent over a fixed train-only item population",
+    "tau_measurement": {
+      "measured_on": "encoder latent z, host native squared L1 distance",
+      "population": "1024 train-only items, seed 42 permutation of the 24556 train items",
+      "p05": 3.923718e-05,
+      "median": 0.00043274835,
+      "p95": 0.001419403,
+      "mean": 0.00053507881,
+      "frozen_tau": 0.001,
+      "floor_fired": true,
+      "feasibility_check": "the issue requires a floored tau to FAIL FEASIBILITY only if the gradients are inert. Measured separation gradients on the preflight treatment arms are NONZERO on both parameter groups (encoder 0.980, L1 codebook 0.386), so the floor is admissible and NO retune was performed."
+    },
+    "optimizer": {"name": "AdamW", "lr": 0.001, "weight_decay": 0.0001, "clip_norm": 1.0},
+    "batch": {"item_per_rank": 1024, "pair_per_rank": 512, "world_size": 1,
+              "single_gpu_note": "GENREC_SINGLE_GPU=1; the host compensates the batch to the 4-rank global size. NOT a distributed result."},
+    "behavior": {"contrastive_temperature": 0.07, "ramp_start_epoch": 1500, "max_weight": 0.20},
+    "codebooks": {"levels": 3, "size": 256, "dim": 32},
+    "epochs": 3000,
+    "early_stopping": "DISABLED",
+    "seed": 42,
+    "init": "fresh cold initialisation, fresh KMeans codebook, NO warm start from any prior checkpoint",
+    "pilot_schedule_used": false,
+    "pilot_schedule_note": "the 32+128 step pilot schedule is NEVER used in the production run"
+  },
+  "mask": {
+    "excludes": ["j == i", "this source's observed target", "this source's train-known successors / false negatives"],
+    "keeps": ["a successor of a DIFFERENT source"],
+    "graph_source": "the training-only parquet, built as a CSR indexed by TRUE item ids",
+    "graph_edges": 323633,
+    "candidate_rng": "private deterministic generator, host training-pair order untouched",
+    "invalid_negative_behaviour": "raises InvalidProtocol rather than returning a zero loss"
+  },
+  "frozen_gate": {
+    "artifact": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "artifact_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+    "positives": 52855,
+    "negatives_per_positive": 10,
+    "metric": "pos_share / neg_share on native hard 3-token SID L1 (index 0)",
+    "frozen_baseline": 16.38953942232631,
+    "comparison": "strict >, no rounding, equality FAILS",
+    "read_policy": "opened EXACTLY ONCE, only after the final Stage2 checkpoint and SID export exist",
+    "historical_r4_08_reference": 16.402627511591962,
+    "historical_reference_note": "a separate research comparison, NOT the gate; and it was reproduced digit-for-digit from the restored git-tracked SID export before use",
+    "proxy_substitution_forbidden": "soft ER, L2/L3 averages, occupancy, entropy, training-pair ratios and probe risk indicators cannot substitute"
+  },
+  "stage3_condition": {
+    "trigger": "ONLY if the frozen gate passes",
+    "protocol": "original frozen HG-Rec, 150 epochs, seed42, beam20, unchanged dataset/split",
+    "report": "test Recall@10 and NDCG@10 against the committed TIGER baseline reference",
+    "separation_of_claims": "Stage2 ER improvement is NOT proof of Recall improvement; each is stated separately"
+  }
+}

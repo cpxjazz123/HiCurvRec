@@ -59,7 +59,29 @@ class InvalidProtocol(RuntimeError):
 
 
 def host_tree(host: str) -> Path:
-    return REPO_ROOT / f"stage2_RQ-VAE/TIGER_{host}"
+    """An ISOLATED copy of the host tree, so the preflight never writes into a historical arm.
+
+    The trainer derives its output directory from EXPERIMENT_ARM, so running the real trainer in
+    the original tree would overwrite that arm's SID export and checkpoint. It did exactly that
+    once during this issue; this function makes the mistake impossible to repeat.
+    """
+    source = REPO_ROOT / f"stage2_RQ-VAE/TIGER_{host}"
+    scratch = REPO_ROOT / f"stage2_RQ-VAE/_r7f_scratch/TIGER_{host}_{host}"
+    if scratch.is_dir():
+        return scratch
+    import shutil
+    scratch.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, scratch,
+                    ignore=shutil.ignore_patterns("logs", "__pycache__", "*.pth", "*.npy",
+                                                  "item_sids.json"))
+    trainer = scratch / "train_rqvae.py"
+    text = trainer.read_text()
+    # give the scratch tree its own arm name so its outputs land in their own directory
+    import re
+    text = re.sub(r'EXPERIMENT_ARM = "[^"]+"',
+                  f'EXPERIMENT_ARM = "r7f_scratch_{host}"', text, count=1)
+    trainer.write_text(text)
+    return scratch
 
 
 def run_arm(arm: str, host: str, lam: float, *, seed: int = 42) -> dict[str, Any]:
@@ -137,9 +159,10 @@ def audit_steps(arm_dir: Path, step_log: Path, snapshot_dir: Path, *,
         return {"execution_ok": False, "problems": ["the per-step provenance log was never written"],
                 "steps": 0, "active_steps": 0}
     records = [json.loads(line) for line in step_log.read_text().splitlines() if line.strip()]
-    if len(records) < TOTAL_STEPS:
-        problems.append(f"only {len(records)} steps were logged, the protocol requires "
-                        f"{TOTAL_STEPS} COMPLETED optimizer steps")
+    if len(records) != TOTAL_STEPS:
+        problems.append(f"{len(records)} steps were logged, the protocol requires EXACTLY "
+                        f"{TOTAL_STEPS} COMPLETED optimizer steps; extra inactive updates are a "
+                        f"step-count defect, not a rounding artefact")
     active = [r for r in records if r.get("applied_weight", 0.0) > 0.0]
     if len(active) != ACTIVE_STEPS:
         problems.append(f"{len(active)} steps carried a positive behaviour weight, the protocol "
@@ -159,6 +182,10 @@ def audit_steps(arm_dir: Path, step_log: Path, snapshot_dir: Path, *,
                 problems.append(f"step {record.get('step')} was active but had no valid unrelated "
                                 f"pairs, so the separation term had nothing to minimise")
                 break
+    steps_seen = [record.get("step") for record in records]
+    if steps_seen != list(range(1, len(records) + 1)):
+        problems.append("the step counter is not the global optimizer step 1..N (it resets or "
+                        "repeats), so snapshots and the weight schedule would be misaligned")
     # the loader stream must actually progress
     hashes = [r.get("item_batch_sha256") for r in records]
     if len(set(hashes)) < max(2, len(hashes) // 4):

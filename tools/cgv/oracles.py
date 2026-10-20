@@ -705,3 +705,54 @@ def hard_assignment_algebra(observations: dict, tol: float = 1e-5) -> dict[str, 
     return {"name": "hard_assignment_algebra", "ok": worst <= tol and checked > 0,
             "measurement": worst,
             "detail": f"max |r_k - r_(k+1) - hard codeword| over {checked} level(s) = {worst:.3e}"}
+
+
+# --------------------------------------------------------------------------------------
+# R7-F: independent oracle for the soft same-code separation loss (issue #89)
+# --------------------------------------------------------------------------------------
+# This lives in the VERIFIER, not with the mechanism. The #87 implementation shipped its own
+# backward; an oracle that reused it would repeat any mistake in it. Everything below is written
+# from the definition:
+#
+#     p_i(k)   = softmax_k(-d_i,k / tau)
+#     P_same   = <p_i, p_j>
+#     L_sep    = lambda * mean_{(i,j) in valid} P_same(i, j)
+#
+# and differentiated by hand from the softmax Jacobian.
+
+
+def r7_f_forward_loss(distances: torch.Tensor, pair_index: torch.Tensor, tau: float,
+                      lam: float) -> torch.Tensor:
+    """L_sep straight from its definition, given the NATIVE L1 distances [N, K]."""
+    posterior = torch.softmax(-distances / tau, dim=-1)
+    left = posterior[pair_index[:, 0]]
+    right = posterior[pair_index[:, 1]]
+    return lam * (left * right).sum(dim=-1).mean()
+
+
+def r7_f_loss_vjp(distances: torch.Tensor, pair_index: torch.Tensor, tau: float,
+                  lam: float) -> torch.Tensor:
+    """d L_sep / d distance, obtained analytically rather than by autograd.
+
+    d<p_i,p_j>/du_i(m) = p_i(m) * [p_j(m) - <p_i,p_j>]      with u = -d/tau
+    so d<p_i,p_j>/dd_i(m) = -(1/tau) * p_i(m) * [p_j(m) - <p_i,p_j>]
+
+    Both sides of the pair contribute; dropping the partner side zeroes its gradient, which a
+    single-pair check exposes immediately.
+    """
+    posterior = torch.softmax(-distances / tau, dim=-1)
+    left = posterior[pair_index[:, 0]]
+    right = posterior[pair_index[:, 1]]
+    inner = (left * right).sum(dim=-1, keepdim=True)
+    scale = lam / float(pair_index.shape[0])
+    gradient = torch.zeros_like(distances)
+    gradient.index_add_(0, pair_index[:, 0], -scale * (left * (right - inner)) / tau)
+    gradient.index_add_(0, pair_index[:, 1], -scale * (right * (left - inner)) / tau)
+    return gradient
+
+
+def r7_f_same_code(probabilities: torch.Tensor, pair_index: torch.Tensor) -> float:
+    """mean <p_i, p_j> over the given pairs, as a scalar the forward gate can compare."""
+    left = probabilities[pair_index[:, 0]]
+    right = probabilities[pair_index[:, 1]]
+    return float((left * right).sum(dim=-1).mean())

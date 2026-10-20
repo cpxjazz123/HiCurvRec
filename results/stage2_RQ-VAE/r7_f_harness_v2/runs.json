@@ -1,32 +1,41 @@
 [
   {
-    "arm": "F1",
-    "host": "r6_04",
+    "arm": "F3",
+    "host": "r4_08",
     "lambda": 0.1,
     "seed": 42,
-    "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_04",
-    "trainer_sha256": "8c41552db6e41b9eaa5ad2f84f820b89e3c505bb4bce974437a8416f02014152",
-    "hook_sha256": "da06fdd44d57d4fa7f2554ece3ffeb2d9c9b9d88b94b367e9dd29d5148b7e3ea",
-    "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c import sys; sys.path.insert(0, '/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_04'); import train_rqvae as T; T.main()",
+    "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r4_08",
+    "trainer_sha256": "b38709b339c0d98e17db6b7432f03cb84c08833e2769d79eff067e04e22b9ceb",
+    "hook_sha256": "6249fe4e249d836233ad3fe1ca63528707384d1d9a961ab4226aac3aba585360",
+    "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c import sys; sys.path.insert(0, '/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r4_08'); import train_rqvae as T; T.main()",
     "exit_code": 0,
-    "elapsed_s": 29.81,
-    "stdout_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F1/seed42/stdout.log",
-    "stderr_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F1/seed42/stderr.log",
-    "step_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F1/seed42/steps.jsonl",
+    "elapsed_s": 30.24,
+    "stdout_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F3/seed42/stdout.log",
+    "stderr_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F3/seed42/stderr.log",
+    "step_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F3/seed42/steps.jsonl",
     "audit": {
       "execution_ok": true,
       "problems": [],
-      "steps": 162,
+      "steps": 160,
       "active_steps": 128,
       "applied_weight_values": [
         0.0,
         0.2
       ],
-      "distinct_item_batch_hashes": 162,
+      "distinct_item_batch_hashes": 160,
       "distinct_pair_item_id_hashes": 128,
       "lr_first": 6.6666666666666675e-06,
-      "lr_last": 0.0005433333333333334,
-      "snapshots": []
+      "lr_last": 0.0005366666666666666,
+      "snapshots": [
+        "step_0000",
+        "step_0008",
+        "step_0016",
+        "step_0032",
+        "step_0064",
+        "step_0096",
+        "step_0128",
+        "step_0160"
+      ]
     },
     "status": "validated_execution"
   }

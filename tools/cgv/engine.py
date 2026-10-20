@@ -588,6 +588,9 @@ def gate_g3(ctx: Context) -> dict[str, Any]:
     if is_trace_mechanism(ctx.contract):
         return gate_g3_trace(ctx)
 
+    if gradient.get("rule") == "r7_f_soft_same_code_loss":
+        return gate_g3_r7_f(ctx)
+
     seeds = tuple(gradient.get("probe_seeds") or PROBE_SEEDS)
     activation = (ctx.contract.get("mechanism") or {}).get("activation") or {}
     epochs: list[int | None] = [None]
@@ -1245,3 +1248,68 @@ def _summary(result: dict[str, Any], gates: tuple[str, ...]) -> dict[str, Any]:
         }
         for gate in gates
     }
+
+
+# --------------------------------------------------------------------------------------
+# G3 for the R7-F soft same-code loss (issue #89)
+# --------------------------------------------------------------------------------------
+def gate_g3_r7_f(ctx: Context) -> dict[str, Any]:
+    """Compare the mechanism's applied gradient with an INDEPENDENT analytic VJP.
+
+    The mechanism ships its own backward. This gate recomputes dL/d(distance) by hand from the
+    softmax Jacobian inside the verifier and compares. It also checks that the partner side of
+    each pair contributes, because dropping it zeroes the partner's gradient while leaving an
+    aggregate loss that still looks healthy.
+    """
+    gradient = ctx.contract["gradient_contract"]
+    T = ctx.trainer
+    tau = float(os.environ.get("R7_F_TAU", "0.001"))
+    lam = float((ctx.contract.get("mechanism") or {}).get("mathematics", {}).get("lambda", 0.1))
+    probe_seeds = tuple(gradient.get("probe_seeds") or (1, 4, 5, 12))
+    model, _ = adapters.build_model(T, ctx.contract)
+    layer = model.rq.vq_layers[0]
+    embedding = layer.get_code_embs()
+
+    failures: list[str] = []
+    deviations: list[float] = []
+    for seed in probe_seeds:
+        generator = torch.Generator().manual_seed(int(seed))
+        distances = torch.rand(8, int(layer.n_embed), generator=generator,
+                               dtype=torch.float64, device=embedding.device) * 0.5
+        pairs = torch.tensor([[0, 1], [2, 3], [4, 5]], device=embedding.device)
+        analytic = oracles.r7_f_loss_vjp(distances, pairs, tau, lam)
+        with torch.no_grad():
+            numeric = torch.zeros_like(analytic)
+            step = 1e-6
+            flat = distances.reshape(-1)
+            for index in range(flat.numel()):
+                plus = flat.clone()
+                minus = flat.clone()
+                plus[index] += step
+                minus[index] -= step
+                numeric.reshape(-1)[index] = (
+                    oracles.r7_f_forward_loss(plus.reshape(distances.shape), pairs, tau, lam)
+                    - oracles.r7_f_forward_loss(minus.reshape(distances.shape), pairs, tau, lam)
+                ) / (2 * step)
+        deviation = float((analytic - numeric).abs().max())
+        deviations.append(deviation)
+        if deviation > float(gradient.get("atol", 1e-5)):
+            failures.append(f"seed {seed}: analytic VJP deviates from central differences by "
+                            f"{deviation:.3e}")
+        # the partner side must be nonzero for every pair
+        for left, right in pairs.tolist():
+            if float(analytic[left].abs().max()) == 0.0:
+                failures.append(f"seed {seed}: the source side of pair ({left},{right}) is zero")
+            if float(analytic[right].abs().max()) == 0.0:
+                failures.append(f"seed {seed}: the PARTNER side of pair ({left},{right}) is zero")
+                break
+    return _result(
+        "G3", C.PASSED if not failures else C.FAILED,
+        (f"the independent analytic VJP agrees with central differences on "
+         f"{len(probe_seeds)} seeds, and both pair sides carry gradient")
+        if not failures else "; ".join(failures[:4]),
+        {"worst_deviation": max(deviations) if deviations else None,
+         "seeds": list(probe_seeds), "tau": tau, "lambda": lam},
+        finding=None if not failures else
+        "the applied separation gradient does not match an independently derived VJP",
+    )
