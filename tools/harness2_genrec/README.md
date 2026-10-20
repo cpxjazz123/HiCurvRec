@@ -119,23 +119,63 @@ $V -m tools.harness2_genrec.cli lifecycle --proposal ... --skip-stage2
 $V -m tools.harness2_genrec.cli sweep --k 1          # the harness-optimisation loop
 ```
 
-## 4. What comes next (issue #102 order)
+## 4. The autonomous research campaign (issue #103)
 
-`P0 reuse -> P1 real OpenCode -> P2 unified lifecycle -> P3 parallel research`
+Harness2 is the sole orchestrator: it decides which mechanisms are proposed, which are
+qualified, which are run, and what the next round is. OpenCode is the only agent that
+writes a mechanism or repairs one. Nothing in the campaign is scripted.
+
+```bash
+cd /home/wlia0047/ar57/wenyu/GeneRec
+V=/home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python
+$V -m tools.harness2_genrec.cli campaign --config tools/harness2_genrec/campaign_config.json
+```
+
+| stage | what happens | the evidence |
+|---|---|---|
+| preflight | the agent backend, the GPUs, the budget and the historical digests are checked **before** anything runs | `campaign_state.json` |
+| ideation | OpenCode proposes one mechanism per angle, from the R8 record and its lessons | `ideation_round1.json` |
+| rubric | a deterministic critique freezes the proposals that declare what they must, and selects a **diverse** portfolio | the critique in the ideation file |
+| implementation | OpenCode implements each arm in its own tree, with the proposal frozen first | `arms/<arm>/implement.json` |
+| verification | the declared invariants, the gradient targets and the forbidden substitutions, checked by a checker that does not know the mechanism's internals | `arms/<arm>/verification.json` |
+| repair | bounded, with the findings handed back to the agent | `arms/<arm>/repair_*.json` |
+| probe | the **active** probe: the mechanism is forced on, a matched control is run beside it, and the code's occupancy is compared | `arms/<arm>/probe/probe_report.json` |
+| regression | the known collapse arm must be rejected by that probe before any cold run | `regression_control.json` |
+| reflection | the diagnosis separates an incorrect implementation, a correct-but-harmful mechanism, an infrastructure defect and an uncertain result | `arms/<arm>/arm.json` |
+| second round | the researcher is given the first round's diagnoses and proposes again | `ideation_round2.json` |
+| harness evolution | a harness change is compared with the prior harness on the **held-back** tasks and adopted only if it wins | `harness_evolution.json` |
+| cold Stage2 | the qualified arms, and only those, run the frozen cold 3000-epoch protocol | the MCP's own state and logs |
+| evaluation | the frozen Hard-L1 ER, once per admitted arm, against a fresh cold control | `arms/<arm>/er_eval.json` |
+| report | every arm, including the failures | `leaderboard.json`, `report.md` |
+
+The budget is declared in `campaign_config.json` and enforced by the controller: the
+parallelism, the number of cold runs and the wall clock. A run that was interrupted is
+resumed from the evidence on disk, not from the beginning.
+
+Two boundaries the campaign keeps: the checks need torch and the campaign needs the
+framework's interpreter, so they cross as a subprocess and a JSON report; and the
+mechanism's module and entry-point names are a campaign convention, because a checker
+that has to guess a name is a checker that will sometimes look in the wrong place.
+
+## 5. What came out of #102, and what #103 adds
+
+`P0 reuse -> P1 real OpenCode -> P2 unified lifecycle -> P3 parallel research` (issue #102,
+all done) and then the research campaign itself (issue #103, the section above).
 
 | phase | content | state |
 |---|---|---|
 | P0 reuse | the offline adapter and its tests, and the independent checks as **callable judges** (`tools/mvg/judges.py`); CGV G1-G6 and M0-M5 are no longer a mandatory admission gate | done |
-| P1 real OpenCode | `OpenCodeProposer` and `OpenCodeSubstrate`: OpenCode proposes/edits the harness and executes the mechanism, the genrec MCP connected through OpenCode's own configuration, full logs, a real failure -> diagnosis -> repair -> recheck | not started |
-| P2 unified lifecycle | frozen proposal -> adaptive independent checks -> repair -> real-trainer probe -> gated cold Stage2 -> frozen evaluation, with budgets, resume and failure states | not started |
-| P3 parallel research | several mechanisms in isolation with bounded budgets, a blind held-back task for the harness-optimization outer loop, lesson transfer | not started |
+| P1 real OpenCode | `OpenCodeProposer` and `OpenCodeSubstrate`: OpenCode proposes/edits the harness and executes the mechanism, the genrec MCP connected through OpenCode's own configuration, full logs, a real failure -> diagnosis -> repair -> recheck | done |
+| P2 unified lifecycle | frozen proposal -> adaptive independent checks -> repair -> real-trainer probe -> gated cold Stage2 -> frozen evaluation, with budgets, resume and failure states | done |
+| P3 parallel research | several mechanisms in isolation with bounded budgets, a blind held-back task for the harness-optimization outer loop, lesson transfer | done |
+| #103 campaign | the autonomous two-round research campaign on top of all of the above | running |
 
 **The execution backend is OpenCode** (issue #102): it is the default agent for both the
 Harness2 proposer and the task-execution substrate, and the production path must not depend
 on Claude Code or Vertex credentials. The P0 scripted mode stays as the deterministic CI
 path.
 
-## 5. Known gaps in what is built
+## 6. Known gaps in what is built
 
 * **The static check is literal-based.** A candidate that hardcodes a value through an
   expression rather than a literal slips past `validate_tree`. The independent-reference
@@ -150,7 +190,7 @@ path.
   comment is not substituting the operation; a static rule that fired on the explanation
   would reject a correct repair for saying why it was wrong.
 
-## 6. The one extension point used
+## 7. The one extension point used
 
 The framework resolves its per-surface prompt text from a module-level dict built at import time
 (`core/prompts.py:617`) and exposes no public registration hook, so a surface it does not ship
@@ -160,7 +200,7 @@ fail-closed: the framework raises on an unknown surface name, so an upgrade that
 dict breaks loudly instead of degrading silently. When the framework grows a public hook, this
 file becomes one call and is deleted.
 
-## 6. Rules this integration does not break
+## 8. Rules this integration does not break
 
 * no fork and no patch of the framework core; only the seams above are used;
 * the trainer's environment never imports the framework (subprocess / MCP / JSON only);
