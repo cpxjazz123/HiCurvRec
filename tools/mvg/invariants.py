@@ -252,6 +252,97 @@ def _code_only(source: str) -> str:
     return "\n".join(pieces)
 
 
+def diagnose_gradient_failure(
+    entry,
+    case: Dict[str, torch.Tensor],
+    targets: Dict[str, str],
+    parameters: Dict[str, float],
+) -> Dict[str, Any]:
+    """Why did a declared gradient target not receive a gradient?
+
+    Three causes are separable by measurement, and the fourth by inspection of the call
+    site:
+
+    * **impossible specification** -- the loss does not depend on the target at all, so no
+      implementation of this formula can reach it. Falsifiable: perturb the target and see
+      whether the loss moves.
+    * **missing gradient (wiring)** -- the loss depends on the target in the forward pass
+      but the backward pass does not reach it: a detach, a stop-gradient, a ``no_grad``, or
+      a call site that hands over a detached tensor.
+    * **saturation** -- the backward pass reaches it but the local derivative is zero at
+      this operating point (a ``relu``/``clamp`` boundary), while a finite step in the
+      input does move the loss.
+
+    The diagnosis is per target, and it is a measurement, not an opinion.
+    """
+    diagnosis: Dict[str, Any] = {}
+
+    def loss_value(overrides: Dict[str, torch.Tensor]) -> float:
+        probe = dict(case)
+        probe.update(overrides)
+        return float(_loss(entry, probe, parameters).detach())
+
+    base = loss_value({})
+    for name, expectation in sorted(targets.items()):
+        if name not in ("source", "target", "codebook"):
+            continue
+        tensor = case[name]
+        step = 1e-3
+        plus = dict(case)
+        plus[name] = tensor + step
+        minus = dict(case)
+        minus[name] = tensor - step
+        forward_move = abs(loss_value(plus) - loss_value(minus))
+        requires_grad = tensor.detach().clone().requires_grad_(True)
+        differentiable = dict(case)
+        differentiable[name] = requires_grad
+        try:
+            value = _loss(entry, differentiable, parameters)
+            grad = torch.autograd.grad(value, requires_grad, allow_unused=True)[0]
+            local = 0.0 if grad is None else float(grad.abs().max())
+        except Exception as exc:  # noqa: BLE001
+            local = 0.0
+            diagnosis[name] = {"error": f"{type(exc).__name__}: {exc}"}
+            continue
+        if expectation != "nonzero":
+            diagnosis[name] = {
+                "expectation": expectation,
+                "forward_dependence": forward_move,
+                "local_gradient": local,
+                "verdict": "matches the declaration",
+            }
+            continue
+        if forward_move <= 1e-12:
+            verdict = "impossible specification"
+            reason = (
+                f"the loss does not depend on {name} at all (a finite step moves it by "
+                f"{forward_move:.3e}), so no implementation of this formula can deliver a "
+                "gradient to it; the declaration is wrong, not the code"
+            )
+        elif local <= 0.0:
+            verdict = "missing gradient (wiring)"
+            reason = (
+                f"the loss depends on {name} (a finite step moves it by {forward_move:.3e}) "
+                "but the backward pass does not reach it: a detach, a stop-gradient, a "
+                "no_grad block, or a call site that passes a detached tensor"
+            )
+        elif forward_move > 1e-6 and local < 1e-9:
+            verdict = "saturation"
+            reason = f"{name} moves the loss finitely but its local derivative is {local:.3e}"
+        else:
+            verdict = "delivered"
+            reason = f"the gradient reaches {name} ({local:.3e})"
+        diagnosis[name] = {
+            "expectation": expectation,
+            "base_loss": base,
+            "forward_dependence": forward_move,
+            "local_gradient": local,
+            "verdict": verdict,
+            "reason": reason,
+        }
+    return diagnosis
+
+
 def verify_mechanism(
     tree: Path,
     proposal: Dict[str, Any],
@@ -299,12 +390,13 @@ def verify_mechanism(
         entry, case, proposal.get("invariants") or [], parameters,
         tolerance=float(proposal.get("tolerance", 1e-6)),
     )
-    checks += check_gradient_targets(entry, case, proposal.get("gradient_targets") or {}, parameters)
+    targets_declared = proposal.get("gradient_targets") or {}
+    checks += check_gradient_targets(entry, case, targets_declared, parameters)
     checks += check_forbidden_substitutions(
         path.read_text(encoding="utf-8"), proposal.get("forbidden_substitutions") or []
     )
     failed = [check for check in checks if not check.ok]
-    return {
+    report = {
         "ok": not failed,
         "detail": (
             f"all {len(checks)} declared checks hold"
@@ -314,6 +406,9 @@ def verify_mechanism(
         "checks": [check.as_dict() for check in checks],
         "failed": [check.id for check in failed],
     }
+    if any(check.id.startswith("gradient_") and not check.ok for check in checks):
+        report["diagnosis"] = diagnose_gradient_failure(entry, case, targets_declared, parameters)
+    return report
 
 
 __all__ = [
