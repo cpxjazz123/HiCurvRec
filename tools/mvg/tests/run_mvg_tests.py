@@ -156,6 +156,12 @@ def _report() -> None:
 
 
 def main() -> int:
+    try:
+        import torch
+
+        torch.set_num_threads(1)
+    except Exception:  # pragma: no cover - torch is present in every environment that runs this
+        pass
     failures = 0
     for name, function in CHECKS:
         try:

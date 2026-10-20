@@ -219,7 +219,13 @@ def activation_open(trainer, contract: dict[str, Any], epoch: int | None = None)
 # executing the real gradient assembly
 # --------------------------------------------------------------------------------------
 def executor_kwargs(trainer, contract, obs, epoch: int | None = None) -> dict[str, Any]:
-    """Pass only the arguments the declared executor actually accepts."""
+    """Pass only the arguments the declared executor actually accepts.
+
+    A mechanism that needs tensors of its own declares an ``inputs`` provider: a symbol in
+    the tree that turns the observations into the tensors the mechanism reads. The provider
+    is called by the verifier, not by the mechanism, and its result is handed to the
+    executor as ``mechanism_inputs``.
+    """
     name = (contract.get("mechanism") or {}).get("executor")
     if not name:
         return {}
@@ -234,6 +240,12 @@ def executor_kwargs(trainer, contract, obs, epoch: int | None = None) -> dict[st
         kwargs["quant_loss"] = obs["quant_loss"]
     if "epoch" in accepted and epoch is not None:
         kwargs["epoch"] = epoch
+    provider_name = (contract.get("mechanism") or {}).get("inputs")
+    if provider_name and "mechanism_inputs" in accepted:
+        provider = resolve_dotted(trainer, provider_name)
+        provider_parameters = inspect.signature(provider).parameters
+        provided = provider(obs) if provider_parameters else provider()
+        kwargs["mechanism_inputs"] = provided
     return kwargs
 
 

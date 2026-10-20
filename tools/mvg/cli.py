@@ -20,6 +20,21 @@ from . import spec as SPEC
 REPO_ROOT = SPEC.REPO_ROOT
 
 
+def _pin_threads() -> None:
+    """One thread for the gates.
+
+    The checks run on tensors a few elements wide. With the default thread pool every one
+    of those tiny operations pays a fan-out, and the suite spends its time in the
+    scheduler instead of in the arithmetic.
+    """
+    try:
+        import torch
+
+        torch.set_num_threads(1)
+    except Exception:  # pragma: no cover - torch is present in every environment that runs this
+        pass
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     tree = Path(args.tree)
     if not tree.is_absolute():
@@ -77,6 +92,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _pin_threads()
     args = _build_parser().parse_args(argv)
     try:
         return int(args.func(args))

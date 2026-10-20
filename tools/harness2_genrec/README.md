@@ -81,17 +81,21 @@ while `inv1` and the composed `agg1` are adopted, reflected into an `EXPERIENCE.
 2. a candidate is rejected for a false success, statically and at runtime -- two tests;
 3. the library travels: the second task's evidence carries the first task's lesson -- one test.
 
-## 3. What comes next (issue #101 order)
+## 3. What comes next (issue #102 order)
 
-`P0 -> independent MVG + mutation suite -> CGV/launch enforcement -> P1 -> P2 -> P3`
+`P0 reuse -> P1 real OpenCode -> P2 unified lifecycle -> P3 parallel research`
 
 | phase | content | state |
 |---|---|---|
-| MVG | the `MechanismSpec` schema, the M0-M5 gates, the named mutation suite, `mvg_report.json` | not started |
-| CGV enforcement | live G1-G6 wired to real seven-group specs; `stage2_start` refuses without a fresh certificate bound to the source/spec/dataset digests | not started |
-| P1 | the real executor: Claude Code CLI + genrec MCP, isolated candidate workspaces, `k=1` | not started |
-| P2 | real probes: MVG + CGV before bounded train-only stability probes; the R8 `#91-#100` split for development, a held-back split for acceptance | not started |
-| P3 | adoption into `main` only after a held-back regression suite and human review | not started |
+| P0 reuse | the offline adapter and its tests, and the independent checks as **callable judges** (`tools/mvg/judges.py`); CGV G1-G6 and M0-M5 are no longer a mandatory admission gate | done |
+| P1 real OpenCode | `OpenCodeProposer` and `OpenCodeSubstrate`: OpenCode proposes/edits the harness and executes the mechanism, the genrec MCP connected through OpenCode's own configuration, full logs, a real failure -> diagnosis -> repair -> recheck | not started |
+| P2 unified lifecycle | frozen proposal -> adaptive independent checks -> repair -> real-trainer probe -> gated cold Stage2 -> frozen evaluation, with budgets, resume and failure states | not started |
+| P3 parallel research | several mechanisms in isolation with bounded budgets, a blind held-back task for the harness-optimization outer loop, lesson transfer | not started |
+
+**The execution backend is OpenCode** (issue #102): it is the default agent for both the
+Harness2 proposer and the task-execution substrate, and the production path must not depend
+on Claude Code or Vertex credentials. The P0 scripted mode stays as the deterministic CI
+path.
 
 ## 4. Known gaps in what is built
 
