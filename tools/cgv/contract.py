@@ -95,7 +95,7 @@ SCHEMA_KEYS = {
         "target", "mode", "rule", "reference_term", "oracle", "probe_weight", "probe_seeds",
         "atol", "rtol", "eps_flag", "alpha", "alpha_flag", "cos_threshold", "cos_threshold_flag",
         "blocks", "ema", "loss_terms", "expected_paths", "additional_targets",
-        "jacobian_expectations", "effect",
+        "jacobian_expectations", "effect", "invariants",
     },
     "update_contract": {
         "optimizer", "lr", "weight_decay", "clip_norm", "atol", "requires_parameter_change",
