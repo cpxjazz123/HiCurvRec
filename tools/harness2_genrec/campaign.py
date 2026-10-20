@@ -711,6 +711,11 @@ class Campaign:
     # -- 7. the report -----------------------------------------------------
     def report(self) -> Dict[str, Any]:
         """The machine-readable leaderboard and the human-readable report."""
+        # The diagnoses are recomputed from the arms' own evidence, so a report can never
+        # carry a diagnosis that the evidence does not support.
+        for arm in self.state.get("arms", []):
+            if arm.get("stages"):
+                arm["diagnosis"] = self._diagnose(arm)
         rows: List[Dict[str, Any]] = []
         for arm in self.state["arms"]:
             probe = arm.get("probe") or {}
@@ -978,10 +983,17 @@ def execute(config: CampaignConfig) -> Dict[str, Any]:
 
     if config.rounds >= 2 and arms:
         proposals2 = campaign.ideate(2, evidence=_evidence_block(arms))
-        portfolio2 = ideation.select_portfolio(
-            [record["proposal"] for record in proposals2 if record.get("proposal")],
-            size=max(1, config.portfolio_size // 3),
-        )
+        taken = {str(arm.get("mechanism_id")) for arm in arms}
+        portfolio2 = [
+            proposal
+            for proposal in ideation.select_portfolio(
+                [record["proposal"] for record in proposals2 if record.get("proposal")],
+                size=max(1, config.portfolio_size // 3),
+            )
+            # A second round that re-proposes a first-round arm under the same name is not a
+            # redesign: it would overwrite the first round's evidence.
+            if str(proposal.get("mechanism_id")) not in taken
+        ]
         campaign.state["round2_proposals"] = len(proposals2)
         campaign.state["round2_portfolio"] = [p.get("mechanism_id") for p in portfolio2]
         arms2 = _run_arms(campaign, portfolio2, 2, config.budget.max_parallel_arms)
