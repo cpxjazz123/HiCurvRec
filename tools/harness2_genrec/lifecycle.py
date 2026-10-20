@@ -78,6 +78,7 @@ class LifecycleConfig:
     probe_epochs: int = 2
     judge_timeout: int = 1800
     arm_name: str = ""
+    probe_checkpoint: str = ""
 
 
 @dataclass
@@ -462,7 +463,16 @@ class MechanismRun:
                 text=True,
                 timeout=self.config.timeout,
             )
-            payload = json.loads(completed.stdout or "{}")
+            report_path = probe_dir / "probe_report.json"
+            if report_path.is_file():
+                payload = json.loads(report_path.read_text(encoding="utf-8"))
+            else:
+                payload = {
+                    "ok": False,
+                    "error": "the probe wrote no report",
+                    "stdout_tail": (completed.stdout or "")[-400:],
+                    "stderr_tail": (completed.stderr or "")[-400:],
+                }
         except (subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
             payload = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
         ok = bool(payload.get("ok"))
@@ -515,6 +525,10 @@ class MechanismRun:
         path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         self.manifest["admission_path"] = str(path)
         self.manifest["admission_sha256"] = _sha256(path)
+        probe_checkpoint = self._seed_probe_checkpoint()
+        self.manifest["probe_checkpoint"] = probe_checkpoint
+        record["probe_checkpoint"] = probe_checkpoint
+        path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         stage = Stage(
             name="admit",
             state="admitted",
@@ -550,14 +564,41 @@ class MechanismRun:
             source_dir=str(self.arm_tree()), admission=str(admission)
         )
         if not result.get("started"):
+            refusal = str(result.get("refused") or "")
+            live = result.get("state") or {}
+            if "already live" in refusal and live.get("status") in ("running", "starting", "smoke_pending"):
+                # A run for this arm is already going: adopt it rather than starting a
+                # second one. The launch path refuses a duplicate for good reason, and a
+                # resumed run must not overwrite its evidence either.
+                self.manifest["stage2_adopted"] = live
+                self._advance("stage2_running")
+                final = self._await_stage2(server)
+                ok = final.get("status") in ("finished", "idle")
+                stage = Stage(
+                    name="stage2",
+                    state="stage2_complete" if ok else "artifact_corrupt",
+                    ok=ok,
+                    detail=f"adopted the live run; it finished with status {final.get('status')!r}"
+                    if ok
+                    else f"the adopted run ended with status {final.get('status')!r}",
+                    started=started,
+                    finished=_now(),
+                    measurements={"final_status": final.get("status"), "adopted": live},
+                )
+                self._record(stage)
+                if ok:
+                    self._advance("stage2_complete")
+                else:
+                    self._advance("artifact_corrupt")
+                return stage
             stage = Stage(
                 name="stage2",
                 state="blocked_preflight",
                 ok=False,
-                detail=f"the launch refused: {result.get('refused')}",
+                detail=f"the launch refused: {refusal or 'no reason given'}",
                 started=started,
                 finished=_now(),
-                measurements={"refusal": result.get("refused")},
+                measurements={"refusal": refusal},
             )
             self._record(stage)
             self._advance("blocked_preflight")
@@ -650,6 +691,51 @@ class MechanismRun:
         return stage
 
     # -- helpers ---------------------------------------------------------
+    def _seed_probe_checkpoint(self) -> Dict[str, Any]:
+        """Seed the checkpoint the launch path's smoke probe needs.
+
+        The smoke probes the real gradient path, so it needs real trained weights: a
+        parent arm's checkpoint of the same architecture, copied in and marked
+        **smoke-only**. The cold run itself starts from scratch -- the seeded file is
+        archived before the run and never becomes a warm start.
+        """
+        server = self._mcp_server()
+        result_dir = Path(str(server.tree_result_dir(self.arm_tree())))
+        target = result_dir / "rqvae_best.pth"
+        if target.is_file():
+            return {"seeded": False, "reason": "the arm already has a checkpoint", "path": str(target)}
+        source: Optional[Path] = None
+        if self.config.probe_checkpoint:
+            candidate = Path(self.config.probe_checkpoint)
+            source = candidate if candidate.is_absolute() else Path(self.config.repo_root) / candidate
+        else:
+            for arm in ("TIGER_BEHAVIOR_SAMPLE_RQ-VAE", "TIGER_r8_control"):
+                try:
+                    candidate = Path(str(server.tree_result_dir(
+                        Path(self.config.repo_root) / "stage2_RQ-VAE" / arm
+                    ))) / "rqvae_best.pth"
+                except Exception:  # pragma: no cover - a tree without the constants
+                    continue
+                if candidate.is_file():
+                    source = candidate
+                    break
+        if source is None or not Path(source).is_file():
+            return {
+                "seeded": False,
+                "reason": "no parent checkpoint to seed the smoke probe with; the launch will "
+                "refuse without one",
+            }
+        result_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        return {
+            "seeded": True,
+            "smoke_only": True,
+            "source": str(source),
+            "source_sha256": _sha256(Path(source)),
+            "path": str(target),
+            "sha256": _sha256(target),
+        }
+
     def _mcp_server(self):
         """The genrec MCP server, imported as a module. It is stdlib-only."""
         import importlib.util

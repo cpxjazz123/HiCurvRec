@@ -45,16 +45,22 @@ instead of with the fixture.
 class Task:
     task_id: str
     domain: str
-    split: str
+    split: str  # "train" (development) or "test" (held back, blind)
 
     @property
     def brief(self) -> str:
         return _BRIEF.format(task_id=self.task_id, script=VERIFIER_SCRIPT)
 
 
-TASKS: tuple[Task, ...] = (
-    Task("verify_masked_sum", "mechanism_verification", "all"),
-    Task("verify_masked_sum_b", "mechanism_verification", "all"),
+TASKS: Tuple[Task, ...] = (
+    Task("verify_masked_sum", "mechanism_verification", "train"),
+    Task("verify_masked_sum_b", "mechanism_verification", "train"),
+    # The held-back tasks. The harness is developed on the two above and never sees these
+    # while it is being edited, so a sweep that transfers to them has learned the rule
+    # rather than the fixture. Their numbers, shapes and codebook geometry are all
+    # different from the development ones.
+    Task("verify_masked_sum_c", "mechanism_verification", "test"),
+    Task("verify_masked_sum_d", "mechanism_verification", "test"),
 )
 
 _BY_ID = {t.task_id: t for t in TASKS}
@@ -62,6 +68,22 @@ _BY_ID = {t.task_id: t for t in TASKS}
 
 def all_tasks() -> list[str]:
     return [t.task_id for t in TASKS]
+
+
+def tasks_for_split(split: str = "all") -> list[str]:
+    """The tasks of one split.
+
+    ``train`` is the development split: the harness is edited against it. ``test`` is the
+    held-back split: the harness never sees those tasks while it is being edited, so a
+    sweep that transfers to them has learned the rule rather than the fixture.
+    """
+    if split == "all":
+        return all_tasks()
+    if split in ("train", "dev"):
+        return [t.task_id for t in TASKS if t.split == "train"]
+    if split in ("test", "heldout"):
+        return [t.task_id for t in TASKS if t.split == "test"]
+    raise ValueError(f"unknown split {split!r}; use all | train | test")
 
 
 def task(task_id: str) -> Task:
@@ -114,4 +136,5 @@ __all__ = [
     "served_fixtures",
     "task",
     "task_dir",
+    "tasks_for_split",
 ]

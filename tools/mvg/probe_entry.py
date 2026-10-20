@@ -213,7 +213,11 @@ def main(argv: List[str] | None = None) -> int:
     if not tree.is_absolute():
         tree = REPO_ROOT / tree
     report = probe(tree, args.epochs, Path(args.out))
-    print(json.dumps(report, indent=2, default=str))
+    text = json.dumps(report, indent=2, default=str)
+    # The trainer's own prints go to stdout, so the report is also written to a file: the
+    # caller reads the file, not the stream.
+    (Path(args.out) / "probe_report.json").write_text(text + "\n", encoding="utf-8")
+    print(text)
     return 0 if report.get("ok") else 1
 
 
