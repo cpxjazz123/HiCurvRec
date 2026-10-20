@@ -17,16 +17,18 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import List, Mapping, Sequence
 
 from harness2.core.tree import SurfaceSpec
 from harness2.substrate.base import Install, RunRequest
 
-from . import oracle, tasks
+from . import opencode, oracle, tasks
 from .surface import GENREC_SURFACE
 
 VERIFIER_TIMEOUT_S = 60
@@ -316,9 +318,154 @@ class LocalSubstrate:
                 raise RuntimeError(f"task {task_id} has no held-out fixture")
 
 
+class OpenCodeSubstrate:
+    """Executes a task with OpenCode, in an isolated copy of the work tree.
+
+    The agent works in a scratch copy of the tree, never in the repository: the copy is
+    what it edits, and the copy is what the judges are run against. The repository is
+    reachable only through the genrec MCP server, whose tools decide what they touch, and
+    the files that must not be edited -- the frozen specifications, the judges, the
+    historical artefacts -- are outside the copy in the first place.
+
+    Every run leaves its evidence behind: the event stream, the tool calls with their
+    inputs and outputs, the cost, the tokens, the exit status and the wall time.
+    """
+
+    name = "opencode"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        timeout: int = 1800,
+        repo_root: Path | None = None,
+        use_mcp: bool = True,
+    ) -> None:
+        self.model = model or opencode.model_name()
+        self.timeout = int(timeout)
+        self.repo_root = Path(repo_root) if repo_root else None
+        self.use_mcp = bool(use_mcp)
+        self._staging: List[Path] = []
+
+    # -- the substrate protocol -----------------------------------------
+    def surface(self) -> SurfaceSpec:
+        return GENREC_SURFACE
+
+    def materialise(self, tree_dir: Path, spec, ctx: Mapping[str, str]) -> Install:
+        staging = Path(tempfile.mkdtemp(prefix="genrec-oc-stage-"))
+        self._staging.append(staging)
+        if Path(tree_dir).is_dir():
+            shutil.copytree(tree_dir, staging, dirs_exist_ok=True)
+        for key, body in (ctx or {}).items():
+            target = staging / key
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(body, encoding="utf-8")
+        return Install(staging_dir=staging, fingerprint=str(tree_dir))
+
+    def execute(
+        self, task_ref: str, install: Install, run_ids: List[str], timeout: int
+    ) -> List[Path]:
+        out: List[Path] = []
+        for run_id in run_ids:
+            out.append(
+                self.run_task(
+                    task_ref,
+                    install.staging_dir,
+                    install.staging_dir / "runs" / run_id,
+                    timeout=timeout or self.timeout,
+                )
+            )
+        return out
+
+    def read_trajectory(
+        self, stream_path: Path, *, obs_trunc: int, max_chars: int, args_trunc: int = 400
+    ) -> str:
+        path = Path(stream_path)
+        if not path.is_file():
+            return ""
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if len(text) > max_chars:
+            text = text[:max_chars] + "\n[TRUNCATED]\n"
+        return text
+
+    def preflight(self) -> None:
+        report = opencode.preflight(self.model)
+        if not report.ok:
+            raise RuntimeError(
+                "the OpenCode backend is not usable here: " + "; ".join(report.problems)
+            )
+
+    # -- the agent runner ------------------------------------------------
+    def run_task(
+        self,
+        task_ref: str,
+        tree: Path,
+        run_dir: Path,
+        *,
+        prompt: str = "",
+        timeout: int | None = None,
+        title: str = "",
+    ) -> Path:
+        """Run the agent on the tree and write the evidence into ``run_dir``."""
+        tree = Path(tree)
+        run_dir = Path(run_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        mcp = None
+        if self.use_mcp and self.repo_root is not None:
+            mcp = opencode.mcp_server_block(self.repo_root)
+        result = opencode.run_agent(
+            tree,
+            prompt or f"Work on the task {task_ref}.",
+            model=self.model,
+            timeout=timeout or self.timeout,
+            mcp=mcp,
+            title=title or f"genrec {task_ref}",
+            deny_paths=[Path(self.repo_root)] if self.repo_root else (),
+        )
+        (run_dir / "events.jsonl").write_text(
+            "\n".join(json.dumps(event, default=str) for event in result.get("events", [])) + "\n",
+            encoding="utf-8",
+        )
+        (run_dir / "run.json").write_text(
+            json.dumps(
+                {
+                    "task": task_ref,
+                    "model": result.get("model"),
+                    "argv": result.get("argv"),
+                    "exit_code": result.get("exit_code"),
+                    "timed_out": result.get("timed_out"),
+                    "elapsed_s": result.get("elapsed_s"),
+                    "cost": result.get("cost"),
+                    "tokens": result.get("tokens"),
+                    "tool_calls": result.get("tool_calls"),
+                    "errors": result.get("errors"),
+                    "text": result.get("text"),
+                    "stdout": result.get("stdout"),
+                    "stderr": result.get("stderr"),
+                },
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+        lines = [f"[ACTION] opencode run on the task {task_ref}"]
+        for call in result.get("tool_calls", []):
+            lines.append(
+                f"[ACTION] {call.get('tool')}: {json.dumps(call.get('input'), default=str)[:300]}"
+            )
+            lines.append(f"[OBSERVATION] {str(call.get('output', ''))[:600]}")
+        for error in result.get("errors", []):
+            lines.append(f"[ERROR] {error.get('message', error)}")
+        if result.get("text"):
+            lines.append("[OBSERVATION] " + str(result["text"])[:4000])
+        (run_dir / "trajectory.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return run_dir
+
+
 __all__ = [
     "FixtureRow",
     "LocalSubstrate",
+    "OpenCodeSubstrate",
     "RunReport",
     "VERIFIER_TIMEOUT_S",
     "run_verifier",

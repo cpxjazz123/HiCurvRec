@@ -21,7 +21,8 @@ from harness2.core.spec import ChannelSpec
 
 from . import tasks
 from .adapter import GenrecAdapter
-from .proposer import GenrecProposer, ScriptedProposer
+from .opencode import preflight as opencode_preflight
+from .proposer import GenrecProposer, OpenCodeProposer, ScriptedProposer
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS_ROOT = Path(
@@ -93,14 +94,19 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         channel = OFFLINE_CHANNEL
         prop = ScriptedProposer(OFFLINE_CHANNEL)
     else:
-        if not args.model.strip():
-            print(
-                "error: --model is required without --offline (or set HARNESS2_GENREC_MODEL)",
-                file=sys.stderr,
-            )
-            return 1
-        channel = ChannelSpec(args.channel, args.model)
-        prop = GenrecProposer(channel)
+        model = args.model.strip() or os.environ.get("HARNESS2_OPENCODE_MODEL", "")
+        if not model:
+            from . import opencode as _opencode
+
+            model = _opencode.model_name()
+        channel = ChannelSpec("opencode", model)
+        prop = OpenCodeProposer(
+            channel,
+            audit_dir=runs_root / "_audit",
+            model=model,
+            timeout=args.timeout,
+            repo_root=REPO_ROOT,
+        )
     adapter = GenrecAdapter(
         REPO_ROOT,
         runs_root,
@@ -136,11 +142,86 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def cmd_preflight(args: argparse.Namespace) -> int:
+    """Check that the real agent backend can be used on this machine."""
+    report = opencode_preflight(args.model, probe=not args.no_probe)
+    print(json.dumps(report.as_dict(), indent=2, default=str))
+    return 0 if report.ok else 1
+
+
+def cmd_mcp_check(args: argparse.Namespace) -> int:
+    """Prove that the genrec MCP is really reachable from an OpenCode session."""
+    from . import mcp_check
+
+    report = mcp_check.run(
+        Path(args.out),
+        model=args.model,
+        timeout=args.timeout,
+        tool=args.tool,
+    )
+    (Path(args.out) / "mcp_check_report.json").write_text(
+        json.dumps(report, indent=2, default=str), encoding="utf-8"
+    )
+    print(json.dumps(report, indent=2, default=str)[:4000])
+    return 0 if report.get("ok") else 1
+
+
+def cmd_repair_demo(args: argparse.Namespace) -> int:
+    """Reject a defective implementation with the judges, repair it with OpenCode, recheck."""
+    from . import repair_demo
+
+    report = repair_demo.run(
+        Path(args.tree) if args.tree else REPO_ROOT / "stage2_RQ-VAE" / "TIGER_r9_mvg_reference",
+        Path(args.spec),
+        args.mutant,
+        Path(args.out),
+        model=args.model,
+        timeout=args.timeout,
+    )
+    (Path(args.out) / "repair_report.json").write_text(
+        json.dumps(report, indent=2, default=str), encoding="utf-8"
+    )
+    print(f"defect       : {report['mutant']}")
+    print(f"judged before: {report['judged_before']['verdict']}")
+    print(f"judged after : {report['judged_after']['verdict']}")
+    print(f"repaired     : {report['rejected_then_repaired']}")
+    print(f"report       : {args.out}/repair_report.json")
+    return 0 if report["rejected_then_repaired"] else 1
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("tasks", help="list the task pool").set_defaults(func=cmd_tasks)
+
+    pre = sub.add_parser("preflight", help="check the OpenCode backend on this machine")
+    pre.add_argument("--model", default="", help="the model to probe")
+    pre.add_argument("--no-probe", action="store_true", help="only check the CLI, do not call it")
+    pre.set_defaults(func=cmd_preflight)
+
+    mcp = sub.add_parser("mcp-check", help="prove the genrec MCP is callable from a session")
+    mcp.add_argument("--out", default="/tmp/h2_mcp_check", help="where the evidence is written")
+    mcp.add_argument("--model", default="")
+    mcp.add_argument("--timeout", type=int, default=900)
+    mcp.add_argument("--tool", default="stage2_status", help="the read-only MCP tool to call")
+    mcp.set_defaults(func=cmd_mcp_check)
+
+    repair = sub.add_parser(
+        "repair-demo", help="reject a defective implementation, repair it, recheck it"
+    )
+    repair.add_argument("--tree", default="", help="the arm tree to copy and break")
+    repair.add_argument(
+        "--spec",
+        default=str(
+            REPO_ROOT / "tools" / "mvg" / "specs" / "masked_directed_codebook_margin.json"
+        ),
+    )
+    repair.add_argument("--mutant", default="symmetric_for_directed", help="the defect to inject")
+    repair.add_argument("--out", default="/tmp/h2_repair_demo")
+    repair.add_argument("--model", default="")
+    repair.add_argument("--timeout", type=int, default=1800)
+    repair.set_defaults(func=cmd_repair_demo)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
@@ -152,9 +233,17 @@ def _build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("--seed", type=int, default=None)
     sweep.add_argument("--tag", default="")
     sweep.add_argument("--runs-dir", default=str(DEFAULT_RUNS_ROOT))
-    sweep.add_argument("--offline", action="store_true", help="scripted proposer, no model")
-    sweep.add_argument("--channel", default="claude_cli", help="proposer channel")
-    sweep.add_argument("--model", default=os.environ.get("HARNESS2_GENREC_MODEL", ""))
+    sweep.add_argument(
+        "--offline", action="store_true", help="the scripted proposer, no model: the CI path"
+    )
+    sweep.add_argument(
+        "--agent",
+        default="opencode",
+        choices=("opencode", "scripted"),
+        help="the agent that edits the harness; opencode is the default (issue #102)",
+    )
+    sweep.add_argument("--model", default="", help="the model the agent uses")
+    sweep.add_argument("--timeout", type=int, default=1800, help="the agent's timeout, seconds")
     sweep.set_defaults(func=cmd_sweep)
     return parser
 
