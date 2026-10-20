@@ -39,8 +39,13 @@ DEFAULT_LAMBDA = 0.10
 STABLE_MIN_TAU = 1e-3
 
 
-def posterior(model, latents: torch.Tensor, *, tau: float = DEFAULT_TAU) -> torch.Tensor:
-    """p_i(k) = softmax(-d(z_i, c_k)/tau), in the quantizer's OWN distance.
+def posterior(model, embeddings: torch.Tensor, *, tau: float = DEFAULT_TAU) -> torch.Tensor:
+    """p_i(k) = softmax_k(-d(z_i, c_k)/tau), in the quantizer's OWN distance.
+
+    ``z`` is the ENCODER's latent, not the raw item embedding. When the model exposes an
+    ``encoder`` the latent is produced here, so a caller that passes item embeddings gets the
+    geometry the quantizer actually sees. The #87 pilot passed raw embeddings as if they were
+    latents and measured a different space; that is the defect this signature exists to prevent.
 
     The temperature is validated rather than clamped silently: a tau at or below the stability
     floor would turn the surrogate into a hard argmin with no gradient, which is the exact thing
@@ -50,6 +55,11 @@ def posterior(model, latents: torch.Tensor, *, tau: float = DEFAULT_TAU) -> torc
         raise ValueError(f"tau={tau} is below the stability floor {STABLE_MIN_TAU}: the soft "
                          f"surrogate would collapse to a hard argmin and carry no gradient")
     layer = model.rq.vq_layers[0]
+    latents = embeddings
+    encoder = getattr(model, "encoder", None)
+    if encoder is not None:
+        produced = encoder(embeddings)
+        latents = produced[0] if isinstance(produced, tuple) else produced
     distance = layer._distances(latents.reshape(-1, layer.dim))
     return torch.softmax(-distance / tau, dim=-1)
 
@@ -84,6 +94,14 @@ def _successor_lookup(successors) -> dict[int, set[int]]:
                                                                  matrix.indptr[row + 1]])
                 for row in range(matrix.shape[0]) if matrix.indptr[row] < matrix.indptr[row + 1]}
     if isinstance(successors, torch.Tensor) and successors.dim() == 2:
+        # A DENSE BOOLEAN adjacency stores the successor set as True POSITIONS. Reading the row's
+        # values would return {0, 1} for every row, which silently excludes the wrong items.
+        if successors.dtype == torch.bool:
+            return {int(row): {int(col) for col in torch.nonzero(successors[row],
+                                                                 as_tuple=False).reshape(-1)}
+                    for row in range(successors.shape[0])
+                    if bool(successors[row].any())}
+        # an EDGE LIST: each row holds the successor ids of that source
         return {int(row): set(int(value) for value in successors[row].tolist())
                 for row in range(successors.shape[0]) if int(successors[row].any())}
     return {}

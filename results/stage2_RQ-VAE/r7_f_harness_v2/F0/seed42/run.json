@@ -1,0 +1,31 @@
+{
+  "arm": "F0",
+  "host": "r6_04",
+  "lambda": 0.0,
+  "seed": 42,
+  "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_04",
+  "trainer_sha256": "50e86c5dbe917d2dd37153154742c80e45a5378c6bd19636ecff2d30ef50630f",
+  "hook_sha256": "091f858f51e84d42d7309eb79181161a513ce0c319bd0e7d0bae9a0f916529df",
+  "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c import sys; sys.path.insert(0, '/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r6_04'); import train_rqvae as T; T.main()",
+  "exit_code": 0,
+  "elapsed_s": 21.4,
+  "stdout_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F0/seed42/stdout.log",
+  "stderr_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F0/seed42/stderr.log",
+  "step_log": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r7_f_harness_v2/F0/seed42/steps.jsonl",
+  "audit": {
+    "execution_ok": true,
+    "problems": [],
+    "steps": 162,
+    "active_steps": 128,
+    "applied_weight_values": [
+      0.0,
+      0.2
+    ],
+    "distinct_item_batch_hashes": 162,
+    "distinct_pair_item_id_hashes": 128,
+    "lr_first": 6.6666666666666675e-06,
+    "lr_last": 0.0005433333333333334,
+    "snapshots": []
+  },
+  "status": "validated_execution"
+}

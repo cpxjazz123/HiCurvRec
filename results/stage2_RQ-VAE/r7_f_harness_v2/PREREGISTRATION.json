@@ -1,0 +1,36 @@
+{
+  "issue": 88,
+  "baseline_main": "41cb8fac3e063de385f3d56c264bcc673b53683e",
+  "written_before_any_effectiveness_metric": true,
+  "protocol": {
+    "steps": "32 baseline (behaviour weight 0.0) + 128 active (weight 0.20) = 160 COMPLETED optimizer steps",
+    "snapshots": [0, 8, 16, 32, 64, 96, 128, 160],
+    "snapshot_note": "step 0 is the post-KMeans initialisation and is labelled pre_initialization, never used as the occupancy baseline",
+    "lambda": 0.10,
+    "tau_rule": "tau = max(1e-3, median(native d_second - d_best) at matched step 32, on the encoder-produced latent with the host's own L1 distance)",
+    "tau_feasibility": "if the floor yields inert gradients the mechanism FAILS FEASIBILITY and tau is NOT retuned",
+    "scope": "single process, single device (GENREC_SINGLE_GPU=1). The issue permits a single-GPU pilot provided the scope is labelled honestly. NOT a distributed result.",
+    "seed": 42,
+    "replications": "seeds 43 and 44 ONLY after seed42 passes execution, metric and CGV checks",
+    "arms": {
+      "F0": {"host": "r6_04", "lambda": 0.0, "role": "zero-lambda no-op control"},
+      "F1": {"host": "r6_04", "lambda": 0.10, "role": "treatment"},
+      "F2": {"host": "r4_08", "lambda": 0.0, "role": "zero-lambda no-op control"},
+      "F3": {"host": "r4_08", "lambda": 0.10, "role": "treatment"}
+    }
+  },
+  "status_rules": {
+    "validated_execution": "160 genuine steps and exactly 128 active, with per-step provenance audited programmatically",
+    "validated_metrics": "native Hard SID through the model's own get_indices on one fixed train-only population, with train-only denominators",
+    "cgv_passed": "ALL SIX real CGV checks on the ON arms",
+    "any_failure": "STOP and report invalid_protocol / invalid_metrics / blocked_cgv, with NO performance claim",
+    "supported_pilot": "only for repeatable paired HARD improvement without meaningful harm to train known positives, reconstruction or quantisation"
+  },
+  "hard_stops": [
+    "no 3000-epoch Stage2",
+    "no Stage3",
+    "no change to the frozen heldout pair artifacts",
+    "the frozen sole final Stage3 gate remains final heldout Hard-L1 ER > 16.38953942232631"
+  ],
+  "no_prior_result_may_select_a_hyperparameter": "#87's L1 0.152 -> 0.062 is marked INVALID and is not used to choose tau or lambda"
+}
