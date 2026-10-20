@@ -764,7 +764,11 @@ class MechanismRun:
         A tree of its own, under ``stage2_RQ-VAE/``, so the launch path can find it and no
         historical tree is ever touched.
         """
-        name = self.config.arm_name or f"TIGER_r9_{self.proposal.get('mechanism_id', 'arm')}"
+        name = (
+            self.config.arm_name
+            or self.proposal.get("arm")
+            or f"TIGER_r9_{self.proposal.get('mechanism_id', 'arm')}"
+        )
         return Path(self.config.repo_root) / "stage2_RQ-VAE" / name
 
     def _copy_tree(self, source: Path, destination: Path) -> None:

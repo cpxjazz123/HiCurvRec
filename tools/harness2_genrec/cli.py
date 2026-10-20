@@ -230,6 +230,30 @@ def cmd_lifecycle(args: argparse.Namespace) -> int:
     return 0 if run.state in ("er_evaluated", "stage3_complete") else 1
 
 
+def cmd_explore(args: argparse.Namespace) -> int:
+    """Explore several mechanisms in parallel, each in its own arm."""
+    from .parallel import explore
+
+    proposals = [Path(p.strip()) for p in args.proposals.split(",") if p.strip()]
+    rows = explore(
+        proposals,
+        repo_root=REPO_ROOT,
+        runs_root=Path(args.runs_dir),
+        base_tree=Path(args.base_tree) if args.base_tree else REPO_ROOT
+        / "stage2_RQ-VAE"
+        / "TIGER_r9_mvg_reference",
+        max_parallel=args.max_parallel,
+        cold_runs=args.cold_runs,
+        model=args.model,
+        timeout=args.timeout,
+        skip_cold=not args.allow_cold,
+    )
+    for row in rows:
+        print(f"  {row.get('mechanism_id', '?'):<40} {row.get('state', '?'):<22} {row.get('arm', '')}")
+    print(f"\nmanifest: {Path(args.runs_dir) / 'exploration.json'}")
+    return 0 if all(row.get("state") not in ("failed",) for row in rows) else 1
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -281,6 +305,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     life.add_argument("--skip-stage2", action="store_true", help="stop before the cold run")
     life.set_defaults(func=cmd_lifecycle)
+
+    explore = sub.add_parser("explore", help="explore several mechanisms in parallel")
+    explore.add_argument("--proposals", required=True, help="comma list of proposal files")
+    explore.add_argument("--base-tree", default="")
+    explore.add_argument("--runs-dir", default="/tmp/h2_explore")
+    explore.add_argument("--max-parallel", type=int, default=2)
+    explore.add_argument("--cold-runs", type=int, default=0, help="cold runs allowed in flight")
+    explore.add_argument("--allow-cold", action="store_true")
+    explore.add_argument("--model", default="")
+    explore.add_argument("--timeout", type=int, default=1800)
+    explore.set_defaults(func=cmd_explore)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
