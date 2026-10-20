@@ -68,7 +68,7 @@ def test_offline_sweep_writes_evidence_selection_and_library(tmp_path: Path) -> 
 
     done = sum(int(d.get("done", 0)) for d in report["domains"])
     failed = sum(int(d.get("failed", 0)) for d in report["domains"])
-    assert (done, failed) == (2, 0)
+    assert (done, failed) == (len(tasks.all_tasks()), 0)
 
     task_dir = _task_dir(runs_root, TASK_A)
     summary = json.loads((task_dir / "summary.json").read_text())
@@ -102,6 +102,24 @@ def test_second_task_sees_the_first_task_lessons(tmp_path: Path) -> None:
     entries = sorted(p.name for p in (second / "harnesses").iterdir())
     assert TASK_A in entries
     assert (second / "harnesses" / TASK_A / "EXPERIENCE.md").is_file()
+
+
+def test_the_task_pool_has_a_development_and_a_held_back_split() -> None:
+    """A transfer claim needs tasks the harness never saw while it was being edited."""
+    development = tasks.tasks_for_split("train")
+    held_back = tasks.tasks_for_split("test")
+    assert development and held_back
+    assert not set(development) & set(held_back)
+    assert set(tasks.tasks_for_split("all")) == set(development) | set(held_back)
+    served = {
+        task_id: tasks.served_fixtures(task_id)[0].read_text(encoding="utf-8")
+        for task_id in development + held_back
+    }
+    for task_id in held_back:
+        for other in development:
+            assert served[task_id] != served[other], (
+                "a held-back task must not share its fixture with a development one"
+            )
 
 
 def test_sweep_is_deterministic(tmp_path: Path) -> None:

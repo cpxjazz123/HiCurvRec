@@ -41,6 +41,25 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def load_sid_matrix(path: Path) -> np.ndarray:
+    """The SID matrix of an arm, in the form the frozen evaluation reads it.
+
+    The frozen evaluation reads ``item_sids.json``: a dict of item id -> the four
+    columns ``[token1, token2, token3, collision_token]``. A ``.npy`` export is read
+    as the matrix it already is.
+    """
+    path = Path(path)
+    if path.suffix == ".npy":
+        return np.load(path)
+    raw = path.read_bytes()
+    sids = json.loads(raw.decode("utf-8"))
+    max_id = max(int(k) for k in sids.keys())
+    matrix = np.zeros((max_id + 1, 4), dtype=np.int64)
+    for key, value in sids.items():
+        matrix[int(key)] = value
+    return matrix
+
+
 def evaluate(sid_path: Path, *, bootstrap: bool = False) -> Dict[str, Any]:
     """The L1 prefix enrichment ratio of one arm's exported SIDs."""
     sid_path = Path(sid_path)
@@ -48,7 +67,7 @@ def evaluate(sid_path: Path, *, bootstrap: bool = False) -> Dict[str, Any]:
         return {"ok": False, "error": f"no SID export at {sid_path}"}
     if not VALID_PAIRS.is_file():
         return {"ok": False, "error": f"the frozen evaluation set is missing: {VALID_PAIRS}"}
-    sid = np.load(sid_path)
+    sid = load_sid_matrix(sid_path)
     if sid.ndim != 2 or sid.shape[1] < 1:
         return {"ok": False, "error": f"the SID export has the wrong shape: {sid.shape}"}
     data = np.load(VALID_PAIRS)
