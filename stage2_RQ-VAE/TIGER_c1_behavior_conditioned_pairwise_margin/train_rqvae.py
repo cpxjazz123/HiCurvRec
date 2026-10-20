@@ -61,7 +61,8 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
-from mechanism_behavior_conditioned_pairwise_margin import mechanism_loss as _behavior_margin_loss
+from mvg_hooks import (mvg_mechanism_executor, mvg_mechanism_inputs,  # noqa: F401
+                       mvg_mechanism_term)
 from scripts.crowding_losses import MatchedParameters, crowding_loss
 from scripts.crowding_metrics import (assemble_losses, crowding_ramp_weight,
                                       crowding_record, crowding_train_fields)
@@ -514,7 +515,7 @@ _LAUNCHER = {
     "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
     "script":      os.path.abspath(__file__),
     "nproc":       4,
-    "master_port": 50202,
+    "master_port": 50207,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
     "single_visible_dev": "0",
@@ -1568,7 +1569,7 @@ def main() -> None:
                 _CROWD_CONFIG is not None,
             )
             if epoch_weight > 0.0:
-                _margin = _behavior_margin_loss(
+                _margin = mvg_mechanism_term(
                     _src_z, _tgt_z, raw_module.rq.vq_layers[0].get_code_embs(),
                     torch.ones_like(_margin_affinity), affinity=_margin_affinity,
                     m_pos=0.25, m_neg=1.0,

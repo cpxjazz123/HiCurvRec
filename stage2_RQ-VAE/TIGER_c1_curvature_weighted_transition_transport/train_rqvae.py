@@ -127,7 +127,8 @@ from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
                                   DIVERSITY_WEIGHT as _AC_DIVERSITY_WEIGHT,
                                   GUMBEL_TAU as _AC_GUMBEL_TAU, ARM_FLAGS)
 from anti_collapse_losses import compose as _ac_compose
-from mechanism_curvature_weighted_transition_transport import mechanism_loss as _cwt_mechanism_loss
+from mvg_hooks import (mvg_mechanism_executor, mvg_mechanism_inputs,  # noqa: F401
+                       mvg_mechanism_term)
 
 _AC_ALIGN = _ac.align_loss
 _AC_DIVERSITY = _ac.diversity_loss
@@ -513,7 +514,7 @@ _LAUNCHER = {
     "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
     "script":      os.path.abspath(__file__),
     "nproc":       4,
-    "master_port": 50202,
+    "master_port": 50209,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
     "single_visible_dev": "0",
@@ -1669,7 +1670,7 @@ def main() -> None:
             cwt_source = cwt_residuals[:, :cwt_n]
             cwt_target = cwt_residuals[:, cwt_n:]
             cwt_mask = torch.ones(cwt_n, device=device, dtype=cwt_source.dtype)
-            cwt_value = _cwt_mechanism_loss(
+            cwt_value = mvg_mechanism_term(
                 cwt_source, cwt_target,
                 torch.stack([layer.get_code_embs() for layer in raw_module.rq.vq_layers]),
                 cwt_mask,

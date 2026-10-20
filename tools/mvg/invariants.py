@@ -189,8 +189,24 @@ def check_gradient_targets(
             continue
         grad = tensor.grad
         if grad is None:
+            # Nothing reached the target at all: the gradient is exactly zero. A "zero"
+            # declaration is satisfied by that; anything else is not. "finite" is refused
+            # here on purpose, so an unreachable path cannot be papered over by declaring
+            # the gradient merely finite.
+            ok = expectation == "zero"
             checks.append(
-                Check(f"gradient_{name}", False, "no gradient reached the declared target")
+                Check(
+                    f"gradient_{name}",
+                    ok,
+                    "no gradient reached the declared target (it is unreachable from this loss)"
+                    if expectation == "nonzero"
+                    else (
+                        f"no gradient reached {name}: the loss does not depend on it (declared zero)"
+                        if ok
+                        else f"no gradient reached {name}; declare 'zero', not {expectation!r}"
+                    ),
+                    {"max_abs": 0.0, "finite": True, "unreachable": True},
+                )
             )
             continue
         _ = differentiable
