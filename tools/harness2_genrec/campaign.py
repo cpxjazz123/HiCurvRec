@@ -196,7 +196,14 @@ class Campaign:
                 evidence=evidence,
             )
             proposal = None
-            record: Dict[str, Any] = {"angle": angle, "round": round_index, "attempts": []}
+            record: Dict[str, Any] = {
+                "angle": angle,
+                "round": round_index,
+                # The brief the researcher was given, so the lesson -> design chain is
+                # traceable and not a matter of retelling.
+                "brief": prompt,
+                "attempts": [],
+            }
             for attempt in range(1, 3):
                 result = opencode.run_agent(
                     self.out / f"ideation_round{round_index}_{angle}_a{attempt}",
