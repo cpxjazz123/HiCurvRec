@@ -127,7 +127,8 @@ from anti_collapse_config import (ALIGN_WEIGHT as _AC_ALIGN_WEIGHT,
                                   DIVERSITY_WEIGHT as _AC_DIVERSITY_WEIGHT,
                                   GUMBEL_TAU as _AC_GUMBEL_TAU, ARM_FLAGS)
 from anti_collapse_losses import compose as _ac_compose
-from mechanism_behaviour_conditioned_residual_target import mechanism_loss as _bcrt_loss
+from mvg_hooks import (mvg_mechanism_executor, mvg_mechanism_inputs,  # noqa: F401
+                       mvg_mechanism_term)
 
 # Frozen mechanism activation for this arm.
 BCRT_WEIGHT = 0.05
@@ -517,7 +518,7 @@ _LAUNCHER = {
     "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
     "script":      os.path.abspath(__file__),
     "nproc":       4,
-    "master_port": 50202,
+    "master_port": 50208,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
     "single_visible_dev": "0",
@@ -1649,7 +1650,7 @@ def main() -> None:
                 bcrt_mask = torch.ones(pair_count, device=device, dtype=residuals.dtype)
                 bcrt_term = torch.zeros((), device=device, dtype=base_loss.dtype)
                 for level, vq_layer in enumerate(raw_module.rq.vq_layers):
-                    bcrt_term = bcrt_term + _bcrt_loss(
+                    bcrt_term = bcrt_term + mvg_mechanism_term(
                         residuals[level, :pair_count],
                         residuals[level, pair_count:2 * pair_count],
                         vq_layer.get_code_embs(), bcrt_mask, **BCRT_PARAMETERS,

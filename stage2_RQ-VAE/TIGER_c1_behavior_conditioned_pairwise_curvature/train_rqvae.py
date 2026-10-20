@@ -152,7 +152,8 @@ _GEOMETRY_ARM_CONFIGS = {
 from scripts.hyp_losses import (ARM_CONFIGS as _HYP_ARM_CONFIGS,
                                 install_nearest_assignment as _install_hyp_assignment,
                                 mechanism_loss as _hyp_mechanism_loss)
-from mechanism_behavior_conditioned_pairwise_curvature import mechanism_loss as _pairwise_curvature_loss
+from mvg_hooks import (mvg_mechanism_executor, mvg_mechanism_inputs,  # noqa: F401
+                       mvg_mechanism_term)
 
 # === 硬编码路径常量 (CLAUDE.md §1) ===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
@@ -513,7 +514,7 @@ _LAUNCHER = {
     "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
     "script":      os.path.abspath(__file__),
     "nproc":       4,
-    "master_port": 50202,
+    "master_port": 50206,
     "log":         str(LOG_DIR / "train_migrated.log"),
     "visible_dev": "0,1,2,3",
     "single_visible_dev": "0",
@@ -1549,7 +1550,7 @@ def main() -> None:
             # directed source/target pairs, using the host's unchanged L1 codebook.
             if epoch_weight > 0.0:
                 _pair_count = int(source_ids.shape[0])
-                _pairwise_value = _pairwise_curvature_loss(
+                _pairwise_value = mvg_mechanism_term(
                     residuals[0, :_pair_count],
                     residuals[0, _pair_count:].detach(),
                     raw_module.rq.vq_layers[0].get_code_embs(),
