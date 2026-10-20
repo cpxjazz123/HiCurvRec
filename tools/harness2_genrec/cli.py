@@ -112,6 +112,7 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         runs_root,
         task_ids=[t.strip() for t in args.tasks.split(",") if t.strip()] or None,
         channel=channel,
+        harness_root=Path(args.base_harness) if args.base_harness else None,
     )
 
     report = run_sweep(
@@ -254,6 +255,21 @@ def cmd_explore(args: argparse.Namespace) -> int:
     return 0 if all(row.get("state") not in ("failed",) for row in rows) else 1
 
 
+def cmd_campaign(args: argparse.Namespace) -> int:
+    """Run the autonomous research campaign."""
+    from .campaign import CampaignConfig, execute
+
+    config = CampaignConfig.load(Path(args.config))
+    state = execute(config)
+    print()
+    print(f"state      : {state.get('state', 'finished')}")
+    print(f"arms       : {len(state.get('arms', []))}")
+    print(f"qualified  : {state.get('qualified', [])}")
+    print(f"leaderboard: {Path(config.out_dir) / 'leaderboard.json'}")
+    print(f"report     : {Path(config.out_dir) / 'report.md'}")
+    return 0 if state.get("errors") == [] else 1
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -317,6 +333,10 @@ def _build_parser() -> argparse.ArgumentParser:
     explore.add_argument("--timeout", type=int, default=1800)
     explore.set_defaults(func=cmd_explore)
 
+    camp = sub.add_parser("campaign", help="run the autonomous research campaign")
+    camp.add_argument("--config", required=True, help="the campaign configuration (JSON)")
+    camp.set_defaults(func=cmd_campaign)
+
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
     sweep.add_argument("--modes", default="parallel", help="parallel | sequential, comma list")
@@ -338,6 +358,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sweep.add_argument("--model", default="", help="the model the agent uses")
     sweep.add_argument("--timeout", type=int, default=1800, help="the agent's timeout, seconds")
+    sweep.add_argument(
+        "--base-harness",
+        default="",
+        help="a directory whose surface is the base harness; the repository by default",
+    )
     sweep.set_defaults(func=cmd_sweep)
     return parser
 

@@ -76,9 +76,13 @@ class GenrecAdapter:
         runs_root: Path,
         task_ids: Sequence[str] | None = None,
         channel: ChannelSpec | None = None,
+        harness_root: Path | None = None,
     ) -> None:
         self.repo = Path(repo)
         self.runs_root = Path(runs_root)
+        # Where the base harness comes from. The repository by default; a scratch copy when
+        # a candidate harness is being compared against the current one.
+        self.harness_root = Path(harness_root) if harness_root else Path(repo)
         self.substrate = LocalSubstrate()
         self._task_ids = list(task_ids) if task_ids else None
         self._base_tree = repo_surface_tree(self.repo)
@@ -153,7 +157,12 @@ class GenrecAdapter:
 
     def base_harness(self) -> Path:
         dest = self.runs_root / "base_harness"
-        harness_tree.write_tree(GENREC_SURFACE, self._base_tree, dest, stubs=False)
+        tree = (
+            self._base_tree
+            if self.harness_root == self.repo
+            else repo_surface_tree(self.harness_root)
+        )
+        harness_tree.write_tree(GENREC_SURFACE, tree, dest, stubs=False)
         return dest
 
     # --- the gate a candidate tree must pass ---------------------------
