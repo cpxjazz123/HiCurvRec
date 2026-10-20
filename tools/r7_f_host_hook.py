@@ -300,3 +300,17 @@ def save_snapshot(model, optimizer, scheduler, step: int, directory: str,
     }
     torch.save(payload, target / "snapshot.pt")
     return str(target / "snapshot.pt")
+
+
+# --------------------------------------------------------------------------------------
+# R8 ten-mechanism dispatch (issues #91..#100)
+# --------------------------------------------------------------------------------------
+def r8_lane() -> str:
+    return os.environ.get("R8_LANE", "")
+
+
+def r8_loss(raw_module, residuals, source_ids, target_ids, successor_indicator, *, step: int):
+    """Run the configured R8 lane's auxiliary term through tools/r8_mechanisms.py."""
+    import r8_mechanisms
+    return r8_mechanisms.compute(raw_module, residuals, source_ids, target_ids,
+                                 successor_indicator, step=step)

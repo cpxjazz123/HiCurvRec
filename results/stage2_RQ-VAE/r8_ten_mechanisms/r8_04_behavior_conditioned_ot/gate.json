@@ -1,0 +1,19 @@
+{
+  "artifact": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+  "artifact_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+  "item_sids": "results/stage2_RQ-VAE/r8_04_behavior_conditioned_ot/item_sids.json",
+  "item_map_sha256": "3f1c4d1d83a6c14e78963a9afca4e28d03313a1d7db69d5dcf608e4bd7d44f92",
+  "positives": 52855,
+  "negatives_per_positive": 10,
+  "pos_hits": 9316,
+  "neg_hits": 10544,
+  "pos_share": 0.17625579415381704,
+  "neg_share": 0.019948916847980322,
+  "hard_l1_er": 8.83535660091047,
+  "frozen_baseline": 16.38953942232631,
+  "comparison": "strict >, no rounding, equality fails",
+  "passed": false,
+  "historical_r4_08_reference": 16.402627511591962,
+  "stronger_than_historical_r4_08": false,
+  "note": "The frozen baseline is the ONLY Stage3 gate. Exceeding the historical R4-08 value is a separate research comparison, not the gate."
+}
