@@ -316,7 +316,13 @@ def critique(proposal: Dict[str, Any]) -> Critique:
                 )
                 break
 
-    differentiation = proposal.get("differentiation") or {}
+    differentiation = proposal.get("differentiation")
+    if not isinstance(differentiation, dict):
+        problems.append(
+            "the proposal's differentiation is not an object: it has to name the lanes it "
+            "differs from, why, and how it avoids the occupancy price"
+        )
+        differentiation = {}
     vs_r8 = differentiation.get("vs_r8") or []
     if not isinstance(vs_r8, list) or not vs_r8:
         problems.append("the proposal does not say which historical lanes it differs from")
@@ -336,7 +342,7 @@ def critique(proposal: Dict[str, Any]) -> Critique:
     if not str(differentiation.get("vs_reference_arm", "")).strip():
         problems.append("the proposal does not say how it differs from the reference arm")
 
-    invariants = proposal.get("invariants") or []
+    invariants = proposal.get("invariants")
     if not isinstance(invariants, list) or not invariants:
         problems.append("the proposal declares no machine-checkable invariant")
     else:
@@ -345,7 +351,7 @@ def critique(proposal: Dict[str, Any]) -> Critique:
         if unknown:
             problems.append(f"the proposal declares transformations a checker cannot run: {sorted(unknown)}")
 
-    targets = proposal.get("gradient_targets") or {}
+    targets = proposal.get("gradient_targets")
     if not isinstance(targets, dict) or not targets:
         problems.append("the proposal declares no gradient target")
     else:
@@ -353,7 +359,7 @@ def critique(proposal: Dict[str, Any]) -> Critique:
             if expectation not in ("nonzero", "zero", "finite"):
                 problems.append(f"gradient target {name!r} has an unknown expectation {expectation!r}")
 
-    inputs = proposal.get("inputs") or {}
+    inputs = proposal.get("inputs")
     if not isinstance(inputs, dict) or not {"source", "target", "codebook"} <= set(inputs):
         problems.append("the proposal does not say how a checker builds its synthetic case")
 
