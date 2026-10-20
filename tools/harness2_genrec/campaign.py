@@ -625,14 +625,36 @@ class Campaign:
                     seeded = {"source": str(source), "target": str(probe_checkpoint)}
                     break
         result = server.tool_stage2_start(source_dir=str(tree), admission=str(admission))
+        # The launch path returns as soon as a detached worker owns the rest of the
+        # sequence, so "started" is False on a DISPATCHED run: the truth is the status.
+        status = str(result.get("status", ""))
+        dispatched = status in ("smoke_pending", "starting", "running") or bool(
+            result.get("worker_pid")
+        )
         record = {
             "mechanism_id": arm["mechanism_id"],
-            "started": bool(result.get("started")),
+            "started": dispatched,
             "refused": result.get("refused"),
+            "status_at_dispatch": status,
             "probe_checkpoint": seeded,
             "launch": result,
         }
-        if not result.get("started"):
+        if not dispatched:
+            refusal = str(result.get("refused") or "")
+            state = result.get("state") or {}
+            if "already live" in refusal and state.get("status") in (
+                "running",
+                "starting",
+                "smoke_pending",
+            ):
+                # The run for this arm is already going: adopt it rather than starting a
+                # second one, and wait for it.
+                record["adopted"] = state
+                final = self._await_run(server, tree)
+                record["final_status"] = final.get("status")
+                record["finished"] = bool(record["final_status"] in ("finished", "idle"))
+                self._evaluate_arm(arm, server, record)
+                return record
             return record
         deadline = time.time() + self.config.budget.max_cold_seconds
         final: Dict[str, Any] = {}
@@ -643,33 +665,48 @@ class Campaign:
             time.sleep(60)
         record["final_status"] = final.get("status")
         record["finished"] = bool(record["final_status"] in ("finished", "idle"))
+        self._evaluate_arm(arm, server, record)
+        return record
 
-        # the frozen evaluation, once
+    def _await_run(self, server, tree: Path) -> Dict[str, Any]:
+        deadline = time.time() + self.config.budget.max_cold_seconds
+        final: Dict[str, Any] = {}
+        while time.time() < deadline:
+            final = server.tool_stage2_status(source_dir=str(tree))
+            if str(final.get("status", "")) in ("finished", "idle", "refused", "worker_gone"):
+                break
+            time.sleep(60)
+        return final
+
+    def _evaluate_arm(self, arm: Dict[str, Any], server, record: Dict[str, Any]) -> None:
+        """The frozen evaluation, once per admitted arm."""
+        tree = Path(arm["tree"])
         result_dir = Path(str(server.tree_result_dir(tree)))
         candidates = sorted(result_dir.rglob("item_sids.json"))
-        if candidates:
-            env = dict(os.environ)
-            env["PYTHONPATH"] = str(REPO_ROOT)
-            completed = subprocess.run(
-                [
-                    PROJECT_PYTHON,
-                    str(REPO_ROOT / "tools" / "mvg" / "er_eval.py"),
-                    "--sid",
-                    str(candidates[-1]),
-                    "--out",
-                    str(self.arms_dir / arm["mechanism_id"] / "er_eval.json"),
-                ],
-                cwd=str(REPO_ROOT),
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=3600,
-            )
-            try:
-                record["evaluation"] = json.loads(completed.stdout or "{}")
-            except json.JSONDecodeError:
-                record["evaluation"] = {"ok": False, "error": "the evaluation produced no report"}
-        return record
+        if not candidates:
+            record["evaluation"] = {"ok": False, "error": f"no exported SIDs under {result_dir}"}
+            return
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(REPO_ROOT)
+        completed = subprocess.run(
+            [
+                PROJECT_PYTHON,
+                str(REPO_ROOT / "tools" / "mvg" / "er_eval.py"),
+                "--sid",
+                str(candidates[-1]),
+                "--out",
+                str(self.arms_dir / arm["mechanism_id"] / "er_eval.json"),
+            ],
+            cwd=str(REPO_ROOT),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=3600,
+        )
+        try:
+            record["evaluation"] = json.loads(completed.stdout or "{}")
+        except json.JSONDecodeError:
+            record["evaluation"] = {"ok": False, "error": "the evaluation produced no report"}
 
     # -- 7. the report -----------------------------------------------------
     def report(self) -> Dict[str, Any]:
