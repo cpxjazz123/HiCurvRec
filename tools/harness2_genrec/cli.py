@@ -270,6 +270,88 @@ def cmd_campaign(args: argparse.Namespace) -> int:
     return 0 if state.get("errors") == [] else 1
 
 
+def cmd_learn(args: argparse.Namespace) -> int:
+    """The research learning loop: repair fidelity, test hypotheses, compare policies."""
+    from . import learning
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    campaign = Path(args.campaign)
+    report: Dict[str, Any] = {"out": str(out), "repairs": [], "ledger": {}, "policy": {}}
+
+    # A -- the fidelity repairs, prototype first
+    for arm in (args.arms.split(",") if args.arms else learning.FAILED_ARMS):
+        record = learning.repair_arm(
+            campaign / "arms" / arm,
+            out / "repairs" / arm,
+            model=args.model,
+            timeout=args.timeout,
+        )
+        report["repairs"].append(
+            {
+                "mechanism_id": record.get("mechanism_id"),
+                "status": record.get("status"),
+                "note": record.get("note"),
+                "diagnosis": {
+                    name: entry.get("verdict")
+                    for name, entry in (record.get("diagnosis") or {}).items()
+                    if isinstance(entry, dict)
+                },
+            }
+        )
+        print(f"  repair {arm:<52} {record.get('status')}")
+        (out / "learning_state.json").write_text(
+            json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8"
+        )
+
+    # B -- the experiments and the ledger
+    experiments = out / "experiments"
+    experiments.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(REPO_ROOT)
+    subprocess.run(
+        [
+            learning.PROJECT_PYTHON,
+            str(REPO_ROOT / "tools" / "mvg" / "experiments.py"),
+            "--experiment",
+            "all",
+            "--out",
+            str(experiments),
+        ],
+        cwd=str(REPO_ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=3600,
+    )
+    ledger = learning.hypothesis_ledger(experiments)
+    report["ledger"] = ledger
+    print(f"  ledger: {ledger['summary']}")
+
+    # C -- the policy comparison
+    learned = learning.derive_learned_policy(
+        out / "policy", ledger, model=args.model, timeout=args.timeout
+    )
+    comparison = learning.compare_policies(
+        out / "policy", model=args.model, learned=Path(learned["workspace"])
+    )
+    report["policy"] = {
+        "learned_files": learned.get("files"),
+        "old_correct": comparison.get("old_correct"),
+        "learned_correct": comparison.get("learned_correct"),
+        "adopted": comparison.get("adopted"),
+        "reason": comparison.get("reason"),
+    }
+    print(
+        f"  policy: old {comparison.get('old_correct')} vs learned "
+        f"{comparison.get('learned_correct')} -> adopted={comparison.get('adopted')}"
+    )
+    (out / "learning_report.json").write_text(
+        json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8"
+    )
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -336,6 +418,14 @@ def _build_parser() -> argparse.ArgumentParser:
     camp = sub.add_parser("campaign", help="run the autonomous research campaign")
     camp.add_argument("--config", required=True, help="the campaign configuration (JSON)")
     camp.set_defaults(func=cmd_campaign)
+
+    learn = sub.add_parser("learn", help="run the research learning loop")
+    learn.add_argument("--campaign", required=True, help="the campaign's evidence directory")
+    learn.add_argument("--out", required=True, help="the learning run's directory")
+    learn.add_argument("--arms", default="", help="comma list of arms to repair")
+    learn.add_argument("--model", default="")
+    learn.add_argument("--timeout", type=int, default=1800)
+    learn.set_defaults(func=cmd_learn)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
