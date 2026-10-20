@@ -502,13 +502,15 @@ class Campaign:
             }
         if not probe.get("ok"):
             occupancy = (probe.get("occupancy") or {})
-            if occupancy.get("collapse_suspected"):
+            if probe.get("collapse") or occupancy.get("collapse_suspected"):
                 return {
                     "category": "(b) correct but harmful",
                     "reason": (
                         "the implementation is faithful and the mechanism still destroys the "
-                        f"code: {occupancy.get('unique_l1')} level-0 entries against the host's "
-                        f"{occupancy.get('host_unique_l1')}"
+                        f"code: {probe.get('unique_l1', occupancy.get('unique_l1'))} level-0 "
+                        f"entries against the host's "
+                        f"{probe.get('host_unique_l1', occupancy.get('host_unique_l1'))}"
+                        f" ({probe.get('l1_ratio')})"
                     ),
                     "evidence": "the probe's occupancy report",
                 }
