@@ -295,6 +295,11 @@ class Campaign:
         if tree.exists():
             shutil.rmtree(tree, ignore_errors=True)
         _copy_tree(self.config.base_tree, tree)
+        # The arms inherited from the r8 line write to results/stage2_RQ-VAE/<ARM NAME>,
+        # which is NOT tree-scoped: an arm copied from one of them would write into that
+        # arm's results. Every campaign arm is patched to write inside its own tree, so no
+        # arm can overwrite another arm's output or a historical directory.
+        _scope_outputs_to_tree(tree)
 
         record: Dict[str, Any] = {
             "mechanism_id": mechanism_id,
@@ -1036,6 +1041,29 @@ def _freeze_proposal(proposal: Dict[str, Any]) -> Dict[str, Any]:
     )
     frozen["provenance"] = provenance
     return frozen
+
+
+def _scope_outputs_to_tree(tree: Path) -> None:
+    """Point an arm's outputs at its own tree.
+
+    The r8-line trainers derive ``_OUT`` from the arm's name alone, so two arms with the
+    same name share a result directory. The campaign's arms must not: each writes under
+    ``results/stage2_RQ-VAE/<TREE_NAME>/<ARM>``, which is what the tree's own comment has
+    always claimed and what the launch path resolves.
+    """
+    trainer = Path(tree) / "train_rqvae.py"
+    if not trainer.is_file():
+        return
+    source = trainer.read_text(encoding="utf-8")
+    if "_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM" in source:
+        return
+    patched = source.replace(
+        "_OUT = OUT_ROOT / EXPERIMENT_ARM",
+        "_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM",
+        1,
+    )
+    if patched != source:
+        trainer.write_text(patched, encoding="utf-8")
 
 
 def _copy_tree(source: Path, destination: Path) -> None:
