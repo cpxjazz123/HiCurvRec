@@ -208,16 +208,17 @@ def cmd_lifecycle(args: argparse.Namespace) -> int:
         max_repair_attempts=args.max_repair_attempts,
         probe_epochs=args.probe_epochs,
         arm_name=args.arm,
+        probe_checkpoint=args.probe_checkpoint,
     )
     run = MechanismRun(config, proposal)
-    stages = [run.freeze_proposal()]
-    stages.append(run.implement())
+    run.freeze_proposal()
+    stages = [run.implement()]
     verify = run.verify()
     stages.append(verify)
     if not verify.ok:
         stages.append(run.repair())
     stages.append(run.probe())
-    if all(stage.ok for stage in stages if stage.name != "freeze_proposal"):
+    if all(stage.ok for stage in stages):
         stages.append(run.admit())
         if not args.skip_stage2:
             stages.append(run.stage2())
@@ -272,6 +273,12 @@ def _build_parser() -> argparse.ArgumentParser:
     life.add_argument("--timeout", type=int, default=1800)
     life.add_argument("--max-repair-attempts", type=int, default=3)
     life.add_argument("--probe-epochs", type=int, default=2)
+    life.add_argument(
+        "--probe-checkpoint",
+        default="",
+        help="the parent checkpoint the launch's smoke probe uses; it is archived before the "
+        "cold run and never becomes a warm start",
+    )
     life.add_argument("--skip-stage2", action="store_true", help="stop before the cold run")
     life.set_defaults(func=cmd_lifecycle)
 

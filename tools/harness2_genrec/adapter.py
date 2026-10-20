@@ -137,7 +137,9 @@ class GenrecAdapter:
 
     # --- the benchmark seam --------------------------------------------
     def tasks(self, split: str = "all") -> list[str]:
-        return list(self._task_ids)
+        if self._task_ids:
+            return list(self._task_ids)
+        return tasks.tasks_for_split(split)
 
     def domain_of(self, task_id: str) -> str:
         return tasks.task(task_id).domain
