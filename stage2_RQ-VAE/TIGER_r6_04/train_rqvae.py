@@ -81,7 +81,9 @@ R7_F_STEP_SCHEDULE = os.environ.get("R7_F_STEP_SCHEDULE", "0") == "1"
 R7_F_MAX_STEPS = int(os.environ.get("R7_F_MAX_STEPS", "0"))
 R7_F_BASELINE_STEPS = int(os.environ.get("R7_F_BASELINE_STEPS", "32"))
 R7_F_ACTIVE_WEIGHT = float(os.environ.get("R7_F_ACTIVE_WEIGHT", "0.20"))
-_R7F_SCHEDULE_STEP = [0]
+# Module-level so the weight hook and the loop body share ONE counter.
+_R7F_GLOBAL_STEP = [0]
+_R7F_DONE = [False]
 if R7_F_STEP_SCHEDULE:
     def _r7f_step_weight(epoch, current=None):
         """The 32 + 128 OPTIMIZER-step schedule the issue specifies.
@@ -92,8 +94,7 @@ if R7_F_STEP_SCHEDULE:
         """
         if current is None:
             return current
-        _R7F_SCHEDULE_STEP[0] += 1
-        step = _R7F_SCHEDULE_STEP[0]
+        step = _R7F_GLOBAL_STEP[0] + 1
         if step <= R7_F_BASELINE_STEPS:
             return 0.0
         if R7_F_MAX_STEPS and step > R7_F_MAX_STEPS:
@@ -1146,6 +1147,11 @@ def main() -> None:
         return max(0.0, float(total_steps - step) / float(total_steps - warmup_steps))
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+    if R7_F_ENABLED and _R7F is not None and R7_F_SNAPSHOT_DIR:
+        # POST-KMeans initialisation: the codebook is real, no optimizer step has run.
+        # Labelled pre_initialization so it is never used as the occupancy baseline.
+        _R7F.save_snapshot(raw_module, optimizer, scheduler, 0, R7_F_SNAPSHOT_DIR,
+                           label="pre_initialization")
 
     if _CROWD_CONFIG is None:
         crowding_metadata = None
@@ -1180,8 +1186,10 @@ def main() -> None:
     if _CROWD_CONFIG and _CROWD_CONFIG[0] in {"couser", "simweight", "density", "random"}:
         crowd_graph = np.load("/home/wlia0047/ar57/wenyu/GeneRec/results/crowding/graph_s42.npz")
 
+    _R7F_GLOBAL_STEP[0] = 0
+    _R7F_DONE[0] = False
     for epoch in range(1, EPOCHS + 1):
-        if R7_F_MAX_STEPS and _R7F_SCHEDULE_STEP[0] >= R7_F_MAX_STEPS:
+        if _R7F_DONE[0]:
             break
         if train_sampler is not None:
             train_sampler.set_epoch(epoch - 1)
@@ -1219,9 +1227,13 @@ def main() -> None:
             raw_module.rq.vq_layers[0]._hyp_assignment_active = epoch_hyp_alpha > 0.0
         _epoch_t0 = time.time()
         hyperbolic_losses = []
-        _r7f_step = 0
         for (batch,) in loader:
-            _r7f_step += 1
+            if R7_F_MAX_STEPS and _R7F_GLOBAL_STEP[0] >= R7_F_MAX_STEPS:
+                # EXACTLY the budget: stop before taking an extra optimizer step.
+                _R7F_DONE[0] = True
+                break
+            _R7F_GLOBAL_STEP[0] += 1
+            _r7f_step = _R7F_GLOBAL_STEP[0]
             if _PROBE_STEP_WEIGHT_HOOK is not None:
                 # Probe-only: re-evaluated per mini-batch. With the hook at its production value
                 # of None this branch never runs and epoch_weight is untouched.
