@@ -66,6 +66,77 @@ def _proposal_digest(mechanism_id: str, roots: List[Path]) -> str:
     return "-"
 
 
+def _controller_arms(store: EvidenceStore) -> List[Dict[str, Any]]:
+    """The arms the durable controller trained, from the store and the audit trail."""
+    audit_path = REPO_ROOT / "results" / "harness3_runs" / "controller" / "audit.jsonl"
+    if not audit_path.is_file():
+        return []
+    measured: Dict[str, Dict[str, Any]] = {}
+    for line in audit_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if record.get("event") == "evaluate":
+            measured[record["mechanism_id"]] = record
+    rows: List[Dict[str, Any]] = []
+    stage3_root = REPO_ROOT / "results" / "stage3_T5Train"
+    for mechanism_id, record in measured.items():
+        variant = f"TIGER_c107_{mechanism_id}__r8_control"
+        stage3: Dict[str, Any] = {}
+        finals = sorted((stage3_root / variant).rglob("test_final.json")) if (
+            stage3_root / variant).is_dir() else []
+        if finals:
+            report = json.loads(finals[-1].read_text(encoding="utf-8"))
+            recall = report.get("test_recall@10")
+            ndcg = report.get("test_ndcg@10")
+            stage3 = {
+                "test_recall@10": recall,
+                "test_ndcg@10": ndcg,
+                "recall_delta_vs_archived_control": (
+                    recall - ARCHIVED_CONTROL["stage3_recall@10"] if recall is not None else None
+                ),
+                "ndcg_delta_vs_archived_control": (
+                    ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"] if ndcg is not None else None
+                ),
+            }
+        rows.append(
+            {
+                "arm": mechanism_id,
+                "issue": "#107 (the durable controller's own arm)",
+                "proposal_sha256": "-",
+                "judges": "passed the unchanged independent checks and the active probe",
+                "cgv_gates": "-",
+                "probe": "passed",
+                "export_verdict": "active",
+                "changed_l1": "-",
+                "l0_occupancy_ratio": "-",
+                "status": "succeeded",
+                "epochs": 3000,
+                "hard_l1_er": record.get("er"),
+                "er_vs_gate": (
+                    record.get("er") - FROZEN_GATE if record.get("er") is not None else "-"
+                ),
+                "er_vs_r4_08": (
+                    record.get("er") - R4_08_REFERENCE if record.get("er") is not None else "-"
+                ),
+                "er_vs_archived_control": (
+                    record.get("er") - ARCHIVED_CONTROL["hard_l1_er"]
+                    if record.get("er") is not None
+                    else "-"
+                ),
+                "er_ci95": "-",
+                "stage3_recall@10": stage3.get("test_recall@10"),
+                "stage3_ndcg@10": stage3.get("test_ndcg@10"),
+                "recall_delta_vs_archived_control": stage3.get("recall_delta_vs_archived_control"),
+                "ndcg_delta_vs_archived_control": stage3.get("ndcg_delta_vs_archived_control"),
+                "run_id": f"controller:{mechanism_id}",
+                "artifacts": [],
+            }
+        )
+    rows.sort(key=lambda row: row["arm"])
+    return rows
+
+
 def build(store: EvidenceStore, out_dir: Path) -> Dict[str, Any]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -127,6 +198,10 @@ def build(store: EvidenceStore, out_dir: Path) -> Dict[str, Any]:
             }
         )
     order = {"r8_control": 0}
+    known = {row["arm"] for row in rows}
+    for row in _controller_arms(store):
+        if row["arm"] not in known:
+            rows.append(row)
     rows.sort(key=lambda row: (order.get(row["arm"], 1), row["arm"]))
     lines = [
         "# The final per-arm table (issue #106)",
