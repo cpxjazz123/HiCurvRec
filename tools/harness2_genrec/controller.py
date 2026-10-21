@@ -795,6 +795,49 @@ class Controller:
         )
         self.save()
 
+    def _record_stage3_in_store(self, item: Dict[str, Any]) -> None:
+        """The Stage-3 measurement joins the arm's record in the store."""
+        from .evidence import RunPlan
+
+        mechanism_id = item["mechanism_id"]
+        stage3 = item.get("stage3") or {}
+        recall = stage3.get("test_recall@10")
+        ndcg = stage3.get("test_ndcg@10")
+        if recall is None:
+            return
+        existing = [
+            manifest
+            for manifest in self.store.runs()
+            if manifest.get("mechanism_id") == mechanism_id
+        ]
+        if existing:
+            # the manifest is immutable: a second manifest records the downstream
+            # measurement for the same arm
+            pass
+        plan = RunPlan(
+            kind="stage3",
+            mechanism_id=mechanism_id,
+            stage="downstream",
+            seed=42,
+            output_dir=REPO_ROOT / "results" / "stage3_T5Train" / f"TIGER_c107_{mechanism_id}",
+        )
+        try:
+            run = self.store.admit(plan)
+        except Exception:  # noqa: BLE001
+            return
+        self.store.close(
+            run,
+            status="succeeded",
+            metrics={
+                "stage3": {
+                    "test_recall@10": recall,
+                    "test_ndcg@10": ndcg,
+                    "recall_delta_vs_archived_control": recall - ARCHIVED_CONTROL["stage3_recall@10"],
+                    "ndcg_delta_vs_archived_control": ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"],
+                }
+            },
+        )
+
     def phase_learn(self) -> None:
         """Phase 6: the learning loop -- the ledger and the next portfolio."""
         import subprocess
@@ -833,6 +876,7 @@ class Controller:
                 ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"] if ndcg is not None else None
             )
             item["status"] = "evaluated"
+            self._record_stage3_in_store(item)
         self.state["round_summary"] = summary
         improved = [
             item
