@@ -1,0 +1,138 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The transport residual differentiates into both assigned codewords, with the source codeword entering through the source residual and the target codeword through the target residual. The additional hinge-like softplus safeguard differentiates the endpoint codeword distance only when it is below rho and pushes the pair apart. The transport term alone has no guarantee against convergence, so the explicit separation safeguard is essential; its weight and threshold must be checked against actual pair-distance measurements.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike inert residual/geometry mechanisms whose useful gradient reached only the overwritten encoder path, this objective has a direct codebook route through both residual anchors and the separation safeguard. Unlike the collapsed assignment cross-entropy, it does not ask one codeword to serve both endpoints; it models ordered residual transport and explicitly penalizes endpoint codewords that approach closer than rho. The safeguard is necessary because the transport component by itself could still cause convergence."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "L = lambda * mean_{i: m_i=1} ||(target_i - c_{b_i}) - R(source_i - c_{a_i})||^2 + eta * softplus((rho - ||c_{a_i} - c_{b_i}||) / tau), where a_i = argmin_j ||source_i - c_j||^2, b_i = argmin_j ||target_i - c_j||^2, and R is the fixed identity map.",
+  "expected_failure_modes": [
+    "Identity residual transport may be an incorrect model of behavior-conditioned dynamics, and its codebook gradients may still indirectly bring endpoint codewords together while fitting the residual relation. The separation safeguard only prevents that locally for pairs below rho and may trade off transport fit against codebook geometry. The small transport weight reduces but cannot remove the risk of harming downstream neighborhoods."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The checker must confirm that swapping source and target changes the loss and that all declared gradients are finite and nonzero. In the cold run, a fall in median transition-pair codeword separation, widespread pair distances below rho, or no improvement in frozen Stage-3 recall@10 and NDCG@10 versus control falsifies the mechanism or its anti-collapse safeguard.",
+    "Unlike inert residual/geometry mechanisms whose useful gradient reached only the overwritten encoder path, this objective has a direct codebook route through both residual anchors and the separation safeguard. Unlike the collapsed assignment cross-entropy, it does not ask one codeword to serve both endpoints; it models ordered residual transport and explicitly penalizes endpoint codewords that approach closer than rho. The safeguard is necessary because the transport component by itself could still cause convergence."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_behavior_residual_transport",
+  "parameters": {
+    "eta": 0.001,
+    "lambda": 0.0001,
+    "rho": 0.2,
+    "tau": 0.05
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T12:17:16.114517+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "c3cfb85755e70ce436c107054fb7178c8754da31f38194af3b6c00b087cfafdb"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "L": "Auxiliary loss.",
+    "R": "Fixed identity linear map on the representation space.",
+    "a_i": "Hard nearest-code index for source_i, treated as a fixed index during differentiation.",
+    "b_i": "Hard nearest-code index for target_i, treated as a fixed index during differentiation.",
+    "c_j": "Codebook vector j.",
+    "eta": "Weight of the codeword separation safeguard.",
+    "lambda": "Weight composing the residual-transport loss with the host objective.",
+    "m_i": "Validity mask for pair i.",
+    "rho": "Minimum desired separation between the endpoint-assigned codewords.",
+    "source_i": "Source representation for pair i.",
+    "target_i": "Target representation for pair i.",
+    "tau": "Positive softplus temperature for the separation safeguard."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed behavior-conditioned residual transport to separated code anchors",
+  "version": "1.0.0"
+}
