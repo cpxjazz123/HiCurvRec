@@ -220,6 +220,9 @@ class Controller:
             return True, ""
         if kind == "stage2":
             running = len([job for job in self.jobs_in("stage2") if job.status == "running"])
+            running += len(
+                [item for item in self.state.get("portfolio") or () if item.get("status") == "training"]
+            )
             if running >= self.config.max_concurrent_training:
                 return False, f"{running} training jobs are already running"
             if self.visible_gpus() < 4:
@@ -231,8 +234,47 @@ class Controller:
             running = len([job for job in self.jobs_in("stage3") if job.status == "running"])
             if running >= self.config.max_concurrent_training:
                 return False, f"{running} Stage-3 jobs are already running"
+            training = len(
+                [item for item in self.state.get("portfolio") or () if item.get("status") == "training"]
+            )
+            if training:
+                return False, (
+                    f"{training} cold run(s) are using the GPUs; a Stage-3 evaluation "
+                    "alongside them exhausts the device memory"
+                )
+            live = self._live_stage3_processes()
+            if live:
+                return False, f"{live} Stage-3 process tree(s) are live on the cluster"
             return True, ""
         return True, ""
+
+    def _live_stage3_processes(self) -> int:
+        """How many Stage-3 process trees are alive on the cluster, whoever started them."""
+        try:
+            completed = subprocess.run(
+                ["pgrep", "-f", "run_stage3_param"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except Exception:  # noqa: BLE001
+            return 0
+        pids = [line for line in completed.stdout.split() if line.strip()]
+        if not pids:
+            return 0
+        # count the launchers only: the ranks and the workers are their children
+        launchers = 0
+        for pid in pids:
+            try:
+                info = subprocess.run(
+                    ["ps", "-o", "cmd=", "-p", pid], capture_output=True, text=True, timeout=30
+                ).stdout
+            except Exception:  # noqa: BLE001
+                continue
+            if "torchrun" in info or "/python" in info:
+                if "run_stage3_param" in info and "torchrun" not in info:
+                    launchers += 1
+        return launchers or len(pids)
 
     def allocate_port(self) -> int:
         used = {
@@ -563,7 +605,7 @@ class Controller:
                     port=port,
                     tree_prefix=f"TIGER_c107",
                 )
-                item["status"] = "trained" if record.get("status") == "cold_running" else "train_failed"
+                item["status"] = "training" if record.get("status") == "cold_running" else "train_failed"
                 item["train"] = {
                     "result_dir": record.get("result_dir"),
                     "launch": (record.get("stages") or {}).get("cold_launch"),
@@ -579,7 +621,7 @@ class Controller:
         # the cold run is asynchronous: the phase waits until the arm has exported
         waiting = []
         for item in admitted:
-            if item.get("status") != "trained":
+            if item.get("status") not in ("training", "trained"):
                 continue
             result_dir = (item.get("train") or {}).get("result_dir")
             exported = Path(result_dir) / "sids_for_hgrec.npy" if result_dir else None
