@@ -1,0 +1,21 @@
+{
+  "recorded_utc": "2026-10-21T11:35:53.566541+00:00",
+  "what_was_stopped": {
+    "seed43_geometry_stage3": {
+      "variant": "TIGER_seed43_geometry__r8_control",
+      "reached_epoch": 116,
+      "of": 150,
+      "final_metrics": null,
+      "reason": "the run was stopped on the user's instruction; the evaluation phase never ran, so there is no test_final.json",
+      "artifacts": "results/stage3_T5Train/TIGER_seed43_geometry__r8_control/logs/"
+    },
+    "seed43_control_stage3": {
+      "variant": "TIGER_seed43_control__r8_control",
+      "reached_epoch": 0,
+      "final_metrics": null,
+      "reason": "never launched: the frozen Stage-3 DDP port admits one run at a time, and the arm's run was stopped before the paired control could start"
+    }
+  },
+  "what_remains_unexecuted": "the downstream half of the second-seed repeat. The Hard-L1 ER half of that repeat is complete and measured (seed 42: control 16.334505666275888, arm 16.616, delta +0.2815; seed 43: control 16.036655211912944, arm 16.73965936739659, delta +0.7030). The Stage-3 half of the seed-43 pair is not measured, so the downstream claim of the shortlisted arm rests on the seed-42 pair alone (arm 0.06338898657706436 against the matched control's 0.06406796775709883).",
+  "consequence_for_the_claims": "no claim changes: the ER gain replicates on two seeds, and the downstream result is a negative one either way. The issue's own rule is that an incomplete budget is reported as such, which is what this record does."
+}
