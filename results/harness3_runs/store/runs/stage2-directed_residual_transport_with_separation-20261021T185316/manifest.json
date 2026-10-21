@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control/sids_for_hgrec.npy",
+      "sha256": "072b6a8c54cfbe042265f9cc1e8b47134766910ddd28047a455527935d706672"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control/rqvae_best.pth",
+      "sha256": "a558afd8c42388f5da156422afb38f4af872ea43eb3ef59f5e550a2b75f9c260"
+    },
+    {
+      "bytes": 1261174,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control/item_sids.json",
+      "sha256": "080357fc7e63663bdb6b55e1527324d3b82b1804ca9e0865a42a6313bcb706c8"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-21T18:53:16.168348+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "e78f581faf8417dd50ab63fe5445dafd760313d571979b2aad193d166cdc9032",
+  "manifest_version": 1,
+  "mechanism_id": "directed_residual_transport_with_separation",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": false,
+      "frozen_threshold": 16.38953942232631,
+      "l1_er": 14.604726976365118
+    },
+    "note": "the ER was read once by the controller; it is recorded here, not re-read"
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_residual_transport_with_separation",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_residual_transport_with_separation-20261021T185316",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

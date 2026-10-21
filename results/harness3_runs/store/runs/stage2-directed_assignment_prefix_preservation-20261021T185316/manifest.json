@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control/sids_for_hgrec.npy",
+      "sha256": "9461caa486b514fd52794571eccbdb8c76c7177ca575e4bbea383fd84afd6745"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control/rqvae_best.pth",
+      "sha256": "4832e67c635ac8d614cf652ff74e818670bfd7f71fce5012a3009196192918d0"
+    },
+    {
+      "bytes": 1259395,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control/item_sids.json",
+      "sha256": "3a52065d8f59af7ea4295caea3cb0e71aa1404df1d42689ee65826255baf1427"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-21T18:53:16.269890+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "42bd8fde83ec278fdac328ef3c8d9c13b27e5e653d67b8b0649b2c103177ee3b",
+  "manifest_version": 1,
+  "mechanism_id": "directed_assignment_prefix_preservation",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": true,
+      "frozen_threshold": 16.38953942232631,
+      "l1_er": 17.298273785628265
+    },
+    "note": "the ER was read once by the controller; it is recorded here, not re-read"
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_assignment_prefix_preservation",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_assignment_prefix_preservation-20261021T185316",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}
