@@ -1,0 +1,144 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients flow through both soft assignment distributions into the codebook, moving Voronoi geometry to preserve informative ordered transitions and balanced source usage. The joint-information term rewards predictable but non-independent source and target codes; it does not contain a same-code attraction or a pairwise codeword-distance minimization, so it has no direct force pulling the two codewords together. Soft assignments avoid nondifferentiable hard-index gradients.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only terms, this objective differentiates through soft distances to the codebook. Unlike directed code-assignment cross-entropy that collapsed the codebook, it optimizes ordered assignment information rather than asking both endpoints to share a code; it uses soft assignments and an explicit marginal usage penalty, not pairwise codeword convergence."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row b, define soft source and target assignments a_bj = softmax_j(-||source_b-codebook_j||^2/tau) and r_bj = softmax_j(-||target_b-codebook_j||^2/tau). Let p_j = mean_b(mask_b * a_bj), p_jk = mean_b(mask_b * a_bj * r_bk), and define L = -lambda * sum_jk p_jk log((p_jk + epsilon)/(p_j p_k + epsilon)) + mu * sum_j (p_j - 1/C)^2. The source-to-target joint is ordered, so exchanging source and target changes the objective in general.",
+  "expected_failure_modes": [
+    "The objective can increase mutual information by encoding batch-specific or unstable transition patterns rather than useful held-out sequence structure. Its soft joint estimates may also be noisy at the available batch size, and the balance penalty on source marginals does not guarantee that the full three-level prefix tree or train-to-test frequency drift is preserved."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if swapping source and target does not change the loss on a nondegenerate checker batch, if any declared gradient is zero or non-finite, or if the cold run does not improve Stage-3 recall@10 while meeting the control-relative Gini, prefix-branch, train-to-test drift, and sequence-information requirements.",
+    "Unlike the inert encoder-only terms, this objective differentiates through soft distances to the codebook. Unlike directed code-assignment cross-entropy that collapsed the codebook, it optimizes ordered assignment information rather than asking both endpoints to share a code; it uses soft assignments and an explicit marginal usage penalty, not pairwise codeword convergence."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_prefix_information",
+  "parameters": {
+    "epsilon": 1e-08,
+    "lambda": 0.01,
+    "mu": 0.001,
+    "tau": 0.1
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T22:20:18.012209+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "448ed93a0bbd13120efdb3c0e81314e601e7d34235809dfef506ff21c8da91e3"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "B": "Batch size.",
+    "C": "Number of codewords.",
+    "D": "Embedding dimension.",
+    "a_bj": "Soft assignment probability of source_b to codeword j.",
+    "b": "Batch-row index.",
+    "codebook_j": "Codeword j.",
+    "epsilon": "Positive numerical stabilizer.",
+    "j": "Source-assignment code index.",
+    "k": "Target-assignment code index.",
+    "lambda": "Weight on the negative directed mutual-information objective.",
+    "mask_b": "Validity indicator for row b.",
+    "mu": "Weight on source-assignment usage balance.",
+    "p_j": "Masked marginal source-assignment probability for code j.",
+    "p_jk": "Masked ordered joint probability for source code j and target code k.",
+    "r_bj": "Soft assignment probability of target_b to codeword j.",
+    "source_b": "Source item representation.",
+    "target_b": "Directed next-item representation.",
+    "tau": "Soft-assignment temperature."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Preserve directed transition information with a codebook-mediated assignment objective",
+  "version": "1.0.0"
+}

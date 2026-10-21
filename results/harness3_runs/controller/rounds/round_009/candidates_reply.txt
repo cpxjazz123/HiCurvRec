@@ -1,0 +1,155 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_geometry_balance",
+      "title": "Directedly balance codeword geometry while preserving transition separation",
+      "equation": "For each valid pair, let p_s(c)=softmax_c(-||source-codebook_c||^2/tau) and p_t(c)=softmax_c(-||target-codebook_c||^2/tau). Let u_c be the masked, batch-mean of p_s(c)+p_t(c), and let q_c=1/C. Let d_c=||codebook_c-mean_j(codebook_j)||^2. L=weight*(sum_c (u_c-q_c)^2 + separation_weight*sum_c q_c*relu(min_separation-d_c)^2 + direction_weight*mean_b KL(p_s||p_t)).",
+      "symbols": {
+        "source": "Source item representation, shape [B,D].",
+        "target": "Target item representation, shape [B,D]; its distinct role makes the transition directed.",
+        "codebook": "Trainable codewords, shape [C,D].",
+        "mask": "Valid-pair indicator, shape [B]; only valid pairs contribute to batch means.",
+        "B": "Batch size.",
+        "D": "Representation dimension.",
+        "C": "Number of codewords.",
+        "p_s(c)": "Soft source-to-codeword assignment probability for codeword c.",
+        "p_t(c)": "Soft target-to-codeword assignment probability for codeword c.",
+        "u_c": "Masked mean soft usage of codeword c across source and target endpoints.",
+        "q_c": "Uniform reference usage, 1/C.",
+        "d_c": "Squared distance of codeword c from the codebook centroid.",
+        "tau": "Assignment softmax temperature.",
+        "weight": "Overall coefficient multiplying this auxiliary loss.",
+        "separation_weight": "Coefficient on the codeword-centroid separation barrier.",
+        "min_separation": "Minimum desired squared distance from a codeword to the codebook centroid.",
+        "direction_weight": "Coefficient on the directed source-to-target assignment divergence.",
+        "KL(p_s||p_t)": "Kullback-Leibler divergence from source assignment distribution to target assignment distribution.",
+        "relu(x)": "Maximum of x and zero."
+      },
+      "parameters": {
+        "weight": 0.001,
+        "tau": 0.5,
+        "separation_weight": 0.1,
+        "min_separation": 0.01,
+        "direction_weight": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target pair and its endpoint assignment distributions; no external behavior input is required.",
+      "codebook_interaction": "The usage-balancing component adjusts codewords through their soft-assignment probabilities, while the centroid barrier repels codewords from an overly tight centroid geometry. The directed KL component penalizes source and target assignment distributions that become indistinguishable. These terms do not minimize the distance between a transition's two codewords; the KL term instead favors different endpoint distributions. A zero barrier gradient can occur when the separation threshold is already met.",
+      "encoder_interaction": "The loss has gradients through both endpoint representations and therefore can influence the encoder locally, but the host overwrites encoder gradients after backward, so that encoder effect is not expected to survive training. The codebook gradient is the operative route to changing exported SIDs.",
+      "risk": "Uniform soft usage and a centroid-spread barrier may preserve code usage without preserving useful item distinctions; the directed KL can also over-separate common transitions. The soft objective may not translate into hard assignment changes, and the frozen run could therefore fail to improve Stage-3 retrieval despite healthy soft statistics.",
+      "falsifier": "Reject if the cold run's exported level-0 Gini exceeds the control's 0.216, L1-to-L2 branches fall below 65.91 per L1 code, train-to-test frequency drift grows, sequence information falls, or the single held-out Stage-3 recall@10 does not exceed 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike encoder-only auxiliary losses, this objective has an explicit codebook gradient. Unlike pairwise curvature or directed code-assignment cross-entropy that can pull endpoint codewords together, it includes a codeword-spread barrier and a directed assignment-divergence term that penalizes shared endpoint distributions. It targets balanced soft usage rather than rewarding code merging, though its hard-export behavior must still be verified."
+    },
+    {
+      "id": "directed_assignment_information_separation",
+      "title": "Increase directed assignment information with an explicit anti-convergence term",
+      "equation": "For each valid pair define p_s(c)=softmax_c(-||source-codebook_c||^2/tau) and p_t(c)=softmax_c(-||target-codebook_c||^2/tau). Let m=(p_s+p_t)/2 and J=0.5*KL(p_s||m)+0.5*KL(p_t||m). Let H(u)=-sum_c u_c log(u_c+epsilon), where u is the masked mean of p_s over source endpoints. L=weight*(-J + balance_weight*(H(u)-log(C)) + repel_weight*mean_b sum_c p_s(c)*p_t(c)).",
+      "symbols": {
+        "source": "Source item representation, shape [B,D].",
+        "target": "Target item representation, shape [B,D].",
+        "codebook": "Trainable codewords, shape [C,D].",
+        "mask": "Valid-pair indicator, shape [B].",
+        "B": "Batch size.",
+        "D": "Representation dimension.",
+        "C": "Number of codewords.",
+        "p_s(c)": "Soft source assignment probability for codeword c.",
+        "p_t(c)": "Soft target assignment probability for codeword c.",
+        "m": "Mean of the source and target assignment distributions for a pair.",
+        "J": "Jensen-Shannon divergence between the directed endpoint assignment distributions.",
+        "u": "Masked mean source assignment distribution across the batch.",
+        "H(u)": "Entropy of the mean source assignment distribution.",
+        "tau": "Assignment softmax temperature.",
+        "epsilon": "Positive constant for numerical stability in the logarithm.",
+        "weight": "Overall coefficient multiplying this auxiliary loss.",
+        "balance_weight": "Coefficient on the source assignment entropy term.",
+        "repel_weight": "Coefficient on the endpoint assignment overlap penalty.",
+        "KL(a||b)": "Kullback-Leibler divergence from distribution a to distribution b."
+      },
+      "parameters": {
+        "weight": 0.001,
+        "tau": 0.5,
+        "epsilon": 1e-08,
+        "balance_weight": 0.1,
+        "repel_weight": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target assignment pair, represented by the two endpoint soft assignments; the source marginal entropy represents source-code usage.",
+      "codebook_interaction": "Minimizing negative Jensen-Shannon divergence rewards distinguishable source and target assignment distributions; minimizing the overlap penalty directly discourages both endpoints from using the same codes. The source-marginal entropy term discourages concentrated source usage. All three components update codewords through the soft assignments; none minimizes the distance between the two endpoint codewords.",
+      "encoder_interaction": "Gradients reach source and target representations through their assignment probabilities, but the host discards encoder gradients from this auxiliary term. The nonzero codebook gradient is the path expected to affect the learned assignments and hard SID export.",
+      "risk": "Assignment separation can encode transition-specific distinctions that are too fine-grained or unstable for held-out transitions. The entropy term balances only the source marginal, so target usage, prefix branching, or train-to-test frequency drift may still worsen; soft separation may also fail to change hard assignments.",
+      "falsifier": "Reject if exported level-0 Gini exceeds 0.216, L1-to-L2 branches fall below 65.91 per L1 code, train-to-test frequency drift grows, sequence information falls, or the single held-out Stage-3 recall@10 does not exceed 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only terms, this objective directly differentiates through the codebook. Unlike pairwise convergence mechanisms, it rewards assignment-distribution separation and penalizes endpoint assignment overlap rather than asking one code to serve both endpoints. Its explicit source entropy term also targets code concentration, rather than accepting concentration as the route to higher pair-level ER."
+    },
+    {
+      "id": "directed_residual_transport_with_margin",
+      "title": "Transport behavior-conditioned residuals through separated codeword roles",
+      "equation": "For each valid pair let r=target-source, a_c=softmax_c(-||source-codebook_c||^2/tau), and b_c=softmax_c(-||target-codebook_c||^2/tau). Define v_s=sum_c a_c*codebook_c and v_t=sum_c b_c*codebook_c. Let T=v_t-v_s and let z=(r dot T)/(||r||*||T||+epsilon). Let O=sum_c a_c*b_c and let U be the masked mean of a across source endpoints. L=weight*(mean_b (1-z) + overlap_weight*mean_b O + balance_weight*(sum_c U_c^2-1/C)).",
+      "symbols": {
+        "source": "Source item representation, shape [B,D].",
+        "target": "Target item representation, shape [B,D].",
+        "codebook": "Trainable codewords, shape [C,D].",
+        "mask": "Valid-pair indicator, shape [B].",
+        "B": "Batch size.",
+        "D": "Representation dimension.",
+        "C": "Number of codewords.",
+        "r": "Directed behavior-conditioned residual vector, target minus source.",
+        "a_c": "Soft source assignment probability for codeword c.",
+        "b_c": "Soft target assignment probability for codeword c.",
+        "v_s": "Source-assignment-weighted codebook vector.",
+        "v_t": "Target-assignment-weighted codebook vector.",
+        "T": "Directed codebook transport vector, target weighted vector minus source weighted vector.",
+        "z": "Cosine alignment between the item residual r and codebook transport T.",
+        "O": "Overlap between source and target soft assignment distributions.",
+        "U_c": "Masked mean source assignment probability for codeword c.",
+        "tau": "Assignment softmax temperature.",
+        "epsilon": "Positive numerical-stability constant for the cosine denominator.",
+        "weight": "Overall coefficient multiplying this auxiliary loss.",
+        "overlap_weight": "Coefficient penalizing shared soft assignment mass across transition endpoints.",
+        "balance_weight": "Coefficient penalizing concentration in the source marginal assignment distribution."
+      },
+      "parameters": {
+        "weight": 0.001,
+        "tau": 0.5,
+        "epsilon": 1e-08,
+        "overlap_weight": 0.1,
+        "balance_weight": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed residual target minus source, used to align the change between source- and target-weighted codebook vectors with the observed transition residual.",
+      "codebook_interaction": "The transport-alignment term updates the source- and target-weighted codebook vectors to represent the directed residual. The overlap penalty discourages shared endpoint assignments, and the source-marginal concentration penalty discourages excessive usage imbalance. The alignment term does not minimize the distance between the two endpoint codewords; the overlap penalty actively discourages assignment convergence.",
+      "encoder_interaction": "The residual and soft assignments produce gradients to both source and target representations, but the host overwrites those auxiliary encoder gradients. The codebook receives a direct gradient through the weighted vectors and assignment probabilities, which is the operative route to changing exported SIDs.",
+      "risk": "Residual alignment may favor codeword transport directions that fit frequent training transitions but generalize poorly, while overlap and marginal balance may conflict with naturally common transitions. Cosine alignment can also be unstable when the transport vector is near zero; epsilon keeps the calculation finite but does not guarantee useful gradients or improved hard assignments.",
+      "falsifier": "Reject if exported level-0 Gini exceeds 0.216, L1-to-L2 branches fall below 65.91 per L1 code, train-to-test frequency drift grows, sequence information falls, or the single held-out Stage-3 recall@10 does not exceed 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, residual alignment and the assignment penalties differentiate directly through the codebook. Unlike the collapsed pairwise curvature or code-assignment cross-entropy, the loss aligns a directed codebook transport vector to the observed residual and penalizes endpoint assignment overlap; it does not pull the two transition codewords toward one another. The marginal concentration penalty explicitly targets the measured failure mode of obtaining ER through code merging."
+    }
+  ]
+}
+```

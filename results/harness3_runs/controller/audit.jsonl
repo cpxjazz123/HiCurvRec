@@ -57,3 +57,148 @@
 {"event": "learn", "next_round": 8, "phase": "hypothesise", "round": 8, "utc": "2026-10-21T18:46:19.048588+00:00"}
 {"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 8, "utc": "2026-10-21T18:47:12.894510+00:00"}
 {"detail": null, "event": "screen", "mechanism_id": "directed_margin_preserving_codebook_geometry", "round": 8, "status": "admitted", "utc": "2026-10-21T18:53:28.034670+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_capacity_constrained_assignment_partition", "round": 8, "status": "admitted", "utc": "2026-10-21T18:55:43.228637+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_residual_transport_with_separation", "round": 8, "status": "admitted", "utc": "2026-10-21T18:58:03.094204+00:00"}
+{"event": "train", "mechanism_id": "directed_margin_preserving_codebook_geometry", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_margin_preserving_codebook_geometry/r8_control", "round": 8, "status": "trained", "utc": "2026-10-21T19:04:46.021999+00:00"}
+{"event": "train", "mechanism_id": "directed_capacity_constrained_assignment_partition", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_partition/r8_control", "round": 8, "status": "trained", "utc": "2026-10-21T19:12:32.387923+00:00"}
+{"event": "train", "mechanism_id": "directed_residual_transport_with_separation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control", "round": 8, "status": "trained", "utc": "2026-10-21T19:23:24.095211+00:00"}
+{"er": 16.31846635367762, "event": "evaluate", "mechanism_id": "directed_margin_preserving_codebook_geometry", "qualified": false, "round": 8, "utc": "2026-10-21T20:14:57.214576+00:00"}
+{"er": 16.732429099876697, "event": "evaluate", "mechanism_id": "directed_capacity_constrained_assignment_partition", "qualified": true, "round": 8, "utc": "2026-10-21T20:18:00.501764+00:00"}
+{"event": "refuse", "mechanism_id": "directed_residual_transport_with_separation", "round": 8, "rule": "no_repeated_frozen_evaluation", "utc": "2026-10-21T20:21:01.825351+00:00"}
+{"event": "stage3", "mechanism_id": "directed_capacity_constrained_assignment_partition", "round": 8, "started": true, "utc": "2026-10-21T20:21:32.227698+00:00"}
+{"event": "learn", "next_round": 9, "phase": "hypothesise", "round": 9, "utc": "2026-10-21T20:22:02.413505+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 9, "utc": "2026-10-21T20:23:01.126972+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_codebook_geometry_balance", "round": 9, "status": "rejected", "utc": "2026-10-21T20:25:37.035210+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_assignment_information_separation", "round": 9, "status": "admitted", "utc": "2026-10-21T20:33:56.526486+00:00"}
+{"detail": "the probe or the export sensitivity rejected the arm before a cold run; the candidate cost no cold-run GPU time", "event": "screen", "mechanism_id": "directed_residual_transport_with_margin", "round": 9, "status": "rejected", "utc": "2026-10-21T20:39:27.318095+00:00"}
+{"event": "train", "mechanism_id": "directed_assignment_information_separation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_information_separation/r8_control", "round": 9, "status": "training", "utc": "2026-10-21T20:46:45.607105+00:00"}
+{"event": "learn", "next_round": 10, "phase": "hypothesise", "round": 10, "utc": "2026-10-21T20:48:16.231662+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 10, "utc": "2026-10-21T20:49:11.402912+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_codebook_repulsion", "round": 10, "status": "admitted", "utc": "2026-10-21T20:56:39.747481+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_assignment_branch_entropy", "round": 10, "status": "admitted", "utc": "2026-10-21T21:04:16.039331+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_residual_transport_separation", "round": 10, "status": "admitted", "utc": "2026-10-21T21:08:45.826031+00:00"}
+{"event": "pause", "reason": "37 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:09:48.599454+00:00"}
+{"event": "pause", "reason": "37 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:10:22.312296+00:00"}
+{"event": "pause", "reason": "37 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:10:54.987291+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:11:27.440149+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:11:59.889712+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:12:33.528010+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:13:06.141120+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:13:38.919500+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:14:11.292712+00:00"}
+{"event": "pause", "reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device", "round": 10, "utc": "2026-10-21T21:14:42.605562+00:00"}
+{"event": "train", "mechanism_id": "directed_codebook_repulsion", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_repulsion/r8_control", "round": 10, "status": "training", "utc": "2026-10-21T21:20:20.406995+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:20:20.409708+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:20:50.589202+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:21:21.348523+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:21:51.533023+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:22:21.695571+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:22:51.870095+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:23:22.027692+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:23:52.193364+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:24:22.483913+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:24:52.664648+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:25:22.851064+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:25:53.026610+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:26:23.189735+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:26:53.365614+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:27:23.526331+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:27:53.709191+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:28:23.873888+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:28:54.047896+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:29:24.216563+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:29:54.393889+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:30:25.200229+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:30:55.373580+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:31:25.532602+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:31:55.715434+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:32:25.881788+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:32:56.062549+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:33:26.224458+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:33:57.600980+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:34:27.768596+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:34:57.941970+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:35:28.759778+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:35:58.941045+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:36:29.382978+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:36:59.604041+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:37:30.275884+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:38:00.499650+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:38:30.682101+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:39:00.852445+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:39:31.015747+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:40:01.189600+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:40:31.613565+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:41:01.783797+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:41:32.945115+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:42:03.121919+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:42:33.296961+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:43:03.474418+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:43:33.635824+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:44:03.808164+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:44:33.975427+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:45:04.163738+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:45:34.348839+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:46:04.525000+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:46:34.722180+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:47:04.914317+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:47:35.073795+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:48:07.501850+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:48:37.661307+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:49:08.142767+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:49:38.301188+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:50:08.481172+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:50:38.645133+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:51:08.844004+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:51:38.997949+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:52:09.191789+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:52:39.350237+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T21:53:10.815379+00:00"}
+{"event": "reconciled", "mechanism_id": "directed_codebook_repulsion", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_repulsion/r8_control", "round": 10, "utc": "2026-10-21T21:53:40.979054+00:00"}
+{"event": "train", "mechanism_id": "directed_assignment_branch_entropy", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_branch_entropy/r8_control", "round": 10, "status": "training", "utc": "2026-10-21T22:01:07.204257+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:01:07.206804+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:01:37.529233+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:02:07.898224+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:02:38.065315+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:03:08.249303+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:03:38.423472+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:04:08.652505+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:04:38.825669+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:05:08.990100+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:05:39.175398+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:06:09.342261+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:06:39.664388+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:07:10.207046+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:07:40.388657+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:08:10.589423+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:08:40.756681+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:09:11.700287+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:09:41.864981+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:10:12.103990+00:00"}
+{"er": 16.378421261404206, "event": "evaluate", "mechanism_id": "directed_codebook_repulsion", "qualified": false, "round": 10, "utc": "2026-10-21T22:10:43.743546+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:10:43.746228+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:11:13.917876+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:11:44.089430+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:12:14.256632+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 10, "utc": "2026-10-21T22:12:44.426890+00:00"}
+{"event": "reconciled", "mechanism_id": "directed_assignment_branch_entropy", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_branch_entropy/r8_control", "round": 10, "utc": "2026-10-21T22:13:14.598322+00:00"}
+{"er": 15.317100792751983, "event": "evaluate", "mechanism_id": "directed_assignment_branch_entropy", "qualified": false, "round": 10, "utc": "2026-10-21T22:13:14.954514+00:00"}
+{"event": "train", "mechanism_id": "directed_residual_transport_separation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_separation/r8_control", "round": 10, "status": "training", "utc": "2026-10-21T22:17:53.951631+00:00"}
+{"event": "learn", "next_round": 11, "phase": "hypothesise", "round": 11, "utc": "2026-10-21T22:19:24.524989+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 11, "utc": "2026-10-21T22:20:18.032909+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_codeword_tangent_repulsion", "round": 11, "status": "admitted", "utc": "2026-10-21T22:24:16.688798+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_assignment_prefix_information", "round": 11, "status": "admitted", "utc": "2026-10-21T22:28:40.524101+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_residual_geometry_separation", "round": 11, "status": "rejected", "utc": "2026-10-21T22:29:43.111112+00:00"}
+{"event": "train", "mechanism_id": "directed_codeword_tangent_repulsion", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control", "round": 11, "status": "training", "utc": "2026-10-21T22:32:59.861816+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:32:59.864359+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:33:30.030565+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:34:00.375555+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:34:30.566652+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:35:00.741566+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:35:30.917835+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:36:01.094095+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:36:31.267080+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:37:01.548575+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:37:31.721816+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:38:01.890413+00:00"}
+{"event": "pause", "reason": "1 training jobs are already running", "round": 11, "utc": "2026-10-21T22:38:32.170406+00:00"}
