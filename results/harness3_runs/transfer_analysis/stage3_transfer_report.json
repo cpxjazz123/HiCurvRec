@@ -163,732 +163,68 @@
         }
       }
     },
-    "geometry_transport": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/sids_for_hgrec.npy",
+    "separated_codeword_geometry": {
+      "sid_path": "results/stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry/r8_control/sids_for_hgrec.npy",
       "sequential_predictability": {
         "level_1": {
-          "top1_accuracy": 0.11859719190973111,
-          "marginal_baseline": 0.017080045593913743,
-          "excess_over_the_marginal": 0.10151714631581737,
+          "top1_accuracy": 0.11814066370365134,
+          "marginal_baseline": 0.010756393603892566,
+          "excess_over_the_marginal": 0.10738427009975877,
           "distinct_codes_used": 247,
           "pairs": 339519
         },
         "level_1_2": {
-          "top1_accuracy": 0.07370132452086628,
+          "top1_accuracy": 0.07126552564068579,
           "marginal_baseline": 0.004697822507724163,
-          "excess_over_the_marginal": 0.06900350201314212,
-          "distinct_codes_used": 16063,
+          "excess_over_the_marginal": 0.06656770313296163,
+          "distinct_codes_used": 15393,
           "pairs": 339519
         }
       },
       "frequency_drift": {
         "level_1": {
-          "total_variation_train_to_test": 0.10231959685501081,
-          "codes_in_train_not_in_test": 2,
+          "total_variation_train_to_test": 0.1033334410134782,
+          "codes_in_train_not_in_test": 0,
           "codes_in_test_not_in_train": 0,
           "codes_in_train": 247,
-          "codes_in_test": 245
+          "codes_in_test": 247
         },
         "level_1_2": {
-          "total_variation_train_to_test": 0.2392147032335878,
-          "codes_in_train_not_in_test": 3932,
-          "codes_in_test_not_in_train": 42,
-          "codes_in_train": 16038,
-          "codes_in_test": 12148
+          "total_variation_train_to_test": 0.23642452347144155,
+          "codes_in_train_not_in_test": 3627,
+          "codes_in_test_not_in_train": 34,
+          "codes_in_train": 15376,
+          "codes_in_test": 11783
         },
         "level_1_2_3": {
-          "total_variation_train_to_test": 0.2820734528605132,
-          "codes_in_train_not_in_test": 7168,
-          "codes_in_test_not_in_train": 80,
-          "codes_in_train": 23543,
-          "codes_in_test": 16455
+          "total_variation_train_to_test": 0.28165470088991,
+          "codes_in_train_not_in_test": 7120,
+          "codes_in_test_not_in_train": 81,
+          "codes_in_train": 23409,
+          "codes_in_test": 16370
         }
       },
       "token_balance": {
         "level_1": {
           "distinct_codes": 247,
-          "entropy": 5.423259880334577,
-          "normalised_entropy": 0.9843669657989446,
-          "gini": 0.22835345165288468,
-          "largest_code_share": 0.01028999064546305
-        },
-        "level_1_2": {
-          "distinct_codes": 16095,
-          "entropy": 9.474220398642665,
-          "normalised_entropy": 0.9781088408986173,
-          "gini": 0.2823854272646247,
-          "largest_code_share": 0.0013421726928864847
-        },
-        "level_1_2_3": {
-          "distinct_codes": 23654,
-          "entropy": 10.050454814743548,
-          "normalised_entropy": 0.9979314761850443,
-          "gini": 0.03704119078546486,
-          "largest_code_share": 0.00044739089762882824
-        }
-      },
-      "popularity_slices": {
-        "quartiles": {
-          "q1": {
-            "items": 6147,
-            "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.07223035627135188
-          },
-          "q2": {
-            "items": 6147,
-            "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.08101512933138116
-          },
-          "q3": {
-            "items": 6147,
-            "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.0811778103139743
-          },
-          "q4": {
-            "items": 6146,
-            "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.07728603970061829
-          }
-        },
-        "cold_slice": {
-          "anchors_without_any_training_interaction": 0,
-          "positive_match_rate": null
-        }
-      },
-      "collisions": {
-        "level_1": {
-          "items_sharing_their_code": 24585,
-          "collision_rate": 0.9899540407532436,
-          "largest_cell": 253
-        },
-        "level_1_2": {
-          "items_sharing_their_code": 13116,
-          "collision_rate": 0.3453857729694554,
-          "largest_cell": 33
-        },
-        "level_1_2_3": {
-          "items_sharing_their_code": 1645,
-          "collision_rate": 0.03794688249888156,
-          "largest_cell": 11
-        }
-      },
-      "prefix_structure": {
-        "l1_to_l2": {
-          "distinct_parents": 247,
-          "mean_branches": 65.16194331983806,
-          "median_branches": 65.0,
-          "tenth_percentile_branches": 41.6,
-          "parents_with_a_single_branch": 2
-        },
-        "l2_to_l3": {
-          "distinct_parents": 16095,
-          "mean_branches": 1.4696489593041318,
-          "median_branches": 1.0,
-          "tenth_percentile_branches": 1.0,
-          "parents_with_a_single_branch": 11661
-        }
-      },
-      "stage3_slices": {
-        "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06338898657706436,
-        "l1_cell_size": {
-          "l1_cell_size[20,1e+09)": {
-            "rows": 57157,
-            "recall@10": 0.0634917857830187
-          },
-          "l1_cell_size[5,20)": {
-            "rows": 282,
-            "recall@10": 0.0425531914893617
-          }
-        },
-        "popularity": {
-          "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06565702642702917
-          },
-          "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.029411764705882353
-          },
-          "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.06741573033707865
-          },
-          "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06109969903979363
-          },
-          "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.055388320288982544
-          }
-        }
-      }
-    },
-    "residual_target": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/sids_for_hgrec.npy",
-      "sequential_predictability": {
-        "level_1": {
-          "top1_accuracy": 0.12396655268188231,
-          "marginal_baseline": 0.012938892963280406,
-          "excess_over_the_marginal": 0.1110276597186019,
-          "distinct_codes_used": 243,
-          "pairs": 339519
-        },
-        "level_1_2": {
-          "top1_accuracy": 0.0701286231403839,
-          "marginal_baseline": 0.004697822507724163,
-          "excess_over_the_marginal": 0.06543080063265974,
-          "distinct_codes_used": 14950,
-          "pairs": 339519
-        }
-      },
-      "frequency_drift": {
-        "level_1": {
-          "total_variation_train_to_test": 0.10243035129074571,
-          "codes_in_train_not_in_test": 0,
-          "codes_in_test_not_in_train": 0,
-          "codes_in_train": 243,
-          "codes_in_test": 243
-        },
-        "level_1_2": {
-          "total_variation_train_to_test": 0.23209426849102432,
-          "codes_in_train_not_in_test": 3466,
-          "codes_in_test_not_in_train": 33,
-          "codes_in_train": 14929,
-          "codes_in_test": 11496
-        },
-        "level_1_2_3": {
-          "total_variation_train_to_test": 0.28129980678097616,
-          "codes_in_train_not_in_test": 7107,
-          "codes_in_test_not_in_train": 78,
-          "codes_in_train": 23413,
-          "codes_in_test": 16384
-        }
-      },
-      "token_balance": {
-        "level_1": {
-          "distinct_codes": 243,
-          "entropy": 5.287096267063024,
-          "normalised_entropy": 0.9625044834466172,
-          "gini": 0.35277299506363646,
-          "largest_code_share": 0.01553666571765567
-        },
-        "level_1_2": {
-          "distinct_codes": 14976,
-          "entropy": 9.37843547218987,
-          "normalised_entropy": 0.9754770419210612,
-          "gini": 0.31261836837287027,
-          "largest_code_share": 0.0013828445926709237
-        },
-        "level_1_2_3": {
-          "distinct_codes": 23520,
-          "entropy": 10.04319989892116,
-          "normalised_entropy": 0.9977739539778823,
-          "gini": 0.04214528604381096,
-          "largest_code_share": 0.00032537519827551144
-        }
-      },
-      "popularity_slices": {
-        "quartiles": {
-          "q1": {
-            "items": 6147,
-            "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.07646006181877339
-          },
-          "q2": {
-            "items": 6147,
-            "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.08996258337400358
-          },
-          "q3": {
-            "items": 6147,
-            "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.08573287782658207
-          },
-          "q4": {
-            "items": 6146,
-            "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.09030263586072242
-          }
-        },
-        "cold_slice": {
-          "anchors_without_any_training_interaction": 0,
-          "positive_match_rate": null
-        }
-      },
-      "collisions": {
-        "level_1": {
-          "items_sharing_their_code": 24585,
-          "collision_rate": 0.9901167283523813,
-          "largest_cell": 382
-        },
-        "level_1_2": {
-          "items_sharing_their_code": 14436,
-          "collision_rate": 0.3908976288282425,
-          "largest_cell": 34
-        },
-        "level_1_2_3": {
-          "items_sharing_their_code": 1903,
-          "collision_rate": 0.04339691706999638,
-          "largest_cell": 8
-        }
-      },
-      "prefix_structure": {
-        "l1_to_l2": {
-          "distinct_parents": 243,
-          "mean_branches": 61.629629629629626,
-          "median_branches": 63.0,
-          "tenth_percentile_branches": 22.200000000000003,
-          "parents_with_a_single_branch": 2
-        },
-        "l2_to_l3": {
-          "distinct_parents": 14976,
-          "mean_branches": 1.5705128205128205,
-          "median_branches": 1.0,
-          "tenth_percentile_branches": 1.0,
-          "parents_with_a_single_branch": 10307
-        }
-      },
-      "stage3_slices": {
-        "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.0610038475600202,
-        "l1_cell_size": {
-          "l1_cell_size[1,2)": {
-            "rows": 97,
-            "recall@10": 0.030927835051546393
-          },
-          "l1_cell_size[2,5)": {
-            "rows": 563,
-            "recall@10": 0.06039076376554174
-          },
-          "l1_cell_size[20,1e+09)": {
-            "rows": 55071,
-            "recall@10": 0.06103030633182619
-          },
-          "l1_cell_size[5,20)": {
-            "rows": 1708,
-            "recall@10": 0.06206088992974239
-          }
-        },
-        "popularity": {
-          "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06276799562083751
-          },
-          "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.029411764705882353
-          },
-          "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.08239700374531835
-          },
-          "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.05904552620264654
-          },
-          "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.05448524984948826
-          }
-        }
-      }
-    },
-    "soft_code_kl": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/sids_for_hgrec.npy",
-      "sequential_predictability": {
-        "level_1": {
-          "top1_accuracy": 0.11779900388490777,
-          "marginal_baseline": 0.013286443468554043,
-          "excess_over_the_marginal": 0.10451256041635373,
-          "distinct_codes_used": 255,
-          "pairs": 339519
-        },
-        "level_1_2": {
-          "top1_accuracy": 0.07420497821918655,
-          "marginal_baseline": 0.004697822507724163,
-          "excess_over_the_marginal": 0.06950715571146239,
-          "distinct_codes_used": 16290,
-          "pairs": 339519
-        }
-      },
-      "frequency_drift": {
-        "level_1": {
-          "total_variation_train_to_test": 0.1030310115175658,
-          "codes_in_train_not_in_test": 0,
-          "codes_in_test_not_in_train": 0,
-          "codes_in_train": 255,
-          "codes_in_test": 255
-        },
-        "level_1_2": {
-          "total_variation_train_to_test": 0.23972846421543306,
-          "codes_in_train_not_in_test": 4061,
-          "codes_in_test_not_in_train": 44,
-          "codes_in_train": 16266,
-          "codes_in_test": 12249
-        },
-        "level_1_2_3": {
-          "total_variation_train_to_test": 0.2819432577661015,
-          "codes_in_train_not_in_test": 7201,
-          "codes_in_test_not_in_train": 82,
-          "codes_in_train": 23536,
-          "codes_in_test": 16417
-        }
-      },
-      "token_balance": {
-        "level_1": {
-          "distinct_codes": 255,
-          "entropy": 5.454220291199711,
-          "normalised_entropy": 0.9842918039812838,
-          "gini": 0.22776231979756556,
-          "largest_code_share": 0.009110505551714321
-        },
-        "level_1_2": {
-          "distinct_codes": 16330,
-          "entropy": 9.496540276343838,
-          "normalised_entropy": 0.9789481518192776,
-          "gini": 0.2758978720377352,
-          "largest_code_share": 0.001179485093748729
-        },
-        "level_1_2_3": {
-          "distinct_codes": 23648,
-          "entropy": 10.050146045154797,
-          "normalised_entropy": 0.9979259548762633,
-          "gini": 0.03726624561710734,
-          "largest_code_share": 0.0005694065969821451
-        }
-      },
-      "popularity_slices": {
-        "quartiles": {
-          "q1": {
-            "items": 6147,
-            "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.07727346673173906
-          },
-          "q2": {
-            "items": 6147,
-            "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.08068976736619489
-          },
-          "q3": {
-            "items": 6147,
-            "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.08199121522693997
-          },
-          "q4": {
-            "items": 6146,
-            "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.08167914090465343
-          }
-        },
-        "cold_slice": {
-          "anchors_without_any_training_interaction": 0,
-          "positive_match_rate": null
-        }
-      },
-      "collisions": {
-        "level_1": {
-          "items_sharing_their_code": 24585,
-          "collision_rate": 0.9896286655549681,
-          "largest_cell": 224
-        },
-        "level_1_2": {
-          "items_sharing_their_code": 12805,
-          "collision_rate": 0.33582787652011226,
-          "largest_cell": 29
-        },
-        "level_1_2_3": {
-          "items_sharing_their_code": 1659,
-          "collision_rate": 0.03819091389758811,
-          "largest_cell": 14
-        }
-      },
-      "prefix_structure": {
-        "l1_to_l2": {
-          "distinct_parents": 255,
-          "mean_branches": 64.03921568627452,
-          "median_branches": 65.0,
-          "tenth_percentile_branches": 41.400000000000006,
-          "parents_with_a_single_branch": 2
-        },
-        "l2_to_l3": {
-          "distinct_parents": 16330,
-          "mean_branches": 1.448132271892223,
-          "median_branches": 1.0,
-          "tenth_percentile_branches": 1.0,
-          "parents_with_a_single_branch": 11980
-        }
-      },
-      "stage3_slices": {
-        "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06225735127700691,
-        "l1_cell_size": {
-          "l1_cell_size[1,2)": {
-            "rows": 3,
-            "recall@10": 0.0
-          },
-          "l1_cell_size[2,5)": {
-            "rows": 2,
-            "recall@10": 0.0
-          },
-          "l1_cell_size[20,1e+09)": {
-            "rows": 57434,
-            "recall@10": 0.062262771180833655
-          }
-        },
-        "popularity": {
-          "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06395401879390566
-          },
-          "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.029411764705882353
-          },
-          "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.056179775280898875
-          },
-          "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.0605742129651746
-          },
-          "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.056893437688139675
-          }
-        }
-      }
-    },
-    "margin_geometry": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/sids_for_hgrec.npy",
-      "sequential_predictability": {
-        "level_1": {
-          "top1_accuracy": 0.11626153470056168,
-          "marginal_baseline": 0.014685481519443683,
-          "excess_over_the_marginal": 0.101576053181118,
-          "distinct_codes_used": 246,
-          "pairs": 339519
-        },
-        "level_1_2": {
-          "top1_accuracy": 0.07340384485109817,
-          "marginal_baseline": 0.004697822507724163,
-          "excess_over_the_marginal": 0.06870602234337402,
-          "distinct_codes_used": 16227,
-          "pairs": 339519
-        }
-      },
-      "frequency_drift": {
-        "level_1": {
-          "total_variation_train_to_test": 0.10313815709282338,
-          "codes_in_train_not_in_test": 2,
-          "codes_in_test_not_in_train": 0,
-          "codes_in_train": 246,
-          "codes_in_test": 244
-        },
-        "level_1_2": {
-          "total_variation_train_to_test": 0.23973761592718001,
-          "codes_in_train_not_in_test": 3974,
-          "codes_in_test_not_in_train": 48,
-          "codes_in_train": 16197,
-          "codes_in_test": 12271
-        },
-        "level_1_2_3": {
-          "total_variation_train_to_test": 0.2824520282425781,
-          "codes_in_train_not_in_test": 7204,
-          "codes_in_test_not_in_train": 81,
-          "codes_in_train": 23592,
-          "codes_in_test": 16469
-        }
-      },
-      "token_balance": {
-        "level_1": {
-          "distinct_codes": 246,
-          "entropy": 5.4391282324348165,
-          "normalised_entropy": 0.987974692701893,
-          "gini": 0.19851375619543798,
-          "largest_code_share": 0.009761255948265343
-        },
-        "level_1_2": {
-          "distinct_codes": 16265,
-          "entropy": 9.499007113500824,
-          "normalised_entropy": 0.9796051975763811,
-          "gini": 0.27582369630401216,
-          "largest_code_share": 0.0010981412941798512
-        },
-        "level_1_2_3": {
-          "distinct_codes": 23704,
-          "entropy": 10.053403544529884,
-          "normalised_entropy": 0.9980150151357698,
-          "gini": 0.03508634769236263,
-          "largest_code_share": 0.0006914222963354618
-        }
-      },
-      "popularity_slices": {
-        "quartiles": {
-          "q1": {
-            "items": 6147,
-            "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.0774361477143322
-          },
-          "q2": {
-            "items": 6147,
-            "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.07987636245322922
-          },
-          "q3": {
-            "items": 6147,
-            "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.0816658532617537
-          },
-          "q4": {
-            "items": 6146,
-            "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.08379433778067036
-          }
-        },
-        "cold_slice": {
-          "anchors_without_any_training_interaction": 0,
-          "positive_match_rate": null
-        }
-      },
-      "collisions": {
-        "level_1": {
-          "items_sharing_their_code": 24585,
-          "collision_rate": 0.9899947126530281,
-          "largest_cell": 240
-        },
-        "level_1_2": {
-          "items_sharing_their_code": 12973,
-          "collision_rate": 0.33847155000610074,
-          "largest_cell": 27
-        },
-        "level_1_2_3": {
-          "items_sharing_their_code": 1567,
-          "collision_rate": 0.03591328750965961,
-          "largest_cell": 17
-        }
-      },
-      "prefix_structure": {
-        "l1_to_l2": {
-          "distinct_parents": 246,
-          "mean_branches": 66.1178861788618,
-          "median_branches": 67.0,
-          "tenth_percentile_branches": 46.5,
-          "parents_with_a_single_branch": 2
-        },
-        "l2_to_l3": {
-          "distinct_parents": 16265,
-          "mean_branches": 1.457362434675684,
-          "median_branches": 1.0,
-          "tenth_percentile_branches": 1.0,
-          "parents_with_a_single_branch": 11804
-        }
-      },
-      "stage3_slices": {
-        "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06373718205400512,
-        "l1_cell_size": {
-          "l1_cell_size[1,2)": {
-            "rows": 1,
-            "recall@10": 0.0
-          },
-          "l1_cell_size[20,1e+09)": {
-            "rows": 57438,
-            "recall@10": 0.06373829172324942
-          }
-        },
-        "popularity": {
-          "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06529209621993128
-          },
-          "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.0
-          },
-          "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.0599250936329588
-          },
-          "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06200735680504467
-          },
-          "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.060204695966285374
-          }
-        }
-      }
-    },
-    "usage_balance": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/sids_for_hgrec.npy",
-      "sequential_predictability": {
-        "level_1": {
-          "top1_accuracy": 0.12011109834795697,
-          "marginal_baseline": 0.011996383118470542,
-          "excess_over_the_marginal": 0.10811471522948643,
-          "distinct_codes_used": 236,
-          "pairs": 339519
-        },
-        "level_1_2": {
-          "top1_accuracy": 0.07170143644391036,
-          "marginal_baseline": 0.004697822507724163,
-          "excess_over_the_marginal": 0.0670036139361862,
-          "distinct_codes_used": 15695,
-          "pairs": 339519
-        }
-      },
-      "frequency_drift": {
-        "level_1": {
-          "total_variation_train_to_test": 0.10233699235157716,
-          "codes_in_train_not_in_test": 1,
-          "codes_in_test_not_in_train": 0,
-          "codes_in_train": 236,
-          "codes_in_test": 235
-        },
-        "level_1_2": {
-          "total_variation_train_to_test": 0.23566712016175143,
-          "codes_in_train_not_in_test": 3823,
-          "codes_in_test_not_in_train": 41,
-          "codes_in_train": 15671,
-          "codes_in_test": 11889
-        },
-        "level_1_2_3": {
-          "total_variation_train_to_test": 0.28199377869218817,
-          "codes_in_train_not_in_test": 7189,
-          "codes_in_test_not_in_train": 81,
-          "codes_in_train": 23539,
-          "codes_in_test": 16431
-        }
-      },
-      "token_balance": {
-        "level_1": {
-          "distinct_codes": 236,
-          "entropy": 5.362181559526325,
-          "normalised_entropy": 0.9813957952721407,
-          "gini": 0.2485757941533111,
+          "entropy": 5.345807963119738,
+          "normalised_entropy": 0.9703087959110251,
+          "gini": 0.31272475547049416,
           "largest_code_share": 0.011591491438565095
         },
         "level_1_2": {
-          "distinct_codes": 15722,
-          "entropy": 9.453905431392423,
-          "normalised_entropy": 0.9783799208415507,
-          "gini": 0.2900825517461969,
-          "largest_code_share": 0.0012608288933176068
+          "distinct_codes": 15429,
+          "entropy": 9.417438563599456,
+          "normalised_entropy": 0.9765071055875636,
+          "gini": 0.2995601168888624,
+          "largest_code_share": 0.0018709073900841909
         },
         "level_1_2_3": {
-          "distinct_codes": 23650,
-          "entropy": 10.04997138522359,
-          "normalised_entropy": 0.9979002323407045,
-          "gini": 0.0371892449739033,
-          "largest_code_share": 0.0008541098954732175
+          "distinct_codes": 23520,
+          "entropy": 10.041128534635167,
+          "normalised_entropy": 0.997568167639408,
+          "gini": 0.04222115504598545,
+          "largest_code_share": 0.0006507503965510229
         }
       },
       "popularity_slices": {
@@ -896,22 +232,22 @@
           "q1": {
             "items": 6147,
             "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.07776150967951846
+            "positive_match_rate": 0.0736944851146901
           },
           "q2": {
             "items": 6147,
             "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.08849845453066536
+            "positive_match_rate": 0.08703432568732715
           },
           "q3": {
             "items": 6147,
             "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.0891491784610379
+            "positive_match_rate": 0.08150317227916057
           },
           "q4": {
             "items": 6146,
             "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.0883501464367068
+            "positive_match_rate": 0.08265538561666125
           }
         },
         "cold_slice": {
@@ -922,50 +258,62 @@
       "collisions": {
         "level_1": {
           "items_sharing_their_code": 24586,
-          "collision_rate": 0.9904014316508725,
+          "collision_rate": 0.9899540407532436,
           "largest_cell": 285
         },
         "level_1_2": {
-          "items_sharing_their_code": 13649,
-          "collision_rate": 0.3605563915890512,
-          "largest_cell": 31
+          "items_sharing_their_code": 13976,
+          "collision_rate": 0.3724732582258917,
+          "largest_cell": 46
         },
         "level_1_2_3": {
-          "items_sharing_their_code": 1655,
-          "collision_rate": 0.038109570098019296,
-          "largest_cell": 21
+          "items_sharing_their_code": 1877,
+          "collision_rate": 0.04339691706999638,
+          "largest_cell": 16
         }
       },
       "prefix_structure": {
         "l1_to_l2": {
-          "distinct_parents": 236,
-          "mean_branches": 66.61864406779661,
-          "median_branches": 66.0,
-          "tenth_percentile_branches": 40.5,
+          "distinct_parents": 247,
+          "mean_branches": 62.465587044534416,
+          "median_branches": 63.0,
+          "tenth_percentile_branches": 26.0,
           "parents_with_a_single_branch": 1
         },
         "l2_to_l3": {
-          "distinct_parents": 15722,
-          "mean_branches": 1.504261544332782,
+          "distinct_parents": 15429,
+          "mean_branches": 1.5244020999416683,
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
-          "parents_with_a_single_branch": 11127
+          "parents_with_a_single_branch": 10827
         }
       },
       "stage3_slices": {
         "available": true,
         "evaluated_rows": 57439,
-        "recall@10": 0.06241403924163025,
+        "recall@10": 0.06103866710771427,
         "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 240,
+            "recall@10": 0.04583333333333333
+          },
+          "l1_cell_size[2,5)": {
+            "rows": 519,
+            "recall@10": 0.06936416184971098
+          },
           "l1_cell_size[20,1e+09)": {
-            "rows": 57439,
-            "recall@10": 0.06241403924163025
+            "rows": 55086,
+            "recall@10": 0.0610681479867843
+          },
+          "l1_cell_size[5,20)": {
+            "rows": 1594,
+            "recall@10": 0.05959849435382685
           }
         },
         "popularity": {
           "popularity[0,1)": {
             "rows": 32883,
-            "recall@10": 0.06322415837970988
+            "recall@10": 0.0621597786090077
           },
           "popularity[1,2)": {
             "rows": 34,
@@ -977,77 +325,77 @@
           },
           "popularity[20,1e+09)": {
             "rows": 20933,
-            "recall@10": 0.06224621411168968
+            "recall@10": 0.060192041274542585
           },
           "popularity[5,20)": {
             "rows": 3322,
-            "recall@10": 0.055689343768813966
+            "recall@10": 0.055388320288982544
           }
         }
       }
     },
-    "collapsed": {
-      "sid_path": "results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/sids_for_hgrec.npy",
+    "assignment_prefix_information": {
+      "sid_path": "results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_information/r8_control/sids_for_hgrec.npy",
       "sequential_predictability": {
         "level_1": {
-          "top1_accuracy": 0.8032333978363508,
-          "marginal_baseline": 0.615570851704912,
-          "excess_over_the_marginal": 0.18766254613143885,
-          "distinct_codes_used": 2,
+          "top1_accuracy": 0.11721288057516663,
+          "marginal_baseline": 0.01831708976522669,
+          "excess_over_the_marginal": 0.09889579080993993,
+          "distinct_codes_used": 250,
           "pairs": 339519
         },
         "level_1_2": {
-          "top1_accuracy": 0.12162500478618281,
-          "marginal_baseline": 0.01696517720657754,
-          "excess_over_the_marginal": 0.10465982757960526,
-          "distinct_codes_used": 407,
+          "top1_accuracy": 0.07379557550534727,
+          "marginal_baseline": 0.004697822507724163,
+          "excess_over_the_marginal": 0.06909775299762311,
+          "distinct_codes_used": 16279,
           "pairs": 339519
         }
       },
       "frequency_drift": {
         "level_1": {
-          "total_variation_train_to_test": 0.032499059127772734,
-          "codes_in_train_not_in_test": 0,
+          "total_variation_train_to_test": 0.10430927539312243,
+          "codes_in_train_not_in_test": 1,
           "codes_in_test_not_in_train": 0,
-          "codes_in_train": 2,
-          "codes_in_test": 2
+          "codes_in_train": 250,
+          "codes_in_test": 249
         },
         "level_1_2": {
-          "total_variation_train_to_test": 0.10477679518226894,
-          "codes_in_train_not_in_test": 25,
-          "codes_in_test_not_in_train": 1,
-          "codes_in_train": 406,
-          "codes_in_test": 382
+          "total_variation_train_to_test": 0.24057041406188504,
+          "codes_in_train_not_in_test": 4084,
+          "codes_in_test_not_in_train": 39,
+          "codes_in_train": 16257,
+          "codes_in_test": 12212
         },
         "level_1_2_3": {
-          "total_variation_train_to_test": 0.23859080368837143,
-          "codes_in_train_not_in_test": 4034,
-          "codes_in_test_not_in_train": 49,
-          "codes_in_train": 16116,
-          "codes_in_test": 12131
+          "total_variation_train_to_test": 0.28194684260911906,
+          "codes_in_train_not_in_test": 7208,
+          "codes_in_test_not_in_train": 81,
+          "codes_in_train": 23576,
+          "codes_in_test": 16449
         }
       },
       "token_balance": {
         "level_1": {
-          "distinct_codes": 2,
-          "entropy": 0.6927195402675042,
-          "normalised_entropy": 0.9993830454708109,
-          "gini": 0.01462154797250581,
-          "largest_code_share": 0.5146215479725058
+          "distinct_codes": 250,
+          "entropy": 5.453132993916811,
+          "normalised_entropy": 0.9876250280565438,
+          "gini": 0.20227290844755363,
+          "largest_code_share": 0.010615365843738562
         },
         "level_1_2": {
-          "distinct_codes": 407,
-          "entropy": 5.50471594286782,
-          "normalised_entropy": 0.9161070203021059,
-          "gini": 0.5223605011297694,
-          "largest_code_share": 0.015129946719811282
+          "distinct_codes": 16313,
+          "entropy": 9.501624590890742,
+          "normalised_entropy": 0.9795774442195593,
+          "gini": 0.27438703678522636,
+          "largest_code_share": 0.001179485093748729
         },
         "level_1_2_3": {
-          "distinct_codes": 16186,
-          "entropy": 9.482419220708554,
-          "normalised_entropy": 0.97838579770755,
-          "gini": 0.28016141120606886,
-          "largest_code_share": 0.0012201569935331679
+          "distinct_codes": 23687,
+          "entropy": 10.053648354247752,
+          "normalised_entropy": 0.998110403978829,
+          "gini": 0.03572098241571964,
+          "largest_code_share": 0.0004067189978443893
         }
       },
       "popularity_slices": {
@@ -1055,22 +403,400 @@
           "q1": {
             "items": 6147,
             "mean_popularity": 16.77794045876037,
-            "positive_match_rate": 0.7750122010736945
+            "positive_match_rate": 0.07890027655767042
           },
           "q2": {
             "items": 6147,
             "mean_popularity": 41.457458923051895,
-            "positive_match_rate": 0.7730600292825769
+            "positive_match_rate": 0.07727346673173906
           },
           "q3": {
             "items": 6147,
             "mean_popularity": 84.9077598828697,
-            "positive_match_rate": 0.7722466243696112
+            "positive_match_rate": 0.08003904343582235
           },
           "q4": {
             "items": 6146,
             "mean_popularity": 360.4692482915718,
-            "positive_match_rate": 0.7691181256101529
+            "positive_match_rate": 0.07972665148063782
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24585,
+          "collision_rate": 0.9898320250538902,
+          "largest_cell": 261
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 12912,
+          "collision_rate": 0.3365192988164477,
+          "largest_cell": 29
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 1605,
+          "collision_rate": 0.03660470980599506,
+          "largest_cell": 10
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 250,
+          "mean_branches": 65.252,
+          "median_branches": 66.0,
+          "tenth_percentile_branches": 44.900000000000006,
+          "parents_with_a_single_branch": 2
+        },
+        "l2_to_l3": {
+          "distinct_parents": 16313,
+          "mean_branches": 1.4520321216207932,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 11861
+        }
+      }
+    },
+    "residual_codebook_tangent": {
+      "sid_path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.12003746476633119,
+          "marginal_baseline": 0.015560248469157838,
+          "excess_over_the_marginal": 0.10447721629717335,
+          "distinct_codes_used": 238,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.07364830834209574,
+          "marginal_baseline": 0.004697822507724163,
+          "excess_over_the_marginal": 0.06895048583437158,
+          "distinct_codes_used": 15999,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.10212819601740843,
+          "codes_in_train_not_in_test": 1,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 238,
+          "codes_in_test": 237
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.2383527123476417,
+          "codes_in_train_not_in_test": 3907,
+          "codes_in_test_not_in_train": 44,
+          "codes_in_train": 15968,
+          "codes_in_test": 12105
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.28229616984932454,
+          "codes_in_train_not_in_test": 7193,
+          "codes_in_test_not_in_train": 81,
+          "codes_in_train": 23538,
+          "codes_in_test": 16426
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 238,
+          "entropy": 5.403790623848794,
+          "normalised_entropy": 0.9874859900201653,
+          "gini": 0.2030602699452091,
+          "largest_code_share": 0.011184772440720706
+        },
+        "level_1_2": {
+          "distinct_codes": 16031,
+          "entropy": 9.473059025930304,
+          "normalised_entropy": 0.9783913903723,
+          "gini": 0.2825621313883915,
+          "largest_code_share": 0.001667547891161996
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23650,
+          "entropy": 10.050167060287562,
+          "normalised_entropy": 0.9979196616688405,
+          "gini": 0.03718701274870573,
+          "largest_code_share": 0.0006914222963354618
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.0746705710102489
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.08573287782658207
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.08150317227916057
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.08184184835665473
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24586,
+          "collision_rate": 0.9903200878513035,
+          "largest_cell": 275
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 13254,
+          "collision_rate": 0.34798877455565946,
+          "largest_cell": 41
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 1657,
+          "collision_rate": 0.038109570098019296,
+          "largest_cell": 17
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 238,
+          "mean_branches": 67.35714285714286,
+          "median_branches": 67.0,
+          "tenth_percentile_branches": 45.0,
+          "parents_with_a_single_branch": 1
+        },
+        "l2_to_l3": {
+          "distinct_parents": 16031,
+          "mean_branches": 1.475266670825276,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 11532
+        }
+      }
+    },
+    "residual_transport_separation": {
+      "sid_path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.14307299444213725,
+          "marginal_baseline": 0.015934307063816752,
+          "excess_over_the_marginal": 0.12713868737832051,
+          "distinct_codes_used": 222,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.06880321867112002,
+          "marginal_baseline": 0.004697822507724163,
+          "excess_over_the_marginal": 0.06410539616339586,
+          "distinct_codes_used": 11776,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.10294868328039258,
+          "codes_in_train_not_in_test": 1,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 222,
+          "codes_in_test": 221
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.21083965200224908,
+          "codes_in_train_not_in_test": 2546,
+          "codes_in_test_not_in_train": 35,
+          "codes_in_train": 11755,
+          "codes_in_test": 9244
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.2786576126998389,
+          "codes_in_train_not_in_test": 6913,
+          "codes_in_test_not_in_train": 78,
+          "codes_in_train": 22928,
+          "codes_in_test": 16093
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 222,
+          "entropy": 5.045226818788185,
+          "normalised_entropy": 0.9338382550319485,
+          "gini": 0.46256133304166824,
+          "largest_code_share": 0.022206857282303656
+        },
+        "level_1_2": {
+          "distinct_codes": 11801,
+          "entropy": 8.977972907428605,
+          "normalised_entropy": 0.9575544783577777,
+          "gini": 0.4112513453201898,
+          "largest_code_share": 0.003335095782323992
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23035,
+          "entropy": 10.00696130678173,
+          "normalised_entropy": 0.9962359745124014,
+          "gini": 0.06080169867465135,
+          "largest_code_share": 0.0008541098954732175
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.08898649747844477
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.10151293313811616
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.10151293313811616
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.10543442889684347
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24586,
+          "collision_rate": 0.9909708382478546,
+          "largest_cell": 546
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 17516,
+          "collision_rate": 0.5200309106438361,
+          "largest_cell": 82
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 2672,
+          "collision_rate": 0.06312278846544928,
+          "largest_cell": 21
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 222,
+          "mean_branches": 53.15765765765766,
+          "median_branches": 49.0,
+          "tenth_percentile_branches": 10.0,
+          "parents_with_a_single_branch": 2
+        },
+        "l2_to_l3": {
+          "distinct_parents": 11801,
+          "mean_branches": 1.951953224303025,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 7200
+        }
+      }
+    },
+    "soft_assignment_branch": {
+      "sid_path": "results/stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_branch_preservation/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.13431059822867056,
+          "marginal_baseline": 0.020973789390284492,
+          "excess_over_the_marginal": 0.11333680883838607,
+          "distinct_codes_used": 183,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.07048795501871766,
+          "marginal_baseline": 0.005130787967683694,
+          "excess_over_the_marginal": 0.06535716705103396,
+          "distinct_codes_used": 14534,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.09948841042518014,
+          "codes_in_train_not_in_test": 0,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 183,
+          "codes_in_test": 183
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.22759325448339965,
+          "codes_in_train_not_in_test": 3344,
+          "codes_in_test_not_in_train": 37,
+          "codes_in_train": 14516,
+          "codes_in_test": 11209
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.2813916651581628,
+          "codes_in_train_not_in_test": 7110,
+          "codes_in_test_not_in_train": 77,
+          "codes_in_train": 23363,
+          "codes_in_test": 16330
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 183,
+          "entropy": 5.1494044587860195,
+          "normalised_entropy": 0.9884668675004288,
+          "gini": 0.1937715986123547,
+          "largest_code_share": 0.015495993817871232
+        },
+        "level_1_2": {
+          "distinct_codes": 14567,
+          "entropy": 9.341260483534391,
+          "normalised_entropy": 0.9744168221584352,
+          "gini": 0.3209275067179762,
+          "largest_code_share": 0.0015048602920242405
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23470,
+          "entropy": 10.038481288666572,
+          "normalised_entropy": 0.9975160675602387,
+          "gini": 0.0441544558977538,
+          "largest_code_share": 0.0003660470980599504
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.0849194729136164
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.1031397429640475
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.0961444607125427
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.09713634884477709
           }
         },
         "cold_slice": {
@@ -1081,44 +807,44 @@
       "collisions": {
         "level_1": {
           "items_sharing_their_code": 24587,
-          "collision_rate": 0.9999186562004311,
-          "largest_cell": 12653
+          "collision_rate": 0.9925570423394476,
+          "largest_cell": 381
         },
         "level_1_2": {
-          "items_sharing_their_code": 24548,
-          "collision_rate": 0.9834465367877333,
-          "largest_cell": 372
+          "items_sharing_their_code": 15050,
+          "collision_rate": 0.40753243584007814,
+          "largest_cell": 37
         },
         "level_1_2_3": {
-          "items_sharing_their_code": 12962,
-          "collision_rate": 0.34168463008907146,
-          "largest_cell": 30
+          "items_sharing_their_code": 1957,
+          "collision_rate": 0.04543051205921833,
+          "largest_cell": 9
         }
       },
       "prefix_structure": {
         "l1_to_l2": {
-          "distinct_parents": 2,
-          "mean_branches": 203.5,
-          "median_branches": 203.5,
-          "tenth_percentile_branches": 196.7,
+          "distinct_parents": 183,
+          "mean_branches": 79.60109289617486,
+          "median_branches": 80.0,
+          "tenth_percentile_branches": 55.2,
           "parents_with_a_single_branch": 0
         },
         "l2_to_l3": {
-          "distinct_parents": 407,
-          "mean_branches": 39.76904176904177,
-          "median_branches": 43.0,
-          "tenth_percentile_branches": 1.6000000000000014,
-          "parents_with_a_single_branch": 41
+          "distinct_parents": 14567,
+          "mean_branches": 1.6111759456305348,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 9714
         }
       }
     }
   },
   "control": "r8_control",
   "design_implications": [
-    "geometry_transport: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
-    "residual_target: the level-0 usage is more concentrated than the control's (Gini 0.353 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
-    "margin_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
-    "usage_balance: the level-0 usage is more concentrated than the control's (Gini 0.249 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
+    "separated_codeword_geometry: the level-0 usage is more concentrated than the control's (Gini 0.313 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
+    "assignment_prefix_information: the codes carry less sequence information than the control's (excess over the marginal 0.099 against 0.104), so a recommender has less to predict from the previous item",
+    "residual_transport_separation: the level-0 usage is more concentrated than the control's (Gini 0.463 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
+    "residual_transport_separation: the L1 -> L2 prefix tree is narrower than the control's (53.16 against 65.91 branches per L1 code), which reduces the candidates a beam search can walk",
     "the requirement a mechanism has to meet, stated measurably: the exported level-0 usage must not become more concentrated than the control's, the L1 -> L2 prefix tree must keep at least as many branches per code, the train-to-test frequency drift must not grow, and the sequence information the codes carry must not fall -- while the pair-level ER rises"
   ]
 }

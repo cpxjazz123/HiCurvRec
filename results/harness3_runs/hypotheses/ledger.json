@@ -391,6 +391,30 @@
       "notes": "the negative result is the finding: the mechanism search is not the bottleneck",
       "observation": "two new mechanisms, each designed against the measured constraint, cleared the frozen gate and neither improved the downstream recommendation quality",
       "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-21",
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "an arm that raises the ER without raising the Gini, and improves Stage-3",
+              "id": "P1",
+              "measurement": "the level-0 Gini and the ER and Stage-3 deltas of every measured arm",
+              "statement": "across the arms, the ER delta tracks the level-0 Gini increase, and the Stage-3 delta tracks the Gini increase as well, negatively"
+            }
+          ],
+          "statement": "the frozen pair-level ER is bought with code concentration: a behaviour-driven merge of the level-0 codes raises the positive match rate, and the same merge removes the distinctions the recommender ranks by"
+        }
+      ],
+      "id": "H107-03",
+      "next_experiment": "a mechanism that raises the ER by a better PARTITION of the items over the SAME number of codes, rather than by merging codes: the portfolio must hold the level-0 Gini at or below the control's 0.216 and the prefix branches at or above 65.9 while the ER rises",
+      "notes": "the arms measured so far line up with the prediction: the Gini increase and the Stage-3 delta go together. No arm has yet raised the ER without concentrating the codes, which is the next thing to try",
+      "observation": "the arms that raise the pair-level Hard-L1 ER raise it by CONCENTRATING the level-0 codes, and the concentration is what the recommender loses: the arm with the best ER of the campaign (17.1349, +0.80 over the control) has a level-0 Gini of 0.313 against the control's 0.216 and 62.5 prefix branches against 65.9, and its Stage-3 recall@10 is 0.061039, the worst measured; the arm with the healthiest structure (Gini 0.194, 79.6 branches, the most sequence information) has an ER of 14.6336, far below the control",
+      "status": "supported"
     }
   ],
   "ledger_sha256": null,

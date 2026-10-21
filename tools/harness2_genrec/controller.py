@@ -309,6 +309,23 @@ class Controller:
                 "the transfer from the pair-level ER to the recommender is the open problem"
             ),
         }
+        # an arm whose export exists but whose frozen evaluation was never read is picked
+        # up here: the evaluation is read once per arm, and a round that moved on must not
+        # leave an arm unmeasured.
+        unmeasured = []
+        for manifest in manifests:
+            if manifest.get("mechanism_id") in (
+                row["mechanism_id"] for row in qualified
+            ):
+                continue
+            if not any(
+                artifact["path"].endswith("sids_for_hgrec.npy")
+                and artifact.get("exists")
+                for artifact in manifest.get("artifacts") or ()
+            ):
+                continue
+            unmeasured.append(manifest["mechanism_id"])
+        self.state["arms_pending_evaluation"] = unmeasured
         self.state["scientific_stop"] = bool(improved)
         self.audit("read", arms=len(qualified), cleared=len(cleared), improved=len(improved))
         if improved:
@@ -462,6 +479,7 @@ class Controller:
                     model=self.config.model,
                     cold=True,
                     port=port,
+                    tree_prefix=f"TIGER_c107",
                 )
                 item["status"] = "trained" if record.get("status") == "cold_running" else "train_failed"
                 item["train"] = {
@@ -507,9 +525,15 @@ class Controller:
             result_dir = (item.get("train") or {}).get("result_dir")
             sid = Path(result_dir) / "sids_for_hgrec.npy" if result_dir else None
             if not sid or not sid.is_file():
-                item["evaluated"] = {"ok": False, "error": "the run exported no SIDs"}
+                # The run has not exported yet: this is a wait, not a finished evaluation.
+                # Advancing here would abandon a cold run that is still training.
+                self.state["phase"] = "train"
+                self.state["next_action"] = (
+                    f"waiting for {item['mechanism_id']} to export its SIDs before the frozen "
+                    "evaluation is read"
+                )
                 self.save()
-                continue
+                return
             intent = ExecutionIntent(
                 kind="stage2",
                 mechanism_id=item["mechanism_id"],
@@ -657,6 +681,23 @@ class Controller:
             self.audit("scientific_stop", arms=[item["mechanism_id"] for item in improved])
             self.save()
             return
+        # every round's portfolio is archived: the next round replaces the working copy, but
+        # the record of what this round proposed, rejected, trained and measured stays.
+        archive = self.config.results / f"round_{int(self.state.get('round', 0)):03d}"
+        archive.mkdir(parents=True, exist_ok=True)
+        (archive / "portfolio.json").write_text(
+            json.dumps(
+                {
+                    "round": self.state.get("round"),
+                    "closed_utc": now_utc(),
+                    "portfolio": self.state.get("portfolio"),
+                    "summary": summary,
+                },
+                indent=2,
+                default=str,
+            )
+            + "\n"
+        )
         # the next round is automatic
         self.state["round"] = int(self.state.get("round", 0)) + 1
         if (

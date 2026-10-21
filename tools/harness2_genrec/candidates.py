@@ -113,6 +113,17 @@ them. You do not write code and you do not run anything.
 
 {CONSTRAINTS}
 
+# THE TENSION THE MEASUREMENTS SHOW
+
+The frozen pair-level ER is bought with CODE CONCENTRATION: a behaviour-driven merge of the
+level-0 codes raises the positive match rate, and the same merge removes the distinctions the
+recommender ranks by. The arm with the best ER of the campaign (17.13 against the control's
+16.33) has a level-0 Gini of 0.313 against the control's 0.216 and 62.5 prefix branches
+against 65.9, and its Stage-3 recall@10 was the worst measured; the arm with the healthiest
+structure had an ER far below the control. So a candidate that repeats the merge will not
+help. A candidate has to raise the ER by a better PARTITION of the items over the SAME number
+of codes.
+
 # THE MEASURED REQUIREMENT A CANDIDATE HAS TO MEET
 
 The archived arms that raised the pair-level ER did not improve the recommender. The
