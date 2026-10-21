@@ -1,0 +1,106 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1260373,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/item_sids.json",
+      "sha256": "07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/rqvae_best.pth",
+      "sha256": "dad33e69f3aa628d1e290255fcab0ba68caecc4c2b720aec65a3ce34ad3a7747"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/sids_for_hgrec.npy",
+      "sha256": "8982e0fe0fbfdb120c2ab7ea7b753cb61bff453d2232273b7cd828c36673536c"
+    },
+    {
+      "bytes": 397,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_20-54-52/test_final.json",
+      "sha256": "53770e0f424fee7cd7b8f5e32d69cd96950f8195453cec613a28add79a969b4d"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T11:05:24.962572+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T11:05:24.879718+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "41b41b00a122e24af236ec15e9f1013c359ed2b1c88663d1afbe14b670dfa7e7",
+  "manifest_version": 1,
+  "mechanism_id": "behavior_directed_soft_code_transition_kl",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "changed_fraction": {
+        "levels_1": 0.6984585349981698,
+        "levels_2": 0.9953227315247896,
+        "levels_3": 0.9999593281002156,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 1.0408163265306123,
+      "reasons": [],
+      "train_side_discrimination": {
+        "arm": {
+          "discrimination": 26.434840425531917,
+          "neg_share": 0.0043964524370494655,
+          "pairs": 171047,
+          "pos_share": 0.11621951861184353
+        },
+        "control": {
+          "discrimination": 25.324393358876115,
+          "neg_share": 0.004577689173151239,
+          "pairs": 171047,
+          "pos_share": 0.11592720129555034
+        }
+      },
+      "verdict": "active"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": true,
+      "bootstrap_ci95": [
+        15.638471833878368,
+        17.220618022328548
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.40282131661442,
+      "neg_share": 0.004828303850156088,
+      "pos_share": 0.07919780531643175,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "stage3": {
+      "n_eval": 57439,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_20-54-52/test_final.json",
+      "test_ndcg@10": 0.03384902483338121,
+      "test_ndcg@5": 0.027091007578948483,
+      "test_recall@10": 0.06225735127700691,
+      "test_recall@5": 0.04115670537439719
+    },
+    "wall_time_s": 1220.82
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/behavior_directed_soft_code_transition_kl",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-behavior_directed_soft_code_transition_kl-20261021T110524",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl",
+  "tree_files": 23,
+  "tree_sha256": "5d91de7ca12b9b334df9e2e6bd906b275a1723ab18a5ffebc910ddb147dd3b9c",
+  "verdicts": {}
+}
