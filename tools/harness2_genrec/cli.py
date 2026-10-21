@@ -353,6 +353,60 @@ def cmd_learn(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ingest_campaign(args: argparse.Namespace) -> int:
+    """Turn the recorded campaign's artifacts into immutable manifests."""
+    from .evidence import EvidenceStore
+    from .ingest import ingest_campaign
+
+    store = EvidenceStore(Path(args.store))
+    run_dir = Path(args.run_dir) if args.run_dir else None
+    if run_dir:
+        report = ingest_campaign(store, run_dir=run_dir)
+    else:
+        report = ingest_campaign(store)
+    for row in report["ingested"]:
+        print(
+            f"  {row['mechanism_id']:<44} {row['run_id']:<58} {row['status']:<10} "
+            f"ER={row['hard_l1_er']} export={row['export_verdict']} "
+            f"R@10={row['stage3_recall@10']}"
+        )
+    print(f"ingested {report['count']} runs into {report['store']}")
+    return 0
+
+
+def cmd_hypotheses(args: argparse.Namespace) -> int:
+    """The agent proposes the next hypotheses; the controller ranks and records them."""
+    from .evidence import EvidenceStore
+    from .hypotheses import generate
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = generate(store, Path(args.out), model=args.model, timeout=args.timeout)
+    print(f"hypotheses: {report['candidates']} | ledger {report['ledger_sha256'][:16]}")
+    for problem in report["problems"]:
+        print(f"  PROBLEM {problem}")
+    for row in report["ranking"]:
+        print(
+            f"  {row['score']:>6}  {row['hypothesis']}/{row['experiment']} "
+            f"gain={row['information_gain']} cost={row['cost_units']} :: {row['decision'][:80]}"
+        )
+    return 0
+
+
+def cmd_record_experiments(args: argparse.Namespace) -> int:
+    """The controller writes the executed experiments into the ledger."""
+    from .evidence import EvidenceStore
+    from .experiments import record
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = record(store, Path(args.ledger), Path(args.out))
+    for row in report["updated"]:
+        print(f"  {row['hypothesis']}/{row['experiment']}: {row['status']} :: {row['verdict'][:100]}")
+    print("statuses:", report["statuses"])
+    for problem in report["problems"]:
+        print(f"  PROBLEM {problem}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -427,6 +481,28 @@ def _build_parser() -> argparse.ArgumentParser:
     learn.add_argument("--model", default="")
     learn.add_argument("--timeout", type=int, default=1800)
     learn.set_defaults(func=cmd_learn)
+
+    ingest = sub.add_parser(
+        "ingest-campaign", help="ingest real runs into the immutable evidence store"
+    )
+    ingest.add_argument("--store", default="results/harness3_runs/store")
+    ingest.add_argument("--run-dir", default="")
+    ingest.set_defaults(func=cmd_ingest_campaign)
+
+    hyp = sub.add_parser("hypotheses", help="generate the next hypotheses from the store")
+    hyp.add_argument("--store", default="results/harness3_runs/store")
+    hyp.add_argument("--out", default="results/harness3_runs/hypotheses")
+    hyp.add_argument("--model", default="")
+    hyp.add_argument("--timeout", type=int, default=2400)
+    hyp.set_defaults(func=cmd_hypotheses)
+
+    rec = sub.add_parser(
+        "record-experiments", help="write the executed experiments back into the ledger"
+    )
+    rec.add_argument("--store", default="results/harness3_runs/store")
+    rec.add_argument("--ledger", default="results/harness3_runs/hypotheses/ledger.json")
+    rec.add_argument("--out", default="results/harness3_runs/experiments")
+    rec.set_defaults(func=cmd_record_experiments)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")

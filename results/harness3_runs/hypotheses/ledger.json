@@ -1,0 +1,281 @@
+{
+  "generated_utc": "2026-10-21T08:32:10.167864+00:00",
+  "hypotheses": [
+    {
+      "created_utc": "2026-10-21T08:32:09.977165+00:00",
+      "evidence_paths": [],
+      "evidence_runs": [
+        "control-r8_control-20261021T082024",
+        "stage2-behavior_conditioned_pairwise_margin-20261021T082028",
+        "stage2-curvature_weighted_transition_transport-20261021T082032"
+      ],
+      "experiments": [
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X1",
+          "produced_runs": [],
+          "result": "the two arms' trained models are byte-identical to the matched control's: the encoder output, the residual stream, the codebook and the assignment all agree to the last bit, and the checkpoint files share one SHA-256",
+          "status": "executed",
+          "tests": [
+            "E1",
+            "E2"
+          ],
+          "treatment_runs": [
+            "stage2-behavior_conditioned_pairwise_margin-20261021T082028",
+            "stage2-curvature_weighted_transition_transport-20261021T082032"
+          ],
+          "verdict": "the arms differ nowhere in the trained model, so the mechanism never moved the weights; the export path did not fall back on anything, the training itself was unchanged"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "A hash or tensor comparison shows that the tensors actually consumed by export differ from control.",
+              "id": "P1",
+              "measurement": "For each run, identify the exact checkpoint and tensor names consumed by export; compare tensor hashes and maximum absolute elementwise differences against the matched control.",
+              "statement": "The export inputs or selected checkpoint tensors for both arms are identical to control, despite differences in training-loss traces."
+            },
+            {
+              "falsifier": "A deterministic re-export from an arm checkpoint produces any changed SID relative to control.",
+              "id": "P2",
+              "measurement": "Run the existing export procedure on each saved final checkpoint with identical data, configuration, and seed; compare the full SID arrays and report the changed-item count.",
+              "statement": "Re-exporting from the arms' final checkpoints with the same export configuration still produces control-identical SIDs."
+            }
+          ],
+          "statement": "The added loss terms change encoder-side optimization but do not affect the representations, checkpoint, or quantization inputs used by the SID export path."
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "The export-input representations are identical, or the quantizer produces different assignments under the existing configuration.",
+              "id": "P3",
+              "measurement": "Compare export-input embeddings, nearest-code distances, assignment margins, and per-level assignments for the same items across control and each arm.",
+              "statement": "Arm and control export-input representations differ, while pre-quantization assignments or distances differ too little to change final SID assignments."
+            }
+          ],
+          "statement": "The export path does use arm-specific representations, but quantization or assignment maps their differences to the same discrete codes."
+        }
+      ],
+      "id": "H105-01",
+      "next_experiment": "X3",
+      "notes": "the export path is not the problem: the trained model itself is identical to the control's, and X5 shows why -- the host discards an auxiliary term's encoder gradient",
+      "observation": "stage2-behavior_conditioned_pairwise_margin-20261021T082028 and stage2-curvature_weighted_transition_transport-20261021T082032 had different training losses but exported SIDs bit-identical to control-r8_control-20261021T082024.",
+      "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-21T08:32:09.977179+00:00",
+      "evidence_paths": [],
+      "evidence_runs": [
+        "control-r8_control-20261021T082024",
+        "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
+        "stage2-behaviour_conditioned_residual_target-20261021T082030",
+        "stage2-behavior_residual_geometry_transport-20261021T082034"
+      ],
+      "experiments": [
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X1",
+          "produced_runs": [],
+          "result": "the ER gains are spread over the catalogue rather than carried by a few items (4.8-5.6% of the held-out anchors changed, and the top 1% of anchors carry 18-21% of the change), the code cells are the same size as the control's for the geometry arm (102 vs 103) and larger for the residual target (111), and the downstream differences are 2.1 and 9.3 times the Stage-3 run-to-run band",
+          "status": "executed",
+          "tests": [
+            "E1",
+            "E2"
+          ],
+          "treatment_runs": [
+            "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
+            "stage2-behaviour_conditioned_residual_target-20261021T082030",
+            "stage2-behavior_residual_geometry_transport-20261021T082034"
+          ],
+          "verdict": "the ER gain is not a concentration artefact, and the geometry arm's export is not degraded; the downstream difference is real but small for the geometry arm and clearly negative for the residual target"
+        },
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X2",
+          "produced_runs": [],
+          "result": "",
+          "status": "planned",
+          "tests": [
+            "E3"
+          ],
+          "treatment_runs": [
+            "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
+            "stage2-behaviour_conditioned_residual_target-20261021T082030",
+            "stage2-behavior_residual_geometry_transport-20261021T082034"
+          ],
+          "verdict": ""
+        },
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X3",
+          "produced_runs": [],
+          "result": "",
+          "status": "planned",
+          "tests": [
+            "E4"
+          ],
+          "treatment_runs": [
+            "stage2-behaviour_conditioned_residual_target-20261021T082030",
+            "stage2-behavior_residual_geometry_transport-20261021T082034"
+          ],
+          "verdict": ""
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "Per-item ER changes are broadly distributed across the catalogue and not dominated by a small subset.",
+              "id": "P1",
+              "measurement": "Using the same held-out transition pairs as the ER evaluation, calculate per-item and per-transition ER changes versus control; report the changed-item fraction, improvement quantiles, and the share of total ER change contributed by the top 1%, 5%, and 10% of items.",
+              "statement": "ER improvements are highly concentrated, with many items unchanged or worse and a small fraction accounting for most of the aggregate gain."
+            }
+          ],
+          "statement": "The ER gain is concentrated in a small subset of items or transitions, so catalogue-wide recommendation opportunities barely change."
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "Neighbourhood-span and prefix-distribution metrics are unchanged or improve, and candidate recall under the same beam-search procedure does not decline.",
+              "id": "P2",
+              "measurement": "On identical held-out prefixes and transitions, enumerate code neighbourhoods and report distinct-code counts by distance and level, prefix occupancy and entropy, beam candidate-set sizes, and candidate recall under the Stage-3 beam-search configuration.",
+              "statement": "Compared with control, treatment codes change the number of distinct codes spanned by transition neighbourhoods or redistribute prefixes in a way that reduces retrieval of relevant candidates."
+            }
+          ],
+          "statement": "The changed codes have less useful neighbourhood and prefix structure for beam search, even where pair-level ER improves."
+        },
+        {
+          "id": "E3",
+          "predictions": [
+            {
+              "falsifier": "Cross-seed SID agreement and level-wise assignment stability are at least as high as control.",
+              "id": "P3",
+              "measurement": "For matched-seed checkpoints, compute item-level exact-SID agreement and per-level code agreement across seeds; within each run, compare assignments from saved checkpoints across training epochs using the same held-out items.",
+              "statement": "Treatment codes show lower cross-seed item-level SID agreement or less consistent level-wise assignments than control, even when their aggregate ER is favorable."
+            }
+          ],
+          "statement": "The pair-level ER hides instability across training seeds or across the three code levels, making the treatment's codes unreliable for downstream retrieval."
+        },
+        {
+          "id": "E4",
+          "predictions": [
+            {
+              "falsifier": "A repeated-seed comparison shows a consistent treatment effect whose uncertainty interval excludes zero.",
+              "id": "P4",
+              "measurement": "Train Stage-3 with multiple matched seeds for the same frozen code artifacts and evaluation data; report paired recall@10 and NDCG@10 differences, seed-level variance, and a paired confidence interval.",
+              "statement": "Across repeated Stage-3 training seeds, treatment and control recall@10 distributions overlap substantially and the estimated treatment-control difference is not distinguishable from seed variability."
+            }
+          ],
+          "statement": "The apparent Stage-3 differences are within run-to-run noise of the Stage-3 trainer rather than a reliable treatment effect."
+        }
+      ],
+      "id": "H105-02",
+      "next_experiment": "X3",
+      "notes": "the ER gain is broad and the export is not damaged, yet the downstream quality did not follow; the pair-level ER and the recommender's objective are decoupled on this host, and the paired repeat is what would settle whether the small downstream difference is real",
+      "observation": "stage2-behavior_conditioned_pairwise_curvature-20261021T082026 had Hard-L1 ER 2.619839290662233, while stage2-behaviour_conditioned_residual_target-20261021T082030 and stage2-behavior_residual_geometry_transport-20261021T082034 had ERs above the control gate and Stage-3 recall@10 below control-r8_control-20261021T082024.",
+      "status": "inconclusive"
+    },
+    {
+      "created_utc": "2026-10-21T08:32:09.977183+00:00",
+      "evidence_paths": [],
+      "evidence_runs": [
+        "control-r8_control-20261021T082024",
+        "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
+        "stage2-behavior_residual_geometry_transport-20261021T082034",
+        "stage2-behaviour_conditioned_residual_target-20261021T082030"
+      ],
+      "experiments": [
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X1",
+          "produced_runs": [],
+          "result": "the residual target concentrates the level-0 usage (Gini +0.137, entropy -0.137) and loses 4.8% of its level-2 occupancy; the geometry transport arm leaves the balance essentially unchanged (Gini +0.012, entropy -0.0005) and improves its train-over-held-out discrimination ratio by 4.5%",
+          "status": "executed",
+          "tests": [
+            "E1",
+            "E2"
+          ],
+          "treatment_runs": [
+            "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
+            "stage2-behavior_residual_geometry_transport-20261021T082034",
+            "stage2-behaviour_conditioned_residual_target-20261021T082030"
+          ],
+          "verdict": "the residual target's ER gain was bought with a more concentrated level-0 code distribution, which is consistent with its downstream regression; the geometry arm's export is healthy and generalises, so its flat downstream result is not explained by the code distribution or by overfitting"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "Across the available artifacts, ER improvement consistently predicts improved Stage-3 candidate ranking and retrieval.",
+              "id": "P1",
+              "measurement": "For the same held-out examples, calculate per-transition ER, Stage-3 candidate recall, and ranking metrics from frozen artifacts; report their paired changes versus control and their association, without interpreting association as causal.",
+              "statement": "Across items and held-out transitions, changes in ER will have weak or inconsistent association with changes in Stage-3-relevant candidate ranking or retrieval, including cases where ER improves but candidate ranking worsens."
+            },
+            {
+              "falsifier": "Artifacts that pass the ER gate also consistently preserve or improve Stage-3 candidate recall under matched evaluation.",
+              "id": "P2",
+              "measurement": "Run the fixed Stage-3 candidate-generation and scoring evaluation on each existing eligible frozen artifact; compare candidate recall and final recall@10/NDCG@10 against the matched control.",
+              "statement": "The ER-only gate admits artifacts that fail a direct Stage-3 candidate-retrieval check."
+            }
+          ],
+          "statement": "The ER admission signal is not aligned with the downstream recommendation objective: pair-level separation can improve without preserving the item geometry or ranking information that Stage-3 needs."
+        }
+      ],
+      "id": "H105-03",
+      "next_experiment": "X3",
+      "notes": "the residual target's gain came with a more concentrated level-0 usage and a collapsed level 2, which matches its downstream regression; the geometry arm changed neither the balance nor the generalisation gap",
+      "observation": "stage2-behavior_conditioned_pairwise_curvature-20261021T082026 reduced Hard-L1 ER to 2.619839290662233, whereas stage2-behavior_residual_geometry_transport-20261021T082034 raised ER to 16.616 and had lower Stage-3 recall@10 and NDCG@10 than control-r8_control-20261021T082024.",
+      "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-21T08:32:10.167852+00:00",
+      "evidence_paths": [],
+      "evidence_runs": [
+        "stage2-behavior_conditioned_pairwise_margin-20261021T082028",
+        "stage2-curvature_weighted_transition_transport-20261021T082032"
+      ],
+      "experiments": [
+        {
+          "control_run": "control-r8_control-20261021T082024",
+          "id": "X5",
+          "produced_runs": [],
+          "result": "",
+          "status": "executed",
+          "tests": [
+            "E1"
+          ],
+          "treatment_runs": [],
+          "verdict": ""
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "the encoder gradient after the host's assembly differs from the control's by a nonzero amount",
+              "id": "P1",
+              "measurement": "a matched pair on the host's mini case: the encoder gradient with and without the term, before and after the host's own projection",
+              "statement": "on the host's own mini case, an auxiliary term changes the encoder gradient before the host's assembly and not at all after it"
+            }
+          ],
+          "statement": "the host overwrites the encoder gradient after the backward, so an auxiliary term that reaches only the encoder is discarded in production, however healthy it looks in isolation"
+        }
+      ],
+      "id": "H105-04",
+      "next_experiment": "",
+      "notes": "measured on the host's own code path: the encoder gradient difference is 1.66e-05 before the host's post-backward assembly and exactly 0.0 after it, so the two inert arms' training was bit-identical to the control's. A mechanism that wants to move the exported SIDs has to deliver its gradient to the codebook, which the host never overwrites",
+      "observation": "two arms' trained models are byte-identical to the matched control's, although their mechanisms pass the independent gradient checks",
+      "status": "supported"
+    }
+  ],
+  "ledger_sha256": "daa1cb248553fed490806bf2066dc00784019edeab45430704d796869afe148d",
+  "ledger_version": 1
+}

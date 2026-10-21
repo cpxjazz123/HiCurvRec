@@ -268,11 +268,20 @@ def _code_only(source: str) -> str:
     return "\n".join(pieces)
 
 
+#: Where a measurement came from. The levels are ordered: a prototype is a mathematical
+#: claim, the integrated module is the production claim, and the runtime entry is the
+#: training claim. They are not interchangeable, and a frozen claim is never revised
+#: because a prototype disagreed with it.
+DIAGNOSIS_PROVENANCE = ("spec", "prototype", "integrated", "runtime")
+
+
 def diagnose_gradient_failure(
     entry,
     case: Dict[str, torch.Tensor],
     targets: Dict[str, str],
     parameters: Dict[str, float],
+    *,
+    provenance: str = "integrated",
 ) -> Dict[str, Any]:
     """Why did a declared gradient target not receive a gradient?
 
@@ -299,6 +308,10 @@ def diagnose_gradient_failure(
         return float(_loss(entry, probe, parameters).detach())
 
     base = loss_value({})
+    if provenance not in DIAGNOSIS_PROVENANCE:
+        raise ValueError(
+            f"unknown diagnosis provenance {provenance!r}; known: {list(DIAGNOSIS_PROVENANCE)}"
+        )
     for name, expectation in sorted(targets.items()):
         if name not in ("source", "target", "codebook"):
             continue
@@ -343,6 +356,7 @@ def diagnose_gradient_failure(
                 )
             diagnosis[name] = {
                 "expectation": expectation,
+                "provenance": provenance,
                 "base_loss": base,
                 "forward_dependence": forward_move,
                 "local_gradient": 0.0,
@@ -368,6 +382,7 @@ def diagnose_gradient_failure(
                 verdict = "matches the declaration"
             diagnosis[name] = {
                 "expectation": expectation,
+                "provenance": provenance,
                 "base_loss": base,
                 "forward_dependence": forward_move,
                 "local_gradient": local,
@@ -397,6 +412,7 @@ def diagnose_gradient_failure(
             reason = f"the gradient reaches {name} ({local:.3e})"
         diagnosis[name] = {
             "expectation": expectation,
+            "provenance": provenance,
             "base_loss": base,
             "forward_dependence": forward_move,
             "local_gradient": local,
@@ -404,6 +420,51 @@ def diagnose_gradient_failure(
             "reason": reason,
         }
     return diagnosis
+
+
+def reconcile_diagnoses(*diagnoses: Dict[str, Any]) -> Dict[str, Any]:
+    """Reconcile diagnoses measured at different provenance levels.
+
+    A prototype is a mathematical claim; the integrated module is the production claim.
+    When they disagree about whether a target is reachable, the honest state is
+    ``unresolved``: something in the chain is wrong, and the frozen claim is NOT revised
+    to match a prototype. The integrated measurement is the one that governs the
+    production claim, and the conflict is recorded rather than resolved by fiat.
+    """
+    per_target: Dict[str, Dict[str, Any]] = {}
+    for diagnosis in diagnoses:
+        for name, entry in diagnosis.items():
+            provenance = str(entry.get("provenance", "unknown"))
+            per_target.setdefault(name, {})[provenance] = entry
+    conflicts: List[Dict[str, Any]] = []
+    names = sorted(per_target)
+    for name in names:
+        levels = per_target[name]
+        verdicts = {level: entry.get("verdict") for level, entry in levels.items()}
+        reachable = {
+            level: verdict not in ("impossible specification", "missing gradient (wiring)")
+            for level, verdict in verdicts.items()
+        }
+        if len(set(reachable.values())) > 1:
+            conflicts.append({"target": name, "verdicts": verdicts})
+    present = sorted({level for levels in per_target.values() for level in levels})
+    governing = None
+    for candidate in ("integrated", "runtime", "prototype"):
+        if candidate in present:
+            governing = candidate
+            break
+    return {
+        "state": "unresolved" if conflicts else "consistent",
+        "governing_provenance": governing,
+        "conflicts": conflicts,
+        "levels": present,
+        "reason": (
+            "the measurements disagree about whether the gradient reaches a declared "
+            "target, so the claim stays as it was frozen and the conflict is open"
+            if conflicts
+            else "every provenance level agrees about the declared targets"
+        ),
+    }
 
 
 def verify_mechanism(
