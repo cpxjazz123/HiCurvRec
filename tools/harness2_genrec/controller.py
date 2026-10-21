@@ -227,6 +227,12 @@ class Controller:
                 return False, f"{running} training jobs are already running"
             if self.visible_gpus() < 4:
                 return False, f"only {self.visible_gpus()} GPUs are visible; the frozen run needs 4"
+            live_stage3 = self._live_stage3_processes()
+            if live_stage3:
+                return False, (
+                    f"{live_stage3} Stage-3 process tree(s) hold the GPU memory; a cold run "
+                    "alongside them exhausts the device"
+                )
             if self.free_gb() < self.config.min_free_gb:
                 return False, f"only {self.free_gb():.0f} GB free; the cap is {self.config.min_free_gb} GB"
             return True, ""
