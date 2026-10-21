@@ -277,10 +277,9 @@ class Controller:
                 ).stdout
             except Exception:  # noqa: BLE001
                 continue
-            if "torchrun" in info or "/python" in info:
-                if "run_stage3_param" in info and "torchrun" not in info:
-                    launchers += 1
-        return launchers or len(pids)
+            if "run_stage3_param" in info and "torchrun" not in info and "-u " not in info:
+                launchers += 1
+        return launchers
 
     def allocate_port(self) -> int:
         used = {
