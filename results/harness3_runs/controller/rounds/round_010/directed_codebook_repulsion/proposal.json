@@ -1,0 +1,136 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The directed distance term updates codewords according to source-weighted target residuals. The repulsion term pushes every codeword pair apart, independently of transition pairing. It contains no attractive source-target codeword term, so it cannot pull a transition's two codewords together; repulsion opposes such convergence.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, this objective has a direct codebook gradient. Unlike the collapsed pairwise cross-entropy, it does not reward a shared codeword for both endpoints: its directed fit term is source-conditioned and its explicit codeword interaction is repulsive, not pairwise attractive. It does not guarantee preservation of code usage or downstream quality, so those remain rejection checks."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "Let p(x)_c = softmax_c(-||x-e_c||^2/tau), where e_c is codebook row c. Define L = lambda * [mean_i sum_c p(source_i)_c * ||target_i-e_c||^2 - rho * mean_{c<d} exp(-||e_c-e_d||^2/sigma^2)]. The first term is directional: source assignments select codewords against which targets are measured. The second spreads codewords globally, not by pulling paired codewords together.",
+  "expected_failure_modes": [
+    "The global repulsion may distort useful codebook geometry or be too weak to counter codeword convergence induced by the host objective. Its directed distance term may improve pair fit by changing assignments in a way that still increases level-0 usage concentration or harms downstream ranking; the frozen downstream evaluation is needed to detect that."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if source-target exchange does not change the loss, any declared gradient is zero or non-finite on the checker case, or the cold run increases level-0 Gini, reduces L1-to-L2 branches, increases train-to-test frequency drift, lowers sequence information, or fails to improve Stage-3 recall@10 against control.",
+    "Unlike encoder-only terms, this objective has a direct codebook gradient. Unlike the collapsed pairwise cross-entropy, it does not reward a shared codeword for both endpoints: its directed fit term is source-conditioned and its explicit codeword interaction is repulsive, not pairwise attractive. It does not guarantee preservation of code usage or downstream quality, so those remain rejection checks."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codebook_repulsion",
+  "parameters": {
+    "eps": 1e-08,
+    "lambda": 0.001,
+    "rho": 0.1,
+    "sigma": 1.0,
+    "tau": 0.5
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T20:49:11.378948+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "fa914e5329f8984148cee8fb3418ab835e11b4c997171cfa5a4fd15d09d3ba28"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "e_c": "Codebook row c.",
+    "lambda": "Overall mechanism-loss weight.",
+    "mask_i": "Validity indicator; means are over valid pairs.",
+    "p(x)_c": "Soft assignment probability of representation x to codeword c.",
+    "rho": "Relative strength of global codeword repulsion.",
+    "sigma": "Length scale for codeword repulsion.",
+    "source_i": "Source representation for valid pair i.",
+    "target_i": "Target representation for valid pair i.",
+    "tau": "Soft-assignment temperature."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft-assignment geometry with global codeword repulsion",
+  "version": "1.0.0"
+}

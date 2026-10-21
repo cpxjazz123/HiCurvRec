@@ -1,0 +1,144 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codeword_tangent_repulsion",
+      "title": "Improve directed pair separation with a codebook-tangent, usage-balanced geometry objective",
+      "equation": "For each valid row b, let i_b = argmin_j ||source_b - codebook_j||^2 and q_b = argmin_j ||target_b - codebook_j||^2, with stop-gradient through i_b and q_b. Let d_b = codebook[q_b] - codebook[i_b], u_b = (target_b - source_b) / (||target_b - source_b||_2 + epsilon), and P_b = I - d_b d_b^T / (||d_b||_2^2 + epsilon). Define L = -lambda * mean_b(mask_b * (u_b^T P_b d_b)) + mu * sum_j (p_j - 1/C)^2, where p_j is the softmax-normalized masked source-assignment count for code j, with assignment logits -||source_b-codebook_j||^2 / tau.",
+      "symbols": {
+        "b": "Batch-row index.",
+        "j": "Codebook index.",
+        "B": "Batch size.",
+        "C": "Number of codewords.",
+        "D": "Embedding dimension.",
+        "source_b": "Source item representation.",
+        "target_b": "Directed next-item representation.",
+        "codebook_j": "Codeword j.",
+        "i_b": "Nearest codeword to source_b; assignment index is treated as constant for differentiation.",
+        "q_b": "Nearest codeword to target_b; assignment index is treated as constant for differentiation.",
+        "d_b": "Directed displacement from the source-assigned codeword to the target-assigned codeword.",
+        "u_b": "Unit-normalized directed item displacement.",
+        "P_b": "Projection onto the subspace orthogonal to d_b.",
+        "mask_b": "Validity indicator for row b.",
+        "p_j": "Soft masked source-assignment frequency of codeword j.",
+        "epsilon": "Positive numerical stabilizer.",
+        "tau": "Temperature for the soft assignment frequencies.",
+        "lambda": "Weight on the directed tangential geometry objective.",
+        "mu": "Weight on the assignment usage-balance regularizer."
+      },
+      "parameters": {
+        "lambda": 0.01,
+        "mu": 0.001,
+        "tau": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-next-item displacement target - source, plus masked source-assignment frequencies; no information beyond source, target, codebook, and mask is required.",
+      "codebook_interaction": "The first term applies equal-and-opposite tangential forces to the two assigned codewords, increasing the component of their separation aligned with the directed item displacement. Because the force is projected orthogonally to their current separation, its instantaneous first-order change in squared pair distance is zero; it does not pull the pair together. The usage penalty spreads soft source-assignment mass across codes. Assignment indices are detached, while distances and codeword vectors remain differentiable.",
+      "encoder_interaction": "The loss has nonzero derivatives with respect to source and target, but the host overwrites encoder gradients after backward, so those derivatives do not update the encoder in production. The viable path is its direct nonzero codebook gradient, which can change exported assignments.",
+      "risk": "The tangential update may rotate codeword boundaries without improving the positive-pair match rate, or may alter higher-level residual assignments and prefix structure despite the level-0 usage penalty. The usage penalty can also be too weak to prevent concentration or too strong to impair useful specialization. The single frozen evaluation could therefore show no recall gain even if pair geometry changes.",
+      "falsifier": "Reject if the checker finds a non-finite or zero codebook gradient, if exchanging source and target leaves the loss unchanged, if the measured transition-pair codeword separation decreases, or if the cold run fails to raise Stage-3 recall@10 while keeping level-0 Gini no higher than control, L1-to-L2 branches per code no lower than control, train-to-test frequency drift no higher than control, and sequence information no lower than control.",
+      "why_not_the_measured_failures": "Unlike encoder-only margin and transport arms, this term directly differentiates through codeword vectors and therefore reaches the surviving codebook path. Unlike the collapsed pairwise cross-entropy, it does not reward assigning both endpoints to one code or shorten their separation: its geometry force is tangential to the current pair displacement, and its explicit usage penalty discourages code concentration."
+    },
+    {
+      "id": "directed_assignment_prefix_information",
+      "title": "Preserve directed transition information with a codebook-mediated assignment objective",
+      "equation": "For each valid row b, define soft source and target assignments a_bj = softmax_j(-||source_b-codebook_j||^2/tau) and r_bj = softmax_j(-||target_b-codebook_j||^2/tau). Let p_j = mean_b(mask_b * a_bj), p_jk = mean_b(mask_b * a_bj * r_bk), and define L = -lambda * sum_jk p_jk log((p_jk + epsilon)/(p_j p_k + epsilon)) + mu * sum_j (p_j - 1/C)^2. The source-to-target joint is ordered, so exchanging source and target changes the objective in general.",
+      "symbols": {
+        "b": "Batch-row index.",
+        "j": "Source-assignment code index.",
+        "k": "Target-assignment code index.",
+        "B": "Batch size.",
+        "C": "Number of codewords.",
+        "D": "Embedding dimension.",
+        "source_b": "Source item representation.",
+        "target_b": "Directed next-item representation.",
+        "codebook_j": "Codeword j.",
+        "a_bj": "Soft assignment probability of source_b to codeword j.",
+        "r_bj": "Soft assignment probability of target_b to codeword j.",
+        "p_j": "Masked marginal source-assignment probability for code j.",
+        "p_jk": "Masked ordered joint probability for source code j and target code k.",
+        "mask_b": "Validity indicator for row b.",
+        "tau": "Soft-assignment temperature.",
+        "lambda": "Weight on the negative directed mutual-information objective.",
+        "mu": "Weight on source-assignment usage balance.",
+        "epsilon": "Positive numerical stabilizer."
+      },
+      "parameters": {
+        "lambda": 0.01,
+        "mu": 0.001,
+        "tau": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target transition represented by the two embeddings in each valid row; the objective maximizes their assignment mutual information while balancing source usage.",
+      "codebook_interaction": "Gradients flow through both soft assignment distributions into the codebook, moving Voronoi geometry to preserve informative ordered transitions and balanced source usage. The joint-information term rewards predictable but non-independent source and target codes; it does not contain a same-code attraction or a pairwise codeword-distance minimization, so it has no direct force pulling the two codewords together. Soft assignments avoid nondifferentiable hard-index gradients.",
+      "encoder_interaction": "Source and target receive nonzero derivatives, but the host discards the encoder gradient after backward. The codebook receives a direct nonzero gradient, so the term can still affect the trained model and hard SID export.",
+      "risk": "The objective can increase mutual information by encoding batch-specific or unstable transition patterns rather than useful held-out sequence structure. Its soft joint estimates may also be noisy at the available batch size, and the balance penalty on source marginals does not guarantee that the full three-level prefix tree or train-to-test frequency drift is preserved.",
+      "falsifier": "Reject if swapping source and target does not change the loss on a nondegenerate checker batch, if any declared gradient is zero or non-finite, or if the cold run does not improve Stage-3 recall@10 while meeting the control-relative Gini, prefix-branch, train-to-test drift, and sequence-information requirements.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only terms, this objective differentiates through soft distances to the codebook. Unlike directed code-assignment cross-entropy that collapsed the codebook, it optimizes ordered assignment information rather than asking both endpoints to share a code; it uses soft assignments and an explicit marginal usage penalty, not pairwise codeword convergence."
+    },
+    {
+      "id": "directed_residual_geometry_separation",
+      "title": "Transport behavior-conditioned residual direction while explicitly separating assigned codewords",
+      "equation": "For each valid row b and residual level l, let s_b^l and t_b^l be source and target residuals, and let i_b^l and q_b^l be their nearest codebook indices, treated as constants for differentiation. Define d_b^l = codebook[q_b^l] - codebook[i_b^l], v_b^l = t_b^l - s_b^l, and L = lambda * mean_{b,l}(mask_b * ||d_b^l - v_b^l||_2^2 / (||v_b^l||_2^2 + epsilon)) + mu * mean_{b,l}(mask_b * max(0, m - ||d_b^l||_2)^2).",
+      "symbols": {
+        "b": "Batch-row index.",
+        "l": "Residual quantization level.",
+        "B": "Batch size.",
+        "C": "Number of codewords at the level.",
+        "D": "Residual dimension.",
+        "s_b^l": "Source residual at level l.",
+        "t_b^l": "Target residual at level l.",
+        "i_b^l": "Nearest codeword index for the source residual, detached for differentiation.",
+        "q_b^l": "Nearest codeword index for the target residual, detached for differentiation.",
+        "d_b^l": "Directed displacement between the target- and source-assigned codewords.",
+        "v_b^l": "Behavior-conditioned directed residual displacement.",
+        "codebook_j": "Codeword j at the relevant level.",
+        "mask_b": "Validity indicator for row b.",
+        "lambda": "Weight on normalized directed residual transport.",
+        "mu": "Weight on the minimum-separation barrier.",
+        "m": "Minimum permitted assigned-codeword separation for the barrier.",
+        "epsilon": "Positive numerical stabilizer."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "mu": 0.01,
+        "m": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed residual displacement t_b^l - s_b^l at each residual level, with valid rows selected by mask.",
+      "codebook_interaction": "The normalized transport term moves each assigned codeword so their directed displacement tracks the behavior-conditioned residual displacement. The separation barrier has gradient only when the assigned pair is closer than m and pushes the two codewords apart; it never pulls them together. Nearest-code indices are detached, but residual vectors and codeword vectors remain differentiable. If the barrier is inactive, transport can still alter pair distance, so the barrier margin must be calibrated above the observed collapse regime.",
+      "encoder_interaction": "The loss has nonzero derivatives with respect to source and target residuals, but the host overwrites encoder gradients after backward, so those derivatives do not update the encoder in production. Its direct codebook gradient is the effective training path and can alter exported SIDs.",
+      "risk": "Residual transport may overfit training transitions, disrupt higher-level residual quantization, or satisfy the minimum-separation barrier by spreading codewords in directions that do not preserve useful prefix branches. The barrier prevents close-pair collapse but does not itself guarantee balanced level-0 usage, sequence information, or downstream retrieval quality.",
+      "falsifier": "Reject if the checker finds a zero or non-finite declared gradient, if exchanging source and target leaves the loss unchanged, or if the cold run shows reduced pair separation, increased level-0 Gini, fewer L1-to-L2 branches per code, increased train-to-test frequency drift, reduced sequence information, or no Stage-3 recall@10 improvement over control.",
+      "why_not_the_measured_failures": "Unlike encoder-only residual transport, this objective directly reaches codebook parameters. Unlike the collapsed pairwise-curvature and directed assignment cross-entropy arms, it combines directed residual transport with an explicit one-sided minimum-separation barrier, so close transition codewords are pushed apart rather than attracted together. It is distinct from the geometry and assignment-information candidates because its primary objective matches behavior-conditioned residual displacement."
+    }
+  ]
+}
+```

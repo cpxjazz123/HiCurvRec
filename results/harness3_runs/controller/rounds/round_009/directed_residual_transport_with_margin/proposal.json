@@ -1,0 +1,149 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The transport-alignment term updates the source- and target-weighted codebook vectors to represent the directed residual. The overlap penalty discourages shared endpoint assignments, and the source-marginal concentration penalty discourages excessive usage imbalance. The alignment term does not minimize the distance between the two endpoint codewords; the overlap penalty actively discourages assignment convergence.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike inert encoder-only mechanisms, residual alignment and the assignment penalties differentiate directly through the codebook. Unlike the collapsed pairwise curvature or code-assignment cross-entropy, the loss aligns a directed codebook transport vector to the observed residual and penalizes endpoint assignment overlap; it does not pull the two transition codewords toward one another. The marginal concentration penalty explicitly targets the measured failure mode of obtaining ER through code merging."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid pair let r=target-source, a_c=softmax_c(-||source-codebook_c||^2/tau), and b_c=softmax_c(-||target-codebook_c||^2/tau). Define v_s=sum_c a_c*codebook_c and v_t=sum_c b_c*codebook_c. Let T=v_t-v_s and let z=(r dot T)/(||r||*||T||+epsilon). Let O=sum_c a_c*b_c and let U be the masked mean of a across source endpoints. L=weight*(mean_b (1-z) + overlap_weight*mean_b O + balance_weight*(sum_c U_c^2-1/C)).",
+  "expected_failure_modes": [
+    "Residual alignment may favor codeword transport directions that fit frequent training transitions but generalize poorly, while overlap and marginal balance may conflict with naturally common transitions. Cosine alignment can also be unstable when the transport vector is near zero; epsilon keeps the calculation finite but does not guarantee useful gradients or improved hard assignments."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if exported level-0 Gini exceeds 0.216, L1-to-L2 branches fall below 65.91 per L1 code, train-to-test frequency drift grows, sequence information falls, or the single held-out Stage-3 recall@10 does not exceed 0.06406796775709883.",
+    "Unlike inert encoder-only mechanisms, residual alignment and the assignment penalties differentiate directly through the codebook. Unlike the collapsed pairwise curvature or code-assignment cross-entropy, the loss aligns a directed codebook transport vector to the observed residual and penalizes endpoint assignment overlap; it does not pull the two transition codewords toward one another. The marginal concentration penalty explicitly targets the measured failure mode of obtaining ER through code merging."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_residual_transport_with_margin",
+  "parameters": {
+    "balance_weight": 0.1,
+    "epsilon": 1e-08,
+    "overlap_weight": 0.1,
+    "tau": 0.5,
+    "weight": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T20:23:01.107930+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "845ad6266340249b56798899c3b0ff0070ab7cc2466a182bccc58216d896d619"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "B": "Batch size.",
+    "C": "Number of codewords.",
+    "D": "Representation dimension.",
+    "O": "Overlap between source and target soft assignment distributions.",
+    "T": "Directed codebook transport vector, target weighted vector minus source weighted vector.",
+    "U_c": "Masked mean source assignment probability for codeword c.",
+    "a_c": "Soft source assignment probability for codeword c.",
+    "b_c": "Soft target assignment probability for codeword c.",
+    "balance_weight": "Coefficient penalizing concentration in the source marginal assignment distribution.",
+    "codebook": "Trainable codewords, shape [C,D].",
+    "epsilon": "Positive numerical-stability constant for the cosine denominator.",
+    "mask": "Valid-pair indicator, shape [B].",
+    "overlap_weight": "Coefficient penalizing shared soft assignment mass across transition endpoints.",
+    "r": "Directed behavior-conditioned residual vector, target minus source.",
+    "source": "Source item representation, shape [B,D].",
+    "target": "Target item representation, shape [B,D].",
+    "tau": "Assignment softmax temperature.",
+    "v_s": "Source-assignment-weighted codebook vector.",
+    "v_t": "Target-assignment-weighted codebook vector.",
+    "weight": "Overall coefficient multiplying this auxiliary loss.",
+    "z": "Cosine alignment between the item residual r and codebook transport T."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Transport behavior-conditioned residuals through separated codeword roles",
+  "version": "1.0.0"
+}
