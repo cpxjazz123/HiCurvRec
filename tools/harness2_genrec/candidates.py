@@ -55,6 +55,7 @@ CONSTRAINTS = """\
 
 CANDIDATE_FIELDS = (
     "id",
+    "family",
     "title",
     "equation",
     "symbols",
@@ -113,6 +114,16 @@ them. You do not write code and you do not run anything.
 
 {CONSTRAINTS}
 
+# THE PATHS THAT SURVIVE THE HOST, MEASURED
+
+The host overwrites the ENCODER gradient after the backward, and the decoder's gradient only
+changes the decoder. The measured consequence is that **the codebook is the only path whose
+gradient can change the exported SIDs**: an auxiliary term that reaches only the encoder
+leaves the trained weights bit-identical to the control's, and one that reaches only the
+decoder cannot move the export either. A candidate that wants to change the exported codes
+must therefore deliver its gradient to the codebook -- and the only question left is *which
+direction* it moves the codebook in.
+
 # THE TENSION THE MEASUREMENTS SHOW
 
 The frozen pair-level ER is bought with CODE CONCENTRATION: a behaviour-driven merge of the
@@ -134,7 +145,11 @@ checker can execute, not adjectives:
 
 # THE TASK
 
-Choose at least **three mathematically distinct** candidate mechanisms. "Distinct" means
+Choose at least **three mathematically distinct** candidate mechanisms, spanning at least
+**three different families** (see `family` above). One of them must address the measured
+cause of the downstream loss directly: the pair-convergence of the two codewords a behaviour
+pair shares. A candidate that keeps the pair's codewords apart while still raising the
+pair-level ER is permitted, and the ledger records that no arm has achieved it yet. "Distinct" means
 their objectives differ in kind, not in their parameters: one that acts on the codebook's
 GEOMETRY, one that acts on the assignment's structure without letting a pair's codewords
 converge, and one that acts on the behaviour-conditioned residual geometry are three
@@ -248,6 +263,7 @@ def propose_candidates(
             continue
         proposal = {
             "mechanism_id": candidate["id"],
+            "family": candidate.get("family", "unspecified"),
             "version": "1.0.0",
             "title": candidate["title"],
             "equation": candidate["equation"],

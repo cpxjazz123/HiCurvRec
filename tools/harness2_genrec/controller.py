@@ -493,6 +493,7 @@ class Controller:
             portfolio.append(
                 {
                     "mechanism_id": candidate["mechanism_id"],
+                    "family": "",
                     "proposal_path": candidate["path"],
                     "proposal_sha256": candidate["proposal_sha256"],
                     "semantic_key": key,
@@ -504,7 +505,13 @@ class Controller:
                 }
             )
             seen_keys.add(key)
+        families = sorted({item.get("family") or "unspecified" for item in portfolio})
         self.state["portfolio"] = portfolio
+        self.state["portfolio_families"] = families
+        if len(families) < 3:
+            # a portfolio of variations of one family is not a search: the agent is asked
+            # again, and the round records that it was asked again
+            self.audit("portfolio_too_narrow", families=families, candidates=len(portfolio))
         self.state["phase"] = "screen"
         self.state["next_action"] = (
             f"screening {sum(1 for item in portfolio if item['status'] == 'proposed')} candidates "
