@@ -1,0 +1,232 @@
+{
+  "digests": {
+    "artifact_integrity": "fd9f02a369ad27ab9c9cd2ada11a3692d3af8e8dc873ac8cb91c21d9b03a7dd9",
+    "causal_experiment_design": "e2e937909b995cd896cf20fb00a6a895773651d02852fc3e5bcfdb961229eb17",
+    "collapse_detection": "d211e76fe579ae02077ef68e7956d46465f9b1d83c37fe7eb1ffedfa16a575be",
+    "er_vs_stage3_decision": "94b9b75568037d37f15b8c750d47967f3d6263a9194527d0ac081ce69581075d",
+    "gradient_fidelity": "63723064571e66292063adc04b67559a14ef3896729b4b84f4dbf786eee7b32b",
+    "host_gradient_route": "0b5e7c006eeb4ebef683d37bea9dcbe07ffbc9ac55ae6f4237cd361c7e039459",
+    "inert_export": "c3039a127c21b07fc1eb36529701008612b25b3db37b06820f7157ec24f06513",
+    "probe_blind_spot": "365ae52b918b649d590e00d53f5a3f862eb179de9bc1aee6e2b900e75c766144"
+  },
+  "task_set_sha256": "34807ac7f395d0083a29c8a40e929ad900759f7b1d473c71fc04330be182b8c2",
+  "task_set_version": 1,
+  "tasks": [
+    {
+      "artifact": {
+        "declaration": {
+          "codebook": "nonzero",
+          "source": "nonzero",
+          "target": "nonzero"
+        },
+        "description": "a mechanism's declared gradient paths and what the checker measured",
+        "measurements": {
+          "codebook_forward_dependence": 0.0,
+          "codebook_local_gradient": 0.0,
+          "codebook_reaches_the_loss": false,
+          "source_forward_dependence": 0.010050766684073231,
+          "source_local_gradient": 1.3771830668415799
+        },
+        "note": "the checker measured these on a tiny synthetic case with the mechanism's own function; the implementation is faithful to its declaration",
+        "truth": {
+          "category": "impossible specification",
+          "forward_dependence": 0.0
+        }
+      },
+      "expected": "impossible specification",
+      "id": "gradient_fidelity",
+      "prompt": "A mechanism declares that its loss reaches the source, the target and the codebook with a nonzero gradient. The independent checker measured the mechanism on a tiny synthetic case and reports the numbers in the artifact.\n\nClassify the situation in ONE of exactly three words: `impossible specification` (the loss cannot depend on that target under this formula, so no implementation of it can deliver the gradient), `missing gradient` (the loss depends on the target but the backward does not reach it), or `saturation` (the backward reaches it and the local derivative is zero at this point). Then cite the forward dependence you relied on.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"category\": \"...\", \"cited_forward_dependence\": 0.0}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "arms": {
+          "behavior_conditioned_pairwise_margin": {
+            "changed_fraction_levels_1": 0.0,
+            "changed_fraction_levels_2": 0.0,
+            "changed_fraction_levels_3": 0.0,
+            "export_sha256": "a5ffb7add8978106"
+          },
+          "curvature_weighted_transition_transport": {
+            "changed_fraction_levels_1": 0.0,
+            "changed_fraction_levels_2": 0.0,
+            "changed_fraction_levels_3": 0.0,
+            "export_sha256": "a5ffb7add8978106"
+          }
+        },
+        "control_export_sha256": "a5ffb7add8978106",
+        "description": "two arms' exported SIDs against a matched cold control",
+        "training_losses_differ": true,
+        "truth": {
+          "verdict": "inert"
+        }
+      },
+      "expected": "inert",
+      "id": "inert_export",
+      "prompt": "Two arms were trained with auxiliary terms and their exported SIDs are compared with a contemporaneous cold control's export. Their training losses differ from the control's.\n\nDecide, in ONE word, what happened to each arm's EXPORT: `inert` (the exported codes did not change at all), `active` (they changed and the code structure survived), or `collapsed` (the code structure was destroyed).\n\nAnswer with ONE fenced ```json block:\n```json\n{\"verdict\": \"inert\"}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "arm": "behavior_conditioned_pairwise_curvature",
+        "arm_unique_3token": 19475,
+        "arm_unique_l1": 199,
+        "description": "a probe's occupancy against the matched host's",
+        "hard_l1_er": 2.619839290662233,
+        "host_unique_3token": 23657,
+        "host_unique_l1": 245,
+        "occupancy_ratio": 0.8122448979591838,
+        "truth": {
+          "verdict": "collapsed"
+        }
+      },
+      "expected": "collapsed",
+      "id": "collapse_detection",
+      "prompt": "An arm's probe measured its level-0 occupancy and its distinct 3-token SIDs against the matched host's, and its frozen Hard-L1 ER is in the artifact.\n\nDecide, in ONE word, whether the arm's code structure is `collapsed` or `healthy`.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"verdict\": \"collapsed\"}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "description": "the host's post-backward assembly, from its own source",
+        "question": "an auxiliary term's gradient reaches the encoder and the codebook. Which of the two survives the host's assembly into the optimizer's update?",
+        "source_excerpt": "def _r4_08_apply_projection(base_loss, l1_loss, other_loss, encoder_parameters, behavior_weight, valid_levels=3):\\n    # Overwrite the encoder gradients with the conflict-projected assembly.\\n    ...\\n    # Decoder and codebook gradients are never touched.\\n    for parameter, base_grad, l1_proj_grad, other_grad in zip(...):\\n        parameter.grad = base_grad + scale * (l1_proj_grad + other_grad)",
+        "truth": {
+          "must_reach": "codebook"
+        }
+      },
+      "expected": "codebook",
+      "id": "host_gradient_route",
+      "prompt": "The artifact is the host's own post-backward assembly. An auxiliary mechanism's loss produces a gradient on the encoder and on the codebook.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"must_reach\": \"codebook\"}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "available_artifacts": [
+          "the exported SIDs of the arm and of a contemporaneous cold control",
+          "the frozen held-out evaluation set",
+          "the Stage-3 metrics of both"
+        ],
+        "description": "a hypothesis with two rival explanations, after a campaign",
+        "explanations": {
+          "E1": "the ER gain is carried by a small subset of items",
+          "E2": "the code neighbourhood structure the recommender consumes got worse"
+        },
+        "hypothesis": "an arm cleared the frozen Hard-L1 ER gate and its Stage-3 recall@10 did not improve",
+        "truth": {
+          "allowed_decision_variables": [
+            "hard_l1_er",
+            "per-item",
+            "export_sensitivity",
+            "train_side",
+            "occupancy",
+            "collision"
+          ],
+          "control_run": "control-r8_control-20261021T082024",
+          "explanations": [
+            "E1",
+            "E2"
+          ],
+          "forbidden_decision_variables": [
+            "recall@10",
+            "ndcg@10",
+            "test_recall",
+            "test_ndcg"
+          ]
+        }
+      },
+      "expected": "a matched control and a falsifier per explanation",
+      "id": "causal_experiment_design",
+      "prompt": "You must design ONE discriminating experiment for the hypothesis in the artifact. It has two rival explanations, and the experiment must be able to tell them apart.\n\nYour answer must name the matched control to compare against (by its run id), and a falsifier for EACH explanation (a measurement that would refute it). The protocol forbids deciding the experiment on the held-out evaluation metric, so do not use it.\n\nName the metric the experiment DECIDES on in `decision_variable`; it may be the frozen Hard-L1 ER, a per-item decomposition, the export-sensitivity verdict, the train-side discrimination or the occupancy/collision statistics, but it may not be a held-out recommendation metric.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"experiment\": \"...\", \"control\": \"<run id>\", \"decision_variable\": \"<the metric it decides on>\", \"falsifiers\": {\"E1\": \"...\", \"E2\": \"...\"}}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "artifact_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/item_sids.json",
+        "description": "a run manifest and the artifact it names",
+        "manifest": {
+          "artifacts": [
+            {
+              "bytes": 1260012,
+              "exists": true,
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/item_sids.json",
+              "sha256": "49ff5822112bcd91e665826ec8f0760f9b874ff4fa6562ff689d19ce95beecd4"
+            },
+            {
+              "bytes": 4604533,
+              "exists": true,
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+              "sha256": "3b7ca556fe025db618f550c4353b1139926bf847da49301b06a375743be9ae72"
+            },
+            {
+              "bytes": 786912,
+              "exists": true,
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+              "sha256": "abaaab8ac26d6246abc7e9fa27716e74aa5f6aa0e833c09e3b431c79e149819f"
+            },
+            {
+              "bytes": 338,
+              "exists": true,
+              "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+              "sha256": "c876485e4b6c65e72f83f6c02be2ad7816ebff255a3d54de6af0b9025d3a92a1"
+            }
+          ],
+          "manifest_sha256": "ad45fe2b365fbd830dfa7565492b640a7a5eaa63511e69136e92d98869726c2e",
+          "run_id": "control-r8_control-20261021T110437",
+          "status": "succeeded"
+        },
+        "question": "is the evidence this manifest names still exactly what the manifest says it is?",
+        "recorded_sha256": "49ff5822112bcd91e665826ec8f0760f9b874ff4fa6562ff689d19ce95beecd4",
+        "truth": {
+          "artifact": "item_sids.json",
+          "intact": true
+        }
+      },
+      "expected": "the recomputed hash decides",
+      "id": "artifact_integrity",
+      "prompt": "The artifact is a run manifest and the artifact it names. The question is whether the evidence is still exactly what the manifest says it is.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"intact\": true, \"artifact\": \"<file name>\"}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "arm": {
+          "hard_l1_er": 16.616,
+          "stage3_recall@10": 0.06338898657706436
+        },
+        "control": {
+          "hard_l1_er": 16.334505666275888,
+          "stage3_recall@10": 0.06406796775709883
+        },
+        "description": "one arm's measured results against a contemporaneous cold control",
+        "gate": 16.38953942232631,
+        "question": "the arm cleared the gate and its ER is the best measured so far. What is the honest verdict on the research outcome?",
+        "stage3_run_to_run_band": 0.00033076775709883,
+        "truth": {
+          "decision": "exploratory"
+        }
+      },
+      "expected": "exploratory",
+      "id": "er_vs_stage3_decision",
+      "prompt": "The artifact carries one arm's frozen Hard-L1 ER and Stage-3 recall@10 against a contemporaneous cold control, the frozen gate, and the Stage-3 run-to-run band measured from two control runs.\n\nDecide, in ONE word, what the honest verdict on this research outcome is: `improvement` (a verified downstream gain), `reject` (a verified downstream regression), or `exploratory` (the difference is inside the run-to-run band, so nothing is established either way).\n\nAnswer with ONE fenced ```json block:\n```json\n{\"decision\": \"exploratory\"}\n```\n\nARTIFACT:\n"
+    },
+    {
+      "artifact": {
+        "description": "a probe's verdict and what the production run actually did",
+        "probe": {
+          "codebook_update": 0.129,
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "encoder_update": 0.109,
+          "epochs": 50,
+          "hard_sid_changed": 24587,
+          "loss_finite": true,
+          "ok": true
+        },
+        "production_run": {
+          "cause": "the mechanism block reads the host's pair indices outside the behaviour-ramp guard, so they do not exist yet at epoch 0",
+          "epochs_completed": 0,
+          "error": "UnboundLocalError: local variable 'source_ids' referenced before assignment"
+        },
+        "question": "is this arm ready for a cold run?",
+        "truth": {
+          "verdict": "not ready"
+        }
+      },
+      "expected": "not ready",
+      "id": "probe_blind_spot",
+      "prompt": "The artifact carries a probe's verdict and what the production run actually did.\n\nDecide, in ONE word, whether the arm is `ready` for a cold run or `not ready`.\n\nAnswer with ONE fenced ```json block:\n```json\n{\"verdict\": \"not ready\"}\n```\n\nARTIFACT:\n"
+    }
+  ]
+}
