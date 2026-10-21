@@ -55,7 +55,6 @@ CONSTRAINTS = """\
 
 CANDIDATE_FIELDS = (
     "id",
-    "family",
     "title",
     "equation",
     "symbols",
@@ -263,7 +262,7 @@ def propose_candidates(
             continue
         proposal = {
             "mechanism_id": candidate["id"],
-            "family": candidate.get("family", "unspecified"),
+            "family": candidate.get("family") or "unspecified",
             "version": "1.0.0",
             "title": candidate["title"],
             "equation": candidate["equation"],
