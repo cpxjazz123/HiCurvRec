@@ -70,6 +70,28 @@ CANDIDATE_FIELDS = (
 )
 
 
+def _transfer_requirements() -> str:
+    """The measured requirements a candidate has to meet, read from the transfer analysis."""
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "results"
+        / "harness3_runs"
+        / "transfer_analysis"
+        / "stage3_transfer_report.json"
+    )
+    if not path.is_file():
+        return (
+            "(the transfer analysis has not been run; the requirement below is the generic one: "
+            "do not degrade the exported codes' balance, their prefix structure, their sequence "
+            "information or their train-to-test stability)"
+        )
+    document = json.loads(path.read_text(encoding="utf-8"))
+    implications = document.get("design_implications") or []
+    if not implications:
+        return "(the transfer analysis reported no additional requirement)"
+    return "\n".join(f"* {line}" for line in implications)
+
+
 def _brief(store: EvidenceStore, ledger_text: str) -> str:
     from .hypotheses import store_brief
 
@@ -90,6 +112,14 @@ them. You do not write code and you do not run anything.
 # THE TWO FACTS A CANDIDATE MUST LIVE WITH
 
 {CONSTRAINTS}
+
+# THE MEASURED REQUIREMENT A CANDIDATE HAS TO MEET
+
+The archived arms that raised the pair-level ER did not improve the recommender. The
+measurements below say what the exported codes must do instead, and they are requirements a
+checker can execute, not adjectives:
+
+{_transfer_requirements()}
 
 # THE TASK
 
