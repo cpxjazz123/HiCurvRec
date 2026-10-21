@@ -92,6 +92,13 @@ def _transfer_requirements() -> str:
     return "\n".join(f"* {line}" for line in implications)
 
 
+def _angles() -> str:
+    """The research angles: the axis along which the mechanisms differ in kind."""
+    from .ideation import ANGLES
+
+    return "\n".join(f"* **{name}** -- {text}" for name, text in sorted(ANGLES.items()))
+
+
 def _brief(store: EvidenceStore, ledger_text: str) -> str:
     from .hypotheses import store_brief
 
@@ -145,7 +152,7 @@ checker can execute, not adjectives:
 # THE TASK
 
 Choose at least **three mathematically distinct** candidate mechanisms, spanning at least
-**three different families** (see `family` above). One of them must address the measured
+**three different research angles** (see `family` above). One of them must address the measured
 cause of the downstream loss directly: the pair-convergence of the two codewords a behaviour
 pair shares. A candidate that keeps the pair's codewords apart while still raising the
 pair-level ER is permitted, and the ledger records that no arm has achieved it yet. "Distinct" means
