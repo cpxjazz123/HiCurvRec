@@ -124,6 +124,7 @@ def run_candidate(
     timeout: int = 2400,
     cold: bool = True,
     port: int = 50231,
+    tree_prefix: str = "TIGER_c107",
 ) -> Dict[str, Any]:
     """The whole route for one candidate."""
     from . import guardrails, mini_campaign, redesign
@@ -141,7 +142,7 @@ def run_candidate(
     }
 
     # 1. the implementation, by the agent
-    tree = REPO_ROOT / "stage2_RQ-VAE" / f"TIGER_c106_{mechanism_id}"
+    tree = REPO_ROOT / "stage2_RQ-VAE" / f"{tree_prefix}_{mechanism_id}"
     if tree.is_dir():
         shutil.rmtree(tree, ignore_errors=True)
     shutil.copytree(BASE_TREE, tree)
