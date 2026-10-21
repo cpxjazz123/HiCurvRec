@@ -1,0 +1,234 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "Use a smooth all-row log-partition rather than hard assignment updates; retain the host quantizer and its assignment path unchanged. Reject the mechanism if distinct-code usage or per-level occupancy entropy falls more than 5 percent versus matched control, or if any level collapses.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "This mechanism uses residual-to-codebook affinity plus directed residual alignment, not an L1 code-transition NCE objective."
+      },
+      {
+        "lane": "r8_02_l1_next_item_prediction",
+        "why": "It does not predict a discrete next-item label from L1; it updates residual and codebook geometry through a smooth all-row objective."
+      },
+      {
+        "lane": "r8_03_successor_profile_js",
+        "why": "It does not cluster successor probability profiles or optimize a Jensen-Shannon profile divergence."
+      },
+      {
+        "lane": "r8_04_behavior_conditioned_ot",
+        "why": "It does not solve an entropic transport or replace the quantizer with behaviour-conditioned assignments."
+      },
+      {
+        "lane": "r8_05_three_level_distillation",
+        "why": "It does not distill a teacher representation into L1 or privilege L1 through a teacher-student target."
+      },
+      {
+        "lane": "r8_06_train_graph_diffusion",
+        "why": "It does not preserve graph diffusion distances; behaviour enters as ordered source-target residual pairs."
+      },
+      {
+        "lane": "r8_07_hyperbolic_gyro",
+        "why": "It uses normalized Euclidean residual and codebook affinities, not hyperbolic gyro-translation."
+      },
+      {
+        "lane": "r8_08_hyperbolic_frechet",
+        "why": "It does not compute hyperbolic successor barycentres or Frechet means."
+      },
+      {
+        "lane": "r8_09_hyperbolic_branching",
+        "why": "It does not impose a radial hierarchy or branching structure."
+      },
+      {
+        "lane": "r8_10_hyperbolic_gw",
+        "why": "It does not optimize a Gromov-Wasserstein alignment between graph and code distances."
+      },
+      {
+        "lane": "r8_control",
+        "why": "Unlike untouched control, this adds a low-weight behaviour-conditioned term whose gradients reach both residual representations and codebook rows."
+      }
+    ],
+    "vs_reference_arm": "Unlike the gentle codebook-reaching geometry-transport reference arm, which improved ER but left downstream quality flat, this objective explicitly aligns ordered behaviour-conditioned source and target residual directions while applying smooth codebook affinity pressure. It is only preferred if matched-seed Stage-3 recommendation quality improves under the declared occupancy safeguards; ER improvement alone is insufficient."
+  },
+  "equation": "For each valid ordered pair (b,d), let u_bd = normalize(r^s_bd) and v_bd = normalize(r^t_bd), where r^s_bd = s_b - c_{l,d} and r^t_bd = t_b - c_{l,d}; let a_bd = logsumexp_j(u_bd \u00b7 normalize(c_{l,j}) / tau) - u_bd \u00b7 normalize(c_{l,d}) / tau. Define L = (1 / max(1, sum_bd m_bd)) * sum_bd m_bd * (softplus(a_bd - margin) + eta * (1 - v_bd \u00b7 u_bd)).",
+  "expected_failure_modes": [
+    "If target construction is not behaviour-conditioned or ordered source-target pairs are accidentally made symmetric, the loss will not encode the intended behavioural direction.",
+    "If the term is detached from the codebook or its codebook gradient is overwritten, trained model weights and exported SIDs will remain control-identical.",
+    "If the affinity pressure is too strong, code usage will concentrate, level-0 occupancy will collapse, and Hard-L1 ER may become extreme while downstream recommendation quality regresses.",
+    "If the loss is normalized by the wrong count or ignores the mask, all-masked input may produce NaN or a nonzero result.",
+    "If residual normalization omits the epsilon clamp, zero or near-zero residuals may produce non-finite loss or gradients."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_encoder_only_detach",
+      "pattern": "detach\\s*\\(\\s*codebook",
+      "reason": "Detaching codebook rows blocks the required codebook gradient, repeating the measured host failure in which encoder-only auxiliary gradients are overwritten."
+    },
+    {
+      "id": "no_symmetric_pair_objective",
+      "pattern": "0\\.5\\s*\\*\\s*\\(\\s*loss\\s*\\(\\s*source\\s*,\\s*target",
+      "reason": "Symmetrizing source and target removes the required ordered behavioural directionality."
+    },
+    {
+      "id": "no_assignment_collapse_pressure",
+      "pattern": "argmin\\s*\\(.*\\)\\s*\\.\\s*(backward|requires_grad)",
+      "reason": "Hard assignment-based gradient pressure is not the declared smooth affinity mechanism and risks reproducing the observed codebook-collapse pattern."
+    },
+    {
+      "id": "no_unmasked_reduction",
+      "pattern": "losses?\\s*\\.\\s*mean\\s*\\(",
+      "reason": "An unconditional mean can include invalid pairs and violates the all-pairs-masked zero contract."
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The target is constructed from observed user-item behaviour, so the directed source-to-target alignment and source-to-codebook affinity update item geometry and codebook rows rather than adding a detached metric.",
+    "The codebook gradient is nonzero but distributed across rows through the log-partition; this is intended to avoid the strong assignment pressure and two-code level-0 collapse observed in the codebook-reaching arms.",
+    "The term is selected only if repeated matched-seed evaluation improves downstream Stage-3 recall@10 without reducing NDCG@10, passes the ER admission gate, and shows no material loss of code usage entropy or occupancy relative to control. ER alone is not a selection criterion."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        6,
+        4
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        8,
+        4
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        8,
+        4
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 0,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "forward_oracle",
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off"
+  ],
+  "mechanism_id": "masked_directed_residual_codebook_affinity",
+  "parameters": {
+    "epsilon": 1e-08,
+    "eta": 0.25,
+    "margin": 0.1,
+    "tau": 0.2
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T00:00:00Z",
+    "authored_by": "researcher",
+    "frozen_digest": "7d9354f65eb1df0302ccb0ddf37a1300db26b0342f7b0b8e39a5e1adf57dd5c0"
+  },
+  "revision": {
+    "measured_utc": "2026-10-21T09:02:00.764520+00:00",
+    "reason": "proposed from the ledger's supported findings, not from a fixed lever list",
+    "supersedes": "the two families the ledger measured in issue #105"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "L": "Masked mean mechanism loss.",
+    "a_bd": "Directed codebook-affinity log-partition difference: all-row source affinity minus positive-row source affinity.",
+    "b": "Batch-pair index.",
+    "c_{l,d}": "Codebook vector at level l and row d.",
+    "d": "Codebook row index serving as the positive row for the pair.",
+    "epsilon": "Positive lower bound used in vector normalization.",
+    "eta": "Nonnegative weight for the directed source-target alignment component.",
+    "j": "Codebook row index in the affinity denominator.",
+    "l": "RQ-VAE codebook level, applied independently at each configured level.",
+    "m_bd": "Binary validity mask for ordered pair (b,d).",
+    "margin": "Nonnegative affinity margin.",
+    "r^s_bd": "Source residual formed by subtracting the positive codebook vector from the source representation.",
+    "r^t_bd": "Target residual formed by subtracting the positive codebook vector from the target representation.",
+    "s_b": "Source item representation or source residual for pair b at level l.",
+    "softplus": "Numerically stable log(1 + exp(x)).",
+    "t_b": "Behaviour-conditioned target item representation or target residual for pair b at level l.",
+    "tau": "Positive temperature parameter.",
+    "u_bd": "L2-normalized source residual, with denominator clamped below by epsilon.",
+    "v_bd": "L2-normalized target residual, with denominator clamped below by epsilon."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "masked_numeric_finite",
+      "kind": "numeric",
+      "statement": "On the prescribed synthetic case with finite inputs, the loss is finite and scalar-valued."
+    },
+    {
+      "id": "codebook_permutation_invariance",
+      "kind": "metamorphic",
+      "statement": "Permuting codebook rows and correspondingly permuting the positive-row indices leaves the loss unchanged within tolerance."
+    },
+    {
+      "id": "ordered_pair_directionality",
+      "kind": "metamorphic",
+      "statement": "Exchanging source and target while retaining the ordered positive-row interpretation changes the loss beyond tolerance on the prescribed non-degenerate synthetic case."
+    },
+    {
+      "id": "all_pairs_masked_zero",
+      "kind": "metamorphic",
+      "statement": "Setting every mask entry to zero returns exactly zero loss and finite zero gradients."
+    },
+    {
+      "id": "claimed_gradient_paths",
+      "kind": "gradient",
+      "statement": "For the prescribed non-degenerate case, source, target, and codebook gradients are finite and nonzero; no stop-gradient may block these claimed paths."
+    },
+    {
+      "id": "rqvae_level_and_export_integration",
+      "kind": "integration",
+      "statement": "With the term enabled at the declared weight, the host's assembled training update changes codebook parameters at each enabled level and a deterministic export from the resulting checkpoint is compared with control; any SID change must arise through the trained encoder/codebook path, not a post-export rewrite."
+    },
+    {
+      "id": "downstream_selection",
+      "kind": "integration",
+      "statement": "Run matched control and treatment seeds through the same Stage-3 procedure; select only if recall@10 improves with uncertainty excluding zero, NDCG@10 does not regress, ER passes its gate, and code occupancy entropy and distinct-code usage remain within 5 percent of control."
+    }
+  ],
+  "title": "Masked Directed Residual\u2013Codebook Affinity",
+  "tolerance": 1e-06,
+  "version": "3.0.0"
+}

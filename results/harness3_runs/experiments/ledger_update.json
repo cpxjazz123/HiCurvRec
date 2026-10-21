@@ -1,7 +1,7 @@
 {
-  "generated_utc": "2026-10-21T08:32:10.174945+00:00",
+  "generated_utc": "2026-10-21T09:00:39.201118+00:00",
   "ledger_path": "results/harness3_runs/hypotheses/ledger.json",
-  "ledger_sha256": "daa1cb248553fed490806bf2066dc00784019edeab45430704d796869afe148d",
+  "ledger_sha256": "c22a1096eb2659d493ac9e4c15e8d192b57b08a3d7810d7b34bb6c6e5ef92cfb",
   "updated": [
     {
       "hypothesis": "H105-01",
@@ -23,6 +23,13 @@
       "status": "executed",
       "verdict": "the residual target's ER gain was bought with a more concentrated level-0 code distribution, which is consistent with its downstream regression; the geometry arm's export is healthy and generalises, so its flat downstream result is not explained by the code distribution or by overfitting",
       "report": "results/harness3_runs/experiments/x4_balance_and_generalisation.json"
+    },
+    {
+      "hypothesis": "H105-04",
+      "experiment": "X5",
+      "status": "executed",
+      "verdict": "the host OVERWRITES the encoder gradient with g_base + w_b/valid_levels * (g'_L1 + g_L2 + g_L3) and never touches the decoder or the codebook gradient, so an auxiliary term that reaches only the encoder is discarded in production however healthy it looks in isolation; only a term that delivers gradient to the codebook can change the exported SIDs",
+      "report": "results/harness3_runs/experiments/x5_projection.json"
     }
   ],
   "problems": [],

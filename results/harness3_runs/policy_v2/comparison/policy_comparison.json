@@ -1,0 +1,276 @@
+{
+  "ok": true,
+  "generated_utc": "2026-10-21T08:54:59.554157+00:00",
+  "tasks": 8,
+  "budget_matched": true,
+  "model": "openai/gpt-6-luna",
+  "timeout_s": 900,
+  "seed": 4242,
+  "adoption_criterion": "the learned policy must solve strictly more held-back tasks than the old policy (8 tasks, one point each); a tie or a loss is a failure to adopt",
+  "scores": {
+    "old": 8,
+    "learned": 7
+  },
+  "old_correct": 8,
+  "learned_correct": 7,
+  "adopted": false,
+  "reason": "the learned policy did not solve strictly more held-back tasks; it is NOT adopted",
+  "rows": [
+    {
+      "task": "artifact_integrity",
+      "policy": "old",
+      "correct": true,
+      "reason": "the integrity verdict and the artifact are right",
+      "answer": {
+        "intact": true,
+        "artifact": "item_sids.json"
+      },
+      "tokens": {
+        "input": 21032,
+        "output": 225,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "artifact_integrity",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the integrity verdict and the artifact are right",
+      "answer": {
+        "intact": true,
+        "artifact": "item_sids.json"
+      },
+      "tokens": {
+        "input": 30803,
+        "output": 403,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "collapse_detection",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "collapsed"
+      },
+      "tokens": {
+        "input": 24879,
+        "output": 225,
+        "reasoning": 51
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "collapse_detection",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "collapsed"
+      },
+      "tokens": {
+        "input": 19522,
+        "output": 288,
+        "reasoning": 21
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "probe_blind_spot",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "not ready"
+      },
+      "tokens": {
+        "input": 16757,
+        "output": 73,
+        "reasoning": 42
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "probe_blind_spot",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "not ready"
+      },
+      "tokens": {
+        "input": 17153,
+        "output": 169,
+        "reasoning": 48
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "host_gradient_route",
+      "policy": "old",
+      "correct": true,
+      "reason": "the parameter is right",
+      "answer": {
+        "must_reach": "codebook"
+      },
+      "tokens": {
+        "input": 37260,
+        "output": 216,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "host_gradient_route",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the parameter is right",
+      "answer": {
+        "must_reach": "codebook"
+      },
+      "tokens": {
+        "input": 10636,
+        "output": 49,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "causal_experiment_design",
+      "policy": "old",
+      "correct": true,
+      "reason": "the design is well formed",
+      "answer": {
+        "experiment": "Using the arm\u2019s exported SIDs and the contemporaneous cold control\u2019s exported SIDs, run one paired, same-item analysis on the matched item universe. First decompose the frozen Hard-L1 ER gain by item and quantify how concentrated the gain is across items. Then, using training interactions only, compare how well each SID set preserves train-side co-occurrence-neighbour relationships (with identical neighbourhood and scoring rules for both runs). Do not consult held-out recommendation metrics.",
+        "control": "control-r8_control-20261021T082024",
+        "decision_variable": "per-item frozen Hard-L1 ER gain distribution and train-side co-occurrence-neighbour discrimination",
+        "falsifiers": {
+          "E1": "Refuted if the per-item decomposition shows the ER gain is broadly distributed rather than concentrated in a small subset of items.",
+          "E2": "Refuted if the arm\u2019s train-side co-occurrence-neighbour discrimination is not worse than the matched control\u2019s."
+        }
+      },
+      "tokens": {
+        "input": 16799,
+        "output": 69,
+        "reasoning": 23
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "causal_experiment_design",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the design is well formed",
+      "answer": {
+        "experiment": "Using the arm and matched cold-control SID exports, run one paired, item-level audit: compute each item\u2019s contribution to frozen Hard-L1 ER and compare the distributions to test whether the arm\u2019s ER gain is concentrated in a small subset; on the same exports, measure train-side code-neighbour discrimination under the identical protocol for both runs. Do not use held-out recommendation metrics.",
+        "control": "control-r8_control-20261021T082024",
+        "decision_variable": "per-item Hard-L1 ER contribution distribution, alongside paired train-side code-neighbour discrimination",
+        "falsifiers": {
+          "E1": "Refuted if the arm\u2019s ER improvement is broadly distributed across items, with no small subset accounting for most of the aggregate gain.",
+          "E2": "Refuted if train-side code-neighbour discrimination in the arm is not worse than in the matched control."
+        }
+      },
+      "tokens": {
+        "input": 26170,
+        "output": 161,
+        "reasoning": 25
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "gradient_fidelity",
+      "policy": "old",
+      "correct": true,
+      "reason": "the category and the cited measurement are right",
+      "answer": {
+        "category": "impossible specification",
+        "cited_forward_dependence": 0.0
+      },
+      "tokens": {
+        "input": 16779,
+        "output": 157,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "gradient_fidelity",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the category and the cited measurement are right",
+      "answer": {
+        "category": "impossible specification",
+        "cited_forward_dependence": 0.0
+      },
+      "tokens": {
+        "input": 17218,
+        "output": 167,
+        "reasoning": 34
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "inert_export",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "inert"
+      },
+      "tokens": {
+        "input": 27420,
+        "output": 209,
+        "reasoning": 43
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "inert_export",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "inert"
+      },
+      "tokens": {
+        "input": 17067,
+        "output": 65,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "er_vs_stage3_decision",
+      "policy": "old",
+      "correct": true,
+      "reason": "the decision follows the predeclared rule",
+      "answer": {
+        "decision": "exploratory"
+      },
+      "tokens": {
+        "input": 16605,
+        "output": 72,
+        "reasoning": 53
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "er_vs_stage3_decision",
+      "policy": "learned",
+      "correct": false,
+      "reason": "the decision is 'reject', the predeclared rule gives 'exploratory'",
+      "answer": {
+        "decision": "reject"
+      },
+      "tokens": {
+        "input": 29528,
+        "output": 173,
+        "reasoning": 44
+      },
+      "exit_code": 0
+    }
+  ]
+}

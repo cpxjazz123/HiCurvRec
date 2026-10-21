@@ -1,13 +1,13 @@
 {
-  "generated_utc": "2026-10-21T08:32:10.167864+00:00",
+  "generated_utc": "2026-10-21T09:00:39.192837+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
       "evidence_paths": [],
       "evidence_runs": [
-        "control-r8_control-20261021T082024",
-        "stage2-behavior_conditioned_pairwise_margin-20261021T082028",
-        "stage2-curvature_weighted_transition_transport-20261021T082032"
+        "control-r8_control-20261021T085955",
+        "stage2-behavior_conditioned_pairwise_margin-20261021T090000",
+        "stage2-curvature_weighted_transition_transport-20261021T090004"
       ],
       "experiments": [
         {
@@ -69,10 +69,10 @@
       "created_utc": "2026-10-21T08:32:09.977179+00:00",
       "evidence_paths": [],
       "evidence_runs": [
-        "control-r8_control-20261021T082024",
-        "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
-        "stage2-behaviour_conditioned_residual_target-20261021T082030",
-        "stage2-behavior_residual_geometry_transport-20261021T082034"
+        "control-r8_control-20261021T085955",
+        "stage2-behavior_conditioned_pairwise_curvature-20261021T085957",
+        "stage2-behavior_residual_geometry_transport-20261021T090007",
+        "stage2-behaviour_conditioned_residual_target-20261021T090002"
       ],
       "experiments": [
         {
@@ -184,10 +184,10 @@
       "created_utc": "2026-10-21T08:32:09.977183+00:00",
       "evidence_paths": [],
       "evidence_runs": [
-        "control-r8_control-20261021T082024",
-        "stage2-behavior_conditioned_pairwise_curvature-20261021T082026",
-        "stage2-behavior_residual_geometry_transport-20261021T082034",
-        "stage2-behaviour_conditioned_residual_target-20261021T082030"
+        "control-r8_control-20261021T085955",
+        "stage2-behavior_conditioned_pairwise_curvature-20261021T085957",
+        "stage2-behavior_residual_geometry_transport-20261021T090007",
+        "stage2-behaviour_conditioned_residual_target-20261021T090002"
       ],
       "experiments": [
         {
@@ -238,21 +238,21 @@
       "created_utc": "2026-10-21T08:32:10.167852+00:00",
       "evidence_paths": [],
       "evidence_runs": [
-        "stage2-behavior_conditioned_pairwise_margin-20261021T082028",
-        "stage2-curvature_weighted_transition_transport-20261021T082032"
+        "stage2-behavior_conditioned_pairwise_margin-20261021T090000",
+        "stage2-curvature_weighted_transition_transport-20261021T090004"
       ],
       "experiments": [
         {
           "control_run": "control-r8_control-20261021T082024",
           "id": "X5",
           "produced_runs": [],
-          "result": "",
+          "result": "in a matched pair on the host's own mini case, an auxiliary term changes the encoder gradient by 1.66e-05 before the host's post-backward assembly and by exactly 0.0 after it",
           "status": "executed",
           "tests": [
             "E1"
           ],
           "treatment_runs": [],
-          "verdict": ""
+          "verdict": "the host OVERWRITES the encoder gradient with g_base + w_b/valid_levels * (g'_L1 + g_L2 + g_L3) and never touches the decoder or the codebook gradient, so an auxiliary term that reaches only the encoder is discarded in production however healthy it looks in isolation; only a term that delivers gradient to the codebook can change the exported SIDs"
         }
       ],
       "explanations": [
@@ -276,6 +276,6 @@
       "status": "supported"
     }
   ],
-  "ledger_sha256": "daa1cb248553fed490806bf2066dc00784019edeab45430704d796869afe148d",
+  "ledger_sha256": "c22a1096eb2659d493ac9e4c15e8d192b57b08a3d7810d7b34bb6c6e5ef92cfb",
   "ledger_version": 1
 }

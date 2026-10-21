@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "detail": "all 9 declared checks hold",
+  "checks": [
+    {
+      "id": "row_permutation",
+      "ok": true,
+      "detail": "the codebook rows were permuted: the loss is unchanged",
+      "measurements": {
+        "base": 8.550892827297414,
+        "value": 8.550892827297414,
+        "expect": "unchanged"
+      }
+    },
+    {
+      "id": "source_target_exchange",
+      "ok": true,
+      "detail": "the source and the target were exchanged: the loss changed by 1.631e+00",
+      "measurements": {
+        "base": 8.550892827297414,
+        "value": 6.91959215827701,
+        "expect": "changed"
+      }
+    },
+    {
+      "id": "all_pairs_masked",
+      "ok": true,
+      "detail": "every pair was masked out: the loss is zero",
+      "measurements": {
+        "base": 8.550892827297414,
+        "value": 0.0,
+        "expect": "zero"
+      }
+    },
+    {
+      "id": "gradient_codebook",
+      "ok": true,
+      "detail": "the gradient on codebook is finite (3.719e+00)",
+      "measurements": {
+        "max_abs": 3.719060850293856,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_source",
+      "ok": true,
+      "detail": "the gradient on source is finite (2.024e+00)",
+      "measurements": {
+        "max_abs": 2.02379305183371,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_target",
+      "ok": true,
+      "detail": "the gradient on target is finite (7.173e+00)",
+      "measurements": {
+        "max_abs": 7.172562804418122,
+        "finite": true
+      }
+    },
+    {
+      "id": "symmetric_assignment_objective",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "L\\s*=\\s*-?\\s*.*(?:q_k\\(s_b;\\s*E\\).*log\\(q_k\\(t_b;\\s*E\\)|q_k\\(t_b;\\s*E\\).*log\\(q_k\\(s_b;\\s*E\\)).*\\+.*(?:q_k\\(t_b;\\s*E\\).*log\\(q_k\\(s_b;\\s*E\\)|q_k\\(s_b;\\s*E\\).*log\\(q_k\\(t_b;\\s*E\\))"
+      }
+    },
+    {
+      "id": "detached_codebook_assignments",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "(?:stop_gradient|detach)\\s*\\(\\s*q_k\\s*\\("
+      }
+    },
+    {
+      "id": "encoder_only_gradient_route",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "(?:stop_gradient|detach)\\s*\\(\\s*E\\s*\\)"
+      }
+    }
+  ],
+  "failed": []
+}
