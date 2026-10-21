@@ -407,6 +407,36 @@ def cmd_record_experiments(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_table(args: argparse.Namespace) -> int:
+    """The per-arm table, assembled from the store's manifests."""
+    from .evidence import EvidenceStore
+    from .table import build
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = build(store, Path(args.out))
+    print(f"per-arm table: {report['rows']} rows -> {report['path']}")
+    return 0
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    """The one-command autonomous campaign."""
+    from .evidence import EvidenceStore
+    from .pipeline import run
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = run(
+        store,
+        Path(args.out),
+        model=args.model,
+        timeout=args.timeout,
+        cold=not args.no_cold,
+        skip=[item for item in (args.skip or "").split(",") if item],
+    )
+    failed = [row for row in report["stages"] if not row["ok"]]
+    print(f"pipeline finished: {len(report['stages'])} stages, {len(failed)} failed")
+    return 1 if failed else 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -503,6 +533,20 @@ def _build_parser() -> argparse.ArgumentParser:
     rec.add_argument("--ledger", default="results/harness3_runs/hypotheses/ledger.json")
     rec.add_argument("--out", default="results/harness3_runs/experiments")
     rec.set_defaults(func=cmd_record_experiments)
+
+    table = sub.add_parser("table", help="build the per-arm table from the evidence store")
+    table.add_argument("--store", default="results/harness3_runs/store")
+    table.add_argument("--out", default="results/harness3_runs/per_arm_table.md")
+    table.set_defaults(func=cmd_table)
+
+    run_cmd = sub.add_parser("run", help="the one-command autonomous campaign")
+    run_cmd.add_argument("--store", default="results/harness3_runs/store")
+    run_cmd.add_argument("--out", default="results/harness3_runs/pipeline")
+    run_cmd.add_argument("--model", default="")
+    run_cmd.add_argument("--timeout", type=int, default=2400)
+    run_cmd.add_argument("--no-cold", action="store_true", help="stop before the cold run")
+    run_cmd.add_argument("--skip", default="", help="comma list of stages to skip")
+    run_cmd.set_defaults(func=cmd_run)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")

@@ -1,0 +1,266 @@
+{
+  "ok": true,
+  "generated_utc": "2026-10-21T08:49:29.159981+00:00",
+  "tasks": 8,
+  "budget_matched": true,
+  "model": "openai/gpt-6-luna",
+  "timeout_s": 900,
+  "seed": 4242,
+  "adoption_criterion": "the learned policy must solve strictly more held-back tasks than the old policy (8 tasks, one point each); a tie or a loss is a failure to adopt",
+  "scores": {
+    "old": 7,
+    "learned": 7
+  },
+  "old_correct": 7,
+  "learned_correct": 7,
+  "adopted": false,
+  "reason": "the learned policy did not solve strictly more held-back tasks; it is NOT adopted",
+  "rows": [
+    {
+      "task": "artifact_integrity",
+      "policy": "old",
+      "correct": true,
+      "reason": "the integrity verdict and the artifact are right",
+      "answer": {
+        "intact": true,
+        "artifact": "item_sids.json"
+      },
+      "tokens": {
+        "input": 30230,
+        "output": 167,
+        "reasoning": 41
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "artifact_integrity",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the integrity verdict and the artifact are right",
+      "answer": {
+        "intact": true,
+        "artifact": "item_sids.json"
+      },
+      "tokens": {
+        "input": 18093,
+        "output": 246,
+        "reasoning": 75
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "collapse_detection",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "collapsed"
+      },
+      "tokens": {
+        "input": 10544,
+        "output": 72,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "collapse_detection",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "collapsed"
+      },
+      "tokens": {
+        "input": 30312,
+        "output": 304,
+        "reasoning": 83
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "probe_blind_spot",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "not ready"
+      },
+      "tokens": {},
+      "exit_code": 0
+    },
+    {
+      "task": "probe_blind_spot",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "not ready"
+      },
+      "tokens": {
+        "input": 27664,
+        "output": 62,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "host_gradient_route",
+      "policy": "old",
+      "correct": true,
+      "reason": "the parameter is right",
+      "answer": {
+        "must_reach": "codebook"
+      },
+      "tokens": {
+        "input": 27043,
+        "output": 150,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "host_gradient_route",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the parameter is right",
+      "answer": {
+        "must_reach": "codebook"
+      },
+      "tokens": {},
+      "exit_code": 0
+    },
+    {
+      "task": "causal_experiment_design",
+      "policy": "old",
+      "correct": false,
+      "reason": "the design decides on 'held-out recall@10', which the protocol forbids as a decision variable; the design decides on 'test_recall@10', which the protocol forbids as a decision variable",
+      "answer": {
+        "experiment": "On the same frozen item universe, compare the arm\u2019s exported SIDs with control-r8_control-20261021T082024. Decompose the arm\u2013control Hard-L1 ER difference into per-item contributions and quantify how concentrated those contributions are (for example, the share attributable to the top 1% of items). In the same paired analysis, measure code-neighborhood quality without using recall: for each item, compare its SID-neighbor set with its nearest neighbors under the recommender\u2019s input item embeddings, then compare the arm and control on mean neighborhood overlap. Use paired bootstrap confidence intervals over items for both diagnostics; do not use held-out recall@10 or test_recall@10.",
+        "control": "control-r8_control-20261021T082024",
+        "falsifiers": {
+          "E1": "The ER gain is not concentrated: the arm\u2019s per-item ER contributions are broadly distributed, and the top 1% share is not higher than the matched control beyond the paired-bootstrap uncertainty.",
+          "E2": "The recommender-consumed code neighborhoods did not worsen: the arm\u2019s mean SID-neighborhood overlap with input-embedding neighbors is not lower than the matched control beyond paired-bootstrap uncertainty."
+        }
+      },
+      "tokens": {
+        "input": 30299,
+        "output": 300,
+        "reasoning": 35
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "causal_experiment_design",
+      "policy": "learned",
+      "correct": false,
+      "reason": "the design decides on 'test_recall@10', which the protocol forbids as a decision variable",
+      "answer": {
+        "experiment": "Using the arm\u2019s and contemporaneous control\u2019s exported SIDs, run a paired item-level analysis on the same frozen Hard-L1 ER evaluation cases. Measure (1) how much of the arm\u2019s ER gain is contributed by each item and (2) code-neighbourhood quality, defined in advance as agreement between SID-neighbour similarity and positive item co-occurrence in the frozen set. Compare both measurements with the matched control; do not use recall@10 or test_recall@10 to decide.",
+        "control": "control-r8_control-20261021T082024",
+        "falsifiers": {
+          "E1": "E1 is refuted if the arm\u2019s ER gain is broadly distributed across items rather than concentrated in a small subset, with the item-level contribution distribution not more concentrated than the matched control\u2019s under a prespecified concentration test.",
+          "E2": "E2 is refuted if the arm\u2019s SID-neighbourhood agreement with positive co-occurrence is not worse than the matched control\u2019s under a prespecified paired comparison."
+        }
+      },
+      "tokens": {
+        "input": 19991,
+        "output": 188,
+        "reasoning": 44
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "gradient_fidelity",
+      "policy": "old",
+      "correct": true,
+      "reason": "the category and the cited measurement are right",
+      "answer": {
+        "category": "impossible specification",
+        "cited_forward_dependence": 0.0
+      },
+      "tokens": {
+        "input": 16975,
+        "output": 208,
+        "reasoning": 23
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "gradient_fidelity",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the category and the cited measurement are right",
+      "answer": {
+        "category": "impossible specification",
+        "cited_forward_dependence": 0.0
+      },
+      "tokens": {
+        "input": 17427,
+        "output": 156,
+        "reasoning": 36
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "inert_export",
+      "policy": "old",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "inert"
+      },
+      "tokens": {
+        "input": 29093,
+        "output": 70,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "inert_export",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "inert"
+      },
+      "tokens": {
+        "input": 9208,
+        "output": 209,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "er_vs_stage3_decision",
+      "policy": "old",
+      "correct": true,
+      "reason": "the decision follows the predeclared rule",
+      "answer": {
+        "decision": "exploratory"
+      },
+      "tokens": {
+        "input": 8633,
+        "output": 104,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "er_vs_stage3_decision",
+      "policy": "learned",
+      "correct": true,
+      "reason": "the decision follows the predeclared rule",
+      "answer": {
+        "decision": "exploratory"
+      },
+      "tokens": {
+        "input": 19330,
+        "output": 162,
+        "reasoning": 0
+      },
+      "exit_code": 0
+    }
+  ]
+}

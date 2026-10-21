@@ -1,0 +1,126 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1261248,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/item_sids.json",
+      "sha256": "efc0bc19f01e7e01ffa7bf0b755c1d9391385411b5d4b2319ee4b3d83cf8772d"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/rqvae_best.pth",
+      "sha256": "8db1eeae3b008b7a62b4208e70fbb5e07f35970e6357baf87c6da84205543984"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/sids_for_hgrec.npy",
+      "sha256": "2e42db57c00a60bfd761dee6c5bf8f2e76b61d686995a59838a2a8eaf3bc870f"
+    },
+    {
+      "bytes": 997,
+      "exists": true,
+      "path": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/behavior_conditioned_pairwise_curvature/probe_report.json",
+      "sha256": "3ca802ab0671d4b463af60330906ee0b2eafbdfed3c8fae23fe8076f0a2a57de"
+    },
+    {
+      "bytes": 2618,
+      "exists": true,
+      "path": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/v2_judges/behavior_conditioned_pairwise_curvature.json",
+      "sha256": "8caa1d6f872a332c454fee2f37c1cbda25a3932430533443e6eae4cd445a7de5"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T08:59:57.775246+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T08:59:57.685111+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "524a8267e939cefd189f7fc0c0175cae9898aea712b86abec46230b3e2dd3d0b",
+  "manifest_version": 1,
+  "mechanism_id": "behavior_conditioned_pairwise_curvature",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "changed_fraction": {
+        "levels_1": 0.9968275918168138,
+        "levels_2": 1.0,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 0.8122448979591838,
+      "reasons": [],
+      "train_side_discrimination": {
+        "arm": {
+          "discrimination": 3.3440764331210193,
+          "neg_share": 0.04589381865802966,
+          "pairs": 171047,
+          "pos_share": 0.15347243740024671
+        },
+        "control": {
+          "discrimination": 25.324393358876115,
+          "neg_share": 0.004577689173151239,
+          "pairs": 171047,
+          "pos_share": 0.11592720129555034
+        }
+      },
+      "verdict": "active"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": false,
+      "bootstrap_ci95": [
+        2.5664184162314267,
+        2.671704369111437
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 2.619839290662233,
+      "neg_share": 0.05462491722637404,
+      "pos_share": 0.14310850439882697,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "wall_time_s": 2391.428
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/behavior_conditioned_pairwise_curvature",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-behavior_conditioned_pairwise_curvature-20261021T085957",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature",
+  "tree_files": 24,
+  "tree_sha256": "8c5bb87690a6f03307882d1eeb5c071fbf2a64f8d0a1709291332105bf763397",
+  "verdicts": {
+    "independent_judges": {
+      "detail": "all 11 declared checks hold",
+      "failed": [],
+      "ok": true
+    },
+    "probe": {
+      "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "occupancy": {
+        "available": true,
+        "collapse_suspected": false,
+        "collision_3token": 0.468988,
+        "host_unique_l1": 172,
+        "items": 24587,
+        "l1_fraction": 0.006914,
+        "l1l2_fraction": 0.091064,
+        "unique_l1": 170,
+        "unique_l1l2": 2239
+      },
+      "occupancy_ratio_vs_host": 0.9884,
+      "ok": true
+    }
+  }
+}

@@ -594,8 +594,81 @@ def _load_mechanism(tree: Path, module_name: str):
     return None
 
 
+def production_gradient_evidence(
+    tree: Path, mechanism_module: str, *, sample: int = 512
+) -> Dict[str, Any]:
+    """Does the mechanism deliver gradient to the codebook on the PRODUCTION path?
+
+    The independent judges test the mechanism module in isolation. This measures the same
+    thing where it actually runs: inside the host's own loss assembly, on the host's own
+    mini case, with the host's own post-backward projection applied. It reports the
+    encoder and the codebook gradient differences separately, because the host overwrites
+    one of them and not the other.
+    """
+    import torch
+
+    trainer = _load_trainer(tree)
+    embeddings = np.load(EMBEDDINGS).astype("float32")[: 2 * sample]
+    tensor = torch.from_numpy(embeddings)
+    pairs = sample
+    model = trainer.RQVAE(trainer._tokenizer_config(), in_dim=int(embeddings.shape[1]))
+    model.eval()
+    module = _load_mechanism(tree, mechanism_module)
+    if module is None:
+        return {"ok": False, "error": f"the mechanism module {mechanism_module!r} was not found"}
+
+    def measure(with_term: bool) -> Dict[str, Any]:
+        model.zero_grad(set_to_none=False)
+        reconstructed, quant_loss, _, _ = model.forward(tensor)
+        base_loss, _recon = model.compute_loss(tensor, reconstructed, quant_loss)
+        residuals = trainer._residuals_with_trace(model, tensor)
+        source_ids = torch.arange(pairs)
+        target_ids = (source_ids + 1) % pairs
+        l1_loss, other_loss, valid_levels = trainer.behavior_contrastive_components(
+            residuals, source_ids, target_ids, None
+        )
+        loss = base_loss + l1_loss
+        if with_term:
+            source = residuals[0, :pairs]
+            target = residuals[0, pairs : 2 * pairs]
+            codebook = model.rq.vq_layers[0].get_code_embs()
+            mask = torch.ones(pairs, dtype=source.dtype)
+            loss = loss + 0.01 * module.mechanism_loss(source, target, codebook, mask)
+        loss.backward(retain_graph=True)
+        encoder = [
+            (torch.zeros_like(p) if p.grad is None else p.grad.detach().clone())
+            for p in model.encoder.parameters()
+        ]
+        codebooks = [
+            (torch.zeros_like(p) if p.grad is None else p.grad.detach().clone())
+            for layer in model.rq.vq_layers
+            for p in layer.parameters()
+        ]
+        return {"encoder": encoder, "codebooks": codebooks}
+
+    control = measure(False)
+    treatment = measure(True)
+    encoder_before = _max_abs_difference(control["encoder"], treatment["encoder"])
+    codebook_difference = _max_abs_difference(control["codebooks"], treatment["codebooks"])
+    return {
+        "ok": True,
+        "mechanism_module": mechanism_module,
+        "tree": str(tree),
+        "sample_items": int(pairs),
+        "encoder_gradient_difference": encoder_before,
+        "codebook_gradient_difference": codebook_difference,
+        "reaches_the_codebook": codebook_difference > 0.0,
+        "note": (
+            "the host overwrites the encoder gradient after the backward and never touches "
+            "the codebook gradient, so a codebook gradient difference is the part of the "
+            "mechanism that survives into the update"
+        ),
+    }
+
+
 __all__ = [
     "experiment_x1",
+    "production_gradient_evidence",
     "experiment_x5",
     "experiment_x2",
     "experiment_x4",

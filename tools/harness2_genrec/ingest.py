@@ -104,6 +104,18 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
         "verification": "redesign_geometry/verification.json",
     },
     {
+        "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+        "kind": "arm",
+        "tree": "stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",
+        "sid_dir": (
+            "results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy"
+            "/r8_control"
+        ),
+        "stage3_variant": None,
+        "probe": None,
+        "verification": None,
+    },
+    {
         "mechanism_id": "directed_st_code_transition_geometry",
         "kind": "arm",
         "tree": "stage2_RQ-VAE/TIGER_directed_st_code_transition_geometry",

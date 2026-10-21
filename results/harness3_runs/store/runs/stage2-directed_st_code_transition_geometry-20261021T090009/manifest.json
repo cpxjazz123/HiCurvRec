@@ -1,0 +1,73 @@
+{
+  "artifacts": [
+    {
+      "bytes": 968,
+      "exists": true,
+      "path": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/directed_st_code_transition_geometry/probe_report.json",
+      "sha256": "b6946edf57ab19ff65b5654f672b55d915514dd7cc13baab8eaaeefe24a03be3"
+    },
+    {
+      "bytes": 2552,
+      "exists": true,
+      "path": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/redesign/verification.json",
+      "sha256": "993a611e480b452dac6e4ca6c57cc4b57738674bebe18dfea2e7b60f46d35345"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_directed_st_code_transition_geometry/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T09:00:09.568015+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T09:00:09.522371+00:00"
+  },
+  "failure": {
+    "detail": "the code collapsed: the arm uses 1 level-0 entries against the host's 199 (0.5% of it)",
+    "reason": "the active probe refused the arm before a cold run"
+  },
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "b0b0dc2a7d78e5123a2056013903ed623eb8db058b15168413ca34d3238d817f",
+  "manifest_version": 1,
+  "mechanism_id": "directed_st_code_transition_geometry",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "metric_records": 3003,
+    "wall_time_s": 2357.37
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_st_code_transition_geometry",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_st_code_transition_geometry-20261021T090009",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "refused",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_directed_st_code_transition_geometry",
+  "tree_files": 22,
+  "tree_sha256": "d243cd4737ce5ab865de13d4a4fc6ee2eacf969ef03a775e84946b1770e51694",
+  "verdicts": {
+    "independent_judges": {
+      "detail": "all 11 declared checks hold",
+      "failed": [],
+      "ok": true
+    },
+    "probe": {
+      "detail": "the code collapsed: the arm uses 1 level-0 entries against the host's 199 (0.5% of it)",
+      "occupancy": {
+        "available": true,
+        "collapse_suspected": true,
+        "collision_3token": 0.697076,
+        "host_unique_l1": 199,
+        "items": 24587,
+        "l1_fraction": 4.1e-05,
+        "l1l2_fraction": 0.008948,
+        "unique_l1": 1,
+        "unique_l1l2": 220
+      },
+      "occupancy_ratio_vs_host": 0.005,
+      "ok": false
+    }
+  }
+}

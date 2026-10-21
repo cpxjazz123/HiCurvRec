@@ -422,4 +422,161 @@ with the same keys as before.
     return {"proposal": frozen, "record": record}
 
 
-__all__ = ["BASE_TREE", "EVIDENCE", "implement", "propose", "repair_proposal"]
+def _ledger_brief(ledger_text: str, constraint: str, lanes: str) -> str:
+    """The research system's brief, assembled from the ledger and nothing else."""
+    schema = {key: "..." for key in ideation._REQUIRED_FIELDS}
+    return f"""# ROLE
+
+You are the researcher of an autonomous research system. You propose ONE mechanism; a
+controller freezes it, gives it to an implementer, and puts it through the independent
+checks, an active probe and a cold run. You do not write code and you do not run anything.
+
+# THE LEDGER: WHAT THE SYSTEM KNOWS AND WHAT IT HAS TESTED
+
+{ledger_text}
+
+# THE CONSTRAINT THE HOST IMPOSES (measured, not assumed)
+
+{constraint}
+
+# WHAT THE MECHANISM MUST BE
+
+A behaviour-aware mechanism for the RQ-VAE of this repository, in which the user-item
+BEHAVIOUR changes the geometry or the organisation of the learned item and codebook
+representations -- not a detached auxiliary metric. Concretely the mechanism must:
+
+* have an equation you can write down, with every symbol defined;
+* say exactly which paths the loss reaches: the encoder, each affected codebook level, and
+  the exported hard L1/L2/L3 SID, and whether the straight-through estimator or a
+  stop-gradient blocks any of them;
+* declare its hyperparameters and the criteria by which it would be selected;
+* declare the invariants that a checker can execute WITHOUT knowing your internals (from:
+  the loss is unchanged when the codebook rows are permuted; the loss changes when the
+  source and the target are exchanged; the loss is zero when every pair is masked out);
+* declare the gradient targets it claims (nonzero, zero or finite for the source residual,
+  the target residual and the codebook) -- and be honest about them, because the checker
+  measures them;
+* declare the substitutions that would make it a DIFFERENT mechanism, as regular
+  expressions over its own source, with the reason each is forbidden;
+* declare how it differs from the lanes that failed, by name, with a reason each, and why
+  it does not repeat their collapse pattern;
+* declare its own failure signatures: what a wrong implementation of it would look like.
+
+# THE MECHANISM MUST BE WRITTEN DOWN AS ONE JSON OBJECT
+
+Reply with ONE fenced ```json block and nothing else. The object must have exactly these
+keys:
+
+{json.dumps(schema, indent=2)}
+
+The controller VALIDATES this object before it freezes anything, and it refuses anything
+that does not have the shape below:
+
+* `schema_version`: the number 1.
+* `symbols`: an object mapping every symbol of the equation to what it means.
+* `parameters`: an object of name -> number.
+* `target_paths`: a list drawn from "encoder", "codebook", "hard_sid_export".
+* `hypotheses` and `expected_failure_modes`: lists of non-empty strings.
+* `tests`: a list of objects, each with an `id`, a `kind` ("numeric", "metamorphic",
+  "integration", "gradient" or "distributed") and a `statement`.
+* `judges`: a list drawn ONLY from "contract_audit", "forward_oracle", "derivative_evidence",
+  "property_checks", "integration_on_off". Your selection criteria belong in `hypotheses` or
+  in a test's statement, NOT in `judges`.
+* `forbidden_substitutions`: a list of objects, each with an `id`, a `pattern` (a regular
+  expression over your own source) and a `reason`.
+* `provenance`: an object with `authored_by` and `authored_at` (an ISO timestamp).
+* `activation`: an object with `kind` ("term") and `weight` (a number).
+* `differentiation`: an object with THREE keys, all required: `occupancy_preservation`
+  (a non-empty string), `vs_r8` (a non-empty list of objects with a `lane` -- one of the
+  exact ids listed below -- and a `why`), and `vs_reference_arm` (a non-empty string).
+* `inputs`: the checker's synthetic case, exactly as described below.
+
+The historical lanes that failed, with their names:
+
+{lanes}
+
+Notes on the keys:
+
+* `mechanism_id`: snake_case, lower case, describing the mechanism itself.
+* `version`: "3.0.0" -- this is the third generation: the first two families were repaired
+  and measured, and the third follows what the ledger established.
+* `equation`: the objective, in text, with the symbols it uses.
+* `parameters`: a flat map of name -> number, every hyperparameter you need.
+* `target_paths`: a list of "encoder", "codebook", "hard_sid_export".
+* `inputs`: how a checker builds a tiny synthetic case for your mechanism:
+  {{"source": {{"shape": [B, D], "seed": 11}}, "target": {{...}}, "codebook": {{"shape":
+  [C, D], "seed": 13}}, "mask": {{"seed": 17, "valid_fraction": 0.75}}}}. The checker calls
+  your loss as `loss(source, target, codebook, mask, **parameters)`.
+* `invariants`: a list of {{"id", "transform", "expect", "tolerance"}} where `transform` is one
+  of "permute_codebook", "swap_source_target", "mask_all" and `expect` is one of "unchanged",
+  "changed", "zero".
+* `gradient_targets`: {{"source": ..., "target": ..., "codebook": ...}}, each "nonzero",
+  "zero" or "finite".
+* `forbidden_substitutions`: a list of {{"pattern", "reason"}}.
+* `activation`: {{"kind": "term", "weight": <number>}}.
+"""
+
+
+def propose_from_ledger(
+    ledger_text: str,
+    constraint: str,
+    out_dir: Path,
+    *,
+    model: str = "",
+    timeout: int = 2400,
+) -> Dict[str, Any]:
+    """The agent proposes the next mechanism, briefed only by the ledger."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    lanes = "\n".join(
+        f"* `{lane}` -- {name}" for lane, name in sorted(ideation.PRIOR_FAILURES.items())
+    )
+    brief = _ledger_brief(ledger_text, constraint, lanes)
+    result = opencode.run_agent(
+        out_dir,
+        brief,
+        model=model or opencode.model_name(),
+        timeout=timeout,
+        title="mechanism proposal from the ledger",
+    )
+    (out_dir / "proposal_session.json").write_text(
+        json.dumps(result, indent=2, default=str) + "\n", encoding="utf-8"
+    )
+    raw = result.get("text") or ""
+    (out_dir / "proposal_reply.txt").write_text(raw, encoding="utf-8")
+    proposal = ideation.parse_proposal(raw)
+    proposal.setdefault("version", "3.0.0")
+    proposal["version"] = "3.0.0"
+    proposal.setdefault("schema_version", 1)
+    proposal["schema_version"] = 1
+    critique = ideation.critique(proposal)
+    frozen = freeze(proposal)
+    frozen["revision"] = {
+        "supersedes": "the two families the ledger measured in issue #105",
+        "reason": "proposed from the ledger's supported findings, not from a fixed lever list",
+        "measured_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    (out_dir / "proposal.json").write_text(
+        json.dumps(frozen, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    record = {
+        "mechanism_id": frozen.get("mechanism_id"),
+        "proposal_sha256": proposal_digest(frozen),
+        "critique": {"fatal": list(critique.problems), "notes": list(critique.notes)},
+        "tokens": result.get("tokens"),
+        "exit_code": result.get("exit_code"),
+    }
+    (out_dir / "proposal_record.json").write_text(
+        json.dumps(record, indent=2, default=str) + "\n", encoding="utf-8"
+    )
+    return {"proposal": frozen, "record": record}
+
+
+__all__ = [
+    "BASE_TREE",
+    "EVIDENCE",
+    "implement",
+    "propose",
+    "propose_from_ledger",
+    "repair_proposal",
+]

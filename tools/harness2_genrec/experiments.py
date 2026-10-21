@@ -94,6 +94,27 @@ def record(
     """Write the executed experiments into the ledger and re-run its checks."""
     ledger = Ledger(ledger_path, store=store).load()
     out_dir = Path(out_dir)
+    # The store's run ids carry a timestamp, so a re-ingestion of the same arms renames
+    # them. The ledger's links are repaired by MECHANISM, not by hand: a hypothesis that
+    # cited the residual-target arm still cites it.
+    by_mechanism = {
+        manifest["mechanism_id"]: manifest["run_id"] for manifest in store.runs()
+    }
+    for hypothesis in ledger.hypotheses:
+        repointed: List[str] = []
+        for run_id in hypothesis.evidence_runs:
+            try:
+                manifest = store.load(run_id)
+                repointed.append(by_mechanism.get(manifest["mechanism_id"], run_id))
+                continue
+            except Exception:  # noqa: BLE001
+                pass
+            # The run is no longer in the store (the store was re-ingested and the ids
+            # carry a timestamp). The mechanism it was about is still known from the id.
+            stem = run_id.rsplit("-", 1)[0]
+            mechanism = stem.split("-", 1)[1] if "-" in stem else stem
+            repointed.append(by_mechanism.get(mechanism, run_id))
+        hypothesis.evidence_runs = sorted(set(repointed))
     updated: List[Dict[str, Any]] = []
     for hypothesis in ledger.hypotheses:
         for experiment in hypothesis.experiments:

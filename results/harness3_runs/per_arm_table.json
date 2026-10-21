@@ -1,0 +1,246 @@
+{
+  "generated_utc": "2026-10-21T09:22:54.210156+00:00",
+  "rows": [
+    {
+      "arm": "r8_control",
+      "issue": "#105 (the matched control for this window)",
+      "run_id": "control-r8_control-20261021T085955",
+      "status": "succeeded",
+      "declaration_sha256": "-",
+      "manifest_sha256": "2ef6043d150372bd1efd66dc544b8d96bdb9c722c35209ca930defce45789e55",
+      "judges": "-",
+      "probe": "-",
+      "export_verdict": "reference",
+      "changed_l1": "-",
+      "occupancy_ratio_vs_control": "-",
+      "epochs": 3000,
+      "hard_l1_er": 16.334505666275888,
+      "vs_gate": -0.05503375605042038,
+      "vs_r4_08": -0.06812184531607457,
+      "er_ci95": [
+        15.563964614011141,
+        17.180504770538473
+      ],
+      "stage3_recall@10": 0.06406796775709883,
+      "stage3_ndcg@10": 0.03530651701940677,
+      "gpu_minutes": 2357.37,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json"
+      ]
+    },
+    {
+      "arm": "behavior_conditioned_pairwise_curvature",
+      "issue": "#103 (repaired, judged in #104)",
+      "run_id": "stage2-behavior_conditioned_pairwise_curvature-20261021T085957",
+      "status": "succeeded",
+      "declaration_sha256": "43556fd2a76e39bc",
+      "manifest_sha256": "524a8267e939cefd189f7fc0c0175cae9898aea712b86abec46230b3e2dd3d0b",
+      "judges": "all 11 declared checks hold",
+      "probe": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "export_verdict": "active",
+      "changed_l1": 0.9968275918168138,
+      "occupancy_ratio_vs_control": 0.8122448979591838,
+      "epochs": 3000,
+      "hard_l1_er": 2.619839290662233,
+      "vs_gate": -13.769700131664075,
+      "vs_r4_08": -13.78278822092973,
+      "er_ci95": [
+        2.5664184162314267,
+        2.671704369111437
+      ],
+      "stage3_recall@10": "-",
+      "stage3_ndcg@10": "-",
+      "gpu_minutes": 2391.428,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control/sids_for_hgrec.npy",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/behavior_conditioned_pairwise_curvature/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/v2_judges/behavior_conditioned_pairwise_curvature.json"
+      ]
+    },
+    {
+      "arm": "behavior_conditioned_pairwise_margin",
+      "issue": "#103 (repaired, judged in #104)",
+      "run_id": "stage2-behavior_conditioned_pairwise_margin-20261021T090000",
+      "status": "succeeded",
+      "declaration_sha256": "318d06cd8b82fad5",
+      "manifest_sha256": "d3b1b0b35a08bb461db9a5decfd2731253bdda3fd866183af38e390ee5d5dda0",
+      "judges": "all 10 declared checks hold",
+      "probe": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "export_verdict": "inert",
+      "changed_l1": 0.0,
+      "occupancy_ratio_vs_control": 1.0,
+      "epochs": 3000,
+      "hard_l1_er": 16.334505666275888,
+      "vs_gate": -0.05503375605042038,
+      "vs_r4_08": -0.06812184531607457,
+      "er_ci95": [
+        15.563964614011141,
+        17.180504770538473
+      ],
+      "stage3_recall@10": "-",
+      "stage3_ndcg@10": "-",
+      "gpu_minutes": 3503.105,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_margin/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_margin/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_margin/r8_control/sids_for_hgrec.npy",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/behavior_conditioned_pairwise_margin/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/v2_judges/behavior_conditioned_pairwise_margin.json"
+      ]
+    },
+    {
+      "arm": "behavior_directed_code_assignment_cross_entropy",
+      "issue": "#105 (ledger-derived, judged and probed)",
+      "run_id": "stage2-behavior_directed_code_assignment_cross_entropy-20261021T090009",
+      "status": "succeeded",
+      "declaration_sha256": "364110e655e26d3f",
+      "manifest_sha256": "954eeac6795618569fcde1f9b952686a83ca0704763821f7197e31a89982ab02",
+      "judges": "-",
+      "probe": "-",
+      "export_verdict": "collapsed",
+      "changed_l1": 0.9917436043437589,
+      "occupancy_ratio_vs_control": 0.008163265306122448,
+      "epochs": 3000,
+      "hard_l1_er": 1.478111600364957,
+      "vs_gate": -14.91142782196135,
+      "vs_r4_08": -14.924515911227004,
+      "er_ci95": [
+        1.4698992388140568,
+        1.4860194613649877
+      ],
+      "stage3_recall@10": "-",
+      "stage3_ndcg@10": "-",
+      "gpu_minutes": 707.022,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/sids_for_hgrec.npy"
+      ]
+    },
+    {
+      "arm": "behavior_residual_geometry_transport",
+      "issue": "#104 (versioned redesign)",
+      "run_id": "stage2-behavior_residual_geometry_transport-20261021T090007",
+      "status": "succeeded",
+      "declaration_sha256": "ba35076a6423e646",
+      "manifest_sha256": "c48acd13d41b45a37b28addf46b2e541951cf0da9a81e5c654df4ec0907840f4",
+      "judges": "all 10 declared checks hold",
+      "probe": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "export_verdict": "active",
+      "changed_l1": 0.6841013543742628,
+      "occupancy_ratio_vs_control": 1.0081632653061223,
+      "epochs": 3000,
+      "hard_l1_er": 16.616,
+      "vs_gate": 0.22646057767369143,
+      "vs_r4_08": 0.21337248840803724,
+      "er_ci95": [
+        15.832937361772315,
+        17.540387471250334
+      ],
+      "stage3_recall@10": 0.06338898657706436,
+      "stage3_ndcg@10": 0.03454331085500618,
+      "gpu_minutes": 720.279,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/sids_for_hgrec.npy",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/behavior_residual_geometry_transport/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/redesign_geometry/verification.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_behavior_residual_geometry_transport__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-01-57/test_final.json"
+      ]
+    },
+    {
+      "arm": "behaviour_conditioned_residual_target",
+      "issue": "#103 (repaired, judged in #104)",
+      "run_id": "stage2-behaviour_conditioned_residual_target-20261021T090002",
+      "status": "succeeded",
+      "declaration_sha256": "05c319f174359669",
+      "manifest_sha256": "19e40445b9f889b2182d1783f752afbf798a9d78f470595d27da3e49a1fbc1d4",
+      "judges": "1 of 10 declared checks failed",
+      "probe": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "export_verdict": "active",
+      "changed_l1": 0.8387765892544841,
+      "occupancy_ratio_vs_control": 0.9918367346938776,
+      "epochs": 3000,
+      "hard_l1_er": 16.503445774392453,
+      "vs_gate": 0.11390635206614519,
+      "vs_r4_08": 0.100818262800491,
+      "er_ci95": [
+        15.79346905356989,
+        17.260442889558657
+      ],
+      "stage3_recall@10": 0.0610038475600202,
+      "stage3_ndcg@10": 0.03381020016512428,
+      "gpu_minutes": 3438.2,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/sids_for_hgrec.npy",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/behaviour_conditioned_residual_target/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/v2_judges/behaviour_conditioned_residual_target.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c1_behaviour_conditioned_residual_target__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_12-07-27/test_final.json"
+      ]
+    },
+    {
+      "arm": "curvature_weighted_transition_transport",
+      "issue": "#103 (repaired, judged in #104)",
+      "run_id": "stage2-curvature_weighted_transition_transport-20261021T090004",
+      "status": "succeeded",
+      "declaration_sha256": "8520b4e281bcbc66",
+      "manifest_sha256": "9ba196c297c543da3f21b889408dfe2338a5b6f8ca8ad9bbc604748762d09fc0",
+      "judges": "all 11 declared checks hold",
+      "probe": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "export_verdict": "inert",
+      "changed_l1": 0.0,
+      "occupancy_ratio_vs_control": 1.0,
+      "epochs": 3000,
+      "hard_l1_er": 16.334505666275888,
+      "vs_gate": -0.05503375605042038,
+      "vs_r4_08": -0.06812184531607457,
+      "er_ci95": [
+        15.563964614011141,
+        17.180504770538473
+      ],
+      "stage3_recall@10": "-",
+      "stage3_ndcg@10": "-",
+      "gpu_minutes": 2410.915,
+      "artifacts": [
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_curvature_weighted_transition_transport/r8_control/item_sids.json",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_curvature_weighted_transition_transport/r8_control/rqvae_best.pth",
+        "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_curvature_weighted_transition_transport/r8_control/sids_for_hgrec.npy",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/curvature_weighted_transition_transport/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/v2_judges/curvature_weighted_transition_transport.json"
+      ]
+    },
+    {
+      "arm": "directed_st_code_transition_geometry",
+      "issue": "#104 (versioned redesign, refused at the probe)",
+      "run_id": "stage2-directed_st_code_transition_geometry-20261021T090009",
+      "status": "refused",
+      "declaration_sha256": "4b2067831eedb6ec",
+      "manifest_sha256": "b0b0dc2a7d78e5123a2056013903ed623eb8db058b15168413ca34d3238d817f",
+      "judges": "all 11 declared checks hold",
+      "probe": "the code collapsed: the arm uses 1 level-0 entries against the host's 199 (0.5% of it)",
+      "export_verdict": "-",
+      "changed_l1": "-",
+      "occupancy_ratio_vs_control": "-",
+      "epochs": 3000,
+      "hard_l1_er": null,
+      "vs_gate": "-",
+      "vs_r4_08": "-",
+      "er_ci95": "-",
+      "stage3_recall@10": "-",
+      "stage3_ndcg@10": "-",
+      "gpu_minutes": 2357.37,
+      "artifacts": [
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/probes/directed_st_code_transition_geometry/probe_report.json",
+        "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1/redesign/verification.json"
+      ]
+    }
+  ]
+}
