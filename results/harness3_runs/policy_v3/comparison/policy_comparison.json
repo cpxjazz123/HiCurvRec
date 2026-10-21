@@ -1,0 +1,143 @@
+{
+  "ok": true,
+  "generated_utc": "2026-10-21T12:27:52.706333+00:00",
+  "tasks": 8,
+  "budget_matched": true,
+  "model": "openai/gpt-6-luna",
+  "timeout_s": 900,
+  "seed": 4242,
+  "adoption_criterion": "the learned policy must solve strictly more held-back tasks than the old policy (8 tasks, one point each); a tie or a loss is a failure to adopt",
+  "scores": {
+    "improved": 8
+  },
+  "old_correct": 8,
+  "learned_correct": 0,
+  "adopted": false,
+  "reason": "the learned policy did not solve strictly more held-back tasks; it is NOT adopted",
+  "rows": [
+    {
+      "task": "artifact_integrity",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the integrity verdict and the artifact are right",
+      "answer": {
+        "intact": true,
+        "artifact": "item_sids.json"
+      },
+      "tokens": {
+        "input": 57520,
+        "output": 676,
+        "reasoning": 73
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "collapse_detection",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "collapsed"
+      },
+      "tokens": {
+        "input": 17325,
+        "output": 94,
+        "reasoning": 91
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "probe_blind_spot",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "not ready"
+      },
+      "tokens": {
+        "input": 18978,
+        "output": 110,
+        "reasoning": 37
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "host_gradient_route",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the parameter is right",
+      "answer": {
+        "must_reach": "codebook"
+      },
+      "tokens": {
+        "input": 19358,
+        "output": 75,
+        "reasoning": 44
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "causal_experiment_design",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the design is well formed",
+      "answer": {
+        "experiment": "Using the arm\u2019s exported SIDs and the contemporaneous cold-control SIDs, compute a per-item Hard-L1 ER decomposition under the frozen protocol. Compare each item\u2019s contribution and the concentration of the total ER gain across items. On the same exports, measure the recommender-consumed code-neighbourhood structure with train-side discrimination and occupancy/collision statistics; compare all measurements with the matched control. Do not use held-out recommendation metrics to decide.",
+        "control": "control-r8_control-20261021T082024",
+        "decision_variable": "per-item Hard-L1 ER decomposition, with train-side discrimination and occupancy/collision statistics as the neighbourhood-structure readout",
+        "falsifiers": {
+          "E1": "Refute the small-subset explanation if the per-item decomposition shows the ER gain is broadly distributed across items rather than concentrated in a small subset.",
+          "E2": "Refute the worsened-neighbourhood explanation if train-side discrimination and occupancy/collision statistics show no degradation relative to the matched control."
+        }
+      },
+      "tokens": {
+        "input": 30402,
+        "output": 112,
+        "reasoning": 43
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "gradient_fidelity",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the category and the cited measurement are right",
+      "answer": {
+        "category": "impossible specification",
+        "cited_forward_dependence": 0.0
+      },
+      "tokens": {
+        "input": 19567,
+        "output": 163,
+        "reasoning": 31
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "inert_export",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the verdict is right",
+      "answer": {
+        "verdict": "inert"
+      },
+      "tokens": {
+        "input": 28006,
+        "output": 234,
+        "reasoning": 49
+      },
+      "exit_code": 0
+    },
+    {
+      "task": "er_vs_stage3_decision",
+      "policy": "improved",
+      "correct": true,
+      "reason": "the decision follows the predeclared rule",
+      "answer": {
+        "decision": "exploratory"
+      },
+      "tokens": {},
+      "exit_code": 0
+    }
+  ]
+}

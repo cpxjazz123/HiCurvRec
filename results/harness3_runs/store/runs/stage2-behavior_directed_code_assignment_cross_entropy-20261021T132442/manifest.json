@@ -1,0 +1,95 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1258176,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/item_sids.json",
+      "sha256": "f4f24280a8b4e553388dc8711e9d9ac9ade7e87fff0c46fb255821c6fc0ebf83"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/rqvae_best.pth",
+      "sha256": "94e467815ed6881cd045e3a33e99fc2b1e36a64ad0df5f37d561c567d47f48e3"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/sids_for_hgrec.npy",
+      "sha256": "fc964f0f1c496a872e0264eb9a9c44dfc2aa364dcf946f4f65bdf2767adf290e"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T13:24:42.943167+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T13:24:42.851748+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "e67b763031f15e0aa4aa8884cc5343a083d31ebbadce30640d2010f56bb83589",
+  "manifest_version": 1,
+  "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "changed_fraction": {
+        "levels_1": 0.9917436043437589,
+        "levels_2": 1.0,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 0.008163265306122448,
+      "reasons": [
+        "the arm uses 0.0% of the codes against the control's 1.0% (ratio 0.008)"
+      ],
+      "train_side_discrimination": {
+        "arm": {
+          "discrimination": 1.5848441402275464,
+          "neg_share": 0.5056388010312954,
+          "pairs": 171047,
+          "pos_share": 0.8013586908861308
+        },
+        "control": {
+          "discrimination": 25.324393358876115,
+          "neg_share": 0.004577689173151239,
+          "pairs": 171047,
+          "pos_share": 0.11592720129555034
+        }
+      },
+      "verdict": "collapsed"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": false,
+      "bootstrap_ci95": [
+        1.4698992388140568,
+        1.4860194613649877
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 1.478111600364957,
+      "neg_share": 0.5246296471478573,
+      "pos_share": 0.7754611673446221,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "trained": true,
+    "wall_time_s": 707.022
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/behavior_directed_code_assignment_cross_entropy",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-behavior_directed_code_assignment_cross_entropy-20261021T132442",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",
+  "tree_files": 23,
+  "tree_sha256": "2ec37c13ea24764f53444fd3901583eec25ea06a01e97aca7df0ba84557e5501",
+  "verdicts": {}
+}

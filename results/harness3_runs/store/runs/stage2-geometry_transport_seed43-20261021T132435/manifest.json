@@ -1,0 +1,93 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1260214,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/item_sids.json",
+      "sha256": "99493976530b98a5a6ae58312a6b2e9f0be9a6eb8e46ea83473c3e5e82079e68"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/rqvae_best.pth",
+      "sha256": "31d23d59ee9738a294927c121ab68d543e24d597b243adecb7f269918a6263c2"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "e3476a03319a67efa150e633b155a3c8e56edda36b5a86f3b97c25235f27f77a"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_seed43_geometry/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T13:24:36.039862+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T13:24:35.828622+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "e2ecb1edba2f606a914a0505cc66efff5d0b54d9ebb23397a0a13fdbce2085fc",
+  "manifest_version": 1,
+  "mechanism_id": "geometry_transport_seed43",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "changed_fraction": {
+        "levels_1": 0.9983731240086224,
+        "levels_2": 1.0,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 1.0081632653061223,
+      "reasons": [],
+      "train_side_discrimination": {
+        "arm": {
+          "discrimination": 26.308510638297875,
+          "neg_share": 0.0043964524370494655,
+          "pairs": 171047,
+          "pos_share": 0.11566411571088649
+        },
+        "control": {
+          "discrimination": 25.324393358876115,
+          "neg_share": 0.004577689173151239,
+          "pairs": 171047,
+          "pos_share": 0.11592720129555034
+        }
+      },
+      "verdict": "active"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": true,
+      "bootstrap_ci95": [
+        15.986512944138077,
+        17.616393302090106
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.73965936739659,
+      "neg_share": 0.0046655945511304515,
+      "pos_share": 0.07810046353230536,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "trained": true,
+    "wall_time_s": 3381.751
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/geometry_transport_seed43",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-geometry_transport_seed43-20261021T132435",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_seed43_geometry",
+  "tree_files": 23,
+  "tree_sha256": "8aee7f590c0660577adcfe13ee66da2fa207bdfcd75dbb0c605eb2b5fc9afbe8",
+  "verdicts": {}
+}

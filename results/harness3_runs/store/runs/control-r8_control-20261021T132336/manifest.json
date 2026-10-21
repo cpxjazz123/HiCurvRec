@@ -1,0 +1,85 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1260012,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/item_sids.json",
+      "sha256": "49ff5822112bcd91e665826ec8f0760f9b874ff4fa6562ff689d19ce95beecd4"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+      "sha256": "3b7ca556fe025db618f550c4353b1139926bf847da49301b06a375743be9ae72"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+      "sha256": "abaaab8ac26d6246abc7e9fa27716e74aa5f6aa0e833c09e3b431c79e149819f"
+    },
+    {
+      "bytes": 338,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+      "sha256": "c876485e4b6c65e72f83f6c02be2ad7816ebff255a3d54de6af0b9025d3a92a1"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r8_control/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T13:23:37.073448+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T13:23:36.931185+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "control",
+  "manifest_sha256": "edada876e826c1a11e186412081370a7621f1c4ccccb339f6843b2253300a4e0",
+  "manifest_version": 1,
+  "mechanism_id": "r8_control",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "verdict": "reference"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": false,
+      "bootstrap_ci95": [
+        15.563964614011141,
+        17.180504770538473
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.334505666275888,
+      "neg_share": 0.004841547630309337,
+      "pos_share": 0.07908428720083246,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "stage3": {
+      "n_eval": 57439,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+      "test_ndcg@10": 0.03530651701940677,
+      "test_ndcg@5": 0.028552804010507957,
+      "test_recall@10": 0.06406796775709883,
+      "test_recall@5": 0.04308919027141837
+    },
+    "trained": true,
+    "wall_time_s": 2357.37
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "control-r8_control-20261021T132336",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r8_control",
+  "tree_files": 20,
+  "tree_sha256": "aa28304cd635f1d2d8ed70c89db9691c72a008d48c6c06a8170129f3c38b16f5",
+  "verdicts": {}
+}

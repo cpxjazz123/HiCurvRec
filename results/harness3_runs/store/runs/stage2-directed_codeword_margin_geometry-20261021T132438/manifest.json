@@ -1,0 +1,93 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1260036,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/item_sids.json",
+      "sha256": "19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/rqvae_best.pth",
+      "sha256": "e281692177e6db8b862bc4df8eae0945c162d261363235fcd21fa1fe150b5e53"
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "34910ffc5e359b38cb051a1dc5e9b39ed12cc26474e9f7430f1a36ba7dd18267"
+    }
+  ],
+  "command": [
+    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+    "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/train_rqvae.py"
+  ],
+  "created_utc": "2026-10-21T13:24:38.456353+00:00",
+  "extra": {
+    "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
+    "ingested_utc": "2026-10-21T13:24:38.286382+00:00"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "dfdc8bade1d5ba42a27838a5dbd807790e65d347ed3a1d24bc802f01d6b01a9d",
+  "manifest_version": 1,
+  "mechanism_id": "directed_codeword_margin_geometry",
+  "metrics": {
+    "epochs": 3000,
+    "event": "train_end",
+    "export_sensitivity": {
+      "changed_fraction": {
+        "levels_1": 0.6556310245251555,
+        "levels_2": 0.9967462480172449,
+        "levels_3": 0.9999186562004311,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 1.0040816326530613,
+      "reasons": [],
+      "train_side_discrimination": {
+        "arm": {
+          "discrimination": 26.04249667994688,
+          "neg_share": 0.00440229878337533,
+          "pairs": 171047,
+          "pos_share": 0.1146468514501862
+        },
+        "control": {
+          "discrimination": 25.324393358876115,
+          "neg_share": 0.004577689173151239,
+          "pairs": 171047,
+          "pos_share": 0.11592720129555034
+        }
+      },
+      "verdict": "active"
+    },
+    "frozen_evaluation": {
+      "above_frozen_gate": true,
+      "bootstrap_ci95": [
+        15.783027457829355,
+        17.44217046610474
+      ],
+      "evaluation_set_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.591820368885326,
+      "neg_share": 0.004718569671743449,
+      "pos_share": 0.0782896603916375,
+      "r4_08_reference": 16.402627511591962
+    },
+    "metric_records": 3003,
+    "trained": true,
+    "wall_time_s": 1235.756
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_codeword_margin_geometry",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_codeword_margin_geometry-20261021T132438",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry",
+  "tree_files": 23,
+  "tree_sha256": "9e0dcbdd27fb0ff1a05da357aad8eaa73b6f8328237ecd93aa03b0c62bafeaec",
+  "verdicts": {}
+}
