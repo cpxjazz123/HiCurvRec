@@ -176,7 +176,7 @@
       ],
       "id": "H105-02",
       "next_experiment": "X3",
-      "notes": "the ER gain is broad and the export is not damaged, yet the downstream quality did not follow; the pair-level ER and the recommender's objective are decoupled on this host, and the paired repeat is what would settle whether the small downstream difference is real",
+      "notes": "the ER gain is broad and the export is not damaged, yet the downstream quality did not follow; the pair-level ER and the recommender's objective are decoupled on this host. The second-seed repeat of the ER half is complete (control 16.0367, arm 16.7397, +0.7030); its downstream half was NOT executed -- the seed-43 Stage-3 was stopped at epoch 116 of 150 and the paired control's never started, so the downstream statement rests on the seed-42 pair alone",
       "observation": "stage2-behavior_conditioned_pairwise_curvature-20261021T082026 had Hard-L1 ER 2.619839290662233, while stage2-behaviour_conditioned_residual_target-20261021T082030 and stage2-behavior_residual_geometry_transport-20261021T082034 had ERs above the control gate and Stage-3 recall@10 below control-r8_control-20261021T082024.",
       "status": "inconclusive"
     },
@@ -276,6 +276,6 @@
       "status": "supported"
     }
   ],
-  "ledger_sha256": "584a4b83f4955d96756b775a46aeee1b8119d893a14b3d467f1efda3cbfc08d3",
+  "ledger_sha256": null,
   "ledger_version": 1
 }
