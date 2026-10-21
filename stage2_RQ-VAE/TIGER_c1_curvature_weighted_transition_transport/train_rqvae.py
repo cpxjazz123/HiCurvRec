@@ -259,7 +259,10 @@ TREE_NAME = TREE_DIR.name
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = OUT_ROOT / EXPERIMENT_ARM
+# Each arm writes into its own tree's directory: the experiment arm name is a host
+# configuration switch, not an output path, and four arms sharing one directory
+# overwrite each other's exports.
+_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
@@ -1639,44 +1642,49 @@ def main() -> None:
                 )
                 hyp_weight = _HYP_CONFIG["strength"] * epoch_hyp_alpha
                 loss = loss + hyp_value * hyp_weight
-            # Frozen Stage-2 auxiliary mechanism. Apply it to the encoder's
-            # directed training pairs before the ordinary backward/optimizer path.
-            # The mask is all-valid here; curvature metadata is added below when
-            # available from the training graph.
-            cwt_pair_batch = all_embeddings[
-                torch.cat((source_ids, target_ids)).cpu()
-            ].to(device, non_blocking=True)
-            cwt_n = int(source_ids.shape[0])
-            # Use the same differentiable encoder outputs that define x_i/x_j in
-            # the contract.  The trace helper walks the quantizer and is intended
-            # for token/quantizer diagnostics; some host quantizer implementations
-            # detach their residual stream, which can sever this auxiliary path.
-            # The level-1 transport is directly on x; later residual levels are
-            # included only when they retain an encoder-connected graph.
-            cwt_latent = raw_module.encoder(cwt_pair_batch)
-            # Preserve the host's ordinary nearest-code residual values while
-            # keeping every q_l connected to the encoder. Some host VQ forwards
-            # detach their residual output; detaching only the selected offset
-            # prevents that implementation detail from severing this loss path.
-            cwt_residual_levels = [cwt_latent]
-            cwt_residual = cwt_latent
-            for _vq_layer in raw_module.rq.vq_layers[:-1]:
-                _quant, _, _, _ = _vq_layer(cwt_residual)
-                cwt_residual = cwt_residual - _quant.detach()
-                cwt_residual_levels.append(cwt_residual)
-            cwt_residuals = torch.stack(
-                cwt_residual_levels[:raw_module.rq.codebook_num], dim=0
-            )
-            cwt_source = cwt_residuals[:, :cwt_n]
-            cwt_target = cwt_residuals[:, cwt_n:]
-            cwt_mask = torch.ones(cwt_n, device=device, dtype=cwt_source.dtype)
-            cwt_value = mvg_mechanism_term(
-                cwt_source, cwt_target,
-                torch.stack([layer.get_code_embs() for layer in raw_module.rq.vq_layers]),
-                cwt_mask,
-                alpha=1.0, beta_l1=1.0, beta_l2=1.0, beta_l3=1.0, epsilon=1e-8,
-            )
-            loss = loss + 0.05 * cwt_value
+            # The mechanism needs the directed training pairs, and the host only
+            # draws them once the behaviour ramp is open. Before that, `source_ids`
+            # does not exist yet: the block belongs to the same regime as the host's
+            # own behaviour term, so it is guarded by the same condition.
+            if epoch_weight > 0.0:
+                # Frozen Stage-2 auxiliary mechanism. Apply it to the encoder's
+                # directed training pairs before the ordinary backward/optimizer path.
+                # The mask is all-valid here; curvature metadata is added below when
+                # available from the training graph.
+                cwt_pair_batch = all_embeddings[
+                    torch.cat((source_ids, target_ids)).cpu()
+                ].to(device, non_blocking=True)
+                cwt_n = int(source_ids.shape[0])
+                # Use the same differentiable encoder outputs that define x_i/x_j in
+                # the contract.  The trace helper walks the quantizer and is intended
+                # for token/quantizer diagnostics; some host quantizer implementations
+                # detach their residual stream, which can sever this auxiliary path.
+                # The level-1 transport is directly on x; later residual levels are
+                # included only when they retain an encoder-connected graph.
+                cwt_latent = raw_module.encoder(cwt_pair_batch)
+                # Preserve the host's ordinary nearest-code residual values while
+                # keeping every q_l connected to the encoder. Some host VQ forwards
+                # detach their residual output; detaching only the selected offset
+                # prevents that implementation detail from severing this loss path.
+                cwt_residual_levels = [cwt_latent]
+                cwt_residual = cwt_latent
+                for _vq_layer in raw_module.rq.vq_layers[:-1]:
+                    _quant, _, _, _ = _vq_layer(cwt_residual)
+                    cwt_residual = cwt_residual - _quant.detach()
+                    cwt_residual_levels.append(cwt_residual)
+                cwt_residuals = torch.stack(
+                    cwt_residual_levels[:raw_module.rq.codebook_num], dim=0
+                )
+                cwt_source = cwt_residuals[:, :cwt_n]
+                cwt_target = cwt_residuals[:, cwt_n:]
+                cwt_mask = torch.ones(cwt_n, device=device, dtype=cwt_source.dtype)
+                cwt_value = mvg_mechanism_term(
+                    cwt_source, cwt_target,
+                    torch.stack([layer.get_code_embs() for layer in raw_module.rq.vq_layers]),
+                    cwt_mask,
+                    alpha=1.0, beta_l1=1.0, beta_l2=1.0, beta_l3=1.0, epsilon=1e-8,
+                )
+                loss = loss + 0.05 * cwt_value
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             # The parameter-matched control's block is used by NOTHING except the crowding

@@ -259,7 +259,10 @@ TREE_NAME = TREE_DIR.name
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = OUT_ROOT / EXPERIMENT_ARM
+# Each arm writes into its own tree's directory: the experiment arm name is a host
+# configuration switch, not an output path, and four arms sharing one directory
+# overwrite each other's exports.
+_OUT = OUT_ROOT / TREE_NAME / EXPERIMENT_ARM
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
