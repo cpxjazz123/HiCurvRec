@@ -60,6 +60,28 @@ FROZEN_GATE = 16.38953942232631
 R4_08_REFERENCE = 16.402627511591962
 
 
+def mechanism_family(proposal: Dict[str, Any]) -> str:
+    """The KIND of a mechanism, read from its own declaration.
+
+    The agent is asked to name the family, but it is not obliged to and often does not; a
+    portfolio's spread has to be measurable either way, so the family is derived from what
+    the proposal actually says.
+    """
+    text = " ".join(
+        str(proposal.get(key, "")).lower()
+        for key in ("equation", "title", "summary", "behaviour_signal", "codebook_interaction")
+    )
+    if any(word in text for word in ("repuls", "separat", "apart", "margin", "distanc", "geometry")):
+        return "codebook_geometry"
+    if any(word in text for word in ("occupanc", "prefix", "branch", "partition", "assign", "usage")):
+        return "assignment_structure"
+    if any(word in text for word in ("residual", "transport", "displacement", "whiten", "residual_space")):
+        return "residual_space"
+    if any(word in text for word in ("entropy", "temperature", "sharp", "softmax")):
+        return "assignment_temperature"
+    return "unspecified"
+
+
 def semantic_key(proposal: Dict[str, Any]) -> str:
     """The digest of what a mechanism DOES, independent of what it is called.
 
@@ -493,7 +515,7 @@ class Controller:
             portfolio.append(
                 {
                     "mechanism_id": candidate["mechanism_id"],
-                    "family": "",
+                    "family": _family_of(Path(candidate["path"])),
                     "proposal_path": candidate["path"],
                     "proposal_sha256": candidate["proposal_sha256"],
                     "semantic_key": key,
@@ -1007,6 +1029,14 @@ class Controller:
             time.sleep(self.config.poll_seconds)
 
 
+def _family_of(proposal_path: Path) -> str:
+    """The family of a frozen proposal, read from the proposal itself."""
+    try:
+        return mechanism_family(json.loads(Path(proposal_path).read_text(encoding="utf-8")))
+    except Exception:  # noqa: BLE001
+        return "unspecified"
+
+
 __all__ = [
     "ARCHIVED_CONTROL",
     "Controller",
@@ -1015,5 +1045,6 @@ __all__ = [
     "Job",
     "PHASES",
     "R4_08_REFERENCE",
+    "mechanism_family",
     "semantic_key",
 ]
