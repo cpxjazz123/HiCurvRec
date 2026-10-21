@@ -448,6 +448,17 @@ def cmd_corrected_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_final_table(args: argparse.Namespace) -> int:
+    """The final per-arm table, assembled from the store and the candidate records."""
+    from .evidence import EvidenceStore
+    from .final_table import build
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = build(store, Path(args.out))
+    print(f"final table: {report['rows']} rows -> {report['path']}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -565,6 +576,11 @@ def _build_parser() -> argparse.ArgumentParser:
     corr.add_argument("--store", default="results/harness3_runs/store")
     corr.add_argument("--out", default="results/harness3_runs/corrected")
     corr.set_defaults(func=cmd_corrected_report)
+
+    final = sub.add_parser("final-table", help="the final per-arm table for issue #106")
+    final.add_argument("--store", default="results/harness3_runs/store")
+    final.add_argument("--out", default="results/harness3_runs/final")
+    final.set_defaults(func=cmd_final_table)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")

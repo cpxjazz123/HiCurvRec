@@ -176,7 +176,7 @@
       ],
       "id": "H105-02",
       "next_experiment": "X3",
-      "notes": "the ER gain is broad and the export is not damaged, yet the downstream quality did not follow; the pair-level ER and the recommender's objective are decoupled on this host. The second-seed repeat of the ER half is complete (control 16.0367, arm 16.7397, +0.7030); its downstream half was NOT executed -- the seed-43 Stage-3 was stopped at epoch 116 of 150 and the paired control's never started, so the downstream statement rests on the seed-42 pair alone",
+      "notes": "the ER gain is broad and the export is not damaged, yet the downstream quality did not follow; the pair-level ER and the recommender's objective are decoupled on this host. FIVE arms have now cleared the gate (ER 16.4028, 16.5034, 16.5918, 16.6160, 16.6516) and NONE improved the downstream metric (recall@10 0.062257, 0.061004, 0.063737, 0.063389, 0.062414 against the archived control's 0.064068). The two explanations the executed experiments could test are ruled out; the remaining one -- that the pair-level ER and the recommender's objective measure different things -- stands, and this issue does not settle it",
       "observation": "stage2-behavior_conditioned_pairwise_curvature-20261021T082026 had Hard-L1 ER 2.619839290662233, while stage2-behaviour_conditioned_residual_target-20261021T082030 and stage2-behavior_residual_geometry_transport-20261021T082034 had ERs above the control gate and Stage-3 recall@10 below control-r8_control-20261021T082024.",
       "status": "inconclusive"
     },
@@ -352,6 +352,44 @@
       "next_experiment": "the candidate search: a mechanism that reaches the codebook without letting a pair's two codewords converge",
       "notes": "the design constraint the next candidates must respect: the encoder path is discarded by the host's assembly, and the codebook path is what collapses the codebook when it pulls a transition's two codewords together",
       "observation": "a mechanism that reached the codebook collapsed the level-0 codebook to two codes (Hard-L1 ER 1.478 against the control's 16.334), while two arms whose mechanisms reached only the encoder left the trained model bit-identical to the control's",
+      "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-21",
+      "evidence_runs": [
+        "stage2-directed_codeword_margin_geometry-20261021T143327",
+        "stage2-directed_assignment_usage_balance-20261021T143329"
+      ],
+      "experiments": [
+        {
+          "id": "X1",
+          "produced_runs": [],
+          "result": "directed_codeword_margin_geometry: train-side discrimination 26.04 against the control's 25.32, the level-0 occupancy ratio 1.004, ER 16.5918 above the gate, and Stage-3 recall@10 0.063737 -- BELOW the archived control's 0.064068; directed_assignment_usage_balance: train-side 26.07, occupancy ratio 0.963, ER 16.6516 (the best of the window) and Stage-3 recall@10 0.062414 -- further BELOW the control",
+          "status": "executed",
+          "tests": [
+            "E1"
+          ],
+          "verdict": "E1 is REFUTED: a healthy export, a better train-side discrimination and an above-gate ER still do not buy downstream quality. The arm with the best ER of the window has the worst downstream result of the two"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "the Stage-3 recall@10 is at or below the archived control's 0.06406796775709883",
+              "id": "P1",
+              "measurement": "the frozen Stage-3 protocol on the arm's exported SIDs",
+              "statement": "an arm whose train-side discrimination rises and whose export is healthy will improve Stage-3 recall@10 against the archived control"
+            }
+          ],
+          "statement": "reaching the codebook without collapsing it is necessary but not sufficient: the downstream metric does not follow from the pair-level ER"
+        }
+      ],
+      "id": "H106-02",
+      "next_experiment": "the pair-level ER and the recommender's objective have to be measured against each other directly before another mechanism is designed: five arms now show that moving the ER does not move the recommender",
+      "notes": "the negative result is the finding: the mechanism search is not the bottleneck",
+      "observation": "two new mechanisms, each designed against the measured constraint, cleared the frozen gate and neither improved the downstream recommendation quality",
       "status": "supported"
     }
   ],

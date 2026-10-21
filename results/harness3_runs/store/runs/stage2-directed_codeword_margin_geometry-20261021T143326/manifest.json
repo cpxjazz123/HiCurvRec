@@ -17,21 +17,27 @@
       "exists": true,
       "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/sids_for_hgrec.npy",
       "sha256": "34910ffc5e359b38cb051a1dc5e9b39ed12cc26474e9f7430f1a36ba7dd18267"
+    },
+    {
+      "bytes": 383,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c106_directed_codeword_margin_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-00-42/test_final.json",
+      "sha256": "52f29f990e4c1f236d6d5318a0c53b507d798c460d411abe55a8f7dc35f08ad5"
     }
   ],
   "command": [
     "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
     "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/train_rqvae.py"
   ],
-  "created_utc": "2026-10-21T13:24:38.456353+00:00",
+  "created_utc": "2026-10-21T14:33:27.051647+00:00",
   "extra": {
     "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
-    "ingested_utc": "2026-10-21T13:24:38.286382+00:00"
+    "ingested_utc": "2026-10-21T14:33:26.903581+00:00"
   },
   "failure": null,
   "gpu_budget_s": null,
   "kind": "stage2",
-  "manifest_sha256": "dfdc8bade1d5ba42a27838a5dbd807790e65d347ed3a1d24bc802f01d6b01a9d",
+  "manifest_sha256": "315081b1730903cf8f3ce563b6c18c82f4ddcae93b2f8c50f19ab537a578ca0f",
   "manifest_version": 1,
   "mechanism_id": "directed_codeword_margin_geometry",
   "metrics": {
@@ -76,13 +82,21 @@
       "r4_08_reference": 16.402627511591962
     },
     "metric_records": 3003,
+    "stage3": {
+      "n_eval": 57439,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c106_directed_codeword_margin_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-00-42/test_final.json",
+      "test_ndcg@10": 0.03466763666330205,
+      "test_ndcg@5": 0.02755781933822884,
+      "test_recall@10": 0.06373718205400512,
+      "test_recall@5": 0.04160935949442017
+    },
     "trained": true,
     "wall_time_s": 1235.756
   },
   "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_codeword_margin_geometry",
   "parent_runs": [],
   "proposal_sha256": null,
-  "run_id": "stage2-directed_codeword_margin_geometry-20261021T132438",
+  "run_id": "stage2-directed_codeword_margin_geometry-20261021T143326",
   "seed": 42,
   "stage": "cold_train",
   "status": "succeeded",

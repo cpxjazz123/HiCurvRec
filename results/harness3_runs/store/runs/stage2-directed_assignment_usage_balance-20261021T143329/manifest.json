@@ -17,21 +17,27 @@
       "exists": true,
       "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/sids_for_hgrec.npy",
       "sha256": "9502f9dfcbaebb53b5a3e15694954c12200e60fb46b36d56269792c3d16328af"
+    },
+    {
+      "bytes": 385,
+      "exists": true,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45/test_final.json",
+      "sha256": "a6cc95a1ae3b1a972e6c9e4bd3466d12d4a9010ac87fe9eb111d7ed46504c9eb"
     }
   ],
   "command": [
     "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
     "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/train_rqvae.py"
   ],
-  "created_utc": "2026-10-21T13:24:40.734528+00:00",
+  "created_utc": "2026-10-21T14:33:29.285632+00:00",
   "extra": {
     "ingested_from": "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1",
-    "ingested_utc": "2026-10-21T13:24:40.593256+00:00"
+    "ingested_utc": "2026-10-21T14:33:29.143224+00:00"
   },
   "failure": null,
   "gpu_budget_s": null,
   "kind": "stage2",
-  "manifest_sha256": "5854137ffb82d8d97a4f52b135261b9305929da932068e684e0a93c72d63d8bd",
+  "manifest_sha256": "efafc2e9b2a8c77dd565c235e0bdfba8aa994ed1a6d79cf8e5d36019cfbd343a",
   "manifest_version": 1,
   "mechanism_id": "directed_assignment_usage_balance",
   "metrics": {
@@ -76,13 +82,21 @@
       "r4_08_reference": 16.402627511591962
     },
     "metric_records": 3003,
+    "stage3": {
+      "n_eval": 57439,
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45/test_final.json",
+      "test_ndcg@10": 0.034312283480564885,
+      "test_ndcg@5": 0.027764050430797906,
+      "test_recall@10": 0.06241403924163025,
+      "test_recall@5": 0.04204460384059611
+    },
     "trained": true,
     "wall_time_s": 1146.185
   },
   "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_assignment_usage_balance",
   "parent_runs": [],
   "proposal_sha256": null,
-  "run_id": "stage2-directed_assignment_usage_balance-20261021T132440",
+  "run_id": "stage2-directed_assignment_usage_balance-20261021T143329",
   "seed": 42,
   "stage": "cold_train",
   "status": "succeeded",
