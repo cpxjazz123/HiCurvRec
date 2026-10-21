@@ -58,6 +58,7 @@ class ExecutionIntent:
     tree: Optional[Path] = None
     rerun_of: Optional[str] = None             # the arm this run repeats
     consumes_frozen_evaluation: bool = False
+    semantic_key: str = ""                     # the normalised specification digest
     note: str = ""
 
     def as_dict(self) -> Dict[str, Any]:
@@ -69,6 +70,7 @@ class ExecutionIntent:
             "tree": str(self.tree) if self.tree else None,
             "rerun_of": self.rerun_of,
             "consumes_frozen_evaluation": self.consumes_frozen_evaluation,
+            "semantic_key": self.semantic_key,
             "note": self.note,
         }
 
@@ -174,6 +176,45 @@ def check_intent(
                     checked,
                     now_utc(),
                 )
+
+    # 6. Stage-3 is read once per arm, and only for an arm that cleared the ER gate
+    checked.append("no_repeated_stage3")
+    if intent.kind == "stage3" and store is not None:
+        evaluated = [
+            manifest
+            for manifest in store.runs()
+            if manifest.get("mechanism_id") == intent.mechanism_id
+            and (manifest.get("metrics") or {}).get("stage3")
+        ]
+        if evaluated:
+            return GuardrailReport(
+                False,
+                "no_repeated_stage3",
+                f"Stage-3 was already measured for {intent.mechanism_id!r} in "
+                f"{evaluated[0].get('run_id')}; it is read once per arm",
+                checked,
+                now_utc(),
+            )
+
+    # 7. a renamed arm is the same arm: the semantic key is the specification's digest
+    checked.append("no_semantic_duplicate")
+    if store is not None and intent.semantic_key:
+        duplicates = [
+            manifest
+            for manifest in store.runs()
+            if (manifest.get("extra") or {}).get("semantic_key") == intent.semantic_key
+            and manifest.get("mechanism_id") != intent.mechanism_id
+        ]
+        if duplicates:
+            return GuardrailReport(
+                False,
+                "no_semantic_duplicate",
+                f"the specification digest {intent.semantic_key[:16]} is already the "
+                f"mechanism of {duplicates[0].get('mechanism_id')!r}; a renamed copy of an "
+                "unchanged mechanism is the same mechanism",
+                checked,
+                now_utc(),
+            )
 
     return GuardrailReport(True, "", "", checked, "")
 

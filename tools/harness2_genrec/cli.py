@@ -459,6 +459,54 @@ def cmd_final_table(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_controller(args: argparse.Namespace) -> int:
+    """The durable controller: status, one transition, a worker loop, pause and resume."""
+    from .controller import Controller, ControllerConfig
+
+    config = ControllerConfig(
+        store=Path(args.store),
+        ledger=Path(args.ledger),
+        state=Path(args.state),
+        audit=Path(args.audit),
+        results=Path(args.results),
+        max_concurrent_screening=args.max_screening,
+        max_concurrent_training=args.max_training,
+        ddp_port_base=args.port_base,
+        poll_seconds=args.poll,
+        model=args.model,
+    )
+    controller = Controller(config).load()
+    if args.action == "status":
+        print(json.dumps(controller.status(), indent=2, default=str))
+        return 0
+    if args.action == "pause":
+        controller.state["phase"] = "paused"
+        controller.state["pause_reason"] = args.reason or "an explicit operator stop"
+        controller.state["next_action"] = controller.state["pause_reason"]
+        controller.audit("pause", reason=controller.state["pause_reason"])
+        controller.save()
+        print(json.dumps(controller.status(), indent=2, default=str))
+        return 0
+    if args.action == "resume":
+        controller.state["phase"] = "read"
+        controller.state["pause_reason"] = None
+        controller.state["next_action"] = "read the evidence and continue the loop"
+        controller.audit("resume")
+        controller.save()
+        print(json.dumps(controller.status(), indent=2, default=str))
+        return 0
+    if args.action == "tick":
+        print(json.dumps(controller.tick(), indent=2, default=str))
+        return 0
+    if args.action == "run":
+        status = controller.run_forever(max_ticks=args.max_ticks or None)
+        print(json.dumps(status, indent=2, default=str))
+        return 0
+    # report
+    print(json.dumps(controller.status(), indent=2, default=str))
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -581,6 +629,22 @@ def _build_parser() -> argparse.ArgumentParser:
     final.add_argument("--store", default="results/harness3_runs/store")
     final.add_argument("--out", default="results/harness3_runs/final")
     final.set_defaults(func=cmd_final_table)
+
+    ctrl = sub.add_parser("controller", help="the durable research controller (issue #107)")
+    ctrl.add_argument("action", choices=["status", "tick", "run", "pause", "resume", "report"])
+    ctrl.add_argument("--state", default="results/harness3_runs/controller/state.json")
+    ctrl.add_argument("--store", default="results/harness3_runs/store")
+    ctrl.add_argument("--ledger", default="results/harness3_runs/hypotheses/ledger.json")
+    ctrl.add_argument("--results", default="results/harness3_runs/controller/rounds")
+    ctrl.add_argument("--audit", default="results/harness3_runs/controller/audit.jsonl")
+    ctrl.add_argument("--max-screening", type=int, default=2)
+    ctrl.add_argument("--max-training", type=int, default=1)
+    ctrl.add_argument("--port-base", type=int, default=50300)
+    ctrl.add_argument("--max-ticks", type=int, default=0)
+    ctrl.add_argument("--poll", type=int, default=60)
+    ctrl.add_argument("--reason", default="")
+    ctrl.add_argument("--model", default="")
+    ctrl.set_defaults(func=cmd_controller)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")
