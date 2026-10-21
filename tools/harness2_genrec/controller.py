@@ -581,6 +581,9 @@ class Controller:
                            result_dir=result_dir)
         self.save()
 
+        # the ER of an arm that has already exported is read now, not after the queue
+        self._evaluate_ready()
+
         admitted = [
             item
             for item in self.state.get("portfolio") or ()
@@ -659,6 +662,20 @@ class Controller:
 
     def phase_evaluate(self) -> None:
         """Phase 5: the frozen evaluation, once per arm."""
+        self._evaluate_ready()
+        self.state["phase"] = "stage3" if any(
+            item.get("status") == "qualified" for item in self.state.get("portfolio") or ()
+        ) else "learn"
+        self.state["next_action"] = (
+            "run Stage-3 once for the qualified arms"
+            if self.state["phase"] == "stage3"
+            else "update the ledger and design the next portfolio"
+        )
+        self.save()
+
+    def _evaluate_ready(self) -> None:
+        """Read the frozen ER of every arm whose export exists. The ER needs no GPU, so it
+        is read while the next cold run is still training."""
         import subprocess
 
         for item in self.state.get("portfolio") or ():
@@ -713,15 +730,6 @@ class Controller:
                 qualified=item["status"] == "qualified",
             )
             self.save()
-        self.state["phase"] = "stage3" if any(
-            item.get("status") == "qualified" for item in self.state.get("portfolio") or ()
-        ) else "learn"
-        self.state["next_action"] = (
-            "run Stage-3 once for the qualified arms"
-            if self.state["phase"] == "stage3"
-            else "update the ledger and design the next portfolio"
-        )
-        self.save()
 
     def _record_in_store(
         self, item: Dict[str, Any], report: Dict[str, Any], sid: Path
