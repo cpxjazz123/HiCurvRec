@@ -20,8 +20,31 @@
       "proposal_path": "results/harness3_runs/controller/rounds/round_008/directed_margin_preserving_codebook_geometry/proposal.json",
       "proposal_sha256": "8a664e9d0acf14da7d959f1891fb45c1cbea0c026e7811e9ceb40547e9779c0b",
       "risk": "The selected-codeword attraction may distort the codebook or increase usage concentration, while the separation barrier may be inactive for most rows or unable to undo an already shared assignment. Even with healthy codeword distances, the changed partition may reduce prefix branches, sequence information, or downstream recall. The frozen probe must reject it unless the measured usage concentration, branch count, frequency drift, sequence information, and pair-level ER all meet their specified constraints.",
+      "screening": {
+        "export_sensitivity": {
+          "changed_fraction": {
+            "levels_1": 0.916703949241469,
+            "levels_2": 0.99963395290194,
+            "levels_3": 1.0,
+            "levels_3token_identical": false
+          },
+          "level0_occupancy_ratio_vs_control": 0.8888888888888888,
+          "verdict": "active"
+        },
+        "judges": {
+          "detail": "all 8 declared checks hold",
+          "failed": [],
+          "ok": true
+        },
+        "probe": {
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "occupancy_ratio_vs_host": 0.8889,
+          "ok": true
+        },
+        "reason": null
+      },
       "semantic_key": "74b382a1049f4e8a81a393418463d491f98178962fa60a6af85e6f6147192fc2",
-      "status": "proposed"
+      "status": "admitted"
     },
     {
       "codebook_interaction": "Gradients flow through source soft-assignment probabilities into codebook vectors. The source-usage squared penalty discourages concentration, while the conditional-entropy floor discourages collapsing transition alternatives. Target probabilities are detached, so target-side codebook vectors receive no gradient through q. No term attracts the two endpoint codewords; the objective acts on source usage and the directed assignment distribution rather than minimizing endpoint distance.",
@@ -66,6 +89,6 @@
     }
   },
   "scientific_stop": false,
-  "updated_utc": "2026-10-21T18:47:12.896920+00:00",
+  "updated_utc": "2026-10-21T18:53:28.038350+00:00",
   "version": 1
 }

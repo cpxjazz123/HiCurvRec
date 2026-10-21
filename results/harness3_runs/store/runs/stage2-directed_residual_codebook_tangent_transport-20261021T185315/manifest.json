@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport/r8_control/sids_for_hgrec.npy",
+      "sha256": "1b764ef8868aa6b67082e4a2aaa567e9201d13b0cb635c4d8d2fe47f85366fb3"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport/r8_control/rqvae_best.pth",
+      "sha256": "97166ed54deb1d4ace41fee2c98ce76a6b95b32b65805a3700bc0b15fc6101fc"
+    },
+    {
+      "bytes": 1260288,
+      "exists": true,
+      "path": "results/stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport/r8_control/item_sids.json",
+      "sha256": "be8ee1a497670aae6a532018560c71617cec1bf99770b00a66ac5abc3408d68d"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-21T18:53:15.989693+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "cb4b0163a3e041506ae7dcdf7d18df9bdcb39bb8abc5d8a866965d775b59e4d2",
+  "manifest_version": 1,
+  "mechanism_id": "directed_residual_codebook_tangent_transport",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": false,
+      "frozen_threshold": 16.38953942232631,
+      "l1_er": 16.134099616858236
+    },
+    "note": "the ER was read once by the controller; it is recorded here, not re-read"
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/store/imported/directed_residual_codebook_tangent_transport",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_residual_codebook_tangent_transport-20261021T185315",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

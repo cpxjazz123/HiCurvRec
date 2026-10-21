@@ -352,6 +352,39 @@ class Controller:
 
     def phase_adopt(self) -> None:
         """Adopt the arms whose evaluation was missed, and stage their Stage-3."""
+        # every arm the store knows about that cleared the gate and has no Stage-3 yet
+        for manifest in self.store.runs():
+            evaluation = (manifest.get("metrics") or {}).get("frozen_evaluation") or {}
+            if not evaluation.get("above_frozen_threshold"):
+                continue
+            mechanism_id = manifest["mechanism_id"]
+            if any(
+                item.get("mechanism_id") == mechanism_id
+                and (item.get("stage3") or {}).get("started")
+                for item in self.state.get("portfolio") or ()
+            ):
+                continue
+            if not any(
+                item.get("mechanism_id") == mechanism_id
+                for item in self.state.get("portfolio") or ()
+            ):
+                sid = self._export_path(mechanism_id)
+                if sid is None:
+                    continue
+                self.state.setdefault("portfolio", []).append(
+                    {
+                        "mechanism_id": mechanism_id,
+                        "status": "qualified",
+                        "adopted": True,
+                        "proposal_path": "",
+                        "semantic_key": "",
+                        "evaluated": {
+                            "hard_l1_er": evaluation.get("l1_er"),
+                            "above_gate": True,
+                        },
+                        "train": {"result_dir": str(sid.parent.parent)},
+                    }
+                )
         pending = list(self.state.get("arms_pending_evaluation") or ())
         remaining: List[str] = []
         for mechanism_id in pending:
@@ -612,6 +645,7 @@ class Controller:
                 "frozen_threshold": report.get("frozen_threshold"),
             }
             item["status"] = "qualified" if report.get("above_frozen_threshold") else "below_gate"
+            self._record_in_store(item, report, sid)
             self.audit(
                 "evaluate",
                 mechanism_id=item["mechanism_id"],
@@ -628,6 +662,41 @@ class Controller:
             else "update the ledger and design the next portfolio"
         )
         self.save()
+
+    def _record_in_store(
+        self, item: Dict[str, Any], report: Dict[str, Any], sid: Path
+    ) -> None:
+        """The store learns about the arm, with the ER that was just read once."""
+        from .evidence import RunPlan
+
+        mechanism_id = item["mechanism_id"]
+        try:
+            plan = RunPlan(
+                kind="stage2",
+                mechanism_id=mechanism_id,
+                stage="cold_train",
+                seed=42,
+                output_dir=REPO_ROOT / "results" / "stage2_RQ-VAE" / f"TIGER_c107_{mechanism_id}",
+                extra={"semantic_key": item.get("semantic_key", "")},
+            )
+            run = self.store.admit(plan)
+        except Exception:  # noqa: BLE001
+            return
+        self.store.close(
+            run,
+            status="succeeded",
+            metrics={
+                "frozen_evaluation": {
+                    "l1_er": report.get("l1_er"),
+                    "above_frozen_threshold": report.get("above_frozen_threshold"),
+                    "frozen_threshold": report.get("frozen_threshold"),
+                    "pos_share": report.get("pos_share"),
+                    "neg_share": report.get("neg_share"),
+                }
+            },
+            artifacts=[sid, sid.parent / "rqvae_best.pth", sid.parent / "item_sids.json"],
+            extra={"semantic_key": item.get("semantic_key", "")},
+        )
 
     def phase_stage3(self) -> None:
         """Phase 5b: Stage-3 once per qualified arm, against the archived control."""
