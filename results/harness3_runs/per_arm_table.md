@@ -1,6 +1,6 @@
 # The per-arm table
 
-Generated 2026-10-21T11:05:40.233007+00:00 from the evidence store. The frozen Hard-L1 ER gate is 16.38953942232631 and the historical R4-08 reference is 16.402627511591962. The matched control for this window is the first row.
+Generated 2026-10-21T11:16:12.700657+00:00 from the evidence store. The frozen Hard-L1 ER gate is 16.38953942232631 and the historical R4-08 reference is 16.402627511591962. The matched control for this window is the first row.
 
 | arm | issue | declaration sha | judges | probe | export | epochs | Hard-L1 ER | vs gate | vs R4-08 | ER delta vs control | ER CI95 | Stage-3 R@10 | Stage-3 NDCG@10 | run id |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
