@@ -1,0 +1,35 @@
+{
+  "generated_utc": "2026-10-21T08:32:10.174945+00:00",
+  "ledger_path": "results/harness3_runs/hypotheses/ledger.json",
+  "ledger_sha256": "daa1cb248553fed490806bf2066dc00784019edeab45430704d796869afe148d",
+  "updated": [
+    {
+      "hypothesis": "H105-01",
+      "experiment": "X1",
+      "status": "executed",
+      "verdict": "the arms differ nowhere in the trained model, so the mechanism never moved the weights; the export path did not fall back on anything, the training itself was unchanged",
+      "report": "results/harness3_runs/experiments/x1_pipeline_stage.json"
+    },
+    {
+      "hypothesis": "H105-02",
+      "experiment": "X1",
+      "status": "executed",
+      "verdict": "the ER gain is not a concentration artefact, and the geometry arm's export is not degraded; the downstream difference is real but small for the geometry arm and clearly negative for the residual target",
+      "report": "results/harness3_runs/experiments/x2_er_decomposition.json"
+    },
+    {
+      "hypothesis": "H105-03",
+      "experiment": "X1",
+      "status": "executed",
+      "verdict": "the residual target's ER gain was bought with a more concentrated level-0 code distribution, which is consistent with its downstream regression; the geometry arm's export is healthy and generalises, so its flat downstream result is not explained by the code distribution or by overfitting",
+      "report": "results/harness3_runs/experiments/x4_balance_and_generalisation.json"
+    }
+  ],
+  "problems": [],
+  "statuses": {
+    "H105-01": "supported",
+    "H105-02": "inconclusive",
+    "H105-03": "supported",
+    "H105-04": "supported"
+  }
+}

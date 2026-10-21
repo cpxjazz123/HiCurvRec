@@ -1,0 +1,23 @@
+{
+  "experiment": "X5",
+  "question": "does an auxiliary term's encoder gradient survive the host's own post-backward assembly?",
+  "control_tree": "stage2_RQ-VAE/TIGER_r8_control",
+  "sample_items": 1024,
+  "results": [
+    {
+      "mechanism": "mechanism_behavior_conditioned_pairwise_margin",
+      "encoder_grad_max_abs_diff_before_projection": 1.656077802181244e-05,
+      "encoder_grad_max_abs_diff_after_projection": 0.0,
+      "discarded_by_the_projection": true,
+      "term_value": 0.9999558329582214
+    },
+    {
+      "mechanism": "mechanism_behavior_residual_geometry_transport",
+      "encoder_grad_max_abs_diff_before_projection": 1.352652907371521e-05,
+      "encoder_grad_max_abs_diff_after_projection": 0.0,
+      "discarded_by_the_projection": true,
+      "term_value": 0.001294600311666727
+    }
+  ],
+  "host_rule": "the host overwrites the encoder gradient with g_base + w_b/valid_levels * (g'_L1 + g_L2 + g_L3) and never touches the decoder or codebook gradients"
+}
