@@ -104,6 +104,48 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
         "verification": "redesign_geometry/verification.json",
     },
     {
+        "mechanism_id": "behavior_directed_soft_code_transition_kl",
+        "kind": "arm",
+        "tree": "stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl",
+        "sid_dir": (
+            "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl"
+            "/r8_control"
+        ),
+        "stage3_variant": "TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control",
+        "probe": None,
+        "verification": None,
+    },
+    {
+        "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+        "kind": "arm",
+        "tree": "stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport",
+        "sid_dir": (
+            "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport"
+            "/r8_control"
+        ),
+        "stage3_variant": None,
+        "probe": None,
+        "verification": None,
+    },
+    {
+        "mechanism_id": "r8_control_seed43",
+        "kind": "control",
+        "tree": "stage2_RQ-VAE/TIGER_seed43_control",
+        "sid_dir": "results/stage2_RQ-VAE/TIGER_seed43_control/r8_control",
+        "stage3_variant": "TIGER_seed43_control__r8_control",
+        "probe": None,
+        "verification": None,
+    },
+    {
+        "mechanism_id": "geometry_transport_seed43",
+        "kind": "arm",
+        "tree": "stage2_RQ-VAE/TIGER_seed43_geometry",
+        "sid_dir": "results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control",
+        "stage3_variant": "TIGER_seed43_geometry__r8_control",
+        "probe": None,
+        "verification": None,
+    },
+    {
         "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
         "kind": "arm",
         "tree": "stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",

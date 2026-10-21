@@ -1,0 +1,81 @@
+{
+  "generated_utc": "2026-10-21",
+  "control": {
+    "er": 16.334505666275888,
+    "stage3_recall@10": 0.06406796775709883
+  },
+  "policies": {
+    "old": {
+      "mechanism_id": "behavior_directed_soft_code_transition_kl",
+      "proposal_sha256": "9e083ac654bdf9f97a7836574600da70cc6627ebd4aa175d1110cdef4c136462",
+      "judges": true,
+      "judges_detail": "all 10 declared checks hold",
+      "probe_ok": true,
+      "probe_occupancy_ratio": 1.0296,
+      "export_verdict": "active",
+      "admitted": true,
+      "status": "cold_running",
+      "cold_launch": {
+        "started": false,
+        "refused": null,
+        "cgv_gate": {
+          "passed": true,
+          "gates": {
+            "G1": "passed",
+            "G2": "passed",
+            "G3": "passed",
+            "G4": "passed",
+            "G5": "passed",
+            "G6": "passed"
+          },
+          "note": "all six gates passed on the supplied declaration"
+        },
+        "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control"
+      },
+      "arm": "behavior_directed_soft_code_transition_kl",
+      "er": 16.40282131661442,
+      "above_gate": true,
+      "export": "active",
+      "train_side": 26.435,
+      "stage3": null
+    },
+    "learned": {
+      "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+      "proposal_sha256": "abc02b6c947ca8b9281e84a749b578f2bbc1f25d1937acd45a29c51de1f28cf0",
+      "judges": true,
+      "judges_detail": "all 10 declared checks hold",
+      "probe_ok": true,
+      "probe_occupancy_ratio": 0.8578,
+      "export_verdict": "active",
+      "admitted": true,
+      "status": "failed",
+      "cold_launch": {
+        "started": false,
+        "refused": "CGV gate: {'G1': 'passed', 'G2': 'passed', 'G3': 'passed', 'G4': 'passed', 'G5': 'passed', 'G6': 'failed'}",
+        "cgv_gate": {
+          "passed": false,
+          "gates": {
+            "G1": "passed",
+            "G2": "passed",
+            "G3": "passed",
+            "G4": "passed",
+            "G5": "passed",
+            "G6": "failed"
+          },
+          "note": "all six gates passed on the supplied declaration"
+        },
+        "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport/r8_control"
+      },
+      "arm": "behavior_conditioned_codebook_directional_transport",
+      "er": 15.280216070222822,
+      "above_gate": false,
+      "export": "active",
+      "train_side": 23.355,
+      "stage3": null
+    }
+  },
+  "budget_matched": true,
+  "cold_runs": 1,
+  "stage3_runs": "one per policy whose arm cleared the gate",
+  "adoption_criterion": "the learned policy must solve strictly more held-back tasks than the old one"
+}
