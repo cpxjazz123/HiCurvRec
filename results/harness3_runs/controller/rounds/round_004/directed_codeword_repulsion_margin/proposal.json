@@ -1,0 +1,134 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.0001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The penalty pushes selected codewords apart when their distance is below the margin. Its gradient is repulsive, never attractive, so it cannot directly pull a transition's two selected codewords together. Nearest-codeword indices are discrete and stop-gradient; epsilon stabilizes the distance derivative.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, this directly differentiates through the codebook and can survive the host overwrite. Unlike the collapsed pairwise cross-entropy, it penalizes close selected codewords with a repulsive gradient rather than asking one code to serve both endpoints. It does not guarantee better downstream quality; the stated structural and sequence-information checks remain necessary."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||^2 and b_i = argmin_c ||target_i - codebook_c||^2, with d_i = ||codebook_a_i - codebook_b_i||. Let L = w * mean_i mask_i * relu(m - d_i)^2. The discrete indices a_i and b_i are stop-gradient; differentiate the selected codewords through d_i.",
+  "expected_failure_modes": [
+    "The selected codewords may already exceed the margin for most transitions, making the term ineffective; otherwise repulsion may distort Voronoi cells, alter level-0 occupancy or prefix branching, and reduce sequence information even while preserving pair separation."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "zero",
+    "target": "zero"
+  },
+  "hypotheses": [
+    "Reject if the checked codebook gradient is zero or nonfinite, if swapping source and target leaves the loss unchanged under the checker, or if the frozen evaluation shows any increase in level-0 Gini, a decrease in L1-to-L2 branches per code, increased train-to-test frequency drift, decreased sequence information, or no rise in pair-level ER.",
+    "Unlike encoder-only terms, this directly differentiates through the codebook and can survive the host overwrite. Unlike the collapsed pairwise cross-entropy, it penalizes close selected codewords with a repulsive gradient rather than asking one code to serve both endpoints. It does not guarantee better downstream quality; the stated structural and sequence-information checks remain necessary."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codeword_repulsion_margin",
+  "parameters": {
+    "epsilon": 1e-08,
+    "margin": 0.2,
+    "weight": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T15:43:57.360209+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "50dba3a57cbbbbfea5b716052e7cd304b387a8dcf7a54e2c6ffb9f783b06c38d"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codeword index to source_i; treated as fixed in differentiation.",
+    "b_i": "Nearest codeword index to target_i; treated as fixed in differentiation.",
+    "codebook_c": "Codeword c in the supplied codebook.",
+    "d_i": "Euclidean separation between the two selected codewords.",
+    "m": "Minimum desired separation between a transition's selected codewords.",
+    "mask_i": "Validity indicator or weight for row i.",
+    "source_i": "Source embedding for transition row i.",
+    "target_i": "Target embedding for transition row i.",
+    "w": "Composition weight for this mechanism."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed codeword separation with assignment-preserving geometry",
+  "version": "1.0.0"
+}

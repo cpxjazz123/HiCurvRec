@@ -1,0 +1,139 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients update the two selected codewords to make their directed difference approximate the stopped-gradient target-minus-source displacement. The hinge barrier gives a restoring gradient whenever their distance is below delta. It cannot pull the pair together: the displacement term can move both endpoints, but its distance penalty is nonnegative and minimized by matching the nonzero directed displacement, while the explicit barrier pushes apart below delta. If a_i equals b_i, the displacement has no codebook gradient through the shared entry, but the barrier is at its hinge and cannot split identical selected indices; this is a known limitation and a falsifier if such pairs are common.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only terms, this loss has a direct codebook gradient. Unlike pairwise convergence, it fits a directed nonzero codeword displacement and adds a minimum-distance barrier rather than asking both transition endpoints to share a code or minimize their mutual distance. It still requires the probe to establish that distinct assignments are sufficiently frequent."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||^2 and b_i = argmin_c ||target_i - codebook_c||^2. Let d_i = codebook[a_i] - codebook[b_i], r_i = target_i - source_i, and u_i = stopgrad(r_i / (||r_i||_2 + eps)). Define L = w * mean_i mask_i * (||d_i - stopgrad(r_i)||_2^2 / (||stopgrad(r_i)||_2^2 + eps) + lambda * max(0, delta - ||d_i||_2)^2).",
+  "expected_failure_modes": [
+    "Nearest-codeword indices are piecewise constant, and rows whose endpoints select the same codeword cannot be separated by this pairwise term. The transition displacement target may also distort codebook geometry or overfit training transitions; the barrier only protects selected distinct pairs and does not guarantee level-0 balance, prefix branching, frequency-drift control, sequence information, or downstream recall."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "zero",
+    "target": "zero"
+  },
+  "hypotheses": [
+    "At the frozen probe, any non-finite gradient, no measurable codebook-gradient signal, a loss unchanged after swapping source and target, or exported codes that violate any required usage concentration, L1-to-L2 branching, train-to-test frequency drift, sequence-information, or pair-level ER criterion falsifies the proposal.",
+    "Unlike the inert encoder-only terms, this loss has a direct codebook gradient. Unlike pairwise convergence, it fits a directed nonzero codeword displacement and adds a minimum-distance barrier rather than asking both transition endpoints to share a code or minimize their mutual distance. It still requires the probe to establish that distinct assignments are sufficiently frequent."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_anchor_repulsion_geometry",
+  "parameters": {
+    "delta": 0.1,
+    "eps": 1e-08,
+    "lambda": 1.0,
+    "w": 0.01
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T16:18:11.472794+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "3d3c0234514f1d958be8be9b6b17219460de2edd9ce72b8d8ca8bcef55bdc09e"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codeword index to source_i; the index selection is nondifferentiable.",
+    "b_i": "Nearest codeword index to target_i; the index selection is nondifferentiable.",
+    "codebook_c": "Codeword c in the supplied codebook.",
+    "d_i": "Directed difference between the selected source and target codewords.",
+    "delta": "Minimum permitted distance between the selected transition codewords.",
+    "eps": "Positive numerical stabilizer.",
+    "lambda": "Weight of the minimum-separation barrier.",
+    "mask_i": "Validity indicator for transition row i.",
+    "r_i": "Directed target-minus-source representation difference.",
+    "source_i": "Source representation for transition row i.",
+    "target_i": "Target representation for transition row i.",
+    "u_i": "Stopped-gradient unit direction of the representation transition; included to specify the transition orientation.",
+    "w": "Overall loss weight."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed transition geometry with an anchored codeword-separation barrier",
+  "version": "1.0.0"
+}

@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "detail": "all 8 declared checks hold",
+  "checks": [
+    {
+      "id": "permute_codebook",
+      "ok": true,
+      "detail": "the codebook rows were permuted: the loss is unchanged",
+      "measurements": {
+        "base": 5.7758156334377935,
+        "value": 5.7758156334377935,
+        "expect": "unchanged"
+      }
+    },
+    {
+      "id": "swap_source_target",
+      "ok": true,
+      "detail": "the source and the target were exchanged: the loss changed by 6.878e-01",
+      "measurements": {
+        "base": 5.7758156334377935,
+        "value": 5.0880066074226535,
+        "expect": "changed"
+      }
+    },
+    {
+      "id": "mask_all",
+      "ok": true,
+      "detail": "every pair was masked out: the loss is zero",
+      "measurements": {
+        "base": 5.7758156334377935,
+        "value": 0.0,
+        "expect": "zero"
+      }
+    },
+    {
+      "id": "gradient_codebook",
+      "ok": true,
+      "detail": "the gradient on codebook is 1.174e+00",
+      "measurements": {
+        "max_abs": 1.1740762592840146,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_source",
+      "ok": true,
+      "detail": "the gradient on source is 1.463e+00",
+      "measurements": {
+        "max_abs": 1.4626818152520014,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_target",
+      "ok": true,
+      "detail": "the gradient on target is 2.045e+00",
+      "measurements": {
+        "max_abs": 2.0450640814540697,
+        "finite": true
+      }
+    },
+    {
+      "id": "no_occupancy_quota",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "occupancy|quota|project_to_capacity"
+      }
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook"
+      }
+    }
+  ],
+  "failed": []
+}

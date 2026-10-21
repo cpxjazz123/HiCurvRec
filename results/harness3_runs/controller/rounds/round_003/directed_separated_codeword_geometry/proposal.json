@@ -1,0 +1,138 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.01
+  },
+  "differentiation": {
+    "occupancy_preservation": "The endpoint quantization terms move each endpoint's selected codeword toward that endpoint. The separation hinge pushes the selected pair apart only when their distance is below delta; it has zero gradient above the margin. No term attracts the two endpoint codewords to one another. Hard nearest-code selection is treated as fixed within each loss evaluation; the selected codeword vectors still receive finite gradients.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only arms, endpoint fitting and the separation hinge deliver gradients directly to codebook vectors. Unlike the collapsed assignment-cross-entropy arm, the codebook interaction includes no attraction between endpoint codewords and explicitly repels pairs below a distance floor. Unlike the prior ER-winning arms, it is admitted only if the measured export-structure requirements and downstream recall improve."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i = argmin_j ||source_i - codebook_j||^2 and b_i = argmin_j ||target_i - codebook_j||^2, with ties broken deterministically. Define L = w * mean_i[||source_i - codebook_{a_i}||^2 + rho * ||target_i - codebook_{b_i}||^2 + mu * max(0, delta - ||codebook_{a_i} - codebook_{b_i}||)^2]. The unequal endpoint weights make the objective directed; the hinge penalizes only endpoint codeword pairs that are too close.",
+  "expected_failure_modes": [
+    "The margin may be inactive for most rows, leaving only endpoint fitting, or too large and force widespread codeword rearrangement that harms occupancy, prefix branching, sequence information, or train-to-test frequency stability. The nearest-code selection is also piecewise constant, so the term does not provide a smooth gradient through changes in the selected indices."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if the cold-run export does not raise pair-level ER while keeping level-0 usage Gini at or below control, L1-to-L2 branches per code at or above control, train-to-test frequency drift no higher than control, and sequence information no lower than control; downstream recall@10 must also exceed the archived control to establish the actual objective.",
+    "Unlike the inert encoder-only arms, endpoint fitting and the separation hinge deliver gradients directly to codebook vectors. Unlike the collapsed assignment-cross-entropy arm, the codebook interaction includes no attraction between endpoint codewords and explicitly repels pairs below a distance floor. Unlike the prior ER-winning arms, it is admitted only if the measured export-structure requirements and downstream recall improve."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_separated_codeword_geometry",
+  "parameters": {
+    "min_codeword_distance": 0.2,
+    "target_weight": 1.25,
+    "weight": 0.01
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T15:28:02.588851+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "fe3e70a0875303aa5b97feaf3b89e0dab103c8b80f9549ab84f341cc2dcbad89"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codebook entry to source_i.",
+    "b_i": "Nearest codebook entry to target_i.",
+    "codebook_j": "Codebook vector j.",
+    "delta": "Minimum preferred distance between the two endpoint codewords.",
+    "i": "Batch-row index.",
+    "j": "Codebook-entry index.",
+    "mask_i": "Validity indicator for row i; only rows with mask_i = 1 contribute.",
+    "rho": "Target-endpoint quantization weight, distinct from the source weight of 1.",
+    "source_i": "Source vector for row i.",
+    "target_i": "Target vector for row i.",
+    "w": "Weight composing this mechanism with the host objective.",
+    "||.||": "Euclidean norm."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Fit endpoint geometry while enforcing a minimum codeword separation",
+  "version": "1.0.0"
+}

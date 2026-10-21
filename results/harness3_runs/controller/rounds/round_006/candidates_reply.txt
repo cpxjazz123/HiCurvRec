@@ -1,0 +1,159 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_repulsion_with_usage_anchor",
+      "title": "Repel transition codewords while anchoring each codeword to its marginal usage",
+      "equation": "For each valid row i, let a_i = softmax(-||source_i - codebook_j||^2 / tau) and b_i = softmax(-||target_i - codebook_j||^2 / tau). Let p_i = a_i^T b_i, the soft probability that both endpoints use the same codeword, and let q_j = mean_i((a_ij + b_ij)/2). Let u_j = 1/C. L = lambda_rep * mean_i[-log(1 - p_i + eps)] + lambda_usage * sum_j q_j * log(q_j/u_j). The directed endpoint distributions make the loss change when source and target are exchanged if their assignments differ.",
+      "symbols": {
+        "i": "Valid transition-row index.",
+        "j": "Codebook-entry index.",
+        "B": "Batch size.",
+        "C": "Number of codewords.",
+        "D": "Embedding dimension.",
+        "source_i": "Source embedding for transition row i.",
+        "target_i": "Target embedding for transition row i.",
+        "codebook_j": "Codebook vector j.",
+        "a_ij": "Soft assignment probability of source_i to codebook_j.",
+        "b_ij": "Soft assignment probability of target_i to codebook_j.",
+        "p_i": "Soft probability that both endpoints assign to the same codeword.",
+        "q_j": "Mean endpoint usage probability of codeword j over valid rows.",
+        "u_j": "Uniform reference usage probability, 1/C.",
+        "tau": "Soft-assignment temperature.",
+        "eps": "Positive numerical stabilizer in the repulsion logarithm.",
+        "lambda_rep": "Weight of the endpoint codeword-repulsion term.",
+        "lambda_usage": "Weight of the usage-distribution regularizer.",
+        "mask_i": "Validity indicator for row i; only valid rows contribute.",
+        "L": "Scalar mechanism loss."
+      },
+      "parameters": {
+        "tau": 0.1,
+        "eps": 1e-6,
+        "lambda_rep": 0.01,
+        "lambda_usage": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target transition endpoint assignments; no additional behavior input is required.",
+      "codebook_interaction": "The repulsion gradient acts on both endpoint soft assignments and pushes their probability mass away from shared codewords; the usage term opposes concentration relative to uniform usage. It penalizes shared assignment probability rather than minimizing endpoint codeword distance, so it does not directly pull a transition's two codewords together. Finite softmax temperature and eps keep the loss and gradients finite.",
+      "encoder_interaction": "The loss also differentiates through source and target embeddings, but the host overwrites that encoder gradient. The surviving intended effect is the direct codebook gradient; any encoder-only effect is discarded.",
+      "risk": "Soft assignments may be too diffuse or poorly calibrated relative to hard SID assignments, so the loss can improve its soft repulsion and usage terms without changing exported codes or preserving sequence information. If the repulsion dominates, it may also make transition endpoints artificially dissimilar and harm downstream ranking.",
+      "falsifier": "Reject if the codebook gradient is non-finite or zero, swapping source and target leaves the loss unchanged on the directedness probe, exported level-0 Gini rises above control, L1-to-L2 branches per code fall, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise.",
+      "why_not_the_measured_failures": "Unlike the encoder-only margin and transport arms, this has a direct codebook gradient that survives host assembly. Unlike the collapsed assignment cross-entropy, it penalizes shared endpoint assignment probability rather than rewarding one codeword for serving both endpoints; its usage term additionally resists concentrated code use. It remains a candidate, not a guarantee that the hard export meets the downstream requirements."
+    },
+    {
+      "id": "directed_assignment_prefix_preservation",
+      "title": "Preserve directed transition assignment diversity and prefix branching",
+      "equation": "Let a_i and b_i be source and target soft assignments to the codebook, and let p_i = a_i^T b_i. For each codeword j, define r_j = mean_i(a_ij * b_i), the unnormalized distribution of target assignments following source assignment j. Let H(r_j) = -sum_k r_jk log(r_jk + eps). Let q_j = mean_i(a_ij + b_ij)/2 and u_j = 1/C. L = lambda_collision * mean_i[-log(1 - p_i + eps)] - lambda_prefix * sum_j q_j H(r_j) + lambda_balance * sum_j q_j log(q_j/u_j).",
+      "symbols": {
+        "i": "Valid transition-row index.",
+        "j": "Source codeword index.",
+        "k": "Target codeword index.",
+        "C": "Number of codewords.",
+        "a_ij": "Soft assignment probability of source_i to codeword j.",
+        "b_ik": "Soft assignment probability of target_i to codeword k.",
+        "p_i": "Soft probability that both endpoints use the same codeword.",
+        "r_jk": "Unnormalized mass of transitions from source codeword j to target codeword k.",
+        "H(r_j)": "Entropy of the outgoing target-code distribution for source codeword j.",
+        "q_j": "Mean endpoint usage probability of codeword j.",
+        "u_j": "Uniform reference usage probability, 1/C.",
+        "tau": "Soft-assignment temperature.",
+        "eps": "Positive numerical stabilizer for logarithms.",
+        "lambda_collision": "Weight of the shared-endpoint assignment penalty.",
+        "lambda_prefix": "Weight of the outgoing assignment entropy reward.",
+        "lambda_balance": "Weight of the usage-concentration penalty.",
+        "mask_i": "Validity indicator for row i; only valid rows contribute.",
+        "source_i": "Source embedding for transition row i.",
+        "target_i": "Target embedding for transition row i.",
+        "codebook_j": "Codebook vector j.",
+        "L": "Scalar mechanism loss."
+      },
+      "parameters": {
+        "tau": 0.1,
+        "eps": 1e-6,
+        "lambda_collision": 0.01,
+        "lambda_prefix": 0.001,
+        "lambda_balance": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "Directed source-code-to-next-code transition assignments, which define outgoing prefix branches.",
+      "codebook_interaction": "Gradients flow through source and target soft assignments into codebook vectors. The outgoing-entropy term rewards multiple target branches after a source code, while the collision penalty discourages both endpoints selecting the same code and the balance term discourages concentrated marginal usage. No term minimizes the distance between a transition's two codewords; the entropy term concerns distributions over successor assignments, not codeword convergence.",
+      "encoder_interaction": "The objective differentiates through both embeddings, but the host discards the encoder gradient after backward assembly. Only the codebook gradient is expected to survive and affect the exported assignments.",
+      "risk": "The entropy reward can inflate successor diversity by making assignments diffuse rather than by preserving meaningful sequence structure. It can also overvalue rare prefixes unless the usage weighting and mask normalization are implemented carefully; hard exported branch counts and sequence information may therefore fail to improve.",
+      "falsifier": "Reject if swapping source and target does not change the probe loss, any declared gradient is zero or non-finite, the hard export has fewer L1-to-L2 branches per code than control, level-0 Gini exceeds control, frequency drift increases, sequence information falls, or pair-level ER fails to rise.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only terms, this explicitly differentiates through codebook assignments. Unlike pairwise curvature or directed cross-entropy that can make both endpoints converge on one codeword, it rewards outgoing assignment diversity and penalizes shared endpoint assignment probability. It directly targets prefix structure rather than treating pair separation or ER as a proxy for downstream utility."
+    },
+    {
+      "id": "behaviour_conditioned_residual_whitening",
+      "title": "Whiten behavior-conditioned residuals while preserving directed transition geometry",
+      "equation": "Let d_i = target_i - source_i and m = mean_i(d_i) over valid rows. Let S = mean_i((d_i - m)(d_i - m)^T) and let W = (S + rho I)^(-1/2). Define z_i = W(d_i - m), and let e_i = target_i - source_i. Let c_i = mean_j(a_ij * codebook_j) - mean_j(b_ij * codebook_j), the directed difference between soft endpoint codebook reconstructions. L = lambda_residual * mean_i ||z_i - c_i||^2 + lambda_cov * ||mean_i(z_i z_i^T) - I||_F^2 + lambda_usage * sum_j q_j log(q_j/u_j).",
+      "symbols": {
+        "i": "Valid transition-row index.",
+        "j": "Codeword index.",
+        "B": "Batch size.",
+        "C": "Number of codewords.",
+        "D": "Embedding dimension.",
+        "source_i": "Source embedding for transition row i.",
+        "target_i": "Target embedding for transition row i.",
+        "d_i": "Behavior-conditioned residual vector target_i - source_i.",
+        "m": "Mean residual over valid rows.",
+        "S": "Residual covariance over valid rows.",
+        "rho": "Positive covariance regularizer for stable inverse square root.",
+        "I": "D-dimensional identity matrix.",
+        "W": "Regularized inverse square root of residual covariance.",
+        "z_i": "Whitened centered residual for transition row i.",
+        "a_ij": "Soft assignment probability of source_i to codebook_j.",
+        "b_ij": "Soft assignment probability of target_i to codebook_j.",
+        "c_i": "Directed difference of source and target soft codebook reconstructions.",
+        "q_j": "Mean endpoint soft usage of codeword j.",
+        "u_j": "Uniform reference usage probability, 1/C.",
+        "lambda_residual": "Weight of the residual-to-codebook-difference matching term.",
+        "lambda_cov": "Weight of the residual covariance regularizer.",
+        "lambda_usage": "Weight of the code usage-concentration penalty.",
+        "tau": "Soft-assignment temperature.",
+        "eps": "Positive numerical stabilizer for logarithms and covariance computation.",
+        "mask_i": "Validity indicator for row i; only valid rows contribute.",
+        "L": "Scalar mechanism loss."
+      },
+      "parameters": {
+        "rho": 0.01,
+        "tau": 0.1,
+        "eps": 1e-6,
+        "lambda_residual": 0.001,
+        "lambda_cov": 0.0001,
+        "lambda_usage": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed target-minus-source residual distribution, including its batch covariance and the ordered endpoint assignments.",
+      "codebook_interaction": "The residual-matching term acts on the difference between endpoint soft codebook reconstructions, so it trains codebook geometry to represent behavior-conditioned residual directions. The covariance term regularizes the residual geometry, and the usage term resists marginal code concentration. The matching term targets a directed difference, not the distance between the two codewords; it does not reward their convergence. Covariance regularization rho and eps stabilize the matrix operations and logarithms.",
+      "encoder_interaction": "The loss differentiates through residuals and endpoint embeddings, but the host overwrites the encoder gradient. The direct codebook assignment path is the mechanism's intended surviving path; encoder changes should not be claimed as an effective training route.",
+      "risk": "Batch residual covariance can be noisy or ill-conditioned, and whitening may amplify low-variance directions despite regularization. The learned codebook differences may then model batch-specific residual noise rather than stable behavior, worsening held-out frequency drift, sequence information, or downstream recommendation even if the training loss decreases.",
+      "falsifier": "Reject if source-target exchange leaves the directed loss unchanged, gradients are zero or non-finite, exported level-0 usage is more concentrated, prefix branching declines, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise.",
+      "why_not_the_measured_failures": "Unlike the residual-target and geometry-transport arms, this explicitly matches a whitened directed behavior residual to a difference of soft codebook reconstructions, with a marginal usage penalty; it does not simply move residual targets or transport codewords. Unlike encoder-only mechanisms, it reaches the codebook. Unlike the collapsed pairwise mechanism, its codebook objective is on the signed difference of endpoint reconstructions and contains no attractive term that asks both endpoints to share a codeword."
+    }
+  ]
+}
+```

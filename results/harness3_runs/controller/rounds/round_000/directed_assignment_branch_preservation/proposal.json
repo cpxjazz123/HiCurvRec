@@ -1,0 +1,141 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The ordered KL differentiates through source and target distances to codebook vectors and seeks distinct, predictive endpoint distributions; the occupancy floor pushes underused codewords to receive soft mass in each endpoint role. Neither term attracts the two endpoint codewords: the KL compares distributions in an ordered direction, and the floor acts on marginal endpoint-role usage rather than pairwise codeword distances. This is not a guarantee that hard assignments retain branches, so the probe must measure hard level-0 concentration and L1-to-L2 branching.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert terms, the distance-based soft assignments give the codebook a direct gradient. Unlike the collapsed cross-entropy, the objective does not train a shared class label for both endpoints or pull their codewords together; it compares ordered distributions and separately floors endpoint-role usage. Unlike the prior usage-balance arm, it explicitly encodes source-to-target direction and tests branch structure rather than treating global balance alone as sufficient."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For valid rows i, define p_ij = softmax_j(-||source_i - c_j||^2 / tau) and q_ij = softmax_j(-||target_i - c_j||^2 / tau). Let L = lambda * mean_i[m_i * KL(p_i || q_i)] + mu * sum_j[max(0, rho - mean_i[m_i * p_ij])^2 + max(0, rho - mean_i[m_i * q_ij])^2]. The ordered KL makes the objective directional; the occupancy-floor term discourages either endpoint role from abandoning codebook entries.",
+  "expected_failure_modes": [
+    "The minibatch occupancy floor may be noisy or conflict with the learned marginal frequencies, creating broad soft assignments that do not translate to better hard-code branching. The ordered KL could also improve pairwise separation while losing sequence information or increasing train-to-test frequency drift."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject at the probe if source-target exchange leaves the loss unchanged, declared gradients are zero or non-finite, or exported-code diagnostics show lower sequence information, fewer L1-to-L2 branches per code, greater level-0 usage concentration, or greater train-to-test frequency drift than control. The cold-run falsifier is no Stage-3 recall@10 gain over 0.06406796775709883.",
+    "Unlike the inert terms, the distance-based soft assignments give the codebook a direct gradient. Unlike the collapsed cross-entropy, the objective does not train a shared class label for both endpoints or pull their codewords together; it compares ordered distributions and separately floors endpoint-role usage. Unlike the prior usage-balance arm, it explicitly encodes source-to-target direction and tests branch structure rather than treating global balance alone as sufficient."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_branch_preservation",
+  "parameters": {
+    "lambda": 0.0001,
+    "mu": 0.0001,
+    "rho": 0.001,
+    "tau": 0.5
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T14:59:25.477486+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "d4fb6ed1d12b1f2a5b393b3ad7e27e904ba57a549282d1d7fd0b84cab7301cfa"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "B": "Batch size.",
+    "C": "Number of codebook entries.",
+    "D": "Embedding dimension.",
+    "c_j": "Codebook vector j.",
+    "i": "Batch-row index.",
+    "j": "Codebook-entry index.",
+    "lambda": "Weight for directed assignment separation.",
+    "m_i": "Validity mask, with 1 for valid rows and 0 otherwise.",
+    "mu": "Weight for the endpoint-role occupancy floor.",
+    "p_ij": "Soft source assignment probability for row i to codeword j.",
+    "q_ij": "Soft target assignment probability for row i to codeword j.",
+    "rho": "Minimum batch-average soft-assignment mass per codeword and endpoint role.",
+    "source_i": "Source embedding for row i.",
+    "target_i": "Target embedding for row i.",
+    "tau": "Soft-assignment temperature."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft-assignment separation with branch-preserving occupancy constraint",
+  "version": "1.0.0"
+}

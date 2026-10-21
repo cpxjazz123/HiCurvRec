@@ -1,0 +1,133 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_margin_preserving_codebook_geometry",
+      "title": "Directed endpoint attraction with a codeword-separation barrier",
+      "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||_2^2 and b_i = argmin_c ||target_i - codebook_c||_2^2, with assignments treated as stop-gradient. Let d_i = ||codebook_a_i - codebook_b_i||_2. Define L = lambda * mean_i[||source_i - codebook_a_i||_2^2 + alpha * max(0, margin - d_i)^2].",
+      "symbols": {
+        "i": "A batch-row index included only when mask_i is true.",
+        "source_i": "The directed source representation for row i.",
+        "target_i": "The directed target representation for row i.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "a_i": "Nearest-codeword index for source_i; the discrete selection is treated as stop-gradient.",
+        "b_i": "Nearest-codeword index for target_i; the discrete selection is treated as stop-gradient.",
+        "d_i": "Euclidean distance between the selected source and target codewords.",
+        "lambda": "Overall auxiliary-loss weight.",
+        "alpha": "Relative weight of the codeword-separation barrier.",
+        "margin": "Minimum desired distance between the two selected codewords.",
+        "mask_i": "Validity indicator for row i."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "alpha": 1.0,
+        "margin": 0.2732,
+        "epsilon": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "zero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target pair and its validity mask; no additional behaviour input is required.",
+      "codebook_interaction": "The source-assignment attraction moves selected source codewords toward source representations. When the selected endpoint codewords are closer than margin, the hinge-distance term pushes them apart, not together. The target assignment is used only to select the second codeword and is stop-gradient; ties are resolved deterministically. If both endpoints select the same codeword, the distance hinge has zero derivative at exactly zero, so this candidate does not guarantee escape from an already merged assignment and must be rejected at the probe if codebook gradients are non-finite or the probe shows no assignment/geometry response.",
+      "encoder_interaction": "The loss has a nonzero source gradient, but the host overwrites that encoder gradient, so it cannot alter the trained encoder through that route. Its intended surviving effect is the direct codebook gradient, which can alter nearest-code assignments and exported SIDs.",
+      "risk": "The selected-codeword attraction may distort the codebook or increase usage concentration, while the separation barrier may be inactive for most rows or unable to undo an already shared assignment. Even with healthy codeword distances, the changed partition may reduce prefix branches, sequence information, or downstream recall. The frozen probe must reject it unless the measured usage concentration, branch count, frequency drift, sequence information, and pair-level ER all meet their specified constraints.",
+      "falsifier": "At the directedness probe, exchanging source and target leaves the loss unchanged, or the measured codebook gradient is zero/non-finite; at export, the ER does not rise or any required structure metric violates its control threshold.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this objective directly differentiates through selected codebook vectors, so it does not rely on the host-preserved encoder gradient. Unlike the collapsed cross-entropy, it contains no objective that rewards both endpoints for sharing a codeword; its explicit active distance term repels distinct selected endpoint codewords. It remains vulnerable to concentration through the attraction term, which is why structural probe gates are required."
+    },
+    {
+      "id": "directed_capacity_constrained_assignment_partition",
+      "title": "Directed soft assignment with usage and prefix-information preservation",
+      "equation": "For valid rows, define p_ic = softmax_c(-||source_i-codebook_c||_2^2 / tau) and q_ic = softmax_c(-||target_i-codebook_c||_2^2 / tau), with q treated as stop-gradient. Let u_c = mean_i p_ic and v_cd = mean_i[p_ic * q_id]. Let H(u) = -sum_c u_c log(u_c + epsilon), H(v|u) = -sum_cd v_cd log((v_cd + epsilon)/(u_c + epsilon)), and L = lambda * (sum_c u_c^2 + beta * max(0, H_control - H(v|u))^2).",
+      "symbols": {
+        "i": "A batch-row index included only when mask_i is true.",
+        "c": "A codebook index.",
+        "d": "A codebook index used for the target-side soft assignment.",
+        "source_i": "The directed source representation for row i.",
+        "target_i": "The directed target representation for row i.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "p_ic": "Soft source assignment probability to codeword c.",
+        "q_ic": "Soft target assignment probability to codeword c; treated as stop-gradient.",
+        "u_c": "Batch marginal source usage probability of codeword c.",
+        "v_cd": "Soft directed transition probability from source code c to target code d.",
+        "H(u)": "Entropy of source code usage.",
+        "H(v|u)": "Conditional entropy of target assignments given source assignments, as a soft transition-structure proxy.",
+        "lambda": "Overall auxiliary-loss weight.",
+        "beta": "Relative weight of the conditional-entropy floor.",
+        "tau": "Soft-assignment temperature.",
+        "H_control": "Fixed control-derived conditional-entropy floor supplied as a scalar parameter.",
+        "epsilon": "Positive numerical-stability constant."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "beta": 1.0,
+        "tau": 0.1,
+        "H_control": 1.0,
+        "epsilon": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "zero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target pair and mask, represented by soft assignments to each endpoint; no external behaviour feature is read.",
+      "codebook_interaction": "Gradients flow through source soft-assignment probabilities into codebook vectors. The source-usage squared penalty discourages concentration, while the conditional-entropy floor discourages collapsing transition alternatives. Target probabilities are detached, so target-side codebook vectors receive no gradient through q. No term attracts the two endpoint codewords; the objective acts on source usage and the directed assignment distribution rather than minimizing endpoint distance.",
+      "encoder_interaction": "The source receives a nonzero gradient, but the host discards that encoder-gradient contribution. Only the codebook gradient is expected to survive host assembly and affect exported hard SIDs.",
+      "risk": "The entropy floor may reward diffuse, poorly calibrated assignments instead of a useful discrete partition, and the batch estimates may not reflect held-out transition structure. A high temperature can preserve apparent entropy while leaving hard assignments unchanged; a low temperature can make gradients ineffective. This candidate can therefore fail the ER objective or lose hard prefix information despite satisfying soft penalties. It must be probed and admitted only if hard-export structure and drift checks pass.",
+      "falsifier": "The swapped-input probe does not change the loss, the codebook gradient is zero/non-finite, or the frozen hard export fails to raise ER while preserving usage Gini, L1-to-L2 branches per code, train-to-test frequency drift, and sequence information at their required thresholds.",
+      "why_not_the_measured_failures": "It reaches the codebook through soft assignment probabilities, unlike the inert encoder-only mechanisms. Its usage penalty discourages the measured concentration failure, and its transition-entropy floor does not reward merging endpoint codewords as the collapsed pairwise cross-entropy did. It does not guarantee good hard assignments, so the probe's hard-export checks remain decisive."
+    },
+    {
+      "id": "directed_residual_transport_with_separation",
+      "title": "Behaviour-directed residual transport with endpoint separation",
+      "equation": "For each valid row i, let a_i = argmin_c ||source_i-codebook_c||_2^2 and b_i = argmin_c ||target_i-codebook_c||_2^2, with assignments treated as stop-gradient. Define residuals r_i^s = source_i-codebook_a_i and r_i^t = target_i-codebook_b_i. Let L = lambda * mean_i[||r_i^t - rho*r_i^s||_2^2 + gamma * max(0, margin - ||codebook_a_i-codebook_b_i||_2)^2].",
+      "symbols": {
+        "i": "A batch-row index included only when mask_i is true.",
+        "source_i": "The directed source representation for row i.",
+        "target_i": "The directed target representation for row i.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "a_i": "Nearest-codeword index for source_i; the discrete selection is treated as stop-gradient.",
+        "b_i": "Nearest-codeword index for target_i; the discrete selection is treated as stop-gradient.",
+        "r_i^s": "Source residual after subtracting its selected codeword.",
+        "r_i^t": "Target residual after subtracting its selected codeword.",
+        "rho": "Scalar transport coefficient mapping source residuals toward target residuals.",
+        "lambda": "Overall auxiliary-loss weight.",
+        "gamma": "Relative weight of the endpoint codeword-separation barrier.",
+        "margin": "Minimum desired distance between selected source and target codewords.",
+        "mask_i": "Validity indicator for row i."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "rho": 0.5,
+        "gamma": 1.0,
+        "margin": 0.2732,
+        "epsilon": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target residual transition, with the mask selecting valid behavioural pairs.",
+      "codebook_interaction": "With assignments detached, the residual transport term differentiates directly through both selected codebook vectors: it moves the source codeword and target codeword according to their respective residual errors. The separation hinge, when active, applies a repulsive gradient to the selected endpoint codewords. The transport term itself can move both codewords in correlated directions, so it is not intrinsically guaranteed to prevent convergence; the explicit barrier only prevents convergence when the selected pair is distinct and below margin. Rows with a shared codeword cannot be separated by the zero-distance hinge and must be rejected if the probe indicates such collapse.",
+      "encoder_interaction": "The residual term has nonzero gradients to source and target representations, but the host discards those encoder contributions. The direct codebook gradients are the intended surviving path to changed hard assignments and exported SIDs.",
+      "risk": "Residual transport may align residuals by shifting codewords in ways that narrow the L1-to-L2 prefix tree, increase frequency drift, or concentrate level-0 usage. The separation barrier may not activate for most transitions and cannot reliably escape a shared-code assignment. Its transport coefficient may also be poorly matched to the actual residual relationship. Admission therefore depends on the single frozen probe's hard-export measurements, not on a favorable loss value.",
+      "falsifier": "The directedness check finds no loss change after swapping source and target, the codebook gradient is zero/non-finite, or the exported hard SIDs fail to improve pair-level ER while satisfying the required usage, branch, drift, and sequence-information constraints.",
+      "why_not_the_measured_failures": "Unlike the inert residual-geometry proposals that only reached the encoder, this objective differentiates through selected codebook vectors. Unlike the collapsed pairwise objective, it transports source and target residuals toward a directed relationship rather than asking one code to serve both endpoints, and includes a repulsive separation hinge for distinct endpoint codes. The hinge has a known limitation at already shared codes, so a probe showing merged assignments is a rejection, not evidence of success."
+    }
+  ]
+}
+```

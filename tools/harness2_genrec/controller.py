@@ -341,6 +341,55 @@ class Controller:
                 "Stage-3 transfer gap, not at the pair-level ER"
             )
         self.save()
+        # an arm whose evaluation was missed when a round moved on is adopted here, so its
+        # frozen ER is read once and its Stage-3 is still run
+        if unmeasured:
+            self.state["phase"] = "adopt"
+            self.state["next_action"] = (
+                f"adopt {len(unmeasured)} arm(s) whose frozen evaluation was never read"
+            )
+            self.save()
+
+    def phase_adopt(self) -> None:
+        """Adopt the arms whose evaluation was missed, and stage their Stage-3."""
+        pending = list(self.state.get("arms_pending_evaluation") or ())
+        remaining: List[str] = []
+        for mechanism_id in pending:
+            sid = self._export_path(mechanism_id)
+            if sid is None:
+                remaining.append(mechanism_id)
+                continue
+            if not any(
+                item.get("mechanism_id") == mechanism_id
+                and (item.get("evaluated") or {}).get("hard_l1_er") is not None
+                for item in self.state.get("portfolio") or ()
+            ):
+                self.state.setdefault("portfolio", []).append(
+                    {
+                        "mechanism_id": mechanism_id,
+                        "status": "trained",
+                        "adopted": True,
+                        "proposal_path": "",
+                        "semantic_key": "",
+                        "train": {"result_dir": str(sid.parent.parent)},
+                    }
+                )
+        self.state["arms_pending_evaluation"] = remaining
+        self.state["phase"] = "evaluate" if self.state.get("portfolio") else "hypothesise"
+        self.state["next_action"] = "read the frozen ER of the adopted arms"
+        self.audit("adopt", adopted=len(pending) - len(remaining), still_missing=len(remaining))
+        self.save()
+
+    def _export_path(self, mechanism_id: str) -> Optional[Path]:
+        """The exported SIDs of an arm, wherever the run that produced them left them."""
+        candidates = [
+            REPO_ROOT / "results" / "stage2_RQ-VAE" / f"TIGER_c107_{mechanism_id}" / "r8_control" / "sids_for_hgrec.npy",
+            REPO_ROOT / "results" / "stage2_RQ-VAE" / mechanism_id / "r8_control" / "sids_for_hgrec.npy",
+        ]
+        for path in candidates:
+            if path.is_file():
+                return path
+        return None
 
     def phase_hypothesise(self) -> None:
         """Phase 2: the portfolio, proposed by the agent and ranked by the controller."""
@@ -585,8 +634,14 @@ class Controller:
         import importlib.util
 
         for item in self.state.get("portfolio") or ():
-            if item.get("status") != "qualified" or item.get("stage3"):
+            if item.get("status") != "qualified":
                 continue
+            recorded = item.get("stage3") or {}
+            if recorded.get("started") or recorded.get("test_recall@10"):
+                continue
+            # a launch that was refused because another Stage-3 held the port is retried on
+            # the next tick; it is not a finished measurement
+
             intent = ExecutionIntent(
                 kind="stage3",
                 mechanism_id=item["mechanism_id"],
@@ -725,6 +780,8 @@ class Controller:
         phase = self.state.get("phase")
         if phase == "read":
             self.phase_read()
+        elif phase == "adopt":
+            self.phase_adopt()
         elif phase == "hypothesise":
             self.phase_hypothesise()
         elif phase == "screen":

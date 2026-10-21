@@ -1,0 +1,148 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients flow through source and target soft assignments into codebook vectors. The outgoing-entropy term rewards multiple target branches after a source code, while the collision penalty discourages both endpoints selecting the same code and the balance term discourages concentrated marginal usage. No term minimizes the distance between a transition's two codewords; the entropy term concerns distributions over successor assignments, not codeword convergence.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike inert encoder-only terms, this explicitly differentiates through codebook assignments. Unlike pairwise curvature or directed cross-entropy that can make both endpoints converge on one codeword, it rewards outgoing assignment diversity and penalizes shared endpoint assignment probability. It directly targets prefix structure rather than treating pair separation or ER as a proxy for downstream utility."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "Let a_i and b_i be source and target soft assignments to the codebook, and let p_i = a_i^T b_i. For each codeword j, define r_j = mean_i(a_ij * b_i), the unnormalized distribution of target assignments following source assignment j. Let H(r_j) = -sum_k r_jk log(r_jk + eps). Let q_j = mean_i(a_ij + b_ij)/2 and u_j = 1/C. L = lambda_collision * mean_i[-log(1 - p_i + eps)] - lambda_prefix * sum_j q_j H(r_j) + lambda_balance * sum_j q_j log(q_j/u_j).",
+  "expected_failure_modes": [
+    "The entropy reward can inflate successor diversity by making assignments diffuse rather than by preserving meaningful sequence structure. It can also overvalue rare prefixes unless the usage weighting and mask normalization are implemented carefully; hard exported branch counts and sequence information may therefore fail to improve."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if swapping source and target does not change the probe loss, any declared gradient is zero or non-finite, the hard export has fewer L1-to-L2 branches per code than control, level-0 Gini exceeds control, frequency drift increases, sequence information falls, or pair-level ER fails to rise.",
+    "Unlike inert encoder-only terms, this explicitly differentiates through codebook assignments. Unlike pairwise curvature or directed cross-entropy that can make both endpoints converge on one codeword, it rewards outgoing assignment diversity and penalizes shared endpoint assignment probability. It directly targets prefix structure rather than treating pair separation or ER as a proxy for downstream utility."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_prefix_preservation",
+  "parameters": {
+    "eps": 1e-06,
+    "lambda_balance": 0.001,
+    "lambda_collision": 0.01,
+    "lambda_prefix": 0.001,
+    "tau": 0.1
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T17:31:21.504997+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "12d924c86e44a406f8a792de7f1a586f3b7a66796d8c5a01195e018788ba8680"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "Number of codewords.",
+    "H(r_j)": "Entropy of the outgoing target-code distribution for source codeword j.",
+    "L": "Scalar mechanism loss.",
+    "a_ij": "Soft assignment probability of source_i to codeword j.",
+    "b_ik": "Soft assignment probability of target_i to codeword k.",
+    "codebook_j": "Codebook vector j.",
+    "eps": "Positive numerical stabilizer for logarithms.",
+    "i": "Valid transition-row index.",
+    "j": "Source codeword index.",
+    "k": "Target codeword index.",
+    "lambda_balance": "Weight of the usage-concentration penalty.",
+    "lambda_collision": "Weight of the shared-endpoint assignment penalty.",
+    "lambda_prefix": "Weight of the outgoing assignment entropy reward.",
+    "mask_i": "Validity indicator for row i; only valid rows contribute.",
+    "p_i": "Soft probability that both endpoints use the same codeword.",
+    "q_j": "Mean endpoint usage probability of codeword j.",
+    "r_jk": "Unnormalized mass of transitions from source codeword j to target codeword k.",
+    "source_i": "Source embedding for transition row i.",
+    "target_i": "Target embedding for transition row i.",
+    "tau": "Soft-assignment temperature.",
+    "u_j": "Uniform reference usage probability, 1/C."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Preserve directed transition assignment diversity and prefix branching",
+  "version": "1.0.0"
+}

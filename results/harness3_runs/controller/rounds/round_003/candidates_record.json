@@ -1,0 +1,34 @@
+{
+  "generated_utc": "2026-10-21T15:28:02.595195+00:00",
+  "candidates": [
+    {
+      "mechanism_id": "directed_separated_codeword_geometry",
+      "proposal_sha256": "3f79d9c0dce64ccb12aa0d87da4d61dfb59672d8414d6346bcf29e194107a7df",
+      "path": "results/harness3_runs/controller/rounds/round_003/directed_separated_codeword_geometry/proposal.json",
+      "title": "Fit endpoint geometry while enforcing a minimum codeword separation",
+      "falsifier": "Reject if the cold-run export does not raise pair-level ER while keeping level-0 usage Gini at or below control, L1-to-L2 branches per code at or above control, train-to-test frequency drift no higher than control, and sequence information no lower than control; downstream recall@10 must also exceed the archived control to establish the actual objective.",
+      "risk": "The margin may be inactive for most rows, leaving only endpoint fitting, or too large and force widespread codeword rearrangement that harms occupancy, prefix branching, sequence information, or train-to-test frequency stability. The nearest-code selection is also piecewise constant, so the term does not provide a smooth gradient through changes in the selected indices.",
+      "codebook_interaction": "The endpoint quantization terms move each endpoint's selected codeword toward that endpoint. The separation hinge pushes the selected pair apart only when their distance is below delta; it has zero gradient above the margin. No term attracts the two endpoint codewords to one another. Hard nearest-code selection is treated as fixed within each loss evaluation; the selected codeword vectors still receive finite gradients."
+    },
+    {
+      "mechanism_id": "directed_soft_assignment_branch_preservation",
+      "proposal_sha256": "39e4ea004cbd37531b4d742302caf133950d33078e5023a2942bc7fc00ff316d",
+      "path": "results/harness3_runs/controller/rounds/round_003/directed_soft_assignment_branch_preservation/proposal.json",
+      "title": "Preserve directed assignment diversity with a soft transition overlap penalty",
+      "falsifier": "Reject if exchanging source and target leaves the measured loss unchanged, any declared gradient is zero or non-finite, or the exported SIDs fail to raise pair-level ER while satisfying the control-relative occupancy, prefix-branch, frequency-drift, and sequence-information requirements. Downstream recall@10 must exceed the archived control.",
+      "risk": "The soft-assignment objective may improve soft diversity without changing hard assignments, or its entropy and cross-entropy terms may distort marginal usage and sequence information. Excessive target entropy can flatten assignments and reduce the transition information the recommender needs; low temperature can make gradients ineffective near saturated assignments.",
+      "codebook_interaction": "Gradients flow through both soft assignments to codebook entries. The overlap term penalizes shared assignment mass rather than pulling endpoint codewords together; target entropy discourages a concentrated target distribution. The directed cross-entropy is ordered, so swapping endpoints changes the objective. No positive attraction term minimizes the distance between the two endpoint codewords. The finite temperature and epsilon keep softmax and logarithm gradients finite."
+    },
+    {
+      "mechanism_id": "directed_residual_codebook_alignment",
+      "proposal_sha256": "2325a1921f0330e76bab566cc8b527eaf4e53e5da965d371e6ced5d2f8c5afcb",
+      "path": "results/harness3_runs/controller/rounds/round_003/directed_residual_codebook_alignment/proposal.json",
+      "title": "Align codebook transitions to the directed behaviour-conditioned residual",
+      "falsifier": "Reject if source-target exchange does not change the loss, gradients are absent or non-finite, or the resulting hard export fails to improve pair-level ER while preserving control-level occupancy, prefix branches, frequency drift, and sequence information. A candidate is not successful for the research objective unless Stage-3 recall@10 exceeds 0.06406796775709883.",
+      "risk": "The residual vectors may be poorly calibrated to the codebook scale, causing alignment to rearrange codewords in ways that damage usage balance, prefix branching, or test stability. If nearest-code pairs rarely change, the mechanism may produce little useful hard-assignment churn even while its continuous loss decreases.",
+      "codebook_interaction": "The residual-alignment gradient acts on the ordered difference between the two selected codewords: it moves their displacement toward the signed residual. The hinge pushes the selected codewords apart when their displacement is below delta and is inactive otherwise. Although the alignment can move either endpoint codeword depending on its residual, it does not minimize endpoint separation; its explicit short-distance term is repulsive. Nearest-code indices are fixed within an evaluation, with finite gradients to selected codebook vectors."
+    }
+  ],
+  "count": 3,
+  "tokens": {}
+}

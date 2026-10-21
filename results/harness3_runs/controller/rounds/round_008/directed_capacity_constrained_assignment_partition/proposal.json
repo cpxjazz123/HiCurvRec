@@ -1,0 +1,144 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients flow through source soft-assignment probabilities into codebook vectors. The source-usage squared penalty discourages concentration, while the conditional-entropy floor discourages collapsing transition alternatives. Target probabilities are detached, so target-side codebook vectors receive no gradient through q. No term attracts the two endpoint codewords; the objective acts on source usage and the directed assignment distribution rather than minimizing endpoint distance.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "It reaches the codebook through soft assignment probabilities, unlike the inert encoder-only mechanisms. Its usage penalty discourages the measured concentration failure, and its transition-entropy floor does not reward merging endpoint codewords as the collapsed pairwise cross-entropy did. It does not guarantee good hard assignments, so the probe's hard-export checks remain decisive."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For valid rows, define p_ic = softmax_c(-||source_i-codebook_c||_2^2 / tau) and q_ic = softmax_c(-||target_i-codebook_c||_2^2 / tau), with q treated as stop-gradient. Let u_c = mean_i p_ic and v_cd = mean_i[p_ic * q_id]. Let H(u) = -sum_c u_c log(u_c + epsilon), H(v|u) = -sum_cd v_cd log((v_cd + epsilon)/(u_c + epsilon)), and L = lambda * (sum_c u_c^2 + beta * max(0, H_control - H(v|u))^2).",
+  "expected_failure_modes": [
+    "The entropy floor may reward diffuse, poorly calibrated assignments instead of a useful discrete partition, and the batch estimates may not reflect held-out transition structure. A high temperature can preserve apparent entropy while leaving hard assignments unchanged; a low temperature can make gradients ineffective. This candidate can therefore fail the ER objective or lose hard prefix information despite satisfying soft penalties. It must be probed and admitted only if hard-export structure and drift checks pass."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "zero"
+  },
+  "hypotheses": [
+    "The swapped-input probe does not change the loss, the codebook gradient is zero/non-finite, or the frozen hard export fails to raise ER while preserving usage Gini, L1-to-L2 branches per code, train-to-test frequency drift, and sequence information at their required thresholds.",
+    "It reaches the codebook through soft assignment probabilities, unlike the inert encoder-only mechanisms. Its usage penalty discourages the measured concentration failure, and its transition-entropy floor does not reward merging endpoint codewords as the collapsed pairwise cross-entropy did. It does not guarantee good hard assignments, so the probe's hard-export checks remain decisive."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_capacity_constrained_assignment_partition",
+  "parameters": {
+    "H_control": 1.0,
+    "beta": 1.0,
+    "epsilon": 1e-08,
+    "lambda": 0.001,
+    "tau": 0.1
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T18:47:12.877108+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "57a12dcd75910ced2661888cb0962c3c450fb26d99859c96edf6b4ae129fe8ed"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "H(u)": "Entropy of source code usage.",
+    "H(v|u)": "Conditional entropy of target assignments given source assignments, as a soft transition-structure proxy.",
+    "H_control": "Fixed control-derived conditional-entropy floor supplied as a scalar parameter.",
+    "beta": "Relative weight of the conditional-entropy floor.",
+    "c": "A codebook index.",
+    "codebook_c": "Codeword c in the supplied codebook.",
+    "d": "A codebook index used for the target-side soft assignment.",
+    "epsilon": "Positive numerical-stability constant.",
+    "i": "A batch-row index included only when mask_i is true.",
+    "lambda": "Overall auxiliary-loss weight.",
+    "p_ic": "Soft source assignment probability to codeword c.",
+    "q_ic": "Soft target assignment probability to codeword c; treated as stop-gradient.",
+    "source_i": "The directed source representation for row i.",
+    "target_i": "The directed target representation for row i.",
+    "tau": "Soft-assignment temperature.",
+    "u_c": "Batch marginal source usage probability of codeword c.",
+    "v_cd": "Soft directed transition probability from source code c to target code d."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft assignment with usage and prefix-information preservation",
+  "version": "1.0.0"
+}

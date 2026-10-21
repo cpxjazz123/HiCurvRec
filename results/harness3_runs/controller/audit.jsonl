@@ -1,0 +1,58 @@
+{"arms": 6, "cleared": 5, "event": "read", "improved": 0, "round": 0, "utc": "2026-10-21T14:58:50.498172+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 0, "utc": "2026-10-21T14:59:25.495111+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_codebook_repulsion_with_anchor", "round": 0, "status": "rejected", "utc": "2026-10-21T15:02:53.408516+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_assignment_branch_preservation", "round": 0, "status": "rejected", "utc": "2026-10-21T15:03:34.279845+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "behaviour_residual_directional_whitening", "round": 0, "status": "rejected", "utc": "2026-10-21T15:04:14.259749+00:00"}
+{"event": "learn", "next_round": 1, "phase": "hypothesise", "round": 1, "utc": "2026-10-21T15:05:01.746111+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 1, "utc": "2026-10-21T15:06:03.058914+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_codeword_repulsion_with_usage_anchor", "round": 1, "status": "rejected", "utc": "2026-10-21T15:08:52.404149+00:00"}
+{"detail": "the probe or the export sensitivity rejected the arm before a cold run; the candidate cost no cold-run GPU time", "event": "screen", "mechanism_id": "directed_soft_assignment_branch_preservation", "round": 1, "status": "rejected", "utc": "2026-10-21T15:14:35.061780+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "behaviour_conditioned_residual_orthogonal_transport", "round": 1, "status": "rejected", "utc": "2026-10-21T15:15:53.374148+00:00"}
+{"event": "learn", "next_round": 2, "phase": "hypothesise", "round": 2, "utc": "2026-10-21T15:17:54.249632+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 2, "utc": "2026-10-21T15:18:52.781884+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_anchor_margin_geometry", "round": 2, "status": "admitted", "utc": "2026-10-21T15:21:02.949748+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_usage_prefix_balance", "round": 2, "status": "rejected", "utc": "2026-10-21T15:22:00.477044+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_residual_geometry_repulsion", "round": 2, "status": "rejected", "utc": "2026-10-21T15:23:10.092004+00:00"}
+{"event": "train", "mechanism_id": "directed_anchor_margin_geometry", "result_dir": null, "round": 2, "status": "train_failed", "utc": "2026-10-21T15:26:00.113696+00:00"}
+{"event": "learn", "next_round": 3, "phase": "hypothesise", "round": 3, "utc": "2026-10-21T15:27:00.489730+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 3, "utc": "2026-10-21T15:28:02.607080+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_separated_codeword_geometry", "round": 3, "status": "admitted", "utc": "2026-10-21T15:30:30.903240+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_soft_assignment_branch_preservation", "round": 3, "status": "admitted", "utc": "2026-10-21T15:32:58.053650+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_residual_codebook_alignment", "round": 3, "status": "rejected", "utc": "2026-10-21T15:34:13.979517+00:00"}
+{"event": "train", "mechanism_id": "directed_separated_codeword_geometry", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry/r8_control", "round": 3, "status": "trained", "utc": "2026-10-21T15:37:12.541343+00:00"}
+{"event": "train", "mechanism_id": "directed_soft_assignment_branch_preservation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_branch_preservation/r8_control", "round": 3, "status": "trained", "utc": "2026-10-21T15:41:36.339943+00:00"}
+{"event": "learn", "next_round": 4, "phase": "hypothesise", "round": 4, "utc": "2026-10-21T15:43:06.954853+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 4, "utc": "2026-10-21T15:43:57.379475+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_codeword_repulsion_margin", "round": 4, "status": "rejected", "utc": "2026-10-21T15:45:04.601464+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_assignment_prefix_entropy", "round": 4, "status": "rejected", "utc": "2026-10-21T15:46:12.109110+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_residual_codebook_tangent_transport", "round": 4, "status": "admitted", "utc": "2026-10-21T15:51:55.108545+00:00"}
+{"event": "train", "mechanism_id": "directed_residual_codebook_tangent_transport", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport/r8_control", "round": 4, "status": "trained", "utc": "2026-10-21T15:59:33.095376+00:00"}
+{"er": 16.134099616858236, "event": "evaluate", "mechanism_id": "directed_residual_codebook_tangent_transport", "qualified": false, "round": 4, "utc": "2026-10-21T16:16:46.669836+00:00"}
+{"event": "learn", "next_round": 5, "phase": "hypothesise", "round": 5, "utc": "2026-10-21T16:17:16.845452+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 5, "utc": "2026-10-21T16:18:11.493291+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_anchor_repulsion_geometry", "round": 5, "status": "rejected", "utc": "2026-10-21T16:20:19.708249+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_assignment_prefix_information", "round": 5, "status": "admitted", "utc": "2026-10-21T16:26:31.039993+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_residual_transport_with_separation", "round": 5, "status": "admitted", "utc": "2026-10-21T16:28:44.338355+00:00"}
+{"event": "train", "mechanism_id": "directed_assignment_prefix_information", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_information/r8_control", "round": 5, "status": "trained", "utc": "2026-10-21T16:31:57.403090+00:00"}
+{"event": "train", "mechanism_id": "directed_residual_transport_with_separation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation/r8_control", "round": 5, "status": "trained", "utc": "2026-10-21T16:35:48.589024+00:00"}
+{"er": 16.946938775510205, "event": "evaluate", "mechanism_id": "directed_assignment_prefix_information", "qualified": true, "round": 5, "utc": "2026-10-21T17:21:18.691192+00:00"}
+{"er": 14.604726976365118, "event": "evaluate", "mechanism_id": "directed_residual_transport_with_separation", "qualified": false, "round": 5, "utc": "2026-10-21T17:29:24.118741+00:00"}
+{"event": "stage3", "mechanism_id": "directed_assignment_prefix_information", "round": 5, "started": false, "utc": "2026-10-21T17:29:54.508937+00:00"}
+{"event": "learn", "next_round": 6, "phase": "hypothesise", "round": 6, "utc": "2026-10-21T17:30:24.692183+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 6, "utc": "2026-10-21T17:31:21.520894+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_codebook_repulsion_with_usage_anchor", "round": 6, "status": "admitted", "utc": "2026-10-21T17:39:42.575785+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_assignment_prefix_preservation", "round": 6, "status": "admitted", "utc": "2026-10-21T17:41:58.385823+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "behaviour_conditioned_residual_whitening", "round": 6, "status": "rejected", "utc": "2026-10-21T17:43:18.152094+00:00"}
+{"event": "train", "mechanism_id": "directed_codebook_repulsion_with_usage_anchor", "result_dir": null, "round": 6, "status": "train_failed", "utc": "2026-10-21T17:44:39.143169+00:00"}
+{"event": "train", "mechanism_id": "directed_assignment_prefix_preservation", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control", "round": 6, "status": "trained", "utc": "2026-10-21T17:46:51.557478+00:00"}
+{"er": 17.298273785628265, "event": "evaluate", "mechanism_id": "directed_assignment_prefix_preservation", "qualified": true, "round": 6, "utc": "2026-10-21T18:00:01.488915+00:00"}
+{"event": "stage3", "mechanism_id": "directed_assignment_prefix_preservation", "round": 6, "started": false, "utc": "2026-10-21T18:00:32.011246+00:00"}
+{"event": "learn", "next_round": 7, "phase": "hypothesise", "round": 7, "utc": "2026-10-21T18:01:02.224136+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 7, "utc": "2026-10-21T18:01:57.729899+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_codeword_tangent_geometry", "round": 7, "status": "rejected", "utc": "2026-10-21T18:04:07.150961+00:00"}
+{"detail": null, "event": "screen", "mechanism_id": "directed_soft_assignment_information", "round": 7, "status": "admitted", "utc": "2026-10-21T18:11:51.297561+00:00"}
+{"detail": "the independent checks rejected the implementation", "event": "screen", "mechanism_id": "directed_residual_transport", "round": 7, "status": "rejected", "utc": "2026-10-21T18:13:04.987266+00:00"}
+{"event": "train", "mechanism_id": "directed_soft_assignment_information", "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_information/r8_control", "round": 7, "status": "trained", "utc": "2026-10-21T18:19:28.410503+00:00"}
+{"er": 16.35477582846004, "event": "evaluate", "mechanism_id": "directed_soft_assignment_information", "qualified": false, "round": 7, "utc": "2026-10-21T18:45:48.879391+00:00"}
+{"event": "learn", "next_round": 8, "phase": "hypothesise", "round": 8, "utc": "2026-10-21T18:46:19.048588+00:00"}
+{"candidates": 3, "duplicates": 0, "event": "hypothesise", "round": 8, "utc": "2026-10-21T18:47:12.894510+00:00"}
