@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "comment": "The resource configuration of the durable research controller (issue #107). Every cap here is enforced before a dispatch, and the controller refuses rather than exceeding one.",
+  "controller": {
+    "state": "results/harness3_runs/controller/state.json",
+    "audit": "results/harness3_runs/controller/audit.jsonl",
+    "rounds": "results/harness3_runs/controller/rounds",
+    "store": "results/harness3_runs/store",
+    "ledger": "results/harness3_runs/hypotheses/ledger.json",
+    "poll_seconds": 30
+  },
+  "caps": {
+    "max_concurrent_screening": 2,
+    "max_concurrent_training": 1,
+    "max_concurrent_stage3": 1,
+    "min_free_gb": 20,
+    "gpus_required_per_cold_run": 4,
+    "ddp_port_base": 50300
+  },
+  "experiment": {
+    "frozen_seed": 42,
+    "cold_epochs": 3000,
+    "probe_epochs": 50,
+    "frozen_gate_hard_l1_er": 16.38953942232631,
+    "historical_r4_08_er": 16.402627511591962,
+    "archived_control": {
+      "hard_l1_er": 16.334505666275888,
+      "stage3_recall@10": 0.06406796775709883,
+      "stage3_ndcg@10": 0.03530651701940677
+    }
+  },
+  "prohibitions": {
+    "multi_seed": "refused by guardrails.py: the seed must be 42",
+    "control_retrain": "refused by guardrails.py: the control is evidence",
+    "archived_policy_rerun": "refused by guardrails.py: the archived policies are read-only",
+    "failed_arm_rerun": "refused by guardrails.py: a failed arm is classified, never retried",
+    "renamed_mechanism": "refused by guardrails.py: the specification digest, not the name, decides",
+    "repeated_frozen_evaluation": "refused by guardrails.py: the ER is read once per arm",
+    "repeated_stage3": "refused by guardrails.py: Stage-3 is read once per arm"
+  }
+}
