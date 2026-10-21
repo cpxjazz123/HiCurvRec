@@ -568,6 +568,19 @@ class Controller:
         """Phase 4: one cold run per admitted arm, within the resource caps."""
         from .candidate_run import run_candidate
 
+        # RECONCILE FIRST: a run that has exported its SIDs is no longer training, and a
+        # controller that counts it as training waits for itself forever.
+        for item in self.state.get("portfolio") or ():
+            if item.get("status") != "training":
+                continue
+            result_dir = (item.get("train") or {}).get("result_dir")
+            exported = Path(result_dir) / "sids_for_hgrec.npy" if result_dir else None
+            if exported and exported.is_file():
+                item["status"] = "trained"
+                self.audit("reconciled", mechanism_id=item["mechanism_id"],
+                           result_dir=result_dir)
+        self.save()
+
         admitted = [
             item
             for item in self.state.get("portfolio") or ()
