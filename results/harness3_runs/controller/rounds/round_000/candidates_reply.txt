@@ -1,0 +1,148 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_repulsion_with_anchor",
+      "title": "Directed codebook repulsion with control-geometry anchoring",
+      "equation": "For valid rows i, let a_i = softmax_j(-||source_i - c_j||^2 / tau), b_i = softmax_j(-||target_i - c_j||^2 / tau), and d_i = sum_j a_ij c_j - sum_j b_ij c_j. Let L = lambda * mean_i[m_i * (max(0, margin - u_i dot d_i))^2] + mu * mean_j[||c_j - stopgrad(c_j)||^2] where u_i = (target_i - source_i) / (||target_i - source_i|| + epsilon). The anchoring term is identically zero and is omitted in implementation; the operative objective is the directed soft-code displacement hinge.",
+      "symbols": {
+        "i": "Batch-row index.",
+        "j": "Codebook-entry index.",
+        "B": "Batch size.",
+        "C": "Number of codebook entries.",
+        "D": "Embedding dimension.",
+        "source_i": "Source embedding for row i.",
+        "target_i": "Target embedding for row i.",
+        "c_j": "Codebook vector j.",
+        "m_i": "Validity mask, with 1 for valid rows and 0 otherwise.",
+        "a_ij": "Soft assignment probability of source_i to codeword c_j.",
+        "b_ij": "Soft assignment probability of target_i to codeword c_j.",
+        "d_i": "Difference between the source and target soft-quantized vectors.",
+        "u_i": "Unit direction from source_i to target_i, stabilized by epsilon.",
+        "tau": "Soft-assignment temperature.",
+        "margin": "Minimum desired soft-code displacement along u_i.",
+        "lambda": "Weight composed with the mechanism loss.",
+        "epsilon": "Positive stabilizer for zero-length source-target differences."
+      },
+      "parameters": {
+        "tau": 0.5,
+        "margin": 0.05,
+        "lambda": 0.0001,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target displacement in the supplied pair; it uses no additional behaviour input.",
+      "codebook_interaction": "The hinge differentiates through both soft assignments and their weighted codebook sums. Its directed displacement pushes the source- and target-associated soft codeword mixtures apart along the observed source-to-target direction when their projected separation is below the margin. It does not minimize pair-codeword distance or pull endpoint codewords together; the force is repulsive along the pair direction. The proposed margin and weight are finite, and assignment churn plus pairwise codeword separation must be checked at the probe.",
+      "encoder_interaction": "The loss has nonzero derivatives with respect to source and target, but the host overwrites the encoder gradient after backward. Those derivatives therefore do not alter encoder training; only the codebook gradient can change exported codes.",
+      "risk": "The soft mixtures may be too diffuse or poorly aligned with hard assignments, so the term can move codebook vectors without producing useful hard-SID changes. If the repulsive updates distort Voronoi regions, they may reduce prefix branching, sequence information, or held-out frequency stability even while pairwise ER rises.",
+      "falsifier": "Reject at the probe if the loss is unchanged when source and target are exchanged, any declared gradient is zero or non-finite, or codebook updates reduce level-0 usage balance, L1-to-L2 branches per code, train-to-test frequency stability, or sequence information relative to control. The cold-run falsifier is no increase in pair-level ER or no Stage-3 recall@10 improvement over 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only terms, this objective differentiates through the supplied codebook and declares a nonzero codebook gradient. Unlike the collapsed assignment cross-entropy, it never rewards assigning both endpoints to one code or minimizing their codeword distance; below-margin pairs receive a directional separation force. Unlike the previous margin-geometry arm, it explicitly imposes a directed soft-code displacement rather than relying on a symmetric pair margin."
+    },
+    {
+      "id": "directed_assignment_branch_preservation",
+      "title": "Directed soft-assignment separation with branch-preserving occupancy constraint",
+      "equation": "For valid rows i, define p_ij = softmax_j(-||source_i - c_j||^2 / tau) and q_ij = softmax_j(-||target_i - c_j||^2 / tau). Let L = lambda * mean_i[m_i * KL(p_i || q_i)] + mu * sum_j[max(0, rho - mean_i[m_i * p_ij])^2 + max(0, rho - mean_i[m_i * q_ij])^2]. The ordered KL makes the objective directional; the occupancy-floor term discourages either endpoint role from abandoning codebook entries.",
+      "symbols": {
+        "i": "Batch-row index.",
+        "j": "Codebook-entry index.",
+        "B": "Batch size.",
+        "C": "Number of codebook entries.",
+        "D": "Embedding dimension.",
+        "source_i": "Source embedding for row i.",
+        "target_i": "Target embedding for row i.",
+        "c_j": "Codebook vector j.",
+        "m_i": "Validity mask, with 1 for valid rows and 0 otherwise.",
+        "p_ij": "Soft source assignment probability for row i to codeword j.",
+        "q_ij": "Soft target assignment probability for row i to codeword j.",
+        "tau": "Soft-assignment temperature.",
+        "rho": "Minimum batch-average soft-assignment mass per codeword and endpoint role.",
+        "lambda": "Weight for directed assignment separation.",
+        "mu": "Weight for the endpoint-role occupancy floor."
+      },
+      "parameters": {
+        "tau": 0.5,
+        "rho": 0.001,
+        "lambda": 0.0001,
+        "mu": 0.0001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "Ordered source-to-target soft-assignment distributions derived from each supplied pair; no additional behaviour input is required.",
+      "codebook_interaction": "The ordered KL differentiates through source and target distances to codebook vectors and seeks distinct, predictive endpoint distributions; the occupancy floor pushes underused codewords to receive soft mass in each endpoint role. Neither term attracts the two endpoint codewords: the KL compares distributions in an ordered direction, and the floor acts on marginal endpoint-role usage rather than pairwise codeword distances. This is not a guarantee that hard assignments retain branches, so the probe must measure hard level-0 concentration and L1-to-L2 branching.",
+      "encoder_interaction": "Source and target derivatives are nonzero mathematically, but the host discards their contribution during gradient assembly. The operative training effect is through the nonzero codebook gradient.",
+      "risk": "The minibatch occupancy floor may be noisy or conflict with the learned marginal frequencies, creating broad soft assignments that do not translate to better hard-code branching. The ordered KL could also improve pairwise separation while losing sequence information or increasing train-to-test frequency drift.",
+      "falsifier": "Reject at the probe if source-target exchange leaves the loss unchanged, declared gradients are zero or non-finite, or exported-code diagnostics show lower sequence information, fewer L1-to-L2 branches per code, greater level-0 usage concentration, or greater train-to-test frequency drift than control. The cold-run falsifier is no Stage-3 recall@10 gain over 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike the inert terms, the distance-based soft assignments give the codebook a direct gradient. Unlike the collapsed cross-entropy, the objective does not train a shared class label for both endpoints or pull their codewords together; it compares ordered distributions and separately floors endpoint-role usage. Unlike the prior usage-balance arm, it explicitly encodes source-to-target direction and tests branch structure rather than treating global balance alone as sufficient."
+    },
+    {
+      "id": "behaviour_residual_directional_whitening",
+      "title": "Behaviour-residual directional transport with codebook covariance whitening",
+      "equation": "Let r_i = target_i - source_i and let Sigma = (1 / (B_valid + epsilon)) * sum_i[m_i * r_i r_i^T], with stop-gradient through Sigma. For valid i, let z_i = codebook^T Sigma^{-1} r_i and v_i = z_i / (||z_i|| + epsilon). Define soft source and target assignments p_ij and q_ij as softmax_j(-||source_i - c_j||^2 / tau) and softmax_j(-||target_i - c_j||^2 / tau). Let h_i = sum_j (q_ij - p_ij) * (c_j^T v_i). Let L = lambda * mean_i[m_i * (max(0, margin - h_i))^2] + nu * mean_j[(||c_j - mean_k c_k||^2 - s)^2].",
+      "symbols": {
+        "i": "Batch-row index.",
+        "j": "Codebook-entry index.",
+        "k": "Codebook-entry index used for the codebook mean.",
+        "B_valid": "Number of valid rows in the batch.",
+        "C": "Number of codebook entries.",
+        "D": "Embedding dimension.",
+        "source_i": "Source embedding for row i.",
+        "target_i": "Target embedding for row i.",
+        "r_i": "Behaviour-conditioned residual target_i - source_i.",
+        "m_i": "Validity mask, with 1 for valid rows and 0 otherwise.",
+        "Sigma": "Masked residual covariance matrix, treated as constant for differentiation.",
+        "epsilon": "Positive numerical stabilizer.",
+        "c_j": "Codebook vector j.",
+        "p_ij": "Soft source assignment probability for row i to codeword j.",
+        "q_ij": "Soft target assignment probability for row i to codeword j.",
+        "z_i": "Residual transformed by the inverse residual covariance and codebook transpose.",
+        "v_i": "Normalized transformed residual direction.",
+        "h_i": "Signed change in soft codeword projection from source to target along v_i.",
+        "tau": "Soft-assignment temperature.",
+        "margin": "Minimum desired behaviour-residual directional code projection change.",
+        "mean_k c_k": "Mean codebook vector.",
+        "s": "Target squared radius of codebook vectors around their mean.",
+        "lambda": "Weight for behaviour-residual directional transport.",
+        "nu": "Weight for the codebook-radius regularizer."
+      },
+      "parameters": {
+        "tau": 0.5,
+        "margin": 0.05,
+        "s": 1.0,
+        "lambda": 0.0001,
+        "nu": 0.000001,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The supplied behaviour-conditioned residual target - source, summarized by its masked covariance and each pair's residual direction.",
+      "codebook_interaction": "The hinge differentiates through the soft endpoint assignments and codeword projections, pushing the target-role soft code projection ahead of the source-role projection along the covariance-whitened behaviour residual. The radius term acts on each codeword relative to the codebook mean, not on endpoint pairs, and discourages codebook-wide radial contraction or expansion. There is no pairwise attraction term; the directed residual projection is a separation signal. The covariance is detached to keep the gradient finite and avoid higher-order batch interactions.",
+      "encoder_interaction": "The objective has nonzero mathematical derivatives through source and target, but the host overwrites encoder gradients. Those derivatives will not update the encoder; the codebook gradient is the only effective training route.",
+      "risk": "Residual covariance can be ill-conditioned or dominated by common transitions, making whitening amplify noisy directions despite stabilization. The fixed codebook-radius target may also oppose a useful learned scale. The resulting hard codes could lose sequence information or worsen frequency drift even if residual-direction projection improves.",
+      "falsifier": "Reject at the probe if exchanging source and target does not change the loss, any declared gradient is zero or non-finite, or the resulting code diagnostics violate any requirement: level-0 usage more concentrated than control, fewer L1-to-L2 branches per code, greater train-to-test frequency drift, or lower sequence information. The cold-run falsifier is no improvement in Stage-3 recall@10 over 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, this residual-based objective sends gradients through soft codebook assignments and codeword projections. Unlike the collapsed code-assignment cross-entropy, it does not ask both transition endpoints to share a code; it imposes signed residual-direction progress and a pair-independent codebook-radius constraint. Unlike the measured residual-target and geometry-transport arms, it measures and acts on covariance-whitened behaviour residual geometry while explicitly checking the exported sequence-information and branching requirements."
+    }
+  ]
+}
+```

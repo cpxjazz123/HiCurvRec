@@ -1,0 +1,143 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The cross-assignment term is directed: it scores target assignment probabilities against source probabilities, so swapping endpoints changes the objective. The displacement-fit term moves codewords to represent the signed assignment change. The marginal-change penalty discourages aggregate source-to-target assignment shifts; it does not pull endpoint codewords together, though it does not itself ensure a balanced or informative hard assignment.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike inert encoder-only terms, the objective directly depends on the supplied codebook through soft assignments and the displacement fit. Unlike the collapsed directed cross-entropy, it uses a signed source-to-target assignment change and does not train both endpoints to share a code. Its marginal penalty is a structural safeguard, not a guarantee; hard-export checks are required."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "Let a_ic = softmax_c(-||source_i-codebook_c||^2 / tau) and b_ic = softmax_c(-||target_i-codebook_c||^2 / tau). Define the directed assignment change q_i = b_i - a_i and directed codeword displacement v_i = sum_c q_ic codebook_c. Minimize L = w * mean_i[ -sum_c b_ic * log(a_ic + epsilon) + mu * ||v_i - (target_i-source_i)||^2 / D + nu * sum_c (bar_b_c - bar_a_c)^2 ], where bar_a and bar_b are masked batch means.",
+  "expected_failure_modes": [
+    "The cross-assignment term may favor broad soft overlap or assignment stagnation, and the marginal-change penalty may suppress useful behavior-dependent reassignment along with harmful concentration. Soft batch marginals may also fail to predict hard SID usage or prefix structure."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if swapping source and target leaves the loss unchanged, declared gradients are zero or non-finite, or the cold run does not improve Stage-3 recall@10 and NDCG@10 over control while raising ER and meeting the Gini, branch-count, drift, and sequence-information requirements.",
+    "Unlike inert encoder-only terms, the objective directly depends on the supplied codebook through soft assignments and the displacement fit. Unlike the collapsed directed cross-entropy, it uses a signed source-to-target assignment change and does not train both endpoints to share a code. Its marginal penalty is a structural safeguard, not a guarantee; hard-export checks are required."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_soft_assignment_information",
+  "parameters": {
+    "epsilon": 1e-08,
+    "mu": 1.0,
+    "nu": 1.0,
+    "tau": 1.0,
+    "w": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T18:01:57.711649+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "fe756413c7020fa41e3fd8252280802cb5a23ca691b2f2483f24f1eebe4ec164"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "D": "Representation dimension.",
+    "a_ic": "Soft source assignment probability for codeword c.",
+    "b_ic": "Soft target assignment probability for codeword c.",
+    "bar_a_c": "Masked batch mean of source assignment probability for codeword c.",
+    "bar_b_c": "Masked batch mean of target assignment probability for codeword c.",
+    "codebook_c": "Codeword c in the supplied codebook.",
+    "epsilon": "Positive numerical stabilizer inside the logarithm.",
+    "mask": "Validity indicator for each pair; means are over valid rows.",
+    "mu": "Weight of the directed codebook-displacement fit.",
+    "nu": "Weight of the batch assignment-marginal change penalty.",
+    "q_i": "Directed change in soft assignment probabilities, b_i - a_i.",
+    "source_i": "Source representation for valid pair i.",
+    "target_i": "Target representation for valid pair i.",
+    "tau": "Temperature for soft assignments.",
+    "v_i": "Codebook displacement implied by the directed assignment change.",
+    "w": "Weight composing this mechanism with the host objective."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Improve directed assignments without rewarding shared endpoint codes",
+  "version": "1.0.0"
+}

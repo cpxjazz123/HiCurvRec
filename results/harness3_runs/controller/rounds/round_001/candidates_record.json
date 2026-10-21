@@ -1,0 +1,34 @@
+{
+  "generated_utc": "2026-10-21T15:06:03.046541+00:00",
+  "candidates": [
+    {
+      "mechanism_id": "directed_codeword_repulsion_with_usage_anchor",
+      "proposal_sha256": "9e528e3269fc003ca7b0e6c457f406e2944e3ce0d10a767a7900ba2496dbc01c",
+      "path": "results/harness3_runs/controller/rounds/round_001/directed_codeword_repulsion_with_usage_anchor/proposal.json",
+      "title": "Directed codeword repulsion with a control-anchored usage barrier",
+      "falsifier": "Reject if the cold run's exported level-0 usage Gini exceeds control, L1-to-L2 branches per code fall below control, train-to-test frequency drift grows, sequence information excess falls below control, or pair-level ER does not rise; any of these is a direct failure of the stated joint requirement.",
+      "risk": "The representation displacement may be a poor proxy for behaviour, and the normalized projection can reward a codeword displacement direction that does not preserve useful sequence information. Batch-local soft usage may also be noisy or conflict with naturally nonuniform item frequencies. The frozen evaluation may therefore show improved pair-level separation but worse sequence information, prefix branching, or downstream recall.",
+      "codebook_interaction": "The projection term updates the two selected codewords with opposite signed forces along the ordered displacement direction; its positive margin discourages zero separation rather than rewarding pairwise convergence. The usage-floor term pushes source-assigned probability mass away from overused cells and toward underused cells. It does not impose an attractive pairwise codeword-distance term. Hard nearest-code indices are nondifferentiable and are held fixed for the local loss gradient; all differentiable paths remain finite through epsilon and softmax temperature."
+    },
+    {
+      "mechanism_id": "directed_soft_assignment_branch_preservation",
+      "proposal_sha256": "6f27afb7e55984176ae7cfce0fae6c7e30d80ba2fa0251997b9335d74dbd3ac7",
+      "path": "results/harness3_runs/controller/rounds/round_001/directed_soft_assignment_branch_preservation/proposal.json",
+      "title": "Directed soft-assignment transition preservation with a prefix-branch barrier",
+      "falsifier": "Reject if exported level-0 Gini rises, prefix branches per code fall, frequency drift grows, sequence information excess falls, or pair-level ER fails to rise. In particular, a healthy soft entropy value with worse exported sequence information falsifies the assumption that this soft transition objective preserves useful hard-code structure.",
+      "risk": "The directed distribution-matching term may preserve source assignment statistics rather than improve useful next-item predictability, and the entropy floor can make assignments diffuse. This can preserve occupancy while reducing sequence information or weakening hard SID transitions; the hard export may not reflect the smooth distributions optimized during training.",
+      "codebook_interaction": "Gradients pass through the soft source and target assignment probabilities into codebook distances. The objective matches a directed transition distribution to the source distribution and imposes a target-entropy floor; it contains no term that attracts source- and target-selected codeword vectors to one another. The entropy barrier resists a transition distribution supported by a single target code. Softmax temperatures keep gradients finite."
+    },
+    {
+      "mechanism_id": "behaviour_conditioned_residual_orthogonal_transport",
+      "proposal_sha256": "2ff332ee9267a189a65c638e60ff6de07623057e9f24e0cc43a8d5350b1f5ae5",
+      "path": "results/harness3_runs/controller/rounds/round_001/behaviour_conditioned_residual_orthogonal_transport/proposal.json",
+      "title": "Behaviour-conditioned residual transport with orthogonal codeword-separation protection",
+      "falsifier": "Reject if the cold run fails to raise pair-level ER or if any measured requirement fails: exported level-0 Gini above control, fewer L1-to-L2 branches per code, increased train-to-test frequency drift, or lower sequence-information excess. A nonzero measured codebook gradient with unchanged hard assignments and no ER gain also falsifies the proposed route from residual geometry to export change.",
+      "risk": "The residual direction and the orthogonal complement may be poorly conditioned when residual displacement is near zero, and a separation hinge can distort codebook geometry without improving ranking. The residual-alignment term may also be satisfied by changes that do not preserve hard assignment sequence information. The floor is batch-local and may not control held-out frequency drift.",
+      "codebook_interaction": "The residual-alignment term sends gradients through both assigned codewords via the residuals. The orthogonal-separation hinge acts on the component of the ordered codeword difference perpendicular to the residual displacement, pushing the assigned codewords apart in that component when below delta; it does not reward convergence along the pair axis. The usage-floor penalty pushes probability mass away from overused source cells. Fixed hard indices avoid differentiating through argmin, and eps stabilizes the projection."
+    }
+  ],
+  "count": 3,
+  "tokens": {}
+}

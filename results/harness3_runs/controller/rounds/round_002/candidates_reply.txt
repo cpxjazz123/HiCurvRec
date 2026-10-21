@@ -1,0 +1,131 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_anchor_margin_geometry",
+      "title": "Directed anchor-to-codeword margin with pair-separation barrier",
+      "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||^2 (stop-gradient through argmin), d_i = ||source_i - codebook_{a_i}||^2, and h_i = min_{c != a_i} ||source_i - codebook_c||^2. Let p_i = ||codebook_{a_i} - codebook_{b_i}||^2 where b_i = argmin_c ||target_i - codebook_c||^2 (stop-gradient through argmin). L = w * mean_i [softplus((d_i - h_i + m)/tau) + rho * softplus((s - p_i)/tau)].",
+      "symbols": {
+        "source_i": "Source-side representation for valid batch row i; the anchor makes the objective directed.",
+        "target_i": "Target-side representation for valid batch row i; used only to identify its nearest codeword b_i.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "a_i": "Index of the codeword nearest to source_i, selected without gradient.",
+        "b_i": "Index of the codeword nearest to target_i, selected without gradient.",
+        "d_i": "Squared distance from source_i to its selected codeword.",
+        "h_i": "Squared distance from source_i to its nearest alternative codeword.",
+        "p_i": "Squared distance between the source and target selected codewords.",
+        "m": "Margin requiring the source assignment to beat its nearest alternative.",
+        "s": "Minimum squared separation required for the transition's selected codewords.",
+        "tau": "Positive softplus temperature.",
+        "rho": "Weight of the codeword-separation barrier within the term.",
+        "w": "Weight composing this auxiliary term with the host objective.",
+        "mask_i": "Validity indicator for row i; only valid rows contribute to the masked mean."
+      },
+      "parameters": {
+        "w": 0.001,
+        "m": 0.05,
+        "s": 0.04,
+        "tau": 0.1,
+        "rho": 1.0
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "zero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target transition represented by the input pair; no external behaviour feature is read.",
+      "codebook_interaction": "The assignment-margin term moves the source-selected codeword relative to the source's nearest alternative; the separation barrier acts only when the selected source and target codewords are closer than s, pushing those two codewords apart. Its gradient is zero once their squared separation reaches s. It therefore cannot pull a transition's two codewords together. Nearest-codeword indices are stop-gradient, avoiding unstable gradients through argmin.",
+      "encoder_interaction": "The source receives a gradient through its distance terms; target receives none because its representation is used only for a stop-gradient index. The host discards the source encoder gradient after assembly, so any practical effect must come through the nonzero codebook gradient.",
+      "risk": "The source-anchored margin may improve local assignment margins without preserving useful sequence information, prefix branching, or train-to-test frequency stability. The separation barrier protects only observed selected pairs and may leave harmful codebook movements elsewhere; the frozen downstream evaluation may consequently show no gain even if the export changes and ER rises.",
+      "falsifier": "Reject if the swapped-source/target loss is unchanged, any declared nonzero gradient is zero or non-finite, or the exported codes fail any measured requirement: level-0 Gini exceeds control, L1-to-L2 branches per code fall below control, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only terms, this objective directly differentiates through the supplied codebook, so it has a path that survives the host's encoder-gradient overwrite. Unlike the collapsed pairwise cross-entropy, it contains no attraction between endpoint codewords; its only direct endpoint interaction is a hinge-like repulsion below a minimum separation, with zero barrier gradient above that threshold."
+    },
+    {
+      "id": "directed_usage_prefix_balance",
+      "title": "Directed assignment-mass and prefix-branch balancing",
+      "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||^2 and b_i = argmin_c ||target_i - codebook_c||^2, with indices stop-gradient. Let q_c = (sum_i mask_i * 1[a_i=c] + eps)/(sum_i mask_i + C*eps), and let r_c = (sum_i mask_i * 1[a_i=c and b_i != a_i] + eps)/(sum_i mask_i * 1[a_i=c] + C*eps). Define L = w * [sum_c q_c * log(q_c * C) + eta * sum_c q_c * (r_c - mean_j r_j)^2].",
+      "symbols": {
+        "source_i": "Source-side representation for valid batch row i; source-only assignment makes the objective directed.",
+        "target_i": "Target-side representation for valid batch row i; its hard assignment supplies the next-level branch indicator.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "a_i": "Nearest codeword to source_i, chosen without gradient.",
+        "b_i": "Nearest codeword to target_i, chosen without gradient.",
+        "q_c": "Smoothed minibatch source-assignment frequency for codeword c.",
+        "r_c": "Smoothed fraction of assignments from prefix c that transition to a different codeword.",
+        "eps": "Positive pseudocount for finite, smoothed frequencies.",
+        "C": "Number of codewords, obtained from the supplied codebook shape.",
+        "eta": "Weight of the prefix-branch dispersion term.",
+        "w": "Weight composing this auxiliary term with the host objective.",
+        "mask_i": "Validity indicator for row i; invalid rows do not contribute."
+      },
+      "parameters": {
+        "w": 0.001,
+        "eta": 1.0,
+        "eps": 0.01
+      },
+      "gradient_targets": {
+        "source": "zero",
+        "target": "zero",
+        "codebook": "zero"
+      },
+      "target_paths": [
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "Directed source-to-target hard-assignment transition counts, including source-code usage and whether the next assignment branches away from its source code.",
+      "codebook_interaction": "This is a discrete assignment-structure objective. With hard argmin assignments and stop-gradient indices, its gradient with respect to codebook entries is exactly zero; it changes no codewords during training and cannot pull transition codewords together. It is not admissible under the stated requirement that a surviving candidate reach the codebook and alter export, so it is included only as a structurally distinct probe and should be rejected before a cold run unless the checker accepts zero codebook gradient.",
+      "encoder_interaction": "The hard assignments are stop-gradient, so source and target gradients are exactly zero. The host's overwrite is immaterial because this term supplies no encoder gradient; it can only diagnose whether its measured assignment statistics correlate with the required export properties, not optimize them.",
+      "risk": "This term is a measurement of assignment structure rather than a trainable mechanism under the given interface: hard indicators have zero derivatives. It may satisfy the directedness check because swapping source and target changes the directed transition counts, but it cannot move the codebook or improve exported codes. It should be rejected at the gradient probe and incur no cold run.",
+      "falsifier": "The immediate falsifier is a checker measurement of zero codebook gradient, which confirms it cannot be an admitted training candidate under the host constraint. Also falsified as a useful structural signal if swapping source and target leaves its loss unchanged on the checker batch.",
+      "why_not_the_measured_failures": "It is not inert for the same hidden reason as the prior encoder-only losses; it is explicitly and honestly declared to have no gradient to any parameter group, so it makes no claim to survive training. It cannot cause the measured codebook collapse because it exerts no codebook force at all. Its inclusion makes the assignment-structure distinction explicit, but it is a no-cold-run probe rather than a viable admitted candidate."
+    },
+    {
+      "id": "directed_residual_geometry_repulsion",
+      "title": "Behaviour-conditioned residual alignment with endpoint repulsion",
+      "equation": "For each valid row i, define residuals u_i = source_i - codebook_{a_i} and v_i = target_i - codebook_{b_i}, where a_i and b_i are nearest-codeword indices selected without gradient. Let z_i = (u_i dot v_i)/(||u_i||*||v_i|| + eps) and p_i = ||codebook_{a_i} - codebook_{b_i}||^2. L = w * mean_i [1 - z_i + rho * softplus((s - p_i)/tau)].",
+      "symbols": {
+        "source_i": "Source-side representation for valid transition row i.",
+        "target_i": "Target-side representation for valid transition row i; its residual defines the directed prediction destination.",
+        "codebook_c": "Codeword c in the supplied codebook.",
+        "a_i": "Nearest codeword to source_i, selected without gradient.",
+        "b_i": "Nearest codeword to target_i, selected without gradient.",
+        "u_i": "Source residual after subtracting its selected codeword.",
+        "v_i": "Target residual after subtracting its selected codeword.",
+        "z_i": "Cosine alignment between source and target residuals.",
+        "p_i": "Squared distance between the selected endpoint codewords.",
+        "eps": "Positive stabilizer for residual norms.",
+        "s": "Minimum squared separation for the endpoint codewords.",
+        "tau": "Positive softplus temperature.",
+        "rho": "Weight of the endpoint-separation barrier.",
+        "w": "Weight composing this auxiliary term with the host objective.",
+        "mask_i": "Validity indicator for row i; only valid rows contribute to the masked mean."
+      },
+      "parameters": {
+        "w": 0.001,
+        "eps": 0.000001,
+        "s": 0.04,
+        "tau": 0.1,
+        "rho": 1.0
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered transition's residual direction, source residual to target residual, conditioned on the pair's selected codewords.",
+      "codebook_interaction": "The cosine residual-alignment gradient acts on the selected codewords through both residual subtractions, adjusting the residual coordinate frames rather than directly minimizing endpoint codeword distance. The separate barrier repels selected endpoint codewords only below squared separation s and has zero gradient above it. Thus neither term attracts endpoint codewords; the pair-distance contribution is explicitly repulsive when needed. Assignment indices are stop-gradient.",
+      "encoder_interaction": "Both representations receive gradients through their residuals and cosine alignment. The host discards those encoder gradients after its assembly, so the only training effect that can survive is the declared nonzero gradient through the codebook.",
+      "risk": "Residual-direction alignment may encode a generic transition smoothness that is poorly matched to recommendation, and its codebook gradients can still alter global Voronoi geometry in ways that reduce sequence information or branch diversity. The endpoint barrier protects only sampled transitions and may not prevent level-0 usage concentration or frequency drift. A healthy local residual objective therefore does not guarantee downstream recall or NDCG.",
+      "falsifier": "Reject if source-target exchange does not change the loss, any declared gradient is zero or non-finite, or the resulting export fails any measured requirement: level-0 Gini no greater than control, L1-to-L2 branches per code at least control, train-to-test frequency drift no greater than control, sequence information no lower than control, and pair-level ER increased.",
+      "why_not_the_measured_failures": "Unlike the inert terms, residual alignment differentiates through selected codewords and does not depend on an encoder-only gradient surviving the host overwrite. Unlike the collapsed pairwise convergence loss, it aligns residual directions rather than minimizing a pairwise codeword distance; its only direct endpoint-distance force is a one-sided repulsion below a fixed separation threshold, never an attraction."
+    }
+  ]
+}
+```

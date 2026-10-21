@@ -1,0 +1,143 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The hinge differentiates through both soft assignments and their weighted codebook sums. Its directed displacement pushes the source- and target-associated soft codeword mixtures apart along the observed source-to-target direction when their projected separation is below the margin. It does not minimize pair-codeword distance or pull endpoint codewords together; the force is repulsive along the pair direction. The proposed margin and weight are finite, and assignment churn plus pairwise codeword separation must be checked at the probe.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only terms, this objective differentiates through the supplied codebook and declares a nonzero codebook gradient. Unlike the collapsed assignment cross-entropy, it never rewards assigning both endpoints to one code or minimizing their codeword distance; below-margin pairs receive a directional separation force. Unlike the previous margin-geometry arm, it explicitly imposes a directed soft-code displacement rather than relying on a symmetric pair margin."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For valid rows i, let a_i = softmax_j(-||source_i - c_j||^2 / tau), b_i = softmax_j(-||target_i - c_j||^2 / tau), and d_i = sum_j a_ij c_j - sum_j b_ij c_j. Let L = lambda * mean_i[m_i * (max(0, margin - u_i dot d_i))^2] + mu * mean_j[||c_j - stopgrad(c_j)||^2] where u_i = (target_i - source_i) / (||target_i - source_i|| + epsilon). The anchoring term is identically zero and is omitted in implementation; the operative objective is the directed soft-code displacement hinge.",
+  "expected_failure_modes": [
+    "The soft mixtures may be too diffuse or poorly aligned with hard assignments, so the term can move codebook vectors without producing useful hard-SID changes. If the repulsive updates distort Voronoi regions, they may reduce prefix branching, sequence information, or held-out frequency stability even while pairwise ER rises."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject at the probe if the loss is unchanged when source and target are exchanged, any declared gradient is zero or non-finite, or codebook updates reduce level-0 usage balance, L1-to-L2 branches per code, train-to-test frequency stability, or sequence information relative to control. The cold-run falsifier is no increase in pair-level ER or no Stage-3 recall@10 improvement over 0.06406796775709883.",
+    "Unlike the inert encoder-only terms, this objective differentiates through the supplied codebook and declares a nonzero codebook gradient. Unlike the collapsed assignment cross-entropy, it never rewards assigning both endpoints to one code or minimizing their codeword distance; below-margin pairs receive a directional separation force. Unlike the previous margin-geometry arm, it explicitly imposes a directed soft-code displacement rather than relying on a symmetric pair margin."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codebook_repulsion_with_anchor",
+  "parameters": {
+    "epsilon": 1e-08,
+    "lambda": 0.0001,
+    "margin": 0.05,
+    "tau": 0.5
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T14:59:25.474812+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "deb61590592398dd1550006cfb187c186c998faaf7184013703bbfa44083df14"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "B": "Batch size.",
+    "C": "Number of codebook entries.",
+    "D": "Embedding dimension.",
+    "a_ij": "Soft assignment probability of source_i to codeword c_j.",
+    "b_ij": "Soft assignment probability of target_i to codeword c_j.",
+    "c_j": "Codebook vector j.",
+    "d_i": "Difference between the source and target soft-quantized vectors.",
+    "epsilon": "Positive stabilizer for zero-length source-target differences.",
+    "i": "Batch-row index.",
+    "j": "Codebook-entry index.",
+    "lambda": "Weight composed with the mechanism loss.",
+    "m_i": "Validity mask, with 1 for valid rows and 0 otherwise.",
+    "margin": "Minimum desired soft-code displacement along u_i.",
+    "source_i": "Source embedding for row i.",
+    "target_i": "Target embedding for row i.",
+    "tau": "Soft-assignment temperature.",
+    "u_i": "Unit direction from source_i to target_i, stabilized by epsilon."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed codebook repulsion with control-geometry anchoring",
+  "version": "1.0.0"
+}

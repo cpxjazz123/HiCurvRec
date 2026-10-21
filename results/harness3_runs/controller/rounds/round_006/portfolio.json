@@ -1,0 +1,157 @@
+{
+  "round": 6,
+  "closed_utc": "2026-10-21T18:01:02.222533+00:00",
+  "portfolio": [
+    {
+      "codebook_interaction": "The repulsion gradient acts on both endpoint soft assignments and pushes their probability mass away from shared codewords; the usage term opposes concentration relative to uniform usage. It penalizes shared assignment probability rather than minimizing endpoint codeword distance, so it does not directly pull a transition's two codewords together. Finite softmax temperature and eps keep the loss and gradients finite.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "Reject if the codebook gradient is non-finite or zero, swapping source and target leaves the loss unchanged on the directedness probe, exported level-0 Gini rises above control, L1-to-L2 branches per code fall, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise.",
+      "mechanism_id": "directed_codebook_repulsion_with_usage_anchor",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_006/directed_codebook_repulsion_with_usage_anchor/proposal.json",
+      "proposal_sha256": "afc2f7be7b9fa6cbb74394ee708e53b0a61c9818a1b1b410028b0613946a2a22",
+      "risk": "Soft assignments may be too diffuse or poorly calibrated relative to hard SID assignments, so the loss can improve its soft repulsion and usage terms without changing exported codes or preserving sequence information. If the repulsion dominates, it may also make transition endpoints artificially dissimilar and harm downstream ranking.",
+      "screening": {
+        "export_sensitivity": {
+          "changed_fraction": {
+            "levels_1": 0.8413795908406881,
+            "levels_2": 0.9997966405010779,
+            "levels_3": 1.0,
+            "levels_3token_identical": false
+          },
+          "level0_occupancy_ratio_vs_control": 0.9213483146067415,
+          "verdict": "active"
+        },
+        "judges": {
+          "detail": "all 8 declared checks hold",
+          "failed": [],
+          "ok": true
+        },
+        "probe": {
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "occupancy_ratio_vs_host": 0.9213,
+          "ok": true
+        },
+        "reason": null
+      },
+      "semantic_key": "7545a545e8c15d1834e9a499d5361971ed9eb8a1cf65dd963be83021968e1f98",
+      "status": "train_failed",
+      "train": {
+        "launch": null,
+        "reason": "the independent checks rejected the implementation",
+        "result_dir": null
+      }
+    },
+    {
+      "codebook_interaction": "Gradients flow through source and target soft assignments into codebook vectors. The outgoing-entropy term rewards multiple target branches after a source code, while the collision penalty discourages both endpoints selecting the same code and the balance term discourages concentrated marginal usage. No term minimizes the distance between a transition's two codewords; the entropy term concerns distributions over successor assignments, not codeword convergence.",
+      "duplicate_of_an_existing_arm": false,
+      "evaluated": {
+        "above_gate": true,
+        "frozen_threshold": 16.38953942232631,
+        "hard_l1_er": 17.298273785628265
+      },
+      "falsifier": "Reject if swapping source and target does not change the probe loss, any declared gradient is zero or non-finite, the hard export has fewer L1-to-L2 branches per code than control, level-0 Gini exceeds control, frequency drift increases, sequence information falls, or pair-level ER fails to rise.",
+      "mechanism_id": "directed_assignment_prefix_preservation",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_006/directed_assignment_prefix_preservation/proposal.json",
+      "proposal_sha256": "83c03fedee631c7fd50696d9c0c5cf9a79e4c3b1a4bc5395d1a1a4c9a21315f2",
+      "risk": "The entropy reward can inflate successor diversity by making assignments diffuse rather than by preserving meaningful sequence structure. It can also overvalue rare prefixes unless the usage weighting and mask normalization are implemented carefully; hard exported branch counts and sequence information may therefore fail to improve.",
+      "screening": {
+        "export_sensitivity": {
+          "changed_fraction": {
+            "levels_1": 0.8577703664538171,
+            "levels_2": 0.9998779843006467,
+            "levels_3": 1.0,
+            "levels_3token_identical": false
+          },
+          "level0_occupancy_ratio_vs_control": 1.0614525139664803,
+          "verdict": "active"
+        },
+        "judges": {
+          "detail": "all 8 declared checks hold",
+          "failed": [],
+          "ok": true
+        },
+        "probe": {
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "occupancy_ratio_vs_host": 1.0615,
+          "ok": true
+        },
+        "reason": null
+      },
+      "semantic_key": "63dcea54b4a032abf603b10409e1cad2d5e2605acd2cede0d604124a4a37a5a2",
+      "stage3": {
+        "refused": "a stage3 process is already live",
+        "started": false,
+        "status": null,
+        "variant": "TIGER_c107_directed_assignment_prefix_preservation__r8_control"
+      },
+      "status": "qualified",
+      "train": {
+        "launch": {
+          "cgv_gate": {
+            "gates": {
+              "G1": "passed",
+              "G2": "passed",
+              "G3": "passed",
+              "G4": "passed",
+              "G5": "passed",
+              "G6": "passed"
+            },
+            "note": "all six gates passed on the supplied declaration",
+            "passed": true
+          },
+          "refused": null,
+          "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control",
+          "started": false,
+          "status": "smoke_pending"
+        },
+        "reason": null,
+        "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation/r8_control"
+      }
+    },
+    {
+      "codebook_interaction": "The residual-matching term acts on the difference between endpoint soft codebook reconstructions, so it trains codebook geometry to represent behavior-conditioned residual directions. The covariance term regularizes the residual geometry, and the usage term resists marginal code concentration. The matching term targets a directed difference, not the distance between the two codewords; it does not reward their convergence. Covariance regularization rho and eps stabilize the matrix operations and logarithms.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "Reject if source-target exchange leaves the directed loss unchanged, gradients are zero or non-finite, exported level-0 usage is more concentrated, prefix branching declines, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise.",
+      "mechanism_id": "behaviour_conditioned_residual_whitening",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_006/behaviour_conditioned_residual_whitening/proposal.json",
+      "proposal_sha256": "ec9c26aade8777c2a107ec029f86e2450e2ed90a6ba8845d5eec1226c6a62390",
+      "risk": "Batch residual covariance can be noisy or ill-conditioned, and whitening may amplify low-variance directions despite regularization. The learned codebook differences may then model batch-specific residual noise rather than stable behavior, worsening held-out frequency drift, sequence information, or downstream recommendation even if the training loss decreases.",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "1 of 8 declared checks failed",
+          "failed": [
+            "swap_source_target"
+          ],
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "c7d23988ec1c1bce6d37e40180986fed4de5810092584a31569b1a14ea67328c",
+      "status": "rejected"
+    }
+  ],
+  "summary": {
+    "directed_codebook_repulsion_with_usage_anchor": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_assignment_prefix_preservation": {
+      "er": 17.298273785628265,
+      "qualified": true,
+      "stage3": {
+        "refused": "a stage3 process is already live",
+        "started": false,
+        "status": null,
+        "variant": "TIGER_c107_directed_assignment_prefix_preservation__r8_control"
+      }
+    },
+    "behaviour_conditioned_residual_whitening": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    }
+  }
+}

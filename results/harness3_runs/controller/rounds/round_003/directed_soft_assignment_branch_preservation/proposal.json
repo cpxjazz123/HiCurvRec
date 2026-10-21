@@ -1,0 +1,140 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients flow through both soft assignments to codebook entries. The overlap term penalizes shared assignment mass rather than pulling endpoint codewords together; target entropy discourages a concentrated target distribution. The directed cross-entropy is ordered, so swapping endpoints changes the objective. No positive attraction term minimizes the distance between the two endpoint codewords. The finite temperature and epsilon keep softmax and logarithm gradients finite.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "This is an assignment-distribution objective with direct codebook gradients, not an encoder-only auxiliary term. Its overlap penalty discourages endpoints from sharing assignment mass rather than using cross-entropy to make one code serve both endpoints, the measured collapse mechanism. Unlike prior assignment-usage balancing, it acts on directed pairwise assignment structure and is checked for preserved marginal usage, sequence information, and downstream recall."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each row i, define p^s_ij = softmax_j(-||source_i - codebook_j||^2 / tau) and p^t_ij = softmax_j(-||target_i - codebook_j||^2 / tau). Let o_i = sum_j p^s_ij p^t_ij and h_i = -sum_j p^t_ij log(p^t_ij + eps). Define L = w * mean_i[(o_i + alpha * h_i) - rho * (sum_j p^s_ij log(p^t_ij + eps))]. The ordered source-to-target cross-entropy term makes the loss change when endpoints are exchanged; overlap discourages sharing codes, and target entropy discourages a one-code target assignment.",
+  "expected_failure_modes": [
+    "The soft-assignment objective may improve soft diversity without changing hard assignments, or its entropy and cross-entropy terms may distort marginal usage and sequence information. Excessive target entropy can flatten assignments and reduce the transition information the recommender needs; low temperature can make gradients ineffective near saturated assignments."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if exchanging source and target leaves the measured loss unchanged, any declared gradient is zero or non-finite, or the exported SIDs fail to raise pair-level ER while satisfying the control-relative occupancy, prefix-branch, frequency-drift, and sequence-information requirements. Downstream recall@10 must exceed the archived control.",
+    "This is an assignment-distribution objective with direct codebook gradients, not an encoder-only auxiliary term. Its overlap penalty discourages endpoints from sharing assignment mass rather than using cross-entropy to make one code serve both endpoints, the measured collapse mechanism. Unlike prior assignment-usage balancing, it acts on directed pairwise assignment structure and is checked for preserved marginal usage, sequence information, and downstream recall."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_soft_assignment_branch_preservation",
+  "parameters": {
+    "directed_cross_entropy_weight": 0.2,
+    "epsilon": 1e-08,
+    "target_entropy_weight": 0.1,
+    "temperature": 0.5,
+    "weight": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T15:28:02.591332+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "0176a030f8b0570a4b1e2104c4bd2a9525f4c3a60ae51e5052ba911d113ba582"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "alpha": "Weight on target-assignment entropy.",
+    "eps": "Positive numerical stabilizer inside the logarithm.",
+    "h_i": "Entropy of the target soft assignment.",
+    "i": "Batch-row index.",
+    "j": "Codebook-entry index.",
+    "mask_i": "Validity indicator for row i; only rows with mask_i = 1 contribute.",
+    "o_i": "Soft overlap between source and target assignments.",
+    "p^s_ij": "Soft assignment probability of source_i to codebook entry j.",
+    "p^t_ij": "Soft assignment probability of target_i to codebook entry j.",
+    "rho": "Weight on the directed source-to-target cross-entropy term.",
+    "tau": "Positive soft-assignment temperature.",
+    "w": "Weight composing this mechanism with the host objective."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Preserve directed assignment diversity with a soft transition overlap penalty",
+  "version": "1.0.0"
+}

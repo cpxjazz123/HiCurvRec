@@ -1,0 +1,146 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.0001
+  },
+  "differentiation": {
+    "occupancy_preservation": "Gradients pass through the soft source and target assignment probabilities into codebook distances. The objective matches a directed transition distribution to the source distribution and imposes a target-entropy floor; it contains no term that attracts source- and target-selected codeword vectors to one another. The entropy barrier resists a transition distribution supported by a single target code. Softmax temperatures keep gradients finite.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "It reaches the codebook directly, unlike the mechanisms whose encoder gradients were overwritten. It is not a pairwise attraction objective: the directed KL is over assignment probabilities, not a loss that makes both endpoints share a codeword, and target entropy explicitly penalizes single-code concentration. It differs from usage_balance by preserving an ordered transition distribution rather than merely balancing marginal usage; whether that retains sequence information is tested by the frozen evaluation."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, define p_i(c) = softmax_c(-||source_i-codebook_c||^2/tau) and r_i(c) = softmax_c(-||target_i-codebook_c||^2/tau). Let h_i(c) = softmax_c((log p_i(c) + beta * log r_i(c))/T). Define L_i = KL(stopgrad(p_i) || h_i) + gamma * max(0, b_min - H(r_i))^2. Minimize the masked mean of L_i. The source-to-target ordering is asymmetric because p_i is the reference and r_i enters the directed transition distribution; the entropy barrier discourages target assignments from collapsing onto too few codewords.",
+  "expected_failure_modes": [
+    "The directed distribution-matching term may preserve source assignment statistics rather than improve useful next-item predictability, and the entropy floor can make assignments diffuse. This can preserve occupancy while reducing sequence information or weakening hard SID transitions; the hard export may not reflect the smooth distributions optimized during training."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if exported level-0 Gini rises, prefix branches per code fall, frequency drift grows, sequence information excess falls, or pair-level ER fails to rise. In particular, a healthy soft entropy value with worse exported sequence information falsifies the assumption that this soft transition objective preserves useful hard-code structure.",
+    "It reaches the codebook directly, unlike the mechanisms whose encoder gradients were overwritten. It is not a pairwise attraction objective: the directed KL is over assignment probabilities, not a loss that makes both endpoints share a codeword, and target entropy explicitly penalizes single-code concentration. It differs from usage_balance by preserving an ordered transition distribution rather than merely balancing marginal usage; whether that retains sequence information is tested by the frozen evaluation."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_soft_assignment_branch_preservation",
+  "parameters": {
+    "entropy_weight": 0.01,
+    "minimum_target_entropy": 1.0,
+    "temperature": 0.2,
+    "transition_target_weight": 1.0,
+    "transition_temperature": 0.5,
+    "weight": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T15:06:03.042597+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "b50b14f5dc7d62ead59d12095bf0cbec19d22ef2988124758b7f15876f9165d7"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "H(r_i)": "Entropy of the target soft assignment distribution.",
+    "KL": "Kullback-Leibler divergence.",
+    "T": "Positive temperature for the transition distribution.",
+    "b_min": "Minimum desired target-assignment entropy per row.",
+    "beta": "Weight of target evidence in the directed transition distribution.",
+    "c": "Codeword index.",
+    "codebook_c": "Codeword c.",
+    "gamma": "Weight of the target-assignment entropy barrier.",
+    "h_i(c)": "Directed soft transition assignment distribution formed from source and target probabilities.",
+    "i": "Batch-row index.",
+    "mask_i": "Validity indicator for batch row i.",
+    "p_i(c)": "Soft source assignment probability for row i.",
+    "r_i(c)": "Soft target assignment probability for row i.",
+    "source_i": "Source representation for row i.",
+    "stopgrad": "Operator that treats its argument as constant for gradient computation.",
+    "target_i": "Target representation for row i.",
+    "tau": "Positive temperature for source and target soft assignments."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft-assignment transition preservation with a prefix-branch barrier",
+  "version": "1.0.0"
+}

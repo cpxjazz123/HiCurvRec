@@ -1,0 +1,138 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "Only the selected target codeword receives gradient from the residual-fit term, which moves it to represent the target's behaviour-conditioned residual relative to the source. The selected source-target pair also receives an explicit hinge repulsion below delta. The residual-fit term does not optimize the two codewords' mutual distance; the only term acting on that distance pushes them apart below the threshold. Rows assigned to the same codeword cannot be separated by this indexed-pair barrier and are a known limitation.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert terms, the residual-fit gradient is applied directly to selected codebook entries. Unlike the collapsed pairwise mechanism, it does not pull both endpoint codewords toward a shared target or minimize their distance: it fits a directed target residual and includes a hinge that repels distinct selected endpoint codewords when too close. It differs in kind from direct codebook geometry and soft assignment structure because its fit target is the behaviour-conditioned residual at the target endpoint."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||_2^2 and b_i = argmin_c ||target_i - codebook_c||_2^2. Let e_i = target_i - source_i and v_i = target_i - codebook[b_i]. Define L = w * mean_i mask_i * (||v_i - stopgrad(e_i)||_2^2 / (||stopgrad(e_i)||_2^2 + eps) + lambda * max(0, delta - ||codebook[a_i] - codebook[b_i]||_2)^2).",
+  "expected_failure_modes": [
+    "The target residual can be poorly conditioned when behaviour displacements are small, and a single target codeword may be pulled by many heterogeneous transitions. Hard nearest-codeword indexing limits which entries receive signal, while same-code assignments evade the separation barrier. Even a well-conditioned residual fit could worsen code usage, prefix branching, train-to-test frequency drift, sequence information, or downstream recall."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "zero",
+    "target": "zero"
+  },
+  "hypotheses": [
+    "A non-finite or absent codebook gradient, source-target swap invariance, or any failure at the frozen probe to preserve the required level-0 usage concentration, L1-to-L2 branch count, frequency drift, and sequence information while raising pair-level ER falsifies this candidate.",
+    "Unlike the inert terms, the residual-fit gradient is applied directly to selected codebook entries. Unlike the collapsed pairwise mechanism, it does not pull both endpoint codewords toward a shared target or minimize their distance: it fits a directed target residual and includes a hinge that repels distinct selected endpoint codewords when too close. It differs in kind from direct codebook geometry and soft assignment structure because its fit target is the behaviour-conditioned residual at the target endpoint."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_residual_transport_with_separation",
+  "parameters": {
+    "delta": 0.1,
+    "eps": 1e-08,
+    "lambda": 1.0,
+    "w": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T16:18:11.476934+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "95d4925320d81c5c9839b6415f194d52117babe1a6a8c232262cd2940ef67eb8"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codeword index to source_i; the index selection is nondifferentiable.",
+    "b_i": "Nearest codeword index to target_i; the index selection is nondifferentiable.",
+    "codebook_c": "Codeword c in the supplied codebook.",
+    "delta": "Minimum permitted distance between selected source and target codewords.",
+    "e_i": "Directed behaviour-conditioned residual, target_i minus source_i.",
+    "eps": "Positive numerical stabilizer.",
+    "lambda": "Weight of the selected-pair minimum-separation barrier.",
+    "mask_i": "Validity indicator for transition row i.",
+    "source_i": "Source representation for transition row i.",
+    "target_i": "Target representation for transition row i.",
+    "v_i": "Residual of target_i relative to its selected codeword.",
+    "w": "Overall loss weight."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Behaviour-conditioned residual transport with a non-collapse constraint",
+  "version": "1.0.0"
+}

@@ -1,0 +1,145 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.0001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The projection term updates the two selected codewords with opposite signed forces along the ordered displacement direction; its positive margin discourages zero separation rather than rewarding pairwise convergence. The usage-floor term pushes source-assigned probability mass away from overused cells and toward underused cells. It does not impose an attractive pairwise codeword-distance term. Hard nearest-code indices are nondifferentiable and are held fixed for the local loss gradient; all differentiable paths remain finite through epsilon and softmax temperature.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only terms, this has an explicit differentiable codebook path, so its intended update survives the host's gradient overwrite. Unlike pairwise cross-entropy collapse, it has no shared-code attraction: it requires positive ordered displacement projection and adds an underuse barrier, so it penalizes coincident assigned codewords when the required margin is unmet. The usage barrier is specifically intended to guard against the concentration observed in residual_target and usage_balance, though that protection remains an empirical hypothesis."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i = argmin_c ||source_i - codebook_c||^2 and b_i = argmin_c ||target_i - codebook_c||^2. Define d_i = codebook[b_i] - codebook[a_i], u_i = target_i - source_i, and L_i = (d_i\u00b7u_i - m)^2 / (||d_i||^2 + eps) + lambda * max(0, p_min - q[a_i])^2, where q[c] is the soft batch usage of code c computed from source-to-codebook squared distances with temperature tau. Minimize the masked mean of L_i. The ordered source-to-target displacement alignment is directional; the usage barrier penalizes source assignments to underused codes relative to a uniform floor.",
+  "expected_failure_modes": [
+    "The representation displacement may be a poor proxy for behaviour, and the normalized projection can reward a codeword displacement direction that does not preserve useful sequence information. Batch-local soft usage may also be noisy or conflict with naturally nonuniform item frequencies. The frozen evaluation may therefore show improved pair-level separation but worse sequence information, prefix branching, or downstream recall."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if the cold run's exported level-0 usage Gini exceeds control, L1-to-L2 branches per code fall below control, train-to-test frequency drift grows, sequence information excess falls below control, or pair-level ER does not rise; any of these is a direct failure of the stated joint requirement.",
+    "Unlike the inert encoder-only terms, this has an explicit differentiable codebook path, so its intended update survives the host's gradient overwrite. Unlike pairwise cross-entropy collapse, it has no shared-code attraction: it requires positive ordered displacement projection and adds an underuse barrier, so it penalizes coincident assigned codewords when the required margin is unmet. The usage barrier is specifically intended to guard against the concentration observed in residual_target and usage_balance, though that protection remains an empirical hypothesis."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codeword_repulsion_with_usage_anchor",
+  "parameters": {
+    "epsilon": 1e-06,
+    "margin": 0.02,
+    "temperature": 0.2,
+    "usage_floor": 0.5,
+    "usage_weight": 0.01,
+    "weight": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T15:06:03.040499+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "4501b7c5e83fd55175db7a6eb17f5d46cab6d2896963e3a0b9063afad9ff90cf"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codeword index to source_i; treated as a fixed hard index for this loss evaluation.",
+    "b_i": "Nearest codeword index to target_i; treated as a fixed hard index for this loss evaluation.",
+    "codebook_c": "Codeword c.",
+    "d_i": "Ordered difference between the target-assigned and source-assigned codewords.",
+    "eps": "Positive numerical stabilizer in the normalized projection term.",
+    "i": "Batch-row index.",
+    "lambda": "Weight of the usage-floor penalty.",
+    "m": "Minimum desired projection of the ordered codeword displacement onto the behaviour displacement.",
+    "mask_i": "Validity indicator for batch row i.",
+    "p_floor": "Minimum total probability mass scale used to set the per-code usage floor.",
+    "p_min": "Uniform-usage floor, equal to p_floor divided by the number of codewords.",
+    "q[c]": "Differentiable soft source-assignment frequency of code c over valid batch rows.",
+    "source_i": "Source representation for row i.",
+    "target_i": "Target representation for row i.",
+    "tau": "Positive temperature for the soft source-to-codebook assignments.",
+    "u_i": "Ordered target-minus-source representation displacement."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed codeword repulsion with a control-anchored usage barrier",
+  "version": "1.0.0"
+}

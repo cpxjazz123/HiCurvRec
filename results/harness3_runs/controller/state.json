@@ -1,0 +1,71 @@
+{
+  "audit_cursor": 0,
+  "created_utc": "2026-10-21T14:58:50.487487+00:00",
+  "evidence_summary": {
+    "arms_clearing_the_er_gate": 5,
+    "arms_improving_both_stage3_metrics": 0,
+    "arms_with_both_metrics": 6,
+    "gap": "the frozen ER gate is cleared by arms whose Stage-3 quality does not move: the transfer from the pair-level ER to the recommender is the open problem"
+  },
+  "jobs": {},
+  "next_action": "screening 3 candidates with the independent checks, the active probe and the export sensitivity",
+  "pause_reason": null,
+  "phase": "screen",
+  "portfolio": [
+    {
+      "codebook_interaction": "The source-assignment attraction moves selected source codewords toward source representations. When the selected endpoint codewords are closer than margin, the hinge-distance term pushes them apart, not together. The target assignment is used only to select the second codeword and is stop-gradient; ties are resolved deterministically. If both endpoints select the same codeword, the distance hinge has zero derivative at exactly zero, so this candidate does not guarantee escape from an already merged assignment and must be rejected at the probe if codebook gradients are non-finite or the probe shows no assignment/geometry response.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "At the directedness probe, exchanging source and target leaves the loss unchanged, or the measured codebook gradient is zero/non-finite; at export, the ER does not rise or any required structure metric violates its control threshold.",
+      "mechanism_id": "directed_margin_preserving_codebook_geometry",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_008/directed_margin_preserving_codebook_geometry/proposal.json",
+      "proposal_sha256": "8a664e9d0acf14da7d959f1891fb45c1cbea0c026e7811e9ceb40547e9779c0b",
+      "risk": "The selected-codeword attraction may distort the codebook or increase usage concentration, while the separation barrier may be inactive for most rows or unable to undo an already shared assignment. Even with healthy codeword distances, the changed partition may reduce prefix branches, sequence information, or downstream recall. The frozen probe must reject it unless the measured usage concentration, branch count, frequency drift, sequence information, and pair-level ER all meet their specified constraints.",
+      "semantic_key": "74b382a1049f4e8a81a393418463d491f98178962fa60a6af85e6f6147192fc2",
+      "status": "proposed"
+    },
+    {
+      "codebook_interaction": "Gradients flow through source soft-assignment probabilities into codebook vectors. The source-usage squared penalty discourages concentration, while the conditional-entropy floor discourages collapsing transition alternatives. Target probabilities are detached, so target-side codebook vectors receive no gradient through q. No term attracts the two endpoint codewords; the objective acts on source usage and the directed assignment distribution rather than minimizing endpoint distance.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "The swapped-input probe does not change the loss, the codebook gradient is zero/non-finite, or the frozen hard export fails to raise ER while preserving usage Gini, L1-to-L2 branches per code, train-to-test frequency drift, and sequence information at their required thresholds.",
+      "mechanism_id": "directed_capacity_constrained_assignment_partition",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_008/directed_capacity_constrained_assignment_partition/proposal.json",
+      "proposal_sha256": "680d11dd27179c07410a81aff8eae6656b20dc709123936f029ce582cad44d29",
+      "risk": "The entropy floor may reward diffuse, poorly calibrated assignments instead of a useful discrete partition, and the batch estimates may not reflect held-out transition structure. A high temperature can preserve apparent entropy while leaving hard assignments unchanged; a low temperature can make gradients ineffective. This candidate can therefore fail the ER objective or lose hard prefix information despite satisfying soft penalties. It must be probed and admitted only if hard-export structure and drift checks pass.",
+      "semantic_key": "b366222c85aaec63506cc2a549f489bf8ec3f99cc0651b18fb7ffb97e5d89d1f",
+      "status": "proposed"
+    },
+    {
+      "codebook_interaction": "With assignments detached, the residual transport term differentiates directly through both selected codebook vectors: it moves the source codeword and target codeword according to their respective residual errors. The separation hinge, when active, applies a repulsive gradient to the selected endpoint codewords. The transport term itself can move both codewords in correlated directions, so it is not intrinsically guaranteed to prevent convergence; the explicit barrier only prevents convergence when the selected pair is distinct and below margin. Rows with a shared codeword cannot be separated by the zero-distance hinge and must be rejected if the probe indicates such collapse.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "The directedness check finds no loss change after swapping source and target, the codebook gradient is zero/non-finite, or the exported hard SIDs fail to improve pair-level ER while satisfying the required usage, branch, drift, and sequence-information constraints.",
+      "mechanism_id": "directed_residual_transport_with_separation",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_008/directed_residual_transport_with_separation/proposal.json",
+      "proposal_sha256": "3d0e932c400337a717df1c2d6e3e4d6213ba5910012ca58336ef6a74319b96fe",
+      "risk": "Residual transport may align residuals by shifting codewords in ways that narrow the L1-to-L2 prefix tree, increase frequency drift, or concentrate level-0 usage. The separation barrier may not activate for most transitions and cannot reliably escape a shared-code assignment. Its transport coefficient may also be poorly matched to the actual residual relationship. Admission therefore depends on the single frozen probe's hard-export measurements, not on a favorable loss value.",
+      "semantic_key": "c3007ac90336d951f62a5a8f81e0a4256dabada244ae1f0bffffc86df0de02ee",
+      "status": "proposed"
+    }
+  ],
+  "queue": [],
+  "round": 8,
+  "round_summary": {
+    "directed_codeword_tangent_geometry": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_residual_transport": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_soft_assignment_information": {
+      "er": 16.35477582846004,
+      "qualified": false,
+      "stage3": {}
+    }
+  },
+  "scientific_stop": false,
+  "updated_utc": "2026-10-21T18:47:12.896920+00:00",
+  "version": 1
+}
