@@ -1,0 +1,74 @@
+{
+  "tree": "stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",
+  "mechanism_module": "mechanism_behavior_directed_code_assignment_cross_entropy",
+  "sample_items": 512,
+  "seed": 42,
+  "host_objective": {
+    "after_backward": {
+      "encoder": 0.012910659424960613,
+      "rq_codebook_0": 0.0349208302795887,
+      "rq_codebook_1": 0.03062567673623562,
+      "rq_codebook_2": 0.03961525112390518,
+      "decoder": 0.0005364748067222536
+    },
+    "after_host_assembly": {
+      "encoder": 0.008920525200664997,
+      "rq_codebook_0": 0.0349208302795887,
+      "rq_codebook_1": 0.03062567673623562,
+      "rq_codebook_2": 0.03961525112390518,
+      "decoder": 0.0005364748067222536
+    },
+    "after_clipping": {
+      "encoder": 0.008920525200664997,
+      "rq_codebook_0": 0.0349208302795887,
+      "rq_codebook_1": 0.03062567673623562,
+      "rq_codebook_2": 0.03961525112390518,
+      "decoder": 0.0005364748067222536
+    },
+    "after_optimizer_step": {
+      "encoder": 0.0010000094771385193,
+      "rq_codebook_0": 0.0010002851486206055,
+      "rq_codebook_1": 0.0010002851486206055,
+      "rq_codebook_2": 0.0010002851486206055,
+      "decoder": 0.0010000020265579224
+    },
+    "mechanism_value": null
+  },
+  "host_assembly_overwrites_encoder": true,
+  "mechanism_contribution": {
+    "by_stage": {
+      "after_backward": {
+        "encoder": 0.027392168529331684,
+        "rq_codebook_0": 0.029610011726617813,
+        "rq_codebook_1": 0.0,
+        "rq_codebook_2": 0.0,
+        "decoder": 0.0
+      },
+      "after_host_assembly": {
+        "encoder": 0.0,
+        "rq_codebook_0": 0.029610011726617813,
+        "rq_codebook_1": 0.0,
+        "rq_codebook_2": 0.0,
+        "decoder": 0.0
+      },
+      "after_clipping": {
+        "encoder": 0.0,
+        "rq_codebook_0": 0.029610011726617813,
+        "rq_codebook_1": 0.0,
+        "rq_codebook_2": 0.0,
+        "decoder": 0.0
+      }
+    },
+    "after_optimizer_step": {
+      "encoder": 0.0,
+      "rq_codebook_0": 0.0,
+      "rq_codebook_1": 0.0,
+      "rq_codebook_2": 0.0,
+      "decoder": 0.0
+    },
+    "delivered_to_encoder": false,
+    "delivered_to_codebooks": {
+      "rq_codebook_0": 0.029610011726617813
+    }
+  }
+}

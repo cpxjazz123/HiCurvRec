@@ -307,6 +307,14 @@ def ingest_campaign(
         if sid_dir and sid_dir.is_dir():
             artifacts.extend(sorted(path for path in sid_dir.iterdir() if path.is_file()))
         metrics = _training_metrics(tree)
+        if sid_path is None or not sid_path.is_file():
+            # The tree may hold the metrics of an EARLIER run of the same tree. Without an
+            # export of this arm there was no run, so the epochs are not reported at all.
+            metrics.pop("epochs", None)
+            metrics.pop("metric_records", None)
+            metrics["trained"] = False
+        else:
+            metrics["trained"] = True
         if sid_path is not None and sid_path.is_file():
             metrics["frozen_evaluation"] = _frozen_er(sid_path)
             if arm["kind"] == "control":

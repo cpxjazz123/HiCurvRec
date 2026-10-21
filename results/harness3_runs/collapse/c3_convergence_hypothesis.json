@@ -1,0 +1,14 @@
+{
+  "experiment": "C3",
+  "control": {
+    "mean_codeword_distance_for_a_transition": 0.27317294478416443,
+    "median_codeword_distance_for_a_transition": 0.28409984707832336,
+    "fraction_below_a_tenth_of_the_control_mean": 0.07840000092983246
+  },
+  "arm": {
+    "mean_codeword_distance_for_a_transition": 0.06444099545478821,
+    "median_codeword_distance_for_a_transition": 0.0,
+    "fraction_below_a_tenth_of_the_control_mean": 0.7720000147819519
+  },
+  "verdict": "E2' is supported: the collapsed arm's transition pairs share their level-0 code far more often and their two codewords sit closer together than the control's, which is what a cross-entropy that asks one code to serve both endpoints predicts"
+}
