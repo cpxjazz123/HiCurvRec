@@ -1,0 +1,131 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codeword_margin_geometry",
+      "title": "Directed codebook geometry with a non-collapse margin",
+      "equation": "L = lambda * mean_{i: m_i=1} softplus((delta + d(z_i, c_{a_i}) - d(z_i, c_{b_i})) / tau), where z_i = (source_i + target_i)/2, a_i = argmin_j ||source_i - c_j||^2, b_i = argmin_j ||target_i - c_j||^2, and d(x,c)=||x-c||^2.",
+      "symbols": {
+        "L": "Auxiliary loss.",
+        "lambda": "Weight composing this loss with the host objective.",
+        "m_i": "Validity mask for pair i.",
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "z_i": "Midpoint of the source and target representations.",
+        "c_j": "Codebook vector j.",
+        "a_i": "Hard nearest-code index for source_i, treated as a fixed index during differentiation.",
+        "b_i": "Hard nearest-code index for target_i, treated as a fixed index during differentiation.",
+        "d(x,c)": "Squared Euclidean distance between x and c.",
+        "delta": "Positive minimum distance-difference margin.",
+        "tau": "Positive softplus temperature."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "delta": 0.1,
+        "tau": 0.5
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The supplied source-to-target transition direction, represented by the ordered pair (source_i, target_i); the mask selects valid transitions.",
+      "codebook_interaction": "For each valid pair, the loss compares the midpoint's distances to the two endpoint-assigned codewords and pushes their distance difference toward the positive margin. The endpoint assignments are hard indices and are held fixed for differentiation. This does not minimize the distance between the two codewords: the codebook gradient acts through their distinct distances to the midpoint, while delta requires a nonzero distance difference rather than convergence. If the margin is already met, the pair contributes only a small softplus tail.",
+      "encoder_interaction": "The expression also differentiates through the midpoint, producing nonzero source and target gradients. The host discards this auxiliary encoder-gradient contribution; the intended surviving effect is the direct codebook gradient.",
+      "risk": "The midpoint-distance ordering may be poorly aligned with recommendation utility, and fixed hard assignments make the signal piecewise and sparse. The codebook may satisfy the margin by moving codewords in a way that harms other items or creates unstable assignment boundaries; the small weight limits but does not eliminate that risk.",
+      "falsifier": "On the checker, exchanging source and target must change the loss and all declared gradients must be finite. After the single cold run, a nonzero codebook update with no improvement in the frozen Stage-3 recall@10 and NDCG@10 versus control falsifies the proposed useful-geometry mechanism; a decrease in transition-pair codeword separation or severe occupancy collapse falsifies its non-convergence rationale.",
+      "why_not_the_measured_failures": "Unlike the inert margin and curvature-transport arms, this loss differentiates directly through codebook vectors, so it does not rely on an encoder-only gradient that the host overwrites. Unlike pairwise code-assignment cross-entropy, it never rewards the two endpoints for sharing a code or minimizes their mutual distance; it imposes a positive distance-difference margin instead."
+    },
+    {
+      "id": "directed_assignment_usage_balance",
+      "title": "Directed assignment-structure balancing with endpoint separation",
+      "equation": "L = lambda * mean_{i: m_i=1} [softplus((rho - ||c_{a_i} - c_{b_i}||) / tau) + gamma * (p_{a_i} - u_{a_i})^2], where a_i = argmin_j ||source_i - c_j||^2, b_i = argmin_j ||target_i - c_j||^2, p_j = (n_j + epsilon)/(N + C*epsilon), n_j = sum_{i: m_i=1} 1[a_i=j], N = sum_{i: m_i=1} 1, and u_j = 1/C.",
+      "symbols": {
+        "L": "Auxiliary loss.",
+        "lambda": "Weight composing this loss with the host objective.",
+        "m_i": "Validity mask for pair i.",
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "c_j": "Codebook vector j.",
+        "a_i": "Hard nearest-code index for source_i, treated as a fixed index during differentiation.",
+        "b_i": "Hard nearest-code index for target_i, treated as a fixed index during differentiation.",
+        "rho": "Minimum desired Euclidean separation between the two endpoint-assigned codewords.",
+        "tau": "Positive softplus temperature for the separation penalty.",
+        "gamma": "Relative weight of the soft assignment-usage balance penalty.",
+        "p_j": "Smoothed fraction of valid source endpoints assigned to code j.",
+        "n_j": "Count of valid source endpoints assigned to code j.",
+        "N": "Number of valid pairs.",
+        "C": "Number of codebook vectors.",
+        "epsilon": "Positive smoothing constant for assignment frequencies.",
+        "u_j": "Uniform reference frequency, equal to 1/C."
+      },
+      "parameters": {
+        "lambda": 0.001,
+        "rho": 0.2,
+        "tau": 0.05,
+        "gamma": 0.1,
+        "epsilon": 0.001
+      },
+      "gradient_targets": {
+        "source": "zero",
+        "target": "zero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target endpoint assignments for valid transitions; source assignment frequencies provide the usage-structure signal, and both endpoint assignments define the transition separation signal.",
+      "codebook_interaction": "The separation term directly differentiates the distance between the two endpoint-assigned codewords and penalizes only distances below rho, pushing those codewords apart rather than together. The usage term is computed from hard source assignments held fixed for differentiation, so it has no gradient through the discrete counts; it affects the objective value but contributes no codebook force under this definition. Thus the guaranteed nonzero codebook path is the separation term, and it cannot pull a transition's two codewords together.",
+      "encoder_interaction": "The nearest-code assignments are hard and treated as fixed, and source/target do not otherwise appear differentiably, so the auxiliary gradients to both representations are zero. This is intentional: the term acts directly on the codebook, the path that survives host gradient assembly.",
+      "risk": "The separation penalty may repeatedly push apart frequently co-occurring codewords without improving useful item neighborhoods, and the hard usage-balance term is nondifferentiable with respect to codebook positions in this specified implementation. If few transitions fall below rho, the only gradient-bearing component may be sparse; if many do, it may distort the codebook globally.",
+      "falsifier": "The checker must observe finite nonzero codebook gradients, zero source/target gradients, and a loss change when source and target are exchanged. The proposal is falsified if a cold run shows reduced transition-pair separation or a collapsed occupancy pattern, or if Stage-3 recall@10 and NDCG@10 fail to improve over the archived control.",
+      "why_not_the_measured_failures": "This is not an encoder-only mechanism: its separation penalty differentiates directly into codebook entries, unlike the two measured inert arms. Its pairwise force has the opposite sign from the failed pairwise cross-entropy: below the explicit positive margin it pushes endpoint codewords apart, and it has no term that rewards assigning both endpoints to one code."
+    },
+    {
+      "id": "directed_behavior_residual_transport",
+      "title": "Directed behavior-conditioned residual transport to separated code anchors",
+      "equation": "L = lambda * mean_{i: m_i=1} ||(target_i - c_{b_i}) - R(source_i - c_{a_i})||^2 + eta * softplus((rho - ||c_{a_i} - c_{b_i}||) / tau), where a_i = argmin_j ||source_i - c_j||^2, b_i = argmin_j ||target_i - c_j||^2, and R is the fixed identity map.",
+      "symbols": {
+        "L": "Auxiliary loss.",
+        "lambda": "Weight composing the residual-transport loss with the host objective.",
+        "eta": "Weight of the codeword separation safeguard.",
+        "m_i": "Validity mask for pair i.",
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "c_j": "Codebook vector j.",
+        "a_i": "Hard nearest-code index for source_i, treated as a fixed index during differentiation.",
+        "b_i": "Hard nearest-code index for target_i, treated as a fixed index during differentiation.",
+        "R": "Fixed identity linear map on the representation space.",
+        "rho": "Minimum desired separation between the endpoint-assigned codewords.",
+        "tau": "Positive softplus temperature for the separation safeguard."
+      },
+      "parameters": {
+        "lambda": 0.0001,
+        "eta": 0.001,
+        "rho": 0.2,
+        "tau": 0.05
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target transition, expressed as transport of its source residual relative to the source-assigned codeword into the target residual relative to the target-assigned codeword.",
+      "codebook_interaction": "The transport residual differentiates into both assigned codewords, with the source codeword entering through the source residual and the target codeword through the target residual. The additional hinge-like softplus safeguard differentiates the endpoint codeword distance only when it is below rho and pushes the pair apart. The transport term alone has no guarantee against convergence, so the explicit separation safeguard is essential; its weight and threshold must be checked against actual pair-distance measurements.",
+      "encoder_interaction": "The transport residual gives nonzero gradients to source and target representations, but the host overwrites those auxiliary encoder gradients. The candidate therefore depends on its direct codebook gradients for any effect on exported SIDs; it does not claim that its encoder gradients survive.",
+      "risk": "Identity residual transport may be an incorrect model of behavior-conditioned dynamics, and its codebook gradients may still indirectly bring endpoint codewords together while fitting the residual relation. The separation safeguard only prevents that locally for pairs below rho and may trade off transport fit against codebook geometry. The small transport weight reduces but cannot remove the risk of harming downstream neighborhoods.",
+      "falsifier": "The checker must confirm that swapping source and target changes the loss and that all declared gradients are finite and nonzero. In the cold run, a fall in median transition-pair codeword separation, widespread pair distances below rho, or no improvement in frozen Stage-3 recall@10 and NDCG@10 versus control falsifies the mechanism or its anti-collapse safeguard.",
+      "why_not_the_measured_failures": "Unlike inert residual/geometry mechanisms whose useful gradient reached only the overwritten encoder path, this objective has a direct codebook route through both residual anchors and the separation safeguard. Unlike the collapsed assignment cross-entropy, it does not ask one codeword to serve both endpoints; it models ordered residual transport and explicitly penalizes endpoint codewords that approach closer than rho. The safeguard is necessary because the transport component by itself could still cause convergence."
+    }
+  ]
+}
+```

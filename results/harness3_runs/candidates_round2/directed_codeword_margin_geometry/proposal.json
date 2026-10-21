@@ -1,0 +1,137 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "For each valid pair, the loss compares the midpoint's distances to the two endpoint-assigned codewords and pushes their distance difference toward the positive margin. The endpoint assignments are hard indices and are held fixed for differentiation. This does not minimize the distance between the two codewords: the codebook gradient acts through their distinct distances to the midpoint, while delta requires a nonzero distance difference rather than convergence. If the margin is already met, the pair contributes only a small softplus tail.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert margin and curvature-transport arms, this loss differentiates directly through codebook vectors, so it does not rely on an encoder-only gradient that the host overwrites. Unlike pairwise code-assignment cross-entropy, it never rewards the two endpoints for sharing a code or minimizes their mutual distance; it imposes a positive distance-difference margin instead."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "L = lambda * mean_{i: m_i=1} softplus((delta + d(z_i, c_{a_i}) - d(z_i, c_{b_i})) / tau), where z_i = (source_i + target_i)/2, a_i = argmin_j ||source_i - c_j||^2, b_i = argmin_j ||target_i - c_j||^2, and d(x,c)=||x-c||^2.",
+  "expected_failure_modes": [
+    "The midpoint-distance ordering may be poorly aligned with recommendation utility, and fixed hard assignments make the signal piecewise and sparse. The codebook may satisfy the margin by moving codewords in a way that harms other items or creates unstable assignment boundaries; the small weight limits but does not eliminate that risk."
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "On the checker, exchanging source and target must change the loss and all declared gradients must be finite. After the single cold run, a nonzero codebook update with no improvement in the frozen Stage-3 recall@10 and NDCG@10 versus control falsifies the proposed useful-geometry mechanism; a decrease in transition-pair codeword separation or severe occupancy collapse falsifies its non-convergence rationale.",
+    "Unlike the inert margin and curvature-transport arms, this loss differentiates directly through codebook vectors, so it does not rely on an encoder-only gradient that the host overwrites. Unlike pairwise code-assignment cross-entropy, it never rewards the two endpoints for sharing a code or minimizes their mutual distance; it imposes a positive distance-difference margin instead."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codeword_margin_geometry",
+  "parameters": {
+    "delta": 0.1,
+    "lambda": 0.001,
+    "tau": 0.5
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T12:17:16.110432+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "77fb1cd1b28a652a42c7189f836d968bbf9dbe0ece95d136e45de8d50f0b3e65"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "L": "Auxiliary loss.",
+    "a_i": "Hard nearest-code index for source_i, treated as a fixed index during differentiation.",
+    "b_i": "Hard nearest-code index for target_i, treated as a fixed index during differentiation.",
+    "c_j": "Codebook vector j.",
+    "d(x,c)": "Squared Euclidean distance between x and c.",
+    "delta": "Positive minimum distance-difference margin.",
+    "lambda": "Weight composing this loss with the host objective.",
+    "m_i": "Validity mask for pair i.",
+    "source_i": "Source representation for pair i.",
+    "target_i": "Target representation for pair i.",
+    "tau": "Positive softplus temperature.",
+    "z_i": "Midpoint of the source and target representations."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed codebook geometry with a non-collapse margin",
+  "version": "1.0.0"
+}
