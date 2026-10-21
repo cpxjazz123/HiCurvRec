@@ -170,10 +170,17 @@ def run_comparison(
     seed: int = 4242,
 ) -> Dict[str, Any]:
     """The blind comparison: every task, every policy, the same model and the same budget."""
-    from . import opencode
+    from . import guardrails, opencode
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    for policy in policies:
+        # An archived policy is evidence, not something to run again (issue #106).
+        verdict = guardrails.check_intent(
+            guardrails.ExecutionIntent(kind="policy", policy=policy.name)
+        )
+        if not verdict.allowed:
+            raise guardrails.GuardrailRefusal(verdict.rule, verdict.detail)
     order = list(tasks)
     random.Random(seed).shuffle(order)
     rows: List[Dict[str, Any]] = []

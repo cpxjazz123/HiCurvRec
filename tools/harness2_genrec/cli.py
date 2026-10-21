@@ -437,6 +437,17 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def cmd_corrected_report(args: argparse.Namespace) -> int:
+    """The corrected per-arm report, computed from the existing evidence only."""
+    from .corrected_report import build
+    from .evidence import EvidenceStore
+
+    store = EvidenceStore(Path(args.store)).open()
+    report = build(store, Path(args.out))
+    print(f"corrected report: {report['rows']} rows -> {report['markdown']}")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.harness2_genrec.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -547,6 +558,13 @@ def _build_parser() -> argparse.ArgumentParser:
     run_cmd.add_argument("--no-cold", action="store_true", help="stop before the cold run")
     run_cmd.add_argument("--skip", default="", help="comma list of stages to skip")
     run_cmd.set_defaults(func=cmd_run)
+
+    corr = sub.add_parser(
+        "corrected-report", help="the corrected per-arm report, from the existing artifacts only"
+    )
+    corr.add_argument("--store", default="results/harness3_runs/store")
+    corr.add_argument("--out", default="results/harness3_runs/corrected")
+    corr.set_defaults(func=cmd_corrected_report)
 
     sweep = sub.add_parser("sweep", help="run the recursion over the task pool")
     sweep.add_argument("--k", type=int, default=1, help="task-level recursion budget")

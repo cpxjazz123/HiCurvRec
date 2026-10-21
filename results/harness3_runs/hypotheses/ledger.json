@@ -274,6 +274,85 @@
       "notes": "measured on the host's own code path: the encoder gradient difference is 1.66e-05 before the host's post-backward assembly and exactly 0.0 after it, so the two inert arms' training was bit-identical to the control's. A mechanism that wants to move the exported SIDs has to deliver its gradient to the codebook, which the host never overwrites",
       "observation": "two arms' trained models are byte-identical to the matched control's, although their mechanisms pass the independent gradient checks",
       "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-21",
+      "evidence_runs": [],
+      "experiments": [
+        {
+          "id": "C1",
+          "produced_runs": [],
+          "result": "the delivered codebook gradient scales exactly linearly with the mechanism's weight (0.01 -> 2.961e-02, 0.001 -> 2.961e-03, 0.0001 -> 2.961e-04) and the hard assignment's churn is ZERO at every weight, including the production one",
+          "status": "executed",
+          "tests": [
+            "E1"
+          ],
+          "verdict": "E1 is NOT supported: the gradient's magnitude scales, but it does not flip the assignment, so magnitude alone does not explain the collapse"
+        },
+        {
+          "id": "C2",
+          "produced_runs": [],
+          "result": "the collapsed arm's codewords moved AWAY from the items they own (level 0: 0.1415 -> 0.2721; level 1: 0.3263 -> 1.4494; level 2: 0.3603 -> 1.6936) while their mutual separation shrank (level 0: 0.3755 -> 0.1272)",
+          "status": "executed",
+          "tests": [
+            "E2"
+          ],
+          "verdict": "E2 is REFUTED: the collapse is not a shrinkage toward the items; the used codewords converged onto each other instead"
+        },
+        {
+          "id": "C3",
+          "produced_runs": [],
+          "result": "a transition's two level-0 codewords are 0.2732 apart in the control and 0.0644 apart in the collapsed arm (the MEDIAN is 0.0, i.e. the two endpoints share one codeword), and 77.2% of the collapsed arm's pairs sit below a tenth of the control's mean separation against the control's 7.8%",
+          "status": "executed",
+          "tests": [
+            "E2p"
+          ],
+          "verdict": "E2' is SUPPORTED: the mechanism's codebook gradient pulled the pair's codewords together until the cells merged, and that is the collapse"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "the churn is unchanged when the weight falls by two orders of magnitude",
+              "id": "P1",
+              "measurement": "C1: the mechanism on the host's own mini case at weights 0.01, 0.001 and 0.0001",
+              "statement": "the delivered gradient scales with the mechanism's weight and the hard assignment's churn scales with it too"
+            }
+          ],
+          "statement": "the collapse follows the magnitude of the delivered codebook gradient"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "they are not closer",
+              "id": "P1",
+              "measurement": "C2: the two archived checkpoints",
+              "statement": "the collapsed arm's codewords sit closer to the items they own than the control's"
+            }
+          ],
+          "statement": "the collapse is a geometry shrinkage: the codewords move toward the items they serve"
+        },
+        {
+          "id": "E2p",
+          "predictions": [
+            {
+              "falsifier": "the collapsed arm's transition-pair codeword distances are not smaller than the control's",
+              "id": "P1",
+              "measurement": "C3: the two archived checkpoints over the frozen held-out transitions",
+              "statement": "in the collapsed checkpoint a transition's two level-0 codewords are closer together than in the control, and the median distance collapses to zero"
+            }
+          ],
+          "statement": "the collapse is a pair-wise convergence: a cross-entropy that asks one code to serve both endpoints pulls the pair's two codewords together until the Voronoi cells merge"
+        }
+      ],
+      "id": "H106-01",
+      "next_experiment": "the candidate search: a mechanism that reaches the codebook without letting a pair's two codewords converge",
+      "notes": "the design constraint the next candidates must respect: the encoder path is discarded by the host's assembly, and the codebook path is what collapses the codebook when it pulls a transition's two codewords together",
+      "observation": "a mechanism that reached the codebook collapsed the level-0 codebook to two codes (Hard-L1 ER 1.478 against the control's 16.334), while two arms whose mechanisms reached only the encoder left the trained model bit-identical to the control's",
+      "status": "supported"
     }
   ],
   "ledger_sha256": null,

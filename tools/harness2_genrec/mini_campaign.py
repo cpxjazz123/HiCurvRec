@@ -360,7 +360,29 @@ def run_campaign(
         )
         return record
 
-    # 5. the cold run, through the launch path with the six gates
+    # 5. the guardrails: a prohibited execution is refused BEFORE a process is started
+    from . import guardrails
+
+    intent = guardrails.ExecutionIntent(
+        kind="stage2",
+        mechanism_id=mechanism_id,
+        seed=42,
+        policy="current",
+        tree=tree,
+    )
+    verdict = guardrails.check_intent(intent, store)
+    record["stages"]["guardrails"] = verdict.as_dict()
+    if not verdict.allowed:
+        record["status"] = "refused"
+        record["detail"] = f"the guardrails refused the run: [{verdict.rule}] {verdict.detail}"
+        record["admitted"] = False
+        record["cold_run_gpu_minutes"] = 0.0
+        (out_dir / "campaign.json").write_text(
+            json.dumps(record, indent=2, default=str) + "\n", encoding="utf-8"
+        )
+        return record
+
+    # 6. the cold run, through the launch path with the six gates
     parameters = {str(k): float(v) for k, v in (frozen.get("parameters") or {}).items()
                   if isinstance(v, (int, float))}
     weight = float((frozen.get("activation") or {}).get("weight", 0.05))
