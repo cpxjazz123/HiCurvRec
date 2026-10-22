@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-21T11:05:40.094956+00:00",
+  "generated_utc": "2026-10-22T00:30:25.337631+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -277,9 +277,11 @@
     },
     {
       "created_utc": "2026-10-21",
+      "evidence_paths": [],
       "evidence_runs": [],
       "experiments": [
         {
+          "control_run": null,
           "id": "C1",
           "produced_runs": [],
           "result": "the delivered codebook gradient scales exactly linearly with the mechanism's weight (0.01 -> 2.961e-02, 0.001 -> 2.961e-03, 0.0001 -> 2.961e-04) and the hard assignment's churn is ZERO at every weight, including the production one",
@@ -287,9 +289,11 @@
           "tests": [
             "E1"
           ],
+          "treatment_runs": [],
           "verdict": "E1 is NOT supported: the gradient's magnitude scales, but it does not flip the assignment, so magnitude alone does not explain the collapse"
         },
         {
+          "control_run": null,
           "id": "C2",
           "produced_runs": [],
           "result": "the collapsed arm's codewords moved AWAY from the items they own (level 0: 0.1415 -> 0.2721; level 1: 0.3263 -> 1.4494; level 2: 0.3603 -> 1.6936) while their mutual separation shrank (level 0: 0.3755 -> 0.1272)",
@@ -297,9 +301,11 @@
           "tests": [
             "E2"
           ],
+          "treatment_runs": [],
           "verdict": "E2 is REFUTED: the collapse is not a shrinkage toward the items; the used codewords converged onto each other instead"
         },
         {
+          "control_run": null,
           "id": "C3",
           "produced_runs": [],
           "result": "a transition's two level-0 codewords are 0.2732 apart in the control and 0.0644 apart in the collapsed arm (the MEDIAN is 0.0, i.e. the two endpoints share one codeword), and 77.2% of the collapsed arm's pairs sit below a tenth of the control's mean separation against the control's 7.8%",
@@ -307,6 +313,7 @@
           "tests": [
             "E2p"
           ],
+          "treatment_runs": [],
           "verdict": "E2' is SUPPORTED: the mechanism's codebook gradient pulled the pair's codewords together until the cells merged, and that is the collapse"
         }
       ],
@@ -356,12 +363,14 @@
     },
     {
       "created_utc": "2026-10-21",
+      "evidence_paths": [],
       "evidence_runs": [
         "stage2-directed_codeword_margin_geometry-20261021T143327",
         "stage2-directed_assignment_usage_balance-20261021T143329"
       ],
       "experiments": [
         {
+          "control_run": null,
           "id": "X1",
           "produced_runs": [],
           "result": "directed_codeword_margin_geometry: train-side discrimination 26.04 against the control's 25.32, the level-0 occupancy ratio 1.004, ER 16.5918 above the gate, and Stage-3 recall@10 0.063737 -- BELOW the archived control's 0.064068; directed_assignment_usage_balance: train-side 26.07, occupancy ratio 0.963, ER 16.6516 (the best of the window) and Stage-3 recall@10 0.062414 -- further BELOW the control",
@@ -369,6 +378,7 @@
           "tests": [
             "E1"
           ],
+          "treatment_runs": [],
           "verdict": "E1 is REFUTED: a healthy export, a better train-side discrimination and an above-gate ER still do not buy downstream quality. The arm with the best ER of the window has the worst downstream result of the two"
         }
       ],
@@ -394,6 +404,7 @@
     },
     {
       "created_utc": "2026-10-21",
+      "evidence_paths": [],
       "evidence_runs": [],
       "experiments": [],
       "explanations": [
@@ -415,8 +426,52 @@
       "notes": "the arms measured so far line up with the prediction: the Gini increase and the Stage-3 delta go together. No arm has yet raised the ER without concentrating the codes, which is the next thing to try",
       "observation": "the arms that raise the pair-level Hard-L1 ER raise it by CONCENTRATING the level-0 codes, and the concentration is what the recommender loses: the arm with the best ER of the campaign (17.1349, +0.80 over the control) has a level-0 Gini of 0.313 against the control's 0.216 and 62.5 prefix branches against 65.9, and its Stage-3 recall@10 is 0.061039, the worst measured; the arm with the healthiest structure (Gini 0.194, 79.6 branches, the most sequence information) has an ER of 14.6336, far below the control",
       "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-22T00:30:25.337621+00:00",
+      "evidence_paths": [
+        "tools/harness2_genrec/probe_fidelity.py",
+        "results/harness3_runs/probe_fidelity.json"
+      ],
+      "evidence_runs": [],
+      "experiments": [
+        {
+          "control_run": null,
+          "id": "X1",
+          "produced_runs": [
+            "results/harness3_runs/probe_fidelity.json"
+          ],
+          "result": "Spearman 0.38 (Gini), 0.47 (codes in use), 0.51 (ER) over 19 arms; the probe's absolute Gini band (0.41-0.63) does not overlap the cold run's (0.18-0.40)",
+          "status": "completed",
+          "tests": [
+            "does the probe export's paired level-0 Gini predict the cold run's?",
+            "does the probe export's paired enrichment ratio predict the cold run's ER?"
+          ],
+          "treatment_runs": [],
+          "verdict": "the probe is a diagnostic, not a gate: the screening phase must not refuse a candidate on the probe's balance or its enrichment ratio"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "a rank correlation above 0.8 between the probe's paired balance and the cold run's paired balance",
+              "id": "P1",
+              "measurement": "tools/harness2_genrec/probe_fidelity.py over every arm with both exports",
+              "statement": "the probe's absolute level-0 Gini sits in a band of its own, well above the cold run's, and its paired difference from the probe's baseline does not order the arms the way the cold run does"
+            }
+          ],
+          "statement": "a short export is a different partition, not a noisy version of the cold run's: the probe's codebook is still close to its initialisation, so its cells are uneven in a way the long run's are not"
+        }
+      ],
+      "id": "H107-04",
+      "next_experiment": "measure the balance and the enrichment ratio on the cold run's export only, and rank the portfolio by the transfer analysis's requirements rather than by a screening proxy",
+      "notes": "this closes a line the system was about to take: a cheap screening gate on the level-0 Gini would have refused arms whose cold runs were fine and passed arms whose cold runs concentrated the codes",
+      "observation": "the screening phase's short probe cannot stand in for the cold run. Across the 19 arms that have both a probe export and a cold export, the probe's paired balance predicts the cold run's balance only weakly (Spearman 0.38 for the level-0 Gini, 0.47 for the number of level-0 codes in use) and the probe's paired enrichment ratio predicts the cold run's ER only weakly (0.51). Gating on that ratio would have wrongly refused an arm whose cold run cleared the gate: directed_assignment_prefix_information has a probe ratio of 0.93 and a cold-run ER of 16.95 against the gate's 16.39.",
+      "status": "supported"
     }
   ],
-  "ledger_sha256": null,
+  "ledger_sha256": "ea372c46ab5719c8222525220420bb30537f15370f754f7109006f7f809f961b",
   "ledger_version": 1
 }

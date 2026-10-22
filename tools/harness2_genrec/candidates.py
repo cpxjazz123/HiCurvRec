@@ -120,6 +120,18 @@ them. You do not write code and you do not run anything.
 
 {CONSTRAINTS}
 
+# THE SHORT PROBE IS NOT A GATE, MEASURED
+
+The screening phase runs every candidate for a bounded number of steps and reads the export
+it produces. That export does NOT predict the cold run's: over the 19 arms that have both,
+the probe's paired level-0 Gini predicts the cold run's with a rank correlation of 0.38, the
+number of level-0 codes in use with 0.47, and the paired enrichment ratio with the cold
+run's ER with 0.51. Gating on the probe's enrichment ratio would have wrongly refused an arm
+whose cold run cleared the gate (directed_assignment_prefix_information: probe ratio 0.93,
+cold-run ER 16.95 against the gate's 16.39). So the probe is a diagnostic and not a
+screening gate, and a candidate must not be refused for what its short export looks like.
+The measurement is reproducible: tools/harness2_genrec/probe_fidelity.py.
+
 # THE PATHS THAT SURVIVE THE HOST, MEASURED
 
 The host overwrites the ENCODER gradient after the backward, and the decoder's gradient only
