@@ -1,0 +1,129 @@
+{
+  "mechanism_id": "r8_control",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "control-r8_control-20261021T143221"
+  ],
+  "official_cold_run": {
+    "status": "unknown",
+    "gpu_minutes": null,
+    "wall_clock_s": null
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": null,
+    "detail": null,
+    "failed": null
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.334505666275888,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": false,
+    "pos_share": 0.07908428720083246,
+    "neg_share": 0.004841547630309337,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 245,
+    "gini": 0.21624933700653148,
+    "largest_cell": 237,
+    "prefix_branches": 65.90612244897959,
+    "sequence_information": 0.10444776286452304
+  },
+  "stage3": {
+    "test_recall@10": 0.06406796775709883,
+    "test_ndcg@10": 0.03530651701940677,
+    "delta_recall_vs_control": 0.0,
+    "delta_ndcg_vs_control": 0.0,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": 0.0,
+    "recall": 0.0,
+    "ndcg": 0.0
+  },
+  "artifacts": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/item_sids.json",
+      "sha256": "49ff5822112bcd91e665826ec8f0760f9b874ff4fa6562ff689d19ce95beecd4",
+      "bytes": 1260012
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+      "sha256": "3b7ca556fe025db618f550c4353b1139926bf847da49301b06a375743be9ae72",
+      "bytes": 4604533
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+      "sha256": "abaaab8ac26d6246abc7e9fa27716e74aa5f6aa0e833c09e3b431c79e149819f",
+      "bytes": 786912
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+      "sha256": "c876485e4b6c65e72f83f6c02be2ad7816ebff255a3d54de6af0b9025d3a92a1",
+      "bytes": 338
+    }
+  ],
+  "posterior_explanation": {
+    "mechanism_id": "r8_control",
+    "er": 16.334505666275888,
+    "cleared_the_gate": false,
+    "delta_recall@10": 0.0,
+    "delta_ndcg@10": 0.0,
+    "modes": [],
+    "primary_mode": "unexplained"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination"
+  ]
+}

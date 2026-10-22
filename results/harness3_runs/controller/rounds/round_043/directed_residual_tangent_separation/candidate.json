@@ -1,0 +1,58 @@
+{
+  "mechanism_id": "directed_residual_tangent_separation",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_043/directed_residual_tangent_separation/proposal.json",
+  "started_utc": "2026-10-22T12:44:52.588523+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_separation",
+      "tokens": {
+        "input": 39746,
+        "output": 1688,
+        "reasoning": 289
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": true,
+      "detail": "all 8 declared checks hold",
+      "failed": []
+    },
+    "probe": {
+      "ok": true,
+      "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "occupancy_ratio_vs_host": 0.6179
+    },
+    "export_sensitivity": {
+      "verdict": "active",
+      "changed_fraction": {
+        "levels_1": 0.9179647781347867,
+        "levels_2": 0.9994712653028023,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 0.6179245283018868
+    },
+    "guardrails": {
+      "allowed": true,
+      "rule": "",
+      "detail": "",
+      "checked": [
+        "single_seed",
+        "no_control_retrain",
+        "no_archived_policy_execution",
+        "no_failed_arm_rerun",
+        "no_repeated_frozen_evaluation",
+        "no_repeated_stage3",
+        "no_semantic_duplicate",
+        "no_repeated_cold_run",
+        "no_repeated_probe",
+        "no_historical_repetition"
+      ],
+      "refused_utc": ""
+    }
+  },
+  "admitted": true,
+  "status": "admitted",
+  "wall_clock_s": 333.7,
+  "cold_run_gpu_minutes": 0.0
+}

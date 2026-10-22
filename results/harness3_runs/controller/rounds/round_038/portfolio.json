@@ -1,0 +1,113 @@
+{
+  "round": 38,
+  "closed_utc": "2026-10-22T10:01:38.119283+00:00",
+  "portfolio": [
+    {
+      "codebook_interaction": "\u5bf9\u6700\u8fd1\u7801\u5b57\u65bd\u52a0\u7531\u6709\u5411\u884c\u4e3a\u56fe\u5207\u5411\u5206\u91cf\u51b3\u5b9a\u7684\u68af\u5ea6\uff0c\u76ee\u6807\u662f\u6539\u53d8\u884c\u4e3a\u90bb\u63a5\u5173\u7cfb\u76f8\u5bf9\u4e8e\u7801\u5b57 Voronoi \u5206\u533a\u7684\u65b9\u5411\uff0c\u800c\u4e0d\u662f\u7f29\u77ed d\u3002\u6295\u5f71\u53bb\u6389\u4e86\u6cbf d \u7684\u884c\u4e3a\u5206\u91cf\uff0c\u635f\u5931\u4e2d\u6ca1\u6709\u5438\u5f15 c_s \u4e0e c_t \u7684\u8ddd\u79bb\u9879\uff1b\u5b9e\u73b0\u987b\u505c\u6b62\u68af\u5ea6\u7a7f\u8fc7\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\uff0c\u5e76\u4ee5\u6700\u8fd1\u7801\u5b57\u884c\u7d2f\u79ef\u7801\u672c\u68af\u5ea6\u3002\u4e0d\u80fd\u636e\u6b64\u4fdd\u8bc1\u8bad\u7ec3\u540e\u5206\u79bb\u5ea6\u4e0d\u53d8\uff0c\u987b\u6d4b\u91cf\u6210\u5bf9\u7801\u5b57\u8ddd\u79bb\u548c SID\u3002",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "\u51b7\u8fd0\u884c\u5bfc\u51fa\u7684 Hard-L1 ER \u4e0d\u4e25\u683c\u5927\u4e8e 16.38953942232631\uff0c\u6216 Stage-3 Recall@10 \u4e0d\u4e25\u683c\u5927\u4e8e 0.06406796775709883\uff0c\u6216 NDCG@10 \u4e0d\u4e25\u683c\u5927\u4e8e 0.03530651701940677\uff0c\u5373\u5426\u5b9a\u4efb\u52a1\u6210\u529f\uff1b\u82e5\u6240\u58f0\u660e\u7684 source\u3001target\u3001codebook \u68af\u5ea6\u5b9e\u6d4b\u4e3a\u96f6\u6216\u975e\u6709\u9650\uff0c\u4ea6\u5426\u5b9a\u673a\u5236\u58f0\u660e\u3002",
+      "family": "codebook_geometry",
+      "fingerprint": "9784c6782dc5d5d01fe14b51605f71efa960ae415ad56dbc3525e362f8aa023b",
+      "mechanism_id": "directed_graph_tangent_codebook_rotation",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_038/directed_graph_tangent_codebook_rotation/proposal.json",
+      "proposal_sha256": "abdedc0ac24b0a75e788852d841bad4990ba6a041663b70ec7271f28b40b970d",
+      "risk": "\u5207\u5411\u5bf9\u9f50\u53ef\u80fd\u63d0\u9ad8\u884c\u4e3a\u5bf9\u4e0e\u7801\u5b57\u5e03\u5c40\u7684\u5c40\u90e8\u4e00\u81f4\u6027\uff0c\u5374\u5c06\u4e0d\u540c\u8f6c\u79fb\u65b9\u5411\u6620\u5c04\u5230\u4e0d\u5229\u4e8e\u53ec\u56de\u7684\u5206\u533a\uff1b\u6700\u8fd1\u7801\u5b57\u5207\u6362\u4e5f\u53ef\u80fd\u4f7f\u5c40\u90e8\u68af\u5ea6\u566a\u58f0\u8f83\u5927\u3002\u5373\u4f7f\u7801\u5b57\u5206\u79bb\u548c\u4f7f\u7528\u5747\u8861\u4fdd\u6301\uff0cHard-L1 ER \u4ecd\u53ef\u80fd\u672a\u8d85\u8fc7\u51bb\u7ed3\u95e8\u69db\uff0c\u6216\u8005 Stage-3 \u4e24\u9879\u6307\u6807\u4ecd\u4f4e\u4e8e\u63a7\u5236\u3002\u77ed\u63a2\u9488\u4e0d\u7528\u4e8e\u62d2\u7edd\u5019\u9009\uff0c\u6700\u7ec8\u53ea\u6309\u51b7\u8fd0\u884c\u53ca\u4e00\u6b21\u6027\u51bb\u7ed3\u8bc4\u4f30\u5224\u65ad\u3002",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "1 of 8 declared checks failed",
+          "failed": [
+            "swap_source_target"
+          ],
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "66db40a466c143def803b07a660454b11b9e093233f214ce9cfbe78a9cb9c969",
+      "sid_effect_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "status": "rejected"
+    },
+    {
+      "codebook_interaction": "\u7801\u672c\u68af\u5ea6\u7ecf\u6709\u5411\u6295\u5f71\u8c03\u6574\u4e24\u7aef\u70b9\u7684\u5206\u914d\u65b9\u5411\uff0c\u5e76\u5bf9\u7aef\u70b9\u6700\u8fd1\u7801\u5b57\u95f4\u9694\u4f4e\u4e8e min_separation \u7684\u60c5\u5f62\u65bd\u52a0\u6392\u65a5\u3002\u8be5\u6392\u65a5\u9879\u5728\u8ddd\u79bb\u53d8\u5c0f\u65f6\u589e\u5927\uff0c\u4e0d\u4f1a\u4ee5\u7aef\u70b9\u6536\u655b\u4e3a\u76ee\u6807\uff1b\u6709\u5411\u6295\u5f71\u9879\u672c\u8eab\u4e0d\u542b\u8d1f\u5411\u7684\u8ddd\u79bb\u6700\u5c0f\u5316\u9879\u3002\u8f6f\u5206\u914d\u7528\u4e8e\u63d0\u4f9b\u8de8\u7801\u5b57\u7684\u7ed3\u6784\u68af\u5ea6\uff0c\u786c\u6700\u8fd1\u7801\u5b57\u53ea\u7528\u4e8e\u5b9a\u4e49\u7aef\u70b9\u8fde\u7ebf\uff1b\u5b9e\u73b0\u987b\u5bf9\u5168\u63a9\u7801\u663e\u5f0f\u8fd4\u56de\u7cbe\u786e\u96f6\uff0c\u5e76\u6309 mask[:,None,None] \u5e7f\u64ad\u4efb\u4f55 [B,C,D] \u9879\u3002",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "\u673a\u5236\u68af\u5ea6\u5b9e\u6d4b\u4e0d\u6ee1\u8db3 source\u3001target\u3001codebook \u5747\u975e\u96f6\u4e14\u6709\u9650\uff0c\u6216 source/target \u4e92\u6362\u540e\u635f\u5931\u4e0d\u53d8\uff0c\u6216\u5168 mask \u635f\u5931\u4e0d\u4e25\u683c\u7b49\u4e8e\u96f6\uff0c\u5373\u5426\u5b9a\u58f0\u660e\u3002\u4efb\u52a1\u5c42\u9762\u4efb\u4e00\u51b7\u8fd0\u884c ER\u3001Recall@10\u3001NDCG@10 \u672a\u4e25\u683c\u8d85\u8fc7\u5404\u81ea\u51bb\u7ed3\u9608\u503c\u5373\u5931\u8d25\u3002",
+      "family": "codebook_geometry",
+      "fingerprint": "cc8fd55203ce6ba856a606cc695a17a315fd3ff5c3c3d9d8606efe59caab672c",
+      "mechanism_id": "directed_pair_separated_assignment_repartition",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_038/directed_pair_separated_assignment_repartition/proposal.json",
+      "proposal_sha256": "ca2a0a35188faa2a57ae298f6694266c2a8aafa6b491fd361a3dac41505261de",
+      "risk": "\u663e\u5f0f\u9632\u6b62\u7aef\u70b9\u7801\u5b57\u6536\u655b\u4e0d\u7b49\u4e8e\u4fdd\u6301\u5168\u5c40\u5206\u533a\u8d28\u91cf\u3002\u6392\u65a5\u53ef\u80fd\u4f7f\u8f6c\u79fb\u7aef\u70b9\u843d\u5165\u4e0d\u540c\u4f46\u4e0d\u5229\u7684 Voronoi \u533a\u57df\uff0c\u8f6f\u5206\u914d\u68af\u5ea6\u4e5f\u53ef\u80fd\u6539\u53d8\u5f88\u591a\u975e\u7aef\u70b9\u5355\u5143\uff0c\u9020\u6210\u7801\u672c\u4e0d\u7a33\u5b9a\u6216\u5e8f\u5217\u4fe1\u606f\u4e0b\u964d\u3002\u53c2\u6570\u6743\u91cd\u867d\u56fa\u5b9a\u4e14\u8f83\u5c0f\uff0c\u4e0d\u80fd\u636e\u6b64\u63a8\u65ad\u51b7\u8fd0\u884c\u4e00\u5b9a\u4fdd\u7559\u5168\u90e8\u4ee3\u7801\u3001\u524d\u7f00\u5206\u652f\u6216\u6f02\u79fb\u6027\u8d28\u3002",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "2 of 8 declared checks failed",
+          "failed": [
+            "permute_codebook",
+            "swap_source_target"
+          ],
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "73b225a31fadb46c1d3d603a207c7b519f97b04bd006fac2feb34ee3018c3ec8",
+      "sid_effect_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "status": "rejected"
+    },
+    {
+      "codebook_interaction": "\u6b8b\u5dee\u5dee\u5206\u7ecf\u5bf9\u7aef\u70b9\u7801\u5b57\u8fde\u7ebf\u7684\u6b63\u4ea4\u6295\u5f71\u540e\u4ea7\u751f\u5207\u5411\u7801\u672c\u68af\u5ea6\uff1b\u6b8b\u5dee\u5c3a\u5ea6\u5bf9\u79f0\u9879\u7ea6\u675f\u4e24\u7aef\u6b8b\u5dee\u8303\u6570\uff0c\u4e0d\u5305\u542b\u4f7f\u7aef\u70b9\u7801\u5b57\u5f7c\u6b64\u9760\u8fd1\u7684\u9879\u3002\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\u987b\u505c\u6b62\u68af\u5ea6\uff0c\u7801\u672c\u68af\u5ea6\u901a\u8fc7\u6b8b\u5dee\u5bf9\u6240\u9009\u7801\u5b57\u884c\u4f20\u64ad\u3002\u8be5\u5c40\u90e8\u7ed3\u6784\u610f\u5728\u6539\u53d8\u884c\u4e3a\u7c07\u7684\u6b8b\u5dee\u51e0\u4f55\u800c\u975e\u5408\u5e76\u7aef\u70b9\u5355\u5143\uff0c\u4f46\u4e0d\u80fd\u4fdd\u8bc1\u5168\u5c40\u7801\u672c\u4f7f\u7528\u4e0e\u524d\u7f00\u7ed3\u6784\u4e0d\u53d8\u3002",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "\u82e5 source/target \u5bf9\u8c03\u540e\u635f\u5931\u4e0d\u53d8\u3001\u5168\u63a9\u7801\u635f\u5931\u975e\u96f6\u3001\u4efb\u4e00\u58f0\u660e\u975e\u96f6\u7684\u68af\u5ea6\u4e3a\u96f6\u6216\u975e\u6709\u9650\uff0c\u5219\u673a\u5236\u58f0\u660e\u88ab\u5426\u5b9a\u3002\u51b7\u8fd0\u884c\u4e2d ER\u3001Recall@10\u3001NDCG@10 \u4efb\u4e00\u672a\u4e25\u683c\u8d85\u8fc7\u51bb\u7ed3\u9608\u503c\u5219\u4efb\u52a1\u76ee\u6807\u5931\u8d25\uff1b\u4efb\u4e00\u8981\u6c42\u7684\u5206\u533a\u7ed3\u6784\u6307\u6807\u6076\u5316\u5219\u5426\u5b9a\u5176\u4fdd\u6301\u7ed3\u6784\u7684\u8bbe\u8ba1\u5047\u8bbe\u3002",
+      "family": "codebook_geometry",
+      "fingerprint": "8b5ff7913e96c750b1d1adec9ec25d47ab4cee40b1b7b13488d1ec3a6e89668c",
+      "mechanism_id": "directed_residual_cluster_balanced_transport",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_038/directed_residual_cluster_balanced_transport/proposal.json",
+      "proposal_sha256": "8ab4de474a3c3c8cf2eea202e341c619c3c994b60e57815666ee918febda4d32",
+      "risk": "\u6b8b\u5dee\u7a7a\u95f4\u4e2d\u7684\u5c40\u90e8\u5bf9\u9f50\u53ef\u80fd\u4e0e\u91cf\u5316\u540e\u7684\u786c\u5206\u914d\u3001\u5e8f\u5217\u524d\u7f00\u6216 Stage-3 \u6392\u540d\u76ee\u6807\u4e0d\u4e00\u81f4\uff1b\u5bf9\u79f0\u6b8b\u5dee\u5c3a\u5ea6\u9879\u53ef\u80fd\u538b\u4f4e\u6709\u7528\u7684\u6e90\u76ee\u6807\u5dee\u5f02\u3002\u5373\u4fbf\u4e0d\u76f4\u63a5\u6536\u655b\u7aef\u70b9\u7801\u5b57\uff0c\u4e5f\u53ef\u80fd\u7ecf\u5171\u4eab\u7801\u672c\u95f4\u63a5\u6539\u53d8\u90bb\u8fd1\u5355\u5143\u5e76\u964d\u4f4e\u5e8f\u5217\u4fe1\u606f\u3002ER\u3001Gini\u3001\u4ee3\u7801\u4f7f\u7528\u6570\u3001\u524d\u7f00\u5206\u652f\u3001\u9891\u7387\u6f02\u79fb\u53ca Stage-3 \u6307\u6807\u5747\u5fc5\u987b\u5728\u51b7\u8fd0\u884c\u4e2d\u89c2\u5bdf\uff0c\u4e0d\u80fd\u7531\u4ee3\u7406\u9879\u62c5\u4fdd\u3002",
+      "screening": {
+        "export_sensitivity": {
+          "changed_fraction": {
+            "levels_1": 0.8522389880831334,
+            "levels_2": 0.9999186562004311,
+            "levels_3": 1.0,
+            "levels_3token_identical": false
+          },
+          "level0_occupancy_ratio_vs_control": 1.1845238095238098,
+          "verdict": "active"
+        },
+        "judges": {
+          "detail": "all 8 declared checks hold",
+          "failed": [],
+          "ok": true
+        },
+        "probe": {
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "occupancy_ratio_vs_host": 1.1845,
+          "ok": true
+        },
+        "reason": null
+      },
+      "semantic_key": "fa5744f3a6d054ac1b4e6692acef7ef28ac94f996c74d372e42da20a62d8fce5",
+      "sid_effect_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "status": "admitted"
+    }
+  ],
+  "summary": {
+    "directed_graph_tangent_codebook_rotation": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_pair_separated_assignment_repartition": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_residual_cluster_balanced_transport": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "\u6b8b\u5dee\u4f20\u8f93\u9879\u63a8\u52a8\u76ee\u6807\u6b8b\u5dee\u63a5\u8fd1\u6cbf\u6709\u5411\u65b9\u5411\u79fb\u52a8\u540e\u7684\u6765\u6e90\u6b8b\u5dee\uff1b\u5206\u79bb\u9879\u5728\u4e24\u7aef\u4ee3\u7801\u5b57\u8ddd\u79bb\u4f4e\u4e8e delta \u65f6\u6cbf\u4e24\u4ee3\u7801\u5b57\u8fde\u7ebf\u65bd\u52a0\u6392\u65a5\u68af\u5ea6\uff0c\u963b\u6b62\u5bf9\u884c\u4e3a\u5bf9\u7684\u4ee3\u7801\u5b57\u6536\u655b\u3002\u6700\u8fd1\u4ee3\u7801\u7d22\u5f15\u6765\u81ea\u8f93\u5165 codebook \u548c\u5411\u91cf\u7684\u786e\u5b9a\u6027\u6700\u8fd1\u90bb\uff1bmask \u5fc5\u987b\u6309 [B,1,1] \u5e7f\u64ad\u5230 pairwise \u5f20\u91cf\u3002",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "\u533a\u522b\u4e8e\u88ab\u5bbf\u4e3b\u8986\u76d6\u7684\u7eaf\u7f16\u7801\u5668\u8f85\u52a9\u9879\uff0c\u672c\u9879\u660e\u786e\u628a\u68af\u5ea6\u9001\u5230\u4ee3\u7801\u672c\u3002\u533a\u522b\u4e8e\u4f7f\u884c\u4e3a\u5bf9\u4e24\u7aef\u4ee3\u7801\u5411\u91cf\u9760\u62e2\u7684\u574d\u7f29\u635f\u5931\uff0c\u672c\u9879\u5305\u542b\u660e\u786e\u7684\u8fd1\u8ddd\u79bb\u6392\u65a5\u9879\uff0c\u4e14\u4f20\u8f93\u4f5c\u7528\u5728\u6b8b\u5dee\u800c\u975e\u5c06\u4e24\u4e2a\u7aef\u70b9\u538b\u5230\u540c\u4e00\u4ee3\u7801\uff1b\u5b83\u4ecd\u9700\u5b9e\u6d4b\u786e\u8ba4\u4e0d\u4f1a\u7531\u603b\u68af\u5ea6\u62b5\u6d88\u6216\u79bb\u6563\u5206\u914d\u9020\u6210\u574d\u7f29\u3002"
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "\u4ee4 r_s=s-c_s\uff0cr_t=t-c_t\uff0cd=c_t-c_s\uff0cu=(t-s)/(||t-s||+eps)\u3002\u5b9a\u4e49 L=weight*m*[||r_t-(r_s+beta*u)||\u00b2 + lambda*softplus((delta-||d||)/temperature)]\u3002\u5168\u63a9\u7801\u65f6 L=0\u3002\u7b2c\u4e00\u9879\u8981\u6c42\u6b8b\u5dee\u6cbf\u6709\u5411\u884c\u4e3a\u65b9\u5411\u4f20\u8f93\uff1b\u7b2c\u4e8c\u9879\u53ea\u5728\u4e24\u4e2a\u7aef\u70b9\u6700\u8fd1\u4ee3\u7801\u8ddd\u79bb\u5c0f\u4e8e delta \u65f6\u65bd\u52a0\u6392\u65a5\uff0c\u9632\u6b62\u4ee3\u7801\u5b57\u6536\u655b\u3002",
+  "expected_failure_modes": [
+    "\u6b8b\u5dee\u4f20\u8f93\u4e0e\u5206\u79bb\u9879\u53ef\u80fd\u76f8\u4e92\u62b5\u6d88\uff0c\u6216\u5206\u79bb\u9879\u8fc7\u5f3a\u800c\u51cf\u5c11\u6b63\u5bf9\u5171\u4eab\u4ee3\u7801\uff0c\u5bfc\u81f4 ER \u4e0d\u5347\uff1b\u8fc7\u5f31\u5219\u4ecd\u53ef\u80fd\u51fa\u73b0\u7aef\u70b9\u4ee3\u7801\u5b57\u9760\u62e2\u3002\u79bb\u6563\u6700\u8fd1\u90bb\u5207\u6362\u4e5f\u4f1a\u4ee4\u8bad\u7ec3\u8f68\u8ff9\u4e0d\u7a33\u5b9a\uff0c\u5e76\u53ef\u80fd\u635f\u5bb3\u5e8f\u5217\u4fe1\u606f\u6216\u524d\u7f00\u5bbd\u5ea6\u3002"
+  ],
+  "family": "behavior_conditioned_residual_geometry",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "\u68af\u5ea6\u68c0\u67e5\u53d1\u73b0\u6765\u6e90\u4e0e\u76ee\u6807\u4ea4\u6362\u540e\u635f\u5931\u4e0d\u53d8\u3001\u4efb\u4e00\u76ee\u6807\u68af\u5ea6\u4e3a\u96f6\u6216\u975e\u6709\u9650\uff0c\u6216\u51b7\u8fd0\u884c\u6d4b\u5f97\u6b63\u5bf9\u4ee3\u7801\u8ddd\u79bb\u6ca1\u6709\u88ab\u4fdd\u7559\u4e14\u672a\u540c\u65f6\u8d85\u8fc7\u4e09\u9879\u51bb\u7ed3\u9608\u503c\uff0c\u5373\u5426\u5b9a\u673a\u5236\u5047\u8bbe\u3002",
+    "\u533a\u522b\u4e8e\u88ab\u5bbf\u4e3b\u8986\u76d6\u7684\u7eaf\u7f16\u7801\u5668\u8f85\u52a9\u9879\uff0c\u672c\u9879\u660e\u786e\u628a\u68af\u5ea6\u9001\u5230\u4ee3\u7801\u672c\u3002\u533a\u522b\u4e8e\u4f7f\u884c\u4e3a\u5bf9\u4e24\u7aef\u4ee3\u7801\u5411\u91cf\u9760\u62e2\u7684\u574d\u7f29\u635f\u5931\uff0c\u672c\u9879\u5305\u542b\u660e\u786e\u7684\u8fd1\u8ddd\u79bb\u6392\u65a5\u9879\uff0c\u4e14\u4f20\u8f93\u4f5c\u7528\u5728\u6b8b\u5dee\u800c\u975e\u5c06\u4e24\u4e2a\u7aef\u70b9\u538b\u5230\u540c\u4e00\u4ee3\u7801\uff1b\u5b83\u4ecd\u9700\u5b9e\u6d4b\u786e\u8ba4\u4e0d\u4f1a\u7531\u603b\u68af\u5ea6\u62b5\u6d88\u6216\u79bb\u6563\u5206\u914d\u9020\u6210\u574d\u7f29\u3002"
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_residual_transport_with_separation",
+  "parameters": {
+    "beta": 0.1,
+    "delta": 0.1,
+    "eps": 1e-08,
+    "lambda": 1.0,
+    "temperature": 0.05,
+    "weight": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T14:03:19.532040+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "963350b522111364d3515bf57b80b898ac13dba366c53d8a22230dc0514408a6"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "beta": "\u6709\u5411\u6b8b\u5dee\u4f20\u8f93\u5e45\u5ea6",
+    "c_s": "\u6765\u6e90\u6700\u8fd1\u4ee3\u7801\u5411\u91cf",
+    "c_t": "\u76ee\u6807\u6700\u8fd1\u4ee3\u7801\u5411\u91cf",
+    "d": "\u76ee\u6807\u4e0e\u6765\u6e90\u6700\u8fd1\u4ee3\u7801\u5411\u91cf\u4e4b\u5dee",
+    "delta": "\u7aef\u70b9\u4ee3\u7801\u5b57\u6700\u5c0f\u95f4\u9694",
+    "eps": "\u8303\u6570\u7a33\u5b9a\u9879",
+    "lambda": "\u4ee3\u7801\u5b57\u6700\u5c0f\u95f4\u9694\u60e9\u7f5a\u6743\u91cd",
+    "m": "\u5f62\u72b6 [B] \u7684\u6709\u6548\u6837\u672c\u63a9\u7801",
+    "r_s": "\u6765\u6e90\u76f8\u5bf9\u5176\u6700\u8fd1\u4ee3\u7801\u7684\u6b8b\u5dee",
+    "r_t": "\u76ee\u6807\u76f8\u5bf9\u5176\u6700\u8fd1\u4ee3\u7801\u7684\u6b8b\u5dee",
+    "s": "\u884c\u4e3a\u5bf9\u6765\u6e90\u5411\u91cf\uff0c\u5f62\u72b6 [B,D]",
+    "t": "\u884c\u4e3a\u5bf9\u76ee\u6807\u5411\u91cf\uff0c\u5f62\u72b6 [B,D]",
+    "temperature": "softplus \u5e73\u6ed1\u6e29\u5ea6",
+    "u": "\u6765\u6e90\u81f3\u76ee\u6807\u7684\u5355\u4f4d\u65b9\u5411",
+    "weight": "\u635f\u5931\u7ec4\u5408\u6743\u91cd"
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "\u5e26\u7aef\u70b9\u5206\u79bb\u7ea6\u675f\u7684\u884c\u4e3a\u6761\u4ef6\u6b8b\u5dee\u51e0\u4f55\u4f20\u8f93",
+  "version": "1.0.0"
+}

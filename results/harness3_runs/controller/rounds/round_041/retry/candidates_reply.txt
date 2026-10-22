@@ -1,0 +1,487 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_tangent_codebook_rotation",
+      "title": "沿行为方向旋转码本切空间，保持码字间距的几何重排",
+      "family": "codebook_geometry",
+      "equation": "令 u=s/||s||、v=t/||t||，令 a=mean_j((c_j-mean(c))·u)、b=mean_j((c_j-mean(c))·v)，L=λ·mean_i[m_i·(a_i-b_i)^2]。此项是有向的码本投影矩差异目标；source、target 和 codebook 均参与求导。",
+      "symbols": {
+        "s": "行为对源向量，形状[B,D]",
+        "t": "行为对目标向量，形状[B,D]",
+        "c_j": "第j个码字，形状[C,D]",
+        "u": "单位化源向量；分母加epsilon",
+        "v": "单位化目标向量；分母加epsilon",
+        "a_i": "第i对源方向上的中心化码本投影均值",
+        "b_i": "第i对目标方向上的中心化码本投影均值",
+        "m_i": "第i对的有效掩码",
+        "λ": "辅助项权重"
+      },
+      "parameters": {
+        "weight": 0.01,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "有向行为对(source,target)，损失按给定方向计算；交换端点通常改变投影矩差异。",
+      "codebook_interaction": "梯度依赖码本相对中心的投影统计，推动码本构型相对行为方向重新取向；不含把source与target最近码字拉到一起的项，也不含码字间距离收缩项，因此不直接促使行为对的两个码字收敛。码本中心化使整体平移方向不受该项驱动。",
+      "encoder_interaction": "对source和target有非零梯度；但主机覆盖encoder梯度，因此单独的encoder变化不会改变训练结果。该项同时对codebook产生非零梯度，实际改变路径依赖codebook更新。",
+      "risk": "投影矩差异可能主要通过旋转码本的非任务相关方向下降，不能保证行为正对共享level-0码，也可能扰乱原有残差量化结构。即使probe中方向性指标改善，冷训练的Hard-L1 ER和Stage-3仍可能不升；也可能因该损失的优化方向与主损失冲突而导致非有限或极小的有效码本更新。",
+      "falsifier": "冷跑后若level-0 Hard-L1 ER未严格超过16.38953942232631，或Stage-3 Recall@10未严格超过0.06406796775709883，或NDCG@10未严格超过0.03530651701940677，即证伪任务假设；机制级证伪还包括梯度检查发现codebook梯度为零/非有限，或交换source和target后损失不变。",
+      "why_not_the_measured_failures": "不同于只到encoder、被主机梯度覆盖而完全惰性的pairwise margin/curvature项，本项明确对codebook求导；不同于directed assignment cross-entropy及收敛型几何项，本项没有让一对端点共享码字的吸引项，也不以缩短其码字间距降低损失。它改的是码本相对方向，不是把单元合并；但是否能提升ER和下游指标仍必须由冷跑检验。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_tangent_codebook_rotation",
+          "type": "loss_term",
+          "summary": "对中心化码本的source与target方向投影均值差平方施加有向辅助损失。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "weight * masked_mean((mean_codebook_projection(source_unit) - mean_codebook_projection(target_unit))^2)",
+            "weight": 0.01,
+            "epsilon": 1e-08,
+            "mask_broadcast": "mask[:,None]"
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "finite_nonzero_source_target_codebook_gradients; all-masked loss and gradients are exactly zero",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "nonzero",
+              "min_norm": 1e-12
+            }
+          ],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_capacity_constrained_soft_repartition",
+      "title": "以有向软分配的容量约束重排行为对的码本归属",
+      "family": "assignment_structure",
+      "equation": "令 p_s=softmax(-||s-c_j||²/τ)，p_t=softmax(-||t-c_j||²/τ)，q_sj=p_sj/(mean_batch(p_sj)+ε)，q_tj=p_tj/(mean_batch(p_tj)+ε)。L=λ·mean_i[m_i·(-log(sum_j q_sij p_tij+ε)+μ·sum_j(p_sij-1/C)²)]。所有求和均限于有效样本；全掩码时返回严格为零。",
+      "symbols": {
+        "s": "行为对源向量，形状[B,D]",
+        "t": "行为对目标向量，形状[B,D]",
+        "c_j": "第j个码字，形状[C,D]",
+        "τ": "软分配温度",
+        "p_sij": "源向量i对码字j的软分配概率",
+        "p_tij": "目标向量i对码字j的软分配概率",
+        "q_sij": "按批次码字占用均值归一化的源软分配",
+        "m_i": "第i对的有效掩码",
+        "C": "码字数量",
+        "ε": "数值稳定常数",
+        "λ": "辅助项权重",
+        "μ": "源端软使用均衡正则权重"
+      },
+      "parameters": {
+        "weight": 0.001,
+        "temperature": 0.2,
+        "balance_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "有向行为对(source,target)；优化源软分配所指向的目标软分配质量，并对源端软码使用加入均衡项。",
+      "codebook_interaction": "码字梯度经平方距离软分配影响source与target的分配概率；均衡项惩罚源端软占用偏离均匀分布，目标项提高有向行为对落入兼容软单元的概率。均衡惩罚阻止全局占用向少数码字集中；该损失不包含直接缩短两个端点最近码字距离的项，且其均衡项反向抵消由正对匹配造成的聚集趋势，避免以合并单元作为唯一降损方式。",
+      "encoder_interaction": "source与target均有非零梯度，但主机覆盖encoder梯度，故其encoder侧影响不会单独保留；该项同时向codebook回传非零梯度，只有codebook路径能改变导出的SID。",
+      "risk": "软分配概率与最终硬SID之间可能存在明显温度差，容量均衡也可能抵消正对匹配信号；若温度过低，梯度会稀疏或不稳定，若过高则软目标可能与硬分配无关。批次级均衡不保证全数据集的level-0 Gini、活跃码数、前缀分支或训练到测试频率漂移满足要求，且序列信息可能下降。",
+      "falsifier": "冷跑的冻结Stage-2 ER、Stage-3 Recall@10、NDCG@10任一未严格越过各自冻结阈值即失败；即便三项过线，若level-0活跃码数低于245、Gini高于控制0.216、L1到L2分支低于控制65.9、频率漂移增大或序列信息下降，也将否定其容量保持机制。交换source和target后损失相同、全掩码loss非零或任一声明梯度不符，则直接否定实现。",
+      "why_not_the_measured_failures": "不同于仅对encoder添加辅助损失，本项对codebook有显式距离软分配梯度；不同于将一对端点硬拉到同一码字的directed assignment cross-entropy，本项是软概率匹配并带源端占用均衡惩罚，不要求两端最近码字收敛。它针对分配结构而非码本刚性几何，但软容量约束是否能保住硬SID结构尚未被证明。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_capacity_constrained_soft_repartition",
+          "type": "loss_term",
+          "summary": "用有向源到目标软分配匹配和源端占用均衡构成容量受约束的重分配损失。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "weight * masked_mean(-log(sum(q_source * p_target) + epsilon) + balance_weight * sum((p_source - 1/C)^2))",
+            "weight": 0.001,
+            "temperature": 0.2,
+            "balance_weight": 0.1,
+            "epsilon": 1e-08,
+            "mask_broadcast": "mask[:,None]"
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "finite_nonzero_source_target_codebook_gradients; all-masked loss and gradients are exactly zero",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "nonzero",
+              "min_norm": 1e-12
+            }
+          ],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_residual_tangent_transport",
+      "title": "在行为条件残差切空间中传输目标方向并保持端点码字分离",
+      "family": "behavior_conditioned_residual_geometry",
+      "equation": "令 r_s=s-c_{j_s}、r_t=t-c_{j_t}，其中 j_s、j_t 是按平方距离选出的最近码字索引；令 d=(t-s)/(||t-s||+ε)，并令 P_s=I-u_su_s^T、u_s=(c_{j_t}-c_{j_s})/(||c_{j_t}-c_{j_s}||+ε)。定义 L=λ·mean_i[m_i·((r_t-r_s)·P_s d - ρ·softplus(δ-||c_{j_t}-c_{j_s}||))²]。对最近码字索引采用停止梯度，仅对选中码字向量及source、target向量求导；全掩码时严格返回零。",
+      "symbols": {
+        "s": "行为对源向量，形状[B,D]",
+        "t": "行为对目标向量，形状[B,D]",
+        "c_{j_s}": "source最近码字向量",
+        "c_{j_t}": "target最近码字向量",
+        "j_s": "source最近码字索引，索引选择停止梯度",
+        "j_t": "target最近码字索引，索引选择停止梯度",
+        "r_s": "source相对其最近码字的残差",
+        "r_t": "target相对其最近码字的残差",
+        "d": "单位化的有向行为位移",
+        "u_s": "两端选中码字连线的单位方向",
+        "P_s": "去除码字连线方向分量的切空间投影矩阵",
+        "δ": "两个端点码字之间要求保持的最小间距",
+        "ρ": "分离屏障项权重",
+        "m_i": "第i对的有效掩码",
+        "ε": "数值稳定常数",
+        "λ": "辅助项权重"
+      },
+      "parameters": {
+        "weight": 0.001,
+        "separation_margin": 0.1,
+        "separation_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "有向行为位移t-s，以及该行为对当前最近码字间距；端点交换会改变位移方向和source/target残差角色。",
+      "codebook_interaction": "codebook梯度来自选中码字对残差切空间投影的影响，以及softplus分离屏障；索引选择停止梯度。残差传输项只匹配垂直于两码字连线的行为方向分量，不沿两码字连线施加吸引力；当间距小于separation_margin时，分离屏障对两码字施加增距梯度，直接抵消pair convergence，而不是让两端码字相互靠近。",
+      "encoder_interaction": "source和target有非零梯度，经残差差与有向位移项传递；主机覆盖encoder梯度，因此这些梯度不单独改变模型。选中码字残差和分离屏障向codebook提供非零梯度，构成实际可影响SID的训练路径。",
+      "risk": "最近码字索引停止梯度会造成分段目标，索引切换处可能使几何信号不连续；切空间残差传输可能改善局部连续几何，却不改变行为对的level-0硬分配。分离屏障也可能过强而阻止有益的相邻重分配，或过弱而无法阻止训练中其他损失引起的收敛。三项冻结下游指标和全套码结构约束均可能失败。",
+      "falsifier": "若冷跑Stage-2 ER不严格高于16.38953942232631，或Stage-3 Recall@10不严格高于0.06406796775709883，或NDCG@10不严格高于0.03530651701940677，则任务目标失败。对机制假设，测量训练中行为对选中码字距离的分布；若相对控制明显收缩且分离屏障未在小间距样本上产生增距梯度，即证伪其防收敛主张。交换端点损失不变、全掩码loss非零、梯度非有限或声明的梯度目标为零也构成直接证伪。",
+      "why_not_the_measured_failures": "不同于被主机覆盖的encoder-only机制，本项将梯度直接传至选中codebook行；不同于导致两码字汇聚、median pair distance降至零的交叉熵式吸引机制，本项的行为几何项只作用于码字连线的正交切空间，且附加屏障在端点码字过近时明确推动其分离。它仍可能失败，但其作用方向与已测出的pair convergence原因相反。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_residual_tangent_transport",
+          "type": "loss_term",
+          "summary": "对有向行为位移的码字正交切空间残差传输施加损失，并以距离屏障阻止端点码字收敛。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "weight * masked_mean(((residual_difference dot tangent_projected_direction) - separation_weight * softplus(separation_margin - pair_codeword_distance))^2)",
+            "weight": 0.001,
+            "separation_margin": 0.1,
+            "separation_weight": 0.1,
+            "epsilon": 1e-08,
+            "nearest_index_gradient": "stop",
+            "mask_broadcast": "mask[:,None]"
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "finite_nonzero_source_target_codebook_gradients; all-masked loss and gradients are exactly zero; separation-barrier gradient increases selected-codeword distance below the margin",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "nonzero",
+              "min_norm": 1e-12
+            }
+          ],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```

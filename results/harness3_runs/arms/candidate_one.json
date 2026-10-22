@@ -1,0 +1,109 @@
+{
+  "mechanism_id": "candidate_one",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "stage2-candidate_one-20261022T154036",
+    "stage3-candidate_one-20261022T154036"
+  ],
+  "official_cold_run": {
+    "status": "unknown",
+    "gpu_minutes": null,
+    "wall_clock_s": null
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": null,
+    "detail": null,
+    "failed": null
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.9,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": true,
+    "pos_share": null,
+    "neg_share": null,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": null,
+    "gini": null,
+    "largest_cell": null,
+    "prefix_branches": null,
+    "sequence_information": null
+  },
+  "stage3": {
+    "test_recall@10": 0.07,
+    "test_ndcg@10": 0.04,
+    "delta_recall_vs_control": 0.005932032242901175,
+    "delta_ndcg_vs_control": 0.0046934829805932304,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": 0.5654943337241107,
+    "recall": 0.005932032242901175,
+    "ndcg": 0.0046934829805932304
+  },
+  "artifacts": [],
+  "posterior_explanation": {
+    "mechanism_id": "candidate_one",
+    "er": null,
+    "cleared_the_gate": false,
+    "delta_recall@10": 0.005932032242901175,
+    "delta_ndcg@10": 0.0046934829805932304,
+    "modes": [],
+    "primary_mode": "none"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination"
+  ]
+}

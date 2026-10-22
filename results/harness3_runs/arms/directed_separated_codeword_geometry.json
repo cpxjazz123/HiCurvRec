@@ -1,0 +1,117 @@
+{
+  "mechanism_id": "directed_separated_codeword_geometry",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "stage3-directed_separated_codeword_geometry-20261022T001619"
+  ],
+  "official_cold_run": {
+    "status": "rejected",
+    "gpu_minutes": 0.0,
+    "wall_clock_s": 153.3
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": false,
+    "detail": "1 of 8 declared checks failed",
+    "failed": [
+      "gradient_target"
+    ]
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": null,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": false,
+    "pos_share": null,
+    "neg_share": null,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": null,
+    "gini": null,
+    "largest_cell": null,
+    "prefix_branches": null,
+    "sequence_information": null
+  },
+  "stage3": {
+    "test_recall@10": 0.06103866710771427,
+    "test_ndcg@10": 0.033942537933861414,
+    "delta_recall_vs_control": -0.0030293006493845587,
+    "delta_ndcg_vs_control": -0.0013639790855453568,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": null,
+    "recall": -0.0030293006493845587,
+    "ndcg": -0.0013639790855453568
+  },
+  "artifacts": [],
+  "posterior_explanation": {
+    "mechanism_id": "directed_separated_codeword_geometry",
+    "er": null,
+    "cleared_the_gate": false,
+    "delta_recall@10": -0.0030293006493845587,
+    "delta_ndcg@10": -0.0013639790855453568,
+    "modes": [
+      {
+        "mode": "invalid_gradient",
+        "evidence": "the independent checks measured the gradient and it did not match the declared target(s): ['gradient_target']",
+        "counterexample": "1 of 8 declared checks failed"
+      }
+    ],
+    "primary_mode": "invalid_gradient"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the frozen ER",
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination"
+  ]
+}

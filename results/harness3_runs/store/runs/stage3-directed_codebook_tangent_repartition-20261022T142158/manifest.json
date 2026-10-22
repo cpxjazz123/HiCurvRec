@@ -1,0 +1,32 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T14:21:58.610062+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage3",
+  "manifest_sha256": "3790505f9ef7f0721b9e9aaf5e4bc32953b7593279a3ad37dc137ff05eccd0dd",
+  "manifest_version": 1,
+  "mechanism_id": "directed_codebook_tangent_repartition",
+  "metrics": {
+    "stage3": {
+      "ndcg_delta_vs_archived_control": -0.0013801132834083268,
+      "note": "read from the Stage-3 artifact already on disk",
+      "recall_delta_vs_archived_control": -0.002385139017044166,
+      "test_ndcg@10": 0.033926403735998444,
+      "test_recall@10": 0.061682828740054665
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_codebook_tangent_repartition__r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage3-directed_codebook_tangent_repartition-20261022T142158",
+  "seed": 42,
+  "stage": "downstream",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

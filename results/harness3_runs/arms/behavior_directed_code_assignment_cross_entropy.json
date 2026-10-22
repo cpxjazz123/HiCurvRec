@@ -1,0 +1,133 @@
+{
+  "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "stage2-behavior_directed_code_assignment_cross_entropy-20261021T143331"
+  ],
+  "official_cold_run": {
+    "status": "unknown",
+    "gpu_minutes": null,
+    "wall_clock_s": null
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": null,
+    "detail": null,
+    "failed": null
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 1.478111600364957,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": false,
+    "pos_share": 0.7754611673446221,
+    "neg_share": 0.5246296471478573,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 2,
+    "gini": 0.01462154797250581,
+    "largest_cell": 12653,
+    "prefix_branches": 203.5,
+    "sequence_information": 0.18766254613143885
+  },
+  "stage3": {
+    "test_recall@10": null,
+    "test_ndcg@10": null,
+    "delta_recall_vs_control": null,
+    "delta_ndcg_vs_control": null,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": -14.85639406591093,
+    "recall": null,
+    "ndcg": null
+  },
+  "artifacts": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/item_sids.json",
+      "sha256": "f4f24280a8b4e553388dc8711e9d9ac9ade7e87fff0c46fb255821c6fc0ebf83",
+      "bytes": 1258176
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/rqvae_best.pth",
+      "sha256": "94e467815ed6881cd045e3a33e99fc2b1e36a64ad0df5f37d561c567d47f48e3",
+      "bytes": 4604533
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy/r8_control/sids_for_hgrec.npy",
+      "sha256": "fc964f0f1c496a872e0264eb9a9c44dfc2aa364dcf946f4f65bdf2767adf290e",
+      "bytes": 786912
+    }
+  ],
+  "posterior_explanation": {
+    "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+    "er": 1.478111600364957,
+    "cleared_the_gate": false,
+    "delta_recall@10": null,
+    "delta_ndcg@10": null,
+    "modes": [
+      {
+        "mode": "concentration_or_collisions",
+        "magnitude": 12416.0,
+        "magnitude_unit": "items in the largest level-0 cell above the control's",
+        "evidence": "the largest level-0 cell holds 12653 items against the control's 237",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+      }
+    ],
+    "primary_mode": "concentration_or_collisions"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination",
+    "the downstream measurement"
+  ]
+}

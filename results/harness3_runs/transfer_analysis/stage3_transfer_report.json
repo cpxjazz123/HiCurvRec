@@ -1424,34 +1424,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 43080,
-        "recall@10": 0.0628133704735376,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05940111420612813,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 43080,
-            "recall@10": 0.0628133704735376
+            "rows": 14360,
+            "recall@10": 0.05940111420612813
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 18524,
-            "recall@10": 0.0632152882746707
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
+            "rows": 6,
             "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.06367041198501873
+            "rows": 57,
+            "recall@10": 0.07017543859649122
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06296278603162471
+            "rows": 12786,
+            "recall@10": 0.06030032848427968
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.060204695966285374
+            "rows": 1509,
+            "recall@10": 0.05168986083499006
           }
         }
       }
@@ -2276,6 +2276,43 @@
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11610
         }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 57439,
+        "recall@10": 0.061682828740054665,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 1,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 57438,
+            "recall@10": 0.06168390264284968
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 32883,
+            "recall@10": 0.0635282668856248
+          },
+          "popularity[1,2)": {
+            "rows": 34,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 267,
+            "recall@10": 0.0599250936329588
+          },
+          "popularity[20,1e+09)": {
+            "rows": 20933,
+            "recall@10": 0.05976209812258157
+          },
+          "popularity[5,20)": {
+            "rows": 3322,
+            "recall@10": 0.056291390728476824
+          }
+        }
       }
     },
     "directed_codeword_margin_geometry": {
@@ -2941,8 +2978,37 @@
         }
       },
       "stage3_slices": {
-        "available": false,
-        "reason": "no per-example shards"
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.060793871866295264,
+        "l1_cell_size": {
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14360,
+            "recall@10": 0.060793871866295264
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.07017543859649122
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06037853902706085
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.06428098078197482
+          }
+        }
       }
     },
     "directed_residual_codebook_tangent_transport": {
@@ -3704,41 +3770,62 @@
   },
   "control": "r8_control",
   "design_implications": [
+    "behavior_conditioned_codebook_directional_transport: the largest level-0 cell holds 380 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behavior_conditioned_codebook_directional_transport: fewer level-0 codes are in use than the control's (214 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "behavior_conditioned_pairwise_curvature: the largest level-0 cell holds 5487 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behavior_conditioned_pairwise_curvature: the level-0 usage is more concentrated than the control's (Gini 0.787 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "behavior_conditioned_pairwise_curvature: fewer level-0 codes are in use than the control's (199 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "behavior_conditioned_pairwise_curvature: the L1 -> L2 prefix tree is narrower than the control's (21.88 against 65.91 branches per L1 code), which reduces the candidates a beam search can walk",
     "behavior_conditioned_pairwise_curvature: the codes carry less sequence information than the control's (excess over the marginal 0.036 against 0.104), so a recommender has less to predict from the previous item",
+    "behavior_directed_code_assignment_cross_entropy: the largest level-0 cell holds 12653 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behavior_directed_code_assignment_cross_entropy: fewer level-0 codes are in use than the control's (2 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "behavior_residual_geometry_transport: the largest level-0 cell holds 253 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behavior_residual_geometry_transport: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "behaviour_conditioned_residual_target: the largest level-0 cell holds 382 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behaviour_conditioned_residual_target: the level-0 usage is more concentrated than the control's (Gini 0.353 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "behaviour_conditioned_residual_target: fewer level-0 codes are in use than the control's (243 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "directed_assignment_branch_entropy: the largest level-0 cell holds 555 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_assignment_branch_entropy: the level-0 usage is more concentrated than the control's (Gini 0.325 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "directed_assignment_branch_entropy: fewer level-0 codes are in use than the control's (198 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "directed_assignment_prefix_information: the largest level-0 cell holds 253 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_assignment_prefix_information: the codes carry less sequence information than the control's (excess over the marginal 0.100 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_assignment_prefix_preservation: the largest level-0 cell holds 374 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
+    "directed_assignment_usage_balance: the largest level-0 cell holds 285 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_assignment_usage_balance: the level-0 usage is more concentrated than the control's (Gini 0.249 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "directed_assignment_usage_balance: fewer level-0 codes are in use than the control's (236 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "directed_capacity_balanced_assignment_partition: the largest level-0 cell holds 249 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_capacity_balanced_assignment_partition: the codes carry less sequence information than the control's (excess over the marginal 0.100 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_capacity_constrained_assignment_partition: the largest level-0 cell holds 257 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_capacity_constrained_assignment_partition: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_capacity_preserving_assignment_repartition: the largest level-0 cell holds 560 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_capacity_preserving_assignment_repartition: the level-0 usage is more concentrated than the control's (Gini 0.364 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "directed_capacity_preserving_assignment_repartition: fewer level-0 codes are in use than the control's (204 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_codebook_repulsion: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_codebook_tangent_repartition: the largest level-0 cell holds 252 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_codebook_tangent_repartition: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_codeword_margin_geometry: the largest level-0 cell holds 240 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_codeword_margin_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_codeword_tangent_repulsion: the largest level-0 cell holds 245 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_codeword_tangent_repulsion: the codes carry less sequence information than the control's (excess over the marginal 0.104 against 0.104), so a recommender has less to predict from the previous item",
     "directed_margin_preserving_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.100 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_pair_margin_rigid_codebook_geometry: the largest level-0 cell holds 377 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_pair_margin_rigid_codebook_geometry: fewer level-0 codes are in use than the control's (239 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_pair_margin_rigid_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.103 against 0.104), so a recommender has less to predict from the previous item",
     "directed_pair_separation_codebook_geometry: fewer level-0 codes are in use than the control's (244 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_pair_separation_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_residual_codebook_tangent_transport: the largest level-0 cell holds 275 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_residual_codebook_tangent_transport: fewer level-0 codes are in use than the control's (238 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "directed_residual_transport_with_separation: the largest level-0 cell holds 268 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_residual_transport_with_separation: fewer level-0 codes are in use than the control's (243 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_residual_transport_with_separation: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_soft_assignment_information: the largest level-0 cell holds 253 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_soft_assignment_information: fewer level-0 codes are in use than the control's (242 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_soft_assignment_information: the codes carry less sequence information than the control's (excess over the marginal 0.103 against 0.104), so a recommender has less to predict from the previous item",
+    "geometry_transport_seed43: the largest level-0 cell holds 260 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "geometry_transport_seed43: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "r8_control_seed43: the largest level-0 cell holds 262 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "r8_control_seed43: fewer level-0 codes are in use than the control's (241 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "r8_control_seed43: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
-    "the requirement a mechanism has to meet, stated measurably: the number of level-0 codes in use must not fall below the control's, the exported level-0 usage must not become more concentrated than the control's, the L1 -> L2 prefix tree must keep at least as many branches per code, the train-to-test frequency drift must not grow, and the sequence information the codes carry must not fall -- while the pair-level ER rises"
+    "the requirement a mechanism has to meet, stated measurably: the largest level-0 cell must not hold more items than the control's largest cell, the number of level-0 codes in use must not fall below the control's, the L1 -> L2 prefix tree must keep at least as many branches per code, the train-to-test frequency drift must not grow, and the sequence information the codes carry must not fall -- while the pair-level ER rises. The tail of the usage and the width of the prefix tree are the two measures that track the downstream quality; the Gini, which summarises the whole distribution, does not"
   ]
 }

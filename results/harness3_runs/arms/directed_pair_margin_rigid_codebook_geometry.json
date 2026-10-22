@@ -1,0 +1,179 @@
+{
+  "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+  "semantic_key": "8601c56e63a62159edca7a1da73cd54cc2d52c8e68816652f7d63bdb8c9192f6",
+  "fingerprints": {
+    "primary": "b735d45b4faf9e766d82545231d5bc3496a1c3136b1385e0ab60a4c40445f8dd",
+    "sid_effect": null
+  },
+  "novelty": "the mathematics is compared with the historical record in the fingerprint registry",
+  "seed": 42,
+  "runs": [
+    "probe-directed_pair_margin_rigid_codebook_geometry-20261022T074948",
+    "stage2-directed_pair_margin_rigid_codebook_geometry-20261022T071845"
+  ],
+  "official_cold_run": {
+    "status": "cold_running",
+    "gpu_minutes": null,
+    "wall_clock_s": 140.0
+  },
+  "cgv_gates": {
+    "gates": {
+      "G1": "passed",
+      "G2": "passed",
+      "G3": "passed",
+      "G4": "passed",
+      "G5": "passed",
+      "G6": "passed"
+    },
+    "note": "all six gates passed on the supplied declaration",
+    "passed": true
+  },
+  "independent_checks": {
+    "ok": true,
+    "detail": "all 8 declared checks hold",
+    "failed": []
+  },
+  "export_sensitivity": {
+    "verdict": "active",
+    "changed_fraction": {
+      "levels_1": 0.8485785171025338,
+      "levels_2": 0.998047748810347,
+      "levels_3": 1.0,
+      "levels_3token_identical": false
+    },
+    "level0_occupancy_ratio_vs_control": 0.8545454545454546
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.226631056848532,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": false,
+    "pos_share": 0.08046542427395706,
+    "neg_share": 0.0049588496830952605,
+    "ci95": null,
+    "d2": 0.03780125947618012,
+    "d2_support": [
+      "low_support"
+    ],
+    "d2_counts": {
+      "numerator_positive": 23,
+      "denominator_positive": 517,
+      "numerator_negative": 16,
+      "denominator_negative": 2393,
+      "anchor_cluster_ci95": {
+        "high": 0.056975803003142145,
+        "low": 0.019326456182645328,
+        "replicates": 1000,
+        "seed": 42,
+        "unit": "anchor"
+      }
+    }
+  },
+  "gh1_probe": {
+    "g_h1": 0.12321926341217053,
+    "prior_ce_l1": 5.334335478816887,
+    "probe_ce_l1": 4.677042590323662,
+    "top1_acc_l1": 0.09151774218468353,
+    "top5_acc_l1": 0.22287171035690376,
+    "top20_acc_l1": 0.4248081577998661,
+    "split": {
+      "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+      "dev_rows": 38834,
+      "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+      "train_rows": 358124
+    },
+    "probe_version": "history_probe/fix48",
+    "budget": {
+      "batch_size": 512,
+      "dev_user_fraction": 0.1,
+      "dropout": 0.1,
+      "epochs": 6,
+      "grad_clip": 5.0,
+      "gru_hidden": 128,
+      "gru_layers": 1,
+      "label_smoothing": 0.0,
+      "lr": 0.001,
+      "seq_len": 20,
+      "token_embed_dim": 128,
+      "weight_decay": 0.0
+    }
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 239,
+    "gini": 0.20280166424649004,
+    "largest_cell": 377,
+    "prefix_branches": 67.17991631799163,
+    "sequence_information": 0.10265110347285425
+  },
+  "stage3": {
+    "test_recall@10": null,
+    "test_ndcg@10": null,
+    "delta_recall_vs_control": null,
+    "delta_ndcg_vs_control": null,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": -0.1078746094273555,
+    "recall": null,
+    "ndcg": null
+  },
+  "artifacts": [
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "e8194c76e1017960341829825b6ab82faf026714cae7da41e53903f91e9b9630",
+      "bytes": 786912
+    },
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/rqvae_best.pth",
+      "sha256": "889a14bb7a9e321638bd69cf6d218f57fc6bbb5695fdc8079f3c4f96cb74969b",
+      "bytes": 4604533
+    },
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/item_sids.json",
+      "sha256": "f0b4234b891bca4db8677474fb852e78ad96472a3e09b49b01831f2aaf86b4c0",
+      "bytes": 1259789
+    }
+  ],
+  "posterior_explanation": {
+    "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+    "er": 16.226631056848532,
+    "cleared_the_gate": false,
+    "delta_recall@10": null,
+    "delta_ndcg@10": null,
+    "modes": [
+      {
+        "mode": "conditional_l2_contamination",
+        "evidence": "the conditional level-2 measurement is not supported: ['low_support']",
+        "counterexample": "the D2 cannot say anything about this arm"
+      },
+      {
+        "mode": "concentration_or_collisions",
+        "magnitude": 140.0,
+        "magnitude_unit": "items in the largest level-0 cell above the control's",
+        "evidence": "the largest level-0 cell holds 377 items against the control's 237",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+      }
+    ],
+    "primary_mode": "conditional_l2_contamination"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the downstream measurement"
+  ]
+}
