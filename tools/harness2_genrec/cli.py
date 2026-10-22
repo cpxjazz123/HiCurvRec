@@ -498,6 +498,9 @@ def cmd_controller(args: argparse.Namespace) -> int:
     if args.action == "tick":
         print(json.dumps(controller.tick(), indent=2, default=str))
         return 0
+    if args.action == "probe-backlog":
+        print(json.dumps({"probed": controller._probe_backlog()}, indent=2, default=str))
+        return 0
     if args.action == "backfill-store":
         print(json.dumps(controller.backfill_store(), indent=2, default=str))
         return 0
@@ -644,6 +647,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "resume",
             "report",
             "backfill-store",
+            "probe-backlog",
         ],
     )
     ctrl.add_argument("--state", default="results/harness3_runs/controller/state.json")

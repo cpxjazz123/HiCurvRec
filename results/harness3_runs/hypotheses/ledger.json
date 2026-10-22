@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T15:04:24.716488+00:00",
+  "generated_utc": "2026-10-22T17:54:42.567377+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -726,8 +726,48 @@
       "notes": "the brief now says plainly that the balance is a requirement rather than a mechanism, that the D2 is weakly supported, and that the history gain is neutral so far -- so the agent is not asked to believe more than was measured",
       "observation": "the two limits of the current instruments, both measured. FIRST: the balance measures are only moderately associated with the downstream loss -- the largest level-0 cell gives -0.52 and the prefix tree +0.44 over a dozen arms, and an arm that holds both can still lose, so the requirement is a constraint rather than a mechanism. SECOND: the conditional level-2 discrimination is intrinsically weakly supported on the frozen behaviour pairs, where only about one per cent of the pairs share their level-1 code: the positive conditional set is a few hundred pairs, and every arm's D2 so far carries a low-support flag. The history-conditioned gain is the more promising of the two signals and it is neutral so far: the rigid arm that kept its balance reads 0.1232 and the repartition arm 0.1234, against a historical range of 0.004 to 0.195.",
       "status": "open"
+    },
+    {
+      "created_utc": "2026-10-22T17:54:42.567375+00:00",
+      "evidence_paths": [
+        "results/harness3_runs/store/runs",
+        "results/harness3_runs/historical_evidence/historical_evidence.json"
+      ],
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "an arm with a history-conditioned gain in the top of the cohort's band and an ER above the gate that still loses more than 0.0005 of Recall@10",
+              "id": "P1",
+              "measurement": "the G_H1 and the ER of every arm against its one Stage-3, case by case",
+              "statement": "a mechanism that raises the frozen ER while also raising the history-conditioned gain will lose less downstream quality than one that raises the ER alone"
+            }
+          ],
+          "statement": "the codes' history-conditioned predictability is the property the recommender actually consumes: a pair-level enrichment ratio that rises without the codes carrying more history gives the recommender nothing to predict from, whatever the ratio says"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "a cohort in which the cell and the tree predict the loss at least as well as the history gain does",
+              "id": "P1",
+              "measurement": "the rank correlation of each structural measure and of the gain with the downstream Recall@10, over the same arms",
+              "statement": "the largest level-0 cell and the prefix tree do not explain the downstream loss either, once the history gain is in the picture"
+            }
+          ],
+          "statement": "the balance hypothesis is REFUTED by the sharpest test: the arm with the best balance of the whole cohort -- ER 16.6019 with a level-0 Gini of 0.193 against the control's 0.216, a largest cell of 253 against 237 and 66.5 prefix branches against 65.9, better on all three -- lost the most downstream quality of any arm, 0.0108 of Recall@10, three times the next worst. Holding the balance is not what protects the recommender"
+        }
+      ],
+      "id": "H109-06",
+      "next_experiment": "a portfolio that aims at the history-conditioned gain as well as the frozen ER, and a cohort that repeats this comparison prospectively, because this one is retrospective and the arms were inspected as they came",
+      "notes": "the brief now says which instrument the measurements point at, and says what the measurements do not establish: a moderate association over twelve arms, not a mechanism and not a certification",
+      "observation": "the campaign's own cohort says which instrument is worth anything. Every arm that had an export was given its one history-conditioned probe, so twelve arms now carry the frozen ER, the history-conditioned gain and the one Stage-3 each of them is allowed. Across those twelve, the history-conditioned gain's rank correlation with the downstream Recall@10 is +0.45 and with the NDCG@10 +0.44, while the frozen ER's is +0.10 and +0.15. The gain's range across the cohort is narrow -- 0.1201 to 0.1258 -- and the ordering inside that band is what tracks the loss. This is a retrospective association on a cohort that has already been inspected, not a causal claim and not a certification.",
+      "status": "open"
     }
   ],
-  "ledger_sha256": "b3b91181e6dd00da9e4212731276248d5de06bb766da0a32235dbcc840953645",
+  "ledger_sha256": "98d4fe748acf2d8ce7927c58b70a47fc3af262d66f7cdf6124a1b148ead81384",
   "ledger_version": 1
 }
