@@ -141,6 +141,27 @@ structure had an ER far below the control. So a candidate that repeats the merge
 help. A candidate has to raise the ER by a better PARTITION of the items over the SAME number
 of codes.
 
+# WHAT THE FROZEN ER ACTUALLY MEASURES
+
+The frozen evaluation is a ratio of two shares over the LEVEL-0 code: the share of held-out
+behaviour pairs (anchor, positive) whose two items carry the same level-0 code, divided by
+the share of (anchor, random negative) pairs that do. It is a measure of how well the
+level-0 partition lines up with the behaviour graph, and there are two ways to raise it.
+
+1. By MERGING cells: the two codewords of a co-occurring pair are pulled together until the
+   pair's items share a code. The numerator rises, and the same merge removes the
+   distinctions the recommender ranks by: the level-0 usage concentrates, the cells become
+   uneven, some codes stop being used, and the prefix tree loses branches. Every arm that
+   raised the ER did it this way, and it is what cost the recommender its candidates.
+2. By RE-PARTITIONING without merging: the items that co-occur land in one cell while the
+   cells keep their number, their sizes and their prefix branches. The partition gets
+   better without the cells getting worse. No arm has done this yet.
+
+So the question a candidate has to answer is not "how do I raise the ER" but "how do I make
+the level-0 partition follow the behaviour graph without making any cell worse". The
+mechanism that answers it moves the codebook so that the items of a behaviour cluster are
+nearest to one codeword, while that codeword keeps its own cell of the same size.
+
 # THE MEASURED REQUIREMENT A CANDIDATE HAS TO MEET
 
 The archived arms that raised the pair-level ER did not improve the recommender. The

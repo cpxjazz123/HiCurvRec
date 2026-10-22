@@ -407,6 +407,15 @@ def design_implications(
                 "mechanism that concentrates the level-0 codes costs the recommender the "
                 "candidates it can rank"
             )
+        distinct = balance["distinct_codes"]
+        reference_distinct = reference_balance["distinct_codes"]
+        if distinct < reference_distinct:
+            implications.append(
+                f"{name}: fewer level-0 codes are in use than the control's "
+                f"({distinct} against {reference_distinct}); a merge of two cells is how "
+                "the codes concentrate, and the cells the recommender walks are the ones "
+                "that disappeared"
+            )
         drift = entry["frequency_drift"]["level_1"]["total_variation_train_to_test"]
         reference_drift = reference["frequency_drift"]["level_1"]["total_variation_train_to_test"]
         if drift > reference_drift + 0.05:
@@ -436,11 +445,12 @@ def design_implications(
                 "recommender has less to predict from the previous item"
             )
     implications.append(
-        "the requirement a mechanism has to meet, stated measurably: the exported level-0 "
-        "usage must not become more concentrated than the control's, the L1 -> L2 prefix tree "
-        "must keep at least as many branches per code, the train-to-test frequency drift must "
-        "not grow, and the sequence information the codes carry must not fall -- while the "
-        "pair-level ER rises"
+        "the requirement a mechanism has to meet, stated measurably: the number of level-0 "
+        "codes in use must not fall below the control's, the exported level-0 usage must not "
+        "become more concentrated than the control's, the L1 -> L2 prefix tree must keep at "
+        "least as many branches per code, the train-to-test frequency drift must not grow, "
+        "and the sequence information the codes carry must not fall -- while the pair-level "
+        "ER rises"
     )
     return implications
 
