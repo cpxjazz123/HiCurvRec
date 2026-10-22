@@ -170,16 +170,31 @@ unequal. The first is what has never been tried: every arm that raised the ER ra
 denominator by pulling a pair's codewords together, and the sizes are exactly what the
 recommender loses.
 
-# THE TENSION THE MEASUREMENTS SHOW
+# THE TENSION THE MEASUREMENTS SHOW, AND WHAT THE MEASUREMENTS CORRECTED
 
 The frozen pair-level ER is bought with CODE CONCENTRATION: a behaviour-driven merge of the
 level-0 codes raises the positive match rate, and the same merge removes the distinctions the
 recommender ranks by. The arm with the best ER of the campaign (17.13 against the control's
 16.33) has a level-0 Gini of 0.313 against the control's 0.216 and 62.5 prefix branches
-against 65.9, and its Stage-3 recall@10 was the worst measured; the arm with the healthiest
-structure had an ER far below the control. So a candidate that repeats the merge will not
-help. A candidate has to raise the ER by a better PARTITION of the items over the SAME number
-of codes.
+against 65.9, and its Stage-3 recall@10 was the worst measured. So a candidate that repeats
+the merge will not help.
+
+But the measurements then CORRECTED that account, and the correction matters more than the
+story it replaced. The arm with the second-best ER of the campaign (17.2983) has a structure
+almost identical to the control's -- 255 level-0 codes against 245, a Gini of 0.229 against
+0.216, and the same sequence information -- and it lost MORE downstream quality than any
+other arm in the cohort (-0.0039 of Recall@10). So the whole-distribution Gini does not
+predict the downstream loss. Over the eleven arms that carry both measurements, the two
+measures that DO track it are the TAIL of the level-0 usage -- the largest cell, which the
+control holds at 237 items and the worst arm at 374 -- and the WIDTH of the L1 -> L2 prefix
+tree. The Gini's rank correlation with the downstream loss is -0.07; the largest cell's is
+-0.52 and the branch count's is +0.44.
+
+So the requirement is not "do not concentrate the codes" in general. It is: do not let the
+largest level-0 cell grow, and do not let the L1 -> L2 tree narrow. A candidate that raises
+the ER while holding those two numbers is the arm this campaign is looking for. (These are
+correlations over eleven arms, not a mechanism; the next arms carry the conditional L2
+discrimination and the history-conditioned gain, which are the signals that can say more.)
 
 # WHAT THE FROZEN ER ACTUALLY MEASURES
 
