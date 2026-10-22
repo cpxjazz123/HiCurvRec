@@ -192,9 +192,20 @@ tree. The Gini's rank correlation with the downstream loss is -0.07; the largest
 
 So the requirement is not "do not concentrate the codes" in general. It is: do not let the
 largest level-0 cell grow, and do not let the L1 -> L2 tree narrow. A candidate that raises
-the ER while holding those two numbers is the arm this campaign is looking for. (These are
-correlations over eleven arms, not a mechanism; the next arms carry the conditional L2
-discrimination and the history-conditioned gain, which are the signals that can say more.)
+the ER while holding those two numbers is the arm this campaign is looking for.
+
+Be honest about what that is worth. These are MODERATE associations over a dozen arms, not
+a mechanism: the cell and the tree together explain part of the spread and not all of it,
+and an arm that holds both can still lose. And the two newer signals are weaker than they
+look. The conditional L2 discrimination is computed on the frozen behaviour pairs, where
+only about one per cent of the pairs share their level-1 code, so its positive conditional
+set is a few hundred pairs: every arm's D2 so far carries a LOW SUPPORT flag, and the
+historical D2 column is too weak to rank anything either. The history-conditioned gain is
+the more promising of the two, and it is neutral on the arms measured so far -- the rigid
+arm that kept its balance reads 0.1232 and the repartition arm 0.1234, against a historical
+range of 0.004 to 0.195. So the honest position is: the balance is the requirement, the
+history gain is the hypothesis, and what decides is whether an arm can hold the balance
+while the ER rises -- which no arm has yet done.
 
 # WHAT THE FROZEN ER ACTUALLY MEASURES
 
