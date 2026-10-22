@@ -622,14 +622,23 @@ class Controller:
         self.save()
 
     def _export_path(self, mechanism_id: str) -> Optional[Path]:
-        """The exported SIDs of an arm, wherever the run that produced them left them."""
-        candidates = [
-            REPO_ROOT / "results" / "stage2_RQ-VAE" / f"TIGER_c107_{mechanism_id}" / "r8_control" / "sids_for_hgrec.npy",
-            REPO_ROOT / "results" / "stage2_RQ-VAE" / mechanism_id / "r8_control" / "sids_for_hgrec.npy",
-        ]
-        for path in candidates:
-            if path.is_file():
-                return path
+        """The exported SIDs of an arm, from the store's record of where they are.
+
+        The store knows the path because the manifest records the artifact; guessing it from
+        a naming convention finds only the arms whose tree happens to be called
+        TIGER_c107_<mechanism_id>, and the others look as if they had never exported.
+        """
+        for manifest in self.store.runs():
+            if manifest.get("mechanism_id") != mechanism_id:
+                continue
+            for artifact in manifest.get("artifacts") or ():
+                path = str(artifact.get("path") or "")
+                if path.endswith("sids_for_hgrec.npy") and artifact.get("exists"):
+                    sid = Path(path)
+                    if not sid.is_absolute():
+                        sid = REPO_ROOT / sid
+                    if sid.is_file():
+                        return sid
         return None
 
     def _refresh_transfer_analysis(self) -> Dict[str, Any]:
@@ -656,9 +665,11 @@ class Controller:
                     sid_path = REPO_ROOT / sid_path
                 arms[mechanism_id] = sid_path.parent
                 break
-            variant = f"TIGER_c107_{mechanism_id}__r8_control"
-            if (stage3_root / variant).is_dir():
-                variants[mechanism_id] = variant
+            item_sids = sid_path.parent / "item_sids.json"
+            if item_sids.is_file():
+                variant = self._stage3_variant(item_sids)
+                if (stage3_root / variant).is_dir():
+                    variants[mechanism_id] = variant
         out = self.config.campaign / "transfer_analysis" / "stage3_transfer_report.json"
         if "r8_control" not in arms:
             return {"refreshed": False, "reason": "the control is not in the store"}
@@ -769,7 +780,7 @@ class Controller:
                         mechanism_id=mechanism_id,
                         stage="downstream",
                         seed=42,
-                        output_dir=variant,
+                        output_dir=variant_dir,
                     ),
                     allow_existing_output=True,
                 )
@@ -1594,6 +1605,31 @@ class Controller:
             )
         return waiting
 
+    @staticmethod
+    def _stage3_variant(sid_path: Path) -> str:
+        """The Stage-3 variant directory of an arm's export, derived from its own path.
+
+        The variant is ``<tree>__<arm>``, with every character outside
+        ``[A-Za-z0-9._-]`` replaced by an underscore -- the same derivation the launch uses.
+        Guessing the name from a naming convention misses every arm whose tree is not called
+        TIGER_c107_*, and an arm whose measurement exists but is not found is measured again.
+        """
+        import re
+
+        for candidate, root in (
+            (Path(sid_path).parent, REPO_ROOT / "results" / "stage2_RQ-VAE"),
+            (Path(sid_path).resolve().parent, (REPO_ROOT / "results" / "stage2_RQ-VAE").resolve()),
+        ):
+            try:
+                relative = candidate.relative_to(root)
+                break
+            except (ValueError, OSError):
+                relative = None
+        if relative is None:
+            relative = Path(Path(sid_path).parent.name)
+        raw = "__".join(part for part in relative.parts if part) or Path(sid_path).parent.name
+        return re.sub(r"[^A-Za-z0-9._-]+", "_", raw)
+
     def _record_finished_stage3s(self) -> List[str]:
         """Record the Stage-3 results that are on disk but not in the store.
 
@@ -1607,15 +1643,27 @@ class Controller:
         measured = {
             manifest.get("mechanism_id")
             for manifest in self.store.runs()
-            if manifest.get("kind") == "stage3"
+            if (manifest.get("metrics") or {}).get("stage3")
         }
         root = REPO_ROOT / "results" / "stage3_T5Train"
-        for variant in sorted(root.glob("TIGER_c107_*__r8_control")):
-            mechanism_id = variant.name[len("TIGER_c107_"): -len("__r8_control")]
-            if mechanism_id in measured:
+        for manifest in self.store.runs():
+            if manifest.get("kind") != "stage2":
                 continue
-            finals = sorted(variant.rglob("test_final.json"))
+            mechanism_id = manifest.get("mechanism_id") or ""
+            if not mechanism_id or mechanism_id in measured:
+                continue
+            item_sids = None
+            for artifact in manifest.get("artifacts") or ():
+                path = str(artifact.get("path") or "")
+                if path.endswith("item_sids.json") and artifact.get("exists"):
+                    item_sids = Path(path)
+                    break
+            if item_sids is None or not item_sids.is_file():
+                continue
+            variant = self._stage3_variant(item_sids)
+            finals = sorted((root / variant).rglob("test_final.json")) if (root / variant).is_dir() else []
             source = ""
+            variant_dir = root / variant
             if finals:
                 try:
                     report = json.loads(finals[-1].read_text(encoding="utf-8"))
@@ -1629,7 +1677,7 @@ class Controller:
                 # everything: the shards hold every row's target rank
                 from . import stage3_from_shards
 
-                recovered = stage3_from_shards.latest_complete(variant)
+                recovered = stage3_from_shards.latest_complete(variant_dir)
                 if recovered is None:
                     continue
                 recall = recovered["test_recall@10"]
@@ -1644,7 +1692,7 @@ class Controller:
                         mechanism_id=mechanism_id,
                         stage="downstream",
                         seed=42,
-                        output_dir=variant,
+                        output_dir=variant_dir,
                     ),
                     allow_existing_output=True,
                 )
