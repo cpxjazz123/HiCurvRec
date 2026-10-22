@@ -1,0 +1,32 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T22:02:18.107078+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage3",
+  "manifest_sha256": "03088a4f48d800e578cf8759f55a1b1d9a18fc52da782f56c108a74e2c54274c",
+  "manifest_version": 1,
+  "mechanism_id": "geometry_transport_seed43",
+  "metrics": {
+    "stage3": {
+      "ndcg_delta_vs_archived_control": -0.000631356794457201,
+      "note": "read from the Stage-3 artifact already on disk",
+      "recall_delta_vs_archived_control": -0.0008878984661989248,
+      "test_ndcg@10": 0.03467516022494957,
+      "test_recall@10": 0.0631800692908999
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_seed43_geometry__r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage3-geometry_transport_seed43-20261022T220218",
+  "seed": 42,
+  "stage": "downstream",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

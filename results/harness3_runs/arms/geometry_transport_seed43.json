@@ -6,7 +6,8 @@
   "seed": 42,
   "runs": [
     "probe-geometry_transport_seed43-20261022T175404",
-    "stage2-geometry_transport_seed43-20261021T143324"
+    "stage2-geometry_transport_seed43-20261021T143324",
+    "stage3-geometry_transport_seed43-20261022T220218"
   ],
   "official_cold_run": {
     "status": "unknown",
@@ -81,16 +82,16 @@
     "sequence_information": 0.10222402869942478
   },
   "stage3": {
-    "test_recall@10": null,
-    "test_ndcg@10": null,
-    "delta_recall_vs_control": null,
-    "delta_ndcg_vs_control": null,
+    "test_recall@10": 0.0631800692908999,
+    "test_ndcg@10": 0.03467516022494957,
+    "delta_recall_vs_control": -0.0008878984661989248,
+    "delta_ndcg_vs_control": -0.000631356794457201,
     "per_token": null
   },
   "deltas_vs_archived_control": {
     "er": 0.40515370112070315,
-    "recall": null,
-    "ndcg": null
+    "recall": -0.0008878984661989248,
+    "ndcg": -0.000631356794457201
   },
   "artifacts": [
     {
@@ -152,7 +153,6 @@
     "the_archived_features_are_on_another_protocol": false
   },
   "missing": [
-    "the conditional level-2 discrimination",
-    "the downstream measurement"
+    "the conditional level-2 discrimination"
   ]
 }
