@@ -255,6 +255,20 @@ For each candidate, state:
   declaration that passes.
 
 6. THE INTERFACE AND THE DIRECTEDNESS CHECK, LEARNED FROM THE FIRST ROUND'S REJECTIONS
+   - The checker's failures are the ones the last rounds actually produced, so they are worth
+     naming before you write the mechanism:
+       * `mask_all`: when every pair is masked, the loss must be exactly ZERO. A masked mean
+         over nothing is not a number, and the term must not contribute.
+       * `swap_source_target`: if your mechanism claims to be directed, the loss must CHANGE
+         when the source and the target are exchanged. A symmetric implementation of a
+         directed claim is rejected.
+       * the shapes: the mask has shape [B] and a pairwise term has shape [B, C, D], so a
+         mask that multiplies such a term must be broadcast as `mask[:, None, None]`. A
+         mechanism whose mask is broadcast along the wrong axis is rejected before it trains.
+       * the declared gradient targets are measured, not believed: if you declare
+         `gradient_targets.source = "nonzero"`, the source parameter's gradient must be
+         non-zero, and if you declare `"zero"`, it must be zero. Declaring a target the term
+         does not reach is a rejection.
    - The checker calls the mechanism as `mechanism_loss(source, target, codebook, mask,
      **parameters)`, with source [B, D], target [B, D], codebook [C, D], mask [B] and
      `parameters` EXACTLY the proposal's declared parameters. A term that needs any other
