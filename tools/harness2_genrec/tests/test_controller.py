@@ -237,8 +237,12 @@ def test_a_negative_round_moves_to_the_next_portfolio(tmp_path):
     ]
     controller.phase_learn()
     assert controller.state["round"] == 4
-    assert controller.state["phase"] == "hypothesise"
+    # a round starts by reading the evidence: the manifests are joined, the arms are
+    # diagnosed and the arm reports are written, and only then is the portfolio designed
+    assert controller.state["phase"] == "read"
     assert not controller.state["scientific_stop"]
+    controller.phase_read()
+    assert controller.state["phase"] == "hypothesise"
 
 
 def test_a_confirmed_success_stops_scientifically_but_not_the_issue(tmp_path):
