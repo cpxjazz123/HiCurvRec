@@ -202,6 +202,13 @@ the level-0 partition follow the behaviour graph without making any cell worse".
 mechanism that answers it moves the codebook so that the items of a behaviour cluster are
 nearest to one codeword, while that codeword keeps its own cell of the same size.
 
+And the grouping of the measured arms says this is where the downstream loss lives. Among
+the arms that cleared the gate, the ones that kept the control's level-0 Gini and its prefix
+branches lose on average 0.000165 of Recall@10, while the ones that lost them lose 0.001928
+-- an order of magnitude more. The ER is not what the recommender pays for; the
+concentration is. A candidate that raises the ER and leaves the balance where the control
+has it is the arm this campaign is looking for.
+
 # THE MEASURED REQUIREMENT A CANDIDATE HAS TO MEET
 
 The archived arms that raised the pair-level ER did not improve the recommender. The

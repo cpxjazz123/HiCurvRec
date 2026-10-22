@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T07:55:19.157606+00:00",
+  "generated_utc": "2026-10-22T10:58:06.335287+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -605,8 +605,48 @@
       "notes": "the controller now adopts any arm the store knows that cleared the gate and has no Stage-3, so an arm is never left unmeasured because a round moved on",
       "observation": "the rigid-motion family does what it was designed to do, and that is new evidence. The first arm that moved the codebook as a rigid body kept its balance: 239 level-0 codes in use against the control's 245, a level-0 Gini of 0.203 against the control's 0.216, and 67.2 prefix branches against 65.9. Its ER, however, FELL: 16.2266 against the control's 16.3345 and below the gate. So the balance and the enrichment ratio can be decoupled -- a mechanism can keep the codes balanced -- and the missing ingredient in this family is the DIRECTION of the motion, not its rigidity.",
       "status": "open"
+    },
+    {
+      "created_utc": "2026-10-22T10:58:06.335283+00:00",
+      "evidence_paths": [
+        "results/harness3_runs/transfer_analysis/stage3_transfer_report.json",
+        "results/harness3_runs/store/runs"
+      ],
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "an arm that clears the gate with a level-0 Gini at or below the control's and still loses more than 0.0005 of Recall@10",
+              "id": "P1",
+              "measurement": "the one Stage-3 each arm is allowed, against the archived control",
+              "statement": "among the arms that clear the gate, the one whose balance is closest to the control's loses the least downstream quality, and one that keeps the balance exactly would lose nothing"
+            }
+          ],
+          "statement": "the loss of the downstream quality comes from the CONCENTRATION, and the concentration is what the enrichment ratio pays for. An arm can therefore clear the gate and keep the balance, and the question is whether the pair-level enrichment can be raised by a partition that does not concentrate"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "an arm with no measurable balance change and a raised ER that still loses downstream quality",
+              "id": "P1",
+              "measurement": "the level-0 Gini, the number of codes in use, the prefix branches and the Stage-3 result of every arm",
+              "statement": "if the mechanism term itself is what costs the downstream quality, then the arms with the smallest balance change lose the least, and an arm with NO balance change and a raised ER would lose nothing at all"
+            }
+          ],
+          "statement": "an alternative reading: every arm is slightly worse than the control because the mechanism term perturbs the quantisation whatever it does, and the concentration only adds to that. The two readings are distinguished by an arm that keeps the balance exactly"
+        }
+      ],
+      "id": "H109-03",
+      "next_experiment": "read the four pending downstream measurements of the arms that cleared the gate, and let the next portfolio target the arms whose balance change is smallest while the ER rises",
+      "notes": "the pending measurements are the sharpest test yet: one of them has a better balance than the control and an ER above the gate, so if the hypothesis holds it is the arm that loses the least",
+      "observation": "the downstream loss is concentrated in the arms that lost their balance, not in the arms that raised the ER. Grouping the measured arms by whether the export kept the control's level-0 Gini and its prefix branches: the arms that kept them lose on average 0.000165 of Recall@10 and 0.000319 of NDCG@10, and the arms that lost them lose on average 0.001928 and 0.001355, an order of magnitude more. The arm with the best ER of the whole campaign (17.2983) and the arm whose balance is BETTER than the control's (Gini 0.193 against 0.216, 66.5 branches against 65.9) had no downstream measurement at all and are being measured now. This is a description of ten arms, not a causal claim.",
+      "status": "open"
     }
   ],
-  "ledger_sha256": "33e4231245dd863a62def506241430d1be6520e7a2a87c73abac649e58a3b44c",
+  "ledger_sha256": "7d855b15a7d26b129f7d2f7ae3914e166b6b40e72b8d5ddbe439667fe9ed1376",
   "ledger_version": 1
 }
