@@ -6,15 +6,6 @@
     "behavior_conditioned_pairwise_margin",
     "behavior_directed_code_assignment_cross_entropy",
     "curvature_weighted_transition_transport",
-    "directed_assignment_branch_entropy",
-    "directed_capacity_preserving_assignment_repartition",
-    "directed_codebook_repulsion",
-    "directed_margin_preserving_codebook_geometry",
-    "directed_pair_margin_rigid_codebook_geometry",
-    "directed_pair_separation_codebook_geometry",
-    "directed_residual_codebook_tangent_transport",
-    "directed_residual_transport_with_separation",
-    "directed_soft_assignment_information",
     "geometry_transport_seed43"
   ],
   "audit_cursor": 0,
@@ -51,6 +42,295 @@
       "delta_ndcg@10": null,
       "delta_recall@10": null,
       "er": null,
+      "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 380 items against the control's 237",
+          "magnitude": 143.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behavior_conditioned_pairwise_curvature",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 5487 items against the control's 237",
+          "magnitude": 5250.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 21.88 branches per code against the control's 65.91",
+          "magnitude": 44.02672546405496,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behavior_conditioned_pairwise_margin",
+      "modes": [],
+      "primary_mode": "unexplained"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 12653 items against the control's 237",
+          "magnitude": 12416.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behavior_directed_soft_code_transition_kl",
+      "modes": [
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.04 branches per code against the control's 65.91",
+          "magnitude": 1.8669067627050708,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behavior_residual_geometry_transport",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 253 items against the control's 237",
+          "magnitude": 16.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "behaviour_conditioned_residual_target",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 382 items against the control's 237",
+          "magnitude": 145.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 61.63 branches per code against the control's 65.91",
+          "magnitude": 4.276492819349961,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_assignment_branch_entropy",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 555 items against the control's 237",
+          "magnitude": 318.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_assignment_prefix_information",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 253 items against the control's 237",
+          "magnitude": 16.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 63.59 branches per code against the control's 65.91",
+          "magnitude": 2.3162786989795876,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_assignment_prefix_preservation",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 374 items against the control's 237",
+          "magnitude": 137.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 63.76 branches per code against the control's 65.91",
+          "magnitude": 2.1414165666266456,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_assignment_usage_balance",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 285 items against the control's 237",
+          "magnitude": 48.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_capacity_balanced_assignment_partition",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 249 items against the control's 237",
+          "magnitude": 12.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.01 branches per code against the control's 65.91",
+          "magnitude": 1.8983099489795876,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_capacity_constrained_assignment_partition",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 257 items against the control's 237",
+          "magnitude": 20.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.09 branches per code against the control's 65.91",
+          "magnitude": 1.8162786989795876,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 560 items against the control's 237",
+          "magnitude": 323.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_codebook_repulsion",
+      "modes": [
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.30 branches per code against the control's 65.91",
+          "magnitude": 1.6092474489795876,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
       "mechanism_id": "directed_codebook_tangent_repartition",
       "modes": [
         {
@@ -68,6 +348,64 @@
       "delta_ndcg@10": null,
       "delta_recall@10": null,
       "er": null,
+      "mechanism_id": "directed_codeword_margin_geometry",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 240 items against the control's 237",
+          "magnitude": 3.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_codeword_tangent_repulsion",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 245 items against the control's 237",
+          "magnitude": 8.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.48 branches per code against the control's 65.91",
+          "magnitude": 1.4222514812376517,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_margin_preserving_codebook_geometry",
+      "modes": [
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.27 branches per code against the control's 65.91",
+          "magnitude": 1.6404974489795876,
+          "magnitude_unit": "branches per L1 code lost against the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
       "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
       "modes": [
         {
@@ -75,6 +413,90 @@
           "evidence": "the largest level-0 cell holds 377 items against the control's 237",
           "magnitude": 140.0,
           "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_pair_separation_codebook_geometry",
+      "modes": [],
+      "primary_mode": "unexplained"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_residual_codebook_tangent_transport",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 275 items against the control's 237",
+          "magnitude": 38.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_residual_transport_with_separation",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 268 items against the control's 237",
+          "magnitude": 31.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "directed_soft_assignment_information",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 253 items against the control's 237",
+          "magnitude": 16.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        }
+      ],
+      "primary_mode": "concentration_or_collisions"
+    },
+    {
+      "cleared_the_gate": false,
+      "delta_ndcg@10": null,
+      "delta_recall@10": null,
+      "er": null,
+      "mechanism_id": "geometry_transport_seed43",
+      "modes": [
+        {
+          "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+          "evidence": "the largest level-0 cell holds 260 items against the control's 237",
+          "magnitude": 23.0,
+          "magnitude_unit": "items in the largest level-0 cell above the control's",
+          "mode": "concentration_or_collisions"
+        },
+        {
+          "counterexample": "a beam search has fewer codes to walk",
+          "evidence": "the L1 -> L2 tree has 64.43 branches per code against the control's 65.91",
+          "magnitude": 1.4769726514087438,
+          "magnitude_unit": "branches per L1 code lost against the control's",
           "mode": "concentration_or_collisions"
         }
       ],
@@ -712,6 +1134,15 @@
     },
     {
       "cleared_the_gate": false,
+      "delta_ndcg@10": -0.006272149921965654,
+      "delta_recall@10": -0.010794059785163387,
+      "er": null,
+      "mechanism_id": "directed_pair_separation_codebook_geometry",
+      "modes": [],
+      "primary_mode": "unexplained"
+    },
+    {
+      "cleared_the_gate": false,
       "delta_ndcg@10": -0.0013639790855453568,
       "delta_recall@10": -0.0030293006493845587,
       "er": null,
@@ -727,38 +1158,38 @@
     }
   ],
   "diagnosis_summary": {
-    "arms": 38,
-    "arms_with_no_diagnosis": 5,
+    "arms": 62,
+    "arms_with_no_diagnosis": 8,
     "mean_magnitude": {
-      "concentration_or_collisions": 435.113
+      "concentration_or_collisions": 521.724
     },
     "modes": {
-      "concentration_or_collisions": 45,
+      "concentration_or_collisions": 74,
       "conditional_l2_contamination": 2,
       "invalid_gradient": 1
     }
   },
   "evidence_summary": {
-    "arms_clearing_the_er_gate": 11,
+    "arms_clearing_the_er_gate": 12,
     "arms_improving_both_stage3_metrics": 0,
-    "arms_with_both_metrics": 12,
+    "arms_with_both_metrics": 13,
     "gap": "the frozen ER gate is cleared by arms whose Stage-3 quality does not move: the transfer from the pair-level ER to the recommender is the open problem"
   },
   "historical_fingerprints": {
-    "campaign_runs": 14,
-    "entries": 76,
-    "file_sha256": "9e753b7110089d78206835d50495e8c72418fb011e3f6a24a79d9a7bb3e46da3",
+    "campaign_runs": 24,
+    "entries": 100,
+    "file_sha256": "cde4beebf10bc78f91eddf2280991d4d214380b246473763c35c590c1b4f88ee",
     "historical_models": 38,
     "refreshed": true,
-    "registry_sha256": "1eb7ff3065157c14dcf8e727794c69de43c4c9913c4201298bfeeb1261cb455f",
+    "registry_sha256": "cdad15539528f123c45da1fe87fcbdf9faeaa728619c73e2dca2285a2ffd8c33",
     "sources": {
       "results/stage3_T5Train/monotonicity/model_inventory.csv": "44e31e5ccc511bd21cbe31d68798a545c97daeb9aec4aaf94714fa25ca897216"
     }
   },
   "jobs": {},
-  "next_action": "adopt 16 arm(s) whose frozen evaluation was never read",
+  "next_action": "join the evidence of the arms measured so far, diagnose them, and then design the next portfolio; the loop does not stop on a negative result",
   "pause_reason": "1 Stage-3 process tree(s) hold the GPU memory; a cold run alongside them exhausts the device",
-  "phase": "adopt",
+  "phase": "read",
   "portfolio": [],
   "portfolio_families": [
     "assignment_temperature",
@@ -767,7 +1198,7 @@
   ],
   "portfolio_retry": true,
   "queue": [],
-  "round": 57,
+  "round": 75,
   "round_summary": {
     "directed_assignment_branch_entropy": {
       "er": null,
@@ -846,7 +1277,7 @@
       "er": 16.601941747572816,
       "qualified": true,
       "stage3": {
-        "error": "the run exported no item_sids.json",
+        "error": "[no_repeated_stage3] Stage-3 was already measured for 'directed_pair_separation_codebook_geometry' in stage3-directed_pair_separation_codebook_geometry-20261022T172607; it is read once per arm",
         "ok": false
       }
     },
@@ -867,6 +1298,6 @@
     }
   },
   "scientific_stop": false,
-  "updated_utc": "2026-10-22T17:11:46.268121+00:00",
+  "updated_utc": "2026-10-22T17:57:28.263639+00:00",
   "version": 1
 }

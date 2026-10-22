@@ -5,7 +5,9 @@
   "novelty": "not measured against the historical record",
   "seed": 42,
   "runs": [
-    "stage2-directed_pair_separation_codebook_geometry-20261022T022522"
+    "probe-directed_pair_separation_codebook_geometry-20261022T175258",
+    "stage2-directed_pair_separation_codebook_geometry-20261022T022522",
+    "stage3-directed_pair_separation_codebook_geometry-20261022T172607"
   ],
   "official_cold_run": {
     "status": "cold_running",
@@ -49,15 +51,33 @@
     }
   },
   "gh1_probe": {
-    "g_h1": null,
-    "prior_ce_l1": null,
-    "probe_ce_l1": null,
-    "top1_acc_l1": null,
-    "top5_acc_l1": null,
-    "top20_acc_l1": null,
-    "split": null,
-    "probe_version": null,
-    "budget": null
+    "g_h1": 0.12257051039651562,
+    "prior_ce_l1": 5.369962256213949,
+    "probe_ce_l1": 4.7117632416597806,
+    "top1_acc_l1": 0.08587835401967348,
+    "top5_acc_l1": 0.21970438275737755,
+    "top20_acc_l1": 0.4227223566977391,
+    "split": {
+      "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+      "dev_rows": 38834,
+      "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+      "train_rows": 358124
+    },
+    "probe_version": "history_probe/fix48",
+    "budget": {
+      "batch_size": 512,
+      "dev_user_fraction": 0.1,
+      "dropout": 0.1,
+      "epochs": 6,
+      "grad_clip": 5.0,
+      "gru_hidden": 128,
+      "gru_layers": 1,
+      "label_smoothing": 0.0,
+      "lr": 0.001,
+      "seq_len": 20,
+      "token_embed_dim": 128,
+      "weight_decay": 0.0
+    }
   },
   "l1_structural_diagnostics": {
     "distinct_codes": 244,
@@ -67,16 +87,16 @@
     "sequence_information": 0.10245376547409718
   },
   "stage3": {
-    "test_recall@10": null,
-    "test_ndcg@10": null,
-    "delta_recall_vs_control": null,
-    "delta_ndcg_vs_control": null,
+    "test_recall@10": 0.053273907971935444,
+    "test_ndcg@10": 0.029034367097441116,
+    "delta_recall_vs_control": -0.010794059785163387,
+    "delta_ndcg_vs_control": -0.006272149921965654,
     "per_token": null
   },
   "deltas_vs_archived_control": {
     "er": 0.2674360812969283,
-    "recall": null,
-    "ndcg": null
+    "recall": -0.010794059785163387,
+    "ndcg": -0.006272149921965654
   },
   "artifacts": [
     {
@@ -96,11 +116,11 @@
     }
   ],
   "posterior_explanation": {
+    "cleared_the_gate": false,
+    "delta_ndcg@10": -0.006272149921965654,
+    "delta_recall@10": -0.010794059785163387,
+    "er": null,
     "mechanism_id": "directed_pair_separation_codebook_geometry",
-    "er": 16.601941747572816,
-    "cleared_the_gate": true,
-    "delta_recall@10": null,
-    "delta_ndcg@10": null,
     "modes": [],
     "primary_mode": "unexplained"
   },
@@ -123,8 +143,6 @@
     "the_archived_features_are_on_another_protocol": false
   },
   "missing": [
-    "the history-conditioned probe",
-    "the conditional level-2 discrimination",
-    "the downstream measurement"
+    "the conditional level-2 discrimination"
   ]
 }

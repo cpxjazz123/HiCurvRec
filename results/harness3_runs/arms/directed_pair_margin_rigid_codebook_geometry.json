@@ -134,23 +134,23 @@
     }
   ],
   "posterior_explanation": {
-    "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
-    "er": 16.226631056848532,
     "cleared_the_gate": false,
-    "delta_recall@10": null,
     "delta_ndcg@10": null,
+    "delta_recall@10": null,
+    "er": 16.226631056848532,
+    "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
     "modes": [
       {
-        "mode": "conditional_l2_contamination",
+        "counterexample": "the D2 cannot say anything about this arm",
         "evidence": "the conditional level-2 measurement is not supported: ['low_support']",
-        "counterexample": "the D2 cannot say anything about this arm"
+        "mode": "conditional_l2_contamination"
       },
       {
-        "mode": "concentration_or_collisions",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+        "evidence": "the largest level-0 cell holds 377 items against the control's 237",
         "magnitude": 140.0,
         "magnitude_unit": "items in the largest level-0 cell above the control's",
-        "evidence": "the largest level-0 cell holds 377 items against the control's 237",
-        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+        "mode": "concentration_or_collisions"
       }
     ],
     "primary_mode": "conditional_l2_contamination"

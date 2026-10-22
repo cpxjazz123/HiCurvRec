@@ -91,18 +91,18 @@
     }
   ],
   "posterior_explanation": {
-    "mechanism_id": "r8_control_seed43",
-    "er": 16.036655211912944,
     "cleared_the_gate": false,
-    "delta_recall@10": null,
     "delta_ndcg@10": null,
+    "delta_recall@10": null,
+    "er": 16.036655211912944,
+    "mechanism_id": "r8_control_seed43",
     "modes": [
       {
-        "mode": "concentration_or_collisions",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated",
+        "evidence": "the largest level-0 cell holds 262 items against the control's 237",
         "magnitude": 25.0,
         "magnitude_unit": "items in the largest level-0 cell above the control's",
-        "evidence": "the largest level-0 cell holds 262 items against the control's 237",
-        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+        "mode": "concentration_or_collisions"
       }
     ],
     "primary_mode": "concentration_or_collisions"
