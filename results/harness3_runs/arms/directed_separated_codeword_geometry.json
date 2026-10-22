@@ -77,16 +77,16 @@
   },
   "artifacts": [],
   "posterior_explanation": {
-    "mechanism_id": "directed_separated_codeword_geometry",
-    "er": null,
     "cleared_the_gate": false,
-    "delta_recall@10": -0.0030293006493845587,
     "delta_ndcg@10": -0.0013639790855453568,
+    "delta_recall@10": -0.0030293006493845587,
+    "er": null,
+    "mechanism_id": "directed_separated_codeword_geometry",
     "modes": [
       {
-        "mode": "invalid_gradient",
+        "counterexample": "1 of 8 declared checks failed",
         "evidence": "the independent checks measured the gradient and it did not match the declared target(s): ['gradient_target']",
-        "counterexample": "1 of 8 declared checks failed"
+        "mode": "invalid_gradient"
       }
     ],
     "primary_mode": "invalid_gradient"

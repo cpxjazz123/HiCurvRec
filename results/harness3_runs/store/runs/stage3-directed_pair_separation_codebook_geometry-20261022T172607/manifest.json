@@ -1,0 +1,32 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T17:26:07.142364+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage3",
+  "manifest_sha256": "31d1cb238d1535ddb04e850a0018afbaaca559a3f6d4c7bd8560edb73b284750",
+  "manifest_version": 1,
+  "mechanism_id": "directed_pair_separation_codebook_geometry",
+  "metrics": {
+    "stage3": {
+      "ndcg_delta_vs_archived_control": -0.006272149921965654,
+      "note": "read from the Stage-3 artifact already on disk",
+      "recall_delta_vs_archived_control": -0.010794059785163387,
+      "test_ndcg@10": 0.029034367097441116,
+      "test_recall@10": 0.053273907971935444
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage3-directed_pair_separation_codebook_geometry-20261022T172607",
+  "seed": 42,
+  "stage": "downstream",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

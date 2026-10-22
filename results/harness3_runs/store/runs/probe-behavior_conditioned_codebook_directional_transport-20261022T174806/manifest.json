@@ -1,0 +1,57 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T17:48:06.582883+00:00",
+  "extra": {
+    "sid_sha256": "35930af3e7122f115558d91158ca00c63bf20514bacb930d3ec482e35de56b78"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "probe",
+  "manifest_sha256": "91cccd7e20abcf2ddd0dfcf3f610b10bf6f391e5400701d8f175f600f61bcfe2",
+  "manifest_version": 1,
+  "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+  "metrics": {
+    "gh1_probe": {
+      "budget": {
+        "batch_size": 512,
+        "dev_user_fraction": 0.1,
+        "dropout": 0.1,
+        "epochs": 6,
+        "grad_clip": 5.0,
+        "gru_hidden": 128,
+        "gru_layers": 1,
+        "label_smoothing": 0.0,
+        "lr": 0.001,
+        "seq_len": 20,
+        "token_embed_dim": 128,
+        "weight_decay": 0.0
+      },
+      "g_h1": 0.1290052137907025,
+      "prior_ce_l1": 5.220385165061544,
+      "probe_ce_l1": 4.546928260772968,
+      "probe_version": "history_probe/fix48",
+      "role": "diagnostic; the frozen ER is the only pre-Stage-3 gate",
+      "split": {
+        "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+        "dev_rows": 38834,
+        "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+        "train_rows": 358124
+      },
+      "top1_acc_l1": 0.09262501931297316,
+      "top20_acc_l1": 0.45223257969820263,
+      "top5_acc_l1": 0.2357727764330226
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/harness3_runs/probes/behavior_conditioned_codebook_directional_transport",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "probe-behavior_conditioned_codebook_directional_transport-20261022T174806",
+  "seed": 42,
+  "stage": "gh1_probe",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

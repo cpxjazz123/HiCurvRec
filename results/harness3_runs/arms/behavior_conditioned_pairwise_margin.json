@@ -5,6 +5,7 @@
   "novelty": "not measured against the historical record",
   "seed": 42,
   "runs": [
+    "probe-behavior_conditioned_pairwise_margin-20261022T174838",
     "stage2-behavior_conditioned_pairwise_margin-20261021T143309"
   ],
   "official_cold_run": {
@@ -44,15 +45,33 @@
     }
   },
   "gh1_probe": {
-    "g_h1": null,
-    "prior_ce_l1": null,
-    "probe_ce_l1": null,
-    "top1_acc_l1": null,
-    "top5_acc_l1": null,
-    "top20_acc_l1": null,
-    "split": null,
-    "probe_version": null,
-    "budget": null
+    "g_h1": 0.12409012631042572,
+    "prior_ce_l1": 5.348072032159319,
+    "probe_ce_l1": 4.684429098171414,
+    "top1_acc_l1": 0.08760364628933409,
+    "top5_acc_l1": 0.22472575578101664,
+    "top20_acc_l1": 0.42715146521089764,
+    "split": {
+      "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+      "dev_rows": 38834,
+      "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+      "train_rows": 358124
+    },
+    "probe_version": "history_probe/fix48",
+    "budget": {
+      "batch_size": 512,
+      "dev_user_fraction": 0.1,
+      "dropout": 0.1,
+      "epochs": 6,
+      "grad_clip": 5.0,
+      "gru_hidden": 128,
+      "gru_layers": 1,
+      "label_smoothing": 0.0,
+      "lr": 0.001,
+      "seq_len": 20,
+      "token_embed_dim": 128,
+      "weight_decay": 0.0
+    }
   },
   "l1_structural_diagnostics": {
     "distinct_codes": 245,
@@ -101,11 +120,11 @@
     }
   ],
   "posterior_explanation": {
-    "mechanism_id": "behavior_conditioned_pairwise_margin",
-    "er": 16.334505666275888,
     "cleared_the_gate": false,
-    "delta_recall@10": null,
     "delta_ndcg@10": null,
+    "delta_recall@10": null,
+    "er": 16.334505666275888,
+    "mechanism_id": "behavior_conditioned_pairwise_margin",
     "modes": [],
     "primary_mode": "unexplained"
   },
@@ -128,7 +147,6 @@
     "the_archived_features_are_on_another_protocol": false
   },
   "missing": [
-    "the history-conditioned probe",
     "the conditional level-2 discrimination",
     "the downstream measurement"
   ]
