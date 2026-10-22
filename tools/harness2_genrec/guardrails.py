@@ -59,6 +59,9 @@ class ExecutionIntent:
     rerun_of: Optional[str] = None             # the arm this run repeats
     consumes_frozen_evaluation: bool = False
     semantic_key: str = ""                     # the normalised specification digest
+    sid_sha256: str = ""                       # the export this run would produce
+    fingerprint: str = ""                      # the mechanism's mathematics digest
+    sid_effect_fingerprint: str = ""           # the mechanism's declared effect on the codes
     note: str = ""
 
     def as_dict(self) -> Dict[str, Any]:
@@ -71,6 +74,9 @@ class ExecutionIntent:
             "rerun_of": self.rerun_of,
             "consumes_frozen_evaluation": self.consumes_frozen_evaluation,
             "semantic_key": self.semantic_key,
+            "sid_sha256": self.sid_sha256,
+            "fingerprint": self.fingerprint,
+            "sid_effect_fingerprint": self.sid_effect_fingerprint,
             "note": self.note,
         }
 
@@ -109,7 +115,8 @@ def check_intent(
             False,
             "single_seed",
             f"the project's frozen seed is {FROZEN_SEED} and this run asks for {intent.seed}; "
-            "multi-seed experiments are prohibited by issue #106",
+            "multi-seed experiments are prohibited by issue #106 and by issue #109, which "
+            "requires one stochastic realisation per genuinely new mechanism",
             checked,
             now_utc(),
         )
@@ -216,7 +223,100 @@ def check_intent(
                 now_utc(),
             )
 
+    # 8. exactly one official cold Stage-2 run per novel arm
+    checked.append("no_repeated_cold_run")
+    if intent.kind == "stage2" and store is not None:
+        trained = [
+            manifest
+            for manifest in store.runs()
+            if manifest.get("mechanism_id") == intent.mechanism_id
+            and manifest.get("kind") == "stage2"
+            and manifest.get("status") == "succeeded"
+        ]
+        if trained:
+            return GuardrailReport(
+                False,
+                "no_repeated_cold_run",
+                f"{intent.mechanism_id!r} already has an official cold Stage-2 run "
+                f"({trained[0].get('run_id')}); issue #109 allows exactly one fixed-seed "
+                "3000-epoch cold run per novel arm, and a further run is a new experiment "
+                "that needs a new mechanism",
+                checked,
+                now_utc(),
+            )
+
+    # 9. exactly one probe per arm, and none under a renamed arm
+    checked.append("no_repeated_probe")
+    if intent.kind == "probe" and store is not None:
+        probed = [
+            manifest
+            for manifest in store.runs()
+            if manifest.get("kind") == "probe"
+            and (
+                manifest.get("mechanism_id") == intent.mechanism_id
+                or (
+                    intent.sid_sha256
+                    and (manifest.get("extra") or {}).get("sid_sha256") == intent.sid_sha256
+                )
+            )
+        ]
+        if probed:
+            return GuardrailReport(
+                False,
+                "no_repeated_probe",
+                f"a probe was already run for {probed[0].get('mechanism_id')!r} "
+                f"({probed[0].get('run_id')}); issue #109 allows one lightweight probe per "
+                "genuinely new arm, and a probe under a renamed arm is the same probe",
+                checked,
+                now_utc(),
+            )
+
+    # 10. the mechanism must be new with respect to the whole historical record
+    checked.append("no_historical_repetition")
+    if intent.kind in ("stage2", "probe") and intent.fingerprint:
+        verdict = _novelty_verdict(intent)
+        if verdict is not None and not verdict.novel:
+            return GuardrailReport(
+                False,
+                "no_historical_repetition",
+                f"the mechanism repeats one that already exists: {verdict.detail} "
+                f"(matched {verdict.matched_component} {verdict.matched_id!r}); issue #109 "
+                "requires a mathematically substantive, independently auditable change",
+                checked,
+                now_utc(),
+            )
+
     return GuardrailReport(True, "", "", checked, "")
+
+
+def _novelty_verdict(intent: ExecutionIntent):
+    """The novelty verdict against the historical fingerprint registry, if it is available.
+
+    The registry is built from the archives, so it may legitimately be absent on a machine
+    that has not built it yet; in that case the check is skipped and the controller's own
+    startup builds it, so the rule is enforced for every run that is actually dispatched.
+    """
+    try:
+        from . import historical_fingerprints
+
+        registry = historical_fingerprints.load_registry(historical_fingerprints.DEFAULT_REGISTRY)
+    except Exception:  # noqa: BLE001
+        return None
+    for entry in registry.get("entries") or ():
+        if entry.get("primary") and entry.get("primary") == intent.fingerprint:
+            return historical_fingerprints.NoveltyResult(
+                False,
+                "primary",
+                entry.get("id", ""),
+                "the mechanism's mathematics matches a registered one",
+                intent.fingerprint,
+                intent.sid_effect_fingerprint,
+            )
+    return historical_fingerprints.NoveltyResult(
+        True,
+        primary=intent.fingerprint,
+        sid_effect=intent.sid_effect_fingerprint,
+    )
 
 
 def refuse_if_prohibited(
