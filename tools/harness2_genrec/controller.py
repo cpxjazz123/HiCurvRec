@@ -1546,10 +1546,13 @@ class Controller:
         portfolio would leave it waiting forever.
         """
         manifests = self.store.runs()
+        # the same criterion the guardrail uses: an arm is measured when a Stage-3 result is
+        # recorded for it, whatever kind of manifest carries it. Two criteria would make the
+        # controller retry arms the guardrail has already refused.
         measured = {
             manifest.get("mechanism_id")
             for manifest in manifests
-            if manifest.get("kind") == "stage3"
+            if (manifest.get("metrics") or {}).get("stage3")
         }
         waiting: List[Dict[str, Any]] = []
         for manifest in manifests:
