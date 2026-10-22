@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T06:08:01.202134+00:00",
+  "generated_utc": "2026-10-22T07:55:19.157606+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -565,8 +565,48 @@
       "notes": "the archived per-model ER and D2 come from the archived models' own evaluation protocol and their exports are not on this machine, so a new arm's frozen ER and D2 must not be read against the archived values; the baseline's historical relationships stand on their own",
       "observation": "the mission is one genuinely new mechanism that clears THREE frozen thresholds at once: the frozen Stage-2 Hard-L1 ER above 16.38953942232631, the Stage-3 Recall@10 above 0.06406796775709883 and the Stage-3 NDCG@10 above 0.03530651701940677, against the immutable archived r8_control (ER 16.334505666275888, Recall@10 0.06406796775709883, NDCG@10 0.03530651701940677). The thresholds are frozen and are never adjusted after the fact.",
       "status": "open"
+    },
+    {
+      "created_utc": "2026-10-22T07:55:19.157604+00:00",
+      "evidence_paths": [
+        "results/harness3_runs/transfer_analysis/stage3_transfer_report.json",
+        "results/harness3_runs/controller/audit.jsonl"
+      ],
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "a rigid-motion arm that keeps the balance and still does not raise the ER above the control's 16.3345, across several directions",
+              "id": "P1",
+              "measurement": "the frozen ER, the level-0 Gini, the distinct level-0 codes and the prefix branch count of every rigid-motion arm",
+              "statement": "a rigid motion whose direction is chosen to raise the positive pair share will raise the ER while the level-0 usage stays at or below the control's Gini and the number of codes in use stays at or above the control's"
+            }
+          ],
+          "statement": "a rigid motion changes which items are grouped without changing how the cells are sized, so it is the right instrument for the requirement the measurements state; this arm's balance confirms it, and its ER says only that this particular direction of the motion did not raise the pair-level enrichment"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "such an arm still loses Recall@10 and NDCG@10 against the archived control",
+              "id": "P1",
+              "measurement": "the one Stage-3 each of those arms is allowed, against the archived control's 0.06406796775709883 and 0.03530651701940677",
+              "statement": "an arm that clears the gate while keeping the balance does not lose downstream quality, because the downstream loss of the previous cohort came from the concentration and not from the ER"
+            }
+          ],
+          "statement": "the arms that clear the gate and keep the balance are the population the mission is about, and their downstream quality has never been measured: the arm with the best ER of the whole campaign (17.2983, level-0 Gini 0.229, 255 codes in use, 63.8 branches) and an arm at 16.6019 whose balance is better than the control's (Gini 0.193, 244 codes, 66.5 branches) had no Stage-3 at all"
+        }
+      ],
+      "id": "H109-02",
+      "next_experiment": "measure the downstream of the two arms that cleared the gate with a preserved balance, and keep the rigid-motion family in the portfolio with its direction as the thing to vary",
+      "notes": "the controller now adopts any arm the store knows that cleared the gate and has no Stage-3, so an arm is never left unmeasured because a round moved on",
+      "observation": "the rigid-motion family does what it was designed to do, and that is new evidence. The first arm that moved the codebook as a rigid body kept its balance: 239 level-0 codes in use against the control's 245, a level-0 Gini of 0.203 against the control's 0.216, and 67.2 prefix branches against 65.9. Its ER, however, FELL: 16.2266 against the control's 16.3345 and below the gate. So the balance and the enrichment ratio can be decoupled -- a mechanism can keep the codes balanced -- and the missing ingredient in this family is the DIRECTION of the motion, not its rigidity.",
+      "status": "open"
     }
   ],
-  "ledger_sha256": "b772f1d6405d22fb315cbefeef6abbe88bce814ebd4698532838817509c24045",
+  "ledger_sha256": "33e4231245dd863a62def506241430d1be6520e7a2a87c73abac649e58a3b44c",
   "ledger_version": 1
 }
