@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T00:40:24.849075+00:00",
+  "generated_utc": "2026-10-22T06:08:01.202134+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -512,8 +512,61 @@
       "notes": "recorded so the system does not build a screening gate on a statistic that does not predict the thing it is supposed to gate",
       "observation": "a mechanism-level 'does this mechanism want to merge a pair's codewords' statistic, computed on the proposal's own mini case by moving the source's and the target's nearest codewords toward each other and measuring the loss's response, does not predict the arm's ER either. Over the 13 arms that have both a mechanism module and a measured ER, the arms that cleared the gate average -0.032 and the arms that missed it average -0.048 -- the opposite sign to the hypothesis -- and the rank correlation with the ER is 0.27. The mini case is random vectors in a low dimension, which is not the geometry the merge happens in.",
       "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-22T06:08:01.202132+00:00",
+      "evidence_paths": [
+        "results/harness3_runs/historical_evidence/historical_evidence.json",
+        "results/harness3_runs/historical_fingerprints.json",
+        "docs/issue107_closing_report.md"
+      ],
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "an arm that holds the Gini and the branch count and still loses Recall@10 and NDCG@10 against the archived control",
+              "id": "P1",
+              "measurement": "the transfer analysis of every arm, refreshed before each portfolio, against the frozen ER and the Stage-3 result",
+              "statement": "an arm that raises the ER while the level-0 usage stays at or below the control's Gini and the L1 -> L2 prefix tree keeps at least as many branches will not lose downstream quality"
+            }
+          ],
+          "statement": "the pair-level ER and the downstream quality move in OPPOSITE directions, and the cause is code concentration: a behaviour-driven merge of the level-0 codes raises the positive match rate and the same merge removes the distinctions the recommender ranks by. The arm with the best ER of the previous campaign (17.13) had a level-0 Gini of 0.313 against the control's 0.216 and was the worst downstream of the cohort"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "a rigid-motion mechanism whose exported level-0 Gini still rises above the control's, or whose ER does not rise at all",
+              "id": "P1",
+              "measurement": "the level-0 Gini, the distinct level-0 codes and the prefix branch count of the export, against the archived control's",
+              "statement": "a mechanism that moves the codebook as a rigid body -- a rotation, a shear, an alignment of the configuration with the behaviour graph -- changes the grouping without pulling two codewords together, and therefore raises the ER without concentrating the codes"
+            }
+          ],
+          "statement": "the ER's denominator is a function of the cell SIZES alone and its numerator a function of the GROUPING, so the ER can rise without any cell getting worse. No arm has done this: every arm that raised the ER raised it by pulling a pair's codewords together"
+        },
+        {
+          "id": "E3",
+          "predictions": [
+            {
+              "falsifier": "a prospective arm whose proxy rank and its downstream outcome agree on every arm of a campaign",
+              "id": "P1",
+              "measurement": "the proxy scores and the Stage-3 results of every arm, compared case by case",
+              "statement": "an arm with a high G_H1 can still lose downstream quality, so the proxy is a hypothesis generator and not an admission rule"
+            }
+          ],
+          "statement": "the proxy scores may not be used to rank a portfolio as if they were certified. On the historical cohort, rebuilt from the seed-42 probe rows only, adding G_H1 to the ER lowers the Recall@10 out-of-fold MAE from 0.003753 to 0.002835 and adding D2 lowers it to 0.003169, but both family-cluster confidence intervals span zero, the proxies alone are WORSE than the ER alone, and 17 to 19 of the 38 models are counterexamples where the proxy predicts worse"
+        }
+      ],
+      "id": "H109-01",
+      "next_experiment": "a portfolio across several substantively different families, each candidate declaring a seven-group contract and its directional predictions for the ER's shares, G_H1, D2, the code usage and the Stage-3 per-token difficulty; the frozen ER stays the only pre-Stage-3 gate",
+      "notes": "the archived per-model ER and D2 come from the archived models' own evaluation protocol and their exports are not on this machine, so a new arm's frozen ER and D2 must not be read against the archived values; the baseline's historical relationships stand on their own",
+      "observation": "the mission is one genuinely new mechanism that clears THREE frozen thresholds at once: the frozen Stage-2 Hard-L1 ER above 16.38953942232631, the Stage-3 Recall@10 above 0.06406796775709883 and the Stage-3 NDCG@10 above 0.03530651701940677, against the immutable archived r8_control (ER 16.334505666275888, Recall@10 0.06406796775709883, NDCG@10 0.03530651701940677). The thresholds are frozen and are never adjusted after the fact.",
+      "status": "open"
     }
   ],
-  "ledger_sha256": "888df42809156d0fa0922ba1bf45f27f6e414444873a4ba22aead18c894ae82f",
+  "ledger_sha256": "b772f1d6405d22fb315cbefeef6abbe88bce814ebd4698532838817509c24045",
   "ledger_version": 1
 }
