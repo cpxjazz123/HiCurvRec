@@ -1254,6 +1254,35 @@ class Controller:
             },
         )
 
+    def _run_probe(self, mechanism_id: str, sid: Path) -> Dict[str, Any]:
+        """Run the history-conditioned probe in the project environment.
+
+        The controller's own environment has no numpy and no torch, so the probe runs as a
+        subprocess under the project's interpreter, exactly like the frozen evaluation does.
+        """
+        completed = subprocess.run(
+            [
+                PROJECT_PYTHON,
+                "-m",
+                "tools.harness2_genrec.history_probe",
+                "--mechanism-id",
+                mechanism_id,
+                "--sid",
+                str(sid),
+            ],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=7200,
+        )
+        try:
+            return json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            return {
+                "ok": False,
+                "error": (completed.stderr or completed.stdout or "no output")[-400:],
+            }
+
     def _probe_gh1(self, item: Dict[str, Any]) -> None:
         """The G_H1 probe for a trained arm: one run, seed 42, recorded as a diagnostic.
 
@@ -1285,25 +1314,7 @@ class Controller:
             return
         item["probe"] = {"started": True}
         self.save()
-        completed = subprocess.run(
-            [
-                PROJECT_PYTHON,
-                "-m",
-                "tools.harness2_genrec.history_probe",
-                "--mechanism-id",
-                mechanism_id,
-                "--sid",
-                str(sid),
-            ],
-            cwd=str(REPO_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=7200,
-        )
-        try:
-            record = json.loads(completed.stdout)
-        except json.JSONDecodeError:
-            record = {"ok": False, "error": (completed.stderr or completed.stdout)[-400:]}
+        record = self._run_probe(mechanism_id, sid)
         if not record.get("ok", True) and "g_h1" not in record:
             item["probe"] = {"ok": False, "error": record.get("error") or record.get("detail")}
             self.audit("probe_failed", mechanism_id=mechanism_id, detail=item["probe"]["error"])
@@ -1376,6 +1387,91 @@ class Controller:
                 kind="probe",
                 reason=f"{type(error).__name__}: {error}",
             )
+
+    def _probe_backlog(self) -> List[str]:
+        """Give the arms that have an export and no probe their one history-conditioned probe.
+
+        The probe reads the export and measures how much history the codes carry, and it is
+        the only instrument with enough support to say WHY an arm loses the downstream
+        quality: the export's shape and the enrichment ratio's own shares do not explain it
+        across the arms measured so far. Every arm gets at most one probe, the guardrail
+        sees the intent first, and the measurement is recorded with the arm.
+        """
+        from . import history_probe
+
+        probed = {
+            manifest.get("mechanism_id")
+            for manifest in self.store.runs()
+            if manifest.get("kind") == "probe"
+        }
+        done: List[str] = []
+        for manifest in self.store.runs():
+            if manifest.get("kind") != "stage2":
+                continue
+            mechanism_id = manifest.get("mechanism_id") or ""
+            if not mechanism_id or mechanism_id in probed:
+                continue
+            sid = None
+            for artifact in manifest.get("artifacts") or ():
+                path = str(artifact.get("path") or "")
+                if path.endswith("sids_for_hgrec.npy") and artifact.get("exists"):
+                    sid = Path(path)
+                    break
+            if sid is None or not sid.is_file():
+                continue
+            extra = manifest.get("extra") or {}
+            intent = ExecutionIntent(
+                kind="probe",
+                mechanism_id=mechanism_id,
+                semantic_key=extra.get("semantic_key", ""),
+                sid_sha256=sha256_file(sid),
+                fingerprint=extra.get("fingerprint", ""),
+                sid_effect_fingerprint=extra.get("sid_effect_fingerprint", ""),
+            )
+            verdict = check_intent(intent, self.store)
+            if not verdict.allowed:
+                self.audit(
+                    "refuse",
+                    mechanism_id=mechanism_id,
+                    kind="probe",
+                    rule=verdict.rule,
+                    detail=verdict.detail,
+                )
+                continue
+            record = self._run_probe(mechanism_id, sid)
+            if record.get("g_h1") is None and record.get("ok") is False:
+                self.audit(
+                    "probe_failed",
+                    mechanism_id=mechanism_id,
+                    reason=record.get("error") or record.get("detail"),
+                )
+                continue
+            item = {
+                "mechanism_id": mechanism_id,
+                "probe": {
+                    "started": True,
+                    "g_h1": record.get("g_h1"),
+                    "prior_ce_l1": record.get("prior_ce_l1"),
+                    "probe_ce_l1": record.get("probe_ce_l1"),
+                    "top1_acc_l1": record.get("top1_acc_l1"),
+                    "top5_acc_l1": record.get("top5_acc_l1"),
+                    "top20_acc_l1": record.get("top20_acc_l1"),
+                    "split": record.get("split"),
+                    "sid_sha256": record.get("sid_sha256"),
+                    "probe_version": record.get("probe_version"),
+                    "budget": record.get("budget"),
+                    "role": "diagnostic; the frozen ER is the only pre-Stage-3 gate",
+                },
+            }
+            self._record_probe_in_store(item)
+            self.audit(
+                "probe",
+                mechanism_id=mechanism_id,
+                g_h1=record.get("g_h1"),
+                source="the backlog",
+            )
+            done.append(mechanism_id)
+        return done
 
     def _adopt_pending_stage3s(self) -> bool:
         """Measure the arms the store knows that cleared the gate and have no Stage-3.
