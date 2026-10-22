@@ -87,6 +87,17 @@ ANGLES: Dict[str, str] = {
         "without touching the codebook's usage. The failed OT lane moved the assignment; this "
         "moves the target."
     ),
+    "rigid_behaviour_alignment": (
+        "Move the codebook as a RIGID BODY, so the level-0 partition changes without two "
+        "codewords being pulled together. The frozen ER is a ratio of two shares over the "
+        "level-0 code: its denominator is the probability that two random items share a "
+        "code, which is a function of the cell SIZES only, and its numerator is a function "
+        "of which items are grouped. Every arm that raised the ER did it by pulling a pair's "
+        "codewords together, which changes the sizes and merges the cells. A motion that "
+        "preserves the codebook's pairwise geometry -- a rotation, a shear, an alignment of "
+        "the configuration with the behaviour graph -- changes the grouping without pulling "
+        "two codewords together, so the numerator can rise while the sizes barely move."
+    ),
     "ranking_space_behaviour_regulariser": (
         "Regularise the RANKING of the L1 logits with the behaviour, and nothing else: a term "
         "that only reorders which item is closest, with no effect on the codebook's geometry or "
