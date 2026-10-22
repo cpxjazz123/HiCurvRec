@@ -201,11 +201,27 @@ look. The conditional L2 discrimination is computed on the frozen behaviour pair
 only about one per cent of the pairs share their level-1 code, so its positive conditional
 set is a few hundred pairs: every arm's D2 so far carries a LOW SUPPORT flag, and the
 historical D2 column is too weak to rank anything either. The history-conditioned gain is
-the more promising of the two, and it is neutral on the arms measured so far -- the rigid
-arm that kept its balance reads 0.1232 and the repartition arm 0.1234, against a historical
-range of 0.004 to 0.195. So the honest position is: the balance is the requirement, the
+the more promising of the two, and the cohort below says it is the one that orders the arms.
+So the honest position is: the balance is a requirement, the
 history gain is the hypothesis, and what decides is whether an arm can hold the balance
 while the ER rises -- which no arm has yet done.
+
+And the campaign's own cohort says which instrument is worth anything. Every arm that had
+an export was given its one history-conditioned probe, so twelve arms now carry the frozen
+ER, the history-conditioned gain and the one Stage-3 each of them is allowed. Across those
+twelve, the history-conditioned gain's rank correlation with the downstream Recall@10 is
++0.45 and with the NDCG@10 +0.44, while the frozen ER's is +0.10 and +0.15. The gain's
+range across the cohort is narrow -- 0.1201 to 0.1258 -- and the ORDERING inside that band
+is what tracks the loss. So a candidate that raises the history-conditioned gain as well as
+the ER is the candidate worth testing next. That is a retrospective association on a cohort
+that has already been inspected: it is a hypothesis, not a mechanism, and it is not a
+certification.
+
+The same cohort REFUTES the balance hypothesis, and the refutation is sharp. The arm with
+the best balance of the whole cohort -- ER 16.6019 with a level-0 Gini of 0.193 against the
+control's 0.216, a largest cell of 253 against 237 and 66.5 prefix branches against 65.9,
+better on all three -- lost the most downstream quality of any arm, 0.0108 of Recall@10,
+three times the next worst. Holding the balance does not protect the recommender.
 
 # WHAT THE FROZEN ER ACTUALLY MEASURES
 
