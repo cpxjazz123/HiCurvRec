@@ -385,6 +385,67 @@ class Controller:
                 continue
         return lost
 
+    def _diagnose_arms(self) -> Dict[str, Any]:
+        """Diagnose every arm the store knows, with the measurements behind each verdict."""
+        from . import diagnosis
+
+        transfer = {}
+        transfer_path = self.config.campaign / "transfer_analysis" / "stage3_transfer_report.json"
+        if transfer_path.is_file():
+            try:
+                transfer = json.loads(transfer_path.read_text(encoding="utf-8")).get("arms") or {}
+            except (OSError, json.JSONDecodeError):
+                transfer = {}
+
+        rows: List[Dict[str, Any]] = []
+        for manifest in self.store.runs():
+            mechanism_id = manifest.get("mechanism_id") or ""
+            metrics = manifest.get("metrics") or {}
+            evaluation = metrics.get("frozen_evaluation") or {}
+            stage3 = metrics.get("stage3") or {}
+            probe = metrics.get("gh1_probe") or {}
+            candidate = self._candidate_record(mechanism_id)
+            screening = (candidate or {}).get("stages") or {}
+            row = diagnosis.diagnose(
+                mechanism_id=mechanism_id,
+                evaluation={
+                    "hard_l1_er": evaluation.get("hard_l1_er")
+                    if evaluation.get("hard_l1_er") is not None
+                    else evaluation.get("l1_er"),
+                    "pos_share": evaluation.get("pos_share"),
+                    "neg_share": evaluation.get("neg_share"),
+                    "d2_flags": (evaluation.get("d2_block") or {}).get("flags"),
+                },
+                stage3={
+                    "test_recall@10": stage3.get("test_recall@10"),
+                    "test_ndcg@10": stage3.get("test_ndcg@10"),
+                },
+                probe={"g_h1": probe.get("g_h1")},
+                structure=transfer.get(mechanism_id) or {},
+                screening={"judges": screening.get("judges")},
+                export_sensitivity=screening.get("export_sensitivity") or {},
+            )
+            rows.append(row)
+        summary = diagnosis.summarise(rows)
+        self.state["diagnoses"] = rows
+        self.state["diagnosis_summary"] = summary
+        self.audit("diagnose", **summary)
+        return summary
+
+    def _candidate_record(self, mechanism_id: str) -> Optional[Dict[str, Any]]:
+        """The screening record of an arm, from the round that produced it."""
+        rounds = self.config.results
+        if not rounds.is_dir():
+            return None
+        for round_dir in sorted(rounds.glob("round_*"), reverse=True):
+            path = round_dir / mechanism_id / "candidate.json"
+            if path.is_file():
+                try:
+                    return json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    return None
+        return None
+
     # ---------------------------------------------------------------- the phases
     def phase_read(self) -> None:
         """Phase 1: take in the new evidence and name the gap the round is about."""
@@ -440,6 +501,7 @@ class Controller:
             for row in cleared
             if row["recall_delta"] > 0 and row["ndcg_delta"] > 0
         ]
+        self._diagnose_arms()
         self.state["evidence_summary"] = {
             "arms_with_both_metrics": len(qualified),
             "arms_clearing_the_er_gate": len(cleared),
