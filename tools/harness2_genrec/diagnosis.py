@@ -134,6 +134,8 @@ def diagnose(
         modes.append(
             {
                 "mode": "concentration_or_collisions",
+                "magnitude": float(largest_cell - CONTROL_LARGEST_CELL),
+                "magnitude_unit": "items in the largest level-0 cell above the control's",
                 "evidence": f"the largest level-0 cell holds {largest_cell} items against the "
                 f"control's {CONTROL_LARGEST_CELL}",
                 "counterexample": "the tail of the usage is where the measured downstream loss "
@@ -145,6 +147,8 @@ def diagnose(
         modes.append(
             {
                 "mode": "concentration_or_collisions",
+                "magnitude": float(CONTROL_BRANCHES - mean_branches),
+                "magnitude_unit": "branches per L1 code lost against the control's",
                 "evidence": f"the L1 -> L2 tree has {mean_branches:.2f} branches per code against "
                 f"the control's {CONTROL_BRANCHES:.2f}",
                 "counterexample": "a beam search has fewer codes to walk",
@@ -182,15 +186,27 @@ def diagnose(
 
 
 def summarise(diagnoses: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """How the cohort's failures are distributed."""
+    """How the cohort's failures are distributed, and how large each failure is.
+
+    The count alone is not enough: a mode that every arm carries tells the reader nothing
+    about which of them it explains, so the mean MAGNITUDE of each mode is reported with it.
+    """
     counts: Dict[str, int] = {}
+    magnitudes: Dict[str, List[float]] = {}
     for row in diagnoses:
         for mode in row.get("modes") or ():
-            counts[mode["mode"]] = counts.get(mode["mode"], 0) + 1
+            name = mode["mode"]
+            counts[name] = counts.get(name, 0) + 1
+            magnitude = mode.get("magnitude")
+            if magnitude is not None:
+                magnitudes.setdefault(name, []).append(float(magnitude))
     unexplained = sum(1 for row in diagnoses if row.get("primary_mode") == "unexplained")
     return {
         "arms": len(diagnoses),
         "modes": dict(sorted(counts.items(), key=lambda item: -item[1])),
+        "mean_magnitude": {
+            name: round(sum(values) / len(values), 4) for name, values in sorted(magnitudes.items())
+        },
         "arms_with_no_diagnosis": unexplained,
     }
 

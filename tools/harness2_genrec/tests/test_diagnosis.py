@@ -121,3 +121,6 @@ def test_the_summary_counts_the_modes():
     assert summary["modes"]["concentration_or_collisions"] == 1
     assert summary["modes"]["invalid_gradient"] == 1
     assert summary["arms_with_no_diagnosis"] == 1
+    # the mean magnitude is reported with the count, because a mode every arm carries
+    # says nothing about which of them it explains
+    assert summary["mean_magnitude"]["concentration_or_collisions"] == 137.0
