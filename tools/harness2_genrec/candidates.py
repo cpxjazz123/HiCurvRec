@@ -275,15 +275,19 @@ def propose_candidates(
     *,
     model: str = "",
     timeout: int = 2400,
+    extra_instruction: str = "",
 ) -> Dict[str, Any]:
     """The agent chooses the candidates; the controller freezes each one."""
     from . import opencode
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    brief = _brief(store, ledger_text)
+    if extra_instruction:
+        brief = f"{brief}\n\n# THE PORTFOLIO IS ASKED AGAIN\n\n{extra_instruction}"
     result = opencode.run_agent(
         out_dir,
-        _brief(store, ledger_text),
+        brief,
         model=model or opencode.model_name(),
         timeout=timeout,
         title="candidate mechanisms",
