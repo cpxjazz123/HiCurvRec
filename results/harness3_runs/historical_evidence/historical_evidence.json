@@ -734,6 +734,16 @@
     },
     "note": "the historical ER range is the support a new arm's ER has to fall inside for the historical relationship to be applicable at all"
   },
+  "protocol_comparability": {
+    "archived_er_range": [
+      1.0346705124054507,
+      16.434583014537107
+    ],
+    "archived_control_er": 10.09075907590759,
+    "frozen_control_er": 16.334505666275888,
+    "the_archived_features_are_the_frozen_pair_product": false,
+    "note": "the archived per-model ER and D2 come from the archived models' own evaluation protocol, and their SID exports are not on this machine, so they cannot be recomputed on the frozen pair product. The historical relationships below are internally consistent, but a new arm's frozen ER and D2 are not on the same scale as the archived ones and must not be ranked against them"
+  },
   "abstention": {
     "certified_for_screening": false,
     "reason": "five historical families and an already-inspected cohort cannot certify a proxy for rejecting arms; the frozen ER stays the only pre-Stage-3 gate",

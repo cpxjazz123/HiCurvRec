@@ -22,6 +22,12 @@ The ER-only Recall@10 out-of-fold MAE is 0.003753 (historical reference 0.003753
 
 **Not certified for screening.** The frozen ER stays the only pre-Stage-3 gate.
 
+## Protocol comparability
+
+- the archived per-model ER range: [1.0346705124054507, 16.434583014537107]
+- the archived control's ER: 10.09075907590759; the frozen control's: 16.334505666275888
+- the archived per-model ER and D2 come from the archived models' own evaluation protocol, and their SID exports are not on this machine, so they cannot be recomputed on the frozen pair product. The historical relationships below are internally consistent, but a new arm's frozen ER and D2 are not on the same scale as the archived ones and must not be ranked against them
+
 ## Limitations
 
 - #48 is invalidated; only the corrected #49 archive is read

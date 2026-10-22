@@ -60,6 +60,14 @@ def load_sid_matrix(path: Path) -> np.ndarray:
     return matrix
 
 
+def _evaluation_set_label() -> str:
+    """The evaluation set's path, relative to the repository when it lives inside it."""
+    try:
+        return str(VALID_PAIRS.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(VALID_PAIRS)
+
+
 def evaluate(sid_path: Path, *, bootstrap: bool = False) -> Dict[str, Any]:
     """The L1 prefix enrichment ratio of one arm's exported SIDs."""
     sid_path = Path(sid_path)
@@ -107,14 +115,170 @@ def evaluate(sid_path: Path, *, bootstrap: bool = False) -> Dict[str, Any]:
         "l1_er_status": status,
         "frozen_threshold": FROZEN_L1_ER,
         "r4_08_reference": FROZEN_R4_08_ER,
-        "evaluation_set": str(VALID_PAIRS.relative_to(REPO_ROOT)),
+        "evaluation_set": _evaluation_set_label(),
         "evaluation_set_sha256": sha256_file(VALID_PAIRS),
     }
     if isinstance(er, float):
         report["above_frozen_threshold"] = bool(er > FROZEN_L1_ER)
+    report["d2"] = conditional_l2_discrimination(
+        sid, anchors, positives, negatives
+    )
     if bootstrap:
         report["bootstrap"] = _bootstrap(positive_match, negative_match)
     return report
+
+
+#: A conditional set with fewer pairs than this is reported as low support.
+LOW_SUPPORT_PAIRS = 1000
+
+#: The replicates of the anchor-cluster bootstrap of the D2.
+D2_BOOTSTRAP_REPLICATES = 1000
+D2_BOOTSTRAP_SEED = 42
+
+#: The replicates are drawn in chunks, so the resampling matrix stays small.
+D2_BOOTSTRAP_CHUNK = 50
+
+
+def conditional_l2_discrimination(
+    sid: np.ndarray,
+    anchors: np.ndarray,
+    positives: np.ndarray,
+    negatives: np.ndarray,
+    *,
+    replicates: int = D2_BOOTSTRAP_REPLICATES,
+    seed: int = D2_BOOTSTRAP_SEED,
+) -> Dict[str, Any]:
+    """The conditional level-2 discrimination, from the SAME frozen read.
+
+    ``D2 = P(shared L2 | shared L1, positive pair) - P(shared L2 | shared L1, negative pair)``
+
+    It is computed here, from the pairs this evaluation has already loaded, because the
+    frozen pair read may happen only once per arm: asking for D2 must never cost a second
+    read of the held-out pairs.
+
+    The uncertainty is a bootstrap over ANCHORS, because the pairs that share an anchor are
+    not independent, and the resampling unit has to be the anchor.
+    """
+    if sid.shape[1] < 3:
+        return {"ok": False, "reason": "the export carries no level-2 column"}
+
+    anchor_l1 = sid[anchors, 1]
+    positive_l1 = sid[positives, 1]
+    anchor_l2 = sid[anchors, 2]
+    positive_l2 = sid[positives, 2]
+    negative_l1 = sid[negatives, 1]
+    negative_l2 = sid[negatives, 2]
+
+    positive_shared_l1 = anchor_l1 == positive_l1
+    positive_shared_l2 = anchor_l2 == positive_l2
+    negative_shared_l1 = anchor_l1[:, None] == negative_l1
+    negative_shared_l2 = anchor_l2[:, None] == negative_l2
+
+    # the per-anchor sufficient statistics, which are what the bootstrap resamples
+    positive_denominator = positive_shared_l1.astype(np.int64)
+    positive_numerator = (positive_shared_l1 & positive_shared_l2).astype(np.int64)
+    negative_denominator = negative_shared_l1.sum(axis=1).astype(np.int64)
+    negative_numerator = (negative_shared_l1 & negative_shared_l2).sum(axis=1).astype(np.int64)
+
+    denominator_positive = int(positive_denominator.sum())
+    numerator_positive = int(positive_numerator.sum())
+    denominator_negative = int(negative_denominator.sum())
+    numerator_negative = int(negative_numerator.sum())
+
+    flags: List[str] = []
+    if denominator_positive == 0 or denominator_negative == 0:
+        flags.append("undefined_zero_denominator")
+    if (
+        denominator_positive < LOW_SUPPORT_PAIRS
+        or denominator_negative < LOW_SUPPORT_PAIRS
+    ):
+        flags.append("low_support")
+
+    if denominator_positive == 0 or denominator_negative == 0:
+        conditional_positive: Any = None
+        conditional_negative: Any = None
+        difference: Any = None
+    else:
+        conditional_positive = float(numerator_positive / denominator_positive)
+        conditional_negative = float(numerator_negative / denominator_negative)
+        difference = float(conditional_positive - conditional_negative)
+
+    interval = _anchor_cluster_interval(
+        positive_numerator,
+        positive_denominator,
+        negative_numerator,
+        negative_denominator,
+        replicates=replicates,
+        seed=seed,
+    )
+
+    return {
+        "ok": True,
+        "definition": (
+            "P(shared L2 | shared L1, positive pair) - P(shared L2 | shared L1, negative pair)"
+        ),
+        "conditional_positive": conditional_positive,
+        "conditional_negative": conditional_negative,
+        "d2": difference,
+        "numerator_positive": numerator_positive,
+        "denominator_positive": denominator_positive,
+        "numerator_negative": numerator_negative,
+        "denominator_negative": denominator_negative,
+        "anchors": int(anchors.shape[0]),
+        "anchors_with_a_shared_l1_positive": int((positive_denominator > 0).sum()),
+        "anchors_with_a_shared_l1_negative": int((negative_denominator > 0).sum()),
+        "flags": flags,
+        "undefined": "undefined_zero_denominator" in flags,
+        "low_support": "low_support" in flags,
+        "anchor_cluster_ci95": interval,
+        "computed_from": "the same frozen pair read as the enrichment ratio",
+    }
+
+
+def _anchor_cluster_interval(
+    positive_numerator: np.ndarray,
+    positive_denominator: np.ndarray,
+    negative_numerator: np.ndarray,
+    negative_denominator: np.ndarray,
+    *,
+    replicates: int = D2_BOOTSTRAP_REPLICATES,
+    seed: int = D2_BOOTSTRAP_SEED,
+    chunk: int = D2_BOOTSTRAP_CHUNK,
+) -> Dict[str, Any]:
+    """The bootstrap confidence interval of the D2, resampling the anchors."""
+    rows = int(positive_denominator.shape[0])
+    if rows == 0:
+        return {"low": None, "high": None, "replicates": replicates, "reason": "no anchors"}
+    rng = np.random.default_rng(seed)
+    differences: List[np.ndarray] = []
+    remaining = replicates
+    while remaining > 0:
+        size = min(chunk, remaining)
+        draws = rng.integers(0, rows, size=(size, rows))
+        positive_num = positive_numerator[draws].sum(axis=1)
+        positive_den = positive_denominator[draws].sum(axis=1)
+        negative_num = negative_numerator[draws].sum(axis=1)
+        negative_den = negative_denominator[draws].sum(axis=1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            values = np.where(
+                (positive_den > 0) & (negative_den > 0),
+                positive_num / positive_den - negative_num / negative_den,
+                np.nan,
+            )
+        differences.append(values)
+        remaining -= size
+    finite = np.concatenate(differences)
+    finite = finite[np.isfinite(finite)]
+    if finite.size == 0:
+        return {"low": None, "high": None, "replicates": replicates, "reason": "no defined draw"}
+    low, high = np.quantile(finite, [0.025, 0.975])
+    return {
+        "low": float(low),
+        "high": float(high),
+        "replicates": int(replicates),
+        "unit": "anchor",
+        "seed": int(seed),
+    }
 
 
 def _bootstrap(positive_match: np.ndarray, negative_match: np.ndarray,

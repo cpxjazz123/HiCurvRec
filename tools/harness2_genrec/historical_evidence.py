@@ -416,6 +416,7 @@ def analyse(root: Path = REPO_ROOT, *, expected_models: Optional[int] = 38) -> D
                 "for the historical relationship to be applicable at all"
             ),
         },
+        "protocol_comparability": _protocol_comparability(complete),
         "abstention": {
             "certified_for_screening": False,
             "reason": (
@@ -436,6 +437,36 @@ def analyse(root: Path = REPO_ROOT, *, expected_models: Optional[int] = 38) -> D
             "pristine prospective confirmatory test",
             "no predictor here is certified to reject an arm or to declare success",
         ],
+    }
+
+
+def _protocol_comparability(complete: pd.DataFrame) -> Dict[str, Any]:
+    """What the archived features can and cannot be compared with.
+
+    The archived per-model ER and D2 were computed on the archived models' own evaluation
+    protocol. Their SID exports are not on this machine, so they cannot be recomputed on the
+    frozen pair product, and the two are demonstrably on different scales: the archived
+    control's ER is 9.907 while the frozen control's is 16.3345. A new arm's frozen ER and
+    D2 therefore cannot be read against the archived values, and the archived D2 in
+    particular must not be used to rank a new arm.
+    """
+    archived_er = np.exp(complete["log_er_l1"].to_numpy(dtype="float64"))
+    control_rows = complete[complete["model"].astype(str).str.contains("curvature_RQ-VAE")]
+    archived_control_er = (
+        float(np.exp(control_rows["log_er_l1"].iloc[0])) if len(control_rows) else None
+    )
+    return {
+        "archived_er_range": [float(archived_er.min()), float(archived_er.max())],
+        "archived_control_er": archived_control_er,
+        "frozen_control_er": 16.334505666275888,
+        "the_archived_features_are_the_frozen_pair_product": False,
+        "note": (
+            "the archived per-model ER and D2 come from the archived models' own evaluation "
+            "protocol, and their SID exports are not on this machine, so they cannot be "
+            "recomputed on the frozen pair product. The historical relationships below are "
+            "internally consistent, but a new arm's frozen ER and D2 are not on the same "
+            "scale as the archived ones and must not be ranked against them"
+        ),
     }
 
 
@@ -469,6 +500,13 @@ def _markdown(report: Dict[str, Any]) -> str:
     lines += [
         "",
         "**Not certified for screening.** The frozen ER stays the only pre-Stage-3 gate.",
+        "",
+        "## Protocol comparability",
+        "",
+        f"- the archived per-model ER range: {report['protocol_comparability']['archived_er_range']}",
+        f"- the archived control's ER: {report['protocol_comparability']['archived_control_er']}; "
+        f"the frozen control's: {report['protocol_comparability']['frozen_control_er']}",
+        f"- {report['protocol_comparability']['note']}",
         "",
         "## Limitations",
         "",
