@@ -1,0 +1,70 @@
+{
+  "mechanism_id": "directed_codebook_frame_alignment",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_032/retry/directed_codebook_frame_alignment/proposal.json",
+  "started_utc": "2026-10-22T06:34:31.485469+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_codebook_frame_alignment",
+      "tokens": {
+        "input": 22712,
+        "output": 1242,
+        "reasoning": 624
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": true,
+      "detail": "all 8 declared checks hold",
+      "failed": []
+    },
+    "probe": {
+      "ok": true,
+      "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "occupancy_ratio_vs_host": 0.6822
+    },
+    "export_sensitivity": {
+      "verdict": "active",
+      "changed_fraction": {
+        "levels_1": 0.8888030259893439,
+        "levels_2": 0.99963395290194,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 0.6822429906542057
+    },
+    "guardrails": {
+      "allowed": true,
+      "rule": "",
+      "detail": "",
+      "checked": [
+        "single_seed",
+        "no_control_retrain",
+        "no_archived_policy_execution",
+        "no_failed_arm_rerun",
+        "no_repeated_frozen_evaluation",
+        "no_repeated_stage3",
+        "no_semantic_duplicate",
+        "no_repeated_cold_run",
+        "no_repeated_probe",
+        "no_historical_repetition"
+      ],
+      "refused_utc": ""
+    },
+    "cold_launch": {
+      "started": false,
+      "status": null,
+      "refused": "CGV gate: CGV produced no readable result (rc=1)",
+      "cgv_gate": {
+        "passed": false,
+        "gates": {},
+        "note": "CGV produced no readable result (rc=1)"
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_frame_alignment/r8_control"
+    }
+  },
+  "admitted": true,
+  "status": "failed",
+  "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_frame_alignment/r8_control",
+  "wall_clock_s": 99.7,
+  "cold_run_gpu_minutes": null
+}

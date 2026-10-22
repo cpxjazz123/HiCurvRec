@@ -1,0 +1,95 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition/r8_control/sids_for_hgrec.npy",
+      "sha256": "af6abe759f94e608e367227aa9d3fceb2218e616dde9d628294ae762d11cb1de"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition/r8_control/rqvae_best.pth",
+      "sha256": "41b6df4b60d209a045e478af8c8de5fe4757ee32401d1c217ebe10bf32d11b6d"
+    },
+    {
+      "bytes": 1260638,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition/r8_control/item_sids.json",
+      "sha256": "691f6ee4ab0cb7547b8f6c83cb5be1ed85e1e1bde550a0f6f3d8577359f8b63c"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-22T07:55:14.900009+00:00",
+  "extra": {
+    "cgv_gate": {
+      "gates": {
+        "G1": "passed",
+        "G2": "passed",
+        "G3": "passed",
+        "G4": "passed",
+        "G5": "passed",
+        "G6": "passed"
+      },
+      "note": "all six gates passed on the supplied declaration",
+      "passed": true
+    },
+    "fingerprint": "c2320abd40b52ba2b86852df7a59f7d667dd2d7f054b32758c8c23ad76ed70b6",
+    "semantic_key": "1028ea40f4195d678d9e1270efdf6d76b8457461f3df4e95ddec8b99a0f85608"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "6330d2179922192c67e1730b0ff9be1ac28d53589f0c710d06676dd3392c377b",
+  "manifest_version": 1,
+  "mechanism_id": "directed_codebook_tangent_repartition",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": true,
+      "d2": 0.046925155740512835,
+      "d2_block": {
+        "anchor_cluster_ci95": {
+          "high": 0.06727228489782516,
+          "low": 0.029511662937611607,
+          "replicates": 1000,
+          "seed": 42,
+          "unit": "anchor"
+        },
+        "anchors": 52855,
+        "anchors_with_a_shared_l1_negative": 2290,
+        "anchors_with_a_shared_l1_positive": 538,
+        "computed_from": "the same frozen pair read as the enrichment ratio",
+        "conditional_negative": 0.005119453924914676,
+        "conditional_positive": 0.05204460966542751,
+        "d2": 0.046925155740512835,
+        "definition": "P(shared L2 | shared L1, positive pair) - P(shared L2 | shared L1, negative pair)",
+        "denominator_negative": 2344,
+        "denominator_positive": 538,
+        "flags": [
+          "low_support"
+        ],
+        "low_support": true,
+        "numerator_negative": 12,
+        "numerator_positive": 28,
+        "ok": true,
+        "undefined": false
+      },
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.499402628434886,
+      "l1_er": 16.499402628434886,
+      "neg_share": 0.0047507331378299125,
+      "pos_share": 0.07838425882130357
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_codebook_tangent_repartition-20261022T075514",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

@@ -1,0 +1,112 @@
+{
+  "ok": false,
+  "detail": "1 of 8 declared checks failed",
+  "checks": [
+    {
+      "id": "permute_codebook",
+      "ok": true,
+      "detail": "the codebook rows were permuted: the loss is unchanged",
+      "measurements": {
+        "base": 4.8597455865909294e-05,
+        "value": 4.8597455865909294e-05,
+        "expect": "unchanged"
+      }
+    },
+    {
+      "id": "swap_source_target",
+      "ok": true,
+      "detail": "the source and the target were exchanged: the loss changed by 1.649e-04",
+      "measurements": {
+        "base": 4.8597455865909294e-05,
+        "value": 0.00021350181184974916,
+        "expect": "changed"
+      }
+    },
+    {
+      "id": "mask_all",
+      "ok": true,
+      "detail": "every pair was masked out: the loss is zero",
+      "measurements": {
+        "base": 4.8597455865909294e-05,
+        "value": 0.0,
+        "expect": "zero"
+      }
+    },
+    {
+      "id": "gradient_codebook",
+      "ok": true,
+      "detail": "the gradient on codebook is 5.199e-05",
+      "measurements": {
+        "max_abs": 5.198550480527735e-05,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_source",
+      "ok": false,
+      "detail": "no gradient reached the declared target (it is unreachable from this loss)",
+      "measurements": {
+        "max_abs": 0.0,
+        "finite": true,
+        "unreachable": true
+      }
+    },
+    {
+      "id": "gradient_target",
+      "ok": true,
+      "detail": "the gradient on target is 5.096e-05",
+      "measurements": {
+        "max_abs": 5.095634784662332e-05,
+        "finite": true
+      }
+    },
+    {
+      "id": "no_occupancy_quota",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "occupancy|quota|project_to_capacity"
+      }
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook"
+      }
+    }
+  ],
+  "failed": [
+    "gradient_source"
+  ],
+  "diagnosis": {
+    "codebook": {
+      "expectation": "nonzero",
+      "provenance": "integrated",
+      "base_loss": 4.8597455865909294e-05,
+      "forward_dependence": 1.0268271327856982e-07,
+      "local_gradient": 5.198550480527735e-05,
+      "verdict": "delivered",
+      "reason": "the gradient reaches codebook (5.199e-05)"
+    },
+    "source": {
+      "expectation": "nonzero",
+      "provenance": "integrated",
+      "base_loss": 4.8597455865909294e-05,
+      "forward_dependence": 0.0,
+      "local_gradient": 0.0,
+      "verdict": "impossible specification",
+      "reason": "the loss does not depend on source at all (a finite step moves it by 0.000e+00) and carries no graph through it, so no implementation of this formula can deliver a gradient to it; the declaration is wrong, not the code"
+    },
+    "target": {
+      "expectation": "nonzero",
+      "provenance": "integrated",
+      "base_loss": 4.8597455865909294e-05,
+      "forward_dependence": 1.0268271327858338e-07,
+      "local_gradient": 5.095634784662332e-05,
+      "verdict": "delivered",
+      "reason": "the gradient reaches target (5.096e-05)"
+    }
+  }
+}
