@@ -357,3 +357,63 @@ def test_a_launch_into_a_dirty_directory_is_still_refused(tmp_path):
         controller.store.admit(
             RunPlan(kind="stage2", mechanism_id="candidate_one", output_dir=output)
         )
+
+
+def test_a_narrow_portfolio_is_asked_again(tmp_path, monkeypatch):
+    """A portfolio of variations of one kind is not a search, so the agent is asked again."""
+    controller = _controller(tmp_path)
+    controller.state["round"] = 7
+    controller.state["phase"] = "hypothesise"
+    calls = []
+
+    def _fake_propose(store, ledger_text, out_dir, **kwargs):
+        calls.append((out_dir, kwargs.get("extra_instruction", "")))
+        angle = "codebook_geometry" if len(calls) == 1 else "rigid_alignment"
+        path = Path(out_dir) / f"{angle}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "mechanism_id": f"candidate_{len(calls)}",
+                    "equation": "L = ||a - b||^2",
+                    "summary": "a rotation of the codebook"
+                    if angle == "rigid_alignment"
+                    else "a repulsion between codewords",
+                    "symbols": {},
+                    "parameters": {"weight": 0.05},
+                    "gradient_targets": {"source": "zero", "target": "zero", "codebook": "nonzero"},
+                    "target_paths": ["codebook"],
+                    "behaviour_signal": "the pair's codeword distance",
+                    "codebook_interaction": "it rotates the codebook",
+                    "encoder_interaction": "none",
+                    "risk": "it may not change the export",
+                    "falsifier": "the export does not change",
+                    "why_not_the_measured_failures": "it is not a pairwise pull",
+                }
+            ),
+            encoding="utf-8",
+        )
+        return {
+            "candidates": [
+                {
+                    "mechanism_id": f"candidate_{len(calls)}",
+                    "path": str(path),
+                    "proposal_sha256": "0" * 64,
+                }
+            ]
+        }
+
+    monkeypatch.setattr("tools.harness2_genrec.candidates.propose_candidates", _fake_propose)
+    monkeypatch.setattr(
+        Controller, "_refresh_transfer_analysis", lambda self: {"refreshed": False}
+    )
+    monkeypatch.setattr(
+        "tools.harness2_genrec.ledger.Ledger.load", lambda self: self
+    )
+    monkeypatch.setattr(
+        "tools.harness2_genrec.ledger.Ledger.brief", lambda self, **kwargs: ""
+    )
+    controller.phase_hypothesise()
+    assert len(calls) == 2
+    assert "at least three different research angles" in calls[1][1]
+    assert controller.state["portfolio_families"] == ["codebook_geometry", "rigid_alignment"]

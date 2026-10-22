@@ -598,6 +598,22 @@ class Controller:
             "path": str(out),
         }
 
+    @staticmethod
+    def _families_of(record: Dict[str, Any]) -> List[str]:
+        """The families the candidates of a record belong to."""
+        families = set()
+        for candidate in record.get("candidates") or ():
+            try:
+                proposal = json.loads(Path(candidate["path"]).read_text(encoding="utf-8"))
+            except Exception:  # noqa: BLE001
+                continue
+            families.add(mechanism_family(proposal))
+        return sorted(families)
+
+    def _portfolio_is_diverse(self, record: Dict[str, Any]) -> bool:
+        """Whether a proposed portfolio spans at least three research angles."""
+        return len(self._families_of(record)) >= 3
+
     def backfill_store(self) -> Dict[str, Any]:
         """Record the arms that were measured but never reached the store.
 
@@ -785,6 +801,39 @@ class Controller:
         record = propose_candidates(
             self.store, ledger.brief(), out_dir, model=self.config.model, timeout=2400
         )
+        # a portfolio of variations of one kind is not a search: if the families it spans
+        # are too few, the agent is asked once more, with the narrowness named
+        if not self._portfolio_is_diverse(record) and not self.state.get("portfolio_retry"):
+            self.state["portfolio_retry"] = True
+            families = self._families_of(record)
+            retry = propose_candidates(
+                self.store,
+                ledger.brief(),
+                out_dir / "retry",
+                model=self.config.model,
+                timeout=2400,
+                extra_instruction=(
+                    f"the portfolio you just proposed spans only {families}. It has to span "
+                    "at least three different research angles, and the angles are listed above "
+                    "under `family`. Propose a portfolio that takes at least three of them, "
+                    "and make each candidate's `family` field the angle it comes from."
+                ),
+            )
+            # the two batches are merged rather than chosen between: the retry's
+            # mechanisms are new ones, and the point of the retry is that the portfolio
+            # covers angles the first batch did not
+            merged = list(record.get("candidates") or ())
+            seen = {candidate["mechanism_id"] for candidate in merged}
+            for candidate in retry.get("candidates") or ():
+                if candidate["mechanism_id"] in seen:
+                    continue
+                merged.append(candidate)
+                seen.add(candidate["mechanism_id"])
+            record = dict(record)
+            record["candidates"] = merged
+            self.audit("portfolio_retry", families=families)
+        else:
+            self.state["portfolio_retry"] = False
         portfolio: List[Dict[str, Any]] = []
         seen_keys = {
             (manifest.get("extra") or {}).get("semantic_key")
