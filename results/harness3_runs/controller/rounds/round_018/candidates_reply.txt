@@ -1,0 +1,151 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_soft_codeword_separation",
+      "title": "Separate directionally assigned codewords with a bounded geometry objective",
+      "equation": "For each valid pair i, let p_i = softmax(-||source_i - c_k||^2 / tau_s)_k and q_i = softmax(-||target_i - c_k||^2 / tau_t)_k. Let u_i = sum_k p_ik c_k and v_i = sum_k q_ik c_k. Minimize L = w * mean_mask[ log(1 + exp((m^2 - ||u_i - v_i||^2) / s)) + a * ||source_i - u_i||^2 + b * ||target_i - v_i||^2 ].",
+      "symbols": {
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "c_k": "Codebook vector k.",
+        "p_ik": "Soft source-to-codeword assignment probability at temperature tau_s.",
+        "q_ik": "Soft target-to-codeword assignment probability at temperature tau_t.",
+        "u_i": "Source soft-assigned codebook vector.",
+        "v_i": "Target soft-assigned codebook vector.",
+        "m": "Desired minimum distance between the pair's soft-assigned codebook vectors.",
+        "s": "Positive scale for the smooth separation hinge.",
+        "a": "Source reconstruction coefficient.",
+        "b": "Target reconstruction coefficient.",
+        "w": "Composition weight for this mechanism loss.",
+        "tau_s": "Source assignment temperature.",
+        "tau_t": "Target assignment temperature.",
+        "mask_i": "Validity indicator for pair i."
+      },
+      "parameters": {
+        "w": 0.001,
+        "m": 0.2,
+        "s": 0.05,
+        "a": 0.1,
+        "b": 0.2,
+        "tau_s": 0.5,
+        "tau_t": 0.8,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target representation pair; source and target use distinct assignment temperatures, so exchanging their roles changes the loss.",
+      "codebook_interaction": "The smooth hinge pushes the two soft-assigned codebook vectors apart when their distance is below m; it does not minimize their distance. The two reconstruction terms pull each side's codewords toward its own representation. The source/target temperatures and reconstruction coefficients are role-specific, so swapping pair endpoints changes the objective.",
+      "encoder_interaction": "The reconstruction terms provide gradients to source and target representations. The host discards encoder-only effects after gradient assembly; the codebook gradient from this same loss is therefore essential for changing exported SIDs.",
+      "risk": "The separation pressure may preserve or enlarge pair distances without improving the partition that the frozen hard quantizer exports. Soft assignments may also be too diffuse to predict hard-SID behaviour, or the reconstruction terms may dominate the separation term and leave pair codewords effectively unchanged.",
+      "falsifier": "On the frozen evaluation, the mechanism fails if exported level-0 Gini exceeds control, L1-to-L2 branches per code fall below control, train-to-test frequency drift increases, sequence information falls, or pair-level ER does not rise; pair-codeword distances should also be checked to confirm the separation pressure acts as intended.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this has an explicit codebook gradient. Unlike the collapsed assignment-cross-entropy arm, its geometry term penalizes insufficient pair-codeword separation rather than rewarding shared codes. It does not guarantee a better exported partition, so the structural and downstream checks remain decisive."
+    },
+    {
+      "id": "directed_assignment_prefix_preservation",
+      "title": "Preserve directed soft assignment information while enforcing pair-code separation",
+      "equation": "For each valid pair i, define p_i = softmax(-||source_i - c_k||^2 / tau_s)_k and q_i = softmax(-||target_i - c_k||^2 / tau_t)_k. Define r_i = softmax(log(p_i + eps) / T)_k. Let u_i = sum_k p_ik c_k and v_i = sum_k q_ik c_k. Minimize L = w * mean_mask[ -sum_k q_ik log(r_ik + eps) + g * max(0, m - ||u_i - v_i||)^2 ].",
+      "symbols": {
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "c_k": "Codebook vector k.",
+        "p_ik": "Soft codebook assignment probability for the source.",
+        "q_ik": "Soft codebook assignment probability for the target.",
+        "r_ik": "Temperature-adjusted source assignment distribution used as the directed prediction of the target assignment.",
+        "u_i": "Source soft-assigned codebook vector.",
+        "v_i": "Target soft-assigned codebook vector.",
+        "tau_s": "Source assignment temperature.",
+        "tau_t": "Target assignment temperature.",
+        "T": "Temperature for the source-derived prediction distribution.",
+        "m": "Minimum desired distance between pair soft-assigned codebook vectors.",
+        "g": "Coefficient on the explicit pair-separation penalty.",
+        "w": "Composition weight for this mechanism loss.",
+        "eps": "Positive numerical stabilizer.",
+        "mask_i": "Validity indicator for pair i."
+      },
+      "parameters": {
+        "w": 0.001,
+        "tau_s": 0.5,
+        "tau_t": 0.8,
+        "T": 1.5,
+        "m": 0.2,
+        "g": 1.0,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered transition's source and target soft code assignments; the cross-entropy predicts the target distribution from the source distribution and is direction-sensitive.",
+      "codebook_interaction": "The directed cross-entropy updates codebook vectors through both assignment distributions. Because that term could favor shared codes, a separate hinge penalty pushes the two soft-assigned codebook vectors apart whenever their distance is below m. This prevents the objective from explicitly rewarding pair-codeword convergence, though it cannot guarantee hard assignments remain distinct.",
+      "encoder_interaction": "The directed assignment term and separation term both differentiate through source and target representations. As the host overwrites encoder gradients, only the accompanying nonzero codebook gradient can alter exported SIDs.",
+      "risk": "The directed cross-entropy may still improve by concentrating assignments or by changing soft probabilities in ways that do not preserve hard prefix branches. The separation penalty may be insufficient relative to the cross-entropy, or strong enough to disrupt useful assignments without improving Stage-3 retrieval.",
+      "falsifier": "The candidate is falsified if its exported codes fail any frozen structural requirement—level-0 Gini no higher than control, at least control's L1-to-L2 branches per code, no greater train-to-test frequency drift, and no lower sequence information—or if pair-level ER fails to rise. A median pair-codeword separation at or below the collapsed-arm range is direct evidence that the anti-convergence constraint failed.",
+      "why_not_the_measured_failures": "It is not inert: its assignment objective differentiates through the codebook, unlike encoder-only mechanisms discarded by the host. It is not the collapse-inducing directed assignment cross-entropy alone: it adds an explicit minimum-distance penalty between source- and target-assigned codebook vectors. Whether that suffices for a healthy hard partition is tested rather than assumed."
+    },
+    {
+      "id": "directed_residual_geometry_alignment",
+      "title": "Align behavior-conditioned residual directions without merging pair codewords",
+      "equation": "For each valid pair i, let p_i = softmax(-||source_i - c_k||^2 / tau_s)_k and q_i = softmax(-||target_i - c_k||^2 / tau_t)_k; set u_i = sum_k p_ik c_k and v_i = sum_k q_ik c_k. Define residuals e_i = source_i - u_i and f_i = target_i - v_i. Minimize L = w * mean_mask[ - (e_i dot f_i) / (sqrt(||e_i||^2 + eps) * sqrt(||f_i||^2 + eps)) + g * max(0, m - ||u_i - v_i||)^2 + h * (||e_i||^2 + ||f_i||^2) ].",
+      "symbols": {
+        "source_i": "Source representation for pair i.",
+        "target_i": "Target representation for pair i.",
+        "c_k": "Codebook vector k.",
+        "p_ik": "Soft source-to-codeword assignment probability.",
+        "q_ik": "Soft target-to-codeword assignment probability.",
+        "u_i": "Source soft-assigned codebook vector.",
+        "v_i": "Target soft-assigned codebook vector.",
+        "e_i": "Source residual after subtracting its soft-assigned codebook vector.",
+        "f_i": "Target residual after subtracting its soft-assigned codebook vector.",
+        "tau_s": "Source assignment temperature.",
+        "tau_t": "Target assignment temperature.",
+        "m": "Minimum desired distance between pair soft-assigned codebook vectors.",
+        "g": "Coefficient on the pair-separation penalty.",
+        "h": "Coefficient on residual magnitude regularization.",
+        "w": "Composition weight for this mechanism loss.",
+        "eps": "Positive numerical stabilizer for assignment logs and residual norms.",
+        "mask_i": "Validity indicator for pair i."
+      },
+      "parameters": {
+        "w": 0.001,
+        "tau_s": 0.5,
+        "tau_t": 0.8,
+        "m": 0.2,
+        "g": 1.0,
+        "h": 0.01,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target pair and its two codebook-relative residual vectors; source and target assignments use different temperatures, making the objective direction-sensitive.",
+      "codebook_interaction": "The cosine term aligns the source and target residual directions relative to their respective soft-assigned codewords, rather than pulling the codewords toward one another. The explicit distance hinge pushes u_i and v_i apart below m. Residual regularization limits the incentive to exploit arbitrarily large residuals. Codebook gradients arise through both soft assignments and residual subtraction.",
+      "encoder_interaction": "The residual-direction and residual-magnitude terms provide gradients to both representations. The host discards their encoder-only contribution, so the mechanism relies on its nonzero codebook gradient to affect exported assignments.",
+      "risk": "Residual directions may be noisy or poorly related to recommendation-relevant transitions, and aligning them can distort the codebook-relative geometry without improving hard-SID retrieval. The smooth separation hinge constrains soft-assigned vectors, not necessarily the two hard-assigned codewords.",
+      "falsifier": "Reject the mechanism if the frozen evaluation shows no pair-level ER increase or violates any measured structure requirement: level-0 Gini above control, fewer L1-to-L2 branches per code, increased train-to-test frequency drift, or reduced sequence information. Also compare hard transition-pair codeword distances against control to test whether separation survives quantization.",
+      "why_not_the_measured_failures": "This reaches the codebook, unlike inert encoder-only losses. Its primary objective is residual-direction geometry, not a cross-entropy that asks one code to serve both endpoints. The explicit distance hinge opposes pair convergence, unlike the measured collapse mechanism, while the frozen checks guard against concentration and downstream loss."
+    }
+  ]
+}
+```

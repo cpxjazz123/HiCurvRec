@@ -1,0 +1,142 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The transport term updates both endpoint codewords through their residuals and through the directed displacement v_i; it fits a directed residual transformation, not a shared-code objective. Its gradients could nevertheless bring the two codewords closer in some cases, so the explicit barrier pushes them apart whenever their distance is below margin. The nearest-index choices are discrete.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only mechanisms, residual transport and its separation barrier differentiate directly with respect to codebook vectors. Unlike the collapsed cross-entropy, it does not make both endpoints share one codeword: it models a directed change between endpoint residuals and adds an explicit repulsive floor against pair convergence."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, let a_i and b_i be the nearest codebook indices to source_i and target_i, and define r^s_i = source_i-codebook_{a_i}, r^t_i = target_i-codebook_{b_i}, and v_i = codebook_{b_i}-codebook_{a_i}. Define the directed residual-transport error e_i = r^t_i - (r^s_i + alpha*v_i). Minimize L = lambda_transport * mean_i ||e_i||_2^2 + lambda_sep * mean_i[max(0, margin-||v_i||_2)^2].",
+  "expected_failure_modes": [
+    "The assumed residual transport may not describe the data: fitting it could distort codebook geometry or reduce useful sequence information, and the barrier cannot guarantee that codeword distances remain healthy when inactive or when nearest assignments change. The mechanism may also improve residual consistency without improving the hard exported assignments."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The candidate is falsified if the frozen evaluation does not raise pair-level Hard-L1 ER while meeting the control thresholds for level-0 Gini, L1-to-L2 branches per L1 code, train-to-test frequency drift, and sequence information. A decrease in endpoint-codeword separation, or a loss that is unchanged when source and target are exchanged, also falsifies its stated mechanism.",
+    "Unlike the inert encoder-only mechanisms, residual transport and its separation barrier differentiate directly with respect to codebook vectors. Unlike the collapsed cross-entropy, it does not make both endpoints share one codeword: it models a directed change between endpoint residuals and adds an explicit repulsive floor against pair convergence."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_residual_frame_transport",
+  "parameters": {
+    "alpha": 0.5,
+    "lambda_sep": 0.01,
+    "lambda_transport": 0.01,
+    "margin": 0.25
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T00:06:08.978083+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "e2c54fd98df37ea31eff8abbf0c40025182092010b23515bfb6b67a855936795"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "a_i": "Nearest codebook index to source_i, selected by squared Euclidean distance.",
+    "alpha": "Scale of the directed codeword displacement used for residual transport.",
+    "b_i": "Nearest codebook index to target_i, selected by squared Euclidean distance.",
+    "codebook_j": "Codebook vector j.",
+    "e_i": "Error between the target residual and the source residual transported by alpha times the directed codeword displacement.",
+    "i": "Batch-row index, restricted to rows where mask is true.",
+    "lambda_sep": "Weight on the endpoint-codeword separation barrier.",
+    "lambda_transport": "Weight on the behavior-conditioned residual-transport error.",
+    "margin": "Minimum desired distance between endpoint codewords.",
+    "r^s_i": "Source residual after subtracting its nearest codeword.",
+    "r^t_i": "Target residual after subtracting its nearest codeword.",
+    "source_i": "Source endpoint embedding for row i.",
+    "target_i": "Target endpoint embedding for row i.",
+    "v_i": "Directed displacement from the source endpoint's nearest codeword to the target endpoint's nearest codeword."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Transport behavior-conditioned residuals in a directed codeword frame",
+  "version": "1.0.0"
+}

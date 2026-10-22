@@ -1,0 +1,143 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "This proposed objective is not valid under the stated checker interface: the control usage prior u_k is not among source, target, codebook, mask, or declared scalar parameters, and cannot be inferred from the codebook alone. It therefore must not be admitted as written; a parameter vector for u is disallowed by the requirement that parameters be a flat map of numbers. The pair term itself applies a directed distance margin and does not attract the two assigned codewords together, but the usage regularizer cannot be implemented honestly with the available inputs.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Its directed margin is unlike symmetric pairwise attraction and is intended not to merge endpoint codes; the usage-matching term would target concentration rather than reward merging. However, because its required control prior is absent from the allowed interface, it cannot be represented as an admissible candidate and should be rejected before any cold run."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "L = w * mean_i[m_i * (||s_i - c_{a_i}||_2^2 + gamma * max(0, tau + ||s_i - c_{a_i}||_2^2 - ||t_i - c_{b_i}||_2^2))] + lambda * sum_k (q_k - u_k)^2, where a_i and b_i are nearest-codeword indices for source and target, q_k is the masked source-assignment frequency of code k, and u_k is the detached control usage frequency.",
+  "expected_failure_modes": [
+    "The mechanism depends on a control usage prior that the checker interface does not provide. Claiming to preserve usage without that input would make the proposal uncheckable and its declared behavior unsupported; this candidate is therefore explicitly marked as a rejected design rather than an executable admission candidate."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The interface itself falsifies this proposal: the checker cannot compute u_k from the permitted inputs. Any implementation that silently substitutes a uniform prior or derives a changing prior from current assignments would test a different mechanism.",
+    "Its directed margin is unlike symmetric pairwise attraction and is intended not to merge endpoint codes; the usage-matching term would target concentration rather than reward merging. However, because its required control prior is absent from the allowed interface, it cannot be represented as an admissible candidate and should be rejected before any cold run."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_prefix_preserving_assignment",
+  "parameters": {
+    "gamma": 1.0,
+    "lambda": 0.1,
+    "tau": 0.1,
+    "weight": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T23:30:15.244926+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "f1a09410af7f944c74504d70ecb7058f5415a351f79b56a1f7c630fd32d8a2bb"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "L": "Auxiliary loss added to the training objective.",
+    "a_i": "Nearest codeword index to source s_i, computed without differentiating through the argmin.",
+    "b_i": "Nearest codeword index to target t_i, computed without differentiating through the argmin.",
+    "c_j": "Codebook vector j.",
+    "gamma": "Weight for the directed target-versus-source assignment-distance margin.",
+    "i": "Batch row index.",
+    "k": "Code index.",
+    "lambda": "Weight for matching source code usage to the detached control usage prior.",
+    "m_i": "Validity mask for row i.",
+    "q_k": "Masked fraction of source rows assigned to code k, with assignments treated as fixed indices.",
+    "s_i": "Source representation for row i.",
+    "t_i": "Directed target representation for row i.",
+    "tau": "Margin requiring the target's assigned-code distance to exceed the source's by at least tau.",
+    "u_k": "Detached control frequency for code k, supplied as the fixed usage prior encoded in the codebook argument's row ordering only if available; otherwise this candidate is not interface-compatible.",
+    "w": "Weight composing the directed pair term with the host objective.",
+    "||.||_2": "Euclidean norm."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed assignment improvement with prefix and usage preservation",
+  "version": "1.0.0"
+}

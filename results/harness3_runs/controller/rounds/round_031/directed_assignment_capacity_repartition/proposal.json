@@ -1,0 +1,141 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.01
+  },
+  "differentiation": {
+    "occupancy_preservation": "The directed KL term changes codeword positions through the soft assignment distributions so target assignments are conditioned on source assignments. The aggregate KL term discourages a batch-level collapse of soft usage toward a few codewords. The pair-conditioned barrier penalizes bringing distinct source/target-associated codewords inside delta, preventing pair-codeword convergence rather than rewarding it.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "The codebook receives a direct finite gradient, unlike the mechanisms rendered inert by encoder-gradient overwrite. The objective does not train a shared code to serve both pair endpoints: it uses a directed conditional assignment term, an aggregate usage penalty, and an explicit barrier against pair-associated codeword convergence. It differs from parameter-only variants by changing the objective's assignment structure and capacity constraint."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "Let p_k(x)=softmax_k(-||x-c_k||^2/tau), q_k = sum_i m_i[p_k(s_i)+p_k(t_i)] / (2*sum_i m_i), and u_k=1/C. Define L = lambda * sum_i m_i * KL(p(t_i)||p(s_i)) + alpha * KL(u||q) + gamma * sum_i m_i * sum_{k,l} p_k(s_i)p_l(t_i) * max(0, delta^2-||c_k-c_l||^2)^2. The first term is directed; the other terms regularize aggregate capacity and separation.",
+  "expected_failure_modes": [
+    "The batch usage regularizer may enforce uniformity that conflicts with the true catalogue distribution, while batch-local soft usage may not preserve global hard-assignment capacities. The directed KL can also improve conditional assignment consistency without improving the frozen held-out ER or recommendation ranking."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Compare the one cold run with the archived control on held-out pair-level ER, hard level-0 code count and Gini, prefix branches, frequency drift, sequence information, and Stage-3 recall@10/NDCG@10. Failure to improve Stage-3 recall, or any structural degradation accompanying an ER increase, falsifies the intended benefit.",
+    "The codebook receives a direct finite gradient, unlike the mechanisms rendered inert by encoder-gradient overwrite. The objective does not train a shared code to serve both pair endpoints: it uses a directed conditional assignment term, an aggregate usage penalty, and an explicit barrier against pair-associated codeword convergence. It differs from parameter-only variants by changing the objective's assignment structure and capacity constraint."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_capacity_repartition",
+  "parameters": {
+    "capacity_weight": 0.1,
+    "minimum_separation": 0.25,
+    "separation_weight": 1.0,
+    "temperature": 0.1,
+    "weight": 0.01
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T02:50:39.842586+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "e916fe875865842be31814811caa220edf811aed250762a3036f1d468dd3d764"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "Number of supplied codewords.",
+    "alpha": "Weight of the aggregate usage-balance regularizer.",
+    "c_k": "Codeword k in the supplied codebook.",
+    "delta": "Minimum preferred distance between distinct pair-associated codewords.",
+    "gamma": "Weight of the pair-conditioned codeword-separation barrier.",
+    "lambda": "Weight of the directed assignment term.",
+    "m_i": "Pair-validity mask value for pair i.",
+    "p_k(x)": "Soft assignment probability of embedding x to codeword k, computed from squared Euclidean distance and temperature tau.",
+    "q_k": "Masked batch-average soft usage of codeword k across source and target endpoints.",
+    "s_i": "Source embedding for pair i.",
+    "t_i": "Target embedding for pair i.",
+    "tau": "Soft-assignment temperature.",
+    "u_k": "Uniform reference usage, equal to 1/C."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed capacity-regularized soft assignment repartition",
+  "version": "1.0.0"
+}

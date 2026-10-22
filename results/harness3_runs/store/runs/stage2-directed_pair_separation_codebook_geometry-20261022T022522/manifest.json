@@ -1,0 +1,54 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "4dbae9a38008eb1c75d4815ac8a7ac5477b6279d578f2c622c2ddbcdfc37aed5"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry/r8_control/rqvae_best.pth",
+      "sha256": "992c8e699abc8a4ad30015b21d9e89e2c70c96356af9f21462ea113c81f97a0d"
+    },
+    {
+      "bytes": 1260358,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry/r8_control/item_sids.json",
+      "sha256": "381818ba2e90f23e2260a47e15c19fbde396899feda6e09956be4e19b2e38a40"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-22T02:25:22.033928+00:00",
+  "extra": {
+    "semantic_key": "901cb6a72e1cd3531734347067a13bf544b457ab053ef9d11afdb37609537079"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "b9396f79227d627414797529b98a401d77dd0bce4be23810f0b7ba9cd485ec6a",
+  "manifest_version": 1,
+  "mechanism_id": "directed_pair_separation_codebook_geometry",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": true,
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.601941747572816,
+      "l1_er": 16.601941747572816,
+      "neg_share": 0.004676946362690379,
+      "pos_share": 0.07764639106990824
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_pair_separation_codebook_geometry-20261022T022522",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

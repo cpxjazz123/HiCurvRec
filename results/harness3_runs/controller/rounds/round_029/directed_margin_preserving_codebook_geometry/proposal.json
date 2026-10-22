@@ -1,0 +1,147 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.0001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The directed KL moves codewords to make the source assignment distribution predict the target assignment distribution. The per-pair hinge explicitly opposes any movement that brings the two selected codewords within delta; global repulsion also opposes codeword collisions. The separation barrier is not a guarantee that assignments never change or that the full training objective cannot overcome it; the measured test is whether pairwise codeword distances and exported usage remain preserved.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, this has a differentiable codebook path that survives host gradient assembly. Unlike pairwise cross-entropy that can pull endpoint codewords together, it includes an explicit per-pair distance barrier and global codeword repulsion. It still might fail through code concentration or downstream misalignment, so those outcomes are measured rather than assumed away."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid pair i, let a_i = softmax(-||source_i - c_k||^2 / tau) and b_i = softmax(-||target_i - c_k||^2 / tau). Minimize L = w * mean_i[KL(b_i || a_i) + lambda_sep * max(0, delta - ||c_argmax(a_i) - c_argmax(b_i)||)^2] + w * lambda_rep * sum_{k<l} max(0, rho - ||c_k - c_l||)^2. The KL is directed: the target assignment distribution is the teacher and the source distribution is the student.",
+  "expected_failure_modes": [
+    "The assignment KL may be too weak to change hard assignments at the frozen weight, while increasing its effective influence may let the directed alignment overcome the separation barrier or distort the assignment distribution. Global repulsion may preserve geometric spacing without preserving occupancy balance, prefix branches, sequence information, or held-out recommendation quality."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if the frozen evaluation does not show higher pair-level ER while level-0 code usage is at least the control's, Gini is no higher than 0.216, prefix branches are at least 65.9, train-to-test frequency drift does not grow, sequence information does not fall, and Stage-3 recall@10 and NDCG@10 improve over the archived control. Also reject the pair-separation premise if behavior-pair codeword distances shrink materially.",
+    "Unlike encoder-only terms, this has a differentiable codebook path that survives host gradient assembly. Unlike pairwise cross-entropy that can pull endpoint codewords together, it includes an explicit per-pair distance barrier and global codeword repulsion. It still might fail through code concentration or downstream misalignment, so those outcomes are measured rather than assumed away."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_margin_preserving_codebook_geometry",
+  "parameters": {
+    "epsilon": 1e-08,
+    "global_repulsion_margin": 0.05,
+    "global_repulsion_weight": 0.1,
+    "pair_separation_margin": 0.1,
+    "pair_separation_weight": 1.0,
+    "temperature": 0.2,
+    "weight": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T00:22:39.617337+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "0d4537c198133d3f03ce6d28e3c59522ef69b6e46ef4afcf69ba7c5d46167e79"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "Number of codebook vectors.",
+    "KL": "Kullback-Leibler divergence; KL(b_i || a_i) is asymmetric in its arguments.",
+    "a_i": "Temperature-softened source-to-codebook assignment distribution.",
+    "argmax": "Index of the largest component of an assignment distribution; used with a straight-through estimator for the separation term.",
+    "b_i": "Temperature-softened target-to-codebook assignment distribution.",
+    "c_k": "Codebook vector k.",
+    "delta": "Minimum permitted distance between the source- and target-selected codewords for a behavior pair.",
+    "i": "Index of a valid behavior pair.",
+    "lambda_rep": "Weight on global codebook repulsion.",
+    "lambda_sep": "Weight on the per-behavior-pair codeword separation barrier.",
+    "mean_i": "Mean over valid behavior pairs.",
+    "rho": "Minimum permitted pairwise distance between distinct codebook vectors in the global repulsion term.",
+    "source_i": "Source embedding for pair i.",
+    "target_i": "Target embedding for pair i.",
+    "tau": "Soft-assignment temperature.",
+    "w": "Composition weight for the complete mechanism loss."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed behavior alignment with a hard pair-separation margin",
+  "version": "1.0.0"
+}

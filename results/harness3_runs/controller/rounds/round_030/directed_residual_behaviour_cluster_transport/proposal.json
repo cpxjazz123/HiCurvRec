@@ -1,0 +1,142 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The squared residual-transport term moves the source-assigned codeword toward a target constructed from the source representation plus a fraction of the observed residual displacement; it does not pull the target-assigned codeword toward the source-assigned one. A separate hinge barrier repels the two assigned codewords if their distance is below delta. Assignments are stop-gradient for this objective.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "It does not rely on an encoder-only gradient, which the host discards, and explicitly reaches the codebook. Unlike the measured collapsing mechanisms, it transports a source codeword along a behaviour-conditioned residual direction and applies a separation barrier rather than applying an attractive force between a pair's two codewords. The actual hard-export structure and downstream value remain empirical."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid ordered pair i, let k_i and l_i be stop-gradient nearest-codeword indices for s_i and t_i. Let r_i = (t_i - c_{l_i}) - (s_i - c_{k_i}) and let h_i = sigmoid((||s_i-c_{k_i}||^2 - ||t_i-c_{l_i}||^2) / tau). Minimize L = w * mean_i[m_i * ||(c_{k_i} - s_i) - beta * h_i * r_i||^2] + xi * mean_i[m_i * relu(delta^2 - ||c_{k_i}-c_{l_i}||^2)], where m_i = h_i.",
+  "expected_failure_modes": [
+    "Residual displacement may encode item-specific noise rather than a stable behaviour-cluster direction. The source-codeword update can still move Voronoi boundaries and harm occupancy or sequence structure, while the separation barrier may be too weak to prevent near-merges at the trained scale."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The proposal is falsified if its codebook gradient is zero or non-finite, if exchanging source and target leaves the loss unchanged, or if the cold export fails to raise ER while preserving the required code usage, Gini, prefix branches, train-to-test drift, and sequence information. Stage-3 recall@10 and NDCG@10 must also exceed the archived control to establish the intended recommendation benefit.",
+    "It does not rely on an encoder-only gradient, which the host discards, and explicitly reaches the codebook. Unlike the measured collapsing mechanisms, it transports a source codeword along a behaviour-conditioned residual direction and applies a separation barrier rather than applying an attractive force between a pair's two codewords. The actual hard-export structure and downstream value remain empirical."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_residual_behaviour_cluster_transport",
+  "parameters": {
+    "beta": 0.25,
+    "delta": 0.1,
+    "tau": 0.1,
+    "w": 0.001,
+    "xi": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T01:20:54.196914+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "55241963c1af97f8d59084b326365b4abdd3f101b3799a01de980a2b34551106"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "beta": "Fraction of the behaviour-conditioned residual displacement used to form the source-codeword target.",
+    "c_j": "Codeword j in the supplied codebook.",
+    "delta": "Minimum preferred squared-distance scale is delta^2 for the pair's assigned codewords.",
+    "h_i": "Directed weight, larger when the target is better represented than the source.",
+    "k_i": "Stop-gradient nearest-codeword index for the source.",
+    "l_i": "Stop-gradient nearest-codeword index for the target.",
+    "m_i": "Behaviour weight; equal to the directed weight h_i.",
+    "r_i": "Behaviour-conditioned residual displacement from the source's assigned-codeword residual to the target's.",
+    "relu(x)": "Maximum of x and zero.",
+    "s_i": "Source representation for row i.",
+    "t_i": "Target representation for row i.",
+    "tau": "Temperature controlling the directed weight.",
+    "w": "Outer residual transport loss weight.",
+    "xi": "Strength of the pair-separation barrier."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed residual-cluster transport with codebook barycentre updates",
+  "version": "1.0.0"
+}

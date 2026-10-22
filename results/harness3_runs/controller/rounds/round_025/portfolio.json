@@ -1,0 +1,93 @@
+{
+  "round": 25,
+  "closed_utc": "2026-10-21T23:37:10.741351+00:00",
+  "portfolio": [
+    {
+      "codebook_interaction": "The source-fit term pulls the source-assigned codeword toward the source. The directed target margin pushes that same codeword away from the target when it is within delta. The separation barrier pushes the two assigned codewords apart when their distance is below rho. Thus the target-side and explicit pairwise gradients oppose endpoint merging; assignments are fixed for differentiation, and the barrier is inactive once the minimum separation is met.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "Reject if the probe shows non-finite gradients, if swapping source and target leaves the loss unchanged, or if the frozen export fails to raise pair-level ER while keeping level-0 Gini no higher than control, L1-to-L2 branches per L1 code at least at control, train-to-test frequency drift no higher, and sequence information no lower.",
+      "family": "",
+      "mechanism_id": "directed_separated_codeword_geometry",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_025/directed_separated_codeword_geometry/proposal.json",
+      "proposal_sha256": "08d6af313c6d5cdaa8059aef57088232ccdf8df0fa802cbe75e1034ee79423f1",
+      "risk": "The separation barrier may preserve pairwise distances but distort Voronoi geometry or push frequently co-occurring codewords into underused regions, worsening occupancy, prefix branching, or train-to-test frequency drift. The directed target margin can also be incompatible with the source fit for pairs whose endpoints naturally share a useful code.",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "1 of 8 declared checks failed",
+          "failed": [
+            "gradient_target"
+          ],
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "0c6419bad4b30feec7c5cf2ccba39054cc42e42183fae87505cb234b15421dca",
+      "status": "rejected"
+    },
+    {
+      "codebook_interaction": "This proposed objective is not valid under the stated checker interface: the control usage prior u_k is not among source, target, codebook, mask, or declared scalar parameters, and cannot be inferred from the codebook alone. It therefore must not be admitted as written; a parameter vector for u is disallowed by the requirement that parameters be a flat map of numbers. The pair term itself applies a directed distance margin and does not attract the two assigned codewords together, but the usage regularizer cannot be implemented honestly with the available inputs.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "The interface itself falsifies this proposal: the checker cannot compute u_k from the permitted inputs. Any implementation that silently substitutes a uniform prior or derives a changing prior from current assignments would test a different mechanism.",
+      "family": "",
+      "mechanism_id": "directed_prefix_preserving_assignment",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_025/directed_prefix_preserving_assignment/proposal.json",
+      "proposal_sha256": "2619ead4727d205f748332bc7e78da5b72a16f95a8fe433480195a6127770a94",
+      "risk": "The mechanism depends on a control usage prior that the checker interface does not provide. Claiming to preserve usage without that input would make the proposal uncheckable and its declared behavior unsupported; this candidate is therefore explicitly marked as a rejected design rather than an executable admission candidate.",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "no mechanism module at /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_prefix_preserving_assignment/mechanism_directed_prefix_preserving_assignment.py",
+          "failed": null,
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "f092e2939d8717865b2dd30304a144cd86e0d0e5df6fcb71458a41ba542c1f7e",
+      "status": "rejected"
+    },
+    {
+      "codebook_interaction": "The transport residual is the component of the codeword displacement v_i orthogonal to the behavior residual r_i; minimizing it aligns codeword displacement with the observed behavior direction. The explicit barrier pushes the assigned codewords apart whenever their separation is below rho. Neither term attracts the endpoints' codewords: the alignment term has a continuum of aligned displacements and the barrier excludes near-zero displacement; assignments are treated as fixed indices during differentiation.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "Reject if gradients are non-finite or source-target exchange leaves the loss unchanged, or if the frozen export does not raise pair-level ER while meeting all structural constraints: level-0 Gini at most control, L1-to-L2 branches per L1 code at least control, train-to-test frequency drift no higher, and sequence information no lower.",
+      "family": "",
+      "mechanism_id": "directed_residual_tangent_transport",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_025/directed_residual_tangent_transport/proposal.json",
+      "proposal_sha256": "cd86de88b379d3e7db0713ad933b3c2c74e9f85e2a326249a1051047cc32cc67",
+      "risk": "Residual directions may be noisy or have very small norm, making the tangent alignment unstable or uninformative despite eps. Codeword displacements aligned with residuals may improve behavior geometry while worsening the discrete partition, level-0 usage balance, prefix branching, or held-out frequency stability; the separation floor can also conflict with naturally short transitions.",
+      "screening": {
+        "export_sensitivity": null,
+        "judges": {
+          "detail": "1 of 8 declared checks failed",
+          "failed": [
+            "swap_source_target"
+          ],
+          "ok": false
+        },
+        "probe": null,
+        "reason": "the independent checks rejected the implementation"
+      },
+      "semantic_key": "fd648d19e383f65a943457975ba4d652bf74e45ffffd854d718d6be2a0c2e262",
+      "status": "rejected"
+    }
+  ],
+  "summary": {
+    "directed_separated_codeword_geometry": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_prefix_preserving_assignment": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    },
+    "directed_residual_tangent_transport": {
+      "er": null,
+      "qualified": null,
+      "stage3": {}
+    }
+  }
+}

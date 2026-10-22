@@ -1,0 +1,48 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "directed_residual_geometry_tangent_transport",
+        "title": "Directed residual-geometry transport with orthogonal pair-separation protection",
+        "equation": "For each valid pair i, let r_i = target_i - source_i and let a_i and b_i be the nearest-codeword indices for source_i and target_i, treated as stop-gradient assignments. Let v_i = codebook_{b_i} - codebook_{a_i}. Define the directed residual alignment loss L_align = mean_i mask_i * ||r_i - v_i||_2^2. Define the separation loss L_sep = mean_i mask_i * relu(separation_floor - ||v_i||_2)^2. The objective is L = weight * (L_align + separation_weight * L_sep).",
+        "symbols": {
+          "source_i": "Source-side representation for pair i.",
+          "target_i": "Target-side representation for pair i.",
+          "r_i": "Behavior-conditioned residual vector target_i minus source_i.",
+          "codebook_c": "Codeword c in the supplied codebook.",
+          "a_i": "Nearest codeword to source_i; assignment is treated as constant during differentiation.",
+          "b_i": "Nearest codeword to target_i; assignment is treated as constant during differentiation.",
+          "v_i": "Directed codebook displacement from the source-assigned codeword to the target-assigned codeword.",
+          "mask_i": "Validity weight for pair i.",
+          "separation_floor": "Minimum desired norm for the assigned codeword displacement.",
+          "separation_weight": "Relative weight of the separation barrier.",
+          "weight": "Overall composition weight for this auxiliary loss.",
+          "mean_i": "Masked mean over valid pairs, with finite normalization.",
+          "relu(x)": "max(0, x)."
+        },
+        "parameters": {
+          "weight": 0.0001,
+          "separation_floor": 0.2,
+          "separation_weight": 1.0,
+          "epsilon": 1e-08
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The directed residual target_i - source_i, which encodes the behavior-conditioned change between the paired representations.",
+        "codebook_interaction": "The alignment gradient moves the target-assigned codeword and source-assigned codeword so their directed displacement approximates the residual vector; it does not minimize their mutual distance. The separation barrier pushes the assigned codewords apart when their displacement is below separation_floor. Assignments are stop-gradient. At exact coincidence the norm-based barrier has zero derivative, so the protection is effective for initially separated codewords but is not a guarantee against recovery from an exact merge.",
+        "encoder_interaction": "The residual alignment differentiates through both source and target representations, but the host overwrites encoder gradients after backward. The surviving intended effect is the direct gradient on the two assigned codewords, not the encoder-side residual update.",
+        "risk": "The representation residual may not be a useful target for codeword displacement: its scale or direction can vary across pairs, causing codebook drift, assignment churn, or train/test mismatch. Even if residual alignment improves, it may worsen level-0 balance, prefix branching, or sequence information, and the separation floor can conflict with the geometry implied by small residuals.",
+        "falsifier": "Reject if swapping source and target leaves the loss unchanged, any declared gradient is zero or non-finite, or the one-read hard-SID evaluation fails to raise pair-level ER while keeping level-0 Gini no greater than control, L1-to-L2 branches at least control, train-to-test frequency drift no greater than control, sequence information no lower than control, and Stage-3 recall@10 above the archived control.",
+        "why_not_the_measured_failures": "Unlike the inert encoder-only residual mechanisms, this loss applies its residual-geometry gradient directly to the codebook, the path known to survive the host. Unlike the collapsed pairwise cross-entropy, it fits a directed displacement vector rather than making both endpoints share a codeword, and it adds an explicit separation barrier. Its structural and downstream outcomes remain empirical and are not inferred from residual alignment alone."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "directed_residual_transport_with_codeword_repulsion",
+        "title": "Transport behaviour-conditioned residuals without merging paired codewords",
+        "equation": "Let q_c(x)=softmax_c(-||x-e_c||^2/tau), z(x)=sum_c q_c(x)e_c, and r_b=t_b-s_b. Define the directed transport error u_b=[z(t_b)-z(s_b)]-r_b. Minimize L = w_transport * sum_b m_b * ||u_b||^2 + w_repulse * sum_b m_b * max(0, delta - ||z(t_b)-z(s_b)||)^2. The ordered residual r_b makes transport directed; the second term repels paired soft representations when their distance is below delta.",
+        "symbols": {
+          "s_b": "Source representation for pair b.",
+          "t_b": "Target representation for pair b.",
+          "r_b": "Ordered residual t_b-s_b.",
+          "e_c": "Codebook vector c.",
+          "q_c(x)": "Soft assignment probability of x to codeword c.",
+          "z(x)": "Soft-quantized representation of x.",
+          "u_b": "Residual transport error in soft-quantized space.",
+          "m_b": "Mask value for pair b.",
+          "tau": "Soft-assignment temperature.",
+          "delta": "Minimum soft-quantized distance allowed between paired representations.",
+          "w_transport": "Weight of the directed residual-transport term.",
+          "w_repulse": "Weight of the paired-representation separation term."
+        },
+        "parameters": {
+          "tau": 0.1,
+          "delta": 0.05,
+          "w_transport": 0.01,
+          "w_repulse": 0.1
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "encoder",
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The ordered residual vector from source to target, t_b-s_b, for each masked behaviour pair.",
+        "codebook_interaction": "The transport term moves codewords so the soft-quantized source-to-target displacement matches the ordered residual. The separation term pushes paired soft representations apart only when their distance is below delta, opposing pair convergence. The transport term can counteract that repulsion, so non-convergence is not guaranteed by construction.",
+        "encoder_interaction": "The transport and separation terms differentiate through source and target representations. Since the host overwrites the encoder gradient, the encoder contribution alone cannot change the exported SIDs; the mechanism relies on its codebook gradient.",
+        "risk": "Matching residuals in soft-quantized space may preserve pair geometry while changing code usage in ways that harm recommendation retrieval. The transport term may overpower the repulsion term, and neither term directly constrains catalogue-wide Gini, prefix branching, or frequency drift.",
+        "falsifier": "Reject if the cold run fails to raise pair ER or violates any structural requirement: level-0 Gini above control, L1-to-L2 branches below control, increased train-to-test frequency drift, or reduced sequence information. If paired codeword distances shrink despite the separation term, its stated protective mechanism is falsified.",
+        "why_not_the_measured_failures": "It sends a gradient to the codebook, unlike the inert encoder-only mechanisms. Unlike the collapsed pairwise convergence objective, its transport target is the ordered residual and it includes an explicit low-distance repulsion term rather than rewarding both endpoints for sharing a code. The repulsion's effectiveness and the global structure remain testable risks."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "directed_residual_geometry_alignment",
+        "title": "Align behavior-conditioned residual directions without merging pair codewords",
+        "equation": "For each valid pair i, let p_i = softmax(-||source_i - c_k||^2 / tau_s)_k and q_i = softmax(-||target_i - c_k||^2 / tau_t)_k; set u_i = sum_k p_ik c_k and v_i = sum_k q_ik c_k. Define residuals e_i = source_i - u_i and f_i = target_i - v_i. Minimize L = w * mean_mask[ - (e_i dot f_i) / (sqrt(||e_i||^2 + eps) * sqrt(||f_i||^2 + eps)) + g * max(0, m - ||u_i - v_i||)^2 + h * (||e_i||^2 + ||f_i||^2) ].",
+        "symbols": {
+          "source_i": "Source representation for pair i.",
+          "target_i": "Target representation for pair i.",
+          "c_k": "Codebook vector k.",
+          "p_ik": "Soft source-to-codeword assignment probability.",
+          "q_ik": "Soft target-to-codeword assignment probability.",
+          "u_i": "Source soft-assigned codebook vector.",
+          "v_i": "Target soft-assigned codebook vector.",
+          "e_i": "Source residual after subtracting its soft-assigned codebook vector.",
+          "f_i": "Target residual after subtracting its soft-assigned codebook vector.",
+          "tau_s": "Source assignment temperature.",
+          "tau_t": "Target assignment temperature.",
+          "m": "Minimum desired distance between pair soft-assigned codebook vectors.",
+          "g": "Coefficient on the pair-separation penalty.",
+          "h": "Coefficient on residual magnitude regularization.",
+          "w": "Composition weight for this mechanism loss.",
+          "eps": "Positive numerical stabilizer for assignment logs and residual norms.",
+          "mask_i": "Validity indicator for pair i."
+        },
+        "parameters": {
+          "w": 0.001,
+          "tau_s": 0.5,
+          "tau_t": 0.8,
+          "m": 0.2,
+          "g": 1.0,
+          "h": 0.01,
+          "eps": 1e-08
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "encoder",
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The ordered source-to-target pair and its two codebook-relative residual vectors; source and target assignments use different temperatures, making the objective direction-sensitive.",
+        "codebook_interaction": "The cosine term aligns the source and target residual directions relative to their respective soft-assigned codewords, rather than pulling the codewords toward one another. The explicit distance hinge pushes u_i and v_i apart below m. Residual regularization limits the incentive to exploit arbitrarily large residuals. Codebook gradients arise through both soft assignments and residual subtraction.",
+        "encoder_interaction": "The residual-direction and residual-magnitude terms provide gradients to both representations. The host discards their encoder-only contribution, so the mechanism relies on its nonzero codebook gradient to affect exported assignments.",
+        "risk": "Residual directions may be noisy or poorly related to recommendation-relevant transitions, and aligning them can distort the codebook-relative geometry without improving hard-SID retrieval. The smooth separation hinge constrains soft-assigned vectors, not necessarily the two hard-assigned codewords.",
+        "falsifier": "Reject the mechanism if the frozen evaluation shows no pair-level ER increase or violates any measured structure requirement: level-0 Gini above control, fewer L1-to-L2 branches per code, increased train-to-test frequency drift, or reduced sequence information. Also compare hard transition-pair codeword distances against control to test whether separation survives quantization.",
+        "why_not_the_measured_failures": "This reaches the codebook, unlike inert encoder-only losses. Its primary objective is residual-direction geometry, not a cross-entropy that asks one code to serve both endpoints. The explicit distance hinge opposes pair convergence, unlike the measured collapse mechanism, while the frozen checks guard against concentration and downstream loss."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

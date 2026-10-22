@@ -1,0 +1,144 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codeword_partition_margin",
+      "title": "Directed codeword geometry with an explicit pair-separation margin",
+      "equation": "For each valid pair i, let p_i = softmax(-||source_i-c_k||^2/tau) and q_i = softmax(-||target_i-c_k||^2/tau). Let a_i = p_i^T c and b_i = q_i^T c. L = w * mean_i[||a_i-source_i||^2 + alpha*||b_i-target_i||^2 + beta*max(0, delta-||a_i-b_i||)^2].",
+      "symbols": {
+        "i": "Index of a batch pair whose mask is valid.",
+        "c_k": "Codebook vector k; k ranges over the C codebook entries.",
+        "p_i": "Soft assignment distribution of source_i over codebook vectors.",
+        "q_i": "Soft assignment distribution of target_i over codebook vectors.",
+        "a_i": "Source-side soft codeword, the expectation of codebook vectors under p_i.",
+        "b_i": "Target-side soft codeword, the expectation of codebook vectors under q_i.",
+        "tau": "Soft-assignment temperature.",
+        "w": "Overall auxiliary-loss weight.",
+        "alpha": "Target-side geometry weight relative to the source-side term.",
+        "beta": "Weight of the pair-separation penalty.",
+        "delta": "Minimum desired distance between the two soft codewords.",
+        "D": "Embedding dimension.",
+        "B": "Batch size.",
+        "C": "Number of codebook vectors.",
+        "mask": "Validity mask; only entries with mask_i = 1 contribute."
+      },
+      "parameters": {
+        "weight": 0.01,
+        "temperature": 0.1,
+        "target_weight": 1.5,
+        "separation_weight": 1.0,
+        "separation_margin": 0.25
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target pair and its endpoint geometry.",
+      "codebook_interaction": "The soft endpoint reconstruction terms move codewords toward the respective endpoint regions. The hinge term repels the two endpoint soft codewords whenever their distance is below the margin; unlike pairwise attraction, it cannot reduce that distance while the hinge is active. Soft assignments mean this is a geometric pressure, not a guarantee that hard assignments remain distinct.",
+      "encoder_interaction": "The loss differentiates through source and target representations, but the host overwrites the encoder gradient. Its operative route is the nonzero gradient through the soft codewords into the codebook.",
+      "risk": "The soft endpoint codewords may satisfy the margin while hard assignments still merge, or the endpoint reconstruction pressure may perturb useful codebook geometry without improving the frozen recommendation metric. The selected margin and temperature may also make the separation term inactive or overly dominant.",
+      "falsifier": "Reject if the probe finds non-finite gradients, swapping source and target leaves the loss unchanged, or the admitted cold run fails the frozen requirement that level-0 Gini does not exceed control, L1-to-L2 branches per code do not fall, train-to-test frequency drift does not grow, sequence information does not fall, and pair-level ER rises; downstream recall@10 and NDCG@10 must also improve over control.",
+      "why_not_the_measured_failures": "This term reaches the codebook, unlike the encoder-only terms that the host discarded. It does not ask both endpoints to share a codeword: its explicit active-margin force pushes their soft codewords apart, unlike the measured pairwise-convergence collapse. Whether that soft constraint protects hard assignments is an empirical risk, not an assumption."
+    },
+    {
+      "id": "directed_transition_assignment_information",
+      "title": "Directed assignment information with a balanced source-conditioned transition",
+      "equation": "Define p_i = softmax(-||source_i-c_k||^2/tau) and q_i = softmax(-||target_i-c_k||^2/tau). Let r_i = softmax(log(p_i+epsilon) A), where A_kl = -||c_k-c_l||^2/tau. Let qbar = mean_i q_i and H(x) = -sum_k x_k log(x_k+epsilon). L = w * mean_i[sum_k q_ik log(q_ik+epsilon) - gamma*sum_k r_ik log(q_ik+epsilon)] + w*eta*sum_k qbar_k log(qbar_k+epsilon).",
+      "symbols": {
+        "i": "Index of a batch pair whose mask is valid.",
+        "k,l": "Codebook indices.",
+        "c_k": "Codebook vector k.",
+        "p_i": "Soft source assignment distribution.",
+        "q_i": "Soft target assignment distribution.",
+        "A_kl": "Directed-transition compatibility logits derived from codeword distances.",
+        "r_i": "Target-code prediction distribution formed by transporting the source assignment through A.",
+        "qbar": "Batch-marginal target assignment distribution.",
+        "H": "Categorical entropy.",
+        "tau": "Soft-assignment and transition-logit temperature.",
+        "epsilon": "Positive numerical stabilizer inside logarithms.",
+        "w": "Overall auxiliary-loss weight.",
+        "gamma": "Weight of the source-conditioned target prediction term.",
+        "eta": "Weight of the marginal target entropy term, which favors broad target-code usage.",
+        "B": "Batch size.",
+        "C": "Number of codebook vectors.",
+        "mask": "Validity mask; only entries with mask_i = 1 contribute."
+      },
+      "parameters": {
+        "weight": 0.001,
+        "temperature": 0.1,
+        "epsilon": 0.000001,
+        "transition_weight": 1.0,
+        "marginal_entropy_weight": 0.5
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target assignment transition and the batch marginal of target assignments.",
+      "codebook_interaction": "Gradients pass through source and target soft assignments and through the codeword-distance transition logits. The target marginal entropy term opposes a concentrated target assignment distribution; the transition term rewards source-conditioned predictability without directly attracting both endpoints to the same codeword. It does not impose a hard pairwise separation guarantee, so codeword distances and hard assignments must be checked.",
+      "encoder_interaction": "The loss differentiates through both endpoint representations, but those encoder gradients are overwritten by the host. The codebook receives a nonzero gradient through assignment probabilities and transition logits.",
+      "risk": "The entropy term can spread assignments without preserving useful sequence information, while the transition term can favor predictable but overly simple transitions. A soft information gain can also fail to translate to hard-SID prefix branches or downstream retrieval, and the small weight may have negligible effect.",
+      "falsifier": "Reject if the probe finds non-finite gradients, source-target exchange does not change the loss, or the admitted cold run fails any frozen structure-and-ER requirement; in particular, falling sequence information or L1-to-L2 branch count falsifies the intended assignment-structure effect. Compare recall@10 and NDCG@10 with the archived control.",
+      "why_not_the_measured_failures": "This is an assignment-information and marginal-entropy objective, not an encoder-only auxiliary term, so it has a codebook gradient that survives host assembly. It does not use the collapsed arm's objective of making pair endpoints share a code; broad target marginals oppose concentration. It remains possible for the transition objective to produce undesirable codeword motion, which the separation and export checks must detect."
+    },
+    {
+      "id": "directed_residual_transport_with_separation",
+      "title": "Directed residual transport constrained by endpoint codeword separation",
+      "equation": "Let p_i = softmax(-||source_i-c_k||^2/tau), q_i = softmax(-||target_i-c_k||^2/tau), a_i = sum_k p_ik c_k, and b_i = sum_k q_ik c_k. Let d_i = target_i-source_i and u_i = b_i-a_i. L = w*mean_i[||u_i-d_i||^2 + lambda*max(0, delta-||u_i||)^2 + rho*max(0, ||u_i||-R)^2].",
+      "symbols": {
+        "i": "Index of a batch pair whose mask is valid.",
+        "k": "Codebook index.",
+        "c_k": "Codebook vector k.",
+        "p_i": "Soft source assignment distribution.",
+        "q_i": "Soft target assignment distribution.",
+        "a_i": "Source-side soft codeword.",
+        "b_i": "Target-side soft codeword.",
+        "d_i": "Ordered behaviour-conditioned residual from source to target.",
+        "u_i": "Residual between target-side and source-side soft codewords.",
+        "tau": "Soft-assignment temperature.",
+        "w": "Overall auxiliary-loss weight.",
+        "lambda": "Weight of the minimum residual-separation penalty.",
+        "delta": "Minimum desired norm of the soft codeword residual.",
+        "rho": "Weight of the maximum residual-size penalty.",
+        "R": "Maximum desired norm of the soft codeword residual.",
+        "B": "Batch size.",
+        "C": "Number of codebook vectors.",
+        "mask": "Validity mask; only entries with mask_i = 1 contribute."
+      },
+      "parameters": {
+        "weight": 0.001,
+        "temperature": 0.1,
+        "separation_weight": 1.0,
+        "separation_margin": 0.25,
+        "upper_bound_weight": 0.1,
+        "residual_upper_bound": 2.0
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered residual target-source for each valid behaviour pair.",
+      "codebook_interaction": "The transport term moves the difference between the endpoint soft codewords toward the directed residual, rather than pulling both endpoints toward one shared codeword. The lower-bound hinge penalizes endpoint codeword convergence below delta, and the upper-bound hinge limits excessively large residuals. These constraints act on soft codewords and do not guarantee distinct hard SIDs.",
+      "encoder_interaction": "The loss differentiates through source and target, but the host overwrites those encoder gradients. Its effective training path is the nonzero codebook gradient through the endpoint soft assignments.",
+      "risk": "The embedding residual may not be a reliable proxy for behaviour-conditioned residual geometry; the transport objective may distort the codebook or satisfy its soft separation while hard assignments still converge. If typical residual norms conflict with the fixed bounds, the penalties may be inactive or dominate the transport term.",
+      "falsifier": "Reject if the probe finds non-finite gradients, exchanging source and target does not change the loss, or the cold run fails the frozen requirements on level-0 Gini, L1-to-L2 branches, frequency drift, sequence information, and rising pair-level ER. Downstream recall@10 and NDCG@10 below the archived control falsify its recommendation benefit.",
+      "why_not_the_measured_failures": "It reaches the codebook, so it is not inert under the host's gradient overwrite. Its residual transport acts on the directed difference between endpoint codewords and includes a minimum-separation penalty, unlike pairwise attraction that merged the cells. It is mathematically distinct from a codeword-margin geometry objective and from an assignment-entropy objective, though its soft constraints require hard-export validation."
+    }
+  ]
+}
+```

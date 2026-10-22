@@ -1,0 +1,54 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "behaviour_residual_directional_margin",
+        "title": "Behaviour-conditioned residual direction with separated codeword margin",
+        "equation": "For each valid row i, let e_i=t_i-s_i, let u_i=e_i/(||e_i||_2+eps), and let r_i=c_{b(i)}-c_{a(i)} for nearest-code assignments a(i) to s_i and b(i) to t_i. Define L_i=max(0, margin-<r_i,u_i>)^2 + lambda_sep*max(0,delta-||r_i||_2)^2 + lambda_orth*||r_i-<r_i,u_i>u_i||_2^2, and J=w_cb*mean_i L_i. The directional margin makes the target-assigned codeword lie ahead of the source-assigned codeword along the observed residual; the separation hinge prevents those codewords from converging, and the orthogonal penalty limits residual distortion.",
+        "symbols": {
+          "s_i": "Source representation for valid pair i.",
+          "t_i": "Target representation for valid pair i.",
+          "e_i": "Behaviour-conditioned residual vector from source to target.",
+          "u_i": "Unit residual direction.",
+          "c_j": "Codebook vector j.",
+          "a(i)": "Nearest-code assignment for the source representation.",
+          "b(i)": "Nearest-code assignment for the target representation.",
+          "r_i": "Target-assigned minus source-assigned codeword vector.",
+          "margin": "Minimum desired codeword displacement along the residual direction.",
+          "lambda_sep": "Weight of the minimum pair-codeword separation hinge.",
+          "delta": "Minimum permitted Euclidean distance between pair-assigned codewords.",
+          "lambda_orth": "Weight penalizing the component of codeword displacement orthogonal to the residual.",
+          "w_cb": "Composition weight for this auxiliary objective.",
+          "eps": "Positive stabilizer for residual normalization.",
+          "B": "Batch size.",
+          "D": "Representation and codebook dimension.",
+          "C": "Number of codebook vectors."
+        },
+        "parameters": {
+          "margin": 0.1,
+          "lambda_sep": 1.0,
+          "delta": 0.2,
+          "lambda_orth": 0.1,
+          "w_cb": 0.0001,
+          "eps": 1e-08
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The masked behaviour-conditioned residual t_i-s_i, including its direction and the nearest-code assignments at both endpoints.",
+        "codebook_interaction": "The directional hinge pushes the target-assigned codeword ahead of the source-assigned codeword along the pair residual. The orthogonal penalty aligns their difference with that residual. The explicit separation hinge repels the pair codewords whenever their Euclidean distance is below delta, preventing the residual objective from satisfying its margin by collapsing the pair.",
+        "encoder_interaction": "The residual direction depends on source and target and gives nonzero gradients to both. Those encoder gradients are discarded by the host's post-backward assembly; the codebook gradient is the intended route to changing exported assignments.",
+        "risk": "A residual direction may encode nuisance movement or sampling noise rather than recommendation-relevant change. The margin can over-regularize selected codeword pairs, and the local distance floor cannot ensure balanced global use or preserve prefix branches. Hard nearest-code assignments may also make the mechanism's export effect discontinuous and small at the frozen weight.",
+        "falsifier": "Reject if the objective is invariant to exchanging source and target, gradients are zero or nonfinite, assigned codeword distances shrink below the specified floor, or the frozen run fails to raise pair-level ER while meeting all measured structural requirements and improving Stage-3 recall@10 over the archived control value 0.06406796775709883.",
+        "why_not_the_measured_failures": "Unlike the inert encoder-only mechanisms, the objective has a direct nonzero gradient to the codebook, the only measured path that changes exported SIDs. Unlike pairwise convergence and collapse, it rewards a directed residual displacement and explicitly penalizes pair distances below delta rather than making one code serve both endpoints. Unlike unconstrained residual transport, it includes a separation floor; nevertheless, global code balance and downstream quality must be measured rather than inferred."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

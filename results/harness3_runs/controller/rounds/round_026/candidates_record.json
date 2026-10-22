@@ -1,0 +1,34 @@
+{
+  "generated_utc": "2026-10-21T23:38:05.479267+00:00",
+  "candidates": [
+    {
+      "mechanism_id": "directed_codebook_tangent_partition",
+      "proposal_sha256": "4f354d6cad6707fc653370645cba2ea7fdd9ef872ab3bc322923a6314c44dc46",
+      "path": "results/harness3_runs/controller/rounds/round_026/directed_codebook_tangent_partition/proposal.json",
+      "title": "Directed tangent transport with pair-separation barrier",
+      "falsifier": "The candidate is wrong if the probe shows non-finite or zero codebook gradients, if the source-target swap leaves the loss unchanged, or if the exported level-0 Gini exceeds control, L1-to-L2 branches fall below control, frequency drift grows, sequence information falls, or pair-level ER fails to rise. The decisive falsifier is Stage-3 recall@10 not exceeding 0.06406796775709883.",
+      "risk": "The nearest-codeword assignments are discrete, and batches where source and target select the same codeword may give the barrier opposing gradients through duplicate indexed entries or fail to recover a useful partition. Even when separation is maintained, tangent alignment may distort codeword geometry without improving held-out sequence retrieval; the frozen downstream evaluation could regress despite passing structural checks.",
+      "codebook_interaction": "The tangent-alignment gradient rotates and repositions the two assigned codewords to encode the directed displacement, while the active separation barrier pushes them apart whenever their distance is below delta. It therefore does not ask the pair's codewords to converge; the barrier directly opposes that failure. Gradients reach the codebook through the indexed codeword vectors."
+    },
+    {
+      "mechanism_id": "directed_assignment_information_partition",
+      "proposal_sha256": "779def785671337de13e5c2c8114032e7b8069b449af8dbb184975bf90a5a80a",
+      "path": "results/harness3_runs/controller/rounds/round_026/directed_assignment_information_partition/proposal.json",
+      "title": "Directed assignment information with codebook repulsion",
+      "falsifier": "The candidate is wrong if swapping source and target does not change the loss, any declared gradient is zero or non-finite, or the exported codes violate any measured requirement: level-0 Gini above control, L1-to-L2 branch count below control, increased train-to-test frequency drift, decreased sequence information, or no pair-level ER increase. Stage-3 recall@10 at or below 0.06406796775709883 falsifies the downstream hypothesis.",
+      "risk": "The batch marginal entropy may spread usage without preserving the particular prefix relationships useful to the recommender, while the directed divergence can make assignments overly sensitive to noise or temperature. Marginal balancing may also conflict with the data's true frequency distribution, increase train-to-test drift, or improve pair discrimination while reducing sequence information. The one-shot downstream evaluation is therefore essential.",
+      "codebook_interaction": "The directed assignment divergences move codewords to make source and target assignment distributions informative and distinguishable. The negative marginal-entropy term spreads assignment mass across codewords rather than rewarding merging. It does not impose a same-code target for the two endpoints; its assignment-level objective and usage regularizer oppose convergence-driven concentration. The codebook receives gradients through the soft distances."
+    },
+    {
+      "mechanism_id": "directed_residual_geometry_separated_transport",
+      "proposal_sha256": "d8c1131e9cf1e7266495533022479bc2c21c467cd81242485e491987ded1f51e",
+      "path": "results/harness3_runs/controller/rounds/round_026/directed_residual_geometry_separated_transport/proposal.json",
+      "title": "Separated behavior-conditioned residual transport",
+      "falsifier": "The candidate is wrong if endpoint exchange leaves the loss unchanged, a declared gradient is zero or non-finite, or the exported level-0 Gini exceeds control, L1-to-L2 branches fall below control, train-to-test frequency drift grows, sequence information falls, or pair-level ER does not rise. Stage-3 recall@10 at or below 0.06406796775709883 is the direct downstream falsifier.",
+      "risk": "Residual directions can be small or noisy, making the stabilized direction uninformative, and the residual-fit force can still dominate the separation terms for some pairs. Hard nearest-codeword indexing also limits assignment changes during training. The mechanism may preserve pair separation yet distort residual geometry, narrow prefix branches, or increase train-test frequency drift; a healthy local objective does not ensure improved recommendation quality.",
+      "codebook_interaction": "The residual-fit term moves the assigned codewords to represent the behaviour-conditioned displacement. The separation barrier pushes the two assigned codewords apart below delta, and the directed projection margin prevents a zero or oppositely oriented codeword difference relative to the residual direction. Thus the term does not reward pair-codeword convergence; it explicitly penalizes it. Gradients reach the selected codebook entries through both residual fit and the separation/projection terms."
+    }
+  ],
+  "count": 3,
+  "tokens": {}
+}

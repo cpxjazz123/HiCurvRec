@@ -1,0 +1,55 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "behaviour_residual_directed_partition_transport",
+        "title": "Behaviour-conditioned residual transport with separated code assignments",
+        "equation": "Let d_i = target_i - source_i and let e_i = d_i / (||d_i||_2 + eps). For each codebook vector c_j, define its residual relative to the source as h_ij = c_j - source_i. Let s_i(j) = softmax_j(-||h_ij||^2 / tau), and let t_i(j) = stopgrad(s_i(j) * exp(kappa * dot(e_i, h_ij))) / Z_i. Define L = lambda * mean_i mask_i * [KL(t_i || s_i) + rho * sum_j s_i(j) * exp(-||h_ij - d_i||^2 / (2 * sigma^2))].",
+        "symbols": {
+          "source_i": "Source representation for pair i.",
+          "target_i": "Target representation for pair i.",
+          "d_i": "Behaviour-conditioned residual displacement target_i - source_i.",
+          "e_i": "Unit direction of the residual displacement.",
+          "c_j": "Codebook vector j.",
+          "h_ij": "Codeword j expressed as a residual from source_i.",
+          "s_i(j)": "Soft assignment of the source to codeword j.",
+          "t_i(j)": "Stopped-gradient source-assignment target tilted toward residuals aligned with the ordered behaviour displacement.",
+          "Z_i": "Normalization constant for the tilted assignment target.",
+          "tau": "Soft-assignment temperature.",
+          "kappa": "Strength of the behaviour-direction tilt.",
+          "rho": "Strength of the residual-target repulsion term.",
+          "sigma": "Width of the residual-target kernel.",
+          "eps": "Positive numerical stabilizer for residual normalization.",
+          "lambda": "Overall auxiliary-loss weight.",
+          "mask_i": "Validity indicator for pair i.",
+          "KL": "Kullback-Leibler divergence.",
+          "L": "Masked mean auxiliary objective."
+        },
+        "parameters": {
+          "lambda": 0.001,
+          "tau": 0.5,
+          "kappa": 1.0,
+          "rho": 0.1,
+          "sigma": 0.2,
+          "eps": 1e-06
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The ordered residual displacement target_i - source_i; it tilts source-side code assignments toward codebook residuals aligned with that behaviour direction.",
+        "codebook_interaction": "The KL term transports soft source assignments toward codewords whose residuals align with the directed behaviour displacement. The residual-target kernel penalizes placing assigned codewords near the behaviour residual target, making it a repulsive term with respect to that location rather than an attraction of both pair endpoints to one codeword. The endpoint swap reverses d_i and changes the tilt. This acts on residual geometry rather than directly minimizing the distance between the two endpoints' assigned codewords.",
+        "encoder_interaction": "The loss differentiates through source and target residuals, but the host overwrites the encoder gradient, so those updates are discarded in production. The codebook gradient through residuals and soft assignments is the path that can change exported SIDs.",
+        "risk": "The repulsive residual target may push codewords into unhelpful regions and damage quantization coverage; moreover, source-relative soft assignments do not directly guarantee a wider L1-to-L2 prefix tree, balanced level-0 occupancy, or improved held-out recommendation ranking.",
+        "falsifier": "Reject if exchanging source and target does not change the loss, declared gradients are zero or non-finite, or the cold export increases ER but violates any measured structure requirement or fails to improve Stage-3 recall@10 and NDCG@10 against the archived control.",
+        "why_not_the_measured_failures": "This term reaches the codebook, unlike the inert encoder-only mechanisms. It does not use pairwise convergence or pull both assigned codewords toward one another; it applies a directed residual-space assignment tilt and a repulsive residual target. Its mathematical object is behaviour-conditioned residual geometry, distinct from direct codeword-distance geometry and assignment-overlap structure."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

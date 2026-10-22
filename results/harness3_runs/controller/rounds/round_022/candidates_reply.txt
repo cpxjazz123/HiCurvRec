@@ -1,0 +1,144 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_tangent_repulsion",
+      "title": "Directed tangent transport with explicit pair-separation preservation",
+      "equation": "For each valid row i, let u_i=(t_i-s_i)/||t_i-s_i||_2, r_i=c_{a(i)}-c_{b(i)}, and P_i=I-u_i u_i^T. Define L_i=||P_i r_i - m u_i||_2^2 + lambda_sep * max(0, delta-||r_i||_2)^2, and J=w_cb * mean_i L_i. Here a(i)=argmin_j ||s_i-c_j||_2^2 and b(i)=argmin_j ||t_i-c_j||_2^2. The first term transports the directed codeword difference toward the source-to-target tangent direction; the second is a hinge that prevents the pair codewords from approaching closer than delta.",
+      "symbols": {
+        "s_i": "Source representation for valid pair i.",
+        "t_i": "Target representation for valid pair i.",
+        "c_j": "Codebook vector j.",
+        "a(i)": "Nearest-code assignment for the source representation.",
+        "b(i)": "Nearest-code assignment for the target representation.",
+        "u_i": "Unit vector from source representation toward target representation.",
+        "r_i": "Difference between the target-assigned and source-assigned codewords.",
+        "P_i": "Projection onto the subspace orthogonal to the directed source-to-target vector.",
+        "m": "Desired directed separation component along u_i.",
+        "lambda_sep": "Weight of the minimum pair-codeword separation hinge.",
+        "delta": "Minimum permitted Euclidean distance between the pair's assigned codewords.",
+        "w_cb": "Composition weight for this auxiliary objective.",
+        "B": "Batch size.",
+        "D": "Representation and codebook dimension.",
+        "C": "Number of codebook vectors."
+      },
+      "parameters": {
+        "m": 0.1,
+        "lambda_sep": 1.0,
+        "delta": 0.2,
+        "w_cb": 0.0001,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The masked directed source-to-target transition; its orientation defines u_i, and its endpoint assignments define the codeword pair.",
+      "codebook_interaction": "The projected-difference term moves the two assigned codewords to reduce their off-axis difference and establish a directed tangent displacement; the separation hinge supplies repulsive gradients whenever their distance is below delta. Thus, while the tangent term alone could bring codewords together, the hinge prevents that convergence below delta. Assignment indices are hard nearest-code indices, while distances and projections remain differentiable with respect to the selected codewords.",
+      "encoder_interaction": "The representation-dependent direction u_i gives nonzero gradients to source and target tensors. The host discards those encoder gradients in production; the proposed export-changing path is the explicitly nonzero codebook gradient, not an assumption that encoder updates survive.",
+      "risk": "The nearest-code assignments are piecewise constant, so the objective can only move the currently selected codewords and may not change hard assignments at the frozen weight. Even if assignments change, the tangent transport may distort item geometry or create a direction unrelated to useful ranking structure; the separation hinge protects only the selected pair and does not guarantee global occupancy, prefix branching, drift, or sequence information.",
+      "falsifier": "Reject if the checked loss is unchanged after exchanging source and target, any declared gradient is zero or nonfinite, the exported pair-codeword distances show convergence below the control-scale separation, or the single frozen evaluation fails to raise pair-level ER while keeping level-0 Gini no higher than control, L1-to-L2 branches no lower, train-to-test frequency drift no greater, sequence information no lower, and Stage-3 recall@10 above 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike the encoder-only inert arms, this objective has a direct codebook gradient, which is the measured surviving path to exported SIDs. Unlike the collapsed cross-entropy, it does not ask one code to serve both endpoints: it acts on their directed difference and adds an explicit repulsive distance hinge. The hinge is a local safeguard, not a claim that downstream requirements are guaranteed."
+    },
+    {
+      "id": "directed_assignment_information_partition",
+      "title": "Directed soft-assignment information with a codeword repulsion barrier",
+      "equation": "For each valid row i and code j, let p^s_ij=softmax_j(-||s_i-c_j||_2^2/tau) and p^t_ij=softmax_j(-||t_i-c_j||_2^2/tau). Let q_ij=p^s_ij*p^t_ij and d_ij=||s_i-c_j||_2^2-||t_i-c_j||_2^2. Define L_i=-sum_j q_ij*log((q_ij+eps)/(sum_k q_ik+eps))*tanh(d_ij/kappa) + lambda_rep*sum_j p^s_ij*p^t_ij*max(0,delta-||c_j-c_{b(i)}||_2)^2, where b(i)=argmin_j ||t_i-c_j||_2^2. The objective is J=w_cb*mean_i L_i. The directed signed distance factor makes the information contribution change under source-target exchange; the repulsion barrier discourages both endpoints from using the same or near-identical codeword.",
+      "symbols": {
+        "s_i": "Source representation for valid pair i.",
+        "t_i": "Target representation for valid pair i.",
+        "c_j": "Codebook vector j.",
+        "p^s_ij": "Soft source assignment probability to code j.",
+        "p^t_ij": "Soft target assignment probability to code j.",
+        "q_ij": "Unnormalized joint soft assignment mass for code j.",
+        "d_ij": "Signed difference between source and target squared distances to code j.",
+        "b(i)": "Nearest-code assignment for the target representation.",
+        "tau": "Soft-assignment temperature.",
+        "kappa": "Scale for the signed directed distance gate.",
+        "lambda_rep": "Weight of the soft pair-codeword separation barrier.",
+        "delta": "Minimum permitted distance from the target-assigned codeword for codewords jointly used by the pair.",
+        "w_cb": "Composition weight for this auxiliary objective.",
+        "eps": "Positive numerical stabilizer for logarithms and norms.",
+        "B": "Batch size.",
+        "D": "Representation and codebook dimension.",
+        "C": "Number of codebook vectors."
+      },
+      "parameters": {
+        "tau": 1.0,
+        "kappa": 1.0,
+        "lambda_rep": 1.0,
+        "delta": 0.2,
+        "w_cb": 0.0001,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The masked ordered source-target pair, represented by the soft assignments and the signed source-versus-target distance difference.",
+      "codebook_interaction": "The soft-assignment information term differentiably changes codeword locations to reshape which codes the two endpoints use, rather than pulling both endpoint codewords toward a shared positive label. The repulsion barrier gives a separating gradient to codewords jointly used by a pair whenever their distance to the target-assigned codeword is below delta. The signed distance gate makes the loss directed; the separation barrier counteracts pairwise merging.",
+      "encoder_interaction": "The soft assignments depend on both representations and therefore produce nonzero source and target gradients. The host discards their encoder-side contribution; only the nonzero codebook gradient is relied upon to affect exported SIDs.",
+      "risk": "The soft joint mass can be diffuse or dominated by common codes, making the information term weak or encouraging an unintended partition. Its repulsion is mediated by soft assignments and a hard target nearest-code index, so it may not preserve separation for every pair after export. The extra soft-assignment geometry could increase frequency drift or reduce prefix information despite maintaining pair separation.",
+      "falsifier": "Reject if exchanging source and target leaves the loss unchanged, any declared gradient is zero or nonfinite, the resulting export increases level-0 Gini, reduces L1-to-L2 branches or sequence information, increases train-to-test frequency drift, or fails to improve Stage-3 recall@10 over 0.06406796775709883 under the frozen evaluation.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this term differentiates through codebook distances and soft assignments, giving the mechanism a surviving codebook path. Unlike the collapsed directed assignment cross-entropy, it does not reward assigning both endpoints to the same positive code: it uses a directed signed assignment signal and a barrier against jointly used codewords becoming too close. The barrier does not guarantee that the resulting full code partition is useful, so the structural and Stage-3 checks remain decisive."
+    },
+    {
+      "id": "behaviour_residual_directional_margin",
+      "title": "Behaviour-conditioned residual direction with separated codeword margin",
+      "equation": "For each valid row i, let e_i=t_i-s_i, let u_i=e_i/(||e_i||_2+eps), and let r_i=c_{b(i)}-c_{a(i)} for nearest-code assignments a(i) to s_i and b(i) to t_i. Define L_i=max(0, margin-<r_i,u_i>)^2 + lambda_sep*max(0,delta-||r_i||_2)^2 + lambda_orth*||r_i-<r_i,u_i>u_i||_2^2, and J=w_cb*mean_i L_i. The directional margin makes the target-assigned codeword lie ahead of the source-assigned codeword along the observed residual; the separation hinge prevents those codewords from converging, and the orthogonal penalty limits residual distortion.",
+      "symbols": {
+        "s_i": "Source representation for valid pair i.",
+        "t_i": "Target representation for valid pair i.",
+        "e_i": "Behaviour-conditioned residual vector from source to target.",
+        "u_i": "Unit residual direction.",
+        "c_j": "Codebook vector j.",
+        "a(i)": "Nearest-code assignment for the source representation.",
+        "b(i)": "Nearest-code assignment for the target representation.",
+        "r_i": "Target-assigned minus source-assigned codeword vector.",
+        "margin": "Minimum desired codeword displacement along the residual direction.",
+        "lambda_sep": "Weight of the minimum pair-codeword separation hinge.",
+        "delta": "Minimum permitted Euclidean distance between pair-assigned codewords.",
+        "lambda_orth": "Weight penalizing the component of codeword displacement orthogonal to the residual.",
+        "w_cb": "Composition weight for this auxiliary objective.",
+        "eps": "Positive stabilizer for residual normalization.",
+        "B": "Batch size.",
+        "D": "Representation and codebook dimension.",
+        "C": "Number of codebook vectors."
+      },
+      "parameters": {
+        "margin": 0.1,
+        "lambda_sep": 1.0,
+        "delta": 0.2,
+        "lambda_orth": 0.1,
+        "w_cb": 0.0001,
+        "eps": 1e-8
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The masked behaviour-conditioned residual t_i-s_i, including its direction and the nearest-code assignments at both endpoints.",
+      "codebook_interaction": "The directional hinge pushes the target-assigned codeword ahead of the source-assigned codeword along the pair residual. The orthogonal penalty aligns their difference with that residual. The explicit separation hinge repels the pair codewords whenever their Euclidean distance is below delta, preventing the residual objective from satisfying its margin by collapsing the pair.",
+      "encoder_interaction": "The residual direction depends on source and target and gives nonzero gradients to both. Those encoder gradients are discarded by the host's post-backward assembly; the codebook gradient is the intended route to changing exported assignments.",
+      "risk": "A residual direction may encode nuisance movement or sampling noise rather than recommendation-relevant change. The margin can over-regularize selected codeword pairs, and the local distance floor cannot ensure balanced global use or preserve prefix branches. Hard nearest-code assignments may also make the mechanism's export effect discontinuous and small at the frozen weight.",
+      "falsifier": "Reject if the objective is invariant to exchanging source and target, gradients are zero or nonfinite, assigned codeword distances shrink below the specified floor, or the frozen run fails to raise pair-level ER while meeting all measured structural requirements and improving Stage-3 recall@10 over the archived control value 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only mechanisms, the objective has a direct nonzero gradient to the codebook, the only measured path that changes exported SIDs. Unlike pairwise convergence and collapse, it rewards a directed residual displacement and explicitly penalizes pair distances below delta rather than making one code serve both endpoints. Unlike unconstrained residual transport, it includes a separation floor; nevertheless, global code balance and downstream quality must be measured rather than inferred."
+    }
+  ]
+}
+```

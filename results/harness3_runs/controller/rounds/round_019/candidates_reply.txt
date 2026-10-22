@@ -1,0 +1,130 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_pair_geometry_with_separation_floor",
+      "title": "Improve directed pair geometry while preserving codeword separation",
+      "equation": "Let q(x)=softmax_c(-||x-e_c||^2/tau), where e_c is codeword c, and let z(x)=sum_c q_c(x)e_c. Minimize L = w_pair * sum_b m_b * [||z(t_b)-z(s_b)||^2 - ||t_b-s_b||^2]^2 + w_floor * sum_b m_b * max(0, delta - ||z(t_b)-z(s_b)||)^2. The first term fits directed pair displacement in codebook space; the second prevents pair representations from converging.",
+      "symbols": {
+        "s_b": "Source representation for pair b.",
+        "t_b": "Target representation for pair b.",
+        "e_c": "Codebook vector c.",
+        "q_c(x)": "Soft assignment probability of representation x to codeword c.",
+        "z(x)": "Soft-quantized representation of x.",
+        "m_b": "Mask value for pair b; zero excludes the pair.",
+        "tau": "Soft-assignment temperature.",
+        "delta": "Minimum soft-quantized distance allowed between a valid pair.",
+        "w_pair": "Weight of the directed pair-geometry fitting term.",
+        "w_floor": "Weight of the pair-separation floor term."
+      },
+      "parameters": {
+        "tau": 0.1,
+        "delta": 0.05,
+        "w_pair": 0.01,
+        "w_floor": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target representation displacement for each masked behaviour pair.",
+      "codebook_interaction": "The geometry-fitting term moves codewords to fit the ordered pair displacement. When a pair's soft-quantized endpoints approach within delta, the floor term pushes their soft representations apart; it therefore opposes pair convergence in that region rather than rewarding shared codes. It is a soft-distance safeguard, not a guarantee that hard assignments remain distinct.",
+      "encoder_interaction": "Produces source and target gradients through their soft assignments and pair geometry. The host discards encoder-only gradient contributions; the codebook gradient is the route by which this term can affect exported SIDs.",
+      "risk": "The soft-distance floor may not protect hard assignments if the soft representations remain separated while the nearest-code assignments merge. The pair-geometry fit may also distort global code occupancy or prefix structure, or its gradients may be too weak to alter hard SIDs.",
+      "falsifier": "Reject if the cold run does not raise pair-level ER, if exported level-0 Gini exceeds control, if L1-to-L2 branches fall below control, or if train-to-test frequency drift grows or sequence information falls. Pair-codeword distance and hard SID sharing should also be checked to test the proposed anti-convergence mechanism.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this sends a gradient to the codebook. Unlike the collapsed assignment cross-entropy, it includes an explicit penalty that activates when paired soft representations converge; it does not optimize a shared-code objective. Whether that safeguard preserves hard-code structure is an empirical risk, not assumed."
+    },
+    {
+      "id": "directed_soft_transition_information_with_pair_margin",
+      "title": "Increase directed assignment information subject to a pairwise code margin",
+      "equation": "Set q_c(x)=softmax_c(-||x-e_c||^2/tau), and define the directed transition score A_b(c,d)=q_c(s_b)q_d(t_b)exp(-||e_d-e_c||^2/kappa). Let P_b(d|c)=A_b(c,d)/sum_j A_b(c,j). Minimize L = w_info * sum_b m_b * [-sum_c q_c(s_b) sum_d q_d(t_b) log(P_b(d|c)+epsilon)] + w_margin * sum_b m_b * max(0, delta - sum_{c,d}q_c(s_b)q_d(t_b)||e_d-e_c||)^2. The conditional prediction is directed; the margin penalizes convergence of the pair's expected codeword distance.",
+      "symbols": {
+        "s_b": "Source representation for pair b.",
+        "t_b": "Target representation for pair b.",
+        "e_c": "Codebook vector c.",
+        "q_c(x)": "Soft assignment probability of x to codeword c.",
+        "A_b(c,d)": "Unnormalized directed score for source code c and target code d.",
+        "P_b(d|c)": "Normalized predicted target-code distribution conditioned on source code c.",
+        "m_b": "Mask value for pair b.",
+        "tau": "Soft-assignment temperature.",
+        "kappa": "Scale for the codeword-distance factor in the transition score.",
+        "delta": "Minimum expected pairwise codeword distance.",
+        "epsilon": "Numerical stabilizer for the logarithm.",
+        "w_info": "Weight of the directed assignment-prediction loss.",
+        "w_margin": "Weight of the pairwise expected-distance margin."
+      },
+      "parameters": {
+        "tau": 0.1,
+        "kappa": 1.0,
+        "delta": 0.05,
+        "epsilon": 1e-8,
+        "w_info": 0.01,
+        "w_margin": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target pairing, represented as a conditional distribution over target code assignments given source code assignments.",
+      "codebook_interaction": "The directed conditional term updates codewords through both the soft assignments and the codeword-distance transition score. The expected-distance margin pushes paired soft codeword distributions apart when their expected distance is below delta. The conditional term alone could still favor concentration; the margin is specifically intended to counter pair convergence.",
+      "encoder_interaction": "The loss differentiates through source and target soft assignments. The host discards the encoder-only contribution, so any exported-SID change must come from the nonzero codebook gradient.",
+      "risk": "The conditional prediction loss may be minimized by concentrating source or target assignments despite the expected-distance margin, which constrains pair distance but not catalogue-wide occupancy, prefix branching, or train-to-test drift. Its soft margin may also fail to prevent hard assignment merges.",
+      "falsifier": "Reject if the exported level-0 Gini rises above control, L1-to-L2 branch count falls below control, train-to-test frequency drift grows, or sequence information falls, even if pair ER rises. A failure of pairwise codeword distances to remain above the control-relevant range would directly falsify the anti-convergence rationale.",
+      "why_not_the_measured_failures": "It reaches the codebook, unlike the inert encoder-only mechanisms. Unlike the collapsed directed assignment cross-entropy, it does not use an unconstrained assignment-prediction objective: it adds an explicit expected pair-distance floor. It still risks global code concentration, which the frozen checks must detect."
+    },
+    {
+      "id": "directed_residual_transport_with_codeword_repulsion",
+      "title": "Transport behaviour-conditioned residuals without merging paired codewords",
+      "equation": "Let q_c(x)=softmax_c(-||x-e_c||^2/tau), z(x)=sum_c q_c(x)e_c, and r_b=t_b-s_b. Define the directed transport error u_b=[z(t_b)-z(s_b)]-r_b. Minimize L = w_transport * sum_b m_b * ||u_b||^2 + w_repulse * sum_b m_b * max(0, delta - ||z(t_b)-z(s_b)||)^2. The ordered residual r_b makes transport directed; the second term repels paired soft representations when their distance is below delta.",
+      "symbols": {
+        "s_b": "Source representation for pair b.",
+        "t_b": "Target representation for pair b.",
+        "r_b": "Ordered residual t_b-s_b.",
+        "e_c": "Codebook vector c.",
+        "q_c(x)": "Soft assignment probability of x to codeword c.",
+        "z(x)": "Soft-quantized representation of x.",
+        "u_b": "Residual transport error in soft-quantized space.",
+        "m_b": "Mask value for pair b.",
+        "tau": "Soft-assignment temperature.",
+        "delta": "Minimum soft-quantized distance allowed between paired representations.",
+        "w_transport": "Weight of the directed residual-transport term.",
+        "w_repulse": "Weight of the paired-representation separation term."
+      },
+      "parameters": {
+        "tau": 0.1,
+        "delta": 0.05,
+        "w_transport": 0.01,
+        "w_repulse": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered residual vector from source to target, t_b-s_b, for each masked behaviour pair.",
+      "codebook_interaction": "The transport term moves codewords so the soft-quantized source-to-target displacement matches the ordered residual. The separation term pushes paired soft representations apart only when their distance is below delta, opposing pair convergence. The transport term can counteract that repulsion, so non-convergence is not guaranteed by construction.",
+      "encoder_interaction": "The transport and separation terms differentiate through source and target representations. Since the host overwrites the encoder gradient, the encoder contribution alone cannot change the exported SIDs; the mechanism relies on its codebook gradient.",
+      "risk": "Matching residuals in soft-quantized space may preserve pair geometry while changing code usage in ways that harm recommendation retrieval. The transport term may overpower the repulsion term, and neither term directly constrains catalogue-wide Gini, prefix branching, or frequency drift.",
+      "falsifier": "Reject if the cold run fails to raise pair ER or violates any structural requirement: level-0 Gini above control, L1-to-L2 branches below control, increased train-to-test frequency drift, or reduced sequence information. If paired codeword distances shrink despite the separation term, its stated protective mechanism is falsified.",
+      "why_not_the_measured_failures": "It sends a gradient to the codebook, unlike the inert encoder-only mechanisms. Unlike the collapsed pairwise convergence objective, its transport target is the ordered residual and it includes an explicit low-distance repulsion term rather than rewarding both endpoints for sharing a code. The repulsion's effectiveness and the global structure remain testable risks."
+    }
+  ]
+}
+```
