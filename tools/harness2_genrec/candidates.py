@@ -207,10 +207,10 @@ history gain is the hypothesis, and what decides is whether an arm can hold the 
 while the ER rises -- which no arm has yet done.
 
 And the campaign's own cohort says which instrument is worth anything. Every arm that had
-an export was given its one history-conditioned probe, so twelve arms now carry the frozen
+an export was given its one history-conditioned probe, so thirteen arms now carry the frozen
 ER, the history-conditioned gain and the one Stage-3 each of them is allowed. Across those
-twelve, the history-conditioned gain's rank correlation with the downstream Recall@10 is
-+0.45 and with the NDCG@10 +0.44, while the frozen ER's is +0.10 and +0.15. The gain's
+thirteen, the history-conditioned gain's rank correlation with the downstream Recall@10 is
++0.46 and with the NDCG@10 +0.45, while the frozen ER's is +0.17 and +0.25. The gain's
 range across the cohort is narrow -- 0.1201 to 0.1258 -- and the ORDERING inside that band
 is what tracks the loss. So a candidate that raises the history-conditioned gain as well as
 the ER is the candidate worth testing next. That is a retrospective association on a cohort
