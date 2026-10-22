@@ -400,6 +400,16 @@ def design_implications(
             continue
         balance = entry["token_balance"]["level_1"]
         reference_balance = reference["token_balance"]["level_1"]
+        # the TAIL of the level-0 usage tracks the downstream quality; the Gini, which
+        # summarises the whole distribution, does not
+        cell = entry["collisions"]["level_1"]["largest_cell"]
+        reference_cell = reference["collisions"]["level_1"]["largest_cell"]
+        if cell > reference_cell:
+            implications.append(
+                f"{name}: the largest level-0 cell holds {cell} items against the control's "
+                f"{reference_cell}; the tail of the usage is what the recommender loses, and "
+                "the whole-distribution Gini does not show it"
+            )
         if balance["gini"] > reference_balance["gini"] + 0.02:
             implications.append(
                 f"{name}: the level-0 usage is more concentrated than the control's "
@@ -445,12 +455,14 @@ def design_implications(
                 "recommender has less to predict from the previous item"
             )
     implications.append(
-        "the requirement a mechanism has to meet, stated measurably: the number of level-0 "
-        "codes in use must not fall below the control's, the exported level-0 usage must not "
-        "become more concentrated than the control's, the L1 -> L2 prefix tree must keep at "
+        "the requirement a mechanism has to meet, stated measurably: the largest level-0 cell "
+        "must not hold more items than the control's largest cell, the number of level-0 "
+        "codes in use must not fall below the control's, the L1 -> L2 prefix tree must keep at "
         "least as many branches per code, the train-to-test frequency drift must not grow, "
-        "and the sequence information the codes carry must not fall -- while the pair-level "
-        "ER rises"
+        "and the sequence information the codes carry must not fall -- while the pair-level ER "
+        "rises. The tail of the usage and the width of the prefix tree are the two measures "
+        "that track the downstream quality; the Gini, which summarises the whole "
+        "distribution, does not"
     )
     return implications
 
