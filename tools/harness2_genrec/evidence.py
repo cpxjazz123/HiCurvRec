@@ -189,13 +189,25 @@ class EvidenceStore:
         return self.run_dir(run_id) / "manifest.json"
 
     # -- admitting a run ------------------------------------------------------------
-    def preflight(self, plan: RunPlan, *, verdict_tree_digest: Optional[str] = None) -> None:
-        """Refuse the run for every reason the store knows about, before anything starts."""
+    def preflight(
+        self,
+        plan: RunPlan,
+        *,
+        verdict_tree_digest: Optional[str] = None,
+        allow_existing_output: bool = False,
+    ) -> None:
+        """Refuse the run for every reason the store knows about, before anything starts.
+
+        The empty-output-directory rule stops a run from overwriting what is already there.
+        It must not stop the store from RECORDING a run that has already finished: by then
+        the run's own products are in that directory, and refusing to record them would
+        leave the system of record blind to exactly the arms that produced evidence.
+        """
         plan.validate()
         if plan.output_dir is None:
             raise EvidenceError("a run must declare its output directory")
         output = Path(plan.output_dir).resolve()
-        if output.exists() and any(output.iterdir()):
+        if not allow_existing_output and output.exists() and any(output.iterdir()):
             raise EvidenceError(
                 f"the target output directory already exists and is not empty: {output}"
             )
@@ -211,9 +223,19 @@ class EvidenceStore:
                     f"{digest[:16]}"
                 )
 
-    def admit(self, plan: RunPlan, *, verdict_tree_digest: Optional[str] = None) -> Run:
+    def admit(
+        self,
+        plan: RunPlan,
+        *,
+        verdict_tree_digest: Optional[str] = None,
+        allow_existing_output: bool = False,
+    ) -> Run:
         """Preflight, allocate an isolated directory and a unique run id."""
-        self.preflight(plan, verdict_tree_digest=verdict_tree_digest)
+        self.preflight(
+            plan,
+            verdict_tree_digest=verdict_tree_digest,
+            allow_existing_output=allow_existing_output,
+        )
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         base = f"{plan.kind}-{plan.mechanism_id}-{stamp}"
         run_id = base

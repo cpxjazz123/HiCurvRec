@@ -108,6 +108,7 @@ class ControllerConfig:
     state: Path = REPO_ROOT / "results" / "harness3_runs" / "controller" / "state.json"
     audit: Path = REPO_ROOT / "results" / "harness3_runs" / "controller" / "audit.jsonl"
     results: Path = REPO_ROOT / "results" / "harness3_runs" / "controller" / "rounds"
+    campaign: Path = REPO_ROOT / "results" / "harness3_runs"
     max_concurrent_screening: int = 2
     max_concurrent_training: int = 1
     ddp_port_base: int = 50300
@@ -341,20 +342,43 @@ class Controller:
     def phase_read(self) -> None:
         """Phase 1: take in the new evidence and name the gap the round is about."""
         manifests = self.store.runs()
-        qualified = []
+        # A manifest is immutable, so the ER and the downstream measurement live in two of
+        # them: one per kind. The arm's evidence is therefore the JOIN of its manifests.
+        # Reading one manifest at a time would report an arm that has both measurements as
+        # an arm that has neither, and a genuine success would go unseen.
+        joined: Dict[str, Dict[str, Any]] = {}
         for manifest in manifests:
+            mechanism_id = manifest.get("mechanism_id") or ""
             metrics = manifest.get("metrics") or {}
             evaluation = metrics.get("frozen_evaluation") or {}
             stage3 = metrics.get("stage3") or {}
+            entry = joined.setdefault(
+                mechanism_id,
+                {"er": None, "recall": None, "ndcg": None, "run_ids": []},
+            )
+            # the ER was written under two names: the manifests made before the key was
+            # aligned carry "l1_er", the ones after carry "hard_l1_er". Both are the same
+            # measurement, read once, so both are accepted.
             er = evaluation.get("hard_l1_er")
-            recall = stage3.get("test_recall@10")
-            ndcg = stage3.get("test_ndcg@10")
+            if er is None:
+                er = evaluation.get("l1_er")
+            if er is not None:
+                entry["er"] = er
+            if stage3.get("test_recall@10") is not None:
+                entry["recall"] = stage3["test_recall@10"]
+                entry["ndcg"] = stage3.get("test_ndcg@10")
+            entry["run_ids"].append(manifest.get("run_id"))
+        qualified = []
+        for mechanism_id, entry in joined.items():
+            er = entry["er"]
+            recall = entry["recall"]
+            ndcg = entry["ndcg"]
             if er is None or recall is None or ndcg is None:
                 continue
             qualified.append(
                 {
-                    "mechanism_id": manifest["mechanism_id"],
-                    "run_id": manifest["run_id"],
+                    "mechanism_id": mechanism_id,
+                    "run_id": (entry["run_ids"] or [""])[-1],
                     "er": er,
                     "er_delta": er - ARCHIVED_CONTROL["hard_l1_er"],
                     "recall": recall,
@@ -493,11 +517,252 @@ class Controller:
                 return path
         return None
 
+    def _refresh_transfer_analysis(self) -> Dict[str, Any]:
+        """Re-run the transfer analysis over every arm the store knows about.
+
+        The brief tells the agent what the measured requirements are. If that requirement is
+        a frozen snapshot, the agent designs against yesterday's evidence -- and every arm
+        measured since has added a measurement of what went wrong. The analysis runs in the
+        project environment, like the frozen evaluation does, because the controller's own
+        environment has no numpy. A refresh that fails must not stop the loop: the previous
+        report is kept and the failure is recorded.
+        """
+        arms: Dict[str, Path] = {}
+        variants: Dict[str, str] = {}
+        stage3_root = REPO_ROOT / "results" / "stage3_T5Train"
+        for manifest in self.store.runs():
+            mechanism_id = manifest.get("mechanism_id") or ""
+            for artifact in manifest.get("artifacts") or ():
+                path = str(artifact.get("path") or "")
+                if not path.endswith("sids_for_hgrec.npy") or not artifact.get("exists"):
+                    continue
+                sid_path = Path(path)
+                if not sid_path.is_absolute():
+                    sid_path = REPO_ROOT / sid_path
+                arms[mechanism_id] = sid_path.parent
+                break
+            variant = f"TIGER_c107_{mechanism_id}__r8_control"
+            if (stage3_root / variant).is_dir():
+                variants[mechanism_id] = variant
+        out = self.config.campaign / "transfer_analysis" / "stage3_transfer_report.json"
+        if "r8_control" not in arms:
+            return {"refreshed": False, "reason": "the control is not in the store"}
+        out.parent.mkdir(parents=True, exist_ok=True)
+        command = [
+            PROJECT_PYTHON,
+            "-m",
+            "tools.harness2_genrec.stage3_transfer",
+            "--arms",
+            ",".join(f"{name}={path}" for name, path in sorted(arms.items())),
+            "--stage3",
+            ",".join(f"{name}={variant}" for name, variant in sorted(variants.items())),
+            "--out",
+            str(out),
+        ]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=str(REPO_ROOT),
+                capture_output=True,
+                text=True,
+                timeout=1800,
+            )
+        except Exception as error:  # noqa: BLE001
+            return {"refreshed": False, "reason": f"{type(error).__name__}: {error}"}
+        if completed.returncode != 0:
+            return {
+                "refreshed": False,
+                "reason": (completed.stderr or completed.stdout or "").strip()[-400:],
+            }
+        return {
+            "refreshed": True,
+            "arms": len(arms),
+            "with_stage3": len(variants),
+            "path": str(out),
+        }
+
+    def backfill_store(self) -> Dict[str, Any]:
+        """Record the arms that were measured but never reached the store.
+
+        The store's preflight used to refuse the admission of a finished run -- the run's
+        own products were in the output directory -- and the refusal was swallowed, so the
+        arms measured in that window are invisible to the phase that decides success. They
+        are recorded here from the evidence that already exists: the ER the controller read
+        once, and the Stage-3 result on disk. Nothing is measured again, and the ER is not
+        read a second time.
+        """
+        from .evidence import RunPlan
+
+        if not self.config.audit.is_file():
+            return {"recorded": [], "reason": "there is no audit log"}
+        events = [
+            json.loads(line)
+            for line in self.config.audit.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        measured = {
+            event["mechanism_id"]: event.get("er")
+            for event in events
+            if event.get("event") == "evaluate" and event.get("er") is not None
+        }
+        keys = {
+            item.get("mechanism_id"): item.get("semantic_key", "")
+            for item in self.state.get("portfolio") or ()
+        }
+        known = {manifest.get("mechanism_id") for manifest in self.store.runs()}
+        recorded: List[str] = []
+        missing: List[str] = []
+        # the Stage-3 of every arm whose result is on disk, whether or not its ER was read
+        # by this controller: the downstream measurement is not re-run, it is read from the
+        # artifact that is already there
+        stage3_root = REPO_ROOT / "results" / "stage3_T5Train"
+        already = {
+            manifest.get("mechanism_id")
+            for manifest in self.store.runs()
+            if manifest.get("kind") == "stage3"
+        }
+        for variant in sorted(stage3_root.glob("TIGER_c107_*__r8_control")):
+            mechanism_id = variant.name[len("TIGER_c107_"): -len("__r8_control")]
+            if mechanism_id in already:
+                continue
+            finals = sorted(variant.rglob("test_final.json"))
+            if not finals:
+                continue
+            report = json.loads(finals[-1].read_text(encoding="utf-8"))
+            recall = report.get("test_recall@10")
+            ndcg = report.get("test_ndcg@10")
+            try:
+                stage3_run = self.store.admit(
+                    RunPlan(
+                        kind="stage3",
+                        mechanism_id=mechanism_id,
+                        stage="downstream",
+                        seed=42,
+                        output_dir=variant,
+                    ),
+                    allow_existing_output=True,
+                )
+                self.store.close(
+                    stage3_run,
+                    status="succeeded",
+                    metrics={
+                        "stage3": {
+                            "test_recall@10": recall,
+                            "test_ndcg@10": ndcg,
+                            "recall_delta_vs_archived_control": (
+                                recall - ARCHIVED_CONTROL["stage3_recall@10"]
+                            ),
+                            "ndcg_delta_vs_archived_control": (
+                                ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"]
+                            ),
+                            "note": "read from the Stage-3 artifact already on disk",
+                        }
+                    },
+                )
+                recorded.append(f"{mechanism_id} (stage3 only)")
+            except Exception as error:  # noqa: BLE001
+                self.audit(
+                    "store_admission_failed",
+                    mechanism_id=mechanism_id,
+                    kind="stage3",
+                    reason=f"{type(error).__name__}: {error}",
+                )
+        for mechanism_id, er in sorted(measured.items()):
+            if mechanism_id in known:
+                continue
+            stage2 = REPO_ROOT / "results" / "stage2_RQ-VAE" / f"TIGER_c107_{mechanism_id}"
+            sid = stage2 / "r8_control" / "sids_for_hgrec.npy"
+            if not sid.is_file():
+                missing.append(mechanism_id)
+                continue
+            try:
+                run = self.store.admit(
+                    RunPlan(
+                        kind="stage2",
+                        mechanism_id=mechanism_id,
+                        stage="cold_train",
+                        seed=42,
+                        output_dir=stage2,
+                        extra={"semantic_key": keys.get(mechanism_id, "")},
+                    ),
+                    allow_existing_output=True,
+                )
+                self.store.close(
+                    run,
+                    status="succeeded",
+                    metrics={
+                        "frozen_evaluation": {
+                            "hard_l1_er": er,
+                            "l1_er": er,
+                            "above_frozen_threshold": er > FROZEN_GATE,
+                            "frozen_threshold": FROZEN_GATE,
+                            "note": (
+                                "the ER the controller had already read; it was not read "
+                                "again"
+                            ),
+                        }
+                    },
+                    artifacts=[
+                        sid,
+                        sid.parent / "rqvae_best.pth",
+                        sid.parent / "item_sids.json",
+                    ],
+                    extra={"semantic_key": keys.get(mechanism_id, "")},
+                )
+                variant = f"TIGER_c107_{mechanism_id}__r8_control"
+                root = REPO_ROOT / "results" / "stage3_T5Train" / variant
+                finals = (
+                    sorted(root.rglob("test_final.json"))
+                    if root.is_dir() and mechanism_id not in already
+                    else []
+                )
+                if finals:
+                    report = json.loads(finals[-1].read_text(encoding="utf-8"))
+                    recall = report.get("test_recall@10")
+                    ndcg = report.get("test_ndcg@10")
+                    stage3_run = self.store.admit(
+                        RunPlan(
+                            kind="stage3",
+                            mechanism_id=mechanism_id,
+                            stage="downstream",
+                            seed=42,
+                            output_dir=root,
+                        ),
+                        allow_existing_output=True,
+                    )
+                    self.store.close(
+                        stage3_run,
+                        status="succeeded",
+                        metrics={
+                            "stage3": {
+                                "test_recall@10": recall,
+                                "test_ndcg@10": ndcg,
+                                "recall_delta_vs_archived_control": (
+                                    recall - ARCHIVED_CONTROL["stage3_recall@10"]
+                                ),
+                                "ndcg_delta_vs_archived_control": (
+                                    ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"]
+                                ),
+                            }
+                        },
+                    )
+                recorded.append(mechanism_id)
+            except Exception as error:  # noqa: BLE001
+                self.audit(
+                    "store_admission_failed",
+                    mechanism_id=mechanism_id,
+                    reason=f"{type(error).__name__}: {error}",
+                )
+        self.audit("backfill_store", recorded=recorded, missing=missing)
+        return {"recorded": recorded, "missing": missing}
+
     def phase_hypothesise(self) -> None:
         """Phase 2: the portfolio, proposed by the agent and ranked by the controller."""
         from .candidates import propose_candidates
         from .ledger import Ledger
 
+        refresh = self._refresh_transfer_analysis()
+        self.audit("transfer_analysis", **refresh)
         ledger = Ledger(self.config.ledger, store=self.store).load()
         out_dir = self.config.results / f"round_{self.state['round']:03d}"
         record = propose_candidates(
@@ -776,14 +1041,20 @@ class Controller:
                 output_dir=REPO_ROOT / "results" / "stage2_RQ-VAE" / f"TIGER_c107_{mechanism_id}",
                 extra={"semantic_key": item.get("semantic_key", "")},
             )
-            run = self.store.admit(plan)
-        except Exception:  # noqa: BLE001
+            run = self.store.admit(plan, allow_existing_output=True)
+        except Exception as error:  # noqa: BLE001
+            self.audit(
+                "store_admission_failed",
+                mechanism_id=mechanism_id,
+                reason=f"{type(error).__name__}: {error}",
+            )
             return
         self.store.close(
             run,
             status="succeeded",
             metrics={
                 "frozen_evaluation": {
+                    "hard_l1_er": report.get("l1_er"),
                     "l1_er": report.get("l1_er"),
                     "above_frozen_threshold": report.get("above_frozen_threshold"),
                     "frozen_threshold": report.get("frozen_threshold"),
@@ -872,8 +1143,14 @@ class Controller:
             output_dir=REPO_ROOT / "results" / "stage3_T5Train" / f"TIGER_c107_{mechanism_id}",
         )
         try:
-            run = self.store.admit(plan)
-        except Exception:  # noqa: BLE001
+            run = self.store.admit(plan, allow_existing_output=True)
+        except Exception as error:  # noqa: BLE001
+            self.audit(
+                "store_admission_failed",
+                mechanism_id=mechanism_id,
+                kind="stage3",
+                reason=f"{type(error).__name__}: {error}",
+            )
             return
         self.store.close(
             run,

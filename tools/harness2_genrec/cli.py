@@ -498,6 +498,9 @@ def cmd_controller(args: argparse.Namespace) -> int:
     if args.action == "tick":
         print(json.dumps(controller.tick(), indent=2, default=str))
         return 0
+    if args.action == "backfill-store":
+        print(json.dumps(controller.backfill_store(), indent=2, default=str))
+        return 0
     if args.action == "run":
         status = controller.run_forever(max_ticks=args.max_ticks or None)
         print(json.dumps(status, indent=2, default=str))
@@ -631,7 +634,18 @@ def _build_parser() -> argparse.ArgumentParser:
     final.set_defaults(func=cmd_final_table)
 
     ctrl = sub.add_parser("controller", help="the durable research controller (issue #107)")
-    ctrl.add_argument("action", choices=["status", "tick", "run", "pause", "resume", "report"])
+    ctrl.add_argument(
+        "action",
+        choices=[
+            "status",
+            "tick",
+            "run",
+            "pause",
+            "resume",
+            "report",
+            "backfill-store",
+        ],
+    )
     ctrl.add_argument("--state", default="results/harness3_runs/controller/state.json")
     ctrl.add_argument("--store", default="results/harness3_runs/store")
     ctrl.add_argument("--ledger", default="results/harness3_runs/hypotheses/ledger.json")
