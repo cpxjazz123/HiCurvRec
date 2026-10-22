@@ -163,15 +163,45 @@ def mvg_mechanism_executor(
     return hooks
 
 
-def _write_spec(path: Path, mechanism_id: str, parameters: Dict[str, Any], weight: float) -> Path:
+def _write_spec(
+    path: Path,
+    mechanism_id: str,
+    parameters: Dict[str, Any],
+    weight: float,
+    contract: Optional[Dict[str, Any]] = None,
+) -> Path:
+    """The declaration the independent verifier will check.
+
+    A mechanism that brings its own seven-group contract is verified against ITS OWN
+    declaration; without one, the campaign's template is used, which declares the
+    mechanism's parameters but not what the mechanism promises to do. The verifier reads the
+    declaration as data, so a declaration that claims something nobody checks is refused
+    rather than accepted quietly.
+    """
     template = json.loads(
         (REPO_ROOT / "tools/mvg/specs/behavior_conditioned_pairwise_curvature.json").read_text()
     )
+    if contract:
+        declared = json.loads(json.dumps(contract))
+        merged = json.loads(json.dumps(template))
+        for group, section in declared.items():
+            if isinstance(section, dict) and isinstance(merged.get(group), dict):
+                combined = dict(merged[group])
+                combined.update(section)
+                merged[group] = combined
+            else:
+                merged[group] = section
+        template = merged
+    template.setdefault("schema_version", 1)
     template["mechanism"]["id"] = mechanism_id
     template["mechanism"]["summary"] = (
-        f"the campaign arm {mechanism_id}: {template['mechanism']['summary']}"
+        f"the campaign arm {mechanism_id}: {template['mechanism'].get('summary', '')}"
     )
-    template["mechanism"]["mathematics"] = {"rule": "additive", "weight": weight, **parameters}
+    mathematics = {"rule": "additive", "weight": weight, **parameters}
+    template["mechanism"]["mathematics"] = {
+        **template["mechanism"].get("mathematics", {}),
+        **mathematics,
+    }
     path.write_text(json.dumps(template, indent=2) + "\n", encoding="utf-8")
     return path
 

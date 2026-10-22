@@ -226,7 +226,16 @@ For each candidate, state:
 * `risk`: the most likely way this candidate fails, in one paragraph;
 * `falsifier`: the measurement that would show this candidate is wrong;
 * `why_not_the_measured_failures`: how it differs from the arms that were inert and from the
-  arms that collapsed the codebook.
+  arms that collapsed the codebook;
+* `cgv_contract`: the SEVEN-GROUP contract the independent verifier will check, as an object
+  with exactly these keys: `mechanism`, `model`, `forward_contract`, `gradient_contract`,
+  `update_contract`, `distributed_contract`, `runtime_contract`. It is a declaration of what
+  your mechanism does, not a description of it: the verifier measures the forward against
+  your declared formula, measures the gradient against your declared rule, and checks that
+  the optimizer and the clipping produce the update you declare. Two of its rules are strict:
+  a `gradient_contract` in `formula` mode must name an independent oracle, and a declaration
+  that carries a key nobody checks is a problem, not trivia. The contract's schema and its
+  validator are in `tools/cgv/contract.py`; read it before you write the contract.
 
 6. THE INTERFACE AND THE DIRECTEDNESS CHECK, LEARNED FROM THE FIRST ROUND'S REJECTIONS
    - The checker calls the mechanism as `mechanism_loss(source, target, codebook, mask,
