@@ -1,0 +1,137 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_tangent_repartition",
+      "title": "行为图驱动的切向码本重分区",
+      "equation": "令 p_ic = softmax_c(-||x_i-c_c||²/τ)，定义行为条件码本质心差 μ_c = Σ_i p_ic m_i s_i / (Σ_i p_ic m_i + ε)，其中 s_i = Σ_j m_j exp(-||x_i-y_j||²/τ_b) y_j / (Σ_j m_j exp(-||x_i-y_j||²/τ_b)+ε)。令 g_c = μ_c - c_c，去除所有码字共同平移与径向分量后，L = λ Σ_c ||P_c g_c||²，P_c 为由当前码本中心化矩阵确定的切空间投影；对 source、target 交换后重新计算 s_i，故目标有向。",
+      "symbols": {
+        "x_i": "source 行为端点表示。",
+        "y_j": "target 行为端点表示。",
+        "c_c": "第 c 个 level-0 码字。",
+        "m_i": "输入 mask 的第 i 项，1 表示有效样本。",
+        "p_ic": "表示 x_i 对码字 c 的温度化软分配概率。",
+        "s_i": "由有向 source-to-target 行为邻域形成的 target 质心。",
+        "μ_c": "按软分配与 mask 加权的行为条件 target 质心。",
+        "g_c": "码字至其行为条件质心的位移方向。",
+        "P_c": "移除整体平移和径向分量的局部切空间投影矩阵。",
+        "τ": "软码字分配温度。",
+        "τ_b": "行为邻域温度。",
+        "ε": "防止分母为零的正数。",
+        "λ": "辅助损失权重。"
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "code_temperature": 0.2,
+        "behavior_temperature": 0.2,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "mask 内 source-to-target 的有向成对几何邻域；目标端质心由 target 表示及其对 source 的温度化邻域加权构成。",
+      "codebook_interaction": "梯度使码字配置切向重排以贴近各自行为条件质心；损失只惩罚投影后的质心残差，不包含 source/target 两码字间的吸引项、共享分配目标或距离缩短项，因此不会直接把行为对的两个码字拉近。若有限步更新仍使其相遇，机制即未达到目的。",
+      "encoder_interaction": "损失对 source、target 有梯度，但 host 会覆盖 encoder 梯度；只有同时存在的 codebook 梯度可能改变导出的 SID，encoder 路径不计作有效更新路径。",
+      "risk": "行为条件质心可能把码字配置旋转或扭曲到有利于训练邻域、却不利于 held-out 序列结构的位置；切空间限制也可能让重分区幅度不足，无法使 ER 越过冻结阈值。必须以冷运行导出的 ER、占用与 Stage-3 指标裁决，probe 不能作准入门槛。",
+      "falsifier": "在冻结冷运行中，ER 未严格高于 16.38953942232631，或 Stage-3 Recall@10 未严格高于 0.06406796775709883，或 NDCG@10 未严格高于 0.03530651701940677；任一项成立即否证任务成功。另测码字间距、level-0 Gini、使用码数、prefix branches、序列信息与 train-test drift，以判定预期的非合并重分区是否发生。",
+      "why_not_the_measured_failures": "区别于只到 encoder 的 pairwise margin/curvature 项：此项显式对 codebook 求导，不能被 host 的 encoder 梯度覆盖抹掉。区别于 directed code assignment cross-entropy 的坍塌：没有让同一行为对共享码字的交叉熵，也没有码字间吸引力；它优化切向几何重排而非端点码字收敛。"
+    },
+    {
+      "id": "directed_capacity_constrained_assignment",
+      "title": "有向容量约束的软分配结构重排",
+      "equation": "令 p_ic = softmax_c(-||x_i-c_c||²/τ)，r_ic = softmax_c(-||y_i-c_c||²/τ)。定义有向行为联合分配 J_cd = Σ_i m_i p_ic r_id；其边际为 a_c = Σ_d J_cd、b_d = Σ_c J_cd。令 u_c = 1/C，L = λ[Σ_c(a_c-u_c)² + κ Σ_cd J_cd log((J_cd+ε)/(a_c b_d+ε)) - ρ Σ_cd J_cd log(J_cd+ε)]。第一项约束源端分配容量，第二项为有向分配互信息，第三项奖励行为对共同占用的分配质量；所有项均通过软分配对码字可微，交换 source/target 通常改变 J 与损失。",
+      "symbols": {
+        "x_i": "source 行为端点表示。",
+        "y_i": "与 x_i 配对的 target 行为端点表示。",
+        "c_c": "第 c 个 level-0 码字。",
+        "m_i": "第 i 个样本的有效性 mask。",
+        "p_ic": "source 端对码字 c 的温度化软分配。",
+        "r_ic": "target 端对码字 c 的温度化软分配。",
+        "J_cd": "从 source 码字 c 到 target 码字 d 的行为联合软分配质量。",
+        "a_c": "联合分配 source 边际。",
+        "b_d": "联合分配 target 边际。",
+        "u_c": "均匀容量目标 1/C。",
+        "C": "码字数。",
+        "τ": "软分配温度。",
+        "κ": "有向序列互信息项权重。",
+        "ρ": "行为联合质量项权重。",
+        "ε": "数值稳定常数。",
+        "λ": "辅助损失总权重。"
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "temperature": 0.2,
+        "mutual_information_weight": 0.1,
+        "joint_mass_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "mask 内成对 source-to-target 行为联合软分配；方向性来自 J_cd 的有向行列语义及 source、target 分别形成的 p、r。",
+      "codebook_interaction": "容量项把源端软分配边际约束到均匀目标，互信息项保留转移结构，联合质量项提升行为对相容分配的质量；它不以端点码字距离为目标，也不要求一对端点落进同一格，因此不直接拉近二者。容量是软约束，不能保证硬 SID 的每格计数严格不变；冷导出若出现使用码数下降或 Gini 增长即是重要失败证据。",
+      "encoder_interaction": "source、target 表示均接收有限可微梯度，但 host 会覆盖 encoder 梯度；codebook 梯度才是能改变导出 SID 的路径。",
+      "risk": "软边际的均匀性不等同于硬分配的等容量，温度、训练分布与离散化可能造成硬码使用下降；互信息也可能偏重可预测的常见转移，损害稀有行为与下游排序。即使 ER 上升，也可能因 prefix 分支或序列信息损失而降低 Stage-3 指标。",
+      "falsifier": "冻结冷运行任一硬阈值未严格越过即否证目标；结构机制预期还要求 level-0 使用码数不低于 245、Gini 不高于 control 的 0.216、L1→L2 branches 不低于 control 的 65.9、序列信息不下降且 train-test frequency drift 不增长。测得容量/结构违反或端点码字距离显著塌缩，否证其非合并容量重排解释。",
+      "why_not_the_measured_failures": "不像 encoder-only 辅助项，本项对 codebook 有非零梯度，具备改变 SID 的必要路径。不同于 directed code assignment cross-entropy 对同一行为对指定单一共同 code 的做法，本项保留有向联合分配并约束边际容量，不把 pair-wise codeword convergence 作为优化目标；与已有 usage-balance 项也不同，它联合优化有向转移互信息和容量约束，而非只施加使用均衡。"
+    },
+    {
+      "id": "directed_residual_geometry_transport",
+      "title": "有向行为条件残差几何的正交输运",
+      "equation": "对每个输入 z 定义 q(z)=softmax_c(-||z-c_c||²/τ)，量化残差 e(z)=z-Σ_c q_c(z)c_c。对 mask 内有向对定义 r_i=e(x_i)，t_i=e(y_i)，以及 v_i=Σ_j m_j exp(-||x_i-y_j||²/τ_b)(t_j-r_i)/(Σ_j m_j exp(-||x_i-y_j||²/τ_b)+ε)。令 n_i=(r_i+t_i)/(||r_i+t_i||+ε)，v_i^⊥=v_i-(v_i·n_i)n_i。L=λ Σ_i m_i[||v_i^⊥||²-η log(ε+||r_i-t_i||²)]。第一项输运行为条件残差几何的切向分量，第二项保留 pair 残差分离；交换端点会改变有向邻域及残差目标。",
+      "symbols": {
+        "x_i": "source 行为端点表示。",
+        "y_i": "target 行为端点表示。",
+        "c_c": "第 c 个 level-0 码字。",
+        "q_c(z)": "z 对码字 c 的温度化软分配概率。",
+        "e(z)": "z 减去软量化码字重心所得残差。",
+        "r_i": "source 残差 e(x_i)。",
+        "t_i": "target 残差 e(y_i)。",
+        "v_i": "由有向行为邻域给出的残差输运向量。",
+        "n_i": "由 pair 残差和定义的单位方向。",
+        "v_i^⊥": "相对于 n_i 的切向输运向量。",
+        "m_i": "有效样本 mask。",
+        "τ": "软量化温度。",
+        "τ_b": "行为邻域温度。",
+        "ε": "稳定化正数。",
+        "η": "pair 残差分离保护项的权重。",
+        "λ": "辅助损失权重。"
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "temperature": 0.2,
+        "behavior_temperature": 0.2,
+        "separation_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "mask 内有向 source-to-target 行为邻域及由该邻域定义的残差输运目标；不读取额外输入。",
+      "codebook_interaction": "梯度通过软量化重心作用于码字，沿 pair 残差和的切空间调整残差几何；负对数分离项惩罚残差差异缩小。它不对两个端点码字施加吸引项，且几何输运被投影去除 pair 轴向分量；若实际 codebook 更新仍使端点码字距离系统性缩小，则其分离保护未奏效。",
+      "encoder_interaction": "source、target 经残差计算获得非零梯度，但 host 覆盖 encoder 梯度；codebook 梯度是有效导出路径，不能把 encoder 梯度变化当作 SID 改变证据。",
+      "risk": "残差层面的分离不保证离散 level-0 码字分离：硬量化边界可能让行为 pair 的 SID 仍发生合并；此外投影方向依赖残差和，在近零和情形下稳定化项可能削弱几何信号。即使结构保住，残差输运也可能与下游推荐目标不一致，不能保证三项冻结阈值同时通过。",
+      "falsifier": "冻结冷运行 ER、Recall@10、NDCG@10 中任何一项未严格超过既定阈值即否证目标；对机制解释的直接否证包括 pair 码字距离下降、level-0 使用数低于 245、Gini 高于 0.216、prefix branches 低于 65.9、序列信息下降或 train-test drift 增长。",
+      "why_not_the_measured_failures": "与只改 encoder 的行为损失不同，此项对软量化重心显式求导至 codebook，因而不会被 host 覆盖的 encoder 梯度单独抹除。与坍塌的 directed code assignment cross-entropy 不同，它不让一对端点共同争夺同一 code，并用切向投影和残差分离项抵制 pair 收敛；与已有 residual geometry transport 不同，它把 pair 分离保护纳入目标并将输运限定为 pair 轴向正交分量。"
+    }
+  ]
+}
+```

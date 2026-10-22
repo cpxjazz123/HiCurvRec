@@ -1423,8 +1423,37 @@
         }
       },
       "stage3_slices": {
-        "available": false,
-        "reason": "no per-example shards"
+        "available": true,
+        "evaluated_rows": 43080,
+        "recall@10": 0.0628133704735376,
+        "l1_cell_size": {
+          "l1_cell_size[20,1e+09)": {
+            "rows": 43080,
+            "recall@10": 0.0628133704735376
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 18524,
+            "recall@10": 0.0632152882746707
+          },
+          "popularity[1,2)": {
+            "rows": 34,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 267,
+            "recall@10": 0.06367041198501873
+          },
+          "popularity[20,1e+09)": {
+            "rows": 20933,
+            "recall@10": 0.06296278603162471
+          },
+          "popularity[5,20)": {
+            "rows": 3322,
+            "recall@10": 0.060204695966285374
+          }
+        }
       }
     },
     "directed_assignment_usage_balance": {
@@ -2123,6 +2152,132 @@
         }
       }
     },
+    "directed_codebook_tangent_repartition": {
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.11607597807486474,
+          "marginal_baseline": 0.014164155761533228,
+          "excess_over_the_marginal": 0.10191182231333151,
+          "distinct_codes_used": 245,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.07295615267481348,
+          "marginal_baseline": 0.004697822507724163,
+          "excess_over_the_marginal": 0.06825833016708932,
+          "distinct_codes_used": 16038,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.10099851084798642,
+          "codes_in_train_not_in_test": 2,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 245,
+          "codes_in_test": 243
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.23719243690046488,
+          "codes_in_train_not_in_test": 3987,
+          "codes_in_test_not_in_train": 40,
+          "codes_in_train": 16017,
+          "codes_in_test": 12070
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.2818474353374834,
+          "codes_in_train_not_in_test": 7169,
+          "codes_in_test_not_in_train": 78,
+          "codes_in_train": 23525,
+          "codes_in_test": 16434
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 245,
+          "entropy": 5.432599242602828,
+          "normalised_entropy": 0.987519406413192,
+          "gini": 0.20182890742826598,
+          "largest_code_share": 0.010249318745678611
+        },
+        "level_1_2": {
+          "distinct_codes": 16074,
+          "entropy": 9.48068262197308,
+          "normalised_entropy": 0.97890794057608,
+          "gini": 0.28139584613945323,
+          "largest_code_share": 0.0010981412941798512
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23632,
+          "entropy": 10.050204510861905,
+          "normalised_entropy": 0.9979988302401088,
+          "gini": 0.03782580133073954,
+          "largest_code_share": 0.0003660470980599504
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.07320644216691069
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.0821538962095331
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.08199121522693997
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.08330621542466644
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24585,
+          "collision_rate": 0.9900353845528125,
+          "largest_cell": 252
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 13188,
+          "collision_rate": 0.34623988286492857,
+          "largest_cell": 27
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 1712,
+          "collision_rate": 0.038841664294139155,
+          "largest_cell": 9
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 245,
+          "mean_branches": 65.60816326530612,
+          "median_branches": 66.0,
+          "tenth_percentile_branches": 44.400000000000006,
+          "parents_with_a_single_branch": 2
+        },
+        "l2_to_l3": {
+          "distinct_parents": 16074,
+          "mean_branches": 1.470200323503795,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 11610
+        }
+      }
+    },
     "directed_codeword_margin_geometry": {
       "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/sids_for_hgrec.npy",
       "sequential_predictability": {
@@ -2534,6 +2689,132 @@
         }
       }
     },
+    "directed_pair_margin_rigid_codebook_geometry": {
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.12054700915118152,
+          "marginal_baseline": 0.01789590567832728,
+          "excess_over_the_marginal": 0.10265110347285425,
+          "distinct_codes_used": 239,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.07270579849728587,
+          "marginal_baseline": 0.004709603880784286,
+          "excess_over_the_marginal": 0.06799619461650158,
+          "distinct_codes_used": 16023,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.1019550285012893,
+          "codes_in_train_not_in_test": 0,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 239,
+          "codes_in_test": 239
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.24026283485436387,
+          "codes_in_train_not_in_test": 3960,
+          "codes_in_test_not_in_train": 43,
+          "codes_in_train": 15996,
+          "codes_in_test": 12079
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.2820082764903374,
+          "codes_in_train_not_in_test": 7214,
+          "codes_in_test_not_in_train": 80,
+          "codes_in_train": 23530,
+          "codes_in_test": 16396
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 239,
+          "entropy": 5.408358152525214,
+          "normalised_entropy": 0.987563981982081,
+          "gini": 0.20280166424649004,
+          "largest_code_share": 0.015333306218733477
+        },
+        "level_1_2": {
+          "distinct_codes": 16056,
+          "entropy": 9.482771622303607,
+          "normalised_entropy": 0.9792369233720538,
+          "gini": 0.2810225599550311,
+          "largest_code_share": 0.0010167974946109733
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23637,
+          "entropy": 10.048348278570819,
+          "normalised_entropy": 0.9977935425184008,
+          "gini": 0.03773467178142531,
+          "largest_code_share": 0.0006100784967665839
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.07255571823653816
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.08979990239141045
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.08410606800065072
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.08379433778067036
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24587,
+          "collision_rate": 0.9902794159515191,
+          "largest_cell": 377
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 13249,
+          "collision_rate": 0.34697197706104854,
+          "largest_cell": 25
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 1661,
+          "collision_rate": 0.038638304795217016,
+          "largest_cell": 15
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 239,
+          "mean_branches": 67.17991631799163,
+          "median_branches": 67.0,
+          "tenth_percentile_branches": 47.0,
+          "parents_with_a_single_branch": 0
+        },
+        "l2_to_l3": {
+          "distinct_parents": 16056,
+          "mean_branches": 1.4721599402092675,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 11537
+        }
+      }
+    },
     "directed_pair_separation_codebook_geometry": {
       "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry/r8_control/sids_for_hgrec.npy",
       "sequential_predictability": {
@@ -2661,7 +2942,7 @@
       },
       "stage3_slices": {
         "available": false,
-        "reason": "no Stage-3 logs for TIGER_c107_directed_pair_separation_codebook_geometry__r8_control"
+        "reason": "no per-example shards"
       }
     },
     "directed_residual_codebook_tangent_transport": {
@@ -3442,9 +3723,12 @@
     "directed_capacity_preserving_assignment_repartition: the level-0 usage is more concentrated than the control's (Gini 0.364 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "directed_capacity_preserving_assignment_repartition: fewer level-0 codes are in use than the control's (204 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_codebook_repulsion: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_codebook_tangent_repartition: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
     "directed_codeword_margin_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
     "directed_codeword_tangent_repulsion: the codes carry less sequence information than the control's (excess over the marginal 0.104 against 0.104), so a recommender has less to predict from the previous item",
     "directed_margin_preserving_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.100 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_pair_margin_rigid_codebook_geometry: fewer level-0 codes are in use than the control's (239 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "directed_pair_margin_rigid_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.103 against 0.104), so a recommender has less to predict from the previous item",
     "directed_pair_separation_codebook_geometry: fewer level-0 codes are in use than the control's (244 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_pair_separation_codebook_geometry: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
     "directed_residual_codebook_tangent_transport: fewer level-0 codes are in use than the control's (238 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",

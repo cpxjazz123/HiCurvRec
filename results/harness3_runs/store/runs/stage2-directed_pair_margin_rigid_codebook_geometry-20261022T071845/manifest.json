@@ -1,0 +1,95 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "e8194c76e1017960341829825b6ab82faf026714cae7da41e53903f91e9b9630"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/rqvae_best.pth",
+      "sha256": "889a14bb7a9e321638bd69cf6d218f57fc6bbb5695fdc8079f3c4f96cb74969b"
+    },
+    {
+      "bytes": 1259789,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry/r8_control/item_sids.json",
+      "sha256": "f0b4234b891bca4db8677474fb852e78ad96472a3e09b49b01831f2aaf86b4c0"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-22T07:18:45.884968+00:00",
+  "extra": {
+    "cgv_gate": {
+      "gates": {
+        "G1": "passed",
+        "G2": "passed",
+        "G3": "passed",
+        "G4": "passed",
+        "G5": "passed",
+        "G6": "passed"
+      },
+      "note": "all six gates passed on the supplied declaration",
+      "passed": true
+    },
+    "fingerprint": "b735d45b4faf9e766d82545231d5bc3496a1c3136b1385e0ab60a4c40445f8dd",
+    "semantic_key": "8601c56e63a62159edca7a1da73cd54cc2d52c8e68816652f7d63bdb8c9192f6"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "87d1532ee15827b74f2bbf879eeadbe2ea757b521b48d184e15dd7070d61c1b3",
+  "manifest_version": 1,
+  "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": false,
+      "d2": 0.03780125947618012,
+      "d2_block": {
+        "anchor_cluster_ci95": {
+          "high": 0.056975803003142145,
+          "low": 0.019326456182645328,
+          "replicates": 1000,
+          "seed": 42,
+          "unit": "anchor"
+        },
+        "anchors": 52855,
+        "anchors_with_a_shared_l1_negative": 2323,
+        "anchors_with_a_shared_l1_positive": 517,
+        "computed_from": "the same frozen pair read as the enrichment ratio",
+        "conditional_negative": 0.006686167989970748,
+        "conditional_positive": 0.04448742746615087,
+        "d2": 0.03780125947618012,
+        "definition": "P(shared L2 | shared L1, positive pair) - P(shared L2 | shared L1, negative pair)",
+        "denominator_negative": 2393,
+        "denominator_positive": 517,
+        "flags": [
+          "low_support"
+        ],
+        "low_support": true,
+        "numerator_negative": 16,
+        "numerator_positive": 23,
+        "ok": true,
+        "undefined": false
+      },
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.226631056848532,
+      "l1_er": 16.226631056848532,
+      "neg_share": 0.0049588496830952605,
+      "pos_share": 0.08046542427395706
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_pair_margin_rigid_codebook_geometry-20261022T071845",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

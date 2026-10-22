@@ -1,0 +1,367 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_frame_alignment",
+      "title": "以有向行为协方差旋转代码本框架",
+      "equation": "令 u_i=c*_{s,i}/(||c*_{s,i}||_2+eps)，v_i=c*_{t,i}/(||c*_{t,i}||_2+eps)，其中 c* 是最近代码字；令 A=Σ_i m_i (x_i·y_i) u_i v_i^T/(Σ_i m_i+eps)，Q=Σ_i m_i (x_i·y_i) x_i y_i^T/(Σ_i m_i+eps)。L=λ||A-Q||_F^2。交换 source 与 target 会将有向外积 u_i v_i^T 变为 v_i u_i^T。",
+      "symbols": {
+        "x_i": "source[i]，第 i 个行为对的源向量",
+        "y_i": "target[i]，第 i 个行为对的目标向量",
+        "C": "codebook，形状 [C,D] 的代码字矩阵",
+        "c*_{s,i}": "与 x_i 欧氏距离最近的代码字",
+        "c*_{t,i}": "与 y_i 欧氏距离最近的代码字",
+        "m_i": "mask[i]，有效行为对权重",
+        "u_i": "归一化的源端最近代码字",
+        "v_i": "归一化的目标端最近代码字",
+        "A": "由代码字有向外积构成、按行为相似度加权的协方差矩阵",
+        "Q": "由行为向量有向外积构成、按行为相似度加权的协方差矩阵",
+        "λ": "机制损失组合权重",
+        "eps": "范数及有效样本数稳定项",
+        "||·||_F": "矩阵 Frobenius 范数"
+      },
+      "parameters": {
+        "weight": 0.01,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "由输入 source 与 target 的内积构成的有向行为相似度；不读取其他数据或额外输入。",
+      "codebook_interaction": "梯度调整代码字之间的整体有向协方差框架，使行为相似的源—目标代码字关系趋近行为向量关系。此项不以源、目标代码字的距离为目标，也不施加二者相互靠近的力；两端分别参与外积，且交换端点会改变目标矩阵。硬最近邻的分段常数区间内，代码字梯度可能为零；因此声明的非零路径是一般非退化探针下的预期，不保证每个输入都非零。",
+      "encoder_interaction": "损失对 source、target 有梯度，但宿主覆盖编码器梯度，单独这一路不会改变导出 SID；有效路径是代码本梯度。候选不宣称编码器更新由该项产生。",
+      "risk": "代码字最近邻选择在大多数探针或训练样本上可能不变，使代码本梯度稀疏或被主训练梯度压过；即使框架旋转发生，也可能改变分组却不增加 held-out 行为对共享 L0 代码的比例，或破坏更高层前缀和 Stage-3 排序。协方差对齐也可能只拟合高频行为方向。",
+      "falsifier": "独立梯度检查若发现一般非退化探针下代码本梯度为零、非有限，或交换 source/target 后损失不变，即否定接口机制声明；冷跑若 ER 未严格超过 16.38953942232631，或 Stage-3 Recall@10、NDCG@10 未分别严格超过 0.06406796775709883、0.03530651701940677，即否定任务假设。同步报告代码使用数、Gini、前缀分支、频率漂移和序列信息，检验是否实现等容量重分组。",
+      "why_not_the_measured_failures": "不同于只作用于编码器、被宿主覆盖后完全惰性的损失，此项明确对代码本求导；不同于把正对两端代码字拉近的配对损失，此项匹配有向协方差框架，不包含端点间吸引或成对合并项。它仍可能失败，且不以代理指标保证冷跑结果。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_codebook_frame_alignment",
+          "type": "loss_term",
+          "summary": "按行为内积加权匹配有向行为协方差与最近代码字协方差，不含端点代码字距离吸引项",
+          "entrypoints": ["mechanism_loss"],
+          "executor": "mvg_mechanism_executor",
+          "activation": {"flag": "MECHANISM_ENABLED"},
+          "mathematics": {
+            "rule": "additive",
+            "weight": 0.01,
+            "eps": 1e-08,
+            "nearest": "euclidean"
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {"in_dim": 32, "n_src": 24}
+        },
+        "forward_contract": {
+          "observables": ["reconstructed", "quant_loss", "base_loss", "recon_loss", "tokens"],
+          "declared_effect": "none",
+          "invariants": [{"name": "finite"}],
+          "atol": 1e-06
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "unprojected",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "l1_loss": "behavior_l1",
+            "other_loss": "behavior_other"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "l1_loss": "nonzero",
+            "other_loss": "zero"
+          },
+          "invariants": [{"name": "finite"}, {"name": "nonzero", "min_norm": 1e-12}],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {"RAMP_START_EPOCH": 0},
+          "observe": [
+            {"name": "mechanism_calls", "target": "mvg_mechanism_term", "min": 1},
+            {"name": "optimizer_steps", "min": 1},
+            {"name": "parameter_updates", "min": 1},
+            {"name": "target_encoder_update", "min": 1}
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_capacity_preserving_assignment_surrogate",
+      "title": "以有向软分配互信息重排固定容量单元",
+      "equation": "定义 p_{ik}=softmax_k(-||x_i-c_k||_2^2/τ)，q_{ik}=softmax_k(-||y_i-c_k||_2^2/τ)，P_{jk}=Σ_i m_i p_{ij}q_{ik}/(Σ_i m_i+eps)，r_j=Σ_k P_{jk}，s_k=Σ_j P_{jk}。L=λ[-Σ_{jk}P_{jk}log((P_{jk}+eps)/(r_js_k+eps)) + ρΣ_k(ŝ_k-1/K)^2]，其中 ŝ_k=Σ_i m_i(p_{ik}+q_{ik})/(2Σ_i m_i+eps)。第一项最大化有向软分配联合互信息；第二项平衡软单元使用。交换 source 与 target 通常改变 P 的转置及其边际，故保持方向性。",
+      "symbols": {
+        "x_i": "source[i]，第 i 个行为对源向量",
+        "y_i": "target[i]，第 i 个行为对目标向量",
+        "c_k": "codebook[k]，第 k 个代码字",
+        "m_i": "mask[i]，有效行为对权重",
+        "p_{ik}": "源向量对第 k 个代码字的温度化软分配概率",
+        "q_{ik}": "目标向量对第 k 个代码字的温度化软分配概率",
+        "P_{jk}": "行为有向联合软分配概率，源码 j 到目标码 k",
+        "r_j": "联合软分配的源端边际概率",
+        "s_k": "联合软分配的目标端边际概率",
+        "ŝ_k": "源与目标合并后的软代码使用比例",
+        "τ": "软分配温度",
+        "ρ": "均衡软代码使用正则项系数",
+        "λ": "机制损失组合权重",
+        "K": "codebook 的代码字数",
+        "eps": "概率对数及有效样本数稳定项"
+      },
+      "parameters": {
+        "weight": 0.01,
+        "temperature": 0.2,
+        "balance_weight": 0.1,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "输入中 source 到 target 的有向配对关系；联合软分配按源码—目标码方向计数。",
+      "codebook_interaction": "梯度经由源、目标到各代码字的软距离分配，调整每个代码字代表的成员及有向联合分配；边际均衡项惩罚软使用比例偏离均匀。目标是重分配而非合并行为对端点：互信息项最大化有向联合分布相对边际分布的依赖，显式均衡项反对丢弃单元，不含两端代码字距离吸引项。离散硬 SID 仍可能变化为集中分组，必须由冷跑审计容量和下游结果。",
+      "encoder_interaction": "损失对 source、target 有梯度，但宿主覆盖编码器梯度，因此不能依赖编码器路径改变 SID；代码本梯度是预期生效路径。",
+      "risk": "有限批次的软边际估计可能偏离全数据真实容量；互信息最大化可能编码批次噪声或高频有向关系，而均衡正则与行为信号之间可能冲突，导致正对共享硬 L0 代码的比例下降。即便软分配平衡，硬量化后仍可能有代码闲置、前缀树变窄或序列信息降低。",
+      "falsifier": "CGV 若测得公式损失、梯度或端点交换行为不符声明则否定实现；冷跑 ER 未严格越过冻结阈值，或任一 Stage-3 指标未严格超过对应控制阈值，则否定任务假设。另核查实际硬导出代码使用数不少于 245、Gini 不高于 0.216、前缀分支不少于 65.9、漂移不增加且序列信息不下降；这些结构检查用于解释失败，不替代三项冻结门槛。",
+      "why_not_the_measured_failures": "该项通过软分配联合分布和边际使用正则作用于代码本，不是仅作用于被宿主覆盖的编码器损失；也没有把行为对的两个代码字互相拉近，区别于已测得会使端点代码字收敛并合并 Voronoi 单元的机制。互信息目标并不保证硬分区或 Stage-3 获益。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_capacity_preserving_assignment_surrogate",
+          "type": "loss_term",
+          "summary": "用有向源码到目标码软联合互信息及软使用均衡正则训练代码本",
+          "entrypoints": ["mechanism_loss"],
+          "executor": "mvg_mechanism_executor",
+          "activation": {"flag": "MECHANISM_ENABLED"},
+          "mathematics": {
+            "rule": "additive",
+            "weight": 0.01,
+            "temperature": 0.2,
+            "balance_weight": 0.1,
+            "eps": 1e-08
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {"in_dim": 32, "n_src": 24}
+        },
+        "forward_contract": {
+          "observables": ["reconstructed", "quant_loss", "base_loss", "recon_loss", "tokens"],
+          "declared_effect": "none",
+          "invariants": [{"name": "finite"}],
+          "atol": 1e-06
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "unprojected",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "l1_loss": "behavior_l1",
+            "other_loss": "behavior_other"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "l1_loss": "nonzero",
+            "other_loss": "zero"
+          },
+          "invariants": [{"name": "finite"}, {"name": "nonzero", "min_norm": 1e-12}],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {"RAMP_START_EPOCH": 0},
+          "observe": [
+            {"name": "mechanism_calls", "target": "mvg_mechanism_term", "min": 1},
+            {"name": "optimizer_steps", "min": 1},
+            {"name": "parameter_updates", "min": 1},
+            {"name": "target_encoder_update", "min": 1}
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_residual_geometry_partition_transport",
+      "title": "在行为条件残差子空间中搬运分区方向",
+      "equation": "对每对定义 d_i=y_i-x_i，a_i=(x_i·y_i)/(||x_i||||y_i||+eps)，选取 c*_{s,i}=argmin_k||x_i-c_k||_2^2，并定义残差 e_i=x_i-c*_{s,i}。令 z_i=d_i/(||d_i||_2+eps)，h_i=e_i/(||e_i||_2+eps)，T=Σ_i m_i a_i z_i h_i^T/(Σ_i m_i+eps)，B=Σ_i m_i a_i d_i d_i^T/(Σ_i m_i+eps)。L=λ||T-B||_F^2。该项以有向转移残差与源端量化残差的交叉几何调整代码字；交换端点会改变 d_i、a_i 及交叉项。",
+      "symbols": {
+        "x_i": "source[i]，第 i 个行为对的源向量",
+        "y_i": "target[i]，第 i 个行为对的目标向量",
+        "c_k": "codebook[k]，第 k 个代码字",
+        "c*_{s,i}": "与源向量最近的代码字",
+        "m_i": "mask[i]，有效行为对权重",
+        "d_i": "有向行为转移向量 y_i-x_i",
+        "a_i": "按端点余弦相似度定义的行为条件权重",
+        "e_i": "源向量相对最近代码字的残差",
+        "z_i": "归一化有向转移向量",
+        "h_i": "归一化源量化残差",
+        "T": "行为条件下转移—量化残差交叉几何矩阵",
+        "B": "行为转移的加权二阶矩阵",
+        "λ": "机制损失组合权重",
+        "eps": "范数及有效样本数稳定项",
+        "||·||_F": "矩阵 Frobenius 范数"
+      },
+      "parameters": {
+        "weight": 0.01,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "source 到 target 的有向转移向量及端点余弦相似度；不依赖额外的行为标签或输入。",
+      "codebook_interaction": "仅源端最近代码字通过残差 e_i 接收代码本梯度；梯度调整源量化残差与有向转移几何的交叉关系。目标代码字不因该项被拉向源代码字，且公式没有端点代码字距离项，因此不直接造成行为对两端代码字收敛。最近邻选择不可微，故代码本梯度来自所选源代码字的残差项；一般非退化探针应为有限非零。",
+      "encoder_interaction": "source 与 target 均出现在转移与余弦权重中，故两者均有梯度；宿主覆盖编码器梯度，不能依赖这部分改变导出 SID，实际导出变化须由代码本路径产生。",
+      "risk": "该目标把有向转移几何与源端量化残差对齐，可能偏向局部平滑而非增加 held-out 正对的同码概率；其源端非对称更新也可能造成源、目标角色条件下的频率漂移，或损害推荐器所需的目标端可预测结构。归一化还可能使小残差样本对方向噪声敏感。",
+      "falsifier": "若独立梯度检查发现交换端点不改变损失，或非退化探针下代码本梯度为零/非有限，则机制声明被否定；冷跑任一冻结阈值未严格超过即否定任务假设。另检查训练到测试频率漂移、代码使用、Gini、前缀分支和序列信息，识别此类非对称残差运输是否损害结构。",
+      "why_not_the_measured_failures": "它不是编码器专属辅助项：最近源代码字的残差路径直接向代码本传梯度。它也不是正对代码字拉近机制：只运输源量化残差的方向几何，不含源—目标代码字距离惩罚，因此避免直接复现已测得的成对收敛；但仍须实测排除间接代码合并。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_residual_geometry_partition_transport",
+          "type": "loss_term",
+          "summary": "匹配行为转移二阶几何与源端量化残差交叉几何，代码本梯度只经过源端最近代码字残差",
+          "entrypoints": ["mechanism_loss"],
+          "executor": "mvg_mechanism_executor",
+          "activation": {"flag": "MECHANISM_ENABLED"},
+          "mathematics": {
+            "rule": "additive",
+            "weight": 0.01,
+            "eps": 1e-08,
+            "nearest": "euclidean"
+          },
+          "inputs": "mvg_mechanism_inputs"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {"in_dim": 32, "n_src": 24}
+        },
+        "forward_contract": {
+          "observables": ["reconstructed", "quant_loss", "base_loss", "recon_loss", "tokens"],
+          "declared_effect": "none",
+          "invariants": [{"name": "finite"}],
+          "atol": 1e-06
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "invariants",
+          "rule": "unprojected",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "l1_loss": "behavior_l1",
+            "other_loss": "behavior_other"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "l1_loss": "nonzero",
+            "other_loss": "zero"
+          },
+          "invariants": [{"name": "finite"}, {"name": "nonzero", "min_norm": 1e-12}],
+          "atol": 1e-05
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "oracle": "oracles:optimizer_update",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "oracle": "oracles:aggregate",
+          "atol": 1e-05
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {"RAMP_START_EPOCH": 0},
+          "observe": [
+            {"name": "mechanism_calls", "target": "mvg_mechanism_term", "min": 1},
+            {"name": "optimizer_steps", "min": 1},
+            {"name": "parameter_updates", "min": 1},
+            {"name": "target_encoder_update", "min": 1}
+          ]
+        }
+      }
+    }
+  ]
+}
+```
