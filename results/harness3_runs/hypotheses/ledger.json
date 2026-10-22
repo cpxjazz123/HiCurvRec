@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T00:30:25.337631+00:00",
+  "generated_utc": "2026-10-22T00:40:24.849075+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -470,8 +470,50 @@
       "notes": "this closes a line the system was about to take: a cheap screening gate on the level-0 Gini would have refused arms whose cold runs were fine and passed arms whose cold runs concentrated the codes",
       "observation": "the screening phase's short probe cannot stand in for the cold run. Across the 19 arms that have both a probe export and a cold export, the probe's paired balance predicts the cold run's balance only weakly (Spearman 0.38 for the level-0 Gini, 0.47 for the number of level-0 codes in use) and the probe's paired enrichment ratio predicts the cold run's ER only weakly (0.51). Gating on that ratio would have wrongly refused an arm whose cold run cleared the gate: directed_assignment_prefix_information has a probe ratio of 0.93 and a cold-run ER of 16.95 against the gate's 16.39.",
       "status": "supported"
+    },
+    {
+      "created_utc": "2026-10-22T00:40:24.849073+00:00",
+      "evidence_paths": [
+        "tools/harness2_genrec/probe_fidelity.py",
+        "results/harness3_runs/probe_fidelity.json"
+      ],
+      "evidence_runs": [],
+      "experiments": [
+        {
+          "control_run": null,
+          "id": "X1",
+          "produced_runs": [],
+          "result": "mean -0.032 for the arms that cleared the gate against -0.048 for the arms that missed it, over 13 arms; rank correlation 0.27",
+          "status": "completed",
+          "tests": [
+            "does the mechanism's loss fall when a pair's codewords are moved together?",
+            "does that statistic order the arms by their ER?"
+          ],
+          "treatment_runs": [],
+          "verdict": "no cheap mechanism-level gate either: the cold run remains the only honest measurement of what a mechanism does to the codes"
+        }
+      ],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "a rank correlation above 0.8 between the merge statistic and the arm's ER",
+              "id": "P1",
+              "measurement": "the merge statistic over every arm with a mechanism module",
+              "statement": "the statistic's sign does not order the arms by their ER, and the arms that cleared the gate are not the ones with the strongest pull"
+            }
+          ],
+          "statement": "the merge happens in the trained high-dimensional geometry with the trained codebook, and a synthetic mini case cannot stand in for it: neither the loss's scale nor the codewords' relative positions are the real ones"
+        }
+      ],
+      "id": "H107-05",
+      "next_experiment": "design against the ER's arithmetic -- keep the cell sizes, change the grouping -- and let the cold run measure it",
+      "notes": "recorded so the system does not build a screening gate on a statistic that does not predict the thing it is supposed to gate",
+      "observation": "a mechanism-level 'does this mechanism want to merge a pair's codewords' statistic, computed on the proposal's own mini case by moving the source's and the target's nearest codewords toward each other and measuring the loss's response, does not predict the arm's ER either. Over the 13 arms that have both a mechanism module and a measured ER, the arms that cleared the gate average -0.032 and the arms that missed it average -0.048 -- the opposite sign to the hypothesis -- and the rank correlation with the ER is 0.27. The mini case is random vectors in a low dimension, which is not the geometry the merge happens in.",
+      "status": "supported"
     }
   ],
-  "ledger_sha256": "ea372c46ab5719c8222525220420bb30537f15370f754f7109006f7f809f961b",
+  "ledger_sha256": "888df42809156d0fa0922ba1bf45f27f6e414444873a4ba22aead18c894ae82f",
   "ledger_version": 1
 }
