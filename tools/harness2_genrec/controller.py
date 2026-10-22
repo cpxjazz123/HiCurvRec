@@ -1168,7 +1168,12 @@ class Controller:
                 }
             },
             artifacts=[sid, sid.parent / "rqvae_best.pth", sid.parent / "item_sids.json"],
-            extra={"semantic_key": item.get("semantic_key", "")},
+            extra={
+                "semantic_key": item.get("semantic_key", ""),
+                "fingerprint": item.get("fingerprint", ""),
+                # the six independent gates, as they stood at the launch
+                "cgv_gate": ((item.get("train") or {}).get("launch") or {}).get("cgv_gate"),
+            },
         )
 
     def phase_stage3(self) -> None:

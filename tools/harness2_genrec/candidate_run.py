@@ -225,7 +225,13 @@ def run_candidate(
     }
     weight = float((proposal.get("activation") or {}).get("weight", 0.05))
     mini_campaign._write_hooks(tree, mechanism_id, parameters, weight)
-    mini_campaign._write_spec(out_dir / "spec.json", mechanism_id, parameters, weight)
+    mini_campaign._write_spec(
+        out_dir / "spec.json",
+        mechanism_id,
+        parameters,
+        weight,
+        contract=proposal.get("cgv_contract") or None,
+    )
     trainer = tree / "train_rqvae.py"
     trainer.write_text(
         re.sub(r'"master_port":\s*\d+', f'"master_port": {port}', trainer.read_text(), count=1),
