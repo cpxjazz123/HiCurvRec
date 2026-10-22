@@ -247,6 +247,15 @@ def run_probe(
         raise ProbeRefusal("no_probe_result", "the probe produced no result")
     metrics = results[0]
 
+    prior_ce = metrics.get("prior_ce_l1")
+    probe_ce = metrics.get("probe_ce_l1")
+    # the issue defines G_H1 as the RELATIVE gain: the share of the prior's cross entropy
+    # that the history-conditioned probe removes. The runner reports the absolute gain.
+    relative_gain = (
+        float((prior_ce - probe_ce) / prior_ce)
+        if prior_ce not in (None, 0) and probe_ce is not None
+        else None
+    )
     record = {
         "mechanism_id": request.mechanism_id,
         "sid_path": str(request.sid_path),
@@ -256,7 +265,7 @@ def run_probe(
         "budget": dict(request.budget),
         "prior_ce_l1": metrics.get("prior_ce_l1"),
         "probe_ce_l1": metrics.get("probe_ce_l1"),
-        "g_h1": metrics.get("gain_l1"),
+        "g_h1": relative_gain,
         "gain_l1_absolute": metrics.get("gain_l1"),
         "top1_acc_l1": metrics.get("probe_top1_acc_l1"),
         "top5_acc_l1": metrics.get("probe_top5_acc_l1"),
@@ -357,6 +366,10 @@ def _cuda_available() -> bool:
         return bool(torch.cuda.is_available())
     except Exception:  # noqa: BLE001
         return False
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 
 
 __all__ = [
