@@ -1,0 +1,137 @@
+{
+  "mechanism_id": "directed_assignment_usage_balance",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "stage2-directed_assignment_usage_balance-20261021T143329"
+  ],
+  "official_cold_run": {
+    "status": "unknown",
+    "gpu_minutes": null,
+    "wall_clock_s": null
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": null,
+    "detail": null,
+    "failed": null
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.651583710407238,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": true,
+    "pos_share": 0.08354933308107085,
+    "neg_share": 0.005017500709488223,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 236,
+    "gini": 0.2485757941533111,
+    "largest_cell": 285,
+    "prefix_branches": 66.61864406779661,
+    "sequence_information": 0.10811471522948643
+  },
+  "stage3": {
+    "test_recall@10": 0.06241403924163025,
+    "test_ndcg@10": 0.034312283480564885,
+    "delta_recall_vs_control": -0.0016539285154685834,
+    "delta_ndcg_vs_control": -0.000994233538841885,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": 0.31707804413134966,
+    "recall": -0.0016539285154685834,
+    "ndcg": -0.000994233538841885
+  },
+  "artifacts": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/item_sids.json",
+      "sha256": "ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb",
+      "bytes": 1259876
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/rqvae_best.pth",
+      "sha256": "6176428bdacb6b83367229be923a483f285c10642c701f63312eacd60f9954ad",
+      "bytes": 4604533
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/sids_for_hgrec.npy",
+      "sha256": "9502f9dfcbaebb53b5a3e15694954c12200e60fb46b36d56269792c3d16328af",
+      "bytes": 786912
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45/test_final.json",
+      "sha256": "a6cc95a1ae3b1a972e6c9e4bd3466d12d4a9010ac87fe9eb111d7ed46504c9eb",
+      "bytes": 385
+    }
+  ],
+  "posterior_explanation": {
+    "mechanism_id": "directed_assignment_usage_balance",
+    "er": 16.651583710407238,
+    "cleared_the_gate": true,
+    "delta_recall@10": -0.0016539285154685834,
+    "delta_ndcg@10": -0.000994233538841885,
+    "modes": [
+      {
+        "mode": "concentration_or_collisions",
+        "magnitude": 48.0,
+        "magnitude_unit": "items in the largest level-0 cell above the control's",
+        "evidence": "the largest level-0 cell holds 285 items against the control's 237",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+      }
+    ],
+    "primary_mode": "concentration_or_collisions"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination"
+  ]
+}

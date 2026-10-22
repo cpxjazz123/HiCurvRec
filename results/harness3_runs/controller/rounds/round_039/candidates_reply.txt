@@ -1,0 +1,527 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_tangent_graph_rotation",
+      "title": "沿行为图方向旋转码本，同时保持码字间隔",
+      "equation": "令 u_b=(t_b-s_b)/(||t_b-s_b||_2+eps)，令 c_b 为与 t_b 最近的码字、且 j_b 为与 c_b 最近的另一不同码字，v_b=(c_b-j_b)/(||c_b-j_b||_2+eps)。L=weight*sum_b mask_b*(1-u_b·v_b+separation_weight*relu(margin-||c_b-j_b||_2)^2)/max(sum_b mask_b,1)。",
+      "symbols": {
+        "s_b": "第 b 个行为对的源表示，形状 [D]。",
+        "t_b": "第 b 个行为对的目标表示，形状 [D]。",
+        "C": "码本矩阵，形状 [C,D]。",
+        "c_b": "码本 C 中距离 t_b 最近的码字；最近邻索引在该次前向中固定。",
+        "j_b": "除 c_b 外距离 c_b 最近的码字；索引在该次前向中固定。",
+        "u_b": "从源表示指向目标表示的单位行为方向。",
+        "v_b": "从邻近码字 j_b 指向 c_b 的单位码本方向。",
+        "mask_b": "第 b 个行为对是否有效的 0/1 掩码。",
+        "weight": "整个辅助损失的组合权重。",
+        "separation_weight": "码字间隔屏障项权重。",
+        "margin": "邻近码字的最小间隔。",
+        "eps": "单位向量归一化用的正数稳定项。"
+      },
+      "parameters": {
+        "weight": 0.01,
+        "separation_weight": 1.0,
+        "margin": 0.1,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "有向行为对的源到目标表示差向量 t-s；不读取额外的行为图输入。",
+      "codebook_interaction": "方向对齐项对 c_b 及其最近邻 j_b 施加相反的切向梯度，改变码本配置的方向而非直接把行为对的两个端点码字拉向彼此。间隔屏障在距离低于 margin 时提供分离梯度，阻止相邻码字继续靠拢；它只能约束 c_b 与 j_b，不能保证所有行为端点所对应码字绝不靠近，须以训练后端点码字距离实测检验。",
+      "encoder_interaction": "损失对 source 和 target 都有梯度，但宿主会覆盖 encoder 梯度；因此不把 encoder 梯度当作有效训练通路。机制只有在 codebook 梯度被宿主保留并改变量化结果时才可能改变导出的 SID。",
+      "risk": "单位方向对齐可能只在局部改变码字排序，未必让更多 held-out 行为对共享 level-0 码；离散最近邻变化也可能使优化信号不稳定。最近邻索引固定的分段梯度不等于对硬 SID 的可微保证，间隔屏障还可能限制所需重分组。即使 ER 上升，较高层前缀结构或 Stage-3 排序质量仍可能下降。",
+      "falsifier": "冷跑导出若未同时严格超过冻结 ER、Recall@10 和 NDCG@10 阈值，即使命中率或平衡代理改善也否定任务成功；机制假设另由码字距离、level-0 Gini、使用码数及前缀分支实测反驳。",
+      "why_not_the_measured_failures": "不同于只触及 encoder 的辅助项，本项显式对传入 codebook 求导；不同于把两个行为端点码字拉到同一位置的配对交叉熵，本项对目标最近码字与邻近码字施加方向对齐，并加入间隔屏障。它不声称屏障必然阻止所有单元合并，是否保持间隔与分区平衡由冷跑测量。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_codebook_tangent_graph_rotation",
+          "type": "loss_term",
+          "summary": "有向行为方向与码本局部方向对齐，并对最近邻码字间隔施加平方屏障。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "masked_mean_direction_alignment_plus_squared_separation_hinge",
+            "weight": 0.01,
+            "separation_weight": 1.0,
+            "margin": 0.1,
+            "eps": 1e-08
+          },
+          "inputs": "source[B,D], target[B,D], codebook[C,D], mask[B]",
+          "model_contract": "rqvae:encoder, rq, decoder"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "formula",
+          "rule": "gradient_of_declared_masked_mean_direction_alignment_plus_separation_hinge",
+          "oracle": "oracles:directed_codebook_tangent_graph_rotation_gradient",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "atol": 1e-05,
+          "rtol": 0.0001,
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "mask_all_zero"
+            },
+            {
+              "name": "swap_source_target_changes_loss"
+            }
+          ]
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true,
+          "oracle": "oracles:optimizer_update"
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "rank_batch_sizes": [
+            8,
+            8
+          ],
+          "atol": 1e-05,
+          "oracle": "oracles:aggregate"
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            },
+            {
+              "name": "target_encoder_update",
+              "min": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_capacity_assignment_margin",
+      "title": "在容量受限的软分配结构上提高有向配对兼容度并保留端点间隔",
+      "equation": "令 p_s=softmax(-||s_b-C_k||_2^2/tau)，p_t=softmax(-||t_b-C_k||_2^2/tau)，令 q_b=p_s·p_t，令 d_b=||c_s-c_t||_2，其中 c_s、c_t 是各自最近码字。L=weight*sum_b mask_b*(-log(q_b+eps)+separation_weight*relu(margin-d_b)^2)/max(sum_b mask_b,1)。",
+      "symbols": {
+        "s_b": "第 b 个行为对的源表示。",
+        "t_b": "第 b 个行为对的目标表示。",
+        "C_k": "码本 C 的第 k 行。",
+        "p_s": "源表示到各码字的温度 tau 软分配概率。",
+        "p_t": "目标表示到各码字的温度 tau 软分配概率。",
+        "q_b": "源、目标软分配落在同一码字的概率质量内积。",
+        "c_s": "源表示最近码字。",
+        "c_t": "目标表示最近码字。",
+        "d_b": "两个最近码字之间的欧氏距离。",
+        "mask_b": "第 b 个行为对是否有效的掩码。",
+        "weight": "辅助损失组合权重。",
+        "separation_weight": "端点码字分离屏障权重。",
+        "margin": "端点最近码字的最小间隔。",
+        "tau": "软分配温度。",
+        "eps": "对数中的正数稳定项。"
+      },
+      "parameters": {
+        "weight": 0.001,
+        "separation_weight": 1.0,
+        "margin": 0.1,
+        "tau": 0.2,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "每个有效有向行为对 (source,target)；通过两个端点在共享码本上的软分配重叠表达配对结构。",
+      "codebook_interaction": "软重叠项对源、目标及码字均产生梯度，推动行为端点的分配概率在码本上重叠；分离屏障在两个端点最近码字距离小于 margin 时反向推开这两个码字，防止把配对兼容度简单实现为端点码字合并。软分配重叠仍可能令分配边界移动或间接造成单元不平衡，不能据此保证容量或前缀树不变。",
+      "encoder_interaction": "source 和 target 梯度均声明为非零；宿主覆盖 encoder 梯度，因此 encoder 通路不构成有效 SID 更新路径。机制依赖 codebook 梯度是否实际改变硬量化分配。",
+      "risk": "分离屏障与软同码概率目标存在竞争：前者可能阻止软重叠提升，后者可能通过移动 Voronoi 边界而不是改善有用分区来降低损失。容量没有由该逐对目标硬性约束，因而可能出现使用码数减少、Gini 增大或序列信息损失；冷跑三个冻结指标仍可能任一未达标。",
+      "falsifier": "独立梯度检查若发现任一声明非零的梯度为零、全掩码损失非零或交换 source/target 后损失不变，即推翻机制声明；科学假设由冷跑 ER、Recall@10、NDCG@10 以及码字端点间隔和分区平衡实测判定。",
+      "why_not_the_measured_failures": "不同于 encoder-only 惯性机制，本目标直接依赖 codebook 的软距离并向其回传梯度。不同于令一个硬码服务两个端点的交叉熵，本目标使用软分配重叠，同时对端点最近码字加入显式分离屏障；它可能仍改变分区容量，但不以端点码字合并作为唯一降损方式。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_capacity_assignment_margin",
+          "type": "loss_term",
+          "summary": "共享码本上的有向行为对软分配重叠损失，附加端点最近码字分离屏障。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "masked_mean_negative_log_soft_assignment_overlap_plus_squared_endpoint_separation_hinge",
+            "weight": 0.001,
+            "separation_weight": 1.0,
+            "margin": 0.1,
+            "tau": 0.2,
+            "eps": 1e-08
+          },
+          "inputs": "source[B,D], target[B,D], codebook[C,D], mask[B]",
+          "model_contract": "rqvae:encoder, rq, decoder"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "formula",
+          "rule": "gradient_of_declared_masked_mean_soft_assignment_overlap_and_endpoint_separation_hinge",
+          "oracle": "oracles:directed_capacity_assignment_margin_gradient",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "atol": 1e-05,
+          "rtol": 0.0001,
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "mask_all_zero"
+            },
+            {
+              "name": "swap_source_target_changes_loss"
+            }
+          ]
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true,
+          "oracle": "oracles:optimizer_update"
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "rank_batch_sizes": [
+            8,
+            8
+          ],
+          "atol": 1e-05,
+          "oracle": "oracles:aggregate"
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            },
+            {
+              "name": "target_encoder_update",
+              "min": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "directed_residual_shell_transport",
+      "title": "在固定径向壳层内输运行为条件残差方向",
+      "equation": "令 r_b=t_b-s_b，令 c_b 为距离 t_b 最近的码字，令 a_b=(c_b-s_b)/(||c_b-s_b||_2+eps)，令 h_b=r_b/(||r_b||_2+eps)。L=weight*sum_b mask_b*((1-a_b·h_b)^2+separation_weight*relu(margin-||c_b-c_s||_2)^2)/max(sum_b mask_b,1)，其中 c_s 是距离 s_b 最近且不同于 c_b 的码字。",
+      "symbols": {
+        "s_b": "第 b 个行为对的源表示。",
+        "t_b": "第 b 个行为对的目标表示。",
+        "r_b": "行为条件残差向量 t_b-s_b。",
+        "c_b": "距离目标表示最近的码字。",
+        "c_s": "距离源表示最近且不同于 c_b 的码字。",
+        "a_b": "从源表示指向目标最近码字的归一化残差方向。",
+        "h_b": "归一化行为条件残差方向。",
+        "mask_b": "第 b 个行为对是否有效的掩码。",
+        "weight": "辅助损失组合权重。",
+        "separation_weight": "源、目标最近码字分离屏障权重。",
+        "margin": "源、目标最近码字的最小间隔。",
+        "eps": "归一化稳定项。"
+      },
+      "parameters": {
+        "weight": 0.005,
+        "separation_weight": 1.0,
+        "margin": 0.1,
+        "eps": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "有向行为对残差 r=t-s；目标最近码字必须通过 codebook 和给定 target 计算，不需要额外输入。",
+      "codebook_interaction": "方向项推动目标最近码字 c_b 朝行为残差方向移动；分离屏障在源与目标最近码字距离小于 margin 时将二者推开。方向项不是两个端点码字的吸引项，因此不以端点收敛实现行为对齐；最近邻索引固定于单次前向，更新后的整体分区仍须实测。",
+      "encoder_interaction": "对 source 与 target 的解析梯度均为非零，但宿主会覆盖 encoder 梯度；只有 codebook 梯度是预期可穿过宿主并影响硬 SID 导出的路径。",
+      "risk": "方向对齐可能移动目标码字但不能有效重排数据集级分区；残差方向还可能将多个行为簇的目标码字推向相近方向，间接造成碰撞或牺牲前缀分支。分离屏障只作用于当前配对最近码字，不提供全局码本排斥或容量保证，Stage-3 指标可能仍下降。",
+      "falsifier": "若对照测量发现目标码字向残差方向的位移没有按声明发生，或端点码字间隔系统性缩小且使用码数、Gini、前缀分支恶化，则机制解释被否定；最终成功标准仍是一次冷跑同时严格超过三个冻结阈值。",
+      "why_not_the_measured_failures": "不同于只作用于 encoder 的项，本项包含直接依赖 codebook 的最近码字方向损失。不同于会把一对端点码字拉到一起的残差输运或配对收敛项，本项让目标码字沿有向残差方向移动，并对源、目标最近码字加入间隔屏障；全局是否保持平衡不作未经测量的保证。",
+      "cgv_contract": {
+        "schema_version": 1,
+        "mechanism": {
+          "id": "directed_residual_shell_transport",
+          "type": "loss_term",
+          "summary": "对目标最近码字施加行为条件残差方向对齐，并对端点最近码字施加分离屏障。",
+          "entrypoints": [
+            "mechanism_loss"
+          ],
+          "executor": "mvg_mechanism_executor",
+          "activation": {
+            "flag": "MECHANISM_ENABLED"
+          },
+          "mathematics": {
+            "rule": "masked_mean_squared_residual_direction_alignment_plus_squared_endpoint_separation_hinge",
+            "weight": 0.005,
+            "separation_weight": 1.0,
+            "margin": 0.1,
+            "eps": 1e-08
+          },
+          "inputs": "source[B,D], target[B,D], codebook[C,D], mask[B]",
+          "model_contract": "rqvae:encoder, rq, decoder"
+        },
+        "model": {
+          "adapter": "rqvae",
+          "factory": "RQVAE",
+          "tokenizer_config": "_tokenizer_config",
+          "forward": "forward",
+          "parameter_groups": {
+            "encoder": "encoder",
+            "codebooks": "rq",
+            "decoder": "decoder"
+          },
+          "probe": {
+            "in_dim": 32,
+            "n_src": 24
+          }
+        },
+        "forward_contract": {
+          "observables": [
+            "reconstructed",
+            "quant_loss",
+            "base_loss",
+            "recon_loss",
+            "tokens"
+          ],
+          "declared_effect": "none",
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "residual_identity",
+              "tol": 0.0001
+            }
+          ],
+          "atol": 1e-05
+        },
+        "gradient_contract": {
+          "target": "codebook",
+          "mode": "formula",
+          "rule": "gradient_of_declared_masked_mean_residual_direction_alignment_and_endpoint_separation_hinge",
+          "oracle": "oracles:directed_residual_shell_transport_gradient",
+          "loss_terms": {
+            "base_loss": "base_loss",
+            "mechanism_loss": "behavior_l1"
+          },
+          "expected_paths": {
+            "base_loss": "nonzero",
+            "mechanism_loss": "nonzero"
+          },
+          "atol": 1e-05,
+          "rtol": 0.0001,
+          "invariants": [
+            {
+              "name": "finite"
+            },
+            {
+              "name": "mask_all_zero"
+            },
+            {
+              "name": "swap_source_target_changes_loss"
+            }
+          ]
+        },
+        "update_contract": {
+          "optimizer": "AdamW",
+          "lr": 0.001,
+          "weight_decay": 0.0001,
+          "clip_norm": 1.0,
+          "atol": 1e-06,
+          "requires_parameter_change": true,
+          "oracle": "oracles:optimizer_update"
+        },
+        "distributed_contract": {
+          "world_size": 2,
+          "aggregation": "ddp_mean",
+          "rank_batch_sizes": [
+            8,
+            8
+          ],
+          "atol": 1e-05,
+          "oracle": "oracles:aggregate"
+        },
+        "runtime_contract": {
+          "entrypoint": "main",
+          "isolation": "required",
+          "force": {
+            "RAMP_START_EPOCH": 0
+          },
+          "observe": [
+            {
+              "name": "mechanism_calls",
+              "target": "mvg_mechanism_term",
+              "min": 1
+            },
+            {
+              "name": "optimizer_steps",
+              "min": 1
+            },
+            {
+              "name": "parameter_updates",
+              "min": 1
+            },
+            {
+              "name": "target_encoder_update",
+              "min": 1
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```

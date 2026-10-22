@@ -1,0 +1,27 @@
+{
+  "mechanism_id": "directed_capacity_neutral_codebook_rotation",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_040/directed_capacity_neutral_codebook_rotation/proposal.json",
+  "started_utc": "2026-10-22T11:16:46.632074+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_capacity_neutral_codebook_rotation",
+      "tokens": {
+        "input": 24343,
+        "output": 1327,
+        "reasoning": 252
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": false,
+      "detail": "1 of 8 declared checks failed",
+      "failed": [
+        "swap_source_target"
+      ]
+    }
+  },
+  "status": "rejected",
+  "reason": "the independent checks rejected the implementation",
+  "wall_clock_s": 157.9,
+  "cold_run_gpu_minutes": 0.0
+}

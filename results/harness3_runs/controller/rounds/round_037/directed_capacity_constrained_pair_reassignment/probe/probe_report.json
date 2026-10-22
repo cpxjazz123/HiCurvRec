@@ -1,0 +1,39 @@
+{
+  "ok": false,
+  "error": null,
+  "epochs": 50,
+  "loss_finite": true,
+  "encoder_update": 0.18211932480335236,
+  "codebook_update": 1.2244280576705933,
+  "hard_sid_changed": 24587,
+  "hard_sid_rows": 24587,
+  "occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 73,
+    "l1_fraction": 0.002969,
+    "unique_l1l2": 4125,
+    "l1l2_fraction": 0.167772,
+    "collision_3token": 0.283768,
+    "collapse_suspected": true,
+    "host_unique_l1": 213
+  },
+  "detail": "the code collapsed: the arm uses 73 level-0 entries against the host's 213 (34.3% of it)",
+  "metrics": {
+    "records": 53,
+    "last_event": "train_end",
+    "loss": null,
+    "loss_finite": true
+  },
+  "baseline_occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 213,
+    "l1_fraction": 0.008663,
+    "unique_l1l2": 6170,
+    "l1l2_fraction": 0.250946,
+    "collision_3token": 0.224509,
+    "collapse_suspected": false
+  },
+  "occupancy_ratio_vs_host": 0.3427
+}

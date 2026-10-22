@@ -1,0 +1,41 @@
+{
+  "mechanism_id": "directed_capacity_assignment_repartition",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_044/directed_capacity_assignment_repartition/proposal.json",
+  "started_utc": "2026-10-22T13:48:02.798449+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_repartition",
+      "tokens": {
+        "input": 24955,
+        "output": 1408,
+        "reasoning": 368
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": true,
+      "detail": "all 8 declared checks hold",
+      "failed": []
+    },
+    "probe": {
+      "ok": false,
+      "detail": "the code collapsed: the arm uses 66 level-0 entries against the host's 207 (31.9% of it)",
+      "occupancy_ratio_vs_host": 0.3188
+    },
+    "export_sensitivity": {
+      "verdict": "collapsed",
+      "changed_fraction": {
+        "levels_1": 0.9359417578395087,
+        "levels_2": 0.9996746248017245,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 0.3188405797101449
+    }
+  },
+  "admitted": false,
+  "status": "rejected",
+  "reason": "the probe or the export sensitivity rejected the arm before a cold run; the candidate cost no cold-run GPU time",
+  "wall_clock_s": 245.2,
+  "cold_run_gpu_minutes": 0.0
+}

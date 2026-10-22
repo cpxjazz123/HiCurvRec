@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "error": null,
+  "epochs": 50,
+  "loss_finite": true,
+  "encoder_update": 0.17910775542259216,
+  "codebook_update": 0.159314826130867,
+  "hard_sid_changed": 24587,
+  "hard_sid_rows": 24587,
+  "occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 199,
+    "l1_fraction": 0.008094,
+    "unique_l1l2": 6285,
+    "l1l2_fraction": 0.255623,
+    "collision_3token": 0.240168,
+    "collapse_suspected": false,
+    "host_unique_l1": 168
+  },
+  "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+  "metrics": {
+    "records": 53,
+    "last_event": "train_end",
+    "loss": null,
+    "loss_finite": true
+  },
+  "baseline_occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 168,
+    "l1_fraction": 0.006833,
+    "unique_l1l2": 4241,
+    "l1l2_fraction": 0.17249,
+    "collision_3token": 0.300525,
+    "collapse_suspected": false
+  },
+  "occupancy_ratio_vs_host": 1.1845
+}

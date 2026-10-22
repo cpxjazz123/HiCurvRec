@@ -1,0 +1,140 @@
+{
+  "mechanism_id": "geometry_transport_seed43",
+  "semantic_key": "",
+  "fingerprints": {},
+  "novelty": "not measured against the historical record",
+  "seed": 42,
+  "runs": [
+    "stage2-geometry_transport_seed43-20261021T143324"
+  ],
+  "official_cold_run": {
+    "status": "unknown",
+    "gpu_minutes": null,
+    "wall_clock_s": null
+  },
+  "cgv_gates": {
+    "passed": null,
+    "note": "the six gates are run at the launch; their states are recorded when the launch happened through this controller"
+  },
+  "independent_checks": {
+    "ok": null,
+    "detail": null,
+    "failed": null
+  },
+  "export_sensitivity": {
+    "verdict": null,
+    "changed_fraction": null,
+    "level0_occupancy_ratio_vs_control": null
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.73965936739659,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": true,
+    "pos_share": 0.07810046353230536,
+    "neg_share": 0.0046655945511304515,
+    "ci95": null,
+    "d2": null,
+    "d2_support": null,
+    "d2_counts": {
+      "numerator_positive": null,
+      "denominator_positive": null,
+      "numerator_negative": null,
+      "denominator_negative": null,
+      "anchor_cluster_ci95": null
+    }
+  },
+  "gh1_probe": {
+    "g_h1": null,
+    "prior_ce_l1": null,
+    "probe_ce_l1": null,
+    "top1_acc_l1": null,
+    "top5_acc_l1": null,
+    "top20_acc_l1": null,
+    "split": null,
+    "probe_version": null,
+    "budget": null
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 247,
+    "gini": 0.22689321518613004,
+    "largest_cell": 260,
+    "prefix_branches": 64.42914979757084,
+    "sequence_information": 0.10222402869942478
+  },
+  "stage3": {
+    "test_recall@10": null,
+    "test_ndcg@10": null,
+    "delta_recall_vs_control": null,
+    "delta_ndcg_vs_control": null,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": 0.40515370112070315,
+    "recall": null,
+    "ndcg": null
+  },
+  "artifacts": [
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/item_sids.json",
+      "sha256": "99493976530b98a5a6ae58312a6b2e9f0be9a6eb8e46ea83473c3e5e82079e68",
+      "bytes": 1260214
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/rqvae_best.pth",
+      "sha256": "31d23d59ee9738a294927c121ab68d543e24d597b243adecb7f269918a6263c2",
+      "bytes": 4604533
+    },
+    {
+      "path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/sids_for_hgrec.npy",
+      "sha256": "e3476a03319a67efa150e633b155a3c8e56edda36b5a86f3b97c25235f27f77a",
+      "bytes": 786912
+    }
+  ],
+  "posterior_explanation": {
+    "mechanism_id": "geometry_transport_seed43",
+    "er": 16.73965936739659,
+    "cleared_the_gate": true,
+    "delta_recall@10": null,
+    "delta_ndcg@10": null,
+    "modes": [
+      {
+        "mode": "concentration_or_collisions",
+        "magnitude": 23.0,
+        "magnitude_unit": "items in the largest level-0 cell above the control's",
+        "evidence": "the largest level-0 cell holds 260 items against the control's 237",
+        "counterexample": "the tail of the usage is where the measured downstream loss is concentrated"
+      },
+      {
+        "mode": "concentration_or_collisions",
+        "magnitude": 1.4769726514087438,
+        "magnitude_unit": "branches per L1 code lost against the control's",
+        "evidence": "the L1 -> L2 tree has 64.43 branches per code against the control's 65.91",
+        "counterexample": "a beam search has fewer codes to walk"
+      }
+    ],
+    "primary_mode": "concentration_or_collisions"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the history-conditioned probe",
+    "the conditional level-2 discrimination",
+    "the downstream measurement"
+  ]
+}
