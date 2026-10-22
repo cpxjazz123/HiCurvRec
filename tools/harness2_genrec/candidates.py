@@ -102,7 +102,22 @@ def _angles() -> str:
 def _brief(store: EvidenceStore, ledger_text: str) -> str:
     from .hypotheses import store_brief
 
-    return f"""# ROLE
+    return f"""# THE OBJECTIVE, AS THREE FROZEN THRESHOLDS
+
+One genuinely new mechanism must clear ALL THREE of these at once, against the immutable
+archived r8_control (ER 16.334505666275888, Recall@10 0.06406796775709883, NDCG@10
+0.03530651701940677):
+
+| Metric | The arm must be strictly above |
+|---|---|
+| the frozen Stage-2 Hard-L1 enrichment ratio | 16.38953942232631 |
+| the Stage-3 Recall@10 | 0.06406796775709883 |
+| the Stage-3 NDCG@10 | 0.03530651701940677 |
+
+The thresholds are frozen. Nothing is adjusted after the fact, an ER-only win is not a
+success, a promising proxy score is not a success, and a near-tie is not a success.
+
+# ROLE
 
 You are the research scientist of an autonomous research system. You choose the next
 candidate mechanisms; a controller freezes them, implements them, checks them and trains
