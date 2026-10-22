@@ -235,7 +235,9 @@ For each candidate, state:
   the optimizer and the clipping produce the update you declare. Two of its rules are strict:
   a `gradient_contract` in `formula` mode must name an independent oracle, and a declaration
   that carries a key nobody checks is a problem, not trivia. The contract's schema and its
-  validator are in `tools/cgv/contract.py`; read it before you write the contract.
+  validator are in `tools/cgv/contract.py`; read it before you write the contract, and take
+  the shape from `tools/mvg/specs/behavior_conditioned_pairwise_curvature.json`, which is a
+  declaration that passes.
 
 6. THE INTERFACE AND THE DIRECTEDNESS CHECK, LEARNED FROM THE FIRST ROUND'S REJECTIONS
    - The checker calls the mechanism as `mechanism_loss(source, target, codebook, mask,
