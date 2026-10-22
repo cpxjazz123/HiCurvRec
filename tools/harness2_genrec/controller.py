@@ -1119,6 +1119,7 @@ class Controller:
                 "d2_flags": (report.get("d2") or {}).get("flags"),
             }
             item["status"] = "qualified" if report.get("above_frozen_threshold") else "below_gate"
+            self._probe_gh1(item)
             self._record_in_store(item, report, sid)
             self.audit(
                 "evaluate",
@@ -1175,6 +1176,129 @@ class Controller:
                 "cgv_gate": ((item.get("train") or {}).get("launch") or {}).get("cgv_gate"),
             },
         )
+
+    def _probe_gh1(self, item: Dict[str, Any]) -> None:
+        """The G_H1 probe for a trained arm: one run, seed 42, recorded as a diagnostic.
+
+        The probe reads the arm's export, so it runs after the cold run and after the frozen
+        evaluation. It is not a gate: the frozen ER stays the only pre-Stage-3 gate, and the
+        probe's number informs the next round's hypotheses.
+        """
+        recorded = item.get("probe") or {}
+        if recorded.get("started") or recorded.get("g_h1") is not None:
+            return
+        result_dir = (item.get("train") or {}).get("result_dir")
+        sid = Path(result_dir) / "sids_for_hgrec.npy" if result_dir else None
+        if not sid or not sid.is_file():
+            return
+        mechanism_id = item["mechanism_id"]
+        intent = ExecutionIntent(
+            kind="probe",
+            mechanism_id=mechanism_id,
+            semantic_key=item.get("semantic_key", ""),
+            sid_sha256=sha256_file(sid),
+            fingerprint=item.get("fingerprint", ""),
+            sid_effect_fingerprint=item.get("sid_effect_fingerprint", ""),
+        )
+        verdict = check_intent(intent, self.store)
+        if not verdict.allowed:
+            item["probe"] = {"ok": False, "error": f"[{verdict.rule}] {verdict.detail}"}
+            self.audit("refuse", mechanism_id=mechanism_id, kind="probe", rule=verdict.rule)
+            self.save()
+            return
+        item["probe"] = {"started": True}
+        self.save()
+        completed = subprocess.run(
+            [
+                PROJECT_PYTHON,
+                "-m",
+                "tools.harness2_genrec.history_probe",
+                "--mechanism-id",
+                mechanism_id,
+                "--sid",
+                str(sid),
+            ],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=7200,
+        )
+        try:
+            record = json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            record = {"ok": False, "error": (completed.stderr or completed.stdout)[-400:]}
+        if not record.get("ok", True) and "g_h1" not in record:
+            item["probe"] = {"ok": False, "error": record.get("error") or record.get("detail")}
+            self.audit("probe_failed", mechanism_id=mechanism_id, detail=item["probe"]["error"])
+            self.save()
+            return
+        item["probe"] = {
+            "started": True,
+            "g_h1": record.get("g_h1"),
+            "prior_ce_l1": record.get("prior_ce_l1"),
+            "probe_ce_l1": record.get("probe_ce_l1"),
+            "top1_acc_l1": record.get("top1_acc_l1"),
+            "top5_acc_l1": record.get("top5_acc_l1"),
+            "top20_acc_l1": record.get("top20_acc_l1"),
+            "split": record.get("split"),
+            "sid_sha256": record.get("sid_sha256"),
+            "probe_version": record.get("probe_version"),
+            "budget": record.get("budget"),
+            "role": "diagnostic; the frozen ER is the only pre-Stage-3 gate",
+        }
+        self._record_probe_in_store(item)
+        self.audit(
+            "probe",
+            mechanism_id=mechanism_id,
+            g_h1=record.get("g_h1"),
+            prior_ce_l1=record.get("prior_ce_l1"),
+            probe_ce_l1=record.get("probe_ce_l1"),
+        )
+        self.save()
+
+    def _record_probe_in_store(self, item: Dict[str, Any]) -> None:
+        """The probe's measurement joins the arm's record in the store."""
+        from .evidence import RunPlan
+
+        probe = item.get("probe") or {}
+        mechanism_id = item["mechanism_id"]
+        try:
+            run = self.store.admit(
+                RunPlan(
+                    kind="probe",
+                    mechanism_id=mechanism_id,
+                    stage="gh1_probe",
+                    seed=42,
+                    output_dir=REPO_ROOT / "results" / "harness3_runs" / "probes" / mechanism_id,
+                ),
+                allow_existing_output=True,
+            )
+            self.store.close(
+                run,
+                status="succeeded",
+                metrics={
+                    "gh1_probe": {
+                        "g_h1": probe.get("g_h1"),
+                        "prior_ce_l1": probe.get("prior_ce_l1"),
+                        "probe_ce_l1": probe.get("probe_ce_l1"),
+                        "top1_acc_l1": probe.get("top1_acc_l1"),
+                        "top5_acc_l1": probe.get("top5_acc_l1"),
+                        "top20_acc_l1": probe.get("top20_acc_l1"),
+                        "split": probe.get("split"),
+                        "probe_version": probe.get("probe_version"),
+                        "budget": probe.get("budget"),
+                        "role": probe.get("role"),
+                    }
+                },
+                extra={"sid_sha256": probe.get("sid_sha256", "")},
+            )
+        except Exception as error:  # noqa: BLE001
+            self.audit(
+                "store_admission_failed",
+                mechanism_id=mechanism_id,
+                kind="probe",
+                reason=f"{type(error).__name__}: {error}",
+            )
 
     def phase_stage3(self) -> None:
         """Phase 5b: Stage-3 once per qualified arm, against the archived control."""
