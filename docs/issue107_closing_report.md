@@ -31,21 +31,21 @@ the share of random pairs that do. The archived control sits at **R@10 = 0.06406
 
 | Arm | frozen ER | ΔR@10 | ΔNDCG@10 |
 |---|---|---|---|
-| directed_assignment_prefix_preservation | 17.2983 | (Stage-3 stopped with the campaign) | |
+| directed_assignment_prefix_preservation | 17.2983 | (Stage-3 stopped with the campaign, no result) | |
 | directed_assignment_prefix_information | 16.9469 | −0.000313 | −0.000631 |
 | directed_codeword_tangent_repulsion | 16.8347 | −0.001375 | −0.001365 |
-| geometry_transport_seed43 | 16.7397 | (Stage-3 stopped with the campaign) | |
+| geometry_transport_seed43 | 16.7397 | (Stage-3 stopped with the campaign, no result) | |
 | directed_capacity_constrained_assignment_partition | 16.7324 | −0.003343 | −0.001928 |
 | directed_assignment_usage_balance | 16.6516 | −0.001654 | −0.000994 |
 | behavior_residual_geometry_transport | 16.6160 | −0.000679 | −0.000763 |
-| directed_pair_separation_codebook_geometry | 16.6019 | (Stage-3 stopped with the campaign) | |
+| directed_pair_separation_codebook_geometry | 16.6019 | (Stage-3 stopped with the campaign, no result) | |
 | directed_codeword_margin_geometry | 16.5918 | −0.000331 | −0.000639 |
 | behaviour_conditioned_residual_target | 16.5034 | −0.003064 | −0.001496 |
-| directed_capacity_balanced_assignment_partition | 16.4929 | (Stage-3 stopped with the campaign) | |
+| directed_capacity_balanced_assignment_partition | 16.4929 | −0.003186 | −0.002204 |
 | behavior_directed_soft_code_transition_kl | 16.4028 | −0.001811 | −0.001457 |
 | **r8_control (archived)** | **16.3345** | **0** | **0** |
 
-**12 arms cleared the frozen ER gate. 9 arms carry both a frozen ER and a Stage-3 reading.
+**12 arms cleared the frozen ER gate. 10 arms carry both a frozen ER and a Stage-3 reading.
 0 arms improved both Stage-3 metrics.** The campaign was stopped by the maintainer's
 instruction while one cold run and one Stage-3 were in flight; their arms are marked as
 stopped above rather than reported as if they had been measured.
