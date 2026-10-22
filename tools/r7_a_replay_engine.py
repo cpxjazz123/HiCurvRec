@@ -168,7 +168,7 @@ NEGATIVE_CONTROL = {"r4_08": "NO-DEEP"}
 
 
 def assemble_and_step(branch: dict[str, Any], bundle: dict[str, Any], *,
-                      intervention: str) -> dict[str, Any]:
+                      intervention: str, extra_loss: torch.Tensor | None = None) -> dict[str, Any]:
     """Take exactly one optimizer step from the frozen state, through the ARM's own code.
 
     ``FULL`` removes nothing and is the control the whole track rests on: it must land on the same
@@ -176,6 +176,10 @@ def assemble_and_step(branch: dict[str, Any], bundle: dict[str, Any], *,
     BEFORE the arm assembles and projects, so R4-08's PCGrad sees the reduced gradient set rather
     than a difference of two finished gradients -- a gradient difference is not a counterfactual
     for a nonlinear projection.
+
+    ``extra_loss`` is an optional tensor added to the assembled loss BEFORE the optimizer step. The
+    pilot uses it to compose the soft separation loss with the host's loss assembly without altering
+    the host's projection or PCGrad path.
     """
     if intervention not in INTERVENTIONS:
         raise ReplayError(f"unknown intervention {intervention!r}")
@@ -238,6 +242,8 @@ def assemble_and_step(branch: dict[str, Any], bundle: dict[str, Any], *,
 
     loss = trainer.assemble_losses(base_loss, behavior_loss, weight,
                                    torch.zeros((), device=device), 0.0, False)
+    if extra_loss is not None:
+        loss = loss + extra_loss
 
     model.zero_grad(set_to_none=True)
     projected = False
