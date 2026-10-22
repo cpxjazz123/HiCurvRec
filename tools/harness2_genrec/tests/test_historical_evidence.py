@@ -5,8 +5,10 @@ are about the properties that decision depends on: the seed-42-only rule, the fa
 protocol, the pairing of the errors, the counterexamples, the out-of-support flags, and the
 refusal to compute anything when the archives disagree.
 
-    /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m pytest \
-        tools/harness2_genrec/tests/test_historical_evidence.py -q
+    python3 -m pytest tools/harness2_genrec/tests/test_historical_evidence.py -q
+
+(the interpreter must have numpy, pandas and scikit-learn; the repository's system python3
+does, and the controller's own environment does not -- there the file skips)
 """
 
 from __future__ import annotations
@@ -15,9 +17,13 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import pytest
+
+# the baseline needs the data stack; the controller's own environment does not have it, so
+# the file skips there and is run with the environment that does
+np = pytest.importorskip("numpy")
+pd = pytest.importorskip("pandas")
+pytest.importorskip("sklearn")
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
