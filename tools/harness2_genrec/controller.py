@@ -1321,6 +1321,8 @@ class Controller:
                 "stage3",
                 mechanism_id=arm["mechanism_id"],
                 started=launch.get("started"),
+                status=launch.get("status"),
+                refused=launch.get("refused"),
                 er=arm.get("er"),
                 source="the store",
             )
