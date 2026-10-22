@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-22T13:37:56.907656+00:00",
+  "generated_utc": "2026-10-22T15:04:24.716488+00:00",
   "hypotheses": [
     {
       "created_utc": "2026-10-21T08:32:09.977165+00:00",
@@ -685,8 +685,49 @@
       "notes": "the transfer analysis now states the requirement in terms of the tail and the tree, so the brief a candidate reads asks for the right thing; the Gini is kept in the report because it is still a description of the export",
       "observation": "the account of what costs the downstream quality is WRONG as it stood, and the correction is measured. The arm with the second-best ER of the campaign (17.2983) has a structure almost identical to the control's -- 255 level-0 codes against 245, a Gini of 0.229 against 0.216, the same sequence information (0.1045 against 0.1044) -- and it lost MORE downstream quality than any other arm in the cohort, 0.0039 of Recall@10. Over the eleven arms that carry both measurements, the Gini's rank correlation with the downstream loss is -0.07, which is no correlation, while the TAIL of the level-0 usage, the largest cell, gives -0.52 and the width of the L1 -> L2 prefix tree gives +0.44. The requirement the campaign had been aiming at was therefore aimed at the wrong statistic.",
       "status": "open"
+    },
+    {
+      "created_utc": "2026-10-22T15:04:24.716485+00:00",
+      "evidence_paths": [
+        "results/harness3_runs/historical_evidence/historical_evidence.json",
+        "results/harness3_runs/transfer_analysis/stage3_transfer_report.json",
+        "results/harness3_runs/store/runs"
+      ],
+      "evidence_runs": [],
+      "experiments": [],
+      "explanations": [
+        {
+          "id": "E1",
+          "predictions": [
+            {
+              "falsifier": "neither signal separates the arms across a further campaign of the same size",
+              "id": "P1",
+              "measurement": "the G_H1 and the D2 of every arm against its Stage-3 result, case by case",
+              "statement": "the history-conditioned gain and the conditional level-2 discrimination separate the arms that lose downstream quality from the ones that do not, where the export's shape does not"
+            }
+          ],
+          "statement": "the export's shape is a SUMMARY, and the thing that costs the recommender is the mechanism's effect on the training, which the summary cannot show: the codes can look like the control's and still carry a loss, and the arm that looked most like the control did lose the most"
+        },
+        {
+          "id": "E2",
+          "predictions": [
+            {
+              "falsifier": "an arm whose conditional set is large enough to support a decision, measured on the same frozen pairs",
+              "id": "P1",
+              "measurement": "the conditional set's size and its support flags, per arm",
+              "statement": "the D2's positive conditional set stays a few hundred pairs for every arm, so the D2 is a diagnostic and not a ranking signal"
+            }
+          ],
+          "statement": "the conditional level-2 discrimination cannot be rescued on the frozen pairs, because the conditioning is too rare there; it is a property of the pair set and not of the mechanism"
+        }
+      ],
+      "id": "H109-05",
+      "next_experiment": "let the cohort grow: every arm measured from now carries the ER, the conditional L2 discrimination, the history-conditioned gain and, when it clears the gate, the one Stage-3, and the question the cohort has to answer is which of those separates the arms that lose from the ones that do not",
+      "notes": "the brief now says plainly that the balance is a requirement rather than a mechanism, that the D2 is weakly supported, and that the history gain is neutral so far -- so the agent is not asked to believe more than was measured",
+      "observation": "the two limits of the current instruments, both measured. FIRST: the balance measures are only moderately associated with the downstream loss -- the largest level-0 cell gives -0.52 and the prefix tree +0.44 over a dozen arms, and an arm that holds both can still lose, so the requirement is a constraint rather than a mechanism. SECOND: the conditional level-2 discrimination is intrinsically weakly supported on the frozen behaviour pairs, where only about one per cent of the pairs share their level-1 code: the positive conditional set is a few hundred pairs, and every arm's D2 so far carries a low-support flag. The history-conditioned gain is the more promising of the two signals and it is neutral so far: the rigid arm that kept its balance reads 0.1232 and the repartition arm 0.1234, against a historical range of 0.004 to 0.195.",
+      "status": "open"
     }
   ],
-  "ledger_sha256": "89e7b1b852487d983826c4d97df722493c86daf938b3b195901cf190e4f53716",
+  "ledger_sha256": "b3b91181e6dd00da9e4212731276248d5de06bb766da0a32235dbcc840953645",
   "ledger_version": 1
 }
