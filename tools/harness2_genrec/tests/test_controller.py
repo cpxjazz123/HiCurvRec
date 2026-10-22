@@ -482,3 +482,18 @@ def test_an_arm_measured_downstream_is_not_measured_again(tmp_path):
         metrics={"stage3": {"test_recall@10": 0.06}},
     )
     assert controller._stage3_arms_needing_measurement() == []
+
+
+def test_a_round_with_nothing_to_train_hands_over(tmp_path):
+    """The training phase must hand over when the round has nothing left to train.
+
+    A round whose portfolio is empty still has to move on: the training phase ends in the
+    evaluation, the evaluation in the Stage-3, and the Stage-3 in the learning, so the loop
+    continues instead of spinning.
+    """
+    controller = _controller(tmp_path)
+    controller.state["round"] = 5
+    controller.state["phase"] = "train"
+    controller.state["portfolio"] = []
+    controller.phase_train()
+    assert controller.state["phase"] == "evaluate"

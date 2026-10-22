@@ -988,6 +988,8 @@ class Controller:
             if item.get("status") == "proposed"
         ]
         if not pending:
+            # nothing left to screen: the round moves on to the training, the evaluation and
+            # the learning, and the loop continues
             self.state["phase"] = "train"
             self.state["next_action"] = "queue the admitted arms for one cold Stage-2 run each"
             self.save()
