@@ -421,3 +421,37 @@ def test_a_narrow_portfolio_is_asked_again(tmp_path, monkeypatch):
     assert len(calls) == 2
     assert "at least three different research angles" in calls[1][1]
     assert controller.state["portfolio_families"] == ["codebook_geometry", "rigid_alignment"]
+
+
+def test_a_measured_arm_is_not_adopted_again(tmp_path):
+    """A measured arm is measured, whether or not it cleared the gate.
+
+    The read phase used to treat an arm that had been measured and missed the gate as an
+    arm whose measurement was missed, and every round then adopted it again. The round
+    never reached the proposal, and the campaign spent seventy-one rounds on it.
+    """
+    controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    export = tmp_path / "out" / "candidate_one" / "sids_for_hgrec.npy"
+    export.parent.mkdir(parents=True, exist_ok=True)
+    export.write_bytes(b"export")
+    run = controller.store.admit(
+        RunPlan(
+            kind="stage2",
+            mechanism_id="candidate_one",
+            output_dir=export.parent,
+        ),
+        allow_existing_output=True,
+    )
+    controller.store.close(
+        run,
+        status="succeeded",
+        metrics={"frozen_evaluation": {"hard_l1_er": 16.0, "above_frozen_threshold": False}},
+        artifacts=[export],
+    )
+    controller.state["phase"] = "read"
+    controller.phase_read()
+    assert controller.state["arms_pending_evaluation"] == []
+    assert controller.state["phase"] == "hypothesise"

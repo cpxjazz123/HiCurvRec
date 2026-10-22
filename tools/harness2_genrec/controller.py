@@ -516,9 +516,14 @@ class Controller:
         # leave an arm unmeasured.
         unmeasured = []
         for manifest in manifests:
-            if manifest.get("mechanism_id") in (
-                row["mechanism_id"] for row in qualified
-            ):
+            if manifest.get("kind") != "stage2":
+                continue
+            evaluation = (manifest.get("metrics") or {}).get("frozen_evaluation") or {}
+            # an arm whose frozen evaluation was READ is measured, whether or not it
+            # cleared the gate: only an arm with no evaluation at all is unmeasured.
+            # Treating a below-the-gate arm as unmeasured makes every round adopt it
+            # again, and the round never reaches the proposal.
+            if evaluation.get("hard_l1_er") is not None or evaluation.get("l1_er") is not None:
                 continue
             if not any(
                 artifact["path"].endswith("sids_for_hgrec.npy")
@@ -526,7 +531,7 @@ class Controller:
                 for artifact in manifest.get("artifacts") or ()
             ):
                 continue
-            unmeasured.append(manifest["mechanism_id"])
+            unmeasured.append(manifest.get("mechanism_id") or "")
         self.state["arms_pending_evaluation"] = unmeasured
         self.state["scientific_stop"] = bool(improved)
         self.audit("read", arms=len(qualified), cleared=len(cleared), improved=len(improved))
