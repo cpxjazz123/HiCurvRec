@@ -1300,9 +1300,171 @@ class Controller:
                 reason=f"{type(error).__name__}: {error}",
             )
 
+    def _launch_stage3(self, mechanism_id: str, sid: Path, semantic_key: str = "") -> Dict[str, Any]:
+        """Launch the one Stage-3 of an arm, after the guardrail has seen the intent."""
+        import importlib.util
+
+        intent = ExecutionIntent(
+            kind="stage3",
+            mechanism_id=mechanism_id,
+            semantic_key=semantic_key,
+        )
+        verdict = check_intent(intent, self.store)
+        if not verdict.allowed:
+            return {"started": False, "refused": f"[{verdict.rule}] {verdict.detail}"}
+        spec = importlib.util.spec_from_file_location(
+            "genrec_mcp_server", REPO_ROOT / "tools/genrec-mcp/server.py"
+        )
+        server = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(server)
+        launch = server.tool_stage3_start(item_sids=str(sid))
+        return {
+            "started": launch.get("started"),
+            "status": launch.get("status"),
+            "variant": launch.get("variant"),
+            "refused": launch.get("refused"),
+        }
+
+    def _stage3_arms_needing_measurement(self) -> List[Dict[str, Any]]:
+        """The arms the store knows that cleared the ER gate and have no Stage-3 yet.
+
+        The store is the system of record, so this is where the truth lives: an arm that
+        cleared the gate in an earlier round and was never measured downstream is still
+        waiting for its measurement, and a campaign that only looked at the current
+        portfolio would leave it waiting forever.
+        """
+        manifests = self.store.runs()
+        measured = {
+            manifest.get("mechanism_id")
+            for manifest in manifests
+            if manifest.get("kind") == "stage3"
+        }
+        waiting: List[Dict[str, Any]] = []
+        for manifest in manifests:
+            if manifest.get("kind") != "stage2":
+                continue
+            mechanism_id = manifest.get("mechanism_id") or ""
+            if not mechanism_id or mechanism_id in measured:
+                continue
+            evaluation = (manifest.get("metrics") or {}).get("frozen_evaluation") or {}
+            er = evaluation.get("hard_l1_er")
+            if er is None:
+                er = evaluation.get("l1_er")
+            if er is None or er <= FROZEN_GATE:
+                continue
+            sid = None
+            for artifact in manifest.get("artifacts") or ():
+                path = str(artifact.get("path") or "")
+                if path.endswith("item_sids.json") and artifact.get("exists"):
+                    sid = Path(path)
+                    break
+            if sid is None or not sid.is_file():
+                continue
+            waiting.append(
+                {
+                    "mechanism_id": mechanism_id,
+                    "sid": sid,
+                    "er": er,
+                    "semantic_key": (manifest.get("extra") or {}).get("semantic_key", ""),
+                }
+            )
+        return waiting
+
+    def _record_finished_stage3s(self) -> List[str]:
+        """Record the Stage-3 results that are on disk but not in the store.
+
+        An arm can finish its Stage-3 while the campaign is doing something else -- a run
+        that was interrupted, an arm adopted from an earlier round -- and the store is where
+        the evidence lives. The artifacts are read; nothing is measured again.
+        """
+        from .evidence import RunPlan
+
+        recorded: List[str] = []
+        measured = {
+            manifest.get("mechanism_id")
+            for manifest in self.store.runs()
+            if manifest.get("kind") == "stage3"
+        }
+        root = REPO_ROOT / "results" / "stage3_T5Train"
+        for variant in sorted(root.glob("TIGER_c107_*__r8_control")):
+            mechanism_id = variant.name[len("TIGER_c107_"): -len("__r8_control")]
+            if mechanism_id in measured:
+                continue
+            finals = sorted(variant.rglob("test_final.json"))
+            if not finals:
+                continue
+            try:
+                report = json.loads(finals[-1].read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            recall = report.get("test_recall@10")
+            ndcg = report.get("test_ndcg@10")
+            if recall is None or ndcg is None:
+                continue
+            try:
+                run = self.store.admit(
+                    RunPlan(
+                        kind="stage3",
+                        mechanism_id=mechanism_id,
+                        stage="downstream",
+                        seed=42,
+                        output_dir=variant,
+                    ),
+                    allow_existing_output=True,
+                )
+                self.store.close(
+                    run,
+                    status="succeeded",
+                    metrics={
+                        "stage3": {
+                            "test_recall@10": recall,
+                            "test_ndcg@10": ndcg,
+                            "recall_delta_vs_archived_control": (
+                                recall - ARCHIVED_CONTROL["stage3_recall@10"]
+                            ),
+                            "ndcg_delta_vs_archived_control": (
+                                ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"]
+                            ),
+                            "note": "read from the Stage-3 artifact already on disk",
+                        }
+                    },
+                )
+                recorded.append(mechanism_id)
+                self.audit("stage3_recorded", mechanism_id=mechanism_id, recall=recall)
+            except Exception as error:  # noqa: BLE001
+                self.audit(
+                    "store_admission_failed",
+                    mechanism_id=mechanism_id,
+                    kind="stage3",
+                    reason=f"{type(error).__name__}: {error}",
+                )
+        return recorded
+
     def phase_stage3(self) -> None:
         """Phase 5b: Stage-3 once per qualified arm, against the archived control."""
         import importlib.util
+
+        # the arms the store knows about and that have not been measured downstream
+        for arm in self._stage3_arms_needing_measurement():
+            launch = self._launch_stage3(
+                arm["mechanism_id"], arm["sid"], arm.get("semantic_key", "")
+            )
+            self.audit(
+                "stage3",
+                mechanism_id=arm["mechanism_id"],
+                started=launch.get("started"),
+                er=arm.get("er"),
+                source="the store",
+            )
+            self.save()
+            if launch.get("started"):
+                # one Stage-3 at a time: the next arm waits for this one to finish
+                self.state["phase"] = "stage3"
+                self.state["next_action"] = (
+                    f"waiting for the Stage-3 of {arm['mechanism_id']} to finish"
+                )
+                self.save()
+                return
 
         for item in self.state.get("portfolio") or ():
             if item.get("status") != "qualified":
@@ -1402,6 +1564,8 @@ class Controller:
     def phase_learn(self) -> None:
         """Phase 6: the learning loop -- the ledger and the next portfolio."""
         import subprocess
+
+        self._record_finished_stage3s()
 
         summary: Dict[str, Any] = {}
         for item in self.state.get("portfolio") or ():
