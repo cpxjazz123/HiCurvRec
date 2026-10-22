@@ -455,3 +455,30 @@ def test_a_measured_arm_is_not_adopted_again(tmp_path):
     controller.phase_read()
     assert controller.state["arms_pending_evaluation"] == []
     assert controller.state["phase"] == "hypothesise"
+
+
+def test_an_arm_measured_downstream_is_not_measured_again(tmp_path):
+    """A Stage-3 result in any manifest counts as the arm's measurement.
+
+    The controller's filter looked for a manifest of kind "stage3" while the guardrail
+    looked for a Stage-3 result wherever it is recorded, so six arms that had been measured
+    were retried on every round, each retry refused, each round ending in the refusals.
+    """
+    controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    run = controller.store.admit(
+        RunPlan(
+            kind="stage2",
+            mechanism_id="candidate_one",
+            output_dir=tmp_path / "out" / "candidate_one",
+        ),
+        allow_existing_output=True,
+    )
+    controller.store.close(
+        run,
+        status="succeeded",
+        metrics={"stage3": {"test_recall@10": 0.06}},
+    )
+    assert controller._stage3_arms_needing_measurement() == []
