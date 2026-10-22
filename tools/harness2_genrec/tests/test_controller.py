@@ -269,3 +269,91 @@ def test_the_semantic_key_ignores_the_name(tmp_path):
     assert first == second
     different = C.semantic_key(_proposal(equation="L = ||a - c||^2"))
     assert different != first
+
+
+# ------------------------------------------------------- the evidence the store keeps
+def test_a_success_split_across_two_manifests_is_still_a_success(tmp_path):
+    """The ER and the downstream measurement are recorded in two immutable manifests.
+
+    A manifest is written once and never edited, so the cold run's ER and the Stage-3's
+    result are two manifests of one arm. The arm's evidence is their join -- reading one
+    manifest at a time reports an arm that has both measurements as an arm that has
+    neither, and the success check would never fire.
+    """
+    controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    controller.store.close(
+        controller.store.admit(
+            RunPlan(
+                kind="stage2",
+                mechanism_id="candidate_one",
+                output_dir=tmp_path / "out" / "candidate_one",
+            )
+        ),
+        status="succeeded",
+        metrics={"frozen_evaluation": {"hard_l1_er": 16.9, "above_frozen_threshold": True}},
+    )
+    controller.store.close(
+        controller.store.admit(
+            RunPlan(
+                kind="stage3",
+                mechanism_id="candidate_one",
+                output_dir=tmp_path / "stage3" / "candidate_one",
+            )
+        ),
+        status="succeeded",
+        metrics={"stage3": {"test_recall@10": 0.070, "test_ndcg@10": 0.040}},
+    )
+    controller.state["phase"] = "read"
+    controller.phase_read()
+    summary = controller.state["evidence_summary"]
+    assert summary["arms_with_both_metrics"] == 1
+    assert summary["arms_clearing_the_er_gate"] == 1
+    assert summary["arms_improving_both_stage3_metrics"] == 1
+    assert controller.state["scientific_stop"]
+
+
+def test_a_finished_run_can_still_be_recorded(tmp_path):
+    """The store records the run that has already produced its products.
+
+    The empty-output-directory rule stops a run from overwriting what is there; it must not
+    stop the store from recording a run that has finished, because by then the run's own
+    products are in that directory.
+    """
+    controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    output = tmp_path / "out" / "candidate_one"
+    output.mkdir(parents=True)
+    (output / "sids_for_hgrec.npy").write_bytes(b"exported")
+    run = controller.store.admit(
+        RunPlan(kind="stage2", mechanism_id="candidate_one", output_dir=output),
+        allow_existing_output=True,
+    )
+    controller.store.close(
+        run,
+        status="succeeded",
+        metrics={"frozen_evaluation": {"hard_l1_er": 16.9}},
+        artifacts=[output / "sids_for_hgrec.npy"],
+    )
+    manifests = [m for m in controller.store.runs() if m["mechanism_id"] == "candidate_one"]
+    assert len(manifests) == 1
+    assert manifests[0]["metrics"]["frozen_evaluation"]["hard_l1_er"] == 16.9
+
+
+def test_a_launch_into_a_dirty_directory_is_still_refused(tmp_path):
+    """The launch guardrail is untouched by the recording path."""
+    controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    output = tmp_path / "out" / "candidate_one"
+    output.mkdir(parents=True)
+    (output / "leftover").write_text("from another run", encoding="utf-8")
+    with pytest.raises(Exception):
+        controller.store.admit(
+            RunPlan(kind="stage2", mechanism_id="candidate_one", output_dir=output)
+        )
