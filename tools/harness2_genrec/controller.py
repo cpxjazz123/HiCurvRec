@@ -542,6 +542,7 @@ class Controller:
                 "propose the next portfolio of mathematically distinct mechanisms aimed at the "
                 "Stage-3 transfer gap, not at the pair-level ER"
             )
+        self._write_arm_reports()
         self.save()
         # an arm whose evaluation was missed when a round moved on is adopted here, so its
         # frozen ER is read once and its Stage-3 is still run
@@ -1815,11 +1816,15 @@ class Controller:
             self.state["next_action"] = self.state["pause_reason"]
             self.audit("pause", reason=self.state["pause_reason"])
         else:
-            self.state["phase"] = "hypothesise"
+            # the next round starts by READING the evidence: the manifests are joined, the
+            # arms are diagnosed and the arm reports are written, and only then is the next
+            # portfolio designed. Handing over to the proposal directly would leave the
+            # campaign's view of its own evidence frozen at the first round.
+            self.state["phase"] = "read"
             self.state["portfolio"] = []
             self.state["next_action"] = (
-                "design the next portfolio from the results of this round; the loop does not "
-                "stop on a negative result"
+                "join the evidence of the arms measured so far, diagnose them, and then design "
+                "the next portfolio; the loop does not stop on a negative result"
             )
         self.audit("learn", next_round=self.state["round"], phase=self.state["phase"])
         self.save()
