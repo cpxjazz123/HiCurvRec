@@ -71,15 +71,32 @@ def mechanism_family(proposal: Dict[str, Any]) -> str:
         str(proposal.get(key, "")).lower()
         for key in ("equation", "title", "summary", "behaviour_signal", "codebook_interaction")
     )
-    if any(word in text for word in ("repuls", "separat", "apart", "margin", "distanc", "geometry")):
-        return "codebook_geometry"
-    if any(word in text for word in ("occupanc", "prefix", "branch", "partition", "assign", "usage")):
-        return "assignment_structure"
-    if any(word in text for word in ("residual", "transport", "displacement", "whiten", "residual_space")):
-        return "residual_space"
-    if any(word in text for word in ("entropy", "temperature", "sharp", "softmax")):
-        return "assignment_temperature"
-    return "unspecified"
+    families = {
+        "codebook_geometry": (
+            "repuls", "separat", "apart", "margin", "distanc", "geometry",
+        ),
+        "rigid_alignment": (
+            "rigid", "rotat", "shear", "procrustes",
+        ),
+        "assignment_structure": (
+            "occupanc", "prefix", "branch", "partition", "assign", "usage", "capacity",
+            "balance", "quot",
+        ),
+        "residual_space": (
+            "residual", "transport", "displacement", "whiten",
+        ),
+        "assignment_temperature": (
+            "entropy", "temperature", "sharp", "softmax",
+        ),
+    }
+    # the family with the most evidence wins, not the first one that matches: a term that
+    # speaks of distances and of capacities is not a geometry term just because it says
+    # "distance" first
+    scores = {
+        name: sum(text.count(word) for word in words) for name, words in families.items()
+    }
+    best = max(scores, key=lambda name: scores[name])
+    return best if scores[best] else "unspecified"
 
 
 def semantic_key(proposal: Dict[str, Any]) -> str:
