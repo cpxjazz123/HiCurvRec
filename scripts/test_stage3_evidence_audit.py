@@ -17,7 +17,7 @@ def test_inventory_and_corrected_probes_match_exactly():
     assert len(data) == data["fix_er"].notna().sum()
     resample = data.loc[data.model == "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample"].iloc[0]
     assert resample["er"] == pytest.approx(16.38953942232631, abs=1e-11)
-    assert resample["l1l2_er"] == pytest.approx(58.38709677419355, abs=1e-11)
+    assert float(resample["l1l2_er"]) == pytest.approx(58.38709677419355, abs=1e-11)
 
 
 def test_historical_ER_LOFO_reproduces_47():
