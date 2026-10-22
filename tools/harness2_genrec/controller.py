@@ -1168,7 +1168,13 @@ class Controller:
                 self.save()
                 continue
             completed = subprocess.run(
-                [PROJECT_PYTHON, str(REPO_ROOT / "tools/mvg/er_eval.py"), "--sid", str(sid)],
+                [
+                    PROJECT_PYTHON,
+                    str(REPO_ROOT / "tools/mvg/er_eval.py"),
+                    "--sid",
+                    str(sid),
+                    "--bootstrap",
+                ],
                 cwd=str(REPO_ROOT),
                 capture_output=True,
                 text=True,
@@ -1182,6 +1188,9 @@ class Controller:
                 "hard_l1_er": report.get("l1_er"),
                 "above_gate": report.get("above_frozen_threshold"),
                 "frozen_threshold": report.get("frozen_threshold"),
+                "er_ci95": (report.get("bootstrap") or {}).get("er_ci95"),
+                "pos_share": report.get("pos_share"),
+                "neg_share": report.get("neg_share"),
                 "d2": (report.get("d2") or {}).get("d2"),
                 "d2_flags": (report.get("d2") or {}).get("flags"),
             }
@@ -1376,6 +1385,7 @@ class Controller:
         still asking.
         """
         self._record_finished_stage3s()
+        self._write_arm_reports()
         for arm in self._stage3_arms_needing_measurement():
             launch = self._launch_stage3(
                 arm["mechanism_id"], arm["sid"], arm.get("semantic_key", "")
@@ -1660,6 +1670,62 @@ class Controller:
                 }
             },
         )
+
+    def _write_arm_reports(self) -> List[str]:
+        """Write each arm's report, the output contract issue #109 asks for.
+
+        The report is assembled from the evidence chain rather than written, so every number
+        in it is traceable to a manifest, and an arm that was measured before a signal
+        existed says which signal it is missing.
+        """
+        from . import arm_report
+
+        transfer = {}
+        transfer_path = self.config.campaign / "transfer_analysis" / "stage3_transfer_report.json"
+        if transfer_path.is_file():
+            try:
+                transfer = json.loads(transfer_path.read_text(encoding="utf-8")).get("arms") or {}
+            except (OSError, json.JSONDecodeError):
+                transfer = {}
+        historical = None
+        historical_path = self.config.campaign / "historical_evidence" / "historical_evidence.json"
+        if historical_path.is_file():
+            try:
+                historical = json.loads(historical_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                historical = None
+        runs = self.store.runs()
+        diagnoses = {row["mechanism_id"]: row for row in self.state.get("diagnoses") or ()}
+        written: List[str] = []
+        out_dir = self.config.campaign / "arms"
+        for manifest in runs:
+            mechanism_id = manifest.get("mechanism_id") or ""
+            if not mechanism_id:
+                continue
+            # the arm's own fingerprints, as they were recorded when it was admitted
+            fingerprint = None
+            for candidate_manifest in runs:
+                if candidate_manifest.get("mechanism_id") != mechanism_id:
+                    continue
+                extra = candidate_manifest.get("extra") or {}
+                if extra.get("fingerprint"):
+                    fingerprint = {
+                        "primary": extra.get("fingerprint"),
+                        "sid_effect": extra.get("sid_effect_fingerprint"),
+                    }
+                    break
+            report = arm_report.arm_report(
+                mechanism_id,
+                store_runs=runs,
+                transfer=transfer,
+                candidate=self._candidate_record(mechanism_id),
+                fingerprint=fingerprint,
+                diagnosis=diagnoses.get(mechanism_id),
+                historical=historical,
+            )
+            arm_report.write_report(report, out_dir)
+            written.append(mechanism_id)
+        return written
 
     def phase_learn(self) -> None:
         """Phase 6: the learning loop -- the ledger and the next portfolio."""
