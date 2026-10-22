@@ -60,6 +60,13 @@ FROZEN_GATE = 16.38953942232631
 R4_08_REFERENCE = 16.402627511591962
 
 
+def mechanism_family_components(proposal: Dict[str, Any]) -> Dict[str, Any]:
+    """The proposal's fingerprints, for the guardrails' newness rule."""
+    from . import historical_fingerprints
+
+    return historical_fingerprints.fingerprint_components(proposal)
+
+
 def mechanism_family(proposal: Dict[str, Any]) -> str:
     """The KIND of a mechanism, read from its own declaration.
 
@@ -185,7 +192,30 @@ class Controller:
             for key in ("portfolio", "queue"):
                 self.state.setdefault(key, [])
             self.state.setdefault("jobs", {})
+        self._refresh_fingerprint_registry()
         return self
+
+    def _refresh_fingerprint_registry(self) -> Dict[str, Any]:
+        """Rebuild the historical fingerprint registry from the archives.
+
+        The registry is what refuses a mechanism that repeats one that already exists, so it
+        has to be current before any dispatch. It is rebuilt from the archives every time the
+        controller starts, and the rebuild is recorded.
+        """
+        from . import historical_fingerprints
+
+        try:
+            registry = historical_fingerprints.build_registry(REPO_ROOT)
+            digest = historical_fingerprints.save_registry(
+                registry, historical_fingerprints.DEFAULT_REGISTRY
+            )
+        except Exception as error:  # noqa: BLE001
+            return {"refreshed": False, "reason": f"{type(error).__name__}: {error}"}
+        summary = historical_fingerprints.summarise(registry)
+        summary["file_sha256"] = digest
+        summary["refreshed"] = True
+        self.state["historical_fingerprints"] = summary
+        return summary
 
     def save(self) -> None:
         self.state["updated_utc"] = now_utc()
@@ -843,10 +873,13 @@ class Controller:
             proposal = json.loads(Path(candidate["path"]).read_text(encoding="utf-8"))
             key = semantic_key(proposal)
             duplicate = key in seen_keys
+            components = mechanism_family_components(proposal)
             portfolio.append(
                 {
                     "mechanism_id": candidate["mechanism_id"],
                     "family": _family_of(Path(candidate["path"])),
+                    "fingerprint": components["primary"],
+                    "sid_effect_fingerprint": components["sid_effect"],
                     "proposal_path": candidate["path"],
                     "proposal_sha256": candidate["proposal_sha256"],
                     "semantic_key": key,
@@ -963,6 +996,8 @@ class Controller:
                     mechanism_id=item["mechanism_id"],
                     tree=REPO_ROOT / "stage2_RQ-VAE" / f"TIGER_c107_{item['mechanism_id']}",
                     semantic_key=item.get("semantic_key", ""),
+                    fingerprint=item.get("fingerprint", ""),
+                    sid_effect_fingerprint=item.get("sid_effect_fingerprint", ""),
                 )
                 verdict = check_intent(intent, self.store)
                 if not verdict.allowed:
@@ -1080,6 +1115,8 @@ class Controller:
                 "hard_l1_er": report.get("l1_er"),
                 "above_gate": report.get("above_frozen_threshold"),
                 "frozen_threshold": report.get("frozen_threshold"),
+                "d2": (report.get("d2") or {}).get("d2"),
+                "d2_flags": (report.get("d2") or {}).get("flags"),
             }
             item["status"] = "qualified" if report.get("above_frozen_threshold") else "below_gate"
             self._record_in_store(item, report, sid)
@@ -1126,6 +1163,8 @@ class Controller:
                     "frozen_threshold": report.get("frozen_threshold"),
                     "pos_share": report.get("pos_share"),
                     "neg_share": report.get("neg_share"),
+                    "d2": (report.get("d2") or {}).get("d2"),
+                    "d2_block": report.get("d2"),
                 }
             },
             artifacts=[sid, sid.parent / "rqvae_best.pth", sid.parent / "item_sids.json"],
