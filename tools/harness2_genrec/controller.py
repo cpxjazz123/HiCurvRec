@@ -718,7 +718,7 @@ class Controller:
                             "ndcg_delta_vs_archived_control": (
                                 ndcg - ARCHIVED_CONTROL["stage3_ndcg@10"]
                             ),
-                            "note": "read from the Stage-3 artifact already on disk",
+                            "note": f"read from {source}",
                         }
                     },
                 )
@@ -1428,14 +1428,26 @@ class Controller:
             if mechanism_id in measured:
                 continue
             finals = sorted(variant.rglob("test_final.json"))
-            if not finals:
-                continue
-            try:
-                report = json.loads(finals[-1].read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            recall = report.get("test_recall@10")
-            ndcg = report.get("test_ndcg@10")
+            source = ""
+            if finals:
+                try:
+                    report = json.loads(finals[-1].read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                recall = report.get("test_recall@10")
+                ndcg = report.get("test_ndcg@10")
+                source = "the Stage-3 final"
+            else:
+                # a run that died between writing its shards and merging them still measured
+                # everything: the shards hold every row's target rank
+                from . import stage3_from_shards
+
+                recovered = stage3_from_shards.latest_complete(variant)
+                if recovered is None:
+                    continue
+                recall = recovered["test_recall@10"]
+                ndcg = recovered["test_ndcg@10"]
+                source = "the per-rank shards of a run whose final was never merged"
             if recall is None or ndcg is None:
                 continue
             try:
