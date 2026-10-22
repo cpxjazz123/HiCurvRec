@@ -74,7 +74,9 @@ def test_the_result_record_carries_the_numbers_and_the_provenance(tmp_path):
     )
     assert record["prior_ce_l1"] == 5.0
     assert record["probe_ce_l1"] == 3.9
-    assert record["g_h1"] == 0.21
+    # the issue defines G_H1 as the relative gain: (prior CE - probe CE) / prior CE
+    assert record["g_h1"] == pytest.approx((5.0 - 3.9) / 5.0)
+    assert record["gain_l1_absolute"] == 0.21
     assert record["top1_acc_l1"] == 0.08
     assert record["top5_acc_l1"] == 0.19
     assert record["top20_acc_l1"] == 0.40
