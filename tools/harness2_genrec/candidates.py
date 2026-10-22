@@ -142,6 +142,19 @@ decoder cannot move the export either. A candidate that wants to change the expo
 must therefore deliver its gradient to the codebook -- and the only question left is *which
 direction* it moves the codebook in.
 
+# THE ARITHMETIC OF THE ER, WHICH SAYS WHAT IS LEFT TO TRY
+
+The frozen ER is a ratio of two shares over the level-0 code. The DENOMINATOR is the share
+of random pairs that share a level-0 code: that is the probability two random items collide
+in the same cell, which is a function of the cell SIZES alone -- the sum over cells of
+(n_c / N)^2 -- and says nothing about which items are grouped together. The NUMERATOR is
+the share of held-out behaviour pairs that share a level-0 code, and that is a function of
+the grouping. So the ER rises through the numerator when the grouping follows the behaviour
+graph while the sizes stay put, and it rises through the denominator when the sizes become
+unequal. The first is what has never been tried: every arm that raised the ER raised the
+denominator by pulling a pair's codewords together, and the sizes are exactly what the
+recommender loses.
+
 # THE TENSION THE MEASUREMENTS SHOW
 
 The frozen pair-level ER is bought with CODE CONCENTRATION: a behaviour-driven merge of the
