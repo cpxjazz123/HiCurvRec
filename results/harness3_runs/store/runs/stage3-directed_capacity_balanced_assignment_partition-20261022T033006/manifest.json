@@ -1,0 +1,32 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T03:30:06.223826+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage3",
+  "manifest_sha256": "a46352907ec467544bf69b20b7d9bdc9b784ea634efb332af8e73ec342217a38",
+  "manifest_version": 1,
+  "mechanism_id": "directed_capacity_balanced_assignment_partition",
+  "metrics": {
+    "stage3": {
+      "ndcg_delta_vs_archived_control": -0.002204410189221191,
+      "note": "read from the Stage-3 artifact already on disk",
+      "recall_delta_vs_archived_control": -0.003185988614007901,
+      "test_ndcg@10": 0.03310210683018558,
+      "test_recall@10": 0.06088197914309093
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage3-directed_capacity_balanced_assignment_partition-20261022T033006",
+  "seed": 42,
+  "stage": "downstream",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}
