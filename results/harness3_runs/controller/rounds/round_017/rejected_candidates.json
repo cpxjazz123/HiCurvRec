@@ -1,0 +1,55 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "directed_residual_transport_with_separation",
+        "title": "Directed residual transport constrained by endpoint codeword separation",
+        "equation": "Let p_i = softmax(-||source_i-c_k||^2/tau), q_i = softmax(-||target_i-c_k||^2/tau), a_i = sum_k p_ik c_k, and b_i = sum_k q_ik c_k. Let d_i = target_i-source_i and u_i = b_i-a_i. L = w*mean_i[||u_i-d_i||^2 + lambda*max(0, delta-||u_i||)^2 + rho*max(0, ||u_i||-R)^2].",
+        "symbols": {
+          "i": "Index of a batch pair whose mask is valid.",
+          "k": "Codebook index.",
+          "c_k": "Codebook vector k.",
+          "p_i": "Soft source assignment distribution.",
+          "q_i": "Soft target assignment distribution.",
+          "a_i": "Source-side soft codeword.",
+          "b_i": "Target-side soft codeword.",
+          "d_i": "Ordered behaviour-conditioned residual from source to target.",
+          "u_i": "Residual between target-side and source-side soft codewords.",
+          "tau": "Soft-assignment temperature.",
+          "w": "Overall auxiliary-loss weight.",
+          "lambda": "Weight of the minimum residual-separation penalty.",
+          "delta": "Minimum desired norm of the soft codeword residual.",
+          "rho": "Weight of the maximum residual-size penalty.",
+          "R": "Maximum desired norm of the soft codeword residual.",
+          "B": "Batch size.",
+          "C": "Number of codebook vectors.",
+          "mask": "Validity mask; only entries with mask_i = 1 contribute."
+        },
+        "parameters": {
+          "weight": 0.001,
+          "temperature": 0.1,
+          "separation_weight": 1.0,
+          "separation_margin": 0.25,
+          "upper_bound_weight": 0.1,
+          "residual_upper_bound": 2.0
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The ordered residual target-source for each valid behaviour pair.",
+        "codebook_interaction": "The transport term moves the difference between the endpoint soft codewords toward the directed residual, rather than pulling both endpoints toward one shared codeword. The lower-bound hinge penalizes endpoint codeword convergence below delta, and the upper-bound hinge limits excessively large residuals. These constraints act on soft codewords and do not guarantee distinct hard SIDs.",
+        "encoder_interaction": "The loss differentiates through source and target, but the host overwrites those encoder gradients. Its effective training path is the nonzero codebook gradient through the endpoint soft assignments.",
+        "risk": "The embedding residual may not be a reliable proxy for behaviour-conditioned residual geometry; the transport objective may distort the codebook or satisfy its soft separation while hard assignments still converge. If typical residual norms conflict with the fixed bounds, the penalties may be inactive or dominate the transport term.",
+        "falsifier": "Reject if the probe finds non-finite gradients, exchanging source and target does not change the loss, or the cold run fails the frozen requirements on level-0 Gini, L1-to-L2 branches, frequency drift, sequence information, and rising pair-level ER. Downstream recall@10 and NDCG@10 below the archived control falsify its recommendation benefit.",
+        "why_not_the_measured_failures": "It reaches the codebook, so it is not inert under the host's gradient overwrite. Its residual transport acts on the directed difference between endpoint codewords and includes a minimum-separation penalty, unlike pairwise attraction that merged the cells. It is mathematically distinct from a codeword-margin geometry objective and from an assignment-entropy objective, though its soft constraints require hard-export validation."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

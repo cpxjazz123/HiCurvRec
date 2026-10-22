@@ -1,0 +1,148 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.0001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The directed cross-entropy moves codewords through the source and target soft assignments. The marginal capacity term pushes assignment mass toward equal code usage, while the expected-distance hinge pushes the endpoint assignment distributions away from codeword pairs that are too close. These terms oppose concentration and pair convergence, respectively, but do not mathematically guarantee unchanged hard-code occupancy or prefix structure.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, its soft assignment and code-distance terms deliver gradients to the codebook. Unlike pair-attraction objectives that merge endpoint codewords, this penalizes low expected endpoint codeword distance and balances marginal assignment mass. It differs from a simple usage-balance term by using a directed source-to-target assignment objective plus an explicit pairwise exclusion objective."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid pair i, define p_i = softmax(-||source_i - c_k||^2 / tau) and q_i = softmax(-||target_i - c_k||^2 / tau). Minimize L = w * mean_i[-sum_k q_ik log(p_ik + epsilon) + lambda_cap * KL(u || m)] + w * lambda_excl * mean_i[max(0, delta - sum_{k,l} p_ik q_il ||c_k - c_l||)^2], where m = mean_i[(p_i + q_i)/2] and u_k = 1/C. The cross-entropy is directed from target assignments to source assignments; the capacity term encourages balanced marginal usage, and the exclusion term keeps the two soft endpoint assignments from concentrating on nearby codewords.",
+  "expected_failure_modes": [
+    "Uniform marginal capacity may improve global occupancy while disrupting behavior-relevant neighborhoods or prefix structure; the soft expected-distance constraint may be satisfied by spreading assignment probability without improving hard assignments. The directed cross-entropy may also be too weak to alter the frozen export, or may trade sequence information for a better pair match rate."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if the frozen evaluation fails to raise pair-level ER while meeting the control-or-better constraints on level-0 code count, Gini, prefix branches, train-to-test frequency drift, and sequence information, or if Stage-3 recall@10 or NDCG@10 does not improve over control. A drop in hard code usage or a shrinkage in behavior-pair codeword distances also falsifies the intended safeguards.",
+    "Unlike encoder-only terms, its soft assignment and code-distance terms deliver gradients to the codebook. Unlike pair-attraction objectives that merge endpoint codewords, this penalizes low expected endpoint codeword distance and balances marginal assignment mass. It differs from a simple usage-balance term by using a directed source-to-target assignment objective plus an explicit pairwise exclusion objective."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_capacity_balanced_assignment_partition",
+  "parameters": {
+    "capacity_weight": 1.0,
+    "epsilon": 1e-08,
+    "pair_exclusion_margin": 0.1,
+    "pair_exclusion_weight": 1.0,
+    "temperature": 0.2,
+    "weight": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T00:22:39.619712+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "b8ada06474bb24099dbeabc0c35a4400e984754c0b51af4297bfcc5140f491a8"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "Number of codebook vectors.",
+    "KL": "Kullback-Leibler divergence; KL(u || m) penalizes deviations from uniform marginal usage.",
+    "c_k": "Codebook vector k.",
+    "delta": "Minimum desired expected distance between codewords sampled from the two endpoint assignment distributions.",
+    "epsilon": "Positive numerical stabilizer inside the logarithm.",
+    "i": "Index of a valid behavior pair.",
+    "k": "Codebook index.",
+    "lambda_cap": "Weight on the marginal capacity-balancing term.",
+    "lambda_excl": "Weight on the soft pairwise codeword-exclusion term.",
+    "m": "Mean marginal assignment distribution over both endpoints of valid pairs.",
+    "mean_i": "Mean over valid behavior pairs.",
+    "p_i": "Temperature-softened source assignment distribution.",
+    "q_i": "Temperature-softened target assignment distribution.",
+    "source_i": "Source embedding for pair i.",
+    "target_i": "Target embedding for pair i.",
+    "tau": "Soft-assignment temperature.",
+    "u": "Uniform distribution over the C codewords.",
+    "w": "Composition weight for the complete mechanism loss."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft assignment with balanced code capacity and pairwise codeword exclusion",
+  "version": "1.0.0"
+}

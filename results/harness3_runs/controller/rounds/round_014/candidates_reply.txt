@@ -1,0 +1,166 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codebook_partition_geometry",
+      "title": "Directed geometry with code-usage and pair-separation constraints",
+      "equation": "For valid rows i, let p_i(c)=softmax_c(-||x_i-e_c||^2/tau), with x_i=(s_i+t_i)/2, and let q_i(c)=softmax_c(-||x_i-e_c||^2/tau_a). Define u_c=mean_i p_i(c), A=mean_i sum_c p_i(c)||s_i-e_c||^2, B=mean_i sum_c q_i(c)||t_i-e_c||^2, H=sum_c u_c log(u_c+eps), and R=mean_i sum_{c,d} p_i(c)q_i(d) max(0,m^2-||e_c-e_d||^2). The loss is L=w_a A + w_b B + w_u H + w_r R. The distinct source/target terms make L directed under endpoint exchange.",
+      "symbols": {
+        "i": "Index over rows selected by mask.",
+        "c,d": "Codebook indices.",
+        "s_i": "Source vector for row i.",
+        "t_i": "Target vector for row i.",
+        "e_c": "Codebook vector c.",
+        "x_i": "Midpoint (s_i+t_i)/2 used for the shared soft usage distribution.",
+        "p_i(c)": "Soft code assignment probability for midpoint x_i at temperature tau.",
+        "q_i(c)": "Soft code assignment probability for midpoint x_i at temperature tau_a.",
+        "u_c": "Mean soft usage of code c across valid rows.",
+        "A": "Source-to-codebook geometric distortion.",
+        "B": "Target-to-codebook geometric distortion.",
+        "H": "Negative soft-usage entropy; minimizing it discourages concentrated code usage.",
+        "R": "Soft expected hinge penalty for codeword pairs closer than margin m.",
+        "tau": "Temperature for p.",
+        "tau_a": "Temperature for q.",
+        "eps": "Numerical stabilizer inside the logarithm.",
+        "m": "Minimum preferred separation for distinct codewords in a behavior pair.",
+        "w_a": "Weight on source geometric distortion.",
+        "w_b": "Weight on target geometric distortion.",
+        "w_u": "Weight on usage anti-concentration.",
+        "w_r": "Weight on codeword-pair separation.",
+        "mask": "Boolean validity mask; only selected rows enter the means."
+      },
+      "parameters": {
+        "tau": 0.7,
+        "tau_a": 1.1,
+        "eps": 1e-08,
+        "m": 0.25,
+        "w_a": 0.2,
+        "w_b": 1.0,
+        "w_u": 0.05,
+        "w_r": 0.5
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target pair, represented by distinct source and target distortion terms and their soft code assignments.",
+      "codebook_interaction": "The source and target distortion terms move codewords toward the respective endpoint geometry; the usage-entropy term discourages many rows sharing a few codes. The pairwise hinge directly pushes soft-associated codewords apart whenever they are closer than m, counteracting pair convergence rather than attracting both endpoints to one codeword.",
+      "encoder_interaction": "The distortion and soft-assignment terms also differentiate through source and target, so their encoder gradients are nonzero before host assembly. The host discards those encoder contributions; the nonzero codebook gradient is the route that can affect exported SIDs.",
+      "risk": "The soft usage and separation terms may preserve occupancy at the cost of fitting useful transition neighborhoods, or may be too weak to affect hard assignments. Soft probabilities can also spread gradients over codewords that are not selected at export, leaving the frozen hard-SID and Stage-3 metrics unchanged.",
+      "falsifier": "Reject if the frozen evaluation shows level-0 Gini above control, fewer L1-to-L2 branches per L1 code, increased train-to-test frequency drift, reduced sequence information, or no Stage-3 recall@10 improvement over 0.06406796775709883; the direct pair-separation measurement should also show no reduction in near-collapsed transition codeword pairs.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this has an explicit codebook gradient that survives host assembly. Unlike the collapsed assignment cross-entropy, it does not reward both endpoints for sharing one codeword: it includes a codeword-distance hinge that penalizes that outcome, plus a usage-entropy term against concentration. Whether these constraints preserve downstream utility remains an empirical risk."
+    },
+    {
+      "id": "directed_assignment_prefix_information",
+      "title": "Directed soft-assignment information with an explicit anti-merge constraint",
+      "equation": "For valid rows, define p_i(c)=softmax_c(-||s_i-e_c||^2/tau_s) and q_i(c)=softmax_c(-||t_i-e_c||^2/tau_t). Let U_c=mean_i p_i(c), V_c=mean_i q_i(c), J_cd=mean_i p_i(c)q_i(d), and I=sum_{c,d} J_cd log((J_cd+eps)/((U_c+eps)(V_d+eps))). Let D=mean_i sum_{c,d}p_i(c)q_i(d)||e_c-e_d||^2 and K=mean_i sum_{c,d}p_i(c)q_i(d)max(0,m^2-||e_c-e_d||^2). The loss is L=-w_i I + w_d D + w_k K. Ordered joint J makes the objective directed; the distance and hinge terms prevent the information term from being satisfied by pairwise codeword convergence.",
+      "symbols": {
+        "i": "Index over rows selected by mask.",
+        "c,d": "Codebook indices for source and target assignments.",
+        "s_i": "Source vector for row i.",
+        "t_i": "Target vector for row i.",
+        "e_c": "Codebook vector c.",
+        "p_i(c)": "Soft source assignment probability at temperature tau_s.",
+        "q_i(c)": "Soft target assignment probability at temperature tau_t.",
+        "U_c": "Marginal source assignment usage.",
+        "V_c": "Marginal target assignment usage.",
+        "J_cd": "Ordered joint soft assignment frequency from source code c to target code d.",
+        "I": "Mutual information of the ordered soft assignments.",
+        "D": "Expected squared distance between source- and target-associated codewords.",
+        "K": "Expected hinge penalty for associated codewords closer than margin m.",
+        "tau_s": "Source assignment temperature.",
+        "tau_t": "Target assignment temperature.",
+        "eps": "Numerical stabilizer for logarithms and marginal probabilities.",
+        "m": "Minimum preferred distance between codewords associated with a transition.",
+        "w_i": "Weight on maximizing ordered assignment mutual information.",
+        "w_d": "Weight on transition-associated codeword separation.",
+        "w_k": "Weight on the minimum-distance hinge."
+      },
+      "parameters": {
+        "tau_s": 0.8,
+        "tau_t": 1.2,
+        "eps": 1e-08,
+        "m": 0.25,
+        "w_i": 0.1,
+        "w_d": 0.2,
+        "w_k": 0.5
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered soft transition table J between source and target code assignments; it uses only source, target, codebook, and mask.",
+      "codebook_interaction": "The mutual-information term moves codewords to make the ordered source-target assignment table informative. The expected squared-distance term and hinge both resist making the two codewords associated with a transition coincide; the hinge supplies a direct repulsive gradient below margin m.",
+      "encoder_interaction": "Soft assignments differentiate through both endpoint vectors, yielding nonzero source and target gradients before host assembly. Those encoder gradients are discarded by the host, so only the direct codebook gradient can change exported SIDs.",
+      "risk": "Maximizing minibatch assignment mutual information can encode batch-specific transitions rather than stable sequence structure, and may increase apparent assignment diversity without improving held-out prefix information. The separation terms can also over-regularize transitions that genuinely benefit from nearby codes.",
+      "falsifier": "Reject if the frozen held-out codes fail any structural requirement—level-0 Gini no greater than control, at least control's L1-to-L2 branches per L1 code, no greater train-to-test frequency drift, and no lower sequence information—or if Stage-3 recall@10 does not exceed 0.06406796775709883.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, the mutual-information, distance, and hinge terms all act directly on the codebook. Unlike the collapsed cross-entropy that pulled pair codewords together, this objective rewards informative ordered assignments and explicitly penalizes near-coincident associated codewords. It does not guarantee that the learned information generalizes."
+    },
+    {
+      "id": "directed_residual_codebook_transport",
+      "title": "Directed residual transport with a non-convergent codeword displacement",
+      "equation": "For each valid row let r_i=t_i-s_i, a_i=softmax_c(-||s_i-e_c||^2/tau), b_i=softmax_c(-||t_i-e_c||^2/tau), and delta_i=sum_c(b_i(c)-a_i(c))e_c. Define L_res=mean_i ||delta_i-r_i||^2, L_sep=mean_i sum_{c,d}a_i(c)b_i(d)max(0,m^2-||e_c-e_d||^2), and L_usage=sum_c z_c log(z_c+eps), where z_c=mean_i(a_i(c)+b_i(c))/2. The loss is L=w_res L_res+w_sep L_sep+w_usage L_usage. Swapping endpoints reverses r_i and exchanges a_i,b_i, but leaves delta_i reversed; the residual term's value alone is symmetric, so directedness is provided by the additional ordered transport term L_dir=mean_i sum_{c,d}a_i(c)b_i(d) (||t_i-e_d||^2-||s_i-e_c||^2), with total loss L+w_dir L_dir. This ordered source-to-target term changes under endpoint exchange.",
+      "symbols": {
+        "i": "Index over rows selected by mask.",
+        "c,d": "Codebook indices for source and target soft assignments.",
+        "s_i": "Source vector for row i.",
+        "t_i": "Target vector for row i.",
+        "r_i": "Directed residual t_i-s_i.",
+        "e_c": "Codebook vector c.",
+        "a_i(c)": "Soft source assignment probability at temperature tau.",
+        "b_i(c)": "Soft target assignment probability at temperature tau.",
+        "delta_i": "Expected codebook displacement from source assignment to target assignment.",
+        "L_res": "Residual transport loss matching codebook displacement to the observed endpoint residual.",
+        "L_sep": "Soft pairwise codeword-distance hinge.",
+        "z_c": "Mean endpoint-averaged soft usage of code c.",
+        "L_usage": "Negative soft-usage entropy, minimized to discourage concentrated usage.",
+        "L_dir": "Ordered source-to-target assignment cost difference; it distinguishes endpoint order.",
+        "tau": "Soft assignment temperature.",
+        "m": "Minimum preferred distance between transition-associated codewords.",
+        "eps": "Numerical stabilizer inside the usage logarithm.",
+        "w_res": "Weight on residual transport.",
+        "w_sep": "Weight on codeword-pair separation.",
+        "w_usage": "Weight on usage anti-concentration.",
+        "w_dir": "Weight on directed assignment cost."
+      },
+      "parameters": {
+        "tau": 0.9,
+        "m": 0.25,
+        "eps": 1e-08,
+        "w_res": 0.2,
+        "w_sep": 0.5,
+        "w_usage": 0.05,
+        "w_dir": 0.1
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed residual t_i-s_i and the ordered soft source-to-target assignments, both derived from the supplied endpoints.",
+      "codebook_interaction": "Residual transport moves source- and target-associated codewords so their expected displacement represents t_i-s_i; it does not ask one codeword to serve both endpoints. The explicit separation hinge pushes associated codewords apart below m, while usage entropy discourages concentration. The ordered cost term adds directionality without a positive attraction between the pair's codewords.",
+      "encoder_interaction": "Residual and assignment terms produce nonzero gradients to source and target before host assembly. The host discards those encoder gradients; the direct codebook gradients are the mechanism by which exported SIDs can change.",
+      "risk": "The residual vector may not be representable as a difference between expected codebook assignments, and the transport objective may distort code geometry or fit frequent residual directions at the expense of rare transitions. The ordered cost term may be small or cancel across a batch, leaving little practical directed effect despite a nonzero gradient.",
+      "falsifier": "Reject if the frozen evaluation finds increased level-0 Gini, fewer L1-to-L2 branches per L1 code, increased train-to-test frequency drift, reduced sequence information, or no Stage-3 recall@10 improvement over 0.06406796775709883; also reject if the measured median transition codeword separation decreases.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only arms, residual transport and its constraints differentiate directly through the codebook. Unlike the collapsed pairwise assignment cross-entropy, it models the endpoint difference as a displacement between source- and target-associated codewords and includes an explicit repulsive hinge; it does not reward merging the pair into one codeword. The usage term targets the measured concentration failure, although generalization and downstream benefit are not assured."
+    }
+  ]
+}
+```

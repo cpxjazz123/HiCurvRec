@@ -8,28 +8,29 @@
     "gap": "the frozen ER gate is cleared by arms whose Stage-3 quality does not move: the transfer from the pair-level ER to the recommender is the open problem"
   },
   "jobs": {},
-  "next_action": "paused: 1 training jobs are already running",
-  "pause_reason": "1 training jobs are already running",
-  "phase": "train",
+  "next_action": "issue #107 is being closed on the maintainer's instruction; the in-flight runs finish, no new arm starts",
+  "pause_reason": "issue #107 is being closed on the maintainer's instruction; the in-flight runs finish, no new arm starts",
+  "phase": "paused",
   "portfolio": [
     {
-      "codebook_interaction": "The first term applies equal-and-opposite tangential forces to the two assigned codewords, increasing the component of their separation aligned with the directed item displacement. Because the force is projected orthogonally to their current separation, its instantaneous first-order change in squared pair distance is zero; it does not pull the pair together. The usage penalty spreads soft source-assignment mass across codes. Assignment indices are detached, while distances and codeword vectors remain differentiable.",
+      "codebook_interaction": "The source-conditioned assignment term moves codewords to change which existing cells receive pair endpoints; the barrier penalizes distinct participating codewords whose distance falls below the specified floor. It therefore promotes reassignment among separated cells rather than pulling a pair's two codewords together. It does not guarantee cell sizes or hard-SID changes.",
       "duplicate_of_an_existing_arm": false,
-      "falsifier": "Reject if the checker finds a non-finite or zero codebook gradient, if exchanging source and target leaves the loss unchanged, if the measured transition-pair codeword separation decreases, or if the cold run fails to raise Stage-3 recall@10 while keeping level-0 Gini no higher than control, L1-to-L2 branches per code no lower than control, train-to-test frequency drift no higher than control, and sequence information no lower than control.",
-      "mechanism_id": "directed_codeword_tangent_repulsion",
-      "proposal_path": "results/harness3_runs/controller/rounds/round_011/directed_codeword_tangent_repulsion/proposal.json",
-      "proposal_sha256": "a4e443ef11f2e3f4127569469d45bf3c6e20db4b4ab13f7c55cee3612b3d318d",
-      "risk": "The tangential update may rotate codeword boundaries without improving the positive-pair match rate, or may alter higher-level residual assignments and prefix structure despite the level-0 usage penalty. The usage penalty can also be too weak to prevent concentration or too strong to impair useful specialization. The single frozen evaluation could therefore show no recall gain even if pair geometry changes.",
+      "falsifier": "On the admitted cold run, measure the frozen held-out pair-level ER, level-0 code count and Gini, L1-to-L2 branches per L1 code, train-to-test frequency drift, sequence information, and Stage-3 recall@10/NDCG@10. The mechanism is falsified if Stage-3 quality does not exceed the archived control or if ER rises only alongside a violation of the required structure.",
+      "family": "codebook_geometry",
+      "mechanism_id": "directed_codebook_cell_repartition",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_031/directed_codebook_cell_repartition/proposal.json",
+      "proposal_sha256": "c39da7b1c4ebece5673cbf280e39ef6c617b6d0edf4aeb509b121dc74cf50b4e",
+      "risk": "The soft assignment pressure may be too weak to change hard assignments, or may change them by unevenly redistributing item mass despite the separation barrier. The barrier preserves geometric distance, not occupancy, prefix branching, train-to-test frequency drift, sequence information, or Stage-3 ranking quality.",
       "screening": {
         "export_sensitivity": {
           "changed_fraction": {
-            "levels_1": 0.8656200431122137,
-            "levels_2": 0.9994712653028023,
+            "levels_1": 0.9112132427705698,
+            "levels_2": 0.9995526091023712,
             "levels_3": 1.0,
             "levels_3token_identical": false
           },
-          "level0_occupancy_ratio_vs_control": 1.0287081339712918,
-          "verdict": "active"
+          "level0_occupancy_ratio_vs_control": 0.11578947368421053,
+          "verdict": "collapsed"
         },
         "judges": {
           "detail": "all 8 declared checks hold",
@@ -37,115 +38,106 @@
           "ok": true
         },
         "probe": {
-          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
-          "occupancy_ratio_vs_host": 1.0287,
-          "ok": true
+          "detail": "the code collapsed: the arm uses 22 level-0 entries against the host's 190 (11.6% of it)",
+          "occupancy_ratio_vs_host": 0.1158,
+          "ok": false
         },
-        "reason": null
+        "reason": "the probe or the export sensitivity rejected the arm before a cold run; the candidate cost no cold-run GPU time"
       },
-      "semantic_key": "dfaeb5ff4a0c549ae4b7788baa8eaaa7eaf26a1aed0a15c43fbb14517f62dfcd",
-      "status": "training",
-      "train": {
-        "launch": {
-          "cgv_gate": {
-            "gates": {
-              "G1": "passed",
-              "G2": "passed",
-              "G3": "passed",
-              "G4": "passed",
-              "G5": "passed",
-              "G6": "passed"
-            },
-            "note": "all six gates passed on the supplied declaration",
-            "passed": true
-          },
-          "refused": null,
-          "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control",
-          "started": false,
-          "status": "smoke_pending"
-        },
-        "reason": null,
-        "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control"
-      }
+      "semantic_key": "56d7eafca5e07dd19075aa8b052122125ff170f25b276d321303001305095fc2",
+      "status": "rejected"
     },
     {
-      "codebook_interaction": "Gradients flow through both soft assignment distributions into the codebook, moving Voronoi geometry to preserve informative ordered transitions and balanced source usage. The joint-information term rewards predictable but non-independent source and target codes; it does not contain a same-code attraction or a pairwise codeword-distance minimization, so it has no direct force pulling the two codewords together. Soft assignments avoid nondifferentiable hard-index gradients.",
+      "codebook_interaction": "The directed KL term changes codeword positions through the soft assignment distributions so target assignments are conditioned on source assignments. The aggregate KL term discourages a batch-level collapse of soft usage toward a few codewords. The pair-conditioned barrier penalizes bringing distinct source/target-associated codewords inside delta, preventing pair-codeword convergence rather than rewarding it.",
       "duplicate_of_an_existing_arm": false,
-      "falsifier": "Reject if swapping source and target does not change the loss on a nondegenerate checker batch, if any declared gradient is zero or non-finite, or if the cold run does not improve Stage-3 recall@10 while meeting the control-relative Gini, prefix-branch, train-to-test drift, and sequence-information requirements.",
-      "mechanism_id": "directed_assignment_prefix_information",
-      "proposal_path": "results/harness3_runs/controller/rounds/round_011/directed_assignment_prefix_information/proposal.json",
-      "proposal_sha256": "0d1065166059fa5a912131838d50e4abddd5fdef0982473d2232fce16dc5a94c",
-      "risk": "The objective can increase mutual information by encoding batch-specific or unstable transition patterns rather than useful held-out sequence structure. Its soft joint estimates may also be noisy at the available batch size, and the balance penalty on source marginals does not guarantee that the full three-level prefix tree or train-to-test frequency drift is preserved.",
-      "screening": {
-        "export_sensitivity": {
-          "changed_fraction": {
-            "levels_1": 0.8626509944279497,
-            "levels_2": 0.9999186562004311,
-            "levels_3": 1.0,
-            "levels_3token_identical": false
-          },
-          "level0_occupancy_ratio_vs_control": 0.989247311827957,
-          "verdict": "active"
-        },
-        "judges": {
-          "detail": "all 8 declared checks hold",
-          "failed": [],
-          "ok": true
-        },
-        "probe": {
-          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
-          "occupancy_ratio_vs_host": 0.9892,
-          "ok": true
-        },
-        "reason": null
-      },
-      "semantic_key": "60a8124915ba8ad74c8dc099417a2d05eb3a8960e1b0d1c1cc9e7ccd38f019a1",
-      "status": "admitted"
-    },
-    {
-      "codebook_interaction": "The normalized transport term moves each assigned codeword so their directed displacement tracks the behavior-conditioned residual displacement. The separation barrier has gradient only when the assigned pair is closer than m and pushes the two codewords apart; it never pulls them together. Nearest-code indices are detached, but residual vectors and codeword vectors remain differentiable. If the barrier is inactive, transport can still alter pair distance, so the barrier margin must be calibrated above the observed collapse regime.",
-      "duplicate_of_an_existing_arm": false,
-      "falsifier": "Reject if the checker finds a zero or non-finite declared gradient, if exchanging source and target leaves the loss unchanged, or if the cold run shows reduced pair separation, increased level-0 Gini, fewer L1-to-L2 branches per code, increased train-to-test frequency drift, reduced sequence information, or no Stage-3 recall@10 improvement over control.",
-      "mechanism_id": "directed_residual_geometry_separation",
-      "proposal_path": "results/harness3_runs/controller/rounds/round_011/directed_residual_geometry_separation/proposal.json",
-      "proposal_sha256": "891547066b37a73f3e4b42ed3e2e2205ebf5bbf4d2e255331cb3ac905b1e4e59",
-      "risk": "Residual transport may overfit training transitions, disrupt higher-level residual quantization, or satisfy the minimum-separation barrier by spreading codewords in directions that do not preserve useful prefix branches. The barrier prevents close-pair collapse but does not itself guarantee balanced level-0 usage, sequence information, or downstream retrieval quality.",
+      "falsifier": "Compare the one cold run with the archived control on held-out pair-level ER, hard level-0 code count and Gini, prefix branches, frequency drift, sequence information, and Stage-3 recall@10/NDCG@10. Failure to improve Stage-3 recall, or any structural degradation accompanying an ER increase, falsifies the intended benefit.",
+      "family": "assignment_structure",
+      "mechanism_id": "directed_assignment_capacity_repartition",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_031/directed_assignment_capacity_repartition/proposal.json",
+      "proposal_sha256": "38531e4969392c7e0119904a47151443861a3ce18a9535cd182cc51d41a29000",
+      "risk": "The batch usage regularizer may enforce uniformity that conflicts with the true catalogue distribution, while batch-local soft usage may not preserve global hard-assignment capacities. The directed KL can also improve conditional assignment consistency without improving the frozen held-out ER or recommendation ranking.",
       "screening": {
         "export_sensitivity": null,
         "judges": {
           "detail": "1 of 8 declared checks failed",
           "failed": [
-            "swap_source_target"
+            "mask_all"
           ],
           "ok": false
         },
         "probe": null,
         "reason": "the independent checks rejected the implementation"
       },
-      "semantic_key": "cc4d4bbd11bedb4cffeb58542bc9f7a979ccb6860c646864f2f809fb349eeb9f",
+      "semantic_key": "be595704adacbc6658831c7edad2869fa1f300455f555eb1d14f62254fd5adf3",
       "status": "rejected"
+    },
+    {
+      "codebook_interaction": "Each source-conditioned codeword is pulled toward a point partway along the source-to-target residual, changing the source-side partition according to directed behavior geometry. The barrier repels that source-associated codeword from the target's nearest codeword when their distance is below delta. Thus the transport signal is directional while the explicit codebook force opposes pair-codeword convergence.",
+      "duplicate_of_an_existing_arm": false,
+      "falsifier": "Use the cold run's single frozen evaluation to test whether held-out pair-level ER and Stage-3 recall@10/NDCG@10 both improve over control while code count, Gini, prefix branches, frequency drift, and sequence information satisfy the stated requirements. Any downstream regression or structural violation despite an ER gain falsifies the mechanism's premise.",
+      "family": "residual_space",
+      "mechanism_id": "directed_residual_geometry_transport",
+      "proposal_path": "results/harness3_runs/controller/rounds/round_031/directed_residual_geometry_transport/proposal.json",
+      "proposal_sha256": "c922cfcf5aa5d458c2f41dc4a22cc5422156b4384130f40819ba8bb76f0dc52c",
+      "risk": "A residual direction may not correspond to a useful cell boundary change: transport can move codewords toward dense regions, alter cell sizes, or fail to change hard assignments. The repulsion term may counteract the transport signal, and neither term directly guarantees preservation of prefix structure or Stage-3 ranking.",
+      "screening": {
+        "export_sensitivity": {
+          "changed_fraction": {
+            "levels_1": 0.9634766339935739,
+            "levels_2": 1.0,
+            "levels_3": 1.0,
+            "levels_3token_identical": false
+          },
+          "level0_occupancy_ratio_vs_control": 1.197802197802198,
+          "verdict": "active"
+        },
+        "judges": {
+          "detail": "all 8 declared checks hold",
+          "failed": [],
+          "ok": true
+        },
+        "probe": {
+          "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+          "occupancy_ratio_vs_host": 1.1978,
+          "ok": true
+        },
+        "reason": null
+      },
+      "semantic_key": "932459e6ba1cfd6a7ab57ef6e86c9073ef81dea9380a78de199f685969cea32e",
+      "status": "admitted"
     }
   ],
+  "portfolio_families": [
+    "assignment_structure",
+    "codebook_geometry",
+    "residual_space"
+  ],
+  "portfolio_retry": false,
   "queue": [],
-  "round": 11,
+  "round": 31,
   "round_summary": {
-    "directed_assignment_branch_entropy": {
-      "er": 15.317100792751983,
+    "directed_capacity_preserving_assignment_repartition": {
+      "er": 14.879436467082092,
       "qualified": false,
       "stage3": {}
     },
-    "directed_codebook_repulsion": {
-      "er": 16.378421261404206,
-      "qualified": false,
-      "stage3": {}
+    "directed_pair_separation_codebook_geometry": {
+      "er": 16.601941747572816,
+      "qualified": true,
+      "stage3": {
+        "refused": null,
+        "started": true,
+        "status": null,
+        "variant": "TIGER_c107_directed_pair_separation_codebook_geometry__r8_control"
+      }
     },
-    "directed_residual_transport_separation": {
+    "directed_residual_behaviour_cluster_transport": {
       "er": null,
       "qualified": null,
       "stage3": {}
     }
   },
   "scientific_stop": false,
-  "updated_utc": "2026-10-21T22:38:32.173082+00:00",
+  "updated_utc": "2026-10-22T03:04:36.855882+00:00",
   "version": 1
 }

@@ -1,0 +1,147 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The tangent-alignment gradient rotates and repositions the two assigned codewords to encode the directed displacement, while the active separation barrier pushes them apart whenever their distance is below delta. It therefore does not ask the pair's codewords to converge; the barrier directly opposes that failure. Gradients reach the codebook through the indexed codeword vectors.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, this has an explicit gradient path through the selected codewords, so it can survive host encoder-gradient overwrite. Unlike pairwise convergence objectives, it includes a minimum-distance barrier and its alignment term targets the directed codeword difference rather than making both endpoints share a code. It remains a candidate, not a guarantee: the export and downstream checks must verify that it produces a better partition without concentration."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid pair i, let d_i = t_i - s_i, u_i = d_i / (||d_i||_2 + eps), and let q_i = c_{a(i)} - c_{b(i)}, where a(i) and b(i) are the nearest codewords to s_i and t_i, respectively. Define P_i = I - u_i u_i^T and L = w * mean_i[||P_i(q_i - alpha*d_i)||_2^2 + beta*max(0, delta - ||q_i||_2)^2]. The first term aligns the pair's codeword difference with the directed source-to-target displacement; the second prevents pair-codeword convergence.",
+  "expected_failure_modes": [
+    "The nearest-codeword assignments are discrete, and batches where source and target select the same codeword may give the barrier opposing gradients through duplicate indexed entries or fail to recover a useful partition. Even when separation is maintained, tangent alignment may distort codeword geometry without improving held-out sequence retrieval; the frozen downstream evaluation could regress despite passing structural checks."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The candidate is wrong if the probe shows non-finite or zero codebook gradients, if the source-target swap leaves the loss unchanged, or if the exported level-0 Gini exceeds control, L1-to-L2 branches fall below control, frequency drift grows, sequence information falls, or pair-level ER fails to rise. The decisive falsifier is Stage-3 recall@10 not exceeding 0.06406796775709883.",
+    "Unlike encoder-only terms, this has an explicit gradient path through the selected codewords, so it can survive host encoder-gradient overwrite. Unlike pairwise convergence objectives, it includes a minimum-distance barrier and its alignment term targets the directed codeword difference rather than making both endpoints share a code. It remains a candidate, not a guarantee: the export and downstream checks must verify that it produces a better partition without concentration."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_codebook_tangent_partition",
+  "parameters": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "delta": 0.2,
+    "eps": 1e-06,
+    "w": 0.0001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T23:38:05.472795+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "7755b129db97928f5d0d38d8ab501be3a118250940d4c74aa334d61056815990"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "B": "Batch size.",
+    "C": "Number of codewords.",
+    "D": "Representation dimension.",
+    "I": "Identity matrix in the representation dimension.",
+    "P_i": "Projection onto directions orthogonal to the source-to-target displacement.",
+    "alpha": "Scale matching representation displacement to codeword displacement.",
+    "beta": "Weight of the pair-separation barrier relative to tangent alignment.",
+    "c_{a(i)}": "Nearest codeword to source representation s_i.",
+    "c_{b(i)}": "Nearest codeword to target representation t_i.",
+    "d_i": "Directed representation displacement from source to target.",
+    "delta": "Minimum desired distance between the pair's codewords.",
+    "eps": "Positive numerical stabilizer in displacement normalization.",
+    "mask": "Validity indicator for each pair; only valid pairs contribute to the mean.",
+    "q_i": "Directed difference between target-side and source-side codewords.",
+    "s_i": "Source representation for valid pair i.",
+    "t_i": "Target representation for valid pair i.",
+    "u_i": "Unit direction of the source-to-target displacement.",
+    "w": "Overall auxiliary-loss weight."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed tangent transport with pair-separation barrier",
+  "version": "1.0.0"
+}

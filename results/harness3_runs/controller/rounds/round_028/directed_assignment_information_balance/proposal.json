@@ -1,0 +1,141 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The negative directed KL rewards distinguishable endpoint assignment distributions rather than a shared codeword; gradients move codewords to increase the target-to-source assignment divergence. The reverse KL is not included, so exchanging endpoints changes the objective. The balance penalty moves underused source-assignment probability upward and overused probability downward across the batch; neither term directly attracts the two endpoints' codewords.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike the inert encoder-only terms, soft assignment probabilities depend directly on the codebook and give it a gradient. Unlike the collapsed pairwise cross-entropy, the information term rewards differing endpoint assignments rather than making both endpoints select the same code; the separate marginal penalty targets usage balance instead of pairwise codeword convergence."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each valid row i, define p^s_ij = softmax_j(-||source_i-codebook_j||_2^2 / tau) and p^t_ij = softmax_j(-||target_i-codebook_j||_2^2 / tau). Let q^s_j = mean_i p^s_ij and u_j = 1/C. Minimize L = -lambda_info * mean_i KL(p^t_i || p^s_i) + lambda_balance * KL(u || q^s).",
+  "expected_failure_modes": [
+    "Maximizing directed KL can make endpoint assignments artificially different, sacrificing pair-level ER or useful sequence structure. The batch-level balance penalty may also balance soft usage without balancing hard assignments, or become noisy when a batch poorly represents the catalogue."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "The candidate is falsified if exchanging source and target leaves the measured loss unchanged, if codebook gradients are zero or non-finite, or if the frozen export fails to raise pair-level Hard-L1 ER while meeting the control thresholds for level-0 Gini, prefix branches, train-to-test frequency drift, and sequence information.",
+    "Unlike the inert encoder-only terms, soft assignment probabilities depend directly on the codebook and give it a gradient. Unlike the collapsed pairwise cross-entropy, the information term rewards differing endpoint assignments rather than making both endpoints select the same code; the separate marginal penalty targets usage balance instead of pairwise codeword convergence."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_information_balance",
+  "parameters": {
+    "lambda_balance": 0.01,
+    "lambda_info": 0.001,
+    "tau": 0.2
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T00:06:08.976202+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "ce226f6ccad237aa7ea61a2c3f23aa65d99fd8e8482f85cdd23a865ff1882afb"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "Number of codebook entries.",
+    "KL(p || q)": "Kullback-Leibler divergence from distribution p to distribution q.",
+    "codebook_j": "Codebook vector j.",
+    "i": "Batch-row index, restricted to rows where mask is true.",
+    "j": "Codebook-entry index.",
+    "lambda_balance": "Weight on source usage-balance penalty.",
+    "lambda_info": "Weight on directed assignment-information reward.",
+    "p^s_i": "Soft source assignment distribution for row i.",
+    "p^t_i": "Soft target assignment distribution for row i.",
+    "q^s_j": "Batch-mean source assignment probability for codebook entry j.",
+    "source_i": "Source endpoint embedding for row i.",
+    "target_i": "Target endpoint embedding for row i.",
+    "tau": "Soft-assignment temperature.",
+    "u_j": "Uniform target usage probability, equal to 1/C."
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Preserve directed assignment information while balancing source-code usage",
+  "version": "1.0.0"
+}

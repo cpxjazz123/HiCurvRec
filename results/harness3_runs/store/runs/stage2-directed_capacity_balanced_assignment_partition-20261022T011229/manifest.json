@@ -1,0 +1,54 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/sids_for_hgrec.npy",
+      "sha256": "59e1284556bfd645cfe39e002731532c1e88d4e7515d7c599aa79fd70c2f8391"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/rqvae_best.pth",
+      "sha256": "f1a9a32a50366a95da416442d9b7ac7b97692f951a21095b601bd139adf072a7"
+    },
+    {
+      "bytes": 1260248,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/item_sids.json",
+      "sha256": "b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-22T01:12:29.522444+00:00",
+  "extra": {
+    "semantic_key": "e5ca84841eecc97bc0a8133f9ac664bf700ea5f8e9baf3f7a6271935329e54ba"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "ffca438b1a7f9406e5a8e683baa7651e65e3ccdbf3fdb1915179974d77f97488",
+  "manifest_version": 1,
+  "mechanism_id": "directed_capacity_balanced_assignment_partition",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": true,
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.492871690427698,
+      "l1_er": 16.492871690427698,
+      "neg_share": 0.004644782896603916,
+      "pos_share": 0.0766058083435815
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-directed_capacity_balanced_assignment_partition-20261022T011229",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

@@ -1,0 +1,142 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.001
+  },
+  "differentiation": {
+    "occupancy_preservation": "The source-fit term pulls the source-assigned codeword toward the source. The directed target margin pushes that same codeword away from the target when it is within delta. The separation barrier pushes the two assigned codewords apart when their distance is below rho. Thus the target-side and explicit pairwise gradients oppose endpoint merging; assignments are fixed for differentiation, and the barrier is inactive once the minimum separation is met.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "Unlike encoder-only terms, this has a direct codebook gradient that survives host assembly. Unlike the collapsed assignment-cross-entropy arm, its objective does not ask one code to serve both endpoints: it includes an explicit minimum-distance barrier between their currently assigned codewords and a directed target exclusion margin. It is designed to improve pair separation without obtaining ER by merging codes, though the occupancy and downstream requirements remain empirical tests."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "L = w * mean_i[m_i * (||s_i - c_{a_i}||_2^2 + alpha * max(0, delta - ||t_i - c_{a_i}||_2)^2 + beta * max(0, rho - ||c_{a_i} - c_{b_i}||_2)^2)], where a_i = argmin_j ||s_i - c_j||_2^2 and b_i = argmin_j ||t_i - c_j||_2^2; assignments are treated as stop-gradient indices.",
+  "expected_failure_modes": [
+    "The separation barrier may preserve pairwise distances but distort Voronoi geometry or push frequently co-occurring codewords into underused regions, worsening occupancy, prefix branching, or train-to-test frequency drift. The directed target margin can also be incompatible with the source fit for pairs whose endpoints naturally share a useful code."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "Reject if the probe shows non-finite gradients, if swapping source and target leaves the loss unchanged, or if the frozen export fails to raise pair-level ER while keeping level-0 Gini no higher than control, L1-to-L2 branches per L1 code at least at control, train-to-test frequency drift no higher, and sequence information no lower.",
+    "Unlike encoder-only terms, this has a direct codebook gradient that survives host assembly. Unlike the collapsed assignment-cross-entropy arm, its objective does not ask one code to serve both endpoints: it includes an explicit minimum-distance barrier between their currently assigned codewords and a directed target exclusion margin. It is designed to improve pair separation without obtaining ER by merging codes, though the occupancy and downstream requirements remain empirical tests."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_separated_codeword_geometry",
+  "parameters": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "delta": 0.2,
+    "rho": 0.2,
+    "weight": 0.001
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T23:30:15.242530+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "8cf7cbff90ffa0f6d33b234b9eb626d0a5e2b5a91ca33f4acb03b5e589aeb6da"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "L": "Auxiliary loss added to the training objective.",
+    "a_i": "Nearest codeword index to source s_i, computed without differentiating through the argmin.",
+    "alpha": "Weight for the target-side margin around the source-assigned codeword.",
+    "b_i": "Nearest codeword index to target t_i, computed without differentiating through the argmin.",
+    "beta": "Weight for the minimum separation barrier between the source- and target-assigned codewords.",
+    "c_j": "Codebook vector j.",
+    "delta": "Minimum target-to-source-codeword distance encouraged by the directed margin.",
+    "i": "Batch row index.",
+    "m_i": "Validity mask for row i.",
+    "rho": "Minimum distance encouraged between the two assigned codewords.",
+    "s_i": "Source representation for row i.",
+    "t_i": "Directed target representation for row i.",
+    "w": "Weight composing this term with the host objective.",
+    "||.||_2": "Euclidean norm."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed pair fit with a codeword-separation barrier",
+  "version": "1.0.0"
+}

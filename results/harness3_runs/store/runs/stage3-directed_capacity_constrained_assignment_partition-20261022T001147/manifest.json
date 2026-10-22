@@ -1,0 +1,31 @@
+{
+  "artifacts": [],
+  "command": [],
+  "created_utc": "2026-10-22T00:11:47.581430+00:00",
+  "extra": {},
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage3",
+  "manifest_sha256": "7e22739685866cb929275eafc18cf2682d09eb327754277c7721c06574c03f87",
+  "manifest_version": 1,
+  "mechanism_id": "directed_capacity_constrained_assignment_partition",
+  "metrics": {
+    "stage3": {
+      "ndcg_delta_vs_archived_control": -0.001927777129115793,
+      "recall_delta_vs_archived_control": -0.003342676578631243,
+      "test_ndcg@10": 0.03337873989029098,
+      "test_recall@10": 0.06072529117846759
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage3-directed_capacity_constrained_assignment_partition-20261022T001147",
+  "seed": 42,
+  "stage": "downstream",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}

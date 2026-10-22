@@ -1,0 +1,39 @@
+{
+  "ok": false,
+  "error": "RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.",
+  "epochs": 50,
+  "loss_finite": true,
+  "encoder_update": 0.0,
+  "codebook_update": 0.0,
+  "hard_sid_changed": 24587,
+  "hard_sid_rows": 24587,
+  "occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 132,
+    "l1_fraction": 0.005369,
+    "unique_l1l2": 4067,
+    "l1l2_fraction": 0.165413,
+    "collision_3token": 0.30748,
+    "collapse_suspected": false,
+    "host_unique_l1": 196
+  },
+  "detail": "the probe did not show a healthy mechanism: RuntimeError: Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed). Saved intermediate values of the graph are freed when you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward through the graph a second time or if you need to access saved tensors after calling backward.",
+  "metrics": {
+    "records": 1,
+    "last_event": "train_start",
+    "loss": null,
+    "loss_finite": true
+  },
+  "baseline_occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 196,
+    "l1_fraction": 0.007972,
+    "unique_l1l2": 5105,
+    "l1l2_fraction": 0.20763,
+    "collision_3token": 0.255867,
+    "collapse_suspected": false
+  },
+  "occupancy_ratio_vs_host": 0.6735
+}

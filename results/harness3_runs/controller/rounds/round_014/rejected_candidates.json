@@ -1,0 +1,60 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "directed_residual_codebook_transport",
+        "title": "Directed residual transport with a non-convergent codeword displacement",
+        "equation": "For each valid row let r_i=t_i-s_i, a_i=softmax_c(-||s_i-e_c||^2/tau), b_i=softmax_c(-||t_i-e_c||^2/tau), and delta_i=sum_c(b_i(c)-a_i(c))e_c. Define L_res=mean_i ||delta_i-r_i||^2, L_sep=mean_i sum_{c,d}a_i(c)b_i(d)max(0,m^2-||e_c-e_d||^2), and L_usage=sum_c z_c log(z_c+eps), where z_c=mean_i(a_i(c)+b_i(c))/2. The loss is L=w_res L_res+w_sep L_sep+w_usage L_usage. Swapping endpoints reverses r_i and exchanges a_i,b_i, but leaves delta_i reversed; the residual term's value alone is symmetric, so directedness is provided by the additional ordered transport term L_dir=mean_i sum_{c,d}a_i(c)b_i(d) (||t_i-e_d||^2-||s_i-e_c||^2), with total loss L+w_dir L_dir. This ordered source-to-target term changes under endpoint exchange.",
+        "symbols": {
+          "i": "Index over rows selected by mask.",
+          "c,d": "Codebook indices for source and target soft assignments.",
+          "s_i": "Source vector for row i.",
+          "t_i": "Target vector for row i.",
+          "r_i": "Directed residual t_i-s_i.",
+          "e_c": "Codebook vector c.",
+          "a_i(c)": "Soft source assignment probability at temperature tau.",
+          "b_i(c)": "Soft target assignment probability at temperature tau.",
+          "delta_i": "Expected codebook displacement from source assignment to target assignment.",
+          "L_res": "Residual transport loss matching codebook displacement to the observed endpoint residual.",
+          "L_sep": "Soft pairwise codeword-distance hinge.",
+          "z_c": "Mean endpoint-averaged soft usage of code c.",
+          "L_usage": "Negative soft-usage entropy, minimized to discourage concentrated usage.",
+          "L_dir": "Ordered source-to-target assignment cost difference; it distinguishes endpoint order.",
+          "tau": "Soft assignment temperature.",
+          "m": "Minimum preferred distance between transition-associated codewords.",
+          "eps": "Numerical stabilizer inside the usage logarithm.",
+          "w_res": "Weight on residual transport.",
+          "w_sep": "Weight on codeword-pair separation.",
+          "w_usage": "Weight on usage anti-concentration.",
+          "w_dir": "Weight on directed assignment cost."
+        },
+        "parameters": {
+          "tau": 0.9,
+          "m": 0.25,
+          "eps": 1e-08,
+          "w_res": 0.2,
+          "w_sep": 0.5,
+          "w_usage": 0.05,
+          "w_dir": 0.1
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "encoder",
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The directed residual t_i-s_i and the ordered soft source-to-target assignments, both derived from the supplied endpoints.",
+        "codebook_interaction": "Residual transport moves source- and target-associated codewords so their expected displacement represents t_i-s_i; it does not ask one codeword to serve both endpoints. The explicit separation hinge pushes associated codewords apart below m, while usage entropy discourages concentration. The ordered cost term adds directionality without a positive attraction between the pair's codewords.",
+        "encoder_interaction": "Residual and assignment terms produce nonzero gradients to source and target before host assembly. The host discards those encoder gradients; the direct codebook gradients are the mechanism by which exported SIDs can change.",
+        "risk": "The residual vector may not be representable as a difference between expected codebook assignments, and the transport objective may distort code geometry or fit frequent residual directions at the expense of rare transitions. The ordered cost term may be small or cancel across a batch, leaving little practical directed effect despite a nonzero gradient.",
+        "falsifier": "Reject if the frozen evaluation finds increased level-0 Gini, fewer L1-to-L2 branches per L1 code, increased train-to-test frequency drift, reduced sequence information, or no Stage-3 recall@10 improvement over 0.06406796775709883; also reject if the measured median transition codeword separation decreases.",
+        "why_not_the_measured_failures": "Unlike the inert encoder-only arms, residual transport and its constraints differentiate directly through the codebook. Unlike the collapsed pairwise assignment cross-entropy, it models the endpoint difference as a displacement between source- and target-associated codewords and includes an explicit repulsive hinge; it does not reward merging the pair into one codeword. The usage term targets the measured concentration failure, although generalization and downstream benefit are not assured."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

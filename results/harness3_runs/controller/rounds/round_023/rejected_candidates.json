@@ -1,0 +1,51 @@
+{
+  "rejected": [
+    {
+      "candidate": {
+        "id": "behavior_residual_transport_with_repulsion",
+        "title": "Behavior-conditioned residual transport with pair-separation barrier",
+        "equation": "For each valid row i, define e_s(i) = source_i - codebook[a_i] and e_t(i) = target_i - codebook[b_i], where a_i and b_i are nearest-codeword indices treated as constants for differentiation. Define v_i = stopgrad(e_t(i)) and let d_i = codebook[b_i] - codebook[a_i]. Let T_i = ||e_t(i) - v_i||^2 + transport_weight * relu(||e_s(i)|| - ||e_t(i)|| + residual_margin)^2 + separation_weight * relu(separation_floor - ||d_i||)^2. Define L = weight * mean_i mask_i * T_i.",
+        "symbols": {
+          "source_i": "Source representation for behavior-pair row i.",
+          "target_i": "Target representation for behavior-pair row i.",
+          "codebook_k": "Codeword k in the supplied codebook.",
+          "a_i": "Nearest codeword index to source_i, treated as constant during differentiation.",
+          "b_i": "Nearest codeword index to target_i, treated as constant during differentiation.",
+          "e_s(i)": "Source residual after subtracting its assigned codeword.",
+          "e_t(i)": "Target residual after subtracting its assigned codeword.",
+          "v_i": "Stopped-gradient copy of the target residual used as the behavior-conditioned transport destination.",
+          "d_i": "Difference between the target-assigned and source-assigned codewords.",
+          "mask_i": "Validity weight for row i.",
+          "residual_margin": "Required margin by which the target residual norm may exceed the source residual norm.",
+          "separation_floor": "Minimum desired distance between the pair's assigned codewords.",
+          "transport_weight": "Coefficient for the directed residual-norm ordering penalty.",
+          "separation_weight": "Coefficient for the codeword separation barrier.",
+          "weight": "Coefficient composing this auxiliary loss with the training objective."
+        },
+        "parameters": {
+          "residual_margin": 0.05,
+          "separation_floor": 0.2,
+          "transport_weight": 1.0,
+          "separation_weight": 1.0,
+          "weight": 0.001
+        },
+        "gradient_targets": {
+          "source": "nonzero",
+          "target": "nonzero",
+          "codebook": "nonzero"
+        },
+        "target_paths": [
+          "codebook",
+          "hard_sid_export"
+        ],
+        "behaviour_signal": "The ordered source-to-target residual relation for each behavior pair, including the target residual norm and the pair's assigned-codeword separation.",
+        "codebook_interaction": "The residual terms act on the two assigned codewords through their own source and target residuals; the explicit barrier has a nonzero gradient only when pair separation is below separation_floor and pushes the two assigned codewords apart. This directly opposes pair convergence below the floor, but does not constrain pairs already above it and cannot guarantee global codebook balance or prevent indirect contraction caused by the other terms.",
+        "encoder_interaction": "The source and target residuals also produce representation gradients, but the host overwrites encoder gradients. The loss can affect exported SIDs only through its direct codebook gradient.",
+        "risk": "Nearest-codeword assignments are piecewise constant, so the residual transport may be weak or discontinuous around assignment boundaries. The barrier only activates below its floor and may cause a few pairs to repel without improving the global partition; the residual ordering term can also distort codebook geometry or assignment frequencies. If the observed pairs are already above the floor, the direct anti-convergence safeguard provides no gradient.",
+        "falsifier": "The loss is unchanged when source and target are exchanged, any declared gradient is zero or non-finite, pair separation contracts below the declared floor, or the exported codes violate any control-level requirement on level-0 Gini, L1-to-L2 branches per code, train-to-test frequency drift, or sequence information; Stage-3 recall@10 at or below control falsifies downstream benefit.",
+        "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, this objective differentiates directly through the codebook. Unlike the collapsed mechanism, it does not reward endpoint codeword convergence: it includes an explicit hinge barrier that pushes assigned codewords apart below a declared floor. Its behavior-conditioned residual transport is distinct from both a codeword geometry margin and an assignment-distribution objective. The barrier's limited scope and possible global partition damage are stated risks to be tested."
+      },
+      "reason": "missing fields: ['family']"
+    }
+  ]
+}

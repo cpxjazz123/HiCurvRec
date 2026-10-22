@@ -1,0 +1,148 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_margin_preserving_codebook_geometry",
+      "title": "Directed behavior alignment with a hard pair-separation margin",
+      "equation": "For each valid pair i, let a_i = softmax(-||source_i - c_k||^2 / tau) and b_i = softmax(-||target_i - c_k||^2 / tau). Minimize L = w * mean_i[KL(b_i || a_i) + lambda_sep * max(0, delta - ||c_argmax(a_i) - c_argmax(b_i)||)^2] + w * lambda_rep * sum_{k<l} max(0, rho - ||c_k - c_l||)^2. The KL is directed: the target assignment distribution is the teacher and the source distribution is the student.",
+      "symbols": {
+        "i": "Index of a valid behavior pair.",
+        "source_i": "Source embedding for pair i.",
+        "target_i": "Target embedding for pair i.",
+        "c_k": "Codebook vector k.",
+        "C": "Number of codebook vectors.",
+        "a_i": "Temperature-softened source-to-codebook assignment distribution.",
+        "b_i": "Temperature-softened target-to-codebook assignment distribution.",
+        "tau": "Soft-assignment temperature.",
+        "argmax": "Index of the largest component of an assignment distribution; used with a straight-through estimator for the separation term.",
+        "KL": "Kullback-Leibler divergence; KL(b_i || a_i) is asymmetric in its arguments.",
+        "delta": "Minimum permitted distance between the source- and target-selected codewords for a behavior pair.",
+        "rho": "Minimum permitted pairwise distance between distinct codebook vectors in the global repulsion term.",
+        "lambda_sep": "Weight on the per-behavior-pair codeword separation barrier.",
+        "lambda_rep": "Weight on global codebook repulsion.",
+        "w": "Composition weight for the complete mechanism loss.",
+        "mean_i": "Mean over valid behavior pairs."
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "temperature": 0.2,
+        "pair_separation_margin": 0.1,
+        "pair_separation_weight": 1.0,
+        "global_repulsion_margin": 0.05,
+        "global_repulsion_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target behavior pair, represented by the supplied source and target embeddings; mask selects valid pairs.",
+      "codebook_interaction": "The directed KL moves codewords to make the source assignment distribution predict the target assignment distribution. The per-pair hinge explicitly opposes any movement that brings the two selected codewords within delta; global repulsion also opposes codeword collisions. The separation barrier is not a guarantee that assignments never change or that the full training objective cannot overcome it; the measured test is whether pairwise codeword distances and exported usage remain preserved.",
+      "encoder_interaction": "The loss differentiates through source and target embeddings, but the host overwrites encoder gradients after backward. Its encoder effect is therefore discarded unless the same loss has a codebook gradient; this candidate has a codebook gradient through the soft assignments and separation/repulsion terms.",
+      "risk": "The assignment KL may be too weak to change hard assignments at the frozen weight, while increasing its effective influence may let the directed alignment overcome the separation barrier or distort the assignment distribution. Global repulsion may preserve geometric spacing without preserving occupancy balance, prefix branches, sequence information, or held-out recommendation quality.",
+      "falsifier": "Reject if the frozen evaluation does not show higher pair-level ER while level-0 code usage is at least the control's, Gini is no higher than 0.216, prefix branches are at least 65.9, train-to-test frequency drift does not grow, sequence information does not fall, and Stage-3 recall@10 and NDCG@10 improve over the archived control. Also reject the pair-separation premise if behavior-pair codeword distances shrink materially.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, this has a differentiable codebook path that survives host gradient assembly. Unlike pairwise cross-entropy that can pull endpoint codewords together, it includes an explicit per-pair distance barrier and global codeword repulsion. It still might fail through code concentration or downstream misalignment, so those outcomes are measured rather than assumed away."
+    },
+    {
+      "id": "directed_capacity_balanced_assignment_partition",
+      "title": "Directed soft assignment with balanced code capacity and pairwise codeword exclusion",
+      "equation": "For each valid pair i, define p_i = softmax(-||source_i - c_k||^2 / tau) and q_i = softmax(-||target_i - c_k||^2 / tau). Minimize L = w * mean_i[-sum_k q_ik log(p_ik + epsilon) + lambda_cap * KL(u || m)] + w * lambda_excl * mean_i[max(0, delta - sum_{k,l} p_ik q_il ||c_k - c_l||)^2], where m = mean_i[(p_i + q_i)/2] and u_k = 1/C. The cross-entropy is directed from target assignments to source assignments; the capacity term encourages balanced marginal usage, and the exclusion term keeps the two soft endpoint assignments from concentrating on nearby codewords.",
+      "symbols": {
+        "i": "Index of a valid behavior pair.",
+        "k": "Codebook index.",
+        "source_i": "Source embedding for pair i.",
+        "target_i": "Target embedding for pair i.",
+        "c_k": "Codebook vector k.",
+        "C": "Number of codebook vectors.",
+        "p_i": "Temperature-softened source assignment distribution.",
+        "q_i": "Temperature-softened target assignment distribution.",
+        "tau": "Soft-assignment temperature.",
+        "m": "Mean marginal assignment distribution over both endpoints of valid pairs.",
+        "u": "Uniform distribution over the C codewords.",
+        "KL": "Kullback-Leibler divergence; KL(u || m) penalizes deviations from uniform marginal usage.",
+        "lambda_cap": "Weight on the marginal capacity-balancing term.",
+        "lambda_excl": "Weight on the soft pairwise codeword-exclusion term.",
+        "delta": "Minimum desired expected distance between codewords sampled from the two endpoint assignment distributions.",
+        "epsilon": "Positive numerical stabilizer inside the logarithm.",
+        "w": "Composition weight for the complete mechanism loss.",
+        "mean_i": "Mean over valid behavior pairs."
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "temperature": 0.2,
+        "capacity_weight": 1.0,
+        "pair_exclusion_margin": 0.1,
+        "pair_exclusion_weight": 1.0,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target behavior pair and the empirical marginal distribution of its endpoint assignments; mask selects valid pairs.",
+      "codebook_interaction": "The directed cross-entropy moves codewords through the source and target soft assignments. The marginal capacity term pushes assignment mass toward equal code usage, while the expected-distance hinge pushes the endpoint assignment distributions away from codeword pairs that are too close. These terms oppose concentration and pair convergence, respectively, but do not mathematically guarantee unchanged hard-code occupancy or prefix structure.",
+      "encoder_interaction": "The loss differentiates through both embeddings, but the host overwrites the encoder gradient after backward. That contribution is discarded; the assignment and distance terms also differentiate through the codebook, which is the path that can change exported SIDs.",
+      "risk": "Uniform marginal capacity may improve global occupancy while disrupting behavior-relevant neighborhoods or prefix structure; the soft expected-distance constraint may be satisfied by spreading assignment probability without improving hard assignments. The directed cross-entropy may also be too weak to alter the frozen export, or may trade sequence information for a better pair match rate.",
+      "falsifier": "Reject if the frozen evaluation fails to raise pair-level ER while meeting the control-or-better constraints on level-0 code count, Gini, prefix branches, train-to-test frequency drift, and sequence information, or if Stage-3 recall@10 or NDCG@10 does not improve over control. A drop in hard code usage or a shrinkage in behavior-pair codeword distances also falsifies the intended safeguards.",
+      "why_not_the_measured_failures": "Unlike encoder-only terms, its soft assignment and code-distance terms deliver gradients to the codebook. Unlike pair-attraction objectives that merge endpoint codewords, this penalizes low expected endpoint codeword distance and balances marginal assignment mass. It differs from a simple usage-balance term by using a directed source-to-target assignment objective plus an explicit pairwise exclusion objective."
+    },
+    {
+      "id": "directed_behavior_residual_codebook_transport",
+      "title": "Directed residual-geometry transport with codeword repulsion",
+      "equation": "For each valid pair i, let r_i = target_i - source_i, let d_ik = c_k - source_i, and let s_ik = softmax(-||d_ik - r_i||^2 / tau). Minimize L = w * mean_i[-sum_k s_ik log softmax_j(-||c_j - source_i||^2 / tau)_k + lambda_rep * sum_{k<l} max(0, rho - ||c_k - c_l||)^2]. This transports the source along its directed behavior residual toward a codeword while repelling codewords globally.",
+      "symbols": {
+        "i": "Index of a valid behavior pair.",
+        "j": "Codebook index used to normalize the source assignment distribution.",
+        "k": "Codebook index.",
+        "source_i": "Source embedding for pair i.",
+        "target_i": "Target embedding for pair i.",
+        "r_i": "Directed behavior-conditioned residual vector target_i minus source_i.",
+        "c_k": "Codebook vector k.",
+        "C": "Number of codebook vectors.",
+        "d_ik": "Vector from the source embedding to codeword k.",
+        "s_ik": "Soft target distribution over codewords according to residual-geometry mismatch.",
+        "tau": "Soft-assignment temperature.",
+        "lambda_rep": "Weight on global codebook repulsion.",
+        "rho": "Minimum permitted distance between distinct codebook vectors in the global repulsion term.",
+        "w": "Composition weight for the complete mechanism loss.",
+        "mean_i": "Mean over valid behavior pairs."
+      },
+      "parameters": {
+        "weight": 0.0001,
+        "temperature": 0.2,
+        "global_repulsion_margin": 0.05,
+        "global_repulsion_weight": 0.1,
+        "epsilon": 1e-08
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "encoder",
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered behavior-conditioned residual target_i minus source_i; mask selects valid pairs.",
+      "codebook_interaction": "The residual-geometry distribution moves codewords toward locations that represent the source-relative behavior residual, rather than directly pulling the source and target's current codewords together. Global repulsion opposes codeword collisions. This is not a hard constraint on the distance between a pair's assigned codewords, so pair convergence remains an explicit measured risk rather than a claimed impossibility.",
+      "encoder_interaction": "The loss differentiates through source and target embeddings, but the host overwrites the encoder gradient after backward. That encoder contribution is discarded; gradients through the residual-geometry distribution and repulsion reach the codebook and can therefore affect exported SIDs.",
+      "risk": "The residual target may be poorly represented by the existing codebook geometry, causing broad codeword movement or harmful reassignment rather than a better partition. Global repulsion may prevent geometric collapse but cannot ensure that hard code usage, prefix branching, sequence information, or train-to-test stability are preserved; the residual may also be too noisy to improve held-out behavior-pair alignment.",
+      "falsifier": "Reject if the frozen evaluation does not raise pair-level ER while preserving at least the control's level-0 code count, no-higher-than-control Gini, at least control-level prefix branches, no increase in train-to-test frequency drift, and no loss of sequence information, or if Stage-3 recall@10 and NDCG@10 fail to improve over control. Shrinking behavior-pair codeword distances would specifically falsify the claimed non-attractive residual interaction.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, the residual-geometry distribution and repulsion have direct codebook gradients. Unlike pairwise curvature or assignment cross-entropy that directly rewards endpoints sharing or approaching one code, this aligns codebook geometry to a directed source-relative residual and uses only global codeword repulsion. It can still cause harmful hard reassignment, so export structure and downstream quality remain required tests."
+    }
+  ]
+}
+```

@@ -1,0 +1,34 @@
+{
+  "generated_utc": "2026-10-22T00:06:08.980082+00:00",
+  "candidates": [
+    {
+      "mechanism_id": "directed_codeword_separation_barrier",
+      "proposal_sha256": "f37cc06ec5530a0cd86664149caa33245361864cceccbcf3867968d3b3236182",
+      "path": "results/harness3_runs/controller/rounds/round_028/directed_codeword_separation_barrier/proposal.json",
+      "title": "Align each endpoint to its own codeword while enforcing a pairwise separation floor",
+      "falsifier": "On the frozen evaluation, the candidate fails if it does not raise pair-level Hard-L1 ER while keeping level-0 Gini no higher than control, L1-to-L2 branches per L1 code at least as high as control, train-to-test frequency drift no higher than control, and sequence information no lower than control. Directly, a reduced median endpoint-codeword distance or increased fraction of pairs below one tenth of control separation would falsify the separation mechanism.",
+      "risk": "Nearest-index changes and the separation barrier may cause unstable codeword reassignment or preserve separation at the expense of useful endpoint alignment. If the margin is rarely active, the term may not prevent convergence in practice; if it is too active, it may lower pair-level ER or disrupt the useful code geometry.",
+      "codebook_interaction": "The alignment terms move codewords toward their respective endpoints. When the pairwise distance is below the margin, the barrier applies equal-and-opposite gradients to the two nearest codewords, pushing them apart; it never attracts the pair's codewords. The nearest-index selection is discrete, while the alignment assignments are soft and differentiable."
+    },
+    {
+      "mechanism_id": "directed_assignment_information_balance",
+      "proposal_sha256": "59d2a6d4a00071478e1fc8adb95a4e38a1699cec29919a481e8fd3626656e4a8",
+      "path": "results/harness3_runs/controller/rounds/round_028/directed_assignment_information_balance/proposal.json",
+      "title": "Preserve directed assignment information while balancing source-code usage",
+      "falsifier": "The candidate is falsified if exchanging source and target leaves the measured loss unchanged, if codebook gradients are zero or non-finite, or if the frozen export fails to raise pair-level Hard-L1 ER while meeting the control thresholds for level-0 Gini, prefix branches, train-to-test frequency drift, and sequence information.",
+      "risk": "Maximizing directed KL can make endpoint assignments artificially different, sacrificing pair-level ER or useful sequence structure. The batch-level balance penalty may also balance soft usage without balancing hard assignments, or become noisy when a batch poorly represents the catalogue.",
+      "codebook_interaction": "The negative directed KL rewards distinguishable endpoint assignment distributions rather than a shared codeword; gradients move codewords to increase the target-to-source assignment divergence. The reverse KL is not included, so exchanging endpoints changes the objective. The balance penalty moves underused source-assignment probability upward and overused probability downward across the batch; neither term directly attracts the two endpoints' codewords."
+    },
+    {
+      "mechanism_id": "directed_residual_frame_transport",
+      "proposal_sha256": "8d2987198def154b498263365a2ba76c6604b7f1555b600e70bb36abcec8947a",
+      "path": "results/harness3_runs/controller/rounds/round_028/directed_residual_frame_transport/proposal.json",
+      "title": "Transport behavior-conditioned residuals in a directed codeword frame",
+      "falsifier": "The candidate is falsified if the frozen evaluation does not raise pair-level Hard-L1 ER while meeting the control thresholds for level-0 Gini, L1-to-L2 branches per L1 code, train-to-test frequency drift, and sequence information. A decrease in endpoint-codeword separation, or a loss that is unchanged when source and target are exchanged, also falsifies its stated mechanism.",
+      "risk": "The assumed residual transport may not describe the data: fitting it could distort codebook geometry or reduce useful sequence information, and the barrier cannot guarantee that codeword distances remain healthy when inactive or when nearest assignments change. The mechanism may also improve residual consistency without improving the hard exported assignments.",
+      "codebook_interaction": "The transport term updates both endpoint codewords through their residuals and through the directed displacement v_i; it fits a directed residual transformation, not a shared-code objective. Its gradients could nevertheless bring the two codewords closer in some cases, so the explicit barrier pushes them apart whenever their distance is below margin. The nearest-index choices are discrete."
+    }
+  ],
+  "count": 3,
+  "tokens": {}
+}

@@ -1,0 +1,131 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_pair_codeword_margin",
+      "title": "Preserve directed pair separation in codebook geometry",
+      "equation": "For x in {source,target}, let p_xc = softmax_c(-||x-c||^2/tau), mu_x = sum_c p_xc c, and d = mu_target - mu_source. Let a = sigmoid((||target||^2-||source||^2)/scale). L = weight * mean_mask[a * relu(margin - ||d||)^2 + eta * a * (||d|| - stopgrad(||d||))^2]. The second term is identically zero and omitted; the optimized objective is the first term.",
+      "symbols": {
+        "source": "Source item representation for each behavior pair.",
+        "target": "Target item representation for each behavior pair.",
+        "codebook": "Shared codebook vectors c indexed by c.",
+        "p_xc": "Soft assignment probability of representation x to codeword c.",
+        "mu_x": "Soft-assignment-weighted codeword representative for x.",
+        "d": "Directed displacement from the source representative to the target representative.",
+        "tau": "Soft-assignment temperature.",
+        "a": "Asymmetric pair weight derived from the target-source difference in squared representation norms.",
+        "scale": "Scale for the asymmetric pair weight.",
+        "margin": "Minimum desired distance between the two pair representatives.",
+        "weight": "Composition weight for this auxiliary loss.",
+        "eta": "Coefficient for the identically zero diagnostic term.",
+        "mask": "Validity mask; only valid pairs contribute to the mean."
+      },
+      "parameters": {
+        "tau": 0.2,
+        "scale": 1.0,
+        "margin": 0.25,
+        "weight": 0.001,
+        "eta": 0.0
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target displacement, weighted asymmetrically by the difference in target and source squared representation norms.",
+      "codebook_interaction": "The loss differentiates through both soft representatives and penalizes pair representatives that lie closer than the margin. Its codebook force separates the two representatives rather than attracting them to a shared codeword. The hinge is inactive once the margin is met, limiting continued distortion; nevertheless, soft assignments can overlap, so the probe must verify the actual pair-codeword separation response.",
+      "encoder_interaction": "The loss has gradients with respect to source and target representations, but the host discards encoder-only gradients. Its intended surviving effect is through the explicitly nonzero codebook gradient; it does not rely on encoder updates.",
+      "risk": "The soft representatives may not track the hard-assigned codewords used by SID export. The margin could therefore move codebook vectors without improving hard pair separation, or distort item-to-code geometry enough to harm retrieval even when pair representatives separate.",
+      "falsifier": "Reject if the probe finds a zero or non-finite codebook gradient, if exchanging source and target leaves the loss unchanged, or if the exported pair-codeword separation fails to increase while level-0 Gini, prefix branches, drift, sequence information, or Stage-3 quality violates the stated requirements.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only losses, this objective differentiates through the supplied codebook. Unlike the collapsed assignment cross-entropy, it penalizes pair representatives that are too close rather than pulling both endpoints toward one code. The direction-dependent weight makes source-target exchange change the objective."
+    },
+    {
+      "id": "directed_assignment_usage_information",
+      "title": "Balance directed soft assignments while preserving transition information",
+      "equation": "For x in {source,target}, define p_xc = softmax_c(-||x-c||^2/tau), and let q^s_c and q^t_c be their mask-weighted batch means. Define H(q) = -sum_c q_c log(q_c+epsilon) and I = H((q^s+q^t)/2) - (H(q^s)+H(q^t))/2. Let r = sigmoid((||target||^2-||source||^2)/scale). L = weight * mean_mask[r * (sum_c (q^t_c)^2 - sum_c (q^s_c)^2) - beta * I].",
+      "symbols": {
+        "source": "Source item representation for each behavior pair.",
+        "target": "Target item representation for each behavior pair.",
+        "codebook": "Shared codebook vectors c indexed by c.",
+        "p_xc": "Soft assignment probability of representation x to codeword c.",
+        "q^s_c": "Mask-weighted batch-average source assignment probability for code c.",
+        "q^t_c": "Mask-weighted batch-average target assignment probability for code c.",
+        "H": "Entropy of an assignment distribution.",
+        "I": "Mutual-information-style quantity measuring how different source and target assignment distributions are.",
+        "r": "Asymmetric pair weight derived from the target-source difference in squared representation norms.",
+        "tau": "Soft-assignment temperature.",
+        "scale": "Scale for the asymmetric pair weight.",
+        "epsilon": "Positive numerical stabilizer inside the logarithm.",
+        "beta": "Weight on preserving source-target assignment information.",
+        "weight": "Composition weight for this auxiliary loss.",
+        "mask": "Validity mask; only valid pairs contribute to the batch statistics and mean."
+      },
+      "parameters": {
+        "tau": 0.2,
+        "scale": 1.0,
+        "epsilon": 1e-08,
+        "beta": 0.1,
+        "weight": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target change in soft code assignment distributions, with asymmetry from the target-source squared-norm difference.",
+      "codebook_interaction": "The squared-frequency term penalizes excess concentration in target assignments relative to source assignments, while the information term rewards distinguishable source and target assignment distributions. Both differentiate through soft assignments into codebook vectors. No term attracts the two endpoint codewords to each other; assignment overlap is instead discouraged by the information term. Because the balance term is directional, exchanging endpoints changes its sign and the asymmetric weight.",
+      "encoder_interaction": "The objective differentiates with respect to source and target representations, but the host discards encoder-only gradients. The mechanism depends on its nonzero codebook gradient to affect exported SIDs.",
+      "risk": "Batch-average assignment regularization may balance soft usage without preserving hard level-0 usage or the L1-to-L2 prefix tree. The information term can also reward assignment differences that are unrelated to useful next-item prediction.",
+      "falsifier": "Reject if the probe finds a zero or non-finite codebook gradient or no loss change under source-target exchange. After training, falsify the mechanism if exported level-0 Gini exceeds control, prefix branches fall below control, frequency drift grows, sequence information falls, or Stage-3 recall@10 does not exceed the archived control.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only objectives, the soft assignments differentiate through the codebook. Unlike pair-convergence losses, this objective does not reward a shared endpoint code; its information term favors distinguishable source and target assignments, while its target-frequency term opposes concentration. The norm-derived directed weight ensures the exchange check is meaningful."
+    },
+    {
+      "id": "directed_residual_displacement_alignment",
+      "title": "Align codebook residual displacement with directed behavior residuals",
+      "equation": "For x in {source,target}, define p_xc = softmax_c(-||x-c||^2/tau) and mu_x = sum_c p_xc c. Let r_x = x - mu_x and v = r_target - r_source. Let g = sigmoid((||target||^2-||source||^2)/scale). L = weight * mean_mask[g * (||v||^2 - 2 * dot(v, target-source))].",
+      "symbols": {
+        "source": "Source item representation for each behavior pair.",
+        "target": "Target item representation for each behavior pair.",
+        "codebook": "Shared codebook vectors c indexed by c.",
+        "p_xc": "Soft assignment probability of representation x to codeword c.",
+        "mu_x": "Soft-assignment-weighted codebook representative for x.",
+        "r_x": "Residual from the soft codebook representative to representation x.",
+        "v": "Directed change in residual from source to target.",
+        "g": "Asymmetric pair weight derived from the target-source difference in squared representation norms.",
+        "tau": "Soft-assignment temperature.",
+        "scale": "Scale for the asymmetric pair weight.",
+        "weight": "Composition weight for this auxiliary loss.",
+        "mask": "Validity mask; only valid pairs contribute to the mean."
+      },
+      "parameters": {
+        "tau": 0.2,
+        "scale": 1.0,
+        "weight": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed change in the source and target residuals after their soft codebook representatives are removed.",
+      "codebook_interaction": "The codebook gradient changes both residual estimates through the source and target soft representatives, and it aligns their directed residual displacement v with the observed target-source displacement. It does not minimize the distance between the two endpoint codewords or pull them toward a common representative. The asymmetric weight and directed dot product make the loss change when endpoints are exchanged.",
+      "encoder_interaction": "The loss has gradients with respect to both representations, but the host discards encoder-only gradients. Its intended effect on exported codes comes from its nonzero codebook gradient.",
+      "risk": "Residual displacement may be dominated by representation scale or noise rather than behaviorally useful structure. Since the loss uses soft representatives, it may improve residual alignment while changing hard assignments in a way that increases code concentration or reduces prefix diversity.",
+      "falsifier": "Reject if the probe finds a zero or non-finite codebook gradient or no loss change after exchanging source and target. Falsify the mechanism after training if pair-codeword separation shrinks materially, any required usage, prefix, drift, or information threshold is breached, or Stage-3 recall@10 fails to exceed the archived control.",
+      "why_not_the_measured_failures": "Unlike the inert encoder-only candidates, this term has a direct soft-representative path to the codebook. Unlike the collapsed pairwise cross-entropy, it aligns the directed residual change to the observed behavior displacement rather than assigning both endpoints to the same code. It is a residual-geometry objective, distinct from direct codeword-margin geometry and assignment-usage regularization."
+    }
+  ]
+}
+```

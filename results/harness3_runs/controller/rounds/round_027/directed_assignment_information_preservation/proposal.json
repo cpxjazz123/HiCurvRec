@@ -1,0 +1,145 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "The directional KL term adjusts codebook positions so the source assignment distribution predicts the detached target distribution. The entropy barrier prevents the source distribution for a pair from becoming arbitrarily concentrated on a single code; unlike pairwise cross-entropy, it does not directly pull the two endpoint codewords together to serve both endpoints. It can still move codewords toward one another indirectly, so pairwise codeword distances must be checked in the probe.",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "It reaches the codebook, unlike the mechanisms erased by host gradient assembly. It matches a detached directed target distribution rather than applying a symmetric pairwise attraction or a cross-entropy that makes one code serve both endpoints; its entropy floor explicitly resists single-code assignments. The probe guards against indirect pair convergence before any cold run."
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "For each row i, define p^s_ij = softmax_j(-||source_i - codebook_j||_2^2 / tau) and p^t_ij = softmax_j(-||target_i - codebook_j||_2^2 / tau). Let q_i = stopgrad(p^t_i). Let H(p) = -sum_j p_j log(p_j + eps). Define L = lambda * mean_i mask_i * [sum_j q_ij log((q_ij + eps)/(p^s_ij + eps)) + gamma * max(0, h_min - H(p^s_i))^2].",
+  "expected_failure_modes": [
+    "Soft assignment matching can still concentrate marginal usage or reduce prefix diversity even with a per-pair entropy floor; the barrier controls individual source distributions, not catalogue-wide Gini, prefix branches, frequency drift, or sequence information. The chosen temperature may also make gradients too diffuse or too sharp."
+  ],
+  "family": "unspecified",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "zero"
+  },
+  "hypotheses": [
+    "Reject if exchanging source and target leaves the loss unchanged, if the codebook gradient is zero or non-finite, or if the source gradient is absent despite its declared target. The probe falsifies the proposal if pair-assigned codeword distances shrink materially, or if exported level-0 Gini exceeds control, L1-to-L2 branches fall below control, train-to-test frequency drift grows, or sequence information falls.",
+    "It reaches the codebook, unlike the mechanisms erased by host gradient assembly. It matches a detached directed target distribution rather than applying a symmetric pairwise attraction or a cross-entropy that makes one code serve both endpoints; its entropy floor explicitly resists single-code assignments. The probe guards against indirect pair convergence before any cold run."
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_assignment_information_preservation",
+  "parameters": {
+    "eps": 1e-08,
+    "gamma": 1.0,
+    "h_min": 0.5,
+    "lambda": 0.001,
+    "tau": 0.1
+  },
+  "provenance": {
+    "authored_at": "2026-10-21T23:51:43.529071+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "366048209d10c376bf9ef64e4936a0878953d9b6ad73049f63191baff8c8fa12"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "H(p)": "Shannon entropy of a soft assignment distribution.",
+    "codebook_j": "Codeword j in the supplied codebook.",
+    "eps": "Positive numerical stabilizer for logarithms.",
+    "gamma": "Relative weight of the minimum-entropy barrier.",
+    "h_min": "Minimum source assignment entropy that prevents this per-pair term from demanding a one-code assignment.",
+    "i": "Batch-row index.",
+    "j": "Codeword index.",
+    "lambda": "Overall loss weight.",
+    "mask_i": "Validity indicator supplied by the checker.",
+    "mean_i": "Mean over valid rows, with a finite zero loss if no rows are valid.",
+    "p^s_ij": "Temperature-scaled soft assignment probability of source_i to codeword j.",
+    "p^t_ij": "Temperature-scaled soft assignment probability of target_i to codeword j.",
+    "q_i": "Detached target-side soft assignment distribution.",
+    "source_i": "Ordered source representation.",
+    "stopgrad": "Identity in the forward pass with gradient stopped.",
+    "target_i": "Ordered target representation.",
+    "tau": "Soft-assignment temperature."
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "Directed soft assignment matching with a prefix-information-preserving codebook barrier",
+  "version": "1.0.0"
+}

@@ -1,0 +1,132 @@
+```json
+{
+  "candidates": [
+    {
+      "id": "directed_codeword_tangent_margin",
+      "title": "Directed pair separation with a codebook-tangent margin",
+      "equation": "For each valid row i, let a_i = argmin_k ||source_i - codebook_k||^2 and b_i = argmin_k ||target_i - codebook_k||^2. Let u_i = (codebook[b_i] - codebook[a_i]) / (||codebook[b_i] - codebook[a_i]|| + epsilon). Define L = weight * mean_i mask_i * relu(margin + dot(source_i - codebook[a_i], u_i) - dot(target_i - codebook[b_i], u_i))^2. The discrete indices are treated as constants during differentiation.",
+      "symbols": {
+        "source_i": "Source representation for behavior-pair row i.",
+        "target_i": "Target representation for behavior-pair row i.",
+        "codebook_k": "Codeword k in the supplied codebook.",
+        "a_i": "Nearest codeword index to source_i, selected using squared Euclidean distance.",
+        "b_i": "Nearest codeword index to target_i, selected using squared Euclidean distance.",
+        "u_i": "Unit direction from the source-assigned codeword toward the target-assigned codeword, with epsilon-stabilized normalization.",
+        "mask_i": "Validity weight for row i.",
+        "margin": "Required directed improvement in residual projection along u_i.",
+        "epsilon": "Positive stabilizer for normalization and finite computation.",
+        "weight": "Coefficient composing this auxiliary loss with the training objective."
+      },
+      "parameters": {
+        "margin": 0.1,
+        "epsilon": 0.000001,
+        "weight": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The directed source-to-target ordering of each valid behavior pair; the source-assigned and target-assigned codewords define the pair-specific direction.",
+      "codebook_interaction": "For active hinge rows, gradients move the two assigned codewords through their separate residual-projection terms, with opposite signed effects along the pair direction; this objective does not minimize the distance between the two codewords and instead penalizes insufficient directed residual separation. It is not a hard guarantee against convergence: if the margin remains unsatisfied, the codebook gradient can still move codewords in a way that reduces their distance indirectly. The checker must therefore measure pairwise codeword separation and reject the mechanism if it contracts it.",
+      "encoder_interaction": "The loss also differentiates through source and target representations, but the host overwrites those encoder gradients. Only the direct codebook gradient can alter exported SIDs.",
+      "risk": "The nearest-codeword indices are piecewise constant, and many rows may have inactive hinges or nearly identical assigned codewords, yielding little useful codebook gradient. Even when active, projection improvement may be achieved by moving codewords in a way that harms global assignment balance or prefix structure. The small declared weight limits the initial perturbation but does not ensure a favorable hard-assignment change.",
+      "falsifier": "On the checker batch, exchanging source and target does not change the scalar loss, any declared gradient is zero or non-finite, or the cold run reduces the minimum/median transition-pair codeword separation while failing to preserve the control's level-0 Gini, L1-to-L2 branches per code, train-to-test frequency drift, or sequence information.",
+      "why_not_the_measured_failures": "Unlike the encoder-only arms, this loss has an explicit differentiable path to the supplied codebook, which is the only measured path that can change exported SIDs. Unlike the collapsed cross-entropy, it does not ask one code to serve both endpoints or directly minimize the endpoints' codeword distance; it rewards directed residual separation. Because indirect contraction remains possible, separation is an explicit falsification measurement rather than an assumed guarantee."
+    },
+    {
+      "id": "directed_assignment_prefix_balance",
+      "title": "Directed assignment likelihood with prefix-information and usage constraints",
+      "equation": "For each row i, define p_s(i,k) = softmax_k(-||source_i - codebook_k||^2 / temperature) and p_t(i,k) = softmax_k(-||target_i - codebook_k||^2 / temperature). Let q_s(i) = stopgrad(p_s(i)), q_t(i) = stopgrad(p_t(i)), and let r_s(k) and r_t(k) be their mask-weighted batch marginals. Define L = weight * [mean_i mask_i * KL(q_s(i) || p_t(i)) + balance_weight * (KL(r_s || uniform_C) + KL(r_t || uniform_C)) - information_weight * (H(r_t) - mean_i H(p_t(i)))].",
+      "symbols": {
+        "source_i": "Source representation for behavior-pair row i.",
+        "target_i": "Target representation for behavior-pair row i.",
+        "codebook_k": "Codeword k in the supplied codebook.",
+        "p_s(i,k)": "Soft assignment probability of source_i to codeword k.",
+        "p_t(i,k)": "Soft assignment probability of target_i to codeword k.",
+        "q_s(i)": "Stopped-gradient source assignment distribution used as the directed teacher.",
+        "q_t(i)": "Stopped-gradient target assignment distribution used to define the target marginal.",
+        "r_s(k)": "Mask-weighted mean source assignment probability for codeword k.",
+        "r_t(k)": "Mask-weighted mean target assignment probability for codeword k.",
+        "mask_i": "Validity weight for row i.",
+        "temperature": "Positive scale controlling the softness of assignment probabilities.",
+        "uniform_C": "Uniform distribution over the C codewords.",
+        "KL": "Kullback-Leibler divergence, with standard epsilon-stabilization for finite evaluation.",
+        "H": "Shannon entropy, with standard epsilon-stabilization for finite evaluation.",
+        "balance_weight": "Coefficient for keeping source and target assignment marginals near uniform.",
+        "information_weight": "Coefficient for increasing target assignment mutual information, represented by marginal entropy minus conditional assignment entropy.",
+        "weight": "Coefficient composing this auxiliary loss with the training objective."
+      },
+      "parameters": {
+        "temperature": 0.2,
+        "balance_weight": 0.1,
+        "information_weight": 0.1,
+        "weight": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target pair assignment distributions; the directed KL uses the source distribution as a stopped-gradient teacher and the target distribution as the student.",
+      "codebook_interaction": "The directed KL pulls target-side codeword logits toward the source assignment distribution, while marginal balance resists code overuse and the information term favors confident, informative target assignments. It does not contain a pairwise codeword-distance attraction and includes explicit marginal anti-concentration pressure. The assignment KL can nevertheless favor shared codes for a pair, so preserving pairwise codeword separation must be checked directly; the balance and information terms are not a mathematical guarantee that every pair remains separated.",
+      "encoder_interaction": "The loss differentiates through source and target assignment probabilities, but the host discards the resulting encoder gradient. Its potentially effective training path is the direct gradient through assignment distances into the codebook.",
+      "risk": "The directed assignment term may still increase shared assignments for behavior pairs, and batch-level uniformity can conflict with the actual catalog frequency distribution. The information bonus may sharpen assignments without preserving useful sequence structure, while a soft objective may produce little hard-SID change at the frozen temperature and weight.",
+      "falsifier": "The source-target swap leaves the loss unchanged, a required gradient is zero or non-finite, or exported level-0 Gini exceeds the control, L1-to-L2 branches per code fall below the control, train-to-test frequency drift grows, sequence information falls, or Stage-3 recall@10 fails to exceed the archived control.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only terms, the assignment probabilities depend directly on the codebook and deliver a codebook gradient. Unlike the collapsed pairwise cross-entropy, the objective is directed, uses a stopped-gradient source teacher, and combines assignment alignment with explicit marginal balance and assignment-information terms rather than pulling two endpoint codewords together by a symmetric pair loss. Pair convergence remains a measurable risk, not an assumed impossibility."
+    },
+    {
+      "id": "behavior_residual_transport_with_repulsion",
+      "title": "Behavior-conditioned residual transport with pair-separation barrier",
+      "equation": "For each valid row i, define e_s(i) = source_i - codebook[a_i] and e_t(i) = target_i - codebook[b_i], where a_i and b_i are nearest-codeword indices treated as constants for differentiation. Define v_i = stopgrad(e_t(i)) and let d_i = codebook[b_i] - codebook[a_i]. Let T_i = ||e_t(i) - v_i||^2 + transport_weight * relu(||e_s(i)|| - ||e_t(i)|| + residual_margin)^2 + separation_weight * relu(separation_floor - ||d_i||)^2. Define L = weight * mean_i mask_i * T_i.",
+      "symbols": {
+        "source_i": "Source representation for behavior-pair row i.",
+        "target_i": "Target representation for behavior-pair row i.",
+        "codebook_k": "Codeword k in the supplied codebook.",
+        "a_i": "Nearest codeword index to source_i, treated as constant during differentiation.",
+        "b_i": "Nearest codeword index to target_i, treated as constant during differentiation.",
+        "e_s(i)": "Source residual after subtracting its assigned codeword.",
+        "e_t(i)": "Target residual after subtracting its assigned codeword.",
+        "v_i": "Stopped-gradient copy of the target residual used as the behavior-conditioned transport destination.",
+        "d_i": "Difference between the target-assigned and source-assigned codewords.",
+        "mask_i": "Validity weight for row i.",
+        "residual_margin": "Required margin by which the target residual norm may exceed the source residual norm.",
+        "separation_floor": "Minimum desired distance between the pair's assigned codewords.",
+        "transport_weight": "Coefficient for the directed residual-norm ordering penalty.",
+        "separation_weight": "Coefficient for the codeword separation barrier.",
+        "weight": "Coefficient composing this auxiliary loss with the training objective."
+      },
+      "parameters": {
+        "residual_margin": 0.05,
+        "separation_floor": 0.2,
+        "transport_weight": 1.0,
+        "separation_weight": 1.0,
+        "weight": 0.001
+      },
+      "gradient_targets": {
+        "source": "nonzero",
+        "target": "nonzero",
+        "codebook": "nonzero"
+      },
+      "target_paths": [
+        "codebook",
+        "hard_sid_export"
+      ],
+      "behaviour_signal": "The ordered source-to-target residual relation for each behavior pair, including the target residual norm and the pair's assigned-codeword separation.",
+      "codebook_interaction": "The residual terms act on the two assigned codewords through their own source and target residuals; the explicit barrier has a nonzero gradient only when pair separation is below separation_floor and pushes the two assigned codewords apart. This directly opposes pair convergence below the floor, but does not constrain pairs already above it and cannot guarantee global codebook balance or prevent indirect contraction caused by the other terms.",
+      "encoder_interaction": "The source and target residuals also produce representation gradients, but the host overwrites encoder gradients. The loss can affect exported SIDs only through its direct codebook gradient.",
+      "risk": "Nearest-codeword assignments are piecewise constant, so the residual transport may be weak or discontinuous around assignment boundaries. The barrier only activates below its floor and may cause a few pairs to repel without improving the global partition; the residual ordering term can also distort codebook geometry or assignment frequencies. If the observed pairs are already above the floor, the direct anti-convergence safeguard provides no gradient.",
+      "falsifier": "The loss is unchanged when source and target are exchanged, any declared gradient is zero or non-finite, pair separation contracts below the declared floor, or the exported codes violate any control-level requirement on level-0 Gini, L1-to-L2 branches per code, train-to-test frequency drift, or sequence information; Stage-3 recall@10 at or below control falsifies downstream benefit.",
+      "why_not_the_measured_failures": "Unlike inert encoder-only mechanisms, this objective differentiates directly through the codebook. Unlike the collapsed mechanism, it does not reward endpoint codeword convergence: it includes an explicit hinge barrier that pushes assigned codewords apart below a declared floor. Its behavior-conditioned residual transport is distinct from both a codeword geometry margin and an assignment-distribution objective. The barrier's limited scope and possible global partition damage are stated risks to be tested."
+    }
+  ]
+}
+```
