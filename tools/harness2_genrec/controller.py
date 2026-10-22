@@ -1313,6 +1313,7 @@ class Controller:
         an hour of the machine and a pending measurement answers a question the campaign is
         still asking.
         """
+        self._record_finished_stage3s()
         for arm in self._stage3_arms_needing_measurement():
             launch = self._launch_stage3(
                 arm["mechanism_id"], arm["sid"], arm.get("semantic_key", "")
@@ -1396,6 +1397,13 @@ class Controller:
                     sid = Path(path)
                     break
             if sid is None or not sid.is_file():
+                continue
+            # a run whose shards are all there measured everything, even if it died before
+            # merging them: such an arm is not waiting for a measurement
+            from . import stage3_from_shards
+
+            variant = REPO_ROOT / "results" / "stage3_T5Train" / f"TIGER_c107_{mechanism_id}__r8_control"
+            if stage3_from_shards.latest_complete(variant) is not None:
                 continue
             waiting.append(
                 {
