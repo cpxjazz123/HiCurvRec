@@ -961,6 +961,11 @@ class Controller:
         """Phase 4: one cold run per admitted arm, within the resource caps."""
         from .candidate_run import run_candidate
 
+        # a pending downstream measurement of an arm that already cleared the gate comes
+        # first: it is a question the campaign is asking, and a cold run is an hour
+        if self._adopt_pending_stage3s():
+            return
+
         # RECONCILE FIRST: a run that has exported its SIDs is no longer training, and a
         # controller that counts it as training waits for itself forever.
         for item in self.state.get("portfolio") or ():
@@ -1300,6 +1305,36 @@ class Controller:
                 reason=f"{type(error).__name__}: {error}",
             )
 
+    def _adopt_pending_stage3s(self) -> bool:
+        """Measure the arms the store knows that cleared the gate and have no Stage-3.
+
+        These arms are the ones the mission is about -- they cleared the frozen ER gate --
+        and they are measured before the campaign's next cold run, because a cold run costs
+        an hour of the machine and a pending measurement answers a question the campaign is
+        still asking.
+        """
+        for arm in self._stage3_arms_needing_measurement():
+            launch = self._launch_stage3(
+                arm["mechanism_id"], arm["sid"], arm.get("semantic_key", "")
+            )
+            self.audit(
+                "stage3",
+                mechanism_id=arm["mechanism_id"],
+                started=launch.get("started"),
+                er=arm.get("er"),
+                source="the store",
+            )
+            self.save()
+            if launch.get("started"):
+                # one Stage-3 at a time: the next arm waits for this one to finish
+                self.state["phase"] = "stage3"
+                self.state["next_action"] = (
+                    f"waiting for the Stage-3 of {arm['mechanism_id']} to finish"
+                )
+                self.save()
+                return True
+        return False
+
     def _launch_stage3(self, mechanism_id: str, sid: Path, semantic_key: str = "") -> Dict[str, Any]:
         """Launch the one Stage-3 of an arm, after the guardrail has seen the intent."""
         import importlib.util
@@ -1444,27 +1479,8 @@ class Controller:
         """Phase 5b: Stage-3 once per qualified arm, against the archived control."""
         import importlib.util
 
-        # the arms the store knows about and that have not been measured downstream
-        for arm in self._stage3_arms_needing_measurement():
-            launch = self._launch_stage3(
-                arm["mechanism_id"], arm["sid"], arm.get("semantic_key", "")
-            )
-            self.audit(
-                "stage3",
-                mechanism_id=arm["mechanism_id"],
-                started=launch.get("started"),
-                er=arm.get("er"),
-                source="the store",
-            )
-            self.save()
-            if launch.get("started"):
-                # one Stage-3 at a time: the next arm waits for this one to finish
-                self.state["phase"] = "stage3"
-                self.state["next_action"] = (
-                    f"waiting for the Stage-3 of {arm['mechanism_id']} to finish"
-                )
-                self.save()
-                return
+        if self._adopt_pending_stage3s():
+            return
 
         for item in self.state.get("portfolio") or ():
             if item.get("status") != "qualified":
