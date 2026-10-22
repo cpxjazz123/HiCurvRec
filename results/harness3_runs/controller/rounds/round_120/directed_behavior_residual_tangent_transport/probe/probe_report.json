@@ -1,0 +1,31 @@
+{
+  "ok": false,
+  "error": "AttributeError: 'NoneType' object has no attribute 'to'",
+  "epochs": 50,
+  "loss_finite": true,
+  "encoder_update": 0.0,
+  "codebook_update": 0.0,
+  "hard_sid_changed": 0,
+  "hard_sid_rows": 0,
+  "occupancy": {
+    "available": false,
+    "collapse_suspected": false
+  },
+  "detail": "the probe did not show a healthy mechanism: AttributeError: 'NoneType' object has no attribute 'to'",
+  "metrics": {
+    "records": 1,
+    "last_event": "train_start",
+    "loss": null,
+    "loss_finite": true
+  },
+  "baseline_occupancy": {
+    "available": true,
+    "items": 24587,
+    "unique_l1": 203,
+    "l1_fraction": 0.008256,
+    "unique_l1l2": 5005,
+    "l1l2_fraction": 0.203563,
+    "collision_3token": 0.290845,
+    "collapse_suspected": false
+  }
+}

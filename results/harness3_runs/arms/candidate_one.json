@@ -5,8 +5,7 @@
   "novelty": "not measured against the historical record",
   "seed": 42,
   "runs": [
-    "stage2-candidate_one-20261022T175515",
-    "stage3-candidate_one-20261022T175515"
+    "stage2-candidate_one-20261022T220341"
   ],
   "official_cold_run": {
     "status": "unknown",
@@ -28,9 +27,9 @@
     "level0_occupancy_ratio_vs_control": null
   },
   "frozen_evaluation": {
-    "hard_l1_er": 16.9,
+    "hard_l1_er": 16.0,
     "frozen_threshold": 16.38953942232631,
-    "cleared_the_gate": true,
+    "cleared_the_gate": false,
     "pos_share": null,
     "neg_share": null,
     "ci95": null,
@@ -63,26 +62,32 @@
     "sequence_information": null
   },
   "stage3": {
-    "test_recall@10": 0.07,
-    "test_ndcg@10": 0.04,
-    "delta_recall_vs_control": 0.005932032242901175,
-    "delta_ndcg_vs_control": 0.0046934829805932304,
+    "test_recall@10": null,
+    "test_ndcg@10": null,
+    "delta_recall_vs_control": null,
+    "delta_ndcg_vs_control": null,
     "per_token": null
   },
   "deltas_vs_archived_control": {
-    "er": 0.5654943337241107,
-    "recall": 0.005932032242901175,
-    "ndcg": 0.0046934829805932304
+    "er": -0.33450566627588785,
+    "recall": null,
+    "ndcg": null
   },
-  "artifacts": [],
+  "artifacts": [
+    {
+      "path": "/fs04/scratch2/ar57/wenyu/tmp/pytest-of-wlia0047/pytest-89/test_a_measured_arm_is_not_ado0/out/candidate_one/sids_for_hgrec.npy",
+      "sha256": "d46aee08cc49f6d1eb41800c1d6bab4506c960c700cff0efffe490d7cb1de5e3",
+      "bytes": 6
+    }
+  ],
   "posterior_explanation": {
     "mechanism_id": "candidate_one",
-    "er": null,
+    "er": 16.0,
     "cleared_the_gate": false,
-    "delta_recall@10": 0.005932032242901175,
-    "delta_ndcg@10": 0.0046934829805932304,
+    "delta_recall@10": null,
+    "delta_ndcg@10": null,
     "modes": [],
-    "primary_mode": "none"
+    "primary_mode": "unexplained"
   },
   "evidence_and_ood_flags": {
     "historical_feature_ranges": {
@@ -104,6 +109,7 @@
   },
   "missing": [
     "the history-conditioned probe",
-    "the conditional level-2 discrimination"
+    "the conditional level-2 discrimination",
+    "the downstream measurement"
   ]
 }

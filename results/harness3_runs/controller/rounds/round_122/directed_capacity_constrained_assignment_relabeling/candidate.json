@@ -1,0 +1,27 @@
+{
+  "mechanism_id": "directed_capacity_constrained_assignment_relabeling",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_122/directed_capacity_constrained_assignment_relabeling/proposal.json",
+  "started_utc": "2026-10-22T21:57:10.290866+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_relabeling",
+      "tokens": {
+        "input": 50823,
+        "output": 1459,
+        "reasoning": 242
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": false,
+      "detail": "1 of 8 declared checks failed",
+      "failed": [
+        "no_occupancy_quota"
+      ]
+    }
+  },
+  "status": "rejected",
+  "reason": "the independent checks rejected the implementation",
+  "wall_clock_s": 29.2,
+  "cold_run_gpu_minutes": 0.0
+}

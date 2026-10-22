@@ -1,0 +1,27 @@
+{
+  "mechanism_id": "directed_pairwise_margin_repulsion",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_121/retry/directed_pairwise_margin_repulsion/proposal.json",
+  "started_utc": "2026-10-22T21:24:53.505747+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_pairwise_margin_repulsion",
+      "tokens": {
+        "input": 40557,
+        "output": 1393,
+        "reasoning": 186
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": false,
+      "detail": "1 of 8 declared checks failed",
+      "failed": [
+        "gradient_source"
+      ]
+    }
+  },
+  "status": "rejected",
+  "reason": "the independent checks rejected the implementation",
+  "wall_clock_s": 33.0,
+  "cold_run_gpu_minutes": 0.0
+}
