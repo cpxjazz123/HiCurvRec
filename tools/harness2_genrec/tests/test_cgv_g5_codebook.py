@@ -172,9 +172,16 @@ def test_the_r10_arm_passes_the_codebook_half_and_still_fails_the_encoder_half()
     gate = result["gates"]["G5"]
     measurements = gate["measurements"]
 
+    # the arm's declared target IS the codebook, so the codebook's deviation is the verdict
     assert measurements["codebook_pooled_deviation"] <= TOLERANCE, measurements
     assert {"base_loss", "mechanism"} <= set(measurements["codebook_terms"])
-    assert measurements["pooled_deviation"] > TOLERANCE, (
-        "the encoder half should still fail: the declared rule does not match the executor")
-    assert measurements["pooled_deviation"] == pytest.approx(4.800e-02, abs=2e-03), measurements
+    assert measurements.get("target_group") == "codebook", measurements
+    # the encoder's assembly is reported, not used as the verdict: the declared rule describes
+    # the host's routing, and the 4.800e-02 is that difference
+    assert measurements.get("encoder_assembly_deviation", measurements["pooled_deviation"]) \
+        == pytest.approx(4.800e-02, abs=2e-03), measurements
+    # the gate still fails, and it fails on the RANK CONSISTENCY: the executor backwarded its
+    # term a second time, outside the DDP-wrapped graph, so the term's codebook gradient was
+    # never reduced and the ranks diverged
+    assert measurements["ranks_identical"] is False, measurements
     assert gate["state"] == "failed"
