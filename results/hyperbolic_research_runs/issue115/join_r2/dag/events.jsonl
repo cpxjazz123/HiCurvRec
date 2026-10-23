@@ -1,0 +1,12 @@
+{"at": 1792796625.2804759, "event": "ready", "task": "joinr:math"}
+{"at": 1792796625.283539, "event": "added", "task": "joinr:math"}
+{"at": 1792796625.2850094, "event": "ready", "task": "joinr:priorart"}
+{"at": 1792796625.287063, "event": "added", "task": "joinr:priorart"}
+{"at": 1792796625.288287, "event": "ready", "task": "joinr:invariants"}
+{"at": 1792796625.2903984, "event": "added", "task": "joinr:invariants"}
+{"at": 1792796625.2936783, "attempt": 1, "event": "dispatched", "owner": "issue115-joinr", "resource": "cpu", "task": "joinr:invariants"}
+{"at": 1792796625.3440833, "attempt": 1, "event": "dispatched", "owner": "issue115-joinr", "resource": "cpu", "task": "joinr:math"}
+{"at": 1792796625.3944757, "attempt": 1, "event": "dispatched", "owner": "issue115-joinr", "resource": "cpu", "task": "joinr:priorart"}
+{"at": 1792796655.873499, "detail": "the M agent finished its work", "event": "done", "task": "joinr:invariants"}
+{"at": 1792796660.6326566, "attempts": 1, "blocked": true, "error": "the verifier refused the output", "event": "failed", "task": "joinr:priorart"}
+{"at": 1792796682.194892, "detail": "the A agent finished its work", "event": "done", "task": "joinr:math"}
