@@ -110,3 +110,72 @@ def test_the_geodesic_sphere_is_not_tangent_and_the_audit_fixture_is_honest():
     assert float(distances.std()) < 1e-12, "the samples must be equidistant"
     centre, radius = B.fit_euclidean_sphere(sphere)
     assert float(centre.norm()) + radius < 1.0
+
+
+# --------------------------------------------------------------------------------------
+# the candidate's own fixtures: the Euclidean twin and the guard
+# --------------------------------------------------------------------------------------
+def test_the_euclidean_level_set_crosses_the_boundary_and_the_hyperbolic_one_touches_it():
+    """H2/H3: the mechanism rests on the curvature CLASS, not on the magnitude of c (F4).
+
+    The Busemann level set is a CLOSED sphere tangent to the boundary from inside; the Euclidean
+    level set is a disc whose rim lies ON the boundary. That is the structural difference the
+    mechanism uses: a horosphere has an inside and an outside, a half-space does not.
+    """
+    import horosphere as H
+
+    omega = torch.zeros(DIM, dtype=torch.float64)
+    omega[0] = 1.0
+    tangent = B.horosphere_points(omega, radius=0.5, count=64)
+    on_boundary = float((tangent.norm(dim=-1) > 1.0 - 1e-9).double().mean())
+
+    # the Euclidean level set at the same value: the plane <x, omega> = 0.5 cut by the ball
+    rim = []
+    for index in range(64):
+        angle = 2 * math.pi * index / 64
+        direction = torch.zeros(DIM, dtype=torch.float64)
+        direction[1] = math.cos(angle)
+        direction[2] = math.sin(angle)
+        rim.append(0.5 * omega + math.sqrt(0.75) * direction)
+    rim = torch.stack(rim)
+    euclid_on_boundary = float((rim.norm(dim=-1) > 1.0 - 1e-9).double().mean())
+
+    assert on_boundary < 0.05, on_boundary
+    assert euclid_on_boundary > 0.95, euclid_on_boundary
+    # and the hyperbolic level is exactly constant on its level set
+    assert H.level_spread_on(tangent, lambda p: B.busemann_boundary(p, omega)) < 1e-12
+
+
+def test_the_hyperbolic_level_is_asymmetric_where_the_euclidean_one_is_not():
+    """The Busemann level has an inside and an outside; the Euclidean linear functional splits
+    the ball roughly in half, so it cannot say 'which side of the horosphere'."""
+    import horosphere as H
+
+    omega = torch.zeros(DIM, dtype=torch.float64)
+    omega[0] = 1.0
+    grid = torch.rand(2000, DIM, dtype=torch.float64) * 1.6 - 0.8
+    inside = grid[(grid * grid).sum(-1) < 0.9]
+    hyperbolic = float((B.busemann_boundary(inside, omega) < 0).double().mean())
+    euclidean = float((H.euclidean_twin_level(inside, omega) < 0).double().mean())
+    assert hyperbolic > 0.9, hyperbolic
+    assert 0.35 < euclidean < 0.65, euclidean
+
+
+def test_the_guard_skips_the_rows_that_leave_the_band():
+    """H5: an out-of-band level is skipped and counted, never clamped to a constant."""
+    import horosphere as H
+
+    levels = torch.tensor([[0.5, -1.0], [30.0, 0.2], [0.1, -0.3]], dtype=torch.float64)
+    keep = H.guard_levels(levels, bound=20.0)
+    assert keep.tolist() == [True, False, True]
+
+
+def test_the_boundary_point_lies_on_the_boundary():
+    import horosphere as H
+
+    direction = torch.zeros(DIM, dtype=torch.float64)
+    direction[2] = 3.0
+    omega = H.boundary_point(direction, c=1.0)
+    assert float(omega.norm()) == pytest.approx(1.0, abs=1e-12)
+    omega4 = H.boundary_point(direction, c=4.0)
+    assert float(omega4.norm()) == pytest.approx(0.5, abs=1e-12)

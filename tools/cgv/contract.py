@@ -88,7 +88,7 @@ FORWARD_EFFECTS = ("none", "changes_forward")
 # must be either understood and acted on, or absent.
 SCHEMA_KEYS = {
     "mechanism": {"id", "type", "summary", "entrypoints", "executor", "activation",
-                  "mathematics", "inputs"},
+                  "mathematics", "inputs", "executor_style"},
     "model": {"adapter", "factory", "tokenizer_config", "forward", "parameter_groups", "probe"},
     "forward_contract": {"observables", "declared_effect", "invariants", "oracle", "atol"},
     "gradient_contract": {

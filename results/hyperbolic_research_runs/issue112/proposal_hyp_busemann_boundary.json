@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "mechanism_id": "hyp_busemann_boundary",
-  "version": "1",
+  "version": "3",
   "family": "D_horospheric_level_sets",
   "title": "The horosphere through the source, with the target's DIRECTION as the boundary base point",
   "equation": "omega = z_target / ||z_target||  (the target's direction, a point of the boundary sphere); b_omega(x) = log( (1 - ||x||^2) / ||x - omega||^2 ); L = -log softmax_j( -| b_omega(x_j) - b_omega(x_source) | / T )  at j = argmin_k ||z_target - c_k||",
@@ -185,7 +185,8 @@
       "inputs": "_b1_horosphere_inputs",
       "activation": {
         "requires": []
-      }
+      },
+      "executor_style": "returns_term"
     },
     "model": {
       "adapter": "rqvae",
@@ -211,7 +212,7 @@
         "recon_loss",
         "tokens"
       ],
-      "declared_effect": "tokens",
+      "declared_effect": "changes_forward",
       "invariants": [
         {
           "name": "finite"
@@ -293,7 +294,7 @@
       "observe": [
         {
           "name": "mechanism_calls",
-          "target": "mechanism_loss",
+          "target": "_hyp_mechanism_loss",
           "min": 1
         },
         {
@@ -313,8 +314,8 @@
   ],
   "provenance": {
     "authored_by": "agent_M_hyperbolic_mechanism_research_issue_112",
-    "authored_at": "2026-10-23T08:30:00Z",
-    "frozen_digest": "9cdf109e1fca129a4fa1936a71401a15457f0898ab98be1ffcd352e5508df443"
+    "authored_at": "2026-10-23T09:55:00Z",
+    "frozen_digest": "97b3938ba4b84c20d7b00078cfa8dcee1337879897a2e6bc17b478ccd0648de5"
   },
-  "proposal_sha256": "0d66784e9ea2c15d3a5dc3cf2e5fb528d702ac2f49e2ff7a13a5727ab20a7d9b"
+  "proposal_sha256": "823874c206c0c37d1d8372f8ca4de35fd5a2e483b1bf50b5b8a1d01d40934862"
 }
