@@ -4,14 +4,164 @@
   "dispatched_total": 0,
   "status_counts": {
     "blocked_no_novel_evidence": 1,
-    "pending": 3,
-    "ready": 8,
-    "waiting_authorisation": 6
+    "pending": 7,
+    "ready": 9,
+    "waiting_authorisation": 7
   },
-  "experiment_tasks": 6,
+  "experiment_tasks": 7,
   "experiment_done": 0,
   "authorisations": {},
   "tasks": [
+    {
+      "task_id": "hyp_busemann_boundary:eval_plan",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "eval_plan",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_busemann_boundary/plan"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
+    {
+      "task_id": "hyp_busemann_boundary:implement",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "implement",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_hyp_busemann_boundary"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
+    {
+      "task_id": "hyp_busemann_boundary:join_E",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "join_E",
+      "deps": [
+        "hyp_busemann_boundary:implement",
+        "hyp_busemann_boundary:oracle",
+        "hyp_busemann_boundary:eval_plan"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_busemann_boundary/join"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
+    {
+      "task_id": "hyp_busemann_boundary:oracle",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "oracle",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_busemann_boundary/oracle"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
+    {
+      "task_id": "hyp_busemann_boundary:review",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "join_R",
+      "deps": [],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_busemann_boundary/review"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "independent novelty/maths review of the boundary-Busemann proposal",
+      "status": "ready",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
+    {
+      "task_id": "hyp_busemann_boundary:stage2",
+      "candidate": "hyp_busemann_boundary",
+      "stage": "stage2",
+      "deps": [
+        "hyp_busemann_boundary:join_E"
+      ],
+      "resource": "gpu",
+      "kind": "experiment",
+      "write_scope": [
+        "results/stage2_RQ-VAE/TIGER_hyp_busemann_boundary"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "description": "",
+      "status": "waiting_authorisation",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "started_at": null,
+      "finished_at": null,
+      "detail": "no operator authorisation for a GPU run"
+    },
     {
       "task_id": "hyp_product_l1_quantiser:eval_plan",
       "candidate": "hyp_product_l1_quantiser",

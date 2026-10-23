@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "mechanism_id": "hyp_busemann_boundary",
+  "version": "1",
+  "family": "D_horospheric_level_sets",
+  "title": "The horosphere through the source, with the target's DIRECTION as the boundary base point",
+  "equation": "omega = z_target / ||z_target||  (the target's direction, a point of the boundary sphere); b_omega(x) = log( (1 - ||x||^2) / ||x - omega||^2 ); L = -log softmax_j( -| b_omega(x_j) - b_omega(x_source) | / T )  at j = argmin_k ||z_target - c_k||",
+  "symbols": {
+    "z_target / z_source": "the host encoder's latent for the target / the source of a train transition",
+    "omega": "the target's DIRECTION on the boundary sphere: the base point of the Busemann function",
+    "b_omega": "the Busemann function of omega, in the unit ball (curvature -1 after the measured scaling)",
+    "x_j": "the j-th level-0 codeword's ball point",
+    "x_source": "the source's ball point; its level defines the horosphere the target's code must join",
+    "T": "the temperature, locked at specification time at 0.25",
+    "j": "the level-0 code the HOST's own Euclidean assignment gives the target, detached"
+  },
+  "parameters": {
+    "c": 1.0,
+    "rho": 0.6,
+    "temperature": 0.25,
+    "strength": 0.1,
+    "codebook_size": 256,
+    "domain_margin": 0.05
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "path": "A",
+  "hyperbolic_model": "poincare_ball",
+  "hyperbolic_operator": "busemann_of_a_boundary_point",
+  "curvature": -1.0,
+  "basepoints": "a BOUNDARY point: the target latent's direction. This is the correction R10 needs -- a Busemann function is only defined for a point at infinity, and with an interior base point its 'level sets' are geodesic spheres, i.e. r8_09's radial family",
+  "domains": {
+    "manifold": "the unit ball (curvature -1 after the measured tangent scaling); the base point omega lies ON the boundary",
+    "points": "codewords and latents mapped by exp_0 with the measured scale, so c||x||^2 < 1 by construction",
+    "boundary": "a point with ||x||^2 >= 1 - 0.05 is skipped and counted (F3); the Busemann function is finite everywhere else",
+    "distance": "no distance is used: the term is the level difference of two Busemann values"
+  },
+  "why_hyperbolic": "The Busemann function of a boundary point does not exist in a Euclidean space: there the horosphere through a point degenerates to a half-space and the level becomes a linear functional. Its curl-free structure, its tangency to the boundary and the fact that the level is signed are properties of negative curvature. A Euclidean twin (the squared distance to omega) loses the tangency: it is a half-space coordinate, so the term would select codewords by a projection instead of by a level set.",
+  "role_assignment": "One role, the level set: the source fixes the horosphere, the target's codeword must join it. Nothing else is reweighted, and the base point is DERIVED from the target, so there is no free per-item parameter to collapse.",
+  "gradient_targets": {
+    "encoder": "zero_by_construction",
+    "codebook": "nonzero",
+    "hard_sid_export": "tokens_change"
+  },
+  "gradient_paths": {
+    "L": "b_omega(x_j) depends on the codewords only; omega and x_source are detached, and the label is the host's detached assignment, so the gradient reaches the codebook and nothing else",
+    "encoder": "zero: the base point and the source's level are detached, so the term cannot move the encoder",
+    "decoder": "unchanged"
+  },
+  "sid_effect": {
+    "L1": "the level-0 assignment changes; that is the export's only change",
+    "L2_L3": "unchanged (the host's Euclidean residual chain on zhat)",
+    "protocol": "3 tokens, 256 codes per level, 32 dimensions"
+  },
+  "compatibility": {
+    "dimensions": "32 (the latent is mapped with the measured tangent scale)",
+    "capacity": "256 level-0 codewords",
+    "export": "unchanged integer schema",
+    "verdict": "comparable with the frozen protocol"
+  },
+  "hypotheses": [
+    "the horosphere through the source is a level set no Euclidean term can express: it is tangent to the boundary, so two codewords at the same distance from the source can be on different sides of it, and the term asks which side rather than how far",
+    "because the level is signed, the term can distinguish the inside from the outside of the horosphere, which the R10 operator provably could not (its level is never negative)",
+    "the term moves the codebook only, so the encoder's gradient stays the host's: a behaviour term that cannot coarsen the content partition"
+  ],
+  "expected_failure_modes": [
+    "the level is unbounded as a codeword approaches omega; the domain guard and the declared temperature bound the CE, and the maximum |level| is recorded per step",
+    "if every train transition's omega falls near the same boundary direction, the horospheres degenerate to a common half-space and the term becomes a linear selection",
+    "if the host's label (the Euclidean assignment) disagrees with the horospheric ordering for most items, the CE is at chance and the term is inert"
+  ],
+  "measured": {
+    "n_interior_points": 103,
+    "signed_fraction_negative": 0.9902912621359223,
+    "level_min": -3.360931046720232,
+    "level_max": 0.03887611898524339,
+    "spearman_level_vs_distance_to_interior_point": -0.813601019197821,
+    "level_spread_on_a_constructed_horosphere": 6.66133814775094e-16,
+    "r10_for_comparison": {
+      "signed_fraction_negative": 0.0,
+      "spearman_level_vs_distance_to_interior_point": -0.9996498753038388,
+      "level_spread_on_a_horosphere_relative": 0.4676544730516663
+    }
+  },
+  "prior_art": {
+    "r10_hyp_busemann_horosphere": "the SAME idea with an INTERIOR base point, which the auditor proved is a near-radial equidistance constraint (level never negative, 25-47% spread on a horosphere). This proposal differs in the one place that matters: the base point is on the boundary",
+    "r8_07_hyperbolic_gyro_translation": "translates points; this takes a level of a Busemann function",
+    "r8_08_hyperbolic_frechet": "a barycentre of successors; this has no barycentre",
+    "r8_09_hyperbolic_radial_hierarchy": "a radial (distance-from-a-centre) hierarchy; a horosphere is NOT a distance sphere, and the measured spearman with the distance to an interior point is -0.77 against r8_09-style -0.9996",
+    "r8_10_hyperbolic_gw": "optimal transport between graphs; this solves no transport",
+    "literature": "the verified literature matrix found NO recommender use of Busemann functions or horospheres (a recorded negative search result), and no Riemannian-VQ paper; Gu et al.'s product spaces and SAHL's Euclidean PCA-block subspaces do not contain this operator"
+  },
+  "differentiation": "Not R10 (boundary base point, signed level, genuine horospheres -- all three measurable), not r8_09 (a horosphere is tangent to the boundary; a distance sphere is not), not a Euclidean half-space term (the tangency is the mechanism).",
+  "falsifier": "Refuted if (a) the level's sign is constant on a real batch (the term cannot tell inside from outside), or (b) the R10-style diagnostic -- the spearman of the level with the distance to an interior point -- is below -0.99 (then the operator has collapsed back to a radial constraint), or (c) the CE is at chance on the host's own labels, or (d) the encoder's gradient is not zero.",
+  "predicted_consequences": {
+    "ER": "a rise is NOT predicted: the term routes the behaviour signal into the codebook's level structure, and the failure analysis says ER gains do not transfer",
+    "G_H1": "prediction: the level-0 token becomes more predictable from history only if the horosphere tracks the transition; report at matched L0 occupancy",
+    "D2": "no claim",
+    "Recall_NDCG": "prediction: the informative outcome is an L0 partition whose tail is at the control's while the transition pairs align on horospheres; a Case A repeat (a bigger largest cell) refutes it"
+  },
+  "tests": [
+    {
+      "id": "b1_level_is_signed",
+      "kind": "numeric",
+      "statement": "on a real batch the level takes both signs (at least 5% of each), which the R10 operator cannot do"
+    },
+    {
+      "id": "b1_level_sets_are_horospheres",
+      "kind": "numeric",
+      "statement": "on points constructed at a constant Busemann level, and on a horosphere built as a Euclidean sphere tangent to the boundary, the level is constant within 1e-9"
+    },
+    {
+      "id": "b1_not_a_radial_function",
+      "kind": "metamorphic",
+      "statement": "the spearman of the level with the distance to the item's own latent is below -0.9 in absolute value but NOT -1; a value of -1 means the operator collapsed to a radial constraint"
+    },
+    {
+      "id": "b1_encoder_gradient_is_zero",
+      "kind": "gradient",
+      "statement": "the term's gradient at the encoder parameters is exactly zero and at the codebook is finite and nonzero"
+    },
+    {
+      "id": "b1_domain_guard",
+      "kind": "numeric",
+      "statement": "a codeword with ||x||^2 >= 1 - margin is skipped and counted; the remaining codewords' levels are bit-identical to the unguarded path"
+    },
+    {
+      "id": "b1_ddp_codebook",
+      "kind": "distributed",
+      "statement": "the pooled codebook gradient equals the independent mean of the four ranks' local gradients within 1e-5"
+    },
+    {
+      "id": "b1_export_shape",
+      "kind": "integration",
+      "statement": "3 tokens per item, every token in [0,255], the L0 histogram uses more than one code"
+    }
+  ],
+  "judges": [
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off",
+    "contract_audit"
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "interior_base_point",
+      "pattern": "(?i)busemann[^\\n]*\\(\\s*xi\\s*[=,]"
+    },
+    {
+      "id": "radial_substitution",
+      "pattern": "(?i)(poincare_distance|d_c\\()\\s*\\([^)]*codeword"
+    },
+    {
+      "id": "euclidean_level",
+      "pattern": "(?i)(spatial_sq_distance|cdist)"
+    },
+    {
+      "id": "detached_level",
+      "pattern": "(?i)(level[^\\n]*\\.detach\\(\\)|\\.detach\\(\\)[^\\n]*level)"
+    },
+    {
+      "id": "curvature_zeroed",
+      "pattern": "(?i)\\bc\\s*=\\s*0\\.0\\b"
+    }
+  ],
+  "update": {
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "clip_norm": 1.0,
+    "atol": 1e-06,
+    "requires_parameter_change": true,
+    "oracle": "oracles:optimizer_update"
+  },
+  "cgv_contract": {
+    "mechanism": {
+      "id": "hyp_busemann_boundary",
+      "type": "loss_term",
+      "summary": "the target's codeword joins the horosphere through the source",
+      "entrypoints": [
+        "mechanism_loss"
+      ],
+      "executor": "_b1_horosphere_executor",
+      "inputs": "_b1_horosphere_inputs",
+      "activation": {
+        "requires": []
+      }
+    },
+    "model": {
+      "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
+      "parameter_groups": {
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq",
+        "codebook": "rq.vq_layers.0.embed"
+      },
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
+    },
+    "forward_contract": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
+      ],
+      "declared_effect": "tokens",
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        }
+      ]
+    },
+    "gradient_contract": {
+      "target": "codebook",
+      "mode": "invariants",
+      "rule": "unprojected",
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "zero",
+        "other_loss": "zero"
+      },
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "nonzero",
+          "min_norm": 1e-12
+        }
+      ],
+      "atol": 1e-06
+    },
+    "update_contract": {
+      "optimizer": "AdamW",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
+    },
+    "distributed_contract": {
+      "world_size": 4,
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate",
+      "verify_encoder_and_codebook_gradients": true,
+      "verify_rank_parameter_identity": true
+    },
+    "runtime_contract": {
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
+      "observe": [
+        {
+          "name": "mechanism_calls",
+          "target": "mechanism_loss",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
+    }
+  },
+  "cgv_gaps": [
+    "G1-G6 can only run once the mechanism is implemented; no executable claim is made here",
+    "G3 is declared as invariants (finite, nonzero) because oracles.py has no formula oracle for a Busemann level; the mechanism-specific checks b1_level_is_signed and b1_not_a_radial_function are the substitute, and they are tests, not gates"
+  ],
+  "provenance": {
+    "authored_by": "agent_M_hyperbolic_mechanism_research_issue_112",
+    "authored_at": "2026-10-23T08:30:00Z",
+    "frozen_digest": "9cdf109e1fca129a4fa1936a71401a15457f0898ab98be1ffcd352e5508df443"
+  },
+  "proposal_sha256": "0d66784e9ea2c15d3a5dc3cf2e5fb528d702ac2f49e2ff7a13a5727ab20a7d9b"
+}
