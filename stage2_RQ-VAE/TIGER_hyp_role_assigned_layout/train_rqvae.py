@@ -163,14 +163,14 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyp_factor_nce_c1"   # the R4-08 host + the product-geodesic level-0 assignment: the level-0 code is the argmin of a sum of two factor geodesic distances
+EXPERIMENT_ARM = "hyp_role_assigned_layout"   # the R4-08 host with a ROLE-ASSIGNED token layout: levels 0 and 1 are the host's residual chain and level 2 carries the behaviour factor (the direction to the mean successor) instead of the residual's remainder. The reconstruction uses levels 0 and 1 only.
 # === 唯一机制 (CLAUDE.md §1: 只有 resample, 没有可选臂) ===
 # resample 是本树唯一允许的机制 (Stage3 test_recall@10 = 0.0637372)。其余臂与其
 # 查表仅作历史记录保留在文件里, 但一旦被选中即在导入时失败, 不允许运行。
-if EXPERIMENT_ARM not in ("r4_08", "r7_f_primary", "r8_control", "hyp_factor_nce_c1"):
+if EXPERIMENT_ARM not in ("r4_08", "r7_f_primary", "r8_control", "hyp_role_assigned_layout"):
     raise RuntimeError(
-        f"only the 'r4_08', 'r7_f_primary' and 'r8_control' arms may run in this tree; "
-        f"got {EXPERIMENT_ARM!r}"
+        f"only the 'r4_08', 'r7_f_primary', 'r8_control' and 'hyp_role_assigned_layout' arms may "
+        f"run in this tree; got {EXPERIMENT_ARM!r}"
     )
 _ANTI_COLLAPSE_FLAGS = ARM_FLAGS.get(EXPERIMENT_ARM)
 # Seed replication arms. Exp1a beat the R48 baseline by only ~1.7 unpaired
@@ -1153,6 +1153,9 @@ def _tokenizer_config() -> SimpleNamespace:
     if len(sizes) != CODEBOOK_NUM:
         raise ValueError("CODEBOOK_SIZE must contain one size or one size per codebook level")
     return SimpleNamespace(
+        # the role-assigned level: level 2 quantises the behaviour factor, not the residual's
+        # remainder, and contributes nothing to the reconstruction (-1 is the host's chain)
+        role_level=2,
         hidden_sizes=HIDDEN_SIZES,
         codebook_num=CODEBOOK_NUM,
         codebook_size=tuple(sizes),
@@ -1165,6 +1168,40 @@ def _tokenizer_config() -> SimpleNamespace:
         sk_epsilon=SK_EPSILON,
         sk_iters=SK_ITERS,
     )
+
+
+def _behaviour_factors(model, embeddings: torch.Tensor, pairs: np.ndarray) -> torch.Tensor:
+    """The role signal for the role-assigned level: the direction to the mean successor.
+
+    b(x) = normalise(mean_{y in succ(x)} phi(y) - phi(x)), where phi is the model's ENCODER and
+    succ(x) are the items that follow x in a user history, taken from the trainer's own pair
+    stream. The signal lives in the model's own 32-dimensional latent space, so the role
+    level's codebook keeps the frozen capacity (three levels, 256 codes, 32 dimensions).
+
+    It is recomputed from the current encoder, so the role token is learned jointly with the
+    content levels rather than being a fixed catalogue label. An item with no successor takes
+    the mean direction, so the assignment stays deterministic.
+    """
+    n_items = int(embeddings.shape[0])
+    with torch.no_grad():
+        latent = model.encoder(embeddings)
+    source = torch.as_tensor(np.asarray(pairs)[:, 0], dtype=torch.long, device=latent.device)
+    target = torch.as_tensor(np.asarray(pairs)[:, 1], dtype=torch.long, device=latent.device)
+    keep = (source >= 0) & (source < n_items) & (target >= 0) & (target < n_items)
+    source, target = source[keep], target[keep]
+    if source.numel() == 0:
+        raise RuntimeError("the training parquet produced no successor pairs")
+    sums = torch.zeros_like(latent)
+    counts = torch.zeros(n_items, dtype=latent.dtype, device=latent.device)
+    sums.index_add_(0, target, latent[source])
+    counts.index_add_(0, target, torch.ones(target.numel(), dtype=latent.dtype,
+                                             device=latent.device))
+    has = counts > 0
+    factors = torch.zeros_like(latent)
+    factors[has] = torch.nn.functional.normalize(sums[has] / counts[has].unsqueeze(1), dim=1)
+    fallback = torch.nn.functional.normalize(factors[has].mean(dim=0), dim=0)
+    factors[~has] = fallback
+    return factors
 
 
 def main() -> None:
@@ -1267,7 +1304,7 @@ def main() -> None:
         directional_heads = DirectionalHeads().to(device)
         raw_module.directional_heads = directional_heads
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_embeddings, torch.from_numpy(train_ids))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -1360,7 +1397,11 @@ def main() -> None:
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
+        # the role level's codebook is fitted to the role signal of the items it will encode
+        init_role_factors = _behaviour_factors(raw_module, all_embeddings.to(device),
+                                               pair_dataset.pairs)
+        raw_module.init_codebook(train_embeddings.to(device),
+                                 role_inputs=init_role_factors[torch.from_numpy(train_ids)].to(device))
     if world_size > 1:
         dist.barrier()
 
@@ -1414,7 +1455,11 @@ def main() -> None:
             raw_module.rq.vq_layers[0]._hyp_assignment_active = epoch_hyp_alpha > 0.0
         _epoch_t0 = time.time()
         hyperbolic_losses = []
-        for (batch,) in loader:
+        # the role signal, recomputed from the current encoder: the role level's codebook and
+        # the encoder are trained together, so the factor table is refreshed every epoch
+        role_factors = _behaviour_factors(raw_module, all_embeddings.to(device),
+                                          pair_dataset.pairs)
+        for batch, batch_index in loader:
             if R7_F_MAX_STEPS and _R7F_GLOBAL_STEP[0] >= R7_F_MAX_STEPS:
                 # EXACTLY the budget: stop before taking an extra optimizer step.
                 _R7F_DONE[0] = True
@@ -1427,7 +1472,8 @@ def main() -> None:
                 epoch_weight = _PROBE_STEP_WEIGHT_HOOK(epoch, epoch_weight)
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _, _ = model(
+                batch, role_inputs=role_factors[batch_index.to(device)])
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             base_loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             behavior_loss = torch.zeros((), device=device)
@@ -1843,8 +1889,11 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
+                    export_roles = _behaviour_factors(raw_module, all_embeddings.to(device),
+                                                      pair_dataset.pairs)
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        all_embeddings.to(device), infer_use_sk=False,
+                        role_inputs=export_roles,
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -1904,8 +1953,11 @@ def main() -> None:
             layer._skip_ddp_reduce = True
         try:
             with torch.no_grad():
+                export_roles = _behaviour_factors(raw_module, all_embeddings.to(device),
+                                                  pair_dataset.pairs)
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
+                    all_embeddings.to(device), infer_use_sk=False,
+                    role_inputs=export_roles,
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
