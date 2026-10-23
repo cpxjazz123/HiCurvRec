@@ -64,9 +64,13 @@ cell 41 → the product metric's 58 on the same codebook) are a geometry probe, 
 ```bash
 python tools/harness2_genrec/history_probe.py \
     --mechanism-id hyp_product_l1_quantiser \
-    --sid results/stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser/item_sids.json \
+    --sid results/stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser/sids_for_hgrec.npy \
     --device cuda
 ```
+
+**The probe reads the `.npy` export, not `item_sids.json`** — a rehearsal against the archived
+control showed the JSON export cannot be loaded by the probe's loader, and the plan said
+otherwise until the rehearsal caught it.
 
 The probe is defined by the frozen configuration (history length 20, embedding and hidden 128, one
 layer, 6 epochs, batch 512, Adam 1e-3, a user-disjoint train/dev split, seed 42) and it computes

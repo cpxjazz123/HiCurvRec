@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "purpose": "a READ-ONLY rehearsal of the frozen G_H1 probe path against an archived export, so the authorised run's probe cannot fail for a trivial reason",
+  "attempts": [
+    {
+      "sid": "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/item_sids.json",
+      "outcome": "refused",
+      "rule": "missing_export",
+      "detail": "the export the probe would read is missing at that path",
+      "what_it_proves": "the probe fails closed on a missing export instead of guessing"
+    },
+    {
+      "sid": "results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+      "outcome": "refused",
+      "rule": "no_repeated_probe",
+      "detail": "a probe was already run for this export as 'behavior_conditioned_pairwise_margin'; issue #109 allows one lightweight probe per genuinely new arm, and a probe under a renamed arm is the same probe",
+      "what_it_proves": "the probe's registry is keyed by the EXPORT, so a renamed arm cannot buy a second probe, and the new candidate's own export will be a first probe (allowed)"
+    }
+  ],
+  "consequences_for_the_plan": [
+    "the probe reads the .npy export (sids_for_hgrec.npy), NOT item_sids.json; the evaluation plan said otherwise until this rehearsal caught it",
+    "the probe is armed and will run on the new arm's own export exactly once"
+  ],
+  "note": "no probe was executed: both attempts were refused by the verifier before any training"
+}
