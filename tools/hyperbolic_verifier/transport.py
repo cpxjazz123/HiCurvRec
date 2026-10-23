@@ -70,6 +70,17 @@ def riemannian_norm(v: torch.Tensor, point: torch.Tensor, c: float) -> torch.Ten
     return conformal(point, c) * torch.linalg.vector_norm(v, dim=-1)
 
 
+def expmap0(x: torch.Tensor, c: float) -> torch.Tensor:
+    """The exponential map at the origin: a tangent vector -> the ball of curvature -c.
+
+    Its image always satisfies ``c||y||^2 < 1``, so the ball constraint is structural rather
+    than something a clamp has to maintain.
+    """
+    root = math.sqrt(c)
+    norm = torch.linalg.vector_norm(x, dim=-1, keepdim=True).clamp_min(1e-12)
+    return torch.tanh(root * norm) / (root * norm) * x
+
+
 def logmap0(x: torch.Tensor, c: float) -> torch.Tensor:
     """The exponential map at the origin, inverted."""
     root = math.sqrt(c)
@@ -79,6 +90,7 @@ def logmap0(x: torch.Tensor, c: float) -> torch.Tensor:
 
 __all__ = [
     "conformal",
+    "expmap0",
     "gyration",
     "logmap0",
     "mobius_add",

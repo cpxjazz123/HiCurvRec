@@ -3,10 +3,10 @@
   "idle_ticks": 17,
   "dispatched_total": 8,
   "status_counts": {
-    "blocked_no_novel_evidence": 4,
+    "blocked_no_novel_evidence": 5,
     "done": 4,
     "pending": 8,
-    "ready": 5,
+    "ready": 4,
     "waiting_authorisation": 7
   },
   "experiment_tasks": 7,
@@ -27,7 +27,7 @@
       "max_attempts": 2,
       "requires": null,
       "description": "the next candidate must be a DIFFERENT family from the three that are closed (horosphere: twice; transported residual: ill posed then an identity) and from the product-geodesic L1 assignment that is approved. The question to answer with measured evidence: which L1 objective can be moved onto a DIFFERENT parameter group than the L1 codebook's assignment, so that the content partition cannot be coarsened by the behaviour signal -- and the L0 tail (largest cell, distinct codes) is the measurable target, because that is what the cohort's failures moved",
-      "status": "ready",
+      "status": "blocked_no_novel_evidence",
       "lease_owner": "",
       "lease_expires": 0.0,
       "attempts": 0,
@@ -36,7 +36,7 @@
       "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
-      "detail": ""
+      "detail": "the next family was pre-checked and closed: the LEVEL-WISE factorisation changes 3.5-6.9% of the per-level assignments but leaves the tree's structure unchanged (L1->L2 3612->3613, L2->L3 3806->3809, the distinct code counts identical), so the deeper tree's weakness is not a geometry problem. The next question must attack the RESIDUAL's information content"
     },
     {
       "task_id": "hyp_busemann_boundary:eval_plan",
