@@ -1,0 +1,9 @@
+# QUESTION (A) -- does a NONTRIVIAL hyperbolic operator remain?
+The frozen proposal (spec.json) declares levels 0 and 1 hyperbolic. The implementation
+(`train_rqvae.py`, `layers.py`) installs a role level and uses the host's residual chain.
+Read the three staged files and answer, with file/line evidence:
+1. Which code path actually computes a Poincare/product-geodesic distance at level 0 and 1?
+2. Does the trained forward pass use it, or is it bypassed (`hyperbolic_distance_fn is None`)?
+3. Verdict: is the candidate genuinely hyperbolic, or is the geometry vestigial?
+Write `verdict.md` with sections EVIDENCE, VERDICT (one of GENUINELY_HYPERBOLIC / VESTIGIAL /
+UNKNOWN) and RISK.

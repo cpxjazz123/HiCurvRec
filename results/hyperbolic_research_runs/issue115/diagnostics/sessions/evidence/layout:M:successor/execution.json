@@ -1,0 +1,57 @@
+{
+  "role": "M",
+  "task_id": "layout:M:successor",
+  "ok": true,
+  "started_utc": "2026-10-23T15:40:52Z",
+  "finished_utc": "2026-10-23T15:41:13Z",
+  "elapsed_s": 20.83,
+  "pid": 2825837,
+  "model": "openai/gpt-6-luna",
+  "prompt_sha256": "cbdbf38ca0083fd374f8793b09a1e2cbec0c785b4fcaf5fd04cc8ac0b14bbdff",
+  "inputs_hash": "",
+  "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "openai/gpt-6-luna",
+    "--title",
+    "M:layout:M:successor",
+    "# QUESTION (B) -- is the successor mean actually the SUCCESSOR?\nIn `train_rqvae.py`, `_behaviour_factors` builds the behaviour factor from a pair array:\n`sums.index_add_(0, target, latent[source])`, then `factors[has] = normalise(sums/counts - latent)`.\nRead `TransitionPairs`' construction and the pair column order used at the call site, and answer:\n1. Which column is the source and which is the target (the item that FOLLOWS)?\n2. Is the mean accumulated over the SUCCESSORS of each item, or over its PREDECESSORS?\n3. Verdict: SUCCESSOR / PREDECESSOR / MIXED, with the exact line numbers that decide it.\nWrite `verdict.md` with sections EVIDENCE, VERDICT and CONSEQUENCE."
+  ],
+  "workspace": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/workspaces/layout:M:successor",
+  "cwd": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/workspaces/layout:M:successor",
+  "exit_code": 0,
+  "timed_out": false,
+  "n_tool_calls": 9,
+  "tools": [
+    "grep",
+    "grep",
+    "glob",
+    "read",
+    "read",
+    "grep",
+    "read",
+    "read",
+    "patch"
+  ],
+  "tokens": {
+    "input": 15576,
+    "output": 847,
+    "reasoning": 147
+  },
+  "cost": 0.0,
+  "session_path": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/evidence/layout:M:successor/session.json",
+  "tool_jsonl_path": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/evidence/layout:M:successor/session.jsonl",
+  "outputs": [
+    "verdict.md"
+  ],
+  "missing_outputs": [],
+  "verification": {
+    "ok": true,
+    "bytes": 1848
+  },
+  "error": ""
+}
