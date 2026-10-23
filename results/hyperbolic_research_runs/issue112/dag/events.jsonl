@@ -113,3 +113,12 @@
 {"at": 1792751031.8682015, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:eval_plan"}
 {"at": 1792751031.8748515, "detail": "the read-only evaluation plan is written: results/hyperbolic_research_runs/issue112/evaluation_plan_hyp_product_l1_quantiser.md", "event": "done", "task": "hyp_product_l1_quantiser:eval_plan"}
 {"at": 1792751043.8642576, "attempts": 1, "blocked": false, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "hyp_busemann_boundary:review"}
+{"at": 1792751206.0826557, "attempt": 2, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_busemann_boundary:review"}
+{"at": 1792751206.089902, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:implement"}
+{"at": 1792751206.097551, "detail": "the sealed tree is built and its smoke test recomputes the declared assignment formula exactly; the CGV passes G1-G6 on it and the arm's own gradient-pathway check passes on the real data", "event": "done", "task": "hyp_product_l1_quantiser:implement"}
+{"at": 1792751206.1025605, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:oracle"}
+{"at": 1792751206.1068773, "event": "ready", "task": "hyp_product_l1_quantiser:join_E"}
+{"at": 1792751206.1096182, "detail": "the independent oracles are in place: tools/hyperbolic_verifier/transport.py (five regression tests) and busemann.py / horosphere.py (ten), plus the arm's smoke test that recomputes the declared formula", "event": "done", "task": "hyp_product_l1_quantiser:oracle"}
+{"at": 1792751206.1147878, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:join_E"}
+{"at": 1792751206.1215699, "detail": "the join passed: the CGV's G1-G6 on the identical frozen tree and the complete H gates; join_e_hyp_product_l1_quantiser.json", "event": "done", "task": "hyp_product_l1_quantiser:join_E"}
+{"at": 1792751206.1257894, "attempts": 2, "blocked": true, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "hyp_busemann_boundary:review"}
