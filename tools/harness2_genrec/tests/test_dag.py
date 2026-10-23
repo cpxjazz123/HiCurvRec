@@ -374,3 +374,41 @@ def test_a_supervised_worker_marks_a_raising_task_failed_and_retries(tmp_path):
     assert attempts == [1, 2]
     assert graph.task("flaky").status == D.BLOCKED
     assert "boom" in graph.task("flaky").error
+
+
+# --------------------------------------------------------------------------------------
+# the gate: the dependency graph itself refuses to release what follows an unmet gate
+# --------------------------------------------------------------------------------------
+def test_a_gated_task_refuses_to_complete_without_a_satisfied_measurement(tmp_path):
+    """The ER gate before Stage-3 lives in the GRAPH, not only in the evaluation plan."""
+    graph = D.DAG(tmp_path, lease_ttl=60)
+    graph.add(D.Task(task_id="er_gate", candidate="arm", stage="er_gate",
+                     requires={"metric": "hard_l1_er", "op": ">", "threshold": 16.38953942232631},
+                     write_scope=("out/gate",)))
+    graph.add(D.Task(task_id="stage3", candidate="arm", stage="stage3", deps=("er_gate",),
+                     resource="gpu", kind="experiment", write_scope=("out/stage3",)))
+    graph.tick(owner="w")
+    assert graph.task("er_gate").status == D.RUNNING
+    assert graph.task("stage3").status == D.PENDING, "Stage-3 waits for the gate"
+
+    with pytest.raises(D.SchedulerError):
+        graph.complete("er_gate", "w")                       # no measurement at all
+    with pytest.raises(D.SchedulerError):
+        graph.complete("er_gate", "w", metrics={"hard_l1_er": 16.2})
+    with pytest.raises(D.SchedulerError):
+        # strict: a value exactly AT the threshold does not clear a ">" gate
+        graph.complete("er_gate", "w", metrics={"hard_l1_er": 16.38953942232631})
+    assert graph.task("er_gate").status == D.RUNNING, "a refused gate is not completed"
+
+    graph.complete("er_gate", "w", metrics={"hard_l1_er": 16.9})
+    assert graph.task("er_gate").status == D.DONE
+    assert graph.task("stage3").status == D.READY, "the gate releases what depends on it"
+    recorded = graph.task("er_gate").as_dict().get("gate_measurement")
+    assert recorded and recorded["metric"] == "hard_l1_er" and recorded["value"] == 16.9
+
+
+def test_a_task_with_a_malformed_requirement_is_refused(tmp_path):
+    graph = D.DAG(tmp_path, lease_ttl=60)
+    with pytest.raises(D.SchedulerError):
+        graph.add(D.Task(task_id="bad_gate", candidate="arm", stage="er_gate",
+                         requires={"op": ">"}))

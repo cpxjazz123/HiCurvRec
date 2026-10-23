@@ -91,6 +91,7 @@ class Task:
     write_scope: tuple[str, ...] = ()
     verify: tuple[str, ...] = ()
     max_attempts: int = 2
+    requires: dict | None = None
     description: str = ""
     status: str = PENDING
     lease_owner: str = ""
@@ -98,6 +99,7 @@ class Task:
     attempts: int = 0
     error: str = ""
     artifacts: list[dict[str, str]] = field(default_factory=list)
+    gate_measurement: dict | None = None
     started_at: float | None = None
     finished_at: float | None = None
     detail: str = ""
@@ -107,10 +109,12 @@ class Task:
             "task_id": self.task_id, "candidate": self.candidate, "stage": self.stage,
             "deps": list(self.deps), "resource": self.resource, "kind": self.kind,
             "write_scope": list(self.write_scope), "verify": list(self.verify),
-            "max_attempts": self.max_attempts, "description": self.description,
+            "max_attempts": self.max_attempts, "requires": self.requires,
+            "description": self.description,
             "status": self.status, "lease_owner": self.lease_owner,
             "lease_expires": self.lease_expires, "attempts": self.attempts,
             "error": self.error, "artifacts": list(self.artifacts),
+            "gate_measurement": self.gate_measurement,
             "started_at": self.started_at, "finished_at": self.finished_at,
             "detail": self.detail,
         }
@@ -122,7 +126,22 @@ class Task:
         known["write_scope"] = tuple(known.get("write_scope") or ())
         known["verify"] = tuple(known.get("verify") or ())
         known["artifacts"] = list(known.get("artifacts") or [])
+        known["gate_measurement"] = known.get("gate_measurement")
         return cls(**known)
+
+
+def _satisfies(measured: float, op: str, threshold: float) -> bool:
+    if op == ">":
+        return measured > threshold
+    if op == ">=":
+        return measured >= threshold
+    if op == "<":
+        return measured < threshold
+    if op == "<=":
+        return measured <= threshold
+    if op == "==":
+        return measured == threshold
+    raise SchedulerError(f"unknown comparison {op!r}")
 
 
 def validate_task(task: Task) -> list[str]:
@@ -141,6 +160,14 @@ def validate_task(task: Task) -> list[str]:
         problems.append(f"{task.task_id}: max_attempts must be at least 1")
     if task.task_id in task.deps:
         problems.append(f"{task.task_id}: depends on itself")
+    if task.requires is not None:
+        requirement = task.requires
+        if not isinstance(requirement, dict) or "metric" not in requirement:
+            problems.append(f"{task.task_id}: requires needs a metric name")
+        elif requirement.get("op", ">") not in (">", ">=", "<", "<=", "=="):
+            problems.append(f"{task.task_id}: requires.op {requirement.get('op')!r} is unknown")
+        elif "threshold" not in requirement:
+            problems.append(f"{task.task_id}: requires needs a threshold")
     return problems
 
 
@@ -418,7 +445,7 @@ class DAG:
         return True
 
     def complete(self, task_id: str, owner: str, *, artifacts: Iterable[str] = (),
-                 detail: str = "") -> None:
+                 detail: str = "", metrics: dict[str, Any] | None = None) -> None:
         with self._Lock(self.lock_path):
             state = self._read_state()
             value = state["tasks"].get(task_id)
@@ -428,6 +455,25 @@ class DAG:
                 raise SchedulerError(
                     f"task {task_id!r} is {value['status']}, owner {value['lease_owner']!r}; "
                     f"only the lease holder can complete it")
+            # A GATE. The dependency graph itself refuses to release what follows a gate whose
+            # measurement does not clear the threshold -- the ER gate before Stage-3 is the case
+            # that matters, because a coordinator that ignored the evaluation plan would
+            # otherwise be free to start Stage-3 on a failing ER.
+            requirement = value.get("requires")
+            if requirement:
+                metric = requirement["metric"]
+                measured = (metrics or {}).get(metric)
+                if measured is None:
+                    raise SchedulerError(
+                        f"task {task_id!r} is gated on {metric!r}, and no measured value was given")
+                if not _satisfies(float(measured), requirement.get("op", ">"),
+                                  float(requirement["threshold"])):
+                    raise SchedulerError(
+                        f"task {task_id!r} is gated on {metric!r} {requirement.get('op', '>')} "
+                        f"{requirement['threshold']}, and the measurement is {measured}")
+                value["gate_measurement"] = {"metric": metric, "value": float(measured),
+                                             "op": requirement.get("op", ">"),
+                                             "threshold": float(requirement["threshold"])}
             value["status"] = DONE
             value["lease_owner"] = ""
             value["lease_expires"] = 0.0

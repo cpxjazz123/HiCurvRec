@@ -1,12 +1,12 @@
 {
   "rounds": 0,
-  "idle_ticks": 0,
-  "dispatched_total": 6,
+  "idle_ticks": 17,
+  "dispatched_total": 8,
   "status_counts": {
     "blocked": 1,
     "blocked_no_novel_evidence": 3,
     "done": 4,
-    "pending": 5,
+    "pending": 8,
     "ready": 4,
     "waiting_authorisation": 7
   },
@@ -28,6 +28,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "",
       "status": "pending",
       "lease_owner": "",
@@ -35,6 +36,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -53,6 +55,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "",
       "status": "pending",
       "lease_owner": "",
@@ -60,6 +63,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -80,6 +84,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "",
       "status": "blocked_no_novel_evidence",
       "lease_owner": "",
@@ -87,6 +92,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "the CGV passes G1-G6 but the real-batch test fails: the level gap does not separate the host's own label (0.0098 of the pairs against a chance of 0.0039) and points the wrong way on average, so the constraint would fight the host's assignment"
@@ -105,6 +111,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "",
       "status": "pending",
       "lease_owner": "",
@@ -112,6 +119,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -128,6 +136,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "independent novelty/maths review of the boundary-Busemann proposal",
       "status": "blocked",
       "lease_owner": "",
@@ -135,8 +144,9 @@
       "attempts": 2,
       "error": "released: the coordinator did not take this work item",
       "artifacts": [],
-      "started_at": 1792751206.0787592,
-      "finished_at": 1792751206.1237743,
+      "gate_measurement": null,
+      "started_at": 1792752034.6788404,
+      "finished_at": 1792752034.69954,
       "detail": ""
     },
     {
@@ -153,6 +163,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -160,9 +171,41 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
+    },
+    {
+      "task_id": "hyp_product_l1_quantiser:er_gate",
+      "candidate": "hyp_product_l1_quantiser",
+      "stage": "er_gate",
+      "deps": [
+        "hyp_product_l1_quantiser:stage2"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_product_l1_quantiser/gate"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "requires": {
+        "metric": "hard_l1_er",
+        "op": ">",
+        "threshold": 16.38953942232631
+      },
+      "description": "the frozen ER gate: Stage-3 may only follow a recorded Hard-L1 ER above the threshold",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "gate_measurement": null,
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
     },
     {
       "task_id": "hyp_product_l1_quantiser:eval_plan",
@@ -176,6 +219,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "read-only evaluation plan for the frozen protocol",
       "status": "done",
       "lease_owner": "",
@@ -183,8 +227,9 @@
       "attempts": 1,
       "error": "",
       "artifacts": [],
-      "started_at": 1792751031.8635347,
-      "finished_at": 1792751031.8727195,
+      "gate_measurement": null,
+      "started_at": 1792752022.4742243,
+      "finished_at": 1792752022.4793088,
       "detail": "the read-only evaluation plan is written: results/hyperbolic_research_runs/issue112/evaluation_plan_hyp_product_l1_quantiser.md"
     },
     {
@@ -199,6 +244,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "implement the frozen v2 proposal exactly",
       "status": "done",
       "lease_owner": "",
@@ -206,8 +252,9 @@
       "attempts": 1,
       "error": "",
       "artifacts": [],
-      "started_at": 1792751206.0860043,
-      "finished_at": 1792751206.0948038,
+      "gate_measurement": null,
+      "started_at": 1792752022.4825172,
+      "finished_at": 1792752022.4877381,
       "detail": "the sealed tree is built and its smoke test recomputes the declared assignment formula exactly; the CGV passes G1-G6 on it and the arm's own gradient-pathway check passes on the real data"
     },
     {
@@ -226,6 +273,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
       "status": "done",
       "lease_owner": "",
@@ -233,8 +281,9 @@
       "attempts": 1,
       "error": "",
       "artifacts": [],
-      "started_at": 1792751206.1107984,
-      "finished_at": 1792751206.1194797,
+      "gate_measurement": null,
+      "started_at": 1792752034.6865358,
+      "finished_at": 1792752034.6953816,
       "detail": "the join passed: the CGV's G1-G6 on the identical frozen tree and the complete H gates; join_e_hyp_product_l1_quantiser.json"
     },
     {
@@ -249,6 +298,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "independent H1-H7 fixtures for the declared mathematics",
       "status": "done",
       "lease_owner": "",
@@ -256,8 +306,9 @@
       "attempts": 1,
       "error": "",
       "artifacts": [],
-      "started_at": 1792751206.0987058,
-      "finished_at": 1792751206.1068702,
+      "gate_measurement": null,
+      "started_at": 1792752022.490865,
+      "finished_at": 1792752022.5741687,
       "detail": "the independent oracles are in place: tools/hyperbolic_verifier/transport.py (five regression tests) and busemann.py / horosphere.py (ten), plus the arm's smoke test that recomputes the declared formula"
     },
     {
@@ -274,6 +325,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -281,6 +333,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "JOIN E passed: the candidate is approved; the cold run needs the operator's authorisation. Nothing is reserved and no GPU job has been started."
@@ -290,7 +343,8 @@
       "candidate": "hyp_product_l1_quantiser",
       "stage": "stage3",
       "deps": [
-        "hyp_product_l1_quantiser:stage2"
+        "hyp_product_l1_quantiser:stage2",
+        "hyp_product_l1_quantiser:er_gate"
       ],
       "resource": "gpu",
       "kind": "experiment",
@@ -299,6 +353,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE Stage3, only if the ER gate is cleared",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -306,9 +361,41 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
+    },
+    {
+      "task_id": "hyp_transported_residual:er_gate",
+      "candidate": "hyp_transported_residual",
+      "stage": "er_gate",
+      "deps": [
+        "hyp_transported_residual:stage2"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyp_transported_residual/gate"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "requires": {
+        "metric": "hard_l1_er",
+        "op": ">",
+        "threshold": 16.38953942232631
+      },
+      "description": "the frozen ER gate: Stage-3 may only follow a recorded Hard-L1 ER above the threshold",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "gate_measurement": null,
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
     },
     {
       "task_id": "hyp_transported_residual:eval_plan",
@@ -322,14 +409,16 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "read-only evaluation plan for the frozen protocol",
       "status": "ready",
       "lease_owner": "",
       "lease_expires": 0.0,
-      "attempts": 0,
-      "error": "",
+      "attempts": 1,
+      "error": "released: the coordinator did not take this work item",
       "artifacts": [],
-      "started_at": null,
+      "gate_measurement": null,
+      "started_at": 1792752022.494862,
       "finished_at": null,
       "detail": ""
     },
@@ -345,14 +434,16 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "implement the frozen v2 proposal exactly",
       "status": "blocked_no_novel_evidence",
       "lease_owner": "",
       "lease_expires": 0.0,
-      "attempts": 0,
-      "error": "",
+      "attempts": 1,
+      "error": "released: the coordinator did not take this work item",
       "artifacts": [],
-      "started_at": null,
+      "gate_measurement": null,
+      "started_at": 1792752022.4991794,
       "finished_at": null,
       "detail": "refuted before implementation: the proposal's form is ill posed (the shared level-1 codebook has no fixed coordinates in an item-dependent frame) and its only well-posed form is a common change of coordinates -- 0.0000 of the level-1 assignments change and the quantisation error is bit-identical"
     },
@@ -372,6 +463,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
       "status": "pending",
       "lease_owner": "",
@@ -379,6 +471,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -395,6 +488,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "independent H1-H7 fixtures for the declared mathematics",
       "status": "ready",
       "lease_owner": "",
@@ -402,6 +496,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -420,6 +515,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -427,6 +523,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
@@ -436,7 +533,8 @@
       "candidate": "hyp_transported_residual",
       "stage": "stage3",
       "deps": [
-        "hyp_transported_residual:stage2"
+        "hyp_transported_residual:stage2",
+        "hyp_transported_residual:er_gate"
       ],
       "resource": "gpu",
       "kind": "experiment",
@@ -445,6 +543,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE Stage3, only if the ER gate is cleared",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -452,9 +551,41 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
+    },
+    {
+      "task_id": "r10_hyp_busemann_horosphere:er_gate",
+      "candidate": "r10_hyp_busemann_horosphere",
+      "stage": "er_gate",
+      "deps": [
+        "r10_hyp_busemann_horosphere:stage2"
+      ],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/r10_hyp_busemann_horosphere/gate"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "requires": {
+        "metric": "hard_l1_er",
+        "op": ">",
+        "threshold": 16.38953942232631
+      },
+      "description": "the frozen ER gate: Stage-3 may only follow a recorded Hard-L1 ER above the threshold",
+      "status": "pending",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "gate_measurement": null,
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
     },
     {
       "task_id": "r10_hyp_busemann_horosphere:eval_plan",
@@ -468,6 +599,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "read-only evaluation plan for the frozen protocol",
       "status": "ready",
       "lease_owner": "",
@@ -475,6 +607,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -491,6 +624,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "implement the frozen v1 proposal exactly",
       "status": "blocked_no_novel_evidence",
       "lease_owner": "",
@@ -498,6 +632,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "the Busemann audit refuted the declared operator; re-specify before any implementation work"
@@ -518,6 +653,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
       "status": "pending",
       "lease_owner": "",
@@ -525,6 +661,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -541,6 +678,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "independent H1-H7 fixtures for the declared mathematics",
       "status": "ready",
       "lease_owner": "",
@@ -548,6 +686,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": ""
@@ -566,6 +705,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -573,6 +713,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
@@ -582,7 +723,8 @@
       "candidate": "r10_hyp_busemann_horosphere",
       "stage": "stage3",
       "deps": [
-        "r10_hyp_busemann_horosphere:stage2"
+        "r10_hyp_busemann_horosphere:stage2",
+        "r10_hyp_busemann_horosphere:er_gate"
       ],
       "resource": "gpu",
       "kind": "experiment",
@@ -591,6 +733,7 @@
       ],
       "verify": [],
       "max_attempts": 2,
+      "requires": null,
       "description": "ONE Stage3, only if the ER gate is cleared",
       "status": "waiting_authorisation",
       "lease_owner": "",
@@ -598,6 +741,7 @@
       "attempts": 0,
       "error": "",
       "artifacts": [],
+      "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
