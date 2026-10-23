@@ -31,9 +31,14 @@
       ]
     }
   },
-  "verdict": "NOT WORTH IMPLEMENTING on this evidence",
-  "reason": "the geometry is not inert -- the per-level assignment changes 3.5%, 5.25% and 6.93% -- but the TREE, which is the measurable target of this family, is essentially unchanged: the L1->L2 branches move 3612 -> 3613 and the L2->L3 branches 3806 -> 3809, and the distinct code counts per level are identical (243 / 255 / 256). A mechanism that leaves the tree's structure alone cannot be the thing that enriches the deeper levels, whatever it does to the assignments. The family is closed WITHOUT an implementation and WITHOUT a GPU run.",
-  "what_it_teaches": "the deeper tree's weakness is not a geometry problem: changing the metric of the level-2 and level-3 assignments, with relative curvatures, leaves the structure as it was. If the third token is nearly determined by the second, the cause is the RESIDUAL's information content, not the metric it is measured in.",
+  "verdict": "INCONCLUSIVE -- not closed",
+  "reason": "The geometry is not inert -- the per-level assignments change 3.5%, 5.25% and 6.93% -- but the tree's structure barely moves (L1->L2 3612 -> 3613, L2->L3 3806 -> 3809, the distinct code counts identical). That is a statement about THIS PROBE, not about the family: the product metric was applied to the host's EUCLIDEAN-TRAINED codebook, so the codewords were never spread for the new metric in the first place. The same caveat applies to the product candidate's tail check. Closing either family on this evidence would be reading a trained artefact as if it were a trained artefact of the new metric, which it is not.",
+  "what_it_teaches": "a weak but honest lesson: the deeper tree's structure is a property of the TRAINED codebook, not of the metric applied afterwards. Any pre-check that swaps the metric on a codebook trained for another one can only falsify a claim of INERTNESS, never certify a gain. The product candidate's pre-check carries the same limitation and says so.",
   "caveat": "the cohort's records carry a prefix_tree.l2_to_l3_branches near 1.47 for the control, which is NOT the normalisation used here (the raw branch counts on 4000 items are 3806 for the host's own chain). The two numbers are not comparable, and the comparison is not made.",
-  "next": "the next family must attack the RESIDUAL's information content, not the metric it is measured in -- and the question for the next pre-check is what, in the RQ chain, makes the third token carry information the second does not."
+  "next": "the next family must attack the RESIDUAL's information content, not the metric it is measured in -- and the question for the next pre-check is what, in the RQ chain, makes the third token carry information the second does not.",
+  "what_this_probe_can_and_cannot_show": {
+    "can": "the metric change is not inert at the assignment level, and a codebook trained for another metric keeps its structure under it",
+    "cannot": "whether a codebook TRAINED under the level-wise metric would give a richer deeper tree. That needs a trained arm, which needs the operator's authorisation.",
+    "consequence": "the family stays open as an UNMEASURED question rather than being closed, and it joins the queue behind the authorised run rather than replacing it."
+  }
 }
