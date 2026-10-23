@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "join": "join_E",
+  "candidate": "hyp_product_l1_quantiser",
+  "proposal_sha256": "b5bcfa8a11a3152c9f9847cc78598959e3e27a64387604e05d927d83d218ade7",
+  "proposal_frozen_digest": "8a1519c519d740824c9c2fc79da7d52a12360fa9d0941ddb36ecd6052a816433",
+  "implementation": {
+    "tree": "stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser",
+    "mechanism": "the level-0 assignment metric; nothing else in the quantiser changes"
+  },
+  "cgv": {
+    "report": "results/hyperbolic_research_runs/issue112/cgv_hyp_product_l1_quantiser.json",
+    "gates": {
+      "G1": {
+        "state": "passed",
+        "detail": "the forward satisfies 5 declared check(s): finite, shape, rows, tokens_in_range, levels"
+      },
+      "G2": {
+        "state": "passed",
+        "detail": "every declared loss path reaches the 'codebook' parameters with the declared character: base_loss=nonzero(norm 7.570e-02), l1_loss=zero(norm 0.000e+00), other_loss=zero(norm 0.000e+00)"
+      },
+      "G3": {
+        "state": "passed",
+        "detail": "the executed gradient satisfies 2 declared invariant(s)"
+      },
+      "G4": {
+        "state": "passed",
+        "detail": "the declared AdamW step (lr 0.001, weight decay 0.0001, clip 1.0) moved the declared target parameters by 1.000e-03, within 1.192e-07 of the independent update oracle"
+      },
+      "G5": {
+        "state": "passed",
+        "detail": "4 real ranks with the declared 'ddp_mean' aggregation: the production pooled gradient matches the independent pooled reference within 9.313e-10, and both ranks hold bitwise identical parameters after a step"
+      },
+      "G6": {
+        "state": "passed",
+        "detail": "the real entry point 'main' ran in 5.1s and satisfied every declared observable: mechanism_calls=48, optimizer_steps=48, parameter_updates=48, target_encoder_update=48"
+      }
+    },
+    "passed": true,
+    "spec_sha256": "f674827c5c793c7055f60256b97fab24c347871181297ed73b3bdfcbc2a6a9ab",
+    "trainer_sha256": "25ce82a21f0f89ce99b421d07cf99699784087c233d426f46ebe426e8540f4c4"
+  },
+  "h_gates": {
+    "H1_manifold_domain": {
+      "state": "passed",
+      "evidence": "the two factor balls hold every codeword and latent by construction (exp_0), and the measured worst-case boundary margin is 0.3644 at the declared scale; the F3 guard skips and counts above it"
+    },
+    "H2_essential_hyperbolic": {
+      "state": "passed",
+      "evidence": "the assignment minimises a sum of two POINCARE geodesic distances, and the patched layer matches a direct computation of the declared formula to 0.0 (the smoke test); the metric changes 19.35% of the level-0 assignments against the host's Euclidean one, so it is not a decoration"
+    },
+    "H3_curvature_dependence": {
+      "state": "passed_after_restatement",
+      "evidence": "F4: the curvature is a pure rescaling in the Poincare ball, so H3 is restated as the curvature CLASS mattering; the counterfactual measured here is hyperbolic versus Euclidean (19.35% of the assignments change)"
+    },
+    "H4_real_gradient_optimizer": {
+      "state": "passed",
+      "evidence": "the mechanism contributes NO additive term, so its own gradient is exactly zero everywhere; the codebook's gradient comes from the base loss through the changed assignment and is finite and nonzero (G2: norm 7.570e-02)"
+    },
+    "H5_numerical_stability": {
+      "state": "passed",
+      "evidence": "the declared scale puts the largest latent at a normalised radius with a boundary margin of 0.3644; no non-finite value, and the F3 guard is declared and counted"
+    },
+    "H6_causal_sid_pathway": {
+      "state": "passed",
+      "evidence": "the operator is enabled and changes the export: the G6 run records 48 mechanism calls, 48 optimizer steps and 48 target updates, and the assignment differs from the host's for 19.35% of the frozen items"
+    },
+    "H7_mathematical_oracle": {
+      "state": "passed",
+      "evidence": "the verifier's own transport and Busemann oracles (15 tests) plus the arm's smoke test, which recomputes the declared formula independently"
+    }
+  },
+  "h_complete": true,
+  "blocking": [],
+  "pre_check": {
+    "schema_version": 1,
+    "issue": 112,
+    "candidate": "hyp_product_l1_quantiser",
+    "proposal_version": "2",
+    "stage": "pre-check on the frozen data, before any implementation",
+    "probe": "results/hyperbolic_research_runs/issue112/product_quantiser_probe.json",
+    "checks": {
+      "not_a_no_op": {
+        "value": 0.1935,
+        "requirement": "the assignment must change, or the metric is a decoration",
+        "passes": true
+      },
+      "not_inert": {
+        "joint_equals_semantic_only": 0.67425,
+        "joint_equals_behaviour_only": 0.74775,
+        "factors_disagree": 0.4995,
+        "requirement": "the declared falsifier: >= 0.99 agreement with one factor alone is inert",
+        "passes": true
+      }
+    },
+    "caveat": "the tail numbers are a GEOMETRY probe, not a training result: the product metric is applied to the host's Euclidean-trained codebook, so the largest cell 41 -> 58 says the product metric is steeper on the host's codebook, NOT what a retrained codebook would look like. Only a trained arm can settle the tail.",
+    "decision": "PASSES the two cheap checks: the product metric changes 19.35% of the level-0 assignments and the two factors disagree on half the items, so the split is not a rotation. This is the one approved candidate left, and it is the next to implement (path B: the level-0 assignment metric)."
+  },
+  "verdict": "JOIN E PASSED: the CGV passes G1-G6 on the identical frozen tree and the H gates are complete. The candidate is APPROVED for the official cold run, which still requires the operator's authorisation.",
+  "what_is_still_unknown": "the L0 TAIL after a trained run: the pre-check applied the product metric to the host's Euclidean-trained codebook, so only a trained arm can say whether the largest cell and the distinct-code count improve. That is the candidate's own reason for existing."
+}
