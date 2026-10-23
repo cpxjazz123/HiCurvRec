@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "lesson": "false_progress",
+      "portfolio_files_without_an_implementation": 117,
+      "examples": [
+        "round_000/behaviour_residual_directional_whitening",
+        "round_000/directed_assignment_branch_preservation",
+        "round_000/directed_codebook_repulsion_with_anchor",
+        "round_001/behaviour_conditioned_residual_orthogonal_transport",
+        "round_001/directed_codeword_repulsion_with_usage_anchor"
+      ],
+      "rounds_that_adopted": 73,
+      "rounds_that_screened": 39,
+      "verdict": "ok",
+      "note": "a portfolio file without an implementation is a proposal, not an experiment; a round that adopts an already measured arm is neither a new candidate nor a training, and the count of rounds is never a measure of research progress"
+    },
+    {
+      "lesson": "repeated_candidate_identities",
+      "proposals": 117,
+      "distinct_names": 93,
+      "names_repeated": 17,
+      "most_repeated": [
+        [
+          "directed_codebook_tangent_partition",
+          4
+        ],
+        [
+          "directed_capacity_preserving_assignment_repartition",
+          4
+        ],
+        [
+          "directed_residual_tangent_transport",
+          3
+        ],
+        [
+          "directed_behavior_residual_tangent_transport",
+          3
+        ],
+        [
+          "directed_tangent_codebook_rotation",
+          3
+        ]
+      ],
+      "verdict": "ok",
+      "note": "the registry compares the normalised equation, the operator classes and the implementation's abstract syntax, and it is keyed by the proposal hash and the run id, so a repeated name is a warning and a repeated mathematics is a refusal"
+    },
+    {
+      "lesson": "lost_cgv_contract",
+      "proposals": 117,
+      "with_a_contract": 0,
+      "with_a_complete_seven_group_contract": 0,
+      "partial_contracts": [],
+      "verdict": "gap",
+      "note": "the contract is caller-supplied data; a missing group is a blocking condition, and a generic template is not a contract"
+    },
+    {
+      "lesson": "repeated_work",
+      "tree_recreations_in_the_candidate_runner": 1,
+      "probe_invocations_in_the_candidate_runner": 2,
+      "verdict": "ok",
+      "note": "the screen and the cold run must share one sealed tree: the cold run must not ask for the implementation again and must not repeat the probe. The fix is in the durable controller: the tree is content-addressed and sealed once"
+    },
+    {
+      "lesson": "repeated_stage3",
+      "manifests_by_kind": {
+        "control": 2,
+        "probe": 27,
+        "stage2": 29,
+        "stage3": 14
+      },
+      "stage3_manifests": 14,
+      "mechanisms_with_more_than_one_stage3_manifest": [],
+      "shard_recovery_present": true,
+      "verdict": "ok",
+      "note": "a complete set of rank shards is the measurement; a run that wrote them and died before merging them is not permission to infer again"
+    },
+    {
+      "lesson": "wrong_scientific_surrogates",
+      "manifests": 72,
+      "with_both_er_shares": 20,
+      "with_a_d2": 4,
+      "with_a_low_support_d2": 4,
+      "with_a_history_gain": 27,
+      "verdict": "ok",
+      "note": "the ER's numerator and denominator are both reported, the D2 carries its support flag, and the history gain is exploratory: a retrospective rank correlation over a dozen arms is not a certified oracle and never gates a launch"
+    },
+    {
+      "lesson": "invalid_scientific_end",
+      "shared_predicate_modules": [],
+      "inline_success_decisions_in_the_controller": 3,
+      "verdict": "gap",
+      "note": "the read phase, the learn phase, the monitor and the reports must all ask the same predicate, and it must require the same arm, the same proposal hash, the same implementation, the same protocol, the same seed and all three strict thresholds"
+    },
+    {
+      "lesson": "euclidean_framing",
+      "proposals": 117,
+      "with_a_hyperbolic_operator": 0,
+      "euclidean_only": 88,
+      "verdict": "gap",
+      "note": "running inside a paper about hyperbolic geometry does not make a mechanism hyperbolic; the H2 gate traces the operator in the actual loss, and this is the prior count of the arms that would fail it"
+    }
+  ],
+  "gaps": [
+    "lost_cgv_contract",
+    "invalid_scientific_end",
+    "euclidean_framing"
+  ],
+  "verdict": "gaps_found"
+}
