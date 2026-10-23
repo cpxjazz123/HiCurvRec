@@ -20,12 +20,10 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-if str(REPO_ROOT / "tools") not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 torch = pytest.importorskip("torch")
 
-from hyperbolic_verifier import geometry as G  # noqa: E402
+from tools.hyperbolic_verifier import geometry as G  # noqa: E402
 
 
 def _points(count: int = 5, seed: int = 7) -> torch.Tensor:
