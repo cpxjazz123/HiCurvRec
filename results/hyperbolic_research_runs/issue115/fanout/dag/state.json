@@ -1,0 +1,94 @@
+{
+  "authorisations": {},
+  "created_utc": 1792770174.1014805,
+  "dispatched": 6,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "fan:A:analysis": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/fanout/sessions/evidence/fan:A:analysis/session.json",
+          "sha256": "e9f85b3579c40b887258036ae71cfc9b83bffe09463ed56b168d015b785a5e7a"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/fanout/sessions/evidence/fan:A:analysis/session.jsonl",
+          "sha256": "c5f0b4ef86095d1aae646aaafe87cae7016475e82443aefa6ab21892db64c6a2"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "new_family",
+      "deps": [],
+      "description": "",
+      "detail": "the A agent finished its work",
+      "error": "",
+      "finished_at": 1792770231.7952504,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": 1792770174.1187387,
+      "status": "done",
+      "task_id": "fan:A:analysis",
+      "verify": [],
+      "write_scope": [
+        "issue115/fan:A:analysis"
+      ]
+    },
+    "fan:L:literature": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "new_family",
+      "deps": [],
+      "description": "",
+      "detail": "the role is at its concurrency limit",
+      "error": "",
+      "finished_at": null,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": 1792770174.3726628,
+      "status": "ready",
+      "task_id": "fan:L:literature",
+      "verify": [],
+      "write_scope": [
+        "issue115/fan:L:literature"
+      ]
+    },
+    "fan:M:mathematics": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "new_family",
+      "deps": [],
+      "description": "",
+      "detail": "fan:M:mathematics",
+      "error": "",
+      "finished_at": null,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "fan:M:mathematics",
+      "verify": [],
+      "write_scope": [
+        "issue115/fan:M:mathematics"
+      ]
+    }
+  }
+}
