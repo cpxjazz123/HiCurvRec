@@ -4,10 +4,10 @@
   "dispatched_total": 6,
   "status_counts": {
     "blocked": 1,
-    "blocked_no_novel_evidence": 2,
+    "blocked_no_novel_evidence": 3,
     "done": 4,
     "pending": 5,
-    "ready": 5,
+    "ready": 4,
     "waiting_authorisation": 7
   },
   "experiment_tasks": 7,
@@ -346,7 +346,7 @@
       "verify": [],
       "max_attempts": 2,
       "description": "implement the frozen v2 proposal exactly",
-      "status": "ready",
+      "status": "blocked_no_novel_evidence",
       "lease_owner": "",
       "lease_expires": 0.0,
       "attempts": 0,
@@ -354,7 +354,7 @@
       "artifacts": [],
       "started_at": null,
       "finished_at": null,
-      "detail": ""
+      "detail": "refuted before implementation: the proposal's form is ill posed (the shared level-1 codebook has no fixed coordinates in an item-dependent frame) and its only well-posed form is a common change of coordinates -- 0.0000 of the level-1 assignments change and the quantisation error is bit-identical"
     },
     {
       "task_id": "hyp_transported_residual:join_E",
