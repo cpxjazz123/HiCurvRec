@@ -91,10 +91,12 @@ def test_a_frozen_path_is_not_writable(tmp_path):
 
 
 def test_an_implementation_with_no_equation_requests_a_revision(tmp_path):
+    """An implementation that declares nothing is a changed mathematics, and is refused."""
     request = _request(tmp_path)
     result = I.implement(request, {"symbols": {}})
     assert result.status == I.REVISION_REQUIRED
-    assert "no equation" in result.detail
+    assert "equation" in result.revision_request["missing"]
+    assert "new mechanism identity" in result.detail
 
 
 def test_a_repair_is_only_for_a_code_bug_under_the_same_mathematics(tmp_path):
