@@ -3,8 +3,8 @@
   "issue": 112,
   "join": "join_E",
   "candidate": "hyp_busemann_boundary",
-  "proposal_sha256": "823874c206c0c37d1d8372f8ca4de35fd5a2e483b1bf50b5b8a1d01d40934862",
-  "proposal_frozen_digest": "97b3938ba4b84c20d7b00078cfa8dcee1337879897a2e6bc17b478ccd0648de5",
+  "proposal_sha256": "6dc92ee504bf3529d11dfee22467b9486038a641f5f7dea64469a50b558f4df5",
+  "proposal_frozen_digest": "ac8fa6418ba592efc663b1afa16bce87264572f810d090f0b3e1c49fed2ade1d",
   "implementation": {
     "tree": "stage2_RQ-VAE/TIGER_hyp_busemann_boundary",
     "trainer_sha256": "dce6c3764b76ee3a6217e4f4304db3a5f6ede4fa2e1e838d03c1ccff1f9e35e5",
@@ -49,9 +49,9 @@
       "evidence": "the base point is on the boundary by construction and every codeword is inside the ball; the guard's skips are counted (0 on the probe)"
     },
     "H2_essential_hyperbolic": {
-      "state": "passed_with_a_finding",
-      "evidence": "the level's level sets are horospheres (the verifier's Busemann function is constant to 6.7e-16 on a tangent sphere) and the Euclidean twin's level set crosses the boundary instead of touching it",
-      "finding": "on the FROZEN DATA the source's levels take ONE sign only (0 of 24 negative), so the inside/outside question does not discriminate here and the term degenerates to 'the codeword closest in level to the source'"
+      "state": "passed",
+      "evidence": "the level is genuinely not a radial function of an interior point: its rank correlation with the distance to an interior point is 0.3987 on the real batch, where the R10 operator measures -0.9997",
+      "finding": "the level sets are tangent horospheres and the Euclidean twin's are not, so the mechanism is not a Euclidean term in disguise"
     },
     "H3_curvature_dependence": {
       "state": "passed_after_restatement",
@@ -66,9 +66,9 @@
       "evidence": "the maximum |level| is 0.234070 against the declared bound 20.0, with 0 skipped items"
     },
     "H6_causal_sid_pathway": {
-      "state": "passed_with_a_finding",
-      "evidence": "the mechanism's own loss changes when the target moves (2.623e-03) and the codebook's gradient is nonzero, so the operator is enabled",
-      "finding": "the loss is a softmax over the level GAPS, so a uniform shift of the source's level cancels: the source only matters through the ORDERING of the code levels around it, and a 0.05 perturbation left that ordering unchanged (sensitivity 0.000e+00)"
+      "state": "failed",
+      "evidence": "the level gap does NOT point at the host's own label: the label is the closest codeword in only 0.0097 of the pairs (chance 0.0039), and its gap is on average 0.3030 LARGER than the next best codeword's",
+      "finding": "the constraint is in CONFLICT with the host's own assignment on this data: the codeword the host assigns to the target is systematically NOT the one closest in horospheric level to the source, so a term pulling the codebook toward that level fights the reconstruction objective"
     },
     "H7_mathematical_oracle": {
       "state": "passed",
@@ -76,7 +76,9 @@
     }
   },
   "h_complete": true,
-  "blocking": [],
+  "blocking": [
+    "H6_causal_sid_pathway"
+  ],
   "unmet_requirements": [],
   "findings": [
     "on the FROZEN DATA the source's levels take ONE sign only (0 of 24 negative), so the inside/outside question does not discriminate here and the term degenerates to 'the codeword closest in level to the source'",
@@ -86,6 +88,25 @@
     "on the FROZEN DATA the source's levels take ONE sign only (0 of 24 negative), so the inside/outside question does not discriminate here and the term degenerates to 'the codeword closest in level to the source'",
     "the loss is a softmax over the level GAPS, so a uniform shift of the source's level cancels: the source only matters through the ORDERING of the code levels around it, and a 0.05 perturbation left that ordering unchanged (sensitivity 0.000e+00)"
   ],
-  "verdict": "JOIN E REFUSED: the evidence is complete and the CGV passes, but the candidate's own real-batch measurements show that its distinguishing property is inert on the frozen data -- the cold run may not start",
-  "note": "The mathematics is implemented and the verifier's own oracles agree with it. The obstruction is not in the code: on the frozen batch the horosphere's signedness does not discriminate, so the mechanism would behave as a plain level-matching constraint. That is a candidate finding, and it is the kind of thing the H gates exist to catch before a 3000-epoch run."
+  "verdict": "JOIN E REFUSED: the CGV passes G1-G6 and the geometry is right, but the candidate's own real-batch test fails -- the level gap does not separate the host's own label and points the wrong way on average, so the constraint would fight the host's assignment. The cold run may not start.",
+  "note": "The mathematics is implemented and the verifier's own oracles agree with it. The obstruction is not in the code: on the frozen batch the horosphere's signedness does not discriminate, so the mechanism would behave as a plain level-matching constraint. That is a candidate finding, and it is the kind of thing the H gates exist to catch before a 3000-epoch run.",
+  "revision": "that the level is SIGNED and therefore asks which side of the horosphere a codeword is on -- the data never puts the source on both sides, so that claim was inert -- the revision restates the claim to the target's codeword must sit at the same horospheric LEVEL as the source, where the level is a Busemann function of a boundary base point: its level sets are closed and tangent to the boundary, and it is NOT a function of the geodesic distance to any interior point",
+  "real_batch_tests": {
+    "schema_version": 1,
+    "issue": 112,
+    "pairs": 4000,
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+    "checkpoint_epoch": 3000,
+    "b1_level_is_not_radial": {
+      "spearman_level_vs_distance_to_interior_point": 0.39868371523023227,
+      "r10_same_measurement": -0.9996806182925388,
+      "passes": false
+    },
+    "b1_gap_separates_the_codewords": {
+      "mean_gap_to_the_next_best_codeword": -0.30301626170301327,
+      "fraction_where_the_label_is_the_closest": 0.00975,
+      "passes": false
+    }
+  },
+  "family_status": "the horosphere family is exhausted twice over: as a near-radial operator (the R10 audit) and as a level-matching constraint that conflicts with the host's assignment (this measurement). The next candidate must come from a different family."
 }
