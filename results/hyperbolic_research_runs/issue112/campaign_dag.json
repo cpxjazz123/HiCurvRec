@@ -795,6 +795,31 @@
       "started_at": null,
       "finished_at": null,
       "detail": "no operator authorisation for a GPU run"
+    },
+    {
+      "task_id": "hyp_role_assigned_layout:implement",
+      "title": "implement level 2 as the behaviour factor in a sealed tree (capacity unchanged, reconstruction from levels 0 and 1), with the executor and the inputs provider",
+      "status": "pending",
+      "deps": [],
+      "note": "the next candidate; prior-art-clear and feasibility-measured, not implemented. No GPU work: the CGV and the joins use mini-cases."
+    },
+    {
+      "task_id": "hyp_role_assigned_layout:cgv",
+      "title": "run CGV G1-G6 on the layout with its seven-group declaration (the gradient contract: the level-2 codebook by the commitment on b(x), the encoder through b(x))",
+      "status": "pending",
+      "deps": [
+        "hyp_role_assigned_layout:implement"
+      ],
+      "note": "the next candidate; prior-art-clear and feasibility-measured, not implemented. No GPU work: the CGV and the joins use mini-cases."
+    },
+    {
+      "task_id": "hyp_role_assigned_layout:join",
+      "title": "join_R and join_E against the frozen proposal (sha256 37a1fde525bf1b79...), including the implementation-parity check and the falsifier (single-code cells < 90%)",
+      "status": "pending",
+      "deps": [
+        "hyp_role_assigned_layout:cgv"
+      ],
+      "note": "the next candidate; prior-art-clear and feasibility-measured, not implemented. No GPU work: the CGV and the joins use mini-cases."
     }
   ]
 }
