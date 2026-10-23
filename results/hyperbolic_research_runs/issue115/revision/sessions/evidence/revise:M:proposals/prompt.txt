@@ -1,0 +1,25 @@
+# ROLE M -- REVISE the two proposals against three adversarial reviews
+The staged files are your own proposals (`proposals.md`) and three independent reviews. The
+mathematics review says: candidate 1 REVISE (no canonical orientation in 32 dimensions, degenerate
+triples, isometry claim), candidate 2 REJECT (mixed point/tangent types, an invalid tangent-norm
+term, contradictory transport). The invariants review says several invariants are vacuous and the
+falsifiers use undefined words. The prior-art review calls both ADJACENT (HiHPQ).
+
+Your job: produce a REVISED proposal document `revised_proposals.md` that fixes the mathematics
+rather than the wording. Requirements for BOTH candidates:
+1. One consistent type convention: every symbol is either a BALL POINT or a TANGENT VECTOR at a
+   NAMED base point. No mixing inside a formula.
+2. Candidate 1: give a canonical, computable orientation rule for a triangle in dimension 32 that
+   does NOT depend on an arbitrary global frame (for example: fix an ordered pair of edges and take
+   the orientation of the 2-plane they span under a named, base-point-dependent convention), state
+   exactly when the score is undefined or zero, and state the c->0 control and what it must predict.
+3. Candidate 2: rebuild the score from correctly typed quantities only; define the transport as a
+   path-defined parallel transport and the gyration as an action on a tangent vector; prove the
+   score stays in-domain or give the explicit clamp policy with its rate as a kill criterion.
+4. Replace every vacuous invariant with one that FAILS for the identity/no-op operator, and
+   pre-register the numeric thresholds that make each falsifier decisive (changed-code fraction,
+   top-1 score margin, boundary/clamp rate).
+5. State for each candidate why it is NOT HiHPQ (the abstract-level overlap) and not a metric swap.
+Write `revised_proposals.md` with: TYPE CONVENTIONS, MECHANISM 1 (revised), MECHANISM 2 (revised),
+NON-VACUOUS INVARIANTS, PRE-REGISTERED FALSIFIERS, WHY NOT HiHPQ, and a one-line STATUS per
+candidate (READY_FOR_JOIN_R or WITHDRAWN, with the reason).
