@@ -49,8 +49,10 @@ def test_the_repeated_identities_are_counted():
 def test_the_lost_cgv_contract_is_found():
     """The previous campaign never carried the caller's contract."""
     check = F.check_cgv_contract()
-    assert check["with_a_contract"] == 0
-    assert check["verdict"] == "gap"
+    assert check["prior_with_a_contract"] == 0
+    # the new campaign has no proposals yet, so there is no live defect
+    assert check["new_proposals"] == 0
+    assert check["verdict"] == "ok"
 
 
 def test_the_euclidean_framing_is_found():

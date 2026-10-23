@@ -181,8 +181,14 @@ def check_repeated_identities() -> Dict[str, Any]:
 
 
 def check_cgv_contract() -> Dict[str, Any]:
-    """Lesson 3: the caller's contract must survive, and a partial one is blocking."""
+    """Lesson 3: the caller's contract must survive, and a partial one is blocking.
+
+    The archived proposals are the PRIOR: none of them carried a contract, and that is a
+    fact about the history. The new campaign's proposals are counted separately, because
+    there a missing contract is a live defect.
+    """
     proposals = _proposals()
+    new_proposals = _new_proposals()
     with_contract = 0
     complete = 0
     partial: List[str] = []
@@ -196,13 +202,27 @@ def check_cgv_contract() -> Dict[str, Any]:
             partial.append(f"{item['round']}/{item['mechanism_id']}: {missing}")
         else:
             complete += 1
+    new_with_contract = 0
+    new_complete = 0
+    for item in new_proposals:
+        contract = item["proposal"].get("cgv_contract")
+        if not isinstance(contract, dict):
+            continue
+        new_with_contract += 1
+        if all(group in contract for group in CGV_GROUPS):
+            new_complete += 1
     return {
         "lesson": "lost_cgv_contract",
-        "proposals": len(proposals),
-        "with_a_contract": with_contract,
-        "with_a_complete_seven_group_contract": complete,
+        "prior_proposals": len(proposals),
+        "prior_with_a_contract": with_contract,
+        "prior_with_a_complete_seven_group_contract": complete,
+        "new_proposals": len(new_proposals),
+        "new_with_a_contract": new_with_contract,
+        "new_with_a_complete_seven_group_contract": new_complete,
         "partial_contracts": partial[:5],
-        "verdict": "ok" if with_contract == len(proposals) and complete == with_contract else "gap",
+        "verdict": "ok"
+        if not new_proposals or new_complete == len(new_proposals)
+        else "gap",
         "note": (
             "the contract is caller-supplied data; a missing group is a blocking condition, "
             "and a generic template is not a contract"
