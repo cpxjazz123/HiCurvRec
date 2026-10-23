@@ -1,0 +1,12 @@
+{"at": 1792770052.2064395, "event": "ready", "task": "layout:A:hyperbolic"}
+{"at": 1792770052.2097404, "event": "added", "task": "layout:A:hyperbolic"}
+{"at": 1792770052.2113433, "event": "ready", "task": "layout:M:successor"}
+{"at": 1792770052.2136538, "event": "added", "task": "layout:M:successor"}
+{"at": 1792770052.2152712, "event": "ready", "task": "layout:I:gradient"}
+{"at": 1792770052.2174451, "event": "added", "task": "layout:I:gradient"}
+{"at": 1792770052.2213619, "attempt": 1, "event": "dispatched", "owner": "issue115-diag", "resource": "cpu", "task": "layout:A:hyperbolic"}
+{"at": 1792770052.2716901, "attempt": 1, "event": "dispatched", "owner": "issue115-diag", "resource": "cpu", "task": "layout:I:gradient"}
+{"at": 1792770052.3234394, "attempt": 1, "event": "dispatched", "owner": "issue115-diag", "resource": "cpu", "task": "layout:M:successor"}
+{"at": 1792770073.1907227, "detail": "the M agent finished its work", "event": "done", "task": "layout:M:successor"}
+{"at": 1792770074.1560159, "detail": "the I agent finished its work", "event": "done", "task": "layout:I:gradient"}
+{"at": 1792770099.378051, "detail": "the A agent finished its work", "event": "done", "task": "layout:A:hyperbolic"}

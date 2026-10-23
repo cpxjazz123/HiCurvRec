@@ -1,0 +1,60 @@
+{
+  "role": "A",
+  "task_id": "layout:A:hyperbolic",
+  "ok": true,
+  "started_utc": "2026-10-23T15:40:52Z",
+  "finished_utc": "2026-10-23T15:41:39Z",
+  "elapsed_s": 47.12,
+  "pid": 2825805,
+  "model": "openai/gpt-6-luna",
+  "prompt_sha256": "89e4a733e5d53927806cf2c9dfa11a343478c45a83502a6f9097bd61e38eda78",
+  "inputs_hash": "",
+  "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "openai/gpt-6-luna",
+    "--title",
+    "A:layout:A:hyperbolic",
+    "# QUESTION (A) -- does a NONTRIVIAL hyperbolic operator remain?\nThe frozen proposal (spec.json) declares levels 0 and 1 hyperbolic. The implementation\n(`train_rqvae.py`, `layers.py`) installs a role level and uses the host's residual chain.\nRead the three staged files and answer, with file/line evidence:\n1. Which code path actually computes a Poincare/product-geodesic distance at level 0 and 1?\n2. Does the trained forward pass use it, or is it bypassed (`hyperbolic_distance_fn is None`)?\n3. Verdict: is the candidate genuinely hyperbolic, or is the geometry vestigial?\nWrite `verdict.md` with sections EVIDENCE, VERDICT (one of GENUINELY_HYPERBOLIC / VESTIGIAL /\nUNKNOWN) and RISK."
+  ],
+  "workspace": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/workspaces/layout:A:hyperbolic",
+  "cwd": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/workspaces/layout:A:hyperbolic",
+  "exit_code": 0,
+  "timed_out": false,
+  "n_tool_calls": 12,
+  "tools": [
+    "shell",
+    "shell",
+    "read",
+    "read",
+    "read",
+    "read",
+    "grep",
+    "read",
+    "read",
+    "grep",
+    "shell",
+    "patch"
+  ],
+  "tokens": {
+    "input": 51981,
+    "output": 1661,
+    "reasoning": 232
+  },
+  "cost": 0.0,
+  "session_path": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/evidence/layout:A:hyperbolic/session.json",
+  "tool_jsonl_path": "results/hyperbolic_research_runs/issue115/diagnostics/sessions/evidence/layout:A:hyperbolic/session.jsonl",
+  "outputs": [
+    "verdict.md"
+  ],
+  "missing_outputs": [],
+  "verification": {
+    "ok": true,
+    "bytes": 3348
+  },
+  "error": ""
+}

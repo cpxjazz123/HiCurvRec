@@ -137,3 +137,24 @@ def test_the_cli_speaks_the_first_party_vocabulary():
     text = (result.stdout + result.stderr).lower()
     assert "harness2" not in text, text[:800]
     assert "genrec_agents" in text
+
+
+def test_the_hand_maintained_campaign_ledger_is_never_read_as_an_authority():
+    """One durable truth.
+
+    The old campaign kept a second, hand-edited queue file (`campaign_dag.json`) beside the DAG's
+    state. No code ever read it, and it drifted (32 tasks against the DAG's 29). The runtime must
+    keep reading the DAG only: this test fails the moment any active module opens a hand-maintained
+    campaign ledger by name.
+    """
+    offenders = []
+    for path in _active_files():
+        if path.suffix != ".py":
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "campaign_dag.json" in text and "tests/" not in path.as_posix():
+            offenders.append(str(path.relative_to(REPO_ROOT)))
+    assert not offenders, ("a hand-maintained campaign ledger is read again: " + ", ".join(offenders))
+    # the historical file may exist as an archive, and the DAG's own state is what a run uses
+    dag = REPO_ROOT / "tools" / "genrec_agents" / "dag.py"
+    assert "campaign_dag" not in dag.read_text(encoding="utf-8")
