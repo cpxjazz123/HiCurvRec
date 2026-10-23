@@ -2,6 +2,7 @@
 from __future__ import annotations
 import sys
 from pathlib import Path
+import json
 import numpy as np
 import pytest
 
@@ -47,3 +48,17 @@ def test_the_criterion_is_the_flip_rate_not_a_variance():
 def test_types_are_checked():
     with pytest.raises(ValueError):
         A.audit(np.zeros((4, 3)), np.zeros((4, 4)))
+
+
+def test_emit_writes_the_record_a_reviewer_can_check(tmp_path):
+    full, ablated = _matrices(flip=True)
+    out = A.emit(tmp_path / "audit.json", full, ablated, stage="level0",
+                 components={"area": full[:, :1], "distance": full[:, 1:2]},
+                 clamp_count=0, error_count=0)
+    assert Path(out["path"]).is_file()
+    doc = json.loads(Path(out["path"]).read_text())
+    assert doc["stage"] == "level0"
+    assert len(doc["per_example"]["winner_full"]) == doc["summary"]["examples"]
+    assert set(doc["components"]) == {"area", "distance"}
+    assert doc["clamp_count"] == 0 and doc["thresholds_frozen_before_metrics"] is True
+    assert doc["summary"]["ok"] is True
