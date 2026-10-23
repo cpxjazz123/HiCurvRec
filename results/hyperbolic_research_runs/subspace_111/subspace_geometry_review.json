@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "issue": 111,
+  "parent_issue": 110,
+  "generated_utc": "2026-10-23T06:20:00Z",
+  "role": "independent geometry review (H1-H7 feasibility + preliminary CGV contract review)",
+  "verdict_legend": {
+    "sandbox_verified": "the declared mathematics was implemented in the verifier's own reference code and the invariant held numerically on the synthetic fixture",
+    "feasible": "structurally sound; no numeric check was needed or possible at this stage",
+    "defect": "the mathematics holds but a declared parameter makes it degenerate; a revision is required before implementation",
+    "unverified_until_implementation": "the check requires the real training path or the real export, which do not exist yet (#111: no claims of passed executable checks without implementation)",
+    "invalid": "the declared operator cannot have the declared effect, for a reason that is stated and verifiable",
+    "unknown": "no evidence either way; unknown blocks execution"
+  },
+  "sandbox": {
+    "script": "results/hyperbolic_research_runs/subspace_111/sandbox/h1_h7_feasibility.py",
+    "sha256": "aa6b05b14bde6a2b0acdbf466842880ccf55d486954f6f3176934622c021686d",
+    "results_file": "results/hyperbolic_research_runs/subspace_111/sandbox/results.json",
+    "interpreter": "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 (torch 2.13.0+cu130)",
+    "fixture": {
+      "n_items": 512,
+      "n_codes": 256,
+      "dim_per_factor": 16,
+      "item_latent_scales": [
+        0.25,
+        0.5,
+        1.0,
+        2.0
+      ],
+      "seed": 20261023
+    },
+    "measurements": {
+      "fixture": {
+        "n_items": 512,
+        "n_codes": 256,
+        "dim_per_factor": 16,
+        "item_latent_scales": [
+          0.25,
+          0.5,
+          1.0,
+          2.0
+        ],
+        "seed": 20261023
+      },
+      "H1_domain": {
+        "max_c_squared_norm_items": 0.999981089888513,
+        "max_c_squared_norm_codes": 0.9938313682377868,
+        "inside_ball_by_construction": true,
+        "max_ball_radius_items": 0.9999905448995571,
+        "boundary_margin": 9.455100442923303e-06,
+        "note": "exp_0 maps every tangent vector strictly inside the ball, so no projection is needed"
+      },
+      "H7_oracle": {
+        "exp_log_inverse_c1.0": 2.1023183194301964e-12,
+        "exp_log_inverse_c2.0": 1.3813261645623243e-10,
+        "exp_log_inverse_c0.25": 1.3322676295501878e-14,
+        "distance_symmetry": 0.0,
+        "distance_self_zero": 0.0,
+        "triangle_violations": 0
+      },
+      "P2_transport": {
+        "isometry_max_deviation": 8.707289111953287e-09,
+        "roundtrip_max_deviation": 6.7014419569133565e-09,
+        "identity_when_both_endpoints_origin": 0.0,
+        "transport_to_origin_is_not_identity_max_dev": 30.050522625286014,
+        "norm_ratio_transport_vs_ambient_mean": 2.069336991425307
+      },
+      "P2_curvature_limit": {
+        "c0.001": {
+          "relative_deviation_from_identity": 0.5143924039356785,
+          "max_c_squared_norm": 0.5950050193547797
+        },
+        "c0.25": {
+          "relative_deviation_from_identity": 0.5143924039356781,
+          "max_c_squared_norm": 0.5950050193547793
+        },
+        "c1.0": {
+          "relative_deviation_from_identity": 0.5143924039356781,
+          "max_c_squared_norm": 0.5950050193547793
+        },
+        "c4.0": {
+          "relative_deviation_from_identity": 0.5143924039356781,
+          "max_c_squared_norm": 0.5950050193547793
+        }
+      },
+      "P2_domain_violation_evidence": {
+        "c1.0": {
+          "max_c_squared_norm": 0.5950050193547793,
+          "transport_deviation": 0.46349729259572614,
+          "finite": true
+        },
+        "c4.0": {
+          "max_c_squared_norm": 2.3800200774191174,
+          "transport_deviation": 240362574768.86282,
+          "finite": true
+        }
+      },
+      "H2_essential_computation": {
+        "geodesic_vs_euclidean_disagreement": 0.806640625,
+        "joint_vs_semantic_only_agreement": 0.126953125,
+        "joint_vs_behaviour_only_agreement": 0.36328125,
+        "factors_disagree_share": 0.9921875,
+        "distinct_joint_codes": 25,
+        "note": "a disagreement rate above zero is what makes the curved metric the mechanism; a joint-vs-single-factor agreement of 1.0 is the declared inertness failure"
+      },
+      "H3_curvature_dependence": {
+        "c0.1": {
+          "disagreement_vs_c1": 0.41796875,
+          "disagreement_vs_euclidean": 0.6171875
+        },
+        "c0.25": {
+          "disagreement_vs_c1": 0.302734375,
+          "disagreement_vs_euclidean": 0.70703125
+        },
+        "c1.0": {
+          "disagreement_vs_c1": 0.0,
+          "disagreement_vs_euclidean": 0.806640625
+        },
+        "c4.0": {
+          "disagreement_vs_c1": 0.326171875,
+          "disagreement_vs_euclidean": 0.87890625
+        }
+      },
+      "H5_numerical": {
+        "distance_zero_zero": 0.0,
+        "distance_zero_near_boundary": 14.508657238484277,
+        "distance_near_near": 0.0,
+        "any_non_finite": false,
+        "max_c_squared_norm_near_boundary": 0.9999980000009999
+      },
+      "P3_metric_conflict": {
+        "metric_min": 5.30887866840305,
+        "metric_max": 324.2210067151823,
+        "conflict_set_disagreement": 0.0,
+        "conflict_pairs": 194,
+        "post_projection_min_inner_product": -1.0913936421275139e-11,
+        "curvature_zero_conflict_set_equals_euclidean": true,
+        "note": "at c=0 the metric is the identity and the Riemannian inner product equals the Euclidean one exactly, so the conflict sets coincide"
+      }
+    },
+    "scope": "synthetic mathematics only: no training, no checkpoint, no GPU, and no candidate code (the operators are the verifier's own implementation)"
+  },
+  "classification": {
+    "hyp_product_l1_quantiser": "novel_but_requires_revision",
+    "hyp_transported_residual": "novel_but_requires_revision",
+    "hyp_factor_conflict_projection": "invalid"
+  },
+  "proposals": [
+    {
+      "mechanism_id": "hyp_product_l1_quantiser",
+      "proposal_sha256": "5ee83e9d0846aad426597f8501816c480a3d3a61a7cd388d5b8b5dd01b54fa1a",
+      "classification": "novel",
+      "novelty_note": "the product-geodesic ASSIGNMENT with factor-masked supervision has no verified prior art; the subspace idea (SAHL), the product manifold (Gu et al.) and hyperbolic codebooks (HVQ-VAE) are prior art and are cited",
+      "gates": {
+        "H1_manifold_domain": {
+          "status": "defect",
+          "evidence": "exp_0 keeps every point inside the ball by construction (max c||x||^2 = 0.999981 for items, 0.993831 for codes), but the resulting boundary margin is only 9.46e-06 at the declared tangent scale s=0.5 for latents of norm ~8",
+          "required": "the tangent scale must be derived from the measured latent-norm distribution of the frozen host (a pre-specification measurement) and stated as a number in a v2 proposal"
+        },
+        "H2_essential_computation": {
+          "status": "sandbox_verified",
+          "evidence": "the geodesic assignment disagrees with the Euclidean assignment on 80.66% of items; the two factors' nearest codewords disagree on 99.22% of items; the joint assignment follows neither factor alone (12.70% agreement with the semantic factor, 36.33% with the behaviour factor), so the declared inertness failure does not occur"
+        },
+        "H3_curvature_dependence": {
+          "status": "defect",
+          "evidence": "with a FIXED tangent scale the assignment changes by 41.8% (c=0.1), 30.3% (c=0.25) and 32.6% (c=4.0) against c=1 \u2014 but that is the expmap's saturation changing, not a change of geometry. With the NORMALISED radius sqrt(c)||x|| held fixed the geometry is scale-equivalent (see cross-cutting finding F1), so this test as declared measures a rescaling",
+          "required": "declare either a per-factor curvature RATIO with a COMMON tangent scale (a genuine relative asymmetry) or drop the curvature claim; the H3 test must be stated on the normalised sweep"
+        },
+        "H4_real_gradient_optimizer": {
+          "status": "unverified_until_implementation",
+          "evidence": "feasible: the codebook stays parametrised in the tangent space, so the optimizer is plain AdamW and no Riemannian retraction is needed; the factor mask is a backward-time multiplier on the two halves"
+        },
+        "H5_numerical_stability": {
+          "status": "defect",
+          "evidence": "no non-finite value at coincident or near-boundary points (d(0,0)=0, d(x,x)=0 for ||x||^2=0.999998); but the near-boundary transport/distance magnitudes are large (d(0,x)=14.51) and the boundary margin is 9.46e-06, i.e. the declared scale puts the largest latents effectively on the boundary",
+          "required": "the same v2 revision as H1; the margin must be recorded per run and must stay above a declared floor"
+        },
+        "H6_causal_sid_pathway": {
+          "status": "unknown",
+          "evidence": "requires the real export; not attempted"
+        },
+        "H7_mathematical_oracle": {
+          "status": "sandbox_verified",
+          "evidence": "exp/log inverse 1.3e-14 .. 1.4e-10 at c in {0.25, 1, 2}; distance symmetry 0.0; self-distance 0.0; 0 triangle-inequality violations in 16 triples"
+        }
+      },
+      "cgv_review": {
+        "seven_groups_present": true,
+        "mechanism_group": "declares an executor and an inputs provider, so the verifier can run the real code path instead of a stand-in",
+        "gaps": [
+          "G5 does not pool the codebook gradient in the non-trace branch, and the declared target is the codebook",
+          "G3 is declared as invariants only; no oracle rule exists for a product-geodesic assignment",
+          "G2 sees the host's loss terms, not the factor mask (the mask is covered by p1_factor_mask, a mechanism test, not a gate)"
+        ],
+        "verdict": "the contract is complete as a design; it cannot pass G1-G6 until an implementation exists and the G5 coverage is extended"
+      },
+      "required_revision": [
+        "v2: tangent scale from the measured latent norms, stated as a number",
+        "v2: the curvature declaration and the H3 test on the normalised sweep",
+        "before implementation: get the engine's non-trace G5 to pool the codebook gradient"
+      ]
+    },
+    {
+      "mechanism_id": "hyp_transported_residual",
+      "proposal_sha256": "064fe4db5a4890279963e6a76188f3189ee7be19586336a56b88e736f8e152c9",
+      "classification": "novel",
+      "novelty_note": "no verified paper in this session's search constructs a quantisation residual in the assigned codeword's tangent frame; parallel transport itself is textbook, so the claim must stay about the residual frame",
+      "gates": {
+        "H1_manifold_domain": {
+          "status": "defect",
+          "evidence": "the domain is structural (exp_0), but see cross-cutting finding F3: at c=4 the fixture points leave the ball (c||x||^2 = 2.38) and the transport diverges to 2.4e11 \u2014 a finite but meaningless value, so a domain guard is mandatory",
+          "required": "guard every transport by c||x||^2 <= 1 - margin, and declare the action when the guard trips (skip the transport, do not clamp)"
+        },
+        "H2_essential_computation": {
+          "status": "sandbox_verified",
+          "evidence": "the transport is materially not the identity: the transported residual's Euclidean norm is 2.07x the ambient one on average, and transporting to the origin deviates by up to 30.05 from the untransported vector, while both-endpoints-at-origin gives exactly 0.0"
+        },
+        "H3_curvature_dependence": {
+          "status": "defect",
+          "evidence": "the relative transport deviation is IDENTICAL to 15 significant digits across c in {0.001, 0.25, 1, 4} when the normalised radius is held fixed (0.5143924039356781/5), i.e. the transport's curvature dependence is a pure rescaling \u2014 cross-cutting finding F1",
+          "required": "the mechanism's curvature content must be declared relative (e.g. the two factors' radii differ) or the curvature claim dropped"
+        },
+        "H4_real_gradient_optimizer": {
+          "status": "unverified_until_implementation",
+          "evidence": "feasible: plain AdamW; the transport is a forward-only isometry between tangent frames"
+        },
+        "H5_numerical_stability": {
+          "status": "defect",
+          "evidence": "the isometry holds to 8.7e-09 and the roundtrip to 6.7e-09, but a near-boundary codeword inflates the transported norm without bound (the c=4, out-of-domain case reached 2.4e11 with finite=True, so a finiteness check alone would not catch it)",
+          "required": "record the maximum transported norm and the conformal factor per step; trip the domain guard before the factor exceeds a declared threshold"
+        },
+        "H6_causal_sid_pathway": {
+          "status": "unknown",
+          "evidence": "requires the real export; not attempted"
+        },
+        "H7_mathematical_oracle": {
+          "status": "sandbox_verified",
+          "evidence": "PT isometry max deviation 8.7e-09; PT roundtrip 6.7e-09; identity at the origin exact (0.0)"
+        }
+      },
+      "cgv_review": {
+        "seven_groups_present": true,
+        "mechanism_group": "declares an executor and an inputs provider; the L1-unchanged property is testable as a bit-identity, which is the strongest available boundary",
+        "gaps": [
+          "G5 codebook pooling (as P1)",
+          "G3 invariants only; an independent PT isometry oracle exists in the sandbox but is not wired into oracles.py"
+        ],
+        "verdict": "complete as a design; not executable until implemented and the G5 coverage is extended"
+      },
+      "required_revision": [
+        "v2: the domain guard and the scale rule",
+        "v2: declare the curvature content relative, or drop it"
+      ]
+    },
+    {
+      "mechanism_id": "hyp_factor_conflict_projection",
+      "proposal_sha256": "a034264e3f53a70e28276b2bd10ce7b682261d03253171867143eb08e7c00c33",
+      "classification": "invalid",
+      "novelty_note": "structurally it is the r4_08 conflict-projection family; the metric was the only difference, and the metric provably cannot make a difference",
+      "gates": {
+        "H1_manifold_domain": {
+          "status": "feasible"
+        },
+        "H2_essential_computation": {
+          "status": "invalid",
+          "evidence": "the Poincare metric is CONFORMAL: g_x = lambda(x)^2 I. For any conformal metric the PCGrad coefficient (dot/||g_rec||^2) is invariant (both terms carry the same lambda^2), so the projected vector is IDENTICAL to Euclidean PCGrad's. Measured: the Riemannian conflict set equals the Euclidean one on all 256 codewords (disagreement 0.0) and the post-projection inner product is -1.1e-11, i.e. the projection succeeds exactly as PCGrad would",
+          "proof": "g = lambda^2 I  =>  <u,v>_g = lambda^2 <u,v> and ||v||^2_g = lambda^2 ||v||^2  =>  (dot_g / ||g_rec||^2_g) g_rec = (dot / ||g_rec||^2) g_rec",
+          "required": "a metric-aware gate needs a metric that is NOT a scalar multiple of the identity within the projected coordinates (a learned/Fisher/non-conformal metric, or a block-diagonal product metric with different factor curvatures acting on a shared coordinate block)"
+        },
+        "H3_curvature_dependence": {
+          "status": "invalid",
+          "evidence": "the conflict set is exactly invariant to c (the conformal factor cancels in the sign test); measured at c=0 and c=1"
+        },
+        "H4_real_gradient_optimizer": {
+          "status": "invalid",
+          "evidence": "the mechanism's effect would be indistinguishable from r4_08's, so no update difference exists to verify"
+        },
+        "H5_numerical_stability": {
+          "status": "feasible"
+        },
+        "H6_causal_sid_pathway": {
+          "status": "invalid",
+          "evidence": "the export would change exactly as Euclidean PCGrad changes it"
+        },
+        "H7_mathematical_oracle": {
+          "status": "sandbox_verified",
+          "evidence": "the invalidation is itself the oracle result: the invariances hold exactly, which is what proves the operator inert"
+        }
+      },
+      "cgv_review": {
+        "seven_groups_present": true,
+        "verdict": "irrelevant while the operator is invalid"
+      },
+      "required_revision": [
+        "reject: any future metric-aware projection must prove the metric is non-conformal in the projected subspace before it is proposed"
+      ]
+    }
+  ],
+  "cross_cutting_findings": [
+    {
+      "id": "F1_curvature_is_a_rescaling",
+      "severity": "high",
+      "statement": "In the Poincare-ball model with the conventional conformal metric g_x = (2/(1-c||x||^2))^2 I, the curvature c is a pure scale: the map x -> x/sqrt(c) is an isometry onto the unit ball, so any intrinsic quantity (geodesic distance, parallel transport, the Voronoi assignment) computed on points whose NORMALISED radius sqrt(c)||x|| is held fixed is independent of c.",
+      "measured": "the relative deviation of the parallel transport from the identity is 0.5143924039356781 at c=0.25, 1 and 4, and 0.5143924039356785 at c=0.001 (the last-bit difference is float64 rounding), i.e. identical to 15 significant digits",
+      "consequence": "a curvature sweep on a Poincare-ball arm is a rescaling of the latent space, which H3 explicitly classifies as a scale-only cosmetic change. Any arm whose hyperbolic claim reduces to 'we changed c' is not making a geometric claim. A genuine curvature effect requires a RELATIVE structure: different curvatures per factor of a product with a COMMON tangent scale, a fixed ambient scale imposed by the host, or a non-conformal metric.",
+      "applies_to": "every arm in this repository whose curvature enters only through the conformal metric, including the R10 arm's c=1 declaration; the R10 construction's hyperbolic content is its Busemann level sets (a shape argument), not the value of c, so the finding does not invalidate it, but it does forbid any 'curvature matters' claim based on a c sweep"
+    },
+    {
+      "id": "F2_conformal_metric_cannot_change_a_conflict_projection",
+      "severity": "high",
+      "statement": "For a conformal metric the PCGrad projection is invariant, so 'Riemannian PCGrad in the Poincare ball' is exactly Euclidean PCGrad.",
+      "measured": "conflict-set disagreement 0.0 on 256 codewords; the metric ranges over 5.31..324.22, yet the projection coefficient is unchanged",
+      "consequence": "this closes a whole direction that looked novel: a metric-aware conflict gate needs a non-conformal metric"
+    },
+    {
+      "id": "F3_domain_guard_is_mandatory",
+      "severity": "medium",
+      "statement": "A point outside the ball does not raise: the transport stays finite (finite=True) while the value diverges to 2.4e11 at c||x||^2 = 2.38.",
+      "measured": {
+        "at_c1_in_domain": {
+          "max_c_squared_norm": 0.5950050193547793,
+          "transport_deviation": 0.46349729259572614
+        },
+        "at_c4_out_of_domain": {
+          "max_c_squared_norm": 2.3800200774191174,
+          "transport_deviation": 240362574768.86282,
+          "finite": true
+        }
+      },
+      "consequence": "H5's usual finiteness check is not sufficient. The verifier and the implementation must assert c||x||^2 <= 1 - margin and declare what happens when the assertion trips (skip the operation, never clamp silently)."
+    },
+    {
+      "id": "F4_effective_alphabet_on_the_fixture",
+      "severity": "medium",
+      "statement": "On the synthetic fixture (random codewords, 512 items) the product assignment uses 25 of 256 joint codewords.",
+      "measured": {
+        "distinct_joint_codes": 25,
+        "codebook_size": 256
+      },
+      "assessment": "this is a FIXTURE observation, not a verdict: random codewords in 32 dimensions do not have the structure of a trained RQ-VAE level-0 codebook. It is recorded because a small effective alphabet is the collapse risk H6 watches for, and the real check must run on a real batch once an implementation exists."
+    }
+  ],
+  "cgv_contract_review": {
+    "all_seven_groups_present_in_every_proposal": true,
+    "no_generic_fallback": true,
+    "mechanism_ids_match_contract_ids": true,
+    "shared_gap": "G5's non-trace branch measures the encoder gradient only (codebook_deviation is set to NaN there), while all three proposals declare the codebook as the gradient target. Until the engine pools the codebook gradient in the non-trace branch, G5 cannot verify any codebook-targeting mechanism. This is the same structural gap that stopped the R10 arm, and it is now the single most valuable verifier extension for #110.",
+    "g2_note": "the declared expected_paths describe the host's loss terms; a mechanism-specific path (a factor mask, a transported residual, a projection) is invisible to G2 and must be covered by a mechanism test",
+    "g3_note": "all three declare mode=invariants because oracles.py has no rule for a product-geodesic assignment, a transport, or a metric projection. A formula-mode G3 requires new independent oracles, which this review does not claim."
+  },
+  "what_this_review_does_not_establish": [
+    "that any candidate would improve ER, G_H1, D2, Recall@10 or NDCG@10 \u2014 no training was run, by design",
+    "that H4 or H6 hold \u2014 both need an implementation, and #111 forbids claiming a passed executable check without one",
+    "that the sandbox's reference operators are numerically identical to the eventual implementation \u2014 they are the verifier's own implementation of the declared mathematics, which is what H7 checks",
+    "that the literature search was exhaustive \u2014 the arXiv API answered 429 to all ten queries"
+  ]
+}

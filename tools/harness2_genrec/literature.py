@@ -97,6 +97,7 @@ class SearchResponse:
     requested_utc: str
     records: List[PaperRecord] = field(default_factory=list)
     error: str = ""
+    request_url: str = ""
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -106,6 +107,7 @@ class SearchResponse:
             "requested_utc": self.requested_utc,
             "count": len(self.records),
             "error": self.error,
+            "request_url": self.request_url,
             "identifiers": [record.identifier for record in self.records],
         }
 
@@ -162,6 +164,7 @@ class CrossrefProvider:
         url = "https://api.crossref.org/works?" + urllib.parse.urlencode(
             {"query": query, "rows": max(int(limit), 1), "select": "DOI,title,author,issued,container-title,URL,abstract"}
         )
+        response.request_url = url
         document, error = _http_json(url)
         if error or not isinstance(document, dict):
             response.error = error or "the response was not an object"
@@ -192,6 +195,88 @@ class CrossrefProvider:
         return response
 
 
+def _openalex_abstract(item: Dict[str, Any]) -> str:
+    """Rebuild the abstract from OpenAlex's inverted index.
+
+    OpenAlex stores an abstract as ``word -> [positions]``; the text is the words in
+    position order. A record without an inverted index has no abstract to read, and saying
+    so is the honest level for it.
+    """
+    index = item.get("abstract_inverted_index") or {}
+    if not isinstance(index, dict) or not index:
+        return ""
+    positions: List[Tuple[int, str]] = []
+    for word, slots in index.items():
+        for slot in slots or ():
+            try:
+                positions.append((int(slot), str(word)))
+            except (TypeError, ValueError):
+                continue
+    positions.sort()
+    return " ".join(word for _, word in positions)
+
+
+class OpenAlexProvider:
+    """The OpenAlex works API: a DOI, a title, the authors, the year and the abstract.
+
+    OpenAlex indexes arXiv-only preprints under the DOI ``10.48550/arxiv.<id>``, so it
+    answers for the papers whose only identifier is an arXiv number -- the arXiv API itself
+    answers with HTTP 429 when it is rate limited, and a source that cannot be reached may
+    not be the only one we ask.
+    """
+
+    name = "openalex"
+    version = "works-v1"
+
+    def search(self, query: str, *, limit: int = 10) -> SearchResponse:
+        response = SearchResponse(
+            provider=self.name,
+            version=self.version,
+            query=query,
+            requested_utc=now_utc(),
+        )
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(
+            {"search": query, "per-page": max(int(limit), 1)}
+        )
+        response.request_url = url
+        document, error = _http_json(url)
+        if error or not isinstance(document, dict):
+            response.error = error or "the response was not an object"
+            return response
+        for item in document.get("results") or []:
+            title = str(item.get("title") or "").strip()
+            if not title:
+                continue
+            doi = str(item.get("doi") or "")
+            identifier = (doi[len("https://doi.org/"):] if doi.startswith("https://doi.org/")
+                          else doi)
+            location = item.get("primary_location") or {}
+            source = location.get("source") or {}
+            venue = str(source.get("display_name") or "") if isinstance(source, dict) else ""
+            authors = tuple(
+                name for name in (
+                    str((entry.get("author") or {}).get("display_name") or "").strip()
+                    for entry in (item.get("authorships") or [])
+                ) if name
+            )
+            abstract = _openalex_abstract(item)
+            response.records.append(PaperRecord(
+                identifier=identifier or str(item.get("id") or ""),
+                title=title,
+                authors=authors,
+                year=int(item["publication_year"]) if item.get("publication_year") else None,
+                venue=venue,
+                url=str(location.get("landing_page_url") or item.get("id") or ""),
+                source=self.name,
+                access_level="verified_abstract_only" if abstract else "unavailable",
+                retrieved_utc=response.requested_utc,
+                abstract=abstract,
+                notes="" if abstract else
+                "the record carries metadata only; the source returned no abstract",
+            ))
+        return response
+
+
 class ArxivProvider:
     """The arXiv Atom API: an identifier, a title, the authors and the abstract."""
 
@@ -208,6 +293,7 @@ class ArxivProvider:
         url = "https://export.arxiv.org/api/query?" + urllib.parse.urlencode(
             {"search_query": f"all:{query}", "start": 0, "max_results": max(int(limit), 1)}
         )
+        response.request_url = url
         text, error = _http_text(url)
         if error or not text:
             response.error = error or "no response"
@@ -366,6 +452,7 @@ class LiteratureAgent:
         self.out_dir = Path(out_dir)
         self.providers = list(providers) if providers is not None else [
             CrossrefProvider(),
+            OpenAlexProvider(),
             ArxivProvider(),
         ]
         self.resolver = resolver
@@ -501,9 +588,29 @@ class LiteratureAgent:
         with (self.out_dir / "search_log.jsonl").open("a", encoding="utf-8") as handle:
             for response in search_log:
                 handle.write(json.dumps(response.as_dict(), sort_keys=True) + "\n")
-        with (self.out_dir / "papers.jsonl").open("w", encoding="utf-8") as handle:
-            for paper in papers:
-                handle.write(json.dumps(paper.as_dict(), sort_keys=True, default=str) + "\n")
+        # The paper store ACCUMULATES. A store that only kept the last query's papers would
+        # silently drop the identities an earlier query verified, and a literature registry
+        # that forgets its own verified papers is not a registry.
+        known: Dict[str, Dict[str, Any]] = {}
+        papers_path = self.out_dir / "papers.jsonl"
+        if papers_path.is_file():
+            for line in papers_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    stored = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                identity = str(stored.get("identifier") or stored.get("title") or "").strip().lower()
+                if identity:
+                    known[identity] = stored
+        for paper in papers:
+            known[paper.identity] = paper.as_dict()
+        with papers_path.open("w", encoding="utf-8") as handle:
+            for stored in sorted(known.values(),
+                                key=lambda item: (str(item.get("identifier") or ""),
+                                                  str(item.get("title") or ""))):
+                handle.write(json.dumps(stored, sort_keys=True, default=str) + "\n")
         (self.out_dir / "literature_review.json").write_text(
             json.dumps(review, indent=2, default=str) + "\n", encoding="utf-8"
         )
@@ -514,6 +621,7 @@ class LiteratureAgent:
 __all__ = [
     "ArxivProvider",
     "CrossrefProvider",
+    "OpenAlexProvider",
     "EVIDENCE_LEVELS",
     "LITERATURE_BLOCKED",
     "LITERATURE_DIR",
