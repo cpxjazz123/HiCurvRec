@@ -37,11 +37,16 @@ def mobius_add(x, y, c):
 def gyration(a, b, v, c):
     return mobius_add(-mobius_add(a, b, c), mobius_add(a, mobius_add(b, v, c), c), c)
 
+sys.path.insert(0, str(REPO / "tools" / "hyperbolic_verifier"))
+import transport as VT          # the verifier's regression-tested transport
+
+
 def parallel_transport(v, x, y, c):
-    """PT_{x->y}(v) for a tangent vector v at x."""
-    lam_x = conformal(x, c); lam_y = conformal(y, c)
-    moved = gyration(y, -x, v, c)
-    return (lam_x / lam_y).unsqueeze(-1) * moved
+    return VT.parallel_transport(v, x, y, c)
+
+
+def transport_from_origin(v, y, c):
+    return VT.transport_from_origin(v, y, c)
 
 trainer, saved, mods = engine.load_trainer(TREE, module_name="pt_probe")
 try:
@@ -69,8 +74,8 @@ try:
     r_amb = tx - ta                                                    # the ambient residual
     # the DUAL: the shared level-1 codebook stays in its canonical frame and is TRANSPORTED
     # into the item's level-0 frame, so the comparison happens in one frame
-    code1_in_a = parallel_transport(code1[None, :, :], torch.zeros_like(a)[:, None, :], a[:, None, :], c)
-    r_tr = parallel_transport(r_amb, x, a, c)                           # the transported residual
+    code1_in_a = transport_from_origin(code1[None, :, :], a[:, None, :], c)
+    r_tr = transport_from_origin(r_amb, a, c)                           # the residual in a's frame
     # the level-1 assignment and the quantisation error in each frame
     err_amb = torch.linalg.vector_norm(r_amb[:, None, :] - code1[None, :, :], dim=-1)
     j_amb = err_amb.argmin(-1)
@@ -104,8 +109,12 @@ try:
             "radius_mean": float(radius[hi].mean())},
         "radius_range": [float(radius.min()), float(radius.max())],
         "transport_is_an_isometry_check": float(
-            (torch.linalg.vector_norm(parallel_transport(r_amb, x, a, c), dim=-1) * lam_a
+            (torch.linalg.vector_norm(transport_from_origin(r_amb, a, c), dim=-1) * lam_a
              - torch.linalg.vector_norm(r_amb, dim=-1) * lam_0).abs().max()),
+        "transport_convention": ("the residual lives in the ORIGIN's tangent space, so it is "
+                                 "transported FROM THE ORIGIN into the codeword's frame; the "
+                                 "earlier probe transported it 'from x', which rotates it by the "
+                                 "wrong gyration"),
     }
     OUT.write_text(json.dumps(payload, indent=2) + chr(10))
     print(json.dumps(payload, indent=1))
