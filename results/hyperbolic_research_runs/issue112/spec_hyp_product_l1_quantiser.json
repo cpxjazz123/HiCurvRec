@@ -1,0 +1,141 @@
+{
+  "mechanism": {
+    "id": "hyp_product_l1_quantiser",
+    "type": "quantization",
+    "summary": "the level-0 assignment minimises a sum of two factor geodesic distances with one common tangent scale and a relative curvature",
+    "entrypoints": [
+      "mechanism_loss"
+    ],
+    "executor": "_p1_product_executor",
+    "inputs": "_p1_product_inputs",
+    "activation": {
+      "requires": []
+    },
+    "executor_style": "returns_term",
+    "host_routing": "_r4_08_apply_projection"
+  },
+  "model": {
+    "adapter": "rqvae",
+    "factory": "RQVAE",
+    "tokenizer_config": "_tokenizer_config",
+    "forward": "forward",
+    "parameter_groups": {
+      "encoder": "encoder",
+      "decoder": "decoder",
+      "codebooks": "rq",
+      "level0": "product_level0",
+      "codebook": "rq.vq_layers.0.embed"
+    },
+    "probe": {
+      "n_src": 24,
+      "in_dim": 32
+    }
+  },
+  "forward_contract": {
+    "observables": [
+      "reconstructed",
+      "quant_loss",
+      "base_loss",
+      "recon_loss",
+      "tokens"
+    ],
+    "declared_effect": "changes_forward",
+    "invariants": [
+      {
+        "name": "finite"
+      },
+      {
+        "name": "shape",
+        "observable": "reconstructed",
+        "expected": [
+          48,
+          32
+        ]
+      },
+      {
+        "name": "rows",
+        "observable": "tokens",
+        "expected": 48
+      },
+      {
+        "name": "tokens_in_range",
+        "observable": "tokens",
+        "min": 0,
+        "max": 255
+      },
+      {
+        "name": "levels",
+        "expected": 3
+      }
+    ]
+  },
+  "gradient_contract": {
+    "target": "codebook",
+    "mode": "invariants",
+    "loss_terms": {
+      "base_loss": "base_loss",
+      "l1_loss": "behavior_l1",
+      "other_loss": "behavior_other"
+    },
+    "expected_paths": {
+      "base_loss": "nonzero",
+      "l1_loss": "zero",
+      "other_loss": "zero"
+    },
+    "invariants": [
+      {
+        "name": "finite"
+      },
+      {
+        "name": "nonzero",
+        "min_norm": 1e-12
+      }
+    ],
+    "atol": 1e-06,
+    "rule": "project_l1_against_base",
+    "reference_term": "base_loss",
+    "alpha": 1.0,
+    "eps_flag": "R4_08_EPS"
+  },
+  "update_contract": {
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "clip_norm": 1.0,
+    "atol": 1e-06,
+    "requires_parameter_change": true,
+    "oracle": "oracles:optimizer_update"
+  },
+  "distributed_contract": {
+    "world_size": 4,
+    "aggregation": "ddp_mean",
+    "atol": 1e-05,
+    "oracle": "oracles:aggregate",
+    "verify_encoder_and_codebook_gradients": true,
+    "verify_rank_parameter_identity": true
+  },
+  "runtime_contract": {
+    "entrypoint": "main",
+    "isolation": "required",
+    "force": {
+      "BEHAVIOR_WEIGHT_MAX": 1.0,
+      "RAMP_START_EPOCH": 0
+    },
+    "observe": [
+      {
+        "name": "mechanism_calls",
+        "target": "_hyp_mechanism_loss",
+        "min": 1
+      },
+      {
+        "name": "optimizer_steps",
+        "min": 1
+      },
+      {
+        "name": "parameter_updates",
+        "min": 1
+      }
+    ]
+  },
+  "schema_version": 1
+}
