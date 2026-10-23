@@ -498,6 +498,31 @@ def cmd_controller(args: argparse.Namespace) -> int:
     if args.action == "tick":
         print(json.dumps(controller.tick(), indent=2, default=str))
         return 0
+    if args.action == "table":
+        from . import arm_table
+
+        runs = controller.store.runs()
+        transfer = {}
+        transfer_path = controller.config.campaign / "transfer_analysis" / "stage3_transfer_report.json"
+        if transfer_path.is_file():
+            try:
+                transfer = json.loads(transfer_path.read_text(encoding="utf-8")).get("arms") or {}
+            except (OSError, json.JSONDecodeError):
+                transfer = {}
+        diagnoses = {
+            row.get("mechanism_id"): row
+            for row in (controller.state.get("diagnoses") or ())
+        }
+        table = arm_table.build_table(runs, transfer=transfer, diagnoses=diagnoses)
+        written = arm_table.write_table(table, controller.config.campaign)
+        print(json.dumps({
+            "written": {k: str(v) for k, v in written.items()},
+            "arms": table["arms"],
+            "arms_clearing_the_gate": table["arms_clearing_the_gate"],
+            "arms_with_both_stage3_metrics": table["arms_with_both_stage3_metrics"],
+            "arms_improving_both": table["arms_improving_both"],
+        }, indent=2))
+        return 0
     if args.action == "probe-backlog":
         print(json.dumps({"probed": controller._probe_backlog()}, indent=2, default=str))
         return 0
@@ -648,6 +673,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "report",
             "backfill-store",
             "probe-backlog",
+            "table",
         ],
     )
     ctrl.add_argument("--state", default="results/harness3_runs/controller/state.json")
