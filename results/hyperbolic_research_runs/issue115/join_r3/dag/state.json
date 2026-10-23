@@ -1,0 +1,103 @@
+{
+  "authorisations": {},
+  "created_utc": 1792796778.629751,
+  "dispatched": 3,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "joinr:invariants": {
+      "artifacts": [],
+      "attempts": 1,
+      "candidate": "join_r",
+      "deps": [],
+      "description": "",
+      "detail": "joinr:invariants",
+      "error": "the verifier refused the output",
+      "finished_at": 1792796813.741985,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792796778.6444948,
+      "status": "blocked",
+      "task_id": "joinr:invariants",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:invariants"
+      ]
+    },
+    "joinr:math": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/join_r3/sessions/evidence/joinr:math/session.json",
+          "sha256": "854c2c8dc15be8de486241fff94d5f08b5a703d9afd2be3dcee3ff4de6acc6dc"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/join_r3/sessions/evidence/joinr:math/session.jsonl",
+          "sha256": "5e9db215bea04a503f98707778bf86447cd47a7f0396390e339e52da1e485d44"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "join_r",
+      "deps": [],
+      "description": "",
+      "detail": "the A agent finished its work",
+      "error": "",
+      "finished_at": 1792796818.1841712,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": 1792796778.6951163,
+      "status": "done",
+      "task_id": "joinr:math",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:math"
+      ]
+    },
+    "joinr:priorart": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/join_r3/sessions/evidence/joinr:priorart/session.json",
+          "sha256": "551b0a4791020e54eb82d5b4388a0de5d284a911b6244137f7e31f4cb830f1cb"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/join_r3/sessions/evidence/joinr:priorart/session.jsonl",
+          "sha256": "53bea07276e9ac40e361c69d109eee94e7f39e0009910a50f2f744739542d982"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "join_r",
+      "deps": [],
+      "description": "",
+      "detail": "the L agent finished its work",
+      "error": "",
+      "finished_at": 1792796813.9550557,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "literature",
+      "started_at": 1792796778.7454233,
+      "status": "done",
+      "task_id": "joinr:priorart",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:priorart"
+      ]
+    }
+  }
+}
