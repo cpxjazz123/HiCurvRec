@@ -43,62 +43,135 @@
   ],
   "literature_evidence": "the identifiers were retrieved from Crossref and arXiv on 2026-10-23 and are recorded in results/hyperbolic_research_runs/literature/ with the request and the response; the access level is verified_abstract_only, so no equation is claimed from their full text",
   "cgv_contract": {
+    "schema_version": 1,
     "mechanism": {
       "id": "r10_horosphere_busemann",
-      "type": "auxiliary_term",
+      "type": "loss_term",
+      "summary": "the level-0 codeword of the target belongs to the horosphere through the source, measured with the signed Busemann level",
       "entrypoints": [
         "mechanism_loss"
       ],
-      "parameters": {
-        "mechanism": "horosphere",
-        "curvature": 1.0,
-        "strength": 0.1,
-        "temperature": 0.25
+      "executor": "_r10_horosphere_executor",
+      "activation": {
+        "requires": []
       },
-      "path": "A"
+      "inputs": "_r10_horosphere_inputs"
     },
     "model": {
       "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
       "parameter_groups": {
-        "codebook": "codebook"
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq",
+        "codebook": "rq.vq_layers.0.embed"
       },
-      "hyperbolic_model": "poincare_ball",
-      "curvature": -1.0
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
     },
     "forward_contract": {
       "observables": [
-        "loss",
-        "mechanism_loss"
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
       ],
+      "declared_effect": "none",
       "invariants": [
-        "the mechanism loss is finite for every batch",
-        "the mechanism loss is zero when the mechanism is disabled"
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        }
       ]
     },
     "gradient_contract": {
-      "mode": "invariants",
       "target": "codebook",
+      "mode": "invariants",
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "zero",
+        "other_loss": "zero"
+      },
       "invariants": [
-        "the gradient reaches the level-0 codebook and is finite",
-        "the gradient does not reach the encoder or the decoder through the mechanism loss"
-      ]
+        {
+          "name": "finite"
+        },
+        {
+          "name": "nonzero",
+          "min_norm": 1e-12
+        }
+      ],
+      "atol": 1e-06
     },
     "update_contract": {
-      "optimizer": "adam",
+      "optimizer": "AdamW",
       "lr": 0.001,
-      "clip_norm": 5.0
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
     },
     "distributed_contract": {
       "world_size": 4,
-      "aggregation": "mean",
-      "same_mechanism_in_every_rank": true
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate"
     },
     "runtime_contract": {
-      "entrypoint": "train_rqvae.py",
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
       "observe": [
-        "loss"
-      ],
-      "arm": "hyp_horosphere_c1"
+        {
+          "name": "mechanism_calls",
+          "target": "_hyp_mechanism_loss",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
     }
   }
 }

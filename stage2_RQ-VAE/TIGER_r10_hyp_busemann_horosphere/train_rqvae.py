@@ -1026,6 +1026,44 @@ def _r4_08_apply_projection(
             parameter.grad.copy_(assembled)
 
 
+def _r10_horosphere_inputs(obs):
+    """The tensors the horosphere mechanism reads, built from the probe's observations.
+
+    This is the mechanism's INPUTS provider: the verifier calls it and hands the result to
+    the executor, so the probe exercises the mechanism's real code path instead of a
+    stand-in. The pair batch is laid out the way the training loop lays it out: the source
+    embeddings first, then the target embeddings, so the mechanism's own split of the two
+    halves is the same split here.
+    """
+    model = obs["model"]
+    latent = model.encoder(obs["embeddings"])
+    n_src = int(obs["n_src"])
+    codebook = model.rq.vq_layers[0].get_code_embs()
+    positive = torch.arange(n_src, device=latent.device)
+    degrees = torch.ones(n_src, device=latent.device, dtype=latent.dtype)
+    return latent, codebook, positive, degrees
+
+
+def _r10_horosphere_executor(base_loss, l1_loss, other_loss, target_parameters,
+                              behavior_weight, valid_levels=3, mechanism_inputs=None):
+    """Assemble the level-0 codebook's gradient for the horosphere mechanism.
+
+    The horosphere term is ADDITIVE, not a gradient projection, so the executor adds the
+    term's own gradient to the codebook's gradient instead of overwriting it. The base loss
+    has already been backwarded by the caller, so its gradient is already in place, and the
+    behaviour terms are deliberately left alone: this mechanism does not touch the host's
+    behaviour routing.
+    """
+    if mechanism_inputs is None:
+        return
+    latent, codebook, positive, degrees = mechanism_inputs
+    term = _hyp_mechanism_loss(
+        "horosphere", latent, codebook, positive,
+        _HYP_CONFIG["curvature"], _HYP_CONFIG["strength"], degrees, euclidean=False,
+    )
+    term.backward()
+
+
 def behavior_contrastive_components(
     residuals: torch.Tensor,
     source_ids: torch.Tensor,
