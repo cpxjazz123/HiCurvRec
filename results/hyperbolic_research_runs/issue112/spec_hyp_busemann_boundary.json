@@ -11,7 +11,8 @@
     "activation": {
       "requires": []
     },
-    "executor_style": "returns_term"
+    "executor_style": "returns_term",
+    "host_routing": "_r4_08_apply_projection"
   },
   "model": {
     "adapter": "rqvae",
@@ -70,7 +71,7 @@
   "gradient_contract": {
     "target": "codebook",
     "mode": "invariants",
-    "rule": "unprojected",
+    "rule": "project_l1_against_base",
     "loss_terms": {
       "base_loss": "base_loss",
       "l1_loss": "behavior_l1",
@@ -90,7 +91,10 @@
         "min_norm": 1e-12
       }
     ],
-    "atol": 1e-06
+    "atol": 1e-06,
+    "reference_term": "base_loss",
+    "alpha": 1.0,
+    "eps_flag": "R4_08_EPS"
   },
   "update_contract": {
     "optimizer": "AdamW",

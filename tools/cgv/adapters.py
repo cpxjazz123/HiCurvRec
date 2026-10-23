@@ -301,9 +301,21 @@ def executed_target_gradient(trainer, contract: dict[str, Any], obs: dict[str, A
                              obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
                              **kwargs)
             if isinstance(term, torch.Tensor):
-                (terms["base_loss"] + term).backward()
+                # retain_graph: the host's routing below reads the terms' gradients with
+                # autograd.grad, which needs the graph the backward just freed
+                (terms["base_loss"] + term).backward(retain_graph=True)
             else:
                 terms["base_loss"].backward(retain_graph=True)
+            # The host's OWN routing, when the contract declares it. The training loop applies it
+            # AFTER the backward, so a declared assembly that omits it describes a different
+            # mechanism than the one that trains (F5): the arm's real assembly is the base plus
+            # the host's conflict projection plus the mechanism's term.
+            host_routing = (contract.get("mechanism") or {}).get("host_routing")
+            if host_routing:
+                router = resolve_dotted(trainer, host_routing)
+                router(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
+                       parameter_group(trainer, obs, contract, "encoder"),
+                       obs["weight"], valid_levels=obs["valid_levels"])
         else:
             terms["base_loss"].backward(retain_graph=True)
             executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),

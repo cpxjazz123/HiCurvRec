@@ -1013,8 +1013,15 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
             "g_recon": pooled_terms.get("recon_loss", pooled_terms["base_loss"]),
             "g_quant": pooled_terms.get("quant_loss", pooled_terms["base_loss"]),
         }
+        # The comparison must be made on the group the contract declares as the mechanism's
+        # target. The oracle's assembly describes the ENCODER's gradient (the base plus the
+        # scaled behaviour terms, optionally projected), so comparing it with the codebook's
+        # gradient would measure two different things. The other group's deviation is REPORTED
+        # as a measurement, not used as this mechanism's verdict.
+        target_group = str((ctx.contract.get("gradient_contract") or {}).get("target", "encoder"))
         expected_pooled = oracles.assemble_gradient(rule_observations)
-        deviation = oracles.max_abs_diff(production, expected_pooled)
+        encoder_deviation = oracles.max_abs_diff(production, expected_pooled)
+        deviation = encoder_deviation
         # The codebook's own gradient. A mechanism that targets the codebook moves a gradient
         # the encoder comparison cannot see, so the gate pools the per-rank codebook gradients
         # INDEPENDENTLY -- with the aggregation oracle, on the local gradients the child
@@ -1032,6 +1039,11 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
             codebook_deviation, codebook_names = compare_pooled_codebook(
                 local_codebook, production_codebook, aggregator, aggregation, weights)
             extra["codebook_terms"] = codebook_names
+        if target_group == "codebook":
+            # the declared target IS the codebook: its deviation is this mechanism's verdict
+            deviation = codebook_deviation
+            extra["encoder_assembly_deviation"] = encoder_deviation
+            extra["target_group"] = target_group
         elif require_codebook:
             return _result("G5", C.FAILED,
                            "the contract targets the codebook, but the multi-rank run produced no "
