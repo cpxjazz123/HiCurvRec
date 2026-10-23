@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "join": "join_R",
+  "candidate": "hyp_busemann_boundary",
+  "proposal_sha256": "0d66784e9ea2c15d3a5dc3cf2e5fb528d702ac2f49e2ff7a13a5727ab20a7d9b",
+  "frozen_digest": "9cdf109e1fca129a4fa1936a71401a15457f0898ab98be1ffcd352e5508df443",
+  "reviewed_utc": "2026-10-23T09:05:00Z",
+  "reviewer": "independent geometry review (the verifier's own operators; no candidate code imported)",
+  "classification": "novel",
+  "decision": "APPROVED_FOR_IMPLEMENTATION_WITH_THREE_REQUIREMENTS",
+  "novelty": {
+    "verdict": "novel",
+    "against_the_literature": "The verified matrix records a NEGATIVE search result: no recommender paper uses a Busemann function or a horosphere as a quantisation constraint (the query 'Busemann function horosphere ranking hyperbolic' returned only pure mathematics). Gu et al.'s product spaces and SAHL's Euclidean PCA-block subspaces do not contain this operator, and the matrix states explicitly that the product-manifold concept itself is not claimable.",
+    "against_r8_09": "r8_09 is a RADIAL family: a function of the distance to an interior point. A horosphere is not a distance sphere: the measured rank correlation of the level with the distance to an interior point is -0.8136 for this mechanism against -0.9996 for R10's operator, and a genuine Busemann function is tangent to the boundary while a distance sphere is not.",
+    "against_r10": "R10 used an INTERIOR base point, which the audit proved makes the operator a near-radial equidistance constraint (never negative, 25-47% spread across a genuine horosphere). This proposal moves the base point onto the boundary, which is the only place a Busemann function is defined.",
+    "against_r8_07_r8_08_r8_10": "no translation, no barycentre, no optimal transport; the operator is a level difference of two Busemann values"
+  },
+  "mathematics": {
+    "verdict": "sound",
+    "checks": [
+      "the level is signed: 0.9903 of interior points are negative, with the range [-3.3609, 0.0389]",
+      "the level sets are horospheres: the level is constant to 6.661e-16 on a horosphere built as a Euclidean sphere tangent to the boundary",
+      "the level is NOT a radial function: the spearman with the distance to an interior point is -0.8136 (a radial operator would be -1)"
+    ],
+    "gradient_path": "the base point omega and the source's level are detached and the label is the host's own detached assignment, so the term reaches the codebook and not the encoder; that has to be MEASURED on the implementation, not asserted here"
+  },
+  "gates": {
+    "H1_manifold_domain": {
+      "status": "sandbox_verified",
+      "evidence": "the base point is ON the boundary (||omega|| = 1), which is where a Busemann function is defined; every codeword and latent is inside the ball by construction (exp_0), and the domain guard (c||x||^2 >= 1 - margin) skips and counts rather than clamping",
+      "gap": "the guard's skip count must be recorded on a real batch"
+    },
+    "H2_essential_hyperbolic": {
+      "status": "sandbox_verified",
+      "evidence": "the level's signedness and the tangency of its level sets are properties that the Euclidean twin cannot have: in a Euclidean space the horosphere through a point degenerates to a half-space and the level becomes a linear functional, so the term asks 'which side' where the Euclidean version asks 'how far'"
+    },
+    "H3_curvature_dependence": {
+      "status": "restatement_required",
+      "evidence": "F1: in the Poincare ball the curvature is a pure rescaling, so a curvature sweep cannot be the mechanism for ANY mechanism in this model. The honest counterfactual for this candidate is hyperbolic versus Euclidean (tangency versus planarity), which is what the sandbox measures",
+      "programme_finding": "F4"
+    },
+    "H4_real_gradient_optimizer": {
+      "status": "unverified_until_implementation",
+      "evidence": "the codebook is the declared target and the encoder must see exactly zero"
+    },
+    "H5_numerical_stability": {
+      "status": "sandbox_verified",
+      "evidence": "the level diverges as a codeword approaches omega, which is why the declared temperature and the domain guard exist; the maximum |level| and the skip count must be recorded per step"
+    },
+    "H6_causal_sid_pathway": {
+      "status": "unverified_until_implementation",
+      "evidence": "needs the real export"
+    },
+    "H7_mathematical_oracle": {
+      "status": "sandbox_verified",
+      "evidence": "tools/hyperbolic_verifier/busemann.py, 6 tests: the Busemann function is constant on a constructed horosphere and signed; the r10 audit's numbers are reproduced by the same module"
+    }
+  },
+  "programme_findings": [
+    {
+      "id": "F4",
+      "statement": "H3 as written -- 'meaningful change of curvature changes appropriately normalised geometry' -- is UNSATISFIABLE for any mechanism in the Poincare ball, because the curvature there is a pure rescaling (F1). Every arm that claims a curvature sweep is therefore claiming a scale change.",
+      "proposed_restatement": "H3 should ask for the curvature CLASS to matter: the same mechanism in the hyperbolic model and in its Euclidean twin must produce measurably different geometry (tangency versus planarity, signedness versus an unsigned distance), with the normalised geometry predicted in advance.",
+      "affects": "every arm in the programme, not only this one"
+    },
+    {
+      "id": "F5",
+      "statement": "a mechanism that declares an executor which does its own backward OUTSIDE the DDP-wrapped graph is not the mechanism the training loop runs: the arm's training folds the term into the single backward, the executor does not, and the ranks then diverge. The R10 measurement (ranks_identical False) caught it; the declaration was wrong, not the gate.",
+      "proposed_restatement": "a declared executor must reproduce the training loop's assembly exactly, including the number of backwards and which graph they traverse"
+    }
+  ],
+  "requirements_before_the_cold_run": [
+    "implement the mechanism in a sealed tree, with the term composed into the loss BEFORE the single backward (F5), not backwarded by the executor",
+    "measure on a real batch: the level's signedness, the encoder's zero gradient, the codebook's nonzero gradient, the max |level| and the guard's skip count (H4, H5, H6)",
+    "close the CGV G1-G6 on the identical frozen tree (JOIN E)"
+  ],
+  "evidence": {
+    "busemann_audit": "results/hyperbolic_research_runs/issue112_busemann_audit.json",
+    "verifier": "tools/hyperbolic_verifier/busemann.py",
+    "tests": "tools/harness2_genrec/tests/test_busemann_verifier.py (6 tests)",
+    "measurements": {
+      "n_interior_points": 103,
+      "signed_fraction_negative": 0.9902912621359223,
+      "level_min": -3.360931046720232,
+      "level_max": 0.03887611898524339,
+      "spearman_level_vs_distance_to_interior_point": -0.813601019197821,
+      "level_spread_on_a_constructed_horosphere": 6.66133814775094e-16,
+      "r10_for_comparison": {
+        "signed_fraction_negative": 0.0,
+        "spearman_level_vs_distance_to_interior_point": -0.9996498753038388,
+        "level_spread_on_a_horosphere_relative": 0.4676544730516663
+      }
+    }
+  }
+}

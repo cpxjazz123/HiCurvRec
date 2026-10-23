@@ -283,11 +283,32 @@ def executed_target_gradient(trainer, contract: dict[str, Any], obs: dict[str, A
             _sum_present(terms.get("l1_loss"), terms.get("other_loss")))
         assembled.backward()
     else:
-        terms["base_loss"].backward(retain_graph=True)
         executor = resolve_dotted(trainer, (contract.get("mechanism") or {})["executor"])
-        executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
-                 encoder, obs["weight"], valid_levels=obs["valid_levels"],
-                 **executor_kwargs(trainer, contract, obs, epoch))
+        kwargs = executor_kwargs(trainer, contract, obs, epoch)
+        # Two assembly styles, and the CONTRACT says which one this mechanism uses.
+        #
+        # "assembles_gradients" (the default): the base loss is backwarded and the executor then
+        # writes the assembly into the parameters itself.
+        #
+        # "returns_term": the executor RETURNS the term it wants added, and the verifier puts it
+        # into the SAME backward as the base loss. This matters: the training loop folds the
+        # mechanism's term into the loss and does ONE backward, so an executor that backwarded
+        # the term on its own would be a second, unreduced backward -- the ranks would then
+        # diverge (measured on the R10 arm: ranks_identical False).
+        style = (contract.get("mechanism") or {}).get("executor_style", "assembles_gradients")
+        if style == "returns_term":
+            term = executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
+                             obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
+                             **kwargs)
+            if isinstance(term, torch.Tensor):
+                (terms["base_loss"] + term).backward()
+            else:
+                terms["base_loss"].backward(retain_graph=True)
+        else:
+            terms["base_loss"].backward(retain_graph=True)
+            executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
+                     obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
+                     **kwargs)
     return [torch.zeros_like(p) if p.grad is None else p.grad.detach().clone()
             for p in encoder]
 
@@ -346,9 +367,22 @@ def mechanism_parameter_contribution(trainer, contract: dict[str, Any], obs: dic
     for parameter in params:
         parameter.grad = None
     executor = resolve_dotted(trainer, (contract.get("mechanism") or {})["executor"])
+    kwargs = executor_kwargs(trainer, contract, obs, epoch)
+    style = (contract.get("mechanism") or {}).get("executor_style", "assembles_gradients")
+    if style == "returns_term":
+        # the executor builds a TERM; its gradient is read with autograd.grad, which is the
+        # independent route and needs no backward at all
+        term = executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
+                        obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
+                        **kwargs)
+        if not isinstance(term, torch.Tensor):
+            return [torch.zeros_like(p) for p in params]
+        grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
+        return [torch.zeros_like(p) if g is None else g.detach().clone()
+                for p, g in zip(params, grads)]
     executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
              obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
-             **executor_kwargs(trainer, contract, obs, epoch))
+             **kwargs)
     return [torch.zeros_like(p) if p.grad is None else p.grad.detach().clone() for p in params]
 
 
