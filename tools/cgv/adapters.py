@@ -35,6 +35,25 @@ LOSS_SOURCES = {
 }
 
 
+def _declared_callable_term(trainer, contract: dict[str, Any], obs: dict[str, Any],
+                            name: str) -> torch.Tensor:
+    """Resolve a term the MECHANISM declares as a callable of (model, embeddings, role_inputs).
+
+    A layout mechanism has no loss of its own in the host's sense: its level quantises a role
+    signal instead of the residual. The tree therefore declares the callable that computes that
+    level's own quantisation loss, and the gradient gates measure exactly that term.
+    """
+    callables = ((contract.get("gradient_contract") or {}).get("loss_term_callables") or {})
+    path = callables.get(name)
+    if not path:
+        raise KeyError(f"no declared callable for the loss term {name!r}")
+    function = resolve_dotted(trainer, path)
+    role_inputs = obs.get("role_inputs")
+    if role_inputs is None:
+        raise ValueError(f"the loss term {name!r} needs the role inputs, which were not observed")
+    return function(obs["model"], obs["embeddings"], role_inputs)
+
+
 def resolve_dotted(trainer, dotted: str) -> Any:
     """Resolve ``"symbol"`` or ``"symbol.attribute"`` inside the loaded trainer module."""
     head, _, tail = dotted.partition(".")
@@ -123,7 +142,8 @@ def build_observations(trainer, contract: dict[str, Any], seed: int = 1234,
         model = trainer.RQVAE(trainer._tokenizer_config(), in_dim=in_dim)
     embeddings = torch.randn(2 * n_src, in_dim,
                              generator=torch.Generator().manual_seed(seed + 1))
-    reconstructed, quant_loss, _, _ = model.forward(embeddings)
+    role_inputs = _role_inputs_for(trainer, contract, model, embeddings)
+    reconstructed, quant_loss, _, _ = model.forward(embeddings, role_inputs=role_inputs)
     base_loss, recon_loss = model.compute_loss(embeddings, reconstructed, quant_loss)
 
     residuals = trainer._residuals_with_trace(model, embeddings)
@@ -132,7 +152,7 @@ def build_observations(trainer, contract: dict[str, Any], seed: int = 1234,
         residuals, torch.arange(n_src), (torch.arange(n_src) + 1) % n_src, None)
 
     with torch.no_grad():
-        tokens = model.get_indices(embeddings, infer_use_sk=False)
+        tokens = model.get_indices(embeddings, infer_use_sk=False, role_inputs=role_inputs)
 
     weight = float((contract.get("gradient_contract") or {}).get("probe_weight", 0.5))
     scale = weight / max(int(valid_levels), 1)
@@ -153,6 +173,7 @@ def build_observations(trainer, contract: dict[str, Any], seed: int = 1234,
         "codewords": codewords,
         "scale": scale,
         "weight": weight,
+        "role_inputs": role_inputs,
         "tensors": {
             "reconstructed": reconstructed,
             "quant_loss": quant_loss,
@@ -167,11 +188,28 @@ def build_observations(trainer, contract: dict[str, Any], seed: int = 1234,
     return observations
 
 
-def _codewords(trainer, model, embeddings: torch.Tensor) -> list[torch.Tensor]:
+def _role_inputs_for(trainer, contract: dict[str, Any], model, embeddings: torch.Tensor):
+    """The role signal for the probe case, when the mechanism declares one."""
+    path = (contract.get("model") or {}).get("role_inputs")
+    if not path:
+        return None
+    role_level = int(getattr(model.rq, "role_level", -1))
+    if role_level < 0:
+        raise ValueError("the contract declares role inputs but the model has no role level")
+    return resolve_dotted(trainer, path)(model, embeddings)
+
+
+def _codewords(trainer, model, embeddings: torch.Tensor,
+               role_inputs: torch.Tensor | None = None) -> list[torch.Tensor]:
     """The quantised vectors each level actually subtracted, observed from the real quantizer."""
     residual = model.encoder(embeddings)
     out = []
-    for layer in model.rq.vq_layers:
+    role_level = int(getattr(model.rq, "role_level", -1))
+    for level, layer in enumerate(model.rq.vq_layers):
+        if role_inputs is not None and level == role_level:
+            quant, _, _, _ = layer(role_inputs)
+            out.append(quant.detach())
+            continue
         quant, _, _, _ = layer(residual)
         out.append(quant.detach())
         residual = residual - quant
@@ -196,9 +234,12 @@ def loss_terms(trainer, contract: dict[str, Any], obs: dict[str, Any],
         if substitute and name in substitute:
             terms[name] = substitute[name]
             continue
-        if source not in LOSS_SOURCES:
-            raise KeyError(f"unknown loss source {source!r} for term {name!r}")
-        value = LOSS_SOURCES[source](trainer, obs)
+        if source == "declared_callable":
+            value = _declared_callable_term(trainer, contract, obs, name)
+        else:
+            if source not in LOSS_SOURCES:
+                raise KeyError(f"unknown loss source {source!r} for term {name!r}")
+            value = LOSS_SOURCES[source](trainer, obs)
         if value is None:
             raise ValueError(f"loss term {name!r} resolved to None on this case")
         terms[name] = value
@@ -470,7 +511,8 @@ def trace_case(trainer, contract: dict[str, Any], seed: int = 1234,
         model = trainer.RQVAE(trainer._tokenizer_config(), in_dim=in_dim)
     embeddings = torch.randn(2 * n_src, in_dim,
                              generator=torch.Generator().manual_seed(seed + 1))
-    reconstructed, quant_loss, _, _ = model.forward(embeddings)
+    role_inputs = _role_inputs_for(trainer, contract, model, embeddings)
+    reconstructed, quant_loss, _, _ = model.forward(embeddings, role_inputs=role_inputs)
     base_loss, recon_loss = model.compute_loss(embeddings, reconstructed, quant_loss)
 
     executor_name = (contract.get("mechanism") or {}).get("executor")

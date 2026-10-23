@@ -707,16 +707,24 @@ class TransitionPairs(torch.utils.data.Dataset):
 
 
 def _residuals_with_trace(
-    raw_module: RQVAE, embeddings: torch.Tensor
+    raw_module: RQVAE, embeddings: torch.Tensor, role_inputs: torch.Tensor | None = None
 ) -> torch.Tensor:
     """Per-level pre-quantization residuals, matching iter48's ResidualTraceRQLayer.
 
     ``model/`` stays byte-identical to the baseline, so the trace is produced by
     walking the unchanged quantizer stack rather than by patching it.
+
+    With a role-assigned level the trace mirrors the REAL forward: the role level's entry is
+    the role signal it quantises, and its code is not subtracted from the residual, because
+    the role level contributes nothing to the reconstruction.
     """
     residual = raw_module.encoder(embeddings)
     traces = [residual]
-    for vq_layer in raw_module.rq.vq_layers:
+    role_level = raw_module.rq.role_level
+    for level, vq_layer in enumerate(raw_module.rq.vq_layers):
+        if role_inputs is not None and level == role_level:
+            traces.append(role_inputs)
+            continue
         quant, _, _, _ = vq_layer(residual)
         residual = residual - quant
         traces.append(residual)
@@ -725,13 +733,23 @@ def _residuals_with_trace(
 
 
 def _residuals_and_tokens_with_trace(
-    raw_module: RQVAE, embeddings: torch.Tensor
+    raw_module: RQVAE, embeddings: torch.Tensor, role_inputs: torch.Tensor | None = None
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Return residual traces and token IDs from the same real RQ layer calls."""
+    """Return residual traces and token IDs from the same real RQ layer calls.
+
+    The role-assigned level is traced the way the real forward runs it: its entry is the role
+    signal and its code does not reduce the residual.
+    """
     residual = raw_module.encoder(embeddings)
     traces = []
     tokens = []
-    for vq_layer in raw_module.rq.vq_layers:
+    role_level = raw_module.rq.role_level
+    for level, vq_layer in enumerate(raw_module.rq.vq_layers):
+        if role_inputs is not None and level == role_level:
+            traces.append(role_inputs)
+            quant, _, _, token_ids = vq_layer(role_inputs)
+            tokens.append(token_ids)
+            continue
         traces.append(residual)
         quant, _, _, token_ids = vq_layer(residual)
         tokens.append(token_ids)
@@ -1183,8 +1201,14 @@ def _behaviour_factors(model, embeddings: torch.Tensor, pairs: np.ndarray) -> to
     the mean direction, so the assignment stays deterministic.
     """
     n_items = int(embeddings.shape[0])
-    with torch.no_grad():
-        latent = model.encoder(embeddings)
+    was_training = model.training
+    model.eval()
+    try:
+        with torch.no_grad():
+            latent = model.encoder(embeddings)
+    finally:
+        if was_training:
+            model.train()
     source = torch.as_tensor(np.asarray(pairs)[:, 0], dtype=torch.long, device=latent.device)
     target = torch.as_tensor(np.asarray(pairs)[:, 1], dtype=torch.long, device=latent.device)
     keep = (source >= 0) & (source < n_items) & (target >= 0) & (target < n_items)
@@ -1202,6 +1226,60 @@ def _behaviour_factors(model, embeddings: torch.Tensor, pairs: np.ndarray) -> to
     fallback = torch.nn.functional.normalize(factors[has].mean(dim=0), dim=0)
     factors[~has] = fallback
     return factors
+
+
+def _probe_role_inputs(model, embeddings: torch.Tensor) -> torch.Tensor:
+    """The role signal for a probe case: the REAL helper, on a deterministic pair set.
+
+    The CGV's probe rows are synthetic, so the successor set is the deterministic cycle
+    (i -> i+1). The helper is the training one, so the probe exercises the same code path.
+    """
+    n = int(embeddings.shape[0])
+    pairs = np.stack([np.arange(n), (np.arange(n) + 1) % n], axis=1)
+    return _behaviour_factors(model, embeddings, pairs)
+
+
+def _role_level_loss(model, embeddings: torch.Tensor, role_inputs: torch.Tensor) -> torch.Tensor:
+    """The role level's own quantisation loss: the commitment on the behaviour factor.
+
+    This is the exact call the training makes for the role level, so the CGV's gradient gates
+    measure the term that actually trains that codebook.
+    """
+    level = int(model.rq.role_level)
+    if level < 0:
+        raise ValueError("this model has no role-assigned level")
+    _, loss, _, _ = model.rq.vq_layers[level](role_inputs)
+    return loss
+
+
+def _role_term_provider(obs) -> torch.Tensor:
+    """The mechanism's term, on the verifier's observations: the role level's own loss.
+
+    The provider is called by the verifier, not by the training, and its result is handed to
+    the executor as the mechanism's inputs. It is the exact call the training makes for the
+    role level, so the gradient gates measure the term that trains that codebook.
+    """
+    model = obs["model"]
+    role_inputs = obs["role_inputs"]
+    if role_inputs is None:
+        raise ValueError("the role term needs the role inputs, which were not observed")
+    level = int(model.rq.role_level)
+    _, loss, _, _ = model.rq.vq_layers[level](role_inputs)
+    return loss
+
+
+def _role_executor(base_loss, l1_loss, other_loss, encoder, weight, valid_levels=0,
+                   *, mechanism_inputs=None, **kwargs) -> torch.Tensor:
+    """The role-assigned layout's contribution to the loss assembly: exactly ZERO.
+
+    The layout is a change of what a level quantises, not a new loss: the role level's
+    commitment is already inside the quantisation loss the host computes, so folding the role
+    term in again would double it. The mechanism's term is therefore measured directly (the
+    declared loss term ``role_loss``), and the assembly itself contributes nothing.
+    """
+    if mechanism_inputs is None:
+        raise ValueError("the role executor needs the mechanism's inputs")
+    return torch.zeros((), dtype=base_loss.dtype, device=base_loss.device)
 
 
 def main() -> None:
@@ -1503,7 +1581,11 @@ def main() -> None:
                 pair_batch = all_embeddings[
                     torch.cat((source_ids, target_ids)).cpu()
                 ].to(device, non_blocking=True)
-                residuals = _residuals_with_trace(raw_module, pair_batch)
+                pair_role_inputs = role_factors[
+                    torch.cat((source_ids, target_ids)).to(device)
+                ]
+                residuals = _residuals_with_trace(raw_module, pair_batch,
+                                                  role_inputs=pair_role_inputs)
                 if DIRECTIONAL_MODE != "none":
                     behavior_loss = directional_residual_loss(
                         residuals, source_ids, target_ids, directional_heads,
