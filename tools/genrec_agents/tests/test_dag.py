@@ -5,7 +5,7 @@ ordering, restart and lease safety, zero duplicate experiments under races, and 
 producing zero false rounds. Each of those is one test below, plus the write-scope rule that
 turns "no concurrent file corruption" into a mechanical refusal.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_dag.py -q
 """
 

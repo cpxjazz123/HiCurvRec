@@ -6,7 +6,7 @@ implementation or a different seed, an incomplete Stage-3, a missing gate, a gat
 not-applicable or insufficient-evidence, and a certificate bound to another proposal. One
 test shows it accepts a genuine win, with every threshold strictly exceeded.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_success.py -q
 """
 

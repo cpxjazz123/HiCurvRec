@@ -1,7 +1,7 @@
 """First-party specifications for the agent harnesses (the native replacement for the
 third-party framework's ``core.spec``).
 
-These dataclasses used to come from ``harness2.core.spec``. They are re-declared here so that
+These dataclasses used to come from the third-party framework's spec module. They are re-declared here so that
 every active module imports nothing outside this repository: the fields, their meaning and their
 defaults are the same, only the owner changed.
 

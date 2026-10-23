@@ -3,7 +3,7 @@
 Each test attempts a PROHIBITED execution and asserts that the controller refuses it
 before any process is launched and any artifact is written.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_guardrails.py -q
 """
 

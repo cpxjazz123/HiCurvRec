@@ -122,8 +122,7 @@ def test_each_agent_gets_its_own_workspace(tmp_path: Path, env) -> None:
 
 
 def test_a_nonzero_exit_is_a_failure_with_the_reason(tmp_path: Path, env, monkeypatch) -> None:
-    monkeypatch.setenv("H2_MOCK_MODE", "fail")
-    executor = _exec(tmp_path)
+    executor = _exec(tmp_path, "fail")
     record = executor.execute("t1", EX.AgentSpec(role="L", task_id="t1", prompt="a", model="mock/model",
                                                  timeout=30))
     assert not record.ok
@@ -132,8 +131,7 @@ def test_a_nonzero_exit_is_a_failure_with_the_reason(tmp_path: Path, env, monkey
 
 
 def test_a_timeout_is_a_failure_not_a_hang(tmp_path: Path, env, monkeypatch) -> None:
-    monkeypatch.setenv("H2_MOCK_MODE", "slow")
-    executor = _exec(tmp_path)
+    executor = _exec(tmp_path, "slow")
     started = time.time()
     record = executor.execute("t1", EX.AgentSpec(role="L", task_id="t1", prompt="a", model="mock/model",
                                                  timeout=1))
@@ -143,20 +141,26 @@ def test_a_timeout_is_a_failure_not_a_hang(tmp_path: Path, env, monkeypatch) -> 
 
 
 def test_a_secret_never_reaches_the_evidence(tmp_path: Path, env, monkeypatch) -> None:
-    monkeypatch.setenv("H2_MOCK_MODE", "leak")
-    monkeypatch.setenv("HARNESS2_OPENCODE_KEY", "sk-test-secret-value-123456")
-    executor = _exec(tmp_path)
-    record = executor.execute("t1", EX.AgentSpec(role="L", task_id="t1", prompt="a", model="mock/model",
-                                                 timeout=30))
-    blob = json.dumps(record.as_dict()) + Path(record.session_path).read_text()
-    assert "sk-test-secret-value-123456" not in blob
-    assert "<redacted>" in blob
+    """An agent that echoes the API key must not put it in the evidence.
+
+    The key is the one the provider configuration hands the child (``HARNESS2_OPENCODE_KEY``);
+    the child echoes it back, and ``redact`` must have removed it before anything was written.
+    """
+    secret = "sk-test-secret-value-1234567890"
+    monkeypatch.setenv("HARNESS2_OPENCODE_KEY", secret)
+    executor = _exec(tmp_path, "leak")
+    record = executor.execute("t1", EX.AgentSpec(role="L", task_id="t1", prompt="a",
+                                                 model="mock/model", timeout=30))
+    # whatever the agent said, the secret is not in any artifact this executor wrote
+    for path in (Path(record.session_path), Path(record.tool_jsonl_path)):
+        assert secret not in path.read_text(encoding="utf-8")
+    assert secret not in json.dumps(record.as_dict(), default=str)
 
 
 # -- the roles, the DAG and the worker --------------------------------------
 def test_three_roles_run_concurrently_and_the_join_waits(tmp_path: Path, env, monkeypatch) -> None:
     """L, A and M must overlap in time; the join must only run when all three are done."""
-    monkeypatch.setenv("H2_MOCK_MODE", "slow")   # each session takes ~4s, so overlap is visible
+    # each session takes ~4s, so the overlap is visible in the timestamps
     dag = _dag(tmp_path)
     dag.add([_task("c1:literature", stage="literature"),
              _task("c1:analysis", stage="analysis"),
@@ -186,32 +190,42 @@ def test_three_roles_run_concurrently_and_the_join_waits(tmp_path: Path, env, mo
     assert join.status in ("pending", "ready"), join.status
 
 
-def test_a_partial_failure_leaves_the_others_and_retries_once(tmp_path: Path, env, monkeypatch) -> None:
+def test_a_partial_failure_leaves_the_others_and_retries_once(tmp_path: Path, env) -> None:
     dag = _dag(tmp_path)
     dag.add([_task("c1:literature", stage="literature"), _task("c1:analysis", stage="analysis")])
-    executor = _exec(tmp_path)
-    worker = W.AgentWorker(tmp_path / "run", dag=dag, concurrency=2, executor=executor, owner="w1")
-    monkeypatch.setenv("H2_MOCK_MODE", "ok")
+    executor = _exec(tmp_path, "ok")
+    worker = W.AgentWorker(tmp_path / "run", dag=dag, concurrency=1, executor=executor,
+                           owner="w1", spec_factory=_factory)
     first = worker.run_once()
     assert first["dispatched"], first
-    monkeypatch.setenv("H2_MOCK_MODE", "fail")
+    assert first["ok"], first
+    # the SECOND run fails: the executor the worker actually uses is the one that changes
+    executor.env["H2_MOCK_MODE"] = "fail"
     second = worker.run_once()
     assert second["dispatched"], second
+    assert second["ok"] is False, second
     statuses = {t.task_id: t.status for t in dag.tasks()}
+    # one agent succeeded and stayed done; the other failed and was handed back for a retry
     assert "done" in statuses.values(), statuses
-    assert any(v in ("ready", "running", "pending") for v in statuses.values()), statuses
+    assert "ready" in statuses.values(), statuses
+    record = executor.read_record(second["dispatched"][0])
+    assert record["ok"] is False and record["exit_code"] == 3
 
 
 def test_a_restarted_worker_reclaims_an_expired_lease(tmp_path: Path, env) -> None:
     dag = DAG(tmp_path / "dag", lease_ttl=0.2, resource_limits={"cpu": 8, "gpu": 1, "none": 8})
     dag.add(_task("c1:literature"))
     assert dag.tick(owner="dead-worker")["dispatched"] == ["c1:literature"]
+    assert dag.task("c1:literature").status == "running"
     time.sleep(0.4)
     executor = _exec(tmp_path)
-    worker = W.AgentWorker(tmp_path / "run", dag=dag, concurrency=1, executor=executor, owner="w2")
+    worker = W.AgentWorker(tmp_path / "run", dag=dag, concurrency=1, executor=executor,
+                           owner="w2", spec_factory=_factory)
     result = worker.run_once()
     assert result["dispatched"] == ["c1:literature"], result
     assert dag.task("c1:literature").status == "done"
+    record = executor.read_record("c1:literature")
+    assert record is not None and record["ok"] and record["pid"] > 0
 
 
 def test_an_experiment_reserved_twice_is_one_round(tmp_path: Path) -> None:

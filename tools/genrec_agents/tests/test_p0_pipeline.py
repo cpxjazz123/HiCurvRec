@@ -42,7 +42,7 @@ def _adapter(tmp_path: Path) -> GenrecAdapter:
 def _sweep(tmp_path: Path):
     adapter = _adapter(tmp_path)
     prop = ScriptedProposer(OFFLINE_CHANNEL)
-    report = cli.run_sweep(adapter, prop, adapter.runs_root, k=1, modes=("agg",))
+    report = cli.run_pool(adapter, prop, adapter.runs_root, k=1, modes=("agg",))
     return adapter, report, adapter.runs_root
 
 

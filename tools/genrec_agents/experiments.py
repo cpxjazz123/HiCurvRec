@@ -5,7 +5,7 @@ the ledger, with the artifact each result came from. The ledger's own checks the
 a hypothesis may not be decided by the results of its own experiment, and every run it
 cites must exist in the store.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m tools.genrec_agents.cli \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m tools.genrec_agents.cli \
         record-experiments --store results/harness3_runs/store \
                            --ledger results/harness3_runs/hypotheses/ledger.json \
                            --out results/harness3_runs/experiments

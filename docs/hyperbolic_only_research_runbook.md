@@ -33,7 +33,7 @@ bootstrap_archives_and_prior_art
  → next genuinely novel hyperbolic portfolio
 ```
 
-Each candidate is an independently durable state machine (`tools/harness2_genrec/hyperbolic_campaign.py`):
+Each candidate is an independently durable state machine (`tools/genrec_agents/hyperbolic_campaign.py`):
 `proposed → reviewed → implemented → screened → sealed → stage2_reserved → stage2_running →
 stage2_complete → evaluated → stage3_reserved → stage3_running → stage3_complete → analysed`,
 with the stops `rejected`, `novelty_unknown`, `blocked_literature`, `blocked_resources` and
@@ -69,26 +69,26 @@ sweep, no ensemble. The historical multi-seed archives are read-only.
 
 ```bash
 # the forensic import and the prior-art registry
-python3 -m tools.harness2_genrec.archives
-python3 -m tools.harness2_genrec.prior_art
+python3 -m tools.genrec_agents.archives
+python3 -m tools.genrec_agents.prior_art
 
 # the #109 lessons, re-checked
-python3 -m tools.harness2_genrec.forensics_109
+python3 -m tools.genrec_agents.forensics_109
 
 # the historical evidence baseline of section 4
 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 \
-    tools/harness2_genrec/historical_evidence.py --out results/harness3_runs/historical_evidence
+    tools/genrec_agents/historical_evidence.py --out results/harness3_runs/historical_evidence
 
 # the tests
-/home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest tools/harness2_genrec/tests -q
+/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest tools/genrec_agents/tests -q
 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python -m pytest \
-    tools/harness2_genrec/tests/test_hyperbolic_geometry.py \
-    tools/harness2_genrec/tests/test_hyperbolic_gates.py -q
+    tools/genrec_agents/tests/test_hyperbolic_geometry.py \
+    tools/genrec_agents/tests/test_hyperbolic_gates.py -q
 ```
 
 ## What counts as success
 
-`is_verified_triple_win` in `tools/harness2_genrec/success.py`, and nothing else. It requires
+`is_verified_triple_win` in `tools/genrec_agents/success.py`, and nothing else. It requires
 the same proposal, implementation, protocol and seed; the seven hyperbolic gates and the six
 CGV gates passed with none of them not-applicable or insufficient-evidence; the frozen ER
 strictly above its gate with both shares recorded; and a complete audited Stage-3 whose

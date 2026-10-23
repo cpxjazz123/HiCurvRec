@@ -5,7 +5,7 @@ candidate and no new evidence produce ZERO new science rounds and ZERO extra tra
 the status is preserved, and that the planner says why it is blocked. It is also a
 regression for the old 48-119 loop, which burned the machine by treating a tick as a round.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_planner.py -q
 """
 

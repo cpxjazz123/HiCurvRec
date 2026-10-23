@@ -3,7 +3,7 @@
 They run with the framework's interpreter, because the package needs ``harness2`` and
 Python 3.12:
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_evidence.py -q
 
 Zero GPU, zero network, zero credentials. Every test here is about a REFUSAL: the store

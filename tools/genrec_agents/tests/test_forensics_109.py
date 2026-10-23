@@ -6,7 +6,7 @@ mechanisms were Euclidean under hyperbolic names, and its success decision was m
 three places. The tests assert that the checks find those facts, so a later campaign
 cannot quietly reintroduce them.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_forensics_109.py -q
 """
 

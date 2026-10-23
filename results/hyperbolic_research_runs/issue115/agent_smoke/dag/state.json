@@ -1,0 +1,44 @@
+{
+  "authorisations": {},
+  "created_utc": 1792769866.199575,
+  "dispatched": 1,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "smoke:genuine": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/evidence/smoke:genuine/session.json",
+          "sha256": "1ae1101afeddd2be92ff777e07d693bee3d4ff7e70f66ea3f7f3e09b625d7399"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/evidence/smoke:genuine/session.jsonl",
+          "sha256": "493e555735611e2c635cbf55751301ca0d9a7d50c0591959c93dbcb350019eff"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "bootstrap",
+      "deps": [],
+      "description": "",
+      "detail": "the L agent finished its work",
+      "error": "",
+      "finished_at": 1792769870.3336804,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "literature",
+      "started_at": 1792769866.207379,
+      "status": "done",
+      "task_id": "smoke:genuine",
+      "verify": [],
+      "write_scope": [
+        "issue115/smoke"
+      ]
+    }
+  }
+}

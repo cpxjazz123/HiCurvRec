@@ -16,11 +16,11 @@ archived control.
 
 | Deliverable | Where | Evidence |
 |---|---|---|
-| Enforceable guardrails: the frozen seed, one cold run per candidate, the ER read once, Stage-3 once per arm, no re-running a failed arm, no renamed copy of a mechanism, no re-reading a frozen evaluation | `tools/harness2_genrec/guardrails.py` | 49 tests; the prohibited operations are refused **before** any process is launched |
-| The durable controller: a persistent state machine (`read → hypothesise → screen → train → evaluate → stage3 → learn`), crash recovery, idempotent dispatch, job supervision (a lost job is classified, never silently retried), isolated ports and output paths, an append-only audit log | `tools/harness2_genrec/controller.py` | 49 tests, including restart, crash-between-transitions and duplicate-dispatch |
-| The transfer analysis: what the SID structure a recommender consumes implies — sequence information, train→test frequency drift, per-level entropy and Gini, popularity and cold-item slices, collisions, prefix-branch structure, Stage-3 error slices, ER↔ranking correlation | `tools/harness2_genrec/stage3_transfer.py` | refreshed from the store before every portfolio |
-| The learning loop: the portfolio is proposed by the research agent, ranked, screened in parallel, trained one cold run at a time within a resource budget, and the round's outcome becomes the next round's brief | `tools/harness2_genrec/candidates.py`, `candidate_run.py`, `ideation.py` | 30 rounds run; 100+ audit events; the negative results feed the next brief |
-| Per-arm reports and the queue/pause/next-action status, from the CLI and on the issue | `tools/harness2_genrec/cli.py`, `results/harness3_runs/final/` | `controller status/tick/run/pause/resume/backfill-store`; status posted on the issue throughout |
+| Enforceable guardrails: the frozen seed, one cold run per candidate, the ER read once, Stage-3 once per arm, no re-running a failed arm, no renamed copy of a mechanism, no re-reading a frozen evaluation | `tools/genrec_agents/guardrails.py` | 49 tests; the prohibited operations are refused **before** any process is launched |
+| The durable controller: a persistent state machine (`read → hypothesise → screen → train → evaluate → stage3 → learn`), crash recovery, idempotent dispatch, job supervision (a lost job is classified, never silently retried), isolated ports and output paths, an append-only audit log | `tools/genrec_agents/controller.py` | 49 tests, including restart, crash-between-transitions and duplicate-dispatch |
+| The transfer analysis: what the SID structure a recommender consumes implies — sequence information, train→test frequency drift, per-level entropy and Gini, popularity and cold-item slices, collisions, prefix-branch structure, Stage-3 error slices, ER↔ranking correlation | `tools/genrec_agents/stage3_transfer.py` | refreshed from the store before every portfolio |
+| The learning loop: the portfolio is proposed by the research agent, ranked, screened in parallel, trained one cold run at a time within a resource budget, and the round's outcome becomes the next round's brief | `tools/genrec_agents/candidates.py`, `candidate_run.py`, `ideation.py` | 30 rounds run; 100+ audit events; the negative results feed the next brief |
+| Per-arm reports and the queue/pause/next-action status, from the CLI and on the issue | `tools/genrec_agents/cli.py`, `results/harness3_runs/final/` | `controller status/tick/run/pause/resume/backfill-store`; status posted on the issue throughout |
 | The runbook and the resource configuration | `docs/runbook_research_controller.md`, `results/harness3_runs/controller/resource_config.json` | — |
 
 ## 3. What was measured (26 arms)
@@ -73,7 +73,7 @@ two codewords being pulled together.
 
 ## 5. Two measured negative results, recorded so they are not retried
 
-* **The short probe is not a gate** (`tools/harness2_genrec/probe_fidelity.py`, ledger
+* **The short probe is not a gate** (`tools/genrec_agents/probe_fidelity.py`, ledger
   H107-04): over the 19 arms with both a probe export and a cold export, the probe's paired
   level-0 Gini predicts the cold run's with a rank correlation of 0.38, the number of codes
   in use with 0.47, and the paired enrichment ratio with the cold run's ER with 0.51.
@@ -117,7 +117,7 @@ every training and Stage-3 process was terminated; the four GPUs are free. The s
 complete, durable and restartable:
 
 ```
-python -m tools.harness2_genrec.cli controller resume --state results/harness3_runs/controller/state.json
+python -m tools.genrec_agents.cli controller resume --state results/harness3_runs/controller/state.json
 ```
 
 re-attaches the worker to the campaign and continues from the recorded state.

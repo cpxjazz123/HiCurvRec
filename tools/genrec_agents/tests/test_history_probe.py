@@ -4,7 +4,7 @@ The probe is the issue's primary Stage-3-oriented signal, so the contract has to
 things the issue names impossible: a second probe for the same export, a seed other than 42,
 a budget other than the frozen one, and a split whose two sides share a user.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_history_probe.py -q
 """
 

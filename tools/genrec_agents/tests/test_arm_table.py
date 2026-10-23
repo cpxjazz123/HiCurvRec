@@ -5,7 +5,7 @@ appears with its numbers, that the deltas are against the archived control, that
 measured before a signal existed says which signal is missing, and that the table can be
 rebuilt from the same manifests to the same thing.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_arm_table.py -q
 """
 

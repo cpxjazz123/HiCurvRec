@@ -27,7 +27,7 @@ from .spec import ChannelSpec
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS_ROOT = Path(
     os.environ.get(
-        "HARNESS2_GENREC_RUNS", "/home/wlia0047/ar57_scratch/wenyu/harness2_runs/genrec"
+        "GENREC_AGENTS_RUNS", "/home/wlia0047/ar57_scratch/wenyu/genrec_agents_runs/genrec"
     )
 )
 OFFLINE_CHANNEL = ChannelSpec("opencode", "local/deterministic")
@@ -56,7 +56,7 @@ def cmd_tasks(args: argparse.Namespace) -> int:
     return 0
 
 
-def run_sweep(
+def run_pool(
     adapter: GenrecAdapter,
     prop,
     runs_root: Path,
@@ -70,7 +70,7 @@ def run_sweep(
     only_domains: tuple[str, ...] = (),
 ) -> dict:
     """Run the framework's scheduler over the adapter's task pool."""
-    return SCHED.run_sweep(
+    return SCHED.run_pool(
         k,
         adapter=adapter,
         prop=prop,
@@ -115,7 +115,7 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         harness_root=Path(args.base_harness) if args.base_harness else None,
     )
 
-    report = run_sweep(
+    report = run_pool(
         adapter,
         prop,
         runs_root,
@@ -537,6 +537,65 @@ def cmd_controller(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_worker(args: argparse.Namespace) -> int:
+    """The production worker: run it, read its liveness, or ask it to stop."""
+    from . import executor as _executor
+    from .dag import DAG
+    from .worker import AgentWorker
+
+    root = Path(args.root)
+    dag = DAG(root / "dag", resource_limits={"cpu": 8, "gpu": 1, "none": 8})
+    executor = _executor.OpenCodeAgentExecutor(root / "sessions", model=args.model or "")
+    worker = AgentWorker(root, dag=dag, executor=executor, concurrency=args.concurrency,
+                         owner=args.owner)
+    if args.action == "status":
+        print(json.dumps(worker.status(), indent=2, default=str))
+        return 0
+    if args.action == "stop":
+        worker.stop(request=True)
+        print(f"stop requested for {root}: the worker will finish its task and exit")
+        return 0
+    report = worker.serve(max_ticks=args.ticks or None, idle_sleep=args.idle_sleep)
+    print(json.dumps(report, indent=2, default=str))
+    return 0
+
+
+def cmd_ledger(args: argparse.Namespace) -> int:
+    """The ONE durable ledger, exported as a read-only view.
+
+    The campaign used to keep a second, hand-maintained queue file next to the DAG's state. It was
+    never read by any code and drifted from the truth. This command is the replacement: the view is
+    DERIVED from the DAG's state, so it cannot disagree with it.
+    """
+    from .dag import DAG
+
+    dag = DAG(Path(args.dag))
+    state = dag.state()
+    tasks = state.get("tasks") or {}
+    counts: dict[str, int] = {}
+    for value in tasks.values():
+        counts[value.get("status", "unknown")] = counts.get(value.get("status", "unknown"), 0) + 1
+    view = {
+        "schema_version": 1,
+        "source": "dag/state.json (the only authority)",
+        "rounds": state.get("rounds", 0),
+        "idle_ticks": state.get("idle_ticks", 0),
+        "dispatched_total": state.get("dispatched", 0),
+        "status_counts": counts,
+        "tasks": {task_id: {"status": value.get("status"),
+                            "detail": value.get("detail", ""),
+                            "attempts": value.get("attempts", 0),
+                            "artifacts": len(value.get("artifacts") or ())}
+                  for task_id, value in sorted(tasks.items())},
+        "reservations": dag.reservations(),
+    }
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(view, indent=2, default=str) + "\n", encoding="utf-8")
+    print(f"ledger: {out} ({len(tasks)} tasks, {view['rounds']} round(s))")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="tools.genrec_agents.cli", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -716,6 +775,21 @@ def _build_parser() -> argparse.ArgumentParser:
         help="a directory whose surface is the base harness; the repository by default",
     )
     sweep.set_defaults(func=cmd_sweep)
+    worker = sub.add_parser("worker", help="run or inspect the production worker")
+    worker.add_argument("action", choices=("run", "status", "stop"))
+    worker.add_argument("--root", required=True)
+    worker.add_argument("--concurrency", type=int, default=4)
+    worker.add_argument("--ticks", type=int, default=0)
+    worker.add_argument("--idle-sleep", type=float, default=2.0)
+    worker.add_argument("--owner", default="worker")
+    worker.add_argument("--model", default="")
+    worker.set_defaults(func=cmd_worker)
+
+    ledger = sub.add_parser("ledger", help="export the one durable ledger as a read-only view")
+    ledger.add_argument("--dag", required=True, help="the directory holding dag/state.json")
+    ledger.add_argument("--out", required=True)
+    ledger.set_defaults(func=cmd_ledger)
+
     return parser
 
 

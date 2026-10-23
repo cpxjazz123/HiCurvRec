@@ -5,7 +5,7 @@ substitute something easier. The tests cover the three rules: a changed mathemat
 new mechanism identity, the frozen files are not writable, and a repair is only for a
 verified code bug under the same mathematics, is counted, and never runs a cold run.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_implementation.py -q
 """
 

@@ -4,7 +4,7 @@ The gate asks the question the campaign's verification suite had been missing: d
 assignment distinguish the catalogue at all? The arm that collapsed is the fixture: its exported
 SIDs are in the repository, so the test is hermetic and does not need a GPU or a checkpoint.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_partition_degeneracy.py -q
 """
 
