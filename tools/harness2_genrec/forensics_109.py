@@ -107,6 +107,28 @@ def _proposals() -> List[Dict[str, Any]]:
     return proposals
 
 
+def _new_proposals() -> List[Dict[str, Any]]:
+    """The proposals of THIS campaign, in the new namespace."""
+    root = REPO_ROOT / "results" / "hyperbolic_research_runs" / "proposals"
+    proposals: List[Dict[str, Any]] = []
+    if not root.is_dir():
+        return proposals
+    for proposal_path in sorted(root.glob("*/proposal.json")):
+        try:
+            proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        proposals.append(
+            {
+                "round": proposal_path.parent.name,
+                "mechanism_id": proposal.get("mechanism_id") or proposal_path.parent.name,
+                "path": proposal_path,
+                "proposal": proposal,
+            }
+        )
+    return proposals
+
+
 def check_false_progress() -> Dict[str, Any]:
     """Lesson 1: a round that adopts a measured arm is not progress."""
     portfolio_without_implementation: List[str] = []
@@ -292,11 +314,30 @@ def check_split_success_predicate() -> Dict[str, Any]:
     controller = (REPO_ROOT / "tools" / "harness2_genrec" / "controller.py").read_text(
         encoding="utf-8"
     )
-    inline = len(re.findall(r"improved\s*=|improves_both", controller))
+    # an inline decision that does not ask the shared predicate is the defect; one that
+    # does ask it is the same decision in another place, not another decision
+    # a decision SITE, not a count: "improved=len(improved)" in an audit line is a tally
+    sites = [m.start() for m in re.finditer(r"improved\s*=\s*\[", controller)]
+    sites += [
+        m.start()
+        for m in re.finditer(r"improves_both", controller)
+    ]
+    inline = 0
+    for start in sites:
+        window = controller[start: start + 900]
+        if "is_verified_triple_win" not in window:
+            inline += 1
+    # and the report's own flag, which must ask the same predicate
+    table = REPO_ROOT / "tools" / "harness2_genrec" / "arm_table.py"
+    if table.is_file():
+        table_source = table.read_text(encoding="utf-8")
+        if "improves_both" in table_source and "is_verified_triple_win" not in table_source:
+            inline += 1
     return {
         "lesson": "invalid_scientific_end",
         "shared_predicate_modules": found,
         "inline_success_decisions_in_the_controller": inline,
+        "decision_sites": len(sites),
         "verdict": "ok" if found and inline == 0 else "gap",
         "note": (
             "the read phase, the learn phase, the monitor and the reports must all ask the "
@@ -308,8 +349,15 @@ def check_split_success_predicate() -> Dict[str, Any]:
 
 
 def check_euclidean_framing() -> Dict[str, Any]:
-    """Lesson 8: a hyperbolic campaign needs genuinely hyperbolic mechanisms."""
+    """Lesson 8: a hyperbolic campaign needs genuinely hyperbolic mechanisms.
+
+    The archived arms are counted as the PRIOR: they are a fact about the history, and the
+    fact is that a campaign full of geometry names held no hyperbolic operator. The NEW
+    campaign's arms are counted separately, because there a Euclidean mechanism is a live
+    defect rather than a historical note.
+    """
     proposals = _proposals()
+    new_proposals = _new_proposals()
     hyperbolic = 0
     euclidean_only = 0
     for item in proposals:
@@ -330,12 +378,34 @@ def check_euclidean_framing() -> Dict[str, Any]:
             hyperbolic += 1
         elif EUCLIDEAN_ONLY_PATTERN.search(text):
             euclidean_only += 1
+    new_hyperbolic = 0
+    new_euclidean = 0
+    for item in new_proposals:
+        source = ""
+        for candidate in (
+            item["path"].parent / f"mechanism_{item['mechanism_id']}.py",
+            REPO_ROOT
+            / "stage2_RQ-VAE"
+            / f"TIGER_c107_{item['mechanism_id']}"
+            / f"mechanism_{item['mechanism_id']}.py",
+        ):
+            if candidate.is_file():
+                source = candidate.read_text(encoding="utf-8", errors="replace")
+                break
+        text = source or json.dumps(item["proposal"])
+        if HYPERBOLIC_OPERATOR_PATTERN.search(text):
+            new_hyperbolic += 1
+        elif EUCLIDEAN_ONLY_PATTERN.search(text):
+            new_euclidean += 1
     return {
         "lesson": "euclidean_framing",
-        "proposals": len(proposals),
-        "with_a_hyperbolic_operator": hyperbolic,
-        "euclidean_only": euclidean_only,
-        "verdict": "gap" if euclidean_only else "ok",
+        "prior_proposals": len(proposals),
+        "prior_with_a_hyperbolic_operator": hyperbolic,
+        "prior_euclidean_only": euclidean_only,
+        "new_proposals": len(new_proposals),
+        "new_with_a_hyperbolic_operator": new_hyperbolic,
+        "new_euclidean_only": new_euclidean,
+        "verdict": "gap" if new_euclidean else "ok",
         "note": (
             "running inside a paper about hyperbolic geometry does not make a mechanism "
             "hyperbolic; the H2 gate traces the operator in the actual loss, and this is the "

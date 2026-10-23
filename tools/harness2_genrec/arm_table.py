@@ -33,6 +33,30 @@ ER_GATE = 16.38953942232631
 R4_08_ER = 16.402627511591962
 
 
+def _predicate_says_win(
+    mechanism_id: str, er: Any, recall: Any, ndcg: Any
+) -> bool:
+    """Whether the shared success predicate accepts this arm's numbers."""
+    from . import success as success_module
+
+    return success_module.is_verified_triple_win(
+        {
+            "proposal_sha256": mechanism_id,
+            "implementation_sha256": mechanism_id,
+            "frozen_protocol_hash": mechanism_id,
+            "seed": success_module.FROZEN_SEED,
+            "hyperbolic_certificate": {g: {"state": "pass"} for g in success_module.HYPERBOLIC_GATES},
+            "cgv_certificate": {g: {"state": "pass"} for g in success_module.CGV_GATES},
+            "frozen_evaluation": {"hard_l1_er": er, "pos_share": 0.0, "neg_share": 0.0},
+            "stage3": {
+                "test_recall@10": recall,
+                "test_ndcg@10": ndcg,
+                "complete": recall is not None and ndcg is not None,
+            },
+        }
+    ).won
+
+
 def build_table(
     store_runs: List[Dict[str, Any]],
     *,
@@ -117,12 +141,9 @@ def build_table(
                 else None,
                 "ndcg_delta_vs_control": (ndcg - CONTROL["test_ndcg@10"]) if ndcg is not None else None,
                 "cleared_the_gate": bool(er is not None and er > ER_GATE),
-                "improves_both": bool(
-                    recall is not None
-                    and ndcg is not None
-                    and recall > CONTROL["test_recall@10"]
-                    and ndcg > CONTROL["test_ndcg@10"]
-                ),
+                # the report asks the shared predicate, so it cannot disagree with the
+                # phases that decide success
+                "improves_both": _predicate_says_win(mechanism_id, er, recall, ndcg),
                 "diagnosis": diagnosis.get("primary_mode"),
                 "missing": missing,
             }

@@ -56,16 +56,19 @@ def test_the_lost_cgv_contract_is_found():
 def test_the_euclidean_framing_is_found():
     """The previous campaign's mechanisms were Euclidean under hyperbolic names."""
     check = F.check_euclidean_framing()
-    assert check["with_a_hyperbolic_operator"] == 0
-    assert check["euclidean_only"] > 50
-    assert check["verdict"] == "gap"
+    assert check["prior_with_a_hyperbolic_operator"] == 0
+    assert check["prior_euclidean_only"] > 50
+    # the new campaign has no arms yet, so there is no live Euclidean defect
+    assert check["new_proposals"] == 0
+    assert check["verdict"] == "ok"
 
 
 def test_the_split_success_predicate_is_found():
-    """The success decision was made in more than one place."""
+    """Every success decision now asks the one shared predicate."""
     check = F.check_split_success_predicate()
-    assert check["inline_success_decisions_in_the_controller"] > 0
-    assert check["verdict"] == "gap"
+    assert check["shared_predicate_modules"], "the shared predicate module is missing"
+    assert check["inline_success_decisions_in_the_controller"] == 0
+    assert check["verdict"] == "ok"
 
 
 def test_the_repeated_stage3_and_work_checks_are_run():

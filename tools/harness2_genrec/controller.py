@@ -385,6 +385,52 @@ class Controller:
                 continue
         return lost
 
+    def _arm_evidence(self, mechanism_id: str) -> Dict[str, Any]:
+        """The evidence of one arm, in the shape the shared success predicate takes.
+
+        The predicate needs the identity, the gates and the two measurements to belong to
+        the same arm, so they are gathered here from the store and the manifest rather than
+        from whatever the phase happens to be holding.
+        """
+        from . import success as success_module
+
+        evaluation: Dict[str, Any] = {}
+        stage3: Dict[str, Any] = {}
+        identity: Dict[str, Any] = {}
+        for manifest in self.store.runs():
+            if manifest.get("mechanism_id") != mechanism_id:
+                continue
+            metrics = manifest.get("metrics") or {}
+            for key, value in (metrics.get("frozen_evaluation") or {}).items():
+                evaluation.setdefault(key, value)
+            for key, value in (metrics.get("stage3") or {}).items():
+                stage3.setdefault(key, value)
+            extra = manifest.get("extra") or {}
+            identity.setdefault("proposal_sha256", extra.get("proposal_sha256") or "")
+            identity.setdefault(
+                "implementation_sha256",
+                extra.get("implementation_sha256")
+                or manifest.get("tree_sha256")
+                or "",
+            )
+            identity.setdefault("frozen_protocol_hash", extra.get("frozen_protocol_hash") or "")
+            identity.setdefault("seed", manifest.get("seed"))
+            if extra.get("hyperbolic_certificate"):
+                identity.setdefault("hyperbolic_certificate", extra["hyperbolic_certificate"])
+            if extra.get("cgv_certificate"):
+                identity.setdefault("cgv_certificate", extra["cgv_certificate"])
+        return {
+            **identity,
+            "seed": identity.get("seed") or success_module.FROZEN_SEED,
+            "hyperbolic_certificate": identity.get("hyperbolic_certificate") or {},
+            "cgv_certificate": identity.get("cgv_certificate") or {},
+            "frozen_evaluation": evaluation,
+            "stage3": {
+                **stage3,
+                "complete": bool(stage3.get("test_recall@10") is not None),
+            },
+        }
+
     def _diagnose_arms(self) -> Dict[str, Any]:
         """Diagnose every arm the store knows, with the measurements behind each verdict."""
         from . import diagnosis
@@ -496,10 +542,12 @@ class Controller:
                 }
             )
         cleared = [row for row in qualified if row["er"] > FROZEN_GATE]
+        from . import success as success_module
+
         improved = [
             row
             for row in cleared
-            if row["recall_delta"] > 0 and row["ndcg_delta"] > 0
+            if success_module.is_verified_triple_win(self._arm_evidence(row["mechanism_id"])).won
         ]
         self._diagnose_arms()
         self.state["evidence_summary"] = {
@@ -1924,13 +1972,14 @@ class Controller:
             item["status"] = "evaluated"
             self._record_stage3_in_store(item)
         self.state["round_summary"] = summary
+        from . import success as success_module
+
         improved = [
             item
             for item in self.state.get("portfolio") or ()
-            if (item.get("stage3") or {}).get("recall_delta_vs_control")
-            and (item.get("stage3") or {}).get("recall_delta_vs_control") > 0
-            and (item.get("stage3") or {}).get("ndcg_delta_vs_control")
-            and (item.get("stage3") or {}).get("ndcg_delta_vs_control") > 0
+            if success_module.is_verified_triple_win(
+                self._arm_evidence(item["mechanism_id"])
+            ).won
         ]
         if improved:
             self.state["phase"] = "done"
