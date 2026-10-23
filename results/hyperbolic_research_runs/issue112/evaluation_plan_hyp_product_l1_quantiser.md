@@ -16,26 +16,26 @@ job; the run needs the operator's explicit authorisation, and nothing is reserve
 | the mechanism's mathematics | the level-0 assignment minimises `d_{c_s}^2(x_s, A_j) + d_{c_b}^2(x_b, B_j)` with `c_s = 1`, `c_b = 2` and ONE common tangent scale `s = 1.4937731…` (measured on the frozen host) |
 
 
-## 0.1 What an authorised run would ACTUALLY measure (read this first)
+## 0.1 What an authorised run would measure (updated after the role-supervised re-implementation)
 
-The implementation in this tree is a **reduced** version of the frozen proposal
-(`implementation_proposal_mismatch.json`): the level-0 assignment is the product-geodesic one, and
-there is **no factor-role supervision** -- the mechanism's branch returns a zero term and the
-executor returns None. The proposal's distinctive hypothesis ("because the two factors are
-separately supervised, the behaviour term can shape the L1 partition without moving the content
-factor's geometry") is therefore **not implemented**, and a prior-art search has since shown that
-the operator that *is* implemented (a product-metric hyperbolic level-0 assignment) sits in crowded
-territory: HiHPQ, HyperVQ, the mixed-curvature VAEs, and the differentiable product-quantisation
-machinery.
+The tree in `stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser` was re-implemented after the
+prior-art search exposed that the earlier version was a REDUCED copy of the frozen proposal
+(`implementation_proposal_mismatch.json`). It now carries BOTH components the proposal declares:
 
-So an authorised run of this tree would measure the **reduced** mechanism, whose distinctness
-rests on nothing the prior art does not already cover. The role-supervision re-implementation is
-queued (`hyp_product_l1_quantiser:role_supervision`) and must pass a fresh join_R and join_E before
-a run is worth spending.
+* the **product-geodesic level-0 assignment** (`install_product_assignment`) — prior art in its own
+  right (HiHPQ, HyperVQ, the mixed-curvature VAEs, differentiable OPQ), and the record says so;
+* the **factor-role supervision** (`factor_nce`): the behaviour factor's transition term is a
+  function of the behaviour half's ball points only, so the content half's codebook gradient is
+  exactly **0.0** (max abs) while the behaviour half's is 1.10e-01. This is the part no verified
+  paper covers, and it is what the proposal's second hypothesis needs.
 
-**The recommendation is therefore: do not authorise a run of THIS tree yet.** Either authorise the
-role-supervision re-implementation once it is sealed and joined, or accept that the reduced
-mechanism is a prior-art variant and close the candidate on novelty.
+The CGV's G1–G6 pass on this tree (G5's pooled codebook gradient matches the independent pooled
+reference within 1.490e-08, the ranks bitwise identical) and the H gates are complete, so the
+candidate is APPROVED and **a run of this tree now measures the proposal as declared**.
+
+What a run still cannot tell us is the L0 tail before it is run: the pre-check used the host's
+Euclidean-trained codebook, so only the trained arm says whether the largest cell and the
+distinct-code count improve. That is why the reading sheet puts the tail first.
 
 ## 1. The single cold Stage-2 (needs the authorisation)
 
