@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "check": "the behaviour factor's transition term must not move the content factor",
+  "term_value": 0.34290874004364014,
+  "codebook_gradient_content_half_max_abs": 0.0,
+  "codebook_gradient_behaviour_half_max_abs": 0.10963654518127441,
+  "content_half_is_exactly_zero": true,
+  "behaviour_half_is_nonzero": true,
+  "verdict": "the role separation is structural: the term is a function of the behaviour half only, so the content half's codebook gradient is exactly zero"
+}
