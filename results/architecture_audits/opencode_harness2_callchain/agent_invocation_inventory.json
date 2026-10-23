@@ -1,0 +1,558 @@
+{
+ "schema_version": 1,
+ "issue": 113,
+ "audit_is_read_only": true,
+ "frozen": {
+  "head_sha": "f6d78b68",
+  "utc": "2026-10-23T14:04:31Z"
+ },
+ "evidence_levels": [
+  "runtime_observed",
+  "code_verified",
+  "documentation_only",
+  "unknown"
+ ],
+ "roles": [
+  {
+   "role_id": "L",
+   "issue": "111/112",
+   "title": "文献提供者（Crossref + arXiv）",
+   "claimed_artifacts": [
+    "results/hyperbolic_research_runs/subspace_111/subspace_literature_matrix.json",
+    "results/hyperbolic_research_runs/subspace_111/source_search_log.jsonl"
+   ],
+   "call_site": null,
+   "opencode_session": null,
+   "evidence_level": "unknown",
+   "status": "NOT VERIFIED: the artifacts exist and are committed, but no session record, argv, workspace or token count ties them to an OpenCode session; the literature provider in the repository (tools/harness2_genrec/literature.py) calls real providers, and it is invoked by the campaign's own scripts, not by an agent session",
+   "provider": "unknown",
+   "argv": null,
+   "model": null,
+   "log_location": null
+  },
+  {
+   "role_id": "A",
+   "issue": "111/112",
+   "title": "失败分析（对已测证据）",
+   "claimed_artifacts": [
+    "results/hyperbolic_research_runs/subspace_111/subspace_failure_analysis.md"
+   ],
+   "call_site": null,
+   "opencode_session": null,
+   "evidence_level": "unknown",
+   "status": "NOT VERIFIED: a committed markdown artifact with no invocation evidence",
+   "provider": "unknown",
+   "argv": null,
+   "model": null,
+   "log_location": null
+  },
+  {
+   "role_id": "M",
+   "issue": "111/112",
+   "title": "机制提案生成器",
+   "claimed_artifacts": [
+    "results/hyperbolic_research_runs/subspace_111/subspace_mechanism_proposals.json",
+    "results/hyperbolic_research_runs/subspace_111/proposals/*.json"
+   ],
+   "call_site": null,
+   "opencode_session": null,
+   "evidence_level": "unknown",
+   "status": "NOT VERIFIED: committed JSON artifacts; the code path that CAN generate proposals with a session is campaign.Campaign.ideate (campaign.py:184), but #111/#112 did not run it and left no session record",
+   "provider": "unknown",
+   "argv": null,
+   "model": null,
+   "log_location": null
+  },
+  {
+   "role_id": "I",
+   "issue": "111/112",
+   "title": "实现契约（冻结提案的七组声明）",
+   "claimed_artifacts": [
+    "results/hyperbolic_research_runs/issue112/spec_hyp_product_l1_quantiser.json",
+    "results/hyperbolic_research_runs/issue112/spec_hyp_role_assigned_layout.json"
+   ],
+   "call_site": null,
+   "opencode_session": null,
+   "evidence_level": "unknown",
+   "status": "NOT VERIFIED: the declarations are committed and are machine-checked by the CGV, but their AUTHORSHIP has no session evidence",
+   "provider": "unknown",
+   "argv": null,
+   "model": null,
+   "log_location": null
+  },
+  {
+   "role_id": "opencode_proposer",
+   "issue": "101-110",
+   "title": "框架侧提案者（原版 Harness² 的 Proposer 实现）",
+   "call_site": "tools/harness2_genrec/proposer.py:216 (OpenCodeProposer.call)",
+   "opencode_session": "results/**/*session*.json (230 份，含 153 implement / 65 candidate 等)",
+   "evidence_level": "runtime_observed",
+   "status": "REAL and PROVEN: the only place where the third-party framework and the OpenCode CLI meet; instantiated once (cli.py:104) by cmd_sweep only",
+   "provider": "OpenCode CLI (via opencode.run_agent)",
+   "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "<label>",
+    "<prompt>"
+   ],
+   "model": "openai/gpt-6-luna",
+   "log_location": "the *_session*.json the proposer writes (proposer.py:236 _audit)"
+  },
+  {
+   "role_id": "campaign_roles",
+   "issue": "104-110",
+   "title": "campaign 的 ideation / 实现 / 修复 / 评估四个角色",
+   "call_site": "tools/harness2_genrec/campaign.py:208 (ideate) / 316 (implement) / 360 (repair) / 897 (evaluate)",
+   "opencode_session": "results/harness3_runs/**/*session*.json",
+   "evidence_level": "runtime_observed",
+   "status": "REAL: bypasses the third-party framework entirely; calls run_agent directly",
+   "provider": "OpenCode CLI",
+   "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "<label>",
+    "<prompt>"
+   ],
+   "model": "openai/gpt-6-luna",
+   "log_location": "results/harness3_runs/**"
+  },
+  {
+   "role_id": "lifecycle_roles",
+   "issue": "102-110",
+   "title": "lifecycle 的实现 / 修复两个角色",
+   "call_site": "tools/harness2_genrec/lifecycle.py:233 (implement) / 396 (repair)",
+   "opencode_session": "results/harness3_runs/**/*session*.json",
+   "evidence_level": "runtime_observed",
+   "status": "REAL: the same run_agent path as campaign; the Stage2 launch afterwards goes through the genrec MCP server imported as a module (lifecycle.py:739)",
+   "provider": "OpenCode CLI",
+   "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "<label>",
+    "<prompt>"
+   ],
+   "model": "openai/gpt-6-luna",
+   "log_location": "results/harness3_runs/**"
+  },
+  {
+   "role_id": "hypotheses_role",
+   "issue": "104-110",
+   "title": "假设提出",
+   "call_site": "tools/harness2_genrec/hypotheses.py:253",
+   "opencode_session": "results/harness3_runs/hypotheses/hypotheses_session.json",
+   "evidence_level": "runtime_observed",
+   "status": "REAL",
+   "provider": "OpenCode CLI",
+   "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "hypotheses",
+    "<prompt>"
+   ],
+   "model": "openai/gpt-6-luna",
+   "log_location": "results/harness3_runs/hypotheses/hypotheses_session.json"
+  },
+  {
+   "role_id": "coordinator_interactive",
+   "issue": "111/112",
+   "title": "#112 的实际执行体（交互式协调者）",
+   "call_site": "no code: ad-hoc coordinator scripts invoking dag.tick / dag.complete and the MCP tools",
+   "opencode_session": null,
+   "evidence_level": "runtime_observed",
+   "status": "REAL but UNSCRIPTED: the DAG event log shows 19 dispatches, all owner='coordinator'; the work itself (tree edits, CGV runs, the cold Stage2) was done by this interactive session, not by a committed driver",
+   "provider": "interactive assistant session",
+   "argv": null,
+   "model": null,
+   "log_location": "results/hyperbolic_research_runs/issue112/dag/events.jsonl"
+  },
+  {
+   "role_id": "cgv_verifier",
+   "issue": "109-112",
+   "title": "CGV 六门独立验证器",
+   "call_site": "tools/cgv/run_cgv.py (via the MCP server's run_cgv_verification, server.py:2066)",
+   "opencode_session": null,
+   "evidence_level": "runtime_observed",
+   "status": "REAL: a CPU subprocess under genrec_env_v2 python3.9; it imports neither the third-party framework nor the arm it verifies; it wrote no certificate",
+   "provider": "n/a (no model)",
+   "argv": [
+    "python3.9",
+    "tools/cgv/run_cgv.py",
+    "<tree>",
+    "--spec",
+    "-"
+   ],
+   "model": null,
+   "log_location": "results/hyperbolic_research_runs/issue112/cgv_*.json"
+  },
+  {
+   "role_id": "genrec_mcp",
+   "issue": "102-112",
+   "title": "GenRec MCP server（stdio）",
+   "call_site": "tools/genrec-mcp/server.py:1189 (tool_stage2_start)",
+   "opencode_session": null,
+   "evidence_level": "runtime_observed",
+   "status": "REAL: it is a TOOL SERVER and a process launcher, not an agent orchestrator; it is reachable both as an in-process import (lifecycle.py:739) and as an OpenCode MCP server (opencode.py:234)",
+   "provider": "n/a",
+   "argv": null,
+   "model": null,
+   "log_location": "~/.cache/genrec-mcp/stage2__<tree>.json, /tmp/genrec-mcp/*.log"
+  },
+  {
+   "role_id": "stage2_trainer",
+   "issue": "all",
+   "title": "Stage2 训练器（4 卡 DDP）",
+   "call_site": "stage2_RQ-VAE/<arm>/train_rqvae.py (self-forks torchrun)",
+   "opencode_session": null,
+   "evidence_level": "runtime_observed",
+   "status": "REAL: the only GPU consumer; it imports no harness code; its own trainer forks the 4-rank torchrun (the launcher only supervises)",
+   "provider": "n/a",
+   "argv": [
+    "python3.9",
+    "train_rqvae.py"
+   ],
+   "model": null,
+   "log_location": "stage2_RQ-VAE/<arm>/logs/<arm>/train_migrated.log, training_metrics.jsonl"
+  },
+  {
+   "role_id": "dag_scheduler",
+   "issue": "112",
+   "title": "#112 DAG 调度器",
+   "call_site": "tools/harness2_genrec/dag.py:349 (tick) / 549 (serve) / 591 (reserve)",
+   "opencode_session": null,
+   "evidence_level": "runtime_observed",
+   "status": "REAL as a LEDGER, ABSENT as an executor: no production caller constructs DAG( or calls serve(); the repository's only construction is in tests/test_dag.py",
+   "provider": "n/a",
+   "argv": null,
+   "model": null,
+   "log_location": "results/hyperbolic_research_runs/issue112/dag/state.json, events.jsonl"
+  }
+ ],
+ "run_agent_call_sites": [
+  {
+   "module": "tools/harness2_genrec/campaign.py",
+   "function": "ideate",
+   "function_line": 184,
+   "call_line": 208,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/campaign.py",
+   "function": "run_arm",
+   "function_line": 272,
+   "call_line": 316,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/campaign.py",
+   "function": "run_arm",
+   "function_line": 272,
+   "call_line": 360,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/campaign.py",
+   "function": "evaluate_harness",
+   "function_line": 845,
+   "call_line": 897,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/candidates.py",
+   "function": "propose_candidates",
+   "function_line": 418,
+   "call_line": 435,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/hypotheses.py",
+   "function": "generate",
+   "function_line": 245,
+   "call_line": 253,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/learning.py",
+   "function": "repair_arm",
+   "function_line": 184,
+   "call_line": 248,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/learning.py",
+   "function": "repair_arm",
+   "function_line": 184,
+   "call_line": 283,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/learning.py",
+   "function": "repair_arm",
+   "function_line": 184,
+   "call_line": 328,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/learning.py",
+   "function": "derive_learned_policy",
+   "function_line": 531,
+   "call_line": 561,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/learning.py",
+   "function": "compare_policies",
+   "function_line": 608,
+   "call_line": 641,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/lifecycle.py",
+   "function": "implement",
+   "function_line": 224,
+   "call_line": 233,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/lifecycle.py",
+   "function": "repair",
+   "function_line": 387,
+   "call_line": 396,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/mcp_check.py",
+   "function": "run",
+   "function_line": 24,
+   "call_line": 44,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/policy_comparison.py",
+   "function": "derive_learned_policy",
+   "function_line": 80,
+   "call_line": 123,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/policy_comparison.py",
+   "function": "run_comparison",
+   "function_line": 163,
+   "call_line": 203,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/proposer.py",
+   "function": "call",
+   "function_line": 216,
+   "call_line": 229,
+   "module_imports_third_party_harness2": true
+  },
+  {
+   "module": "tools/harness2_genrec/redesign.py",
+   "function": "propose",
+   "function_line": 208,
+   "call_line": 214,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/redesign.py",
+   "function": "implement",
+   "function_line": 258,
+   "call_line": 329,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/redesign.py",
+   "function": "repair_proposal",
+   "function_line": 351,
+   "call_line": 406,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/redesign.py",
+   "function": "propose_from_ledger",
+   "function_line": 542,
+   "call_line": 557,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/repair_demo.py",
+   "function": "run",
+   "function_line": 108,
+   "call_line": 176,
+   "module_imports_third_party_harness2": false
+  },
+  {
+   "module": "tools/harness2_genrec/substrate.py",
+   "function": "run_task",
+   "function_line": 399,
+   "call_line": 416,
+   "module_imports_third_party_harness2": true
+  },
+  {
+   "module": "tools/harness2_genrec/opencode.py",
+   "function": "preflight",
+   "function_line": 461,
+   "call_line": 513,
+   "module_imports_third_party_harness2": false,
+   "note": "the bare-name call inside preflight (a one-token probe); it is the 24th site and the only one that is not an `opencode.run_agent(...)` attribute call"
+  }
+ ],
+ "run_agent_call_site_count": 24,
+ "the_sessions_that_prove_the_cli_path": {
+  "count": 230,
+  "argv_shape": [
+   "run",
+   "--standalone",
+   "--format",
+   "json",
+   "--auto",
+   "--model",
+   "<model>",
+   "[--title <title>]",
+   "[--agent <agent>]",
+   "<prompt>"
+  ],
+  "model": "openai/gpt-6-luna",
+  "exit_codes": {
+   "0": 228,
+   "1": 2
+  },
+  "by_title_prefix": {
+   "implement": 153,
+   "candidate": 65,
+   "mechanism": 5,
+   "repair": 3,
+   "derive": 3,
+   "hypotheses": 1
+  },
+  "total_input_tokens": 6643365,
+  "total_output_tokens": 221084,
+  "total_elapsed_s": 8897.5,
+  "time_span_utc": [
+   "2026-10-21T08:32:09Z",
+   "2026-10-23T00:21:54Z"
+  ],
+  "mentions_of_the_112_candidates": {
+   "product_l1": 0,
+   "busemann": 0,
+   "transported_residual": 0,
+   "role_assigned": 0
+  },
+  "full_list": "evidence_index.json -> session_inventory.records"
+ },
+ "the_112_dag_dispatches": {
+  "source": "results/hyperbolic_research_runs/issue112/dag/events.jsonl",
+  "total_dispatched": 19,
+  "owners": {
+   "coordinator": 19
+  },
+  "resources": {
+   "cpu": 18,
+   "gpu": 1
+  },
+  "idle_ticks": 71,
+  "reservations": 1,
+  "spawned_a_process": false,
+  "note": "the DAG leased tasks; the work behind each lease was done by the interactive coordinator. 'dispatched' therefore does NOT mean 'a worker ran this'."
+ },
+ "the_112_cold_run": {
+  "launcher": "genrec MCP tool_stage2_start (server.py:1189), called through the omp MCP client",
+  "worker": "/tmp/genrec-mcp/stage2_worker.py (written at launch time), Popen(start_new_session=True)",
+  "state_file": "~/.cache/genrec-mcp/stage2__TIGER_hyp_product_l1_quantiser.json",
+  "pid": 3755994,
+  "cmd": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 .../TIGER_hyp_product_l1_quantiser/train_rqvae.py",
+  "smoke": {
+   "passed": true,
+   "launch_mode": "ddp",
+   "steps": 24,
+   "log": "/tmp/genrec-mcp/smoke_TIGER_hyp_product_l1_quantiser.log (SMOKE_PASS)"
+  },
+  "train": {
+   "epochs": 3000,
+   "wall_time_s": 739.063,
+   "metrics_records": 3003,
+   "train_start_epoch_ts": 1792757957.23,
+   "train_end_epoch_ts": 1792758426.3,
+   "unique_after_extend": 24587
+  },
+  "result": {
+   "hard_l1_er": 1.0,
+   "gate_threshold": 16.38953942232631,
+   "gate": "FAILED",
+   "stage3": "NOT RUN"
+  }
+ },
+ "where_the_framework_and_the_cli_meet": [
+  {
+   "site": "tools/harness2_genrec/proposer.py:229",
+   "meaning": "the Proposer seam: the framework calls prop.call(...) and this implementation runs an OpenCode session"
+  },
+  {
+   "site": "tools/harness2_genrec/substrate.py:416",
+   "meaning": "the Substrate seam: the harness2.substrate.base implementation runs an OpenCode session while executing a candidate task (substrate.py imports harness2.substrate.base.Install/RunRequest at line 29)"
+  }
+ ],
+ "the_next_candidate_hyp_role_assigned_layout": {
+  "tree": "stage2_RQ-VAE/TIGER_hyp_role_assigned_layout/",
+  "state": "implemented and smoke-verified; NOT officially trained; no reservation",
+  "smoke": {
+   "steps": 24,
+   "entrypoint": "the real train_rqvae.py",
+   "level0": {
+    "distinct_codes": 249,
+    "largest_cell": 271,
+    "share": 0.011022
+   },
+   "level1": {
+    "distinct_codes": 256,
+    "largest_cell": 316,
+    "share": 0.012852
+   },
+   "level2_the_role_level": {
+    "distinct_codes": 256,
+    "largest_cell": 152,
+    "share": 0.006182
+   },
+   "the_partition_degeneracy_gate": "pass at all three levels",
+   "artifact": "/tmp/role_layout_smoke/sids_for_hgrec.npy (temporary; re-measurable with tools/harness2_genrec/partition_degeneracy.py)"
+  },
+  "cgv": {
+   "passed": [
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G6"
+   ],
+   "outstanding": [
+    "G5"
+   ],
+   "g5_reason": "the executor declares the layout's assembly contribution as exactly zero (the role commitment is already inside the quantisation loss) and the multi-rank gate needs a term that carries a gradient"
+  }
+ }
+}
