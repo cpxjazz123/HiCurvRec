@@ -1,0 +1,50 @@
+{
+  "role": "M",
+  "task_id": "fan:M:mathematics",
+  "ok": true,
+  "started_utc": "2026-10-23T15:44:05Z",
+  "finished_utc": "2026-10-23T15:44:45Z",
+  "elapsed_s": 39.93,
+  "pid": 2925672,
+  "model": "openai/gpt-6-luna",
+  "prompt_sha256": "3199300a344267fde07c9aa5236535a44f27deba7319a030ea70349bf500034f",
+  "inputs_hash": "",
+  "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "openai/gpt-6-luna",
+    "--title",
+    "M:fan:M:mathematics",
+    "# THE FROZEN CONSTRAINTS (do not propose anything that changes them)\n32-dimensional latent; exactly THREE codebooks of 256 codes; exactly three integer SID tokens;\nthe original dataset, splits, Stage2 recipe and Stage3 recipe. Thresholds the SAME candidate must\nstrictly beat: Hard-L1 ER > 16.38953942232631, Stage3 Recall@10 > 0.06406796775709883,\nNDCG@10 > 0.03530651701940677.\n\n# WHAT IS ALREADY REFUTED (do not propose these again)\n1. A product-geodesic level-0 assignment whose codeword scores are dominated by the codeword's\n   RADIUS: every item took the same code (ER collapsed to 1.0).\n2. Horospheric / Busemann-level set families: the level gap did not separate the host's label and\n   pointed the wrong way; a near-radial equidistance operator was measured.\n3. A codeword-frame transported residual: ill posed, and its well-posed form is a common change of\n   coordinates (0.0 assignments changed).\n4. A role-assigned token layout: measured VESTIGIAL (the declared geometry was not in the forward).\n5. Any Euclidean reformulation dressed in geometric words, and any curvature-only sweep.\n\n# YOUR TASK\n# ROLE M -- a mathematically precise, GENUINELY hyperbolic proposal\nYou have the refutations above. Propose TWO distinct candidate mechanisms, each stating:\nthe operator (Poincare / product manifold / hyperboloid -- name the formula), its domain, the\ncurvature and the basepoint, the tangent/vector semantics, where the gradient flows, the invariants\nthat must hold, the falsifier (the measurement that kills it), and the predicted effect on the frozen\nmetrics. Each must have a NONTRIVIAL hyperbolic operation at the point where the SID code is chosen\n-- not a reparametrisation, not a distance that reduces to a norm comparison.\nFor each, state explicitly why it is NOT one of the five refuted items.\nWrite `proposals.md` with sections MECHANISM 1, MECHANISM 2, WHY NOT EUCLIDEAN, FALSIFIERS."
+  ],
+  "workspace": "results/hyperbolic_research_runs/issue115/fanout2/sessions/workspaces/fan:M:mathematics",
+  "cwd": "results/hyperbolic_research_runs/issue115/fanout2/sessions/workspaces/fan:M:mathematics",
+  "exit_code": 0,
+  "timed_out": false,
+  "n_tool_calls": 3,
+  "tools": [
+    "glob",
+    "shell",
+    "patch"
+  ],
+  "tokens": {
+    "input": 22090,
+    "output": 2612,
+    "reasoning": 534
+  },
+  "cost": 0.0,
+  "session_path": "results/hyperbolic_research_runs/issue115/fanout2/sessions/evidence/fan:M:mathematics/session.json",
+  "tool_jsonl_path": "results/hyperbolic_research_runs/issue115/fanout2/sessions/evidence/fan:M:mathematics/session.jsonl",
+  "outputs": [
+    "proposals.md"
+  ],
+  "missing_outputs": [],
+  "verification": {
+    "ok": true
+  },
+  "error": ""
+}
