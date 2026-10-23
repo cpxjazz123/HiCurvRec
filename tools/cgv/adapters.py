@@ -92,6 +92,18 @@ def parameter_group(trainer, obs, contract, group: str) -> list[torch.nn.Paramet
     return [parameter for parameter in target.parameters()]
 
 
+def optional_parameter_group(trainer, obs, contract, group: str
+                             ) -> list[torch.nn.Parameter] | None:
+    """The declared parameter group, or None when the contract declares no such group."""
+    paths = (contract.get("model") or {}).get("parameter_groups") or {}
+    if group not in paths:
+        return None
+    try:
+        return parameter_group(trainer, obs, contract, group)
+    except (AttributeError, KeyError):
+        return None
+
+
 # --------------------------------------------------------------------------------------
 # building a real mini case
 # --------------------------------------------------------------------------------------
@@ -300,6 +312,44 @@ def term_gradient(trainer, obs: dict[str, Any], term: torch.Tensor) -> list[torc
     params = obs["encoder"]
     grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
     return [torch.zeros_like(p) if g is None else g for p, g in zip(params, grads)]
+
+
+def term_gradient_for(trainer, obs: dict[str, Any], term: torch.Tensor,
+                      params: list[torch.nn.Parameter]) -> list[torch.Tensor]:
+    """A term's gradient with respect to an ARBITRARY parameter group.
+
+    The same independent route as ``term_gradient``, but aimed at the group the contract
+    declares as the mechanism's target. A codebook-targeting mechanism's gradient is invisible
+    to the encoder route, which is why the distributed gate needs this separately.
+    """
+    grads = torch.autograd.grad(term, params, retain_graph=True, allow_unused=True)
+    return [torch.zeros_like(p) if g is None else g.detach().clone()
+            for p, g in zip(params, grads)]
+
+
+def mechanism_parameter_contribution(trainer, contract: dict[str, Any], obs: dict[str, Any],
+                                     params: list[torch.nn.Parameter], *,
+                                     epoch: int | None = None) -> list[torch.Tensor]:
+    """The gradient the DECLARED mechanism adds to ``params``, computed locally.
+
+    The mechanism's real executor is run on the local (non-DDP) graph with the group's
+    gradients zeroed first, so whatever it leaves behind IS its contribution. This is the
+    adapter doing its job -- running the real code path -- and it is what lets the parent
+    pool the per-rank contributions INDEPENDENTLY and compare that pooling with what the
+    distributed path actually produced.
+
+    It is not an oracle: no mathematics is re-derived here, and nothing in this function
+    decides whether the aggregation is right.
+    """
+    model = obs["model"]
+    terms = loss_terms(trainer, contract, obs)
+    for parameter in params:
+        parameter.grad = None
+    executor = resolve_dotted(trainer, (contract.get("mechanism") or {})["executor"])
+    executor(terms["base_loss"], terms.get("l1_loss"), terms.get("other_loss"),
+             obs["encoder"], obs["weight"], valid_levels=obs["valid_levels"],
+             **executor_kwargs(trainer, contract, obs, epoch))
+    return [torch.zeros_like(p) if p.grad is None else p.grad.detach().clone() for p in params]
 
 
 def probe_substitution(trainer, contract, name: str, seed: int = 1234,

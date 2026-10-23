@@ -1,0 +1,448 @@
+{
+  "authorisations": {},
+  "created_utc": 1792740547.1522026,
+  "dispatched": 0,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "hyp_product_l1_quantiser:eval_plan": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [],
+      "description": "read-only evaluation plan for the frozen protocol",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "eval_plan",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_product_l1_quantiser:eval_plan",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_product_l1_quantiser/plan"
+      ]
+    },
+    "hyp_product_l1_quantiser:implement": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [],
+      "description": "implement the frozen v2 proposal exactly",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "implement",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_product_l1_quantiser:implement",
+      "verify": [],
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser"
+      ]
+    },
+    "hyp_product_l1_quantiser:join_E": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [
+        "hyp_product_l1_quantiser:implement",
+        "hyp_product_l1_quantiser:oracle",
+        "hyp_product_l1_quantiser:eval_plan"
+      ],
+      "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "join_E",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_product_l1_quantiser:join_E",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_product_l1_quantiser/join"
+      ]
+    },
+    "hyp_product_l1_quantiser:oracle": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [],
+      "description": "independent H1-H7 fixtures for the declared mathematics",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "oracle",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_product_l1_quantiser:oracle",
+      "verify": [],
+      "write_scope": [
+        "results/hyperbolic_research_runs/hyp_product_l1_quantiser/oracle"
+      ]
+    },
+    "hyp_product_l1_quantiser:stage2": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [
+        "hyp_product_l1_quantiser:join_E"
+      ],
+      "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage2",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "hyp_product_l1_quantiser:stage2",
+      "verify": [],
+      "write_scope": [
+        "results/stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser"
+      ]
+    },
+    "hyp_product_l1_quantiser:stage3": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [
+        "hyp_product_l1_quantiser:stage2"
+      ],
+      "description": "ONE Stage3, only if the ER gate is cleared",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage3",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "hyp_product_l1_quantiser:stage3",
+      "verify": [],
+      "write_scope": [
+        "results/stage3_T5Train/hyp_product_l1_quantiser"
+      ]
+    },
+    "hyp_transported_residual:eval_plan": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [],
+      "description": "read-only evaluation plan for the frozen protocol",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "eval_plan",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_transported_residual:eval_plan",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_transported_residual/plan"
+      ]
+    },
+    "hyp_transported_residual:implement": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [],
+      "description": "implement the frozen v2 proposal exactly",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "implement",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_transported_residual:implement",
+      "verify": [],
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_hyp_transported_residual"
+      ]
+    },
+    "hyp_transported_residual:join_E": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [
+        "hyp_transported_residual:implement",
+        "hyp_transported_residual:oracle",
+        "hyp_transported_residual:eval_plan"
+      ],
+      "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "join_E",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_transported_residual:join_E",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_transported_residual/join"
+      ]
+    },
+    "hyp_transported_residual:oracle": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [],
+      "description": "independent H1-H7 fixtures for the declared mathematics",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "oracle",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_transported_residual:oracle",
+      "verify": [],
+      "write_scope": [
+        "results/hyperbolic_research_runs/hyp_transported_residual/oracle"
+      ]
+    },
+    "hyp_transported_residual:stage2": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [
+        "hyp_transported_residual:join_E"
+      ],
+      "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage2",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "hyp_transported_residual:stage2",
+      "verify": [],
+      "write_scope": [
+        "results/stage2_RQ-VAE/TIGER_hyp_transported_residual"
+      ]
+    },
+    "hyp_transported_residual:stage3": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_transported_residual",
+      "deps": [
+        "hyp_transported_residual:stage2"
+      ],
+      "description": "ONE Stage3, only if the ER gate is cleared",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage3",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "hyp_transported_residual:stage3",
+      "verify": [],
+      "write_scope": [
+        "results/stage3_T5Train/hyp_transported_residual"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:eval_plan": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [],
+      "description": "read-only evaluation plan for the frozen protocol",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "eval_plan",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "r10_hyp_busemann_horosphere:eval_plan",
+      "verify": [],
+      "write_scope": [
+        "results/r10_hyp_busemann_horosphere/plan"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:implement": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [],
+      "description": "implement the frozen v1 proposal exactly",
+      "detail": "the Busemann audit refuted the declared operator; re-specify before any implementation work",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "implement",
+      "started_at": null,
+      "status": "blocked_no_novel_evidence",
+      "task_id": "r10_hyp_busemann_horosphere:implement",
+      "verify": [],
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_r10_hyp_busemann_horosphere"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:join_E": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [
+        "r10_hyp_busemann_horosphere:implement",
+        "r10_hyp_busemann_horosphere:oracle",
+        "r10_hyp_busemann_horosphere:eval_plan"
+      ],
+      "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "join_E",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "r10_hyp_busemann_horosphere:join_E",
+      "verify": [],
+      "write_scope": [
+        "results/r10_hyp_busemann_horosphere/join"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:oracle": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [],
+      "description": "independent H1-H7 fixtures for the declared mathematics",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "oracle",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "r10_hyp_busemann_horosphere:oracle",
+      "verify": [],
+      "write_scope": [
+        "results/hyperbolic_research_runs/r10_hyp_busemann_horosphere/oracle"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:stage2": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [
+        "r10_hyp_busemann_horosphere:join_E"
+      ],
+      "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage2",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "r10_hyp_busemann_horosphere:stage2",
+      "verify": [],
+      "write_scope": [
+        "results/stage2_RQ-VAE/TIGER_r10_hyp_busemann_horosphere"
+      ]
+    },
+    "r10_hyp_busemann_horosphere:stage3": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "r10_hyp_busemann_horosphere",
+      "deps": [
+        "r10_hyp_busemann_horosphere:stage2"
+      ],
+      "description": "ONE Stage3, only if the ER gate is cleared",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage3",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "r10_hyp_busemann_horosphere:stage3",
+      "verify": [],
+      "write_scope": [
+        "results/stage3_T5Train/r10_hyp_busemann_horosphere"
+      ]
+    }
+  }
+}

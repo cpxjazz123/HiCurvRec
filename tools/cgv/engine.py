@@ -879,6 +879,41 @@ def gate_g4(ctx: Context) -> dict[str, Any]:
 # --------------------------------------------------------------------------------------
 # G5 -- distributed consistency
 # --------------------------------------------------------------------------------------
+def codebook_check_required(contract: dict[str, Any]) -> bool:
+    """Whether the distributed check MUST cover the codebook's gradient.
+
+    A contract whose declared gradient target is the codebook MUST have its codebook
+    gradients checked: a mechanism that moves the codebook moves a gradient the encoder
+    comparison cannot see. A missing measurement is a failure, never a silent pass.
+    """
+    distributed = contract.get("distributed_contract") or {}
+    if distributed.get("verify_encoder_and_codebook_gradients", False):
+        return True
+    return str((contract.get("gradient_contract") or {}).get("target", "encoder")) == "codebook"
+
+
+def compare_pooled_codebook(local_codebook: list[dict[str, list[torch.Tensor]]],
+                            production_codebook: list[torch.Tensor],
+                            aggregator, aggregation: str, weights) -> tuple[float, list[str]]:
+    """The parent's INDEPENDENT pooling of the per-rank codebook gradients, and how far it is
+    from what the distributed path produced.
+
+    The local gradients were computed by the child WITHOUT DDP, on the rank's own batch. The
+    pooling is done here, with the declared aggregation oracle, so the comparison is against a
+    reconstruction the production path cannot influence.
+    """
+    names = sorted(local_codebook[0])
+    pooled = {
+        name: aggregator({"aggregation": aggregation,
+                          "rank_grads": [local_codebook[rank][name]
+                                         for rank in range(len(local_codebook))],
+                          "weights": weights})
+        for name in names
+    }
+    expected = oracles.codebook_reference(pooled)
+    return oracles.max_abs_diff(production_codebook, expected), names
+
+
 def gate_g5(ctx: Context) -> dict[str, Any]:
     skip = _skipped("G5", ctx)
     if skip:
@@ -917,9 +952,27 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
     production = torch.load(payload / "production_pooled.pt", weights_only=False)
     oracle_inputs = json.loads((payload / "oracle_inputs.json").read_text())
     weights = summary.get("weights")
+    if not is_trace_mechanism(ctx.contract):
+        rule_name = oracle_inputs.get("rule")
+        if not isinstance(rule_name, str) or not rule_name:
+            # fail closed: the gate cannot reconstruct the declared assembly without knowing
+            # which rule it is, and guessing one would verify the guess instead of the mechanism
+            return _result("G5", C.FAILED,
+                           "the declaration names no assembly rule (gradient_contract.rule), so "
+                           "the multi-rank assembly cannot be reconstructed",
+                           {"world_size": world_size, "aggregation": aggregation},
+                           finding="an incomplete declaration is a blocking finding, not a pass")
+        if rule_name not in oracles.RULES:
+            return _result("G5", C.FAILED,
+                           f"the declaration names a rule the oracles do not implement: {rule_name!r}",
+                           {"world_size": world_size, "aggregation": aggregation,
+                            "known_rules": list(oracles.RULES)},
+                           finding="an unknown rule cannot be verified")
 
     aggregator = C.resolve_reference(distributed["oracle"])
     trace = is_trace_mechanism(ctx.contract)
+    require_codebook = codebook_check_required(ctx.contract)
+    extra: dict[str, Any] = {}
 
     if trace:
         # A trace mechanism has no projection step: the multi-rank question is whether DDP's own
@@ -962,17 +1015,44 @@ def gate_g5(ctx: Context) -> dict[str, Any]:
         }
         expected_pooled = oracles.assemble_gradient(rule_observations)
         deviation = oracles.max_abs_diff(production, expected_pooled)
+        # The codebook's own gradient. A mechanism that targets the codebook moves a gradient
+        # the encoder comparison cannot see, so the gate pools the per-rank codebook gradients
+        # INDEPENDENTLY -- with the aggregation oracle, on the local gradients the child
+        # computed without DDP -- and compares that pooling with what the distributed path
+        # actually produced. Before the repair this was a NaN, which silently waived the check.
         codebook_deviation = float("nan")
+        codebook_local_path = payload / "rank_0_codebook_local.pt"
+        codebook_production_path = payload / "production_codebook_pooled.pt"
+        if codebook_local_path.is_file() and codebook_production_path.is_file():
+            local_codebook = [
+                torch.load(payload / f"rank_{rank}_codebook_local.pt", weights_only=False)
+                for rank in range(world_size)
+            ]
+            production_codebook = torch.load(codebook_production_path, weights_only=False)
+            codebook_deviation, codebook_names = compare_pooled_codebook(
+                local_codebook, production_codebook, aggregator, aggregation, weights)
+            extra["codebook_terms"] = codebook_names
+        elif require_codebook:
+            return _result("G5", C.FAILED,
+                           "the contract targets the codebook, but the multi-rank run produced no "
+                           "codebook gradients to compare",
+                           {"world_size": world_size, "aggregation": aggregation,
+                            "pooled_deviation": deviation},
+                           finding="the codebook half of the distributed check is missing, and a "
+                                   "missing check is not a passed check")
 
     tolerance = float(distributed.get("atol", 1e-5))
     ranks_identical = bool(summary.get("ranks_identical"))
-    extra: dict[str, Any] = {}
     passed = deviation <= tolerance and ranks_identical
 
-    if distributed.get("verify_encoder_and_codebook_gradients", False):
-        if codebook_deviation == codebook_deviation and not math.isnan(codebook_deviation):
+    if require_codebook:
+        if math.isnan(codebook_deviation):
+            passed = False
+            extra["codebook_pooled_deviation"] = codebook_deviation
+            extra["codebook_check"] = "not measured: the multi-rank run produced no codebook gradients"
+        else:
             passed = passed and codebook_deviation <= tolerance
-        extra["codebook_pooled_deviation"] = codebook_deviation
+            extra["codebook_pooled_deviation"] = codebook_deviation
     if distributed.get("verify_rank_parameter_identity", False):
         passed = passed and ranks_identical
     if rank_sizes:

@@ -246,6 +246,27 @@ def unprojected_gradient(observations: dict[str, Any]) -> list[torch.Tensor]:
     return assemble_gradient({**observations, "rule": "unprojected"})
 
 
+def codebook_reference(pooled_terms: dict[str, Sequence[torch.Tensor]]) -> list[torch.Tensor]:
+    """The codebook gradient the declared assembly must produce.
+
+    The production path backwards the BASE loss onto the codebook and then runs the
+    mechanism's own assembly, whose effect on the codebook is measured separately (the
+    adapter runs the real executor on the local graph and reads what it left behind). The
+    behaviour terms are routed to the encoder by the mechanism's executor and never reach the
+    codebook on that path; if an executor DOES apply them to the codebook, that appears in
+    the mechanism's own contribution rather than here.
+
+    The caller pools every term INDEPENDENTLY before calling this, so the comparison is
+    against a reconstruction the production path cannot influence.
+    """
+    if "base_loss" not in pooled_terms:
+        raise ValueError("the codebook reference needs the pooled base_loss gradient")
+    reference = list(pooled_terms["base_loss"])
+    if "mechanism" in pooled_terms:
+        reference = _add(reference, list(pooled_terms["mechanism"]))
+    return reference
+
+
 # --------------------------------------------------------------------------------------
 # gradient invariants
 # --------------------------------------------------------------------------------------

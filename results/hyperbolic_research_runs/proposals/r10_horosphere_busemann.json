@@ -133,7 +133,8 @@
           "min_norm": 1e-12
         }
       ],
-      "atol": 1e-06
+      "atol": 1e-06,
+      "rule": "unprojected"
     },
     "update_contract": {
       "optimizer": "AdamW",
