@@ -1,0 +1,63 @@
+{
+  "mechanism_id": "dry_run_synthetic",
+  "proposal_sha256": "387a74abf4e4bba340d3b0e36e2fcd126e813ac7c8e4cf9879512b4f2f8a6f19",
+  "implementation_sha256": "d3fcc35bd0b6880c140b9673290eb860e24783939dbc60bdbe1dbd75fbb1f5f1",
+  "frozen_protocol_hash": "8fcc526e39a1a31bf26d16c502212bbf8dcc2cf9def179fcfdddb46700ec0873",
+  "family": "hyperbolic_history",
+  "seed": 42,
+  "state": "evaluated",
+  "certificates": {},
+  "measurements": {},
+  "blocked_reason": "",
+  "next_action": "",
+  "history": [
+    {
+      "utc": "2026-10-23T03:37:29.922924+00:00",
+      "from": "proposed",
+      "to": "reviewed",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.925391+00:00",
+      "from": "reviewed",
+      "to": "implemented",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.927599+00:00",
+      "from": "implemented",
+      "to": "screened",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.929919+00:00",
+      "from": "screened",
+      "to": "sealed",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.934080+00:00",
+      "from": "sealed",
+      "to": "stage2_reserved",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.936314+00:00",
+      "from": "stage2_reserved",
+      "to": "stage2_running",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.938509+00:00",
+      "from": "stage2_running",
+      "to": "stage2_complete",
+      "reason": ""
+    },
+    {
+      "utc": "2026-10-23T03:37:29.940757+00:00",
+      "from": "stage2_complete",
+      "to": "evaluated",
+      "reason": ""
+    }
+  ]
+}

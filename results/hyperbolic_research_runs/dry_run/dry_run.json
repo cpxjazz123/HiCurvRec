@@ -1,0 +1,122 @@
+{
+  "generated_utc": "2026-10-23T03:37:29.942930+00:00",
+  "dry_run": true,
+  "is_scientific_success": false,
+  "warning": "this is a dry run on a synthetic candidate: the GPU stages are mocked, and it is not a scientific success and must never be recorded as one",
+  "proposal_sha256": "387a74abf4e4bba340d3b0e36e2fcd126e813ac7c8e4cf9879512b4f2f8a6f19",
+  "implementation_sha256": "d3fcc35bd0b6880c140b9673290eb860e24783939dbc60bdbe1dbd75fbb1f5f1",
+  "frozen_protocol_hash": "8fcc526e39a1a31bf26d16c502212bbf8dcc2cf9def179fcfdddb46700ec0873",
+  "stages": {
+    "search": {
+      "state": "searched",
+      "papers": 1,
+      "provider": "dry_run_fake",
+      "mocked": false
+    },
+    "prior_art": {
+      "allowed": true,
+      "reason": "no recorded mechanism matches",
+      "registry_entries": 159,
+      "mocked": false
+    },
+    "math_review": {
+      "gates": {
+        "H1": "pass",
+        "H2": "pass",
+        "H3": "pass",
+        "H4": "pass",
+        "H5": "pass",
+        "H6": "pass",
+        "H7": "pass"
+      },
+      "passed": true,
+      "mocked": false
+    },
+    "implementation": {
+      "status": "implemented",
+      "implementation_sha256": "ecf473cdfceca23ad6305768feb3b35731eccd15933be5405eb6f346a16405d9",
+      "mocked": false
+    },
+    "cgv": {
+      "gates": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6"
+      ],
+      "state": "mocked",
+      "note": "the real CGV runs the trainer; the dry run only proves the path is wired",
+      "mocked": true
+    },
+    "probe": {
+      "state": "mocked",
+      "g_h1": 0.1234,
+      "note": "a real probe costs a GPU run; the dry run records the call path",
+      "mocked": true
+    },
+    "stage2": {
+      "state": "mocked",
+      "epochs": 3000,
+      "seed": 42,
+      "note": "no cold run is performed by a dry run",
+      "mocked": true
+    },
+    "frozen_evaluation": {
+      "state": "mocked",
+      "er": 16.42,
+      "pos_share": 0.079,
+      "neg_share": 0.0048,
+      "d2": 0.04,
+      "note": "the frozen pairs are not read again for a dry run",
+      "mocked": true
+    },
+    "stage3": {
+      "state": "mocked",
+      "recall": 0.061,
+      "ndcg": 0.033,
+      "note": "no Stage-3 is performed by a dry run",
+      "mocked": true
+    },
+    "analysis": {
+      "failure_kinds": {
+        "mechanism_falsified": 1
+      },
+      "questions": 2,
+      "mocked": false
+    },
+    "success_predicate": {
+      "won": false,
+      "reason": "2 requirement(s) not met: stage3_recall (Recall@10 0.061 against the threshold 0.06406796775709883), stage3_ndcg (NDCG@10 0.033 against the threshold 0.03530651701940677)",
+      "mocked": false
+    },
+    "resume": {
+      "states": {
+        "evaluated": 1
+      },
+      "reserved_experiments": 1,
+      "identity": "f1732c87d5c0efbfa794db8d17c5de30864c199e46728b11813f6d67fa52280d",
+      "mocked": false
+    }
+  },
+  "stage_order": [
+    "search",
+    "prior_art",
+    "math_review",
+    "implementation",
+    "cgv",
+    "probe",
+    "stage2",
+    "frozen_evaluation",
+    "stage3",
+    "analysis",
+    "resume"
+  ],
+  "mocked_stages": [
+    "probe",
+    "stage2",
+    "frozen_evaluation",
+    "stage3"
+  ]
+}
