@@ -66,7 +66,7 @@ for _c in CURVATURES:
 
 # the product entries carry the second factor's curvature and the common tangent scale
 for _name in list(ARM_CONFIGS):
-    if ARM_CONFIGS[_name]["mechanism"] == "product":
+    if ARM_CONFIGS[_name]["mechanism"] in ("product", "factor_nce"):
         ARM_CONFIGS[_name]["curvature_b"] = (
             ARM_CONFIGS[_name]["curvature"] * PRODUCT_CURVATURE_RATIO)
         ARM_CONFIGS[_name]["tangent_scale"] = PRODUCT_SCALE
