@@ -412,3 +412,54 @@ def test_a_task_with_a_malformed_requirement_is_refused(tmp_path):
     with pytest.raises(D.SchedulerError):
         graph.add(D.Task(task_id="bad_gate", candidate="arm", stage="er_gate",
                          requires={"op": ">"}))
+
+
+def test_a_ready_task_whose_dependency_was_closed_is_demoted_and_never_dispatched(tmp_path):
+    """A promotion that outlives its dependency must not stay dispatchable.
+
+    The campaign's queue held a stage2 that had been promoted while its join was DONE and
+    that was still READY after the join was closed by a refutation. A tick then leased the
+    stage2 of a family that had already been refuted twice. The rule: a READY task whose
+    dependencies are not all DONE is demoted, and a closed dependency closes the task.
+    """
+    clock = Clock()
+    # the GPU is at capacity, so the promoted stage2 stays READY across ticks -- the
+    # situation the campaign was in when the join was closed under it
+    graph = D.DAG(tmp_path, clock=clock, lease_ttl=60,
+                  resource_limits={"cpu": 4, "gpu": 0, "none": 8})
+    graph.add([_task("join"), _task("stage2", deps=("join",), stage="stage2", resource="gpu",
+                                   kind="experiment")])
+    graph.authorise("gpu", "operator", "the operator authorised the GPU work")
+
+    graph.tick(owner="w1")
+    graph.complete("join", "w1")
+    graph.tick(owner="w1")
+    assert graph.task("stage2").status == D.READY, "the stage2 is promoted once its join is done"
+
+    # the join is closed afterwards: the family was refuted
+    graph.set_status("join", D.BLOCKED, "refuted on its own measurements")
+    dispatched = graph.tick(owner="w1")
+    assert dispatched["dispatched"] == [], "a closed dependency must stop the dispatch"
+    assert graph.task("stage2").status == D.BLOCKED
+    assert graph.task("stage2").status in D.NOT_DISPATCHABLE
+
+
+def test_a_ready_task_waits_for_an_unfinished_dependency_instead_of_running(tmp_path):
+    """A dependency that is merely unfinished demotes the task to PENDING, not BLOCKED."""
+    clock = Clock()
+    graph = D.DAG(tmp_path, clock=clock, lease_ttl=60,
+                  resource_limits={"cpu": 4, "gpu": 0, "none": 8})
+    graph.add([_task("join"), _task("stage2", deps=("join",), stage="stage2", resource="gpu",
+                                   kind="experiment")])
+    graph.authorise("gpu", "operator", "the operator authorised the GPU work")
+    graph.tick(owner="w1")
+    graph.complete("join", "w1")
+    graph.tick(owner="w1")
+    assert graph.task("stage2").status == D.READY
+
+    # the join is re-opened (its own dependency was closed), so it is unfinished again
+    graph.set_status("join", D.PENDING, "re-opened")
+    graph.tick(owner="w1")
+    assert graph.task("stage2").status == D.PENDING
+    assert graph.task("stage2").status != D.READY, "PENDING is not dispatchable"
+    assert graph.task("stage2").status in D.NOT_DISPATCHABLE
