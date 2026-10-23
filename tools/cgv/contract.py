@@ -89,13 +89,14 @@ FORWARD_EFFECTS = ("none", "changes_forward")
 SCHEMA_KEYS = {
     "mechanism": {"id", "type", "summary", "entrypoints", "executor", "activation",
                   "mathematics", "inputs", "executor_style", "host_routing"},
-    "model": {"adapter", "factory", "tokenizer_config", "forward", "parameter_groups", "probe"},
+    "model": {"adapter", "factory", "tokenizer_config", "forward", "parameter_groups", "probe",
+              "role_inputs"},
     "forward_contract": {"observables", "declared_effect", "invariants", "oracle", "atol"},
     "gradient_contract": {
         "target", "mode", "rule", "reference_term", "oracle", "probe_weight", "probe_seeds",
         "atol", "rtol", "eps_flag", "alpha", "alpha_flag", "cos_threshold", "cos_threshold_flag",
         "blocks", "ema", "loss_terms", "expected_paths", "additional_targets",
-        "jacobian_expectations", "effect", "invariants",
+        "jacobian_expectations", "effect", "invariants", "loss_term_callables",
     },
     "update_contract": {
         "optimizer", "lr", "weight_decay", "clip_norm", "atol", "requires_parameter_change",
