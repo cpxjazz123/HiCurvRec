@@ -1,0 +1,3597 @@
+{
+ "schema_version": 1,
+ "issue": 113,
+ "audit_is_read_only": true,
+ "scope": {
+  "repo": "/fs04/ar57/wenyu/GeneRec",
+  "branch": "main",
+  "head_sha": "f6d78b68567db86aef7fc04d8ad144674976fb58",
+  "frozen_utc": "2026-10-23T14:12:19Z",
+  "remote": "https://github.com/cpxjazz123/HiCurvRec.git",
+  "note": "Scope frozen before any read. No GPU, no training, no agent session and no code change was performed for this audit; the only writes are the files in this directory."
+ },
+ "the_six_entities": {
+  "third_party_harness2": {
+   "identity": "Google Research Harness², PyPI-style package `harness2` 0.1.0",
+   "source_dir": "/home/wlia0047/ar57_scratch/wenyu/harness2 (= /fs04/scratch2/ar57/wenyu/harness2)",
+   "python_env": "/home/wlia0047/ar57_scratch/wenyu/harness2/.venv (CPython 3.12)",
+   "import_path_seen": "/fs04/scratch2/ar57/wenyu/harness2/harness2/core/__init__.py",
+   "installed_in_project_envs": false,
+   "evidence_level": "runtime_observed",
+   "evidence": "`genrec_env_v2/bin/python3.9 -c 'import harness2'` -> ModuleNotFoundError; the harness2 venv imports harness2.core from /fs04/scratch2/...",
+   "readme_claim_mismatch": "tools/harness2_genrec/README.md:18-19 says the venv is `<repo>/.venv`; the repository has no .venv and the only installation is the sibling directory above."
+  },
+  "self_built_harness2_genrec": {
+   "path": "tools/harness2_genrec/",
+   "note": "borrows the `harness2` name; six of its modules import the third-party package",
+   "modules_importing_the_framework": [
+    "surface.py",
+    "adapter.py",
+    "prompts_ext.py",
+    "substrate.py",
+    "proposer.py",
+    "cli.py"
+   ],
+   "modules_not_importing_the_framework": [
+    "dag.py",
+    "controller.py",
+    "campaign.py",
+    "lifecycle.py",
+    "opencode.py"
+   ],
+   "evidence_level": "code_verified"
+  },
+  "dag_scheduler": {
+   "path": "tools/harness2_genrec/dag.py",
+   "imports_harness2": false,
+   "imports_subprocess": false,
+   "spawns_agents": false,
+   "note": "serve(run) takes a caller-supplied callable; the scheduler only leases",
+   "production_consumers": [],
+   "evidence_level": "code_verified"
+  },
+  "opencode_wrapper": {
+   "path": "tools/harness2_genrec/opencode.py",
+   "function": "run_agent (line 353)",
+   "imports_harness2": false,
+   "evidence_level": "code_verified"
+  },
+  "opencode_cli": {
+   "binary_env": "HARNESS2_OPENCODE_BIN",
+   "model_env": "HARNESS2_OPENCODE_MODEL",
+   "argv_shape": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "[--title <title>]",
+    "[--agent <agent>]",
+    "<prompt>"
+   ],
+   "required_flags_checked": [
+    "--standalone",
+    "--format",
+    "--model",
+    "--auto",
+    "--title"
+   ],
+   "evidence_level": "runtime_observed",
+   "evidence": "230 *_session*.json records under results/ carry exactly this argv"
+  },
+  "genrec_mcp": {
+   "path": "tools/genrec-mcp/server.py",
+   "transport": "local stdio MCP server (docstring line 2)",
+   "launch_tool": "tool_stage2_start (line 1189)",
+   "role": "tool access + Stage2/Stage3 process launching; not an agent orchestrator",
+   "evidence_level": "code_verified"
+  }
+ },
+ "evidence": [
+  {
+   "id": "E01",
+   "claim": "HEAD and branch at audit time",
+   "level": "runtime_observed",
+   "artifact": "git rev-parse HEAD",
+   "value": "f6d78b68567db86aef7fc04d8ad144674976fb58"
+  },
+  {
+   "id": "E02",
+   "claim": "six modules import the third-party framework; five do not",
+   "level": "code_verified",
+   "artifact": "grep -n 'harness2\\.core\\|from harness2' tools/harness2_genrec/*.py"
+  },
+  {
+   "id": "E03",
+   "claim": "the framework-dependent modules cannot be imported by the project interpreter",
+   "level": "runtime_observed",
+   "artifact": "genrec_env_v2 python3.9 -c 'import tools.harness2_genrec.cli' -> ModuleNotFoundError: No module named 'harness2'; the same command succeeds under harness2/.venv (py3.12)"
+  },
+  {
+   "id": "E04",
+   "claim": "cli.run_sweep is the only call into the third-party scheduler",
+   "level": "code_verified",
+   "artifact": "tools/harness2_genrec/cli.py:60-87 (SCHED.run_sweep at line 74); grep for run_sweep matches only this file"
+  },
+  {
+   "id": "E05",
+   "claim": "OpenCodeProposer is instantiated only by cmd_sweep",
+   "level": "code_verified",
+   "artifact": "grep -rn 'OpenCodeProposer(' -> proposer.py:183 (class), cli.py:104 (the only construction)"
+  },
+  {
+   "id": "E06",
+   "claim": "OpenCodeProposer.call invokes the CLI through run_agent",
+   "level": "code_verified",
+   "artifact": "tools/harness2_genrec/proposer.py:216-255 (run_agent at 229, mcp block at 228)"
+  },
+  {
+   "id": "E07",
+   "claim": "run_agent's argv, cwd, env, timeout and event parsing",
+   "level": "code_verified",
+   "artifact": "tools/harness2_genrec/opencode.py:353-458 (argv 406-420, subprocess.run 425-431, parse_events 293-351, build_config 249-282)"
+  },
+  {
+   "id": "E08",
+   "claim": "230 OpenCode sessions exist, all gpt-6-luna, 228 exit 0",
+   "level": "runtime_observed",
+   "artifact": "results/**/*session*.json (see agent_invocation_inventory.json)",
+   "counts": {
+    "implement": 153,
+    "mechanism": 5,
+    "repair": 3,
+    "candidate": 65,
+    "hypotheses": 1,
+    "derive": 3
+   }
+  },
+  {
+   "id": "E09",
+   "claim": "no OpenCode session record exists for the #111/#112 candidates",
+   "level": "runtime_observed",
+   "artifact": "the 230 session titles/workspaces contain none of product_l1, busemann, transported_residual, role_assigned (0 matches each)"
+  },
+  {
+   "id": "E10",
+   "claim": "the #112 DAG was driven by the interactive coordinator, not a service",
+   "level": "runtime_observed",
+   "artifact": "results/hyperbolic_research_runs/issue112/dag/events.jsonl: 19 dispatched events, owner='coordinator' on every one; 71 idle_ticks"
+  },
+  {
+   "id": "E11",
+   "claim": "the DAG has no production consumer in the repository",
+   "level": "code_verified",
+   "artifact": "grep -rn 'DAG(|\\\\.serve(' -> only tools/harness2_genrec/tests/test_dag.py"
+  },
+  {
+   "id": "E12",
+   "claim": "campaign_dag.json is read by no code",
+   "level": "code_verified",
+   "artifact": "grep -rn 'campaign_dag' --include=*.py -> no matches"
+  },
+  {
+   "id": "E13",
+   "claim": "the #112 cold run was launched by the MCP launcher into a detached worker",
+   "level": "runtime_observed",
+   "artifact": "~/.cache/genrec-mcp/stage2__TIGER_hyp_product_l1_quantiser.json (pid 3755994, cmd, smoke.passed true, gpu_probe 4 cards)"
+  },
+  {
+   "id": "E14",
+   "claim": "the smoke ran as a real 1-epoch DDP job before the run",
+   "level": "runtime_observed",
+   "artifact": "/tmp/genrec-mcp/smoke_TIGER_hyp_product_l1_quantiser.log (epoch=1, 24 steps, SMOKE_PASS)"
+  },
+  {
+   "id": "E15",
+   "claim": "the cold run took 739 s for 3000 epochs",
+   "level": "runtime_observed",
+   "artifact": "stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser/logs/hyp_factor_nce_c1/training_metrics.jsonl (3003 records; train_start 1792757957.23, train_end total_wall_time_s 739.063)"
+  },
+  {
+   "id": "E16",
+   "claim": "the official reservation is the only round",
+   "level": "runtime_observed",
+   "artifact": "results/hyperbolic_research_runs/issue112/dag/reservations.json (one key: hyp_product_l1_quantiser|stage2|42|stage2-cold-3000)"
+  },
+  {
+   "id": "E17",
+   "claim": "the MCP launcher runs the CGV by subprocess under the project interpreter",
+   "level": "code_verified",
+   "artifact": "tools/genrec-mcp/server.py:2066-2089 (CGV_PY 1945, CGV_RUNNER 1943, timeout 1946)"
+  },
+  {
+   "id": "E18",
+   "claim": "the CGV verifier does not import the framework or the arm",
+   "level": "code_verified",
+   "artifact": "grep -rn harness2 tools/cgv/*.py -> no matches"
+  },
+  {
+   "id": "E19",
+   "claim": "the Stage2 trainer never imports the harness package",
+   "level": "code_verified",
+   "artifact": "grep -rn harness2 stage2_RQ-VAE/*/train_rqvae.py stage2_RQ-VAE/*/scripts/*.py -> no matches"
+  },
+  {
+   "id": "E20",
+   "claim": "the README's 'stdlib-only' statement is false for six modules",
+   "level": "documentation_only",
+   "artifact": "tools/harness2_genrec/README.md:24-25 vs E02/E03"
+  },
+  {
+   "id": "E21",
+   "claim": "the README's venv path is wrong",
+   "level": "documentation_only",
+   "artifact": "README.md:17 ('<repo>/.venv') vs E03"
+  },
+  {
+   "id": "E22",
+   "claim": "a separate durable controller exists and is paused mid-campaign",
+   "level": "runtime_observed",
+   "artifact": "results/harness3_runs/controller/state.json (phase=paused, round=124, portfolio 6)"
+  },
+  {
+   "id": "E23",
+   "claim": "the controller launches training through candidate_run, not the DAG",
+   "level": "code_verified",
+   "artifact": "tools/harness2_genrec/controller.py:1042,1066,1091,1149 (run_candidate)"
+  },
+  {
+   "id": "E24",
+   "claim": "the MCP record's result_dir does not match where the trainer wrote",
+   "level": "runtime_observed",
+   "artifact": "record says results/stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser/hyp_factor_nce_c1; the artifacts are one level up"
+  },
+  {
+   "id": "E25",
+   "claim": "the Agent L/A/M/I roles of #110-#112 have no session record",
+   "level": "unknown",
+   "artifact": "no session file, no workspace, no argv for them; the artifacts exist as committed JSON/MD only (e.g. subspace_mechanism_proposals.json, commit 1484671d)"
+  },
+  {
+   "id": "E26",
+   "claim": "the role-assigned layout's final 24-step smoke partitions at every level",
+   "level": "runtime_observed",
+   "artifact": "/tmp/role_layout_smoke/sids_for_hgrec.npy, re-measured with tools/harness2_genrec/partition_degeneracy.py",
+   "value": {
+    "level0": {
+     "distinct_codes": 249,
+     "largest_cell": 271,
+     "share": 0.011022
+    },
+    "level1": {
+     "distinct_codes": 256,
+     "largest_cell": 316,
+     "share": 0.012852
+    },
+    "level2_role_level": {
+     "distinct_codes": 256,
+     "largest_cell": 152,
+     "share": 0.006182
+    },
+    "the_gate": "pass at all three levels"
+   },
+   "note": "an earlier smoke (before the residual trace became role-aware) reported 240/255/256 with the role level's largest cell at 151; the numbers above are the final ones"
+  }
+ ],
+ "gaps": [
+  "No OpenCode session record exists for the L/A/M/I roles of #110-#112; their outputs are committed artifacts with no invocation evidence. PROVENANCE NOT VERIFIED.",
+  "The third-party framework's internal implementation was not read beyond the seams this repository imports (core.schedule, core.library, core.spec, core.proposer, core.tree, core.prompts, substrate.base); its scheduling internals are out of scope.",
+  "Historical shell history of the interactive coordinator is not available, so which commands the coordinator ran by hand is reconstructed from the artifacts and the DAG event log only.",
+  "The stage3 nondeterminism / transfer work belongs to #112's record and was not re-measured."
+ ],
+ "session_inventory": {
+  "count": 230,
+  "by_title_prefix": {
+   "implement": 153,
+   "mechanism": 5,
+   "repair": 3,
+   "candidate": 65,
+   "hypotheses": 1,
+   "derive": 3
+  },
+  "models": {
+   "openai/gpt-6-luna": 230
+  },
+  "exit_codes": {
+   "0": 228,
+   "1": 2
+  },
+  "total_input_tokens": 6643365,
+  "total_output_tokens": 221084,
+  "total_elapsed_s": 8897.5,
+  "records": [
+   {
+    "path": "results/harness3_runs/campaigns/learned/implement_session.json",
+    "title": "implement directed_soft_code_affinity_transition_kl",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.55,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 40017,
+     "output": 1582,
+     "reasoning": 348
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c1_policy_directed_soft_code_affinity_transition_kl",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns/learned/proposal/proposal_session.json",
+    "title": "mechanism proposal from the ledger",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.76,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/campaigns/learned/proposal",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns/old/implement_session.json",
+    "title": "implement masked_directed_residual_codebook_affinity",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 52.92,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 23318,
+     "output": 2012,
+     "reasoning": 355
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c1_policy_masked_directed_residual_codebook_affinity",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns/old/proposal/proposal_session.json",
+    "title": "mechanism proposal from the ledger",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.55,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/campaigns/old/proposal",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns_v2/learned/implement_session.json",
+    "title": "implement behavior_conditioned_codebook_directional_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 45.38,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 37858,
+     "output": 1281,
+     "reasoning": 168
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns_v2/learned/proposal/proposal_session.json",
+    "title": "mechanism proposal from the ledger",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.02,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/campaigns_v2/learned/proposal",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns_v2/old/implement_session.json",
+    "title": "implement behavior_directed_soft_code_transition_kl",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.74,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 45982,
+     "output": 1237,
+     "reasoning": 238
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/campaigns_v2/old/proposal/proposal_session.json",
+    "title": "mechanism proposal from the ledger",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.67,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/campaigns_v2/old/proposal",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/behaviour_conditioned_assignment_exclusion/implement_session.json",
+    "title": "implement behaviour_conditioned_assignment_exclusion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.09,
+    "n_tool_calls": 13,
+    "tokens": {
+     "input": 24520,
+     "output": 1160,
+     "reasoning": 311
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_conditioned_assignment_exclusion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/behaviour_conditioned_assignment_exclusion/repair_session.json",
+    "title": "repair behaviour_conditioned_assignment_exclusion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 10.34,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 10730,
+     "output": 90,
+     "reasoning": 30
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_conditioned_assignment_exclusion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/behaviour_conditioned_residual_displacement/implement_session.json",
+    "title": "implement behaviour_conditioned_residual_displacement",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.5,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 24076,
+     "output": 1144,
+     "reasoning": 494
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_conditioned_residual_displacement",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/behaviour_conditioned_residual_displacement/repair_session.json",
+    "title": "repair behaviour_conditioned_residual_displacement",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.16,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 28616,
+     "output": 923,
+     "reasoning": 183
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_conditioned_residual_displacement",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.05,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/candidates",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/reference_codebook_geometry_preservation/implement_session.json",
+    "title": "implement reference_codebook_geometry_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 40.03,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 27454,
+     "output": 1468,
+     "reasoning": 709
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_reference_codebook_geometry_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates/reference_codebook_geometry_preservation/repair_session.json",
+    "title": "repair reference_codebook_geometry_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.25,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 17066,
+     "output": 1202,
+     "reasoning": 414
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_reference_codebook_geometry_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates_round2/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.27,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/candidates_round2",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates_round2/directed_assignment_usage_balance/implement_session.json",
+    "title": "implement directed_assignment_usage_balance",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 44.63,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 22717,
+     "output": 1267,
+     "reasoning": 270
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates_round2/directed_behavior_residual_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.99,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 22657,
+     "output": 1366,
+     "reasoning": 145
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_behavior_residual_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/candidates_round2/directed_codeword_margin_geometry/implement_session.json",
+    "title": "implement directed_codeword_margin_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 41.81,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 35977,
+     "output": 1316,
+     "reasoning": 559
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_000/behaviour_residual_directional_whitening/implement_session.json",
+    "title": "implement behaviour_residual_directional_whitening",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.02,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 24345,
+     "output": 1594,
+     "reasoning": 443
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_residual_directional_whitening",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_000/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.94,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_000",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_000/directed_assignment_branch_preservation/implement_session.json",
+    "title": "implement directed_assignment_branch_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.88,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 36949,
+     "output": 1414,
+     "reasoning": 289
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_assignment_branch_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_000/directed_codebook_repulsion_with_anchor/implement_session.json",
+    "title": "implement directed_codebook_repulsion_with_anchor",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.6,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 33815,
+     "output": 1141,
+     "reasoning": 121
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_codebook_repulsion_with_anchor",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_001/behaviour_conditioned_residual_orthogonal_transport/implement_session.json",
+    "title": "implement behaviour_conditioned_residual_orthogonal_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 45.54,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 36891,
+     "output": 1523,
+     "reasoning": 139
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_behaviour_conditioned_residual_orthogonal_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_001/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.09,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_001",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_001/directed_codeword_repulsion_with_usage_anchor/implement_session.json",
+    "title": "implement directed_codeword_repulsion_with_usage_anchor",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 43.7,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 37531,
+     "output": 1438,
+     "reasoning": 465
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_codeword_repulsion_with_usage_anchor",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_001/directed_soft_assignment_branch_preservation/implement_session.json",
+    "title": "implement directed_soft_assignment_branch_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.79,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 37435,
+     "output": 1646,
+     "reasoning": 455
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_soft_assignment_branch_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_002/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.28,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_002",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_002/directed_anchor_margin_geometry/implement_session.json",
+    "title": "implement directed_anchor_margin_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 33.45,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 21789,
+     "output": 1958,
+     "reasoning": 153
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_anchor_margin_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_002/directed_residual_geometry_repulsion/implement_session.json",
+    "title": "implement directed_residual_geometry_repulsion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.66,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 78201,
+     "output": 1187,
+     "reasoning": 276
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_residual_geometry_repulsion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_002/directed_usage_prefix_balance/implement_session.json",
+    "title": "implement directed_usage_prefix_balance",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.01,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 49121,
+     "output": 1362,
+     "reasoning": 271
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c106_directed_usage_prefix_balance",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_003/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.8,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_003",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_003/directed_residual_codebook_alignment/implement_session.json",
+    "title": "implement directed_residual_codebook_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 43.48,
+    "n_tool_calls": 14,
+    "tokens": {
+     "input": 38171,
+     "output": 1744,
+     "reasoning": 598
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_003/directed_separated_codeword_geometry/implement_session.json",
+    "title": "implement directed_separated_codeword_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.3,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 23341,
+     "output": 1135,
+     "reasoning": 255
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_003/directed_soft_assignment_branch_preservation/implement_session.json",
+    "title": "implement directed_soft_assignment_branch_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 53.38,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 39933,
+     "output": 1688,
+     "reasoning": 210
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_branch_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_004/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 20.2,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_004",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_004/directed_assignment_prefix_entropy/implement_session.json",
+    "title": "implement directed_assignment_prefix_entropy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 35.19,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 39109,
+     "output": 1012,
+     "reasoning": 347
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_entropy",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_004/directed_codeword_repulsion_margin/implement_session.json",
+    "title": "implement directed_codeword_repulsion_margin",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.14,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 35612,
+     "output": 1602,
+     "reasoning": 484
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codeword_repulsion_margin",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_004/directed_residual_codebook_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_codebook_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.33,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 23823,
+     "output": 1193,
+     "reasoning": 207
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_codebook_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_005/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.42,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_005",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_005/directed_anchor_repulsion_geometry/implement_session.json",
+    "title": "implement directed_anchor_repulsion_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.09,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 36372,
+     "output": 886,
+     "reasoning": 210
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_anchor_repulsion_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_005/directed_assignment_prefix_information/implement_session.json",
+    "title": "implement directed_assignment_prefix_information",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.78,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 58015,
+     "output": 1489,
+     "reasoning": 318
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_information",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_005/directed_residual_transport_with_separation/implement_session.json",
+    "title": "implement directed_residual_transport_with_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.84,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 34896,
+     "output": 1077,
+     "reasoning": 268
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_006/behaviour_conditioned_residual_whitening/implement_session.json",
+    "title": "implement behaviour_conditioned_residual_whitening",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 44.42,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 37290,
+     "output": 1866,
+     "reasoning": 1079
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_behaviour_conditioned_residual_whitening",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_006/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.62,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_006",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_006/directed_assignment_prefix_preservation/implement_session.json",
+    "title": "implement directed_assignment_prefix_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.33,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 24737,
+     "output": 1486,
+     "reasoning": 260
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_006/directed_codebook_repulsion_with_usage_anchor/implement_session.json",
+    "title": "implement directed_codebook_repulsion_with_usage_anchor",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 1,
+    "elapsed_s": 17.83,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 29775,
+     "output": 112,
+     "reasoning": 9
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_repulsion_with_usage_anchor",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_007/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.28,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_007",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_007/directed_codeword_tangent_geometry/implement_session.json",
+    "title": "implement directed_codeword_tangent_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 35.58,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 27330,
+     "output": 1787,
+     "reasoning": 884
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_007/directed_residual_transport/implement_session.json",
+    "title": "implement directed_residual_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.32,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 21487,
+     "output": 1322,
+     "reasoning": 152
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_007/directed_soft_assignment_information/implement_session.json",
+    "title": "implement directed_soft_assignment_information",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 21.51,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 26966,
+     "output": 1336,
+     "reasoning": 273
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_information",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_008/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.59,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_008",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_008/directed_capacity_constrained_assignment_partition/implement_session.json",
+    "title": "implement directed_capacity_constrained_assignment_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.14,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 37494,
+     "output": 2463,
+     "reasoning": 244
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_008/directed_margin_preserving_codebook_geometry/implement_session.json",
+    "title": "implement directed_margin_preserving_codebook_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.0,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 22600,
+     "output": 1020,
+     "reasoning": 390
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_margin_preserving_codebook_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_008/directed_residual_transport_with_separation/implement_session.json",
+    "title": "implement directed_residual_transport_with_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.36,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 36585,
+     "output": 1026,
+     "reasoning": 266
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_009/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.67,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_009",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_009/directed_assignment_information_separation/implement_session.json",
+    "title": "implement directed_assignment_information_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.48,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 22168,
+     "output": 1261,
+     "reasoning": 290
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_information_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_009/directed_codebook_geometry_balance/implement_session.json",
+    "title": "implement directed_codebook_geometry_balance",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.88,
+    "n_tool_calls": 14,
+    "tokens": {
+     "input": 36652,
+     "output": 1656,
+     "reasoning": 106
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_geometry_balance",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_009/directed_residual_transport_with_margin/implement_session.json",
+    "title": "implement directed_residual_transport_with_margin",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.87,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 36696,
+     "output": 1465,
+     "reasoning": 375
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_margin",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_010/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.96,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_010",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_010/directed_assignment_branch_entropy/implement_session.json",
+    "title": "implement directed_assignment_branch_entropy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.06,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 23412,
+     "output": 1189,
+     "reasoning": 168
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_branch_entropy",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_010/directed_codebook_repulsion/implement_session.json",
+    "title": "implement directed_codebook_repulsion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.07,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 24025,
+     "output": 1475,
+     "reasoning": 477
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_repulsion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_010/directed_residual_transport_separation/implement_session.json",
+    "title": "implement directed_residual_transport_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.14,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 24151,
+     "output": 1084,
+     "reasoning": 314
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_011/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.21,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_011",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_011/directed_assignment_prefix_information/implement_session.json",
+    "title": "implement directed_assignment_prefix_information",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.62,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 36770,
+     "output": 1246,
+     "reasoning": 300
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_prefix_information",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_011/directed_codeword_tangent_repulsion/implement_session.json",
+    "title": "implement directed_codeword_tangent_repulsion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.52,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 40319,
+     "output": 1458,
+     "reasoning": 373
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_011/directed_residual_geometry_separation/implement_session.json",
+    "title": "implement directed_residual_geometry_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.01,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 36695,
+     "output": 1127,
+     "reasoning": 430
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_012/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.85,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_012",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_013/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.76,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_013",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_014/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.08,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_014",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_015/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.79,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_015",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_016/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.52,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_016",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_017/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.13,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_017",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_018/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 41.1,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_018",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_019/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.79,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_019",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_020/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.41,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_020",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_021/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.06,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_021",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_022/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.12,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_022",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_023/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.69,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_023",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_024/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 21.61,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_024",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_025/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.5,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_025",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_025/directed_prefix_preserving_assignment/implement_session.json",
+    "title": "implement directed_prefix_preserving_assignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 20.07,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 14624,
+     "output": 124,
+     "reasoning": 304
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_prefix_preserving_assignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_025/directed_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.69,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 22397,
+     "output": 1392,
+     "reasoning": 201
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_025/directed_separated_codeword_geometry/implement_session.json",
+    "title": "implement directed_separated_codeword_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.16,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 40143,
+     "output": 1250,
+     "reasoning": 415
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_026/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.5,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_026",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_026/directed_assignment_information_partition/implement_session.json",
+    "title": "implement directed_assignment_information_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.68,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 23406,
+     "output": 1508,
+     "reasoning": 352
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_information_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_026/directed_codebook_tangent_partition/implement_session.json",
+    "title": "implement directed_codebook_tangent_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.37,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 20877,
+     "output": 1609,
+     "reasoning": 586
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_026/directed_residual_geometry_separated_transport/implement_session.json",
+    "title": "implement directed_residual_geometry_separated_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.59,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 24335,
+     "output": 1316,
+     "reasoning": 227
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_separated_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_027/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.35,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_027",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_027/directed_assignment_information_preservation/implement_session.json",
+    "title": "implement directed_assignment_information_preservation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.89,
+    "n_tool_calls": 14,
+    "tokens": {
+     "input": 47339,
+     "output": 1404,
+     "reasoning": 38
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_information_preservation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_027/directed_codebook_tangent_repulsion/implement_session.json",
+    "title": "implement directed_codebook_tangent_repulsion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.16,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 20380,
+     "output": 1347,
+     "reasoning": 246
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repulsion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_027/directed_residual_tangent_separation/implement_session.json",
+    "title": "implement directed_residual_tangent_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.21,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 38030,
+     "output": 1414,
+     "reasoning": 414
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_028/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.82,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_028",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_028/directed_assignment_information_balance/implement_session.json",
+    "title": "implement directed_assignment_information_balance",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.36,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 21872,
+     "output": 1380,
+     "reasoning": 283
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_information_balance",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_028/directed_codeword_separation_barrier/implement_session.json",
+    "title": "implement directed_codeword_separation_barrier",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.62,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 39363,
+     "output": 1657,
+     "reasoning": 601
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codeword_separation_barrier",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_028/directed_residual_frame_transport/implement_session.json",
+    "title": "implement directed_residual_frame_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.67,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 20304,
+     "output": 1483,
+     "reasoning": 276
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_frame_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_029/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.38,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_029",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_029/directed_behavior_residual_codebook_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_codebook_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.75,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 36502,
+     "output": 1446,
+     "reasoning": 193
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_codebook_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_029/directed_capacity_balanced_assignment_partition/implement_session.json",
+    "title": "implement directed_capacity_balanced_assignment_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 307.25,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 17910,
+     "output": 1012,
+     "reasoning": 107
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_029/directed_margin_preserving_codebook_geometry/implement_session.json",
+    "title": "implement directed_margin_preserving_codebook_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.77,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 24310,
+     "output": 1422,
+     "reasoning": 169
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_margin_preserving_codebook_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_030/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.34,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_030",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_030/directed_capacity_preserving_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.06,
+    "n_tool_calls": 13,
+    "tokens": {
+     "input": 50458,
+     "output": 1484,
+     "reasoning": 240
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_030/directed_pair_separation_codebook_geometry/implement_session.json",
+    "title": "implement directed_pair_separation_codebook_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.11,
+    "n_tool_calls": 13,
+    "tokens": {
+     "input": 26108,
+     "output": 1347,
+     "reasoning": 324
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_030/directed_residual_behaviour_cluster_transport/implement_session.json",
+    "title": "implement directed_residual_behaviour_cluster_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 39.56,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 25071,
+     "output": 1548,
+     "reasoning": 350
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_behaviour_cluster_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_031/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.93,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/controller/rounds/round_031",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_031/directed_assignment_capacity_repartition/implement_session.json",
+    "title": "implement directed_assignment_capacity_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.27,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 41394,
+     "output": 1265,
+     "reasoning": 72
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_capacity_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_031/directed_codebook_cell_repartition/implement_session.json",
+    "title": "implement directed_codebook_cell_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.2,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 24762,
+     "output": 1360,
+     "reasoning": 194
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_cell_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_031/directed_residual_geometry_transport/implement_session.json",
+    "title": "implement directed_residual_geometry_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.21,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 30358,
+     "output": 1383,
+     "reasoning": 205
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 50.06,
+    "n_tool_calls": 2,
+    "tokens": {
+     "input": 31541,
+     "output": 76,
+     "reasoning": 38
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_032",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/directed_behavior_residual_transport_with_separation/implement_session.json",
+    "title": "implement directed_behavior_residual_transport_with_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.54,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 51226,
+     "output": 1092,
+     "reasoning": 199
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_transport_with_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/directed_capacity_preserving_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.98,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 53294,
+     "output": 1699,
+     "reasoning": 376
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/directed_codebook_frame_alignment/implement_session.json",
+    "title": "implement directed_codebook_frame_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.59,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 22712,
+     "output": 1242,
+     "reasoning": 624
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_frame_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/directed_codebook_tangent_repartition/implement_session.json",
+    "title": "implement directed_codebook_tangent_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 54.26,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 39747,
+     "output": 1399,
+     "reasoning": 246
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/directed_residual_behavior_geometry_transport/implement_session.json",
+    "title": "implement directed_residual_behavior_geometry_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 55.81,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 39488,
+     "output": 1612,
+     "reasoning": 353
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_behavior_geometry_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_032/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 54.9,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 31940,
+     "output": 129,
+     "reasoning": 59
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_032/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_033/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 61.37,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 51146,
+     "output": 129,
+     "reasoning": 30
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_033",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_033/directed_capacity_preserving_assignment_surrogate/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_surrogate",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 55.29,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 25815,
+     "output": 1172,
+     "reasoning": 492
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_surrogate",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_033/directed_codebook_frame_alignment/implement_session.json",
+    "title": "implement directed_codebook_frame_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 79.92,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 46619,
+     "output": 1590,
+     "reasoning": 346
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_frame_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_033/directed_residual_geometry_partition_transport/implement_session.json",
+    "title": "implement directed_residual_geometry_partition_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 33.22,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 39865,
+     "output": 1658,
+     "reasoning": 474
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_partition_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_034/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 77.65,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 31574,
+     "output": 169,
+     "reasoning": 52
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_034",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_034/directed_capacity_constrained_pair_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_pair_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.55,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 25646,
+     "output": 1073,
+     "reasoning": 508
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_pair_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_034/directed_pair_margin_rigid_codebook_geometry/implement_session.json",
+    "title": "implement directed_pair_margin_rigid_codebook_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 45.88,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 25096,
+     "output": 1337,
+     "reasoning": 252
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pair_margin_rigid_codebook_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_034/directed_residual_graph_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_graph_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.74,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 46096,
+     "output": 1571,
+     "reasoning": 659
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_graph_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 43.47,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 36976,
+     "output": 239,
+     "reasoning": 144
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_035",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/directed_capacity_constrained_assignment/implement_session.json",
+    "title": "implement directed_capacity_constrained_assignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.65,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 41309,
+     "output": 1402,
+     "reasoning": 387
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/directed_capacity_constrained_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 58.29,
+    "n_tool_calls": 13,
+    "tokens": {
+     "input": 27853,
+     "output": 1634,
+     "reasoning": 310
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/directed_codebook_tangent_repartition/implement_session.json",
+    "title": "implement directed_codebook_tangent_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 42.17,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 38257,
+     "output": 1299,
+     "reasoning": 275
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/directed_residual_behavior_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_behavior_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.83,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 28406,
+     "output": 1679,
+     "reasoning": 231
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_behavior_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/directed_residual_geometry_transport/implement_session.json",
+    "title": "implement directed_residual_geometry_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 55.26,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 38587,
+     "output": 1196,
+     "reasoning": 216
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_035/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 98.63,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 32547,
+     "output": 174,
+     "reasoning": 68
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_035/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_036/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 53.34,
+    "n_tool_calls": 2,
+    "tokens": {
+     "input": 32614,
+     "output": 76,
+     "reasoning": 35
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_036",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_036/directed_behavior_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 62.82,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 23156,
+     "output": 1349,
+     "reasoning": 255
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_036/directed_capacity_preserving_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 45.09,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 55541,
+     "output": 2081,
+     "reasoning": 735
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_036/directed_rigid_codebook_graph_rotation/implement_session.json",
+    "title": "implement directed_rigid_codebook_graph_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 67.21,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 25443,
+     "output": 1335,
+     "reasoning": 286
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_rigid_codebook_graph_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 66.16,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 57386,
+     "output": 172,
+     "reasoning": 42
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_037",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_capacity_constrained_pair_reassignment/implement_session.json",
+    "title": "implement directed_capacity_constrained_pair_reassignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.88,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 24677,
+     "output": 1413,
+     "reasoning": 137
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_pair_reassignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_capacity_preserving_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 41.86,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 39109,
+     "output": 1500,
+     "reasoning": 515
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 43.27,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 24160,
+     "output": 1333,
+     "reasoning": 305
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_residual_target_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_target_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.89,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 24065,
+     "output": 1654,
+     "reasoning": 371
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_target_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_rigid_codebook_alignment/implement_session.json",
+    "title": "implement directed_rigid_codebook_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 1,
+    "elapsed_s": 36.25,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 23821,
+     "output": 1328,
+     "reasoning": 471
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_rigid_codebook_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/directed_rigid_codebook_partition_alignment/implement_session.json",
+    "title": "implement directed_rigid_codebook_partition_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.38,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 23053,
+     "output": 950,
+     "reasoning": 273
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_rigid_codebook_partition_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_037/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 48.91,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 34124,
+     "output": 124,
+     "reasoning": 269
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_037/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_038/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 51.61,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 34748,
+     "output": 183,
+     "reasoning": 211
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_038",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_038/directed_graph_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_graph_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 46.35,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 69453,
+     "output": 1046,
+     "reasoning": 665
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_graph_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_038/directed_pair_separated_assignment_repartition/implement_session.json",
+    "title": "implement directed_pair_separated_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 213.89,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 25819,
+     "output": 1381,
+     "reasoning": 346
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pair_separated_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_038/directed_residual_cluster_balanced_transport/implement_session.json",
+    "title": "implement directed_residual_cluster_balanced_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 213.1,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 25306,
+     "output": 1827,
+     "reasoning": 552
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_cluster_balanced_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 50.61,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 32661,
+     "output": 151,
+     "reasoning": 204
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_039",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_capacity_assignment_margin/implement_session.json",
+    "title": "implement directed_capacity_assignment_margin",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.3,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 54127,
+     "output": 1389,
+     "reasoning": 249
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_margin",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_capacity_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.35,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 39534,
+     "output": 1461,
+     "reasoning": 293
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_codebook_tangent_graph_rotation/implement_session.json",
+    "title": "implement directed_codebook_tangent_graph_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 42.13,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 44155,
+     "output": 1516,
+     "reasoning": 379
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_graph_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_residual_orthogonal_transport/implement_session.json",
+    "title": "implement directed_residual_orthogonal_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.32,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 40361,
+     "output": 1405,
+     "reasoning": 565
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_orthogonal_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_residual_shell_transport/implement_session.json",
+    "title": "implement directed_residual_shell_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 22.67,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 37059,
+     "output": 1074,
+     "reasoning": 351
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_shell_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/directed_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.99,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 26055,
+     "output": 1284,
+     "reasoning": 197
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_039/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 55.6,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 35047,
+     "output": 222,
+     "reasoning": 109
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_039/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_040/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 54.53,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 33413,
+     "output": 109,
+     "reasoning": 70
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_040",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_040/directed_behavior_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.37,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 38619,
+     "output": 1172,
+     "reasoning": 244
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_040/directed_capacity_neutral_codebook_rotation/implement_session.json",
+    "title": "implement directed_capacity_neutral_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.72,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 24343,
+     "output": 1327,
+     "reasoning": 252
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_neutral_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_040/directed_pair_separated_assignment_repartition/implement_session.json",
+    "title": "implement directed_pair_separated_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.72,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 23774,
+     "output": 1216,
+     "reasoning": 329
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pair_separated_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 52.08,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 33280,
+     "output": 144,
+     "reasoning": 47
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_041",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_capacity_assignment_with_pair_barrier/implement_session.json",
+    "title": "implement directed_capacity_assignment_with_pair_barrier",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 40.96,
+    "n_tool_calls": 13,
+    "tokens": {
+     "input": 39629,
+     "output": 2252,
+     "reasoning": 388
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_with_pair_barrier",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_capacity_constrained_soft_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_soft_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.37,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 54497,
+     "output": 1335,
+     "reasoning": 264
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_soft_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_codebook_tangent_alignment/implement_session.json",
+    "title": "implement directed_codebook_tangent_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.73,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 26232,
+     "output": 1700,
+     "reasoning": 456
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.99,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 41287,
+     "output": 1314,
+     "reasoning": 549
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_residual_transport_with_tangent_guard/implement_session.json",
+    "title": "implement directed_residual_transport_with_tangent_guard",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 34.56,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 23313,
+     "output": 1620,
+     "reasoning": 559
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_tangent_guard",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/directed_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 18.31,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 33513,
+     "output": 222,
+     "reasoning": 0
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_041/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 49.77,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 60742,
+     "output": 182,
+     "reasoning": 266
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_041/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_042/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 9.98,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 25407,
+     "output": 162,
+     "reasoning": 0
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_042",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_043/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 53.57,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 25712,
+     "output": 222,
+     "reasoning": 34
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_043",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_043/directed_capacity_constrained_pair_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_pair_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 39.1,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 46272,
+     "output": 1356,
+     "reasoning": 273
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_pair_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_043/directed_residual_tangent_separation/implement_session.json",
+    "title": "implement directed_residual_tangent_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 54.38,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 39746,
+     "output": 1688,
+     "reasoning": 289
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_043/directed_rigid_codebook_graph_alignment/implement_session.json",
+    "title": "implement directed_rigid_codebook_graph_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 49.87,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 38372,
+     "output": 1298,
+     "reasoning": 295
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_rigid_codebook_graph_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_043/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 52.02,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 33514,
+     "output": 113,
+     "reasoning": 91
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_043/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_044/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 47.97,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 34992,
+     "output": 114,
+     "reasoning": 284
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_044",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_044/directed_capacity_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 33.1,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 24955,
+     "output": 1408,
+     "reasoning": 368
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_044/directed_residual_frame_transport/implement_session.json",
+    "title": "implement directed_residual_frame_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 40.42,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 24288,
+     "output": 1197,
+     "reasoning": 201
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_frame_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_044/directed_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 100.87,
+    "n_tool_calls": 11,
+    "tokens": {
+     "input": 54049,
+     "output": 1789,
+     "reasoning": 452
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 53.83,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 36294,
+     "output": 133,
+     "reasoning": 267
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_045",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_capacity_preserving_pair_reassignment/implement_session.json",
+    "title": "implement directed_capacity_preserving_pair_reassignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.52,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 47214,
+     "output": 1126,
+     "reasoning": 225
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_pair_reassignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_codebook_tangent_partition/implement_session.json",
+    "title": "implement directed_codebook_tangent_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.19,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 27177,
+     "output": 1567,
+     "reasoning": 749
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_pair_separation_assignment_margin/implement_session.json",
+    "title": "implement directed_pair_separation_assignment_margin",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 29.55,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 39166,
+     "output": 1542,
+     "reasoning": 125
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pair_separation_assignment_margin",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_residual_conditional_geometry/implement_session.json",
+    "title": "implement directed_residual_conditional_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 72.64,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 84028,
+     "output": 2211,
+     "reasoning": 599
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_conditional_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_residual_transport_with_separation/implement_session.json",
+    "title": "implement directed_residual_transport_with_separation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 39.79,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 27094,
+     "output": 1471,
+     "reasoning": 303
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_transport_with_separation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/directed_tangent_codebook_repartition/implement_session.json",
+    "title": "implement directed_tangent_codebook_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.66,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 41560,
+     "output": 1735,
+     "reasoning": 621
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_045/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 68.54,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 34937,
+     "output": 274,
+     "reasoning": 129
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_045/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_046/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 63.89,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 34606,
+     "output": 227,
+     "reasoning": 104
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_046",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_046/directed_behavioural_rigid_codebook_rotation/implement_session.json",
+    "title": "implement directed_behavioural_rigid_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 47.01,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 24203,
+     "output": 1256,
+     "reasoning": 211
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavioural_rigid_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_046/directed_capacity_constrained_soft_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_soft_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 47.59,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 87476,
+     "output": 1735,
+     "reasoning": 568
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_soft_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_046/directed_residual_tangent_transport_with_pair_barrier/implement_session.json",
+    "title": "implement directed_residual_tangent_transport_with_pair_barrier",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 35.3,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 59103,
+     "output": 1152,
+     "reasoning": 270
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport_with_pair_barrier",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 47.23,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 35909,
+     "output": 172,
+     "reasoning": 262
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_047",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_assignment_margin_repartition/implement_session.json",
+    "title": "implement directed_assignment_margin_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 35.53,
+    "n_tool_calls": 14,
+    "tokens": {
+     "input": 34994,
+     "output": 1835,
+     "reasoning": 474
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_assignment_margin_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_capacity_preserving_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_preserving_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 37.32,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 49499,
+     "output": 1369,
+     "reasoning": 585
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_preserving_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_codebook_tangent_rotation/implement_session.json",
+    "title": "implement directed_codebook_tangent_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 20.74,
+    "n_tool_calls": 6,
+    "tokens": {
+     "input": 38069,
+     "output": 1054,
+     "reasoning": 209
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_residual_geometry_transport/implement_session.json",
+    "title": "implement directed_residual_geometry_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 39.68,
+    "n_tool_calls": 15,
+    "tokens": {
+     "input": 28708,
+     "output": 1737,
+     "reasoning": 294
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_geometry_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 36.13,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 24717,
+     "output": 1791,
+     "reasoning": 366
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/directed_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 21.99,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 21660,
+     "output": 633,
+     "reasoning": 492
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_047/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 93.56,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 35709,
+     "output": 174,
+     "reasoning": 73
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_047/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_120/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 43.0,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 39220,
+     "output": 158,
+     "reasoning": 116
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_120",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_120/directed_behavior_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.43,
+    "n_tool_calls": 15,
+    "tokens": {
+     "input": 51862,
+     "output": 1496,
+     "reasoning": 364
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_120/directed_pairwise_codebook_tangent_repartition/implement_session.json",
+    "title": "implement directed_pairwise_codebook_tangent_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.51,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 26945,
+     "output": 1314,
+     "reasoning": 382
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pairwise_codebook_tangent_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_120/directed_soft_assignment_capacity_rewire/implement_session.json",
+    "title": "implement directed_soft_assignment_capacity_rewire",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.26,
+    "n_tool_calls": 12,
+    "tokens": {
+     "input": 40483,
+     "output": 1362,
+     "reasoning": 501
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_soft_assignment_capacity_rewire",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/behavior_residual_graph_orthogonal_transport/implement_session.json",
+    "title": "implement behavior_residual_graph_orthogonal_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.79,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 42381,
+     "output": 1300,
+     "reasoning": 262
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_behavior_residual_graph_orthogonal_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 56.15,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 38282,
+     "output": 214,
+     "reasoning": 84
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_121",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/directed_behavior_residual_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.65,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 22671,
+     "output": 1183,
+     "reasoning": 329
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/directed_capacity_assignment_repartition/implement_session.json",
+    "title": "implement directed_capacity_assignment_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.38,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 39836,
+     "output": 1271,
+     "reasoning": 268
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_assignment_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/directed_capacity_constrained_pair_assignment/implement_session.json",
+    "title": "implement directed_capacity_constrained_pair_assignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.46,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 26674,
+     "output": 1372,
+     "reasoning": 385
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_pair_assignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/directed_codebook_tangent_partition/implement_session.json",
+    "title": "implement directed_codebook_tangent_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.1,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 41722,
+     "output": 1370,
+     "reasoning": 483
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/directed_pairwise_margin_repulsion/implement_session.json",
+    "title": "implement directed_pairwise_margin_repulsion",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 30.43,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 40557,
+     "output": 1393,
+     "reasoning": 186
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_pairwise_margin_repulsion",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_121/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 44.8,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 37560,
+     "output": 107,
+     "reasoning": 0
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_121/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_122/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 51.81,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 27543,
+     "output": 196,
+     "reasoning": 14
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_122",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_122/directed_behavior_residual_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 23.38,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 38970,
+     "output": 1250,
+     "reasoning": 155
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_122/directed_capacity_constrained_assignment_relabeling/implement_session.json",
+    "title": "implement directed_capacity_constrained_assignment_relabeling",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.45,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 50823,
+     "output": 1459,
+     "reasoning": 242
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_relabeling",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_122/directed_codebook_tangent_rotation/implement_session.json",
+    "title": "implement directed_codebook_tangent_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.72,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 38775,
+     "output": 1266,
+     "reasoning": 125
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_123/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 54.86,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 43228,
+     "output": 241,
+     "reasoning": 203
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_123",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_123/capacity_preserving_directed_assignment/implement_session.json",
+    "title": "implement capacity_preserving_directed_assignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.5,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 37232,
+     "output": 1377,
+     "reasoning": 346
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_123/directed_residual_tangent_transport/implement_session.json",
+    "title": "implement directed_residual_tangent_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.01,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 27885,
+     "output": 1071,
+     "reasoning": 270
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_tangent_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_123/directed_tangent_codebook_rotation/implement_session.json",
+    "title": "implement directed_tangent_codebook_rotation",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.98,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 39635,
+     "output": 1471,
+     "reasoning": 395
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 42.7,
+    "n_tool_calls": 2,
+    "tokens": {
+     "input": 38524,
+     "output": 76,
+     "reasoning": 76
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_124",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_behavior_residual_transport/implement_session.json",
+    "title": "implement directed_behavior_residual_transport",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 25.69,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 38256,
+     "output": 1125,
+     "reasoning": 250
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_behavior_residual_transport",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_capacity_constrained_soft_repartition/implement_session.json",
+    "title": "implement directed_capacity_constrained_soft_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 26.67,
+    "n_tool_calls": 9,
+    "tokens": {
+     "input": 49152,
+     "output": 1527,
+     "reasoning": 65
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_soft_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_capacity_soft_repartition/implement_session.json",
+    "title": "implement directed_capacity_soft_repartition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 21.76,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 53400,
+     "output": 1194,
+     "reasoning": 191
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_capacity_soft_repartition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_codebook_tangent_partition/implement_session.json",
+    "title": "implement directed_codebook_tangent_partition",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 28.66,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 37922,
+     "output": 1353,
+     "reasoning": 226
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_codebook_tangent_partition",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_margin_preserving_codebook_geometry/implement_session.json",
+    "title": "implement directed_margin_preserving_codebook_geometry",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.98,
+    "n_tool_calls": 10,
+    "tokens": {
+     "input": 32592,
+     "output": 1191,
+     "reasoning": 530
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_margin_preserving_codebook_geometry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/directed_residual_history_alignment/implement_session.json",
+    "title": "implement directed_residual_history_alignment",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 24.57,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 39162,
+     "output": 1117,
+     "reasoning": 135
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_c107_directed_residual_history_alignment",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/controller/rounds/round_124/retry/candidates_session.json",
+    "title": "candidate mechanisms",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 48.79,
+    "n_tool_calls": 7,
+    "tokens": {
+     "input": 41636,
+     "output": 309,
+     "reasoning": 393
+    },
+    "workspace_under": "results/harness3_runs/controller/rounds/round_124/retry",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/hypotheses/hypotheses_session.json",
+    "title": "hypotheses",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 32.58,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/hypotheses",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/mechanism/implement_session.json",
+    "title": "implement behavior_directed_code_assignment_cross_entropy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 38.24,
+    "n_tool_calls": 8,
+    "tokens": {
+     "input": 38214,
+     "output": 1060,
+     "reasoning": 185
+    },
+    "workspace_under": "stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/mechanism/proposal_session.json",
+    "title": "mechanism proposal from the ledger",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 31.43,
+    "n_tool_calls": 0,
+    "tokens": {},
+    "workspace_under": "results/harness3_runs/mechanism",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/policy/learned/policy_session.json",
+    "title": "derive the learned policy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 27.6,
+    "n_tool_calls": 5,
+    "tokens": {
+     "input": 33357,
+     "output": 991,
+     "reasoning": 79
+    },
+    "workspace_under": "results/harness3_runs/policy/learned",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/policy_v2/learned/policy_session.json",
+    "title": "derive the learned policy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 15.63,
+    "n_tool_calls": 3,
+    "tokens": {
+     "input": 18542,
+     "output": 649,
+     "reasoning": 63
+    },
+    "workspace_under": "results/harness3_runs/policy_v2/learned",
+    "evidence_level": "runtime_observed"
+   },
+   {
+    "path": "results/harness3_runs/policy_v3/learned/policy_session.json",
+    "title": "derive the learned policy",
+    "model": "openai/gpt-6-luna",
+    "exit_code": 0,
+    "elapsed_s": 17.97,
+    "n_tool_calls": 4,
+    "tokens": {
+     "input": 19606,
+     "output": 995,
+     "reasoning": 75
+    },
+    "workspace_under": "results/harness3_runs/policy_v3/learned",
+    "evidence_level": "runtime_observed"
+   }
+  ]
+ }
+}
