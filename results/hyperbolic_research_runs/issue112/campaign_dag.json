@@ -36,7 +36,7 @@
       "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
-      "detail": "the level-wise factorisation was PRE-CHECKED and the result is INCONCLUSIVE, not a closure: the metric was applied to the host's Euclidean-trained codebook, so the tree's structure could hardly move. A pre-check can falsify inertness but never certify a gain. The family stays open as an unmeasured question, and the next measurable target is the residual's information content rather than the metric it is measured in"
+      "detail": "the measurable target is now quantified: on the frozen host, 92.08% of the (L1,L2) cells carry exactly ONE L3 code (the mean is 1.0969 L3 codes per cell over 3612 cells), while every level's codebook is essentially fully used (243/255/256 of 256). So the third token is determined by the cell, and the codebook is NOT the bottleneck -- the residual's structure is. A candidate that enriches the third token must move that 92.08%; the level-wise metric swap does not (its pre-check was inconclusive, and the baseline is in residual_information_baseline.json)"
     },
     {
       "task_id": "hyp_busemann_boundary:eval_plan",
