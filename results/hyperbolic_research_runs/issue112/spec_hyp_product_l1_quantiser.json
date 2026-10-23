@@ -2,7 +2,7 @@
   "mechanism": {
     "id": "hyp_product_l1_quantiser",
     "type": "quantization",
-    "summary": "the level-0 assignment minimises a sum of two factor geodesic distances with one common tangent scale and a relative curvature",
+    "summary": "the level-0 assignment is the product-geodesic one AND the behaviour factor carries its own transition term, so the content factor's geometry cannot be moved by the behaviour signal",
     "entrypoints": [
       "mechanism_loss"
     ],

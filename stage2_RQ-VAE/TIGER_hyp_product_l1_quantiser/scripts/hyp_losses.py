@@ -17,6 +17,7 @@ TARGET_RADIUS_FRACTION = 0.6
 MECHANISMS = (
     "geodesic", "assign", "joint", "radial", "localcurve", "perlayer",
     "hardneg", "angular", "capacity", "horosphere", "horosphere_boundary", "product",
+    "factor_nce",
 )
 # The horosphere temperature is locked at specification time, like the strengths: it is not
 # tuned against any measured metric table.
@@ -69,6 +70,10 @@ for _name in list(ARM_CONFIGS):
         ARM_CONFIGS[_name]["curvature_b"] = (
             ARM_CONFIGS[_name]["curvature"] * PRODUCT_CURVATURE_RATIO)
         ARM_CONFIGS[_name]["tangent_scale"] = PRODUCT_SCALE
+    if ARM_CONFIGS[_name]["mechanism"] == "factor_nce":
+        # this arm carries BOTH components: the product-geodesic level-0 assignment AND the
+        # behaviour factor's own transition term
+        ARM_CONFIGS[_name]["product_assignment"] = True
 
 
 def tangent_scale_for_median_radius(latent: torch.Tensor, c: float,
@@ -328,6 +333,34 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
             return source_ball.sum() * 0.0
         loss = F.cross_entropy(-gap[keep] / HOROSPHERE_TEMPERATURE, label[keep])
         return strength * loss
+    if mechanism == "factor_nce":
+        # The ROLE SEPARATION, and it is structural rather than a mask.
+        #
+        # The term is a transition-consistency constraint on the level-0 codebook's BEHAVIOUR
+        # half only: the successor's assigned codeword should sit at the source's behaviour
+        # position, measured by the Poincare distance in the behaviour factor's ball. Because the
+        # term is a function of that half alone, its gradient reaches the behaviour half and NOT
+        # the content half -- the content factor's geometry cannot be moved by the behaviour
+        # signal, which is the proposal's hypothesis, true by construction.
+        #
+        # The label is the host's OWN assignment of the successor, computed with the SAME product
+        # metric the level-0 assignment uses (so the term pulls the codeword the host actually
+        # chose), and it is detached: the label does not move with the term.
+        config = ARM_CONFIGS.get(f"hyp_{mechanism}_c{c:g}", {})
+        c_b = float(config.get("curvature_b", c))
+        scale = float(config.get("tangent_scale", 1.0))
+        half = codebook.shape[1] // 2
+        # the DECLARED scale, the same one install_product_assignment uses, so the term and the
+        # assignment live in the same geometry
+        source_ball = expmap0(scale * source_raw[:, half:], c)
+        code_ball = expmap0(scale * codebook[:, half:], c_b)
+        a_ball = expmap0(scale * codebook[:, :half], c)
+        target_ball = expmap0(scale * target_raw.detach(), c)
+        # the host's own product assignment of the successor
+        label = (pair_poincare_distance(target_ball[:, :half], a_ball, c) ** 2
+                 + pair_poincare_distance(target_ball[:, half:], code_ball, c_b) ** 2).argmin(-1)
+        logits = -pair_poincare_distance(source_ball, code_ball, c_b)
+        return strength * F.cross_entropy(logits, label)
     if mechanism == "product":
         # The product-geodesic level-0 assignment contributes no additive term: the mechanism
         # works by changing the assignment (see install_product_assignment), so its effect is

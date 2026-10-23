@@ -163,11 +163,11 @@ TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (改这一行切换 arm; 每个 arm 的提交状态即实际跑过的配置) ===
-EXPERIMENT_ARM = "hyp_product_c1"   # the R4-08 host + the product-geodesic level-0 assignment: the level-0 code is the argmin of a sum of two factor geodesic distances
+EXPERIMENT_ARM = "hyp_factor_nce_c1"   # the R4-08 host + the product-geodesic level-0 assignment: the level-0 code is the argmin of a sum of two factor geodesic distances
 # === 唯一机制 (CLAUDE.md §1: 只有 resample, 没有可选臂) ===
 # resample 是本树唯一允许的机制 (Stage3 test_recall@10 = 0.0637372)。其余臂与其
 # 查表仅作历史记录保留在文件里, 但一旦被选中即在导入时失败, 不允许运行。
-if EXPERIMENT_ARM not in ("r4_08", "r7_f_primary", "r8_control", "hyp_product_c1"):
+if EXPERIMENT_ARM not in ("r4_08", "r7_f_primary", "r8_control", "hyp_factor_nce_c1"):
     raise RuntimeError(
         f"only the 'r4_08', 'r7_f_primary' and 'r8_control' arms may run in this tree; "
         f"got {EXPERIMENT_ARM!r}"
@@ -1039,19 +1039,30 @@ def _p1_product_inputs(obs):
     model = obs["model"]
     codebook = model.rq.vq_layers[0].get_code_embs()
     latent = model.encoder(obs["embeddings"])
-    return latent, codebook
+    n_src = int(obs["n_src"])
+    positive = torch.arange(n_src, device=latent.device)
+    degrees = torch.ones(n_src, device=latent.device, dtype=latent.dtype)
+    return latent, codebook, positive, degrees
 
 
 def _p1_product_executor(base_loss, l1_loss, other_loss, target_parameters,
                           behavior_weight, valid_levels=3, mechanism_inputs=None):
     """The product-geodesic level-0 assignment contributes NO additive term.
 
-    The mechanism works by changing the ASSIGNMENT, so its effect is inside the base loss's
-    graph: the term is None and the verifier backwards the base loss once, exactly as the
-    training loop does. (F5: an executor that backwarded a term of its own would be a second,
-    unreduced backward, and the ranks would diverge.)
+    The mechanism has two parts and the verifier needs both. The ASSIGNMENT is inside the host's
+    forward (install_product_assignment) and needs no term. The ROLE SEPARATION is the
+    behaviour factor's own transition term, which is RETURNED so the verifier can fold it into
+    the SAME backward the base loss uses -- exactly what the training loop does with it. (F5: an
+    executor that backwarded the term on its own would be a second, unreduced backward, and the
+    ranks would diverge.)
     """
-    return None
+    if mechanism_inputs is None:
+        return None
+    latent, codebook, positive, degrees = mechanism_inputs
+    return _hyp_mechanism_loss(
+        "factor_nce", latent, codebook, positive,
+        _HYP_CONFIG["curvature"], _HYP_CONFIG["strength"], degrees, euclidean=False,
+    )
 
 
 def behavior_contrastive_components(
@@ -1244,7 +1255,7 @@ def main() -> None:
             raw_module.rq.vq_layers[0], _HYP_CONFIG["curvature"],
             _HYP_CONFIG["distance"] == "euclidean",
         )
-    if _HYP_CONFIG is not None and _HYP_CONFIG["mechanism"] == "product":
+    if _HYP_CONFIG is not None and _HYP_CONFIG.get("product_assignment", False):
         # The level-0 assignment becomes the product-geodesic one. The layer returns
         # the codeword's own tangent coordinates, so nothing else in the quantiser changes.
         _install_product_assignment(
