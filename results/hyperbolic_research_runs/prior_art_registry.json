@@ -1,0 +1,2257 @@
+{
+  "counts": {
+    "campaign_proposals": 117,
+    "entries": 159,
+    "historical_models_with_unknown_math": 38,
+    "r8_hyperbolic_arms": 4
+  },
+  "entries": [
+    {
+      "ast_sha256": "7c1881587d21c167a4b0acee5ae72c52514733a2fb031951f40a28c7bcabadc2",
+      "equation_signature": "",
+      "family": "r8_hyperbolic",
+      "math_status": "verified",
+      "mechanism_id": "TIGER_r8_07_hyperbolic_gyro",
+      "notes": "the mathematics is recoverable from the source; the equation itself is not transcribed here, so the comparison is by the operator classes and the abstract syntax",
+      "operator_classes": [
+        "argmax",
+        "artanh",
+        "cdist",
+        "curvature",
+        "euclidean",
+        "gyro",
+        "l2_norm",
+        "matmul",
+        "mobius_add",
+        "poincare_distance",
+        "softmax"
+      ],
+      "proposal_sha256": "ba9bf096aafd4f6e1f37054bc18634d0c2f64012fddaeb2d4f1a30064e03ce0d",
+      "run_id": "r8::TIGER_r8_07_hyperbolic_gyro",
+      "sid_export": "",
+      "source": "stage2_RQ-VAE/TIGER_r8_07_hyperbolic_gyro"
+    },
+    {
+      "ast_sha256": "90963d9b5f69b5cce9b8b8f61799041072348da29bdefe974f32e3cbcc6ce4a0",
+      "equation_signature": "",
+      "family": "r8_hyperbolic",
+      "math_status": "verified",
+      "mechanism_id": "TIGER_r8_08_hyperbolic_frechet",
+      "notes": "the mathematics is recoverable from the source; the equation itself is not transcribed here, so the comparison is by the operator classes and the abstract syntax",
+      "operator_classes": [
+        "argmax",
+        "artanh",
+        "cdist",
+        "curvature",
+        "euclidean",
+        "l2_norm",
+        "matmul",
+        "mobius_add",
+        "poincare_distance",
+        "softmax"
+      ],
+      "proposal_sha256": "654ccf64ca2151a251906a6591ae0848f81137784c42aa385b0333435b82fe03",
+      "run_id": "r8::TIGER_r8_08_hyperbolic_frechet",
+      "sid_export": "",
+      "source": "stage2_RQ-VAE/TIGER_r8_08_hyperbolic_frechet"
+    },
+    {
+      "ast_sha256": "e8756311bedd103c6abd006ec3f8090143b36bfa742055d99acadb6b59616f51",
+      "equation_signature": "",
+      "family": "r8_hyperbolic",
+      "math_status": "verified",
+      "mechanism_id": "TIGER_r8_09_hyperbolic_branching",
+      "notes": "the mathematics is recoverable from the source; the equation itself is not transcribed here, so the comparison is by the operator classes and the abstract syntax",
+      "operator_classes": [
+        "argmax",
+        "artanh",
+        "cdist",
+        "curvature",
+        "euclidean",
+        "l2_norm",
+        "matmul",
+        "mobius_add",
+        "poincare_distance",
+        "softmax"
+      ],
+      "proposal_sha256": "066bae694cd3eea7a8458309efc2cce560e8cf0c9836e758263f5a98121be8f1",
+      "run_id": "r8::TIGER_r8_09_hyperbolic_branching",
+      "sid_export": "",
+      "source": "stage2_RQ-VAE/TIGER_r8_09_hyperbolic_branching"
+    },
+    {
+      "ast_sha256": "51c374324e95c7048f59d6872d6a4d9bd550c5ae7389106e65bba1cdd1d966a3",
+      "equation_signature": "",
+      "family": "r8_hyperbolic",
+      "math_status": "verified",
+      "mechanism_id": "TIGER_r8_10_hyperbolic_gw",
+      "notes": "the mathematics is recoverable from the source; the equation itself is not transcribed here, so the comparison is by the operator classes and the abstract syntax",
+      "operator_classes": [
+        "argmax",
+        "artanh",
+        "cdist",
+        "curvature",
+        "euclidean",
+        "l2_norm",
+        "matmul",
+        "mobius_add",
+        "poincare_distance",
+        "softmax"
+      ],
+      "proposal_sha256": "150ebfda491e35e78cfe2948d076eda46d6d1fb79dcc9b106060f7fb395312ac",
+      "run_id": "r8::TIGER_r8_10_hyperbolic_gw",
+      "sid_export": "",
+      "source": "stage2_RQ-VAE/TIGER_r8_10_hyperbolic_gw"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letr_i=target_i-source_iandletsigma=(<s>/(b_valid+epsilon))*sum_i[m_i*r_ir_i^t],withstop-gradientthroughsigma.forvalidi,letz_i=codebook^tsigma^{-<s>}r_iandv_i=z_i/(||z_i||+epsilon).definesoftsourceandtargetassignmentsp_ijandq_ijassoftmax_j(-||source_i-c_j||^2.0/tau)andsoftmax_j(-||target_i-c_j||^2.0/tau).leth_i=sum_j(q_ij-p_ij)*(c_j^tv_i).letl=lambda*mean_i[m_i*(max(0.0,margin-h_i))^2.0]+nu*mean_j[(||c_j-mean_kc_k||^2.0-s)^2.0].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "behaviour_residual_directional_whitening",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "9c879983d65c96f1aab38505ad7fab05614934579c6968159007e5008f8deef5",
+      "run_id": "proposal::round_000::behaviour_residual_directional_whitening",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_000/behaviour_residual_directional_whitening/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrowsi,definep_ij=softmax_j(-||source_i-c_j||^2.0/tau)andq_ij=softmax_j(-||target_i-c_j||^2.0/tau).letl=lambda*mean_i[m_i*kl(p_i||q_i)]+mu*sum_j[max(0.0,rho-mean_i[m_i*p_ij])^2.0+max(0.0,rho-mean_i[m_i*q_ij])^2.0].theorderedklmakestheobjectivedirectional;theoccupancy-floortermdiscourageseitherendpointrolefromabandoningcodebookentries.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_branch_preservation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "be32898edb319daba66a1cf45bb95f222f4e4f83d7ae56535bfc2f5723ddc772",
+      "run_id": "proposal::round_000::directed_assignment_branch_preservation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_000/directed_assignment_branch_preservation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrowsi,leta_i=softmax_j(-||source_i-c_j||^2.0/tau),b_i=softmax_j(-||target_i-c_j||^2.0/tau),andd_i=sum_ja_ijc_j-sum_jb_ijc_j.letl=lambda*mean_i[m_i*(max(0.0,margin-u_idotd_i))^2.0]+mu*mean_j[||c_j-stopgrad(c_j)||^2.0]whereu_i=(target_i-source_i)/(||target_i-source_i||+epsilon).theanchoringtermisidenticallyzeroandisomittedinimplementation;theoperativeobjectiveisthedirectedsoft-codedisplacementhinge.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_repulsion_with_anchor",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "0ebc6b36a09303c80699a562d32a0df501fbd93e38358c5a0599f332dc928ed1",
+      "run_id": "proposal::round_000::directed_codebook_repulsion_with_anchor",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_000/directed_codebook_repulsion_with_anchor/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_iandb_ibethenearestcodewordindicestosource_iandtarget_i,heldfixedfordifferentiation.defineresidualse_s=source_i-codebook[a_i],e_t=target_i-codebook[b_i],andbehaviour-conditionedresidualdirectionv_i=e_t-e_s.letd_i=codebook[b_i]-codebook[a_i]andd_perp=d_i-((d_i\u00b7v_i)/(||v_i||^2.0+eps))*v_i.definel_i=-((e_t-e_s)\u00b7(target_i-source_i))/(||target_i-source_i||^2.0+eps)+lambda*max(0.0,delta-||d_perp||)^2.0+mu*max(0.0,p_min-q[a_i])^2.0.minimizethemaskedmean.thefirsttermalignstheorderedresidualchangewiththeorderedbehaviourdisplacement;thesecondpreventsthetwoassignedcodewordsfromapproachingwithindeltaintheresidual-orthogonaldirection;thethirddiscouragessource-codeusagebelowauniformfloor.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "behaviour_conditioned_residual_orthogonal_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "e34f29afe8702f8cfdf2768940c0399819687049e16e5e62a10ba02019a6830b",
+      "run_id": "proposal::round_001::behaviour_conditioned_residual_orthogonal_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_001/behaviour_conditioned_residual_orthogonal_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||^2.0andb_i=argmin_c||target_i-codebook_c||^2.0.defined_i=codebook[b_i]-codebook[a_i],u_i=target_i-source_i,andl_i=(d_i\u00b7u_i-m)^2.0/(||d_i||^2.0+eps)+lambda*max(0.0,p_min-q[a_i])^2.0,whereq[c]isthesoftbatchusageofcodeccomputedfromsource-to-codebooksquareddistanceswithtemperaturetau.minimizethemaskedmeanofl_i.theorderedsource-to-targetdisplacementalignmentisdirectional;theusagebarrierpenalizessourceassignmentstounderusedcodesrelativetoauniformfloor.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codeword_repulsion_with_usage_anchor",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "e6c78433c04d5491bb3e8db8cb7943428ef975f3a924eff01d0471bb4d08033c",
+      "run_id": "proposal::round_001::directed_codeword_repulsion_with_usage_anchor",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_001/directed_codeword_repulsion_with_usage_anchor/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,definep_i(c)=softmax_c(-||source_i-codebook_c||^2.0/tau)andr_i(c)=softmax_c(-||target_i-codebook_c||^2.0/tau).leth_i(c)=softmax_c((logp_i(c)+beta*logr_i(c))/t).definel_i=kl(stopgrad(p_i)||h_i)+gamma*max(0.0,b_min-h(r_i))^2.0.minimizethemaskedmeanofl_i.thesource-to-targetorderingisasymmetricbecausep_iisthereferenceandr_ientersthedirectedtransitiondistribution;theentropybarrierdiscouragestargetassignmentsfromcollapsingontotoofewcodewords.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_soft_assignment_branch_preservation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "42e88736144b85356b66799984550af1f5e2d824edf2f81238b17c3b13402896",
+      "run_id": "proposal::round_001::directed_soft_assignment_branch_preservation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_001/directed_soft_assignment_branch_preservation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||^2.0(stop-gradientthroughargmin),d_i=||source_i-codebook_{a_i}||^2.0,andh_i=min_{c!=a_i}||source_i-codebook_c||^2.0.letp_i=||codebook_{a_i}-codebook_{b_i}||^2.0whereb_i=argmin_c||target_i-codebook_c||^2.0(stop-gradientthroughargmin).l=w*mean_i[softplus((d_i-h_i+m)/tau)+rho*softplus((s-p_i)/tau)].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_anchor_margin_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "3331dea0d7cc28fee8a4ae4b2f0cea9ffefbaf04ac3a3f893265f4abb6fc71a6",
+      "run_id": "proposal::round_002::directed_anchor_margin_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_002/directed_anchor_margin_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,defineresidualsu_i=source_i-codebook_{a_i}andv_i=target_i-codebook_{b_i},wherea_iandb_iarenearest-codewordindicesselectedwithoutgradient.letz_i=(u_idotv_i)/(||u_i||*||v_i||+eps)andp_i=||codebook_{a_i}-codebook_{b_i}||^2.0.l=w*mean_i[<rho>-z_i+rho*softplus((s-p_i)/tau)].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_repulsion",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "8c45cd79d484f25a829b668a58c377cb8cb95dc41eb6158f0550a96b4916276e",
+      "run_id": "proposal::round_002::directed_residual_geometry_repulsion",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_002/directed_residual_geometry_repulsion/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||^2.0andb_i=argmin_c||target_i-codebook_c||^2.0,withindicesstop-gradient.letq_c=(sum_imask_i*<eta>[a_i=c]+eps)/(sum_imask_i+c*eps),andletr_c=(sum_imask_i*<eta>[a_i=candb_i!=a_i]+eps)/(sum_imask_i*<eta>[a_i=c]+c*eps).definel=w*[sum_cq_c*log(q_c*c)+eta*sum_cq_c*(r_c-mean_jr_j)^2.0].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_usage_prefix_balance",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "27935a3949416cfbc9d692b2f938e335f0c532e16d184db8d12782935bc8258f",
+      "run_id": "proposal::round_002::directed_usage_prefix_balance",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_002/directed_usage_prefix_balance/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,letr_i=target_i-source_iandletd_i=codebook_{b_i}-codebook_{a_i},wherea_iandb_iarethenearestcodebookentriestosource_iandtarget_i.definel=w*mean_i[||d_i-r_i||^2.0+gamma*max(0.0,delta-||d_i||)^2.0].thesignedresidualalignmentisdirectedbecauseexchangingendpointsnegatesbothresidualandcodebookdisplacement,whiletheunequalsource/targetnearest-coderolesandrow-wisealignmentpreservetheorderedtransitionsignal.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_codebook_alignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "1b4dd2f26ff9bf0a43035a96eea5f17f6860ed9ffca1df02b9974c2f980cdbfd",
+      "run_id": "proposal::round_003::directed_residual_codebook_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_003/directed_residual_codebook_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_j||source_i-codebook_j||^2.0andb_i=argmin_j||target_i-codebook_j||^2.0,withtiesbrokendeterministically.definel=w*mean_i[||source_i-codebook_{a_i}||^2.0+rho*||target_i-codebook_{b_i}||^2.0+mu*max(0.0,delta-||codebook_{a_i}-codebook_{b_i}||)^2.0].theunequalendpointweightsmaketheobjectivedirected;thehingepenalizesonlyendpointcodewordpairsthataretooclose.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_separated_codeword_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "3fa0e7f11b9b84ca7d5b64e3acc3da813629d541e47357bcc991300e9e301dde",
+      "run_id": "proposal::round_003::directed_separated_codeword_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_003/directed_separated_codeword_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachrowi,definep^s_ij=softmax_j(-||source_i-codebook_j||^2.0/tau)andp^t_ij=softmax_j(-||target_i-codebook_j||^2.0/tau).leto_i=sum_jp^s_ijp^t_ijandh_i=-sum_jp^t_ijlog(p^t_ij+eps).definel=w*mean_i[(o_i+alpha*h_i)-rho*(sum_jp^s_ijlog(p^t_ij+eps))].theorderedsource-to-targetcross-entropytermmakesthelosschangewhenendpointsareexchanged;overlapdiscouragessharingcodes,andtargetentropydiscouragesaone-codetargetassignment.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_soft_assignment_branch_preservation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "0aa2b1b14c8bfdba85c6ecf654ae1f3f717c18a97621b2e49ddc9adf646797d6",
+      "run_id": "proposal::round_003::directed_soft_assignment_branch_preservation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_003/directed_soft_assignment_branch_preservation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrows,definep(a,b)astheempiricaljointdistributionofdetachednearest-codewordindicesa=argmin_c||source-codebook_c||^2.0andb=argmin_c||target-codebook_c||^2.0,andp(a),p(b)asitsmarginals.letl=w*[sum_ap(a)^2.0-beta*h_p(b|a)],whereh_p(b|a)=-sum_{a,b}p(a,b)log((p(a,b)+epsilon)/(p(a)+epsilon)).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_prefix_entropy",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "45bed6f3e213e2baa31f483a92ec07b21d0cc1cf36bc18eb0e410b093e61d1bb",
+      "run_id": "proposal::round_004::directed_assignment_prefix_entropy",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_004/directed_assignment_prefix_entropy/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||^2.0andb_i=argmin_c||target_i-codebook_c||^2.0,withd_i=||codebook_a_i-codebook_b_i||.letl=w*mean_imask_i*relu(m-d_i)^2.0.thediscreteindicesa_iandb_iarestop-gradient;differentiatetheselectedcodewordsthroughd_i.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codeword_repulsion_margin",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "5a5ea896e37330676b7d26eeb388f6a1d2fb48bea8ecb24a5013eec3001f134a",
+      "run_id": "proposal::round_004::directed_codeword_repulsion_margin",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_004/directed_codeword_repulsion_margin/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,letr_i=target_i-source_i,u_i=r_i/(||r_i||+epsilon),andletc_ibethenearestcodewordtosource_i.definev_i=codebook_{c_i}-mean_c(codebook_c),thenq_i=v_i-(v_idotu_i)u_i.letl=-w*mean_imask_i*(q_idot(target_i-codebook_{c_i})).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_codebook_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "a2e94b859ea1e70ea616e00befd0509db2e4b19628bbd442930575efe11192e4",
+      "run_id": "proposal::round_004::directed_residual_codebook_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_004/directed_residual_codebook_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||^2.0andb_i=argmin_c||target_i-codebook_c||^2.0.letd_i=codebook[a_i]-codebook[b_i],r_i=target_i-source_i,andu_i=stopgrad(r_i/(||r_i||_2+eps)).definel=w*mean_imask_i*(||d_i-stopgrad(r_i)||_2^2.0/(||stopgrad(r_i)||_2^2.0+eps)+lambda*max(0.0,delta-||d_i||_2)^2.0).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_anchor_repulsion_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "ed56709d99b11f83792a319a88b1a4bc52824425116b7624e50ee38ad643582f",
+      "run_id": "proposal::round_005::directed_anchor_repulsion_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_005/directed_anchor_repulsion_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,definep(c|x)=softmax_c(-||x-codebook_c||_2^2.0/tau),q_i(c)=stopgrad(p(c|source_i)),ands_i(c)=p(c|target_i).definel=w*mean_imask_i*[-sum_cq_i(c)log(s_i(c)+eps)+lambda*sum_{c,d}q_i(c)s_i(d)*max(0.0,delta-||codebook_c-codebook_d||_2)^2.0].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_prefix_information",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "263380d9608b69f33cde0031d4167a75359eb4da807ea409725a2b6eae5d3de8",
+      "run_id": "proposal::round_005::directed_assignment_prefix_information",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_005/directed_assignment_prefix_information/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||_2^2.0andb_i=argmin_c||target_i-codebook_c||_2^2.0.lete_i=target_i-source_iandv_i=target_i-codebook[b_i].definel=w*mean_imask_i*(||v_i-stopgrad(e_i)||_2^2.0/(||stopgrad(e_i)||_2^2.0+eps)+lambda*max(0.0,delta-||codebook[a_i]-codebook[b_i]||_2)^2.0).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport_with_separation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "eabfc551f2da406abf028465b67f369611b99e035694373afaf0d749b88bf464",
+      "run_id": "proposal::round_005::directed_residual_transport_with_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_005/directed_residual_transport_with_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letd_i=target_i-source_iandm=mean_i(d_i)overvalidrows.lets=mean_i((d_i-m)(d_i-m)^t)andletw=(s+rhoi)^(-1.0/2.0).definez_i=w(d_i-m),andlete_i=target_i-source_i.letc_i=mean_j(a_ij*codebook_j)-mean_j(b_ij*codebook_j),thedirecteddifferencebetweensoftendpointcodebookreconstructions.l=lambda_residual*mean_i||z_i-c_i||^2.0+lambda_cov*||mean_i(z_iz_i^t)-i||_f^2.0+lambda_usage*sum_jq_jlog(q_j/u_j).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "behaviour_conditioned_residual_whitening",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "4f46973ff21b9f66414cc0085e3d13b17b7f4b24cfb22655c025f44a4c6a52c1",
+      "run_id": "proposal::round_006::behaviour_conditioned_residual_whitening",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_006/behaviour_conditioned_residual_whitening/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "leta_iandb_ibesourceandtargetsoftassignmentstothecodebook,andletp_i=a_i^tb_i.foreachcodewordj,definer_j=mean_i(a_ij*b_i),theunnormalizeddistributionoftargetassignmentsfollowingsourceassignmentj.leth(r_j)=-sum_kr_jklog(r_jk+eps).letq_j=mean_i(a_ij+b_ij)/2.0andu_j=1.0/c.l=lambda_collision*mean_i[-log(1.0-p_i+eps)]-lambda_prefix*sum_jq_jh(r_j)+lambda_balance*sum_jq_jlog(q_j/u_j).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_prefix_preservation",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "f8c88ba4bdf3ac08bf66ed920ba964268dbaa84897349d0b504b14203661bc1a",
+      "run_id": "proposal::round_006::directed_assignment_prefix_preservation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_006/directed_assignment_prefix_preservation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=softmax(-||source_i-codebook_j||^2.0/tau)andb_i=softmax(-||target_i-codebook_j||^2.0/tau).letp_i=a_i^tb_i,thesoftprobabilitythatbothendpointsusethesamecodeword,andletq_j=mean_i((a_ij+b_ij)/2.0).letu_j=1.0/c.l=lambda_rep*mean_i[-log(1.0-p_i+eps)]+lambda_usage*sum_jq_j*log(q_j/u_j).thedirectedendpointdistributionsmakethelosschangewhensourceandtargetareexchangediftheirassignmentsdiffer.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_repulsion_with_usage_anchor",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "fc67f2d35fa6bf5b96d297a3100f37a05ba62c4f1a11b98eecc92f2636bc97b7",
+      "run_id": "proposal::round_006::directed_codebook_repulsion_with_usage_anchor",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_006/directed_codebook_repulsion_with_usage_anchor/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrows,letd_i=target_i-source_iandletp_ic=softmax_c(-||source_i-codebook_c||^2.0/tau).definethedirectedcodebookdisplacementu_i=sum_cp_iccodebook_c-sum_csoftmax_c(-||target_i-codebook_c||^2.0/tau)codebook_c.minimizel=w*mean_i[||u_i+d_i||^2.0/d+lambda*sum_{c<k}exp(-||codebook_c-codebook_k||^2.0/rho^2.0)*(d_idot(codebook_c-codebook_k))^2.0/(d*c^2.0)].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codeword_tangent_geometry",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "064d5dd23932459333a86e43e6122f1535e171334e45fec78affb4db656444d6",
+      "run_id": "proposal::round_007::directed_codeword_tangent_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_007/directed_codeword_tangent_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrowi,setd_i=target_i-source_i,a_ic=softmax_c(-||source_i-codebook_c||^2.0/tau),andr_i=source_i-sum_ca_iccodebook_c.lets_i=sum_ca_iccodebook_canddefinethetransportedresidualpredictiont_i=s_i+d_i+alpha*r_i.minimizel=w*mean_i[||target_i-t_i||^2.0/d+beta*sum_ca_ic*softplus((m-min_{k!=c}||codebook_c-codebook_k||)/sigma)/c].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "03d6f47b84db281a7dde1e4ed2bc2d40d3cbdc5dcb830629526d570e2926927d",
+      "run_id": "proposal::round_007::directed_residual_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_007/directed_residual_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "leta_ic=softmax_c(-||source_i-codebook_c||^2.0/tau)andb_ic=softmax_c(-||target_i-codebook_c||^2.0/tau).definethedirectedassignmentchangeq_i=b_i-a_ianddirectedcodeworddisplacementv_i=sum_cq_iccodebook_c.minimizel=w*mean_i[-sum_cb_ic*log(a_ic+epsilon)+mu*||v_i-(target_i-source_i)||^2.0/d+nu*sum_c(bar_b_c-bar_a_c)^2.0],wherebar_aandbar_baremaskedbatchmeans.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_soft_assignment_information",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "a1af3fe073237364e4d60c151de2943349e6aa5992f8933eb98292fe4f7b093d",
+      "run_id": "proposal::round_007::directed_soft_assignment_information",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_007/directed_soft_assignment_information/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "forvalidrows,definep_ic=softmax_c(-||source_i-codebook_c||_2^2.0/tau)andq_ic=softmax_c(-||target_i-codebook_c||_2^2.0/tau),withqtreatedasstop-gradient.letu_c=mean_ip_icandv_cd=mean_i[p_ic*q_id].leth(u)=-sum_cu_clog(u_c+epsilon),h(v|u)=-sum_cdv_cdlog((v_cd+epsilon)/(u_c+epsilon)),andl=lambda*(sum_cu_c^2.0+beta*max(0.0,h_control-h(v|u))^2.0).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_assignment_partition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "d686b99ee67c8356d38eeb061149df8a0847aff9abdca7b503811e395f7e1964",
+      "run_id": "proposal::round_008::directed_capacity_constrained_assignment_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_008/directed_capacity_constrained_assignment_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||_2^2.0andb_i=argmin_c||target_i-codebook_c||_2^2.0,withassignmentstreatedasstop-gradient.letd_i=||codebook_a_i-codebook_b_i||_2.definel=lambda*mean_i[||source_i-codebook_a_i||_2^2.0+alpha*max(0.0,margin-d_i)^2.0].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_margin_preserving_codebook_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "ef4bd93f18ce2a29b1af1c7f259d79259e8c386dbdf0e94d31f93e7364be7c14",
+      "run_id": "proposal::round_008::directed_margin_preserving_codebook_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_008/directed_margin_preserving_codebook_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_c||source_i-codebook_c||_2^2.0andb_i=argmin_c||target_i-codebook_c||_2^2.0,withassignmentstreatedasstop-gradient.defineresidualsr_i^s=source_i-codebook_a_iandr_i^t=target_i-codebook_b_i.letl=lambda*mean_i[||r_i^t-rho*r_i^s||_2^2.0+gamma*max(0.0,margin-||codebook_a_i-codebook_b_i||_2)^2.0].",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport_with_separation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "573c7198d4519eedc6ec5cec6fd201014c5f4c18c0fa442b96ce2379c67019f5",
+      "run_id": "proposal::round_008::directed_residual_transport_with_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_008/directed_residual_transport_with_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairdefinep_s(c)=softmax_c(-||source-codebook_c||^2.0/tau)andp_t(c)=softmax_c(-||target-codebook_c||^2.0/tau).letm=(p_s+p_t)/2.0andj=<tau>*kl(p_s||m)<tau>*kl(p_t||m).leth(u)=-sum_cu_clog(u_c+epsilon),whereuisthemaskedmeanofp_soversourceendpoints.l=weight*(-j+balance_weight*(h(u)-log(c))+repel_weight*mean_bsum_cp_s(c)*p_t(c)).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_information_separation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "4092e68a32b796320e607a565dfd17b40186c7e16a09bfc231ad2121c18e351d",
+      "run_id": "proposal::round_009::directed_assignment_information_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_009/directed_assignment_information_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpair,letp_s(c)=softmax_c(-||source-codebook_c||^2.0/tau)andp_t(c)=softmax_c(-||target-codebook_c||^2.0/tau).letu_cbethemasked,batch-meanofp_s(c)+p_t(c),andletq_c=1.0/c.letd_c=||codebook_c-mean_j(codebook_j)||^2.0.l=weight*(sum_c(u_c-q_c)^2.0+separation_weight*sum_cq_c*relu(min_separation-d_c)^2.0+direction_weight*mean_bkl(p_s||p_t)).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_geometry_balance",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "5959d23805b75c0e1843432a1216b124c7c26e263e57cfd646fabed821625bca",
+      "run_id": "proposal::round_009::directed_codebook_geometry_balance",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_009/directed_codebook_geometry_balance/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairletr=target-source,a_c=softmax_c(-||source-codebook_c||^2.0/tau),andb_c=softmax_c(-||target-codebook_c||^2.0/tau).definev_s=sum_ca_c*codebook_candv_t=sum_cb_c*codebook_c.lett=v_t-v_sandletz=(rdott)/(||r||*||t||+epsilon).leto=sum_ca_c*b_candletubethemaskedmeanofaacrosssourceendpoints.l=weight*(mean_b(1.0-z)+overlap_weight*mean_bo+balance_weight*(sum_cu_c^2.0-1.0/c)).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport_with_margin",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "a267f9f06c871d1b2286fd74661975d8fd7ebdf38be972bc2b504142c3c83d00",
+      "run_id": "proposal::round_009::directed_residual_transport_with_margin",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_009/directed_residual_transport_with_margin/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letp_i=softmax_c(-||source_i-e_c||^2.0/tau)andq_i=softmax_c(-||target_i-e_c||^2.0/tau).letj_cd=mean_ip_i[c]q_i[d],withmask-normalizedmeans,andleth(q|p)=-sum_cdj_cdlog((j_cd+eps)/(sum_dj_cd+eps)).definel=lambda*[mean_isum_cp_i[c]||target_i-e_c||^2.0-beta*h(q|p)].minimizationfitstargetstosource-conditionedcodeswhilerewardingdiversetarget-codebranchesconditionalonthesourceassignment.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_branch_entropy",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "c723ec95511a81b189dd290855da99914c81f36dd2af3c322b0ab307c84e29e7",
+      "run_id": "proposal::round_010::directed_assignment_branch_entropy",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_010/directed_assignment_branch_entropy/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letp(x)_c=softmax_c(-||x-e_c||^2.0/tau),wheree_ciscodebookrowc.definel=lambda*[mean_isum_cp(source_i)_c*||target_i-e_c||^2.0-rho*mean_{c<d}exp(-||e_c-e_d||^2.0/sigma^2.0)].thefirsttermisdirectional:sourceassignmentsselectcodewordsagainstwhichtargetsaremeasured.thesecondspreadscodewordsglobally,notbypullingpairedcodewordstogether.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_repulsion",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "453d7b46a31b2a8d7d4d3d13dd2cdff98a854892345e789cfeb69217921e4920",
+      "run_id": "proposal::round_010::directed_codebook_repulsion",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_010/directed_codebook_repulsion/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachcodeworde_c,definethesource-conditionedsoftresidualr_i=target_i-sum_cp_i[c]e_c,wherep_i[c]=softmax_c(-||source_i-e_c||^2.0/tau).defined_i=sum_cp_i[c]||target_i-e_c||^2.0andl=lambda*[mean_i||r_i||^2.0-alpha*mean_id_i].thenegativedistancetermrewardssource-conditionedtarget/codewordseparationwhiletheresidualtermtransportsthetargetrelativetothesource-selectedcodebookgeometry.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport_separation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "2e536b2bf8c16d3e0738c6426b6e4f4f7fff5a2907f34c861aebf481b8e0026c",
+      "run_id": "proposal::round_010::directed_residual_transport_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_010/directed_residual_transport_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowb,definesoftsourceandtargetassignmentsa_bj=softmax_j(-||source_b-codebook_j||^2.0/tau)andr_bj=softmax_j(-||target_b-codebook_j||^2.0/tau).letp_j=mean_b(mask_b*a_bj),p_jk=mean_b(mask_b*a_bj*r_bk),anddefinel=-lambda*sum_jkp_jklog((p_jk+epsilon)/(p_jp_k+epsilon))+mu*sum_j(p_j-1.0/c)^2.0.thesource-to-targetjointisordered,soexchangingsourceandtargetchangestheobjectiveingeneral.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_prefix_information",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "9fe7c4e53f2460f66b5094cb4e77c075205035136feb0cf88df9f8acefc5bd7b",
+      "run_id": "proposal::round_011::directed_assignment_prefix_information",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_011/directed_assignment_prefix_information/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowb,leti_b=argmin_j||source_b-codebook_j||^2.0andq_b=argmin_j||target_b-codebook_j||^2.0,withstop-gradientthroughi_bandq_b.letd_b=codebook[q_b]-codebook[i_b],u_b=(target_b-source_b)/(||target_b-source_b||_2+epsilon),andp_b=i-d_bd_b^t/(||d_b||_2^2.0+epsilon).definel=-lambda*mean_b(mask_b*(u_b^tp_bd_b))+mu*sum_j(p_j-1.0/c)^2.0,wherep_jisthesoftmax-normalizedmaskedsource-assignmentcountforcodej,withassignmentlogits-||source_b-codebook_j||^2.0/tau.",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codeword_tangent_repulsion",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "47b022183beaba90346b22599c584d66c518a845cf84dc594e359b80cd3b331a",
+      "run_id": "proposal::round_011::directed_codeword_tangent_repulsion",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_011/directed_codeword_tangent_repulsion/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowbandresiduallevell,lets_b^landt_b^lbesourceandtargetresiduals,andleti_b^landq_b^lbetheirnearestcodebookindices,treatedasconstantsfordifferentiation.defined_b^l=codebook[q_b^l]-codebook[i_b^l],v_b^l=t_b^l-s_b^l,andl=lambda*mean_{b,l}(mask_b*||d_b^l-v_b^l||_2^2.0/(||v_b^l||_2^2.0+epsilon))+mu*mean_{b,l}(mask_b*max(0.0,m-||d_b^l||_2)^2.0).",
+      "family": "unclassified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_separation",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "379491d46b54714f0bd3e5291edbd600b3508004a25004f93cc1d1a8f21bd81c",
+      "run_id": "proposal::round_011::directed_residual_geometry_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_011/directed_residual_geometry_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "l=w*mean_i[m_i*(||s_i-c_{a_i}||_2^2.0+gamma*max(0.0,tau+||s_i-c_{a_i}||_2^2.0-||t_i-c_{b_i}||_2^2.0))]+lambda*sum_k(q_k-u_k)^2.0,wherea_iandb_iarenearest-codewordindicesforsourceandtarget,q_kisthemaskedsource-assignmentfrequencyofcodek,andu_kisthedetachedcontrolusagefrequency.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_prefix_preserving_assignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "a5c6a9e68740e95b3cde2d7f91457d99ff20cbfc0ffc67c90b7aa49d84e5e6bf",
+      "run_id": "proposal::round_025::directed_prefix_preserving_assignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_025/directed_prefix_preserving_assignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letr_i=t_i-s_iandv_i=c_{b_i}-c_{a_i},witha_iandb_ithenearest-codewordindicesfors_iandt_i.definel=w*mean_i[m_i*(||v_i-(r_idotv_i)r_i/(||r_i||_2^2.0+eps)||_2^2.0+eta*max(0.0,rho-||c_{a_i}-c_{b_i}||_2)^2.0)].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "aca2d644ba23210496597127bb78a72739c990510bf04dd0e57041374a14ee90",
+      "run_id": "proposal::round_025::directed_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_025/directed_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "l=w*mean_i[m_i*(||s_i-c_{a_i}||_2^2.0+alpha*max(0.0,delta-||t_i-c_{a_i}||_2)^2.0+beta*max(0.0,rho-||c_{a_i}-c_{b_i}||_2)^2.0)],wherea_i=argmin_j||s_i-c_j||_2^2.0andb_i=argmin_j||t_i-c_j||_2^2.0;assignmentsaretreatedasstop-gradientindices.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_separated_codeword_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "a08d6a929a0c8d4a4fafee25694c3f3f68566a7441247c050c0fe5abd1b8726f",
+      "run_id": "proposal::round_025::directed_separated_codeword_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_025/directed_separated_codeword_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letp_i=softmax(-||s_i-c_j||_2^2.0/tau)_jandr_i=softmax(-||t_i-c_j||_2^2.0/tau)_j.letp_barandr_barbetheirmaskedbatchmeans.definel=w*mean_i[kl(p_i||r_i)+lambda*kl(r_i||p_i)]-w*gamma*[h(p_bar)+h(r_bar)],wherekl(x||y)=sum_jx_jlog((x_j+eps)/(y_j+eps))andh(x)=-sum_jx_jlog(x_j+eps).",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_information_partition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "efc0d33d1b6c5fea62a74d829b28fce8a65e78078b53f0d5372f6e921820c354",
+      "run_id": "proposal::round_026::directed_assignment_information_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_026/directed_assignment_information_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairi,letd_i=t_i-s_i,u_i=d_i/(||d_i||_2+eps),andletq_i=c_{a(i)}-c_{b(i)},wherea(i)andb(i)arethenearestcodewordstos_iandt_i,respectively.definep_i=i-u_iu_i^tandl=w*mean_i[||p_i(q_i-alpha*d_i)||_2^2.0+beta*max(0.0,delta-||q_i||_2)^2.0].thefirsttermalignsthepair'scodeworddifferencewiththedirectedsource-to-targetdisplacement;thesecondpreventspair-codewordconvergence.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_partition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "1da7a420ad7e2b65277e437f5146874bec289346cf5c921364b07ef0d089c23e",
+      "run_id": "proposal::round_026::directed_codebook_tangent_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_026/directed_codebook_tangent_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairi,definee_i=(t_i-s_i)-(c_{b(i)}-c_{a(i)}),wherea(i),b(i)arenearest-codewordindicesatlevel0.0.letrho_i=||e_i||_2andv_i=e_i/(rho_i+eps).definel=w*mean_i[rho_i^2.0+eta*max(0.0,delta-||c_{b(i)}-c_{a(i)}||_2)^2.0+mu*max(0.0,m-v_i^t(c_{b(i)}-c_{a(i)}))^2.0].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_separated_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "70341635e5434fedd670867427c10f036e261395948bd43039b38c13f13be3c4",
+      "run_id": "proposal::round_026::directed_residual_geometry_separated_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_026/directed_residual_geometry_separated_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachrowi,definep^s_ij=softmax_j(-||source_i-codebook_j||_2^2.0/tau)andp^t_ij=softmax_j(-||target_i-codebook_j||_2^2.0/tau).letq_i=stopgrad(p^t_i).leth(p)=-sum_jp_jlog(p_j+eps).definel=lambda*mean_imask_i*[sum_jq_ijlog((q_ij+eps)/(p^s_ij+eps))+gamma*max(0.0,h_min-h(p^s_i))^2.0].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_information_preservation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "05c5b152e25308ea1f3ddc97fe8b31f059c74612c066a49d1393812947608aa9",
+      "run_id": "proposal::round_027::directed_assignment_information_preservation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_027/directed_assignment_information_preservation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_j||source_i-codebook_j||_2^2.0andb_i=argmin_j||target_i-codebook_j||_2^2.0,withc^s_i=codebook[a_i]andc^t_i=codebook[b_i].letu_i=stopgrad(target_i-source_i)/(||stopgrad(target_i-source_i)||_2+eps).letr_i=stopgrad(target_i-c^s_i).definel=lambda*mean_imask_i*(||c^t_i-(c^s_i+alpha*u_i)||_2^2.0+beta*max(0.0,delta-||c^t_i-c^s_i||_2)^2.0).",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_repulsion",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "34c094fc32f5ff718ede60b04fc4f4a6dc1e9aa43eb0739b24706e268f8810ed",
+      "run_id": "proposal::round_027::directed_codebook_tangent_repulsion",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_027/directed_codebook_tangent_repulsion/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_iandb_ibethenearestcodebookindicesforsource_iandtarget_i,andletc^s_iandc^t_ibetheirassignedcodewords.definee^s_i=stopgrad(source_i-c^s_i),e^t_i=stopgrad(target_i-c^t_i),andv_i=stopgrad(target_i-source_i)/(||stopgrad(target_i-source_i)||_2+eps).letd_i=c^t_i-c^s_i.definel=lambda*mean_imask_i*[(||e^t_i-e^s_i-rho*v_i||_2^2.0)+eta*max(0.0,delta-||d_i||_2)^2.0].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_separation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "6d13226ed5d86bf0fed54939d1056ea87e407c1123810d329a7261661d2da5b7",
+      "run_id": "proposal::round_027::directed_residual_tangent_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_027/directed_residual_tangent_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,definep^s_ij=softmax_j(-||source_i-codebook_j||_2^2.0/tau)andp^t_ij=softmax_j(-||target_i-codebook_j||_2^2.0/tau).letq^s_j=mean_ip^s_ijandu_j=1.0/c.minimizel=-lambda_info*mean_ikl(p^t_i||p^s_i)+lambda_balance*kl(u||q^s).",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_information_balance",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "07befc96b749b34d86e7779ae7d9b7b246953997ec53e8b256cf64f32d7f6af1",
+      "run_id": "proposal::round_028::directed_assignment_information_balance",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_028/directed_assignment_information_balance/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=argmin_j||source_i-codebook_j||_2^2.0andb_i=argmin_j||target_i-codebook_j||_2^2.0,withsoftassignmentsp^s_ij=softmax_j(-||source_i-codebook_j||_2^2.0/tau)andp^t_ijdefinedanalogously.letd_i=||codebook_{a_i}-codebook_{b_i}||_2.minimizel=lambda_align*mean_i[sum_jp^s_ij||source_i-codebook_j||_2^2.0+sum_jp^t_ij||target_i-codebook_j||_2^2.0]+lambda_sep*mean_i[max(0.0,margin-d_i)^2.0].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codeword_separation_barrier",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "512e66c4a608040a8ea7c2f4fe18b339d659f2d6a3f6b6777f10d3c9c6f313af",
+      "run_id": "proposal::round_028::directed_codeword_separation_barrier",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_028/directed_codeword_separation_barrier/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_iandb_ibethenearestcodebookindicestosource_iandtarget_i,anddefiner^s_i=source_i-codebook_{a_i},r^t_i=target_i-codebook_{b_i},andv_i=codebook_{b_i}-codebook_{a_i}.definethedirectedresidual-transporterrore_i=r^t_i-(r^s_i+alpha*v_i).minimizel=lambda_transport*mean_i||e_i||_2^2.0+lambda_sep*mean_i[max(0.0,margin-||v_i||_2)^2.0].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_frame_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "05d5f873f2244bd2d841934db33b58d3c6b5926f1bf70528ef01d65ceaeb3194",
+      "run_id": "proposal::round_028::directed_residual_frame_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_028/directed_residual_frame_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairi,letr_i=target_i-source_i,letd_ik=c_k-source_i,andlets_ik=softmax(-||d_ik-r_i||^2.0/tau).minimizel=w*mean_i[-sum_ks_iklogsoftmax_j(-||c_j-source_i||^2.0/tau)_k+lambda_rep*sum_{k<l}max(0.0,rho-||c_k-c_l||)^2.0].thistransportsthesourcealongitsdirectedbehaviorresidualtowardacodewordwhilerepellingcodewordsglobally.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_codebook_transport",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "e4d11cf7d0d3f7c21ce271ed53ae4ec3db9457ad65f436022b7ff69e7fb15008",
+      "run_id": "proposal::round_029::directed_behavior_residual_codebook_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_029/directed_behavior_residual_codebook_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairi,definep_i=softmax(-||source_i-c_k||^2.0/tau)andq_i=softmax(-||target_i-c_k||^2.0/tau).minimizel=w*mean_i[-sum_kq_iklog(p_ik+epsilon)+lambda_cap*kl(u||m)]+w*lambda_excl*mean_i[max(0.0,delta-sum_{k,l}p_ikq_il||c_k-c_l||)^2.0],wherem=mean_i[(p_i+q_i)/2.0]andu_k=<capacity_weight>/c.thecross-entropyisdirectedfromtargetassignmentstosourceassignments;thecapacitytermencouragesbalancedmarginalusage,andtheexclusiontermkeepsthetwosoftendpointassignmentsfromconcentratingonnearbycodewords.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_balanced_assignment_partition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "7eee58d0727a4ae8cd399b3c85eaa94441e8c50ebd273f775468e946560eb468",
+      "run_id": "proposal::round_029::directed_capacity_balanced_assignment_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_029/directed_capacity_balanced_assignment_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidpairi,leta_i=softmax(-||source_i-c_k||^2.0/tau)andb_i=softmax(-||target_i-c_k||^2.0/tau).minimizel=w*mean_i[kl(b_i||a_i)+lambda_sep*max(0.0,delta-||c_argmax(a_i)-c_argmax(b_i)||)^2.0]+w*lambda_rep*sum_{k<l}max(0.0,rho-||c_k-c_l||)^2.0.theklisdirected:thetargetassignmentdistributionistheteacherandthesourcedistributionisthestudent.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_margin_preserving_codebook_geometry",
+      "notes": "",
+      "operator_classes": [
+        "argmax",
+        "softmax"
+      ],
+      "proposal_sha256": "7a117e548150dd9fb6c91ed21a957e495b094e810b9c5fc97ac9f81708ae4390",
+      "run_id": "proposal::round_029::directed_margin_preserving_codebook_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_029/directed_margin_preserving_codebook_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidorderedpairi,definep_i(j)=softmax_j(-||s_i-c_j||^2.0/tau)andq_i(j)=softmax_j(-||t_i-c_j||^2.0/tau).definethedirectedtargetdistributionr_i(j)=softmax_j(-||t_i-c_j||^2.0/tau).minimizel=w*mean_i[m_i*kl(r_i||p_i)]+eta*sum_j(u_j-v_j)^2.0,wherem_i=sigmoid((||s_i-c_{k_i}||^2.0-||t_i-c_{l_i}||^2.0)/tau),u_j=mean_i[m_i*p_i(j)],andv_j=mean_i[p_i(j)].",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "b8baaaf8badd6d4a63614fa27ffffc34af81467f56b15ea28ce0c5a525f7007c",
+      "run_id": "proposal::round_030::directed_capacity_preserving_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_030/directed_capacity_preserving_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidrowi,leta_i=||s_i-c_{k_i}||^2.0andb_i=||t_i-c_{l_i}||^2.0,wherek_iandl_iarethenearestcodewordstothesourceandtargetunderstop-gradientassignments.letd_i=||c_{k_i}-c_{l_i}||^2.0.minimizel=w*mean_i[m_i*(a_i+rho*relu(delta^2.0-d_i))]overvalidrows,wherem_i=sigmoid((a_i-b_i)/tau).",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pair_separation_codebook_geometry",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "e968bb1b40c31dfab90a38524ec6e2b475c02721121b590fc2492433063cae16",
+      "run_id": "proposal::round_030::directed_pair_separation_codebook_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_030/directed_pair_separation_codebook_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachvalidorderedpairi,letk_iandl_ibestop-gradientnearest-codewordindicesfors_iandt_i.letr_i=(t_i-c_{l_i})-(s_i-c_{k_i})andleth_i=sigmoid((||s_i-c_{k_i}||^2.0-||t_i-c_{l_i}||^2.0)/tau).minimizel=w*mean_i[m_i*||(c_{k_i}-s_i)-beta*h_i*r_i||^2.0]+xi*mean_i[m_i*relu(delta^2.0-||c_{k_i}-c_{l_i}||^2.0)],wherem_i=h_i.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_behaviour_cluster_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "a68ddfaaadaf467d84f3abf437ac91985c1b8e92078506c173835c4825222684",
+      "run_id": "proposal::round_030::directed_residual_behaviour_cluster_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_030/directed_residual_behaviour_cluster_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letp_k(x)=softmax_k(-||x-c_k||^2.0/tau),q_k=sum_im_i[p_k(s_i)+p_k(t_i)]/(2.0*sum_im_i),andu_k=<separation_weight>/c.definel=lambda*sum_im_i*kl(p(t_i)||p(s_i))+alpha*kl(u||q)+gamma*sum_im_i*sum_{k,l}p_k(s_i)p_l(t_i)*max(0.0,delta^2.0-||c_k-c_l||^2.0)^2.0.thefirsttermisdirected;theothertermsregularizeaggregatecapacityandseparation.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_capacity_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "2000e9a2c32af83f6bdea8ff0d8fc38e7ab899b739332c96d2f751f819f9081d",
+      "run_id": "proposal::round_031::directed_assignment_capacity_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_031/directed_assignment_capacity_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "letp_k(x)=softmax_k(-||x-c_k||^2.0/tau).definel=lambda*sum_im_i*sum_kp_k(s_i)*sum_lp_l(t_i)*[log(p_l(t_i)+eps)+beta*(||c_k-c_l||^2.0-delta^2.0)^2.0],withtheseparationtermappliedonlytok!=l.thedirectedassignmenttermisevaluatedwithsource-conditionedweightsp_k(s_i);sourceandtargetarenotinterchangeable.",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_cell_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "ec10e74215bbd3f719cc342b248bc14e92b0c2c88f3c575c859009d29c1742f5",
+      "run_id": "proposal::round_031::directed_codebook_cell_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_031/directed_codebook_cell_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "foreachpairdefiner_i=t_i-s_i,andleta_ik=softmax_k(-||s_i-c_k||^2.0/tau).definethesource-conditionedtransportedpointz_i=s_i+rho*r_i.letl=lambda*sum_im_i*sum_ka_ik*||z_i-c_k||^2.0+eta*sum_im_i*sum_ka_ik*max(0.0,delta^2.0-||c_k-c_{j(i)}||^2.0)^2.0,wherej(i)=argmin_j||t_i-c_j||^2.0istreatedasstop-gradientinthesecondtermandthebarrierisevaluatedonlywhenk!=j(i).",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_transport",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "e7914c24b68a846ba5ea6814c9516a813625502cccdc1feb78b9f2624d51b2bb",
+      "run_id": "proposal::round_031::directed_residual_geometry_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_031/directed_residual_geometry_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_j(x)=softmax_j(\u2212||x\u2212c_j||\u00b2/temperature)\uff0c\u4ee4p=p(source)\u3001q=p(target)\uff0c\u4ee4a_ij=softplus((margin\u2212(c_j\u2212c_i)\u00b7(target\u2212source)/(||target\u2212source||\u2082+eps))/temperature)\u3002l=weight\u00b7mean_mask[\u03c3_ijp_iq_ja_ij+separation_weight\u00b7\u03c2_ijp_iq_jsoftplus((min_separation\u2212||c_i\u2212c_j||\u2082)/temperature)]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "5ec19b96a90c603535fe9345c1cb56b1b2b643c2d5a7457f9176aa21c1f3f1cc",
+      "run_id": "proposal::round_032::directed_capacity_preserving_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_032/directed_capacity_preserving_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4i=argmin_j||source\u2212c_j||\u00b2\u3001k=argmin_j||target\u2212c_j||\u00b2\uff0c\u4ee4u=(target\u2212source)/(||target\u2212source||\u2082+eps)\uff0ca=(c_k\u2212c_i)\u00b7u\u3002l=weight\u00b7mean_mask[softplus((margin\u2212a)/temperature)+separation_weight\u00b7softplus((min_separation\u2212||c_k\u2212c_i||\u2082)/temperature)]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_repartition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "f4642fa2fc5e2711f96d271a9f78d16d93f0f153e8f6ac5da7b146c5ac95f739",
+      "run_id": "proposal::round_032::directed_codebook_tangent_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_032/directed_codebook_tangent_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_s=source\u2212c_i\u3001r_t=target\u2212c_k\uff0c\u5176\u4e2di\u3001k\u5206\u522b\u4e3a\u4e24\u7aef\u6700\u8fd1\u4ee3\u7801\u5b57\u7d22\u5f15\uff1b\u4ee4u=(target\u2212source)/(||target\u2212source||\u2082+eps)\uff0c\u4ee4v=(c_k\u2212c_i)\u3002l=weight\u00b7mean_mask[||(r_t\u2212r_s)\u2212residual_step\u00b7u||\u00b2+separation_weight\u00b7softplus((min_separation\u2212||v||\u2082)/temperature)+alignment_weight\u00b7(<separation_weight>\u2212(v\u00b7u)/(||v||\u2082+eps))]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_behavior_geometry_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "bf438f7512f58263099ab019e8bf22509859115c4473170a22688b73db9b30d9",
+      "run_id": "proposal::round_032::directed_residual_behavior_geometry_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_032/directed_residual_behavior_geometry_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5b9a\u4e49p_{ik}=softmax_k(-||x_i-c_k||_2^2.0/\u03c4)\uff0cq_{ik}=softmax_k(-||y_i-c_k||_2^2.0/\u03c4)\uff0cp_{jk}=\u03c3_im_ip_{ij}q_{ik}/(\u03c3_im_i+eps)\uff0cr_j=\u03c3_kp_{jk}\uff0cs_k=\u03c3_jp_{jk}\u3002l=\u03bb[-\u03c3_{jk}p_{jk}log((p_{jk}+eps)/(r_js_k+eps))+\u03c1\u03c2_k(\u015d_k-1.0/k)^2.0]\uff0c\u5176\u4e2d\u015d_k=\u03c3_im_i(p_{ik}+q_{ik})/(2.0\u03c3_im_i+eps)\u3002\u7b2c\u4e00\u9879\u6700\u5927\u5316\u6709\u5411\u8f6f\u5206\u914d\u8054\u5408\u4e92\u4fe1\u606f\uff1b\u7b2c\u4e8c\u9879\u5e73\u8861\u8f6f\u5355\u5143\u4f7f\u7528\u3002\u4ea4\u6362source\u4e0etarget\u901a\u5e38\u6539\u53d8p\u7684\u8f6c\u7f6e\u53ca\u5176\u8fb9\u9645\uff0c\u6545\u4fdd\u6301\u65b9\u5411\u6027\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_preserving_assignment_surrogate",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "b7e4591d5c25b887826ba56cf27bbe716c5f365874937dcfa6fd4aeda90449c9",
+      "run_id": "proposal::round_033::directed_capacity_preserving_assignment_surrogate",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_033/directed_capacity_preserving_assignment_surrogate/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=c*_{s,i}/(||c*_{s,i}||_2+eps)\uff0cv_i=c*_{t,i}/(||c*_{t,i}||_2+eps)\uff0c\u5176\u4e2dc*\u662f\u6700\u8fd1\u4ee3\u7801\u5b57\uff1b\u4ee4a=\u03c3_im_i(x_i\u00b7y_i)u_iv_i^t/(\u03c3_im_i+eps)\uff0cq=\u03c3_im_i(x_i\u00b7y_i)x_iy_i^t/(\u03c3_im_i+eps)\u3002l=\u03bb||a-q||_f^2.0\u3002\u4ea4\u6362source\u4e0etarget\u4f1a\u5c06\u6709\u5411\u5916\u79efu_iv_i^t\u53d8\u4e3av_iu_i^t\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_frame_alignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "fa3f81c31f64f208b17b2e345c6193afd3c0079bf984e7c4425a056a96c9fe16",
+      "run_id": "proposal::round_033::directed_codebook_frame_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_033/directed_codebook_frame_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u5bf9\u5b9a\u4e49d_i=y_i-x_i\uff0ca_i=(x_i\u00b7y_i)/(||x_i||||y_i||+eps)\uff0c\u9009\u53d6c*_{s,i}=argmin_k||x_i-c_k||_2^2.0\uff0c\u5e76\u5b9a\u4e49\u6b8b\u5deee_i=x_i-c*_{s,i}\u3002\u4ee4z_i=d_i/(||d_i||_2+eps)\uff0ch_i=e_i/(||e_i||_2+eps)\uff0ct=\u03c3_im_ia_iz_ih_i^t/(\u03c3_im_i+eps)\uff0cb=\u03c3_im_ia_id_id_i^t/(\u03c3_im_i+eps)\u3002l=\u03bb||t-b||_f^2.0\u3002\u8be5\u9879\u4ee5\u6709\u5411\u8f6c\u79fb\u6b8b\u5dee\u4e0e\u6e90\u7aef\u91cf\u5316\u6b8b\u5dee\u7684\u4ea4\u53c9\u51e0\u4f55\u8c03\u6574\u4ee3\u7801\u5b57\uff1b\u4ea4\u6362\u7aef\u70b9\u4f1a\u6539\u53d8d_i\u3001a_i\u53ca\u4ea4\u53c9\u9879\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_partition_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "20eeb0d6d7a0553b524b775e7e26109186ef9f84b2d15d064c1dad4c18b63c19",
+      "run_id": "proposal::round_033::directed_residual_geometry_partition_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_033/directed_residual_geometry_partition_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s=softmax(-||source-c_j||_2^2.0/temperature)\uff0cp_t=softmax(-||target-c_j||_2^2.0/temperature)\uff0c\u5e76\u4ee4q=(p_s+p_t)/2.0\u3002\u5bf9\u6709\u6548\u914d\u5bf9\uff0cl=weight*mean_mask[-log(sum_jp_s[j]*p_t[j]+eps)+balance_weight*kl(mean_batch(q)||uniform(c))]\u3002\u914d\u5bf9\u9879\u9f13\u52b1\u5171\u540c\u5206\u914d\uff0c\u6279\u6b21\u8fb9\u9645\u5747\u8861\u9879\u60e9\u7f5a\u7801\u4f7f\u7528\u7387\u504f\u659c\uff1b\u4e24\u9879\u5747\u901a\u8fc7\u5e73\u6ed1\u5206\u914d\u5411\u91cf\u53cd\u4f20\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_pair_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "e1df464a5f3fb3fcb092621688257298015c6e09710599cb5e896e2365dc16a3",
+      "run_id": "proposal::round_034::directed_capacity_constrained_pair_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_034/directed_capacity_constrained_pair_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4c_s\u4e0ec_t\u5206\u522b\u4e3asource\u4e0etarget\u6700\u8fd1\u7684codebook\u884c\uff0cu=(c_t-c_s)/(||c_t-c_s||_2+eps)\uff0ce_s=||source-c_s||_2^2.0\uff0ce_t=||target-c_t||_2^2.0\u3002l=weight*mean_mask[softplus((e_t-e_s+margin)/temperature)+separation_weight*softplus((minimum_gap-||c_t-c_s||_2)/temperature)]\u3002\u7b2c\u4e00\u9879\u8981\u6c42\u76ee\u6807\u9879\u76f8\u5bf9\u6e90\u9879\u66f4\u6613\u91cf\u5316\uff1b\u7b2c\u4e8c\u9879\u53ea\u5728\u914d\u5bf9\u7801\u5b57\u95f4\u9694\u4e0d\u8db3\u65f6\u65bd\u52a0\u6392\u65a5\uff0c\u4e0d\u65bd\u52a0\u5438\u5f15\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "69e96c028acd0fb7b2e939a9f69afd6d253b860fc17c19d92b5b61642d964b23",
+      "run_id": "proposal::round_034::directed_pair_margin_rigid_codebook_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_034/directed_pair_margin_rigid_codebook_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r=target-source\uff0cc_s\u4e3asource\u6700\u8fd1\u7801\u5b57\uff0cc_t\u4e3atarget\u6700\u8fd1\u7801\u5b57\uff0cu=(c_t-c_s)/(||c_t-c_s||_2+eps)\uff0cg=target-source-(target-source)\u00b7u*u\u3002l=weight*mean_mask[||r-(c_t-c_s)||_2^2.0+transport_weight*||g||_2^2.0]\u3002\u7b2c\u4e00\u9879\u4f7f\u6709\u5411\u914d\u5bf9\u6b8b\u5dee\u4e0e\u5f53\u524d\u7801\u5b57\u4f4d\u79fb\u76f8\u5bb9\uff1b\u7b2c\u4e8c\u9879\u60e9\u7f5a\u6b8b\u5dee\u5728\u914d\u5bf9\u7801\u5b57\u8fde\u7ebf\u6b63\u4ea4\u5207\u7a7a\u95f4\u4e0a\u7684\u5206\u91cf\uff0c\u4e0d\u542b\u8d1f\u7684\u7801\u5b57\u95f4\u8ddd\u9879\u6216\u914d\u5bf9\u7801\u5b57\u5438\u5f15\u9879\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_graph_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "fb2641d83440ca9235000a3425546035bb50bdb3224b90d2d633eb3d5c0b65c8",
+      "run_id": "proposal::round_034::directed_residual_graph_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_034/directed_residual_graph_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_ic=softmax_c(-||x_i-c_c||\u00b2/\u03c4)\uff0cr_ic=softmax_c(-||y_i-c_c||\u00b2/\u03c4)\u3002\u5b9a\u4e49\u6709\u5411\u884c\u4e3a\u8054\u5408\u5206\u914dj_cd=\u03c3_im_ip_icr_id\uff1b\u5176\u8fb9\u9645\u4e3aa_c=\u03c3_dj_cd\u3001b_d=\u03c3_cj_cd\u3002\u4ee4u_c=1.0/c\uff0cl=\u03bb[\u03c3_c(a_c-u_c)\u00b2+\u03ba\u03c3_cdj_cdlog((j_cd+\u03b5)/(a_cb_d+\u03b5))-\u03c1\u03c3_cdj_cdlog(j_cd+\u03b5)]\u3002\u7b2c\u4e00\u9879\u7ea6\u675f\u6e90\u7aef\u5206\u914d\u5bb9\u91cf\uff0c\u7b2c\u4e8c\u9879\u4e3a\u6709\u5411\u5206\u914d\u4e92\u4fe1\u606f\uff0c\u7b2c\u4e09\u9879\u5956\u52b1\u884c\u4e3a\u5bf9\u5171\u540c\u5360\u7528\u7684\u5206\u914d\u8d28\u91cf\uff1b\u6240\u6709\u9879\u5747\u901a\u8fc7\u8f6f\u5206\u914d\u5bf9\u7801\u5b57\u53ef\u5fae\uff0c\u4ea4\u6362source/target\u901a\u5e38\u6539\u53d8j\u4e0e\u635f\u5931\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_assignment",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "4cdff9f68c600b5be92725a6a3eaafe9cfdfca7778b91e862d46a872d14a0920",
+      "run_id": "proposal::round_035::directed_capacity_constrained_assignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_035/directed_capacity_constrained_assignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_ic=softmax_c(-||x_i-c_c||\u00b2/\u03c4)\uff0c\u5b9a\u4e49\u884c\u4e3a\u6761\u4ef6\u7801\u672c\u8d28\u5fc3\u5dee\u03bc_c=\u03c3_ip_icm_is_i/(\u03c3_ip_icm_i+\u03b5)\uff0c\u5176\u4e2ds_i=\u03c3_jm_jexp(-||x_i-y_j||\u00b2/\u03c4_b)y_j/(\u03c3_jm_jexp(-||x_i-y_j||\u00b2/\u03c4_b)+\u03b5)\u3002\u4ee4g_c=\u03bc_c-c_c\uff0c\u53bb\u9664\u6240\u6709\u7801\u5b57\u5171\u540c\u5e73\u79fb\u4e0e\u5f84\u5411\u5206\u91cf\u540e\uff0cl=\u03bb\u03c3_c||p_cg_c||\u00b2\uff0cp_c\u4e3a\u7531\u5f53\u524d\u7801\u672c\u4e2d\u5fc3\u5316\u77e9\u9635\u786e\u5b9a\u7684\u5207\u7a7a\u95f4\u6295\u5f71\uff1b\u5bf9source\u3001target\u4ea4\u6362\u540e\u91cd\u65b0\u8ba1\u7b97s_i\uff0c\u6545\u76ee\u6807\u6709\u5411\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_repartition",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "255cc1eb6ec73bff3e5dc1fa1f1b93205c4d9379f14961bbaa60f29a5f548176",
+      "run_id": "proposal::round_035::directed_codebook_tangent_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_035/directed_codebook_tangent_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u8f93\u5165z\u5b9a\u4e49q(z)=softmax_c(-||z-c_c||\u00b2/\u03c4)\uff0c\u91cf\u5316\u6b8b\u5deee(z)=z-\u03c3_cq_c(z)c_c\u3002\u5bf9mask\u5185\u6709\u5411\u5bf9\u5b9a\u4e49r_i=e(x_i)\uff0ct_i=e(y_i)\uff0c\u4ee5\u53cav_i=\u03c3_jm_jexp(-||x_i-y_j||\u00b2/\u03c4_b)(t_j-r_i)/(\u03c3_jm_jexp(-||x_i-y_j||\u00b2/\u03c4_b)+\u03b5)\u3002\u4ee4n_i=(r_i+t_i)/(||r_i+t_i||+\u03b5)\uff0cv_i^\u22a5=v_i-(v_i\u00b7n_i)n_i\u3002l=\u03bb\u03c3_im_i[||v_i^\u22a5||\u00b2-\u03b7log(\u03b5+||r_i-t_i||\u00b2)]\u3002\u7b2c\u4e00\u9879\u8f93\u8fd0\u884c\u4e3a\u6761\u4ef6\u6b8b\u5dee\u51e0\u4f55\u7684\u5207\u5411\u5206\u91cf\uff0c\u7b2c\u4e8c\u9879\u4fdd\u7559pair\u6b8b\u5dee\u5206\u79bb\uff1b\u4ea4\u6362\u7aef\u70b9\u4f1a\u6539\u53d8\u6709\u5411\u90bb\u57df\u53ca\u6b8b\u5dee\u76ee\u6807\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_geometry_transport",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "182fca8c9dea919c2ef7f2fcade0fbcaeb11ef397cf6b1945952c3210b61cfba",
+      "run_id": "proposal::round_035::directed_residual_geometry_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_035/directed_residual_geometry_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2ai\u5b9a\u4e49k_i=argmin_k||source_i\u2212codebook_k||\u00b2\uff0cl_i=argmin_k||target_i\u2212codebook_k||\u00b2\uff0cres_i=target_i\u2212codebook_{k_i}\uff0ct_i=res_i\u2212(res_i\u00b7d_i)d_i/(||d_i||\u00b2+\u03b5)\uff0cd_i=codebook_{l_i}\u2212codebook_{k_i}\uff0cl=\u03bb\u03c2_imask_i[||res_i\u2212t_i||\u00b2\u2212\u03bc\u00b7max(0.0,\u03b4\u2212||d_i||)\u00b2]/(\u03c3_imask_i+\u03b5)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "3d0227fb87b39ac771115b2d42ae85a75a2436df665616c2479ff272f0cac183",
+      "run_id": "proposal::round_036::directed_behavior_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_036/directed_behavior_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4a_i=softmax_k(source_i\u00b7codebook_k/\u03c4)\uff0cb_i=softmax_k(target_i\u00b7codebook_k/\u03c4)\uff0cr_k=\u03c3_imask_ia_ik/m\uff0cs_k=\u03c3_imask_ib_ik/m\uff0cm=\u03c3_imask_i+\u03b5\uff0ch_k=\u03c3_imask_ia_ikb_ik/m\u3002l=\u03bb[\u03c3_k(r_k\u2212s_k)^2.0+\u03c1\u03c2_k(h_k\u2212h*_k)^2.0]\uff0c\u5176\u4e2dh*_k=\u03c3_imask_i\u00b7stopgrad(a_ikb_ik)/m\uff1b\u8bad\u7ec3\u5b9e\u73b0\u5fc5\u987b\u5c06h*_k\u66ff\u6362\u4e3a\u9884\u5148\u5b9a\u4e49\u7684\u5e38\u6570\u5747\u5300\u76ee\u68071.0/c\uff0c\u4ee5\u4f7f\u76ee\u6807\u4e0d\u968f\u5f53\u524d\u5206\u914d\u53cd\u5411\u4f20\u64ad\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "594078b1ef897a8b8aad2145da0eadf3e05febcd74efeac94a36acf438b7475f",
+      "run_id": "proposal::round_036::directed_capacity_preserving_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_036/directed_capacity_preserving_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=source_i/||source_i||\uff0cv_i=target_i/||target_i||\uff0cc_k=codebook_k/||codebook_k||\uff0cp_i=softmax_k(u_i\u00b7c_k/\u03c4)\uff0cq_i=softmax_k(v_i\u00b7c_k/\u03c4)\uff0cm=\u03c3_imask_i\u00b7(p_i\u2212q_i)\u00d7(u_i+\u03b7v_i)\uff0cl=\u2212\u03bb||m||\u00b2/(\u03c3_imask_i+\u03b5)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_rigid_codebook_graph_rotation",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "40fc388c606fb63915ecbd3c1a38bf51166e547aab37881bf29131f2ad556b88",
+      "run_id": "proposal::round_036::directed_rigid_codebook_graph_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_036/directed_rigid_codebook_graph_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_k(x)=softmax_k(-||x-c_k||\u00b2/\u03c4)\uff0cq_k(x)=softmax_k(-||x-c_k||\u00b2/\u03c4)\u3002l=\u03bb\u00b7mean_mask[-log(\u03c3_kp_k(s)q_k(t)+eps)+\u03bc\u00b7(\u03c3_kp_k(s)logp_k(s)+\u03c3_kq_k(t)logq_k(t))+\u03bd\u00b7max(0.0,m-||c_{a(s)}-c_{b(t)}||)\u00b2]\u3002\u7b2c\u4e00\u9879\u63d0\u5347\u6709\u5411\u884c\u4e3a\u8fb9\u7684\u8f6f\u5171\u5206\u914d\uff0c\u71b5\u9879\u9650\u5236\u5355\u7aef\u5206\u914d\u8fc7\u5ea6\u5f25\u6563\uff0c\u5206\u79bb\u5c4f\u969c\u963b\u6b62\u4e00\u6761\u8fb9\u4e24\u7aef\u6700\u8fd1\u7801\u5b57\u5408\u5e76\uff1b\u65b9\u5411\u901a\u8fc7p(source)q(target)\u4fdd\u7559\uff0c\u4ea4\u6362\u7aef\u70b9\u4e00\u822c\u6539\u53d8\u635f\u5931\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "fd889ca2df52bf0e0f52a36e015b4383e2c3d50e63ec7fb1fdb9f480f7a5fd0f",
+      "run_id": "proposal::round_037::directed_capacity_preserving_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_037/directed_capacity_preserving_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_s=s-c_{a(s)}\uff0cr_t=t-c_{a(t)}\uff0cd=r_t-r_s\uff0cn=d/(||d||+eps)\uff0c\u4ee5\u53cap_s=i-u_su_s\u1d40\uff0c\u5176\u4e2du_s=r_s/(||r_s||+eps)\u3002l=\u03bb\u00b7mean_mask[1.0-cos(p_s(c_{a(t)}-c_{a(s)}),d)+\u03b7\u00b7(||p_s(c_{a(t)}-c_{a(s)})||-||d||)\u00b2]\u3002\u8f93\u8fd0\u65b9\u5411\u7531source\u6b8b\u5dee\u5b9a\u4e49\u7684\u5207\u7a7a\u95f4\u6295\u5f71\uff0c\u76ee\u6807\u662f\u8ba9\u7801\u672c\u4f4d\u79fb\u6cbf\u6709\u5411\u884c\u4e3a\u6761\u4ef6\u6b8b\u5dee\u53d8\u5316\uff0c\u800c\u4e0d\u662f\u8ba9\u7aef\u70b9\u7801\u5b57\u5f7c\u6b64\u9760\u8fd1\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_target_tangent_transport",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "417c88eb14f040eee9f96a1739eb73d295cf0f10a7a207915f260ce1e5fc97af",
+      "run_id": "proposal::round_037::directed_residual_target_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_037/directed_residual_target_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=(s_i-c_{a_i})/||s_i-c_{a_i}||\uff0cv_j=(t_j-c_{b_j})/||t_j-c_{b_j}||\uff0c\u5176\u4e2da_i\u3001b_j\u662f\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\u3002l=\u03bb\u00b7mean_mask[1.0-u_i\u00b7v_j+\u03c1\u00b7(u_i\u00b7u_i-v_j\u00b7v_j)]\u3002\u7b2c\u4e00\u9879\u4f7f\u884c\u4e3a\u8fb9\u7aef\u70b9\u7684\u6b8b\u5dee\u65b9\u5411\u4e00\u81f4\uff1b\u7b2c\u4e8c\u9879\u4f7f\u4ea4\u6362source\u4e0etarget\u65f6\u635f\u5931\u6539\u53d8\u3002\u5bf9\u7801\u672c\u68af\u5ea6\u4ec5\u65bd\u52a0\u5230\u65b9\u5411\u6784\u578b\uff0c\u4e0d\u52a0\u5165\u7aef\u70b9\u7801\u5b57\u8ddd\u79bb\u6536\u7f29\u9879\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_rigid_codebook_partition_alignment",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "305d53b5aefc2ff5d8049b35f1cbc9e9b3fa8bd5f4be885343048248b3c9b751",
+      "run_id": "proposal::round_037::directed_rigid_codebook_partition_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_037/directed_rigid_codebook_partition_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4c_s\u3001c_t\u5206\u522b\u4e3asource\u3001target\u5bf9codebook\u7684\u6700\u8fd1\u7801\u5b57\uff0cu_s=source-c_s\uff0cu_t=target-c_t\uff0cd=c_t-c_s\uff0cq=target-source\u3002\u5b9a\u4e49r=q-(q\u00b7d)d/(||d||\u00b2+eps)\uff0cl=weight\u00b7mean_mask(relu(margin-(r\u00b7d)/sqrt(||r||\u00b2+eps)))\u3002\u8be5\u9879\u53ea\u6cbf\u6bcf\u4e2a\u7801\u5b57\u914d\u7f6e\u7684\u884c\u4e3a\u56fe\u5207\u5411\u65b9\u5411\u6539\u53d8\u7801\u672c\uff1beps\u4fdd\u8bc1\u6709\u9650\u3002\u5168\u63a9\u7801\u65f6\u635f\u5931\u4e25\u683c\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_graph_tangent_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "3955288acf615579d65d51d9acc9df638da46d87e0904d94383c150acb7bc7fc",
+      "run_id": "proposal::round_038::directed_graph_tangent_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_038/directed_graph_tangent_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s=softmax(-||source-c_k||\u00b2/tau)\uff0cp_t=softmax(-||target-c_k||\u00b2/tau)\uff0cd=c_t-c_s\uff0c\u5176\u4e2dc_s\u3001c_t\u662f\u5404\u7aef\u70b9\u5f53\u524d\u6700\u8fd1\u7801\u5b57\u3002\u5b9a\u4e49a=(target-source)\u00b7d/(||d||\u00b2+eps)\uff0cl=weight\u00b7mean_mask(relu(margin-a)\u00b7(1.0+separation/(||d||+eps)))\uff0cseparation=relu(min_separation-||d||)\u3002\u8be5\u6709\u5411\u635f\u5931\u8981\u6c42\u884c\u4e3a\u65b9\u5411\u6cbf\u6e90\u5230\u76ee\u6807\u7801\u5b57\u8fde\u7ebf\u5177\u6709\u6b63\u6295\u5f71\uff0c\u5e76\u5728\u7aef\u70b9\u7801\u5b57\u8fc7\u8fd1\u65f6\u60e9\u7f5a\u8fd1\u8ddd\u79bb\uff1b\u5168\u63a9\u7801\u65f6\u635f\u5931\u4e25\u683c\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pair_separated_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "0611e0929929d39b5f445f2e96f8965f7231523eee57318041f6b53122a4a563",
+      "run_id": "proposal::round_038::directed_pair_separated_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_038/directed_pair_separated_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_s=source-c_s\u3001r_t=target-c_t\u3001v=r_t-r_s\u3001d=c_t-c_s\uff0c\u4ee4h=target-source\u3002\u5b9a\u4e49z=v-(v\u00b7d)d/(||d||\u00b2+eps)\uff0cl=weight\u00b7mean_mask(relu(margin-(h\u00b7z)/sqrt(||z||\u00b2+eps))+balance\u00b7(||r_t||\u00b2-||r_s||\u00b2)\u00b2)\u3002\u7b2c\u4e00\u9879\u8981\u6c42\u6709\u5411\u884c\u4e3a\u4fe1\u53f7\u4e0e\u6b8b\u5dee\u53d8\u5316\u5728\u7aef\u70b9\u7801\u5b57\u8fde\u7ebf\u7684\u5207\u7a7a\u95f4\u4e2d\u5bf9\u9f50\uff1b\u7b2c\u4e8c\u9879\u5bf9\u6e90\u3001\u76ee\u6807\u6b8b\u5dee\u5c3a\u5ea6\u4e0d\u5bf9\u79f0\u4f5c\u60e9\u7f5a\u3002\u4e24\u9879\u90fd\u4e0d\u4ee5\u7f29\u77edd\u4e3a\u76ee\u6807\u3002\u5168\u63a9\u7801\u65f6\u635f\u5931\u4e25\u683c\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_cluster_balanced_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "32045c5c6d352ee35054ca1958147e29bf4153c98a28d23d1e590f5b71832351",
+      "run_id": "proposal::round_038::directed_residual_cluster_balanced_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_038/directed_residual_cluster_balanced_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s=softmax(-||s_b-c_k||_2^2.0/tau)\uff0cp_t=softmax(-||t_b-c_k||_2^2.0/tau)\uff0c\u4ee4q_b=p_s\u00b7p_t\uff0c\u4ee4d_b=||c_s-c_t||_2\uff0c\u5176\u4e2dc_s\u3001c_t\u662f\u5404\u81ea\u6700\u8fd1\u7801\u5b57\u3002l=weight*sum_bmask_b*(-log(q_b+eps)+separation_weight*relu(margin-d_b)^2.0)/max(sum_bmask_b,<separation_weight>)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_assignment_margin",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "7b6e54c2b26b0d4c7176d2527834c85fea1eaca51f35a74c735d94af7bd8e739",
+      "run_id": "proposal::round_039::directed_capacity_assignment_margin",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_039/directed_capacity_assignment_margin/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_b=(t_b-s_b)/(||t_b-s_b||_2+eps)\uff0c\u4ee4c_b\u4e3a\u4e0et_b\u6700\u8fd1\u7684\u7801\u5b57\u3001\u4e14j_b\u4e3a\u4e0ec_b\u6700\u8fd1\u7684\u53e6\u4e00\u4e0d\u540c\u7801\u5b57\uff0cv_b=(c_b-j_b)/(||c_b-j_b||_2+eps)\u3002l=weight*sum_bmask_b*(<separation_weight>-u_b\u00b7v_b+separation_weight*relu(margin-||c_b-j_b||_2)^2.0)/max(sum_bmask_b,<separation_weight>)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_graph_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "53ef4b5499a103823b1dff6092a98bd65c7e0018c7011872fac89c69f41b09aa",
+      "run_id": "proposal::round_039::directed_codebook_tangent_graph_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_039/directed_codebook_tangent_graph_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_b=t_b-s_b\uff0c\u4ee4c_b\u4e3a\u8ddd\u79bbt_b\u6700\u8fd1\u7684\u7801\u5b57\uff0c\u4ee4a_b=(c_b-s_b)/(||c_b-s_b||_2+eps)\uff0c\u4ee4h_b=r_b/(||r_b||_2+eps)\u3002l=weight*sum_bmask_b*((<separation_weight>-a_b\u00b7h_b)^2.0+separation_weight*relu(margin-||c_b-c_s||_2)^2.0)/max(sum_bmask_b,<separation_weight>)\uff0c\u5176\u4e2dc_s\u662f\u8ddd\u79bbs_b\u6700\u8fd1\u4e14\u4e0d\u540c\u4e8ec_b\u7684\u7801\u5b57\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_shell_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "84db5c629081832ecc08c0b7dbd22900730d652422ccbca14ee3a85b762fb4d2",
+      "run_id": "proposal::round_039::directed_residual_shell_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_039/directed_residual_shell_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r=t-source\uff0cn_j=(c_j-source)/(||c_j-source||+eps)\uff0ca_j=softmax(-||c_j-source||^2.0/tau)\uff0cv_j=r-(r\u00b7n_j)n_j\uff1b\u5b9a\u4e49l=weight*mean_mask[sum_ja_j||(c_j-source)-stopgrad(v_j)||^2.0-align*sum_ja_j((t-source)\u00b7(c_j-source))]\u3002mask\u5168\u96f6\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "15be96a2b74d0e3df92a9056b29b2788540ea8cccf8bc121b3dd8bf39772e898",
+      "run_id": "proposal::round_040::directed_behavior_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_040/directed_behavior_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u6709\u6548\u6709\u5411\u5bf9\uff0c\u4ee4u=s/||s||\u3001v=t/||t||\u3001r=u-v\uff0c\u6784\u9020a=(cr^t-rc^t)/(||c||^2.0+eps)\uff0c\u5176\u4e2dc\u662fcodebook\u884c\u5747\u503c\uff1b\u5b9a\u4e49r=exp(etaa)\uff0cl=weight*mean_mask[1.0-cos(ur,v)]\u3002mask\u5168\u96f6\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_neutral_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "5d0d6a7ed7d31d65434162309cade6325e71c58909305dd5266ffea552ac61ce",
+      "run_id": "proposal::round_040::directed_capacity_neutral_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_040/directed_capacity_neutral_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_i=softmax(-||x_i-c_j||^2.0/tau)\uff0c\u5176\u4e2dx_i\u4e3asource\u6216target\uff0cc_j\u4e3a\u7801\u672c\u884c\uff1b\u4ee4q=softmax((p_source\u00b7p_target)/tau_pair)\uff0c\u5e76\u5b9a\u4e49l=weight*mean_mask[-log(sum_jq_jp_source,jp_target,j+eps)+repulsion*relu(sep_min-||m_source-m_target||)^2.0]\u3002m_i=sum_jp_i,jc_j\u3002mask\u5168\u96f6\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pair_separated_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "f9e79091daf39a42632be2c4faf4e58c9d333adb5c1a2808b87e1719e77e13d7",
+      "run_id": "proposal::round_040::directed_pair_separated_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_040/directed_pair_separated_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s=softmax(-||s-c_j||\u00b2/\u03c4)_j\uff0cp_t=softmax(-||t-c_j||\u00b2/\u03c4)_j\uff0cq_s\u3001q_t\u5206\u522b\u4e3a\u5bf9p_s\u3001p_t\u6309mask\u52a0\u6743\u7684\u6279\u5747\u503c\u3002\u5b9a\u4e49l=\u03bb[-log(\u03b5+\u03c3_jp_s,jp_t,j)+\u03b1kl(q_s||r)+\u03b2max(0.0,m-||\u03c3_j(p_s,j-p_t,j)c_j||\u2082)\u00b2]\uff0c\u5176\u4e2dr_j=<capacity_weight>/c\uff1b\u6240\u6709\u6279\u5747\u503c\u53ea\u4f7f\u7528\u6709\u6548\u9879\uff0c\u5168\u63a9\u7801\u65f6\u8fd4\u56de\u7cbe\u786e\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_assignment_with_pair_barrier",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "252c04adfa022bf647c9dfc1fdaa9b496bce3aa72ae28d80fac715c50ccf3708",
+      "run_id": "proposal::round_041::directed_capacity_assignment_with_pair_barrier",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_041/directed_capacity_assignment_with_pair_barrier/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4i=argmin_j||s-c_j||\u00b2\uff0ck=argmin_j||t-c_j||\u00b2\uff0cu=(t-s)/(||t-s||\u2082+eps)\uff0cp=i-uu\u1d40\uff0cd=c_k-c_i\u3002\u5b9a\u4e49l=\u03bb[-u\u1d40d+\u03bc(max(0.0,\u03b4-||pd||\u2082))\u00b2+\u03bd(||d||\u2082-||d\u2080||\u2082)\u00b2]\uff0c\u5176\u4e2dd\u2080\u5728\u672c\u6b21\u8c03\u7528\u5f00\u59cb\u65f6\u7531\u5f53\u524d\u7801\u672c\u4e2di\u3001k\u4e24\u884c\u7684\u5dee\u786e\u5b9a\u5e76\u505c\u6b62\u68af\u5ea6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_alignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "95b8c9f4fbc6da43f2fc59ca536852d56d27a59cc423123bf917c1d849b08f54",
+      "run_id": "proposal::round_041::directed_codebook_tangent_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_041/directed_codebook_tangent_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r=t-s\uff0cu=r/(||r||\u2082+eps)\uff0ci=argmin_j||s-c_j||\u00b2\uff0ck=argmin_j||t-c_j||\u00b2\uff0cd=c_k-c_i\uff0cp=i-uu\u1d40\u3002\u5b9a\u4e49l=\u03bb[||p(d-r)||\u2082\u00b2+\u03b3(max(0.0,\u03b4-||pd||\u2082))\u00b2+\u03c1(max(0.0,||d\u2080||\u2082-||d||\u2082))\u00b2]\uff0c\u5176\u4e2dd\u2080\u4e3a\u672c\u6b21\u8c03\u7528\u524d\u5411\u65f6\u7684\u7801\u5b57\u5dee\u5e76\u505c\u6b62\u68af\u5ea6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_transport_with_tangent_guard",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "8d11648b32a39faf6001c664b87c45492e291bd540c5a0b121f9bd39bcbe522d",
+      "run_id": "proposal::round_041::directed_residual_transport_with_tangent_guard",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_041/directed_residual_transport_with_tangent_guard/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_j(x)=softmax_j(\u2212||x\u2212c_j||\u00b2/\u03c4)\uff0cq_j(x)=softmax_j(\u2212||x\u2212c_j||\u00b2/\u03c4)\u3002\u4ee5\u6e90\u5206\u5e03p(s_i)\u4f5c\u4e3a\u884c\u8fb9\u9645\u3001\u76ee\u6807\u5206\u5e03q(t_i)\u4f5c\u4e3a\u5217\u8fb9\u9645\uff0c\u5b9a\u4e49\u5177\u71b5\u6b63\u5219\u7684\u5bb9\u91cf\u7ea6\u675f\u8026\u5408\u03c0_i=sinkhorn(exp((\u2212d_i+\u03b1_i+\u03b2_i)/\u03b5));d_i[j,k]=||c_j\u2212s_i||\u00b2+||c_k\u2212t_i||\u00b2\u3002l=\u03bb\u00b7mean_imask_i\u00b7(\u2212\u03c3_j\u03c0_i[j,j])\u3002\u5168\u63a9\u7801\u65f6l\u7cbe\u786e\u4e3a\u96f6\u3002\u4ea4\u6362source\u4e0etarget\u4f1a\u4ea4\u6362\u6709\u5411\u8fb9\u9645\u89d2\u8272\uff1b\u5b9e\u73b0\u987b\u6309\u6b64\u516c\u5f0f\u68c0\u9a8c\u4ea4\u6362\u540e\u7684\u635f\u5931\u786e\u5b9e\u6539\u53d8\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_pair_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "f489453b71b783bf8add3cebdafe5cd87da185c4c3c6d84826ef148437b3967d",
+      "run_id": "proposal::round_043::directed_capacity_constrained_pair_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_043/directed_capacity_constrained_pair_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_i=t_i\u2212s_i\uff0c\u0109_i=argmin_j||s_i\u2212c_j||\u00b2\uff0cd_i=argmin_j||t_i\u2212c_j||\u00b2\uff0cu_i=(c_{\u0109_i}\u2212s_i)/(||c_{\u0109_i}\u2212s_i||+\u03b5)\uff0cv_i=r_i/(||r_i||+\u03b5)\uff0c\u4e14w_i=stopgrad(sigmoid((u_i\u00b7v_i)/\u03c4))\u3002l=\u03bb\u00b7mean_imask_i\u00b7{w_i\u00b7[1.0\u2212cos(r_i,c_{\u0109_i}\u2212s_i)]+max(0.0,m\u2212||c_{\u0109_i}\u2212c_{d_i}||)\u00b2}\u3002\u5168\u63a9\u7801\u65f6l\u7cbe\u786e\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_separation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "03b917647b09023ad1b1729d02a856f114d24cb9ec634b37912668d2c9830ea9",
+      "run_id": "proposal::round_043::directed_residual_tangent_separation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_043/directed_residual_tangent_separation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=(c_{a(i)}-\u03bc)/||c_{a(i)}-\u03bc||\u3001v_i=(t_i-s_i)/||t_i-s_i||\uff0c\u03bc=c^{-1.0}\u03c3_jc_j\u3002l=\u03bb\u00b7mean_imask_i\u00b7[1.0-u_i\u00b7v_i]\uff1b\u5bf9\u7801\u672c\u65bd\u52a0\u7531\u8be5\u635f\u5931\u4ea7\u751f\u7684\u53cd\u5bf9\u79f0\u5207\u7a7a\u95f4\u68af\u5ea6\u6295\u5f71\u03c0_t(g)=g\u2212sym(gc\u1d40)c\uff0c\u5176\u4e2dc\u4e3a\u4e2d\u5fc3\u5316\u4e14\u884c\u6b63\u4ea4\u5f52\u4e00\u5316\u7684\u7801\u672c\u3002\u6bcf\u4e2a\u6709\u6548\u6837\u672c\u7684\u635f\u5931\u6309\u5355\u6837\u672c\u8d21\u732e\u8ba1\u7b97\uff1b\u5168\u63a9\u7801\u65f6\u603b\u635f\u5931\u7cbe\u786e\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_rigid_codebook_graph_alignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "128bfec0ca984fc98fdfcadf640503697f0abe5d91870e0d64904280b5d6a7b4",
+      "run_id": "proposal::round_043::directed_rigid_codebook_graph_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_043/directed_rigid_codebook_graph_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5b9a\u4e49p_i=softmax(-||s_i-c_k||^2.0/tau)_k\uff0cq_i=softmax(-||t_i-c_k||^2.0/tau)_k\uff0cm=(mean_imask_i(p_i+q_i)/2.0)\uff0cu=(1.0/c)\u00b71.0\u3002\u5b9a\u4e49l=weight\u00b7mean_imask_i\u00b7kl(p_i||q_i)+balance\u00b7kl(u||m)\uff0c\u7a7a\u63a9\u7801\u65f6l=0.0\uff1b\u5b9e\u73b0\u987b\u4fdd\u8bc1\u4ea4\u6362source\u4e0etarget\u540e\u635f\u5931\u6539\u53d8\uff0c\u5e76\u4e14mask\u6309[b,1.0]\u5e7f\u64ad\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_assignment_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "af4852b978a3b4358b57b716787131f1a922fceb6673c6fc53081bfd01d50340",
+      "run_id": "proposal::round_044::directed_capacity_assignment_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_044/directed_capacity_assignment_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_i=t_i-s_i\uff0c\u4ee4c_i\u4e3a\u8dddt_i\u6700\u8fd1\u7684\u7801\u5b57\uff0c\u4ee4a_i=s_i-c_i\uff0c\u4ee4d_i=||c_i-a_i||\uff0c\u4ee4v_i=r_i/(||r_i||+eps)\u3002\u5b9a\u4e49l=weight\u00b7mean_imask_i\u00b7[(v_i^t(c_i-a_i)-margin)^2.0+repel\u00b7max(0.0,sep-||c_i-c_j||)^2.0]\uff0c\u5176\u4e2dj\u4e3a\u8dddc_i\u6700\u8fd1\u7684\u5176\u4ed6\u7801\u5b57\uff1b\u7a7a\u63a9\u7801\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_frame_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "5e50d9b0901ffa54826b162645f1f518ad70d111122cc008415cfbf247147612",
+      "run_id": "proposal::round_044::directed_residual_frame_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_044/directed_residual_frame_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=(t_i-s_i)/(||t_i-s_i||+eps)\uff0c\u4ee4c_i\u4e3acodebook\u4e2d\u8dddt_i\u6700\u8fd1\u7684\u7801\u5b57\uff0c\u4ee4p_i=i-c_ic_i^t/(||c_i||^2.0+eps)\u3002\u5b9a\u4e49l=weight\u00b7mean_imask_i\u00b7[-u_i^tp_i(c_i-s_i)+repel\u00b7max(0.0,sep-||c_i-c_j||)^2.0]\uff0c\u5176\u4e2dj\u662f\u8dddc_i\u6700\u8fd1\u7684\u5176\u4ed6\u7801\u5b57\uff1b\u7a7a\u63a9\u7801\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_tangent_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "401e58a0f7537ad5fd6c620b9e4d6986379709689f0afdaa8b67182f81183e83",
+      "run_id": "proposal::round_044::directed_tangent_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_044/directed_tangent_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4c_s=argmin_j||s-e_j||\u00b2\uff0cc_t=argmin_j||t-e_j||\u00b2\uff0cu=e_{c_t}-e_{c_s}\uff0cr=t-s\uff0cp_u=i-uu\u1d40/(||u||\u00b2+eps)\u3002l=weight\u00b7mean_bmask_b\u00b7[softplus((margin-r\u1d40p_ur)/(temperature))+repulsion\u00b7exp(-||u||\u00b2/separation\u00b2)\u00b7(r\u1d40u)\u00b2/(||u||\u00b2+eps)]\u3002\u82e5c_s=c_t\uff0c\u5219\u8be5\u6837\u672c\u7684\u4e24\u9879\u5747\u5b9a\u4e49\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_partition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "6efd5a42ad529fba42dc20f9054f3f448148d25ddd0782b31f5782c1524152bc",
+      "run_id": "proposal::round_045::directed_codebook_tangent_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_045/directed_codebook_tangent_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u6837\u672c\u4ee4p_j(x)=softmax_j(-||x-e_j||\u00b2/temperature)\uff0cq_j(x)=softmax_j(-||x-e_j||\u00b2/temperature)\uff0c\u5176\u4e2d\u5bf9\u6e90\u7aef\u4f7f\u7528p\uff0c\u5bf9\u76ee\u6807\u7aef\u4f7f\u7528q\u3002\u4ee4a=\u03c3_jp_j(s)q_j(t)\uff0cb=\u03c3_jp_j(t)q_j(s)\uff0c\u5b9a\u4e49l=weight\u00b7mean_bmask_b\u00b7[softplus((margin-a)/temperature)+direction\u00b7(1.0-b)+separation\u00b7exp(-||e_{c_t}-e_{c_s}||\u00b2/scale\u00b2)]\uff0c\u5176\u4e2dc_s\u3001c_t\u662f\u5404\u7aef\u6700\u8fd1\u7801\u5b57\uff1b\u5f53c_s=c_t\u65f6\u5206\u79bb\u9879\u7f6e\u96f6\u3002\u4ea4\u6362source\u4e0etarget\u4f1a\u4ea4\u6362a\u4e0eb\uff0cdirection\u9879\u4f7f\u635f\u5931\u6709\u5411\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pair_separation_assignment_margin",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "28548afac6feb039d29c4a22c34fb13cafe6dc40ef3bca5ca803a03a69f268dc",
+      "run_id": "proposal::round_045::directed_pair_separation_assignment_margin",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_045/directed_pair_separation_assignment_margin/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r=t-s\uff0c\u4ee4c_s=argmin_j||s-e_j||\u00b2\u3001c_t=argmin_j||t-e_j||\u00b2\uff0c\u5b9a\u4e49d_s=e_{c_s}-s\uff0cd_t=e_{c_t}-t\u3002l=weight\u00b7mean_bmask_b\u00b7[softplus((margin-d_s\u1d40r)/(temperature))+curvature\u00b7(d_t\u1d40r)\u00b2/(||r||\u00b2+eps)+separation\u00b7exp(-||e_{c_t}-e_{c_s}||\u00b2/scale\u00b2)]\uff1b\u82e5c_s=c_t\uff0c\u6700\u540e\u4e00\u9879\u4e3a\u96f6\u3002\u6e90\u5230\u76ee\u6807\u7684\u6b8b\u5dee\u65b9\u5411r\u4f7f\u4ea4\u6362\u7aef\u70b9\u540e\u524d\u4e24\u9879\u6539\u53d8\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_conditional_geometry",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "8e9ee899b57ed59394a29f23b195b02440c1ef23d2d530f8358fcd09c6161aef",
+      "run_id": "proposal::round_045::directed_residual_conditional_geometry",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_045/directed_residual_conditional_geometry/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_b=(t_b-s_b)/(||t_b-s_b||_2+eps)\uff0cv_b=(c_{j_b}-c_{i_b})/(||c_{j_b}-c_{i_b}||_2+eps)\uff0c\u5176\u4e2di_b=argmin_j||s_b-c_j||\u00b2\uff0cj_b=argmin_j||t_b-c_j||\u00b2\uff1bl=weight*masked_mean_b[(u_b\u00b7v_b-cos_target)^2.0+repulsion*exp(-||c_{i_b}-c_{j_b}||\u00b2/separation_scale\u00b2)]\u3002\u8bad\u7ec3\u65f6\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\u505c\u6b62\u68af\u5ea6\uff1b\u8ddd\u79bb\u4e0e\u65b9\u5411\u5bf9\u88ab\u9009\u4e2d\u7684\u7801\u5b57\u4fdd\u6301\u68af\u5ea6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavioural_rigid_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "87a9fd6be6d073cb4336d162c5f7de704aae8595605e5319acf4b3a804b677f4",
+      "run_id": "proposal::round_046::directed_behavioural_rigid_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_046/directed_behavioural_rigid_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s(j)=softmax_j(-||s-c_j||\u00b2/temperature)\uff0cp_t(j)=softmax_j(-||t-c_j||\u00b2/temperature)\uff0c\u4e14p\u0304=(p_s+p_t)/2.0\u3002l=weight*masked_mean_b[-log(sum_jp_s(j)p_t(j)+eps)+capacity_weight*sum_j(p\u0304(j)-<separation_weight>/c)\u00b2+separation_weight*relu(min_separation-||\u03c3_jp_s(j)c_j-\u03c3_jp_t(j)c_j||)\u00b2+direction_weight*relu(0.0,(t-s)\u00b7(\u03c3_jp_t(j)c_j-\u03c3_jp_s(j)c_j))\u00b2]\u3002\u8be5\u76ee\u6807\u6709\u5411\uff1a\u6e90\u3001\u76ee\u6807\u4e92\u6362\u4f1a\u4ea4\u6362p_s\u4e0ep_t\uff0c\u5e76\u6539\u53d8\u6709\u5411\u65b9\u5411\u9879\uff1b\u5168\u90e8\u63a9\u7801\u65f6\u635f\u5931\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_soft_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "d95db537db2bfea0e45d459f97f7fd9ffce7161dbd2ecdbc5675fbd140e98366",
+      "run_id": "proposal::round_046::directed_capacity_constrained_soft_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_046/directed_capacity_constrained_soft_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_b=t_b-s_b\uff0c\u4ee4q_b=argmin_j||s_b-c_j||\u00b2\uff0c\u5b9a\u4e49\u6b8b\u5dee\u5207\u5411\u5206\u91cfr_perp,b=r_b-(r_b\u00b7(c_{q_b}/(||c_{q_b}||+eps)))c_{q_b}/(||c_{q_b}||+eps)\uff0c\u5e76\u4ee4d_b=c_{j_b}-c_{i_b}\uff0c\u5176\u4e2di_b\u3001j_b\u5206\u522b\u662fsource\u3001target\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\u4e14\u7d22\u5f15\u9009\u62e9\u505c\u6b62\u68af\u5ea6\u3002l=weight*masked_mean_b[-r_perp,b\u00b7d_b/(||r_perp,b||||d_b||+eps)+barrier_weight*relu(min_separation-||d_b||)^2.0]\u3002\u8be5\u76ee\u6807\u6cbf\u884c\u4e3a\u6761\u4ef6\u6b8b\u5dee\u7684\u5207\u5411\u65b9\u5411\u8f93\u8fd0\u7801\u5b57\u5dee\uff0c\u5e76\u5bf9\u540c\u4e00\u884c\u4e3a\u5bf9\u6700\u8fd1\u7801\u5b57\u65bd\u52a0\u8ddd\u79bb\u5c4f\u969c\uff1b\u5168\u63a9\u7801\u65f6\u635f\u5931\u4e3a\u7cbe\u786e\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_transport_with_pair_barrier",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "869d4afbd9452f0dcc9ff6c507a6fa756b934f0ce3974979e5f8a5ec95862b99",
+      "run_id": "proposal::round_046::directed_residual_tangent_transport_with_pair_barrier",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_046/directed_residual_tangent_transport_with_pair_barrier/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_j(x)=softmax_j(-||x-codebook_j||_2^2.0/temperature)\uff0c\u4ee4s_i=\u03c3_jp_j(source_i)codebook_j\u3001t_i=\u03c3_jp_j(target_i)codebook_j\u3002\u5b9a\u4e49l=weight*mean_i(mask_i*[||s_i-target_i||_2^2.0-||t_i-source_i||_2^2.0+separation_weight*relu(margin-||s_i-t_i||_2)^2.0])\u3002\u524d\u4e24\u9879\u6784\u6210\u6709\u5411\u5206\u914d\u76ee\u6807\uff0c\u672b\u9879\u60e9\u7f5a\u6765\u6e90\u548c\u76ee\u6807\u8f6f\u5206\u914d\u7801\u5411\u91cf\u8fc7\u8fd1\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_assignment_margin_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "9334ac52721913ad5cff518d1eff654443e722ff9ec71105157bee8c7a265cae",
+      "run_id": "proposal::round_047::directed_assignment_margin_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_047/directed_assignment_margin_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4d_i=target_i-source_i\uff0cq_ij=codebook_j-source_i\uff0cu_i=d_i/(||d_i||_2+eps)\uff0cp_i=i-u_iu_i^t\uff0cz_ij=p_iq_ij\uff0ch_i=p_id_i\u3002\u5b9a\u4e49l=weight*mean_i(mask_i*mean_j((||z_ij-h_i||_2^2.0-||z_ij||_2^2.0)/temperature))\u3002\u8be5\u65b9\u5411\u6027\u6b8b\u5dee\u76ee\u6807\u8ba9\u7801\u5b57\u7684\u5207\u5411\u6b8b\u5dee\u9002\u914d\u884c\u4e3a\u4f4d\u79fb\u7684\u5207\u5411\u5206\u91cf\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "549b5976652c2c56555d08ceea68751a5a0b702cfdc5dac8fb10727926083cb4",
+      "run_id": "proposal::round_047::directed_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_047/directed_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4d_i=target_i-source_i\uff0cu_i=d_i/(||d_i||_2+eps)\uff0cr_ij=codebook_j-source_i\uff0cp_i=i-u_iu_i^t\u3002\u5b9a\u4e49a_ij=<p_ir_ij,p_id_i>\uff0cl=weight*mean_i(mask_i*mean_j(tanh(a_ij/temperature)))\u3002\u8be5\u6709\u5411\u52bf\u63a8\u52a8\u7801\u672c\u6cbf\u884c\u4e3a\u65b9\u5411\u7684\u5207\u7a7a\u95f4\u53d1\u751f\u5dee\u5f02\u5316\u65cb\u8f6c\uff0c\u800c\u4e0d\u6cbf\u6e90\u5230\u76ee\u6807\u7684\u8fde\u7ebf\u6536\u7f29\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_tangent_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "2135bcedce30c7e9488dd672a15fd43b07a160f9c8e95efaa1137eb0b37d657d",
+      "run_id": "proposal::round_047::directed_tangent_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_047/directed_tangent_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4r_s=s-c_i\uff0cr_t=t-c_j\uff0cd=normalize(t-s)\uff0cn=normalize(r_s-r_t)\uff0c\u5b9a\u4e49l=weight*mean_mask[softplus(margin-d\u00b7(r_s-r_t))+separation_weight*relu(min_separation-||c_i-c_j||)^2.0]\uff0c\u5176\u4e2di\u3001j\u5206\u522b\u662fsource\u3001target\u6700\u8fd1\u7801\u5b57\u3002\u7a7a\u6709\u6548mask\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [
+        "curvature"
+      ],
+      "proposal_sha256": "a43cea757612798cf70179fac2888f78083bddddf02cbca4b7bb8b73b62d23cd",
+      "run_id": "proposal::round_120::directed_behavior_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_120/directed_behavior_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_i=(c_i-s)/||c_i-s||\uff0cv_i=(c_i-t)/||c_i-t||\uff0c\u5176\u4e2di\u662fsource\u6700\u8fd1\u7801\u5b57\uff1b\u4ee4q_i=normalize(u_i-v_i)\uff0ca_i=normalize(t-s)\u3002\u5b9a\u4e49l=weight*mean_mask[softplus(margin-(a_i\u00b7q_i))+separation_weight*(relu(min_separation-||c_i-c_j||))^2.0]\uff0cj\u662ftarget\u6700\u8fd1\u7801\u5b57\u3002\u82e5\u6709\u6548mask\u4e3a\u7a7a\uff0cl=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_pairwise_codebook_tangent_repartition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "28d5d2e6341d1df2866e28c98477b661ef7df2751c8ddc53f8670bf032dddd8a",
+      "run_id": "proposal::round_120::directed_pairwise_codebook_tangent_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_120/directed_pairwise_codebook_tangent_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s=softmax(-||s-c_k||\u00b2/temperature)\uff0cp_t=softmax(-||t-c_k||\u00b2/temperature)\uff0c\u4e14a=softmax(-||t-c_k||\u00b2/temperature)\uff1b\u4ee4r=normalize(p_s)\uff0cz=normalize(a)\uff0c\u5b9a\u4e49l=weight*mean_mask[-log(sum_kr_kz_k+eps)+separation_weight*relu(min_separation-||c_{argmaxr}-c_{argmaxz}||)^2.0]\u3002\u7a7a\u6709\u6548mask\u65f6l=0.0\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_soft_assignment_capacity_rewire",
+      "notes": "",
+      "operator_classes": [
+        "argmax",
+        "softmax"
+      ],
+      "proposal_sha256": "0589a26e70d56f6f39742dd50a85dc350f49729c8b1bc7d16d561d131bc92208",
+      "run_id": "proposal::round_120::directed_soft_assignment_capacity_rewire",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_120/directed_soft_assignment_capacity_rewire/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u6709\u6548\u6709\u5411\u5bf9\uff0c\u4ee4r=t-s\uff0cc_t\u4e3atarget\u6700\u8fd1\u7801\u5b57\uff0cc_s\u4e3asource\u6700\u8fd1\u7801\u5b57\uff0cq=r/(||r||\u2082+eps)\u3002\u2113_i=||(t-c_t)-q\u00b7(q\u1d40(t-c_t))||\u2082\u00b2+\u03b1\u00b7max(0.0,\u03b4-||c_s-c_t||\u2082)\u00b2\u3002l=w\u00b7sum_imask_i\u00b7\u2113_i/(sum_imask_i+eps)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "06c1658b12c1b5be0fde1f204ddb5274ceb1817abd546ec818d2d5ad715bcd4b",
+      "run_id": "proposal::round_121::directed_behavior_residual_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_121/directed_behavior_residual_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u6709\u6548\u6709\u5411\u5bf9\uff0c\u4ee4c_s\u3001c_t\u4e3asource\u3001target\u7684\u6700\u8fd1\u7801\u5b57\uff0cd(x,c)=||x-c||\u2082\u00b2\u3002\u2113_i=softplus(m+d(t,c_s)-d(t,c_t))+\u03bb\u00b7max(0.0,\u03b4-||c_s-c_t||\u2082)\u00b2\u3002l=w\u00b7sum_imask_i\u00b7\u2113_i/(sum_imask_i+eps)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_pair_assignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "df6df83abfe17e6463440b5fdd2279c88a0019873f86732a2a159d8ae2580896",
+      "run_id": "proposal::round_121::directed_capacity_constrained_pair_assignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_121/directed_capacity_constrained_pair_assignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u6709\u6548\u6709\u5411\u5bf9(s,t)\uff0c\u4ee4u=(t-s)/(||t-s||\u2082+eps)\uff0c\u4ee4c_s\u3001c_t\u5206\u522b\u4e3acodebook\u4e2d\u8ddds\u3001t\u6700\u8fd1\u7684\u884c\uff0c\u4ee4p_u=i-uu\u1d40\u3002\u2113_i=||p_u(s-c_t)||\u2082\u00b2-||p_u(s-c_s)||\u2082\u00b2+\u03bc\u00b7max(0.0,\u03b4-||c_s-c_t||\u2082)\u00b2\u3002l=w\u00b7sum_imask_i\u00b7\u2113_i/(sum_imask_i+eps)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_partition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "8cfba3064ba88d4b5ebab6ebbc36cc8289b14ea925ae4fdcade67c7d02b72a97",
+      "run_id": "proposal::round_121::directed_codebook_tangent_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_121/directed_codebook_tangent_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u672a\u5c4f\u853d\u5bf9\uff0c\u4ee4r=target-source\uff0ca=softmax(-||source-c||\u00b2/tau)\uff0cb=softmax(-||target-c||\u00b2/tau)\uff0c\u5e76\u4ee4d=sum_cb(c)c-sum_ca(c)c\u3002\u5b9a\u4e49l=weight*masked_mean(softplus(margin-d\u00b7r_hat)+separation_weight*relu(separation_margin-||sum_cb(c)c-sum_ca(c)c||)^2.0)\uff0c\u5176\u4e2dr_hat=r/(||r||+eps)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_behavior_residual_transport",
+      "notes": "",
+      "operator_classes": [
+        "curvature",
+        "softmax"
+      ],
+      "proposal_sha256": "8aaf2c5854f4a949feecf381b497d6d49fab027e875d53da5abd30eb7bed5336",
+      "run_id": "proposal::round_122::directed_behavior_residual_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_122/directed_behavior_residual_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4p_s(c)=softmax(-||source-c||\u00b2/tau)\uff0cp_t(c)=softmax(-||target-c||\u00b2/tau)\uff0cq(c)=softmax(-||source-c||\u00b2/tau)\u3002\u5bf9\u6bcf\u4e2a\u6709\u6548\u5bf9\u5b9a\u4e49l_i=-log(sum_cp_s(c)*stopgrad(p_t(c)))+balance_weight*sum_c(mean_mask(q(c))-1.0/c)^2.0\u3002\u603b\u635f\u5931\u4e3aweight*masked_mean(l_i)\u3002\u5b9e\u9645\u5b9e\u73b0\u4e2d\uff0c\u7b2c\u4e8c\u9879\u7684q\u6309\u5f53\u524d\u6709\u6548batch\u8ba1\u7b97\uff1b\u7a7a\u63a9\u7801\u65f6\u603b\u635f\u5931\u4e25\u683c\u4e3a\u96f6\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_constrained_assignment_relabeling",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "3fa741c906a5d35bf58ca459a5d101eb67902203ac448771cd5469cb6a839f54",
+      "run_id": "proposal::round_122::directed_capacity_constrained_assignment_relabeling",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_122/directed_capacity_constrained_assignment_relabeling/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u672a\u5c4f\u853d\u884c\u4e3a\u5bf9\uff0c\u4ee4u=normalize(c_near(source)-source)\uff0cv=normalize(target-source)\uff0c\u5e76\u4ee4t=v-(u\u00b7v)u\u3002\u5b9a\u4e49l=weight*mean_mask(softplus(margin-(c_near(target)-c_near(source))\u00b7t))\u3002\u6700\u8fd1\u7801\u5b57\u7d22\u5f15\u4ee5\u8f93\u5165\u7684\u6b27\u6c0f\u8ddd\u79bb\u786e\u5b9a\uff1b\u5f52\u4e00\u5316\u5206\u6bcd\u52a0eps\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "bbdcf751a742e312f22039c7f172c4e56fe67f2c70ba2f3f8787eda19db52528",
+      "run_id": "proposal::round_122::directed_codebook_tangent_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_122/directed_codebook_tangent_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2ax\u2208{source_b,target_b}\u5b9a\u4e49p_xc=softmax_c(-||x-codebook_c||_2^2.0/temperature)\u3002\u4ee4q_b=p_source_b\uff0cr_b=p_target_b\uff0c\u4e14\u4ee4\u03c0_c=mean_{b:mask_b=1.0}q_bc\u3002\u5b9a\u4e49l=lambda*masked_mean_b[-log(sum_cq_bc*r_bc+eps)+capacity_weight*sum_c(\u03c0_c-1.0/c)^2.0+direction_weight*sum_c(q_bc-r_bc)*(||target_b-codebook_c||_2^2.0-||source_b-codebook_c||_2^2.0)]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "capacity_preserving_directed_assignment",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "ae40d0dd3f5aeef8c7b460d7b7417419614f1c7a4cf67782d6bb37ad235e3e6b",
+      "run_id": "proposal::round_123::capacity_preserving_directed_assignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_123/capacity_preserving_directed_assignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4d_b=target_b-source_b\uff0ce_b=d_b/(||d_b||_2+eps)\uff0c\u4ee4c_b\u4e3a\u79bbtarget_b\u6700\u8fd1\u7684\u7801\u5b57\uff0cm\u4e3acodebook\u7684\u5747\u503c\uff0cz_b=c_b-m\uff0cz_parallel_b=(z_b\u00b7e_b)e_b\uff0cz_perp_b=z_b-z_parallel_b\u3002\u5b9a\u4e49l=lambda*masked_mean_b[||z_perp_b-residual_scale*d_b||_2^2.0/(||z_b||_2^2.0+eps)+separation_weight*softplus((separation_margin-||z_b||_2)/(temperature))]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_tangent_transport",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "2cff5b5bc353ab1ecfda4bdfed3fdfc059381f716f0b24b28f1ba27352012c14",
+      "run_id": "proposal::round_123::directed_residual_tangent_transport",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_123/directed_residual_tangent_transport/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u_b=(target_b-source_b)/(||target_b-source_b||_2+eps)\uff0c\u4ee4c_b\u4e3acodebook\u4e2d\u79bbtarget_b\u6700\u8fd1\u7684\u7801\u5b57\uff0c\u4ee4v_b=c_b-mean(codebook)\u3002\u5b9a\u4e49a_b=u_b\u00b7v_b\uff0ct_b=v_b-a_bu_b\uff0cl=lambda*masked_mean_b[softplus((margin-a_b)/temperature)+rotation_weight*||t_b-rotation_scale*a_b*u_b||_2^2.0/(||v_b||_2^2.0+eps)]\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_tangent_codebook_rotation",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "8664be62697c6f4547d08cd0469f5b7c8d40b7aab106fda2cae2569324aea7e0",
+      "run_id": "proposal::round_123::directed_tangent_codebook_rotation",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_123/directed_tangent_codebook_rotation/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u5bf9\u6bcf\u4e2a\u5411\u91cfx\u5b9a\u4e49p_j(x)=softmax_j(\u2212||x\u2212codebook_j||\u2082\u00b2/\u03c4)\uff0c\u5bf9source\u4e0etarget\u5b9a\u4e49\u6709\u5411\u8f6c\u79fb\u77e9\u9635t=p(source)\u1d40p(target)\u3002\u4ee4a_j=p_j(source)\uff0cb_j=p_j(target)\uff0cl=\u03bb[\u2212\u03c3_jt_jj+\u03c1\u00b7\u03c2_j(a_j\u2212b_j)\u00b2]\u3002\u7b2c\u4e00\u9879\u63d0\u9ad8\u884c\u4e3a\u5bf9\u540c\u7801\u6982\u7387\uff0c\u7b2c\u4e8c\u9879\u4ee5\u6709\u5411\u8fb9\u9645\u5dee\u5f02\u7834\u9664\u4ea4\u6362\u5bf9\u79f0\uff1b\u4e0d\u5f97\u52a0\u5165\u4f7f\u7aef\u70b9\u7801\u5b57\u76f8\u4e92\u5438\u5f15\u7684\u9879\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_capacity_soft_repartition",
+      "notes": "",
+      "operator_classes": [
+        "softmax"
+      ],
+      "proposal_sha256": "8f427fa7ef6c6e241b2c373add833b0762336d6a1308236b43d778a85e9e4306",
+      "run_id": "proposal::round_124::directed_capacity_soft_repartition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_124/directed_capacity_soft_repartition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4u=(source-target)/(||source-target||\u2082+eps)\uff0cq=argmin_j||source-codebook_j||\u2082\u00b2\uff0ck=argmin_j||target-codebook_j||\u2082\u00b2\uff0cr_j=codebook_j-source\u3002l=\u03bb(\u2212u\u00b7(r_k\u2212r_q)+\u03bc\u00b7max(0.0,m\u2212||codebook_k\u2212codebook_q||\u2082)\u00b2)\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_codebook_tangent_partition",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "efac283cbd46b551b64972b01020a972769118bde9d3fa5686ca445da8a52287",
+      "run_id": "proposal::round_124::directed_codebook_tangent_partition",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_124/directed_codebook_tangent_partition/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "\u4ee4d=target\u2212source\uff0c\u0109=argmin_j||source\u2212codebook_j||\u2082\u00b2\uff0cv=codebook_\u0109\u2212source\uff0c\u03b4=d\u00b7v/(||d||\u2082\u00b2+eps)\u3002l=\u03bb[\u2212\u03b4+\u03b3\u00b7max(0.0,|\u03b4|\u2212r)\u00b2]\u3002\u7b2c\u4e00\u9879\u5bf9\u9f50\u884c\u4e3a\u6b8b\u5dee\u4e0e\u6765\u6e90\u91cf\u5316\u6b8b\u5dee\uff1b\u7b2c\u4e8c\u9879\u9650\u5236\u5355\u5bf9\u6b8b\u5dee\u6295\u5f71\u7684\u8fc7\u5927\u5e45\u5ea6\uff0c\u4e0d\u542b\u7aef\u70b9\u7801\u5b57\u76f8\u4e92\u5438\u5f15\u3002",
+      "family": "unspecified",
+      "math_status": "verified",
+      "mechanism_id": "directed_residual_history_alignment",
+      "notes": "",
+      "operator_classes": [],
+      "proposal_sha256": "abbc8f90c7d42588a30d2dbdfcfbaa2e4022b8028a84e6c295ecb769797fe8af",
+      "run_id": "proposal::round_124::directed_residual_history_alignment",
+      "sid_export": "",
+      "source": "results/harness3_runs/controller/rounds/round_124/directed_residual_history_alignment/proposal.json"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "sid_export": "b08567c7fbaf06e5",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "sid_export": "eb1237df0acad348",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "sid_export": "5ed70aadbe517fac",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "sid_export": "0936671326dd2518",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/fork_radial_corr",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/fork_radial_corr",
+      "sid_export": "f302449845c011a7",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/fork_more_sib",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/fork_more_sib",
+      "sid_export": "3ceb2d57a7443bc8",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/prefix_sib",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/prefix_sib",
+      "sid_export": "15b540a23491e965",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/fork_euclid_group",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/fork_euclid_group",
+      "sid_export": "84126c626920322f",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/exp2_euclid_matched",
+      "sid_export": "cc6e729ccab9f00d",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/fork_ang_only",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/fork_ang_only",
+      "sid_export": "65819d4075542a75",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/exp4_euclid_delta",
+      "sid_export": "8c28fb6944d2283b",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "smoothness_arms/A_euclid_smooth_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::smoothness_arms/A_euclid_smooth_s42",
+      "sid_export": "16b024dff4b814e4",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "curvature_RQ-VAE/euclid_l2_256_72k_s43",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::curvature_RQ-VAE/euclid_l2_256_72k_s43",
+      "sid_export": "0a72486f6f6bc5d6",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/nce_euclid_radius_control",
+      "sid_export": "858ac30df43405b0",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "smooth_fair_arms/A_euclid_smoothfair_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::smooth_fair_arms/A_euclid_smoothfair_s42",
+      "sid_export": "9590324d1b3377fa",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "smoothness_arms/B_poincare_smooth_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::smoothness_arms/B_poincare_smooth_s42",
+      "sid_export": "8abe6860ac8fae59",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "curvature_RQ-VAE/euclid_l2_256_72k_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::curvature_RQ-VAE/euclid_l2_256_72k_s42",
+      "sid_export": "9f9067d6d5839521",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/nce_euclid_group",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/nce_euclid_group",
+      "sid_export": "4484e382f405d5e0",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/nce_hyp_group",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/nce_hyp_group",
+      "sid_export": "c48ae84b67b69a0a",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "smooth_fair_arms/B_poincare_smoothfair_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::smooth_fair_arms/B_poincare_smoothfair_s42",
+      "sid_export": "b21f89a613921de0",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "curvature_RQ-VAE/euclid_l2_256_72k_s44",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::curvature_RQ-VAE/euclid_l2_256_72k_s44",
+      "sid_export": "fabb437555769491",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "curvature_RQ-VAE",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::curvature_RQ-VAE",
+      "sid_export": "73bb967663f25f0a",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_ball",
+      "sid_export": "0a8f1c6cd576c021",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_FORK_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_FORK_RQ-VAE/fork_hyp_group",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_FORK_RQ-VAE/fork_hyp_group",
+      "sid_export": "c468711bf505fccd",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/exp2_poincare_c1",
+      "sid_export": "a19a90139b6d014d",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_cone_arms/A_euclid_nocone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_cone_arms/A_euclid_nocone_s42",
+      "sid_export": "5cd26e761f1c0b83",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/fix_carry_euclid_raw",
+      "sid_export": "9064df1523f0ba67",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_RQ-VAE",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_RQ-VAE",
+      "sid_export": "53273cb605dc3210",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_assignment_arms/A_bucket_sinkhorn_s42",
+      "sid_export": "f2655ce037dc49fa",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_cone_arms/B_poincare_nocone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_cone_arms/B_poincare_nocone_s42",
+      "sid_export": "c9f990c353af78c4",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/fix_det_euclid_raw",
+      "sid_export": "7cc7c8e2d9e6503d",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_assignment_arms/B_global_sinkhorn_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_assignment_arms/B_global_sinkhorn_s42",
+      "sid_export": "1019d2502683a3ba",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "coarse_l1_arms/B_poincare_coarse_l1_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::coarse_l1_arms/B_poincare_coarse_l1_s42",
+      "sid_export": "6fd8cc3ed6f5d961",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_cone_arms_fixed_rejection/D_poincare_cone_s42",
+      "sid_export": "7d892b1f5b12ec9a",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "TIGER_HYPERBOLIC_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::TIGER_HYPERBOLIC_RQ-VAE/fix_det_poincare",
+      "sid_export": "25e30c50e172d058",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "l2_cone_arms/D_poincare_cone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::l2_cone_arms/D_poincare_cone_s42",
+      "sid_export": "08eb05f4ada000f6",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "metric_cone_arms/B_poincare_metriccone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::metric_cone_arms/B_poincare_metriccone_s42",
+      "sid_export": "c24f515a853b497d",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    },
+    {
+      "ast_sha256": "",
+      "equation_signature": "",
+      "family": "curvature_RQ-VAE",
+      "math_status": "novelty_unknown",
+      "mechanism_id": "metric_cone_arms/A_euclid_metriccone_s42",
+      "notes": "the archived model has no recoverable proposal or source here, so its mathematics is UNKNOWN: this entry is a name-level record only and a mechanism with this name is refused, while a mechanism with a different name is NOT cleared by it and must be checked against the prior-art review",
+      "operator_classes": [],
+      "proposal_sha256": "",
+      "run_id": "inventory::metric_cone_arms/A_euclid_metriccone_s42",
+      "sid_export": "2798778d1034824d",
+      "source": "results/stage3_T5Train/monotonicity/model_inventory.csv"
+    }
+  ],
+  "registry_sha256": "6fc39469ec2a6642ad39cb62628994e20c6a9c64360956bcb0d0b5b90b527b05",
+  "version": 2
+}
