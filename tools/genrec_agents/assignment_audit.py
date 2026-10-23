@@ -18,11 +18,13 @@ pre-registered decision criterion is the FLIP RATE, not a variance or a syntheti
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import json
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-__all__ = ["audit", "GATE"]
+__all__ = ["audit", "emit", "GATE"]
 
 #: A mechanism whose term flips fewer than this fraction of decisions, in any stage, has not been
 #: shown to do anything. Fixed before any run.
@@ -82,3 +84,40 @@ def audit(full: np.ndarray, ablated: np.ndarray, *,
                     else "the mechanism's term is not shown to change any decision: "
                          + "; ".join(failures)),
     }
+
+
+def emit(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
+         components: Optional[Dict[str, np.ndarray]] = None,
+         clamp_count: Optional[int] = None, error_count: Optional[int] = None) -> Dict[str, Any]:
+    """Write the per-operation diagnostics a run must emit, not merely compute.
+
+    The JOIN R review of issue #115 refused to accept a falsifier that exists only as a function in
+    the repository: the RUN has to leave the record behind. This writes, per example, the winning
+    index under both scores, the winner/runner-up margins, and every named score component, plus the
+    aggregate audit and the clamp/error counts -- one JSON file that a reviewer can check without
+    re-running anything.
+    """
+    full = np.asarray(full, dtype=np.float64)
+    ablated = np.asarray(ablated, dtype=np.float64)
+    summary = audit(full, ablated)
+    ordered = np.sort(full, axis=1)
+    gap = ordered[:, 1] - ordered[:, 0] if full.shape[1] > 1 else np.zeros(len(full))
+    record = {
+        "schema_version": 1, "kind": "assignment_audit", "stage": stage,
+        "summary": summary,
+        "per_example": {
+            "winner_full": full.argmin(axis=1).tolist(),
+            "winner_ablated": ablated.argmin(axis=1).tolist(),
+            "margin_full": gap.tolist(),
+            "flipped": (full.argmin(axis=1) != ablated.argmin(axis=1)).tolist(),
+        },
+        "components": {name: np.asarray(value, dtype=np.float64).tolist()
+                       for name, value in (components or {}).items()},
+        "clamp_count": int(clamp_count) if clamp_count is not None else None,
+        "error_count": int(error_count) if error_count is not None else None,
+        "thresholds_frozen_before_metrics": True,
+    }
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return {"path": str(out), "summary": summary}
