@@ -1,0 +1,172 @@
+{
+  "counts": {
+    "archives_imported": 17,
+    "archives_missing": 0,
+    "new_scientific_arms": 0,
+    "old_archive_imports": 17,
+    "synthetic_math_tests": 0
+  },
+  "imports": [
+    {
+      "bytes": 8189,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "historical_inventory",
+      "path": "results/stage3_T5Train/monotonicity/model_inventory.csv",
+      "rows": 38,
+      "sha256": "44e31e5ccc511bd21cbe31d68798a545c97daeb9aec4aaf94714fa25ca897216"
+    },
+    {
+      "bytes": 27603,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "historical_features",
+      "path": "results/stage3_T5Train/monotonicity/joint_prefix_predictors/stage2_valid_features.csv",
+      "rows": 38,
+      "sha256": "b4714d5b546825e2e65e15fc6645e11237467ff1e53217d3c36b2027da0d8611"
+    },
+    {
+      "bytes": 193804,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "historical_probe_scores",
+      "path": "results/stage3_T5Train/monotonicity/history_hierarchy_predictors_fix48/probe_scores.csv",
+      "rows": 228,
+      "sha256": "e8ac51d0c25684fad61a5478e43a2cf31c4d2a15fdddfa4bf57c77e86de1c371"
+    },
+    {
+      "bytes": 26622,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "historical_per_model_features",
+      "path": "results/stage3_T5Train/monotonicity/history_hierarchy_predictors_fix48/per_model_features.csv",
+      "rows": 38,
+      "sha256": "e8a4fcd4c1a9c95a66f0043142a0d62239640e888bdf5386cb605257ef56d0b2"
+    },
+    {
+      "bytes": 157547,
+      "exists": true,
+      "files": 72,
+      "kind": "old_archive_import",
+      "kinds": {
+        "control": 2,
+        "probe": 27,
+        "stage2": 29,
+        "stage3": 14
+      },
+      "manifests": 72,
+      "mechanisms": 32,
+      "name": "campaign_store",
+      "path": "results/harness3_runs/store/runs"
+    },
+    {
+      "bytes": 1176459498,
+      "exists": true,
+      "files": 1770,
+      "kind": "old_archive_import",
+      "name": "campaign_proposals",
+      "path": "results/harness3_runs/controller/rounds",
+      "proposals": 144
+    },
+    {
+      "bytes": 1684150,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "campaign_audit",
+      "path": "results/harness3_runs/controller/audit.jsonl",
+      "rows": 5736,
+      "sha256": "21d82217360967dcfbd01f18bb6fab5e1c1e7663dc408598bc01631f63c3c9db"
+    },
+    {
+      "bytes": 54397,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "campaign_ledger",
+      "path": "results/harness3_runs/hypotheses/ledger.json",
+      "sha256": "15302b67e28642c9771cc5f1d1f6d311d792a9c28da80e4bde776eba0f3ba0bb",
+      "top_level_keys": [
+        "generated_utc",
+        "hypotheses",
+        "ledger_sha256",
+        "ledger_version"
+      ]
+    },
+    {
+      "bytes": 150544,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "prior_art_registry",
+      "path": "results/hyperbolic_research_runs/prior_art_registry.json",
+      "sha256": "fc2ddf546c2ada7d64e0accb6b8d48f16d71f2c6d207334976c35379ad35bbf7",
+      "top_level_keys": [
+        "counts",
+        "entries",
+        "registry_sha256",
+        "version"
+      ]
+    },
+    {
+      "bytes": 786912,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "frozen_control_export",
+      "path": "results/stage2_RQ-VAE/r8_control/sids_for_hgrec.npy",
+      "sha256": "abaaab8ac26d6246abc7e9fa27716e74aa5f6aa0e833c09e3b431c79e149819f"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "frozen_control_checkpoint",
+      "path": "results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+      "sha256": "3b7ca556fe025db618f550c4353b1139926bf847da49301b06a375743be9ae72"
+    },
+    {
+      "bytes": 1435941,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "frozen_pair_archive",
+      "path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+    },
+    {
+      "bytes": 11152937,
+      "exists": true,
+      "kind": "old_archive_import",
+      "name": "train_parquet",
+      "path": "results/stage0_build_parquet/train.parquet",
+      "sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815"
+    },
+    {
+      "exists": true,
+      "files": 37,
+      "kind": "old_archive_import",
+      "name": "r8_tree::TIGER_r8_07_hyperbolic_gyro",
+      "path": "stage2_RQ-VAE/TIGER_r8_07_hyperbolic_gyro"
+    },
+    {
+      "exists": true,
+      "files": 37,
+      "kind": "old_archive_import",
+      "name": "r8_tree::TIGER_r8_08_hyperbolic_frechet",
+      "path": "stage2_RQ-VAE/TIGER_r8_08_hyperbolic_frechet"
+    },
+    {
+      "exists": true,
+      "files": 37,
+      "kind": "old_archive_import",
+      "name": "r8_tree::TIGER_r8_09_hyperbolic_branching",
+      "path": "stage2_RQ-VAE/TIGER_r8_09_hyperbolic_branching"
+    },
+    {
+      "exists": true,
+      "files": 37,
+      "kind": "old_archive_import",
+      "name": "r8_tree::TIGER_r8_10_hyperbolic_gw",
+      "path": "stage2_RQ-VAE/TIGER_r8_10_hyperbolic_gw"
+    }
+  ],
+  "namespace": "results/hyperbolic_research_runs",
+  "policy": "the archives are read-only: this import writes nothing into the earlier campaigns, and an imported record is never counted as new science. A new scientific arm is one whose proposal hash is absent from the archive import; a synthetic math test is a verifier fixture and is never a measurement.",
+  "version": 1
+}
