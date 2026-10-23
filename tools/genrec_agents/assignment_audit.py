@@ -88,7 +88,9 @@ def audit(full: np.ndarray, ablated: np.ndarray, *,
 
 def emit(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
          components: Optional[Dict[str, np.ndarray]] = None,
-         clamp_count: Optional[int] = None, error_count: Optional[int] = None) -> Dict[str, Any]:
+         clamp_count: Optional[int] = None, error_count: Optional[int] = None,
+         item_index: Optional[np.ndarray] = None, split: str = "train",
+         candidate_sha256: str = "", units: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Write the per-operation diagnostics a run must emit, not merely compute.
 
     The JOIN R review of issue #115 refused to accept a falsifier that exists only as a function in
@@ -104,6 +106,12 @@ def emit(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
     gap = ordered[:, 1] - ordered[:, 0] if full.shape[1] > 1 else np.zeros(len(full))
     record = {
         "schema_version": 1, "kind": "assignment_audit", "stage": stage,
+        "candidate_sha256": candidate_sha256,
+        "examples": {"count": int(len(full)),
+                     "index": (np.asarray(item_index).tolist() if item_index is not None
+                               else list(range(len(full)))),
+                     "split": split},
+        "units": dict(units or {}),
         "summary": summary,
         "per_example": {
             "winner_full": full.argmin(axis=1).tolist(),
