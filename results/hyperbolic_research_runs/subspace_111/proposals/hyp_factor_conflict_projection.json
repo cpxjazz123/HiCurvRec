@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "mechanism_id": "hyp_factor_conflict_projection",
+  "version": "1",
+  "family": "C_cross_factor_geometry_preserving",
+  "title": "A metric-aware conflict gate: the behaviour gradient is projected against the content gradient in the codeword's own Riemannian metric",
+  "equation": "at each level-0 codeword a_j: g_j = (2 / (1 - c||exp_0^c(a_j)||^2))^2 * I; <u,v>_R = u^T g_j v;  conflict iff <g_beh, g_rec>_R < 0; if conflict: g_beh <- g_beh - ( <g_beh, g_rec>_R / (<g_rec, g_rec>_R + eps) ) * g_rec; the gate is applied to the codeword parameters only, and only on the coordinates of the behaviour half",
+  "symbols": {
+    "a_j": "the level-0 codeword's tangent coordinates",
+    "g_j": "the Riemannian metric tensor of the Poincare ball at the codeword's ball point, a scalar multiple of the identity whose scale depends on ||exp_0(a_j)||",
+    "g_beh / g_rec": "the behaviour term's and the reconstruction term's gradient with respect to the level-0 codeword parameters",
+    "<.,.>_R": "the inner product induced by g_j; a positive-definite but position-dependent inner product",
+    "eps": "the declared numerical guard, 1e-12",
+    "behaviour half": "the declared last 16 coordinates of the level-0 codebook, where the behaviour term is allowed to act"
+  },
+  "parameters": {
+    "c": 1.0,
+    "eps": 1e-12,
+    "division": 16,
+    "codebook_size": 256
+  },
+  "target_paths": [
+    "codebook"
+  ],
+  "path": "A",
+  "hyperbolic_model": "poincare_ball",
+  "hyperbolic_operator": "riemannian_metric_inner_product",
+  "curvature": -1.0,
+  "domains": {
+    "manifold": "B^16_{-1} per factor for the codewords; the metric tensor is evaluated at the codeword",
+    "points": "the codewords are the host's Euclidean codewords, mapped by exp_0 for the metric evaluation only; the assignment stays Euclidean, so the export's construction is unchanged in kind",
+    "tangent_domain": "the codeword's tangent space with g_j = (2/(1-||x||^2))^2 I",
+    "distance": "none used: the mechanism is a gradient-level gate, not a distance",
+    "boundary": "the metric's scale diverges as ||x|| -> 1; the declared margin and the maximum scale are recorded, and the gate is skipped (declared) when the scale exceeds 1e6"
+  },
+  "why_hyperbolic": "The conflict set is defined by a position-dependent inner product. Two gradient pairs with a negative Euclidean dot product can have a positive Riemannian dot product near the boundary and vice versa, so the set of coordinates that get projected differs from Euclidean PCGrad's, and the difference is caused by the curvature. As c -> 0 the metric becomes the identity and the gate degenerates to Euclidean PCGrad, which is the declared control.",
+  "role_assignment": "The behaviour half of the codebook is the only place the behaviour gradient may act, and the gate decides whether it is projected there. The factor split is thus enforced by the gradient's support, and the curvature decides the projection.",
+  "gradient_targets": {
+    "encoder": "zero_change",
+    "codebook": "nonzero_but_projected",
+    "hard_sid_export": "tokens_change"
+  },
+  "gradient_paths": {
+    "L_recon": "the level-0 codebook's content gradient, unchanged",
+    "L_trans": "the behaviour gradient on the last 16 coordinates, projected when the Riemannian inner product is negative",
+    "encoder": "unchanged from the host (declared zero change)",
+    "decoder": "unchanged from the host"
+  },
+  "sid_effect": {
+    "L1": "changes only where the projection fires",
+    "L2_L3": "unchanged",
+    "protocol": "3 tokens, 256 codes, 32 dimensions unchanged"
+  },
+  "compatibility": {
+    "dimensions": "32",
+    "capacity": "256 level-0 codes",
+    "export": "unchanged integer schema",
+    "verdict": "comparable with the frozen protocol; train-only, so the export changes only through the learned codebook"
+  },
+  "hypotheses": [
+    "the curvature makes the conflict set position-dependent, so near the boundary the gate fires on a different set of codewords than Euclidean PCGrad would, which changes which codewords the behaviour term is allowed to move",
+    "if the Case A/E failure is a gradient conflict at the codeword, gating the behaviour gradient in the codeword's own metric should keep the L0 tail (largest cell) at the control's while the transition share still improves",
+    "as c -> 0 the mechanism must reproduce Euclidean PCGrad's update exactly, which is a falsifiable identity, not an assumption"
+  ],
+  "expected_failure_modes": [
+    "overlap: the projected set equals the Euclidean one for all codewords on the probe, making the metric cosmetic",
+    "inert: the reconstruction and behaviour gradients rarely conflict at the codeword, so the gate never fires",
+    "scale blow-up: near the boundary the metric's scale makes the projection coefficient tiny or huge; the declared skip threshold and the recorded maximum are the guard"
+  ],
+  "tests": [
+    {
+      "id": "p3_metric_positive_definite",
+      "kind": "numeric",
+      "statement": "g_j is symmetric positive definite with a positive determinant for 32 sampled codewords"
+    },
+    {
+      "id": "p3_euclidean_limit",
+      "kind": "metamorphic",
+      "statement": "as c -> 0 the projected coordinate set converges to Euclidean PCGrad's, and at c=0 the update is bit-comparable within 1e-9"
+    },
+    {
+      "id": "p3_conflict_set_differs",
+      "kind": "metamorphic",
+      "statement": "for at least one codeword with ||x|| above 0.5 the Riemannian conflict sign differs from the Euclidean sign on the same gradient pair"
+    },
+    {
+      "id": "p3_projection_removes_conflict",
+      "kind": "numeric",
+      "statement": "after projection the Riemannian inner product of the two gradients is >= -1e-9"
+    },
+    {
+      "id": "p3_encoder_unchanged",
+      "kind": "gradient",
+      "statement": "the encoder's gradient is identical to the host's within 1e-9 on the same batch"
+    },
+    {
+      "id": "p3_ddp_codebook",
+      "kind": "distributed",
+      "statement": "the pooled codebook gradient equals the independent mean of the four ranks' local gradients within 1e-5"
+    }
+  ],
+  "judges": [
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off"
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "euclidean_inner_product",
+      "pattern": "(?i)(\\bdot\\(|@\\s*g_rec|torch\\.dot)"
+    },
+    {
+      "id": "position_independent_metric",
+      "pattern": "(?i)(identity_metric|metric\\s*=\\s*torch\\.eye)"
+    },
+    {
+      "id": "curvature_zeroed",
+      "pattern": "(?i)\\bc\\s*=\\s*0\\.0\\b"
+    },
+    {
+      "id": "gate_disabled",
+      "pattern": "(?i)(return\\s+gradient\\s*$|if\\s+False\\s*:)"
+    }
+  ],
+  "differentiation": "Structurally this is the R4-08 conflict-projection family, which is the honest overlap: it projects one gradient against another. The difference is the metric: R4-08 and every #109 tangent-rotation arm project in the ambient Euclidean inner product, and this candidate projects in g(x) = (2/(1-c||x||^2))^2 I, whose scale depends on the codeword. It is therefore NOT offered as a novel mechanism; it is the cheapest diagnostic of whether the ball metric changes the conflict structure at all.",
+  "prior_art": {
+    "r8_07_hyperbolic_gyro_translation": "a Mobius/gyro TRANSLATION of points; this candidate does not translate any point, it changes the metric under which a codebook is assigned",
+    "r8_08_hyperbolic_frechet": "a Frechet BARYCENTRE of successors used as a target; this candidate takes no barycentre of anything",
+    "r8_09_hyperbolic_radial_hierarchy": "a per-layer RADIAL reweighting of the hierarchy; this candidate has no radial term and no per-layer weight",
+    "r8_10_hyperbolic_gw": "a graph-code Gromov-Wasserstein matching; this candidate solves no transport problem between graphs",
+    "sahl_2026": "PCA blocks (whiten=True) + K-means + balanced residual quantisation over sentence embeddings, K=16..64 digits. This candidate has no PCA, no K-means, no Euclidean subspace block and 3 tokens",
+    "gu_2019_product_spaces": "a product of constant-curvature factors as a REPRESENTATION; this candidate uses the product as the QUANTISER's assignment metric and its gradient's role split",
+    "switch_spaces_2021": "sparse learned gates over product components, no quantisation; this candidate has no gate module and no per-input space switch",
+    "hvq_vae_2025": "a single hyperbolic codebook for images; this candidate has two factors with separately supervised codewords"
+  },
+  "falsifier": "Refuted if the Riemannian conflict set equals the Euclidean one on every codeword of one real train batch (the metric is cosmetic), or if the gate never fires, or if the encoder's gradient is not identical to the host's.",
+  "predicted_consequences": {
+    "ER": "prediction: a small change, not a large one; the gate is a second-order effect on the codebook's trajectory",
+    "G_H1": "prediction: no claim",
+    "D2": "prediction: no claim",
+    "Recall_NDCG": "prediction: no claim; this is a diagnostic, not a route to a joint win"
+  },
+  "cgv_contract": {
+    "mechanism": {
+      "id": "hyp_factor_conflict_projection",
+      "type": "gradient_routing",
+      "summary": "project the behaviour gradient against the content gradient in the codeword's Riemannian metric",
+      "entrypoints": [
+        "mechanism_loss"
+      ],
+      "executor": "_p3_metric_conflict_executor",
+      "activation": {
+        "requires": []
+      }
+    },
+    "model": {
+      "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
+      "parameter_groups": {
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq",
+        "level0": "product_level0"
+      },
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
+    },
+    "forward_contract": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
+      ],
+      "declared_effect": "none",
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        }
+      ]
+    },
+    "gradient_contract": {
+      "target": "codebook",
+      "mode": "invariants",
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "zero",
+        "other_loss": "zero"
+      },
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "nonzero",
+          "min_norm": 1e-12
+        }
+      ],
+      "atol": 1e-06
+    },
+    "update_contract": {
+      "optimizer": "AdamW",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
+    },
+    "distributed_contract": {
+      "world_size": 4,
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate",
+      "verify_encoder_and_codebook_gradients": true,
+      "verify_rank_parameter_identity": true
+    },
+    "runtime_contract": {
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
+      "observe": [
+        {
+          "name": "mechanism_calls",
+          "target": "mechanism_loss",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
+    }
+  },
+  "cgv_gaps": [
+    "G5: same non-trace codebook gap as P1 and P2.",
+    "G3: the projection's independent formula oracle does not exist in oracles.py; mode 'invariants' is the only honest declaration, and the mechanism's real check is the p3_euclidean_limit metamorphic test."
+  ],
+  "provenance": {
+    "authored_by": "agent_M_hyperbolic_mechanism_research_issue_111",
+    "authored_at": "2026-10-23T05:55:00Z",
+    "frozen_digest": "68595263906ef9c14981334644ba5482dfbb56ce524e39ed4d72504c73bfc93e"
+  },
+  "proposal_sha256": "a034264e3f53a70e28276b2bd10ce7b682261d03253171867143eb08e7c00c33"
+}

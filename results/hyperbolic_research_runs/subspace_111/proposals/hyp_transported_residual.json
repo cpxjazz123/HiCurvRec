@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "mechanism_id": "hyp_transported_residual",
+  "version": "1",
+  "family": "C_cross_factor_geometry_preserving",
+  "title": "A codeword-frame residual chain: parallel transport of the level-0 residual before quantising levels 2 and 3",
+  "equation": "x = exp_0^c(s * z)  (the item's ball point, log_0^c(x) = s*z the tangent); a = exp_0^c(a_{j*})  (the assigned level-0 ball point); r = PT_{x -> a}( s*z - log_0^c(a) )_a  (the residual, transported into the codeword's tangent frame); levels 2 and 3 quantise r with the host's Euclidean codebooks; zhat = log_0^c(a) + PT^{-1}_{a -> 0}( r_hat )  where r_hat is the level-2/3 codeword sum",
+  "symbols": {
+    "z": "the host encoder's 32-dimensional output (tangent at the origin)",
+    "x / a": "the item's and the level-0 codeword's Poincare ball points, curvature -1",
+    "a_{j*}": "the assigned level-0 codeword's tangent coordinates (the host's codebook, unchanged)",
+    "PT_{x -> y}(v)": "parallel transport of the tangent vector v from x to y along the unique geodesic, an isometry of the tangent spaces under g",
+    "r": "the transported residual, expressed in the tangent frame AT the codeword; this is what the level-2 codebook sees instead of z - log_0(a)",
+    "r_hat": "the level-2 and level-3 codeword sum, quantising r",
+    "zhat": "the reconstructed latent fed to the host's decoder and used for the RQ commitment",
+    "s": "the fixed tangent scale, 0.5",
+    "c": "the curvature magnitude, fixed at 1.0"
+  },
+  "parameters": {
+    "c": 1.0,
+    "s": 0.5,
+    "codebook_size": 256,
+    "division": 32,
+    "levels": 3
+  },
+  "target_paths": [
+    "codebook",
+    "hard_sid_export"
+  ],
+  "path": "B",
+  "hyperbolic_model": "poincare_ball",
+  "hyperbolic_operator": "parallel_transport_along_geodesic",
+  "curvature": -1.0,
+  "domains": {
+    "manifold": "B^32_{-1} for the item point and the level-0 codeword; the tangent space at the codeword is where the residual lives",
+    "points": "every point is exp_0 of a tangent vector, so the ball constraint holds by construction",
+    "tangent_domain": "T_a B^32 with the metric g(a) = (2/(1-||a||^2))^2 I; the transport is an isometry between T_x and T_a",
+    "distance": "the level-0 assignment is the host's Euclidean assignment (UNCHANGED); the geometry enters only through the transport of the residual",
+    "boundary": "the transported norm equals the source norm exactly (isometry), so the near-boundary behaviour is a large norm in T_a, which is reported, not clamped"
+  },
+  "why_hyperbolic": "Parallel transport along a geodesic of the Poincare ball is not the identity and not a linear map of the ambient space: it mixes the radial and tangential components with a factor that depends on the ball metric at both endpoints. The residual that levels 2 and 3 quantise is therefore a genuinely codeword-relative object, and the ambient residual (z - log_0(a)) is a different vector. Without the curved metric there is no transport: a Euclidean PT is the identity, so removing the geometry removes the mechanism entirely.",
+  "role_assignment": "Level 0 keeps the host's partition (the semantic/behaviour assignment is untouched, which is testable as bit-identity). The factorisation is between the LEVELS: level 0 fixes the frame, levels 2 and 3 carry the residual inside that frame. This is #111's Family D question (one SID whose levels coordinate) answered with a manifold transport rather than with a new token alphabet.",
+  "gradient_targets": {
+    "encoder": "nonzero_through_ste",
+    "codebook": "nonzero_levels_2_3_and_level_0_via_commit",
+    "hard_sid_export": "tokens_change_at_levels_2_3"
+  },
+  "gradient_paths": {
+    "L_recon + beta*L_commit": "reaches the level-0 codebook through zhat's dependence on log_0(a) and on r_hat's transport",
+    "level_2_3_codebooks": "receive the reconstruction and commitment gradient in the transported frame",
+    "encoder": "reaches the encoder through the straight-through estimator of the level-2/3 assignment and the commitment term",
+    "decoder": "unchanged from the host"
+  },
+  "sid_effect": {
+    "L1": "bit-identical to the host (declared and tested)",
+    "L2_L3": "change: they now index the transported residual, so the same L2/L3 code means a different displacement depending on the L1 codeword",
+    "protocol": "3 tokens, 256 codes per level, 32 dimensions: unchanged"
+  },
+  "compatibility": {
+    "dimensions": "32 throughout; no split of the latent and no extra parameters beyond the host's",
+    "capacity": "256 codes at every level; the L2/L3 codebooks still hold 256 x 32 numbers",
+    "export": "unchanged integer schema",
+    "verdict": "comparable with the frozen protocol"
+  },
+  "hypotheses": [
+    "the ball metric stretches distances near the boundary, so the ambient residual z - log_0(a) under-states displacements for items far from the origin; transporting it into the codeword's frame makes the residual's norm equal the geodesic distance up to the first order, which should reduce the level-2 quantisation error for exactly those items",
+    "because the residual is codeword-relative, the level-2 codebook can spend its 256 codes on local displacements instead of a global one, which should raise the L1->L2 branch count without changing level 0",
+    "the effect is curvature-caused: as c -> 0 the transport tends to the identity and the mechanism must converge to the host"
+  ],
+  "expected_failure_modes": [
+    "no-op: on probe latents with small ||z|| the transport is nearly the identity, so the level-2 assignment is unchanged and the mechanism is inert",
+    "near-boundary blow-up: for ||x|| close to 1 the transport's factor grows, and the L2/L3 gradient norms can become large; the test records the maximum and the declared margin",
+    "frame inconsistency: if the level-2/3 codebooks learn a codeword-dependent frame while the decode inverts it incorrectly, the reconstruction loss rises and the arm is an implementation failure, not a mechanism failure"
+  ],
+  "tests": [
+    {
+      "id": "p2_pt_isometry",
+      "kind": "numeric",
+      "statement": "||PT_{x->y}(v)||_{g(y)} = ||v||_{g(x)} within 1e-6 for 16 random (x, y, v) at c=1"
+    },
+    {
+      "id": "p2_pt_roundtrip",
+      "kind": "numeric",
+      "statement": "PT_{y->x}(PT_{x->y}(v)) = v within 1e-6"
+    },
+    {
+      "id": "p2_pt_identity_at_origin",
+      "kind": "metamorphic",
+      "statement": "when the codeword is the origin the transport is the identity, and as c -> 0 the transported residual converges to the ambient residual"
+    },
+    {
+      "id": "p2_level0_bit_identity",
+      "kind": "integration",
+      "statement": "the L1 token of every item is bit-identical to the host's export on the same checkpoint"
+    },
+    {
+      "id": "p2_residual_decode_identity",
+      "kind": "numeric",
+      "statement": "with the level-2/3 codeword sum set to zero, zhat equals the host's tangent decode log_0(a) within 1e-6"
+    },
+    {
+      "id": "p2_nonzero_gradient",
+      "kind": "gradient",
+      "statement": "the level-2/3 codebooks receive a finite nonzero gradient, and the level-0 codebook still receives one through the commitment path"
+    },
+    {
+      "id": "p2_ddp_codebook",
+      "kind": "distributed",
+      "statement": "the pooled level-2/3 codebook gradient equals the independent mean of the four ranks' local gradients within 1e-5"
+    },
+    {
+      "id": "p2_export_shape",
+      "kind": "integration",
+      "statement": "3 tokens per item, every token in [0,255]"
+    }
+  ],
+  "judges": [
+    "derivative_evidence",
+    "property_checks",
+    "integration_on_off",
+    "contract_audit"
+  ],
+  "forbidden_substitutions": [
+    {
+      "id": "euclidean_transport",
+      "pattern": "(?i)(def\\s+parallel_transport[^\\n]*:\\s*\\n\\s*return\\s+vector\\b|identity_transport)"
+    },
+    {
+      "id": "ambient_residual",
+      "pattern": "(?i)(residual\\s*=\\s*z\\s*-\\s*log_0|residual\\s*=\\s*latent\\s*-\\s*code)"
+    },
+    {
+      "id": "detached_transport",
+      "pattern": "(?i)(transport[^\\n]*\\.detach\\(\\)|\\.detach\\(\\)[^\\n]*transport)"
+    },
+    {
+      "id": "pca_or_whitening",
+      "pattern": "(?i)(\\bpca\\b|whiten|decomposition\\.PCA)"
+    },
+    {
+      "id": "curvature_zeroed",
+      "pattern": "(?i)\\bc\\s*=\\s*0\\.0\\b"
+    }
+  ],
+  "differentiation": "Not R8-07: gyro-translation moves points, this transports a residual's frame. Not R8-08: no barycentre. Not R8-09: no radial reweighting. Not R8-10: no optimal transport between graphs. Not any Euclidean residual-transport arm (r8 / #107 / #109): their residual is ambient, and a Euclidean parallel transport is the identity, so those arms are exactly the c -> 0 limit of this one and are falsified as distinguished by this test.",
+  "prior_art": {
+    "r8_07_hyperbolic_gyro_translation": "a Mobius/gyro TRANSLATION of points; this candidate does not translate any point, it changes the metric under which a codebook is assigned",
+    "r8_08_hyperbolic_frechet": "a Frechet BARYCENTRE of successors used as a target; this candidate takes no barycentre of anything",
+    "r8_09_hyperbolic_radial_hierarchy": "a per-layer RADIAL reweighting of the hierarchy; this candidate has no radial term and no per-layer weight",
+    "r8_10_hyperbolic_gw": "a graph-code Gromov-Wasserstein matching; this candidate solves no transport problem between graphs",
+    "sahl_2026": "PCA blocks (whiten=True) + K-means + balanced residual quantisation over sentence embeddings, K=16..64 digits. This candidate has no PCA, no K-means, no Euclidean subspace block and 3 tokens",
+    "gu_2019_product_spaces": "a product of constant-curvature factors as a REPRESENTATION; this candidate uses the product as the QUANTISER's assignment metric and its gradient's role split",
+    "switch_spaces_2021": "sparse learned gates over product components, no quantisation; this candidate has no gate module and no per-input space switch",
+    "hvq_vae_2025": "a single hyperbolic codebook for images; this candidate has two factors with separately supervised codewords"
+  },
+  "falsifier": "The candidate is refuted if (a) on the probe and on one real train batch the level-2 assignment under the transported residual is identical for >= 99% of items to the ambient residual's (the transport is a no-op), or (b) the level-2 quantisation error does not fall for the items with the largest ||z||, or (c) the L1 tokens are not bit-identical (the mechanism leaked outside its declared level).",
+  "predicted_consequences": {
+    "ER": "prediction: no claim of a rise; the mechanism does not touch level 0, so the ER may not move at all. That is an acceptable and informative outcome, and it is the reason this candidate is the cheap test of whether quantisation error is the missing link",
+    "G_H1": "prediction: rises if the L2/L3 tokens become more informative; report it at matched L0 occupancy",
+    "D2": "prediction: no claim",
+    "Recall_NDCG": "prediction: the only route in this portfolio that can move Stage3 without moving the ER, because it targets the level-2/3 token quality that Stage3 consumes"
+  },
+  "cgv_contract": {
+    "mechanism": {
+      "id": "hyp_transported_residual",
+      "type": "quantiser_metric",
+      "summary": "the level-0 residual is parallel-transported into the codeword's tangent frame before levels 2 and 3 quantise it",
+      "entrypoints": [
+        "mechanism_loss"
+      ],
+      "executor": "_p2_transported_residual_executor",
+      "inputs": "_p2_transport_inputs",
+      "activation": {
+        "requires": []
+      }
+    },
+    "model": {
+      "adapter": "rqvae",
+      "factory": "RQVAE",
+      "tokenizer_config": "_tokenizer_config",
+      "forward": "forward",
+      "parameter_groups": {
+        "encoder": "encoder",
+        "decoder": "decoder",
+        "codebooks": "rq",
+        "level0": "product_level0"
+      },
+      "probe": {
+        "n_src": 24,
+        "in_dim": 32
+      }
+    },
+    "forward_contract": {
+      "observables": [
+        "reconstructed",
+        "quant_loss",
+        "base_loss",
+        "recon_loss",
+        "tokens"
+      ],
+      "declared_effect": "tokens",
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "shape",
+          "observable": "reconstructed",
+          "expected": [
+            48,
+            32
+          ]
+        },
+        {
+          "name": "rows",
+          "observable": "tokens",
+          "expected": 48
+        },
+        {
+          "name": "tokens_in_range",
+          "observable": "tokens",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "levels",
+          "expected": 3
+        }
+      ]
+    },
+    "gradient_contract": {
+      "target": "codebook",
+      "mode": "invariants",
+      "loss_terms": {
+        "base_loss": "base_loss",
+        "l1_loss": "behavior_l1",
+        "other_loss": "behavior_other"
+      },
+      "expected_paths": {
+        "base_loss": "nonzero",
+        "l1_loss": "zero",
+        "other_loss": "zero"
+      },
+      "invariants": [
+        {
+          "name": "finite"
+        },
+        {
+          "name": "nonzero",
+          "min_norm": 1e-12
+        }
+      ],
+      "atol": 1e-06
+    },
+    "update_contract": {
+      "optimizer": "AdamW",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "clip_norm": 1.0,
+      "atol": 1e-06,
+      "requires_parameter_change": true,
+      "oracle": "oracles:optimizer_update"
+    },
+    "distributed_contract": {
+      "world_size": 4,
+      "aggregation": "ddp_mean",
+      "atol": 1e-05,
+      "oracle": "oracles:aggregate",
+      "verify_encoder_and_codebook_gradients": true,
+      "verify_rank_parameter_identity": true
+    },
+    "runtime_contract": {
+      "entrypoint": "main",
+      "isolation": "required",
+      "force": {
+        "BEHAVIOR_WEIGHT_MAX": 1.0,
+        "RAMP_START_EPOCH": 0
+      },
+      "observe": [
+        {
+          "name": "mechanism_calls",
+          "target": "mechanism_loss",
+          "min": 1
+        },
+        {
+          "name": "optimizer_steps",
+          "min": 1
+        },
+        {
+          "name": "parameter_updates",
+          "min": 1
+        }
+      ]
+    }
+  },
+  "cgv_gaps": [
+    "G5: as for P1, the non-trace branch does not pool the codebook gradient, and this mechanism's target is the codebook. The engine needs the codebook pooling before G5 verifies it.",
+    "G3: 'invariants' only; a formula-mode check would need an independent PT oracle (the transport's isometry and inverse) wired into the gate, which the current oracles module does not have."
+  ],
+  "provenance": {
+    "authored_by": "agent_M_hyperbolic_mechanism_research_issue_111",
+    "authored_at": "2026-10-23T05:55:00Z",
+    "frozen_digest": "caf858e677aca32b4910228732f1131e19f88d5cbb9d9773f7fc89fad1ec1544"
+  },
+  "proposal_sha256": "064fe4db5a4890279963e6a76188f3189ee7be19586336a56b88e736f8e152c9"
+}

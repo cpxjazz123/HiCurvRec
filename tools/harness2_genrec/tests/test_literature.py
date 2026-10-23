@@ -147,3 +147,23 @@ def test_the_cache_keeps_a_search_from_being_repeated(tmp_path):
     agent.search("hyperbolic")
     agent.search("hyperbolic")
     assert provider.asked == ["hyperbolic"]
+
+
+def test_a_second_search_does_not_drop_the_first_search_papers(tmp_path):
+    """The paper store accumulates: a registry that forgets its own verified papers is not one.
+
+    The store used to be rewritten with the papers of the last query only, so every search
+    after the first silently erased the identities the earlier queries had verified.
+    """
+    agent = L.LiteratureAgent(
+        out_dir=tmp_path,
+        providers=[_Provider([_record(identifier="10.1000/one", title="First paper")])],
+    )
+    agent.search("hyperbolic semantic id")
+    agent.providers = [_Provider([_record(identifier="10.1000/two", title="Second paper")])]
+    agent.search("product manifold")
+    identifiers = {
+        json.loads(line)["identifier"]
+        for line in (tmp_path / "papers.jsonl").read_text().strip().splitlines()
+    }
+    assert identifiers == {"10.1000/one", "10.1000/two"}
