@@ -258,7 +258,9 @@ TREE_NAME = TREE_DIR.name
 REPO_ROOT = Path("/home/wlia0047/ar57/wenyu/GeneRec")
 OUT_ROOT  = REPO_ROOT / "results/stage2_RQ-VAE"
 _ARM_SEED = {"resample_s43": 43, "resample_s44": 44}.get(EXPERIMENT_ARM, 42)
-_OUT = OUT_ROOT / EXPERIMENT_ARM
+# The artifacts mirror the TREE's name (CLAUDE.md section 10), not the arm name: the arm
+# name would scatter this run across results/stage2_RQ-VAE/<arm name>/.
+_OUT = OUT_ROOT / TREE_NAME
 OUTPUT_SID     = _OUT / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _OUT / "item_sids.json"
 CHECKPOINT     = _OUT / "rqvae_best.pth"
