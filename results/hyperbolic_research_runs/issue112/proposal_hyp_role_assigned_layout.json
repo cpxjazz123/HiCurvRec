@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "mechanism_id": "hyp_role_assigned_layout",
+  "version": 1,
+  "family": "token-slot role assignment (Family D)",
+  "title": "A role-assigned token layout: level 2 carries the behaviour factor, not the residual's remainder",
+  "equation": "SID(x) = ( q0(x), q1(x - e0), q2(b(x)) ) with e_k = codebook_k[l_k] and b(x) = normalise( mean_{y in succ(x)} phi(y) - phi(x) ); the reconstruction uses levels 0 and 1 only, and level 2's codebook is trained on b(x) with the commitment term -- it contributes no reconstruction.",
+  "symbols": {
+    "phi": "the frozen encoder",
+    "succ(x)": "the items that follow x in a user history",
+    "q_k": "the argmin assignment under the product-hyperbolic geodesic for k in {0,1}, cosine for k = 2",
+    "b": "the behaviour factor: the direction from the item to the mean of its successors"
+  },
+  "parameters": {
+    "levels": 3,
+    "codes_per_level": 256,
+    "dimension": 32,
+    "level_2_trained_by": "commitment on b(x) only",
+    "the_reconstruction": "levels 0 and 1"
+  },
+  "target_paths": [
+    "stage2_RQ-VAE/TIGER_hyp_role_assigned_layout/"
+  ],
+  "path": "B",
+  "hyperbolic_model": "the Poincare ball at levels 0 and 1; the unit sphere at level 2",
+  "hyperbolic_operator": "the approved candidate's product-geodesic distance at levels 0 and 1",
+  "curvature": {
+    "c": "1.0",
+    "source": "the frozen host"
+  },
+  "basepoints": {
+    "level_0": "the origin",
+    "level_1": "the origin"
+  },
+  "domains": {
+    "level_0": "the tangent at the origin",
+    "level_1": "the residual's tangent",
+    "level_2": "the unit sphere (directions)"
+  },
+  "why_hyperbolic": "levels 0 and 1 keep the approved geometry; level 2 moves to the sphere because a behaviour factor is a DIRECTION, and the measured k-means normalises the same way",
+  "role_assignment": {
+    "level_0": "content (the product-geodesic cluster)",
+    "level_1": "content (the residual)",
+    "level_2": "behaviour (the successor direction)"
+  },
+  "gradient_targets": {
+    "level_2_codebook": "the commitment on b(x)",
+    "encoder": "through b(x)"
+  },
+  "gradient_paths": {
+    "b(x)": "phi(x) and phi(y) for y in succ(x)"
+  },
+  "sid_effect": "the third token stops being a reconstruction remainder; measured 1.3724 behaviour codes per (L1,L2) cell against the residual's 1.0969, and 75.06% single-code cells against 92.08%",
+  "compatibility": {
+    "levels": 3,
+    "codes": 256,
+    "dimension": 32,
+    "the_capacity_is_unchanged": true
+  },
+  "hypotheses": [
+    "the third token carries behaviour the residual cannot",
+    "the (L1,L2) prefix stays a coherent content cluster"
+  ],
+  "expected_failure_modes": [
+    "the level-2 codebook collapses onto a few directions",
+    "the 2-level reconstruction degrades the encoder",
+    "the behaviour signal does not transfer through Stage3's beam"
+  ],
+  "measured": {
+    "codes_per_cell_behaviour": 1.372424,
+    "single_code_cells_behaviour": 0.750611,
+    "codes_per_cell_residual": 1.0968872953377804,
+    "single_code_cells_residual": 0.9208,
+    "source": "layout_feasibility.json"
+  },
+  "prior_art": {
+    "verdict": "clear within the searched corpus (8 queries, 662 papers)",
+    "closest": [
+      "HiHPQ",
+      "HRQ",
+      "CoST",
+      "Cross-Stage Decoupling"
+    ],
+    "source": "layout_prior_art.json"
+  },
+  "differentiation": "every prior layout keeps the residual hierarchy's meaning at every level",
+  "falsifier": "the level-2 token is determined by the cell (>= 90% single-code cells), or the 2-level reconstruction degrades the ER beyond the control",
+  "predicted_consequences": {
+    "the_third_token": "informative",
+    "the_er": "unchanged or worse (the reconstruction loses level 2)"
+  },
+  "tests": [
+    "the capacity is unchanged",
+    "the level-2 token is not determined by the cell",
+    "the export inverts"
+  ],
+  "judges": [
+    "the frozen ER gate",
+    "G_H1"
+  ],
+  "forbidden_substitutions": [
+    "a capacity change",
+    "a residual re-normalisation"
+  ],
+  "update": {
+    "optimizer": "the host's",
+    "clip": "the host's"
+  },
+  "cgv_contract": {
+    "note": "to be produced when the mechanism is implemented"
+  },
+  "cgv_gaps": [],
+  "provenance": {
+    "issue": 112,
+    "feasibility": "layout_feasibility.json",
+    "prior_art": "layout_prior_art.json"
+  },
+  "revision": {
+    "version": 1,
+    "reason": "the first written proposal; not implemented"
+  },
+  "proposal_sha256": "37a1fde525bf1b79908bde02d5a1a4528b4bcbdbb849672b3425070934b2b1da"
+}
