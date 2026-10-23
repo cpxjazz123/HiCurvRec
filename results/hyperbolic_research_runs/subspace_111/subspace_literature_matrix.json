@@ -9,9 +9,24 @@
     "note": "The single paper identity store is #110's (tools/harness2_genrec/literature.py + results/hyperbolic_research_runs/literature/). This matrix is a curated view over it and adds no second identity store. Papers are deduplicated by identifier; the raw accumulated store holds 109 records across 10 queries."
   },
   "providers_used": [
-    {"name": "openalex", "version": "works-v1", "state": "reachable", "note": "added in this issue: the only reachable source that resolves arXiv-only identifiers here (10.48550/arxiv.<id>)"},
-    {"name": "crossref", "version": "rest-v1", "state": "reachable", "note": "resolves DOIs and titles; a title query alone is too weak for arXiv-only papers"},
-    {"name": "arxiv", "version": "atom-v1", "state": "BLOCKED", "note": "10 of 10 queries failed: 9 HTTP 429, 1 read timeout. Recorded as negative results in source_search_log.jsonl. arXiv-only papers were therefore verified through OpenAlex's arXiv DOI instead, which is a metadata-and-abstract level of evidence, not full text."}
+    {
+      "name": "openalex",
+      "version": "works-v1",
+      "state": "reachable",
+      "note": "added in this issue: the only reachable source that resolves arXiv-only identifiers here (10.48550/arxiv.<id>)"
+    },
+    {
+      "name": "crossref",
+      "version": "rest-v1",
+      "state": "reachable",
+      "note": "resolves DOIs and titles; a title query alone is too weak for arXiv-only papers"
+    },
+    {
+      "name": "arxiv",
+      "version": "atom-v1",
+      "state": "BLOCKED",
+      "note": "10 of 10 queries failed: 9 HTTP 429, 1 read timeout. Recorded as negative results in source_search_log.jsonl. arXiv-only papers were therefore verified through OpenAlex's arXiv DOI instead, which is a metadata-and-abstract level of evidence, not full text."
+    }
   ],
   "access_level_legend": {
     "verified_fulltext": "the full text or the reference implementation was actually read",
@@ -23,7 +38,14 @@
     {
       "id": "sahl_2026",
       "title": "Structure-Aligned History Learning with Subspace-Structured Semantic IDs for Generative Recommendation",
-      "authors": ["Kaiwen Wei", "Kejun He", "Jie Zhang", "Xiaomian Kang", "Yuming Yang", "Aijia Zhou"],
+      "authors": [
+        "Kaiwen Wei",
+        "Kejun He",
+        "Jie Zhang",
+        "Xiaomian Kang",
+        "Yuming Yang",
+        "Aijia Zhou"
+      ],
       "year": 2026,
       "venue": "arXiv (Cornell University)",
       "identifier": "10.48550/arxiv.2610.25093",
@@ -38,7 +60,7 @@
         "what_it_already_does": [
           "SRBQ (SubspaceResidualBalancedGenerator): one global PCA with whiten=True over the item text embeddings, the resulting principal components split into G contiguous groups of equal width (srbq_n_groups default 4), and within each group digits_per_group = K/G digits produced by residual quantisation (each digit K-means over the running residual, then residual = residual - centers[labels]).",
           "An occupancy cap on the assignment: target_size = n_items / codebook_size, max_size = target_size * balance_ratio (default 2.0), overflow members reassigned to the nearest cluster with spare capacity, centres re-estimated, iterated srbq_balance_iters (default 3) times, and a hard failure if any cluster still exceeds max_size.",
-          "Ablations shipped in the same class: no_subspace (n_groups = 1), no_residual, no_balance — i.e. the paper itself isolates exactly the three components the subspace family would claim.",
+          "Ablations shipped in the same class: no_subspace (n_groups = 1), no_residual, no_balance \u2014 i.e. the paper itself isolates exactly the three components the subspace family would claim.",
           "MHL (Masked History Learning): multi-granularity masked-history reconstruction over token / subspace / item units (Tri-Mixed probabilities 0.33/0.33/0.34), an entropy-guided masking curriculum decaying to zero, and next-item prediction in the final phase.",
           "SID length K is a free parameter: 16 (Beauty), 32 (Toys, Sports), 64 (CDs) in the released configurations, with a codebook vocabulary of 256 per digit, a 2-layer 4-head GPT-2 backbone (hidden 448), and item text embeddings from Sentence-T5-base."
         ],
@@ -56,7 +78,12 @@
     {
       "id": "gu_2019_product_spaces",
       "title": "Learning Mixed-Curvature Representations in Product Spaces",
-      "authors": ["Albert Gu", "Frédéric Sala", "Beliz Gunel", "Christopher Ré"],
+      "authors": [
+        "Albert Gu",
+        "Fr\u00e9d\u00e9ric Sala",
+        "Beliz Gunel",
+        "Christopher R\u00e9"
+      ],
       "year": 2018,
       "venue": "International Conference on Learning Representations (ICLR 2019)",
       "identifier": "https://openalex.org/W2923452197",
@@ -87,7 +114,11 @@
     {
       "id": "weighted_product_manifold_2023",
       "title": "Improving Heterogeneous Graph Learning with Weighted Mixed-Curvature Product Manifold",
-      "authors": ["Tuc Nguyen-Van", "Dung D. Le", "The-Anh Ta"],
+      "authors": [
+        "Tuc Nguyen-Van",
+        "Dung D. Le",
+        "The-Anh Ta"
+      ],
       "year": 2023,
       "venue": "arXiv (Cornell University)",
       "identifier": "10.48550/arxiv.2307.04514",
@@ -97,7 +128,7 @@
       "access_level": "verified_abstract_only",
       "mathematical_overlap": {
         "what_it_already_does": [
-          "Argues that each component space of a product manifold contributes differently to expressing structure, and therefore should be WEIGHTED accordingly — the per-factor importance weighting is explicit.",
+          "Argues that each component space of a product manifold contributes differently to expressing structure, and therefore should be WEIGHTED accordingly \u2014 the per-factor importance weighting is explicit.",
           "Embeds heterogeneous graphs (multiple relation types) in a product of Euclidean / hyperbolic / spherical components."
         ],
         "geometry": "product of constant-curvature components with learned per-component weights.",
@@ -113,7 +144,13 @@
     {
       "id": "switch_spaces_2021",
       "title": "Switch Spaces: Learning Product Spaces with Sparse Gating",
-      "authors": ["Shuai Zhang", "Yi Tay", "Wenqi Jiang", "Da-Cheng Juan", "Ce Zhang"],
+      "authors": [
+        "Shuai Zhang",
+        "Yi Tay",
+        "Wenqi Jiang",
+        "Da-Cheng Juan",
+        "Ce Zhang"
+      ],
       "year": 2021,
       "venue": "arXiv (Cornell University)",
       "identifier": "10.48550/arxiv.2102.08688",
@@ -139,7 +176,13 @@
     {
       "id": "hvq_vae_2025",
       "title": "HVQ-VAE: Variational auto-encoder with hyperbolic vector quantization",
-      "authors": ["Shangyu Chen", "Pengfei Fang", "Mehrtash Harandi", "Trung Le", "Jianfei Cai"],
+      "authors": [
+        "Shangyu Chen",
+        "Pengfei Fang",
+        "Mehrtash Harandi",
+        "Trung Le",
+        "Jianfei Cai"
+      ],
       "year": 2025,
       "venue": "Computer Vision and Image Understanding",
       "identifier": "10.1016/j.cviu.2025.104392",
@@ -165,7 +208,13 @@
     {
       "id": "cost_2024",
       "title": "CoST: Contrastive Quantization based Semantic Tokenization for Generative Recommendation",
-      "authors": ["Jieming Zhu", "Mengqun Jin", "Qijiong Liu", "Zexuan Qiu", "Zhenhua Dong"],
+      "authors": [
+        "Jieming Zhu",
+        "Mengqun Jin",
+        "Qijiong Liu",
+        "Zexuan Qiu",
+        "Zhenhua Dong"
+      ],
       "year": 2024,
       "venue": "18th ACM Conference on Recommender Systems (RecSys 2024)",
       "identifier": "10.1145/3640457.3688178",
@@ -189,7 +238,12 @@
     {
       "id": "cross_stage_decoupling_2026",
       "title": "Addressing Cross-Stage Decoupling of Semantic and Collaborative Signals in Generative Recommendation",
-      "authors": ["单佳怡", "Weijian Li", "Yongqi Liu", "Kaiqiao Zhan"],
+      "authors": [
+        "\u5355\u4f73\u6021",
+        "Weijian Li",
+        "Yongqi Liu",
+        "Kaiqiao Zhan"
+      ],
       "year": 2026,
       "venue": "ACM Conference on Recommender Systems (RecSys)",
       "identifier": "10.1145/3773078.3831736",
@@ -213,7 +267,11 @@
     {
       "id": "adaptive_semantic_id_2026",
       "title": "Not All Branches Are Equal: Adaptive Semantic ID Construction for Generative Recommendation",
-      "authors": ["Guy Hadad", "Haggai Roitman", "Bracha Shapira"],
+      "authors": [
+        "Guy Hadad",
+        "Haggai Roitman",
+        "Bracha Shapira"
+      ],
       "year": 2026,
       "venue": "Proceedings of the 20th ACM Conference on Recommender Systems (RecSys 2026)",
       "identifier": "10.1145/3773078.3831756",
@@ -223,7 +281,7 @@
       "access_level": "verified_abstract_only",
       "mathematical_overlap": {
         "what_it_already_does": [
-          "Treats the prefix tree of a semantic ID as non-uniform and constructs the ID adaptively per branch — i.e. the branching structure of the SID is already an explicit, optimised object."
+          "Treats the prefix tree of a semantic ID as non-uniform and constructs the ID adaptively per branch \u2014 i.e. the branching structure of the SID is already an explicit, optimised object."
         ],
         "geometry": "not stated as non-Euclidean in the retrieved metadata.",
         "what_it_does_not_do": [
@@ -237,7 +295,9 @@
     {
       "id": "atlas_2026",
       "title": "The Atlas: Phase-Locked Geometric Neural Manifolds on Mixed-Curvature Hyperbolic-Toroidal Product Spaces",
-      "authors": ["Stewart Barteau"],
+      "authors": [
+        "Stewart Barteau"
+      ],
       "year": 2026,
       "venue": "SSRN Electronic Journal",
       "identifier": "10.2139/ssrn.7370258",
@@ -248,7 +308,7 @@
       "access_note": "identity verified by Crossref; no abstract returned, so nothing beyond the title is claimed. It is a preprint, not a peer-reviewed venue: it is recorded for completeness of the product-space search, not as a source of mathematics.",
       "mathematical_overlap": {
         "what_it_already_does": [
-          "The title states mixed-curvature hyperbolic-toroidal product spaces — i.e. a product of a hyperbolic factor and a toroidal (flat, periodic) factor."
+          "The title states mixed-curvature hyperbolic-toroidal product spaces \u2014 i.e. a product of a hyperbolic factor and a toroidal (flat, periodic) factor."
         ],
         "geometry": "product of hyperbolic and toroidal factors.",
         "what_it_does_not_do": [
@@ -262,7 +322,10 @@
     {
       "id": "product_manifold_flow_2026",
       "title": "Product Manifold Flow Matching for Mixed-Type Tabular Data Generation",
-      "authors": ["Shikun Chen", "Yangguang Liu"],
+      "authors": [
+        "Shikun Chen",
+        "Yangguang Liu"
+      ],
       "year": 2026,
       "venue": "Machine Learning",
       "identifier": "10.1007/s10994-026-07178-9",
@@ -282,14 +345,121 @@
       "novelty_impact": "Forbids 'a product manifold with per-factor continuous transport' as a novelty claim in itself. It is also the closest thing the store holds to a *generative* product-manifold model, so a proposal that claims a generative product-manifold mechanism must differentiate from it.",
       "verification": "verified",
       "retrieved_utc": "2026-10-23T05:25:00Z"
+    },
+    {
+      "id": "10_48550_arxiv_2505_12404",
+      "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
+      "authors": [
+        "Piotr Pi\u0119kos",
+        "Kayal, Subhradeep",
+        "Alexandros Karatzoglou"
+      ],
+      "year": 2025,
+      "venue": "arXiv (Cornell University)",
+      "identifier": "10.48550/arxiv.2505.12404",
+      "url": "http://arxiv.org/abs/2505.12404",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the next family",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Hierarchical data arise in countless domains, from biological taxonomies and organizational charts to legal codes and knowledge graphs. Residual Quantization (RQ) is widely used to generate discrete, multitoken representations for such data by iteratively quantizing residuals in a multilevel codebook. However, its reliance on Euclidean geometry can introduce fundamental mismatches that hinder modeling of hierarchical branching, necessary for faithful representation of hierarchical data. In this work, we propose Hyperbolic Residual Quantization (HRQ), which embeds data natively in a hyperbolic manifold and performs residual quantization using hyperbolic operations and distance metrics. By adapting the embedding network, residual computation, and distance metric to hyperbolic geometry, HRQ imparts an inductive bias that aligns naturally with hierarchical branching. We claim that HRQ in com",
+        "geometry": "the hyperbolic manifold, with hyperbolic operations and distance metrics",
+        "what_it_does_not_do": "read from the abstract only; the full text was not read"
+      },
+      "novelty_impact": "CLOSES the hyperbolic-residual family: HRQ 'embeds data natively in a hyperbolic manifold and performs residual quantization using hyperbolic operations and distance metrics', adapting the embedding network, the RESIDUAL COMPUTATION and the distance metrics. That is exactly the operator the next candidate would have introduced."
+    },
+    {
+      "id": "10_48550_arxiv_2609_03369",
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "authors": [
+        "Longfeng Wu",
+        "Tong Zeng",
+        "Giovanni Seni",
+        "Zhimin Peng",
+        "Bhanu Pratap Singh Rawat",
+        "Si Zhang",
+        "Yao Zhou",
+        "Lecheng Zheng",
+        "Bo Ji",
+        "Yujun Yan",
+        "Dawei Zhou"
+      ],
+      "year": 2026,
+      "venue": "arXiv (Cornell University)",
+      "identifier": "10.48550/arxiv.2609.03369",
+      "url": "https://arxiv.org/abs/2609.03369",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the next family",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Sequential recommender systems model user behavior as item ID sequences, while recent generative methods cast recommendation as a language modeling task using large language models (LLMs). While this paradigm incorporates rich textual semantics, it introduces a fundamental mismatch: LLMs operate on text tokens, whereas recommender systems depend on discrete item indices. This misalignment often leads to hallucinations in generative recommendations. Existing methods attempt to bridge this gap by learning item vocabularies in Euclidean space, but they struggle to model the inherent long-tail distribution of real-world catalogs, where a small number of head items dominate, and a vast number of tail items reflect users' niche preferences. To address this issue, we introduce Hyperbolic Residual-Quantized Variational AutoEncoder (HypRQ-VAE), the first framework to learn item indexing in hyperb",
+        "geometry": "the hyperbolic manifold, with hyperbolic operations and distance metrics",
+        "what_it_does_not_do": "read from the abstract only; the full text was not read"
+      },
+      "novelty_impact": "CLOSES the same family in our own setting: a hyperbolic RQ-VAE for item indexing in generative recommendation."
+    },
+    {
+      "id": "next_family_prior_art_search",
+      "title": "the targeted prior-art search for the next family (8 operator-level queries)",
+      "authors": [],
+      "year": 2026,
+      "venue": "the campaign's own search log",
+      "identifier": "results/hyperbolic_research_runs/issue112/next_family_literature.json",
+      "url": "",
+      "source_provider": "openalex + crossref + arxiv",
+      "query": "eight operator-level queries (hyperbolic residual quantization, Mobius subtraction residual vector quantization, Poincare ball discrete bottleneck, tangent space residual discrete latent autoencoder, geodesic residual discrete codebook, hyperbolic vector quantizer residual chain, Riemannian vector quantization autoencoder, product manifold residual quantization levels)",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "the eight queries returned 276 papers in the shared store, 169 with an abstract, and among them the two that close the family",
+        "geometry": "n/a",
+        "what_it_does_not_do": "n/a"
+      },
+      "novelty_impact": "the arXiv API answered 429 to these queries as well; OpenAlex and Crossref carried them, and the two decisive records came from OpenAlex"
     }
   ],
   "searches_that_returned_nothing_useful": [
-    {"query": "Riemannian vector quantization manifold codebook geodesic", "providers": ["crossref", "openalex"], "outcome": "6 records each, none about Riemannian vector quantisation (MIMO codebook design and Riemannian optimisation over covariance matrices dominated). Recorded as a negative result: no verified paper on Riemannian/geodesic VQ for discrete tokens was found in this session."},
-    {"query": "hyperbolic residual parallel transport recommendation", "providers": ["crossref", "openalex"], "outcome": "6 records each; the useful survivors were the hyperbolic sequential-recommendation papers already in the store (Poincare heterogeneous GNN, Hyperbolic Hypergraphs, Hyperbolic Diffusion Recommender). None is a parallel-transport residual mechanism."},
-    {"query": "Busemann function horosphere ranking hyperbolic", "providers": ["openalex"], "outcome": "2 records, both pure mathematics (Busemann-Petty problem; horospheres in complex hyperbolic space). No recommender-system use of Busemann/horospheres was found, i.e. the R10 arm's operator has no verified prior use in this literature sample."},
-    {"query": "disentangled factor routing semantic ID quantization", "providers": ["crossref", "openalex"], "outcome": "6 records each, none about factor routing over semantic IDs; the survivors were generic disentanglement papers in vision/segmentation. Recorded as a negative result."},
-    {"query": "curvature conditioned sequential recommendation hyperbolic", "providers": ["crossref", "openalex"], "outcome": "6 records each; survivors were hyperbolic sequential-recommendation papers (not curvature-conditioned per edge)."}
+    {
+      "query": "Riemannian vector quantization manifold codebook geodesic",
+      "providers": [
+        "crossref",
+        "openalex"
+      ],
+      "outcome": "6 records each, none about Riemannian vector quantisation (MIMO codebook design and Riemannian optimisation over covariance matrices dominated). Recorded as a negative result: no verified paper on Riemannian/geodesic VQ for discrete tokens was found in this session."
+    },
+    {
+      "query": "hyperbolic residual parallel transport recommendation",
+      "providers": [
+        "crossref",
+        "openalex"
+      ],
+      "outcome": "6 records each; the useful survivors were the hyperbolic sequential-recommendation papers already in the store (Poincare heterogeneous GNN, Hyperbolic Hypergraphs, Hyperbolic Diffusion Recommender). None is a parallel-transport residual mechanism."
+    },
+    {
+      "query": "Busemann function horosphere ranking hyperbolic",
+      "providers": [
+        "openalex"
+      ],
+      "outcome": "2 records, both pure mathematics (Busemann-Petty problem; horospheres in complex hyperbolic space). No recommender-system use of Busemann/horospheres was found, i.e. the R10 arm's operator has no verified prior use in this literature sample."
+    },
+    {
+      "query": "disentangled factor routing semantic ID quantization",
+      "providers": [
+        "crossref",
+        "openalex"
+      ],
+      "outcome": "6 records each, none about factor routing over semantic IDs; the survivors were generic disentanglement papers in vision/segmentation. Recorded as a negative result."
+    },
+    {
+      "query": "curvature conditioned sequential recommendation hyperbolic",
+      "providers": [
+        "crossref",
+        "openalex"
+      ],
+      "outcome": "6 records each; survivors were hyperbolic sequential-recommendation papers (not curvature-conditioned per edge)."
+    }
   ],
   "summary": {
     "verified_entries": 10,

@@ -3,9 +3,9 @@
   "idle_ticks": 17,
   "dispatched_total": 8,
   "status_counts": {
-    "blocked_no_novel_evidence": 4,
+    "blocked_no_novel_evidence": 5,
     "done": 4,
-    "pending": 9,
+    "pending": 8,
     "ready": 4,
     "waiting_authorisation": 7
   },
@@ -27,7 +27,7 @@
       "max_attempts": 2,
       "requires": null,
       "description": "the next candidate must be a DIFFERENT family from the three that are closed (horosphere: twice; transported residual: ill posed then an identity) and from the product-geodesic L1 assignment that is approved. The question to answer with measured evidence: which L1 objective can be moved onto a DIFFERENT parameter group than the L1 codebook's assignment, so that the content partition cannot be coarsened by the behaviour signal -- and the L0 tail (largest cell, distinct codes) is the measurable target, because that is what the cohort's failures moved",
-      "status": "pending",
+      "status": "blocked_no_novel_evidence",
       "lease_owner": "",
       "lease_expires": 0.0,
       "attempts": 0,
@@ -36,7 +36,7 @@
       "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
-      "detail": "the next family's target is now a metric the geometry demonstrably moves: the within-cell spread over the level-3 codebook's spacing is 0.7895 for the Euclidean chain and 1.4251 for a Mobius residual chain, while the redundancy itself (the fraction of (L1,L2) cells with a single L3 code) barely moves (0.9208 -> 0.9263) because it is a property of the TRAINED codebook. Any candidate in this direction is read against the 92.08% baseline"
+      "detail": "the hyperbolic/Mobius residual chain is CLOSED ON PRIOR ART before any implementation: HRQ (arXiv 2505.12404) performs residual quantization with hyperbolic operations and adapts the residual computation, and HypRQ-VAE (arXiv 2609.03369) is a hyperbolic RQ-VAE for generative recommendation. The LESSON: the prior-art search must target the OPERATOR, not the family name"
     },
     {
       "task_id": "hyp_busemann_boundary:eval_plan",
