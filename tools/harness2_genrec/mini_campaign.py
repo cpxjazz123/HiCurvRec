@@ -163,6 +163,10 @@ def mvg_mechanism_executor(
     return hooks
 
 
+class MissingContractError(RuntimeError):
+    """The proposal carries no caller-supplied contract. The launch is blocked."""
+
+
 def _write_spec(
     path: Path,
     mechanism_id: str,
@@ -192,6 +196,15 @@ def _write_spec(
             else:
                 merged[group] = section
         template = merged
+    else:
+        # Issue #110: the declaration is the CALLER's. A generic template is not a contract:
+        # a mechanism whose seven groups were never supplied cannot be verified, and a
+        # verifier that falls back to a template verifies the template instead of the
+        # mechanism. This is a blocking condition.
+        raise MissingContractError(
+            "the proposal carries no cgv_contract: the seven-group declaration is "
+            "caller-supplied data, and without it the CGV has nothing to verify"
+        )
     template.setdefault("schema_version", 1)
     template["mechanism"]["id"] = mechanism_id
     template["mechanism"]["summary"] = (

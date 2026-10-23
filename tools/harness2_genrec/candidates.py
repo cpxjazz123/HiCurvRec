@@ -53,6 +53,27 @@ CONSTRAINTS = """\
    that is rejected at the probe costs no cold run at all.
 """
 
+#: The seven contract groups a caller-supplied CGV declaration must carry. A proposal
+#: without all seven is rejected: a contract with a missing group cannot be verified, and a
+#: generic template is not a contract.
+CGV_CONTRACT_GROUPS = (
+    "mechanism",
+    "model",
+    "forward_contract",
+    "gradient_contract",
+    "update_contract",
+    "distributed_contract",
+    "runtime_contract",
+)
+
+#: The fields a hyperbolic proposal must carry, so that the H gates have something to check.
+HYPERBOLIC_FIELDS = (
+    "hyperbolic_model",
+    "hyperbolic_operator",
+    "curvature",
+    "literature_ids",
+)
+
 CANDIDATE_FIELDS = (
     "id",
     "title",
@@ -68,6 +89,35 @@ CANDIDATE_FIELDS = (
     "falsifier",
     "why_not_the_measured_failures",
 )
+
+
+def validate_candidate(candidate: Dict[str, Any]) -> List[str]:
+    """The problems that make a candidate unusable, and nothing else.
+
+    A candidate without the caller's seven-group contract cannot be verified, and a
+    candidate without a hyperbolic declaration cannot pass the geometry gates. Both are
+    blocking: they are written to the rejection record and the candidate is not frozen.
+    """
+    problems: List[str] = []
+    missing = [field for field in CANDIDATE_FIELDS if field not in candidate]
+    if missing:
+        problems.append(f"missing fields: {missing}")
+        return problems
+    contract = candidate.get("cgv_contract")
+    if not isinstance(contract, dict):
+        problems.append("cgv_contract is missing or is not an object")
+    else:
+        missing_groups = [group for group in CGV_CONTRACT_GROUPS if group not in contract]
+        if missing_groups:
+            problems.append(f"cgv_contract is missing the group(s) {missing_groups}")
+        for group in CGV_CONTRACT_GROUPS:
+            section = contract.get(group)
+            if isinstance(section, dict) and not section:
+                problems.append(f"cgv_contract's group {group!r} is empty")
+    missing_hyperbolic = [field for field in HYPERBOLIC_FIELDS if field not in candidate]
+    if missing_hyperbolic:
+        problems.append(f"the hyperbolic declaration is missing {missing_hyperbolic}")
+    return problems
 
 
 def _transfer_requirements() -> str:
@@ -291,6 +341,14 @@ For each candidate, state:
 * `falsifier`: the measurement that would show this candidate is wrong;
 * `why_not_the_measured_failures`: how it differs from the arms that were inert and from the
   arms that collapsed the codebook;
+* `hyperbolic_model`: the manifold you work in, one of "poincare_ball", "lorentz_hyperboloid" or
+  an explicitly equivalent construction, with the curvature you declare;
+* `hyperbolic_operator`: the genuinely hyperbolic operator the loss actually uses -- the
+  geodesic distance, an exp or log map, a Mobius or gyro construction, a Busemann function, a
+  parallel transport -- and why the mechanism changes if it is removed;
+* `curvature`: the curvature, written as -c with c > 0, and the domain constraint it implies;
+* `literature_ids`: the identifiers of the verified sources the idea rests on, or an empty
+  list when it is your own inference -- an empty list is a research claim, not a citation;
 * `cgv_contract`: the SEVEN-GROUP contract the independent verifier will check, as an object
   with exactly these keys: `mechanism`, `model`, `forward_contract`, `gradient_contract`,
   `update_contract`, `distributed_contract`, `runtime_contract`. It is a declaration of what
@@ -406,9 +464,34 @@ def propose_candidates(
                 encoding="utf-8",
             )
             continue
+        contract_problems = validate_candidate(candidate)
+        if contract_problems:
+            (out_dir / "rejected_candidates.json").write_text(
+                json.dumps(
+                    {
+                        "rejected": [
+                            {
+                                "candidate": candidate,
+                                "reason": "; ".join(contract_problems),
+                                "blocking": True,
+                            }
+                        ]
+                    },
+                    indent=2,
+                    default=str,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            continue
         proposal = {
             "mechanism_id": candidate["id"],
             "family": candidate.get("family") or "unspecified",
+            "cgv_contract": contract,
+            "hyperbolic_model": candidate["hyperbolic_model"],
+            "hyperbolic_operator": candidate["hyperbolic_operator"],
+            "curvature": candidate["curvature"],
+            "literature_ids": candidate["literature_ids"],
             "version": "1.0.0",
             "title": candidate["title"],
             "equation": candidate["equation"],
@@ -535,4 +618,11 @@ def propose_candidates(
     return record
 
 
-__all__ = ["CANDIDATE_FIELDS", "CONSTRAINTS", "propose_candidates"]
+__all__ = [
+    "CANDIDATE_FIELDS",
+    "CGV_CONTRACT_GROUPS",
+    "CONSTRAINTS",
+    "HYPERBOLIC_FIELDS",
+    "propose_candidates",
+    "validate_candidate",
+]
