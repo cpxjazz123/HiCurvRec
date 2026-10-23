@@ -222,12 +222,15 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
         return strength * (_info_nce(source_raw, target_raw, positive, c, euclidean)
                            + consistency)
     if mechanism == "horosphere":
-        # The horosphere discrimination. The base point is the TARGET's hyperbolic
-        # position; the horosphere through the SOURCE is the level set of the Busemann
-        # function of that base point; the codeword of the target has to sit ON that
-        # horosphere, and the other codewords off it. The Busemann level is SIGNED, so the
-        # term asks for the inside/outside structure of the horosphere and not only for a
-        # distance: the Euclidean twin keeps the same code but loses the sign.
+        # The horosphere constraint. The base point is the TARGET's hyperbolic position;
+        # the horosphere through the SOURCE is the level set of the Busemann function of
+        # that base point; the codeword the host assigns to the target has to sit ON that
+        # horosphere, and the other codewords off it.
+        #
+        # The label is the host's OWN assignment -- the codeword the Euclidean assignment
+        # gives the target -- and it is detached, so it is a hard label that does not move
+        # with the term. The base point and the source level are detached as well, so the
+        # gradient reaches the codebook and nothing else.
         xi = target.detach()
         codes = encode_points(codebook, c)
         if euclidean:
@@ -237,8 +240,9 @@ def mechanism_loss(mechanism: str, latent: torch.Tensor, codebook,
             source_level = busemann_poincare(x, xi, c)
             code_levels = _busemann_matrix(codes, xi, c)
         source_level = source_level.detach()
+        label = torch.cdist(target_raw, codebook).argmin(dim=-1)
         gap = (code_levels.t() - source_level[:, None]).abs()
-        return strength * F.cross_entropy(-gap / HOROSPHERE_TEMPERATURE, positive)
+        return strength * F.cross_entropy(-gap / HOROSPHERE_TEMPERATURE, label)
     if mechanism == "geodesic":
         return strength * _info_nce(source_raw, target_raw, positive, c, euclidean)
     raise ValueError(f"unknown hyperbolic mechanism: {mechanism}")
