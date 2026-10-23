@@ -1,9 +1,15 @@
 {
-  "authorisations": {},
+  "authorisations": {
+    "gpu": {
+      "at": 1792757427.7940395,
+      "note": "the operator authorised any GPU work: the cold Stage-2 of the approved candidate",
+      "token": "operator-2026-10-23"
+    }
+  },
   "created_utc": 1792752022.4363916,
-  "dispatched": 17,
-  "idle_ticks": 70,
-  "rounds": 0,
+  "dispatched": 18,
+  "idle_ticks": 71,
+  "rounds": 1,
   "schema_version": 1,
   "tasks": {
     "campaign:next_family_search": {
@@ -168,14 +174,14 @@
     },
     "hyp_busemann_boundary:stage2": {
       "artifacts": [],
-      "attempts": 0,
+      "attempts": 1,
       "candidate": "hyp_busemann_boundary",
       "deps": [
         "hyp_busemann_boundary:join_E"
       ],
       "description": "",
-      "detail": "no operator authorisation for a GPU run",
-      "error": "",
+      "detail": "a dependency is closed: hyp_busemann_boundary:join_E",
+      "error": "the horosphere family was refuted on its own measurements; the task must not run",
       "finished_at": null,
       "gate_measurement": null,
       "kind": "experiment",
@@ -185,8 +191,8 @@
       "requires": null,
       "resource": "gpu",
       "stage": "stage2",
-      "started_at": null,
-      "status": "waiting_authorisation",
+      "started_at": 1792758128.8919563,
+      "status": "blocked",
       "task_id": "hyp_busemann_boundary:stage2",
       "verify": [],
       "write_scope": [
@@ -361,19 +367,19 @@
         "hyp_product_l1_quantiser:join_E"
       ],
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
-      "detail": "JOIN E passed: the candidate is approved; the cold run needs the operator's authorisation. Nothing is reserved and no GPU job has been started.",
+      "detail": "the cold seed-42 3000-epoch run launched by the MCP's stage2_start at 2026-10-23 23:19 after its six CGV gates passed",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
       "kind": "experiment",
-      "lease_expires": 0.0,
-      "lease_owner": "",
+      "lease_expires": 1792844646.3022654,
+      "lease_owner": "genrec-mcp:stage2_start",
       "max_attempts": 2,
       "requires": null,
       "resource": "gpu",
       "stage": "stage2",
-      "started_at": null,
-      "status": "waiting_authorisation",
+      "started_at": 1792758246.3022661,
+      "status": "running",
       "task_id": "hyp_product_l1_quantiser:stage2",
       "verify": [],
       "write_scope": [
@@ -389,7 +395,7 @@
         "hyp_product_l1_quantiser:er_gate"
       ],
       "description": "ONE Stage3, only if the ER gate is cleared",
-      "detail": "no operator authorisation for a GPU run",
+      "detail": "waiting for: hyp_product_l1_quantiser:stage2, hyp_product_l1_quantiser:er_gate",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
@@ -401,7 +407,7 @@
       "resource": "gpu",
       "stage": "stage3",
       "started_at": null,
-      "status": "waiting_authorisation",
+      "status": "pending",
       "task_id": "hyp_product_l1_quantiser:stage3",
       "verify": [],
       "write_scope": [
@@ -551,7 +557,7 @@
         "hyp_transported_residual:join_E"
       ],
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
-      "detail": "no operator authorisation for a GPU run",
+      "detail": "the candidate was closed by refutation before implementation; no run",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
@@ -563,7 +569,7 @@
       "resource": "gpu",
       "stage": "stage2",
       "started_at": null,
-      "status": "waiting_authorisation",
+      "status": "blocked",
       "task_id": "hyp_transported_residual:stage2",
       "verify": [],
       "write_scope": [
@@ -579,7 +585,7 @@
         "hyp_transported_residual:er_gate"
       ],
       "description": "ONE Stage3, only if the ER gate is cleared",
-      "detail": "no operator authorisation for a GPU run",
+      "detail": "the candidate was closed by refutation before implementation; no run",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
@@ -591,7 +597,7 @@
       "resource": "gpu",
       "stage": "stage3",
       "started_at": null,
-      "status": "waiting_authorisation",
+      "status": "blocked",
       "task_id": "hyp_transported_residual:stage3",
       "verify": [],
       "write_scope": [
@@ -741,7 +747,7 @@
         "r10_hyp_busemann_horosphere:join_E"
       ],
       "description": "ONE cold 3000-epoch seed-42 Stage2, only after authorisation",
-      "detail": "no operator authorisation for a GPU run",
+      "detail": "the horosphere family was refuted twice; no run",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
@@ -753,7 +759,7 @@
       "resource": "gpu",
       "stage": "stage2",
       "started_at": null,
-      "status": "waiting_authorisation",
+      "status": "blocked",
       "task_id": "r10_hyp_busemann_horosphere:stage2",
       "verify": [],
       "write_scope": [
@@ -769,7 +775,7 @@
         "r10_hyp_busemann_horosphere:er_gate"
       ],
       "description": "ONE Stage3, only if the ER gate is cleared",
-      "detail": "no operator authorisation for a GPU run",
+      "detail": "the horosphere family was refuted twice; no run",
       "error": "",
       "finished_at": null,
       "gate_measurement": null,
@@ -781,7 +787,7 @@
       "resource": "gpu",
       "stage": "stage3",
       "started_at": null,
-      "status": "waiting_authorisation",
+      "status": "blocked",
       "task_id": "r10_hyp_busemann_horosphere:stage3",
       "verify": [],
       "write_scope": [

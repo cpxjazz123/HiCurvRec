@@ -383,6 +383,26 @@ class DAG:
                     value["detail"] = ""
                     self._event("authorisation_released", task=value["task_id"])
                 self._recompute(value, tasks)
+            # 2b. a READY task whose dependencies are not all DONE is not dispatchable.
+            #     A dependency that was later closed (blocked, failed, or refuted) closes
+            #     the task with it; a dependency that is merely unfinished demotes it back
+            #     to PENDING so it can be promoted again when the dependency completes.
+            #     Without this, a task promoted before its dependency was closed stays
+            #     READY and a tick dispatches a candidate whose family was refuted.
+            for value in tasks.values():
+                if value["status"] != READY:
+                    continue
+                unmet = [dep for dep in value["deps"] if tasks[dep]["status"] != DONE]
+                if not unmet:
+                    continue
+                closed = [dep for dep in unmet
+                          if tasks[dep]["status"] in (BLOCKED, FAILED, BLOCKED_NO_NOVEL_EVIDENCE,
+                                                     USER_STOPPED)]
+                value["status"] = BLOCKED if closed else PENDING
+                value["detail"] = (
+                    "a dependency is closed: " + ", ".join(unmet) if closed
+                    else "waiting for: " + ", ".join(unmet))
+                self._event("demoted", task=value["task_id"], reason=value["detail"])
             # 3. dispatch
             counts = self._running_by_class(tasks)
             running_scopes = [tuple(value["write_scope"]) for value in tasks.values()

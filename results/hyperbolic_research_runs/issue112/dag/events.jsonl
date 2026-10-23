@@ -164,3 +164,22 @@
 {"at": 1792754722.3444452, "attempts": 2, "blocked": true, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "hyp_transported_residual:oracle"}
 {"at": 1792754722.3488164, "attempts": 2, "blocked": true, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "r10_hyp_busemann_horosphere:eval_plan"}
 {"at": 1792754722.3526013, "attempts": 2, "blocked": true, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "r10_hyp_busemann_horosphere:oracle"}
+{"at": 1792757427.7968729, "event": "authorised", "resource": "gpu", "token": "operator-2026-10-23"}
+{"at": 1792757427.8042183, "event": "reserved", "key": "hyp_product_l1_quantiser|stage2|42|stage2-cold-3000", "rounds": 1}
+{"at": 1792757427.8087225, "event": "status", "reason": "the operator authorised the GPU work on 2026-10-23; one cold seed-42 3000-epoch run", "status": "pending", "task": "hyp_product_l1_quantiser:stage2"}
+{"at": 1792758128.8939013, "event": "authorisation_released", "task": "hyp_busemann_boundary:stage2"}
+{"at": 1792758128.8946543, "event": "ready", "task": "hyp_product_l1_quantiser:stage2"}
+{"at": 1792758128.8958697, "event": "authorisation_released", "task": "hyp_product_l1_quantiser:stage3"}
+{"at": 1792758128.8969474, "event": "authorisation_released", "task": "hyp_transported_residual:stage2"}
+{"at": 1792758128.8979669, "event": "authorisation_released", "task": "hyp_transported_residual:stage3"}
+{"at": 1792758128.8990457, "event": "authorisation_released", "task": "r10_hyp_busemann_horosphere:stage2"}
+{"at": 1792758128.9002857, "event": "authorisation_released", "task": "r10_hyp_busemann_horosphere:stage3"}
+{"at": 1792758128.901342, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "gpu", "task": "hyp_busemann_boundary:stage2"}
+{"at": 1792758241.3394928, "attempts": 1, "blocked": false, "error": "the horosphere family was refuted on its own measurements; the task must not run", "event": "failed", "task": "hyp_busemann_boundary:stage2"}
+{"at": 1792758246.2891948, "event": "status", "reason": "the candidate was closed by refutation before implementation; no run", "status": "blocked", "task": "hyp_transported_residual:stage2"}
+{"at": 1792758246.2938292, "event": "status", "reason": "the candidate was closed by refutation before implementation; no run", "status": "blocked", "task": "hyp_transported_residual:stage3"}
+{"at": 1792758246.2976182, "event": "status", "reason": "the horosphere family was refuted twice; no run", "status": "blocked", "task": "r10_hyp_busemann_horosphere:stage2"}
+{"at": 1792758246.3011389, "event": "status", "reason": "the horosphere family was refuted twice; no run", "status": "blocked", "task": "r10_hyp_busemann_horosphere:stage3"}
+{"at": 1792758246.3055859, "event": "demoted", "reason": "a dependency is closed: hyp_busemann_boundary:join_E", "task": "hyp_busemann_boundary:stage2"}
+{"at": 1792758246.305976, "event": "demoted", "reason": "waiting for: hyp_product_l1_quantiser:stage2, hyp_product_l1_quantiser:er_gate", "task": "hyp_product_l1_quantiser:stage3"}
+{"at": 1792758246.3063836, "deferred": {}, "event": "idle_tick", "idle": 71}
