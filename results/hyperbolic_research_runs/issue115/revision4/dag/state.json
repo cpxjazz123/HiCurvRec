@@ -1,0 +1,44 @@
+{
+  "authorisations": {},
+  "created_utc": 1792797183.4953647,
+  "dispatched": 1,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "revise4:M:final": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/revision4/sessions/evidence/revise4:M:final/session.json",
+          "sha256": "64cb6e9a23de90f3add4f0c48dc9ff382fb0e5252331491be3f44f54eab04f45"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/revision4/sessions/evidence/revise4:M:final/session.jsonl",
+          "sha256": "c45431bd7782dd1f59aa6da2c14ed388c369e6d58cb98259368ca0fb0b028823"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "new_family",
+      "deps": [],
+      "description": "",
+      "detail": "the M agent finished its work",
+      "error": "",
+      "finished_at": 1792797226.3089085,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792797183.5036023,
+      "status": "done",
+      "task_id": "revise4:M:final",
+      "verify": [],
+      "write_scope": [
+        "issue115/revision4"
+      ]
+    }
+  }
+}
