@@ -139,5 +139,32 @@
     "the operator's authorisation for exactly one cold Stage-2 (nothing reserved, no GPU job started)",
     "the L0 tail after a trained run cannot be known before the run; the pre-check used the host's Euclidean-trained codebook"
   ],
-  "note": "Every count above excludes backfilled #103-#109 archives: they are NEW work in this campaign. The GPU hours are zero because no official run has been authorised."
+  "note": "Every count above excludes backfilled #103-#109 archives: they are NEW work in this campaign. The GPU hours are zero because no official run has been authorised. The final state is recorded here because the issue is closed.",
+  "final_state": {
+    "closed_utc": "2026-10-24",
+    "closed_because": "the operator asked for the issue to be closed and all tasks ended",
+    "rounds": 1,
+    "gpu_hours": 0.37,
+    "the_one_run": {
+      "candidate": "hyp_product_l1_quantiser",
+      "epochs": 3000,
+      "seed": 42,
+      "hard_l1_er": 1.0,
+      "the_gate": "FAILED",
+      "the_cause": "the level-0 assignment is a norm comparison: the codeword with the smallest row norm (0.29712 of 256) is the argmin for every item"
+    },
+    "the_gate_this_exposed": "tools/harness2_genrec/partition_degeneracy.py, with 5 tests: a level must use more than 16 of its codes and no cell may hold more than a quarter of the catalogue",
+    "the_next_candidate": {
+      "id": "hyp_role_assigned_layout",
+      "state": "implemented in a sealed tree, smoke-verified (level 0: 240 codes, level 1: 255, the role level: all 256, largest cell 0.61%), CGV G1-G4 + G6 pass, G5 outstanding",
+      "gpu_run_started": false
+    },
+    "the_mission_target": {
+      "er": 16.38953942232631,
+      "recall": 0.06406796775709883,
+      "ndcg": 0.03530651701940677,
+      "met": false
+    },
+    "stage3_results": 0
+  }
 }
