@@ -42,6 +42,21 @@ def _controller(tmp_path: Path) -> Controller:
     return controller
 
 
+def _winning_extra():
+    """The identity and the gate certificates a verified win needs."""
+    from tools.harness2_genrec import success as success_module
+
+    return {
+        "proposal_sha256": "p" * 64,
+        "implementation_sha256": "i" * 64,
+        "frozen_protocol_hash": "f" * 64,
+        "hyperbolic_certificate": {
+            gate: {"state": "pass"} for gate in success_module.HYPERBOLIC_GATES
+        },
+        "cgv_certificate": {gate: {"state": "pass"} for gate in success_module.CGV_GATES},
+    }
+
+
 def _proposal(equation: str = "L = ||a - b||^2", **overrides):
     proposal = {
         "mechanism_id": "candidate_one",
@@ -247,6 +262,47 @@ def test_a_negative_round_moves_to_the_next_portfolio(tmp_path):
 
 def test_a_confirmed_success_stops_scientifically_but_not_the_issue(tmp_path):
     controller = _controller(tmp_path)
+    RunPlan = __import__(
+        "tools.harness2_genrec.evidence", fromlist=["RunPlan"]
+    ).RunPlan
+    # the store is the system of record: the arm's identity, its gates and its two
+    # measurements are recorded there, and the phase reads them from there
+    controller.store.close(
+        controller.store.admit(
+            RunPlan(
+                kind="stage2",
+                mechanism_id="candidate_one",
+                output_dir=tmp_path / "out" / "candidate_one",
+                extra=_winning_extra(),
+            )
+        ),
+        status="succeeded",
+        metrics={
+            "frozen_evaluation": {
+                "hard_l1_er": 16.9,
+                "above_frozen_threshold": True,
+                "pos_share": 0.09,
+                "neg_share": 0.0048,
+            }
+        },
+    )
+    controller.store.close(
+        controller.store.admit(
+            RunPlan(
+                kind="stage3",
+                mechanism_id="candidate_one",
+                output_dir=tmp_path / "stage3" / "candidate_one",
+            )
+        ),
+        status="succeeded",
+        metrics={
+            "stage3": {
+                "test_recall@10": 0.070,
+                "test_ndcg@10": 0.040,
+                "n_eval": 57439,
+            }
+        },
+    )
     controller.state["phase"] = "learn"
     controller.state["portfolio"] = [
         {
@@ -297,7 +353,15 @@ def test_a_success_split_across_two_manifests_is_still_a_success(tmp_path):
             )
         ),
         status="succeeded",
-        metrics={"frozen_evaluation": {"hard_l1_er": 16.9, "above_frozen_threshold": True}},
+        metrics={
+            "frozen_evaluation": {
+                "hard_l1_er": 16.9,
+                "above_frozen_threshold": True,
+                "pos_share": 0.09,
+                "neg_share": 0.0048,
+            }
+        },
+        extra=_winning_extra(),
     )
     controller.store.close(
         controller.store.admit(
@@ -308,7 +372,13 @@ def test_a_success_split_across_two_manifests_is_still_a_success(tmp_path):
             )
         ),
         status="succeeded",
-        metrics={"stage3": {"test_recall@10": 0.070, "test_ndcg@10": 0.040}},
+        metrics={
+            "stage3": {
+                "test_recall@10": 0.070,
+                "test_ndcg@10": 0.040,
+                "n_eval": 57439,
+            }
+        },
     )
     controller.state["phase"] = "read"
     controller.phase_read()
