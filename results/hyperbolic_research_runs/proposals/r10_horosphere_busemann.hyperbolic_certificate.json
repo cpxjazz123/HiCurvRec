@@ -1,0 +1,81 @@
+{
+  "proposal_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "code_tree_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "passed": false,
+  "gates": {
+    "H1": {
+      "gate": "H1",
+      "state": "pass",
+      "detail": "the model poincare_ball with curvature -1.0 and its domain constraint",
+      "measurements": {
+        "model": "poincare_ball",
+        "curvature": -1.0
+      }
+    },
+    "H2": {
+      "gate": "H2",
+      "state": "pass",
+      "detail": "the source calls the hyperbolic operator(s) ['geodesic_distance', 'mobius_addition', 'busemann', 'artanh_projection']",
+      "measurements": {
+        "hyperbolic_operators_called": [
+          "geodesic_distance",
+          "mobius_addition",
+          "busemann",
+          "artanh_projection"
+        ],
+        "declared": "busemann"
+      }
+    },
+    "H3": {
+      "gate": "H3",
+      "state": "pass",
+      "detail": "the geometry changes with the curvature (by 0.7758 between c and c/2)",
+      "measurements": {
+        "max_change": 0.7757621836122186,
+        "curvature": -1.0
+      }
+    },
+    "H4": {
+      "gate": "H4",
+      "state": "pass",
+      "detail": "the gradients are finite and reach exactly the declared parameters",
+      "measurements": {
+        "declared": [
+          "codebook"
+        ],
+        "reached": [
+          "codebook"
+        ]
+      }
+    },
+    "H5": {
+      "gate": "H5",
+      "state": "pass",
+      "detail": "the coincident, the zero and the near-boundary cases are finite and inside the domain",
+      "measurements": {
+        "margin": 1.999999000079633e-06
+      }
+    },
+    "H6": {
+      "gate": "H6",
+      "state": "insufficient_evidence",
+      "detail": "no activation evidence was supplied: the operator has to be shown to be enabled and to change the exported hard SID level",
+      "measurements": {}
+    },
+    "H7": {
+      "gate": "H7",
+      "state": "pass",
+      "detail": "the distance, the maps and the Busemann function satisfy their identities against the independent oracle",
+      "measurements": {}
+    }
+  },
+  "summary": {
+    "H1": "pass",
+    "H2": "pass",
+    "H3": "pass",
+    "H4": "pass",
+    "H5": "pass",
+    "H6": "insufficient_evidence",
+    "H7": "pass"
+  }
+}

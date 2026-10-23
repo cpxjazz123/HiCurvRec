@@ -1,0 +1,104 @@
+{
+  "id": "r10_horosphere_busemann",
+  "mechanism_id": "r10_horosphere_busemann",
+  "family": "hyperbolic_history",
+  "title": "The horosphere discrimination: a signed Busemann level set instead of a distance",
+  "equation": "L_horo = -log softmax_j( -|b_xi(q_j) - b_xi(s_i)| / T ) [j = positive_i], with xi = the target's hyperbolic position, b_xi the Busemann function of the base point xi, q_j the level-0 codewords and s_i the source's hyperbolic position",
+  "symbols": {
+    "b_xi": "the Busemann function of the base point xi in the Poincare ball of curvature -c; its level sets are the horospheres centred at xi and its sign says which side of a horosphere a point is on",
+    "xi": "the base point: the TARGET's hyperbolic position, detached, so the term moves the codebook and not the encoder",
+    "s_i": "the SOURCE's hyperbolic position; the horosphere through it is the level b_xi(s_i)",
+    "q_j": "the level-0 codewords, mapped into the ball with the same expmap0 and tangent scale as the latents",
+    "T": "the temperature, locked at specification time at 0.25"
+  },
+  "parameters": {
+    "c": 1.0,
+    "strength": 0.1,
+    "T": 0.25
+  },
+  "gradient_targets": {
+    "source": "zero",
+    "target": "zero",
+    "codebook": "nonzero"
+  },
+  "target_paths": [
+    "codebook"
+  ],
+  "behaviour_signal": "the train-split transition pair: the source item and its successor, read only from the train split",
+  "codebook_interaction": "the level-0 codewords are pulled onto the horosphere through the source and pushed off the horospheres through the wrong base points; the term is additive to the R4-08 host and does not touch the host's own routing",
+  "encoder_interaction": "none: the base point and the source level are detached, so the term moves the codebook and the export, and leaves the encoder's gradient exactly as the host left it",
+  "hyperbolic_model": "poincare_ball",
+  "hyperbolic_operator": "busemann",
+  "curvature": -1.0,
+  "basepoints": "the target's hyperbolic position, used as the base point of the Busemann function",
+  "path": "A",
+  "risk": "the horosphere is a global level set: if the codewords spread along the level instead of across it, the term separates the level-0 codes without improving the successor's code, and the arm collapses to a use-based split that the ER gate would not catch",
+  "falsifier": "the exported level-0 usage does not change, or the level-0 usage collapses onto fewer codes than the control, or the arm's ER does not exceed the control's 16.38953942232631",
+  "why_not_the_measured_failures": "the four measured failures are a gyro-translation (R8-07), a Frechet barycentre of the successors (R8-08), a per-layer radial hierarchy (R8-09) and a graph-code Gromov-Wasserstein (R8-10). None of them is a signed level set: the horosphere compares the SIGNED Busemann levels of the codewords with the level of the horosphere through the source, and the sign is what distinguishes the inside of the horosphere from the outside. A gyro-translation moves the points; a barycentre averages them; a hierarchy reweights the layers; a Wasserstein matches the graphs. This term does none of those: it asks which side of a horosphere a codeword is on.",
+  "why_not_just_euclidean": "the matched Euclidean twin keeps the same code and replaces the signed Busemann level with the squared Euclidean distance to the base point. The twin cannot ask for the inside/outside structure, because the Euclidean level is unsigned: two points on opposite sides of the horosphere are at the same distance from the base point. The arms hyp_horosphere_c1 and eucl_horosphere_c1 are the pair, and the ER difference between them is the evidence that the double-curvature geometry is what does the work.",
+  "literature_ids": [
+    "10.1145/3701716.3717802",
+    "10.1145/3773078.3831806",
+    "10.1609/aaai.v40i17.38508"
+  ],
+  "literature_evidence": "the identifiers were retrieved from Crossref and arXiv on 2026-10-23 and are recorded in results/hyperbolic_research_runs/literature/ with the request and the response; the access level is verified_abstract_only, so no equation is claimed from their full text",
+  "cgv_contract": {
+    "mechanism": {
+      "id": "r10_horosphere_busemann",
+      "type": "auxiliary_term",
+      "entrypoints": [
+        "mechanism_loss"
+      ],
+      "parameters": {
+        "mechanism": "horosphere",
+        "curvature": 1.0,
+        "strength": 0.1,
+        "temperature": 0.25
+      },
+      "path": "A"
+    },
+    "model": {
+      "adapter": "rqvae",
+      "parameter_groups": {
+        "codebook": "codebook"
+      },
+      "hyperbolic_model": "poincare_ball",
+      "curvature": -1.0
+    },
+    "forward_contract": {
+      "observables": [
+        "loss",
+        "mechanism_loss"
+      ],
+      "invariants": [
+        "the mechanism loss is finite for every batch",
+        "the mechanism loss is zero when the mechanism is disabled"
+      ]
+    },
+    "gradient_contract": {
+      "mode": "invariants",
+      "target": "codebook",
+      "invariants": [
+        "the gradient reaches the level-0 codebook and is finite",
+        "the gradient does not reach the encoder or the decoder through the mechanism loss"
+      ]
+    },
+    "update_contract": {
+      "optimizer": "adam",
+      "lr": 0.001,
+      "clip_norm": 5.0
+    },
+    "distributed_contract": {
+      "world_size": 4,
+      "aggregation": "mean",
+      "same_mechanism_in_every_rank": true
+    },
+    "runtime_contract": {
+      "entrypoint": "train_rqvae.py",
+      "observe": [
+        "loss"
+      ],
+      "arm": "hyp_horosphere_c1"
+    }
+  }
+}
