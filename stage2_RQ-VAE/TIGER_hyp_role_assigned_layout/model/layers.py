@@ -263,6 +263,12 @@ class RQLayer(nn.Module):
         self.vq_beta = float(config.beta)
         self.sk_epsilon = float(config.sk_epsilon)
         self.sk_iters = int(config.sk_iters)
+        # The role-assigned level: -1 means the host's residual chain, unchanged. A level with
+        # a role quantises the role signal instead of the residual's remainder and
+        # contributes nothing to the reconstruction.
+        self.role_level = int(getattr(config, "role_level", -1))
+        if self.role_level >= self.codebook_num:
+            raise ValueError(f"role_level {self.role_level} is outside the {self.codebook_num} levels")
 
         layers: list[nn.Module] = []
         for level, size in enumerate(self.codebook_sizes):
@@ -283,13 +289,27 @@ class RQLayer(nn.Module):
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
+        role_inputs: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, float, torch.Tensor]:
+        """Quantise the residual chain, with one level optionally carrying a ROLE signal.
+
+        When ``role_inputs`` is given, the level at ``self.role_level`` quantises the role
+        signal instead of the residual's remainder, and its codeword contributes NOTHING to
+        the reconstruction: the residual chain stops at the level before it. The role level's
+        own quantisation loss still enters the returned loss, so its codebook is trained.
+        """
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
         sum_quant_loss: torch.Tensor | float = 0.0
         num_unused_codes = 0.0
         output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long, device=x.device)
         residual = x
         for level, vq_layer in enumerate(self.vq_layers):
+            if role_inputs is not None and level == self.role_level:
+                quant, quant_loss, unused, indices = vq_layer(role_inputs, infer_use_sk)
+                sum_quant_loss = sum_quant_loss + quant_loss
+                num_unused_codes += unused
+                output[:, level] = indices
+                continue
             quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             residual = residual - quant
             quantized_x = quantized_x + quant
@@ -298,8 +318,13 @@ class RQLayer(nn.Module):
             output[:, level] = indices
         return quantized_x, sum_quant_loss / self.codebook_num, num_unused_codes, output
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+    def init_codebook(self, x: torch.Tensor, device: torch.device,
+                      role_inputs: torch.Tensor | None = None) -> torch.Tensor:
+        """Initialise the codebooks by k-means; the role level is fitted to the ROLE signal."""
         residual = x
-        for vq_layer in self.vq_layers:
+        for level, vq_layer in enumerate(self.vq_layers):
+            if role_inputs is not None and level == self.role_level:
+                vq_layer.init_codebook(role_inputs, device)
+                continue
             residual = vq_layer.init_codebook(residual, device)
         return residual

@@ -23,22 +23,25 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor,
+                role_inputs: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         encoded = self.encoder(embeddings)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        quantized, quant_loss, unused_codes, tokens = self.rq(encoded, role_inputs=role_inputs)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    role_inputs: torch.Tensor | None = None) -> torch.Tensor:
         encoded = self.encoder(embeddings)
-        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
+        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk, role_inputs=role_inputs)
         return tokens
 
     @torch.no_grad()
-    def init_codebook(self, embeddings: torch.Tensor) -> None:
+    def init_codebook(self, embeddings: torch.Tensor,
+                      role_inputs: torch.Tensor | None = None) -> None:
         encoded = self.encoder(embeddings)
-        self.rq.init_codebook(encoded, embeddings.device)
+        self.rq.init_codebook(encoded, embeddings.device, role_inputs=role_inputs)
 
     def compute_loss(
         self,
