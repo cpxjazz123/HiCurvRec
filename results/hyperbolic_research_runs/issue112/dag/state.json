@@ -6,6 +6,31 @@
   "rounds": 0,
   "schema_version": 1,
   "tasks": {
+    "campaign:next_family_search": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "portfolio",
+      "deps": [],
+      "description": "the next candidate must be a DIFFERENT family from the three that are closed (horosphere: twice; transported residual: ill posed then an identity) and from the product-geodesic L1 assignment that is approved. The question to answer with measured evidence: which L1 objective can be moved onto a DIFFERENT parameter group than the L1 codebook's assignment, so that the content partition cannot be coarsened by the behaviour signal -- and the L0 tail (largest cell, distinct codes) is the measurable target, because that is what the cohort's failures moved",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "literature",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "campaign:next_family_search",
+      "verify": [],
+      "write_scope": [
+        "results/hyperbolic_research_runs/portfolio"
+      ]
+    },
     "hyp_busemann_boundary:eval_plan": {
       "artifacts": [],
       "attempts": 0,
@@ -122,7 +147,7 @@
       "candidate": "hyp_busemann_boundary",
       "deps": [],
       "description": "independent novelty/maths review of the boundary-Busemann proposal",
-      "detail": "",
+      "detail": "the family was refuted on its own measurements: the boundary-Busemann candidate passed the CGV 6/6 and the H gates, but its real-batch test showed the level gap does not separate the host's own label and points the wrong way, so the constraint would fight the host's assignment",
       "error": "released: the coordinator did not take this work item",
       "finished_at": 1792752034.69954,
       "gate_measurement": null,
@@ -134,7 +159,7 @@
       "resource": "cpu",
       "stage": "join_R",
       "started_at": 1792752034.6788404,
-      "status": "blocked",
+      "status": "blocked_no_novel_evidence",
       "task_id": "hyp_busemann_boundary:review",
       "verify": [],
       "write_scope": [
