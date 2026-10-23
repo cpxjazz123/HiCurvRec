@@ -215,6 +215,21 @@ def gate_h3(declaration: Dict[str, Any]) -> GateResult:
     evaluated at two curvatures, and the change is compared with the change a mere rescaling
     of the points would produce. A curvature flag that changes nothing, and a geometry that
     only scales, are both refused.
+
+    WHAT THIS GATE CANNOT SEE (finding F4, issue #112). In the Poincare ball the curvature IS a
+    pure rescaling: x -> x/sqrt(c) is an isometry onto the unit ball, so on points with a fixed
+    NORMALISED radius every intrinsic quantity is independent of c. The measured consequence:
+    the transport's deviation from the identity is 0.5143924039356781 at c = 0.25, 1 and 4
+    alike. A curvature sweep in this model is therefore a scale change, and no gate that only
+    compares magnitudes can tell a real geometric dependence from a rescaling.
+
+    The honest form of H3 for this model is the curvature CLASS: the same operator in the
+    hyperbolic model and in its Euclidean twin must produce measurably different geometry (a
+    tangent closed level set versus a half-space), with the difference predicted in advance.
+    The candidates in this repository are checked against that form directly -- see
+    tools/hyperbolic_verifier/busemann.py and horosphere.py, and the measured
+    "curvature is a rescaling" result in
+    results/hyperbolic_research_runs/subspace_111/subspace_geometry_review.json.
     """
     import torch
 
