@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "stage": "prior-art check BEFORE any implementation",
+  "family": "the hyperbolic / Mobius residual chain (a residual computed as a hyperbolic displacement)",
+  "verdict": "CLOSED ON PRIOR ART",
+  "prior_art": [
+    {
+      "identifier": "10.48550/arxiv.2505.12404",
+      "year": 2025,
+      "title": "Hyperbolic Residual Quantization: Discrete Representations for Data with Latent Hierarchies",
+      "authors": [
+        "Piotr PIEKOS",
+        "Kayal",
+        "Subhradeep",
+        "Alexandros Karatzoglou"
+      ],
+      "overlap": "HRQ embeds data natively in a hyperbolic manifold and performs residual quantization using hyperbolic operations and distance metrics, adapting the embedding network, the RESIDUAL COMPUTATION and the distance metrics. That is the operator the candidate would have introduced."
+    },
+    {
+      "identifier": "10.48550/arxiv.2609.03369",
+      "year": 2026,
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "authors": [
+        "Longfeng Wu",
+        "Tong Zeng",
+        "Giovanni Seni",
+        "Zhimin Peng",
+        "Bhanu Pratap Singh Rawat",
+        "Si Zhang"
+      ],
+      "overlap": "a hyperbolic RQ-VAE for item indexing in generative recommendation -- the same family in our own setting"
+    }
+  ],
+  "why_this_matters": "The family is closed BEFORE an implementation, which is the cheapest possible closure and the rule the campaign follows: a family is closed by a prior-art hit, not by a failed run. The two probes that led here (the level-wise factorisation and the Mobius residual chain) were INCONCLUSIVE on the data -- they measured the geometry's effect, not the novelty -- and the targeted prior-art search is what closed the family.",
+  "lesson": "A prior-art search must be targeted at the OPERATOR, not at the family's name. The campaign's earlier general queries (hyperbolic vector quantisation, Riemannian vector quantisation) recorded a NEGATIVE result -- no Riemannian-VQ paper -- and that negative result was wrong in the sense that mattered: HRQ and HypRQ-VAE exist, and they were missed because the queries were about the topic rather than about the operation. A negative search result is only as good as the query that produced it.",
+  "what_remains_open": "the LEVEL-WISE factorisation (one factor per level, relative curvatures) is a DIFFERENT operator from HRQ's (which is one manifold for the whole chain), and it has NOT been checked against a targeted prior-art search. That is the next check, and it should happen before any implementation of it as well.",
+  "artifacts": {
+    "search_log": "results/hyperbolic_research_runs/issue112/next_family_literature.json",
+    "matrix": "results/hyperbolic_research_runs/subspace_111/subspace_literature_matrix.json",
+    "probes": [
+      "results/hyperbolic_research_runs/issue112/levelwise_factors_probe.json",
+      "results/hyperbolic_research_runs/issue112/hyperbolic_residual_chain_probe.json"
+    ]
+  }
+}
