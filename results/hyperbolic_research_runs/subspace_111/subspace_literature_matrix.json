@@ -418,6 +418,78 @@
         "what_it_does_not_do": "n/a"
       },
       "novelty_impact": "the arXiv API answered 429 to these queries as well; OpenAlex and Crossref carried them, and the two decisive records came from OpenAlex"
+    },
+    {
+      "id": "10_1609_aaai_v38i5_28261",
+      "title": "HiHPQ: Hierarchical Hyperbolic Product Quantization for Unsupervised Image Retrieval",
+      "authors": [
+        "Zexuan Qiu",
+        "Jiahong Liu",
+        "Yankai Chen",
+        "Irwin King"
+      ],
+      "year": 2024,
+      "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+      "identifier": "10.1609/aaai.v38i5.28261",
+      "url": "https://doi.org/10.1609/aaai.v38i5.28261",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the level-wise family",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Existing unsupervised deep product quantization methods primarily aim for the increased similarity between different views of the identical image, whereas the delicate multi-level semantic similarities preserved between images are overlooked. Moreover, these methods predominantly focus on the Euclidean space for computational convenience, compromising their ability to map the multi-level semantic relationships between images effectively. To mitigate these shortcomings, we propose a novel unsupervised product quantization method dubbed Hierarchical Hyperbolic Product Quantization (HiHPQ), which learns quantized representations by incorporating hierarchical semantic similarity within hyperbolic geometry. Specifically, we propose a hyperbolic product quantizer, where the hyperbolic codebook attention mechanism and the quantized contrastive learning on the hyperbolic product manifold are int",
+        "geometry": "hyperbolic / mixed curvature",
+        "what_it_does_not_do": "the full text was not read"
+      },
+      "novelty_impact": "CLOSES (at abstract level) the level-wise factorisation: a HIERARCHICAL HYPERBOLIC PRODUCT QUANTISER -- several levels, each a product of hyperbolic factors, which is the level-wise operator with a different task attached."
+    },
+    {
+      "id": "10_3929_ethz-b-000372387",
+      "title": "Mixed-curvature Variational Autoencoders",
+      "authors": [
+        "Ondrej Skopek",
+        "Octavian-Eugen Ganea",
+        "Gary B\u00e9cigneul"
+      ],
+      "year": 2019,
+      "venue": "arXiv (Cornell University)",
+      "identifier": "10.3929/ethz-b-000372387",
+      "url": "http://arxiv.org/abs/1911.08411",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the level-wise family",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Euclidean geometry has historically been the typical \"workhorse\" for machine learning applications due to its power and simplicity. However, it has recently been shown that geometric spaces with constant non-zero curvature improve representations and performance on a variety of data types and downstream tasks. Consequently, generative models like Variational Autoencoders (VAEs) have been successfully generalized to elliptical and hyperbolic latent spaces. While these approaches work well on data with particular kinds of biases e.g. tree-like data for a hyperbolic VAE, there exists no generic approach unifying and leveraging all three models. We develop a Mixed-curvature Variational Autoencoder, an efficient way to train a VAE whose latent space is a product of constant curvature Riemannian manifolds, where the per-component curvature is fixed or learnable. This generalizes the Euclidean ",
+        "geometry": "hyperbolic / mixed curvature",
+        "what_it_does_not_do": "the full text was not read"
+      },
+      "novelty_impact": "prior art for the mixed-curvature latent space the level-wise family would rest on, from 2019."
+    },
+    {
+      "id": "10_48550_arxiv_2606_01844",
+      "title": "Decoupled Residual Quantization for Robust Semantic IDs in Recommendation",
+      "authors": [
+        "Xuesi Wang",
+        "Junjie Wang",
+        "Ziliang Wang",
+        "Weijie Bian",
+        "Guanxing Zhang"
+      ],
+      "year": 2026,
+      "venue": "arXiv (Cornell University)",
+      "identifier": "10.48550/arxiv.2606.01844",
+      "url": "https://arxiv.org/abs/2606.01844",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the level-wise family",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Semantic IDs represent items as shared discrete token sequences and have become a practical tool for recommendation and retrieval. Yet it remains difficult to tell why a tokenizer fails: poor quality may come from codebook underutilization, unstable decision boundaries, or geometric distortion of the embedding space. This paper develops a quantitative framework for diagnosing these failures through expected codeword overlap and effective codebook capacity. The former measures expected codeword confusion under retrieval-time perturbation, while the latter converts that confusion into an effective number of usable, well-separated codes. The framework links semantic boundary confusion to both code usage imbalance and Euclidean geometric constraints. As a proof of concept, we present Decoupled Residual Quantization (DRQ), which separates continuous geometry reconstruction from discrete distr",
+        "geometry": "hyperbolic / mixed curvature",
+        "what_it_does_not_do": "the full text was not read"
+      },
+      "novelty_impact": "prior art for decoupled residual quantisation for semantic IDs -- the residual-chain structure the level-wise family modifies."
     }
   ],
   "searches_that_returned_nothing_useful": [
