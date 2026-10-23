@@ -1,0 +1,48 @@
+{
+  "device": "cuda:0",
+  "behavior_weight_max": 0.2,
+  "behavior_temperature": 0.07,
+  "ramp_start_epoch": 1500,
+  "ramp_samples": {
+    "1": 0.0,
+    "1499": 0.0,
+    "1500": 0.0,
+    "2250": 0.1,
+    "3000": 0.2
+  },
+  "train_items": 24556,
+  "transition_pairs": 339519,
+  "base_loss": 0.0005296078161336482,
+  "recon_loss": 0.0005060721305198967,
+  "quant_loss": 2.3535698346677236e-05,
+  "residual_shape": [
+    3,
+    1024,
+    32
+  ],
+  "pair_rows": 512,
+  "contrastive_loss": 6.237584114074707,
+  "contrastive_grad_nonzero_parameter_count": 8,
+  "contrastive_grad_touches_encoder": true,
+  "contrastive_grad_sample": [
+    "encoder.mlp.1.weight",
+    "encoder.mlp.1.bias",
+    "encoder.mlp.4.weight",
+    "encoder.mlp.4.bias",
+    "encoder.mlp.7.weight",
+    "encoder.mlp.7.bias",
+    "encoder.mlp.10.weight",
+    "encoder.mlp.10.bias"
+  ],
+  "valid_contrastive_rows": 512,
+  "share_true_successor_is_nearest": 0.001953125,
+  "share_nearest_before_mask": 0.001953125,
+  "first_active_epoch": 1501,
+  "ramp_weight_at_first_active_epoch": 0.00013333333333333334,
+  "total_loss": 0.0013612856855615973,
+  "total_grad_fn": "AddBackward0",
+  "weighted_delta": 0.0008316778694279492,
+  "total_grad_nonzero_parameter_count": 19,
+  "failures": [],
+  "status": "PASS"
+}

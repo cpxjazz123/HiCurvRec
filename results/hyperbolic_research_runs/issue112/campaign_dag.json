@@ -1,11 +1,12 @@
 {
   "rounds": 0,
   "idle_ticks": 0,
-  "dispatched_total": 0,
+  "dispatched_total": 2,
   "status_counts": {
     "blocked_no_novel_evidence": 2,
+    "done": 1,
     "pending": 6,
-    "ready": 9,
+    "ready": 8,
     "waiting_authorisation": 7
   },
   "experiment_tasks": 7,
@@ -130,10 +131,10 @@
       "status": "ready",
       "lease_owner": "",
       "lease_expires": 0.0,
-      "attempts": 0,
-      "error": "",
+      "attempts": 1,
+      "error": "released: the coordinator did not take this work item",
       "artifacts": [],
-      "started_at": null,
+      "started_at": 1792751031.8550022,
       "finished_at": null,
       "detail": ""
     },
@@ -175,15 +176,15 @@
       "verify": [],
       "max_attempts": 2,
       "description": "read-only evaluation plan for the frozen protocol",
-      "status": "ready",
+      "status": "done",
       "lease_owner": "",
       "lease_expires": 0.0,
-      "attempts": 0,
+      "attempts": 1,
       "error": "",
       "artifacts": [],
-      "started_at": null,
-      "finished_at": null,
-      "detail": ""
+      "started_at": 1792751031.8635347,
+      "finished_at": 1792751031.8727195,
+      "detail": "the read-only evaluation plan is written: results/hyperbolic_research_runs/issue112/evaluation_plan_hyp_product_l1_quantiser.md"
     },
     {
       "task_id": "hyp_product_l1_quantiser:implement",
