@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "mechanism": "hyp_product_l1_quantiser",
+  "tree": "stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser",
+  "components": [
+    {
+      "id": "product_assignment",
+      "kind": "symbol_present",
+      "symbol": "install_product_assignment",
+      "ok": true,
+      "detail": "install_product_assignment is defined in scripts/hyp_losses.py",
+      "why": "the level-0 assignment is the product-geodesic one"
+    },
+    {
+      "id": "role_supervision",
+      "kind": "active_mechanism",
+      "symbol": "factor_nce",
+      "ok": true,
+      "detail": "the arm's configuration uses the mechanism 'factor_nce'",
+      "why": "the behaviour factor's transition term must be the arm's ACTIVE mechanism, not a function that happens to exist in the tree"
+    },
+    {
+      "id": "role_separation",
+      "kind": "half_scoped_term",
+      "symbol": "factor_nce",
+      "ok": true,
+      "detail": "the content half's gradient is exactly 0.0 and the behaviour half's is 7.631153e-02",
+      "why": "the behaviour factor's transition term must not move the content half"
+    }
+  ],
+  "missing": [],
+  "verdict": "the implementation carries every component the proposal declared"
+}
