@@ -36,7 +36,7 @@
       "gate_measurement": null,
       "started_at": null,
       "finished_at": null,
-      "detail": "the measurable target is now quantified: on the frozen host, 92.08% of the (L1,L2) cells carry exactly ONE L3 code (the mean is 1.0969 L3 codes per cell over 3612 cells), while every level's codebook is essentially fully used (243/255/256 of 256). So the third token is determined by the cell, and the codebook is NOT the bottleneck -- the residual's structure is. A candidate that enriches the third token must move that 92.08%; the level-wise metric swap does not (its pre-check was inconclusive, and the baseline is in residual_information_baseline.json)"
+      "detail": "the next family's target is now a metric the geometry demonstrably moves: the within-cell spread over the level-3 codebook's spacing is 0.7895 for the Euclidean chain and 1.4251 for a Mobius residual chain, while the redundancy itself (the fraction of (L1,L2) cells with a single L3 code) barely moves (0.9208 -> 0.9263) because it is a property of the TRAINED codebook. Any candidate in this direction is read against the 92.08% baseline"
     },
     {
       "task_id": "hyp_busemann_boundary:eval_plan",
