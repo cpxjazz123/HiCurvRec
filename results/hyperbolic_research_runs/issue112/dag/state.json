@@ -1,7 +1,7 @@
 {
   "authorisations": {},
   "created_utc": 1792752022.4363916,
-  "dispatched": 8,
+  "dispatched": 9,
   "idle_ticks": 17,
   "rounds": 0,
   "schema_version": 1,
@@ -276,7 +276,7 @@
     },
     "hyp_product_l1_quantiser:join_E": {
       "artifacts": [],
-      "attempts": 1,
+      "attempts": 2,
       "candidate": "hyp_product_l1_quantiser",
       "deps": [
         "hyp_product_l1_quantiser:implement",
@@ -284,9 +284,9 @@
         "hyp_product_l1_quantiser:eval_plan"
       ],
       "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
-      "detail": "the join measured the REDUCED mechanism: the implementation has no factor-role supervision, so the operator that was implemented (a product-metric hyperbolic level-0 assignment) is prior art (HiHPQ, HyperVQ, mixed-curvature VAEs). The candidate is NOT approvable as implemented; the role-supervision re-implementation is queued",
+      "detail": "the join PASSED for the implemented mechanism (the CGV's G1-G6 on the identical tree and the complete H gates), but the implementation is a REDUCED version of the frozen proposal: it has no factor-role supervision, and the operator it does implement -- a product-metric hyperbolic level-0 assignment -- is prior art (HiHPQ, HyperVQ, the mixed-curvature VAEs). The candidate is NOT approvable as implemented; the role-supervision re-implementation is queued",
       "error": "",
-      "finished_at": 1792752034.6953816,
+      "finished_at": 1792753617.5928965,
       "gate_measurement": null,
       "kind": "engineering",
       "lease_expires": 0.0,
@@ -295,8 +295,8 @@
       "requires": null,
       "resource": "cpu",
       "stage": "join_E",
-      "started_at": 1792752034.6865358,
-      "status": "ready",
+      "started_at": 1792753617.5823824,
+      "status": "done",
       "task_id": "hyp_product_l1_quantiser:join_E",
       "verify": [],
       "write_scope": [
