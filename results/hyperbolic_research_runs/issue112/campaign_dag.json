@@ -3,17 +3,41 @@
   "idle_ticks": 17,
   "dispatched_total": 8,
   "status_counts": {
-    "blocked": 1,
-    "blocked_no_novel_evidence": 3,
+    "blocked_no_novel_evidence": 4,
     "done": 4,
     "pending": 8,
-    "ready": 4,
+    "ready": 5,
     "waiting_authorisation": 7
   },
   "experiment_tasks": 7,
   "experiment_done": 0,
   "authorisations": {},
   "tasks": [
+    {
+      "task_id": "campaign:next_family_search",
+      "candidate": "portfolio",
+      "stage": "literature",
+      "deps": [],
+      "resource": "cpu",
+      "kind": "engineering",
+      "write_scope": [
+        "results/hyperbolic_research_runs/portfolio"
+      ],
+      "verify": [],
+      "max_attempts": 2,
+      "requires": null,
+      "description": "the next candidate must be a DIFFERENT family from the three that are closed (horosphere: twice; transported residual: ill posed then an identity) and from the product-geodesic L1 assignment that is approved. The question to answer with measured evidence: which L1 objective can be moved onto a DIFFERENT parameter group than the L1 codebook's assignment, so that the content partition cannot be coarsened by the behaviour signal -- and the L0 tail (largest cell, distinct codes) is the measurable target, because that is what the cohort's failures moved",
+      "status": "ready",
+      "lease_owner": "",
+      "lease_expires": 0.0,
+      "attempts": 0,
+      "error": "",
+      "artifacts": [],
+      "gate_measurement": null,
+      "started_at": null,
+      "finished_at": null,
+      "detail": ""
+    },
     {
       "task_id": "hyp_busemann_boundary:eval_plan",
       "candidate": "hyp_busemann_boundary",
@@ -138,7 +162,7 @@
       "max_attempts": 2,
       "requires": null,
       "description": "independent novelty/maths review of the boundary-Busemann proposal",
-      "status": "blocked",
+      "status": "blocked_no_novel_evidence",
       "lease_owner": "",
       "lease_expires": 0.0,
       "attempts": 2,
@@ -147,7 +171,7 @@
       "gate_measurement": null,
       "started_at": 1792752034.6788404,
       "finished_at": 1792752034.69954,
-      "detail": ""
+      "detail": "the family was refuted on its own measurements: the boundary-Busemann candidate passed the CGV 6/6 and the H gates, but its real-batch test showed the level gap does not separate the host's own label and points the wrong way, so the constraint would fight the host's assignment"
     },
     {
       "task_id": "hyp_busemann_boundary:stage2",
