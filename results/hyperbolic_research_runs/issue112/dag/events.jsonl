@@ -94,3 +94,29 @@
 {"at": 1792753579.002516, "event": "status", "reason": "the join measured the REDUCED mechanism: the implementation has no factor-role supervision, so the operator that was implemented (a product-metric hyperbolic level-0 assignment) is prior art (HiHPQ, HyperVQ, mixed-curvature VAEs). The candidate is NOT approvable as implemented; the role-supervision re-implementation is queued", "status": "ready", "task": "hyp_product_l1_quantiser:join_E"}
 {"at": 1792753617.58809, "attempt": 2, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:join_E"}
 {"at": 1792753617.5950854, "detail": "the join PASSED for the implemented mechanism (the CGV's G1-G6 on the identical tree and the complete H gates), but the implementation is a REDUCED version of the frozen proposal: it has no factor-role supervision, and the operator it does implement -- a product-metric hyperbolic level-0 assignment -- is prior art (HiHPQ, HyperVQ, the mixed-curvature VAEs). The candidate is NOT approvable as implemented; the role-supervision re-implementation is queued", "event": "done", "task": "hyp_product_l1_quantiser:join_E"}
+{"at": 1792754699.2244534, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:role_supervision"}
+{"at": 1792754699.23374, "detail": "the role supervision is implemented and MEASURED: the behaviour factor's transition term touches only the behaviour half, so the content half's codebook gradient is exactly 0.0 while the behaviour half's is 1.10e-01; the CGV then passed G1-G6 on the revised tree (G5's pooled deviation 1.490e-08, the ranks bitwise identical)", "event": "done", "task": "hyp_product_l1_quantiser:role_supervision"}
+{"at": 1792754699.2400866, "attempt": 2, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_transported_residual:eval_plan"}
+{"at": 1792754699.2476208, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_transported_residual:oracle"}
+{"at": 1792754699.2548513, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "r10_hyp_busemann_horosphere:eval_plan"}
+{"at": 1792754699.2622318, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "r10_hyp_busemann_horosphere:oracle"}
+{"at": 1792754699.269917, "deferred": {}, "event": "idle_tick", "idle": 18}
+{"at": 1792754699.2772093, "deferred": {}, "event": "idle_tick", "idle": 19}
+{"at": 1792754699.285452, "deferred": {}, "event": "idle_tick", "idle": 20}
+{"at": 1792754699.2928433, "deferred": {}, "event": "idle_tick", "idle": 21}
+{"at": 1792754699.3003159, "deferred": {}, "event": "idle_tick", "idle": 22}
+{"at": 1792754699.308719, "deferred": {}, "event": "idle_tick", "idle": 23}
+{"at": 1792754699.3166096, "deferred": {}, "event": "idle_tick", "idle": 24}
+{"at": 1792754699.3237808, "deferred": {}, "event": "idle_tick", "idle": 25}
+{"at": 1792754699.3320057, "deferred": {}, "event": "idle_tick", "idle": 26}
+{"at": 1792754699.3399315, "deferred": {}, "event": "idle_tick", "idle": 27}
+{"at": 1792754699.3474977, "deferred": {}, "event": "idle_tick", "idle": 28}
+{"at": 1792754699.3552434, "deferred": {}, "event": "idle_tick", "idle": 29}
+{"at": 1792754699.363044, "deferred": {}, "event": "idle_tick", "idle": 30}
+{"at": 1792754699.3712971, "deferred": {}, "event": "idle_tick", "idle": 31}
+{"at": 1792754699.3788338, "deferred": {}, "event": "idle_tick", "idle": 32}
+{"at": 1792754699.386542, "deferred": {}, "event": "idle_tick", "idle": 33}
+{"at": 1792754699.3931425, "attempts": 2, "blocked": true, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "hyp_transported_residual:eval_plan"}
+{"at": 1792754699.3967843, "attempts": 1, "blocked": false, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "hyp_transported_residual:oracle"}
+{"at": 1792754699.4008625, "attempts": 1, "blocked": false, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "r10_hyp_busemann_horosphere:eval_plan"}
+{"at": 1792754699.4047537, "attempts": 1, "blocked": false, "error": "released: the coordinator did not take this work item", "event": "failed", "task": "r10_hyp_busemann_horosphere:oracle"}
