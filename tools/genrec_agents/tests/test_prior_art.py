@@ -7,7 +7,7 @@ formulas and the previous campaigns' losses are recognised as prior art, a model
 mathematics cannot be recovered is marked unknown rather than approved, and a missing or
 edited registry BLOCKS rather than skipping the comparison.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_prior_art.py -q
 """
 

@@ -25,7 +25,7 @@ cd /fs04/ar57/wenyu/GeneRec
 export PYTHONPATH=/fs04/ar57/wenyu/GeneRec
 
 # one transition at a time (useful while you watch it)
-python3 -m tools.harness2_genrec.cli controller tick
+python3 -m tools.genrec_agents.cli controller tick
 
 # the worker loop
 setsid nohup /tmp/controller_worker.sh > /tmp/controller_worker.log 2>&1 < /dev/null &
@@ -39,7 +39,7 @@ resume from; the state file is the authority on what happened.
 
 ```bash
 # the queue, the phase, the next action, the pause reason
-python3 -m tools.harness2_genrec.cli controller status
+python3 -m tools.genrec_agents.cli controller status
 
 # the last twenty audit events
 tail -20 results/harness3_runs/controller/audit.jsonl
@@ -48,7 +48,7 @@ tail -20 results/harness3_runs/controller/audit.jsonl
 pgrep -af "train_rqvae.py|run_stage3_param"
 
 # the arms measured so far, and the downstream deltas
-python3 -m tools.harness2_genrec.cli final-table --out results/harness3_runs/final
+python3 -m tools.genrec_agents.cli final-table --out results/harness3_runs/final
 ```
 
 ## Restarting after a crash
@@ -63,10 +63,10 @@ window does not duplicate a cold run.
 
 ```bash
 # an operator pause: the state is persisted and the issue stays OPEN
-python3 -m tools.harness2_genrec.cli controller pause --reason "maintenance window"
+python3 -m tools.genrec_agents.cli controller pause --reason "maintenance window"
 
 # resume
-python3 -m tools.harness2_genrec.cli controller resume
+python3 -m tools.genrec_agents.cli controller resume
 ```
 
 A pause is operational, not scientific. The controller never turns a negative result into a
@@ -98,8 +98,8 @@ read -> hypothesise -> screen -> train -> evaluate -> stage3 -> learn -> (next p
 
 ## The prohibitions, and where they are enforced
 
-`tools/harness2_genrec/guardrails.py`, consulted before every dispatch and covered by
-`tools/harness2_genrec/tests/test_guardrails.py`:
+`tools/genrec_agents/guardrails.py`, consulted before every dispatch and covered by
+`tools/genrec_agents/tests/test_guardrails.py`:
 
 | prohibition | refusal |
 |---|---|

@@ -4,7 +4,7 @@ The import has to be read-only, it has to count what it found, and it has to kee
 three kinds of material apart: an imported record, a new scientific arm and a synthetic
 math test. Counting them together is how a campaign reports progress it did not make.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_archives.py -q
 """
 

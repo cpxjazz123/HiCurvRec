@@ -11,7 +11,7 @@ surface: the harness reads a tree, validates it, and only the paths declared her
 ever reach a candidate.
 
 The surface specification and the tree helpers used to come from the third-party
-framework (``harness2.core.tree``). They are declared here instead, with the same
+framework's tree module. They are declared here instead, with the same
 fields and the same semantics, so that no active module imports anything outside this
 repository.
 """

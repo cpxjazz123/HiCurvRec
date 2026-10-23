@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from . import library as library_mod
 from . import prompts, surface as surface_mod
 
-__all__ = ["MODES", "MODE_NAMES", "mode_token", "run_sweep", "Stage"]
+__all__ = ["MODES", "MODE_NAMES", "mode_token", "run_pool", "Stage"]
 
 MODES = ("agg", "seq")
 MODE_NAMES = {"agg": "parallel", "seq": "sequential"}
@@ -254,7 +254,7 @@ def _run_task(task_id: str, *, adapter: Any, prop: Any, k: int, modes: Sequence[
     return result
 
 
-def run_sweep(k: int, *, adapter: Any, prop: Any, runs_root: Path, library_root: Path,
+def run_pool(k: int, *, adapter: Any, prop: Any, runs_root: Path, library_root: Path,
               split: str = "all", modes: Sequence[str] = MODES, seed: Optional[int] = None,
               tag: str = "", domain_parallel: int = 1, only_domains: Sequence[str] = (),
               selector_prop: Any = None, pool_policy: str = "finals",

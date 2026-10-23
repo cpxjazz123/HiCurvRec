@@ -6,7 +6,7 @@ second official experiment of the same kind under the same identity. It also has
 distinguish progress from a stop: a blocked candidate records what it needs, and the counts
 keep the kinds apart.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_hyperbolic_campaign.py -q
 """
 

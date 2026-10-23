@@ -4,7 +4,7 @@ The dry run has to walk the whole flow, it has to mark the stages that are mocke
 must never present itself as a scientific success: the success predicate is asked, it
 refuses, and the refusal is in the output.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_dry_run.py -q
 """
 

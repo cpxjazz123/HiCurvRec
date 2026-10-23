@@ -5,7 +5,7 @@ the evidence store's manifests -- not from a hand-written summary -- so a reader
 each cell against the run it came from, and the table can be regenerated from the store
 alone.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m tools.genrec_agents.cli \\
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m tools.genrec_agents.cli \\
         table --store results/harness3_runs/store --out results/harness3_runs/per_arm_table.md
 """
 

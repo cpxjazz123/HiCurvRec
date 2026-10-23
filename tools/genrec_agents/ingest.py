@@ -10,7 +10,7 @@ against the run that produced it.
 What is hardcoded here is the *location* of the artifacts, never their content: every
 number in a manifest is read out of the artifact itself.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m tools.genrec_agents.cli \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m tools.genrec_agents.cli \
         ingest-campaign --run-dir /home/wlia0047/ar57_scratch/wenyu/harness2_runs/learning_c1 \
                         --store results/harness3_runs/store
 """

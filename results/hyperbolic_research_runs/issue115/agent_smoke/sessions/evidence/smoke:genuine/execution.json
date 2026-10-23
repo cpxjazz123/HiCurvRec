@@ -1,0 +1,49 @@
+{
+  "role": "L",
+  "task_id": "smoke:genuine",
+  "ok": true,
+  "started_utc": "2026-10-23T15:37:46Z",
+  "finished_utc": "2026-10-23T15:37:50Z",
+  "elapsed_s": 4.11,
+  "pid": 2746911,
+  "model": "openai/gpt-6-luna",
+  "prompt_sha256": "a77036687242404b29f4840aec341f0afd7aee66cb3fc43da55f6b9cc870f808",
+  "inputs_hash": "",
+  "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "openai/gpt-6-luna",
+    "--title",
+    "L:smoke:genuine",
+    "Write the single word READY to the file smoke.txt in your current directory. Do not read, create or modify any other file. Then stop."
+  ],
+  "workspace": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/workspaces/smoke:genuine",
+  "cwd": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/workspaces/smoke:genuine",
+  "exit_code": 0,
+  "timed_out": false,
+  "n_tool_calls": 1,
+  "tools": [
+    "shell"
+  ],
+  "tokens": {
+    "input": 10173,
+    "output": 21,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "session_path": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/evidence/smoke:genuine/session.json",
+  "tool_jsonl_path": "results/hyperbolic_research_runs/issue115/agent_smoke/sessions/evidence/smoke:genuine/session.jsonl",
+  "outputs": [
+    "smoke.txt"
+  ],
+  "missing_outputs": [],
+  "verification": {
+    "ok": true,
+    "body": "READY"
+  },
+  "error": ""
+}

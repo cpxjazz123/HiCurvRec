@@ -5,7 +5,7 @@ blocked, a group that is present but empty is blocked, and the generic template 
 substituted for a contract that was not supplied -- a verifier that falls back to a template
 verifies the template instead of the mechanism.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_cgv_pass_through.py -q
 """
 

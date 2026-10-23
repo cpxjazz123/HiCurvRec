@@ -122,7 +122,7 @@ class Campaign:
         self.arms_dir.mkdir(parents=True, exist_ok=True)
         self.started = time.time()
         self.state: Dict[str, Any] = {
-            "campaign": "harness2-autonomous-research",
+            "campaign": "genrec-autonomous-research",
             "started_utc": _now(),
             "config": {
                 "base_tree": str(config.base_tree),

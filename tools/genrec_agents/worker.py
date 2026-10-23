@@ -88,6 +88,8 @@ class AgentWorker:
         self.backoff_base_s = float(backoff_base_s)
         self.backoff_max_s = float(backoff_max_s)
         self.status_path = self.root / "worker_status.json"
+        #: Another process may ask for a clean stop by creating this file.
+        self.stop_path = self.root / "worker_stop"
         self._lock = threading.Lock()
         self._in_flight: Dict[str, int] = {}
         self._not_before: Dict[str, float] = {}
@@ -133,8 +135,15 @@ class AgentWorker:
                                  "the DAG is idle, not working")
         return payload
 
-    def stop(self) -> None:
+    def stop(self, *, request: bool = False) -> None:
+        """Stop this worker; ``request=True`` also writes the flag other workers read."""
         self._stop.set()
+        if request:
+            self.stop_path.parent.mkdir(parents=True, exist_ok=True)
+            self.stop_path.write_text("stop\n", encoding="utf-8")
+
+    def stop_requested(self) -> bool:
+        return self.stop_path.is_file()
 
     # -- dispatch ---------------------------------------------------------
     def _role_free(self, role: str) -> bool:
@@ -242,7 +251,7 @@ class AgentWorker:
         with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
             futures = []
             while max_ticks is None or ticks < max_ticks:
-                if self._stop.is_set():
+                if self._stop.is_set() or self.stop_requested():
                     break
                 ticks += 1
                 futures = [f for f in futures if not f.done()]
@@ -254,4 +263,7 @@ class AgentWorker:
             for future in futures:
                 future.result()
         self._write_status()
-        return {"ticks": ticks, "counters": dict(self._counters)}
+        stopped = self.stop_requested()
+        if stopped:
+            self.stop_path.unlink(missing_ok=True)
+        return {"ticks": ticks, "counters": dict(self._counters), "stopped": stopped}

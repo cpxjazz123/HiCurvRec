@@ -5,7 +5,7 @@ seed other than 42 for a Stage-2, a Stage-3 or a G_H1 probe; a repeated probe, c
 frozen evaluation or Stage-3; a control or an archived policy; and a mechanism that
 repeats one that already exists.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_guardrails_109.py -q
 """
 

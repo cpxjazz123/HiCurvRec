@@ -6,7 +6,7 @@ identifier does not resolve is unavailable, a record whose title disagrees with 
 identifier is disputed, and a claim that cites an unverified paper fails. A search is
 recorded as a request and a response, never as a claim that a search happened.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_literature.py -q
 """
 

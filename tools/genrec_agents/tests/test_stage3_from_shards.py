@@ -4,7 +4,7 @@ A Stage-3 run that dies between writing its shards and merging them leaves a com
 measurement that nothing records. The recovery reads those shards, and the test proves the
 convention is the official one by reproducing the archived finals exactly.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_stage3_from_shards.py -q
 """
 

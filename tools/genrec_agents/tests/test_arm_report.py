@@ -5,7 +5,7 @@ assemble them from the evidence chain and to say what is missing as loudly as wh
 The tests therefore check that each item reaches the report, that the deltas are against the
 archived control, and that an arm measured before the signals existed says so.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_arm_report.py -q
 """
 

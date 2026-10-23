@@ -5,7 +5,7 @@ tests are about the behaviours the issue names: a rename is not novelty, a weigh
 change is not novelty, an old arm's resubmission is not novelty, and a genuinely new
 mechanism is.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_historical_fingerprints.py -q
 """
 

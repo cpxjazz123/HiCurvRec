@@ -1,6 +1,6 @@
 """The one-command autonomous campaign (issue #105, acceptance).
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m tools.genrec_agents.cli \\
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m tools.genrec_agents.cli \\
         run --store results/harness3_runs/store --out results/harness3_runs/pipeline
 
 The chain is:

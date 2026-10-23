@@ -4,7 +4,7 @@ The controller has to say which hypothesis failed for an arm, and say it with th
 measurement that produced it. The tests therefore check that each mode is raised by its own
 evidence and not by anything else, and that a healthy arm is not diagnosed as broken.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_diagnosis.py -q
 """
 

@@ -159,7 +159,7 @@ def _campaign_checks() -> None:
     """The campaign's own machinery: the rubric and the mechanism-specific checks."""
     import tempfile
 
-    from tools.harness2_genrec import ideation
+    from tools.genrec_agents import ideation
     from tools.mvg import invariants
 
     proposal = {

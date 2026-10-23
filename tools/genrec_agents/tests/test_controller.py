@@ -5,7 +5,7 @@ transitions, a restart that launches the same job twice, a job whose process die
 silently retried, two arms with the same specification under different names, and the
 prohibited runs. Each of those has a test here.
 
-    /home/wlia0047/ar57_scratch/wenyu/harness2/.venv/bin/python -m pytest \
+    /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10 -m pytest \
         tools/genrec_agents/tests/test_controller.py -q
 """
 

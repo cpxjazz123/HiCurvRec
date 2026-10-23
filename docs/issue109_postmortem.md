@@ -1,7 +1,7 @@
 # The #109 postmortem (issue #110, section 0)
 
 What the previous campaign actually did, measured rather than remembered, and what is now
-encoded as a check. The checks live in `tools/harness2_genrec/forensics_109.py` and are run
+encoded as a check. The checks live in `tools/genrec_agents/forensics_109.py` and are run
 against the archives on demand.
 
 ## The eight lessons
