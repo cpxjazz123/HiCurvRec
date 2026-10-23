@@ -6,6 +6,156 @@
   "rounds": 0,
   "schema_version": 1,
   "tasks": {
+    "hyp_busemann_boundary:eval_plan": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "description": "",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "eval_plan",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_busemann_boundary:eval_plan",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_busemann_boundary/plan"
+      ]
+    },
+    "hyp_busemann_boundary:implement": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "description": "",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "implement",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_busemann_boundary:implement",
+      "verify": [],
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_hyp_busemann_boundary"
+      ]
+    },
+    "hyp_busemann_boundary:join_E": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [
+        "hyp_busemann_boundary:implement",
+        "hyp_busemann_boundary:oracle",
+        "hyp_busemann_boundary:eval_plan"
+      ],
+      "description": "",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "join_E",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_busemann_boundary:join_E",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_busemann_boundary/join"
+      ]
+    },
+    "hyp_busemann_boundary:oracle": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [
+        "hyp_busemann_boundary:review"
+      ],
+      "description": "",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "oracle",
+      "started_at": null,
+      "status": "pending",
+      "task_id": "hyp_busemann_boundary:oracle",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_busemann_boundary/oracle"
+      ]
+    },
+    "hyp_busemann_boundary:review": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [],
+      "description": "independent novelty/maths review of the boundary-Busemann proposal",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "cpu",
+      "stage": "join_R",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_busemann_boundary:review",
+      "verify": [],
+      "write_scope": [
+        "results/hyp_busemann_boundary/review"
+      ]
+    },
+    "hyp_busemann_boundary:stage2": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_busemann_boundary",
+      "deps": [
+        "hyp_busemann_boundary:join_E"
+      ],
+      "description": "",
+      "detail": "no operator authorisation for a GPU run",
+      "error": "",
+      "finished_at": null,
+      "kind": "experiment",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "resource": "gpu",
+      "stage": "stage2",
+      "started_at": null,
+      "status": "waiting_authorisation",
+      "task_id": "hyp_busemann_boundary:stage2",
+      "verify": [],
+      "write_scope": [
+        "results/stage2_RQ-VAE/TIGER_hyp_busemann_boundary"
+      ]
+    },
     "hyp_product_l1_quantiser:eval_plan": {
       "artifacts": [],
       "attempts": 0,
