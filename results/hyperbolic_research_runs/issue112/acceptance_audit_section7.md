@@ -15,7 +15,7 @@ mechanism exists but one clause is unproven; **BLOCKED** — it needs the operat
 | 5 | the caller-supplied CGV has all seven named groups, a malformed group and the generic fallback are rejected, all six gates run, and G3 matches an independent oracle | `tools/cgv/contract.py::validate` (the unknown-key rejection was exercised twice while building the two candidates: `executor_style`, `host_routing` had to be *declared*, and `declared_effect` had to be one of the allowed words); `tools/cgv/oracles.py::assemble_gradient` is the independent oracle for the formula-mode G3 | **PROVEN** |
 | 6 | the literature IDs, curvature/model/operator statements, the CGV contract and the proposal SHA survive screening, implementation and launch, and an implementation that changes the frozen maths is rejected | `tools/harness2_genrec/proposal.py::validate_proposal(require_frozen=True)` (the frozen digest is checked against the content) and the `experiment_intent` record (the proposal hash + the three implementation hashes + the protocol hash) | **PROVEN** |
 | 7 | after one screen, the cold run consumes the same sealed tree, does not re-implement and does not repeat the probe or the baseline training | the sealed tree's hashes are recorded in the intent; the DAG's `serve()` loop runs a leased task once and the reservation is idempotent (a second attempt for the same key returns False) | **PROVEN** |
-| 8 | a Stage-2 below the ER gate records the diagnostics exactly once and NEVER triggers Stage-3; an ER-qualified arm queues Stage-3 once | the evaluation plan fixes the order (ER/D2 → the G_H1 probe → Stage-3 only if ER > 16.38953942232631); the DAG's Stage-3 node depends on the Stage-2 node | **PARTIAL**: the ER *gate* lives in the plan, not in the scheduler's dependency graph — a coordinator that ignores the plan could start Stage-3 on a failing ER. The plan says so explicitly; the dependency does not yet enforce it. |
+| 8 | a Stage-2 below the ER gate records the diagnostics exactly once and NEVER triggers Stage-3; an ER-qualified arm queues Stage-3 once | the evaluation plan fixes the order (ER/D2 → the G_H1 probe → Stage-3 only if ER > 16.38953942232631) **and the scheduler now enforces it**: every candidate's graph carries an `er_gate` node with `requires = {metric: hard_l1_er, op: ">", threshold: 16.38953942232631}`, the Stage-3 node depends on it, and `DAG.complete` REFUSES to close a gate whose measured value does not clear the threshold (no measurement, a failing value, and a value exactly AT the threshold are all refused) — `tests/test_dag.py::test_a_gated_task_refuses_to_complete_without_a_satisfied_measurement` | **PROVEN** |
 | 9 | a complete set of existing Stage-3 shards recovers Recall/NDCG without re-training or re-inference, and a restart does not duplicate jobs | `tools/harness2_genrec/stage3_from_shards.py` (+ its test) | **PROVEN** |
 | 10 | a missing or corrupt historical registry, missing maths evidence, an unavailable academic search with no verified cache, and untrusted literature claims all block the dispatch instead of guessing | `tools/harness2_genrec/guardrails.py`; the literature agent's `LITERATURE_BLOCKED` state; the arXiv outage of this session is recorded as negative results in `subspace_111/source_search_log.jsonl` | **PROVEN** |
 | 11 | 72 planner ticks with no novel evidence produce ZERO new science rounds and ZERO extra training | `tools/harness2_genrec/tests/test_dag.py::test_seventy_two_idle_ticks_produce_zero_rounds_and_zero_training` (72 ticks → 0 rounds, 0 dispatches) | **PROVEN** |
@@ -27,13 +27,16 @@ mechanism exists but one clause is unproven; **BLOCKED** — it needs the operat
 | 17 | once the dry-run tests pass, the operator can deliberately start the single-seed research controller, and the reports give real cold runs, Stage-3 results and wall/GPU time rather than a tick count | the campaign's `experiment_intent` (authorisation: NOT GRANTED) and the queue's `waiting_authorisation` nodes | **BLOCKED** — needs the operator's explicit authorisation for exactly one cold Stage-2 |
 | 18 | the same-candidate parallel overlap, the join ordering, the non-trace G5 DDP gradient checks, the restart and lease safety, zero duplicate experiments under races and the 72 idle ticks are regression-tested | `tests/test_dag.py` (22 tests) and `tests/test_cgv_g5_codebook.py` (10 tests, including the real multi-rank run on the R10 arm) | **PROVEN** |
 
-## The two gaps this audit found
+## The gaps this audit found, and what happened to them
 
-1. **Item 8**: the ER gate is in the evaluation plan but not in the scheduler's dependency graph. A
-   coordinator that follows the plan is safe; a coordinator that only follows the graph is not. The
-   fix is a gate node between the evaluation and the Stage-3 node, so the dependency itself refuses
-   to release Stage-3 without a recorded ER above the threshold.
-2. **Item 2**: the curvature clause of H3 cannot be satisfied as written, because in the Poincare
-   ball the curvature is a pure rescaling (F1). The restatement is recorded and the verifier now
-   measures the curvature *class* instead; the acceptance item as literally written stays
-   unsatisfiable, and saying so is more useful than quietly widening it.
+1. **Item 8 — CLOSED.** The ER gate is now a node of the graph, not only a line in the plan: the
+   scheduler refuses to close a gate whose measured ER does not clear the threshold, and the Stage-3
+   node depends on the gate. A coordinator that follows only the graph is now as safe as one that
+   follows the plan.
+2. **Item 2 — STILL OPEN, ON PURPOSE.** The curvature clause of H3 cannot be satisfied as written,
+   because in the Poincare ball the curvature is a pure rescaling (F1): on points with a fixed
+   normalised radius every intrinsic quantity is independent of `c` (the transport's deviation from
+   the identity is 0.5143924039356781 at c = 0.25, 1 and 4 alike). The gate's own docstring now
+   says so, and the verifier measures the curvature *class* instead (a tangent closed level set
+   versus a half-space). The acceptance item as literally written stays unsatisfiable — and saying
+   so, with the measurement attached, is more useful than quietly widening the clause.
