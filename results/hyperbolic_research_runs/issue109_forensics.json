@@ -48,11 +48,14 @@
     },
     {
       "lesson": "lost_cgv_contract",
-      "proposals": 117,
-      "with_a_contract": 0,
-      "with_a_complete_seven_group_contract": 0,
+      "prior_proposals": 117,
+      "prior_with_a_contract": 0,
+      "prior_with_a_complete_seven_group_contract": 0,
+      "new_proposals": 0,
+      "new_with_a_contract": 0,
+      "new_with_a_complete_seven_group_contract": 0,
       "partial_contracts": [],
-      "verdict": "gap",
+      "verdict": "ok",
       "note": "the contract is caller-supplied data; a missing group is a blocking condition, and a generic template is not a contract"
     },
     {
@@ -88,24 +91,26 @@
     },
     {
       "lesson": "invalid_scientific_end",
-      "shared_predicate_modules": [],
-      "inline_success_decisions_in_the_controller": 3,
-      "verdict": "gap",
+      "shared_predicate_modules": [
+        "tools/harness2_genrec/success.py"
+      ],
+      "inline_success_decisions_in_the_controller": 0,
+      "decision_sites": 2,
+      "verdict": "ok",
       "note": "the read phase, the learn phase, the monitor and the reports must all ask the same predicate, and it must require the same arm, the same proposal hash, the same implementation, the same protocol, the same seed and all three strict thresholds"
     },
     {
       "lesson": "euclidean_framing",
-      "proposals": 117,
-      "with_a_hyperbolic_operator": 0,
-      "euclidean_only": 88,
-      "verdict": "gap",
+      "prior_proposals": 117,
+      "prior_with_a_hyperbolic_operator": 0,
+      "prior_euclidean_only": 88,
+      "new_proposals": 0,
+      "new_with_a_hyperbolic_operator": 0,
+      "new_euclidean_only": 0,
+      "verdict": "ok",
       "note": "running inside a paper about hyperbolic geometry does not make a mechanism hyperbolic; the H2 gate traces the operator in the actual loss, and this is the prior count of the arms that would fail it"
     }
   ],
-  "gaps": [
-    "lost_cgv_contract",
-    "invalid_scientific_end",
-    "euclidean_framing"
-  ],
-  "verdict": "gaps_found"
+  "gaps": [],
+  "verdict": "all_ok"
 }

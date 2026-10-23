@@ -1,0 +1,4186 @@
+{
+  "arms": [
+    {
+      "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+      "diagnostics": {
+        "mechanism_id": "behavior_conditioned_codebook_directional_transport",
+        "enrichment_ratio": {
+          "value": 15.280216070222822,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.08563049853372434,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.0056040109734178415,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1290052137907025,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.220385165061544,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.546928260772968,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.09262501931297316,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2357727764330226,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.45223257969820263,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 214,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.19259836042829415,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 380,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 143,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.023650976578237337,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 72.35514018691589,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 6.449017737936302,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.5242831309739084,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10683349090919801,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "behavior_conditioned_pairwise_curvature",
+      "diagnostics": {
+        "mechanism_id": "behavior_conditioned_pairwise_curvature",
+        "enrichment_ratio": {
+          "value": 2.619839290662233,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.14310850439882697,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.05462491722637404,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.09647485047177987,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 3.960167319753631,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 3.57811076973717,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.19037441417314724,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.410542308286553,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.7215584281814904,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 199,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.7865360887489468,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 5487,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 5250,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.5702867517424153,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 21.87939698492462,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -44.02672546405496,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 4.472898484152504,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.03566810693952327,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "behavior_conditioned_pairwise_margin",
+      "diagnostics": {
+        "mechanism_id": "behavior_conditioned_pairwise_margin",
+        "enrichment_ratio": {
+          "value": 16.334505666275888,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.07908428720083246,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004841547630309337,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12409012631042572,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.348072032159319,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.684429098171414,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08760364628933409,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22472575578101664,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.42715146521089764,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21624933700653148,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 237,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 0,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.90612244897959,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4651018765095682,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10444776286452304,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+      "diagnostics": {
+        "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
+        "enrichment_ratio": {
+          "value": 1.478111600364957,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.7754611673446221,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.5246296471478573,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.28951281755814723,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 0.66632697125103,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 0.47341677238915775,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.779368594530566,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 1.0,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 1.0,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 2,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.01462154797250581,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 12653,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 12416,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.20162778903402567,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 203.5,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 137.5938775510204,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 39.76904176904177,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.18766254613143885,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "behavior_directed_soft_code_transition_kl",
+      "diagnostics": {
+        "mechanism_id": "behavior_directed_soft_code_transition_kl",
+        "enrichment_ratio": {
+          "value": 16.40282131661442,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.07919780531643175,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004828303850156088,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12198050690616553,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.3857444004448425,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.728788568411538,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08829891332337643,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21870010815264973,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4158726888808776,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 255,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.22776231979756556,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 224,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": -13,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.011512982791034077,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.03921568627452,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.8669067627050708,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.448132271892223,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10451256041635373,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06225735127700691,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03384902483338121,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0018106164800919186,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0014574921860255607,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.4028, Recall@10 0.062257, NDCG@10 0.033849; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "behavior_residual_geometry_transport",
+      "diagnostics": {
+        "mechanism_id": "behavior_residual_geometry_transport",
+        "enrichment_ratio": {
+          "value": 16.616,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.07859237536656892,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004729921483303377,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12348280398469558,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.383375543579724,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.718621236555865,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08927743729721378,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22065715610032446,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41414739661121697,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 247,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.22835345165288468,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 253,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 16,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.012104114646353192,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.16194331983806,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -0.7441791291415285,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4696489593041318,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10151714631581737,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06338898657706436,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03454331085500618,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0006789811800344686,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0007632061644005927,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.6160, Recall@10 0.063389, NDCG@10 0.034543; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "behaviour_conditioned_residual_target",
+      "diagnostics": {
+        "mechanism_id": "behaviour_conditioned_residual_target",
+        "enrichment_ratio": {
+          "value": 16.503445774392453,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.08608457099612146,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.005216157411786965,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12575796162314637,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.411926706462121,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.731333835403577,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.09283102436009683,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22045115105320082,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4062677035587372,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 243,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.35277299506363646,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 382,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 145,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.13652365805710498,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 61.629629629629626,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -4.276492819349961,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.5705128205128205,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.1110276597186019,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.0610038475600202,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03381020016512428,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0030641201970786347,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0014963168542824895,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.5034, Recall@10 0.061004, NDCG@10 0.033810; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "capacity_preserving_directed_assignment",
+      "diagnostics": {
+        "mechanism_id": "capacity_preserving_directed_assignment",
+        "enrichment_ratio": {
+          "value": 16.398775353999234,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.08107085422381989,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.00494371393434869,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": 0.04020980881767537,
+          "kind": "measured",
+          "support": 549,
+          "flags": [
+            "low_support"
+          ],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12584959489254444,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.30132885326003,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.634158764685098,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08809290827625277,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2266570530978009,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.43340886851727867,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 228,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.18853512660734295,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 8,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.027714210399188532,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 69.47368421052632,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 3.5675617615467274,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.494128787878788,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10182051667211554,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "no_failure_identified",
+        "evidence": "the arm has not been measured downstream yet",
+        "confidence": "low"
+      }
+    },
+    {
+      "mechanism_id": "curvature_weighted_transition_transport",
+      "diagnostics": {
+        "mechanism_id": "curvature_weighted_transition_transport",
+        "enrichment_ratio": {
+          "value": 16.334505666275888,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.07908428720083246,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004841547630309337,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": null,
+          "kind": "missing",
+          "prior_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "split": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21624933700653148,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 237,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 0,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.90612244897959,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4651018765095682,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10444776286452304,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_assignment_branch_entropy",
+      "diagnostics": {
+        "mechanism_id": "directed_assignment_branch_entropy",
+        "enrichment_ratio": {
+          "value": 15.317100792751983,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1355042634127756,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.121175930724365,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.427234758424325,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.11544007828191791,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2636864603182778,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4764639233661225,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 198,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.32498922605482994,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 555,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 318,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.10873988904829845,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 70.61616161616162,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 4.710039167182032,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.6650693749105994,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.1271269060052604,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_assignment_prefix_information",
+      "diagnostics": {
+        "mechanism_id": "directed_assignment_prefix_information",
+        "enrichment_ratio": {
+          "value": 16.946938775510205,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12137791725688264,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.3730975464074655,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.720922157006461,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08482257815316475,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.215275274244219,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.42241334912705364,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 256,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.23518923236873146,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 253,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 16,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.018939895362199977,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 63.58984375,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -2.3162786989795876,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4572762454696235,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10020646856287865,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06375459182785216,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03467522673433716,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.00031337592924667035,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0006312902850696134,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.9469, Recall@10 0.063755, NDCG@10 0.034675; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_assignment_prefix_preservation",
+      "diagnostics": {
+        "mechanism_id": "directed_assignment_prefix_preservation",
+        "enrichment_ratio": {
+          "value": 17.298273785628265,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12126740354150722,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.395585869099887,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.741277180168897,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.0886079208940619,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21975588401915847,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41046505639388164,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 255,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.22925840771904804,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 374,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 137,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.013009070712516557,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 63.76470588235294,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -2.1414165666266456,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4544280442804427,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10452139644614881,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.060185588189209424,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.032655356455760634,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0038823795678894074,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0026511605636461363,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 17.2983, Recall@10 0.060186, NDCG@10 0.032655; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_assignment_usage_balance",
+      "diagnostics": {
+        "mechanism_id": "directed_assignment_usage_balance",
+        "enrichment_ratio": {
+          "value": 16.651583710407238,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.08354933308107085,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.005017500709488223,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12331920059585155,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.3519947283630325,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.691991016868092,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.0887366740485142,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21844260184374517,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41594994077354897,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 236,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.2485757941533111,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 285,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 48,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.03232645714677962,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 66.61864406779661,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.7125216188170214,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.504261544332782,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10811471522948643,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06241403924163025,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.034312283480564885,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0016539285154685834,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.000994233538841885,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.6516, Recall@10 0.062414, NDCG@10 0.034312; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_capacity_balanced_assignment_partition",
+      "diagnostics": {
+        "mechanism_id": "directed_capacity_balanced_assignment_partition",
+        "enrichment_ratio": {
+          "value": 16.492871690427698,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.0766058083435815,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004644782896603916,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12095689449003327,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.395365127851882,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.742758517347097,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08368955039398465,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21625379821805635,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41618169645156305,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 256,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.2007166198092487,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 249,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 12,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.015532717197282775,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.0078125,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.8983099489795876,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4480043939948737,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.1001534523841081,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06088197914309093,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03310210683018558,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.003185988614007901,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.002204410189221191,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.4929, Recall@10 0.060882, NDCG@10 0.033102; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_capacity_constrained_assignment_partition",
+      "diagnostics": {
+        "mechanism_id": "directed_capacity_constrained_assignment_partition",
+        "enrichment_ratio": {
+          "value": 16.732429099876697,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1200835131142776,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.40689369033096,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.757614900960597,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08523458824741206,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21316372251120153,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.40817325024463097,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 256,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21156553132753086,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 257,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 20,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.004683805679000619,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.08984375,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.8162786989795876,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4442615956603888,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10232122502717078,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06072529117846759,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03337873989029098,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.003342676578631243,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.001927777129115793,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.7324, Recall@10 0.060725, NDCG@10 0.033379; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+      "diagnostics": {
+        "mechanism_id": "directed_capacity_preserving_assignment_repartition",
+        "enrichment_ratio": {
+          "value": 14.879436467082092,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.10390691514520858,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.006983256077949106,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.13754462042009186,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.106737295483661,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.404333052591235,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.11819539578719679,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.27488798475562654,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.48673842509141474,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 204,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.36377684843815916,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 560,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 323,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.14752751143162768,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 68.50490196078431,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 2.5987795118047217,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.6692665474060824,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.12784262441866287,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_codebook_repulsion",
+      "diagnostics": {
+        "mechanism_id": "directed_codebook_repulsion",
+        "enrichment_ratio": {
+          "value": 16.378421261404206,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12276917419790996,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.398198954604856,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.735466526791997,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08948344234433743,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22189318638306638,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41667095843848173,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 256,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.2194806643246432,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 225,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": -12,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0032313273181117097,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.296875,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.6092474489795876,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4375455650060753,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10163496004641862,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_codebook_tangent_repartition",
+      "diagnostics": {
+        "mechanism_id": "directed_codebook_tangent_repartition",
+        "enrichment_ratio": {
+          "value": 16.499402628434886,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.07838425882130357,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.0047507331378299125,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": 0.046925155740512835,
+          "kind": "measured",
+          "support": 538,
+          "flags": [
+            "low_support"
+          ],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1233798077275023,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.365719839774746,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.7036983576236935,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08500283256939795,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21929237266313026,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.42084256064273573,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.20182890742826598,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 252,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 15,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.014420429578265503,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.60816326530612,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -0.29795918367346985,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.470200323503795,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10191182231333151,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.061682828740054665,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.033926403735998444,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.002385139017044166,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0013801132834083268,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.4994, Recall@10 0.061683, NDCG@10 0.033926; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_codeword_margin_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_codeword_margin_geometry",
+        "enrichment_ratio": {
+          "value": 16.591820368885326,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.0782896603916375,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004718569671743449,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12373242110039885,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.37371153801276,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.708809199119293,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08732038934953906,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2166400576814132,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4197352835144461,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 246,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.19851375619543798,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 240,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 3,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.0177355808110935,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 66.1178861788618,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.21176372988220749,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.457362434675684,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.101576053181118,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06373718205400512,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03466763666330205,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.00033078570309370836,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0006388803561047235,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.5918, Recall@10 0.063737, NDCG@10 0.034668; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_codeword_tangent_repulsion",
+      "diagnostics": {
+        "mechanism_id": "directed_codeword_tangent_repulsion",
+        "enrichment_ratio": {
+          "value": 16.83467741935484,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12367280428752432,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.37707076313604,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.712073343006548,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08737189061131997,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2202193953751867,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4214090745223258,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 248,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21942768733017837,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 8,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0031783503236468835,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.48387096774194,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.4222514812376517,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4780515257628815,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10372909910785552,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06269259562318286,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03394123485236039,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0013753721339159752,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0013652821670463791,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.8347, Recall@10 0.062693, NDCG@10 0.033941; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_margin_preserving_codebook_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_margin_preserving_codebook_geometry",
+        "enrichment_ratio": {
+          "value": 16.31846635367762,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12056287959714729,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.404723822471932,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.753114755007415,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08708863367152496,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21849410310552608,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.40920327548024926,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 256,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.22047235963110579,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 230,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": -7,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.004223022624574302,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.265625,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.6404974489795876,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4386092876246048,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.09957616510416206,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_pair_margin_rigid_codebook_geometry",
+        "enrichment_ratio": {
+          "value": 16.226631056848532,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.08046542427395706,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.0049588496830952605,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": 0.03780125947618012,
+          "kind": "measured",
+          "support": 517,
+          "flags": [
+            "low_support"
+          ],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12321926341217053,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.334335478816887,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.677042590323662,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.09151774218468353,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22287171035690376,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4248081577998661,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 239,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.20280166424649004,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 377,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 140,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.01344767276004144,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 67.17991631799163,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 1.2737938690120387,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4721599402092675,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10265110347285425,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "no_failure_identified",
+        "evidence": "the arm has not been measured downstream yet",
+        "confidence": "low"
+      }
+    },
+    {
+      "mechanism_id": "directed_pair_separation_codebook_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_pair_separation_codebook_geometry",
+        "enrichment_ratio": {
+          "value": 16.601941747572816,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.07764639106990824,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004676946362690379,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12257051039651562,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.369962256213949,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.7117632416597806,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08587835401967348,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.21970438275737755,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4227223566977391,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 244,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.19318802352569375,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 230,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": -7,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.02306131348083773,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 66.50819672131148,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.6020742723318904,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4598225289622875,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10245376547409718,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.053273907971935444,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.029034367097441116,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.010794059785163387,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.006272149921965654,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.6019, Recall@10 0.053274, NDCG@10 0.029034; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "directed_residual_codebook_tangent_transport",
+      "diagnostics": {
+        "mechanism_id": "directed_residual_codebook_tangent_transport",
+        "enrichment_ratio": {
+          "value": 16.134099616858236,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12357086804081277,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.3328217742506565,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.673840358499556,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.09007570685481794,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22446824947211208,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4272544677344595,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 238,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.2030602699452091,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 275,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 38,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.01318906706132239,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 67.35714285714286,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 1.4510204081632736,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.475266670825276,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10447721629717335,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_residual_transport_with_separation",
+      "diagnostics": {
+        "mechanism_id": "directed_residual_transport_with_separation",
+        "enrichment_ratio": {
+          "value": 14.604726976365118,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.12194367673820818,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.345355667512682,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.693523343942767,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08721738682597724,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2216614307050523,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4256836792501416,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 243,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21584158780418772,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 268,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 31,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.00040774920234376566,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 66.24279835390946,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.3366759049298764,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4671677952413493,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10159077989744314,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "implementation_failure",
+        "evidence": "the independent checks failed: ['swap_source_target']",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_separated_codeword_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_separated_codeword_geometry",
+        "enrichment_ratio": {
+          "value": null,
+          "kind": "missing",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": null,
+          "kind": "missing",
+          "prior_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "split": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": null,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": null,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": null,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06103866710771427,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.033942537933861414,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0030293006493845587,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.0013639790855453568,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "implementation_failure",
+        "evidence": "the independent checks failed: ['gradient_target']",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_soft_assignment_information",
+      "diagnostics": {
+        "mechanism_id": "directed_soft_assignment_information",
+        "enrichment_ratio": {
+          "value": 16.35477582846004,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1233946967139213,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.344897914842663,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.685365857673783,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.08631611474481125,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.2242107431632075,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.425760931142813,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 242,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.1991102937889302,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 253,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 16,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.01713904321760129,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 66.11157024793388,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.205447798954296,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4792799549971873,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10282487872549106,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_st_code_transition_geometry",
+      "diagnostics": {
+        "mechanism_id": "directed_st_code_transition_geometry",
+        "enrichment_ratio": {
+          "value": null,
+          "kind": "missing",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": null,
+          "kind": "missing",
+          "prior_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "split": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": null,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": null,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": null,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    },
+    {
+      "mechanism_id": "directed_tangent_codebook_rotation",
+      "diagnostics": {
+        "mechanism_id": "directed_tangent_codebook_rotation",
+        "enrichment_ratio": {
+          "value": 13.17260273972603,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.09096584996689056,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.00690568536562293,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": 0.04646483838959613,
+          "kind": "measured",
+          "support": 570,
+          "flags": [
+            "low_support"
+          ],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1354131743884585,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.066109036419439,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.380091129999828,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.10305402482360818,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.25578101663490754,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.4893649894422413,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 182,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.2661517723339011,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 281,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 44,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0499024353273696,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 74.29120879120879,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 8.3850863422292,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.7273130685600178,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.11162261905813814,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "no_failure_identified",
+        "evidence": "the arm has not been measured downstream yet",
+        "confidence": "low"
+      }
+    },
+    {
+      "mechanism_id": "geometry_transport_seed43",
+      "diagnostics": {
+        "mechanism_id": "geometry_transport_seed43",
+        "enrichment_ratio": {
+          "value": 16.73965936739659,
+          "kind": "measured",
+          "cleared_the_gate": true,
+          "numerator_positive_share": {
+            "value": 0.07810046353230536,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.0046655945511304515,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": 0.1236019092464657,
+          "kind": "measured",
+          "prior_ce_l1": {
+            "value": 5.38110714938102,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": 4.715992031857719,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": 0.0887366740485142,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": 0.22052840294587217,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": 0.41873100890971826,
+            "kind": "measured"
+          },
+          "split": {
+            "value": {
+              "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+              "dev_rows": 38834,
+              "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+              "train_rows": 358124
+            },
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 247,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.22689321518613004,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 260,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 23,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.010643878179598554,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 64.42914979757084,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -1.4769726514087438,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4829081312052281,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10222402869942478,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.0631800692908999,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03467516022494957,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": -0.0008878984661989248,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": -0.000631356794457201,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.7397, Recall@10 0.063180, NDCG@10 0.034675; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "r8_control",
+      "diagnostics": {
+        "mechanism_id": "r8_control",
+        "enrichment_ratio": {
+          "value": 16.334505666275888,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.07908428720083246,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004841547630309337,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": null,
+          "kind": "missing",
+          "prior_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "split": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 245,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21624933700653148,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 237,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 0,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.90612244897959,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4651018765095682,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10444776286452304,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": 0.06406796775709883,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": 0.03530651701940677,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": 0.0,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "mechanism_falsified",
+        "evidence": "the mechanism ran and was measured: ER 16.3345, Recall@10 0.064068, NDCG@10 0.035307; the hypothesis did not hold for the downstream",
+        "confidence": "medium",
+        "limitations": "one arm, one seed, and a cohort that has already been inspected"
+      }
+    },
+    {
+      "mechanism_id": "r8_control_seed43",
+      "diagnostics": {
+        "mechanism_id": "r8_control_seed43",
+        "enrichment_ratio": {
+          "value": 16.036655211912944,
+          "kind": "measured",
+          "cleared_the_gate": false,
+          "numerator_positive_share": {
+            "value": 0.07946268091949674,
+            "kind": "measured"
+          },
+          "denominator_negative_share": {
+            "value": 0.004955065745908618,
+            "kind": "measured"
+          },
+          "ci95": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "conditional_l2_discrimination": {
+          "value": null,
+          "kind": "missing",
+          "support": null,
+          "flags": [],
+          "low_support": true
+        },
+        "history_gain": {
+          "value": null,
+          "kind": "missing",
+          "prior_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "probe_ce_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top1_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top5_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "top20_acc_l1": {
+            "value": null,
+            "kind": "measured"
+          },
+          "split": {
+            "value": null,
+            "kind": "measured"
+          }
+        },
+        "level0_usage": {
+          "distinct_codes": {
+            "value": 241,
+            "kind": "measured"
+          },
+          "gini": {
+            "value": 0.21054711805837423,
+            "kind": "measured"
+          },
+          "largest_cell": {
+            "value": 262,
+            "kind": "measured"
+          },
+          "delta_largest_cell_vs_control": {
+            "value": 25,
+            "kind": "measured"
+          },
+          "delta_gini_vs_control": {
+            "value": -0.005702218948157256,
+            "kind": "measured"
+          }
+        },
+        "prefix_tree": {
+          "l1_to_l2_branches": {
+            "value": 65.67634854771784,
+            "kind": "measured"
+          },
+          "delta_branches_vs_control": {
+            "value": -0.22977390126175123,
+            "kind": "measured"
+          },
+          "l2_to_l3_branches": {
+            "value": 1.4854056103108415,
+            "kind": "measured"
+          }
+        },
+        "sequence_information": {
+          "value": 0.10226231816187017,
+          "kind": "measured"
+        },
+        "downstream": {
+          "recall": {
+            "value": null,
+            "kind": "measured"
+          },
+          "ndcg": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_recall_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "delta_ndcg_vs_control": {
+            "value": null,
+            "kind": "measured"
+          },
+          "per_level": {
+            "value": null,
+            "kind": "measured"
+          }
+        }
+      },
+      "failure": {
+        "kind": "statistical_low_support",
+        "evidence": "the conditional level-2 discrimination has no support on the frozen pairs, so it cannot be read, and the arm has no downstream measurement either",
+        "confidence": "high"
+      }
+    }
+  ],
+  "arm_count": 32,
+  "failure_kinds": {
+    "mechanism_falsified": 14,
+    "statistical_low_support": 13,
+    "no_failure_identified": 3,
+    "implementation_failure": 2
+  },
+  "control": {
+    "hard_l1_er": 16.334505666275888,
+    "pos_share": 0.07908428720083246,
+    "neg_share": 0.004841547630309337,
+    "l0_distinct_codes": 245,
+    "l0_gini": 0.21624933700653148,
+    "l0_largest_cell": 237,
+    "l1_to_l2_branches": 65.90612244897959,
+    "g_h1": null
+  },
+  "thresholds": {
+    "er": 16.38953942232631,
+    "recall": 0.06406796775709883,
+    "ndcg": 0.03530651701940677
+  },
+  "measured_arms": 30,
+  "arms_with_both_downstream_metrics": 15,
+  "limitations": "the cohort has already been inspected, so these are retrospective associations; the history gain's rank correlation with the downstream is about +0.46 over a dozen paired arms against the ER's +0.17, which is a hypothesis and not a certified oracle, and the conditional level-2 discrimination is weakly supported"
+}
