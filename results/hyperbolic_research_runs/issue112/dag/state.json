@@ -331,7 +331,7 @@
       "candidate": "hyp_transported_residual",
       "deps": [],
       "description": "implement the frozen v2 proposal exactly",
-      "detail": "",
+      "detail": "refuted before implementation: the proposal's form is ill posed (the shared level-1 codebook has no fixed coordinates in an item-dependent frame) and its only well-posed form is a common change of coordinates -- 0.0000 of the level-1 assignments change and the quantisation error is bit-identical",
       "error": "",
       "finished_at": null,
       "kind": "engineering",
@@ -341,7 +341,7 @@
       "resource": "cpu",
       "stage": "implement",
       "started_at": null,
-      "status": "ready",
+      "status": "blocked_no_novel_evidence",
       "task_id": "hyp_transported_residual:implement",
       "verify": [],
       "write_scope": [
