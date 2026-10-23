@@ -284,7 +284,7 @@
         "hyp_product_l1_quantiser:eval_plan"
       ],
       "description": "H1-H7 complete AND CGV G1-G6 on identical frozen inputs",
-      "detail": "the join passed: the CGV's G1-G6 on the identical frozen tree and the complete H gates; join_e_hyp_product_l1_quantiser.json",
+      "detail": "the join measured the REDUCED mechanism: the implementation has no factor-role supervision, so the operator that was implemented (a product-metric hyperbolic level-0 assignment) is prior art (HiHPQ, HyperVQ, mixed-curvature VAEs). The candidate is NOT approvable as implemented; the role-supervision re-implementation is queued",
       "error": "",
       "finished_at": 1792752034.6953816,
       "gate_measurement": null,
@@ -296,7 +296,7 @@
       "resource": "cpu",
       "stage": "join_E",
       "started_at": 1792752034.6865358,
-      "status": "done",
+      "status": "ready",
       "task_id": "hyp_product_l1_quantiser:join_E",
       "verify": [],
       "write_scope": [
@@ -326,6 +326,31 @@
       "verify": [],
       "write_scope": [
         "results/hyperbolic_research_runs/hyp_product_l1_quantiser/oracle"
+      ]
+    },
+    "hyp_product_l1_quantiser:role_supervision": {
+      "artifacts": [],
+      "attempts": 0,
+      "candidate": "hyp_product_l1_quantiser",
+      "deps": [],
+      "description": "re-implement the candidate with the factor-ROLE supervision the frozen proposal declares (the masked gradient: the content factor's codebook gradient from the reconstruction, the behaviour factor's from the train-split transition term), because the implemented arm has NO supervision and its product-metric assignment operator is now known prior art (HiHPQ, HyperVQ, mixed-curvature VAEs). Then a fresh join_R and join_E",
+      "detail": "",
+      "error": "",
+      "finished_at": null,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 2,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "implement",
+      "started_at": null,
+      "status": "ready",
+      "task_id": "hyp_product_l1_quantiser:role_supervision",
+      "verify": [],
+      "write_scope": [
+        "stage2_RQ-VAE/TIGER_hyp_product_l1_quantiser"
       ]
     },
     "hyp_product_l1_quantiser:stage2": {
