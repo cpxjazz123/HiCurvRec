@@ -15,6 +15,28 @@ job; the run needs the operator's explicit authorisation, and nothing is reserve
 | H gates | complete (`join_e_hyp_product_l1_quantiser.json`); H3 in its restated form (finding F4) |
 | the mechanism's mathematics | the level-0 assignment minimises `d_{c_s}^2(x_s, A_j) + d_{c_b}^2(x_b, B_j)` with `c_s = 1`, `c_b = 2` and ONE common tangent scale `s = 1.4937731…` (measured on the frozen host) |
 
+
+## 0.1 What an authorised run would ACTUALLY measure (read this first)
+
+The implementation in this tree is a **reduced** version of the frozen proposal
+(`implementation_proposal_mismatch.json`): the level-0 assignment is the product-geodesic one, and
+there is **no factor-role supervision** -- the mechanism's branch returns a zero term and the
+executor returns None. The proposal's distinctive hypothesis ("because the two factors are
+separately supervised, the behaviour term can shape the L1 partition without moving the content
+factor's geometry") is therefore **not implemented**, and a prior-art search has since shown that
+the operator that *is* implemented (a product-metric hyperbolic level-0 assignment) sits in crowded
+territory: HiHPQ, HyperVQ, the mixed-curvature VAEs, and the differentiable product-quantisation
+machinery.
+
+So an authorised run of this tree would measure the **reduced** mechanism, whose distinctness
+rests on nothing the prior art does not already cover. The role-supervision re-implementation is
+queued (`hyp_product_l1_quantiser:role_supervision`) and must pass a fresh join_R and join_E before
+a run is worth spending.
+
+**The recommendation is therefore: do not authorise a run of THIS tree yet.** Either authorise the
+role-supervision re-implementation once it is sealed and joined, or accept that the reduced
+mechanism is a prior-art variant and close the candidate on novelty.
+
 ## 1. The single cold Stage-2 (needs the authorisation)
 
 ```bash
