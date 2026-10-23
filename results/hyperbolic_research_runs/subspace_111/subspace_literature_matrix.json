@@ -490,6 +490,56 @@
         "what_it_does_not_do": "the full text was not read"
       },
       "novelty_impact": "prior art for decoupled residual quantisation for semantic IDs -- the residual-chain structure the level-wise family modifies."
+    },
+    {
+      "id": "10_48550_arxiv_2403_13015",
+      "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+      "authors": [
+        "Nabarun Goswami",
+        "Yusuke Mukuta",
+        "Tatsuya Harada"
+      ],
+      "year": 2024,
+      "venue": "arXiv (Cornell University)",
+      "identifier": "10.48550/arxiv.2403.13015",
+      "url": "http://arxiv.org/abs/2403.13015",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the approved candidate's operator",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "The success of models operating on tokenized data has heightened the need for effective tokenization methods, particularly in vision and auditory tasks where inputs are naturally continuous. A common solution is to employ Vector Quantization (VQ) within VQ Variational Autoencoders (VQVAEs), transforming inputs into discrete tokens by clustering embeddings in Euclidean space. However, Euclidean embeddings not only suffer from inefficient packing and limited separation - due to their polynomial volume growth - but are also prone to codebook collapse, where only a small subset of codebook vectors are effectively utilized. To address these limitations, we introduce HyperVQ, a novel approach that formulates VQ as a hyperbolic Multinomial Logistic Regression (MLR) problem, leveraging the exponential volume growth in hyperbolic space to mitigate collapse and improve cluster separability. Additi",
+        "geometry": "hyperbolic / product",
+        "what_it_does_not_do": "the full text was not read"
+      },
+      "novelty_impact": "prior art for a hyperbolic codebook with a NON-EUCLIDEAN ASSIGNMENT METRIC (the minimum log ratio): the assignment-metric change the implemented arm makes is occupied, which is why the candidate's distinctness has to rest on the factor-role supervision instead."
+    },
+    {
+      "id": "10_1145_3543507_3583482",
+      "title": "Differentiable Optimized Product Quantization and Beyond",
+      "authors": [
+        "Zepu Lu",
+        "Defu Lian",
+        "Jin Zhang",
+        "Zaixi Zhang",
+        "Chao Feng",
+        "Hao Wang",
+        "Enhong Chen"
+      ],
+      "year": 2023,
+      "venue": "ACM Web Conference (WWW)",
+      "identifier": "10.1145/3543507.3583482",
+      "url": "https://doi.org/10.1145/3543507.3583482",
+      "source_provider": "openalex",
+      "query": "the targeted prior-art search for the approved candidate's operator",
+      "access_level": "verified_abstract_only",
+      "verification": "verified",
+      "mathematical_overlap": {
+        "what_it_already_does": "Vector quantization techniques, such as Product Quantization (PQ), play a vital role in approximate nearest neighbor search (ANNs) and maximum inner product search (MIPS) owing to their remarkable search and storage efficiency. However, the indexes in vector quantization cannot be trained together with the inference models since data indexing is not differentiable. To this end, differentiable vector quantization approaches, such as DiffPQ and DeepPQ, have been recently proposed, but existing methods have two drawbacks. First, they do not impose any constraints on codebooks, such that the resultant codebooks lack diversity, leading to limited retrieval performance. Second, since data indexing resorts to operator, differentiability is usually achieved by either relaxation or Straight-Through Estimation (STE), which leads to biased gradient and slow convergence. To address these problems, w",
+        "geometry": "hyperbolic / product",
+        "what_it_does_not_do": "the full text was not read"
+      },
+      "novelty_impact": "the differentiable product-quantisation machinery the implemented arm's operator sits inside."
     }
   ],
   "searches_that_returned_nothing_useful": [
