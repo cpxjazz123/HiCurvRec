@@ -1,0 +1,144 @@
+{
+  "activation": {
+    "kind": "term",
+    "weight": 0.05
+  },
+  "differentiation": {
+    "occupancy_preservation": "\u7b2c\u4e00\u9879\u901a\u8fc7\u76ee\u6807\u8f6f\u5206\u914d\u4e0e\u6765\u6e90\u8f6f\u5206\u914d\u7684\u6709\u5411\u91cd\u5408\u6982\u7387\uff0c\u63a8\u52a8\u884c\u4e3a\u76f8\u5173\u7684\u91cd\u5206\u7ec4\uff1b\u7b2c\u4e8c\u9879\u5bf9\u8be5\u6709\u5411\u5206\u914d\u4e0b\u7684\u7801\u5b57\u5bf9\u65bd\u52a0\u671f\u671b\u5e73\u65b9\u8ddd\u79bb\u4e0b\u9650\u3002\u5206\u79bb\u9879\u7684\u68af\u5ea6\u5728\u7801\u5b57\u91cd\u5408\u4e0d\u8db3\u65f6\u628a\u88ab\u914d\u5bf9\u7801\u5b57\u63a8\u5f00\uff0c\u800c\u4e0d\u662f\u628a\u4e00\u5bf9\u7801\u5b57\u62c9\u8fd1\uff1b\u7b2c\u4e00\u9879\u4ecd\u53ef\u80fd\u9020\u6210\u7801\u5b57\u79fb\u52a8\u6216\u5206\u7ec4\u6539\u53d8\uff0c\u4e0d\u80fd\u636e\u516c\u5f0f\u4fdd\u8bc1\u5b9e\u9645\u8bad\u7ec3\u4e2d\u5b8c\u5168\u65e0\u6536\u655b\uff0c\u987b\u6d4b\u91cf pairwise codeword distance \u4e0e\u5bfc\u51fa\u5360\u7528\u3002",
+    "vs_r8": [
+      {
+        "lane": "r8_01_directed_l1_transition_nce",
+        "why": "\u4e0d\u540c\u4e8e\u53ea\u5230 encoder \u7684\u8f85\u52a9\u635f\u5931\uff0c\u672c\u9879\u660e\u786e\u5bf9 codebook \u5efa\u7acb\u53ef\u6d4b\u68af\u5ea6\u8def\u5f84\uff1b\u4e0d\u540c\u4e8e\u628a source \u4e0e target \u7684\u7801\u5b57\u62c9\u8fd1\u7684\u4ea4\u53c9\u71b5\u6216\u914d\u5bf9\u6536\u655b\u76ee\u6807\uff0c\u672c\u9879\u53e6\u542b\u5bf9\u6240\u914d\u7801\u5b57\u7684\u8ddd\u79bb\u4e0b\u9650\u68af\u5ea6\uff0c\u65b9\u5411\u4e3a\u5206\u79bb\u3002\u4f46\u8fd9\u53ea\u6539\u53d8\u98ce\u9669\u7ed3\u6784\uff0c\u4e0d\u4ee3\u8868\u4e0d\u4f1a\u53d1\u751f\u96c6\u4e2d\u6216\u4e0b\u6e38\u9000\u5316\u3002"
+      }
+    ],
+    "vs_reference_arm": "the reference arm is the untouched host; this candidate adds one term whose gradient reaches the codebook without pulling a transition's two codewords together"
+  },
+  "equation": "\u4ee4 u_i(k) = -||x_i-c_k||\u00b2/\u03c4\uff0cp_i = softmax(u_i)\uff0cq_i = softmax(u_i/\u03c4_a)\u3002\u5bf9\u6bcf\u4e2a\u6709\u6548\u6709\u5411\u5bf9 (s,t)\uff0cL = \u03bb mean[ -log(\u03b5 + \u03a3_k p_t(k)q_s(k)) + \u03bc max(0, m - \u03a3_{k,l} p_t(k)q_s(l)||c_k-c_l||\u00b2) ]\u3002\u7a7a\u63a9\u7801\u65f6 L=0\u3002",
+  "expected_failure_modes": [
+    "\u65b9\u5411\u6027\u8f6f\u5206\u914d\u53ef\u80fd\u628a\u91cd\u5206\u7ec4\u538b\u529b\u96c6\u4e2d\u5230\u5c11\u91cf\u7801\u5b57\uff0c\u5bfc\u81f4\u6700\u5927 level-0 \u5355\u5143\u53d8\u5927\u3001\u6709\u6548\u7801\u6570\u6216\u524d\u7f00\u5206\u652f\u51cf\u5c11\uff1b\u8ddd\u79bb\u4e0b\u9650\u4e5f\u53ef\u80fd\u4e0e\u6570\u636e\u51e0\u4f55\u51b2\u7a81\uff0c\u4f7f\u884c\u4e3a\u5bf9\u96be\u4ee5\u5171\u4eab\u5206\u914d\uff0c\u4ee4 ER \u4e0d\u5347\u3002\u5373\u4f7f ER \u8fc7\u95e8\uff0cStage-3 \u4ecd\u53ef\u80fd\u4e0b\u964d\uff0c\u56e0\u6b64\u5e94\u6309\u51bb\u7ed3\u9608\u503c\u5224\u65ad\uff0c\u4e0d\u4ee5\u4ee3\u7406\u91cf\u66ff\u4ee3\u3002"
+  ],
+  "family": "codebook_geometry",
+  "forbidden_substitutions": [
+    {
+      "id": "no_occupancy_quota",
+      "pattern": "occupancy|quota|project_to_capacity",
+      "reason": "a quota on the assignment is the family that produced 39.5% and 24.2% occupancy without preserving the exported codes"
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook",
+      "reason": "a term that pulls a pair's two codewords together is what collapsed the level-0 codebook to two codes"
+    }
+  ],
+  "gradient_targets": {
+    "codebook": "nonzero",
+    "source": "nonzero",
+    "target": "nonzero"
+  },
+  "hypotheses": [
+    "\u51b7\u8dd1\u5bfc\u51fa\u7684 Hard-L1 ER \u672a\u4e25\u683c\u8d85\u8fc7 16.38953942232631\uff0c\u6216\u72ec\u7acb\u51bb\u7ed3 Stage-3 \u7684 Recall@10 \u672a\u4e25\u683c\u8d85\u8fc7 0.06406796775709883\uff0c\u6216 NDCG@10 \u672a\u4e25\u683c\u8d85\u8fc7 0.03530651701940677\uff1b\u4efb\u4e00\u9879\u6210\u7acb\u5373\u8bc1\u4f2a\u4efb\u52a1\u6210\u529f\u3002\u673a\u5236\u5c42\u9762\u7684\u76f4\u63a5\u53cd\u8bc1\u662f\u6709\u6548\u5bf9\u7684\u671f\u671b\u7801\u5b57\u8ddd\u79bb\u4f4e\u4e8e\u58f0\u660e margin\uff0c\u6216\u68af\u5ea6\u5b9e\u6d4b\u4e0d\u7b26\u5408\u58f0\u660e\u8def\u5f84\u3002",
+    "\u4e0d\u540c\u4e8e\u53ea\u5230 encoder \u7684\u8f85\u52a9\u635f\u5931\uff0c\u672c\u9879\u660e\u786e\u5bf9 codebook \u5efa\u7acb\u53ef\u6d4b\u68af\u5ea6\u8def\u5f84\uff1b\u4e0d\u540c\u4e8e\u628a source \u4e0e target \u7684\u7801\u5b57\u62c9\u8fd1\u7684\u4ea4\u53c9\u71b5\u6216\u914d\u5bf9\u6536\u655b\u76ee\u6807\uff0c\u672c\u9879\u53e6\u542b\u5bf9\u6240\u914d\u7801\u5b57\u7684\u8ddd\u79bb\u4e0b\u9650\u68af\u5ea6\uff0c\u65b9\u5411\u4e3a\u5206\u79bb\u3002\u4f46\u8fd9\u53ea\u6539\u53d8\u98ce\u9669\u7ed3\u6784\uff0c\u4e0d\u4ee3\u8868\u4e0d\u4f1a\u53d1\u751f\u96c6\u4e2d\u6216\u4e0b\u6e38\u9000\u5316\u3002"
+  ],
+  "inputs": {
+    "codebook": {
+      "seed": 13,
+      "shape": [
+        5,
+        3
+      ]
+    },
+    "mask": {
+      "seed": 17,
+      "valid_fraction": 0.75
+    },
+    "source": {
+      "seed": 11,
+      "shape": [
+        4,
+        3
+      ]
+    },
+    "target": {
+      "seed": 12,
+      "shape": [
+        4,
+        3
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "expect": "unchanged",
+      "id": "permute_codebook",
+      "tolerance": 1e-06,
+      "transform": "permute_codebook"
+    },
+    {
+      "expect": "changed",
+      "id": "swap_source_target",
+      "tolerance": 1e-06,
+      "transform": "swap_source_target"
+    },
+    {
+      "expect": "zero",
+      "id": "mask_all",
+      "tolerance": 1e-08,
+      "transform": "mask_all"
+    }
+  ],
+  "judges": [
+    "contract_audit",
+    "derivative_evidence",
+    "property_checks"
+  ],
+  "mechanism_id": "directed_margin_preserving_codebook_geometry",
+  "parameters": {
+    "epsilon": 1e-08,
+    "lambda": 0.01,
+    "margin": 0.08,
+    "mu": 0.05,
+    "tau": 0.2,
+    "tau_a": 0.35
+  },
+  "provenance": {
+    "authored_at": "2026-10-22T23:56:44.769595+00:00",
+    "authored_by": "opencode",
+    "frozen_digest": "9d20bf451bc068c2d8c9849397632c534a60e9bb755b7f8d1892b5a7b44020be"
+  },
+  "schema_version": 1,
+  "symbols": {
+    "C": "\u7801\u5b57\u6570\u91cf",
+    "D": "\u8868\u5f81\u7ef4\u5ea6",
+    "c_k": "codebook \u4e2d\u7b2c k \u4e2a\u7801\u5b57",
+    "m": "\u6765\u6e90\u2014\u76ee\u6807\u5206\u914d\u4e0b\u7684\u671f\u671b\u7801\u5b57\u5e73\u65b9\u8ddd\u79bb\u4e0b\u9650",
+    "mask": "\u5f62\u72b6\u4e3a [B] \u7684\u6709\u6548\u884c\u4e3a\u5bf9\u63a9\u7801",
+    "p_i(k)": "\u8868\u5f81 i \u5bf9\u7801\u5b57 k \u7684\u8f6f\u5206\u914d\u6982\u7387",
+    "q_s(k)": "\u6765\u6e90\u8868\u5f81\u7684\u65b9\u5411\u6027\u8f6f\u5206\u914d\u6982\u7387",
+    "s": "source \u8868\u5f81\uff0c\u8f93\u5165 source",
+    "t": "target \u8868\u5f81\uff0c\u8f93\u5165 target",
+    "\u03b5": "\u5bf9\u6570\u7a33\u5b9a\u5e38\u6570",
+    "\u03bb": "\u673a\u5236\u603b\u6743\u91cd",
+    "\u03bc": "\u7801\u5b57\u5206\u79bb\u7ea6\u675f\u6743\u91cd",
+    "\u03c4": "\u8f6f\u5206\u914d\u6e29\u5ea6",
+    "\u03c4_a": "\u65b9\u5411\u6027\u6765\u6e90\u5206\u914d\u6e29\u5ea6"
+  },
+  "target_paths": [
+    "encoder",
+    "codebook",
+    "hard_sid_export"
+  ],
+  "tests": [
+    {
+      "id": "numeric",
+      "kind": "numeric",
+      "statement": "the term's value on a hand-computable case matches the declared equation"
+    },
+    {
+      "id": "gradient",
+      "kind": "gradient",
+      "statement": "the gradient reaches exactly the declared parameter groups"
+    }
+  ],
+  "title": "\u65b9\u5411\u6027\u7801\u672c\u95f4\u9694\u91cd\u6392",
+  "version": "1.0.0"
+}

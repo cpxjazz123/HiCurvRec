@@ -1,0 +1,77 @@
+{
+  "mechanism_id": "directed_tangent_codebook_rotation",
+  "proposal_path": "results/harness3_runs/controller/rounds/round_123/directed_tangent_codebook_rotation/proposal.json",
+  "started_utc": "2026-10-22T23:15:03.833574+00:00",
+  "stages": {
+    "implement": {
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation",
+      "tokens": {
+        "input": 39635,
+        "output": 1471,
+        "reasoning": 395
+      },
+      "exit_code": 0
+    },
+    "judges": {
+      "ok": true,
+      "detail": "all 8 declared checks hold",
+      "failed": []
+    },
+    "probe": {
+      "ok": true,
+      "detail": "the real entry ran, the declared parameters moved, the exported hard SIDs changed and the code did not collapse",
+      "occupancy_ratio_vs_host": 1.0231
+    },
+    "export_sensitivity": {
+      "verdict": "active",
+      "changed_fraction": {
+        "levels_1": 0.9138569162565583,
+        "levels_2": 0.9997152967015089,
+        "levels_3": 1.0,
+        "levels_3token_identical": false
+      },
+      "level0_occupancy_ratio_vs_control": 1.023121387283237
+    },
+    "guardrails": {
+      "allowed": true,
+      "rule": "",
+      "detail": "",
+      "checked": [
+        "single_seed",
+        "no_control_retrain",
+        "no_archived_policy_execution",
+        "no_failed_arm_rerun",
+        "no_repeated_frozen_evaluation",
+        "no_repeated_stage3",
+        "no_semantic_duplicate",
+        "no_repeated_cold_run",
+        "no_repeated_probe",
+        "no_historical_repetition"
+      ],
+      "refused_utc": ""
+    },
+    "cold_launch": {
+      "started": false,
+      "status": "smoke_pending",
+      "refused": null,
+      "cgv_gate": {
+        "passed": true,
+        "gates": {
+          "G1": "passed",
+          "G2": "passed",
+          "G3": "passed",
+          "G4": "passed",
+          "G5": "passed",
+          "G6": "passed"
+        },
+        "note": "all six gates passed on the supplied declaration"
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation/r8_control"
+    }
+  },
+  "admitted": true,
+  "status": "cold_running",
+  "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation/r8_control",
+  "wall_clock_s": 121.7,
+  "cold_run_gpu_minutes": null
+}

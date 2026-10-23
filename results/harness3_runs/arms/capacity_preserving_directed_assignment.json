@@ -1,0 +1,172 @@
+{
+  "mechanism_id": "capacity_preserving_directed_assignment",
+  "semantic_key": "8e4563114517bf0746138902ff02519354c25d3f0f0d8af293ea2a53a9eed569",
+  "fingerprints": {
+    "primary": "5afb6daab6296a232d244a0f33c4b48e2dc91c0cf15264e3db069c589408b8ee",
+    "sid_effect": null
+  },
+  "novelty": "the mathematics is compared with the historical record in the fingerprint registry",
+  "seed": 42,
+  "runs": [
+    "probe-capacity_preserving_directed_assignment-20261022T234920",
+    "stage2-capacity_preserving_directed_assignment-20261022T234920"
+  ],
+  "official_cold_run": {
+    "status": "cold_running",
+    "gpu_minutes": null,
+    "wall_clock_s": 146.5
+  },
+  "cgv_gates": {
+    "gates": {
+      "G1": "passed",
+      "G2": "passed",
+      "G3": "passed",
+      "G4": "passed",
+      "G5": "passed",
+      "G6": "passed"
+    },
+    "note": "all six gates passed on the supplied declaration",
+    "passed": true
+  },
+  "independent_checks": {
+    "ok": true,
+    "detail": "all 8 declared checks hold",
+    "failed": []
+  },
+  "export_sensitivity": {
+    "verdict": "active",
+    "changed_fraction": {
+      "levels_1": 0.8286899581079432,
+      "levels_2": 0.9998373124008623,
+      "levels_3": 1.0,
+      "levels_3token_identical": false
+    },
+    "level0_occupancy_ratio_vs_control": 0.9526315789473684
+  },
+  "frozen_evaluation": {
+    "hard_l1_er": 16.398775353999234,
+    "frozen_threshold": 16.38953942232631,
+    "cleared_the_gate": true,
+    "pos_share": 0.08107085422381989,
+    "neg_share": 0.00494371393434869,
+    "ci95": null,
+    "d2": 0.04020980881767537,
+    "d2_support": [
+      "low_support"
+    ],
+    "d2_counts": {
+      "numerator_positive": 24,
+      "denominator_positive": 549,
+      "numerator_negative": 9,
+      "denominator_negative": 2567,
+      "anchor_cluster_ci95": {
+        "high": 0.05846732151118398,
+        "low": 0.02268641900357499,
+        "replicates": 1000,
+        "seed": 42,
+        "unit": "anchor"
+      }
+    }
+  },
+  "gh1_probe": {
+    "g_h1": 0.12584959489254444,
+    "prior_ce_l1": 5.30132885326003,
+    "probe_ce_l1": 4.634158764685098,
+    "top1_acc_l1": 0.08809290827625277,
+    "top5_acc_l1": 0.2266570530978009,
+    "top20_acc_l1": 0.43340886851727867,
+    "split": {
+      "dev_row_id_sha256": "a6d48110bed5389c240bce3f0aa417678cdc13ae29f9d7421e1cedd6b5d3a942",
+      "dev_rows": 38834,
+      "train_row_id_sha256": "257cc7868d980c032de6bb99888eb0b9fb1b0847d1eb8d270b909307353d1784",
+      "train_rows": 358124
+    },
+    "probe_version": "history_probe/fix48",
+    "budget": {
+      "batch_size": 512,
+      "dev_user_fraction": 0.1,
+      "dropout": 0.1,
+      "epochs": 6,
+      "grad_clip": 5.0,
+      "gru_hidden": 128,
+      "gru_layers": 1,
+      "label_smoothing": 0.0,
+      "lr": 0.001,
+      "seq_len": 20,
+      "token_embed_dim": 128,
+      "weight_decay": 0.0
+    }
+  },
+  "l1_structural_diagnostics": {
+    "distinct_codes": 228,
+    "gini": 0.18853512660734295,
+    "largest_cell": 245,
+    "prefix_branches": 69.47368421052632,
+    "sequence_information": 0.10182051667211554
+  },
+  "stage3": {
+    "test_recall@10": null,
+    "test_ndcg@10": null,
+    "delta_recall_vs_control": null,
+    "delta_ndcg_vs_control": null,
+    "per_token": null
+  },
+  "deltas_vs_archived_control": {
+    "er": 0.06426968772334618,
+    "recall": null,
+    "ndcg": null
+  },
+  "artifacts": [
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/sids_for_hgrec.npy",
+      "sha256": "b9a320744c4cfbd421fabece2ed882d2ea25bcf8e4501aaaeb2068faa9d7d31a",
+      "bytes": 786912
+    },
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/rqvae_best.pth",
+      "sha256": "622e95fff8a6a95208b5567531b58b7ca07cb5c3e6aee70cd36098ba272b41ba",
+      "bytes": 4604533
+    },
+    {
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/item_sids.json",
+      "sha256": "14b826b516ecb8edab9274eedead236c9f4e58b2df62c5a5e60b9d962290d32d",
+      "bytes": 1260573
+    }
+  ],
+  "posterior_explanation": {
+    "cleared_the_gate": true,
+    "delta_ndcg@10": null,
+    "delta_recall@10": null,
+    "er": 16.398775353999234,
+    "mechanism_id": "capacity_preserving_directed_assignment",
+    "modes": [
+      {
+        "counterexample": "the D2 cannot say anything about this arm",
+        "evidence": "the conditional level-2 measurement is not supported: ['low_support']",
+        "mode": "conditional_l2_contamination"
+      }
+    ],
+    "primary_mode": "conditional_l2_contamination"
+  },
+  "evidence_and_ood_flags": {
+    "historical_feature_ranges": {
+      "log_er_l1": [
+        0.0340830305326664,
+        2.799387834998579
+      ],
+      "G_H1": [
+        0.003972384133663863,
+        0.19469284765367922
+      ],
+      "D2": [
+        0.0,
+        0.2088149688796519
+      ]
+    },
+    "certified_for_screening": false,
+    "the_archived_features_are_on_another_protocol": false
+  },
+  "missing": [
+    "the downstream measurement"
+  ]
+}

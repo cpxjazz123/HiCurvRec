@@ -1,0 +1,82 @@
+{
+  "ok": false,
+  "detail": "1 of 8 declared checks failed",
+  "checks": [
+    {
+      "id": "permute_codebook",
+      "ok": true,
+      "detail": "the codebook rows were permuted: the loss is unchanged",
+      "measurements": {
+        "base": -0.0001039607081042999,
+        "value": -0.00010396070810429987,
+        "expect": "unchanged"
+      }
+    },
+    {
+      "id": "swap_source_target",
+      "ok": false,
+      "detail": "the source and the target were exchanged: the loss changed by only 0.000e+00 (expected more than 1.0e-06)",
+      "measurements": {
+        "base": -0.0001039607081042999,
+        "value": -0.0001039607081042999,
+        "expect": "changed"
+      }
+    },
+    {
+      "id": "mask_all",
+      "ok": true,
+      "detail": "every pair was masked out: the loss is zero",
+      "measurements": {
+        "base": -0.0001039607081042999,
+        "value": 0.0,
+        "expect": "zero"
+      }
+    },
+    {
+      "id": "gradient_codebook",
+      "ok": true,
+      "detail": "the gradient on codebook is 5.558e-04",
+      "measurements": {
+        "max_abs": 0.0005557885880820862,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_source",
+      "ok": true,
+      "detail": "the gradient on source is 2.275e-04",
+      "measurements": {
+        "max_abs": 0.0002275167373103967,
+        "finite": true
+      }
+    },
+    {
+      "id": "gradient_target",
+      "ok": true,
+      "detail": "the gradient on target is 4.570e-04",
+      "measurements": {
+        "max_abs": 0.0004569944414494281,
+        "finite": true
+      }
+    },
+    {
+      "id": "no_occupancy_quota",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "occupancy|quota|project_to_capacity"
+      }
+    },
+    {
+      "id": "no_pair_codeword_convergence",
+      "ok": true,
+      "detail": "the code does not contain it",
+      "measurements": {
+        "pattern": "codebook\\[[^\\]]*\\]\\s*-\\s*codebook"
+      }
+    }
+  ],
+  "failed": [
+    "swap_source_target"
+  ]
+}
