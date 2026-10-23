@@ -588,6 +588,30 @@ class DAG:
         return {"served": served, "ticks": ticks}
 
     # ------------------------------------------------------------------ experiments
+    def release(self, task_id: str, owner: str, reason: str = "") -> None:
+        """Give a task back without spending an attempt.
+
+        A worker that takes a lease and then finds it cannot run the task (a role at its
+        concurrency limit, a missing input) must not burn the task's attempt budget on a
+        refusal that was never the task's fault.
+        """
+        with self._Lock(self.lock_path):
+            state = self._read_state()
+            value = state["tasks"].get(task_id)
+            if not value:
+                raise SchedulerError(f"no task {task_id!r}")
+            if value["status"] != RUNNING or (owner and value["lease_owner"] != owner):
+                raise SchedulerError(
+                    f"task {task_id!r} is {value['status']}; only the lease holder can release it")
+            value["status"] = READY
+            value["lease_owner"] = ""
+            value["lease_expires"] = 0.0
+            value["attempts"] = max(0, int(value["attempts"]) - 1)
+            if reason:
+                value["detail"] = reason
+            self._write_state(state)
+        self._event("released", task=task_id, reason=reason)
+
     def reserve(self, candidate: str, stage: str, seed: int = 42, *,
                 protocol: str = "") -> bool:
         """Reserve an official experiment exactly once. True when this caller got it.

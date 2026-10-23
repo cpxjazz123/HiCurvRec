@@ -78,7 +78,7 @@ class AgentWorker:
     def __init__(self, root: Path | str, *, executor: OpenCodeAgentExecutor,
                  dag: Optional[DAG] = None, concurrency: int = 4, owner: str = "worker",
                  role_limits: Optional[Dict[str, int]] = None, backoff_base_s: float = 5.0,
-                 backoff_max_s: float = 300.0) -> None:
+                 backoff_max_s: float = 300.0, spec_factory: Optional[Any] = None) -> None:
         self.root = Path(root)
         self.executor = executor
         self.dag = dag or DAG(self.root / "dag")
@@ -91,6 +91,9 @@ class AgentWorker:
         self._lock = threading.Lock()
         self._in_flight: Dict[str, int] = {}
         self._not_before: Dict[str, float] = {}
+        #: How a task becomes a role's spec. The default is the L/A/M/I binding; a caller may
+        #: bind its own prompts (and the tests bind a mock).
+        self.spec_factory = spec_factory or build_spec
         self._stop = threading.Event()
         self._counters: Dict[str, int] = {"dispatched": 0, "completed": 0, "failed": 0,
                                           "skipped": 0, "idle": 0}
@@ -170,14 +173,14 @@ class AgentWorker:
             return {"dispatched": [task_id], "idle": False, "skipped": True}
         if not self._role_free(role):
             # the role is at its concurrency limit: wait for a slot rather than exceed the bound
-            self.dag.set_status(task_id, "pending", "the role is at its concurrency limit")
+            self.dag.release(task_id, self.owner, "the role is at its concurrency limit")
             with self._lock:
                 self._counters["skipped"] += 1
             self._write_status()
             return {"dispatched": [task_id], "idle": False, "deferred_for_limit": role}
         wait = self._not_before.get(task_id, 0.0) - time.time()
         if wait > 0:
-            self.dag.set_status(task_id, "pending", f"backing off for {wait:.1f}s")
+            self.dag.release(task_id, self.owner, f"backing off for {wait:.1f}s")
             with self._lock:
                 self._counters["skipped"] += 1
             self._write_status()
@@ -227,7 +230,8 @@ class AgentWorker:
                 payload = {}
             inputs = payload.get("inputs") or {}
             files = tuple((str(name), Path(path)) for name, path in (payload.get("files") or []))
-        return build_spec(role, task.task_id, model=self.executor.model, inputs=inputs, files=files)
+        return self.spec_factory(role, task.task_id, model=self.executor.model,
+                                 inputs=inputs, files=files)
 
     # -- supervision ------------------------------------------------------
     def serve(self, *, max_ticks: Optional[int] = None, idle_sleep: float = 2.0) -> Dict[str, Any]:

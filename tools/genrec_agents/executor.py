@@ -130,12 +130,15 @@ class OpenCodeAgentExecutor:
     """
 
     def __init__(self, root: Path | str, *, model: str = "", mcp: Optional[Dict[str, Any]] = None,
-                 binary: str = "", keep_workspaces: bool = True) -> None:
+                 binary: str = "", keep_workspaces: bool = True,
+                 env: Optional[Dict[str, str]] = None) -> None:
         self.root = Path(root)
         self.model = model or opencode.model_name()
         self.mcp = mcp
         self.binary = binary
         self.keep_workspaces = keep_workspaces
+        #: Extra environment for the agent process (a role's own settings, a test's harness).
+        self.env = dict(env or {})
 
     # -- paths ------------------------------------------------------------
     def workspace_for(self, task_id: str) -> Path:
@@ -187,6 +190,7 @@ class OpenCodeAgentExecutor:
                 model=record.model,
                 timeout=spec.timeout,
                 mcp=self.mcp,
+                env=self.env or None,
                 title=f"{spec.role}:{task_id}",
             )
         except Exception as exc:  # noqa: BLE001 - a failed agent is state, not a crash
