@@ -126,6 +126,21 @@ def _rank(rank: int, tree: str, payload: str, world_size: int, spec_text: str,
                                                                     terms[name])]
                          for name in terms}
                 torch.save(local, out / f"rank_{rank}_local.pt")
+                # The codebook's own per-rank gradients. A mechanism that targets the codebook
+                # moves a gradient the encoder route cannot see, so the parent needs the
+                # codebook's local gradients AND the mechanism's own contribution to compare
+                # its independent pooling against what the distributed path produced.
+                codebook_params = adapters.optional_parameter_group(
+                    trainer, local_obs, contract, "codebook")
+                if codebook_params is not None:
+                    local_codebook = {
+                        name: adapters.term_gradient_for(trainer, local_obs, terms[name],
+                                                          codebook_params)
+                        for name in terms
+                    }
+                    local_codebook["mechanism"] = adapters.mechanism_parameter_contribution(
+                        trainer, contract, local_obs, codebook_params)
+                    torch.save(local_codebook, out / f"rank_{rank}_codebook_local.pt")
 
             # the production path: a real DDP wrapper, so the framework performs the declared
             # aggregation during backward, and the mechanism then runs on the averaged gradient
@@ -202,8 +217,33 @@ def _rank(rank: int, tree: str, payload: str, world_size: int, spec_text: str,
                     "valid_levels": int(valid),
                     "scale": observations["weight"] / max(int(valid), 1),
                 })
-                production = adapters.executed_target_gradient(trainer, contract, observations)
+                # count the reducer's collectives on the NON-trace path too: reporting zero
+                # here would read as "DDP never reduced", which is a different claim from
+                # "this path does not count". A double reduction would show up as two.
+                reduce_calls = 0
+                original_all_reduce = dist.all_reduce
+
+                def counting_all_reduce(*args, **kwargs):
+                    nonlocal reduce_calls
+                    reduce_calls += 1
+                    return original_all_reduce(*args, **kwargs)
+
+                dist.all_reduce = counting_all_reduce
+                try:
+                    production = adapters.executed_target_gradient(trainer, contract, observations)
+                finally:
+                    dist.all_reduce = original_all_reduce
+                    trace_reduce_calls = reduce_calls
                 torch.save(production, out / f"rank_{rank}_production.pt")
+                codebook_params = adapters.optional_parameter_group(
+                    trainer, observations, contract, "codebook")
+                if codebook_params is not None:
+                    production_codebook = [
+                        torch.zeros_like(p) if p.grad is None else p.grad.detach().clone()
+                        for p in codebook_params
+                    ]
+                    torch.save(production_codebook,
+                               out / f"rank_{rank}_production_codebook.pt")
 
             # one declared optimizer step, so the ranks can be compared afterwards
             update = contract["update_contract"]
@@ -222,7 +262,7 @@ def _rank(rank: int, tree: str, payload: str, world_size: int, spec_text: str,
                 gradient = contract["gradient_contract"]
                 oracle_inputs = {
                     "scale": float(observations["scale"]),
-                    "rule": gradient["rule"],
+                    "rule": gradient.get("rule"),
                     "reference_term": gradient.get("reference_term"),
                     "alpha": float(adapters.declared_value(trainer, gradient, "alpha", 1.0)),
                     "eps": float(adapters.declared_value(trainer, gradient, "eps", 1e-12)),
@@ -255,6 +295,18 @@ def _rank(rank: int, tree: str, payload: str, world_size: int, spec_text: str,
                         for index, tensor in enumerate(piece):
                             pooled[index] = pooled[index] + tensor / world_size
                 torch.save(pooled, out / "production_pooled.pt")
+                # the same pooling for the codebook's production gradient, so the parent has a
+                # DDP-averaged codebook gradient to compare its OWN pooling against
+                codebook_first = out / "rank_0_production_codebook.pt"
+                if codebook_first.is_file():
+                    template = torch.load(codebook_first, weights_only=False)
+                    pooled_codebook = [torch.zeros_like(tensor) for tensor in template]
+                    for source in range(world_size):
+                        piece = torch.load(out / f"rank_{source}_production_codebook.pt",
+                                           weights_only=False)
+                        for index, tensor in enumerate(piece):
+                            pooled_codebook[index] = pooled_codebook[index] + tensor / world_size
+                    torch.save(pooled_codebook, out / "production_codebook_pooled.pt")
                 digests = [item["digest"] for item in gathered]
                 (out / "summary.json").write_text(json.dumps({
                     "ok": True,

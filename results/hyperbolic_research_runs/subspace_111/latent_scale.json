@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "measured_utc": "2026-10-23T07:30:00Z",
+  "purpose": "the pre-specification latent measurement for the v2 subspace proposals: the tangent scale must be tied to the data (geometry review F1)",
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_r10_hyp_busemann_horosphere",
+  "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+  "checkpoint_epoch": 3000,
+  "checkpoint_selection": "final_epoch",
+  "embeddings": {
+    "file": "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy",
+    "rows_used": 20000,
+    "in_dim_after_pca": 768,
+    "pca_dim": 0,
+    "pca_seed": 42
+  },
+  "load_state_dict": {
+    "missing": [],
+    "unexpected": []
+  },
+  "latent_norm": {
+    "n": 20000,
+    "mean": 0.36043378710746765,
+    "std": 0.06011215224862099,
+    "p50": 0.35655733942985535,
+    "p90": 0.44080260396003723,
+    "p95": 0.4640243947505951,
+    "p99": 0.5069563388824463,
+    "max": 0.7304060459136963
+  },
+  "halves": {
+    "first": {
+      "p50": 0.2339680939912796,
+      "p95": 0.3154066801071167
+    },
+    "second": {
+      "p50": 0.2664887309074402,
+      "p95": 0.3658437728881836
+    }
+  },
+  "scale_rule": "s = atanh(rho) / (sqrt(c) * ||z||_p95); rho declared at specification time",
+  "rho": 0.6,
+  "rules": {
+    "c1": {
+      "tangent_scale": 1.4937731472770945,
+      "normalised_radius_squared": {
+        "p50": 0.23753737895813445,
+        "p95": 0.36,
+        "p99": 0.4089227898919144,
+        "max": 0.6356315498275945
+      },
+      "boundary_margin_at_max": 0.3643684501724055
+    },
+    "c4": {
+      "tangent_scale": 0.7468865736385473,
+      "normalised_radius_squared": {
+        "p50": 0.23753737895813445,
+        "p95": 0.36,
+        "p99": 0.4089227898919144,
+        "max": 0.6356315498275945
+      },
+      "boundary_margin_at_max": 0.3643684501724055
+    }
+  },
+  "interpretation": "With ONE common tangent scale and c_b = 4 * c_s the two factors' normalised radii differ by construction (0.60 vs tanh(2*atanh(0.60))^2 = 0.766): that relative difference is the only curvature content the Poincare ball can carry (F1), and it is what the v2 declarations must use instead of a curvature sweep."
+}
