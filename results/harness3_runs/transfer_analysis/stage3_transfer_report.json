@@ -628,6 +628,47 @@
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11980
         }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 1,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[2,5)": {
+            "rows": 1,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14358,
+            "recall@10": 0.0591307981613038
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
+        }
       }
     },
     "behavior_residual_geometry_transport": {
@@ -753,6 +794,43 @@
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11661
+        }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14283,
+            "recall@10": 0.05923125393824827
+          },
+          "l1_cell_size[5,20)": {
+            "rows": 77,
+            "recall@10": 0.03896103896103896
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
         }
       }
     },
@@ -880,6 +958,181 @@
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 10307
         }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 18,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[2,5)": {
+            "rows": 146,
+            "recall@10": 0.04794520547945205
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 13787,
+            "recall@10": 0.05896859360266918
+          },
+          "l1_cell_size[5,20)": {
+            "rows": 409,
+            "recall@10": 0.07090464547677261
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
+        }
+      }
+    },
+    "capacity_preserving_directed_assignment": {
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.11933352772598882,
+          "marginal_baseline": 0.017513011053873272,
+          "excess_over_the_marginal": 0.10182051667211554,
+          "distinct_codes_used": 228,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.07217563670958031,
+          "marginal_baseline": 0.004697822507724163,
+          "excess_over_the_marginal": 0.06747781420185615,
+          "distinct_codes_used": 15807,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.10196398422831905,
+          "codes_in_train_not_in_test": 0,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 228,
+          "codes_in_test": 228
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.2371351642256204,
+          "codes_in_train_not_in_test": 3855,
+          "codes_in_test_not_in_train": 48,
+          "codes_in_train": 15774,
+          "codes_in_test": 11967
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.28229560123173403,
+          "codes_in_train_not_in_test": 7207,
+          "codes_in_test_not_in_train": 80,
+          "codes_in_train": 23557,
+          "codes_in_test": 16430
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 228,
+          "entropy": 5.373455909504408,
+          "normalised_entropy": 0.9897059934530643,
+          "gini": 0.18853512660734295,
+          "largest_code_share": 0.009964615447187538
+        },
+        "level_1_2": {
+          "distinct_codes": 15840,
+          "entropy": 9.467031572768406,
+          "normalised_entropy": 0.978980773528322,
+          "gini": 0.28564138918365733,
+          "largest_code_share": 0.0014235164924553626
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23667,
+          "entropy": 10.051216380064425,
+          "normalised_entropy": 0.9979526503658139,
+          "gini": 0.036524744248857655,
+          "largest_code_share": 0.0005694065969821451
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.07580933788840084
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.08101512933138116
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.08052708638360176
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.08298080052066385
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24587,
+          "collision_rate": 0.9907268068491479,
+          "largest_cell": 245
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 13572,
+          "collision_rate": 0.3557571074144873,
+          "largest_cell": 35
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 1630,
+          "collision_rate": 0.03741814780168384,
+          "largest_cell": 14
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 228,
+          "mean_branches": 69.47368421052632,
+          "median_branches": 69.5,
+          "tenth_percentile_branches": 47.0,
+          "parents_with_a_single_branch": 0
+        },
+        "l2_to_l3": {
+          "distinct_parents": 15840,
+          "mean_branches": 1.494128787878788,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 11205
+        }
+      },
+      "stage3_slices": {
+        "available": false,
+        "reason": "no Stage-3 logs for TIGER_c107_capacity_preserving_directed_assignment__r8_control"
       }
     },
     "curvature_weighted_transition_transport": {
@@ -1261,38 +1514,38 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06375459182785216,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 57396,
-            "recall@10": 0.06373266429716357
+            "rows": 14347,
+            "recall@10": 0.05910643340071095
           },
           "l1_cell_size[5,20)": {
-            "rows": 43,
-            "recall@10": 0.09302325581395349
+            "rows": 13,
+            "recall@10": 0.07692307692307693
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06550497217407171
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
+            "rows": 6,
             "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.056179775280898875
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.0626761572636507
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.05448524984948826
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -1425,11 +1678,11 @@
       "stage3_slices": {
         "available": true,
         "evaluated_rows": 14360,
-        "recall@10": 0.05940111420612813,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
             "rows": 14360,
-            "recall@10": 0.05940111420612813
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
@@ -1443,15 +1696,15 @@
           },
           "popularity[2,5)": {
             "rows": 57,
-            "recall@10": 0.07017543859649122
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
             "rows": 12786,
-            "recall@10": 0.06030032848427968
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
             "rows": 1509,
-            "recall@10": 0.05168986083499006
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -1579,6 +1832,39 @@
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11127
+        }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
         }
       }
     },
@@ -1709,34 +1995,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06088197914309093,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 57439,
-            "recall@10": 0.06088197914309093
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06000060821701183
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
+            "rows": 6,
             "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.06367041198501873
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06262838580232169
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.059000602046959665
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -1868,34 +2154,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06072529117846759,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 57439,
-            "recall@10": 0.06072529117846759
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06331539093148435
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.029411764705882353
+            "rows": 6,
+            "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.0599250936329588
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.058042325514737494
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.052378085490668275
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -2279,38 +2565,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.061682828740054665,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
-          "l1_cell_size[1,2)": {
-            "rows": 1,
-            "recall@10": 0.0
-          },
           "l1_cell_size[20,1e+09)": {
-            "rows": 57438,
-            "recall@10": 0.06168390264284968
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.0635282668856248
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
+            "rows": 6,
             "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.0599250936329588
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.05976209812258157
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.056291390728476824
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -2438,6 +2720,43 @@
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11804
+        }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 1,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14359,
+            "recall@10": 0.05912668013092834
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
         }
       }
     },
@@ -2568,34 +2887,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 57439,
-        "recall@10": 0.06269259562318286,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 57439,
-            "recall@10": 0.06269259562318286
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 32883,
-            "recall@10": 0.06398442964449716
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
+            "rows": 6,
             "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.04868913857677903
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06138632780776764
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.059903672486453945
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -2979,34 +3298,34 @@
       },
       "stage3_slices": {
         "available": true,
-        "evaluated_rows": 28719,
-        "recall@10": 0.06264145687523939,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
         "l1_cell_size": {
           "l1_cell_size[20,1e+09)": {
-            "rows": 28719,
-            "recall@10": 0.06264145687523939
+            "rows": 14360,
+            "recall@10": 0.05912256267409471
           }
         },
         "popularity": {
           "popularity[0,1)": {
-            "rows": 4163,
-            "recall@10": 0.06629834254143646
+            "rows": 2,
+            "recall@10": 0.0
           },
           "popularity[1,2)": {
-            "rows": 34,
-            "recall@10": 0.08823529411764706
+            "rows": 6,
+            "recall@10": 0.0
           },
           "popularity[2,5)": {
-            "rows": 267,
-            "recall@10": 0.0599250936329588
+            "rows": 57,
+            "recall@10": 0.05263157894736842
           },
           "popularity[20,1e+09)": {
-            "rows": 20933,
-            "recall@10": 0.06229398557301868
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
           },
           "popularity[5,20)": {
-            "rows": 3322,
-            "recall@10": 0.060204695966285374
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
           }
         }
       }
@@ -3389,6 +3708,132 @@
         }
       }
     },
+    "directed_tangent_codebook_rotation": {
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_tangent_codebook_rotation/r8_control/sids_for_hgrec.npy",
+      "sequential_predictability": {
+        "level_1": {
+          "top1_accuracy": 0.12988669264459426,
+          "marginal_baseline": 0.018264073586456132,
+          "excess_over_the_marginal": 0.11162261905813814,
+          "distinct_codes_used": 182,
+          "pairs": 339519
+        },
+        "level_1_2": {
+          "top1_accuracy": 0.06859704464256787,
+          "marginal_baseline": 0.006606404943464136,
+          "excess_over_the_marginal": 0.06199063969910373,
+          "distinct_codes_used": 13489,
+          "pairs": 339519
+        }
+      },
+      "frequency_drift": {
+        "level_1": {
+          "total_variation_train_to_test": 0.09722191804515412,
+          "codes_in_train_not_in_test": 3,
+          "codes_in_test_not_in_train": 0,
+          "codes_in_train": 182,
+          "codes_in_test": 179
+        },
+        "level_1_2": {
+          "total_variation_train_to_test": 0.22239796101845183,
+          "codes_in_train_not_in_test": 3034,
+          "codes_in_test_not_in_train": 38,
+          "codes_in_train": 13468,
+          "codes_in_test": 10472
+        },
+        "level_1_2_3": {
+          "total_variation_train_to_test": 0.2803526379943632,
+          "codes_in_train_not_in_test": 7079,
+          "codes_in_test_not_in_train": 78,
+          "codes_in_train": 23246,
+          "codes_in_test": 16245
+        }
+      },
+      "token_balance": {
+        "level_1": {
+          "distinct_codes": 182,
+          "entropy": 5.058350247123623,
+          "normalised_entropy": 0.9720107123776601,
+          "gini": 0.2661517723339011,
+          "largest_code_share": 0.01142880383942734
+        },
+        "level_1_2": {
+          "distinct_codes": 13521,
+          "entropy": 9.248356225864194,
+          "normalised_entropy": 0.9722831050692219,
+          "gini": 0.3444400948984525,
+          "largest_code_share": 0.0013421726928864847
+        },
+        "level_1_2_3": {
+          "distinct_codes": 23355,
+          "entropy": 10.031824252313367,
+          "normalised_entropy": 0.9973413586358792,
+          "gini": 0.04850146078818307,
+          "largest_code_share": 0.0004880627974132672
+        }
+      },
+      "popularity_slices": {
+        "quartiles": {
+          "q1": {
+            "items": 6147,
+            "mean_popularity": 16.77794045876037,
+            "positive_match_rate": 0.08264193915731251
+          },
+          "q2": {
+            "items": 6147,
+            "mean_popularity": 41.457458923051895,
+            "positive_match_rate": 0.09012526435659671
+          },
+          "q3": {
+            "items": 6147,
+            "mean_popularity": 84.9077598828697,
+            "positive_match_rate": 0.08817309256547909
+          },
+          "q4": {
+            "items": 6146,
+            "mean_popularity": 360.4692482915718,
+            "positive_match_rate": 0.09518385942076148
+          }
+        },
+        "cold_slice": {
+          "anchors_without_any_training_interaction": 0,
+          "positive_match_rate": null
+        }
+      },
+      "collisions": {
+        "level_1": {
+          "items_sharing_their_code": 24581,
+          "collision_rate": 0.9925977142392322,
+          "largest_cell": 281
+        },
+        "level_1_2": {
+          "items_sharing_their_code": 16322,
+          "collision_rate": 0.4500752430146012,
+          "largest_cell": 33
+        },
+        "level_1_2_3": {
+          "items_sharing_their_code": 2173,
+          "collision_rate": 0.05010778053442877,
+          "largest_cell": 12
+        }
+      },
+      "prefix_structure": {
+        "l1_to_l2": {
+          "distinct_parents": 182,
+          "mean_branches": 74.29120879120879,
+          "median_branches": 83.0,
+          "tenth_percentile_branches": 20.200000000000003,
+          "parents_with_a_single_branch": 8
+        },
+        "l2_to_l3": {
+          "distinct_parents": 13521,
+          "mean_branches": 1.7273130685600178,
+          "median_branches": 1.0,
+          "tenth_percentile_branches": 1.0,
+          "parents_with_a_single_branch": 8450
+        }
+      }
+    },
     "geometry_transport_seed43": {
       "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control/sids_for_hgrec.npy",
       "sequential_predictability": {
@@ -3512,6 +3957,43 @@
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11521
+        }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 14360,
+        "recall@10": 0.05912256267409471,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 1,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 14359,
+            "recall@10": 0.05912668013092834
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 2,
+            "recall@10": 0.0
+          },
+          "popularity[1,2)": {
+            "rows": 6,
+            "recall@10": 0.0
+          },
+          "popularity[2,5)": {
+            "rows": 57,
+            "recall@10": 0.05263157894736842
+          },
+          "popularity[20,1e+09)": {
+            "rows": 12786,
+            "recall@10": 0.06014390739871735
+          },
+          "popularity[5,20)": {
+            "rows": 1509,
+            "recall@10": 0.051027170311464545
+          }
         }
       }
     },
@@ -3638,6 +4120,43 @@
           "median_branches": 1.0,
           "tenth_percentile_branches": 1.0,
           "parents_with_a_single_branch": 11705
+        }
+      },
+      "stage3_slices": {
+        "available": true,
+        "evaluated_rows": 57439,
+        "recall@10": 0.06406796775709883,
+        "l1_cell_size": {
+          "l1_cell_size[1,2)": {
+            "rows": 3,
+            "recall@10": 0.0
+          },
+          "l1_cell_size[20,1e+09)": {
+            "rows": 57436,
+            "recall@10": 0.06407131415836757
+          }
+        },
+        "popularity": {
+          "popularity[0,1)": {
+            "rows": 32883,
+            "recall@10": 0.06507922026579084
+          },
+          "popularity[1,2)": {
+            "rows": 34,
+            "recall@10": 0.029411764705882353
+          },
+          "popularity[2,5)": {
+            "rows": 267,
+            "recall@10": 0.0599250936329588
+          },
+          "popularity[20,1e+09)": {
+            "rows": 20933,
+            "recall@10": 0.06353604356757273
+          },
+          "popularity[5,20)": {
+            "rows": 3322,
+            "recall@10": 0.058097531607465384
+          }
         }
       }
     },
@@ -3784,6 +4303,9 @@
     "behaviour_conditioned_residual_target: the largest level-0 cell holds 382 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "behaviour_conditioned_residual_target: the level-0 usage is more concentrated than the control's (Gini 0.353 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "behaviour_conditioned_residual_target: fewer level-0 codes are in use than the control's (243 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "capacity_preserving_directed_assignment: the largest level-0 cell holds 245 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
+    "capacity_preserving_directed_assignment: fewer level-0 codes are in use than the control's (228 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
+    "capacity_preserving_directed_assignment: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
     "directed_assignment_branch_entropy: the largest level-0 cell holds 555 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_assignment_branch_entropy: the level-0 usage is more concentrated than the control's (Gini 0.325 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
     "directed_assignment_branch_entropy: fewer level-0 codes are in use than the control's (198 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
@@ -3821,6 +4343,9 @@
     "directed_soft_assignment_information: the largest level-0 cell holds 253 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "directed_soft_assignment_information: fewer level-0 codes are in use than the control's (242 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "directed_soft_assignment_information: the codes carry less sequence information than the control's (excess over the marginal 0.103 against 0.104), so a recommender has less to predict from the previous item",
+    "directed_tangent_codebook_rotation: the largest level-0 cell holds 281 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
+    "directed_tangent_codebook_rotation: the level-0 usage is more concentrated than the control's (Gini 0.266 against 0.216); a mechanism that concentrates the level-0 codes costs the recommender the candidates it can rank",
+    "directed_tangent_codebook_rotation: fewer level-0 codes are in use than the control's (182 against 245); a merge of two cells is how the codes concentrate, and the cells the recommender walks are the ones that disappeared",
     "geometry_transport_seed43: the largest level-0 cell holds 260 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",
     "geometry_transport_seed43: the codes carry less sequence information than the control's (excess over the marginal 0.102 against 0.104), so a recommender has less to predict from the previous item",
     "r8_control_seed43: the largest level-0 cell holds 262 items against the control's 237; the tail of the usage is what the recommender loses, and the whole-distribution Gini does not show it",

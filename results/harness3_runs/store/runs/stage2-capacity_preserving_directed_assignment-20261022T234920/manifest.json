@@ -1,0 +1,95 @@
+{
+  "artifacts": [
+    {
+      "bytes": 786912,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/sids_for_hgrec.npy",
+      "sha256": "b9a320744c4cfbd421fabece2ed882d2ea25bcf8e4501aaaeb2068faa9d7d31a"
+    },
+    {
+      "bytes": 4604533,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/rqvae_best.pth",
+      "sha256": "622e95fff8a6a95208b5567531b58b7ca07cb5c3e6aee70cd36098ba272b41ba"
+    },
+    {
+      "bytes": 1260573,
+      "exists": true,
+      "path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment/r8_control/item_sids.json",
+      "sha256": "14b826b516ecb8edab9274eedead236c9f4e58b2df62c5a5e60b9d962290d32d"
+    }
+  ],
+  "command": [],
+  "created_utc": "2026-10-22T23:49:20.441209+00:00",
+  "extra": {
+    "cgv_gate": {
+      "gates": {
+        "G1": "passed",
+        "G2": "passed",
+        "G3": "passed",
+        "G4": "passed",
+        "G5": "passed",
+        "G6": "passed"
+      },
+      "note": "all six gates passed on the supplied declaration",
+      "passed": true
+    },
+    "fingerprint": "5afb6daab6296a232d244a0f33c4b48e2dc91c0cf15264e3db069c589408b8ee",
+    "semantic_key": "8e4563114517bf0746138902ff02519354c25d3f0f0d8af293ea2a53a9eed569"
+  },
+  "failure": null,
+  "gpu_budget_s": null,
+  "kind": "stage2",
+  "manifest_sha256": "7962c49d276a56f08868f21edb584631de84d172816d2e9d6932162640cd5446",
+  "manifest_version": 1,
+  "mechanism_id": "capacity_preserving_directed_assignment",
+  "metrics": {
+    "frozen_evaluation": {
+      "above_frozen_threshold": true,
+      "d2": 0.04020980881767537,
+      "d2_block": {
+        "anchor_cluster_ci95": {
+          "high": 0.05846732151118398,
+          "low": 0.02268641900357499,
+          "replicates": 1000,
+          "seed": 42,
+          "unit": "anchor"
+        },
+        "anchors": 52855,
+        "anchors_with_a_shared_l1_negative": 2507,
+        "anchors_with_a_shared_l1_positive": 549,
+        "computed_from": "the same frozen pair read as the enrichment ratio",
+        "conditional_negative": 0.003506038176860148,
+        "conditional_positive": 0.04371584699453552,
+        "d2": 0.04020980881767537,
+        "definition": "P(shared L2 | shared L1, positive pair) - P(shared L2 | shared L1, negative pair)",
+        "denominator_negative": 2567,
+        "denominator_positive": 549,
+        "flags": [
+          "low_support"
+        ],
+        "low_support": true,
+        "numerator_negative": 9,
+        "numerator_positive": 24,
+        "ok": true,
+        "undefined": false
+      },
+      "frozen_threshold": 16.38953942232631,
+      "hard_l1_er": 16.398775353999234,
+      "l1_er": 16.398775353999234,
+      "neg_share": 0.00494371393434869,
+      "pos_share": 0.08107085422381989
+    }
+  },
+  "output_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_capacity_preserving_directed_assignment",
+  "parent_runs": [],
+  "proposal_sha256": null,
+  "run_id": "stage2-capacity_preserving_directed_assignment-20261022T234920",
+  "seed": 42,
+  "stage": "cold_train",
+  "status": "succeeded",
+  "tree": null,
+  "tree_files": 0,
+  "tree_sha256": "",
+  "verdicts": {}
+}
