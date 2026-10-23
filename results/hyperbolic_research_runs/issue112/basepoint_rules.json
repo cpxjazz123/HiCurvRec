@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "issue": 112,
+  "question": "which base-point rule makes the horosphere's SIGN discriminative on the frozen data?",
+  "fixture": {
+    "pairs": 4000,
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/r8_control/rqvae_best.pth",
+    "checkpoint_epoch": 3000,
+    "train_pairs_total": null,
+    "curvature": 1.0
+  },
+  "rules": {
+    "target_direction": {
+      "negative_fraction": 0.0,
+      "sign_balance": 0.0,
+      "level_min": 2.4844093040526527,
+      "level_max": 4.997184884987226,
+      "level_spread": 2.512775580934573,
+      "mean_distance_negative": null,
+      "mean_distance_positive": 0.25945201633803394
+    },
+    "source_direction": {
+      "negative_fraction": 0.0,
+      "sign_balance": 0.0,
+      "level_min": 2.4898056492826997,
+      "level_max": 5.214119306418749,
+      "level_spread": 2.7243136571360496,
+      "mean_distance_negative": null,
+      "mean_distance_positive": 0.25945201633803394
+    },
+    "pair_mean_direction": {
+      "negative_fraction": 0.0,
+      "sign_balance": 0.0,
+      "level_min": 2.489738363819978,
+      "level_max": 5.093685126379012,
+      "level_spread": 2.603946762559034,
+      "mean_distance_negative": null,
+      "mean_distance_positive": 0.25945201633803394
+    },
+    "transition_direction": {
+      "negative_fraction": 0.0,
+      "sign_balance": 0.0,
+      "level_min": 2.352588145454209,
+      "level_max": 4.732731483124227,
+      "level_spread": 2.380143337670018,
+      "mean_distance_negative": null,
+      "mean_distance_positive": 0.25945201633803394
+    },
+    "target_orthogonal_to_source": {
+      "negative_fraction": 0.0,
+      "sign_balance": 0.0,
+      "level_min": 2.3752458466905373,
+      "level_max": 4.793332731477982,
+      "level_spread": 2.4180868847874444,
+      "mean_distance_negative": null,
+      "mean_distance_positive": 0.25945201633803394
+    }
+  },
+  "ranking": [
+    {
+      "rule": "target_direction",
+      "sign_balance": 0.0,
+      "distance_separation": null
+    },
+    {
+      "rule": "source_direction",
+      "sign_balance": 0.0,
+      "distance_separation": null
+    },
+    {
+      "rule": "pair_mean_direction",
+      "sign_balance": 0.0,
+      "distance_separation": null
+    },
+    {
+      "rule": "transition_direction",
+      "sign_balance": 0.0,
+      "distance_separation": null
+    },
+    {
+      "rule": "target_orthogonal_to_source",
+      "sign_balance": 0.0,
+      "distance_separation": null
+    }
+  ],
+  "verdict": "the rule with the best balance AND a separating sign is the only one that can carry the inside/outside question on this data",
+  "recommendation": "target_direction"
+}
