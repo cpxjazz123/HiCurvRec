@@ -183,3 +183,8 @@
 {"at": 1792758246.3055859, "event": "demoted", "reason": "a dependency is closed: hyp_busemann_boundary:join_E", "task": "hyp_busemann_boundary:stage2"}
 {"at": 1792758246.305976, "event": "demoted", "reason": "waiting for: hyp_product_l1_quantiser:stage2, hyp_product_l1_quantiser:er_gate", "task": "hyp_product_l1_quantiser:stage3"}
 {"at": 1792758246.3063836, "deferred": {}, "event": "idle_tick", "idle": 71}
+{"at": 1792759380.7269545, "event": "ready", "task": "hyp_product_l1_quantiser:er_gate"}
+{"at": 1792759380.7308037, "detail": "the cold seed-42 3000-epoch run completed (23:19-23:41, 4 GPUs); the level-0 partition collapsed to ONE code for all 24587 items; the ER is 1.0 against the control's 16.3345", "event": "done", "task": "hyp_product_l1_quantiser:stage2"}
+{"at": 1792759386.8342617, "attempt": 1, "event": "dispatched", "owner": "coordinator", "resource": "cpu", "task": "hyp_product_l1_quantiser:er_gate"}
+{"at": 1792759396.1177905, "attempts": 1, "blocked": false, "error": "the frozen gate FAILED: hard_l1_er = 1.0 against the threshold 16.38953942232631; the level-0 partition is degenerate (1 distinct code for all 24587 items, the largest cell 24587). The candidate is refuted by its own cold run; no Stage-3 follows.", "event": "failed", "task": "hyp_product_l1_quantiser:er_gate"}
+{"at": 1792759396.1217308, "event": "status", "reason": "the frozen ER gate failed (ER 1.0 against 16.38953942232631); the protocol forbids Stage-3 after a failed gate", "status": "blocked", "task": "hyp_product_l1_quantiser:stage3"}
