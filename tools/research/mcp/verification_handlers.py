@@ -12,6 +12,7 @@ from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, read_json
 from . import handlers
+from ..verification.admission import source_digest
 
 SOURCE_DIR = settings.ROOT / "stage2_RQ-VAE"
 SAFE_ID = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{2,63}$")
@@ -65,14 +66,18 @@ def _start(run_id, source_dir, action):
     root = handlers._root(run_id)
     path = root / "verification_requests" / (action + ".json")
     with _lock(root):
+        source_sha = source_digest(tree)
         if path.is_file():
             existing = read_json(path)
-            if existing.get("status") not in ("failed", "cancelled", "superseded"):
+            stale = existing.get("source_sha256") not in (None, source_sha)
+            if (existing.get("status") not in ("failed", "cancelled", "superseded")
+                    and not stale):
                 return {"started": False, "reason": "request_already_recorded",
                         "status": existing.get("status"), "request_id": existing.get("request_id")}
-            # A failed attempt must not block the next one. The failed record is
-            # kept under its own request id and the request is superseded with a
-            # fresh id, so the earlier evidence is never overwritten.
+            # A failed attempt must not block the next one, and a request made
+            # against a source that has since changed is stale evidence. The old
+            # record is kept under its own request id and superseded with a
+            # fresh one, so earlier evidence is never overwritten.
             keep = path.with_name(path.stem + "." + str(existing.get("request_id", "old"))[:8] + ".json")
             path.replace(keep)
         if action == "review":
@@ -81,6 +86,7 @@ def _start(run_id, source_dir, action):
                 return {"started": False, "reason": "drafts_not_ready"}
         record = {"schema": 1, "request_id": uuid.uuid4().hex,
                   "run_id": run_id, "candidate_id": cid, "source_dir": str(tree),
+                  "source_sha256": source_sha,
                   "action": action, "created_at": time.time(), "status": "queued"}
         atomic_json(path, record)
         try:
