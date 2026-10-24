@@ -48,6 +48,20 @@ class RQVAE(nn.Module):
                                            c=self.rq.curvature) / TAU_ASSIGN)
         return points, logits
 
+    def population_balance(self, embeddings: torch.Tensor):
+        """Marginal KL to uniform over the whole population (one pass per epoch)."""
+        latent = self.encoder(embeddings)
+        points = project_ball(latent, radius=self.radius)
+        loss_bal = torch.zeros((), device=latent.device, dtype=latent.dtype)
+        for level in range(self.rq.codebook_num):
+            candidates = project_ball(self.rq.codebooks[level], radius=self.radius)
+            logits = -squared_distance(points.unsqueeze(1), candidates.unsqueeze(0),
+                                       c=self.rq.curvature) / TAU_ASSIGN
+            marginal = torch.softmax(logits, dim=1).mean(dim=0)
+            loss_bal = loss_bal + (marginal * torch.log(
+                marginal.clamp(min=1e-12) * float(marginal.numel()))).sum()
+        return loss_bal / float(self.rq.codebook_num)
+
     def forward(self, embeddings: torch.Tensor, index: torch.Tensor | None = None,
                 edges: tuple | None = None):
         if index is None:
@@ -71,23 +85,21 @@ class RQVAE(nn.Module):
         log_prob = [torch.log_softmax(logit, dim=1) for logit in logits]
         loss_assign = -(transport * torch.stack(log_prob, dim=1)).sum(dim=(1, 2)).mean()
 
-        # global marginal KL to uniform, differentiable
-        marginals = []
-        for level in range(self.rq.codebook_num):
-            soft = torch.softmax(logits[level], dim=1)
-            marginals.append(soft.mean(dim=0))
+        # the global marginal term is computed once per epoch by the caller
         loss_bal = torch.zeros((), device=latent.device, dtype=latent.dtype)
-        for marginal in marginals:
-            loss_bal = loss_bal + (marginal * torch.log(
-                marginal.clamp(min=1e-12) * float(marginal.numel()))).sum()
-        loss_bal = loss_bal / float(self.rq.codebook_num)
 
-        # train-only transition term
+        # train-only transition term: the third-level soft assignment of the
+        # sampled successor items, weighted by the frozen prefix-conditional r.
         loss_tr = torch.zeros((), device=latent.device, dtype=latent.dtype)
         if edges is not None:
-            anchor, target, r = edges
-            soft_third = torch.softmax(logits[2], dim=1)
-            soft_target = soft_third.index_select(0, target)
+            target_embeddings, r = edges
+            target_latent = self.encoder(target_embeddings)
+            target_points = project_ball(target_latent, radius=self.radius)
+            candidates = project_ball(self.rq.codebooks[2], radius=self.radius)
+            target_logits = -squared_distance(target_points.unsqueeze(1),
+                                               candidates.unsqueeze(0),
+                                               c=self.rq.curvature) / TAU_ASSIGN
+            soft_target = torch.softmax(target_logits, dim=1)
             loss_tr = -(r * soft_target).sum(dim=1).mean()
 
         total = loss_rec + loss_assign + loss_bal + loss_tr
