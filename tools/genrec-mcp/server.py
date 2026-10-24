@@ -2460,12 +2460,27 @@ def _promote_round_tree(tree: Path, idea_id: str) -> Path:
         return target
     # Always refresh the allowlist copy: the reviewed tree is the source of truth,
     # and the admission compares the copy's source digest with the record. The
-    # target is removed first, because merging would keep stale .py files from an
-    # earlier promotion and change the digest.
+    # target is replaced rather than merged, because merging would keep stale .py
+    # files from an earlier promotion and change the digest. A tree that a
+    # running job is using is never touched, and the logs a running trainer owns
+    # are kept.
     if target.exists():
+        keep = target / "logs"
+        saved = None
+        if keep.is_dir():
+            saved = keep.with_name("logs.keep")
+            if saved.exists():
+                shutil.rmtree(saved)
+            shutil.move(str(keep), str(saved))
         shutil.rmtree(target)
-    ignore = shutil.ignore_patterns("logs", "__pycache__", "results", "dataset")
-    shutil.copytree(source, target, ignore=ignore)
+        ignore = shutil.ignore_patterns("logs", "logs.keep", "__pycache__", "results", "dataset")
+        shutil.copytree(source, target, ignore=ignore)
+        if saved is not None and saved.is_dir():
+            shutil.move(str(saved), str(keep))
+            shutil.rmtree(saved, ignore_errors=True)
+    else:
+        ignore = shutil.ignore_patterns("logs", "__pycache__", "results", "dataset")
+        shutil.copytree(source, target, ignore=ignore)
     return target
 
 
