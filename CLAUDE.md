@@ -31,7 +31,7 @@
 ## 4. 训练与评估
 
 18. Stage2 保持 3000 epochs 的完整训练预算，禁止重新加入基于训练损失或验证指标的提前停止。
-19. Stage2 的 ER、HitRate 和稳定性探针等指标仅作诊断记录，不得新增外部指标硬门槛。
+19. Stage2→Stage3 必须通过独立验证集 Hard-L1 ER 严格大于 16.38953942232631、HitRate 达到冻结源码阈值、二级 SID 前缀数量严格超过冻结 TIGER 基线 7414 三项硬门槛，任一数值、阈值或验证证据缺失均禁止启动 Stage3。
 20. 所有新 Stage2 机制在正式训练前必须通过独立 Agent 编写的数学、梯度、DDP 和真实入口测试。
 21. 梯度验证必须使用实际模型与训练 batch 检查参与训练的损失、梯度及参数更新，不得只检查合成张量。
 22. Stage3 固定使用 `NUM_EPOCHS=150`、`EVAL_INTERVAL=5`、`EVAL_START_EPOCH=75`、`EARLY_EVAL_EPOCHS=(25,50,75,100,125)`、`SEED=42`、`BEAM_SIZE=20`、`NO_EVAL=True` 和 `SKIP_TEST=False`。
