@@ -68,7 +68,7 @@ def mark_workspace_project(workspace: Path) -> Path:
 
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary="opencode", model="openai/gpt-6-luna", timeout=900) -> Path:
-    if (not output_name.endswith(".json") or "/" in output_name
+    if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
     root = Path(root)

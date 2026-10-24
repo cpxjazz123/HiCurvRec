@@ -81,14 +81,22 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
     canonical: dict = {}
     order: list = []
     duplicates: list = []
+    collected_rejections: list = []
     for agent, payload in per_agent:
         ideas = payload.get("ideas") if isinstance(payload, dict) else payload
         if not isinstance(ideas, list) or not ideas:
             raise IdeaError("agent " + str(agent) + " returned no ideas")
         if len(ideas) > 3:
             raise IdeaError("agent " + str(agent) + " returned more than three ideas")
+        rejected = []
         for raw in ideas:
-            idea = validate_idea(raw, agent=str(agent))
+            try:
+                idea = validate_idea(raw, agent=str(agent))
+            except IdeaError as exc:
+                # One malformed idea does not cost the agent its other ideas.
+                rejected.append({"idea_id": str(raw.get("idea_id", "")) if isinstance(raw, dict) else "",
+                                 "origin_agent": str(agent), "reason": str(exc)})
+                continue
             fingerprint = idea_fingerprint(idea)
             if fingerprint in canonical:
                 canonical[fingerprint]["also_proposed_by"].append(idea["origin_agent"])
@@ -100,6 +108,8 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
             idea["also_proposed_by"] = [idea["origin_agent"]]
             canonical[fingerprint] = idea
             order.append(fingerprint)
+        if rejected:
+            collected_rejections.extend(rejected)
     merged = [canonical[key] for key in order]
     if len(merged) < 3:
         raise IdeaError("a round needs at least three distinct ideas, got " + str(len(merged)))
@@ -107,6 +117,8 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
         raise IdeaError("a round may not hold more than nine ideas, got " + str(len(merged)))
     for idea in merged:
         idea["duplicate_count"] = len(idea["also_proposed_by"])
+    if collected_rejections:
+        merged[0].setdefault("rejected_ideas", []).extend(collected_rejections)
     return merged
 
 
