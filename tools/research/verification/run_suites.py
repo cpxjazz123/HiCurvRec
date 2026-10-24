@@ -26,7 +26,7 @@ is a failed suite, never a missing one.
 """
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import io
 import json
 import sys
@@ -44,11 +44,16 @@ def run_suite(name: str, case_dir: Path) -> dict:
         "ok": False, "output": "",
     }
     try:
-        spec = importlib.util.spec_from_file_location("reviewed_" + name, path)
-        if spec is None or spec.loader is None:
-            raise ImportError("cannot load " + str(path))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        # Import the suite under its NATURAL module name with the case
+        # directory on sys.path. A suite that spawns worker processes (the DDP
+        # suite pickles a worker function) is re-imported by name in the child,
+        # so a private importlib name would make the child fail with
+        # "import of module ... failed".
+        case_dir = Path(case_dir).resolve()
+        if str(case_dir) not in sys.path:
+            sys.path.insert(0, str(case_dir))
+        module_name = "test_" + name
+        module = sys.modules.get(module_name) or importlib.import_module(module_name)
         suite = unittest.defaultTestLoader.loadTestsFromModule(module)
         result = unittest.TextTestRunner(stream=buffer, verbosity=2).run(suite)
         record.update(
