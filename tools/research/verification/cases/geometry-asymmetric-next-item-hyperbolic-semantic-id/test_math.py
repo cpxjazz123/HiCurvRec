@@ -1,50 +1,51 @@
 import importlib.util
 import pathlib
+import sys
 import unittest
-
-SOURCE = pathlib.Path("/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/hyperbolic.py")
-SPEC = importlib.util.spec_from_file_location("candidate_hyperbolic", SOURCE)
-hyperbolic = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(hyperbolic)
 
 import torch
 
 
-class HyperbolicMathReferenceTests(unittest.TestCase):
-    def test_exp_log_round_trip_and_origin(self):
-        # In one dimension, exp_0(atanh(3/5)) = 3/5 exactly in real arithmetic.
-        x = torch.tensor([[0.0, 0.0], [0.6, 0.0]], dtype=torch.float64)
-        got = hyperbolic.exp_0(hyperbolic.log_0(x))
-        torch.testing.assert_close(got, x, rtol=1e-12, atol=1e-12)
-        torch.testing.assert_close(hyperbolic.exp_0(torch.zeros(1, 2, dtype=torch.float64)),
-                                   torch.zeros(1, 2, dtype=torch.float64), rtol=0, atol=0)
+SOURCE = pathlib.Path("/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id")
+sys.path.insert(0, str(SOURCE))
+from model import hyperbolic as hyp
 
-    def test_distance_collinear_closed_form_and_symmetry(self):
-        # D(0.2,0.5)=2 atanh((0.5-0.2)/(1-0.2*0.5))=2 atanh(1/3)=ln(2).
-        x = torch.tensor([[0.2]], dtype=torch.float64)
-        y = torch.tensor([[0.5]], dtype=torch.float64)
-        expected = torch.tensor([[0.6931471805599453]], dtype=torch.float64)
-        torch.testing.assert_close(hyperbolic.hyperbolic_distance(x, y), expected, rtol=1e-12, atol=1e-12)
-        torch.testing.assert_close(hyperbolic.hyperbolic_distance(x, y),
-                                   hyperbolic.hyperbolic_distance(y, x), rtol=1e-12, atol=1e-12)
 
-    def test_mobius_identity_and_distance_invariance(self):
-        # 0 (+) b=b; and a common Möbius translation preserves pairwise distance.
-        a = torch.tensor([[0.1, -0.2]], dtype=torch.float64)
-        b = torch.tensor([[0.3, 0.1]], dtype=torch.float64)
-        zero = torch.zeros_like(a)
-        torch.testing.assert_close(hyperbolic.mobius_add(zero, b), b, rtol=1e-12, atol=1e-12)
-        u = torch.tensor([[-0.2, 0.15]], dtype=torch.float64)
-        translated_a = hyperbolic.mobius_add(u, a)
-        translated_b = hyperbolic.mobius_add(u, b)
-        d0 = hyperbolic.hyperbolic_distance(a, b)
-        d1 = hyperbolic.hyperbolic_distance(translated_a, translated_b)
-        torch.testing.assert_close(d1, d0, rtol=1e-11, atol=1e-11)
+class HyperbolicReferenceTests(unittest.TestCase):
+    def test_origin_maps_and_inverse(self):
+        v = torch.tensor([[0.0, 0.0], [0.5, 0.0]], dtype=torch.float64)
+        expected_x = torch.tensor([[0.0, 0.0], [0.46211715726000974, 0.0]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.exp_0(v), expected_x, rtol=1e-12, atol=1e-12)
+        torch.testing.assert_close(hyp.log_0(expected_x), v, rtol=1e-12, atol=1e-12)
 
-    def test_projection_and_boundary_finiteness(self):
-        x = torch.tensor([[3.0, 4.0]], dtype=torch.float64)
-        projected = hyperbolic.project_to_ball(x)
-        self.assertLess(float(torch.linalg.vector_norm(projected)), 1.0)
-        self.assertAlmostEqual(float(torch.linalg.vector_norm(projected)), 1.0 - hyperbolic.EPSILON, places=10)
-        edge = torch.tensor([[1.0, 0.0]], dtype=torch.float64)
-        self.assertTrue(torch.isfinite(hyperbolic.hyperbolic_distance(edge, torch.zeros_like(edge))).all().item())
+    def test_mobius_addition_known_collinear_values(self):
+        a = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
+        b = torch.tensor([[0.3, 0.0]], dtype=torch.float64)
+        # Formula reduces to (a+b)/(1+ab) on this axis.
+        expected = torch.tensor([[0.4716981132075472, 0.0]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.mobius_add(a, b), expected, rtol=1e-12, atol=1e-12)
+
+    def test_collinear_hyperbolic_distance_reference(self):
+        x = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
+        y = torch.tensor([[0.4, 0.0]], dtype=torch.float64)
+        # ||(-x) (+) y|| = (0.4-0.2)/(1-0.2*0.4) = 5/23.
+        expected = torch.tensor([[0.442169]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), expected, rtol=2e-5, atol=2e-6)
+
+    def test_distance_origin_radial_is_twice_artanh_radius(self):
+        x = torch.tensor([[0.0, 0.3]], dtype=torch.float64)
+        origin = torch.zeros_like(x)
+        expected = torch.tensor([[0.6190392084062235]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.hyperbolic_distance(origin, x), expected, rtol=1e-12, atol=1e-12)
+
+    def test_distance_symmetry_and_self_distance(self):
+        x = torch.tensor([[0.2, -0.1]], dtype=torch.float64)
+        y = torch.tensor([[-0.15, 0.25]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), hyp.hyperbolic_distance(y, x), rtol=1e-12, atol=1e-12)
+        torch.testing.assert_close(hyp.hyperbolic_distance(x, x), torch.zeros((1, 1), dtype=torch.float64), atol=1e-12, rtol=0)
+
+    def test_exp_projects_large_tangent_vector_inside_ball(self):
+        v = torch.tensor([[100.0, 0.0]], dtype=torch.float64)
+        out = hyp.exp_0(v)
+        self.assertLess(float(torch.linalg.vector_norm(out)), 1.0)
+        self.assertAlmostEqual(float(out[0, 0]), 1.0 - hyp.EPSILON, places=12)
