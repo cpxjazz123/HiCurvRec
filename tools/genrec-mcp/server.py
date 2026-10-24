@@ -2442,6 +2442,26 @@ def tool_research_round_results(round_id: str) -> dict:
             "events": state.get("events", [])}
 
 
+def _promote_round_tree(tree: Path, idea_id: str) -> Path:
+    """Place a round implementation inside the Stage2 allowlist.
+
+    resolve_stage2_tree only accepts a direct child of stage2_RQ-VAE/, so a tree
+    the round built in its own workspace is copied there under a name derived
+    from the idea. The copy keeps the source digest the verifiers reviewed.
+    """
+    import shutil
+
+    target = STAGE2_ROOT / ("TIGER_" + idea_id)
+    source = Path(tree)
+    if source.resolve() == target.resolve():
+        return target
+    if target.exists():
+        return target
+    ignore = shutil.ignore_patterns("logs", "__pycache__", "results", "dataset")
+    shutil.copytree(source, target, ignore=ignore, dirs_exist_ok=True)
+    return target
+
+
 def tool_research_round_collect(round_id: str) -> dict:
     """Collect finished Stage 2 jobs and hand every valid SID to Stage 3.
 
@@ -2464,8 +2484,10 @@ def tool_research_round_collect(round_id: str) -> dict:
             if job["status"] == "running":
                 continue
             queue.start(job["job_id"])
+            tree = _promote_round_tree(Path(job["tree"]), str(job["idea_id"]))
+            job["stage2_tree"] = str(tree)
             verification = "round:" + str(job.get("round_id", "")) + ":" + str(job["idea_id"])
-            outcome = tool_stage2_start(str(job["tree"]), verification)
+            outcome = tool_stage2_start(str(tree), verification)
             if outcome.get("started") is False and outcome.get("refused"):
                 queue.fail(job["job_id"], str(outcome["refused"]),
                            evidence={"refused": outcome["refused"]})
