@@ -151,6 +151,14 @@ independent reviewer can judge them:
    absolute destination it was given; the runner now accepts an output found
    inside the workspace and records where it landed. The content is still
    validated on candidate identity and source digest.
+6. **test_math.py, the candidate path.** The suite located the candidate with
+   `Path(__file__).resolve().parents[5]`, which is the repository root when it
+   runs from the committed cases directory but the `results/` directory when it
+   runs from the copy the review materializes under the run evidence space --
+   the independent Reviewer caught exactly that, as a static defect that made
+   the suite unable to load the candidate in the review location. The suite now
+   uses the absolute candidate path and falls back to walking up, and it has
+   been executed from BOTH locations with all four suites passing.
 
 ## 7. What is authorized now, and what is not
 
