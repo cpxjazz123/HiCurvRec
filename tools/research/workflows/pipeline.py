@@ -111,7 +111,7 @@ def process_next(run_id):
             evidence = analyze_train_behavior(settings.TRAIN, root / "behavior.json")
         else:
             manifest = manifest_for(task, root)
-            prompt = build_prompt(role, manifest, OUTPUTS[task])
+            prompt = build_prompt(role, manifest, OUTPUTS[task], root=root)
             if role == "REVIEW":
                 check_review_identity(
                     root / "agents" / "geometry" / "candidate.json", manifest, prompt)
