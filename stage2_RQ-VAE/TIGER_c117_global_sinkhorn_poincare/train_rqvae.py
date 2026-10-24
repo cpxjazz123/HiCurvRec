@@ -348,6 +348,10 @@ def main() -> None:
     # the prefix-conditional r vectors are built from.
     events = build_train_events(train_frame)
     item_index = {int(item): position for position, item in enumerate(train_ids)}
+    # Only transitions whose two ends are inside the Stage2 training item set can
+    # be scored; the rest are dropped rather than indexed out of range.
+    events = events[np.array([(int(a) in item_index) and (int(t) in item_index)
+                               for a, t in events], dtype=bool)]
     # Vector lookup from raw item id to the row in the training item set.
     item_position = np.full(int(train_ids.max()) + 1, -1, dtype=np.int64)
     for position, item in enumerate(train_ids):
@@ -431,7 +435,9 @@ def main() -> None:
         group_table = transition_weights(events, raw_module.frozen_codes, item_index,
                                          successors, level_codes)
         epoch_balance = raw_module.population_balance(train_embeddings.to(device))
+        first_batch_of_epoch = True
         for batch, index in loader:
+            first_batch_of_epoch = False
             batch = batch.to(device, non_blocking=True)
             index = index.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
@@ -444,6 +450,10 @@ def main() -> None:
             edges = (train_embeddings.to(device)[target_rows],
                      torch.from_numpy(r_batch).to(device))
             loss, recon_loss, assign_loss, balance_loss, transition_loss = model(batch, index, edges)
+            # The global marginal term is computed once per epoch and enters the
+            # objective exactly once, in the first batch of that epoch.
+            if first_batch_of_epoch:
+                loss = loss + epoch_balance
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()

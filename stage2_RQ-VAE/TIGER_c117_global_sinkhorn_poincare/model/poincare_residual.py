@@ -90,6 +90,16 @@ def auction_balanced_assignment(log_q: torch.Tensor, capacities: list,
                 remaining[choice] += 1
     assigned_code = _cancel_improving_cycles(cost, assigned_code, remaining)
     assigned_code = _cancel_improving_swaps(cost, assigned_code, remaining)
+    # Every item must end with a label: the capacities sum to the group size, so
+    # a free slot always exists for an item the auction left unassigned.
+    unassigned = torch.nonzero(assigned_code < 0, as_tuple=False).flatten().tolist()
+    for item in unassigned:
+        available = [k for k in range(n_codes) if remaining[k] > 0]
+        if not available:
+            break
+        choice = min(available, key=lambda k: (float(cost[item, k].item()), k))
+        assigned_code[item] = choice
+        remaining[choice] -= 1
     return assigned_code
 
 
@@ -193,10 +203,13 @@ class GlobalSinkhornQuantiser(nn.Module):
                     buckets.setdefault(tuple(row[:level]), []).append(index)
                 groups = [torch.as_tensor(bucket, dtype=torch.long, device=points.device)
                           for _, bucket in sorted(buckets.items())]
-            capacities = balanced_capacities(n, self.codebook_size[level])
             for group in groups:
                 if group.numel() == 0:
                     continue
+                # The balanced capacities belong to THIS group: floor/ceil of the
+                # group's own size, with the remainder on the lower code ids.
+                capacities = balanced_capacities(int(group.numel()),
+                                                 self.codebook_size[level])
                 cost = squared_distance(points[group].unsqueeze(1), candidates.unsqueeze(0),
                                         c=self.curvature)
                 log_q = sinkhorn_log(cost)
