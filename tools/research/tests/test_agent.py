@@ -3,11 +3,31 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from tools.research.agents.runner import run_agent
+from tools.research import settings
+from tools.research.agents.runner import isolation_permissions, run_agent
 from tools.research.core.evidence import read_json
 
 
 class AgentTests(unittest.TestCase):
+    def test_agent_is_confined_to_its_own_workspace(self):
+        """The permission boundary must deny shell, Code Mode and every escape path."""
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "agents" / "task"
+            rules = isolation_permissions(workspace)
+            effects = {(rule["action"], rule["resource"]): rule["effect"]
+                       for rule in rules}
+            self.assertEqual(effects[("shell", "*")], "deny")
+            self.assertEqual(effects[("execute", "*")], "deny")
+            self.assertEqual(effects[("external_directory", "*")], "deny")
+            self.assertEqual(effects[("edit", "*")], "allow")
+            self.assertEqual(effects[("edit", str(settings.ROOT) + "/*")], "deny")
+            self.assertEqual(effects[("edit", str(workspace.resolve()) + "/*")], "allow")
+            # The traversal denies must come last: opencode v2 lets the LAST match win.
+            for action in ("../*", "*/../*", "*..*"):
+                self.assertEqual(effects[("edit", action)], "deny")
+                self.assertEqual([rule["resource"] for rule in rules].index(action),
+                                 len(rules) - 3 + ["../*", "*/../*", "*..*"].index(action))
+
     def test_fake_opencode_is_real_subprocess_not_a_marker(self):
         with tempfile.TemporaryDirectory() as work:
             binary = Path(work) / "fake-opencode"
@@ -28,6 +48,13 @@ class AgentTests(unittest.TestCase):
             self.assertGreater(evidence["pid"], 0)
             self.assertEqual(evidence["exit_code"], 0)
             self.assertTrue((receipt.parent / "session.jsonl").exists())
+            # Every agent run carries its own permission boundary, and the receipt
+            # names the boundary it ran under.
+            config = receipt.parent / evidence["isolation_config"]
+            self.assertTrue(config.is_file())
+            written = json.loads(config.read_text(encoding="utf-8"))
+            self.assertIn("permissions", written)
+            self.assertTrue(written["permissions"])
 
 
 if __name__ == "__main__":
