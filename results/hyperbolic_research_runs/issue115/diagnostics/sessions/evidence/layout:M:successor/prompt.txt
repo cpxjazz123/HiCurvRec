@@ -1,8 +1,0 @@
-# QUESTION (B) -- is the successor mean actually the SUCCESSOR?
-In `train_rqvae.py`, `_behaviour_factors` builds the behaviour factor from a pair array:
-`sums.index_add_(0, target, latent[source])`, then `factors[has] = normalise(sums/counts - latent)`.
-Read `TransitionPairs`' construction and the pair column order used at the call site, and answer:
-1. Which column is the source and which is the target (the item that FOLLOWS)?
-2. Is the mean accumulated over the SUCCESSORS of each item, or over its PREDECESSORS?
-3. Verdict: SUCCESSOR / PREDECESSOR / MIXED, with the exact line numbers that decide it.
-Write `verdict.md` with sections EVIDENCE, VERDICT and CONSEQUENCE.
