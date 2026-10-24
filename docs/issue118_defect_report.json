@@ -55,6 +55,7 @@
       "expected_code": "CLAMP_DOMINATES_DOMAIN",
       "expected_layer": "math",
       "observed_codes": [
+        "FLOOR_LIFTS_DISTANCE",
         "CLAMP_DOMINATES_DOMAIN"
       ],
       "observed_layer": "math",
@@ -178,21 +179,21 @@
   ],
   "dod": {
     "avoidable_review_calls": 16,
-    "known_failure_recurrence": 0,
-    "machine_repair_attempts": 0,
-    "registry_entries": 13,
+    "known_failure_recurrence": 1,
+    "machine_repair_attempts": 41,
+    "registry_entries": 14,
     "review_verdicts": {
       "CPU_ELIGIBLE": 2,
-      "FATAL": 6,
+      "FATAL": 8,
       "MATERIAL": 8,
       "none": 6
     },
-    "runs": 22,
-    "science_rejections": 14,
+    "runs": 24,
+    "science_rejections": 16,
     "stage2_runs": 3,
     "time_to_verified_candidate_seconds": 23364.98502588272
   },
-  "generated_at_epoch": 1792835631.6746106,
+  "generated_at_epoch": 1792836936.2563045,
   "issue": 118,
   "published_thresholds": {
     "level2_prefixes_strict_gt": 16145,
