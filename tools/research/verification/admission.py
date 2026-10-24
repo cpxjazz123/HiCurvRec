@@ -272,12 +272,13 @@ def _normalise_suite_keys(mapping):
     """
     if not isinstance(mapping, dict):
         return mapping
+    from ..science.contract import canonical_suite
+
     normalised = {}
     for key, value in mapping.items():
-        name = str(key)
-        if name.startswith("test_"):
-            name = name[len("test_"):]
-        if name.endswith(".py"):
-            name = name[:-len(".py")]
-        normalised[name] = value
+        name = canonical_suite(key)
+        if name is None:
+            normalised[str(key)] = value
+        else:
+            normalised[name] = value
     return normalised
