@@ -84,15 +84,30 @@ def check_falsifier(candidate: dict) -> None:
     # Only bare snake_case identifiers can be diagnostic names. Anything carrying
     # a dot or slash is a field reference (stage3_behavioral_test.metric), and an
     # all-caps token is an operator (OR/AND/NOT), so neither is a name claim.
-    containers = {"stage2_diagnostics", "stage3_behavioral_test", "stage3_behavioral_test_mean"}
     words = {word.strip("()[],") for word in text.replace("+", " ").split()}
+    # A classification may name a registered diagnostic or any key that the
+    # falsifier itself defines; anything else written as a bare snake_case
+    # identifier is a claim about a diagnostic that was never registered.
+    allowed = set(registered) | _keys_of(falsifier)
     suspicious = sorted(
         word for word in words
         if "_" in word and "." not in word and "/" not in word and not word.isupper()
-        and word not in registered and word not in containers
+        and word not in allowed
     )
     if suspicious:
         raise ValueError("classification references unregistered diagnostics: "
                          + ", ".join(suspicious))
     if "NULL" not in text and "null" not in text:
         raise ValueError("classification must define the NULL outcome")
+
+def _keys_of(value) -> set:
+    """Every mapping key reachable in a nested JSON value."""
+    found = set()
+    if isinstance(value, dict):
+        for key, item in value.items():
+            found.add(str(key))
+            found |= _keys_of(item)
+    elif isinstance(value, list):
+        for item in value:
+            found |= _keys_of(item)
+    return found
