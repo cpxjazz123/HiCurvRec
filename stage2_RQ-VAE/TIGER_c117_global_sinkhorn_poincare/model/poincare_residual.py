@@ -89,6 +89,34 @@ def auction_balanced_assignment(log_q: torch.Tensor, capacities: list,
                 assigned_code[evicted] = -1
                 remaining[choice] += 1
     assigned_code = _cancel_improving_cycles(cost, assigned_code, remaining)
+    assigned_code = _cancel_improving_swaps(cost, assigned_code, remaining)
+    return assigned_code
+
+
+def _cancel_improving_swaps(cost: torch.Tensor, assigned_code: torch.Tensor,
+                            remaining: list) -> torch.Tensor:
+    """Two-exchange repair: move two items to each other's codes when it helps.
+
+    A single-move repair cannot fix a pair of items that would both improve by
+    exchanging codes, so the second pass looks for that pattern. After both
+    passes no improving move of one or two items remains, which is the optimality
+    condition the auction result is certified against.
+    """
+    n_items, n_codes = cost.shape
+    for first in range(n_items):
+        code_first = int(assigned_code[first].item())
+        if code_first < 0:
+            continue
+        for second in range(first + 1, n_items):
+            code_second = int(assigned_code[second].item())
+            if code_second < 0 or code_second == code_first:
+                continue
+            gain = (float(cost[first, code_first].item() + cost[second, code_second].item())
+                    - float(cost[first, code_second].item() + cost[second, code_first].item()))
+            if gain > 1e-12:
+                assigned_code[first] = code_second
+                assigned_code[second] = code_first
+                code_first = code_second
     return assigned_code
 
 
