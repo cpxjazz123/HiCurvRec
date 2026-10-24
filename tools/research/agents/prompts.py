@@ -57,6 +57,18 @@ ROLE_GUIDANCE = {
     ),
 }
 
+#: The suites are executed by `python -m unittest discover -s <dir> -p test_<suite>.py`,
+#: so a suite must be a unittest module. A pytest-style function is discovered as ZERO
+#: tests and the suite is refused; every authoring role is told the contract.
+UNITTEST_CONTRACT = (
+    "The test source must be a self-contained unittest module: import unittest, define "
+    "one or more unittest.TestCase subclasses with test_* methods, and contain no pytest "
+    "fixtures (no tmp_path, no monkeypatch) and no pytest-only imports. It is executed as "
+    "`python -m unittest discover -s <dir> -p test_<suite>.py -v`, which collects only "
+    "unittest.TestCase classes, so a plain test function would run ZERO tests and be "
+    "refused. It must import the candidate implementation from the source tree by path."
+)
+
 
 def build_prompt(role: str, manifest: dict, output_name: str, root=None) -> str:
     if role not in ROLE_GUIDANCE:
@@ -79,7 +91,10 @@ def build_prompt(role: str, manifest: dict, output_name: str, root=None) -> str:
     else:
         destination = output_name
         instruction = ("Write the answer to " + destination + " in your working directory.")
-    return ("ROLE: " + role + "\n" + ROLE_GUIDANCE[role]
+    guidance = ROLE_GUIDANCE[role]
+    if role in ("MATH_VERIFY", "GRADIENT_VERIFY", "RUNTIME_VERIFY"):
+        guidance = guidance + "\n" + UNITTEST_CONTRACT
+    return ("ROLE: " + role + "\n" + guidance
             + "\nFROZEN CURRENT-ONLY MANIFEST:\n"
             + json.dumps(manifest, sort_keys=True, ensure_ascii=False, indent=2)
             + "\n" + instruction

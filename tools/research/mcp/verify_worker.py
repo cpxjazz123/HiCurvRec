@@ -22,7 +22,8 @@ def main():
             raise RuntimeError("research cancelled")
         tree = Path(request["source_dir"])
         if request["action"] == "draft":
-            report = workflow.draft_test_suites(request["candidate_id"], tree, run_id)
+            report = workflow.draft_test_suites(request["candidate_id"], tree, run_id,
+                                                 request_id=current.get("request_id", ""))
             current["status"] = "drafts_ready"
             current["draft_count"] = sum(len(x["drafts"]) for x in report["authors"].values())
         elif request["action"] == "review":

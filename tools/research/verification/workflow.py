@@ -62,7 +62,8 @@ def _prompt(role, ident, data, output, root=None):
     return build_prompt(role, frozen, output, root=root)
 
 
-def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
+def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
+                      request_id: str = "") -> dict:
     """Write untrusted test drafts only to results/, never into tracked cases."""
     _require_live()
     data = _inputs(candidate_id, tree, run_id)
@@ -73,7 +74,10 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
 
     def author(role_key: str):
         role, output, mapping = AUTHOR_SPEC[role_key]
-        task_id = candidate_id + "_" + role_key
+        # The task id carries the request id, so a re-requested draft stage gets
+        # fresh workspaces instead of colliding with the previous attempt's
+        # output (the runner refuses to overwrite a role output).
+        task_id = candidate_id + "_" + role_key + ("_" + request_id[:8] if request_id else "")
         prompt = _prompt(role, task_id, data, output, root=run_root)
         execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
@@ -94,8 +98,14 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
 
     with ThreadPoolExecutor(max_workers=3) as pool:
         pairs = list(pool.map(author, AUTHOR_SPEC))
+    authors = dict(pairs)
+    # The index tells the review stage where each author wrote its output, so
+    # the reviewer reads the same sessions the draft stage actually produced.
+    atomic_json(draft_dir / "authors.json",
+                {key: {"execution": value["execution"], "output_name": AUTHOR_SPEC[key][1]}
+                 for key, value in authors.items()})
     return {"source_sha256": data["source_sha256"],
-            "proposal_sha256": data["proposal_sha256"], "authors": dict(pairs),
+            "proposal_sha256": data["proposal_sha256"], "authors": authors,
             "next_action": "Review and commit independent cases into tools/research/verification/cases/<candidate_id>/; do NOT auto-install drafts."}
 
 
@@ -114,8 +124,15 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str) -> Path:
         tests[suite] = {"sha256": sha256(path), "source": path.read_text(encoding="utf-8")}
     data["tests"] = tests
     data["author_reports"] = {}
+    index = EVIDENCE_ROOT / "verification" / candidate_id / "drafts" / "authors.json"
     for role in ("math", "gradient", "runtime"):
         output = run_root / "agents" / (candidate_id + "_" + role) / (role + ".json")
+        if not output.is_file() and index.is_file():
+            entry = read_json(index).get(role) or {}
+            name = entry.get("output_name") or (role + ".json")
+            execution = entry.get("execution")
+            if execution:
+                output = Path(execution).parent / name
         data["author_reports"][role] = read_json(output)
     prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json",
                      root=run_root)
