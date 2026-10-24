@@ -99,6 +99,16 @@ class FalsifierTests(unittest.TestCase):
         })
         check_falsifier({"falsifier": good})
 
+    def test_container_names_are_not_mistaken_for_names(self):
+        good = _falsifier(classification={
+            "falsified_if": "every entry of stage2_diagnostics is null and "
+                            "stage3_behavioral_test is null",
+            "passed_if": "stage2_diagnostics.valid_l1_hard_er positive and "
+                         "stage3_behavioral_test.mean_difference at least its minimum_effect",
+            "mixed_if": "otherwise, or any seed is NULL",
+        })
+        check_falsifier({"falsifier": good})
+
     def test_behavioural_metric_must_be_a_real_stage3_metric(self):
         bad = _falsifier(stage3_behavioral_test={"metric": "accuracy", "direction": "higher",
                                                  "minimum_effect": 0.01, "seed_rule": "median"})

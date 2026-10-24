@@ -84,11 +84,12 @@ def check_falsifier(candidate: dict) -> None:
     # Only bare snake_case identifiers can be diagnostic names. Anything carrying
     # a dot or slash is a field reference (stage3_behavioral_test.metric), and an
     # all-caps token is an operator (OR/AND/NOT), so neither is a name claim.
+    containers = {"stage2_diagnostics", "stage3_behavioral_test", "stage3_behavioral_test_mean"}
     words = {word.strip("()[],") for word in text.replace("+", " ").split()}
     suspicious = sorted(
         word for word in words
         if "_" in word and "." not in word and "/" not in word and not word.isupper()
-        and word not in registered
+        and word not in registered and word not in containers
     )
     if suspicious:
         raise ValueError("classification references unregistered diagnostics: "
