@@ -55,6 +55,10 @@ class AgentTests(unittest.TestCase):
             written = json.loads(config.read_text(encoding="utf-8"))
             self.assertIn("permissions", written)
             self.assertTrue(written["permissions"])
+            # The workspace must be its own opencode project, otherwise opencode
+            # resolves the repository as the project and ignores the boundary.
+            self.assertEqual(evidence["project_marker"], ".git")
+            self.assertTrue((receipt.parent / ".git").is_dir())
 
 
 if __name__ == "__main__":
