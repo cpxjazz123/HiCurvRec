@@ -162,6 +162,21 @@ class JobQueue:
         self.save()
         return job
 
+    def resource_block(self, job_id: str, reason: str, *, evidence: dict = None) -> dict:
+        """Record a measured infeasibility.
+
+        The mechanism is not rejected: the run was too expensive on this host,
+        so the idea is kept for an optimisation route.
+        """
+        job = self._job(job_id)
+        job["status"] = "resource_blocked"
+        job["finished_at"] = time.time()
+        job["error"] = str(reason)[:2000]
+        job["failure_evidence"] = evidence or {}
+        job["failure_kind"] = "RESOURCE_BLOCKED"
+        self.save()
+        return job
+
     def complete_stage3(self, job_id: str, result: dict) -> dict:
         job = self._job(job_id)
         job["status"] = "done"
@@ -191,6 +206,7 @@ class JobQueue:
                           "idea_id": job["idea_id"], "status": job["status"],
                           "attempts": job.get("attempts", 0),
                           "stage3_job_id": job.get("stage3_job_id"),
+                          "failure_kind": job.get("failure_kind"),
                           "error": job.get("error")} for job in self.jobs["jobs"]]}
 
     def stage3_results(self) -> list:

@@ -22,7 +22,10 @@ from ..core.evidence import atomic_json, digest_file, read_json
 from . import ideas as ideas_module
 from . import scoring as scoring_module
 
-STATE_ROOT = Path("results/research/issue120/rounds")
+#: The round lives under the issue that opened it, so #121's exploration is
+#: filed with #121 and not with the framework issue that built the machinery.
+DEFAULT_ISSUE = "issue120"
+STATE_ROOT = Path("results/research") / DEFAULT_ISSUE / "rounds"
 IDEAE_AGENTS = 3
 SCORER_AGENTS = 3
 VERIFIER_AGENTS = 3
@@ -33,19 +36,33 @@ class RoundError(RuntimeError):
     """The round cannot advance as asked."""
 
 
-def round_root(root: Path) -> Path:
-    return Path(root) / STATE_ROOT
+def round_root(root: Path, issue: str = DEFAULT_ISSUE) -> Path:
+    return Path(root) / "results" / "research" / issue / "rounds"
 
 
-def new_round(root: Path, round_id: str, *, objective: str = "") -> Path:
+def find_round_directory(root: Path, round_id: str) -> Path:
+    """Locate a round under whichever issue opened it."""
+    base = Path(root) / "results" / "research"
+    if not base.is_dir():
+        raise RoundError("no research directory: " + str(base))
+    for issue in sorted(base.iterdir()):
+        candidate = issue / "rounds" / round_id
+        if (candidate / "state.json").is_file():
+            return candidate
+    raise RoundError("unknown round: " + str(round_id))
+
+
+def new_round(root: Path, round_id: str, *, objective: str = "",
+              issue: str = DEFAULT_ISSUE) -> Path:
     """Create the round directory and its initial state."""
-    directory = round_root(root) / round_id
+    directory = round_root(root, issue) / round_id
     if (directory / "state.json").is_file():
         raise RoundError("round already exists: " + round_id)
     directory.mkdir(parents=True, exist_ok=True)
     state = {
         "schema": 1,
         "round_id": round_id,
+        "issue": issue,
         "objective": objective,
         "created_at": time.time(),
         "step": "ideation",
@@ -203,7 +220,11 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     # The digest the reviewers saw is the tree's digest now: a stale one would make
     # the admission refuse a tree that was reviewed in exactly this state.
     record["source_digest"] = _source_digest(Path(record["tree"]))
-    record["blocking_findings"] = findings
+    # A finding the framework itself raised (the output-path preflight) stays
+    # in the list: the repair agent has to fix it as well.
+    earlier = [finding for finding in (record.get("blocking_findings") or [])
+               if finding.get("verifier") == "preflight"]
+    record["blocking_findings"] = earlier + findings
     if findings:
         record["status"] = "needs_repair"
         signature = _failure_signature(findings)
@@ -243,16 +264,69 @@ def apply_repair(state: dict, implementation_id: str, report: dict) -> dict:
     return state
 
 
-def mark_blocked(state: dict, implementation_id: str, reason: str) -> dict:
+#: The kinds of stop a candidate can have. They are kept apart because they
+#: mean different things: an agent that failed to answer says nothing about the
+#: mechanism, while a defect in the code does.
+AGENT_INFRA_ERROR = "AGENT_INFRA_ERROR"
+IMPLEMENTATION_NEEDS_FIX = "IMPLEMENTATION_NEEDS_FIX"
+RESOURCE_BLOCKED = "RESOURCE_BLOCKED"
+STAGE_FAILED = "STAGE2_3_FAILED"
+BASELINE_UNAVAILABLE = "BASELINE_UNAVAILABLE"
+
+#: How often an agent answer may be retried before the branch is recorded as
+#: an infrastructure failure. A failed answer is retried, never a mechanism.
+MAX_AGENT_RETRIES = 2
+
+
+def mark_blocked(state: dict, implementation_id: str, reason: str,
+                 *, kind: str = IMPLEMENTATION_NEEDS_FIX) -> dict:
     """Stop one implementation without stopping the round."""
     record = _implementation(state, implementation_id)
     record["status"] = "blocked"
     record["blocked_reason"] = reason
+    record["blocked_kind"] = kind
     state.setdefault("blocked", []).append(
-        {"idea_id": implementation_id, "reason": reason,
+        {"idea_id": implementation_id, "reason": reason, "kind": kind,
          "revision": record.get("revision", 0),
          "signature": record.get("failure_signature")})
-    record_event(state, "implementation_blocked", idea_id=implementation_id, reason=reason)
+    record_event(state, "implementation_blocked", idea_id=implementation_id, reason=reason,
+                 kind=kind)
+    return state
+
+
+def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
+    """Record an infrastructure failure of the agent, and keep the mechanism open.
+
+    An agent that crashed, timed out or wrote an unusable answer says nothing
+    about the idea, so the branch is retried instead of being blocked.
+    """
+    record = _implementation(state, implementation_id)
+    attempts = int(record.get("agent_error_attempts", 0)) + 1
+    record["agent_error_attempts"] = attempts
+    record["agent_error"] = {"error": error, "attempts": attempts,
+                              "kind": AGENT_INFRA_ERROR}
+    if attempts > MAX_AGENT_RETRIES:
+        record["status"] = "agent_error"
+    else:
+        record["status"] = "agent_error"
+    state.setdefault("agent_errors", []).append(
+        {"idea_id": implementation_id, "error": error, "attempts": attempts,
+         "kind": AGENT_INFRA_ERROR})
+    record_event(state, "agent_error", idea_id=implementation_id, error=error, attempts=attempts)
+    return state
+
+
+def mark_resource_blocked(state: dict, implementation_id: str, reason: str) -> dict:
+    """Record a measured infeasibility, keeping the idea for an optimisation route."""
+    record = _implementation(state, implementation_id)
+    record["status"] = "resource_blocked"
+    record["blocked_reason"] = reason
+    record["blocked_kind"] = RESOURCE_BLOCKED
+    state.setdefault("resource_blocked", []).append(
+        {"idea_id": implementation_id, "reason": reason, "kind": RESOURCE_BLOCKED,
+         "revision": record.get("revision", 0)})
+    record_event(state, "implementation_resource_blocked", idea_id=implementation_id,
+                 reason=reason)
     return state
 
 
@@ -285,6 +359,8 @@ def summary(state: dict) -> dict:
         "implementations": len(state.get("implementations", [])),
         "verified": len(verified_implementations(state)),
         "blocked": len(state.get("blocked", [])),
+        "agent_errors": len(state.get("agent_errors", [])),
+        "resource_blocked": len(state.get("resource_blocked", [])),
         "stage2_jobs": len(state.get("stage2_jobs", [])),
         "stage3_jobs": len(state.get("stage3_jobs", [])),
     }

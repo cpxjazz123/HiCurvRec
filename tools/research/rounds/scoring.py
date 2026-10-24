@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import statistics
 
+from . import scope as scope_module
+
 DIMENSIONS = ("novelty", "scientific_motivation", "feasibility",
               "downstream_impact", "experimental_distinctness")
 SCALE = (0, 5)
@@ -24,6 +26,9 @@ DEFAULT_SELECTION = {
     "max_selected": 6,
     "require_min_scorers_above_threshold": 2,
     "fallback_to_best": True,
+    # A proposal that does not couple behaviour and geometry is never selected,
+    # not even as the fallback.
+    "require_scope": True,
     # An idea that declares a per-step cost making the frozen 3000-epoch budget
     # infeasible cannot be implemented here, whatever its other scores.
     "max_declared_hours_for_the_frozen_budget": 72.0,
@@ -35,7 +40,12 @@ class ScoreError(ValueError):
 
 
 def validate_report(report: dict, *, scorer: str) -> dict:
-    """Check one scorer's report over all ideas."""
+    """Check one scorer's report over all ideas.
+
+    A missing scope verdict is recorded, not rejected: the scope decision is
+    taken from the proposal's own content by :func:`scope.check_scope`, so one
+    reviewer's label never decides an idea on its own.
+    """
     if not isinstance(report, dict):
         raise ScoreError("score report must be an object")
     scores = report.get("scores")
@@ -66,6 +76,14 @@ def validate_report(report: dict, *, scorer: str) -> dict:
             entry["missing_dimensions"] = missing
         if not str(entry.get("rationale", "")).strip():
             entry["rationale_missing"] = True
+        verdict = str(entry.get("scope_verdict", "")).upper()
+        if verdict and verdict not in ("IN_SCOPE", "OUT_OF_SCOPE"):
+            raise ScoreError("score for " + identifier + " has an unknown scope verdict: "
+                             + verdict)
+        if verdict:
+            entry["scope_verdict"] = verdict
+        else:
+            entry["scope_verdict_missing"] = True
     return report
 
 
@@ -141,7 +159,26 @@ def build_matrix(ideas: list, reports: list) -> dict:
                                       if dimension in per_scorer[scorer]])
                 >= DEFAULT_SELECTION["median_threshold"]),
             "incomplete_scorers": sorted(incomplete),
+            "per_scorer_scope": {scorer: by_scorer[scorer][identifier].get("scope_verdict", "")
+                                 for scorer in sorted(by_scorer)},
+            "per_scorer_scope_reason": {
+                scorer: by_scorer[scorer][identifier].get("scope_reason", "")
+                for scorer in sorted(by_scorer)},
         }
+        # The scope decision is audited against the proposal's own content, so
+        # it is not one reviewer's opinion: a reviewer that disagrees with the
+        # content is recorded with its reason instead of deciding the idea.
+        idea = next((entry for entry in ideas if entry["idea_id"] == identifier), {})
+        verdict = scope_module.check_scope(idea)
+        row["scope_verdict"] = "IN_SCOPE" if verdict["in_scope"] else "OUT_OF_SCOPE"
+        row["scope_reasons"] = verdict["reasons"]
+        row["scope_decision_basis"] = "proposal content: behaviour signal, curved " \
+                                      "operation, coupling pathway, ablations"
+        row["scope_disagreements"] = [
+            {"scorer": scorer, "label": label,
+             "reason": row["per_scorer_scope_reason"].get(scorer, "")}
+            for scorer, label in row["per_scorer_scope"].items()
+            if label and label != row["scope_verdict"]]
         if identifier in cost_by_idea:
             row["declared_hours"] = cost_by_idea[identifier]
         matrix.append(row)
@@ -155,6 +192,10 @@ def select(matrix: dict, *, rule: dict = None) -> dict:
     selected, rejected = [], []
     for row in matrix["rows"]:
         reasons = []
+        # Scope is a gate, not a dimension: an out-of-scope proposal is not
+        # compensated by its scores.
+        if row.get("scope_verdict") == "OUT_OF_SCOPE":
+            reasons.append("out of scope: " + ", ".join(row.get("scope_reasons", [])[:6]))
         weak_dimension = [dimension for dimension in DIMENSIONS
                           if row["medians"][dimension] < rule["min_dimension_median"]]
         if weak_dimension:
@@ -192,8 +233,10 @@ def select(matrix: dict, *, rule: dict = None) -> dict:
                              "reasons": ["outside the configured selection cap"],
                              "overall_median": entry["overall_median"]})
         selected = selected[:rule["max_selected"]]
-    if not selected and rule["fallback_to_best"] and matrix["rows"]:
-        best = max(matrix["rows"], key=lambda row: (row["overall_median"], row["overall_mean"]))
+    eligible = [row for row in matrix["rows"]
+                if not rule.get("require_scope") or row.get("scope_verdict") != "OUT_OF_SCOPE"]
+    if not selected and rule["fallback_to_best"] and eligible:
+        best = max(eligible, key=lambda row: (row["overall_median"], row["overall_mean"]))
         selected = [{"idea_id": best["idea_id"], "overall_median": best["overall_median"],
                      "overall_mean": best["overall_mean"],
                      "max_disagreement": best["max_disagreement"],

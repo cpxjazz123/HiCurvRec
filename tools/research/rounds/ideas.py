@@ -12,12 +12,14 @@ import json
 import re
 from typing import Iterable
 
+from . import scope as scope_module
+
 #: Every idea carries these fields. ``novelty`` is relative to the mechanisms
 #: that already exist in the repository, not a claim of priority.
 REQUIRED_FIELDS = (
     "idea_id", "title", "motivation", "novelty", "key_change", "specification",
     "cost_estimate", "falsifiable_hypothesis", "risks",
-)
+) + scope_module.REQUIRED_SCOPE_FIELDS
 
 MAX_IDEA_ID_LEN = 64
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
@@ -41,6 +43,14 @@ def validate_idea(idea: dict, *, agent: str = "") -> dict:
     record = dict(idea)
     record["idea_id"] = identifier
     record["origin_agent"] = agent or str(idea.get("origin_agent", ""))
+    # The scope gate is a check on the content the agent wrote, not on a flag
+    # it set: an idea that does not couple behaviour and geometry is rejected
+    # with the reasons, and it is never reinterpreted as acceptable.
+    verdict = scope_module.check_scope(record)
+    record["scope_verdict"] = "IN_SCOPE" if verdict["in_scope"] else "OUT_OF_SCOPE"
+    record["scope_reasons"] = verdict["reasons"]
+    if not verdict["in_scope"]:
+        raise IdeaError("out of scope: " + "; ".join(verdict["reasons"][:6]))
     if isinstance(idea.get("risks"), str):
         record["risks"] = [idea["risks"]]
     if isinstance(idea.get("specification"), str):
