@@ -67,35 +67,40 @@ class QualityGateTests(unittest.TestCase):
         return gate.evaluate(self.candidate_path, self.baseline_path,
                              self.pairs_path, self.meta_path)
 
-    def test_missing_hitrate_cutoff_fails_closed(self):
-        with patch.object(gate, "MIN_VALID_L1_HITRATE", None):
-            actual = self.evaluate()
-        self.assertFalse(actual["passed"])
-        self.assertIn("HitRate hard cutoff", actual["refused"])
-        self.assertEqual(actual["candidate"]["valid_l1_hard_er"], 40)
-        self.assertEqual(actual["candidate"]["level2_distinct_prefixes"], 13)
+    def test_hitrate_is_recorded_only_and_never_blocks_promotion(self):
+        """A missing HitRate threshold must not be required for Stage3."""
+        result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+        self.assertNotIn("valid_l1_positive_hit_rate_min", result["thresholds"])
+        self.assertEqual(result["candidate"]["valid_l1_positive_hit_rate"], 1.0)
+        self.assertIn("valid_l1_positive_hit_rate", result["diagnostic_only"])
+        self.assertEqual(result["candidate"]["valid_l1_hard_er"], 40)
 
-    def test_pass_only_with_all_real_gates(self):
-        with patch.object(gate, "MIN_VALID_L1_HITRATE", 0.6):
-            result = self.evaluate()
+    def test_pass_only_with_er_and_prefix_gates(self):
+        result = self.evaluate()
         self.assertTrue(result["passed"], result)
         self.assertEqual(result["candidate"]["full_unique_items"], 13)
         self.assertEqual(set(result["sha256"]), {"sid", "baseline", "validation_pairs", "validation_meta"})
 
-    def test_low_prefix_rejected_even_when_er_and_hitrate_pass(self):
+    def test_low_prefix_rejected_even_when_er_passes(self):
         self.candidate = {str(i): [0, 0, i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
-        with patch.object(gate, "MIN_VALID_L1_HITRATE", 0.6):
-            result = self.evaluate()
+        result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("prefixes", result["refused"])
 
     def test_er_must_strictly_beat_cutoff(self):
-        with patch.object(gate, "MIN_VALID_L1_HITRATE", 0.6), \
-             patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.0):
+        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.0):
             result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("Hard-L1 ER", result["refused"])
+
+    def test_equal_prefix_to_baseline_is_rejected(self):
+        self.candidate_path.write_text(json.dumps(self.baseline))
+        with patch.object(gate, "MIN_VALID_L1_HARD_ER", -1):
+            result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("prefixes", result["refused"])
 
     def test_missing_pairs_refuses(self):
         self.pairs_path.unlink()
@@ -104,8 +109,7 @@ class QualityGateTests(unittest.TestCase):
     def test_tampered_independent_validation_pairs_fail_closed(self):
         with zipfile.ZipFile(self.pairs_path, "a") as z:
             z.writestr("injected.txt", "changed frozen bytes")
-        with patch.object(gate, "MIN_VALID_L1_HITRATE", 0.6):
-            result = self.evaluate()
+        result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("frozen Git blob", result["refused"])
 
