@@ -25,8 +25,8 @@ ROLE_GUIDANCE = {
         "history[-1] -> target), the share where the anchor item's first SID token equals the "
         "positive's first token; (b) valid Hard-L1 ER = 10 * positive_hits / negative_hits with "
         "negative_hits counted the same way on the ten negatives, so the Resample reference is "
-        "16.38953942232631; (c) level2_distinct_prefixes = |{(k1,k2)}| over all items, "
-        "reference 16145; (d) L3 collision = share of items whose (k1,k2,k3) is shared with "
+        "(see FROZEN_THRESHOLDS below); (c) level2_distinct_prefixes = |{(k1,k2)}| over all "
+        "items; (d) L3 collision = share of items whose (k1,k2,k3) is shared with "
         "another item; (e) L3 refinement gain = mean over items of log2(|bucket(k1,k2)| / "
         "|bucket(k1,k2,k3)|); (f) conditional G3 = mean over the validation pairs of "
         "log2(p_hist(L3 target | anchor) / p_pref(L3 target | target prefix2)) with the "
@@ -181,6 +181,16 @@ def build_prompt(role: str, manifest: dict, output_name: str, root=None) -> str:
     guidance = ROLE_GUIDANCE[role]
     if role in ("MATH_VERIFY", "GRADIENT_VERIFY", "RUNTIME_VERIFY"):
         guidance = guidance + "\n" + UNITTEST_CONTRACT
+    if role in ("GEOMETRY", "REVIEW"):
+        # The numbers come from the contract compiler, so a prompt can never
+        # disagree with the gate that enforces them.
+        from ..science import contract as _contract
+        guidance = guidance + (
+            "\nFROZEN_THRESHOLDS: valid_l1_hard_er strictly above "
+            f"{_contract.THRESHOLDS['valid_l1_hard_er_strict_gt']}; "
+            f"level2_distinct_prefixes strictly above "
+            f"{_contract.THRESHOLDS['level2_prefixes_strict_gt']}; "
+            f"schema_version {_contract.SCHEMA_VERSION}.")
     return ("ROLE: " + role + "\n" + guidance
             + "\nFROZEN CURRENT-ONLY MANIFEST:\n"
             + json.dumps(manifest, sort_keys=True, ensure_ascii=False, indent=2)
