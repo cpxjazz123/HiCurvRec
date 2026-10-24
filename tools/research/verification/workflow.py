@@ -46,11 +46,29 @@ def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
     if not (tree / "train_rqvae.py").is_file():
         raise AdmissionError("no candidate Stage2 trainer")
     source_sha, source_files = source_digest_recipe(tree)
+    # The authoring roles receive the mechanism, not the whole proposal dump: the
+    # full candidate text made the math role return an empty answer three times
+    # on a verbose proposal.
+    mechanism = {
+        "candidate_id": candidate.get("candidate_id"),
+        "behavior_problem_id": candidate.get("behavior_problem_id"),
+        "next_item_hypothesis": candidate.get("next_item_hypothesis"),
+        "math_definition": candidate.get("math_definition"),
+        "hyperbolic_necessity": candidate.get("hyperbolic_necessity"),
+        "euclidean_control": candidate.get("euclidean_control"),
+        "effect_site": candidate.get("effect_site"),
+        "real_trigger_measurement": candidate.get("real_trigger_measurement"),
+        "training_only_inputs": candidate.get("training_only_inputs"),
+        "stable_global_sid": candidate.get("stable_global_sid"),
+        "protocol": candidate.get("protocol"),
+        "falsifier": candidate.get("falsifier"),
+    }
     return {
         "candidate_id": candidate_id,
         "run_id": run_id,
         "proposal_sha256": sha256(proposal),
         "source_sha256": source_sha,
+        "candidate": mechanism,
         "source_digest_recipe": {
             "algorithm": "sha256 over the sorted list of source files: for each file, the "
                          "relative path, a NUL byte, and the file's own sha256 in ascii",
