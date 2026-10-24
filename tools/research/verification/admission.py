@@ -15,6 +15,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ..core.evidence import atomic_json
+
 REPO = Path(__file__).resolve().parents[3]
 EVIDENCE_ROOT = REPO / "results" / "research" / "issue117"
 CASES_ROOT = Path(__file__).resolve().parent / "cases"
@@ -171,10 +173,25 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
     Code review of these tests is required before merging them into main.
     A passing unittest result alone cannot prove a mathematically sound test.
     """
+    outcome_path = EVIDENCE_ROOT / "verification" / candidate_id / "preflight.json"
+
+    def _persist(payload: dict) -> dict:
+        """Record the execution outcome on disk.
+
+        The MCP client's request deadline is shorter than four separate test
+        processes pay in interpreter and CUDA start-up, so the reply can be lost
+        after the suites really ran. The artifact keeps the proof.
+        """
+        try:
+            atomic_json(outcome_path, {**payload, "recorded_at_epoch": time.time()})
+        except OSError:
+            pass
+        return payload
+
     try:
         case_dir, manifest, context = validate_evidence(tree, candidate_id)
     except (AdmissionError, OSError) as exc:
-        return {"passed": False, "refused": str(exc), "candidate_id": candidate_id}
+        return _persist({"passed": False, "refused": str(exc), "candidate_id": candidate_id})
     result = {"passed": False, **context, "suites": {}}
     for suite in SUITES:
         # Discover exactly one reviewed and content-addressed suite.
@@ -185,7 +202,7 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
                                   text=True, timeout=TIMEOUT_SECONDS, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
             result["refused"] = suite + " did not execute: " + type(exc).__name__
-            return result
+            return _persist(result)
         text = (done.stdout or "") + "\n" + (done.stderr or "")
         ran = re.search(r"\bRan\s+(\d+)\s+tests?\b", text)
         count = int(ran.group(1)) if ran else 0
@@ -202,9 +219,9 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
         }
         if not passed:
             result["refused"] = suite + " independent tests failed, were skipped, or ran zero tests"
-            return result
+            return _persist(result)
     result["passed"] = True
     result["verified_at_epoch"] = time.time()
     result["note"] = ("All four reviewed test suites actually ran; the existing "
                       "MCP one-epoch trainer smoke still follows before official training.")
-    return result
+    return _persist(result)
