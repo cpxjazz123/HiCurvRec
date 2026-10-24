@@ -62,6 +62,20 @@ def _prompt(role, ident, data, output, root=None):
     return build_prompt(role, frozen, output, root=root)
 
 
+def _archive_workspace(workspace: Path, request_id: str = "") -> Path | None:
+    """Move a previous role workspace aside so a re-authoring can write there."""
+    if not workspace.is_dir():
+        return None
+    suffix = (request_id[:8] if request_id else "old")
+    target = workspace.with_name(workspace.name + "." + suffix)
+    index = 1
+    while target.exists():
+        index += 1
+        target = workspace.with_name(workspace.name + "." + suffix + "." + str(index))
+    workspace.rename(target)
+    return target
+
+
 def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
                       request_id: str = "") -> dict:
     """Write untrusted test drafts only to results/, never into tracked cases."""
@@ -74,10 +88,13 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
 
     def author(role_key: str):
         role, output, mapping = AUTHOR_SPEC[role_key]
-        # The task id carries the request id, so a re-requested draft stage gets
-        # fresh workspaces instead of colliding with the previous attempt's
-        # output (the runner refuses to overwrite a role output).
-        task_id = candidate_id + "_" + role_key + ("_" + request_id[:8] if request_id else "")
+        # The receipt path is part of the evidence contract: the admission
+        # checker looks the role receipts up at agents/<candidate_id>_<role>.
+        # A re-authored role therefore archives its previous workspace instead
+        # of moving to a different path, so the contract holds and the earlier
+        # evidence is kept.
+        task_id = candidate_id + "_" + role_key
+        _archive_workspace(run_root / "agents" / task_id, request_id)
         prompt = _prompt(role, task_id, data, output, root=run_root)
         execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
@@ -109,7 +126,8 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
             "next_action": "Review and commit independent cases into tools/research/verification/cases/<candidate_id>/; do NOT auto-install drafts."}
 
 
-def review_committed_suites(candidate_id: str, tree: Path, run_id: str) -> Path:
+def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
+                        request_id: str = "") -> Path:
     """Read actual committed files, then run a distinct independent review Agent."""
     _require_live()
     from ..workflows.pipeline import run_dir
@@ -136,6 +154,7 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str) -> Path:
         data["author_reports"][role] = read_json(output)
     prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json",
                      root=run_root)
+    _archive_workspace(run_root / "agents" / (candidate_id + "_review"), request_id)
     return run_agent(candidate_id + "_review", prompt, "review.json",
                      run_root, binary=settings.AGENT_BINARY,
                      model=settings.AGENT_MODEL,
