@@ -55,7 +55,7 @@ The research package never starts GPU training directly, never uses validation/t
 
 Output state is isolated to `results/research/issue117/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.
 
-The standard Stage2/Stage3 source trees are unchanged, Stage2 metrics remain diagnostic only, and the current formal Stage3 success rule is defined in `CLAUDE.md`.
+The standard Stage2/Stage3 source trees are unchanged, Stage2-to-Stage3 quality admission is mandatory: `stage2_start` still requires its independent executable tests and smoke; `stage3_start` now recomputes Hard-L1 ER on frozen independent validation pairs, positive-prefix HitRate and level-2 SID prefix counts before GPU launch. Missing HitRate numeric cutoff is an explicit fail-closed policy, never an implicit PASS. The final Stage3 success rule remains in `CLAUDE.md`.
 
 `tools/stage2_stability_probe.py` has been retired because it imported modules from the removed legacy verification package and the active MCP no longer exposes the probe.
 

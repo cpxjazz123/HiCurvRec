@@ -1790,6 +1790,29 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     }
 
 
+def stage2_quality_admission(sid: Path) -> dict:
+    """Recompute required Stage2 quality from the independent validation set.
+
+    All quality checks are read-only and run before GPU probing or Stage3 launch.
+    Never trust a user-authored PASS record or a stored Stage2 diagnostic flag.
+    """
+    import importlib.util
+    src = REPO / "tools" / "genrec-mcp" / "stage2_quality_gate.py"
+    try:
+        spec = importlib.util.spec_from_file_location("stage2_quality_gate", src)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.evaluate(
+            sid,
+            RESULT2_ROOT / "TIGER_RQ-VAE" / "item_sids.json",
+            RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.npz",
+            RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.meta.json",
+        )
+    except Exception as exc:
+        return {"passed": False, "refused": "quality verifier unavailable: " +
+                type(exc).__name__ + ": " + str(exc)}
+
+
 def tool_stage3_start(item_sids: str | None = None) -> dict:
     """Start Stage3 for the SID path given by the caller -- the only argument.
 
@@ -1819,6 +1842,12 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         }
     if not sid.is_file():
         return {"started": False, "refused": f"no item_sids file at {given}"}
+    quality = stage2_quality_admission(sid)
+    if not quality["passed"]:
+        return {"started": False,
+                "refused": "Stage2 quality gate: " + str(quality.get("refused")),
+                "quality_gate": quality}
+
     # Canonical logical (/home) form: Path.resolve() would embed the physical
     # /fs04 path, while the repository and Stage3 record /home paths.
     try:
@@ -1891,6 +1920,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "cwd": str(STAGE3_DIR),
         "variant": chosen_variant,
         "sid": str(sid),
+        "stage2_quality_gate": quality,
         "run_log": str(run_log),
         "native_log": str(RESULT3_ROOT / chosen_variant / "logs/_stage3_launcher.log"),
         "harness": str(harness),
