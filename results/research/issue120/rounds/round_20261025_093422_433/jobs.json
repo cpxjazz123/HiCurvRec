@@ -1,0 +1,58 @@
+{
+  "jobs": [
+    {
+      "attempts": 1,
+      "error": "1 CUDA device(s) visible, but this tree's trainer has no single-card launch path (it forks 4-rank torchrun); run it on a 4-card allocation, or add the single-card contract to the tree's trainer first",
+      "failure_evidence": {
+        "refused": "1 CUDA device(s) visible, but this tree's trainer has no single-card launch path (it forks 4-rank torchrun); run it on a 4-card allocation, or add the single-card contract to the tree's trainer first"
+      },
+      "finished_at": 1792884341.0363321,
+      "gpu": "1",
+      "idea_id": "predictive_residual_level_order",
+      "job_id": "stage2:predictive_residual_level_order",
+      "kind": "stage2",
+      "queued_at": 1792884340.8399367,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_predictive_residual_level_order",
+      "round_id": "round_20261025_093422_433",
+      "started_at": 1792884340.9772253,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_predictive_residual_level_order"
+    },
+    {
+      "attempts": 1,
+      "error": "source_dir must name one of ['TIGER_BEHAVIOR_SAMPLE_RQ-VAE', 'TIGER_RQ-VAE', 'TIGER_bootstrap_code_stability', 'TIGER_bootstrap_consensus_sid', 'TIGER_c117_asymmetric_successor_branches', 'TIGER_c117_global_sinkhorn_poincare', 'TIGER_c117_hyperbolic_item_semantic_id', 'TIGER_c117_transition_residual_poincare', 'TIGER_predictive_residual_level_order', 'TIGER_residual_norm_tempering', 'TIGER_train_graph_denoised_residual', 'TIGER_train_only_demand_signature', 'TIGER_uncertainty_aware_sid']",
+      "failure_evidence": {
+        "refused": "source_dir must name one of ['TIGER_BEHAVIOR_SAMPLE_RQ-VAE', 'TIGER_RQ-VAE', 'TIGER_bootstrap_code_stability', 'TIGER_bootstrap_consensus_sid', 'TIGER_c117_asymmetric_successor_branches', 'TIGER_c117_global_sinkhorn_poincare', 'TIGER_c117_hyperbolic_item_semantic_id', 'TIGER_c117_transition_residual_poincare', 'TIGER_predictive_residual_level_order', 'TIGER_residual_norm_tempering', 'TIGER_train_graph_denoised_residual', 'TIGER_train_only_demand_signature', 'TIGER_uncertainty_aware_sid']"
+      },
+      "finished_at": 1792884340.9739995,
+      "gpu": "0",
+      "idea_id": "frequency_whitened_rq_geometry",
+      "job_id": "stage2:frequency_whitened_rq_geometry",
+      "kind": "stage2",
+      "queued_at": 1792884340.8702245,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_frequency_whitened_rq_geometry",
+      "round_id": "round_20261025_093422_433",
+      "started_at": 1792884340.9489455,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_frequency_whitened_rq_geometry"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "residual_norm_tempering",
+      "job_id": "stage2:residual_norm_tempering",
+      "kind": "stage2",
+      "queued_at": 1792884340.905248,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_residual_norm_tempering",
+      "round_id": "round_20261025_093422_433",
+      "started_at": null,
+      "status": "pending",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_residual_norm_tempering"
+    }
+  ],
+  "schema": 1
+}

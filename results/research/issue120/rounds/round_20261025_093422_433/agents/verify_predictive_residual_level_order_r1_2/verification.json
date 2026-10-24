@@ -1,0 +1,44 @@
+{
+  "verifier": "verify_predictive_residual_level_order_r1_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/model/layers.py:139-141",
+          "detail": "The codebook initialization invokes sklearn KMeans with n_init=\"auto\". This requires a sufficiently recent scikit-learn; older versions accepted by the project environment raise a TypeError instead of initializing, so the real training forward/backward is never reached. The supplied smoke test has an independent environment limitation here: running it in the available Python failed immediately because torch is not installed, thus finite gradients were not independently demonstrated in this environment.",
+          "reproduction": "In an environment with torch and scikit-learn older than 1.2, call model.init_codebook(torch.randn(256, 32)); KMeans.fit rejects n_init=\"auto\". In the current environment, `python smoke_test.py` fails at import torch with ModuleNotFoundError.",
+          "correction": "Pin/document a compatible scikit-learn version or use an integer n_init supported by the frozen baseline environment; then run smoke_test.py there and assert finite nonzero gradients on encoder/decoder and trainable VQ embeddings."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:48-50,441-445; stage3_T5Train/train_HG-Rec.py:157",
+          "detail": "The candidate trainer exports item_sids.json under its own tree directory, while the actual Stage 3 trainer's hardcoded CODE_PATH remains results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json. Therefore running the real Stage 3 entry point reads the baseline SID file, not this candidate's reordered SIDs; the intended permutation is not integrated into the experiment. The Stage 3 dataset's JSON reader does correctly require contiguous zero-based item keys and item_sids generation enumerates rows, but that does not bridge the path mismatch.",
+          "reproduction": "Run the candidate exporter (or inspect OUTPUT_JSON at train_rqvae.py:50,444), then run stage3_T5Train/train_HG-Rec.py:157: its CODE_PATH still resolves to the baseline results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json, independently of the candidate tree output.",
+          "correction": "Provide a candidate-specific Stage 3 configuration/launcher whose CODE_PATH points to this candidate's item_sids.json (and whose run directory is isolated), or export atomically to the exact configured candidate path. Confirm the actual trainer logs that path and loads candidate item mappings."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:83-90,454-475",
+          "detail": "The launcher's executable path is hardcoded to /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun and forces four visible GPUs. This environment has no torch installed in its active Python and no evidence in the tree that the hardcoded launcher/runtime exists, so the real entry point and distributed launcher could not be run or verified. The subprocess return code is propagated, but there is no environment-aware validation/fallback.",
+          "reproduction": "In the available environment, `python smoke_test.py` fails because torch is unavailable; invoking the script's launcher will attempt the absolute torchrun path and four-GPU launch rather than a local CPU/single-process run.",
+          "correction": "Run the entry point in the declared genrec_env_v2 environment and verify the configured executable, four GPUs, data paths, and successful child exit; retain the frozen launcher if it is intentional, but record that environment as a prerequisite and execute an actual DDP smoke run."
+        }
+      ]
+    }
+  ]
+}

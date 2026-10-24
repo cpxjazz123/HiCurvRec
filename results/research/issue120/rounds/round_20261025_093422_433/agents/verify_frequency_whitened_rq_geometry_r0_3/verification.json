@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_frequency_whitened_rq_geometry_r0_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:1",
+          "detail": "The supplied tree contains only PROPOSAL.json and no implementation source. Therefore there is no code to establish that train-only shrinkage covariance, the specified inverse-square-root transform, frozen application, and otherwise unchanged quantization are implemented, or that unrelated changes were avoided.",
+          "reproduction": "Inspect the supplied tree: `find . -type f` returns only `./PROPOSAL.json`.",
+          "correction": "Provide the implementation tree/commit to review; no code correction can be specified without the implementation."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:1",
+          "detail": "No model, forward/backward path, or training code is present, so finite losses/gradients, gradient reachability, dead terms, and numerical stability cannot be checked. A passing test claim or proposal is not executable evidence.",
+          "reproduction": "The supplied tree has no Python or other implementation files (`find . -type f` lists only `PROPOSAL.json`); consequently no real forward/backward can be invoked from it.",
+          "correction": "Provide the trainer/model implementation and executable configuration/data fixture so forward/backward behavior can be inspected and reproduced."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:1",
+          "detail": "No trainer entry point, data-loading/preprocessing path, SID exporter/index mapping, or distributed launcher is present in the supplied tree. Thus the required integration properties cannot be verified.",
+          "reproduction": "The tree contains only `PROPOSAL.json`; there is no entry point or launcher to run, and no export/data-path code to inspect.",
+          "correction": "Provide the complete implementation tree, including its real trainer entry point, dataset path, SID export, and distributed launch configuration, then rerun integration review."
+        }
+      ]
+    }
+  ]
+}

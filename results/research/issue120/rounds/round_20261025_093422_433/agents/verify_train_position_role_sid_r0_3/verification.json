@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_train_position_role_sid_r0_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/PROPOSAL.json:19-20",
+          "detail": "The supplied tree contains only PROPOSAL.json, which describes the requested mechanism; it contains no implementation code. Therefore there is no evidence that position statistics are computed from training histories, that quartile roles are assigned as specified, or that the role token is appended while preserving baseline SID IDs. Fidelity cannot be verified.",
+          "reproduction": "Inspect the named tree: `find .../train_position_role_sid -type f` returns only PROPOSAL.json. There is no code path to execute or compare against the specification.",
+          "correction": "Provide the implementation in this tree, including the training-only statistic/bin computation and SID export, so the mechanism and absence of unrelated changes can be reviewed."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/PROPOSAL.json:19-20",
+          "detail": "No model, forward pass, loss, or training code is present in the supplied tree. Finite losses/gradients, gradient reachability, dead terms, and numerical stability therefore cannot be inspected or reproduced.",
+          "reproduction": "Attempting to locate executable implementation files in the tree finds only PROPOSAL.json; no real forward/backward can be run from this tree.",
+          "correction": "Provide the actual training/model changes and a minimal real forward/backward reproduction (with the intended trainable parameters identified); then verify finite loss and gradients on that path."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/PROPOSAL.json:19-20",
+          "detail": "The supplied tree has no trainer entry point, data-path configuration, SID export, or distributed launcher changes to inspect. Consequently the real trainer cannot be shown to run, the frozen data path and SID indexing/validity cannot be checked, and distributed launch compatibility cannot be verified.",
+          "reproduction": "The tree contains only PROPOSAL.json, so there is no entry point, exported SID artifact, or launcher available for execution or validation.",
+          "correction": "Provide the implementation tree with its trainer/data/export/launcher files and artifacts or reproducible commands; verify the frozen training data path, SID-to-item indexing and vocabulary, and a distributed launch on that code."
+        }
+      ]
+    }
+  ]
+}

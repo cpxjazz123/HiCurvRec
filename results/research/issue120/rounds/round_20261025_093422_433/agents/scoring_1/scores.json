@@ -1,0 +1,65 @@
+{
+  "scorer": "scoring_1",
+  "scores": [
+    {
+      "idea_id": "predictive_residual_level_order",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "A clean serialization-only intervention that aligns early SID positions with observed continuation information without changing tokenizer geometry or assignments. It is easy to isolate and cheap to test; impact is plausible if the generator benefits from more informative early tokens, but the global permutation may yield little when all tokens are available to the decoder.",
+      "uncertainties": "The specification gives multiple non-equivalent estimators (including conditional MI and a simpler empirical MI), and the detailed conditioning/PMI formula is not fully operationally consistent. Level scores may be unstable or popularity-dominated, and an ordering optimized for next-token information may not improve ranking recall."
+    },
+    {
+      "idea_id": "frequency_whitened_rq_geometry",
+      "scores": {
+        "novelty": 2,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 3,
+        "experimental_distinctness": 3
+      },
+      "rationale": "Covariance whitening is a technically straightforward way to test whether anisotropic embedding geometry misallocates residual-code capacity. The train-only frozen transform preserves a single global SID per item and has a clear downstream test, though the core intervention is an established preprocessing technique rather than a strongly novel quantization method.",
+      "uncertainties": "It is unknown whether high-variance axes are nuisance variation or useful semantics, whether the chosen shrinkage and eigenvalue floor are appropriate, and whether recall changes exceed seed variation. The stated cost can be material for a large embedding dimension if the transform is applied densely, though precomputation avoids repeated cost."
+    },
+    {
+      "idea_id": "covariance_preconditioned_ids",
+      "scores": {
+        "novelty": 2,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 3,
+        "experimental_distinctness": 3
+      },
+      "rationale": "This is a feasible, falsifiable application of shrinkage whitening to residual quantization, motivated by the possibility that dominant embedding directions consume code capacity. It is experimentally distinct from a behavioral or assignment-loss change, but scientifically overlaps substantially with another listed whitening proposal and its contribution is primarily a fixed preprocessing choice.",
+      "uncertainties": "The fixed alpha may not suit the embedding spectrum; whitening could magnify noisy low-variance directions or suppress genuinely useful broad semantics. It is unclear whether any gain would be robust across seeds and whether improved representation geometry translates to next-item ranking."
+    },
+    {
+      "idea_id": "residual_norm_tempering",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 3,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Stage-wise scaling directly targets imbalance in residual magnitudes while retaining the residual-quantization structure and global item codes. The mechanism is concrete and cheap once scales are available, and it is a distinct intervention from covariance geometry or SID serialization. Potential downstream value depends on whether later-stage capacity is currently underused for predictive distinctions.",
+      "uncertainties": "The warm-up checkpoint and scale estimation protocol may make results sensitive to training state. Scaling quantized contributions also changes effective codebook and commitment-loss behavior, so the stated unchanged objective may not be behaviorally unchanged. The prescribed residual statistic may not remain representative during the full run."
+    },
+    {
+      "idea_id": "train_position_role_sid",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 3,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Appending a frozen, train-only position-role token is simple to implement and tests whether marginal sequence position carries complementary item information beyond content SIDs. It is a distinct augmentation of the identifier rather than a change to the tokenizer, although the signal is coarse and may already be available from the user's sequence context.",
+      "uncertainties": "Relative position may mainly encode sequence truncation, ordering, or data-construction artifacts rather than a stable item role. Quartile bins and smoothing may be sensitive to item frequency; the added token can fragment prefixes, and it is uncertain whether the generator can exploit a global marginal role not conditioned on preceding context."
+    }
+  ]
+}

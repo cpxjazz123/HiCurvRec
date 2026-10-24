@@ -1,0 +1,65 @@
+{
+  "scorer": "scoring_3",
+  "scores": [
+    {
+      "idea_id": "predictive_residual_level_order",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "A low-cost serialization intervention directly tests whether placing continuation-predictive code distinctions earlier helps autoregressive SID generation. It preserves tokenizer assignments and adds essentially no training cost, making the causal comparison unusually clean.",
+      "uncertainties": "The proposed estimators are not fully consistent (PMI-style scoring versus conditional mutual information), and full-tuple conditioning may induce leakage-like redundancy or unstable estimates. Level scores may be tied, dominated by item frequency, or fail to matter because the generator can use all positions equally well."
+    },
+    {
+      "idea_id": "frequency_whitened_rq_geometry",
+      "scores": {
+        "novelty": 2,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 2
+      },
+      "rationale": "Covariance preconditioning has a plausible geometric rationale: Euclidean quantization can overemphasize high-variance axes. The transform is straightforward, train-only, and compatible with the existing pipeline, although it is a familiar preprocessing intervention rather than a substantially new quantizer.",
+      "uncertainties": "High-variance directions may encode useful semantics, while low-variance directions may mostly be noise. The specified eigenvalue floor and shrinkage may materially affect results; gains could reflect changed embedding scale or seed variation rather than better item distinctions."
+    },
+    {
+      "idea_id": "covariance_preconditioned_ids",
+      "scores": {
+        "novelty": 2,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 2
+      },
+      "rationale": "This is a feasible, testable covariance-whitening approach with a sound motivation about anisotropic embedding distances. Its core mechanism substantially overlaps the other covariance-preconditioning proposal, and the fixed transform leaves the modeling pipeline simple.",
+      "uncertainties": "The benefit depends on whether embedding anisotropy is nuisance variation rather than task-relevant structure. Whitening can amplify noisy directions; shrinkage choices and the relationship between reconstruction geometry and recommendation ranking remain uncertain."
+    },
+    {
+      "idea_id": "residual_norm_tempering",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Stage-wise scaling is a concrete intervention on residual quantization dynamics that retains the codebook count and hard-assignment structure. It tests whether later stages are under-trained due to residual magnitude imbalance, with low computational overhead and measurable intermediate effects.",
+      "uncertainties": "Scaling both code vectors and residuals changes the effective balance of reconstruction, commitment, and codebook losses, so it may not isolate residual magnitude alone. Warm-up scales may become stale, and improved code usage or residual reduction may not translate into ranking gains."
+    },
+    {
+      "idea_id": "train_position_role_sid",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 3,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Appending a frozen, train-only position-role token is implementable and tests whether a simple behavioral attribute complements content-derived IDs. Its marginal sequence-position signal differs from changing quantizer geometry and can be evaluated without adding training-time model cost.",
+      "uncertainties": "Mean position may capture sequence construction or truncation artifacts rather than a stable item role. It ignores context and user heterogeneity, and the added token may be redundant with history input or fragment existing content prefixes, especially for sparse items."
+    }
+  ]
+}

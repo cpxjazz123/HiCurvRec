@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_predictive_residual_level_order_r1_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "verification-blocker",
+          "location": "smoke_test.py:4-16",
+          "detail": "The required forward/backward check could not execute in this environment because importing torch fails; therefore finite loss/gradients and gradient reach are not independently verified. Static inspection shows the smoke test checks only that some parameter has a gradient, not that intended parameters all receive gradients.",
+          "reproduction": "From the candidate tree, run `python smoke_test.py`; it exits at line 4 with `ModuleNotFoundError: No module named 'torch'`.",
+          "correction": "Run the smoke test in the project's configured PyTorch environment and confirm finite loss and gradients on the intended trainable parameters; report the resulting evidence. No source-level numerical defect was established by inspection."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "verification-blocker",
+          "location": "train_rqvae.py:42-50,250-265,454-480",
+          "detail": "The actual trainer and distributed launcher were not runnable/verified here: they require external hard-coded embedding and frozen train parquet paths, a GPU/NCCL setup for the four-rank launcher, and the unavailable torch dependency. Source inspection confirms the code reads the declared train parquet, scores its history-to-target adjacencies, writes item-indexed SID exports, and retains the torchrun launcher, but does not establish that this real entry point executes or that the produced SID is accepted by Stage 3.",
+          "reproduction": "Running `python smoke_test.py` already fails on missing torch. Running the real entry point additionally requires `/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy` and `/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet` (train_rqvae.py:42-47), plus the configured torchrun binary and four GPUs for the launcher (lines 85-90, 454-480).",
+          "correction": "Execute the real single-rank/torchrun trainer in the configured environment with the frozen inputs, then validate the exported NPY/JSON against the Stage 3 loader and item-ID mapping. Do not change the frozen data paths or launcher absent a demonstrated mismatch."
+        }
+      ]
+    }
+  ]
+}

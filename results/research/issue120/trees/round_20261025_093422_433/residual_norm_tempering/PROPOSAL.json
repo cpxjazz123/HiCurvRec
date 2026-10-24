@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "cost_estimate": "The per-step change is K scalar divisions/multiplications on existing tensors and no additional pairwise distances or optimizer state: O(batch*d*K) elementwise work, expected well below 1% of baseline RQ-VAE step time. Scale estimation is one train-item pass after warm-up. At 24556 items, 24 steps/epoch, and 3000 epochs this remains feasible on one GPU.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "The fixed scales make later-stage code usage and per-stage residual-energy reduction less degenerate, and this translates into higher validation and test next-item R@10 than the untempered model (targeting improvement over test_R@10 0.06335). If only code utilization changes without a repeatable ranking gain, discard the idea.",
+  "fingerprint": "c86b495565b2e78f",
+  "idea_id": "residual_norm_tempering",
+  "key_change": "Normalize the residual entering each later stage by a fixed stage-specific scalar, while accumulating the correspondingly rescaled quantized contribution, so all stages operate on comparable residual scales without adding trainable parameters.",
+  "motivation": "In residual quantization, early-stage residuals can be much larger than later residuals, so reconstruction-driven training may over-optimize coarse semantic directions while fine code digits encode little useful distinction. This can make two items with different fine-grained needs share overly similar prefixes or leave later digits underused.",
+  "novelty": "This changes the scale of the residual presented to each successive quantizer using a deterministic scalar schedule, rather than changing geometry, branching, assignment balancing, or adding a behavior-derived objective. It keeps the same codebooks, number of stages, and global item-to-tuple assignment.",
+  "origin_agent": "ideation_2",
+  "risks": [
+    "Stage scales estimated from an early checkpoint may be stale; scaling may interact badly with the commitment/codebook loss magnitudes; and normalizing a stage could encourage fine digits to encode noise. Use a fixed scale protocol decided before the run, log per-stage residual and usage statistics, and evaluate with identical Stage 3 settings."
+  ],
+  "specification": {
+    "text": "For encoder output h_i and K residual codebooks, initialize r_i^(0)=h_i. For stage l, compute s_l = sqrt(mean_train(||r_i^(l)||_2^2)/d) once from a short baseline warm-up checkpoint (stop-gradient, train items only), then quantize u_i^(l)=r_i^(l)/max(s_l,1e-6) with the existing nearest-code rule. Set q_i^(l)=s_l * e_{a_i^l}^{(l)}, r_i^(l+1)=r_i^(l)-q_i^(l), and reconstruct h-hat_i=sum_l q_i^(l). Freeze s_l for the subsequent training run; use the same scales at export. Compare against an identical baseline warm-up and exclude held-out items from scale estimation."
+  },
+  "title": "Temper residual magnitudes across quantization stages"
+}

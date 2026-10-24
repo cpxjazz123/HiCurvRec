@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_residual_norm_tempering_r0_3",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792882551.7974606,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "5d13f05bc5f558f5fe92348e4470a483f4721ab408ed2c2d078a537dba9596d6",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.json",
+  "output_sha256": "64394ea048ea50ab1e69bbd1589928257a2bdfd12e5c6f4b104aecd8365679f0",
+  "pid": 583728,
+  "project_marker": ".git",
+  "prompt_sha256": "4417e387b0631bb305eef9176e8dd114e6425ea7c755792418454e2510481189",
+  "session_sha256": "a505651372b74dd8f21c45f7bf2196e73c7fba5644987ebef35208256cad928b",
+  "stderr_present": false,
+  "task_id": "verify_residual_norm_tempering_r0_3",
+  "timed_out": false,
+  "verified": true
+}

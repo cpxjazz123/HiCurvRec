@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_train_position_role_sid_r0_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/ (no implementation files; only PROPOSAL.json:1)",
+          "detail": "The supplied candidate tree contains only the idea proposal, not implementation code. There is no position-statistics accumulation, smoothing, quartile assignment, or SID concatenation to inspect, so the requested mechanism cannot be verified as implemented or exclusive of unrelated changes.",
+          "reproduction": "List the candidate tree recursively: it contains only PROPOSAL.json. There is no source file or patch in which to locate an implementation.",
+          "correction": "Provide the implementation in this candidate tree, including the train-only statistics and SID export, so mechanism fidelity can be reviewed."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/ (no model/training code; only PROPOSAL.json:1)",
+          "detail": "No model, forward pass, loss, or optimizer implementation is present. A real forward/backward cannot be run, and there is no evidence that the appended token reaches intended trainable parameters or that losses and gradients remain finite.",
+          "reproduction": "The candidate tree has no executable source or test files; attempting to identify or run its trainer/model is impossible from the supplied tree.",
+          "correction": "Include the candidate model/trainer integration and an executable minimal forward/backward path; then verify finite loss and gradients on that path."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/train_position_role_sid/ (no trainer, data, SID-export, or launcher files; only PROPOSAL.json:1)",
+          "detail": "The tree provides no real trainer entry point, frozen data-path configuration, SID export, or distributed launcher to inspect or execute. Consequently SID indexing/token-vocabulary validity and distributed compatibility are unverified; this is an absent implementation rather than a demonstrated runtime failure.",
+          "reproduction": "Recursively list the candidate tree; PROPOSAL.json is its only file, so there is no entry point or integration artifact to run.",
+          "correction": "Provide the implementation tree or patch, including trainer/data/SID export and launcher changes, then run the real entry point and distributed launch smoke test against the frozen data path."
+        }
+      ]
+    }
+  ]
+}

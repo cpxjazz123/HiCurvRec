@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "cost_estimate": "Tokenizer fitting and each of the 24 Stage 3 steps are unchanged. One CPU pass over train adjacencies and L small contingency tables (at most 24,556 transitions per epoch-equivalent pass; one-time computation), negligible versus 3,000 GPU epochs; per-step additional cost is exactly zero.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "The train-only predictive ordering improves Stage 3 test_R@10 over 0.06335 using the identical Stage 3 recipe, and its gain is larger than the baseline ordering when measuring next-token accuracy at the first SID position. If the early-position token accuracy and final recall do not improve, or recall falls despite token accuracy gain, the serialization change is not worth keeping.",
+  "fingerprint": "32ab24ed615c7af3",
+  "idea_id": "predictive_residual_level_order",
+  "key_change": "After baseline RQ-VAE training and hard assignment, compute a train-only transition-predictiveness score for each code level, then serialize each item's same codes in descending score order. Carry the same global level permutation into Stage 3 SID tokenization; item identity remains one deterministic global tuple.",
+  "motivation": "RQ-VAE residual levels are ordered by reconstruction mechanics, not by how useful each level is for predicting what users consume next. A generative recommender that emits a fixed-length SID autoregressively can benefit when the early SID tokens expose the most continuation-relevant distinctions first, particularly under limited context or decoding budget.",
+  "novelty": "This leaves the learned item embeddings, codebooks, assignments, and number of tokens untouched; unlike geometry/assignment changes, it permutes the existing level-to-position serialization using only train-split transitions. No transition graph is fed back into tokenizer fitting.",
+  "origin_agent": "ideation_1",
+  "risks": [
+    "Code levels may be redundant or have near-tied scores, making the ordering noisy; transition statistics may overfit popular items and fail to generalize. Stage 3 may already model all SID positions equally well, in which case reordering does not improve ranking. Ensure the inverse mapping and every export/inference path use the same fixed permutation."
+  ],
+  "specification": {
+    "text": "Let c[i,l] be the baseline code for item i at residual level l, and let T[i,j] count adjacent train-sequence transitions i->j (count each sequence adjacency once). For each level l compute S_l = sum_{i,j} T[i,j] * PMI(c[j,l], c[i,all]) / (sum_{i,j} T[i,j] + eps), where c[i,all] is the full source SID tuple; estimate PMI with add-one smoothed counts over training transitions and truncate negative PMI to zero. To avoid self-information, use source-prefix c[i,all] only as conditioning context and score target level c[j,l] by conditional mutual information I(c[j,l]; c[i,all] | c[j,other levels]) (equivalently estimate smoothed train transition contingency tables); sort levels by descending S_l, ties by original level index. Simpler minimally specified estimator: score S_l=I(c[j,l]; c[i,all]) under the empirical train adjacency distribution. Replace emitted tuple (c[i,0],...,c[i,L-1]) by (c[i,pi[0]],...,c[i,pi[L-1]]) with one fixed permutation pi. Train Stage 3 exactly as baseline and compare identical settings; do not use validation/test transitions to choose pi."
+  },
+  "title": "Order residual-code levels by next-item predictiveness"
+}

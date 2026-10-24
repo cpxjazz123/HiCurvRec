@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_frequency_whitened_rq_geometry_r0_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/frequency_whitened_rq_geometry/PROPOSAL.json:1",
+          "detail": "The designated tree contains only PROPOSAL.json; it contains no implementation source. Consequently there is no code to verify for train-only covariance estimation, rho=0.1 shrinkage, the eigenvalue floor, fixed centering/transform, unchanged RQ-VAE behavior, or single global hard SID assignment. Fidelity cannot be credited from the idea description alone.",
+          "reproduction": "Inspect the designated tree with find: its only file is PROPOSAL.json. There is no trainer/model/preprocessing/export code to execute or compare with the specification.",
+          "correction": "Add the implementation to this tree, including the frozen train-fitted transform and its application at training and assignment; then rerun the independent review against the actual source."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/frequency_whitened_rq_geometry/PROPOSAL.json:1",
+          "detail": "No forward/backward implementation is present, so finite losses, gradient flow to intended model parameters, dead loss terms, and numerical stability cannot be tested. The proposal file is not executable training code.",
+          "reproduction": "Attempting to locate or invoke a trainer within the designated tree fails because the tree contains only PROPOSAL.json; there is no real forward/backward path to run.",
+          "correction": "Include the actual model and trainer entry point in the tree and demonstrate a real forward/backward step with finite loss and gradients reaching trainable RQ-VAE parameters."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/frequency_whitened_rq_geometry/PROPOSAL.json:1",
+          "detail": "The designated tree has no trainer, data loader, SID exporter, or distributed launcher/configuration. Therefore the real entry point, train/validation/test frozen-transform data path, SID validity/index alignment, and distributed launch are absent and cannot be verified. A proposal-only tree cannot satisfy the requested integration check.",
+          "reproduction": "Enumerate files under the designated tree: only PROPOSAL.json is present. No trainer command or export artifact can be run from this tree.",
+          "correction": "Populate the tree with the integrated implementation and its normal entry point, preserving item IDs through SID export and applying the same train-fitted mu/A for every split; verify the standard distributed launcher against it."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "independent_verifier_r1_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "train_rqvae.py:303-310; model/layers.py:139-144",
+          "detail": "Distributed codebook initialization enters mismatched collectives. Only rank 0 calls raw_module.init_codebook(), but VQLayer.init_codebook() calls distributed.broadcast() whenever a process group is initialized. The other ranks skip initialization and reach the explicit barrier at train_rqvae.py:310. Rank 0 waits in broadcast while the remaining ranks wait in barrier, so the four-rank launcher cannot proceed into training.",
+          "reproduction": "Run the actual trainer with its four-process torchrun launcher and a valid input dataset. At the initialization section, rank 0 enters the broadcast in model/layers.py:143; ranks 1-3 enter dist.barrier() in train_rqvae.py:310. The collective mismatch hangs before the first training batch.",
+          "correction": "Make all ranks call init_codebook in the same order so they participate in each broadcast, or make initialization rank-0-only without an internal broadcast and explicitly broadcast the initialized codebook parameters to other ranks using matching collectives. Then verify a complete multi-rank startup and at least one train step."
+        }
+      ]
+    }
+  ]
+}
