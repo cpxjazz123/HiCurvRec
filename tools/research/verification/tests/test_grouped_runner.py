@@ -68,3 +68,22 @@ class GroupedRunnerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SuiteKeyNormalisationTests(unittest.TestCase):
+    def test_filenames_normalise_to_suite_names(self):
+        from tools.research.verification.admission import _normalise_suite_keys
+        reported = {"test_math.py": "a", "test_gradient.py": "b",
+                    "test_ddp.py": "c", "test_entrypoint.py": "d"}
+        self.assertEqual(_normalise_suite_keys(reported),
+                         {"math": "a", "gradient": "b", "ddp": "c", "entrypoint": "d"})
+
+    def test_suite_names_pass_through(self):
+        from tools.research.verification.admission import _normalise_suite_keys
+        reported = {"math": "a", "gradient": "b", "ddp": "c", "entrypoint": "d"}
+        self.assertEqual(_normalise_suite_keys(reported), reported)
+
+    def test_mismatched_hash_is_not_normalised_away(self):
+        from tools.research.verification.admission import _normalise_suite_keys
+        reported = {"test_math.py": "different"}
+        self.assertNotEqual(_normalise_suite_keys(reported), {"math": "a"})
