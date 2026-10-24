@@ -81,18 +81,17 @@ def check_falsifier(candidate: dict) -> None:
         raise ValueError("stage3 behavioural metric must be test_R@10 or test_NDCG@10")
     registered = {entry["name"] for entry in diagnostics}
     text = " ".join(str(classification.get(key)) for key in CLASSIFICATION_KEYS)
-    unknown = sorted({word.strip("()[],") for word in text.replace("+", " ").split()}
-                     - registered - {"and", "or", "not", "all", "any", "seeds", "mean", "median",
-                                     "NULL", "null", "if", "then", "else", "is", "is not", ">",
-                                     ">=", "<", "<=", "==", "0", "0.0", "positive", "negative",
-                                     "zero", "opposite", "directional", "minimum", "for", "with",
-                                     "the", "a", "an", "of", "to", "in", "reaches", "reached",
-                                     "pooled", "per-seed", "seed", "diagnostic", "diagnostics"})
-    if unknown:
-        # Unknown tokens are only a problem when they look like registered names.
-        suspicious = [token for token in unknown if "_" in token or token.isupper()]
-        if suspicious:
-            raise ValueError("classification references unregistered diagnostics: "
-                             + ", ".join(sorted(suspicious)))
+    # Only bare snake_case identifiers can be diagnostic names. Anything carrying
+    # a dot or slash is a field reference (stage3_behavioral_test.metric), and an
+    # all-caps token is an operator (OR/AND/NOT), so neither is a name claim.
+    words = {word.strip("()[],") for word in text.replace("+", " ").split()}
+    suspicious = sorted(
+        word for word in words
+        if "_" in word and "." not in word and "/" not in word and not word.isupper()
+        and word not in registered
+    )
+    if suspicious:
+        raise ValueError("classification references unregistered diagnostics: "
+                         + ", ".join(suspicious))
     if "NULL" not in text and "null" not in text:
         raise ValueError("classification must define the NULL outcome")
