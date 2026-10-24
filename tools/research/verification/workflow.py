@@ -144,11 +144,21 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
     data = _inputs(candidate_id, tree, run_id)
     case_dir = CASES_ROOT / candidate_id
     tests = {}
+    # The reviewed suites are materialized in the run's evidence space as well,
+    # so a reviewer can match concrete bytes to the hashes it is given instead
+    # of taking the committed files on trust.
+    reviewed = EVIDENCE_ROOT / "verification" / candidate_id / "reviewed"
+    reviewed.mkdir(parents=True, exist_ok=True)
     for suite in SUITES:
         path = case_dir / ("test_" + suite + ".py")
         if not path.is_file() or path.is_symlink():
             raise AdmissionError("missing reviewed test in source tree: " + str(path))
-        tests[suite] = {"sha256": sha256(path), "source": path.read_text(encoding="utf-8")}
+        source = path.read_text(encoding="utf-8")
+        materialised = reviewed / ("test_" + suite + ".py")
+        materialised.write_text(source, encoding="utf-8")
+        tests[suite] = {"sha256": sha256(path), "source": source,
+                        "committed_path": str(path), "materialised_path": str(materialised),
+                        "materialised_sha256": sha256(materialised)}
     data["tests"] = tests
     data["author_reports"] = {}
     index = EVIDENCE_ROOT / "verification" / candidate_id / "drafts" / "authors.json"
