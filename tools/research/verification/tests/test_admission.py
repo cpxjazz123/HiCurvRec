@@ -155,6 +155,29 @@ class AdmissionTests(unittest.TestCase):
         self.assertFalse(report["passed"])
         self.assertIn("trainer source", report["refused"])
 
+    def test_one_changed_byte_in_a_reviewed_test_is_rejected(self):
+        cid = self._complete_fixture()
+        target = self.cases / cid / "test_math.py"
+        original = target.read_text(encoding="utf-8")
+        # A single extra space: the suite still runs, but it is no longer the
+        # bytes the reviewer approved.
+        target.write_text(original.replace("1+1", "1 + 1", 1), encoding="utf-8")
+        with patch.object(A, "EVIDENCE_ROOT", self.evidence):
+            with patch.object(A, "CASES_ROOT", self.cases):
+                with self.assertRaisesRegex(A.AdmissionError, "test suite math"):
+                    A.validate_evidence(self.tree, cid)
+
+    def test_a_manifest_bound_to_another_contract_is_rejected(self):
+        cid = self._complete_fixture()
+        manifest = self.evidence / "verification" / cid / "manifest.json"
+        payload = json.loads(manifest.read_text())
+        payload["contract_sha256"] = "0" * 64
+        manifest.write_text(json.dumps(payload), encoding="utf-8")
+        with patch.object(A, "EVIDENCE_ROOT", self.evidence):
+            with patch.object(A, "CASES_ROOT", self.cases):
+                with self.assertRaisesRegex(A.AdmissionError, "contract"):
+                    A.validate_evidence(self.tree, cid)
+
     def test_invalid_ids_fail(self):
         for cid in ("../escape", "A/B", "", "a", "bad name"):
             with self.assertRaises(A.AdmissionError):

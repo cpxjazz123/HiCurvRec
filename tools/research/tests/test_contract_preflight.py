@@ -19,6 +19,7 @@ def legal_candidate():
             "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=1e-7.",
             "operator": {"family": "poincare_squared_distance", "curvature_c": 1.0,
                          "delta": 1e-7, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
+            "objective": {"anti_collapse": "usage-balanced assignment plus latent reconstruction"},
         },
         "hyperbolic_necessity": "n", "euclidean_control": "same architecture, metric only",
         "effect_site": "e", "real_trigger_measurement": "r",
@@ -181,3 +182,21 @@ class ContractCompilationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CollapseGuardTests(unittest.TestCase):
+    """The real 3000-epoch collapse must be impossible to propose again."""
+
+    def test_an_objective_without_an_anti_collapse_term_is_refused(self):
+        candidate = legal_candidate()
+        del candidate["math_definition"]["objective"]
+        report = preflight.run(candidate)
+        self.assertEqual(report["verdict"], preflight.MACHINE_INVALID)
+        self.assertEqual(report["stopped_at"], "math")
+        self.assertEqual(report["diagnostics"][0]["code"], "COLLAPSE_UNGUARDED")
+
+    def test_an_empty_declaration_is_not_a_guard(self):
+        candidate = legal_candidate()
+        candidate["math_definition"]["objective"]["anti_collapse"] = "   "
+        report = preflight.run(candidate)
+        self.assertEqual(report["diagnostics"][0]["code"], "COLLAPSE_UNGUARDED")

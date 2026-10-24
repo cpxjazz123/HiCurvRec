@@ -153,6 +153,19 @@ def check_math(candidate) -> list:
                 "math_definition.operator.flat_limit", canonical[0], declared_limit,
                 "the squared distance's limit is 4*||x-y||^2; the distance itself is 2*||x-y||",
                 verdict=MATH_COUNTEREXAMPLE))
+    # (a3) The objective must say what stops the representation from collapsing.
+    # A candidate whose frozen objective can be lowered by mapping every item to
+    # one code has already produced a single distinct SID in a real 3000-epoch
+    # run, so the declaration is required before any GPU time is spent.
+    objective = (candidate.get("math_definition") or {}).get("objective")
+    guard = str((objective or {}).get("anti_collapse") or "") if isinstance(objective, dict) else ""
+    if not guard.strip():
+        problems.append(diagnostic(
+            "math", "COLLAPSE_UNGUARDED", "math_definition.objective.anti_collapse",
+            "a term or mechanism that keeps the latent informative",
+            "not declared",
+            "name the anti-collapse term (decoder reconstruction, usage balance, "
+            "entropy or margin) and where it enters the loss"))
     # The clamp may only act where the arcosh argument is numerically degenerate;
     # at the declared curvature a separated pair must clear it.
     if curvature > 0 and curvature * separation_squared < 10.0 * delta:
