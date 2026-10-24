@@ -58,7 +58,7 @@ class TaskStore:
             self._save(state, {"event": "add", "task": task_id})
 
     def claim(self, owner, lease_seconds=1200, max_attempts=2, roles=None, prefix=None):
-        if not owner or lease_seconds <= 0 or max_attempts <= 0:
+        if not owner or lease_seconds <= 0 or (max_attempts is not None and max_attempts <= 0):
             raise ValueError("owner, lease and attempts must be positive")
         with self.locked():
             state = self._load()
@@ -72,7 +72,8 @@ class TaskStore:
                     self._save(state, {"event": "lease_expired", "task": task_id})
             for task_id, task in tasks.items():
                 if (prefix and not task_id.startswith(prefix)
-                        or task["status"] != "pending" or task["attempts"] >= max_attempts
+                        or task["status"] != "pending"
+                        or (max_attempts is not None and task["attempts"] >= max_attempts)
                         or (roles is not None and task["role"] not in roles)
                         or not all(tasks[dep]["status"] == "done"
                                    for dep in task["dependencies"])):
@@ -82,6 +83,18 @@ class TaskStore:
                 self._save(state, {"event": "claim", "task": task_id, "owner": owner})
                 return task_id, task["role"]
             return None
+
+    def renew(self, task_id, owner, lease_seconds):
+        """Extend the existing owner's lease before each new bounded Agent call."""
+        if lease_seconds <= 0:
+            raise ValueError("lease_seconds must be positive")
+        with self.locked():
+            state = self._load()
+            task = state["tasks"].get(task_id)
+            if not task or task["status"] != "running" or task["owner"] != owner:
+                raise StateError("cannot renew an unowned or cancelling task")
+            task["lease_until"] = time.time() + lease_seconds
+            self._save(state, {"event": "renew", "task": task_id, "owner": owner})
 
     def complete(self, task_id, owner, artifact: Path, metadata=None):
         artifact = Path(artifact).resolve()

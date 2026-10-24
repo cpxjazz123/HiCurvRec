@@ -45,21 +45,33 @@ class ReviewRevisionTests(unittest.TestCase):
             self.assertTrue((geometry_dir / "revision_feedback.json").is_file())
             self.assertTrue((geometry_dir / "attempt-1" / "session.jsonl").is_file())
 
-    def test_the_revision_limit_stops_the_loop(self):
+    def test_material_can_be_revised_after_many_prior_attempts(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             store = self._store_and_run(work)
-            review_dir = root / "agents" / "review"
-            review_dir.mkdir(parents=True, exist_ok=True)
-            (review_dir / "review.json").write_text(json.dumps({"verdict": "FATAL"}),
-                                                    encoding="utf-8")
-            geometry_dir = root / "agents" / "geometry"
-            geometry_dir.mkdir(parents=True, exist_ok=True)
-            for index in range(pipeline.MAX_REVISIONS):
-                (geometry_dir / ("attempt-%d" % (index + 1))).mkdir()
-            handled = pipeline._send_back_for_revision(
-                store, "run__review", root, ValueError("BLOCKED by FATAL"))
-            self.assertFalse(handled)
+            review = root / "agents" / "review"
+            review.mkdir(parents=True, exist_ok=True)
+            (review / "review.json").write_text(json.dumps({"verdict": "MATERIAL"}))
+            geometry = root / "agents" / "geometry"
+            geometry.mkdir(parents=True, exist_ok=True)
+            for n in range(1, 9):
+                (geometry / ("attempt-%d" % n)).mkdir()
+            (geometry / "candidate.json").write_text("{}")
+            self.assertTrue(pipeline._send_back_for_revision(
+                store, "run__review", root, ValueError("MATERIAL")))
+            self.assertTrue((geometry / "attempt-9" / "candidate.json").is_file())
+            self.assertTrue((review / "attempt-1" / "review.json").is_file())
+            self.assertEqual(store.snapshot()["tasks"]["run__geometry"]["status"], "pending")
+
+    def test_fatal_scientific_verdict_is_not_revised(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            store = self._store_and_run(work)
+            review = root / "agents" / "review"
+            review.mkdir(parents=True, exist_ok=True)
+            (review / "review.json").write_text(json.dumps({"verdict": "FATAL"}))
+            self.assertFalse(pipeline._send_back_for_revision(
+                store, "run__review", root, ValueError("FATAL")))
             self.assertEqual(store.snapshot()["tasks"]["run__geometry"]["status"], "done")
 
     def test_an_approved_review_is_never_sent_back(self):
