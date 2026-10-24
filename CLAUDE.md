@@ -104,3 +104,9 @@
 61. 因此 issue #117 §1「当前资源权限」与 §4 第 5 步「HPC GPU/权限有效」由本节满足；`tools/research/integrations/preflight.py` 错误文案中的 "explicit authorization" 指的也是这一层。
 62. 常设授权不等于免除记录：每次 GPU 运行仍必须留下真实 run_id、Worker PID、实际模式、checkpoint 与评估工件；不得以"已获授权"为由伪造运行结果，也不得绕过 `verification_check`/`stage2_start` 直接跑 trainer。
 
+
+## 11. Stage2 分层指标永久记录
+
+
+63. **每个新 Stage2 候选在完成训练并导出 item_sids.json 后、报告质量结论或尝试 Stage3 前，必须对该 SID 单独计算并持久化一份完整的分层指标记录**（使用 `tools/research/science/sid_layer_analysis.py::record_single_sid`）。必记的实际数值包括：L1 Hard ER、L1 正/负样本前缀命中率（HitRate，仅诊断）、不同的二级 SID 前缀数、不同的三级 SID 组合数、L3 Collision（三级 SID 重复商品占比）、L3 Refinement Gain（bits）、Conditional G3（平均 log2 概率比），并记录 Resample 基线与严格准入比较结论。必须同时记录实际 SID 路径和 SHA-256、训练/验证输入路径及 SHA-256、指标口径、有效验证样本数、实验/候选身份和输出文件位置。记录必须在读取该候选的 Stage3 测试成绩前产生，固定使用训练行为与冻结独立验证样本，禁止借测试结果调参或选最优运行；任一指标无法计算时明确标记缺失/失败及原因，不得虚构、填写 0 或称作 PASS。所有 L3 指标为**强制记录的诊断值**，不新增 L3 或 HitRate 的 Stage3 准入硬门槛；准入仍只按第 19 条的 Resample ER、L2 前缀及现有完整性校验执行。分层报告保存在该 Stage2 结果目录下 `stage2_metrics/<sid_sha256>.json`，不得覆盖其他 SID 的历史记录。
+

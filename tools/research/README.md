@@ -80,3 +80,10 @@ The existing `verification_check(source_dir, verification_id)` and `stage2_start
 **Cancellation**: `research_cancel` marks the global DAG and a run-local cancellation token, and active OpenCode subprocesses terminate cooperatively; actual worker death and incomplete cancellation are reported rather than silently claimed successful.
 
 MCP exposes no options for changing training hyperparameters, bypassing source checks, launching GPU from research tools or accepting a Reviewer-only verdict as independent executable evidence.
+
+## Mandatory per-SID Stage2 metric record
+
+For **every new Stage2 SID** (including models that will not reach Stage3), immediately after training/export and **before consulting its Stage3 result**, use `tools.research.science.sid_layer_analysis.record_single_sid(sid_path)` with the same real train sequences and frozen independent-validation pairs. It writes an atomic, SID-hash-versioned report to `results/stage2_RQ-VAE/<ARM>/stage2_metrics/<sid_sha256>.json`. A saved report is required for the experiment's audit/review and must be linked in the Issue/run outcome; this does not create an additional Stage3 performance gate.
+
+Every report includes numeric `metrics.valid_l1_hard_er`, `valid_l1_positive_hit_rate`, `valid_l1_negative_hit_rate`, `level2_distinct_prefixes`, `level3_distinct_triples`, `l3_collision`, `l3_refinement_gain_bits`, and `conditional_l3_gain`, together with frozen Resample thresholds, gate PASS/FAIL, methodology, validation sample count and SHA-256 provenance for SID/train/validation/baseline/source. Both L1 HitRates and all L3 measures are diagnostics only; **only ER > 16.38953942232631 and L2 prefixes > 16145 are hard Stage2 quality thresholds**. A negative G3 value is valid and must not be converted to zero or used as a cutoff. If any metric cannot be computed, record an explicit failure with the actual cause and do not claim a complete report. This measurement step requires the Stage3 Python environment with NumPy/Pandas for offline computation, not the stdlib-only MCP process.
+
