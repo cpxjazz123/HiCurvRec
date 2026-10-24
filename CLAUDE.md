@@ -13,7 +13,7 @@
 ## 2. 解释器与配置
 
 6. Stage0、Stage1 和 Stage3 使用 `/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10`。
-7. Stage2 和 CGV 使用 `/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9`。
+7. Stage2 和机制专属测试使用 `/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9`。
 8. MCP Server 使用仅依赖标准库的系统 `python3`。
 9. 项目超参数、路径和运行模式只能在源码常量中修改，禁止通过命令行参数或环境变量覆写。
 10. 项目训练与研究入口默认无参运行，只有内部测试执行器及 `/tmp/` 参考脚本可使用必要的执行参数。
@@ -46,7 +46,7 @@
 28. 验证凭据必须绑定冻结数学提案、实际 Stage2 源码哈希、四套测试文件哈希和独立审查结论。
 29. MCP 必须在每次正式训练启动前重新执行四套测试，任一测试失败、缺失或执行零用例均禁止启动。
 30. 正式 Stage2 仅允许调用 `stage2_start(source_dir, verification_id)`，并在测试通过后执行实际训练入口的一轮梯度 Smoke Test。
-31. 旧 CGV 声明和历史 admission 记录不得作为新机制的训练准入凭据。
+31. 旧研究框架的历史 admission 记录不得作为新机制的训练准入凭据。
 32. `tools/research/` 不得擅自启动 Stage2、Stage3 或 GPU 作业。
 
 ## 6. 原生科研工具

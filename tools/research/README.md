@@ -1,99 +1,57 @@
-# GeneRec research tools — new clean architecture for Issue #116
+# Native behavior-first research tools — Issue #116
 
-This package is a *new* small tool system against the cleaned repository. It does
-not import or restore any historical research controller, experiment campaign, or
-old agent-Harness framework. The Stage2/Stage3 trainers, CGV engine, and MCP
-server stay exactly where they are, unmodified.
+The only active research orchestration lives in `tools/research/`; formal training and job status remain in `tools/genrec-mcp/server.py`.
 
-## Directory tree (one clear owner per concern)
+## Source structure
 
-    tools/
-    ├── cgv/                         RETIRED for new training admission; not restored
-    ├── genrec-mcp/server.py         CURRENT training service; verification_id only
-    ├── stage2_stability_probe.py    EXISTING diagnostic; unchanged
-    └── research/                    NEW sole Issue116 research orchestration
-        ├── README.md                architecture and operational contract
-        ├── settings.py              source-locked paths, model, operation mode
-        ├── __main__.py              no-argument inspect/one-step entry
-        ├── core/
-        │   ├── dag.py               ONLY task ledger, locks, leases, recoverable jobs
-        │   └── evidence.py          sha256 and atomic artifact writes
-        ├── agents/
-        │   ├── prompts.py           behavior-first role prompts from frozen inputs
-        │   └── runner.py            direct OpenCode CLI + process evidence (no library)
-        ├── science/
-        │   ├── behavior.py          train-only transition measurement (lazy pandas)
-        │   └── contracts.py         candidate/SID and reviewer identity validation
-        ├── verification/
-        │   ├── admission.py        source/evidence checks and real unittest re-runs
-        │   ├── cases/             separately reviewed mechanism test modules
-        │   └── tests/             offline evidence fault-injection tests
-        ├── workflows/
-        │   └── pipeline.py          DATA+LITERATURE -> GEOMETRY -> REVIEW
-        ├── integrations/
-        │   └── preflight.py         read-only CGV/MCP/trainer registry; no bypass
-        └── tests/                    stdlib unittest; no network/model/GPU
+```text
+tools/
+├── genrec-mcp/
+│   └── server.py              Official Stage2/Stage3 execution and status
+└── research/
+    ├── settings.py            Source-defined paths and safe defaults
+    ├── __main__.py            No-argument inspect/step
+    ├── core/
+    │   ├── dag.py             Canonical task ledger, leases and events
+    │   └── evidence.py        Hashes and atomic JSON evidence
+    ├── agents/
+    │   ├── runner.py          Real OpenCode CLI subprocess receipts
+    │   └── prompts.py         Candidate-specific role prompts
+    ├── science/
+    │   ├── behavior.py        Train-only user-sequence measurements
+    │   └── contracts.py       Behavioral and candidate identity rules
+    ├── workflows/
+    │   └── pipeline.py        DATA + LITERATURE → GEOMETRY → REVIEW
+    ├── verification/
+    │   ├── workflow.py        Independent test authoring and review
+    │   ├── admission.py       Deterministic evidence checks and test execution
+    │   ├── cases/             Reviewed per-candidate test suites
+    │   └── tests/             Fail-closed verification regressions
+    ├── integrations/
+    │   └── preflight.py       Read-only training and verifier path checks
+    └── tests/                 Offline DAG, prompt and behavior tests
+```
 
-Output/state ONLY in results/research/issue116, NEVER under source trees.
+## How it works
 
-## Execution / boundaries
+`python3 -m tools.research` safely initializes the research ledger and reports state without model or GPU access; `python3 -m unittest discover -s tools/research/tests -v` and `python3 -m unittest discover -s tools/research/verification/tests -v` exercise offline regressions.
 
-    python3 -m tools.research
-    python3 -m unittest discover -s tools/research/tests -v
+DATA must produce measurable train-only behavior evidence, LITERATURE must cite applicable methods, and only then can GEOMETRY propose a candidate and an independent REVIEW assess it.
 
-The default ACTION = "inspect" is *read-only about science*: it initializes a
-fresh issue116 task ledger and prints statuses; it never trains or invokes a model.
-To generate real train-only measurements, edit settings.py to ACTION = "behavior",
-then use the genrec_env Python 3.10 interpreter. The behavior analyzer reads
-ONLY results/stage0_build_parquet/train.parquet, not valid/test or raw full-user
-sequences. It collapses repeated prefix-expanded rows to each user's longest
-training prefix before counting transitions (so repeated history is not counted
-multiple times).
+Independent MATH_VERIFY, GRADIENT_VERIFY and RUNTIME_VERIFY Agents prepare mathematical, gradient, real DDP and actual entrypoint tests; a separate VERIFY_REVIEW Agent checks their source, expected results, evidence and exact hashes.
 
-The worker mode is opt-in *by source edit*, not by CLI flags or environment
-hyperparameter overrides, per repository CLAUDE.md. LIVE_AGENTS_ALLOWED defaults
-False. Before enabling, deploy real filesystem confinement for the agent
-processes: separate cwd is not a security sandbox. Agent JSON output proves only
-the process ran, NOT that the scientific conclusion is correct. A true scientific
-verifier must check a candidate's schema, hashes and frozen evidence.
+After independent review, the mechanism-specific `test_math.py`, `test_gradient.py`, `test_ddp.py` and `test_entrypoint.py` are stored in `verification/cases/<candidate_id>/` and remain fail-closed until actual execution.
 
-The workflow stages are DATA and LITERATURE (independent, can be assigned by
-separate processes); GEOMETRY waits for BOTH measured/train-only evidence and
-literature; REVIEW is bound to the candidate ID, SHA and CURRENT formula. These
-are scientific preparation tasks, not automatic Stage2 permission.
+The MCP `verification_check(source_dir, verification_id)` verifies all source, proposal, test and agent evidence and re-runs the tests; `stage2_start(source_dir, verification_id)` requires the same verification and executes a real trainer smoke before full Stage2.
 
-The research package NEVER launches formal training. Official Stage2 now accepts
-`stage2_start(source_dir, verification_id)`, with `verification_check` as the
-test-only endpoint. The MCP verifies four independent real OpenCode session
-receipts and a distinct review, binds the source tree and four content-addressed
-test files to a frozen proposal, then actually runs math, gradient, DDP and
-entrypoint suites under the Stage2 Python environment. Missing or stale evidence
-and zero executed tests always BLOCK. The MCP's actual one-epoch trainer
-gradient smoke is still required AFTER these tests and BEFORE full 3000-epoch
-training. There is no active CGV or historical admission alternate launch path.
+The research package never starts GPU training directly, never uses validation/test future behavior to build SID, and never accepts textual Agent approval as proof of test execution.
 
-Legacy `tools/cgv/` remains physically present temporarily for audit/reference,
-but its declarations are NOT accepted by current Stage2 start; remove only after
-the real HPC test chain and fault-injection regression are verified. The
-existing Stage2/Stage3 trainers were not modified, and descriptive Stage2
-metrics are not used as additional early-stop gates.
+## Boundaries
 
-Validation Agents author mechanism-specific executable suites and an independent
-Reviewer approves exact source and test hashes; passing tests alone are not
-proof that the test assertions cover the claimed mathematics. Agent-generated
-files require source review before promotion into `verification/cases/`.
-Read `tools/research/verification/cases/README.md` for evidence requirements.
+Output state is isolated to `results/research/issue116/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.
 
-## Acceptance scope
+The standard Stage2/Stage3 source trees are unchanged, Stage2 metrics remain diagnostic only, and the current formal Stage3 success rule is defined in `CLAUDE.md`.
 
-This initial implementation establishes separated modules, train-only data
-collection, atomic task evidence, a live-disabled agent runtime, prompt
-identity guards and offline test fixtures. It does NOT claim:
-- agent model sessions have run;
-- Stage2 or Stage3 has been launched;
-- an Idea has passed scientific review, CGV or final recommendation evaluation;
-- robust sandboxing / service uptime has been deployed;
-- that a JSON-formatted LLM answer is scientifically validated.
+`tools/stage2_stability_probe.py` has been retired because it imported modules from the removed legacy verification package and the active MCP no longer exposes the probe.
 
-A subsequent production integration must add domain-specific scientific
-verifiers and the real HPC worker supervisor before enabling live research.
+No actual HPC Agents, multi-GPU tests or Stage2 training have been executed merely by creating these tools; verify those separately before interpreting a candidate as admitted.

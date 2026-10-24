@@ -3,7 +3,7 @@
 
 Stage2 requires source-bound independent Agent-authored executable tests via
 verification_id, followed by a real one-epoch trainer gradient/DDP smoke;
-the old CGV and retired admission paths do NOT grant launch permission.
+no historical admission path grants launch permission.
 Stage3 retains its frozen evaluation protocol and existing status tools.
 """
 from __future__ import annotations
@@ -1165,7 +1165,7 @@ def run_stage2_smoke(
 def tool_stage2_start(source_dir: str, verification_id: str) -> dict:
     """Launch only after independent Agent tests and real trainer smoke.
 
-    Old admission records, CGV specs and direct trainer calls do not grant access.
+    Historical admission records and direct trainer calls do not grant access.
     No agent or model can approve training merely by writing a verdict string.
     """
     tree, problem = resolve_stage2_tree(source_dir)
@@ -1889,7 +1889,7 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
     """Read current #116 source-bound Agent evidence and rerun reviewed tests.
 
     This module loads only the tiny stdlib deterministic admission checker, not
-    the former CGV engine; Stage2's real one-epoch gradient/DDP smoke follows.
+    any retired verifier; Stage2's real one-epoch gradient/DDP smoke follows.
     """
     import importlib.util
     verifier = REPO / "tools" / "research" / "verification" / "admission.py"
@@ -1934,7 +1934,7 @@ TOOLS: dict[str, dict] = {
         "description": "Start one Stage2 candidate only after the source-bound "
         "independent math/gradient/DDP/entrypoint Agent tests have ACTUALLY executed "
         "and passed, then perform the existing real one-epoch gradient smoke before "
-        "3000-epoch training; historical admissions and CGV specs are not accepted.",
+        "3000-epoch training; historical admissions are not accepted.",
     },
     "verification_check": {
         "fn": tool_verification_check,

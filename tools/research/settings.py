@@ -9,7 +9,7 @@ TEST = ROOT / "results" / "stage0_build_parquet" / "test.parquet"
 STAGE2_BASELINE = ROOT / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
 STAGE2_BEHAVIOR = ROOT / "stage2_RQ-VAE" / "TIGER_BEHAVIOR_SAMPLE_RQ-VAE"
 STAGE3 = ROOT / "stage3_T5Train"
-CGV = ROOT / "tools" / "cgv" / "run_cgv.py"
+VERIFICATION = ROOT / "tools" / "research" / "verification" / "admission.py"
 MCP = ROOT / "tools" / "genrec-mcp" / "server.py"
 
 # Change the source constant, not an argv flag. Inspect never spawns an agent.
@@ -21,6 +21,6 @@ AGENT_TIMEOUT_SECONDS = 900
 LEASE_SECONDS = 1200
 MAX_ATTEMPTS = 2
 
-# Explicitly forbidden here. Real training remains behind the existing MCP/CGV.
+# Explicitly forbidden here. Real training remains behind the existing MCP.
 AUTO_STAGE2 = False
 AUTO_STAGE3 = False

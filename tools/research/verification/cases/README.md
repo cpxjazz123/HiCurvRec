@@ -46,7 +46,7 @@ exercise multi-rank distributed updates, and prove the real Stage2 entrypoint
 calls the new mechanism; these substantive properties require code review and
 fault-injection examples in the individual suite.
 
-The verifier does not inspect CGV declarations or require G1–G6 contracts; it
+The verifier accepts only source-bound executable evidence; it
 deliberately fails closed on missing cases, unverifiable sessions, unknown
 candidates, source changes and test changes.
 
