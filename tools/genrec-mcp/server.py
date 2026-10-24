@@ -2005,13 +2005,9 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     saw, and a real smoke result. Scientific paperwork is not a gate here; a
     correct, numerically stable, runnable trainer is.
     """
-    import importlib.util
-    from tools.research.rounds import pipeline as round_pipeline
-
-    spec = importlib.util.spec_from_file_location("genrec_round_pipeline",
-                                                  REPO / "tools/research/rounds/pipeline.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tools.research.rounds import pipeline as module
     parts = verification_id.split(":", 2)
     if len(parts) != 3 or parts[0] != "round":
         return {"passed": False, "refused": "not a round verification id"}
