@@ -133,6 +133,13 @@ independent reviewer can judge them:
    classes, so such a suite runs ZERO tests and is refused. The role guidance
    now states the contract, and the suites under review are the re-authored
    ones.
+3. **test_entrypoint.py, the trainer import path.** The draft put only the
+   tree's PARENT directory on `sys.path` and then imported the trainer as a
+   package member, but `train_rqvae.py` itself does `from model import RQVAE`,
+   a top-level import, so the suite failed at import with
+   `ModuleNotFoundError: No module named 'model'` and never reached its
+   assertions. The tree directory is now on the path as well. No assertion was
+   removed, added or loosened.
 
 ## 7. What is authorized now, and what is not
 
