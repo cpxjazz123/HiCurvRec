@@ -1,8 +1,0 @@
-# QUESTION (C) -- does `no_grad` cut the DECLARED encoder gradient?
-`spec.json` declares the role level's gradient contract. `_behaviour_factors` computes the latents
-inside `with torch.no_grad(): latent = model.encoder(embeddings)`.
-Read the three files and answer:
-1. Which parameters receive gradient from the role term, and which are cut by that `no_grad`?
-2. Does the spec declare an encoder gradient that the code cannot deliver?
-3. Verdict: CONSISTENT / SPEC_OVERCLAIMS / CODE_UNDERDELIVERS, with evidence.
-Write `verdict.md` with sections EVIDENCE, VERDICT and REQUIRED_FIX.
