@@ -12,7 +12,8 @@ from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, read_json
 from . import handlers
-from ..verification.admission import EVIDENCE_ROOT, source_digest
+from ..core.evidence import digest_file
+from ..verification.admission import CASES_ROOT, EVIDENCE_ROOT, SUITES, source_digest
 
 SOURCE_DIR = settings.ROOT / "stage2_RQ-VAE"
 SAFE_ID = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{2,63}$")
@@ -43,6 +44,20 @@ def _lock(root):
             yield
         finally:
             fcntl.flock(fd, fcntl.LOCK_UN)
+
+
+def _promoted_differs_from_drafts(candidate_id: str) -> bool:
+    """True when the committed suite is not the suite the last draft produced."""
+    drafts = EVIDENCE_ROOT / "verification" / candidate_id / "drafts"
+    cases = CASES_ROOT / candidate_id
+    for suite in SUITES:
+        draft = drafts / ("test_" + suite + ".py")
+        promoted = cases / ("test_" + suite + ".py")
+        if not draft.is_file() or not promoted.is_file():
+            continue
+        if digest_file(draft) != digest_file(promoted):
+            return True
+    return False
 
 
 def _authored_source_digest(root, candidate_id: str):
@@ -93,8 +108,13 @@ def _start(run_id, source_dir, action):
                 # digest the authors themselves reported.
                 recorded = _authored_source_digest(root, cid)
             stale = recorded not in (None, source_sha)
+            # A finished draft can also be superseded when the operator promoted
+            # a corrected suite: the authors must then speak to the suite that
+            # is actually under review, not to the one that was corrected.
+            promoted_changed = (action == "draft"
+                                and _promoted_differs_from_drafts(cid))
             if (existing.get("status") not in ("failed", "cancelled", "superseded")
-                    and not stale):
+                    and not stale and not promoted_changed):
                 return {"started": False, "reason": "request_already_recorded",
                         "status": existing.get("status"), "request_id": existing.get("request_id")}
             # A failed attempt must not block the next one, and a request made
