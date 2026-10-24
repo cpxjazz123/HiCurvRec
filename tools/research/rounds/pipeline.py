@@ -169,6 +169,9 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                     findings.append({"verifier": report.get("verifier", ""),
                                      "check": check.get("name", ""), **finding})
     record["verdicts"] = reports
+    # The digest the reviewers saw is the tree's digest now: a stale one would make
+    # the admission refuse a tree that was reviewed in exactly this state.
+    record["source_digest"] = _source_digest(Path(record["tree"]))
     record["blocking_findings"] = findings
     if findings:
         record["status"] = "needs_repair"
