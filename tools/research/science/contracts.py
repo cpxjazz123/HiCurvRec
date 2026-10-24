@@ -26,6 +26,7 @@ def check_candidate(candidate: dict) -> None:
         raise ValueError("frozen Stage2 SID capacity mismatch")
     if policy.get("hyperparameter_sweep") or policy.get("uses_future_events"):
         raise ValueError("sweep/test leakage forbidden")
+    check_falsifier(candidate)
 
 
 def check_review_identity(candidate_path: Path, manifest: dict, prompt: str) -> None:
@@ -42,3 +43,56 @@ def check_review_identity(candidate_path: Path, manifest: dict, prompt: str) -> 
     forbidden = tuple(manifest.get("forbidden_stale_formulas", ()))
     if any(text and text in prompt for text in forbidden):
         raise ValueError("stale candidate formula found in review prompt")
+
+FALSIFIER_KEYS = ("stage2_diagnostics", "stage3_behavioral_test", "classification")
+CLASSIFICATION_KEYS = ("falsified_if", "passed_if", "mixed_if")
+
+
+def check_falsifier(candidate: dict) -> None:
+    """The falsifier must be decidable from numbers registered exactly once.
+
+    A proposal that names a threshold twice, omits the mixed/null rule or leaves
+    a diagnostic without a direction or minimum effect cannot be decided by two
+    independent readers, and the review blocks it. Reject it here instead of
+    spending a whole research run to find out.
+    """
+    falsifier = candidate.get("falsifier")
+    if not isinstance(falsifier, dict):
+        raise ValueError("falsifier must be an object")
+    missing = [key for key in FALSIFIER_KEYS if not falsifier.get(key)]
+    if missing:
+        raise ValueError("falsifier is incomplete: " + ", ".join(missing))
+    classification = falsifier["classification"]
+    if not isinstance(classification, dict) or any(
+            not classification.get(key) for key in CLASSIFICATION_KEYS):
+        raise ValueError("falsifier classification must define " + ", ".join(CLASSIFICATION_KEYS))
+    diagnostics = falsifier["stage2_diagnostics"]
+    if not isinstance(diagnostics, list) or not diagnostics:
+        raise ValueError("falsifier requires at least one Stage2 diagnostic")
+    for entry in diagnostics:
+        if not isinstance(entry, dict) or any(
+                not entry.get(key) for key in ("name", "direction", "minimum_effect", "seed_rule")):
+            raise ValueError("each Stage2 diagnostic needs name, direction, minimum_effect, seed_rule")
+    behavioural = falsifier["stage3_behavioral_test"]
+    if not isinstance(behavioural, dict) or any(
+            not behavioural.get(key) for key in ("metric", "direction", "minimum_effect", "seed_rule")):
+        raise ValueError("stage3_behavioral_test needs metric, direction, minimum_effect, seed_rule")
+    if behavioural["metric"] not in ("test_R@10", "test_NDCG@10"):
+        raise ValueError("stage3 behavioural metric must be test_R@10 or test_NDCG@10")
+    registered = {entry["name"] for entry in diagnostics}
+    text = " ".join(str(classification.get(key)) for key in CLASSIFICATION_KEYS)
+    unknown = sorted({word.strip("()[],") for word in text.replace("+", " ").split()}
+                     - registered - {"and", "or", "not", "all", "any", "seeds", "mean", "median",
+                                     "NULL", "null", "if", "then", "else", "is", "is not", ">",
+                                     ">=", "<", "<=", "==", "0", "0.0", "positive", "negative",
+                                     "zero", "opposite", "directional", "minimum", "for", "with",
+                                     "the", "a", "an", "of", "to", "in", "reaches", "reached",
+                                     "pooled", "per-seed", "seed", "diagnostic", "diagnostics"})
+    if unknown:
+        # Unknown tokens are only a problem when they look like registered names.
+        suspicious = [token for token in unknown if "_" in token or token.isupper()]
+        if suspicious:
+            raise ValueError("classification references unregistered diagnostics: "
+                             + ", ".join(sorted(suspicious)))
+    if "NULL" not in text and "null" not in text:
+        raise ValueError("classification must define the NULL outcome")
