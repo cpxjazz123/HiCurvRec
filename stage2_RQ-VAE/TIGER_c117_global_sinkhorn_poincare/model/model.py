@@ -63,7 +63,7 @@ class RQVAE(nn.Module):
         return loss_bal / float(self.rq.codebook_num)
 
     def forward(self, embeddings: torch.Tensor, index: torch.Tensor | None = None,
-                edges: tuple | None = None):
+                edges: tuple | None = None, population: torch.Tensor | None = None):
         if index is None:
             index = torch.arange(embeddings.shape[0], device=embeddings.device)
         if self.frozen_codes is None or self.frozen_transport is None:
@@ -85,8 +85,13 @@ class RQVAE(nn.Module):
         log_prob = [torch.log_softmax(logit, dim=1) for logit in logits]
         loss_assign = -(transport * torch.stack(log_prob, dim=1)).sum(dim=(1, 2)).mean()
 
-        # the global marginal term is computed once per epoch by the caller
-        loss_bal = torch.zeros((), device=latent.device, dtype=latent.dtype)
+        # The global marginal term is a full-population quantity: it is computed
+        # from the whole training population inside every objective evaluation,
+        # not added once outside the model.
+        if population is None:
+            loss_bal = torch.zeros((), device=latent.device, dtype=latent.dtype)
+        else:
+            loss_bal = self.population_balance(population)
 
         # train-only transition term: the third-level soft assignment of the
         # sampled successor items, weighted by the frozen prefix-conditional r.
