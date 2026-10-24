@@ -35,6 +35,15 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str) -> dict:
     # The runner gives the agent a workspace but not a destination; without this
     # the agent answers in prose and writes no file.
     destination = Path(root) / "agents" / task_id / output_name
+    # Resumability: an answer that is already on disk is reused, so a round that
+    # was interrupted does not pay for the same agents twice.
+    if destination.is_file():
+        try:
+            payload = read_json(destination)
+        except Exception:                                  # noqa: BLE001
+            payload = None
+        if isinstance(payload, dict):
+            return payload
     prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
               " (this absolute path). Write nowhere else.")
     run_agent(task_id, prompt, output_name, Path(root),
