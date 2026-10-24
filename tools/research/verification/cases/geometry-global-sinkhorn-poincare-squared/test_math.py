@@ -83,5 +83,60 @@ class TransportTests(unittest.TestCase):
         self.assertGreater(int((labels != log_q.argmax(dim=1)).sum()), 0)
 
 
+class ExactnessTests(unittest.TestCase):
+    """The assignment must be optimal and lexicographically smallest."""
+
+    def _brute_force(self, cost, capacities):
+        import itertools
+        n_items, n_codes = cost.shape
+        best = None
+
+        def walk(code, remaining, labels):
+            nonlocal best
+            if code == n_codes - 1:
+                if len(remaining) != capacities[code]:
+                    return
+                assignment = list(labels) + [code] * capacities[code]
+                if len(assignment) != n_items:
+                    return
+                total = sum(float(cost[i, assignment[i]]) for i in range(n_items))
+                if best is None or total < best[0] - 1e-12 or (
+                        abs(total - best[0]) <= 1e-12 and tuple(assignment) < best[1]):
+                    best = (total, tuple(assignment))
+                return
+            for chosen in itertools.combinations(remaining, capacities[code]):
+                walk(code + 1, [i for i in remaining if i not in chosen],
+                     labels + [code] * capacities[code])
+
+        walk(0, list(range(n_items)), [])
+        return list(best[1])
+
+    def test_balanced_labels_are_the_exact_lexicographic_optimum(self):
+        torch.manual_seed(7)
+        cost = torch.rand(6, 3, dtype=torch.float64)
+        capacities = balanced_capacities(6, 3)
+        expected = self._brute_force(cost, capacities)
+        # The solver minimises -log_q, so pass -cost as the log target.
+        labels = auction_balanced_assignment(-cost, capacities).tolist()
+        self.assertEqual(labels, expected)
+        self.assertEqual(sorted(labels), sorted(expected))
+
+    def test_independent_sinkhorn_reference_reproduces_the_margins(self):
+        import math
+        torch.manual_seed(11)
+        rows, cols, tau = 12, 4, 0.05
+        cost = torch.rand(rows, cols, dtype=torch.float64)
+        log_kernel = -cost / tau
+        log_v = torch.zeros((1, cols), dtype=torch.float64)
+        log_a = torch.full((rows,), -math.log(rows), dtype=torch.float64)
+        log_b = torch.full((cols,), -math.log(cols), dtype=torch.float64)
+        for _ in range(100):
+            log_u = log_a.unsqueeze(1) - torch.logsumexp(log_kernel + log_v, dim=1, keepdim=True)
+            log_v = log_b.unsqueeze(0) - torch.logsumexp(log_kernel + log_u, dim=0, keepdim=True)
+        reference = torch.exp(log_kernel + log_u + log_v)
+        produced = torch.exp(sinkhorn_log(cost, tau=tau, iters=100))
+        self.assertTrue(torch.allclose(reference, produced, rtol=1e-9, atol=1e-12))
+
+
 if __name__ == "__main__":
     unittest.main()

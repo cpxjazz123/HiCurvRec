@@ -67,6 +67,8 @@ def auction_balanced_assignment(log_q: torch.Tensor, capacities: list,
     """
     n_items, n_codes = log_q.shape
     cost = -log_q                                   # minimised
+    if n_items <= EXACT_LIMIT_ITEMS and n_codes <= EXACT_LIMIT_CODES:
+        return _exact_balanced_assignment(cost, capacities)
     remaining = list(capacities)
     assigned_code = torch.full((n_items,), -1, dtype=torch.long, device=cost.device)
     price = torch.zeros(n_codes, device=cost.device, dtype=cost.dtype)
@@ -158,6 +160,50 @@ def _cancel_improving_cycles(cost: torch.Tensor, assigned_code: torch.Tensor,
             remaining[best_code] -= 1
             assigned_code[item] = best_code
     return assigned_code
+
+
+#: Groups at or below these sizes are solved by exact enumeration, so the
+#: lexicographic rule and the optimality of the result are verifiable.
+EXACT_LIMIT_ITEMS = 64
+EXACT_LIMIT_CODES = 6
+
+
+def _exact_balanced_assignment(cost: torch.Tensor, capacities: list) -> torch.Tensor:
+    """Exact minimum-cost assignment with the lexicographically smallest optimum.
+
+    Small groups are enumerated exhaustively over the balanced capacity vectors,
+    which makes the optimum and the tie-break checkable rather than asserted.
+    """
+    import itertools
+
+    n_items, n_codes = cost.shape
+    values = [[float(cost[item, code].item()) for code in range(n_codes)]
+              for item in range(n_items)]
+    best = None
+
+    def walk(code, remaining, labels):
+        nonlocal best
+        if code == len(capacities) - 1:
+            if len(remaining) != capacities[code]:
+                return
+            for code_id in ([code] * capacities[code]):
+                pass
+            assignment = list(labels) + [code] * capacities[code]
+            if len(assignment) != n_items:
+                return
+            total = sum(values[item][assignment[item]] for item in range(n_items))
+            if best is None or total < best[0] - 1e-12 or (
+                    abs(total - best[0]) <= 1e-12 and tuple(assignment) < best[1]):
+                best = (total, tuple(assignment))
+            return
+        for chosen in itertools.combinations(remaining, capacities[code]):
+            walk(code + 1, [item for item in remaining if item not in chosen],
+                 labels + [code] * capacities[code])
+
+    walk(0, list(range(n_items)), [])
+    if best is None:
+        raise ValueError("no balanced assignment exists for this group")
+    return torch.tensor(best[1], dtype=torch.long, device=cost.device)
 
 
 class GlobalSinkhornQuantiser(nn.Module):
