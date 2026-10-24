@@ -145,6 +145,10 @@ is not GPU approval. Stage 2 may start only after
 3. `research_verify_review` freezes source, proposal and test hashes;
 4. `verification_check(source_dir, verification_id)` really re-runs all four
    suites with the project's Stage 2 interpreter and passes;
-5. the resource authorization for the 4-GPU run is present.
+5. the resource authorization for the 4-GPU run is present. That standing
+   authorization is granted by the repository owner in CLAUDE.md §10 and
+   recorded on issue #117; it waives the per-run human approval and nothing
+   else, so the four suites, the source/test hashes and the real trainer smoke
+   still have to pass on their own.
 
 Until then the honest status is WAITING, not RUNNING.
