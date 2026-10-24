@@ -71,6 +71,11 @@ def _prompt(role, ident, data, output, root=None):
     return build_prompt(role, frozen, output, root=root)
 
 
+def sha256_text(text: str) -> str:
+    import hashlib
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def _archive_workspace(workspace: Path, request_id: str = "") -> Path | None:
     """Move a previous role workspace aside so a re-authoring can write there."""
     if not workspace.is_dir():
@@ -170,7 +175,17 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
             execution = entry.get("execution")
             if execution:
                 output = Path(execution).parent / name
-        data["author_reports"][role] = read_json(output)
+        report = read_json(output) or {}
+        # The committed suites are already in the manifest, so the author report
+        # only contributes its identity and hashes: carrying the full test text a
+        # second time doubles the prompt and pushed the Reviewer into a truncated
+        # answer.
+        compact = {key: value for key, value in report.items()
+                   if not (isinstance(key, str) and key.endswith("test_source"))}
+        for key, value in report.items():
+            if isinstance(key, str) and key.endswith("test_source") and isinstance(value, str):
+                compact[key + "_sha256"] = sha256_text(value)
+        data["author_reports"][role] = compact
     prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json",
                      root=run_root)
     _archive_workspace(run_root / "agents" / (candidate_id + "_review"), request_id)

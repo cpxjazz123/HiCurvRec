@@ -69,7 +69,9 @@ ROLE_GUIDANCE = {
         "trainer, the hashes match. State in the rationale what you verified statically and "
         "what execution still has to prove. "
         "Reply JSON with candidate_id, source_sha256, proposal_sha256, "
-        "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale."
+        "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale. "
+        "Keep the rationale under 120 words and finish it; an incomplete rationale "
+        "cannot justify either verdict."
     ),
     "REVIEW": (
         "Read ONLY the candidate in THIS manifest. Audit actual behavior source, "
