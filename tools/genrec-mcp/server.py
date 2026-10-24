@@ -1815,11 +1815,14 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     }
 
 
-def stage2_quality_admission(sid: Path) -> dict:
-    """Recompute required Stage2 quality from the independent validation set.
+def stage2_validity_admission(sid: Path) -> dict:
+    """Check that the exported Stage2 SID is technically usable.
 
-    All quality checks are read-only and run before GPU probing or Stage3 launch.
-    Never trust a user-authored PASS record or a stored Stage2 diagnostic flag.
+    Issue #120 removed every quality floor from admission: ER, level-two prefix
+    counts, collisions and usage are measured as diagnostics and never refuse a
+    Stage 3 launch. Only an unreadable, malformed or ambiguous SID does. The
+    check is read-only and runs before GPU probing; a user-authored PASS record
+    is never trusted.
     """
     import importlib.util
     src = REPO / "tools" / "genrec-mcp" / "stage2_quality_gate.py"
@@ -1867,11 +1870,11 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         }
     if not sid.is_file():
         return {"started": False, "refused": f"no item_sids file at {given}"}
-    quality = stage2_quality_admission(sid)
-    if not quality["passed"]:
+    validity = stage2_validity_admission(sid)
+    if not validity["passed"]:
         return {"started": False,
-                "refused": "Stage2 quality gate: " + str(quality.get("refused")),
-                "quality_gate": quality}
+                "refused": "Stage2 SID validity: " + str(validity.get("refused")),
+                "validity": validity}
 
     # Canonical logical (/home) form: Path.resolve() would embed the physical
     # /fs04 path, while the repository and Stage3 record /home paths.
@@ -1945,7 +1948,7 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         "cwd": str(STAGE3_DIR),
         "variant": chosen_variant,
         "sid": str(sid),
-        "stage2_quality_gate": quality,
+        "stage2_validity": validity,
         "run_log": str(run_log),
         "native_log": str(RESULT3_ROOT / chosen_variant / "logs/_stage3_launcher.log"),
         "harness": str(harness),

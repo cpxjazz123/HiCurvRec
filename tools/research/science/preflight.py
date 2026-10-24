@@ -294,17 +294,6 @@ def check_falsifier(candidate) -> list:
         problems.append(diagnostic("falsifier", "NULL_OUTCOME_MISSING",
                                    "falsifier.classification", "a NULL outcome rule", text[:80],
                                    "classify undefined or non-finite outcomes as NULL"))
-    # Thresholds are declared once: the falsifier is their only home.
-    scattered = [key for key in ("real_trigger_measurement",)
-                 if isinstance(candidate.get(key), str)
-                 and any(number in candidate[key] for number in
-                         (f"{THRESHOLDS['valid_l1_hard_er_strict_gt']}",))]
-    if scattered:
-        problems.append(diagnostic("falsifier", "THRESHOLD_DUPLICATED", ",".join(scattered),
-                                   "thresholds live only in the falsifier",
-                                   "same threshold restated in prose",
-                                   "reference the falsifier instead of restating the number"))
-    del registered
     return problems
 
 

@@ -80,12 +80,16 @@ class ContractLayerTests(unittest.TestCase):
         report = preflight.run(candidate)
         self.assertEqual(report["diagnostics"][0]["code"], "FUTURE_LEAKAGE")
 
-    def test_thresholds_come_from_the_authoritative_gate(self):
+    def test_there_are_no_promotion_thresholds_any_more(self):
+        # Issue #120 removed every quality floor, so the contract must not
+        # carry one either; the frozen reference stays as a reported value.
         from tools.research.science.contract import _GATE
-        self.assertEqual(contract.THRESHOLDS["valid_l1_hard_er_strict_gt"],
-                         float(_GATE.MIN_VALID_L1_HARD_ER))
-        self.assertEqual(contract.THRESHOLDS["level2_prefixes_strict_gt"],
+        self.assertEqual(contract.THRESHOLDS, {})
+        self.assertEqual(contract.REFERENCE_VALUES["valid_l1_hard_er"],
+                         float(_GATE.FROZEN_RESAMPLE_VALID_L1_ER))
+        self.assertEqual(contract.REFERENCE_VALUES["level2_distinct_prefixes"],
                          int(_GATE.FROZEN_BASELINE_L2_PREFIXES))
+        self.assertEqual(contract.METRICS["valid_l1_hard_er"]["role"], "diagnostic_only")
 
 
 class MathLayerTests(unittest.TestCase):
@@ -146,15 +150,6 @@ class FalsifierLayerTests(unittest.TestCase):
         report = preflight.run(candidate)
         codes = [entry["code"] for entry in report["diagnostics"]]
         self.assertIn("NULL_OUTCOME_MISSING", codes)
-
-    def test_a_duplicated_threshold_is_refused(self):
-        candidate = legal_candidate()
-        candidate["real_trigger_measurement"] = (
-            "reject unless ER is at least "
-            f"{contract.THRESHOLDS['valid_l1_hard_er_strict_gt']} with prefixes above 16145")
-        report = preflight.run(candidate)
-        codes = [entry["code"] for entry in report["diagnostics"]]
-        self.assertIn("THRESHOLD_DUPLICATED", codes)
 
     def test_a_behavioural_metric_cannot_be_a_stage2_diagnostic(self):
         candidate = legal_candidate()

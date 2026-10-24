@@ -31,7 +31,7 @@
 ## 4. 训练与评估
 
 18. Stage2 保持 3000 epochs 的完整训练预算，禁止重新加入基于训练损失或验证指标的提前停止。
-19. Stage2→Stage3 保留**强制的双指标质量准入（AND）**，但从旧的「必须双双严格超过 Resample」放宽为：在冻结独立验证样本上 L1 Hard ER **≥ 10.0**，且不同的两级 SID 前缀数 **≥ 10000**；任何一项不足即拒绝 Stage3。Resample 的 ER=16.38953942232631 与 L2=16145 仍是不可修改、必须复核 SHA 的**历史参照**，不再是准入分界值。候选完整 SID 唯一、商品集合一致、冻结验证数据及哈希、三层结构与 Stage3 固定协议仍必须通过，缺失/损坏/指标不可定义时一律 FAIL-CLOSED。正/负 L1 HitRate 与 L3 指标仅诊断，不另加硬门槛；Stage3 test_R@10 > 0.065 才是最终成功条件。新宽松准入规则是探索性预算筛选，不代表对 Recall 的性能保证。
+19. Stage2→Stage3 的准入只做**技术有效性**判定（Issue #120）：候选 SID 文件可解析、商品映射为规范十进制 id 空间、token 宽度与取值合法、完整 SID（含确定性消歧 token）唯一，即自动进入 Stage 3。**不得**把 Hard-L1 ER、二级前缀数、L3 Collision、码使用率、冗余度等任何质量指标作为准入门槛；这些只作为诊断被测量与记录。Resample 的 ER=16.38953942232631 与 L2=16145 仅为**历史参照**值，不是分界值。Stage3 test_R@10 > 0.065 仍是最终成功条件；实验登记保留所有候选（含低召回与失败分支），不得只留最优。
 20. 所有新 Stage2 机制在正式训练前必须通过独立 Agent 编写的数学、梯度、DDP 和真实入口测试。
 21. 梯度验证必须使用实际模型与训练 batch 检查参与训练的损失、梯度及参数更新，不得只检查合成张量。
 22. Stage3 固定使用 `NUM_EPOCHS=150`、`EVAL_INTERVAL=5`、`EVAL_START_EPOCH=75`、`EARLY_EVAL_EPOCHS=(25,50,75,100,125)`、`SEED=42`、`BEAM_SIZE=20`、`NO_EVAL=True` 和 `SKIP_TEST=False`。
@@ -108,7 +108,7 @@
 ## 11. Stage2 分层指标永久记录
 
 
-63. **每个新 Stage2 候选在完成训练并导出 item_sids.json 后、报告质量结论或尝试 Stage3 前，必须对该 SID 单独计算并持久化一份完整的分层指标记录**（使用 `tools/research/science/sid_layer_analysis.py::record_single_sid`）。必记的实际数值包括：L1 Hard ER、L1 正/负样本前缀命中率（HitRate，仅诊断）、不同的二级 SID 前缀数、不同的三级 SID 组合数、L3 Collision（三级 SID 重复商品占比）、L3 Refinement Gain（bits）、Conditional G3（平均 log2 概率比），并记录 Resample 历史基线、当前 ER≥10.0 且 L2≥10000 的双硬门槛比较结论。必须同时记录实际 SID 路径和 SHA-256、训练/验证输入路径及 SHA-256、指标口径、有效验证样本数、实验/候选身份和输出文件位置。记录必须在读取该候选的 Stage3 测试成绩前产生，固定使用训练行为与冻结独立验证样本，禁止借测试结果调参或选最优运行；任一指标无法计算时明确标记缺失/失败及原因，不得虚构、填写 0 或称作 PASS。所有 L3 指标为**强制记录的诊断值**，不新增 L3 或 HitRate 的 Stage3 准入硬门槛；准入仍只按第 19 条的放宽后 ER、L2 双硬门槛及现有完整性校验执行。分层报告保存在该 Stage2 结果目录下 `stage2_metrics/<sid_sha256>.json`，不得覆盖其他 SID 的历史记录。
+63. **每个新 Stage2 候选在完成训练并导出 item_sids.json 后、报告质量结论或尝试 Stage3 前，必须对该 SID 单独计算并持久化一份完整的分层指标记录**（使用 `tools/research/science/sid_layer_analysis.py::record_single_sid`）。必记的实际数值包括：L1 Hard ER、L1 正/负样本前缀命中率（HitRate，仅诊断）、不同的二级 SID 前缀数、不同的三级 SID 组合数、L3 Collision（三级 SID 重复商品占比）、L3 Refinement Gain（bits）、Conditional G3（平均 log2 概率比），并记录 Resample 历史基线与诊断对比（无晋级门槛）。必须同时记录实际 SID 路径和 SHA-256、训练/验证输入路径及 SHA-256、指标口径、有效验证样本数、实验/候选身份和输出文件位置。记录必须在读取该候选的 Stage3 测试成绩前产生，固定使用训练行为与冻结独立验证样本，禁止借测试结果调参或选最优运行；任一指标无法计算时明确标记缺失/失败及原因，不得虚构、填写 0 或称作 PASS。所有 L3 指标为**强制记录的诊断值**，不新增 L3 或 HitRate 的 Stage3 准入硬门槛；准入仍只按第 19 条的放宽后 ER、L2 双硬门槛及现有完整性校验执行。分层报告保存在该 Stage2 结果目录下 `stage2_metrics/<sid_sha256>.json`，不得覆盖其他 SID 的历史记录。
 
 
 64. **科研审查的准入标准**：独立 REVIEW 只审查冻结提案的数学类型与可定义域、同容量对照是否只差度量、是否使用验证/测试/未来行为或预测时用户上下文、损失与目标分布能否唯一复算、以及反证是否可机械判定；提案必须同时注册 Stage3 行为检验（指标、方向、最小效应、种子合并与 mixed/null 分类）。Stage2 只构建 SID、从不排序，因此**不得**以「Stage2 侧指标无法自证 next-item 收益」为由阻断晋级；行为收益由 Stage3 `test_R@10` 判定，Stage2 指标（Hard-L1 ER、二级前缀、L3 三统计）只作为前导指标。

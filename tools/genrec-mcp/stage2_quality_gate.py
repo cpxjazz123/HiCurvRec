@@ -1,11 +1,14 @@
-"""Fail-closed Stage2 -> Stage3 quality admission; stdlib only, no training.
+"""Stage 2 -> Stage 3 admission: technical validity of the exported SID.
 
-Hard-L1 ER is measured on frozen independent validation pairs and must be
-at least 10.0; distinct two-token SID prefixes must be at least 10000.
-These two relaxed floors remain mandatory AND gates. The historical Resample
-values are still verified against frozen blobs and reported as references,
-not used as strict promotion thresholds. L1 positive/negative HitRates remain
-diagnostic only. Stage3 Recall@10 is a separate downstream outcome.
+Issue #120 removes every quality floor from admission. ER, level-two prefix
+counts, collisions, code usage and redundancy are still MEASURED, but they are
+diagnostics: a Stage 2 run that produced a technically valid SID proceeds to
+Stage 3 whatever those numbers look like.
+
+What is still refused is a Stage 2 output that cannot be used at all: an
+unreadable or malformed SID file, an item mapping that is not the canonical
+decimal id space, a SID whose token width or token values are malformed, or
+full SIDs that are not unique after the deterministic disambiguation token.
 """
 import array
 import ast
@@ -17,9 +20,9 @@ import struct
 import sys
 import zipfile
 
-MIN_VALID_L1_HARD_ER = 10.0  # Inclusive Stage3 promotion floor, not a Resample-beating requirement
-MIN_L2_PREFIXES = 10000  # Inclusive Stage3 promotion floor; both floors are mandatory
-FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference only, not the promotion floor
+#: No promotion floor exists any more. The frozen Resample numbers stay only as
+#: the reference values the diagnostics are compared against.
+FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic report
 FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
 FROZEN_BASELINE_BLOB_SHA1 = "d97d24a7a63891682d2b68c09a89164de2031ee9"
@@ -162,51 +165,67 @@ def _measures(sids, anchors, positives, negatives):
 
 
 def evaluate(sid_path, baseline_path, pairs_path, meta_path):
-    """Recompute all gates from source-bound artifacts, never accept a PASS flag."""
+    """Check that the exported SID is usable, and measure the diagnostics.
+
+    Only the candidate's own technical validity can refuse an admission. The
+    reference artifacts and the derived quality numbers are reported; a missing
+    or altered reference changes the diagnostics, not the usability of the
+    candidate's SID.
+    """
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
-                "pairs": str(pairs_path), "meta": str(meta_path)}
+                "pairs": str(pairs_path), "meta": str(meta_path),
+                "admission_policy": "technical validity only; no quality floor"}
     try:
-        for label, path, want in (
-            ("baseline SID", baseline_path, FROZEN_BASELINE_BLOB_SHA1),
-            ("independent validation pairs", pairs_path, FROZEN_VALID_PAIRS_BLOB_SHA1),
-            ("validation metadata", meta_path, FROZEN_VALID_META_BLOB_SHA1),
-        ):
-            if _git_blob_sha1(path) != want:
-                raise QualityGateError(label + " no longer matches frozen Git blob")
         sid = _sid(sid_path)
-        baseline = _sid(baseline_path)
-        if set(sid) != set(baseline):
-            raise QualityGateError("candidate and frozen baseline have different item sets")
+        if not sid:
+            raise QualityGateError("candidate SID is empty")
+        failures = []
         if len(set(sid.values())) != len(sid):
-            raise QualityGateError("full candidate Semantic IDs are not unique")
+            failures.append("full candidate Semantic IDs are not unique after "
+                            "the disambiguation token")
+        reference_status = {}
+        baseline = None
+        try:
+            for label, path, want in (
+                ("baseline SID", baseline_path, FROZEN_BASELINE_BLOB_SHA1),
+                ("independent validation pairs", pairs_path, FROZEN_VALID_PAIRS_BLOB_SHA1),
+                ("validation metadata", meta_path, FROZEN_VALID_META_BLOB_SHA1),
+            ):
+                if _git_blob_sha1(path) != want:
+                    reference_status[label] = "no longer matches the frozen Git blob"
+            baseline = _sid(baseline_path)
+            if set(sid) != set(baseline):
+                reference_status["item set"] = ("candidate and frozen baseline "
+                                                "have different item sets")
+        except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
+            reference_status["reference"] = str(exc)
+
+        candidate = {}
+        baseline_metrics = {}
         candidate_prefixes = len({v[:2] for v in sid.values()})
-        baseline_prefixes = len({v[:2] for v in baseline.values()})
-        if baseline_prefixes != FROZEN_BASELINE_L2_PREFIXES:
-            raise QualityGateError("frozen baseline prefix reference has changed")
-        anchors, positives, negatives = _pairs(pairs_path, meta_path)
-        candidate = _measures(sid, anchors, positives, negatives)
-        reference = _measures(baseline, anchors, positives, negatives)
-        if not math.isclose(reference["valid_l1_hard_er"], FROZEN_RESAMPLE_VALID_L1_ER,
-                            rel_tol=0.0, abs_tol=1e-10):
-            raise QualityGateError("Resample validation L1 Hard ER does not match frozen reference")
+        try:
+            anchors, positives, negatives = _pairs(pairs_path, meta_path)
+            candidate = _measures(sid, anchors, positives, negatives)
+            if baseline is not None:
+                baseline_metrics = _measures(baseline, anchors, positives, negatives)
+        except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
+            reference_status["diagnostics"] = str(exc)
         evidence.update({
             "candidate": {**candidate, "level2_distinct_prefixes": candidate_prefixes,
                           "full_unique_items": len(sid)},
-            "baseline": {**reference, "level2_distinct_prefixes": baseline_prefixes},
-            "thresholds": {"valid_l1_hard_er_min_inclusive": MIN_VALID_L1_HARD_ER,
-                           "level2_prefixes_min_inclusive": MIN_L2_PREFIXES,
-                           "frozen_resample_valid_l1_hard_er": FROZEN_RESAMPLE_VALID_L1_ER,
-                           "frozen_resample_level2_prefixes": baseline_prefixes},
-            "diagnostic_only": ["valid_l1_positive_hit_rate", "valid_l1_negative_hit_rate"],
+            "baseline": {**baseline_metrics,
+                         "level2_distinct_prefixes": len({v[:2] for v in baseline.values()})
+                         if baseline else None},
+            "reference_status": reference_status or {"status": "verified"},
+            "thresholds": {},
+            "diagnostic_only": ["valid_l1_hard_er", "valid_l1_positive_hit_rate",
+                                "valid_l1_negative_hit_rate", "level2_distinct_prefixes",
+                                "full_unique_items"],
             "sha256": {key: _digest(path) for key, path in (
                 ("sid", sid_path), ("baseline", baseline_path),
-                ("validation_pairs", pairs_path), ("validation_meta", meta_path))},
+                ("validation_pairs", pairs_path), ("validation_meta", meta_path))
+                if Path(path).is_file()},
         })
-        failures = []
-        if candidate["valid_l1_hard_er"] < MIN_VALID_L1_HARD_ER:
-            failures.append("Hard-L1 ER must be >= " + str(MIN_VALID_L1_HARD_ER))
-        if candidate_prefixes < MIN_L2_PREFIXES:
-            failures.append("second-level SID prefixes must be >= " + str(MIN_L2_PREFIXES))
         return {"passed": not failures, "refused": "; ".join(failures) if failures else None,
                 **evidence}
     except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:

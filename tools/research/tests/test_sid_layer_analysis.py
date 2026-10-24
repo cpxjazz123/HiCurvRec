@@ -101,7 +101,9 @@ class SingleSIDMetricsRecordTests(unittest.TestCase):
     def test_record_covers_all_layers_without_new_gate(self):
         sids = _sid([(1, 2, 7, 768), (1, 2, 8, 768), (1, 3, 9, 768)])
         fake_gate = {
-            "passed": False,
+            # A technically valid SID with poor diagnostics: under Issue #120
+            # this is admitted, so the validity verdict is True.
+            "passed": True,
             "candidate": {
                 "valid_l1_hard_er": 8.0,
                 "valid_l1_positive_hit_rate": 0.2,
@@ -118,12 +120,16 @@ class SingleSIDMetricsRecordTests(unittest.TestCase):
         metrics = analysis.build_single_sid_record(
             sids, fake_gate, [0, 0], [1, 2], {0: Counter({1: 2})})
         self.assertEqual(metrics["status"], "complete")
-        self.assertFalse(metrics["promotion_eligible_by_quality"])
+        # Issue #120: the record carries diagnostics and a validity verdict, and
+        # it no longer computes a promotion gate of any kind.
+        self.assertTrue(metrics["technically_valid_sid"])
+        self.assertNotIn("hard_gates", metrics)
+        self.assertNotIn("promotion_eligible_by_quality", metrics)
+        self.assertEqual(metrics["admission_policy"],
+                         "technical validity only; no quality floor")
         self.assertEqual(len(metrics["metrics"]), 8)
         self.assertEqual(metrics["metrics"]["level3_distinct_triples"], 3)
-        self.assertIn("conditional_l3_gain", metrics["diagnostics_only"])
-        self.assertNotIn("conditional_l3_gain", metrics["hard_gates"])
-        self.assertNotIn("valid_l1_positive_hit_rate", metrics["hard_gates"])
+        self.assertIn("conditional_l3_gain", metrics["diagnostics"])
 
     def test_single_sid_excluded_singleton_pairs_recorded_not_fabricated(self):
         sids = _sid([(1, 2, 7, 768), (1, 2, 8, 768), (2, 3, 9, 768)])
