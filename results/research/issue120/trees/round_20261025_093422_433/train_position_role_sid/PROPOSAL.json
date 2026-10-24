@@ -1,0 +1,23 @@
+{
+  "also_proposed_by": [
+    "ideation_3"
+  ],
+  "cost_estimate": "One streaming pass over training sequences and O(number of items) accumulators; negligible relative to baseline and no added per-step training work. At 24 steps per epoch and 3000 epochs, incremental cost is exactly 0 tensor operations per optimization step and under one additional data pass before training; fits easily on one GPU.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "The appended role token improves test_R@10 over 0.06335, with the largest gains for items whose position profiles differ despite similar baseline content codes. Measure overall Recall@10 and stratified performance by item occurrence count and position-bin separation; reject if role assignment does not improve held-out next-item accuracy or gains are confined to frequent items.",
+  "fingerprint": "a0b39528d3a1fe53",
+  "idea_id": "train_position_role_sid",
+  "key_change": "Estimate a smoothed position profile for each item using training histories only, quantize its mean relative position into a small number of bins, and append that bin as one global SID token. No per-user state or inference-time lookup is required.",
+  "motivation": "Items with similar content can play different roles in user journeys: some tend to appear as early exploration, while others are commonly revisited or occur late in a history. Content-derived IDs can merge such items even though their next-item implications differ.",
+  "novelty": "Unlike transition graphs, demand/repeat signatures, or uncertainty-based stability, this describes an item's marginal position within observed training histories and adds a tiny categorical role token while preserving its existing content SID.",
+  "origin_agent": "ideation_3",
+  "risks": [
+    "Position can reflect dataset truncation or sequence-construction conventions rather than a stable user journey role.",
+    "The added token may be redundant with the generator's history context, or may fragment useful content prefixes and reduce generalization for rare items.",
+    "Position marginals discard which preceding context caused the role, so the bins may be too coarse to produce predictive distinctions."
+  ],
+  "specification": {
+    "text": "For each training sequence s=(i_1,...,i_L), ignore sequences with L<2 and define x_{s,t}=(t-1)/(L-1). For item i accumulate n_i and m_i=sum x_{s,t} over all occurrences. Let mu_i=(m_i+alpha*mu_0)/(n_i+alpha), where mu_0 is the global mean x over all counted positions and alpha=5. On training items with n_i>0, compute quartile cut points of mu_i; assign role r_i in {0,1,2,3} by these cuts, with n_i=0 assigned to the global-median bin. Export SID(i)=baseline_RQ_SID(i) concatenated with r_i (a single token from a four-token vocabulary); do not alter existing token IDs. Compute all statistics and cut points from training histories only, freeze them, and evaluate with unchanged Stage 3 settings."
+  },
+  "title": "Encode an item's train-only sequence-position role"
+}

@@ -1,0 +1,32 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order",
+  "changed_files": [
+    "train_rqvae.py",
+    "smoke_test.py"
+  ],
+  "deviations": [
+    {
+      "item": "Used the specification's simpler estimator I(target level; source full SID) rather than conditional MI given the other target levels or its earlier PMI wording.",
+      "reason": "The description explicitly permits the simpler minimally specified empirical MI estimator; it gives a straightforward train-only contingency-table implementation."
+    },
+    {
+      "item": "No Stage 3 training or test_R@10 comparison was run, and shared Stage 3 configuration/export code was not modified.",
+      "reason": "The request forbids edits outside the owned candidate tree and requires only a minimal smoke test. The candidate exports the permuted item SID JSON in its tree for an explicitly configured Stage 3 run."
+    },
+    {
+      "item": "The frozen baseline hyperparameters and 3000-epoch recipe were retained, but the full 3000-epoch training was not executed.",
+      "reason": "The requested verification scope was a minimal forward/backward/export smoke test; the candidate tree is configured for the frozen full run."
+    }
+  ],
+  "assumptions": [
+    "Each parquet training row represents one target event; its immediately preceding source item is history[-1]. Empty-history rows are initial events and are excluded from adjacency statistics.",
+    "The item row index used by the embedding matrix and baseline code export is the item ID used in train.parquet.",
+    "Stage 3 should consume this candidate's item_sids.json as the complete SID mapping; tuple position carries the same global level permutation, and collision-extension tokens remain appended as in baseline.",
+    "Candidate artifacts must remain inside the owned tree to avoid overwriting frozen baseline outputs."
+  ],
+  "smoke": {
+    "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
+    "result": "PASS: finite loss (1.097167), backward produced finite nonzero parameter gradients, train-only ordering returned a valid permutation [1, 2, 0], and collision-extended SID export had shape (4, 4) with 4 unique rows. KMeans emitted expected small-fixture convergence warnings; smoke completed successfully."
+  },
+  "notes": "The candidate is an isolated copy of stage2_RQ-VAE/TIGER_RQ-VAE. The learned embeddings, RQ-VAE, codebooks, assignments, and tokenizer fit are unchanged. At export, each item's baseline three-level code row is reordered using descending empirical train-adjacency MI in nats; exact ties retain original level index. The permutation and scores are recorded in level_order.json, and both SID and JSON exports use the reordered codes. Candidate output/checkpoint/metrics paths were redirected inside this tree."
+}

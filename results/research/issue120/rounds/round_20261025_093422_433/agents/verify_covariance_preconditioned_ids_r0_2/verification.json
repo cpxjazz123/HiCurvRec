@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_covariance_preconditioned_ids_r0_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/covariance_preconditioned_ids/PROPOSAL.json:1",
+          "detail": "The target tree contains only PROPOSAL.json and no implementation source. Consequently there is no code to verify for train-only covariance estimation, the specified shrinkage-whitening transform, feeding transformed vectors to the unchanged RQ-VAE, or exporting one SID tuple per item. Mechanism fidelity cannot be established.",
+          "reproduction": "Enumerate files under the target tree: the only file is PROPOSAL.json. There is no trainer, preprocessing/transform implementation, export code, or test in this tree.",
+          "correction": "Provide the implementation in this tree, including the fixed alpha=0.05 train-only transform and its use consistently during training and export; then review the actual code against the specification."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/covariance_preconditioned_ids/PROPOSAL.json:1",
+          "detail": "No forward/backward implementation is present, so finite losses, gradient reachability, dead loss terms, and numerical stability cannot be checked or reproduced. A proposal is not executable evidence of trainability.",
+          "reproduction": "There is no Python/module or test file in the target tree to invoke for a real forward and backward pass.",
+          "correction": "Include the runnable model/training entry point and a minimal real-batch forward/backward check; verify finite loss and gradients for the intended RQ-VAE parameters and inspect the transform/eigendecomposition for numerical stability."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/covariance_preconditioned_ids/PROPOSAL.json:1",
+          "detail": "The tree has no trainer entry point, data-loading path, SID export, or distributed launcher configuration. Therefore the real trainer cannot be run, frozen-data provenance and SID indexing/validity cannot be checked, and launcher compatibility cannot be confirmed.",
+          "reproduction": "The target tree contains only PROPOSAL.json; attempts to identify a trainer or launcher within it yield no files to run or inspect.",
+          "correction": "Provide the integrated implementation and its actual entry point/configuration. Run it against the frozen data path, validate exported SIDs against item indices and expected tuple format, and exercise the distributed launcher before verification."
+        }
+      ]
+    }
+  ]
+}

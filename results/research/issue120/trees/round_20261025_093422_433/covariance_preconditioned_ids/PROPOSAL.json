@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "cost_estimate": "One-time O(N*d^2 + d^3) CPU/GPU preprocessing (for N=24556 and the existing modest embedding dimension), then zero additional asymptotic work per training step beyond a stored transformed input tensor. Storage is O(N*d); at 24 steps/epoch and 3000 epochs the incremental per-step cost is effectively zero versus baseline RQ-VAE, so the full run remains baseline-feasible.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "On a fixed-seed Stage 2/Stage 3 comparison, covariance preconditioning improves test_R@10 over 0.06335, and the gain is accompanied by improved validation next-item ranking rather than merely lower reconstruction loss. Keep it only if the held-out test metric improves and train-only diagnostics show no pathological code collapse or large increase in SID collisions.",
+  "fingerprint": "57977fcdfe1ec671",
+  "idea_id": "covariance_preconditioned_ids",
+  "key_change": "Compute a shrinkage-whitening linear map from training-item embeddings and feed transformed vectors to the otherwise unchanged RQ-VAE. Export SIDs from this model as usual; no item receives more than one global SID.",
+  "motivation": "Dense item embeddings often devote much of their Euclidean distance to a few high-variance directions. Those directions can dominate nearest-code assignments even when lower-variance directions distinguish items that users substitute or compare, yielding IDs that waste code capacity on broad popularity/category axes.",
+  "novelty": "Instead of changing the quantizer, codebook balance, hierarchy, or behavioral loss, use a fixed train-item covariance transform to change which embedding differences count equally during quantization. The transform is estimated once from the existing Stage 1 vectors and adds no learned per-step mechanism.",
+  "origin_agent": "ideation_2",
+  "risks": [
+    "Small eigenvalues may mostly represent noise, causing whitening to amplify unstable directions despite shrinkage; global covariance may erase useful broad semantic structure; and any Stage 3 gain may be within seed variance. Ensure preprocessing uses only train-item embeddings and hold all downstream training/evaluation settings fixed."
+  ],
+  "specification": {
+    "text": "Given train-only embeddings x_i in R^d, compute mu = mean_i(x_i), C = (1/N) sum_i (x_i-mu)(x_i-mu)^T, and eigendecomposition C=U diag(lambda) U^T. Set A=U diag((lambda+alpha*mean(lambda))^(-1/2)) U^T, with fixed alpha=0.05. Train the unchanged RQ-VAE on z_i=A(x_i-mu) with its existing reconstruction, commitment, and codebook losses; at export, encode each item's same z_i and write its ordinary single code tuple. Do not fit A using validation/test items or labels."
+  },
+  "title": "Whiten item semantics before residual quantization"
+}

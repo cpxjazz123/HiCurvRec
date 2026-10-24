@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_covariance_preconditioned_ids_r1_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:171-182",
+          "detail": "The specified shrinkage transform is implemented for non-degenerate covariance, using only train target IDs and fixed alpha=0.05. However, it is undefined for zero-variance embeddings: mean eigenvalue is zero, so the regularized eigenvalues are zero and inverse_sqrt becomes infinity. This produces a non-finite transform and transformed inputs, contrary to a valid fixed preprocessing step.",
+          "reproduction": "Call fit_train_whitener(np.ones((4, 2), dtype=np.float32), np.arange(4)); the covariance eigenvalues and their mean are zero, so the returned matrix contains infinities (and applying it yields NaNs).",
+          "correction": "Reject zero/non-finite mean variance with a clear ValueError before taking the reciprocal square root, or define an explicit finite fallback (for example identity) for this degenerate input; also check the resulting transform is finite."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:171-186",
+          "detail": "The degenerate-covariance case above feeds non-finite tensors to the model, so a real forward/backward has non-finite loss/gradients for this valid finite-input counterexample. I could not execute the supplied forward/backward smoke test in this environment because the active Python has no PyTorch installed; therefore ordinary-data runtime gradient reachability is not independently established here.",
+          "reproduction": "Use the all-ones matrix in fit_train_whitener, then apply_train_whitener and pass the result through RQVAE: inputs are non-finite before the model forward. Running `python smoke_test.py` in the available environment currently stops at `ModuleNotFoundError: No module named 'torch'`.",
+          "correction": "Guard the whitening eigenvalue scale as described above, then run smoke_test.py in the project's configured PyTorch environment and verify finite loss and finite, nonzero gradients for trainable parameters."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

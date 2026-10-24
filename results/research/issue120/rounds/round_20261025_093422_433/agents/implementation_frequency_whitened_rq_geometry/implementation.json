@@ -1,0 +1,23 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_20261025_093422_433/agents/implementation_frequency_whitened_rq_geometry/tree",
+  "changed_files": [
+    "train_rqvae.py",
+    "smoke_test.py"
+  ],
+  "deviations": [
+    {
+      "item": "The smoke test uses 64 synthetic items, 8 input dimensions, a compact network, and 8-entry codebooks rather than the frozen production dataset and full 3000-epoch schedule.",
+      "reason": "A bounded smoke test is intended to prove the altered preprocessing, finite forward/backward with gradients reaching trainable RQ-VAE parameters, and valid unique SID export without executing a full production training run. Production hyperparameters and schedule in train_rqvae.py remain frozen."
+    }
+  ],
+  "assumptions": [
+    "The baseline embedding array row order is the item-ID order, and unique target IDs in the existing training parquet define the train-item population for covariance estimation.",
+    "The provided train.parquet target IDs represent the existing frozen training split; validation/test items should be transformed with the same train-fitted mean and matrix, as the existing exporter transforms all embedding rows uniformly.",
+    "The specified floor 0.01*mean(s) is applied to the eigenvalues of the shrinkage covariance, with rho=0.1 and population covariance denominator N, exactly as stated."
+  ],
+  "smoke": {
+    "command": "PYTHONPATH=. /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py (from the tree directory)",
+    "result": "PASS: loss=0.315373, finite loss and finite nonzero gradients on trainable model parameters; transformed output finite; token shape (64, 3); exported extended SID shape (64, 4), all 64 unique."
+  },
+  "notes": "Copied the frozen baseline TIGER_RQ-VAE train script and model package into the standalone candidate tree. The only production-script behavior change is a single train-ID-only shrinkage covariance/eigendecomposition, application of the frozen transform to every item before RQ-VAE training/evaluation/export, persistence of the fitted mean/matrix, and routing candidate outputs/logs into this owned tree. No model, loss, optimizer, schedule, seeds, split, or exporter logic was changed."
+}

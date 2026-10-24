@@ -1,0 +1,65 @@
+{
+  "scorer": "scoring_2",
+  "scores": [
+    {
+      "idea_id": "predictive_residual_level_order",
+      "scores": {
+        "novelty": 4,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Reorders existing residual codes by train-only predictive information without altering the tokenizer or injecting behavior into its fit. This is a clear serialization-level intervention with a plausible mechanism: make early autoregressive decisions expose distinctions useful for continuation. Implementation and cost are modest; potential benefit is meaningful but depends on whether token order affects the trained generator materially.",
+      "uncertainties": "The specification offers alternative estimators and has a source/target conditioning ambiguity, so the exact score needs to be fixed before evaluation. Level scores may be noisy or redundant, and next-token accuracy improvements may not translate to ranking gains. The effect may depend on whether the generator has position-specific capacity or can learn around the original order."
+    },
+    {
+      "idea_id": "frequency_whitened_rq_geometry",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 3
+      },
+      "rationale": "A fixed shrinkage-whitening preconditioner is a technically straightforward way to test whether embedding anisotropy causes residual quantization to spend capacity on dominant directions. It preserves the existing model and assignment pipeline and is easy to isolate experimentally. Its possible downstream value is credible, though it is an established preprocessing family rather than a substantially new quantization mechanism.",
+      "uncertainties": "Whitening may amplify low-variance noise or suppress useful semantic structure, and the assumed link between high-variance directions and unhelpful distinctions is dataset-dependent. Gains may be sensitive to shrinkage and eigenvalue flooring. There is no guarantee geometry changes improve next-item recommendation rather than reconstruction behavior alone."
+    },
+    {
+      "idea_id": "covariance_preconditioned_ids",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 2
+      },
+      "rationale": "The proposed covariance transform directly tests whether Euclidean quantization is dominated by anisotropic embedding directions, and it is implementable as train-only preprocessing with negligible added training cost. The intervention has plausible effects on code allocation and potentially recommendation, but the basic idea is conventional whitening/preconditioning. Its experimental change is essentially the same core intervention as frequency_whitened_rq_geometry, with only a different shrinkage parameterization and regularization constant.",
+      "uncertainties": "The useful signal/noise status of low-variance axes is unknown; whitening can distort semantic distances or introduce instability. Results may depend on alpha, seed, and downstream variance. Any improvement could reflect changed reconstruction geometry without translating to held-out ranking."
+    },
+    {
+      "idea_id": "residual_norm_tempering",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Stage-wise residual scaling targets a concrete imbalance in residual quantization and could give later codebooks a more consequential role. The intervention is distinct from covariance preprocessing and serialization changes, remains computationally light, and has a plausible path from finer code distinctions to better item IDs. The stated frozen-scale protocol makes it implementable, although it changes the effective balance of quantization and commitment losses.",
+      "uncertainties": "Scales from a warm-up checkpoint may not represent later training, while rescaling code contributions can interact with loss magnitudes and codebook optimization. Later stages may encode noise instead of useful detail. Improved residual energy or code use may not improve recommendation metrics."
+    },
+    {
+      "idea_id": "train_position_role_sid",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 3,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Appending a frozen, train-only positional-role token is simple and experimentally distinct from changes to the content quantizer. It tests whether marginal journey position contributes information absent from content IDs, and the global token can be consumed by the existing autoregressive generator. The intervention is cheap and operationally straightforward, with moderate potential if these roles are stable and predictive.",
+      "uncertainties": "Within-sequence position may be an artifact of truncation, ordering, or dataset construction rather than a persistent item property. Marginal position bins omit context and may duplicate information already available in the history. The appended token could fragment prefixes or overfit frequent items; test behavior for unseen or sparsely observed items depends on the fallback bin."
+    }
+  ]
+}

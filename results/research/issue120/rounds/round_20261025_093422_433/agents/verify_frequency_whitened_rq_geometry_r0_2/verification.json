@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_frequency_whitened_rq_geometry_r0_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:17-18",
+          "detail": "The tree contains the idea specification only; no whitening implementation is present. Consequently this cannot establish the specified train-only covariance, frozen transform, or an unmodified model trained on transformed inputs.",
+          "reproduction": "Inspect the tree's files: it contains PROPOSAL.json but no implementation file for this idea; the checked-out commit is the base commit and there is no diff implementing the proposal.",
+          "correction": "Implement this as a dedicated stage-2 fork: estimate mu and the rho=0.1 shrinkage covariance from training item embeddings, form the specified clipped inverse square root, transform and cache all item vectors with the same fixed transform, and avoid unrelated model/objective changes."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:18",
+          "detail": "There is no candidate forward/backward implementation to exercise, so finite loss/gradient behavior and gradient flow to the baseline RQ-VAE parameters cannot be verified. A test of another stage-2 arm would not verify this idea.",
+          "reproduction": "There is no train_rqvae.py (or model code) in the idea tree; the proposal is documentation only, so a real candidate training step cannot be invoked.",
+          "correction": "Add the runnable trainer/model fork, then execute a real finite-loss backward step on representative input and assert finite gradients on intended trainable RQ-VAE parameters; the fixed whitening statistics should not be trainable parameters."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "PROPOSAL.json:10,18",
+          "detail": "No integrated trainer entry point, train/test transform path, SID export, item-index mapping, or distributed launcher change exists in this tree. Thus end-to-end integration and launcher compatibility are absent, not demonstrated.",
+          "reproduction": "The tree has no candidate train_rqvae.py, export script, launcher, or generated SID artifact; attempting to run the idea-specific trainer fails because it does not exist.",
+          "correction": "Provide the trainer entry point and launcher integration, persist/reuse the training-fitted mu and A for every assignment split, export one hard tuple per item keyed by the canonical item IDs, and validate with an actual launcher run plus checks for complete, unique, correctly indexed SID rows."
+        }
+      ]
+    }
+  ]
+}

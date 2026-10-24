@@ -1,0 +1,33 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/residual_norm_tempering",
+  "changed_files": ["train_rqvae.py", "model/layers.py", "smoke_test.py"],
+  "deviations": [
+    {
+      "item": "Scales are calibrated from the candidate's own encoder and codebooks after the existing 50-epoch warm-up, rather than from a separately executed baseline warm-up checkpoint.",
+      "reason": "The frozen tree provides no baseline checkpoint-and-resume handoff for this experiment. Using its first 50 epochs as the short warm-up keeps the same model initialization, optimizer, scheduler, batch size, seeds, and total 3000-epoch schedule while avoiding an external checkpoint dependency. This is an operational interpretation, not a claim that the warm-up is an independent baseline run."
+    },
+    {
+      "item": "The per-stage statistic is implemented as sqrt(mean over train items and latent coordinates of residual squared), equivalent to sqrt(mean_train(||r||^2)/d); scale calibration enumerates the complete training-item tensor on each rank.",
+      "reason": "This directly implements the specified population RMS per coordinate using only train target items. The dataset is small enough for the existing training device path and repeated rank-local calculation avoids introducing a new distributed aggregation mechanism."
+    },
+    {
+      "item": "Calibration is performed for all three stages, including the first stage, and each stage's quantization loss is computed in normalized residual coordinates.",
+      "reason": "The provided formula defines s_l and normalized quantization u_l for every stage, while also describing later-stage tempering. The literal per-stage definition was followed; the existing loss applied to each stage's transformed input/output without adding loss weights."
+    },
+    {
+      "item": "The complete 3000-epoch run and Stage 3 ranking evaluation were not executed; the smoke test uses a compact synthetic fixture.",
+      "reason": "The requested verification is a minimal runability smoke test. A full training and downstream evaluation are materially longer; Stage 3 changes or shared evaluation modifications are outside the owned candidate tree. Production constants retain the frozen 3000-epoch protocol."
+    }
+  ],
+  "assumptions": [
+    "The unique target IDs in the existing train.parquet define train items for scale estimation, and embedding row indices match item IDs, as in the frozen baseline loader/exporter.",
+    "The existing 50-epoch warm-up is the intended 'short baseline warm-up' boundary; scales become active beginning with epoch 51 and remain fixed thereafter, including inference/export.",
+    "The baseline optimizer and scheduler continue through warm-up without reset, since the protocol requires preserving the existing optimizer and schedule and does not specify a reset at scale activation.",
+    "Use of rank-local full train-item calibration is valid because DDP parameters/codebooks are synchronized by the preceding training and every rank evaluates the same train-item set; no validation/test items contribute."
+  ],
+  "smoke": {
+    "command": "PYTHONPATH=. /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py (from the tree directory)",
+    "result": "PASS: finite loss 464.126526, finite frozen scales [0.22578894, 0.01406008, 0.00555947], backward yielded finite nonzero parameter gradients, tokens had shape (24, 3), and collision-extended export had 24 unique SID rows. Python compilation also passed."
+  },
+  "notes": "Standalone copy of stage2_RQ-VAE/TIGER_RQ-VAE, with production inputs and frozen training constants retained. The candidate implements fixed stage scales as a non-trainable buffer in RQLayer: warm-up residual RMS is measured train-only; subsequent inputs are divided by the scale, quantized by the existing nearest-code rule, and quantized contributions are multiplied by the same scale before residual subtraction and reconstruction accumulation. The scales are part of model state and are used during index generation/export. Candidate SID, JSON, checkpoint, and training metrics/log outputs resolve inside this tree. Only this tree and the requested implementation.json were written; no baseline, shared repository code, MCP server, or verification code was modified."
+}

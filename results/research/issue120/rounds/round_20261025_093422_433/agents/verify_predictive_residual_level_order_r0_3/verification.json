@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_predictive_residual_level_order_r0_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:312-319",
+          "detail": "The configured distributed launcher starts four ranks, but codebook initialization is only entered by rank 0. Each VQLayer.init_codebook calls distributed.broadcast when a process group is initialized, so rank 0 blocks waiting for ranks that instead reach the barrier at line 319. The available training metrics report world_size=1, so they do not demonstrate that the configured distributed entry point works.",
+          "reproduction": "Run the script via its default _launch_via_torchrun path with four available GPUs. Rank 0 enters init_codebook and blocks in the first broadcast at model/layers.py:142-143; ranks 1-3 wait at train_rqvae.py:319. Training never begins.",
+          "correction": "Make codebook initialization a collective operation with all ranks participating in the same broadcast sequence (for example, have rank 0 compute KMeans centers and broadcast each level's centers to all ranks), or otherwise remove the rank-local broadcast while ensuring all rank models receive identical initialized codebooks. Then exercise the four-rank launcher."
+        },
+        {
+          "severity": "high",
+          "location": "stage3_T5Train/train_HG-Rec.py:153-158; results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:48-50,443-447",
+          "detail": "The new trainer exports the reordered SID JSON into its experiment tree, while the real Stage 3 entry point's CODE_PATH remains the frozen baseline results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json. Thus the normal Stage 3 trainer will not consume this implementation's SID/permutation; the fact that both files are named item_sids.json does not connect them. The JSON format and contiguous zero-based keys produced here do match the Stage 3 loader contract, but the artifact is not wired into that entry point.",
+          "reproduction": "Run the trainer and then run stage3_T5Train/train_HG-Rec.py without editing configuration: it resolves CODE_PATH to results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json (line 157), not the experiment tree's item_sids.json. Stage 3 therefore trains with the baseline ordering or fails if that baseline file is absent.",
+          "correction": "Wire the Stage 3 run configuration/CODE_PATH to this experiment's exported item_sids.json (and preserve the experiment-specific output naming), or export to the exact per-variant path selected by the Stage 3 entry point. Verify loaded rows retain zero-based item-ID alignment and the level permutation is the one used to generate those rows."
+        }
+      ]
+    }
+  ]
+}

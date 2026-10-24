@@ -1,0 +1,43 @@
+{
+  "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order",
+  "repairs": [
+    {
+      "finding": "trainability: smoke test did not demonstrate finite nonzero gradients on encoder, decoder, and trainable codebook parameters",
+      "change": "Expanded smoke_test.py to require all intended parameters have finite gradients and at least one nonzero gradient in each of the encoder, decoder, and trainable codebook groups.",
+      "verification": "Executed successfully in genrec_env_v2: PASS loss=1.097167 grad=finite_nonzero(encoder,decoder,codebook) permutation=[1, 2, 0] sid_shape=(4, 4) unique=4. KMeans emitted only duplicate-point convergence warnings."
+    },
+    {
+      "finding": "trainability: sklearn KMeans n_init=\"auto\" is incompatible with older supported sklearn versions",
+      "change": "Changed KMeans n_init to integer 10, supported by older and newer sklearn versions.",
+      "verification": "The smoke test ran through codebook initialization and forward/backward in the configured environment; it completed with the PASS output recorded above."
+    },
+    {
+      "finding": "integration: candidate item_sids.json was not emitted under the Stage 2 arm admission directory",
+      "change": "The trainer now saves item_sids.json, sids_for_hgrec.npy, and rqvae_best.pth under results/stage2_RQ-VAE/predictive_residual_level_order/; metrics and export logging use those artifact paths.",
+      "verification": "Verified the output path construction is rooted at the repository results directory and the export/checkpoint save calls target ARM_OUTPUT_DIR. The full trainer was not run, so artifact existence from a real training run is unverified."
+    },
+    {
+      "finding": "integration: no frozen single-card execution branch",
+      "change": "When SINGLE_GPU_ENV=GENREC_SINGLE_GPU, _launch_via_torchrun now returns without spawning the four-rank launcher, allowing main() to run with world_size=1 on the available GPU.",
+      "verification": "Static inspection confirms the sentinel bypass and existing world_size=1 path. A real CUDA training run was not possible/attempted in this verification."
+    },
+    {
+      "finding": "integration: hardcoded Stage 3 CODE_PATH selected baseline TIGER item_sids.json rather than this candidate's SID file",
+      "change": "No Stage 3 source or file outside the specified tree was modified. The candidate artifacts are now placed in the required arm directory, but the Stage 3 entry point's hardcoded CODE_PATH remains unchanged.",
+      "verification": "Not fixed end-to-end: stage3_T5Train/train_HG-Rec.py still defaults to results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json. The verifier must configure CODE_PATH for this candidate when running Stage 3; doing so in the external Stage 3 file would violate the instruction not to modify outside this tree."
+    },
+    {
+      "finding": "integration: actual distributed trainer and launcher were not executed against frozen inputs / four GPUs",
+      "change": "Retained the frozen input paths and four-rank launcher, while adding the required explicit single-GPU sentinel route.",
+      "verification": "The project-environment smoke test passed. A full trainer run was not performed because it requires the frozen dataset/embeddings and GPU resources; four-rank DDP, real export, and Stage 3 loading remain unverified."
+    }
+  ],
+  "remaining_issues": [
+    "Stage 3's unchanged default CODE_PATH still points at the baseline TIGER directory; a candidate-specific Stage 3 run must explicitly point to results/stage2_RQ-VAE/predictive_residual_level_order/item_sids.json.",
+    "No real frozen-input training run, single-GPU training run, four-rank DDP run, or Stage 3 loader execution was performed; therefore candidate output artifacts and runtime integration are not evidenced by this repair run."
+  ],
+  "smoke": {
+    "command": "/fs04/scratch2/ar57/wenyu/genrec_env_v2/bin/python /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/smoke_test.py",
+    "result": "PASS (exit 0). Output: /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (141) found smaller than n_clusters (256). Possibly due to duplicate points in X. /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (1) found smaller than n_clusters (256). Possibly due to duplicate points in X. PASS loss=1.097167 grad=finite_nonzero(encoder,decoder,codebook) permutation=[1, 2, 0] sid_shape=(4, 4) unique=4"
+  }
+}

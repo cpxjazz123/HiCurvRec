@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "scoring_3",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792885476.1364741,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "5a9a5edbda61edf99585dcecdf323af3b0e7a6043d47d0725d1a01ecc8b9fe9f",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "scores.txt",
+  "output_sha256": "0840a5f1993db0daab2d85fc2ecd2463d1ea6d65bd3ba9004024106f9e92b09c",
+  "pid": 897740,
+  "project_marker": ".git",
+  "prompt_sha256": "9a270329e98a8825ee0e9a5ef7fce4e90770a1181962e46aadba5babcfbfa1fd",
+  "session_sha256": "0926cc7faee0a4ef75e2ee12e3eac895c8931859857e14c5221baf90ab3f28ae",
+  "stderr_present": false,
+  "task_id": "scoring_3",
+  "timed_out": false,
+  "verified": true
+}

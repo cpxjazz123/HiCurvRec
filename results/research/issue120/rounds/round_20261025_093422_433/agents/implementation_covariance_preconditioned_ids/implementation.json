@@ -1,0 +1,24 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_20261025_093422_433/agents/implementation_covariance_preconditioned_ids/tree",
+  "changed_files": ["train_rqvae.py", "smoke_test.py"],
+  "deviations": [
+    {
+      "item": "Smoke test uses 64 synthetic items with 8-dimensional embeddings, compact hidden layers and 8-entry codebooks, rather than the production data and full 3000-epoch run.",
+      "reason": "A minimal smoke test proves the train-only transform, finite forward/backward with nonzero parameter gradients and valid collision-extended SID export without running the expensive frozen schedule. The production script retains the frozen schedule and hyperparameters."
+    },
+    {
+      "item": "No full 3000-epoch training or Stage 3 test_R@10 evaluation was run.",
+      "reason": "The required validation was a minimal smoke test; Stage 3 settings and shared evaluation code are outside the owned candidate tree."
+    }
+  ],
+  "assumptions": [
+    "The unique target item IDs in the existing train.parquet define the train-item population for estimating mean and covariance; embedding row indices correspond to item IDs.",
+    "The existing exporter represents item IDs by embedding row order. The same train-fitted mean and matrix are applied to all item vectors before encoding, without using validation/test labels or vectors to fit the transform.",
+    "The idea's alpha=0.05 regularization means adding alpha times the mean covariance eigenvalue to each eigenvalue, exactly as specified."
+  ],
+  "smoke": {
+    "command": "PYTHONPATH=. /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py (from the tree directory)",
+    "result": "PASS: loss=0.334728 finite; backward produced finite nonzero gradients on trainable RQ-VAE parameters; transformed output was finite; token shape (64, 3); collision-extended SID shape (64, 4), all 64 unique."
+  },
+  "notes": "Standalone copy of the frozen Stage 2 RQ-VAE candidate implementation. The changed idea-specific production behavior is a one-time train-target-only mean/covariance eigendecomposition and fixed alpha=0.05 whitening, followed by applying the stored transform to vectors before the otherwise unchanged RQ-VAE training/evaluation/export. The baseline copy's different whitening rule (rho=0.1 shrinkage plus eigenvalue floor) was replaced by the requested formula. Model, losses, codebooks, optimizer, schedule, batch size, seeds, data split and exporter were otherwise retained. Candidate outputs and logs resolve within this tree."
+}

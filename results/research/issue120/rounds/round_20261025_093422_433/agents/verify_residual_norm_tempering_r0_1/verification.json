@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_residual_norm_tempering_r0_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "train_rqvae.py:277-284",
+          "detail": "The DDP codebook initialization is performed only on rank 0, but the VQ codebook embeddings are parameters updated by gradient descent and DDP initial parameter synchronization has already happened at line 242. The barrier does not broadcast the post-KMeans codebooks. Thus ranks start training with different codebooks; subsequent VQLayer all-reduces only usage statistics, not the codebook weights, so assignment/forward behavior diverges and the final rank-0 export is not the learned distributed model represented by the other ranks.",
+          "reproduction": "Run with world_size=2 and VQ_TYPE='vq'; record each rank's vq_layers[0].embed.weight after init_codebook and the barrier. Rank 0 contains KMeans centers while rank 1 retains its pre-init random weights. Even if the DDP gradient reducer later averages parameter gradients, each rank's local nearest-code assignments and forward values are computed using different embeddings.",
+          "correction": "After rank-0 initialization, broadcast every initialized trainable codebook parameter (and any relevant EMA state) from rank 0 to all ranks before the first training step, or perform deterministic identical initialization on all ranks. Keep this synchronization explicit; a barrier alone is insufficient."
+        },
+        {
+          "severity": "medium",
+          "location": "train_rqvae.py:40-47",
+          "detail": "The configured frozen-data inputs are absolute paths under /home/wlia0047/ar57/wenyu/GeneRec, while the inspected tree is a detached tree elsewhere. The trainer therefore is not self-contained in this tree and cannot be verified to use the frozen dataset snapshot from the tree. The source comments identify Stage 0/Stage 1 paths, but do not pin or verify a snapshot/version.",
+          "reproduction": "Invoke the real trainer entry point from this tree in an environment without those exact absolute-path files: load_embeddings(EMBEDDING_FILE) or pd.read_parquet(TRAIN_FILE) fails before training. Even where they exist, replacing either file in place silently changes the input data.",
+          "correction": "Use the project's frozen input paths/artifact identifiers and validate expected metadata or checksums at startup; ensure the runner uses those same pinned files rather than mutable external paths."
+        }
+      ]
+    }
+  ]
+}

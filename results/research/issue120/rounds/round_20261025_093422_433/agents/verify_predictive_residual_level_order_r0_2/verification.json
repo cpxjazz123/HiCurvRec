@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_predictive_residual_level_order_r0_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:49-50,439-447; stage3_T5Train/train_HG-Rec.py:157",
+          "detail": "The trainer writes the reordered SID JSON under this candidate tree, but the real Stage 3 entry point is configured to read the frozen baseline JSON at results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json. Thus the permutation is not consumed by the Stage 3 run; it will silently train/evaluate with baseline SIDs, so this change is not integrated. The distributed launcher itself still launches the candidate trainer with four ranks (train_rqvae.py:83-91,456-481).",
+          "reproduction": "Run the candidate trainer to export item_sids.json, then invoke stage3_T5Train/train_HG-Rec.py with its default CODE_PATH: line 157 resolves to the baseline TIGER path, not the candidate tree's OUTPUT_JSON at train_rqvae.py:50. The resulting Stage 3 dataset therefore loads the other SID mapping.",
+          "correction": "Make the Stage 3 invocation resolve the candidate's item_sids.json (or promote/copy it to the intended variant path and point CODE_PATH there), and verify the loaded SID file/path and permutation in the actual trainer run without changing the frozen train/valid/test data paths."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/predictive_residual_level_order/train_rqvae.py:195-226",
+          "detail": "The implementation uses the explicitly allowed simpler empirical mutual-information estimator, so it is faithful to that option. However, it does not implement the preceding add-one-smoothed / nonnegative-PMI variant in the same specification. This is not a defect under the listed simpler estimator, but the exported metadata calls the score mutual_information_nats and should not imply smoothing.",
+          "reproduction": "A context/target contingency table with an unobserved pair gets no pseudocount in lines 215-224; its score is ordinary plug-in MI, not add-one-smoothed PMI.",
+          "correction": "No correction is required if the simpler empirical MI estimator is the chosen specified variant; otherwise implement and document the smoothed estimator explicitly."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "r2_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_093422_433/covariance_preconditioned_ids/train_rqvae.py:49-50, 433-436",
+          "detail": "The trainer exports the Stage 3 SID JSON under this candidate tree's outputs/item_sids.json. The real Stage 3 entry point's CODE_PATH is results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json (train_HG-Rec.py:157), and its resolver checks that path and a fixed list of historical paths (train_HG-Rec.py:299-313), not this candidate output. Consequently, running this trainer does not make its exported SIDs available to the real trainer; Stage 3 fails to resolve them or silently uses a different candidate if a fallback exists. The .npy file is likewise candidate-local. The values are enumerated by embedding row (line 435), consistent with the item-indexed matrix, and the collision extension yields unique tuples; the integration defect is artifact placement/selection.",
+          "reproduction": "Run the candidate trainer to produce outputs/item_sids.json, then invoke the unmodified stage3_T5Train/train_HG-Rec.py with its default CODE_PATH. _resolve_code_file does not include results/research/issue120/trees/round_20261025_093422_433/covariance_preconditioned_ids/outputs/item_sids.json and raises FileNotFoundError if no unrelated fallback exists. A minimal counterexample is to leave all fixed fallback files absent: the candidate JSON exists, but Stage 3 still cannot resolve it.",
+          "correction": "Write the candidate's Stage 3-consumed item_sids.json to a path recognized by the actual Stage 3 configuration/resolver, or explicitly configure Stage 3 to consume this candidate's output. Keep the candidate isolated from baseline outputs where required, but make the experiment invocation select its artifacts unambiguously; verify the resolved path and item-ID mapping at entry-point startup."
+        }
+      ]
+    }
+  ]
+}

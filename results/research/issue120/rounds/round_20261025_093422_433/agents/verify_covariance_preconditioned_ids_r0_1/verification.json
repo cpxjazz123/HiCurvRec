@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_covariance_preconditioned_ids_r0_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "PROPOSAL.json:17-18",
+          "detail": "The target tree contains only PROPOSAL.json; it contains no implementation code. Thus there is no covariance estimator/transform, RQ-VAE input change, or export path to verify. The proposal specifies train-only centering, shrinkage whitening with alpha=0.05, and unchanged quantization, but a specification is not an implementation.",
+          "reproduction": "Inspect the requested tree: `find . -type f` returns only `./PROPOSAL.json`. There is no executable implementation to run or compare against the required mechanism.",
+          "correction": "Add the actual implementation in this tree: estimate mu and C solely from training-item embeddings, construct the specified symmetric A with alpha=0.05, transform the same embeddings used for RQ-VAE training and export, and leave the existing quantizer/losses otherwise unchanged."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "PROPOSAL.json:17-18",
+          "detail": "Trainability cannot be established because the target tree has no model or training code and therefore no real forward/backward path. No finite-loss/gradient, intended-parameter reachability, dead-term, or numerical-stability behavior is implemented here to inspect. This is an absence of implementation evidence, not a claim that a particular gradient is faulty.",
+          "reproduction": "In the target tree, there is no trainer/model file or test; attempting to run the real training entry point from this tree is impossible because none exists.",
+          "correction": "Include the model/trainer implementation and exercise an actual batch through forward, loss, and backward, checking finite losses and gradients for the RQ-VAE parameters and confirming the transformed input is finite."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "PROPOSAL.json:10,18",
+          "detail": "No trainer entry point, frozen data-path integration, SID exporter, or distributed launcher is present in the target tree. Consequently the requested checks for real trainer execution, unchanged/frozen data provenance, SID validity and indexing, and launcher compatibility cannot pass. The proposal describes ordinary SID export but provides no code for it.",
+          "reproduction": "The target tree contains only PROPOSAL.json, so there is no entry point, export command, or launcher to invoke; no generated SIDs exist here to validate or check for correct item indexing.",
+          "correction": "Add the implementation to the real existing training/export path without changing the frozen data inputs or launcher contract; export one ordinary SID tuple per item from that item's transformed vector, preserve the existing item-index mapping, and run the trainer/export plus distributed-launch smoke checks."
+        }
+      ]
+    }
+  ]
+}
