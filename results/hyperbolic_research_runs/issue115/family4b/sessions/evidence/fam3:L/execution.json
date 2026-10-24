@@ -1,0 +1,71 @@
+{
+  "role": "L",
+  "task_id": "fam3:L",
+  "ok": true,
+  "started_utc": "2026-10-24T00:19:19Z",
+  "finished_utc": "2026-10-24T00:20:24Z",
+  "elapsed_s": 65.58,
+  "pid": 1053919,
+  "model": "openai/gpt-6-luna",
+  "prompt_sha256": "10e2b8a5c796ea54888c85eded98004430de23e22c471603c03aeef5d85670c3",
+  "inputs_hash": "",
+  "argv": [
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "openai/gpt-6-luna",
+    "--title",
+    "L:fam3:L",
+    "# THE FROZEN PROTOCOL (unchanged, never to be altered)\n32-dim latent; exactly THREE codebooks of 256 codes; exactly three integer SID tokens; the original\ndataset, splits, Stage2 recipe and Stage3 recipe. One mechanism must strictly beat ALL THREE:\nHard-L1 ER > 16.38953942232631, Stage3 Recall@10 > 0.06406796775709883, NDCG@10 > 0.03530651701940677.\n\n# FAMILIES ALREADY CLOSED (do not propose them again, in any disguise)\n1. Product-geodesic level-0 assignment scored by codeword RADIUS: every item collapsed to one code.\n2. Horospheric / Busemann level sets: the level gap did not separate the host's label.\n3. Codeword-frame transported residual: ill posed; its well-posed form is an identity.\n4. Role-assigned token layout: measured VESTIGIAL (the declared geometry was not in the forward).\n5. Gyro-composition / Mobius associator in the score: rejected twice at definition level (type errors).\n6. Unsigned tangent-space wedge area: 14 adversarial rounds without unanimous approval; parked. It is\n   NOT refuted -- no surviving mathematical objection, no prior-art occupation -- but it is not a\n   candidate any more.\n6b. LOTV (Lorentzian oriented tetrahedral volume, a signed 4x4 Lorentzian determinant used ONLY as a\n   tie-break within tau_score of the frozen objective): WITHDRAWN BY ITS AUTHOR, because no\n   assignment-stream evidence establishes the pre-registered >=5% per-level tie rate. Without frequent\n   ties it is an operational no-op. Do not revive a tie-break-only mechanism unless the tie rate is\n   measured FIRST.\n6c. THE GENERAL LESSON FROM 6b: a mechanism whose effect can only appear in rare configurations must\n   MEASURE that configuration's frequency BEFORE it is proposed. Any candidate must state the\n   occurrence rate of the situation it acts on, and that rate must be computable from the frozen\n   artifacts without training.\n\n# THE NEW HARD REQUIREMENT (learned from round 14 of the parked candidate)\nA mechanism must be NUMERICALLY WELL DEFINED IN FINITE PRECISION as part of its declaration: state the\ndomain, the epsilons, the clamps, the comparison tolerance, and what happens at every boundary, BEFORE\nany implementation. A declaration whose operator is only well defined \"in exact arithmetic\" is refused.\n\n# THE FROZEN ARTIFACTS ARE STAGED: the file `frozen_artifacts.json` IS IN YOUR WORKING DIRECTORY\n# (read it there; it is also on disk at\n# results/hyperbolic_research_runs/issue115/frozen_artifacts_summary.json).\nThey carry the numbers a candidate needs to MEASURE the occurrence rate of the configuration it acts\non: the control's per-level code usage and cell quantiles, the prefix-cell structure (how many (L0,L1)\ncells admit more than one code), the frozen ER pair shapes and the latent shape. Use them: a candidate\nthat acts on a COMMON configuration must quote the measured rate; a candidate that acts on a rare one\nmust either quote a rate that justifies it or withdraw.\n\n# YOUR TASK\n# ROLE L -- verified literature for a NEW family\nFind mechanisms that put a NON-TRIVIAL hyperbolic operation where a discrete SID CODE is chosen, and\nthat are NOT in the six closed families. Give identifier (DOI/arXiv), title, year and the precise\noverlap, marked FULL_TEXT / ABSTRACT_ONLY / UNKNOWN. Then list 3-4 mechanism IDEAS that the inspected\nprior art does not occupy. No fabricated citation. Write `literature.md`."
+  ],
+  "workspace": "results/hyperbolic_research_runs/issue115/family4b/sessions/workspaces/fam3:L",
+  "cwd": "results/hyperbolic_research_runs/issue115/family4b/sessions/workspaces/fam3:L",
+  "exit_code": 0,
+  "timed_out": false,
+  "n_tool_calls": 23,
+  "tools": [
+    "skill",
+    "shell",
+    "read",
+    "read",
+    "read",
+    "glob",
+    "read",
+    "read",
+    "read",
+    "read",
+    "grep",
+    "websearch",
+    "websearch",
+    "websearch",
+    "websearch",
+    "execute",
+    "webfetch",
+    "read",
+    "webfetch",
+    "read",
+    "webfetch",
+    "webfetch",
+    "patch"
+  ],
+  "tokens": {
+    "input": 31222,
+    "output": 4501,
+    "reasoning": 529
+  },
+  "cost": 0.0,
+  "session_path": "results/hyperbolic_research_runs/issue115/family4b/sessions/evidence/fam3:L/session.json",
+  "tool_jsonl_path": "results/hyperbolic_research_runs/issue115/family4b/sessions/evidence/fam3:L/session.jsonl",
+  "outputs": [
+    "literature.md"
+  ],
+  "missing_outputs": [],
+  "verification": {
+    "ok": true,
+    "bytes": 5494
+  },
+  "error": ""
+}
