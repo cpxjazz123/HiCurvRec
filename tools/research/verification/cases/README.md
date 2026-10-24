@@ -19,15 +19,15 @@ For every new candidate, write:
   results/research/issue116/verification/<candidate_id>/manifest.json
 
 The manifest binds:
-- schema=1, candidate_id, source_tree, source_sha256 (full active code tree);
-- proposal_sha256 (current frozen agents/geometry/candidate.json);
+- schema=1, run_id, candidate_id, source_tree, source_sha256 (full active code tree);
+- proposal_sha256 (current frozen runs/<run_id>/agents/geometry/candidate.json);
 - tests: math, gradient, ddp, entrypoint = exact sha256 of reviewed test files.
 
-The evidence root must contain four independent real OpenCode sessions:
-  agents/<candidate_id>_math/
-  agents/<candidate_id>_gradient/
-  agents/<candidate_id>_runtime/
-  agents/<candidate_id>_review/
+The run evidence directory must contain four independent real OpenCode sessions:
+  runs/<run_id>/agents/<candidate_id>_math/
+  runs/<run_id>/agents/<candidate_id>_gradient/
+  runs/<run_id>/agents/<candidate_id>_runtime/
+  runs/<run_id>/agents/<candidate_id>_review/
 
 Each session needs execution.json, session.jsonl, and the named JSON output;
 execution.json itself is a process receipt, NOT a valid scientific judgement.
