@@ -106,24 +106,28 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     return report
 
 
-def run_verification(root: Path, idea: dict, tree: Path) -> list:
-    """Three independent verifiers of one implementation."""
+def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> list:
+    """Three independent verifiers of one implementation revision."""
     prompt = (agent_contracts.VERIFY_PROMPT.format(
         idea=json.dumps(idea, ensure_ascii=False, indent=1), tree=str(tree)))
     reports = []
     for index in range(1, VERIFIERS + 1):
-        task_id = "verify_" + idea["idea_id"] + "_" + str(index)
+        # The revision is part of the workspace name: a fresh review after a
+        # repair must be a fresh agent, never a replay of the previous answer.
+        task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
         report = _run_agent(root, task_id, prompt, "verification.json")
         report.setdefault("verifier", task_id)
         reports.append(report)
     return reports
 
 
-def run_repair(root: Path, idea: dict, tree: Path, findings: list) -> dict:
-    """The dedicated repair agent for one implementation."""
+def run_repair(root: Path, idea: dict, tree: Path, findings: list,
+               revision: int = 0) -> dict:
+    """The dedicated repair agent for one implementation revision."""
     prompt = (agent_contracts.REPAIR_PROMPT.format(
         findings=json.dumps(findings, ensure_ascii=False, indent=1), tree=str(tree)))
-    return _run_agent(root, "repair_" + idea["idea_id"], prompt, "repair.json")
+    return _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
+                      prompt, "repair.json")
 
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:
@@ -168,7 +172,8 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
                 continue
             idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
             try:
-                reports = run_verification(agent_root, idea, Path(record["tree"]))
+                reports = run_verification(agent_root, idea, Path(record["tree"]),
+                                           int(record.get("revision", 0)))
             except Exception as exc:                       # noqa: BLE001
                 state = pipeline_module.mark_blocked(state, record["idea_id"],
                                                      "verification failed: " + str(exc))
@@ -179,7 +184,8 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
             if record.get("status") == "needs_repair":
                 try:
                     repair = run_repair(agent_root, idea, Path(record["tree"]),
-                                        record.get("blocking_findings", []))
+                                        record.get("blocking_findings", []),
+                                        int(record.get("revision", 0)))
                     state = pipeline_module.apply_repair(state, record["idea_id"], repair)
                 except Exception as exc:                   # noqa: BLE001
                     state = pipeline_module.mark_blocked(state, record["idea_id"],
