@@ -1,4 +1,5 @@
 import importlib.util
+import math
 import pathlib
 import sys
 import unittest
@@ -28,9 +29,12 @@ class HyperbolicReferenceTests(unittest.TestCase):
     def test_collinear_hyperbolic_distance_reference(self):
         x = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
         y = torch.tensor([[0.4, 0.0]], dtype=torch.float64)
-        # ||(-x) (+) y|| = (0.4-0.2)/(1-0.2*0.4) = 5/23.
-        expected = torch.tensor([[0.442169]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), expected, rtol=2e-5, atol=2e-6)
+        # ||(-x) (+) y|| = (0.4-0.2)/(1-0.2*0.4) = 5/23, so D = 2*atanh(5/23) = ln(14/9).
+        # Operator correction: the draft hard-coded the rounded 0.442169, which is
+        # 3.4e-4 off the closed form the draft itself derives; the reference is
+        # now the exact expression.
+        expected = torch.tensor([[math.log(14.0 / 9.0)]], dtype=torch.float64)
+        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), expected, rtol=1e-12, atol=1e-12)
 
     def test_distance_origin_radial_is_twice_artanh_radius(self):
         x = torch.tensor([[0.0, 0.3]], dtype=torch.float64)

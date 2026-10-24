@@ -112,7 +112,29 @@ result does not count.
 * the per-example trigger frequency is too low to support the mechanism ->
   the candidate is out of scope regardless of any aggregate number.
 
-## 6. What is authorized now, and what is not
+## 6. Operator corrections applied to the drafted suites
+
+The suites are authored by independent Agents and are promoted into this
+directory by the repository operator, which may correct a defect but never
+weaken a suite. Two corrections were made and are recorded here so the
+independent reviewer can judge them:
+
+1. **test_math.py, the collinear distance reference.** The MATH Agent derived
+   the reference correctly in its own comment -- `||(-x) (+) y|| = 5/23`, so
+   `D = 2*atanh(5/23) = ln(14/9)` -- but hard-coded the rounded decimal
+   `0.442169`, which is 3.4e-4 off the value its own derivation gives
+   (`ln(14/9) = 0.44183275227903923`, which the implementation reproduces
+   exactly). The reference is now the exact expression
+   `math.log(14.0/9.0)` and the tolerance is 1e-12. No assertion was removed
+   and no expectation was loosened.
+2. **The RUNTIME Agent's first draft was pytest-style** (`tmp_path` /
+   `monkeypatch` fixtures, plain test functions). The executor is
+   `python -m unittest discover`, which collects only `unittest.TestCase`
+   classes, so such a suite runs ZERO tests and is refused. The role guidance
+   now states the contract, and the suites under review are the re-authored
+   ones.
+
+## 7. What is authorized now, and what is not
 
 The review verdict is CPU_ELIGIBLE: it authorizes the implementation and the
 mechanism-specific CPU checks (the four reviewed suites), and nothing else. It
