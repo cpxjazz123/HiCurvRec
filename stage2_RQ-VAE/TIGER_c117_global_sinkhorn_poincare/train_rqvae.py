@@ -104,8 +104,6 @@ EVAL_INTERVAL       = 50
 # === 冻结几何常量 (proposal: geometry_asymmetric_successor_branches_hyp) ===
 CURVATURE_C     = 1.0    # 曲率 c; flat 臂是同一实现的 c->0 极限
 GEOMETRY_RADIUS = 0.9    # 两臂共用的固定投影半径 R < 1
-BETA_COMMIT     = 0.25   # 冻结的 commit 系数
-BETA_CODE       = 1.0    # 冻结的 code 系数
 
 
 # === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
@@ -244,8 +242,6 @@ def _tokenizer_config() -> SimpleNamespace:
         geometry="global_sinkhorn",
         curvature=CURVATURE_C,
         radius=GEOMETRY_RADIUS,
-        beta_commit=BETA_COMMIT,
-        beta_code=BETA_CODE,
     )
 
 
@@ -434,10 +430,8 @@ def main() -> None:
         level_codes = int(raw_module.rq.codebook_size[2])
         group_table = transition_weights(events, raw_module.frozen_codes, item_index,
                                          successors, level_codes)
-        epoch_balance = raw_module.population_balance(train_embeddings.to(device))
-        first_batch_of_epoch = True
+        population_embeddings = train_embeddings.to(device)
         for batch, index in loader:
-            first_batch_of_epoch = False
             batch = batch.to(device, non_blocking=True)
             index = index.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
@@ -449,11 +443,10 @@ def main() -> None:
             target_rows = torch.from_numpy(item_position[targets]).to(device)
             edges = (train_embeddings.to(device)[target_rows],
                      torch.from_numpy(r_batch).to(device))
-            loss, recon_loss, assign_loss, balance_loss, transition_loss = model(batch, index, edges)
+            loss, recon_loss, assign_loss, balance_loss, transition_loss = model(
+                batch, index, edges, population=population_embeddings)
             # The global marginal term is computed once per epoch and enters the
             # objective exactly once, in the first batch of that epoch.
-            if first_batch_of_epoch:
-                loss = loss + epoch_balance
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
