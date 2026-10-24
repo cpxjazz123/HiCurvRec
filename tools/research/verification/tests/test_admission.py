@@ -16,6 +16,10 @@ class AdmissionTests(unittest.TestCase):
         self.cases = self.root / "cases"
         self.tree = self.root / "proposed_hyperbolic"
         self.tree.mkdir()
+        self.run_id = "run_0123456789abcdef"
+        record = self.evidence / "runs" / self.run_id / "run.json"
+        record.parent.mkdir(parents=True)
+        record.write_text(json.dumps({"run_id": self.run_id}))
         (self.tree / "train_rqvae.py").write_text("print('real trainer placeholder')\n")
 
     def test_missing_manifest_is_fail_closed(self):
@@ -47,13 +51,14 @@ class AdmissionTests(unittest.TestCase):
             path = case_dir / ("test_" + kind + ".py")
             path.write_text("import unittest\nclass T(unittest.TestCase):\n def test_ok(self): self.assertTrue(True)\n")
             tests[kind] = A.sha256(path)
-        proposal = self.evidence / "agents" / "geometry" / "candidate.json"
+        proposal = self.evidence / "runs" / self.run_id / "agents" / "geometry" / "candidate.json"
         proposal.parent.mkdir(parents=True)
         proposal.write_text(json.dumps({"candidate_id": cid}))
         manifest_dir = self.evidence / "verification" / cid
         manifest_dir.mkdir(parents=True)
         (manifest_dir / "manifest.json").write_text(json.dumps({
-            "schema": 1, "candidate_id": cid, "source_tree": self.tree.name,
+            "schema": 1, "candidate_id": cid, "run_id": self.run_id,
+            "source_tree": self.tree.name,
             "source_sha256": A.source_digest(self.tree),
             "proposal_sha256": A.sha256(proposal), "tests": tests,
         }))
@@ -92,7 +97,7 @@ class AdmissionTests(unittest.TestCase):
             "tests": frozen_tests,
         }), encoding="utf-8")
         for pos, role in enumerate(A.AGENT_ROLES):
-            session = self.evidence / "agents" / (cid + "_" + role)
+            session = self.evidence / "runs" / self.run_id / "agents" / (cid + "_" + role)
             session.mkdir()
             output = session / (role + ".json")
             content = {"candidate_id": cid, "source_sha256": code_sha}

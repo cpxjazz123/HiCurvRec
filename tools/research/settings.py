@@ -15,6 +15,7 @@ MCP = ROOT / "tools" / "genrec-mcp" / "server.py"
 # Change the source constant, not an argv flag. Inspect never spawns an agent.
 ACTION = "inspect"  # inspect | behavior | worker
 LIVE_AGENTS_ALLOWED = False
+RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
 AGENT_MODEL = "openai/gpt-6-luna"
 AGENT_TIMEOUT_SECONDS = 900

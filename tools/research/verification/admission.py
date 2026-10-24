@@ -90,8 +90,15 @@ def validate_evidence(tree: Path, candidate_id: str) -> tuple[Path, dict, dict]:
     if manifest.get("source_tree") != tree.name:
         raise AdmissionError("manifest targets a different Stage2 tree")
     source = source_digest(tree)
+    run_id = manifest.get("run_id")
+    if not isinstance(run_id, str) or not re.fullmatch(r"run_[0-9a-f]{16}", run_id):
+        raise AdmissionError("verification evidence must identify a real research run")
+    run_root = EVIDENCE_ROOT / "runs" / run_id
+    run_record = _read_json(run_root / "run.json")
+    if run_record.get("run_id") != run_id or (run_root / "cancel.json").is_file():
+        raise AdmissionError("research run identity mismatch or cancelled")
     _require_sha(source, manifest.get("source_sha256"), "trainer source")
-    proposal = EVIDENCE_ROOT / "agents" / "geometry" / "candidate.json"
+    proposal = run_root / "agents" / "geometry" / "candidate.json"
     _require_sha(sha256(proposal), manifest.get("proposal_sha256"), "research proposal")
     candidate = _read_json(proposal)
     if candidate.get("candidate_id") != candidate_id:
@@ -112,7 +119,7 @@ def validate_evidence(tree: Path, candidate_id: str) -> tuple[Path, dict, dict]:
     receipts = {}
     pids = set()
     for role in AGENT_ROLES:
-        session = EVIDENCE_ROOT / "agents" / (candidate_id + "_" + role)
+        session = run_root / "agents" / (candidate_id + "_" + role)
         record = _read_json(session / "execution.json")
         if (record.get("verified") is not True or record.get("exit_code") != 0
                 or record.get("timed_out") is not False or not isinstance(record.get("pid"), int)

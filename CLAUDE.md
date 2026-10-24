@@ -68,3 +68,11 @@
 44. 禁止未经明确授权执行 `git push --force` 或 `git push --force-with-lease`。
 45. 每次推送前必须核对远端地址，推送后必须确认本地 `main` 与远端 `main` 的 Commit SHA 一致。
 46. `.pth` 与 `.npy` 文件必须按仓库 `.gitattributes` 使用 Git LFS。
+
+## 8. MCP 科研调度
+
+47. 所有新科研任务必须通过现有 GenRec MCP 的 `research_start` 和 `research_resume` 进入唯一持久 DAG。
+48. MCP 查询与取消研究任务必须使用真实 `run_id`，不得将 Issue Open 或任务已创建视为 Agent 正在运行。
+49. DATA 与 LITERATURE 允许并行执行，GEOMETRY 和 REVIEW 必须等待各自实际证据依赖完成。
+50. MCP 的 `research_verify_start` 和 `research_verify_review` 必须使用当前候选的冻结提案及真实独立 OpenCode 会话。
+51. 研究 MCP 只能执行授权的 Agent 任务，正式 GPU 训练仍必须通过独立的 `verification_check` 和 `stage2_start` 准入。

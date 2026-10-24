@@ -1,4 +1,4 @@
-"""Atomic, persistent DAG for one issue116 campaign, not a collection of per-round ledgers."""
+"""One atomic root DAG across all Issue116 research runs."""
 import fcntl
 import json
 import time
@@ -29,7 +29,7 @@ class TaskStore:
                 fcntl.flock(fd, fcntl.LOCK_UN)
 
     def _load(self):
-        return read_json(self.path) if self.path.is_file() else {"schema": 1, "tasks": {}}
+        return read_json(self.path) if self.path.is_file() else {"schema": 2, "tasks": {}}
 
     def snapshot(self):
         with self.locked():
@@ -57,7 +57,7 @@ class TaskStore:
                               "evidence": None}
             self._save(state, {"event": "add", "task": task_id})
 
-    def claim(self, owner, lease_seconds=1200, max_attempts=2, roles=None):
+    def claim(self, owner, lease_seconds=1200, max_attempts=2, roles=None, prefix=None):
         if not owner or lease_seconds <= 0 or max_attempts <= 0:
             raise ValueError("owner, lease and attempts must be positive")
         with self.locked():
@@ -65,11 +65,14 @@ class TaskStore:
             tasks = state["tasks"]
             now = time.time()
             for task_id, task in tasks.items():
+                if prefix and not task_id.startswith(prefix):
+                    continue
                 if task["status"] == "running" and task["lease_until"] < now:
                     task["status"], task["owner"] = "pending", None
                     self._save(state, {"event": "lease_expired", "task": task_id})
             for task_id, task in tasks.items():
-                if (task["status"] != "pending" or task["attempts"] >= max_attempts
+                if (prefix and not task_id.startswith(prefix)
+                        or task["status"] != "pending" or task["attempts"] >= max_attempts
                         or (roles is not None and task["role"] not in roles)
                         or not all(tasks[dep]["status"] == "done"
                                    for dep in task["dependencies"])):
@@ -90,7 +93,7 @@ class TaskStore:
             state = self._load()
             task = state["tasks"].get(task_id)
             if not task or task["status"] != "running" or task["owner"] != owner:
-                raise StateError("task ownership mismatch")
+                raise StateError("task ownership mismatch or task was cancelled")
             task.update(status="done", owner=None, lease_until=0,
                         evidence=evidence, finished_at=time.time())
             self._save(state, {"event": "done", "task": task_id,
@@ -102,8 +105,35 @@ class TaskStore:
             state = self._load()
             task = state["tasks"].get(task_id)
             if not task or task["status"] != "running" or task["owner"] != owner:
-                raise StateError("task ownership mismatch")
+                raise StateError("task ownership mismatch or task was cancelled")
             task.update(status="pending" if retry else "blocked",
                         owner=None, lease_until=0, failure=str(reason)[:300])
             self._save(state, {"event": "retry" if retry else "blocked",
                                "task": task_id, "reason": str(reason)[:300]})
+
+    def cancel_prefix(self, prefix):
+        """Pending jobs are cancelled; active workers must cooperatively stop."""
+        with self.locked():
+            state = self._load()
+            changed = []
+            for key, task in state["tasks"].items():
+                if not key.startswith(prefix) or task["status"] in ("done", "cancelled"):
+                    continue
+                if task["status"] == "running":
+                    task["status"] = "cancelling"
+                else:
+                    task["status"] = "cancelled"
+                changed.append(key)
+            if changed:
+                self._save(state, {"event": "cancel_requested", "tasks": changed})
+            return changed
+
+    def finish_cancel(self, task_id, owner):
+        with self.locked():
+            state = self._load()
+            task = state["tasks"].get(task_id)
+            if not task or task["status"] != "cancelling" or task["owner"] != owner:
+                return False
+            task.update(status="cancelled", owner=None, lease_until=0)
+            self._save(state, {"event": "cancelled", "task": task_id})
+            return True

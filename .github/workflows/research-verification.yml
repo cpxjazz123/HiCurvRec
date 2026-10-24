@@ -13,7 +13,7 @@ jobs:
           python-version: "3.10"
       - name: Parse changed Python entrypoints without torch
         run: |
-          python -m py_compile tools/genrec-mcp/server.py tools/research/verification/admission.py tools/research/verification/workflow.py tools/research/agents/prompts.py tools/research/agents/runner.py
+          python -m py_compile tools/genrec-mcp/server.py tools/research/verification/admission.py tools/research/verification/workflow.py tools/research/agents/prompts.py tools/research/agents/runner.py tools/research/mcp/handlers.py tools/research/mcp/worker.py tools/research/mcp/verification_handlers.py tools/research/mcp/verify_worker.py
       - name: Existing native research offline regression
         run: python -m unittest discover -s tools/research/tests -v
       - name: Fail-closed verification and fault-injection regression
@@ -41,4 +41,16 @@ jobs:
           assert "cgv" not in audit_surviving_mainline()
           assert Path("tools/research/verification/admission.py").is_file()
           print("Clean research verification structure")
+          PY
+      - name: Verify MCP research tools are registered
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          server = Path("tools/genrec-mcp/server.py").read_text()
+          tools = ("research_start", "research_status", "research_results",
+                   "research_cancel", "research_resume", "research_verify_start",
+                   "research_verify_review", "research_verify_status")
+          for name in tools:
+              assert f'"{name}": {{' in server, name
+          print("All eight native research MCP tools registered")
           PY
