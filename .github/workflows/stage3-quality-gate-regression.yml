@@ -1,0 +1,28 @@
+name: Stage3 Quality Gate Regression
+on:
+  push:
+    paths:
+      - "tools/genrec-mcp/stage2_quality_gate.py"
+      - "tools/research/tests/test_stage2_quality_gate.py"
+      - ".github/workflows/stage3-quality-gate-regression.yml"
+  pull_request:
+    paths:
+      - "tools/genrec-mcp/stage2_quality_gate.py"
+      - "tools/research/tests/test_stage2_quality_gate.py"
+      - ".github/workflows/stage3-quality-gate-regression.yml"
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify Stage3 quality gate without GPU
+        run: |
+          python -m py_compile tools/genrec-mcp/stage2_quality_gate.py
+          python -m unittest discover -s tools/research/tests -p "test_stage2_quality_gate.py" -v

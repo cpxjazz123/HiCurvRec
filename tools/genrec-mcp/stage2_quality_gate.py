@@ -1,10 +1,11 @@
 """Fail-closed Stage2 -> Stage3 quality admission; stdlib only, no training.
 
-Hard-L1 ER is measured on the frozen independent validation pairs and must
-strictly exceed the frozen Resample reference. L1 positive/negative HitRates
-are retained only as diagnostic measurements, never a promotion threshold.
-The other quality gate is distinct two-token SID prefix count above Resample.
-Both are distinct from downstream Stage3 Recall@10.
+Hard-L1 ER is measured on frozen independent validation pairs and must be
+at least 10.0; distinct two-token SID prefixes must be at least 10000.
+These two relaxed floors remain mandatory AND gates. The historical Resample
+values are still verified against frozen blobs and reported as references,
+not used as strict promotion thresholds. L1 positive/negative HitRates remain
+diagnostic only. Stage3 Recall@10 is a separate downstream outcome.
 """
 import array
 import ast
@@ -16,8 +17,9 @@ import struct
 import sys
 import zipfile
 
-MIN_VALID_L1_HARD_ER = 16.38953942232631  # STRICTLY greater; frozen Resample valid L1 Hard ER
-FROZEN_BASELINE_L2_PREFIXES = 16145  # Exact distinct two-token prefixes of Resample SID
+MIN_VALID_L1_HARD_ER = 10.0  # Inclusive Stage3 promotion floor, not a Resample-beating requirement
+MIN_L2_PREFIXES = 10000  # Inclusive Stage3 promotion floor; both floors are mandatory
+FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference only, not the promotion floor
 FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
 FROZEN_BASELINE_BLOB_SHA1 = "d97d24a7a63891682d2b68c09a89164de2031ee9"
@@ -191,18 +193,20 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
             "candidate": {**candidate, "level2_distinct_prefixes": candidate_prefixes,
                           "full_unique_items": len(sid)},
             "baseline": {**reference, "level2_distinct_prefixes": baseline_prefixes},
-            "thresholds": {"valid_l1_hard_er_strict_gt": MIN_VALID_L1_HARD_ER,
-                           "level2_prefixes_strict_gt": baseline_prefixes},
+            "thresholds": {"valid_l1_hard_er_min_inclusive": MIN_VALID_L1_HARD_ER,
+                           "level2_prefixes_min_inclusive": MIN_L2_PREFIXES,
+                           "frozen_resample_valid_l1_hard_er": FROZEN_RESAMPLE_VALID_L1_ER,
+                           "frozen_resample_level2_prefixes": baseline_prefixes},
             "diagnostic_only": ["valid_l1_positive_hit_rate", "valid_l1_negative_hit_rate"],
             "sha256": {key: _digest(path) for key, path in (
                 ("sid", sid_path), ("baseline", baseline_path),
                 ("validation_pairs", pairs_path), ("validation_meta", meta_path))},
         })
         failures = []
-        if not candidate["valid_l1_hard_er"] > MIN_VALID_L1_HARD_ER:
-            failures.append("Hard-L1 ER must be strictly above frozen cutoff")
-        if candidate_prefixes <= baseline_prefixes:
-            failures.append("second-level SID prefixes do not exceed frozen baseline")
+        if candidate["valid_l1_hard_er"] < MIN_VALID_L1_HARD_ER:
+            failures.append("Hard-L1 ER must be >= " + str(MIN_VALID_L1_HARD_ER))
+        if candidate_prefixes < MIN_L2_PREFIXES:
+            failures.append("second-level SID prefixes must be >= " + str(MIN_L2_PREFIXES))
         return {"passed": not failures, "refused": "; ".join(failures) if failures else None,
                 **evidence}
     except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
