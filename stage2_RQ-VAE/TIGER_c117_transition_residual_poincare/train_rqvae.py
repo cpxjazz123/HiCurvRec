@@ -295,8 +295,21 @@ def build_transition_targets(sequences: list[tuple[int, ...]], item_index: dict[
 
 def sample_edges(edge_anchor: np.ndarray, edge_target: np.ndarray,
                  probabilities: np.ndarray, count: int, rng: np.random.Generator):
-    """Draw ``count`` training edges with probability proportional to T_ab."""
+    """Draw ``count`` training edges with probability proportional to T_ab.
+
+    ``probabilities`` are the row-normalised T_ab, so each source row sums to one
+    and the whole array sums to the number of source rows, not to one. The
+    cumulative distribution is therefore normalised by its own total: sampling
+    proportional to T_ab then picks a source uniformly and a successor with
+    probability T_ab, which is what makes the sample unbiased for the proposal's
+    uniform-over-sources mean. Forcing the last entry to 1.0 instead would leave
+    a non-monotonic array and bias every draw towards the first rows.
+    """
     cumulative = np.cumsum(probabilities)
+    total = float(cumulative[-1])
+    if not np.isfinite(total) or total <= 0.0:
+        raise ValueError("transition probabilities do not form a distribution")
+    cumulative = cumulative / total
     cumulative[-1] = 1.0
     picks = np.searchsorted(cumulative, rng.random(count), side="right")
     picks = np.clip(picks, 0, len(probabilities) - 1)
