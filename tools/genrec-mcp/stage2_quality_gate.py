@@ -18,6 +18,10 @@ import zipfile
 MIN_VALID_L1_HARD_ER = 16.38953942232631  # STRICTLY greater; frozen Resample reference
 MIN_VALID_L1_HITRATE = None  # Not recovered: fail closed, never guess or silently skip
 FROZEN_BASELINE_L2_PREFIXES = 7414
+# Git blob identities pin these exact frozen source files, not merely their paths.
+FROZEN_BASELINE_BLOB_SHA1 = "4743e45db263a40e044ab8af8da1abc0ca95b54c"
+FROZEN_VALID_PAIRS_BLOB_SHA1 = "11d76dd452f3a27d1f6bf79fe7673bc6505733ef"
+FROZEN_VALID_META_BLOB_SHA1 = "a0121691dc95168169bffdc3b6018608580468da"
 EXPECTED_PAIRS = 52855
 EXPECTED_NEGATIVES = 10
 EXPECTED_SEED = 42
@@ -33,6 +37,13 @@ def _digest(path):
         for block in iter(lambda: f.read(1024 * 1024), b""):
             h.update(block)
     return h.hexdigest()
+
+
+def _git_blob_sha1(path):
+    """Compute immutable Git blob identity for an on-disk byte string."""
+    content = Path(path).read_bytes()
+    return hashlib.sha1(b"blob " + str(len(content)).encode("ascii") +
+                        b"\0" + content).hexdigest()
 
 
 def _sid(path):
@@ -152,6 +163,13 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
                 "pairs": str(pairs_path), "meta": str(meta_path)}
     try:
+        for label, path, want in (
+            ("baseline SID", baseline_path, FROZEN_BASELINE_BLOB_SHA1),
+            ("independent validation pairs", pairs_path, FROZEN_VALID_PAIRS_BLOB_SHA1),
+            ("validation metadata", meta_path, FROZEN_VALID_META_BLOB_SHA1),
+        ):
+            if _git_blob_sha1(path) != want:
+                raise QualityGateError(label + " no longer matches frozen Git blob")
         sid = _sid(sid_path)
         baseline = _sid(baseline_path)
         if set(sid) != set(baseline):
