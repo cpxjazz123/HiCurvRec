@@ -50,6 +50,22 @@ def write_isolation_config(workspace: Path) -> Path:
     return path
 
 
+def mark_workspace_project(workspace: Path) -> Path:
+    """Make the workspace opencode's OWN project root.
+
+    opencode resolves its project by walking up to the enclosing git root, so a
+    workspace inside the repository makes the REPOSITORY the project: the task's
+    own opencode.json is then ignored, the permission boundary never applies and
+    the Agent writes into the baseline trees. An empty .git/ directory stops the
+    walk at the workspace, so the boundary in opencode.json is the one that
+    applies and the shell stays denied. The marker is empty on purpose: it is a
+    project marker, not a repository.
+    """
+    marker = Path(workspace) / ".git"
+    marker.mkdir(parents=True, exist_ok=True)
+    return marker
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary="opencode", model="openai/gpt-6-luna", timeout=900) -> Path:
     if (not output_name.endswith(".json") or "/" in output_name
@@ -62,6 +78,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     if output.exists():
         raise RuntimeError("refuse to overwrite previous role output")
     isolation = write_isolation_config(workspace)
+    marker = mark_workspace_project(workspace)
     cmd = [binary, "run", "--standalone", "--format", "json", "--auto",
            "--model", model, "--title", task_id, prompt]
     started = time.monotonic()
@@ -113,8 +130,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "session_sha256": digest_file(workspace / "session.jsonl"),
         "isolation_config": isolation.name,
         "isolation_config_sha256": digest_file(isolation),
+        "project_marker": marker.name,
         "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, "
-                            "edit limited to the agent workspace",
+                            "edit limited to the agent workspace; the workspace is its own "
+                            "opencode project so the boundary is the one that applies",
         "stderr_present": bool(stderr), "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,
