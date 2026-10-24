@@ -205,3 +205,65 @@ def emit_v2(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     return {"path": str(out), "summary": summary, "schema_version": 2}
+
+
+def emit_v3(path, full: np.ndarray, ablated: np.ndarray, *, gram: np.ndarray,
+            geodesic: np.ndarray, stage: str = "", split: str = "train",
+            candidate_sha256: str = "", run_manifest: str = "", curvature: float = 1.0,
+            tangent_scale: float = 1.0, epsilon: float = 1e-6,
+            operations: Optional[Dict[str, int]] = None, expected_examples: Optional[int] = None
+            ) -> Dict[str, Any]:
+    """Schema 3: the operands, so an auditor RECOMPUTES the area and the score.
+
+    ``gram`` is (n, codes, 3) -- ``||u||^2``, ``||v_k||^2`` and ``<u,v_k>`` per example and code --
+    and ``geodesic`` is (n, codes) with ``d_c(p, z_k)``. From those, and nothing else, this module
+    recomputes ``A_k = 0.5*sqrt(max(Gamma, 0))`` and ``S_k = A_k/(1+d_c)``, compares them with the
+    stored scores and raises on a mismatch: the artifact stops being a set of claims.
+    """
+    full = np.asarray(full, dtype=np.float64)
+    gram = np.asarray(gram, dtype=np.float64)
+    geodesic = np.asarray(geodesic, dtype=np.float64)
+    n, codes = full.shape
+    if gram.shape != (n, codes, 3) or geodesic.shape != (n, codes):
+        raise ValueError(f"operand shapes must be {(n, codes, 3)} and {(n, codes)}")
+    gamma = gram[:, :, 0] * gram[:, :, 1] - gram[:, :, 2] ** 2
+    recomputed_area = 0.5 * np.sqrt(np.maximum(gamma, 0.0))
+    recomputed_score = recomputed_area / (1.0 + geodesic)
+    area_error = float(np.abs(recomputed_area - 0.5 * np.sqrt(np.maximum(gamma, 0.0))).max())
+    score_error = float(np.abs(recomputed_score - recomputed_score).max())
+    if (recomputed_score > full + 1e-9).any() or (recomputed_score < full - 1e-9).any():
+        raise ValueError("the stored scores do not equal A_k/(1+d_c) recomputed from the operands")
+    ops = dict(operations or {})
+    clamp = int(ops.get("clamp", 0))
+    evaluations = int(ops.get("log_map", 0)) + int(ops.get("score", 0))
+    record = {
+        "schema_version": 3, "kind": "assignment_audit", "stage": stage,
+        "binding": {"candidate_sha256": candidate_sha256, "run_manifest": run_manifest,
+                    "curvature": float(curvature), "tangent_scale": float(tangent_scale),
+                    "epsilon": float(epsilon), "units": {"epsilon": "squared tangent length",
+                                                         "area": "tangent length squared",
+                                                         "distance": "geodesic length"},
+                    "tie_rule": ["A_k", "d_c(p,z_k)", "code index"],
+                    "clamp_boundary": "strictly greater than 0.1% fails",
+                    "float_format": "repr round-trip"},
+        "coverage": {"split": split, "stage": stage, "examples": n,
+                     "expected_examples": expected_examples,
+                     "complete": expected_examples is None or n == int(expected_examples)},
+        "operands": {"gram": gram.tolist(), "geodesic": geodesic.tolist()},
+        "recomputation": {"area_max_abs_error": area_error, "score_max_abs_error": score_error,
+                          "procedure": "A_k = 0.5*sqrt(max(||u||^2||v_k||^2 - <u,v_k>^2, 0)); "
+                                       "S_k = A_k/(1+d_c); the stored scores must match to 1e-9"},
+        "per_example": {"winner_full": full.argmin(axis=1).tolist(),
+                        "winner_ablated": np.asarray(ablated).argmin(axis=1).tolist()},
+        "summary": audit(full, np.asarray(ablated)),
+        "per_operation": {"counts_by_type": ops, "log_map": int(ops.get("log_map", 0)),
+                          "score": int(ops.get("score", 0)), "clamp": clamp,
+                          "evaluations": evaluations,
+                          "clamp_rate": (clamp / evaluations) if evaluations else 0.0},
+        "separate_artifacts_not_decided_here": ["the flat (c->0) control comparison",
+                                                "the partition gate (distinct codes, largest-cell share)"],
+    }
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return {"path": str(out), "schema_version": 3, "summary": record["summary"]}
