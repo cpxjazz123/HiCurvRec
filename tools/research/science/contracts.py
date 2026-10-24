@@ -1,4 +1,5 @@
 """Machine-checkable candidate identity, user-behavior grounding and SID policy."""
+import json
 from pathlib import Path
 
 from ..core.evidence import digest_file
@@ -33,6 +34,9 @@ def check_review_identity(candidate_path: Path, manifest: dict, prompt: str) -> 
     ident = str(manifest.get("candidate_id") or "")
     if not ident or manifest.get("candidate_sha256") != expected:
         raise ValueError("candidate identity or digest does not match staged bytes")
+    payload = json.loads(Path(candidate_path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or payload.get("candidate_id") != ident:
+        raise ValueError("candidate identity differs from the actual frozen proposal")
     if ident not in prompt or expected not in prompt:
         raise ValueError("review prompt does not bind current candidate ID and SHA")
     forbidden = tuple(manifest.get("forbidden_stale_formulas", ()))
