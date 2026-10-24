@@ -27,10 +27,9 @@ AGENT_BINARY = "opencode"
 AGENT_MODEL = "openai/gpt-6-luna"
 AGENT_TIMEOUT_SECONDS = 900
 LEASE_SECONDS = 1200
-#: A task may be claimed this many times inside one run: the initial attempt
-#: plus the reviewer's revisions, which reopen the geometry task with its
-#: findings instead of spending a whole run per defect.
-MAX_ATTEMPTS = 5
+#: No numeric cap on repairable errors or evidence-based MATERIAL revisions.
+#: FATAL/PARKED scientific verdicts, cancellation and resource failures remain stops.
+MAX_ATTEMPTS = None
 
 # Explicitly forbidden here. Real training remains behind the existing MCP.
 AUTO_STAGE2 = False

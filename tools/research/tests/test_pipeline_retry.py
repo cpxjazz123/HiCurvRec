@@ -64,28 +64,69 @@ class RetryTests(unittest.TestCase):
         finally:
             pipeline.run_agent, pipeline.verify_science_output = original_run, original_verify
 
-    def test_a_run_gives_up_after_the_last_attempt(self):
-        calls = {"runs": 0}
+    def test_repairs_continue_past_previous_three_try_limit(self):
+        calls = {"n": 0}
+        def agent(task, prompt, output_name, root, **kwargs):
+            calls["n"] += 1
+            ws = Path(root) / "agents" / task
+            ws.mkdir(parents=True, exist_ok=True)
+            (ws / output_name).write_text("{}", encoding="utf-8")
+            (ws / "session.jsonl").write_text(prompt, encoding="utf-8")
+            return ws / output_name
+        def checker(*args):
+            if calls["n"] < 8:
+                raise ValueError("fixable syntax error")
+        original = pipeline.run_agent, pipeline.verify_science_output
+        pipeline.run_agent, pipeline.verify_science_output = agent, checker
+        try:
+            with tempfile.TemporaryDirectory() as work:
+                pipeline.run_agent_until_valid("geometry", Path(work), {}, "prompt")
+                attempts = list((Path(work) / "agents" / "geometry").glob("attempt-*"))
+                self.assertEqual(len(attempts), 7)
+                self.assertTrue(all((x / "repair_failure.json").is_file() for x in attempts))
+        finally:
+            pipeline.run_agent, pipeline.verify_science_output = original
+        self.assertEqual(calls["n"], 8)
 
-        def fake_run_agent(task, prompt, output_name, root, **kwargs):
-            calls["runs"] += 1
-            workspace = Path(root) / "agents" / task
-            workspace.mkdir(parents=True, exist_ok=True)
-            (workspace / output_name).write_text("{}", encoding="utf-8")
-            return workspace / output_name
+    def test_invalid_agent_output_can_be_repaired(self):
+        calls = {"n": 0}
+        def agent(task, prompt, output_name, root, **kwargs):
+            calls["n"] += 1
+            ws = Path(root) / "agents" / task
+            ws.mkdir(parents=True, exist_ok=True)
+            (ws / output_name).write_text("bad" if calls["n"] == 1 else "{}", encoding="utf-8")
+            (ws / "execution.json").write_text("{}", encoding="utf-8")
+            if calls["n"] == 1:
+                raise RuntimeError("OpenCode returned invalid JSON")
+            return ws / "execution.json"
+        original = pipeline.run_agent, pipeline.verify_science_output
+        pipeline.run_agent, pipeline.verify_science_output = agent, lambda *args: None
+        try:
+            with tempfile.TemporaryDirectory() as work:
+                pipeline.run_agent_until_valid("geometry", Path(work), {}, "prompt")
+        finally:
+            pipeline.run_agent, pipeline.verify_science_output = original
+        self.assertEqual(calls["n"], 2)
 
-        def fake_verify(task, root, manifest):
-            raise ValueError("still wrong")
-
-        original_run, original_verify = pipeline.run_agent, pipeline.verify_science_output
-        pipeline.run_agent, pipeline.verify_science_output = fake_run_agent, fake_verify
+    def test_cancelled_run_does_not_retry(self):
+        calls = {"n": 0}
+        def agent(task, prompt, output_name, root, **kwargs):
+            calls["n"] += 1
+            (Path(root) / "cancel.json").write_text("{}")
+            ws = Path(root) / "agents" / task
+            ws.mkdir(parents=True, exist_ok=True)
+            (ws / output_name).write_text("{}")
+            return ws / output_name
+        original = pipeline.run_agent, pipeline.verify_science_output
+        pipeline.run_agent, pipeline.verify_science_output = (
+            agent, lambda *args: (_ for _ in ()).throw(ValueError("error")))
         try:
             with tempfile.TemporaryDirectory() as work:
                 with self.assertRaises(ValueError):
                     pipeline.run_agent_until_valid("geometry", Path(work), {}, "prompt")
         finally:
-            pipeline.run_agent, pipeline.verify_science_output = original_run, original_verify
-        self.assertEqual(calls["runs"], pipeline.MAX_PROPOSAL_ATTEMPTS)
+            pipeline.run_agent, pipeline.verify_science_output = original
+        self.assertEqual(calls["n"], 1)
 
 
 if __name__ == "__main__":

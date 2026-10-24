@@ -26,6 +26,19 @@ class TaskStoreTests(unittest.TestCase):
                 store.add("design", "LITERATURE", ("data",))
             self.assertEqual(store.snapshot()["tasks"]["data"]["status"], "done")
 
+    def test_unlimited_retries_keep_lease_owner(self):
+        with tempfile.TemporaryDirectory() as work:
+            store = TaskStore(Path(work))
+            store.add("fix", "GEOMETRY")
+            for _ in range(8):
+                self.assertEqual(store.claim("agent", max_attempts=None)[0], "fix")
+                with self.assertRaises(StateError):
+                    store.renew("fix", "other", 120)
+                store.renew("fix", "agent", 120)
+                store.fail("fix", "agent", "retry", retry=True)
+            self.assertEqual(store.claim("agent", max_attempts=None)[0], "fix")
+            self.assertEqual(store.snapshot()["tasks"]["fix"]["attempts"], 9)
+
     def test_failure_blocks_task_and_lease_recovers(self):
         with tempfile.TemporaryDirectory() as work:
             store = TaskStore(Path(work))

@@ -91,8 +91,8 @@ def verify_science_output(task, root, manifest):
             raise ValueError("review targets another candidate")
         if output.get("verdict") not in ("FATAL", "MATERIAL", "CPU_ELIGIBLE", "PARKED"):
             raise ValueError("review verdict absent/unknown")
-        if output["verdict"] != "CPU_ELIGIBLE":
-            raise ValueError("scientific admission BLOCKED by " + output["verdict"])
+        # Scientific outcomes are NOT machine-output errors; the DAG handles
+        # MATERIAL revision and FATAL/PARKED rejection separately.
 
 
 def process_next(run_id):
@@ -127,15 +127,19 @@ def process_next(run_id):
                 check_review_identity(
                     root / "agents" / "geometry" / "candidate.json", manifest, prompt)
             atomic_json(root / "manifests" / (task + ".json"), manifest)
-            evidence = run_agent_until_valid(task, root, manifest, prompt)
+            evidence = run_agent_until_valid(
+                task, root, manifest, prompt, task_id=task_id, owner=owner, dag=dag)
             if role == "REVIEW":
-                try:
-                    verify_science_output(task, root, manifest)
-                except ValueError as exc:
-                    if not _send_back_for_revision(dag, task_id, root, exc):
-                        raise
-                    dag.fail(task_id, owner, str(exc), retry=True)
-                    return {"task": task, "role": role, "evidence": False, "revision": True}
+                verdict = read_json(root / "agents" / "review" / "review.json")["verdict"]
+                if verdict == "MATERIAL":
+                    if not _send_back_for_revision(dag, task_id, root, ValueError(verdict)):
+                        raise StateError("could not reopen fixable proposal")
+                    dag.fail(task_id, owner, "scientific revision: MATERIAL", retry=True)
+                    return {"task": task, "role": role, "revision": True, "evidence": False}
+                if verdict in ("FATAL", "PARKED"):
+                    dag.fail(task_id, owner, "scientific rejection: " + verdict)
+                    return {"task": task, "role": role, "blocked": True,
+                            "review_verdict": verdict, "evidence": False}
         if (root / "cancel.json").exists():
             dag.finish_cancel(task_id, owner)
             return None
@@ -164,58 +168,76 @@ def step():
     return inspect()
 
 
-#: A rejected proposal is retried inside the same run, with the checker's own
-#: complaint, before the run is abandoned. One research run used to be spent per
-#: schema defect, which made the loop sample the generator instead of fixing it.
-MAX_PROPOSAL_ATTEMPTS = 3
-
-
-def _archive_attempt(root: Path, task: str, attempt: int) -> None:
-    """Keep the receipts of a rejected attempt instead of overwriting them."""
+def _archive_attempt(root: Path, task: str, attempt: int = 1) -> Path | None:
+    """Archive every attempted implementation with non-colliding evidence."""
     workspace = root / "agents" / task
     if not workspace.is_dir():
-        return
+        return None
+    while (workspace / ("attempt-%d" % attempt)).exists():
+        attempt += 1
     target = workspace / ("attempt-%d" % attempt)
-    target.mkdir(parents=True, exist_ok=True)
-    for item in workspace.iterdir():
-        if item.name == target.name or item.name.startswith("attempt-"):
+    target.mkdir(parents=True, exist_ok=False)
+    for item in list(workspace.iterdir()):
+        if item == target or item.name.startswith("attempt-"):
             continue
         if item.name == "revision_feedback.json":
-            continue  # the next attempt has to read it
+            continue
         shutil.move(str(item), str(target / item.name))
+    return target
 
 
-def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str) -> Path:
-    """Run the role agent until its output passes the machine checks.
+def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str,
+                          *, task_id=None, owner=None, dag=None) -> Path:
+    """No attempt limit for recoverable errors; still enforce cancellation/leases.
 
-    Each rejected attempt keeps its own session, execution and output receipts,
-    and the next prompt carries the checker's complaint verbatim so the agent
-    can correct exactly that defect.
+    Every failure is preserved and repaired with concrete checker feedback.
+    Frozen scientific FATAL/PARKED verdicts never enter this repair branch.
     """
+    import time
+
+    root = Path(root)
+    original_prompt = prompt
+    workspace = root / "agents" / task
+    if workspace.is_dir() and any(
+            (workspace / x).exists()
+            for x in (OUTPUTS[task], "session.jsonl", "execution.json")):
+        _archive_attempt(root, task)  # recover from a prior interrupted worker
     attempt = 0
     while True:
+        if (root / "cancel.json").is_file():
+            raise RuntimeError("research run cancelled before retry")
+        if dag is not None:
+            if not task_id or not owner:
+                raise ValueError("lease owner/task id required")
+            dag.renew(task_id, owner, settings.LEASE_SECONDS)
         attempt += 1
-        evidence = run_agent(task, prompt, OUTPUTS[task], root,
-                             binary=settings.AGENT_BINARY,
-                             model=settings.AGENT_MODEL,
-                             timeout=settings.AGENT_TIMEOUT_SECONDS)
         try:
+            evidence = run_agent(task, prompt, OUTPUTS[task], root,
+                                 binary=settings.AGENT_BINARY,
+                                 model=settings.AGENT_MODEL,
+                                 timeout=settings.AGENT_TIMEOUT_SECONDS)
             verify_science_output(task, root, manifest)
-        except ValueError as exc:
-            if attempt >= MAX_PROPOSAL_ATTEMPTS:
+            return evidence
+        except (ValueError, RuntimeError) as exc:
+            if (root / "cancel.json").is_file():
                 raise
-            _archive_attempt(root, task, attempt)
-            prompt = (prompt + "\n\nYour previous answer was rejected by the automated "
-                      "checker with this exact message:\n" + str(exc) +
-                      "\nFix precisely that defect, keep every requirement you already met, "
-                      "and write the output file again.")
+            archived = _archive_attempt(root, task)
+            if archived is None:
+                raise
+            atomic_json(archived / "repair_failure.json", {
+                "attempt_in_invocation": attempt, "error_type": type(exc).__name__,
+                "error": str(exc), "at": time.time(),
+                "scientific_review_overridden": False})
+            # Only the current error is appended: the prompt never grows without
+            # bound, and previous outputs remain in the archived directory.
+            prompt = (original_prompt +
+                      "\n\nYour previous answer was rejected by the automated checker "
+                      "with this exact message:\n" + str(exc) +
+                      "\nExamine the archived attempt at " +
+                      str(archived / OUTPUTS[task]) +
+                      ", fix this specific defect, preserve the frozen protocol "
+                      "and every other satisfied requirement, then write a new output.")
             continue
-        return evidence
-
-
-#: How many times the review may send one proposal back for revision inside a
-#: single run before the run is blocked.
-MAX_REVISIONS = 3
 
 
 def _send_back_for_revision(dag, review_task_id, root: Path, error: Exception) -> bool:
@@ -234,20 +256,20 @@ def _send_back_for_revision(dag, review_task_id, root: Path, error: Exception) -
     except Exception:
         return False
     verdict = str(payload.get("verdict") or "")
-    if verdict not in ("FATAL", "MATERIAL", "PARKED"):
+    # MATERIAL can be repaired with a new candidate; FATAL/PARKED is a
+    # scientific stop, not an instruction to re-ask the same reviewer.
+    if verdict != "MATERIAL":
         return False
     workspace = root / "agents" / "geometry"
     workspace.mkdir(parents=True, exist_ok=True)
-    attempts = len(list(workspace.glob("attempt-*")))
-    if attempts >= MAX_REVISIONS:
-        return False
     atomic_json(workspace / "revision_feedback.json", {
         "review_verdict": verdict,
         "review_sha256": digest_file(review),
         "blockers": payload.get("blockers"),
         "reproducible_evidence": payload.get("reproducible_evidence"),
     })
-    _archive_attempt(root, "geometry", attempts + 1)
+    _archive_attempt(root, "geometry")
+    _archive_attempt(root, "review")  # next REVIEW must not read stale evidence
     dag.reopen(review_task_id.split("__", 1)[0] + "__geometry",
                "review blocked the proposal: " + verdict)
     return True
