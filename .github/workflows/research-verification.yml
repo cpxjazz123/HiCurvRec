@@ -42,6 +42,17 @@ jobs:
         run: python -m unittest discover -s tools/research/tests -v
       - name: Fail-closed verification and fault-injection regression
         run: python -m unittest discover -s tools/research/verification/tests -v
+      - name: Replay every known defect against the preflight
+        run: |
+          python -m tools.research.integrations.defect_report
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("results/research/issue117/reports/defect_report.json").read_text())
+          assert report["all_defects_detected"], [
+              row for row in report["defect_classes"] if not row["passed"]]
+          print("defect classes:", len(report["defect_classes"]), "| DoD:", report["dod"])
+          PY
       - name: Assert no old training-admission bypass
         run: |
           python - <<'PY'

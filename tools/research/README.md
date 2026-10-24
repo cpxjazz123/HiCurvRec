@@ -121,3 +121,20 @@ instead of re-learning the same defect.
 CI runs a deployed-Python 3.9 job that imports the research package, because the
 MCP server uses the host's system `python3` and a 3.10-only annotation once took
 the whole tool surface down at call time.
+
+### Machine report and the failure ledger
+
+`integrations/defect_report.py` replays every known engineering defect as a live
+injection against the preflight and writes
+`results/research/issue117/reports/defect_report.json`: one row per class with
+the layer that caught it, the observed diagnostic code, the verdict and whether
+a legal spelling was wrongly rejected. It also publishes the DoD counters —
+`runs`, `review_verdicts`, `known_failure_recurrence`, `registry_entries`,
+`machine_repair_attempts`, `avoidable_review_calls`, `science_rejections`,
+`time_to_verified_candidate_seconds` — computed from the run directories and the
+registry, so the baseline can be recomputed rather than asserted. CI runs it and
+fails if any class escapes.
+
+`integrations/backfill_failures.py` records the defects #117 actually hit, each
+with the commit that fixed it and the regression that now proves it, so the
+registry starts as a ledger instead of an empty counter.
