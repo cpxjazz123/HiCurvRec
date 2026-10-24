@@ -104,9 +104,15 @@ ROLE_GUIDANCE = {
         "cannot justify either verdict."
     ),
     "REVIEW": (
-        "Read ONLY the candidate in THIS manifest. Audit actual behavior source, "
-        "next-item causal link, math types, real nontrivial hyperbolic effect, numerical "
-        "domain, same-capacity control, user-future leakage, frozen model protocol and novelty. "
+        "Read ONLY the candidate in THIS manifest. Audit the next-item causal link, math "
+        "types, real nontrivial hyperbolic effect, numerical domain, same-capacity control, "
+        "user-future leakage, frozen model protocol and novelty of the PROPOSAL. "
+        "Scope: the candidate is not implemented yet at this stage. Do not require the "
+        "mechanism to exist in any repository tree, and do not treat an existing Stage2 tree "
+        "as this candidate's implementation; implementation identity, hash binding and "
+        "execution evidence are checked later by the independent test authors, the four "
+        "suites and verification_check. Judge whether the proposed Stage2 SID mechanism is "
+        "implementable inside the frozen contract and whether its falsifier is decidable. "
         "Write JSON with candidate_id, candidate_sha256, verdict (FATAL/MATERIAL/CPU_ELIGIBLE/"
         "PARKED), blockers and reproducible evidence. The right to CPU study is NOT GPU approval."
     ),
