@@ -1,4 +1,9 @@
-"""Offline Stage2-to-Stage3 quality gate regressions; requires only stdlib."""
+"""Stage 2 -> Stage 3 admission regressions under the Issue #120 semantics.
+
+The admission decision is technical validity only. ER, level-two prefix counts,
+collisions and usage are measured and reported, and they never refuse a Stage 3
+launch; only a malformed, ambiguous or unreadable SID does.
+"""
 import importlib.util
 import json
 import struct
@@ -9,7 +14,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parents[3]
-SOURCE = HERE / "tools" / "genrec-mcp" / "stage2_quality_gate.py"
+SOURCE = HERE / "tools/genrec-mcp/stage2_quality_gate.py"
 spec = importlib.util.spec_from_file_location("quality_gate_under_test", SOURCE)
 gate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gate)
@@ -23,7 +28,7 @@ def npy(data, shape):
     return b"\x93NUMPY" + bytes((1, 0)) + struct.pack("<H", len(head)) + head + values.tobytes()
 
 
-class QualityGateTests(unittest.TestCase):
+class Stage3AdmissionTests(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -32,10 +37,9 @@ class QualityGateTests(unittest.TestCase):
         self.baseline_path = root / "baseline.json"
         self.pairs_path = root / "valid.npz"
         self.meta_path = root / "valid.meta.json"
-        self.candidate = {str(i): [i, 0, 0] for i in range(13)}
-        self.candidate["0"] = [0, 0, 0]
-        self.candidate["1"] = [0, 1, 0]
-        self.candidate["12"] = [0, 2, 0]
+        # A deliberately poor candidate: every item shares the same first token,
+        # so ER collapses and the level-two prefix count is one.
+        self.candidate = {str(i): [0, 0, i] for i in range(13)}
         self.baseline = {str(i): [i % 2, 0, i] for i in range(13)}
         with zipfile.ZipFile(self.pairs_path, "w") as z:
             z.writestr("anchors.npy", npy([0] * 4, (4,)))
@@ -55,9 +59,7 @@ class QualityGateTests(unittest.TestCase):
         self.candidate_path.write_text(json.dumps(self.candidate))
         self.baseline_path.write_text(json.dumps(self.baseline))
         self.patch = patch.multiple(
-            gate, EXPECTED_PAIRS=4, MIN_VALID_L1_HARD_ER=10.0,
-            MIN_L2_PREFIXES=3, FROZEN_BASELINE_L2_PREFIXES=2,
-            FROZEN_RESAMPLE_VALID_L1_ER=0.0,
+            gate, EXPECTED_PAIRS=4,
             FROZEN_BASELINE_BLOB_SHA1=gate._git_blob_sha1(self.baseline_path),
             FROZEN_VALID_PAIRS_BLOB_SHA1=gate._git_blob_sha1(self.pairs_path),
             FROZEN_VALID_META_BLOB_SHA1=gate._git_blob_sha1(self.meta_path))
@@ -68,124 +70,60 @@ class QualityGateTests(unittest.TestCase):
         return gate.evaluate(self.candidate_path, self.baseline_path,
                              self.pairs_path, self.meta_path)
 
-    def test_hitrate_is_recorded_only_and_never_blocks_promotion(self):
-        """A missing HitRate threshold must not be required for Stage3."""
+    def test_a_technically_valid_sid_passes_however_poor_its_quality_is(self):
         result = self.evaluate()
         self.assertTrue(result["passed"], result)
-        self.assertNotIn("valid_l1_positive_hit_rate_min", result["thresholds"])
-        self.assertEqual(result["thresholds"]["valid_l1_hard_er_min_inclusive"], 10.0)
-        self.assertEqual(result["thresholds"]["level2_prefixes_min_inclusive"], 3)
-        self.assertEqual(result["thresholds"]["frozen_resample_level2_prefixes"], 2)
-        self.assertEqual(result["candidate"]["valid_l1_positive_hit_rate"], 1.0)
-        self.assertIn("valid_l1_positive_hit_rate", result["diagnostic_only"])
-        self.assertEqual(result["candidate"]["valid_l1_hard_er"], 40)
+        self.assertIsNone(result["refused"])
+        self.assertEqual(result["candidate"]["level2_distinct_prefixes"], 1)
+        self.assertLess(result["candidate"]["valid_l1_hard_er"], 10.0)
+        self.assertEqual(result["thresholds"], {}, "no promotion floor may be reported")
 
-    def test_pass_only_with_er_and_prefix_gates(self):
+    def test_quality_numbers_are_still_measured(self):
         result = self.evaluate()
-        self.assertTrue(result["passed"], result)
-        self.assertEqual(result["candidate"]["full_unique_items"], 13)
-        self.assertEqual(set(result["sha256"]), {"sid", "baseline", "validation_pairs", "validation_meta"})
+        self.assertIn("valid_l1_hard_er", result["candidate"])
+        self.assertIn("valid_l1_positive_hit_rate", result["candidate"])
+        self.assertIn("level2_distinct_prefixes", result["candidate"])
+        self.assertIn("valid_l1_hard_er", result["diagnostic_only"])
+        self.assertEqual(result["admission_policy"], "technical validity only; no quality floor")
 
-    def test_low_prefix_rejected_even_when_er_passes(self):
-        self.candidate = {str(i): [0, 0, i] for i in range(13)}
-        self.candidate_path.write_text(json.dumps(self.candidate))
-        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 0.5):
-            result = self.evaluate()
-        self.assertFalse(result["passed"])
-        self.assertIn("prefixes", result["refused"])
-
-    def test_er_at_relaxed_floor_passes_inclusively(self):
-        # Item 11 appears three times among the 40 negatives, raising
-        # negative hits from 1 to 4: 4*10/4 = ER 10.0, below Resample.
-        self.candidate["11"] = [0, 3, 0]
-        self.candidate_path.write_text(json.dumps(self.candidate))
-        result = self.evaluate()
-        self.assertTrue(result["passed"], result)
-        self.assertEqual(result["candidate"]["valid_l1_hard_er"], 10.0)
-        self.assertGreaterEqual(result["candidate"]["level2_distinct_prefixes"], 3)
-        self.assertLess(result["candidate"]["valid_l1_hard_er"], 16.38953942232631)
-
-    def test_er_below_relaxed_floor_rejected(self):
-        self.candidate["1"] = [1, 1, 0]
-        self.candidate["2"] = [0, 3, 0]
+    def test_duplicate_full_sid_is_refused(self):
+        self.candidate["5"] = self.candidate["4"]
         self.candidate_path.write_text(json.dumps(self.candidate))
         result = self.evaluate()
         self.assertFalse(result["passed"])
-        self.assertIn("Hard-L1 ER", result["refused"])
+        self.assertIn("not unique", result["refused"])
 
-    def test_equal_er_to_threshold_is_allowed(self):
-        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.0):
-            result = self.evaluate()
-        self.assertTrue(result["passed"], result)
-
-    def test_below_er_threshold_is_rejected(self):
-        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.01):
-            result = self.evaluate()
-        self.assertFalse(result["passed"])
-        self.assertIn("Hard-L1 ER", result["refused"])
-
-    def test_equal_l2_prefix_to_threshold_is_allowed(self):
-        prefixes = self.evaluate()["candidate"]["level2_distinct_prefixes"]
-        with patch.object(gate, "MIN_L2_PREFIXES", prefixes):
-            result = self.evaluate()
-        self.assertTrue(result["passed"], result)
-
-    def test_below_l2_prefix_threshold_is_rejected(self):
-        prefixes = self.evaluate()["candidate"]["level2_distinct_prefixes"]
-        with patch.object(gate, "MIN_L2_PREFIXES", prefixes + 1):
-            result = self.evaluate()
-        self.assertFalse(result["passed"])
-        self.assertIn("prefixes", result["refused"])
-
-    def test_equal_prefix_to_baseline_is_rejected(self):
-        self.candidate_path.write_text(json.dumps(self.baseline))
-        with patch.object(gate, "MIN_VALID_L1_HARD_ER", -1):
-            result = self.evaluate()
-        self.assertFalse(result["passed"])
-        self.assertIn("prefixes", result["refused"])
-
-    def test_missing_pairs_refuses(self):
-        self.pairs_path.unlink()
-        self.assertFalse(self.evaluate()["passed"])
-
-    def test_tampered_independent_validation_pairs_fail_closed(self):
-        with zipfile.ZipFile(self.pairs_path, "a") as z:
-            z.writestr("injected.txt", "changed frozen bytes")
+    def test_a_malformed_sid_is_refused(self):
+        self.candidate["7"] = [1, -2, 3]
+        self.candidate_path.write_text(json.dumps(self.candidate))
         result = self.evaluate()
         self.assertFalse(result["passed"])
-        self.assertIn("frozen Git blob", result["refused"])
 
-    def test_missing_baseline_refuses(self):
+    def test_an_unreadable_sid_file_is_refused(self):
+        self.candidate_path.write_text("{not json", encoding="utf-8")
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+
+    def test_a_missing_reference_does_not_block_a_valid_candidate(self):
         self.baseline_path.unlink()
-        self.assertFalse(self.evaluate()["passed"])
+        result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+        self.assertTrue(result["reference_status"])
 
-    def test_recorded_c117_fails_on_real_validation_and_prefixes(self):
-        """Reproduce the rejected run from immutable repository evidence."""
-        root = HERE / "results"
-        candidate = root / "stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json"
-        baseline = root / "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json"
-        data = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
-        meta = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json"
-        with patch.multiple(
-            gate, EXPECTED_PAIRS=52855, MIN_VALID_L1_HARD_ER=10.0,
-            MIN_L2_PREFIXES=10000, FROZEN_BASELINE_L2_PREFIXES=16145,
-            FROZEN_RESAMPLE_VALID_L1_ER=16.38953942232631,
-            FROZEN_BASELINE_BLOB_SHA1="d97d24a7a63891682d2b68c09a89164de2031ee9",
-            FROZEN_VALID_PAIRS_BLOB_SHA1="11d76dd452f3a27d1f6bf79fe7673bc6505733ef",
-            FROZEN_VALID_META_BLOB_SHA1="a0121691dc95168169bffdc3b6018608580468da"):
-            verdict = gate.evaluate(candidate, baseline, data, meta)
-        self.assertFalse(verdict["passed"])
-        self.assertEqual(verdict["candidate"]["level2_distinct_prefixes"], 6233)
-        self.assertEqual(verdict["baseline"]["level2_distinct_prefixes"], 16145)
-        self.assertAlmostEqual(verdict["baseline"]["valid_l1_hard_er"], 16.38953942232631, places=9)
-        self.assertIn("prefixes", verdict["refused"])
+    def test_tampered_validation_pairs_do_not_block_a_valid_candidate(self):
+        with zipfile.ZipFile(self.pairs_path, "w") as z:
+            z.writestr("anchors.npy", npy([0] * 4, (4,)))
+        result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+        self.assertTrue(result["reference_status"])
 
-    def test_stage3_checks_quality_before_gpu_or_launch(self):
+    def test_stage3_checks_validity_before_gpu_or_launch(self):
         server = (HERE / "tools/genrec-mcp/server.py").read_text()
         launch = server[server.index("def tool_stage3_start("):]
-        self.assertLess(launch.index("stage2_quality_admission(sid)"),
+        self.assertIn("stage2_validity_admission(sid)", launch)
+        self.assertLess(launch.index("stage2_validity_admission(sid)"),
                         launch.index("probe_gpu_layout()"))
-        self.assertLess(launch.index("if not quality[\"passed\"]:"),
+        self.assertLess(launch.index('if not validity["passed"]:'),
                         launch.index("subprocess.Popen("))
 
 

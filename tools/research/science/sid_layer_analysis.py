@@ -314,7 +314,7 @@ def _local(path: Path) -> Path:
 def build_single_sid_record(sids, gate_result, anchors, positives, successors) -> dict:
     """Complete, numeric Stage2 layer diagnostics independent of Stage3 scores.
 
-    ER and L2 prefix comparisons are the only quality promotion thresholds;
+    ER and L2 prefix counts are diagnostics only, never promotion thresholds;
     both prefix-hit rates and all three L3 metrics are diagnostic only.
     """
     from math import isfinite
@@ -344,19 +344,11 @@ def build_single_sid_record(sids, gate_result, anchors, positives, successors) -
         "schema": "stage2_sid_layer_metrics_v1",
         "status": "complete",
         "metrics": metrics,
-        "hard_gates": {
-            "valid_l1_hard_er": {
-                "strict_gt": gate_result["thresholds"]["valid_l1_hard_er_strict_gt"],
-                "passed": metrics["valid_l1_hard_er"] >
-                          gate_result["thresholds"]["valid_l1_hard_er_strict_gt"],
-            },
-            "level2_distinct_prefixes": {
-                "strict_gt": gate_result["thresholds"]["level2_prefixes_strict_gt"],
-                "passed": metrics["level2_distinct_prefixes"] >
-                          gate_result["thresholds"]["level2_prefixes_strict_gt"],
-            },
-        },
-        "promotion_eligible_by_quality": bool(gate_result["passed"]),
+        # Issue #120: there is no quality floor any more. Every number here is a
+        # diagnostic; only the technical validity of the SID decides admission.
+        "diagnostics": {key: metrics[key] for key in sorted(metrics)},
+        "admission_policy": "technical validity only; no quality floor",
+        "technically_valid_sid": bool(gate_result["passed"]),
         "diagnostics_only": [
             "valid_l1_positive_hit_rate", "valid_l1_negative_hit_rate",
             "level3_distinct_triples", "l3_collision", "l3_refinement_gain_bits",

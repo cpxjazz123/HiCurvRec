@@ -39,11 +39,13 @@ def _load_gate():
 
 _GATE = _load_gate()
 
-#: Admission thresholds are READ from the gate; copying them would create the
-#: second hard-coded source of truth that this issue exists to remove.
-THRESHOLDS = {
-    "valid_l1_hard_er_strict_gt": float(_GATE.MIN_VALID_L1_HARD_ER),
-    "level2_prefixes_strict_gt": int(_GATE.FROZEN_BASELINE_L2_PREFIXES),
+#: Issue #120 removed every quality floor from admission, so there are no
+#: promotion thresholds left to read. The frozen Resample numbers stay only as
+#: the reference the diagnostics are reported against.
+THRESHOLDS: dict = {}
+REFERENCE_VALUES = {
+    "valid_l1_hard_er": float(_GATE.FROZEN_RESAMPLE_VALID_L1_ER),
+    "level2_distinct_prefixes": int(_GATE.FROZEN_BASELINE_L2_PREFIXES),
 }
 
 FROZEN = {
@@ -90,7 +92,7 @@ METRICS = {
                       "a hit means the anchor item's first SID token equals the candidate's",
         "unit": "ratio", "direction": "higher", "denominator": "negative_hits",
         "source": "tools/genrec-mcp/stage2_quality_gate.py::_measures",
-        "role": "admission_hard_gate",
+        "role": "diagnostic_only",
     },
     "valid_l1_positive_hit_rate": {
         "definition": "positive_hits / pairs over the frozen validation pairs",
@@ -108,7 +110,7 @@ METRICS = {
         "definition": "count of distinct (k1, k2) pairs over all exported items",
         "unit": "count", "direction": "higher", "denominator": "none",
         "source": "tools/genrec-mcp/stage2_quality_gate.py::_measures",
-        "role": "admission_hard_gate",
+        "role": "diagnostic_only",
     },
     "level3_distinct_triples": {
         "definition": "count of distinct (k1, k2, k3) triples over all exported items",
