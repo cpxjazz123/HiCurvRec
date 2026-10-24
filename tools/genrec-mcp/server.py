@@ -1975,12 +1975,15 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
 # Independent executable verification -- active Stage2 admission
 # --------------------------------------------------------------------------
 def run_agent_verification(tree: Path, verification_id: str) -> dict:
-    """Read current #116 source-bound Agent evidence and rerun reviewed tests.
+    """Read the current independent evidence for this tree.
 
-    This module loads only the tiny stdlib deterministic admission checker, not
-    any retired verifier; Stage2's real one-epoch gradient/DDP smoke follows.
+    Issue #117 candidates are checked by the reviewed four-suite engine; Issue
+    #120 round candidates by their three-verifier implementation record. Either
+    way the Stage2 worker re-checks the evidence before and after its smoke.
     """
     import importlib.util
+    if str(verification_id).startswith("round:"):
+        return round_admission(tree, verification_id)
     verifier = REPO / "tools" / "research" / "verification" / "admission.py"
     if not verifier.is_file():
         return {"passed": False, "refused": "new native verifier is missing"}
