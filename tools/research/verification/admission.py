@@ -1,7 +1,7 @@
 """Deterministic Stage2 preflight for independent OpenCode verification evidence.
 
 This is not an LLM judge and does not import retired CGV code. It accepts a
-candidate identifier, resolves all evidence under the Issue116 root, verifies
+candidate identifier, resolves all evidence under the Issue117 root, verifies
 frozen source and test hashes, and RE-RUNS independent tests before every GPU
 launch. Agent prose alone never authorizes training.
 """
@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[3]
-EVIDENCE_ROOT = REPO / "results" / "research" / "issue116"
+EVIDENCE_ROOT = REPO / "results" / "research" / "issue117"
 CASES_ROOT = Path(__file__).resolve().parent / "cases"
 SUITES = ("math", "gradient", "ddp", "entrypoint")
 AGENT_ROLES = ("math", "gradient", "runtime", "review")

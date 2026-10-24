@@ -1973,7 +1973,7 @@ def tool_research_verify_status(run_id: str) -> dict:
 TOOLS: dict[str, dict] = {
     "research_start": {
         "fn": tool_research_start, "args": {},
-        "description": "Create a fresh Issue116 research run with a real run_id and "
+        "description": "Create a fresh Issue117 research run with a real run_id and "
         "start detached native DAG workers when source-configured safety permits; "
         "DATA and LITERATURE can work in parallel, and no GPU is launched.",
     },

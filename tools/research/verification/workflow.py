@@ -1,4 +1,4 @@
-"""Independent OpenCode test authors and evidence freeze for Issue116.
+"""Independent OpenCode test authors and evidence freeze for Issue117.
 
 Three verifier agents may author test sources in parallel; they do NOT install
 their own code as passing tests or auto-approve it. Reviewed tests are promoted

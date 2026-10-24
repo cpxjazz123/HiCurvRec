@@ -1,4 +1,4 @@
-# Native behavior-first research tools — Issue #116
+# Native behavior-first research tools — Issue #117
 
 The only active research orchestration lives in `tools/research/`; formal training and job status remain in `tools/genrec-mcp/server.py`.
 
@@ -53,7 +53,7 @@ The research package never starts GPU training directly, never uses validation/t
 
 ## Boundaries
 
-Output state is isolated to `results/research/issue116/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.
+Output state is isolated to `results/research/issue117/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.
 
 The standard Stage2/Stage3 source trees are unchanged, Stage2 metrics remain diagnostic only, and the current formal Stage3 success rule is defined in `CLAUDE.md`.
 
@@ -65,7 +65,7 @@ No actual HPC Agents, multi-GPU tests or Stage2 training have been executed mere
 
 The existing GenRec MCP Server now exposes `research_start()` → `run_id`, `research_status(run_id)`, `research_results(run_id)`, `research_cancel(run_id)` and `research_resume(run_id)` through the single `tools/research/mcp/handlers.py` adapter.
 
-`research_start` creates a run under `results/research/issue116/runs/<run_id>/` and schedules DATA and LITERATURE independently from the sole `results/research/issue116/dag/state.json` authority, while GEOMETRY and REVIEW cannot start until their real evidence dependencies are completed.
+`research_start` creates a run under `results/research/issue117/runs/<run_id>/` and schedules DATA and LITERATURE independently from the sole `results/research/issue117/dag/state.json` authority, while GEOMETRY and REVIEW cannot start until their real evidence dependencies are completed.
 
 Detached workers are real Python processes; MCP returns immediately and the user queries status instead of awaiting long OpenCode sessions inside the MCP request.
 

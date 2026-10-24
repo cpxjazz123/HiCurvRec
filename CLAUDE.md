@@ -4,7 +4,7 @@
 
 ## 1. 仓库边界
 
-1. Stage2 只使用 `stage2_RQ-VAE/TIGER_RQ-VAE/` 和 `stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/` 两棵现存源码树。
+1. Stage2 仅使用两棵冻结基线树或由其派生、单独命名且通过独立验证的候选源码树。
 2. Stage3 只使用 `stage3_T5Train/train_HG-Rec.py` 作为正式训练入口。
 3. 机制专属测试由 `tools/research/verification/` 执行，正式训练与状态查询仍通过 `tools/genrec-mcp/server.py`。
 4. 新科研工具统一放在 `tools/research/`，模块职责以该目录 `README.md` 为准。
@@ -24,7 +24,7 @@
 12. Stage1 产物固定放在 `stage1_GeneEmbedding/output/`。
 13. Stage2 模型、SID 与导出文件固定放在 `results/stage2_RQ-VAE/<ARM>/`，不得写入 Stage2 源码树。
 14. Stage3 日志和模型产物固定放在 `results/stage3_T5Train/<RQVAE_VARIANT>/`。
-15. #116 的研究状态与证据仅写入 `results/research/issue116/`，不得污染正式训练目录。
+15. #117 的研究状态与证据仅写入 `results/research/issue117/`，不得污染正式训练目录。
 16. 构建商品 SID 的行为监督只允许使用训练划分中合法可见的交互，禁止读取验证或测试阶段的未来行为。
 17. 同一商品在不同用户、批次或推理请求中必须使用相同的全局 Semantic ID。
 
