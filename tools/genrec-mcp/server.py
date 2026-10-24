@@ -1804,7 +1804,7 @@ def stage2_quality_admission(sid: Path) -> dict:
         spec.loader.exec_module(module)
         return module.evaluate(
             sid,
-            RESULT2_ROOT / "TIGER_RQ-VAE" / "item_sids.json",
+            RESULT2_ROOT / "TIGER_BEHAVIOR_SAMPLE_RQ-VAE" / "resample" / "item_sids.json",
             RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.npz",
             RESULT3_ROOT / "monotonicity" / "behavior_pairs_valid_s42.meta.json",
         )

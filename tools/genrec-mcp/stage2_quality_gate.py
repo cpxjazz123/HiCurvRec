@@ -15,11 +15,12 @@ import struct
 import sys
 import zipfile
 
-MIN_VALID_L1_HARD_ER = 16.38953942232631  # STRICTLY greater; frozen Resample reference
+MIN_VALID_L1_HARD_ER = 16.38953942232631  # STRICTLY greater; frozen Resample valid L1 Hard ER
 MIN_VALID_L1_HITRATE = None  # Not recovered: fail closed, never guess or silently skip
-FROZEN_BASELINE_L2_PREFIXES = 7414
+FROZEN_BASELINE_L2_PREFIXES = 16145  # Exact distinct two-token prefixes of Resample SID
+FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
-FROZEN_BASELINE_BLOB_SHA1 = "4743e45db263a40e044ab8af8da1abc0ca95b54c"
+FROZEN_BASELINE_BLOB_SHA1 = "d97d24a7a63891682d2b68c09a89164de2031ee9"
 FROZEN_VALID_PAIRS_BLOB_SHA1 = "11d76dd452f3a27d1f6bf79fe7673bc6505733ef"
 FROZEN_VALID_META_BLOB_SHA1 = "a0121691dc95168169bffdc3b6018608580468da"
 EXPECTED_PAIRS = 52855
@@ -183,6 +184,9 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
         anchors, positives, negatives = _pairs(pairs_path, meta_path)
         candidate = _measures(sid, anchors, positives, negatives)
         reference = _measures(baseline, anchors, positives, negatives)
+        if not math.isclose(reference["valid_l1_hard_er"], FROZEN_RESAMPLE_VALID_L1_ER,
+                            rel_tol=0.0, abs_tol=1e-10):
+            raise QualityGateError("Resample validation L1 Hard ER does not match frozen reference")
         evidence.update({
             "candidate": {**candidate, "level2_distinct_prefixes": candidate_prefixes,
                           "full_unique_items": len(sid)},
