@@ -2493,8 +2493,13 @@ def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
                                  round_id=round_id)
             queued.append(record["idea_id"])
     launched, refused = [], []
-    free_gpus = probe_gpu_layout().get("physical") or []
+    probe = probe_gpu_layout()
+    free_gpus = probe.get("physical") or []
     batch = queue.next_batch("stage2")
+    if probe.get("visible_count") == 1:
+        # One card each: a tree that can only fork four ranks cannot start here,
+        # so the trees that honour the single-card contract go first.
+        batch.sort(key=lambda job: 0 if tree_supports_single_gpu(Path(job["tree"])) else 1)
     for slot, job in enumerate(batch):
         gpu = free_gpus[slot % len(free_gpus)] if free_gpus else None
         previous = os.environ.get("CUDA_VISIBLE_DEVICES")
