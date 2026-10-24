@@ -10,3 +10,15 @@
 {"at": 1792800520.025691, "detail": "the L agent finished its work", "event": "done", "task": "fam2:L"}
 {"at": 1792800524.1321874, "detail": "the A agent finished its work", "event": "done", "task": "fam2:A"}
 {"at": 1792800531.4978063, "detail": "the M agent finished its work", "event": "done", "task": "fam2:M"}
+{"at": 1792800786.119121, "event": "ready", "task": "fam3:L"}
+{"at": 1792800786.1216307, "event": "added", "task": "fam3:L"}
+{"at": 1792800786.1229756, "event": "ready", "task": "fam3:A"}
+{"at": 1792800786.1251802, "event": "added", "task": "fam3:A"}
+{"at": 1792800786.1265006, "event": "ready", "task": "fam3:M"}
+{"at": 1792800786.1288857, "event": "added", "task": "fam3:M"}
+{"at": 1792800786.1327693, "attempt": 1, "event": "dispatched", "owner": "issue115-family3", "resource": "cpu", "task": "fam3:A"}
+{"at": 1792800786.183163, "attempt": 1, "event": "dispatched", "owner": "issue115-family3", "resource": "cpu", "task": "fam3:L"}
+{"at": 1792800786.2337098, "attempt": 1, "event": "dispatched", "owner": "issue115-family3", "resource": "cpu", "task": "fam3:M"}
+{"at": 1792800808.5635986, "attempts": 1, "blocked": true, "error": "missing outputs: analysis3.md; the verifier refused the output", "event": "failed", "task": "fam3:A"}
+{"at": 1792800826.3959284, "attempts": 1, "blocked": true, "error": "missing outputs: mechanism3.md; the verifier refused the output", "event": "failed", "task": "fam3:M"}
+{"at": 1792800831.9885237, "attempts": 1, "blocked": true, "error": "missing outputs: literature3.md; the verifier refused the output", "event": "failed", "task": "fam3:L"}

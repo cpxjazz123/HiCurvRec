@@ -1,7 +1,7 @@
 {
   "authorisations": {},
   "created_utc": 1792800491.7068605,
-  "dispatched": 3,
+  "dispatched": 6,
   "idle_ticks": 0,
   "rounds": 0,
   "schema_version": 1,
@@ -106,6 +106,81 @@
       "verify": [],
       "write_scope": [
         "issue115/fam2:M"
+      ]
+    },
+    "fam3:A": {
+      "artifacts": [],
+      "attempts": 1,
+      "candidate": "family2",
+      "deps": [],
+      "description": "",
+      "detail": "fam3:A",
+      "error": "missing outputs: analysis3.md; the verifier refused the output",
+      "finished_at": 1792800808.5617034,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": 1792800786.1314692,
+      "status": "blocked",
+      "task_id": "fam3:A",
+      "verify": [],
+      "write_scope": [
+        "issue115/fam3:A"
+      ]
+    },
+    "fam3:L": {
+      "artifacts": [],
+      "attempts": 1,
+      "candidate": "family2",
+      "deps": [],
+      "description": "",
+      "detail": "fam3:L",
+      "error": "missing outputs: literature3.md; the verifier refused the output",
+      "finished_at": 1792800831.9864566,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "literature",
+      "started_at": 1792800786.182074,
+      "status": "blocked",
+      "task_id": "fam3:L",
+      "verify": [],
+      "write_scope": [
+        "issue115/fam3:L"
+      ]
+    },
+    "fam3:M": {
+      "artifacts": [],
+      "attempts": 1,
+      "candidate": "family2",
+      "deps": [],
+      "description": "",
+      "detail": "fam3:M",
+      "error": "missing outputs: mechanism3.md; the verifier refused the output",
+      "finished_at": 1792800826.3937805,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792800786.2324333,
+      "status": "blocked",
+      "task_id": "fam3:M",
+      "verify": [],
+      "write_scope": [
+        "issue115/fam3:M"
       ]
     }
   }
