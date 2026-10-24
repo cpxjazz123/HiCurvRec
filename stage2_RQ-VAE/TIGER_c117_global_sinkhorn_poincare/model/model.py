@@ -100,7 +100,9 @@ class RQVAE(nn.Module):
                                                candidates.unsqueeze(0),
                                                c=self.rq.curvature) / TAU_ASSIGN
             soft_target = torch.softmax(target_logits, dim=1)
-            loss_tr = -(r * soft_target).sum(dim=1).mean()
+            # The proposal's L_tr is the negative LOG of the weighted sum over
+            # the third-level codes, not the negative sum.
+            loss_tr = -torch.log((r * soft_target).sum(dim=1).clamp(min=1e-12)).mean()
 
         total = loss_rec + loss_assign + loss_bal + loss_tr
         return total, loss_rec, loss_assign, loss_bal, loss_tr
