@@ -4,6 +4,28 @@ on:
     branches: [main]
   workflow_dispatch:
 jobs:
+  # The MCP server runs the host's system python3, which is 3.9 in the deployed
+  # environment. Importing the research package there catches PEP 604 and other
+  # syntax that a 3.10/3.11-only CI would happily accept.
+  deployed-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Import the research package under Python 3.9
+        run: |
+          python - <<'PY'
+          import tools.research.workflows.pipeline            # noqa: F401
+          import tools.research.verification.admission        # noqa: F401
+          import tools.research.verification.workflow         # noqa: F401
+          import tools.research.mcp.verification_handlers     # noqa: F401
+          import tools.research.science.contract              # noqa: F401
+          import tools.research.science.preflight             # noqa: F401
+          import tools.research.core.failures                 # noqa: F401
+          print("research package imports under", __import__("sys").version.split()[0])
+          PY
   offline:
     runs-on: ubuntu-latest
     steps:

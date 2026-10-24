@@ -87,3 +87,37 @@ For **every new Stage2 SID** (including models that will not reach Stage3), imme
 
 Every report includes numeric `metrics.valid_l1_hard_er`, `valid_l1_positive_hit_rate`, `valid_l1_negative_hit_rate`, `level2_distinct_prefixes`, `level3_distinct_triples`, `l3_collision`, `l3_refinement_gain_bits`, and `conditional_l3_gain`, together with frozen Resample thresholds, gate PASS/FAIL, methodology, validation sample count and SHA-256 provenance for SID/train/validation/baseline/source. Both L1 HitRates and all L3 measures are diagnostics only; **only ER > 16.38953942232631 and L2 prefixes > 16145 are hard Stage2 quality thresholds**. A negative G3 value is valid and must not be converted to zero or used as a cutoff. If any metric cannot be computed, record an explicit failure with the actual cause and do not claim a complete report. This measurement step requires the Stage3 Python environment with NumPy/Pandas for offline computation, not the stdlib-only MCP process.
 
+
+## Versioned contract, deterministic preflight and the failure registry (Issue #118)
+
+`science/contract.py` is the single source of truth. Admission thresholds are
+**read** from `tools/genrec-mcp/stage2_quality_gate.py` rather than copied, the
+frozen capacity/protocol and the metric registry live here, and a proposal
+compiles into a staged contract (`behavior -> geometry -> math -> controls ->
+falsifier -> stage3`) whose sections each carry their own digest. The contract
+exposes `contract_sha256` and `prompt_input_digest`, so an agent, a reviewer and a
+verification manifest can prove they saw the same version. Suite identifiers are
+canonicalised in one place (`math` / `test_math.py` resolve to the same id).
+
+`science/preflight.py` runs four layers in dependency order — output, contract,
+math, falsifier — and stops at the first that cannot be trusted. Verdicts are
+distinct on purpose: `MACHINE_INVALID` and `MATH_COUNTEREXAMPLE` are repairable
+engineering defects whose diagnostics name the location, the expected value, the
+observed value and a repair; only `SCIENTIFIC_REVIEW_REQUIRED` reaches the
+independent reviewer. Entries with `verdict=None` are warnings (for example an
+expected direction that contradicts measured evidence) and never mask a failure.
+The math layer evaluates the audited reference, not the proposal's prose: the
+flat limit is checked on the unclamped formula, the clamp gets its own
+domain check, and a stated `4||x-y||^2`-style limit is compared textually.
+
+`core/failures.py` records every reproducible failure under
+`results/research/issue117/failures/registry.json`, deduplicated by a fingerprint
+over `(stage, error_class, rule, expected, actual)` — never by prose similarity —
+with occurrences, run ids, fix commit, regression test and status. The pipeline
+records machine failures from the task error classifier and scientific
+`FATAL`/`PARKED` verdicts, so a run can report `known_failure_recurrence`
+instead of re-learning the same defect.
+
+CI runs a deployed-Python 3.9 job that imports the research package, because the
+MCP server uses the host's system `python3` and a 3.10-only annotation once took
+the whole tool surface down at call time.
