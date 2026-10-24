@@ -100,6 +100,21 @@ class QualityGateTests(unittest.TestCase):
         self.baseline_path.unlink()
         self.assertFalse(self.evaluate()["passed"])
 
+    def test_recorded_c117_fails_on_real_validation_and_prefixes(self):
+        """Reproduce the rejected run from immutable repository evidence."""
+        root = HERE / "results"
+        candidate = root / "stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json"
+        baseline = root / "stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
+        data = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
+        meta = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json"
+        with patch.object(gate, "EXPECTED_PAIRS", 52855), \
+             patch.object(gate, "FROZEN_BASELINE_L2_PREFIXES", 7414):
+            verdict = gate.evaluate(candidate, baseline, data, meta)
+        self.assertFalse(verdict["passed"])
+        self.assertEqual(verdict["candidate"]["level2_distinct_prefixes"], 6233)
+        self.assertEqual(verdict["baseline"]["level2_distinct_prefixes"], 7414)
+        self.assertIn("prefixes", verdict["refused"])
+
     def test_stage3_checks_quality_before_gpu_or_launch(self):
         server = (HERE / "tools/genrec-mcp/server.py").read_text()
         launch = server[server.index("def tool_stage3_start("):]
