@@ -1,0 +1,112 @@
+{
+  "authorisations": {},
+  "created_utc": 1792801309.516726,
+  "dispatched": 3,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "joinr:invariants": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:invariants/session.json",
+          "sha256": "72afbc3a47df10a90ec33793ab626e32f94074042c2dcc6fc5619019c0dc7543"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:invariants/session.jsonl",
+          "sha256": "dd21f0ac70ea3f45336b0d31b013955e7d6f3ff8e3e53c1e235d5b82fced7d90"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "unsigned_area",
+      "deps": [],
+      "description": "",
+      "detail": "the M agent finished its work",
+      "error": "",
+      "finished_at": 1792801332.4213996,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792801309.5317779,
+      "status": "done",
+      "task_id": "joinr:invariants",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:invariants"
+      ]
+    },
+    "joinr:math": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:math/session.json",
+          "sha256": "70abc53666a721c99d40f6186310fd3107e06f38cca398282c2ada64d99e1339"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:math/session.jsonl",
+          "sha256": "425ad94348068555ff43796d235513d70b8db4a86b7c43d4627d47320894ae89"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "unsigned_area",
+      "deps": [],
+      "description": "",
+      "detail": "the A agent finished its work",
+      "error": "",
+      "finished_at": 1792801326.4716809,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "analysis",
+      "started_at": 1792801309.5823243,
+      "status": "done",
+      "task_id": "joinr:math",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:math"
+      ]
+    },
+    "joinr:priorart": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:priorart/session.json",
+          "sha256": "8b5365ca4b7415e73f0494150e766b42d9a0e3267b7863606addbca8fbdd3007"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/joinr_pctr_1/sessions/evidence/joinr:priorart/session.jsonl",
+          "sha256": "9b1bd55afefb838e800bb80f5a2643eaffc2c7da2455b5992f7de78dbea5cf8d"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "unsigned_area",
+      "deps": [],
+      "description": "",
+      "detail": "the L agent finished its work",
+      "error": "",
+      "finished_at": 1792801331.4831488,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "literature",
+      "started_at": 1792801309.6326694,
+      "status": "done",
+      "task_id": "joinr:priorart",
+      "verify": [],
+      "write_scope": [
+        "issue115/joinr:priorart"
+      ]
+    }
+  }
+}
