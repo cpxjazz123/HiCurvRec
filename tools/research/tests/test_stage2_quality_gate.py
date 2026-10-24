@@ -56,6 +56,7 @@ class QualityGateTests(unittest.TestCase):
         self.baseline_path.write_text(json.dumps(self.baseline))
         self.patch = patch.multiple(
             gate, EXPECTED_PAIRS=4, FROZEN_BASELINE_L2_PREFIXES=2,
+            FROZEN_RESAMPLE_VALID_L1_ER=0.0,
             FROZEN_BASELINE_BLOB_SHA1=gate._git_blob_sha1(self.baseline_path),
             FROZEN_VALID_PAIRS_BLOB_SHA1=gate._git_blob_sha1(self.pairs_path),
             FROZEN_VALID_META_BLOB_SHA1=gate._git_blob_sha1(self.meta_path))
@@ -116,18 +117,19 @@ class QualityGateTests(unittest.TestCase):
         """Reproduce the rejected run from immutable repository evidence."""
         root = HERE / "results"
         candidate = root / "stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json"
-        baseline = root / "stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
+        baseline = root / "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json"
         data = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
         meta = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json"
         with patch.multiple(
-            gate, EXPECTED_PAIRS=52855, FROZEN_BASELINE_L2_PREFIXES=7414,
-            FROZEN_BASELINE_BLOB_SHA1="4743e45db263a40e044ab8af8da1abc0ca95b54c",
+            gate, EXPECTED_PAIRS=52855, FROZEN_BASELINE_L2_PREFIXES=16145,
+            FROZEN_BASELINE_BLOB_SHA1="d97d24a7a63891682d2b68c09a89164de2031ee9",
             FROZEN_VALID_PAIRS_BLOB_SHA1="11d76dd452f3a27d1f6bf79fe7673bc6505733ef",
             FROZEN_VALID_META_BLOB_SHA1="a0121691dc95168169bffdc3b6018608580468da"):
             verdict = gate.evaluate(candidate, baseline, data, meta)
         self.assertFalse(verdict["passed"])
         self.assertEqual(verdict["candidate"]["level2_distinct_prefixes"], 6233)
-        self.assertEqual(verdict["baseline"]["level2_distinct_prefixes"], 7414)
+        self.assertEqual(verdict["baseline"]["level2_distinct_prefixes"], 16145)
+        self.assertAlmostEqual(verdict["baseline"]["valid_l1_hard_er"], 16.38953942232631, places=9)
         self.assertIn("prefixes", verdict["refused"])
 
     def test_stage3_checks_quality_before_gpu_or_launch(self):
