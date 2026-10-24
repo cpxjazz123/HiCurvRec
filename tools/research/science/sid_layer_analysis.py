@@ -335,10 +335,11 @@ def build_single_sid_record(sids, gate_result, anchors, positives, successors) -
         "l3_refinement_gain_bits": refinement["mean_gain_bits"],
         "conditional_l3_gain": conditional["mean_log2_likelihood_ratio"],
     }
-    if (conditional["pairs_scored"] != len(anchors) or
+    if (conditional["pairs_scored"] < 1 or
+            conditional["pairs_scored"] > len(anchors) or
             any(isinstance(x, bool) or not isinstance(x, (float, int)) or
                 not isfinite(x) for x in metrics.values())):
-        raise ValueError("incomplete/nonfinite layer metrics or validation coverage")
+        raise ValueError("incomplete/nonfinite layer metrics or no eligible G3 validation pairs")
     return {
         "schema": "stage2_sid_layer_metrics_v1",
         "status": "complete",
@@ -368,7 +369,9 @@ def build_single_sid_record(sids, gate_result, anchors, positives, successors) -
             "conditional_G3": "mean log2(train-successor likelihood / prefix-only likelihood), conditioned on true target L1+L2",
             "l3_alpha": L3_ALPHA,
             "prob_floor": PROB_FLOOR,
+            "validation_pairs_total": len(anchors),
             "validation_pairs": conditional["pairs_scored"],
+            "validation_pairs_excluded": len(anchors) - conditional["pairs_scored"],
             "validation_pairs_with_train_successors": conditional["pairs_with_train_successors"],
         },
         "quality_source": gate_result["sha256"],
