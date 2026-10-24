@@ -27,7 +27,8 @@ def main():
             current["status"] = "drafts_ready"
             current["draft_count"] = sum(len(x["drafts"]) for x in report["authors"].values())
         elif request["action"] == "review":
-            workflow.review_committed_suites(request["candidate_id"], tree, run_id)
+            workflow.review_committed_suites(request["candidate_id"], tree, run_id,
+                                              request_id=current.get("request_id", ""))
             if (root / "cancel.json").exists():
                 raise RuntimeError("research cancelled")
             manifest = workflow.freeze_reviewed_manifest(request["candidate_id"], tree, run_id)
