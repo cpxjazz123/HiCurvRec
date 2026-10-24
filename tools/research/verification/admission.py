@@ -198,33 +198,65 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
     except (AdmissionError, OSError) as exc:
         return _persist({"passed": False, "refused": str(exc), "candidate_id": candidate_id})
     result = {"passed": False, **context, "suites": {}}
-    for suite in SUITES:
-        # Discover exactly one reviewed and content-addressed suite.
-        command = [python, "-m", "unittest", "discover", "-s",
-                   str(case_dir), "-p", "test_" + suite + ".py", "-v"]
+    # Three process groups, run concurrently. Grouping is the isolation
+    # boundary, not an optimisation detail: math and gradient share one
+    # interpreter (neither spawns ranks nor drives the trainer) so PyTorch is
+    # imported once for both, while the two-rank DDP suite and the real
+    # trainer-entrypoint suite each keep their own process.
+    groups = (("math", "gradient"), ("ddp",), ("entrypoint",))
+    runner = Path(__file__).resolve().parent / "run_suites.py"
+    deadline = time.monotonic() + TIMEOUT_SECONDS
+    started = []
+    for group in groups:
         try:
-            done = subprocess.run(command, cwd=str(REPO), capture_output=True,
-                                  text=True, timeout=TIMEOUT_SECONDS, check=False)
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            result["refused"] = suite + " did not execute: " + type(exc).__name__
+            started.append((group, subprocess.Popen(
+                [python, str(runner), str(case_dir), *group],
+                cwd=str(REPO), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True)))
+        except OSError as exc:
+            result["refused"] = " / ".join(group) + " did not execute: " + type(exc).__name__
+            for _, proc in started:
+                proc.kill()
             return _persist(result)
-        text = (done.stdout or "") + "\n" + (done.stderr or "")
-        ran = re.search(r"\bRan\s+(\d+)\s+tests?\b", text)
-        count = int(ran.group(1)) if ran else 0
-        prohibited = re.search(
-            r"\b(?:skipped|expected failures|unexpected successes)\s*=\s*[1-9]\d*",
-            text,
-        )
-        passed = (done.returncode == 0 and count >= 1 and prohibited is None
-                  and bool(re.search(r"(?m)^OK(?:\s|$)", text)))
-        result["suites"][suite] = {
-            "passed": passed, "tests_run": count, "exit_code": done.returncode,
-            "output_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-            "output_tail": text[-1200:],
-        }
-        if not passed:
-            result["refused"] = suite + " independent tests failed, were skipped, or ran zero tests"
+    for group, proc in started:
+        remaining = max(1.0, deadline - time.monotonic())
+        try:
+            stdout, stderr = proc.communicate(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            result["refused"] = " / ".join(group) + " exceeded the execution budget"
+            for _, other in started:
+                if other.poll() is None:
+                    other.kill()
             return _persist(result)
+        try:
+            payload = json.loads(stdout.strip().splitlines()[-1])
+        except (IndexError, json.JSONDecodeError):
+            payload = {"ok": False, "suites": {}}
+            for name in group:
+                payload["suites"][name] = {"ok": False, "tests_run": 0,
+                                           "output": (stdout or "") + (stderr or "")}
+        for name in group:
+            record = payload["suites"].get(name) or {"ok": False, "tests_run": 0,
+                                                     "output": (stdout or "") + (stderr or "")}
+            text = record.pop("output", "") or ""
+            ran = int(record.get("tests_run") or 0)
+            clean = bool(record.get("ok")) and ran >= 1 and proc.returncode == 0
+            result["suites"][name] = {
+                "passed": clean, "tests_run": ran, "exit_code": proc.returncode,
+                "output_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "output_tail": text[-1200:],
+                "failures": record.get("failures"), "errors": record.get("errors"),
+                "skipped": record.get("skipped"),
+                "expected_failures": record.get("expected_failures"),
+                "unexpected_successes": record.get("unexpected_successes"),
+                "process_group": list(group),
+            }
+            if not clean:
+                result["refused"] = (name + " independent tests failed, were skipped, "
+                                     "or ran zero tests")
+                return _persist(result)
     result["passed"] = True
     result["verified_at_epoch"] = time.time()
     result["note"] = ("All four reviewed test suites actually ran; the existing "
