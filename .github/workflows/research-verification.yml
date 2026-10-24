@@ -1,0 +1,32 @@
+name: Native Research Safety Tests
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Parse changed Python entrypoints without torch
+        run: |
+          python -m py_compile tools/genrec-mcp/server.py tools/research/verification/admission.py tools/research/verification/workflow.py tools/research/agents/prompts.py tools/research/agents/runner.py
+      - name: Existing native research offline regression
+        run: python -m unittest discover -s tools/research/tests -v
+      - name: Fail-closed verification and fault-injection regression
+        run: python -m unittest discover -s tools/research/verification/tests -v
+      - name: Assert no old training-admission bypass
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path("tools/genrec-mcp/server.py").read_text()
+          assert "def tool_stage2_start(source_dir: str, verification_id: str)" in s
+          assert '"verification_check": {' in s
+          assert '"cgv_check": {' not in s
+          assert "if admission:" not in s
+          assert "elif spec:" not in s
+          print("Stage2 has a single source-bound independent-test admission path")
+          PY

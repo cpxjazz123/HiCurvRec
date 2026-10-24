@@ -6,7 +6,7 @@
 
 1. Stage2 只使用 `stage2_RQ-VAE/TIGER_RQ-VAE/` 和 `stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/` 两棵现存源码树。
 2. Stage3 只使用 `stage3_T5Train/train_HG-Rec.py` 作为正式训练入口。
-3. 机制验证使用 `tools/cgv/`，训练与状态查询使用 `tools/genrec-mcp/server.py`。
+3. 机制专属测试由 `tools/research/verification/` 执行，正式训练与状态查询仍通过 `tools/genrec-mcp/server.py`。
 4. 新科研工具统一放在 `tools/research/`，模块职责以该目录 `README.md` 为准。
 5. 禁止引用或恢复已清理的研究控制器、旧机制树、旧结果路径和历史任务队列。
 
@@ -16,7 +16,7 @@
 7. Stage2 和 CGV 使用 `/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9`。
 8. MCP Server 使用仅依赖标准库的系统 `python3`。
 9. 项目超参数、路径和运行模式只能在源码常量中修改，禁止通过命令行参数或环境变量覆写。
-10. 项目训练与研究入口默认无参运行，只有现存 CGV 校验工具的契约输入及 `/tmp/` 参考脚本可使用规定的参数。
+10. 项目训练与研究入口默认无参运行，只有内部测试执行器及 `/tmp/` 参考脚本可使用必要的执行参数。
 
 ## 3. 数据与产物
 
@@ -32,21 +32,21 @@
 
 18. Stage2 保持 3000 epochs 的完整训练预算，禁止重新加入基于训练损失或验证指标的提前停止。
 19. Stage2 的 ER、HitRate 和稳定性探针等指标仅作诊断记录，不得新增外部指标硬门槛。
-20. Stage2 机制在正式训练前必须通过真实梯度通路检查和 CGV 验证。
-21. 梯度检查至少使用一个真实 checkpoint 和 batch 验证总损失的计算图以及所有声明为非零的机制梯度路径。
+20. 所有新 Stage2 机制在正式训练前必须通过独立 Agent 编写的数学、梯度、DDP 和真实入口测试。
+21. 梯度验证必须使用实际模型与训练 batch 检查参与训练的损失、梯度及参数更新，不得只检查合成张量。
 22. Stage3 固定使用 `NUM_EPOCHS=150`、`EVAL_INTERVAL=5`、`EVAL_START_EPOCH=75`、`EARLY_EVAL_EPOCHS=(25,50,75,100,125)`、`SEED=42`、`BEAM_SIZE=20`、`NO_EVAL=True` 和 `SKIP_TEST=False`。
 23. Stage3 只能更换合法的 SID 输入路径、结果路径和变体标识，禁止修改冻结训练超参数或恢复 early-stop。
 24. 正式四卡 DDP 的 Stage2 使用端口 `50202`，Stage3 使用端口 `50201`。
 25. 当前实验的最终采纳标准为 Stage3 的 `test_R@10 > 0.065`，不得自动套用已关闭研究 Issue 的旧指标门槛。
 
-## 5. CGV 与训练权限
+## 5. 独立 Agent 验证与训练准入
 
-26. 每次 `cgv_check` 或 `stage2_start` 都必须传入真实、完整的七组机制声明：`mechanism/model/forward_contract/gradient_contract/update_contract/distributed_contract/runtime_contract`。
-27. CGV 的 G1–G6 分别验证前向契约、梯度传播、梯度数学、参数更新、分布式一致性和真实训练入口。
-28. CGV 状态只允许使用 `passed`、`failed`、`not_applicable` 和 `insufficient_evidence`，后两者不得伪装为通过。
-29. 数学 Oracle 必须独立于被测机制实现，G3 公式模式必须绑定独立 Oracle。
-30. 正式 Stage2 必须通过现存 MCP 的 `stage2_start` 入口重新执行 CGV，禁止直接启动训练器绕过验证。
-31. 禁止通过改写机制声明、验证阈值或门禁代码掩盖实测失败。
+26. 每个新候选必须提供独立数学、梯度、DDP 和真实入口四套可执行测试，不得使用仅返回成功的占位用例。
+27. MATH、GRADIENT、RUNTIME 和 REVIEW 验证角色必须保留相互独立的真实 OpenCode 执行记录。
+28. 验证凭据必须绑定冻结数学提案、实际 Stage2 源码哈希、四套测试文件哈希和独立审查结论。
+29. MCP 必须在每次正式训练启动前重新执行四套测试，任一测试失败、缺失或执行零用例均禁止启动。
+30. 正式 Stage2 仅允许调用 `stage2_start(source_dir, verification_id)`，并在测试通过后执行实际训练入口的一轮梯度 Smoke Test。
+31. 旧 CGV 声明和历史 admission 记录不得作为新机制的训练准入凭据。
 32. `tools/research/` 不得擅自启动 Stage2、Stage3 或 GPU 作业。
 
 ## 6. 原生科研工具
@@ -57,8 +57,8 @@
 36. `tools/research/workflows/` 必须先冻结 DATA 与 LITERATURE 证据，再允许 GEOMETRY 正式提案。
 37. Reviewer 的 Prompt、当前候选 ID、公式与文件哈希不一致时，审查必须被判为无效。
 38. 真实 Agent 必须保留可核验的进程、输入、输出和日志证据，不能将模拟执行当成已完成研究。
-39. `tools/research/integrations/` 只对接现有接口，不得创建第二套 CGV 或 GPU 调度器。
-40. `tools/research/` 的真实 Agent 默认禁用，只有完成离线测试、权限隔离和验证器验收后才可启用。
+39. `tools/research/integrations/` 只使用现有 MCP 训练接口，不得自行创建第二套训练调度器。
+40. `tools/research/agents/` 的真实进程默认禁用，必须在隔离和测试验收后才允许开启。
 
 ## 7. Git 与交付
 

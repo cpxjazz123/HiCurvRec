@@ -1,4 +1,4 @@
-"""Read-only source/layout checks. Training MUST be launched via existing MCP."""
+"""Read-only source/layout checks; training requires new MCP verification_id."""
 from pathlib import Path
 from .. import settings
 
@@ -17,4 +17,4 @@ def audit_surviving_mainline() -> dict:
 
 
 def request_training(*args, **kwargs):
-    raise PermissionError("No direct training in research tools. Use the existing GenRec MCP cgv_check + stage2_start/stage3_start, with explicit operator authorisation and unchanged Stage3 recipe.")
+    raise PermissionError("No direct training in research tools; use MCP verification_check and stage2_start(source_dir, verification_id) with independent evidence, real smoke, explicit authorization, and unchanged Stage3 recipe.")

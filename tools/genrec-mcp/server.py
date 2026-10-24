@@ -1,34 +1,10 @@
 #!/usr/bin/env python3
-"""genrec-mcp -- local stdio MCP server for this repository's stage2/stage3 workflow.
+"""GeneRec MCP Stage2/Stage3 process service (stdlib only).
 
-Stdlib only: nothing is installed into genrec_env / genrec_env_v2, and this
-program never imports torch.
-
-Two tools, one required argument each:
-  stage2_start(source_dir)  the Stage2 tree to train (a directory under
-                            stage2_RQ-VAE/ that holds train_rqvae.py)
-  stage3_start(item_sids)   the Stage2 item_sids.json Stage3 should evaluate
-                            (must live under results/stage2_RQ-VAE/)
-
-Repository rules this server encodes (root CLAUDE.md):
-  §1  no CLI flags, no argparse, no env overrides: every interpreter and
-      command is fixed here, and the only arguments are the two selectors above.
-      No experiment hyperparameter can be passed through this server.
-  §2  Stage2 has no gate: the run reports its native outputs, nothing judges them.
-  §4  never start a duplicate job: a live run of the same stage refuses.
-  §5  Stage3 starts only after the frozen protocol is checked here in-process
-      (150 epochs, NO_EVAL, SKIP_TEST=false, seed 42, beam 20, no early stop).
-  §13 no workflow bookkeeping in the repo: state stays in ~/.cache/genrec-mcp/
-      and generated launchers in /tmp/genrec-mcp/.
-
-Operational lessons encoded (2026-10-14 incidents):
-  * a Stage3 launcher spends minutes importing the trainer before torchrun
-    starts, so silence after launch is not a failure.
-  * a trained run is never overwritten: an arm whose result directory already
-    holds artifacts must be relocated by the operator first.
-  * Stage3 shard files have gone missing on this filesystem while every rank
-    still logged its shard as written, so a run is judged by its own native
-    test_final.json, never by a progress line.
+Stage2 requires source-bound independent Agent-authored executable tests via
+verification_id, followed by a real one-epoch trainer gradient/DDP smoke;
+the old CGV and retired admission paths do NOT grant launch permission.
+Stage3 retains its frozen evaluation protocol and existing status tools.
 """
 from __future__ import annotations
 
@@ -1186,20 +1162,11 @@ def run_stage2_smoke(
     }
 
 
-def tool_stage2_start(source_dir: str, spec: dict | None = None,
-                      admission: str | None = None) -> dict:
-    """Start one Stage2 run in the given tree. Every call really trains.
+def tool_stage2_start(source_dir: str, verification_id: str) -> dict:
+    """Launch only after independent Agent tests and real trainer smoke.
 
-    The tree's runnable entrypoint is validated (an unwired launcher is
-    refused), the hardcoded arm and its result directory are reported, a live
-    run of the same tree refuses, and existing artifacts in the arm's directory
-    must be moved away first.
-
-    The launch is gated by independent evidence: either the Harness2
-    controller's admission record (issue #102) or, on the legacy path, a
-    seven-group CGV declaration. The admission record is bound to the digest of
-    the tree's source, so a tree that changed after the verdict cannot be
-    launched on that verdict.
+    Old admission records, CGV specs and direct trainer calls do not grant access.
+    No agent or model can approve training merely by writing a verdict string.
     """
     tree, problem = resolve_stage2_tree(source_dir)
     if tree is None:
@@ -1237,47 +1204,14 @@ def tool_stage2_start(source_dir: str, spec: dict | None = None,
             "refused": "no runnable Stage2 entrypoint in this tree",
             **context,
         }
-    # The launch is gated by independent evidence, and the gate is checked before anything is
-    # archived or dispatched, so a refusal has no side effect.
-    if admission:
-        ok, detail, record = verify_admission(admission, Path(tree))
-        context["admission"] = {"verified": ok, "detail": detail,
-                                "mechanism_id": record.get("mechanism_id"),
-                                "proposal_sha256": record.get("proposal_sha256"),
-                                "judges": record.get("judges"),
-                                "tree_digest": record.get("tree_digest")}
-        if not ok:
-            return {
-                "started": False,
-                "refused": f"admission record: {detail}",
-                **context,
-            }
-    elif spec:
-        # The legacy path: the CGV's six gates, run here, on the declaration this call
-        # supplies. The report is not persisted and no certificate exists.
-        verification = run_cgv_verification(Path(tree), spec)
-        gate_states = {gate: (verification.get("summary") or {}).get(gate, {}).get("state")
-                       for gate in CGV_GATES} if verification.get("passed") or \
-            verification.get("gates") else {}
-        context["cgv_gate"] = {"passed": bool(verification.get("passed")),
-                               "gates": gate_states,
-                               "note": verification.get("refused")
-                                       or "all six gates passed on the supplied declaration"}
-        if not verification.get("passed"):
-            return {
-                "started": False,
-                "refused": f"CGV gate: {verification.get('refused') or gate_states}",
-                **context,
-            }
-    else:
-        return {
-            "started": False,
-            "refused": (
-                "the launch path needs independent evidence: an admission record from the "
-                "Harness2 controller (issue #102), or a seven-group declaration for the legacy "
-                "CGV path. Refusing to train on nothing."),
-            **context,
-        }
+    # Deterministic test gate runs BEFORE any archive or dispatch side effect.
+    verification = run_agent_verification(tree, verification_id)
+    context["agent_verification"] = verification
+    if not verification.get("passed"):
+        return {"started": False,
+                "refused": "independent executable verification: "
+                           + str(verification.get("refused") or "no passing evidence"),
+                **context}
     refusal = stage2_launch_decision(gpu_probe)
     if refusal is not None:
         return {"started": False, "refused": refusal, **context}
@@ -1351,6 +1285,7 @@ def tool_stage2_start(source_dir: str, spec: dict | None = None,
             "archived_artifacts": archived,
             "logs": logs,
             "gpu_probe": gpu_probe,
+            "verification_id": verification_id,
         }
     )
     claim = {
@@ -1433,6 +1368,15 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     checkpoint, checkpoint_source = probe_checkpoint(tree, result_dir)
     gpu_probe = spec.get("gpu_probe") or probe_gpu_layout()
     child_env = stage2_child_env(tree, gpu_probe)
+    # Fail closed before touching the trainer: a worker can outlive its MCP call.
+    verification_id = spec.get("verification_id")
+    before = validate_agent_evidence_only(tree, verification_id)
+    if not before.get("passed"):
+        save_state(state_key, {"status": "refused", "worker_pid": pending.get("worker_pid"),
+                               "tree": str(tree), "result_dir": str(result_dir),
+                               "refused": "source/test verification drift before smoke: "
+                                          + str(before.get("refused")), **logs})
+        return 1
     smoke = run_stage2_smoke(
         tree,
         spec["python"],
@@ -1462,6 +1406,10 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
     if not smoke["passed"]:
         refused = "the one-epoch gradient smoke failed, so no training was started"
     else:
+        after = validate_agent_evidence_only(tree, verification_id)
+        if not after.get("passed"):
+            refused = "source/test verification drift after smoke: " + str(after.get("refused"))
+    if refused is None:
         # The smoke passed, so the archived copies are the only backup needed: drop
         # the originals now so the run writes a fresh artifact set instead of a
         # mixture. A failed removal is fatal.
@@ -1935,293 +1883,66 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
 
 
 # --------------------------------------------------------------------------
-# CGV -- Computational Graph & Gradient Verification
+# Independent executable verification -- active Stage2 admission
 # --------------------------------------------------------------------------
-# --------------------------------------------------------------------------
-# CGV -- Computational Graph & Gradient Verification
-# --------------------------------------------------------------------------
-CGV_RUNNER = REPO / "tools/cgv/run_cgv.py"
-PROBE_RUNNER = REPO / "tools/stage2_stability_probe.py"
-CGV_PY = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
-CGV_TIMEOUT_S = 2400
+def run_agent_verification(tree: Path, verification_id: str) -> dict:
+    """Read current #116 source-bound Agent evidence and rerun reviewed tests.
 
-CGV_GATES = ("G1", "G2", "G3", "G4", "G5", "G6")
-CGV_SCHEMA_VERSION = 1
-CGV_TITLES = {
-    "G1": "forward contract",
-    "G2": "gradient propagation",
-    "G3": "gradient mathematics",
-    "G4": "parameter update",
-    "G5": "distributed consistency",
-    "G6": "real training entry",
-}
-CGV_VERIFIES = {
-    "G1": "the observed forward satisfies the declared formula and invariants",
-    "G2": "every declared loss path reaches the declared parameters with the declared character",
-    "G3": "the executed gradient equals the mechanism's own declared rule, and changes it",
-    "G4": "the declared optimizer and clipping produce the declared update",
-    "G5": "multi-rank execution matches the declared aggregation rule",
-    "G6": "formal training executes the declared mechanism and moves a parameter",
-}
-CGV_PREVENTS = {
-    "G1": "a forward that violates the declared formula, invariants or output constraints",
-    "G2": "a declared loss path that delivers nothing to the declared parameters",
-    "G3": "an executed gradient that contradicts the mechanism's declared rule",
-    "G4": "an update the declared optimizer and clipping do not produce",
-    "G5": "an aggregation rule the multi-rank execution does not satisfy",
-    "G6": "a mechanism formal training never executes, or that never moves a parameter",
-}
-CGV_STATES = {
-    "passed": "the declared behaviour was verified",
-    "failed": "the declaration was contradicted by the real computation",
-    "not_applicable": "the contract explicitly declares the mechanism has no effect in this "
-                      "dimension, with a reason",
-    "insufficient_evidence": "the contract leaves this gate nothing testable; never counts as "
-                             "success",
-}
-
-
-def cgv_gate_table() -> dict:
-    """The six gates, what each verifies, and what each one prevents."""
-    return {gate: {"title": CGV_TITLES[gate], "verifies": CGV_VERIFIES[gate],
-                   "prevents": CGV_PREVENTS[gate]} for gate in CGV_GATES}
-
-
-def _sha256_file(path: Path) -> str | None:
-    digest = hashlib.sha256()
-    if not path.is_file():
-        return None
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-ADMISSION_MAX_AGE_S = 24 * 3600
-
-
-def _code_tree_sha256(tree: Path) -> tuple[str | None, int]:
-    """The digest of a tree's active source, using the verifier's own implementation.
-
-    The same function the CGV and the Harness2 controller use, so the three agree on
-    what "the tree" means.
+    This module loads only the tiny stdlib deterministic admission checker, not
+    the former CGV engine; Stage2's real one-epoch gradient/DDP smoke follows.
     """
     import importlib.util
-
-    path = REPO / "tools" / "cgv" / "contract.py"
-    if not path.is_file():
-        return None, 0
-    spec = importlib.util.spec_from_file_location("cgv_contract_for_admission", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.code_tree_sha256(tree)
-
-
-def verify_admission(path: str, tree: Path) -> tuple[bool, str, dict]:
-    """Check the Harness2 controller's admission record against the live tree.
-
-    The record is bound to the digest of the tree's source: if the tree changed after
-    the verdict, the verdict is about a different tree and the launch is refused. A
-    record that is missing, stale, forged or bound to another tree is refused too --
-    there is no path from a cold run to a run without evidence.
-    """
-    record_path = Path(path)
-    if not record_path.is_file():
-        return False, f"no admission record at {record_path}", {}
+    verifier = REPO / "tools" / "research" / "verification" / "admission.py"
+    if not verifier.is_file():
+        return {"passed": False, "refused": "new native verifier is missing"}
     try:
-        record = json.loads(record_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return False, f"the admission record is unreadable: {exc}", {}
-    if not isinstance(record, dict):
-        return False, "the admission record is not an object", {}
-    if record.get("judge_verdict") != "passed":
-        return False, (
-            f"the admission record says the judges returned {record.get('judge_verdict')!r}"
-        ), record
-    if not record.get("proposal_sha256"):
-        return False, "the admission record names no frozen proposal", record
-    live, _count = _code_tree_sha256(tree)
-    if record.get("tree_digest") != live:
-        return False, (
-            "the tree changed after the verdict: the record was issued for "
-            f"{str(record.get('tree_digest'))[:16]} and the tree is now {str(live)[:16]}"
-        ), record
-    issued = record.get("issued_utc")
-    age: float | None = None
-    if isinstance(issued, str):
-        try:
-            age = time.time() - datetime.fromisoformat(issued).timestamp()
-        except ValueError:
-            age = None
-    if age is None:
-        return False, f"the admission record carries no usable issue time ({issued!r})", record
-    if age > ADMISSION_MAX_AGE_S:
-        return False, (
-            f"the admission record is stale: it was issued {age / 3600:.1f}h ago and the limit "
-            f"is {ADMISSION_MAX_AGE_S / 3600:.0f}h"
-        ), record
-    return True, "the admission record matches the tree and the judges passed", record
-
-
-def run_cgv_verification(tree: Path, spec: dict) -> dict:
-    """Run the six gates under the project's interpreter and return the report.
-
-    Pure execution: nothing is written, and no verdict is kept. The caller decides what the
-    report means -- cgv_check hands it back, the stage2 gate refuses on it.
-    """
-    if not isinstance(spec, dict) or not spec:
-        return {"passed": False, "refused": (
-            "spec is required: CGV verifies a mechanism against the mathematical behaviour the "
-            "caller declares, so the declaration travels with the call as the seven contract "
-            "groups (mechanism, model, forward_contract, gradient_contract, update_contract, "
-            "distributed_contract, runtime_contract). CGV reads no declaration from the tree.")}
-    try:
-        proc = subprocess.run([CGV_PY, str(CGV_RUNNER), str(tree), "--spec", "-"],
-                              input=json.dumps(spec), capture_output=True, text=True,
-                              timeout=CGV_TIMEOUT_S)
-    except subprocess.TimeoutExpired:
-        return {"passed": False, "refused": f"CGV did not finish within {CGV_TIMEOUT_S}s"}
-    try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError:
+        spec = importlib.util.spec_from_file_location("genrec_native_verification", verifier)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.run_preflight(tree, verification_id, PY2)
+    except Exception as exc:
         return {"passed": False,
-                "refused": f"CGV produced no readable result (rc={proc.returncode})",
-                "stderr_tail": (proc.stderr or proc.stdout or "").strip()[-800:]}
+                "refused": "verification engine error: " + type(exc).__name__ + ": " + str(exc)}
 
 
-def tool_cgv_check(source_dir: str, spec: dict) -> dict:
-    """Run the six CGV gates against one Stage2 tree and report the result.
-
-    The gates execute in the project's own interpreter: this server runs on a torch-less one, so
-    the engine is executed as a subprocess rather than imported. Starts no training and writes
-    nothing; the returned report is the whole record.
-    """
-    tree, problem = resolve_stage2_tree(source_dir)
-    if tree is None:
-        return {"passed": False, "refused": problem,
-                "available_trees": [item.name for item in stage2_trees()]}
-    payload = run_cgv_verification(tree, spec)
-    payload.setdefault("gate_table", cgv_gate_table())
-    return payload
-
-
-def tool_stage2_stability_probe(source_dir: str, spec: dict, probe_config: dict | None = None) -> dict:
-    """Run the isolated short-run stability probe (issue #77).
-
-    A diagnostic, not a gate: it reports `status` for its own execution and a HEURISTIC `risk`,
-    and it never unlocks Stage3, never retunes training and never redefines a failed ER as a CGV
-    failure. It reuses the arm's real loaders, loss, optimizer, clipping and DDP; only the
-    behaviour-weight schedule and the epoch bound are probe-local, because production ramps from
-    epoch 1500 and a short run would otherwise never touch the behaviour path at all.
-    """
-    tree, problem = resolve_stage2_tree(source_dir)
-    if tree is None:
-        return {"refused": problem, "available_trees": [item.name for item in stage2_trees()]}
-    if not isinstance(spec, dict) or not spec:
-        return {"status": "invalid", "risk": "unknown",
-                "refused": "spec is required: the probe is run against the arm's own declaration"}
-    payload = {"spec": spec, "probe_config": probe_config or {}}
+def validate_agent_evidence_only(tree: Path, verification_id: str) -> dict:
+    """Recheck immutable bytes and independent sessions without re-running GPU tests."""
+    import importlib.util
+    path = REPO / "tools" / "research" / "verification" / "admission.py"
     try:
-        proc = subprocess.run([CGV_PY, str(PROBE_RUNNER), str(tree), "--spec", "-",
-                               "--probe-config", "-"],
-                              input=json.dumps(payload), capture_output=True, text=True,
-                              timeout=CGV_TIMEOUT_S)
-    except subprocess.TimeoutExpired:
-        return {"status": "invalid", "risk": "unknown",
-                "refused": f"the probe did not finish within {CGV_TIMEOUT_S}s"}
-    try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        return {"status": "invalid", "risk": "unknown",
-                "refused": f"the probe produced no readable result (rc={proc.returncode})",
-                "stderr_tail": (proc.stderr or proc.stdout or "").strip()[-800:]}
+        spec = importlib.util.spec_from_file_location("genrec_native_evidence", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _, _, record = module.validate_evidence(tree, verification_id)
+        return {"passed": True, **record}
+    except Exception as exc:
+        return {"passed": False, "refused": type(exc).__name__ + ": " + str(exc)}
 
 
-def tool_cgv_status(source_dir: str, spec: dict | None = None) -> dict:
-    """Read-only: the gate table for one Stage2 tree, and whether it has ever been verified here.
-
-    Nothing is stored, so this reports what a verification WOULD check and whether a declaration was
-    supplied, rather than a stored verdict.
-    """
+def tool_verification_check(source_dir: str, verification_id: str) -> dict:
+    """Re-run independent Agent-authored tests without scheduling formal training."""
     tree, problem = resolve_stage2_tree(source_dir)
     if tree is None:
-        return {"refused": problem, "available_trees": [item.name for item in stage2_trees()]}
-    supplied = None
-    if isinstance(spec, dict) and spec:
-        declared = json.dumps(spec, indent=2, sort_keys=True, default=str)
-        supplied = hashlib.sha256(declared.encode("utf-8")).hexdigest()
-    return {
-        "tree": str(tree),
-        "gate_table": cgv_gate_table(),
-        "gate_states": CGV_STATES,
-        "trainer_sha256": _sha256_file(Path(tree) / "train_rqvae.py"),
-        "supplied_declaration_sha256": supplied,
-        "verified": False,
-        "note": "nothing is persisted; call cgv_check with the declaration and read its report",
-    }
+        return {"passed": False, "refused": problem}
+    return run_agent_verification(tree, verification_id)
 
 
 TOOLS: dict[str, dict] = {
     "stage2_start": {
         "fn": tool_stage2_start,
-        "args": {"source_dir": "string",
-                 "admission": "string (optional: path to the Harness2 controller's admission "
-                              "record)",
-                 "spec": "object (optional: the legacy seven-group mechanism declaration)"},
-        "description": "Start one Stage2 run in the given Stage2 tree, e.g. "
-        "stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE. source_dir is required because several trees "
-        "exist. The call returns as soon as the existing artifacts have been archived and a detached "
-        "worker owns the rest: status is smoke_pending and stage2_status(source_dir) reports the "
-        "smoke verdict, then the launched run. Existing artifacts no longer block a run (they are "
-        "copied to the archive first), and a live run of the same tree still refuses. The run is "
-        "gated by independent evidence, checked before anything is archived or dispatched, so a "
-        "refusal has no side effect: pass admission (the Harness2 controller's admission record, "
-        "issue #102) or, on the legacy path, spec (the seven-group declaration the six CGV gates "
-        "are run against). The admission record is bound to the digest of the tree's source: a "
-        "tree that changed after the verdict, a stale record, or a record bound to another tree is "
-        "refused. With neither, the run is refused: there is no path from a cold run to a run "
-        "without evidence.",
+        "args": {"source_dir": "string", "verification_id": "string"},
+        "description": "Start one Stage2 candidate only after the source-bound "
+        "independent math/gradient/DDP/entrypoint Agent tests have ACTUALLY executed "
+        "and passed, then perform the existing real one-epoch gradient smoke before "
+        "3000-epoch training; historical admissions and CGV specs are not accepted.",
     },
-    "cgv_check": {
-        "fn": tool_cgv_check,
-        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)"},
-        "description": "Contract-based verification of one Stage2 mechanism. The declaration is "
-        "the spec ARGUMENT: seven groups (mechanism, model, forward_contract, gradient_contract, "
-        "update_contract, distributed_contract, runtime_contract). Nothing is read from the "
-        "mechanism's tree, so a tree supplies CGV with no files at all -- no baseline, no parent "
-        "version, no declaration on disk, no required on/off switch. Three roles stay apart: the "
-        "contract states the claim, the adapter executes the real code, and an independent oracle "
-        "in tools/cgv/oracles.py recomputes the expected mathematics (an oracle that resolves to "
-        "the mechanism itself is refused). Gates: G1 forward contract, G2 gradient propagation, "
-        "G3 gradient mathematics against the declared rule, G4 parameter update against an "
-        "independent closed-form prediction, G5 multi-rank execution against the declared "
-        "aggregation rule, G6 the real training entry with outputs isolated to a temporary "
-        "directory. A gate is passed / failed / not_applicable (declared, with a reason) / "
-        "insufficient_evidence; the last NEVER counts as success. The call also runs the "
-        "counterexample suite, which injects seven standard faults and requires the matching gate "
-        "Reads and reports. Starts no training.",
-    },
-    "stage2_stability_probe": {
-        "fn": tool_stage2_stability_probe,
-        "args": {"source_dir": "string", "spec": "object (the mechanism declaration)",
-                 "probe_config": "object (optional; omit for the documented defaults)"},
-        "description": "Isolated short-run Stage2 stability diagnostic. Runs the arm's REAL "
-        "loaders, loss assembly, optimizer, clipping and DDP for a bounded step budget (default "
-        "32 baseline steps then 128 with a forced positive behaviour weight) and reports "
-        "per-snapshot L1 occupancy/entropy/collision, the three-level tuple collision separately, "
-        "train-only pair proxies and per-level gradient norms against the base gradient. Returns "
-        "status {valid,invalid,inconclusive} for the diagnostic's own execution and a HEURISTIC "
-        "risk {low,watch,high,unknown}. It is NOT a gate: a risk verdict never unlocks Stage3, "
-        "never retunes training and never replaces the frozen Hard-L1 ER criterion. The frozen "
-        "held-out pairs are never read. Production artifacts are hashed before and after.",
-    },
-    "cgv_status": {
-        "fn": tool_cgv_status,
-        "args": {"source_dir": "string", "spec": "object (optional, the declaration)"},
-        "description": "Read-only: the six-gate table with what each gate verifies and prevents, the "
-        "meaning of each gate state, the trainer's source hash and the hash of a supplied "
-        "declaration. Nothing is persisted, so no stored verdict is reported. Runs no gate and "
-        "starts nothing.",
+    "verification_check": {
+        "fn": tool_verification_check,
+        "args": {"source_dir": "string", "verification_id": "string"},
+        "description": "Read current candidate/test/Agent identities, reject stale or "
+        "missing evidence, and execute all four independently authored reviewed "
+        "Python test suites with the project Stage2 interpreter; does not launch "
+        "the formal Stage2 trainer.",
     },
     "stage2_status": {
         "fn": tool_stage2_status,
