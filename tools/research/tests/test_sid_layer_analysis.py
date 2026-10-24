@@ -96,5 +96,53 @@ class PredictionTests(unittest.TestCase):
         self.assertEqual(analysis.family_of("X/STE_FIX"), "STE_FIX")
 
 
+
+class SingleSIDMetricsRecordTests(unittest.TestCase):
+    def test_record_covers_all_layers_without_new_gate(self):
+        sids = _sid([(1, 2, 7, 768), (1, 2, 8, 768), (1, 3, 9, 768)])
+        fake_gate = {
+            "passed": False,
+            "candidate": {
+                "valid_l1_hard_er": 8.0,
+                "valid_l1_positive_hit_rate": 0.2,
+                "valid_l1_negative_hit_rate": 0.025,
+                "level2_distinct_prefixes": 2,
+            },
+            "baseline": {"valid_l1_hard_er": 16.38953942232631,
+                         "level2_distinct_prefixes": 16145},
+            "thresholds": {"valid_l1_hard_er_strict_gt": 16.38953942232631,
+                           "level2_prefixes_strict_gt": 16145},
+            "sha256": {"sid": "fixture", "baseline": "fixture",
+                       "validation_pairs": "fixture", "validation_meta": "fixture"},
+        }
+        metrics = analysis.build_single_sid_record(
+            sids, fake_gate, [0, 0], [1, 2], {0: Counter({1: 2})})
+        self.assertEqual(metrics["status"], "complete")
+        self.assertFalse(metrics["promotion_eligible_by_quality"])
+        self.assertEqual(len(metrics["metrics"]), 8)
+        self.assertEqual(metrics["metrics"]["level3_distinct_triples"], 3)
+        self.assertIn("conditional_l3_gain", metrics["diagnostics_only"])
+        self.assertNotIn("conditional_l3_gain", metrics["hard_gates"])
+        self.assertNotIn("valid_l1_positive_hit_rate", metrics["hard_gates"])
+
+    def test_single_sid_incomplete_valid_pairs_are_rejected(self):
+        sids = _sid([(1, 2, 7, 768)])
+        fake_gate = {
+            "passed": False,
+            "candidate": {
+                "valid_l1_hard_er": 1.0,
+                "valid_l1_positive_hit_rate": 0.0,
+                "valid_l1_negative_hit_rate": 0.0,
+                "level2_distinct_prefixes": 1,
+            },
+            "baseline": {}, "sha256": {},
+            "thresholds": {"valid_l1_hard_er_strict_gt": 16.38953942232631,
+                           "level2_prefixes_strict_gt": 16145},
+        }
+        with self.assertRaisesRegex(ValueError, "incomplete/nonfinite"):
+            analysis.build_single_sid_record(
+                sids, fake_gate, [0], [999999], {})
+
+
 if __name__ == "__main__":
     unittest.main()

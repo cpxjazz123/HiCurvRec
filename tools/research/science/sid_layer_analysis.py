@@ -310,6 +310,136 @@ def _local(path: Path) -> Path:
     return path
 
 
+# ----------------------------------------------------------- per-candidate record
+def build_single_sid_record(sids, gate_result, anchors, positives, successors) -> dict:
+    """Complete, numeric Stage2 layer diagnostics independent of Stage3 scores.
+
+    ER and L2 prefix comparisons are the only quality promotion thresholds;
+    both prefix-hit rates and all three L3 metrics are diagnostic only.
+    """
+    from math import isfinite
+
+    if "candidate" not in gate_result or "baseline" not in gate_result:
+        raise ValueError("quality-gate source/provenance could not be verified")
+    candidate = gate_result["candidate"]
+    collision = l3_collision(sids)
+    refinement = l3_refinement_gain(sids)
+    conditional = conditional_l3_gain(sids, anchors, positives, successors)
+    metrics = {
+        "valid_l1_hard_er": candidate["valid_l1_hard_er"],
+        "valid_l1_positive_hit_rate": candidate["valid_l1_positive_hit_rate"],
+        "valid_l1_negative_hit_rate": candidate["valid_l1_negative_hit_rate"],
+        "level2_distinct_prefixes": candidate["level2_distinct_prefixes"],
+        "level3_distinct_triples": collision["distinct_three_token_sids"],
+        "l3_collision": collision["l3_collision"],
+        "l3_refinement_gain_bits": refinement["mean_gain_bits"],
+        "conditional_l3_gain": conditional["mean_log2_likelihood_ratio"],
+    }
+    if (conditional["pairs_scored"] != len(anchors) or
+            any(isinstance(x, bool) or not isinstance(x, (float, int)) or
+                not isfinite(x) for x in metrics.values())):
+        raise ValueError("incomplete/nonfinite layer metrics or validation coverage")
+    return {
+        "schema": "stage2_sid_layer_metrics_v1",
+        "status": "complete",
+        "metrics": metrics,
+        "hard_gates": {
+            "valid_l1_hard_er": {
+                "strict_gt": gate_result["thresholds"]["valid_l1_hard_er_strict_gt"],
+                "passed": metrics["valid_l1_hard_er"] >
+                          gate_result["thresholds"]["valid_l1_hard_er_strict_gt"],
+            },
+            "level2_distinct_prefixes": {
+                "strict_gt": gate_result["thresholds"]["level2_prefixes_strict_gt"],
+                "passed": metrics["level2_distinct_prefixes"] >
+                          gate_result["thresholds"]["level2_prefixes_strict_gt"],
+            },
+        },
+        "promotion_eligible_by_quality": bool(gate_result["passed"]),
+        "diagnostics_only": [
+            "valid_l1_positive_hit_rate", "valid_l1_negative_hit_rate",
+            "level3_distinct_triples", "l3_collision", "l3_refinement_gain_bits",
+            "conditional_l3_gain",
+        ],
+        "methodology": {
+            "L3": "first three semantic codes; fourth collision-extension token ignored",
+            "collision": "item-weighted share of repeated three-token SIDs",
+            "refinement": "item-weighted mean log2(size of L2 bucket / size of L3 bucket)",
+            "conditional_G3": "mean log2(train-successor likelihood / prefix-only likelihood), conditioned on true target L1+L2",
+            "l3_alpha": L3_ALPHA,
+            "prob_floor": PROB_FLOOR,
+            "validation_pairs": conditional["pairs_scored"],
+            "validation_pairs_with_train_successors": conditional["pairs_with_train_successors"],
+        },
+        "quality_source": gate_result["sha256"],
+        "baseline_metrics": gate_result["baseline"],
+    }
+
+
+def record_single_sid(sid_path: Path, output: Path | None = None) -> Path:
+    """Record all required numbers once per exported SID, even if ER/L2 fail.
+
+    Called after Stage2 SID export, BEFORE any Stage3 result is used for model
+    selection. Writes a versioned, atomic report under the Stage2 result tree.
+    Missing inputs are errors, not artificial zero measurements.
+    """
+    import hashlib
+    import importlib.util
+    import os
+    import pandas as pd
+
+    sid_path = Path(sid_path).resolve(strict=True)
+    if sid_path.name != "item_sids.json" or STAGE2_ROOT.resolve() not in sid_path.parents:
+        raise ValueError("SID must be an item_sids.json inside the Stage2 result tree")
+    spec = importlib.util.spec_from_file_location("stage2_quality_gate", GATE_PATH)
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    verdict = gate.evaluate(
+        sid_path, REFERENCE_SID, PAIRS_NPZ, PAIRS_NPZ.with_suffix(".meta.json"))
+    if "candidate" not in verdict:
+        raise ValueError("Stage2 quality evidence unavailable: " +
+                         str(verdict.get("refused")))
+    sids = load_sid(sid_path)
+    pairs = np.load(PAIRS_NPZ)
+    anchors, positives = pairs["anchors"], pairs["positives"]
+    train = pd.read_parquet(TRAIN_PARQUET, columns=["user", "history", "target"])
+    sequences = recover_train_sequences(train.to_dict("records"))
+    successors = defaultdict(Counter)
+    for seq in sequences.values():
+        for src, dst in zip(seq, seq[1:]):
+            successors[src][dst] += 1
+    record = build_single_sid_record(sids, verdict, anchors, positives, successors)
+    def digest(path):
+        h = hashlib.sha256()
+        with Path(path).open("rb") as handle:
+            for block in iter(lambda: handle.read(1 << 20), b""):
+                h.update(block)
+        return h.hexdigest()
+    record["provenance"] = {
+        "sid": str(sid_path),
+        "train_parquet": str(TRAIN_PARQUET),
+        "validation_npz": str(PAIRS_NPZ),
+        "resample_sid": str(REFERENCE_SID),
+        "sid_sha256": digest(sid_path),
+        "train_parquet_sha256": digest(TRAIN_PARQUET),
+        "analysis_source_sha256": digest(Path(__file__)),
+        "resample_sid_sha256": digest(REFERENCE_SID),
+        "validation_npz_sha256": digest(PAIRS_NPZ),
+        "stage3_results_used": False,
+    }
+    if output is None:
+        output = sid_path.parent / "stage2_metrics" / (record["provenance"]["sid_sha256"] + ".json")
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_name(output.name + ".tmp")
+    try:
+        temporary.write_text(json.dumps(record, indent=2, sort_keys=True), encoding="utf-8")
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return output
+
+
 # ---------------------------------------------------------------- robustness
 _FEATURES = ["valid_l1_hard_er", "l3_collision", "l3_refinement_gain", "conditional_l3_gain"]
 
