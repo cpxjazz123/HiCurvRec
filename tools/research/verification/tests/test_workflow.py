@@ -9,7 +9,7 @@ class WorkflowSafetyTests(unittest.TestCase):
     def test_agents_disabled_by_default(self):
         with patch.object(workflow.settings, "LIVE_AGENTS_ALLOWED", False):
             with self.assertRaises(PermissionError):
-                workflow.draft_test_suites("new_candidate", Path("/tmp/absent"))
+                workflow.draft_test_suites("new_candidate", Path("/tmp/absent"), "run_0123456789abcdef")
 
     def test_reviewed_files_absent_refuse_freeze(self):
         with tempfile.TemporaryDirectory() as work:
@@ -18,7 +18,7 @@ class WorkflowSafetyTests(unittest.TestCase):
                 "source_sha256": "a" * 64, "proposal_sha256": "b" * 64}):
                 with patch.object(workflow, "CASES_ROOT", repo):
                     with self.assertRaises(workflow.AdmissionError):
-                        workflow.freeze_reviewed_manifest("new_candidate", repo)
+                        workflow.freeze_reviewed_manifest("new_candidate", repo, "run_0123456789abcdef")
 
 
 if __name__ == "__main__":

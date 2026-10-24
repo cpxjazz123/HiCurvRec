@@ -1927,7 +1927,94 @@ def tool_verification_check(source_dir: str, verification_id: str) -> dict:
     return run_agent_verification(tree, verification_id)
 
 
+# --------------------------------------------------------------------------
+# Thin MCP transport for the single native research DAG and verification Agents
+# --------------------------------------------------------------------------
+def _research_endpoints():
+    repo = Path(__file__).resolve().parents[2]
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    from tools.research.mcp import handlers, verification_handlers
+    return handlers, verification_handlers
+
+
+def tool_research_start() -> dict:
+    return _research_endpoints()[0].research_start()
+
+
+def tool_research_resume(run_id: str) -> dict:
+    return _research_endpoints()[0].research_resume(run_id)
+
+
+def tool_research_status(run_id: str) -> dict:
+    return _research_endpoints()[0].research_status(run_id)
+
+
+def tool_research_results(run_id: str) -> dict:
+    return _research_endpoints()[0].research_results(run_id)
+
+
+def tool_research_cancel(run_id: str) -> dict:
+    return _research_endpoints()[0].research_cancel(run_id)
+
+
+def tool_research_verify_start(run_id: str, source_dir: str) -> dict:
+    return _research_endpoints()[1].research_verify_start(run_id, source_dir)
+
+
+def tool_research_verify_review(run_id: str, source_dir: str) -> dict:
+    return _research_endpoints()[1].research_verify_review(run_id, source_dir)
+
+
+def tool_research_verify_status(run_id: str) -> dict:
+    return _research_endpoints()[1].research_verify_status(run_id)
+
+
 TOOLS: dict[str, dict] = {
+    "research_start": {
+        "fn": tool_research_start, "args": {},
+        "description": "Create a fresh Issue116 research run with a real run_id and "
+        "start detached native DAG workers when source-configured safety permits; "
+        "DATA and LITERATURE can work in parallel, and no GPU is launched.",
+    },
+    "research_resume": {
+        "fn": tool_research_resume, "args": {"run_id": "string"},
+        "description": "Resume eligible tasks for an existing research run using "
+        "the same immutable root DAG and measured source evidence.",
+    },
+    "research_status": {
+        "fn": tool_research_status, "args": {"run_id": "string"},
+        "description": "Read actual run/task/worker status, attempts, failures, "
+        "evidence hashes and whether detached workers are really alive.",
+    },
+    "research_results": {
+        "fn": tool_research_results, "args": {"run_id": "string"},
+        "description": "Return bounded, hash-checked previews of train-only behavior, "
+        "literature, geometry proposal and scientific review artifacts.",
+    },
+    "research_cancel": {
+        "fn": tool_research_cancel, "args": {"run_id": "string"},
+        "description": "Cooperatively stop new tasks and running OpenCode subprocesses "
+        "in a research run, without deleting evidence or stopping GPU jobs.",
+    },
+    "research_verify_start": {
+        "fn": tool_research_verify_start,
+        "args": {"run_id": "string", "source_dir": "string"},
+        "description": "Start three independent OpenCode verification authors in a "
+        "detached worker for an approved new mechanism; produce drafts only.",
+    },
+    "research_verify_review": {
+        "fn": tool_research_verify_review,
+        "args": {"run_id": "string", "source_dir": "string"},
+        "description": "After reviewable test suites are committed, start a separate "
+        "verification Reviewer and freeze source/test/proposal hashes; no GPU.",
+    },
+    "research_verify_status": {
+        "fn": tool_research_verify_status, "args": {"run_id": "string"},
+        "description": "Check real draft and independent review Worker status and "
+        "whether an executable-verification manifest exists.",
+    },
+
     "stage2_start": {
         "fn": tool_stage2_start,
         "args": {"source_dir": "string", "verification_id": "string"},

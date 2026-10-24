@@ -32,8 +32,12 @@ def _require_live():
         raise PermissionError("real OpenCode Agents disabled; check sandbox and settings.py first")
 
 
-def _inputs(candidate_id: str, tree: Path) -> dict:
-    proposal = EVIDENCE_ROOT / "agents" / "geometry" / "candidate.json"
+def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
+    from ..workflows.pipeline import run_dir
+    root = run_dir(run_id)
+    if not (root / "run.json").is_file():
+        raise AdmissionError("run_id does not reference a recorded research run")
+    proposal = root / "agents" / "geometry" / "candidate.json"
     candidate = read_json(proposal)
     if candidate.get("candidate_id") != candidate_id:
         raise AdmissionError("proposal ID mismatch")
@@ -42,6 +46,7 @@ def _inputs(candidate_id: str, tree: Path) -> dict:
         raise AdmissionError("no candidate Stage2 trainer")
     return {
         "candidate_id": candidate_id,
+        "run_id": run_id,
         "proposal_sha256": sha256(proposal),
         "source_sha256": source_digest(tree),
         "source_tree": str(tree),
@@ -57,10 +62,12 @@ def _prompt(role, ident, data, output):
     return build_prompt(role, frozen, output)
 
 
-def draft_test_suites(candidate_id: str, tree: Path) -> dict:
+def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
     """Write untrusted test drafts only to results/, never into tracked cases."""
     _require_live()
-    data = _inputs(candidate_id, tree)
+    data = _inputs(candidate_id, tree, run_id)
+    from ..workflows.pipeline import run_dir
+    run_root = run_dir(run_id)
     draft_dir = EVIDENCE_ROOT / "verification" / candidate_id / "drafts"
     draft_dir.mkdir(parents=True, exist_ok=True)
 
@@ -68,7 +75,7 @@ def draft_test_suites(candidate_id: str, tree: Path) -> dict:
         role, output, mapping = AUTHOR_SPEC[role_key]
         task_id = candidate_id + "_" + role_key
         prompt = _prompt(role, task_id, data, output)
-        execution = run_agent(task_id, prompt, output, EVIDENCE_ROOT,
+        execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
                               model=settings.AGENT_MODEL,
                               timeout=settings.AGENT_TIMEOUT_SECONDS)
@@ -92,10 +99,12 @@ def draft_test_suites(candidate_id: str, tree: Path) -> dict:
             "next_action": "Review and commit independent cases into tools/research/verification/cases/<candidate_id>/; do NOT auto-install drafts."}
 
 
-def review_committed_suites(candidate_id: str, tree: Path) -> Path:
+def review_committed_suites(candidate_id: str, tree: Path, run_id: str) -> Path:
     """Read actual committed files, then run a distinct independent review Agent."""
     _require_live()
-    data = _inputs(candidate_id, tree)
+    from ..workflows.pipeline import run_dir
+    run_root = run_dir(run_id)
+    data = _inputs(candidate_id, tree, run_id)
     case_dir = CASES_ROOT / candidate_id
     tests = {}
     for suite in SUITES:
@@ -106,28 +115,31 @@ def review_committed_suites(candidate_id: str, tree: Path) -> Path:
     data["tests"] = tests
     data["author_reports"] = {}
     for role in ("math", "gradient", "runtime"):
-        output = EVIDENCE_ROOT / "agents" / (candidate_id + "_" + role) / (role + ".json")
+        output = run_root / "agents" / (candidate_id + "_" + role) / (role + ".json")
         data["author_reports"][role] = read_json(output)
     prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json")
     return run_agent(candidate_id + "_review", prompt, "review.json",
-                     EVIDENCE_ROOT, binary=settings.AGENT_BINARY,
+                     run_root, binary=settings.AGENT_BINARY,
                      model=settings.AGENT_MODEL,
                      timeout=settings.AGENT_TIMEOUT_SECONDS)
 
 
-def freeze_reviewed_manifest(candidate_id: str, tree: Path) -> Path:
+def freeze_reviewed_manifest(candidate_id: str, tree: Path, run_id: str) -> Path:
     """Build a candidate-specific content address only; never claim tests ran."""
-    data = _inputs(candidate_id, tree)
+    data = _inputs(candidate_id, tree, run_id)
     test_paths = [CASES_ROOT / candidate_id / ("test_" + role + ".py") for role in SUITES]
     if any(not path.is_file() or path.is_symlink() for path in test_paths):
         raise AdmissionError("four reviewed test modules are required")
     manifest = {
-        "schema": 1, "candidate_id": candidate_id, "source_tree": Path(tree).name,
+        "schema": 1, "candidate_id": candidate_id, "run_id": run_id,
+        "source_tree": Path(tree).name,
         "source_sha256": data["source_sha256"],
         "proposal_sha256": data["proposal_sha256"],
         "tests": dict(zip(SUITES, (sha256(path) for path in test_paths))),
     }
     path = EVIDENCE_ROOT / "verification" / candidate_id / "manifest.json"
+    if path.exists() and read_json(path).get("run_id") != run_id:
+        raise AdmissionError("candidate verification identity is owned by another run")
     atomic_json(path, manifest)
     # Non-test identity check; will fail closed if review evidence is incomplete.
     validate_evidence(tree, candidate_id)

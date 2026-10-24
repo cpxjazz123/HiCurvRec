@@ -1,11 +1,12 @@
-"""One native issue116 path: train evidence and literature before geometry."""
+"""One canonical Issue116 DAG; each research run owns a separate evidence directory."""
 import json
 import os
+from pathlib import Path
 
 from .. import settings
 from ..agents.prompts import build_prompt
 from ..agents.runner import run_agent
-from ..core.dag import TaskStore
+from ..core.dag import StateError, TaskStore
 from ..core.evidence import atomic_json, digest_bytes, digest_file, read_json
 from ..integrations.preflight import audit_surviving_mainline
 from ..science.behavior import run as analyze_train_behavior
@@ -19,40 +20,37 @@ TASKS = (
 )
 OUTPUTS = {"literature": "literature.json", "geometry": "candidate.json",
            "review": "review.json"}
-OWNER = "issue116-native-" + str(os.getpid())
+AGENT_ROLES = ("LITERATURE", "GEOMETRY", "REVIEW")
 
 
 def store():
     return TaskStore(settings.STATE_ROOT)
 
 
-def bootstrap():
+def run_dir(run_id):
+    if not isinstance(run_id, str) or len(run_id) != 20 or not run_id.startswith("run_"):
+        raise ValueError("unknown research run identifier")
+    if not all(c in "0123456789abcdef" for c in run_id[4:]):
+        raise ValueError("unsafe research run identifier")
+    return settings.STATE_ROOT / "runs" / run_id
+
+
+def bootstrap_run(run_id):
     dag = store()
-    for ident, role, dependencies in TASKS:
-        dag.add(ident, role, dependencies)
+    for name, role, deps in TASKS:
+        dag.add(run_id + "__" + name, role, [run_id + "__" + d for d in deps])
     return dag
-
-
-def inspect():
-    state = bootstrap().snapshot()
-    return {"system": "research-issue116", "mode": settings.ACTION,
-            "live_agents_allowed": settings.LIVE_AGENTS_ALLOWED,
-            "training_launch_available": False,
-            "surviving_mainline": audit_surviving_mainline(),
-            "tasks": {ident: {"role": task["role"], "status": task["status"],
-                              "attempts": task["attempts"]}
-                      for ident, task in state["tasks"].items()}}
 
 
 def manifest_for(task, root):
     behavior = root / "behavior.json"
     literature = root / "agents" / "literature" / "literature.json"
-    candidate_path = root / "agents" / "geometry" / "candidate.json"
+    proposal = root / "agents" / "geometry" / "candidate.json"
     manifest = {"task_id": task, "research": "issue116-behavior-first"}
     if task == "literature":
         manifest["research_question"] = (
-            "Measure exact primary-source research overlap for user next-item behavior "
-            "x negative-curvature geometry x generative SID; use no future interactions."
+            "Research verified literature where user next-item behavior, "
+            "hyperbolic geometry and generative semantic IDs intersect."
         )
     if task in ("geometry", "review"):
         report = read_json(behavior)
@@ -61,48 +59,54 @@ def manifest_for(task, root):
                         literature_evidence_sha256=digest_file(literature),
                         behavior_evidence=report, literature_evidence=lit)
         if task == "review":
-            candidate = read_json(candidate_path)
+            candidate = read_json(proposal)
             check_candidate(candidate)
             manifest.update(candidate_id=candidate["candidate_id"],
-                            candidate_sha256=digest_file(candidate_path),
+                            candidate_sha256=digest_file(proposal),
                             candidate=candidate)
     manifest["inputs_sha256"] = digest_bytes(
-        json.dumps(manifest, sort_keys=True, ensure_ascii=False).encode("utf-8"))
+        json.dumps(manifest, sort_keys=True, ensure_ascii=False).encode())
     return manifest
 
 
 def verify_science_output(task, root, manifest):
-    path = root / "agents" / task / OUTPUTS[task]
-    output = read_json(path)
+    output = read_json(root / "agents" / task / OUTPUTS[task])
     if task == "literature":
         if not isinstance(output.get("sources"), list) or not output["sources"]:
-            raise ValueError("literature output must include verified or qualified sources")
+            raise ValueError("literature requires real cited/qualified sources")
     elif task == "geometry":
         check_candidate(output)
         if (output["behavior_evidence_sha256"] != manifest["behavior_evidence_sha256"]
                 or output["literature_evidence_sha256"] != manifest["literature_evidence_sha256"]):
-            raise ValueError("candidate does not bind current frozen DATA and LITERATURE")
+            raise ValueError("candidate ignores frozen DATA/LITERATURE inputs")
     elif task == "review":
         if (output.get("candidate_id") != manifest["candidate_id"]
                 or output.get("candidate_sha256") != manifest["candidate_sha256"]):
-            raise ValueError("review verdict pertains to a different candidate")
+            raise ValueError("review targets another candidate")
         if output.get("verdict") not in ("FATAL", "MATERIAL", "CPU_ELIGIBLE", "PARKED"):
-            raise ValueError("review must emit a current structured verdict")
+            raise ValueError("review verdict absent/unknown")
         if output["verdict"] != "CPU_ELIGIBLE":
-            raise ValueError("scientific admission blocked: " + output["verdict"])
+            raise ValueError("scientific admission BLOCKED by " + output["verdict"])
 
 
-def step():
-    """Exactly one eligible task per invocation. Multiple workers share atomic leases."""
-    dag = bootstrap()
+def process_next(run_id):
+    """Claim one eligible task; callers may run separate workers concurrently."""
+    root = run_dir(run_id)
+    if not (root / "run.json").is_file() or (root / "cancel.json").exists():
+        return None
+    dag = store()
+    owner = "research-worker-pid-" + str(os.getpid())
     permitted = None if settings.LIVE_AGENTS_ALLOWED else ("DATA",)
-    claim = dag.claim(OWNER, settings.LEASE_SECONDS, settings.MAX_ATTEMPTS,
-                      roles=permitted)
-    if not claim:
-        return inspect()
-    task, role = claim
-    root = settings.STATE_ROOT
+    claimed = dag.claim(owner, settings.LEASE_SECONDS, settings.MAX_ATTEMPTS,
+                        roles=permitted, prefix=run_id + "__")
+    if claimed is None:
+        return None
+    task_id, role = claimed
+    task = task_id.split("__", 1)[1]
     try:
+        if (root / "cancel.json").exists():
+            dag.finish_cancel(task_id, owner)
+            return None
         if role == "DATA":
             evidence = analyze_train_behavior(settings.TRAIN, root / "behavior.json")
         else:
@@ -117,8 +121,29 @@ def step():
                                  model=settings.AGENT_MODEL,
                                  timeout=settings.AGENT_TIMEOUT_SECONDS)
             verify_science_output(task, root, manifest)
-        dag.complete(task, OWNER, evidence)
+        if (root / "cancel.json").exists():
+            dag.finish_cancel(task_id, owner)
+            return None
+        dag.complete(task_id, owner, evidence)
     except Exception as exc:
-        dag.fail(task, OWNER, type(exc).__name__ + ": " + str(exc))
+        if (root / "cancel.json").exists():
+            dag.finish_cancel(task_id, owner)
+            return None
+        try:
+            dag.fail(task_id, owner, type(exc).__name__ + ": " + str(exc))
+        except StateError:
+            pass
         raise
+    return {"task": task, "role": role, "evidence": True}
+
+
+def inspect():
+    return {"system": "research-issue116", "live_agents_allowed": settings.LIVE_AGENTS_ALLOWED,
+            "training_launch_available": False,
+            "repository": audit_surviving_mainline(),
+            "tasks": store().snapshot()["tasks"]}
+
+
+def step():
+    """Compatibility for the source-configured no-argument local entry."""
     return inspect()

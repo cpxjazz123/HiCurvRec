@@ -1,8 +1,4 @@
-"""Actual OpenCode subprocess, isolated working directory, immutable execution receipt.
-
-Deployment MUST independently restrict the OpenCode process to its workspace;
-a cwd alone is not an OS sandbox. Live mode defaults off until checked.
-"""
+"""Real OpenCode CLI with cooperative cancellation and process receipts."""
 import json
 import os
 import signal
@@ -25,35 +21,49 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         raise RuntimeError("refuse to overwrite previous role output")
     cmd = [binary, "run", "--standalone", "--format", "json", "--auto",
            "--model", model, "--title", task_id, prompt]
-    started = time.time()
+    started = time.monotonic()
+    cancelled, timed_out, stderr = False, False, ""
     try:
         with (workspace / "session.jsonl").open("w", encoding="utf-8") as log:
             process = subprocess.Popen(cmd, cwd=workspace, stdout=log,
                                        stderr=subprocess.PIPE, text=True,
                                        start_new_session=True)
-            timed_out = False
-            try:
-                _, stderr = process.communicate(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                _, stderr = process.communicate()
-                timed_out = True
+            atomic_json(workspace / "running.json", {"pid": process.pid,
+                        "started_at": time.time(), "task_id": task_id})
+            while True:
+                try:
+                    _, stderr = process.communicate(timeout=1)
+                    break
+                except subprocess.TimeoutExpired:
+                    if (root / "cancel.json").is_file():
+                        cancelled = True
+                    if time.monotonic() - started > timeout:
+                        timed_out = True
+                    if cancelled or timed_out:
+                        os.killpg(process.pid, signal.SIGTERM)
+                        try:
+                            _, stderr = process.communicate(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            os.killpg(process.pid, signal.SIGKILL)
+                            _, stderr = process.communicate()
+                        break
     except OSError as exc:
         atomic_json(workspace / "execution.json",
-                    {"task_id": task_id, "started": started, "error_type": type(exc).__name__,
+                    {"task_id": task_id, "error_type": type(exc).__name__,
                      "verified": False})
         raise
+    finally:
+        (workspace / "running.json").unlink(missing_ok=True)
     valid = False
-    if output.is_file() and process.returncode == 0 and not timed_out:
+    if output.is_file() and process.returncode == 0 and not timed_out and not cancelled:
         try:
             valid = isinstance(json.loads(output.read_text(encoding="utf-8")), dict)
         except (OSError, ValueError):
             valid = False
     record = {
         "task_id": task_id, "pid": process.pid,
-        "started_utc_epoch": started, "finished_utc_epoch": time.time(),
-        "exit_code": process.returncode, "timed_out": timed_out,
-        "model": model,
+        "finished_utc_epoch": time.time(), "exit_code": process.returncode,
+        "timed_out": timed_out, "cancelled": cancelled, "model": model,
         "argv_shape": ["opencode", "run", "--standalone", "--format", "json",
                        "--auto", "--model", "<model>", "--title", task_id, "<prompt>"],
         "prompt_sha256": digest_bytes(prompt.encode()),
@@ -61,10 +71,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "stderr_present": bool(stderr), "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,
-        "limitations": "No OS-level sandbox guarantee; live deployment requires filesystem tool permissions.",
+        "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
     }
     receipt = workspace / "execution.json"
     atomic_json(receipt, record)
     if not valid:
-        raise RuntimeError("OpenCode failed, timed out or wrote invalid JSON: " + str(receipt))
+        raise RuntimeError("OpenCode failed, cancelled, timed out or returned invalid JSON: " + str(receipt))
     return receipt
