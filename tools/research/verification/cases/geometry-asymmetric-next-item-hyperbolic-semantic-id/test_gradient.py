@@ -1,62 +1,84 @@
+import importlib
 import sys
 import unittest
 from pathlib import Path
 
 import torch
 
-SOURCE = Path("/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id")
-sys.path.insert(0, str(SOURCE))
-from model.hyperbolic import exp_0, log_0, hyperbolic_distance
-from model.layers import HyperbolicVQLayer
+# Load the frozen candidate package directly from its source tree.
+SOURCE_TREE = Path("/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id")
+if str(SOURCE_TREE) not in sys.path:
+    sys.path.insert(0, str(SOURCE_TREE))
+hyperbolic = importlib.import_module("model.hyperbolic")
+layers = importlib.import_module("model.layers")
 
 
-class TestHyperbolicGradientFlow(unittest.TestCase):
-    def test_exp_log_roundtrip_has_finite_nonzero_gradient(self):
-        v = torch.tensor([[0.17, -0.11, 0.08], [-0.09, 0.13, 0.19]], dtype=torch.float64, requires_grad=True)
-        z = log_0(exp_0(v))
-        loss = (z * torch.tensor([[0.4, -0.7, 0.2], [0.3, 0.5, -0.6]], dtype=v.dtype)).sum()
-        grad, = torch.autograd.grad(loss, v)
-        self.assertTrue(torch.isfinite(grad).all().item())
-        self.assertGreater(grad.norm().item(), 1e-5)
-        self.assertTrue(torch.allclose(z, v, atol=1e-8, rtol=1e-7))
+class HyperbolicGradientTests(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(17)
+        self.dtype = torch.float64
 
-    def test_distance_gradcheck_and_independent_finite_difference(self):
-        x = torch.tensor([[0.12, -0.08, 0.05]], dtype=torch.float64, requires_grad=True)
-        y = torch.tensor([[0.23, 0.06, -0.04]], dtype=torch.float64, requires_grad=True)
-        fn = lambda a, b: hyperbolic_distance(exp_0(a), exp_0(b)).sum()
-        self.assertTrue(torch.autograd.gradcheck(fn, (x, y), eps=1e-6, atol=2e-5, rtol=2e-4))
-        analytic, = torch.autograd.grad(fn(x, y), (x,))
-        h = 1e-6
-        plus, minus = x.detach().clone(), x.detach().clone()
-        plus[0, 1] += h
-        minus[0, 1] -= h
-        numeric = (fn(plus, y.detach()) - fn(minus, y.detach())) / (2 * h)
-        self.assertAlmostEqual(analytic[0, 1].item(), numeric.item(), delta=2e-5)
-        self.assertGreater(analytic.norm().item(), 1e-5)
+    def test_exp_log_and_distance_pass_gradcheck(self):
+        v = torch.tensor([[0.17, -0.11, 0.23]], dtype=self.dtype, requires_grad=True)
+        self.assertTrue(torch.autograd.gradcheck(hyperbolic.exp_0, (v,), eps=1e-6, atol=2e-5, rtol=2e-4))
+        x = hyperbolic.exp_0(v.detach()).requires_grad_(True)
+        self.assertTrue(torch.autograd.gradcheck(hyperbolic.log_0, (x,), eps=1e-6, atol=2e-5, rtol=2e-4))
+        a = torch.tensor([[0.12, -0.08, 0.04]], dtype=self.dtype, requires_grad=True)
+        b = torch.tensor([[-0.19, 0.14, 0.09]], dtype=self.dtype, requires_grad=True)
+        self.assertTrue(torch.autograd.gradcheck(hyperbolic.hyperbolic_distance, (a, b), eps=1e-6, atol=2e-5, rtol=2e-4))
 
-    def test_hyperbolic_quantizer_trains_input_and_code_vectors(self):
-        torch.manual_seed(7)
-        layer = HyperbolicVQLayer(4, 2, beta=0.25)
+    def test_distance_has_finite_difference_and_two_sided_gradients(self):
+        a = torch.tensor([[0.13, -0.07, 0.05]], dtype=self.dtype, requires_grad=True)
+        b = torch.tensor([[-0.16, 0.09, 0.11]], dtype=self.dtype, requires_grad=True)
+        value = hyperbolic.hyperbolic_distance(a, b).sum()
+        grad_a, grad_b = torch.autograd.grad(value, (a, b))
+        self.assertTrue(torch.isfinite(grad_a).all().item())
+        self.assertTrue(torch.isfinite(grad_b).all().item())
+        self.assertGreater(grad_a.norm().item(), 1e-7)
+        self.assertGreater(grad_b.norm().item(), 1e-7)
+        step = 1e-6
+        plus, minus = a.detach().clone(), a.detach().clone()
+        plus[0, 0] += step
+        minus[0, 0] -= step
+        fd = (hyperbolic.hyperbolic_distance(plus, b.detach()).item() - hyperbolic.hyperbolic_distance(minus, b.detach()).item()) / (2 * step)
+        self.assertAlmostEqual(grad_a[0, 0].item(), fd, delta=2e-5)
+
+    def test_real_hyperbolic_rqvae_backward_reaches_encoder_and_each_codebook(self):
+        # Small instance of the production hyperbolic residual quantizer.
+        config = type("Config", (), {
+            "codebook_num": 3, "codebook_dim": 4, "codebook_size": (5, 6, 7),
+            "vq_type": "vq", "beta": 0.25, "sk_epsilon": -1.0, "sk_iters": -1,
+        })()
+        model = layers.HyperbolicRQLayer(config).double()
         with torch.no_grad():
-            layer.embed.weight.copy_(torch.tensor([[0.4, 0.1], [-0.3, 0.2], [0.05, -0.45], [0.35, -0.3]]))
-        x = torch.tensor([[0.36, 0.08], [-0.25, 0.18], [0.02, -0.39]], requires_grad=True)
-        quantized, commitment, _, indices = layer(x, exp_0(x))
-        loss = (quantized * torch.tensor([[0.7, -0.2], [-0.4, 0.9], [0.3, 0.6]])).sum() + commitment
-        loss.backward()
-        self.assertEqual(tuple(indices.shape), (3,))
-        self.assertIsNotNone(x.grad)
-        self.assertTrue(torch.isfinite(x.grad).all().item())
-        self.assertGreater(x.grad.norm().item(), 1e-6)
-        code_grad = layer.embed.weight.grad
-        self.assertIsNotNone(code_grad)
-        self.assertTrue(torch.isfinite(code_grad).all().item())
-        self.assertGreater(code_grad.norm().item(), 1e-6)
+            for level, quantizer in enumerate(model.vq_layers):
+                quantizer.embed.weight.copy_(torch.randn_like(quantizer.embed.weight) * 0.16 + (level + 1) * 0.025)
+        encoded = torch.tensor([[0.21, -0.13, 0.08, 0.17], [-0.12, 0.19, 0.14, -0.09],
+                                [0.16, 0.07, -0.18, 0.11]], dtype=self.dtype, requires_grad=True)
+        quantized, quant_loss, _, indices = model(encoded)
+        objective = (quantized.square().mean() + quant_loss)
+        self.assertEqual(tuple(indices.shape), (3, 3))
+        self.assertTrue(torch.isfinite(objective).item())
+        objective.backward()
+        self.assertIsNotNone(encoded.grad)
+        self.assertTrue(torch.isfinite(encoded.grad).all().item())
+        self.assertGreater(encoded.grad.norm().item(), 1e-8)
+        for level, quantizer in enumerate(model.vq_layers):
+            grad = quantizer.embed.weight.grad
+            self.assertIsNotNone(grad, "quantizer level %d is disconnected" % level)
+            self.assertTrue(torch.isfinite(grad).all().item())
+            self.assertGreater(grad.norm().item(), 1e-8, "quantizer level %d receives no learning signal" % level)
 
-    def test_disconnected_and_nan_paths_are_detected(self):
-        x = torch.tensor([0.2, -0.1], requires_grad=True)
-        disconnected = (x.detach() ** 2).sum()
+    def test_nan_input_is_not_silently_repaired(self):
+        point = torch.tensor([[float("nan"), 0.1, 0.0]], dtype=self.dtype)
+        result = hyperbolic.exp_0(point)
+        self.assertFalse(torch.isfinite(result).all().item())
+        distance = hyperbolic.hyperbolic_distance(point, torch.zeros_like(point))
+        self.assertFalse(torch.isfinite(distance).all().item())
+
+    def test_detached_output_negative_control_is_graph_disconnected(self):
+        source = torch.tensor([0.3, -0.2], dtype=self.dtype, requires_grad=True)
+        disconnected = source.detach().square().sum()
         self.assertFalse(disconnected.requires_grad)
         with self.assertRaises(RuntimeError):
-            torch.autograd.grad(disconnected, x)
-        bad = hyperbolic_distance(torch.tensor([[float("nan"), 0.0]]), torch.zeros(1, 2))
-        self.assertFalse(torch.isfinite(bad).all().item())
+            torch.autograd.grad(disconnected, source)

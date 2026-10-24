@@ -140,6 +140,17 @@ independent reviewer can judge them:
    `ModuleNotFoundError: No module named 'model'` and never reached its
    assertions. The tree directory is now on the path as well. No assertion was
    removed, added or loosened.
+4. **test_entrypoint.py, the SID export comparison.** The draft asserted the
+   exported SID matrix with `assertEqual` on two numpy arrays, which raises
+   "the truth value of an array with more than one element is ambiguous"; the
+   run itself had already trained, written the checkpoint and exported the SID.
+   The comparison is now `numpy.testing.assert_array_equal` on the same two
+   arrays. No assertion was removed, added or loosened.
+5. **A bounded relocation in the runner.** The RUNTIME author wrote its answer
+   into a slightly misnamed subdirectory of its own workspace instead of the
+   absolute destination it was given; the runner now accepts an output found
+   inside the workspace and records where it landed. The content is still
+   validated on candidate identity and source digest.
 
 ## 7. What is authorized now, and what is not
 
