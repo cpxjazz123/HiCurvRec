@@ -272,7 +272,7 @@ def _normalise_suite_keys(mapping):
     """
     if not isinstance(mapping, dict):
         return mapping
-    from ..science.contract import canonical_suite
+    canonical_suite = _contract_module().canonical_suite
 
     normalised = {}
     for key, value in mapping.items():
@@ -282,3 +282,14 @@ def _normalise_suite_keys(mapping):
         else:
             normalised[name] = value
     return normalised
+
+def _contract_module():
+    """Load the contract compiler whether this module is imported as a package
+    or, as the MCP does, as a standalone file by ``spec_from_file_location``."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[1] / "science" / "contract.py"
+    spec = importlib.util.spec_from_file_location("genrec_science_contract", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
