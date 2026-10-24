@@ -45,6 +45,12 @@ ROLE_GUIDANCE = {
         "Independently inspect the frozen candidate, actual trainer source, the four "
         "concrete reviewed test files and independent Agent logs; reject mock-only, "
         "self-referential math, missing DDP/entrypoint evidence and test/hash drift. "
+        "The manifest carries the source digest together with the exact recipe that "
+        "produced it (the algorithm and the per-file sha256 list), so you can recompute "
+        "the digest yourself instead of comparing single file hashes with it. The author "
+        "reports in this manifest are the CURRENT evidence; any other Agent session under "
+        "the run directory belongs to an earlier attempt against a source that has since "
+        "changed, so it is archived history and NOT competing evidence. "
         "Reply JSON with candidate_id, source_sha256, proposal_sha256, "
         "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale."
     ),
