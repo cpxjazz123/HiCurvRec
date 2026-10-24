@@ -55,11 +55,11 @@ def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
     }
 
 
-def _prompt(role, ident, data, output):
+def _prompt(role, ident, data, output, root=None):
     frozen = {"task_id": ident, **data}
     frozen["inputs_sha256"] = digest_bytes(
         json.dumps(frozen, ensure_ascii=False, sort_keys=True).encode())
-    return build_prompt(role, frozen, output)
+    return build_prompt(role, frozen, output, root=root)
 
 
 def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
@@ -74,7 +74,7 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str) -> dict:
     def author(role_key: str):
         role, output, mapping = AUTHOR_SPEC[role_key]
         task_id = candidate_id + "_" + role_key
-        prompt = _prompt(role, task_id, data, output)
+        prompt = _prompt(role, task_id, data, output, root=run_root)
         execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
                               model=settings.AGENT_MODEL,
@@ -117,7 +117,8 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str) -> Path:
     for role in ("math", "gradient", "runtime"):
         output = run_root / "agents" / (candidate_id + "_" + role) / (role + ".json")
         data["author_reports"][role] = read_json(output)
-    prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json")
+    prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json",
+                     root=run_root)
     return run_agent(candidate_id + "_review", prompt, "review.json",
                      run_root, binary=settings.AGENT_BINARY,
                      model=settings.AGENT_MODEL,

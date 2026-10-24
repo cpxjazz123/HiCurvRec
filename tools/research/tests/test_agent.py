@@ -61,5 +61,16 @@ class AgentTests(unittest.TestCase):
             self.assertTrue((receipt.parent / ".git").is_dir())
 
 
+    def test_prompt_names_the_absolute_output_path(self):
+        """A relative output path is resolved against the git root, not the workspace."""
+        from tools.research.agents.prompts import build_prompt
+        manifest = {"task_id": "literature", "inputs_sha256": "abc"}
+        root = Path("/tmp/run_root")
+        prompt = build_prompt("LITERATURE", manifest, "literature.json", root=root)
+        expected = str(root / "agents" / "literature" / "literature.json")
+        self.assertIn(expected, prompt)
+        self.assertNotIn("in your working directory", prompt)
+
+
 if __name__ == "__main__":
     unittest.main()

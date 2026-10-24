@@ -1,5 +1,6 @@
 """Review a specific current business problem, never a cached old formula."""
 import json
+from pathlib import Path
 
 ROLE_GUIDANCE = {
     "LITERATURE": (
@@ -57,7 +58,7 @@ ROLE_GUIDANCE = {
 }
 
 
-def build_prompt(role: str, manifest: dict, output_name: str) -> str:
+def build_prompt(role: str, manifest: dict, output_name: str, root=None) -> str:
     if role not in ROLE_GUIDANCE:
         raise ValueError("undefined role")
     if not manifest.get("task_id") or not manifest.get("inputs_sha256"):
@@ -67,8 +68,19 @@ def build_prompt(role: str, manifest: dict, output_name: str) -> str:
     if role == "REVIEW" and not (manifest.get("candidate_id")
                                   and manifest.get("candidate_sha256")):
         raise ValueError("candidate identity missing")
+    # Name the ABSOLUTE output path. A relative path is resolved against the git
+    # root, which is the repository, so the Agent would write its answer outside
+    # the workspace it is allowed to write in.
+    task_id = manifest["task_id"]
+    if root is not None:
+        destination = str(Path(root) / "agents" / task_id / output_name)
+        instruction = ("Write the answer to " + destination + " (this absolute path). "
+                       "Write nowhere else.")
+    else:
+        destination = output_name
+        instruction = ("Write the answer to " + destination + " in your working directory.")
     return ("ROLE: " + role + "\n" + ROLE_GUIDANCE[role]
             + "\nFROZEN CURRENT-ONLY MANIFEST:\n"
             + json.dumps(manifest, sort_keys=True, ensure_ascii=False, indent=2)
-            + "\nWrite the answer to " + output_name + " in your working directory. "
-              "Do not use prior-candidate prompts or any unseen future/test interactions.")
+            + "\n" + instruction
+            + " Do not use prior-candidate prompts or any unseen future/test interactions.")
