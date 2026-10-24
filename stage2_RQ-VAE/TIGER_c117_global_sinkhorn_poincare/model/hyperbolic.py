@@ -50,9 +50,17 @@ def project_ball(x: torch.Tensor, radius: float = RADIUS_R) -> torch.Tensor:
     return scale * x
 
 
+#: arcosh has a square-root singularity at 1, so the backward of sqrt(0) is
+#: infinite and a coincident pair produces NaN gradients. The excess is floored
+#: at 1e-24, which changes arcosh(1+e)^2 by less than 1e-24 (the value is
+#: 2e for small e) while keeping the derivative finite. The proposal's clamp of
+#: the arcosh argument at 1.0 is untouched.
+EXCESS_FLOOR = 1e-24
+
+
 def arcosh_stable(u: torch.Tensor) -> torch.Tensor:
     """arcosh(1 + u) for u >= 0, evaluated as log1p(u + sqrt(u*(u+2)))."""
-    excess = torch.clamp(u, min=0.0)
+    excess = torch.clamp(u, min=0.0).clamp(min=EXCESS_FLOOR)
     return torch.log1p(excess + torch.sqrt(excess * (excess + 2.0)))
 
 
