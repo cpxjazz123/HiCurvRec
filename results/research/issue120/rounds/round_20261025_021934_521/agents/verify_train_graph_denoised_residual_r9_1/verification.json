@@ -1,0 +1,36 @@
+{
+  "verifier": "r9_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:314-315",
+          "detail": "The actual trainer entry point calls _validate_frozen_inputs(), but no such function is defined anywhere in the file. A normal invocation therefore terminates with NameError before loading data or training.",
+          "reproduction": "Run python train_rqvae.py with the configured environment (or import the module and call main()); the first statement in main raises NameError: name '_validate_frozen_inputs' is not defined.",
+          "correction": "Implement and call the intended frozen-input validation helper, or remove the call if validation is not required; ensure it checks the declared input files without changing the frozen data path."
+        },
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:104-110, 541-554",
+          "detail": "The distributed launcher configuration is unusable in both launch modes: _LAUNCHER['torchrun'] is None but is passed as argv[0] for the four-GPU path, while the single-GPU path indexes the nonexistent 'single_visible_dev' key. Thus the advertised launcher fails before the trainer starts (even after fixing the undefined validation call).",
+          "reproduction": "Call _launch_via_torchrun() without RANK and with GENREC_SINGLE_GPU=1: KeyError('single_visible_dev'). With multiple visible GPUs and single-GPU mode disabled, it constructs a subprocess command whose first element is None and subprocess.call raises TypeError.",
+          "correction": "Resolve the torchrun executable (for example via sys.executable -m torch.distributed.run) and define/use a valid single-visible-device configuration; exercise both branches with mocked subprocess invocation."
+        }
+      ]
+    }
+  ]
+}

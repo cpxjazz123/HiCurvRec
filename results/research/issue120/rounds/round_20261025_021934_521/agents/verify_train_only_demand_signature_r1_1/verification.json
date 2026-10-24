@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_train_only_demand_signature_r1_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/train_rqvae.py:482-483",
+          "detail": "The single-GPU launch branch indexes _LAUNCHER['single_visible_dev'], but the active _LAUNCHER dict at lines 124-131 does not define that key. On a one-GPU host with CUDA_VISIBLE_DEVICES unset, the real trainer entry point crashes with KeyError before spawning the training process. The older, shadowed launcher dict at lines 105-112 also lacks the key.",
+          "reproduction": "Run the entry point with no RANK, one visible CUDA device (or force GENREC_SINGLE_GPU=1), and unset CUDA_VISIBLE_DEVICES. resolve_single_gpu() is true and line 483 raises KeyError: 'single_visible_dev'.",
+          "correction": "Define single_visible_dev in the active _LAUNCHER configuration (or avoid this missing-key lookup and inherit the current device visibility safely); exercise the actual launcher branch."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/train_rqvae.py:43-53",
+          "detail": "The trainer hard-codes inputs and outputs under /home/wlia0047/ar57/wenyu/GeneRec, while this checked-out repository and issue tree are under /fs04/ar57/wenyu/GeneRec. Although the former input files happen to exist in this environment, a run writes the exported SID/checkpoint/metrics to the other checkout's shared baseline stage2 paths, not to this candidate tree. That makes the candidate output non-isolated and can overwrite baseline artifacts; this integration does not establish the intended frozen data/output path for this tree.",
+          "reproduction": "Invoke this candidate trainer and inspect OUTPUT_SID: it resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/sids_for_hgrec.npy, not a path under results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature. The source path also bypasses the active checkout's root resolution.",
+          "correction": "Resolve the frozen stage0 train parquet and embedding input relative to the canonical repository root (or explicit frozen-path constants), and direct all candidate SID/checkpoint/metrics outputs into this candidate's isolated output directory. Preserve the verified item-ID-to-embedding-row indexing when exporting."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_train_graph_denoised_residual_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:17-18",
+          "detail": "The inspected tree contains only PROPOSAL.json; there is no implementation code to verify. The proposal specifies the intended graph construction and embedding mix, but does not implement them. Therefore fidelity (including whether changes are limited to this idea) cannot be established.",
+          "reproduction": "Enumerate all files under results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual: the only file is PROPOSAL.json (20 lines). No code defining transition counts, weights, normalization, lambda mixing, or tokenizer invocation is present.",
+          "correction": "Add the implementation to this tree, using only training sequences and the specified symmetrized, degree-corrected transition aggregation and lambda mix, then rerun the review against that code."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:1",
+          "detail": "No model or training implementation exists in the inspected tree, so a real forward/backward pass, finite loss/gradient check, intended-parameter gradient reachability, dead-term check, or numerical-stability check cannot be performed. This is an absent deliverable, not evidence that the proposed operation itself is unstable.",
+          "reproduction": "Attempt to locate any source or runnable trainer in the tree; it contains only PROPOSAL.json and no executable implementation or test entry point.",
+          "correction": "Provide the actual training-path implementation and a runnable minimal forward/backward reproduction. Check finite outputs and gradients for the proposed lambda values, including zero-row/no-neighbor items and zero-norm input vectors."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:1",
+          "detail": "The tree has no trainer entry point, data-path changes, SID export, or distributed-launcher changes to inspect or run. Consequently frozen-data-path use, SID indexing/validity, and launcher compatibility are unverified; no claim of successful integration is supported.",
+          "reproduction": "Inspect the complete tree: it contains only PROPOSAL.json, so there is no command, source file, configuration, or artifact exporter to execute or audit.",
+          "correction": "Include the integrated implementation in the requested tree. Then run the actual trainer entry point and distributed launcher on the frozen data path, and validate that exported SIDs cover the expected item indices with the baseline format and mapping."
+        }
+      ]
+    }
+  ]
+}

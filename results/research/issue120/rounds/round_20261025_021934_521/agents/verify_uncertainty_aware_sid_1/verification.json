@@ -1,0 +1,52 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:229-245",
+          "detail": "The trainer loads one precomputed embedding per item and trains the original single-view RQ-VAE. It does not create independently corrupted metadata views, calculate view means/variances for the reconstruction target, or add an uncertainty-weighted agreement loss. uncertainty_agreement exists separately but is never imported or called. Thus the central proposed mechanism is absent, rather than implemented alongside the baseline.",
+          "reproduction": "Inspect main(): train_embeddings is selected directly from load_embeddings(EMBEDDING_FILE), wrapped in a TensorDataset, and each batch invokes model(batch) once followed by compute_loss(batch, ...). No view dimension or agreement term enters the optimization.",
+          "correction": "Build M independent training-only metadata views per item, encode them, reconstruct from their mean using the baseline RQ objective, and incorporate the specified variance-weighted code disagreement term (with a trainable/gradient-bearing implementation). Keep validation selection of lambda separate from training records."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/uncertainty.py:19-25",
+          "detail": "The proposed agreement penalty has no gradient to the encoder or quantizer: variance is explicitly detached and code inequality is a discrete comparison. Consequently, adding this returned scalar to the loss produces a dead regularization term; only the separate baseline reconstruction/commitment loss can update parameters. A normal baseline forward/backward does not establish trainability of the proposed mechanism.",
+          "reproduction": "For M=2, take encoded_views with requires_grad=True and token_views with differing integer codes, call uncertainty_agreement(...).backward(); encoded_views.grad is None (and integer tokens cannot receive gradients). The penalty value can be positive while supplying no parameter gradient.",
+          "correction": "Use a gradient-bearing relaxation or surrogate for code disagreement (or another explicitly defined differentiable estimator), and verify a nonzero finite gradient from the added term reaches intended encoder/quantizer parameters. Preserve the requested forward objective's behavior in the hard-code limit."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:397-410",
+          "detail": "The export path assigns codes from one unperturbed embedding per item, not Q(mean_m z_i^(m)) as required. This is consistent with the missing multi-view training path and means exported SIDs are not produced by the proposed mechanism. The collision extension and row-ordinal JSON mapping are internally unique, but they do not remedy the wrong code assignment source.",
+          "reproduction": "At export, get_indices is called once on all_embeddings (lines 397-400), then those tokens are directly extended and enumerated into item_sids.json (404-410); no view encodings or mean are computed.",
+          "correction": "After implementing multi-view encoding, export Q of the per-item mean embedding; retain and explicitly validate the embedding-row-to-item-ID mapping before writing both outputs."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:419-445",
+          "detail": "The code has a torchrun self-launcher, but this review cannot establish that the real trainer entry point completes: invoking it launches four GPUs and 3000 epochs. The dataset and embedding paths exist in this environment, but no end-to-end run or distributed-launch validation is evidenced in the tree. The substantive export mismatch is independently confirmed above.",
+          "reproduction": "Running the script directly calls _launch_via_torchrun(), which invokes the hard-coded torchrun binary with nproc_per_node=4; child ranks then enter main() for EPOCHS=3000. A full invocation is not a minimal verification run.",
+          "correction": "Provide a bounded smoke-run configuration or test harness that exercises the actual entry point through one forward/backward/update and export, plus a short multi-rank launcher smoke test, without changing the frozen production data source."
+        }
+      ]
+    }
+  ]
+}

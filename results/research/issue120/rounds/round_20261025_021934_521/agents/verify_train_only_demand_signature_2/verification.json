@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_train_only_demand_signature_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "demand_signature.py:27-54",
+          "detail": "Training items are split into deciles by rank of occurrence count, and r/p values are likewise assigned bins by rank. This is not a fitted set of frequency-decile/quantile value boundaries: tied values can be split across bins according to item order. For example, several items with identical (f,u,r,p) can receive different suffixes when a frequency/shape group crosses a rank cut. This adds arbitrary item-ID/order information instead of a signature determined by the specified demand statistics.",
+          "reproduction": "Supply a frame with at least 10 active items whose counts tie, or a frequency-decile group with identical r and p values spanning a rank cut; inspect returned suffixes for items with identical statistics. Stable sorting preserves input item index, so identical statistics can receive different bins.",
+          "correction": "Fit numeric decile and within-decile quantile cut points on training items only, then apply those frozen boundaries to values; define deterministic tie handling that does not split equal-valued items."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "model/layers.py:80-113",
+          "detail": "A real forward/backward could not be run in this environment because importing PyTorch fails (ModuleNotFoundError: No module named 'torch'). Therefore finite loss/gradient propagation through the intended trainable parameters is unverified; this is a verification blocker, not evidence that gradients are broken. Source inspection shows a plausible straight-through path, but it does not satisfy the requested executable check.",
+          "reproduction": "Run `python -c 'import torch'` in the available environment; it fails with ModuleNotFoundError. The attempted minimal RQVAE init/forward/compute_loss/backward likewise stops at import.",
+          "correction": "Run the minimal initialized RQVAE forward, loss, and backward check in the project's supported training environment; assert finite loss and finite non-None gradients on encoder/decoder and trainable codebook parameters."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "train_rqvae.py:43-53",
+          "detail": "The real trainer is tied to absolute paths under `/home/wlia0047/ar57/wenyu/GeneRec`, and the launcher additionally hard-codes a torchrun executable at `/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun` (lines 84-90). Neither path exists in this workspace, and PyTorch is unavailable, so the entry point cannot be exercised here. The SID code itself enumerates rows by embedding/item index (lines 405-413), and uses only TRAIN_FILE to compute the suffix (line 406), but export/index correctness and distributed execution have not been runtime-validated.",
+          "reproduction": "In this checkout, execute `python train_rqvae.py`: module import fails because torch is absent. In a torch-enabled environment, the configured embedding/train/launcher paths must also exist or startup fails before training.",
+          "correction": "Make the trainer paths resolve from the configured project/data environment (or validate and document the required host paths), then run the actual entry point and verify output SID row i maps to embedding/item i, suffixes derive only from the frozen training parquet, and torchrun completes with the configured ranks."
+        }
+      ]
+    }
+  ]
+}

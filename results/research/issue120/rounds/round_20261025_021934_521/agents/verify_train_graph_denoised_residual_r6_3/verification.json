@@ -1,0 +1,29 @@
+{
+  "verifier": "r6_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "train_rqvae.py:80,202-230",
+          "detail": "The graph denoising formula is implemented as specified (directed train transitions, symmetrized weights, out-degree correction, normalized neighbor consensus), but the prescribed lambda set {0.1, 0.3, 0.5} and validation-only selection protocol are not implemented. The trainer unconditionally uses 0.1, and its own comment delegates selection downstream without emitting the other candidate tokenizers.",
+          "reproduction": "Run the entry point with the checked-in constants: denoise_with_train_transitions is called once at line 296 with GRAPH_LAMBDA=0.1; no code path computes 0.3 or 0.5 or produces validation-selected outputs.",
+          "correction": "Provide a controlled candidate-lambda run/export path for all three specified values, preserving identical training configuration, and select/report the chosen candidate only under the predeclared validation protocol. If this tree intentionally represents only one candidate, explicitly scope it as such and ensure a coordinating experiment produces the other candidates."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

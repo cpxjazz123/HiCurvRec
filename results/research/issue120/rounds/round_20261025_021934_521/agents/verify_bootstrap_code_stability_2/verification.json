@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_bootstrap_code_stability_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/PROPOSAL.json:1",
+          "detail": "The designated implementation tree contains only the proposal metadata and no implementation files. The nearby candidate helper implements variance-scaled seeded perturbations and modal agreement, but is not integrated into the trainer; the trainer's export remains an ordinary collision-extended SID. Thus the specified added stability token is absent, so the key change is not implemented.",
+          "reproduction": "List files under the designated tree (only PROPOSAL.json exists); inspect stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py:1537-1544, where export applies _extend_collisions(raw_tokens, codebook_sizes) and writes those rows without any stability token.",
+          "correction": "Implement and wire the stability calculation into the actual exported SID in the designated tree: use training-item-only coordinate variance, deterministic B=8 perturbations, frozen baseline quantization, the specified four agreement bins, and append the resulting token without changing the baseline quantizer/training objective."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py:1170-1225",
+          "detail": "The proposed stability feature is correctly intended as export-only and should not add a dead differentiable loss or trainable parameter. However, the requested real forward/backward check of finite loss and gradients reaching the baseline model parameters could not be performed in this environment; static inspection is not a substitute for that check.",
+          "reproduction": "Running `python -c 'import torch'` fails with ModuleNotFoundError: No module named 'torch', so a genuine trainer forward/backward smoke cannot run here. The feature helper, where present, returns discrete agreement/bin values and is not a training loss.",
+          "correction": "Run the unmodified baseline training forward/backward smoke in the supported PyTorch/CUDA environment, checking finite loss/gradient tensors and nonzero gradients to the expected encoder/codebook parameters; keep stability computation export-only."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py:943-959,1530-1544",
+          "detail": "The candidate trainer reads the frozen training parquet, derives train_ids from training targets, and maps embeddings by item row, but its final export does not call stability_tokens or append a stability field. Export therefore cannot satisfy SID shape/content requirements. The designated tree itself has no trainer entry point. The distributed launch code exists, but its operation is unverified because PyTorch is unavailable.",
+          "reproduction": "Inspect the designated tree: it has only PROPOSAL.json. In the neighboring candidate, final export at lines 1537-1544 constructs and saves sid solely from raw_tokens; invoking the configured trainer cannot produce the proposed augmented SID. `python -c 'import torch'` fails, precluding execution of the trainer and launcher.",
+          "correction": "Place the implementation in the designated tree, preserve the frozen train-data/embedding item mapping, append a correctly aligned stability token to each row, and validate output row count, token range, JSON/NPY agreement and SID format. Then run the real trainer entry point and a supported distributed-launch smoke test."
+        }
+      ]
+    }
+  ]
+}

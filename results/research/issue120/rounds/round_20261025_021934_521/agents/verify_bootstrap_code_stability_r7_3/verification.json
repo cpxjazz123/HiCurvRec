@@ -1,0 +1,29 @@
+{
+  "verifier": "r7_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/train_rqvae.py:1-9,444",
+          "detail": "This candidate changes the behavior-pair training stream in addition to appending the proposed stability feature: the file explicitly describes fixing frozen itertools.cycle sampling, and RESAMPLE_PAIRS=True. That is not the frozen baseline quantizer/training setup promised by the specification, so downstream comparisons cannot isolate the stability token.",
+          "reproduction": "Run the candidate trainer and compare with the stated baseline: this candidate rebuilds/shuffles the pair iterator each epoch (RESAMPLE_PAIRS=True), whereas the documented baseline replays the first cycled pair batches. The behavior loss consequently receives different training pairs even before export.",
+          "correction": "Use the exact frozen baseline trainer and checkpoint/training budget for this experiment; remove the pair-resampling change from this candidate. Keep the bootstrap perturbation and appended stability-token export as the sole delta."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r6_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:381-386",
+          "detail": "In DDP mode, consensus computes a second encoder graph by calling raw_module.encoder(batch) directly after the wrapped model forward already used that encoder. This creates an extra autograd use outside the DDP forward bookkeeping; reducer hooks can be marked ready twice for the shared encoder parameters on backward, causing a DDP runtime error instead of a trainable consensus step. The consensus term itself is otherwise connected: its distances use encoded values and trainable codebook weights, and the KL has finite log-softmax protection for finite inputs.",
+          "reproduction": "Run two ranks with world_size=2, enable a minimal one-batch training iteration at lines 381-392, and execute backward. The model forward and the separate encoder call both contribute gradient paths to encoder parameters; DDP can report that a variable/parameter was marked ready twice.",
+          "correction": "Return the encoded representation from the model's wrapped forward and use that same tensor to calculate consensus, or otherwise restructure into a single DDP-tracked forward graph. Then verify the consensus gradient reaches encoder and codebook parameters on a two-rank backward."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:523-525",
+          "detail": "The single-GPU launcher accesses _LAUNCHER['single_visible_dev'], but neither _LAUNCHER definition (lines 109-116 or 128-135) supplies that key. On a host with one visible GPU and no CUDA_VISIBLE_DEVICES variable, the entry point raises KeyError before starting the trainer.",
+          "reproduction": "Execute the script entry point with torch.cuda.device_count() <= 1, GENREC_SINGLE_GPU unset/false, and CUDA_VISIBLE_DEVICES absent. resolve_single_gpu() is true and line 524 raises KeyError.",
+          "correction": "Add a valid single_visible_dev value to the active _LAUNCHER mapping, or remove the lookup and provide a deliberate default; test both inherited and unset CUDA_VISIBLE_DEVICES cases."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:47-57",
+          "detail": "The trainer hard-codes the input, SID outputs, checkpoint, and metrics under /home/wlia0047/ar57/wenyu/GeneRec. The inspected workspace is /fs04/ar57/wenyu/GeneRec, so the real entry point cannot load its frozen embedding/train files here and, if it did run on another host with that path, would export outside the requested tree. This is not a portable reference to the frozen stage0/stage1 data path.",
+          "reproduction": "In this checkout, test EMBEDDING_FILE.is_file() and TRAIN_FILE.is_file(); they resolve beneath /home/wlia0047/... rather than the workspace's /fs04/... root and are absent. Starting main therefore fails at load_embeddings before fitting.",
+          "correction": "Derive the repository root from the script location (or use the established frozen-path configuration) and construct the existing stage1 embedding and stage0 train.parquet paths relative to it. Keep output paths scoped to the intended run/tree and validate all input paths before launch."
+        }
+      ]
+    }
+  ]
+}

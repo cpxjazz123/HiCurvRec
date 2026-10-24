@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_bootstrap_code_stability_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/code_stability.py:5-22",
+          "detail": "The standalone helper implements train-derived per-coordinate variance, deterministic Gaussian perturbations, complete-tuple modal agreement, and four bins, but the trainer never imports or calls it. Consequently this candidate does not actually encode stability in an SID; the implemented behavior remains the baseline mechanism/export rather than the proposed key change.",
+          "reproduction": "Inspect trainer imports and the final export at train_rqvae.py:1502-1545: there is no stability_tokens call and SID is built only from raw_tokens via _extend_collisions. Run/export therefore produces no stability column/token.",
+          "correction": "Wire the helper into final SID export after obtaining frozen baseline codes/codebooks, append its token to each corresponding ordinary SID row, and preserve the baseline training mechanism and fixed sequence-model comparison."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/code_stability.py:2,5-22",
+          "detail": "No genuine forward/backward smoke was demonstrated, and this helper is a discrete export-time computation (comparison, max, and integer binning), not a differentiable training loss or parameterized module. That is compatible with an export-only feature, but the requested finite-loss/gradient reachability check cannot be passed by this helper alone; the candidate report also records that torch is unavailable and no such smoke ran.",
+          "reproduction": "The implementation record reports `python -c 'import torch'` fails with ModuleNotFoundError and explicitly says forward/backward was not verified. The helper returns integer stability tokens and agreement; no gradient path is defined through quantize/argmax-like agreement to model parameters.",
+          "correction": "Run the actual baseline trainer's forward/backward smoke in a supported PyTorch runtime and confirm finite loss and expected encoder/codebook gradients. Keep stability computation export-only; do not invent a dead auxiliary loss."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py:110-117,1502-1545",
+          "detail": "The submitted tree path contains only PROPOSAL.json, while the claimed implementation is elsewhere under stage2_RQ-VAE/TIGER_bootstrap_code_stability. In that candidate trainer, the data paths are hard-coded to the frozen baseline inputs, but the stability code is not wired into export: the exported .npy/.json remain ordinary collision-extended SIDs, not the required augmented and indexed SIDs. Thus integration and a valid candidate SID export fail. The trainer's existing export indexing enumerates rows, but there is no demonstrated check that the helper's embedding rows and train_ids share this exact item ordering.",
+          "reproduction": "Inspect the requested tree at results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability: only PROPOSAL.json is present. In the implementation candidate, final export at train_rqvae.py:1537-1544 saves sid and row-enumerated JSON without stability_tokens. The implementation record also acknowledges no valid modified SID export. The environment lacks torch, so the trainer/launcher cannot be run here; launcher code is present at train_rqvae.py:1552-1611 but runtime operation is unverified.",
+          "correction": "Place the implementation in the designated candidate tree (or make its location unambiguous), wire train-only statistics and seeded perturbation tokens into the actual final SID export, validate row-to-item alignment against the frozen data mapping and uniqueness/shape/vocabulary constraints, then run the real trainer entry point and distributed launcher under the supported PyTorch environment."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "verifier": "r7_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:314",
+          "detail": "Replica assignments are aligned and used as soft targets, but the specification says use gamma from {0.01, 0.1}; this implementation hardcodes 0.1 and has no selection mechanism. More importantly, replicas and the final model use the same fixed architecture/hyperparameters but their replica training loops do not use the ordinary final trainer's warmup/scheduler or gradient clipping, so they are not replicas of the baseline training procedure as configured.",
+          "reproduction": "Inspect lines 295-308 against final trainer setup at 339-349 and gradient clipping at 393-395: the replica loop performs a constant-LR AdamW fit without clipping for all 3000 epochs.",
+          "correction": "Apply the same baseline optimizer schedule and clipping to each replica, and implement or explicitly record the prescribed gamma selection in {0.01, 0.1}."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:523-525",
+          "detail": "The real single-GPU launcher accesses a missing _LAUNCHER key, so when only one GPU is available and CUDA_VISIBLE_DEVICES is unset, the intended single-GPU entry point raises KeyError before training. The registered launch config contains visible_dev but not single_visible_dev.",
+          "reproduction": "Run the script with torch.cuda.device_count() <= 1, no RANK, no GENREC_SINGLE_GPU override, and unset CUDA_VISIBLE_DEVICES. resolve_single_gpu() is true and line 524 evaluates _LAUNCHER['single_visible_dev'], producing KeyError.",
+          "correction": "Use the configured visible_dev value or define single_visible_dev in _LAUNCHER; exercise this launcher branch as well as the four-rank branch."
+        },
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:53-57",
+          "detail": "The trainer's output destinations do not match the tree's own recorded integration output path. The source exports to TIGER_bootstrap_consensus_sid, while the checked-in training log reports export to TIGER_RQ-VAE; the latter does not demonstrate this implementation's SID artifact was generated. The data inputs are hardcoded to external absolute paths, so this checkout cannot run the real entry point unless those exact paths exist.",
+          "reproduction": "Run main in an environment lacking /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy or results/stage0_build_parquet/train.parquet: load_embeddings/read_parquet fails before fitting. The included train_migrated.log instead names TIGER_RQ-VAE as its SID destination, not the source's bootstrap-consensus path.",
+          "correction": "Wire the frozen Stage1 embedding and Stage0 training parquet paths for the target environment, preserve them as read-only inputs, and confirm the actual run writes the SID and JSON to these constants. Do not use the baseline log as evidence of this branch's export."
+        }
+      ]
+    }
+  ]
+}

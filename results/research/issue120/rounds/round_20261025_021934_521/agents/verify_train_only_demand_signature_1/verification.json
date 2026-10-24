@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_train_only_demand_signature_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/demand_signature.py:33-37",
+          "detail": "Frequency deciles are assigned by item rank, splitting equal-frequency items across deciles. Thus items with identical training frequency can receive different repeat-propensity/purchase-rate quantile populations and consequently different suffixes, depending on item ordering. This does not faithfully define bins by frequency decile values and undermines the intended separation from raw frequency.",
+          "reproduction": "Use 20 active items, all with counts[item]=1 and u[item]=1, but vary per-user repetition patterns. The stable argsort assigns the first ten items to decile 0 and the rest to decile 1 despite every item's frequency being identical; each half then gets independently ranked r and p bins.",
+          "correction": "Fit decile cut points from training-item frequency quantiles and apply the same cut points to equal-frequency items (document and handle duplicate cut points explicitly), rather than assigning ranks that split ties. Keep all fitting restricted to training items."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

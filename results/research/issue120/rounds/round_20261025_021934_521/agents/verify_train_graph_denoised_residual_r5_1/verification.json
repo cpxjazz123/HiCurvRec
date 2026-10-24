@@ -1,0 +1,36 @@
+{
+  "verifier": "r5_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:83-90",
+          "detail": "The purported real trainer launcher is tied to a machine-specific torchrun executable (/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun) and hardcodes CUDA_VISIBLE_DEVICES=0,1,2,3 with nproc=4. On an environment without that exact executable, invoking the script as documented fails before main() with FileNotFoundError; on a machine without four CUDA devices it cannot launch. This prevents confirming a usable trainer entry point and distributed launcher from this tree.",
+          "reproduction": "Run python train_rqvae.py in an environment where /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun does not exist: subprocess.call at line 472 raises FileNotFoundError. Alternatively, on a 1-GPU host, the hardcoded four-process launch requests unavailable devices.",
+          "correction": "Resolve torchrun from the active Python environment (for example sys.executable -m torch.distributed.run), and derive or explicitly validate the process count and visible devices from the available/configured GPUs. Keep the single-process path available when distributed execution is not configured."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:42-51",
+          "detail": "The real input paths are absolute and bound to /home/wlia0047/ar57/wenyu/GeneRec, while this implementation is located in the issue tree under /fs04/ar57/wenyu/GeneRec. The entry point therefore does not consume inputs relative to this candidate tree and is not portable; a run from the tree can fail at load_embeddings or read_parquet before training unless the separate home-directory copy and frozen parquet happen to exist.",
+          "reproduction": "Run the entry point where /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy or /home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet is absent; the first file read fails before training.",
+          "correction": "Resolve the frozen Stage1/Stage0 inputs from a documented shared project root or validate their existence before launching; preserve the frozen source files rather than silently substituting a different split."
+        }
+      ]
+    }
+  ]
+}

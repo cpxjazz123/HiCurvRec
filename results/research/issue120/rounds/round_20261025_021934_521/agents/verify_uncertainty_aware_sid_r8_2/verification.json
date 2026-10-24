@@ -1,0 +1,51 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_r8_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:324-341",
+          "detail": "This does not implement the specified stochastic metadata-text views: it applies elementwise Bernoulli masking to the already precomputed sentence embeddings. More importantly, the specified disagreement penalty is replaced by a latent-distance gradient surrogate (uncertainty.py:23-33), so the optimized gradient is not the stated weighted code-disagreement objective. The reconstruction is trained against the original batch embeddings rather than the view mean (line 339), although the model input is view_mean.",
+          "reproduction": "For any two view tensors whose quantized codes differ but whose latent distances are scaled, the implemented hard forward scalar is unchanged while its gradient changes with latent distance; therefore the actual optimization is not the specified indicator loss. Inspecting the input path also shows no metadata text or text encoder call, only batch embedding multiplication by random masks.",
+          "correction": "Generate independently corrupted views from each training item's metadata through the intended text encoder, compute uncertainty and code tuples from those views, make the agreement term's optimized gradient faithfully correspond to the specified code disagreement (or explicitly document and validate a different estimator), and use the view mean as the RQ-VAE reconstruction target/input as specified."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:43-50",
+          "detail": "REPO_ROOT is resolved one directory above the repository for this tree: the script is at <repo>/results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py, whose parents[6] is the directory containing <repo>. Consequently the default frozen embedding/train paths and output paths point outside the repository, so the real trainer cannot find the intended data and would export to the wrong location.",
+          "reproduction": "Run `python -c 'from pathlib import Path; p=Path("results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py").resolve(); print(p.parents[6])'` from the repository. It resolves to the repository's parent, not the repository root.",
+          "correction": "Resolve the root relative to the actual repository layout (or use a repository-root discovery mechanism) and verify the default input paths resolve to the frozen stage1 embedding and train split before loading."
+        },
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:103-107, 483-487",
+          "detail": "The four-GPU distributed launcher is not executable: `_LAUNCHER["torchrun"]` is None, but the DDP command passes it as argv[0]. On a machine resolving to multi-GPU mode, subprocess.call raises TypeError instead of launching training. The single-GPU path also references absent key `single_visible_dev` at line 476 when CUDA_VISIBLE_DEVICES is unset.",
+          "reproduction": "Call `_launch_via_torchrun()` with no RANK, GENREC_SINGLE_GPU=0 and CUDA_VISIBLE_DEVICES set: command construction yields `[None, "--standalone", ...]`, which subprocess.call rejects. For single-GPU mode, unset CUDA_VISIBLE_DEVICES and set GENREC_SINGLE_GPU=1: line 476 raises KeyError.",
+          "correction": "Populate the launcher executable with a resolvable torchrun path (or use `sys.executable -m torch.distributed.run`), and define/use a valid single-GPU visible-device default."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:441-447",
+          "detail": "Collision-extension indices are computed from occurrence order within groups built by enumerating the `tokens` array, not from the frozen item IDs. Export rows are then associated with item IDs by row position (JSON keys likewise enumerate rows). If the embedding rows are not exactly the frozen item-ID order, the SID file is valid-shaped but assigned to the wrong items; the training target IDs are used only to select a subset, not to establish export indexing. The extension also assumes disjoint level offsets without validating IDs against codebook sizes.",
+          "reproduction": "Use an embedding matrix in permuted item order and the same `all_embeddings` row-wise export: output row 0 is emitted as item 0 even though it represents the original item at the permutation's first row. A consumer indexed by frozen item ID receives the wrong SID.",
+          "correction": "Carry explicit item IDs alongside every embedding, restore/export rows by those IDs, and validate raw token ranges and final SID shape/uniqueness against the frozen item index contract."
+        }
+      ]
+    }
+  ]
+}

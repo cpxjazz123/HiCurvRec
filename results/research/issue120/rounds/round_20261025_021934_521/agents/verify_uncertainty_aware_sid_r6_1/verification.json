@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_r6_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305",
+          "detail": "The implementation does not form independently dropout-corrupted metadata-text views as specified: it applies elementwise Bernoulli dropout directly to already-precomputed embeddings. Moreover, the agreement helper's forward value is the specified hard variance-weighted token disagreement, but its backward value is replaced entirely with variance-weighted latent distance (uncertainty.py:31-33), which is not a straight-through estimator of the hard token disagreement and adds an unrequested smooth latent-distance objective. Thus this is not just a different implementation of the stated objective.",
+          "reproduction": "Given two views with identical encoded vectors but different token IDs, the helper returns a positive hard disagreement value while its gradient is zero because the latent-distance surrogate is zero. Conversely, two different encoded vectors assigned identical token IDs produce zero hard disagreement but a nonzero gradient. At train_rqvae.py:305-310, no metadata text is loaded or corrupted; only vector coordinates are dropped.",
+          "correction": "Construct the M views from training-split metadata text using the specified stochastic text corruption and encode each view. For gradient flow through discrete code disagreement, use an explicitly justified estimator whose forward and gradient correspond to the specified indicator objective; do not silently substitute latent distance as a different regularizer."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:415",
+          "detail": "SID export quantizes each original embedding once, rather than assigning Q(mean_m z_i^(m)) as required. It therefore does not export the mean encoding of the stochastic training views. The trainer also uses an embedding matrix and training target IDs rather than metadata text, so the implemented data path is not the specified frozen metadata-view path. Existing log output does show the four-rank trainer progressing through real epochs, but does not establish correctness of the export input semantics.",
+          "reproduction": "With two views whose encodings are z1 and z2 and whose average crosses a codebook decision boundary, Q((z1+z2)/2) can differ from Q(x_i); current export at lines 416-418 instead calls get_indices(all_embeddings) on x_i. No stochastic view averaging occurs in the export block.",
+          "correction": "Retain or deterministically regenerate the intended training-only metadata views for export, compute their encoder-output mean per item, and quantize that mean. Keep the frozen split/item-ID mapping explicit and verify exported row i still corresponds to item ID i."
+        }
+      ]
+    }
+  ]
+}

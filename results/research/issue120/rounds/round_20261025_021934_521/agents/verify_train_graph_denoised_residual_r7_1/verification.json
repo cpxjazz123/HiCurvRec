@@ -1,0 +1,44 @@
+{
+  "verifier": "r7_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:208-215",
+          "detail": "Graph construction does not recover each training sequence. It concatenates every row's history and target independently, then counts all adjacent pairs. In the common prefix/target training format, the same user sequence is represented by multiple overlapping prefixes; this repeatedly weights earlier edges, while the requested C counts adjacent pairs once per training sequence. The degree is correspondingly not the specified out-degree. This changes the weighting/consensus mechanism, not merely its implementation.",
+          "reproduction": "One true sequence [a,b,c] represented as prefix rows ([a],b) and ([a,b],c) produces counts a→b=2 and b→c=1; the specified one-pass sequence count gives 1 for both. With further overlapping prefixes, early edges are increasingly overcounted.",
+          "correction": "Construct the graph from the frozen training sequence source with one ordered sequence per user (or deduplicate/reconstruct sequences according to the frozen schema), and count each adjacent pair once. Do not join independent rows as if each row were a separate observed sequence."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:42-50",
+          "detail": "The real trainer hardcodes embeddings, item-ID map, and train parquet under /home/wlia0047/... rather than the current /fs04/ar57/... workspace/frozen input path. From the supplied environment these paths are not present, so the entry point fails before loading data; it cannot demonstrate the real frozen data path or produce an export.",
+          "reproduction": "Run python train_rqvae.py in this workspace: load_embeddings(EMBEDDING_FILE) attempts /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy and raises FileNotFoundError when that machine-specific path is absent.",
+          "correction": "Point constants to the frozen inputs available to this run (or use the repository's established immutable path configuration), and validate all three files before initializing DDP."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:80",
+          "detail": "Only GRAPH_LAMBDA=0.1 is actually trained. There is no run over {0.1,0.3,0.5} and no validation-based selection protocol in this entry point; the comment delegates selection downstream, but no parameterized lambda/run manifest or validation integration is implemented. Thus the specified candidate comparison is not integrated.",
+          "reproduction": "Inspect main(): denoise_with_train_transitions is called once without strength at line 296, so every invocation uses 0.1 and exports only that candidate.",
+          "correction": "Make lambda an explicit candidate configuration and run the three candidates with identical tokenizer settings; select only using the predeclared validation protocol, recording the selected value and candidate outputs."
+        }
+      ]
+    }
+  ]
+}

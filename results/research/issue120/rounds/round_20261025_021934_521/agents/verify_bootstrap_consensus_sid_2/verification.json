@@ -1,0 +1,44 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:215-310",
+          "detail": "The real training path is still a single baseline RQVAE fit. It never trains five bootstrap replicas, computes replica assignments, aligns them, constructs consensus targets, or adds consensus_kl to the training loss. consensus.py is not imported or called anywhere by the trainer. Consequently this implements none of the proposal's operative change; the existence of helper functions does not implement the idea.",
+          "reproduction": "Run the trainer or inspect main(): it constructs one RQVAE at line 238 and the batch loss at lines 302-304 is only compute_loss(batch, reconstructed, quant_loss). There are no replica fits or target/loss calls.",
+          "correction": "Fit B=5 separately seeded replicas on N-item bootstrap samples drawn only from train_embeddings; collect assignments for training items, align each level to replica 0 and build q; during the final fit add the specified gamma-weighted consensus KL while retaining the baseline losses. Keep export based on ordinary hard assignments."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py:10-22",
+          "detail": "Label alignment assumes every assignment is an integer in [0,codes). Invalid IDs silently index the overlap/mapping arrays incorrectly or raise; there is no validation that codes is positive or that replica/reference IDs are in range. This helper is intended to accept fitted assignment arrays, so malformed/inconsistent replica outputs can corrupt consensus targets rather than fail clearly.",
+          "reproduction": "Call align_assignments(np.array([[0]]), np.array([[2]]), codes=2): the replica ID is out of range and raises during overlap accumulation rather than reporting an input-contract error.",
+          "correction": "Validate codes > 0 and all assignment IDs lie in [0,codes) before building the overlap matrix, and raise a descriptive ValueError."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:42-52,215-245",
+          "detail": "The trainer is not wired to the bootstrap-consensus implementation (same missing replica/target/loss path noted above), so a real entry-point run exports baseline SIDs, not consensus-trained SIDs. The current trainer entry point and DDP launcher do run according to logs/train_migrated.log:5-7, but this only demonstrates the baseline path. Its data inputs are hard-coded to stage1 sentence_t5.npy and stage0 train.parquet, and train IDs are derived from train.parquet targets at lines 230-236; no validation/test rows are used for training. SID export enumerates embedding rows and applies the collision extension at lines 398-410, preserving row/item indexing and uniqueness.",
+          "reproduction": "Execute train_rqvae.py through its __main__ entry: _launch_via_torchrun launches four workers, and main trains one model then exports SIDs. No call to consensus.py occurs. The captured launcher log shows it reached training with world_size=4.",
+          "correction": "Integrate replica fitting, alignment, consensus-target generation and the KL term into main before treating the exported artifact as this candidate. Preserve the frozen stage1/stage0 inputs and row-indexed export; verify all ranks follow the same collective schedule after adding replica fits so the four-rank launcher cannot deadlock."
+        }
+      ]
+    }
+  ]
+}

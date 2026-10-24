@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_code_stability_r7_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "train_rqvae.py:1536-1543",
+          "detail": "The stability export quantization runs after the code resets each VQ layer's _skip_ddp_reduce flag to False. In a multi-rank run, stability_tokens calls the frozen model's get_indices eight times; VQLayer.forward then performs distributed.all_reduce on rank 0 only, while the other ranks are waiting at the final barrier. The export hangs instead of completing. The preceding baseline SID pass correctly enables the skip flag, but this second quantization pass does not.",
+          "reproduction": "Launch with torchrun on 2 or more ranks. After all ranks finish training, rank 0 reaches stability_tokens at train_rqvae.py:1540. Its first quantize callback enters VQLayer.forward with distributed initialized, infer_use_sk=False, and _skip_ddp_reduce=False (model/layers.py:136), and blocks in all_reduce because the other ranks have reached the barrier at train_rqvae.py:1500. A single-GPU run does not reproduce it.",
+          "correction": "Set _skip_ddp_reduce=True on all VQ layers for the entire stability_tokens call, restoring the previous values in a finally block, just as the baseline export pass does at train_rqvae.py:1528-1537. Alternatively make the quantization callback use an inference path that cannot issue distributed collectives."
+        }
+      ]
+    }
+  ]
+}

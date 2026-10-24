@@ -1,0 +1,36 @@
+{
+  "verifier": "r7_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305",
+          "detail": "The proposed stochastic views are feature-wise Bernoulli masking of already-precomputed embeddings, not independently dropout-corrupted versions of each item's available metadata text. The implementation comment explicitly confirms metadata text is absent from this input path. This changes the core uncertainty source: embedding-coordinate masking does not model metadata-view uncertainty as specified.",
+          "reproduction": "For an item with one metadata field omitted by text dropout, the specified view should be the encoder output for that altered text. Here no text or metadata fields are loaded; the view is instead `batch * BernoulliMask / 0.9` at lines 308-310, regardless of the item's metadata.",
+          "correction": "Construct each training-only view from the item's metadata using independent metadata/text dropout before the embedding encoder, and preserve the train-split-only item restriction. If only precomputed vectors are intentionally supported, document this as a different mechanism rather than claiming metadata-view uncertainty fidelity."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:415",
+          "detail": "Export assigns codes to the single uncorrupted embedding (`all_embeddings`) rather than to the mean of M encoded stochastic views required by the specification. Thus inference/export does not use the trained view-mean assignment rule, and the exported SID is not Q(mean_m z_i^(m)).",
+          "reproduction": "At export, line 416 calls `get_indices(all_embeddings, ...)` once. No view generation, M-view encoding, or averaging occurs in the export path.",
+          "correction": "Generate the documented M deterministic/seeded export views, encode each, average the encoded vectors, and quantize that mean; alternatively define a deterministic view-mean approximation and use it consistently. Keep one exported row per item in original embedding-row order."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

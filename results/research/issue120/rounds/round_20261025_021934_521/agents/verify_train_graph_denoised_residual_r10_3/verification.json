@@ -1,0 +1,37 @@
+{
+  "verifier": "r10_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:118-119",
+          "detail": "The graph denoising formula is implemented as train-only, symmetric transition weights with outgoing-degree correction and row-normalized neighbor consensus (lines 229-257). However this trainer hardcodes lambda=0.1 and offers no route to train the specified 0.3 and 0.5 candidates or to select among the predeclared candidates using validation. The comment says selection is downstream, but the data flow at lines 331-335 always produces only the 0.1 tokenizer input. This does not execute the specification's candidate/selection procedure.",
+          "reproduction": "Run the entry point with the frozen inputs: GRAPH_LAMBDA remains 0.1 for every run; neither 0.3 nor 0.5 is constructed or selected, and no validation metric participates in selection.",
+          "correction": "Expose the three prescribed strengths as separate candidate runs (or an explicitly configured strength) and implement/record the predeclared validation-only selection outside the test set; if each tree intentionally represents one candidate, identify its lambda in the artifact/run metadata and ensure the orchestration runs all three candidates and selects by validation."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking-in-this-environment",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:28-38",
+          "detail": "The actual trainer entry point could not run in the provided Python environment: importing the script fails immediately with ModuleNotFoundError: No module named 'torch'. Thus I could not verify end-to-end training, SID file creation/indexing, or the torchrun/DDP launcher by execution. The frozen input files are present, and source inspection shows the intended Stage0 train parquet plus Stage1 embedding/item-ID mapping paths, but that does not establish a successful real run.",
+          "reproduction": "From the repository root, execute `python -c 'import torch'` or import train_rqvae.py; both fail with `ModuleNotFoundError: No module named torch` in this environment.",
+          "correction": "Run the entry point in the project's supported environment with PyTorch (and its CUDA/distributed dependencies for the DDP check), then verify the exported N-row SID array and raw-item-ID mapping against item_ids.json. No source-level SID indexing defect was identified by inspection."
+        }
+      ]
+    }
+  ]
+}

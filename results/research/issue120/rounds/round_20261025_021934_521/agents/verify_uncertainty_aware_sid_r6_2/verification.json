@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_r6_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-320",
+          "detail": "The implementation does not make stochastic views of metadata text; it applies elementwise dropout to precomputed item embeddings (and explicitly notes that metadata text is absent). It also reconstructs from the encoding of the mean corrupted input, not from the mean of the independently encoded views required by the specification. Thus it implements a different perturbation source and target than the proposed method.",
+          "reproduction": "For a nonlinear encoder f and two views x1,x2, in general f((x1+x2)/2) != (f(x1)+f(x2))/2. The code at lines 312 and 318 uses the former; the specification defines mu_i as the latter. No metadata text or metadata-view encoder path exists in this tree.",
+          "correction": "Generate independently corrupted training-split metadata inputs, encode each view, form mu_i = encoded_views.mean(0), and feed/quantize that latent mean for the RQ-VAE reconstruction objective. Do not substitute embedding-coordinate dropout unless the proposal is explicitly revised to that mechanism."
+        },
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/uncertainty.py:26-33",
+          "detail": "The forward penalty is the specified hard disagreement, but its gradient is replaced by a variance-weighted pairwise latent squared-distance penalty. This introduces an additional objective that pushes even same-code views together, so training is not solely optimizing the specified code-disagreement regularizer.",
+          "reproduction": "Choose two encoded views with equal code IDs and nonzero distance. `hard` is zero, but the returned scalar has a nonzero gradient through `soft` and therefore updates the encoder despite zero code disagreement.",
+          "correction": "Use a documented gradient estimator that approximates the indicator/code assignment objective without adding latent-distance shrinkage on agreeing pairs, or explicitly amend the mechanism to include that extra loss and its coefficient."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

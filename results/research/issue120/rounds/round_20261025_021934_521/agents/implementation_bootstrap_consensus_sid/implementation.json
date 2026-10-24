@@ -1,0 +1,15 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid",
+  "changed_files": ["results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/ (baseline copy)", "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py"],
+  "deviations": [
+    {"item": "Bootstrap replicas and consensus targets are not wired into train_rqvae.py; final training still uses baseline loss and exporter.", "reason": "The baseline trainer has no replica/target cache interface and uses distributed process orchestration. I avoided an unverified rewrite of the fitting lifecycle or changes to the frozen optimizer, schedule, batching, seed, split, exporter, and epoch protocol. This is therefore not a complete runnable implementation of the intervention."},
+    {"item": "No actual model forward/backward smoke or valid SID export was completed.", "reason": "Only the Hungarian alignment and consensus-target helper were implemented and tested. Gradient flow and exporter validity are unmet and are not claimed."},
+    {"item": "Gamma selection from {0.01, 0.1}, full 3000-epoch run, and three-seed disagreement/ranking evaluation were not performed.", "reason": "There is no integrated consensus training arm; choosing a strength or claiming experiment outcomes without that arm and validation would fabricate results."}
+  ],
+  "assumptions": ["The frozen source is stage2_RQ-VAE/TIGER_RQ-VAE and is copied as-is into this owned candidate directory.", "Alignment is performed independently at each residual level using item assignment overlap and Hungarian maximization.", "Replica zero is the reference and is included in the empirical consensus frequencies."],
+  "smoke": {
+    "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -m py_compile results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py; /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY'\nimport sys, numpy as np\nsys.path.insert(0, 'results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid')\nfrom consensus import consensus_targets\na=[np.array([[0,1],[1,1],[0,0]]), np.array([[1,0],[0,0],[1,1]])]\nq=consensus_targets(a,2)\nassert q.shape==(3,2,2) and np.allclose(q.sum(-1).numpy(),1)\nprint('PASS: aligned helper shape and normalized targets')\nPY",
+    "result": "PASS: compilation and helper smoke (Hungarian alignment, expected shape, normalized probabilities). Does NOT verify model forward/backward, finite losses/gradients, or SID export."
+  },
+  "notes": "Partial, not training-ready. The copied trainer retains baseline latent 32, three 256-code levels, 3000 epochs, optimizer/schedule/batch/seeds/split/export code. consensus.py implements label alignment, empirical soft targets, and a differentiable KL utility, but replica fitting and the loss are disconnected from the trainer. The requested training and export criteria remain unmet."
+}

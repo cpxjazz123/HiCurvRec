@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "cost_estimate": "Negligible: one pass over training interactions and a 12-token suffix vocabulary; no additional embedding model or quantizer training. Sequence-model cost is effectively unchanged.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "The suffix improves held-out next-item ranking over baseline, especially for repeat-consuming users and within frequency-matched item groups; measure overall Recall@K/NDCG@K and those predeclared slices. It is not worth keeping if frequency-matched performance does not improve, indicating the suffix only duplicates popularity.",
+  "fingerprint": "f1dd61d2744bd5db",
+  "idea_id": "train_only_demand_signature",
+  "key_change": "Append a discretized demand-shape suffix computed from training interactions, separating repeat/revisit propensity from raw item frequency so the generative model can condition on distinct usage regimes without changing item embeddings.",
+  "motivation": "Content-near items can have very different roles in user activity: some are repeatedly revisited while others are typically one-off discoveries. A content-only SID can therefore fail to distinguish items whose consumption patterns call for different continuation predictions.",
+  "novelty": "This adds a low-cardinality behavioral descriptor derived from the shape of training-only item usage, not a transition/adjacency objective, graph embedding, or popularity-weighted codebook loss; the existing content SID remains unchanged.",
+  "origin_agent": "ideation_1",
+  "risks": [
+    "Repeat propensity is noisy for infrequent items, and per-frequency-bin quantiles may be unstable; user/item leakage can arise if boundaries accidentally use validation or test interactions. The appended behavior may be nonstationary or redundant with sequence context and could worsen cold-item generalization."
+  ],
+  "specification": {
+    "text": "Using training sequences only, for each item i compute f_i=count of occurrences, u_i=count of distinct training users, and r_i=(number of users with >=2 occurrences of i)/(u_i+1). Compute p_i=log(1+f_i/u_i) (set to 0 if u_i=0). Within each training-only frequency decile, quantile-bin r_i into 3 bins; independently quantile-bin p_i into 2 bins. Append suffix d_i=6*b_r+b_p to the baseline SID. Fit decile boundaries and quantiles on training items/interactions only; freeze them for validation/test. Evaluate against the unmodified baseline using the same sequence split and model settings."
+  },
+  "title": "Add a compact train-only demand-shape suffix"
+}

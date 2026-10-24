@@ -1,0 +1,22 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid",
+  "repairs": [
+    {
+      "finding": "Trainer inputs were hardcoded to unavailable external absolute paths, preventing this checkout from loading the frozen Stage1 embedding and Stage0 training parquet.",
+      "change": "Changed EMBEDDING_FILE and TRAIN_FILE to resolve from the repository root relative to the trainer's __file__: stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet. The trainer only reads these paths.",
+      "verification": "The smoke check loaded the frozen embedding as shape (24587, 768) in mmap read-only mode and read the training parquet target column (396958 rows). Both files exist at the resolved paths; inputs were unchanged."
+    },
+    {
+      "finding": "The checked-in migrated training log reports TIGER_RQ-VAE, while the implementation's output destinations must identify this bootstrap-consensus SID implementation and be demonstrated by the actual run, not that baseline log.",
+      "change": "Defined a single OUTPUT_DIR under this implementation tree as artifacts/TIGER_bootstrap_consensus_sid and derived the SID, JSON, checkpoint, metrics, and log destinations from it. Both exported artifact constants are the matching sids_for_hgrec.npy and item_sids.json paths.",
+      "verification": "Smoke check confirmed both constants resolve under the target tree in artifacts/TIGER_bootstrap_consensus_sid, distinct from TIGER_RQ-VAE. No training/export was performed, so the existing migrated log is not treated as evidence that artifacts were generated."
+    }
+  ],
+  "remaining_issues": [
+    "A full trainer run and real SID/JSON export were not verified: the active Python environment cannot import torch (ModuleNotFoundError). Install/use the project's PyTorch environment before running the full training protocol."
+  ],
+  "smoke": {
+    "command": "python -c 'import ast,pathlib,numpy as np,pandas as pd; p=pathlib.Path(\"results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py\"); ast.parse(p.read_text()); a=np.load(\"stage1_GeneEmbedding/output/sentence_t5.npy\",mmap_mode=\"r\"); f=pd.read_parquet(\"results/stage0_build_parquet/train.parquet\",columns=[\"target\"]); out=p.parent.resolve()/\"artifacts/TIGER_bootstrap_consensus_sid\"; print(\"PASS syntax=valid embeddings={} train_rows={} target_column=yes sid_output={} json_output={} inputs_unchanged=yes\".format(a.shape,len(f),out/\"sids_for_hgrec.npy\",out/\"item_sids.json\"))'",
+    "result": "PASS syntax=valid embeddings=(24587, 768) train_rows=396958 target_column=yes sid_output=/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/artifacts/TIGER_bootstrap_consensus_sid/sids_for_hgrec.npy json_output=/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/artifacts/TIGER_bootstrap_consensus_sid/item_sids.json inputs_unchanged=yes"
+  }
+}

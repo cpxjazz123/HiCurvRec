@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r5_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:253-258",
+          "detail": "Each replica's codebook is initialized by KMeans on the complete training-item matrix before the bootstrap sample is drawn. Thus every replica sees all training items during initialization; only subsequent optimization uses the resample. This is not a replica fit on its bootstrap resample, and weakens the intended resampling estimate of tokenizer uncertainty.",
+          "reproduction": "For any bootstrap draw that omits an item, that omitted item's embedding still participates in replica.init_codebook(train_embeddings.to(device)) at line 254 and can affect all initial centers and subsequent assignments.",
+          "correction": "Draw sampled indices before initialization and initialize each replica's codebook from its bootstrap sample (sampled embeddings), then train that replica on the same resample. Keep final-model codebook initialization on the ordinary training set."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

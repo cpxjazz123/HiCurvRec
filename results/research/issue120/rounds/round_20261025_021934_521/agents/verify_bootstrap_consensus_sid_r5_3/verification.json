@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r5_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:47-57",
+          "detail": "The actual trainer hardcodes the embedding, training parquet, outputs, and metrics paths to /home/wlia0047/ar57/wenyu/GeneRec. These are not paths in this workspace (/fs04/ar57/wenyu/GeneRec), so invoking this entry point here fails before training at load_embeddings or read_parquet. This prevents validating a real trainer run, SID output, and launcher end-to-end in this tree. The launcher itself also hardcodes a torchrun executable under /home/wlia0047/ar57_scratch (lines 88-95), making the normal four-process entry point unavailable in the current environment.",
+          "reproduction": "Run python train_rqvae.py from this tree: _launch_via_torchrun attempts /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun; if bypassed and main() is called, load_embeddings(EMBEDDING_FILE) targets /home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy. Neither path is the current workspace path.",
+          "correction": "Use the same valid, frozen Stage1 embedding and Stage0 train.parquet paths as the baseline trainer in this environment, and point the launcher to the available torchrun (or preserve the baseline's established launcher resolution). Keep outputs at the intended Stage2 locations. Then run the real entry point and verify the exported SID row-to-item mapping."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_code_stability",
+  "changed_files": [
+    "stage2_RQ-VAE/TIGER_bootstrap_code_stability/code_stability.py",
+    "stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py"
+  ],
+  "deviations": [
+    {
+      "item": "Stability helper is not wired into the SID export; no valid modified SID export is produced by this candidate yet.",
+      "reason": "The required torch runtime is unavailable in the current Python environment, preventing an end-to-end quantizer invocation and verified integration. Avoided claiming or fabricating a valid export."
+    },
+    {
+      "item": "No full frozen 3000-epoch training was run.",
+      "reason": "The Python environment lacks PyTorch (ModuleNotFoundError), so model training and the required genuine forward/backward smoke could not execute."
+    },
+    {
+      "item": "The baseline experiment arm identity remains `resample` rather than being switched to a dedicated stability arm.",
+      "reason": "The copied trainer enforces an import-time single-arm guard and has many arm-specific identity/path contracts. Altering these without executable runtime verification risks modifying frozen protocol behavior."
+    }
+  ],
+  "assumptions": [
+    "The perturbation scale sigma defaults to 1.0 because the specification does not assign a numerical value.",
+    "The stated threshold intervals are treated as half-open with exact boundaries assigned to the higher bin; this resolves the endpoint ambiguity noted by evaluators.",
+    "The helper accepts a supplied frozen quantizer callable so it can be tested independently of a particular RQ-VAE wrapper API."
+  ],
+  "smoke": {
+    "command": "python -m py_compile stage2_RQ-VAE/TIGER_bootstrap_code_stability/code_stability.py stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py; python -c 'import torch'",
+    "result": "Python compilation passed. Required forward/backward helper smoke was attempted but blocked: ModuleNotFoundError: No module named 'torch'. Thus gradient flow, finite loss, and valid candidate export are NOT verified."
+  },
+  "notes": "The candidate tree is a copy of the frozen TIGER_BEHAVIOR_SAMPLE_RQ-VAE tree with its copied logs removed and a standalone helper added. The helper computes train-item coordinate variance, deterministic seeded Gaussian views, complete-tuple modal agreement, and four stability bins. This is an incomplete implementation, not a training-ready Stage 2 result: export integration and the requested actual training smoke remain outstanding. Only the required implementation.json was written outside the candidate tree."
+}

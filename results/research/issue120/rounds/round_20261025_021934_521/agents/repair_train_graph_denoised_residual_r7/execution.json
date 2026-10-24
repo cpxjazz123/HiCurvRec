@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "repair_train_graph_denoised_residual_r7",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792858119.987048,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "75591a24ea7385648e865ba04756cb2dc19d6d71cdb54f6921223dba1c9b6a49",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "repair.json",
+  "output_sha256": "2b3f680da164dcdfd0542389014c9a5806fb33d6048e82e653a328ddd4def77c",
+  "pid": 3591989,
+  "project_marker": ".git",
+  "prompt_sha256": "4634f1e315b6d207fae7e9c4c507e7273686e44637b56325e6c5051fc868307c",
+  "session_sha256": "83805f39891ad68b1259dc270e4ff7d106808222355a1a44f14772750b694fac",
+  "stderr_present": false,
+  "task_id": "repair_train_graph_denoised_residual_r7",
+  "timed_out": false,
+  "verified": true
+}

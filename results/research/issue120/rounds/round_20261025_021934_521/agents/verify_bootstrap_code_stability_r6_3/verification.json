@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_code_stability_r6_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/train_rqvae.py:478-491",
+          "detail": "The auto launcher treats only zero or one visible GPU as single-GPU; with two or three visible GPUs it proceeds to launch four torchrun ranks (the fixed nproc at lines 453-460). This can make the advertised real trainer entry point fail on a valid multi-GPU host whose visible-device count is less than four. The export indexing logic itself preserves row i as item_id i (lines 1538-1559), but this launcher branch prevents integration from being reliable across supported device counts.",
+          "reproduction": "Run the entry point with CUDA available and torch.cuda.device_count() == 2 or 3, without GENREC_SINGLE_GPU and without RANK. resolve_single_gpu() returns false, and _launch_via_torchrun launches --nproc_per_node=4; ranks will request unavailable local devices.",
+          "correction": "Choose single-GPU mode whenever fewer than the configured nproc GPUs are visible, or set nproc_per_node to the detected visible device count (and preserve the selected CUDA_VISIBLE_DEVICES list)."
+        }
+      ]
+    }
+  ]
+}

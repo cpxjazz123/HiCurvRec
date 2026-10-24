@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_train_only_demand_signature_r1_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/demand_signature.py:43-54",
+          "detail": "The rank-quantile implementation computes the two features from training rows as intended and appends only a behavioral suffix, but the specified encoding 6*b_r+b_p yields {0,1,6,7,12,13}, not a 12-token suffix vocabulary (0..11). Thus the claimed compact 12-token suffix contract is not met; items in the highest repeat bin receive tokens 12 or 13.",
+          "reproduction": "With a frequency-decile group containing at least three items whose r ranks fall into all three bins, and p bins assigned 0/1, line 54 emits 12 and 13 for the highest-r bin. The code comment/proposal describes a 12-token suffix vocabulary, but the output has a maximum token id of 13.",
+          "correction": "Resolve the encoding/vocabulary mismatch: if 12 distinct tokens are intended, encode as 2*b_r+b_p (0..5) or use an equivalent collision-free 0..11 mapping; otherwise explicitly update the vocabulary contract to 14 IDs and ensure downstream SID consumers accept it."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/train_rqvae.py:481-484",
+          "detail": "The single-GPU trainer entry point references _LAUNCHER['single_visible_dev'], but neither _LAUNCHER dictionary defines that key. On a host where CUDA_VISIBLE_DEVICES is unset and resolve_single_gpu() is true, the real launch path raises KeyError before starting training. This prevents the supported single-GPU fallback from running.",
+          "reproduction": "Run the script with CUDA_VISIBLE_DEVICES removed, GENREC_SINGLE_GPU unset (or truthy), and torch.cuda.device_count() <= 1. Execution enters line 481 and raises KeyError: 'single_visible_dev' at line 483.",
+          "correction": "Define single_visible_dev in the active _LAUNCHER configuration (or remove the missing-key lookup and preserve the inherited/default device selection), then exercise the single-GPU entry point."
+        }
+      ]
+    }
+  ]
+}

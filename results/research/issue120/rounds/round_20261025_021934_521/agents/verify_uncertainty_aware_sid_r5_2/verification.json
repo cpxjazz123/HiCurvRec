@@ -1,0 +1,51 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_r5_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-311",
+          "detail": "The proposal requires independently corrupted metadata-text views encoded by the metadata encoder. This implementation instead applies elementwise Bernoulli masking to already-precomputed embedding vectors; there is no text or metadata encoder/input in this trainer. Consequently the training perturbations do not implement the specified mechanism (and can zero individual embedding coordinates rather than omit/corrupt metadata fields).",
+          "reproduction": "For any input embedding batch, inspect the tensors in `views`: they are formed by multiplying `batch` by Bernoulli masks, with inverted-dropout scaling. No metadata text or metadata fields are loaded anywhere in main().",
+          "correction": "Load the frozen training-split item metadata and produce each view by the specified metadata-level corruption followed by the metadata encoder; if only embedding-level perturbation is intentionally used, it is a different method and must not be represented as implementing this proposal."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/uncertainty.py:20-33",
+          "detail": "The agreement forward value uses variance times hard code disagreements, but its gradient is routed through variance times pairwise squared latent distance. This is not a straight-through estimator of the hard indicator: even when all hard codes agree, it imposes an additional continuous contraction penalty, and its derivative also acts through the variance multiplier. Thus the optimized objective is materially different from the specified hard disagreement penalty and can suppress view distinctions beyond code disagreement.",
+          "reproduction": "Choose two views with identical quantizer codes but distinct encoder outputs. `disagreement` is zero while `soft` is positive and has nonzero gradient; backpropagating the returned value therefore changes the encoder despite the prescribed discrete disagreement being zero.",
+          "correction": "Use a gradient estimator tied to the code-disagreement objective (or an explicit differentiable assignment/probability surrogate whose forward and gradient semantics are documented and match the intended loss); do not silently substitute latent-distance contraction."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:41-53,233-240",
+          "detail": "The entry point is tied to absolute paths under `/home/wlia0047/...`, not the frozen inputs in this review tree. The included successful run log demonstrates a run in a different canonical checkout/environment, not that this tree's frozen data path is consumed. This makes the checked-in entry point non-portable and prevents a verifier/user in this workspace from running it against the tree's own data.",
+          "reproduction": "Run `python train_rqvae.py` in this tree where `/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy` is absent; `load_embeddings(EMBEDDING_FILE)` fails before training. The same hardcoded-path problem applies to TRAIN_FILE and output destinations.",
+          "correction": "Resolve frozen train/embedding inputs and outputs relative to this experiment tree or a validated project root, and add explicit existence/shape/index checks before launch. Do not rely on a separate machine's absolute filesystem layout."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:78-80,296-322",
+          "detail": "The proposal says to select lambda on validation, but AGREEMENT_LAMBDA is hard-coded and the trainer loads no validation split or performs lambda selection. The run therefore cannot satisfy the specified validation selection/integration requirement.",
+          "reproduction": "Search the trainer data path: only TRAIN_FILE is read; AGREEMENT_LAMBDA is fixed at 1.0 and consumed directly in the loss. No validation records or lambda candidates are evaluated.",
+          "correction": "Add validation-only selection of the agreement coefficient without fitting/using validation items for codebook training, or explicitly scope this implementation as a fixed-lambda smoke test and keep it from being treated as the completed proposal."
+        }
+      ]
+    }
+  ]
+}

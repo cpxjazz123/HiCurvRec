@@ -1,0 +1,153 @@
+{
+  "jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_evidence": {
+        "refused": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)"
+      },
+      "finished_at": 1792861973.7620754,
+      "gpu": "1",
+      "idea_id": "bootstrap_code_stability",
+      "job_id": "stage2:bootstrap_code_stability",
+      "kind": "stage2",
+      "queued_at": 1792858404.4971936,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 15854,
+          "negative_hits": 2654,
+          "pairs": 52855,
+          "positive_hits": 4104,
+          "valid_l1_hard_er": 15.46345139412208,
+          "valid_l1_negative_hit_rate": 0.0050212846466748656,
+          "valid_l1_positive_hit_rate": 0.07764639106990824
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample/item_sids.json",
+        "sid_sha256": "c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 15854,
+            "negative_hits": 2654,
+            "pairs": 52855,
+            "positive_hits": 4104,
+            "valid_l1_hard_er": 15.46345139412208,
+            "valid_l1_negative_hit_rate": 0.0050212846466748656,
+            "valid_l1_positive_hit_rate": 0.07764639106990824
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample",
+      "round_id": "round_20261025_021934_521",
+      "stage3_job_id": "stage3:bootstrap_code_stability",
+      "started_at": 1792860168.3695278,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_code_stability"
+    },
+    {
+      "attempts": 2,
+      "error": "independent executable verification: implementation status is blocked",
+      "failure_evidence": {
+        "refused": "independent executable verification: implementation status is blocked"
+      },
+      "finished_at": 1792861974.7094853,
+      "idea_id": "train_only_demand_signature",
+      "job_id": "stage2:train_only_demand_signature",
+      "kind": "stage2",
+      "queued_at": 1792858404.5906332,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_train_only_demand_signature",
+      "round_id": "round_20261025_021934_521",
+      "stage2_tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_train_only_demand_signature",
+      "started_at": 1792861974.6412556,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_train_only_demand_signature"
+    },
+    {
+      "attempts": 2,
+      "error": "1 CUDA device(s) visible, but this tree's trainer has no single-card launch path (it forks 4-rank torchrun); run it on a 4-card allocation, or add the single-card contract to the tree's trainer first",
+      "failure_evidence": {
+        "refused": "1 CUDA device(s) visible, but this tree's trainer has no single-card launch path (it forks 4-rank torchrun); run it on a 4-card allocation, or add the single-card contract to the tree's trainer first"
+      },
+      "finished_at": 1792858857.8400702,
+      "idea_id": "train_graph_denoised_residual",
+      "job_id": "stage2:train_graph_denoised_residual",
+      "kind": "stage2",
+      "queued_at": 1792858404.6600554,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_train_graph_denoised_residual",
+      "round_id": "round_20261025_021934_521",
+      "started_at": 1792858857.7823172,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_train_graph_denoised_residual"
+    },
+    {
+      "attempts": 4,
+      "error": "the promoted tree lost its logs to a promotion while the job was running",
+      "failure_evidence": {
+        "stage2_status": "exited_incomplete"
+      },
+      "finished_at": 1792858823.8911266,
+      "gpu": "1",
+      "idea_id": "bootstrap_consensus_sid",
+      "job_id": "stage2:bootstrap_consensus_sid",
+      "kind": "stage2",
+      "queued_at": 1792858404.7415774,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid",
+      "round_id": "round_20261025_021934_521",
+      "started_at": 1792865028.1775281,
+      "status": "running",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_evidence": {
+        "refused": "1 CUDA device(s) visible, but this tree's trainer has no single-card launch path (it forks 4-rank torchrun); run it on a 4-card allocation, or add the single-card contract to the tree's trainer first"
+      },
+      "finished_at": 1792858449.6306322,
+      "idea_id": "uncertainty_aware_sid",
+      "job_id": "stage2:uncertainty_aware_sid",
+      "kind": "stage2",
+      "queued_at": 1792858404.7962358,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_uncertainty_aware_sid",
+      "round_id": "round_20261025_021934_521",
+      "started_at": 1792858449.5520818,
+      "status": "blocked",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_uncertainty_aware_sid"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": 1792864961.88348,
+      "idea_id": "bootstrap_code_stability",
+      "job_id": "stage3:bootstrap_code_stability",
+      "kind": "stage3",
+      "queued_at": 1792861974.0756266,
+      "result": {
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_bootstrap_code_stability__resample/logs/Amazon_2023_Instruments/Oct-25-2026_04-19-04/test_final.json",
+        "test_ndcg@10": 0.03516551922018455,
+        "test_ndcg@5": 0.028496590523210182,
+        "test_recall@10": 0.06335416702937029,
+        "test_recall@5": 0.04265394592524243
+      },
+      "round_id": "round_20261025_021934_521",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample/item_sids.json",
+      "stage2_job_id": "stage2:bootstrap_code_stability",
+      "started": true,
+      "started_at": null,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_code_stability"
+    }
+  ],
+  "schema": 1
+}

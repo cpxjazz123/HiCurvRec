@@ -1,0 +1,29 @@
+{
+  "verifier": "r8_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
+          "detail": "The single-GPU launcher reads _LAUNCHER['single_visible_dev'], but that key is never defined in either _LAUNCHER mapping (lines 109-116 and 127-135). On a one-GPU host without CUDA_VISIBLE_DEVICES, automatic single-GPU mode raises KeyError before starting the trainer. The committed training log demonstrates the four-GPU path, not this path.",
+          "reproduction": "Run the script entry point with CUDA_VISIBLE_DEVICES unset and torch.cuda.device_count() <= 1 (or invoke the helper with resolve_single_gpu() true); line 524 raises KeyError: 'single_visible_dev'.",
+          "correction": "Define single_visible_dev in _LAUNCHER or remove the lookup and preserve the inherited/default device visibility. Exercise the entry point in single-GPU mode as well as torchrun mode."
+        }
+      ]
+    }
+  ]
+}

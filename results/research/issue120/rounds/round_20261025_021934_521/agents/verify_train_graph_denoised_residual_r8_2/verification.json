@@ -1,0 +1,29 @@
+{
+  "verifier": "r8_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:77",
+          "detail": "The implementation hard-codes GRAPH_LAMBDA to 0.1 and applies only that candidate (line 293). The specified experiment requires comparing lambda in {0.1, 0.3, 0.5} and selecting only under the predeclared validation protocol. Thus this implementation cannot execute the specified candidate comparison or falsify/select among the declared strengths. The graph construction itself uses training rows only, symmetrizes counts, applies the stated degree correction and row normalization, and normalizes x, g, and the mixture (lines 198-226).",
+          "reproduction": "Run the trainer as configured: every run uses strength 0.1; changing validation results cannot cause the 0.3 or 0.5 candidate to be fit/exported.",
+          "correction": "Expose/run the three declared strengths as separate otherwise-identical candidates, record their outputs, and choose only using the predeclared validation protocol; keep validation/test data out of graph construction."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

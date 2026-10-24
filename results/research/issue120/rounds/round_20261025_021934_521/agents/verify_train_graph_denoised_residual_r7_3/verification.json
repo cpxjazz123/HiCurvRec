@@ -1,0 +1,29 @@
+{
+  "verifier": "r7_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:208-215",
+          "detail": "Graph counts are accumulated by treating every train row's history-plus-target as a complete sequence. In the frozen next-item training format these rows are prefix/target observations, so earlier transitions are counted repeatedly (and the multiplicity varies with prefix length). This does not implement one increment per adjacent pair in each training sequence; it changes both C and the degree correction, and therefore the graph being applied.",
+          "reproduction": "For one user sequence [a,b,c], if train rows are ([a],b) and ([a,b],c), this code yields C[a,b]=2 and C[b,c]=1, whereas counting the observed sequence once yields C[a,b]=1 and C[b,c]=1. A sequence with more prefix rows inflates its early edges further.",
+          "correction": "Construct counts from the frozen training sequence representation exactly once per original training sequence, or deduplicate/reconstruct sequence events from the training rows before counting. Keep validation/test out of that construction."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

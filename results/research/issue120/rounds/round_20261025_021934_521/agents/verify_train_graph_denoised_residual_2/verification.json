@@ -1,0 +1,59 @@
+{
+  "verifier": "verify_train_graph_denoised_residual_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:1",
+          "detail": "The designated implementation tree contains only PROPOSAL.json; it has no implementation source. The separate agent artifact contains a train_rqvae.py, but that file is not present in the tree the review request identifies. Consequently the requested tree does not implement the specified graph transform or establish that only the proposed change is applied.",
+          "reproduction": "Run `find results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual -type f`: it lists only PROPOSAL.json.",
+          "correction": "Place the intended implementation and any required supporting files in the designated tree, then review that tree. Do not treat the proposal document as an implementation."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/rounds/round_20261025_021934_521/agents/implementation_train_graph_denoised_residual/tree/train_rqvae.py:171-199",
+          "detail": "In the available implementation artifact, the graph uses `degree[i]` accumulated as outgoing count, but creates a reverse neighbor entry with the same weight without using `degree[j]` as the source endpoint's outgoing degree. For a directed edge i→j with no reverse edge, the reverse row's weight therefore has the wrong popularity-correction denominator: it uses deg_out(i) where the specification requires deg_out(j) for row j. This is not the specified symmetrized popularity-corrected graph.",
+          "reproduction": "Use two items with one observed transition 0→1 and degrees deg_out(0)=1, deg_out(1)=0. The specified symmetric edge weight is 1/sqrt(2*1)=1/sqrt(2) in both directions. The artifact computes that weight once and assigns it to both rows; with additional outgoing transitions from item 0 or 1 the reverse-row denominator remains tied to the original orientation and diverges from the required per-endpoint formula. A minimal direct check is to construct asymmetric counts and compare each directed/symmetric edge against `(C[i,j]+C[j,i])/sqrt((deg[i]+1)*(deg[j]+1))`.",
+          "correction": "Compute the undirected pair weight once from both endpoints' outgoing degrees (the stated formula is symmetric), and ensure row normalization uses those weights; add a small asymmetric-count unit case."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:1",
+          "detail": "There is no trainer or model code in the designated tree, so a real forward/backward pass cannot be run or inspected there. No evidence in this tree establishes finite losses/gradients, parameter reachability, or stable optimizer behavior.",
+          "reproduction": "The tree file listing contains no Python files, and therefore no importable trainer/model entry point.",
+          "correction": "Include the actual trainer and its model dependencies in the target tree and exercise a finite forward/backward step on a representative minibatch, checking intended trainable parameters receive finite nonzero gradients."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/PROPOSAL.json:1",
+          "detail": "The designated tree has no trainer entry point, model package, launcher, or export implementation, so the real trainer, frozen data path, SID indexing/export, and distributed launcher cannot be verified or run from it.",
+          "reproduction": "`find` the designated tree: the only file is PROPOSAL.json. The separate implementation artifact's train_rqvae.py imports `from model import RQVAE`, but no `model/` package is included in that artifact's listed tree either, so running that script as delivered cannot resolve the dependency.",
+          "correction": "Deliver a self-contained implementation tree with the unchanged baseline model/runtime dependencies and correct frozen train input, then run the actual entry point (including the supported torchrun path) and validate exported SID row-to-item indexing and uniqueness against the baseline consumer contract."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/rounds/round_20261025_021934_521/agents/implementation_train_graph_denoised_residual/tree/train_rqvae.py:77",
+          "detail": "The available implementation fixes GRAPH_LAMBDA to 0.1 and explicitly leaves validation-based lambda selection downstream, but the specified experiment compares lambda in {0.1, 0.3, 0.5} under a predeclared validation protocol. The delivered trainer cannot perform that comparison, and this fixed choice is not supported by the stated selection protocol.",
+          "reproduction": "Inspect GRAPH_LAMBDA and its only use at lines 77 and 263: the sole executed graph transformation always uses 0.1; there is no candidate loop or validation selection in the script.",
+          "correction": "Implement the declared candidate runs/selection using the predeclared validation protocol, or explicitly scope this artifact as one candidate only and do not claim the full specified experiment/integration is complete."
+        }
+      ]
+    }
+  ]
+}

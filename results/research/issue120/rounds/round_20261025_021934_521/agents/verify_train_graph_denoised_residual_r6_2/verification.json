@@ -1,0 +1,29 @@
+{
+  "verifier": "r6_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:343-350",
+          "detail": "The real 4-rank torchrun entry point deadlocks during codebook initialization. Only rank 0 calls raw_module.init_codebook(), but VQLayer.init_codebook() calls distributed.broadcast() when the process group is initialized (model/layers.py:139-144). Ranks 1-3 do not enter that collective and instead reach the barrier at line 350. In addition, each rank has its own model, so a rank-0-only initialization cannot initialize the other rank codebooks as intended.",
+          "reproduction": "Run the normal entry point with its configured 4-GPU torchrun launcher. After rank 0 enters the broadcast in VQLayer.init_codebook, ranks 1-3 wait at train_rqvae.py:350; the collective never completes. This occurs before the first training batch and therefore prevents the trainer from running.",
+          "correction": "Make every rank participate in the same initialization collectives in identical order (e.g. all ranks call init_codebook using the same data, or rank 0 computes centers and explicitly broadcasts each codebook tensor while all other ranks participate). Do not place the nonzero ranks at a barrier while rank 0 is inside a broadcast."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature",
+  "repairs": [
+    {
+      "finding": "verify_train_only_demand_signature_r1_2:integration — missing _LAUNCHER['single_visible_dev'] breaks automatic single-GPU launch when CUDA_VISIBLE_DEVICES is unset.",
+      "change": "Added 'single_visible_dev': '0' to the effective _LAUNCHER configuration in train_rqvae.py. The launcher now explicitly selects the sole visible card when it must populate CUDA_VISIBLE_DEVICES.",
+      "verification": "Confirmed the effective _LAUNCHER dictionary now defines the key indexed by the single-GPU branch. Python compilation passed."
+    },
+    {
+      "finding": "verify_train_only_demand_signature_r1_2:integration — rank 0 alone initializing the codebook deadlocks because VQLayer.init_codebook broadcasts centers to all process-group ranks.",
+      "change": "Kept codebook initialization invocation unconditional across ranks, and clarified its comment: every rank enters init_codebook in the same order before the existing barrier, allowing rank 0's broadcast to rendezvous with the other ranks. The existing implementation performs KMeans on every rank; no unrelated codebook behavior was changed.",
+      "verification": "Inspected the training flow and confirmed init_codebook is outside the rank-0-only logging condition and is called before the barrier by all ranks. The called VQLayer method broadcasts centers when distributed is initialized. Python compilation passed."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "python -m py_compile train_rqvae.py model/model.py model/layers.py",
+    "result": "Exit code 0; no output. This validates syntax/import compilation only; a full training run was not performed."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "r5_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:264-269",
+          "detail": "The actual tokenizer training dataset is restricted to IDs occurring as training targets, while export (lines 376-379 and 431-433) includes every embedding row. In the available frozen files there are 24,556 target IDs but 24,587 embedding rows, leaving 31 items entirely outside tokenizer fitting. This is not the specified ordinary baseline tokenizer fit/export on the resulting x'_i matrix; these items receive codes from an encoder/codebook never trained on their embeddings, which can also undermine SID validity for those rows.",
+          "reproduction": "With results/stage0_build_parquet/train.parquet and stage1_GeneEmbedding/output/sentence_t5.npy, run unique(train_frame.target): it has 24,556 IDs versus 24,587 embedding rows; then observe train_embeddings uses only those IDs but get_indices exports all_embeddings.",
+          "correction": "Fit the tokenizer on all rows of the graph-denoised embedding matrix, as in the baseline all-item tokenizer pass; retain train-only restriction solely for constructing graph edges/statistics. If intentionally excluding cold items, define and implement a consistent supported-item export/index contract instead of silently emitting untrained rows."
+        }
+      ]
+    }
+  ]
+}

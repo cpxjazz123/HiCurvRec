@@ -1,0 +1,37 @@
+{
+  "verifier": "r9_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:117",
+          "detail": "The mechanism implements a train-only symmetrized, popularity-corrected transition graph and the normalized residual mixture, but hard-codes GRAPH_LAMBDA=0.1. The specification explicitly requires candidates {0.1, 0.3, 0.5} and selection only under the predeclared validation protocol. As written, this run cannot compare candidates or perform the required selection; the comment defers selection downstream but the exported SID is already fit using only this fixed candidate.",
+          "reproduction": "Run the trainer as configured and inspect line 333: denoise_with_train_transitions is called without strength, so its default always uses 0.1. There is no candidate loop or lambda selection in this tree.",
+          "correction": "Make lambda an explicit candidate/run configuration, support all three specified values, and bind each run's exported SIDs and metadata to its lambda; choose among them only using the declared validation protocol."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:315",
+          "detail": "The real trainer entry point calls _validate_frozen_inputs(), but no definition or import of that symbol exists in the file/tree. Thus main() immediately raises NameError before loading frozen inputs or training. Independently, the multi-GPU launcher config sets _LAUNCHER['torchrun'] to None, then passes that value as argv[0] to subprocess.call, so the DDP launch path also fails.",
+          "reproduction": "Invoke the script through its single-GPU path (or call main() after imports): it reaches line 315 and raises NameError: name '_validate_frozen_inputs' is not defined. With four visible GPUs, _launch_via_torchrun constructs [None, '--standalone', ...] at line 552 and subprocess.call fails with a TypeError before starting ranks.",
+          "correction": "Implement/import _validate_frozen_inputs or remove the stale call after adding equivalent frozen-input checks. Resolve torchrun to an executable path (for example via shutil.which('torchrun')) and fail with a clear error if unavailable; test both single-GPU and multi-GPU launch branches."
+        }
+      ]
+    }
+  ]
+}

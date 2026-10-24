@@ -1,0 +1,45 @@
+{
+  "verifier": "verify_bootstrap_code_stability_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/PROPOSAL.json:1",
+          "detail": "The requested implementation tree contains only PROPOSAL.json; it contains no implementation source. The related trainer at stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py does not use the stability function or implement the proposal. It explicitly describes stability as export-only at line 117, but export at lines 1527-1544 only obtains baseline codes and collision-extends them. Thus no stability token is appended. Also, code_stability.py is outside the specified tree and is not integrated into the trainer.",
+          "reproduction": "Inspect the named tree with find: only PROPOSAL.json exists. In the trainer, follow rank-0 export at lines 1527-1544; it calls get_indices, then _extend_collisions(raw_tokens, codebook_sizes), and writes those SIDs without a stability calculation or token.",
+          "correction": "Add the implementation to the specified tree and wire it into the actual export path: estimate variance from training-item embeddings only, generate deterministic seeded B=8 perturbations, quantize with frozen codebooks, compute modal tuple agreement and the specified bins, and append that token to each correctly aligned baseline SID. Preserve baseline quantizer and training objectives."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "stage2_RQ-VAE/TIGER_bootstrap_code_stability/code_stability.py:5",
+          "detail": "There is no real forward/backward path for the proposed feature: stability_tokens is not imported or called by the trainer, and its output is a discrete export token rather than a trainable differentiable term. Consequently the proposed token cannot reach sequence-model parameters through this code path. The base RQ-VAE trainer may train independently, but that does not verify or train the proposed SID feature.",
+          "reproduction": "Search train_rqvae.py for stability_tokens: there is no call. Run the trainer's export flow and only baseline raw_tokens are passed to _extend_collisions; no output from code_stability.py participates in the resulting SIDs or any loss.",
+          "correction": "Integrate the appended token into the downstream sequence-model data/vocabulary path and run a real batch through its forward, loss, backward, and optimizer step, checking finite loss/gradients and nonzero gradients on intended recommender parameters. Keep bootstrap estimation as deterministic non-gradient export computation; do not invent a training loss for the discrete statistic."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/PROPOSAL.json:1",
+          "detail": "The requested implementation tree has no trainer entry point, data-path changes, SID export, or launcher. The adjacent stage2 trainer is a separate baseline-style implementation and exports ordinary collision-extended SIDs, not (baseline SID, stability token). Therefore there is no integrated implementation to run or validate for frozen data path, indexed SID validity, or distributed launch behavior.",
+          "reproduction": "The specified tree contains only PROPOSAL.json. In stage2_RQ-VAE/TIGER_bootstrap_code_stability/train_rqvae.py:1531-1543 the export runs get_indices(all_embeddings), collision extension, then enumerates rows into JSON; the extra token is absent. No integration from code_stability.py is present. The launcher at lines 1552-1611 is for this unmodified trainer and cannot exercise the feature.",
+          "correction": "Place a complete implementation under the requested tree, keep the existing frozen training-item data source and item ordering, explicitly map per-item stability values to those same item indices, validate NumPy/JSON SID shape and token range, and invoke the actual trainer entry point in both supported single-/distributed-launch modes. Do not count the unrelated trainer's launcher as feature integration."
+        }
+      ]
+    }
+  ]
+}
