@@ -89,6 +89,29 @@ def check_contract(candidate) -> list:
         if protocol.get("uses_future_events"):
             problems.append(diagnostic("contract", "FUTURE_LEAKAGE", "protocol.uses_future_events",
                                        False, True, "train-only inputs only"))
+    math_definition = candidate.get("math_definition")
+    if isinstance(math_definition, dict):
+        # The assignment and residual path must be declared as named fields, not
+        # as prose: prose proposals kept contradicting themselves, and a reviewer
+        # then could not recompute Q, the labels or the losses.
+        assignment = math_definition.get("assignment_algorithm")
+        if not isinstance(assignment, dict) or not assignment.get("cost_and_transport")                 or not assignment.get("discrete_label_extraction"):
+            problems.append(diagnostic(
+                "contract", "ASSIGNMENT_NOT_DECLARED", "math_definition.assignment_algorithm",
+                "cost_and_transport and discrete_label_extraction",
+                sorted(assignment) if isinstance(assignment, dict) else None,
+                "declare how the cost is built, how the transport is solved and how the hard "
+                "labels are extracted"))
+        if not math_definition.get("projection_order"):
+            problems.append(diagnostic(
+                "contract", "PROJECTION_ORDER_MISSING", "math_definition.projection_order",
+                "the order of map, project, assign, score and subtract",
+                None, "state the order of the per-level steps"))
+        if not math_definition.get("tensor_gradient_rules"):
+            problems.append(diagnostic(
+                "contract", "GRADIENT_RULES_MISSING", "math_definition.tensor_gradient_rules",
+                "which tensors are frozen and which are differentiable", None,
+                "state the gradient rule for every tensor"))
     control = str(candidate.get("euclidean_control") or "")
     if not control:
         problems.append(diagnostic("contract", "CONTROL_MISSING", "euclidean_control",
