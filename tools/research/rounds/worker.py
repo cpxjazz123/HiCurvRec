@@ -104,15 +104,17 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
     """Run the agent stages of a round until it waits for Stage 2."""
     directory = pipeline_module.round_root(root) / round_id
     state = pipeline_module.load_state(directory)
+    # Agent workspaces belong to the round, not to the repository root.
+    agent_root = directory
 
     if state["step"] == "ideation":
-        answers = run_ideation(root, state.get("objective", ""))
+        answers = run_ideation(agent_root, state.get("objective", ""))
         state = pipeline_module.apply_ideation(state, answers)
         pipeline_module.save_state(directory, state)
         log("ideation: %d ideas" % len(state["ideas"]))
 
     if state["step"] == "scoring":
-        reports = run_scoring(root, state["ideas"])
+        reports = run_scoring(agent_root, state["ideas"])
         state = pipeline_module.apply_scoring(state, reports)
         pipeline_module.save_state(directory, state)
         log("selection: %d selected" % len(state["selection"]["selected"]))
@@ -121,7 +123,7 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
         for idea in pipeline_module.selected_ideas(state):
             tree = Path(root) / "results" / "research" / "issue120" / "trees" / round_id / idea["idea_id"]
             try:
-                report = run_implementation(root, idea, tree)
+                report = run_implementation(agent_root, idea, tree)
             except Exception as exc:                       # noqa: BLE001 - recorded, not raised
                 state = pipeline_module.mark_blocked(state, idea["idea_id"],
                                                      "implementation failed: " + str(exc))
@@ -140,7 +142,7 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
                 continue
             idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
             try:
-                reports = run_verification(root, idea, Path(record["tree"]))
+                reports = run_verification(agent_root, idea, Path(record["tree"]))
             except Exception as exc:                       # noqa: BLE001
                 state = pipeline_module.mark_blocked(state, record["idea_id"],
                                                      "verification failed: " + str(exc))
@@ -150,7 +152,7 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
             pipeline_module.save_state(directory, state)
             if record.get("status") == "needs_repair":
                 try:
-                    repair = run_repair(root, idea, Path(record["tree"]),
+                    repair = run_repair(agent_root, idea, Path(record["tree"]),
                                         record.get("blocking_findings", []))
                     state = pipeline_module.apply_repair(state, record["idea_id"], repair)
                 except Exception as exc:                   # noqa: BLE001
