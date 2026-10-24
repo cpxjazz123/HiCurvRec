@@ -153,6 +153,20 @@ def check_math(candidate) -> list:
                 "math_definition.operator.flat_limit", canonical[0], declared_limit,
                 "the squared distance's limit is 4*||x-y||^2; the distance itself is 2*||x-y||",
                 verdict=MATH_COUNTEREXAMPLE))
+    # (a2b) A fixed arcosh floor lifts the small-separation regime: the squared
+    # distance stops approaching zero and is replaced by the constant 2*delta/c.
+    # The stabilisation must therefore be max(u, 1.0), which leaves the measurable
+    # regime untouched; a floor of 1+delta is reported with the numbers.
+    probe = 1e-6
+    floor_value = _poincare_squared_distance((0.0, 0.0, 0.0), (probe, 0.0, 0.0), curvature, delta)
+    true_value = 4.0 * probe * probe
+    if floor_value > 1.01 * true_value:
+        problems.append(diagnostic(
+            "math", "FLOOR_LIFTS_DISTANCE", "math_definition.operator.delta",
+            f"about {true_value:.3e} at separation {probe:g}", f"{floor_value:.3e}",
+            "clamp the arcosh argument to at least 1.0 (max(u, 1.0)); a 1+delta floor makes "
+            "the distance constant 2*delta/c near coincidence",
+            verdict=MATH_COUNTEREXAMPLE))
     # (a3) The objective must say what stops the representation from collapsing.
     # A candidate whose frozen objective can be lowered by mapping every item to
     # one code has already produced a single distinct SID in a real 3000-epoch

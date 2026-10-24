@@ -16,9 +16,9 @@ def legal_candidate():
         "behavior_evidence_sha256": "a", "literature_evidence_sha256": "b",
         "next_item_hypothesis": "h",
         "math_definition": {
-            "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=1e-7.",
+            "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=0.",
             "operator": {"family": "poincare_squared_distance", "curvature_c": 1.0,
-                         "delta": 1e-7, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
+                         "delta": 0.0, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
             "objective": {"anti_collapse": "usage-balanced assignment plus latent reconstruction"},
         },
         "hyperbolic_necessity": "n", "euclidean_control": "same architecture, metric only",
@@ -85,12 +85,21 @@ class MathLayerTests(unittest.TestCase):
         self.assertEqual(report["verdict"], preflight.MATH_COUNTEREXAMPLE)
         self.assertEqual(report["diagnostics"][0]["code"], "FLAT_LIMIT_DECLARATION_MISMATCH")
 
+    def test_a_floor_that_lifts_the_small_separation_distance_is_a_counterexample(self):
+        candidate = legal_candidate()
+        candidate["math_definition"]["operator"]["delta"] = 1e-7
+        report = preflight.run(candidate)
+        self.assertEqual(report["verdict"], preflight.MATH_COUNTEREXAMPLE)
+        codes = [entry["code"] for entry in report["diagnostics"]]
+        self.assertIn("FLOOR_LIFTS_DISTANCE", codes)
+
     def test_a_clamp_that_dominates_the_curvature_is_a_counterexample(self):
         candidate = legal_candidate()
         candidate["math_definition"]["operator"]["delta"] = 1e-2
         report = preflight.run(candidate)
         self.assertEqual(report["verdict"], preflight.MATH_COUNTEREXAMPLE)
-        self.assertEqual(report["diagnostics"][0]["code"], "CLAMP_DOMINATES_DOMAIN")
+        codes = [entry["code"] for entry in report["diagnostics"]]
+        self.assertIn("CLAMP_DOMINATES_DOMAIN", codes)
 
     def test_a_radius_outside_the_ball_is_a_counterexample(self):
         candidate = legal_candidate()

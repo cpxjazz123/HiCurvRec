@@ -33,9 +33,9 @@ def _legal_candidate() -> dict:
         "behavior_evidence_sha256": "a", "literature_evidence_sha256": "b",
         "next_item_hypothesis": "h",
         "math_definition": {
-            "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=1e-7.",
+            "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=0.",
             "operator": {"family": "poincare_squared_distance", "curvature_c": 1.0,
-                         "delta": 1e-7, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
+                         "delta": 0.0, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
             "objective": {"anti_collapse": "usage-balanced assignment plus latent reconstruction"},
         },
         "hyperbolic_necessity": "n", "euclidean_control": "same architecture, metric only",
