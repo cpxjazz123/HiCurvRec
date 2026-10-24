@@ -336,7 +336,8 @@ def main() -> None:
             batch = batch.to(device, non_blocking=True)
             index = index.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            loss, recon_loss, balance_loss = raw_module.loss(batch, index)
+            # Through the DDP wrapper so the 4-rank reducer sees this graph.
+            loss, recon_loss, balance_loss = model(batch, index)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
