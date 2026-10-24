@@ -43,18 +43,31 @@ CONSENSUS_TAU = 0.1
 
 
 # === 硬编码路径常量 (CLAUDE.md §1) ===
-# Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
-EMBEDDING_FILE = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"  # stage1
-)
-TRAIN_FILE     = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
-)
-OUTPUT_SID     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/sids_for_hgrec.npy")
-OUTPUT_JSON    = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/item_sids.json")
-CHECKPOINT     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/rqvae_best.pth")
-METRICS_PATH   = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/logs/training_metrics.jsonl")
-LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/logs")
+# Frozen Stage0/Stage1 inputs resolve from this checkout and remain read-only.
+# All generated artifacts stay inside this implementation tree.
+def _repository_root() -> Path:
+    """The repository root, found by walking up to the stage2_RQ-VAE directory.
+
+    A fixed number of parents only works at one depth; the same tree is
+    reviewed in the round workspace and trained from the Stage2 allowlist.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    raise RuntimeError("cannot locate the repository root from " + str(here))
+
+
+REPO_ROOT = _repository_root()
+TREE_ROOT = Path(__file__).resolve().parent
+EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
+TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
+OUTPUT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid")
+OUTPUT_SID = OUTPUT_DIR / "sids_for_hgrec.npy"
+OUTPUT_JSON = OUTPUT_DIR / "item_sids.json"
+CHECKPOINT = OUTPUT_DIR / "rqvae_best.pth"
+METRICS_PATH = OUTPUT_DIR / "logs/training_metrics.jsonl"
+LOG_DIR = OUTPUT_DIR / "logs"
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -520,8 +533,8 @@ def _launch_via_torchrun() -> None:
     env["NCCL_TIMEOUT"] = "3600"
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
     if resolve_single_gpu():
-        if "CUDA_VISIBLE_DEVICES" not in os.environ:
-            env["CUDA_VISIBLE_DEVICES"] = _LAUNCHER["single_visible_dev"]
+        # Leave CUDA_VISIBLE_DEVICES unset when the caller has not selected a
+        # device; the single-GPU child then inherits the host's visible device.
         env[LAUNCHED_ENV] = "1"
         cmd = [sys.executable, _LAUNCHER["script"]]
         banner = ("[RecBole RQ-VAE] launching single-GPU run "

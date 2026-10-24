@@ -11,6 +11,12 @@
       "reason": "repair failed: OpenCode failed, cancelled, timed out or returned invalid JSON: results/research/issue120/rounds/round_20261025_021934_521/agents/repair_train_only_demand_signature_r1/execution.json",
       "revision": 1,
       "signature": "c95d29b04d1c5375"
+    },
+    {
+      "idea_id": "bootstrap_consensus_sid",
+      "reason": "infeasible at the frozen scale: the first epoch did not complete within 30 minutes on one GPU (the smoke needed ~10 minutes for 6 steps), so 3000 epochs over 24556 items cannot run here",
+      "revision": 11,
+      "signature": "96f8589781a9854d"
     }
   ],
   "created_at": 1792855174.5217915,
@@ -491,6 +497,29 @@
       "event": "implementation_repaired",
       "idea_id": "bootstrap_consensus_sid",
       "revision": 9
+    },
+    {
+      "at": 1792866130.8065014,
+      "event": "implementation_verified",
+      "idea_id": "bootstrap_consensus_sid",
+      "revision": 9
+    },
+    {
+      "at": 1792866407.226756,
+      "event": "implementation_verified",
+      "idea_id": "bootstrap_consensus_sid",
+      "revision": 10
+    },
+    {
+      "at": 1792867828.7254176,
+      "event": "implementation_verified",
+      "idea_id": "bootstrap_consensus_sid",
+      "revision": 11
+    },
+    {
+      "event": "implementation_blocked_infeasible_cost",
+      "at": 1792870230.61458,
+      "idea_id": "bootstrap_consensus_sid"
     }
   ],
   "ideas": [
@@ -498,7 +527,7 @@
       "also_proposed_by": [
         "ideation_1"
       ],
-      "cost_estimate": "One additional batched quantization pass of B=8 per item; no codebook or recommender training cost change beyond the extra token vocabulary. Expected Stage2 wall time roughly 1.1–1.3x, dominated by quantization.",
+      "cost_estimate": "One additional batched quantization pass of B=8 per item; no codebook or recommender training cost change beyond the extra token vocabulary. Expected Stage2 wall time roughly 1.1\u20131.3x, dominated by quantization.",
       "duplicate_count": 1,
       "falsifiable_hypothesis": "On held-out next-item evaluation, adding s_i improves Recall@K/NDCG@K over the same baseline SID, with the largest gain among items whose bootstrap agreement a_i is low; verify by overall metrics and predeclared agreement-bin slices. Reject if gains are absent or confined to one unstable random seed.",
       "fingerprint": "82972aa7a40ccfa9",
@@ -1352,7 +1381,7 @@
                   "correction": "Construct/count each underlying training sequence once (using stable user/order information in the frozen train data), or confirm and enforce a data contract that each row is an independent complete sequence; avoid inferring complete sequences from overlapping prefixes.",
                   "detail": "The graph counts every parquet training row as a complete history-plus-target sequence. If train.parquet stores the usual overlapping prefix/target examples for a user, the same underlying adjacent transition is counted repeatedly, with multiplicity dependent on how many prefixes contain it. This is not the specified one count per adjacent pair in each training sequence, and can materially skew the graph weights. The comment asserts this interpretation but does not establish that parquet rows are unique complete sequences.",
                   "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:235-242",
-                  "reproduction": "Minimal counterexample: one user's sequence [a,b,c] represented by rows ([a],b) and ([a,b],c) contributes a→b twice and b→c once; a single complete-sequence pass contributes each edge once. Run denoise_with_train_transitions on those rows and compare its counts with the specified sequence counts.",
+                  "reproduction": "Minimal counterexample: one user's sequence [a,b,c] represented by rows ([a],b) and ([a,b],c) contributes a\u2192b twice and b\u2192c once; a single complete-sequence pass contributes each edge once. Run denoise_with_train_transitions on those rows and compare its counts with the specified sequence counts.",
                   "severity": "moderate"
                 },
                 {
@@ -1377,7 +1406,7 @@
                   "correction": "Export an explicit raw-item-ID-to-SID mapping using item_ids.json (and arrange the NPY according to the downstream contract), or document and verify that all downstream consumers use embedding-row IDs. Add a validation that every source item maps to the intended exported row.",
                   "detail": "The export uses embedding-row indices as SID keys/array positions, but remap_train_item_ids explicitly maps raw parquet item IDs to embedding rows, and EMBEDDING_IDS_FILE provides the inverse mapping. The export therefore loses the raw item-ID mapping. It is only correctly indexed if every downstream consumer independently treats the embedding row as the item ID; that is not validated here, and the JSON keys are explicitly row enumerations rather than the source item IDs. This can assign SIDs to the wrong items or make non-contiguous IDs inaccessible.",
                   "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:190-215, 336-341, 504-516",
-                  "reproduction": "Use item_ids.json=[20,10] and two embedding rows. remap_train_item_ids maps raw item 20→row 0 and 10→row 1, but export writes JSON keys \"0\" and \"1\" and sid array positions 0 and 1. A consumer looking up raw item 20 cannot retrieve its SID by that ID.",
+                  "reproduction": "Use item_ids.json=[20,10] and two embedding rows. remap_train_item_ids maps raw item 20\u2192row 0 and 10\u2192row 1, but export writes JSON keys \"0\" and \"1\" and sid array positions 0 and 1. A consumer looking up raw item 20 cannot retrieve its SID by that ID.",
                   "severity": "high"
                 }
               ],
@@ -1394,7 +1423,7 @@
               "findings": [
                 {
                   "correction": "Recover one ordered training sequence per user from the frozen train rows (for example, deduplicate by user and reconstruct the observed train prefix through its largest target position), then count each adjacent pair exactly once; alternatively deduplicate the repeated prefix transitions with a rigorously defined per-user edge set/count before applying the stated formula.",
-                  "detail": "The Stage0 train parquet stores one row per training prefix/target, not one row per complete training sequence. Concatenating each row's history and target therefore counts earlier transitions repeatedly. For a sequence [a,b,c], its rows contribute a→b once from target b and a→b plus b→c from target c, so the graph is not the specified once-per-adjacent-pair training-sequence graph. This changes both transition counts and popularity correction and can materially overweight early transitions.",
+                  "detail": "The Stage0 train parquet stores one row per training prefix/target, not one row per complete training sequence. Concatenating each row's history and target therefore counts earlier transitions repeatedly. For a sequence [a,b,c], its rows contribute a\u2192b once from target b and a\u2192b plus b\u2192c from target c, so the graph is not the specified once-per-adjacent-pair training-sequence graph. This changes both transition counts and popularity correction and can materially overweight early transitions.",
                   "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:235-242",
                   "reproduction": "Use the Stage0 prefix construction at stage0_build_parquet/build_recbole_parquet.py:164-170 with a single user's sequence [a,b,c]. Feeding those rows to denoise_with_train_transitions yields C[a,b]=2 and C[b,c]=1, rather than 1 and 1.",
                   "severity": "major"
@@ -1462,17 +1491,7 @@
         "Alignment is performed independently at each residual level using item assignment overlap and Hungarian maximization.",
         "Replica zero is the reference and is included in the empirical consensus frequencies."
       ],
-      "blocking_findings": [
-        {
-          "check": "integration",
-          "correction": "Define single_visible_dev in _LAUNCHER or remove the missing-key lookup and preserve/use the intended inherited or explicit CUDA_VISIBLE_DEVICES value.",
-          "detail": "The normal single-GPU launcher path indexes _LAUNCHER['single_visible_dev'], but the _LAUNCHER dictionary defined at lines 125-132 has no such key. On a host with one visible GPU (or GENREC_SINGLE_GPU=1) the actual script exits with KeyError before launching main, so the trainer entry point does not run in this supported mode.",
-          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
-          "reproduction": "Run the script with CUDA_VISIBLE_DEVICES unset and one CUDA device visible, or set GENREC_SINGLE_GPU=1; resolve_single_gpu() is true and line 524 raises KeyError: 'single_visible_dev'.",
-          "severity": "blocker",
-          "verifier": "verify_bootstrap_consensus_sid_r8_2"
-        }
-      ],
+      "blocking_findings": [],
       "changed_files": [
         "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/ (baseline copy)",
         "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py"
@@ -1674,13 +1693,13 @@
           }
         }
       ],
-      "revision": 9,
+      "revision": 11,
       "smoke": {
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -m py_compile results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py; /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY'\nimport sys, numpy as np\nsys.path.insert(0, 'results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid')\nfrom consensus import consensus_targets\na=[np.array([[0,1],[1,1],[0,0]]), np.array([[1,0],[0,0],[1,1]])]\nq=consensus_targets(a,2)\nassert q.shape==(3,2,2) and np.allclose(q.sum(-1).numpy(),1)\nprint('PASS: aligned helper shape and normalized targets')\nPY",
         "result": "PASS: compilation and helper smoke (Hungarian alignment, expected shape, normalized probabilities). Does NOT verify model forward/backward, finite losses/gradients, or SID export."
       },
-      "source_digest": "0854c5d13ec509fa30a1946dbef91d9c57bdda6dff39521c54bcd8571dc22008",
-      "status": "repaired",
+      "source_digest": "aad2488652585056ba2f37658a11a54cf04658538fde20fcdcb95e86d34656f8",
+      "status": "blocked",
       "tree": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid",
       "tree_exists": true,
       "verdicts": [
@@ -1697,31 +1716,23 @@
               "verdict": "PASS"
             },
             {
-              "findings": [
-                {
-                  "correction": "Define single_visible_dev in _LAUNCHER or remove the lookup and preserve the inherited/default device visibility. Exercise the entry point in single-GPU mode as well as torchrun mode.",
-                  "detail": "The single-GPU launcher reads _LAUNCHER['single_visible_dev'], but that key is never defined in either _LAUNCHER mapping (lines 109-116 and 127-135). On a one-GPU host without CUDA_VISIBLE_DEVICES, automatic single-GPU mode raises KeyError before starting the trainer. The committed training log demonstrates the four-GPU path, not this path.",
-                  "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
-                  "reproduction": "Run the script entry point with CUDA_VISIBLE_DEVICES unset and torch.cuda.device_count() <= 1 (or invoke the helper with resolve_single_gpu() true); line 524 raises KeyError: 'single_visible_dev'.",
-                  "severity": "major"
-                }
-              ],
+              "findings": [],
               "name": "integration",
-              "verdict": "NEEDS_FIX"
+              "verdict": "PASS"
             }
           ],
-          "verdict": "NEEDS_FIX",
-          "verifier": "r8_1"
+          "verdict": "PASS",
+          "verifier": "r11_1"
         },
         {
           "checks": [
             {
               "findings": [
                 {
-                  "correction": "Draw sampled indices before initialization and initialize the replica codebooks from the sampled bootstrap tensor (including repeated rows), consistently with the replica training data.",
-                  "detail": "Replica training data are bootstrap-resampled, but each replica's codebooks are initialized from the complete unresampled training set before the bootstrap sample is drawn. Thus replicas are not independently fitted on their specified bootstrap resamples from initialization; this weakens the intended estimator and is an unimplemented part of the proposed procedure. The remaining central mechanism is present: five replica fits, Hungarian per-level alignment, empirical frequencies, and a final KL-regularized fit.",
-                  "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:293-299",
-                  "reproduction": "With a two-item training set and a bootstrap draw [item 0, item 0], replica.init_codebook still receives [item 0, item 1] at line 294, so item 1 can seed the replica despite not appearing in that replica's bootstrap sample.",
+                  "correction": "Draw the N bootstrap indices before initialization and initialize each replica on replica_data (or an equivalent bootstrap sample), then use that same resampled dataset for replica fitting. Keep assignments evaluated on the common train_embeddings item list for alignment.",
+                  "detail": "Replica initialization uses the complete training embedding set rather than that replica's bootstrap resample. The subsequent optimization loader samples with replacement (lines 309-312), but KMeans initialization is a fit on the unresampled data, so the five replicas do not each fit the specified bootstrap dataset throughout their tokenizer fit. This weakens the key resampling mechanism; it does not introduce validation/test leakage.",
+                  "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:307",
+                  "reproduction": "For any replica_id, trace the input to replica.init_codebook at line 307: it is train_embeddings, whereas the bootstrap indices are not drawn until lines 309-310. Consequently changing the bootstrap RNG/sample while holding train_embeddings fixed leaves the replica's initial codebook fit input unchanged.",
                   "severity": "major"
                 }
               ],
@@ -1734,21 +1745,13 @@
               "verdict": "PASS"
             },
             {
-              "findings": [
-                {
-                  "correction": "Define single_visible_dev in _LAUNCHER or remove the missing-key lookup and preserve/use the intended inherited or explicit CUDA_VISIBLE_DEVICES value.",
-                  "detail": "The normal single-GPU launcher path indexes _LAUNCHER['single_visible_dev'], but the _LAUNCHER dictionary defined at lines 125-132 has no such key. On a host with one visible GPU (or GENREC_SINGLE_GPU=1) the actual script exits with KeyError before launching main, so the trainer entry point does not run in this supported mode.",
-                  "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
-                  "reproduction": "Run the script with CUDA_VISIBLE_DEVICES unset and one CUDA device visible, or set GENREC_SINGLE_GPU=1; resolve_single_gpu() is true and line 524 raises KeyError: 'single_visible_dev'.",
-                  "severity": "blocker"
-                }
-              ],
+              "findings": [],
               "name": "integration",
-              "verdict": "NEEDS_FIX"
+              "verdict": "PASS"
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_bootstrap_consensus_sid_r8_2"
+          "verifier": "verify_bootstrap_consensus_sid_r11_2"
         },
         {
           "checks": [
@@ -1758,17 +1761,25 @@
               "verdict": "PASS"
             },
             {
-              "findings": [],
+              "findings": [
+                {
+                  "correction": "Use numerically controlled distance/logit scaling (for example, normalize/clip latent distances consistently before applying the fixed temperature), and validate that loss and gradients are finite and bounded before optimizer.step; add a focused forward/backward test at representative and adversarial scales.",
+                  "detail": "The KL probability calculation computes squared distances in the encoder's latent scale and divides directly by tau=0.1. For ordinary large latent/codebook norms, logits can have very large magnitude; although log_softmax itself is stable, its backward through cdist/square can produce very large gradients. No gradient finiteness check or clipping specific to this added term exists (the later global clip can silently reduce it to an unstable/no-op update).",
+                  "location": "consensus.py:44-47",
+                  "reproduction": "Call consensus_kl with encoded=torch.tensor([[1000., 1000.]], requires_grad=True), codebooks=torch.zeros(1, 2, 2, requires_grad=True), targets=torch.tensor([[[1., 0.]]]), gamma=0.1; backpropagate and inspect gradients. The distance/tau scaling gives gradients with magnitude on the order of 1e6, despite a finite scalar loss.",
+                  "severity": "high"
+                }
+              ],
               "name": "trainability",
-              "verdict": "PASS"
+              "verdict": "NEEDS_FIX"
             },
             {
               "findings": [
                 {
-                  "correction": "Define single_visible_dev in the active _LAUNCHER configuration (or remove that lookup and preserve/infer the visible device safely); then smoke-test both the single-GPU re-exec and four-rank torchrun entry paths.",
-                  "detail": "The single-GPU launcher accesses _LAUNCHER['single_visible_dev'], but that key is never defined in either _LAUNCHER declaration (lines 109-116 and 127-135). With one GPU and CUDA_VISIBLE_DEVICES unset, the real script launcher raises KeyError before main() and training cannot start. The four-GPU torchrun branch itself is configured and is not affected by this missing key.",
-                  "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:523-526",
-                  "reproduction": "Run the entry script with torch.cuda.device_count() == 1, no RANK, no GENREC_STAGE2_LAUNCHED, and CUDA_VISIBLE_DEVICES unset (or directly call _launch_via_torchrun under those conditions): resolve_single_gpu() is true and evaluating _LAUNCHER['single_visible_dev'] raises KeyError.",
+                  "correction": "Derive OUTPUT_DIR from TREE_ROOT or the explicitly approved Stage2 output path for this run; do not use a user/home-specific absolute checkout path. Verify the resulting output and checkpoint destinations before training.",
+                  "detail": "Artifacts are hard-wired to /home/wlia0047/ar57/wenyu/GeneRec rather than to the checked-out repository/tree. This implementation is reviewed under results/research/issue120/trees/...; when run from that tree, the frozen inputs are located via REPO_ROOT but SID/checkpoint/log writes go to a different checkout path. Thus the actual trainer does not deliver artifacts alongside/in the configured implementation output, and may overwrite an unrelated candidate's artifacts.",
+                  "location": "train_rqvae.py:65",
+                  "reproduction": "Import/run from this tree and inspect OUTPUT_DIR: it resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid, while TREE_ROOT is results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid. A run writes OUTPUT_SID there, not under this tree.",
                   "severity": "high"
                 }
               ],
@@ -1777,9 +1788,10 @@
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_bootstrap_consensus_sid_r8_3"
+          "verifier": "verify_bootstrap_consensus_sid_r11_3"
         }
-      ]
+      ],
+      "blocked_reason": "infeasible at the frozen scale: the first epoch did not complete within 30 minutes on one GPU (the smoke needed ~10 minutes for 6 steps), so 3000 epochs over 24556 items cannot run here"
     },
     {
       "assumptions": [
@@ -1962,8 +1974,8 @@
             },
             {
               "change": "Set repository-root-based defaults for inputs and outputs, with GENEREC_EMBEDDING_FILE, GENEREC_TRAIN_FILE, GENEREC_OUTPUT_SID, GENEREC_OUTPUT_JSON, GENEREC_CHECKPOINT, GENEREC_LOG_DIR, and GENEREC_METRICS_PATH overrides. Resolve torchrun from the active interpreter using sys.executable -m torch.distributed.run instead of a foreign executable path.",
-              "finding": "r5_3: training inputs, outputs, logs, and torchrun executable were bound to another machine’s absolute paths.",
-              "verification": "Confirmed no /home/wlia0047 paths or foreign executable remain in the trainer; path defaults resolve against this checkout’s repository root. py_compile passed."
+              "finding": "r5_3: training inputs, outputs, logs, and torchrun executable were bound to another machine\u2019s absolute paths.",
+              "verification": "Confirmed no /home/wlia0047 paths or foreign executable remain in the trainer; path defaults resolve against this checkout\u2019s repository root. py_compile passed."
             }
           ],
           "revision": 6,
@@ -3935,8 +3947,8 @@
       "status": "failed"
     },
     {
-      "attempts": 4,
-      "error": "the promoted tree lost its logs to a promotion while the job was running",
+      "attempts": 1,
+      "error": null,
       "idea_id": "bootstrap_consensus_sid",
       "job_id": "stage2:bootstrap_consensus_sid",
       "kind": "stage2",
@@ -3973,8 +3985,8 @@
       "status": "done"
     }
   ],
-  "step": "verification",
-  "updated_at": 1792865959.565978,
+  "step": "stage2",
+  "updated_at": 1792870179.6426916,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261025_021934_521.log",
   "worker_pid": 3314543

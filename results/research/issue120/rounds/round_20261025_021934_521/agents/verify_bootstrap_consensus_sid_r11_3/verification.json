@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r11_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "consensus.py:44-47",
+          "detail": "The KL probability calculation computes squared distances in the encoder's latent scale and divides directly by tau=0.1. For ordinary large latent/codebook norms, logits can have very large magnitude; although log_softmax itself is stable, its backward through cdist/square can produce very large gradients. No gradient finiteness check or clipping specific to this added term exists (the later global clip can silently reduce it to an unstable/no-op update).",
+          "reproduction": "Call consensus_kl with encoded=torch.tensor([[1000., 1000.]], requires_grad=True), codebooks=torch.zeros(1, 2, 2, requires_grad=True), targets=torch.tensor([[[1., 0.]]]), gamma=0.1; backpropagate and inspect gradients. The distance/tau scaling gives gradients with magnitude on the order of 1e6, despite a finite scalar loss.",
+          "correction": "Use numerically controlled distance/logit scaling (for example, normalize/clip latent distances consistently before applying the fixed temperature), and validate that loss and gradients are finite and bounded before optimizer.step; add a focused forward/backward test at representative and adversarial scales."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "train_rqvae.py:65",
+          "detail": "Artifacts are hard-wired to /home/wlia0047/ar57/wenyu/GeneRec rather than to the checked-out repository/tree. This implementation is reviewed under results/research/issue120/trees/...; when run from that tree, the frozen inputs are located via REPO_ROOT but SID/checkpoint/log writes go to a different checkout path. Thus the actual trainer does not deliver artifacts alongside/in the configured implementation output, and may overwrite an unrelated candidate's artifacts.",
+          "reproduction": "Import/run from this tree and inspect OUTPUT_DIR: it resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid, while TREE_ROOT is results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid. A run writes OUTPUT_SID there, not under this tree.",
+          "correction": "Derive OUTPUT_DIR from TREE_ROOT or the explicitly approved Stage2 output path for this run; do not use a user/home-specific absolute checkout path. Verify the resulting output and checkpoint destinations before training."
+        }
+      ]
+    }
+  ]
+}
