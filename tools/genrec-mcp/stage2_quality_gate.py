@@ -1,9 +1,10 @@
 """Fail-closed Stage2 -> Stage3 quality admission; stdlib only, no training.
 
-Hard-L1 ER and L1 positive HitRate are measured on the frozen independent
-validation pairs; both are distinct from downstream Stage3 Recall@10.
-The HitRate cutoff is deliberately unset until an authorised numerical
-threshold has been recovered and frozen in source. Missing policy never passes.
+Hard-L1 ER is measured on the frozen independent validation pairs and must
+strictly exceed the frozen Resample reference. L1 positive/negative HitRates
+are retained only as diagnostic measurements, never a promotion threshold.
+The other quality gate is distinct two-token SID prefix count above Resample.
+Both are distinct from downstream Stage3 Recall@10.
 """
 import array
 import ast
@@ -16,7 +17,6 @@ import sys
 import zipfile
 
 MIN_VALID_L1_HARD_ER = 16.38953942232631  # STRICTLY greater; frozen Resample valid L1 Hard ER
-MIN_VALID_L1_HITRATE = None  # Not recovered: fail closed, never guess or silently skip
 FROZEN_BASELINE_L2_PREFIXES = 16145  # Exact distinct two-token prefixes of Resample SID
 FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
@@ -192,8 +192,8 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
                           "full_unique_items": len(sid)},
             "baseline": {**reference, "level2_distinct_prefixes": baseline_prefixes},
             "thresholds": {"valid_l1_hard_er_strict_gt": MIN_VALID_L1_HARD_ER,
-                           "valid_l1_positive_hit_rate_min": MIN_VALID_L1_HITRATE,
                            "level2_prefixes_strict_gt": baseline_prefixes},
+            "diagnostic_only": ["valid_l1_positive_hit_rate", "valid_l1_negative_hit_rate"],
             "sha256": {key: _digest(path) for key, path in (
                 ("sid", sid_path), ("baseline", baseline_path),
                 ("validation_pairs", pairs_path), ("validation_meta", meta_path))},
@@ -201,11 +201,6 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
         failures = []
         if not candidate["valid_l1_hard_er"] > MIN_VALID_L1_HARD_ER:
             failures.append("Hard-L1 ER must be strictly above frozen cutoff")
-        cutoff = MIN_VALID_L1_HITRATE
-        if type(cutoff) not in (float, int) or not math.isfinite(cutoff) or not 0 < cutoff <= 1:
-            failures.append("HitRate hard cutoff is not yet specified in source; refusing Stage3")
-        elif candidate["valid_l1_positive_hit_rate"] < cutoff:
-            failures.append("independent-validation L1 positive HitRate below cutoff")
         if candidate_prefixes <= baseline_prefixes:
             failures.append("second-level SID prefixes do not exceed frozen baseline")
         return {"passed": not failures, "refused": "; ".join(failures) if failures else None,

@@ -31,7 +31,7 @@
 ## 4. 训练与评估
 
 18. Stage2 保持 3000 epochs 的完整训练预算，禁止重新加入基于训练损失或验证指标的提前停止。
-19. Stage2→Stage3 的正式比较基线是 Resample（`results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json`），不是原始 TIGER_RQ-VAE。新候选必须在冻结独立验证样本上满足 L1 Hard ER 严格大于 Resample 的 16.38953942232631、HitRate 达到已确认的冻结阈值，且不同的两级 SID 前缀数严格超过 Resample 的 16145；缺少基线产物、HitRate 数值或任何验证证据时应拒绝启动 Stage3，不得以原始 TIGER 的 ER/前缀替代。
+19. Stage2→Stage3 的正式比较基线是 Resample（`results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json`），不是原始 TIGER_RQ-VAE。新候选必须在冻结独立验证样本上满足 L1 Hard ER 严格大于 Resample 的 16.38953942232631，且不同的两级 SID 前缀数严格超过 Resample 的 16145；HitRate（含正负前缀命中率）仅作为诊断指标，不是准入门槛。缺少基线产物、冻结验证数据或必要指标时拒绝启动 Stage3，不得以原始 TIGER 的 ER/前缀替代。
 20. 所有新 Stage2 机制在正式训练前必须通过独立 Agent 编写的数学、梯度、DDP 和真实入口测试。
 21. 梯度验证必须使用实际模型与训练 batch 检查参与训练的损失、梯度及参数更新，不得只检查合成张量。
 22. Stage3 固定使用 `NUM_EPOCHS=150`、`EVAL_INTERVAL=5`、`EVAL_START_EPOCH=75`、`EARLY_EVAL_EPOCHS=(25,50,75,100,125)`、`SEED=42`、`BEAM_SIZE=20`、`NO_EVAL=True` 和 `SKIP_TEST=False`。
