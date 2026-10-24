@@ -17,7 +17,8 @@ from ..agents.prompts import build_prompt
 from ..agents.runner import run_agent
 from ..core.evidence import atomic_json, digest_bytes, digest_file, read_json
 from .admission import (AGENT_ROLES, CASES_ROOT, EVIDENCE_ROOT, SUITES,
-                        AdmissionError, source_digest, validate_evidence, sha256)
+                        AdmissionError, source_digest, source_digest_recipe, validate_evidence,
+                        sha256)
 
 AUTHOR_SPEC = {
     "math": ("MATH_VERIFY", "math.json", {"math": "test_source"}),
@@ -44,11 +45,19 @@ def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
     tree = Path(tree).resolve()
     if not (tree / "train_rqvae.py").is_file():
         raise AdmissionError("no candidate Stage2 trainer")
+    source_sha, source_files = source_digest_recipe(tree)
     return {
         "candidate_id": candidate_id,
         "run_id": run_id,
         "proposal_sha256": sha256(proposal),
-        "source_sha256": source_digest(tree),
+        "source_sha256": source_sha,
+        "source_digest_recipe": {
+            "algorithm": "sha256 over the sorted list of source files: for each file, the "
+                         "relative path, a NUL byte, and the file's own sha256 in ascii",
+            "file_suffixes": [".py", ".json", ".yaml", ".yml", ".toml"],
+            "excluded_directories": ["logs", "results", "__pycache__", ".git"],
+            "files": source_files,
+        },
         "source_tree": str(tree),
         "candidate": candidate,
         "test_policy": "Use independent mathematical oracle; really call trainer; DDP needs >=2 actual ranks.",

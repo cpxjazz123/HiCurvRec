@@ -39,10 +39,21 @@ def sha256(path: Path) -> str:
 
 def source_digest(tree: Path) -> str:
     """Bind the complete active trainer Python/config source, not just its launcher."""
+    return source_digest_recipe(tree)[0]
+
+
+def source_digest_recipe(tree: Path) -> tuple[str, list]:
+    """The tree digest together with the per-file hashes it was computed from.
+
+    The recipe makes the digest reproducible by an independent party: it lists
+    every file that went into the hash, with that file's own sha256, in the
+    order the digest consumed them.
+    """
     tree = Path(tree)
     if not tree.is_dir() or not (tree / "train_rqvae.py").is_file():
         raise AdmissionError("Stage2 tree has no real trainer")
     digest = hashlib.sha256()
+    entries: list = []
     count = 0
     for path in sorted(tree.rglob("*")):
         if not path.is_file() or path.is_symlink():
@@ -51,13 +62,16 @@ def source_digest(tree: Path) -> str:
             continue
         if path.suffix not in {".py", ".json", ".yaml", ".yml", ".toml"}:
             continue
-        digest.update(str(path.relative_to(tree)).encode("utf-8"))
+        relative = str(path.relative_to(tree))
+        file_sha = sha256(path)
+        digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(sha256(path).encode("ascii"))
+        digest.update(file_sha.encode("ascii"))
+        entries.append({"path": relative, "sha256": file_sha})
         count += 1
     if not count:
         raise AdmissionError("no source files available for digest")
-    return digest.hexdigest()
+    return digest.hexdigest(), entries
 
 
 def _read_json(path: Path) -> dict:
