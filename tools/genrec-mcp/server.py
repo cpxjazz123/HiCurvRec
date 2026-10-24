@@ -927,6 +927,31 @@ if isinstance(_model_cls, type) and hasattr(_model_cls, "compute_loss"):
 
     _model_cls.compute_loss = _probed_compute_loss
 
+# A candidate may return its loss from forward() instead of exposing
+# compute_loss. The same base-loss question then has to be asked of the forward
+# tuple: the total loss must carry gradient into the model parameters.
+if isinstance(_model_cls, type) and not hasattr(_model_cls, "compute_loss"):
+    _original_forward = _model_cls.forward
+
+    def _probed_forward(self, *args, **kwargs):
+        out = _original_forward(self, *args, **kwargs)
+        total = out[0] if isinstance(out, tuple) and out else out
+        key = "RQVAE.forward.total"
+        if key not in probes and torch.is_tensor(total) and total.requires_grad:
+            params = [p for p in self.parameters() if p.requires_grad]
+            try:
+                grads = torch.autograd.grad(total.sum(), params, retain_graph=True,
+                                            allow_unused=True)
+            except RuntimeError:
+                return out
+            best = max((float(g.abs().sum()) for g in grads if g is not None), default=0.0)
+            probes[key] = {"loss": float(total.detach()) if total.numel() == 1
+                           else float(total.detach().abs().mean()), "grad": best,
+                           "source": "forward_loss_parameter_gradient"}
+        return out
+
+    _model_cls.forward = _probed_forward
+
 _original_clip = torch.nn.utils.clip_grad_norm_
 
 
