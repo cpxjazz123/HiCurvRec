@@ -73,6 +73,38 @@ class ResearchMCPTests(unittest.TestCase):
         bad = handlers.research_results(rid)["artifacts"]["behavior"]
         self.assertFalse(bad["verified"])
 
+    def test_finished_research_is_not_relabelled_cancelled(self):
+        with patch.object(handlers, "_spawn_worker", return_value=333):
+            rid = handlers.research_start()["run_id"]
+        root = handlers._root(rid)
+        for name in handlers.ROLES:
+            task, role = pipeline.store().claim("test", prefix=rid + "__")
+            self.assertEqual(task, rid + "__" + name)
+            path = root / (name + ".json")
+            path.write_text('{"finished":true}', encoding="utf-8")
+            pipeline.store().complete(task, "test", path)
+        result = handlers.research_cancel(rid)
+        self.assertFalse(result["cancel_requested"])
+        self.assertFalse((root / "cancel.json").exists())
+        self.assertEqual(handlers.research_status(rid)["status"], "completed")
+
+    def test_mutating_agent_receipt_invalidates_returned_result(self):
+        with patch.object(handlers, "_spawn_worker", return_value=333):
+            rid = handlers.research_start()["run_id"]
+        root = handlers._root(rid)
+        task, _ = pipeline.store().claim("test", roles=("LITERATURE",), prefix=rid + "__")
+        folder = root / "agents" / "literature"
+        folder.mkdir(parents=True)
+        output = folder / "literature.json"
+        output.write_text('{"sources":["paper"]}', encoding="utf-8")
+        receipt = folder / "execution.json"
+        from tools.research.core.evidence import digest_file
+        receipt.write_text(json.dumps({"output_sha256": digest_file(output)}), encoding="utf-8")
+        pipeline.store().complete(task, "test", receipt)
+        self.assertTrue(handlers.research_results(rid)["artifacts"]["literature"]["verified"])
+        receipt.write_text(json.dumps({"output_sha256": digest_file(output), "changed": True}))
+        self.assertFalse(handlers.research_results(rid)["artifacts"]["literature"]["verified"])
+
     def test_running_cancel_requires_cooperative_completion(self):
         with patch.object(handlers, "_spawn_worker", return_value=333):
             rid = handlers.research_start()["run_id"]

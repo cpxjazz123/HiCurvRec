@@ -163,10 +163,10 @@ def research_status(run_id):
     statuses = [item["status"] for item in tasks.values()]
     workers = _workers(root)
     active = any(w["alive"] for w in workers)
-    if (root / "cancel.json").is_file():
-        status = "cancelling" if "cancelling" in statuses or active else "cancelled"
-    elif all(x == "done" for x in statuses) and len(statuses) == len(ROLES):
+    if all(x == "done" for x in statuses) and len(statuses) == len(ROLES):
         status = "completed"
+    elif (root / "cancel.json").is_file():
+        status = "cancelling" if "cancelling" in statuses or active else "cancelled"
     elif any(x == "blocked" for x in statuses):
         status = "blocked"
     elif any(x == "running" for x in statuses):
@@ -199,7 +199,10 @@ def research_results(run_id):
             expected = evidence.get("sha256")
         else:
             receipt = root / "agents" / name / "execution.json"
-            expected = read_json(receipt).get("output_sha256") if receipt.is_file() else None
+            if not receipt.is_file() or digest_file(receipt) != evidence.get("sha256"):
+                results[name] = {"verified": False, "refused": "agent execution receipt hash drift"}
+                continue
+            expected = read_json(receipt).get("output_sha256")
         try:
             if expected != digest_file(path):
                 results[name] = {"verified": False, "refused": "evidence hash drift"}
@@ -217,6 +220,10 @@ def research_results(run_id):
 def research_cancel(run_id):
     with _launch_lock():
         root = _root(run_id)
+        tasks = _task_view(run_id)
+        if len(tasks) == len(ROLES) and all(x["status"] == "done" for x in tasks.values()):
+            return {"run_id": run_id, "cancel_requested": False,
+                    "reason": "already_completed"}
         atomic_json(root / "cancel.json", {"requested_at": time.time(),
                                           "reason": "MCP user cancellation"})
         changed = pipeline.store().cancel_prefix(run_id + "__")
