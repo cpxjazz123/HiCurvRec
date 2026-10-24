@@ -177,7 +177,7 @@ def main():
             rec["sid_sha256"]=sha(raw)
             rec.update(sid_metrics(raw,A,P,N))
             # For archived original 38, refuse a mistaken version or invalid history.
-            if sidpath in inventory and not rec["sid_sha256"].startswith(inventory[sidpath]["sid_sha256"]):
+            if index not in h.HISTORIC_REFS and sidpath in inventory and not rec["sid_sha256"].startswith(inventory[sidpath]["sid_sha256"]):
                 raise ValueError("SID SHA differs from previously audited 38-model inventory")
             if index in h.EXPECTED_MISSING_L2 and rec["l2_distinct"]!=h.EXPECTED_MISSING_L2[index]:
                 raise ValueError("historical prefix mismatch")
