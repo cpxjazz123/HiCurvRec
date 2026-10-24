@@ -36,6 +36,7 @@ def _legal_candidate() -> dict:
             "geometry_constants": "Freeze c=1.0, tau=0.1, epsilon=1e-5, delta=1e-7.",
             "operator": {"family": "poincare_squared_distance", "curvature_c": 1.0,
                          "delta": 1e-7, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
+            "objective": {"anti_collapse": "usage-balanced assignment plus latent reconstruction"},
         },
         "hyperbolic_necessity": "n", "euclidean_control": "same architecture, metric only",
         "effect_site": "e", "real_trigger_measurement": "r",
@@ -83,6 +84,8 @@ def _injections():
          mutate(lambda c: c["falsifier"]["classification"].update(mixed_if="otherwise"))),
         ("BEHAVIOURAL_AS_STAGE2", "falsifier", "BEHAVIOURAL_AS_STAGE2",
          mutate(lambda c: c["falsifier"]["stage2_diagnostics"][0].update(name="test_R@10"))),
+        ("COLLAPSE_UNGUARDED", "math", "COLLAPSE_UNGUARDED",
+         mutate(lambda c: c["math_definition"].pop("objective"))),
         ("DUPLICATED_THRESHOLD", "falsifier", "THRESHOLD_DUPLICATED",
          mutate(lambda c: c.update(real_trigger_measurement=(
              "require ER above %s" % contract.THRESHOLDS["valid_l1_hard_er_strict_gt"])))),

@@ -13,7 +13,9 @@ import json
 import time
 from pathlib import Path
 
-REGISTRY = Path("results/research/issue117/failures/registry.json")
+#: Registry location RELATIVE to the evidence root (``settings.STATE_ROOT``),
+#: so a caller cannot end up with the state path duplicated inside itself.
+REGISTRY = Path("failures") / "registry.json"
 
 ERROR_CLASSES = (
     "GENERATION_OUTPUT", "SCHEMA", "MATH", "FALSIFIER", "TEST_AUTHOR", "DDP",
@@ -50,7 +52,7 @@ def _load(path: Path) -> dict:
     return payload
 
 
-def record(root: Path, entry: dict) -> dict:
+def record(root: Path, entry: dict, *, repeat: bool = True) -> dict:
     """Insert or update one failure, keyed by its fingerprint.
 
     A repeat of the same fingerprint increments ``occurrences`` and appends the
@@ -94,7 +96,10 @@ def record(root: Path, entry: dict) -> dict:
             "last_seen": now,
         }
     else:
-        existing["occurrences"] = int(existing.get("occurrences", 1)) + 1
+        # A backfilled ledger entry is not a recurrence: re-running the seed must
+        # leave the counts alone, otherwise the ledger inflates itself.
+        if repeat:
+            existing["occurrences"] = int(existing.get("occurrences", 1)) + 1
         existing["last_seen"] = now
         if entry.get("run_id") and entry["run_id"] not in existing["run_ids"]:
             existing["run_ids"].append(entry["run_id"])

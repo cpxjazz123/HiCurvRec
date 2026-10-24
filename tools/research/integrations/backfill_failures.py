@@ -72,6 +72,11 @@ DEFECTS = [
      "actual": "author draft prose quoted pre-correction values and blocked approval",
      "fix_commit": "365d8879",
      "regression_test": "tools/research/verification/tests/test_grouped_runner.py"},
+    {"stage": "stage2", "error_class": "MATH", "rule": "COLLAPSE_UNGUARDED",
+     "expected": "an objective term that keeps the latent informative",
+     "actual": "3000 epochs produced one distinct three-token SID for 24587 items (ER 1.0)",
+     "fix_commit": "111ac1d6",
+     "regression_test": REGRESSION + "::CollapseGuardTests"},
     {"stage": "smoke", "error_class": "ENTRYPOINT", "rule": "FORWARD_LOSS_UNPROBED",
      "expected": "the smoke probes a loss returned from forward()",
      "actual": "no compute_loss, so probed_terms stayed empty and a healthy run was refused",
@@ -86,7 +91,7 @@ def run() -> dict:
         entry = dict(defect)
         entry.setdefault("status", "verified")
         entry.setdefault("run_id", "")
-        recorded.append(failures.record(STATE, entry))
+        recorded.append(failures.record(STATE, entry, repeat=False))
     return failures.summary(STATE)
 
 
