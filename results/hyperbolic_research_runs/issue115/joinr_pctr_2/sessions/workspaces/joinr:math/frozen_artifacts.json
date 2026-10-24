@@ -1,0 +1,78 @@
+{
+ "source": "the frozen control (r8_control, seed 42) and the frozen evaluation inputs",
+ "the_control_sids": {
+  "items": 24587,
+  "per_level": {
+   "level0": {
+    "distinct_codes": 245,
+    "largest_cell": 237,
+    "largest_cell_share": 0.009639,
+    "cell_size_quantiles": {
+     "0.5": 94,
+     "0.9": 150,
+     "0.99": 203
+    },
+    "n_codes": 256
+   },
+   "level1": {
+    "distinct_codes": 256,
+    "largest_cell": 261,
+    "largest_cell_share": 0.010615,
+    "cell_size_quantiles": {
+     "0.5": 89,
+     "0.9": 133,
+     "0.99": 254
+    },
+    "n_codes": 256
+   },
+   "level2": {
+    "distinct_codes": 256,
+    "largest_cell": 293,
+    "largest_cell_share": 0.011917,
+    "cell_size_quantiles": {
+     "0.5": 95,
+     "0.9": 109,
+     "0.99": 132
+    },
+    "n_codes": 256
+   },
+   "level3": {
+    "distinct_codes": 13,
+    "largest_cell": 23657,
+    "largest_cell_share": 0.962175,
+    "cell_size_quantiles": {
+     "0.5": 4,
+     "0.9": 586,
+     "0.99": 20901
+    },
+    "n_codes": 781
+   }
+  },
+  "cells": {
+   "prefix_cells": 16147,
+   "codes_per_prefix_cell_mean": 1.522698,
+   "prefix_cells_with_one_code": 11523,
+   "prefix_cells_with_ge2_codes": 4624
+  }
+ },
+ "the_frozen_ER_pairs": {
+  "anchors": [
+   52855
+  ],
+  "positives": [
+   52855
+  ],
+  "negatives": [
+   52855,
+   10
+  ]
+ },
+ "the_latents": {
+  "shape": [
+   24587,
+   768
+  ],
+  "dtype": "float32",
+  "row_norm_mean": 0.559254
+ }
+}

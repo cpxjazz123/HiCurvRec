@@ -1,0 +1,44 @@
+{
+  "authorisations": {},
+  "created_utc": 1792801376.9529035,
+  "dispatched": 1,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "pctr:M:revision2": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/pctr_rev2/sessions/evidence/pctr:M:revision2/session.json",
+          "sha256": "4fbc1429a6c0856ea04c6de56b1b1de505fa4766c53312b2cfa009765883a1b2"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/pctr_rev2/sessions/evidence/pctr:M:revision2/session.jsonl",
+          "sha256": "efd9fbf931862fffeaa7b852ea15e26e989b9d2ac8936107ae504746f6aafdb4"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "pctr",
+      "deps": [],
+      "description": "",
+      "detail": "the M agent finished its work",
+      "error": "",
+      "finished_at": 1792801410.2020776,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792801376.9608638,
+      "status": "done",
+      "task_id": "pctr:M:revision2",
+      "verify": [],
+      "write_scope": [
+        "issue115/pctr_rev2"
+      ]
+    }
+  }
+}
