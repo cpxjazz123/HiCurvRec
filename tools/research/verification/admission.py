@@ -168,7 +168,11 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
         text = (done.stdout or "") + "\n" + (done.stderr or "")
         ran = re.search(r"\bRan\s+(\d+)\s+tests?\b", text)
         count = int(ran.group(1)) if ran else 0
-        passed = (done.returncode == 0 and count >= 1
+        prohibited = re.search(
+            r"\b(?:skipped|expected failures|unexpected successes)\s*=\s*[1-9]\d*",
+            text,
+        )
+        passed = (done.returncode == 0 and count >= 1 and prohibited is None
                   and bool(re.search(r"(?m)^OK(?:\s|$)", text)))
         result["suites"][suite] = {
             "passed": passed, "tests_run": count, "exit_code": done.returncode,
@@ -176,7 +180,7 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
             "output_tail": text[-1200:],
         }
         if not passed:
-            result["refused"] = suite + " independent tests failed or ran zero tests"
+            result["refused"] = suite + " independent tests failed, were skipped, or ran zero tests"
             return result
     result["passed"] = True
     result["verified_at_epoch"] = time.time()

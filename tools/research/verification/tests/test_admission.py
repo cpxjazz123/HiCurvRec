@@ -1,4 +1,5 @@
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -60,6 +61,93 @@ class AdmissionTests(unittest.TestCase):
             with patch.object(A, "CASES_ROOT", self.cases):
                 with self.assertRaisesRegex(A.AdmissionError, "evidence"):
                     A.validate_evidence(self.tree, cid)
+
+    def _complete_fixture(self, override=None):
+        """Synthetic test-runner fixtures only; not proof of any real mechanism."""
+        cid = "new_behavior_case"
+        folder = self.cases / cid
+        folder.mkdir(parents=True)
+        frozen_tests = {}
+        for name in A.SUITES:
+            path = folder / ("test_" + name + ".py")
+            code = (
+                "import unittest\n"
+                "class IndependentFixture(unittest.TestCase):\n"
+                "    def test_arithmetic(self): self.assertEqual(2, 1+1)\n"
+            )
+            if override and name in override:
+                code = override[name]
+            path.write_text(code, encoding="utf-8")
+            frozen_tests[name] = A.sha256(path)
+        proposal = self.evidence / "agents" / "geometry" / "candidate.json"
+        proposal.parent.mkdir(parents=True)
+        proposal.write_text(json.dumps({"candidate_id": cid}))
+        code_sha = A.source_digest(self.tree)
+        proposal_sha = A.sha256(proposal)
+        path = self.evidence / "verification" / cid / "manifest.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({
+            "schema": 1, "candidate_id": cid, "source_tree": self.tree.name,
+            "source_sha256": code_sha, "proposal_sha256": proposal_sha,
+            "tests": frozen_tests,
+        }), encoding="utf-8")
+        for pos, role in enumerate(A.AGENT_ROLES):
+            session = self.evidence / "agents" / (cid + "_" + role)
+            session.mkdir()
+            output = session / (role + ".json")
+            content = {"candidate_id": cid, "source_sha256": code_sha}
+            if role == "review":
+                content.update({
+                    "verdict": "APPROVE_TESTS",
+                    "proposal_sha256": proposal_sha,
+                    "test_sha256": frozen_tests,
+                })
+            output.write_text(json.dumps(content), encoding="utf-8")
+            stream = session / "session.jsonl"
+            stream.write_text('{"event":"fixture_only"}\n', encoding="utf-8")
+            (session / "execution.json").write_text(json.dumps({
+                "verified": True, "exit_code": 0, "timed_out": False,
+                "pid": 2000 + pos, "output_name": output.name,
+                "output_sha256": A.sha256(output), "session_sha256": A.sha256(stream),
+            }), encoding="utf-8")
+        return cid
+
+    def _run_fixture(self, cid):
+        with patch.object(A, "EVIDENCE_ROOT", self.evidence):
+            with patch.object(A, "CASES_ROOT", self.cases):
+                return A.run_preflight(self.tree, cid, sys.executable)
+
+    def test_approved_fixture_executes_all_four_real_subprocess_suites(self):
+        cid = self._complete_fixture()
+        report = self._run_fixture(cid)
+        self.assertTrue(report["passed"], report)
+        self.assertEqual(set(report["suites"]), set(A.SUITES))
+        self.assertTrue(all(item["tests_run"] >= 1 for item in report["suites"].values()))
+
+    def test_unittest_skips_are_not_admission(self):
+        cid = self._complete_fixture({"ddp": (
+            "import unittest\n"
+            "class Dummy(unittest.TestCase):\n"
+            " @unittest.skip('no real DDP')\n"
+            " def test_must_run(self): self.assertTrue(True)\n"
+        )})
+        report = self._run_fixture(cid)
+        self.assertFalse(report["passed"])
+        self.assertFalse(report["suites"]["ddp"]["passed"])
+        self.assertIn("skipped", report["refused"])
+
+    def test_unittest_zero_tests_are_not_admission(self):
+        cid = self._complete_fixture({"math": "import unittest\n"})
+        report = self._run_fixture(cid)
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["suites"]["math"]["tests_run"], 0)
+
+    def test_source_drift_after_approval_is_rejected(self):
+        cid = self._complete_fixture()
+        (self.tree / "model.py").write_text("changed=42\n", encoding="utf-8")
+        report = self._run_fixture(cid)
+        self.assertFalse(report["passed"])
+        self.assertIn("trainer source", report["refused"])
 
     def test_invalid_ids_fail(self):
         for cid in ("../escape", "A/B", "", "a", "bad name"):
