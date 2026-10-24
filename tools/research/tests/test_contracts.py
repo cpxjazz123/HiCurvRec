@@ -89,6 +89,16 @@ class FalsifierTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_falsifier({"falsifier": bad})
 
+    def test_field_references_and_operators_are_not_mistaken_for_names(self):
+        good = _falsifier(classification={
+            "falsified_if": "stage2_diagnostics.valid_l1_hard_er OR "
+                            "stage3_behavioral_test.mean_difference is NULL",
+            "passed_if": "valid_l1_hard_er positive and stage3_behavioral_test.mean_difference "
+                         "at least stage3_behavioral_test.minimum_effect",
+            "mixed_if": "otherwise, or any seed is NULL",
+        })
+        check_falsifier({"falsifier": good})
+
     def test_behavioural_metric_must_be_a_real_stage3_metric(self):
         bad = _falsifier(stage3_behavioral_test={"metric": "accuracy", "direction": "higher",
                                                  "minimum_effect": 0.01, "seed_rule": "median"})
