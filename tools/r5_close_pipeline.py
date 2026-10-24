@@ -186,14 +186,6 @@ def wait_stage3(allowed: list[str], poll_s: int = 90) -> None:
 
 def commit_and_push() -> str:
     sh(["git", "add",
-        "stage2_RQ-VAE/TIGER_r5_01", "stage2_RQ-VAE/TIGER_r5_02", "stage2_RQ-VAE/TIGER_r5_03",
-        "stage2_RQ-VAE/TIGER_r5_04", "stage2_RQ-VAE/TIGER_r5_05", "stage2_RQ-VAE/TIGER_r5_06",
-        "stage2_RQ-VAE/TIGER_r5_07", "stage2_RQ-VAE/TIGER_r5_08", "stage2_RQ-VAE/TIGER_r5_09",
-        "stage2_RQ-VAE/TIGER_r5_10",
-        "results/stage2_RQ-VAE/r5_01", "results/stage2_RQ-VAE/r5_02", "results/stage2_RQ-VAE/r5_03",
-        "results/stage2_RQ-VAE/r5_04", "results/stage2_RQ-VAE/r5_05", "results/stage2_RQ-VAE/r5_06",
-        "results/stage2_RQ-VAE/r5_07", "results/stage2_RQ-VAE/r5_08", "results/stage2_RQ-VAE/r5_09",
-        "results/stage2_RQ-VAE/r5_10", "results/stage2_RQ-VAE/r5_common",
         "results/stage2_RQ-VAE/R5_SUMMARY.md",
         "tools/r5_fork_arms.py", "tools/r5_apply_mechanisms.py",
         "tools/r5_generate_tests_and_tools.py", "tools/r5_capture_red.py",

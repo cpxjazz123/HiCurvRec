@@ -36,8 +36,9 @@ LEARNING_RUN_DIR = Path(
 RESULTS_ROOT = REPO_ROOT / "results" / "stage2_RQ-VAE"
 STAGE3_ROOT = REPO_ROOT / "results" / "stage3_T5Train"
 
-#: The arms of the #104 campaign: the tree that trained them, where their exported SIDs
-#: live, and where their judge and probe reports are.
+#: The arms of the #104 campaign: where their exported SIDs live and where their judge and
+#: probe reports are. An arm carries a "tree" only while the tree that trained it is still
+#: on disk; the rest survive as exported results, so they are ingested without one.
 CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "r8_control",
@@ -51,7 +52,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_conditioned_pairwise_curvature",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_curvature/r8_control"
         ),
@@ -62,7 +62,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_conditioned_pairwise_margin",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_margin",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_behavior_conditioned_pairwise_margin/r8_control"
         ),
@@ -73,7 +72,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behaviour_conditioned_residual_target",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control"
         ),
@@ -84,7 +82,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "curvature_weighted_transition_transport",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_curvature_weighted_transition_transport",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_curvature_weighted_transition_transport/r8_control"
         ),
@@ -95,7 +92,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_residual_geometry_transport",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control"
         ),
@@ -106,7 +102,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_directed_soft_code_transition_kl",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl"
             "/r8_control"
@@ -118,7 +113,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_conditioned_codebook_directional_transport",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_conditioned_codebook_directional_transport"
             "/r8_control"
@@ -130,7 +124,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "r8_control_seed43",
         "kind": "control",
-        "tree": "stage2_RQ-VAE/TIGER_seed43_control",
         "sid_dir": "results/stage2_RQ-VAE/TIGER_seed43_control/r8_control",
         "stage3_variant": "TIGER_seed43_control__r8_control",
         "probe": None,
@@ -139,7 +132,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "geometry_transport_seed43",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_seed43_geometry",
         "sid_dir": "results/stage2_RQ-VAE/TIGER_seed43_geometry/r8_control",
         "stage3_variant": "TIGER_seed43_geometry__r8_control",
         "probe": None,
@@ -148,7 +140,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "directed_codeword_margin_geometry",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry",
         "sid_dir": "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control",
         "stage3_variant": "TIGER_c106_directed_codeword_margin_geometry__r8_control",
         "probe": None,
@@ -157,7 +148,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "directed_assignment_usage_balance",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance",
         "sid_dir": "results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control",
         "stage3_variant": "TIGER_c106_directed_assignment_usage_balance__r8_control",
         "probe": None,
@@ -166,7 +156,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "behavior_directed_code_assignment_cross_entropy",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy",
         "sid_dir": (
             "results/stage2_RQ-VAE/TIGER_behavior_directed_code_assignment_cross_entropy"
             "/r8_control"
@@ -178,7 +167,6 @@ CAMPAIGN_ARMS: Tuple[Dict[str, Any], ...] = (
     {
         "mechanism_id": "directed_st_code_transition_geometry",
         "kind": "arm",
-        "tree": "stage2_RQ-VAE/TIGER_directed_st_code_transition_geometry",
         "sid_dir": None,
         "stage3_variant": None,
         "probe": "probes/directed_st_code_transition_geometry/probe_report.json",
@@ -318,13 +306,15 @@ def ingest_campaign(
     store.open()
     ingested: List[Dict[str, Any]] = []
     for arm in CAMPAIGN_ARMS:
-        tree = REPO_ROOT / arm["tree"]
+        tree = REPO_ROOT / arm["tree"] if arm.get("tree") else None
         sid_dir = REPO_ROOT / arm["sid_dir"] if arm.get("sid_dir") else None
         sid_path = (sid_dir / "sids_for_hgrec.npy") if sid_dir else None
         artifacts: List[Path] = []
         if sid_dir and sid_dir.is_dir():
             artifacts.extend(sorted(path for path in sid_dir.iterdir() if path.is_file()))
-        metrics = _training_metrics(tree)
+        # An arm whose training tree is gone keeps its metrics out of the manifest: there is
+        # no training record left to read, and inventing an epoch count would be worse.
+        metrics = _training_metrics(tree) if tree is not None else {}
         if sid_path is None or not sid_path.is_file():
             # The tree may hold the metrics of an EARLIER run of the same tree. Without an
             # export of this arm there was no run, so the epochs are not reported at all.
@@ -373,8 +363,7 @@ def ingest_campaign(
             seed=42,
             output_dir=store.root / "imported" / arm["mechanism_id"],
             command=(
-                PROJECT_PYTHON,
-                str(tree / "train_rqvae.py"),
+                (PROJECT_PYTHON, str(tree / "train_rqvae.py")) if tree is not None else ()
             ),
             extra={"ingested_from": str(run_dir), "ingested_utc": now_utc()},
         )

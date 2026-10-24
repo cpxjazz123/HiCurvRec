@@ -576,8 +576,6 @@ def _load_mechanism(tree: Path, module_name: str):
             sys.path.insert(0, entry)
     candidates = [
         Path(tree) / f"{module_name}.py",
-        REPO_ROOT / "stage2_RQ-VAE" / "TIGER_c1_behavior_conditioned_pairwise_margin" / f"{module_name}.py",
-        REPO_ROOT / "stage2_RQ-VAE" / "TIGER_behavior_residual_geometry_transport" / f"{module_name}.py",
     ]
     for candidate in candidates:
         if not candidate.is_file():
