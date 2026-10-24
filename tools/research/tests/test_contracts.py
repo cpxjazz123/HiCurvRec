@@ -34,7 +34,10 @@ class ContractTests(unittest.TestCase):
 
 BASE_CANDIDATE = {
     "candidate_id": "toy", "behavior_problem_id": "p", "behavior_evidence_sha256": "a",
-    "literature_evidence_sha256": "b", "next_item_hypothesis": "h", "math_definition": "m",
+    "literature_evidence_sha256": "b", "next_item_hypothesis": "h",
+    "math_definition": {"geometry_constants": "Freeze c=1.0 and delta=1e-7 for the Poincare ball.",
+                        "operator": {"family": "poincare_squared_distance",
+                                     "curvature_c": 1.0, "delta": 1e-7}},
     "hyperbolic_necessity": "n", "euclidean_control": "c", "effect_site": "e",
     "real_trigger_measurement": "r", "training_only_inputs": "t", "stable_global_sid": True,
     "protocol": {"latent_dim": 32, "levels": 3, "codes_per_level": 256,

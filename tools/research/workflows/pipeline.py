@@ -8,6 +8,7 @@ from pathlib import Path
 from .. import settings
 from ..agents.prompts import build_prompt
 from ..agents.runner import run_agent
+from ..core import failures as failure_registry
 from ..core.dag import StateError, TaskStore
 from ..core.evidence import atomic_json, digest_bytes, digest_file, read_json
 from ..integrations.preflight import audit_surviving_mainline
@@ -66,6 +67,12 @@ def manifest_for(task, root):
             manifest.update(candidate_id=candidate["candidate_id"],
                             candidate_sha256=digest_file(proposal),
                             candidate=candidate)
+        if task == "review":
+            from ..science import preflight as _preflight
+            report = _preflight.run(candidate)
+            manifest.update(preflight_verdict=report["verdict"],
+                            preflight_warnings=report.get("warnings", []),
+                            contract_sha256=report.get("contract_sha256"))
         if task == "geometry":
             feedback = root / "agents" / "geometry" / "revision_feedback.json"
             if feedback.is_file():
@@ -138,6 +145,15 @@ def process_next(run_id):
                     dag.fail(task_id, owner, "scientific revision: MATERIAL", retry=True)
                     return {"task": task, "role": role, "revision": True, "evidence": False}
                 if verdict in ("FATAL", "PARKED"):
+                    failure_registry.record(settings.STATE_ROOT, {
+                        "stage": "review", "error_class": "SCIENTIFIC_FATAL",
+                        "rule": verdict, "expected": "CPU_ELIGIBLE or MATERIAL",
+                        "actual": verdict, "run_id": run_id,
+                        "candidate_id": manifest.get("candidate_id"),
+                        "contract_sha256": manifest.get("contract_sha256"),
+                        "reproducer": str(root / "agents" / "review" / "review.json"),
+                        "status": "open",
+                    })
                     dag.fail(task_id, owner, "scientific rejection: " + verdict)
                     return {"task": task, "role": role, "blocked": True,
                             "review_verdict": verdict, "evidence": False}
@@ -149,6 +165,7 @@ def process_next(run_id):
         if (root / "cancel.json").exists():
             dag.finish_cancel(task_id, owner)
             return None
+        _record_machine_failure(task, root, run_id, exc)
         try:
             dag.fail(task_id, owner, type(exc).__name__ + ": " + str(exc))
         except StateError:
@@ -274,3 +291,42 @@ def _send_back_for_revision(dag, review_task_id, root: Path, error: Exception) -
     dag.reopen(review_task_id.split("__", 1)[0] + "__geometry",
                "review blocked the proposal: " + verdict)
     return True
+
+_MACHINE_CLASSES = (
+    ("MATH_COUNTEREXAMPLE", "MATH"), ("FLAT_LIMIT", "MATH"), ("DOMAIN_ESCAPE", "MATH"),
+    ("UNREGISTERED_METRIC", "FALSIFIER"), ("NULL_OUTCOME", "FALSIFIER"),
+    ("THRESHOLD_DUPLICATED", "FALSIFIER"), ("CAPACITY_MISMATCH", "SCHEMA"),
+    ("FUTURE_LEAKAGE", "SCHEMA"), ("OPERATOR_UNRESOLVED", "SCHEMA"),
+    ("did not complete", "GENERATION_OUTPUT"), ("invalid JSON", "GENERATION_OUTPUT"),
+    ("no candidate", "GENERATION_OUTPUT"), ("did not approve", "HASH_BINDING"),
+    ("different source", "HASH_BINDING"), ("another candidate", "HASH_BINDING"),
+    ("TypeError", "PYTHON_RUNTIME"), ("ImportError", "PYTHON_RUNTIME"),
+    ("ModuleNotFound", "PYTHON_RUNTIME"), ("timed out", "INFRA_TRANSIENT"),
+    ("cancelled", "INFRA_TRANSIENT"), ("lease", "INFRA_TRANSIENT"),
+)
+
+
+def classify_failure(message: str) -> str:
+    """Map an error message to a registry class by its stable marker."""
+    for marker, error_class in _MACHINE_CLASSES:
+        if marker in message:
+            return error_class
+    return "SCHEMA"
+
+
+def _record_machine_failure(task: str, root: Path, run_id: str, exc: Exception) -> None:
+    """Every failed task leaves a registry entry; recording never raises."""
+    try:
+        message = type(exc).__name__ + ": " + str(exc)
+        failure_registry.record(settings.STATE_ROOT, {
+            "stage": task,
+            "error_class": classify_failure(message),
+            "rule": message.split(":")[0],
+            "expected": "task completes and its evidence validates",
+            "actual": message[:300],
+            "run_id": run_id,
+            "reproducer": str(root),
+            "status": "open",
+        })
+    except Exception:                            # noqa: BLE001 - never mask the task error
+        pass

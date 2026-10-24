@@ -15,17 +15,24 @@ REQUIRED = (
 
 
 def check_candidate(candidate: dict) -> None:
-    missing = [key for key in REQUIRED if not candidate.get(key)]
-    if missing:
-        raise ValueError("incomplete behavior-first contract: " + ", ".join(missing))
-    if candidate["stable_global_sid"] is not True:
-        raise ValueError("SID must be globally fixed per item")
-    policy = candidate["protocol"]
-    if not isinstance(policy, dict) or (policy.get("latent_dim"),
-       policy.get("levels"), policy.get("codes_per_level")) != (32, 3, 256):
-        raise ValueError("frozen Stage2 SID capacity mismatch")
-    if policy.get("hyperparameter_sweep") or policy.get("uses_future_events"):
-        raise ValueError("sweep/test leakage forbidden")
+    """Compile the contract and run the deterministic preflight.
+
+    The preflight owns the staged checks (output, contract, math, falsifier) and
+    reports a verdict class. A machine-repairable defect is raised with its
+    location, expected and observed value so the retry loop can feed it back; a
+    candidate that survives is the only thing a reviewer is asked about.
+    """
+    from . import preflight
+
+    report = preflight.run(candidate)
+    if not report["scientific_review_allowed"]:
+        failures = [entry for entry in report["diagnostics"]
+                    if entry.get("verdict") is not None]
+        detail = "; ".join(
+            f"{entry['layer']}/{entry['code']} at {entry['location']}: expected "
+            f"{entry['expected']!r}, observed {entry['actual']!r} -> {entry['repair']}"
+            for entry in failures[:4])
+        raise ValueError(f"{report['verdict']} ({report['stopped_at']}): {detail}")
     check_falsifier(candidate)
 
 
