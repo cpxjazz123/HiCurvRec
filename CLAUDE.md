@@ -16,6 +16,7 @@ stage3_T5Train/train_HG-Rec.py                 -> results/stage3_T5Train/<RQVAE_
 tools/genrec-mcp/server.py                      MCP: stage2_start/stage2_status/stage3_start/stage3_status/cgv_check/cgv_status/stage2_stability_probe
 tools/cgv/                                      机制契约六门（run_cgv.py / engine.py / contract.py / oracles.py / adapters.py / family.py）
 tools/stage2_stability_probe.py                 诊断探针（不是门）
+tools/research/                              新科研工具：core/agents/science/workflows/integrations/tests
 results/stage3_T5Train/<94 个历史变体>/         只读历史结果，不再有对应源树
 papers/                                         35 份参考论文 + grid_paper.md
 ```
@@ -170,4 +171,9 @@ python3.9 tools/cgv/run_cgv.py <tree> --spec -      # JSON 从 stdin
   `git rev-parse main` 与 `git ls-remote origin refs/heads/main` 的 commit hash，不一致不得继续。
 - **LFS**：`.pth` 与 `.npy` 由 Git LFS 跟踪（`.gitattributes`）。历史大产物已用
   `git lfs prune --verify-remote` 清理过，需要时可从 GitHub 重新拉取。
+
+
+## 9. 新增自研研究工具（2026-10-24）
+
+`tools/research/` 是清理后新建、职责分层的研究工具，不恢复已退役的控制器。`core` 维护唯一持久 DAG 和证据，`agents` 直接使用 OpenCode CLI，`science` 从 train-only 交互做行为分析并验证候选，`workflows` 串联 DATA+LITERATURE→GEOMETRY→REVIEW，`integrations` 只读对接现有 CGV/MCP，`tests` 离线验证。完整目录见 `tools/research/README.md`。状态和研究输出只存 `results/research/issue116/`。所有脚本遵守 §1 的无参入口，真人 Agent 默认不开启，任何正式 Stage2/Stage3 均只能经现有 MCP 和 CGV 流程授权运行。
 
