@@ -61,6 +61,26 @@ class AgentTests(unittest.TestCase):
             self.assertTrue((receipt.parent / ".git").is_dir())
 
 
+    def test_archived_candidate_cannot_be_reused_as_new_agent_output(self):
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "out" / "agents" / "geometry"
+            archived = workspace / "attempt-1"
+            archived.mkdir(parents=True)
+            (archived / "candidate.json").write_text('{"old":true}', encoding="utf-8")
+            binary = Path(work) / "fake-opencode-no-output"
+            binary.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json\n"
+                "print(json.dumps({'type':'mock','status':'no_output'}))\n",
+                encoding="utf-8")
+            binary.chmod(0o700)
+            with self.assertRaisesRegex(RuntimeError, "invalid JSON"):
+                run_agent("geometry", "Write candidate", "candidate.json",
+                          Path(work) / "out", binary=str(binary), timeout=10)
+            receipt = read_json(workspace / "execution.json")
+            self.assertFalse(receipt["verified"])
+            self.assertIsNone(receipt["output_sha256"])
+
     def test_prompt_names_the_absolute_output_path(self):
         """A relative output path is resolved against the git root, not the workspace."""
         from tools.research.agents.prompts import build_prompt

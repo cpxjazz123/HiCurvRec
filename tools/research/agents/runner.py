@@ -122,8 +122,14 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     relocated = None
     if not output.is_file():
         matches = sorted(workspace.rglob(output_name))
+        # A repaired run archives older answers under attempt-N/. Never
+        # "recover" an archived candidate/review as though this subprocess
+        # had produced it: that would make a failed retry look successful.
         matches = [match for match in matches
-                   if match.is_file() and ".." not in match.relative_to(workspace).parts]
+                   if match.is_file()
+                   and ".." not in match.relative_to(workspace).parts
+                   and not any(part.startswith("attempt-")
+                               for part in match.relative_to(workspace).parts)]
         if matches:
             relocated = matches[0]
             output = relocated
