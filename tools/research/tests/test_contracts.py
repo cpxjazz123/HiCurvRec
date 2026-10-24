@@ -3,7 +3,8 @@ import unittest
 from pathlib import Path
 from tools.research.agents.prompts import build_prompt
 from tools.research.core.evidence import digest_file
-from tools.research.science.contracts import check_review_identity, check_candidate
+from tools.research.science.contracts import (
+    check_candidate, check_falsifier, check_review_identity)
 
 
 class ContractTests(unittest.TestCase):
@@ -29,6 +30,70 @@ class ContractTests(unittest.TestCase):
     def test_incomplete_candidate_is_rejected(self):
         with self.assertRaises(ValueError):
             check_candidate({"candidate_id": "toy"})
+
+
+BASE_CANDIDATE = {
+    "candidate_id": "toy", "behavior_problem_id": "p", "behavior_evidence_sha256": "a",
+    "literature_evidence_sha256": "b", "next_item_hypothesis": "h", "math_definition": "m",
+    "hyperbolic_necessity": "n", "euclidean_control": "c", "effect_site": "e",
+    "real_trigger_measurement": "r", "training_only_inputs": "t", "stable_global_sid": True,
+    "protocol": {"latent_dim": 32, "levels": 3, "codes_per_level": 256,
+                 "hyperparameter_sweep": False, "uses_future_events": False},
+}
+
+
+def _falsifier(**overrides):
+    payload = {
+        "stage2_diagnostics": [
+            {"name": "valid_l1_hard_er", "direction": "higher", "minimum_effect": 0.01,
+             "seed_rule": "median over 3 seeds"},
+        ],
+        "stage3_behavioral_test": {"metric": "test_R@10", "direction": "higher",
+                                   "minimum_effect": 0.01, "seed_rule": "median over 3 seeds"},
+        "classification": {
+            "falsified_if": "valid_l1_hard_er is not positive for any seed",
+            "passed_if": "valid_l1_hard_er is positive for all seeds",
+            "mixed_if": "otherwise, or any seed is NULL",
+        },
+    }
+    payload.update(overrides)
+    return payload
+
+
+class FalsifierTests(unittest.TestCase):
+    def test_complete_falsifier_is_accepted(self):
+        candidate = dict(BASE_CANDIDATE, falsifier=_falsifier())
+        check_candidate(candidate)
+
+    def test_missing_classification_rule_is_rejected(self):
+        bad = _falsifier(classification={"falsified_if": "x", "passed_if": "y"})
+        with self.assertRaises(ValueError):
+            check_falsifier({"falsifier": bad})
+
+    def test_missing_null_rule_is_rejected(self):
+        bad = _falsifier(classification={"falsified_if": "valid_l1_hard_er is zero",
+                                         "passed_if": "valid_l1_hard_er is positive",
+                                         "mixed_if": "otherwise"})
+        with self.assertRaises(ValueError):
+            check_falsifier({"falsifier": bad})
+
+    def test_unregistered_diagnostic_is_rejected(self):
+        bad = _falsifier(classification={"falsified_if": "level9_hard_er is zero",
+                                         "passed_if": "valid_l1_hard_er is positive and NULL",
+                                         "mixed_if": "otherwise"})
+        with self.assertRaises(ValueError):
+            check_falsifier({"falsifier": bad})
+
+    def test_diagnostic_needs_direction_and_effect(self):
+        bad = _falsifier(stage2_diagnostics=[{"name": "valid_l1_hard_er"}])
+        with self.assertRaises(ValueError):
+            check_falsifier({"falsifier": bad})
+
+    def test_behavioural_metric_must_be_a_real_stage3_metric(self):
+        bad = _falsifier(stage3_behavioral_test={"metric": "accuracy", "direction": "higher",
+                                                 "minimum_effect": 0.01, "seed_rule": "median"})
+        with self.assertRaises(ValueError):
+            check_falsifier({"falsifier": bad})
 
 
 if __name__ == "__main__":
