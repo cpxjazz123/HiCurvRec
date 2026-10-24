@@ -420,6 +420,7 @@ def record_single_sid(sid_path: Path, output: Path | None = None) -> Path:
         return h.hexdigest()
     record["provenance"] = {
         "sid": str(sid_path),
+        "candidate_arm": str(sid_path.parent.relative_to(STAGE2_ROOT.resolve())),
         "train_parquet": str(TRAIN_PARQUET),
         "validation_npz": str(PAIRS_NPZ),
         "resample_sid": str(REFERENCE_SID),
@@ -433,6 +434,7 @@ def record_single_sid(sid_path: Path, output: Path | None = None) -> Path:
     if output is None:
         output = sid_path.parent / "stage2_metrics" / (record["provenance"]["sid_sha256"] + ".json")
     output = Path(output)
+    record["report_path"] = str(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(output.name + ".tmp")
     try:
