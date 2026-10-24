@@ -24,6 +24,9 @@ DEFAULT_SELECTION = {
     "max_selected": 6,
     "require_min_scorers_above_threshold": 2,
     "fallback_to_best": True,
+    # An idea that declares a per-step cost making the frozen 3000-epoch budget
+    # infeasible cannot be implemented here, whatever its other scores.
+    "max_declared_hours_for_the_frozen_budget": 72.0,
 }
 
 
@@ -77,6 +80,13 @@ def build_matrix(ideas: list, reports: list) -> dict:
                 missing.append(scorer + ":" + identifier)
     if missing:
         raise ScoreError("every scorer must judge every idea; missing " + ", ".join(missing))
+    cost_by_idea = {}
+    for idea in ideas:
+        for key in ("cost_estimate_hours", "hours_for_frozen_budget"):
+            value = idea.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                cost_by_idea[idea["idea_id"]] = float(value)
+                break
     matrix = []
     for identifier in idea_ids:
         per_scorer = {}
@@ -95,7 +105,7 @@ def build_matrix(ideas: list, reports: list) -> dict:
             [statistics.median([per_scorer[scorer][dimension] for scorer in per_scorer])
              for dimension in DIMENSIONS])
         overall_mean = sum(means[dimension] for dimension in DIMENSIONS) / len(DIMENSIONS)
-        matrix.append({
+        row = {
             "idea_id": identifier,
             "per_scorer": per_scorer,
             "per_scorer_rationale": {scorer: by_scorer[scorer][identifier].get("rationale", "")
@@ -110,7 +120,10 @@ def build_matrix(ideas: list, reports: list) -> dict:
                 1 for scorer in per_scorer
                 if statistics.median([per_scorer[scorer][dimension] for dimension in DIMENSIONS])
                 >= DEFAULT_SELECTION["median_threshold"]),
-        })
+        }
+        if identifier in cost_by_idea:
+            row["declared_hours"] = cost_by_idea[identifier]
+        matrix.append(row)
     return {"dimensions": list(DIMENSIONS), "scale": list(SCALE), "rows": matrix,
             "scorers": sorted(by_scorer)}
 
@@ -135,6 +148,11 @@ def select(matrix: dict, *, rule: dict = None) -> dict:
         if row["scorers_above_median_threshold"] < rule["require_min_scorers_above_threshold"]:
             reasons.append("only " + str(row["scorers_above_median_threshold"]) +
                            " scorer(s) reached the median threshold")
+        declared = row.get("declared_hours")
+        if declared is not None and declared > rule["max_declared_hours_for_the_frozen_budget"]:
+            reasons.append("declared cost " + str(declared) + " h exceeds the " +
+                           str(rule["max_declared_hours_for_the_frozen_budget"]) +
+                           " h budget for the frozen 3000-epoch run")
         if reasons:
             rejected.append({"idea_id": row["idea_id"], "reasons": reasons,
                              "overall_median": row["overall_median"],

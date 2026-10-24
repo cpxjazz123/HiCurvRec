@@ -274,3 +274,23 @@ class ValidityAdmissionTests(unittest.TestCase):
             verdict = round_jobs.sid_is_technically_valid(broken)
             self.assertFalse(verdict["valid"])
             self.assertTrue(verdict["refused"])
+
+
+class CostFeasibilityTests(unittest.TestCase):
+    """An idea whose declared cost cannot run the frozen budget is not selected."""
+
+    def test_an_infeasible_declared_cost_rejects_the_idea(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1")]}),
+            ("agent2", {"ideas": [_idea("b", title="beta", change="2")]}),
+            ("agent3", {"ideas": [_idea("c", title="gamma", change="3")]}),
+        ])
+        ideas[0]["cost_estimate_hours"] = 900.0
+        reports = [{"scorer": name,
+                    "scores": [_scores(idea["idea_id"], 5) for idea in ideas]}
+                   for name in ("s1", "s2", "s3")]
+        matrix = scoring_module.build_matrix(ideas, reports)
+        selection = scoring_module.select(matrix)
+        self.assertNotIn("a", [entry["idea_id"] for entry in selection["selected"]])
+        reasons = [entry for entry in selection["rejected"] if entry["idea_id"] == "a"][0]["reasons"]
+        self.assertTrue(any("declared cost" in reason for reason in reasons))

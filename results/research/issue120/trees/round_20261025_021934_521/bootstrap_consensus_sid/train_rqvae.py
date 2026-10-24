@@ -45,11 +45,24 @@ CONSENSUS_TAU = 0.1
 # === 硬编码路径常量 (CLAUDE.md §1) ===
 # Frozen Stage0/Stage1 inputs resolve from this checkout and remain read-only.
 # All generated artifacts stay inside this implementation tree.
-REPO_ROOT = Path(__file__).resolve().parents[6]
+def _repository_root() -> Path:
+    """The repository root, found by walking up to the stage2_RQ-VAE directory.
+
+    A fixed number of parents only works at one depth; the same tree is
+    reviewed in the round workspace and trained from the Stage2 allowlist.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    raise RuntimeError("cannot locate the repository root from " + str(here))
+
+
+REPO_ROOT = _repository_root()
 TREE_ROOT = Path(__file__).resolve().parent
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
-OUTPUT_DIR = TREE_ROOT / "artifacts/TIGER_bootstrap_consensus_sid"
+OUTPUT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid")
 OUTPUT_SID = OUTPUT_DIR / "sids_for_hgrec.npy"
 OUTPUT_JSON = OUTPUT_DIR / "item_sids.json"
 CHECKPOINT = OUTPUT_DIR / "rqvae_best.pth"

@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r10_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:295-308",
+          "detail": "Replica fits do not use the baseline final-fit schedule: they have no warmup/learning-rate scheduler, while the final fit does (lines 342-349). Thus the empirical assignment frequencies are not from replicas fitted with the baseline hyperparameters/schedule as specified. The per-replica RNG seed also drives both sampling and model initialization, but this is still an independent seed and is not itself a defect.",
+          "reproduction": "Compare the replica optimization loop at lines 295-308 with the final optimizer/scheduler setup at lines 335-349: replica LR remains 1e-3 for all 3000 epochs; final fit warms up and decays.",
+          "correction": "Apply the same baseline learning-rate/warmup schedule to every replica, preserving independent initialization/bootstrap sampling."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:52-56",
+          "detail": "The trainer writes its checkpoint, SID array, JSON, and logs to a machine-specific absolute /home/wlia0047/... path rather than inside the implementation tree or relative to the checkout. This makes the requested tree's trainer non-portable and means a run can silently export artifacts outside the reviewed implementation; the checked-in tree log also shows an export to TIGER_RQ-VAE, not the configured TIGER_bootstrap_consensus_sid path, so it does not validate this implementation's export destination.",
+          "reproduction": "Run the entry point on a checkout without /home/wlia0047/ar57/wenyu/GeneRec: OUTPUT_DIR resolves to a nonexistent/unwritable path, and line 492 creates directories at that absolute location rather than under TREE_ROOT. The actual output destinations are fixed at lines 52-56.",
+          "correction": "Derive OUTPUT_DIR from REPO_ROOT (or TREE_ROOT) and keep all generated artifacts in the intended bootstrap-consensus run directory; then verify the exported file has one row per embedding/item ID and the expected SID width."
+        }
+      ]
+    }
+  ]
+}

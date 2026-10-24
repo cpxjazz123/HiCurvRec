@@ -1,0 +1,44 @@
+{
+  "verifier": "r10_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:293-299",
+          "detail": "Replica codebooks are initialized using the complete training embedding set before the bootstrap resample is drawn. Thus each replica is not fitted solely on its specified N-item bootstrap sample; the full-data KMeans initialization leaks items omitted from that replica's resample into its assignment estimator. The subsequent optimization does use the sampled tensor.",
+          "reproduction": "For N=2 and a bootstrap draw [item 0, item 0], line 294 still initializes the codebook from [item 0, item 1]. The replica can therefore depend on item 1 despite its bootstrap sample containing only item 0.",
+          "correction": "Draw sampled indices before codebook initialization and call init_codebook on replica_data (or the sampled bootstrap embeddings); keep assignment evaluation on all training items as currently done at lines 309-312."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:48-51",
+          "detail": "REPO_ROOT resolves one parent too high for the declared implementation tree, so the frozen embedding and training parquet paths resolve outside the repository. Given this file's tree location, parents[5] is the checkout root and parents[6] is its parent. The real trainer entry point therefore cannot load the frozen inputs at these paths in this checkout.",
+          "reproduction": "Evaluate Path(__file__).resolve().parents[6] from this tree: it resolves to /fs04/ar57/wenyu, making EMBEDDING_FILE /fs04/ar57/wenyu/stage1_GeneEmbedding/output/sentence_t5.npy rather than /fs04/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy; the same one-level error affects TRAIN_FILE.",
+          "correction": "Set REPO_ROOT to Path(__file__).resolve().parents[5] (or robustly locate the repository root), then verify both frozen paths exist before starting training."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:52-55",
+          "detail": "Artifacts are directed to a hard-coded /home/wlia0047/... absolute output path, not the implementation tree or the current checkout. In this environment that path is unrelated to the checkout and may not exist or be writable; the promised trainer/export integration is consequently not portable and can fail before training at log creation.",
+          "reproduction": "Run the real entry point on a machine without /home/wlia0047/ar57/wenyu/GeneRec: _launch_via_torchrun calls LOG_DIR.mkdir at line 515, under this absolute path, before main or data loading.",
+          "correction": "Derive OUTPUT_DIR from TREE_ROOT (or an explicitly configured output root that is validated), and keep checkpoint, logs, SID NPY and JSON together there."
+        }
+      ]
+    }
+  ]
+}
