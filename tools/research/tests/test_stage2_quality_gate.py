@@ -122,6 +122,7 @@ class QualityGateTests(unittest.TestCase):
         meta = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json"
         with patch.multiple(
             gate, EXPECTED_PAIRS=52855, FROZEN_BASELINE_L2_PREFIXES=16145,
+            FROZEN_RESAMPLE_VALID_L1_ER=16.38953942232631,
             FROZEN_BASELINE_BLOB_SHA1="d97d24a7a63891682d2b68c09a89164de2031ee9",
             FROZEN_VALID_PAIRS_BLOB_SHA1="11d76dd452f3a27d1f6bf79fe7673bc6505733ef",
             FROZEN_VALID_META_BLOB_SHA1="a0121691dc95168169bffdc3b6018608580468da"):
