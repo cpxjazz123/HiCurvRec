@@ -125,6 +125,27 @@ class SingleSIDMetricsRecordTests(unittest.TestCase):
         self.assertNotIn("conditional_l3_gain", metrics["hard_gates"])
         self.assertNotIn("valid_l1_positive_hit_rate", metrics["hard_gates"])
 
+    def test_single_sid_excluded_singleton_pairs_recorded_not_fabricated(self):
+        sids = _sid([(1, 2, 7, 768), (1, 2, 8, 768), (2, 3, 9, 768)])
+        fake_gate = {
+            "passed": False,
+            "candidate": {
+                "valid_l1_hard_er": 2.0,
+                "valid_l1_positive_hit_rate": 0.1,
+                "valid_l1_negative_hit_rate": 0.05,
+                "level2_distinct_prefixes": 2,
+            },
+            "baseline": {},
+            "sha256": {},
+            "thresholds": {"valid_l1_hard_er_strict_gt": 16.38953942232631,
+                           "level2_prefixes_strict_gt": 16145},
+        }
+        report = analysis.build_single_sid_record(
+            sids, fake_gate, [0, 0], [1, 2], {0: Counter({1: 2})})
+        self.assertEqual(report["methodology"]["validation_pairs_total"], 2)
+        self.assertEqual(report["methodology"]["validation_pairs"], 1)
+        self.assertEqual(report["methodology"]["validation_pairs_excluded"], 1)
+
     def test_single_sid_incomplete_valid_pairs_are_rejected(self):
         sids = _sid([(1, 2, 7, 768)])
         fake_gate = {
