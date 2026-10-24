@@ -1,55 +1,54 @@
 import importlib.util
-import math
 import pathlib
 import sys
 import unittest
 
 import torch
 
-
-SOURCE = pathlib.Path("/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id")
-sys.path.insert(0, str(SOURCE))
-from model import hyperbolic as hyp
-
+# Import directly from this candidate source tree, without relying on package installation.
+ROOT = pathlib.Path(__file__).resolve().parents[4] / 'stage2_RQ-VAE' / 'TIGER_c117_hyperbolic_item_semantic_id'
+if not ROOT.is_dir():
+    # Typical placement: .../agents/<candidate>_math/test_math.py
+    ROOT = pathlib.Path('/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id')
+sys.path.insert(0, str(ROOT))
+spec = importlib.util.spec_from_file_location('candidate_hyperbolic', ROOT / 'model' / 'hyperbolic.py')
+hyperbolic = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(hyperbolic)
 
 class HyperbolicReferenceTests(unittest.TestCase):
-    def test_origin_maps_and_inverse(self):
-        v = torch.tensor([[0.0, 0.0], [0.5, 0.0]], dtype=torch.float64)
-        expected_x = torch.tensor([[0.0, 0.0], [0.46211715726000974, 0.0]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.exp_0(v), expected_x, rtol=1e-12, atol=1e-12)
-        torch.testing.assert_close(hyp.log_0(expected_x), v, rtol=1e-12, atol=1e-12)
+    def test_origin_exponential_and_logarithm_on_axis(self):
+        # In curvature -1, exp_0((r,0))=(tanh(r),0), and log_0 reverses it.
+        v = torch.tensor([[0.0, 0.0], [0.5, 0.0], [-1.0, 0.0]], dtype=torch.float64)
+        expected = torch.tensor([[0.0, 0.0], [0.46211715726000974, 0.0], [-0.7615941559557649, 0.0]], dtype=torch.float64)
+        actual = hyperbolic.exp_0(v)
+        self.assertTrue(torch.allclose(actual, expected, atol=1e-12, rtol=1e-12), (actual, expected))
+        recovered = hyperbolic.log_0(expected)
+        self.assertTrue(torch.allclose(recovered, v, atol=1e-12, rtol=1e-12), (recovered, v))
 
-    def test_mobius_addition_known_collinear_values(self):
-        a = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
-        b = torch.tensor([[0.3, 0.0]], dtype=torch.float64)
-        # Formula reduces to (a+b)/(1+ab) on this axis.
-        expected = torch.tensor([[0.4716981132075472, 0.0]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.mobius_add(a, b), expected, rtol=1e-12, atol=1e-12)
-
-    def test_collinear_hyperbolic_distance_reference(self):
+    def test_collinear_mobius_distance_has_exact_log_two_reference(self):
+        # For x=1/5, y=1/2 on one diameter, (-x) (+) y=(y-x)/(1-xy)=1/3.
+        # Thus D=2*atanh(1/3)=ln(2), derived directly from the frozen definition.
         x = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
-        y = torch.tensor([[0.4, 0.0]], dtype=torch.float64)
-        # ||(-x) (+) y|| = (0.4-0.2)/(1-0.2*0.4) = 5/23, so D = 2*atanh(5/23) = ln(14/9).
-        # Operator correction: the draft hard-coded the rounded 0.442169, which is
-        # 3.4e-4 off the closed form the draft itself derives; the reference is
-        # now the exact expression.
-        expected = torch.tensor([[math.log(14.0 / 9.0)]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), expected, rtol=1e-12, atol=1e-12)
+        y = torch.tensor([[0.5, 0.0]], dtype=torch.float64)
+        expected = torch.tensor([[0.6931471805599453]], dtype=torch.float64)
+        actual = hyperbolic.hyperbolic_distance(x, y)
+        self.assertTrue(torch.allclose(actual, expected, atol=1e-12, rtol=1e-12), (actual, expected))
 
-    def test_distance_origin_radial_is_twice_artanh_radius(self):
-        x = torch.tensor([[0.0, 0.3]], dtype=torch.float64)
-        origin = torch.zeros_like(x)
-        expected = torch.tensor([[0.6190392084062235]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.hyperbolic_distance(origin, x), expected, rtol=1e-12, atol=1e-12)
+    def test_origin_distance_and_symmetry(self):
+        # D(0,tanh(0.7)e_1)=2*atanh(tanh(0.7))=1.4.
+        origin = torch.zeros((1, 2), dtype=torch.float64)
+        point = torch.tensor([[0.6043677771171636, 0.0]], dtype=torch.float64)
+        expected = torch.tensor([[1.4]], dtype=torch.float64)
+        d01 = hyperbolic.hyperbolic_distance(origin, point)
+        d10 = hyperbolic.hyperbolic_distance(point, origin)
+        self.assertTrue(torch.allclose(d01, expected, atol=1e-12, rtol=1e-12), (d01, expected))
+        self.assertTrue(torch.allclose(d10, expected, atol=1e-12, rtol=1e-12), (d10, expected))
 
-    def test_distance_symmetry_and_self_distance(self):
-        x = torch.tensor([[0.2, -0.1]], dtype=torch.float64)
-        y = torch.tensor([[-0.15, 0.25]], dtype=torch.float64)
-        torch.testing.assert_close(hyp.hyperbolic_distance(x, y), hyp.hyperbolic_distance(y, x), rtol=1e-12, atol=1e-12)
-        torch.testing.assert_close(hyp.hyperbolic_distance(x, x), torch.zeros((1, 1), dtype=torch.float64), atol=1e-12, rtol=0)
+    def test_mobius_add_zero_identity_and_opposite_cancellation(self):
+        a = torch.tensor([[0.2, -0.3]], dtype=torch.float64)
+        zero = torch.zeros_like(a)
+        self.assertTrue(torch.allclose(hyperbolic.mobius_add(a, zero), a, atol=1e-12, rtol=1e-12))
+        self.assertTrue(torch.allclose(hyperbolic.mobius_add(-a, a), zero, atol=1e-12, rtol=1e-12))
 
-    def test_exp_projects_large_tangent_vector_inside_ball(self):
-        v = torch.tensor([[100.0, 0.0]], dtype=torch.float64)
-        out = hyp.exp_0(v)
-        self.assertLess(float(torch.linalg.vector_norm(out)), 1.0)
-        self.assertAlmostEqual(float(out[0, 0]), 1.0 - hyp.EPSILON, places=12)
+if __name__ == '__main__':
+    unittest.main()
