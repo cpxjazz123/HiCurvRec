@@ -2026,10 +2026,14 @@ def round_admission(tree: Path, verification_id: str) -> dict:
         return {"passed": False, "refused": "the implementation was not reviewed by three agents"}
     if record.get("blocking_findings"):
         return {"passed": False, "refused": "unresolved blocking findings remain"}
-    if Path(record.get("tree", "")).resolve() != Path(tree).resolve():
-        return {"passed": False, "refused": "the record points at a different tree"}
+    # The tree may be the one the verifiers saw or its promoted copy inside the
+    # Stage2 allowlist; the source digest is path-independent, so it is what must
+    # match. A different digest means the code changed after the review.
     if record.get("source_digest") != module._source_digest(Path(tree)):
-        return {"passed": False, "refused": "the tree changed after the verifiers saw it"}
+        return {"passed": False,
+                "refused": "the tree changed after the verifiers saw it" +
+                           ("" if Path(record.get("tree", "")).resolve() == Path(tree).resolve()
+                            else " (and it is not the reviewed path)")}
     if not record.get("smoke"):
         return {"passed": False, "refused": "the implementation recorded no smoke result"}
     return {"passed": True, "round_id": round_id, "idea_id": idea_id,
