@@ -186,7 +186,11 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
                                                          "repair failed: " + str(exc))
                 pipeline_module.save_state(directory, state)
                 log("%s: %s" % (record["idea_id"], record.get("status")))
-        state["step"] = "stage2"
+        # Stay in verification until every implementation is resolved: a repair
+        # reopens the review, and the round must not move on with work in flight.
+        pending = [record for record in state.get("implementations", [])
+                   if record.get("status") in ("implemented", "repaired", "needs_repair")]
+        state["step"] = "verification" if pending else "stage2"
         pipeline_module.save_state(directory, state)
 
     return pipeline_module.summary(state)
