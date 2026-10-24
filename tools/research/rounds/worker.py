@@ -37,10 +37,22 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str) -> dict:
     destination = Path(root) / "agents" / task_id / output_name
     prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
               " (this absolute path). Write nowhere else.")
-    output = run_agent(task_id, prompt, output_name, Path(root),
-                        binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-                        timeout=settings.AGENT_TIMEOUT_SECONDS)
-    payload = read_json(output)
+    run_agent(task_id, prompt, output_name, Path(root),
+              binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
+              timeout=settings.AGENT_TIMEOUT_SECONDS)
+    # run_agent returns its execution receipt, not the answer: locate the file
+    # the agent wrote, accepting the same bounded relocation the runner allows.
+    workspace = Path(root) / "agents" / task_id
+    answer = workspace / output_name
+    if not answer.is_file():
+        matches = [match for match in sorted(workspace.rglob(output_name))
+                   if match.is_file()
+                   and not any(part.startswith("attempt-")
+                               for part in match.relative_to(workspace).parts)]
+        if not matches:
+            raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
+        answer = matches[0]
+    payload = read_json(answer)
     if not isinstance(payload, dict):
         raise pipeline_module.RoundError("agent " + task_id + " returned no JSON object")
     return payload
