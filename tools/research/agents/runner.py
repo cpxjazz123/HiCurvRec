@@ -114,6 +114,19 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         raise
     finally:
         (workspace / "running.json").unlink(missing_ok=True)
+    # The Agent is told the absolute destination, but a model can still write the
+    # answer into a nested or slightly misnamed directory of its own workspace.
+    # The artifact is what matters and the caller validates its content
+    # (candidate identity and source digest), so accept a bounded relocation and
+    # record where it landed instead of discarding a real session.
+    relocated = None
+    if not output.is_file():
+        matches = sorted(workspace.rglob(output_name))
+        matches = [match for match in matches
+                   if match.is_file() and ".." not in match.relative_to(workspace).parts]
+        if matches:
+            relocated = matches[0]
+            output = relocated
     valid = False
     if output.is_file() and process.returncode == 0 and not timed_out and not cancelled:
         try:
