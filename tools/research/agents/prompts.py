@@ -120,6 +120,8 @@ ROLE_GUIDANCE = {
         "the DDP suite really gathers per-rank values, the entrypoint suite really calls the "
         "trainer, the hashes match. State in the rationale what you verified statically and "
         "what execution still has to prove. "
+        "The materialised test files are the authoritative evidence: judge them, the "
+        "frozen source and the proposal. "
         "Reply JSON with candidate_id, source_sha256, proposal_sha256, "
         "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale. "
         "Keep the rationale under 120 words and finish it; an incomplete rationale "
