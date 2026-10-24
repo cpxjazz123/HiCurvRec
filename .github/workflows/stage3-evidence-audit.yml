@@ -1,0 +1,38 @@
+name: Stage3 Archived Evidence Audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/stage3_evidence_audit.py'
+      - 'scripts/stage3_evidence_review.py'
+      - 'scripts/test_stage3_evidence_audit.py'
+      - 'scripts/test_stage3_evidence_review.py'
+      - 'docs/stage3_predictor_validation.md'
+      - '.github/workflows/stage3-evidence-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-archival-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install diagnostic dependencies only
+        run: python -m pip install numpy pandas scipy scikit-learn pytest
+      - name: Run provenance, no-leakage and uncertainty tests
+        run: python -m pytest scripts/test_stage3_evidence_audit.py scripts/test_stage3_evidence_review.py -q
+      - name: Produce reproducible no-training diagnostic artifacts
+        run: |
+          python scripts/stage3_evidence_audit.py --out results/harness3_runs/stage3_evidence_audit
+          python scripts/stage3_evidence_review.py --folder results/harness3_runs/stage3_evidence_audit
+      - name: Publish analysis tables from this workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage3-evidence-audit
+          path: results/harness3_runs/stage3_evidence_audit
+          if-no-files-found: error
