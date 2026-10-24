@@ -30,3 +30,15 @@ jobs:
           assert "elif spec:" not in s
           print("Stage2 has a single source-bound independent-test admission path")
           PY
+      - name: Assert removed verifier and orphan probe are absent
+        run: |
+          test ! -e tools/cgv
+          test ! -e tools/stage2_stability_probe.py
+          python - <<'PY'
+          from pathlib import Path
+          from tools.research.integrations.preflight import audit_surviving_mainline
+          assert "verification" in audit_surviving_mainline()
+          assert "cgv" not in audit_surviving_mainline()
+          assert Path("tools/research/verification/admission.py").is_file()
+          print("Clean research verification structure")
+          PY

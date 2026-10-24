@@ -9,7 +9,7 @@ def audit_surviving_mainline() -> dict:
         "stage2_baseline": settings.STAGE2_BASELINE / "train_rqvae.py",
         "stage2_behavior": settings.STAGE2_BEHAVIOR / "train_rqvae.py",
         "stage3_entry": settings.STAGE3 / "train_HG-Rec.py",
-        "cgv": settings.CGV,
+        "verification": settings.VERIFICATION,
         "mcp": settings.MCP,
     }
     return {key: {"path": str(path), "exists": Path(path).is_file()}
