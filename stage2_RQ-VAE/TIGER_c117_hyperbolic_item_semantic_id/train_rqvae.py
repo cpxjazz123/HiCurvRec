@@ -50,21 +50,21 @@ from model import RQVAE
 # === 硬编码路径常量 (CLAUDE.md §1) ===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
 EMBEDDING_FILE = Path(
-    "/home/wlia0047/ar57_wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"  # stage1
+    "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"  # stage1
 )
 TRAIN_FILE     = Path(
-    "/home/wlia0047/ar57_wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
+    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
 # === 本轮实验臂 (issue #117 候选树) ===
 EXPERIMENT_ARM = "c117_hyperbolic_item_semantic_id"
 # 产物目录名: MCP 的 tree_result_dir 以本声明为准, 因此它与树名一致, 不带 iter 编号.
 RESULT_DIR_NAME = "TIGER_c117_hyperbolic_item_semantic_id"
-_RESULT_DIR     = Path("/home/wlia0047/ar57_wenyu/GeneRec/results/stage2_RQ-VAE") / RESULT_DIR_NAME
+_RESULT_DIR     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / RESULT_DIR_NAME
 OUTPUT_SID     = _RESULT_DIR / "sids_for_hgrec.npy"
 OUTPUT_JSON    = _RESULT_DIR / "item_sids.json"
 CHECKPOINT     = _RESULT_DIR / "rqvae_best.pth"
-METRICS_PATH   = Path("/home/wlia0047/ar57_wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/logs") / EXPERIMENT_ARM / "training_metrics.jsonl"
-LOG_DIR        = Path("/home/wlia0047/ar57_wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/logs") / EXPERIMENT_ARM
+METRICS_PATH   = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/logs") / EXPERIMENT_ARM / "training_metrics.jsonl"
+LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/logs") / EXPERIMENT_ARM
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
