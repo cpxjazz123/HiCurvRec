@@ -16,7 +16,9 @@
   (1) 硬标签由 auction + epsilon scaling + 单点改进修复给出, 不是经证明精确的
       平衡字典序运输最优解; 提案要求 "Solve the finite transportation problem
       exactly ... lexicographically smallest";
-  (2) 转移项 L_tr 的 (a,t,k) 计数尚未接入训练循环, 当前该项恒为 0.
+  (2) 转移项 L_tr 已接入: r[a,t,k] = (n_train(a,t,k) + p_pref[t,k]) / (n_train(a,t) + 1),
+      n_train 只统计与 prefix2(t) 同前缀的后继, p_pref 按提案的 leave-one-out 平滑,
+      边按 train 事件均匀采样 (无偏估计 (1/|T|) sum_T).
 
 2026-09-22 改造 (CLAUDE.md §1 + §3):
 - 参数全部硬编码为模块常量 (禁 argparse/CLI flag)
@@ -247,6 +249,79 @@ def _tokenizer_config() -> SimpleNamespace:
     )
 
 
+# === 训练划分的转移 (train-only) 与前缀条件目标 r ===
+def build_train_events(frame: pd.DataFrame) -> np.ndarray:
+    """Directed item transitions of the train split, one row per observed event.
+
+    The train split repeats each user's history at several prefix lengths, so
+    only the longest prefix plus its target is the complete available TRAIN
+    sequence (the same population the behaviour evidence uses).
+    """
+    latest: dict[int, tuple[int, ...]] = {}
+    for user, history, target in frame[["user", "history", "target"]].itertuples(
+            index=False, name=None):
+        sequence = tuple(int(x) for x in history) + (int(target),)
+        current = latest.get(int(user))
+        if current is None or len(sequence) > len(current):
+            latest[int(user)] = sequence
+    events: list[tuple[int, int]] = []
+    for key in sorted(latest):
+        sequence = latest[key]
+        for source, target in zip(sequence, sequence[1:]):
+            events.append((source, target))
+    return np.asarray(events, dtype=np.int64)
+
+
+def transition_weights(events: np.ndarray, codes: torch.Tensor, item_index: dict,
+                       successors: dict, n_codes: int = 256) -> tuple:
+    """Prefix-conditional r vectors and the per-epoch group tables.
+
+    p_pref[t,k] = (n_items(prefix2(t),k) - 1[k = q[t,3]] + 1)
+                   / (n_items(prefix2(t)) - 1 + 256)
+    r[a,t,k]    = (n_train(a,t,k) + p_pref[t,k]) / (n_train(a,t) + 1)
+    """
+    device = codes.device
+    n_items, n_levels = codes.shape
+    prefix2 = codes[:, :2].cpu().numpy()
+    third = codes[:, 2].cpu().numpy()
+    groups: dict = {}
+    for item in range(n_items):
+        key = (int(prefix2[item, 0]), int(prefix2[item, 1]))
+        groups.setdefault(key, []).append(item)
+    group_table = {}
+    for key, members in groups.items():
+        counts = np.zeros(n_codes, dtype=np.float64)
+        for member in members:
+            counts[third[member]] += 1.0
+        group_table[key] = (counts, float(len(members)))
+    return group_table
+
+
+def _r_vectors(anchors, targets, codes, group_table, item_index, successors,
+                n_codes: int = 256):
+    """r[a,t,k] for the sampled edges, from the frozen labels and train counts."""
+    prefix2 = codes[:, :2].cpu().numpy()
+    third = codes[:, 2].cpu().numpy()
+    out = np.zeros((len(anchors), n_codes), dtype=np.float32)
+    for position, (anchor, target) in enumerate(zip(anchors, targets)):
+        key = (int(prefix2[target, 0]), int(prefix2[target, 1]))
+        counts, size = group_table.get(key, (np.zeros(256), 0.0))
+        own = 1 if third[target] < 256 else 0
+        p_pref = (counts - own + 1.0) / (size - 1.0 + float(n_codes))
+        train_counts = np.zeros(n_codes, dtype=np.float64)
+        total = 0.0
+        for successor, count in successors.get(int(anchor), {}).items():
+            successor = int(successor)
+            if successor >= len(prefix2):
+                continue
+            if (int(prefix2[successor, 0]), int(prefix2[successor, 1])) != key:
+                continue
+            code = int(third[successor])
+            train_counts[code] += float(count)
+            total += float(count)
+        out[position] = ((train_counts + p_pref) / (total + 1.0)).astype(np.float32)
+    return out
+
 def main() -> None:
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
@@ -269,6 +344,20 @@ def main() -> None:
 
     all_embeddings = torch.from_numpy(embeddings)
     train_embeddings = all_embeddings[torch.from_numpy(train_ids)]
+    # Train-only directed transitions, the item index and the successor counts
+    # the prefix-conditional r vectors are built from.
+    events = build_train_events(train_frame)
+    item_index = {int(item): position for position, item in enumerate(train_ids)}
+    # Vector lookup from raw item id to the row in the training item set.
+    item_position = np.full(int(train_ids.max()) + 1, -1, dtype=np.int64)
+    for position, item in enumerate(train_ids):
+        item_position[int(item)] = position
+    successors: dict = {}
+    for anchor, target in events:
+        if int(anchor) in item_index and int(target) in item_index:
+            successors.setdefault(int(anchor), {})[int(target)] = \
+                successors.setdefault(int(anchor), {}).get(int(target), 0) + 1
+    edge_rng = np.random.default_rng(SEED + rank)
     config = _tokenizer_config()
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
@@ -338,11 +427,23 @@ def main() -> None:
         # Once per epoch: recompute the frozen global assignment and the frozen
         # transport targets over the whole training population.
         raw_module.refresh_assignment(train_embeddings.to(device))
+        level_codes = int(raw_module.rq.codebook_size[2])
+        group_table = transition_weights(events, raw_module.frozen_codes, item_index,
+                                         successors, level_codes)
+        epoch_balance = raw_module.population_balance(train_embeddings.to(device))
         for batch, index in loader:
             batch = batch.to(device, non_blocking=True)
             index = index.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            loss, recon_loss, assign_loss, balance_loss, transition_loss = model(batch, index)
+            picks = edge_rng.integers(0, len(events), size=batch.shape[0])
+            anchors = events[picks, 0]
+            targets = events[picks, 1]
+            r_batch = _r_vectors(anchors, targets, raw_module.frozen_codes, group_table,
+                                 item_index, successors, level_codes)
+            target_rows = torch.from_numpy(item_position[targets]).to(device)
+            edges = (train_embeddings.to(device)[target_rows],
+                     torch.from_numpy(r_batch).to(device))
+            loss, recon_loss, assign_loss, balance_loss, transition_loss = model(batch, index, edges)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -352,7 +453,7 @@ def main() -> None:
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
-            transitions.append(float(assign_loss.detach()) + float(balance_loss.detach()) + float(transition_loss.detach()))
+            transitions.append(float(assign_loss.detach()) + float(transition_loss.detach()))
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===
