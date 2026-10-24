@@ -97,3 +97,10 @@
 57. 只有确认重载生效后，才可用 MCP 触发依赖新代码的行为（例如按源码漂移重新起草验证套件）；禁止绕过 MCP 直接调用内部函数来推进流程。
 58. 若重载后 MCP 仍拒绝某项请求，那是规则本身在 fail-closed（例如源码已变、证据哈希对不上），应先修规则或重新生成证据，不得靠直接调用内部函数绕过。
 
+## 10. GPU 任务授权（常设授权）
+
+59. 仓库所有者已给出**常设授权**：任何 GPU 任务（Stage2 训练、Stage3 训练、四套机制测试里的真实 DDP 检验）可自行启动，**不必逐次询问授权**。
+60. 该常设授权只替代"人工逐次批准"这一步，**不放宽任何机器强制的闸门**：四套独立测试必须由 `verification_check` 真实执行并全部通过，source/test SHA 必须与冻结 manifest 一致，正式训练前必须完成一轮真实 Trainer smoke，Stage-3 冻结协议不得改动。
+61. 因此 issue #117 §1「当前资源权限」与 §4 第 5 步「HPC GPU/权限有效」由本节满足；`tools/research/integrations/preflight.py` 错误文案中的 "explicit authorization" 指的也是这一层。
+62. 常设授权不等于免除记录：每次 GPU 运行仍必须留下真实 run_id、Worker PID、实际模式、checkpoint 与评估工件；不得以"已获授权"为由伪造运行结果，也不得绕过 `verification_check`/`stage2_start` 直接跑 trainer。
+
