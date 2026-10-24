@@ -1,0 +1,67 @@
+# CANDIDATE -- PCTR, revision 2 (issue #115 JOIN R round 2)
+
+One mechanism. Role M's revised
+declaration follows verbatim; the frozen artifacts it quotes are in `frozen_artifacts.json`.
+
+```
+# PCTR revision 2 — Role M response to JOIN R
+
+## Scope and status of evidence
+
+This revision concerns exactly one mechanism: **prefix-internal tangent residual ordering (PCTR)**. The other mechanism families are closed and are not proposed, modified, or reopened here. The frozen protocol, control, data, split, model dimensions, codebook sizes, SID length, and Stage2/Stage3 recipes remain unchanged. `frozen_artifacts.json` is read-only evidence; none of its values or the frozen thresholds below are changed. This is a revised, auditable specification, not a claim that a candidate run has passed. No run outputs are present in the staged materials.
+
+## Operator and grouping
+
+For a sample with frozen Stage2 Lorentz point `x` and a candidate code point `q[p,k]`, both in the 32-dimensional hyperboloid of curvature `-c`, let `o=(1/sqrt(c),0,...,0)`. Put `u=log_o(x)`, `v[p,k]=log_o(q[p,k])`, and `r[p,k]=u-v[p,k]`. For training only, `mu[p,k]` is the arithmetic mean of the residuals of **all samples in the current minibatch** whose current discrete assignment is exactly `(parent prefix p, level-2 code k)`. The current sample is included. Membership and sample order are the recipe's discrete assignment and deterministic batch order; no gradient is taken through membership, but gradients are retained through each residual contributing to the mean. A singleton group therefore has `mu=r`; an empty group has no `(p,k)` candidate and is omitted. Groups are recomputed from the current assignment on each forward pass (no stale means). At evaluation, means are computed from the evaluation batch and its fixed, logged membership, without updating parameters. The batch composition is part of the operator and must be logged.
+
+Define the signed tangent inner product by `g(a,b)=c * sum_{j=1}^{32} a[j]*b[j]`. The factor `c` is the Lorentz metric induced on the tangent space at `o`; omitting it would give the Euclidean-coordinate tangent product, not the declared Lorentz product. Let `na=sqrt(max(g(a,a),0))`, `nb=sqrt(max(g(b,b),0))`, and
+
+`C(r,mu)=g(r,mu)/(max(nr,1e-6)*max(nmu,1e-6))`.
+
+This is a clipped normalized signed product, not necessarily a cosine when either norm is below the cutoff. At zero residual the numerator and term are zero. Within the same parent prefix, rank candidates by increasing `S[p,k]=D(x,q[p,k])-lambda*C(r[p,k],mu[p,k])`; cross-parent decisions continue to use the frozen objective. `lambda` is selected only on the frozen validation split from `{0.01,0.03,0.1,0.3,1.0}`, then locked. It is a selected hyperparameter, not a gradient-trained parameter. PCTR adds no learned parameters or codebooks, but does add batch-dependent functional scoring capacity.
+
+## Normative finite-precision algorithm (32-dimensional Lorentz model)
+
+All model inputs and stored point coordinates are IEEE-754 binary32. Reject NaN/Inf, `c<=0`, nonpositive time coordinate, missing frozen configuration, and points failing `abs(c*<z,z>_L+1)>1e-5`; do not project or silently fall back. Use binary64 for intermediate reductions and scalar geometry, then round each emitted operator value to binary32 using round-to-nearest, ties-to-even. The exact implementation/version and device math mode must be recorded; the reference path below is normative.
+
+For each valid point `z`, compute the Lorentz product with fixed-order binary64 accumulation, `L=<o,z>_L=-z[0]/sqrt(c)`, then `a=max(1,-c*L)` and `theta=acosh(a)`. The spatial tangent coordinates are computed without subtracting nearly equal hyperboloid points:
+
+`w[j]=z[j+1]` for `j=0..31`; `rho=sqrt(sum_j w[j]^2)` using fixed-order binary64 accumulation; `alpha=asinh(sqrt(c)*rho)`.
+
+For `rho>0`, set `log_o(z)[j]= (alpha/(sqrt(c)*rho))*w[j]`. For `rho=0`, or `theta<=1e-6`, set all 32 components exactly to positive zero. This is the declared identity-neighborhood residual policy; the cutoff event is recorded. The equivalent factor is `theta/sinh(theta)` and the `asinh` form avoids cancellation in `acosh` near the origin. Compute `u`, `v`, then each residual `r=u-v` in binary64 from the rounded binary32 input/log values; round and store each result as binary32 before computing subsequent score operands. This fixes the operator's rounding points.
+
+Compute `g` as the binary64 fixed-order sum of the 32 products, multiplied by frozen `c`; clamp only a negative self-product `g(a,a)` in `[-1e-12,0)` to zero and record that clamp. A more negative self-product is a numerical/domain error and aborts the run. Do not clamp cross-products or their signs. Compute norms by square root of self-products. Apply the norm floor separately to each norm exactly as written above and record a clamp whenever the pre-floor norm is strictly less than `1e-6` (including zero, not equality). Form group sums in fixed sample-ID order in binary64 and divide by the integer group count; round `mu` to binary32 before score computation. Any nonfinite intermediate aborts the run and makes the audit incomplete; it is not dropped from denominators.
+
+All score comparisons use the rounded binary32 score values promoted exactly to binary64. A difference with absolute value `<=1e-7` is a tie. Resolve ties by smaller frozen `D`; if those are tied by the same tolerance, by smaller integer code ID. No pairwise approximate comparator is used for sorting: construct a deterministic total order by sorting on `(score bucket, D bucket, integer code ID)`, where bucket equality is defined by comparing each value to the first (smallest) value in the bucket within `1e-7`; document the bucket representative and comparisons. This first-representative rule avoids non-transitive chained tolerance ties. Emit raw values, buckets, and the chosen path for every comparison.
+
+## Closed-family distinction
+
+PCTR is not any of the seven closed families, by operator-level definition (not by a novelty claim): (1) it does not assign a product-geodesic level-0 radius or collapse the sample to one code; (2) it does not use horospheric/Busemann levels or level-set gaps; (3) it does not transport residuals in codeword frames; all vectors are represented at the single fixed origin `o`; (4) it does not allocate token roles or alter the forward layout; (5) it has no gyro/Möbius composition or associator; (6) it does not use an unsigned tangent wedge/2-simplex area; and (7) it does not use a LOTV/Lorentzian determinant tie-break. Instead it adds a signed, batch-group residual inner product to ordinary within-prefix candidate scores, capable of changing non-tied rankings. These are mutually testable operator distinctions; they do not establish prior-art novelty. HiHPQ remains adjacent/unresolved on the supplied abstract-only record; no novelty or non-overlap claim is made pending full-text/code review.
+
+## Pre-registered decision rules (all independently gating)
+
+Use the unchanged frozen evaluation populations and metric implementations/configuration. The task-performance gates are strict: candidate Hard-L1 ER `>16.38953942232631`, Stage3 Recall@10 `>0.06406796775709883`, and Stage3 NDCG@10 `>0.03530651701940677`; failure of any one is failure. Report exact paired ER inputs and Stage3 per-query hits/discounted gains, denominators, and metric implementation/configuration so these values can be recomputed. No threshold is rounded before comparison.
+
+The following assignment diagnostics are additional independent gates, not substitutes for task metrics:
+
+* **Per-level flip rate:** for each SID level `l=0,1,2`, eligible units are all 24,587 frozen evaluation sample IDs (or the unchanged protocol's actual evaluation IDs if different, explicitly reconciled). Numerator is IDs whose candidate integer code differs from the directly joined `lambda=0` control code at level `l`; denominator is the count of eligible IDs, including unchanged assignments. Each level must be at least `5.00%` (`100*flips/eligible >= 5.00`). Report numerator and denominator; do not pool levels. Missing IDs or incomplete joins fail audit.
+* **Tie share:** among eligible within-parent candidate comparisons (each sample × unordered pair of distinct available candidate codes, levels 0–2 as applicable), count comparisons whose raw score difference is within `1e-7` under the fixed first-representative rule. Report per-level and overall numerator/denominator; overall tie share must be `<=10.00%`. Empty populations fail audit rather than count as zero.
+* **Clamp rate:** numerator counts each occurrence of any declared numerical clamp: log identity-neighborhood cutoff, `max(1,...)` arcosh argument adjustment, tolerated negative self-product clamp, and either norm floor. Denominator is the total number of corresponding attempted operations (log-map points, arcosh arguments, self-products, and norm evaluations) in the same completed run; report per-type counts and denominators as well as their summed ratio. Clamp rate must be `<=0.10%`; exactly `0.10%` passes. Any abort, invalid input, or nonfinite intermediate fails, independently of the rate.
+* **Mechanism activity:** at least `1.00%` of eligible within-prefix unordered candidate comparisons must change pairwise ordering relative to `lambda=0`, computed on identical samples/candidate sets; otherwise PCTR is operationally ineffective and fails. This is distinct from per-level assignment flips.
+* **Identity/control check:** a `lambda=0` replay on identical inputs must reproduce every frozen-control SID exactly. A mismatch fails implementation fidelity; no metric gain can override it.
+
+The frozen summary's 4,624/16,147 = 28.64% is the fraction of observed prefix cells containing at least two codes, not a sample coverage rate. The run must calculate and emit sample-level eligible coverage separately.
+
+## Required run artifact and independent recomputation
+
+The required machine-readable artifact is `assignment_audit.jsonl`, written by the `assignment_audit.emit` call immediately after each evaluation batch's score construction and assignment, and finalized by a manifest `assignment_audit.manifest.json`. One JSONL record per sample/comparison includes run/split/sample IDs; batch ID, ordered membership and `(p,k)` group counts; frozen and lambda-zero/candidate SID triples; parent and full eligible code set; exact binary32 `x,q,o,c,u,v,r,mu` values (not hashes alone); `g`, norms, pre/post-floor norms, numerator, denominator, normalized term, `D`, lambda and `S`; raw pairwise score differences, bucket representatives, tolerance/tie branch and final order; all clamp/domain/nonfinite flags. Include payloads or lossless inline IEEE-754 bit encodings, schema/version, deterministic decoding rules, source/config/code/data hashes and metric inputs/results. The manifest records expected and observed sample/comparison counts, per-level denominators, completion marker, and hashes of every shard. Writes are atomic per shard; an exception leaves no completion marker and is a failed/incomplete run. The lambda-zero and candidate streams must have a one-to-one sample-ID join, identical candidate eligibility, and identical evaluation inputs.
+
+The audit consumer recomputes the log maps, residuals, group means, scores, tie buckets, assignment flips, tie shares, clamp rates and metric thresholds from the emitted operands, without rerunning model inference. It must reject missing fields, hash-only operands, count mismatches, incomplete shards, or changed frozen files. Preserve the completed artifact and manifest with the run. At present these outputs do not exist in the staged workspace, so this document makes no pass claim.
+
+## Capacity, gradients, and identity falsifier
+
+No learned embedding/codebook/token is added. Gradients flow through the stated log-map (outside its identity branch), residuals, inner product, clipped normalization, and batch mean with group membership held fixed. The cutoff, norm-floor, discrete membership and ordering boundaries are piecewise differentiable; no smooth-gradient claim is made at boundaries. The mean includes the current sample, so singleton behavior is explicitly the clipped self-product. If every eligible comparison has the same order as lambda-zero, or every correction is zero, the run is an operational identity and fails the activity gate.
+
+STATUS: READY_FOR_JOIN_R
+
+```
