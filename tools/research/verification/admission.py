@@ -161,7 +161,7 @@ def validate_evidence(tree: Path, candidate_id: str) -> tuple[Path, dict, dict]:
     if (verdict.get("verdict") != "APPROVE_TESTS"
             or verdict.get("source_sha256") != source
             or verdict.get("proposal_sha256") != manifest["proposal_sha256"]
-            or verdict.get("test_sha256") != tests):
+            or _normalise_suite_keys(verdict.get("test_sha256")) != tests):
         raise AdmissionError("independent Reviewer did not approve these exact tests and source")
     return case_dir, manifest, {"candidate_id": candidate_id,
                                 "source_sha256": source, "review": "APPROVE_TESTS"}
@@ -262,3 +262,22 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
     result["note"] = ("All four reviewed test suites actually ran; the existing "
                       "MCP one-epoch trainer smoke still follows before official training.")
     return _persist(result)
+
+def _normalise_suite_keys(mapping):
+    """Accept a report that names suites by file instead of by suite name.
+
+    The manifest keys the reviewed suites by suite name ("math"), while a
+    reviewer may write the filename ("test_math.py"). The hashes are the same
+    evidence either way, so normalise the names and keep the values strict.
+    """
+    if not isinstance(mapping, dict):
+        return mapping
+    normalised = {}
+    for key, value in mapping.items():
+        name = str(key)
+        if name.startswith("test_"):
+            name = name[len("test_"):]
+        if name.endswith(".py"):
+            name = name[:-len(".py")]
+        normalised[name] = value
+    return normalised
