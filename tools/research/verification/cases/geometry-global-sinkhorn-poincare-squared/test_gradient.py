@@ -53,7 +53,10 @@ class GradientFlowTests(unittest.TestCase):
         total, rec, bal = model.loss(data[:6], torch.arange(6))
         self.assertTrue(torch.isfinite(total))
         self.assertGreater(float(rec), 0.0)
-        self.assertGreater(float(bal), 0.0)
+        # The marginal KL is non-negative and may be zero when the soft marginals
+        # are already uniform; the composition is what must hold.
+        self.assertGreaterEqual(float(bal), 0.0)
+        self.assertAlmostEqual(float(total), float(rec + bal), places=5)
         total.backward()
         dead = [name for name, parameter in model.named_parameters()
                 if parameter.requires_grad and parameter.grad is None]
