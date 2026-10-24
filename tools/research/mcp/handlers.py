@@ -132,7 +132,7 @@ def research_start():
         atomic_json(root / "run.json", {
             "schema": 1, "run_id": run_id, "created_at": time.time(),
             "objective": "Behavior-grounded hyperbolic semantic IDs for next-item recommendation",
-            "frozen_protocol": "Issue116 / CLAUDE.md", "autorun_gpu": False,
+            "frozen_protocol": "Issue117 / CLAUDE.md", "autorun_gpu": False,
         })
         pipeline.bootstrap_run(run_id)
         dispatch = _launch_if_possible(run_id, root)

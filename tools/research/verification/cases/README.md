@@ -16,7 +16,7 @@ No generic placeholder cases ship with this repository: until a real candidate
 has four passing and reviewed test suites, official research Stage2 is blocked.
 
 For every new candidate, write:
-  results/research/issue116/verification/<candidate_id>/manifest.json
+  results/research/issue117/verification/<candidate_id>/manifest.json
 
 The manifest binds:
 - schema=1, run_id, candidate_id, source_tree, source_sha256 (full active code tree);

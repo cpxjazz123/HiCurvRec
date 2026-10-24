@@ -2,7 +2,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-STATE_ROOT = ROOT / "results" / "research" / "issue116"
+STATE_ROOT = ROOT / "results" / "research" / "issue117"
 TRAIN = ROOT / "results" / "stage0_build_parquet" / "train.parquet"
 VALID = ROOT / "results" / "stage0_build_parquet" / "valid.parquet"
 TEST = ROOT / "results" / "stage0_build_parquet" / "test.parquet"

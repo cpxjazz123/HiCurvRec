@@ -12,7 +12,7 @@ class AdmissionTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.evidence = self.root / "issue116"
+        self.evidence = self.root / "issue117"
         self.cases = self.root / "cases"
         self.tree = self.root / "proposed_hyperbolic"
         self.tree.mkdir()

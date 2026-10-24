@@ -1,4 +1,4 @@
-"""One canonical Issue116 DAG; each research run owns a separate evidence directory."""
+"""One canonical Issue117 DAG; each research run owns a separate evidence directory."""
 import json
 import os
 from pathlib import Path
@@ -46,7 +46,7 @@ def manifest_for(task, root):
     behavior = root / "behavior.json"
     literature = root / "agents" / "literature" / "literature.json"
     proposal = root / "agents" / "geometry" / "candidate.json"
-    manifest = {"task_id": task, "research": "issue116-behavior-first"}
+    manifest = {"task_id": task, "research": "issue117-behavior-first"}
     if task == "literature":
         manifest["research_question"] = (
             "Research verified literature where user next-item behavior, "
@@ -138,7 +138,7 @@ def process_next(run_id):
 
 
 def inspect():
-    return {"system": "research-issue116", "live_agents_allowed": settings.LIVE_AGENTS_ALLOWED,
+    return {"system": "research-issue117", "live_agents_allowed": settings.LIVE_AGENTS_ALLOWED,
             "training_launch_available": False,
             "repository": audit_surviving_mainline(),
             "tasks": store().snapshot()["tasks"]}

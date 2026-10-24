@@ -1,1 +1,1 @@
-"""Thin MCP adapters for the one native Issue116 research DAG."""
+"""Thin MCP adapters for the one native Issue117 research DAG."""
