@@ -165,27 +165,12 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
                         "committed_path": str(path), "materialised_path": str(materialised),
                         "materialised_sha256": sha256(materialised)}
     data["tests"] = tests
+    # The draft author reports are receipts of the authoring step, checked by
+    # salt-and-hash admission; they are NOT evidence about the committed tests.
+    # Carrying their stale prose into the review made a reviewer block two
+    # corrected suites because a draft still quoted the pre-correction expected
+    # value. The committed, materialised tests are the only authoritative text.
     data["author_reports"] = {}
-    index = EVIDENCE_ROOT / "verification" / candidate_id / "drafts" / "authors.json"
-    for role in ("math", "gradient", "runtime"):
-        output = run_root / "agents" / (candidate_id + "_" + role) / (role + ".json")
-        if not output.is_file() and index.is_file():
-            entry = read_json(index).get(role) or {}
-            name = entry.get("output_name") or (role + ".json")
-            execution = entry.get("execution")
-            if execution:
-                output = Path(execution).parent / name
-        report = read_json(output) or {}
-        # The committed suites are already in the manifest, so the author report
-        # only contributes its identity and hashes: carrying the full test text a
-        # second time doubles the prompt and pushed the Reviewer into a truncated
-        # answer.
-        compact = {key: value for key, value in report.items()
-                   if not (isinstance(key, str) and key.endswith("test_source"))}
-        for key, value in report.items():
-            if isinstance(key, str) and key.endswith("test_source") and isinstance(value, str):
-                compact[key + "_sha256"] = sha256_text(value)
-        data["author_reports"][role] = compact
     prompt = _prompt("VERIFY_REVIEW", candidate_id + "_review", data, "review.json",
                      root=run_root)
     _archive_workspace(run_root / "agents" / (candidate_id + "_review"), request_id)
