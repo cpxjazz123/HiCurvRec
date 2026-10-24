@@ -2459,9 +2459,13 @@ def _promote_round_tree(tree: Path, idea_id: str) -> Path:
     if source.resolve() == target.resolve():
         return target
     # Always refresh the allowlist copy: the reviewed tree is the source of truth,
-    # and the admission compares the copy's source digest with the record.
+    # and the admission compares the copy's source digest with the record. The
+    # target is removed first, because merging would keep stale .py files from an
+    # earlier promotion and change the digest.
+    if target.exists():
+        shutil.rmtree(target)
     ignore = shutil.ignore_patterns("logs", "__pycache__", "results", "dataset")
-    shutil.copytree(source, target, ignore=ignore, dirs_exist_ok=True)
+    shutil.copytree(source, target, ignore=ignore)
     return target
 
 
