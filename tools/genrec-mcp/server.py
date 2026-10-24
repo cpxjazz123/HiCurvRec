@@ -2494,19 +2494,30 @@ def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
             queued.append(record["idea_id"])
     launched, refused = [], []
     probe = probe_gpu_layout()
-    free_gpus = probe.get("physical") or []
+    # Only the cards this process may use, and never a card a running job already
+    # holds: two jobs on one card would break both.
+    usable = list(probe.get("visible") or probe.get("physical") or [])
+    busy = set()
+    for job in queue.jobs["jobs"]:
+        if job["status"] == "running" and job.get("gpu"):
+            busy.add(str(job["gpu"]))
+    free_gpus = [gpu for gpu in usable if str(gpu) not in busy]
     batch = queue.next_batch("stage2")
     if probe.get("visible_count") == 1:
         # One card each: a tree that can only fork four ranks cannot start here,
         # so the trees that honour the single-card contract go first.
         batch.sort(key=lambda job: 0 if tree_supports_single_gpu(Path(job["tree"])) else 1)
     for slot, job in enumerate(batch):
-        gpu = free_gpus[slot % len(free_gpus)] if free_gpus else None
+        gpu = free_gpus[slot] if slot < len(free_gpus) else None
+        if gpu is None and usable:
+            break
         previous = os.environ.get("CUDA_VISIBLE_DEVICES")
         if gpu is not None:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
         try:
             queue.start(job["job_id"])
+            queue._job(job["job_id"])["gpu"] = gpu
+            queue.save()
             verification = "round:" + round_id + ":" + str(job["idea_id"])
             outcome = tool_stage2_start(str(job["tree"]), verification)
         finally:
