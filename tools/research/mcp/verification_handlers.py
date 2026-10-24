@@ -45,6 +45,24 @@ def _lock(root):
             fcntl.flock(fd, fcntl.LOCK_UN)
 
 
+def _authored_source_digest(root, candidate_id: str):
+    """The source digest the authoring Agents reported, if any."""
+    index = root / "verification" / candidate_id / "drafts" / "authors.json"
+    if not index.is_file():
+        return None
+    for entry in (read_json(index) or {}).values():
+        execution = entry.get("execution")
+        if not execution:
+            continue
+        output = Path(execution).parent / (entry.get("output_name") or "")
+        if not output.is_file():
+            continue
+        reported = (read_json(output) or {}).get("source_sha256")
+        if reported:
+            return reported
+    return None
+
+
 def _candidate(run_id):
     root = handlers._root(run_id)
     if (root / "cancel.json").is_file():
@@ -69,7 +87,12 @@ def _start(run_id, source_dir, action):
         source_sha = source_digest(tree)
         if path.is_file():
             existing = read_json(path)
-            stale = existing.get("source_sha256") not in (None, source_sha)
+            recorded = existing.get("source_sha256")
+            if recorded is None:
+                # A record made before the digest was stored: fall back to the
+                # digest the authors themselves reported.
+                recorded = _authored_source_digest(root, cid)
+            stale = recorded not in (None, source_sha)
             if (existing.get("status") not in ("failed", "cancelled", "superseded")
                     and not stale):
                 return {"started": False, "reason": "request_already_recorded",
