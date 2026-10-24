@@ -22,10 +22,14 @@ jobs:
           python-version: '3.11'
       - name: Check frozen validation metadata and calculate all historical SID ER
         run: python tools/research/integrations/historical_er_backfill.py
+      - name: Compute 30+ SID structural and behavioral indicators
+        run: python tools/research/integrations/historical_sid_indicator_screen.py
       - name: Attach reproducible audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: historical-frozen-er-audit
-          path: results/research/historical_er_backfill/
+          path: |
+            results/research/historical_er_backfill/
+            results/research/historical_sid_indicator_screen/
           if-no-files-found: warn
