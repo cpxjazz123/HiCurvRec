@@ -896,6 +896,37 @@ for _attr, _value in list(vars(T).items()):
     _wrapped += _wrap_public(_value, _value.__name__)
 summary_wrapped = _wrapped
 
+# A candidate whose mechanism lives in the module geometry rather than in an
+# auxiliary loss term has no wrapped term to probe, and the smoke used to fail
+# with an empty ``probed_terms`` for exactly that shape of tree. Probe the tree's
+# OWN base losses against its OWN parameters instead: the total loss and the
+# reconstruction term must both carry gradient into the model, or the geometry is
+# learning nothing. This is measured on the real training batch, with the real
+# trainer call, and it never weakens the auxiliary-term probe above.
+_model_cls = getattr(T, "RQVAE", None)
+if isinstance(_model_cls, type) and hasattr(_model_cls, "compute_loss"):
+    _original_compute_loss = _model_cls.compute_loss
+
+    def _probed_compute_loss(self, *args, **kwargs):
+        total, recon = _original_compute_loss(self, *args, **kwargs)
+        params = [p for p in self.parameters() if p.requires_grad]
+        for _key, _term in (("RQVAE.compute_loss.total", total),
+                            ("RQVAE.compute_loss.recon", recon)):
+            if _key in probes or not torch.is_tensor(_term) or not _term.requires_grad:
+                continue
+            try:
+                _grads = torch.autograd.grad(_term.sum(), params, retain_graph=True,
+                                             allow_unused=True)
+            except RuntimeError:
+                continue
+            _best = max((float(g.abs().sum()) for g in _grads if g is not None), default=0.0)
+            probes[_key] = {"loss": float(_term.detach()) if _term.numel() == 1
+                            else float(_term.detach().abs().mean()), "grad": _best,
+                            "source": "base_loss_parameter_gradient"}
+        return total, recon
+
+    _model_cls.compute_loss = _probed_compute_loss
+
 _original_clip = torch.nn.utils.clip_grad_norm_
 
 
