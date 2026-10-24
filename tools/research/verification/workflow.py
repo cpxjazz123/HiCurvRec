@@ -198,5 +198,11 @@ def freeze_reviewed_manifest(candidate_id: str, tree: Path, run_id: str) -> Path
         raise AdmissionError("candidate verification identity is owned by another run")
     atomic_json(path, manifest)
     # Non-test identity check; will fail closed if review evidence is incomplete.
-    validate_evidence(tree, candidate_id)
+    # A blocked review must leave NO manifest behind, otherwise a later
+    # verification_check could find a manifest whose review never approved it.
+    try:
+        validate_evidence(tree, candidate_id)
+    except AdmissionError:
+        path.unlink(missing_ok=True)
+        raise
     return path
