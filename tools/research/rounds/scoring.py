@@ -52,14 +52,20 @@ def validate_report(report: dict, *, scorer: str) -> dict:
         values = entry.get("scores")
         if not isinstance(values, dict):
             raise ScoreError("score for " + identifier + " has no dimension scores")
+        missing = []
         for dimension in DIMENSIONS:
             value = values.get(dimension)
             if not isinstance(value, (int, float)) or isinstance(value, bool):
-                raise ScoreError("score for " + identifier + " has no numeric " + dimension)
+                missing.append(dimension)
+                continue
             if not SCALE[0] <= float(value) <= SCALE[1]:
                 raise ScoreError("score for " + identifier + " is outside 0-5: " + dimension)
+        if missing:
+            # One incomplete line does not cost the scorer its other ideas: the
+            # gap is recorded and the matrix shows it.
+            entry["missing_dimensions"] = missing
         if not str(entry.get("rationale", "")).strip():
-            raise ScoreError("score for " + identifier + " has no rationale")
+            entry["rationale_missing"] = True
     return report
 
 
@@ -90,19 +96,31 @@ def build_matrix(ideas: list, reports: list) -> dict:
     matrix = []
     for identifier in idea_ids:
         per_scorer = {}
+        incomplete = []
         for scorer, entries in by_scorer.items():
-            per_scorer[scorer] = {dimension: float(entries[identifier]["scores"][dimension])
-                                  for dimension in DIMENSIONS}
+            values = entries[identifier]["scores"]
+            per_scorer[scorer] = {dimension: float(values[dimension])
+                                  for dimension in DIMENSIONS if dimension in values}
+            if len(per_scorer[scorer]) != len(DIMENSIONS) or \
+                    entries[identifier].get("rationale_missing"):
+                incomplete.append(scorer)
         medians = {dimension: statistics.median(
-            [per_scorer[scorer][dimension] for scorer in sorted(per_scorer)])
+            [per_scorer[scorer][dimension] for scorer in sorted(per_scorer)
+             if dimension in per_scorer[scorer]])
             for dimension in DIMENSIONS}
-        means = {dimension: sum(per_scorer[scorer][dimension] for scorer in per_scorer) / len(per_scorer)
+        means = {dimension: (sum(per_scorer[scorer][dimension] for scorer in per_scorer
+                                 if dimension in per_scorer[scorer])
+                             / len([scorer for scorer in per_scorer
+                                    if dimension in per_scorer[scorer]]))
                  for dimension in DIMENSIONS}
-        spreads = {dimension: max(per_scorer[scorer][dimension] for scorer in per_scorer)
-                   - min(per_scorer[scorer][dimension] for scorer in per_scorer)
+        spreads = {dimension: max(per_scorer[scorer][dimension] for scorer in per_scorer
+                                  if dimension in per_scorer[scorer])
+                   - min(per_scorer[scorer][dimension] for scorer in per_scorer
+                         if dimension in per_scorer[scorer])
                    for dimension in DIMENSIONS}
         overall_median = statistics.median(
-            [statistics.median([per_scorer[scorer][dimension] for scorer in per_scorer])
+            [statistics.median([per_scorer[scorer][dimension] for scorer in per_scorer
+                                 if dimension in per_scorer[scorer]])
              for dimension in DIMENSIONS])
         overall_mean = sum(means[dimension] for dimension in DIMENSIONS) / len(DIMENSIONS)
         row = {
@@ -118,8 +136,11 @@ def build_matrix(ideas: list, reports: list) -> dict:
             "overall_mean": overall_mean,
             "scorers_above_median_threshold": sum(
                 1 for scorer in per_scorer
-                if statistics.median([per_scorer[scorer][dimension] for dimension in DIMENSIONS])
+                if statistics.median([per_scorer[scorer][dimension]
+                                      for dimension in DIMENSIONS
+                                      if dimension in per_scorer[scorer]])
                 >= DEFAULT_SELECTION["median_threshold"]),
+            "incomplete_scorers": sorted(incomplete),
         }
         if identifier in cost_by_idea:
             row["declared_hours"] = cost_by_idea[identifier]

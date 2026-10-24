@@ -136,7 +136,13 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     valid = False
     if output.is_file() and process.returncode == 0 and not timed_out and not cancelled:
         try:
-            valid = isinstance(json.loads(output.read_text(encoding="utf-8")), dict)
+            text = output.read_text(encoding="utf-8")
+            if output_name.endswith(".json"):
+                valid = isinstance(json.loads(text), dict)
+            else:
+                # A plain-text answer only has to exist and say something: the
+                # caller reads it and decides whether it is usable.
+                valid = bool(text.strip())
         except (OSError, ValueError):
             valid = False
     record = {
@@ -161,5 +167,9 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     receipt = workspace / "execution.json"
     atomic_json(receipt, record)
     if not valid:
-        raise RuntimeError("OpenCode failed, cancelled, timed out or returned invalid JSON: " + str(receipt))
+        reason = ("OpenCode failed, cancelled, timed out or returned invalid JSON: "
+                  if output_name.endswith(".json")
+                  else "OpenCode failed, cancelled, timed out or wrote no usable "
+                       "answer file: ")
+        raise RuntimeError(reason + str(receipt))
     return receipt

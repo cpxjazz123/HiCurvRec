@@ -172,12 +172,14 @@ def parse_scores(text: str) -> dict:
                 rationales[identifier] = rest.strip() or value.strip()
     for entry in scores:
         entry["rationale"] = rationales.get(entry["idea_id"], "")
+        entry["missing_dimensions"] = [dimension for dimension in _SCORE_DIMENSIONS
+                                       if dimension not in entry["scores"]]
+        if not entry["rationale"]:
+            # A scorer that ran out of words still gave a usable number; the gap
+            # is recorded instead of throwing the whole report away.
+            entry["rationale_missing"] = True
     if not scores:
         raise PlainTextError("the answer holds no score line")
-    missing = [dimension for dimension in _SCORE_DIMENSIONS
-               if any(dimension not in entry["scores"] for entry in scores)]
-    if missing:
-        raise PlainTextError("a score line is missing: " + ", ".join(missing))
     return {"scores": scores}
 
 
