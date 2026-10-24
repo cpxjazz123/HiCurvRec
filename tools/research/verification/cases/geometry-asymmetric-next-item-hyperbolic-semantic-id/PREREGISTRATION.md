@@ -159,6 +159,22 @@ independent reviewer can judge them:
    the suite unable to load the candidate in the review location. The suite now
    uses the absolute candidate path and falls back to walking up, and it has
    been executed from BOTH locations with all four suites passing.
+7. **test_math.py, the multi-dimensional `exp_0` closed form.** The re-authored
+   suite asserted element-wise `tanh`, which is only true on a single axis; the
+   frozen map is radial, `exp_0(v) = tanh(||v||) v/||v||`, and the assertion
+   failed by 0.10 on a three-coordinate point. The suite now asserts the radial
+   closed form derived from the definition, and a separate test pins the
+   single-axis case where element-wise `tanh` does hold.
+8. **test_gradient.py, the disconnected-path negative control.** The draft
+   asserted that `torch.autograd.grad` returns `None` for a detached tensor, but
+   autograd RAISES in that case, so the assertion was unreachable. The control
+   now asserts the raise; the NaN control is unchanged.
+9. **The grouped executor.** Suites now run as three concurrent process groups
+   (math+gradient share one interpreter, DDP and entrypoint keep their own), and
+   each suite imports under its natural module name with the case directory on
+   `sys.path`, because the DDP suite pickles a worker function that the child
+   process re-imports. Grouping is the isolation boundary: no suite was merged
+   into a single-process DDP check and the real trainer call was not weakened.
 
 ## 7. What is authorized now, and what is not
 
