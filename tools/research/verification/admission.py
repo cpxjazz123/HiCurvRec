@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 import time
 from pathlib import Path
 from typing import Any
 
-from ..core.evidence import atomic_json
 
 REPO = Path(__file__).resolve().parents[3]
 EVIDENCE_ROOT = REPO / "results" / "research" / "issue117"
@@ -183,7 +183,12 @@ def run_preflight(tree: Path, candidate_id: str, python: str) -> dict:
         after the suites really ran. The artifact keeps the proof.
         """
         try:
-            atomic_json(outcome_path, {**payload, "recorded_at_epoch": time.time()})
+            outcome_path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = outcome_path.with_suffix(".json.tmp")
+            temporary.write_text(
+                json.dumps({**payload, "recorded_at_epoch": time.time()},
+                           indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            os.replace(temporary, outcome_path)
         except OSError:
             pass
         return payload
