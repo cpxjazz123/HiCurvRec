@@ -1994,9 +1994,57 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
                 "refused": "verification engine error: " + type(exc).__name__ + ": " + str(exc)}
 
 
+def round_admission(tree: Path, verification_id: str) -> dict:
+    """Admission for an Issue #120 round candidate.
+
+    The round's own evidence is the implementation record: three independent
+    verifiers, no unresolved blocking finding, the source digest the verifiers
+    saw, and a real smoke result. Scientific paperwork is not a gate here; a
+    correct, numerically stable, runnable trainer is.
+    """
+    import importlib.util
+    from tools.research.rounds import pipeline as round_pipeline
+
+    spec = importlib.util.spec_from_file_location("genrec_round_pipeline",
+                                                  REPO / "tools/research/rounds/pipeline.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    parts = verification_id.split(":", 2)
+    if len(parts) != 3 or parts[0] != "round":
+        return {"passed": False, "refused": "not a round verification id"}
+    _, round_id, idea_id = parts
+    directory = REPO / "results" / "research" / "issue120" / "rounds" / round_id
+    state = module.load_state(directory)
+    records = [record for record in state.get("implementations", [])
+               if record.get("idea_id") == idea_id]
+    if not records:
+        return {"passed": False, "refused": "the round has no implementation for " + idea_id}
+    record = records[-1]
+    if record.get("status") != "verified":
+        return {"passed": False, "refused": "implementation status is " +
+                str(record.get("status"))}
+    if len(record.get("verdicts", [])) != 3:
+        return {"passed": False, "refused": "the implementation was not reviewed by three agents"}
+    if record.get("blocking_findings"):
+        return {"passed": False, "refused": "unresolved blocking findings remain"}
+    if Path(record.get("tree", "")).resolve() != Path(tree).resolve():
+        return {"passed": False, "refused": "the record points at a different tree"}
+    if record.get("source_digest") != module._source_digest(Path(tree)):
+        return {"passed": False, "refused": "the tree changed after the verifiers saw it"}
+    if not record.get("smoke"):
+        return {"passed": False, "refused": "the implementation recorded no smoke result"}
+    return {"passed": True, "round_id": round_id, "idea_id": idea_id,
+            "revision": record.get("revision", 0),
+            "source_digest": record.get("source_digest"),
+            "verifiers": [verdict.get("verifier") for verdict in record.get("verdicts", [])],
+            "smoke": record.get("smoke", {})}
+
+
 def validate_agent_evidence_only(tree: Path, verification_id: str) -> dict:
     """Recheck immutable bytes and independent sessions without re-running GPU tests."""
     import importlib.util
+    if str(verification_id).startswith("round:"):
+        return round_admission(tree, verification_id)
     path = REPO / "tools" / "research" / "verification" / "admission.py"
     try:
         spec = importlib.util.spec_from_file_location("genrec_native_evidence", path)
@@ -2262,3 +2310,215 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# --------------------------------------------------------------------------
+# Issue #120: multi-agent research rounds
+# --------------------------------------------------------------------------
+ROUND_WORKER_TEMPLATE = '''"""Detached round worker: run the agent stages of one round.
+
+Started by genrec-mcp's research_round_start so the tool call returns
+immediately. The worker runs the ideation, scoring, implementation and
+verification agents and writes the round state; it never trains anything.
+"""
+import importlib.util
+import json
+import sys
+
+_spec = importlib.util.spec_from_file_location("genrec_server", {server!r})
+server = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(server)
+sys.exit(server.round_worker_main(json.loads(sys.argv[1])))
+'''
+
+
+def round_worker_main(spec: dict) -> int:
+    """Advance one round through its agent stages."""
+    from tools.research.rounds import pipeline as round_pipeline
+    from tools.research.rounds import worker as round_worker
+
+    round_id = spec["round_id"]
+    directory = REPO / "results" / "research" / "issue120" / "rounds" / round_id
+    try:
+        summary = round_worker.advance(REPO, round_id)
+    except Exception as exc:                               # noqa: BLE001
+        state = round_pipeline.load_state(directory)
+        round_pipeline.record_event(state, "round_failed", error=str(exc))
+        round_pipeline.save_state(directory, state)
+        return 1
+    state = round_pipeline.load_state(directory)
+    state["worker_summary"] = summary
+    round_pipeline.save_state(directory, state)
+    return 0
+
+
+def write_round_worker() -> Path:
+    HARNESS_DIR.mkdir(parents=True, exist_ok=True)
+    worker = HARNESS_DIR / "round_worker.py"
+    worker.write_text(ROUND_WORKER_TEMPLATE.format(server=str(Path(__file__).resolve())),
+                      encoding="utf-8")
+    return worker
+
+
+def tool_research_round_start(objective: str = "") -> dict:
+    """Start one multi-agent round: three ideation agents, then three scorers.
+
+    The round is asynchronous; research_round_status reports where it is.
+    """
+    import time
+    from tools.research.rounds import pipeline as round_pipeline
+
+    round_id = "round_" + time.strftime("%Y%m%d_%H%M%S") + "_" + str(int(time.time() * 1000) % 1000)
+    directory = round_pipeline.new_round(REPO, round_id, objective=objective)
+    worker = write_round_worker()
+    log = HARNESS_DIR / ("round_" + round_id + ".log")
+    with log.open("wb") as sink:
+        process = subprocess.Popen(
+            [sys.executable, str(worker), json.dumps({"round_id": round_id})],
+            cwd=str(REPO),
+            stdout=sink,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    state = round_pipeline.load_state(directory)
+    state["worker_pid"] = process.pid
+    state["worker_log"] = str(log)
+    round_pipeline.record_event(state, "round_worker_started", pid=process.pid)
+    round_pipeline.save_state(directory, state)
+    return {"started": True, "round_id": round_id, "directory": str(directory),
+            "worker_pid": process.pid, "worker_log": str(log), "gpu_launched": False}
+
+
+def _round_directory(round_id: str) -> Path:
+    from tools.research.rounds import pipeline as round_pipeline
+    if not round_id or "/" in round_id:
+        raise ValueError("invalid round id")
+    return round_pipeline.round_root(REPO) / round_id
+
+
+def tool_research_round_status(round_id: str) -> dict:
+    """Where the round is, what it produced and what is still open."""
+    from tools.research.rounds import jobs as round_jobs
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    queue = round_jobs.JobQueue(directory)
+    summary = round_pipeline.summary(state)
+    summary["worker_pid"] = state.get("worker_pid")
+    summary["worker_alive"] = bool(state.get("worker_pid")) and state_process_live(
+        state.get("worker_pid"), HARNESS_DIR / ("round_" + round_id + ".log"))
+    summary["jobs"] = queue.report()
+    summary["selection"] = {
+        "selected": [entry["idea_id"] for entry in (state.get("selection") or {}).get("selected", [])],
+        "rejected": (state.get("selection") or {}).get("rejected", []),
+        "rule": (state.get("selection") or {}).get("rule", {})}
+    summary["implementations"] = [
+        {"idea_id": record["idea_id"], "status": record.get("status"),
+         "revision": record.get("revision", 0), "tree": record.get("tree"),
+         "verdicts": [verdict.get("verdict") for verdict in record.get("verdicts", [])],
+         "failure_signature": record.get("failure_signature")}
+        for record in state.get("implementations", [])]
+    return summary
+
+
+def tool_research_round_results(round_id: str) -> dict:
+    """The full audit record of a round: ideas, matrix, selection, jobs, results."""
+    from tools.research.rounds import jobs as round_jobs
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    queue = round_jobs.JobQueue(directory)
+    return {"round_id": round_id, "objective": state.get("objective"),
+            "ideas": state.get("ideas", []), "duplicates": state.get("duplicates", []),
+            "scores": state.get("scores", {}), "matrix": state.get("matrix"),
+            "selection": state.get("selection"),
+            "implementations": state.get("implementations", []),
+            "repairs": state.get("repairs", []), "blocked": state.get("blocked", []),
+            "jobs": queue.report(), "stage3_results": queue.stage3_results(),
+            "events": state.get("events", [])}
+
+
+def tool_research_round_collect(round_id: str) -> dict:
+    """Collect finished Stage 2 jobs and hand every valid SID to Stage 3.
+
+    A Stage 2 job that exported a technically valid SID becomes a Stage 3 job
+    automatically; a job that failed keeps its evidence and the round continues.
+    """
+    from tools.research.rounds import jobs as round_jobs
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    queue = round_jobs.JobQueue(directory)
+    started, refused = [], []
+    for job in list(queue.jobs["jobs"]):
+        if job["kind"] != "stage2" or job["status"] not in ("pending", "running"):
+            continue
+        result_dir = Path(job["result_dir"])
+        sid_path = result_dir / "item_sids.json"
+        if not sid_path.is_file():
+            if job["status"] == "running":
+                continue
+            queue.start(job["job_id"])
+            verification = "round:" + str(job.get("round_id", "")) + ":" + str(job["idea_id"])
+            outcome = tool_stage2_start(str(job["tree"]), verification)
+            if outcome.get("started") is False and outcome.get("refused"):
+                queue.fail(job["job_id"], str(outcome["refused"]),
+                           evidence={"refused": outcome["refused"]})
+                refused.append({"idea_id": job["idea_id"], "refused": outcome["refused"]})
+            else:
+                started.append({"idea_id": job["idea_id"], "tree": job["tree"]})
+            continue
+        validity = round_jobs.sid_is_technically_valid(sid_path, repo=REPO)
+        if not validity["valid"]:
+            queue.fail(job["job_id"], "exported SID is not technically valid: " +
+                       str(validity["refused"]), evidence=validity)
+            refused.append({"idea_id": job["idea_id"], "refused": validity["refused"]})
+            continue
+        outcome = queue.complete_stage2(job["job_id"], sid_path=sid_path,
+                                        metrics=validity["diagnostics"])
+        stage3 = outcome.get("stage3")
+        if stage3 is not None:
+            result = tool_stage3_start(str(sid_path))
+            stage3["started"] = bool(result.get("started"))
+            if not result.get("started"):
+                stage3["refused"] = result.get("refused")
+    pipeline_module_state = state
+    pipeline_module_state["stage2_jobs"] = queue.report()["jobs"]
+    pipeline_module_state["stage3_jobs"] = [job for job in queue.report()["jobs"]
+                                            if job["kind"] == "stage3"]
+    round_pipeline.save_state(directory, pipeline_module_state)
+    return {"round_id": round_id, "stage2_started": started, "stage2_refused": refused,
+            "jobs": queue.report()}
+
+TOOLS.update({
+    "research_round_start": {
+        "fn": tool_research_round_start,
+        "args": {"objective": "string"},
+        "description": "Start one multi-agent research round: three independent "
+                       "ideation agents, three independent scorers that judge every "
+                       "idea, an explicit multi-candidate selection, one isolated "
+                       "implementation per selected idea and three verifiers per "
+                       "implementation; no GPU work is started by this call.",
+    },
+    "research_round_status": {
+        "fn": tool_research_round_status,
+        "args": {"round_id": "string"},
+        "description": "Report where a round stands: ideas, duplicates, score matrix, "
+                       "selection, implementations, verifications, repairs and jobs.",
+    },
+    "research_round_results": {
+        "fn": tool_research_round_results,
+        "args": {"round_id": "string"},
+        "description": "The full audit record of a round, including failed and blocked "
+                       "branches and every Stage 3 result.",
+    },
+    "research_round_collect": {
+        "fn": tool_research_round_collect,
+        "args": {"round_id": "string"},
+        "description": "Start the queued Stage 2 jobs and hand every technically valid "
+                       "exported SID to Stage 3 automatically.",
+    },
+})
