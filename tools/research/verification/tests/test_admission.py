@@ -84,7 +84,7 @@ class AdmissionTests(unittest.TestCase):
                 code = override[name]
             path.write_text(code, encoding="utf-8")
             frozen_tests[name] = A.sha256(path)
-        proposal = self.evidence / "agents" / "geometry" / "candidate.json"
+        proposal = self.evidence / "runs" / self.run_id / "agents" / "geometry" / "candidate.json"
         proposal.parent.mkdir(parents=True)
         proposal.write_text(json.dumps({"candidate_id": cid}))
         code_sha = A.source_digest(self.tree)
@@ -92,7 +92,8 @@ class AdmissionTests(unittest.TestCase):
         path = self.evidence / "verification" / cid / "manifest.json"
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps({
-            "schema": 1, "candidate_id": cid, "source_tree": self.tree.name,
+            "schema": 1, "candidate_id": cid, "run_id": self.run_id,
+            "source_tree": self.tree.name,
             "source_sha256": code_sha, "proposal_sha256": proposal_sha,
             "tests": frozen_tests,
         }), encoding="utf-8")
