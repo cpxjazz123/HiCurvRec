@@ -56,9 +56,16 @@ class SuccessorBranchQuantiser(nn.Module):
 
     # ------------------------------------------------------------- assignment
     def assign(self, latent: torch.Tensor):
-        """Return tokens, projected residuals and projected selected codes."""
+        """Return tokens, residuals, selected codes and their STE twins.
+
+        ``codes`` carry the codebook gradient (the code-side loss reaches the
+        codebook through them). ``straight_through`` forward equal the same
+        codes but backward send the identity derivative to the projected
+        assignment input, which is the path the proposal requires for the
+        reconstruction term.
+        """
         residual = project_ball(latent, radius=self.radius)
-        tokens, residuals, selections = [], [], []
+        tokens, residuals, selections, straight_throughs = [], [], [], []
         for level, codebook in enumerate(self.codebooks):
             mapped = project_ball(residual, radius=self.radius)
             candidates = project_ball(codebook, radius=self.radius)
@@ -72,21 +79,23 @@ class SuccessorBranchQuantiser(nn.Module):
             straight_through = mapped + (code - mapped).detach()
             tokens.append(index)
             selections.append(code)
+            straight_throughs.append(straight_through)
             residuals.append(mapped)
             residual = project_ball(residual - straight_through, radius=self.radius)
         return (torch.stack(tokens, dim=1), torch.stack(residuals, dim=1),
-                torch.stack(selections, dim=1))
+                torch.stack(selections, dim=1), torch.stack(straight_throughs, dim=1))
 
-    def reconstruction(self, selections: torch.Tensor) -> torch.Tensor:
-        """Projected sum of the selected codes, used by the content term."""
-        return project_ball(selections.sum(dim=1), radius=self.radius)
+    def reconstruction(self, values: torch.Tensor) -> torch.Tensor:
+        """Projected sum of the selected codes (or of their STE twins)."""
+        return project_ball(values.sum(dim=1), radius=self.radius)
 
     # --------------------------------------------------------------- forward
     def forward(self, latent: torch.Tensor):
-        tokens, residuals, selections = self.assign(latent)
-        return self.reconstruction(selections), tokens, residuals, selections
+        tokens, residuals, selections, straight_throughs = self.assign(latent)
+        reconstruction = self.reconstruction(straight_throughs)
+        return reconstruction, tokens, residuals, selections
 
     @torch.no_grad()
     def get_indices(self, latent: torch.Tensor) -> torch.Tensor:
-        tokens, _residuals, _selections = self.assign(latent)
+        tokens, _residuals, _selections, _ste = self.assign(latent)
         return tokens
