@@ -5,7 +5,18 @@ import unittest
 
 import torch
 
-_SOURCE = Path(__file__).resolve().parents[5] / 'stage2_RQ-VAE' / 'TIGER_c117_hyperbolic_item_semantic_id' / 'model' / 'hyperbolic.py'
+_CANDIDATE = Path('/fs04/ar57/wenyu/GeneRec') / 'stage2_RQ-VAE' / 'TIGER_c117_hyperbolic_item_semantic_id'
+_SOURCE = _CANDIDATE / 'model' / 'hyperbolic.py'
+if not _SOURCE.is_file():
+    # Operator correction: a `parents[N]`-only resolution breaks when this suite
+    # runs from the copy the review materializes under the run evidence space,
+    # because that copy sits at a different depth. Walk up instead, so the suite
+    # loads the same candidate from either location.
+    for _parent in Path(__file__).resolve().parents:
+        _candidate = _parent / 'stage2_RQ-VAE' / 'TIGER_c117_hyperbolic_item_semantic_id' / 'model' / 'hyperbolic.py'
+        if _candidate.is_file():
+            _SOURCE = _candidate
+            break
 _SPEC = importlib.util.spec_from_file_location('candidate_hyperbolic', _SOURCE)
 hyperbolic = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(hyperbolic)
