@@ -55,7 +55,8 @@ class QualityGateTests(unittest.TestCase):
         self.candidate_path.write_text(json.dumps(self.candidate))
         self.baseline_path.write_text(json.dumps(self.baseline))
         self.patch = patch.multiple(
-            gate, EXPECTED_PAIRS=4, FROZEN_BASELINE_L2_PREFIXES=2,
+            gate, EXPECTED_PAIRS=4, MIN_VALID_L1_HARD_ER=10.0,
+            MIN_L2_PREFIXES=3, FROZEN_BASELINE_L2_PREFIXES=2,
             FROZEN_RESAMPLE_VALID_L1_ER=0.0,
             FROZEN_BASELINE_BLOB_SHA1=gate._git_blob_sha1(self.baseline_path),
             FROZEN_VALID_PAIRS_BLOB_SHA1=gate._git_blob_sha1(self.pairs_path),
@@ -72,6 +73,9 @@ class QualityGateTests(unittest.TestCase):
         result = self.evaluate()
         self.assertTrue(result["passed"], result)
         self.assertNotIn("valid_l1_positive_hit_rate_min", result["thresholds"])
+        self.assertEqual(result["thresholds"]["valid_l1_hard_er_min_inclusive"], 10.0)
+        self.assertEqual(result["thresholds"]["level2_prefixes_min_inclusive"], 3)
+        self.assertEqual(result["thresholds"]["frozen_resample_level2_prefixes"], 2)
         self.assertEqual(result["candidate"]["valid_l1_positive_hit_rate"], 1.0)
         self.assertIn("valid_l1_positive_hit_rate", result["diagnostic_only"])
         self.assertEqual(result["candidate"]["valid_l1_hard_er"], 40)
@@ -85,15 +89,53 @@ class QualityGateTests(unittest.TestCase):
     def test_low_prefix_rejected_even_when_er_passes(self):
         self.candidate = {str(i): [0, 0, i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
-        result = self.evaluate()
+        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 0.5):
+            result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("prefixes", result["refused"])
 
-    def test_er_must_strictly_beat_cutoff(self):
+    def test_er_at_relaxed_floor_passes_inclusively(self):
+        # Item 11 appears three times among the 40 negatives, raising
+        # negative hits from 1 to 4: 4*10/4 = ER 10.0, below Resample.
+        self.candidate["11"] = [0, 3, 0]
+        self.candidate_path.write_text(json.dumps(self.candidate))
+        result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+        self.assertEqual(result["candidate"]["valid_l1_hard_er"], 10.0)
+        self.assertGreaterEqual(result["candidate"]["level2_distinct_prefixes"], 3)
+        self.assertLess(result["candidate"]["valid_l1_hard_er"], 16.38953942232631)
+
+    def test_er_below_relaxed_floor_rejected(self):
+        self.candidate["1"] = [1, 1, 0]
+        self.candidate["2"] = [0, 3, 0]
+        self.candidate_path.write_text(json.dumps(self.candidate))
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("Hard-L1 ER", result["refused"])
+
+    def test_equal_er_to_threshold_is_allowed(self):
         with patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.0):
+            result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+
+    def test_below_er_threshold_is_rejected(self):
+        with patch.object(gate, "MIN_VALID_L1_HARD_ER", 40.01):
             result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("Hard-L1 ER", result["refused"])
+
+    def test_equal_l2_prefix_to_threshold_is_allowed(self):
+        prefixes = self.evaluate()["candidate"]["level2_distinct_prefixes"]
+        with patch.object(gate, "MIN_L2_PREFIXES", prefixes):
+            result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+
+    def test_below_l2_prefix_threshold_is_rejected(self):
+        prefixes = self.evaluate()["candidate"]["level2_distinct_prefixes"]
+        with patch.object(gate, "MIN_L2_PREFIXES", prefixes + 1):
+            result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("prefixes", result["refused"])
 
     def test_equal_prefix_to_baseline_is_rejected(self):
         self.candidate_path.write_text(json.dumps(self.baseline))
