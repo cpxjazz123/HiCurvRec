@@ -20,6 +20,17 @@ def legal_candidate():
             "operator": {"family": "poincare_squared_distance", "curvature_c": 1.0,
                          "delta": 0.0, "radius": 0.99999, "flat_limit": "4*||x-y||^2"},
             "objective": {"anti_collapse": "usage-balanced assignment plus latent reconstruction"},
+            "assignment_algorithm": {
+                "population": "all frozen training items in ascending item-id order",
+                "conditioning": "level l is solved inside the groups of the frozen earlier labels",
+                "cost_and_transport": "C[i,k] = D_c^2(P(z_i), P(e[l,k])), Sinkhorn at tau=0.05",
+                "discrete_label_extraction": "argmin with balanced capacities, lowest code id on ties",
+                "arm_and_refresh": "both arms, refreshed at every epoch boundary",
+                "gradient_rule": "labels and transport frozen, logits differentiable",
+            },
+            "projection_order": "map, project, assign, project the selected code, score, subtract",
+            "tensor_gradient_rules": {"latent_z": "differentiable", "codebook_vectors_e": "differentiable",
+                                       "epoch_boundary_labels": "frozen"},
         },
         "hyperbolic_necessity": "n", "euclidean_control": "same architecture, metric only",
         "effect_site": "e", "real_trigger_measurement": "r",
@@ -187,6 +198,36 @@ class ContractCompilationTests(unittest.TestCase):
         for name in ("math", "test_math.py", "math.py"):
             self.assertEqual(contract.canonical_suite(name), "math")
         self.assertIsNone(contract.canonical_suite("test_unknown.py"))
+
+
+class DeclaredAssignmentTests(unittest.TestCase):
+    """The assignment and residual path must be declared, not narrated."""
+
+    def test_a_candidate_without_a_declared_assignment_is_refused(self):
+        candidate = legal_candidate()
+        del candidate["math_definition"]["assignment_algorithm"]
+        report = preflight.run(candidate)
+        self.assertEqual(report["verdict"], preflight.MACHINE_INVALID)
+        self.assertEqual(report["diagnostics"][0]["code"], "ASSIGNMENT_NOT_DECLARED")
+
+    def test_an_assignment_without_the_extraction_rule_is_refused(self):
+        candidate = legal_candidate()
+        del candidate["math_definition"]["assignment_algorithm"]["discrete_label_extraction"]
+        report = preflight.run(candidate)
+        self.assertIn("ASSIGNMENT_NOT_DECLARED",
+                       [entry["code"] for entry in report["diagnostics"]])
+
+    def test_missing_projection_order_or_gradient_rules_are_refused(self):
+        candidate = legal_candidate()
+        del candidate["math_definition"]["projection_order"]
+        report = preflight.run(candidate)
+        codes = [entry["code"] for entry in report["diagnostics"]]
+        self.assertIn("PROJECTION_ORDER_MISSING", codes)
+        candidate = legal_candidate()
+        del candidate["math_definition"]["tensor_gradient_rules"]
+        report = preflight.run(candidate)
+        codes = [entry["code"] for entry in report["diagnostics"]]
+        self.assertIn("GRADIENT_RULES_MISSING", codes)
 
 
 if __name__ == "__main__":
