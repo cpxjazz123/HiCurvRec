@@ -1,0 +1,44 @@
+{
+  "authorisations": {},
+  "created_utc": 1792800711.4120781,
+  "dispatched": 1,
+  "idle_ticks": 0,
+  "rounds": 0,
+  "schema_version": 1,
+  "tasks": {
+    "lotv:M:revision2": {
+      "artifacts": [
+        {
+          "path": "results/hyperbolic_research_runs/issue115/lotv_rev2/sessions/evidence/lotv:M:revision2/session.json",
+          "sha256": "5930b9d3e2d6d0e816ba378c78584af1c9152087e068bdc4b70689a1d599ae51"
+        },
+        {
+          "path": "results/hyperbolic_research_runs/issue115/lotv_rev2/sessions/evidence/lotv:M:revision2/session.jsonl",
+          "sha256": "69048e7e28ec041c19ab15ca35ad291aca7ccf1717fa75b4e06f44b0db57dbeb"
+        }
+      ],
+      "attempts": 1,
+      "candidate": "lotv",
+      "deps": [],
+      "description": "",
+      "detail": "the M agent finished its work",
+      "error": "",
+      "finished_at": 1792800744.7101953,
+      "gate_measurement": null,
+      "kind": "engineering",
+      "lease_expires": 0.0,
+      "lease_owner": "",
+      "max_attempts": 1,
+      "requires": null,
+      "resource": "cpu",
+      "stage": "proposal",
+      "started_at": 1792800711.421535,
+      "status": "done",
+      "task_id": "lotv:M:revision2",
+      "verify": [],
+      "write_scope": [
+        "issue115/lotv_rev2"
+      ]
+    }
+  }
+}
