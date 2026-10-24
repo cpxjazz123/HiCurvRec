@@ -67,8 +67,14 @@ def _start(run_id, source_dir, action):
     with _lock(root):
         if path.is_file():
             existing = read_json(path)
-            return {"started": False, "reason": "request_already_recorded",
-                    "status": existing.get("status"), "request_id": existing.get("request_id")}
+            if existing.get("status") not in ("failed", "cancelled", "superseded"):
+                return {"started": False, "reason": "request_already_recorded",
+                        "status": existing.get("status"), "request_id": existing.get("request_id")}
+            # A failed attempt must not block the next one. The failed record is
+            # kept under its own request id and the request is superseded with a
+            # fresh id, so the earlier evidence is never overwritten.
+            keep = path.with_name(path.stem + "." + str(existing.get("request_id", "old"))[:8] + ".json")
+            path.replace(keep)
         if action == "review":
             draft = root / "verification_requests" / "draft.json"
             if not draft.is_file() or read_json(draft).get("status") != "drafts_ready":
