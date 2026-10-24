@@ -1,4 +1,5 @@
 """One canonical Issue117 DAG; each research run owns a separate evidence directory."""
+from __future__ import annotations
 import json
 import os
 import shutil
