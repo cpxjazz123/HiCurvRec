@@ -1,5 +1,6 @@
 """One native issue116 path: train evidence and literature before geometry."""
 import json
+import os
 
 from .. import settings
 from ..agents.prompts import build_prompt
@@ -18,7 +19,7 @@ TASKS = (
 )
 OUTPUTS = {"literature": "literature.json", "geometry": "candidate.json",
            "review": "review.json"}
-OWNER = "issue116-native"
+OWNER = "issue116-native-" + str(os.getpid())
 
 
 def store():
@@ -87,6 +88,8 @@ def verify_science_output(task, root, manifest):
             raise ValueError("review verdict pertains to a different candidate")
         if output.get("verdict") not in ("FATAL", "MATERIAL", "CPU_ELIGIBLE", "PARKED"):
             raise ValueError("review must emit a current structured verdict")
+        if output["verdict"] != "CPU_ELIGIBLE":
+            raise ValueError("scientific admission blocked: " + output["verdict"])
 
 
 def step():
