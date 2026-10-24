@@ -81,18 +81,17 @@ def mobius_add(a: torch.Tensor, b: torch.Tensor, *, epsilon: float = EPSILON) ->
 def hyperbolic_distance(x: torch.Tensor, y: torch.Tensor, *, epsilon: float = EPSILON) -> torch.Tensor:
     """D(x, y) = 2 * artanh(|| (-x) (+) y ||), the frozen candidate operator.
 
-    The norm of the Mobius offset is folded into the ball with a smooth tanh
-    bound instead of a hard clamp: a clamp would zero the gradient of every
-    pair that reaches the boundary, and the review asked for finite gradients
-    near the boundary. With the bound, D(x, x) is exactly zero and the
-    gradient stays finite everywhere.
+    The operator is exact: the only clamp is on the argument of artanh, and it
+    binds only for a pair whose Mobius offset reaches the boundary, where the
+    true distance diverges anyway. A smooth reparameterization of the argument
+    was tried and rejected: it changed the operator itself (the collinear
+    closed form 2*atanh(1/3) came out as 2/3) and the independent MATH test
+    caught it.
     """
     offset = mobius_add(-x, y, epsilon=epsilon)
     squared = (offset * offset).sum(dim=-1, keepdim=True).clamp(min=0.0)
     norm = torch.sqrt(squared)
-    limit = 1.0 - epsilon
-    bounded = limit * torch.tanh(norm / limit)
-    return 2.0 * torch.atanh(bounded)
+    return 2.0 * torch.atanh(norm.clamp(max=1.0 - epsilon))
 
 
 __all__ = [
