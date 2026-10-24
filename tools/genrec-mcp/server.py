@@ -2462,6 +2462,60 @@ def _promote_round_tree(tree: Path, idea_id: str) -> Path:
     return target
 
 
+def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
+    """Enqueue every verified implementation and start up to `parallel` Stage 2 jobs.
+
+    On a four-card host two jobs of one card each run concurrently: each launch is
+    pinned to its own CUDA_VISIBLE_DEVICES and its tree and result directory are
+    distinct, so the jobs cannot observe or overwrite each other.
+    """
+    import os
+    from tools.research.rounds import jobs as round_jobs
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    queue = round_jobs.JobQueue(directory, max_parallel=max(1, int(parallel)))
+    queued = []
+    for record in round_pipeline.verified_implementations(state):
+        tree = _promote_round_tree(Path(record["tree"]), str(record["idea_id"]))
+        target = tree_result_dir(tree)
+        if not any(job["idea_id"] == record["idea_id"] and job["kind"] == "stage2"
+                   for job in queue.jobs["jobs"]):
+            queue.enqueue_stage2(idea_id=record["idea_id"], tree=tree, result_dir=target,
+                                 round_id=round_id)
+            queued.append(record["idea_id"])
+    launched, refused = [], []
+    free_gpus = probe_gpu_layout().get("physical") or []
+    batch = queue.next_batch("stage2")
+    for slot, job in enumerate(batch):
+        gpu = free_gpus[slot % len(free_gpus)] if free_gpus else None
+        previous = os.environ.get("CUDA_VISIBLE_DEVICES")
+        if gpu is not None:
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
+        try:
+            queue.start(job["job_id"])
+            verification = "round:" + round_id + ":" + str(job["idea_id"])
+            outcome = tool_stage2_start(str(job["tree"]), verification)
+        finally:
+            if previous is None:
+                os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+            else:
+                os.environ["CUDA_VISIBLE_DEVICES"] = previous
+        if outcome.get("started") is False and outcome.get("refused"):
+            queue.fail(job["job_id"], str(outcome["refused"]),
+                       evidence={"refused": outcome["refused"]})
+            refused.append({"idea_id": job["idea_id"], "refused": outcome["refused"]})
+        else:
+            launched.append({"idea_id": job["idea_id"], "tree": job["tree"],
+                             "gpu": gpu, "worker_pid": outcome.get("worker_pid"),
+                             "status": outcome.get("status")})
+    state["stage2_jobs"] = queue.report()["jobs"]
+    round_pipeline.save_state(directory, state)
+    return {"round_id": round_id, "queued": queued, "launched": launched,
+            "refused": refused, "jobs": queue.report()}
+
+
 def tool_research_round_collect(round_id: str) -> dict:
     """Collect finished Stage 2 jobs and hand every valid SID to Stage 3.
 
@@ -2538,6 +2592,12 @@ TOOLS.update({
         "args": {"round_id": "string"},
         "description": "The full audit record of a round, including failed and blocked "
                        "branches and every Stage 3 result.",
+    },
+    "research_round_launch": {
+        "fn": tool_research_round_launch,
+        "args": {"round_id": "string", "parallel": "integer"},
+        "description": "Enqueue the verified implementations and start up to "
+                       "`parallel` Stage 2 jobs, each pinned to its own GPU.",
     },
     "research_round_collect": {
         "fn": tool_research_round_collect,
