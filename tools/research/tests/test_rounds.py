@@ -250,3 +250,27 @@ class QueueTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ValidityAdmissionTests(unittest.TestCase):
+    """A technically valid SID is admitted whatever its quality numbers are."""
+
+    def test_a_real_stage2_output_with_er_one_and_one_prefix_is_admitted(self):
+        from tools.research.rounds import jobs as round_jobs
+        repo = Path(__file__).resolve().parents[3]
+        sid = repo / "results/stage2_RQ-VAE/TIGER_c117_transition_residual_poincare/item_sids.json"
+        if not sid.is_file():
+            self.skipTest("the recorded Stage 2 output is not in this checkout")
+        verdict = round_jobs.sid_is_technically_valid(sid, repo=repo)
+        self.assertTrue(verdict["valid"], verdict)
+        self.assertLessEqual(verdict["diagnostics"]["valid_l1_hard_er"], 1.0)
+        self.assertEqual(verdict["diagnostics"]["level2_distinct_prefixes"], 1)
+
+    def test_a_malformed_sid_is_refused(self):
+        from tools.research.rounds import jobs as round_jobs
+        with tempfile.TemporaryDirectory() as work:
+            broken = Path(work) / "item_sids.json"
+            broken.write_text('{"0": [1, 2]}', encoding="utf-8")
+            verdict = round_jobs.sid_is_technically_valid(broken)
+            self.assertFalse(verdict["valid"])
+            self.assertTrue(verdict["refused"])
